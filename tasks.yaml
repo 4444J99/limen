@@ -11,9 +11,9 @@ portal:
       gemini: 10
     track:
       date: '2026-05-31'
-      spent: 3
+      spent: 6
       per_agent:
-        jules: 3
+        jules: 6
         gemini: 0
 tasks:
 - id: LIMEN-001
@@ -86,7 +86,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - docs
   - governance
@@ -95,7 +95,12 @@ tasks:
   context: Governance docs need a ToC and back-to-top links for easier navigation.
     Markdown-only change.
   created: '2026-05-31'
-  dispatch_log: []
+  updated: '2026-05-31T15:18:36.643894Z'
+  dispatch_log:
+  - timestamp: '2026-05-31T15:18:36.643894Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: LIMEN-005
   title: 'Add testing steps to CI for 4 repos named in issue #59'
   repo: a-organvm/organvm-engine
@@ -103,7 +108,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - ci
   - testing
@@ -112,7 +117,12 @@ tasks:
   context: Add CI testing steps to the 4 repos identified in the issue. CI config
     changes only.
   created: '2026-05-31'
-  dispatch_log: []
+  updated: '2026-05-31T15:18:46.957485Z'
+  dispatch_log:
+  - timestamp: '2026-05-31T15:18:46.957485Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: LIMEN-006
   title: "Scaffold limen CLI \u2014 init/dispatch/harvest/status subcommands"
   repo: ''
@@ -154,7 +164,7 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - limen
   - distribution
