@@ -1,0 +1,27 @@
+name: Deploy Dashboard
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/app/**"
+      - "firebase.json"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - run: npm ci
+        working-directory: web/app
+      - run: npm run build
+        working-directory: web/app
+      - uses: w9jds/firebase-action@v13
+        with:
+          args: deploy --only hosting --project device-streaming-067d747a
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
