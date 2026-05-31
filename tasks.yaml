@@ -1,8 +1,7 @@
 version: '1.0'
 portal:
   name: Universal Task Intake
-  description: "One file to aim every agent you have \u2014 cross-repo, cross-agent,\
-    \ budget-capped"
+  description: One file to aim every agent you have — cross-repo, cross-agent, budget-capped
   budget:
     daily: 100
     unit: runs
@@ -53,8 +52,8 @@ tasks:
   - IRF-SYS-007
   urls:
   - https://github.com/a-organvm/the-actual-news/issues/28
-  context: "Grouping was deployed then removed \u2014 restore or replace it. Config-only\
-    \ change in dependabot.yml."
+  context: Grouping was deployed then removed — restore or replace it. Config-only
+    change in dependabot.yml.
   created: '2026-05-31'
   updated: '2026-05-31T15:12:47.350018Z'
   dispatch_log:
@@ -69,16 +68,16 @@ tasks:
   target_agent: gemini
   priority: medium
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - docs
   - decision-record
   urls:
   - https://github.com/a-organvm/the-actual-news/issues/29
-  context: Write a brief ADR or decision doc explaining why Dependabot grouping was
-    removed and what the new dependency-management approach is.
+  context: 'Issue #29 closed 2026-05-29 — ADR decision documented in CLAUDE.md.'
   created: '2026-05-31'
   dispatch_log: []
+  closed: '2026-05-31'
 - id: LIMEN-004
   title: Add table of contents and back-to-top navigation to governance docs
   repo: a-organvm/petasum-super-petasum
@@ -124,7 +123,7 @@ tasks:
     session_id: cli
     status: dispatched
 - id: LIMEN-006
-  title: "Scaffold limen CLI \u2014 init/dispatch/harvest/status subcommands"
+  title: Scaffold limen CLI — init/dispatch/harvest/status subcommands
   repo: ''
   type: code
   target_agent: claude
@@ -147,16 +146,16 @@ tasks:
   target_agent: gemini
   priority: medium
   budget_cost: 2
-  status: open
+  status: done
   labels:
   - audit
   - discovery
   urls: []
-  context: Scan all 255 repos across the 6 connected orgs. Find open issues that are
-    well-scoped, code-only, no human judgment needed. Return a prioritized list that
-    feeds into tasks.yaml.
+  context: Audit complete. Scanned 5 orgs. Found 10+ Jules-ready issues. Seeded LIMEN-009
+    through LIMEN-014.
   created: '2026-05-31'
   dispatch_log: []
+  closed: '2026-05-31'
 - id: LIMEN-008
   title: Write the limen install.sh one-liner
   repo: ''
@@ -173,3 +172,101 @@ tasks:
     vars. Must be idempotent.
   created: '2026-05-31'
   dispatch_log: []
+- id: LIMEN-009
+  title: Fix ERESOLVE dependency conflict + 42 npm audit vulnerabilities
+  repo: a-organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 2
+  status: open
+  urls:
+  - https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/603
+  context: ERESOLVE peer dependency conflict between @nestjs/cli, expo, turbo + 42
+    vulns (4L, 24M, 13H, 1C). Run npm audit fix --force, verify lockfile.
+  labels:
+  - bug
+  - dependencies
+  - security
+  created: '2026-05-31'
+- id: LIMEN-010
+  title: Fix TypeScript build errors in test files (30+ errors)
+  repo: a-organvm/my-knowledge-base
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 2
+  status: open
+  urls:
+  - https://github.com/a-organvm/my-knowledge-base/issues/46
+  context: tsc fails with 30+ TS errors in test files. Missing ttl, vitest API changed,
+    wrong arg counts, redeclared vars. Fix type annotations.
+  labels:
+  - bug
+  - typescript
+  created: '2026-05-31'
+- id: LIMEN-011
+  title: Fix YAML duplicate key issues in application-pipeline files
+  repo: a-organvm/organvm-corpvs-testamentvm
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: open
+  urls:
+  - https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/290
+  context: 21 duplicate key errors across 10 pipeline files. Replace current validator
+    with strict YAML parser, fix duplicate keys in source files.
+  labels:
+  - bug
+  - irf
+  - P1-SOON
+  created: '2026-05-31'
+- id: LIMEN-012
+  title: Fix integrity score ceiling — proportional fraud penalties at high scores
+  repo: a-organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: open
+  urls:
+  - https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/162
+  context: 'calculateIntegrity() has no ceiling; score can reach 5050. Penalties become
+    meaningless. Implement Option A: percentage-based penalty at high tiers (>=500).'
+  labels:
+  - bug
+  - api
+  created: '2026-05-31'
+- id: LIMEN-013
+  title: Fix ask-styx rate limiter — replace in-memory Map with Cloudflare KV
+  repo: a-organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: open
+  urls:
+  - https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/159
+  context: Rate limiting uses in-memory Map in Cloudflare Worker — ineffective across
+    distributed isolates. Replace with Cloudflare KV for global consistency.
+  labels:
+  - bug
+  - security
+  created: '2026-05-31'
+- id: LIMEN-014
+  title: Add codex_to_bundle.py converter (sibling to chatgpt_exporter)
+  repo: organvm-i-theoria/conversation-corpus-engine
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 2
+  status: open
+  urls:
+  - https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/28
+  context: 'Mirror scripts/chatgpt_exporter_to_bundle.py pattern. Input: Codex rollout-*.jsonl
+    files. Output: synthetic ChatGPT-export-shaped bundle. Filter response_item, role=user|assistant.'
+  labels:
+  - feature
+  - irf
+  created: '2026-05-31'
