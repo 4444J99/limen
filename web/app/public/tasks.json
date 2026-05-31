@@ -1,0 +1,467 @@
+{
+  "version": "1.0",
+  "portal": {
+    "name": "Universal Task Intake",
+    "description": "One file to aim every agent you have \u2014 cross-repo, cross-agent, budget-capped",
+    "budget": {
+      "daily": 100,
+      "unit": "runs",
+      "per_agent": {
+        "jules": 100,
+        "gemini": 10
+      },
+      "track": {
+        "date": "2026-05-31",
+        "spent": 18,
+        "per_agent": {
+          "jules": 15,
+          "gemini": 0,
+          "claude": 3
+        }
+      }
+    }
+  },
+  "tasks": [
+    {
+      "id": "LIMEN-001",
+      "title": "Resolve issue #236: ~358 frontend TypeScript errors in public-record-data-scrapper",
+      "repo": "a-organvm/public-record-data-scrapper",
+      "type": "code",
+      "target_agent": "jules",
+      "priority": "high",
+      "budget_cost": 3,
+      "status": "dispatched",
+      "labels": [
+        "bug",
+        "typescript",
+        "frontend"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/public-record-data-scrapper/issues/236"
+      ],
+      "context": "358 TS errors across ~65 files in apps/web/. Root cause: types in packages/core/src/types.ts (camelCase, @public-records/core) and apps/web/src/lib/api/*.ts (snake_case) were updated/extended but test mocks were not. 11 fix categories:\n1. HealthScore objects missing avgSentiment (+1) and lastUpdated (+2). Add: avgSentiment: 0.5, lastUpdated: new Date().toISOString(). 2. GrowthSignal objects missing score (+3). Add: score: 75. 3. Prospect objects missing defaultDate, timeSinceDefault, healthScore, narrative (+4). Add: defaultDate: \"2024-01-15\", timeSinceDefault: 120, healthScore: { grade: \"B\", score: 65, ... }, narrative: \"Sample narrative\". 4. User objects missing emailVerified (+1). Add: emailVerified: true. 5. ImprovementSuggestion missing id (+1). Add: id: \"sug-1\". 6. ImprovementResult missing changes and metrics (+2). Add: changes: {}, metrics: {}. 7. MLScoring.factors empty objects: replace {} with { healthTrend: 0.5, signalQuality: 0.7, industryRisk: 0.3, timeToRecovery: 0.6, financialStability: 0.8 }. 8. UseAgenticEngineResult mock uses rejectImprovement which doesnt exist on type. 9. CompetitorChart uses string[] for industries instead of IndustryType[]. 10. useDealActions test uses camelCase (orgId, dealId, stageId, amountRequested) but @/lib/api/deals types are snake_case (org_id, deal_id, stage_id, amount_requested). 11. Source files (AgenticDashboard.tsx, AnalyticsDashboard.tsx, use-enrichment.ts etc.) have real type errors too. Reference the types file at packages/core/src/types.ts for the correct shape. Fix all test mocks + source type errors.",
+      "created": "2026-05-31",
+      "updated": "2026-05-31T16:35:00+00:00",
+      "dispatch_log": [
+        {
+          "timestamp": "2026-05-31T15:12:30.182131Z",
+          "agent": "jules",
+          "session_id": "2847308303220998737",
+          "status": "superseded",
+          "output": "No diff on remote (superseded by newer dispatch)"
+        },
+        {
+          "timestamp": "2026-05-31T15:33:08.589461+00:00",
+          "agent": "jules",
+          "session_id": "6780648903142505137",
+          "status": "superseded",
+          "output": "PR #241 merged \u2014 reduced 628\u2192357 errors, added type interfaces, recharts deps"
+        },
+        {
+          "timestamp": "2026-05-31T15:33:08.589461+00:00",
+          "agent": "jules",
+          "session_id": "17354747813764803879",
+          "status": "failed",
+          "output": "tsc still failing after patch \u2014 358 remaining (categories detailed above)"
+        }
+      ]
+    },
+    {
+      "id": "LIMEN-002",
+      "title": "Fix stale Dependabot grouping in the-actual-news (IRF-SYS-007)",
+      "repo": "a-organvm/the-actual-news",
+      "type": "code",
+      "target_agent": "jules",
+      "priority": "high",
+      "budget_cost": 1,
+      "status": "done",
+      "labels": [
+        "chore",
+        "dependabot",
+        "IRF-SYS-007"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/the-actual-news/issues/28"
+      ],
+      "context": "Jules session 1157943350871849976 completed \u2014 created dependabot.yml. Issue #28 already resolved by human PR #33. Patch saved. Older session 14372742151319923315 had no diff on remote (same resolution).",
+      "created": "2026-05-31",
+      "updated": "2026-05-31T15:33:08.589461+00:00",
+      "dispatch_log": [
+        {
+          "timestamp": "2026-05-31T15:12:47.350018Z",
+          "agent": "jules",
+          "session_id": "14372742151319923315",
+          "status": "superseded",
+          "output": "No diff on remote (already resolved by human PR"
+        },
+        {
+          "timestamp": "2026-05-31T15:33:08.589461+00:00",
+          "agent": "jules",
+          "session_id": "1157943350871849976",
+          "status": "done",
+          "output": "Created dependabot.yml with npm+github-actions grouping"
+        }
+      ],
+      "closed": "2026-05-31T15:33:08.589461+00:00"
+    },
+    {
+      "id": "LIMEN-003",
+      "title": "Document Dependabot removal decision and dependency-management posture",
+      "repo": "a-organvm/the-actual-news",
+      "type": "docs",
+      "target_agent": "gemini",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "done",
+      "labels": [
+        "docs",
+        "decision-record"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/the-actual-news/issues/29"
+      ],
+      "context": "Issue #29 closed 2026-05-29 \u2014 ADR decision documented in CLAUDE.md.",
+      "created": "2026-05-31",
+      "dispatch_log": [],
+      "closed": "2026-05-31"
+    },
+    {
+      "id": "LIMEN-004",
+      "title": "Add table of contents and back-to-top navigation to governance docs",
+      "repo": "a-organvm/petasum-super-petasum",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "done",
+      "labels": [
+        "docs",
+        "governance"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/petasum-super-petasum/issues/140"
+      ],
+      "context": "Jules session 6764601667214665372 completed \u2014 no diff (issue #140 already resolved by human PR #143). Marking done.",
+      "created": "2026-05-31",
+      "updated": "2026-05-31T15:33:08.589461+00:00",
+      "dispatch_log": [
+        {
+          "timestamp": "2026-05-31T15:18:36.643894Z",
+          "agent": "jules",
+          "session_id": "cli",
+          "status": "dispatched"
+        },
+        {
+          "timestamp": "2026-05-31T15:33:08.589461+00:00",
+          "agent": "jules",
+          "session_id": "6764601667214665372",
+          "status": "done",
+          "output": "No changes needed \u2014 already resolved"
+        }
+      ],
+      "closed": "2026-05-31T15:33:08.589461+00:00"
+    },
+    {
+      "id": "LIMEN-005",
+      "title": "Add testing steps to CI for 4 repos named in issue #59",
+      "repo": "a-organvm/organvm-engine",
+      "type": "code",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 2,
+      "status": "done",
+      "labels": [
+        "ci",
+        "testing"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-engine/issues/59"
+      ],
+      "context": "Issue #59 already CLOSED \u2014 CI testing steps completed via organvm ci audit. Jules sessions: 7819655186891960864 (added submodules, misguided), 12969220929106740896, 16036269367358331275. Marking done.",
+      "created": "2026-05-31",
+      "updated": "2026-05-31T16:27:00+00:00",
+      "dispatch_log": [
+        {
+          "timestamp": "2026-05-31T15:18:46.957485Z",
+          "agent": "jules",
+          "session_id": "7819655186891960864",
+          "status": "superseded",
+          "output": "Added 4 git submodules instead of CI config \u2014 issue already resolved"
+        },
+        {
+          "timestamp": "2026-05-31T15:33:08.589461+00:00",
+          "agent": "jules",
+          "session_id": "12969220929106740896",
+          "status": "superseded",
+          "output": "Issue already closed"
+        },
+        {
+          "timestamp": "2026-05-31T15:33:08.589461+00:00",
+          "agent": "jules",
+          "session_id": "16036269367358331275",
+          "status": "superseded",
+          "output": "Issue already closed"
+        }
+      ],
+      "closed": "2026-05-31T16:27:00+00:00"
+    },
+    {
+      "id": "LIMEN-006",
+      "title": "Scaffold limen CLI \u2014 init/dispatch/harvest/status subcommands",
+      "repo": "",
+      "type": "code",
+      "target_agent": "claude",
+      "priority": "high",
+      "budget_cost": 1,
+      "status": "done",
+      "labels": [
+        "limen",
+        "cli",
+        "core"
+      ],
+      "urls": [],
+      "context": "CLI built, installed, pushed to GitHub. Implemented with click + pydantic models.",
+      "created": "2026-05-31",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-007",
+      "title": "Audit all GitHub orgs for open issues suitable for Jules dispatch",
+      "repo": "",
+      "type": "audit",
+      "target_agent": "gemini",
+      "priority": "medium",
+      "budget_cost": 2,
+      "status": "done",
+      "labels": [
+        "audit",
+        "discovery"
+      ],
+      "urls": [],
+      "context": "Audit complete. Scanned 5 orgs. Found 10+ Jules-ready issues. Seeded LIMEN-009 through LIMEN-014.",
+      "created": "2026-05-31",
+      "dispatch_log": [],
+      "closed": "2026-05-31"
+    },
+    {
+      "id": "LIMEN-008",
+      "title": "Write the limen install.sh one-liner",
+      "repo": "",
+      "type": "code",
+      "target_agent": "claude",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "done",
+      "labels": [
+        "limen",
+        "distribution"
+      ],
+      "urls": [],
+      "context": "Create a curl|sh installer that clones the limen repo and sets up the env vars. Must be idempotent.",
+      "created": "2026-05-31",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-009",
+      "title": "Fix ERESOLVE dependency conflict + 42 npm audit vulnerabilities",
+      "repo": "a-organvm/peer-audited--behavioral-blockchain",
+      "type": "code",
+      "target_agent": "jules",
+      "priority": "high",
+      "budget_cost": 2,
+      "status": "done",
+      "urls": [
+        "https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/603"
+      ],
+      "context": "Already resolved via PR #619 (merged: drop root expo/next) and PR #604 (open: comprehensive override fix, reduces 42\u21925 remaining vulns). Jules session 36549371605837195 superseded. Covering with existing PRs \u2014 no new dispatch needed.",
+      "labels": [
+        "bug",
+        "dependencies",
+        "security"
+      ],
+      "created": "2026-05-31",
+      "updated": "2026-05-31T16:27:00+00:00",
+      "dispatch_log": [
+        {
+          "timestamp": "2026-05-31T15:33:44.878442+00:00",
+          "agent": "jules",
+          "session_id": "36549371605837195",
+          "status": "superseded",
+          "output": "Already covered by PR"
+        }
+      ],
+      "closed": "2026-05-31T16:27:00+00:00"
+    },
+    {
+      "id": "LIMEN-010",
+      "title": "Fix TypeScript build errors in test files (30+ errors)",
+      "repo": "a-organvm/my-knowledge-base",
+      "type": "code",
+      "target_agent": "jules",
+      "priority": "high",
+      "budget_cost": 2,
+      "status": "done",
+      "urls": [
+        "https://github.com/a-organvm/my-knowledge-base/issues/46"
+      ],
+      "context": "Already resolved via PR #47 (open: fix/typescript-build-errors branch). Jules session 2721304265616159805 failed but human PR #47 covers the fix. No re-dispatch needed.",
+      "labels": [
+        "bug",
+        "typescript"
+      ],
+      "created": "2026-05-31",
+      "updated": "2026-05-31T16:27:00+00:00",
+      "dispatch_log": [
+        {
+          "timestamp": "2026-05-31T15:33:44.878442+00:00",
+          "agent": "jules",
+          "session_id": "2721304265616159805",
+          "status": "superseded",
+          "output": "Already covered by human PR"
+        }
+      ],
+      "closed": "2026-05-31T16:27:00+00:00"
+    },
+    {
+      "id": "LIMEN-011",
+      "title": "Fix YAML duplicate key issues in application-pipeline files",
+      "repo": "a-organvm/organvm-corpvs-testamentvm",
+      "type": "code",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "urls": [
+        "https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/290"
+      ],
+      "context": "21 duplicate key errors across ~10 pipeline files. Clone repo, find all .yaml/.yml files under applications/ directory. For each: run yamllint -d \"{extends: default, rules: {key-duplicates: {level: error}}}\" . Fix every duplicate key found. Then add a pre-commit hook or CI step that runs yamllint with strict key-duplicates. Session 12257481645995032829 awaiting human review of its patch.",
+      "labels": [
+        "bug",
+        "irf",
+        "P1-SOON"
+      ],
+      "created": "2026-05-31",
+      "updated": "2026-05-31T16:35:00+00:00",
+      "dispatch_log": [
+        {
+          "timestamp": "2026-05-31T15:33:44.878442+00:00",
+          "agent": "jules",
+          "session_id": "12257481645995032829",
+          "status": "dispatched",
+          "output": "Awaiting human review of patch \u2014 re-dispatched 2026-05-31T16:35"
+        }
+      ]
+    },
+    {
+      "id": "LIMEN-012",
+      "title": "Fix integrity score ceiling \u2014 proportional fraud penalties at high scores",
+      "repo": "a-organvm/peer-audited--behavioral-blockchain",
+      "type": "code",
+      "target_agent": "claude",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "done",
+      "urls": [
+        "https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/162"
+      ],
+      "context": "Implemented Option A: percentage-based compression at ceiling (500). Scores \u2264500 linear, scores >500 compressed at 50% rate. PR #639 created (fix/integrity-ceiling-162). Jules session 15931042222679633953 completed (patch not available locally \u2014 reimplemented).",
+      "labels": [
+        "bug",
+        "api"
+      ],
+      "created": "2026-05-31",
+      "updated": "2026-05-31T16:27:00+00:00",
+      "dispatch_log": [
+        {
+          "timestamp": "2026-05-31T15:33:44.878442+00:00",
+          "agent": "jules",
+          "session_id": "15931042222679633953",
+          "status": "completed",
+          "output": "Implemented percentage-based penalty at high tiers"
+        },
+        {
+          "timestamp": "2026-05-31T16:27:00+00:00",
+          "agent": "claude",
+          "session_id": "current",
+          "status": "done",
+          "output": "PR #639: fix/integrity-ceiling-162"
+        }
+      ],
+      "closed": "2026-05-31T16:27:00+00:00"
+    },
+    {
+      "id": "LIMEN-013",
+      "title": "Fix ask-styx rate limiter \u2014 replace in-memory Map with Cloudflare KV",
+      "repo": "a-organvm/peer-audited--behavioral-blockchain",
+      "type": "code",
+      "target_agent": "claude",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "done",
+      "urls": [
+        "https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/159"
+      ],
+      "context": "Replaced in-memory Map with Cloudflare KV namespace. Added kv_namespaces binding to wrangler.toml, made isRateLimited async. PR #640 created (fix/rate-limiter-kv-159). Note: KV namespace ID is placeholder \u2014 needs npx wrangler kv:namespace create before deploy. Jules session 11877776654060003425 completed (patch not available locally \u2014 reimplemented).",
+      "labels": [
+        "bug",
+        "security"
+      ],
+      "created": "2026-05-31",
+      "updated": "2026-05-31T16:27:00+00:00",
+      "dispatch_log": [
+        {
+          "timestamp": "2026-05-31T15:33:44.878442+00:00",
+          "agent": "jules",
+          "session_id": "11877776654060003425",
+          "status": "completed",
+          "output": "Replaced in-memory Map with Cloudflare KV"
+        },
+        {
+          "timestamp": "2026-05-31T16:27:00+00:00",
+          "agent": "claude",
+          "session_id": "current",
+          "status": "done",
+          "output": "PR #640: fix/rate-limiter-kv-159 (placeholder KV ID \u2014 create before deploy)"
+        }
+      ],
+      "closed": "2026-05-31T16:27:00+00:00"
+    },
+    {
+      "id": "LIMEN-014",
+      "title": "Add codex_to_bundle.py converter (sibling to chatgpt_exporter)",
+      "repo": "organvm-i-theoria/conversation-corpus-engine",
+      "type": "code",
+      "target_agent": "claude",
+      "priority": "medium",
+      "budget_cost": 2,
+      "status": "done",
+      "urls": [
+        "https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/28"
+      ],
+      "context": "Created scripts/codex_to_bundle.py. Input: rollout-*.jsonl (Codex CLI). Output: standard ChatGPT-export bundle. PR #29 created (feat/codex-to-bundle-28). Jules session 17495639879445057605 completed (patch not available locally \u2014 reimplemented).",
+      "labels": [
+        "feature",
+        "irf"
+      ],
+      "created": "2026-05-31",
+      "updated": "2026-05-31T16:27:00+00:00",
+      "dispatch_log": [
+        {
+          "timestamp": "2026-05-31T15:33:44.878442+00:00",
+          "agent": "jules",
+          "session_id": "17495639879445057605",
+          "status": "completed",
+          "output": "Created codex_to_bundle.py converter"
+        },
+        {
+          "timestamp": "2026-05-31T16:27:00+00:00",
+          "agent": "claude",
+          "session_id": "current",
+          "status": "done",
+          "output": "PR #29: feat/codex-to-bundle-28"
+        }
+      ],
+      "closed": "2026-05-31T16:27:00+00:00"
+    }
+  ]
+}
