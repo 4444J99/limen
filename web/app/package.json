@@ -4,8 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/fetch-pr-status.mjs",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "fetch-prs": "node scripts/fetch-pr-status.mjs"
   },
   "dependencies": {
     "next": "^15.0",
