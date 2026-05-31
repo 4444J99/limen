@@ -10,31 +10,49 @@ portal:
       gemini: 10
     track:
       date: '2026-05-31'
-      spent: 15
+      spent: 18
       per_agent:
         jules: 15
         gemini: 0
+        claude: 3
 tasks:
 - id: LIMEN-001
-  title: 'Resolve issue #236: reduce ~357 frontend TypeScript errors in public-record-data-scrapper'
+  title: 'Resolve issue #236: ~358 frontend TypeScript errors in public-record-data-scrapper'
   repo: a-organvm/public-record-data-scrapper
   type: code
   target_agent: jules
   priority: high
-  budget_cost: 2
-  status: in_progress
+  budget_cost: 3
+  status: dispatched
   labels:
   - bug
   - typescript
   - frontend
   urls:
   - https://github.com/a-organvm/public-record-data-scrapper/issues/236
-  context: 'Jules session 17354747813764803879 failed. Older sessions: 2847308303220998737
-    had no diff on remote (superseded by newer session); 6780648903142505137 added
-    type interfaces + renamed createQueries→createQueryBuilder + added recharts deps
-    (needs human review to teleport & apply or re-dispatch).'
+  context: '358 TS errors across ~65 files in apps/web/. Root cause: types in packages/core/src/types.ts
+    (camelCase, @public-records/core) and apps/web/src/lib/api/*.ts (snake_case) were
+    updated/extended but test mocks were not. 11 fix categories:
+
+    1. HealthScore objects missing avgSentiment (+1) and lastUpdated (+2). Add: avgSentiment:
+    0.5, lastUpdated: new Date().toISOString(). 2. GrowthSignal objects missing score
+    (+3). Add: score: 75. 3. Prospect objects missing defaultDate, timeSinceDefault,
+    healthScore, narrative (+4). Add: defaultDate: "2024-01-15", timeSinceDefault:
+    120, healthScore: { grade: "B", score: 65, ... }, narrative: "Sample narrative".
+    4. User objects missing emailVerified (+1). Add: emailVerified: true. 5. ImprovementSuggestion
+    missing id (+1). Add: id: "sug-1". 6. ImprovementResult missing changes and metrics
+    (+2). Add: changes: {}, metrics: {}. 7. MLScoring.factors empty objects: replace
+    {} with { healthTrend: 0.5, signalQuality: 0.7, industryRisk: 0.3, timeToRecovery:
+    0.6, financialStability: 0.8 }. 8. UseAgenticEngineResult mock uses rejectImprovement
+    which doesnt exist on type. 9. CompetitorChart uses string[] for industries instead
+    of IndustryType[]. 10. useDealActions test uses camelCase (orgId, dealId, stageId,
+    amountRequested) but @/lib/api/deals types are snake_case (org_id, deal_id, stage_id,
+    amount_requested). 11. Source files (AgenticDashboard.tsx, AnalyticsDashboard.tsx,
+    use-enrichment.ts etc.) have real type errors too. Reference the types file at
+    packages/core/src/types.ts for the correct shape. Fix all test mocks + source type
+    errors.'
   created: '2026-05-31'
-  updated: '2026-05-31T16:27:00+00:00'
+  updated: '2026-05-31T16:35:00+00:00'
   dispatch_log:
   - timestamp: '2026-05-31T15:12:30.182131Z'
     agent: jules
@@ -44,13 +62,13 @@ tasks:
   - timestamp: '2026-05-31T15:33:08.589461+00:00'
     agent: jules
     session_id: '6780648903142505137'
-    status: awaiting_feedback
-    output: Added type interfaces, renamed createQueries→createQueryBuilder, recharts deps
+    status: superseded
+    output: 'PR #241 merged — reduced 628→357 errors, added type interfaces, recharts deps'
   - timestamp: '2026-05-31T15:33:08.589461+00:00'
     agent: jules
     session_id: '17354747813764803879'
     status: failed
-    output: tsc still failing after patch
+    output: tsc still failing after patch — 358 remaining (categories detailed above)
 - id: LIMEN-002
   title: Fix stale Dependabot grouping in the-actual-news (IRF-SYS-007)
   repo: a-organvm/the-actual-news
@@ -134,33 +152,34 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 2
-  status: in_progress
+  status: done
   labels:
   - ci
   - testing
   urls:
   - https://github.com/a-organvm/organvm-engine/issues/59
-  context: 'Jules sessions awaiting user feedback: 12969220929106740896, 16036269367358331275.
-    Session 7819655186891960864 awaiting human review — added 4 git submodules (collective-persona-operations,
-    metasystem-master, orchestration-start-here, peer-audited--behavioral-blockchain)
-    instead of CI config. Accept submodules approach or reject and re-dispatch with
-    clearer instructions.'
+  context: 'Issue #59 already CLOSED — CI testing steps completed via organvm ci
+    audit. Jules sessions: 7819655186891960864 (added submodules, misguided), 12969220929106740896,
+    16036269367358331275. Marking done.'
   created: '2026-05-31'
-  updated: '2026-05-31T15:33:08.589461+00:00'
+  updated: '2026-05-31T16:27:00+00:00'
   dispatch_log:
   - timestamp: '2026-05-31T15:18:46.957485Z'
     agent: jules
     session_id: '7819655186891960864'
-    status: awaiting_feedback
-    output: Added 4 git submodules instead of CI config — needs human review
+    status: superseded
+    output: Added 4 git submodules instead of CI config — issue already resolved
   - timestamp: '2026-05-31T15:33:08.589461+00:00'
     agent: jules
     session_id: '12969220929106740896'
-    status: awaiting_feedback
+    status: superseded
+    output: Issue already closed
   - timestamp: '2026-05-31T15:33:08.589461+00:00'
     agent: jules
     session_id: '16036269367358331275'
-    status: awaiting_feedback
+    status: superseded
+    output: Issue already closed
+  closed: '2026-05-31T16:27:00+00:00'
 - id: LIMEN-006
   title: Scaffold limen CLI — init/dispatch/harvest/status subcommands
   repo: ''
@@ -218,12 +237,12 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: done
   urls:
   - https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/603
-  context: ERESOLVE peer dependency conflict between @nestjs/cli, expo, turbo + 42
-    vulns (4L, 24M, 13H, 1C). Run npm audit fix --force, verify lockfile. Session
-    36549371605837195 awaiting user feedback.
+  context: 'Already resolved via PR #619 (merged: drop root expo/next) and PR #604
+    (open: comprehensive override fix, reduces 42→5 remaining vulns). Jules session
+    36549371605837195 superseded. Covering with existing PRs — no new dispatch needed.'
   labels:
   - bug
   - dependencies
@@ -234,7 +253,9 @@ tasks:
   - timestamp: '2026-05-31T15:33:44.878442+00:00'
     agent: jules
     session_id: '36549371605837195'
-    status: awaiting_feedback
+    status: superseded
+    output: Already covered by PR #604
+  closed: '2026-05-31T16:27:00+00:00'
 - id: LIMEN-010
   title: Fix TypeScript build errors in test files (30+ errors)
   repo: a-organvm/my-knowledge-base
@@ -242,12 +263,12 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: done
   urls:
   - https://github.com/a-organvm/my-knowledge-base/issues/46
-  context: tsc fails with 30+ TS errors in test files. Missing ttl, vitest API changed,
-    wrong arg counts, redeclared vars. Fix type annotations. Session 2721304265616159805
-    failed — needs re-dispatch with more specific instructions.
+  context: 'Already resolved via PR #47 (open: fix/typescript-build-errors branch).
+    Jules session 2721304265616159805 failed but human PR #47 covers the fix. No
+    re-dispatch needed.'
   labels:
   - bug
   - typescript
@@ -257,7 +278,9 @@ tasks:
   - timestamp: '2026-05-31T15:33:44.878442+00:00'
     agent: jules
     session_id: '2721304265616159805'
-    status: failed
+    status: superseded
+    output: Already covered by human PR #47
+  closed: '2026-05-31T16:27:00+00:00'
 - id: LIMEN-011
   title: Fix YAML duplicate key issues in application-pipeline files
   repo: a-organvm/organvm-corpvs-testamentvm
@@ -268,33 +291,36 @@ tasks:
   status: dispatched
   urls:
   - https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/290
-  context: 21 duplicate key errors across 10 pipeline files. Replace current validator
-    with strict YAML parser, fix duplicate keys in source files. Session 12257481645995032829
-    awaiting user feedback.
+  context: '21 duplicate key errors across ~10 pipeline files. Clone repo, find all
+    .yaml/.yml files under applications/ directory. For each: run yamllint -d "{extends:
+    default, rules: {key-duplicates: {level: error}}}" . Fix every duplicate key found.
+    Then add a pre-commit hook or CI step that runs yamllint with strict key-duplicates.
+    Session 12257481645995032829 awaiting human review of its patch.'
   labels:
   - bug
   - irf
   - P1-SOON
   created: '2026-05-31'
-  updated: '2026-05-31T16:27:00+00:00'
+  updated: '2026-05-31T16:35:00+00:00'
   dispatch_log:
   - timestamp: '2026-05-31T15:33:44.878442+00:00'
     agent: jules
     session_id: '12257481645995032829'
-    status: awaiting_feedback
+    status: dispatched
+    output: Awaiting human review of patch — re-dispatched 2026-05-31T16:35
 - id: LIMEN-012
   title: Fix integrity score ceiling — proportional fraud penalties at high scores
   repo: a-organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: jules
+  target_agent: claude
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   urls:
   - https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/162
-  context: 'calculateIntegrity() has no ceiling; score can reach 5050. Penalties become
-    meaningless. Implement Option A: percentage-based penalty at high tiers (>=500).
-    Session 15931042222679633953 completed — review patch and close.'
+  context: 'Implemented Option A: percentage-based compression at ceiling (500).
+    Scores ≤500 linear, scores >500 compressed at 50% rate. PR #639 created (fix/integrity-ceiling-162).
+    Jules session 15931042222679633953 completed (patch not available locally — reimplemented).'
   labels:
   - bug
   - api
@@ -306,19 +332,27 @@ tasks:
     session_id: '15931042222679633953'
     status: completed
     output: Implemented percentage-based penalty at high tiers
+  - timestamp: '2026-05-31T16:27:00+00:00'
+    agent: claude
+    session_id: current
+    status: done
+    output: 'PR #639: fix/integrity-ceiling-162'
+  closed: '2026-05-31T16:27:00+00:00'
 - id: LIMEN-013
   title: Fix ask-styx rate limiter — replace in-memory Map with Cloudflare KV
   repo: a-organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: jules
+  target_agent: claude
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   urls:
   - https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/159
-  context: Rate limiting uses in-memory Map in Cloudflare Worker — ineffective across
-    distributed isolates. Replace with Cloudflare KV for global consistency. Session
-    11877776654060003425 completed — review patch and close.
+  context: 'Replaced in-memory Map with Cloudflare KV namespace. Added kv_namespaces
+    binding to wrangler.toml, made isRateLimited async. PR #640 created (fix/rate-limiter-kv-159).
+    Note: KV namespace ID is placeholder — needs npx wrangler kv:namespace create
+    before deploy. Jules session 11877776654060003425 completed (patch not available
+    locally — reimplemented).'
   labels:
   - bug
   - security
@@ -330,19 +364,27 @@ tasks:
     session_id: '11877776654060003425'
     status: completed
     output: Replaced in-memory Map with Cloudflare KV
+  - timestamp: '2026-05-31T16:27:00+00:00'
+    agent: claude
+    session_id: current
+    status: done
+    output: 'PR #640: fix/rate-limiter-kv-159 (placeholder KV ID — create before
+      deploy)'
+  closed: '2026-05-31T16:27:00+00:00'
 - id: LIMEN-014
   title: Add codex_to_bundle.py converter (sibling to chatgpt_exporter)
   repo: organvm-i-theoria/conversation-corpus-engine
   type: code
-  target_agent: jules
+  target_agent: claude
   priority: medium
   budget_cost: 2
-  status: dispatched
+  status: done
   urls:
   - https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/28
-  context: 'Mirror scripts/chatgpt_exporter_to_bundle.py pattern. Input: Codex rollout-*.jsonl
-    files. Output: synthetic ChatGPT-export-shaped bundle. Filter response_item, role=user|assistant.
-    Session 17495639879445057605 completed — review patch and close.'
+  context: 'Created scripts/codex_to_bundle.py. Input: rollout-*.jsonl (Codex CLI).
+    Output: standard ChatGPT-export bundle. PR #29 created (feat/codex-to-bundle-28).
+    Jules session 17495639879445057605 completed (patch not available locally —
+    reimplemented).'
   labels:
   - feature
   - irf
@@ -354,3 +396,9 @@ tasks:
     session_id: '17495639879445057605'
     status: completed
     output: Created codex_to_bundle.py converter
+  - timestamp: '2026-05-31T16:27:00+00:00'
+    agent: claude
+    session_id: current
+    status: done
+    output: 'PR #29: feat/codex-to-bundle-28'
+  closed: '2026-05-31T16:27:00+00:00'
