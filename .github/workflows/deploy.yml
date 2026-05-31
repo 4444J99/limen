@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "web/app/**"
+      - "tasks.yaml"
       - "firebase.json"
   workflow_dispatch:
 
@@ -13,13 +14,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Generate tasks.json from tasks.yaml
+        run: |
+          python3 -c "
+import json, yaml
+with open('tasks.yaml') as f:
+    data = yaml.safe_load(f)
+with open('web/app/public/tasks.json', 'w') as f:
+    json.dump(data, f, indent=2)
+print(f'Generated tasks.json with {len(data.get(\"tasks\",[]))} tasks')
+"
+
       - uses: actions/setup-node@v6
         with:
           node-version: "22"
+
       - run: npm ci
         working-directory: web/app
+
       - run: npm run build
         working-directory: web/app
+
       - uses: w9jds/firebase-action@v13
         with:
           args: deploy --only hosting --project device-streaming-067d747a
