@@ -26,9 +26,28 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/status")
-      .then((r) => r.json())
-      .then(setData)
+    fetch("/tasks.json")
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((raw) => {
+        const tasks = (raw.tasks || []).map((t: any) => ({
+          ...t,
+          target_agent: t.target_agent || "any",
+        }));
+        const by_status: Record<string, number> = {};
+        const by_agent: Record<string, number> = {};
+        for (const t of tasks) {
+          by_status[t.status] = (by_status[t.status] || 0) + 1;
+          by_agent[t.target_agent] = (by_agent[t.target_agent] || 0) + 1;
+        }
+        setData({
+          portal: raw.portal || { name: "limen" },
+          tasks,
+          summary: { total: tasks.length, by_status, by_agent },
+        });
+      })
       .catch((e) => setError(String(e)));
   }, []);
 
