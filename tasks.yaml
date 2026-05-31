@@ -1,0 +1,123 @@
+version: "1.0"
+portal:
+  name: "Universal Task Intake"
+  description: "One file to aim every agent you have — cross-repo, cross-agent, budget-capped"
+  budget:
+    daily: 100
+    unit: "runs"
+    per_agent:
+      jules: 100
+      gemini: 10
+    track:
+      date: "2026-05-31"
+      spent: 0
+      per_agent:
+        jules: 0
+        gemini: 0
+
+tasks:
+  - id: "LIMEN-001"
+    title: "Resolve issue #236: reduce ~357 frontend TypeScript errors in public-record-data-scrapper"
+    repo: "a-organvm/public-record-data-scrapper"
+    type: code
+    target_agent: jules
+    priority: high
+    budget_cost: 2
+    status: open
+    urls:
+      - "https://github.com/a-organvm/public-record-data-scrapper/issues/236"
+    context: "Fix missing deps + recharts/resizable version drift. Well-scoped code fix, no human judgment required."
+    labels: ["bug", "typescript", "frontend"]
+    created: "2026-05-31"
+
+  - id: "LIMEN-002"
+    title: "Fix stale Dependabot grouping in the-actual-news (IRF-SYS-007)"
+    repo: "a-organvm/the-actual-news"
+    type: code
+    target_agent: jules
+    priority: high
+    budget_cost: 1
+    status: open
+    urls:
+      - "https://github.com/a-organvm/the-actual-news/issues/28"
+    context: "Grouping was deployed then removed — restore or replace it. Config-only change in dependabot.yml."
+    labels: ["chore", "dependabot", "IRF-SYS-007"]
+    created: "2026-05-31"
+
+  - id: "LIMEN-003"
+    title: "Document Dependabot removal decision and dependency-management posture"
+    repo: "a-organvm/the-actual-news"
+    type: docs
+    target_agent: gemini
+    priority: medium
+    budget_cost: 1
+    status: open
+    urls:
+      - "https://github.com/a-organvm/the-actual-news/issues/29"
+    context: "Write a brief ADR or decision doc explaining why Dependabot grouping was removed and what the new dependency-management approach is."
+    labels: ["docs", "decision-record"]
+    created: "2026-05-31"
+
+  - id: "LIMEN-004"
+    title: "Add table of contents and back-to-top navigation to governance docs"
+    repo: "a-organvm/petasum-super-petasum"
+    type: docs
+    target_agent: jules
+    priority: medium
+    budget_cost: 1
+    status: open
+    urls:
+      - "https://github.com/a-organvm/petasum-super-petasum/issues/140"
+    context: "Governance docs need a ToC and back-to-top links for easier navigation. Markdown-only change."
+    labels: ["docs", "governance"]
+    created: "2026-05-31"
+
+  - id: "LIMEN-005"
+    title: "Add testing steps to CI for 4 repos named in issue #59"
+    repo: "a-organvm/organvm-engine"
+    type: code
+    target_agent: jules
+    priority: medium
+    budget_cost: 2
+    status: open
+    urls:
+      - "https://github.com/a-organvm/organvm-engine/issues/59"
+    context: "Add CI testing steps to the 4 repos identified in the issue. CI config changes only."
+    labels: ["ci", "testing"]
+    created: "2026-05-31"
+
+  - id: "LIMEN-006"
+    title: "Scaffold limen CLI — init/dispatch/harvest/status subcommands"
+    repo: ""
+    type: code
+    target_agent: claude
+    priority: high
+    budget_cost: 1
+    status: open
+    context: "Build the CLI tool that reads tasks.yaml and implements the dispatch lifecycle. Python with click/typer. See SCHEMA.md for full spec."
+    labels: ["limen", "cli", "core"]
+    created: "2026-05-31"
+
+  - id: "LIMEN-007"
+    title: "Audit all GitHub orgs for open issues suitable for Jules dispatch"
+    repo: ""
+    type: audit
+    target_agent: gemini
+    priority: medium
+    budget_cost: 2
+    status: open
+    context: "Scan all 255 repos across the 6 connected orgs. Find open issues that are well-scoped, code-only, no human judgment needed. Return a prioritized list that feeds into tasks.yaml."
+    labels: ["audit", "discovery"]
+    created: "2026-05-31"
+
+  - id: "LIMEN-008"
+    title: "Write the limen install.sh one-liner"
+    repo: ""
+    type: code
+    target_agent: claude
+    priority: medium
+    budget_cost: 1
+    status: open
+    context: "Create a curl|sh installer that clones the limen repo and sets up the env vars. Must be idempotent."
+    labels: ["limen", "distribution"]
+    created: "2026-05-31"
