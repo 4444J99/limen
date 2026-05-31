@@ -1,0 +1,24 @@
+services:
+  api:
+    build:
+      context: ./web/api
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./tasks.yaml:/limen/tasks.yaml:ro
+    restart: unless-stopped
+
+  app:
+    build:
+      context: ./web/app
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - api
+    restart: unless-stopped
