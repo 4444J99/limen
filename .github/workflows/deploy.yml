@@ -7,6 +7,8 @@ on:
       - "web/app/**"
       - "tasks.yaml"
       - "firebase.json"
+  schedule:
+    - cron: "0 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -39,6 +41,8 @@ print(f'Generated tasks.json with {len(data.get(\"tasks\",[]))} tasks')
 
       - run: npm run build
         working-directory: web/app
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: w9jds/firebase-action@v13
         with:
