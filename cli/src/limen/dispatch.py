@@ -19,20 +19,29 @@ def session_id() -> str:
 
 
 def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool:
+    if agent == "jules":
+        return _call_jules(task, dry_run)
     dispatch_cmd = os.environ.get("LIMEN_DISPATCH_CMD", "agent-dispatch")
-    prompt = f"Complete task {task.id}: {task.title}"
-    if task.repo:
-        prompt += f" in repository {task.repo}"
-    if task.context:
-        prompt += f"\nContext: {task.context}"
-    if task.urls:
-        prompt += f"\nReferences: {', '.join(task.urls)}"
-
+    prompt = _build_prompt(task)
     cmd = [dispatch_cmd, agent, prompt]
+    return _run_cmd(cmd, task, dry_run)
+
+
+def _build_prompt(task: Task) -> str:
+    parts = [f"Complete task {task.id}: {task.title}"]
+    if task.repo:
+        parts.append(f" in repository {task.repo}")
+    if task.context:
+        parts.append(f"\nContext: {task.context}")
+    if task.urls:
+        parts.append(f"\nReferences: {', '.join(task.urls)}")
+    return "".join(parts)
+
+
+def _run_cmd(cmd: list[str], task: Task, dry_run: bool) -> bool:
     if dry_run:
         print(f"  would: {' '.join(cmd)}")
         return True
-
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
         if result.returncode == 0:
@@ -43,11 +52,18 @@ def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool:
             print(f"    stderr: {result.stderr[:500]}")
         return False
     except FileNotFoundError:
-        print(f"  dispatch command not found: {dispatch_cmd}")
+        print(f"  dispatch command not found: {cmd[0]}")
         return False
     except subprocess.TimeoutExpired:
         print(f"  timed out: {task.id}")
         return False
+
+
+def _call_jules(task: Task, dry_run: bool) -> bool:
+    repo = task.repo or os.environ.get("LIMEN_ROOT", ".")
+    prompt = _build_prompt(task)
+    cmd = ["jules", "new", "--repo", repo, prompt]
+    return _run_cmd(cmd, task, dry_run)
 
 
 def dispatch_tasks(
