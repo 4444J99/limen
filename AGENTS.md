@@ -138,6 +138,33 @@ git -C "$LIMEN_ROOT" commit -m "limen: update task states"
 git -C "$LIMEN_ROOT" push
 ```
 
+## SaaS Deployment (Production)
+
+When deploying the SaaS stack, set these env vars on the web API:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `LIMEN_API_TOKEN` | Yes | Bearer token for API auth |
+| `LIMEN_ROOT` | Yes | Path to limen root on disk |
+| `LIMEN_TASKS` | No | Alternative path to tasks.yaml |
+
+For the Next.js dashboard, set `NEXT_PUBLIC_API_URL` to the API endpoint (defaults to `http://localhost:8000`).
+
+### Railway (API)
+
+```bash
+railway login
+railway init
+railway up
+```
+
+### Vercel (Dashboard)
+
+```bash
+vercel login
+vercel --prod
+```
+
 ---
 
 ## Agent-Specific Notes

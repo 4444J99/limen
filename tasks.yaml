@@ -10,9 +10,9 @@ portal:
       gemini: 10
     track:
       date: '2026-05-31'
-      spent: 6
+      spent: 15
       per_agent:
-        jules: 6
+        jules: 15
         gemini: 0
 tasks:
 - id: LIMEN-001
@@ -22,22 +22,27 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: in_progress
   labels:
   - bug
   - typescript
   - frontend
   urls:
   - https://github.com/a-organvm/public-record-data-scrapper/issues/236
-  context: Fix missing deps + recharts/resizable version drift. Well-scoped code fix,
-    no human judgment required.
+  context: 'Jules session 17354747813764803879 in progress. 2 older sessions await
+    feedback (IDs: 2847308303220998737, 6780648903142505137) — partial type fixes
+    added to queries.ts'
   created: '2026-05-31'
-  updated: '2026-05-31T15:12:30.182131Z'
+  updated: '2026-05-31T15:33:08.589461+00:00'
   dispatch_log:
   - timestamp: '2026-05-31T15:12:30.182131Z'
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-05-31T15:33:08.589461+00:00'
+    agent: jules
+    session_id: '17354747813764803879'
+    status: in_progress
 - id: LIMEN-002
   title: Fix stale Dependabot grouping in the-actual-news (IRF-SYS-007)
   repo: a-organvm/the-actual-news
@@ -45,22 +50,28 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - chore
   - dependabot
   - IRF-SYS-007
   urls:
   - https://github.com/a-organvm/the-actual-news/issues/28
-  context: Grouping was deployed then removed — restore or replace it. Config-only
-    change in dependabot.yml.
+  context: 'Jules session 1157943350871849976 completed — created dependabot.yml.
+    Issue #28 already resolved by human PR #33. Patch saved.'
   created: '2026-05-31'
-  updated: '2026-05-31T15:12:47.350018Z'
+  updated: '2026-05-31T15:33:08.589461+00:00'
   dispatch_log:
   - timestamp: '2026-05-31T15:12:47.350018Z'
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-05-31T15:33:08.589461+00:00'
+    agent: jules
+    session_id: '1157943350871849976'
+    status: done
+    output: Created dependabot.yml with npm+github-actions grouping
+  closed: '2026-05-31T15:33:08.589461+00:00'
 - id: LIMEN-003
   title: Document Dependabot removal decision and dependency-management posture
   repo: a-organvm/the-actual-news
@@ -85,21 +96,27 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - docs
   - governance
   urls:
   - https://github.com/a-organvm/petasum-super-petasum/issues/140
-  context: Governance docs need a ToC and back-to-top links for easier navigation.
-    Markdown-only change.
+  context: 'Jules session 6764601667214665372 completed — no diff (issue #140 already
+    resolved by human PR #143). Marking done.'
   created: '2026-05-31'
-  updated: '2026-05-31T15:18:36.643894Z'
+  updated: '2026-05-31T15:33:08.589461+00:00'
   dispatch_log:
   - timestamp: '2026-05-31T15:18:36.643894Z'
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-05-31T15:33:08.589461+00:00'
+    agent: jules
+    session_id: '6764601667214665372'
+    status: done
+    output: No changes needed — already resolved
+  closed: '2026-05-31T15:33:08.589461+00:00'
 - id: LIMEN-005
   title: 'Add testing steps to CI for 4 repos named in issue #59'
   repo: a-organvm/organvm-engine
@@ -107,21 +124,26 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 2
-  status: dispatched
+  status: in_progress
   labels:
   - ci
   - testing
   urls:
   - https://github.com/a-organvm/organvm-engine/issues/59
-  context: Add CI testing steps to the 4 repos identified in the issue. CI config
-    changes only.
+  context: 'Jules sessions in progress (IDs: 12969220929106740896, 16036269367358331275).
+    Session 7819655186891960864 awaiting feedback — added submodules instead of CI
+    config (needs human review).'
   created: '2026-05-31'
-  updated: '2026-05-31T15:18:46.957485Z'
+  updated: '2026-05-31T15:33:08.589461+00:00'
   dispatch_log:
   - timestamp: '2026-05-31T15:18:46.957485Z'
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-05-31T15:33:08.589461+00:00'
+    agent: jules
+    session_id: '12969220929106740896'
+    status: in_progress
 - id: LIMEN-006
   title: Scaffold limen CLI — init/dispatch/harvest/status subcommands
   repo: ''
@@ -179,7 +201,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   urls:
   - https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/603
   context: ERESOLVE peer dependency conflict between @nestjs/cli, expo, turbo + 42
@@ -189,6 +211,12 @@ tasks:
   - dependencies
   - security
   created: '2026-05-31'
+  updated: '2026-05-31T15:33:44.878442+00:00'
+  dispatch_log:
+  - timestamp: '2026-05-31T15:33:44.878442+00:00'
+    agent: jules
+    session_id: '36549371605837195'
+    status: dispatched
 - id: LIMEN-010
   title: Fix TypeScript build errors in test files (30+ errors)
   repo: a-organvm/my-knowledge-base
@@ -196,7 +224,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   urls:
   - https://github.com/a-organvm/my-knowledge-base/issues/46
   context: tsc fails with 30+ TS errors in test files. Missing ttl, vitest API changed,
@@ -205,6 +233,12 @@ tasks:
   - bug
   - typescript
   created: '2026-05-31'
+  updated: '2026-05-31T15:33:44.878442+00:00'
+  dispatch_log:
+  - timestamp: '2026-05-31T15:33:44.878442+00:00'
+    agent: jules
+    session_id: '2721304265616159805'
+    status: dispatched
 - id: LIMEN-011
   title: Fix YAML duplicate key issues in application-pipeline files
   repo: a-organvm/organvm-corpvs-testamentvm
@@ -212,7 +246,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   urls:
   - https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/290
   context: 21 duplicate key errors across 10 pipeline files. Replace current validator
@@ -222,6 +256,12 @@ tasks:
   - irf
   - P1-SOON
   created: '2026-05-31'
+  updated: '2026-05-31T15:33:44.878442+00:00'
+  dispatch_log:
+  - timestamp: '2026-05-31T15:33:44.878442+00:00'
+    agent: jules
+    session_id: '12257481645995032829'
+    status: dispatched
 - id: LIMEN-012
   title: Fix integrity score ceiling — proportional fraud penalties at high scores
   repo: a-organvm/peer-audited--behavioral-blockchain
@@ -229,7 +269,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   urls:
   - https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/162
   context: 'calculateIntegrity() has no ceiling; score can reach 5050. Penalties become
@@ -238,6 +278,12 @@ tasks:
   - bug
   - api
   created: '2026-05-31'
+  updated: '2026-05-31T15:33:44.878442+00:00'
+  dispatch_log:
+  - timestamp: '2026-05-31T15:33:44.878442+00:00'
+    agent: jules
+    session_id: '15931042222679633953'
+    status: dispatched
 - id: LIMEN-013
   title: Fix ask-styx rate limiter — replace in-memory Map with Cloudflare KV
   repo: a-organvm/peer-audited--behavioral-blockchain
@@ -245,7 +291,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   urls:
   - https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/159
   context: Rate limiting uses in-memory Map in Cloudflare Worker — ineffective across
@@ -254,6 +300,12 @@ tasks:
   - bug
   - security
   created: '2026-05-31'
+  updated: '2026-05-31T15:33:44.878442+00:00'
+  dispatch_log:
+  - timestamp: '2026-05-31T15:33:44.878442+00:00'
+    agent: jules
+    session_id: '11877776654060003425'
+    status: dispatched
 - id: LIMEN-014
   title: Add codex_to_bundle.py converter (sibling to chatgpt_exporter)
   repo: organvm-i-theoria/conversation-corpus-engine
@@ -261,7 +313,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 2
-  status: open
+  status: dispatched
   urls:
   - https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/28
   context: 'Mirror scripts/chatgpt_exporter_to_bundle.py pattern. Input: Codex rollout-*.jsonl
@@ -270,3 +322,9 @@ tasks:
   - feature
   - irf
   created: '2026-05-31'
+  updated: '2026-05-31T15:33:44.878442+00:00'
+  dispatch_log:
+  - timestamp: '2026-05-31T15:33:44.878442+00:00'
+    agent: jules
+    session_id: '17495639879445057605'
+    status: dispatched
