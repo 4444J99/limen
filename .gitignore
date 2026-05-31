@@ -8,3 +8,4 @@ build/
 
 # Firebase deployment cache
 .firebase/
+pr-status.json
