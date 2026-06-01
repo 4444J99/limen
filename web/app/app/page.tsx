@@ -321,7 +321,7 @@ export default function Home() {
                                       <a href={p.html_url} target="_blank" rel="noopener" style={{ color: "#2563eb", textDecoration: "none", fontWeight: 600 }}>#{p.number}</a>
                                       <span>{p.title}</span>
                                       {p.checks ? (
-                                        <a href={`https://github.com/${p.repo}/pull/${p.number}/checks`} target="_blank" rel="noopener" style={{ color: p.checks.failed > 0 ? "#ef4444" : "#22c55e", textDecoration: "none", fontWeight: 600 }}>
+                                        <a href={`https://github.com/${t.repo}/pull/${p.number}/checks`} target="_blank" rel="noopener" style={{ color: p.checks.failed > 0 ? "#ef4444" : "#22c55e", textDecoration: "none", fontWeight: 600 }}>
                                           {p.checks.failed > 0 ? `${p.checks.failed} failed CI` : `${p.checks.passed} passed CI`}
                                         </a>
                                       ) : <span style={{ color: "#999" }}>no checks</span>}
