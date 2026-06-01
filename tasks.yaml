@@ -401,7 +401,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 2
-  status: dispatched
+  status: in_progress
   urls:
   - https://github.com/a-organvm/public-record-data-scrapper/issues/238
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #238 in a-organvm/public-record-data-scrapper.'
