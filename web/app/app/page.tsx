@@ -84,7 +84,6 @@ function shortRepo(repo: string) {
   return repo.split("/").pop() || repo;
 }
 
-// Map task status and PR state to Lifecycle Phase
 function getPhase(task: Task, prs: PR[]): LifecyclePhase {
   const hasOpenPR = prs.length > 0;
   if (["failed", "superseded", "failed_blocked"].includes(task.status)) return "REPEAT";
@@ -92,7 +91,7 @@ function getPhase(task: Task, prs: PR[]): LifecyclePhase {
   if (hasOpenPR && task.status === "in_progress") return "VERIFY";
   if (task.status === "in_progress") return "BUILD";
   if (task.status === "dispatched") return "PLAN";
-  return "EXPLORE"; // open or needs_human
+  return "EXPLORE";
 }
 
 function getProgress(phase: LifecyclePhase): number {
@@ -159,7 +158,7 @@ export default function Home() {
     const repoPRs = prsByRepo[task.repo] || [];
     const prUrls = task.urls?.filter(u => u.includes("/pull/")) || [];
     if (prUrls.length > 0) {
-      return repoPRs.filter(pr => prUrls.includes(pr.html_url));
+      return repoPRs.filter(pr => prUrls.some(url => url.endsWith("/pull/" + pr.number) || url.includes("/pull/" + pr.number + "/")));
     }
     return repoPRs.filter(pr => pr.author === "4444J99");
   };
@@ -182,8 +181,9 @@ export default function Home() {
           <a href="/" style={{ color: "inherit", textDecoration: "none" }}>{data.portal.name || "limen"}</a>
         </h1>
         <p style={{ color: "#666", margin: "0.25rem 0 0", fontSize: "0.875rem" }}>
-          {data.summary.total} tasks &middot;{" "}
-          <span style={{ color: "inherit" }}>{spent}/{budget.daily} budget</span>
+          <button onClick={() => setTab("EXPLORE")} style={{ background: "none", border: "none", padding: 0, color: "inherit", cursor: "pointer", fontSize: "inherit", textDecoration: "underline" }}>{data.summary.total} tasks</button> &middot;{" "}
+          <span style={{ color: "inherit" }}>{spent}/{budget.daily} budget</span> &middot;{" "}
+          <button onClick={() => setTab("VERIFY")} style={{ background: "none", border: "none", padding: 0, color: "inherit", cursor: "pointer", fontSize: "inherit", textDecoration: "underline" }}>{prData?.summary.total_open_prs || 0} open PRs</button>
         </p>
       </header>
 
@@ -192,10 +192,10 @@ export default function Home() {
           <div style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "#666", fontWeight: 600 }}>Budget</div>
           <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>{pct}%</div>
           <div style={{ height: 4, background: "#e5e7eb", borderRadius: 2, marginTop: 4 }}>
-            <div style={{ width: \`\${pct}%\`, height: "100%", background: pct > 80 ? "#ef4444" : "#22c55e", borderRadius: 2 }} />
+            <div style={{ width: `${pct}%`, height: "100%", background: pct > 80 ? "#ef4444" : "#22c55e", borderRadius: 2 }} />
           </div>
           <div style={{ fontSize: "0.75rem", color: "#999", marginTop: 4 }}>
-            {Object.entries(perAgent).map(([a, c]) => \`\${a}: \${c}\`).join(" | ")}
+            {Object.entries(perAgent).map(([a, c]) => `${a}: ${c}`).join(" | ")}
           </div>
         </div>
 
@@ -274,11 +274,11 @@ export default function Home() {
                           {t.title}
                         </div>
                         <div style={{ height: 4, background: "#e5e7eb", borderRadius: 2 }}>
-                          <div style={{ width: \`\${prog}%\`, height: "100%", background: "#3b82f6", borderRadius: 2 }} />
+                          <div style={{ width: `${prog}%`, height: "100%", background: "#3b82f6", borderRadius: 2 }} />
                         </div>
                       </td>
                       <td style={{ ...tdStyle, fontSize: "0.75rem", color: "#666" }}>
-                        <a href={\`https://github.com/\${t.repo}\`} target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()} style={{ color: "inherit", textDecoration: "none" }}>{shortRepo(t.repo)}</a>
+                        <a href={`https://github.com/${t.repo}`} target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()} style={{ color: "inherit", textDecoration: "none" }}>{shortRepo(t.repo)}</a>
                       </td>
                       <td style={tdStyle}>
                         <span style={{ background: agentColors[t.target_agent] || "#e5e7eb", color: "#fff", padding: "0.125rem 0.5rem", borderRadius: 4, fontSize: "0.75rem" }}>
@@ -294,8 +294,6 @@ export default function Home() {
                       <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e5e7eb" }}>
                         <td colSpan={5} style={{ padding: "1rem" }}>
                           <div style={{ display: "flex", flexDirection: "column", gap: "1rem", fontSize: "0.875rem" }}>
-                            
-                            {/* Context & Labels */}
                             <div>
                               <strong>Context:</strong> {t.context || "No context provided."}
                               <div style={{ marginTop: 8, display: "flex", gap: 4 }}>
@@ -304,8 +302,6 @@ export default function Home() {
                                 ))}
                               </div>
                             </div>
-                            
-                            {/* Links */}
                             {t.urls && t.urls.length > 0 && (
                               <div>
                                 <strong>Links:</strong>
@@ -316,8 +312,6 @@ export default function Home() {
                                 </ul>
                               </div>
                             )}
-
-                            {/* Related PRs */}
                             {t.relatedPRs.length > 0 && (
                               <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6, padding: "0.75rem" }}>
                                 <strong>Related Pull Requests:</strong>
@@ -327,8 +321,8 @@ export default function Home() {
                                       <a href={p.html_url} target="_blank" rel="noopener" style={{ color: "#2563eb", textDecoration: "none", fontWeight: 600 }}>#{p.number}</a>
                                       <span>{p.title}</span>
                                       {p.checks ? (
-                                        <a href={\`https://github.com/\${p.repo}/pull/\${p.number}/checks\`} target="_blank" rel="noopener" style={{ color: p.checks.failed > 0 ? "#ef4444" : "#22c55e", textDecoration: "none", fontWeight: 600 }}>
-                                          {p.checks.failed > 0 ? \`\${p.checks.failed} failed CI\` : \`\${p.checks.passed} passed CI\`}
+                                        <a href={`https://github.com/${p.repo}/pull/${p.number}/checks`} target="_blank" rel="noopener" style={{ color: p.checks.failed > 0 ? "#ef4444" : "#22c55e", textDecoration: "none", fontWeight: 600 }}>
+                                          {p.checks.failed > 0 ? `${p.checks.failed} failed CI` : `${p.checks.passed} passed CI`}
                                         </a>
                                       ) : <span style={{ color: "#999" }}>no checks</span>}
                                     </div>
@@ -336,8 +330,6 @@ export default function Home() {
                                 </div>
                               </div>
                             )}
-
-                            {/* Dispatch Log */}
                             {t.dispatch_log && t.dispatch_log.length > 0 && (
                               <div style={{ background: "#1e293b", color: "#f8fafc", padding: "1rem", borderRadius: 6, fontFamily: "monospace", fontSize: "0.75rem", maxHeight: 200, overflowY: "auto" }}>
                                 {t.dispatch_log.map((log, i) => (
@@ -350,7 +342,6 @@ export default function Home() {
                                 ))}
                               </div>
                             )}
-                            
                           </div>
                         </td>
                       </tr>
