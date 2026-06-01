@@ -318,14 +318,15 @@ tasks:
   status: done
   urls:
   - https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/162
-  context: 'Implemented Option A: percentage-based compression at ceiling (500).
-    Scores ≤500 linear, scores >500 compressed at 50% rate. PR #639 created (fix/integrity-ceiling-162).
-    Jules session 15931042222679633953 completed (patch not available locally — reimplemented).'
+  context: 'PR #639 all green, review threads resolved. Merge blocked by branch protection:
+    e2e check renamed to e2e (firefox)/e2e (chromium) — needs repo admin to update
+    required status checks at /settings/branches. Follow-up issue #642 filed for contracts.service.ts
+    delta path.'
   labels:
   - bug
   - api
   created: '2026-05-31'
-  updated: '2026-05-31T16:27:00+00:00'
+  updated: '2026-06-01T10:10:00+00:00'
   dispatch_log:
   - timestamp: '2026-05-31T15:33:44.878442+00:00'
     agent: jules
@@ -337,7 +338,7 @@ tasks:
     session_id: current
     status: done
     output: 'PR #639: fix/integrity-ceiling-162'
-  closed: '2026-05-31T16:27:00+00:00'
+  closed: '2026-06-01T10:10:00+00:00'
 - id: LIMEN-013
   title: Fix ask-styx rate limiter — replace in-memory Map with Cloudflare KV
   repo: a-organvm/peer-audited--behavioral-blockchain
@@ -348,16 +349,14 @@ tasks:
   status: done
   urls:
   - https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/159
-  context: 'Replaced in-memory Map with Cloudflare KV namespace. Added kv_namespaces
-    binding to wrangler.toml, made isRateLimited async. PR #640 created (fix/rate-limiter-kv-159).
-    Note: KV namespace ID is placeholder — needs npx wrangler kv:namespace create
-    before deploy. Jules session 11877776654060003425 completed (patch not available
-    locally — reimplemented).'
+  context: 'PR #640 all green, review threads resolved. Merge blocked by branch protection
+    (same e2e name mismatch as #639). KV namespace ID is placeholder — human must run
+    npx wrangler kv:namespace create rate-limit-kv before deploy.'
   labels:
   - bug
   - security
   created: '2026-05-31'
-  updated: '2026-05-31T16:27:00+00:00'
+  updated: '2026-06-01T10:10:00+00:00'
   dispatch_log:
   - timestamp: '2026-05-31T15:33:44.878442+00:00'
     agent: jules
@@ -368,9 +367,8 @@ tasks:
     agent: claude
     session_id: current
     status: done
-    output: 'PR #640: fix/rate-limiter-kv-159 (placeholder KV ID — create before
-      deploy)'
-  closed: '2026-05-31T16:27:00+00:00'
+    output: 'PR #640: fix/rate-limiter-kv-159 (blocked on branch protection)'
+  closed: '2026-06-01T10:10:00+00:00'
 - id: LIMEN-014
   title: Add codex_to_bundle.py converter (sibling to chatgpt_exporter)
   repo: organvm-i-theoria/conversation-corpus-engine
@@ -381,15 +379,14 @@ tasks:
   status: done
   urls:
   - https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/28
-  context: 'Created scripts/codex_to_bundle.py. Input: rollout-*.jsonl (Codex CLI).
-    Output: standard ChatGPT-export bundle. PR #29 created (feat/codex-to-bundle-28).
-    Jules session 17495639879445057605 completed (patch not available locally —
-    reimplemented).'
+  context: 'PR #29 MERGED. Converter reads rollout-*.jsonl, filters response_item
+    user/assistant, groups by session UUID, writes ChatGPT-export bundle. CI fixes:
+    pinned actions to commit SHAs, fixed 15 ruff lint + 15 format errors.'
   labels:
   - feature
   - irf
   created: '2026-05-31'
-  updated: '2026-05-31T16:27:00+00:00'
+  updated: '2026-06-01T10:10:00+00:00'
   dispatch_log:
   - timestamp: '2026-05-31T15:33:44.878442+00:00'
     agent: jules
@@ -400,5 +397,5 @@ tasks:
     agent: claude
     session_id: current
     status: done
-    output: 'PR #29: feat/codex-to-bundle-28'
-  closed: '2026-05-31T16:27:00+00:00'
+    output: 'PR #29: feat/codex-to-bundle-28 (merged 2026-06-01)'
+  closed: '2026-06-01T10:10:00+00:00'
