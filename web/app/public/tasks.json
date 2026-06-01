@@ -1333,6 +1333,783 @@
       ],
       "created": "2026-06-01",
       "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-060",
+      "title": "feat: implement MCP tool wrappers for all 5 organvm CLIs",
+      "repo": "a-organvm/organvm-engine",
+      "type": "code",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 2,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-engine/issues/89"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. feat: implement MCP tool wrappers for all 5 organvm CLIs",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-061",
+      "title": "Add seed.yaml validation for missing produces/consumes edges",
+      "repo": "a-organvm/organvm-engine",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-engine/issues/84"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. Add seed.yaml validation for missing produces/consumes edges",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-062",
+      "title": "Add --format json flag to organvm registry list command",
+      "repo": "a-organvm/organvm-engine",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-engine/issues/83"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. Add --format json flag to organvm registry list command",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-063",
+      "title": "feat: corpus knowledge graph module (organvm corpus)",
+      "repo": "a-organvm/organvm-engine",
+      "type": "code",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 2,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-engine/issues/81"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. feat: corpus knowledge graph module (organvm corpus)",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-064",
+      "title": "feat: SOP staleness detection \u2014 cross-reference SOPs against governed code",
+      "repo": "a-organvm/organvm-engine",
+      "type": "code",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 2,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-engine/issues/76"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. feat: SOP staleness detection \u2014 cross-reference SOPs against governed code",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-065",
+      "title": "feat: exit interview testimony for documentation-only repos",
+      "repo": "a-organvm/organvm-engine",
+      "type": "code",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 2,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-engine/issues/75"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. feat: exit interview testimony for documentation-only repos",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-066",
+      "title": "feat: handoff staleness detection and workspace-wide handoff listing",
+      "repo": "a-organvm/organvm-engine",
+      "type": "code",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 2,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-engine/issues/74"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. feat: handoff staleness detection and workspace-wide handoff listing",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-067",
+      "title": "feat: context sync diff/changelog between runs",
+      "repo": "a-organvm/organvm-engine",
+      "type": "code",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 2,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-engine/issues/73"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. feat: context sync diff/changelog between runs",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-068",
+      "title": "fix(irf): stats command undercounts newly added tail items",
+      "repo": "a-organvm/organvm-engine",
+      "type": "code",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-engine/issues/71"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. fix(irf): stats command undercounts newly added tail items",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-069",
+      "title": "fix(session): investigate hanging review and plans commands in large repos",
+      "repo": "a-organvm/organvm-engine",
+      "type": "code",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-engine/issues/70"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. fix(session): investigate hanging review and plans commands in large repos",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-070",
+      "title": "network: R3 kinship mirror research \u2014 community identification",
+      "repo": "a-organvm/organvm-engine",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-engine/issues/66"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. network: R3 kinship mirror research \u2014 community identification",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-071",
+      "title": "descent: content-based detection for CodeQL and release automation",
+      "repo": "a-organvm/organvm-engine",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-engine/issues/64"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. descent: content-based detection for CodeQL and release automation",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-072",
+      "title": "descent: expand branch protection to all organs",
+      "repo": "a-organvm/organvm-engine",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-engine/issues/61"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. descent: expand branch protection to all organs",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-073",
+      "title": "descent: add type-checking to 6 remaining repos",
+      "repo": "a-organvm/organvm-engine",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-engine/issues/60"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. descent: add type-checking to 6 remaining repos",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-074",
+      "title": "feat: Ring 4 \u2014 external chain anchoring (Base L2 / Celestia)",
+      "repo": "a-organvm/organvm-engine",
+      "type": "code",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 2,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-engine/issues/55"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. feat: Ring 4 \u2014 external chain anchoring (Base L2 / Celestia)",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-075",
+      "title": "feat: Stakeholder Portal /testament/ route",
+      "repo": "a-organvm/organvm-engine",
+      "type": "code",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 2,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-engine/issues/54"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. feat: Stakeholder Portal /testament/ route",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-076",
+      "title": "feat: testament sonic bridge \u2014 OSC to alchemical-synthesizer",
+      "repo": "a-organvm/organvm-engine",
+      "type": "code",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 2,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-engine/issues/49"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. feat: testament sonic bridge \u2014 OSC to alchemical-synthesizer",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-077",
+      "title": "Fix soak-test LaunchAgent \u2014 gh CLI auth fails under launchd",
+      "repo": "a-organvm/organvm-engine",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-engine/issues/41"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. Fix soak-test LaunchAgent \u2014 gh CLI auth fails under launchd",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-078",
+      "title": "feat: formalize Score\u2192Rehearse\u2192Perform ritual in Conductor lifecycle",
+      "repo": "a-organvm/organvm-engine",
+      "type": "code",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 2,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-engine/issues/10"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. feat: formalize Score\u2192Rehearse\u2192Perform ritual in Conductor lifecycle",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-079",
+      "title": "Fix npm audit vulnerabilities (drizzle-orm, next) in stakeholder-portal",
+      "repo": "a-organvm/stakeholder-portal",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/stakeholder-portal/issues/49"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. Fix npm audit vulnerabilities (drizzle-orm, next) in stakeholder-portal",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-080",
+      "title": "Refresh stale CLAUDE.md autogen tail (2026-03-08)",
+      "repo": "a-organvm/universal-mail--automation",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/universal-mail--automation/issues/3"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. Refresh stale CLAUDE.md autogen tail (2026-03-08)",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-081",
+      "title": "[IRF-RES-003] Define 'readiness' construct independently of operationalization",
+      "repo": "a-organvm/organvm-corpvs-testamentvm",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/343"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. [IRF-RES-003] Define 'readiness' construct independently of operationalization",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-082",
+      "title": "[IRF-RES-013] Temporal staging refactor (validate previous-with-current)",
+      "repo": "a-organvm/organvm-corpvs-testamentvm",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/342"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. [IRF-RES-013] Temporal staging refactor (validate previous-with-current)",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-083",
+      "title": "[IRF-RES-011] Hybrid topology law codification (effective vs nominal coupling)",
+      "repo": "a-organvm/organvm-corpvs-testamentvm",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/341"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. [IRF-RES-011] Hybrid topology law codification (effective vs nominal coupling)",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-084",
+      "title": "[IRF-RES-004] Bayesian factor analysis on omega scorecard",
+      "repo": "a-organvm/organvm-corpvs-testamentvm",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/340"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. [IRF-RES-004] Bayesian factor analysis on omega scorecard",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-085",
+      "title": "[IRF-RES-006] Controlled vocabulary registry (retroactive reconciliation)",
+      "repo": "a-organvm/organvm-corpvs-testamentvm",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/339"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. [IRF-RES-006] Controlled vocabulary registry (retroactive reconciliation)",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-086",
+      "title": "Secret Scanning Alert triage: 6862 potential leaks",
+      "repo": "organvm-i-theoria/.github",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/organvm-i-theoria/.github/issues/441"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. Secret Scanning Alert triage: 6862 potential leaks",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-087",
+      "title": "IRF-CCE-027: Post Office discover uses wrong API (gizmos != Projects)",
+      "repo": "organvm-i-theoria/conversation-corpus-engine",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/16"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. IRF-CCE-027: Post Office discover uses wrong API (gizmos != Projects)",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-088",
+      "title": "Monthly Organ Audit \u2014 2026-06-01 manual triage",
+      "repo": "a-organvm/orchestration-start-here",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/orchestration-start-here/issues/165"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. Monthly Organ Audit \u2014 2026-06-01 manual triage",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-089",
+      "title": "Fix a-i--skills validate job red on main \u2014 3 skills invalid frontmatter",
+      "repo": "a-organvm/organvm-corpvs-testamentvm",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/375"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. Fix a-i--skills validate job red on main \u2014 3 skills invalid frontmatter",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-090",
+      "title": "Fix prompts distill input file missing: clipboard-prompts.json",
+      "repo": "a-organvm/organvm-corpvs-testamentvm",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/352"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. Fix prompts distill input file missing: clipboard-prompts.json",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-091",
+      "title": "PR #234 security gate prerequisites (JWT_SECRET, org_id)",
+      "repo": "a-organvm/public-record-data-scrapper",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/public-record-data-scrapper/issues/235"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. PR #234 security gate prerequisites (JWT_SECRET, org_id)",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-092",
+      "title": "Dedup triplicate research docs in docs/architecture/",
+      "repo": "a-organvm/peer-audited--behavioral-blockchain",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/591"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. Dedup triplicate research docs in docs/architecture/",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-093",
+      "title": "Restore missing INST-INDEX-RERUM-FACIENDARUM.md",
+      "repo": "a-organvm/organvm-corpvs-testamentvm",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/355"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. Restore missing INST-INDEX-RERUM-FACIENDARUM.md",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-094",
+      "title": "Audit 26 missing READMEs across 148 repos",
+      "repo": "a-organvm/organvm-corpvs-testamentvm",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/387"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. Audit 26 missing READMEs across 148 repos",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-095",
+      "title": "Session receipt 2026-05-30 \u2014 post-restart hanging-task drain",
+      "repo": "a-organvm/organvm-corpvs-testamentvm",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/376"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. Session receipt 2026-05-30 \u2014 post-restart hanging-task drain",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-096",
+      "title": "Submit conference talk proposals \u2014 AI-Conductor path",
+      "repo": "a-organvm/organvm-engine",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/organvm-engine/issues/42"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. Submit conference talk proposals \u2014 AI-Conductor path",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-097",
+      "title": "Promotion Recommendations \u2014 June 2026 triage",
+      "repo": "a-organvm/orchestration-start-here",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/a-organvm/orchestration-start-here/issues/166"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. Promotion Recommendations \u2014 June 2026 triage",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-098",
+      "title": "Staggered Walkthrough Schedule triage",
+      "repo": "organvm-i-theoria/.github",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/organvm-i-theoria/.github/issues/442"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. Staggered Walkthrough Schedule triage",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-099",
+      "title": "IRF-CCE-033: Execute CCE commercial architecture \u2014 H1 actions",
+      "repo": "organvm-i-theoria/conversation-corpus-engine",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [
+        "https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/20"
+      ],
+      "context": "Audited 2026-06-01 from Jules-ready batch. IRF-CCE-033: Execute CCE commercial architecture \u2014 H1 actions",
+      "created": "2026-06-01",
+      "dispatch_log": []
+    },
+    {
+      "id": "LIMEN-100",
+      "title": "Audit all GitHub orgs for open issues suitable for Jules dispatch (Batch 3)",
+      "repo": "a-organvm/orchestration-start-here",
+      "type": "docs",
+      "target_agent": "jules",
+      "priority": "medium",
+      "budget_cost": 1,
+      "status": "dispatched",
+      "labels": [
+        "batch-2026-06-01"
+      ],
+      "urls": [],
+      "context": "Audited 2026-06-01 from Jules-ready batch. Audit all GitHub orgs for open issues suitable for Jules dispatch (Batch 3)",
+      "created": "2026-06-01",
+      "dispatch_log": []
     }
   ]
 }
