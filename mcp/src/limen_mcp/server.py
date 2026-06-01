@@ -3,6 +3,7 @@ import subprocess
 from datetime import date, datetime
 from pathlib import Path
 from typing import Optional, List, Dict
+import json
 
 import yaml
 from mcp.server.fastmcp import FastMCP
@@ -60,7 +61,28 @@ class LimenFile(BaseModel):
 mcp = FastMCP("Limen")
 
 CIRCUIT_BREAKER_TRIPPED = False
-TASK_LOOP_TRACKER: Dict[str, int] = {}  # Tracks gets/updates per task today
+TASK_LOOP_TRACKER: Dict[str, int] = {}
+STATE_FILE = Path.home() / "Workspace" / "limen" / ".mcp_state.json"
+
+def _load_state():
+    global CIRCUIT_BREAKER_TRIPPED, TASK_LOOP_TRACKER
+    if STATE_FILE.exists():
+        try:
+            with open(STATE_FILE, "r") as f:
+                state = json.load(f)
+                CIRCUIT_BREAKER_TRIPPED = state.get("circuit_breaker", False)
+                TASK_LOOP_TRACKER = state.get("task_loops", {})
+        except Exception:
+            pass
+
+def _save_state():
+    try:
+        with open(STATE_FILE, "w") as f:
+            json.dump({"circuit_breaker": CIRCUIT_BREAKER_TRIPPED, "task_loops": TASK_LOOP_TRACKER}, f)
+    except Exception:
+        pass
+
+_load_state()
 
 def _check_circuit_breaker():
     if CIRCUIT_BREAKER_TRIPPED:
@@ -87,21 +109,19 @@ def _save_data(data: LimenFile, commit_msg: str = "chore: mcp task update"):
     path = _get_tasks_path()
     repo_dir = path.parent
     
-    # Write file
+    # Write file locally first
     with open(path, "w") as f:
         yaml.dump(data.model_dump(mode="json"), f, default_flow_style=False, sort_keys=False)
         
     # Layer 1: Concurrency Sync (Git Pull --Rebase wrapper)
     if (repo_dir / ".git").exists():
         try:
-            # 1. Stash any uncommitted changes just in case
+            # 1. Stash any uncommitted changes
             subprocess.run(["git", "stash"], cwd=repo_dir, capture_output=True)
             # 2. Pull rebase to resolve remote conflicts
             subprocess.run(["git", "pull", "--rebase"], cwd=repo_dir, capture_output=True)
-            # 3. Pop stash if it existed (simplistic, could cause conflicts if manual edits happened)
-            subprocess.run(["git", "stash", "pop"], cwd=repo_dir, capture_output=True)
             
-            # Re-write the file to ensure our state is the absolute latest after rebase
+            # 3. RE-WRITE the file from memory to resolve any conflicts in tasks.yaml automatically
             with open(path, "w") as f:
                 yaml.dump(data.model_dump(mode="json"), f, default_flow_style=False, sort_keys=False)
                 
@@ -117,6 +137,7 @@ def trip_circuit_breaker() -> str:
     """Manually trip the circuit breaker to offline the swarm and protect from API bans."""
     global CIRCUIT_BREAKER_TRIPPED
     CIRCUIT_BREAKER_TRIPPED = True
+    _save_state()
     return "Circuit breaker TRIPPED. System offline."
 
 @mcp.tool()
@@ -124,6 +145,7 @@ def reset_circuit_breaker() -> str:
     """Reset the circuit breaker to bring the swarm back online."""
     global CIRCUIT_BREAKER_TRIPPED
     CIRCUIT_BREAKER_TRIPPED = False
+    _save_state()
     return "Circuit breaker RESET. System online."
 
 @mcp.tool()
@@ -145,6 +167,7 @@ def get_task(task_id: str) -> dict:
     
     # Layer 3: Hard Loop Limits
     TASK_LOOP_TRACKER[task_id] = TASK_LOOP_TRACKER.get(task_id, 0) + 1
+    _save_state()
     if TASK_LOOP_TRACKER[task_id] > 3:
         raise ValueError(f"HARD LOOP LIMIT REACHED: Task {task_id} requested >3 times today. Moving to 'needs_human'. Abandon task immediately.")
         
@@ -195,7 +218,7 @@ def update_task_status(task_id: str, status: str, context: Optional[str] = None)
         if t.id == task_id:
             # Layer 1: Dynamic Costing - Double budget cost on failure
             if status in ["failed", "failed_blocked", "needs_human"] and t.status == "in_progress":
-                t.budget_cost *= 2
+                t.budget_cost = min(t.budget_cost * 2, 8)
                 
             t.status = status
             if context:
