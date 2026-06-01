@@ -23,29 +23,16 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 3
-  status: dispatched
+  status: done
   labels:
   - bug
   - typescript
   - frontend
   urls:
   - https://github.com/a-organvm/public-record-data-scrapper/issues/236
-  context: '358 TS errors across ~65 files in apps/web/. Root cause: types in packages/core/src/types.ts (camelCase, @public-records/core)
-    and apps/web/src/lib/api/*.ts (snake_case) were updated/extended but test mocks were not. 11 fix categories:
-
-    1. HealthScore objects missing avgSentiment (+1) and lastUpdated (+2). Add: avgSentiment: 0.5, lastUpdated: new Date().toISOString().
-    2. GrowthSignal objects missing score (+3). Add: score: 75. 3. Prospect objects missing defaultDate, timeSinceDefault,
-    healthScore, narrative (+4). Add: defaultDate: "2024-01-15", timeSinceDefault: 120, healthScore: { grade: "B", score:
-    65, ... }, narrative: "Sample narrative". 4. User objects missing emailVerified (+1). Add: emailVerified: true. 5. ImprovementSuggestion
-    missing id (+1). Add: id: "sug-1". 6. ImprovementResult missing changes and metrics (+2). Add: changes: {}, metrics: {}.
-    7. MLScoring.factors empty objects: replace {} with { healthTrend: 0.5, signalQuality: 0.7, industryRisk: 0.3, timeToRecovery:
-    0.6, financialStability: 0.8 }. 8. UseAgenticEngineResult mock uses rejectImprovement which doesnt exist on type. 9. CompetitorChart
-    uses string[] for industries instead of IndustryType[]. 10. useDealActions test uses camelCase (orgId, dealId, stageId,
-    amountRequested) but @/lib/api/deals types are snake_case (org_id, deal_id, stage_id, amount_requested). 11. Source files
-    (AgenticDashboard.tsx, AnalyticsDashboard.tsx, use-enrichment.ts etc.) have real type errors too. Reference the types
-    file at packages/core/src/types.ts for the correct shape. Fix all test mocks + source type errors.'
+  context: 'PR created: fix/ts-errors-236. 358→0 errors. 69 files fixed. Test mocks now match types.'
   created: '2026-05-31'
-  updated: '2026-05-31T16:35:00+00:00'
+  updated: '2026-06-01T10:30:00+00:00'
   dispatch_log:
   - timestamp: '2026-05-31T15:12:30.182131Z'
     agent: jules
@@ -62,6 +49,12 @@ tasks:
     session_id: '17354747813764803879'
     status: failed
     output: tsc still failing after patch — 358 remaining (categories detailed above)
+  - timestamp: '2026-06-01T10:30:00+00:00'
+    agent: claude
+    session_id: claude-fix
+    status: done
+    output: Fixed all 358 TS errors. 0 remaining.
+  closed: '2026-06-01T10:30:00+00:00'
 - id: LIMEN-002
   title: Fix stale Dependabot grouping in the-actual-news (IRF-SYS-007)
   repo: a-organvm/the-actual-news
