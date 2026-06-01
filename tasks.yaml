@@ -9,12 +9,12 @@ portal:
       jules: 100
       gemini: 10
     track:
-      date: '2026-05-31'
-      spent: 18
+      date: '2026-06-01'
+      spent: 0
       per_agent:
-        jules: 15
+        jules: 0
         gemini: 0
-        claude: 3
+        claude: 0
 tasks:
 - id: LIMEN-001
   title: 'Resolve issue #236: ~358 frontend TypeScript errors in public-record-data-scrapper'
@@ -30,27 +30,20 @@ tasks:
   - frontend
   urls:
   - https://github.com/a-organvm/public-record-data-scrapper/issues/236
-  context: '358 TS errors across ~65 files in apps/web/. Root cause: types in packages/core/src/types.ts
-    (camelCase, @public-records/core) and apps/web/src/lib/api/*.ts (snake_case) were
-    updated/extended but test mocks were not. 11 fix categories:
+  context: '358 TS errors across ~65 files in apps/web/. Root cause: types in packages/core/src/types.ts (camelCase, @public-records/core)
+    and apps/web/src/lib/api/*.ts (snake_case) were updated/extended but test mocks were not. 11 fix categories:
 
-    1. HealthScore objects missing avgSentiment (+1) and lastUpdated (+2). Add: avgSentiment:
-    0.5, lastUpdated: new Date().toISOString(). 2. GrowthSignal objects missing score
-    (+3). Add: score: 75. 3. Prospect objects missing defaultDate, timeSinceDefault,
-    healthScore, narrative (+4). Add: defaultDate: "2024-01-15", timeSinceDefault:
-    120, healthScore: { grade: "B", score: 65, ... }, narrative: "Sample narrative".
-    4. User objects missing emailVerified (+1). Add: emailVerified: true. 5. ImprovementSuggestion
-    missing id (+1). Add: id: "sug-1". 6. ImprovementResult missing changes and metrics
-    (+2). Add: changes: {}, metrics: {}. 7. MLScoring.factors empty objects: replace
-    {} with { healthTrend: 0.5, signalQuality: 0.7, industryRisk: 0.3, timeToRecovery:
-    0.6, financialStability: 0.8 }. 8. UseAgenticEngineResult mock uses rejectImprovement
-    which doesnt exist on type. 9. CompetitorChart uses string[] for industries instead
-    of IndustryType[]. 10. useDealActions test uses camelCase (orgId, dealId, stageId,
-    amountRequested) but @/lib/api/deals types are snake_case (org_id, deal_id, stage_id,
-    amount_requested). 11. Source files (AgenticDashboard.tsx, AnalyticsDashboard.tsx,
-    use-enrichment.ts etc.) have real type errors too. Reference the types file at
-    packages/core/src/types.ts for the correct shape. Fix all test mocks + source type
-    errors.'
+    1. HealthScore objects missing avgSentiment (+1) and lastUpdated (+2). Add: avgSentiment: 0.5, lastUpdated: new Date().toISOString().
+    2. GrowthSignal objects missing score (+3). Add: score: 75. 3. Prospect objects missing defaultDate, timeSinceDefault,
+    healthScore, narrative (+4). Add: defaultDate: "2024-01-15", timeSinceDefault: 120, healthScore: { grade: "B", score:
+    65, ... }, narrative: "Sample narrative". 4. User objects missing emailVerified (+1). Add: emailVerified: true. 5. ImprovementSuggestion
+    missing id (+1). Add: id: "sug-1". 6. ImprovementResult missing changes and metrics (+2). Add: changes: {}, metrics: {}.
+    7. MLScoring.factors empty objects: replace {} with { healthTrend: 0.5, signalQuality: 0.7, industryRisk: 0.3, timeToRecovery:
+    0.6, financialStability: 0.8 }. 8. UseAgenticEngineResult mock uses rejectImprovement which doesnt exist on type. 9. CompetitorChart
+    uses string[] for industries instead of IndustryType[]. 10. useDealActions test uses camelCase (orgId, dealId, stageId,
+    amountRequested) but @/lib/api/deals types are snake_case (org_id, deal_id, stage_id, amount_requested). 11. Source files
+    (AgenticDashboard.tsx, AnalyticsDashboard.tsx, use-enrichment.ts etc.) have real type errors too. Reference the types
+    file at packages/core/src/types.ts for the correct shape. Fix all test mocks + source type errors.'
   created: '2026-05-31'
   updated: '2026-05-31T16:35:00+00:00'
   dispatch_log:
@@ -83,9 +76,8 @@ tasks:
   - IRF-SYS-007
   urls:
   - https://github.com/a-organvm/the-actual-news/issues/28
-  context: 'Jules session 1157943350871849976 completed — created dependabot.yml.
-    Issue #28 already resolved by human PR #33. Patch saved. Older session 14372742151319923315
-    had no diff on remote (same resolution).'
+  context: 'Jules session 1157943350871849976 completed — created dependabot.yml. Issue #28 already resolved by human PR #33.
+    Patch saved. Older session 14372742151319923315 had no diff on remote (same resolution).'
   created: '2026-05-31'
   updated: '2026-05-31T15:33:08.589461+00:00'
   dispatch_log:
@@ -93,7 +85,7 @@ tasks:
     agent: jules
     session_id: '14372742151319923315'
     status: superseded
-    output: No diff on remote (already resolved by human PR #33)
+    output: No diff on remote (already resolved by human PR
   - timestamp: '2026-05-31T15:33:08.589461+00:00'
     agent: jules
     session_id: '1157943350871849976'
@@ -130,8 +122,8 @@ tasks:
   - governance
   urls:
   - https://github.com/a-organvm/petasum-super-petasum/issues/140
-  context: 'Jules session 6764601667214665372 completed — no diff (issue #140 already
-    resolved by human PR #143). Marking done.'
+  context: 'Jules session 6764601667214665372 completed — no diff (issue #140 already resolved by human PR #143). Marking
+    done.'
   created: '2026-05-31'
   updated: '2026-05-31T15:33:08.589461+00:00'
   dispatch_log:
@@ -158,9 +150,8 @@ tasks:
   - testing
   urls:
   - https://github.com/a-organvm/organvm-engine/issues/59
-  context: 'Issue #59 already CLOSED — CI testing steps completed via organvm ci
-    audit. Jules sessions: 7819655186891960864 (added submodules, misguided), 12969220929106740896,
-    16036269367358331275. Marking done.'
+  context: 'Issue #59 already CLOSED — CI testing steps completed via organvm ci audit. Jules sessions: 7819655186891960864
+    (added submodules, misguided), 12969220929106740896, 16036269367358331275. Marking done.'
   created: '2026-05-31'
   updated: '2026-05-31T16:27:00+00:00'
   dispatch_log:
@@ -193,8 +184,7 @@ tasks:
   - cli
   - core
   urls: []
-  context: CLI built, installed, pushed to GitHub. Implemented with click + pydantic
-    models.
+  context: CLI built, installed, pushed to GitHub. Implemented with click + pydantic models.
   created: '2026-05-31'
   dispatch_log: []
 - id: LIMEN-007
@@ -209,8 +199,7 @@ tasks:
   - audit
   - discovery
   urls: []
-  context: Audit complete. Scanned 5 orgs. Found 10+ Jules-ready issues. Seeded LIMEN-009
-    through LIMEN-014.
+  context: Audit complete. Scanned 5 orgs. Found 10+ Jules-ready issues. Seeded LIMEN-009 through LIMEN-014.
   created: '2026-05-31'
   dispatch_log: []
   closed: '2026-05-31'
@@ -226,8 +215,7 @@ tasks:
   - limen
   - distribution
   urls: []
-  context: Create a curl|sh installer that clones the limen repo and sets up the env
-    vars. Must be idempotent.
+  context: Create a curl|sh installer that clones the limen repo and sets up the env vars. Must be idempotent.
   created: '2026-05-31'
   dispatch_log: []
 - id: LIMEN-009
@@ -240,9 +228,8 @@ tasks:
   status: done
   urls:
   - https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/603
-  context: 'Already resolved via PR #619 (merged: drop root expo/next) and PR #604
-    (open: comprehensive override fix, reduces 42→5 remaining vulns). Jules session
-    36549371605837195 superseded. Covering with existing PRs — no new dispatch needed.'
+  context: 'Already resolved via PR #619 (merged: drop root expo/next) and PR #604 (open: comprehensive override fix, reduces
+    42→5 remaining vulns). Jules session 36549371605837195 superseded. Covering with existing PRs — no new dispatch needed.'
   labels:
   - bug
   - dependencies
@@ -254,7 +241,7 @@ tasks:
     agent: jules
     session_id: '36549371605837195'
     status: superseded
-    output: Already covered by PR #604
+    output: Already covered by PR
   closed: '2026-05-31T16:27:00+00:00'
 - id: LIMEN-010
   title: Fix TypeScript build errors in test files (30+ errors)
@@ -266,9 +253,8 @@ tasks:
   status: done
   urls:
   - https://github.com/a-organvm/my-knowledge-base/issues/46
-  context: 'Already resolved via PR #47 (open: fix/typescript-build-errors branch).
-    Jules session 2721304265616159805 failed but human PR #47 covers the fix. No
-    re-dispatch needed.'
+  context: 'Already resolved via PR #47 (open: fix/typescript-build-errors branch). Jules session 2721304265616159805 failed
+    but human PR #47 covers the fix. No re-dispatch needed.'
   labels:
   - bug
   - typescript
@@ -279,7 +265,7 @@ tasks:
     agent: jules
     session_id: '2721304265616159805'
     status: superseded
-    output: Already covered by human PR #47
+    output: Already covered by human PR
   closed: '2026-05-31T16:27:00+00:00'
 - id: LIMEN-011
   title: Fix YAML duplicate key issues in application-pipeline files
@@ -291,11 +277,10 @@ tasks:
   status: dispatched
   urls:
   - https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/290
-  context: '21 duplicate key errors across ~10 pipeline files. Clone repo, find all
-    .yaml/.yml files under applications/ directory. For each: run yamllint -d "{extends:
-    default, rules: {key-duplicates: {level: error}}}" . Fix every duplicate key found.
-    Then add a pre-commit hook or CI step that runs yamllint with strict key-duplicates.
-    Session 12257481645995032829 awaiting human review of its patch.'
+  context: '21 duplicate key errors across ~10 pipeline files. Clone repo, find all .yaml/.yml files under applications/ directory.
+    For each: run yamllint -d "{extends: default, rules: {key-duplicates: {level: error}}}" . Fix every duplicate key found.
+    Then add a pre-commit hook or CI step that runs yamllint with strict key-duplicates. Session 12257481645995032829 awaiting
+    human review of its patch.'
   labels:
   - bug
   - irf
@@ -318,9 +303,8 @@ tasks:
   status: done
   urls:
   - https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/162
-  context: 'PR #639 all green, review threads resolved. Merge blocked by branch protection:
-    e2e check renamed to e2e (firefox)/e2e (chromium) — needs repo admin to update
-    required status checks at /settings/branches. Follow-up issue #642 filed for contracts.service.ts
+  context: 'PR #639 all green, review threads resolved. Merge blocked by branch protection: e2e check renamed to e2e (firefox)/e2e
+    (chromium) — needs repo admin to update required status checks at /settings/branches. Follow-up issue #642 filed for contracts.service.ts
     delta path.'
   labels:
   - bug
@@ -349,9 +333,8 @@ tasks:
   status: done
   urls:
   - https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/159
-  context: 'PR #640 all green, review threads resolved. Merge blocked by branch protection
-    (same e2e name mismatch as #639). KV namespace ID is placeholder — human must run
-    npx wrangler kv:namespace create rate-limit-kv before deploy.'
+  context: 'PR #640 all green, review threads resolved. Merge blocked by branch protection (same e2e name mismatch as #639).
+    KV namespace ID is placeholder — human must run npx wrangler kv:namespace create rate-limit-kv before deploy.'
   labels:
   - bug
   - security
@@ -379,9 +362,8 @@ tasks:
   status: done
   urls:
   - https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/28
-  context: 'PR #29 MERGED. Converter reads rollout-*.jsonl, filters response_item
-    user/assistant, groups by session UUID, writes ChatGPT-export bundle. CI fixes:
-    pinned actions to commit SHAs, fixed 15 ruff lint + 15 format errors.'
+  context: 'PR #29 MERGED. Converter reads rollout-*.jsonl, filters response_item user/assistant, groups by session UUID,
+    writes ChatGPT-export bundle. CI fixes: pinned actions to commit SHAs, fixed 15 ruff lint + 15 format errors.'
   labels:
   - feature
   - irf
@@ -399,3 +381,678 @@ tasks:
     status: done
     output: 'PR #29: feat/codex-to-bundle-28 (merged 2026-06-01)'
   closed: '2026-06-01T10:10:00+00:00'
+- id: LIMEN-015
+  title: 'Propagate PR #234 completions to meta-organvm indices'
+  repo: a-organvm/public-record-data-scrapper
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 2
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/public-record-data-scrapper/issues/238
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #238 in a-organvm/public-record-data-scrapper.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-016
+  title: 'Deploy prerequisites for PR #234 security hardening'
+  repo: a-organvm/public-record-data-scrapper
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 2
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/public-record-data-scrapper/issues/235
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #235 in a-organvm/public-record-data-scrapper.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-017
+  title: 'IRF-APP-003: Phase 1 reliability hardening for ucc-mca-api'
+  repo: a-organvm/public-record-data-scrapper
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 2
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/public-record-data-scrapper/issues/230
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #230 in a-organvm/public-record-data-scrapper.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-018
+  title: Apply integrity ceiling compression to persisted score delta path
+  repo: a-organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 2
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/642
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #642 in a-organvm/peer-audited--behavioral-blockchain.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-019
+  title: Fury consensus parameter contradicted three ways across corpus
+  repo: a-organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/592
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #592 in a-organvm/peer-audited--behavioral-blockchain.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-020
+  title: Triplicate research docs need dedup + provenance frontmatter
+  repo: a-organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/591
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #591 in a-organvm/peer-audited--behavioral-blockchain.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-021
+  title: Propagate brand identity from .env to platform-specific files
+  repo: a-organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/599
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #599 in a-organvm/peer-audited--behavioral-blockchain.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-022
+  title: Tests — billing flow + scope enforcement
+  repo: a-organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 2
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/554
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #554 in a-organvm/peer-audited--behavioral-blockchain.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-023
+  title: Tests — collision detection accuracy + performance
+  repo: a-organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 2
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/551
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #551 in a-organvm/peer-audited--behavioral-blockchain.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-024
+  title: Tests — access control + org isolation
+  repo: a-organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 2
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/548
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #548 in a-organvm/peer-audited--behavioral-blockchain.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-025
+  title: a-i--skills validate job red on main — 3 skills invalid frontmatter
+  repo: a-organvm/organvm-corpvs-testamentvm
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/375
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #375 in a-organvm/organvm-corpvs-testamentvm.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-026
+  title: 'IRF-SYS-185: VACUUM IRF missing from testamentvm'
+  repo: a-organvm/organvm-corpvs-testamentvm
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/355
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #355 in a-organvm/organvm-corpvs-testamentvm.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-027
+  title: prompts distill default closeout requires missing clipboard-prompts precondition
+  repo: a-organvm/organvm-corpvs-testamentvm
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/352
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #352 in a-organvm/organvm-corpvs-testamentvm.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-028
+  title: 'IRF-SYS-110: governance doc structural error'
+  repo: a-organvm/organvm-corpvs-testamentvm
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/321
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #321 in a-organvm/organvm-corpvs-testamentvm.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-029
+  title: 'IRF-SYS-109: Omega evidence map — zettelkasten #6 and #13'
+  repo: a-organvm/organvm-corpvs-testamentvm
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/320
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #320 in a-organvm/organvm-corpvs-testamentvm.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-030
+  title: Backfill prompt index for 16 pre-existing session archives
+  repo: a-organvm/organvm-corpvs-testamentvm
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 2
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/350
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #350 in a-organvm/organvm-corpvs-testamentvm.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-031
+  title: Session receipt 2026-05-30 — post-restart hanging-task drain (DONE-569)
+  repo: a-organvm/organvm-corpvs-testamentvm
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/376
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #376 in a-organvm/organvm-corpvs-testamentvm.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-032
+  title: Clean up ~100 stale bot branches (jules, sentinel, bolt, palette, copilot)
+  repo: a-organvm/petasum-super-petasum
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/petasum-super-petasum/issues/139
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #139 in a-organvm/petasum-super-petasum.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-033
+  title: Create prompt anti-pattern catalog (10+ anti-patterns)
+  repo: a-organvm/petasum-super-petasum
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/petasum-super-petasum/issues/133
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #133 in a-organvm/petasum-super-petasum.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-034
+  title: Create AI interaction manifest template
+  repo: a-organvm/petasum-super-petasum
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/petasum-super-petasum/issues/126
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #126 in a-organvm/petasum-super-petasum.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-035
+  title: Create prompt template library (5+ versioned skeletons)
+  repo: a-organvm/petasum-super-petasum
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/petasum-super-petasum/issues/124
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #124 in a-organvm/petasum-super-petasum.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-036
+  title: Define AI-free practice cadence for cognitive atrophy prevention
+  repo: a-organvm/petasum-super-petasum
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/petasum-super-petasum/issues/132
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #132 in a-organvm/petasum-super-petasum.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-037
+  title: Document provider policy tracking (OpenAI, Anthropic, Google, etc.)
+  repo: a-organvm/petasum-super-petasum
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/petasum-super-petasum/issues/127
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #127 in a-organvm/petasum-super-petasum.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-038
+  title: Create pseudonymization and redaction guidelines
+  repo: a-organvm/petasum-super-petasum
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/petasum-super-petasum/issues/122
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #122 in a-organvm/petasum-super-petasum.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-039
+  title: Address platform memory lock-in (ChatGPT/Claude memory risks)
+  repo: a-organvm/petasum-super-petasum
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 2
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/petasum-super-petasum/issues/131
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #131 in a-organvm/petasum-super-petasum.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-040
+  title: Add safety constraints for non-interactive agent modes
+  repo: a-organvm/petasum-super-petasum
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 2
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/petasum-super-petasum/issues/136
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #136 in a-organvm/petasum-super-petasum.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-041
+  title: Add seed.yaml validation for missing produces/consumes edges
+  repo: a-organvm/organvm-engine
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/organvm-engine/issues/84
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #84 in a-organvm/organvm-engine.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-042
+  title: Add --format json flag to organvm registry list command
+  repo: a-organvm/organvm-engine
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/organvm-engine/issues/83
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #83 in a-organvm/organvm-engine.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-043
+  title: 'fix(irf): stats command undercounts newly added tail items'
+  repo: a-organvm/organvm-engine
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/organvm-engine/issues/71
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #71 in a-organvm/organvm-engine.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-044
+  title: 'descent: content-based detection for CodeQL and release automation'
+  repo: a-organvm/organvm-engine
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 2
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/organvm-engine/issues/64
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #64 in a-organvm/organvm-engine.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-045
+  title: 'descent: add type-checking to 6 remaining repos'
+  repo: a-organvm/organvm-engine
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 2
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/organvm-engine/issues/60
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #60 in a-organvm/organvm-engine.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-046
+  title: 'descent: expand branch protection to all organs (~45 repos)'
+  repo: a-organvm/organvm-engine
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 2
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/organvm-engine/issues/61
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #61 in a-organvm/organvm-engine.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-047
+  title: 'fix(session): hanging review and plans commands in large repos'
+  repo: a-organvm/organvm-engine
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 2
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/organvm-engine/issues/70
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #70 in a-organvm/organvm-engine.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-048
+  title: 'feat: SOP staleness detection cross-reference SOPs against governed code'
+  repo: a-organvm/organvm-engine
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 2
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/organvm-engine/issues/76
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #76 in a-organvm/organvm-engine.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-049
+  title: 'feat: handoff staleness detection and workspace-wide handoff listing'
+  repo: a-organvm/organvm-engine
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 2
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/organvm-engine/issues/74
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #74 in a-organvm/organvm-engine.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-050
+  title: 'feat: context sync diff/changelog between runs'
+  repo: a-organvm/organvm-engine
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 2
+  status: dispatched
+  urls:
+  - https://github.com/a-organvm/organvm-engine/issues/73
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #73 in a-organvm/organvm-engine.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-051
+  title: 'IRF-CCE-029/037: Testament vacuum — S38-S41 sessions lack testament files'
+  repo: organvm-i-theoria/conversation-corpus-engine
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/17
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #17 in organvm-i-theoria/conversation-corpus-engine.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-052
+  title: 'IRF-CCE-032: Omega evidence format specimen missing from GH#14 handoff'
+  repo: organvm-i-theoria/conversation-corpus-engine
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/19
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #19 in organvm-i-theoria/conversation-corpus-engine.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-053
+  title: 'IRF-CCE-031: CCE lacks inquiry-log.yaml for research activities'
+  repo: organvm-i-theoria/conversation-corpus-engine
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/18
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #18 in organvm-i-theoria/conversation-corpus-engine.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-054
+  title: 'IRF-CCE-038: Cross-repo commercial awareness gap (CCE ↔ pipeline)'
+  repo: organvm-i-theoria/conversation-corpus-engine
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/23
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #23 in organvm-i-theoria/conversation-corpus-engine.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-055
+  title: 'IRF-CCE-036: seed.yaml planned produces edges for 3 ORGAN-III vehicles'
+  repo: organvm-i-theoria/conversation-corpus-engine
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/22
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #22 in organvm-i-theoria/conversation-corpus-engine.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-056
+  title: 'IRF-CCE-035: Omega evidence map — note commercial spec for criteria #9/#10'
+  repo: organvm-i-theoria/conversation-corpus-engine
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/21
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #21 in organvm-i-theoria/conversation-corpus-engine.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-057
+  title: CPU throttling fix — Layer 4 orchestration tuning pending
+  repo: organvm-i-theoria/conversation-corpus-engine
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  urls:
+  - https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/25
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #25 in organvm-i-theoria/conversation-corpus-engine.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-058
+  title: 'feat: build corpus persona-extract subcommand'
+  repo: organvm-i-theoria/conversation-corpus-engine
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 2
+  status: dispatched
+  urls:
+  - https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/27
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #27 in organvm-i-theoria/conversation-corpus-engine.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
+- id: LIMEN-059
+  title: 'IRF-CCE-039: Derive implementation plan from commercial architecture spec'
+  repo: organvm-i-theoria/conversation-corpus-engine
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 2
+  status: dispatched
+  urls:
+  - https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/24
+  context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #24 in organvm-i-theoria/conversation-corpus-engine.'
+  labels:
+  - batch-2026-06-01
+  created: '2026-06-01'
+  dispatch_log: []
