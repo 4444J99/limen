@@ -127,12 +127,14 @@ export default function Home() {
     <main style={{ maxWidth: 1200, margin: "0 auto", padding: "1rem", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
       <header style={{ marginBottom: "1.5rem" }}>
         <h1 style={{ fontSize: "1.5rem", fontWeight: 700, margin: 0 }}>
-          {data.portal.name || "limen"}
+          <a href="/" style={{ color: "inherit", textDecoration: "none" }}>{data.portal.name || "limen"}</a>
         </h1>
         <p style={{ color: "#666", margin: "0.25rem 0 0", fontSize: "0.875rem" }}>
-          {data.summary.total} tasks &middot; {spent}/{budget.daily} budget &middot;{" "}
-          {myPRs.length} open PRs{failingPRs.length > 0 && (
-            <span style={{ color: "#ef4444" }}> &middot; {failingPRs.length} failing CI</span>
+          <a href="#" onClick={(e) => {e.preventDefault(); setTab("tasks")}} style={{ color: "inherit", textDecoration: "none" }}>{data.summary.total} tasks</a> &middot;{" "}
+          <span style={{ color: "inherit" }}>{spent}/{budget.daily} budget</span> &middot;{" "}
+          <a href="#" onClick={(e) => {e.preventDefault(); setTab("prs")}} style={{ color: "inherit", textDecoration: "none" }}>{myPRs.length} open PRs</a>
+          {failingPRs.length > 0 && (
+            <a href="#" onClick={(e) => {e.preventDefault(); setTab("prs")}} style={{ color: "#ef4444", textDecoration: "none" }}> &middot; {failingPRs.length} failing CI</a>
           )}
         </p>
       </header>
@@ -174,11 +176,13 @@ export default function Home() {
         {prData && (
           <div style={{ background: "#fff", borderRadius: 8, padding: "1rem", border: "1px solid #e5e7eb" }}>
             <div style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "#666", fontWeight: 600 }}>PRs</div>
-            <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>{prData.summary.total_open_prs}</div>
+            <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>
+              <a href="#" onClick={(e) => {e.preventDefault(); setTab("prs")}} style={{ color: "inherit", textDecoration: "none" }}>{prData.summary.total_open_prs}</a>
+            </div>
             <div style={{ fontSize: "0.75rem", color: "#999" }}>
               across {prData.summary.total_repos} repos
               {prData.summary.prs_with_failing_ci > 0 && (
-                <span style={{ color: "#ef4444" }}> &middot; {prData.summary.prs_with_failing_ci} failing</span>
+                <a href="#" onClick={(e) => {e.preventDefault(); setTab("prs")}} style={{ color: "#ef4444", textDecoration: "none" }}> &middot; {prData.summary.prs_with_failing_ci} failing</a>
               )}
             </div>
           </div>
@@ -224,24 +228,34 @@ export default function Home() {
             {data.tasks.map((t) => (
               <tr key={t.id} style={{ borderTop: "1px solid #e5e7eb" }}>
                 <td style={tdStyle}>
-                  <span style={{ fontFamily: "monospace", fontWeight: 600 }}>{t.id}</span>
+                  {t.urls?.[0] ? (
+                    <a href={t.urls[0]} target="_blank" rel="noopener" style={{ fontFamily: "monospace", fontWeight: 600, color: "#2563eb", textDecoration: "none" }}>{t.id}</a>
+                  ) : (
+                    <span style={{ fontFamily: "monospace", fontWeight: 600 }}>{t.id}</span>
+                  )}
                 </td>
                 <td style={{ ...tdStyle, maxWidth: 350, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {t.urls?.[0] ? (
-                    <a href={t.urls[0]} target="_blank" rel="noopener" style={{ color: "#2563eb", textDecoration: "none" }}>{t.title}</a>
+                    <a href={t.urls[0]} target="_blank" rel="noopener" style={{ color: "inherit", textDecoration: "none" }}>{t.title}</a>
                   ) : t.title}
                 </td>
-                <td style={{ ...tdStyle, fontSize: "0.75rem", color: "#666" }}>{shortRepo(t.repo)}</td>
+                <td style={{ ...tdStyle, fontSize: "0.75rem", color: "#666" }}>
+                  <a href={`https://github.com/${t.repo}`} target="_blank" rel="noopener" style={{ color: "inherit", textDecoration: "none" }}>{shortRepo(t.repo)}</a>
+                </td>
                 <td style={tdStyle}>
                   <span style={{ background: agentColors[t.target_agent] || "#e5e7eb", color: "#fff", padding: "0.125rem 0.5rem", borderRadius: 4, fontSize: "0.75rem" }}>
                     {t.target_agent}
                   </span>
                 </td>
                 <td style={tdStyle}>
-                  <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: statusColors[t.status] || "#e5e7eb", marginRight: 4 }} />
-                  {t.status}
+                  <a href={t.urls?.[0] || "#"} target={t.urls?.[0] ? "_blank" : undefined} rel="noopener" style={{ color: "inherit", textDecoration: "none", display: "flex", alignItems: "center" }}>
+                    <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: statusColors[t.status] || "#e5e7eb", marginRight: 4 }} />
+                    {t.status}
+                  </a>
                 </td>
-                <td style={{ ...tdStyle, textAlign: "center" }}>{t.budget_cost}</td>
+                <td style={{ ...tdStyle, textAlign: "center" }}>
+                   <span style={{ fontWeight: 600 }}>{t.budget_cost}</span>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -269,24 +283,26 @@ export default function Home() {
                       <a href={p.html_url} target="_blank" rel="noopener" style={{ color: "#2563eb", textDecoration: "none", fontWeight: 600 }}>
                         #{p.number}
                       </a>{" "}
-                      <span style={{ fontSize: "0.875rem" }}>{p.title}</span>
+                      <a href={p.html_url} target="_blank" rel="noopener" style={{ color: "inherit", textDecoration: "none", fontSize: "0.875rem" }}>{p.title}</a>
                       {p.draft && <span style={{ background: "#f59e0b", color: "#fff", padding: "0.0625rem 0.375rem", borderRadius: 3, fontSize: "0.625rem", marginLeft: 4 }}>DRAFT</span>}
                     </td>
-                    <td style={{ ...tdStyle, fontSize: "0.75rem", color: "#666" }}>{shortRepo(p.repo)}</td>
-                    <td style={{ ...tdStyle, fontFamily: "monospace", fontSize: "0.75rem" }}>{p.head}</td>
+                    <td style={{ ...tdStyle, fontSize: "0.75rem", color: "#666" }}>
+                      <a href={`https://github.com/${p.repo}`} target="_blank" rel="noopener" style={{ color: "inherit", textDecoration: "none" }}>{shortRepo(p.repo)}</a>
+                    </td>
+                    <td style={{ ...tdStyle, fontFamily: "monospace", fontSize: "0.75rem" }}>
+                      <a href={`https://github.com/${p.repo}/tree/${p.head}`} target="_blank" rel="noopener" style={{ color: "inherit", textDecoration: "none" }}>{p.head}</a>
+                    </td>
                     <td style={tdStyle}>
-                      {p.checks ? (
-                        <span style={{
-                          color: p.checks.failed > 0 ? "#ef4444" : "#22c55e",
-                          fontWeight: 600,
-                          fontSize: "0.75rem",
-                        }}>
-                          {p.checks.failed > 0 ? `${p.checks.failed} failed` : `${p.checks.passed} passed`}
-                          {p.checks.pending > 0 && ` (${p.checks.pending} pending)`}
-                        </span>
-                      ) : (
-                        <span style={{ color: "#999", fontSize: "0.75rem" }}>no checks</span>
-                      )}
+                      <a href={`https://github.com/${p.repo}/pull/${p.number}/checks`} target="_blank" rel="noopener" style={{ color: p.checks?.failed && p.checks.failed > 0 ? "#ef4444" : "#22c55e", textDecoration: "none", fontWeight: 600, fontSize: "0.75rem" }}>
+                        {p.checks ? (
+                          <>
+                            {p.checks.failed > 0 ? `${p.checks.failed} failed` : `${p.checks.passed} passed`}
+                            {p.checks.pending > 0 && ` (${p.checks.pending} pending)`}
+                          </>
+                        ) : (
+                          <span style={{ color: "#999", fontSize: "0.75rem" }}>no checks</span>
+                        )}
+                      </a>
                     </td>
                   </tr>
                 ))}
@@ -297,7 +313,7 @@ export default function Home() {
       )}
 
       <footer style={{ marginTop: "2rem", padding: "1rem 0", borderTop: "1px solid #e5e7eb", fontSize: "0.75rem", color: "#999", display: "flex", justifyContent: "space-between" }}>
-        <span>device-streaming-067d747a.web.app</span>
+        <a href="https://device-streaming-067d747a.web.app" target="_blank" rel="noopener" style={{ color: "inherit", textDecoration: "none" }}>device-streaming-067d747a.web.app</a>
         {prData && <span>PR data: {new Date(prData.generated_at).toLocaleString()}</span>}
       </footer>
     </main>
