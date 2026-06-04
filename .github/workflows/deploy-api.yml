@@ -21,27 +21,29 @@ jobs:
     permissions:
       contents: read
       id-token: write # allow-secret
+    env:
+      GCP_SA_KEY_SET: ${{ secrets.GCP_SA_KEY != '' }}
     steps:
       - uses: actions/checkout@v6
 
       - name: Note skipped API deploy
-        if: ${{ secrets.GCP_SA_KEY == '' }}
+        if: env.GCP_SA_KEY_SET == 'false'
         run: echo "::notice::GCP_SA_KEY secret not configured; skipping Cloud Run API deploy. The live runtime API remains the Cloudflare Worker (limen-runtime)."
 
       - uses: google-github-actions/auth@v3
-        if: ${{ secrets.GCP_SA_KEY != '' }}
+        if: env.GCP_SA_KEY_SET == 'true'
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - uses: google-github-actions/setup-gcloud@v3
-        if: ${{ secrets.GCP_SA_KEY != '' }}
+        if: env.GCP_SA_KEY_SET == 'true'
 
       - name: Preflight Cloud Run prerequisites
-        if: ${{ secrets.GCP_SA_KEY != '' }}
+        if: env.GCP_SA_KEY_SET == 'true'
         run: bash scripts/preflight-cloud-run.sh
 
       - name: Deploy Cloud Run API
-        if: ${{ secrets.GCP_SA_KEY != '' }}
+        if: env.GCP_SA_KEY_SET == 'true'
         run: |
           gcloud run deploy limen-api \
             --project "$GCP_PROJECT_ID" \
@@ -52,7 +54,7 @@ jobs:
             --set-secrets LIMEN_GITHUB_TOKEN=limen-github-token:latest,LIMEN_API_TOKEN=limen-api-token:latest,LIMEN_CLIENT_TOKEN=limen-client-token:latest # allow-secret
 
       - name: Print API URL
-        if: ${{ secrets.GCP_SA_KEY != '' }}
+        if: env.GCP_SA_KEY_SET == 'true'
         run: |
           gcloud run services describe limen-api \
             --project "$GCP_PROJECT_ID" \
