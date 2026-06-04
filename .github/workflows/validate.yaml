@@ -2,40 +2,43 @@ name: validate
 on:
   push:
     branches: [main]
-    paths: ["tasks.yaml", "SCHEMA.md"]
+    paths: ["tasks.yaml", "SCHEMA.md", ".github/workflows/validate.yaml"]
   pull_request:
-    paths: ["tasks.yaml", "SCHEMA.md"]
+    paths: ["tasks.yaml", "SCHEMA.md", ".github/workflows/validate.yaml"]
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install yq
-        run: sudo snap install yq
-      - name: Validate tasks.yaml is valid YAML
-        run: yq eval '.' tasks.yaml >/dev/null
-      - name: Check version field
+      - name: Validate tasks.yaml schema, budget, and task fields
         run: |
-          VERSION=$(yq '.version' tasks.yaml)
-          test -n "$VERSION" || { echo "Missing version"; exit 1; }
-          echo "Schema version: $VERSION"
-      - name: Check budget consistency
-        run: |
-          DAILY=$(yq '.portal.budget.daily' tasks.yaml)
-          TOTAL=$(yq '.portal.budget.per_agent | to_entries | map(.value) | add' tasks.yaml)
-          echo "Daily budget: $DAILY, Sum of per-agent: $TOTAL"
-          test "$TOTAL" -le "$((DAILY * 2))" || { echo "Per-agent sum exceeds 2x daily budget"; exit 1; }
-      - name: Check all tasks have required fields
-        run: |
-          yq eval '.tasks[] | select(.id == null or .title == null or .status == null or .target_agent == null or .priority == null)' tasks.yaml && \
-            { echo "Tasks missing required fields"; exit 1; } || echo "All tasks have required fields"
-      - name: Check valid status values
-        run: |
-          for s in $(yq '.tasks[].status' tasks.yaml); do
-            case "$s" in
-              open|dispatched|in_progress|done|failed|cancelled) ;;
-              *) echo "Invalid status: $s"; exit 1 ;;
-            esac
-          done
-          echo "All statuses valid"
+          python3 - <<'PY'
+          import yaml
+
+          with open("tasks.yaml") as fh:
+              data = yaml.safe_load(fh)
+
+          version = data.get("version")
+          if not version:
+              raise SystemExit("Missing version")
+          print(f"Schema version: {version}")
+
+          budget = data["portal"]["budget"]
+          daily = budget["daily"]
+          total = sum(budget["per_agent"].values())
+          print(f"Daily budget: {daily}, Sum of per-agent: {total}")
+          if total > daily * 2:
+              raise SystemExit("Per-agent sum exceeds 2x daily budget")
+
+          required = ("id", "title", "status", "target_agent", "priority")
+          valid_statuses = {"open", "dispatched", "in_progress", "done", "failed", "cancelled"}
+          tasks = data.get("tasks", [])
+          for task in tasks:
+              missing = [field for field in required if task.get(field) is None]
+              if missing:
+                  raise SystemExit(f"Task {task.get('id', '<no id>')} missing required fields: {missing}")
+              if task["status"] not in valid_statuses:
+                  raise SystemExit(f"Invalid status: {task['status']} ({task['id']})")
+          print(f"All {len(tasks)} tasks have required fields and valid statuses")
+          PY
