@@ -1,3 +1,10 @@
+import "./globals.css";
+
+export const metadata = {
+  title: "Limen | Universal Task Intake",
+  description: "Operational dashboard for cross-agent task dispatch and PR health.",
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -5,9 +12,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body style={{ fontFamily: "system-ui, sans-serif", margin: 0, padding: "2rem", background: "#f5f5f5" }}>
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

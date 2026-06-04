@@ -6,6 +6,8 @@ on:
     paths:
       - "web/app/**"
       - "firebase.json"
+      - "tasks.yaml"
+      - ".github/workflows/deploy.yml"
   schedule:
     - cron: "0 * * * *"
   workflow_dispatch:
@@ -15,21 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-
-      - name: Generate tasks.json from tasks.yaml
-        run: |
-          python3 -c "
-import json, yaml
-with open('tasks.yaml') as f:
-    data = yaml.safe_load(f)
-with open('web/app/public/tasks.json', 'w') as f:
-    json.dump(data, f, indent=2)
-print(f'Generated tasks.json with {len(data.get(\"tasks\",[]))} tasks')
-"
 
       - uses: actions/setup-node@v6
         with:
@@ -42,9 +29,101 @@ print(f'Generated tasks.json with {len(data.get(\"tasks\",[]))} tasks')
         working-directory: web/app
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEXT_PUBLIC_API_URL: ${{ vars.LIMEN_API_URL }}
+
+      - name: Check hosting artifact privacy
+        env:
+          NEXT_PUBLIC_API_URL: ${{ vars.LIMEN_API_URL }}
+        run: |
+          test -f web/app/out/index.html
+          test -f web/app/out/client.html
+          test -f web/app/out/public.html
+          test -f web/app/out/qa.html
+          test -f web/app/out/public-status.json
+          test -f web/app/out/surface-manifest.json
+          test -f web/app/out/public-surface-manifest.json
+          test ! -e web/app/out/tasks.json
+          test ! -e web/app/out/client-status.json
+          test ! -e web/app/out/internal-status.json
+          test ! -e web/app/out/readiness.json
+          test ! -e web/app/out/qa-status.json
+          test ! -e web/app/out/owner-surface-manifest.json
+          test ! -e web/app/out/client-surface-manifest.json
+          node web/app/scripts/validate-exported-pages.mjs
+          node web/app/scripts/validate-surface-contracts.mjs
 
       - uses: w9jds/firebase-action@v13
         with:
           args: deploy --only hosting --project device-streaming-067d747a
         env:
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Verify hosted surface boundary
+        run: |
+          python3 - <<'PY'
+          import json
+          import re
+          import urllib.error
+          import urllib.request
+
+          base = "https://device-streaming-067d747a.web.app"
+
+          def read(path):
+              return urllib.request.urlopen(f"{base}/{path}", timeout=20).read().decode()
+
+          public_manifest = json.loads(read("surface-manifest.json"))
+          public_surface_manifest = json.loads(read("public-surface-manifest.json"))
+          for name, payload in {
+              "surface-manifest.json": public_manifest,
+              "public-surface-manifest.json": public_surface_manifest,
+          }.items():
+              ids = [surface.get("id") for surface in payload.get("surfaces", [])]
+              if payload.get("persona") != "public" or ids != ["public"]:
+                  raise SystemExit(f"{name} exposed wrong persona/surfaces: {payload.get('persona')} {ids}")
+
+          qa_html = read("qa")
+          nav = re.search(r'<nav class="surfaceNav"[^>]*>([\s\S]*?)</nav>', qa_html)
+          labels = re.findall(r'<a [^>]*>([^<]+)</a>', nav.group(1) if nav else "")
+          if labels != ["Internal", "QA", "Client", "Public"]:
+              raise SystemExit(f"qa nav drifted: {labels}")
+          for needle in ("Owner token required", "Load QA"):
+              if needle not in qa_html:
+                  raise SystemExit(f"qa page missing {needle}")
+          for forbidden in ("LIMEN-015", "Propagate PR #234 completions", "dispatch_log"):
+              if forbidden in qa_html:
+                  raise SystemExit(f"qa page leaks {forbidden}")
+
+          client_html = read("client")
+          for needle in ("Client token required", "Load client"):
+              if needle not in client_html:
+                  raise SystemExit(f"client page missing {needle}")
+
+          for name in ("tasks.json", "client-status.json", "internal-status.json", "qa-status.json", "owner-surface-manifest.json", "client-surface-manifest.json", "readiness.json"):
+              try:
+                  urllib.request.urlopen(f"{base}/{name}", timeout=20)
+              except urllib.error.HTTPError as error:
+                  if error.code == 404:
+                      continue
+                  raise
+              raise SystemExit(f"private artifact is hosted: {name}")
+          PY
+
+      - name: Verify live runtime adapter schemas
+        env:
+          LIMEN_WORKER_URL: ${{ vars.LIMEN_API_URL }}
+          LIMEN_API_TOKEN: ${{ secrets.LIMEN_API_TOKEN }}
+          LIMEN_CLIENT_TOKEN: ${{ secrets.LIMEN_CLIENT_TOKEN }}
+        run: |
+          if [ -z "$LIMEN_WORKER_URL" ]; then
+            echo "LIMEN_API_URL repository variable is required for dashboard deploy runtime verification" >&2
+            exit 1
+          fi
+          if [ -z "$LIMEN_API_TOKEN" ] || [ -z "$LIMEN_CLIENT_TOKEN" ]; then
+            echo "LIMEN_API_TOKEN and LIMEN_CLIENT_TOKEN secrets are required for dashboard deploy runtime verification" >&2
+            exit 1
+          fi
+          scripts/probe-runtime-adapter.py \
+            --api-url "$LIMEN_WORKER_URL" \
+            --owner-token "$LIMEN_API_TOKEN" \
+            --client-token "$LIMEN_CLIENT_TOKEN" \
+            --task-id "${LIMEN_VERIFY_TASK_ID:-LIMEN-015}"
