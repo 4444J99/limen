@@ -957,14 +957,21 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   urls:
   - https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/19
+  - https://jules.google.com/session/4931863898552119297
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #19 in organvm-i-theoria/conversation-corpus-engine.'
   labels:
   - batch-2026-06-01
   created: '2026-06-01'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-01T23:12:24.414727+00:00'
+    agent: jules
+    session_id: '4931863898552119297'
+    status: dispatched
+    output: 'Jules session created via CLI. URL: https://jules.google.com/session/4931863898552119297'
+  updated: '2026-06-01T23:33:31.072790+00:00'
 - id: LIMEN-053
   title: 'IRF-CCE-031: CCE lacks inquiry-log.yaml for research activities'
   repo: organvm-i-theoria/conversation-corpus-engine
@@ -972,14 +979,21 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   urls:
   - https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/18
+  - https://jules.google.com/session/5359449811305763961
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #18 in organvm-i-theoria/conversation-corpus-engine.'
   labels:
   - batch-2026-06-01
   created: '2026-06-01'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-01T23:12:24.414732+00:00'
+    agent: jules
+    session_id: '5359449811305763961'
+    status: dispatched
+    output: 'Jules session created via CLI. URL: https://jules.google.com/session/5359449811305763961'
+  updated: '2026-06-01T23:33:31.073290+00:00'
 - id: LIMEN-054
   title: "IRF-CCE-038: Cross-repo commercial awareness gap (CCE \u2194 pipeline)"
   repo: organvm-i-theoria/conversation-corpus-engine
@@ -987,14 +1001,21 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: in_progress
   urls:
   - https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/23
+  - https://jules.google.com/session/13992835732913028712
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #23 in organvm-i-theoria/conversation-corpus-engine.'
   labels:
   - batch-2026-06-01
   created: '2026-06-01'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-01T23:12:24.414735+00:00'
+    agent: jules
+    session_id: '13992835732913028712'
+    status: dispatched
+    output: 'Jules session created via CLI. URL: https://jules.google.com/session/13992835732913028712'
+  updated: '2026-06-01T23:12:24.414734+00:00'
 - id: LIMEN-055
   title: 'IRF-CCE-036: seed.yaml planned produces edges for 3 ORGAN-III vehicles'
   repo: organvm-i-theoria/conversation-corpus-engine
@@ -1002,14 +1023,21 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   urls:
   - https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/22
+  - https://jules.google.com/session/7697148783094249715
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #22 in organvm-i-theoria/conversation-corpus-engine.'
   labels:
   - batch-2026-06-01
   created: '2026-06-01'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-01T23:12:24.414737+00:00'
+    agent: jules
+    session_id: '7697148783094249715'
+    status: dispatched
+    output: 'Jules session created via CLI. URL: https://jules.google.com/session/7697148783094249715'
+  updated: '2026-06-01T23:33:31.073293+00:00'
 - id: LIMEN-056
   title: "IRF-CCE-035: Omega evidence map \u2014 note commercial spec for criteria\
     \ #9/#10"
@@ -1018,14 +1046,21 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: in_progress
   urls:
   - https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/21
+  - https://jules.google.com/session/3989424053504450135
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #21 in organvm-i-theoria/conversation-corpus-engine.'
   labels:
   - batch-2026-06-01
   created: '2026-06-01'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-01T23:12:24.414738+00:00'
+    agent: jules
+    session_id: '3989424053504450135'
+    status: dispatched
+    output: 'Jules session created via CLI. URL: https://jules.google.com/session/3989424053504450135'
+  updated: '2026-06-01T23:12:24.414738+00:00'
 - id: LIMEN-057
   title: "CPU throttling fix \u2014 Layer 4 orchestration tuning pending"
   repo: organvm-i-theoria/conversation-corpus-engine
@@ -1033,14 +1068,21 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   urls:
   - https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/25
+  - https://jules.google.com/session/9093480277388573227
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #25 in organvm-i-theoria/conversation-corpus-engine.'
   labels:
   - batch-2026-06-01
   created: '2026-06-01'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-01T23:12:24.414740+00:00'
+    agent: jules
+    session_id: '9093480277388573227'
+    status: dispatched
+    output: 'Jules session created via CLI. URL: https://jules.google.com/session/9093480277388573227'
+  updated: '2026-06-01T23:33:31.073294+00:00'
 - id: LIMEN-058
   title: 'feat: build corpus persona-extract subcommand'
   repo: organvm-i-theoria/conversation-corpus-engine
@@ -1048,14 +1090,21 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 2
-  status: dispatched
+  status: in_progress
   urls:
   - https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/27
+  - https://jules.google.com/session/4082366623912210320
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #27 in organvm-i-theoria/conversation-corpus-engine.'
   labels:
   - batch-2026-06-01
   created: '2026-06-01'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-01T23:12:24.414742+00:00'
+    agent: jules
+    session_id: '4082366623912210320'
+    status: dispatched
+    output: 'Jules session created via CLI. URL: https://jules.google.com/session/4082366623912210320'
+  updated: '2026-06-01T23:12:24.414741+00:00'
 - id: LIMEN-059
   title: 'IRF-CCE-039: Derive implementation plan from commercial architecture spec'
   repo: organvm-i-theoria/conversation-corpus-engine
@@ -1063,14 +1112,21 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 2
-  status: dispatched
+  status: done
   urls:
   - https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/24
+  - https://jules.google.com/session/17839491071518389914
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #24 in organvm-i-theoria/conversation-corpus-engine.'
   labels:
   - batch-2026-06-01
   created: '2026-06-01'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-01T23:12:24.414744+00:00'
+    agent: jules
+    session_id: '17839491071518389914'
+    status: dispatched
+    output: 'Jules session created via CLI. URL: https://jules.google.com/session/17839491071518389914'
+  updated: '2026-06-01T23:33:31.073295+00:00'
 - id: LIMEN-060
   title: 'feat: implement MCP tool wrappers for all 5 organvm CLIs'
   repo: a-organvm/organvm-engine
@@ -1078,15 +1134,22 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 2
-  status: dispatched
+  status: in_progress
   labels:
   - batch-2026-06-01
   urls:
   - https://github.com/a-organvm/organvm-engine/issues/89
+  - https://jules.google.com/session/11094992051730985281
   context: 'Audited 2026-06-01 from Jules-ready batch. feat: implement MCP tool wrappers
     for all 5 organvm CLIs'
   created: '2026-06-01'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-01T23:12:24.414746+00:00'
+    agent: jules
+    session_id: '11094992051730985281'
+    status: dispatched
+    output: 'Jules session created via CLI. URL: https://jules.google.com/session/11094992051730985281'
+  updated: '2026-06-01T23:12:24.414745+00:00'
 - id: LIMEN-061
   title: Add seed.yaml validation for missing produces/consumes edges
   repo: a-organvm/organvm-engine
@@ -1094,15 +1157,22 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - batch-2026-06-01
   urls:
   - https://github.com/a-organvm/organvm-engine/issues/84
+  - https://jules.google.com/session/2265102270527534194
   context: Audited 2026-06-01 from Jules-ready batch. Add seed.yaml validation for
     missing produces/consumes edges
   created: '2026-06-01'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-01T23:12:24.414748+00:00'
+    agent: jules
+    session_id: '2265102270527534194'
+    status: dispatched
+    output: 'Jules session created via CLI. URL: https://jules.google.com/session/2265102270527534194'
+  updated: '2026-06-01T23:33:31.073296+00:00'
 - id: LIMEN-062
   title: Add --format json flag to organvm registry list command
   repo: a-organvm/organvm-engine
