@@ -57,8 +57,9 @@ jobs:
       - name: Check adapter lifecycle contracts
         run: python scripts/validate-lifecycle-adapters.py
 
-      - name: Check portable contract schemas
-        run: node scripts/validate-contract-schemas.mjs
+      # Portable contract schemas are validated in the web job via
+      # validate:surfaces, after the full generation pipeline (including
+      # pr-status.json) has produced every input the validator reads.
 
       - name: Run API and CLI tests
         run: python -m pytest web/api/tests cli/tests -q
