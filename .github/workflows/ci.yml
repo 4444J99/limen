@@ -44,6 +44,16 @@ jobs:
       - name: Check shell scripts
         run: bash -n scripts/preflight-cloud-run.sh
 
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: web/app/package-lock.json
+
+      - name: Generate surface snapshots for lifecycle validation
+        run: npm ci && npm run generate:data
+        working-directory: web/app
+
       - name: Check adapter lifecycle contracts
         run: python scripts/validate-lifecycle-adapters.py
 
