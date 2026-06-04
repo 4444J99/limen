@@ -1,0 +1,51 @@
+name: Deploy API
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/api/**"
+      - "cli/**"
+      - "scripts/preflight-cloud-run.sh"
+      - ".github/workflows/deploy-api.yml"
+  workflow_dispatch:
+
+env:
+  GCP_PROJECT_ID: device-streaming-067d747a
+  GCP_REGION: us-central1
+  LIMEN_CLOUD_RUN_SERVICE: limen-api
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # allow-secret
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+
+      - name: Preflight Cloud Run prerequisites
+        run: bash scripts/preflight-cloud-run.sh
+
+      - name: Deploy Cloud Run API
+        run: |
+          gcloud run deploy limen-api \
+            --project "$GCP_PROJECT_ID" \
+            --region "$GCP_REGION" \
+            --source web/api \
+            --allow-unauthenticated \
+            --set-env-vars LIMEN_GITHUB_REPO=4444J99/limen,LIMEN_GITHUB_BRANCH=main,LIMEN_GITHUB_PATH=tasks.yaml,LIMEN_CORS_ORIGINS=https://device-streaming-067d747a.web.app \
+            --set-secrets LIMEN_GITHUB_TOKEN=limen-github-token:latest,LIMEN_API_TOKEN=limen-api-token:latest,LIMEN_CLIENT_TOKEN=limen-client-token:latest # allow-secret
+
+      - name: Print API URL
+        run: |
+          gcloud run services describe limen-api \
+            --project "$GCP_PROJECT_ID" \
+            --region "$GCP_REGION" \
+            --format='value(status.url)'

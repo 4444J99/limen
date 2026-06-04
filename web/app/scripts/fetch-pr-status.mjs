@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import { writeFileSync } from "fs";
+import { existsSync, readFileSync, writeFileSync } from "fs";
+import { execFileSync } from "child_process";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -15,7 +16,22 @@ const REPOS = [
   "organvm-i-theoria/conversation-corpus-engine",
 ];
 
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+function resolveGitHubToken() {
+  if (process.env.GITHUB_TOKEN || process.env.GH_TOKEN) return process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+  try {
+    return execFileSync("gh", ["auth", "token"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+  } catch {
+    return "";
+  }
+}
+
+const GITHUB_TOKEN = resolveGitHubToken();
+const outPath = join(__dirname, "..", "public", "pr-status.json");
+const previous = existsSync(outPath) ? JSON.parse(readFileSync(outPath, "utf8")) : null;
+
+function previousRepo(repo) {
+  return previous?.repos?.find((item) => item.repo === repo) || null;
+}
 
 async function fetchPRs(repo) {
   const url = `https://api.github.com/repos/${repo}/pulls?state=open&per_page=30`;
@@ -25,7 +41,7 @@ async function fetchPRs(repo) {
   const res = await fetch(url, { headers });
   if (!res.ok) {
     console.error(`Failed to fetch PRs for ${repo}: ${res.status}`);
-    return [];
+    return null;
   }
   const prs = await res.json();
   return prs.map((pr) => ({
@@ -64,6 +80,17 @@ async function main() {
 
   for (const repo of REPOS) {
     const prs = await fetchPRs(repo);
+    if (prs === null) {
+      const fallback = previousRepo(repo);
+      if (fallback) {
+        results.push({ ...fallback, stale: true, error: "fetch_failed" });
+        console.log(`  ${repo}: reused ${fallback.count} cached PRs`);
+      } else {
+        results.push({ repo, prs: [], count: 0, stale: true, error: "fetch_failed" });
+        console.log(`  ${repo}: no cached PRs`);
+      }
+      continue;
+    }
     const prsWithChecks = [];
     for (const pr of prs) {
       const checks = await fetchCheckRuns(repo, pr.head);
@@ -81,7 +108,7 @@ async function main() {
 
   const output = {
     generated_at: new Date().toISOString(),
-    repos: results,
+    repos: [],
     summary: {
       total_repos: REPOS.length,
       total_open_prs: totalPRs,
@@ -89,7 +116,6 @@ async function main() {
     },
   };
 
-  const outPath = join(__dirname, "..", "public", "pr-status.json");
   writeFileSync(outPath, JSON.stringify(output, null, 2));
   console.log(`Wrote ${outPath} (${totalPRs} PRs across ${REPOS.length} repos)`);
 }

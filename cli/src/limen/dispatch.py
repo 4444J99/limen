@@ -1,11 +1,12 @@
 import os
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from limen.io import save_limen_file
 from limen.models import DispatchLogEntry, LimenFile, Task
+from limen.doctor import stale_tasks
 
 
 def resolve_agent() -> str:
@@ -62,8 +63,27 @@ def _run_cmd(cmd: list[str], task: Task, dry_run: bool) -> bool:
 def _call_jules(task: Task, dry_run: bool) -> bool:
     repo = task.repo or os.environ.get("LIMEN_ROOT", ".")
     prompt = _build_prompt(task)
-    cmd = ["jules", "new", "--repo", repo, prompt]
+    cmd = [os.environ.get("LIMEN_JULES_BIN", "jules"), "new", "--repo", repo, prompt]
     return _run_cmd(cmd, task, dry_run)
+
+
+def _reset_budget_if_needed(limen: LimenFile, now: datetime) -> None:
+    today = now.strftime("%Y-%m-%d")
+    track = limen.portal.budget.track
+    if track.date != today:
+        track.date = today
+        track.spent = 0
+        track.per_agent = {agent: 0 for agent in limen.portal.budget.per_agent}
+
+
+def _remaining_budget(limen: LimenFile, agent: str, budget: int) -> int:
+    track = limen.portal.budget.track
+    daily_remaining = budget - track.spent
+    agent_limit = limen.portal.budget.per_agent.get(agent)
+    if agent_limit is None:
+        return max(0, daily_remaining)
+    agent_spent = track.per_agent.get(agent, 0)
+    return max(0, min(daily_remaining, agent_limit - agent_spent))
 
 
 def dispatch_tasks(
@@ -73,23 +93,20 @@ def dispatch_tasks(
     budget: int | None = None,
     dry_run: bool = True,
     task_id: str | None = None,
+    limit: int | None = None,
 ) -> None:
     now = datetime.now(timezone.utc)
-    today = now.strftime("%Y-%m-%d")
     budget = budget or limen.portal.budget.daily
 
+    _reset_budget_if_needed(limen, now)
     track = limen.portal.budget.track
-    if track.date != today:
-        track.date = today
-        track.spent = 0
-        track.per_agent = {}
-
-    remaining = budget - track.spent
-    if remaining <= 0:
-        print(f"Daily budget exhausted ({track.spent}/{budget} spent)")
-        return
 
     agent_filter = agent or resolve_agent()
+    remaining = _remaining_budget(limen, agent_filter, budget)
+    if remaining <= 0:
+        print(f"Budget exhausted for {agent_filter} ({track.spent}/{budget} total spent)")
+        return
+
     tasks = limen.tasks
 
     if task_id:
@@ -107,6 +124,9 @@ def dispatch_tasks(
     ]
     priority_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "backlog": 4}
     candidates.sort(key=lambda t: priority_order.get(t.priority, 99))
+
+    if limit is not None:
+        candidates = candidates[: max(0, limit)]
 
     if not candidates:
         print(
@@ -135,6 +155,8 @@ def dispatch_tasks(
         if not success and not dry_run:
             entry.status = "failed"
             task.status = "failed"
+            task.updated = now
+            task.dispatch_log.append(entry)
         elif not dry_run:
             task.status = "dispatched"
             task.updated = now
@@ -151,3 +173,52 @@ def dispatch_tasks(
         save_limen_file(tasks_path, limen)
 
     print(f"── {mode}: {dispatched} task(s)")
+
+
+def release_stale_tasks(
+    limen: LimenFile,
+    tasks_path: Path,
+    hours: int = 24,
+    dry_run: bool = True,
+    agent: str | None = None,
+) -> dict:
+    now = datetime.now(timezone.utc)
+    candidates = stale_tasks(limen, hours=hours, agent=agent)
+
+    mode = "DRY-RUN" if dry_run else "APPLY"
+    print(f"── limen release-stale ({mode}) — hours={hours} candidates={len(candidates)}")
+    for task in candidates:
+        print(f"  {task.id} {task.status} {task.target_agent} — {task.title}")
+        if not dry_run:
+            task.status = "open"
+            task.updated = now
+            task.dispatch_log.append(
+                DispatchLogEntry(
+                    timestamp=now,
+                    agent="limen",
+                    session_id=session_id(),
+                    status="open",
+                    output=f"Released stale claim after {hours}h",
+                )
+            )
+
+    if not dry_run:
+        save_limen_file(tasks_path, limen)
+    return {
+        "status": "dry_run" if dry_run else "applied",
+        "agent": agent,
+        "hours": hours,
+        "tasks_path": str(tasks_path),
+        "count": len(candidates),
+        "released": [task.id for task in candidates],
+        "candidates": [
+            {
+                "id": task.id,
+                "title": task.title,
+                "repo": task.repo,
+                "target_agent": task.target_agent,
+                "status": task.status if dry_run else "open",
+            }
+            for task in candidates
+        ],
+    }
