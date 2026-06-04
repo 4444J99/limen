@@ -4,15 +4,19 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/fetch-pr-status.mjs",
+    "generate:data": "node scripts/generate-static-data.mjs",
+    "validate:surfaces": "node scripts/validate-surface-contracts.mjs && node ../../scripts/validate-contract-schemas.mjs",
+    "prebuild": "npm run generate:data && npm run validate:surfaces && node scripts/fetch-pr-status.mjs",
     "build": "next build",
+    "postbuild": "node scripts/validate-exported-pages.mjs",
     "start": "next start",
     "fetch-prs": "node scripts/fetch-pr-status.mjs"
   },
   "dependencies": {
     "next": "^15.0",
     "react": "^19.0",
-    "react-dom": "^19.0"
+    "react-dom": "^19.0",
+    "yaml": "2.9.0"
   },
   "devDependencies": {
     "@types/node": "^22",

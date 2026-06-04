@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://limen.local/contracts/surface-manifest.schema.json",
+  "title": "Limen Surface Manifest",
+  "type": "object",
+  "required": ["status", "persona", "generated_at", "source", "surfaces", "contracts"],
+  "properties": {
+    "status": { "type": "string", "enum": ["ok"] },
+    "persona": { "type": "string", "enum": ["owner", "client", "public"] },
+    "generated_at": { "type": "string" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "task_file", "api_runtime", "api_url_configured"],
+      "properties": {
+        "type": { "type": "string" },
+        "task_file": { "type": "string" },
+        "api_runtime": { "type": "string" },
+        "api_url_configured": { "type": "boolean" },
+        "blocker": { "type": ["string", "null"] },
+        "storage": { "type": "object" }
+      }
+    },
+    "surfaces": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "title", "route", "contract", "persona", "sanctioned_personas", "disclosure"],
+        "properties": {
+          "id": { "type": "string", "enum": ["internal", "qa", "client", "public"] },
+          "title": { "type": "string" },
+          "route": { "type": "string" },
+          "contract": { "type": "string" },
+          "persona": { "type": "string", "enum": ["owner", "client", "public"] },
+          "sanctioned_personas": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["owner", "client", "public"] }
+          },
+          "disclosure": { "type": "string" }
+        }
+      }
+    },
+    "contracts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "internal": { "$ref": "#/$defs/internalContract" },
+        "client": { "$ref": "#/$defs/clientContract" },
+        "public": { "$ref": "#/$defs/publicContract" },
+        "qa": { "$ref": "#/$defs/qaContract" },
+        "readiness": { "$ref": "#/$defs/readinessContract" }
+      }
+    }
+  },
+  "$defs": {
+    "internalContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "total", "stale_count"],
+      "properties": {
+        "path": { "type": "string" },
+        "total": { "type": "number" },
+        "stale_count": { "type": "number" },
+        "includes_full_tasks": { "type": "boolean" }
+      }
+    },
+    "clientContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "total", "stale_count", "max_active_tasks", "includes_dispatch_logs"],
+      "properties": {
+        "path": { "type": "string" },
+        "total": { "type": "number" },
+        "stale_count": { "type": "number" },
+        "max_active_tasks": { "type": "number" },
+        "includes_dispatch_logs": { "type": "boolean" }
+      }
+    },
+    "publicContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "total", "includes_tasks", "includes_dispatch_logs"],
+      "properties": {
+        "path": { "type": "string" },
+        "total": { "type": "number" },
+        "includes_tasks": { "type": "boolean" },
+        "includes_dispatch_logs": { "type": "boolean" }
+      }
+    },
+    "qaContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "verify_endpoint", "assignment_endpoint", "archive_endpoint", "includes_dispatch_logs", "includes_task_context", "includes_task_urls"],
+      "properties": {
+        "path": { "type": "string" },
+        "total": { "type": "number" },
+        "stale_count": { "type": "number" },
+        "verify_endpoint": { "type": "string" },
+        "assignment_endpoint": { "type": "string" },
+        "archive_endpoint": { "type": "string" },
+        "includes_dispatch_logs": { "type": "boolean" },
+        "includes_task_context": { "type": "boolean" },
+        "includes_task_urls": { "type": "boolean" }
+      }
+    },
+    "readinessContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "includes_dispatch_logs"],
+      "properties": {
+        "path": { "type": "string" },
+        "agent": { "type": "string" },
+        "includes_dispatch_logs": { "type": "boolean" }
+      }
+    }
+  }
+}

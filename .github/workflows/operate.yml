@@ -1,0 +1,85 @@
+name: Operate
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Operation to run"
+        required: true
+        default: "doctor"
+        type: choice
+        options:
+          - doctor
+          - qa
+          - release-stale-preview
+          - release-stale-apply
+      agent:
+        description: "Agent queue to operate"
+        required: true
+        default: "jules"
+      hours:
+        description: "Stale active-claim threshold in hours"
+        required: true
+        default: "24"
+
+permissions:
+  contents: write
+
+jobs:
+  operate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Limen CLI
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e "cli[test]"
+
+      - name: Doctor
+        if: inputs.mode == 'doctor'
+        run: limen doctor --agent "${{ inputs.agent }}" --report-file .limen-reports/doctor.json
+
+      - name: QA steering report
+        if: inputs.mode == 'qa'
+        run: limen qa --agent "${{ inputs.agent }}" --report-file .limen-reports/qa.json
+
+      - name: Preview stale release
+        if: inputs.mode == 'release-stale-preview'
+        run: limen release-stale --agent "${{ inputs.agent }}" --hours "${{ inputs.hours }}" --report-file .limen-reports/release-stale-preview.json
+
+      - name: Apply stale release
+        if: inputs.mode == 'release-stale-apply'
+        run: limen release-stale --agent "${{ inputs.agent }}" --hours "${{ inputs.hours }}" --apply --report-file .limen-reports/release-stale-apply.json
+
+      - name: Upload operation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: limen-operation-${{ inputs.mode }}-${{ github.run_id }}
+          path: .limen-reports/*.json
+          if-no-files-found: warn
+
+      - name: Show task diff
+        if: inputs.mode == 'release-stale-apply'
+        run: git diff -- tasks.yaml
+
+      - name: Commit stale release
+        if: inputs.mode == 'release-stale-apply'
+        run: |
+          if git diff --quiet -- tasks.yaml; then
+            echo "No task changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tasks.yaml
+          git commit -m "Release stale Limen claims"
+          git push

@@ -19,8 +19,16 @@ All paths and configuration come from environment variables. No hardcoded paths.
 | `LIMEN_BUDGET` | no | `100` | Daily run budget cap |
 | `LIMEN_AGENT` | no | *(auto-detect)* | Which agent this session is (`claude`, `gemini`, `jules`, `opencode`, `codex`, `copilot`, `goose`) |
 | `LIMEN_API_KEY` | no | — | API key for SaaS sync (optional) |
+| `LIMEN_API_TOKEN` | no | — | Bearer token required by the FastAPI backend when set |
+| `LIMEN_OWNER_TOKEN` | no | — | Additional owner persona bearer token for all sanctioned endpoints |
+| `LIMEN_CLIENT_TOKEN` | no | — | Client persona bearer token for client/public status and manifest endpoints |
 | `LIMEN_REPO` | no | — | Git remote URL (optional, enables `limen sync`) |
 | `LIMEN_TASKS` | no | `$LIMEN_ROOT/tasks.yaml` | Path to the task file |
+| `LIMEN_GITHUB_REPO` | no | — | `owner/repo` for hosted API storage via GitHub Contents |
+| `LIMEN_GITHUB_BRANCH` | no | `main` | Branch used by hosted API GitHub storage |
+| `LIMEN_GITHUB_PATH` | no | `tasks.yaml` | Path to the task YAML in the GitHub repo |
+| `LIMEN_GITHUB_TOKEN` | no | — | GitHub token with contents read/write access for hosted API storage |
+| `LIMEN_CORS_ORIGINS` | no | `*` | Comma-separated browser origins allowed to call the API |
 
 Auto-detection: `$LIMEN_AGENT` is set from `$CLAUDE_NAME` (Claude), `$GEMINI_NAME` (Gemini),
 or falls back to the basename of the calling process.
@@ -235,6 +243,123 @@ Prints a table of tasks filtered by agent and/or status. Shows:
 - Task ID, title, priority, status, agent, repo, budget
 - Daily budget used/remaining
 - Timeline of recent dispatches
+
+### 4.5 QA and Steering Contract
+
+Limen exposes a derived lifecycle contract for QA and assignment steering. This
+contract is generated from `tasks.yaml`; it does not create a second work list.
+
+Static hosting writes:
+
+```
+/qa-status.json
+```
+
+Portable JSON Schemas for the generated contracts live in `spec/contracts/`:
+
+- `surface-manifest.schema.json`
+- `qa-status.schema.json`
+- `status-summary.schema.json`
+- `readiness.schema.json`
+
+Run `node scripts/validate-contract-schemas.mjs` after generating static data to
+validate the current JSON contracts against those schemas.
+
+The CLI exposes the same lifecycle report:
+
+```
+limen qa [--agent <name>] [--json-output] [--report-file <path>]
+```
+
+The FastAPI backend exposes:
+
+```
+GET /api/qa-status
+POST /api/tasks/{task_id}/verify
+POST /api/tasks/{task_id}/assign
+POST /api/tasks/{task_id}/archive
+```
+
+Contract shape:
+
+```yaml
+status: ok | degraded
+surface: qa
+generated_at: datetime
+lifecycle:
+  total: integer
+  assign: integer          # open work ready for budgeted dispatch
+  verify: integer          # active work or PR-linked work needing evidence
+  recover: integer         # stale, failed, blocked, or human-needed work
+  archive_ready: integer   # done work suppressed from active steering
+  archived: integer        # terminal work already suppressed from steering
+steering:
+  principle: string
+  next_batch: task_lifecycle[]
+  qa_queue: task_lifecycle[]
+  recovery_queue: task_lifecycle[]
+  assignment_queue: task_lifecycle[]
+  archive_queue: task_lifecycle[]
+mechanisms:
+  - id: release-stale | qa-verify | assign-next | archive-done
+    label: string
+    agent: string
+    command: string
+    mode: string
+    count: integer
+```
+
+Surface manifests must declare audience sanctions:
+
+```yaml
+surfaces:
+  - id: internal
+    persona: owner
+    sanctioned_personas: [owner]
+  - id: qa
+    persona: owner
+    sanctioned_personas: [owner]
+  - id: client
+    persona: client
+    sanctioned_personas: [owner, client]
+  - id: public
+    persona: public
+    sanctioned_personas: [owner, client, public]
+```
+
+Owner users can see every dashboard. Client and public personas must only see
+navigation and contracts sanctioned for their disclosure level.
+
+Persona manifests:
+
+- `owner-surface-manifest.json` / owner API response: internal, QA, client, public.
+- `client-surface-manifest.json` / client API response: client, public.
+- `surface-manifest.json` and `public-surface-manifest.json` / public API response: public only.
+
+Backend authorization must enforce the same sanctions:
+
+| Persona | Token source | Allowed API surface |
+|---|---|---|
+| owner | `LIMEN_API_TOKEN` or `LIMEN_OWNER_TOKEN` | all endpoints |
+| client | `LIMEN_CLIENT_TOKEN` | `/api/client-status`, `/api/public-status`, `/api/surface-manifest`, `/health` |
+| public | no token | `/api/public-status`, `/api/surface-manifest`, `/health` |
+
+`qa-status` must not expose dispatch logs, task context, or raw task URLs. It
+may expose task IDs, titles, repos, assignees, statuses, priorities, lifecycle
+phase, stale flags, issue/PR presence booleans, and latest event timestamps.
+
+Verification is an explicit QA operation. `POST /api/tasks/{task_id}/verify`
+accepts active or attention work and records the QA decision as `done`,
+`needs_human`, `failed`, or `failed_blocked`. A `done` result moves the task to
+the archive-ready gate; attention results return it to recovery steering.
+
+Assignment is an explicit steering operation. `POST /api/tasks/{task_id}/assign`
+may update `target_agent`, `priority`, `budget_cost`, and `status`, and appends
+an `assigned` dispatch-log entry for audit. It does not dispatch work by itself.
+
+Archive is the terminal closure operation. `POST /api/tasks/{task_id}/archive`
+only accepts tasks whose status is `done`, changes them to `archived`, appends
+an `archived` audit entry, and suppresses them from active steering queues.
 
 ---
 

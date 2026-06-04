@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://limen.local/contracts/status-summary.schema.json",
+  "title": "Limen Public or Client Status",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "surface", "summary"],
+  "properties": {
+    "status": { "type": "string", "enum": ["ok", "missing"] },
+    "surface": { "type": "string", "enum": ["public", "client", "internal"] },
+    "portal": { "type": "object" },
+    "storage": { "type": "object" },
+    "summary": {
+      "type": "object",
+      "required": ["total", "by_status", "generated_at"],
+      "properties": {
+        "portal": { "type": "object" },
+        "total": { "type": "number" },
+        "completed": { "type": "number" },
+        "completion_rate": { "type": "number" },
+        "active": { "type": "number" },
+        "by_status": { "type": "object" },
+        "generated_at": { "type": "string" },
+        "stale_count": { "type": "number" },
+        "lifecycle": { "$ref": "#/$defs/lifecycle" },
+        "budget": { "type": "object" },
+        "top_repos": { "type": "array" },
+        "active_tasks": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/clientTask" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recover", "verify", "assign", "archive", "archived"],
+      "properties": {
+        "recover": { "type": "number" },
+        "verify": { "type": "number" },
+        "assign": { "type": "number" },
+        "archive": { "type": "number" },
+        "archived": { "type": "number" }
+      }
+    },
+    "clientTask": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "repo", "target_agent", "status", "priority", "stale", "phase", "next_gate"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "repo": { "type": "string" },
+        "target_agent": { "type": "string" },
+        "status": { "type": "string" },
+        "priority": { "type": "string" },
+        "stale": { "type": "boolean" },
+        "phase": { "type": "string", "enum": ["assign", "verify", "recover", "archive", "archived"] },
+        "next_gate": { "type": "string" }
+      }
+    }
+  }
+}

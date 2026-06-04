@@ -9,3 +9,15 @@ build/
 # Firebase deployment cache
 .firebase/
 pr-status.json
+
+# Local runtime secrets
+.runtime/
+
+# Build and tooling artifacts
+node_modules/
+web/app/.next/
+web/app/out/
+web/worker/.wrangler/
+
+# Generated private validation snapshots (rebuilt by generate:data)
+web/app/.generated/

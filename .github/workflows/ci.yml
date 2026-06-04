@@ -1,0 +1,142 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cli/**"
+      - "web/**"
+      - "tasks.yaml"
+      - "firebase.json"
+      - "scripts/**"
+      - "spec/**"
+      - ".github/workflows/**"
+  pull_request:
+    paths:
+      - "cli/**"
+      - "web/**"
+      - "tasks.yaml"
+      - "firebase.json"
+      - "scripts/**"
+      - "spec/**"
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r web/api/requirements.txt -e "cli[test]"
+
+      - name: Compile Python modules
+        run: python -m py_compile web/api/main.py cli/src/limen/*.py
+
+      - name: Check shell scripts
+        run: bash -n scripts/preflight-cloud-run.sh
+
+      - name: Check adapter lifecycle contracts
+        run: python scripts/validate-lifecycle-adapters.py
+
+      - name: Check portable contract schemas
+        run: node scripts/validate-contract-schemas.mjs
+
+      - name: Run API and CLI tests
+        run: python -m pytest web/api/tests cli/tests -q
+
+      - name: Probe local runtime adapter
+        run: scripts/probe-local-runtime.sh
+
+  worker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: web/worker/package-lock.json
+
+      - name: Install Worker dependencies
+        run: npm ci
+        working-directory: web/worker
+
+      - name: Check Worker syntax
+        run: npm run check
+        working-directory: web/worker
+
+      - name: Probe local Worker runtime adapter
+        run: scripts/probe-local-worker.sh
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: web/app/package-lock.json
+
+      - name: Install dashboard dependencies
+        run: npm ci
+        working-directory: web/app
+
+      - name: Build static dashboard and surface contracts
+        run: npm run build
+        working-directory: web/app
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check exported surface routes and contracts
+        run: |
+          test -f web/app/out/index.html
+          test -f web/app/out/client.html
+          test -f web/app/out/public.html
+          test -f web/app/out/qa.html
+          test -f web/app/out/public-status.json
+          test -f web/app/out/surface-manifest.json
+          test -f web/app/out/public-surface-manifest.json
+          test ! -e web/app/out/tasks.json
+          test ! -e web/app/out/client-status.json
+          test ! -e web/app/out/internal-status.json
+          test ! -e web/app/out/readiness.json
+          test ! -e web/app/out/qa-status.json
+          test ! -e web/app/out/owner-surface-manifest.json
+          test ! -e web/app/out/client-surface-manifest.json
+          test -f web/app/.generated/surfaces/client-status.json
+          test -f web/app/.generated/surfaces/internal-status.json
+          test -f web/app/.generated/surfaces/readiness.json
+          test -f web/app/.generated/surfaces/qa-status.json
+          test -f web/app/.generated/surfaces/owner-surface-manifest.json
+          test -f web/app/.generated/surfaces/client-surface-manifest.json
+          node web/app/scripts/validate-exported-pages.mjs
+          node web/app/scripts/validate-surface-contracts.mjs
+          node scripts/validate-contract-schemas.mjs
+          node - <<'NODE'
+          const fs = require("fs");
+          const publicStatus = JSON.parse(fs.readFileSync("web/app/out/public-status.json", "utf8"));
+          const clientStatus = JSON.parse(fs.readFileSync("web/app/.generated/surfaces/client-status.json", "utf8"));
+          const qaStatus = JSON.parse(fs.readFileSync("web/app/.generated/surfaces/qa-status.json", "utf8"));
+          const readiness = JSON.parse(fs.readFileSync("web/app/.generated/surfaces/readiness.json", "utf8"));
+          if (publicStatus.surface !== "public") throw new Error("wrong public surface");
+          if (clientStatus.surface !== "client") throw new Error("wrong client surface");
+          if (qaStatus.surface !== "qa") throw new Error("wrong qa surface");
+          if ("tasks" in publicStatus) throw new Error("public surface leaked tasks");
+          if (JSON.stringify(publicStatus).includes("dispatch_log")) throw new Error("public surface leaked dispatch logs");
+          if (JSON.stringify(clientStatus).includes("dispatch_log")) throw new Error("client surface leaked dispatch logs");
+          if (JSON.stringify(qaStatus).includes("dispatch_log")) throw new Error("qa surface leaked dispatch logs");
+          if (!Array.isArray(readiness.next_actions)) throw new Error("readiness missing next_actions");
+          if (JSON.stringify(readiness).includes("dispatch_log")) throw new Error("readiness leaked dispatch logs");
+          NODE

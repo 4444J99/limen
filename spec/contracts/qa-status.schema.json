@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://limen.local/contracts/qa-status.schema.json",
+  "title": "Limen QA Status",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "surface", "generated_at", "lifecycle", "steering", "mechanisms"],
+  "properties": {
+    "status": { "type": "string", "enum": ["ok", "degraded", "missing"] },
+    "surface": { "type": "string", "enum": ["qa"] },
+    "generated_at": { "type": "string" },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "assign", "verify", "recover", "archive_ready", "archived"],
+      "properties": {
+        "total": { "type": "number" },
+        "assign": { "type": "number" },
+        "verify": { "type": "number" },
+        "recover": { "type": "number" },
+        "archive_ready": { "type": "number" },
+        "archived": { "type": "number" }
+      }
+    },
+    "steering": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["principle", "next_batch", "qa_queue", "recovery_queue", "assignment_queue", "archive_queue"],
+      "properties": {
+        "principle": { "type": "string" },
+        "next_batch": { "type": "array", "items": { "$ref": "#/$defs/task_lifecycle" } },
+        "qa_queue": { "type": "array", "items": { "$ref": "#/$defs/task_lifecycle" } },
+        "recovery_queue": { "type": "array", "items": { "$ref": "#/$defs/task_lifecycle" } },
+        "assignment_queue": { "type": "array", "items": { "$ref": "#/$defs/task_lifecycle" } },
+        "archive_queue": { "type": "array", "items": { "$ref": "#/$defs/task_lifecycle" } }
+      }
+    },
+    "mechanisms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label", "agent", "command", "mode", "count"],
+        "properties": {
+          "id": { "type": "string", "enum": ["release-stale", "qa-verify", "assign-next", "archive-done"] },
+          "label": { "type": "string" },
+          "agent": { "type": "string" },
+          "command": { "type": "string" },
+          "mode": { "type": "string" },
+          "count": { "type": "number" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "task_lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "repo", "status", "priority", "assignee", "phase", "next_gate", "stale", "has_issue", "has_pr", "latest_event_at"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "repo": { "type": "string" },
+        "status": { "type": "string" },
+        "priority": { "type": "string" },
+        "assignee": { "type": "string" },
+        "phase": { "type": "string", "enum": ["assign", "verify", "recover", "archive", "archived"] },
+        "next_gate": { "type": "string" },
+        "stale": { "type": "boolean" },
+        "has_issue": { "type": "boolean" },
+        "has_pr": { "type": "boolean" },
+        "latest_event_at": { "type": ["string", "null"] }
+      }
+    }
+  }
+}
