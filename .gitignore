@@ -21,3 +21,9 @@ web/worker/.wrangler/
 
 # Generated private validation snapshots (rebuilt by generate:data)
 web/app/.generated/
+
+# Hosted public JSONs are generated at build time
+web/app/public/
+
+# Next.js route source — protect from machine-global 'public/' ignore rules
+!web/app/app/public/
