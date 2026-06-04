@@ -6,7 +6,7 @@
     "dev": "next dev",
     "generate:data": "node scripts/generate-static-data.mjs",
     "validate:surfaces": "node scripts/validate-surface-contracts.mjs && node ../../scripts/validate-contract-schemas.mjs",
-    "prebuild": "npm run generate:data && npm run validate:surfaces && node scripts/fetch-pr-status.mjs",
+    "prebuild": "npm run generate:data && node scripts/fetch-pr-status.mjs && npm run validate:surfaces",
     "build": "next build",
     "postbuild": "node scripts/validate-exported-pages.mjs",
     "start": "next start",
