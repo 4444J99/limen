@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://limen.local/contracts/readiness.schema.json",
+  "title": "Limen Readiness",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "generated_at", "agent", "counts", "budget", "checks", "next_actions"],
+  "properties": {
+    "status": { "type": "string", "enum": ["ready", "degraded", "blocked", "missing"] },
+    "generated_at": { "type": "string" },
+    "agent": { "type": "string" },
+    "counts": { "type": "object" },
+    "budget": { "type": "object" },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "status", "detail"],
+        "properties": {
+          "id": { "type": "string" },
+          "status": { "type": "string", "enum": ["pass", "warn", "fail"] },
+          "detail": { "type": "string" }
+        }
+      }
+    },
+    "next_actions": { "type": "array", "items": { "type": "string" } }
+  }
+}

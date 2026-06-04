@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://limen.local/contracts/pr-status.schema.json",
+  "title": "Limen Public PR Status",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["generated_at", "repos", "summary"],
+  "properties": {
+    "generated_at": { "type": "string" },
+    "repos": { "type": "array" },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total_repos", "total_open_prs", "prs_with_failing_ci"],
+      "properties": {
+        "total_repos": { "type": "number" },
+        "total_open_prs": { "type": "number" },
+        "prs_with_failing_ci": { "type": "number" }
+      }
+    }
+  }
+}
