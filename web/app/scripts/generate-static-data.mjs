@@ -433,6 +433,7 @@ const readiness = readinessReport(data, summary);
 const qa = qaStatus(data, summary);
 
 mkdirSync(dirname(outPath), { recursive: true });
+mkdirSync(dirname(publicStatusPath), { recursive: true });
 for (const path of hostedPrivatePaths) {
   if (existsSync(path)) unlinkSync(path);
 }
