@@ -72,32 +72,36 @@ const ownerOnlyUiNeedles = [
   "Load internal",
 ];
 
-assertLabels("index.html", ["Internal", "QA", "Client", "Public"]);
+assertLabels("index.html", ["Public"]);
+assertLabels("internal.html", ["Internal", "QA", "Client", "Public"]);
 assertLabels("qa.html", ["Internal", "QA", "Client", "Public"]);
 assertLabels("client.html", ["Client", "Public"]);
 assertLabels("public.html", ["Public"]);
 
 const runtimeAttached = Boolean(process.env.NEXT_PUBLIC_API_URL);
 if (runtimeAttached) {
-  assertIncludes("index.html", ["Owner access", "Owner token required", "Load internal"]);
+  assertIncludes("index.html", ["Limen is tracking", "Run plan", "Unrecorded capacity"]);
+  assertIncludes("internal.html", ["Owner access", "Owner token required", "Load internal"]);
   assertIncludes("client.html", ["Client token required", "Load client"]);
-  assertIncludes("public.html", ["Public runtime refresh", "CI attention", "Pull requests"]);
+  assertIncludes("public.html", ["Public runtime refresh", "Unrecorded capacity", "Pull requests"]);
   assertIncludes("qa.html", ["Owner token required", "Load QA"]);
   assertNotIncludes("client.html", ["Static snapshot only", "Build with NEXT_PUBLIC_API_URL to enable runtime refresh."]);
   assertNotIncludes("public.html", ["Static snapshot only", "Build with NEXT_PUBLIC_API_URL to enable runtime refresh."]);
 } else {
-  assertIncludes("index.html", ["Runtime unavailable"]);
+  assertIncludes("index.html", ["Limen is tracking", "Run plan", "Unrecorded capacity"]);
+  assertIncludes("internal.html", ["Runtime unavailable"]);
   assertIncludes("qa.html", ["Runtime unavailable"]);
   assertIncludes("client.html", ["Runtime unavailable"]);
   assertIncludes("public.html", ["Static snapshot only", "Build with NEXT_PUBLIC_API_URL to enable runtime refresh."]);
 }
 assertIncludes("public.html", ["/public-surface-manifest.json"]);
 
+assertNotIncludes("index.html", [">Internal</a>", ">QA</a>", ">Client</a>", "Client token", "Load internal", "Load QA"]);
 assertNotIncludes("client.html", [">Internal</a>", ">QA</a>", "API verification unavailable", "API assignment unavailable", "API archive unavailable"]);
 assertNotIncludes("public.html", [">Internal</a>", ">QA</a>", ">Client</a>", "Client token", "API verification unavailable", "API assignment unavailable", "API archive unavailable"]);
 assertNotIncludes("client.html", ['href="/surface-manifest.json"']);
 assertNotIncludes("public.html", ['href="/surface-manifest.json"']);
-for (const page of ["index.html", "qa.html", "client.html", "public.html"]) {
+for (const page of ["index.html", "internal.html", "qa.html", "client.html", "public.html"]) {
   assertNotIncludes(page, ["LIMEN-015", "Propagate PR #234 completions", "dispatch_log", "/tasks.json", "/qa-status.json", "/client-status.json", "/internal-status.json", "/owner-surface-manifest.json", "/readiness.json"]);
 }
 assertSourceNotIncludes("lib/data.ts", [
@@ -112,6 +116,12 @@ assertSourceNotIncludes("lib/data.ts", [
 assertSourceNotIncludes("client/client-surface-client.tsx", ownerOnlyUiNeedles);
 assertSourceNotIncludes("client/page.tsx", ownerOnlyUiNeedles);
 assertSourceNotIncludes("public/page.tsx", [
+  ...ownerOnlyUiNeedles,
+  "Client token",
+  "Load client",
+  "/api/client-status",
+]);
+assertSourceNotIncludes("public-surface.tsx", [
   ...ownerOnlyUiNeedles,
   "Client token",
   "Load client",

@@ -230,8 +230,67 @@ def test_public_status_is_aggregate_only(client: TestClient, tmp_path: Path) -> 
     payload = response.json()
     assert payload["summary"]["total"] == 1
     assert payload["summary"]["completed"] == 1
+    assert payload["summary"]["throughput"]["first_created"] == "2026-06-03"
+    assert payload["summary"]["throughput"]["done"] == 1
+    assert payload["summary"]["throughput"]["not_done"] == 0
     assert "tasks" not in payload
     assert "Private implementation detail" not in str(payload)
+
+
+def test_status_summary_reports_creation_age_and_run_ledger(client: TestClient, tmp_path: Path) -> None:
+    write_board(
+        tmp_path / "tasks.yaml",
+        [
+            {
+                "id": "LIMEN-AGE-001",
+                "title": "Completed task",
+                "repo": "4444J99/limen",
+                "target_agent": "jules",
+                "priority": "high",
+                "budget_cost": 1,
+                "status": "done",
+                "created": "2026-05-31",
+                "dispatch_log": [
+                    {
+                        "timestamp": "2026-05-31T00:00:00+00:00",
+                        "agent": "jules",
+                        "session_id": "test",
+                        "status": "dispatched",
+                    },
+                    {
+                        "timestamp": "2026-05-31T01:00:00+00:00",
+                        "agent": "jules",
+                        "session_id": "test",
+                        "status": "completed",
+                    },
+                ],
+            },
+            {
+                "id": "LIMEN-AGE-002",
+                "title": "Still active",
+                "repo": "4444J99/limen",
+                "target_agent": "jules",
+                "priority": "high",
+                "budget_cost": 1,
+                "status": "dispatched",
+                "created": "2026-06-01",
+                "dispatch_log": [],
+            },
+        ],
+    )
+
+    response = client.get("/api/status")
+
+    assert response.status_code == 200
+    throughput = response.json()["summary"]["throughput"]
+    assert throughput["first_created"] == "2026-05-31"
+    assert throughput["daily_capacity"] == 100
+    assert throughput["recorded_events"] == 2
+    assert throughput["recorded_starts"] == 1
+    assert throughput["recorded_finishes"] == 1
+    assert throughput["done"] == 1
+    assert throughput["not_done"] == 1
+    assert throughput["unrecorded_capacity_runs"] >= 0
 
 
 def test_client_status_respects_token(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

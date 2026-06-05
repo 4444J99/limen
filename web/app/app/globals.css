@@ -632,6 +632,144 @@ tbody tr.activeRow {
   color: #0f172a;
 }
 
+.publicCockpit {
+  padding-top: 28px;
+}
+
+.publicHero {
+  align-items: end;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin-bottom: 16px;
+  padding: 28px 0 22px;
+}
+
+.publicHero > *,
+.publicMetric,
+.surfacePanel {
+  min-width: 0;
+}
+
+.publicHero h1 {
+  color: #0f172a;
+  font-size: clamp(34px, 5vw, 62px);
+  letter-spacing: 0;
+  line-height: 0.98;
+  margin: 0;
+  max-width: 860px;
+}
+
+.publicHero h1 span {
+  display: block;
+}
+
+.publicHero p {
+  color: #475467;
+  font-size: 16px;
+  line-height: 1.55;
+  margin: 18px 0 0;
+  max-width: 820px;
+}
+
+.publicHero p span {
+  display: block;
+}
+
+.heroAction {
+  align-items: center;
+  background: #111827;
+  border: 1px solid #111827;
+  border-radius: 8px;
+  color: white;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 800;
+  height: 40px;
+  justify-content: center;
+  padding: 0 14px;
+  white-space: nowrap;
+}
+
+.publicOpsGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1.35fr repeat(3, minmax(0, 1fr));
+  margin-bottom: 12px;
+}
+
+.publicMetric {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  min-height: 136px;
+  padding: 16px;
+}
+
+.publicMetric.primary {
+  background: #111827;
+  border-color: #111827;
+  color: white;
+}
+
+.publicMetric span,
+.publicSplit span {
+  color: var(--muted);
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.publicMetric.primary span,
+.publicMetric.primary p {
+  color: #d1d5db;
+}
+
+.publicMetric strong {
+  display: block;
+  font-size: clamp(30px, 4vw, 48px);
+  line-height: 1;
+  margin-top: 12px;
+}
+
+.publicMetric p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 12px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.publicStatusBand {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.7fr);
+}
+
+.publicSplit {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 16px;
+}
+
+.publicSplit div {
+  background: var(--panel-2);
+  border: 1px solid #edf0f4;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.publicSplit strong {
+  display: block;
+  font-size: 26px;
+  line-height: 1;
+  margin-top: 8px;
+}
+
 .audienceMetrics,
 .publicSignal {
   display: grid;
@@ -704,6 +842,7 @@ tbody tr.activeRow {
 
 .panelTitle strong {
   font-size: 16px;
+  overflow-wrap: anywhere;
 }
 
 .clientTaskList {
@@ -741,6 +880,7 @@ tbody tr.activeRow {
   font-size: 13px;
   line-height: 1.45;
   margin: 5px 0 0;
+  overflow-wrap: anywhere;
 }
 
 .clientTaskList em {
@@ -759,7 +899,7 @@ tbody tr.activeRow {
   display: inline-flex;
   font-size: 12px;
   font-weight: 800;
-  margin-top: 10px;
+  margin: 10px 12px 0 0;
 }
 
 .rankList {
@@ -1138,6 +1278,11 @@ tbody tr.activeRow {
     grid-template-columns: 1fr;
   }
 
+  .publicOpsGrid,
+  .publicStatusBand {
+    grid-template-columns: 1fr 1fr;
+  }
+
   .surfacePanel.wide {
     grid-row: auto;
   }
@@ -1192,6 +1337,37 @@ tbody tr.activeRow {
   .audienceMetrics,
   .publicSignal {
     grid-template-columns: 1fr;
+  }
+
+  .publicHero {
+    align-items: start;
+    grid-template-columns: 1fr;
+    padding-top: 24px;
+  }
+
+  .publicHero h1 {
+    font-size: 30px;
+    line-height: 1;
+    overflow-wrap: anywhere;
+  }
+
+  .publicHero p {
+    overflow-wrap: anywhere;
+  }
+
+  .heroAction {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .publicOpsGrid,
+  .publicStatusBand,
+  .publicSplit {
+    grid-template-columns: 1fr;
+  }
+
+  .publicMetric {
+    min-height: 0;
   }
 
   .audienceHeader {
