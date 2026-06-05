@@ -18,18 +18,22 @@ export default function AuthenticatedDashboard({ apiUrl }: { apiUrl: string }) {
     if (!apiUrl || state.loading) return;
     setState({ loading: true, error: "", data: null });
     try {
-      const response = await fetch(`${apiUrl}/api/status`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.detail || response.statusText);
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+      const [statusResponse, tasksResponse] = await Promise.all([
+        fetch(`${apiUrl}/api/status`, { headers }),
+        fetch(`${apiUrl}/api/tasks`, { headers }),
+      ]);
+      const payload = await statusResponse.json();
+      if (!statusResponse.ok) throw new Error(payload.detail || statusResponse.statusText);
+      const tasksPayload = await tasksResponse.json();
+      if (!tasksResponse.ok) throw new Error(tasksPayload.detail || tasksResponse.statusText);
       setState({
         loading: false,
         error: "",
         data: {
           version: "runtime",
           portal: payload.portal || { name: "Limen", description: "" },
-          tasks: payload.tasks || [],
+          tasks: tasksPayload.tasks || [],
           summary: payload.summary,
           storage: payload.storage,
         },

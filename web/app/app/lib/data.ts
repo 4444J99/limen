@@ -1,6 +1,6 @@
 import { readFileSync } from "fs";
 import { join } from "path";
-import type { DashboardData, PRStatusData, Task } from "../dashboard-client";
+import type { DashboardData, PRStatusData, Task, ThroughputSummary } from "../dashboard-client";
 
 export interface PublicStatusData {
   status: string;
@@ -16,6 +16,7 @@ export interface PublicStatusData {
     active: number;
     by_status: Record<string, number>;
     generated_at: string;
+    throughput?: ThroughputSummary;
   };
 }
 

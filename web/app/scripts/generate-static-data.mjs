@@ -37,6 +37,13 @@ function countBy(items, keyFn) {
   }, {});
 }
 
+function parseDateOnly(value) {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toISOString().slice(0, 10);
+}
+
 function getTaskEvents(task) {
   return (task.dispatch_log || [])
     .filter((entry) => entry && entry.timestamp)
@@ -77,7 +84,43 @@ function deriveSummary(data) {
     today,
     today_events: todayEvents.length,
     today_jules_dispatches: todayJulesDispatches.length,
+    throughput: deriveThroughput(data, events, now),
     recent_events: events.slice(0, 40),
+  };
+}
+
+function deriveThroughput(data, events, now = new Date()) {
+  const tasks = data.tasks || [];
+  const currentDate = now.toISOString().slice(0, 10);
+  const createdDates = tasks.map((task) => parseDateOnly(task.created)).filter(Boolean).sort();
+  const firstCreated = createdDates[0] || currentDate;
+  const ageDays = Math.max(1, Math.floor((Date.parse(`${currentDate}T00:00:00.000Z`) - Date.parse(`${firstCreated}T00:00:00.000Z`)) / 86400000) + 1);
+  const dailyCapacity = Number(data.portal?.budget?.daily || 100);
+  const byStatus = countBy(tasks, (task) => task.status);
+  const byEventStatus = countBy(events, (event) => event.status);
+  const byEventAgent = countBy(events, (event) => event.agent);
+  const byEventDate = countBy(events, (event) => new Date(event.timestamp_ms).toISOString().slice(0, 10));
+  const done = (byStatus.done || 0) + (byStatus.archived || 0);
+  const recordedStarts = (byEventStatus.dispatched || 0) + (byEventStatus.in_progress || 0);
+  const recordedFinishes = (byEventStatus.done || 0) + (byEventStatus.completed || 0) + (byEventStatus.failed || 0) + (byEventStatus.failed_blocked || 0);
+  const expectedCapacityRuns = dailyCapacity * ageDays;
+  const unrecordedCapacityRuns = Math.max(0, expectedCapacityRuns - recordedStarts);
+  return {
+    first_created: firstCreated,
+    current_date: currentDate,
+    age_days: ageDays,
+    daily_capacity: dailyCapacity,
+    expected_capacity_runs: expectedCapacityRuns,
+    task_burndown_target_per_day: tasks.length ? Math.ceil(tasks.length / ageDays) : 0,
+    recorded_events: events.length,
+    recorded_starts: recordedStarts,
+    recorded_finishes: recordedFinishes,
+    done,
+    not_done: tasks.length - done,
+    unrecorded_capacity_runs: unrecordedCapacityRuns,
+    by_event_status: byEventStatus,
+    by_event_agent: byEventAgent,
+    by_event_date: byEventDate,
   };
 }
 
@@ -96,6 +139,7 @@ function publicSummary(data, generatedAt) {
     active: (byStatus.dispatched || 0) + (byStatus.in_progress || 0),
     by_status: byStatus,
     generated_at: generatedAt,
+    throughput: deriveThroughput(data, (data.tasks || []).flatMap(getTaskEvents), new Date(generatedAt)),
   };
 }
 

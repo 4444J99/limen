@@ -73,6 +73,49 @@ function taskEvents(task) {
     .sort((a, b) => b.timestamp_ms - a.timestamp_ms);
 }
 
+function parseDateOnly(value) {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (!Number.isFinite(parsed.getTime())) return null;
+  return parsed.toISOString().slice(0, 10);
+}
+
+function deriveThroughput(data, events, now = new Date()) {
+  const tasks = data.tasks || [];
+  const currentDate = now.toISOString().slice(0, 10);
+  const createdDates = tasks.map((task) => parseDateOnly(task.created)).filter(Boolean).sort();
+  const firstCreated = createdDates[0] || currentDate;
+  const firstCreatedMs = Date.parse(`${firstCreated}T00:00:00.000Z`);
+  const currentDateMs = Date.parse(`${currentDate}T00:00:00.000Z`);
+  const ageDays = Math.max(1, Math.floor((currentDateMs - firstCreatedMs) / 86400000) + 1);
+  const dailyCapacity = Number(data.portal?.budget?.daily || 100);
+  const byStatus = countBy(tasks, (task) => task.status);
+  const byEventStatus = countBy(events, (event) => event.status);
+  const byEventAgent = countBy(events, (event) => event.agent);
+  const byEventDate = countBy(events, (event) => new Date(event.timestamp_ms).toISOString().slice(0, 10));
+  const done = (byStatus.done || 0) + (byStatus.archived || 0);
+  const recordedStarts = (byEventStatus.dispatched || 0) + (byEventStatus.in_progress || 0);
+  const recordedFinishes = (byEventStatus.done || 0) + (byEventStatus.completed || 0) + (byEventStatus.failed || 0) + (byEventStatus.failed_blocked || 0);
+  const expectedCapacityRuns = dailyCapacity * ageDays;
+  return {
+    first_created: firstCreated,
+    current_date: currentDate,
+    age_days: ageDays,
+    daily_capacity: dailyCapacity,
+    expected_capacity_runs: expectedCapacityRuns,
+    task_burndown_target_per_day: tasks.length ? Math.ceil(tasks.length / ageDays) : 0,
+    recorded_events: events.length,
+    recorded_starts: recordedStarts,
+    recorded_finishes: recordedFinishes,
+    done,
+    not_done: tasks.length - done,
+    unrecorded_capacity_runs: Math.max(0, expectedCapacityRuns - recordedStarts),
+    by_event_status: byEventStatus,
+    by_event_agent: byEventAgent,
+    by_event_date: byEventDate,
+  };
+}
+
 function summary(data) {
   const tasks = data.tasks || [];
   const events = tasks.flatMap(taskEvents).sort((a, b) => b.timestamp_ms - a.timestamp_ms);
@@ -97,6 +140,7 @@ function summary(data) {
     today,
     today_events: todayEvents.length,
     today_jules_dispatches: todayEvents.filter((event) => event.agent === "jules" && event.status === "dispatched").length,
+    throughput: deriveThroughput(data, events, new Date(now)),
     recent_events: events.slice(0, 40),
   };
 }
@@ -115,6 +159,7 @@ function publicSummary(data) {
     active: (raw.by_status.dispatched || 0) + (raw.by_status.in_progress || 0),
     by_status: raw.by_status,
     generated_at: raw.generated_at,
+    throughput: raw.throughput,
   };
 }
 
