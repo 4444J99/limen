@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "limen": {
+      "command": "uv --directory /Users/4jp/Workspace/limen/mcp run limen-mcp",
+      "args": []
+    }
+  }
+}
