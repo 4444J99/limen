@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from limen.dispatch import dispatch_tasks, release_stale_tasks
 from limen.doctor import qa_report, readiness_report, stale_tasks
 from limen.io import load_limen_file
+from limen.status import print_status
 
 
 def write_board(path: Path, tasks: list[dict]) -> None:
@@ -150,6 +151,57 @@ def test_dispatch_limit_and_per_agent_budget(tmp_path: Path, monkeypatch) -> Non
     statuses = {task["id"]: task["status"] for task in board["tasks"]}
     assert statuses == {"LIMEN-003": "dispatched", "LIMEN-004": "dispatched", "LIMEN-005": "open"}
     assert board["portal"]["budget"]["track"]["per_agent"]["codex"] == 2
+
+
+def test_status_prints_creation_age_and_recorded_throughput(tmp_path: Path, capsys) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "LIMEN-AGE-001",
+                "title": "Completed task",
+                "repo": "4444J99/limen",
+                "target_agent": "jules",
+                "priority": "high",
+                "budget_cost": 1,
+                "status": "done",
+                "created": "2026-05-31",
+                "dispatch_log": [
+                    {
+                        "timestamp": "2026-05-31T00:00:00+00:00",
+                        "agent": "jules",
+                        "session_id": "test",
+                        "status": "dispatched",
+                    },
+                    {
+                        "timestamp": "2026-05-31T01:00:00+00:00",
+                        "agent": "jules",
+                        "session_id": "test",
+                        "status": "done",
+                    },
+                ],
+            },
+            {
+                "id": "LIMEN-AGE-002",
+                "title": "Active task",
+                "repo": "4444J99/limen",
+                "target_agent": "jules",
+                "priority": "high",
+                "budget_cost": 1,
+                "status": "dispatched",
+                "created": "2026-06-01",
+                "dispatch_log": [],
+            },
+        ],
+    )
+
+    print_status(load_limen_file(tasks_path))
+
+    output = capsys.readouterr().out
+    assert "Throughput: created 2026-05-31 ->" in output
+    assert "capacity 100/day" in output
+    assert "recorded: 2 log events, 1 starts, 1 finishes, 1 done, 1 not done" in output
 
 
 def test_readiness_report_flags_stale_claims_and_next_actions(tmp_path: Path, monkeypatch) -> None:

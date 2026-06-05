@@ -1,4 +1,53 @@
+from datetime import date, datetime
+from math import ceil
+from typing import Any
+
 from limen.models import LimenFile
+
+
+def _as_date(value: Any) -> date | None:
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00")).date()
+    except ValueError:
+        return None
+
+
+def _throughput(limen: LimenFile) -> dict[str, int | str | None]:
+    tasks = limen.tasks
+    today = date.today()
+    created_dates = [created for task in tasks if (created := _as_date(task.created))]
+    first_created = min(created_dates) if created_dates else today
+    age_days = max(1, (today - first_created).days + 1)
+    daily_capacity = int(limen.portal.budget.daily or 0)
+    done = len([task for task in tasks if task.status in ("done", "archived")])
+    not_done = len(tasks) - done
+    event_statuses = [
+        entry.status
+        for task in tasks
+        for entry in task.dispatch_log
+        if entry.status
+    ]
+    recorded_starts = len([status for status in event_statuses if status in ("dispatched", "in_progress")])
+    recorded_finishes = len([status for status in event_statuses if status in ("done", "completed", "failed", "failed_blocked")])
+    return {
+        "first_created": first_created.isoformat(),
+        "current_date": today.isoformat(),
+        "age_days": age_days,
+        "daily_capacity": daily_capacity,
+        "expected_capacity_runs": daily_capacity * age_days,
+        "task_burndown_target_per_day": ceil(len(tasks) / age_days) if tasks else 0,
+        "recorded_events": len(event_statuses),
+        "recorded_starts": recorded_starts,
+        "recorded_finishes": recorded_finishes,
+        "done": done,
+        "not_done": not_done,
+    }
 
 
 def print_status(
@@ -13,6 +62,22 @@ def print_status(
     if track.per_agent:
         per = ", ".join(f"{k}: {v}" for k, v in track.per_agent.items())
         print(f"  per agent: {per}")
+    throughput = _throughput(limen)
+    print(
+        "Throughput:"
+        f" created {throughput['first_created']} -> {throughput['current_date']}"
+        f" ({throughput['age_days']} days),"
+        f" capacity {throughput['daily_capacity']}/day = {throughput['expected_capacity_runs']} run slots,"
+        f" drain target {throughput['task_burndown_target_per_day']} tasks/day"
+    )
+    print(
+        "  recorded:"
+        f" {throughput['recorded_events']} log events,"
+        f" {throughput['recorded_starts']} starts,"
+        f" {throughput['recorded_finishes']} finishes,"
+        f" {throughput['done']} done,"
+        f" {throughput['not_done']} not done"
+    )
     print()
 
     tasks = limen.tasks

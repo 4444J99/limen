@@ -93,6 +93,7 @@ export interface DashboardData {
     today: string;
     today_events: number;
     today_jules_dispatches: number;
+    throughput?: ThroughputSummary;
     recent_events: DispatchEvent[];
   };
   storage?: {
@@ -102,6 +103,24 @@ export interface DashboardData {
     path?: string;
     configured?: boolean;
   };
+}
+
+export interface ThroughputSummary {
+  first_created: string;
+  current_date: string;
+  age_days: number;
+  daily_capacity: number;
+  expected_capacity_runs: number;
+  task_burndown_target_per_day: number;
+  recorded_events: number;
+  recorded_starts: number;
+  recorded_finishes: number;
+  done: number;
+  not_done: number;
+  unrecorded_capacity_runs: number;
+  by_event_status: Record<string, number>;
+  by_event_agent: Record<string, number>;
+  by_event_date: Record<string, number>;
 }
 
 type Phase = "EXPLORE" | "PLAN" | "BUILD" | "VERIFY" | "LEARN" | "REPEAT";
@@ -246,6 +265,7 @@ export default function DashboardClient({ data, prData, apiUrl, initialToken = "
   const done = data.summary.by_status.done || 0;
   const active = data.summary.active_count;
   const failed = (data.summary.by_status.failed || 0) + (data.summary.by_status.failed_blocked || 0);
+  const throughput = data.summary.throughput;
   const lifecycleCounts = Object.fromEntries(lifecycleGates.map((gate) => [gate, rows.filter((task) => task.lifecycleGate === gate).length])) as Record<LifecycleGate, number>;
   const apiReady = Boolean(apiUrl);
   const storageLabel = data.storage?.mode === "github" && data.storage.repo
@@ -303,8 +323,10 @@ export default function DashboardClient({ data, prData, apiUrl, initialToken = "
 
       <section className="metrics" aria-label="Pipeline metrics">
         <Metric title="Jules today" value={`${julesToday}/${julesDaily}`} tone={julesToday === 0 ? "red" : "blue"} detail={`${julesPct}% of daily async capacity used`} />
+        <Metric title="Run plan" value={throughput ? `${throughput.task_burndown_target_per_day}/day` : "n/a"} tone="blue" detail={throughput ? `${throughput.first_created} to ${throughput.current_date}: ${throughput.age_days} days` : "Creation date unavailable"} />
+        <Metric title="Recorded starts" value={throughput ? `${throughput.recorded_starts}` : "0"} tone={throughput?.recorded_starts ? "amber" : "red"} detail={throughput ? `${throughput.recorded_events} events, ${throughput.unrecorded_capacity_runs} starts not recorded` : "No run ledger"} />
         <Metric title="Queue" value={`${data.summary.total}`} tone="blue" detail={`${active} active, ${data.summary.stale_count} stale`} />
-        <Metric title="Completed" value={`${done}`} tone="green" detail={`${Math.round((done / Math.max(1, data.summary.total)) * 100)}% closed`} />
+        <Metric title="Completed" value={`${throughput?.done ?? done}`} tone="green" detail={`${throughput?.not_done ?? data.summary.total - done} not done`} />
         <Metric title="PR health" value={`${prData?.summary.total_open_prs || 0}`} tone={prData?.summary.prs_with_failing_ci ? "amber" : "green"} detail={`${prData?.summary.prs_with_failing_ci || 0} with failing CI`} />
         <Metric title="Failures" value={`${failed}`} tone={failed ? "red" : "green"} detail="Failed or blocked task states" />
       </section>

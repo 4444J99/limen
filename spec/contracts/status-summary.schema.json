@@ -21,6 +21,7 @@
         "active": { "type": "number" },
         "by_status": { "type": "object" },
         "generated_at": { "type": "string" },
+        "throughput": { "$ref": "#/$defs/throughput" },
         "stale_count": { "type": "number" },
         "lifecycle": { "$ref": "#/$defs/lifecycle" },
         "budget": { "type": "object" },
@@ -33,6 +34,44 @@
     }
   },
   "$defs": {
+    "throughput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "first_created",
+        "current_date",
+        "age_days",
+        "daily_capacity",
+        "expected_capacity_runs",
+        "task_burndown_target_per_day",
+        "recorded_events",
+        "recorded_starts",
+        "recorded_finishes",
+        "done",
+        "not_done",
+        "unrecorded_capacity_runs",
+        "by_event_status",
+        "by_event_agent",
+        "by_event_date"
+      ],
+      "properties": {
+        "first_created": { "type": "string" },
+        "current_date": { "type": "string" },
+        "age_days": { "type": "number" },
+        "daily_capacity": { "type": "number" },
+        "expected_capacity_runs": { "type": "number" },
+        "task_burndown_target_per_day": { "type": "number" },
+        "recorded_events": { "type": "number" },
+        "recorded_starts": { "type": "number" },
+        "recorded_finishes": { "type": "number" },
+        "done": { "type": "number" },
+        "not_done": { "type": "number" },
+        "unrecorded_capacity_runs": { "type": "number" },
+        "by_event_status": { "type": "object" },
+        "by_event_agent": { "type": "object" },
+        "by_event_date": { "type": "object" }
+      }
+    },
     "lifecycle": {
       "type": "object",
       "additionalProperties": false,

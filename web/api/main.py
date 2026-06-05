@@ -7,7 +7,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
+from math import ceil
 from pathlib import Path
 import shutil
 from typing import Any
@@ -101,6 +102,19 @@ class LoadedBoard:
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def parse_date(value: Any) -> date | None:
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00")).date()
+    except ValueError:
+        return None
 
 
 def tasks_path() -> Path:
@@ -321,6 +335,56 @@ def summary(data: dict[str, Any]) -> dict[str, Any]:
         "by_priority": by_priority,
         "by_repo": by_repo,
         "budget": budget(data),
+        "throughput": throughput(data),
+    }
+
+
+def throughput(data: dict[str, Any]) -> dict[str, Any]:
+    tasks = data.get("tasks", [])
+    current_date = datetime.now(timezone.utc).date()
+    created_dates = [created for task in tasks if (created := parse_date(task.get("created")))]
+    first_created = min(created_dates) if created_dates else current_date
+    age_days = max(1, (current_date - first_created).days + 1)
+    raw_budget = budget(data)
+    daily_capacity = int(raw_budget.get("daily", 100))
+    by_status: dict[str, int] = {}
+    by_event_status: dict[str, int] = {}
+    by_event_agent: dict[str, int] = {}
+    by_event_date: dict[str, int] = {}
+    for task in tasks:
+        status = task.get("status", "unknown")
+        by_status[status] = by_status.get(status, 0) + 1
+        for entry in task.get("dispatch_log", []) or []:
+            event_status = entry.get("status", "unknown")
+            by_event_status[event_status] = by_event_status.get(event_status, 0) + 1
+            agent = entry.get("agent", "unknown")
+            by_event_agent[agent] = by_event_agent.get(agent, 0) + 1
+            event_date = parse_date(entry.get("timestamp"))
+            if event_date:
+                key = event_date.isoformat()
+                by_event_date[key] = by_event_date.get(key, 0) + 1
+    done = by_status.get("done", 0) + by_status.get("archived", 0)
+    expected_capacity_runs = daily_capacity * age_days
+    recorded_events = sum(by_event_status.values())
+    recorded_starts = sum(by_event_status.get(status, 0) for status in ("dispatched", "in_progress"))
+    recorded_finishes = sum(by_event_status.get(status, 0) for status in ("done", "completed", "failed", "failed_blocked"))
+    unrecorded_capacity_runs = max(0, expected_capacity_runs - recorded_starts)
+    return {
+        "first_created": first_created.isoformat(),
+        "current_date": current_date.isoformat(),
+        "age_days": age_days,
+        "daily_capacity": daily_capacity,
+        "expected_capacity_runs": expected_capacity_runs,
+        "task_burndown_target_per_day": ceil(len(tasks) / age_days) if tasks else 0,
+        "recorded_events": recorded_events,
+        "recorded_starts": recorded_starts,
+        "recorded_finishes": recorded_finishes,
+        "done": done,
+        "not_done": len(tasks) - done,
+        "unrecorded_capacity_runs": unrecorded_capacity_runs,
+        "by_event_status": by_event_status,
+        "by_event_agent": by_event_agent,
+        "by_event_date": by_event_date,
     }
 
 
@@ -338,6 +402,7 @@ def public_summary(data: dict[str, Any]) -> dict[str, Any]:
         "active": raw["by_status"].get("dispatched", 0) + raw["by_status"].get("in_progress", 0),
         "by_status": raw["by_status"],
         "generated_at": now_iso(),
+        "throughput": raw["throughput"],
     }
 
 
