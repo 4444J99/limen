@@ -1,7 +1,6 @@
 import os
 import subprocess
-import sys
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 from limen.io import save_limen_file
@@ -19,7 +18,7 @@ def session_id() -> str:
     )
 
 
-def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool:
+def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool | str:
     if agent == "jules":
         return _call_jules(task, dry_run)
     dispatch_cmd = os.environ.get("LIMEN_DISPATCH_CMD", "agent-dispatch")
@@ -39,14 +38,27 @@ def _build_prompt(task: Task) -> str:
     return "".join(parts)
 
 
-def _run_cmd(cmd: list[str], task: Task, dry_run: bool) -> bool:
+def _run_cmd(cmd: list[str], task: Task, dry_run: bool) -> bool | str:
     if dry_run:
         print(f"  would: {' '.join(cmd)}")
         return True
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=600, stdin=subprocess.DEVNULL)
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=600, stdin=subprocess.DEVNULL
+        )
         if result.returncode == 0:
             print(f"  dispatched: {task.id}")
+            # Try to extract session ID from output if it's jules
+            if cmd[0].endswith("jules"):
+                import re
+
+                match = re.search(r"session\s+(\d+)", result.stdout, re.IGNORECASE)
+                if match:
+                    return match.group(1)
+                # Just look for any large number
+                match = re.search(r"\b(\d{15,20})\b", result.stdout)
+                if match:
+                    return match.group(1)
             return True
         print(f"  FAILED ({result.returncode}): {task.id}")
         if result.stderr:
@@ -60,7 +72,7 @@ def _run_cmd(cmd: list[str], task: Task, dry_run: bool) -> bool:
         return False
 
 
-def _call_jules(task: Task, dry_run: bool) -> bool:
+def _call_jules(task: Task, dry_run: bool) -> bool | str:
     repo = task.repo or os.environ.get("LIMEN_ROOT", ".")
     prompt = _build_prompt(task)
     cmd = [os.environ.get("LIMEN_JULES_BIN", "jules"), "new", "--repo", repo, prompt]
@@ -104,7 +116,9 @@ def dispatch_tasks(
     agent_filter = agent or resolve_agent()
     remaining = _remaining_budget(limen, agent_filter, budget)
     if remaining <= 0:
-        print(f"Budget exhausted for {agent_filter} ({track.spent}/{budget} total spent)")
+        print(
+            f"Budget exhausted for {agent_filter} ({track.spent}/{budget} total spent)"
+        )
         return
 
     tasks = limen.tasks
@@ -158,6 +172,8 @@ def dispatch_tasks(
             task.updated = now
             task.dispatch_log.append(entry)
         elif not dry_run:
+            if isinstance(success, str):
+                entry.session_id = success
             task.status = "dispatched"
             task.updated = now
             task.dispatch_log.append(entry)
@@ -186,7 +202,9 @@ def release_stale_tasks(
     candidates = stale_tasks(limen, hours=hours, agent=agent)
 
     mode = "DRY-RUN" if dry_run else "APPLY"
-    print(f"── limen release-stale ({mode}) — hours={hours} candidates={len(candidates)}")
+    print(
+        f"── limen release-stale ({mode}) — hours={hours} candidates={len(candidates)}"
+    )
     for task in candidates:
         print(f"  {task.id} {task.status} {task.target_agent} — {task.title}")
         if not dry_run:
