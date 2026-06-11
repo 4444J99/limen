@@ -44,7 +44,7 @@ def _run_cmd(cmd: list[str], task: Task, dry_run: bool) -> bool:
         print(f"  would: {' '.join(cmd)}")
         return True
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=600, stdin=subprocess.DEVNULL)
         if result.returncode == 0:
             print(f"  dispatched: {task.id}")
             return True
