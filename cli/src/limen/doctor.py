@@ -10,7 +10,9 @@ from typing import Any
 from limen.models import LimenFile, Task
 
 
-def stale_tasks(limen: LimenFile, hours: int = 24, agent: str | None = None) -> list[Task]:
+def stale_tasks(
+    limen: LimenFile, hours: int = 24, agent: str | None = None
+) -> list[Task]:
     cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
     candidates: list[Task] = []
     for task in limen.tasks:
@@ -25,27 +27,64 @@ def stale_tasks(limen: LimenFile, hours: int = 24, agent: str | None = None) -> 
     return candidates
 
 
-def readiness_report(limen: LimenFile, tasks_path: Path, agent: str = "jules") -> dict[str, Any]:
+def readiness_report(
+    limen: LimenFile, tasks_path: Path, agent: str = "jules"
+) -> dict[str, Any]:
     stale = stale_tasks(limen, agent=agent)
-    open_tasks = [task for task in limen.tasks if task.status == "open" and task.target_agent in (agent, "any")]
-    active_tasks = [task for task in limen.tasks if task.status in ("dispatched", "in_progress")]
+    open_tasks = [
+        task
+        for task in limen.tasks
+        if task.status == "open" and task.target_agent in (agent, "any")
+    ]
+    active_tasks = [
+        task for task in limen.tasks if task.status in ("dispatched", "in_progress")
+    ]
     budget = limen.portal.budget
     spent = budget.track.per_agent.get(agent, 0)
     limit = budget.per_agent.get(agent, budget.daily)
     remaining = max(0, min(budget.daily - budget.track.spent, limit - spent))
-    agent_bin = os.environ.get("LIMEN_JULES_BIN", "jules") if agent == "jules" else os.environ.get("LIMEN_DISPATCH_CMD", "agent-dispatch")
+    agent_bin = (
+        os.environ.get("LIMEN_JULES_BIN", "jules")
+        if agent == "jules"
+        else os.environ.get("LIMEN_DISPATCH_CMD", "agent-dispatch")
+    )
     agent_path = shutil.which(agent_bin)
     checks = [
-        {"id": "tasks_file", "status": "pass" if tasks_path.exists() else "fail", "detail": str(tasks_path)},
-        {"id": "task_count", "status": "pass" if limen.tasks else "warn", "detail": f"{len(limen.tasks)} tasks"},
-        {"id": "stale_claims", "status": "warn" if stale else "pass", "detail": f"{len(stale)} stale {agent} active tasks"},
-        {"id": "open_queue", "status": "pass" if open_tasks else "warn", "detail": f"{len(open_tasks)} open {agent} tasks"},
-        {"id": "budget", "status": "pass" if remaining > 0 else "fail", "detail": f"{remaining}/{limit} {agent} runs remaining"},
-        {"id": "agent_cli", "status": "pass" if agent_path else "fail", "detail": agent_path or f"{agent_bin} not found"},
+        {
+            "id": "tasks_file",
+            "status": "pass" if tasks_path.exists() else "fail",
+            "detail": str(tasks_path),
+        },
+        {
+            "id": "task_count",
+            "status": "pass" if limen.tasks else "warn",
+            "detail": f"{len(limen.tasks)} tasks",
+        },
+        {
+            "id": "stale_claims",
+            "status": "warn" if stale else "pass",
+            "detail": f"{len(stale)} stale {agent} active tasks",
+        },
+        {
+            "id": "open_queue",
+            "status": "pass" if open_tasks else "warn",
+            "detail": f"{len(open_tasks)} open {agent} tasks",
+        },
+        {
+            "id": "budget",
+            "status": "pass" if remaining > 0 else "fail",
+            "detail": f"{remaining}/{limit} {agent} runs remaining",
+        },
+        {
+            "id": "agent_cli",
+            "status": "pass" if agent_path else "fail",
+            "detail": agent_path or f"{agent_bin} not found",
+        },
         {
             "id": "api_runtime",
             "status": "pass" if os.environ.get("NEXT_PUBLIC_API_URL") else "warn",
-            "detail": os.environ.get("NEXT_PUBLIC_API_URL") or "backend runtime not attached to Firebase static hosting",
+            "detail": os.environ.get("NEXT_PUBLIC_API_URL")
+            or "backend runtime not attached to Firebase static hosting",
         },
     ]
     if any(check["status"] == "fail" for check in checks):
@@ -72,7 +111,9 @@ def readiness_report(limen: LimenFile, tasks_path: Path, agent: str = "jules") -
             "remaining": remaining,
         },
         "checks": checks,
-        "next_actions": next_actions(stale, open_tasks, remaining, bool(agent_path), agent),
+        "next_actions": next_actions(
+            stale, open_tasks, remaining, bool(agent_path), agent
+        ),
     }
 
 
@@ -128,7 +169,9 @@ def _task_lifecycle(task: Task, stale_ids: set[str]) -> dict[str, Any]:
     }
 
 
-def qa_report(limen: LimenFile, tasks_path: Path, agent: str = "jules") -> dict[str, Any]:
+def qa_report(
+    limen: LimenFile, tasks_path: Path, agent: str = "jules"
+) -> dict[str, Any]:
     stale_ids = {task.id for task in stale_tasks(limen)}
     items = [_task_lifecycle(task, stale_ids) for task in limen.tasks]
     phase_order = {"recover": 0, "verify": 1, "assign": 2, "archive": 3, "archived": 4}
@@ -205,12 +248,20 @@ def qa_report(limen: LimenFile, tasks_path: Path, agent: str = "jules") -> dict[
     }
 
 
-def next_actions(stale: list[Task], open_tasks: list[Task], remaining: int, has_agent_cli: bool, agent: str) -> list[str]:
+def next_actions(
+    stale: list[Task],
+    open_tasks: list[Task],
+    remaining: int,
+    has_agent_cli: bool,
+    agent: str,
+) -> list[str]:
     actions: list[str] = []
     if stale:
         actions.append(f"limen release-stale --agent {agent} --hours 24 --apply")
     if open_tasks and remaining > 0 and has_agent_cli:
-        actions.append(f"limen dispatch --agent {agent} --limit {min(remaining, len(open_tasks))} --live")
+        actions.append(
+            f"limen dispatch --agent {agent} --limit {min(remaining, len(open_tasks))} --live"
+        )
     if not has_agent_cli:
         actions.append(f"Install or configure {agent} dispatch CLI")
     if remaining <= 0:
@@ -241,7 +292,9 @@ def print_qa_report(report: dict[str, Any]) -> None:
     )
     print("── next steering batch")
     for item in report["steering"]["next_batch"]:
-        print(f"  {item['phase'].upper():7} {item['id']} {item['assignee']} — {item['title']}")
+        print(
+            f"  {item['phase'].upper():7} {item['id']} {item['assignee']} — {item['title']}"
+        )
     print("── mechanisms")
     for mechanism in report["mechanisms"]:
         print(f"  {mechanism['count']:3} {mechanism['id']}: {mechanism['command']}")

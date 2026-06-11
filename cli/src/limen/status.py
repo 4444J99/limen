@@ -28,13 +28,18 @@ def _throughput(limen: LimenFile) -> dict[str, int | str | None]:
     done = len([task for task in tasks if task.status in ("done", "archived")])
     not_done = len(tasks) - done
     event_statuses = [
-        entry.status
-        for task in tasks
-        for entry in task.dispatch_log
-        if entry.status
+        entry.status for task in tasks for entry in task.dispatch_log if entry.status
     ]
-    recorded_starts = len([status for status in event_statuses if status in ("dispatched", "in_progress")])
-    recorded_finishes = len([status for status in event_statuses if status in ("done", "completed", "failed", "failed_blocked")])
+    recorded_starts = len(
+        [status for status in event_statuses if status in ("dispatched", "in_progress")]
+    )
+    recorded_finishes = len(
+        [
+            status
+            for status in event_statuses
+            if status in ("done", "completed", "failed", "failed_blocked")
+        ]
+    )
     return {
         "first_created": first_created.isoformat(),
         "current_date": today.isoformat(),
@@ -94,7 +99,6 @@ def print_status(
         print("No tasks match the current filters")
         return
 
-    task_types = limen.portal.budget.per_agent
 
     header = f"{'ID':<12} {'Title':<50} {'Agent':<10} {'Status':<14} {'Priority':<10} {'Budget':<6}"
     sep = "-" * len(header)
