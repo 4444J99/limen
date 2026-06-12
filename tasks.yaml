@@ -10,10 +10,10 @@ portal:
       jules: 100
       gemini: 10
     track:
-      date: '2026-06-11'
-      spent: 86
+      date: '2026-06-12'
+      spent: 7
       per_agent:
-        jules: 86
+        jules: 7
         gemini: 0
 tasks:
 - id: LIMEN-001
@@ -3095,7 +3095,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: superseded
   labels:
   - batch-2026-06-01
   urls:
@@ -3116,7 +3116,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - batch-2026-06-01
   urls:
@@ -3124,13 +3124,17 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. Audit 26 missing READMEs across
     148 repos
   created: '2026-06-01'
-  updated: '2026-06-11T04:01:20.023759Z'
+  updated: '2026-06-12T13:36:12.976313Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-12T13:36:12.976313Z'
+    agent: jules
+    session_id: '10973463060798665291'
+    status: dispatched
 - id: LIMEN-095
   title: "Session receipt 2026-05-30 \u2014 post-restart hanging-task drain"
   repo: a-organvm/organvm-corpvs-testamentvm
@@ -3138,7 +3142,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - batch-2026-06-01
   urls:
@@ -3146,13 +3150,17 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. Session receipt 2026-05-30\
     \ \u2014 post-restart hanging-task drain"
   created: '2026-06-01'
-  updated: '2026-06-11T04:01:20.023759Z'
+  updated: '2026-06-12T13:36:12.976313Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-12T13:36:12.976313Z'
+    agent: jules
+    session_id: '10888699745473444762'
+    status: dispatched
 - id: LIMEN-096
   title: "Submit conference talk proposals \u2014 AI-Conductor path"
   repo: a-organvm/organvm-engine
@@ -3160,7 +3168,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - batch-2026-06-01
   urls:
@@ -3168,13 +3176,17 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. Submit conference talk proposals\
     \ \u2014 AI-Conductor path"
   created: '2026-06-01'
-  updated: '2026-06-11T04:01:20.023759Z'
+  updated: '2026-06-12T13:36:12.976313Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-12T13:36:12.976313Z'
+    agent: jules
+    session_id: '9491685092102974577'
+    status: dispatched
 - id: LIMEN-097
   title: "Promotion Recommendations \u2014 June 2026 triage"
   repo: a-organvm/orchestration-start-here
@@ -3182,7 +3194,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - batch-2026-06-01
   urls:
@@ -3190,13 +3202,17 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. Promotion Recommendations \u2014\
     \ June 2026 triage"
   created: '2026-06-01'
-  updated: '2026-06-11T04:01:20.023759Z'
+  updated: '2026-06-12T13:36:12.976313Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-12T13:36:12.976313Z'
+    agent: jules
+    session_id: '17961470350566474261'
+    status: dispatched
 - id: LIMEN-098
   title: Staggered Walkthrough Schedule triage
   repo: organvm-i-theoria/.github
@@ -3204,7 +3220,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - batch-2026-06-01
   urls:
@@ -3212,13 +3228,17 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. Staggered Walkthrough Schedule
     triage
   created: '2026-06-01'
-  updated: '2026-06-11T04:01:20.023759Z'
+  updated: '2026-06-12T13:36:12.976313Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-12T13:36:12.976313Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: LIMEN-099
   title: "IRF-CCE-033: Execute CCE commercial architecture \u2014 H1 actions"
   repo: organvm-i-theoria/conversation-corpus-engine
@@ -3226,7 +3246,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - batch-2026-06-01
   urls:
@@ -3234,13 +3254,17 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. IRF-CCE-033: Execute CCE commercial\
     \ architecture \u2014 H1 actions"
   created: '2026-06-01'
-  updated: '2026-06-11T04:01:20.023759Z'
+  updated: '2026-06-12T13:36:12.976313Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-12T13:36:12.976313Z'
+    agent: jules
+    session_id: '15842058161518851569'
+    status: dispatched
 - id: LIMEN-100
   title: Audit all GitHub orgs for open issues suitable for Jules dispatch (Batch
     3)
@@ -3249,17 +3273,21 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - batch-2026-06-01
   urls: []
   context: Audited 2026-06-01 from Jules-ready batch. Audit all GitHub orgs for open
     issues suitable for Jules dispatch (Batch 3)
   created: '2026-06-01'
-  updated: '2026-06-11T04:01:20.023759Z'
+  updated: '2026-06-12T13:36:12.976313Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-12T13:36:12.976313Z'
+    agent: jules
+    session_id: '5599664914462044276'
+    status: dispatched
