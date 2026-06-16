@@ -21,6 +21,8 @@ def session_id() -> str:
 def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool | str:
     if agent == "jules":
         return _call_jules(task, dry_run)
+    if agent in _LOCAL_AGENTS:
+        return _call_local_agent(agent, task, dry_run)
     dispatch_cmd = os.environ.get("LIMEN_DISPATCH_CMD", "agent-dispatch")
     prompt = _build_prompt(task)
     cmd = [dispatch_cmd, agent, prompt]
@@ -38,13 +40,19 @@ def _build_prompt(task: Task) -> str:
     return "".join(parts)
 
 
-def _run_cmd(cmd: list[str], task: Task, dry_run: bool) -> bool | str:
+def _run_cmd(cmd: list[str], task: Task, dry_run: bool, cwd: str | None = None) -> bool | str:
     if dry_run:
-        print(f"  would: {' '.join(cmd)}")
+        loc = f" [cwd={cwd}]" if cwd else ""
+        print(f"  would:{loc} {' '.join(cmd)}")
         return True
     try:
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=600, stdin=subprocess.DEVNULL
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=600,
+            stdin=subprocess.DEVNULL,
+            cwd=cwd,
         )
         if result.returncode == 0:
             print(f"  dispatched: {task.id}")
@@ -77,6 +85,67 @@ def _call_jules(task: Task, dry_run: bool) -> bool | str:
     prompt = _build_prompt(task)
     cmd = [os.environ.get("LIMEN_JULES_BIN", "jules"), "new", "--repo", repo, prompt]
     return _run_cmd(cmd, task, dry_run)
+
+
+# Local non-interactive agents — run inside a working copy of the task's repo.
+# Verified CLI verbs: codex exec, opencode run, gemini -p, agy -p, claude -p.
+# (Jules is the async-cloud lane above; these are the local lanes.)
+_LOCAL_AGENTS: dict[str, list[str]] = {
+    "codex": ["exec"],
+    "opencode": ["run"],
+    "gemini": ["-p"],
+    "agy": ["-p"],
+    "antigravity": ["-p"],
+    "claude": ["-p"],
+}
+_LOCAL_BIN: dict[str, str] = {"antigravity": "agy"}
+
+
+def _resolve_repo_dir(task: Task) -> Path | None:
+    """Find a local git checkout of task.repo (owner/name) across known roots.
+
+    Falls back to matching by repo name under any org dir (the local checkout's
+    org can differ from the GitHub remote org, e.g. local organvm/ vs remote
+    a-organvm/), disambiguating by the git remote when multiple names collide.
+    """
+    if not task.repo:
+        return None
+    org, _, name = task.repo.partition("/")
+    ws = Path(os.environ.get("LIMEN_WORKDIR", Path.home() / "Workspace"))
+    cart = Path.home() / "Workspace" / ".home-cartridge" / "Code"
+    for cand in (ws / task.repo, ws / org / name, ws / name, cart / org / name, cart / name):
+        if (cand / ".git").exists():
+            return cand
+    matches = [
+        p for root in (ws, cart) for p in root.glob(f"*/{name}") if (p / ".git").exists()
+    ]
+    if len(matches) == 1:
+        return matches[0]
+    for p in matches:  # disambiguate by remote when name collides across orgs
+        try:
+            r = subprocess.run(
+                ["git", "-C", str(p), "remote", "get-url", "origin"],
+                capture_output=True, text=True, timeout=10,
+            )
+            if r.returncode == 0 and task.repo.lower() in r.stdout.lower():
+                return p
+        except Exception:
+            pass
+    return matches[0] if matches else None
+
+
+def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str:
+    binary = os.environ.get(f"LIMEN_{agent.upper()}_BIN", _LOCAL_BIN.get(agent, agent))
+    cmd = [binary, *_LOCAL_AGENTS[agent], _build_prompt(task)]
+    cwd = _resolve_repo_dir(task)
+    if cwd is None:
+        msg = f"no local checkout of {task.repo or '(no repo)'}"
+        if dry_run:
+            print(f"  would [{msg}; clone first]: {binary} {' '.join(_LOCAL_AGENTS[agent])} …")
+            return True
+        print(f"  SKIP {task.id}: {msg} — clone it under $LIMEN_WORKDIR first")
+        return False
+    return _run_cmd(cmd, task, dry_run, cwd=str(cwd))
 
 
 def _reset_budget_if_needed(limen: LimenFile, now: datetime) -> None:
