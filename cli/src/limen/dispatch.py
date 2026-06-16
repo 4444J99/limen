@@ -88,15 +88,26 @@ def _call_jules(task: Task, dry_run: bool) -> bool | str:
 
 
 # Local non-interactive agents — run inside a working copy of the task's repo.
-# Verified CLI verbs: codex exec, opencode run, gemini -p, agy -p, claude -p.
-# (Jules is the async-cloud lane above; these are the local lanes.)
+# Verified CLI verbs (2026-06-16 live probe): codex exec, opencode run,
+# gemini -p, agy -p, claude -p. (Jules is the async-cloud lane above.)
+#
+# WRITE MODE matters: several CLIs default to read-only / no-edit in headless
+# mode, so they'd execute but never change a file. Flags below opt each into
+# autonomous workspace writes:
+#   - codex: needs --skip-git-repo-check (else aborts outside a "trusted" dir)
+#     and --sandbox workspace-write (default sandbox is read-only). exec is
+#     already non-interactive (approval: never).
+#   - claude: -p prints; --permission-mode acceptEdits lets it apply edits.
+#   - opencode/agy: edit by default in run/-p mode (verified READY headless).
+#   - gemini: requires GEMINI_API_KEY / settings.json auth (not configured;
+#     lane is wired but will fail until auth is set).
 _LOCAL_AGENTS: dict[str, list[str]] = {
-    "codex": ["exec"],
+    "codex": ["exec", "--skip-git-repo-check", "--sandbox", "workspace-write"],
     "opencode": ["run"],
     "gemini": ["-p"],
     "agy": ["-p"],
     "antigravity": ["-p"],
-    "claude": ["-p"],
+    "claude": ["-p", "--permission-mode", "acceptEdits"],
 }
 _LOCAL_BIN: dict[str, str] = {"antigravity": "agy"}
 
