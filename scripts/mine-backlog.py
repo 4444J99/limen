@@ -1,0 +1,177 @@
+#!/usr/bin/env python3
+"""Backlog-miner — rung 3 of the self-* ladder (self-feeding).
+
+Keeps the conductor's queue full so idle multi-vendor capacity always has work.
+Mines OPEN GitHub issues across the fleet's orgs, normalizes each into a limen
+task (identity = owner/repo from the issue, never a folder name), dedups against
+the existing tasks.yaml, and appends them as `open` tasks with target_agent=any
+so the vendor-tiering router (scripts/route.py) decides the lane.
+
+Bounded by design (the backlog is ~1600+ issues; the budget is 100/day):
+  --limit N         cap total mined this run (default 25)
+  --owners a,b,c    restrict to these owners (default: the known fleet owners)
+  --label L         only issues carrying label L
+  --exclude-label   skip these labels (default: park,blocked,wip,duplicate,
+                    invalid,wontfix) — "park"/"blocked" are deferred by design
+  --apply           append to tasks.yaml via the limen schema (validated);
+                    without it, prints the plan and changes nothing.
+
+Priority is read from labels: ship-now/critical -> high; ship-soon -> medium;
+otherwise medium. Requires `gh` authenticated with repo + read:org.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import subprocess
+import sys
+from datetime import date
+from pathlib import Path
+
+DEFAULT_OWNERS = [
+    "4444J99",  # personal account -> user: qualifier
+    "a-organvm", "meta-organvm",
+    "organvm-i-theoria", "organvm-ii-poiesis", "organvm-iii-ergon",
+    "organvm-iv-taxis", "organvm-v-logos", "organvm-vi-koinonia",
+    "organvm-vii-kerygma",
+]
+DEFAULT_EXCLUDE = ["park", "blocked", "wip", "duplicate", "invalid", "wontfix"]
+_PERSONAL = {"4444J99"}
+
+
+def _gh_issues(owner: str, per_owner: int, label: str | None) -> list[dict]:
+    args = ["gh", "search", "issues", "--owner", owner, "--state", "open",
+            "--limit", str(per_owner),
+            "--json", "repository,number,title,labels,url,body"]
+    if label:
+        args += ["--label", label]
+    try:
+        r = subprocess.run(args, capture_output=True, text=True, timeout=120)
+        if r.returncode != 0:
+            print(f"  ! {owner}: gh error ({r.stderr.strip()[:80]})", file=sys.stderr)
+            return []
+        return json.loads(r.stdout or "[]")
+    except Exception as e:
+        print(f"  ! {owner}: {e}", file=sys.stderr)
+        return []
+
+
+_PRIO_HIGH = {"ship-now", "critical", "urgent", "p0", "p1"}
+_PRIO_MED = {"ship-soon", "p2"}
+
+
+def _priority(labels: list[str]) -> str:
+    ls = {l.lower() for l in labels}
+    if ls & _PRIO_HIGH:
+        return "high"
+    if ls & _PRIO_MED:
+        return "medium"
+    return "medium"
+
+
+_PRIO_RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3, "backlog": 4}
+
+
+def _slug(s: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")
+
+
+def _to_task(issue: dict) -> dict:
+    nwo = issue["repository"]["nameWithOwner"]  # owner/repo
+    owner, _, repo = nwo.partition("/")
+    num = issue["number"]
+    labels = [l["name"] for l in issue.get("labels", [])]
+    body = (issue.get("body") or "").strip().replace("\r", "")
+    excerpt = re.sub(r"\s+", " ", body)[:400]
+    return {
+        "id": f"GH-{_slug(owner)}-{_slug(repo)}-{num}",
+        "title": issue["title"][:140],
+        "repo": nwo,
+        "type": "code",
+        "target_agent": "any",
+        "priority": _priority(labels),
+        "budget_cost": 1,
+        "status": "open",
+        "labels": labels,
+        "urls": [issue["url"]],
+        "context": f"GitHub issue {nwo}#{num}. {excerpt}".strip(),
+        "created": date.today().isoformat(),
+    }
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS", "tasks.yaml"))
+    ap.add_argument("--owners", default=",".join(DEFAULT_OWNERS))
+    ap.add_argument("--limit", type=int, default=25)
+    ap.add_argument("--per-owner", type=int, default=40)
+    ap.add_argument("--label", default=None)
+    ap.add_argument("--exclude-label", default=",".join(DEFAULT_EXCLUDE))
+    ap.add_argument("--apply", action="store_true")
+    args = ap.parse_args()
+
+    owners = [o.strip() for o in args.owners.split(",") if o.strip()]
+    exclude = {x.strip().lower() for x in args.exclude_label.split(",") if x.strip()}
+    tasks_path = Path(args.tasks)
+
+    # existing ids + urls for dedup
+    import yaml
+    existing = yaml.safe_load(tasks_path.read_text()) if tasks_path.exists() else {"tasks": []}
+    have_ids = {t["id"] for t in existing.get("tasks", [])}
+    have_urls = {u for t in existing.get("tasks", []) for u in (t.get("urls") or [])}
+
+    print(f"# Backlog-miner  (owners={len(owners)}, limit={args.limit}, "
+          f"exclude={sorted(exclude)})\n")
+
+    mined: list[dict] = []
+    seen_ids: set[str] = set()
+    for owner in owners:
+        # gh's `user:` vs `org:` is auto-handled by --owner, but personal accounts
+        # work with --owner too; keep a note for clarity.
+        issues = _gh_issues(owner, args.per_owner, args.label)
+        for iss in issues:
+            labels = {l["name"].lower() for l in iss.get("labels", [])}
+            if labels & exclude:
+                continue
+            t = _to_task(iss)
+            if t["id"] in have_ids or t["id"] in seen_ids:
+                continue
+            if t["urls"] and t["urls"][0] in have_urls:
+                continue
+            seen_ids.add(t["id"])
+            mined.append(t)
+
+    # prioritize, then cap
+    mined.sort(key=lambda t: _PRIO_RANK.get(t["priority"], 9))
+    capped = mined[: args.limit]
+
+    print(f"discovered {len(mined)} new (deduped) issues; taking top {len(capped)} "
+          f"by priority\n")
+    print("| new task id | repo | prio | title |")
+    print("|---|---|---|---|")
+    for t in capped:
+        print(f"| {t['id']} | {t['repo']} | {t['priority']} | {t['title'][:50]} |")
+
+    if not args.apply:
+        print(f"\ndry-run — no changes. re-run with --apply to append "
+              f"{len(capped)} tasks, then route + dispatch.")
+        return 0
+
+    # validated append via the limen schema
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+    from limen.io import load_limen_file, save_limen_file
+    from limen.models import Task
+
+    limen = load_limen_file(tasks_path)
+    for t in capped:
+        limen.tasks.append(Task(**t))
+    save_limen_file(tasks_path, limen)
+    print(f"\napplied: appended {len(capped)} open tasks -> {tasks_path}")
+    print("next: python3 scripts/route.py --apply   then   limen dispatch --agent <v> --live")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
