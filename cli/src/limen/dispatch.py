@@ -1,5 +1,9 @@
 import os
+import re
+import secrets
+import shutil
 import subprocess
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -145,7 +149,141 @@ def _resolve_repo_dir(task: Task) -> Path | None:
     return matches[0] if matches else None
 
 
+# ── Isolation: every local agent works like Jules — in its own throwaway git
+# worktree off origin/<default>, on a fresh branch, producing a reviewable PR.
+# It NEVER touches the user's live working copy or current branch (only the
+# checkout's object store + remotes are read). Afterwards the worktree AND the
+# local branch are removed; the only surviving artifacts are the remote branch +
+# PR. This is the universal default for ALL local lanes (codex/opencode/agy/
+# claude/gemini) — set LIMEN_ISOLATION=off only for a deliberate in-place run.
+_ISOLATION_ROOT = Path(
+    os.environ.get("LIMEN_WORKTREES", Path.home() / "Workspace" / ".limen-worktrees")
+)
+
+
+def _git(args: list[str], cwd, timeout: int = 120) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        ["git", *args], cwd=str(cwd), capture_output=True, text=True,
+        timeout=timeout, stdin=subprocess.DEVNULL,
+    )
+
+
+def _default_branch(repo_dir: Path) -> str:
+    """Best-effort detection of origin's default branch (main/master/…)."""
+    r = _git(["symbolic-ref", "--quiet", "refs/remotes/origin/HEAD"], repo_dir)
+    if r.returncode == 0 and r.stdout.strip():
+        return r.stdout.strip().rsplit("/", 1)[-1]
+    for cand in ("main", "master"):
+        if _git(
+            ["show-ref", "--verify", "--quiet", f"refs/remotes/origin/{cand}"], repo_dir
+        ).returncode == 0:
+            return cand
+    return "main"
+
+
+def _pr_body(task: Task) -> str:
+    lines = [f"Autonomous **limen** dispatch of task `{task.id}`.", ""]
+    if task.context:
+        lines += [task.context, ""]
+    if task.urls:
+        lines += ["Refs: " + ", ".join(task.urls), ""]
+    lines.append("_Produced in an isolated worktree off origin — review before merge._")
+    return "\n".join(lines)
+
+
+def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
+    binary = os.environ.get(f"LIMEN_{agent.upper()}_BIN", _LOCAL_BIN.get(agent, agent))
+    repo_dir = _resolve_repo_dir(task)
+    if repo_dir is None:
+        msg = f"no local checkout of {task.repo or '(no repo)'}"
+        if dry_run:
+            print(f"  would [{msg}; clone first]: isolate→{binary}→PR")
+            return True
+        print(f"  SKIP {task.id}: {msg} — clone it under $LIMEN_WORKDIR first")
+        return False
+
+    base = _default_branch(repo_dir)
+    branch = "limen/" + re.sub(r"[^a-zA-Z0-9._/-]+", "-", task.id.lower())
+    wt = _ISOLATION_ROOT / re.sub(r"[^a-zA-Z0-9._-]+", "-", task.id.lower())
+    agent_cmd = [binary, *_LOCAL_AGENTS[agent], _build_prompt(task)]
+
+    if dry_run:
+        print(
+            f"  would isolate {task.id}: worktree {wt} off origin/{base} "
+            f"→ branch {branch} → {binary} {' '.join(_LOCAL_AGENTS[agent])} "
+            f"→ commit → push → PR  (live checkout untouched)"
+        )
+        return True
+
+    # 1) fresh base from origin — never the user's possibly-dirty working tree
+    _git(["fetch", "origin", base], repo_dir, timeout=300)
+    _ISOLATION_ROOT.mkdir(parents=True, exist_ok=True)
+    if wt.exists():  # leftover from a prior run
+        _git(["worktree", "remove", "--force", str(wt)], repo_dir)
+    _git(["branch", "-D", branch], repo_dir)  # clear stale same-named branch
+    add = _git(
+        ["worktree", "add", "-b", branch, str(wt), f"origin/{base}"], repo_dir, timeout=120
+    )
+    if add.returncode != 0:
+        print(f"  FAILED worktree add {task.id}: {add.stderr.strip()[:300]}")
+        return False
+
+    pushed = False
+    try:
+        # 2) run the agent inside the isolated tree
+        run = subprocess.run(
+            agent_cmd, cwd=str(wt), capture_output=True, text=True,
+            timeout=900, stdin=subprocess.DEVNULL,
+        )
+        if run.returncode != 0:
+            print(f"  FAILED agent {task.id} ({run.returncode}): {run.stderr.strip()[:300]}")
+            return False
+
+        # 3) did the agent change anything?
+        _git(["add", "-A"], wt)
+        if _git(["diff", "--cached", "--quiet"], wt).returncode == 0:
+            print(f"  no-op {task.id}: agent made no changes — no PR opened")
+            return False  # not dispatched → free to re-route/retry
+
+        # 4) commit → push → PR
+        msg = f"{task.title}\n\nlimen task {task.id}"
+        c = _git(
+            ["-c", "user.name=limen", "-c", "user.email=limen@local",
+             "commit", "-m", msg], wt
+        )
+        if c.returncode != 0:
+            print(f"  FAILED commit {task.id}: {c.stderr.strip()[:200]}")
+            return False
+        p = _git(["push", "-u", "origin", branch], wt, timeout=300)
+        if p.returncode != 0:
+            print(f"  FAILED push {task.id}: {p.stderr.strip()[:300]}")
+            return False
+        pushed = True
+        pr = subprocess.run(
+            ["gh", "pr", "create", "--base", base, "--head", branch,
+             "--title", f"[limen {task.id}] {task.title}"[:250],
+             "--body", _pr_body(task)],
+            cwd=str(wt), capture_output=True, text=True, timeout=120,
+            stdin=subprocess.DEVNULL,
+        )
+        if pr.returncode != 0:
+            print(f"  pushed {branch} but PR-create failed {task.id}: {pr.stderr.strip()[:200]}")
+            return branch  # branch is live; record it (manual PR possible)
+        url = pr.stdout.strip().splitlines()[-1] if pr.stdout.strip() else branch
+        print(f"  dispatched: {task.id} → PR {url}")
+        return url
+    finally:
+        # leave the user's checkout pristine: drop the worktree, and the local
+        # branch too once its commits are safely on the remote.
+        _git(["worktree", "remove", "--force", str(wt)], repo_dir)
+        if pushed:
+            _git(["branch", "-D", branch], repo_dir)
+
+
 def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str:
+    if os.environ.get("LIMEN_ISOLATION", "worktree").lower() != "off":
+        return _isolated_local_run(agent, task, dry_run)
+    # ── legacy in-place path (escape hatch; edits the live checkout directly)
     binary = os.environ.get(f"LIMEN_{agent.upper()}_BIN", _LOCAL_BIN.get(agent, agent))
     cmd = [binary, *_LOCAL_AGENTS[agent], _build_prompt(task)]
     cwd = _resolve_repo_dir(task)
