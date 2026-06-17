@@ -10,10 +10,10 @@ portal:
       jules: 100
       gemini: 10
     track:
-      date: '2026-06-12'
-      spent: 7
+      date: '2026-06-16'
+      spent: 86
       per_agent:
-        jules: 7
+        jules: 86
         gemini: 0
 tasks:
 - id: LIMEN-001
@@ -432,7 +432,7 @@ tasks:
   - https://github.com/a-organvm/public-record-data-scrapper/issues/235
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #235 in a-organvm/public-record-data-scrapper.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:05:57.567421Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -451,6 +451,15 @@ tasks:
   - timestamp: '2026-06-11T10:50:08.755979Z'
     agent: jules
     session_id: '17787600408394386769'
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:05:57.567421Z'
+    agent: jules
+    session_id: '17522549912052302971'
     status: dispatched
 - id: LIMEN-017
   title: 'IRF-APP-003: Phase 1 reliability hardening for ucc-mca-api'
@@ -538,7 +547,7 @@ tasks:
   - https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/592
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #592 in a-organvm/peer-audited--behavioral-blockchain.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:05:57.567421Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -557,6 +566,15 @@ tasks:
   - timestamp: '2026-06-11T10:50:08.755979Z'
     agent: jules
     session_id: '17326413766720187816'
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:05:57.567421Z'
+    agent: jules
+    session_id: '12058615494463333497'
     status: dispatched
 - id: LIMEN-020
   title: Triplicate research docs need dedup + provenance frontmatter
@@ -715,14 +733,14 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 2
-  status: dispatched
+  status: done
   labels:
   - batch-2026-06-01
   urls:
   - https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/551
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #551 in a-organvm/peer-audited--behavioral-blockchain.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:38:39.404406Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -742,6 +760,25 @@ tasks:
     agent: jules
     session_id: '11014597222362287836'
     status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:05:57.567421Z'
+    agent: jules
+    session_id: '1198831147275258294'
+    status: dispatched
+  - timestamp: '2026-06-16T15:38:39.404406Z'
+    agent: jules
+    session_id: '1198831147275258294'
+    status: done
+    output: "diff --git a/src/desktop/src/components/HashCollider.spec.tsx b/src/desktop/src/components/HashCollider.spec.tsx\n\
+      index cdeb386..d45519f 100644\n--- a/src/desktop/src/components/HashCollider.spec.tsx\n\
+      +++ b/src/desktop/src/components/HashCollider.spec.tsx\n@@ -6,8 +6,8 @@ import\
+      \ {\n   filterCollisionsByThreshold,\n   getCollisionSimilarity,\n   normalizeCollisionList,\n\
+      -  type HashCollision,\n } from './hash-collider.utils';\n+import type { HashCollision\
+      \ } from './hash-collider.utils';\n \n jest.mock('./Has"
 - id: LIMEN-024
   title: "Tests \u2014 access control + org isolation"
   repo: a-organvm/peer-audited--behavioral-blockchain
@@ -800,7 +837,7 @@ tasks:
   - https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/375
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #375 in a-organvm/organvm-corpvs-testamentvm.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:05:57.567421Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -820,6 +857,15 @@ tasks:
     agent: jules
     session_id: '11701711723423150876'
     status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:05:57.567421Z'
+    agent: jules
+    session_id: '14145989247806164474'
+    status: dispatched
 - id: LIMEN-026
   title: 'IRF-SYS-185: VACUUM IRF missing from testamentvm'
   repo: a-organvm/organvm-corpvs-testamentvm
@@ -827,14 +873,14 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - batch-2026-06-01
   urls:
   - https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/355
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #355 in a-organvm/organvm-corpvs-testamentvm.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:38:39.405183Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -854,6 +900,26 @@ tasks:
     agent: jules
     session_id: '4314704017427275226'
     status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:05:57.567421Z'
+    agent: jules
+    session_id: '10347222642068352184'
+    status: dispatched
+  - timestamp: '2026-06-16T15:38:39.405183Z'
+    agent: jules
+    session_id: '10347222642068352184'
+    status: done
+    output: "diff --git a/INST-INDEX-RERUM-FACIENDARUM.md b/INST-INDEX-RERUM-FACIENDARUM.md\n\
+      index 7882259..77c8c60 100644\n--- a/INST-INDEX-RERUM-FACIENDARUM.md\n+++ b/INST-INDEX-RERUM-FACIENDARUM.md\n\
+      @@ -2526,6 +2526,7 @@ ### S-2026-05-17-knowledge-base-epistemic-export Discovered\
+      \ Items (2026-05-17)\n | ~~IRF-THE-033~~ | ~~P1~~ | ~~**Epistemic Engine product\
+      \ spec \u2014 formalize LLM knowledge base workflow as product.** User workflow:\
+      \ raw data ingest \u2192 LLM-compiled wiki \u2192 Obsidian IDE \u2192 Q&A/output\
+      \ \u2192 recursive filin"
 - id: LIMEN-027
   title: prompts distill default closeout requires missing clipboard-prompts precondition
   repo: a-organvm/organvm-corpvs-testamentvm
@@ -861,14 +927,14 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - batch-2026-06-01
   urls:
   - https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/352
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #352 in a-organvm/organvm-corpvs-testamentvm.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T16:19:34.543661Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -888,6 +954,26 @@ tasks:
     agent: jules
     session_id: '4422294034972239455'
     status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: '16870126484771348186'
+    status: dispatched
+  - timestamp: '2026-06-16T16:19:34.543661Z'
+    agent: jules
+    session_id: '16870126484771348186'
+    status: done
+    output: "diff --git a/CLAUDE.md b/CLAUDE.md\nindex 2ea4cf9..02887c7 100644\n---\
+      \ a/CLAUDE.md\n+++ b/CLAUDE.md\n@@ -305,7 +305,7 @@ ## Session Review Protocol\n\
+      \ 1. Run `organvm session review --latest` to get a session summary\n 2. Check\
+      \ for unimplemented plans: `organvm session plans --project .`\n 3. Export significant\
+      \ sessions: `organvm session export <id> --slug <slug>`\n-4. Run `organvm prompts\
+      \ distill --dry-run` to detect uncovered operational patterns\n+4. Run `organvm\
+      \ prompts clipboard` then `organvm prompt"
 - id: LIMEN-028
   title: 'IRF-SYS-110: governance doc structural error'
   repo: a-organvm/organvm-corpvs-testamentvm
@@ -902,7 +988,7 @@ tasks:
   - https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/321
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #321 in a-organvm/organvm-corpvs-testamentvm.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -922,6 +1008,15 @@ tasks:
     agent: jules
     session_id: '15709143551447741546'
     status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: '7974243834837895996'
+    status: dispatched
 - id: LIMEN-029
   title: "IRF-SYS-109: Omega evidence map \u2014 zettelkasten #6 and #13"
   repo: a-organvm/organvm-corpvs-testamentvm
@@ -929,14 +1024,14 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - batch-2026-06-01
   urls:
   - https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/320
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #320 in a-organvm/organvm-corpvs-testamentvm.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:04:18.427888Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -956,6 +1051,16 @@ tasks:
     agent: jules
     session_id: '9145207146388532657'
     status: dispatched
+  - timestamp: '2026-06-16T15:04:18.427888Z'
+    agent: jules
+    session_id: '9145207146388532657'
+    status: done
+    output: "diff --git a/INST-INDEX-RERUM-FACIENDARUM.md b/INST-INDEX-RERUM-FACIENDARUM.md\n\
+      index 5dd41e3..c07e02e 100644\n--- a/INST-INDEX-RERUM-FACIENDARUM.md\n+++ b/INST-INDEX-RERUM-FACIENDARUM.md\n\
+      @@ -2334,7 +2334,7 @@ ### S-Zettelkasten Discovered Items (2026-04-13)\n |----|----------|--------|-------|--------|---------|\n\
+      \ | IRF-SYS-107 | **P1** | **CLAUDE.md tree diagram structurally wrong for TDR\
+      \ subtree.** `post-flood/CLAUDE.md` lines 174-197 show depth-2 TDR branches\
+      \ as children of unnamed first branch. "
 - id: LIMEN-030
   title: Backfill prompt index for 16 pre-existing session archives
   repo: a-organvm/organvm-corpvs-testamentvm
@@ -970,7 +1075,7 @@ tasks:
   - https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/350
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #350 in a-organvm/organvm-corpvs-testamentvm.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -990,6 +1095,15 @@ tasks:
     agent: jules
     session_id: '18268066380951636053'
     status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: '1131117365239698645'
+    status: dispatched
 - id: LIMEN-031
   title: "Session receipt 2026-05-30 \u2014 post-restart hanging-task drain (DONE-569)"
   repo: a-organvm/organvm-corpvs-testamentvm
@@ -997,14 +1111,14 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - batch-2026-06-01
   urls:
   - https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/376
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #376 in a-organvm/organvm-corpvs-testamentvm.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:04:18.428622Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1024,6 +1138,17 @@ tasks:
     agent: jules
     session_id: '15609480122749140822'
     status: dispatched
+  - timestamp: '2026-06-16T15:04:18.428622Z'
+    agent: jules
+    session_id: '15609480122749140822'
+    status: done
+    output: "diff --git a/INST-INDEX-RERUM-FACIENDARUM.md b/INST-INDEX-RERUM-FACIENDARUM.md\n\
+      index 5dd41e3..6306b85 100644\n--- a/INST-INDEX-RERUM-FACIENDARUM.md\n+++ b/INST-INDEX-RERUM-FACIENDARUM.md\n\
+      @@ -2753,7 +2753,7 @@ ### S-2026-05-29-heartbeat-live-flip \u2014 DONE-566/567\
+      \ + IRF-SYS-241/242 (2026-05\n \n ### S-2026-05-30-post-restart-hanging-tasks\
+      \ \u2014 DONE-569/570 (2026-05-30)\n \n-| **DONE-569** | OPS | **Post-restart\
+      \ session-close: recovered 5 plans an autonomous `--delete` mirror erroneously\
+      \ pruned, root-caused t"
 - id: LIMEN-032
   title: Clean up ~100 stale bot branches (jules, sentinel, bolt, palette, copilot)
   repo: a-organvm/petasum-super-petasum
@@ -1031,14 +1156,14 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - batch-2026-06-01
   urls:
   - https://github.com/a-organvm/petasum-super-petasum/issues/139
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #139 in a-organvm/petasum-super-petasum.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:04:18.428869Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1058,6 +1183,57 @@ tasks:
     agent: jules
     session_id: '9772464623285066078'
     status: dispatched
+  - timestamp: '2026-06-16T15:04:18.428869Z'
+    agent: jules
+    session_id: '9772464623285066078'
+    status: done
+    output: 'diff --git a/.github/workflows/cleanup-bot-branches.yml b/.github/workflows/cleanup-bot-branches.yml
+
+      new file mode 100644
+
+      index 0000000..bec92c1
+
+      --- /dev/null
+
+      +++ b/.github/workflows/cleanup-bot-branches.yml
+
+      @@ -0,0 +1,85 @@
+
+      +---
+
+      +name: Cleanup Stale Bot Branches
+
+      +
+
+      +"on":
+
+      +  schedule:
+
+      +    - cron: "0 0 * * 0"
+
+      +  workflow_dispatch:
+
+      +
+
+      +permissions:
+
+      +  contents: write
+
+      +
+
+      +jobs:
+
+      +  cleanup:
+
+      +    runs-on: ubuntu-latest
+
+      +    steps:
+
+      +      - name: Checkout repository
+
+      +        uses: actions/checkout@v4
+
+      +'
 - id: LIMEN-033
   title: Create prompt anti-pattern catalog (10+ anti-patterns)
   repo: a-organvm/petasum-super-petasum
@@ -1065,14 +1241,14 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - batch-2026-06-01
   urls:
   - https://github.com/a-organvm/petasum-super-petasum/issues/133
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #133 in a-organvm/petasum-super-petasum.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:04:18.429051Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1092,6 +1268,17 @@ tasks:
     agent: jules
     session_id: '2539863035131329960'
     status: dispatched
+  - timestamp: '2026-06-16T15:04:18.429051Z'
+    agent: jules
+    session_id: '2539863035131329960'
+    status: done
+    output: "diff --git a/docs/prompt-anti-patterns.md b/docs/prompt-anti-patterns.md\n\
+      index 4f9d7a0..aa32e14 100644\n--- a/docs/prompt-anti-patterns.md\n+++ b/docs/prompt-anti-patterns.md\n\
+      @@ -9,227 +9,268 @@ # Prompt Anti-Pattern Catalog\n \n ## Why This Exists\n\
+      \ \n-Good prompts have templates (see `prompt-template-library.md`). Bad prompts\
+      \ also have\n-patterns \u2014 recurring mistakes that waste tokens, produce\
+      \ poor output, and create\n-false confidence. Naming these anti-patterns makes\
+      \ them recognizable and avoidable."
 - id: LIMEN-034
   title: Create AI interaction manifest template
   repo: a-organvm/petasum-super-petasum
@@ -1099,14 +1286,14 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - batch-2026-06-01
   urls:
   - https://github.com/a-organvm/petasum-super-petasum/issues/126
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #126 in a-organvm/petasum-super-petasum.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:04:18.429237Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1126,6 +1313,42 @@ tasks:
     agent: jules
     session_id: '4833804530068236880'
     status: dispatched
+  - timestamp: '2026-06-16T15:04:18.429237Z'
+    agent: jules
+    session_id: '4833804530068236880'
+    status: done
+    output: 'diff --git a/.ai-manifests/.gitattributes b/.ai-manifests/.gitattributes
+
+      new file mode 100644
+
+      index 0000000..0215bcc
+
+      --- /dev/null
+
+      +++ b/.ai-manifests/.gitattributes
+
+      @@ -0,0 +1 @@
+
+      +*.yaml linguist-generated=true
+
+      diff --git a/.ai-manifests/README.md b/.ai-manifests/README.md
+
+      new file mode 100644
+
+      index 0000000..e00959b
+
+      --- /dev/null
+
+      +++ b/.ai-manifests/README.md
+
+      @@ -0,0 +1,13 @@
+
+      +# AI Manifests
+
+      +
+
+      +This directory stores AI interaction manifests for interactions classified
+      as T1 (public) and T2 (int'
 - id: LIMEN-035
   title: Create prompt template library (5+ versioned skeletons)
   repo: a-organvm/petasum-super-petasum
@@ -1133,14 +1356,14 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - batch-2026-06-01
   urls:
   - https://github.com/a-organvm/petasum-super-petasum/issues/124
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #124 in a-organvm/petasum-super-petasum.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:38:39.405383Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1160,6 +1383,46 @@ tasks:
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: '12392707424047030126'
+    status: dispatched
+  - timestamp: '2026-06-16T15:38:39.405383Z'
+    agent: jules
+    session_id: '12392707424047030126'
+    status: done
+    output: 'diff --git a/docs/examples/prompt-templates/analyze-patterns.yaml b/docs/examples/prompt-templates/analyze-patterns.yaml
+
+      new file mode 100644
+
+      index 0000000..78743f2
+
+      --- /dev/null
+
+      +++ b/docs/examples/prompt-templates/analyze-patterns.yaml
+
+      @@ -0,0 +1,26 @@
+
+      +---
+
+      +name: "analyze-patterns"
+
+      +version: "1.0.0"
+
+      +category: "analyze"
+
+      +
+
+      +role: "Analyst skilled in pattern recognition and data interpretation"
+
+      +audience: "The person who provided the content for analysis"
+
+      +goal: "Extract patterns, themes, or st'
 - id: LIMEN-036
   title: Define AI-free practice cadence for cognitive atrophy prevention
   repo: a-organvm/petasum-super-petasum
@@ -1167,14 +1430,14 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - batch-2026-06-01
   urls:
   - https://github.com/a-organvm/petasum-super-petasum/issues/132
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #132 in a-organvm/petasum-super-petasum.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:38:39.405491Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1194,6 +1457,26 @@ tasks:
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: '4606454117837465361'
+    status: dispatched
+  - timestamp: '2026-06-16T15:38:39.405491Z'
+    agent: jules
+    session_id: '4606454117837465361'
+    status: done
+    output: "diff --git a/docs/conductor-playbook.md b/docs/conductor-playbook.md\n\
+      new file mode 100644\nindex 0000000..7c9c35b\n--- /dev/null\n+++ b/docs/conductor-playbook.md\n\
+      @@ -0,0 +1,61 @@\n+# Conductor Playbook\n+\n+> **Governance**: Commandment #5\
+      \ (Discipline Over Drift)\n+> **Scope**: Standard operating procedures for AI\
+      \ conductors across the\n+> ORGANVM system\n+> **Version**: 1.0\n+\n+## Purpose\n\
+      +\n+This playbook defines the standard operating procedures for \"conductors\"\
+      \u2014human\n+practitioners who direct, orchest"
 - id: LIMEN-037
   title: Document provider policy tracking (OpenAI, Anthropic, Google, etc.)
   repo: a-organvm/petasum-super-petasum
@@ -1208,7 +1491,7 @@ tasks:
   - https://github.com/a-organvm/petasum-super-petasum/issues/127
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #127 in a-organvm/petasum-super-petasum.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1227,6 +1510,15 @@ tasks:
   - timestamp: '2026-06-11T10:50:08.755979Z'
     agent: jules
     session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: '7371219454469920406'
     status: dispatched
 - id: LIMEN-038
   title: Create pseudonymization and redaction guidelines
@@ -1235,14 +1527,14 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - batch-2026-06-01
   urls:
   - https://github.com/a-organvm/petasum-super-petasum/issues/122
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #122 in a-organvm/petasum-super-petasum.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T16:05:25.369257Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1262,6 +1554,26 @@ tasks:
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: '6273730348314808619'
+    status: dispatched
+  - timestamp: '2026-06-16T16:05:25.369257Z'
+    agent: jules
+    session_id: '6273730348314808619'
+    status: done
+    output: "diff --git a/docs/pseudonymization-guidelines.md b/docs/pseudonymization-guidelines.md\n\
+      index 8584a4a..5a54c79 100644\n--- a/docs/pseudonymization-guidelines.md\n+++\
+      \ b/docs/pseudonymization-guidelines.md\n@@ -23,7 +23,7 @@ ## Token Format\n\
+      \ ### Entity Types and Tokens\n \n | Entity Type | Token Pattern | Examples\
+      \ |\n-|-------------|---------------|----------|\n+| ------------- | ---------------\
+      \ | ---------- |\n | Person | `[[PERSON_N]]` | `[[PERSON_1]]`, `[[PERSON_2]]`\
+      \ |\n | Organization | `[[ORG_X]]` | `["
 - id: LIMEN-039
   title: Address platform memory lock-in (ChatGPT/Claude memory risks)
   repo: a-organvm/petasum-super-petasum
@@ -1276,7 +1588,7 @@ tasks:
   - https://github.com/a-organvm/petasum-super-petasum/issues/131
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #131 in a-organvm/petasum-super-petasum.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1295,6 +1607,15 @@ tasks:
   - timestamp: '2026-06-11T10:50:08.755979Z'
     agent: jules
     session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: '5639734348615896506'
     status: dispatched
 - id: LIMEN-040
   title: Add safety constraints for non-interactive agent modes
@@ -1310,7 +1631,7 @@ tasks:
   - https://github.com/a-organvm/petasum-super-petasum/issues/136
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #136 in a-organvm/petasum-super-petasum.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1327,6 +1648,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -1344,7 +1674,7 @@ tasks:
   - https://github.com/a-organvm/organvm-engine/issues/84
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #84 in a-organvm/organvm-engine.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1361,6 +1691,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -1378,7 +1717,7 @@ tasks:
   - https://github.com/a-organvm/organvm-engine/issues/83
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #83 in a-organvm/organvm-engine.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1395,6 +1734,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -1412,7 +1760,7 @@ tasks:
   - https://github.com/a-organvm/organvm-engine/issues/71
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #71 in a-organvm/organvm-engine.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1429,6 +1777,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -1482,7 +1839,7 @@ tasks:
   - https://github.com/a-organvm/organvm-engine/issues/60
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #60 in a-organvm/organvm-engine.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1499,6 +1856,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -1516,7 +1882,7 @@ tasks:
   - https://github.com/a-organvm/organvm-engine/issues/61
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #61 in a-organvm/organvm-engine.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1533,6 +1899,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -1550,7 +1925,7 @@ tasks:
   - https://github.com/a-organvm/organvm-engine/issues/70
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #70 in a-organvm/organvm-engine.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1567,6 +1942,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -1584,7 +1968,7 @@ tasks:
   - https://github.com/a-organvm/organvm-engine/issues/76
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #76 in a-organvm/organvm-engine.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1601,6 +1985,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -1618,7 +2011,7 @@ tasks:
   - https://github.com/a-organvm/organvm-engine/issues/74
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #74 in a-organvm/organvm-engine.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1635,6 +2028,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -1652,7 +2054,7 @@ tasks:
   - https://github.com/a-organvm/organvm-engine/issues/73
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #73 in a-organvm/organvm-engine.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1669,6 +2071,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -1687,7 +2098,7 @@ tasks:
   - https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/17
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #17 in organvm-i-theoria/conversation-corpus-engine.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1704,6 +2115,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -1766,7 +2186,7 @@ tasks:
   - https://jules.google.com/session/13992835732913028712
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #23 in organvm-i-theoria/conversation-corpus-engine.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-01T23:12:24.414735Z'
     agent: jules
@@ -1788,6 +2208,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -1829,7 +2258,7 @@ tasks:
   - https://jules.google.com/session/3989424053504450135
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #21 in organvm-i-theoria/conversation-corpus-engine.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-01T23:12:24.414738Z'
     agent: jules
@@ -1851,6 +2280,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -1891,7 +2329,7 @@ tasks:
   - https://jules.google.com/session/4082366623912210320
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #27 in organvm-i-theoria/conversation-corpus-engine.'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-01T23:12:24.414742Z'
     agent: jules
@@ -1913,6 +2351,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -1954,7 +2401,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. feat: implement MCP tool wrappers
     for all 5 organvm CLIs'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-01T23:12:24.414746Z'
     agent: jules
@@ -1976,6 +2423,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2017,7 +2473,7 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. Add --format json flag to organvm
     registry list command
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2034,6 +2490,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2052,7 +2517,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. feat: corpus knowledge graph
     module (organvm corpus)'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2069,6 +2534,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2088,7 +2562,7 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. feat: SOP staleness detection\
     \ \u2014 cross-reference SOPs against governed code"
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2105,6 +2579,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2123,7 +2606,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. feat: exit interview testimony
     for documentation-only repos'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2140,6 +2623,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2158,7 +2650,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. feat: handoff staleness detection
     and workspace-wide handoff listing'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2175,6 +2667,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2193,7 +2694,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. feat: context sync diff/changelog
     between runs'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2210,6 +2711,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2228,7 +2738,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. fix(irf): stats command undercounts
     newly added tail items'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2245,6 +2755,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2263,7 +2782,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. fix(session): investigate hanging
     review and plans commands in large repos'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2280,6 +2799,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2298,7 +2826,7 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. network: R3 kinship mirror\
     \ research \u2014 community identification"
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2315,6 +2843,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2333,7 +2870,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. descent: content-based detection
     for CodeQL and release automation'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2350,6 +2887,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2368,7 +2914,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. descent: expand branch protection
     to all organs'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2385,6 +2931,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2403,7 +2958,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. descent: add type-checking
     to 6 remaining repos'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2420,6 +2975,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2438,7 +3002,7 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. feat: Ring 4 \u2014 external\
     \ chain anchoring (Base L2 / Celestia)"
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2455,6 +3019,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2473,7 +3046,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. feat: Stakeholder Portal /testament/
     route'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2490,6 +3063,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2508,7 +3090,7 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. feat: testament sonic bridge\
     \ \u2014 OSC to alchemical-synthesizer"
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2525,6 +3107,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2543,7 +3134,7 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. Fix soak-test LaunchAgent \u2014\
     \ gh CLI auth fails under launchd"
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2560,6 +3151,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2578,7 +3178,7 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. feat: formalize Score\u2192\
     Rehearse\u2192Perform ritual in Conductor lifecycle"
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2595,6 +3195,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2613,7 +3222,7 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. Fix npm audit vulnerabilities
     (drizzle-orm, next) in stakeholder-portal
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2630,6 +3239,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2648,7 +3266,7 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. Refresh stale CLAUDE.md autogen
     tail (2026-03-08)
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2665,6 +3283,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2683,7 +3310,7 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. [IRF-RES-003] Define 'readiness'
     construct independently of operationalization
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2702,6 +3329,15 @@ tasks:
   - timestamp: '2026-06-11T10:50:08.755979Z'
     agent: jules
     session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: '18157474156501233061'
     status: dispatched
 - id: LIMEN-082
   title: '[IRF-RES-013] Temporal staging refactor (validate previous-with-current)'
@@ -2718,7 +3354,7 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. [IRF-RES-013] Temporal staging
     refactor (validate previous-with-current)
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2735,6 +3371,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2753,7 +3398,7 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. [IRF-RES-011] Hybrid topology
     law codification (effective vs nominal coupling)
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2770,6 +3415,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2788,7 +3442,7 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. [IRF-RES-004] Bayesian factor
     analysis on omega scorecard
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2805,6 +3459,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2823,7 +3486,7 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. [IRF-RES-006] Controlled vocabulary
     registry (retroactive reconciliation)
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2840,6 +3503,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2858,7 +3530,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. Secret Scanning Alert triage:
     6862 potential leaks'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2875,6 +3547,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2893,7 +3574,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. IRF-CCE-027: Post Office discover
     uses wrong API (gizmos != Projects)'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2910,6 +3591,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2928,7 +3618,7 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. Monthly Organ Audit \u2014\
     \ 2026-06-01 manual triage"
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2945,6 +3635,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2963,7 +3662,7 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. Fix a-i--skills validate job\
     \ red on main \u2014 3 skills invalid frontmatter"
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2980,6 +3679,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2998,7 +3706,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix prompts distill input file
     missing: clipboard-prompts.json'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3015,6 +3723,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -3033,7 +3750,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. PR #234 security gate prerequisites
     (JWT_SECRET, org_id)'
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3050,6 +3767,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -3068,7 +3794,7 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. Dedup triplicate research docs
     in docs/architecture/
   created: '2026-06-01'
-  updated: '2026-06-11T10:50:08.755979Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3085,6 +3811,15 @@ tasks:
     status: open
     output: Released orphan claim (lost session_id cli)
   - timestamp: '2026-06-11T10:50:08.755979Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -3124,7 +3859,7 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. Audit 26 missing READMEs across
     148 repos
   created: '2026-06-01'
-  updated: '2026-06-12T13:36:12.976313Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3135,6 +3870,15 @@ tasks:
     agent: jules
     session_id: '10973463060798665291'
     status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: '5947559587084702656'
+    status: dispatched
 - id: LIMEN-095
   title: "Session receipt 2026-05-30 \u2014 post-restart hanging-task drain"
   repo: a-organvm/organvm-corpvs-testamentvm
@@ -3142,7 +3886,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - batch-2026-06-01
   urls:
@@ -3150,7 +3894,7 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. Session receipt 2026-05-30\
     \ \u2014 post-restart hanging-task drain"
   created: '2026-06-01'
-  updated: '2026-06-12T13:36:12.976313Z'
+  updated: '2026-06-16T15:05:11.401001Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3161,6 +3905,17 @@ tasks:
     agent: jules
     session_id: '10888699745473444762'
     status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T00:00:00Z'
+    agent: jules
+    session_id: reconciled-restart
+    status: done
+    output: 'Closed during restart: Jules session Completed 2026-06-12 (no local diff
+      to harvest).'
 - id: LIMEN-096
   title: "Submit conference talk proposals \u2014 AI-Conductor path"
   repo: a-organvm/organvm-engine
@@ -3168,7 +3923,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - batch-2026-06-01
   urls:
@@ -3176,7 +3931,7 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. Submit conference talk proposals\
     \ \u2014 AI-Conductor path"
   created: '2026-06-01'
-  updated: '2026-06-12T13:36:12.976313Z'
+  updated: '2026-06-16T15:05:11.401001Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3187,6 +3942,17 @@ tasks:
     agent: jules
     session_id: '9491685092102974577'
     status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T00:00:00Z'
+    agent: jules
+    session_id: reconciled-restart
+    status: done
+    output: 'Closed during restart: Jules session Completed 2026-06-12 (no local diff
+      to harvest).'
 - id: LIMEN-097
   title: "Promotion Recommendations \u2014 June 2026 triage"
   repo: a-organvm/orchestration-start-here
@@ -3202,7 +3968,7 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. Promotion Recommendations \u2014\
     \ June 2026 triage"
   created: '2026-06-01'
-  updated: '2026-06-12T13:36:12.976313Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3212,6 +3978,15 @@ tasks:
   - timestamp: '2026-06-12T13:36:12.976313Z'
     agent: jules
     session_id: '17961470350566474261'
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
     status: dispatched
 - id: LIMEN-098
   title: Staggered Walkthrough Schedule triage
@@ -3228,7 +4003,7 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. Staggered Walkthrough Schedule
     triage
   created: '2026-06-01'
-  updated: '2026-06-12T13:36:12.976313Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3236,6 +4011,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-12T13:36:12.976313Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -3254,7 +4038,7 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. IRF-CCE-033: Execute CCE commercial\
     \ architecture \u2014 H1 actions"
   created: '2026-06-01'
-  updated: '2026-06-12T13:36:12.976313Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3264,6 +4048,15 @@ tasks:
   - timestamp: '2026-06-12T13:36:12.976313Z'
     agent: jules
     session_id: '15842058161518851569'
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
     status: dispatched
 - id: LIMEN-100
   title: Audit all GitHub orgs for open issues suitable for Jules dispatch (Batch
@@ -3280,7 +4073,7 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. Audit all GitHub orgs for open
     issues suitable for Jules dispatch (Batch 3)
   created: '2026-06-01'
-  updated: '2026-06-12T13:36:12.976313Z'
+  updated: '2026-06-16T15:13:02.097822Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3290,4 +4083,13 @@ tasks:
   - timestamp: '2026-06-12T13:36:12.976313Z'
     agent: jules
     session_id: '5599664914462044276'
+    status: dispatched
+  - timestamp: '2026-06-16T15:05:11.401001Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
     status: dispatched
