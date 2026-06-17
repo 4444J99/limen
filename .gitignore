@@ -27,3 +27,8 @@ web/app/public/
 
 # Next.js route source — protect from machine-global 'public/' ignore rules
 !web/app/app/public/
+env/
+container/backup/
+container/state/
+*.premigrate
+.limen.env

@@ -1,0 +1,8 @@
+# SLOT(OS-pinned, fixed location)	CONTAINER-TARGET(single source of truth)	KIND
+# names are outputs: the OS slot is a signpost; substance lives in the container.
+~/.limen.env	/Users/4jp/Workspace/limen/env/limen.env	symlink-absolute
+~/.claude/settings.json	/Users/4jp/Workspace/limen/container/claude/settings.json	symlink-absolute
+~/Library/LaunchAgents/com.limen.heartbeat.plist	/Users/4jp/Workspace/limen/container/launchd/com.limen.heartbeat.plist	real-inplace-byte-identical
+~/.zshrc ~/.zshenv ~/.zprofile ~/.bashrc	(none)	scrub-GEMINI_API_KEY-line
+# left REAL, never moved (hardcoded by Path.home() / live co-tenants):
+# ~/Workspace/.home-cartridge  ~/Workspace/.limen-worktrees  ~/.gemini
