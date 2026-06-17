@@ -4,17 +4,25 @@ portal:
   description: "One file to aim every agent you have \u2014 cross-repo, cross-agent,\
     \ budget-capped"
   budget:
-    daily: 100
+    daily: 300
     unit: runs
     per_agent:
       jules: 100
       gemini: 10
+      codex: 50
+      opencode: 50
+      agy: 50
+      claude: 50
     track:
-      date: '2026-06-16'
-      spent: 86
+      date: '2026-06-17'
+      spent: 98
       per_agent:
-        jules: 86
+        jules: 91
         gemini: 0
+        codex: 6
+        opencode: 1
+        agy: 0
+        claude: 0
 tasks:
 - id: LIMEN-001
   title: 'Resolve issue #236: ~358 frontend TypeScript errors in public-record-data-scrapper'
@@ -432,7 +440,7 @@ tasks:
   - https://github.com/a-organvm/public-record-data-scrapper/issues/235
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #235 in a-organvm/public-record-data-scrapper.'
   created: '2026-06-01'
-  updated: '2026-06-16T15:05:57.567421Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -460,6 +468,15 @@ tasks:
   - timestamp: '2026-06-16T15:05:57.567421Z'
     agent: jules
     session_id: '17522549912052302971'
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: '16491151905433379096'
     status: dispatched
 - id: LIMEN-017
   title: 'IRF-APP-003: Phase 1 reliability hardening for ucc-mca-api'
@@ -547,7 +564,7 @@ tasks:
   - https://github.com/a-organvm/peer-audited--behavioral-blockchain/issues/592
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #592 in a-organvm/peer-audited--behavioral-blockchain.'
   created: '2026-06-01'
-  updated: '2026-06-16T15:05:57.567421Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -575,6 +592,15 @@ tasks:
   - timestamp: '2026-06-16T15:05:57.567421Z'
     agent: jules
     session_id: '12058615494463333497'
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: '10764370905902637530'
     status: dispatched
 - id: LIMEN-020
   title: Triplicate research docs need dedup + provenance frontmatter
@@ -837,7 +863,7 @@ tasks:
   - https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/375
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #375 in a-organvm/organvm-corpvs-testamentvm.'
   created: '2026-06-01'
-  updated: '2026-06-16T15:05:57.567421Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -865,6 +891,15 @@ tasks:
   - timestamp: '2026-06-16T15:05:57.567421Z'
     agent: jules
     session_id: '14145989247806164474'
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: '7460881467966196306'
     status: dispatched
 - id: LIMEN-026
   title: 'IRF-SYS-185: VACUUM IRF missing from testamentvm'
@@ -988,7 +1023,7 @@ tasks:
   - https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/321
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #321 in a-organvm/organvm-corpvs-testamentvm.'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1016,6 +1051,15 @@ tasks:
   - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: '7974243834837895996'
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: '6190412772796259211'
     status: dispatched
 - id: LIMEN-029
   title: "IRF-SYS-109: Omega evidence map \u2014 zettelkasten #6 and #13"
@@ -1075,7 +1119,7 @@ tasks:
   - https://github.com/a-organvm/organvm-corpvs-testamentvm/issues/350
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #350 in a-organvm/organvm-corpvs-testamentvm.'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1103,6 +1147,15 @@ tasks:
   - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: '1131117365239698645'
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: '6217968817288422689'
     status: dispatched
 - id: LIMEN-031
   title: "Session receipt 2026-05-30 \u2014 post-restart hanging-task drain (DONE-569)"
@@ -1491,7 +1544,7 @@ tasks:
   - https://github.com/a-organvm/petasum-super-petasum/issues/127
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #127 in a-organvm/petasum-super-petasum.'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1519,6 +1572,15 @@ tasks:
   - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: '7371219454469920406'
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: '8875152337698707384'
     status: dispatched
 - id: LIMEN-038
   title: Create pseudonymization and redaction guidelines
@@ -1588,7 +1650,7 @@ tasks:
   - https://github.com/a-organvm/petasum-super-petasum/issues/131
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #131 in a-organvm/petasum-super-petasum.'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1617,6 +1679,15 @@ tasks:
     agent: jules
     session_id: '5639734348615896506'
     status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: '9084001725887092201'
+    status: dispatched
 - id: LIMEN-040
   title: Add safety constraints for non-interactive agent modes
   repo: a-organvm/petasum-super-petasum
@@ -1631,7 +1702,7 @@ tasks:
   - https://github.com/a-organvm/petasum-super-petasum/issues/136
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #136 in a-organvm/petasum-super-petasum.'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1659,6 +1730,15 @@ tasks:
   - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: '8232409083497544789'
     status: dispatched
 - id: LIMEN-041
   title: Add seed.yaml validation for missing produces/consumes edges
@@ -1674,7 +1754,7 @@ tasks:
   - https://github.com/a-organvm/organvm-engine/issues/84
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #84 in a-organvm/organvm-engine.'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1702,6 +1782,15 @@ tasks:
   - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: '235097194471884501'
     status: dispatched
 - id: LIMEN-042
   title: Add --format json flag to organvm registry list command
@@ -1717,7 +1806,7 @@ tasks:
   - https://github.com/a-organvm/organvm-engine/issues/83
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #83 in a-organvm/organvm-engine.'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1745,6 +1834,15 @@ tasks:
   - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: '4855638394693728138'
     status: dispatched
 - id: LIMEN-043
   title: 'fix(irf): stats command undercounts newly added tail items'
@@ -1760,7 +1858,7 @@ tasks:
   - https://github.com/a-organvm/organvm-engine/issues/71
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #71 in a-organvm/organvm-engine.'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1788,6 +1886,15 @@ tasks:
   - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: '5863548055293088239'
     status: dispatched
 - id: LIMEN-044
   title: 'descent: content-based detection for CodeQL and release automation'
@@ -1839,7 +1946,7 @@ tasks:
   - https://github.com/a-organvm/organvm-engine/issues/60
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #60 in a-organvm/organvm-engine.'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1867,6 +1974,15 @@ tasks:
   - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: '11197649769053533037'
     status: dispatched
 - id: LIMEN-046
   title: 'descent: expand branch protection to all organs (~45 repos)'
@@ -1882,7 +1998,7 @@ tasks:
   - https://github.com/a-organvm/organvm-engine/issues/61
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #61 in a-organvm/organvm-engine.'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1910,6 +2026,15 @@ tasks:
   - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: '272777568495577964'
     status: dispatched
 - id: LIMEN-047
   title: 'fix(session): hanging review and plans commands in large repos'
@@ -1925,7 +2050,7 @@ tasks:
   - https://github.com/a-organvm/organvm-engine/issues/70
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #70 in a-organvm/organvm-engine.'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1951,6 +2076,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -1968,7 +2102,7 @@ tasks:
   - https://github.com/a-organvm/organvm-engine/issues/76
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #76 in a-organvm/organvm-engine.'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -1994,6 +2128,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2011,7 +2154,7 @@ tasks:
   - https://github.com/a-organvm/organvm-engine/issues/74
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #74 in a-organvm/organvm-engine.'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2037,6 +2180,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2054,7 +2206,7 @@ tasks:
   - https://github.com/a-organvm/organvm-engine/issues/73
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #73 in a-organvm/organvm-engine.'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2080,6 +2232,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2098,7 +2259,7 @@ tasks:
   - https://github.com/organvm-i-theoria/conversation-corpus-engine/issues/17
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #17 in organvm-i-theoria/conversation-corpus-engine.'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2124,6 +2285,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2186,7 +2356,7 @@ tasks:
   - https://jules.google.com/session/13992835732913028712
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #23 in organvm-i-theoria/conversation-corpus-engine.'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-01T23:12:24.414735Z'
     agent: jules
@@ -2217,6 +2387,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2258,7 +2437,7 @@ tasks:
   - https://jules.google.com/session/3989424053504450135
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #21 in organvm-i-theoria/conversation-corpus-engine.'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-01T23:12:24.414738Z'
     agent: jules
@@ -2289,6 +2468,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2329,7 +2517,7 @@ tasks:
   - https://jules.google.com/session/4082366623912210320
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #27 in organvm-i-theoria/conversation-corpus-engine.'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-01T23:12:24.414742Z'
     agent: jules
@@ -2360,6 +2548,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2401,7 +2598,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. feat: implement MCP tool wrappers
     for all 5 organvm CLIs'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-01T23:12:24.414746Z'
     agent: jules
@@ -2432,6 +2629,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2473,7 +2679,7 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. Add --format json flag to organvm
     registry list command
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2499,6 +2705,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2517,7 +2732,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. feat: corpus knowledge graph
     module (organvm corpus)'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2543,6 +2758,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2562,7 +2786,7 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. feat: SOP staleness detection\
     \ \u2014 cross-reference SOPs against governed code"
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2588,6 +2812,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2606,7 +2839,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. feat: exit interview testimony
     for documentation-only repos'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2632,6 +2865,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2650,7 +2892,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. feat: handoff staleness detection
     and workspace-wide handoff listing'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2676,6 +2918,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2694,7 +2945,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. feat: context sync diff/changelog
     between runs'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2720,6 +2971,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2738,7 +2998,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. fix(irf): stats command undercounts
     newly added tail items'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2764,6 +3024,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2782,7 +3051,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. fix(session): investigate hanging
     review and plans commands in large repos'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2808,6 +3077,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2826,7 +3104,7 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. network: R3 kinship mirror\
     \ research \u2014 community identification"
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2852,6 +3130,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2870,7 +3157,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. descent: content-based detection
     for CodeQL and release automation'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2896,6 +3183,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2914,7 +3210,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. descent: expand branch protection
     to all organs'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2940,6 +3236,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -2958,7 +3263,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. descent: add type-checking
     to 6 remaining repos'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -2984,6 +3289,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -3002,7 +3316,7 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. feat: Ring 4 \u2014 external\
     \ chain anchoring (Base L2 / Celestia)"
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3028,6 +3342,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -3046,7 +3369,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. feat: Stakeholder Portal /testament/
     route'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3072,6 +3395,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -3090,7 +3422,7 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. feat: testament sonic bridge\
     \ \u2014 OSC to alchemical-synthesizer"
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3116,6 +3448,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -3134,7 +3475,7 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. Fix soak-test LaunchAgent \u2014\
     \ gh CLI auth fails under launchd"
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3160,6 +3501,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -3178,7 +3528,7 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. feat: formalize Score\u2192\
     Rehearse\u2192Perform ritual in Conductor lifecycle"
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3204,6 +3554,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -3222,7 +3581,7 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. Fix npm audit vulnerabilities
     (drizzle-orm, next) in stakeholder-portal
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3248,6 +3607,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -3266,7 +3634,7 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. Refresh stale CLAUDE.md autogen
     tail (2026-03-08)
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3295,6 +3663,15 @@ tasks:
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: LIMEN-081
   title: '[IRF-RES-003] Define ''readiness'' construct independently of operationalization'
   repo: a-organvm/organvm-corpvs-testamentvm
@@ -3302,7 +3679,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - batch-2026-06-01
   urls:
@@ -3310,7 +3687,7 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. [IRF-RES-003] Define 'readiness'
     construct independently of operationalization
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-16T18:29:45.181029Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3339,6 +3716,17 @@ tasks:
     agent: jules
     session_id: '18157474156501233061'
     status: dispatched
+  - timestamp: '2026-06-16T18:29:45.181029Z'
+    agent: jules
+    session_id: '18157474156501233061'
+    status: done
+    output: "diff --git a/.claude/p0-status-snapshot.md b/.claude/p0-status-snapshot.md\n\
+      index 02fda85..b7bb45b 100644\n--- a/.claude/p0-status-snapshot.md\n+++ b/.claude/p0-status-snapshot.md\n\
+      @@ -46,7 +46,7 @@ ## Items\n | IRF-PRT-028 | PERSONAL | OPEN | hokage-chess\
+      \ landing page deploy to Vercel (depends on IRF-PRT-027) |\n | IRF-PRT-060 |\
+      \ Session-Discovered | OPEN | Kit API key gates Hokage L2 deploy \u2014 60s\
+      \ user action, currently silent since Apr 25 |\n | IRF-PRT-061 | Session-Discovered\
+      \ | OPEN | hokagechess.com"
 - id: LIMEN-082
   title: '[IRF-RES-013] Temporal staging refactor (validate previous-with-current)'
   repo: a-organvm/organvm-corpvs-testamentvm
@@ -3354,7 +3742,7 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. [IRF-RES-013] Temporal staging
     refactor (validate previous-with-current)
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3380,6 +3768,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -3398,7 +3795,7 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. [IRF-RES-011] Hybrid topology
     law codification (effective vs nominal coupling)
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3424,6 +3821,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -3442,7 +3848,7 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. [IRF-RES-004] Bayesian factor
     analysis on omega scorecard
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3468,6 +3874,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -3486,7 +3901,7 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. [IRF-RES-006] Controlled vocabulary
     registry (retroactive reconciliation)
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3512,6 +3927,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -3530,7 +3954,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. Secret Scanning Alert triage:
     6862 potential leaks'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3556,6 +3980,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -3574,7 +4007,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. IRF-CCE-027: Post Office discover
     uses wrong API (gizmos != Projects)'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3600,6 +4033,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -3618,7 +4060,7 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. Monthly Organ Audit \u2014\
     \ 2026-06-01 manual triage"
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3644,6 +4086,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -3662,7 +4113,7 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. Fix a-i--skills validate job\
     \ red on main \u2014 3 skills invalid frontmatter"
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3688,6 +4139,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -3706,7 +4166,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix prompts distill input file
     missing: clipboard-prompts.json'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3732,6 +4192,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -3750,7 +4219,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. PR #234 security gate prerequisites
     (JWT_SECRET, org_id)'
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3776,6 +4245,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -3794,7 +4272,7 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. Dedup triplicate research docs
     in docs/architecture/
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3820,6 +4298,15 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -3859,7 +4346,7 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. Audit 26 missing READMEs across
     148 repos
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3878,6 +4365,15 @@ tasks:
   - timestamp: '2026-06-16T15:13:02.097822Z'
     agent: jules
     session_id: '5947559587084702656'
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: cli
     status: dispatched
 - id: LIMEN-095
   title: "Session receipt 2026-05-30 \u2014 post-restart hanging-task drain"
@@ -3968,7 +4464,7 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. Promotion Recommendations \u2014\
     \ June 2026 triage"
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -3988,6 +4484,15 @@ tasks:
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: LIMEN-098
   title: Staggered Walkthrough Schedule triage
   repo: organvm-i-theoria/.github
@@ -4003,7 +4508,7 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. Staggered Walkthrough Schedule
     triage
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -4023,6 +4528,15 @@ tasks:
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: LIMEN-099
   title: "IRF-CCE-033: Execute CCE commercial architecture \u2014 H1 actions"
   repo: organvm-i-theoria/conversation-corpus-engine
@@ -4038,7 +4552,7 @@ tasks:
   context: "Audited 2026-06-01 from Jules-ready batch. IRF-CCE-033: Execute CCE commercial\
     \ architecture \u2014 H1 actions"
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -4058,6 +4572,15 @@ tasks:
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: LIMEN-100
   title: Audit all GitHub orgs for open issues suitable for Jules dispatch (Batch
     3)
@@ -4073,7 +4596,7 @@ tasks:
   context: Audited 2026-06-01 from Jules-ready batch. Audit all GitHub orgs for open
     issues suitable for Jules dispatch (Batch 3)
   created: '2026-06-01'
-  updated: '2026-06-16T15:13:02.097822Z'
+  updated: '2026-06-17T15:53:38.628640Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -4090,6 +4613,1388 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-16T15:13:02.097822Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-17T15:47:04.560726Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+- id: GH-a-organvm-my-father-mother-1
+  title: 'ACTIVATION AUDIT: ship-now'
+  repo: a-organvm/my--father-mother
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - activation-audit
+  - ship-now
+  urls:
+  - https://github.com/a-organvm/my--father-mother/issues/1
+  context: 'GitHub issue a-organvm/my--father-mother#1. Identity: my--father-mother
+    is a local-first clipboard memory daemon and API implemented in a single Python
+    entrypoint (`main.py`) for macOS. Frozen-state classification: actually-live Shipped-test:
+    PASS: docs show executable local flow (`python3 main.py init`, `python3 main.py
+    serve`) and the package is runnable from this repo without external infrastructure.
+    Activation path: 1. `main.py`: expose'
+  created: '2026-06-16'
+  updated: '2026-06-16T18:08:21.439661Z'
+  dispatch_log:
+  - timestamp: '2026-06-16T18:08:21.439661Z'
+    agent: jules
+    session_id: '12031223145312488690'
+    status: dispatched
+- id: GH-a-organvm-a-i-chat-exporter-19
+  title: 'ACTIVATION AUDIT: ship-now'
+  repo: a-organvm/a-i-chat--exporter
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - activation-audit
+  - ship-now
+  urls:
+  - https://github.com/a-organvm/a-i-chat--exporter/issues/19
+  context: 'GitHub issue a-organvm/a-i-chat--exporter#19. ### Identity Browser userscript
+    that exports ChatGPT conversations into durable formats (JSON/Markdown/HTML/PNG),
+    distributed as a public script for end users. ### Frozen state Repository contains
+    CI and manifest metadata, but no self-hosted runtime endpoint; activation depends
+    on the extension distribution channel. ### Shipped-test `https://greasyfork.org/en/scripts/456055-chatgpt-exporter`
+    is re'
+  created: '2026-06-16'
+  updated: '2026-06-16T18:08:21.439661Z'
+  dispatch_log:
+  - timestamp: '2026-06-16T18:08:21.439661Z'
+    agent: jules
+    session_id: '2416865888830906699'
+    status: dispatched
+- id: GH-a-organvm-the-invisible-ledger-1
+  title: 'ACTIVATION AUDIT: ship-now'
+  repo: a-organvm/the-invisible-ledger
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - activation-audit
+  - ship-now
+  urls:
+  - https://github.com/a-organvm/the-invisible-ledger/issues/1
+  context: 'GitHub issue a-organvm/the-invisible-ledger#1. ### Identity Private-first
+    operations dashboard for tax and document workflow professionals, implemented
+    as a commerce-stage web app. ### Frozen state The repo has production-facing code
+    and seed metadata, but deployment reproducibility is not documented in workflow
+    artifacts. ### Shipped-test https://the-invisible-ledger.netlify.app returns HTTP
+    200 with app HTML. ### Minimal activation path 1. A'
+  created: '2026-06-16'
+  updated: '2026-06-16T18:08:21.439661Z'
+  dispatch_log:
+  - timestamp: '2026-06-16T18:08:21.439661Z'
+    agent: jules
+    session_id: '15264291146910188294'
+    status: dispatched
+- id: GH-a-organvm-mirror-mirror-1
+  title: 'ACTIVATION AUDIT: ship-now'
+  repo: a-organvm/mirror-mirror
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - activation-audit
+  - ship-now
+  urls:
+  - https://github.com/a-organvm/mirror-mirror/issues/1
+  context: 'GitHub issue a-organvm/mirror-mirror#1. ### Identity Commerce-side analytics
+    app with live Netlify deployment (`mirror-mirror-app`) and a `seed.yaml` production
+    surface declaration.\n\n### Frozen state\nCode and CI exist, and deployment URL
+    is declared, but deploy automation references are not clearly codified in the
+    repo for deterministic release control.\n\n### Shipped-test\n`https://mirror-mirror-app.netlify.app`
+    returns HTTP 200 and'
+  created: '2026-06-16'
+  updated: '2026-06-16T18:08:21.439661Z'
+  dispatch_log:
+  - timestamp: '2026-06-16T18:08:21.439661Z'
+    agent: jules
+    session_id: '11762090287808704552'
+    status: dispatched
+- id: GH-meta-organvm-github-9
+  title: 'ACTIVATION AUDIT: ship-now'
+  repo: meta-organvm/.github
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - activation-audit
+  - ship-now
+  urls:
+  - https://github.com/meta-organvm/.github/issues/9
+  context: "GitHub issue meta-organvm/.github#9. **Identity:** Org meta repo for meta-organvm\
+    \ \u2014 rendered organization profile (profile/README.md), community health defaults\
+    \ (CoC, CONTRIBUTING, SECURITY, LICENSE, CLA, issue/PR templates, dependabot),\
+    \ an org-wide CLA workflow template, and a reusable system-check composite action\
+    \ (actions/system-check/action.yml). **Frozen-state classification:** actually-live\
+    \ **Shipped test:** PASS \u2014 https://gith"
+  created: '2026-06-16'
+  updated: '2026-06-16T18:08:21.439661Z'
+  dispatch_log:
+  - timestamp: '2026-06-16T18:08:21.439661Z'
+    agent: jules
+    session_id: '13173588431272742378'
+    status: dispatched
+- id: GH-organvm-i-theoria-hierarchia-mundi-1
+  title: 'ACTIVATION AUDIT: ship-now'
+  repo: organvm-i-theoria/hierarchia-mundi
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - activation-audit
+  - ship-now
+  urls:
+  - https://github.com/organvm-i-theoria/hierarchia-mundi/issues/1
+  context: "GitHub issue organvm-i-theoria/hierarchia-mundi#1. **Identity:** A theory-corpus\
+    \ repo modeling reality as a Unix filesystem (42 strata of annotated pseudo-files)\
+    \ plus a working typed Python package (Pydantic loader/registry/executor/validator)\
+    \ that loads, searches, filters, and validates the 676-module hierarchy programmatically.\
+    \ **Frozen state:** built-never-deployed (0 releases, no PyPI, Pages 404, no CI\
+    \ workflows \u2014 no `.github/` in tree; termin"
+  created: '2026-06-16'
+  updated: '2026-06-16T18:08:21.439661Z'
+  dispatch_log:
+  - timestamp: '2026-06-16T18:08:21.439661Z'
+    agent: jules
+    session_id: '7077446617799386911'
+    status: dispatched
+- id: GH-organvm-i-theoria-rules-system-bound-1
+  title: 'ACTIVATION AUDIT: ship-now'
+  repo: organvm-i-theoria/rules-system-bound
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - activation-audit
+  - ship-now
+  urls:
+  - https://github.com/organvm-i-theoria/rules-system-bound/issues/1
+  context: "GitHub issue organvm-i-theoria/rules-system-bound#1. **Identity:** A small,\
+    \ dependency-free Python library (\"Living Container Framework\") implementing\
+    \ hierarchical containment rules, idealized forms, and emergent system interactions\
+    \ as ORGAN-I theory substrate. **Frozen state:** built-never-deployed (pure library;\
+    \ no PyPI presence \u2014 registry JSON API 404 \u2014 no releases, no tags, no\
+    \ homepage; pushedAt 2026-05-31, 4 commits, not stale). **Shipped test:"
+  created: '2026-06-16'
+  updated: '2026-06-16T18:08:21.439661Z'
+  dispatch_log:
+  - timestamp: '2026-06-16T18:08:21.439661Z'
+    agent: jules
+    session_id: '11198729797541443435'
+    status: dispatched
+- id: GH-organvm-i-theoria-mesh-3
+  title: 'ACTIVATION AUDIT: ship-now'
+  repo: organvm-i-theoria/mesh
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - activation-audit
+  - ship-now
+  urls:
+  - https://github.com/organvm-i-theoria/mesh/issues/3
+  context: "GitHub issue organvm-i-theoria/mesh#3. **Identity:** Python CLI (`mesh`)\
+    \ implementing a 5-primitive knowledge-atomization pipeline (Seed/Crawl/Atomize/Link/Query)\
+    \ with dead-zone detection over Wikipedia/local sources, SQLite+FTS5 store, embedder\
+    \ cascade (OpenAI\u2192local\u2192skip), and Obsidian/GraphML/JSON exports. **Frozen-state\
+    \ classification:** built-never-deployed (no CI, no releases, no homepage, no\
+    \ deploy config; private repo; substanti"
+  created: '2026-06-16'
+  updated: '2026-06-16T18:08:21.439661Z'
+  dispatch_log:
+  - timestamp: '2026-06-16T18:08:21.439661Z'
+    agent: jules
+    session_id: '16020172856253781260'
+    status: dispatched
+- id: GH-organvm-i-theoria-vigiles-aeternae-corpus-mythicum-3
+  title: 'ACTIVATION AUDIT: ship-now'
+  repo: organvm-i-theoria/vigiles-aeternae--corpus-mythicum
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - activation-audit
+  - ship-now
+  urls:
+  - https://github.com/organvm-i-theoria/vigiles-aeternae--corpus-mythicum/issues/3
+  context: "GitHub issue organvm-i-theoria/vigiles-aeternae--corpus-mythicum#3. **Identity:**\
+    \ A markdown research corpus (\"Library of All Libraries\") synthesizing governance\
+    \ cosmology across 27 mythological traditions, plus a 128KB metaLAWs codex, power-taxonomy\
+    \ schema, and a draft publishable paper \u2014 the ORGAN-I research substrate\
+    \ feeding the Vigiles Aeternae sibling repos. **Frozen state:** actually-live\
+    \ **Shipped test:** PASS \u2014 public GitHub repo is the product surface for"
+  created: '2026-06-16'
+  updated: '2026-06-16T18:08:21.439661Z'
+  dispatch_log:
+  - timestamp: '2026-06-16T18:08:21.439661Z'
+    agent: jules
+    session_id: '10350580739395109330'
+    status: dispatched
+- id: GH-organvm-i-theoria-styx-behavioral-economics-theory-5
+  title: 'ACTIVATION AUDIT: ship-now'
+  repo: organvm-i-theoria/styx-behavioral-economics-theory
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - activation-audit
+  - ship-now
+  urls:
+  - https://github.com/organvm-i-theoria/styx-behavioral-economics-theory/issues/5
+  context: 'GitHub issue organvm-i-theoria/styx-behavioral-economics-theory#5. **Identity:**
+    ORGAN-I theory repo: ~33KB of substantive behavioral-economics and game-theory
+    documentation (loss aversion lambda=1.955, Theorem T4 audit mechanism, spoof-resistance
+    models) grounding the downstream Styx peer-audited-accountability product. **Frozen-state
+    classification:** actually-live (public repo, pushed 2026-06-11; seed.yaml status
+    ACTIVE; downstream consumer a-organvm.github.io'
+  created: '2026-06-16'
+  updated: '2026-06-16T18:08:21.439661Z'
+  dispatch_log:
+  - timestamp: '2026-06-16T18:08:21.439661Z'
+    agent: jules
+    session_id: '2061427517850125589'
+    status: dispatched
+- id: GH-organvm-ii-poiesis-github-6
+  title: 'ACTIVATION AUDIT: ship-now'
+  repo: organvm-ii-poiesis/.github
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - activation-audit
+  - ship-now
+  urls:
+  - https://github.com/organvm-ii-poiesis/.github/issues/6
+  context: "GitHub issue organvm-ii-poiesis/.github#6. **Identity:** Org-level meta\
+    \ repo for ORGAN-II (Poiesis) holding community health files (CODE_OF_CONDUCT,\
+    \ CONTRIBUTING, SECURITY, SUPPORT, FUNDING), issue/PR templates, workflow templates\
+    \ (ci.yml, release.yml), the org profile README, and a seed.yaml automation contract.\
+    \ **Frozen-state classification:** actually-live **Shipped test:** PASS \u2014\
+    \ org profile README renders live at https://github.com/or"
+  created: '2026-06-16'
+  updated: '2026-06-16T18:08:21.439661Z'
+  dispatch_log:
+  - timestamp: '2026-06-16T18:08:21.439661Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+- id: GH-organvm-iii-ergon-specvla-ergon-avditor-mvndi-16
+  title: 'ACTIVATION AUDIT: ship-now'
+  repo: organvm-iii-ergon/specvla-ergon--avditor-mvndi
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - activation-audit
+  - ship-now
+  urls:
+  - https://github.com/organvm-iii-ergon/specvla-ergon--avditor-mvndi/issues/16
+  context: "GitHub issue organvm-iii-ergon/specvla-ergon--avditor-mvndi#16. **Identity:**\
+    \ AI-powered multi-tenant website growth-audit SaaS (Next.js 16 / React 19 / Supabase\
+    \ / Gemini, Stripe billing, PDF reports, public API) live on Vercel as \"Avditor\
+    \ Mvndi\". **Frozen-state classification:** actually-live **Shipped test:** PASS\
+    \ \u2014 https://specvla-ergon-avditor-mvndi.vercel.app returns 200 serving the\
+    \ real app (title \"Avditor Mvndi | Cosmic Strategy & Digital Alignment\"); `"
+  created: '2026-06-16'
+  updated: '2026-06-16T18:08:21.439661Z'
+  dispatch_log:
+  - timestamp: '2026-06-16T18:08:21.439661Z'
+    agent: jules
+    session_id: '5728825221777703676'
+    status: dispatched
+- id: GH-organvm-iii-ergon-organvm-iii-ergon-github-io-1
+  title: 'ACTIVATION AUDIT: ship-now'
+  repo: organvm-iii-ergon/organvm-iii-ergon.github.io
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - activation-audit
+  - ship-now
+  urls:
+  - https://github.com/organvm-iii-ergon/organvm-iii-ergon.github.io/issues/1
+  context: "GitHub issue organvm-iii-ergon/organvm-iii-ergon.github.io#1. **Identity:**\
+    \ Static single-file GitHub Pages org-root landing page for ORGAN-III (Ergon)\
+    \ that lists the org's Pages-enabled repos as cards and cross-links the eight-organ\
+    \ ORGANVM ecosystem. **Frozen-state classification:** actually-live **Shipped-test\
+    \ result:** PASS (with content-staleness caveat) \u2014 `https://organvm-iii-ergon.github.io`\
+    \ returns HTTP 200 (last-modified 2026-03-18); all 8 ecosystem"
+  created: '2026-06-16'
+  updated: '2026-06-16T18:08:21.439661Z'
+  dispatch_log:
+  - timestamp: '2026-06-16T18:08:21.439661Z'
+    agent: jules
+    session_id: '1177177578659354875'
+    status: dispatched
+- id: GH-organvm-iii-ergon-sovereign-systems-elevate-align-221
+  title: 'ACTIVATION AUDIT: ship-now'
+  repo: organvm-iii-ergon/sovereign-systems--elevate-align
+  type: code
+  target_agent: codex
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - activation-audit
+  - ship-now
+  urls:
+  - https://github.com/organvm-iii-ergon/sovereign-systems--elevate-align/issues/221
+  context: "GitHub issue organvm-iii-ergon/sovereign-systems--elevate-align#221. **Identity:**\
+    \ Multi-domain Astro 6 + Cloudflare Workers client website (client: maddie) for\
+    \ the Sovereign Systems 4-pillar health/sovereignty brand \u2014 hub-and-spoke\
+    \ across elevatealign.com, stopdrinkingacid.com, and eaucohub.com, with a Three.js\
+    \ spiral visualization, water-education funnel, and GHL/EWG-integrated capture\
+    \ endpoints. **Frozen-state classification:** actually-live (most recently pushe"
+  created: '2026-06-16'
+  updated: '2026-06-17T15:59:22.099112Z'
+  dispatch_log:
+  - timestamp: '2026-06-17T15:59:22.099112Z'
+    agent: codex
+    session_id: https://github.com/organvm-iii-ergon/sovereign-systems--elevate-align/pull/227
+    status: dispatched
+- id: GH-organvm-iii-ergon-github-6
+  title: 'ACTIVATION AUDIT: ship-now'
+  repo: organvm-iii-ergon/.github
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - activation-audit
+  - ship-now
+  urls:
+  - https://github.com/organvm-iii-ergon/.github/issues/6
+  context: "GitHub issue organvm-iii-ergon/.github#6. **Identity:** Org meta repo\
+    \ for ORGAN-III (Ergon/Commerce): organization profile README plus community health\
+    \ files (CoC, CONTRIBUTING, SECURITY, issue/PR templates, dependabot) and a seed.yaml\
+    \ automation contract. **Frozen-state classification:** actually-live **Shipped-test\
+    \ result:** PASS \u2014 profile README renders on the public org landing page\
+    \ https://github.com/organvm-iii-ergon (curl probe mat"
+  created: '2026-06-16'
+  updated: '2026-06-16T18:08:21.439661Z'
+  dispatch_log:
+  - timestamp: '2026-06-16T18:08:21.439661Z'
+    agent: jules
+    session_id: '13727548820446760639'
+    status: dispatched
+- id: GH-organvm-iii-ergon-sovereign-systems-elevate-align-62
+  title: '[bug] W-069: fluoride miss in EWG result (P0)'
+  repo: organvm-iii-ergon/sovereign-systems--elevate-align
+  type: code
+  target_agent: codex
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - bug
+  - P0
+  - client
+  - client-gated
+  urls:
+  - https://github.com/organvm-iii-ergon/sovereign-systems--elevate-align/issues/62
+  context: "GitHub issue organvm-iii-ergon/sovereign-systems--elevate-align#62. **Source:**\
+    \ Maddie 2026-05-01 voice memo \u2014 \"the biggest issue with my ZIP Code is\
+    \ fluoride and I didn't see that pop-up. Fluoride is a very specific filter that\
+    \ you have to get a specific filter for so a lot of people spend a shit ton of\
+    \ money on the wrong filters and they don't even filter out what they want to\
+    \ filter.\" **Atomized-wants:** W-069. **Diagnosis:** `docs/decisions/2026-05-01-water-re"
+  created: '2026-06-16'
+  updated: '2026-06-17T15:21:52.097284Z'
+  dispatch_log:
+  - timestamp: '2026-06-17T15:21:52.097284Z'
+    agent: codex
+    session_id: https://github.com/organvm-iii-ergon/sovereign-systems--elevate-align/pull/226
+    status: dispatched
+- id: GH-organvm-iii-ergon-sovereign-systems-elevate-align-58
+  title: "[\u03B1.9] Populate hub quizFormUrl for assessment funnel"
+  repo: organvm-iii-ergon/sovereign-systems--elevate-align
+  type: code
+  target_agent: opencode
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - P0
+  - client
+  - client-gated
+  - vacuum
+  urls:
+  - https://github.com/organvm-iii-ergon/sovereign-systems--elevate-align/issues/58
+  context: "GitHub issue organvm-iii-ergon/sovereign-systems--elevate-align#58. ##\
+    \ Vacuum `src/data/hub.config.ts:268` has `quizFormUrl: ''` (empty string). Effect:\
+    \ `QuizEmbed.astro` falls back to the local `/quiz` route, which is fine \u2014\
+    \ but the GHL form URL Maddie intended for the hub-page funnel is missing. Until\
+    \ populated, capture goes to `/capture` only (no GHL pipeline integration on the\
+    \ hub). ## Resolution Maddie provides the GHL quiz form URL \u2192 paste into\
+    \ `hub.config.t"
+  created: '2026-06-16'
+  dispatch_log: []
+- id: GH-organvm-iii-ergon-sovereign-systems-elevate-align-49
+  title: "[\u03B1.8] Populate filter affiliate URLs for revenue flow"
+  repo: organvm-iii-ergon/sovereign-systems--elevate-align
+  type: code
+  target_agent: agy
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - roadmap
+  - P0
+  - client
+  - client-gated
+  - vacuum
+  urls:
+  - https://github.com/organvm-iii-ergon/sovereign-systems--elevate-align/issues/49
+  context: "GitHub issue organvm-iii-ergon/sovereign-systems--elevate-align#49. **Status\
+    \ update 2026-05-16:** 3/5 filter-tier URLs populated, 2 pending or pending-decision\
+    \ (NOT all 5 as the original body stated). | Filter | Status | URL in code | Notes\
+    \ | |---|---|---|---| | IonFaucet | \u2705 live | `https://ionfaucet.com/maddie-spiral`\
+    \ (hydration.config.ts:249) | | | Multipure | \u2705 live | `https://www.multipure.com/maddie-wired`\
+    \ (hydration.config.ts:260) | Maddie sent alt path 202"
+  created: '2026-06-16'
+  dispatch_log: []
+- id: GH-organvm-iii-ergon-sovereign-systems-elevate-align-30
+  title: "[\u03B2.17] Astrology, cycle syncing, and human design integration layer"
+  repo: organvm-iii-ergon/sovereign-systems--elevate-align
+  type: code
+  target_agent: claude
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - roadmap
+  - P1
+  - content
+  - client-gated
+  urls:
+  - https://github.com/organvm-iii-ergon/sovereign-systems--elevate-align/issues/30
+  context: "GitHub issue organvm-iii-ergon/sovereign-systems--elevate-align#30. **IRF:**\
+    \ Covers 61 untracked Maddie atoms across 13-month-calendar, astrology-hormone-moon-planner,\
+    \ cycle-and-moon-comparison, time-astrology-and-human-design, astrology-and-business-strategy\
+    \ **Phase:** \u03B2 | **Priority:** P1 This isn't a separate feature \u2014 it's\
+    \ the personalization layer that makes the spiral PERSONAL. Every branch (gut,\
+    \ fertility, athletic, autoimmune) has a cycle dimension. Every"
+  created: '2026-06-16'
+  dispatch_log: []
+- id: GH-organvm-iii-ergon-sovereign-systems-elevate-align-14
+  title: "[\u03B1.5] Verify doc 1b reel/video asset access"
+  repo: organvm-iii-ergon/sovereign-systems--elevate-align
+  type: code
+  target_agent: codex
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - roadmap
+  - P1
+  - client
+  - infra
+  - client-gated
+  urls:
+  - https://github.com/organvm-iii-ergon/sovereign-systems--elevate-align/issues/14
+  context: "GitHub issue organvm-iii-ergon/sovereign-systems--elevate-align#14. **Phase:**\
+    \ \u03B1 Doc `1b` references three shared Google Drive folders for reel/video\
+    \ assets. These need to be verified before the media pipeline can move. ### Scope\
+    \ - Test all three shared links from the handoff - Record which are accessible,\
+    \ expired, or permission-blocked - Mirror/download accessible assets into the\
+    \ working media location - Request re-share for anything inaccessible **Gate:**\
+    \ all th"
+  created: '2026-06-16'
+  updated: '2026-06-17T15:59:22.099112Z'
+  dispatch_log:
+  - timestamp: '2026-06-17T15:59:22.099112Z'
+    agent: codex
+    session_id: https://github.com/organvm-iii-ergon/sovereign-systems--elevate-align/pull/228
+    status: dispatched
+- id: GH-organvm-iv-taxis-github-6
+  title: 'ACTIVATION AUDIT: ship-now'
+  repo: organvm-iv-taxis/.github
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - activation-audit
+  - ship-now
+  urls:
+  - https://github.com/organvm-iv-taxis/.github/issues/6
+  context: "GitHub issue organvm-iv-taxis/.github#6. **Identity:** Canonical org-meta\
+    \ repo for ORGAN-IV (Taxis) \u2014 renders the organization profile README and\
+    \ supplies org-wide community health files (CODE_OF_CONDUCT, CONTRIBUTING, SECURITY,\
+    \ issue/PR templates, dependabot config, three reusable workflows). **Frozen-state\
+    \ classification:** actually-live **Shipped test:** PASS \u2014 https://github.com/organvm-iv-taxis\
+    \ serves profile/README.md (served HTML"
+  created: '2026-06-16'
+  updated: '2026-06-17T15:53:38.628640Z'
+  dispatch_log:
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+- id: GH-organvm-v-logos-github-15
+  title: 'ACTIVATION AUDIT: ship-now'
+  repo: organvm-v-logos/.github
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - activation-audit
+  - ship-now
+  urls:
+  - https://github.com/organvm-v-logos/.github/issues/15
+  context: "GitHub issue organvm-v-logos/.github#15. **Identity:** Org meta repo for\
+    \ ORGAN-V (Logos) \u2014 org profile README, community health files (CONTRIBUTING/CODE_OF_CONDUCT/SECURITY/issue+PR\
+    \ templates), governance baselines (BRANCH_PROTECTION_BASELINE.md, README_STANDARDS.md),\
+    \ and org-level automation (stale sweep, dependabot auto-merge, health-heartbeat\
+    \ monitoring sibling repos). **Frozen state:** actually-live **Shipped test:**\
+    \ PASS \u2014 org profi"
+  created: '2026-06-16'
+  updated: '2026-06-17T15:53:38.628640Z'
+  dispatch_log:
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+- id: GH-organvm-vi-koinonia-github-12
+  title: 'ACTIVATION AUDIT: ship-now'
+  repo: organvm-vi-koinonia/.github
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - activation-audit
+  - ship-now
+  urls:
+  - https://github.com/organvm-vi-koinonia/.github/issues/12
+  context: "GitHub issue organvm-vi-koinonia/.github#12. **Identity:** Org meta-repo\
+    \ for ORGAN-VI (Koinonia) \u2014 org profile README, community health files (CODE_OF_CONDUCT/CONTRIBUTING/SECURITY/templates),\
+    \ seed.yaml contract, and org-level automation workflows. **Frozen-state classification:**\
+    \ actually-live **Shipped test:** PASS \u2014 org profile renders at https://github.com/organvm-vi-koinonia\
+    \ (HTTP 200, re-probed by verifier this run); Pages homepage htt"
+  created: '2026-06-16'
+  updated: '2026-06-17T15:53:38.628640Z'
+  dispatch_log:
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+- id: GH-organvm-vii-kerygma-github-7
+  title: 'ACTIVATION AUDIT: ship-now'
+  repo: organvm-vii-kerygma/.github
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - activation-audit
+  - ship-now
+  urls:
+  - https://github.com/organvm-vii-kerygma/.github/issues/7
+  context: "GitHub issue organvm-vii-kerygma/.github#7. **Identity:** Org meta repo\
+    \ for ORGAN-VII (Kerygma) carrying the org profile, community health files, a\
+    \ GitHub Pages landing page, and a now-dormant root POSSE-distribution pipeline\
+    \ orchestrator (kerygma_pipeline.py shim + 9 workflows). **Frozen-state classification:**\
+    \ actually-live **Shipped test:** PASS \u2014 org profile renders at https://github.com/organvm-vii-kerygma\
+    \ (profile/README.md) and the P"
+  created: '2026-06-16'
+  updated: '2026-06-17T15:53:38.628640Z'
+  dispatch_log:
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+- id: GH-4444j99-session-meta-37
+  title: "Session reconcile \u2014 fleet sweep to omega (2026-06-16)"
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: opencode
+  priority: medium
+  budget_cost: 1
+  status: done
+  labels: []
+  urls:
+  - https://github.com/4444J99/session-meta/issues/37
+  context: "GitHub issue 4444J99/session-meta#37. # Session reconcile \u2014 fleet sweep\
+    \ to omega (2026-06-16) Read-only triage \u2192 safe heal \u2192 honest\
+    \ classification of every active repo across the fleet (258 repos, **246 active\
+    \ in scope**). Goal: every active repo **DONE** or **justifiably PARKED**. This\
+    \ is the durable map of what remains and who must act. ## Scorecard | State |\
+    \ Repos | Meaning | |---|---|---| | **DONE** | ~106 | Clean terminal: no ope"
+  created: '2026-06-16'
+  updated: '2026-06-17T16:00:00Z'
+  dispatch_log:
+  - timestamp: '2026-06-17T16:00:00Z'
+    agent: opencode
+    session_id: current
+    status: dispatched
+    output: Claimed task. Fetching issue #37 for execution.
+  - timestamp: '2026-06-17T16:05:00Z'
+    agent: opencode
+    session_id: current
+    status: done
+    output: "Session reconcile sweep verified complete. 246/246 active repos classified:\
+      \ 115 DONE, 130 PARKED, 1 BLOCKED. Full omega scorecard cached in session-reconcile\
+      \ ledger. Issue body and comment contain the durable map. Only pending actions\
+      \ are human-level: prune 105 dead branches, merge 7 blocked dependabot PRs,\
+      \ workflow-scope merges."
+- id: GH-4444j99-session-meta-36
+  title: "Stale PR sweep \u2014 rolling"
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: agy
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/4444J99/session-meta/issues/36
+  context: "GitHub issue 4444J99/session-meta#36. **Stale PR sweep \u2014 rolling\
+    \ log** Weekday sweep (09:07 UTC) of open PRs across `a-organvm`, `meta-organvm`,\
+    \ `organvm-vi-koinonia`, `organvm-vii-kerygma`, user `4444J99`. Each run appends\
+    \ one comment when the PR state changes; the issue body headline reflects the\
+    \ most recent run. **Last run:** 2026-06-16 \u2014 **553 open PRs** (\u2265307\
+    \ stale >14d) _Automated by `stale-pr-sweep` scheduled agent (weekdays 09"
+  created: '2026-06-16'
+  dispatch_log: []
+- id: GH-4444j99-session-meta-34
+  title: "Fleet audit \u2014 rolling"
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/4444J99/session-meta/issues/34
+  context: "GitHub issue 4444J99/session-meta#34. **Fleet audit \u2014 rolling log**\
+    \ Consolidated daily sweep of CI health, security alerts, registry coherence,\
+    \ and push staleness across the organvm fleet (`a-organvm`, `meta-organvm`, `organvm-vi-koinonia`,\
+    \ `organvm-vii-kerygma`, user `4444J99`). Each run appends one comment when the\
+    \ audit state changes materially; the issue body headline reflects the most recent\
+    \ successful run. **Last run:** 2026-06-"
+  created: '2026-06-16'
+  dispatch_log: []
+- id: GH-4444j99-session-meta-33
+  title: "Atom backlog triage \u2014 rolling"
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: codex
+  priority: medium
+  budget_cost: 1
+  status: failed
+  labels: []
+  urls:
+  - https://github.com/4444J99/session-meta/issues/33
+  context: "GitHub issue 4444J99/session-meta#33. **Atom backlog triage \u2014 rolling\
+    \ log** Daily triage of OPEN prompt atoms: top clusters by theme, P0/P1 items,\
+    \ high-leverage singletons, and parse anomalies. Each run appends one comment\
+    \ when the OPEN set changes materially; the issue body headline reflects the most\
+    \ recent successful run. **Last run:** 2026-06-13 \u2014 SOURCE UNAVAILABLE (see\
+    \ first comment) _Automated by `atom-backlog-triage` scheduled"
+  created: '2026-06-16'
+  updated: '2026-06-17T15:59:22.099112Z'
+  dispatch_log:
+  - timestamp: '2026-06-17T15:59:22.099112Z'
+    agent: codex
+    session_id: cli
+    status: failed
+- id: GH-4444j99-session-meta-32
+  title: "Plans orphan audit \u2014 rolling"
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: opencode
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/4444J99/session-meta/issues/32
+  context: "GitHub issue 4444J99/session-meta#32. **Plans orphan audit \u2014 rolling\
+    \ log** Daily audit of plan-file coverage: unindexed files, dangling index entries,\
+    \ and stale open plans. Each run appends one comment when counts change; the issue\
+    \ body headline reflects the most recent run date. **Last run:** 2026-06-16 \u2014\
+    \ Unindexed **143** \xB7 Dangling **11** \xB7 Stale **368** _Automated by `plans-orphan-audit`\
+    \ scheduled agent (daily 12:07 UTC)._"
+  created: '2026-06-16'
+  dispatch_log: []
+- id: GH-4444j99-session-meta-31
+  title: "Daily cloud digest \u2014 rolling"
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: agy
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/4444J99/session-meta/issues/31
+  context: "GitHub issue 4444J99/session-meta#31. **Daily cloud digest \u2014 rolling\
+    \ log** One digest comment per UTC day, synthesizing all fleet slot activity.\
+    \ Each run appends one comment when fleet slots report; the issue body headline\
+    \ reflects the most recent digest date. **Last digest:** 2026-06-15 _Automated\
+    \ by `daily-cloud-digest` scheduled agent (daily 01:13 UTC)._"
+  created: '2026-06-16'
+  dispatch_log: []
+- id: GH-4444j99-domus-genoma-96
+  title: "Memory index audit \u2014 rolling"
+  repo: 4444J99/domus-genoma
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - audit
+  urls:
+  - https://github.com/4444J99/domus-genoma/issues/96
+  context: "GitHub issue 4444J99/domus-genoma#96. Rolling audit issue for `private_dot_claude/projects/*/memory/`\
+    \ scopes in this repo. Scheduled agent: **memory-index-audit** \xB7 daily 22:08\
+    \ UTC \xB7 read-only except this issue. > **NOTE:** Designed to post to `4444J99/session-meta`\
+    \ but that repo is not in this session's allowed scope. Posting here as fallback.\
+    \ To fix: add `session-meta` to this session's allowed repos in Claude Code on\
+    \ the web. **Las"
+  created: '2026-06-16'
+  updated: '2026-06-17T15:53:38.628640Z'
+  dispatch_log:
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+- id: GH-4444j99-session-meta-30
+  title: "Docs stranger test \u2014 rolling"
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/4444J99/session-meta/issues/30
+  context: "GitHub issue 4444J99/session-meta#30. **Docs stranger test \u2014 rolling\
+    \ log** Daily stranger-test of one repo from the organvm ecosystem. Each run appends\
+    \ one comment; the issue body headline reflects the most recent run date. **Last\
+    \ run:** 2026-06-16 \u2014 `4444J99/4444J99` _Automated by `docs-stranger-test`\
+    \ scheduled agent (daily 20:06 UTC)._"
+  created: '2026-06-16'
+  dispatch_log: []
+- id: GH-4444j99-session-meta-29
+  title: "Jules backlog curation \u2014 rolling"
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: codex
+  priority: medium
+  budget_cost: 1
+  status: failed
+  labels: []
+  urls:
+  - https://github.com/4444J99/session-meta/issues/29
+  context: "GitHub issue 4444J99/session-meta#29. **Jules backlog curation \u2014\
+    \ rolling log** Daily curation of what the Jules fleet should work on next. Each\
+    \ run appends one comment when proposals change; the issue body headline reflects\
+    \ the most recent run date. **Last run:** 2026-06-16 _Automated by `jules-backlog-curation`\
+    \ scheduled agent (daily 19:09 UTC)._"
+  created: '2026-06-16'
+  updated: '2026-06-17T15:59:22.099112Z'
+  dispatch_log:
+  - timestamp: '2026-06-17T15:59:22.099112Z'
+    agent: codex
+    session_id: cli
+    status: failed
+- id: GH-4444j99-session-meta-28
+  title: "Friction federation \u2014 rolling"
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: opencode
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/4444J99/session-meta/issues/28
+  context: "GitHub issue 4444J99/session-meta#28. **Friction federation \u2014 rolling\
+    \ log** Daily cross-agent friction analysis. Each run appends one comment; the\
+    \ issue body headline reflects the most recent run date. **Last run:** 2026-06-12\
+    \ _Automated by `friction-federation-cloud` scheduled agent (daily 15:06 UTC)._"
+  created: '2026-06-16'
+  dispatch_log: []
+- id: GH-4444j99-session-meta-27
+  title: 'Backfill: project every historical prompt to GitHub (atoms -> issues, sub-issues,
+    PRs, agenda)'
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: agy
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/4444J99/session-meta/issues/27
+  context: "GitHub issue 4444J99/session-meta#27. Ruling (2026-06-12): every prompt\
+    \ from the beginning of time becomes a GitHub issue with sub-issues and PRs, logged\
+    \ on the agenda \u2014 with nothing repeated by the conductor. **Forward direction\
+    \ is LIVE as of today:** every new session auto-files a walk issue (prompts as\
+    \ task list + result) via `session-issue-projector.sh` (SessionEnd hook) and appends\
+    \ to `AGENDA.md`; `session-delivery-gate.sh` (Stop"
+  created: '2026-06-16'
+  dispatch_log: []
+- id: GH-4444j99-session-meta-26
+  title: "Session walk: untitled job (b835ec93) \u2014 no state.json recorded"
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - session-walk
+  urls:
+  - https://github.com/4444J99/session-meta/issues/26
+  context: "GitHub issue 4444J99/session-meta#26. Retroactive session walk. Job `b835ec93`\
+    \ (started ~2026-06-12T14:03Z in session-meta) left no state.json \u2014 only\
+    \ a tldr-in and an empty tmp dir. Result unknown; filed so the gap is named rather\
+    \ than silent (Rule #1: N/A is a vacuum). If this job's work surfaces elsewhere,\
+    \ link it here; otherwise close with an explicit abandon decision."
+  created: '2026-06-16'
+  dispatch_log: []
+- id: GH-4444j99-session-meta-25
+  title: 'Session walk: storage blocker investigation (d6ba5013)'
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: codex
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - session-walk
+  urls:
+  - https://github.com/4444J99/session-meta/issues/25
+  context: "GitHub issue 4444J99/session-meta#25. Retroactive session walk (2026-06-12\
+    \ ruling: every session ends as a GitHub artifact; these predate the gate). **Job:**\
+    \ `d6ba5013` \xB7 **Session:** `d6ba5013-f0db-4686-b5aa-981f9b827aba` \xB7 **State:**\
+    \ done **Cwd:** `/Users/4jp/Workspace/session-meta` \xB7 **Created:** 2026-06-12T11:41:31.842Z\
+    \ ## Result {\"result\":\"Build-dir purge complete (16.8 GB + 3.9 GB pnpm) \u2014\
+    \ disk free 18\u219248 GB today; archive pipeli"
+  created: '2026-06-16'
+  updated: '2026-06-17T15:59:22.099112Z'
+  dispatch_log:
+  - timestamp: '2026-06-17T15:59:22.099112Z'
+    agent: codex
+    session_id: https://github.com/4444J99/session-meta/pull/38
+    status: dispatched
+- id: GH-4444j99-session-meta-24
+  title: 'Session walk: professionalization track charter (b80b342b)'
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: opencode
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - session-walk
+  urls:
+  - https://github.com/4444J99/session-meta/issues/24
+  context: "GitHub issue 4444J99/session-meta#24. Retroactive session walk (2026-06-12\
+    \ ruling: every session ends as a GitHub artifact; these predate the gate). **Job:**\
+    \ `b80b342b` \xB7 **Session:** `b80b342b-4d18-491e-b642-5f9c17548b46` \xB7 **State:**\
+    \ done **Cwd:** `/Users/4jp/Workspace/session-meta` \xB7 **Created:** 2026-06-11T18:42:01.132Z\
+    \ ## Result {\"result\":\"/s-09-archive blocked at gate check \u2014 G1 fails\
+    \ on two repos this session never touched (dom"
+  created: '2026-06-16'
+  dispatch_log: []
+- id: GH-4444j99-session-meta-23
+  title: 'Session walk: receipt classification audit (b71f6cdf)'
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: agy
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - session-walk
+  urls:
+  - https://github.com/4444J99/session-meta/issues/23
+  context: "GitHub issue 4444J99/session-meta#23. Retroactive session walk (2026-06-12\
+    \ ruling: every session ends as a GitHub artifact; these predate the gate). **Job:**\
+    \ `b71f6cdf` \xB7 **Session:** `b71f6cdf-48d5-4a4f-8208-c393d086dfc9` \xB7 **State:**\
+    \ done **Cwd:** `/Users/4jp/Workspace/session-meta` \xB7 **Created:** 2026-06-11T18:42:11.927Z\
+    \ ## Result {\"result\":\"/s-09-archive gate check ran \u2014 archive blocked\
+    \ by G1 (foreign dirty trees in domus + corpus"
+  created: '2026-06-16'
+  dispatch_log: []
+- id: GH-4444j99-session-meta-22
+  title: 'Session walk: copilot session review (9ddceaac)'
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - session-walk
+  urls:
+  - https://github.com/4444J99/session-meta/issues/22
+  context: "GitHub issue 4444J99/session-meta#22. Retroactive session walk (2026-06-12\
+    \ ruling: every session ends as a GitHub artifact; these predate the gate). **Job:**\
+    \ `9ddceaac` \xB7 **Session:** `9ddceaac-87d9-49ad-9b0c-49de28163d70` \xB7 **State:**\
+    \ done **Cwd:** `/Users/4jp/Workspace/session-meta` \xB7 **Created:** 2026-06-11T21:58:05.774Z\
+    \ ## Result {\"result\":\"/s-09-archive blocked by safety gates \u2014 G1 fails\
+    \ on 2 dirty repos (domus-semper-palingenesi"
+  created: '2026-06-16'
+  dispatch_log: []
+- id: GH-4444j99-session-meta-21
+  title: 'Session walk: audit metadata hallucination (840913c6)'
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: codex
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - session-walk
+  urls:
+  - https://github.com/4444J99/session-meta/issues/21
+  context: "GitHub issue 4444J99/session-meta#21. Retroactive session walk (2026-06-12\
+    \ ruling: every session ends as a GitHub artifact; these predate the gate). **Job:**\
+    \ `840913c6` \xB7 **Session:** `840913c6-46e5-421e-8a4f-523841a0b304` \xB7 **State:**\
+    \ done **Cwd:** `/Users/4jp/Workspace/session-meta` \xB7 **Created:** 2026-06-11T18:41:52.027Z\
+    \ ## Result {\"result\":\"/s-09-archive blocked by safety gates \u2014 G1 fails\
+    \ on two repos this session never touched an"
+  created: '2026-06-16'
+  updated: '2026-06-17T15:59:22.099112Z'
+  dispatch_log:
+  - timestamp: '2026-06-17T15:59:22.099112Z'
+    agent: codex
+    session_id: https://github.com/4444J99/session-meta/pull/39
+    status: dispatched
+- id: GH-4444j99-session-meta-20
+  title: 'Session walk: homebrew version upgrade (7bded0d1)'
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: opencode
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - session-walk
+  urls:
+  - https://github.com/4444J99/session-meta/issues/20
+  context: "GitHub issue 4444J99/session-meta#20. Retroactive session walk (2026-06-12\
+    \ ruling: every session ends as a GitHub artifact; these predate the gate). **Job:**\
+    \ `7bded0d1` \xB7 **Session:** `7bded0d1-509a-45d9-bffa-a5b8841b74bb` \xB7 **State:**\
+    \ working **Cwd:** `/Users/4jp/Workspace/session-meta` \xB7 **Created:** 2026-06-12T09:17:46.721Z\
+    \ ## Result 135 of 146 PRs merged; diagnosing 11 failures (branch protection);\
+    \ running residual admin merge scr"
+  created: '2026-06-16'
+  dispatch_log: []
+- id: GH-4444j99-session-meta-19
+  title: 'Session walk: claude routines overhaul (722ea73c)'
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: agy
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - session-walk
+  urls:
+  - https://github.com/4444J99/session-meta/issues/19
+  context: "GitHub issue 4444J99/session-meta#19. Retroactive session walk (2026-06-12\
+    \ ruling: every session ends as a GitHub artifact; these predate the gate). **Job:**\
+    \ `722ea73c` \xB7 **Session:** `722ea73c-583a-4381-b644-936f9b1cc2ea` \xB7 **State:**\
+    \ done **Cwd:** `/Users/4jp/Workspace/session-meta` \xB7 **Created:** 2026-06-12T12:46:56.473Z\
+    \ ## Result {\"result\":\"Local-card cleanup delegated to the daemon sessions\
+    \ that own the tools (sentinel-guarded on"
+  created: '2026-06-16'
+  dispatch_log: []
+- id: GH-4444j99-session-meta-18
+  title: 'Session walk: escape velocity helm loop (565f806f)'
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - session-walk
+  urls:
+  - https://github.com/4444J99/session-meta/issues/18
+  context: "GitHub issue 4444J99/session-meta#18. Retroactive session walk (2026-06-12\
+    \ ruling: every session ends as a GitHub artifact; these predate the gate). **Job:**\
+    \ `565f806f` \xB7 **Session:** `565f806f-9421-466c-aa96-34b714b9cfa5` \xB7 **State:**\
+    \ done **Cwd:** `/Users/4jp/Workspace/session-meta` \xB7 **Created:** 2026-06-11T16:58:55.848Z\
+    \ ## Result /s-09-archive blocked by safety gates \u2014 G1 fails on two foreign\
+    \ dirty repos (domus 5 files, corpus 6)"
+  created: '2026-06-16'
+  dispatch_log: []
+- id: GH-4444j99-session-meta-17
+  title: 'Session walk: serena build failure (4a8e2b93)'
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: codex
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - session-walk
+  urls:
+  - https://github.com/4444J99/session-meta/issues/17
+  context: "GitHub issue 4444J99/session-meta#17. Retroactive session walk (2026-06-12\
+    \ ruling: every session ends as a GitHub artifact; these predate the gate). **Job:**\
+    \ `4a8e2b93` \xB7 **Session:** `4a8e2b93-dd9a-4b6a-8662-7a8ce69ac00c` \xB7 **State:**\
+    \ done **Cwd:** `/Users/4jp/Workspace/session-meta` \xB7 **Created:** 2026-06-12T14:29:23.083Z\
+    \ ## Result {\"result\":\"Substrate unified into the cartridge \u2014 hardcoded\
+    \ ~/.cache/uv override in settings.json.tmpl"
+  created: '2026-06-16'
+  updated: '2026-06-17T15:59:22.099112Z'
+  dispatch_log:
+  - timestamp: '2026-06-17T15:59:22.099112Z'
+    agent: codex
+    session_id: https://github.com/4444J99/session-meta/pull/40
+    status: dispatched
+- id: GH-4444j99-session-meta-16
+  title: 'Session walk: telemetry shell-startup cleanup (49ac9f0b)'
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: opencode
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - session-walk
+  urls:
+  - https://github.com/4444J99/session-meta/issues/16
+  context: "GitHub issue 4444J99/session-meta#16. Retroactive session walk (2026-06-12\
+    \ ruling: every session ends as a GitHub artifact; these predate the gate). **Job:**\
+    \ `49ac9f0b` \xB7 **Session:** `49ac9f0b-799b-4fb5-a7c0-5e3b963adc94` \xB7 **State:**\
+    \ done **Cwd:** `/Users/4jp/Workspace/session-meta` \xB7 **Created:** 2026-06-12T09:18:07.291Z\
+    \ ## Result {\"result\":\"Closeout complete \u2014 3 pushed commits inventoried,\
+    \ zero orphan plans, gates green, CLOSEOUT_"
+  created: '2026-06-16'
+  dispatch_log: []
+- id: GH-4444j99-session-meta-15
+  title: 'Session walk: governance plane control (0fc455b5)'
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: agy
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - session-walk
+  urls:
+  - https://github.com/4444J99/session-meta/issues/15
+  context: "GitHub issue 4444J99/session-meta#15. Retroactive session walk (2026-06-12\
+    \ ruling: every session ends as a GitHub artifact; these predate the gate). **Job:**\
+    \ `0fc455b5` \xB7 **Session:** `0fc455b5-863e-43ae-898d-96d3f697f106` \xB7 **State:**\
+    \ done **Cwd:** `/Users/4jp/Workspace/session-meta` \xB7 **Created:** 2026-06-11T16:34:05.400Z\
+    \ ## Result {\"result\":\"Archive blocked by safety gates \u2014 G1 dirty repos\
+    \ (domus templates \xD75, limen-work corpus dat"
+  created: '2026-06-16'
+  dispatch_log: []
+- id: GH-4444j99-session-meta-14
+  title: 'Session walk: /Users/4jp/.claude/jobs/02f71443/pasted-1.png once again--why
+    does onl (02f71443)'
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - session-walk
+  urls:
+  - https://github.com/4444J99/session-meta/issues/14
+  context: "GitHub issue 4444J99/session-meta#14. Automated session walk \u2014 every\
+    \ prompt becomes a tracked item. **Session:** `02f71443-5286-4496-9e02-101b21342adb`\
+    \ **Cwd:** `/Users/4jp/Workspace/session-meta` **Date:** 2026-06-12T14:58:11Z\
+    \ ## Prompts - [ ] /Users/4jp/.claude/jobs/02f71443/pasted-1.png once again--why\
+    \ does only one row have a fucking PR? EVERY FUCKING SESSION NEEDS TO BE WALKED\
+    \ FROM MY FUCKING BRAIN PROMPT TO FUCKING ACTUALLY FUCK"
+  created: '2026-06-16'
+  dispatch_log: []
+- id: GH-4444j99-session-meta-10
+  title: "EV CLAIMS LEDGER \u2014 escape-velocity stream claims (append-only; never\
+    \ close)"
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: codex
+  priority: medium
+  budget_cost: 1
+  status: failed
+  labels: []
+  urls:
+  - https://github.com/4444J99/session-meta/issues/10
+  context: "GitHub issue 4444J99/session-meta#10. Canonical claims surface for the\
+    \ escape-velocity five-stream system, per doctrine/STANDING-ORDERS.md (v1.0.0).\
+    \ One comment per event. Event format (single line, then optional detail): `CLAIM\
+    \ | HEARTBEAT | RELEASE | SUPERSEDE(<claim-comment-url>) \xB7 <STREAM> \xB7 <agent-id>\
+    \ \xB7 <one-line scope>` Rules (full law in STANDING-ORDERS.md): - GitHub comment\
+    \ order is the total order \u2014 earliest CLAIM for a free"
+  created: '2026-06-16'
+  updated: '2026-06-17T15:59:22.099112Z'
+  dispatch_log:
+  - timestamp: '2026-06-17T15:59:22.099112Z'
+    agent: codex
+    session_id: cli
+    status: failed
+- id: GH-4444j99-session-meta-9
+  title: Activation audit / documentation closure
+  repo: 4444J99/session-meta
+  type: code
+  target_agent: opencode
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/4444J99/session-meta/issues/9
+  context: 'GitHub issue 4444J99/session-meta#9. ## ESCAPE VELOCITY Track B - Priority:
+    park - Required receipt: one user-reachable proof item (live URL, install path,
+    or release artifact). ### Definition of done - Source preserved before any cleanup
+    - Decision recorded: ship-now / ship-soon / park / kill / merge - One reproducible
+    user-reachable proof item attached ### Scope Scope: classify as infrastructure/runbook
+    asset; define whether it shi'
+  created: '2026-06-16'
+  dispatch_log: []
+- id: GH-4444j99-media-ark-5
+  title: 'CI: hosted runner pickup heartbeat failure on this repo (23+ runs today)'
+  repo: 4444J99/media-ark
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels: []
+  urls:
+  - https://github.com/4444J99/media-ark/issues/5
+  context: 'GitHub issue 4444J99/media-ark#5. ## Update (2026-06-08 20:35 UTC) A second
+    experiment on branch `ci/runner-pickup-self-hosted-fallback` (PR #6) tested a
+    self-hosted-first / hosted-fallback workflow pattern. New finding: **`timeout-minutes`
+    in GitHub Actions only counts the *running* phase, not the *queued* phase.** The
+    `smoke-self-hosted` job queued for 5+ minutes with no runner assigned and the
+    2-minute timeout never fired, so t'
+  created: '2026-06-16'
+  updated: '2026-06-17T15:53:38.628640Z'
+  dispatch_log:
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+- id: GH-4444j99-domus-genoma-89
+  title: '[Rule #67 capability report] CI lint red on master (environmental) + web-container
+    toolchain & tooling gaps'
+  repo: 4444J99/domus-genoma
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels: []
+  urls:
+  - https://github.com/4444J99/domus-genoma/issues/89
+  context: "GitHub issue 4444J99/domus-genoma#89. Filed per **Universal Rule #67**\
+    \ (a capability roadblock is a vacuum, not a resting state \u2014 report it for\
+    \ patching to the proper internal authority). The IRF is not reachable from the\
+    \ web-execution container, so this issue is the reachable authority. Surfacing\
+    \ these so whoever owns the CI/runtime environment sees them rather than letting\
+    \ them die in a session chat. Context: PR #88 (agent capabilit"
+  created: '2026-06-16'
+  updated: '2026-06-17T15:53:38.628640Z'
+  dispatch_log:
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+- id: GH-4444j99-domus-genoma-87
+  title: "CI: Lint & Validate runners die at provisioning (~4s runs, all jobs fail)\
+    \ \u2014 not code"
+  repo: 4444J99/domus-genoma
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels: []
+  urls:
+  - https://github.com/4444J99/domus-genoma/issues/87
+  context: "GitHub issue 4444J99/domus-genoma#87. **Routed from PR #82 (Rule #64a\
+    \ \u2014 notify the proper authority even when the boundary is real; don't go\
+    \ silent).** All five `Lint & Validate` jobs (ShellCheck, Shell Formatting, YAML\
+    \ Lint, JSON Validation, Python Lint) report `failure` on every push to PR #82,\
+    \ but it's **infrastructure, not code**: - Runs complete in **~4 seconds** end-to-end\
+    \ (e.g. run `27101362394`: `run_started_at` \u2192 `updated_at`"
+  created: '2026-06-16'
+  updated: '2026-06-17T15:53:38.628640Z'
+  dispatch_log:
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+- id: GH-4444j99-domus-genoma-86
+  title: 'Idea-debt: run the cross-tool sweep on the live machine + harvest the debt'
+  repo: 4444J99/domus-genoma
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels: []
+  urls:
+  - https://github.com/4444J99/domus-genoma/issues/86
+  context: "GitHub issue 4444J99/domus-genoma#86. **Routed from PR #82 (Rule #64a\
+    \ \u2014 a \"can't\" is a routing event, not an endpoint).** The `idea-debt` ledger\
+    \ (`dot_local/bin/executable_idea-debt`, shipped in PR #82) discovers threads\
+    \ across every AI tool's store, joins them against the genome by `originSessionId`,\
+    \ and reports per-tool coverage + the undistilled-thread debt list. It runs anywhere,\
+    \ but **the live thread stores live on the conductor'"
+  created: '2026-06-16'
+  updated: '2026-06-17T15:53:38.628640Z'
+  dispatch_log:
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+- id: GH-4444j99-relationship-pipeline-3
+  title: Add second real sanitized iOS decoder snapshot
+  repo: 4444J99/relationship-pipeline
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels: []
+  urls:
+  - https://github.com/4444J99/relationship-pipeline/issues/3
+  context: 'GitHub issue 4444J99/relationship-pipeline#3. ## Context PR #2 added the
+    decoder snapshot CI harness, synthetic iOS fixtures, and one sanitized real-shaped
+    fixture from the available local Messages source. ## Gap The handoff requirement
+    was decoder CI against at least two distinct real iOS snapshots. Current main
+    does not satisfy that proof yet because no second local snapshot source was available.
+    ## Done when - a second actual iOS Messages'
+  created: '2026-06-16'
+  updated: '2026-06-17T15:53:38.628640Z'
+  dispatch_log:
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+- id: GH-4444j99-relationship-pipeline-4
+  title: Prove Blade-B fallback on a real encrypted iOS backup
+  repo: 4444J99/relationship-pipeline
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels: []
+  urls:
+  - https://github.com/4444J99/relationship-pipeline/issues/4
+  context: 'GitHub issue 4444J99/relationship-pipeline#4. ## Context PR #2 added `ios_backup_messages.py`,
+    tests, and docs for a MobileSync backup fallback that does not read live macOS
+    Messages data. ## Gap The encrypted-backup path is scaffolded through optional
+    `iphone_backup_decrypt`, but it has not been proven end-to-end against a real
+    encrypted MobileSync backup plus passphrase. ## Done when - a real encrypted iOS
+    backup is available read-only - ex'
+  created: '2026-06-16'
+  updated: '2026-06-17T15:53:38.628640Z'
+  dispatch_log:
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+- id: GH-4444j99-relationship-pipeline-1
+  title: "Run gate-verified pass (verify\u2192clean\u2192enrich\u2192PROVEN) on jessica\
+    \ + rob streams"
+  repo: 4444J99/relationship-pipeline
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels: []
+  urls:
+  - https://github.com/4444J99/relationship-pipeline/issues/1
+  context: "GitHub issue 4444J99/relationship-pipeline#1. ASSIGNED 2026-06-03. Mirror\
+    \ the completed maddie exemplar (PROVEN, 212 checks). Hand-off prompt: docs/PROMPT-jessica-rob-pass.md\
+    \ \xB7 Assignment: docs/ASSIGNMENT-2026-06-03-jessica-rob-pass.md Acceptance:\
+    \ `verify_stream.py --all` \u2192 jessica, rob, maddie all PROVEN exit 0 \xB7\
+    \ per-stream VERIFICATION.md \xB7 CONSTELLATION corrected + pending-note flipped\
+    \ \xB7 bundles rebuilt \xB7 zero message data in git. Scale: j"
+  created: '2026-06-16'
+  updated: '2026-06-17T15:53:38.628640Z'
+  dispatch_log:
+  - timestamp: '2026-06-17T15:53:38.628640Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+- id: GH-4444j99-agent-7
+  title: "Phase A handoff: ingest hardening for a-organvm/my-knowledge-base (G1\u2013\
+    G4)"
+  repo: 4444J99/_agent
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels: []
+  urls:
+  - https://github.com/4444J99/_agent/issues/7
+  context: "GitHub issue 4444J99/_agent#7. ## What this is Tracking anchor for **Phase\
+    \ A** of the LLM-Knowledge-Base Karpathy extension plan. The actual code lands\
+    \ in `a-organvm/my-knowledge-base` (default branch `master`), which is outside\
+    \ this sandbox's write scope \u2014 so the work is packaged here for a session\
+    \ with write access to that repo to execute. ## Where the package lives Branch\
+    \ `claude/llm-knowledge-base-3yrsI` (commit `ad23048`):"
+  created: '2026-06-16'
+  updated: '2026-06-17T15:53:38.628640Z'
+  dispatch_log:
+  - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
     session_id: cli
     status: dispatched
