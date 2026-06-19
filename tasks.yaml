@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-06-19'
-      spent: 132
+      spent: 134
       per_agent:
         jules: 70
         gemini: 0
         codex: 25
-        opencode: 5
+        opencode: 7
         agy: 10
         claude: 22
       per_agent_reset:
@@ -452,10 +452,10 @@ tasks:
   title: 'Deploy prerequisites for PR #234 security hardening'
   repo: a-organvm/public-record-data-scrapper
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: medium
   budget_cost: 2
-  status: open
+  status: done
   labels:
   - batch-2026-06-01
   - noop
@@ -464,7 +464,7 @@ tasks:
   context: 'Audited 2026-06-01 from Jules-ready batch. Fix issue #235 in a-organvm/public-record-data-scrapper.'
   depends_on: []
   created: '2026-06-01'
-  updated: '2026-06-19T01:27:12.220246Z'
+  updated: '2026-06-19T13:44:00Z'
   dispatch_log:
   - timestamp: '2026-06-11T04:01:20.023759Z'
     agent: limen
@@ -520,6 +520,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: noop
+  - timestamp: '2026-06-19T13:44:00Z'
+    agent: opencode
+    session_id: current
+    status: noop
+    output: "PR #234 already merged. Issue #235 lists deploy prerequisites (Auth0 config, prod secrets, DB role, migrations) requiring human production infrastructure access. No code changes an agent can perform. Confirming noop."
 - id: LIMEN-017
   title: 'IRF-APP-003: Phase 1 reliability hardening for ucc-mca-api'
   repo: a-organvm/public-record-data-scrapper
@@ -918,7 +923,7 @@ tasks:
   title: "a-i--skills validate job red on main \u2014 3 skills invalid frontmatter"
   repo: a-organvm/organvm-corpvs-testamentvm
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -1096,7 +1101,7 @@ tasks:
   title: 'IRF-SYS-110: governance doc structural error'
   repo: a-organvm/organvm-corpvs-testamentvm
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -2065,7 +2070,7 @@ tasks:
   title: 'fix(irf): stats command undercounts newly added tail items'
   repo: a-organvm/organvm-engine
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -2319,7 +2324,7 @@ tasks:
   title: 'fix(session): hanging review and plans commands in large repos'
   repo: a-organvm/organvm-engine
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 2
   status: open
@@ -2872,7 +2877,7 @@ tasks:
     \ #9/#10"
   repo: organvm-i-theoria/conversation-corpus-engine
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -2973,7 +2978,7 @@ tasks:
   title: 'feat: build corpus persona-extract subcommand'
   repo: organvm-i-theoria/conversation-corpus-engine
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 2
   status: open
@@ -3250,7 +3255,7 @@ tasks:
   title: 'feat: corpus knowledge graph module (organvm corpus)'
   repo: a-organvm/organvm-engine
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 2
   status: open
@@ -3315,7 +3320,7 @@ tasks:
     \ code"
   repo: a-organvm/organvm-engine
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 2
   status: open
@@ -3749,7 +3754,7 @@ tasks:
   title: "network: R3 kinship mirror research \u2014 community identification"
   repo: a-organvm/organvm-engine
   type: docs
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -3818,7 +3823,7 @@ tasks:
   title: 'descent: content-based detection for CodeQL and release automation'
   repo: a-organvm/organvm-engine
   type: docs
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -4033,7 +4038,7 @@ tasks:
   title: "feat: Ring 4 \u2014 external chain anchoring (Base L2 / Celestia)"
   repo: a-organvm/organvm-engine
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 2
   status: open
@@ -4384,7 +4389,7 @@ tasks:
   title: Fix npm audit vulnerabilities (drizzle-orm, next) in stakeholder-portal
   repo: a-organvm/stakeholder-portal
   type: docs
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -4650,7 +4655,7 @@ tasks:
   title: '[IRF-RES-011] Hybrid topology law codification (effective vs nominal coupling)'
   repo: a-organvm/organvm-corpvs-testamentvm
   type: docs
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -5001,7 +5006,7 @@ tasks:
   title: "Monthly Organ Audit \u2014 2026-06-01 manual triage"
   repo: a-organvm/orchestration-start-here
   type: docs
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -5074,7 +5079,7 @@ tasks:
   title: "Fix a-i--skills validate job red on main \u2014 3 skills invalid frontmatter"
   repo: a-organvm/organvm-corpvs-testamentvm
   type: docs
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -5280,7 +5285,7 @@ tasks:
   title: Dedup triplicate research docs in docs/architecture/
   repo: a-organvm/peer-audited--behavioral-blockchain
   type: docs
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -7051,7 +7056,7 @@ tasks:
   title: "Stale PR sweep \u2014 rolling"
   repo: 4444J99/session-meta
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -7091,7 +7096,7 @@ tasks:
   title: "Fleet audit \u2014 rolling"
   repo: 4444J99/session-meta
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -7175,7 +7180,7 @@ tasks:
   title: "Plans orphan audit \u2014 rolling"
   repo: 4444J99/session-meta
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -7215,7 +7220,7 @@ tasks:
   title: "Daily cloud digest \u2014 rolling"
   repo: 4444J99/session-meta
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -7312,7 +7317,7 @@ tasks:
   title: "Docs stranger test \u2014 rolling"
   repo: 4444J99/session-meta
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -7356,7 +7361,7 @@ tasks:
   title: "Jules backlog curation \u2014 rolling"
   repo: 4444J99/session-meta
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -7395,7 +7400,7 @@ tasks:
   title: "Friction federation \u2014 rolling"
   repo: 4444J99/session-meta
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -7491,7 +7496,7 @@ tasks:
   title: "Session walk: untitled job (b835ec93) \u2014 no state.json recorded"
   repo: 4444J99/session-meta
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -7826,7 +7831,7 @@ tasks:
   title: 'Session walk: escape velocity helm loop (565f806f)'
   repo: 4444J99/session-meta
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -7893,7 +7898,7 @@ tasks:
   title: 'Session walk: telemetry shell-startup cleanup (49ac9f0b)'
   repo: 4444J99/session-meta
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -7934,7 +7939,7 @@ tasks:
   title: 'Session walk: governance plane control (0fc455b5)'
   repo: 4444J99/session-meta
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -8194,10 +8199,10 @@ tasks:
     \ \u2014 not code"
   repo: 4444J99/domus-genoma
   type: code
-  target_agent: gemini
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - noop
   urls:
@@ -8210,7 +8215,7 @@ tasks:
     \ (e.g. run `27101362394`: `run_started_at` \u2192 `updated_at`"
   depends_on: []
   created: '2026-06-16'
-  updated: '2026-06-18T18:49:10.229809Z'
+  updated: '2026-06-19T12:37:36.078797Z'
   dispatch_log:
   - timestamp: '2026-06-17T15:53:38.628640Z'
     agent: jules
@@ -8367,7 +8372,7 @@ tasks:
     \ + rob streams"
   repo: 4444J99/relationship-pipeline
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -8510,7 +8515,7 @@ tasks:
   title: 'Session walk: you-are-helm-the-spine-session (f4f9d95b)'
   repo: 4444J99/session-meta
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -8546,7 +8551,7 @@ tasks:
   title: 'Session walk: reactive-noodling-turing (f2ca6eb8)'
   repo: 4444J99/session-meta
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -8925,7 +8930,7 @@ tasks:
   title: 'Session walk: merry-tinkering-wave (611a306b)'
   repo: 4444J99/session-meta
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -10051,10 +10056,10 @@ tasks:
   title: 'ACTIVATION AUDIT: park'
   repo: organvm-i-theoria/organvm-iii-ergon.github.io
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - activation-audit
   - noop
@@ -10068,7 +10073,7 @@ tasks:
     - cu'
   depends_on: []
   created: '2026-06-17'
-  updated: '2026-06-19T01:27:12.220246Z'
+  updated: '2026-06-19T12:37:36.078797Z'
   dispatch_log:
   - timestamp: '2026-06-18T03:15:59.859981Z'
     agent: jules
@@ -10502,10 +10507,10 @@ tasks:
   title: 'ACTIVATION AUDIT: ship-soon'
   repo: organvm-i-theoria/growth-auditor
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - activation-audit
   - noop
@@ -10519,7 +10524,7 @@ tasks:
     EV-2026-06-11-200207 LABELS_REQUESTED: a'
   depends_on: []
   created: '2026-06-18'
-  updated: '2026-06-19T05:15:30.245956Z'
+  updated: '2026-06-19T12:37:36.078797Z'
   dispatch_log:
   - timestamp: '2026-06-18T19:28:04.430644Z'
     agent: gemini
@@ -10646,7 +10651,7 @@ tasks:
   title: 'ACTIVATION AUDIT: park'
   repo: organvm-i-theoria/scale-threshold-emergence
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -10683,7 +10688,7 @@ tasks:
   title: 'ACTIVATION AUDIT: park'
   repo: organvm-i-theoria/vigiles-aeternae--corpus-mythicum
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -11231,7 +11236,7 @@ tasks:
   title: 'ACTIVATION AUDIT: kill'
   repo: organvm-i-theoria/growth-auditor
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -11629,7 +11634,7 @@ tasks:
     \ decision"
   repo: organvm-iii-ergon/sovereign-systems--elevate-align
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -11659,7 +11664,7 @@ tasks:
     \ (2026-05-16) \u2014 unresolved loop"
   repo: organvm-iii-ergon/sovereign-systems--elevate-align
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -11761,7 +11766,7 @@ tasks:
     \ visual identity"
   repo: organvm-iii-ergon/sovereign-systems--elevate-align
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -11830,7 +11835,7 @@ tasks:
   title: '[water] W-070: email-simplified personalized filter plan path'
   repo: organvm-iii-ergon/sovereign-systems--elevate-align
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -12729,7 +12734,7 @@ tasks:
   title: "[Health] Pipeline stall detected \u2014 2026-06-01"
   repo: organvm-v-logos/.github
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -12880,7 +12885,7 @@ tasks:
   title: Run weekly signals triage ritual and remediation loop
   repo: organvm-v-logos/.github
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -13051,7 +13056,7 @@ tasks:
   title: '[ORGAN-V] Schedule discussion: Essay 11: The Living System Ignites'
   repo: organvm-vi-koinonia/.github
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -13154,7 +13159,7 @@ tasks:
   title: "[\u03B2.2] Subscription boundary and gated content model"
   repo: organvm-iii-ergon/sovereign-systems--elevate-align
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -14743,7 +14748,7 @@ tasks:
     (multi-provider e'
   repo: a-organvm/a-i-chat--exporter
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -16311,7 +16316,7 @@ tasks:
   title: Add src/lib/analytics
   repo: a-organvm/mirror-mirror
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -16395,7 +16400,7 @@ tasks:
   title: Add src/lib/webhook-ratelimit
   repo: a-organvm/the-invisible-ledger
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -16566,7 +16571,7 @@ tasks:
   title: Add src/web/src/app/launch/page
   repo: a-organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -16666,7 +16671,7 @@ tasks:
   title: Add server/services/LicenseService
   repo: 4444J99/domus-genoma
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -16721,7 +16726,7 @@ tasks:
   title: Add server/services/PaymentService
   repo: 4444J99/domus-genoma
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -16746,7 +16751,7 @@ tasks:
   title: Add optional AES-256-GCM encryption of mfm
   repo: a-organvm/my--father-mother
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -16861,7 +16866,7 @@ tasks:
   title: Define subscription tiers in src/lib/types
   repo: a-organvm/mirror-mirror
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -17421,7 +17426,7 @@ tasks:
   title: "a-i-chat--exporter: ci \u2014 Add a CI workflow under "
   repo: a-organvm/a-i-chat--exporter
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -17450,7 +17455,7 @@ tasks:
     \ error handli"
   repo: a-organvm/a-i-chat--exporter
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -17502,7 +17507,7 @@ tasks:
     \ per the product's path-"
   repo: a-organvm/a-i-chat--exporter
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -17610,7 +17615,7 @@ tasks:
     \ who-pays, install, usag"
   repo: a-organvm/public-record-data-scrapper
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -17751,7 +17756,7 @@ tasks:
     \ install, usag"
   repo: a-organvm/mirror-mirror
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -17780,7 +17785,7 @@ tasks:
     \ the product's path-"
   repo: a-organvm/mirror-mirror
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -17832,7 +17837,7 @@ tasks:
   title: "universal-mail--automation: ci \u2014 Add a CI workflow under "
   repo: a-organvm/universal-mail--automation
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -17860,7 +17865,7 @@ tasks:
     \ input validation, error handli"
   repo: a-organvm/universal-mail--automation
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -17917,7 +17922,7 @@ tasks:
     \ per the product's path-"
   repo: a-organvm/universal-mail--automation
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -17947,7 +17952,7 @@ tasks:
     \ test suite covering the core code pa"
   repo: a-organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -17970,7 +17975,7 @@ tasks:
   title: "peer-audited--behavioral-blockchain: ci \u2014 Add a CI workflow under "
   repo: a-organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -18088,7 +18093,7 @@ tasks:
     \ the core code pa"
   repo: a-organvm/the-invisible-ledger
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -18122,7 +18127,7 @@ tasks:
   title: "the-invisible-ledger: ci \u2014 Add a CI workflow under "
   repo: a-organvm/the-invisible-ledger
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -18174,7 +18179,7 @@ tasks:
     \ who-pays, install, usag"
   repo: a-organvm/the-invisible-ledger
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -18235,7 +18240,7 @@ tasks:
     \ core code pa"
   repo: 4444J99/media-ark
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -18258,7 +18263,7 @@ tasks:
   title: "media-ark: ci \u2014 Add a CI workflow under "
   repo: 4444J99/media-ark
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -18292,7 +18297,7 @@ tasks:
     \ error handli"
   repo: 4444J99/media-ark
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -18405,7 +18410,7 @@ tasks:
   title: "domus-genoma: ci \u2014 Add a CI workflow under "
   repo: 4444J99/domus-genoma
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -18452,7 +18457,7 @@ tasks:
     \ install, usag"
   repo: 4444J99/domus-genoma
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -18505,7 +18510,7 @@ tasks:
     \ the core code pa"
   repo: a-organvm/my--father-mother
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -18565,7 +18570,7 @@ tasks:
     \ error handli"
   repo: a-organvm/my--father-mother
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -18664,7 +18669,7 @@ tasks:
   title: "specvla-ergon--avditor-mvndi: ci \u2014 Add a CI workflow under "
   repo: organvm-iii-ergon/specvla-ergon--avditor-mvndi
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -18692,7 +18697,7 @@ tasks:
     \ input validation, error handli"
   repo: organvm-iii-ergon/specvla-ergon--avditor-mvndi
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -18721,7 +18726,7 @@ tasks:
     \ who-pays, install, usag"
   repo: organvm-iii-ergon/specvla-ergon--avditor-mvndi
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -18765,7 +18770,7 @@ tasks:
     \ core code pa"
   repo: 4444J99/promptscope
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -18812,7 +18817,7 @@ tasks:
     \ error handli"
   repo: 4444J99/promptscope
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -18872,7 +18877,7 @@ tasks:
     \ product's path-"
   repo: 4444J99/promptscope
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -18897,7 +18902,7 @@ tasks:
     \ core code pa"
   repo: 4444J99/writelens
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -18925,7 +18930,7 @@ tasks:
   title: "writelens: ci \u2014 Add a CI workflow under "
   repo: 4444J99/writelens
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -18949,7 +18954,7 @@ tasks:
     \ error handli"
   repo: 4444J99/writelens
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -19089,7 +19094,7 @@ tasks:
     \ error handli"
   repo: 4444J99/edgarflash
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -19228,7 +19233,7 @@ tasks:
     \ error handli"
   repo: 4444J99/trendpulse
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -19362,7 +19367,7 @@ tasks:
     \ error handli"
   repo: a-organvm/essay-pipeline
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -19386,7 +19391,7 @@ tasks:
     \ install, usag"
   repo: a-organvm/essay-pipeline
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -19488,7 +19493,7 @@ tasks:
     \ validation, error handli"
   repo: a-organvm/tab-bookmark-manager
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -19512,7 +19517,7 @@ tasks:
     \ who-pays, install, usag"
   repo: a-organvm/tab-bookmark-manager
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -19535,7 +19540,7 @@ tasks:
     \ per the product's path-"
   repo: a-organvm/tab-bookmark-manager
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -19586,7 +19591,7 @@ tasks:
   title: "narratological-algorithmic-lenses: ci \u2014 Add a CI workflow under "
   repo: a-organvm/narratological-algorithmic-lenses
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -19639,7 +19644,7 @@ tasks:
     \ what-it-is, who-pays, install, usag"
   repo: a-organvm/narratological-algorithmic-lenses
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -19662,7 +19667,7 @@ tasks:
     \ increment per the product's path-"
   repo: a-organvm/narratological-algorithmic-lenses
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -19741,7 +19746,7 @@ tasks:
     \ error handli"
   repo: a-organvm/card-trade-social
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -19765,7 +19770,7 @@ tasks:
     \ install, usag"
   repo: a-organvm/card-trade-social
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -19857,7 +19862,7 @@ tasks:
     \ error handli"
   repo: 4444J99/bountyscope
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -19881,7 +19886,7 @@ tasks:
     \ install, usag"
   repo: 4444J99/bountyscope
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -19905,7 +19910,7 @@ tasks:
     \ product's path-"
   repo: 4444J99/bountyscope
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -19975,7 +19980,7 @@ tasks:
     \ error handli"
   repo: 4444J99/vulnpulse
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -20032,7 +20037,7 @@ tasks:
     \ product's path-"
   repo: 4444J99/vulnpulse
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -20488,10 +20493,10 @@ tasks:
   title: resolve .github#460 (BLOCKED)
   repo: organvm-i-theoria/.github
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - review-resolution
   - unblock-pr
@@ -20507,7 +20512,7 @@ tasks:
     as a fresh PR. Goal: make it mergeable.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:18:06.701123Z'
+  updated: '2026-06-19T12:37:36.078797Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:18:06.701123Z'
     agent: claude
@@ -20517,10 +20522,10 @@ tasks:
   title: resolve the-invisible-ledger#6 (DIRTY)
   repo: a-organvm/the-invisible-ledger
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - review-resolution
   - unblock-pr
@@ -20536,7 +20541,7 @@ tasks:
     as a fresh PR. Goal: make it mergeable.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:18:06.701123Z'
+  updated: '2026-06-19T12:37:36.078797Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:18:06.701123Z'
     agent: gemini
@@ -20689,10 +20694,10 @@ tasks:
   title: resolve organvm-engine#121 (BLOCKED)
   repo: a-organvm/organvm-engine
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - review-resolution
   - unblock-pr
@@ -20708,7 +20713,7 @@ tasks:
     make it mergeable.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:18:06.701123Z'
+  updated: '2026-06-19T12:37:36.078797Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:18:06.701123Z'
     agent: gemini
@@ -20746,10 +20751,10 @@ tasks:
   title: resolve organvm-engine#119 (BLOCKED)
   repo: a-organvm/organvm-engine
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - review-resolution
   - unblock-pr
@@ -20765,7 +20770,7 @@ tasks:
     make it mergeable.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:18:06.701123Z'
+  updated: '2026-06-19T12:37:36.078797Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:18:06.701123Z'
     agent: codex
@@ -20832,10 +20837,10 @@ tasks:
   title: resolve organvm-engine#117 (BLOCKED)
   repo: a-organvm/organvm-engine
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - review-resolution
   - unblock-pr
@@ -20851,7 +20856,7 @@ tasks:
     make it mergeable.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:18:06.701123Z'
+  updated: '2026-06-19T12:37:36.078797Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:18:06.701123Z'
     agent: claude
@@ -20864,7 +20869,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - review-resolution
   - unblock-pr
@@ -20880,7 +20885,7 @@ tasks:
     make it mergeable.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:18:06.701123Z'
+  updated: '2026-06-19T12:37:36.078797Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:18:06.701123Z'
     agent: gemini
@@ -20946,10 +20951,10 @@ tasks:
   title: resolve rules-system-bound#8 (UNSTABLE)
   repo: organvm-i-theoria/rules-system-bound
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - review-resolution
   - unblock-pr
@@ -20965,7 +20970,7 @@ tasks:
     as a fresh PR. Goal: make it mergeable.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:18:06.701123Z'
+  updated: '2026-06-19T12:37:36.078797Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:18:06.701123Z'
     agent: opencode
@@ -21003,10 +21008,10 @@ tasks:
   title: resolve organvm-engine#115 (BLOCKED)
   repo: a-organvm/organvm-engine
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - review-resolution
   - unblock-pr
@@ -21022,7 +21027,7 @@ tasks:
     as a fresh PR. Goal: make it mergeable.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:18:06.701123Z'
+  updated: '2026-06-19T12:37:36.078797Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:18:06.701123Z'
     agent: claude
@@ -21032,7 +21037,7 @@ tasks:
   title: resolve organvm-engine#114 (BLOCKED)
   repo: a-organvm/organvm-engine
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -21089,7 +21094,7 @@ tasks:
   title: resolve rules-system-bound#6 (UNSTABLE)
   repo: organvm-i-theoria/rules-system-bound
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -21176,7 +21181,7 @@ tasks:
   title: resolve organvm-engine#112 (BLOCKED)
   repo: a-organvm/organvm-engine
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -21205,7 +21210,7 @@ tasks:
   title: resolve .github#453 (BLOCKED)
   repo: organvm-i-theoria/.github
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -21285,7 +21290,7 @@ tasks:
   title: 'a-i-chat--exporter: billing'
   repo: a-organvm/a-i-chat--exporter
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21355,7 +21360,7 @@ tasks:
   title: 'a-i-chat--exporter: integration-tests'
   repo: a-organvm/a-i-chat--exporter
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21425,7 +21430,7 @@ tasks:
   title: 'public-record-data-scrapper: billing'
   repo: a-organvm/public-record-data-scrapper
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21449,7 +21454,7 @@ tasks:
   title: 'public-record-data-scrapper: dashboard'
   repo: a-organvm/public-record-data-scrapper
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21496,7 +21501,7 @@ tasks:
   title: 'public-record-data-scrapper: integration-tests'
   repo: a-organvm/public-record-data-scrapper
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21565,7 +21570,7 @@ tasks:
   title: 'mirror-mirror: billing'
   repo: a-organvm/mirror-mirror
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21636,7 +21641,7 @@ tasks:
   title: 'mirror-mirror: integration-tests'
   repo: a-organvm/mirror-mirror
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21705,7 +21710,7 @@ tasks:
   title: 'universal-mail--automation: billing'
   repo: a-organvm/universal-mail--automation
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21779,7 +21784,7 @@ tasks:
   title: 'universal-mail--automation: integration-tests'
   repo: a-organvm/universal-mail--automation
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21825,7 +21830,7 @@ tasks:
   title: 'peer-audited--behavioral-blockchain: auth'
   repo: a-organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21919,7 +21924,7 @@ tasks:
   title: 'peer-audited--behavioral-blockchain: integration-tests'
   repo: a-organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21982,7 +21987,7 @@ tasks:
   title: 'the-invisible-ledger: billing'
   repo: a-organvm/the-invisible-ledger
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22006,7 +22011,7 @@ tasks:
   title: 'the-invisible-ledger: dashboard'
   repo: a-organvm/the-invisible-ledger
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22053,7 +22058,7 @@ tasks:
   title: 'the-invisible-ledger: integration-tests'
   repo: a-organvm/the-invisible-ledger
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22111,7 +22116,7 @@ tasks:
   title: 'media-ark: billing'
   repo: 4444J99/media-ark
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22129,7 +22134,7 @@ tasks:
   title: 'media-ark: dashboard'
   repo: 4444J99/media-ark
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22156,7 +22161,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - build-out
   - product
@@ -22167,7 +22172,7 @@ tasks:
     one-command deploy.
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:41:57.371147Z'
+  updated: '2026-06-19T12:37:36.078797Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:41:57.371147Z'
     agent: opencode
@@ -22177,7 +22182,7 @@ tasks:
   title: 'media-ark: integration-tests'
   repo: 4444J99/media-ark
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22217,7 +22222,7 @@ tasks:
   title: 'domus-genoma: auth'
   repo: 4444J99/domus-genoma
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22276,10 +22281,10 @@ tasks:
   title: 'domus-genoma: deploy'
   repo: 4444J99/domus-genoma
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - build-out
   - product
@@ -22289,12 +22294,13 @@ tasks:
     one-command deploy.
   depends_on: []
   created: '2026-06-19'
+  updated: '2026-06-19T12:37:36.078797Z'
   dispatch_log: []
 - id: BLD2-domus-genoma-integration-tests
   title: 'domus-genoma: integration-tests'
   repo: 4444J99/domus-genoma
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22334,7 +22340,7 @@ tasks:
   title: 'my--father-mother: auth'
   repo: a-organvm/my--father-mother
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22352,7 +22358,7 @@ tasks:
   title: 'my--father-mother: billing'
   repo: a-organvm/my--father-mother
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22388,10 +22394,10 @@ tasks:
   title: 'my--father-mother: deploy'
   repo: a-organvm/my--father-mother
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - build-out
   - product
@@ -22401,12 +22407,13 @@ tasks:
     one-command deploy.
   depends_on: []
   created: '2026-06-19'
+  updated: '2026-06-19T12:37:36.078797Z'
   dispatch_log: []
 - id: BLD2-my--father-mother-integration-tests
   title: 'my--father-mother: integration-tests'
   repo: a-organvm/my--father-mother
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22423,7 +22430,7 @@ tasks:
   title: 'my--father-mother: api-docs'
   repo: a-organvm/my--father-mother
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22441,7 +22448,7 @@ tasks:
   title: 'specvla-ergon--avditor-mvndi: auth'
   repo: organvm-iii-ergon/specvla-ergon--avditor-mvndi
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22477,7 +22484,7 @@ tasks:
   title: 'specvla-ergon--avditor-mvndi: dashboard'
   repo: organvm-iii-ergon/specvla-ergon--avditor-mvndi
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22498,7 +22505,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - build-out
   - product
@@ -22508,12 +22515,13 @@ tasks:
     one-command deploy.
   depends_on: []
   created: '2026-06-19'
+  updated: '2026-06-19T12:37:36.078797Z'
   dispatch_log: []
 - id: BLD2-specvla-ergon--avditor-mvndi-integration-tests
   title: 'specvla-ergon--avditor-mvndi: integration-tests'
   repo: organvm-iii-ergon/specvla-ergon--avditor-mvndi
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22530,7 +22538,7 @@ tasks:
   title: 'specvla-ergon--avditor-mvndi: api-docs'
   repo: organvm-iii-ergon/specvla-ergon--avditor-mvndi
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22566,7 +22574,7 @@ tasks:
   title: 'promptscope: billing'
   repo: 4444J99/promptscope
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22584,7 +22592,7 @@ tasks:
   title: 'promptscope: dashboard'
   repo: 4444J99/promptscope
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22602,7 +22610,7 @@ tasks:
   title: 'promptscope: deploy'
   repo: 4444J99/promptscope
   type: code
-  target_agent: gemini
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -22620,7 +22628,7 @@ tasks:
   title: 'promptscope: integration-tests'
   repo: 4444J99/promptscope
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22655,7 +22663,7 @@ tasks:
   title: 'writelens: auth'
   repo: 4444J99/writelens
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22673,7 +22681,7 @@ tasks:
   title: 'writelens: billing'
   repo: 4444J99/writelens
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22691,7 +22699,7 @@ tasks:
   title: 'writelens: dashboard'
   repo: 4444J99/writelens
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22709,7 +22717,7 @@ tasks:
   title: 'writelens: deploy'
   repo: 4444J99/writelens
   type: code
-  target_agent: gemini
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -22744,7 +22752,7 @@ tasks:
   title: 'writelens: api-docs'
   repo: 4444J99/writelens
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22762,7 +22770,7 @@ tasks:
   title: 'edgarflash: auth'
   repo: 4444J99/edgarflash
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22780,7 +22788,7 @@ tasks:
   title: 'edgarflash: billing'
   repo: 4444J99/edgarflash
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22798,7 +22806,7 @@ tasks:
   title: 'edgarflash: dashboard'
   repo: 4444J99/edgarflash
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22816,7 +22824,7 @@ tasks:
   title: 'edgarflash: deploy'
   repo: 4444J99/edgarflash
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -22834,7 +22842,7 @@ tasks:
   title: 'edgarflash: integration-tests'
   repo: 4444J99/edgarflash
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22851,7 +22859,7 @@ tasks:
   title: 'edgarflash: api-docs'
   repo: 4444J99/edgarflash
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22869,7 +22877,7 @@ tasks:
   title: 'trendpulse: auth'
   repo: 4444J99/trendpulse
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22887,7 +22895,7 @@ tasks:
   title: 'trendpulse: billing'
   repo: 4444J99/trendpulse
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22923,7 +22931,7 @@ tasks:
   title: 'trendpulse: deploy'
   repo: 4444J99/trendpulse
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -22941,7 +22949,7 @@ tasks:
   title: 'trendpulse: integration-tests'
   repo: 4444J99/trendpulse
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22958,7 +22966,7 @@ tasks:
   title: 'trendpulse: api-docs'
   repo: 4444J99/trendpulse
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22976,7 +22984,7 @@ tasks:
   title: 'essay-pipeline: auth'
   repo: a-organvm/essay-pipeline
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -23012,7 +23020,7 @@ tasks:
   title: 'essay-pipeline: dashboard'
   repo: a-organvm/essay-pipeline
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -23048,7 +23056,7 @@ tasks:
   title: 'essay-pipeline: integration-tests'
   repo: a-organvm/essay-pipeline
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -23065,7 +23073,7 @@ tasks:
   title: 'essay-pipeline: api-docs'
   repo: a-organvm/essay-pipeline
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -23101,7 +23109,7 @@ tasks:
   title: 'tab-bookmark-manager: billing'
   repo: a-organvm/tab-bookmark-manager
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -23119,7 +23127,7 @@ tasks:
   title: 'tab-bookmark-manager: dashboard'
   repo: a-organvm/tab-bookmark-manager
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -23137,7 +23145,7 @@ tasks:
   title: 'tab-bookmark-manager: deploy'
   repo: a-organvm/tab-bookmark-manager
   type: code
-  target_agent: gemini
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -23155,7 +23163,7 @@ tasks:
   title: 'tab-bookmark-manager: integration-tests'
   repo: a-organvm/tab-bookmark-manager
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -23190,7 +23198,7 @@ tasks:
   title: 'narratological-algorithmic-lenses: auth'
   repo: a-organvm/narratological-algorithmic-lenses
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -23208,7 +23216,7 @@ tasks:
   title: 'narratological-algorithmic-lenses: billing'
   repo: a-organvm/narratological-algorithmic-lenses
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -23226,7 +23234,7 @@ tasks:
   title: 'narratological-algorithmic-lenses: dashboard'
   repo: a-organvm/narratological-algorithmic-lenses
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -23244,7 +23252,7 @@ tasks:
   title: 'narratological-algorithmic-lenses: deploy'
   repo: a-organvm/narratological-algorithmic-lenses
   type: code
-  target_agent: gemini
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -23279,7 +23287,7 @@ tasks:
   title: 'narratological-algorithmic-lenses: api-docs'
   repo: a-organvm/narratological-algorithmic-lenses
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -23297,7 +23305,7 @@ tasks:
   title: 'card-trade-social: auth'
   repo: a-organvm/card-trade-social
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -23315,7 +23323,7 @@ tasks:
   title: 'card-trade-social: billing'
   repo: a-organvm/card-trade-social
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -23333,7 +23341,7 @@ tasks:
   title: 'card-trade-social: dashboard'
   repo: a-organvm/card-trade-social
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -23351,7 +23359,7 @@ tasks:
   title: 'card-trade-social: deploy'
   repo: a-organvm/card-trade-social
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -23369,7 +23377,7 @@ tasks:
   title: 'card-trade-social: integration-tests'
   repo: a-organvm/card-trade-social
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -23386,7 +23394,7 @@ tasks:
   title: 'card-trade-social: api-docs'
   repo: a-organvm/card-trade-social
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -23404,7 +23412,7 @@ tasks:
   title: 'bountyscope: auth'
   repo: 4444J99/bountyscope
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -23422,7 +23430,7 @@ tasks:
   title: 'bountyscope: billing'
   repo: 4444J99/bountyscope
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -23458,7 +23466,7 @@ tasks:
   title: 'bountyscope: deploy'
   repo: 4444J99/bountyscope
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -23476,7 +23484,7 @@ tasks:
   title: 'bountyscope: integration-tests'
   repo: 4444J99/bountyscope
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -23493,7 +23501,7 @@ tasks:
   title: 'bountyscope: api-docs'
   repo: 4444J99/bountyscope
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -23511,7 +23519,7 @@ tasks:
   title: 'vulnpulse: auth'
   repo: 4444J99/vulnpulse
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -23547,7 +23555,7 @@ tasks:
   title: 'vulnpulse: dashboard'
   repo: 4444J99/vulnpulse
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -23583,7 +23591,7 @@ tasks:
   title: 'vulnpulse: integration-tests'
   repo: 4444J99/vulnpulse
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -23600,7 +23608,7 @@ tasks:
   title: 'vulnpulse: api-docs'
   repo: 4444J99/vulnpulse
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -23788,4 +23796,46 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T11:04:43.575616Z'
+  dispatch_log: []
+- id: GH-organvm-i-theoria-github-446
+  title: 'ACTIVATION AUDIT: ship-now'
+  repo: organvm-i-theoria/.github
+  type: code
+  target_agent: codex
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm-i-theoria/.github/issues/446
+  context: "GitHub issue organvm-i-theoria/.github#446. **Identity:** Org-level meta\
+    \ repo for ORGAN-I (Theoria) supplying the org profile README, ~100 inherited/reusable\
+    \ CI-CD and automation workflows, community-health files, AI-agent configs, and\
+    \ a GitHub Pages org hub. **Frozen-state classification:** actually-live **Shipped-test\
+    \ result:** PASS \u2014 three user-reachable paths verified (auditor) and independently\
+    \ re-verified (adversarial verifier, this r"
+  depends_on: []
+  created: '2026-06-19'
+  dispatch_log: []
+- id: FIX-atomic-queue-writers
+  title: atomic-write the 3 unguarded tasks.yaml writers
+  repo: 4444J99/limen
+  type: code
+  target_agent: codex
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - infra
+  - reliability
+  - data-loss
+  urls: []
+  context: 'The queue file tasks.yaml was emptied to 0 bytes by a non-atomic write
+    race (fixed in cli/src/limen/io.py via os.replace). BUT three other writers bypass
+    save_limen_file and still write tasks.yaml non-atomically: scripts/route.py:146,
+    scripts/batch-dispatch.py:351, scripts/auto-scale.py:115. Route ALL of them through
+    limen.io.save_limen_file (or replicate the temp+fsync+os.replace pattern) so the
+    queue can never be truncated again. Add a cli/tests regression.'
+  depends_on: []
+  created: '2026-06-19'
   dispatch_log: []
