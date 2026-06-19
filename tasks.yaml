@@ -6261,9 +6261,9 @@ tasks:
     agent: opencode
     session_id: cli
     status: done
-    output: "Activation audit complete. Issue body contains full audit with verdict ship-now.\
-      \ PR #5 (README quickstart, the main actionable item) already merged. PR #7\
-      \ (ship-soon follow-up) open. No further agent action needed for ship-now."
+    output: 'Activation audit complete. Issue body contains full audit with verdict
+      ship-now. PR #5 (README quickstart, the main actionable item) already merged.
+      PR #7 (ship-soon follow-up) open. No further agent action needed for ship-now.'
 - id: GH-organvm-i-theoria-vigiles-aeternae-corpus-mythicum-3
   title: 'ACTIVATION AUDIT: ship-now'
   repo: organvm-i-theoria/vigiles-aeternae--corpus-mythicum
@@ -16569,7 +16569,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - revenue
   - ship-order
@@ -17424,7 +17424,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - build-out
   - product
@@ -17754,7 +17754,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - build-out
   - product
@@ -17920,7 +17920,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - build-out
   - product
@@ -17973,7 +17973,7 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - build-out
   - product
@@ -18091,7 +18091,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - build-out
   - product
@@ -18261,7 +18261,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - build-out
   - product
@@ -18900,7 +18900,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - build-out
   - product
@@ -22156,7 +22156,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - build-out
   - product
