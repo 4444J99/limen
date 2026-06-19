@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync, writeFileSync, mkdirSync, unlinkSync } from "fs";
+import { copyFileSync, existsSync, readFileSync, writeFileSync, mkdirSync, unlinkSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import YAML from "yaml";
@@ -7,6 +7,7 @@ import YAML from "yaml";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const appRoot = join(__dirname, "..");
 const repoRoot = join(appRoot, "..", "..");
+const limenRoot = process.env.LIMEN_ROOT || repoRoot;
 const sourcePath = join(repoRoot, "tasks.yaml");
 const privateDir = join(appRoot, ".generated", "surfaces");
 const outPath = join(privateDir, "tasks.json");
@@ -14,6 +15,8 @@ const publicStatusPath = join(appRoot, "public", "public-status.json");
 const clientStatusPath = join(privateDir, "client-status.json");
 const internalStatusPath = join(privateDir, "internal-status.json");
 const surfaceManifestPath = join(appRoot, "public", "surface-manifest.json");
+const fleetStatusSourcePath = process.env.LIMEN_FLEET_STATUS || join(limenRoot, "logs", "fleet-status.json");
+const fleetStatusOutPath = join(appRoot, "public", "logs", "fleet-status.json");
 const ownerSurfaceManifestPath = join(privateDir, "owner-surface-manifest.json");
 const clientSurfaceManifestPath = join(privateDir, "client-surface-manifest.json");
 const publicSurfaceManifestPath = join(appRoot, "public", "public-surface-manifest.json");
@@ -35,6 +38,19 @@ function countBy(items, keyFn) {
     acc[key] = (acc[key] || 0) + 1;
     return acc;
   }, {});
+}
+
+function mirrorFleetStatus() {
+  mkdirSync(dirname(fleetStatusOutPath), { recursive: true });
+  if (existsSync(fleetStatusOutPath)) unlinkSync(fleetStatusOutPath);
+
+  if (!existsSync(fleetStatusSourcePath)) {
+    console.log(`Fleet status feed not found at ${fleetStatusSourcePath}`);
+    return;
+  }
+
+  copyFileSync(fleetStatusSourcePath, fleetStatusOutPath);
+  console.log(`Mirrored ${fleetStatusSourcePath} to ${fleetStatusOutPath}`);
 }
 
 function parseDateOnly(value) {
@@ -491,5 +507,6 @@ writeFileSync(clientSurfaceManifestPath, `${JSON.stringify(clientManifest, null,
 writeFileSync(publicSurfaceManifestPath, `${JSON.stringify(publicManifest, null, 2)}\n`);
 writeFileSync(readinessPath, `${JSON.stringify(readiness, null, 2)}\n`);
 writeFileSync(qaStatusPath, `${JSON.stringify(qa, null, 2)}\n`);
+mirrorFleetStatus();
 console.log(`Generated ${outPath} with ${output.tasks?.length || 0} tasks`);
 console.log("Generated public-safe hosted contracts and private validation snapshots");

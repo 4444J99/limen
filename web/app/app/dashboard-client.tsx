@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import FleetLivePanel from "./fleet-live-panel";
 import SurfaceNav from "./surface-nav";
 
 export interface Task {
@@ -330,6 +331,8 @@ export default function DashboardClient({ data, prData, apiUrl, initialToken = "
         <Metric title="PR health" value={`${prData?.summary.total_open_prs || 0}`} tone={prData?.summary.prs_with_failing_ci ? "amber" : "green"} detail={`${prData?.summary.prs_with_failing_ci || 0} with failing CI`} />
         <Metric title="Failures" value={`${failed}`} tone={failed ? "red" : "green"} detail="Failed or blocked task states" />
       </section>
+
+      <FleetLivePanel />
 
       <section className="lifecycleBand" aria-label="Task lifecycle gates">
         {lifecycleGates.map((gate) => (
