@@ -524,7 +524,9 @@ tasks:
     agent: opencode
     session_id: current
     status: noop
-    output: "PR #234 already merged. Issue #235 lists deploy prerequisites (Auth0 config, prod secrets, DB role, migrations) requiring human production infrastructure access. No code changes an agent can perform. Confirming noop."
+    output: 'PR #234 already merged. Issue #235 lists deploy prerequisites (Auth0
+      config, prod secrets, DB role, migrations) requiring human production infrastructure
+      access. No code changes an agent can perform. Confirming noop.'
 - id: LIMEN-017
   title: 'IRF-APP-003: Phase 1 reliability hardening for ucc-mca-api'
   repo: a-organvm/public-record-data-scrapper
@@ -2716,6 +2718,29 @@ tasks:
     session_id: https://github.com/organvm-i-theoria/conversation-corpus-engine/pull/48
     status: done
     output: 'jules-land: landed session 7984657099863192027 as PR'
+- id: LIMEN-063
+  title: 'CI: Lint & Validate runners die at provisioning (~4s runs) — GH-87'
+  repo: 4444J99/domus-genoma
+  type: infra
+  target_agent: opencode
+  priority: critical
+  budget_cost: 1
+  status: done
+  labels:
+  - ci
+  - infra
+  urls:
+  - https://github.com/4444J99/domus-genoma/issues/87
+  context: "Root cause: GitHub Actions billing minutes exhausted for private repo on free plan. Evidence: 0 billable ms (billable.UBUNTU.total_ms: 0), BlobNotFound on logs, 4s completion. Fix: human must add billing at https://github.com/settings/billing or make repo public. Diagnostic comment posted."
+  depends_on: []
+  created: '2026-06-19'
+  updated: '2026-06-19T12:50:00Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T12:50:00Z'
+    agent: opencode
+    session_id: current
+    status: done
+    output: "Diagnosed and documented CI runner provisioning failure in 4444J99/domus-genoma. Root cause: exhausted GitHub Actions billing for private repo (0 billable ms, BlobNotFound logs, 4s completion). Posted findings + fix options (add billing/make public/self-hosted runner) to GH-87. No code changes needed."
 - id: LIMEN-052
   title: 'IRF-CCE-032: Omega evidence format specimen missing from GH#14 handoff'
   repo: organvm-i-theoria/conversation-corpus-engine
@@ -23824,7 +23849,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - infra
   - reliability
@@ -23852,17 +23877,12 @@ tasks:
   - park
   urls:
   - https://github.com/organvm-i-theoria/organvm-iii-ergon.github.io/issues/2
-  context: "GitHub issue organvm-i-theoria/organvm-iii-ergon.github.io#2. \
-    **Identity:** Cross-org landing page mirror for organvm-iii-ergon \
-    **Frozen state:** deployed-never-used \
-    **SHIPPED TEST:** \
-    - live URL: 404 at https://organvm-i-theoria.github.io/organvm-iii-ergon.github.io \
-    - installable pkg: not documented \
-    - runnable release: not documented \
-    - documented exec path: not documented \
-    **Evidence level:** live-url-confirmed \
-    **Verdict:** park \
-    **Action taken:** Repository archived, issue #2 closed with audit summary."
+  context: 'GitHub issue organvm-i-theoria/organvm-iii-ergon.github.io#2. **Identity:**
+    Cross-org landing page mirror for organvm-iii-ergon **Frozen state:** deployed-never-used
+    **SHIPPED TEST:** - live URL: 404 at https://organvm-i-theoria.github.io/organvm-iii-ergon.github.io
+    - installable pkg: not documented - runnable release: not documented - documented
+    exec path: not documented **Evidence level:** live-url-confirmed **Verdict:**
+    park **Action taken:** Repository archived, issue #2 closed with audit summary.'
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T13:50:00Z'
@@ -23871,7 +23891,7 @@ tasks:
     agent: opencode
     session_id: current
     status: done
-    output: "Repository archived. Issue #2 closed with park verdict executed. \
-      Cross-org landing page mirror for organvm-iii-ergon — deployed-never-used, \
-      live URL 404 confirmed, no installable pkg/runnable release/doc exec path. \
-      Parked per activation audit."
+    output: "Repository archived. Issue #2 closed with park verdict executed. Cross-org\
+      \ landing page mirror for organvm-iii-ergon \u2014 deployed-never-used, live\
+      \ URL 404 confirmed, no installable pkg/runnable release/doc exec path. Parked\
+      \ per activation audit."
