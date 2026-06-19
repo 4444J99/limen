@@ -86,24 +86,57 @@ def _local_checkout(repo: str | None, workdir: Path) -> Path | None:
 _DEPLOY_HINTS = ("deploy", "cloudflare", "worker", "wrangler", "infra", "hosting")
 
 
-def _pick_local(task: dict, health: dict[str, bool]) -> str | None:
+# General local lanes that compete for non-deploy work. opencode is reserved for deploy/infra
+# (and used only as a last-resort fallback below) because it historically times out on big tasks.
+_LOCAL_LANES = ("codex", "claude", "agy")
+
+
+def _pick_local(
+    task: dict,
+    health: dict[str, bool],
+    assigned: dict[str, int],
+    budget: dict[str, int],
+) -> str | None:
+    """Pick a healthy LOCAL lane, distributing across ALL of them by per-agent budget headroom.
+
+    The old version returned the first healthy lane (always codex), which serialized the whole
+    fleet onto one vendor and starved claude/agy/jules — violating the use-all-vendors mandate.
+    We now spread load proportional to each lane's daily budget: pick the lane with the lowest
+    assigned/budget ratio so far, weighting higher-budget lanes to take proportionally more.
+    """
     text = f"{task.get('type','')} {task.get('title','')} {task.get('context','')}".lower()
     if any(h in text for h in _DEPLOY_HINTS) and health.get("opencode"):
         return "opencode"
-    for v in ("codex", "claude", "agy", "opencode"):  # strongest-local first
-        if health.get(v):
-            return v
-    return None
+    candidates = [v for v in _LOCAL_LANES if health.get(v)]
+    if not candidates and health.get("opencode"):  # only opencode is up locally -> use it
+        candidates = ["opencode"]
+    if not candidates:
+        return None
+
+    def load(v: str) -> float:
+        b = budget.get(v, 0) or 1
+        return assigned.get(v, 0) / b
+
+    # least-loaded by budget ratio; tie-break toward the higher-budget lane, then name (stable).
+    return min(candidates, key=lambda v: (load(v), -budget.get(v, 0), v))
 
 
-def route_task(task: dict, health: dict[str, bool], workdir: Path) -> tuple[str, str]:
+def route_task(
+    task: dict,
+    health: dict[str, bool],
+    workdir: Path,
+    assigned: dict[str, int] | None = None,
+    budget: dict[str, int] | None = None,
+) -> tuple[str, str]:
     """Return (vendor, reason) for one open task."""
+    assigned = assigned if assigned is not None else {}
+    budget = budget if budget is not None else {}
     repo = task.get("repo")
     checkout = _local_checkout(repo, workdir)
     if checkout is not None:
-        local = _pick_local(task, health)
+        local = _pick_local(task, health, assigned, budget)
         if local:
-            return local, f"local checkout at {checkout} -> {local} (saves Jules quota)"
+            return local, f"local checkout at {checkout} -> {local} (distributed by budget)"
         # local exists but no healthy local lane -> fall through to jules
     if health.get("jules"):
         why = "no local checkout; only Jules clones remotely" if checkout is None \
@@ -138,9 +171,12 @@ def main() -> int:
     print("| task | repo | -> vendor | reason |")
     print("|---|---|---|---|")
     from collections import Counter
+    # per-agent daily budget drives the distribution (derived from tasks.yaml, never pinned).
+    budget = (data.get("portal", {}).get("budget", {}) or {}).get("per_agent", {}) or {}
     tally: Counter = Counter()
     for t in opens:
-        vendor, reason = route_task(t, health, workdir)
+        # pass the running tally as the assigned-so-far counts so load spreads across lanes.
+        vendor, reason = route_task(t, health, workdir, assigned=tally, budget=budget)
         tally[vendor] += 1
         print(f"| {t['id']} | {t.get('repo','-')} | {vendor} | {reason} |")
         if args.apply and vendor not in ("unroutable",):
