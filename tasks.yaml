@@ -15,13 +15,13 @@ portal:
       claude: 100
     track:
       date: '2026-06-19'
-      spent: 144
+      spent: 154
       per_agent:
         jules: 100
         gemini: 0
-        codex: 4
-        opencode: 14
-        agy: 13
+        codex: 7
+        opencode: 15
+        agy: 19
         claude: 13
       per_agent_reset:
         jules: '2026-06-18T22:56:11.988853+00:00'
@@ -10153,7 +10153,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - activation-audit
   urls:
@@ -10166,7 +10166,7 @@ tasks:
     activation-audit, park'
   depends_on: []
   created: '2026-06-17'
-  updated: '2026-06-19T15:05:40.213141Z'
+  updated: '2026-06-19T19:37:34.521666Z'
   dispatch_log:
   - timestamp: '2026-06-18T03:15:59.859981Z'
     agent: jules
@@ -10190,6 +10190,11 @@ tasks:
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-06-19T19:37:34.521666Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: orphaned (session 1394131595587804441 gone) \u2192 reopened"
 - id: GH-meta-organvm-meta-organvm-superproject-9
   title: 'ACTIVATION AUDIT: skip'
   repo: meta-organvm/meta-organvm--superproject
@@ -10197,7 +10202,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - activation-audit
   urls:
@@ -10210,7 +10215,7 @@ tasks:
     LABELS_REQUESTED: activation-audit, skip'
   depends_on: []
   created: '2026-06-17'
-  updated: '2026-06-19T15:05:40.213141Z'
+  updated: '2026-06-19T19:37:34.521666Z'
   dispatch_log:
   - timestamp: '2026-06-18T03:15:59.859981Z'
     agent: jules
@@ -10234,6 +10239,11 @@ tasks:
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-06-19T19:37:34.521666Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: orphaned (session 13567919889542901577 gone) \u2192 reopened"
 - id: GH-meta-organvm-glyph-cascade-tapes-1
   title: 'ACTIVATION AUDIT: park'
   repo: meta-organvm/glyph-cascade-tapes
@@ -10241,7 +10251,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - activation-audit
   urls:
@@ -10254,7 +10264,7 @@ tasks:
     activation-audit, park'
   depends_on: []
   created: '2026-06-17'
-  updated: '2026-06-19T15:05:40.213141Z'
+  updated: '2026-06-19T19:37:34.521666Z'
   dispatch_log:
   - timestamp: '2026-06-18T03:15:59.859981Z'
     agent: jules
@@ -10278,6 +10288,11 @@ tasks:
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-06-19T19:37:34.521666Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: orphaned (session 13758914951995029080 gone) \u2192 reopened"
 - id: GH-meta-organvm-visual-substrate-inquiry-2
   title: 'ACTIVATION AUDIT: kill'
   repo: meta-organvm/visual-substrate-inquiry
@@ -10492,7 +10507,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - omega
   urls:
@@ -10505,7 +10520,7 @@ tasks:
     7 to 8.'
   depends_on: []
   created: '2026-06-17'
-  updated: '2026-06-19T15:05:40.213141Z'
+  updated: '2026-06-19T19:37:34.521666Z'
   dispatch_log:
   - timestamp: '2026-06-18T03:15:59.859981Z'
     agent: jules
@@ -10529,6 +10544,11 @@ tasks:
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-06-19T19:37:34.521666Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: orphaned (session 503573628217546414 gone) \u2192 reopened"
 - id: GH-organvm-i-theoria-github-452
   title: "\U0001F4C5 Staggered Walkthrough Schedule - Week of 2026-06-15"
   repo: organvm-i-theoria/.github
@@ -13715,7 +13735,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels: []
   urls:
   - https://github.com/organvm-vi-koinonia/organvm-vi-koinonia.github.io/issues/1
@@ -13727,12 +13747,17 @@ tasks:
     \ substance lives outside the org. Same navigability gap as organvm-iv-taxis.gi"
   depends_on: []
   created: '2026-06-18'
-  updated: '2026-06-18T18:49:10.229809Z'
+  updated: '2026-06-19T19:37:30.191501Z'
   dispatch_log:
   - timestamp: '2026-06-18T18:49:10.229809Z'
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-06-19T19:37:30.191501Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: GH-organvm-vi-koinonia-github-8
   title: 'community-hub service alert: unreachable'
   repo: organvm-vi-koinonia/.github
@@ -13837,7 +13862,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels: []
   urls:
   - https://github.com/organvm-vii-kerygma/organvm-vii-kerygma.github.io/issues/1
@@ -13849,12 +13874,17 @@ tasks:
     \ substance lives outside the org. Same navigability gap as organvm-iv-taxis.gi"
   depends_on: []
   created: '2026-06-18'
-  updated: '2026-06-18T18:49:10.229809Z'
+  updated: '2026-06-19T19:37:30.191501Z'
   dispatch_log:
   - timestamp: '2026-06-18T18:49:10.229809Z'
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-06-19T19:37:30.191501Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: GH-organvm-vii-kerygma-organvm-vii-kerygma-superproject-5
   title: 'Epic: Kerygma Pipeline Activation (POSSE Distribution)'
   repo: organvm-vii-kerygma/organvm-vii-kerygma--superproject
@@ -13862,7 +13892,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - epic
   urls:
@@ -13875,12 +13905,17 @@ tasks:
     Bluesky, Mastodon, LinkedIn) - Set up RSS feed aggregation and cross-p'
   depends_on: []
   created: '2026-06-18'
-  updated: '2026-06-18T18:49:10.229809Z'
+  updated: '2026-06-19T19:37:30.191501Z'
   dispatch_log:
   - timestamp: '2026-06-18T18:49:10.229809Z'
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-06-19T19:37:30.191501Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: GH-organvm-vii-kerygma-organvm-vii-kerygma-superproject-2
   title: Add missing READMEs for kerygma-pipeline and kerygma-profiles
   repo: organvm-vii-kerygma/organvm-vii-kerygma--superproject
@@ -13888,7 +13923,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels: []
   urls:
   - https://github.com/organvm-vii-kerygma/organvm-vii-kerygma--superproject/issues/2
@@ -13900,12 +13935,17 @@ tasks:
     and context links - [ ] Re-run `./tools/audit_platform_standards.sh` w'
   depends_on: []
   created: '2026-06-18'
-  updated: '2026-06-18T19:28:04.430644Z'
+  updated: '2026-06-19T19:37:30.191501Z'
   dispatch_log:
   - timestamp: '2026-06-18T19:28:04.430644Z'
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-06-19T19:37:30.191501Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: GH-organvm-iii-ergon-sovereign-systems-elevate-align-7
   title: "[\u03B2.2] Subscription boundary and gated content model"
   repo: organvm-iii-ergon/sovereign-systems--elevate-align
@@ -16071,6 +16111,10 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-06-19T18:43:14.031059Z'
+    agent: codex
+    session_id: https://github.com/4444J99/domus-genoma/pull/115
+    status: dispatched
 - id: REV-fathermother-pro-embeddings
   title: 'Add a pro-tier flag that gates semantic-embedding indexing in the existing
     Python backend '
@@ -17608,7 +17652,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: cancelled
   labels:
   - revenue
   - ship-order
@@ -17645,6 +17689,10 @@ tasks:
     agent: gemini
     session_id: cli
     status: ratelimited->jules
+  - timestamp: '2026-06-19T18:43:14.031059Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: REV-styx-email-service
   title: Add src/api/src/modules/email/email
   repo: a-organvm/peer-audited--behavioral-blockchain
@@ -17930,7 +17978,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: cancelled
   labels:
   - revenue
   - ship-order
@@ -17953,6 +18001,10 @@ tasks:
     agent: gemini
     session_id: cli
     status: ratelimited->jules
+  - timestamp: '2026-06-19T18:43:14.031059Z'
+    agent: agy
+    session_id: cli
+    status: noop
 - id: REV-mirror-tab-gating
   title: Gate tabs by tier in App
   repo: a-organvm/mirror-mirror
@@ -18637,6 +18689,10 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-06-19T18:43:14.031059Z'
+    agent: codex
+    session_id: https://github.com/a-organvm/a-i-chat--exporter/pull/48
+    status: dispatched
 - id: BLD-public-record-data-scrapper-tests
   title: "public-record-data-scrapper: tests \u2014 Add/expand an automated test suite\
     \ covering the core code pa"
@@ -18888,16 +18944,17 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: done
+  status: cancelled
   labels:
   - build-out
   - product
+  - noop
   urls: []
   context: 'Write/expand the README: what-it-is, who-pays, install, usage, and a Pricing/monetization
     section consistent with the product''s tier model.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19'
+  updated: '2026-06-19T18:43:14.031059Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:39:50.100046Z'
     agent: limen
@@ -18908,14 +18965,18 @@ tasks:
     agent: opencode
     session_id: cli
     status: noop
-  - timestamp: '2026-06-19'
+  - timestamp: '2026-06-19T00:00:00'
     agent: opencode
     session_id: cli
     status: done
-    output: "Rewrote README.md with sections: What It Is, Who Pays (B2C/B2B/strategic),\
-      \ Pricing & Monetization (Free/Pro/Studio tiers, Stripe subscriptions, badge economy,\
-      \ brand licensing), Installation, Usage, Technical Architecture, Contributing.\
-      \ Pushed to a-organvm/mirror-mirror@main."
+    output: 'Rewrote README.md with sections: What It Is, Who Pays (B2C/B2B/strategic),
+      Pricing & Monetization (Free/Pro/Studio tiers, Stripe subscriptions, badge economy,
+      brand licensing), Installation, Usage, Technical Architecture, Contributing.
+      Pushed to a-organvm/mirror-mirror@main.'
+  - timestamp: '2026-06-19T18:43:14.031059Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: BLD-mirror-mirror-next-rev
   title: "mirror-mirror: next-rev \u2014 Implement the next revenue increment per\
     \ the product's path-"
@@ -19143,6 +19204,10 @@ tasks:
     agent: codex
     session_id: cli
     status: ratelimited->opencode
+  - timestamp: '2026-06-19T18:43:14.031059Z'
+    agent: agy
+    session_id: https://github.com/a-organvm/peer-audited--behavioral-blockchain/pull/727
+    status: dispatched
 - id: BLD-peer-audited--behavioral-blockchain-ci
   title: "peer-audited--behavioral-blockchain: ci \u2014 Add a CI workflow under "
   repo: a-organvm/peer-audited--behavioral-blockchain
@@ -19336,6 +19401,10 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-19T18:43:14.031059Z'
+    agent: codex
+    session_id: https://github.com/a-organvm/the-invisible-ledger/pull/22
+    status: dispatched
 - id: BLD-the-invisible-ledger-harden
   title: "the-invisible-ledger: harden \u2014 Harden the main entry points: input\
     \ validation, error handli"
@@ -19574,10 +19643,11 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: cancelled
   labels:
   - build-out
   - product
+  - noop
   urls: []
   context: "Implement the next revenue increment per the product's path-to-revenue\
     \ (payment/license gate, auth, or dashboard as applicable) \u2014 a bounded, mergeable\
@@ -19595,6 +19665,10 @@ tasks:
     agent: gemini
     session_id: cli
     status: ratelimited->jules
+  - timestamp: '2026-06-19T18:43:14.031059Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: BLD-domus-genoma-tests
   title: "domus-genoma: tests \u2014 Add/expand an automated test suite covering the\
     \ core code pa"
@@ -19825,6 +19899,10 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-19T18:43:14.031059Z'
+    agent: agy
+    session_id: https://github.com/a-organvm/my--father-mother/pull/18
+    status: dispatched
 - id: BLD-my--father-mother-readme
   title: "my--father-mother: readme \u2014 Write/expand the README: what-it-is, who-pays,\
     \ install, usag"
@@ -19938,10 +20016,10 @@ tasks:
     \ input validation, error handli"
   repo: organvm-iii-ergon/specvla-ergon--avditor-mvndi
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: cancelled
   labels:
   - build-out
   - product
@@ -19951,7 +20029,7 @@ tasks:
     logging on the primary request/CLI paths.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
+  updated: '2026-06-19T19:27:20.703790Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:11:29.067982Z'
     agent: limen
@@ -19959,6 +20037,14 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: opencode
+    session_id: cli
+    status: noop
+  - timestamp: '2026-06-19T18:54:20.241841Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-19T19:27:20.703790Z'
     agent: opencode
     session_id: cli
     status: noop
@@ -20183,20 +20269,21 @@ tasks:
     \ core code pa"
   repo: 4444J99/writelens
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - build-out
   - product
   - noop
+  - slow
   urls: []
   context: Add/expand an automated test suite covering the core code paths; wire it
     to run with the project's test runner. Aim for the critical modules.
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:41:57.371147Z'
+  updated: '2026-06-19T19:38:18.105246Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:39:50.100046Z'
     agent: limen
@@ -20207,6 +20294,10 @@ tasks:
     agent: opencode
     session_id: cli
     status: noop
+  - timestamp: '2026-06-19T18:54:20.241841Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: BLD-writelens-ci
   title: "writelens: ci \u2014 Add a CI workflow under "
   repo: 4444J99/writelens
@@ -20262,16 +20353,17 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: open
+  status: cancelled
   labels:
   - build-out
   - product
+  - noop
   urls: []
   context: 'Write/expand the README: what-it-is, who-pays, install, usage, and a Pricing/monetization
     section consistent with the product''s tier model.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:41:57.371147Z'
+  updated: '2026-06-19T18:54:20.241841Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:39:50.100046Z'
     agent: limen
@@ -20282,6 +20374,10 @@ tasks:
     agent: gemini
     session_id: cli
     status: ratelimited->jules
+  - timestamp: '2026-06-19T18:54:20.241841Z'
+    agent: agy
+    session_id: cli
+    status: noop
 - id: BLD-writelens-next-rev
   title: "writelens: next-rev \u2014 Implement the next revenue increment per the\
     \ product's path-"
@@ -20651,10 +20747,10 @@ tasks:
     \ error handli"
   repo: a-organvm/essay-pipeline
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: cancelled
   labels:
   - build-out
   - product
@@ -20664,9 +20760,17 @@ tasks:
     logging on the primary request/CLI paths.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
+  updated: '2026-06-19T19:27:20.703790Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: opencode
+    session_id: cli
+    status: noop
+  - timestamp: '2026-06-19T18:54:20.241841Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-19T19:27:20.703790Z'
     agent: opencode
     session_id: cli
     status: noop
@@ -20780,7 +20884,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - build-out
   - product
@@ -20790,9 +20894,18 @@ tasks:
     logging on the primary request/CLI paths.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
+  updated: '2026-06-19T19:38:18.105246Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
+  - timestamp: '2026-06-19T19:09:00Z'
+    agent: opencode
+    session_id: current
+    status: in_progress
+    output: Started work on hardening main entry points
+  - timestamp: '2026-06-19T18:54:20.241841Z'
     agent: opencode
     session_id: cli
     status: timeout->jules
@@ -20878,7 +20991,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: open
+  status: cancelled
   labels:
   - build-out
   - product
@@ -20888,10 +21001,14 @@ tasks:
     lint on PRs and the default branch (use the repo's stack).
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
+  updated: '2026-06-19T18:54:20.241841Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:12:14.174841Z'
     agent: claude
+    session_id: cli
+    status: noop
+  - timestamp: '2026-06-19T18:54:20.241841Z'
+    agent: agy
     session_id: cli
     status: noop
 - id: BLD-narratological-algorithmic-lenses-harden
@@ -20951,25 +21068,34 @@ tasks:
     \ increment per the product's path-"
   repo: a-organvm/narratological-algorithmic-lenses
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: cancelled
   labels:
   - build-out
   - product
+  - noop
   urls: []
   context: "Implement the next revenue increment per the product's path-to-revenue\
     \ (payment/license gate, auth, or dashboard as applicable) \u2014 a bounded, mergeable\
     \ first slice."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
+  updated: '2026-06-19T19:27:20.703790Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:12:14.174841Z'
     agent: gemini
     session_id: cli
     status: ratelimited->jules
+  - timestamp: '2026-06-19T18:54:20.241841Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-19T19:27:20.703790Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: BLD-card-trade-social-tests
   title: "card-trade-social: tests \u2014 Add/expand an automated test suite covering\
     \ the core code pa"
@@ -21080,22 +21206,27 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: cancelled
   labels:
   - build-out
   - product
+  - noop
   urls: []
   context: "Implement the next revenue increment per the product's path-to-revenue\
     \ (payment/license gate, auth, or dashboard as applicable) \u2014 a bounded, mergeable\
     \ first slice."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
+  updated: '2026-06-19T18:54:20.241841Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:12:14.174841Z'
     agent: gemini
     session_id: cli
     status: ratelimited->jules
+  - timestamp: '2026-06-19T18:54:20.241841Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: BLD-bountyscope-tests
   title: "bountyscope: tests \u2014 Add/expand an automated test suite covering the\
     \ core code pa"
@@ -21207,7 +21338,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - build-out
   - product
@@ -21218,12 +21349,16 @@ tasks:
     \ first slice."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:18:06.701123Z'
+  updated: '2026-06-19T18:54:20.241841Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:18:06.701123Z'
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-19T18:54:20.241841Z'
+    agent: agy
+    session_id: https://github.com/4444J99/bountyscope/pull/7
+    status: dispatched
 - id: BLD-vulnpulse-tests
   title: "vulnpulse: tests \u2014 Add/expand an automated test suite covering the\
     \ core code pa"
@@ -21341,10 +21476,10 @@ tasks:
     \ product's path-"
   repo: 4444J99/vulnpulse
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - build-out
   - product
@@ -21355,12 +21490,16 @@ tasks:
     \ first slice."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:18:06.701123Z'
+  updated: '2026-06-19T19:38:18.105246Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:18:06.701123Z'
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-19T19:27:20.703790Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
 - id: RESOLVE-organvm-iii-ergon-specvla-ergon--avditor-mvndi-30
   title: resolve specvla-ergon--avditor-mvndi#30 (UNSTABLE)
   repo: organvm-iii-ergon/specvla-ergon--avditor-mvndi
@@ -22849,10 +22988,10 @@ tasks:
   title: 'a-i-chat--exporter: billing'
   repo: a-organvm/a-i-chat--exporter
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - build-out
   - product
@@ -22863,7 +23002,7 @@ tasks:
     the premium features (free tier preserved).
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:18:06.701123Z'
+  updated: '2026-06-19T19:38:18.105246Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:18:06.701123Z'
     agent: opencode
@@ -23005,7 +23144,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - build-out
   - product
@@ -23016,12 +23155,16 @@ tasks:
     the premium features (free tier preserved).
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:18:06.701123Z'
+  updated: '2026-06-19T19:27:20.703790Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:18:06.701123Z'
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-06-19T19:27:20.703790Z'
+    agent: agy
+    session_id: https://github.com/a-organvm/public-record-data-scrapper/pull/288
+    status: dispatched
 - id: BLD2-public-record-data-scrapper-dashboard
   title: 'public-record-data-scrapper: dashboard'
   repo: a-organvm/public-record-data-scrapper
@@ -23181,10 +23324,10 @@ tasks:
   title: 'mirror-mirror: billing'
   repo: a-organvm/mirror-mirror
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - build-out
   - product
@@ -23195,12 +23338,21 @@ tasks:
     the premium features (free tier preserved).
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:18:06.701123Z'
+  updated: '2026-06-19T15:48:00Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:18:06.701123Z'
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-06-19T19:27:20.703790Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-19T15:48:00Z'
+    agent: opencode
+    session_id: current
+    status: done
+    output: "Wired full billing system: (1) Stripe checkout (existing) kept as default. (2) Added Lemon Squeezy checkout API (api/checkout/lemon-squeezy.ts) + webhook handler (api/webhooks/lemon-squeezy.ts) with signature verification and Spark KV persistence. (3) Added offline license key system (src/lib/license.ts, api/auth/license.ts) with HMAC-signed keys and client-side crypto.subtle verification. (4) .env.example with all billing env vars. (5) MirrorPlusSubscription UI now has 3 payment tabs - Stripe, Lemon Squeezy, License Key. (6) Fixed pre-existing apiAuth test (nowMs forwarding in requireApiKey). (7) 21 new tests (Lemon Squeezy checkout + webhook, license verification + API) - all 117 tests pass across 11 test files. Free tier preserved - only 3 features gated behind Pro."
 - id: BLD2-mirror-mirror-dashboard
   title: 'mirror-mirror: dashboard'
   repo: a-organvm/mirror-mirror
@@ -23353,10 +23505,10 @@ tasks:
   title: 'universal-mail--automation: billing'
   repo: a-organvm/universal-mail--automation
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - build-out
   - product
@@ -23367,7 +23519,7 @@ tasks:
     the premium features (free tier preserved).
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:18:06.701123Z'
+  updated: '2026-06-19T19:38:18.105246Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:30:00Z'
     agent: opencode
@@ -23532,7 +23684,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - build-out
   - product
@@ -23543,12 +23695,16 @@ tasks:
     the premium features (free tier preserved).
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:18:06.701123Z'
+  updated: '2026-06-19T19:27:20.703790Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:18:06.701123Z'
     agent: opencode
     session_id: cli
     status: noop
+  - timestamp: '2026-06-19T19:27:20.703790Z'
+    agent: agy
+    session_id: https://github.com/a-organvm/peer-audited--behavioral-blockchain/pull/728
+    status: dispatched
 - id: BLD2-peer-audited--behavioral-blockchain-dashboard
   title: 'peer-audited--behavioral-blockchain: dashboard'
   repo: a-organvm/peer-audited--behavioral-blockchain
@@ -23703,7 +23859,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - build-out
   - product
@@ -23714,12 +23870,16 @@ tasks:
     key metrics for the product.
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:18:06.701123Z'
+  updated: '2026-06-19T19:38:18.105246Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:18:06.701123Z'
     agent: agy
     session_id: cli
     status: noop
+  - timestamp: '2026-06-19T19:27:20.703790Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
 - id: BLD2-the-invisible-ledger-deploy
   title: 'the-invisible-ledger: deploy'
   repo: a-organvm/the-invisible-ledger
@@ -23813,7 +23973,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - build-out
   - product
@@ -23823,6 +23983,7 @@ tasks:
     the premium features (free tier preserved).
   depends_on: []
   created: '2026-06-19'
+  updated: '2026-06-19T19:38:18.105246Z'
   dispatch_log: []
 - id: BLD2-media-ark-dashboard
   title: 'media-ark: dashboard'
@@ -23924,7 +24085,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - build-out
   - product
@@ -23934,7 +24095,12 @@ tasks:
     (or CLI), with a documented secret/config path.
   depends_on: []
   created: '2026-06-19'
-  dispatch_log: []
+  updated: '2026-06-19T19:27:20.703790Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T19:27:20.703790Z'
+    agent: agy
+    session_id: https://github.com/4444J99/domus-genoma/pull/116
+    status: dispatched
 - id: BLD2-domus-genoma-billing
   title: 'domus-genoma: billing'
   repo: 4444J99/domus-genoma
@@ -24063,10 +24229,10 @@ tasks:
   title: 'my--father-mother: auth'
   repo: a-organvm/my--father-mother
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - build-out
   - product
@@ -24076,6 +24242,7 @@ tasks:
     (or CLI), with a documented secret/config path.
   depends_on: []
   created: '2026-06-19'
+  updated: '2026-06-19T19:38:18.105246Z'
   dispatch_log: []
 - id: BLD2-my--father-mother-billing
   title: 'my--father-mother: billing'
@@ -24143,7 +24310,7 @@ tasks:
   title: 'my--father-mother: integration-tests'
   repo: a-organvm/my--father-mother
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -24207,7 +24374,7 @@ tasks:
   title: 'specvla-ergon--avditor-mvndi: billing'
   repo: organvm-iii-ergon/specvla-ergon--avditor-mvndi
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -24295,7 +24462,7 @@ tasks:
   title: 'specvla-ergon--avditor-mvndi: api-docs'
   repo: organvm-iii-ergon/specvla-ergon--avditor-mvndi
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -24483,7 +24650,7 @@ tasks:
   title: 'writelens: auth'
   repo: 4444J99/writelens
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -24575,7 +24742,7 @@ tasks:
   title: 'writelens: integration-tests'
   repo: 4444J99/writelens
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -24592,7 +24759,7 @@ tasks:
   title: 'writelens: api-docs'
   repo: 4444J99/writelens
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -24610,7 +24777,7 @@ tasks:
   title: 'edgarflash: auth'
   repo: 4444J99/edgarflash
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -24628,7 +24795,7 @@ tasks:
   title: 'edgarflash: billing'
   repo: 4444J99/edgarflash
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -24646,7 +24813,7 @@ tasks:
   title: 'edgarflash: dashboard'
   repo: 4444J99/edgarflash
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -24691,7 +24858,7 @@ tasks:
   title: 'edgarflash: integration-tests'
   repo: 4444J99/edgarflash
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -24708,7 +24875,7 @@ tasks:
   title: 'edgarflash: api-docs'
   repo: 4444J99/edgarflash
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -24726,7 +24893,7 @@ tasks:
   title: 'trendpulse: auth'
   repo: 4444J99/trendpulse
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -24744,7 +24911,7 @@ tasks:
   title: 'trendpulse: billing'
   repo: 4444J99/trendpulse
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -24762,7 +24929,7 @@ tasks:
   title: 'trendpulse: dashboard'
   repo: 4444J99/trendpulse
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -24807,7 +24974,7 @@ tasks:
   title: 'trendpulse: integration-tests'
   repo: 4444J99/trendpulse
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -24824,7 +24991,7 @@ tasks:
   title: 'trendpulse: api-docs'
   repo: 4444J99/trendpulse
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -24842,7 +25009,7 @@ tasks:
   title: 'essay-pipeline: auth'
   repo: a-organvm/essay-pipeline
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -24860,7 +25027,7 @@ tasks:
   title: 'essay-pipeline: billing'
   repo: a-organvm/essay-pipeline
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -24878,7 +25045,7 @@ tasks:
   title: 'essay-pipeline: dashboard'
   repo: a-organvm/essay-pipeline
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -24923,7 +25090,7 @@ tasks:
   title: 'essay-pipeline: integration-tests'
   repo: a-organvm/essay-pipeline
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -24940,7 +25107,7 @@ tasks:
   title: 'essay-pipeline: api-docs'
   repo: a-organvm/essay-pipeline
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -24958,7 +25125,7 @@ tasks:
   title: 'tab-bookmark-manager: auth'
   repo: a-organvm/tab-bookmark-manager
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -24976,7 +25143,7 @@ tasks:
   title: 'tab-bookmark-manager: billing'
   repo: a-organvm/tab-bookmark-manager
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -24994,7 +25161,7 @@ tasks:
   title: 'tab-bookmark-manager: dashboard'
   repo: a-organvm/tab-bookmark-manager
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -25039,7 +25206,7 @@ tasks:
   title: 'tab-bookmark-manager: integration-tests'
   repo: a-organvm/tab-bookmark-manager
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -25056,7 +25223,7 @@ tasks:
   title: 'tab-bookmark-manager: api-docs'
   repo: a-organvm/tab-bookmark-manager
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -25074,7 +25241,7 @@ tasks:
   title: 'narratological-algorithmic-lenses: auth'
   repo: a-organvm/narratological-algorithmic-lenses
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -25092,7 +25259,7 @@ tasks:
   title: 'narratological-algorithmic-lenses: billing'
   repo: a-organvm/narratological-algorithmic-lenses
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -25110,7 +25277,7 @@ tasks:
   title: 'narratological-algorithmic-lenses: dashboard'
   repo: a-organvm/narratological-algorithmic-lenses
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -25155,7 +25322,7 @@ tasks:
   title: 'narratological-algorithmic-lenses: integration-tests'
   repo: a-organvm/narratological-algorithmic-lenses
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -25172,7 +25339,7 @@ tasks:
   title: 'narratological-algorithmic-lenses: api-docs'
   repo: a-organvm/narratological-algorithmic-lenses
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -25190,7 +25357,7 @@ tasks:
   title: 'card-trade-social: auth'
   repo: a-organvm/card-trade-social
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -25208,7 +25375,7 @@ tasks:
   title: 'card-trade-social: billing'
   repo: a-organvm/card-trade-social
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -25226,7 +25393,7 @@ tasks:
   title: 'card-trade-social: dashboard'
   repo: a-organvm/card-trade-social
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -25271,7 +25438,7 @@ tasks:
   title: 'card-trade-social: integration-tests'
   repo: a-organvm/card-trade-social
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -25288,7 +25455,7 @@ tasks:
   title: 'card-trade-social: api-docs'
   repo: a-organvm/card-trade-social
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -25306,7 +25473,7 @@ tasks:
   title: 'bountyscope: auth'
   repo: 4444J99/bountyscope
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -25324,7 +25491,7 @@ tasks:
   title: 'bountyscope: billing'
   repo: 4444J99/bountyscope
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -25342,7 +25509,7 @@ tasks:
   title: 'bountyscope: dashboard'
   repo: 4444J99/bountyscope
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -25381,7 +25548,7 @@ tasks:
   title: 'bountyscope: integration-tests'
   repo: 4444J99/bountyscope
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -25398,7 +25565,7 @@ tasks:
   title: 'bountyscope: api-docs'
   repo: 4444J99/bountyscope
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -25416,7 +25583,7 @@ tasks:
   title: 'vulnpulse: auth'
   repo: 4444J99/vulnpulse
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -25434,7 +25601,7 @@ tasks:
   title: 'vulnpulse: billing'
   repo: 4444J99/vulnpulse
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -25452,7 +25619,7 @@ tasks:
   title: 'vulnpulse: dashboard'
   repo: 4444J99/vulnpulse
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -25491,7 +25658,7 @@ tasks:
   title: 'vulnpulse: integration-tests'
   repo: 4444J99/vulnpulse
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -25508,7 +25675,7 @@ tasks:
   title: 'vulnpulse: api-docs'
   repo: 4444J99/vulnpulse
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -25794,7 +25961,7 @@ tasks:
   title: 'ACTIVATION AUDIT: ship-now'
   repo: organvm-i-theoria/.github
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -25877,7 +26044,7 @@ tasks:
     the missing claude-code adapter)'
   repo: organvm-i-theoria/conversation-corpus-engine
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -25902,7 +26069,7 @@ tasks:
   title: "Limen disposition triage \u2014 rolling"
   repo: 4444J99/session-meta
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -25922,7 +26089,7 @@ tasks:
   title: "\U0001F6A8 Security Alert: Potential Secrets Detected in Code"
   repo: organvm-i-theoria/.github
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
