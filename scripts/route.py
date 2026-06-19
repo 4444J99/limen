@@ -158,6 +158,14 @@ def main() -> int:
     workdir = Path(args.workdir).expanduser()
     data = yaml.safe_load(tasks_path.read_text())
     health = _vendor_health()
+    # Only route to lanes the daemon can actually DISPATCH. The dispatchable set is DERIVED from
+    # LIMEN_LANES (the same env the heartbeat uses) + jules (always appended at dispatch). This stops
+    # stranding tasks on a lane that's healthy but not in the dispatch rotation (e.g. agy when the
+    # launchd plist drops it). Auto-heals: fix LIMEN_LANES to include agy and it rejoins routing.
+    _lanes_env = os.environ.get("LIMEN_LANES")
+    if _lanes_env:
+        _dispatchable = {l.strip() for l in _lanes_env.split(",") if l.strip()} | {"jules"}
+        health = {k: (v and k in _dispatchable) for k, v in health.items()}
 
     up = [k for k, v in health.items() if v]
     down = [k for k, v in health.items() if not v]
