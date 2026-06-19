@@ -174,4 +174,16 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    rc = main()
+    # SELF-FEED (live without a daemon restart): the heartbeat calls THIS script as a fresh
+    # subprocess every FEED beat, so chaining the generator here activates the "queue never hits 0"
+    # guarantee in the RUNNING daemon — no heartbeat-loop.sh restart, no in-flight dispatch lost.
+    # Only on --apply (the daemon's mode); generate-backlog no-ops when the queue is above floor.
+    if "--apply" in sys.argv:
+        try:
+            import subprocess
+            gen = Path(__file__).resolve().parent / "generate-backlog.py"
+            subprocess.run([sys.executable, str(gen), "--apply"], timeout=120)
+        except Exception as e:  # never let self-feed break the feed beat
+            print(f"(generate-backlog skipped: {e})")
+    sys.exit(rc)
