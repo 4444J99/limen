@@ -438,7 +438,12 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
     branch = f"limen/{slug}-{suffix}"
     wt = _ISOLATION_ROOT / (re.sub(r"[^a-zA-Z0-9._-]+", "-", task.id.lower()) + "-" + suffix)
     agent_cmd = [binary, *_agent_argv(agent), _build_prompt(task)]
-    lane_timeout = int(os.environ.get("LIMEN_LANE_TIMEOUT", "900"))
+    # 1800s (was 900): local lanes have ABUNDANT budget headroom (codex/claude/opencode ~60-92 left
+    # per window) while jules is scarce (≈100/day). At 900s, big tasks — incl. the revenue/deploy
+    # tasks (BLD2-*-deploy, REV-*) — timed out locally then bled to jules, exhausting the scarce lane
+    # and stalling the money work. A longer local cap lets the cheap, abundant lanes finish the big
+    # tasks (a hung run is still bounded — _run_capture kills the process group at the cap).
+    lane_timeout = int(os.environ.get("LIMEN_LANE_TIMEOUT", "1800"))
 
     if dry_run:
         print(
