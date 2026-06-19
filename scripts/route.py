@@ -42,6 +42,7 @@ except ImportError:
 # concurrent heartbeat read can never observe a truncated/empty queue.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.io import atomic_write_text
+from limen.dispatch import _down_lanes
 
 # Vendor health: which local lanes are usable right now. gemini needs an API key.
 def _vendor_health() -> dict[str, bool]:
@@ -86,9 +87,13 @@ def _local_checkout(repo: str | None, workdir: Path) -> Path | None:
 _DEPLOY_HINTS = ("deploy", "cloudflare", "worker", "wrangler", "infra", "hosting")
 
 
-# General local lanes that compete for non-deploy work. opencode is reserved for deploy/infra
-# (and used only as a last-resort fallback below) because it historically times out on big tasks.
-_LOCAL_LANES = ("codex", "claude", "agy")
+# General local lanes that compete for non-deploy work, distributed by budget headroom.
+# opencode is now in the GENERAL rotation: its specialty (deploy/cloudflare) is blocked on
+# Cloudflare auth (those tasks are needs_human), so reserving it for deploy would leave a whole
+# lane with ~full budget IDLE — a "don't leave a lane with usage idle" violation. The 1800s lane
+# timeout + jules async-fallback bound its historical big-task timeouts. It still gets FIRST pick
+# for genuine deploy/infra work (the _DEPLOY_HINTS branch below) when that's unblocked.
+_LOCAL_LANES = ("codex", "claude", "agy", "opencode")
 
 
 def _pick_local(
@@ -166,6 +171,13 @@ def main() -> int:
     if _lanes_env:
         _dispatchable = {l.strip() for l in _lanes_env.split(",") if l.strip()} | {"jules"}
         health = {k: (v and k in _dispatchable) for k, v in health.items()}
+
+    # Honest routing: never assign work to a lane the LIVE usage meter says is dead (token-exhausted
+    # or rate-limited). Reuses the SAME _down_lanes() the dispatcher skips on, so route and dispatch
+    # agree on which lanes can actually produce. Self-heals: a lane rejoins as its window refills.
+    _dead = _down_lanes()
+    if _dead:
+        health = {k: (v and k not in _dead) for k, v in health.items()}
 
     up = [k for k, v in health.items() if v]
     down = [k for k, v in health.items() if not v]
