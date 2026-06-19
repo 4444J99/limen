@@ -1,0 +1,151 @@
+#!/usr/bin/env python3
+"""generate-backlog — the SELF-FEEDING half of the metabolism.
+
+mine-backlog.py pulls EXISTING open GitHub issues; when that backlog is exhausted the queue
+drains to 0 and the autonomous loop idles (the one thing that forces a stop). This generator
+closes that gap: when `open` falls below a floor, it synthesizes genuinely-useful build-out
+tasks per active product so the stream is endless ("run out of tasks -> make more tasks").
+
+NOT mindless filler: each task names a real engineering lever (coverage, CI, docs, security,
+complexity, typing) and demands SPECIFIC work + a green check — the lane agent does the real
+discovery. Every repo always has headroom in each lever, so the supply is effectively infinite.
+
+Identity from metadata: the product set is DERIVED from the repos already referenced in
+tasks.yaml (the active surfaces), never a pinned list.
+
+Read-only by default (prints a plan). With --apply it appends `open` tasks via the limen
+schema (validated, atomic write). Never dispatches.
+"""
+from __future__ import annotations
+
+import argparse
+import os
+import sys
+from collections import Counter
+from datetime import date
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+from limen.io import load_limen_file, save_limen_file  # noqa: E402
+from limen.models import Task  # noqa: E402
+
+# Useful, repo-agnostic but ACTIONABLE levers. The agent resolves the specifics in-repo.
+# (key, priority, title, context-template). {repo} is filled per product.
+TEMPLATES = [
+    ("test-coverage", "medium",
+     "Raise test coverage in {repo}",
+     "Find the largest source module in {repo} with little or no test coverage and add a focused, "
+     "PASSING test suite for it. Run the repo's own test command and confirm green. No placeholder tests."),
+    ("ci-green", "high",
+     "Make {repo} CI green",
+     "Inspect the latest FAILING checks on {repo}'s default branch, fix the root cause (lint / types / "
+     "failing test / config), and confirm the checks pass. If CI is already green, add the single most "
+     "valuable missing check (e.g. typecheck or test-matrix) instead."),
+    ("docs", "low",
+     "Real usage docs for {repo}",
+     "Derive an accurate Usage section in {repo}'s README from the ACTUAL entrypoints/exports (install, "
+     "run, key commands + flags). No invented features, no TODOs — only what the code actually does."),
+    ("security", "high",
+     "Security hardening pass on {repo}",
+     "Run the ecosystem audit for {repo} (npm audit / pip-audit / equivalent), upgrade or pin "
+     "high-severity advisories, and add input validation at the main untrusted-input entrypoints. "
+     "Open a PR; keep the build green."),
+    ("simplify", "medium",
+     "Reduce complexity in {repo}",
+     "Identify the most complex or most-duplicated module in {repo} and refactor it for clarity, with "
+     "tests proving behavior is unchanged. Net lines should not grow without cause."),
+    ("typing", "medium",
+     "Tighten types in {repo}",
+     "Eliminate the worst untyped hotspots in {repo}'s most-imported module (remove `any` / add type "
+     "hints / fix loose signatures). Keep the build and tests green."),
+]
+
+# statuses that count as "this (repo,lever) is already being worked" — don't duplicate those.
+_ACTIVE = {"open", "dispatched", "in_progress", "needs_human"}
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS", "tasks.yaml"))
+    ap.add_argument("--floor", type=int, default=int(os.environ.get("LIMEN_BACKLOG_FLOOR", "60")),
+                    help="top the OPEN queue up to this depth; generate nothing if already at/above")
+    ap.add_argument("--max-new", type=int, default=int(os.environ.get("LIMEN_GEN_MAX", "40")),
+                    help="hard cap on tasks generated in one run (anti-flood)")
+    ap.add_argument("--apply", action="store_true", help="append to tasks.yaml (validated, atomic)")
+    args = ap.parse_args()
+
+    path = Path(args.tasks)
+    lf = load_limen_file(path)
+    tasks = lf.tasks
+
+    open_now = sum(1 for t in tasks if t.status == "open")
+    if open_now >= args.floor:
+        print(f"queue healthy: open={open_now} >= floor={args.floor} — nothing to generate.")
+        return 0
+    need = min(args.floor - open_now, args.max_new)
+
+    # active product set, DERIVED from the repos already in play (not pinned).
+    repos = [r for r in dict.fromkeys(t.repo for t in tasks if t.repo) if r]
+    if not repos:
+        print("no product repos referenced in tasks.yaml — cannot generate. (seed a real task first.)")
+        return 0
+
+    # how loaded is each repo right now (fewest-loaded get fed first → spread the work).
+    load = Counter(t.repo for t in tasks if t.status in _ACTIVE and t.repo)
+    repos.sort(key=lambda r: load.get(r, 0))
+
+    # what (repo, lever) pairs are already active → skip them.
+    existing = {t.id for t in tasks}
+    active_pairs = {
+        (t.repo, t.labels[0]) for t in tasks
+        if t.status in _ACTIVE and t.repo and t.labels and t.labels[0] in {k for k, *_ in TEMPLATES}
+    }
+
+    stamp = date.today().isoformat()
+    mmdd = date.today().strftime("%m%d")
+    new: list[Task] = []
+    # round-robin levers across repos so we never dump six tasks on one repo.
+    for lever_idx in range(len(TEMPLATES)):
+        if len(new) >= need:
+            break
+        key, prio, title, ctx = TEMPLATES[lever_idx]
+        for repo in repos:
+            if len(new) >= need:
+                break
+            if (repo, key) in active_pairs:
+                continue
+            slug = repo.replace("/", "-").lower()
+            tid = f"GEN-{slug}-{key}-{mmdd}"
+            if tid in existing:
+                continue
+            existing.add(tid)
+            active_pairs.add((repo, key))
+            new.append(Task(
+                id=tid, title=title.format(repo=repo), repo=repo, type="code",
+                target_agent="any", priority=prio, budget_cost=1, status="open",
+                labels=[key, "generated", "build-out"], urls=[],
+                context=ctx.format(repo=repo) + f" [auto-generated {stamp} to keep the stream endless]",
+                depends_on=[], created=stamp, dispatch_log=[],
+            ))
+
+    print(f"# generate-backlog: open={open_now} floor={args.floor} -> generating {len(new)} "
+          f"(cap {args.max_new}) across {len(set(t.repo for t in new))} repos\n")
+    print("| new task id | repo | prio | lever |")
+    print("|---|---|---|---|")
+    for t in new:
+        print(f"| {t.id} | {t.repo} | {t.priority} | {t.labels[0]} |")
+
+    if not new:
+        print("\n(nothing new to generate — every (repo,lever) is already active)")
+        return 0
+    if args.apply:
+        lf.tasks.extend(new)
+        save_limen_file(path, lf)
+        print(f"\napplied: appended {len(new)} generated tasks -> {path} (route+dispatch separately)")
+    else:
+        print(f"\ndry-run — re-run with --apply to append {len(new)} tasks.")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

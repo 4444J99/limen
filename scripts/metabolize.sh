@@ -30,6 +30,12 @@ bash "$LIMEN_ROOT/scripts/drain.sh" || echo "  (drain skipped/failed — continu
 echo "── 2. mine (refill queue from GitHub backlog) ──"
 python3 "$LIMEN_ROOT/scripts/mine-backlog.py" --limit "${LIMEN_MINE_LIMIT:-15}" --apply || echo "  (mine skipped)"
 
+echo "── 2b. generate (self-feed build-out tasks if mining left the queue below floor) ──"
+# the SELF-FEEDING guarantee: when the GitHub backlog is exhausted and mining returns nothing,
+# this tops the queue to LIMEN_BACKLOG_FLOOR with useful per-product work so `open` never hits 0
+# and the loop never idles. No-ops when the queue is already healthy.
+python3 "$LIMEN_ROOT/scripts/generate-backlog.py" --apply || echo "  (generate skipped)"
+
 echo "── 3. route (assign cheapest-capable vendor) ──"
 python3 "$LIMEN_ROOT/scripts/route.py" --apply || echo "  (route skipped)"
 
