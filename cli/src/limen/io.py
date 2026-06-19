@@ -16,12 +16,13 @@ def load_limen_file(path: Path) -> LimenFile:
     return LimenFile.model_validate(raw)
 
 
-def save_limen_file(path: Path, limen: LimenFile) -> None:
-    data = limen.model_dump(mode="json", exclude_none=True)
-    text = yaml.dump(data, sort_keys=False, default_flow_style=False)
-    # ATOMIC write: serialize to a temp file in the same dir, fsync, then os.replace().
-    # os.replace is atomic on POSIX, so a crash or a concurrent writer can NEVER leave the
-    # queue file truncated/empty — the race that emptied tasks.yaml to 0 bytes on 2026-06-19.
+def atomic_write_text(path: Path, text: str) -> None:
+    """Crash-/race-safe text write: serialize to a temp file in the same dir, fsync, then
+    os.replace(). os.replace is atomic on POSIX, so a crash or a concurrent reader can NEVER
+    observe a truncated/empty file — the race that emptied tasks.yaml to 0 bytes on 2026-06-19.
+    This is the ONE writer primitive every tasks.yaml writer must route through (the heartbeat
+    read None mid-write and went idle until this was unified)."""
+    path = Path(path)
     fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
     try:
         with os.fdopen(fd, "w") as f:
@@ -35,3 +36,9 @@ def save_limen_file(path: Path, limen: LimenFile) -> None:
         except OSError:
             pass
         raise
+
+
+def save_limen_file(path: Path, limen: LimenFile) -> None:
+    data = limen.model_dump(mode="json", exclude_none=True)
+    text = yaml.dump(data, sort_keys=False, default_flow_style=False)
+    atomic_write_text(path, text)

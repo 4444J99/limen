@@ -7,6 +7,11 @@ import subprocess, sys, yaml, json
 from pathlib import Path
 from datetime import datetime, timezone
 
+# route every tasks.yaml write through the ONE atomic primitive (see limen/io.py) so a
+# concurrent heartbeat read can never observe a truncated/empty queue.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+from limen.io import atomic_write_text
+
 TASKS_YAML = Path(__file__).resolve().parent.parent / "tasks.yaml"
 
 # 53 audited issues across 7 repos — compiled 2026-06-01
@@ -348,15 +353,16 @@ def main():
         )
         added += 1
 
-    with open(TASKS_YAML, "w") as f:
+    atomic_write_text(
+        TASKS_YAML,
         yaml.dump(
             data,
-            f,
             default_flow_style=False,
             allow_unicode=True,
             sort_keys=False,
             width=120,
-        )
+        ),
+    )
 
     print(f"Added {added} tasks. Total: {len(tasks)}")
 

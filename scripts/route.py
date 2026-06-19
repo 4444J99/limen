@@ -38,6 +38,11 @@ except ImportError:
     print("pyyaml required", file=sys.stderr)
     sys.exit(1)
 
+# route every tasks.yaml write through the ONE atomic primitive (see limen/io.py) so a
+# concurrent heartbeat read can never observe a truncated/empty queue.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+from limen.io import atomic_write_text
+
 # Vendor health: which local lanes are usable right now. gemini needs an API key.
 def _vendor_health() -> dict[str, bool]:
     def has(bin_: str) -> bool:
@@ -143,7 +148,7 @@ def main() -> int:
 
     print(f"\nrouted: {dict(tally)}")
     if args.apply:
-        tasks_path.write_text(yaml.safe_dump(data, sort_keys=False))
+        atomic_write_text(tasks_path, yaml.safe_dump(data, sort_keys=False))
         print(f"applied target_agent assignments -> {tasks_path} "
               f"(dispatch separately, gated: limen dispatch --agent <v> --live)")
     else:

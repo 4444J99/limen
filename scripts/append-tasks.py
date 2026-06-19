@@ -1,6 +1,12 @@
+import sys
 import yaml
 from pathlib import Path
 from datetime import date
+
+# route every tasks.yaml write through the ONE atomic primitive (see limen/io.py) so a
+# concurrent heartbeat read can never observe a truncated/empty queue.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+from limen.io import atomic_write_text
 
 tasks_to_add = [
     {"id": "LIMEN-060", "title": "feat: implement MCP tool wrappers for all 5 organvm CLIs", "repo": "a-organvm/organvm-engine", "urls": ["https://github.com/a-organvm/organvm-engine/issues/89"]},
@@ -79,7 +85,6 @@ for t in tasks_to_add:
         data['tasks'].append(new_task)
         added_count += 1
 
-with open(tasks_path, 'w') as f:
-    yaml.dump(data, f, default_flow_style=False, sort_keys=False)
+atomic_write_text(tasks_path, yaml.dump(data, default_flow_style=False, sort_keys=False))
 
 print(f"Added {added_count} tasks. Total: {len(data['tasks'])}")

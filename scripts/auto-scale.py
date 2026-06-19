@@ -22,6 +22,11 @@ from pathlib import Path
 import requests
 import yaml
 
+# route every tasks.yaml write through the ONE atomic primitive (see limen/io.py) so a
+# concurrent heartbeat read can never observe a truncated/empty queue.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+from limen.io import atomic_write_text
+
 TASKS_FILE = Path(__file__).resolve().parent.parent / "tasks.yaml"
 ORGS = ["a-organvm", "organvm-i-theoria"]
 DEFAULT_DEPTH = 100
@@ -112,7 +117,7 @@ def main() -> int:
 
     tasks.extend(new_tasks)
     data["tasks"] = tasks
-    TASKS_FILE.write_text(yaml.dump(data, sort_keys=False, allow_unicode=True))
+    atomic_write_text(TASKS_FILE, yaml.dump(data, sort_keys=False, allow_unicode=True))
     print(f"Added {len(new_tasks)} new tasks. Total: {len(tasks)}")
     return 0
 
