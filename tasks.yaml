@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-06-19'
-      spent: 51
+      spent: 109
       per_agent:
-        jules: 47
+        jules: 62
         gemini: 0
-        codex: 0
-        opencode: 4
-        agy: 0
-        claude: 0
+        codex: 17
+        opencode: 5
+        agy: 10
+        claude: 15
       per_agent_reset:
         jules: '2026-06-18T22:56:11.988853+00:00'
         gemini: '2026-06-18T22:56:11.988853+00:00'
@@ -455,7 +455,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 2
-  status: cancelled
+  status: open
   labels:
   - batch-2026-06-01
   - noop
@@ -921,7 +921,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - batch-2026-06-01
   - tried:opencode
@@ -1099,7 +1099,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - batch-2026-06-01
   - noop
@@ -2068,7 +2068,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - batch-2026-06-01
   - tried:opencode
@@ -2322,7 +2322,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 2
-  status: cancelled
+  status: open
   labels:
   - batch-2026-06-01
   - tried:opencode
@@ -2390,7 +2390,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 2
-  status: cancelled
+  status: open
   labels:
   - batch-2026-06-01
   - noop
@@ -2875,7 +2875,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - batch-2026-06-01
   - noop
@@ -2976,7 +2976,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 2
-  status: cancelled
+  status: open
   labels:
   - batch-2026-06-01
   - noop
@@ -3253,7 +3253,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 2
-  status: cancelled
+  status: open
   labels:
   - batch-2026-06-01
   - noop
@@ -3318,7 +3318,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 2
-  status: cancelled
+  status: open
   labels:
   - batch-2026-06-01
   - tried:opencode
@@ -3387,7 +3387,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 2
-  status: cancelled
+  status: open
   labels:
   - batch-2026-06-01
   - noop
@@ -3752,7 +3752,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - batch-2026-06-01
   - tried:opencode
@@ -3821,7 +3821,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - batch-2026-06-01
   - noop
@@ -4036,7 +4036,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 2
-  status: cancelled
+  status: open
   labels:
   - batch-2026-06-01
   - tried:opencode
@@ -4387,7 +4387,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - batch-2026-06-01
   - tried:opencode
@@ -4456,7 +4456,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - batch-2026-06-01
   - tried:opencode
@@ -4653,7 +4653,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - batch-2026-06-01
   - noop
@@ -5004,7 +5004,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - batch-2026-06-01
   - tried:opencode
@@ -5077,7 +5077,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - batch-2026-06-01
   - noop
@@ -5283,7 +5283,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - batch-2026-06-01
   - noop
@@ -5716,7 +5716,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - batch-2026-06-01
   - tried:opencode
@@ -6082,7 +6082,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - activation-audit
   - ship-now
@@ -6218,7 +6218,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - activation-audit
   - ship-now
@@ -6652,7 +6652,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - P0
   - client
@@ -6875,7 +6875,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - activation-audit
   - ship-now
@@ -6970,7 +6970,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - activation-audit
   - ship-now
@@ -7047,7 +7047,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - noop
   urls:
@@ -7087,7 +7087,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - noop
   urls:
@@ -7171,7 +7171,7 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - noop
   urls:
@@ -7211,7 +7211,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - noop
   urls:
@@ -7267,7 +7267,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - audit
   - tried:claude
@@ -7308,7 +7308,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - tried:opencode
   - noop
@@ -7352,7 +7352,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - noop
   urls:
@@ -7391,7 +7391,7 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - noop
   urls:
@@ -7487,7 +7487,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - session-walk
   - noop
@@ -7661,7 +7661,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - session-walk
   - noop
@@ -7822,7 +7822,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - session-walk
   - noop
@@ -7889,7 +7889,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - session-walk
   - tried:opencode
@@ -7930,7 +7930,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - session-walk
   - noop
@@ -8190,7 +8190,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - noop
   urls:
@@ -8278,7 +8278,7 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - tried:opencode
   - tried:agy
@@ -8363,7 +8363,7 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - noop
   urls:
@@ -8506,7 +8506,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - session-walk
   - noop
@@ -8542,7 +8542,7 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - session-walk
   - noop
@@ -8921,7 +8921,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - session-walk
   - noop
@@ -10047,7 +10047,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - activation-audit
   - noop
@@ -10498,7 +10498,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - activation-audit
   - noop
@@ -10642,7 +10642,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - activation-audit
   - tried:opencode
@@ -10679,7 +10679,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - activation-audit
   - noop
@@ -11227,7 +11227,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - activation-audit
   - kill
@@ -11447,7 +11447,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - activation-audit
   - noop
@@ -11625,7 +11625,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - roadmap
   - P2
@@ -11655,7 +11655,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - bug
   - P3
@@ -11757,7 +11757,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - roadmap
   - P3
@@ -11826,7 +11826,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - enhancement
   - P3
@@ -12121,7 +12121,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - roadmap
   - P3
@@ -12725,7 +12725,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - automation
   - health-check
@@ -12876,7 +12876,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - stale
   - noop
@@ -13047,7 +13047,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - essay-published
   - auto-dispatch
@@ -13150,7 +13150,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - roadmap
   - P2
@@ -13694,7 +13694,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - noop
   urls:
@@ -13753,7 +13753,7 @@ tasks:
   target_agent: codex
   priority: critical
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - ci-repair
   - unblocks-prs
@@ -13841,7 +13841,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - ci-repair
   - unblocks-prs
@@ -13897,7 +13897,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - ci-repair
   - unblocks-prs
@@ -13923,7 +13923,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - ci-repair
   - unblocks-prs
@@ -14031,7 +14031,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - ci-repair
   - unblocks-prs
@@ -14087,7 +14087,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - ci-repair
   - unblocks-prs
@@ -14113,7 +14113,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - ci-repair
   - unblocks-prs
@@ -14169,7 +14169,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - ci-repair
   - unblocks-prs
@@ -14195,7 +14195,7 @@ tasks:
   target_agent: opencode
   priority: critical
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - ci-repair
   - unblocks-prs
@@ -14282,7 +14282,7 @@ tasks:
   target_agent: opencode
   priority: critical
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - ci-repair
   - unblocks-prs
@@ -14369,7 +14369,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - ci-repair
   - unblocks-prs
@@ -14456,7 +14456,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - ci-repair
   - unblocks-prs
@@ -14512,7 +14512,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - ci-repair
   - unblocks-prs
@@ -14739,7 +14739,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - revenue
   - ship-order
@@ -15084,7 +15084,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - revenue
   - ship-order
@@ -15121,12 +15121,17 @@ tasks:
     Wiring + a unit test.
   depends_on: []
   created: '2026-06-18'
-  updated: '2026-06-19T02:58:02.954926Z'
+  updated: '2026-06-19T10:41:57.371147Z'
   dispatch_log:
   - timestamp: '2026-06-19T02:39:56.434053Z'
     agent: gemini
     session_id: cli
     status: ratelimited->jules
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: REV-mirror-landing
   title: 'Add a static landing page (docs/ or public/) for Mirror+: hero, the try-on/skin-analysis
     f'
@@ -15135,7 +15140,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - revenue
   - ship-order
@@ -15217,7 +15222,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - revenue
   - ship-order
@@ -15301,7 +15306,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - revenue
   - ship-order
@@ -15634,7 +15639,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - revenue
   - ship-order
@@ -15761,7 +15766,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - revenue
   - ship-order
@@ -15847,7 +15852,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - revenue
   - ship-order
@@ -16166,7 +16171,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - cifix
   - unblock-prs
@@ -16298,7 +16303,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - revenue
   - ship-order
@@ -16382,7 +16387,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - revenue
   - ship-order
@@ -16467,7 +16472,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - revenue
   - ship-order
@@ -16566,7 +16571,7 @@ tasks:
     reuses the waitlist service.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T04:49:09.792283Z'
+  updated: '2026-06-19T10:41:57.371147Z'
   dispatch_log:
   - timestamp: '2026-06-19T04:17:39.826297Z'
     agent: opencode
@@ -16576,6 +16581,11 @@ tasks:
     agent: jules
     session_id: '16398937109534982294'
     status: dispatched
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: REV-styx-email-service
   title: Add src/api/src/modules/email/email
   repo: a-organvm/peer-audited--behavioral-blockchain
@@ -16643,7 +16653,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - revenue
   - ship-order
@@ -16698,7 +16708,7 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - revenue
   - ship-order
@@ -16723,7 +16733,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - revenue
   - ship-order
@@ -16838,7 +16848,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - revenue
   - ship-order
@@ -16951,7 +16961,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - revenue
   - ship-order
@@ -17035,7 +17045,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - revenue
   - ship-order
@@ -17380,8 +17390,13 @@ tasks:
     to run with the project's test runner. Aim for the critical modules.
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-a-i-chat--exporter-ci
   title: "a-i-chat--exporter: ci \u2014 Add a CI workflow under "
   repo: a-organvm/a-i-chat--exporter
@@ -17398,8 +17413,13 @@ tasks:
     lint on PRs and the default branch (use the repo's stack).
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-a-i-chat--exporter-harden
   title: "a-i-chat--exporter: harden \u2014 Harden the main entry points: input validation,\
     \ error handli"
@@ -17408,7 +17428,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -17417,8 +17437,13 @@ tasks:
     logging on the primary request/CLI paths.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-a-i-chat--exporter-readme
   title: "a-i-chat--exporter: readme \u2014 Write/expand the README: what-it-is, who-pays,\
     \ install, usag"
@@ -17436,8 +17461,13 @@ tasks:
     section consistent with the product''s tier model.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-a-i-chat--exporter-next-rev
   title: "a-i-chat--exporter: next-rev \u2014 Implement the next revenue increment\
     \ per the product's path-"
@@ -17456,8 +17486,13 @@ tasks:
     \ first slice."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-public-record-data-scrapper-tests
   title: "public-record-data-scrapper: tests \u2014 Add/expand an automated test suite\
     \ covering the core code pa"
@@ -17466,7 +17501,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - build-out
   - product
@@ -17475,13 +17510,22 @@ tasks:
     to run with the project's test runner. Aim for the critical modules.
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
+  updated: '2026-06-19T10:39:50.100046Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:11:29.067982Z'
     agent: limen
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: codex
+    session_id: https://github.com/a-organvm/public-record-data-scrapper/pull/281
+    status: dispatched
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: BLD-public-record-data-scrapper-ci
   title: "public-record-data-scrapper: ci \u2014 Add a CI workflow under "
   repo: a-organvm/public-record-data-scrapper
@@ -17498,8 +17542,13 @@ tasks:
     lint on PRs and the default branch (use the repo's stack).
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-public-record-data-scrapper-harden
   title: "public-record-data-scrapper: harden \u2014 Harden the main entry points:\
     \ input validation, error handli"
@@ -17527,7 +17576,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -17536,8 +17585,13 @@ tasks:
     section consistent with the product''s tier model.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-public-record-data-scrapper-next-rev
   title: "public-record-data-scrapper: next-rev \u2014 Implement the next revenue\
     \ increment per the product's path-"
@@ -17556,8 +17610,13 @@ tasks:
     \ first slice."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-mirror-mirror-tests
   title: "mirror-mirror: tests \u2014 Add/expand an automated test suite covering\
     \ the core code pa"
@@ -17575,8 +17634,13 @@ tasks:
     to run with the project's test runner. Aim for the critical modules.
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-mirror-mirror-ci
   title: "mirror-mirror: ci \u2014 Add a CI workflow under "
   repo: a-organvm/mirror-mirror
@@ -17584,7 +17648,7 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - build-out
   - product
@@ -17593,13 +17657,22 @@ tasks:
     lint on PRs and the default branch (use the repo's stack).
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
+  updated: '2026-06-19T10:39:50.100046Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:11:29.067982Z'
     agent: limen
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: claude
+    session_id: https://github.com/a-organvm/mirror-mirror/pull/11
+    status: dispatched
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: BLD-mirror-mirror-harden
   title: "mirror-mirror: harden \u2014 Harden the main entry points: input validation,\
     \ error handli"
@@ -17617,8 +17690,13 @@ tasks:
     logging on the primary request/CLI paths.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-mirror-mirror-readme
   title: "mirror-mirror: readme \u2014 Write/expand the README: what-it-is, who-pays,\
     \ install, usag"
@@ -17636,8 +17714,13 @@ tasks:
     section consistent with the product''s tier model.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-mirror-mirror-next-rev
   title: "mirror-mirror: next-rev \u2014 Implement the next revenue increment per\
     \ the product's path-"
@@ -17646,7 +17729,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -17656,8 +17739,13 @@ tasks:
     \ first slice."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-universal-mail--automation-tests
   title: "universal-mail--automation: tests \u2014 Add/expand an automated test suite\
     \ covering the core code pa"
@@ -17675,8 +17763,13 @@ tasks:
     to run with the project's test runner. Aim for the critical modules.
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-universal-mail--automation-ci
   title: "universal-mail--automation: ci \u2014 Add a CI workflow under "
   repo: a-organvm/universal-mail--automation
@@ -17693,8 +17786,13 @@ tasks:
     lint on PRs and the default branch (use the repo's stack).
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-universal-mail--automation-harden
   title: "universal-mail--automation: harden \u2014 Harden the main entry points:\
     \ input validation, error handli"
@@ -17703,10 +17801,11 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
+  - noop
   urls: []
   context: 'Harden the main entry points: input validation, error handling, and structured
     logging on the primary request/CLI paths.'
@@ -17719,6 +17818,10 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: BLD-universal-mail--automation-readme
   title: "universal-mail--automation: readme \u2014 Write/expand the README: what-it-is,\
     \ who-pays, install, usag"
@@ -17736,8 +17839,13 @@ tasks:
     section consistent with the product''s tier model.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-universal-mail--automation-next-rev
   title: "universal-mail--automation: next-rev \u2014 Implement the next revenue increment\
     \ per the product's path-"
@@ -17756,8 +17864,13 @@ tasks:
     \ first slice."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-peer-audited--behavioral-blockchain-tests
   title: "peer-audited--behavioral-blockchain: tests \u2014 Add/expand an automated\
     \ test suite covering the core code pa"
@@ -17766,7 +17879,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -17775,8 +17888,13 @@ tasks:
     to run with the project's test runner. Aim for the critical modules.
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-peer-audited--behavioral-blockchain-ci
   title: "peer-audited--behavioral-blockchain: ci \u2014 Add a CI workflow under "
   repo: a-organvm/peer-audited--behavioral-blockchain
@@ -17793,8 +17911,13 @@ tasks:
     lint on PRs and the default branch (use the repo's stack).
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-peer-audited--behavioral-blockchain-harden
   title: "peer-audited--behavioral-blockchain: harden \u2014 Harden the main entry\
     \ points: input validation, error handli"
@@ -17812,14 +17935,19 @@ tasks:
     logging on the primary request/CLI paths.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-peer-audited--behavioral-blockchain-readme
   title: "peer-audited--behavioral-blockchain: readme \u2014 Write/expand the README:\
     \ what-it-is, who-pays, install, usag"
   repo: a-organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: dispatched
@@ -17831,13 +17959,17 @@ tasks:
     section consistent with the product''s tier model.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
+  updated: '2026-06-19T10:41:57.371147Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:11:29.067982Z'
     agent: limen
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: gemini
+    session_id: cli
+    status: ratelimited->jules
 - id: BLD-peer-audited--behavioral-blockchain-next-rev
   title: "peer-audited--behavioral-blockchain: next-rev \u2014 Implement the next\
     \ revenue increment per the product's path-"
@@ -17856,8 +17988,13 @@ tasks:
     \ first slice."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-the-invisible-ledger-tests
   title: "the-invisible-ledger: tests \u2014 Add/expand an automated test suite covering\
     \ the core code pa"
@@ -17866,7 +18003,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - build-out
   - product
@@ -17875,8 +18012,19 @@ tasks:
     to run with the project's test runner. Aim for the critical modules.
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T06:58:00Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T06:58:00Z'
+    agent: opencode
+    session_id: current
+    status: done
+    output: "Created 7 new test files covering 7 core modules (billing, compliance-reports,\
+      \ file-versioning, multi-tenant, sharefile-webhooks, threshold-types, sharefile-auth).\
+      \ 152 tests total (124 new + 28 existing) across 9 test files. All passing. Modules\
+      \ tested: card validation/Luhn checks, report generation/risk detection/CSV-JSON\
+      \ export, file versioning/conflict detection/pruning, multi-tenant seat mgmt/connection\
+      \ pools, webhook dedup/cleanup, threshold presets integrity, OAuth URL building.\
+      \ Wired via vitest (existing npm test script)."
 - id: BLD-the-invisible-ledger-ci
   title: "the-invisible-ledger: ci \u2014 Add a CI workflow under "
   repo: a-organvm/the-invisible-ledger
@@ -17884,7 +18032,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -17893,8 +18041,13 @@ tasks:
     lint on PRs and the default branch (use the repo's stack).
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-the-invisible-ledger-harden
   title: "the-invisible-ledger: harden \u2014 Harden the main entry points: input\
     \ validation, error handli"
@@ -17912,8 +18065,13 @@ tasks:
     logging on the primary request/CLI paths.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-the-invisible-ledger-readme
   title: "the-invisible-ledger: readme \u2014 Write/expand the README: what-it-is,\
     \ who-pays, install, usag"
@@ -17931,14 +18089,19 @@ tasks:
     section consistent with the product''s tier model.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-the-invisible-ledger-next-rev
   title: "the-invisible-ledger: next-rev \u2014 Implement the next revenue increment\
     \ per the product's path-"
   repo: a-organvm/the-invisible-ledger
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: dispatched
@@ -17951,13 +18114,17 @@ tasks:
     \ first slice."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
+  updated: '2026-06-19T10:41:57.371147Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:11:29.067982Z'
     agent: limen
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: gemini
+    session_id: cli
+    status: ratelimited->jules
 - id: BLD-media-ark-tests
   title: "media-ark: tests \u2014 Add/expand an automated test suite covering the\
     \ core code pa"
@@ -17966,7 +18133,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -17975,8 +18142,13 @@ tasks:
     to run with the project's test runner. Aim for the critical modules.
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-media-ark-ci
   title: "media-ark: ci \u2014 Add a CI workflow under "
   repo: 4444J99/media-ark
@@ -17993,8 +18165,18 @@ tasks:
     lint on PRs and the default branch (use the repo's stack).
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-19T11:53:00Z'
+    agent: opencode
+    session_id: cli
+    status: in_progress
+    output: "Claimed and started working on CI workflow"
 - id: BLD-media-ark-harden
   title: "media-ark: harden \u2014 Harden the main entry points: input validation,\
     \ error handli"
@@ -18003,7 +18185,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -18012,8 +18194,13 @@ tasks:
     logging on the primary request/CLI paths.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-media-ark-readme
   title: "media-ark: readme \u2014 Write/expand the README: what-it-is, who-pays,\
     \ install, usag"
@@ -18031,8 +18218,13 @@ tasks:
     section consistent with the product''s tier model.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-media-ark-next-rev
   title: "media-ark: next-rev \u2014 Implement the next revenue increment per the\
     \ product's path-"
@@ -18051,8 +18243,13 @@ tasks:
     \ first slice."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-domus-genoma-tests
   title: "domus-genoma: tests \u2014 Add/expand an automated test suite covering the\
     \ core code pa"
@@ -18061,7 +18258,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - build-out
   - product
@@ -18070,13 +18267,22 @@ tasks:
     to run with the project's test runner. Aim for the critical modules.
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
+  updated: '2026-06-19T10:39:50.100046Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:11:29.067982Z'
     agent: limen
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: codex
+    session_id: https://github.com/4444J99/domus-genoma/pull/108
+    status: dispatched
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: BLD-domus-genoma-ci
   title: "domus-genoma: ci \u2014 Add a CI workflow under "
   repo: 4444J99/domus-genoma
@@ -18084,7 +18290,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -18093,8 +18299,13 @@ tasks:
     lint on PRs and the default branch (use the repo's stack).
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-domus-genoma-harden
   title: "domus-genoma: harden \u2014 Harden the main entry points: input validation,\
     \ error handli"
@@ -18126,7 +18337,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -18135,8 +18346,13 @@ tasks:
     section consistent with the product''s tier model.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-domus-genoma-next-rev
   title: "domus-genoma: next-rev \u2014 Implement the next revenue increment per the\
     \ product's path-"
@@ -18155,8 +18371,13 @@ tasks:
     \ first slice."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-my--father-mother-tests
   title: "my--father-mother: tests \u2014 Add/expand an automated test suite covering\
     \ the core code pa"
@@ -18174,8 +18395,13 @@ tasks:
     to run with the project's test runner. Aim for the critical modules.
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-my--father-mother-ci
   title: "my--father-mother: ci \u2014 Add a CI workflow under "
   repo: a-organvm/my--father-mother
@@ -18183,7 +18409,7 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - build-out
   - product
@@ -18192,13 +18418,22 @@ tasks:
     lint on PRs and the default branch (use the repo's stack).
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
+  updated: '2026-06-19T10:39:50.100046Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:11:29.067982Z'
     agent: limen
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: claude
+    session_id: https://github.com/a-organvm/my--father-mother/pull/12
+    status: dispatched
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: BLD-my--father-mother-harden
   title: "my--father-mother: harden \u2014 Harden the main entry points: input validation,\
     \ error handli"
@@ -18207,7 +18442,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -18216,8 +18451,13 @@ tasks:
     logging on the primary request/CLI paths.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-my--father-mother-readme
   title: "my--father-mother: readme \u2014 Write/expand the README: what-it-is, who-pays,\
     \ install, usag"
@@ -18249,7 +18489,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -18259,8 +18499,13 @@ tasks:
     \ first slice."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-specvla-ergon--avditor-mvndi-tests
   title: "specvla-ergon--avditor-mvndi: tests \u2014 Add/expand an automated test\
     \ suite covering the core code pa"
@@ -18278,8 +18523,13 @@ tasks:
     to run with the project's test runner. Aim for the critical modules.
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-specvla-ergon--avditor-mvndi-ci
   title: "specvla-ergon--avditor-mvndi: ci \u2014 Add a CI workflow under "
   repo: organvm-iii-ergon/specvla-ergon--avditor-mvndi
@@ -18296,8 +18546,13 @@ tasks:
     lint on PRs and the default branch (use the repo's stack).
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-specvla-ergon--avditor-mvndi-harden
   title: "specvla-ergon--avditor-mvndi: harden \u2014 Harden the main entry points:\
     \ input validation, error handli"
@@ -18306,10 +18561,11 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
+  - noop
   urls: []
   context: 'Harden the main entry points: input validation, error handling, and structured
     logging on the primary request/CLI paths.'
@@ -18322,6 +18578,10 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: BLD-specvla-ergon--avditor-mvndi-readme
   title: "specvla-ergon--avditor-mvndi: readme \u2014 Write/expand the README: what-it-is,\
     \ who-pays, install, usag"
@@ -18330,7 +18590,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -18339,8 +18599,13 @@ tasks:
     section consistent with the product''s tier model.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-specvla-ergon--avditor-mvndi-next-rev
   title: "specvla-ergon--avditor-mvndi: next-rev \u2014 Implement the next revenue\
     \ increment per the product's path-"
@@ -18369,7 +18634,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -18378,8 +18643,13 @@ tasks:
     to run with the project's test runner. Aim for the critical modules.
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-promptscope-ci
   title: "promptscope: ci \u2014 Add a CI workflow under "
   repo: 4444J99/promptscope
@@ -18387,7 +18657,7 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -18396,8 +18666,13 @@ tasks:
     lint on PRs and the default branch (use the repo's stack).
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-promptscope-harden
   title: "promptscope: harden \u2014 Harden the main entry points: input validation,\
     \ error handli"
@@ -18415,14 +18690,19 @@ tasks:
     logging on the primary request/CLI paths.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-promptscope-readme
   title: "promptscope: readme \u2014 Write/expand the README: what-it-is, who-pays,\
     \ install, usag"
   repo: 4444J99/promptscope
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: dispatched
@@ -18434,13 +18714,17 @@ tasks:
     section consistent with the product''s tier model.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
+  updated: '2026-06-19T10:41:57.371147Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:11:29.067982Z'
     agent: limen
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: gemini
+    session_id: cli
+    status: ratelimited->jules
 - id: BLD-promptscope-next-rev
   title: "promptscope: next-rev \u2014 Implement the next revenue increment per the\
     \ product's path-"
@@ -18449,7 +18733,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -18459,8 +18743,13 @@ tasks:
     \ first slice."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-writelens-tests
   title: "writelens: tests \u2014 Add/expand an automated test suite covering the\
     \ core code pa"
@@ -18478,8 +18767,13 @@ tasks:
     to run with the project's test runner. Aim for the critical modules.
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-writelens-ci
   title: "writelens: ci \u2014 Add a CI workflow under "
   repo: 4444J99/writelens
@@ -18487,7 +18781,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -18496,8 +18790,13 @@ tasks:
     lint on PRs and the default branch (use the repo's stack).
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-writelens-harden
   title: "writelens: harden \u2014 Harden the main entry points: input validation,\
     \ error handli"
@@ -18506,7 +18805,7 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -18515,8 +18814,13 @@ tasks:
     logging on the primary request/CLI paths.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-writelens-readme
   title: "writelens: readme \u2014 Write/expand the README: what-it-is, who-pays,\
     \ install, usag"
@@ -18534,14 +18838,19 @@ tasks:
     section consistent with the product''s tier model.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:05:14.365470Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: BLD-writelens-next-rev
   title: "writelens: next-rev \u2014 Implement the next revenue increment per the\
     \ product's path-"
   repo: 4444J99/writelens
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: dispatched
@@ -18554,13 +18863,17 @@ tasks:
     \ first slice."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
+  updated: '2026-06-19T10:41:57.371147Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:11:29.067982Z'
     agent: limen
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: gemini
+    session_id: cli
+    status: ratelimited->jules
 - id: BLD-edgarflash-tests
   title: "edgarflash: tests \u2014 Add/expand an automated test suite covering the\
     \ core code pa"
@@ -18569,7 +18882,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - build-out
   - product
@@ -18578,8 +18891,17 @@ tasks:
     to run with the project's test runner. Aim for the critical modules.
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: codex
+    session_id: https://github.com/4444J99/edgarflash/pull/4
+    status: dispatched
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: BLD-edgarflash-ci
   title: "edgarflash: ci \u2014 Add a CI workflow under "
   repo: 4444J99/edgarflash
@@ -18587,7 +18909,7 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - build-out
   - product
@@ -18596,8 +18918,17 @@ tasks:
     lint on PRs and the default branch (use the repo's stack).
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: claude
+    session_id: https://github.com/4444J99/edgarflash/pull/5
+    status: dispatched
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: BLD-edgarflash-harden
   title: "edgarflash: harden \u2014 Harden the main entry points: input validation,\
     \ error handli"
@@ -18606,28 +18937,33 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: in_progress
+  status: open
   labels:
   - build-out
   - product
+  - noop
   urls: []
   context: 'Harden the main entry points: input validation, error handling, and structured
     logging on the primary request/CLI paths.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:18:06.701123Z'
+  updated: '2026-06-19T10:12:14.174841Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:18:06.701123Z'
     agent: opencode
     session_id: current
     status: in_progress
     output: Started work on hardening main entry points
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: BLD-edgarflash-readme
   title: "edgarflash: readme \u2014 Write/expand the README: what-it-is, who-pays,\
     \ install, usag"
   repo: 4444J99/edgarflash
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: dispatched
@@ -18639,14 +18975,18 @@ tasks:
     section consistent with the product''s tier model.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: gemini
+    session_id: cli
+    status: ratelimited->jules
 - id: BLD-edgarflash-next-rev
   title: "edgarflash: next-rev \u2014 Implement the next revenue increment per the\
     \ product's path-"
   repo: 4444J99/edgarflash
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: dispatched
@@ -18659,8 +18999,12 @@ tasks:
     \ first slice."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: gemini
+    session_id: cli
+    status: ratelimited->jules
 - id: BLD-trendpulse-tests
   title: "trendpulse: tests \u2014 Add/expand an automated test suite covering the\
     \ core code pa"
@@ -18669,7 +19013,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - build-out
   - product
@@ -18678,8 +19022,17 @@ tasks:
     to run with the project's test runner. Aim for the critical modules.
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: codex
+    session_id: https://github.com/4444J99/trendpulse/pull/3
+    status: dispatched
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: BLD-trendpulse-ci
   title: "trendpulse: ci \u2014 Add a CI workflow under "
   repo: 4444J99/trendpulse
@@ -18687,7 +19040,7 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - build-out
   - product
@@ -18696,8 +19049,17 @@ tasks:
     lint on PRs and the default branch (use the repo's stack).
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: claude
+    session_id: https://github.com/4444J99/trendpulse/pull/2
+    status: dispatched
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: BLD-trendpulse-harden
   title: "trendpulse: harden \u2014 Harden the main entry points: input validation,\
     \ error handli"
@@ -18706,23 +19068,28 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
+  - noop
   urls: []
   context: 'Harden the main entry points: input validation, error handling, and structured
     logging on the primary request/CLI paths.'
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: BLD-trendpulse-readme
   title: "trendpulse: readme \u2014 Write/expand the README: what-it-is, who-pays,\
     \ install, usag"
   repo: 4444J99/trendpulse
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: dispatched
@@ -18734,14 +19101,18 @@ tasks:
     section consistent with the product''s tier model.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: gemini
+    session_id: cli
+    status: ratelimited->jules
 - id: BLD-trendpulse-next-rev
   title: "trendpulse: next-rev \u2014 Implement the next revenue increment per the\
     \ product's path-"
   repo: 4444J99/trendpulse
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: dispatched
@@ -18754,8 +19125,12 @@ tasks:
     \ first slice."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: gemini
+    session_id: cli
+    status: ratelimited->jules
 - id: BLD-essay-pipeline-tests
   title: "essay-pipeline: tests \u2014 Add/expand an automated test suite covering\
     \ the core code pa"
@@ -18764,7 +19139,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - build-out
   - product
@@ -18773,8 +19148,17 @@ tasks:
     to run with the project's test runner. Aim for the critical modules.
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: codex
+    session_id: https://github.com/a-organvm/essay-pipeline/pull/14
+    status: dispatched
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: BLD-essay-pipeline-ci
   title: "essay-pipeline: ci \u2014 Add a CI workflow under "
   repo: a-organvm/essay-pipeline
@@ -18782,7 +19166,7 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - build-out
   - product
@@ -18791,8 +19175,17 @@ tasks:
     lint on PRs and the default branch (use the repo's stack).
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: claude
+    session_id: https://github.com/a-organvm/essay-pipeline/pull/15
+    status: dispatched
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: BLD-essay-pipeline-harden
   title: "essay-pipeline: harden \u2014 Harden the main entry points: input validation,\
     \ error handli"
@@ -18801,26 +19194,31 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
+  - noop
   urls: []
   context: 'Harden the main entry points: input validation, error handling, and structured
     logging on the primary request/CLI paths.'
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: BLD-essay-pipeline-readme
   title: "essay-pipeline: readme \u2014 Write/expand the README: what-it-is, who-pays,\
     \ install, usag"
   repo: a-organvm/essay-pipeline
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -18830,16 +19228,20 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: gemini
+    session_id: cli
+    status: ratelimited->jules
 - id: BLD-essay-pipeline-next-rev
   title: "essay-pipeline: next-rev \u2014 Implement the next revenue increment per\
     \ the product's path-"
   repo: a-organvm/essay-pipeline
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -18850,7 +19252,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: gemini
+    session_id: cli
+    status: ratelimited->jules
 - id: BLD-tab-bookmark-manager-tests
   title: "tab-bookmark-manager: tests \u2014 Add/expand an automated test suite covering\
     \ the core code pa"
@@ -18859,7 +19265,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - build-out
   - product
@@ -18868,8 +19274,17 @@ tasks:
     to run with the project's test runner. Aim for the critical modules.
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: codex
+    session_id: https://github.com/a-organvm/tab-bookmark-manager/pull/22
+    status: dispatched
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: BLD-tab-bookmark-manager-ci
   title: "tab-bookmark-manager: ci \u2014 Add a CI workflow under "
   repo: a-organvm/tab-bookmark-manager
@@ -18877,7 +19292,7 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - build-out
   - product
@@ -18886,36 +19301,50 @@ tasks:
     lint on PRs and the default branch (use the repo's stack).
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: claude
+    session_id: https://github.com/a-organvm/tab-bookmark-manager/pull/21
+    status: dispatched
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: BLD-tab-bookmark-manager-harden
   title: "tab-bookmark-manager: harden \u2014 Harden the main entry points: input\
     \ validation, error handli"
   repo: a-organvm/tab-bookmark-manager
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
+  - slow
   urls: []
   context: 'Harden the main entry points: input validation, error handling, and structured
     logging on the primary request/CLI paths.'
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: BLD-tab-bookmark-manager-readme
   title: "tab-bookmark-manager: readme \u2014 Write/expand the README: what-it-is,\
     \ who-pays, install, usag"
   repo: a-organvm/tab-bookmark-manager
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -18925,16 +19354,20 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: gemini
+    session_id: cli
+    status: ratelimited->jules
 - id: BLD-tab-bookmark-manager-next-rev
   title: "tab-bookmark-manager: next-rev \u2014 Implement the next revenue increment\
     \ per the product's path-"
   repo: a-organvm/tab-bookmark-manager
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -18945,7 +19378,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: gemini
+    session_id: cli
+    status: ratelimited->jules
 - id: BLD-narratological-algorithmic-lenses-tests
   title: "narratological-algorithmic-lenses: tests \u2014 Add/expand an automated\
     \ test suite covering the core code pa"
@@ -18954,7 +19391,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - build-out
   - product
@@ -18963,8 +19400,17 @@ tasks:
     to run with the project's test runner. Aim for the critical modules.
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: codex
+    session_id: https://github.com/a-organvm/narratological-algorithmic-lenses/pull/33
+    status: dispatched
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: BLD-narratological-algorithmic-lenses-ci
   title: "narratological-algorithmic-lenses: ci \u2014 Add a CI workflow under "
   repo: a-organvm/narratological-algorithmic-lenses
@@ -18972,17 +19418,22 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
+  - noop
   urls: []
   context: Add a CI workflow under .github/workflows that runs the build + tests +
     lint on PRs and the default branch (use the repo's stack).
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: claude
+    session_id: cli
+    status: noop
 - id: BLD-narratological-algorithmic-lenses-harden
   title: "narratological-algorithmic-lenses: harden \u2014 Harden the main entry points:\
     \ input validation, error handli"
@@ -18991,10 +19442,11 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
+  - noop
   urls: []
   context: 'Harden the main entry points: input validation, error handling, and structured
     logging on the primary request/CLI paths.'
@@ -19006,16 +19458,20 @@ tasks:
     agent: opencode
     session_id: current
     status: in_progress
-    output: "Started hardening main entry points"
+    output: Started hardening main entry points
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: BLD-narratological-algorithmic-lenses-readme
   title: "narratological-algorithmic-lenses: readme \u2014 Write/expand the README:\
     \ what-it-is, who-pays, install, usag"
   repo: a-organvm/narratological-algorithmic-lenses
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -19025,16 +19481,20 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: gemini
+    session_id: cli
+    status: ratelimited->jules
 - id: BLD-narratological-algorithmic-lenses-next-rev
   title: "narratological-algorithmic-lenses: next-rev \u2014 Implement the next revenue\
     \ increment per the product's path-"
   repo: a-organvm/narratological-algorithmic-lenses
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -19045,7 +19505,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: gemini
+    session_id: cli
+    status: ratelimited->jules
 - id: BLD-card-trade-social-tests
   title: "card-trade-social: tests \u2014 Add/expand an automated test suite covering\
     \ the core code pa"
@@ -19054,7 +19518,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - build-out
   - product
@@ -19063,8 +19527,17 @@ tasks:
     to run with the project's test runner. Aim for the critical modules.
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: codex
+    session_id: https://github.com/a-organvm/card-trade-social/pull/6
+    status: dispatched
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: BLD-card-trade-social-ci
   title: "card-trade-social: ci \u2014 Add a CI workflow under "
   repo: a-organvm/card-trade-social
@@ -19072,7 +19545,7 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - build-out
   - product
@@ -19081,36 +19554,50 @@ tasks:
     lint on PRs and the default branch (use the repo's stack).
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  updated: '2026-06-19T10:39:50.100046Z'
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: claude
+    session_id: https://github.com/a-organvm/card-trade-social/pull/7
+    status: dispatched
+  - timestamp: '2026-06-19T10:39:50.100046Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: BLD-card-trade-social-harden
   title: "card-trade-social: harden \u2014 Harden the main entry points: input validation,\
     \ error handli"
   repo: a-organvm/card-trade-social
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
+  - slow
   urls: []
   context: 'Harden the main entry points: input validation, error handling, and structured
     logging on the primary request/CLI paths.'
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: BLD-card-trade-social-readme
   title: "card-trade-social: readme \u2014 Write/expand the README: what-it-is, who-pays,\
     \ install, usag"
   repo: a-organvm/card-trade-social
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -19120,16 +19607,20 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: gemini
+    session_id: cli
+    status: ratelimited->jules
 - id: BLD-card-trade-social-next-rev
   title: "card-trade-social: next-rev \u2014 Implement the next revenue increment\
     \ per the product's path-"
   repo: a-organvm/card-trade-social
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
@@ -19140,7 +19631,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:12:14.174841Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:12:14.174841Z'
+    agent: gemini
+    session_id: cli
+    status: ratelimited->jules
 - id: BLD-bountyscope-tests
   title: "bountyscope: tests \u2014 Add/expand an automated test suite covering the\
     \ core code pa"
@@ -19159,7 +19654,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: codex
+    session_id: https://github.com/4444J99/bountyscope/pull/4
+    status: dispatched
 - id: BLD-bountyscope-ci
   title: "bountyscope: ci \u2014 Add a CI workflow under "
   repo: 4444J99/bountyscope
@@ -19177,7 +19676,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: claude
+    session_id: https://github.com/4444J99/bountyscope/pull/5
+    status: dispatched
 - id: BLD-bountyscope-harden
   title: "bountyscope: harden \u2014 Harden the main entry points: input validation,\
     \ error handli"
@@ -19186,48 +19689,59 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
+  - noop
   urls: []
   context: 'Harden the main entry points: input validation, error handling, and structured
     logging on the primary request/CLI paths.'
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: BLD-bountyscope-readme
   title: "bountyscope: readme \u2014 Write/expand the README: what-it-is, who-pays,\
     \ install, usag"
   repo: 4444J99/bountyscope
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
+  - tried:gemini
   urls: []
   context: 'Write/expand the README: what-it-is, who-pays, install, usage, and a Pricing/monetization
     section consistent with the product''s tier model.'
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: BLD-bountyscope-next-rev
   title: "bountyscope: next-rev \u2014 Implement the next revenue increment per the\
     \ product's path-"
   repo: 4444J99/bountyscope
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
+  - tried:gemini
   urls: []
   context: "Implement the next revenue increment per the product's path-to-revenue\
     \ (payment/license gate, auth, or dashboard as applicable) \u2014 a bounded, mergeable\
@@ -19235,7 +19749,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: BLD-vulnpulse-tests
   title: "vulnpulse: tests \u2014 Add/expand an automated test suite covering the\
     \ core code pa"
@@ -19254,7 +19772,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: codex
+    session_id: https://github.com/4444J99/vulnpulse/pull/4
+    status: dispatched
 - id: BLD-vulnpulse-ci
   title: "vulnpulse: ci \u2014 Add a CI workflow under "
   repo: 4444J99/vulnpulse
@@ -19272,7 +19794,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: claude
+    session_id: https://github.com/4444J99/vulnpulse/pull/6
+    status: dispatched
 - id: BLD-vulnpulse-harden
   title: "vulnpulse: harden \u2014 Harden the main entry points: input validation,\
     \ error handli"
@@ -19281,57 +19807,68 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: done
+  status: open
   labels:
   - build-out
   - product
+  - noop
   urls:
   - https://github.com/4444J99/vulnpulse/pull/5
   context: 'Harden the main entry points: input validation, error handling, and structured
     logging on the primary request/CLI paths.'
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T20:30:00Z'
+  updated: '2026-06-19T10:18:06.701123Z'
   dispatch_log:
   - timestamp: '2026-06-19T20:30:00Z'
     agent: opencode
     session_id: cli
     status: done
-    output: "PR #5 created. Added structured logging (JSON-formatted with correlation IDs),\
-      \ input validation (email, webhook URL, content-type, body size), global error\
-      \ boundary (HttpError + catch-all 500), consistent error response format across\
-      \ all endpoints."
+    output: 'PR #5 created. Added structured logging (JSON-formatted with correlation
+      IDs), input validation (email, webhook URL, content-type, body size), global
+      error boundary (HttpError + catch-all 500), consistent error response format
+      across all endpoints.'
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: BLD-vulnpulse-readme
   title: "vulnpulse: readme \u2014 Write/expand the README: what-it-is, who-pays,\
     \ install, usag"
   repo: 4444J99/vulnpulse
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
+  - tried:gemini
   urls: []
   context: 'Write/expand the README: what-it-is, who-pays, install, usage, and a Pricing/monetization
     section consistent with the product''s tier model.'
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: BLD-vulnpulse-next-rev
   title: "vulnpulse: next-rev \u2014 Implement the next revenue increment per the\
     \ product's path-"
   repo: 4444J99/vulnpulse
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
+  - tried:gemini
   urls: []
   context: "Implement the next revenue increment per the product's path-to-revenue\
     \ (payment/license gate, auth, or dashboard as applicable) \u2014 a bounded, mergeable\
@@ -19339,7 +19876,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: RESOLVE-organvm-iii-ergon-specvla-ergon--avditor-mvndi-30
   title: resolve specvla-ergon--avditor-mvndi#30 (UNSTABLE)
   repo: organvm-iii-ergon/specvla-ergon--avditor-mvndi
@@ -19363,7 +19904,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: codex
+    session_id: https://github.com/organvm-iii-ergon/specvla-ergon--avditor-mvndi/pull/31
+    status: dispatched
 - id: RESOLVE-organvm-i-theoria-growth-auditor-8
   title: resolve growth-auditor#8 (UNSTABLE)
   repo: organvm-i-theoria/growth-auditor
@@ -19371,10 +19916,11 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - noop
   urls: []
   context: "Resolve blocked PR organvm-i-theoria/growth-auditor#8 ('activate: ship-soon\
     \ \u2014 add .env.local.example, fix README pat'), state=UNSTABLE. Branch=limen/activate-ship-soon-4,\
@@ -19387,7 +19933,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: RESOLVE-a-organvm-my--father-mother-10
   title: resolve my--father-mother#10 (DIRTY)
   repo: a-organvm/my--father-mother
@@ -19411,7 +19961,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: agy
+    session_id: https://github.com/a-organvm/my--father-mother/pull/13
+    status: dispatched
 - id: RESOLVE-4444J99-media-ark-34
   title: resolve media-ark#34 (DIRTY)
   repo: 4444J99/media-ark
@@ -19419,10 +19973,11 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - noop
   urls: []
   context: 'Resolve blocked PR 4444J99/media-ark#34 (''[limen REV-mediaark-dashboard-pro]
     Add auth form + pro featu''), state=DIRTY. Branch=limen/rev-mediaark-dashboard-pro-198c,
@@ -19435,18 +19990,23 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: claude
+    session_id: cli
+    status: noop
 - id: RESOLVE-a-organvm-my--father-mother-9
   title: resolve my--father-mother#9 (DIRTY)
   repo: a-organvm/my--father-mother
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - tried:gemini
   urls: []
   context: 'Resolve blocked PR a-organvm/my--father-mother#9 (''[limen REV-fathermother-pro-web-ui]
     Add a free-tier upgrade ''), state=DIRTY. Branch=limen/rev-fathermother-pro-web-ui-a1a8,
@@ -19459,7 +20019,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: RESOLVE-a-organvm-peer-audited--behavioral-blockchain-715
   title: resolve peer-audited--behavioral-blockchain#715 (BLOCKED)
   repo: a-organvm/peer-audited--behavioral-blockchain
@@ -19483,18 +20047,23 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: jules
+    session_id: '9175192476911768107'
+    status: dispatched
 - id: RESOLVE-a-organvm-peer-audited--behavioral-blockchain-714
   title: resolve peer-audited--behavioral-blockchain#714 (BLOCKED)
   repo: a-organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - slow
   urls: []
   context: 'Resolve blocked PR a-organvm/peer-audited--behavioral-blockchain#714 (''[limen
     REV-styx-email-service] Add src/api/src/modules/email''), state=BLOCKED. Branch=limen/rev-styx-email-service-38e7,
@@ -19507,7 +20076,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: codex
+    session_id: cli
+    status: timeout->jules
 - id: RESOLVE-a-organvm-universal-mail--automation-53
   title: resolve universal-mail--automation#53 (DIRTY)
   repo: a-organvm/universal-mail--automation
@@ -19515,10 +20088,11 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - noop
   urls: []
   context: 'Resolve blocked PR a-organvm/universal-mail--automation#53 (''[limen REV-umail-saas-runner]
     Add platform/saas_runner''), state=DIRTY. Branch=limen/rev-umail-saas-runner-e46b,
@@ -19531,7 +20105,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: RESOLVE-4444J99-media-ark-33
   title: resolve media-ark#33 (BLOCKED)
   repo: 4444J99/media-ark
@@ -19555,7 +20133,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: agy
+    session_id: https://github.com/4444J99/media-ark/pull/35
+    status: dispatched
 - id: RESOLVE-a-organvm-peer-audited--behavioral-blockchain-713
   title: resolve peer-audited--behavioral-blockchain#713 (BLOCKED)
   repo: a-organvm/peer-audited--behavioral-blockchain
@@ -19563,10 +20145,11 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - noop
   urls: []
   context: 'Resolve blocked PR a-organvm/peer-audited--behavioral-blockchain#713 (''[limen
     REV-styx-metered-billing] Add src/api/src/modules/pay''), state=BLOCKED. Branch=limen/rev-styx-metered-billing-57ec,
@@ -19579,18 +20162,23 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: claude
+    session_id: cli
+    status: noop
 - id: RESOLVE-a-organvm-my--father-mother-8
   title: resolve my--father-mother#8 (DIRTY)
   repo: a-organvm/my--father-mother
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - tried:gemini
   urls: []
   context: 'Resolve blocked PR a-organvm/my--father-mother#8 (''[limen REV-fathermother-license-gate]
     Add a license_type (fr''), state=DIRTY. Branch=limen/rev-fathermother-license-gate-0d5e,
@@ -19603,7 +20191,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: RESOLVE-organvm-i-theoria-growth-auditor-7
   title: resolve growth-auditor#7 (UNSTABLE)
   repo: organvm-i-theoria/growth-auditor
@@ -19627,7 +20219,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: jules
+    session_id: '6456351076793133894'
+    status: dispatched
 - id: RESOLVE-a-organvm-the-invisible-ledger-8
   title: resolve the-invisible-ledger#8 (DIRTY)
   repo: a-organvm/the-invisible-ledger
@@ -19651,7 +20247,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: codex
+    session_id: https://github.com/a-organvm/the-invisible-ledger/pull/14
+    status: dispatched
 - id: RESOLVE-a-organvm-the-invisible-ledger-7
   title: resolve the-invisible-ledger#7 (DIRTY)
   repo: a-organvm/the-invisible-ledger
@@ -19659,10 +20259,11 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - noop
   urls: []
   context: 'Resolve blocked PR a-organvm/the-invisible-ledger#7 (''[limen REV-ledger-org-billing-schema]
     Extend the Organizatio''), state=DIRTY. Branch=limen/rev-ledger-org-billing-schema-c034,
@@ -19675,7 +20276,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: RESOLVE-a-organvm-peer-audited--behavioral-blockchain-712
   title: resolve peer-audited--behavioral-blockchain#712 (BLOCKED)
   repo: a-organvm/peer-audited--behavioral-blockchain
@@ -19683,10 +20288,11 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - noop
   urls: []
   context: 'Resolve blocked PR a-organvm/peer-audited--behavioral-blockchain#712 (''[limen
     jules REV-styx-deploy-activation] Complete the docs/a''), state=BLOCKED. Branch=limen/jules-rev-styx-deploy-activation-4409,
@@ -19699,7 +20305,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: agy
+    session_id: cli
+    status: noop
 - id: RESOLVE-organvm-i-theoria-.github-460
   title: resolve .github#460 (BLOCKED)
   repo: organvm-i-theoria/.github
@@ -19707,10 +20317,11 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - noop
   urls: []
   context: 'Resolve blocked PR organvm-i-theoria/.github#460 (''[limen CIFIX-organvm-i-theoria-.github]
     CIFIX organvm-i-theo''), state=BLOCKED. Branch=limen/cifix-organvm-i-theoria-.github-0590,
@@ -19723,18 +20334,23 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: claude
+    session_id: cli
+    status: noop
 - id: RESOLVE-a-organvm-the-invisible-ledger-6
   title: resolve the-invisible-ledger#6 (DIRTY)
   repo: a-organvm/the-invisible-ledger
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - tried:gemini
   urls: []
   context: 'Resolve blocked PR a-organvm/the-invisible-ledger#6 (''fix: resolve TypeScript
     errors breaking CI''), state=DIRTY. Branch=claude/remote-install-type-check-4b17op,
@@ -19747,7 +20363,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: RESOLVE-a-organvm-organvm-engine-123
   title: resolve organvm-engine#123 (BLOCKED)
   repo: a-organvm/organvm-engine
@@ -19771,18 +20391,23 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: jules
+    session_id: '6558381853263665005'
+    status: dispatched
 - id: RESOLVE-organvm-i-theoria-.github-459
   title: resolve .github#459 (BLOCKED)
   repo: organvm-i-theoria/.github
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - slow
   urls: []
   context: 'Resolve blocked PR organvm-i-theoria/.github#459 (''[limen CIFIX-organvm-i-theoria--github]
     Fix pre-existing CI ''), state=BLOCKED. Branch=limen/cifix-organvm-i-theoria--github-c902,
@@ -19795,7 +20420,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: codex
+    session_id: cli
+    status: timeout->jules
 - id: RESOLVE-a-organvm-organvm-engine-122
   title: resolve organvm-engine#122 (BLOCKED)
   repo: a-organvm/organvm-engine
@@ -19803,10 +20432,11 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - noop
   urls: []
   context: 'Resolve blocked PR a-organvm/organvm-engine#122 (''[limen CIFIX-a-organvm-organvm-engine]
     Fix pre-existing CI b''), state=BLOCKED. Branch=limen/cifix-a-organvm-organvm-engine-549e,
@@ -19819,7 +20449,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: RESOLVE-organvm-i-theoria-.github-458
   title: resolve .github#458 (BLOCKED)
   repo: organvm-i-theoria/.github
@@ -19843,7 +20477,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: agy
+    session_id: https://github.com/organvm-i-theoria/.github/pull/463
+    status: dispatched
 - id: RESOLVE-a-organvm-the-invisible-ledger-4
   title: resolve the-invisible-ledger#4 (DIRTY)
   repo: a-organvm/the-invisible-ledger
@@ -19851,10 +20489,11 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - noop
   urls: []
   context: 'Resolve blocked PR a-organvm/the-invisible-ledger#4 (''[limen REV-ledger-postgres-adapter]
     Add a PostgreSQL persist''), state=DIRTY. Branch=limen/rev-ledger-postgres-adapter-ef35,
@@ -19867,18 +20506,23 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: claude
+    session_id: cli
+    status: noop
 - id: RESOLVE-a-organvm-organvm-engine-121
   title: resolve organvm-engine#121 (BLOCKED)
   repo: a-organvm/organvm-engine
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - tried:gemini
   urls: []
   context: 'Resolve blocked PR a-organvm/organvm-engine#121 (''[limen LIMEN-066] feat:
     handoff staleness detection and work''), state=BLOCKED. Branch=limen/limen-066-9b35,
@@ -19891,7 +20535,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: RESOLVE-a-organvm-organvm-engine-120
   title: resolve organvm-engine#120 (BLOCKED)
   repo: a-organvm/organvm-engine
@@ -19915,7 +20563,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: jules
+    session_id: '10383556539188131435'
+    status: dispatched
 - id: RESOLVE-a-organvm-organvm-engine-119
   title: resolve organvm-engine#119 (BLOCKED)
   repo: a-organvm/organvm-engine
@@ -19923,10 +20575,11 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - noop
   urls: []
   context: 'Resolve blocked PR a-organvm/organvm-engine#119 (''[limen LIMEN-068] fix(irf):
     stats command undercounts newly ''), state=BLOCKED. Branch=limen/limen-068-35db,
@@ -19939,7 +20592,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: codex
+    session_id: cli
+    status: noop
 - id: RESOLVE-a-organvm-organvm-engine-118
   title: resolve organvm-engine#118 (BLOCKED)
   repo: a-organvm/organvm-engine
@@ -19947,10 +20604,11 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - noop
   urls: []
   context: 'Resolve blocked PR a-organvm/organvm-engine#118 (''[limen LIMEN-062] Add
     --format json flag to organvm registry''), state=BLOCKED. Branch=limen/limen-062-d467,
@@ -19963,7 +20621,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: RESOLVE-organvm-i-theoria-.github-457
   title: resolve .github#457 (BLOCKED)
   repo: organvm-i-theoria/.github
@@ -19987,7 +20649,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: agy
+    session_id: https://github.com/organvm-i-theoria/.github/pull/462
+    status: dispatched
 - id: RESOLVE-a-organvm-organvm-engine-117
   title: resolve organvm-engine#117 (BLOCKED)
   repo: a-organvm/organvm-engine
@@ -19995,10 +20661,11 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - noop
   urls: []
   context: 'Resolve blocked PR a-organvm/organvm-engine#117 (''[limen LIMEN-049] feat:
     handoff staleness detection and work''), state=BLOCKED. Branch=limen/limen-049-c267,
@@ -20011,18 +20678,23 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: claude
+    session_id: cli
+    status: noop
 - id: RESOLVE-a-organvm-organvm-engine-116
   title: resolve organvm-engine#116 (BLOCKED)
   repo: a-organvm/organvm-engine
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - tried:gemini
   urls: []
   context: 'Resolve blocked PR a-organvm/organvm-engine#116 (''[limen LIMEN-045] descent:
     add type-checking to 6 remaining ''), state=BLOCKED. Branch=limen/limen-045-bd44,
@@ -20035,7 +20707,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: RESOLVE-organvm-i-theoria-.github-456
   title: resolve .github#456 (BLOCKED)
   repo: organvm-i-theoria/.github
@@ -20059,7 +20735,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: RESOLVE-organvm-i-theoria-.github-455
   title: resolve .github#455 (BLOCKED)
   repo: organvm-i-theoria/.github
@@ -20083,7 +20763,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: codex
+    session_id: https://github.com/organvm-i-theoria/.github/pull/461
+    status: dispatched
 - id: RESOLVE-organvm-i-theoria-rules-system-bound-8
   title: resolve rules-system-bound#8 (UNSTABLE)
   repo: organvm-i-theoria/rules-system-bound
@@ -20091,10 +20775,11 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - noop
   urls: []
   context: 'Resolve blocked PR organvm-i-theoria/rules-system-bound#8 (''[limen GH-organvm-i-theoria-rules-system-bound-2]
     ACTIVATION''), state=UNSTABLE. Branch=limen/gh-organvm-i-theoria-rules-system-bound-2-26b9,
@@ -20107,7 +20792,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: RESOLVE-a-organvm-peer-audited--behavioral-blockchain-711
   title: resolve peer-audited--behavioral-blockchain#711 (BLOCKED)
   repo: a-organvm/peer-audited--behavioral-blockchain
@@ -20131,7 +20820,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: agy
+    session_id: https://github.com/a-organvm/peer-audited--behavioral-blockchain/pull/716
+    status: dispatched
 - id: RESOLVE-a-organvm-organvm-engine-115
   title: resolve organvm-engine#115 (BLOCKED)
   repo: a-organvm/organvm-engine
@@ -20139,10 +20832,11 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - noop
   urls: []
   context: 'Resolve blocked PR a-organvm/organvm-engine#115 (''[limen jules LIMEN-041]
     Add seed.yaml validation for missing''), state=BLOCKED. Branch=limen/jules-limen-041-491f,
@@ -20155,18 +20849,23 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: claude
+    session_id: cli
+    status: noop
 - id: RESOLVE-a-organvm-organvm-engine-114
   title: resolve organvm-engine#114 (BLOCKED)
   repo: a-organvm/organvm-engine
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - tried:gemini
   urls: []
   context: 'Resolve blocked PR a-organvm/organvm-engine#114 (''[limen jules LIMEN-042]
     Add --format json flag to organvm re''), state=BLOCKED. Branch=limen/jules-limen-042-91b2,
@@ -20179,7 +20878,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: RESOLVE-a-organvm-organvm-engine-113
   title: resolve organvm-engine#113 (BLOCKED)
   repo: a-organvm/organvm-engine
@@ -20203,7 +20906,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: jules
+    session_id: '7941162046452294700'
+    status: dispatched
 - id: RESOLVE-organvm-i-theoria-rules-system-bound-6
   title: resolve rules-system-bound#6 (UNSTABLE)
   repo: organvm-i-theoria/rules-system-bound
@@ -20211,10 +20918,11 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - noop
   urls: []
   context: 'Resolve blocked PR organvm-i-theoria/rules-system-bound#6 (''[limen jules
     GH-organvm-i-theoria-rules-system-bound-1] ACTI''), state=UNSTABLE. Branch=limen/jules-gh-organvm-i-theoria-rules-system-bound-1-18f1,
@@ -20228,7 +20936,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: codex
+    session_id: cli
+    status: noop
 - id: RESOLVE-4444J99-relationship-pipeline-6
   title: resolve relationship-pipeline#6 (UNSTABLE)
   repo: 4444J99/relationship-pipeline
@@ -20236,10 +20948,11 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - noop
   urls: []
   context: 'Resolve blocked PR 4444J99/relationship-pipeline#6 (''[limen GH-4444j99-relationship-pipeline-4]
     Prove Blade-B fal''), state=UNSTABLE. Branch=limen/gh-4444j99-relationship-pipeline-4-1399,
@@ -20252,7 +20965,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: RESOLVE-organvm-i-theoria-.github-454
   title: resolve .github#454 (BLOCKED)
   repo: organvm-i-theoria/.github
@@ -20276,7 +20993,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: agy
+    session_id: https://github.com/organvm-i-theoria/.github/pull/464
+    status: dispatched
 - id: RESOLVE-a-organvm-organvm-engine-112
   title: resolve organvm-engine#112 (BLOCKED)
   repo: a-organvm/organvm-engine
@@ -20284,10 +21005,11 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - noop
   urls: []
   context: 'Resolve blocked PR a-organvm/organvm-engine#112 (''[limen LIMEN-060] feat:
     implement MCP tool wrappers for all ''), state=BLOCKED. Branch=limen/limen-060-4a78,
@@ -20300,18 +21022,23 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: claude
+    session_id: cli
+    status: noop
 - id: RESOLVE-organvm-i-theoria-.github-453
   title: resolve .github#453 (BLOCKED)
   repo: organvm-i-theoria/.github
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - review-resolution
   - unblock-pr
+  - tried:gemini
   urls: []
   context: 'Resolve blocked PR organvm-i-theoria/.github#453 (''[limen LIMEN-086]
     Secret Scanning Alert triage: 6862 potenti''), state=BLOCKED. Branch=limen/limen-086-ba70,
@@ -20324,7 +21051,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: RESOLVE-a-organvm-organvm-engine-111
   title: resolve organvm-engine#111 (BLOCKED)
   repo: a-organvm/organvm-engine
@@ -20348,7 +21079,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: jules
+    session_id: '13803580058348686460'
+    status: dispatched
 - id: BLD2-a-i-chat--exporter-auth
   title: 'a-i-chat--exporter: auth'
   repo: a-organvm/a-i-chat--exporter
@@ -20367,7 +21102,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: codex
+    session_id: https://github.com/a-organvm/a-i-chat--exporter/pull/39
+    status: dispatched
 - id: BLD2-a-i-chat--exporter-billing
   title: 'a-i-chat--exporter: billing'
   repo: a-organvm/a-i-chat--exporter
@@ -20375,18 +21114,23 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
   - wave2
+  - noop
   urls: []
   context: Wire a Stripe or Lemon Squeezy checkout + a license/subscription gate around
     the premium features (free tier preserved).
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: BLD2-a-i-chat--exporter-dashboard
   title: 'a-i-chat--exporter: dashboard'
   repo: a-organvm/a-i-chat--exporter
@@ -20405,7 +21149,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: agy
+    session_id: https://github.com/a-organvm/a-i-chat--exporter/pull/40
+    status: dispatched
 - id: BLD2-a-i-chat--exporter-deploy
   title: 'a-i-chat--exporter: deploy'
   repo: a-organvm/a-i-chat--exporter
@@ -20424,25 +21172,34 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: claude
+    session_id: https://github.com/a-organvm/a-i-chat--exporter/pull/41
+    status: dispatched
 - id: BLD2-a-i-chat--exporter-integration-tests
   title: 'a-i-chat--exporter: integration-tests'
   repo: a-organvm/a-i-chat--exporter
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
   - wave2
+  - tried:gemini
   urls: []
   context: Add integration/e2e tests exercising the main user flow end-to-end.
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: BLD2-a-i-chat--exporter-api-docs
   title: 'a-i-chat--exporter: api-docs'
   repo: a-organvm/a-i-chat--exporter
@@ -20461,45 +21218,59 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: jules
+    session_id: '18035967991016654083'
+    status: dispatched
 - id: BLD2-public-record-data-scrapper-auth
   title: 'public-record-data-scrapper: auth'
   repo: a-organvm/public-record-data-scrapper
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
   - wave2
+  - slow
   urls: []
   context: Add user auth / API-key issuance + verification on the primary endpoints
     (or CLI), with a documented secret/config path.
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: codex
+    session_id: cli
+    status: timeout->jules
 - id: BLD2-public-record-data-scrapper-billing
   title: 'public-record-data-scrapper: billing'
   repo: a-organvm/public-record-data-scrapper
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
   - wave2
+  - slow
   urls: []
   context: Wire a Stripe or Lemon Squeezy checkout + a license/subscription gate around
     the premium features (free tier preserved).
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: BLD2-public-record-data-scrapper-dashboard
   title: 'public-record-data-scrapper: dashboard'
   repo: a-organvm/public-record-data-scrapper
@@ -20507,18 +21278,23 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
   - wave2
+  - noop
   urls: []
   context: Add a minimal status/usage dashboard (web page or CLI command) showing
     key metrics for the product.
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: agy
+    session_id: cli
+    status: noop
 - id: BLD2-public-record-data-scrapper-deploy
   title: 'public-record-data-scrapper: deploy'
   repo: a-organvm/public-record-data-scrapper
@@ -20537,25 +21313,34 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: claude
+    session_id: https://github.com/a-organvm/public-record-data-scrapper/pull/282
+    status: dispatched
 - id: BLD2-public-record-data-scrapper-integration-tests
   title: 'public-record-data-scrapper: integration-tests'
   repo: a-organvm/public-record-data-scrapper
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
   - wave2
+  - tried:gemini
   urls: []
   context: Add integration/e2e tests exercising the main user flow end-to-end.
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: BLD2-public-record-data-scrapper-api-docs
   title: 'public-record-data-scrapper: api-docs'
   repo: a-organvm/public-record-data-scrapper
@@ -20574,7 +21359,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: jules
+    session_id: '16105446205688544662'
+    status: dispatched
 - id: BLD2-mirror-mirror-auth
   title: 'mirror-mirror: auth'
   repo: a-organvm/mirror-mirror
@@ -20593,26 +21382,35 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: codex
+    session_id: https://github.com/a-organvm/mirror-mirror/pull/12
+    status: dispatched
 - id: BLD2-mirror-mirror-billing
   title: 'mirror-mirror: billing'
   repo: a-organvm/mirror-mirror
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
   - wave2
+  - slow
   urls: []
   context: Wire a Stripe or Lemon Squeezy checkout + a license/subscription gate around
     the premium features (free tier preserved).
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: BLD2-mirror-mirror-dashboard
   title: 'mirror-mirror: dashboard'
   repo: a-organvm/mirror-mirror
@@ -20620,18 +21418,23 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
   - wave2
+  - noop
   urls: []
   context: Add a minimal status/usage dashboard (web page or CLI command) showing
     key metrics for the product.
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: agy
+    session_id: cli
+    status: noop
 - id: BLD2-mirror-mirror-deploy
   title: 'mirror-mirror: deploy'
   repo: a-organvm/mirror-mirror
@@ -20650,25 +21453,34 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: claude
+    session_id: https://github.com/a-organvm/mirror-mirror/pull/13
+    status: dispatched
 - id: BLD2-mirror-mirror-integration-tests
   title: 'mirror-mirror: integration-tests'
   repo: a-organvm/mirror-mirror
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
   - wave2
+  - tried:gemini
   urls: []
   context: Add integration/e2e tests exercising the main user flow end-to-end.
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: BLD2-mirror-mirror-api-docs
   title: 'mirror-mirror: api-docs'
   repo: a-organvm/mirror-mirror
@@ -20687,7 +21499,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: jules
+    session_id: '4258307679257650566'
+    status: dispatched
 - id: BLD2-universal-mail--automation-auth
   title: 'universal-mail--automation: auth'
   repo: a-organvm/universal-mail--automation
@@ -20706,7 +21522,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: codex
+    session_id: https://github.com/a-organvm/universal-mail--automation/pull/55
+    status: dispatched
 - id: BLD2-universal-mail--automation-billing
   title: 'universal-mail--automation: billing'
   repo: a-organvm/universal-mail--automation
@@ -20714,22 +21534,27 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: in_progress
+  status: open
   labels:
   - build-out
   - product
   - wave2
+  - noop
   urls: []
   context: Wire a Stripe or Lemon Squeezy checkout + a license/subscription gate around
     the premium features (free tier preserved).
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T10:30:00Z'
+  updated: '2026-06-19T10:18:06.701123Z'
   dispatch_log:
   - timestamp: '2026-06-19T10:30:00Z'
     agent: opencode
     session_id: cli
     status: dispatched
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: BLD2-universal-mail--automation-dashboard
   title: 'universal-mail--automation: dashboard'
   repo: a-organvm/universal-mail--automation
@@ -20748,7 +21573,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: agy
+    session_id: https://github.com/a-organvm/universal-mail--automation/pull/56
+    status: dispatched
 - id: BLD2-universal-mail--automation-deploy
   title: 'universal-mail--automation: deploy'
   repo: a-organvm/universal-mail--automation
@@ -20767,25 +21596,34 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: claude
+    session_id: https://github.com/a-organvm/universal-mail--automation/pull/57
+    status: dispatched
 - id: BLD2-universal-mail--automation-integration-tests
   title: 'universal-mail--automation: integration-tests'
   repo: a-organvm/universal-mail--automation
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
   - wave2
+  - tried:gemini
   urls: []
   context: Add integration/e2e tests exercising the main user flow end-to-end.
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: BLD2-universal-mail--automation-api-docs
   title: 'universal-mail--automation: api-docs'
   repo: a-organvm/universal-mail--automation
@@ -20804,26 +21642,35 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: jules
+    session_id: '9484333459561463279'
+    status: dispatched
 - id: BLD2-peer-audited--behavioral-blockchain-auth
   title: 'peer-audited--behavioral-blockchain: auth'
   repo: a-organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
   - wave2
+  - slow
   urls: []
   context: Add user auth / API-key issuance + verification on the primary endpoints
     (or CLI), with a documented secret/config path.
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: codex
+    session_id: cli
+    status: timeout->jules
 - id: BLD2-peer-audited--behavioral-blockchain-billing
   title: 'peer-audited--behavioral-blockchain: billing'
   repo: a-organvm/peer-audited--behavioral-blockchain
@@ -20831,18 +21678,23 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
   - wave2
+  - noop
   urls: []
   context: Wire a Stripe or Lemon Squeezy checkout + a license/subscription gate around
     the premium features (free tier preserved).
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: BLD2-peer-audited--behavioral-blockchain-dashboard
   title: 'peer-audited--behavioral-blockchain: dashboard'
   repo: a-organvm/peer-audited--behavioral-blockchain
@@ -20861,7 +21713,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: agy
+    session_id: https://github.com/a-organvm/peer-audited--behavioral-blockchain/pull/717
+    status: dispatched
 - id: BLD2-peer-audited--behavioral-blockchain-deploy
   title: 'peer-audited--behavioral-blockchain: deploy'
   repo: a-organvm/peer-audited--behavioral-blockchain
@@ -20880,12 +21736,16 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: claude
+    session_id: https://github.com/a-organvm/peer-audited--behavioral-blockchain/pull/718
+    status: dispatched
 - id: BLD2-peer-audited--behavioral-blockchain-integration-tests
   title: 'peer-audited--behavioral-blockchain: integration-tests'
   repo: a-organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -20916,7 +21776,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: BLD2-the-invisible-ledger-auth
   title: 'the-invisible-ledger: auth'
   repo: a-organvm/the-invisible-ledger
@@ -20935,7 +21799,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: codex
+    session_id: https://github.com/a-organvm/the-invisible-ledger/pull/13
+    status: dispatched
 - id: BLD2-the-invisible-ledger-billing
   title: 'the-invisible-ledger: billing'
   repo: a-organvm/the-invisible-ledger
@@ -20943,18 +21811,23 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
   - wave2
+  - noop
   urls: []
   context: Wire a Stripe or Lemon Squeezy checkout + a license/subscription gate around
     the premium features (free tier preserved).
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: BLD2-the-invisible-ledger-dashboard
   title: 'the-invisible-ledger: dashboard'
   repo: a-organvm/the-invisible-ledger
@@ -20962,18 +21835,23 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
   - wave2
+  - noop
   urls: []
   context: Add a minimal status/usage dashboard (web page or CLI command) showing
     key metrics for the product.
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: agy
+    session_id: cli
+    status: noop
 - id: BLD2-the-invisible-ledger-deploy
   title: 'the-invisible-ledger: deploy'
   repo: a-organvm/the-invisible-ledger
@@ -20992,12 +21870,16 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: claude
+    session_id: https://github.com/a-organvm/the-invisible-ledger/pull/15
+    status: dispatched
 - id: BLD2-the-invisible-ledger-integration-tests
   title: 'the-invisible-ledger: integration-tests'
   repo: a-organvm/the-invisible-ledger
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21028,7 +21910,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: BLD2-media-ark-auth
   title: 'media-ark: auth'
   repo: 4444J99/media-ark
@@ -21051,7 +21937,7 @@ tasks:
   title: 'media-ark: billing'
   repo: 4444J99/media-ark
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21072,26 +21958,31 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - build-out
   - product
   - wave2
+  - noop
   urls: []
   context: Add a minimal status/usage dashboard (web page or CLI command) showing
     key metrics for the product.
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: agy
+    session_id: cli
+    status: noop
 - id: BLD2-media-ark-deploy
   title: 'media-ark: deploy'
   repo: 4444J99/media-ark
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - build-out
   - product
@@ -21101,12 +21992,13 @@ tasks:
     one-command deploy.
   depends_on: []
   created: '2026-06-19'
+  updated: '2026-06-19T10:41:57.371147Z'
   dispatch_log: []
 - id: BLD2-media-ark-integration-tests
   title: 'media-ark: integration-tests'
   repo: 4444J99/media-ark
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21137,7 +22029,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: BLD2-domus-genoma-auth
   title: 'domus-genoma: auth'
   repo: 4444J99/domus-genoma
@@ -21160,7 +22056,7 @@ tasks:
   title: 'domus-genoma: billing'
   repo: 4444J99/domus-genoma
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21192,12 +22088,16 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: agy
+    session_id: https://github.com/4444J99/domus-genoma/pull/109
+    status: dispatched
 - id: BLD2-domus-genoma-deploy
   title: 'domus-genoma: deploy'
   repo: 4444J99/domus-genoma
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -21215,7 +22115,7 @@ tasks:
   title: 'domus-genoma: integration-tests'
   repo: 4444J99/domus-genoma
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21246,7 +22146,11 @@ tasks:
   depends_on: []
   created: '2026-06-19'
   updated: '2026-06-19T10:18:06.701123Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-19T10:18:06.701123Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: BLD2-my--father-mother-auth
   title: 'my--father-mother: auth'
   repo: a-organvm/my--father-mother
@@ -21269,7 +22173,7 @@ tasks:
   title: 'my--father-mother: billing'
   repo: a-organvm/my--father-mother
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21287,7 +22191,7 @@ tasks:
   title: 'my--father-mother: dashboard'
   repo: a-organvm/my--father-mother
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21305,7 +22209,7 @@ tasks:
   title: 'my--father-mother: deploy'
   repo: a-organvm/my--father-mother
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -21323,7 +22227,7 @@ tasks:
   title: 'my--father-mother: integration-tests'
   repo: a-organvm/my--father-mother
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21340,7 +22244,7 @@ tasks:
   title: 'my--father-mother: api-docs'
   repo: a-organvm/my--father-mother
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21376,7 +22280,7 @@ tasks:
   title: 'specvla-ergon--avditor-mvndi: billing'
   repo: organvm-iii-ergon/specvla-ergon--avditor-mvndi
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21394,7 +22298,7 @@ tasks:
   title: 'specvla-ergon--avditor-mvndi: dashboard'
   repo: organvm-iii-ergon/specvla-ergon--avditor-mvndi
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21412,7 +22316,7 @@ tasks:
   title: 'specvla-ergon--avditor-mvndi: deploy'
   repo: organvm-iii-ergon/specvla-ergon--avditor-mvndi
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -21430,7 +22334,7 @@ tasks:
   title: 'specvla-ergon--avditor-mvndi: integration-tests'
   repo: organvm-iii-ergon/specvla-ergon--avditor-mvndi
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21447,7 +22351,7 @@ tasks:
   title: 'specvla-ergon--avditor-mvndi: api-docs'
   repo: organvm-iii-ergon/specvla-ergon--avditor-mvndi
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21483,7 +22387,7 @@ tasks:
   title: 'promptscope: billing'
   repo: 4444J99/promptscope
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21501,7 +22405,7 @@ tasks:
   title: 'promptscope: dashboard'
   repo: 4444J99/promptscope
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21519,7 +22423,7 @@ tasks:
   title: 'promptscope: deploy'
   repo: 4444J99/promptscope
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -21537,7 +22441,7 @@ tasks:
   title: 'promptscope: integration-tests'
   repo: 4444J99/promptscope
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21554,7 +22458,7 @@ tasks:
   title: 'promptscope: api-docs'
   repo: 4444J99/promptscope
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21590,7 +22494,7 @@ tasks:
   title: 'writelens: billing'
   repo: 4444J99/writelens
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21608,7 +22512,7 @@ tasks:
   title: 'writelens: dashboard'
   repo: 4444J99/writelens
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21626,7 +22530,7 @@ tasks:
   title: 'writelens: deploy'
   repo: 4444J99/writelens
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -21644,7 +22548,7 @@ tasks:
   title: 'writelens: integration-tests'
   repo: 4444J99/writelens
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21661,7 +22565,7 @@ tasks:
   title: 'writelens: api-docs'
   repo: 4444J99/writelens
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21697,7 +22601,7 @@ tasks:
   title: 'edgarflash: billing'
   repo: 4444J99/edgarflash
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21715,7 +22619,7 @@ tasks:
   title: 'edgarflash: dashboard'
   repo: 4444J99/edgarflash
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21733,7 +22637,7 @@ tasks:
   title: 'edgarflash: deploy'
   repo: 4444J99/edgarflash
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -21751,7 +22655,7 @@ tasks:
   title: 'edgarflash: integration-tests'
   repo: 4444J99/edgarflash
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21768,7 +22672,7 @@ tasks:
   title: 'edgarflash: api-docs'
   repo: 4444J99/edgarflash
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21804,7 +22708,7 @@ tasks:
   title: 'trendpulse: billing'
   repo: 4444J99/trendpulse
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21822,7 +22726,7 @@ tasks:
   title: 'trendpulse: dashboard'
   repo: 4444J99/trendpulse
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21840,7 +22744,7 @@ tasks:
   title: 'trendpulse: deploy'
   repo: 4444J99/trendpulse
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -21858,7 +22762,7 @@ tasks:
   title: 'trendpulse: integration-tests'
   repo: 4444J99/trendpulse
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21875,7 +22779,7 @@ tasks:
   title: 'trendpulse: api-docs'
   repo: 4444J99/trendpulse
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21911,7 +22815,7 @@ tasks:
   title: 'essay-pipeline: billing'
   repo: a-organvm/essay-pipeline
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21929,7 +22833,7 @@ tasks:
   title: 'essay-pipeline: dashboard'
   repo: a-organvm/essay-pipeline
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21947,7 +22851,7 @@ tasks:
   title: 'essay-pipeline: deploy'
   repo: a-organvm/essay-pipeline
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -21965,7 +22869,7 @@ tasks:
   title: 'essay-pipeline: integration-tests'
   repo: a-organvm/essay-pipeline
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -21982,7 +22886,7 @@ tasks:
   title: 'essay-pipeline: api-docs'
   repo: a-organvm/essay-pipeline
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22018,7 +22922,7 @@ tasks:
   title: 'tab-bookmark-manager: billing'
   repo: a-organvm/tab-bookmark-manager
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22036,7 +22940,7 @@ tasks:
   title: 'tab-bookmark-manager: dashboard'
   repo: a-organvm/tab-bookmark-manager
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22054,7 +22958,7 @@ tasks:
   title: 'tab-bookmark-manager: deploy'
   repo: a-organvm/tab-bookmark-manager
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -22072,7 +22976,7 @@ tasks:
   title: 'tab-bookmark-manager: integration-tests'
   repo: a-organvm/tab-bookmark-manager
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22089,7 +22993,7 @@ tasks:
   title: 'tab-bookmark-manager: api-docs'
   repo: a-organvm/tab-bookmark-manager
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22125,7 +23029,7 @@ tasks:
   title: 'narratological-algorithmic-lenses: billing'
   repo: a-organvm/narratological-algorithmic-lenses
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22143,7 +23047,7 @@ tasks:
   title: 'narratological-algorithmic-lenses: dashboard'
   repo: a-organvm/narratological-algorithmic-lenses
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22161,7 +23065,7 @@ tasks:
   title: 'narratological-algorithmic-lenses: deploy'
   repo: a-organvm/narratological-algorithmic-lenses
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -22179,7 +23083,7 @@ tasks:
   title: 'narratological-algorithmic-lenses: integration-tests'
   repo: a-organvm/narratological-algorithmic-lenses
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22196,7 +23100,7 @@ tasks:
   title: 'narratological-algorithmic-lenses: api-docs'
   repo: a-organvm/narratological-algorithmic-lenses
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22232,7 +23136,7 @@ tasks:
   title: 'card-trade-social: billing'
   repo: a-organvm/card-trade-social
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22250,7 +23154,7 @@ tasks:
   title: 'card-trade-social: dashboard'
   repo: a-organvm/card-trade-social
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22268,7 +23172,7 @@ tasks:
   title: 'card-trade-social: deploy'
   repo: a-organvm/card-trade-social
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -22286,7 +23190,7 @@ tasks:
   title: 'card-trade-social: integration-tests'
   repo: a-organvm/card-trade-social
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22303,7 +23207,7 @@ tasks:
   title: 'card-trade-social: api-docs'
   repo: a-organvm/card-trade-social
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22339,7 +23243,7 @@ tasks:
   title: 'bountyscope: billing'
   repo: 4444J99/bountyscope
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22357,7 +23261,7 @@ tasks:
   title: 'bountyscope: dashboard'
   repo: 4444J99/bountyscope
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22375,7 +23279,7 @@ tasks:
   title: 'bountyscope: deploy'
   repo: 4444J99/bountyscope
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -22393,7 +23297,7 @@ tasks:
   title: 'bountyscope: integration-tests'
   repo: 4444J99/bountyscope
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22410,7 +23314,7 @@ tasks:
   title: 'bountyscope: api-docs'
   repo: 4444J99/bountyscope
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22446,7 +23350,7 @@ tasks:
   title: 'vulnpulse: billing'
   repo: 4444J99/vulnpulse
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22464,7 +23368,7 @@ tasks:
   title: 'vulnpulse: dashboard'
   repo: 4444J99/vulnpulse
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22482,7 +23386,7 @@ tasks:
   title: 'vulnpulse: deploy'
   repo: 4444J99/vulnpulse
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -22500,7 +23404,7 @@ tasks:
   title: 'vulnpulse: integration-tests'
   repo: 4444J99/vulnpulse
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22517,7 +23421,7 @@ tasks:
   title: 'vulnpulse: api-docs'
   repo: 4444J99/vulnpulse
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -22530,4 +23434,42 @@ tasks:
     customer.
   depends_on: []
   created: '2026-06-19'
+  dispatch_log: []
+- id: WEB-live-dashboard
+  title: web live dashboard
+  repo: limen
+  type: code
+  target_agent: codex
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - meta
+  - viz
+  urls: []
+  context: "Build a real-time fleet view in web/app that polls logs/fleet-status.json\
+    \ (emitted by scripts/watch.py): per-agent completion bars, live process dots,\
+    \ current task per lane. Same feed as the CLI \u2014 inside and outside. Simple\
+    \ poller, serve the json statically."
+  depends_on: []
+  created: '2026-06-19'
+  updated: '2026-06-19T10:41:57.371147Z'
+  dispatch_log: []
+- id: CLI-watch-subcommand
+  title: cli watch subcommand
+  repo: limen
+  type: code
+  target_agent: codex
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - meta
+  - viz
+  urls: []
+  context: Wire scripts/watch.py in as `python3 -m limen watch` with a --compact one-line
+    mode; add a cli/tests test that `watch --once` renders without error.
+  depends_on: []
+  created: '2026-06-19'
+  updated: '2026-06-19T10:41:57.371147Z'
   dispatch_log: []
