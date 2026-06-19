@@ -1,0 +1,143 @@
+#!/usr/bin/env bash
+# heartbeat-loop.sh — the conductor as a CONTINUOUS, POLYRHYTHMIC daemon.
+#
+# One base tempo (the loop), multiple voices each subdividing it at its own cadence —
+# like a drum kit over one BPM. Replaces the fixed 3h StartInterval (one instrument,
+# one note). Tempo is ADAPTIVE: tighten when work flows, back off when idle. Total
+# output is bounded by per-day budgets AND by real token/rate limits (the dispatcher
+# cools a lane on its actual rate-limit signal, not a guessed count). flock in each
+# step prevents overlap; near-zero cost while idle; resumes instantly on wake (run
+# under a launchd KeepAlive daemon, NOT a StartInterval timer).
+#
+#   VOICE          cadence (beats)   what plays
+#   dispatch       every 1 (kick)    use idle capacity across all 6 lanes
+#   tick           every 1           emit logs/ticks.jsonl (portal pulse)
+#   balance        every 2 (snare)   route + rebalance the queue across lanes
+#   feed           every 3           mine the GitHub backlog
+#   drain          every 5           pull+close completed jules, release stale
+#   hygiene        every 8           clone-maintenance (gc/prune/reap-report)
+#   backup         every 48          mountpoint-guarded copy→verify to externals
+set -uo pipefail
+export HOME="${HOME:-/Users/4jp}"
+export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+export LIMEN_ROOT="${LIMEN_ROOT:-$HOME/Workspace/limen}"
+export LIMEN_TASKS="${LIMEN_TASKS:-$LIMEN_ROOT/tasks.yaml}"
+export LIMEN_WORKDIR="${LIMEN_WORKDIR:-$HOME/Workspace}"
+export LIMEN_ISOLATION="${LIMEN_ISOLATION:-worktree}"
+export GEMINI_CLI_TRUST_WORKSPACE="${GEMINI_CLI_TRUST_WORKSPACE:-true}"
+export PYTHONPATH="$LIMEN_ROOT/cli/src"
+cd "$LIMEN_ROOT" || exit 1
+[ -f "$HOME/.limen.env" ] && { set -a; . "$HOME/.limen.env"; set +a; }
+# opencode runs on a Google model → it needs the Google generative-AI key (reuse gemini's)
+[ -n "${GEMINI_API_KEY:-}" ] && export GOOGLE_GENERATIVE_AI_API_KEY="${GOOGLE_GENERATIVE_AI_API_KEY:-$GEMINI_API_KEY}"
+
+# SINGLETON GUARD (ATOMIC) — only one heartbeat-loop may run. mkdir is atomic, so two
+# near-simultaneous launchd respawns cannot both win (the pidfile read-then-write did).
+# Stale-lock (dead holder) is recovered with a single rmdir+retry; lose that race → exit.
+DAEMON_DIR="$LIMEN_ROOT/logs/.daemon.lock.d"
+DAEMON_LOCK="$DAEMON_DIR/pid"
+if ! mkdir "$DAEMON_DIR" 2>/dev/null; then
+  _old=$(cat "$DAEMON_LOCK" 2>/dev/null || echo "")
+  # EMPTY pidfile = the holder just won mkdir and hasn't written its pid yet → it's
+  # alive, back off (do NOT rmdir, or we'd steal a starting holder's lock = the dup bug).
+  if [ -z "$_old" ] || kill -0 "$_old" 2>/dev/null; then
+    echo "heartbeat-loop already running (pid ${_old:-starting}) — singleton guard, exiting"; exit 0
+  fi
+  # pidfile has a DEAD pid → genuinely stale (e.g. prior SIGKILL bypassed the EXIT trap);
+  # remove the pidfile FIRST (rmdir fails on a non-empty dir), then take over once.
+  rm -f "$DAEMON_LOCK" 2>/dev/null
+  rmdir "$DAEMON_DIR" 2>/dev/null
+  mkdir "$DAEMON_DIR" 2>/dev/null || { echo "lost stale-lock takeover race — exiting"; exit 0; }
+fi
+echo $$ > "$DAEMON_LOCK"
+
+LANES="${LIMEN_LANES:-codex,opencode,agy,claude}"
+[ -n "${GEMINI_API_KEY:-}" ] && LANES="$LANES,gemini"
+# per-lane tasks PER BEAT kept low so no single lane hogs a beat — lanes rotate fast
+# (the safe throughput fix; real braking is the rate-limit detector in dispatch.py).
+LOCAL_LIMIT="${LIMEN_LOCAL_LIMIT:-3}"; JULES_LIMIT="${LIMEN_JULES_LIMIT:-100}"
+
+# base tempo (adaptive) + voice subdivisions (configurable)
+MIN="${LIMEN_LOOP_MIN:-120}"; MAX="${LIMEN_LOOP_MAX:-1800}"; beat="$MIN"
+# voices subdivide the base tempo — the work-cadence EXPLORE>PLAN>BUILD>VERIFY>HEAL>LEARN>RELAY:
+C_BALANCE="${LIMEN_BEAT_BALANCE:-2}"   # PLAN  (route + rebalance)
+C_FEED="${LIMEN_BEAT_FEED:-3}"         # EXPLORE (mine the backlog)
+C_DRAIN="${LIMEN_BEAT_DRAIN:-3}"       # VERIFY (harvest completed → done; faster recycle)
+C_HEAL="${LIMEN_BEAT_HEAL:-6}"         # HEAL  (recover failed/orphaned → fresh cascade)
+C_HYGIENE="${LIMEN_BEAT_HYGIENE:-8}"; C_BACKUP="${LIMEN_BEAT_BACKUP:-48}"
+C_WEB="${LIMEN_BEAT_WEB:-4}"           # LEARN (refresh the visualized surfaces)
+LOCKD="$LIMEN_ROOT/logs/.queue.lock.d"   # shared with supervisory ops (two-scale safety)
+c=0
+play() { [ $(( c % $1 )) -eq 0 ]; }   # true on this voice's beat
+trap 'rmdir "$LOCKD" 2>/dev/null || true; rm -f "$DAEMON_LOCK" 2>/dev/null; rmdir "$DAEMON_DIR" 2>/dev/null || true' EXIT
+
+echo "═══ heartbeat-loop start $(date '+%F %T') tempo=${MIN}-${MAX}s lanes=$LANES ═══"
+# ensure the web dashboard is served from the start
+bash "$LIMEN_ROOT/scripts/refresh-web.sh" 2>&1 | tail -2 || true
+while true; do
+  # OWNERSHIP BACKSTOP — if any acquisition race let a second loop through, the one whose
+  # pid is NOT in the lockfile exits here. Converges to exactly one daemon within a beat.
+  if [ "$(cat "$DAEMON_LOCK" 2>/dev/null)" != "$$" ]; then
+    echo "no longer singleton owner (pid in lock != $$) — exiting"; exit 0
+  fi
+  c=$(( c + 1 ))
+  worked=0
+  echo "──── beat $c $(date '+%F %T') ────"
+
+  # acquire the shared queue lock so the BODY never races a SUPERVISOR write to
+  # tasks.yaml (two-scale safety). If a supervisor holds it, skip queue-mutation this
+  # beat (still emit tick/web below). Wait up to ~20s.
+  locked=0
+  for _ in $(seq 1 20); do mkdir "$LOCKD" 2>/dev/null && { locked=1; break; }; sleep 1; done
+
+  if [ "$locked" = 1 ]; then
+    play "$C_DRAIN"   && { bash "$LIMEN_ROOT/scripts/drain.sh" 2>&1 | tail -2 || true        # VERIFY
+                           python3 -m limen release-stale --agent jules --hours 24 --apply 2>&1 | tail -1 || true; }
+    play "$C_HEAL"    && python3 "$LIMEN_ROOT/scripts/recover.py" --apply 2>&1 | tail -1 || true   # HEAL
+    play "$C_FEED"    && { python3 "$LIMEN_ROOT/scripts/mine-backlog.py" --limit "${LIMEN_MINE_LIMIT:-25}" --apply 2>&1 | tail -1 || true  # EXPLORE
+                           python3 "$LIMEN_ROOT/scripts/generate-backlog.py" --apply 2>&1 | tail -1 || true; }  # SELF-FEED: top queue to floor when mining is dry → never idle
+    play "$C_BALANCE" && { python3 "$LIMEN_ROOT/scripts/route.py" --apply 2>&1 | tail -1 || true   # PLAN
+                           python3 "$LIMEN_ROOT/scripts/rebalance.py" --lanes "$LANES" --apply 2>&1 | tail -1 || true; }
+
+    # #11: RELEASE the queue-lock BEFORE the slow dispatch so supervisors (seed / heal / verify)
+    # aren't starved through the multi-minute run. dispatch-parallel.py now self-acquires the
+    # SAME lockdir around its reserve AND reloads-fresh+commits under it — so nothing races
+    # tasks.yaml, and a seed written mid-run survives instead of being clobbered.
+    rmdir "$LOCKD" 2>/dev/null || true
+
+    # BUILD — dispatch every beat. Default = SYNC parallel (reserve→run→commit, beat waits for the
+    # slowest agent). Opt in to ASYNC (LIMEN_DISPATCH_ASYNC=1): fire detached workers + harvest
+    # finished runs → fast beats, a slow agent never gates the beat (the throughput 10x). Async is
+    # OFF by default; flip the env + restart between beats to enable. See dispatch-async.py.
+    if [ "${LIMEN_DISPATCH_ASYNC:-0}" = "1" ]; then
+      out="$(python3 "$LIMEN_ROOT/scripts/dispatch-async.py" --lanes "$LANES,jules" \
+              --per-lane "$LOCAL_LIMIT" --max "${LIMEN_ASYNC_MAX:-12}" 2>&1)"
+    else
+      out="$(python3 "$LIMEN_ROOT/scripts/dispatch-parallel.py" --lanes "$LANES,jules" \
+              --per-lane "$LOCAL_LIMIT" --workers "${LIMEN_WORKERS:-8}" 2>&1)"
+    fi
+    echo "$out" | tail -8
+    echo "$out" | grep -qE "→ PR|dispatched/PR|  dispatched:|launched|harvested" && worked=1
+  else
+    echo "── queue lock held by a supervisor — skipping mutation this beat ──"
+  fi
+
+  # RECONCILE — outside the queue-lock (heal-dispatch self-acquires it, so it must NOT run
+  # under the daemon's lock or it would deadlock). Verify claimed dispatches vs real PR state,
+  # then flip phantom → done/open so the funnel self-clears and the open pool refills each cycle.
+  play "$C_HEAL" && { python3 "$LIMEN_ROOT/scripts/verify-dispatch.py" 2>&1 | tail -1 || true
+                      python3 "$LIMEN_ROOT/scripts/heal-dispatch.py" --apply 2>&1 | tail -1 || true; }
+  play "$C_HYGIENE" && bash "$LIMEN_ROOT/scripts/clone-maintenance.sh" 2>&1 | tail -3 || true
+  python3 "$LIMEN_ROOT/scripts/emit-tick.py" 2>&1 | tail -1 || true   # tick voice — every beat
+  play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" 2>&1 | tail -1 || true   # real per-vendor usage
+  play "$C_WEB"     && bash "$LIMEN_ROOT/scripts/refresh-web.sh" 2>&1 | tail -2 || true   # web auto-refresh
+  play "$C_BACKUP"  && [ -x "$LIMEN_ROOT/scripts/backup.sh" ] && bash "$LIMEN_ROOT/scripts/backup.sh" 2>&1 | tail -2 || true
+
+  # adaptive tempo: tighten to MIN whenever work is flowing OR the OPEN QUEUE is non-empty (so a
+  # beat that produced no PR this cycle — all no-op / still-running — doesn't back off to 30min
+  # while tasks wait); exponential backoff to MAX only when genuinely idle (empty queue, no PR).
+  open_n=$(python3 -c "import sys;sys.path.insert(0,'$LIMEN_ROOT/cli/src');from pathlib import Path;from limen.io import load_limen_file;print(sum(1 for t in load_limen_file(Path('$LIMEN_ROOT/tasks.yaml')).tasks if t.status=='open'))" 2>/dev/null || echo 0)
+  if [ "$worked" = 1 ] || [ "${open_n:-0}" -gt 0 ]; then beat="$MIN"; echo "── tempo: work pending (open=${open_n}) → ${beat}s ──"
+  else beat=$(( beat*2 > MAX ? MAX : beat*2 )); echo "── tempo: idle (queue empty) → ${beat}s ──"; fi
+  sleep "$beat"
+done
