@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DashboardClient, { type DashboardData, type PRStatusData } from "./dashboard-client";
 import SurfaceNav from "./surface-nav";
 
@@ -13,6 +13,30 @@ type LoadState = {
 export default function AuthenticatedDashboard({ apiUrl }: { apiUrl: string }) {
   const [token, setToken] = useState("");
   const [state, setState] = useState<LoadState>({ loading: false, error: "", data: null });
+  const [prData, setPrData] = useState<PRStatusData | null>(null);
+
+  // STATIC-FIRST (detach-safe): render the baked dashboard.json directly — no runtime
+  // needed. The daemon's web voice regenerates it each cycle, so it stays near-real-time.
+  useEffect(() => {
+    let alive = true;
+    const pull = async () => {
+      try {
+        const res = await fetch("/dashboard.json", { cache: "no-store" });
+        if (!res.ok) return;
+        const d = await res.json();
+        const prRes = await fetch("/pr-status.json", { cache: "no-store" }).catch(() => null);
+        const pr = prRes && prRes.ok ? await prRes.json() : null;
+        if (!alive) return;
+        if (pr) setPrData(pr);
+        setState({ loading: false, error: "", data: {
+          version: "static", portal: d.portal || { name: "Limen", description: "" },
+          tasks: d.tasks || [], summary: d.summary, storage: d.storage } });
+      } catch { /* fall back to the runtime gate below */ }
+    };
+    pull();
+    const id = setInterval(pull, 20000);  // live: re-pull every 20s (browser real-time)
+    return () => { alive = false; clearInterval(id); };
+  }, []);
 
   async function load() {
     if (!apiUrl || state.loading) return;
@@ -44,7 +68,7 @@ export default function AuthenticatedDashboard({ apiUrl }: { apiUrl: string }) {
   }
 
   if (state.data) {
-    return <DashboardClient data={state.data} prData={null as PRStatusData | null} apiUrl={apiUrl} initialToken={token} />;
+    return <DashboardClient data={state.data} prData={prData} apiUrl={apiUrl} initialToken={token} />;
   }
 
   return (

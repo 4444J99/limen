@@ -24,6 +24,10 @@ class Task(BaseModel):
     labels: list[str] = Field(default_factory=list)
     urls: list[str] = Field(default_factory=list)
     context: Optional[str] = None
+    # task ids that must have a MERGED PR before this task is eligible to dispatch. Lets a
+    # dependent increment be seeded NOW and auto-build only once its predecessor lands in the
+    # base branch (avoids parallel-built PRs that conflict / reference not-yet-merged code).
+    depends_on: list[str] = Field(default_factory=list)
     created: date
     updated: Optional[datetime] = None
     dispatch_log: list[DispatchLogEntry] = Field(default_factory=list)
@@ -33,6 +37,9 @@ class BudgetTrack(BaseModel):
     date: str
     spent: int = 0
     per_agent: dict[str, int] = Field(default_factory=dict)
+    # agent -> ISO timestamp of last budget-window reset; lets each vendor refill on its
+    # OWN cadence (codex/claude ~5h, jules/gemini/etc daily) instead of one daily reset.
+    per_agent_reset: dict[str, str] = Field(default_factory=dict)
 
 
 class Budget(BaseModel):

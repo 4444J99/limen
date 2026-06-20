@@ -57,6 +57,45 @@ function getTaskEvents(task) {
     .filter((entry) => Number.isFinite(entry.timestamp_ms));
 }
 
+function deriveVendors(data, todayEvents) {
+  // Per-lane usage + refresh, derived from the already-present portal.budget.
+  // Mirrors web/api/main.py remaining_budget(): remaining = min(daily-left, cap-spent).
+  const budget = data.portal?.budget || {};
+  const caps = budget.per_agent || {};
+  const daily = Number(budget.daily || 100);
+  const dailySpent = Number(budget.track?.spent || 0);
+  const trackPer = budget.track?.per_agent || {};
+  const tasks = data.tasks || [];
+  const order = ["jules", "codex", "opencode", "agy", "claude", "gemini"];
+  const names = Array.from(new Set([...order, ...Object.keys(caps)])).filter((a) => caps[a] != null);
+  return names.map((agent) => {
+    const cap = Number(caps[agent] || 0);
+    const spent = Number(trackPer[agent] || 0);
+    const remaining = Math.max(0, Math.min(daily - dailySpent, cap - spent));
+    return {
+      agent,
+      kind: agent === "jules" ? "cloud" : "local",
+      cap,
+      spent,
+      remaining,
+      pct: cap ? Math.round((spent / cap) * 100) : 0,
+      open: tasks.filter((t) => t.status === "open" && t.target_agent === agent).length,
+      today_dispatches: todayEvents.filter((e) => e.agent === agent && e.status === "dispatched").length,
+    };
+  });
+}
+
+function readTicks() {
+  try {
+    const p = join(repoRoot, "logs", "ticks.jsonl");
+    if (!existsSync(p)) return [];
+    const lines = readFileSync(p, "utf8").trim().split("\n").filter(Boolean);
+    return lines.slice(-40).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
 function deriveSummary(data) {
   const tasks = data.tasks || [];
   const events = tasks.flatMap(getTaskEvents).sort((a, b) => b.timestamp_ms - a.timestamp_ms);
@@ -84,6 +123,13 @@ function deriveSummary(data) {
     today,
     today_events: todayEvents.length,
     today_jules_dispatches: todayJulesDispatches.length,
+    per_vendor: deriveVendors(data, todayEvents),
+    daily_total: {
+      spent: Number(data.portal?.budget?.track?.spent || 0),
+      cap: Number(data.portal?.budget?.daily || 300),
+      date: data.portal?.budget?.track?.date || null,
+    },
+    ticks: readTicks(),
     throughput: deriveThroughput(data, events, now),
     recent_events: events.slice(0, 40),
   };
@@ -275,7 +321,10 @@ function qaStatus(data, summary) {
     .filter((item) => !["archive", "archived"].includes(item.phase))
     .sort((a, b) => {
       const order = { recover: 0, verify: 1, assign: 2, archive: 3, archived: 4 };
-      const priority = { high: 0, medium: 1, low: 2 };
+      // MUST mirror limen.doctor.qa_report's priority_order (Python source of truth) — was missing
+      // `critical`/`backlog`, so critical tasks sorted LAST here (?? 9) but FIRST in the CLI →
+      // next_batch drift that verify-whole.sh caught once critical-priority CIFIX tasks existed.
+      const priority = { critical: 0, high: 1, medium: 2, low: 3, backlog: 4 };
       return (order[a.phase] ?? 9) - (order[b.phase] ?? 9)
         || (priority[a.priority] ?? 9) - (priority[b.priority] ?? 9)
         || String(a.id).localeCompare(String(b.id));

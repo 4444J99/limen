@@ -19,7 +19,7 @@ def _get_jules_sessions(harvest_dir: Path) -> dict[str, str]:
                     session_id = parts[0]
                     if not session_id.isdigit():
                         continue
-                    match = re.search(r"(LIMEN-\d+)", line)
+                    match = re.search(r"((?:LIMEN-\d+)|(?:GH-[A-Za-z0-9._-]+))", line)
                     if match:
                         mapping[match.group(1)] = session_id
             except Exception:
@@ -39,7 +39,7 @@ def _get_jules_sessions(harvest_dir: Path) -> dict[str, str]:
                 session_id = parts[0]
                 if not session_id.isdigit():
                     continue
-                match = re.search(r"(LIMEN-\d+)", line)
+                match = re.search(r"((?:LIMEN-\d+)|(?:GH-[A-Za-z0-9._-]+))", line)
                 if match:
                     mapping[match.group(1)] = session_id
     except Exception:

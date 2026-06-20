@@ -1,0 +1,46 @@
+"""Honest-work gate: dispatch/route must skip lanes the LIVE usage meter says are dead.
+
+Regression guard for the 2026-06-19 bug where codex burned its 5h token budget (usage.json
+health="exhausted") yet the dispatcher kept assigning to it because _down_lanes() only read a
+static hand-maintained file. The fix derives the down-set from logs/usage.json (self-healing)."""
+import json
+
+import pytest
+
+from limen.dispatch import _down_lanes, _usage_dead_lanes
+
+
+def _write_usage(root, vendors):
+    logs = root / "logs"
+    logs.mkdir(parents=True, exist_ok=True)
+    (logs / "usage.json").write_text(json.dumps({"generated": "t", "vendors": vendors}))
+
+
+def test_usage_dead_lanes_flags_exhausted_and_ratelimited(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_usage(tmp_path, {
+        "codex": {"health": "exhausted"},
+        "gemini": {"health": "rate-limited"},
+        "claude": {"health": "ok"},
+        "agy": {"health": "low"},  # low still has headroom -> NOT dead (keep working until spent)
+    })
+    assert _usage_dead_lanes() == {"codex", "gemini"}
+
+
+def test_down_lanes_unions_manual_file_and_live_meter(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_usage(tmp_path, {"codex": {"health": "exhausted"}})
+    (tmp_path / "logs" / "lanes-down.txt").write_text("agy  # bin missing\n# a comment line\n\n")
+    assert _down_lanes() == {"codex", "agy"}
+
+
+def test_low_and_ok_lanes_stay_up(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_usage(tmp_path, {"codex": {"health": "ok"}, "claude": {"health": "low"}})
+    assert _down_lanes() == set()
+
+
+def test_missing_usage_json_is_safe(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    assert _usage_dead_lanes() == set()
+    assert _down_lanes() == set()

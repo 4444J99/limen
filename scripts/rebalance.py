@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
-from limen.dispatch import _resolve_repo_dir  # noqa: E402
+from limen.dispatch import _resolve_repo_dir, _down_lanes  # noqa: E402
 
 LOCAL = {"codex", "opencode", "agy", "antigravity", "claude", "gemini"}
 
@@ -30,10 +30,13 @@ def main() -> int:
     ap.add_argument("--apply", action="store_true")
     args = ap.parse_args()
 
-    lanes = [x.strip() for x in args.lanes.split(",") if x.strip()]
+    down = _down_lanes()
+    lanes = [x.strip() for x in args.lanes.split(",") if x.strip() and x.strip() not in down]
     if not lanes:
-        print("no lanes given")
+        print(f"no productive lanes (given lanes all down: {sorted(down)})")
         return 2
+    if down:
+        print(f"skipping down lanes: {sorted(down)} — re-routing their tasks to {lanes}")
     path = Path(args.tasks)
     lf = load_limen_file(path)
 

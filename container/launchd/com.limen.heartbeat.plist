@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.limen.heartbeat</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/4jp/Workspace/limen/scripts/heartbeat-loop.sh</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key><string>/Users/4jp</string>
+        <key>LIMEN_ROOT</key><string>/Users/4jp/Workspace/limen</string>
+        <key>LIMEN_WORKDIR</key><string>/Users/4jp/Workspace</string>
+        <key>LIMEN_LANES</key><string>codex,opencode,agy,claude,gemini</string>
+        <key>LIMEN_LOCAL_LIMIT</key><string>3</string>
+    </dict>
+    <key>KeepAlive</key><false/>
+    <key>RunAtLoad</key><true/>
+    <key>ThrottleInterval</key><integer>60</integer>
+    <key>ProcessType</key><string>Background</string>
+    <key>StandardOutPath</key><string>/Users/4jp/Workspace/limen/logs/heartbeat.out.log</string>
+    <key>StandardErrorPath</key><string>/Users/4jp/Workspace/limen/logs/heartbeat.err.log</string>
+</dict>
+</plist>

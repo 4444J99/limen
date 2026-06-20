@@ -1,0 +1,38 @@
+"""Test rebalance.py honors the lane-down filter (this session's change): open local-lane tasks
+are fanned across the PRODUCTIVE lanes only — a down lane (logs/lanes-down.txt) never receives work
+and its tasks are redistributed. _resolve_repo_dir is monkeypatched so the test needs no clones."""
+import importlib.util
+import sys
+from collections import Counter
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "rebalance.py"
+
+from limen.io import load_limen_file, save_limen_file  # noqa: E402
+from limen.models import Budget, BudgetTrack, LimenFile, Portal, Task  # noqa: E402
+
+
+def test_rebalance_skips_down_lanes(tmp_path, monkeypatch):
+    import datetime
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("LIMEN_TASKS", str(tmp_path / "tasks.yaml"))
+    today = datetime.date.today()
+    lf = LimenFile(portal=Portal(budget=Budget(daily=300, per_agent={}, track=BudgetTrack(date=str(today)))),
+                   tasks=[Task(id=f"T{i}", title="t", repo="x/y", target_agent="codex", status="open", created=today)
+                          for i in range(6)])
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+    (tmp_path / "logs").mkdir()
+    (tmp_path / "logs" / "lanes-down.txt").write_text("gemini\nagy\n")
+
+    spec = importlib.util.spec_from_file_location("rebalance_uut", SCRIPT)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    monkeypatch.setattr(m, "_resolve_repo_dir", lambda t: tmp_path)  # always "cloned"
+    monkeypatch.setattr(sys, "argv", ["rebalance", "--lanes", "codex,claude,gemini", "--apply"])
+    m.main()
+
+    lanes = Counter(t.target_agent for t in load_limen_file(tmp_path / "tasks.yaml").tasks)
+    assert lanes.get("gemini", 0) == 0, f"down lane got work: {lanes}"
+    assert set(lanes) == {"codex", "claude"}, f"expected only productive lanes: {lanes}"
+    assert lanes["codex"] == 3 and lanes["claude"] == 3, f"not evenly fanned: {lanes}"

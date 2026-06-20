@@ -147,3 +147,4 @@ A clean checklist of every open next-step (todo + partial), highest-leverage fir
 - Board: open 107→100; every remaining open task names a real organvm/4444J99 repo and is clone-on-demand routable.
 - Reconcile (observe): verify read-only, heal 0 merged→done / 0 stuck→open; autonomy-policy stays observe (no spend).
 - HOLD intact: nothing merged/deployed/dispatched. Plumbing-fix code (auto-scale/mine-backlog/dispatch clone-on-demand) remains applied-but-uncommitted on heal/conductor-restart-2026-06-16, staged for the gated batch.
+- 2026-06-20 cycle: done 592, open 100, coverage 68 (flat). FINDING: widened generator gated on open<floor(60), but queue held ~100 by jules-stuck unroutable tasks → generator not firing → coverage stalled. Activates when jules refills (unroutable dispatch → open drops). If flat 2-3 more cycles, decouple coverage from queue-depth floor (count ROUTABLE-open, excluding dead-lane-stuck). codex/opencode alive.

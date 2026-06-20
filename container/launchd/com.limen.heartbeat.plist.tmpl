@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  SOURCE TEMPLATE — contains NO machine-specific literals (no home-dir paths, no pinned
+  python version). Generate the real plist with: scripts/gen-launchd-plist.sh
+  All @@PLACEHOLDERS@@ are DERIVED at generation time. Names are outputs, not inputs.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.limen.heartbeat</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>@@LIMEN_ROOT@@/scripts/heartbeat-loop.sh</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key><string>@@HOME@@</string>
+        <key>LIMEN_ROOT</key><string>@@LIMEN_ROOT@@</string>
+        <key>LIMEN_WORKDIR</key><string>@@LIMEN_WORKDIR@@</string>
+        <key>LIMEN_PYTHON</key><string>@@LIMEN_PYTHON@@</string>
+        <key>PATH</key><string>@@PATH@@</string>
+    </dict>
+    <key>KeepAlive</key><true/>
+    <key>RunAtLoad</key><true/>
+    <key>ThrottleInterval</key><integer>60</integer>
+    <key>ProcessType</key><string>Background</string>
+    <key>StandardOutPath</key><string>@@LIMEN_ROOT@@/logs/heartbeat.out.log</string>
+    <key>StandardErrorPath</key><string>@@LIMEN_ROOT@@/logs/heartbeat.err.log</string>
+</dict>
+</plist>

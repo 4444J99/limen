@@ -153,6 +153,42 @@ def test_dispatch_limit_and_per_agent_budget(tmp_path: Path, monkeypatch) -> Non
     assert board["portal"]["budget"]["track"]["per_agent"]["codex"] == 2
 
 
+def test_dispatch_skips_lane_marked_down_by_usage_meter(tmp_path: Path, monkeypatch) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    dispatch_bin = tmp_path / "agent-dispatch"
+    dispatch_bin.write_text("#!/bin/sh\nexit 99\n")
+    dispatch_bin.chmod(0o755)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("LIMEN_DISPATCH_CMD", str(dispatch_bin))
+    (tmp_path / "logs").mkdir()
+    (tmp_path / "logs" / "usage.json").write_text(
+        '{"vendors":{"claude":{"health":"rate-limited"}}}'
+    )
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "LIMEN-DOWN-CLAUDE",
+                "title": "Should not dispatch",
+                "repo": "4444J99/limen",
+                "target_agent": "claude",
+                "priority": "critical",
+                "budget_cost": 1,
+                "status": "open",
+                "created": "2026-06-19",
+                "dispatch_log": [],
+            }
+        ],
+    )
+
+    dispatch_tasks(load_limen_file(tasks_path), tasks_path, agent="claude", dry_run=False, limit=1)
+
+    board = read_board(tasks_path)
+    assert board["tasks"][0]["status"] == "open"
+    assert board["tasks"][0]["dispatch_log"] == []
+    assert board["portal"]["budget"]["track"].get("per_agent", {}) == {}
+
+
 def test_status_prints_creation_age_and_recorded_throughput(tmp_path: Path, capsys) -> None:
     tasks_path = tmp_path / "tasks.yaml"
     write_board(

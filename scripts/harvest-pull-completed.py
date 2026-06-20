@@ -27,17 +27,41 @@ _STATUS_KW = ["completed", "failed", "planning", "awaiting", "paused",
               "in progress", "running", "queued"]
 
 
-def dispatched_tasks() -> set[str]:
+def dispatched_by_session() -> dict[str, str]:
+    """Map the RECORDED jules session_id -> task_id for every dispatched/in_progress
+    jules task. This is the robust key: it bypasses description parsing (which breaks
+    on the LIMEN-* vs GH-* id schemes AND on jules-list truncation). Falls back to a
+    description-id mapping for any task whose dispatch_log lacks a numeric session."""
     data = yaml.safe_load(TASKS.read_text()) or {}
-    return {
-        t["id"]
-        for t in data.get("tasks", [])
-        if t.get("target_agent") == "jules" and t.get("status") in ("dispatched", "in_progress")
-    }
+    by_sid: dict[str, str] = {}
+    for t in data.get("tasks", []):
+        if t.get("target_agent") != "jules" or t.get("status") not in ("dispatched", "in_progress"):
+            continue
+        for entry in reversed(t.get("dispatch_log", []) or []):
+            sid = str(entry.get("session_id") or "")
+            if sid.isdigit() and len(sid) >= 12:
+                by_sid[sid] = t["id"]
+                break
+    return by_sid
+
+
+_TASK_ID_RE = re.compile(r"Complete task (\S+?):")
+
+
+def dispatched_jules_ids() -> set[str]:
+    """Every task id currently dispatched/in_progress on the jules lane — the robust
+    match target, since the recorded session_id is often 'cli' (jules-new stdout parse
+    failed at dispatch). The jules session Description carries 'Complete task <ID>:'."""
+    data = yaml.safe_load(TASKS.read_text()) or {}
+    return {t["id"] for t in data.get("tasks", [])
+            if t.get("target_agent") == "jules"
+            and t.get("status") in ("dispatched", "in_progress")}
 
 
 def jules_sessions() -> list[tuple[str, str, str]]:
-    """Return (session_id, limen_id, status), newest first."""
+    """Return (session_id, status, task_id), newest first. session_id from the numeric ID
+    column (never truncated); task_id parsed from the Description ('Complete task <ID>:'),
+    which is the reliable session→task key when the recorded session_id was lost."""
     r = subprocess.run(
         ["jules", "remote", "list", "--session"],
         capture_output=True, text=True, timeout=90,
@@ -48,42 +72,40 @@ def jules_sessions() -> list[tuple[str, str, str]]:
         if not parts or not parts[0].isdigit():
             continue
         sid = parts[0]
-        m = re.search(r"(LIMEN-\d+)", line)
-        if not m:
-            continue
         low = line.lower()
         status = next((kw for kw in _STATUS_KW if kw in low), "?")
-        rows.append((sid, m.group(1), status))
+        m = _TASK_ID_RE.search(line)
+        rows.append((sid, status, m.group(1) if m else ""))
     return rows
 
 
 def main() -> int:
     HARVEST.mkdir(parents=True, exist_ok=True)
-    dispatched = dispatched_tasks()
+    by_sid = dispatched_by_session()        # numeric session_id -> task (when captured)
+    open_jules = dispatched_jules_ids()      # robust target set (by task id in description)
     pulled, already, failed = [], [], []
-    seen: set[str] = set()
-    for sid, lid, status in jules_sessions():
-        if lid in seen:
+    for sid, status, desc_tid in jules_sessions():
+        # prefer the recorded numeric mapping; fall back to the description task id
+        tid = by_sid.get(sid) or (desc_tid if desc_tid in open_jules else None)
+        if not tid or status != "completed":
             continue
-        seen.add(lid)  # newest session per task only
-        if lid not in dispatched or status != "completed":
-            continue
-        result = HARVEST / lid / "result.txt"
-        if result.exists():
-            already.append(lid)
+        result = HARVEST / tid / "result.txt"
+        diff = HARVEST / f"{sid}.diff"
+        if result.exists() and diff.exists():
+            already.append(tid)
             continue
         pr = subprocess.run(
             ["jules", "remote", "pull", "--session", sid],
             capture_output=True, text=True, timeout=120,
         )
         if pr.returncode != 0 or not pr.stdout.strip():
-            failed.append(f"{lid}({sid}): {pr.stderr.strip()[:100]}")
+            failed.append(f"{tid}({sid}): {pr.stderr.strip()[:100]}")
             continue
         result.parent.mkdir(parents=True, exist_ok=True)
         result.write_text(pr.stdout)
-        (HARVEST / f"{sid}.diff").write_text(pr.stdout)
-        pulled.append(lid)
-        print(f"  pulled {lid} <- {sid} ({len(pr.stdout)} bytes)")
+        diff.write_text(pr.stdout)
+        pulled.append(tid)
+        print(f"  pulled {tid} <- {sid} ({len(pr.stdout)} bytes)")
     print(f"pulled {len(pulled)}: {pulled}")
     if already:
         print(f"already harvested: {already}")

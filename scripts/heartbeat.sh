@@ -17,7 +17,14 @@ export LIMEN_TASKS="${LIMEN_TASKS:-$LIMEN_ROOT/tasks.yaml}"
 export LIMEN_WORKDIR="${LIMEN_WORKDIR:-$HOME/Workspace}"
 export LIMEN_ISOLATION="${LIMEN_ISOLATION:-worktree}"
 export PYTHONPATH="$LIMEN_ROOT/cli/src"
+export GEMINI_CLI_TRUST_WORKSPACE="${GEMINI_CLI_TRUST_WORKSPACE:-true}"  # gemini runs headless in throwaway worktrees
 cd "$LIMEN_ROOT" || exit 1
+
+MODE="$(python3 "$LIMEN_ROOT/scripts/autonomy-governor.py" mode 2>/dev/null || echo paused)"
+if [ "$MODE" = "paused" ]; then
+  echo "heartbeat paused by autonomy governor"
+  exit 0
+fi
 
 # load local secrets (gemini key, etc.) from the single un-committed secrets file
 [ -f "$HOME/.limen.env" ] && { set -a; . "$HOME/.limen.env"; set +a; }
@@ -39,6 +46,15 @@ else
 fi
 
 echo "═══ heartbeat $(date '+%F %T') lanes=$LANES ═══"
+python3 "$LIMEN_ROOT/scripts/usage-telemetry.py"                    2>&1 | tail -2 || true
+if [ "$MODE" != "dispatch" ]; then
+  echo "autonomy mode=$MODE — telemetry/status only; queue mutation and dispatch skipped"
+  python3 "$LIMEN_ROOT/scripts/emit-tick.py" 2>&1 | tail -1 || true
+  python3 -m limen doctor 2>&1 | head -10
+  echo "═══ heartbeat done $(date '+%F %T') ═══"
+  exit 0
+fi
+
 bash   "$LIMEN_ROOT/scripts/drain.sh"                              2>&1 | tail -3 || true
 python3 "$LIMEN_ROOT/scripts/mine-backlog.py" --limit "$MINE_LIMIT" --apply 2>&1 | tail -3 || true
 python3 "$LIMEN_ROOT/scripts/route.py" --apply                    2>&1 | tail -3 || true
@@ -50,5 +66,8 @@ for v in "${A[@]}"; do
   echo "── lane $v ──"
   python3 -m limen dispatch --agent "$v" --live --limit "$LOCAL_LIMIT" 2>&1 | tail -4 || true
 done
+echo "── clone lifecycle hygiene (worktree prune + gc --auto + reap-report) ──"
+bash "$LIMEN_ROOT/scripts/clone-maintenance.sh" 2>&1 | tail -6 || true
+python3 "$LIMEN_ROOT/scripts/emit-tick.py" 2>&1 | tail -1 || true
 python3 -m limen doctor 2>&1 | head -10
 echo "═══ heartbeat done $(date '+%F %T') ═══"

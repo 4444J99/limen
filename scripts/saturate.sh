@@ -17,6 +17,7 @@ export LIMEN_TASKS="${LIMEN_TASKS:-$LIMEN_ROOT/tasks.yaml}"
 export LIMEN_WORKDIR="${LIMEN_WORKDIR:-$HOME/Workspace}"
 export LIMEN_ISOLATION="${LIMEN_ISOLATION:-worktree}"
 export PYTHONPATH="$LIMEN_ROOT/cli/src"
+export GEMINI_CLI_TRUST_WORKSPACE="${GEMINI_CLI_TRUST_WORKSPACE:-true}"  # gemini runs headless in throwaway worktrees
 cd "$LIMEN_ROOT" || exit 1
 
 # load local secrets (gemini key, etc.) from the single un-committed secrets file
@@ -40,7 +41,13 @@ fi
 
 echo "═══ saturate $(date '+%F %T') lanes=$LANES local_limit=$LOCAL_LIMIT jules_limit=$JULES_LIMIT ═══"
 
-echo "── 0. release stale jules claims ──"
+echo "── 0. refresh usage telemetry / lane health ──"
+python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" 2>&1 | tail -2 || true
+
+echo "── 0a. drain (pull + close completed/awaiting jules) ──"
+bash "$LIMEN_ROOT/scripts/drain.sh" 2>&1 | tail -4 || echo "  (drain skipped)"
+
+echo "── 0b. release stale jules claims (after drain, so completed work closes first) ──"
 python3 -m limen release-stale --agent jules --hours 24 --apply 2>&1 | tail -3
 
 echo "── 1. rebalance open local work across live lanes ──"

@@ -1,0 +1,45 @@
+# manifest-extended.tsv — PLAN ONLY. Nothing here has been moved or linked.
+# Extends container/manifest.tsv to cover the literal "ONE folder" ask: the bulky
+# per-vendor STATE dirs and the agent BINS, not just the four config slots.
+#
+# Governing rule (CLAUDE.md): "names are outputs, not inputs." A bin's identity is its
+# package (brew cask/cellar, claude self-updater), NOT its path. So bins are REFERENCED,
+# never moved — moving them breaks the manager that owns the path and the symlink gets
+# re-clobbered on the next upgrade. State dirs hold live secrets + multi-GB caches, so
+# they are SYMLINK-with-verify (cache stays out of git), never copy-into-repo.
+#
+# KIND legend:
+#   symlink-state-absolute  dir lives in container, OS path becomes an absolute symlink;
+#                           copy->verify(rsync+du)->rename(mv -n original to .premigrate)->ln -s; gitignored.
+#   reference-only          NOT moved/linked. Recorded in container/state/bins.json (path+
+#                           realpath+version+manager) so identity is derivable at use-time.
+#   guard-secret            file inside a symlinked state dir that carries a credential; MUST be
+#                           gitignored AND only ever backed up to a mountpoint-guarded external volume.
+#
+# COLUMN: SLOT  CONTAINER-TARGET  KIND  SIZE  NOTES
+#
+# ---- STATE DIRS (the bulk; symlink-with-verify, cache excluded from git) ----
+~/.claude	/Users/4jp/Workspace/limen/container/state/claude	symlink-state-absolute	2.1G	Claude Code state. Contains ~/.claude.json sibling (separate file, also a secret) + settings.json already folded by base manifest. Verify sub-symlink (settings.json) survives the dir move.
+~/.codex	/Users/4jp/Workspace/limen/container/state/codex	symlink-state-absolute	468M	Codex CLI state. logs_2.sqlite alone is ~93M and grows; exclude *.sqlite-wal/-shm from git. auth.json is a secret.
+~/.gemini	/Users/4jp/Workspace/limen/container/state/gemini	symlink-state-absolute	8.7G	NOTE: 8.7G is almost entirely .gemini/antigravity-cli (the agy/antigravity install). The CLAUDE.md base manifest says leave ~/.gemini REAL — folding it conflicts with that and dumps 8.7G onto a 69GiB-free internal disk. RECOMMEND: keep .gemini REAL, or symlink ONLY .gemini/config + .gemini/history (sub-slot), leaving antigravity-cli in place.
+~/.claude.json	/Users/4jp/Workspace/limen/container/state/claude.json	guard-secret	-	Separate from ~/.claude/ dir. Carries account/session data. Gitignore + external-only backup.
+#
+# ---- SECRET-BEARING FILES inside the state dirs (flag for gitignore + guard) ----
+~/.codex/auth.json	(stays inside symlinked ~/.codex)	guard-secret	4.7K	chmod 600. Never into git; external-only backup.
+~/.codex/config.toml	(stays inside symlinked ~/.codex)	guard-secret	4.2K	chmod 600.
+~/.claude/.credentials.json	(if present; not found at scan time)	guard-secret	-	If it appears later, gitignore it.
+#
+# ---- BINS (reference-only; identity = package, derive path at use-time) ----
+# Recorded to container/state/bins.json by a (future) inventory step; NOT symlinked.
+codex	manager=brew-cask codex@0.141.0	reference-only	230M	realpath /opt/homebrew/Caskroom/codex/0.141.0/codex-aarch64-apple-darwin. brew upgrade re-clobbers any symlink. Pin via LIMEN_CODEX_BIN if a fixed path is needed.
+agy	manager=brew (antigravity) agy	reference-only	136M	/opt/homebrew/bin/agy (Mach-O). Its STATE is the 8.7G ~/.gemini/antigravity-cli above. LIMEN_AGY_BIN to pin.
+gemini	manager=brew-cellar gemini-cli@0.46.0	reference-only	8K(js)	node script -> .../@google/gemini-cli/bundle/gemini.js. The 8K is just the launcher; node + bundle are the real payload. LIMEN_GEMINI_BIN to pin.
+claude	manager=claude-self-updater 2.1.183	reference-only	206M	/Users/4jp/.local/bin/claude -> ~/.local/share/claude/versions/<v>. Self-updater rotates versions/ (2.1.179/181/183 present); a symlink would point at a stale version after update. NEVER move.
+jules	manager=brew jules	reference-only	20M	/opt/homebrew/bin/jules (Mach-O). LIMEN_JULES_BIN to pin.
+opencode	manager=brew-cellar opencode@1.17.5	reference-only	114M	node_modules/opencode-ai/bin/opencode.exe. LIMEN_OPENCODE_BIN to pin.
+#
+# ---- ALREADY HANDLED by base container/manifest.tsv (do not re-do) ----
+# ~/.limen.env                       -> env/limen.env                 (symlink-absolute)  [staged: copied, S3 done]
+# ~/.claude/settings.json            -> container/claude/settings.json (symlink-absolute) [staged: merged]
+# ~/Library/LaunchAgents/...plist    -> container/launchd/...plist     (real-inplace)
+# ~/.zshrc ~/.zshenv ~/.zprofile ~/.bashrc -> scrub GEMINI_API_KEY line

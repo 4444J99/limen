@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import SurfaceNav from "./surface-nav";
 
 export interface Task {
@@ -93,7 +93,14 @@ export interface DashboardData {
     today: string;
     today_events: number;
     today_jules_dispatches: number;
+    per_vendor?: VendorUsage[];
+    daily_total?: { spent: number; cap: number; date: string | null };
+    ticks?: HeartbeatTick[];
     throughput?: ThroughputSummary;
+    integrity?: {
+      counts: Record<string, number>;
+      chronic?: { id: string; agent: string; reopens: number; repo: string }[];
+    };
     recent_events: DispatchEvent[];
   };
   storage?: {
@@ -123,7 +130,29 @@ export interface ThroughputSummary {
   by_event_date: Record<string, number>;
 }
 
-type Phase = "EXPLORE" | "PLAN" | "BUILD" | "VERIFY" | "LEARN" | "REPEAT";
+export interface VendorUsage {
+  agent: string;
+  kind: "cloud" | "local";
+  cap: number;
+  spent: number;
+  remaining: number;
+  pct: number;
+  open: number;
+  today_dispatches: number;
+}
+
+export interface HeartbeatTick {
+  ts: string;
+  total: number;
+  open: number;
+  dispatched: number;
+  done: number;
+  failed: number;
+  daily_spent: number;
+  daily_cap: number;
+}
+
+type Phase = "EXPLORE" | "PLAN" | "BUILD" | "VERIFY" | "HEAL" | "LEARN" | "RELAY";
 type LifecycleGate = "recover" | "verify" | "assign" | "archive" | "archived";
 type FilterKey = "all" | "needs-attention" | "jules" | "active" | "done" | LifecycleGate;
 type ApiAction = "release" | "dispatch";
@@ -145,7 +174,7 @@ type ApiState = {
   action: ApiAction | null;
 };
 
-const phases: Phase[] = ["EXPLORE", "PLAN", "BUILD", "VERIFY", "LEARN", "REPEAT"];
+const phases: Phase[] = ["EXPLORE", "PLAN", "BUILD", "VERIFY", "HEAL", "LEARN", "RELAY"];
 const lifecycleGates: LifecycleGate[] = ["recover", "verify", "assign", "archive", "archived"];
 const statusColor: Record<string, string> = {
   open: "blue",
@@ -175,8 +204,9 @@ function formatDate(value?: string) {
 }
 
 function getPhase(task: Task, relatedPRs: PR[]): Phase {
-  if (["failed", "failed_blocked", "needs_human", "superseded"].includes(task.status)) return "REPEAT";
-  if (task.status === "done") return "LEARN";
+  if (["failed", "failed_blocked", "needs_human"].includes(task.status)) return "HEAL";
+  if (task.status === "superseded" || task.status === "cancelled") return "RELAY";
+  if (task.status === "done" || task.status === "archived") return "LEARN";
   if (relatedPRs.length > 0 || task.status === "in_progress") return "VERIFY";
   if (task.status === "dispatched") return "BUILD";
   return "EXPLORE";
@@ -202,7 +232,7 @@ function getLifecycleGateLabel(gate: LifecycleGate) {
 }
 
 function getProgress(phase: Phase) {
-  return { EXPLORE: 12, PLAN: 28, BUILD: 52, VERIFY: 74, LEARN: 92, REPEAT: 100 }[phase];
+  return { EXPLORE: 10, PLAN: 24, BUILD: 44, VERIFY: 64, HEAL: 78, LEARN: 92, RELAY: 100 }[phase];
 }
 
 function latestEvent(task: Task) {
@@ -216,6 +246,9 @@ export default function DashboardClient({ data, prData, apiUrl, initialToken = "
   const [selectedId, setSelectedId] = useState(data.tasks[0]?.id || "");
   const [apiToken, setApiToken] = useState(initialToken);
   const [apiState, setApiState] = useState<ApiState>({ loading: null, result: "", error: "", preview: [], action: null });
+  const [rollup, setRollup] = useState(true);
+  const [openRepos, setOpenRepos] = useState<Record<string, boolean>>({});
+  const [hideChurn, setHideChurn] = useState(true);
 
   const prsByRepo = useMemo(() => {
     const byRepo: Record<string, PR[]> = {};
@@ -243,6 +276,15 @@ export default function DashboardClient({ data, prData, apiUrl, initialToken = "
     });
   }, [data.tasks, data.summary.stale_task_ids, prsByRepo]);
 
+  // Machine churn (cancelled / noop / per-session "Session walk" reconcile rows) is
+  // telemetry, not work — demoted out of the default view (toggle to show).
+  const isChurn = (task: (typeof rows)[number]) =>
+    task.status === "cancelled" ||
+    (task.labels || []).includes("noop") ||
+    (task.labels || []).includes("session-walk") ||
+    task.title.startsWith("Session walk:");
+  const churnTotal = rows.filter(isChurn).length;
+
   const filteredRows = rows.filter((task) => {
     const matchesPhase = phase === "ALL" || task.phase === phase;
     const haystack = `${task.id} ${task.title} ${task.repo} ${task.status} ${task.target_agent} ${(task.labels || []).join(" ")}`.toLowerCase();
@@ -254,8 +296,27 @@ export default function DashboardClient({ data, prData, apiUrl, initialToken = "
       (filter === "active" && ["dispatched", "in_progress"].includes(task.status)) ||
       (filter === "done" && task.status === "done") ||
       (lifecycleGates.includes(filter as LifecycleGate) && task.lifecycleGate === filter);
-    return matchesPhase && matchesQuery && matchesFilter;
+    return matchesPhase && matchesQuery && matchesFilter && (!hideChurn || !isChurn(task));
   });
+
+  // Roll up the (filtered) tasks by repo so the view is a handful of collapsible
+  // groups with per-status counts — not an endless flat scroll of every dispatch.
+  const repoGroups = (() => {
+    const map = new Map<string, typeof filteredRows>();
+    for (const task of filteredRows) {
+      const key = task.repo || "(no repo)";
+      const list = map.get(key);
+      if (list) list.push(task);
+      else map.set(key, [task]);
+    }
+    return Array.from(map.entries())
+      .map(([repo, tasks]) => {
+        const counts: Record<string, number> = {};
+        for (const t of tasks) counts[t.status] = (counts[t.status] || 0) + 1;
+        return { repo, tasks, counts };
+      })
+      .sort((a, b) => b.tasks.length - a.tasks.length);
+  })();
 
   const selected = rows.find((task) => task.id === selectedId) || filteredRows[0] || rows[0];
   const budget = data.portal.budget || { daily: 100, unit: "runs", per_agent: { jules: 100 }, track: { date: "", spent: 0, per_agent: {} } };
@@ -305,6 +366,24 @@ export default function DashboardClient({ data, prData, apiUrl, initialToken = "
     }
   }
 
+  const renderRow = (task: (typeof rows)[number]) => (
+    <tr key={task.id} className={selected?.id === task.id ? "activeRow" : ""} onClick={() => setSelectedId(task.id)}>
+      <td className="mono">{task.id}</td>
+      <td>
+        <div className="taskTitle">{task.title}</div>
+        <div className="labels">{(task.labels || []).slice(0, 4).map((label) => <span key={label}>{label}</span>)}</div>
+      </td>
+      <td><a href={task.repo ? `https://github.com/${task.repo}` : "#"} target="_blank" rel="noreferrer">{shortRepo(task.repo)}</a></td>
+      <td><span className="agent">{task.target_agent || "any"}</span></td>
+      <td><span className={`status ${statusColor[task.status] || "slate"}`}>{task.status}</span></td>
+      <td><span className="gatePill">{task.lifecycleGate}</span></td>
+      <td>
+        <div className="progress"><span style={{ width: `${task.progress}%` }} /></div>
+      </td>
+      <td>{formatDate(task.latestEvent?.timestamp || task.updated || task.created)}</td>
+    </tr>
+  );
+
   return (
     <main className="shell">
       <SurfaceNav active="internal" />
@@ -324,12 +403,20 @@ export default function DashboardClient({ data, prData, apiUrl, initialToken = "
       <section className="metrics" aria-label="Pipeline metrics">
         <Metric title="Jules today" value={`${julesToday}/${julesDaily}`} tone={julesToday === 0 ? "red" : "blue"} detail={`${julesPct}% of daily async capacity used`} />
         <Metric title="Run plan" value={throughput ? `${throughput.task_burndown_target_per_day}/day` : "n/a"} tone="blue" detail={throughput ? `${throughput.first_created} to ${throughput.current_date}: ${throughput.age_days} days` : "Creation date unavailable"} />
-        <Metric title="Recorded starts" value={throughput ? `${throughput.recorded_starts}` : "0"} tone={throughput?.recorded_starts ? "amber" : "red"} detail={throughput ? `${throughput.recorded_events} events, ${throughput.unrecorded_capacity_runs} starts not recorded` : "No run ledger"} />
+        <Metric title="Dispatches recorded" value={throughput ? `${throughput.recorded_starts}` : "0"} tone={throughput?.recorded_starts ? "blue" : "red"} detail={throughput ? `${throughput.recorded_events} log events · ${throughput.unrecorded_capacity_runs} capacity slots unused since launch` : "No run ledger"} />
         <Metric title="Queue" value={`${data.summary.total}`} tone="blue" detail={`${active} active, ${data.summary.stale_count} stale`} />
         <Metric title="Completed" value={`${throughput?.done ?? done}`} tone="green" detail={`${throughput?.not_done ?? data.summary.total - done} not done`} />
         <Metric title="PR health" value={`${prData?.summary.total_open_prs || 0}`} tone={prData?.summary.prs_with_failing_ci ? "amber" : "green"} detail={`${prData?.summary.prs_with_failing_ci || 0} with failing CI`} />
         <Metric title="Failures" value={`${failed}`} tone={failed ? "red" : "green"} detail="Failed or blocked task states" />
       </section>
+
+      <VendorCapacity vendors={data.summary.per_vendor || []} dailyTotal={data.summary.daily_total} />
+
+      <IntegrityPanel integrity={data.summary.integrity} />
+
+      <HeartbeatTimeline ticks={data.summary.ticks || []} />
+
+      <SurfacesGrid byRepo={data.summary.by_repo} />
 
       <section className="lifecycleBand" aria-label="Task lifecycle gates">
         {lifecycleGates.map((gate) => (
@@ -350,6 +437,8 @@ export default function DashboardClient({ data, prData, apiUrl, initialToken = "
           ))}
         </div>
         <div className="filters">
+          <button type="button" className={rollup ? "selected" : ""} onClick={() => setRollup((v) => !v)}>{rollup ? "Rolled up" : "Flat list"}</button>
+          <button type="button" className={hideChurn ? "selected" : ""} onClick={() => setHideChurn((v) => !v)} title="cancelled / noop / session-walk reconcile rows">{hideChurn ? `Churn hidden (${churnTotal})` : "Churn shown"}</button>
           <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search task, repo, label" />
           <select value={filter} onChange={(event) => setFilter(event.target.value as FilterKey)}>
             <option value="all">All tasks</option>
@@ -417,23 +506,23 @@ export default function DashboardClient({ data, prData, apiUrl, initialToken = "
               </tr>
             </thead>
             <tbody>
-              {filteredRows.map((task) => (
-                <tr key={task.id} className={selected?.id === task.id ? "activeRow" : ""} onClick={() => setSelectedId(task.id)}>
-                  <td className="mono">{task.id}</td>
-                  <td>
-                    <div className="taskTitle">{task.title}</div>
-                    <div className="labels">{(task.labels || []).slice(0, 4).map((label) => <span key={label}>{label}</span>)}</div>
-                  </td>
-                  <td><a href={task.repo ? `https://github.com/${task.repo}` : "#"} target="_blank" rel="noreferrer">{shortRepo(task.repo)}</a></td>
-                  <td><span className="agent">{task.target_agent || "any"}</span></td>
-                  <td><span className={`status ${statusColor[task.status] || "slate"}`}>{task.status}</span></td>
-                  <td><span className="gatePill">{task.lifecycleGate}</span></td>
-                  <td>
-                    <div className="progress"><span style={{ width: `${task.progress}%` }} /></div>
-                  </td>
-                  <td>{formatDate(task.latestEvent?.timestamp || task.updated || task.created)}</td>
-                </tr>
-              ))}
+              {rollup
+                ? repoGroups.map((group) => (
+                    <React.Fragment key={group.repo}>
+                      <tr className="groupRow" onClick={() => setOpenRepos((open) => ({ ...open, [group.repo]: !open[group.repo] }))}>
+                        <td colSpan={8} style={{ cursor: "pointer", background: "#0f172a" }}>
+                          <span style={{ display: "inline-block", width: 14 }}>{openRepos[group.repo] ? "▾" : "▸"}</span>
+                          <strong>{shortRepo(group.repo)}</strong>
+                          <span style={{ marginLeft: 8, color: "#94a3b8" }}>{group.tasks.length} tasks</span>
+                          {Object.entries(group.counts).sort((a, b) => b[1] - a[1]).map(([s, n]) => (
+                            <span key={s} className={`status ${statusColor[s] || "slate"}`} style={{ marginLeft: 6 }}>{s} {n}</span>
+                          ))}
+                        </td>
+                      </tr>
+                      {openRepos[group.repo] && group.tasks.map((task) => renderRow(task))}
+                    </React.Fragment>
+                  ))
+                : filteredRows.map((task) => renderRow(task))}
             </tbody>
           </table>
         </div>
@@ -492,5 +581,126 @@ function Metric({ title, value, detail, tone }: { title: string; value: string; 
       <strong>{value}</strong>
       <p>{detail}</p>
     </div>
+  );
+}
+
+function VendorCapacity({ vendors, dailyTotal }: { vendors: VendorUsage[]; dailyTotal?: { spent: number; cap: number; date: string | null } }) {
+  if (!vendors.length) return null;
+  const barColor = (pct: number) => (pct >= 90 ? "#e5484d" : pct >= 60 ? "#f5a623" : "#3b82f6");
+  return (
+    <section aria-label="Vendor capacity" style={{ margin: "1rem 0", padding: "1rem 1.25rem", border: "1px solid #2a2f3a", borderRadius: 10, background: "#0f1320" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "0.85rem" }}>
+        <h2 style={{ margin: 0, fontSize: "0.85rem", letterSpacing: "0.06em", textTransform: "uppercase", color: "#cbd5e1" }}>Vendor capacity &amp; refresh</h2>
+        {dailyTotal ? (
+          <span style={{ fontSize: "0.78rem", color: "#94a3b8" }}>
+            daily {dailyTotal.spent}/{dailyTotal.cap} · resets on UTC date-roll{dailyTotal.date ? ` (now ${dailyTotal.date})` : ""}
+          </span>
+        ) : null}
+      </div>
+      <div style={{ display: "grid", gap: "0.55rem" }}>
+        {vendors.map((v) => (
+          <div key={v.agent} style={{ display: "grid", gridTemplateColumns: "8rem 1fr 12rem", alignItems: "center", gap: "0.85rem" }}>
+            <span style={{ fontWeight: 600, color: "#e2e8f0" }}>
+              {v.agent}
+              <span style={{ marginLeft: 6, fontSize: "0.62rem", color: v.kind === "cloud" ? "#a78bfa" : "#34d399" }}>{v.kind}</span>
+            </span>
+            <div style={{ position: "relative", height: 14, background: "#1f2937", borderRadius: 7, overflow: "hidden" }} title={`${v.spent}/${v.cap} used today`}>
+              <div style={{ width: `${Math.max(2, Math.min(100, v.pct))}%`, height: "100%", background: barColor(v.pct) }} />
+            </div>
+            <span style={{ fontSize: "0.76rem", color: "#94a3b8", textAlign: "right" }}>
+              {v.spent}/{v.cap} · {v.remaining} left · {v.open} queued · {v.today_dispatches} today
+            </span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+interface Surface { name: string; repo: string; kind: string; live?: string; status?: string; desc?: string }
+
+function IntegrityPanel({ integrity }: { integrity?: DashboardData["summary"]["integrity"] }) {
+  if (!integrity) return null;
+  const c = integrity.counts || {};
+  const healthy: [string, string][] = [["PR_OPEN", "#34d399"], ["JULES_ASYNC", "#22d3ee"], ["DISPATCHED_RUNNING", "#3b82f6"]];
+  const bad: [string, string][] = [["PR_MERGED", "#f5a623"], ["PR_CLOSED", "#f5a623"], ["PR_MISSING", "#e5484d"], ["DISPATCHED_NO_PR", "#e5484d"]];
+  const actionable = bad.reduce((s, [k]) => s + (c[k] || 0), 0);
+  const chronic = c["CHRONIC"] || 0;
+  return (
+    <section aria-label="Dispatch integrity" style={{ margin: "1rem 0", padding: "1rem 1.25rem", border: "1px solid #2a2f3a", borderRadius: 10, background: "#0f1320" }}>
+      <h2 style={{ margin: "0 0 0.7rem", fontSize: "0.85rem", letterSpacing: "0.06em", textTransform: "uppercase", color: "#cbd5e1" }}>Dispatch integrity · babysit every send</h2>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.9rem", alignItems: "baseline" }}>
+        {healthy.map(([k, col]) => (
+          <span key={k} style={{ color: col, fontSize: "0.82rem" }}>{k.toLowerCase()}: <strong>{c[k] || 0}</strong></span>
+        ))}
+        {actionable === 0 ? (
+          <span style={{ color: "#34d399", fontSize: "0.82rem" }}>✓ no silent failures</span>
+        ) : (
+          bad.filter(([k]) => c[k]).map(([k, col]) => (
+            <span key={k} style={{ color: col, fontSize: "0.82rem" }}>⚠ {k.toLowerCase()}: <strong>{c[k]}</strong></span>
+          ))
+        )}
+      </div>
+      {chronic ? (
+        <div style={{ marginTop: "0.7rem", fontSize: "0.78rem", color: "#a78bfa" }}>
+          ⚑ chronic: <strong>{chronic}</strong> <span style={{ color: "#94a3b8" }}>(reopened ≥3× · never a PR · failing all lanes → escalate, not re-loop)</span>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function SurfacesGrid({ byRepo }: { byRepo: Record<string, number> }) {
+  const [surfaces, setSurfaces] = useState<Surface[]>([]);
+  useEffect(() => {
+    let alive = true;
+    fetch("/surfaces.json")
+      .then((r) => (r.ok ? r.json() : { surfaces: [] }))
+      .then((d) => { if (alive) setSurfaces(d.surfaces || []); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  if (!surfaces.length) return null;
+  return (
+    <section aria-label="Surfaces" style={{ margin: "1rem 0", padding: "1rem 1.25rem", border: "1px solid #2a2f3a", borderRadius: 10, background: "#0f1320" }}>
+      <h2 style={{ margin: "0 0 0.85rem", fontSize: "0.85rem", letterSpacing: "0.06em", textTransform: "uppercase", color: "#cbd5e1" }}>Surfaces — backend &amp; frontend</h2>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(15rem, 1fr))", gap: "0.75rem" }}>
+        {surfaces.map((s) => {
+          const tasks = byRepo?.[s.repo] || 0;
+          const href = s.live || `https://github.com/${s.repo}`;
+          return (
+            <a key={s.repo} href={href} target="_blank" rel="noreferrer" style={{ display: "block", padding: "0.75rem 0.9rem", border: "1px solid #2a2f3a", borderRadius: 8, background: "#141a2b", textDecoration: "none", color: "#e2e8f0" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                <strong style={{ fontSize: "0.85rem" }}>{s.name}</strong>
+                <span style={{ fontSize: "0.6rem", color: s.status === "lost" ? "#e5484d" : s.kind === "frontend" ? "#60a5fa" : "#34d399" }}>{s.status === "lost" ? "lost" : s.kind}</span>
+              </div>
+              <p style={{ margin: "0.3rem 0 0", fontSize: "0.72rem", color: "#94a3b8" }}>{s.desc}</p>
+              <p style={{ margin: "0.4rem 0 0", fontSize: "0.68rem", color: "#64748b" }}>{s.repo} · {tasks} task{tasks === 1 ? "" : "s"}{s.live ? " · live" : ""}</p>
+            </a>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function HeartbeatTimeline({ ticks }: { ticks: HeartbeatTick[] }) {
+  if (!ticks.length) return null;
+  const last = ticks[ticks.length - 1];
+  const max = Math.max(1, ...ticks.map((t) => t.dispatched + t.done));
+  return (
+    <section aria-label="Heartbeat" style={{ margin: "1rem 0", padding: "1rem 1.25rem", border: "1px solid #2a2f3a", borderRadius: 10, background: "#0f1320" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "0.85rem" }}>
+        <h2 style={{ margin: 0, fontSize: "0.85rem", letterSpacing: "0.06em", textTransform: "uppercase", color: "#cbd5e1" }}>Heartbeat — autonomic loop</h2>
+        <span style={{ fontSize: "0.78rem", color: "#94a3b8" }}>{ticks.length} ticks · last {formatDate(last.ts)} · spent {last.daily_spent}/{last.daily_cap}</span>
+      </div>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 48 }}>
+        {ticks.map((t, i) => {
+          const h = Math.max(3, Math.round(((t.dispatched + t.done) / max) * 46));
+          return <div key={i} title={`${t.ts} — ${t.total} tasks, ${t.open} open, ${t.dispatched} dispatched`} style={{ width: 6, height: h, background: t.failed ? "#e5484d" : "#3b82f6", borderRadius: 2 }} />;
+        })}
+      </div>
+      <p style={{ margin: "0.5rem 0 0", fontSize: "0.72rem", color: "#64748b" }}>{last.total} tasks · {last.open} open · {last.done} done · {last.failed} failed (latest tick)</p>
+    </section>
   );
 }

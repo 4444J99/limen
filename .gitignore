@@ -32,3 +32,11 @@ container/backup/
 container/state/
 *.premigrate
 .limen.env
+MASTER-PLAN.md
+# git worktree dirs (isolation checkouts — never tracked)
+.worktrees/
+.claude/worktrees/
+# nested vendored clones (their own repos — archived independently)
+domus-genoma/
+# build artifacts
+*.tsbuildinfo

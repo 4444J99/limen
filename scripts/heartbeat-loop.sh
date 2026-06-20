@@ -27,6 +27,7 @@ export LIMEN_ISOLATION="${LIMEN_ISOLATION:-worktree}"
 export GEMINI_CLI_TRUST_WORKSPACE="${GEMINI_CLI_TRUST_WORKSPACE:-true}"
 export PYTHONPATH="$LIMEN_ROOT/cli/src"
 cd "$LIMEN_ROOT" || exit 1
+
 [ -f "$HOME/.limen.env" ] && { set -a; . "$HOME/.limen.env"; set +a; }
 # opencode runs on a Google model → it needs the Google generative-AI key (reuse gemini's)
 [ -n "${GEMINI_API_KEY:-}" ] && export GOOGLE_GENERATIVE_AI_API_KEY="${GOOGLE_GENERATIVE_AI_API_KEY:-$GEMINI_API_KEY}"
@@ -50,12 +51,20 @@ if ! mkdir "$DAEMON_DIR" 2>/dev/null; then
   mkdir "$DAEMON_DIR" 2>/dev/null || { echo "lost stale-lock takeover race — exiting"; exit 0; }
 fi
 echo $$ > "$DAEMON_LOCK"
+echo $$ > "$LIMEN_ROOT/logs/heartbeat-loop.pid"
 
 LANES="${LIMEN_LANES:-codex,opencode,agy,claude}"
 [ -n "${GEMINI_API_KEY:-}" ] && LANES="$LANES,gemini"
 # per-lane tasks PER BEAT kept low so no single lane hogs a beat — lanes rotate fast
 # (the safe throughput fix; real braking is the rate-limit detector in dispatch.py).
 LOCAL_LIMIT="${LIMEN_LOCAL_LIMIT:-3}"; JULES_LIMIT="${LIMEN_JULES_LIMIT:-100}"
+case "$LOCAL_LIMIT" in
+  ''|*[!0-9]*) LOCAL_LIMIT=3 ;;
+esac
+if [ "$LOCAL_LIMIT" -gt 3 ] && [ "${LIMEN_ALLOW_HIGH_LOCAL_LIMIT:-0}" != "1" ]; then
+  echo "  local limit capped: requested $LOCAL_LIMIT -> 3 (set LIMEN_ALLOW_HIGH_LOCAL_LIMIT=1 to override)"
+  LOCAL_LIMIT=3
+fi
 
 # base tempo (adaptive) + voice subdivisions (configurable)
 MIN="${LIMEN_LOOP_MIN:-120}"; MAX="${LIMEN_LOOP_MAX:-1800}"; beat="$MIN"
@@ -69,7 +78,28 @@ C_WEB="${LIMEN_BEAT_WEB:-4}"           # LEARN (refresh the visualized surfaces)
 LOCKD="$LIMEN_ROOT/logs/.queue.lock.d"   # shared with supervisory ops (two-scale safety)
 c=0
 play() { [ $(( c % $1 )) -eq 0 ]; }   # true on this voice's beat
-trap 'rmdir "$LOCKD" 2>/dev/null || true; rm -f "$DAEMON_LOCK" 2>/dev/null; rmdir "$DAEMON_DIR" 2>/dev/null || true' EXIT
+healthy_lanes() {
+  python3 - "$1" <<'PY'
+import sys
+from limen.dispatch import _down_lanes
+
+down = _down_lanes()
+seen = []
+for lane in sys.argv[1].split(","):
+    lane = lane.strip()
+    if lane and lane not in down and lane not in seen:
+        seen.append(lane)
+print(",".join(seen))
+PY
+}
+cleanup() {
+  rmdir "$LOCKD" 2>/dev/null || true
+  if [ "$(cat "$DAEMON_LOCK" 2>/dev/null)" = "$$" ]; then
+    rm -f "$DAEMON_LOCK" "$LIMEN_ROOT/logs/heartbeat-loop.pid" 2>/dev/null
+    rmdir "$DAEMON_DIR" 2>/dev/null || true
+  fi
+}
+trap cleanup EXIT
 
 echo "═══ heartbeat-loop start $(date '+%F %T') tempo=${MIN}-${MAX}s lanes=$LANES ═══"
 # ensure the web dashboard is served from the start
@@ -83,6 +113,26 @@ while true; do
   c=$(( c + 1 ))
   worked=0
   echo "──── beat $c $(date '+%F %T') ────"
+  MODE="$(python3 "$LIMEN_ROOT/scripts/autonomy-governor.py" mode 2>/dev/null || echo paused)"
+  if [ "$MODE" = "paused" ]; then
+    echo "autonomy paused by governor — exiting"
+    exit 0
+  fi
+  python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" 2>&1 | tail -1 || true   # refresh lane health BEFORE route/dispatch
+  EFFECTIVE_LANES="$(healthy_lanes "$LANES")"
+  if [ "$EFFECTIVE_LANES" != "$LANES" ]; then
+    echo "  lanes: ${EFFECTIVE_LANES:-none} active from requested [$LANES]"
+  fi
+
+  if [ "$MODE" != "dispatch" ]; then
+    echo "autonomy mode=$MODE — telemetry/status only; queue mutation and dispatch skipped"
+    python3 "$LIMEN_ROOT/scripts/emit-tick.py" 2>&1 | tail -1 || true
+    play "$C_WEB" && bash "$LIMEN_ROOT/scripts/refresh-web.sh" 2>&1 | tail -2 || true
+    beat="$MAX"
+    echo "── tempo: observe → ${beat}s ──"
+    sleep "$beat"
+    continue
+  fi
 
   # acquire the shared queue lock so the BODY never races a SUPERVISOR write to
   # tasks.yaml (two-scale safety). If a supervisor holds it, skip queue-mutation this
@@ -97,7 +147,11 @@ while true; do
     play "$C_FEED"    && { python3 "$LIMEN_ROOT/scripts/mine-backlog.py" --limit "${LIMEN_MINE_LIMIT:-25}" --apply 2>&1 | tail -1 || true  # EXPLORE
                            python3 "$LIMEN_ROOT/scripts/generate-backlog.py" --apply 2>&1 | tail -1 || true; }  # SELF-FEED: top queue to floor when mining is dry → never idle
     play "$C_BALANCE" && { python3 "$LIMEN_ROOT/scripts/route.py" --apply 2>&1 | tail -1 || true   # PLAN
-                           python3 "$LIMEN_ROOT/scripts/rebalance.py" --lanes "$LANES" --apply 2>&1 | tail -1 || true; }
+                           if [ -n "$EFFECTIVE_LANES" ]; then
+                             python3 "$LIMEN_ROOT/scripts/rebalance.py" --lanes "$EFFECTIVE_LANES" --apply 2>&1 | tail -1 || true
+                           else
+                             echo "no live local lanes available for rebalance"
+                           fi; }
 
     # #11: RELEASE the queue-lock BEFORE the slow dispatch so supervisors (seed / heal / verify)
     # aren't starved through the multi-minute run. dispatch-parallel.py now self-acquires the
@@ -110,10 +164,10 @@ while true; do
     # finished runs → fast beats, a slow agent never gates the beat (the throughput 10x). Async is
     # OFF by default; flip the env + restart between beats to enable. See dispatch-async.py.
     if [ "${LIMEN_DISPATCH_ASYNC:-0}" = "1" ]; then
-      out="$(python3 "$LIMEN_ROOT/scripts/dispatch-async.py" --lanes "$LANES,jules" \
+      out="$(python3 "$LIMEN_ROOT/scripts/dispatch-async.py" --lanes "$EFFECTIVE_LANES,jules" \
               --per-lane "$LOCAL_LIMIT" --max "${LIMEN_ASYNC_MAX:-12}" 2>&1)"
     else
-      out="$(python3 "$LIMEN_ROOT/scripts/dispatch-parallel.py" --lanes "$LANES,jules" \
+      out="$(python3 "$LIMEN_ROOT/scripts/dispatch-parallel.py" --lanes "$EFFECTIVE_LANES,jules" \
               --per-lane "$LOCAL_LIMIT" --workers "${LIMEN_WORKERS:-8}" 2>&1)"
     fi
     echo "$out" | tail -8
