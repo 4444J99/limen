@@ -16,15 +16,23 @@ def _write_usage(root, vendors):
     (logs / "usage.json").write_text(json.dumps({"generated": "t", "vendors": vendors}))
 
 
-def test_usage_dead_lanes_flags_exhausted_and_ratelimited(tmp_path, monkeypatch):
+def test_usage_dead_lanes_flags_exhausted_ratelimited_and_reserve(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     _write_usage(tmp_path, {
         "codex": {"health": "exhausted"},
         "gemini": {"health": "rate-limited"},
+        "jules": {"health": "low"},        # at/below reserve -> STOP before 0 (paced-out)
+        "opencode": {"health": "throttle"},  # still has runway -> stays UP (steer signal only)
         "claude": {"health": "ok"},
-        "agy": {"health": "low"},  # low still has headroom -> NOT dead (keep working until spent)
     })
-    assert _usage_dead_lanes() == {"codex", "gemini"}
+    assert _usage_dead_lanes() == {"codex", "gemini", "jules"}
+
+
+def test_throttle_lane_stays_up(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_usage(tmp_path, {"codex": {"health": "throttle"}, "claude": {"health": "ok"}})
+    assert _usage_dead_lanes() == set()
+    assert _down_lanes() == set()
 
 
 def test_down_lanes_unions_manual_file_and_live_meter(tmp_path, monkeypatch):
@@ -34,10 +42,10 @@ def test_down_lanes_unions_manual_file_and_live_meter(tmp_path, monkeypatch):
     assert _down_lanes() == {"codex", "agy"}
 
 
-def test_low_and_ok_lanes_stay_up(tmp_path, monkeypatch):
+def test_reserve_low_lane_is_down_ok_stays_up(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     _write_usage(tmp_path, {"codex": {"health": "ok"}, "claude": {"health": "low"}})
-    assert _down_lanes() == set()
+    assert _down_lanes() == {"claude"}
 
 
 def test_missing_usage_json_is_safe(tmp_path, monkeypatch):

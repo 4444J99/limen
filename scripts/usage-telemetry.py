@@ -48,12 +48,20 @@ _DEFAULT_LIMITS = {
 }
 
 
+# Hold back this % of every cap so a live lane is paced-OUT before it hits 0 — the
+# "never run out" reserve. Override via env LIMEN_RESERVE_PCT or a top-level
+# "reserve_pct" key in logs/usage-limits.json.
+_DEFAULT_RESERVE_PCT = 15.0
+
+
 def load_limits():
     path = ROOT / "logs" / "usage-limits.json"
     limits = {k: dict(v) for k, v in _DEFAULT_LIMITS.items()}
     if path.exists():
         try:
             for k, v in json.loads(path.read_text()).items():
+                if not isinstance(v, dict):  # e.g. top-level "reserve_pct": 15 → not a vendor
+                    continue
                 limits.setdefault(k, {}).update(v)
         except Exception:
             pass
@@ -68,6 +76,38 @@ def load_limits():
         if env and env.isdigit():
             limits[k]["limit"] = int(env)
     return limits
+
+
+def load_reserve_pct():
+    """The fraction of every cap to hold in reserve. env LIMEN_RESERVE_PCT wins, then a
+    top-level "reserve_pct" in logs/usage-limits.json, else the default."""
+    env = os.environ.get("LIMEN_RESERVE_PCT")
+    if env:
+        try:
+            return float(env)
+        except ValueError:
+            pass
+    path = ROOT / "logs" / "usage-limits.json"
+    if path.exists():
+        try:
+            v = json.loads(path.read_text()).get("reserve_pct")
+            if v is not None:
+                return float(v)
+        except Exception:
+            pass
+    return _DEFAULT_RESERVE_PCT
+
+
+def _window_hours(window: str) -> float:
+    """Refresh-window length in hours, parsed from the human label telemetry already carries:
+    "5h"/"5h rolling" → 5, "24h"/"rolling 24h" → 24, "today" → hours left in the UTC day."""
+    if window:
+        m = re.search(r"(\d+)\s*h", window)
+        if m:
+            return float(m.group(1))
+        if "today" in window:
+            return max(1.0, 24 - NOW.hour - NOW.minute / 60)
+    return 24.0
 
 
 def load_tasks_data():
@@ -185,7 +225,10 @@ def main():
                       "consumed": dc.get(v, 0), "unit": "runs",
                       "note": "no readable meter — dispatch count + rate-limit watch"}
 
-    # attach the "amount POSSIBLE" → headroom for every vendor
+    # attach the "amount POSSIBLE" → headroom + the refresh-window PACING math for every vendor.
+    # The split decision: never run a live lane to 0. Burning faster than safe_rate_per_h
+    # (cap / window) will exhaust the window; staying at-or-below it self-refreshes forever.
+    reserve_pct = load_reserve_pct()
     for name, v in vendors.items():
         lim = limits.get(name, {})
         possible = lim.get("limit")
@@ -195,11 +238,25 @@ def main():
             remaining = max(0, possible - v["consumed"])
             v["remaining"] = remaining
             v["headroom_pct"] = round(remaining / possible * 100)
+            wh = _window_hours(lim.get("window") or v.get("window", ""))
+            burn = round(v["consumed"] / wh) if wh else 0       # consumed-per-hour, in-window
+            safe = round(possible / wh) if wh else 0            # cap-per-hour = steady-state ceiling
+            v["window_hours"] = round(wh, 2)
+            v["reserve_pct"] = reserve_pct
+            v["burn_rate_per_h"] = burn
+            v["safe_rate_per_h"] = safe
+            v["runway_h"] = round(remaining / burn, 1) if burn > 0 else None  # hrs to 0 at this pace
             pre_health = v.get("health")
-            v["health"] = ("rate-limited" if rl.get(name) or pre_health == "rate-limited"
-                           else "exhausted" if remaining <= 0
-                           else "low" if v["headroom_pct"] <= 10
-                           else "ok")
+            if rl.get(name) or pre_health == "rate-limited":
+                v["health"] = "rate-limited"
+            elif remaining <= 0:
+                v["health"] = "exhausted"
+            elif v["headroom_pct"] <= reserve_pct:
+                v["health"] = "low"        # at/below reserve → stop with fuel still in the tank
+            elif v["headroom_pct"] <= 2 * reserve_pct or burn > safe:
+                v["health"] = "throttle"   # still has runway, but pace down / steer work away
+            else:
+                v["health"] = "ok"
         else:
             v.setdefault("health", "rate-limited" if rl.get(name) else "ok")
 

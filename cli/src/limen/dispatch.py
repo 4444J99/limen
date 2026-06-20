@@ -45,17 +45,18 @@ def _queue_lock(tasks_path: Path, timeout: int = 90):
 
 def _usage_dead_lanes() -> set[str]:
     """Lanes the LIVE usage meter (logs/usage.json, written by usage-telemetry.py) reports as
-    having no real usage left — token-`exhausted` or `rate-limited`. DERIVED from the live signal,
-    never pinned: a lane auto-rejoins the instant its rolling window refills (no manual edit). This
-    is what makes dispatch HONEST — we never assign a task to a lane that physically cannot produce
-    (e.g. codex after it burns its 5h token budget, gemini while the free tier is rate-limited)."""
+    out of safe usage — token-`exhausted`, `rate-limited`, or `low` (at/below the pacing reserve,
+    so we stop BEFORE 0). `throttle` lanes stay UP — they still have runway; it's a steering
+    signal for the split, not a stop. DERIVED from the live signal, never pinned: a lane auto-rejoins
+    the instant its rolling window refills (no manual edit). This is what makes dispatch HONEST —
+    we never assign a task to a lane that physically cannot produce, and we never burn one to 0."""
     f = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen"))) / "logs" / "usage.json"
     try:
         vendors = (json.loads(f.read_text()) or {}).get("vendors", {})
     except (OSError, ValueError):
         return set()
     return {name for name, info in vendors.items()
-            if isinstance(info, dict) and info.get("health") in ("exhausted", "rate-limited")}
+            if isinstance(info, dict) and info.get("health") in ("exhausted", "rate-limited", "low")}
 
 
 def _down_lanes() -> set[str]:
