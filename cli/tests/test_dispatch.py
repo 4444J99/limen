@@ -24,7 +24,7 @@ def write_board(path: Path, tasks: list[dict]) -> None:
                     "budget": {
                         "daily": 100,
                         "unit": "runs",
-                        "per_agent": {"jules": 100, "codex": 2},
+                        "per_agent": {"jules": 100, "codex": 2, "external": 2},
                         "track": {"date": "", "spent": 0, "per_agent": {}},
                     },
                 },
@@ -111,9 +111,9 @@ def test_dispatch_limit_and_per_agent_budget(tmp_path: Path, monkeypatch) -> Non
         [
             {
                 "id": "LIMEN-003",
-                "title": "Open Codex task one",
+                "title": "Open external task one",
                 "repo": "4444J99/limen",
-                "target_agent": "codex",
+                "target_agent": "external",
                 "priority": "critical",
                 "budget_cost": 1,
                 "status": "open",
@@ -122,9 +122,9 @@ def test_dispatch_limit_and_per_agent_budget(tmp_path: Path, monkeypatch) -> Non
             },
             {
                 "id": "LIMEN-004",
-                "title": "Open Codex task two",
+                "title": "Open external task two",
                 "repo": "4444J99/limen",
-                "target_agent": "codex",
+                "target_agent": "external",
                 "priority": "critical",
                 "budget_cost": 1,
                 "status": "open",
@@ -133,9 +133,9 @@ def test_dispatch_limit_and_per_agent_budget(tmp_path: Path, monkeypatch) -> Non
             },
             {
                 "id": "LIMEN-005",
-                "title": "Open Codex task three",
+                "title": "Open external task three",
                 "repo": "4444J99/limen",
-                "target_agent": "codex",
+                "target_agent": "external",
                 "priority": "critical",
                 "budget_cost": 1,
                 "status": "open",
@@ -145,12 +145,12 @@ def test_dispatch_limit_and_per_agent_budget(tmp_path: Path, monkeypatch) -> Non
         ],
     )
 
-    dispatch_tasks(load_limen_file(tasks_path), tasks_path, agent="codex", dry_run=False, limit=3)
+    dispatch_tasks(load_limen_file(tasks_path), tasks_path, agent="external", dry_run=False, limit=3)
 
     board = read_board(tasks_path)
     statuses = {task["id"]: task["status"] for task in board["tasks"]}
     assert statuses == {"LIMEN-003": "dispatched", "LIMEN-004": "dispatched", "LIMEN-005": "open"}
-    assert board["portal"]["budget"]["track"]["per_agent"]["codex"] == 2
+    assert board["portal"]["budget"]["track"]["per_agent"]["external"] == 2
 
 
 def test_status_prints_creation_age_and_recorded_throughput(tmp_path: Path, capsys) -> None:
