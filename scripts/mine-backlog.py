@@ -30,13 +30,11 @@ import sys
 from datetime import date
 from pathlib import Path
 
-DEFAULT_OWNERS = [
-    "4444J99",  # personal account -> user: qualifier
-    "a-organvm", "meta-organvm",
-    "organvm-i-theoria", "organvm-ii-poiesis", "organvm-iii-ergon",
-    "organvm-iv-taxis", "organvm-v-logos", "organvm-vi-koinonia",
-    "organvm-vii-kerygma",
-]
+# Post-move: the per-aspect orgs (a-organvm, organvm-i..vii, meta-organvm) were
+# consolidated into the single `organvm` org. Personal account stays separate
+# (uses the user: qualifier). Override with --owners or $LIMEN_OWNERS.
+DEFAULT_OWNERS = [o.strip() for o in os.environ.get(
+    "LIMEN_OWNERS", "4444J99,organvm").split(",") if o.strip()]
 DEFAULT_EXCLUDE = ["park", "blocked", "wip", "duplicate", "invalid", "wontfix"]
 _PERSONAL = {"4444J99"}
 

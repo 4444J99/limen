@@ -28,7 +28,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.io import atomic_write_text
 
 TASKS_FILE = Path(__file__).resolve().parent.parent / "tasks.yaml"
-ORGS = ["a-organvm", "organvm-i-theoria"]
+# Post-move: all repos were consolidated into the single `organvm` org (was
+# a-organvm + organvm-i..vii + meta-organvm, now emptied). Derive from env so a
+# future re-home is a config change, not a code edit.
+ORGS = [o.strip() for o in os.environ.get("LIMEN_ORGS", "organvm").split(",") if o.strip()]
 DEFAULT_DEPTH = 100
 
 

@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import secrets
@@ -42,16 +43,36 @@ def _queue_lock(tasks_path: Path, timeout: int = 90):
             except OSError:
                 pass
 
-def _down_lanes() -> set[str]:
-    """Lanes currently DOWN/unproductive — derived from logs/lanes-down.txt (one lane per line,
-    '#' comments ok), NOT pinned in code. Rebalance + dispatch skip these so tasks aren't wasted
-    on a lane that can't produce (e.g. gemini ratelimited to 0 PRs on the free tier, agy bin
-    missing). Remove a line when the lane is healthy again (e.g. a paid GEMINI_API_KEY)."""
-    f = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen"))) / "logs" / "lanes-down.txt"
+def _usage_dead_lanes() -> set[str]:
+    """Lanes the LIVE usage meter (logs/usage.json, written by usage-telemetry.py) reports as
+    having no real usage left — token-`exhausted` or `rate-limited`. DERIVED from the live signal,
+    never pinned: a lane auto-rejoins the instant its rolling window refills (no manual edit). This
+    is what makes dispatch HONEST — we never assign a task to a lane that physically cannot produce
+    (e.g. codex after it burns its 5h token budget, gemini while the free tier is rate-limited)."""
+    f = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen"))) / "logs" / "usage.json"
     try:
-        return {ln.split("#")[0].strip() for ln in f.read_text().splitlines() if ln.split("#")[0].strip()}
-    except OSError:
+        vendors = (json.loads(f.read_text()) or {}).get("vendors", {})
+    except (OSError, ValueError):
         return set()
+    return {name for name, info in vendors.items()
+            if isinstance(info, dict) and info.get("health") in ("exhausted", "rate-limited")}
+
+
+def _down_lanes() -> set[str]:
+    """Lanes currently DOWN/unproductive. Two sources, unioned:
+      1. logs/lanes-down.txt — a manual override file (one lane per line, '#' comments ok) for
+         lanes a human knows are dead (e.g. agy bin missing); NOT pinned in code.
+      2. the LIVE usage meter (_usage_dead_lanes) — lanes token-exhausted or rate-limited RIGHT NOW.
+    Rebalance + dispatch + route skip these so tasks aren't wasted on a lane that can't produce.
+    Source 2 self-heals (a lane rejoins when its window refills); remove a line from source 1 when
+    that lane is healthy again (e.g. a paid GEMINI_API_KEY)."""
+    f = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen"))) / "logs" / "lanes-down.txt"
+    manual: set[str] = set()
+    try:
+        manual = {ln.split("#")[0].strip() for ln in f.read_text().splitlines() if ln.split("#")[0].strip()}
+    except OSError:
+        pass
+    return manual | _usage_dead_lanes()
 
 
 def _run_capture(cmd, cwd=None, timeout=600, env=None):
@@ -342,6 +363,40 @@ def _resolve_repo_dir(task: Task) -> Path | None:
     return matches[0] if matches else None
 
 
+def _clone_repo(task: Task) -> Path | None:
+    """Clone task.repo locally when no checkout exists yet, so local lanes can
+    work it instead of bleeding to the scarce cloud lane.
+
+    Post-consolidation many repos (org scaffolding: --superproject, .github.io,
+    org-dotgithub, _agent, …) live in the `organvm` org but were never cloned —
+    _resolve_repo_dir correctly returns None for them. We clone on demand into
+    $LIMEN_WORKDIR/<owner>/<name> using gh's auth (handles private repos), then
+    the next _resolve_repo_dir finds it. Serialized on the git-plumbing lock so
+    two same-repo dispatches don't race the same clone. Returns the dir or None.
+    """
+    if not task.repo or "/" not in task.repo:
+        return None
+    ws = Path(os.environ.get("LIMEN_WORKDIR", Path.home() / "Workspace"))
+    dest = ws / task.repo  # ws/<owner>/<name>
+    with _GIT_PLUMBING_LOCK:
+        if (dest / ".git").exists():  # a concurrent dispatch already cloned it
+            return dest
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            r = subprocess.run(
+                ["gh", "repo", "clone", task.repo, str(dest)],
+                capture_output=True, text=True, timeout=600,
+            )
+        except Exception as e:
+            print(f"  clone {task.repo} errored: {e}")
+            return None
+    if (dest / ".git").exists():
+        print(f"  cloned {task.repo} → {dest}")
+        return dest
+    print(f"  clone {task.repo} failed: {r.stderr.strip()[:200]}")
+    return None
+
+
 # ── Isolation: every local agent works like Jules — in its own throwaway git
 # worktree off origin/<default>, on a fresh branch, producing a reviewable PR.
 # It NEVER touches the user's live working copy or current branch (only the
@@ -423,12 +478,14 @@ def _bridge_agy_scratch(task: Task, wt: Path) -> None:
 def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
     binary = os.environ.get(f"LIMEN_{agent.upper()}_BIN", _LOCAL_BIN.get(agent, agent))
     repo_dir = _resolve_repo_dir(task)
+    if repo_dir is None and not dry_run:
+        repo_dir = _clone_repo(task)  # post-move: clone on demand so local lanes can work it
     if repo_dir is None:
         msg = f"no local checkout of {task.repo or '(no repo)'}"
         if dry_run:
-            print(f"  would [{msg}; clone first]: isolate→{binary}→PR")
+            print(f"  would [{msg}; clone-on-demand then isolate]: →{binary}→PR")
             return True
-        print(f"  SKIP {task.id}: {msg} — clone it under $LIMEN_WORKDIR first")
+        print(f"  SKIP {task.id}: {msg} — clone-on-demand failed")
         return False
 
     base = _default_branch(repo_dir)
@@ -640,6 +697,11 @@ def dispatch_tasks(
     track = limen.portal.budget.track
 
     agent_filter = agent or resolve_agent()
+    down = _down_lanes()
+    if agent_filter in down:
+        print(f"Lane '{agent_filter}' is down by live usage/health gate; skipping dispatch")
+        return
+
     remaining = _remaining_budget(limen, agent_filter, budget)
     if remaining <= 0:
         print(
