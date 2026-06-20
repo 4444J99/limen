@@ -130,16 +130,39 @@ def _truthy(value: str | None) -> bool:
 
 def _copilot_assignable(binary: str, repo: str, actor: str) -> bool:
     try:
+        import json
+        owner, name = repo.split("/", 1)
+        query = """
+        query($owner: String!, $name: String!, $actor: String!) {
+          repository(owner: $owner, name: $name) {
+            suggestedActors(query: $actor, capabilities: [CAN_BE_ASSIGNED], first: 10) {
+              nodes { login }
+            }
+          }
+        }
+        """
         result = subprocess.run(
-            [binary, "api", "--silent", f"repos/{repo}/assignees/{actor}"],
+            [
+                binary, "api", "graphql", "--silent",
+                "-f", f"query={query}",
+                "-F", f"owner={owner}",
+                "-F", f"name={name}",
+                "-F", f"actor={actor}",
+            ],
             capture_output=True,
             text=True,
             timeout=10,
             stdin=subprocess.DEVNULL,
         )
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        return False
-    return result.returncode == 0
+        if result.returncode == 0:
+            data = json.loads(result.stdout)
+            nodes = data.get("data", {}).get("repository", {}).get("suggestedActors", {}).get("nodes", [])
+            for n in nodes:
+                if n.get("login", "").lower() == actor.lower():
+                    return True
+    except (FileNotFoundError, subprocess.TimeoutExpired, Exception):
+        pass
+    return False
 
 
 def agent_status(agent: str) -> dict[str, Any]:

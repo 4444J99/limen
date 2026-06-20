@@ -110,15 +110,54 @@ def _call_copilot(task: Task, dry_run: bool) -> bool | str:
     repo, issue = ref
     gh = os.environ.get("LIMEN_COPILOT_BIN", "gh")
     actor = os.environ.get("LIMEN_COPILOT_ACTOR", "copilot-swe-agent")
+
+    if dry_run:
+        print(f"  would: {gh} api graphql (fetch node IDs + replaceActorsForAssignable for {actor} on {repo}#{issue})")
+        return True
+
+    owner, name = repo.split("/", 1)
+    query = """
+    query($owner: String!, $name: String!, $number: Int!, $actor: String!) {
+      repository(owner: $owner, name: $name) { issue(number: $number) { id } }
+      user(login: $actor) { id }
+    }
+    """
+    import json
+    import subprocess
+    q_cmd = [
+        gh, "api", "graphql",
+        "-f", f"query={query}",
+        "-F", f"owner={owner}",
+        "-F", f"name={name}",
+        "-F", f"number={issue}",
+        "-F", f"actor={actor}",
+    ]
+    r = subprocess.run(q_cmd, capture_output=True, text=True, timeout=30)
+    if r.returncode != 0:
+        print(f"  FAILED copilot query {task.id}: {r.stderr.strip()}")
+        return False
+
+    try:
+        data = json.loads(r.stdout)["data"]
+        issue_id = data["repository"]["issue"]["id"]
+        actor_id = data["user"]["id"]
+    except Exception as e:
+        print(f"  FAILED copilot parse {task.id}: {e}")
+        return False
+
+    mut = """
+    mutation($issue: ID!, $actor: ID!) {
+      replaceActorsForAssignable(input: { assignableId: $issue, actorIds: [$actor] }) {
+        assignable { id }
+      }
+    }
+    """
     cmd = [
-        gh,
-        "issue",
-        "edit",
-        issue,
-        "--repo",
-        repo,
-        "--add-assignee",
-        actor,
+        gh, "api", "graphql",
+        "-H", "GraphQL-Features: issues_copilot_assignment_api_support",
+        "-f", f"query={mut}",
+        "-f", f"issue={issue_id}",
+        "-f", f"actor={actor_id}",
     ]
     result = _run_cmd(cmd, task, dry_run)
     if result is True and not dry_run:
