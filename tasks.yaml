@@ -15,13 +15,13 @@ portal:
       claude: 100
     track:
       date: '2026-06-20'
-      spent: 92
+      spent: 114
       per_agent:
-        jules: 60
+        jules: 69
         gemini: 0
-        codex: 9
-        opencode: 6
-        agy: 17
+        codex: 18
+        opencode: 7
+        agy: 20
         claude: 0
       per_agent_reset:
         jules: '2026-06-19T23:05:08.666818+00:00'
@@ -9126,6 +9126,10 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 3h
+  - timestamp: '2026-06-20T07:56:16.958491Z'
+    agent: jules
+    session_id: '17860140775784713135'
+    status: dispatched
 - id: GH-4444j99-session-meta-53
   title: 'Session walk: we-need-to-reach-out-to (30249e53)'
   repo: 4444J99/session-meta
@@ -10793,7 +10797,7 @@ tasks:
     7 to 8.'
   depends_on: []
   created: '2026-06-17'
-  updated: '2026-06-20T05:11:18.938106Z'
+  updated: '2026-06-20T08:29:35.719884Z'
   dispatch_log:
   - timestamp: '2026-06-18T03:15:59.859981Z'
     agent: jules
@@ -10839,6 +10843,15 @@ tasks:
   - timestamp: '2026-06-20T05:11:18.938106Z'
     agent: jules
     session_id: '3015848917250203416'
+    status: dispatched
+  - timestamp: '2026-06-20T08:12:27.407368Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 3h
+  - timestamp: '2026-06-20T08:29:35.719884Z'
+    agent: jules
+    session_id: '6114489731013740480'
     status: dispatched
 - id: GH-organvm-i-theoria-github-452
   title: "\U0001F4C5 Staggered Walkthrough Schedule - Week of 2026-06-15"
@@ -13974,7 +13987,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels: []
   urls:
   - https://github.com/organvm-iv-taxis/organvm-iv-taxis.github.io/issues/1
@@ -13987,7 +14000,7 @@ tasks:
     \ outs"
   depends_on: []
   created: '2026-06-18'
-  updated: '2026-06-20T07:10:31.554757Z'
+  updated: '2026-06-20T08:29:35.719884Z'
   dispatch_log:
   - timestamp: '2026-06-18T17:35:18.322771Z'
     agent: jules
@@ -14012,6 +14025,10 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 3h
+  - timestamp: '2026-06-20T08:29:35.719884Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GH-organvm-v-logos-organvm-v-logos-superproject-6
   title: 'ACTIVATION AUDIT: kill'
   repo: organvm-v-logos/organvm-v-logos--superproject
@@ -14019,7 +14036,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - activation-audit
   - kill
@@ -14032,7 +14049,7 @@ tasks:
     \ **Shipped-test result:** FAIL \u2014 no path passes. Homepage Pages URL (`https://organvm-v-logos.github.io/organvm-v-logos--superproject/`"
   depends_on: []
   created: '2026-06-18'
-  updated: '2026-06-20T07:10:31.554757Z'
+  updated: '2026-06-20T08:29:35.719884Z'
   dispatch_log:
   - timestamp: '2026-06-18T18:14:18.222517Z'
     agent: jules
@@ -14057,6 +14074,10 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 3h
+  - timestamp: '2026-06-20T08:29:35.719884Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GH-organvm-v-logos-organvm-v-logos-github-io-1
   title: "EV Activation Audit: ship-now \u2014 org landing page live (HTTP 200)"
   repo: organvm-v-logos/organvm-v-logos.github.io
@@ -14064,7 +14085,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels: []
   urls:
   - https://github.com/organvm-v-logos/organvm-v-logos.github.io/issues/1
@@ -14076,7 +14097,7 @@ tasks:
     \ the org. Same navigability gap as organvm-iv-taxis.github.io"
   depends_on: []
   created: '2026-06-18'
-  updated: '2026-06-20T07:10:31.554757Z'
+  updated: '2026-06-20T08:42:28.846476Z'
   dispatch_log:
   - timestamp: '2026-06-18T18:14:18.222517Z'
     agent: jules
@@ -14096,6 +14117,10 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 3h
+  - timestamp: '2026-06-20T08:42:28.846476Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GH-organvm-v-logos-github-14
   title: "[Health] Pipeline stall detected \u2014 2026-06-01"
   repo: organvm-v-logos/.github
@@ -14343,7 +14368,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - activation-audit
   - kill
@@ -14358,7 +14383,7 @@ tasks:
     \ https://organvm"
   depends_on: []
   created: '2026-06-18'
-  updated: '2026-06-20T07:41:23.932939Z'
+  updated: '2026-06-20T08:42:28.846476Z'
   dispatch_log:
   - timestamp: '2026-06-18T18:14:18.222517Z'
     agent: jules
@@ -14378,6 +14403,10 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 3h
+  - timestamp: '2026-06-20T08:42:28.846476Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GH-organvm-vi-koinonia-organvm-vi-koinonia-github-io-1
   title: "EV Activation Audit: ship-now \u2014 org landing page live (HTTP 200)"
   repo: organvm-vi-koinonia/organvm-vi-koinonia.github.io
@@ -14385,7 +14414,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels: []
   urls:
   - https://github.com/organvm-vi-koinonia/organvm-vi-koinonia.github.io/issues/1
@@ -14397,7 +14426,7 @@ tasks:
     \ substance lives outside the org. Same navigability gap as organvm-iv-taxis.gi"
   depends_on: []
   created: '2026-06-18'
-  updated: '2026-06-20T07:41:23.932939Z'
+  updated: '2026-06-20T08:42:28.846476Z'
   dispatch_log:
   - timestamp: '2026-06-18T18:49:10.229809Z'
     agent: jules
@@ -14417,6 +14446,10 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 3h
+  - timestamp: '2026-06-20T08:42:28.846476Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GH-organvm-vi-koinonia-github-8
   title: 'community-hub service alert: unreachable'
   repo: organvm-vi-koinonia/.github
@@ -14544,7 +14577,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels: []
   urls:
   - https://github.com/organvm-vii-kerygma/organvm-vii-kerygma.github.io/issues/1
@@ -14556,7 +14589,7 @@ tasks:
     \ substance lives outside the org. Same navigability gap as organvm-iv-taxis.gi"
   depends_on: []
   created: '2026-06-18'
-  updated: '2026-06-20T07:41:23.932939Z'
+  updated: '2026-06-20T08:50:05.874283Z'
   dispatch_log:
   - timestamp: '2026-06-18T18:49:10.229809Z'
     agent: jules
@@ -14596,7 +14629,7 @@ tasks:
     Bluesky, Mastodon, LinkedIn) - Set up RSS feed aggregation and cross-p'
   depends_on: []
   created: '2026-06-18'
-  updated: '2026-06-20T05:11:18.938106Z'
+  updated: '2026-06-20T08:50:05.874283Z'
   dispatch_log:
   - timestamp: '2026-06-18T18:49:10.229809Z'
     agent: jules
@@ -14616,6 +14649,11 @@ tasks:
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-06-20T08:43:24.139385Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 3h
 - id: GH-organvm-vii-kerygma-organvm-vii-kerygma-superproject-2
   title: Add missing READMEs for kerygma-pipeline and kerygma-profiles
   repo: organvm-vii-kerygma/organvm-vii-kerygma--superproject
@@ -14635,7 +14673,7 @@ tasks:
     and context links - [ ] Re-run `./tools/audit_platform_standards.sh` w'
   depends_on: []
   created: '2026-06-18'
-  updated: '2026-06-20T05:11:18.938106Z'
+  updated: '2026-06-20T08:50:05.874283Z'
   dispatch_log:
   - timestamp: '2026-06-18T19:28:04.430644Z'
     agent: jules
@@ -14655,6 +14693,11 @@ tasks:
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-06-20T08:43:24.139385Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 3h
 - id: GH-organvm-iii-ergon-sovereign-systems-elevate-align-7
   title: "[\u03B2.2] Subscription boundary and gated content model"
   repo: organvm-iii-ergon/sovereign-systems--elevate-align
@@ -29113,6 +29156,10 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 3h
+  - timestamp: '2026-06-20T07:56:16.958491Z'
+    agent: jules
+    session_id: '9813967346165204309'
+    status: dispatched
 - id: ASK-60-needs-human-digest
   title: Generate a needs_human digest (id, title, single human action) for the 5
     needs_human tasks and surface it as a decision checklist
@@ -29161,6 +29208,10 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 3h
+  - timestamp: '2026-06-20T07:56:16.958491Z'
+    agent: jules
+    session_id: '4511182287400108104'
+    status: dispatched
 - id: ASK-61-gemini-agy-rotation
   title: Re-enter gemini lane into rotation (set GEMINI_API_KEY / cool rate-limit)
     and bring the agy lane back up so all 6 vendors fan
@@ -29519,7 +29570,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - security
   - secrets
@@ -29536,12 +29587,21 @@ tasks:
     \ o"
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-20T07:56:16.958491Z'
+  updated: '2026-06-20T08:26:55.081749Z'
   dispatch_log:
   - timestamp: '2026-06-20T07:06:48.950214Z'
     agent: agy
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-06-20T07:56:16.958491Z'
+    agent: codex
+    session_id: https://github.com/organvm-i-theoria/.github/pull/471
+    status: dispatched
+  - timestamp: '2026-06-20T08:26:55.081749Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: BLD-my--father-mother-tests
   title: "Tests \u2014 Add/expand automated test suite covering core code paths"
   repo: a-organvm/my--father-mother
@@ -29721,7 +29781,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - test-coverage
   - generated
@@ -29733,7 +29793,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-20T07:39:58.624603Z'
+  updated: '2026-06-20T08:12:23.227724Z'
   dispatch_log:
   - timestamp: '2026-06-20T07:41:20.763016Z'
     agent: limen
@@ -29744,6 +29804,11 @@ tasks:
     agent: codex
     session_id: https://github.com/4444J99/domus-genoma/pull/122
     status: dispatched
+  - timestamp: '2026-06-20T08:12:23.227724Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GEN-a-organvm-stakeholder-portal-test-coverage-0620
   title: Raise test coverage in a-organvm/stakeholder-portal
   repo: a-organvm/stakeholder-portal
@@ -29782,7 +29847,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - test-coverage
   - generated
@@ -29794,7 +29859,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-20T07:39:58.624603Z'
+  updated: '2026-06-20T08:12:23.227724Z'
   dispatch_log:
   - timestamp: '2026-06-20T07:41:20.763016Z'
     agent: limen
@@ -29805,6 +29870,11 @@ tasks:
     agent: codex
     session_id: https://github.com/a-organvm/orchestration-start-here/pull/176
     status: dispatched
+  - timestamp: '2026-06-20T08:12:23.227724Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR merged \u2192 done"
 - id: GEN-meta-organvm-.github-test-coverage-0620
   title: Raise test coverage in meta-organvm/.github
   repo: meta-organvm/.github
@@ -29843,7 +29913,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - test-coverage
   - generated
@@ -29855,7 +29925,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-20T07:39:58.624603Z'
+  updated: '2026-06-20T08:12:23.227724Z'
   dispatch_log:
   - timestamp: '2026-06-20T07:41:20.763016Z'
     agent: limen
@@ -29866,18 +29936,24 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm-i-theoria/hierarchia-mundi/pull/9
     status: dispatched
+  - timestamp: '2026-06-20T08:12:23.227724Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR merged \u2192 done"
 - id: GEN-organvm-i-theoria-rules-system-bound-test-coverage-0620
   title: Raise test coverage in organvm-i-theoria/rules-system-bound
   repo: organvm-i-theoria/rules-system-bound
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: cancelled
   labels:
   - test-coverage
   - generated
   - build-out
+  - noop
   urls: []
   context: Find the largest source module in organvm-i-theoria/rules-system-bound
     with little or no test coverage and add a focused, PASSING test suite for it.
@@ -29886,12 +29962,21 @@ tasks:
   depends_on: []
   created: '2026-06-20'
   updated: '2026-06-20T07:56:16.958491Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-20T08:12:26.402783Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 3h
+  - timestamp: '2026-06-20T07:56:16.958491Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: GEN-organvm-i-theoria-mesh-test-coverage-0620
   title: Raise test coverage in organvm-i-theoria/mesh
   repo: organvm-i-theoria/mesh
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: dispatched
@@ -29899,6 +29984,7 @@ tasks:
   - test-coverage
   - generated
   - build-out
+  - slow
   urls: []
   context: Find the largest source module in organvm-i-theoria/mesh with little or
     no test coverage and add a focused, PASSING test suite for it. Run the repo's
@@ -29906,16 +29992,24 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-20T07:56:16.958491Z'
-  dispatch_log: []
+  updated: '2026-06-20T08:42:28.846476Z'
+  dispatch_log:
+  - timestamp: '2026-06-20T07:56:16.958491Z'
+    agent: agy
+    session_id: cli
+    status: timeout->jules
+  - timestamp: '2026-06-20T08:42:28.846476Z'
+    agent: codex
+    session_id: https://github.com/organvm-i-theoria/mesh/pull/9
+    status: dispatched
 - id: GEN-organvm-i-theoria-vigiles-aeternae--corpus-mythicum-test-coverage-0620
   title: Raise test coverage in organvm-i-theoria/vigiles-aeternae--corpus-mythicum
   repo: organvm-i-theoria/vigiles-aeternae--corpus-mythicum
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - test-coverage
   - generated
@@ -29927,20 +30021,35 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-20T07:56:16.958491Z'
-  dispatch_log: []
+  updated: '2026-06-20T08:26:55.081749Z'
+  dispatch_log:
+  - timestamp: '2026-06-20T08:12:24.319221Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 3h
+  - timestamp: '2026-06-20T07:56:16.958491Z'
+    agent: codex
+    session_id: https://github.com/organvm-i-theoria/vigiles-aeternae--corpus-mythicum/pull/10
+    status: dispatched
+  - timestamp: '2026-06-20T08:26:55.081749Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR merged \u2192 done"
 - id: GEN-organvm-i-theoria-styx-behavioral-economics-theory-test-coverage-0620
   title: Raise test coverage in organvm-i-theoria/styx-behavioral-economics-theory
   repo: organvm-i-theoria/styx-behavioral-economics-theory
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: cancelled
   labels:
   - test-coverage
   - generated
   - build-out
+  - noop
   urls: []
   context: Find the largest source module in organvm-i-theoria/styx-behavioral-economics-theory
     with little or no test coverage and add a focused, PASSING test suite for it.
@@ -29949,19 +30058,30 @@ tasks:
   depends_on: []
   created: '2026-06-20'
   updated: '2026-06-20T07:56:16.958491Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-20T08:12:26.402783Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 3h
+  - timestamp: '2026-06-20T07:56:16.958491Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: GEN-organvm-ii-poiesis-.github-test-coverage-0620
   title: Raise test coverage in organvm-ii-poiesis/.github
   repo: organvm-ii-poiesis/.github
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: cancelled
   labels:
   - test-coverage
   - generated
   - build-out
+  - slow
+  - noop
   urls: []
   context: Find the largest source module in organvm-ii-poiesis/.github with little
     or no test coverage and add a focused, PASSING test suite for it. Run the repo's
@@ -29969,16 +30089,24 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-20T07:56:16.958491Z'
-  dispatch_log: []
+  updated: '2026-06-20T08:42:28.846476Z'
+  dispatch_log:
+  - timestamp: '2026-06-20T07:56:16.958491Z'
+    agent: agy
+    session_id: cli
+    status: timeout->jules
+  - timestamp: '2026-06-20T08:42:28.846476Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: GEN-organvm-iii-ergon-organvm-iii-ergon.github.io-test-coverage-0620
   title: Raise test coverage in organvm-iii-ergon/organvm-iii-ergon.github.io
   repo: organvm-iii-ergon/organvm-iii-ergon.github.io
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - test-coverage
   - generated
@@ -29990,8 +30118,22 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-20T07:56:16.958491Z'
-  dispatch_log: []
+  updated: '2026-06-20T08:26:55.081749Z'
+  dispatch_log:
+  - timestamp: '2026-06-20T08:12:24.319221Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 3h
+  - timestamp: '2026-06-20T07:56:16.958491Z'
+    agent: codex
+    session_id: https://github.com/organvm-iii-ergon/organvm-iii-ergon.github.io/pull/3
+    status: dispatched
+  - timestamp: '2026-06-20T08:26:55.081749Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR merged \u2192 done"
 - id: GEN-a-organvm-my--father-mother-test-coverage-0620
   title: Raise test coverage in a-organvm/my--father-mother
   repo: a-organvm/my--father-mother
@@ -29999,11 +30141,12 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: done
+  status: cancelled
   labels:
   - test-coverage
   - generated
   - build-out
+  - noop
   urls: []
   context: Find the largest source module in a-organvm/my--father-mother with little
     or no test coverage and add a focused, PASSING test suite for it. Run the repo's
@@ -30017,7 +30160,14 @@ tasks:
     agent: opencode
     session_id: current
     status: done
-    output: "Added 52 focused tests covering: mask_secret, _license_key_summary, pro_required, has_premium, require_premium, auto_context_flags, parse_s3_bucket, gumroad_webhook_secret, get_upgrade_url, ingest_file_at_path, ingest_image_with_ocr, ingest_transcript. All 264 tests pass (212 existing + 52 new)."
+    output: 'Added 52 focused tests covering: mask_secret, _license_key_summary, pro_required,
+      has_premium, require_premium, auto_context_flags, parse_s3_bucket, gumroad_webhook_secret,
+      get_upgrade_url, ingest_file_at_path, ingest_image_with_ocr, ingest_transcript.
+      All 264 tests pass (212 existing + 52 new).'
+  - timestamp: '2026-06-20T07:56:16.958491Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: GEN-organvm-iii-ergon-specvla-ergon--avditor-mvndi-test-coverage-0620
   title: Raise test coverage in organvm-iii-ergon/specvla-ergon--avditor-mvndi
   repo: organvm-iii-ergon/specvla-ergon--avditor-mvndi
@@ -30025,11 +30175,12 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: cancelled
   labels:
   - test-coverage
   - generated
   - build-out
+  - noop
   urls: []
   context: Find the largest source module in organvm-iii-ergon/specvla-ergon--avditor-mvndi
     with little or no test coverage and add a focused, PASSING test suite for it.
@@ -30038,7 +30189,11 @@ tasks:
   depends_on: []
   created: '2026-06-20'
   updated: '2026-06-20T07:56:16.958491Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-20T07:56:16.958491Z'
+    agent: agy
+    session_id: cli
+    status: noop
 - id: GEN-organvm-iii-ergon-sovereign-systems--elevate-align-test-coverage-0620
   title: Raise test coverage in organvm-iii-ergon/sovereign-systems--elevate-align
   repo: organvm-iii-ergon/sovereign-systems--elevate-align
@@ -30046,7 +30201,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - test-coverage
   - generated
@@ -30058,7 +30213,17 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-06-20T08:43:19.918017Z'
+  dispatch_log:
+  - timestamp: '2026-06-20T08:29:35.719884Z'
+    agent: codex
+    session_id: https://github.com/organvm-iii-ergon/sovereign-systems--elevate-align/pull/259
+    status: dispatched
+  - timestamp: '2026-06-20T08:43:19.918017Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GEN-organvm-iii-ergon-.github-test-coverage-0620
   title: Raise test coverage in organvm-iii-ergon/.github
   repo: organvm-iii-ergon/.github
@@ -30066,11 +30231,12 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: cancelled
   labels:
   - test-coverage
   - generated
   - build-out
+  - noop
   urls: []
   context: Find the largest source module in organvm-iii-ergon/.github with little
     or no test coverage and add a focused, PASSING test suite for it. Run the repo's
@@ -30078,15 +30244,20 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-06-20T08:29:35.719884Z'
+  dispatch_log:
+  - timestamp: '2026-06-20T08:29:35.719884Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: GEN-organvm-iv-taxis-.github-test-coverage-0620
   title: Raise test coverage in organvm-iv-taxis/.github
   repo: organvm-iv-taxis/.github
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - test-coverage
   - generated
@@ -30098,19 +30269,30 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-06-20T08:43:19.918017Z'
+  dispatch_log:
+  - timestamp: '2026-06-20T08:29:35.719884Z'
+    agent: codex
+    session_id: https://github.com/organvm-iv-taxis/.github/pull/10
+    status: dispatched
+  - timestamp: '2026-06-20T08:43:19.918017Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GEN-organvm-v-logos-.github-test-coverage-0620
   title: Raise test coverage in organvm-v-logos/.github
   repo: organvm-v-logos/.github
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: cancelled
   labels:
   - test-coverage
   - generated
   - build-out
+  - noop
   urls: []
   context: Find the largest source module in organvm-v-logos/.github with little or
     no test coverage and add a focused, PASSING test suite for it. Run the repo's
@@ -30118,15 +30300,20 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-06-20T08:29:35.719884Z'
+  dispatch_log:
+  - timestamp: '2026-06-20T08:29:35.719884Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: GEN-organvm-vi-koinonia-.github-test-coverage-0620
   title: Raise test coverage in organvm-vi-koinonia/.github
   repo: organvm-vi-koinonia/.github
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - test-coverage
   - generated
@@ -30138,19 +30325,30 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-06-20T08:43:19.918017Z'
+  dispatch_log:
+  - timestamp: '2026-06-20T08:29:35.719884Z'
+    agent: codex
+    session_id: https://github.com/organvm-vi-koinonia/.github/pull/19
+    status: dispatched
+  - timestamp: '2026-06-20T08:43:19.918017Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GEN-organvm-vii-kerygma-.github-test-coverage-0620
   title: Raise test coverage in organvm-vii-kerygma/.github
   repo: organvm-vii-kerygma/.github
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: cancelled
   labels:
   - test-coverage
   - generated
   - build-out
+  - noop
   urls: []
   context: Find the largest source module in organvm-vii-kerygma/.github with little
     or no test coverage and add a focused, PASSING test suite for it. Run the repo's
@@ -30158,15 +30356,20 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-06-20T08:29:35.719884Z'
+  dispatch_log:
+  - timestamp: '2026-06-20T08:29:35.719884Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: GEN-4444j99-media-ark-test-coverage-0620
   title: Raise test coverage in 4444J99/media-ark
   repo: 4444J99/media-ark
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -30178,15 +30381,20 @@ tasks:
     keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-06-20T08:42:28.846476Z'
+  dispatch_log:
+  - timestamp: '2026-06-20T08:42:28.846476Z'
+    agent: agy
+    session_id: https://github.com/4444J99/media-ark/pull/43
+    status: dispatched
 - id: GEN-4444j99-relationship-pipeline-test-coverage-0620
   title: Raise test coverage in 4444J99/relationship-pipeline
   repo: 4444J99/relationship-pipeline
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -30198,7 +30406,17 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-06-20T08:42:28.846476Z'
+  dispatch_log:
+  - timestamp: '2026-06-20T08:43:21.032218Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 3h
+  - timestamp: '2026-06-20T08:42:28.846476Z'
+    agent: codex
+    session_id: https://github.com/4444J99/relationship-pipeline/pull/9
+    status: dispatched
 - id: GEN-a-organvm-a-i-council--coliseum-test-coverage-0620
   title: Raise test coverage in a-organvm/a-i-council--coliseum
   repo: a-organvm/a-i-council--coliseum
@@ -30403,14 +30621,15 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/organvm-iii-ergon.github.io
   repo: organvm-i-theoria/organvm-iii-ergon.github.io
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: cancelled
   labels:
   - test-coverage
   - generated
   - build-out
+  - noop
   urls: []
   context: Find the largest source module in organvm-i-theoria/organvm-iii-ergon.github.io
     with little or no test coverage and add a focused, PASSING test suite for it.
@@ -30418,7 +30637,17 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-06-20T08:42:28.846476Z'
+  dispatch_log:
+  - timestamp: '2026-06-20T08:43:23.097177Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 3h
+  - timestamp: '2026-06-20T08:42:28.846476Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: GEN-organvm-i-theoria-organvm-iv-taxis.github.io-test-coverage-0620
   title: Raise test coverage in organvm-i-theoria/organvm-iv-taxis.github.io
   repo: organvm-i-theoria/organvm-iv-taxis.github.io
@@ -30563,10 +30792,10 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/studium-generale
   repo: organvm-i-theoria/studium-generale
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -30578,15 +30807,20 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-06-20T08:42:28.846476Z'
+  dispatch_log:
+  - timestamp: '2026-06-20T08:42:28.846476Z'
+    agent: agy
+    session_id: https://github.com/organvm-i-theoria/studium-generale/pull/14
+    status: dispatched
 - id: GEN-organvm-i-theoria-carrier-wave--zeitgeist-thesis-test-coverage-0620
   title: Raise test coverage in organvm-i-theoria/carrier-wave--zeitgeist-thesis
   repo: organvm-i-theoria/carrier-wave--zeitgeist-thesis
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -30598,19 +30832,30 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-06-20T08:42:28.846476Z'
+  dispatch_log:
+  - timestamp: '2026-06-20T08:43:21.032218Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 3h
+  - timestamp: '2026-06-20T08:42:28.846476Z'
+    agent: codex
+    session_id: https://github.com/organvm-i-theoria/carrier-wave--zeitgeist-thesis/pull/5
+    status: dispatched
 - id: GEN-organvm-i-theoria-growth-auditor-test-coverage-0620
   title: Raise test coverage in organvm-i-theoria/growth-auditor
   repo: organvm-i-theoria/growth-auditor
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: cancelled
   labels:
   - test-coverage
   - generated
   - build-out
+  - noop
   urls: []
   context: Find the largest source module in organvm-i-theoria/growth-auditor with
     little or no test coverage and add a focused, PASSING test suite for it. Run the
@@ -30618,15 +30863,25 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-06-20T08:42:28.846476Z'
+  dispatch_log:
+  - timestamp: '2026-06-20T08:43:23.097177Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 3h
+  - timestamp: '2026-06-20T08:42:28.846476Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: GEN-organvm-i-theoria-sovereign--ground-test-coverage-0620
   title: Raise test coverage in organvm-i-theoria/sovereign--ground
   repo: organvm-i-theoria/sovereign--ground
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -30638,15 +30893,20 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-06-20T08:42:28.846476Z'
+  dispatch_log:
+  - timestamp: '2026-06-20T08:42:28.846476Z'
+    agent: agy
+    session_id: https://github.com/organvm-i-theoria/sovereign--ground/pull/6
+    status: dispatched
 - id: GEN-organvm-i-theoria-scale-threshold-emergence-test-coverage-0620
   title: Raise test coverage in organvm-i-theoria/scale-threshold-emergence
   repo: organvm-i-theoria/scale-threshold-emergence
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -30658,6 +30918,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
+  updated: '2026-06-20T08:50:05.874283Z'
   dispatch_log: []
 - id: GEN-organvm-i-theoria-organvm-ii-poiesis.github.io-test-coverage-0620
   title: Raise test coverage in organvm-i-theoria/organvm-ii-poiesis.github.io
@@ -30683,10 +30944,10 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/conversation-corpus-engine
   repo: organvm-i-theoria/conversation-corpus-engine
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -30698,6 +30959,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
+  updated: '2026-06-20T08:50:05.874283Z'
   dispatch_log: []
 - id: GEN-4444j99-session-meta-test-coverage-0620
   title: Raise test coverage in 4444J99/session-meta
@@ -30706,7 +30968,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -30718,6 +30980,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
+  updated: '2026-06-20T08:50:05.874283Z'
   dispatch_log: []
 - id: GEN-organvm-ii-poiesis-organvm-ii-poiesis.github.io-test-coverage-0620
   title: Raise test coverage in organvm-ii-poiesis/organvm-ii-poiesis.github.io
@@ -30773,6 +31036,579 @@ tasks:
   - build-out
   urls: []
   context: Find the largest source module in organvm-ii-poiesis/styx-behavioral-art
+    with little or no test coverage and add a focused, PASSING test suite for it.
+    Run the repo's own test command and confirm green. No placeholder tests. [auto-generated
+    2026-06-20 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  dispatch_log: []
+- id: GEN-organvm-iii-ergon-content-engine--asset-amplifier-test-coverage-0620
+  title: Raise test coverage in organvm-iii-ergon/content-engine--asset-amplifier
+  repo: organvm-iii-ergon/content-engine--asset-amplifier
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in organvm-iii-ergon/content-engine--asset-amplifier
+    with little or no test coverage and add a focused, PASSING test suite for it.
+    Run the repo's own test command and confirm green. No placeholder tests. [auto-generated
+    2026-06-20 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  dispatch_log: []
+- id: GEN-organvm-iii-ergon-sovereign-systems--layer-above-hokage-test-coverage-0620
+  title: Raise test coverage in organvm-iii-ergon/sovereign-systems--layer-above-hokage
+  repo: organvm-iii-ergon/sovereign-systems--layer-above-hokage
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in organvm-iii-ergon/sovereign-systems--layer-above-hokage
+    with little or no test coverage and add a focused, PASSING test suite for it.
+    Run the repo's own test command and confirm green. No placeholder tests. [auto-generated
+    2026-06-20 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  dispatch_log: []
+- id: GEN-a-organvm-public-process-test-coverage-0620
+  title: Raise test coverage in a-organvm/public-process
+  repo: a-organvm/public-process
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in a-organvm/public-process with little
+    or no test coverage and add a focused, PASSING test suite for it. Run the repo's
+    own test command and confirm green. No placeholder tests. [auto-generated 2026-06-20
+    to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  dispatch_log: []
+- id: GEN-a-organvm-alchemia-ingestvm-test-coverage-0620
+  title: Raise test coverage in a-organvm/alchemia-ingestvm
+  repo: a-organvm/alchemia-ingestvm
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in a-organvm/alchemia-ingestvm with little
+    or no test coverage and add a focused, PASSING test suite for it. Run the repo's
+    own test command and confirm green. No placeholder tests. [auto-generated 2026-06-20
+    to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  dispatch_log: []
+- id: GEN-a-organvm-call-function--ontological-test-coverage-0620
+  title: Raise test coverage in a-organvm/call-function--ontological
+  repo: a-organvm/call-function--ontological
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in a-organvm/call-function--ontological
+    with little or no test coverage and add a focused, PASSING test suite for it.
+    Run the repo's own test command and confirm green. No placeholder tests. [auto-generated
+    2026-06-20 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  dispatch_log: []
+- id: GEN-a-organvm-metasystem-master-test-coverage-0620
+  title: Raise test coverage in a-organvm/metasystem-master
+  repo: a-organvm/metasystem-master
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in a-organvm/metasystem-master with little
+    or no test coverage and add a focused, PASSING test suite for it. Run the repo's
+    own test command and confirm green. No placeholder tests. [auto-generated 2026-06-20
+    to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  dispatch_log: []
+- id: GEN-a-organvm-organvm-ontologia-test-coverage-0620
+  title: Raise test coverage in a-organvm/organvm-ontologia
+  repo: a-organvm/organvm-ontologia
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in a-organvm/organvm-ontologia with little
+    or no test coverage and add a focused, PASSING test suite for it. Run the repo's
+    own test command and confirm green. No placeholder tests. [auto-generated 2026-06-20
+    to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  dispatch_log: []
+- id: GEN-organvm-i-theoria-.github-test-coverage-0620
+  title: Raise test coverage in organvm-i-theoria/.github
+  repo: organvm-i-theoria/.github
+  type: code
+  target_agent: opencode
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in organvm-i-theoria/.github with little
+    or no test coverage and add a focused, PASSING test suite for it. Run the repo's
+    own test command and confirm green. No placeholder tests. [auto-generated 2026-06-20
+    to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  updated: '2026-06-20T08:50:05.874283Z'
+  dispatch_log: []
+- id: GEN-a-organvm-schema-definitions-test-coverage-0620
+  title: Raise test coverage in a-organvm/schema-definitions
+  repo: a-organvm/schema-definitions
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in a-organvm/schema-definitions with little
+    or no test coverage and add a focused, PASSING test suite for it. Run the repo's
+    own test command and confirm green. No placeholder tests. [auto-generated 2026-06-20
+    to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  dispatch_log: []
+- id: GEN-a-organvm-4-ivi374-f0rivi4-test-coverage-0620
+  title: Raise test coverage in a-organvm/4-ivi374-F0Rivi4
+  repo: a-organvm/4-ivi374-F0Rivi4
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in a-organvm/4-ivi374-F0Rivi4 with little
+    or no test coverage and add a focused, PASSING test suite for it. Run the repo's
+    own test command and confirm green. No placeholder tests. [auto-generated 2026-06-20
+    to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  dispatch_log: []
+- id: GEN-limen-test-coverage-0620
+  title: Raise test coverage in limen
+  repo: limen
+  type: code
+  target_agent: codex
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in limen with little or no test coverage
+    and add a focused, PASSING test suite for it. Run the repo's own test command
+    and confirm green. No placeholder tests. [auto-generated 2026-06-20 to keep the
+    stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  updated: '2026-06-20T08:50:05.874283Z'
+  dispatch_log: []
+- id: GEN-4444j99-limen-test-coverage-0620
+  title: Raise test coverage in 4444J99/limen
+  repo: 4444J99/limen
+  type: code
+  target_agent: opencode
+  priority: medium
+  budget_cost: 1
+  status: done
+  updated: '2026-06-20T09:00:00Z'
+  dispatch_log:
+  - timestamp: '2026-06-20T09:00:00Z'
+    agent: opencode
+    session_id: current
+    status: done
+    output: "Added 45 focused unit tests for src/limen/doctor.py (307 lines, 2nd largest module after dispatch.py). Covers all previously untested functions: _iso, _task_lifecycle, next_actions, print_readiness, print_qa_report, write_report, plus expanded stale_tasks, readiness_report, and qa_report coverage. Full suite: 93/93 tests green."
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in 4444J99/limen with little or no test
+    coverage and add a focused, PASSING test suite for it. Run the repo's own test
+    command and confirm green. No placeholder tests. [auto-generated 2026-06-20 to
+    keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  updated: '2026-06-20T08:50:05.874283Z'
+  dispatch_log: []
+- id: GEN-a-organvm-a-i-chat--exporter-test-coverage-0620
+  title: Raise test coverage in a-organvm/a-i-chat--exporter
+  repo: a-organvm/a-i-chat--exporter
+  type: code
+  target_agent: codex
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in a-organvm/a-i-chat--exporter with little
+    or no test coverage and add a focused, PASSING test suite for it. Run the repo's
+    own test command and confirm green. No placeholder tests. [auto-generated 2026-06-20
+    to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  dispatch_log: []
+- id: GEN-a-organvm-peer-audited--behavioral-blockchain-test-coverage-0620
+  title: Raise test coverage in a-organvm/peer-audited--behavioral-blockchain
+  repo: a-organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: opencode
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in a-organvm/peer-audited--behavioral-blockchain
+    with little or no test coverage and add a focused, PASSING test suite for it.
+    Run the repo's own test command and confirm green. No placeholder tests. [auto-generated
+    2026-06-20 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  dispatch_log: []
+- id: GEN-a-organvm-universal-mail--automation-test-coverage-0620
+  title: Raise test coverage in a-organvm/universal-mail--automation
+  repo: a-organvm/universal-mail--automation
+  type: code
+  target_agent: codex
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in a-organvm/universal-mail--automation
+    with little or no test coverage and add a focused, PASSING test suite for it.
+    Run the repo's own test command and confirm green. No placeholder tests. [auto-generated
+    2026-06-20 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  dispatch_log: []
+- id: GEN-a-organvm-the-invisible-ledger-test-coverage-0620
+  title: Raise test coverage in a-organvm/the-invisible-ledger
+  repo: a-organvm/the-invisible-ledger
+  type: code
+  target_agent: opencode
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in a-organvm/the-invisible-ledger with little
+    or no test coverage and add a focused, PASSING test suite for it. Run the repo's
+    own test command and confirm green. No placeholder tests. [auto-generated 2026-06-20
+    to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  dispatch_log: []
+- id: GEN-a-organvm-mirror-mirror-test-coverage-0620
+  title: Raise test coverage in a-organvm/mirror-mirror
+  repo: a-organvm/mirror-mirror
+  type: code
+  target_agent: codex
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in a-organvm/mirror-mirror with little or
+    no test coverage and add a focused, PASSING test suite for it. Run the repo's
+    own test command and confirm green. No placeholder tests. [auto-generated 2026-06-20
+    to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  dispatch_log: []
+- id: GEN-meta-organvm-meta-organvm--superproject-test-coverage-0620
+  title: Raise test coverage in meta-organvm/meta-organvm--superproject
+  repo: meta-organvm/meta-organvm--superproject
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in meta-organvm/meta-organvm--superproject
+    with little or no test coverage and add a focused, PASSING test suite for it.
+    Run the repo's own test command and confirm green. No placeholder tests. [auto-generated
+    2026-06-20 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  dispatch_log: []
+- id: GEN-organvm-ii-poiesis-organvm-ii-poiesis--superproject-test-coverage-0620
+  title: Raise test coverage in organvm-ii-poiesis/organvm-ii-poiesis--superproject
+  repo: organvm-ii-poiesis/organvm-ii-poiesis--superproject
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in organvm-ii-poiesis/organvm-ii-poiesis--superproject
+    with little or no test coverage and add a focused, PASSING test suite for it.
+    Run the repo's own test command and confirm green. No placeholder tests. [auto-generated
+    2026-06-20 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  dispatch_log: []
+- id: GEN-organvm-iii-ergon-organvm-iii-ergon--superproject-test-coverage-0620
+  title: Raise test coverage in organvm-iii-ergon/organvm-iii-ergon--superproject
+  repo: organvm-iii-ergon/organvm-iii-ergon--superproject
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in organvm-iii-ergon/organvm-iii-ergon--superproject
+    with little or no test coverage and add a focused, PASSING test suite for it.
+    Run the repo's own test command and confirm green. No placeholder tests. [auto-generated
+    2026-06-20 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  dispatch_log: []
+- id: GEN-organvm-iii-ergon-sign-signal--voice-synth-test-coverage-0620
+  title: Raise test coverage in organvm-iii-ergon/sign-signal--voice-synth
+  repo: organvm-iii-ergon/sign-signal--voice-synth
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in organvm-iii-ergon/sign-signal--voice-synth
+    with little or no test coverage and add a focused, PASSING test suite for it.
+    Run the repo's own test command and confirm green. No placeholder tests. [auto-generated
+    2026-06-20 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  dispatch_log: []
+- id: GEN-organvm-iv-taxis-org-dotgithub-test-coverage-0620
+  title: Raise test coverage in organvm-iv-taxis/org-dotgithub
+  repo: organvm-iv-taxis/org-dotgithub
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in organvm-iv-taxis/org-dotgithub with little
+    or no test coverage and add a focused, PASSING test suite for it. Run the repo's
+    own test command and confirm green. No placeholder tests. [auto-generated 2026-06-20
+    to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  dispatch_log: []
+- id: GEN-organvm-iv-taxis-organvm-iv-taxis.github.io-test-coverage-0620
+  title: Raise test coverage in organvm-iv-taxis/organvm-iv-taxis.github.io
+  repo: organvm-iv-taxis/organvm-iv-taxis.github.io
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in organvm-iv-taxis/organvm-iv-taxis.github.io
+    with little or no test coverage and add a focused, PASSING test suite for it.
+    Run the repo's own test command and confirm green. No placeholder tests. [auto-generated
+    2026-06-20 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  dispatch_log: []
+- id: GEN-organvm-v-logos-organvm-v-logos--superproject-test-coverage-0620
+  title: Raise test coverage in organvm-v-logos/organvm-v-logos--superproject
+  repo: organvm-v-logos/organvm-v-logos--superproject
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in organvm-v-logos/organvm-v-logos--superproject
+    with little or no test coverage and add a focused, PASSING test suite for it.
+    Run the repo's own test command and confirm green. No placeholder tests. [auto-generated
+    2026-06-20 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  dispatch_log: []
+- id: GEN-organvm-v-logos-organvm-v-logos.github.io-test-coverage-0620
+  title: Raise test coverage in organvm-v-logos/organvm-v-logos.github.io
+  repo: organvm-v-logos/organvm-v-logos.github.io
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in organvm-v-logos/organvm-v-logos.github.io
+    with little or no test coverage and add a focused, PASSING test suite for it.
+    Run the repo's own test command and confirm green. No placeholder tests. [auto-generated
+    2026-06-20 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  updated: '2026-06-20T08:50:05.874283Z'
+  dispatch_log: []
+- id: GEN-organvm-vi-koinonia-organvm-vi-koinonia--superproject-test-coverage-0620
+  title: Raise test coverage in organvm-vi-koinonia/organvm-vi-koinonia--superproject
+  repo: organvm-vi-koinonia/organvm-vi-koinonia--superproject
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in organvm-vi-koinonia/organvm-vi-koinonia--superproject
+    with little or no test coverage and add a focused, PASSING test suite for it.
+    Run the repo's own test command and confirm green. No placeholder tests. [auto-generated
+    2026-06-20 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  updated: '2026-06-20T08:50:05.874283Z'
+  dispatch_log: []
+- id: GEN-organvm-vi-koinonia-organvm-vi-koinonia.github.io-test-coverage-0620
+  title: Raise test coverage in organvm-vi-koinonia/organvm-vi-koinonia.github.io
+  repo: organvm-vi-koinonia/organvm-vi-koinonia.github.io
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in organvm-vi-koinonia/organvm-vi-koinonia.github.io
+    with little or no test coverage and add a focused, PASSING test suite for it.
+    Run the repo's own test command and confirm green. No placeholder tests. [auto-generated
+    2026-06-20 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-20'
+  updated: '2026-06-20T08:50:05.874283Z'
+  dispatch_log: []
+- id: GEN-organvm-vii-kerygma-organvm-vii-kerygma.github.io-test-coverage-0620
+  title: Raise test coverage in organvm-vii-kerygma/organvm-vii-kerygma.github.io
+  repo: organvm-vii-kerygma/organvm-vii-kerygma.github.io
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in organvm-vii-kerygma/organvm-vii-kerygma.github.io
     with little or no test coverage and add a focused, PASSING test suite for it.
     Run the repo's own test command and confirm green. No placeholder tests. [auto-generated
     2026-06-20 to keep the stream endless]
