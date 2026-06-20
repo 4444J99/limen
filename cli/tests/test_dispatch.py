@@ -122,7 +122,7 @@ def test_dispatch_dry_run_prints_capacity_census_and_copilot_command(
     output = capsys.readouterr().out
     assert "-- capacity census" in output
     assert "copilot" in output
-    assert "would: gh issue edit 12 --repo organvm/limen --add-assignee copilot-swe-agent" in output
+    assert "would: gh api graphql (fetch node IDs + replaceActorsForAssignable for copilot-swe-agent on organvm/limen#12)" in output
 
 
 def test_release_stale_dry_run_does_not_mutate(tmp_path: Path) -> None:
