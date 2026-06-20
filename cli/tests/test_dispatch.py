@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import sys
 import os
 from pathlib import Path
@@ -8,10 +9,20 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from limen.capacity import PAID_AGENT_ORDER, capacity_census, format_capacity_census
 from limen.dispatch import dispatch_tasks, release_stale_tasks
 from limen.doctor import qa_report, readiness_report, stale_tasks
 from limen.io import load_limen_file
 from limen.status import print_status
+
+
+def load_route_module():
+    route_path = Path(__file__).resolve().parents[2] / "scripts" / "route.py"
+    spec = importlib.util.spec_from_file_location("limen_route_test", route_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def write_board(path: Path, tasks: list[dict]) -> None:
@@ -37,6 +48,81 @@ def write_board(path: Path, tasks: list[dict]) -> None:
 
 def read_board(path: Path) -> dict:
     return yaml.safe_load(path.read_text())
+
+
+def test_capacity_census_lists_every_paid_lane(tmp_path: Path, monkeypatch) -> None:
+    for binary in ("codex", "claude", "opencode", "agy", "gemini", "jules", "gh", "agent-dispatch"):
+        path = tmp_path / binary
+        path.write_text("#!/bin/sh\nexit 0\n")
+        path.chmod(0o755)
+    monkeypatch.setenv("PATH", str(tmp_path))
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    monkeypatch.setenv("LIMEN_COPILOT_ENABLED", "1")
+
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(tasks_path, [])
+    rows = capacity_census(load_limen_file(tasks_path))
+
+    assert [row["agent"] for row in rows] == list(PAID_AGENT_ORDER)
+    assert {row["agent"] for row in rows if row["reachable"]} == set(PAID_AGENT_ORDER)
+    text = format_capacity_census(rows)
+    assert "-- capacity census" in text
+    assert "github_actions" in text
+
+
+def test_route_round_robins_across_all_reachable_paid_lanes(tmp_path: Path) -> None:
+    route = load_route_module()
+    workdir = tmp_path / "work"
+    checkout = workdir / "organvm" / "limen"
+    (checkout / ".git").mkdir(parents=True)
+    tasks = [
+        {
+            "id": f"LIMEN-{i:03}",
+            "title": f"Task {i}",
+            "repo": "organvm/limen",
+            "target_agent": "any",
+            "budget_cost": 1,
+            "status": "open",
+            "urls": [f"https://github.com/organvm/limen/issues/{i}"],
+        }
+        for i in range(1, len(PAID_AGENT_ORDER) + 1)
+    ]
+    health = {agent: True for agent in PAID_AGENT_ORDER}
+    planned_remaining = {agent: 10 for agent in PAID_AGENT_ORDER}
+
+    routed = route.route_tasks(tasks, health, planned_remaining, workdir)
+
+    assert [agent for _, agent, _ in routed] == list(PAID_AGENT_ORDER)
+
+
+def test_dispatch_dry_run_prints_capacity_census_and_copilot_command(
+    tmp_path: Path, capsys
+) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "LIMEN-COPILOT",
+                "title": "Use Copilot lane",
+                "repo": "organvm/limen",
+                "target_agent": "copilot",
+                "priority": "high",
+                "budget_cost": 1,
+                "status": "open",
+                "urls": ["https://github.com/organvm/limen/issues/12"],
+                "created": "2026-06-20",
+                "dispatch_log": [],
+            }
+        ],
+    )
+
+    dispatch_tasks(load_limen_file(tasks_path), tasks_path, agent="copilot", dry_run=True)
+
+    output = capsys.readouterr().out
+    assert "-- capacity census" in output
+    assert "copilot" in output
+    assert "would: gh issue edit 12 --repo organvm/limen --add-assignee copilot-swe-agent" in output
 
 
 def test_release_stale_dry_run_does_not_mutate(tmp_path: Path) -> None:

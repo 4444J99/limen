@@ -33,7 +33,18 @@ type FeedState = {
 };
 
 const feedPath = "/logs/fleet-status.json";
-const laneOrder = ["codex", "claude", "opencode", "agy", "gemini", "jules"];
+const laneOrder = [
+  "codex",
+  "claude",
+  "opencode",
+  "agy",
+  "gemini",
+  "jules",
+  "copilot",
+  "warp",
+  "oz",
+  "github_actions",
+];
 
 function numberValue(value: unknown) {
   return typeof value === "number" && Number.isFinite(value) ? value : 0;

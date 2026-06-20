@@ -165,10 +165,11 @@ Every AI agent reads `tasks.yaml` at session start, finds open tasks matching th
 
 ## Agents
 
-- **Jules** — async coding agent (Google). 100 runs/day budget. Dispatch via `jules new --repo`.
-- **Gemini** — interactive CLI agent. Executes in-session.
-- **Claude** — interactive agent. Reads tasks.yaml on session start.
-- **OpenCode** — CLI coding agent. Supports `--task <id>` for targeted dispatch.
+- **Codex, Claude, OpenCode, Agy, Gemini** — local CLI coding lanes, dispatched in isolated worktrees when a local checkout exists.
+- **Jules** — async coding agent (Google). Dispatch via `jules new --repo`.
+- **Copilot** — GitHub Copilot coding agent lane. Dispatch assigns an existing GitHub issue to `copilot-swe-agent`; census marks it down until `LIMEN_COPILOT_ENABLED=1` or `LIMEN_COPILOT_HEALTH_REPO` confirms assignability.
+- **Warp/Oz** — paid service lanes via `LIMEN_WARP_DISPATCH_CMD`, `LIMEN_OZ_DISPATCH_CMD`, or the generic `agent-dispatch` adapter.
+- **GitHub Actions** — runner lane via `gh workflow run` against `LIMEN_GITHUB_ACTIONS_WORKFLOW` (default `limen-agent.yml`).
 
 ## Links
 
