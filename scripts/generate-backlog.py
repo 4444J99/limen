@@ -64,6 +64,37 @@ TEMPLATES = [
 _ACTIVE = {"open", "dispatched", "in_progress", "needs_human"}
 
 
+def _org_repos() -> list[str]:
+    """The full candidate set = EVERY non-fork, non-archived repo in the org(s) — so the generator
+    covers every owner, not just the ~60 already in tasks.yaml (the organvm consolidation left ~160
+    real repos dark). Org list DERIVED from LIMEN_ORGS (default organvm), core API (no search quota).
+    Excludes infra/meta/site/example/contrib-fork names. Returns [] on any error so main() can fall
+    back to the tasks.yaml set (the generator must never break the feed beat)."""
+    import subprocess
+    orgs = [o.strip() for o in os.environ.get("LIMEN_ORGS", "organvm").split(",") if o.strip()]
+    out: list[str] = []
+    for org in orgs:
+        try:
+            r = subprocess.run(
+                ["gh", "api", f"/orgs/{org}/repos", "--paginate",
+                 "--jq", ".[] | select(.fork==false and .archived==false) | .full_name"],
+                capture_output=True, text=True, timeout=120)
+            if r.returncode == 0:
+                out += [ln.strip() for ln in r.stdout.splitlines() if ln.strip()]
+        except Exception:
+            pass
+
+    def is_product(full: str) -> bool:
+        n = full.split("/")[-1]
+        if n.startswith("_") or n == ".github" or n.endswith("--superproject") or n.endswith(".github.io"):
+            return False
+        if n.startswith(("example-", "art-from--", "contrib--")):
+            return False
+        return True
+
+    return [r for r in out if is_product(r)]
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS", "tasks.yaml"))
@@ -84,11 +115,18 @@ def main() -> int:
         return 0
     need = min(args.floor - open_now, args.max_new)
 
-    # active product set, DERIVED from the repos already in play (not pinned).
-    repos = [r for r in dict.fromkeys(t.repo for t in tasks if t.repo) if r]
+    # candidate repos = EVERY real repo in the org (so every owner gets covered, not just the ~60
+    # already in tasks.yaml) ∪ any repo already referenced in the queue. Falls back to the tasks.yaml
+    # set if the org API is unreachable. This is the permanent fix for the post-consolidation blind
+    # spots: the generator now sources the live organvm estate, not just repos it already knew.
+    in_queue = [r for r in dict.fromkeys(t.repo for t in tasks if t.repo) if r]
+    org = _org_repos()
+    repos = list(dict.fromkeys(org + in_queue)) if org else in_queue
     if not repos:
-        print("no product repos referenced in tasks.yaml — cannot generate. (seed a real task first.)")
+        print("no candidate repos (org API unreachable + tasks.yaml empty) — nothing to generate.")
         return 0
+    if org:
+        print(f"  candidate repos: {len(repos)} ({len(org)} from org, +{len(set(in_queue)-set(org))} queue-only)")
 
     # how loaded is each repo right now (fewest-loaded get fed first → spread the work).
     load = Counter(t.repo for t in tasks if t.status in _ACTIVE and t.repo)

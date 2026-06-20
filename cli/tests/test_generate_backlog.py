@@ -7,6 +7,7 @@ generate-backlog.py runs autonomously in the heartbeat, so its safety properties
 """
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -41,9 +42,12 @@ def _board(path: Path, repos: list[str], n_open_per_repo: int = 1) -> None:
 
 
 def _run(path: Path, *args: str) -> str:
+    # LIMEN_ORGS="" disables the live-org repo source so the test is deterministic against the
+    # repos in its temp tasks.yaml (the generator falls back to the queue set when no org is given).
     p = subprocess.run(
         [sys.executable, str(SCRIPT), "--tasks", str(path), *args],
         capture_output=True, text=True, timeout=60,
+        env={**os.environ, "LIMEN_ORGS": ""},
     )
     assert p.returncode == 0, p.stderr
     return p.stdout
