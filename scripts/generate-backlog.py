@@ -109,9 +109,18 @@ def main() -> int:
     lf = load_limen_file(path)
     tasks = lf.tasks
 
-    open_now = sum(1 for t in tasks if t.status == "open")
+    # Floor on ROUTABLE open work, not total open. A queue held above floor purely by tasks stuck
+    # on a dead lane (e.g. jules exhausted → 67 unroutable) must NOT block coverage generation —
+    # otherwise the widened generator never fires while jules is down and dark repos stay uncovered.
+    # Count only open tasks whose target lane can actually produce right now.
+    try:
+        from limen.dispatch import _down_lanes
+        _dead = _down_lanes()
+    except Exception:
+        _dead = set()
+    open_now = sum(1 for t in tasks if t.status == "open" and (t.target_agent or "any") not in _dead)
     if open_now >= args.floor:
-        print(f"queue healthy: open={open_now} >= floor={args.floor} — nothing to generate.")
+        print(f"queue healthy: routable-open={open_now} >= floor={args.floor} — nothing to generate.")
         return 0
     need = min(args.floor - open_now, args.max_new)
 

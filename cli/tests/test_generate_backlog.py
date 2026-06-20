@@ -47,7 +47,9 @@ def _run(path: Path, *args: str) -> str:
     p = subprocess.run(
         [sys.executable, str(SCRIPT), "--tasks", str(path), *args],
         capture_output=True, text=True, timeout=60,
-        env={**os.environ, "LIMEN_ORGS": ""},
+        # LIMEN_ORGS="" → no live-org source; LIMEN_ROOT=tmp → _down_lanes finds no usage.json,
+        # so the routable-open floor count == total open (deterministic, no real lane-health bleed).
+        env={**os.environ, "LIMEN_ORGS": "", "LIMEN_ROOT": str(path.parent)},
     )
     assert p.returncode == 0, p.stderr
     return p.stdout
