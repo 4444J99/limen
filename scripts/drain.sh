@@ -3,7 +3,11 @@
 # Env-parameterized so it survives a later relocation of the conductor (set LIMEN_ROOT).
 # Idempotent: jules-land skips repos with no checkout + sessions already landed (dup-safe via
 # the PR-URL backfill in dispatch_log). Set LIMEN_JULES_LAND=0 for the old pull-only behavior.
-set -euo pipefail
+# NEVER-"NO" INVARIANT: drain is a sequence of INDEPENDENT best-effort organ steps (jules-land,
+# harvest, merge-drain, self-heal). Drop `-e` so one step failing (e.g. a transient pydantic load
+# error in `limen harvest`) can NEVER abort the rest — the merge + heal organs must run every beat.
+# Keep -u/pipefail for safety; every step is individually guarded with `|| true`.
+set -uo pipefail
 export LIMEN_ROOT="${LIMEN_ROOT:-$HOME/Workspace/limen}"
 export LIMEN_TASKS="${LIMEN_TASKS:-$LIMEN_ROOT/tasks.yaml}"
 PY="$LIMEN_ROOT/cli/src"
@@ -14,7 +18,7 @@ PY="$LIMEN_ROOT/cli/src"
 [ -f "$HOME/.limen.env" ] && { set -a; . "$HOME/.limen.env"; set +a; }
 
 echo "[drain] pulling completed Jules sessions…"
-python3 "$LIMEN_ROOT/scripts/harvest-pull-completed.py"
+python3 "$LIMEN_ROOT/scripts/harvest-pull-completed.py" 2>&1 | tail -4 || true
 
 # #18: LAND completed jules sessions as PRs (the jules→PR gap). Bounded per beat so it never
 # dominates the cycle; skips repos with no local checkout (clone-maintenance handles those).
@@ -27,7 +31,7 @@ if [ "${LIMEN_JULES_LAND:-1}" = "1" ]; then
 fi
 
 echo "[drain] harvesting…"
-PYTHONPATH="$PY" python3 -m limen harvest --agent jules
+PYTHONPATH="$PY" python3 -m limen harvest --agent jules 2>&1 | tail -4 || true
 
 # MERGE the landed/dispatched PRs — the missing autonomic organ. Bounded per beat so it never
 # dominates the cycle; merges ONLY mergeable+CI-green, never force-merges; idempotent vs other
