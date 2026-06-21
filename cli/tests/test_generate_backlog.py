@@ -41,15 +41,21 @@ def _board(path: Path, repos: list[str], n_open_per_repo: int = 1) -> None:
     path.write_text(yaml.safe_dump(doc, sort_keys=False))
 
 
-def _run(path: Path, *args: str) -> str:
+def _run(path: Path, *args: str, value_repos: str | None = None) -> str:
     # LIMEN_ORGS="" disables the live-org repo source so the test is deterministic against the
     # repos in its temp tasks.yaml (the generator falls back to the queue set when no org is given).
+    # value-tier gate: by default allow exactly the repos on the board (so floor/cap/spread logic is
+    # exercised); pass value_repos="" to test the fail-closed (no-tier) path.
+    if value_repos is None:
+        doc = yaml.safe_load(path.read_text()) or {}
+        value_repos = ",".join(sorted({t["repo"] for t in doc.get("tasks", []) if t.get("repo")}))
     p = subprocess.run(
         [sys.executable, str(SCRIPT), "--tasks", str(path), *args],
         capture_output=True, text=True, timeout=60,
         # LIMEN_ORGS="" → no live-org source; LIMEN_ROOT=tmp → _down_lanes finds no usage.json,
         # so the routable-open floor count == total open (deterministic, no real lane-health bleed).
-        env={**os.environ, "LIMEN_ORGS": "", "LIMEN_ROOT": str(path.parent)},
+        env={**os.environ, "LIMEN_ORGS": "", "LIMEN_ROOT": str(path.parent),
+             "LIMEN_VALUE_REPOS": value_repos, "LIMEN_VALUE_REPOS_FILE": str(path.parent / "no-such-tier.json")},
     )
     assert p.returncode == 0, p.stderr
     return p.stdout
@@ -84,3 +90,20 @@ def test_spreads_across_distinct_repos(tmp_path: Path):
     gen_repos = [t["repo"] for t in doc["tasks"] if str(t["id"]).startswith("GEN-")]
     assert len(gen_repos) == 12
     assert len(set(gen_repos)) == 12, "generated tasks must hit distinct repos, not pile on one"
+
+
+def test_value_tier_gate_fail_closed_and_filters(tmp_path: Path):
+    # No tier configured → generate NOTHING (fail-closed: never flood all repos).
+    p = tmp_path / "tasks.yaml"
+    _board(p, [f"o/r{i}" for i in range(20)], n_open_per_repo=1)
+    out = _run(p, "--floor", "100", "--max-new", "12", "--apply", value_repos="")
+    assert "fail-closed" in out
+    assert _count_generated(p) == 0
+
+    # Tier set to ONE repo → generation only for that repo, never the others.
+    p2 = tmp_path / "tasks2.yaml"
+    _board(p2, [f"o/r{i}" for i in range(20)], n_open_per_repo=1)
+    _run(p2, "--floor", "100", "--max-new", "12", "--apply", value_repos="o/r3")
+    doc = yaml.safe_load(p2.read_text())
+    gen_repos = {t["repo"] for t in doc["tasks"] if str(t["id"]).startswith("GEN-")}
+    assert gen_repos == {"o/r3"}, f"gate leaked to non-tier repos: {gen_repos}"

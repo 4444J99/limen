@@ -1,10 +1,35 @@
 import os
+import sys
 import tempfile
 from pathlib import Path
 
 import yaml
 
 from limen.models import LimenFile
+
+_DLOG_REQUIRED = {"timestamp", "agent", "session_id", "status"}
+
+
+def _sanitize_dispatch_logs(raw: object) -> int:
+    """NEVER-"NO" data-layer guard: tolerate torn writes. The shared tasks.yaml is written by many
+    uncoordinated processes; a recurring corruption lands a whole Task object inside some task's
+    dispatch_log (an entry missing timestamp/agent/session_id), which made strict validation reject
+    the ENTIRE 900+-task queue — silently breaking the generator, harvest, prune, and the daemon's
+    own beats. Drop ONLY the malformed log entries (garbage history rows); every task + the queue
+    survive. Mutates raw in place; returns the count dropped."""
+    if not isinstance(raw, dict):
+        return 0
+    dropped = 0
+    for t in raw.get("tasks") or []:
+        if not isinstance(t, dict):
+            continue
+        dl = t.get("dispatch_log")
+        if not isinstance(dl, list):
+            continue
+        clean = [e for e in dl if isinstance(e, dict) and _DLOG_REQUIRED.issubset(e.keys())]
+        dropped += len(dl) - len(clean)
+        t["dispatch_log"] = clean
+    return dropped
 
 
 def load_limen_file(path: Path) -> LimenFile:
@@ -13,6 +38,11 @@ def load_limen_file(path: Path) -> LimenFile:
         # an empty/whitespace file is corruption, not an empty queue — refuse to load it as
         # None (which would crash downstream); the caller should restore from git/backup.
         raise ValueError(f"{path} is empty or invalid YAML — refusing to load (restore from git HEAD)")
+    dropped = _sanitize_dispatch_logs(raw)
+    if dropped:
+        print(f"[limen.io] tolerated {dropped} malformed dispatch_log "
+              f"entr{'y' if dropped == 1 else 'ies'} in {Path(path).name} (torn-write recovery)",
+              file=sys.stderr)
     return LimenFile.model_validate(raw)
 
 
