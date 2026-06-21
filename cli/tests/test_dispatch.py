@@ -109,6 +109,26 @@ def test_route_distributes_local_work_and_reaches_extended_fleet(tmp_path: Path)
     assert vendor in ("copilot", "github_actions", "jules"), (vendor, reason)
 
 
+def test_self_improve_weight_nudge_steers_local_split(monkeypatch) -> None:
+    """The self-IMPROVE rung closing the loop: a learned down-weight makes _pick_local prefer the
+    other lane even when budget+load+runway are otherwise tied. Default (no weights) keeps the
+    stable name-order pick — so the nudge only bites when armed."""
+    route = load_route_module()
+    task = {"type": "code", "title": "neutral work", "context": ""}
+    health = {"codex": True, "claude": True, "agy": False, "opencode": False}
+    # codex has more budget headroom, so by load (assigned/budget) it's the lighter lane and wins.
+    budget = {"codex": 20, "claude": 10}
+    assigned = {"codex": 1, "claude": 1}  # load: codex 0.05 < claude 0.10
+
+    # No learned weights -> lightest-load lane: codex (unchanged behavior).
+    monkeypatch.setattr(route, "_learned_weights", lambda: {})
+    assert route._pick_local(task, health, assigned, budget) == "codex"
+
+    # codex down-weighted (0.25) -> effective load 0.05/0.25=0.20 > claude 0.10 -> claude wins.
+    monkeypatch.setattr(route, "_learned_weights", lambda: {"codex": 0.25})
+    assert route._pick_local(task, health, assigned, budget) == "claude"
+
+
 def test_dispatch_dry_run_prints_capacity_census_and_copilot_command(
     tmp_path: Path, capsys
 ) -> None:

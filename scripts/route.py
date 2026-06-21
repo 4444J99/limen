@@ -154,6 +154,30 @@ _DEPLOY_HINTS = ("deploy", "cloudflare", "worker", "wrangler", "infra", "hosting
 _LOCAL_LANES = ("codex", "claude", "agy", "opencode")
 
 
+def _learned_weights() -> dict[str, float]:
+    """Conservative lane weights LEARNED by the self-improve organ — the feedback that closes the
+    self-IMPROVE rung (route consumes what improve learned). Read from the proposal the organ already
+    writes (logs/self-improve-proposal.json: lane_adjustments[].target_weight). Applied to the local
+    split ONLY when LIMEN_SI_APPLY=1 — OFF by default, so improve stays proposal-only until the flip.
+
+    A down-weighted lane gets a proportionally higher effective load (picked less), but every weight
+    is floored (LIMEN_SI_WEIGHT_FLOOR, default 0.25) so no lane is ever fully STARVED — it can still
+    win work and recover as its later tries succeed. Missing lane -> 1.0 (no effect). Derive-not-pin."""
+    if os.environ.get("LIMEN_SI_APPLY") != "1":
+        return {}
+    floor = float(os.environ.get("LIMEN_SI_WEIGHT_FLOOR", "0.25"))
+    try:
+        data = json.loads((ROOT / "logs" / "self-improve-proposal.json").read_text())
+    except Exception:
+        return {}  # no proposal yet / unreadable -> no effect (fail-open to budget+runway split)
+    weights: dict[str, float] = {}
+    for adj in data.get("lane_adjustments", []):
+        lane, w = adj.get("lane"), adj.get("target_weight")
+        if lane and isinstance(w, (int, float)):
+            weights[lane] = max(floor, min(1.0, float(w)))
+    return weights
+
+
 def _pick_local(
     task: dict,
     health: dict[str, bool],
@@ -181,10 +205,15 @@ def _pick_local(
     if not candidates:
         return None
 
+    weights = _learned_weights()  # {} unless LIMEN_SI_APPLY=1 -> pure budget+runway split
+
     def load(v: str) -> float:
         b = budget.get(v, 0) or 1
         # round so near-equal loads tie and let the refresh-runway signal break the tie.
-        return round(assigned.get(v, 0) / b, 3)
+        base = assigned.get(v, 0) / b
+        # self-improve nudge: a down-weighted (historically less-shipping) lane carries a higher
+        # effective load so it's picked less; floored weight means never fully starved.
+        return round(base / weights.get(v, 1.0), 3)
 
     def runway_of(v: str) -> float:
         return runway.get(v, float("inf"))
