@@ -428,6 +428,17 @@ def test_qa_report_derives_lifecycle_without_mutation_or_private_fields(tmp_path
                 "created": "2026-06-03",
                 "dispatch_log": [],
             },
+            {
+                "id": "LIMEN-013",
+                "title": "Cancelled task",
+                "repo": "4444J99/limen",
+                "target_agent": "jules",
+                "priority": "low",
+                "budget_cost": 1,
+                "status": "cancelled",
+                "created": "2026-06-03",
+                "dispatch_log": [],
+            },
         ],
     )
     before = tasks_path.read_text()
@@ -436,14 +447,15 @@ def test_qa_report_derives_lifecycle_without_mutation_or_private_fields(tmp_path
 
     assert report["status"] == "degraded"
     assert report["lifecycle"] == {
-        "total": 4,
+        "total": 5,
         "assign": 1,
         "verify": 1,
         "recover": 1,
         "archive_ready": 1,
-        "archived": 0,
+        "archived": 1,
     }
     assert [item["id"] for item in report["steering"]["next_batch"]] == ["LIMEN-009", "LIMEN-010", "LIMEN-011"]
+    assert [item["id"] for item in report["steering"]["assignment_queue"]] == ["LIMEN-011"]
     text = str(report)
     assert "private context must not leak" not in text
     assert "private-session" not in text

@@ -133,7 +133,7 @@ def _task_lifecycle(task: Task, stale_ids: set[str]) -> dict[str, Any]:
     stale = task.id in stale_ids
     has_pr = any("/pull/" in url for url in task.urls)
     has_issue = any("/issues/" in url for url in task.urls)
-    if task.status == "archived":
+    if task.status in ("archived", "cancelled"):
         phase = "archived"
     elif task.status == "done":
         phase = "archive"
