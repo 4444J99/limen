@@ -1,0 +1,73 @@
+{
+  "_comment": "THE REVENUE LADDER — the money view's source of truth. Each product's STAGE toward its first paying dollar and WHOSE hand the next move needs. The fleet fills in the live/mechanical numbers (PRs shipped, open work) every beat; YOU curate the stage + gate here. Edit freely: this is what the money dashboard, the phone page, and the push notifications all read. Spine: real income before unemployment ends (~late Aug 2026) — enough to rent an EV and live/work/travel.",
+  "spine": "real income in <10 weeks — rent an EV, live/work/travel",
+  "stages": ["building", "deploy-ready", "live", "monetized"],
+  "products": [
+    {
+      "rank": 1,
+      "repo": "organvm/a-i-chat--exporter",
+      "product": "ChatGPT Exporter",
+      "stage": "deploy-ready",
+      "whose_hand": "yours",
+      "next_action": "git push the green branch -> wrangler deploy (Cloudflare) -> wire Ko-fi/Lemon Squeezy checkout",
+      "first_dollar_path": "live page + Pro tier via Lemon Squeezy (already integrated) or Ko-fi donations now — individual rail, NOT the dead-LLC Stripe",
+      "note": "code gate is green; only the human gates stand between this and the first dollar"
+    },
+    {
+      "rank": 2,
+      "repo": "organvm/public-record-data-scrapper",
+      "product": "Public Record Data Scraper",
+      "stage": "building",
+      "whose_hand": "mine",
+      "next_action": "drive remaining PRs green, then to deploy-ready",
+      "first_dollar_path": "data-as-a-service / one-off scrape gigs once deployed",
+      "note": "recently healed (large test suite passing)"
+    },
+    {
+      "rank": 3,
+      "repo": "organvm/universal-mail--automation",
+      "product": "Universal Mail Automation",
+      "stage": "building",
+      "whose_hand": "mine",
+      "next_action": "harden toward deploy-ready",
+      "first_dollar_path": "subscription on the automation tier once live",
+      "note": ""
+    },
+    {
+      "rank": 4,
+      "repo": "organvm/the-invisible-ledger",
+      "product": "The Invisible Ledger",
+      "stage": "building",
+      "whose_hand": "mine",
+      "next_action": "harden toward deploy-ready",
+      "first_dollar_path": "paid tier once live",
+      "note": ""
+    },
+    {
+      "rank": 5,
+      "repo": "organvm/mirror-mirror",
+      "product": "Mirror Mirror",
+      "stage": "building",
+      "whose_hand": "mine",
+      "next_action": "harden toward deploy-ready",
+      "first_dollar_path": "paid tier once live",
+      "note": ""
+    },
+    {
+      "rank": 6,
+      "repo": "organvm/styx",
+      "product": "Styx",
+      "stage": "building",
+      "whose_hand": "mine",
+      "next_action": "harden toward deploy-ready",
+      "first_dollar_path": "paid tier once live",
+      "note": ""
+    }
+  ],
+  "conductor_core": ["organvm/limen", "4444J99/limen", "organvm/session-meta", "4444J99/session-meta"],
+  "your_levers": [
+    "money rail — Ko-fi or Lemon Squeezy (individual, ~1h, start now)",
+    "git push the exporter branch",
+    "wrangler deploy (Cloudflare) — exporter live + the phone page"
+  ]
+}

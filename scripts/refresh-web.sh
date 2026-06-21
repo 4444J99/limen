@@ -21,7 +21,7 @@ with_timeout() {
 }
 
 # re-export static site from live tasks.yaml (prebuild regenerates data, postbuild validates)
-if LIMEN_TASKS="$ROOT/tasks.yaml" with_timeout "${LIMEN_WEB_BUILD_TIMEOUT:-20}" \
+if LIMEN_TASKS="$ROOT/tasks.yaml" with_timeout "${LIMEN_WEB_BUILD_TIMEOUT:-90}" \
     npm run build >"$ROOT/logs/web-refresh.log" 2>&1; then
   echo "  web: rebuilt from live tasks.yaml"
 else

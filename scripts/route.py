@@ -53,14 +53,8 @@ from limen.capacity import (  # noqa: E402
     format_capacity_census,
     task_has_github_issue,
 )
-from limen.io import atomic_write_text  # noqa: E402
+from limen.io import load_limen_file, queue_lock, save_limen_file  # noqa: E402
 from limen.dispatch import _down_lanes  # noqa: E402
-
-try:
-    import yaml
-except ImportError:
-    print("pyyaml required", file=sys.stderr)
-    sys.exit(1)
 
 
 # Vendor health: which local lanes are usable right now. gemini needs an API key.
@@ -321,7 +315,13 @@ def main() -> int:
 
     tasks_path = Path(args.tasks)
     workdir = Path(args.workdir).expanduser()
-    data = yaml.safe_load(tasks_path.read_text())
+    # Read through the RESILIENT loader (sanitizes torn writes) instead of raw yaml.safe_load —
+    # so route never re-emits / re-encodes the malformed dispatch_log rows that produced the
+    # "dispatch_log.*.agent Field required" trace every beat. Decisions run on a (possibly stale)
+    # snapshot WITHOUT the lock, because the capacity census/health probes shell out (which/gh) and
+    # we must not hold the queue mutex across slow work. The actual write re-reads fresh UNDER the
+    # lock below, so we only ever clobber our own target_agent field, never a dispatcher's append.
+    data = load_limen_file(tasks_path).model_dump(mode="json", exclude_none=True)
     census = capacity_census(data)
     health = _fleet_health(data)
 
@@ -366,22 +366,40 @@ def main() -> int:
     # per-agent daily budget drives the distribution (derived from tasks.yaml, never pinned).
     budget = (data.get("portal", {}).get("budget", {}) or {}).get("per_agent", {}) or {}
     tally: Counter = Counter()
+    assignments: dict[str, str] = {}  # task id -> chosen vendor (decisions only; applied under lock)
     for t in opens:
         # pass the running tally as the assigned-so-far counts so load spreads across lanes,
         # and the live runway so the split steers toward the freshest refresh window.
         vendor, reason = route_task(t, health, workdir, assigned=tally, budget=budget, runway=runway)
         tally[vendor] += 1
         print(f"| {t['id']} | {t.get('repo','-')} | {vendor} | {reason} |")
-        if args.apply and vendor not in ("unroutable",):
-            t["target_agent"] = vendor
+        if vendor not in ("unroutable",):
+            assignments[t["id"]] = vendor
 
     print(f"\nrouted: {dict(tally)}")
-    if args.apply:
-        atomic_write_text(tasks_path, yaml.safe_dump(data, sort_keys=False))
-        print(f"applied target_agent assignments -> {tasks_path} "
-              f"(dispatch separately, gated: limen dispatch --agent <v> --live)")
-    else:
+    if not args.apply:
         print("dry-run (no changes). re-run with --apply to set target_agent.")
+        return 0
+
+    # Apply UNDER the queue lock with a FRESH sanitized re-read, so route stops racing the
+    # dispatchers (the race that wrote a Task into a dispatch_log = the torn-write source). We
+    # mutate ONLY target_agent on tasks that are still open, then write through the validated
+    # save_limen_file (never a raw dump). If the lock is busy, skip this pass — a missed routing
+    # write is harmless and self-corrects next beat (never block the beat / never dead-stop).
+    with queue_lock(tasks_path) as got:
+        if not got:
+            print("queue busy — skipped applying target_agent this pass (self-corrects next beat).")
+            return 0
+        lf = load_limen_file(tasks_path)
+        applied = 0
+        for task in lf.tasks:
+            v = assignments.get(task.id)
+            if v and task.status == "open":
+                task.target_agent = v
+                applied += 1
+        save_limen_file(tasks_path, lf)
+    print(f"applied target_agent assignments ({applied}) -> {tasks_path} "
+          f"(dispatch separately, gated: limen dispatch --agent <v> --live)")
     return 0
 
 

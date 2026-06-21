@@ -86,6 +86,19 @@ async function fetchCheckRuns(repo, headSha) {
 }
 
 async function main() {
+  // Cache-skip-if-fresh: the static site rebuilds every web beat, but PR status does NOT need a live
+  // GitHub round-trip each time. If the cached pr-status.json is younger than the TTL, reuse it and
+  // skip ALL network — this nested fetch (repos x PRs x check-runs = 200+ sequential calls) is what
+  // blew past the build timeout and left the dashboard stale since 2026-06-19. TTL derived from env,
+  // never pinned; the money.html surface is the always-fresh primary regardless.
+  const ttlMin = Number(process.env.LIMEN_PR_STATUS_TTL_MIN || 30);
+  if (previous?.generated_at) {
+    const ageMin = (Date.now() - new Date(previous.generated_at).getTime()) / 60000;
+    if (Number.isFinite(ageMin) && ageMin < ttlMin) {
+      console.log(`PR status cache fresh (${ageMin.toFixed(0)}m < ${ttlMin}m) — skipping fetch.`);
+      return;
+    }
+  }
   console.log("Fetching PR status for", REPOS.length, "repos...");
   const results = [];
 
