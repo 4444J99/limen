@@ -24,5 +24,15 @@ fi
 echo "[drain] harvesting…"
 PYTHONPATH="$PY" python3 -m limen harvest --agent jules
 
+# MERGE the landed/dispatched PRs — the missing autonomic organ. Bounded per beat so it never
+# dominates the cycle; merges ONLY mergeable+CI-green, never force-merges; idempotent vs other
+# agents (already-merged is counted, not an error). Touches only GitHub, not tasks.yaml/worktrees.
+# On by default for the live daemon (already authorized to open PRs); LIMEN_MERGE_DRAIN=0 disables.
+if [ "${LIMEN_MERGE_DRAIN:-1}" = "1" ]; then
+  echo "[drain] merging READY PRs (scan ${LIMEN_MERGE_SCAN:-30}, limit ${LIMEN_MERGE_LIMIT:-10})…"
+  PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/merge-drain.py" \
+      --scan "${LIMEN_MERGE_SCAN:-30}" --limit "${LIMEN_MERGE_LIMIT:-10}" 2>&1 | tail -3 || true
+fi
+
 echo "[drain] board:"
 PYTHONPATH="$PY" python3 -m limen doctor 2>&1 | head -9
