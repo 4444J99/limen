@@ -7,7 +7,11 @@ import json
 
 import yaml
 from mcp.server.fastmcp import FastMCP
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+VALID_STATUSES = {"open", "dispatched", "in_progress", "done", "failed", "failed_blocked", "needs_human", "archived"}
+VALID_PRIORITIES = {"critical", "high", "medium", "low", "backlog"}
+VALID_AGENTS = {"jules", "claude", "gemini", "opencode", "codex", "copilot", "agy", "warp", "oz", "github_actions", "any"}
 
 # ── Models ─────────────────────────────────────────────────────────────────
 
@@ -26,7 +30,7 @@ class Task(BaseModel):
     type: str = "code"
     target_agent: str
     priority: str = "medium"
-    budget_cost: int = 1
+    budget_cost: int = Field(default=1, ge=1)
     status: str = "open"
     labels: List[str] = []
     urls: List[str] = []
@@ -34,6 +38,27 @@ class Task(BaseModel):
     created: date
     updated: Optional[datetime] = None
     dispatch_log: List[DispatchLogEntry] = []
+
+    @field_validator("priority")
+    @classmethod
+    def validate_priority(cls, v: str) -> str:
+        if v not in VALID_PRIORITIES:
+            raise ValueError(f"priority must be one of {', '.join(sorted(VALID_PRIORITIES))}")
+        return v
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: str) -> str:
+        if v not in VALID_STATUSES:
+            raise ValueError(f"status must be one of {', '.join(sorted(VALID_STATUSES))}")
+        return v
+
+    @field_validator("target_agent")
+    @classmethod
+    def validate_target_agent(cls, v: str) -> str:
+        if v not in VALID_AGENTS:
+            raise ValueError(f"target_agent must be one of {', '.join(sorted(VALID_AGENTS))}")
+        return v
 
 class BudgetTrack(BaseModel):
     date: str

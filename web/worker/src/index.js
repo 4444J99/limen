@@ -2,6 +2,9 @@ import YAML from "yaml";
 
 const GITHUB_API = "https://api.github.com";
 const VERIFY_STATUSES = new Set(["done", "needs_human", "failed", "failed_blocked"]);
+const VALID_STATUSES = new Set(["open", "dispatched", "in_progress", "done", "failed", "failed_blocked", "needs_human", "archived"]);
+const VALID_PRIORITIES = new Set(["critical", "high", "medium", "low", "backlog"]);
+const VALID_AGENTS = new Set(["jules", "claude", "gemini", "opencode", "codex", "copilot", "agy", "warp", "oz", "github_actions", "any"]);
 let inlineBoardText = null;
 
 function nowIso() {
@@ -16,6 +19,15 @@ function json(payload, status = 200, env = {}) {
       ...corsHeaders(env),
     },
   });
+}
+
+function safeParseBody(body, allowedFields = []) {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) return {};
+  const cleaned = {};
+  for (const field of allowedFields) {
+    if (field in body) cleaned[field] = body[field];
+  }
+  return cleaned;
 }
 
 function corsHeaders(env) {
@@ -486,7 +498,9 @@ async function route(request, env) {
   if (path === "/api/release-stale" && request.method === "POST") {
     const auth = requirePersona(request, env, ["owner"]);
     if (auth.response) return auth.response;
-    const hours = Number(url.searchParams.get("hours") || "24");
+    const hoursRaw = Number(url.searchParams.get("hours") || "24");
+    if (!Number.isFinite(hoursRaw) || hoursRaw < 0 || hoursRaw > 8760) return error("hours must be a number between 0 and 8760", 422, env);
+    const hours = hoursRaw;
     const dryRun = (url.searchParams.get("dry_run") || "true") !== "false";
     const doc = await loadBoard(env);
     const candidates = releaseStaleCandidates(doc.data, hours);
@@ -506,11 +520,16 @@ async function route(request, env) {
   if (path === "/api/dispatch" && request.method === "POST") {
     const auth = requirePersona(request, env, ["owner"]);
     if (auth.response) return auth.response;
-    const body = await request.json().catch(() => ({}));
+    let rawBody;
+    try { rawBody = await request.json(); } catch { return error("invalid JSON body", 422, env); }
+    const body = safeParseBody(rawBody, ["agent", "limit", "task_id", "live"]);
+    const agent = typeof body.agent === "string" && body.agent ? body.agent : "jules";
+    const taskId = typeof body.task_id === "string" ? body.task_id : null;
+    const limit = Number.isFinite(Number(body.limit)) ? Math.max(1, Math.min(Number(body.limit), 100)) : 1;
     const doc = await loadBoard(env);
-    const candidates = dispatchCandidates(doc.data, body.agent || "jules", body.task_id || null).slice(0, Math.max(1, Math.min(Number(body.limit || 1), 100)));
+    const candidates = dispatchCandidates(doc.data, agent, taskId).slice(0, limit);
     if (body.live) return error("live dispatch is not implemented by the Cloudflare adapter", 501, env);
-    return json({ status: "dry_run", count: candidates.length, candidates, tasks: candidates, live: false, agent: body.agent || "jules" }, 200, env);
+    return json({ status: "dry_run", count: candidates.length, candidates, tasks: candidates, live: false, agent }, 200, env);
   }
 
   const taskMatch = path.match(/^\/api\/tasks\/([^/]+)(?:\/(verify|assign|archive))?$/);
@@ -521,11 +540,13 @@ async function route(request, env) {
     const action = taskMatch[2];
     if (!action && request.method === "GET") return withBoard(env, (data) => json(findTask(data, taskId), 200, env));
     if (request.method !== "POST") return error("method not allowed", 405, env);
-    const body = await request.json().catch(() => ({}));
+    let rawBody;
+    try { rawBody = await request.json(); } catch { return error("invalid JSON body", 422, env); }
+    const body = safeParseBody(rawBody, ["status", "note", "session_id", "target_agent", "priority", "budget_cost"]);
     const doc = await loadBoard(env);
     const task = findTask(doc.data, taskId);
     if (action === "verify") {
-      if (!VERIFY_STATUSES.has(body.status || "done")) return error("invalid verification status", 422, env);
+      if (!VERIFY_STATUSES.has(body.status || "done")) return error("invalid verification status: must be one of " + [...VERIFY_STATUSES].join(", "), 422, env);
       if (!["dispatched", "in_progress", "needs_human", "failed", "failed_blocked", "done"].includes(task.status)) return error("only active, attention, or done tasks can be verified", 409, env);
       task.status = body.status || "done";
       appendLog(task, "qa", body.session_id || "qa-verify", task.status, body.note || `QA verified task as ${task.status}`);
@@ -534,10 +555,23 @@ async function route(request, env) {
     }
     if (action === "assign") {
       const before = { target_agent: task.target_agent, priority: task.priority, budget_cost: task.budget_cost, status: task.status };
-      if (body.target_agent !== undefined) task.target_agent = body.target_agent;
-      if (body.priority !== undefined) task.priority = body.priority;
-      if (body.budget_cost !== undefined) task.budget_cost = body.budget_cost;
-      if (body.status !== undefined) task.status = body.status;
+      if (body.target_agent !== undefined) {
+        if (!VALID_AGENTS.has(body.target_agent)) return error("invalid target_agent: must be one of " + [...VALID_AGENTS].join(", "), 422, env);
+        task.target_agent = body.target_agent;
+      }
+      if (body.priority !== undefined) {
+        if (!VALID_PRIORITIES.has(body.priority)) return error("invalid priority: must be one of " + [...VALID_PRIORITIES].join(", "), 422, env);
+        task.priority = body.priority;
+      }
+      if (body.budget_cost !== undefined) {
+        const cost = Number(body.budget_cost);
+        if (!Number.isFinite(cost) || cost < 1 || cost > 100) return error("budget_cost must be a number between 1 and 100", 422, env);
+        task.budget_cost = cost;
+      }
+      if (body.status !== undefined) {
+        if (!VALID_STATUSES.has(body.status)) return error("invalid status: must be one of " + [...VALID_STATUSES].join(", "), 422, env);
+        task.status = body.status;
+      }
       const after = { target_agent: task.target_agent, priority: task.priority, budget_cost: task.budget_cost, status: task.status };
       const changed = Object.keys(after).filter((key) => before[key] !== after[key]);
       appendLog(task, "api", body.session_id || "assignment", "assigned", body.note || `Assigned via steering controls: ${changed.join(", ") || "no field changes"}`);
