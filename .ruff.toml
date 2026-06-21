@@ -1,0 +1,10 @@
+target-version = "py311"
+line-length = 120
+extend-exclude = [
+    ".claude",
+    ".worktrees",
+    ".ruff_cache",
+    "node_modules",
+    ".limen",
+    ".git",
+]

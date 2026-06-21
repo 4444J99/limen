@@ -699,7 +699,7 @@ def readiness(data: dict[str, Any], agent: str = "jules") -> dict[str, Any]:
         status = "ready"
     next_actions: list[str] = []
     if stale:
-        next_actions.append(f"POST /api/release-stale?hours=24&dry_run=false")
+        next_actions.append("POST /api/release-stale?hours=24&dry_run=false")
     if open_tasks and remaining > 0 and agent_path:
         next_actions.append(f"POST /api/dispatch live=true limit={min(len(open_tasks), remaining)}")
     if not agent_path:
