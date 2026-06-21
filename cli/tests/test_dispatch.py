@@ -57,6 +57,7 @@ def test_capacity_census_lists_every_paid_lane(tmp_path: Path, monkeypatch) -> N
         path.chmod(0o755)
     monkeypatch.setenv("PATH", str(tmp_path))
     monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    monkeypatch.setenv("WARP_API_KEY", "test-key")
     monkeypatch.setenv("LIMEN_COPILOT_ENABLED", "1")
 
     tasks_path = tmp_path / "tasks.yaml"
