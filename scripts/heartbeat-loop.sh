@@ -16,7 +16,8 @@
 #   feed           every 3           mine the GitHub backlog
 #   drain          every 5           pull+close completed jules, release stale
 #   hygiene        every 8           clone-maintenance (gc/prune/reap-report)
-#   backup         every 48          mountpoint-guarded copy→verify to externals
+#   capture        every 48          commit+push every workspace repo → off disk, into canonical
+#   corpus         every 24          CONVERGE his words: distill the knowledge base toward ONE
 set -uo pipefail
 export HOME="${HOME:-/Users/4jp}"
 export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
@@ -74,6 +75,7 @@ C_FEED="${LIMEN_BEAT_FEED:-3}"         # EXPLORE (mine the backlog)
 C_DRAIN="${LIMEN_BEAT_DRAIN:-3}"       # VERIFY (harvest completed → done; faster recycle)
 C_HEAL="${LIMEN_BEAT_HEAL:-6}"         # HEAL  (recover failed/orphaned → fresh cascade)
 C_HYGIENE="${LIMEN_BEAT_HYGIENE:-8}"; C_BACKUP="${LIMEN_BEAT_BACKUP:-48}"
+C_CORPUS="${LIMEN_BEAT_CORPUS:-24}"    # CONVERGE (distill his words toward ONE; expensive → rare)
 C_WEB="${LIMEN_BEAT_WEB:-4}"           # LEARN (refresh the visualized surfaces)
 LOCKD="$LIMEN_ROOT/logs/.queue.lock.d"   # shared with supervisory ops (two-scale safety)
 c=0
@@ -185,9 +187,20 @@ while true; do
   python3 "$LIMEN_ROOT/scripts/emit-tick.py" 2>&1 | tail -1 || true   # tick voice — every beat
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" 2>&1 | tail -1 || true   # real per-vendor usage
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/money-view.py" 2>&1 | tail -1 || true   # revenue-first money view (no network, can't time out)
+  play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/corpus-view.py" 2>&1 | tail -1 || true   # knowledge-base view: THE ONE + convergence activity (no network)
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/notify-events.py" 2>&1 | tail -1 || true   # push: your-gate ready / ship milestones
   play "$C_WEB"     && bash "$LIMEN_ROOT/scripts/refresh-web.sh" 2>&1 | tail -2 || true   # web auto-refresh (best-effort; money.html is primary)
-  play "$C_BACKUP"  && [ -x "$LIMEN_ROOT/scripts/backup.sh" ] && bash "$LIMEN_ROOT/scripts/backup.sh" 2>&1 | tail -2 || true
+  # CAPTURE — get every workspace repo OFF disk into the canonical universal context (commit+push,
+  # additive only). Implements the old backup voice; falls back to a legacy backup.sh if present.
+  if play "$C_BACKUP"; then
+    if [ -x "$LIMEN_ROOT/scripts/capture.sh" ]; then bash "$LIMEN_ROOT/scripts/capture.sh" 2>&1 | tail -3 || true
+    elif [ -x "$LIMEN_ROOT/scripts/backup.sh" ]; then bash "$LIMEN_ROOT/scripts/backup.sh" 2>&1 | tail -2 || true; fi
+  fi
+  # CONVERGE his WORDS — distill the knowledge base toward ONE. Gated OFF by default
+  # (LIMEN_CORPUS_CONVERGE=1); the script self-selects live synthesis (LIMEN_CORPUS_CONVERGE_LIVE=1)
+  # + graph shots (LIMEN_CORPUS_GRAPH=1). Bounded + fail-open — never gates the beat.
+  play "$C_CORPUS"  && [ "${LIMEN_CORPUS_CONVERGE:-0}" = "1" ] && \
+    python3 "$LIMEN_ROOT/scripts/corpus-converge.py" --apply 2>&1 | tail -3 || true
 
   # adaptive tempo: tighten to MIN whenever work is flowing OR the OPEN QUEUE is non-empty (so a
   # beat that produced no PR this cycle — all no-op / still-running — doesn't back off to 30min
