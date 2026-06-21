@@ -34,5 +34,16 @@ if [ "${LIMEN_MERGE_DRAIN:-1}" = "1" ]; then
       --scan "${LIMEN_MERGE_SCAN:-30}" --limit "${LIMEN_MERGE_LIMIT:-10}" 2>&1 | tail -3 || true
 fi
 
+# SELF-HEAL — emit targeted heal tasks for the PRs merge-drain just REFUSED (CI-RED / CONFLICT)
+# so the dispatcher repairs them in a worktree → they turn mergeable → merge-drain lands them next
+# beat → the open-PR floor finally falls. Emits via the same atomic queue-lock path the daemon uses
+# (cannot race tasks.yaml); bounded + idempotent. OFF by default — set LIMEN_SELF_HEAL=1 to enable
+# live emission (it WRITES heal tasks to the queue); use --dry-run to preview without writing.
+if [ "${LIMEN_SELF_HEAL:-0}" = "1" ]; then
+  echo "[drain] emitting heal tasks for stuck PRs (scan ${LIMEN_HEAL_SCAN:-30}, limit ${LIMEN_HEAL_LIMIT:-10})…"
+  PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/self-heal.py" \
+      --scan "${LIMEN_HEAL_SCAN:-30}" --limit "${LIMEN_HEAL_LIMIT:-10}" 2>&1 | tail -3 || true
+fi
+
 echo "[drain] board:"
 PYTHONPATH="$PY" python3 -m limen doctor 2>&1 | head -9

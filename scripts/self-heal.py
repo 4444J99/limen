@@ -1,0 +1,242 @@
+#!/usr/bin/env python3
+"""self-heal.py — the SELF-HEAL rung of the self-* ladder.
+
+merge-drain.py merges the PRs that are genuinely READY and correctly REFUSES the ones that
+are CI-RED or CONFLICTING. But nothing fixes those refused PRs, so the open-PR floor never
+falls — the stuck pile just sits. This organ closes that gap: every heal beat it assesses the
+open PRs (exactly as merge-drain does), and for each CI-RED or CONFLICT PR it EMITS a targeted
+heal task into the queue so the existing router+dispatcher picks it up and an agent fixes the
+PR in a worktree → the PR turns mergeable → merge-drain lands it next beat → the floor drops.
+
+This is alchemical progress toward ideal form (the fleet repairing its OWN work), NOT reduction.
+
+Safety / shape (matches the sibling organs exactly):
+  • SCAN side is identical to merge-drain.py (same OWNERS, same `gh search prs --author @me`,
+    the same assess() classifier: READY / CI-RED / CI-PENDING / CONFLICT). Read-only `gh`.
+  • EMIT side uses the ONE safe shared-append path every tasks.yaml writer uses: acquire the
+    daemon's queue-lock (logs/.queue.lock.d, the heal-dispatch.py convention), RELOAD fresh
+    under the lock, append validated limen Task objects, save via the atomic writer
+    (limen.io.save_limen_file → temp file + fsync + os.replace). Never a naive open()/dump,
+    so it can NEVER race the daemon or torn-read tasks.yaml.
+  • IDEMPOTENT: each heal task has a STABLE id derived from kind+owner+repo+num
+    (HEAL-cifix-… / HEAL-rebase-…). If that id already exists in tasks.yaml (any status), no
+    duplicate is emitted — re-running is a no-op until the PR's state changes.
+  • BOUNDED: --scan caps PRs assessed (default 30, like merge-drain), --limit caps heal tasks
+    emitted this run (default 10). Never dispatches, merges, pushes, or closes anything.
+
+  --scan N    max open PRs to assess this run     (default 30)
+  --limit N   max heal tasks to EMIT this run     (default 10)
+  --dry-run   assess + report what WOULD be emitted; make ZERO writes (lock untouched)
+"""
+import argparse
+import collections
+import concurrent.futures as cf
+import datetime
+import json
+import os
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+from limen.io import load_limen_file, save_limen_file  # noqa: E402
+from limen.models import Task  # noqa: E402
+
+# DERIVED from env so the conductor survives relocation; same defaults as merge-drain.py.
+OWNERS = [o.strip() for o in os.environ.get("LIMEN_OWNERS", "organvm,4444J99").split(",") if o.strip()]
+ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
+LOCKD = ROOT / "logs" / ".queue.lock.d"
+LOG = ROOT / "logs" / "self-heal.log"
+
+# the heal kinds this organ emits, keyed by the classifier verdict it reacts to.
+KINDS = {
+    "CI-RED": {
+        "slug": "cifix",
+        "priority": "high",
+        "labels": ["cifix", "self-heal", "ci-red"],
+        "title": "fix failing CI on {repo}#{num}",
+        "context": (
+            "PR {repo}#{num} has FAILING CI checks and merge-drain correctly refuses to merge "
+            "it. Check out the PR branch, find the root cause of the red checks (lint / types / "
+            "failing test / config), fix it, push to the SAME PR branch, and confirm every check "
+            "goes green. Do not open a new PR — repair the existing one so merge-drain lands it. "
+            "PR: {url}"
+        ),
+    },
+    "CONFLICT": {
+        "slug": "rebase",
+        "priority": "high",
+        "labels": ["rebase", "self-heal", "conflict"],
+        "title": "rebase/resolve conflicts on {repo}#{num}",
+        "context": (
+            "PR {repo}#{num} is CONFLICTING with its base branch and merge-drain correctly "
+            "refuses to merge it. Check out the PR branch, rebase it onto the current base (or "
+            "merge base in), resolve every conflict preserving the PR's intent, push to the SAME "
+            "PR branch, and confirm it reports MERGEABLE with green CI. Do not open a new PR. "
+            "PR: {url}"
+        ),
+    },
+}
+
+
+def gh(args, timeout=60):
+    return subprocess.run(["gh", *args], capture_output=True, text=True, timeout=timeout)
+
+
+def open_prs(scan):
+    r = gh(["search", "prs", "--author", "@me", "--state", "open", "--limit", str(scan),
+            *sum([["--owner", o] for o in OWNERS], []),
+            "--json", "number,repository,url"])
+    if r.returncode != 0:
+        return []
+    return [(p["repository"]["nameWithOwner"], p["number"], p.get("url", ""))
+            for p in json.loads(r.stdout or "[]")]
+
+
+def assess(pr):
+    # identical classification logic to merge-drain.py.assess (kept verbatim so the two organs
+    # always agree on what is READY vs CI-RED vs CONFLICT — they are two halves of one verdict).
+    repo, num, url = pr
+    try:
+        r = gh(["pr", "view", str(num), "-R", repo, "--json",
+                "mergeable,mergeStateStatus,state,statusCheckRollup,isDraft"], timeout=40)
+        if r.returncode != 0:
+            return (repo, num, url, "ERR")
+        d = json.loads(r.stdout)
+        if d.get("state") != "OPEN" or d.get("isDraft"):
+            return (repo, num, url, "SKIP")
+        states = [(c.get("conclusion") or c.get("state") or "") for c in (d.get("statusCheckRollup") or [])]
+        if any(s in ("FAILURE", "ERROR", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED") for s in states):
+            return (repo, num, url, "CI-RED")
+        if any(s in ("PENDING", "IN_PROGRESS", "QUEUED", "EXPECTED", "") for s in states):
+            return (repo, num, url, "CI-PENDING")
+        if d.get("mergeable") == "CONFLICTING":
+            return (repo, num, url, "CONFLICT")
+        if d.get("mergeable") == "MERGEABLE":
+            return (repo, num, url, "READY")
+        return (repo, num, url, "BLOCKED")
+    except Exception:
+        return (repo, num, url, "ERR")
+
+
+def task_id(kind_slug, repo, num):
+    # stable id → idempotency. repo is owner/name; slugify both halves like generate-backlog.
+    slug = repo.replace("/", "-").lower()
+    return f"HEAL-{kind_slug}-{slug}-{num}"
+
+
+def build_task(verdict, repo, num, url, stamp):
+    spec = KINDS[verdict]
+    return Task(
+        id=task_id(spec["slug"], repo, num),
+        title=spec["title"].format(repo=repo, num=num),
+        repo=repo,
+        type="code",
+        target_agent="any",
+        priority=spec["priority"],
+        budget_cost=1,
+        status="open",
+        labels=list(spec["labels"]),
+        urls=[url] if url else [],
+        context=spec["context"].format(repo=repo, num=num, url=url or f"{repo}#{num}")
+        + f" [auto-emitted {stamp} by self-heal so merge-drain can land it]",
+        depends_on=[],
+        created=stamp,
+        dispatch_log=[],
+    )
+
+
+def acquire_lock(timeout=15):
+    for _ in range(timeout):
+        try:
+            LOCKD.mkdir()
+            return True
+        except FileExistsError:
+            time.sleep(1)
+    return False
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--scan", type=int, default=int(os.environ.get("LIMEN_HEAL_SCAN", "30")))
+    ap.add_argument("--limit", type=int, default=int(os.environ.get("LIMEN_HEAL_LIMIT", "10")))
+    ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS", str(ROOT / "tasks.yaml")))
+    ap.add_argument("--dry-run", action="store_true")
+    a = ap.parse_args()
+
+    prs = open_prs(a.scan)
+    if not prs:
+        print("[self-heal] no open PRs (or gh unavailable)")
+        return 0
+    with cf.ThreadPoolExecutor(max_workers=10) as ex:
+        rows = list(ex.map(assess, prs))
+    b = collections.Counter(r[3] for r in rows)
+
+    # the stuck PRs this organ exists to heal, capped per run.
+    sick = [(r[3], r[0], r[1], r[2]) for r in rows if r[3] in KINDS][:a.limit]
+    stamp = datetime.date.today().isoformat()
+
+    tasks_path = Path(a.tasks)
+
+    # DRY-RUN: assess + report only. Zero writes; the queue-lock is never even touched.
+    if a.dry_run:
+        existing = {t.id for t in load_limen_file(tasks_path).tasks} if tasks_path.exists() else set()
+        would, dup = [], 0
+        for verdict, repo, num, url in sick:
+            tid = task_id(KINDS[verdict]["slug"], repo, num)
+            if tid in existing:
+                dup += 1
+            else:
+                would.append((tid, verdict, repo, num))
+        print(f"[self-heal] DRY-RUN scanned={len(prs)} ready={b['READY']} "
+              f"ci-red={b['CI-RED']} conflict={b['CONFLICT']} ci-pending={b['CI-PENDING']} "
+              f"| would-emit={len(would)} already-queued={dup}")
+        print("| heal task id (would emit) | kind | repo | pr |")
+        print("|---|---|---|---|")
+        for tid, verdict, repo, num in would:
+            print(f"| {tid} | {KINDS[verdict]['slug']} | {repo} | #{num} |")
+        if not would:
+            print("| (none — every sick PR already has an open heal task) |  |  |  |")
+        return 0
+
+    # LIVE: acquire the daemon's queue-lock, RELOAD fresh under it, dedupe by stable id, append
+    # validated Task objects, save atomically. This is the ONLY safe shared-append path.
+    if not acquire_lock():
+        print("[self-heal] queue lock held by daemon — skipping this pass (retry next tick)")
+        return 0
+    try:
+        lf = load_limen_file(tasks_path)
+        existing = {t.id for t in lf.tasks}
+        emitted = []
+        for verdict, repo, num, url in sick:
+            tid = task_id(KINDS[verdict]["slug"], repo, num)
+            if tid in existing:
+                continue
+            existing.add(tid)
+            lf.tasks.append(build_task(verdict, repo, num, url, stamp))
+            emitted.append(tid)
+        if emitted:
+            save_limen_file(tasks_path, lf)
+    finally:
+        try:
+            LOCKD.rmdir()
+        except OSError:
+            pass
+
+    ts = datetime.datetime.now().strftime("%F %T")
+    summary = (f"[self-heal] {ts} scanned={len(prs)} ready={b['READY']} ci-red={b['CI-RED']} "
+               f"conflict={b['CONFLICT']} ci-pending={b['CI-PENDING']} | emitted={len(emitted)}")
+    print(summary)
+    for tid in emitted:
+        print(f"    emit: {tid}")
+    try:
+        with open(LOG, "a") as f:
+            f.write(summary + (("  " + " ".join(emitted)) if emitted else "") + "\n")
+    except Exception:
+        pass
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
