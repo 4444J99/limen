@@ -19,6 +19,7 @@ schema (validated, atomic write). Never dispatches.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 from collections import Counter
@@ -95,6 +96,27 @@ def _org_repos() -> list[str]:
     return [r for r in out if is_product(r)]
 
 
+def _allowed_repos() -> set[str]:
+    """THE VALUE TIER — the ONLY repos worth a generated token (revenue products + conductor-core),
+    ranked by time-to-dollar. Sourced from value-repos.json at LIMEN_ROOT (or LIMEN_VALUE_REPOS_FILE)
+    and/or the LIMEN_VALUE_REPOS env (comma-sep). Supports both ["owner/repo", …] and
+    [{"repo": "owner/repo"}, …]. Returns the union as a set; empty = no tier configured (caller
+    fail-closes). Derive-not-pin: the tier is data, never hardcoded here."""
+    repos: set[str] = {r.strip() for r in os.environ.get("LIMEN_VALUE_REPOS", "").split(",") if r.strip()}
+    fpath = os.environ.get(
+        "LIMEN_VALUE_REPOS_FILE",
+        str(Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent)) / "value-repos.json"),
+    )
+    try:
+        data = json.loads(Path(fpath).read_text())
+        for r in data.get("repos", []):
+            repos.add(r if isinstance(r, str) else (r.get("repo") or ""))
+    except Exception:
+        pass
+    repos.discard("")
+    return repos
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS", "tasks.yaml"))
@@ -133,6 +155,21 @@ def main() -> int:
     repos = list(dict.fromkeys(org + in_queue)) if org else in_queue
     if not repos:
         print("no candidate repos (org API unreachable + tasks.yaml empty) — nothing to generate.")
+        return 0
+
+    # VALUE-TIER GATE: only generate work for the ranked revenue/conductor repos — never the ~174
+    # dead/zero-user repos that were the 70-80%-noise source. Fail-closed: an unconfigured tier
+    # generates NOTHING (better an idle feed beat than a flood of waste). value-repos.json is the tier.
+    allowed = _allowed_repos()
+    if not allowed:
+        print("value-tier: no value-repos.json configured — generating NOTHING (fail-closed). "
+              "Add repos to value-repos.json to fund fleet work.")
+        return 0
+    before = len(repos)
+    repos = [r for r in repos if r in allowed]
+    print(f"  value-tier gate: {before} candidates → {len(repos)} in tier")
+    if not repos:
+        print("no candidate repos in the value tier — nothing to generate.")
         return 0
     if org:
         print(f"  candidate repos: {len(repos)} ({len(org)} from org, +{len(set(in_queue)-set(org))} queue-only)")
