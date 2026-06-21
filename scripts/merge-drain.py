@@ -30,6 +30,28 @@ def open_prs(scan):
         return []
     return [(p["repository"]["nameWithOwner"], p["number"]) for p in json.loads(r.stdout or "[]")]
 
+def _is_trivial(repo, num):
+    """True if the PR diff is a no-op / pure reformat (whitespace or line-ending only) or empty — the
+    'green-checkmark noise' class (e.g. a CIFIX that only normalized CRLF->LF, showing 436/436 lines).
+    A VALUE gate ON TOP of the CI gate: refuse to auto-merge these. Conservative + fail-open: any real
+    content change, or any error fetching the diff, -> NOT trivial (defer to the existing CI gate)."""
+    r = gh(["pr", "diff", str(num), "-R", repo], timeout=60)
+    if r.returncode != 0:
+        return False
+    added, removed = [], []
+    for ln in r.stdout.splitlines():
+        if ln.startswith(("+++", "---", "diff ", "index ", "@@", "old mode", "new mode",
+                          "similarity", "rename", "deleted file", "new file", "Binary")):
+            continue
+        if ln.startswith("+"):
+            added.append(ln[1:].strip())
+        elif ln.startswith("-"):
+            removed.append(ln[1:].strip())
+    if not added and not removed:
+        return True  # empty diff
+    # added==removed after stripping whitespace/EOL -> no net content change -> pure reformat no-op
+    return sorted(x for x in added if x) == sorted(x for x in removed if x)
+
 def assess(rn):
     repo, num = rn
     try:
@@ -48,6 +70,8 @@ def assess(rn):
         if d.get("mergeable") == "CONFLICTING":
             return (repo, num, "CONFLICT")
         if d.get("mergeable") == "MERGEABLE":
+            if _is_trivial(repo, num):
+                return (repo, num, "TRIVIAL")  # CI-green but no-op/reformat — value gate refuses it
             return (repo, num, "READY")
         return (repo, num, "BLOCKED")
     except Exception:
@@ -85,8 +109,8 @@ def main():
                 merged.append(f"{repo}#{num}")
     ts = datetime.datetime.now().strftime("%F %T")
     summary = (f"[merge-drain] {ts} scanned={len(prs)} ready={b['READY']} "
-               f"merged={len(merged)} | blocked: conflict={b['CONFLICT']} ci-red={b['CI-RED']} "
-               f"ci-pending={b['CI-PENDING']}")
+               f"merged={len(merged)} trivial-skipped={b['TRIVIAL']} | blocked: conflict={b['CONFLICT']} "
+               f"ci-red={b['CI-RED']} ci-pending={b['CI-PENDING']}")
     print(summary)
     try:
         with open(LOG, "a") as f:
