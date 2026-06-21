@@ -64,6 +64,10 @@ def main():
     closed_ids = {x["id"] for x in det.get("PR_CLOSED", [])}
     nopr_ids = {x["id"] for x in det.get("DISPATCHED_NO_PR", [])}
     open_pr_ids = {x["id"] for x in det.get("PR_OPEN", [])}
+    # CHRONIC: reopened >=3x, never produced a PR (verify-dispatch surfaces these). Re-looping them
+    # just burns capacity with zero output, so ESCALATE to needs_human (surface to the human, the
+    # cheapest path) instead of silently recycling. Reversible status flip. ([[no-never-happens-again]])
+    chronic_ids = {x["id"] for x in verify.get("chronic", [])}
 
     if not acquire_lock():
         print("queue lock held by daemon — skipping this pass (will retry next tick)")
@@ -72,9 +76,20 @@ def main():
         path = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
         lf = load_limen_file(path)
         now = datetime.datetime.now(datetime.timezone.utc)
-        done, reopened = [], []
+        done, reopened, escalated = [], [], []
 
         for t in lf.tasks:
+            # CHRONIC escalation runs on the churning (open/failed) chronic tasks, NOT the dispatched
+            # ones the loop below handles — stop them re-looping; surface for a human. Idempotent
+            # (skips ones already needs_human). Reversible.
+            if t.id in chronic_ids and t.status in ("open", "failed"):
+                t.status = "needs_human"
+                t.updated = now
+                t.dispatch_log.append(DispatchLogEntry(
+                    timestamp=now, agent="limen", session_id="heal", status="needs_human",
+                    output="heal-dispatch: chronic (reopened ≥3×, never a PR) → escalated, stop re-looping"))
+                escalated.append(t.id)
+                continue
             if t.status != "dispatched":   # re-check fresh state under lock
                 continue
             if t.id in merged_ids:
@@ -108,11 +123,14 @@ def main():
                     status="open", output=f"heal-dispatch: {why} → reopened"))
                 reopened.append(t.id)
 
-        print(f"heal-dispatch: {len(done)} merged→done, {len(reopened)} stuck→open")
+        print(f"heal-dispatch: {len(done)} merged→done, {len(reopened)} stuck→open, "
+              f"{len(escalated)} chronic→needs_human")
         for i in done:
             print(f"    done:   {i}")
         for i in reopened:
             print(f"    reopen: {i}")
+        for i in escalated:
+            print(f"    escalate: {i}")
         if args.apply:
             save_limen_file(path, lf)
             print("  APPLIED -> tasks.yaml")
