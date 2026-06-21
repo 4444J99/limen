@@ -240,7 +240,7 @@ def _capable_agents(
             if not has_repo and checkout is None:
                 continue
             agents.append(agent)
-            reasons[agent] = "configured paid-service lane"
+            reasons[agent] = "GitHub Actions workflow_dispatch via oz-agent-action (Warp cloud agent)"
 
     return agents, reasons
 

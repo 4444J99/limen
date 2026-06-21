@@ -188,16 +188,33 @@ def agent_status(agent: str) -> dict[str, Any]:
         }
 
     if agent in {"warp", "oz"}:
-        dispatch_cmd = os.environ.get("LIMEN_DISPATCH_CMD", "agent-dispatch")
-        ok, detail = _binary_status(dispatch_cmd)
-        if ok:
+        warp_key = os.environ.get("WARP_API_KEY")
+        gh_path = shutil.which("gh")
+        workflow = os.environ.get("LIMEN_WARP_OZ_WORKFLOW", "limen-warp-oz.yml")
+        dispatch_repo = os.environ.get("LIMEN_WARP_OZ_REPO", "organvm/limen")
+        if not warp_key:
             return {
                 "agent": agent,
                 "kind": _KINDS[agent],
-                "reachable": True,
-                "detail": f"generic dispatch adapter: {detail}",
-                "command": [dispatch_cmd, agent],
+                "reachable": False,
+                "detail": "WARP_API_KEY not set (set env var + add as org/repo Actions secret)",
+                "command": None,
             }
+        if not gh_path:
+            return {
+                "agent": agent,
+                "kind": _KINDS[agent],
+                "reachable": False,
+                "detail": "gh CLI not found (needed to trigger workflow_dispatch)",
+                "command": None,
+            }
+        return {
+            "agent": agent,
+            "kind": _KINDS[agent],
+            "reachable": True,
+            "detail": f"WARP_API_KEY set, gh at {gh_path}, workflow={workflow}@{dispatch_repo}",
+            "command": [gh_path, "workflow", "run", workflow, "--repo", dispatch_repo],
+        }
 
     binary = _binary_for(agent)
     ok, detail = _binary_status(binary)

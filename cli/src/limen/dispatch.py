@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import secrets
 import shlex
 import subprocess
 import tempfile
@@ -165,6 +166,8 @@ def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool | str:
         return _call_copilot(task, dry_run)
     if agent == "github_actions":
         return _call_github_actions(task, dry_run)
+    if agent in {"warp", "oz"}:
+        return _call_warp_oz(agent, task, dry_run)
     if agent in _CONFIGURED_SERVICE_AGENTS:
         return _call_configured_paid_service(agent, task, dry_run)
     if agent in _LOCAL_AGENTS:
@@ -314,6 +317,37 @@ def _call_github_actions(task: Task, dry_run: bool) -> bool | str:
     result = _run_cmd(cmd, task, dry_run)
     if result is True and not dry_run:
         return f"github-actions:{task.repo}:{workflow}"
+    return result
+
+
+def _call_warp_oz(agent: str, task: Task, dry_run: bool) -> bool | str:
+    if not task.repo:
+        print(f"  SKIP {task.id}: {agent} lane needs task.repo")
+        return False
+    gh = os.environ.get("LIMEN_WARP_OZ_BIN", "gh")
+    workflow = os.environ.get("LIMEN_WARP_OZ_WORKFLOW", "limen-warp-oz.yml")
+    dispatch_repo = os.environ.get("LIMEN_WARP_OZ_REPO", "organvm/limen")
+    cmd = [
+        gh,
+        "workflow",
+        "run",
+        workflow,
+        "--repo",
+        dispatch_repo,
+        "-f",
+        f"task_id={task.id}",
+        "-f",
+        f"repo={task.repo}",
+        "-f",
+        f"title={task.title}",
+        "-f",
+        f"agent={agent}",
+        "-f",
+        f"prompt={_build_prompt(task)}",
+    ]
+    result = _run_cmd(cmd, task, dry_run)
+    if result is True and not dry_run:
+        return f"warp-oz:{dispatch_repo}:{workflow}"
     return result
 
 

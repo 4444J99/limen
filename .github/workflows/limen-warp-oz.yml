@@ -1,0 +1,45 @@
+name: Warp/Oz Agent Dispatch
+
+on:
+  workflow_dispatch:
+    inputs:
+      task_id:
+        description: Limen task ID
+        required: true
+        type: string
+      repo:
+        description: Target repository (owner/name)
+        required: true
+        type: string
+      title:
+        description: Task title
+        required: true
+        type: string
+      prompt:
+        description: Full agent prompt
+        required: true
+        type: string
+      agent:
+        description: Which agent lane (warp or oz)
+        required: true
+        type: choice
+        default: oz
+        options:
+          - warp
+          - oz
+
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.repo }}
+          fetch-depth: 1
+
+      - name: Run Oz agent
+        uses: warpdotdev/oz-agent-action@v1
+        with:
+          prompt: ${{ inputs.prompt }}
+          name: limen-${{ inputs.agent }}-${{ inputs.task_id }}
+          warp_api_key: ${{ secrets.WARP_API_KEY }}
