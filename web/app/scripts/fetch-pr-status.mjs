@@ -38,7 +38,13 @@ async function fetchPRs(repo) {
   const headers = { Accept: "application/vnd.github.v3+json" };
   if (GITHUB_TOKEN) headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
 
-  const res = await fetch(url, { headers });
+  let res;
+  try {
+    res = await fetch(url, { headers });
+  } catch (error) {
+    console.error(`Failed to fetch PRs for ${repo}: ${error instanceof Error ? error.message : "network error"}`);
+    return null;
+  }
   if (!res.ok) {
     console.error(`Failed to fetch PRs for ${repo}: ${res.status}`);
     return null;
@@ -64,7 +70,12 @@ async function fetchCheckRuns(repo, headSha) {
   const headers = { Accept: "application/vnd.github.v3+json" };
   if (GITHUB_TOKEN) headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
 
-  const res = await fetch(url, { headers });
+  let res;
+  try {
+    res = await fetch(url, { headers });
+  } catch {
+    return null;
+  }
   if (!res.ok) return null;
   const data = await res.json();
   const runs = data.check_runs || [];

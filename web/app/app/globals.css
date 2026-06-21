@@ -151,6 +151,242 @@ h1 {
 .metric.amber strong { color: var(--amber); }
 .metric.red strong { color: var(--red); }
 
+.fleetPanel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  margin-bottom: 12px;
+  padding: 14px;
+}
+
+.fleetHeader {
+  align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.fleetHeader h2 {
+  font-size: 20px;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.fleetHeaderMeta {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.fleetFeedState {
+  border-radius: 999px;
+  color: white;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 5px 7px;
+  text-transform: uppercase;
+}
+
+.fleetFeedState.online {
+  background: var(--green);
+}
+
+.fleetFeedState.offline {
+  background: var(--amber);
+}
+
+.fleetEmpty {
+  background: var(--panel-2);
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  margin-top: 12px;
+  padding: 18px;
+}
+
+.fleetEmpty strong {
+  display: block;
+  font-size: 14px;
+}
+
+.fleetEmpty p {
+  color: var(--muted);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  margin: 6px 0 0;
+}
+
+.fleetSummary {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(180px, 2fr) repeat(4, minmax(104px, 1fr));
+  margin-top: 12px;
+}
+
+.fleetSummary div {
+  background: var(--panel-2);
+  border: 1px solid #edf0f4;
+  border-radius: 6px;
+  min-width: 0;
+  padding: 10px;
+}
+
+.fleetSummary span,
+.fleetTask span {
+  color: var(--muted);
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.fleetSummary strong {
+  display: block;
+  font-size: 22px;
+  line-height: 1;
+  margin-top: 6px;
+}
+
+.fleetProgress {
+  background: #e5e7eb;
+  border-radius: 999px;
+  height: 7px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.fleetProgress span {
+  background: linear-gradient(90deg, var(--green), var(--blue));
+  display: block;
+  height: 100%;
+}
+
+.fleetGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin-top: 10px;
+}
+
+.fleetLane {
+  background: white;
+  border: 1px solid #edf0f4;
+  border-radius: 8px;
+  min-width: 0;
+  padding: 12px;
+}
+
+.fleetLaneHeader {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.fleetLaneHeader strong {
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.fleetLaneHeader em {
+  color: var(--muted);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.liveDot {
+  border-radius: 999px;
+  display: inline-block;
+  height: 10px;
+  width: 10px;
+}
+
+.liveDot.live {
+  background: var(--green);
+  box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.14);
+}
+
+.liveDot.idle {
+  background: #cbd5e1;
+}
+
+.laneProgress {
+  margin-top: 11px;
+}
+
+.fleetCounts {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 10px;
+}
+
+.fleetCounts span {
+  background: #f8fafc;
+  border: 1px solid #edf0f4;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 7px;
+}
+
+.fleetCounts strong {
+  color: var(--text);
+  display: block;
+  font-size: 14px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.fleetTask {
+  border-top: 1px solid #edf0f4;
+  margin-top: 10px;
+  min-height: 118px;
+  padding-top: 10px;
+}
+
+.fleetTask strong {
+  color: #101828;
+  display: block;
+  font-size: 12px;
+  margin-top: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fleetTask p {
+  color: #475467;
+  font-size: 12px;
+  line-height: 1.35;
+  margin: 5px 0 0;
+}
+
+.fleetTask em,
+.fleetTask small {
+  color: var(--muted);
+  display: block;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+}
+
 .lifecycleBand {
   display: grid;
   gap: 8px;
@@ -1269,6 +1505,10 @@ tbody tr.activeRow {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .fleetSummary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .lifecycleBand {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -1327,6 +1567,18 @@ tbody tr.activeRow {
   }
 
   .metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .fleetHeader,
+  .fleetHeaderMeta {
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
+  .fleetSummary,
+  .fleetGrid {
     grid-template-columns: 1fr;
   }
 

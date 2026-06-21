@@ -177,12 +177,12 @@ tasks:
   - timestamp: '2026-05-31T15:12:30.182131Z'
     agent: jules
     session_id: '2847308303220998737'
-    status: superseded
+    status: failed
     output: No diff on remote (superseded by newer dispatch)
   - timestamp: '2026-05-31T15:33:08.589461Z'
     agent: jules
     session_id: '6780648903142505137'
-    status: superseded
+    status: failed
     output: "PR #241 merged \u2014 reduced 628\u2192357 errors, added type interfaces,\
       \ recharts deps"
   - timestamp: '2026-05-31T15:33:08.589461Z'
@@ -220,7 +220,7 @@ tasks:
   - timestamp: '2026-05-31T15:12:47.350018Z'
     agent: jules
     session_id: '14372742151319923315'
-    status: superseded
+    status: failed
     output: No diff on remote (already resolved by human PR
   - timestamp: '2026-05-31T15:33:08.589461Z'
     agent: jules
@@ -295,17 +295,17 @@ tasks:
   - timestamp: '2026-05-31T15:18:46.957485Z'
     agent: jules
     session_id: '7819655186891960864'
-    status: superseded
+    status: failed
     output: "Added 4 git submodules instead of CI config \u2014 issue already resolved"
   - timestamp: '2026-05-31T15:33:08.589461Z'
     agent: jules
     session_id: '12969220929106740896'
-    status: superseded
+    status: failed
     output: Issue already closed
   - timestamp: '2026-05-31T15:33:08.589461Z'
     agent: jules
     session_id: '16036269367358331275'
-    status: superseded
+    status: failed
     output: Issue already closed
 - id: LIMEN-006
   title: "Scaffold limen CLI \u2014 init/dispatch/harvest/status subcommands"
@@ -384,7 +384,7 @@ tasks:
   - timestamp: '2026-05-31T15:33:44.878442Z'
     agent: jules
     session_id: '36549371605837195'
-    status: superseded
+    status: failed
     output: Already covered by PR
 - id: LIMEN-010
   title: Fix TypeScript build errors in test files (30+ errors)
@@ -409,7 +409,7 @@ tasks:
   - timestamp: '2026-05-31T15:33:44.878442Z'
     agent: jules
     session_id: '2721304265616159805'
-    status: superseded
+    status: failed
     output: Already covered by human PR
 - id: LIMEN-011
   title: Fix YAML duplicate key issues in application-pipeline files
@@ -466,7 +466,7 @@ tasks:
   - timestamp: '2026-05-31T15:33:44.878442Z'
     agent: jules
     session_id: '15931042222679633953'
-    status: completed
+    status: done
     output: Implemented percentage-based penalty at high tiers
   - timestamp: '2026-05-31T16:27:00Z'
     agent: claude
@@ -496,7 +496,7 @@ tasks:
   - timestamp: '2026-05-31T15:33:44.878442Z'
     agent: jules
     session_id: '11877776654060003425'
-    status: completed
+    status: done
     output: Replaced in-memory Map with Cloudflare KV
   - timestamp: '2026-05-31T16:27:00Z'
     agent: claude
@@ -526,7 +526,7 @@ tasks:
   - timestamp: '2026-05-31T15:33:44.878442Z'
     agent: jules
     session_id: '17495639879445057605'
-    status: completed
+    status: done
     output: Created codex_to_bundle.py converter
   - timestamp: '2026-05-31T16:27:00Z'
     agent: claude

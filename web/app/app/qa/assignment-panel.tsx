@@ -10,7 +10,19 @@ type AssignState = {
 };
 
 const priorities = ["critical", "high", "medium", "low", "backlog"];
-const agents = ["jules", "codex", "claude", "gemini", "any"];
+const agents = [
+  "jules",
+  "codex",
+  "claude",
+  "opencode",
+  "agy",
+  "gemini",
+  "copilot",
+  "warp",
+  "oz",
+  "github_actions",
+  "any",
+];
 
 export default function AssignmentPanel({
   items,

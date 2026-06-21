@@ -1,8 +1,7 @@
 import json
 import os
 import re
-import secrets
-import shutil
+import shlex
 import subprocess
 import tempfile
 import contextlib
@@ -12,6 +11,12 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
+from limen.capacity import (
+    canonical_agent,
+    capacity_census,
+    format_capacity_census,
+    github_issue_ref,
+)
 from limen.io import load_limen_file, save_limen_file
 from limen.models import DispatchLogEntry, LimenFile, Task
 from limen.doctor import stale_tasks
@@ -135,7 +140,7 @@ _GIT_PLUMBING_LOCK = threading.Lock()
 
 
 def resolve_agent() -> str:
-    return os.environ.get("LIMEN_AGENT", "claude")
+    return canonical_agent(os.environ.get("LIMEN_AGENT", "claude"))
 
 
 def session_id() -> str:
@@ -145,6 +150,7 @@ def session_id() -> str:
 
 
 def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool | str:
+    agent = canonical_agent(agent)
     if agent == "jules":
         return _call_jules(task, dry_run)
     # Explicit escape/test hook: when LIMEN_DISPATCH_CMD is set, route EVERY agent through that
@@ -155,6 +161,12 @@ def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool | str:
     cmd_override = os.environ.get("LIMEN_DISPATCH_CMD")
     if cmd_override:
         return _run_cmd([cmd_override, agent, _build_prompt(task)], task, dry_run)
+    if agent == "copilot":
+        return _call_copilot(task, dry_run)
+    if agent == "github_actions":
+        return _call_github_actions(task, dry_run)
+    if agent in _CONFIGURED_SERVICE_AGENTS:
+        return _call_configured_paid_service(agent, task, dry_run)
     if agent in _LOCAL_AGENTS:
         return _call_local_agent(agent, task, dry_run)
     return _run_cmd(["agent-dispatch", agent, _build_prompt(task)], task, dry_run)
@@ -212,6 +224,97 @@ def _call_jules(task: Task, dry_run: bool) -> bool | str:
     prompt = _build_prompt(task)
     cmd = [os.environ.get("LIMEN_JULES_BIN", "jules"), "new", "--repo", repo, prompt]
     return _run_cmd(cmd, task, dry_run)
+
+
+def _call_copilot(task: Task, dry_run: bool) -> bool | str:
+    ref = github_issue_ref(task)
+    if ref is None:
+        print(f"  SKIP {task.id}: copilot lane needs an existing GitHub issue URL")
+        return False
+    repo, issue = ref
+    gh = os.environ.get("LIMEN_COPILOT_BIN", "gh")
+    actor = os.environ.get("LIMEN_COPILOT_ACTOR", "copilot-swe-agent")
+
+    if dry_run:
+        print(f"  would: {gh} api graphql (fetch node IDs + replaceActorsForAssignable for {actor} on {repo}#{issue})")
+        return True
+
+    owner, name = repo.split("/", 1)
+    query = """
+    query($owner: String!, $name: String!, $number: Int!, $actor: String!) {
+      repository(owner: $owner, name: $name) { issue(number: $number) { id } }
+      user(login: $actor) { id }
+    }
+    """
+    import json
+    import subprocess
+    q_cmd = [
+        gh, "api", "graphql",
+        "-f", f"query={query}",
+        "-F", f"owner={owner}",
+        "-F", f"name={name}",
+        "-F", f"number={issue}",
+        "-F", f"actor={actor}",
+    ]
+    r = subprocess.run(q_cmd, capture_output=True, text=True, timeout=30)
+    if r.returncode != 0:
+        print(f"  FAILED copilot query {task.id}: {r.stderr.strip()}")
+        return False
+
+    try:
+        data = json.loads(r.stdout)["data"]
+        issue_id = data["repository"]["issue"]["id"]
+        actor_id = data["user"]["id"]
+    except Exception as e:
+        print(f"  FAILED copilot parse {task.id}: {e}")
+        return False
+
+    mut = """
+    mutation($issue: ID!, $actor: ID!) {
+      replaceActorsForAssignable(input: { assignableId: $issue, actorIds: [$actor] }) {
+        assignable { id }
+      }
+    }
+    """
+    cmd = [
+        gh, "api", "graphql",
+        "-H", "GraphQL-Features: issues_copilot_assignment_api_support",
+        "-f", f"query={mut}",
+        "-f", f"issue={issue_id}",
+        "-f", f"actor={actor_id}",
+    ]
+    result = _run_cmd(cmd, task, dry_run)
+    if result is True and not dry_run:
+        return f"https://github.com/{repo}/issues/{issue}"
+    return result
+
+
+def _call_github_actions(task: Task, dry_run: bool) -> bool | str:
+    if not task.repo:
+        print(f"  SKIP {task.id}: github_actions lane needs task.repo")
+        return False
+    gh = os.environ.get("LIMEN_GITHUB_ACTIONS_BIN", "gh")
+    workflow = os.environ.get("LIMEN_GITHUB_ACTIONS_WORKFLOW", "limen-agent.yml")
+    cmd = [
+        gh,
+        "workflow",
+        "run",
+        workflow,
+        "--repo",
+        task.repo,
+        "-f",
+        f"task_id={task.id}",
+        "-f",
+        f"repo={task.repo}",
+        "-f",
+        f"title={task.title}",
+        "-f",
+        f"prompt={_build_prompt(task)}",
+    ]
+    result = _run_cmd(cmd, task, dry_run)
+    if result is True and not dry_run:
+        return f"github-actions:{task.repo}:{workflow}"
+    return result
 
 
 # Local non-interactive agents — run inside a working copy of the task's repo.
@@ -276,7 +379,23 @@ _LOCAL_AGENTS: dict[str, list[str]] = {
     "antigravity": ["--dangerously-skip-permissions", "-p"],
     "claude": ["-p", "--permission-mode", "acceptEdits"],
 }
-_LOCAL_BIN: dict[str, str] = {"antigravity": "agy"}
+_LOCAL_BIN: dict[str, str] = {}
+_CONFIGURED_SERVICE_AGENTS = {"warp", "oz"}
+
+
+def _call_configured_paid_service(agent: str, task: Task, dry_run: bool) -> bool | str:
+    prompt = _build_prompt(task)
+    env_cmd = os.environ.get(f"LIMEN_{agent.upper()}_DISPATCH_CMD")
+    if env_cmd:
+        try:
+            cmd = [*shlex.split(env_cmd), prompt]
+        except ValueError as exc:
+            print(f"  SKIP {task.id}: invalid LIMEN_{agent.upper()}_DISPATCH_CMD: {exc}")
+            return False
+    else:
+        dispatch_cmd = os.environ.get("LIMEN_DISPATCH_CMD", "agent-dispatch")
+        cmd = [dispatch_cmd, agent, prompt]
+    return _run_cmd(cmd, task, dry_run)
 
 
 def _agent_argv(agent: str) -> list[str]:
@@ -675,6 +794,7 @@ def _reset_budget_if_needed(limen: LimenFile, now: datetime) -> None:
 def _remaining_budget(limen: LimenFile, agent: str, budget: int) -> int:
     """The per-vendor cadence cap is the binding gate (each refills on its own window); the
     global daily is only a backstop for agents that have no per-agent cap."""
+    agent = canonical_agent(agent)
     track = limen.portal.budget.track
     agent_limit = limen.portal.budget.per_agent.get(agent)
     if agent_limit is not None:
@@ -697,13 +817,14 @@ def dispatch_tasks(
     _reset_budget_if_needed(limen, now)
     track = limen.portal.budget.track
 
-    agent_filter = agent or resolve_agent()
+    agent_filter = canonical_agent(agent or resolve_agent())
     down = _down_lanes()
     if agent_filter in down:
         print(f"Lane '{agent_filter}' is down by live usage/health gate; skipping dispatch")
         return
 
     remaining = _remaining_budget(limen, agent_filter, budget)
+    print(format_capacity_census(capacity_census(limen, budget_limit=budget)))
     if remaining <= 0:
         print(
             f"Budget exhausted for {agent_filter} ({track.spent}/{budget} total spent)"

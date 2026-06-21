@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import FleetLivePanel from "./fleet-live-panel";
 import SurfaceNav from "./surface-nav";
 
 export interface Task {
@@ -413,6 +414,8 @@ export default function DashboardClient({ data, prData, apiUrl, initialToken = "
       <VendorCapacity vendors={data.summary.per_vendor || []} dailyTotal={data.summary.daily_total} />
 
       <IntegrityPanel integrity={data.summary.integrity} />
+
+      <FleetLivePanel />
 
       <HeartbeatTimeline ticks={data.summary.ticks || []} />
 

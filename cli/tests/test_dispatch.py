@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import sys
 import os
 from pathlib import Path
@@ -8,10 +9,20 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from limen.capacity import PAID_AGENT_ORDER, capacity_census, format_capacity_census
 from limen.dispatch import dispatch_tasks, release_stale_tasks
 from limen.doctor import qa_report, readiness_report, stale_tasks
 from limen.io import load_limen_file
 from limen.status import print_status
+
+
+def load_route_module():
+    route_path = Path(__file__).resolve().parents[2] / "scripts" / "route.py"
+    spec = importlib.util.spec_from_file_location("limen_route_test", route_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def write_board(path: Path, tasks: list[dict]) -> None:
@@ -24,7 +35,7 @@ def write_board(path: Path, tasks: list[dict]) -> None:
                     "budget": {
                         "daily": 100,
                         "unit": "runs",
-                        "per_agent": {"jules": 100, "codex": 2},
+                        "per_agent": {"jules": 100, "codex": 2, "external": 2},
                         "track": {"date": "", "spent": 0, "per_agent": {}},
                     },
                 },
@@ -37,6 +48,94 @@ def write_board(path: Path, tasks: list[dict]) -> None:
 
 def read_board(path: Path) -> dict:
     return yaml.safe_load(path.read_text())
+
+
+def test_capacity_census_lists_every_paid_lane(tmp_path: Path, monkeypatch) -> None:
+    for binary in ("codex", "claude", "opencode", "agy", "gemini", "jules", "gh", "agent-dispatch"):
+        path = tmp_path / binary
+        path.write_text("#!/bin/sh\nexit 0\n")
+        path.chmod(0o755)
+    monkeypatch.setenv("PATH", str(tmp_path))
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    monkeypatch.setenv("LIMEN_COPILOT_ENABLED", "1")
+
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(tasks_path, [])
+    rows = capacity_census(load_limen_file(tasks_path))
+
+    assert [row["agent"] for row in rows] == list(PAID_AGENT_ORDER)
+    assert {row["agent"] for row in rows if row["reachable"]} == set(PAID_AGENT_ORDER)
+    text = format_capacity_census(rows)
+    assert "-- capacity census" in text
+    assert "github_actions" in text
+
+
+def test_route_distributes_local_work_and_reaches_extended_fleet(tmp_path: Path) -> None:
+    """Ideal-form router (origin's local-first split + the extended-fleet graft): local-checkout
+    work spreads across LOCAL lanes by budget+refresh-runway (no single-lane serialization), and a
+    repo with NO local checkout but a GitHub issue still reaches the extended fleet (copilot/jules)
+    instead of being stranded. Supersedes the old fan-everything-round-robin assertion — which routed
+    local work to copilot/warp/oz the daemon can't dispatch (the 'don't strand' lesson origin learned)."""
+    route = load_route_module()
+    workdir = tmp_path / "work"
+    checkout = workdir / "organvm" / "limen"
+    (checkout / ".git").mkdir(parents=True)
+    health = {agent: True for agent in PAID_AGENT_ORDER}
+    budget = {a: 10 for a in ("codex", "claude", "agy", "opencode")}
+
+    # Many local-checkout tasks must SPREAD across local lanes, never serialize onto one.
+    tally: dict[str, int] = {}
+    picks = []
+    for i in range(8):
+        task = {
+            "id": f"LIMEN-{i:03}", "title": f"Task {i}", "repo": "organvm/limen",
+            "status": "open", "budget_cost": 1,
+            "urls": [f"https://github.com/organvm/limen/issues/{i}"],
+        }
+        vendor, _ = route.route_task(task, health, workdir, assigned=tally, budget=budget)
+        tally[vendor] = tally.get(vendor, 0) + 1
+        picks.append(vendor)
+    assert set(picks) <= {"codex", "claude", "agy", "opencode"}, f"local work leaked to {set(picks)}"
+    assert len(set(picks)) >= 2, f"work serialized onto {set(picks)}"
+
+    # A repo with NO local checkout but a GitHub issue reaches the extended fleet, not 'unroutable'.
+    remote = {
+        "id": "REMOTE-1", "title": "Remote-only repo", "repo": "someorg/no-local-here",
+        "status": "open", "budget_cost": 1,
+        "urls": ["https://github.com/someorg/no-local-here/issues/9"],
+    }
+    vendor, reason = route.route_task(remote, health, workdir, assigned={}, budget=budget)
+    assert vendor in ("copilot", "github_actions", "jules"), (vendor, reason)
+
+
+def test_dispatch_dry_run_prints_capacity_census_and_copilot_command(
+    tmp_path: Path, capsys
+) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "LIMEN-COPILOT",
+                "title": "Use Copilot lane",
+                "repo": "organvm/limen",
+                "target_agent": "copilot",
+                "priority": "high",
+                "budget_cost": 1,
+                "status": "open",
+                "urls": ["https://github.com/organvm/limen/issues/12"],
+                "created": "2026-06-20",
+                "dispatch_log": [],
+            }
+        ],
+    )
+
+    dispatch_tasks(load_limen_file(tasks_path), tasks_path, agent="copilot", dry_run=True)
+
+    output = capsys.readouterr().out
+    assert "-- capacity census" in output
+    assert "copilot" in output
+    assert "would: gh api graphql (fetch node IDs + replaceActorsForAssignable for copilot-swe-agent on organvm/limen#12)" in output
 
 
 def test_release_stale_dry_run_does_not_mutate(tmp_path: Path) -> None:
@@ -111,9 +210,9 @@ def test_dispatch_limit_and_per_agent_budget(tmp_path: Path, monkeypatch) -> Non
         [
             {
                 "id": "LIMEN-003",
-                "title": "Open Codex task one",
+                "title": "Open external task one",
                 "repo": "4444J99/limen",
-                "target_agent": "codex",
+                "target_agent": "external",
                 "priority": "critical",
                 "budget_cost": 1,
                 "status": "open",
@@ -122,9 +221,9 @@ def test_dispatch_limit_and_per_agent_budget(tmp_path: Path, monkeypatch) -> Non
             },
             {
                 "id": "LIMEN-004",
-                "title": "Open Codex task two",
+                "title": "Open external task two",
                 "repo": "4444J99/limen",
-                "target_agent": "codex",
+                "target_agent": "external",
                 "priority": "critical",
                 "budget_cost": 1,
                 "status": "open",
@@ -133,9 +232,9 @@ def test_dispatch_limit_and_per_agent_budget(tmp_path: Path, monkeypatch) -> Non
             },
             {
                 "id": "LIMEN-005",
-                "title": "Open Codex task three",
+                "title": "Open external task three",
                 "repo": "4444J99/limen",
-                "target_agent": "codex",
+                "target_agent": "external",
                 "priority": "critical",
                 "budget_cost": 1,
                 "status": "open",
@@ -145,12 +244,12 @@ def test_dispatch_limit_and_per_agent_budget(tmp_path: Path, monkeypatch) -> Non
         ],
     )
 
-    dispatch_tasks(load_limen_file(tasks_path), tasks_path, agent="codex", dry_run=False, limit=3)
+    dispatch_tasks(load_limen_file(tasks_path), tasks_path, agent="external", dry_run=False, limit=3)
 
     board = read_board(tasks_path)
     statuses = {task["id"]: task["status"] for task in board["tasks"]}
     assert statuses == {"LIMEN-003": "dispatched", "LIMEN-004": "dispatched", "LIMEN-005": "open"}
-    assert board["portal"]["budget"]["track"]["per_agent"]["codex"] == 2
+    assert board["portal"]["budget"]["track"]["per_agent"]["external"] == 2
 
 
 def test_dispatch_skips_lane_marked_down_by_usage_meter(tmp_path: Path, monkeypatch) -> None:
