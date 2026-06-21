@@ -18,7 +18,7 @@ jobs:
     env:
       GCP_SA_KEY_SET: ${{ secrets.GCP_SA_KEY != '' }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v6
         with:
@@ -54,7 +54,7 @@ jobs:
           node web/app/scripts/validate-exported-pages.mjs
           node web/app/scripts/validate-surface-contracts.mjs
 
-      - uses: w9jds/firebase-action@v15.19.1
+      - uses: w9jds/firebase-action@v15.22.0
         if: env.GCP_SA_KEY_SET == 'true'
         with:
           args: deploy --only hosting --project device-streaming-067d747a
