@@ -29,11 +29,26 @@ W5H = NOW - datetime.timedelta(hours=5)
 TODAY = NOW.date().isoformat()
 _IN = re.compile(r'"input_tokens"\s*:\s*(\d+)')
 _OUT = re.compile(r'"output_tokens"\s*:\s*(\d+)')
-_CLAUDE_RATE_LIMIT_TEXT = re.compile(
-    r"monthly spend limit|rate[_ -]?limit|too many requests|\b429\b|usage limit|"
-    r"insufficient_quota|out of (?:tokens|credits)",
-    re.IGNORECASE,
-)
+
+# A rate-limit gate must come from a REAL, RECENT 429 — never from text that merely MENTIONS
+# rate limits (a planning session discussing "rate limit" / "429" must not bench a lane). And it
+# must auto-expire: a lane is only "rate-limited" while a real event sits inside this cooldown,
+# then it heals on its own. Override via env LIMEN_RL_COOLDOWN_MIN. ([[no-never-happens-again]])
+COOLDOWN_MIN = float(os.environ.get("LIMEN_RL_COOLDOWN_MIN", "30"))
+RL_COOLDOWN = NOW - datetime.timedelta(minutes=COOLDOWN_MIN)
+
+
+def _parse_ts(value) -> "datetime.datetime | None":
+    """Parse an ISO-ish timestamp into an aware UTC datetime; None if unparseable."""
+    if not value:
+        return None
+    try:
+        dt = datetime.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=datetime.timezone.utc)
+        return dt.astimezone(datetime.timezone.utc)
+    except (ValueError, TypeError):
+        return None
 
 # tunable per-vendor LIMITS (the "amount possible") — defaults are honest estimates;
 # calibrate to your real plan (codex/claude: see each CLI's /status). Override via
@@ -153,6 +168,7 @@ def codex_5h():
 def claude_5h():
     base = HOME / ".claude" / "projects"
     total = msgs = rate_limit_events = 0
+    recent_rl = False
     if base.exists():
         for f in base.rglob("*.jsonl"):
             if not _recent(f):
@@ -163,9 +179,15 @@ def claude_5h():
                         row = json.loads(ln)
                     except Exception:
                         continue
-                    blob = json.dumps(row, ensure_ascii=False)
-                    if row.get("error") == "rate_limit" or _CLAUDE_RATE_LIMIT_TEXT.search(blob):
+                    # ONLY a structured API rate_limit error counts — never free-text that merely
+                    # mentions "rate limit"/"429" (a transcript discussing limits is not a 429).
+                    if row.get("error") == "rate_limit" or (
+                            isinstance(row.get("error"), dict)
+                            and row["error"].get("type") == "rate_limit_error"):
                         rate_limit_events += 1
+                        ts = _parse_ts(row.get("timestamp"))
+                        if ts is None or ts >= RL_COOLDOWN:  # recent (or undated → treat as recent)
+                            recent_rl = True
                     u = (row.get("message", {}) or {}).get("usage")
                     if not u:
                         continue
@@ -176,8 +198,8 @@ def claude_5h():
                 pass
     return {"signal": "tokens", "window": "5h rolling", "consumed": total,
             "unit": "tokens", "messages": msgs,
-            "health": "rate-limited" if rate_limit_events else "ok",
-            "rate_limit_events": rate_limit_events,
+            "health": "rate-limited" if recent_rl else "ok",
+            "rate_limit_events": rate_limit_events, "recent_rate_limit": recent_rl,
             "note": "billable claude tokens (in+out+cache-create, excl cache-read, 5h)"}
 
 
@@ -194,13 +216,22 @@ def dispatch_counts(tasks):
 
 
 def last_ratelimit():
+    """Lanes with a RECENT rate-limit marker in the heartbeat log. Time-boxed: a one-time
+    historical 'RATE-LIMIT <lane>' must NOT bench a lane forever. We bound recency by the log
+    TAIL (the last few beats' worth of lines) so the gate auto-expires as the log advances —
+    a lane with full headroom and no fresh marker is never gated. ([[no-never-happens-again]])"""
     log = ROOT / "logs" / "heartbeat.out.log"
     out = {}
     if log.exists():
-        for ln in log.read_text(errors="ignore").splitlines():
-            m = re.search(r"RATE-LIMIT (\w+)", ln)
-            if m:
-                out[m.group(1)] = "seen"
+        try:
+            tail_lines = int(os.environ.get("LIMEN_RL_TAIL_LINES", "400"))
+            lines = log.read_text(errors="ignore").splitlines()[-tail_lines:]
+            for ln in lines:
+                m = re.search(r"RATE-LIMIT (\w+)", ln)
+                if m:
+                    out[m.group(1)] = "recent"
+        except Exception:
+            pass
     return out
 
 
@@ -247,18 +278,29 @@ def main():
             v["safe_rate_per_h"] = safe
             v["runway_h"] = round(remaining / burn, 1) if burn > 0 else None  # hrs to 0 at this pace
             pre_health = v.get("health")
-            if rl.get(name) or pre_health == "rate-limited":
+            # A lane is hard-DOWN only on a real, recent 429 (rl marker is now tail-bounded; the
+            # claude structured-error check is cooldown-bounded). Everything else is paced, not
+            # benched. THE INVARIANT: real headroom + no recent 429 ⇒ never gated. ([[no-never-happens-again]])
+            recent_rl = bool(rl.get(name)) or v.get("recent_rate_limit") or pre_health == "rate-limited"
+            healthy_headroom = v["headroom_pct"] > 2 * reserve_pct
+            if recent_rl:
                 v["health"] = "rate-limited"
+            elif healthy_headroom:
+                v["health"] = "ok"          # INVARIANT: cannot bench a lane that has real headroom
+            elif v.get("signal") == "tokens":
+                # token "consumed" is LOCAL transcript spend (incl. the interactive session), NOT the
+                # vendor's true remaining budget — it can never PROVE a lane is down. Pace-down hint
+                # only; hard-down needs a real 429. So a bad/low cap can't falsely exhaust the lane.
+                v["health"] = "throttle" if (v["headroom_pct"] <= 0 or burn > safe) else "ok"
             elif remaining <= 0:
-                v["health"] = "exhausted"
+                v["health"] = "exhausted"   # count lanes: real dispatch count hit the real cap
             elif v["headroom_pct"] <= reserve_pct:
-                v["health"] = "low"        # at/below reserve → stop with fuel still in the tank
-            elif v["headroom_pct"] <= 2 * reserve_pct or burn > safe:
-                v["health"] = "throttle"   # still has runway, but pace down / steer work away
+                v["health"] = "low"         # at/below reserve → stop with fuel still in the tank
             else:
-                v["health"] = "ok"
+                v["health"] = "throttle"    # in (reserve, 2*reserve] or burn>safe → pace down, still up
         else:
-            v.setdefault("health", "rate-limited" if rl.get(name) else "ok")
+            recent_rl = bool(rl.get(name)) or v.get("recent_rate_limit")
+            v.setdefault("health", "rate-limited" if recent_rl else "ok")
 
     out = {"generated": NOW.isoformat(timespec="seconds"), "vendors": vendors}
     logs = ROOT / "logs"
