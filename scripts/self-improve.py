@@ -391,7 +391,11 @@ def apply_proposal(proposal: dict, tasks_path: Path) -> int:
         if not got:
             print("[self-improve] queue busy — skipped apply this pass (self-corrects next beat)")
             return 0
-        lf = load_limen_file(tasks_path)
+        try:
+            lf = load_limen_file(tasks_path)
+        except Exception as exc:  # never crash the heartbeat — skip apply, proposal already written
+            print(f"[self-improve] could not load {tasks_path} for apply ({exc}); proposal-only this pass")
+            return 0
         ch = {"boost": 0, "deprio": 0, "retire": 0}
         for t in lf.tasks:
             if t.status not in ("open", "failed"):

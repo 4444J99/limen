@@ -124,13 +124,13 @@ def test_default_writes_proposal_json(tmp_path: Path, monkeypatch: pytest.Monkey
     data = json.loads(out_path.read_text())
     assert data["organ"] == "self-improve"
     assert data["board_summary"]["total_tasks"] == 12
-    assert data["apply"]["wired"] is False
+    assert data["apply"]["wired"] is True
     # idempotent: a second run produces a valid proposal again (timestamps differ)
     assert si.main() == 0
     assert json.loads(out_path.read_text())["board_summary"]["total_tasks"] == 12
 
 
-def test_apply_refuses_and_writes_nothing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_apply_writes_proposal_and_applies(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     si = load_self_improve()
     tasks_path = tmp_path / "tasks.yaml"
     out_path = tmp_path / "proposal.json"
@@ -138,9 +138,10 @@ def test_apply_refuses_and_writes_nothing(tmp_path: Path, monkeypatch: pytest.Mo
 
     monkeypatch.setattr("sys.argv", [
         "self-improve.py", "--tasks", str(tasks_path), "--out", str(out_path), "--apply"])
-    # --apply is a documented stub: refuses (exit 2) and writes no proposal file
-    assert si.main() == 2
-    assert not out_path.exists()
+    # --apply now writes the proposal AND runs the re-plan writer; it is fail-open (never crashes
+    # the heartbeat) so a board the strict loader can't parse just skips apply — both return 0.
+    assert si.main() == 0
+    assert out_path.exists()  # proposal is written before the apply step
 
 
 def test_missing_tasks_file_does_not_crash(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
