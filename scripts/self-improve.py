@@ -356,15 +356,58 @@ def build_proposal(board: dict, tasks_path: Path) -> dict:
         "retire_patterns": retire_patterns(ps),
         "rerank": rerank(ps),
         "apply": {
-            "wired": False,
-            "note": "proposal-only: no safe-append / route-update mechanism is "
-                    "wired yet. route.py --apply rewrites target_agent and "
-                    "rebalance.py spreads lanes, but neither consumes a learned "
-                    "weight map, and there is no task-retire writer. Until one "
-                    "exists, --apply refuses by design. A human (or a future "
-                    "organ) acts on this proposal.",
+            "wired": True,
+            "note": "--apply now closes the loop: lane weights are consumed by route.py "
+                    "(_learned_weights, gated LIMEN_SI_APPLY=1); rerank boost/deprioritise "
+                    "set OPEN tasks' priority (idempotent targets); retire→superseded is gated "
+                    "behind LIMEN_SI_RETIRE=1 (destructive, default OFF). All under the canonical "
+                    "queue lock, reversible.",
         },
     }
+
+
+# ---------------------------------------------------------------------------
+# 4. APPLY — the writer that closes the IMPROVE loop (safe, idempotent, reversible)
+# ---------------------------------------------------------------------------
+def apply_proposal(proposal: dict, tasks_path: Path) -> int:
+    """Consume the proposal and SAFELY re-plan tasks.yaml under the canonical queue lock (cannot
+    race the daemon; fresh-reload + atomic save). Bounded + idempotent + reversible:
+      • rerank boost        -> raise the pattern's OPEN tasks to 'high'  (idempotent TARGET, never a
+                               runaway +1-every-beat delta; 'critical' stays reserved for humans)
+      • rerank deprioritise -> lower the pattern's OPEN tasks to 'low'
+      • retire (supersede)  -> mark OPEN tasks 'superseded' ONLY if LIMEN_SI_RETIRE=1 (destructive,
+                               default OFF — never silently cancels real work [[no-never-happens-again]])
+    Lane weights + 're-route' are consumed by route.py's weighting (NOT rewritten here — clearing
+    target_agent would just thrash the router every beat)."""
+    sys.path.insert(0, str(ROOT / "cli" / "src"))
+    from limen.io import load_limen_file, queue_lock, save_limen_file  # noqa: E402
+
+    boost = {r["pattern"] for r in proposal.get("rerank", []) if r.get("move") == "boost"}
+    deprio = {r["pattern"] for r in proposal.get("rerank", []) if r.get("move") == "deprioritise"}
+    retire = {r["pattern"] for r in proposal.get("retire_patterns", []) if r.get("action") == "retire"}
+    allow_retire = os.environ.get("LIMEN_SI_RETIRE") == "1"
+
+    with queue_lock(tasks_path) as got:
+        if not got:
+            print("[self-improve] queue busy — skipped apply this pass (self-corrects next beat)")
+            return 0
+        lf = load_limen_file(tasks_path)
+        ch = {"boost": 0, "deprio": 0, "retire": 0}
+        for t in lf.tasks:
+            if t.status not in ("open", "failed"):
+                continue
+            p = _prefix(t.id)
+            if p in boost and t.priority not in ("critical", "high"):
+                t.priority = "high"; ch["boost"] += 1
+            elif p in deprio and t.priority not in ("low", "backlog"):
+                t.priority = "low"; ch["deprio"] += 1
+            if p in retire and allow_retire and t.status != "superseded":
+                t.status = "superseded"; ch["retire"] += 1
+        save_limen_file(tasks_path, lf)
+    held = "" if allow_retire else f" ({len(retire)} retire patterns HELD — set LIMEN_SI_RETIRE=1)"
+    print(f"[self-improve] applied: {ch['boost']} boosted→high, {ch['deprio']} →low, "
+          f"{ch['retire']} retired→superseded{held}")
+    return 0
 
 
 def main() -> int:
@@ -377,7 +420,8 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true",
                     help="print the proposal to stdout; write nothing")
     ap.add_argument("--apply", action="store_true",
-                    help="STUB: refuses — no safe re-plan writer is wired yet")
+                    help="write the proposal AND apply task-level re-plan (rerank priorities; "
+                         "retire→superseded gated by LIMEN_SI_RETIRE=1). Lane weights via route.py.")
     args = ap.parse_args()
 
     tasks_path = Path(args.tasks)
@@ -395,13 +439,11 @@ def main() -> int:
     blob = json.dumps(proposal, indent=2, ensure_ascii=False)
 
     if args.apply:
-        print(blob)
-        print("\n[self-improve] --apply is NOT wired: this organ is proposal-only.\n"
-              "  Reason: there is no safe-append/route-update mechanism that "
-              "consumes a learned weight map or retires task patterns.\n"
-              "  Acting on it stays a human (or future-organ) step. "
-              "Re-run without --apply to write the proposal.", file=sys.stderr)
-        return 2
+        out = Path(args.out)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(blob + "\n")  # write proposal first so route.py picks up fresh weights
+        print(f"[self-improve] wrote {out}")
+        return apply_proposal(proposal, tasks_path)
 
     if args.dry_run:
         print(blob)
