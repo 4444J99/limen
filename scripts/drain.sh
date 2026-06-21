@@ -55,5 +55,17 @@ if [ "${LIMEN_SELF_HEAL:-1}" = "1" ]; then
       --scan "${LIMEN_HEAL_SCAN:-30}" --limit "${LIMEN_HEAL_LIMIT:-10}" 2>&1 | tail -3 || true
 fi
 
+# CONVERGE — the alchemical rung that completes the self-* ladder. Finds "multiverses" (one idea a
+# task with >=2 divergent PRs from different lanes), distills them via limen.converge, and emits the
+# gap-finder's next_shots as bounded NEW work. Offline by default (no network); only writes bounded
+# gap-tasks + logs/converge-log.jsonl under the queue lock — NEVER closes/merges PRs (his/merge gate).
+# OFF by default (newest organ) — set LIMEN_CONVERGE=1 to enable; LIMEN_CONVERGE_LIVE=1 for real
+# Anthropic synthesis. ([[alchemical-convergence-method]], [[distillation-not-reduction]])
+if [ "${LIMEN_CONVERGE:-0}" = "1" ]; then
+  echo "[drain] converge: distilling multiverses (limit ${LIMEN_CONVERGE_LIMIT:-2})…"
+  PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/converge-organ.py" --apply \
+      --limit "${LIMEN_CONVERGE_LIMIT:-2}" 2>&1 | tail -3 || true
+fi
+
 echo "[drain] board:"
 PYTHONPATH="$PY" python3 -m limen doctor 2>&1 | head -9
