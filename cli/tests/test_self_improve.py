@@ -42,21 +42,24 @@ def write_board(path: Path, tasks: list[dict]) -> None:
 def _fixture_tasks() -> list[dict]:
     """A small board with three deliberate signals:
 
-    - DEAD lane: gemini fails all 20 of its tries (0%, > min_samples) -> down-weight.
+    - DEAD lane: gemini is the responsible lane on 6 GH tasks that ALL end cancelled
+      (per-task attribution -> 0% over 6 >= min_samples) -> down-weight.
     - GOOD lane: jules lands all 6 of its done tries -> keep (and it's the top lane).
-    - CHRONIC pattern: GH tasks re-thrown 5x with mostly cancellations -> flagged.
+    - CHRONIC pattern: GH tasks re-thrown 5x with cancellations -> flagged.
     - SHIPPING pattern: REV mostly done -> rerank boost.
     - The `limen` meta-agent ledger rows must be IGNORED, not counted as a lane.
     """
     tasks: list[dict] = []
-    # GH pattern: 4 tasks, chronic re-dispatch on gemini, mostly cancelled (dead-end)
-    for i in range(4):
+    # GH pattern: 6 tasks, chronic re-dispatch on gemini, all cancelled (dead-end).
+    # Per-task attribution credits each task's terminal verdict to gemini (the last
+    # real lane), so 6 cancelled => 6 fail / 0 done => 0% over 6 decided tries.
+    for i in range(6):
         log = [_entry("gemini", "failed") for _ in range(5)]
         log += [_entry("limen", "cancelled")]  # ledger noise that must be skipped
         tasks.append({
             "id": f"GH-repo-{i}",
             "title": f"gh {i}",
-            "status": "cancelled" if i < 3 else "done",
+            "status": "cancelled",
             "dispatch_log": log,
         })
     # REV pattern: 6 tasks all shipped by jules (>= min_samples so it earns a verdict)
@@ -120,11 +123,11 @@ def test_default_writes_proposal_json(tmp_path: Path, monkeypatch: pytest.Monkey
 
     data = json.loads(out_path.read_text())
     assert data["organ"] == "self-improve"
-    assert data["board_summary"]["total_tasks"] == 10
+    assert data["board_summary"]["total_tasks"] == 12
     assert data["apply"]["wired"] is False
     # idempotent: a second run produces a valid proposal again (timestamps differ)
     assert si.main() == 0
-    assert json.loads(out_path.read_text())["board_summary"]["total_tasks"] == 10
+    assert json.loads(out_path.read_text())["board_summary"]["total_tasks"] == 12
 
 
 def test_apply_refuses_and_writes_nothing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

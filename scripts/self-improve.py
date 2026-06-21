@@ -129,14 +129,36 @@ def load_board(path: Path) -> dict:
 # 1. LANE PRODUCTIVITY
 # ---------------------------------------------------------------------------
 def lane_stats(tasks: list[dict]) -> dict[str, Counter]:
-    """Per real-lane Counter of done/inflight/fail across the whole dispatch_log."""
+    """Per real-lane Counter of done/inflight/fail, attributed PER TASK to the lane
+    that actually last worked it.
+
+    Why per-task, not per-dispatch-row: the local lanes (codex/opencode/agy) run in a
+    throwaway worktree and open a PR, leaving their OWN dispatch_log row at `dispatched`;
+    the terminal `done` is written later by the `limen` reconcile voice on a SEPARATE
+    row. Counting rows therefore credits those lanes' wins to `limen` (which we exclude)
+    and scores them ~0% — a pure measurement artifact (it made codex read 0%/92 while it
+    was in fact carrying load). Instead we credit each task's terminal verdict to its
+    RESPONSIBLE lane = the last real-lane agent in its dispatch_log (the one that
+    produced the final state). jules self-reports `done`, so both views agree for it;
+    this repair only corrects the local lanes whose success the ledger had hidden.
+    """
     stats: dict[str, Counter] = defaultdict(Counter)
     for t in tasks:
-        for e in (t.get("dispatch_log") or []):
-            lane = canonical_agent(e.get("agent"))
-            if lane not in _REAL_LANES:
-                continue  # skip the `limen` status-ledger voice and any alias noise
-            stats[lane][_status_class(e.get("status"))] += 1
+        real_entries = [
+            e for e in (t.get("dispatch_log") or [])
+            if canonical_agent(e.get("agent")) in _REAL_LANES
+        ]
+        if not real_entries:
+            continue  # no real lane ever took it (limen-only ledger / never dispatched)
+        lane = canonical_agent(real_entries[-1].get("agent"))
+        status = (t.get("status") or "").strip().lower()
+        if status == "done":
+            verdict = "done"
+        elif status in {"failed", "cancelled"}:
+            verdict = "fail"
+        else:
+            verdict = "inflight"  # open / dispatched / in_progress / needs_human / ...
+        stats[lane][verdict] += 1
     return stats
 
 
