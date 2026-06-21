@@ -268,17 +268,16 @@ def route_task(
             return local, f"local checkout at {checkout} -> {local} (split by budget+refresh runway)"
         # local exists but no healthy local lane -> fall through to the extended fleet / jules
 
-    # No (healthy) local lane: reach the extended paid fleet for whatever it can serve.
+    # No (healthy) local lane: reach the extended paid fleet (jules/copilot/github_actions/warp/oz)
+    # for whatever it can serve — DISTRIBUTING across the capable extended lanes by least-assigned-
+    # so-far so we never dump the whole remote backlog on one lane (origin's 'don't strand / don't
+    # pile on one vendor' lesson, applied to the fan-out). Jules competes here too when it's up.
     planned_remaining = {agent: _task_cost(task) for agent in PAID_AGENT_ORDER}
-    agents, _reasons = _capable_agents(task, health, planned_remaining, workdir)
-    for agent in agents:
-        if agent in LOCAL_CHECKOUT_AGENTS:
-            continue  # local lanes were already offered via _pick_local above
-        return agent, _reasons[agent]
-    if health.get("jules"):
-        why = "no local checkout; only Jules clones remotely" if checkout is None \
-              else "no healthy local lane; Jules fallback"
-        return "jules", why
+    agents, reasons = _capable_agents(task, health, planned_remaining, workdir)
+    extended = [a for a in agents if a not in LOCAL_CHECKOUT_AGENTS]
+    if extended:
+        pick = min(extended, key=lambda a: (assigned.get(a, 0), PAID_AGENT_ORDER.index(a)))
+        return pick, reasons[pick]
     return "unroutable", "no reachable capable paid lane"
 
 
