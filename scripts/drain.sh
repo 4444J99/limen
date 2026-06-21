@@ -8,6 +8,11 @@ export LIMEN_ROOT="${LIMEN_ROOT:-$HOME/Workspace/limen}"
 export LIMEN_TASKS="${LIMEN_TASKS:-$LIMEN_ROOT/tasks.yaml}"
 PY="$LIMEN_ROOT/cli/src"
 
+# Runtime organ toggles (LIMEN_SELF_HEAL, LIMEN_MERGE_DRAIN, LIMEN_JULES_LAND, …): the daemon
+# re-reads this script fresh each beat, so sourcing ~/.limen.env HERE lets an organ be switched
+# on/off live without restarting the heartbeat. Existence-guarded; set -a exports the vars.
+[ -f "$HOME/.limen.env" ] && { set -a; . "$HOME/.limen.env"; set +a; }
+
 echo "[drain] pulling completed Jules sessions…"
 python3 "$LIMEN_ROOT/scripts/harvest-pull-completed.py"
 
