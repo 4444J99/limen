@@ -75,6 +75,7 @@ C_FEED="${LIMEN_BEAT_FEED:-3}"         # EXPLORE (mine the backlog)
 C_DRAIN="${LIMEN_BEAT_DRAIN:-3}"       # VERIFY (harvest completed → done; faster recycle)
 C_HEAL="${LIMEN_BEAT_HEAL:-6}"         # HEAL  (recover failed/orphaned → fresh cascade)
 C_HYGIENE="${LIMEN_BEAT_HYGIENE:-8}"; C_BACKUP="${LIMEN_BEAT_BACKUP:-48}"
+C_SYNC="${LIMEN_BEAT_SYNC:-2}"         # SELF-HEAL the substrate (re-converge checkout to the release)
 C_CORPUS="${LIMEN_BEAT_CORPUS:-24}"    # CONVERGE (distill his words toward ONE; expensive → rare)
 C_WEB="${LIMEN_BEAT_WEB:-4}"           # LEARN (refresh the visualized surfaces)
 LOCKD="$LIMEN_ROOT/logs/.queue.lock.d"   # shared with supervisory ops (two-scale safety)
@@ -120,6 +121,10 @@ while true; do
     echo "autonomy paused by governor — exiting"
     exit 0
   fi
+  # SUBSTRATE SELF-HEAL — re-converge this checkout to the release (origin/main) before doing
+  # work, so the beat always runs the latest code (push = deploy). ff-only, data-preserving,
+  # fail-open; never exits/re-execs the daemon. Closes the loop: root → leaf → back to root.
+  play "$C_SYNC" && bash "$LIMEN_ROOT/scripts/sync-release.sh" 2>&1 | tail -2 || true
   python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" 2>&1 | tail -1 || true   # refresh lane health BEFORE route/dispatch
   EFFECTIVE_LANES="$(healthy_lanes "$LANES")"
   if [ "$EFFECTIVE_LANES" != "$LANES" ]; then
