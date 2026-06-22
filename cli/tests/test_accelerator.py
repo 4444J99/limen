@@ -218,6 +218,7 @@ def test_routing_drains_cliff_edge_lane_first(tmp_path, monkeypatch):
 def test_routing_no_cliff_data_is_today_behaviour(tmp_path, monkeypatch):
     route = importlib.import_module("route")
     monkeypatch.setattr(route, "ROOT", tmp_path)  # no usage.json → cliff urgency {} → runway breaks tie
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))  # isolate ledger/self-improve reads from LIVE logs/ too
     health = {"codex": True, "claude": True}
     pick = route._pick_local({"title": "build", "type": "code"}, health,
                              assigned={}, budget={"codex": 100, "claude": 100},
