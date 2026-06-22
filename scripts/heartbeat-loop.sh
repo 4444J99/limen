@@ -18,6 +18,7 @@
 #   hygiene        every 8           clone-maintenance (gc/prune/reap-report)
 #   capture        every 48          commit+push every workspace repo → off disk, into canonical
 #   corpus         every 24          CONVERGE his words: distill the knowledge base toward ONE
+#   media          every 24          ATOMIZE his docs → Shot atoms (strand D; gated LIMEN_MEDIA_ATOMIZE=1)
 set -uo pipefail
 export HOME="${HOME:-/Users/4jp}"
 export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
@@ -237,6 +238,11 @@ while true; do
   # + graph shots (LIMEN_CORPUS_GRAPH=1). Bounded + fail-open — never gates the beat.
   play "$C_CORPUS"  && [ "${LIMEN_CORPUS_CONVERGE:-0}" = "1" ] && \
     python3 "$LIMEN_ROOT/scripts/corpus-converge.py" --apply 2>&1 | tail -3 || true
+  # ATOMIZE his personal MEDIA — strand D slice 1: docs (from the durable Archive4T copy) → first-class
+  # Shot atoms in the SAME converge engine, so his media remixes with his words. Gated OFF by default
+  # (LIMEN_MEDIA_ATOMIZE=1); bounded + fail-open; READ-ONLY on sources (never deletes/evicts in slice 1).
+  play "$C_CORPUS"  && [ "${LIMEN_MEDIA_ATOMIZE:-0}" = "1" ] && \
+    python3 "$LIMEN_ROOT/scripts/media-atomize.py" --apply 2>&1 | tail -3 || true
 
   # adaptive tempo: tighten to MIN whenever work is flowing OR the OPEN QUEUE is non-empty (so a
   # beat that produced no PR this cycle — all no-op / still-running — doesn't back off to 30min

@@ -50,6 +50,12 @@ def _corpus_root() -> Path:
     return Path(os.environ.get("LIMEN_CORPUS_ROOT", Path.home() / "Workspace" / "knowledge-corpus"))
 
 
+def _media_atoms_root() -> Path:
+    # The media-atoms store produced by scripts/media-atomize.py (strand D). Kept in sync
+    # with that script's default so his docs/photos remix with his words.
+    return Path(os.environ.get("LIMEN_MEDIA_ATOMS", _corpus_root() / "02-media-atoms"))
+
+
 def _session_meta_root() -> Path:
     return Path(os.environ.get("LIMEN_SESSION_META", Path.home() / "Workspace" / "session-meta"))
 
@@ -139,6 +145,29 @@ def gather_new_material(limit: int, *, with_graph: bool = False, absorbed: set[s
             if iid in absorbed:
                 continue
             items.append({"id": iid, "text": text, "source": f"collection:{p.name}"})
+
+    # personal-media atoms (strand D): doc/photo Shots produced by media-atomize.py, read from
+    # the canonical media-atoms store so his MEDIA remixes with his WORDS through the same engine.
+    # Fail-open (missing store → no media shots this beat); bounded like the other sources.
+    atoms_dir = _media_atoms_root()
+    if atoms_dir.is_dir():
+        atom_files = []
+        for p in atoms_dir.glob("*.json"):
+            try:
+                atom_files.append((p.stat().st_mtime, p))
+            except Exception:
+                continue
+        atom_files.sort(reverse=True)
+        for _, p in atom_files[: max(limit * 8, 40)]:
+            try:
+                a = json.loads(p.read_text())
+            except Exception:
+                continue
+            text = (a.get("text") or "").strip()
+            iid = a.get("id") or _hash(str(p))
+            if not text or iid in absorbed:
+                continue
+            items.append({"id": iid, "text": text[:20000], "source": a.get("source") or f"media:{p.name}"})
 
     # the universal context: a bounded slice of the GitHub graph (issues/PRs as shots).
     if with_graph:
