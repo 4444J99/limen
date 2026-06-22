@@ -9,9 +9,9 @@
       "product": "ChatGPT Exporter",
       "stage": "deploy-ready",
       "whose_hand": "yours",
-      "next_action": "git push the green branch -> wrangler deploy (Cloudflare) -> wire Ko-fi/Lemon Squeezy checkout",
-      "first_dollar_path": "live page + Pro tier via Lemon Squeezy (already integrated) or Ko-fi donations now — individual rail, NOT the dead-LLC Stripe",
-      "note": "code gate is green; only the human gates stand between this and the first dollar"
+      "next_action": "DOLLAR #1 today = Ko-fi + GitHub Sponsors donations (no LLC, no code). I prep FUNDING.yml + README links; you create the two accounts (~10 min each). Pro tier = I rebase the stacked, CI-green checkout PRs (conflicting only because none merged); you create the LemonSqueezy product + paste LEMONSQUEEZY_STORE_ID.",
+      "first_dollar_path": "donations NOW via Ko-fi/Sponsors (individual rail); Pro tier via Lemon Squeezy (code already integrated). NOT Stripe — that needs an LLC blocked by the card-0186 hold.",
+      "note": "live on GreasyFork with real daily users, monetized at $0 — the gap to the first dollar is account creation, not code"
     },
     {
       "rank": 2,
@@ -66,8 +66,9 @@
   ],
   "conductor_core": ["organvm/limen", "4444J99/limen", "organvm/session-meta", "4444J99/session-meta"],
   "your_levers": [
-    "money rail — Ko-fi or Lemon Squeezy (individual, ~1h, start now)",
-    "git push the exporter branch",
-    "wrangler deploy (Cloudflare) — exporter live + the phone page"
+    "Ko-fi + GitHub Sponsors on the Exporter — donations flow TODAY (no LLC, no code; ~10 min each, I prep FUNDING.yml + README)",
+    "Create the LemonSqueezy product + paste LEMONSQUEEZY_STORE_ID — unlocks the Exporter Pro tier (code already integrated)",
+    "Stripe = DEFERRED — needs an LLC, blocked by the card-0186 Santander hold; one call clears it (also frees Anthropic + GitHub autopay) but it is NOT required for dollar #1",
+    "Pick one build-in-public channel (X / Reddit / Show HN) — I draft the launch post from the live ledger + the product"
   ]
 }
