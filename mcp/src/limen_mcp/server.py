@@ -190,7 +190,7 @@ def add_task(title: str, repo: str, agent: str = "jules", priority: str = "mediu
                 num = int(t.id.split("-")[1])
                 if num > last_num:
                     last_num = num
-            except:
+            except ValueError:
                 pass
     new_id = f"LIMEN-{last_num + 1:03d}"
     

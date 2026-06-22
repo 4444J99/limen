@@ -185,6 +185,7 @@ const statusColor: Record<string, string> = {
   failed: "red",
   failed_blocked: "red",
   needs_human: "red",
+  cancelled: "slate",
   superseded: "slate",
 };
 
@@ -215,7 +216,7 @@ function getPhase(task: Task, relatedPRs: PR[]): Phase {
 
 function getLifecycleGate(task: Task, stale: boolean): LifecycleGate {
   const urls = task.urls || [];
-  if (task.status === "archived") return "archived";
+  if (["archived", "cancelled"].includes(task.status)) return "archived";
   if (task.status === "done") return "archive";
   if (stale || ["failed", "failed_blocked", "needs_human"].includes(task.status)) return "recover";
   if (urls.some((url) => url.includes("/pull/")) || ["dispatched", "in_progress"].includes(task.status)) return "verify";

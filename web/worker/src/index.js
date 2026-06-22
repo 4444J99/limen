@@ -227,7 +227,7 @@ function taskLifecycle(task, staleIds) {
   const has_issue = urls.some((url) => url.includes("/issues/"));
   const status = task.status || "unknown";
   let phase = "assign";
-  if (status === "archived") phase = "archived";
+  if (["archived", "cancelled"].includes(status)) phase = "archived";
   else if (status === "done") phase = "archive";
   else if (stale || ["failed", "failed_blocked", "needs_human"].includes(status)) phase = "recover";
   else if (has_pr || ["dispatched", "in_progress"].includes(status)) phase = "verify";
