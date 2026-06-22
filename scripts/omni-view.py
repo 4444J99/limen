@@ -124,6 +124,19 @@ def build_view():
                  "runway_h": i.get("runway_h")}
              for n, i in usage.items() if isinstance(i, dict)}
 
+    # FRONT-LOAD: the reset-window accelerator's job, made visible — which lanes will lose budget at
+    # their reset if pacing stays even (will_expire from usage.json), worst first. Empty when nothing
+    # is at a cliff. accel_on reflects LIMEN_ACCEL (the daemon's env at write-time isn't known here, so
+    # default-on matches the dispatcher default).
+    expiring = sorted(
+        ({"lane": n, "expire": i.get("will_expire"), "unit": i.get("unit"),
+          "h_left": round((i.get("time_left_frac") or 0) * (i.get("window_hours") or 0), 1),
+          "headroom_pct": i.get("headroom_pct")}
+         for n, i in usage.items()
+         if isinstance(i, dict) and i.get("will_expire")),
+        key=lambda d: -(d["expire"] or 0))
+    front_load = {"accel": os.environ.get("LIMEN_ACCEL", "1") == "1", "expiring": expiring[:8]}
+
     return {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "spine": ladder.get("spine", ""),
@@ -150,6 +163,7 @@ def build_view():
             "recent_ships": recent_refs,
         },
         "future": {
+            "front_load": front_load,
             "your_levers": ladder.get("your_levers", []),
             "products": sorted(ladder.get("products", []), key=lambda p: p.get("rank", 99)),
             "corpus": {"faces": corpus.get("face_count"), "absorbed": corpus.get("absorbed_total"),
@@ -209,6 +223,19 @@ def render_html(v):
 
     past = v["past"]
     fut = v["future"]
+    fl = fut.get("front_load") or {}
+    fl_items = "".join(
+        f"<span class='vd'><b>{_esc(d['lane'])}</b> "
+        f"<span class='mut'>~{d['expire']}{_esc(d.get('unit') or '')} expiring · {d['h_left']}h left "
+        f"· {d.get('headroom_pct','?')}% idle</span></span>"
+        for d in fl.get("expiring", []))
+    fl_html = (f"<div class='card'><div class='lab'>future · front-load "
+               f"<span class='{'you' if fl.get('accel') else 'mut'}'>"
+               f"[accelerator {'ON' if fl.get('accel') else 'OFF'}]</span></div>"
+               f"<div>{fl_items or '<span class=mut>no lane near a reset cliff — nothing expiring</span>'}</div>"
+               f"<div class='mut' style='margin-top:6px'>budget that would expire unused at the next "
+               f"reset if pacing stayed even — the accelerator burns it into win-class work first.</div></div>"
+               if fl_items or fl else "")
     levers = "".join(f"<li>{_esc(x)}</li>" for x in fut["your_levers"])
     prod_rows = "".join(
         f"<tr><td class='mut'>{_esc(p.get('rank',''))}</td><td><b>{_esc(p.get('product',''))}</b>"
@@ -274,6 +301,8 @@ def render_html(v):
   <div class="card"><div class="lab">future · knowledge</div><div>{_esc(ing_s)}</div>
     <div class="mut" style="margin-top:6px">{_esc((corp.get('one') or '')[:160])}</div></div>
  </div>
+
+ {fl_html}
 
  <div class="card"><div class="lab">future · revenue ladder</div>
    <table><tbody>{prod_rows}</tbody></table>

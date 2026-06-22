@@ -69,6 +69,7 @@
     "Ko-fi + GitHub Sponsors on the Exporter — donations flow TODAY (no LLC, no code; ~10 min each, I prep FUNDING.yml + README)",
     "Create the LemonSqueezy product + paste LEMONSQUEEZY_STORE_ID — unlocks the Exporter Pro tier (code already integrated)",
     "Stripe = DEFERRED — needs an LLC, blocked by the card-0186 Santander hold; one call clears it (also frees Anthropic + GitHub autopay) but it is NOT required for dollar #1",
-    "Pick one build-in-public channel (X / Reddit / Show HN) — I draft the launch post from the live ledger + the product"
+    "Pick one build-in-public channel (X / Reddit / Show HN) — I draft the launch post from the live ledger + the product",
+    "Claude cloud agents (15 free tasks/day) = UI-only, NOT scriptable — the daemon cannot dispatch them. To use that free capacity: open Claude Code → Agent View → New cloud session, one per task (up to 15/day). For a PROGRAMMATIC lane instead, the path is Anthropic Managed Agents (client.beta.sessions.create) — say the word and I wire it as a real fleet lane"
   ]
 }

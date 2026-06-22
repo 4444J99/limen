@@ -117,6 +117,28 @@ def _vendor_runway() -> dict[str, float]:
     return out
 
 
+def _vendor_cliff_urgency() -> dict[str, float]:
+    """Per-vendor 'budget about to EXPIRE unused' pressure, from the live meter (usage.json, written
+    by usage-telemetry.py: headroom_pct + time_left_frac). urgency = headroom_frac * (1 - time_left_frac):
+    HIGH when a lane has lots of unspent budget AND little time left in its window → drain it FIRST so
+    it ships value before the reset wipes the headroom. ~0 early in a window (runway breaks the tie as
+    before). Derived from the live signal, never pinned; missing meter → {} → no effect (today's routing)."""
+    f = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen"))) / "logs" / "usage.json"
+    try:
+        vendors = (json.loads(f.read_text()) or {}).get("vendors", {})
+    except (OSError, ValueError):
+        return {}
+    out: dict[str, float] = {}
+    for name, info in vendors.items():
+        if not isinstance(info, dict):
+            continue
+        hp = info.get("headroom_pct")
+        tlf = info.get("time_left_frac")
+        if isinstance(hp, (int, float)) and isinstance(tlf, (int, float)):
+            out[name] = max(0.0, (hp / 100.0) * (1.0 - tlf))
+    return out
+
+
 def _local_checkout(repo: str | None, workdir: Path) -> Path | None:
     """Mirror of dispatch._resolve_repo_dir: does a local git checkout exist?"""
     if not repo:
@@ -253,9 +275,17 @@ def _pick_local(
     def runway_of(v: str) -> float:
         return runway.get(v, float("inf"))
 
-    # least-loaded by budget ratio; then MOST refresh runway (freshest window); then higher-budget
-    # lane; then name (stable).
-    return min(candidates, key=lambda v: (load(v), -runway_of(v), -budget.get(v, 0), v))
+    # cliff-urgency: a lane near its reset with unspent budget should DRAIN FIRST (its headroom expires
+    # otherwise). Read from the live meter; ~0 away from a cliff, so this only reorders near a reset.
+    cliff = _vendor_cliff_urgency()
+
+    def urgency_of(v: str) -> float:
+        return cliff.get(v, 0.0)
+
+    # least-loaded by budget ratio; then HIGHEST cliff-urgency (drain expiring budget before reset);
+    # then MOST refresh runway (freshest window); then higher-budget lane; then name (stable).
+    return min(candidates,
+               key=lambda v: (load(v), -urgency_of(v), -runway_of(v), -budget.get(v, 0), v))
 
 
 def _capable_agents(

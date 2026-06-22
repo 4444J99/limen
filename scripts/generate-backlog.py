@@ -123,6 +123,22 @@ def _allowed_repos() -> set[str]:
     return repos
 
 
+def _avg_headroom_pct() -> float | None:
+    """Average live per-vendor headroom (0–100) from logs/usage.json, or None if unreadable. A full
+    tank ⇒ lift the backlog floor so the routable queue can't cap out while capacity sits idle — the
+    SAME accelerator discover-value.py uses, applied here too (the asymmetry was: discovery scaled with
+    headroom but the larger backlog generator did not, so a full tank still hit the flat floor and the
+    queue starved the daemon mid-window)."""
+    fpath = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent)) / "logs" / "usage.json"
+    try:
+        vendors = (json.loads(fpath.read_text()) or {}).get("vendors", {})
+        hs = [v["headroom_pct"] for v in vendors.values()
+              if isinstance(v, dict) and isinstance(v.get("headroom_pct"), (int, float))]
+        return sum(hs) / len(hs) if hs else None
+    except Exception:
+        return None
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS", "tasks.yaml"))
@@ -153,10 +169,18 @@ def main() -> int:
         and (t.target_agent or "any") in _DISPATCH_LANES
         and (t.target_agent or "any") not in _dead
     )
-    if open_now >= args.floor:
-        print(f"queue healthy: routable-open={open_now} >= floor={args.floor} — nothing to generate.")
+    # Headroom accelerator (symmetric with discover-value.py): a full tank lifts the floor up to 3x so
+    # the routable queue stays deep enough to feed the accelerated dispatch toward each reset cliff;
+    # a near-empty tank keeps the base floor (don't pile on). 50%→1x … 100%→3x.
+    floor = args.floor
+    avg_hr = _avg_headroom_pct()
+    if avg_hr is not None and avg_hr >= 50:
+        floor = int(round(args.floor * (1 + min(2.0, (avg_hr - 50) / 25))))
+    if open_now >= floor:
+        print(f"queue healthy: routable-open={open_now} >= floor={floor} "
+              f"(avg headroom {avg_hr if avg_hr is None else round(avg_hr)}%) — nothing to generate.")
         return 0
-    need = min(args.floor - open_now, args.max_new)
+    need = min(floor - open_now, args.max_new)
 
     # candidate repos = EVERY real repo in the org (so every owner gets covered, not just the ~60
     # already in tasks.yaml) ∪ any repo already referenced in the queue. Falls back to the tasks.yaml
