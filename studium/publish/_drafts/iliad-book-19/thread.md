@@ -41,7 +41,7 @@ The arming scene in Homer is ceremonial and terrible. The divine armor fits a ma
 — — —
 
 7/ Xanthus speaks — the horse prophesies Achilles' death
-🎵 Berlioz — Symphonie fantastique — V. 'Dream of a Witches' Sabbath'
+🎵 Bartók — Music for Strings, Percussion and Celesta — III. Adagio
 A horse speaks. The Erinyes silence it. This is the uncanny irrupting into the heroic world — the boundary between animal and divine collapses for one moment, and fate speaks through an unexpected mou
 
 — — —

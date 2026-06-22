@@ -11,9 +11,9 @@ Copy-paste into Spotify/Apple Music, or use the search links.
 3. Szymanowski — Symphony No. 3 'Song of the Night' — I
    YouTube: https://www.youtube.com/results?search_query=Szymanowski+Symphony+No.+3+%27Song+of+the+Night%27+%E2%80%94+I
    Spotify: https://open.spotify.com/search/Szymanowski+Symphony+No.+3+%27Song+of+the+Night%27+%E2%80%94+I
-4. Wagner — Tristan und Isolde — 'Liebestod' (Act III finale)
-   YouTube: https://www.youtube.com/results?search_query=Wagner+Tristan+und+Isolde+%E2%80%94+%27Liebestod%27+%28Act+III+finale%29
-   Spotify: https://open.spotify.com/search/Wagner+Tristan+und+Isolde+%E2%80%94+%27Liebestod%27+%28Act+III+finale%29
+4. Debussy — Prélude à l'après-midi d'un faune
+   YouTube: https://www.youtube.com/results?search_query=Debussy+Pr%C3%A9lude+%C3%A0+l%27apr%C3%A8s-midi+d%27un+faune
+   Spotify: https://open.spotify.com/search/Debussy+Pr%C3%A9lude+%C3%A0+l%27apr%C3%A8s-midi+d%27un+faune
 5. Fauré — Pelléas et Mélisande Suite — 'Sicilienne'
    YouTube: https://www.youtube.com/results?search_query=Faur%C3%A9+Pell%C3%A9as+et+M%C3%A9lisande+Suite+%E2%80%94+%27Sicilienne%27
    Spotify: https://open.spotify.com/search/Faur%C3%A9+Pell%C3%A9as+et+M%C3%A9lisande+Suite+%E2%80%94+%27Sicilienne%27

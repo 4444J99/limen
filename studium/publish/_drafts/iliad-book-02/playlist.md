@@ -23,9 +23,9 @@ Copy-paste into Spotify/Apple Music, or use the search links.
 7. Elgar — Enigma Variations — IX. 'Nimrod'
    YouTube: https://www.youtube.com/results?search_query=Elgar+Enigma+Variations+%E2%80%94+IX.+%27Nimrod%27
    Spotify: https://open.spotify.com/search/Elgar+Enigma+Variations+%E2%80%94+IX.+%27Nimrod%27
-8. Verdi — Requiem — 'Dies Irae'
-   YouTube: https://www.youtube.com/results?search_query=Verdi+Requiem+%E2%80%94+%27Dies+Irae%27
-   Spotify: https://open.spotify.com/search/Verdi+Requiem+%E2%80%94+%27Dies+Irae%27
+8. Stravinsky — The Rite of Spring — Part II: 'Sacrificial Dance (The Chosen One)'
+   YouTube: https://www.youtube.com/results?search_query=Stravinsky+The+Rite+of+Spring+%E2%80%94+Part+II%3A+%27Sacrificial+Dance+%28The+Chosen+One%29%27
+   Spotify: https://open.spotify.com/search/Stravinsky+The+Rite+of+Spring+%E2%80%94+Part+II%3A+%27Sacrificial+Dance+%28The+Chosen+One%29%27
 9. Elgar — Symphony No. 1 — I. Andante. Nobilmente e semplice (opening Adagio)
    YouTube: https://www.youtube.com/results?search_query=Elgar+Symphony+No.+1+%E2%80%94+I.+Andante.+Nobilmente+e+semplice+%28opening+Adagio%29
    Spotify: https://open.spotify.com/search/Elgar+Symphony+No.+1+%E2%80%94+I.+Andante.+Nobilmente+e+semplice+%28opening+Adagio%29

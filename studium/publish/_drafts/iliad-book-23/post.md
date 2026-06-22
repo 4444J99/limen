@@ -19,11 +19,11 @@ Do not score this book as generic funeral music. The funeral-march register open
 | 5 | The bones of Patroclus are gathered; the burial mound raised | law | **Bach — Mass in B minor: 'Agnus Dei'** |
 | 6 | Achilles announces the funeral games | law | **Handel — Zadok the Priest, HWV 258** |
 | 7 | The chariot race — preparation and anticipation | return | **Beethoven — Symphony No. 7, IV. Allegro con brio** |
-| 8 | Apollo and Athena interfere; the crash of Eumelus | wrath | **Stravinsky — The Rite of Spring: 'The Sage'** |
+| 8 | Apollo and Athena interfere; the crash of Eumelus | divine-intervention | **Stravinsky — The Rite of Spring: 'The Sage'** |
 | 9 | The chariot race dispute — Antilochus, Menelaus, the oath | comedy | **Haydn — Symphony No. 104 ('London'), IV. Spiritoso** |
 | 10 | The boxing match — Epeius and Euryalus | comedy | **Rossini — La gazza ladra: Overture** |
 | 11 | Wrestling, foot-race, spear-and-shield, discus — the games in full | comedy | **Mozart — Sinfonie Concertante in E-flat, K. 364, III. Presto** |
-| 12 | Achilles gives a prize to Nestor; the old man remembers | return | **Elgar — Enigma Variations, Op. 36: IX. 'Nimrod'** |
+| 12 | Achilles gives a prize to Nestor; the old man remembers | memory | **Elgar — Enigma Variations, Op. 36: IX. 'Nimrod'** |
 | 13 | The games end; Achilles alone with the grief that the games covered | grief | **Mahler — Symphony No. 9, I. Andante comodo (opening)** |
 
 ---
@@ -115,11 +115,11 @@ Mahler's Ninth opens with a broken pulse — a heartbeat rhythm that falters, so
 ## The dominant arc of Book XXIII
 
 ```
-grief (the ghost) → grief (the ghost fades) → sacrifice (the pyre built) → sacrifice (the pyre lit) → law (bones gathered, mound raised) → law (games announced) → return (the race) → wrath (divine interference) → comedy (the dispute, resolved) → comedy (the boxing) → comedy (the games at play) → return (Nestor honored, memory) → grief (Achilles alone)
+grief (the ghost) → grief (the ghost fades) → sacrifice (the pyre built) → sacrifice (the pyre lit) → law (bones gathered, mound raised) → law (games announced) → return (the race) → divine-intervention (gods interfere) → comedy (the dispute, resolved) → comedy (the boxing) → comedy (the games at play) → memory (Nestor honored, the old games) → grief (Achilles alone)
 ```
 
 Book XXIII is the poem's argument that life reasserts itself through grief, not despite it — that the community must compete and laugh and dispute prize-rulings and remember the dead, and that all of it is how the living stay alive. Achilles knows this. He organizes the games himself. He still goes to sleep alone.
 
 
 ---
-_Dominant arc: grief → grief → sacrifice → law → law → return → return → wrath → comedy → comedy → comedy → return → grief. From the Studium — a transmission curriculum (reading · script · translation · music)._
+_Dominant arc: grief → grief → sacrifice → sacrifice → law → law → return → divine-intervention → comedy → comedy → comedy → memory → grief. From the Studium — a transmission curriculum (reading · script · translation · music)._

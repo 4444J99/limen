@@ -14,7 +14,7 @@ This is the book where grief becomes creation. Hephaestus is a maker who works f
 |--:|-------|-------|-------|
 | 1 | Antilochus brings the news — Achilles hears Patroclus is dead | grief | **Schubert — String Quartet No. 14 in D minor ("Death and the Maiden"), II. Andante con moto** |
 | 2 | Achilles' terrible cry — Thetis hears him from the deep | grief | **Britten — Four Sea Interludes from *Peter Grimes*, I. "Dawn"** |
-| 3 | The Nereids gather / Thetis' lament | grief | **Purcell — *Dido and Aeneas*: "When I am laid in earth" (Dido's Lament)** |
+| 3 | The Nereids gather / Thetis' lament | grief | **Pärt — *Spiegel im Spiegel*** |
 | 4 | Achilles and Thetis — she holds his face | grief | **Mahler — Symphony No. 9, I. Andante comodo (opening pages)** |
 | 5 | Achilles declares he will return — the rift dissolves into something colder | metamorphosis | **Strauss — *Metamorphosen* for 23 Solo Strings** |
 | 6 | Thetis goes to Hephaestus — the approach to the forge | law | **Bach — The Well-Tempered Clavier, Book I: Prelude and Fugue No. 1 in C major, BWV 846** |
@@ -34,9 +34,9 @@ The Andante is a set of variations on a theme of visitation — death arriving, 
 
 Achilles' cry is a sonic event. He rolls in the dust, pours ash on his head, and the sound he makes crosses from the land into the sea-depths where Thetis hears it. Homer tells us this explicitly: the cry itself is what summons her. Britten's "Dawn" interlude opens with strings climbing out of near-silence, building toward a sound that is weather — the sea as resonance chamber. Peter Grimes is a man whose suffering sounds outward; the interludes are the world absorbing and transmitting his pain. The "Dawn" interlude does not weep for Achilles — it carries the signal. The sea hears.
 
-**3. Purcell — Dido's Lament: "When I am laid in earth"**
+**3. Pärt — Spiegel im Spiegel**
 
-Thetis and the fifty Nereids arrive on the shore and cry aloud. This is formal mourning — a chorus of divine women lamenting together, shaped by repetition, shaped by the knowledge that the loss is not yet death but is already irreversible. They know. They know Achilles will return to battle and die. Purcell's ground bass is the structural truth of formal grief: an inexorable descending line that does not stop, beneath which melody reaches upward and cannot arrest the descent. The lament has a shape before the mourner even begins to speak. The Nereids' grief has this quality — it is ancient, procedural, foreknowing. "Remember me, but ah, forget my fate" is exactly what the Nereids cannot do.
+Thetis and the fifty Nereids arrive on the shore and cry aloud. This is formal mourning — a chorus of divine women lamenting together, shaped by repetition, shaped by the knowledge that the loss is not yet death but is already irreversible. They know. They know Achilles will return to battle and die. Pärt's "Spiegel im Spiegel" — mirror in the mirror — is grief without terminus: a single sustained pulse in the piano, a violin line that moves in slow arcs above it, neither arriving nor departing. The piece has no funeral weight, no public ceremony. It is inward, archaic in grain, a vigil rather than a burial. The Nereids do not conduct a funeral — they hold vigil over a man who has not yet died but whose death they already see. Pärt holds the space between knowing and happening.
 
 **4. Mahler — Symphony No. 9, I. Andante comodo (opening)**
 
@@ -66,6 +66,8 @@ The book's final image: Achilles receives the Shield and the armor, and his eyes
 
 ## Removed / Demoted
 
+**Purcell — *Dido and Aeneas*: "When I am laid in earth"** — held back; terminal-death register forbidden before Book XXII. Dido sings this aria while dying — it is an in-the-grave lament, the sound of a life extinguishing. Book XVIII's grief is private and wounded, not terminal. The foreknowledge quality was right but the weight was wrong. Replaced by Pärt "Spiegel im Spiegel." Purcell belongs in XXII or XXIV.
+
 **Wagner — *Götterdämmerung*: "Siegfried's Funeral March"** — held back; do not deploy before Book XXII. The funeral-march register — public, monumental, terminal — opens only when Hector falls. Deploying it here would conflate Achilles' private catastrophic grief with the public mourning of a fallen hero. Book XVIII is not yet a funeral. It is the moment before the killing.
 
 **Barber — Adagio for Strings** — too saturated by contemporary-cinematic weight (Vietnam memorials, film grief). Book XVIII's grief is archaic, pre-Christian, divine. It requires a form with older or stranger grain.
@@ -87,4 +89,4 @@ Book XVIII is the poem's hinge. It begins with the worst sound a human body can 
 
 
 ---
-_Dominant arc: grief → grief → supplication → grief → metamorphosis → law → law → metamorphosis → wrath. From the Studium — a transmission curriculum (reading · script · translation · music)._
+_Dominant arc: grief → grief → grief → grief → metamorphosis → law → law → metamorphosis → wrath. From the Studium — a transmission curriculum (reading · script · translation · music)._

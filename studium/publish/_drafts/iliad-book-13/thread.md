@@ -1,6 +1,6 @@
 🧵 Iliad Book XIII: Poseidon's Surge
 
-Scoring this not as "war" but as its real emotional arc — divine-intervention → divine-intervention → wrath → wrath → fate. One piece per beat. 👇
+Scoring this not as "war" but as its real emotional arc — fate → divine-intervention → divine-intervention → fate → wrath. One piece per beat. 👇
 
 — — —
 
@@ -22,9 +22,9 @@ Poseidon works by disguise and rhetoric — he speaks as a seer, and his words f
 
 — — —
 
-4/ The two Aiantes form the defensive line / wrath crystallizes into formation
+4/ The two Aiantes form the defensive line / fate crystallizes into formation
 🎵 Beethoven — Symphony No. 5 — I. Allegro con brio
-The Aiantes locking shields is where wrath stops being personal and becomes structural — the hammering motif of Beethoven's Fifth is the only language for a line that will not break by force of pressu
+The Aiantes locking shields is where the line's fate is set — the hammering motif of Beethoven's Fifth is the canonical musical grammar of fate as inexorable pressure: not one hero's fury but the stru
 
 — — —
 

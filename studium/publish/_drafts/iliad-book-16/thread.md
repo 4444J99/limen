@@ -1,6 +1,6 @@
 🧵 Iliad Book XVI: The Patrokleia
 
-Scoring this not as "war" but as its real emotional arc — return → wrath → wrath → grief → wrath. One piece per beat. 👇
+Scoring this not as "war" but as its real emotional arc — supplication → return → wrath → fate → grief. One piece per beat. 👇
 
 — — —
 
@@ -41,7 +41,7 @@ After Sarpedon falls, Glaukos shames the Trojans into fighting for the body. Gri
 — — —
 
 7/ Apollo intervenes — the god's warning, ignored
-🎵 Strauss — Also sprach Zarathustra — 'Von den Hinterweltlern' (Of the Afterworldly)
+🎵 Strauss — Also sprach Zarathustra — 'Einleitung' (Sunrise)
 Apollo approaches Patroclus and warns him three times not to press to the walls of Troy. The divine-intervention force requires sudden color shift, brass/strings contrast — the intrusion of a vertical
 
 — — —

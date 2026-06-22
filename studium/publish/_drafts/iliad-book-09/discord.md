@@ -1,5 +1,5 @@
 **🎵 Iliad Book IX: The Embassy, the Refusal**
-_dominant arc: supplication → law → law → law → wrath → wrath → law → wrath → grief → grief_
+_dominant arc: supplication → law → law → law → wrath → wrath → supplication → wrath → grief → grief_
 
 ` 1` **Bach** — St Matthew Passion — 'Erbarme dich, mein Gott' (BWV 244)  ·  *Agamemnon's embassy assembled — chastened authority, desperate overture*  ·  [▶](https://www.youtube.com/results?search_query=Bach+St+Matthew+Passion+%E2%80%94+%27Erbarme+dich%2C+mein+Gott%27+%28BWV+244%29) [♫](https://open.spotify.com/search/Bach+St+Matthew+Passion+%E2%80%94+%27Erbarme+dich%2C+mein+Gott%27+%28BWV+244%29)
 ` 2` **Bach** — The Art of Fugue — Contrapunctus I (BWV 1080)  ·  *Odysseus opens the formal case — the rhetoric of gifts and return*  ·  [▶](https://www.youtube.com/results?search_query=Bach+The+Art+of+Fugue+%E2%80%94+Contrapunctus+I+%28BWV+1080%29) [♫](https://open.spotify.com/search/Bach+The+Art+of+Fugue+%E2%80%94+Contrapunctus+I+%28BWV+1080%29)
@@ -10,6 +10,6 @@ _dominant arc: supplication → law → law → law → wrath → wrath → law 
 ` 7` **Pärt** — Spiegel im Spiegel  ·  *Phoenix weeps — the old man who raised Achilles, undone*  ·  [▶](https://www.youtube.com/results?search_query=P%C3%A4rt+Spiegel+im+Spiegel) [♫](https://open.spotify.com/search/P%C3%A4rt+Spiegel+im+Spiegel)
 ` 8` **Schubert** — String Quintet in C major — II. Adagio (D. 956)  ·  *Achilles' courtesy and his immovability — he offers them wine, a bed, warmth, and no*  ·  [▶](https://www.youtube.com/results?search_query=Schubert+String+Quintet+in+C+major+%E2%80%94+II.+Adagio+%28D.+956%29) [♫](https://open.spotify.com/search/Schubert+String+Quintet+in+C+major+%E2%80%94+II.+Adagio+%28D.+956%29)
 ` 9` **Mahler** — Symphony No. 9 — IV. Adagio  ·  *The embassy returns empty — the Greeks receive the refusal*  ·  [▶](https://www.youtube.com/results?search_query=Mahler+Symphony+No.+9+%E2%80%94+IV.+Adagio) [♫](https://open.spotify.com/search/Mahler+Symphony+No.+9+%E2%80%94+IV.+Adagio)
-`10` **Fauré** — Requiem — 'In Paradisum' (Op. 48)  ·  *Achilles alone — grief suspended in refusal*  ·  [▶](https://www.youtube.com/results?search_query=Faur%C3%A9+Requiem+%E2%80%94+%27In+Paradisum%27+%28Op.+48%29) [♫](https://open.spotify.com/search/Faur%C3%A9+Requiem+%E2%80%94+%27In+Paradisum%27+%28Op.+48%29)
+`10` **Brahms** — Intermezzo in A major (Op. 118, No. 2)  ·  *Achilles alone — grief suspended in refusal*  ·  [▶](https://www.youtube.com/results?search_query=Brahms+Intermezzo+in+A+major+%28Op.+118%2C+No.+2%29) [♫](https://open.spotify.com/search/Brahms+Intermezzo+in+A+major+%28Op.+118%2C+No.+2%29)
 
 _react 🎼 if you'd keep it, 🔁 to suggest a replacement._

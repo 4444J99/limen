@@ -1,6 +1,6 @@
 🧵 Iliad Book XVIII: The Grief, the Lament, the Forging
 
-Scoring this not as "war" but as its real emotional arc — grief → grief → supplication → grief → metamorphosis. One piece per beat. 👇
+Scoring this not as "war" but as its real emotional arc — grief → grief → grief → grief → metamorphosis. One piece per beat. 👇
 
 — — —
 
@@ -17,8 +17,8 @@ Achilles rolls in the dust, pours ash on his head, and cries out so violently th
 — — —
 
 3/ The Nereids gather / Thetis' lament
-🎵 Purcell — Dido and Aeneas — 'When I am laid in earth' (Dido's Lament)
-Thetis and the fifty Nereids gather and cry aloud — a chorus of sea-goddesses lamenting. This is grief as formal mourning, shaped by repetition, shaped by the knowledge that the loss is not yet death 
+🎵 Pärt — Spiegel im Spiegel
+Thetis and the fifty Nereids gather and cry aloud — a chorus of sea-goddesses lamenting together. This is grief as timeless formal mourning, shaped by repetition, shaped by the knowledge that the loss
 
 — — —
 

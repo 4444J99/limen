@@ -1,6 +1,6 @@
 🧵 Iliad Book VIII: The Golden Scales
 
-Scoring this not as "war" but as its real emotional arc — law → divine-intervention → fate → wrath → exile. One piece per beat. 👇
+Scoring this not as "war" but as its real emotional arc — law → divine-intervention → fate → wrath → grief. One piece per beat. 👇
 
 — — —
 
@@ -35,8 +35,8 @@ Nestor unhorsed is one of Homer's most precise grief notes: an old man who has k
 — — —
 
 6/ Diomedes rescues Nestor / Hector advances
-🎵 Holst — The Planets — 'Mars, the Bringer of War' (reprise register)
-The rescue galvanizes the scene: Diomedes, the ablest Greek fighter after Achilles, chooses to stand when others flee. But Hector is there and Zeus is behind him. The 5/4 pulse of Mars returns — not f
+🎵 Shostakovich — Symphony No. 7 'Leningrad' — I. Allegretto (the Invasion episode)
+The rescue galvanizes the scene: Diomedes, the ablest Greek fighter after Achilles, chooses to stand when others flee. But Hector is there and Zeus is behind him. Shostakovich's Invasion episode begin
 
 — — —
 

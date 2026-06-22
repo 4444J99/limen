@@ -14,12 +14,12 @@ Copy-paste into Spotify/Apple Music, or use the search links.
 4. Handel — Messiah — 'And the Glory of the Lord'
    YouTube: https://www.youtube.com/results?search_query=Handel+Messiah+%E2%80%94+%27And+the+Glory+of+the+Lord%27
    Spotify: https://open.spotify.com/search/Handel+Messiah+%E2%80%94+%27And+the+Glory+of+the+Lord%27
-5. Brahms — Symphony No. 1 — IV. Adagio — Un poco Allegretto e grazioso
-   YouTube: https://www.youtube.com/results?search_query=Brahms+Symphony+No.+1+%E2%80%94+IV.+Adagio+%E2%80%94+Un+poco+Allegretto+e+grazioso
-   Spotify: https://open.spotify.com/search/Brahms+Symphony+No.+1+%E2%80%94+IV.+Adagio+%E2%80%94+Un+poco+Allegretto+e+grazioso
-6. Strauss — Also sprach Zarathustra — 'Von den Hinterweltlern' (opening sunrise into first theme)
-   YouTube: https://www.youtube.com/results?search_query=Strauss+Also+sprach+Zarathustra+%E2%80%94+%27Von+den+Hinterweltlern%27+%28opening+sunrise+into+first+theme%29
-   Spotify: https://open.spotify.com/search/Strauss+Also+sprach+Zarathustra+%E2%80%94+%27Von+den+Hinterweltlern%27+%28opening+sunrise+into+first+theme%29
+5. Brahms — Symphony No. 1 — IV. Adagio (slow introduction)
+   YouTube: https://www.youtube.com/results?search_query=Brahms+Symphony+No.+1+%E2%80%94+IV.+Adagio+%28slow+introduction%29
+   Spotify: https://open.spotify.com/search/Brahms+Symphony+No.+1+%E2%80%94+IV.+Adagio+%28slow+introduction%29
+6. Strauss — Also sprach Zarathustra — 'Einleitung' (sunrise opening)
+   YouTube: https://www.youtube.com/results?search_query=Strauss+Also+sprach+Zarathustra+%E2%80%94+%27Einleitung%27+%28sunrise+opening%29
+   Spotify: https://open.spotify.com/search/Strauss+Also+sprach+Zarathustra+%E2%80%94+%27Einleitung%27+%28sunrise+opening%29
 7. Holst — The Planets — 'Jupiter, the Bringer of Jollity' (central march passage)
    YouTube: https://www.youtube.com/results?search_query=Holst+The+Planets+%E2%80%94+%27Jupiter%2C+the+Bringer+of+Jollity%27+%28central+march+passage%29
    Spotify: https://open.spotify.com/search/Holst+The+Planets+%E2%80%94+%27Jupiter%2C+the+Bringer+of+Jollity%27+%28central+march+passage%29

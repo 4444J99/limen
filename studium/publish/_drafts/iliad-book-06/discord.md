@@ -1,5 +1,5 @@
 **🎵 Iliad Book VI: Guest-Friendship, Prayer, Farewell**
-_dominant arc: law → law → supplication → grief → grief → fate → grief → fate_
+_dominant arc: law → law → supplication → wrath → grief → fate → grief → grief → supplication → grief → fate_
 
 ` 1` **Bach** — The Art of Fugue — Contrapunctus I (BWV 1080)  ·  *Glaucus and Diomedes — the moment of recognition across the battle-line*  ·  [▶](https://www.youtube.com/results?search_query=Bach+The+Art+of+Fugue+%E2%80%94+Contrapunctus+I+%28BWV+1080%29) [♫](https://open.spotify.com/search/Bach+The+Art+of+Fugue+%E2%80%94+Contrapunctus+I+%28BWV+1080%29)
 ` 2` **Handel** — Giulio Cesare — 'Va tacito e nascosto' (Act I)  ·  *The armor exchange — Glaucus gives gold for bronze (Zeus takes his wits)*  ·  [▶](https://www.youtube.com/results?search_query=Handel+Giulio+Cesare+%E2%80%94+%27Va+tacito+e+nascosto%27+%28Act+I%29) [♫](https://open.spotify.com/search/Handel+Giulio+Cesare+%E2%80%94+%27Va+tacito+e+nascosto%27+%28Act+I%29)

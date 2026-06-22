@@ -14,12 +14,12 @@ Copy-paste into Spotify/Apple Music, or use the search links.
 4. Elgar — Enigma Variations — IX. 'Nimrod'
    YouTube: https://www.youtube.com/results?search_query=Elgar+Enigma+Variations+%E2%80%94+IX.+%27Nimrod%27
    Spotify: https://open.spotify.com/search/Elgar+Enigma+Variations+%E2%80%94+IX.+%27Nimrod%27
-5. Fauré — Requiem, Op. 48 — III. Sanctus
-   YouTube: https://www.youtube.com/results?search_query=Faur%C3%A9+Requiem%2C+Op.+48+%E2%80%94+III.+Sanctus
-   Spotify: https://open.spotify.com/search/Faur%C3%A9+Requiem%2C+Op.+48+%E2%80%94+III.+Sanctus
-6. Holst — The Planets — 'Mars, the Bringer of War' (from 2:30)
-   YouTube: https://www.youtube.com/results?search_query=Holst+The+Planets+%E2%80%94+%27Mars%2C+the+Bringer+of+War%27+%28from+2%3A30%29
-   Spotify: https://open.spotify.com/search/Holst+The+Planets+%E2%80%94+%27Mars%2C+the+Bringer+of+War%27+%28from+2%3A30%29
+5. Fauré — Pavane, Op. 50
+   YouTube: https://www.youtube.com/results?search_query=Faur%C3%A9+Pavane%2C+Op.+50
+   Spotify: https://open.spotify.com/search/Faur%C3%A9+Pavane%2C+Op.+50
+6. Prokofiev — Romeo and Juliet, Op. 64 — 'The Death of Tybalt'
+   YouTube: https://www.youtube.com/results?search_query=Prokofiev+Romeo+and+Juliet%2C+Op.+64+%E2%80%94+%27The+Death+of+Tybalt%27
+   Spotify: https://open.spotify.com/search/Prokofiev+Romeo+and+Juliet%2C+Op.+64+%E2%80%94+%27The+Death+of+Tybalt%27
 7. Beethoven — Symphony No. 5 — I. Allegro con brio
    YouTube: https://www.youtube.com/results?search_query=Beethoven+Symphony+No.+5+%E2%80%94+I.+Allegro+con+brio
    Spotify: https://open.spotify.com/search/Beethoven+Symphony+No.+5+%E2%80%94+I.+Allegro+con+brio

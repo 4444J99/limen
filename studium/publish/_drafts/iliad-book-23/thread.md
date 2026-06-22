@@ -1,6 +1,6 @@
 🧵 Iliad Book XXIII: The Ghost, the Pyre, the Games
 
-Scoring this not as "war" but as its real emotional arc — grief → grief → sacrifice → law → law. One piece per beat. 👇
+Scoring this not as "war" but as its real emotional arc — grief → grief → sacrifice → sacrifice → law. One piece per beat. 👇
 
 — — —
 

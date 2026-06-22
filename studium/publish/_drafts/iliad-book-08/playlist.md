@@ -17,9 +17,9 @@ Copy-paste into Spotify/Apple Music, or use the search links.
 5. Elgar — Enigma Variations — 'Nimrod' (Variation IX)
    YouTube: https://www.youtube.com/results?search_query=Elgar+Enigma+Variations+%E2%80%94+%27Nimrod%27+%28Variation+IX%29
    Spotify: https://open.spotify.com/search/Elgar+Enigma+Variations+%E2%80%94+%27Nimrod%27+%28Variation+IX%29
-6. Holst — The Planets — 'Mars, the Bringer of War' (reprise register)
-   YouTube: https://www.youtube.com/results?search_query=Holst+The+Planets+%E2%80%94+%27Mars%2C+the+Bringer+of+War%27+%28reprise+register%29
-   Spotify: https://open.spotify.com/search/Holst+The+Planets+%E2%80%94+%27Mars%2C+the+Bringer+of+War%27+%28reprise+register%29
+6. Shostakovich — Symphony No. 7 'Leningrad' — I. Allegretto (the Invasion episode)
+   YouTube: https://www.youtube.com/results?search_query=Shostakovich+Symphony+No.+7+%27Leningrad%27+%E2%80%94+I.+Allegretto+%28the+Invasion+episode%29
+   Spotify: https://open.spotify.com/search/Shostakovich+Symphony+No.+7+%27Leningrad%27+%E2%80%94+I.+Allegretto+%28the+Invasion+episode%29
 7. Berlioz — Symphonie fantastique — V. 'Songe d'une nuit du sabbat'
    YouTube: https://www.youtube.com/results?search_query=Berlioz+Symphonie+fantastique+%E2%80%94+V.+%27Songe+d%27une+nuit+du+sabbat%27
    Spotify: https://open.spotify.com/search/Berlioz+Symphonie+fantastique+%E2%80%94+V.+%27Songe+d%27une+nuit+du+sabbat%27

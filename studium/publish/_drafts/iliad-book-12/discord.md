@@ -1,5 +1,5 @@
 **🎵 Iliad Book XII: Storming the Wall**
-_dominant arc: wrath → wrath → fate → fate → kingship → kingship → wrath → wrath_
+_dominant arc: wrath → fate → fate → supplication → wrath → kingship → kingship → wrath → wrath → fate → wrath → metamorphosis_
 
 ` 1` **Shostakovich** — Symphony No. 7 'Leningrad' — I. Allegretto (invasion episode)  ·  *The Trojan army massing at the wall — grinding siege pressure*  ·  [▶](https://www.youtube.com/results?search_query=Shostakovich+Symphony+No.+7+%27Leningrad%27+%E2%80%94+I.+Allegretto+%28invasion+episode%29) [♫](https://open.spotify.com/search/Shostakovich+Symphony+No.+7+%27Leningrad%27+%E2%80%94+I.+Allegretto+%28invasion+episode%29)
 ` 2` **Beethoven** — Symphony No. 5 — I. Allegro con brio  ·  *The Achaean wall itself — architecture of dread*  ·  [▶](https://www.youtube.com/results?search_query=Beethoven+Symphony+No.+5+%E2%80%94+I.+Allegro+con+brio) [♫](https://open.spotify.com/search/Beethoven+Symphony+No.+5+%E2%80%94+I.+Allegro+con+brio)

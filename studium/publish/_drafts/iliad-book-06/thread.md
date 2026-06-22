@@ -1,6 +1,6 @@
 🧵 Iliad Book VI: Guest-Friendship, Prayer, Farewell
 
-Scoring this not as "war" but as its real emotional arc — law → law → supplication → grief → grief. One piece per beat. 👇
+Scoring this not as "war" but as its real emotional arc — law → law → supplication → wrath → grief. One piece per beat. 👇
 
 — — —
 

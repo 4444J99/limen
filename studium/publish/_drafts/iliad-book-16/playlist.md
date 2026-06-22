@@ -20,9 +20,9 @@ Copy-paste into Spotify/Apple Music, or use the search links.
 6. Shostakovich — Symphony No. 7 'Leningrad' — I. Allegretto (invasion episode)
    YouTube: https://www.youtube.com/results?search_query=Shostakovich+Symphony+No.+7+%27Leningrad%27+%E2%80%94+I.+Allegretto+%28invasion+episode%29
    Spotify: https://open.spotify.com/search/Shostakovich+Symphony+No.+7+%27Leningrad%27+%E2%80%94+I.+Allegretto+%28invasion+episode%29
-7. Strauss — Also sprach Zarathustra — 'Von den Hinterweltlern' (Of the Afterworldly)
-   YouTube: https://www.youtube.com/results?search_query=Strauss+Also+sprach+Zarathustra+%E2%80%94+%27Von+den+Hinterweltlern%27+%28Of+the+Afterworldly%29
-   Spotify: https://open.spotify.com/search/Strauss+Also+sprach+Zarathustra+%E2%80%94+%27Von+den+Hinterweltlern%27+%28Of+the+Afterworldly%29
+7. Strauss — Also sprach Zarathustra — 'Einleitung' (Sunrise)
+   YouTube: https://www.youtube.com/results?search_query=Strauss+Also+sprach+Zarathustra+%E2%80%94+%27Einleitung%27+%28Sunrise%29
+   Spotify: https://open.spotify.com/search/Strauss+Also+sprach+Zarathustra+%E2%80%94+%27Einleitung%27+%28Sunrise%29
 8. Debussy — Prélude à l'après-midi d'un faune
    YouTube: https://www.youtube.com/results?search_query=Debussy+Pr%C3%A9lude+%C3%A0+l%27apr%C3%A8s-midi+d%27un+faune
    Spotify: https://open.spotify.com/search/Debussy+Pr%C3%A9lude+%C3%A0+l%27apr%C3%A8s-midi+d%27un+faune

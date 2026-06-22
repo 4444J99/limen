@@ -1,6 +1,6 @@
 🧵 Iliad Book XX: The Gods Enter the War
 
-Scoring this not as "war" but as its real emotional arc — divine-intervention → wrath → fate → divine-intervention → wrath. One piece per beat. 👇
+Scoring this not as "war" but as its real emotional arc — divine-intervention → wrath → wrath → fate → divine-intervention. One piece per beat. 👇
 
 — — —
 

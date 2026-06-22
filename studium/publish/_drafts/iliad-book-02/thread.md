@@ -1,6 +1,6 @@
 🧵 Iliad Book II: The False Dream, the Assembly, the Catalogue
 
-Scoring this not as "war" but as its real emotional arc — divine-intervention → wrath → law → comedy → law. One piece per beat. 👇
+Scoring this not as "war" but as its real emotional arc — divine-intervention → wrath → divine-intervention → law → comedy. One piece per beat. 👇
 
 — — —
 
@@ -47,7 +47,7 @@ Nestor's counsel is always the same structure: I have seen greater men than you.
 — — —
 
 8/ Agamemnon's sacrifice before battle / the altar on the plain
-🎵 Verdi — Requiem — 'Dies Irae'
+🎵 Stravinsky — The Rite of Spring — Part II: 'Sacrificial Dance (The Chosen One)'
 Before the Catalogue, Agamemnon sacrifices a fat ox to Zeus — and Zeus rejects it (his thighs burn, the omen is dark, the favor is withheld). This is sacrifice as ritual weight without return: the pro
 
 — — —

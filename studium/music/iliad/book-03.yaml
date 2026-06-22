@@ -11,7 +11,7 @@ principle: >
   not military. It is erotic, elegiac, and cosmic: desire deferred, shame exposed, memory
   embodied on the walls, force discharged and then snatched away, and desire reinstated
   by divine compulsion.
-force_arc: [desire, wrath, law, memory, memory, wrath, wrath, divine-intervention, desire, desire]
+force_arc: [desire, wrath, law, memory, memory, wrath, fate, divine-intervention, desire, desire]
 dominant_force: desire
 tracks:
   - n: 1
@@ -68,32 +68,33 @@ tracks:
     scene: "Teichoscopia II — Priam's question / Odysseus named"
     force: memory
     composer: Fauré
-    work: "Requiem, Op. 48 — III. Sanctus"
+    work: "Pavane, Op. 50"
     decision: added
     why: >
       Priam asks about Odysseus and Antenor answers with a portrait of him mid-speech —
-      hunched, deceptive, then suddenly overwhelming. The Sanctus is not grief; it is
-      suspended recognition, the quality of watching something vast and distant and naming
-      it. Fauré's luminous, almost weightless Sanctus keeps the scene on the walls: elevated,
-      removed, overlooking what cannot be stopped. It bridges the two memory tracks without
-      tipping into funeral.
+      hunched, deceptive, then suddenly overwhelming. The Pavane is not grief; it is
+      suspended recognition — an elevated, processional dance that watches something vast and
+      distant and names it. Its measured, nostalgic line keeps the scene up on the walls:
+      removed, overlooking what cannot be stopped, bridging the two memory tracks without
+      tipping into the funeral register Book III must hold back.
   - n: 6
     scene: "The duel begins — Paris vs. Menelaus"
     force: wrath
-    composer: Holst
-    work: "The Planets — 'Mars, the Bringer of War' (from 2:30)"
-    decision: "kept from Book I use-case, but located specifically in the duel"
+    composer: Prokofiev
+    work: "Romeo and Juliet, Op. 64 — 'The Death of Tybalt'"
+    decision: added
     why: >
       The duel is not an army engagement — it is two men, the personal violence the war was
-      always about, compressed to a single exchange. Mars is the right force here, but it
-      must land on the specific duel, not the general war: the spear strikes the shield,
-      Paris' helmet catches on the strap and chokes him, Menelaus is about to kill him.
-      The 5/4 rhythm is not majestic; it is asymmetrical, brutal, grinding — this is how
-      the poem strips away all the epic splendor to reveal two men trying to kill each other
-      on behalf of a woman neither truly possesses.
+      always about, compressed to a single exchange. Prokofiev's 'Death of Tybalt' is exactly
+      the right scale: a duel between specific men, not armies, with a grinding, asymmetrical
+      rhythmic violence that escalates to a hard stop. Spears bent on shields, swords shattered
+      on helmets, two bodies in the middle of a field trying to kill each other on behalf of a
+      woman neither truly possesses — the force is wrath made intimate, made personal, stripped
+      of all epic distance. Holst's Mars belongs to the general war; Prokofiev belongs to this
+      fight, between these two men, today.
   - n: 7
     scene: "Menelaus seizes Paris by the helmet — the killing is seconds away"
-    force: wrath
+    force: fate
     composer: Beethoven
     work: "Symphony No. 5 — I. Allegro con brio"
     decision: added
@@ -166,3 +167,11 @@ demoted:
       The fate register is right for the duel but Verdi's overture is too much
       machinery-of-fate for what is actually two men on a field. Beethoven's Fifth captures
       the same inexorability at the right scale.
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "demoted from Book III track 6; already used in Book I for wrath"
+    why: >
+      Mars was carried over from Book I as the wrath piece for the duel, but Book I already
+      owns this pairing (track 5). Reuse without a justification that Book III is its proper
+      referent weakens both books. Prokofiev's 'Death of Tybalt' gives the same wrath force
+      at the correct intimate scale — a duel between two men, not a war between armies.

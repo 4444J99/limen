@@ -17,7 +17,7 @@ Hera's speech to Zeus is monstrous and absurd in equal measure: she offers to sa
 — — —
 
 3/ Athena descends — the divine saboteur sent to break the truce
-🎵 Strauss — Also sprach Zarathustra — 'Von den Hinterweltern' (Von den Hinterweltlern)
+🎵 Strauss — Also sprach Zarathustra — 'Einleitung (Sunrise)'
 Athena's descent is not rescue — it is assassination of peace. She enters the human world as a comet entering an atmosphere: sudden, specific, catastrophic. Richard Strauss gives divine-intervention a
 
 — — —

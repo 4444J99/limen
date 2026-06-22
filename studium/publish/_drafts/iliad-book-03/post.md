@@ -16,9 +16,9 @@ The playlist does not score the Trojan War. It scores this book's specific movem
 | 2 | Hector's rebuke | **Bartók — Music for Strings, Percussion and Celesta: III. Adagio** | wrath |
 | 3 | The truce / formal oath | **Bach — Mass in B minor: "Et in unum Dominum"** | law |
 | 4 | Teichoscopia I — Helen names the Achaean kings | **Elgar — Enigma Variations: IX. "Nimrod"** | memory |
-| 5 | Teichoscopia II — Priam asks about Odysseus | **Fauré — Requiem, Op. 48: III. Sanctus** | memory |
-| 6 | The duel — Paris vs. Menelaus | **Holst — The Planets: "Mars, the Bringer of War"** | wrath |
-| 7 | Menelaus seizes Paris — the kill is seconds away | **Beethoven — Symphony No. 5: I. Allegro con brio** | wrath |
+| 5 | Teichoscopia II — Priam asks about Odysseus | **Fauré — Pavane, Op. 50** | memory |
+| 6 | The duel — Paris vs. Menelaus | **Prokofiev — Romeo and Juliet, Op. 64: "The Death of Tybalt"** | wrath |
+| 7 | Menelaus seizes Paris — the kill is seconds away | **Beethoven — Symphony No. 5: I. Allegro con brio** | fate |
 | 8 | Aphrodite snatches Paris from the battlefield | **Messiaen — Quartet for the End of Time: V. "Louange à l'Éternité de Jésus"** | divine-intervention |
 | 9 | Aphrodite compels Helen to the bedchamber | **Wagner — Tristan und Isolde: "Liebestod"** | desire |
 | 10 | Paris in the bed / the war's engine still running | **Szymanowski — Violin Concerto No. 1, Op. 35: opening** | desire |
@@ -27,7 +27,7 @@ The playlist does not score the Trojan War. It scores this book's specific movem
 
 ## Per-Track Reasoning
 
-**1. Scriabin — Piano Sonata No. 4, Op. 35: I. Andante** — *Paris advances, then quails*
+**1. Scriabin — Piano Sonata No. 4, Op. 30: I. Andante** — *Paris advances, then quails*
 
 Paris walks out between the armies in his panther-skin and then, the moment he sees Menelaus, flinches back into the ranks like a man who has spotted a snake. This is the war's founding irony: the man it is about is a coward. The correct music is not martial — it is desire without nerve. Scriabin's Fourth Sonata opens in suspended, chromatic longing, trembling and iridescent, beautiful and irresolute. It does not advance; it hovers. That is Paris exactly — a man constituted by wanting, not by will. The force is desire, not wrath, because Paris is not an aggressor in this moment. He is a beautiful, frightened object who started a war he cannot fight.
 
@@ -43,13 +43,13 @@ The agreement of single combat is a legal ceremony: wine mixed, lambs slaughtere
 
 The teichoscopia — Helen standing on the walls of Troy naming the Achaean heroes to Priam — is one of the most elegiac passages in the Iliad, and one of the strangest. She identifies Ajax, Odysseus, Agamemnon, Idomeneus, and she does it with eerie calm, the calm of someone who has watched this war from both sides and carries the knowledge in her body. Priam calls her "dear child" and does not blame her. The dominant force is memory — not grief, not exile — because Helen names with authority, not with tears. Elgar's "Nimrod" is the music of a gaze backward: stately, inward, luminous with loss that has been lived with long enough to become something else. It is the only piece at the right altitude: commemoration without breakdown.
 
-**5. Fauré — Requiem, Op. 48: III. Sanctus** — *Teichoscopia II: Priam asks about Odysseus*
+**5. Fauré — Pavane, Op. 50** — *Teichoscopia II: Priam asks about Odysseus*
 
-Antenor's description of Odysseus mid-speech — hunched over at first, seeming stupid, then suddenly overwhelming, words falling like winter snow — is a portrait, a memory of a man seen at a distance. The Sanctus is not grief; it is suspended recognition, the quality of watching something vast from a wall and naming it accurately. Fauré's Sanctus is almost weightless, elevated, hovering above the scene rather than in it. It holds the teichoscopia in its second phase: still on the walls, still looking down at the plain, still naming the men who will eventually break the gates.
+Antenor's description of Odysseus mid-speech — hunched over at first, seeming stupid, then suddenly overwhelming, words falling like winter snow — is a portrait, a memory of a man seen at a distance. The Pavane is not grief; it is suspended recognition, the quality of watching something vast from a wall and naming it accurately. Fauré's Pavane is a measured, elevated processional, hovering above the scene rather than in it. It holds the teichoscopia in its second phase: still on the walls, still looking down at the plain, still naming the men who will eventually break the gates.
 
-**6. Holst — The Planets: "Mars, the Bringer of War"** — *The duel: Paris vs. Menelaus*
+**6. Prokofiev — Romeo and Juliet, Op. 64: "The Death of Tybalt"** — *The duel: Paris vs. Menelaus*
 
-The duel is not a battle — it is two men, the personal violence the war was always about, distilled to its source. Paris throws his spear; it bends on Menelaus' shield. Menelaus throws his; it punches through Paris' corselet and Paris dodges. Then Menelaus draws his sword, strikes Paris' helmet, and the sword shatters. The 5/4 pulse of Mars is not majestic; it is asymmetrical, grinding, hard to inhabit. That is the duel's rhythm: not heroic exchange but two men in the middle of a field trying to kill each other because a woman is in a bedroom behind the walls. The force is wrath, but it is wrath made personal, made small, made specific. Mars without army is still Mars.
+The duel is not a battle — it is two men, the personal violence the war was always about, distilled to its source. Paris throws his spear; it bends on Menelaus' shield. Menelaus throws his; it punches through Paris' corselet and Paris dodges. Then Menelaus draws his sword, strikes Paris' helmet, and the sword shatters. This is the scale of Prokofiev's duel music: not an army, not a war, but a grinding, asymmetrical violence between specific named men. "The Death of Tybalt" is wrath made intimate and personal — a furious rhythmic escalation that terminates in a hard stop. It is exactly the right register for two bodies in a field trying to kill each other because a woman is in a bedroom behind the walls: small-scale, urgent, and without epic distance.
 
 **7. Beethoven — Symphony No. 5: I. Allegro con brio** — *Menelaus seizes Paris — the killing is seconds away*
 
@@ -77,6 +77,8 @@ The book closes with Paris in bed, Helen reluctant beside him, and Menelaus hunt
 
 **Verdi — La forza del destino: Overture** — demoted; too operatically spectacular for the duel's intimacy. Beethoven's Fifth captures the same inexorability at human scale.
 
+**Holst — The Planets: "Mars, the Bringer of War"** — demoted from Book III; already used in Book I (track 5) for wrath. Mars belongs to the general war register; Book I has prior claim. Prokofiev's duel music works at the intimate scale Book III actually needs: two men, not two armies.
+
 ---
 
 ## The dominant arc of Book III
@@ -85,10 +87,10 @@ The book closes with Paris in bed, Helen reluctant beside him, and Menelaus hunt
 desire → shame/wrath → law → memory → memory → wrath → fate → divine-intervention → desire → desire
 ```
 
-That is why the playlist moves Scriabin → Bartók → Bach → Elgar → Fauré → Holst → Beethoven → Messiaen → Wagner → Szymanowski.
+That is why the playlist moves Scriabin → Bartók → Bach → Elgar → Fauré → Prokofiev → Beethoven → Messiaen → Wagner → Szymanowski.
 
 Book III is the poem's first proof that the war cannot end by military means. The force that started it is a goddess, and she is still in the room.
 
 
 ---
-_Dominant arc: desire → wrath → law → memory → memory → wrath → wrath → divine-intervention → desire → desire. From the Studium — a transmission curriculum (reading · script · translation · music)._
+_Dominant arc: desire → wrath → law → memory → memory → wrath → fate → divine-intervention → desire → desire. From the Studium — a transmission curriculum (reading · script · translation · music)._

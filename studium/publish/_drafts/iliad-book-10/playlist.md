@@ -26,9 +26,9 @@ Copy-paste into Spotify/Apple Music, or use the search links.
 8. Schubert — String Quartet No. 14 in D minor, D. 810, 'Death and the Maiden' — II. Andante con moto
    YouTube: https://www.youtube.com/results?search_query=Schubert+String+Quartet+No.+14+in+D+minor%2C+D.+810%2C+%27Death+and+the+Maiden%27+%E2%80%94+II.+Andante+con+moto
    Spotify: https://open.spotify.com/search/Schubert+String+Quartet+No.+14+in+D+minor%2C+D.+810%2C+%27Death+and+the+Maiden%27+%E2%80%94+II.+Andante+con+moto
-9. Fauré — Requiem, Op. 48 — 'In Paradisum'
-   YouTube: https://www.youtube.com/results?search_query=Faur%C3%A9+Requiem%2C+Op.+48+%E2%80%94+%27In+Paradisum%27
-   Spotify: https://open.spotify.com/search/Faur%C3%A9+Requiem%2C+Op.+48+%E2%80%94+%27In+Paradisum%27
+9. Arvo Pärt — Spiegel im Spiegel
+   YouTube: https://www.youtube.com/results?search_query=Arvo+P%C3%A4rt+Spiegel+im+Spiegel
+   Spotify: https://open.spotify.com/search/Arvo+P%C3%A4rt+Spiegel+im+Spiegel
 10. Debussy — Préludes, Book I — 'La cathédrale engloutie'
    YouTube: https://www.youtube.com/results?search_query=Debussy+Pr%C3%A9ludes%2C+Book+I+%E2%80%94+%27La+cath%C3%A9drale+engloutie%27
    Spotify: https://open.spotify.com/search/Debussy+Pr%C3%A9ludes%2C+Book+I+%E2%80%94+%27La+cath%C3%A9drale+engloutie%27

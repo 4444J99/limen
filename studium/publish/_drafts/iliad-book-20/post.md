@@ -90,4 +90,4 @@ Book XX is not a battle book. It is the book where the governing restraints of t
 
 
 ---
-_Dominant arc: divine-intervention → wrath → fate → divine-intervention → wrath → wrath → divine-intervention → wrath → wrath. From the Studium — a transmission curriculum (reading · script · translation · music)._
+_Dominant arc: divine-intervention → wrath → wrath → fate → divine-intervention → divine-intervention → sacrifice → wrath → grief → divine-intervention → metamorphosis. From the Studium — a transmission curriculum (reading · script · translation · music)._

@@ -31,7 +31,7 @@ great catalogue itself as a juridical act of memory — these are what Book II i
 | 5 | Thersites — the demagogue beaten | **Mozart — *Le nozze di Figaro*: Overture** | comedy |
 | 6 | Assembly restored — the crowd falls back into order | **Handel — *Messiah*: "And the Glory of the Lord"** | law |
 | 7 | Nestor's counsel — the old king's memory | **Elgar — *Enigma Variations*: IX. "Nimrod"** | memory |
-| 8 | Agamemnon's sacrifice — the omen is dark | **Verdi — *Requiem*: "Dies Irae"** | sacrifice |
+| 8 | Agamemnon's sacrifice — the omen is dark | **Stravinsky — *The Rite of Spring*: Part II, "Sacrificial Dance (The Chosen One)"** | sacrifice |
 | 9 | The Catalogue of Ships — name after name | **Elgar — Symphony No. 1: I. Andante opening** | memory |
 | 10 | The Trojan catalogue — Priam's world assembles | **Walton — *Crown Imperial*: March** | kingship |
 | 11 | Iris to the Trojans — the march begins | **Beethoven — Symphony No. 5: I. Allegro con brio** | fate |
@@ -118,16 +118,17 @@ rendered not as loss but as gravity. Elgar gives Nestor his exact register — n
 vanity, but the genuine weight of what an old man has actually seen and what that seeing costs
 to carry.
 
-**8. Verdi — *Requiem*: "Dies Irae"** — *sacrifice*
+**8. Stravinsky — *The Rite of Spring*: Part II, "Sacrificial Dance (The Chosen One)"** — *sacrifice*
 
 Agamemnon sacrifices a fat five-year-old ox to Zeus before the army advances. Zeus accepts the
 fat and burns the thighs — and rejects the prayer. The omen is already dark before the
 Catalogue even begins. This is sacrifice at full ritual weight: the priests, the fire, the
-formal compact with a god who is already arranging betrayal. Verdi's "Dies Irae" is the
-repertoire's most powerful statement of sacrifice as immolation-build — the processional gravity
-of a world-historical act, the full mass of human organization arrayed before a force that will
-not answer on human terms. Sacrifice requires ritual weight and processional build; Verdi at
-this scale is the only answer.
+formal compact with a god who is already arranging betrayal. Stravinsky's Sacrificial Dance —
+Part II of the Rite, a different movement from Book I's "Augurs of Spring" — brings the ritual
+violence and immolation-build the scene demands without the terminal register of a requiem's
+Dies Irae. The relentless percussive drive and harmonic convulsion capture the act of a
+sacrifice that fails — fire consuming what will not be answered. Sacrifice requires ritual weight
+and processional build; the Sacrificial Dance is its most violent instantiation in the canon.
 
 **9. Elgar — Symphony No. 1: I. Andante opening** — *memory*
 
@@ -177,4 +178,4 @@ the quarrel. It begins here, when the armies actually move — and only after it
 
 
 ---
-_Dominant arc: divine-intervention → wrath → law → comedy → law → memory → kingship → fate. From the Studium — a transmission curriculum (reading · script · translation · music)._
+_Dominant arc: divine-intervention → wrath → divine-intervention → law → comedy → law → memory → sacrifice → memory → kingship → fate. From the Studium — a transmission curriculum (reading · script · translation · music)._

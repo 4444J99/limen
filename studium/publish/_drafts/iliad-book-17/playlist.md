@@ -11,9 +11,9 @@ Copy-paste into Spotify/Apple Music, or use the search links.
 3. Beethoven — Symphony No. 5 — I. Allegro con brio
    YouTube: https://www.youtube.com/results?search_query=Beethoven+Symphony+No.+5+%E2%80%94+I.+Allegro+con+brio
    Spotify: https://open.spotify.com/search/Beethoven+Symphony+No.+5+%E2%80%94+I.+Allegro+con+brio
-4. Holst — The Planets — 'Mars, the Bringer of War'
-   YouTube: https://www.youtube.com/results?search_query=Holst+The+Planets+%E2%80%94+%27Mars%2C+the+Bringer+of+War%27
-   Spotify: https://open.spotify.com/search/Holst+The+Planets+%E2%80%94+%27Mars%2C+the+Bringer+of+War%27
+4. Prokofiev — Romeo and Juliet, Op. 64 — 'Montagues and Capulets'
+   YouTube: https://www.youtube.com/results?search_query=Prokofiev+Romeo+and+Juliet%2C+Op.+64+%E2%80%94+%27Montagues+and+Capulets%27
+   Spotify: https://open.spotify.com/search/Prokofiev+Romeo+and+Juliet%2C+Op.+64+%E2%80%94+%27Montagues+and+Capulets%27
 5. Gluck — Iphigénie en Tauride — 'O malheureuse Iphigénie'
    YouTube: https://www.youtube.com/results?search_query=Gluck+Iphig%C3%A9nie+en+Tauride+%E2%80%94+%27O+malheureuse+Iphig%C3%A9nie%27
    Spotify: https://open.spotify.com/search/Gluck+Iphig%C3%A9nie+en+Tauride+%E2%80%94+%27O+malheureuse+Iphig%C3%A9nie%27

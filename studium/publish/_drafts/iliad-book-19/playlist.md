@@ -20,9 +20,9 @@ Copy-paste into Spotify/Apple Music, or use the search links.
 6. Beethoven — Symphony No. 7 — II. Allegretto
    YouTube: https://www.youtube.com/results?search_query=Beethoven+Symphony+No.+7+%E2%80%94+II.+Allegretto
    Spotify: https://open.spotify.com/search/Beethoven+Symphony+No.+7+%E2%80%94+II.+Allegretto
-7. Berlioz — Symphonie fantastique — V. 'Dream of a Witches' Sabbath'
-   YouTube: https://www.youtube.com/results?search_query=Berlioz+Symphonie+fantastique+%E2%80%94+V.+%27Dream+of+a+Witches%27+Sabbath%27
-   Spotify: https://open.spotify.com/search/Berlioz+Symphonie+fantastique+%E2%80%94+V.+%27Dream+of+a+Witches%27+Sabbath%27
+7. Bartók — Music for Strings, Percussion and Celesta — III. Adagio
+   YouTube: https://www.youtube.com/results?search_query=Bart%C3%B3k+Music+for+Strings%2C+Percussion+and+Celesta+%E2%80%94+III.+Adagio
+   Spotify: https://open.spotify.com/search/Bart%C3%B3k+Music+for+Strings%2C+Percussion+and+Celesta+%E2%80%94+III.+Adagio
 8. Beethoven — Piano Sonata No. 23 'Appassionata' — III. Allegro ma non troppo
    YouTube: https://www.youtube.com/results?search_query=Beethoven+Piano+Sonata+No.+23+%27Appassionata%27+%E2%80%94+III.+Allegro+ma+non+troppo
    Spotify: https://open.spotify.com/search/Beethoven+Piano+Sonata+No.+23+%27Appassionata%27+%E2%80%94+III.+Allegro+ma+non+troppo

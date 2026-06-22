@@ -5,9 +5,9 @@ Copy-paste into Spotify/Apple Music, or use the search links.
 1. Prokofiev — Symphony No. 5 — I. Andante (opening)
    YouTube: https://www.youtube.com/results?search_query=Prokofiev+Symphony+No.+5+%E2%80%94+I.+Andante+%28opening%29
    Spotify: https://open.spotify.com/search/Prokofiev+Symphony+No.+5+%E2%80%94+I.+Andante+%28opening%29
-2. Holst — The Planets — 'Mars, the Bringer of War'
-   YouTube: https://www.youtube.com/results?search_query=Holst+The+Planets+%E2%80%94+%27Mars%2C+the+Bringer+of+War%27
-   Spotify: https://open.spotify.com/search/Holst+The+Planets+%E2%80%94+%27Mars%2C+the+Bringer+of+War%27
+2. Shostakovich — Symphony No. 7 'Leningrad' — I. Allegretto (invasion episode)
+   YouTube: https://www.youtube.com/results?search_query=Shostakovich+Symphony+No.+7+%27Leningrad%27+%E2%80%94+I.+Allegretto+%28invasion+episode%29
+   Spotify: https://open.spotify.com/search/Shostakovich+Symphony+No.+7+%27Leningrad%27+%E2%80%94+I.+Allegretto+%28invasion+episode%29
 3. Elgar — Enigma Variations — 'Nimrod' (Variation IX)
    YouTube: https://www.youtube.com/results?search_query=Elgar+Enigma+Variations+%E2%80%94+%27Nimrod%27+%28Variation+IX%29
    Spotify: https://open.spotify.com/search/Elgar+Enigma+Variations+%E2%80%94+%27Nimrod%27+%28Variation+IX%29
@@ -20,9 +20,9 @@ Copy-paste into Spotify/Apple Music, or use the search links.
 6. Sibelius — Violin Concerto in D minor — I. Allegro moderato
    YouTube: https://www.youtube.com/results?search_query=Sibelius+Violin+Concerto+in+D+minor+%E2%80%94+I.+Allegro+moderato
    Spotify: https://open.spotify.com/search/Sibelius+Violin+Concerto+in+D+minor+%E2%80%94+I.+Allegro+moderato
-7. Fauré — Requiem — 'Agnus Dei'
-   YouTube: https://www.youtube.com/results?search_query=Faur%C3%A9+Requiem+%E2%80%94+%27Agnus+Dei%27
-   Spotify: https://open.spotify.com/search/Faur%C3%A9+Requiem+%E2%80%94+%27Agnus+Dei%27
+7. Barber — Adagio for Strings, Op. 11
+   YouTube: https://www.youtube.com/results?search_query=Barber+Adagio+for+Strings%2C+Op.+11
+   Spotify: https://open.spotify.com/search/Barber+Adagio+for+Strings%2C+Op.+11
 8. Pärt — Spiegel im Spiegel
    YouTube: https://www.youtube.com/results?search_query=P%C3%A4rt+Spiegel+im+Spiegel
    Spotify: https://open.spotify.com/search/P%C3%A4rt+Spiegel+im+Spiegel

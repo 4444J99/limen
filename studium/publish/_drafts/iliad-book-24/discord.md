@@ -1,5 +1,5 @@
 **🎵 Iliad Book XXIV: Ransom, Weeping, Burial**
-_dominant arc: divine-intervention → divine-intervention → supplication → supplication → grief → grief → grief_
+_dominant arc: divine-intervention → divine-intervention → grief → supplication → supplication → grief → grief → salvation → supplication → grief → grief → grief → grief_
 
 ` 1` **Strauss** — Also sprach Zarathustra — 'Von den Hinterweltlern' (Of the Afterworldly)  ·  *The gods debate — Zeus restrains Achilles and sends Thetis*  ·  [▶](https://www.youtube.com/results?search_query=Strauss+Also+sprach+Zarathustra+%E2%80%94+%27Von+den+Hinterweltlern%27+%28Of+the+Afterworldly%29) [♫](https://open.spotify.com/search/Strauss+Also+sprach+Zarathustra+%E2%80%94+%27Von+den+Hinterweltlern%27+%28Of+the+Afterworldly%29)
 ` 2` **Handel** — Solomon — 'The Arrival of the Queen of Sheba'  ·  *Iris to Priam — the god's message and the old king's resolution*  ·  [▶](https://www.youtube.com/results?search_query=Handel+Solomon+%E2%80%94+%27The+Arrival+of+the+Queen+of+Sheba%27) [♫](https://open.spotify.com/search/Handel+Solomon+%E2%80%94+%27The+Arrival+of+the+Queen+of+Sheba%27)

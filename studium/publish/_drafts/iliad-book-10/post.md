@@ -18,7 +18,7 @@ Book X is the moment where the Iliad stops being heroic in any comfortable sense
 | 6 | Dolon departs in a wolf-skin — hubris and the wrong bet | **Verdi — Macbeth: "Patria oppressa" (Act IV)** | fate |
 | 7 | The capture of Dolon — interrogation in the dark | **Shostakovich — String Quartet No. 8 in C minor, Op. 110: II. Allegro molto** | wrath |
 | 8 | Diomedes kills Dolon | **Schubert — String Quartet No. 14 in D minor, D. 810 "Death and the Maiden": II. Andante con moto** | grief |
-| 9 | The slaughter of the sleeping Thracians — Rhesus killed in his bed | **Fauré — Requiem, Op. 48: "In Paradisum"** | grief |
+| 9 | The slaughter of the sleeping Thracians — Rhesus killed in his bed | **Arvo Pärt — Spiegel im Spiegel** | salvation |
 | 10 | Odysseus steals the white horses — escape across the plain | **Debussy — Préludes, Book I: "La cathédrale engloutie"** | metamorphosis |
 
 ---
@@ -57,9 +57,9 @@ Odysseus and Diomedes run Dolon down. He begs. They tell him to speak, and he sp
 
 Dolon begs for his life. He mentions his father, his ransom value. Diomedes kills him before he finishes speaking. The Iliad moves on immediately — Homer does not dwell. But this is the most ethically complicated kill in the epic so far: not a warrior in battle but a prisoner who had cooperated, executed in the dark after giving everything he had to give. Schubert's slow movement — built on his song of Death speaking gently to a girl who fears him — is private, wounded, inward grief. Slow tempo, inward line: the grief force as specified. Not the public funeral register (that belongs to Patroclus and Hector) but the specific grief of uncanny violence, a life that ended the wrong way, in the wrong place, for reasons that served others.
 
-**9. Fauré — Requiem, Op. 48: "In Paradisum"**
+**9. Arvo Pärt — Spiegel im Spiegel**
 
-Diomedes moves through the sleeping Thracian camp. He kills twelve men. He kills Rhesus. Homer's simile: like a lion coming among helpless flocks. The men never wake. They die inside their own sleep, in their own camp, at the edge of a war in which they had barely arrived. Rhesus had come from Thrace the day before. None of them get the heroic death — the witnessed death, the dying speech, the moment of recognition — that the Iliad otherwise offers its soldiers. This is the eeriest sequence in the poem. Fauré's In Paradisum does not mourn; it accompanies. It is not mournful but suspended, luminous, almost weightless — the sound of souls departing without drama, without anyone watching. Using it here is not ironic. It is the only adequate music for men who die without knowing they are dying. The grief requirement is slow tempo and inward line; Fauré provides that without the funeral-march register that is reserved, firmly, for a later book.
+Diomedes moves through the sleeping Thracian camp. He kills twelve men. He kills Rhesus. Homer's simile: like a lion coming among helpless flocks. The men never wake. They die inside their own sleep, in their own camp, at the edge of a war in which they had barely arrived. Rhesus had come from Thrace the day before. None of them get the heroic death — the witnessed death, the dying speech, the moment of recognition — that the Iliad otherwise offers its soldiers. This is the eeriest sequence in the poem. Pärt's Spiegel im Spiegel does not mourn; it accompanies. It is not mournful but suspended, luminous, almost weightless — the sound of souls departing without drama, without anyone watching. Using it here is not ironic. It is the only adequate music for men who die without knowing they are dying. The radiance salvation asks for is slow tempo and inward line; Pärt provides that without the funeral-march register that is reserved, firmly, for a later book.
 
 **10. Debussy — Préludes, Book I: "La cathédrale engloutie"**
 
@@ -72,11 +72,11 @@ Odysseus drives the white horses of Rhesus back across the plain toward the Gree
 ```
 fate (insomnia) → exile (the dark camp) → law (council) → wrath (the raid) →
 divine-intervention (the heron) → fate (Dolon's error) → wrath (interrogation) →
-grief (Dolon's death) → grief (the sleeping Thracians) → metamorphosis (the white horses)
+grief (Dolon's death) → salvation (the sleeping Thracians) → metamorphosis (the white horses)
 ```
 
 Book X moves from a king who cannot sleep to horses that are whiter than snow. In between: the grammar of heroic counsel gives way completely to something older and colder — intelligence extraction, the slaughter of sleepers, the theft of animals too beautiful for ordinary war. The dominant force is grief, but not the grief of named loss. It is the grief that attaches to violence done in the dark, to men who never had a chance to fight back, to an episode the Iliad never quite integrates into its own heroic code. The Doloneia knows something about war that the rest of the Iliad is too honest to claim it doesn't.
 
 
 ---
-_Dominant arc: fate → exile → divine-intervention → wrath → law → wrath → divine-intervention → grief → grief → metamorphosis. From the Studium — a transmission curriculum (reading · script · translation · music)._
+_Dominant arc: fate → exile → law → wrath → divine-intervention → fate → wrath → grief → salvation → metamorphosis. From the Studium — a transmission curriculum (reading · script · translation · music)._

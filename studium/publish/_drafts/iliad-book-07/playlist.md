@@ -11,9 +11,9 @@ Copy-paste into Spotify/Apple Music, or use the search links.
 3. Beethoven — Symphony No. 5 in C minor — I. Allegro con brio
    YouTube: https://www.youtube.com/results?search_query=Beethoven+Symphony+No.+5+in+C+minor+%E2%80%94+I.+Allegro+con+brio
    Spotify: https://open.spotify.com/search/Beethoven+Symphony+No.+5+in+C+minor+%E2%80%94+I.+Allegro+con+brio
-4. Holst — The Planets — 'Mars, the Bringer of War'
-   YouTube: https://www.youtube.com/results?search_query=Holst+The+Planets+%E2%80%94+%27Mars%2C+the+Bringer+of+War%27
-   Spotify: https://open.spotify.com/search/Holst+The+Planets+%E2%80%94+%27Mars%2C+the+Bringer+of+War%27
+4. Shostakovich — Symphony No. 10 in E minor — II. Allegro
+   YouTube: https://www.youtube.com/results?search_query=Shostakovich+Symphony+No.+10+in+E+minor+%E2%80%94+II.+Allegro
+   Spotify: https://open.spotify.com/search/Shostakovich+Symphony+No.+10+in+E+minor+%E2%80%94+II.+Allegro
 5. Prokofiev — Romeo and Juliet — 'Montagues and Capulets' (Dance of the Knights)
    YouTube: https://www.youtube.com/results?search_query=Prokofiev+Romeo+and+Juliet+%E2%80%94+%27Montagues+and+Capulets%27+%28Dance+of+the+Knights%29
    Spotify: https://open.spotify.com/search/Prokofiev+Romeo+and+Juliet+%E2%80%94+%27Montagues+and+Capulets%27+%28Dance+of+the+Knights%29
@@ -26,9 +26,9 @@ Copy-paste into Spotify/Apple Music, or use the search links.
 8. Haydn — Symphony No. 94 in G major 'Surprise' — II. Andante
    YouTube: https://www.youtube.com/results?search_query=Haydn+Symphony+No.+94+in+G+major+%27Surprise%27+%E2%80%94+II.+Andante
    Spotify: https://open.spotify.com/search/Haydn+Symphony+No.+94+in+G+major+%27Surprise%27+%E2%80%94+II.+Andante
-9. Fauré — Requiem, Op. 48 — 'In Paradisum'
-   YouTube: https://www.youtube.com/results?search_query=Faur%C3%A9+Requiem%2C+Op.+48+%E2%80%94+%27In+Paradisum%27
-   Spotify: https://open.spotify.com/search/Faur%C3%A9+Requiem%2C+Op.+48+%E2%80%94+%27In+Paradisum%27
+9. Barber — Adagio for Strings
+   YouTube: https://www.youtube.com/results?search_query=Barber+Adagio+for+Strings
+   Spotify: https://open.spotify.com/search/Barber+Adagio+for+Strings
 10. Stravinsky — Symphony in Three Movements — I. Quarter-note = 160
    YouTube: https://www.youtube.com/results?search_query=Stravinsky+Symphony+in+Three+Movements+%E2%80%94+I.+Quarter-note+%3D+160
    Spotify: https://open.spotify.com/search/Stravinsky+Symphony+in+Three+Movements+%E2%80%94+I.+Quarter-note+%3D+160

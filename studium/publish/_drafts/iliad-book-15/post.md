@@ -4,7 +4,7 @@
 
 **Playlist length:** ~88 minutes
 **Dominant force:** fate
-**Force arc:** wrath → fate → law → divine-intervention → law → divine-intervention → wrath → fate → grief → fate
+**Force arc:** wrath → fate → law → divine-intervention → law → divine-intervention → fate → fate → wrath → fate
 
 ---
 
@@ -59,7 +59,7 @@ Apollo does not heal Hector gradually. He breathes life into him the way a god b
 
 **7. Holst — *The Planets*: "Jupiter, the Bringer of Jollity" (central march)**
 
-The Trojan advance in Book XV is not Hector's personal fury — it is more than that. An entire army flowing forward because the divine has permitted and directed it. The central march passage of Jupiter has the quality of something irresistible without being savage: it is confident, immense, forward, the pressure of a tide returning to where it was. This is wrath not as private rage but as the rhythm of a world returning to its appointed direction. The Trojans are not angry. They are the current.
+The Trojan advance in Book XV is not Hector's personal fury — it is more than that. An entire army flowing forward because the divine has permitted and directed it. The central march passage of Jupiter has the quality of something irresistible without being savage: it is confident, immense, forward, the pressure of a tide returning to where it was. This is fate experienced from inside the current: not a blow from outside but the resumption of direction. The Trojans are not angry. They are the current.
 
 **8. Tchaikovsky — Symphony No. 4, I: Andante sostenuto (fate motif)**
 
@@ -79,12 +79,13 @@ When fire touches the first Achaean ship, the poem crosses its structural hinge.
 
 ```
 wrath (Zeus wakes) → fate (the deviation named) → law (the decree) →
-divine-intervention (Hector revived) → wrath (the flood) → fate (the wall breaks) →
-grief-as-wrath (Ajax) → fate (the fire)
+divine-intervention (Iris; Poseidon yields) → law (reluctant submission) →
+divine-intervention (Apollo reconstitutes Hector) → fate (the flood reversal) →
+fate (the wall breaks) → wrath (Ajax's desperate stand) → fate (the fire)
 ```
 
 Book XV is the poem teaching you what fate actually sounds like: not a single blow, but a current returning. The music moves from catastrophic reassertion through formal decree through divine reconstitution into something finally and irreversibly physical — fire on wood. Everything before the fire was still reversible, at least in imagination. After the fire, the poem knows exactly what it will cost. So do we.
 
 
 ---
-_Dominant arc: wrath → divine-intervention → law → divine-intervention → fate → wrath → fate → grief → wrath → fate. From the Studium — a transmission curriculum (reading · script · translation · music)._
+_Dominant arc: wrath → fate → law → divine-intervention → law → divine-intervention → fate → fate → wrath → fate. From the Studium — a transmission curriculum (reading · script · translation · music)._

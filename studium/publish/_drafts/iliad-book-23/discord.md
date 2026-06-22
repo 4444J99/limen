@@ -1,5 +1,5 @@
 **🎵 Iliad Book XXIII: The Ghost, the Pyre, the Games**
-_dominant arc: grief → grief → sacrifice → law → law → return → return → wrath → comedy → comedy → comedy → return → grief_
+_dominant arc: grief → grief → sacrifice → sacrifice → law → law → return → divine-intervention → comedy → comedy → comedy → memory → grief_
 
 ` 1` **Schubert** — String Quartet No. 14 in D minor, D. 810 ('Death and the Maiden') — II. Andante con moto  ·  *Patroclus' ghost appears to Achilles at night*  ·  [▶](https://www.youtube.com/results?search_query=Schubert+String+Quartet+No.+14+in+D+minor%2C+D.+810+%28%27Death+and+the+Maiden%27%29+%E2%80%94+II.+Andante+con+moto) [♫](https://open.spotify.com/search/Schubert+String+Quartet+No.+14+in+D+minor%2C+D.+810+%28%27Death+and+the+Maiden%27%29+%E2%80%94+II.+Andante+con+moto)
 ` 2` **Fauré** — Requiem, Op. 48 — 'In Paradisum'  ·  *Achilles weeps; the ghost begs burial and fades*  ·  [▶](https://www.youtube.com/results?search_query=Faur%C3%A9+Requiem%2C+Op.+48+%E2%80%94+%27In+Paradisum%27) [♫](https://open.spotify.com/search/Faur%C3%A9+Requiem%2C+Op.+48+%E2%80%94+%27In+Paradisum%27)

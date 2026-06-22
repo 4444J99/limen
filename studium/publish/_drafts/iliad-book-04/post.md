@@ -18,7 +18,7 @@ Book IV's arc is not wrath (that is Book I, and Book IX, and Book XVIII). It is 
 |--:|------------------|-------|-------|
 | 1 | The Olympian feast — gods deliberate over the truce | **Rameau — *Hippolyte et Aricie*: Prologue, "Que ce rivage retentisse"** | comedy |
 | 2 | Hera's fury — she demands Troy's destruction at any cost | **Rossini — *La gazza ladra*: Overture** | comedy |
-| 3 | Athena descends — divine saboteur sent to break the truce | **R. Strauss — *Also sprach Zarathustra*: "Von den Hinterweltlern"** | divine-intervention |
+| 3 | Athena descends — divine saboteur sent to break the truce | **R. Strauss — *Also sprach Zarathustra*: "Einleitung (Sunrise)"** | divine-intervention |
 | 4 | Athena induces Pandarus to shoot — the oath is broken | **Verdi — *La forza del destino*: Overture** | fate |
 | 5 | The arrow strikes Menelaus — wound, blood, the truce dead | **Shostakovich — Symphony No. 10: II. Allegro** | fate |
 | 6 | Agamemnon grieves over the wound — fraternal fear, fatal pulse | **Schubert — String Quartet No. 14 "Death and the Maiden": II. Andante con moto** | fate |
@@ -35,7 +35,7 @@ Book IV's arc is not wrath (that is Book I, and Book IX, and Book XVIII). It is 
 
 **2. Rossini — *La gazza ladra*: Overture** — Hera's speech to Zeus is one of the Iliad's most disturbing passages: she offers to sacrifice her three favorite cities — Argos, Sparta, Mycenae — if Zeus will let Troy burn. The moral scale is monstrous; the dramatic register is operatic farce. A goddess haggling over civilizations with the casual viciousness of a merchant at market. Rossini's overture holds both valences: propulsive comic energy with a current of violence underneath it. The snare drum in the opening is the gavel coming down on a transaction. Hera gets what she wants.
 
-**3. R. Strauss — *Also sprach Zarathustra*: "Von den Hinterweltlern"** — Athena's descent is not rescue; it is the assassination of peace. She enters the human world as a comet enters an atmosphere: sudden, purposive, irreversible. Strauss gives divine-intervention as vertical rupture — the slow brass rise into sudden orchestral color-shift of "Von den Hinterweltlern" captures the moment a god crosses the plane into human reality with a designed purpose mortals cannot refuse. What is crucial here is that Athena does not appear to Pandarus as a terror. She appears as a whisper, a reasonable voice suggesting he take the shot. The supernatural is most dangerous when it sounds like common sense.
+**3. R. Strauss — *Also sprach Zarathustra*: "Einleitung (Sunrise)"** — Athena's descent is not rescue; it is the assassination of peace. She enters the human world as a comet enters an atmosphere: sudden, purposive, irreversible. Strauss gives divine-intervention as vertical rupture — the slow brass rise out of held silence into sudden full-orchestra color-shift of the Einleitung captures the moment a god crosses the plane into human reality with a designed purpose mortals cannot refuse. What is crucial here is that Athena does not appear to Pandarus as a terror. She appears as a whisper, a reasonable voice suggesting he take the shot. The supernatural is most dangerous when it sounds like common sense.
 
 **4. Verdi — *La forza del destino*: Overture** — The Force of Destiny overture is the correct piece for this moment and no other in the Iliad. It names what Book IV does. Pandarus draws his bow, the bowstring sings, the arrow flies. The truce — the possibility of peace, of Menelaus walking away with Helen, of ten years of accumulated dead amounting to something, of the war ending without more deaths — is annihilated by one mechanical act. Verdi's driving opening theme is inexorability: not dramatic accident but structural doom. The hammered motif of a mechanism that was always going to close this way. Pandarus is not an agent in this moment; he is an instrument. The force of destiny does not require villains.
 
@@ -56,10 +56,10 @@ Book IV's arc is not wrath (that is Book I, and Book IX, and Book XVIII). It is 
 ## The dominant arc of Book IV
 
 ```
-comedy → divine-intervention → fate → fate → fate → kingship → kingship → wrath → wrath
+comedy → comedy → divine-intervention → fate → fate → fate → kingship → kingship → wrath → wrath
 ```
 
-That is why the playlist moves Rameau/Rossini → Strauss → Verdi → Shostakovich → Schubert → Elgar → Walton → Beethoven → Bartók.
+That is why the playlist moves Rameau → Rossini → Strauss → Verdi → Shostakovich → Schubert → Elgar → Walton → Beethoven → Bartók.
 
 Book IV is not a war book. It is the book where peace is murdered and the murderers go back to feasting. Everything else — the review, the first battle, the first dead — is the world arranging itself around an absence: the truce that was, and is not.
 

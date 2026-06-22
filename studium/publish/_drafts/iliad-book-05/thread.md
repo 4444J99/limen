@@ -1,11 +1,11 @@
 🧵 Iliad Book V: The Wounding of Gods
 
-Scoring this not as "war" but as its real emotional arc — divine-intervention → wrath → wrath → divine-intervention → wrath. One piece per beat. 👇
+Scoring this not as "war" but as its real emotional arc — divine-intervention → wrath → wrath → divine-intervention → revelation. One piece per beat. 👇
 
 — — —
 
 1/ Athena fills Diomedes with valor — divine empowerment, eyes unclouded
-🎵 Strauss — Also sprach Zarathustra — 'Von den Hinterweltlern' (opening sunrise)
+🎵 Strauss — Also sprach Zarathustra — Einleitung (sunrise)
 The book opens not with battle but with transformation: Athena pours menos into Diomedes, lifts the mist from his eyes so he can see gods on the field. This is not a general preparing; it is a human r
 
 — — —
@@ -17,8 +17,8 @@ Homer gives Diomedes in full aristeia a simile of fire: he moves across the plai
 — — —
 
 3/ Diomedes kills Pandarus — aristeia at full violence
-🎵 Stravinsky — The Rite of Spring — 'The Sage' / 'The Augurs of Spring'
-The killing of Pandarus — the Trojan archer who broke the truce in Book IV — is not merely a battle death; it is the aristeia at its pure annihilating mechanism. Stravinsky's Augurs are rhythmic ritua
+🎵 Nielsen — Symphony No. 4 'The Inextinguishable' — IV. Finale
+The aristeia in Book V is not individual duels — it is a harvesting. Diomedes moves through the Trojan field as mechanism, not man. Homer gives us name after name: Astynous, Hypeiron, Abas, Polyidus, 
 
 — — —
 

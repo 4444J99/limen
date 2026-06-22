@@ -31,12 +31,12 @@ stop it.
 | # | Scene / Function | Track | Force |
 |--:|---|---|---|
 | 1 | Dawn arms Agamemnon — the aristeia ignites | **Prokofiev — Symphony No. 5: I. Andante (opening)** | wrath |
-| 2 | Agamemnon in his killing rage — the aristeia itself | **Holst — *The Planets*: "Mars, the Bringer of War"** | wrath |
+| 2 | Agamemnon in his killing rage — the aristeia itself | **Shostakovich — Symphony No. 7 "Leningrad": I. Allegretto (invasion episode)** | wrath |
 | 3 | Agamemnon is wounded — the king falls back | **Elgar — *Enigma Variations*: "Nimrod" (Variation IX)** | grief |
 | 4 | The tide turns — Trojans advance across the plain | **Beethoven — Symphony No. 5: I. Allegro con brio** | fate |
 | 5 | Diomedes is shot — the second hero falls | **Schubert — String Quartet No. 14 "Death and the Maiden": II. Andante con moto** | grief |
 | 6 | Odysseus alone, surrounded — the pivot of his isolation | **Sibelius — Violin Concerto in D minor: I. Allegro moderato** | fate |
-| 7 | Machaon is shot — the healer felled | **Fauré — *Requiem*: "Agnus Dei"** | grief |
+| 7 | Machaon is shot — the healer felled | **Barber — *Adagio for Strings*, Op. 11** | grief |
 | 8 | Achilles watches from the stern — the moment of watching | **Pärt — *Spiegel im Spiegel*** | supplication |
 | 9 | Achilles sends Patroclus — the fatal errand | **Tchaikovsky — Symphony No. 6 "Pathétique": I. Allegro non troppo (opening Adagio)** | fate |
 | 10 | Nestor detains Patroclus — the counsel that will doom him | **Bach — *St. Matthew Passion*: "Erbarme dich, mein Gott" (BWV 244)** | supplication |
@@ -54,14 +54,15 @@ unloosed but power at full structural integrity, grave and monumental simultaneo
 says *I know what I am doing*. Agamemnon at peak authority before the fall begins requires this
 register — wrath with form, rhythmic pressure that has organized itself into something terrible.
 
-**2. Holst — *The Planets*: "Mars, the Bringer of War"** — *wrath*
+**2. Shostakovich — Symphony No. 7 "Leningrad": I. Allegretto (invasion episode)** — *wrath*
 
-The aristeia itself: Agamemnon killing named men, one after another, in close detail. Book I
-used "Mars" for the verbal quarrel between Achilles and Agamemnon — the force in potential. Book
-XI earns it for actual slaughter. The 5/4 pulse is the right register for mechanically applied
-violence: asymmetrical, relentless, never settling into a groove where you can breathe. The two
-books rhyme structurally — the quarrel becomes the killing. Here the wrath has finally become
-external.
+The aristeia itself: Agamemnon killing named men, one after another, in close detail. Shostakovich's
+invasion episode is the right register — a simple theme that repeats and repeats, stated twelve times
+with mechanical insistence, each iteration heavier than the last. This is killing as procedure, not
+as passion. The theme does not vary; it accumulates. That is precisely the grammar of an aristeia:
+the hero becomes a machine of war. Book I uses Holst's "Mars" for the verbal quarrel — asymmetrical,
+hostile, explosive. Book XI's slaughter earns something colder and more relentless: the Shostakovich
+invasion, where the violence is bureaucratic, inexorable, and does not breathe.
 
 **3. Elgar — *Enigma Variations*: "Nimrod" (Variation IX)** — *grief*
 
@@ -102,15 +103,16 @@ the sense of inevitability that the concerto form itself imposes — all of this
 circumference of spears. He survives. But the fate force operates here because he should not
 have had to fight alone.
 
-**7. Fauré — *Requiem*: "Agnus Dei"** — *grief*
+**7. Barber — *Adagio for Strings*, Op. 11** — *grief*
 
 Machaon the physician — son of Asclepius, the healer's healer — takes Paris' arrow through the
 shoulder. This is the most structurally cruel wound in the book: the one man who could treat
-the others cannot now treat himself or them. Fauré's "Agnus Dei" is grief held in care, not
-grief collapsed into despair. It is not the In Paradisum (that is salvation, transcendence) and
-not the Lacrimosa (public lamentation). It hovers — suspended between loss and the wish for
-release, between "take this away" and "accept this." That is exactly the register of the wound
-that will now go untreated, because the one who treats is felled.
+the others cannot now treat himself or them. Any Requiem movement carries a liturgy-of-the-dead
+register that would misread Book XI — the wounded here are still breathing, the grief is private
+and ambulatory, not ceremonial. Barber's Adagio is private grief without public ceremony: a slow
+inward climb that does not arrive at peace or release but shatters and falls silent. That is
+the correct finish for the scene where the healers run out — grief not resolved, not entombed,
+simply unable to continue.
 
 **8. Pärt — *Spiegel im Spiegel*** — *supplication*
 

@@ -1,5 +1,5 @@
 **🎵 Iliad Book XXI: River, Fire, the Gods at War**
-_dominant arc: wrath → wrath → divine-intervention → fate → supplication → divine-intervention → wrath → divine-intervention → comedy_
+_dominant arc: wrath → supplication → divine-intervention → fate → supplication → divine-intervention → wrath → revelation → comedy_
 
 ` 1` **Shostakovich** — Symphony No. 8 — II. Allegretto  ·  *Achilles drives Trojans into the Scamander — mass slaughter, the river choked with corpses*  ·  [▶](https://www.youtube.com/results?search_query=Shostakovich+Symphony+No.+8+%E2%80%94+II.+Allegretto) [♫](https://open.spotify.com/search/Shostakovich+Symphony+No.+8+%E2%80%94+II.+Allegretto)
 ` 2` **Bach** — St. Matthew Passion — 'Erbarme dich, mein Gott'  ·  *Lycaon's supplication — Achilles refuses mercy, kills Priam's son at the water's edge*  ·  [▶](https://www.youtube.com/results?search_query=Bach+St.+Matthew+Passion+%E2%80%94+%27Erbarme+dich%2C+mein+Gott%27) [♫](https://open.spotify.com/search/Bach+St.+Matthew+Passion+%E2%80%94+%27Erbarme+dich%2C+mein+Gott%27)

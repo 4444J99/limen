@@ -11,8 +11,8 @@ Agamemnon's aristeia opens with Dawn's golden armor-ceremony — formal, martial
 — — —
 
 2/ Agamemnon in his killing rage — the aristeia itself
-🎵 Holst — The Planets — 'Mars, the Bringer of War'
-The aristeia is explicit, metronomic killing. Agamemnon cuts through Trojans — named deaths, close detail, blood economy. Holst's 5/4 hostility is the right register: asymmetrical, never settling, mec
+🎵 Shostakovich — Symphony No. 7 'Leningrad' — I. Allegretto (invasion episode)
+The aristeia is explicit, metronomic killing. Agamemnon cuts through Trojans — named deaths, one after another, relentless accumulation. Shostakovich's invasion episode is the correct register: a simp
 
 — — —
 
@@ -41,8 +41,8 @@ Odysseus is cut off when his companions break and run. He stands alone, takes a 
 — — —
 
 7/ Machaon is shot — the healer felled
-🎵 Fauré — Requiem — 'Agnus Dei'
-Machaon the physician, son of Asclepius, takes Paris' arrow. This is the cruelest structural irony of the book: the healer is wounded. Fauré's Agnus Dei is not terminal grief — it is grief suspended i
+🎵 Barber — Adagio for Strings, Op. 11
+Machaon the physician, son of Asclepius, takes Paris' arrow. This is the cruelest structural irony of the book: the healer is wounded. Barber's Adagio is private grief without public ceremony — not a 
 
 — — —
 

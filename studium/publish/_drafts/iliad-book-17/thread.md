@@ -1,6 +1,6 @@
 🧵 Iliad Book XVII: The Fight over Patroclus' Body
 
-Scoring this not as "war" but as its real emotional arc — grief → wrath → wrath → sacrifice → grief. One piece per beat. 👇
+Scoring this not as "war" but as its real emotional arc — grief → wrath → fate → wrath → sacrifice. One piece per beat. 👇
 
 — — —
 
@@ -23,8 +23,8 @@ When Hector puts on Achilles' immortal armor, Zeus above watches and grieves inw
 — — —
 
 4/ Menelaus calls Ajax — the defense assembles
-🎵 Holst — The Planets — 'Mars, the Bringer of War'
-Menelaus cannot hold alone; he calls the greater Ajax, and the Achaean defense organizes around the corpse. The 5/4 asymmetric pulse of "Mars" fits a battle formation under duress — men not charging f
+🎵 Prokofiev — Romeo and Juliet, Op. 64 — 'Montagues and Capulets'
+Menelaus cannot hold alone; he calls the greater Ajax, and the Achaean defense organizes around the corpse. Prokofiev's 'Montagues and Capulets' is a grinding, asymmetric martial block — men not charg
 
 — — —
 

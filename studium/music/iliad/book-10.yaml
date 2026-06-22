@@ -11,7 +11,7 @@ principle: >
   the slaughter of sleepers who never wake to fight. The dominant emotional axis is not heroic
   triumph but the wrongness of killing men in their sleep — the grief that attaches to
   uncanny violence rather than to named loss.
-force_arc: [fate, exile, divine-intervention, wrath, law, wrath, divine-intervention, grief, grief, metamorphosis]
+force_arc: [fate, exile, law, wrath, divine-intervention, fate, wrath, grief, salvation, metamorphosis]
 dominant_force: grief
 tracks:
   - n: 1
@@ -125,20 +125,20 @@ tracks:
       uncanny violence: something just ended that should not have ended this way.
   - n: 9
     scene: "The slaughter of the sleeping Thracians — Rhesus killed in his bed"
-    force: grief
-    composer: Fauré
-    work: "Requiem, Op. 48 — 'In Paradisum'"
+    force: salvation
+    composer: Arvo Pärt
+    work: "Spiegel im Spiegel"
     decision: added
     why: >
       Diomedes moves through the sleeping Thracians and kills twelve of them, then kills Rhesus
       in his bed. Homer describes it as dreamlike: as if a lion coming among helpless flocks.
       The men never wake. They die in their sleep, in their own camp, without a chance at the
       heroic death the Iliad otherwise offers. The register is not triumph — it is the eeriest
-      section of the epic, violence without witness. Fauré's In Paradisum is not mournful but
-      suspended, luminous, utterly calm — the sound of souls departing without drama. Using it
-      here is not ironic; it is the only adequate music for twelve men who die without knowing
-      it. The slow tempo and inward line match grief's requirement. This is the furthest the
-      Doloneia goes from heroic convention.
+      section of the epic, violence without witness. Pärt's Spiegel im Spiegel is not mournful
+      but suspended, luminous, utterly calm — the sound of souls departing without drama. Using
+      it here is not ironic; it is the only adequate music for twelve men who die without
+      knowing it. The slow, inward tintinnabuli line matches the radiance salvation asks for.
+      This is the furthest the Doloneia goes from heroic convention.
   - n: 10
     scene: "Odysseus steals the white horses — escape across the plain"
     force: metamorphosis

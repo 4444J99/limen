@@ -1,5 +1,5 @@
 **🎵 Iliad Book XX: The Gods Enter the War**
-_dominant arc: divine-intervention → wrath → fate → divine-intervention → wrath → wrath → divine-intervention → wrath → wrath_
+_dominant arc: divine-intervention → wrath → wrath → fate → divine-intervention → divine-intervention → sacrifice → wrath → grief → divine-intervention → metamorphosis_
 
 ` 1` **Strauss** — Also sprach Zarathustra — Introduction ('Sunrise')  ·  *Zeus releases the gods — the divine embargo lifted*  ·  [▶](https://www.youtube.com/results?search_query=Strauss+Also+sprach+Zarathustra+%E2%80%94+Introduction+%28%27Sunrise%27%29) [♫](https://open.spotify.com/search/Strauss+Also+sprach+Zarathustra+%E2%80%94+Introduction+%28%27Sunrise%27%29)
 ` 2` **Berlioz** — Symphonie fantastique — V. 'Songe d'une nuit du sabbat'  ·  *Gods take the field — theomachy assembles*  ·  [▶](https://www.youtube.com/results?search_query=Berlioz+Symphonie+fantastique+%E2%80%94+V.+%27Songe+d%27une+nuit+du+sabbat%27) [♫](https://open.spotify.com/search/Berlioz+Symphonie+fantastique+%E2%80%94+V.+%27Songe+d%27une+nuit+du+sabbat%27)

@@ -29,6 +29,6 @@ Copy-paste into Spotify/Apple Music, or use the search links.
 9. Mahler — Symphony No. 9 — IV. Adagio
    YouTube: https://www.youtube.com/results?search_query=Mahler+Symphony+No.+9+%E2%80%94+IV.+Adagio
    Spotify: https://open.spotify.com/search/Mahler+Symphony+No.+9+%E2%80%94+IV.+Adagio
-10. Fauré — Requiem — 'In Paradisum' (Op. 48)
-   YouTube: https://www.youtube.com/results?search_query=Faur%C3%A9+Requiem+%E2%80%94+%27In+Paradisum%27+%28Op.+48%29
-   Spotify: https://open.spotify.com/search/Faur%C3%A9+Requiem+%E2%80%94+%27In+Paradisum%27+%28Op.+48%29
+10. Brahms — Intermezzo in A major (Op. 118, No. 2)
+   YouTube: https://www.youtube.com/results?search_query=Brahms+Intermezzo+in+A+major+%28Op.+118%2C+No.+2%29
+   Spotify: https://open.spotify.com/search/Brahms+Intermezzo+in+A+major+%28Op.+118%2C+No.+2%29

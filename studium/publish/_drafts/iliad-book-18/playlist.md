@@ -8,9 +8,9 @@ Copy-paste into Spotify/Apple Music, or use the search links.
 2. Britten — Four Sea Interludes from Peter Grimes — I. 'Dawn'
    YouTube: https://www.youtube.com/results?search_query=Britten+Four+Sea+Interludes+from+Peter+Grimes+%E2%80%94+I.+%27Dawn%27
    Spotify: https://open.spotify.com/search/Britten+Four+Sea+Interludes+from+Peter+Grimes+%E2%80%94+I.+%27Dawn%27
-3. Purcell — Dido and Aeneas — 'When I am laid in earth' (Dido's Lament)
-   YouTube: https://www.youtube.com/results?search_query=Purcell+Dido+and+Aeneas+%E2%80%94+%27When+I+am+laid+in+earth%27+%28Dido%27s+Lament%29
-   Spotify: https://open.spotify.com/search/Purcell+Dido+and+Aeneas+%E2%80%94+%27When+I+am+laid+in+earth%27+%28Dido%27s+Lament%29
+3. Pärt — Spiegel im Spiegel
+   YouTube: https://www.youtube.com/results?search_query=P%C3%A4rt+Spiegel+im+Spiegel
+   Spotify: https://open.spotify.com/search/P%C3%A4rt+Spiegel+im+Spiegel
 4. Mahler — Symphony No. 9 — I. Andante comodo (opening pages)
    YouTube: https://www.youtube.com/results?search_query=Mahler+Symphony+No.+9+%E2%80%94+I.+Andante+comodo+%28opening+pages%29
    Spotify: https://open.spotify.com/search/Mahler+Symphony+No.+9+%E2%80%94+I.+Andante+comodo+%28opening+pages%29

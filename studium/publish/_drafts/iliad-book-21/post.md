@@ -21,7 +21,7 @@ The playlist scores that arc, not "the Trojan War."
 | 5 | Achilles prays to Zeus — supplication inside near-death | supplication | **Pärt — Spiegel im Spiegel** |
 | 6 | Hephaestus unleashes fire — flame beats back the Scamander, the river submits | divine-intervention | **Strauss — Also sprach Zarathustra, "Von der Wissenschaft" through "Das Tanzlied"** |
 | 7 | The gods clash on the plain — Ares vs. Athena, Aphrodite felled, Poseidon vs. Apollo | wrath | **Stravinsky — The Rite of Spring, "Danse sacrale"** |
-| 8 | Apollo refuses to fight Poseidon — restraint, luminous refusal; Artemis humiliated | divine-intervention | **Messiaen — Quartet for the End of Time, V. "Louange à l'Éternité de Jésus"** |
+| 8 | Apollo refuses to fight Poseidon — restraint, luminous refusal; Artemis humiliated | revelation | **Messiaen — Quartet for the End of Time, V. "Louange à l'Éternité de Jésus"** |
 | 9 | The gods disperse — absurdity, Artemis weeping, Hermes stepping aside | comedy | **Rossini — Il barbiere di Siviglia, Overture** |
 
 ---
@@ -58,7 +58,7 @@ The gods fight. Ares versus Athena. Athena knocks Ares down with a stone; Aphrod
 
 **8. Messiaen — Quartet for the End of Time, V. "Louange à l'Éternité de Jésus"** (divine-intervention)
 
-Apollo refuses to fight Poseidon. He steps back — not from weakness but from something like proportion, or irony: two supreme gods striking each other on a plain full of dying mortals would be undignified. The far-shooter and the earth-shaker recognize the absurdity of their potential combat and decline it. Homer gives Apollo a speech of almost philosophical restraint. Messiaen's Quintet movement is stillness and verticality — the revelation-register, chant-adjacent, time suspended in luminous refusal. It scores the moment where divine force expresses itself as non-action, the most powerful god stepping back into light. Against the chaos of every other divine encounter in this book, Apollo's refusal is the single act of proportion, and Messiaen holds it.
+Apollo refuses to fight Poseidon. He steps back — not from weakness but from something like proportion, or irony: two supreme gods striking each other on a plain full of dying mortals would be undignified. The far-shooter and the earth-shaker recognize the absurdity of their potential combat and decline it. Homer gives Apollo a speech of almost philosophical restraint. Messiaen's Quartet movement is stillness and verticality — the revelation-register, chant-adjacent, time suspended in luminous refusal. It scores the moment where divine force expresses itself as non-action, the most powerful god stepping back into light. Against the chaos of every other divine encounter in this book, Apollo's refusal is the single act of proportion, and Messiaen holds it.
 
 **9. Rossini — Il barbiere di Siviglia, Overture** (comedy)
 
@@ -69,11 +69,11 @@ Book XXI ends badly for the gods' dignity. Artemis weeps to Zeus about Hera boxi
 ## The Dominant Arc of Book XXI
 
 ```
-wrath (massacre) → supplication (refused) → divine-intervention (the river rises) → fate (Achilles drowns) → supplication (Achilles to Zeus) → divine-intervention (fire wins) → wrath (the gods' brawl) → divine-intervention (Apollo's refusal) → comedy (Olympian embarrassment)
+wrath (massacre) → supplication (refused) → divine-intervention (the river rises) → fate (Achilles drowns) → supplication (Achilles to Zeus) → divine-intervention (fire wins) → wrath (the gods' brawl) → revelation (Apollo's refusal) → comedy (Olympian embarrassment)
 ```
 
 Book XXI is the book where Achilles' wrath exceeds the human world and the world pushes back — river, fire, and the gods reduced to farce. The dominant force is wrath, but wrath so total it generates its own counter-forces. By the end, the gods have been stripped of gravity and Achilles is still moving.
 
 
 ---
-_Dominant arc: wrath → wrath → divine-intervention → fate → supplication → divine-intervention → wrath → divine-intervention → comedy. From the Studium — a transmission curriculum (reading · script · translation · music)._
+_Dominant arc: wrath → supplication → divine-intervention → fate → supplication → divine-intervention → wrath → revelation → comedy. From the Studium — a transmission curriculum (reading · script · translation · music)._

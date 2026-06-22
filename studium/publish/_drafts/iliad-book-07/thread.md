@@ -1,6 +1,6 @@
 🧵 Iliad Book VII: Challenge, Duel, Wall
 
-Scoring this not as "war" but as its real emotional arc — kingship → wrath → wrath → law → grief. One piece per beat. 👇
+Scoring this not as "war" but as its real emotional arc — kingship → exile → fate → wrath → wrath. One piece per beat. 👇
 
 — — —
 
@@ -23,8 +23,8 @@ The lot tumbles out of the helmet and it is Ajax. Fate rendered as a mechanical 
 — — —
 
 4/ Ajax arms — the approach
-🎵 Holst — The Planets — 'Mars, the Bringer of War'
-Ajax arming is theater and menace at once. Homer slows the narrative to describe the shield — huge, layered, like a tower. The 5/4 asymmetrical pulse of 'Mars' fits the approach of something that does
+🎵 Shostakovich — Symphony No. 10 in E minor — II. Allegro
+Ajax arming is theater and menace at once. Homer slows the narrative to describe the shield — huge, layered, like a tower. Shostakovich's second movement of his Tenth is the most ferocious scherzo in 
 
 — — —
 
@@ -53,8 +53,8 @@ After the duel, Agamemnon feasts the chiefs. Homer lingers on the food, the wine
 — — —
 
 9/ Burial truce — both sides collect their dead
-🎵 Fauré — Requiem, Op. 48 — 'In Paradisum'
-The burial truce is grief at its most compressed and public: two armies face each other silently, gathering bodies, building pyres. Homer does not dwell here — the war doesn't allow it. Fauré's 'In Pa
+🎵 Barber — Adagio for Strings
+The burial truce is grief at its most compressed and public: two armies face each other silently, gathering bodies, building pyres. Homer does not dwell here — the war doesn't allow it. Barber's Adagi
 
 — — —
 

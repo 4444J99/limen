@@ -1,6 +1,6 @@
 🧵 Iliad Book X: Night, Dolon, the Thracian Slaughter
 
-Scoring this not as "war" but as its real emotional arc — fate → exile → divine-intervention → wrath → law. One piece per beat. 👇
+Scoring this not as "war" but as its real emotional arc — fate → exile → law → wrath → divine-intervention. One piece per beat. 👇
 
 — — —
 
@@ -53,7 +53,7 @@ Dolon begs for his life. Diomedes kills him before he finishes speaking. Book X 
 — — —
 
 9/ The slaughter of the sleeping Thracians — Rhesus killed in his bed
-🎵 Fauré — Requiem, Op. 48 — 'In Paradisum'
+🎵 Arvo Pärt — Spiegel im Spiegel
 Diomedes moves through the sleeping Thracians and kills twelve of them, then kills Rhesus in his bed. Homer describes it as dreamlike: as if a lion coming among helpless flocks. The men never wake. Th
 
 — — —

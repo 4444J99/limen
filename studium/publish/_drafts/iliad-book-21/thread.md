@@ -1,6 +1,6 @@
 🧵 Iliad Book XXI: River, Fire, the Gods at War
 
-Scoring this not as "war" but as its real emotional arc — wrath → wrath → divine-intervention → fate → supplication. One piece per beat. 👇
+Scoring this not as "war" but as its real emotional arc — wrath → supplication → divine-intervention → fate → supplication. One piece per beat. 👇
 
 — — —
 

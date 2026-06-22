@@ -1,6 +1,6 @@
 🧵 Iliad Book XII: Storming the Wall
 
-Scoring this not as "war" but as its real emotional arc — wrath → wrath → fate → fate → kingship. One piece per beat. 👇
+Scoring this not as "war" but as its real emotional arc — wrath → fate → fate → supplication → wrath. One piece per beat. 👇
 
 — — —
 
@@ -12,7 +12,7 @@ The Trojans crossing the ditch and moving against the Achaean wall is not heroic
 
 2/ The Achaean wall itself — architecture of dread
 🎵 Beethoven — Symphony No. 5 — I. Allegro con brio
-The wall is the law of the poem's second movement: it is the one structure the Trojans have not yet broken. Book XII is organized around whether that law holds. Beethoven's first movement has the qual
+The wall is the poem's one standing boundary — the structure the Trojans have not yet broken, the threshold that fate has not yet authorized crossing. Book XII is organized around whether that boundar
 
 — — —
 
@@ -24,7 +24,7 @@ The omen is not background mythology. It is the cosmos making a statement direct
 
 4/ Polydamas reads the omen — counsel of caution
 🎵 Bach — St. Matthew Passion — 'Erbarme dich, mein Gott'
-Polydamas, the counselor, is the figure who reads correctly. His warning is not cowardice — it is the voice of interpretation, of deference to divine signal. 'Erbarme dich' is the aria of the one who 
+Polydamas, the counselor, is the figure who reads correctly. His speech is not argument — it is an act of supplication addressed to Hector on behalf of the divine signal: please, hear this. He is the 
 
 — — —
 

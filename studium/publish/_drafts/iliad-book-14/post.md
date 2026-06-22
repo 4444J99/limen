@@ -21,8 +21,8 @@ Book XIV is not a battle book. It is a seduction book with a battle at the end. 
 | 1 | Greek leaders survey the rout / the wound of the army | grief | **Elgar — Symphony No. 1, II. Allegro molto (scherzo)** |
 | 2 | Hera resolves to deceive Zeus — the plan takes shape | metamorphosis | **Ravel — *La Valse*** |
 | 3 | Hera adorns herself — the toilette of a goddess | desire | **Szymanowski — Symphony No. 3 'Song of the Night', I** |
-| 4 | Hera borrows Aphrodite's girdle — the erotic instrument | desire | **Wagner — *Tristan und Isolde*: 'Liebestod'** |
-| 5 | Hera approaches Sleep — the bribe of a Grace | divine-intervention | **Fauré — *Pelléas et Mélisande* Suite: 'Sicilienne'** |
+| 4 | Hera borrows Aphrodite's girdle — the erotic instrument | desire | **Debussy — *Prélude à l'après-midi d'un faune*** |
+| 5 | Hera approaches Sleep — the bribe of a Grace | supplication | **Fauré — *Pelléas et Mélisande* Suite: 'Sicilienne'** |
 | 6 | Hera and Zeus on Mount Ida — the seduction | desire | **Scriabin — *Le Poème de l'extase*, Op. 54** |
 | 7 | Sleep locks Zeus — Poseidon is free | comedy | **Mozart — *The Marriage of Figaro*: Overture** |
 | 8 | Poseidon surges — divine reversal unleashed | divine-intervention | **Beethoven — Symphony No. 7, I. Vivace** |
@@ -49,15 +49,15 @@ Hera's scheme is a small masterpiece of Homeric intelligence: toilette, girdle, 
 
 Homer lingers here. He catalogs it: the bath, the oil of ambrosial fragrance, the braided hair, the divine robe, the girdle, the earrings, the veil. This is not action — it is erotic preparation, each object charged with purpose. The dominant-force requirement for desire is "chromatic longing, deferred resolution." Szymanowski's Third Symphony is perhaps its purest orchestral embodiment: voice dissolving into orchestra, nocturnal, slowly ascending through chromatic space without landing. The toilette scene has this quality — suspended anticipation, the body as instrument being tuned.
 
-**4. Wagner — *Tristan und Isolde*: 'Liebestod' (Act III finale)**
+**4. Debussy — *Prélude à l'après-midi d'un faune***
 *Hera borrows Aphrodite's girdle — the erotic instrument*
 
-The *cestus* contains "love, desire, sweet talk, the whisper that steals away the minds even of the wise." Homer's description of what is inside the girdle is one of the poem's most dangerous moments. Hera is going to use this object on the god who rules the universe — and it will work. Wagner's Liebestod is the most ruthless harmonic statement of desire as dissolution of will in the repertoire. It earns its place here not as death music but as weapon music: the Liebestod is desire consuming all other purpose. Hera is handling exactly this as an instrument.
+The *cestus* contains "love, desire, sweet talk, the whisper that steals away the minds even of the wise." Homer's description of what is inside the girdle is one of the poem's most dangerous moments. Hera is going to use this object on the god who rules the universe — and it will work. Debussy's Faune is the most purely erotic piece in the orchestral canon without terminal weight: chromatic longing that neither resolves nor dies, desire suspended at the exact moment of reaching. The opening flute gesture is the girdle being lifted from the box — invitation, not consummation. Wagner's Liebestod belongs later in the cycle: its terminal gravity (Isolde dying over Tristan's body) is the wrong register here, where desire must remain a living weapon rather than a beautiful death.
 
 **5. Fauré — *Pelléas et Mélisande* Suite: 'Sicilienne'**
 *Hera approaches Sleep — the bribe of a Grace*
 
-Before reaching Zeus, Hera must negotiate with Hypnos. She finds him near Lemnos, promises him Pasithée — one of the younger Graces — as a bride. This divine transaction takes place in whisper, in shadow, in the space between sleep and waking. Fauré's Sicilienne is the exact register: delicate, slightly off-balance, carrying something illicit beneath its surface grace. The dominant-force requirement for divine-intervention is "sudden color shift, brass/strings contrast" — Fauré achieves this subtly, the strings carrying erotic lightness while the texture keeps shifting underneath.
+Before reaching Zeus, Hera must negotiate with Hypnos. She finds him near Lemnos, promises him Pasithée — one of the younger Graces — as a bride. This divine transaction takes place in whisper, in shadow, in the space between sleep and waking. The dominant-force is supplication: Hera is making an offer she cannot compel, asking Sleep to comply, the outcome uncertain. Fauré's Sicilienne is the exact register: the flute line suspended over gently rocking strings, the melody exposed and pleading in its very delicacy. The "suspended cadence, exposed melodic line" requirement for supplication is what the Sicilienne delivers — that slightly off-balance quality carries both the transaction's illicitness and the real fragility of the scheme at this hinge.
 
 **6. Scriabin — *Le Poème de l'extase*, Op. 54**
 *Hera and Zeus on Mount Ida — the seduction*
@@ -94,11 +94,11 @@ Hector is carried off the field. Not dead. Not yet. But felled, broken, unconsci
 ## The dominant arc of Book XIV
 
 ```
-grief (the wound of the army) → metamorphosis (Hera plots) → desire (the toilette, the girdle, the seduction) → comedy (Zeus sleeps) → divine-intervention (Poseidon unleashed) → return (the tide turns) → wrath (the stone) → grief (Hector carried off)
+grief (the wound of the army) → metamorphosis (Hera plots) → desire (the toilette) → desire (the girdle) → supplication (Sleep bribed) → desire (the seduction) → comedy (Zeus sleeps) → divine-intervention (Poseidon unleashed) → return (the tide turns) → wrath (the stone) → grief (Hector carried off)
 ```
 
 Book XIV is the *Dios apate* — the deception of Zeus — and its musical arc must carry that double register from the first note: beauty that is also cunning, desire that is also a weapon, comedy that is also the hinge of a war. The book ends on Mahler's suspended heartbeat because Homer does not let us have the triumph clean. Hector is still alive. The cloud is still golden. The tide has turned but nothing is finished.
 
 
 ---
-_Dominant arc: desire → metamorphosis → desire → divine-intervention → comedy → wrath → wrath → return. From the Studium — a transmission curriculum (reading · script · translation · music)._
+_Dominant arc: grief → metamorphosis → desire → desire → supplication → desire → comedy → divine-intervention → return → wrath → grief. From the Studium — a transmission curriculum (reading · script · translation · music)._

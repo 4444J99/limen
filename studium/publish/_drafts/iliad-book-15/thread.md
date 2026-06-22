@@ -1,6 +1,6 @@
 🧵 Iliad Book XV: The Flood Returns
 
-Scoring this not as "war" but as its real emotional arc — wrath → divine-intervention → law → divine-intervention → fate. One piece per beat. 👇
+Scoring this not as "war" but as its real emotional arc — wrath → fate → law → divine-intervention → law. One piece per beat. 👇
 
 — — —
 
@@ -29,13 +29,13 @@ The divine message system in Book XV is rapid: Iris to Poseidon, Iris back, Apol
 — — —
 
 5/ Poseidon yields — reluctant divine submission
-🎵 Brahms — Symphony No. 1 — IV. Adagio — Un poco Allegretto e grazioso
+🎵 Brahms — Symphony No. 1 — IV. Adagio (slow introduction)
 Poseidon's retreat is grudging and formal: equal rank, ancient grievance, but submission nonetheless. Brahms in this transition movement — the slow chorale yielding into the famous string melody — giv
 
 — — —
 
 6/ Apollo descends — Hector revived
-🎵 Strauss — Also sprach Zarathustra — 'Von den Hinterweltlern' (opening sunrise into first theme)
+🎵 Strauss — Also sprach Zarathustra — 'Einleitung' (sunrise opening)
 Apollo does not heal Hector gradually. He breathes life back into him the way a god breathes life — suddenly, completely, with surplus. The Strauss opening is not dawn as prettiness; it is the eruptio
 
 — — —

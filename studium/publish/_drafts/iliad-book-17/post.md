@@ -15,7 +15,7 @@ That is the emotional structure this playlist scores: grief(the contested body) 
 | 1 | Menelaus stands over Patroclus' body — first watch | grief | **Schubert — String Quintet in C, D. 956: II. Adagio** |
 | 2 | Hector arrives, strips divine armor from Patroclus | wrath | **Bartók — Music for Strings, Percussion and Celesta: III. Adagio** |
 | 3 | Hector dons the divine armor / Zeus watches | fate | **Beethoven — Symphony No. 5: I. Allegro con brio** |
-| 4 | Menelaus calls Ajax — the defense assembles | wrath | **Holst — The Planets: "Mars, the Bringer of War"** |
+| 4 | Menelaus calls Ajax — the defense assembles | wrath | **Prokofiev — Romeo and Juliet, Op. 64: "Montagues and Capulets"** |
 | 5 | Euphorbus challenges Menelaus / ritual death exchange | sacrifice | **Gluck — Iphigénie en Tauride: "O malheureuse Iphigénie"** |
 | 6 | Achilles' immortal horses weep at the chariot | grief | **Mahler — Symphony No. 9: I. Andante comodo** |
 | 7 | Zeus pities the weeping horses / divine tenderness | divine-intervention | **Messiaen — Quatuor pour la fin du Temps: V. "Louange à l'Éternité de Jésus"** |
@@ -40,9 +40,9 @@ Hector stripping Achilles' divine armor from Patroclus' body is an act of violen
 
 When Hector puts on the divine armor, Zeus looks down and grieves. The god knows this man has claimed what will not save him — that doom is now inscribed in the wearing. The Fifth Symphony's famous motif is about fate not as shock but as recurrence: it comes back, comes back, comes back. This is not the terror of something unknown arriving; it is the weight of something confirmed. Zeus' sorrow over Hector is not surprise. It is recognition. The hammered insistence of the Beethoven opening is exactly that: fate recognizing itself in a mortal's confident mistake.
 
-**4. Holst — The Planets: "Mars, the Bringer of War"** (wrath)
+**4. Prokofiev — Romeo and Juliet, Op. 64: "Montagues and Capulets"** (wrath)
 
-Menelaus cannot hold alone. He calls Ajax, and the Achaean defense begins to coalesce around the corpse. The 5/4 asymmetric pulse of "Mars" — used in Book I for the Agamemnon-Achilles quarrel — returns here for a different kind of wrath: not political ego but military grinding. Men not charging forward but pressing back, holding a line against a weight that outnumbers them. The rhythmic hostility without resolution fits a defense that succeeds at enormous cost, with no particular moment of triumph.
+Menelaus cannot hold alone. He calls Ajax, and the Achaean defense begins to coalesce around the corpse. Prokofiev's 'Montagues and Capulets' is formation-music under siege: its hammered minor chords do not charge forward but press and hold, the rhythmic weight asymmetric and grinding without catharsis. Men not seeking glory but holding a line against a force that outnumbers them. "Mars" belongs to Book I's quarrel register — political ego and verbal war. This scene is different: it is defense as a form of loyalty, and Prokofiev's martial block, refusing all relief, is the right sound for a line that holds at enormous cost and without triumph.
 
 **5. Gluck — Iphigénie en Tauride: "O malheureuse Iphigénie"** (sacrifice)
 
@@ -80,10 +80,10 @@ The book ends with the Achaeans walking backward toward the ships, Ajax holding 
 grief(contested body) → wrath(defenders' fury) → grief(weeping horses) → fate(loyalty under doom)
 ```
 
-That is why the playlist moves Schubert → Bartók → Beethoven → Holst → Gluck → Mahler → Messiaen → Shostakovich → Verdi → Barber → Sibelius: from private inward grief, through cold violent wrath, through the most astonishing moment of animal mourning in Western literature, through divine tenderness, through the machinery of siege, through the messenger's running, and finally into the sustained, compressed, unrewarded loyalty of men carrying their dead home.
+That is why the playlist moves Schubert → Bartók → Beethoven → Prokofiev → Gluck → Mahler → Messiaen → Shostakovich → Verdi → Barber → Sibelius: from private inward grief, through cold violent wrath, through the most astonishing moment of animal mourning in Western literature, through divine tenderness, through the machinery of siege, through the messenger's running, and finally into the sustained, compressed, unrewarded loyalty of men carrying their dead home.
 
 Book XVII does not end with a funeral. The funeral register — the Wagnerian terminal gravity, the public weight of "Siegfried's Funeral March" — does not open here. It opens in Book XXII when Hector falls, and fully consumes everything in Book XXIV. Here the grief is still contested. The body is still moving. The score must remain pressed, inward, enduring — and it does.
 
 
 ---
-_Dominant arc: grief → wrath → wrath → sacrifice → grief → fate → wrath → grief → fate → fate. From the Studium — a transmission curriculum (reading · script · translation · music)._
+_Dominant arc: grief → wrath → fate → wrath → sacrifice → grief → divine-intervention → wrath → wrath → grief → fate. From the Studium — a transmission curriculum (reading · script · translation · music)._

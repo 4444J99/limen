@@ -1,6 +1,6 @@
 🧵 Iliad Book XXII: The Death of Hector
 
-Scoring this not as "war" but as its real emotional arc — fate → grief → wrath → fate → wrath. One piece per beat. 👇
+Scoring this not as "war" but as its real emotional arc — fate → grief → fate → wrath → wrath. One piece per beat. 👇
 
 — — —
 
@@ -54,7 +54,7 @@ This is the track demoted from Book I, reserved for exactly this moment. Achille
 
 9/ Achilles lashes the body to the chariot — defilement
 🎵 Bartók — Music for Strings, Percussion and Celesta — III. Adagio
-After the death, wrath does not stop — it continues into the body. Achilles pierces Hector's heels, threads the reins through, drags him in the dust around the walls. Priam watches from above. Bartók'
+After the death, grief does not stop — it is violated. Achilles pierces Hector's heels, threads the reins through, drags him in the dust around the walls. Priam watches from above. Bartók's Adagio is 
 
 — — —
 

@@ -28,9 +28,9 @@ will, wrath as a boulder in the hands of a man who has decided the gods can wait
 | # | Scene / Function | Track | Force |
 |--:|---|---|---|
 | 1 | The Trojan army massing at the wall | **Shostakovich — Symphony No. 7 'Leningrad': I. Allegretto (invasion episode)** | wrath |
-| 2 | The Achaean wall — architecture of dread | **Beethoven — Symphony No. 5: I. Allegro con brio** | law |
+| 2 | The Achaean wall — architecture of dread | **Beethoven — Symphony No. 5: I. Allegro con brio** | fate |
 | 3 | The eagle and the snake — the omen appears | **Verdi — *La forza del destino*: Overture** | fate |
-| 4 | Polydamas reads the omen — counsel of caution | **Bach — *St. Matthew Passion*: "Erbarme dich, mein Gott"** | fate |
+| 4 | Polydamas reads the omen — counsel of caution | **Bach — *St. Matthew Passion*: "Erbarme dich, mein Gott"** | supplication |
 | 5 | Hector refuses — 'one omen is best: to fight for your country' | **Beethoven — *Coriolan* Overture, Op. 62** | wrath |
 | 6 | Sarpedon's speech — noblesse oblige, the cost of the front rank | **Elgar — *Enigma Variations*: IX. "Nimrod"** | kingship |
 | 7 | Sarpedon leads the charge at the battlements | **Walton — *Crown Imperial*: March** | kingship |
@@ -57,18 +57,18 @@ explosive. This wrath is different — it is siege wrath, accumulative wrath, th
 grinds rather than detonates. Shostakovich is the composer of siege. There was no better
 choice.
 
-**2. Beethoven — Symphony No. 5: I. Allegro con brio** — *law*
+**2. Beethoven — Symphony No. 5: I. Allegro con brio** — *fate*
 
-The wall is the organizing fact of Book XII's first half. It has stood. It represents the
-order of the poem's second movement — the boundary that the Trojans have not yet crossed, the
-law that has held. Beethoven's first movement of the Fifth is one of music's most precise
-images of law under pressure: the four-note motif is not decorative, it is structural — it is
-what the music cannot escape, what it keeps returning to even as it tries to break free. In
-Book I, I placed the Fifth's opening at the moment the armies first move, as fate engaging;
-here, in a different appearance, its quality as formal constraint under assault is what scores
-the wall's presence. The wall is the law hearing the army arrive. The motif is the wall's
-answer: I am still here. Law requires formal clarity and architectural repetition; this is
-both, under maximum duress.
+The wall is the organizing fact of Book XII's first half — the one boundary the Trojans have
+not yet crossed, the one structure whose integrity the entire book will test. It is the poem's
+standing fate-boundary: not a law enacted by men, but a limit that fate has not yet authorized
+crossing. Beethoven's first movement is the dominant-force engine's canonical fate-piece for
+exactly the right reason — the four-note motif is inexorable, it returns and returns until the
+texture must answer it, it does not permit argument. The wall as Beethoven's Fifth: a thing
+that does not yield until it yields completely. The first movement does not contain the assault;
+it holds against it, identically, at the same pitch, until Book XII tells us that Hector lifted
+the stone. Fate here is not atmospheric — it is architectural, structural, the limit that must
+be met before the poem can become what it needs to become.
 
 **3. Verdi — *La forza del destino*: Overture** — *fate*
 
@@ -83,17 +83,19 @@ with brass proclamations and does not permit argument. The omen has Verdi's rhyt
 not suggest, it states. Fate requires inexorable motif and hammered insistence; Verdi gives
 fate a voice that could silence an army if an army were willing to listen. Hector is not.
 
-**4. Bach — *St. Matthew Passion*: "Erbarme dich, mein Gott"** — *fate*
+**4. Bach — *St. Matthew Passion*: "Erbarme dich, mein Gott"** — *supplication*
 
 Polydamas is one of the poem's wisest minor figures: the counselor who reads correctly, states
-plainly, and is overruled by the man everyone follows. His warning is not cowardice; it is the
-voice of interpretation, the figure who understands what the sign means and says so at personal
-cost to his standing with the most formidable captain in either army. Bach's "Erbarme dich" —
-Peter's aria of weeping after the denial — is the score for this moment because it is the
-music of the one who saw clearly and was not heard. It has the quality of fate acknowledged
-but not accepted: the exposed melodic line suspended above accompaniment that will not resolve,
-the inward clarity of a man who knows he was right and knows it made no difference. Fate in
-this register is not thunder; it is the quiet of someone who told you exactly what was coming.
+plainly, and is overruled by the man everyone follows. His speech to Hector is an act of
+supplication — not petition to a god, but the offering of interpretation to a captain who could
+refuse it and would. He is Peter: the one who saw clearly, stated clearly, and was not heard.
+Bach's "Erbarme dich" — the aria of weeping after the denial — is the score for this register
+because supplication in the St. Matthew Passion is not weakness but exposed clarity: the
+melodic line suspended above accompaniment that will not resolve, the inwardness of a man who
+understood what the sign meant and said so at personal cost. Supplication here is not a
+request to be spared — it is interpretation offered in deference to something larger than the
+speaker, and refused by the one who had the authority to refuse it. The aria does not resolve
+because Polydamas is not heard.
 
 **5. Beethoven — *Coriolan* Overture, Op. 62** — *wrath*
 
@@ -203,7 +205,7 @@ a poem the breach made possible.
 ## The dominant arc of Book XII
 
 ```
-wrath(siege) → law(the wall) → fate(omen) → fate(ignored) →
+wrath(siege) → fate(the wall) → fate(omen) → supplication(fate-spoken) →
 wrath(refusal) → kingship(speech) → kingship(charge) →
 wrath(assault) → wrath(defense) → fate(the stone) →
 wrath(the breach) → metamorphosis(a changed world)
@@ -220,4 +222,4 @@ where it does not merely wound honor but breaks stone.
 
 
 ---
-_Dominant arc: wrath → wrath → fate → fate → kingship → kingship → wrath → wrath. From the Studium — a transmission curriculum (reading · script · translation · music)._
+_Dominant arc: wrath → fate → fate → supplication → wrath → kingship → kingship → wrath → wrath → fate → wrath → metamorphosis. From the Studium — a transmission curriculum (reading · script · translation · music)._

@@ -8,9 +8,9 @@ Copy-paste into Spotify/Apple Music, or use the search links.
 2. Rossini — La gazza ladra — Overture
    YouTube: https://www.youtube.com/results?search_query=Rossini+La+gazza+ladra+%E2%80%94+Overture
    Spotify: https://open.spotify.com/search/Rossini+La+gazza+ladra+%E2%80%94+Overture
-3. Strauss — Also sprach Zarathustra — 'Von den Hinterweltern' (Von den Hinterweltlern)
-   YouTube: https://www.youtube.com/results?search_query=Strauss+Also+sprach+Zarathustra+%E2%80%94+%27Von+den+Hinterweltern%27+%28Von+den+Hinterweltlern%29
-   Spotify: https://open.spotify.com/search/Strauss+Also+sprach+Zarathustra+%E2%80%94+%27Von+den+Hinterweltern%27+%28Von+den+Hinterweltlern%29
+3. Strauss — Also sprach Zarathustra — 'Einleitung (Sunrise)'
+   YouTube: https://www.youtube.com/results?search_query=Strauss+Also+sprach+Zarathustra+%E2%80%94+%27Einleitung+%28Sunrise%29%27
+   Spotify: https://open.spotify.com/search/Strauss+Also+sprach+Zarathustra+%E2%80%94+%27Einleitung+%28Sunrise%29%27
 4. Verdi — La forza del destino — Overture
    YouTube: https://www.youtube.com/results?search_query=Verdi+La+forza+del+destino+%E2%80%94+Overture
    Spotify: https://open.spotify.com/search/Verdi+La+forza+del+destino+%E2%80%94+Overture

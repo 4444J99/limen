@@ -1,6 +1,6 @@
 🧵 Iliad Book XXIV: Ransom, Weeping, Burial
 
-Scoring this not as "war" but as its real emotional arc — divine-intervention → divine-intervention → supplication → supplication → grief. One piece per beat. 👇
+Scoring this not as "war" but as its real emotional arc — divine-intervention → divine-intervention → grief → supplication → supplication. One piece per beat. 👇
 
 — — —
 

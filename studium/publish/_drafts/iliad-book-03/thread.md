@@ -29,14 +29,14 @@ The teichoscopia is the emotional pivot of Book III and one of the strangest mom
 — — —
 
 5/ Teichoscopia II — Priam's question / Odysseus named
-🎵 Fauré — Requiem, Op. 48 — III. Sanctus
-Priam asks about Odysseus and Antenor answers with a portrait of him mid-speech — hunched, deceptive, then suddenly overwhelming. The Sanctus is not grief; it is suspended recognition, the quality of 
+🎵 Fauré — Pavane, Op. 50
+Priam asks about Odysseus and Antenor answers with a portrait of him mid-speech — hunched, deceptive, then suddenly overwhelming. The Pavane is not grief; it is suspended recognition — an elevated, pr
 
 — — —
 
 6/ The duel begins — Paris vs. Menelaus
-🎵 Holst — The Planets — 'Mars, the Bringer of War' (from 2:30)
-The duel is not an army engagement — it is two men, the personal violence the war was always about, compressed to a single exchange. Mars is the right force here, but it must land on the specific duel
+🎵 Prokofiev — Romeo and Juliet, Op. 64 — 'The Death of Tybalt'
+The duel is not an army engagement — it is two men, the personal violence the war was always about, compressed to a single exchange. Prokofiev's 'Death of Tybalt' is exactly the right scale: a duel be
 
 — — —
 

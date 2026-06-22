@@ -11,7 +11,7 @@ principle: >
   and pride; the duel is wrath at its most ritualized; the draw is law masking irresolution;
   the burial truce is grief kept brief and functional; the wall is law again — and Poseidon's
   resentment is divine-intervention as jealousy, not rescue.
-force_arc: [kingship, wrath, wrath, law, grief, law, divine-intervention]
+force_arc: [kingship, exile, fate, wrath, wrath, law, law, comedy, grief, law, divine-intervention]
 dominant_force: law
 tracks:
   - n: 1
@@ -52,15 +52,16 @@ tracks:
   - n: 4
     scene: "Ajax arms — the approach"
     force: wrath
-    composer: Holst
-    work: "The Planets — 'Mars, the Bringer of War'"
+    composer: Shostakovich
+    work: "Symphony No. 10 in E minor — II. Allegro"
     decision: added
     why: >
       Ajax arming is theater and menace at once. Homer slows the narrative to describe the
-      shield — huge, layered, like a tower. The 5/4 asymmetrical pulse of 'Mars' fits the
-      approach of something that does not move like ordinary men. 'Mars' already appeared in
-      Book I as the quarrel; here it recurs for legitimate formal combat — the same force,
-      differently channeled. Wrath wearing armor is still wrath.
+      shield — huge, layered, like a tower. Shostakovich's second movement of his Tenth is the
+      most ferocious scherzo in the symphonic canon: relentless, asymmetric, crushing —
+      something that does not move like ordinary men but like a force that has been aimed.
+      Where Prokofiev (track 5) gives the duel's formal choreography, this gives the approach
+      of pure physical mass before the ceremony begins. Wrath wearing armor is still wrath.
   - n: 5
     scene: "The duel — blow and counterblow"
     force: wrath
@@ -112,16 +113,16 @@ tracks:
   - n: 9
     scene: "Burial truce — both sides collect their dead"
     force: grief
-    composer: Fauré
-    work: "Requiem, Op. 48 — 'In Paradisum'"
+    composer: Barber
+    work: "Adagio for Strings"
     decision: added
     why: >
       The burial truce is grief at its most compressed and public: two armies face each other
       silently, gathering bodies, building pyres. Homer does not dwell here — the war doesn't
-      allow it. Fauré's 'In Paradisum' is private grief disciplined into liturgical form —
-      quiet, children's voices rising, not funeral-march monumental. This is not Hector's
-      death; it is anonymous loss distributed across both sides. The register must stay
-      inward and brief, not terminal.
+      allow it. Barber's Adagio is exactly this register — a slow, swelling string elegy for
+      anonymous loss distributed across both sides, intimate rather than monumental. This is
+      not Hector's death and not a funeral mass; the line stays inward and aching, then
+      recedes, holding the terminal register back for Book XXII.
   - n: 10
     scene: "The Achaeans build their wall"
     force: law
@@ -164,3 +165,11 @@ demoted:
       The Dies Irae would overwhelm the burial truce's restrained, procedural grief.
       Book VII buries anonymous dead under truce; the Dies Irae is eschatological fury.
       Save for scenes of total annihilation.
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "demoted — already used in Book I for the same force"
+    why: >
+      'Mars' appeared in Book I (track 5) for the Agamemnon-Achilles quarrel. Reusing the
+      same distinctive piece for wrath in Book VII without a claim that this is its proper
+      referent would exhaust a signature pairing. Shostakovich's Tenth (II) covers the
+      Ajax arming with equal force and brings fresh compositional color to the cycle.

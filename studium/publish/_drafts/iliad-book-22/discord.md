@@ -1,5 +1,5 @@
 **🎵 Iliad Book XXII: The Death of Hector**
-_dominant arc: fate → grief → wrath → fate → wrath → fate → grief → grief → grief_
+_dominant arc: fate → grief → fate → wrath → wrath → fate → grief → grief → grief → grief → grief_
 
 ` 1` **Beethoven** — Symphony No. 5 — I. Allegro con brio  ·  *Hector alone at the Scaean Gate — the waiting*  ·  [▶](https://www.youtube.com/results?search_query=Beethoven+Symphony+No.+5+%E2%80%94+I.+Allegro+con+brio) [♫](https://open.spotify.com/search/Beethoven+Symphony+No.+5+%E2%80%94+I.+Allegro+con+brio)
 ` 2` **Purcell** — Dido and Aeneas — 'When I am laid in earth' (Dido's Lament)  ·  *Priam and Hecuba beg from the walls*  ·  [▶](https://www.youtube.com/results?search_query=Purcell+Dido+and+Aeneas+%E2%80%94+%27When+I+am+laid+in+earth%27+%28Dido%27s+Lament%29) [♫](https://open.spotify.com/search/Purcell+Dido+and+Aeneas+%E2%80%94+%27When+I+am+laid+in+earth%27+%28Dido%27s+Lament%29)

@@ -1,6 +1,6 @@
 🧵 Iliad Book XIV: Desire, Deception, Stone
 
-Scoring this not as "war" but as its real emotional arc — desire → metamorphosis → desire → divine-intervention → comedy. One piece per beat. 👇
+Scoring this not as "war" but as its real emotional arc — grief → metamorphosis → desire → desire → supplication. One piece per beat. 👇
 
 — — —
 
@@ -23,14 +23,14 @@ Homer lingers: Hera bathes, anoints herself with ambrosial oil, braids her hair,
 — — —
 
 4/ Hera borrows Aphrodite's girdle — the erotic instrument
-🎵 Wagner — Tristan und Isolde — 'Liebestod' (Act III finale)
-The cestus, Aphrodite's girdle, contains "love, desire, sweet talk, the whisper that steals away the minds even of the wise." Wagner's Liebestod is the most ruthless harmonic statement of desire as di
+🎵 Debussy — Prélude à l'après-midi d'un faune
+The cestus, Aphrodite's girdle, contains "love, desire, sweet talk, the whisper that steals away the minds even of the wise." Homer's description is the poem's most dangerous moment: an object whose c
 
 — — —
 
 5/ Hera approaches Sleep — the bribe of a Grace
 🎵 Fauré — Pelléas et Mélisande Suite — 'Sicilienne'
-Hera must negotiate with Hypnos (Sleep) before she can reach Zeus. She promises him one of the Graces — Pasithée — as a bride. This is divine transaction carried out in a forest near Lemnos, all whisp
+Hera must negotiate with Hypnos (Sleep) before she can reach Zeus. She promises him one of the Graces — Pasithée — as a bride. This is supplication: a goddess making an offer she cannot compel, in whi
 
 — — —
 

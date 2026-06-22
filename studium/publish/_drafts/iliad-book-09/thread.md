@@ -59,8 +59,8 @@ The ambassadors walk back across the beach to report failure. This is private, i
 — — —
 
 10/ Achilles alone — grief suspended in refusal
-🎵 Fauré — Requiem — 'In Paradisum' (Op. 48)
-Book IX ends on Achilles, not on the Greeks. He has made his choice. He is alone with Patroclus. He will sleep; he will grieve; he will not return — not yet. Fauré's 'In Paradisum' is the most radiant
+🎵 Brahms — Intermezzo in A major (Op. 118, No. 2)
+Book IX ends on Achilles, not on the Greeks. He has made his choice. He is alone with Patroclus. He will sleep; he will grieve; he will not return — not yet. Brahms' Intermezzo Op. 118 No. 2 is the mo
 
 — — —
 
