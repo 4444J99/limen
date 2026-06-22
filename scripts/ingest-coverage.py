@@ -17,8 +17,9 @@ MANIFEST = Path(os.environ.get(
     "LIMEN_INGEST_MANIFEST", ROOT.parent / "session-meta" / "ingest" / "manifest.jsonl"))
 # the universe we WANT ingested — every prompt from every source. Adapters present vs. this = coverage.
 TARGET_SOURCES = {
-    "claude", "claude-code-sessions", "codex", "chatgpt", "gemini", "antigravity",
-    "opencode", "cowork-sessions", "downloads", "intake", "session-transcripts", "notes",
+    "claude", "claude-code-sessions", "claude-projects", "codex", "chatgpt", "gemini",
+    "antigravity", "opencode", "cowork-sessions", "downloads", "intake",
+    "session-transcripts", "notes",
     # known gaps (no adapter yet) — counted as missing so coverage is honest, not flattering:
     "copilot", "ollama", "workbench", "perplexity",
 }

@@ -96,6 +96,7 @@ C_HEAL="${LIMEN_BEAT_HEAL:-6}"         # HEAL  (recover failed/orphaned → fres
 C_HYGIENE="${LIMEN_BEAT_HYGIENE:-8}"; C_BACKUP="${LIMEN_BEAT_BACKUP:-48}"
 C_SYNC="${LIMEN_BEAT_SYNC:-2}"         # SELF-HEAL the substrate (re-converge checkout to the release)
 C_CORPUS="${LIMEN_BEAT_CORPUS:-24}"    # CONVERGE (distill his words toward ONE; expensive → rare)
+C_CORPUS_FEED="${LIMEN_BEAT_CORPUS_FEED:-8}"  # FEED (atomize live Claude Code prompts into the manifest, BEFORE converge)
 C_WEB="${LIMEN_BEAT_WEB:-4}"           # LEARN (refresh the visualized surfaces)
 C_MAIL="${LIMEN_BEAT_MAIL:-6}"         # COMMS (sweep inbound mail + rebuild the obligations ledger/faces)
 C_REPORT="${LIMEN_BEAT_REPORT:-12}"    # RELAY (conducting report; self-limits to once per usage-day)
@@ -241,6 +242,21 @@ while true; do
     # caches + the reversible iCloud local-cache (copy→verify→brctl-evict). Solves the recurring
     # local-storage creep autonomically; safe/reversible only; fails open if Archive4T is unmounted.
     LIMEN_LIB_APPLY="${LIMEN_LIB_APPLY:-1}" python3 "$LIMEN_ROOT/scripts/library-preserve.py" 2>&1 | tail -4 || true
+  fi
+  # FEED his WORDS — atomize EVERY live Claude Code prompt (~/.claude/projects) into the SINGLE
+  # session-meta manifest+atoms, BEFORE converge, so the conductor holds his ENTIRE prompt corpus
+  # (the structural answer to "I am not repeating myself again"). --merge preserves the offloaded
+  # historical index; .jsonl-only + the claude-projects adapter exclude sub-agent sidechain traffic,
+  # tool I/O, and harness machinery — only his prompts + the written replies + his question-answers.
+  # Default-ON (LIMEN_CORPUS_FEED=1; set 0 to roll back). Content-addressed + idempotent → cheap
+  # re-run. The WHOLE feed is timeout-bounded so it can NEVER wedge the beat (the prior wedge bug).
+  if play "$C_CORPUS_FEED" && [ "${LIMEN_CORPUS_FEED:-1}" = "1" ]; then
+    SM="${LIMEN_SESSION_META:-$HOME/Workspace/session-meta}"
+    [ -d "$SM" ] && ( cd "$SM" && timeout "${LIMEN_CORPUS_FEED_TIMEOUT:-180}" sh -c '
+        python3 ingest/manifest.py data/session-transcripts \
+          --extra-root "$HOME/.claude/projects:claude-projects" --out ingest/manifest.jsonl --merge \
+        && python3 ingest/atomize.py --manifest ingest/manifest.jsonl --out ingest/atoms.jsonl
+      ' 2>&1 | tail -4 ) || true
   fi
   # CONVERGE his WORDS — distill the knowledge base toward ONE. Gated OFF by default
   # (LIMEN_CORPUS_CONVERGE=1); the script self-selects live synthesis (LIMEN_CORPUS_CONVERGE_LIVE=1)
