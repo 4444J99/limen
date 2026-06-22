@@ -45,6 +45,33 @@ def arc_files():
     return sorted((STUDIUM / "music").glob("*/book-*.yaml"))
 
 
+def film_files():
+    return sorted((STUDIUM / "film").glob("*.yaml"))
+
+
+def validate_film(valid):
+    """The fourth commentary system: every film `force` (and adaptation scene force) ∈ taxonomy.
+    Non-breaking + fail-open — a missing film/ dir simply yields no checks."""
+    viol = []
+    for f in film_files():
+        try:
+            doc = yaml.safe_load(f.read_text()) or {}
+        except Exception as e:  # noqa: BLE001
+            viol.append((f.relative_to(STUDIUM), f"YAML parse error: {e}"))
+            continue
+        rel = f.relative_to(STUDIUM)
+        for i, fm in enumerate(doc.get("films") or [], 1):
+            fc = (fm.get("force") or "").strip()
+            if fc not in valid:
+                viol.append((rel, f"film {i} ({fm.get('title','?')}): invalid force {fc!r}"))
+        for ad in doc.get("adaptations") or []:
+            for sc in ad.get("scenes") or []:
+                fc = (sc.get("force") or "").strip()
+                if fc and fc not in valid:
+                    viol.append((rel, f"adaptation {ad.get('title','?')}: invalid scene force {fc!r}"))
+    return viol
+
+
 def reconcile_file(path: Path, track_forces):
     """Rewrite the force_arc flow-list to equal the ordered track forces. Preserves comments/format."""
     text = path.read_text()
@@ -106,6 +133,10 @@ def main():
             bad = [i + 1 for i, (a, b) in enumerate(zip(arc, tforces)) if a != b]
             violations.append((rel, f"force_arc != track forces at positions {bad}"))
 
+    # film layer (the fourth commentary system) — additive, non-breaking
+    films = film_files()
+    violations.extend(validate_film(VALID))
+
     if reconciled:
         print(f"reconciled force_arc in {len(reconciled)} file(s):")
         for r in reconciled:
@@ -115,7 +146,8 @@ def main():
         for rel, msg in violations:
             print(f"  ✗ {rel}: {msg}")
         return 1
-    print(f"\n✓ all {len(files)} arcs valid (forces ∈ taxonomy; force_arc == track forces)")
+    print(f"\n✓ all {len(files)} arcs valid (forces ∈ taxonomy; force_arc == track forces)"
+          f" · {len(films)} film companion(s) valid (forces ∈ taxonomy)")
     return 0
 
 

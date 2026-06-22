@@ -150,10 +150,77 @@ corpus_gaps:
 # ── Pillar D — community / build-in-public (propose-only; SENDS NOTHING until his gate) ──
 community:
   - id: studium-community-discord
-    title: "Stand up the simplified Studium Discord (studium/community/discord-plan.md) — 2 rituals / 6 channels / 3 roles"
-    gate: "his go; invite/post nothing autonomously"
+    title: "Stand up the multi-medium Studium seminar (studium/community/) — 3 rituals / ~8 channels / 3 roles, incl. #screening-room (film) + #trials (war zone)"
+    gate: "his go; invite/post/provision nothing autonomously"
     class: content
   - id: studium-publish-cadence
     title: "Build-in-public posts from studium/publish/_drafts/ (Wings: post/thread/discord/playlist per arc) — drafts exist, sending is his lever"
     gate: "his go"
     class: content
+
+# ── Pillar E — FILM (the fourth commentary system): a force-matched companion per work ──────
+# Iliad = SEED/DONE (studium/film/iliad.yaml is the gold standard). Each task = author one
+# studium/film/<work>.yaml: tag the work's forces → pick films that meet each force's register
+# (dominant-force.yaml film_hints are gravity, not pins) → justify every choice → adaptation overlay
+# where a real film-of-the-work exists → studium-validate.py --film. Watch links resolve to LEGAL rails only.
+film:
+  method: "for each work: cover its force spectrum with films that ENCODE the force (not 'movies about it'); reserve grief/lament/mercy films for the work's late divisions, as the music layer reserves the funeral-march"
+  acceptance: "studium-validate.py passes the film pass (every film.force ∈ taxonomy)"
+  proof_of_form: "studium/film/iliad.yaml (9 force-matched films + the Troy adaptation overlay)"
+  first_pass:
+    note: "one companion per first-pass work (19 remaining; Iliad done). Reuse the work's force_arc from its arcs."
+    tasks:
+      - {id: studium-film-odyssey,            title: "Odyssey film companion (return/exile/recognition)",        class: content}
+      - {id: studium-film-aeneid,             title: "Aeneid film companion (empire/fate/sacrifice)",            class: content}
+      - {id: studium-film-metamorphoses,      title: "Metamorphoses film companion (metamorphosis)",             class: content}
+      - {id: studium-film-divine-comedy,      title: "Divine Comedy film companion (descent/ascent/beatitude)",  class: content}
+      - {id: studium-film-tanakh,             title: "Tanakh film companion (covenant/law/exile)",               class: content}
+      - {id: studium-film-quran,              title: "Qur'an film companion (revelation/law/the straight path)", class: content}
+      - {id: studium-film-gilgamesh,          title: "Gilgamesh film companion (mortality/grief)",               class: content}
+      - {id: studium-film-beowulf,            title: "Beowulf film companion (wyrd/heroic doom)",                 class: content}
+      - {id: studium-film-canterbury-tales,   title: "Canterbury Tales film companion (the human comedy)",       class: content}
+      - {id: studium-film-mahabharata,        title: "Mahabharata film companion (dharma/war)",                  class: content}
+      - {id: studium-film-bhagavad-gita,      title: "Bhagavad Gita film companion (right action/renunciation)", class: content}
+      - {id: studium-film-ramayana,           title: "Ramayana film companion (fidelity/return)",                class: content}
+      - {id: studium-film-analects,           title: "Analects film companion (ritual order/the rectified self)", class: content}
+      - {id: studium-film-tao-te-ching,       title: "Dao De Jing film companion (wu wei/the Way)",              class: content}
+      - {id: studium-film-journey-to-the-west, title: "Journey to the West film companion (pilgrimage/comic transcendence)", class: content}
+      - {id: studium-film-tale-of-genji,      title: "Tale of Genji film companion (desire/impermanence)",       class: content}
+      - {id: studium-film-heike,              title: "Tale of the Heike film companion (mono no aware)",          class: content}
+      - {id: studium-film-conference-of-birds, title: "Conference of the Birds film companion (the seven valleys/fanā)", class: content}
+      - {id: studium-film-shahnameh,          title: "Shahnameh film companion (kingship/the farr)",             class: content}
+  tier2:
+    note: "film companions for the 5 staged works — after the first pass, his gate"
+    tasks:
+      - {id: studium-film-tier2, title: "Film companions for Upanishads · Book of Songs · Kojiki · Rumi-Hafez · Dream of the Red Chamber", class: content}
+
+# ── Pillar F — the SEMINAR going live (the breeding zone + war zone) — HIS GATE, nothing autonomous ──
+community_interaction:
+  gate: "provisioning / inviting / posting / running live trials are all his levers"
+  tasks:
+    - id: studium-seminar-provision
+      title: "Provision the seminar surfaces (#screening-room, #trials) + the 3 rituals (Weekly Listening · Watch-Along · Sunday Circle) per studium/community/discord-plan.md"
+      gate: "his go"
+      class: content
+    - id: studium-seminar-inquiry-rotate
+      title: "Rotate/seed the season's current-inquiry (studium/community/current-inquiry.md) from a synthesis counter-system; orbit the mediums around it"
+      gate: "his go (which question is live + whether the community is invited)"
+      class: content
+    - id: studium-seminar-trials
+      title: "Run live trials (claim → defend → attack → score → log) per trial-protocol.md — emits claim/trial_round events"
+      gate: "his go; consent-gated data"
+      class: content
+
+# ── Pillar G — ANALYSIS at community scale (packaging interaction as data) — CONSENT-GATED ──
+analysis:
+  gate: "real-people data collection is consent-gated; the solo stream (his ledger) is live now"
+  acceptance: "studium-analysis.py renders analysis.html; community views populate as events flow"
+  tasks:
+    - id: studium-analysis-emit-events
+      title: "Wire studium.py + trial-protocol to emit events to logs/studium-events.jsonl (daily_page, rubric_score, keep_replace, film_react, claim, trial_round, attendance) per analysis/events-schema.yaml"
+      gate: "solo emission needs no gate; community emission is consent-gated"
+      class: content
+    - id: studium-analysis-community-ingest
+      title: "Ingest consented community events (opaque ids, non-PII) → concept heat + claim survival + rubric trends views"
+      gate: "his go; explicit participant consent; structure-not-identity"
+      class: content

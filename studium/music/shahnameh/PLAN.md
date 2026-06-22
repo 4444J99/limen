@@ -8,7 +8,7 @@
 
 - **Main question:** What is kingship, fate, and lineage across an age?
 - **Tradition / script:** persian / persian · **language lesson:** [`../../scripts/persian.md`](../../scripts/persian.md)
-- **Corpus:** `None` (translations only)
+- **Corpus:** `arabic-persian/shahnameh` (persian_original_seed.txt)
 - **Source rail:** https://ganjoor.net/ferdousi/shahname/
 - **Divisions:** 50 × Cycle
 - **Progress:** 1/50 arcs authored

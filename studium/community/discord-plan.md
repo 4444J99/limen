@@ -14,8 +14,10 @@
 - **Ambassador/facilitator** path for people who run reading-circles. (Retained as one role.)
 
 ## What we STRIP (the baroque)
-- 4 tiered categories + 10 channels → **2 zones, ~6 channels**.
-- 7 weekly rituals (3 public + 4 gated) → **2** (one public, one supporter).
+- 4 tiered categories + 10 channels → **2 zones, ~8 channels** (one per medium: read · scriptorium ·
+  forum · listen · **screen** · **trials**).
+- 7 weekly rituals (3 public + 4 gated) → **3** (Weekly Listening · Watch-Along · Sunday Circle) — one
+  per non-text medium, the "many mediums" made into a cadence.
 - Naruto theming / chess-funnel framing → dropped; the Studium's own register (the canon + music).
 - The Patreon→Stripe→Kit→webhook→role bot chain → **one** supporter role (a single integration or
   even manual at first). No bot maze before there are members.
@@ -31,6 +33,10 @@
 - `#scriptorium` — share handwriting / translation / a daily-page. The third commentary system, social.
 - `#the-forum` — open discussion, one thread per work.
 - `#listening-room` (voice) — listening parties; read a passage, play its arc together.
+- `#screening-room` — the fourth commentary system: the week's force-matched **film** (`../film/<work>.yaml`)
+  + "why it relates to the force" + a legal where-to-watch link. The Watch-Along happens here.
+- `#trials` — the **war zone**: stage a claim about a passage, defend it, attack it with the work's
+  counter-system (`trial-protocol.md`). Build-in-public idea-testing; the seminar's heartbeat.
 
 **ZONE B — The Inner Studium (supporter)**
 - `#inner-studium` — supporters' deeper discussion + Anthony's notes; the closer cohort.
@@ -41,12 +47,21 @@
 - `@Patron` (supporter) — adds the Inner Studium.
 - `@Facilitator` (ambassador) — runs a reading-circle/cohort; light coordination room.
 
-## Rituals (2)
+## Rituals (3 — one per non-text medium, the "many mediums" made social)
 - **Weekly Listening (public)** — one evening, ~30 min: the week's passage + its force-matched arc,
   read + played together in `#listening-room`. (Absorbs Welcome Wednesday + Loot Drop Friday: the
   weekly artifact IS the draw + the onboarding moment.)
+- **Watch-Along (public)** — the fourth-medium ritual: the week's force-matched **film**
+  (`../film/<work>.yaml`) screened/discussed in `#screening-room` — "watch films that relate," together.
+  Pairs with the reading: the film as a fourth reading of the same force.
 - **Sunday Circle (supporter)** — the reading-circle cadence from `reading-group-curriculum`:
-  discussion-guide for the week's text. (Absorbs the 4 tier-gated rituals into one.)
+  discussion-guide for the week's text, and the staging ground for a **trial** (`trial-protocol.md`)
+  when a claim is ready. (Absorbs the 4 tier-gated rituals into one.)
+
+> The interaction model across all mediums (read · scriptorium · listen · screen · debate), the
+> seminar-as-lab-and-arena, the live inquiry, and the data each interaction produces are specified in
+> [`interaction-model.md`](interaction-model.md) · [`current-inquiry.md`](current-inquiry.md) ·
+> [`trial-protocol.md`](trial-protocol.md) · [`../analysis/PLAN.md`](../analysis/PLAN.md).
 
 ## Provisioning (his gate — staged, not done)
 1. Create the server with the 2 zones / 6 channels / 3 roles above.

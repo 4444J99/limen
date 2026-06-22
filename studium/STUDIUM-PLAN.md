@@ -5,41 +5,41 @@
 > manifest lives in every directory; content files appear as authored (no empty stubs).
 
 ## The ~100 things — coverage matrix
-| Work | Tradition | Reading | Music (arcs/divs) | Script |
-| --- | --- | :--: | :--: | --- |
-| The Epic of Gilgamesh | mesopotamian | ✓ | 1/12 | cuneiform ✓ |
-| The Iliad | greek | ✓ | 24/24 | greek ✓ |
-| The Odyssey | greek | ✓ | 9/24 | greek ✓ |
-| The Tanakh / Hebrew Bible (Torah · Nevi'im · Ketuvim) | hebrew | ✓ | 1/39 | hebrew ✓ |
-| The Analects | chinese | ✓ | 1/20 | chinese ✓ |
-| The Mahabharata (selections, incl. the Bhagavad Gita) | sanskrit | ✓ | 1/18 | sanskrit ✓ |
-| The Ramayana | sanskrit | ✓ | 1/7 | sanskrit ✓ |
-| The Bhagavad Gita | sanskrit | ✓ | 1/18 | sanskrit ✓ |
-| The Dao De Jing | chinese | ✓ | 1/81 | chinese ✓ |
-| The Aeneid | roman | ✓ | 1/12 | latin ✓ |
-| Metamorphoses | roman | ✓ | 1/15 | latin ✓ |
-| The Qur'an | arabic | ✓ | 1/114 | arabic ✓ |
-| The Conference of the Birds | persian | ✓ | 1/45 | persian ✓ |
-| The Shahnameh (Book of Kings) | persian | ✓ | 1/50 | persian ✓ |
-| Beowulf | old-english | ✓ | 1/43 | old-english ✓ |
-| The Tale of Genji | japanese | ✓ | 1/54 | japanese ✓ |
-| The Tale of the Heike | japanese | ✓ | 1/12 | japanese ✓ |
-| The Divine Comedy | italian | ✓ | 1/100 | italian ✓ |
-| The Canterbury Tales | middle-english | ✓ | 1/24 | middle-english ✓ |
-| Journey to the West | chinese | ✓ | 1/100 | chinese ✓ |
+| Work | Tradition | Reading | Music (arcs/divs) | Film | Script |
+| --- | --- | :--: | :--: | :--: | --- |
+| The Epic of Gilgamesh | mesopotamian | ✓ | 1/12 | ☐ | cuneiform ✓ |
+| The Iliad | greek | ✓ | 24/24 | ✓ | greek ✓ |
+| The Odyssey | greek | ✓ | 9/24 | ☐ | greek ✓ |
+| The Tanakh / Hebrew Bible (Torah · Nevi'im · Ketuvim) | hebrew | ✓ | 1/39 | ☐ | hebrew ✓ |
+| The Analects | chinese | ✓ | 1/20 | ☐ | chinese ✓ |
+| The Mahabharata (selections, incl. the Bhagavad Gita) | sanskrit | ✓ | 1/18 | ☐ | sanskrit ✓ |
+| The Ramayana | sanskrit | ✓ | 1/7 | ☐ | sanskrit ✓ |
+| The Bhagavad Gita | sanskrit | ✓ | 1/18 | ☐ | sanskrit ✓ |
+| The Dao De Jing | chinese | ✓ | 1/81 | ☐ | chinese ✓ |
+| The Aeneid | roman | ✓ | 1/12 | ☐ | latin ✓ |
+| Metamorphoses | roman | ✓ | 1/15 | ☐ | latin ✓ |
+| The Qur'an | arabic | ✓ | 1/114 | ☐ | arabic ✓ |
+| The Conference of the Birds | persian | ✓ | 1/45 | ☐ | persian ✓ |
+| The Shahnameh (Book of Kings) | persian | ✓ | 1/50 | ☐ | persian ✓ |
+| Beowulf | old-english | ✓ | 1/43 | ☐ | old-english ✓ |
+| The Tale of Genji | japanese | ✓ | 1/54 | ☐ | japanese ✓ |
+| The Tale of the Heike | japanese | ✓ | 1/12 | ☐ | japanese ✓ |
+| The Divine Comedy | italian | ✓ | 1/100 | ☐ | italian ✓ |
+| The Canterbury Tales | middle-english | ✓ | 1/24 | ☐ | middle-english ✓ |
+| Journey to the West | chinese | ✓ | 1/100 | ☐ | chinese ✓ |
 
-**Totals:** reading 20/20 · scripts 12/12 · music 51 arcs authored of 812 divisions across the first-pass canon.
+**Totals:** reading 20/20 · scripts 12/12 · film companions 1/20 · music 51 arcs authored of 812 divisions across the first-pass canon.
 
 ## Tier 2 — staged (after the first pass, his spec §57)
-Enumerated + located; kept out of `orderings.yaml` so the daily face does not route to them until his gate. Reading + arcs deferred to `expansion-backlog.yaml`.
+Enumerated + located; kept out of `orderings.yaml` so the daily face does not route to them until his gate. Reading + arcs + film deferred to `expansion-backlog.yaml`.
 
-| Work | Tradition | Divisions | Music | Script |
-| --- | --- | :--: | :--: | --- |
-| The Book of Songs (Shijing) | chinese | 4 × Part | 0 arcs | chinese |
-| The Principal Upanishads | sanskrit | 13 × Upanishad | 0 arcs | sanskrit |
-| The Kojiki (Record of Ancient Matters) | japanese | 3 × Book | 0 arcs | japanese |
-| Rumi & Hafez — Mystical Lyric (selections) | persian | 12 × Selection | 0 arcs | persian |
-| Dream of the Red Chamber (Honglou Meng) | chinese | 120 × Chapter | 0 arcs | chinese |
+| Work | Tradition | Divisions | Music | Film | Script |
+| --- | --- | :--: | :--: | :--: | --- |
+| The Book of Songs (Shijing) | chinese | 4 × Part | 0 arcs | ☐ | chinese |
+| The Principal Upanishads | sanskrit | 13 × Upanishad | 0 arcs | ☐ | sanskrit |
+| The Kojiki (Record of Ancient Matters) | japanese | 3 × Book | 0 arcs | ☐ | japanese |
+| Rumi & Hafez — Mystical Lyric (selections) | persian | 12 × Selection | 0 arcs | ☐ | persian |
+| Dream of the Red Chamber (Honglou Meng) | chinese | 120 × Chapter | 0 arcs | ☐ | chinese |
 
 ## Method
 Read → copy the original script → translate a unit → compare translations → one note → one fitting

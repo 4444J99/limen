@@ -47,6 +47,10 @@ def _music_count(wid):
     return len(list(d.glob("book-*.yaml"))) if d.exists() else 0
 
 
+def _film_done(wid):
+    return (STUDIUM / "film" / f"{wid}.yaml").exists()
+
+
 def reading_done(wid):
     return (STUDIUM / "reading" / f"{wid}.md").exists()
 
@@ -155,28 +159,31 @@ def main():
            f"- `{lang}.md` — {'✓' if script_done(lang) else '☐'}" for lang in languages) + "\n")
 
     # ── master tracker ───────────────────────────────────────────────────
-    rows, r_done, s_done, arcs_total, divs_total = [], 0, 0, 0, 0
+    rows, r_done, s_done, arcs_total, divs_total, film_done = [], 0, 0, 0, 0, 0
     for wid, w in active:
         n = (w.get("divisions") or {}).get("count") or 0
         mc = _music_count(wid)
         rdone = reading_done(wid)
+        fdone = _film_done(wid)
         lang = w.get("language")
         sdone = script_done(lang)
         r_done += 1 if rdone else 0
+        film_done += 1 if fdone else 0
         arcs_total += mc
         divs_total += int(n)
         rows.append(f"| {w.get('title')} | {w.get('tradition')} | {'✓' if rdone else '☐'} "
-                    f"| {mc}/{n} | {lang} {'✓' if sdone else '☐'} |")
+                    f"| {mc}/{n} | {'✓' if fdone else '☐'} | {lang} {'✓' if sdone else '☐'} |")
     s_done = sum(1 for l in languages if script_done(l))
     staged_rows = [
         f"| {w.get('title')} | {w.get('tradition')} | {(w.get('divisions') or {}).get('count','?')} × "
-        f"{(w.get('divisions') or {}).get('label','—')} | {_music_count(wid)} arcs | {w.get('language')} |"
+        f"{(w.get('divisions') or {}).get('label','—')} | {_music_count(wid)} arcs | "
+        f"{'✓' if _film_done(wid) else '☐'} | {w.get('language')} |"
         for wid, w in staged]
     staged_section = ("" if not staged else
         "\n## Tier 2 — staged (after the first pass, his spec §57)\n"
         "Enumerated + located; kept out of `orderings.yaml` so the daily face does not route to them "
-        "until his gate. Reading + arcs deferred to `expansion-backlog.yaml`.\n\n"
-        "| Work | Tradition | Divisions | Music | Script |\n| --- | --- | :--: | :--: | --- |\n"
+        "until his gate. Reading + arcs + film deferred to `expansion-backlog.yaml`.\n\n"
+        "| Work | Tradition | Divisions | Music | Film | Script |\n| --- | --- | :--: | :--: | :--: | --- |\n"
         + "\n".join(staged_rows) + "\n")
     tracker = f"""# THE STUDIUM — master plan & tracker
 
@@ -185,11 +192,11 @@ def main():
 > manifest lives in every directory; content files appear as authored (no empty stubs).
 
 ## The ~100 things — coverage matrix
-| Work | Tradition | Reading | Music (arcs/divs) | Script |
-| --- | --- | :--: | :--: | --- |
+| Work | Tradition | Reading | Music (arcs/divs) | Film | Script |
+| --- | --- | :--: | :--: | :--: | --- |
 {chr(10).join(rows)}
 
-**Totals:** reading {r_done}/{len(active)} · scripts {s_done}/{len(languages)} · music {arcs_total} arcs authored of {divs_total} divisions across the first-pass canon.
+**Totals:** reading {r_done}/{len(active)} · scripts {s_done}/{len(languages)} · film companions {film_done}/{len(active)} · music {arcs_total} arcs authored of {divs_total} divisions across the first-pass canon.
 {staged_section}
 ## Method
 Read → copy the original script → translate a unit → compare translations → one note → one fitting
@@ -214,7 +221,7 @@ Staged on `feat/studium-transmission-curriculum`; non-destructive. His levers: l
     _w(STUDIUM / "STUDIUM-PLAN.md", tracker)
 
     print(f"studium-scaffold: {len(active)} first-pass + {len(staged)} staged works · {len(languages)} languages · "
-          f"reading {r_done}/{len(active)} · scripts {s_done}/{len(languages)} · {arcs_total} arcs · "
+          f"reading {r_done}/{len(active)} · scripts {s_done}/{len(languages)} · film {film_done}/{len(active)} · {arcs_total} arcs · "
           f"manifests in music/<work>/ + 4 layers + master tracker")
     return 0
 

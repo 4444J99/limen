@@ -1,0 +1,144 @@
+# The Iliad — film companion (the FOURTH commentary system)
+# GOLD STANDARD. Every other work's studium/film/<work>.yaml mirrors this shape.
+#
+# Film is not illustration. Like the daily composition is a second commentary system and the
+# handwriting a third, a film that "relates" is a fourth: an independent account of the same FORCE
+# (wrath, fate, grief, law …) meeting the poem on its own terms — sometimes a direct adaptation,
+# more often a film from anywhere that encodes the same force more truthfully than any adaptation does.
+#
+# Cadence: film is WEEKLY, not daily (the protocol is finite). The daily face surfaces the films whose
+# `force` matches the day's dominant force; the community "Watch-Along" screens one per week.
+# Each `force` is a key of dominant-force.yaml (validated by studium-validate.py --film).
+# Watch links resolve to LEGAL rails only (JustWatch / search) — never a pirated source.
+work: iliad
+title: "The Iliad — a cinema of wrath, doom, and the cost"
+principle: >
+  Do not assemble a "movies about the Trojan War" list. Assemble the poem's FORCES given cinematic
+  bodies. The Iliad is not primarily a war story; it is the study of mēnis — a wrath that detaches
+  from its cause and consumes its own hero — set inside a world where the gods watch, fate is fixed,
+  and men choose glory knowing it kills them. The companion therefore reaches past Troy itself:
+  Vietnam (Apocalypse Now) for wrath unmoored, the Eastern Front (Come and See) for Apollo's plague
+  made flesh, a samurai apocalypse (Ran) for sovereignty collapsing, the doomed charge (Gallipoli) for
+  the sacrifice of youth to kleos. The grief-and-mercy films — the women's lament, the enemy humanized —
+  belong to the poem's last movement (Books 22-24); screen them late, as the music layer reserves the
+  funeral-march for the slaughter. A direct adaptation (Troy) is included as an overlay, honestly flawed,
+  useful mostly for staging the quarrel, the duel, and the ransom against the text.
+force_coverage: [wrath, law, plague, divine-intervention, kingship, sacrifice, fate, grief, supplication]
+films:
+  - title: "Apocalypse Now"
+    director: "Francis Ford Coppola"
+    year: 1979
+    force: wrath
+    scene_or_theme: "Achilles' mēnis (Books 1, 9, 18-22) — wrath detached from its cause, consuming the hero"
+    why: >
+      Willard's journey upriver toward Kurtz is the closest cinema has come to mēnis as Homer means it:
+      a rage that begins with a grievance and becomes its own metaphysics, a warrior who is most himself
+      at the moment he is least human. Kurtz is Achilles after Patroclus — glory curdled into something
+      the war can no longer use. Coppola scores the helicopter assault to Wagner; the Iliad scores its
+      aristeia to the gods' attention. Both ask whether the wrath was righteous or monstrous and refuse
+      to answer.
+    content_note: "war violence, atrocity; the Redux/Final Cut runs long — the theatrical cut is enough"
+  - title: "Paths of Glory"
+    director: "Stanley Kubrick"
+    year: 1957
+    force: law
+    scene_or_theme: "Book 1 — the quarrel of Agamemnon and Achilles: honor, authority, and the abuse of command"
+    why: >
+      The Iliad opens not with battle but with a legal-political crisis: a king dishonors his best
+      warrior and the army pays for it. Paths of Glory is the same machinery — command treating men as
+      property of its own prestige, the form of authority used to commit an injustice the form cannot
+      answer. Watch it before Book 1 to feel why Achilles' withdrawal is not petulance but a strike
+      against a sovereignty that has forfeited its claim.
+    content_note: "execution, military injustice; no graphic gore"
+  - title: "Come and See"
+    director: "Elem Klimov"
+    year: 1985
+    force: plague
+    scene_or_theme: "Book 1 — Apollo's arrows: the nine days of pestilence, war as a descending sickness"
+    why: >
+      The Iliad begins with a plague the god rains on the camp; Come and See is what that plague looks
+      like from inside — war not as combat but as a pestilence that falls on a landscape and ages a
+      boy's face into a death-mask across two hours. It supplies the force's requirement (descending
+      motion, darkness closing) more truthfully than any depiction of arrows could. The most harrowing
+      war film ever made; it earns the comparison.
+    content_note: "extreme — massacre, sustained psychological horror; screen with full warning"
+  - title: "2001: A Space Odyssey"
+    director: "Stanley Kubrick"
+    year: 1968
+    force: divine-intervention
+    scene_or_theme: "the gods above the plain (Books 4, 20-21) — forces of another order intervening without explanation"
+    why: >
+      Homer's gods are not metaphors; they reach onto the field, deflect spears, and break the action
+      with their own scale. 2001 is the rare film that makes the genuinely OTHER felt — the monolith
+      arriving without announcement, an intelligence indifferent to the human frame it interrupts. It
+      trains the eye for how the Iliad's divine machinery works: not comfort, but immensity entering
+      the human story on terms the humans cannot read.
+    content_note: "slow, non-narrative stretches by design"
+  - title: "Ran"
+    director: "Akira Kurosawa"
+    year: 1985
+    force: kingship
+    scene_or_theme: "Agamemnon's sovereignty and the catastrophe it sets in motion; the gods' indifference"
+    why: >
+      Kurosawa's Lear, set in the Sengoku wars, is the Iliad's vision of kingship: a warlord whose
+      authority is real and whose exercise of it brings the world down, watched over by heavens that do
+      not intervene to save anyone. The famous line — "the gods... they kill us for their sport" — is
+      pure Iliad. Screen it for the weight of sovereign display and the cost the display exacts.
+    content_note: "large-scale battle violence, immolation"
+  - title: "Gallipoli"
+    director: "Peter Weir"
+    year: 1981
+    force: sacrifice
+    scene_or_theme: "the heroes who run to death for kleos — the choice of the short glorious life"
+    why: >
+      Achilles knows the prophecy: stay and die young and famous, or go home and fade. Gallipoli ends on
+      the freeze-frame of a sprinter-turned-soldier running into the guns — youth spent for nothing and
+      for glory at once. It gives the poem's central wager a body: the sacrifice of the young to a name
+      that will outlast them, and the unbearable question of whether the trade was worth it.
+    content_note: "war deaths; the ending is a gut-punch by design"
+  - title: "The Thin Red Line"
+    director: "Terrence Malick"
+    year: 1998
+    force: fate
+    scene_or_theme: "Books 16-22 — men living knowingly toward their deaths; the deaths of Patroclus and Hector"
+    why: >
+      Malick films war as the Iliad narrates it: lyric, doom-soaked, attentive to grass and light even
+      as men are killed, every soldier carrying his own end inside him. The voice-over's metaphysical
+      questions are the poem's questions — why does the world contain this? — asked without resolution.
+      The register is exactly the Iliad's fate: not catastrophe as event but mortality as the medium
+      everyone moves through.
+    content_note: "combat, death; meditative pace"
+  - title: "The Trojan Women"
+    director: "Michael Cacoyannis"
+    year: 1971
+    force: grief
+    scene_or_theme: "the poem's last movement (Books 22-24) — the women's lament, the cost counted"
+    why: >
+      Euripides, not Homer — but it is the Iliad's grief seen from the side the poem keeps at its edges:
+      Hecuba, Andromache, Cassandra after the wall falls. Screen it late in the cycle, beside Hector's
+      death and funeral, to hear the lament the Iliad sounds for Patroclus and Hector extended to the
+      women who survive them. Grief here is not a beat in a battle; it is the whole remaining world.
+    content_note: "grief, implied violence to women and a child; no graphic gore"
+  - title: "Letters from Iwo Jima"
+    director: "Clint Eastwood"
+    year: 2006
+    force: supplication
+    scene_or_theme: "Book 24 — Priam at Achilles' tent: the enemy seen as human, the ransom of the body"
+    why: >
+      The Iliad's final and greatest movement is mercy: a father kneels to the man who killed his son
+      and kisses the hands that did it, and the killer weeps and gives the body back. Letters from Iwo
+      Jima performs the same reversal — the war film that makes the enemy fully human, that finds the
+      father and son inside the soldier. Screen it for Book 24, the supplication that lets the poem end
+      not in slaughter but in a shared and unbearable recognition.
+    content_note: "war violence, suicide; the companion piece to Flags of Our Fathers"
+adaptations:
+  # Direct films OF the Iliad — useful for staging specific divisions against the text. Honestly flawed;
+  # the force-companion above carries the real weight. `division` ties a scene to its book.
+  - title: "Troy"
+    director: "Wolfgang Petersen"
+    year: 2004
+    note: "compresses the war and cuts the gods entirely (a serious loss); strong on the duel and the ransom"
+    scenes:
+      - {division: 1, force: kingship, scene: "Agamemnon and Achilles quarrel over honor and the prize"}
+      - {division: 22, force: wrath, scene: "Achilles and Hector before the walls — the duel"}
+      - {division: 24, force: supplication, scene: "Priam comes by night to ransom Hector's body"}

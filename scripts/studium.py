@@ -205,6 +205,21 @@ def _listen_links(composer, work):
     }
 
 
+# ── film (the fourth commentary system) ───────────────────────────────────────────
+def load_film(work_id):
+    """Load studium/film/<work>.yaml (a per-work force-tagged companion). None if absent (fail-open)."""
+    return _load_yaml(STUDIUM / "film" / f"{work_id}.yaml", None)
+
+
+def _watch_links(title, year=None):
+    """Legal rails only — JustWatch (where-to-stream) + a generic search. NEVER a pirated source."""
+    q = urllib.parse.quote_plus(f"{title} {year}".strip())
+    return {
+        "justwatch": f"https://www.justwatch.com/us/search?q={urllib.parse.quote_plus(str(title))}",
+        "search": f"https://duckduckgo.com/?q={q}+film",
+    }
+
+
 # ── original-script sample (real Greek/Latin/… from the corpus head) ─────────────
 def original_sample(work, division, n=6):
     of = work.get("original_file")
@@ -259,6 +274,21 @@ def build_view(state, advance=False):
     dom_color = (forces.get(dom, {}) or {}).get("color", "#8a93a6")
     dom_req = (forces.get(dom, {}) or {}).get("requirement", "")
 
+    # film (fourth commentary system): the work's companion, with the day's-force films highlighted.
+    film_doc = load_film(work_id)
+    films = []
+    if film_doc:
+        for fm in film_doc.get("films", []):
+            ff = (fm.get("force") or "").strip()
+            films.append({
+                **fm,
+                "color": (forces.get(ff, {}) or {}).get("color", "#8a93a6"),
+                "match": ff == dom,           # surfaces on a day whose dominant force this film encodes
+                "links": _watch_links(fm.get("title", ""), fm.get("year")),
+            })
+        # day's-force films first, then the rest (the weekly companion still shows in full)
+        films.sort(key=lambda x: (not x["match"]))
+
     # all orderings, for the canon map
     ord_views = []
     for key, spec in (orderings.get("orderings", {}) or {}).items():
@@ -299,6 +329,8 @@ def build_view(state, advance=False):
                   "dom_color": dom_color, "dom_req": dom_req,
                   "force_arc": (music or {}).get("force_arc", []),
                   "tracks": tracks, "have_curated": bool(music)},
+        "film": {"title": (film_doc or {}).get("title"), "have_companion": bool(film_doc),
+                 "dom_color": dom_color, "films": films},
         "orderings": ord_views,
         "all_paces": [(k, v.get("label", k)) for k, v in (paces.get("paces", {}) or {}).items()],
         "all_depths": list(depth_labels.items()),
@@ -400,6 +432,36 @@ def render_html(v):
        <div class="muted">curated arc pending for this division — the synthesizer pairs it on demand (gap-driven expansion).</div>
      </div>"""
 
+    # film card (the fourth commentary system) — day's-force films highlighted
+    fl = v["film"]
+    if fl["have_companion"]:
+        film_rows = ""
+        for fm in fl["films"]:
+            links = fm.get("links", {})
+            badge = '<span class="todayf">today’s force</span>' if fm.get("match") else ""
+            cn = f'<div class="cnote">{_esc(fm.get("content_note",""))}</div>' if fm.get("content_note") else ""
+            film_rows += f"""
+        <tr class="{'match' if fm.get('match') else ''}">
+          <td><span class="force" style="background:{_esc(fm.get('color'))}">{_esc(fm.get('force',''))}</span></td>
+          <td><b>{_esc(fm.get('title',''))}</b> <span class="muted">— {_esc(fm.get('director',''))}, {_esc(fm.get('year',''))}</span>{badge}
+              <div class="scene">{_esc(fm.get('scene_or_theme',''))}</div>
+              <div class="why">{_esc(fm.get('why',''))}</div>{cn}</td>
+          <td class="lk"><a href="{_esc(links.get('justwatch','#'))}" target="_blank">▷ where</a>
+              <a href="{_esc(links.get('search','#'))}" target="_blank">🔎</a></td>
+        </tr>"""
+        film_card = f"""
+     <div class="card">
+       <h2 style="color:{_esc(fl['dom_color'])}">🎬 Film resonance <span class="muted">— the fourth commentary system (weekly)</span></h2>
+       <div class="muted">{_esc(fl.get('title') or '')} · the day’s-force films are highlighted; the community Watch-Along screens one a week</div>
+       <table class="tracks"><tbody>{film_rows}</tbody></table>
+     </div>"""
+    else:
+        film_card = f"""
+     <div class="card">
+       <h2 style="color:{_esc(fl['dom_color'])}">🎬 Film resonance</h2>
+       <div class="muted">film companion pending for this work — staged in <code>expansion-backlog.yaml</code> (film pillar). Gold standard: <code>studium/film/iliad.yaml</code>.</div>
+     </div>"""
+
     # canon map (all orderings)
     maps = ""
     for ov in v["orderings"]:
@@ -435,6 +497,9 @@ def render_html(v):
  table.tracks{{width:100%;border-collapse:collapse}} table.tracks td{{padding:8px 6px;border-top:1px solid #21262d;vertical-align:top}}
  .tn{{color:#8a93a6;width:18px}} .scene{{color:#c9d1d9;font-size:13px;width:150px}}
  .why{{color:#8a93a6;font-size:12px;margin-top:3px}}
+ .cnote{{color:#6e7681;font-size:11px;margin-top:3px;font-style:italic}}
+ tr.match td{{background:#11281a}} tr.match{{box-shadow:inset 3px 0 0 #2ecc71}}
+ .todayf{{font-size:10px;color:#06140c;background:#2ecc71;border-radius:4px;padding:0 5px;margin-left:6px;font-weight:700}}
  .force{{color:#06140c;font-weight:700;border-radius:5px;padding:1px 7px;font-size:11px;text-transform:lowercase}}
  .lk a{{color:#58a6ff;font-size:12px;margin-right:6px;text-decoration:none;white-space:nowrap}}
  .ord{{margin:8px 0}} .ord.active .ordlbl{{color:#2ecc71}} .ordlbl{{font-size:13px;margin-bottom:4px}}
@@ -462,6 +527,8 @@ def render_html(v):
  </div>
 
  {music_card}
+
+ {film_card}
 
  <div class="card">
    <h2>🗺 The canon — all paths (choice is the fruit of life)</h2>

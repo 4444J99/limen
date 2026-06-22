@@ -1,0 +1,65 @@
+# events-schema.yaml — the interaction event taxonomy ("packaging as data analysis")
+#
+# His ask: "we create systems of interaction for studying and learning and trial and packaging as data
+# analysis." Every interaction the seminar generates — a scored daily page, a KEEP/REPLACE on a music
+# pairing, a film reaction, a staged claim, a trial round — is an EVENT. Logged append-only to a local
+# JSONL, the events become analyzable data: which forces the canon leans on, which concepts get
+# contested, which claims survive trial, which mediums move people most.
+#
+# POSTURE (hard):
+#   - append-only · local-first · NON-PII. Never a name, email, handle, or message body — only the
+#     structured fields below. `actor` is "self" for the solo practice, or an OPAQUE consented id at
+#     community scale (never identifying).
+#   - the SOLO stream (his own ledger) runs now; COMMUNITY ingestion is CONSENT-GATED and his to open
+#     ([[known-owned-pervasive-then-idgaf]], [[no-never-happens-again]]). See PLAN.md.
+#   - the analysis face (scripts/studium-analysis.py) fails OPEN: with zero events it still renders the
+#     corpus-level analysis (force distribution, concept reach) from the authored curriculum itself.
+
+meta:
+  store: logs/studium-events.jsonl       # one JSON object per line; created on first real event
+  format: "JSON Lines (append-only)"
+  privacy: "non-PII only; actor is 'self' or an opaque consented id; no free-text bodies, no identities"
+  gate: "community-scale collection is consent-gated; the solo stream (his ledger) needs no gate"
+
+# Every event carries these; type-specific fields are added per event_type.
+common_fields:
+  ts: "ISO-8601 timestamp (UTC)"
+  type: "one of event_types below"
+  actor: "'self' | opaque-consented-id (never PII)"
+  work: "canon work id (e.g. iliad) — optional"
+  division: "book/chapter/canto number — optional"
+  force: "a key of ../dominant-force.yaml — optional but preferred (the analysis spine)"
+
+event_types:
+  daily_page:
+    emitted_by: "scripts/studium.py (ledger export) — one per studied day"
+    fields: {streak: int, ordering: str, pace: str, depth: str}
+    note: "also derivable post-hoc from ledger/studium-YYYY-MM-DD.md (the face reads those directly)"
+  rubric_score:
+    emitted_by: "the daily page (optional scoring)"
+    fields: {rubric: "comprehension|handwriting|translation|music-engagement|film-engagement|seminar", level: "1..4"}
+  keep_replace:
+    emitted_by: "the daily page (music KEEP/REPLACE verdict)"
+    fields: {verdict: "keep|replace", proposed: "composer — work (if replace; optional)"}
+  film_react:
+    emitted_by: "the Watch-Along / film-engagement scoring"
+    fields: {film: "title", level: "1..4"}
+  claim:
+    emitted_by: "trial-protocol.md step 1"
+    fields: {claim_id: str, counter_system: "concept pairing (optional)"}
+    note: "claim TEXT lives in the ledger/essay, not the event (non-PII discipline; events are structure)"
+  trial_round:
+    emitted_by: "trial-protocol.md step 5"
+    fields: {claim_id: str, fate: "held|revised|refuted", counter_system: "concept", seminar_score: "1..4"}
+  attendance:
+    emitted_by: "a ritual (Weekly Listening / Watch-Along / Sunday Circle)"
+    fields: {ritual: "listening|watch-along|circle"}
+
+# What the analysis face computes (scripts/studium-analysis.py → analysis.html).
+analysis_views:
+  corpus_force_distribution: "how often each force is encoded across ALL authored arcs (real now: ~51 arcs)"
+  concept_reach: "from ../synthesis/concepts.yaml — works-per-concept + counter-system count"
+  practice_cadence: "from ledger/ + logs/studium-state.json — streak, days logged, force-per-day, KEEP/REPLACE tally"
+  rubric_trends: "rubric_score events over time (per layer) — empty until events flow"
+  concept_heat: "trial_round events per concept — which encodings are most contested (community scale)"
+  claim_survival: "trial_round fate tally per claim — which interpretations keep surviving"

@@ -21,3 +21,14 @@ daily_minimum:
 principle: >
   The key is not fluency. The key is physical contact with the text. Handwriting slows you down enough
   to notice structure. Script first, grammar second, translation third.
+
+# Film is the FOURTH commentary system, but it is a WEEKLY medium, not a daily step — the daily loop
+# stays finite ("do not let this become an infinite research swamp"). One screening a week; one trial
+# when a claim is ready. These are also the community rituals (studium/community/discord-plan.md).
+weekly_addendum:
+  - {step: "Film",  cadence: "1×/week", minutes: "90–150", output: "Watch one force-matched film (studium/film/<work>.yaml); note what it made visible in the work that the page/score/script did not. Rubric: rubric/film-engagement.md."}
+  - {step: "Trial", cadence: "when a claim is ready", minutes: "20–40", output: "Stage one claim about a passage; defend it against the work's counter-system; score the conduct (rubric/seminar.md); log the outcome. Protocol: studium/community/trial-protocol.md."}
+weekly_principle: >
+  The four mediums (read · listen · screen) plus the war zone (trial) are five readings of one force.
+  Film and trial are where the solo practice becomes a seminar — and where every interaction becomes
+  data (studium/analysis/). Keep them weekly so the daily contact with the text stays primary.
