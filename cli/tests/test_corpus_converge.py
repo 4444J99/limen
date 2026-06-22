@@ -154,3 +154,60 @@ def test_main_offline_apply_emits_gaps_but_never_writes_faces(tmp_path, monkeypa
     assert (corpus / "reduced" / "prompts.md").read_text() == before
     # nothing absorbed (state stays empty / unwritten since changed_any is False)
     assert not (tmp_path / "state.json").exists()
+
+
+# ─── _kit live/ladder branch (the earned-tier ladder in the production organ) ──────
+
+def test_kit_ladder_rides_keyless_cli_when_no_api_key(tmp_path, monkeypatch):
+    """Default on + no key + claude CLI present → LadderSynthesizer over the keyless CLI rung
+    (the live-daemon path), eager cheapest rung a real ClaudeCliSynthesizer."""
+    from limen.converge import ClaudeCliSynthesizer, LadderSynthesizer
+
+    m = _load(monkeypatch)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("LIMEN_CONVERGE_LADDER", raising=False)
+    monkeypatch.setattr("shutil.which", lambda b: "/usr/bin/claude")
+    kit = m._kit(True)
+    assert isinstance(kit["synthesizer"], LadderSynthesizer)
+    assert isinstance(kit["synthesizer"]._built["haiku"], ClaudeCliSynthesizer)
+
+
+def test_kit_ladder_off_uses_single_tier(tmp_path, monkeypatch):
+    """LIMEN_CONVERGE_LADDER=0 reverts the organ to the bare single-tier synthesizer."""
+    from limen.converge import ClaudeCliSynthesizer, LadderSynthesizer
+
+    m = _load(monkeypatch)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setenv("LIMEN_CONVERGE_LADDER", "0")
+    monkeypatch.setattr("shutil.which", lambda b: "/usr/bin/claude")
+    kit = m._kit(True)
+    assert isinstance(kit["synthesizer"], ClaudeCliSynthesizer)
+    assert not isinstance(kit["synthesizer"], LadderSynthesizer)
+
+
+def test_kit_falls_to_offline_when_no_key_and_no_cli(tmp_path, monkeypatch):
+    """No key AND no claude CLI → the eager rung raises through the ladder, the outer except
+    catches it, and the organ degrades to the offline kit (never a silent no)."""
+    from limen.converge import ConcatSynthesizer
+
+    m = _load(monkeypatch)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("LIMEN_CONVERGE_LADDER", raising=False)
+    monkeypatch.setattr("shutil.which", lambda b: None)
+    kit = m._kit(True)
+    assert isinstance(kit["synthesizer"], ConcatSynthesizer)
+
+
+def test_kit_threshold_threads_into_ladder_gate(tmp_path, monkeypatch):
+    """The ladder accept-gate equals the threshold converge() promotes on (the bug the review
+    caught): an explicit threshold passed to _kit must reach the LadderSynthesizer."""
+    from limen.converge import LadderSynthesizer
+
+    m = _load(monkeypatch)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("LIMEN_CONVERGE_LADDER", raising=False)
+    monkeypatch.delenv("LIMEN_CORPUS_THRESHOLD", raising=False)
+    monkeypatch.setattr("shutil.which", lambda b: "/usr/bin/claude")
+    kit = m._kit(True, threshold=0.9)
+    assert isinstance(kit["synthesizer"], LadderSynthesizer)
+    assert kit["synthesizer"]._threshold == 0.9  # not the 0.7 env default

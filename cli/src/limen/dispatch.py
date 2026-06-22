@@ -430,10 +430,11 @@ def _call_configured_paid_service(agent: str, task: Task, dry_run: bool) -> bool
     return _run_cmd(cmd, task, dry_run)
 
 
-def _agent_argv(agent: str) -> list[str]:
+def _agent_argv(agent: str, task: Task | None = None) -> list[str]:
     """Static lane flags + any LAZILY-derived per-run flags, so nothing is pinned or
-    resolved at import time. opencode's model is derived here (only when it actually
-    runs) from `opencode models` — names are outputs, not inputs."""
+    resolved at import time. opencode's/codex's model is derived here (only when it actually
+    runs); claude's TIER is derived per task (the earned-tier ladder) — names are outputs.
+    `task` is optional (codex/opencode ignore it) so existing callers stay valid."""
     flags = list(_LOCAL_AGENTS[agent])
     if agent == "opencode":
         model = _opencode_model()
@@ -441,6 +442,10 @@ def _agent_argv(agent: str) -> list[str]:
             flags += ["-m", model]
     elif agent == "codex":
         model = _codex_model()
+        if model:
+            flags += ["-m", model]
+    elif agent == "claude":
+        model = _claude_model(task)
         if model:
             flags += ["-m", model]
     return flags
@@ -650,7 +655,7 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
     suffix = secrets.token_hex(2)
     branch = f"limen/{slug}-{suffix}"
     wt = _ISOLATION_ROOT / (re.sub(r"[^a-zA-Z0-9._-]+", "-", task.id.lower()) + "-" + suffix)
-    agent_cmd = [binary, *_agent_argv(agent), _build_prompt(task)]
+    agent_cmd = [binary, *_agent_argv(agent, task), _build_prompt(task)]
     # 1800s (was 900): local lanes have ABUNDANT budget headroom (codex/claude/opencode ~60-92 left
     # per window) while jules is scarce (≈100/day). At 900s, big tasks — incl. the revenue/deploy
     # tasks (BLD2-*-deploy, REV-*) — timed out locally then bled to jules, exhausting the scarce lane
@@ -661,7 +666,7 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
     if dry_run:
         print(
             f"  would isolate {task.id}: worktree {wt} off origin/{base} "
-            f"→ branch {branch} → {binary} {' '.join(_agent_argv(agent))} "
+            f"→ branch {branch} → {binary} {' '.join(_agent_argv(agent, task))} "
             f"→ commit → push → PR  (live checkout untouched)"
         )
         return True
@@ -774,12 +779,12 @@ def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str:
         return _isolated_local_run(agent, task, dry_run)
     # ── legacy in-place path (escape hatch; edits the live checkout directly)
     binary = os.environ.get(f"LIMEN_{agent.upper()}_BIN", _LOCAL_BIN.get(agent, agent))
-    cmd = [binary, *_agent_argv(agent), _build_prompt(task)]
+    cmd = [binary, *_agent_argv(agent, task), _build_prompt(task)]
     cwd = _resolve_repo_dir(task)
     if cwd is None:
         msg = f"no local checkout of {task.repo or '(no repo)'}"
         if dry_run:
-            print(f"  would [{msg}; clone first]: {binary} {' '.join(_agent_argv(agent))} …")
+            print(f"  would [{msg}; clone first]: {binary} {' '.join(_agent_argv(agent, task))} …")
             return True
         print(f"  SKIP {task.id}: {msg} — clone it under $LIMEN_WORKDIR first")
         return False
@@ -1133,6 +1138,100 @@ def _codex_model() -> str | None:
     except Exception:
         pass
     return None
+
+
+# ─── Claude-lane earned-tier ladder (haiku-first-with-cheap-verify) ──────────
+# The claude lane invoked `claude -p` with NO -m, so the account picked the tier. Now the
+# tier is DERIVED per task: a coding task's failure is cheaply detectable (CI/PR/auto-merge/
+# reconcile), so verifiable classes start at HAIKU and rely on the EXISTING _LANE_CASCADE +
+# chronic escalation as the escalate rung — only UNDETECTABLE-failure classes get a higher
+# tier up front. No new escalation machinery. Mirrors _codex_model/_opencode_model: env pin
+# wins, derive at call-time, fail-open. ([[model-tiering-policy]], [[value-is-discovered-never-assumed]])
+_CLAUDE_TIER_ORDER = ("haiku", "sonnet", "opus")
+
+# Reserved-Opus classes: the doctrine's small principled set whose failure is BOTH undetectable
+# AND high-stakes (final/canon synthesis, irreversible go-live reasoning, kernel abstraction). A
+# stated principle, env-overridable (comma-separated LIMEN_CLAUDE_OPUS_CLASSES) — not inherited config.
+_CLAUDE_OPUS_CLASSES_DEFAULT = ("canon", "synthesis", "kernel", "go-live", "irreversible")
+
+
+def _claude_opus_classes() -> set[str]:
+    raw = os.environ.get("LIMEN_CLAUDE_OPUS_CLASSES")
+    if raw is not None:
+        return {c.strip() for c in raw.split(",") if c.strip()}
+    return set(_CLAUDE_OPUS_CLASSES_DEFAULT)
+
+
+def _claude_tier_overrides() -> dict:
+    """Optional operator OVERRIDE map logs/model-tiers.json → the claude lane's {tier: [classes]}.
+    Fail-open to {} (→ the ledger-DISCOVERED default). Demoted to an override: the default
+    pre-assign set is discovered from the ledger, not pinned. Same read pattern as _ledger_lanes()."""
+    try:
+        root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
+        return (json.loads((root / "logs" / "model-tiers.json").read_text()).get("claude") or {})
+    except Exception:
+        return {}
+
+
+def _claude_tier_for(task: Task | None) -> str:
+    """DERIVE the Claude tier for a task. Default = haiku (verifiable → escalate via the existing
+    cascade). Pre-assign a higher tier ONLY where failure is undetectable:
+      • opus  — the reserved principled set (_claude_opus_classes) or an explicit override;
+      • sonnet— classes the ledger has DISCOVERED this lane wastes on (waste_classes): work that
+                shipped low-value yet passed whatever gate exists ⇒ failure not caught cheaply here.
+    A per-task `claude_tier` pin and an optional logs/model-tiers.json override layer on top.
+    Fail-open → haiku, never block."""
+    if task is None:
+        return "haiku"
+    pin = getattr(task, "claude_tier", None)
+    if pin in _CLAUDE_TIER_ORDER:
+        return pin
+    classes = _task_classes(task)
+    override = _claude_tier_overrides()
+    if classes & (_claude_opus_classes() | set(override.get("opus") or [])):
+        return "opus"
+    waste = set((_ledger_lanes().get("claude") or {}).get("waste_classes") or [])
+    if classes & (waste | set(override.get("sonnet") or [])):
+        return "sonnet"
+    return "haiku"
+
+
+def _bump_tier(tier: str, task: Task | None) -> str:
+    """Escalate-on-failed-cheap-check, in-tier: if THIS task already failed on the claude lane
+    (carries the cascade's own 'tried:claude' breadcrumb), the cheap verify failed once here, so
+    step up one rung (capped at opus). State lives in the EXISTING label — no new retry counter,
+    no schema change. Env-gated LIMEN_CLAUDE_RETRY_BUMP (default on)."""
+    if task is None or os.environ.get("LIMEN_CLAUDE_RETRY_BUMP", "1") != "1":
+        return tier
+    if "tried:claude" not in (getattr(task, "labels", None) or []):
+        return tier
+    i = _CLAUDE_TIER_ORDER.index(tier)
+    return _CLAUDE_TIER_ORDER[min(i + 1, len(_CLAUDE_TIER_ORDER) - 1)]
+
+
+def _resolve_claude_model(tier: str) -> str:
+    """tier → the `claude -m` value. Env pin wins (LIMEN_CLAUDE_<TIER>_MODEL); else the bare CLI
+    tier alias, which the `claude` CLI resolves to the current dated model itself (nothing pinned,
+    survives renames). ([[derive-never-pin-hardcodes]])"""
+    return os.environ.get(f"LIMEN_CLAUDE_{tier.upper()}_MODEL") or tier
+
+
+def _claude_model(task: Task | None = None) -> str | None:
+    """Lazily pick the Claude tier for THIS task, resolved only when the claude lane runs (names
+    are outputs). Order mirrors _codex_model:
+      1. explicit LIMEN_CLAUDE_MODEL — a manual pin always wins;
+      2. feature flag LIMEN_CLAUDE_TIER_SELECT (default on; off → None = today's bare invocation);
+      3. derive the tier (class-based), bump it if the task already failed here, resolve to a model.
+    Fail-open to None everywhere → bare `claude -p` (account default), never a blocked lane."""
+    env = os.environ.get("LIMEN_CLAUDE_MODEL")
+    if env:
+        return env
+    if os.environ.get("LIMEN_CLAUDE_TIER_SELECT", "1") != "1":
+        return None
+    try:
+        return _resolve_claude_model(_bump_tier(_claude_tier_for(task), task))
+    except Exception:
+        return None  # never block the lane on a tier-selection hiccup
 
 
 def dispatch_parallel(
