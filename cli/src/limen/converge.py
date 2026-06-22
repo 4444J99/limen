@@ -509,11 +509,16 @@ class ClaudeCliSynthesizer:
 
     _PROMPT = AnthropicSynthesizer._PROMPT
 
-    def __init__(self, *, model: str | None = None, timeout: int = 120, binary: str = "claude") -> None:
+    def __init__(self, *, model: str | None = None, timeout: int | None = None, binary: str = "claude") -> None:
+        import os
         import shutil
 
         self.model = model
-        self.timeout = timeout
+        # Full face distillation via `claude -p` routinely exceeds a couple minutes
+        # (large reduced faces + many shots); a too-short timeout skips the heaviest,
+        # most-valuable faces every cadence. Generous default, env-overridable for the
+        # outliers — a timeout fail-opens (face skipped, retried next beat), never corrupts.
+        self.timeout = int(os.environ.get("LIMEN_CORPUS_SYNTH_TIMEOUT", "600")) if timeout is None else timeout
         self._binary = shutil.which(binary) or binary
         if shutil.which(binary) is None:
             raise FileNotFoundError(
