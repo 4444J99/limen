@@ -55,6 +55,15 @@ def _notify_ntfy(title, msg):
         pass
 
 
+def _value_verdict() -> str | None:
+    """The ledger's net value verdict (worth-it vs sunk money). Fail-open to None — so the burn
+    report still fires even before the ledger has scored anything."""
+    rep = _load(LOGS / "ledger.json", {})
+    if isinstance(rep, dict) and rep.get("verdict"):
+        return str(rep["verdict"])
+    return None
+
+
 def _discovery_count() -> int:
     """Open value-discovery tasks (cheap YAML scan; fail-open to 0)."""
     try:
@@ -111,7 +120,12 @@ def build_report() -> tuple[str, str, str]:
         headline = f"partial — {burned}/{len(lines)} lanes burned"
     if disc:
         headline += f"; {disc} repos in value-discovery"
-    body = f"Conducting report {day}\n{headline}\n" + "\n".join(lines)
+    # the credit side: did the spend earn its keep? (the "was it worth my money?" answer)
+    value = _value_verdict()
+    body = f"Conducting report {day}\n{headline}\n"
+    if value:
+        body += f"  value: {value}\n"
+    body += "\n".join(lines)
     return headline, body, day
 
 
