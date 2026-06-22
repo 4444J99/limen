@@ -64,9 +64,9 @@ Book VI ends without a death. Hector goes back out the Scaean Gate. Andromache i
 ## The Dominant Arc
 
 ```
-law (guest-friendship) → supplication (Hecuba's prayer, unanswered) → grief (Helen, Hector, the farewell) → fate (Hector through Troy, the closing silence)
+law (guest-friendship) → supplication (Hecuba's prayer, unanswered) → wrath (Hector's contempt for Paris) → grief (Helen, Hector, the farewell) → fate (Hector through Troy, the closing silence)
 ```
 
-That is why the playlist moves Bach/Handel → Bach → Brahms/Fauré → Tchaikovsky → Mahler → Schubert/Pärt → Elgar → Sibelius: from formal architecture through private tenderness to the weight of what cannot be stopped.
+That is why the playlist moves Bach/Handel → Bach → Brahms → Fauré → Tchaikovsky → Mahler → Schubert → Pärt → Elgar → Sibelius: from formal architecture through private tenderness to the weight of what cannot be stopped.
 
 Book VI is not an interruption of the *Iliad*. It is the reason the *Iliad* is not merely a war poem. Homer built it so that when Hector dies in Book XXII, you have stood with him at the Scaean Gate, watched his son cry, heard him pray. The death will be enormous. The grief here — private, present-tense, the grief of the living — is what makes it unbearable.

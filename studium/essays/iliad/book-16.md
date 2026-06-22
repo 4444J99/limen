@@ -26,7 +26,7 @@ and the stripped body. Each piece is chosen for its specific force, not for gene
 |  4 | Sarpedon enters / Zeus considers breaking fate      | **Beethoven — Symphony No. 5, I. Allegro con brio**                         | Added                |
 |  5 | Zeus rains tears of blood / Sarpedon falls          | **Mahler — Symphony No. 9, IV. Adagio**                                     | Added                |
 |  6 | Glaukos rallies — grief becomes renewed battle      | **Shostakovich — Symphony No. 7 'Leningrad', I. Allegretto (invasion)**     | Added                |
-|  7 | Apollo warns Patroclus — the god's intrusion        | **Strauss — *Also sprach Zarathustra*: "Von den Hinterweltlern"**           | Added                |
+|  7 | Apollo warns Patroclus — the god's intrusion        | **Strauss — *Also sprach Zarathustra*: "Einleitung" (Sunrise)**             | Added                |
 |  8 | Apollo dazes Patroclus — the armor dissolved        | **Debussy — *Prélude à l'après-midi d'un faune***                           | Added                |
 |  9 | Euphorbos wounds / Hector deals the death-blow      | **Verdi — *La forza del destino*: Overture**                                | Added                |
 | 10 | Patroclus' dying prophecy of Hector's doom          | **Mahler — Symphony No. 5, IV. Adagietto**                                  | Recontextualized     |
@@ -101,16 +101,17 @@ untouched by loss. The Trojans here are not avenging in the heroic sense; they a
 There is no glory in this rally, only attrition — which is what makes it dangerous. Wrath with
 the flavor of accumulation, not explosion. The music carries that grinding inevitability forward.
 
-**7. Strauss — *Also sprach Zarathustra*: "Von den Hinterweltlern"** — *divine-intervention*
+**7. Strauss — *Also sprach Zarathustra*: "Einleitung" (Sunrise)** — *divine-intervention*
 
 Apollo approaches Patroclus three times in succession and warns him not to press to the walls of
 Troy — you are not Achilles; do not go further. Patroclus does not listen. The divine-intervention
 force requires sudden color shift, a vertical intrusion into horizontal movement: something that
-is not of the field entering the field. Strauss's 'Von den Hinterweltlern' carries exactly this
-registral shift — from the dark, earthbound bass to something luminous and unresolvable above it,
-the uncanny gap between human and not-human. Apollo's warning is not a threat; it is a statement
-of ontological limit. Patroclus cannot hear it. The music opens into a register that his action
-cannot close.
+is not of the field entering the field. Strauss's 'Einleitung' carries exactly this registral
+shift — from the dark, earthbound bass pedal to something luminous and unresolvable above it,
+the uncanny gap between human and not-human. That rising brass fanfare is not a sunrise; it is
+an ontological statement: a vertical force arriving from outside the horizontal field. Apollo's
+warning is not a threat; it is a statement of limit. Patroclus cannot hear it. The music opens
+into a register that his action cannot close.
 
 **8. Debussy — *Prélude à l'après-midi d'un faune*** — *metamorphosis*
 
@@ -180,7 +181,7 @@ loss without consolation.
 ## The dominant arc of Book XVI
 
 ```
-return → wrath → fate → grief → wrath → divine-intervention → metamorphosis → fate → grief
+supplication → return → wrath → fate → grief → wrath → divine-intervention → metamorphosis → fate → grief → grief
 ```
 
 Book XVI is the book of mercy become catastrophe, of a borrowed form that cannot hold, of a man
@@ -188,3 +189,4 @@ who saves his friends and loses himself. The playlist moves Bach → Beethoven �
 → Mahler → Shostakovich → Strauss → Debussy → Verdi → Mahler → Barber. It begins with weeping
 and ends with a stripped body. In between is everything the *Iliad* knows about the cost of
 compassion.
+

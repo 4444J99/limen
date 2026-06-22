@@ -94,16 +94,18 @@ tracks:
   - n: 7
     scene: "Xanthus speaks — the horse prophesies Achilles' death"
     force: fate
-    composer: Berlioz
-    work: "Symphonie fantastique — V. 'Dream of a Witches' Sabbath'"
+    composer: Bartók
+    work: "Music for Strings, Percussion and Celesta — III. Adagio"
     decision: added
     why: >
       A horse speaks. The Erinyes silence it. This is the uncanny irrupting into the heroic
       world — the boundary between animal and divine collapses for one moment, and fate
-      speaks through an unexpected mouth. Berlioz's Witches' Sabbath is the right register:
-      the supernatural made sonically real, the Dies Irae quoted, the grotesque and the
-      cosmic occupying the same moment. This is not gentle prophecy; it is the world
-      breaking its own grammar to tell a man he will die.
+      speaks through an unexpected mouth. Bartók's third movement is the sonically exact
+      register: xylophone, celesta, and strings in a tessiture where nothing is tonal and
+      nothing resolves, the cosmos tilting on its axis without warning. It is the
+      supernatural rendered as wrong-grammar — not a funeral, not a march, but a world
+      briefly operating outside its own rules. The Erinyes restore natural order; the music
+      has already shown us how thin that order is.
   - n: 8
     scene: "Achilles answers the prophecy — 'I know it well; but I will not stop'"
     force: wrath

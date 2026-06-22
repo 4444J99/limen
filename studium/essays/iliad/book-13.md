@@ -17,7 +17,7 @@ The music for Book XIII must not sound like a war movie score. It must sound lik
 | 1 | Zeus looks away — the poem holds its breath | **Sibelius — Symphony No. 7 in C major: opening** | Added |
 | 2 | Poseidon descends from Samothrace / divine defiance | **Strauss — *Also sprach Zarathustra*: Introduction ('Sunrise')** | Added |
 | 3 | Poseidon rallies the Achaeans disguised as Calchas | **Handel — *Solomon*: Overture (Act I)** | Added |
-| 4 | The two Aiantes form the defensive line | **Beethoven — Symphony No. 5: I. Allegro con brio** | Added |
+| 4 | The two Aiantes form the defensive line — fate crystallizes | **Beethoven — Symphony No. 5: I. Allegro con brio** | Added |
 | 5 | Idomeneus arms himself — old commander entering the grind | **Brahms — Symphony No. 2: IV. Allegro con spirito** | Added |
 | 6 | Idomeneus kills Othryoneus / spear-kills multiply | **Holst — *The Planets*: 'Mars, the Bringer of War'** | Different scene than Book I |
 | 7 | Deiphobus and the phantom Ascalaphus — divine deception multiplies | **Debussy — *Images*: 'Ibéria' I. 'Par les rues et par les chemins'** | Added |
@@ -43,9 +43,9 @@ Poseidon's descent is not subtle. He strides down from the heights of Samothrace
 
 Poseidon's second mode is disguise. He takes the form of Calchas the seer and speaks — and his speech functions as divine law injected directly into human will without revelation. The Achaeans do not feel a god; they feel their own courage return, as though it had been their own all along. Handel's Solomon overture carries that quality: authority working through ceremony, wisdom-as-governance, the divine effective without being spectacular. It is the music of something that changes the outcome by speaking correctly, not by force.
 
-**4. Beethoven — Symphony No. 5: I. Allegro con brio** *(wrath)*
+**4. Beethoven — Symphony No. 5: I. Allegro con brio** *(fate)*
 
-The Aiantes locking shields is where Book XIII's energy crystallizes from divine underground current into human formation. This is the moment wrath stops being personal and becomes structural — the compressed defensive line that will not give way not because of one hero's fury but because of mass refusal. Beethoven's Fifth is the only grammar for this: the hammering motif is force meeting resistance and insisting. Not a heroic surge. A statement the world is required to answer. The Achaeans in formation are answering Trojan pressure with the Fifth's logic: this is what does not move.
+The Aiantes locking shields is where Book XIII's energy crystallizes from divine underground current into human formation — and into the book's structural fate. Beethoven's Fifth is the canonical musical grammar of fate as inexorable pressure: the hammering motif is not one hero's fury but the insistence of a force that will not be denied. It is the fate exemplar (not a wrath piece — wrath ignites and explodes; fate hammers and holds). The defensive line, once set, is the axis on which the whole book turns: inexorable, asymmetric, not yet resolved. The Achaeans in formation are answering Trojan pressure with the Fifth's logic: this is what does not move.
 
 **5. Brahms — Symphony No. 2: IV. Allegro con spirito** *(wrath)*
 

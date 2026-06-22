@@ -42,15 +42,16 @@ tracks:
     scene: "Athena descends — the divine saboteur sent to break the truce"
     force: divine-intervention
     composer: Strauss
-    work: "Also sprach Zarathustra — 'Von den Hinterweltern' (Von den Hinterweltlern)"
+    work: "Also sprach Zarathustra — 'Einleitung (Sunrise)'"
     decision: added
     why: >
       Athena's descent is not rescue — it is assassination of peace. She enters the human world
       as a comet entering an atmosphere: sudden, specific, catastrophic. Richard Strauss gives
       divine-intervention as vertical rupture, a shift in register that cannot be undone. The
-      'Hinterweltern' section's slow brass rise into sudden color-shift captures the moment a
-      god crosses into the mortal plane with a designed purpose humans cannot refuse. Athena
-      appears to Pandarus not as a vision of terror but as a whisper — and that is worse.
+      Einleitung's slow brass rise out of held silence into sudden full-orchestra color-shift
+      captures the moment a god crosses into the mortal plane with a designed purpose humans
+      cannot refuse. Athena appears to Pandarus not as a vision of terror but as a whisper —
+      and that is worse.
   - n: 4
     scene: "Athena induces Pandarus to shoot — the oath is broken"
     force: fate

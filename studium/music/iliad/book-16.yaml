@@ -12,7 +12,7 @@ principle: >
   is not public funeral — it is the private, shocked grief of a death that should not have happened.
   Zeus rains tears of blood for Sarpedon; Apollo dazes Patroclus before he falls. This book is
   governed by the logic of transgression: each force that rises crests and breaks.
-force_arc: [return, wrath, wrath, grief, wrath, fate, divine-intervention, grief]
+force_arc: [supplication, return, wrath, fate, grief, wrath, divine-intervention, metamorphosis, fate, grief, grief]
 dominant_force: grief
 tracks:
   - n: 1
@@ -95,14 +95,15 @@ tracks:
     scene: "Apollo intervenes — the god's warning, ignored"
     force: divine-intervention
     composer: Strauss
-    work: "Also sprach Zarathustra — 'Von den Hinterweltlern' (Of the Afterworldly)"
+    work: "Also sprach Zarathustra — 'Einleitung' (Sunrise)"
     decision: added
     why: >
       Apollo approaches Patroclus and warns him three times not to press to the walls of Troy.
       The divine-intervention force requires sudden color shift, brass/strings contrast — the
-      intrusion of a vertical force into horizontal movement. Strauss's 'Also sprach' carries the
-      uncanny registral shift from dark to bright, from human to something else. Patroclus does
-      not listen. The music does not resolve — it opens a register that mortal action cannot close.
+      intrusion of a vertical force into horizontal movement. Strauss's 'Einleitung' rises from
+      dark bass pedal to blazing brass: not a sunrise but an ontological rupture, something not-human
+      arriving in the human field. Patroclus does not listen. The music does not resolve — it opens
+      a register that mortal action cannot close.
   - n: 8
     scene: "Apollo dazes Patroclus — the armor struck away"
     force: metamorphosis

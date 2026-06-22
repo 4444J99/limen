@@ -10,7 +10,7 @@ principle: >
   The ghost of Patroclus is private, liminal, aching. The pyre is public ritual. The games are
   the community reasserting life: violent, comic, unfair, warm, fully human. The dominant
   movement is grief → law → return → comedy — from the private wound to the shared arena.
-force_arc: [grief, grief, sacrifice, law, law, return, return, wrath, comedy, comedy, comedy, return, grief]
+force_arc: [grief, grief, sacrifice, sacrifice, law, law, return, divine-intervention, comedy, comedy, comedy, memory, grief]
 dominant_force: grief
 tracks:
   - n: 1
@@ -102,7 +102,7 @@ tracks:
       the first time since the grief began.
   - n: 8
     scene: "Apollo and Athena interfere; the crash of Eumelus"
-    force: wrath
+    force: divine-intervention
     composer: Stravinsky
     work: "The Rite of Spring — 'The Sage'"
     decision: added
@@ -152,7 +152,7 @@ tracks:
       rivalry, the ensemble behind them warm and supportive. The community is the instrument.
   - n: 12
     scene: "Achilles gives a prize to Nestor; the old man remembers"
-    force: return
+    force: memory
     composer: Elgar
     work: "Enigma Variations, Op. 36 — IX. 'Nimrod'"
     decision: added

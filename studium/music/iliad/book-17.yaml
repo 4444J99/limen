@@ -13,7 +13,7 @@ principle: >
   Hector stripping divine armor from a dead friend, immortal horses
   weeping by a broken chariot. The register is wounded and inward,
   never monumental — the funeral register does not open until Book XXII.
-force_arc: [grief, wrath, wrath, sacrifice, grief, fate, wrath, grief, fate, fate]
+force_arc: [grief, wrath, fate, wrath, sacrifice, grief, divine-intervention, wrath, wrath, grief, fate]
 dominant_force: grief
 tracks:
   - n: 1
@@ -61,16 +61,18 @@ tracks:
   - n: 4
     scene: "Menelaus calls Ajax — the defense assembles"
     force: wrath
-    composer: Holst
-    work: "The Planets — 'Mars, the Bringer of War'"
+    composer: Prokofiev
+    work: "Romeo and Juliet, Op. 64 — 'Montagues and Capulets'"
     decision: added
     why: >
       Menelaus cannot hold alone; he calls the greater Ajax, and the
-      Achaean defense organizes around the corpse. The 5/4 asymmetric
-      pulse of "Mars" fits a battle formation under duress — men not
-      charging for glory but grinding against a press that outnumbers
-      them. The rhythmic hostility without resolution is correct for
-      a defense that succeeds at enormous cost.
+      Achaean defense organizes around the corpse. Prokofiev's 'Montagues
+      and Capulets' is a grinding, asymmetric martial block — men not
+      charging for glory but pressing against a weight that outnumbers
+      them, its hammered minor chords refusing to release or resolve.
+      The rhythmic hostility without catharsis is correct for a defense
+      that succeeds at enormous cost. ('Mars' belongs to Book I's quarrel
+      register; this scene is formation-under-siege, a different wrath.)
   - n: 5
     scene: "Euphorbus challenges Menelaus / single combat attempt"
     force: sacrifice

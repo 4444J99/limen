@@ -14,13 +14,15 @@ principle: >
 force_arc:
   - divine-intervention
   - wrath
+  - wrath
   - fate
   - divine-intervention
-  - wrath
-  - wrath
   - divine-intervention
+  - sacrifice
   - wrath
-  - wrath
+  - grief
+  - divine-intervention
+  - metamorphosis
 dominant_force: wrath
 tracks:
   - n: 1
@@ -102,7 +104,7 @@ tracks:
       marks how differently divine counsel sounds from divine combat.
   - n: 7
     scene: "Achilles kills Iphition — the aristeia runs"
-    force: wrath
+    force: sacrifice
     composer: Stravinsky
     work: "The Rite of Spring — 'The Sacrificial Dance'"
     decision: added
@@ -156,7 +158,7 @@ tracks:
       simultaneously. Brass/strings contrast delivers the divine-intervention color shift.
   - n: 11
     scene: "Achilles rages through the Trojan ranks — wildfire close of the book"
-    force: wrath
+    force: metamorphosis
     composer: Scriabin
     work: "Poem of Ecstasy, Op. 54"
     decision: added

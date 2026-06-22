@@ -9,7 +9,7 @@ principle: >
   violence pauses and human interiority fills the space: the courteous exchange of armor between
   enemies, a mother at a temple altar, a husband who knows he will die, a wife who cannot stop
   him, a child terrified by a bronze helmet-crest. This book is private grief beside public doom.
-force_arc: [law, law, supplication, grief, grief, fate, grief, fate]
+force_arc: [law, law, supplication, wrath, grief, fate, grief, grief, supplication, grief, fate]
 dominant_force: grief
 tracks:
   - n: 1

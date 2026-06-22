@@ -10,7 +10,7 @@ principle: >
   turns on four pivots: the siege as grinding pressure, the omen as cosmic speech, Sarpedon's
   speech as the moral grammar of aristocracy, and Hector's final act — not skill, not strategy,
   but a single stone that shatters a gate. Score the refusal, not the victory.
-force_arc: [wrath, wrath, fate, fate, kingship, kingship, wrath, wrath]
+force_arc: [wrath, fate, fate, supplication, wrath, kingship, kingship, wrath, wrath, fate, wrath, metamorphosis]
 dominant_force: wrath
 tracks:
   - n: 1
@@ -28,17 +28,19 @@ tracks:
       wrath as accumulation, not detonation.
   - n: 2
     scene: "The Achaean wall itself — architecture of dread"
-    force: law
+    force: fate
     composer: Beethoven
     work: "Symphony No. 5 — I. Allegro con brio"
     decision: added
     why: >
-      The wall is the law of the poem's second movement: it is the one structure the Trojans have
-      not yet broken. Book XII is organized around whether that law holds. Beethoven's first
-      movement has the quality of fate as formal constraint — the four-note hammer-motif is law
-      pressing back against chaos. This is the wall hearing the army arrive: architecture under
-      force. The force here is law because the wall represents the order that the siege is
-      testing.
+      The wall is the poem's one standing boundary — the structure the Trojans have not yet
+      broken, the threshold that fate has not yet authorized crossing. Book XII is organized
+      around whether that boundary holds. Beethoven's first movement has the character of fate
+      as formal constraint: the four-note hammer-motif is inexorable, not decorative — it
+      returns and returns until the texture must answer it. This is the wall as fate hears
+      the army arrive: not an institution holding a rule, but a limit holding against a force
+      that will eventually supersede it. Beethoven's Fifth is the dominant-force engine's
+      canonical fate-piece precisely because it sounds like something that will not be denied.
   - n: 3
     scene: "The eagle and the snake — the omen appears"
     force: fate
@@ -54,17 +56,19 @@ tracks:
       rendered visible.
   - n: 4
     scene: "Polydamas reads the omen — counsel of caution"
-    force: fate
+    force: supplication
     composer: Bach
     work: "St. Matthew Passion — 'Erbarme dich, mein Gott'"
     decision: added
     why: >
-      Polydamas, the counselor, is the figure who reads correctly. His warning is not cowardice —
-      it is the voice of interpretation, of deference to divine signal. 'Erbarme dich' is the
-      aria of the one who sees clearly and is not heard: Peter's weeping after the denial. In
-      Book XII, Polydamas is Peter — he understands what the sign means, states it plainly, and
-      is overruled. The suspended, inward melodic line of the aria is perfect for fate-accepted,
-      fate-spoken, fate-refused.
+      Polydamas, the counselor, is the figure who reads correctly. His speech is not argument —
+      it is an act of supplication addressed to Hector on behalf of the divine signal: please,
+      hear this. He is the poem's Peter — he understood the sign, stated it plainly at personal
+      cost, and was overruled by the man everyone follows. 'Erbarme dich' is Bach's music for
+      exactly this register: the exposed melodic line of someone who has seen clearly and was
+      not heard, suspended above accompaniment that will not resolve, an inward clarity that
+      the poem will bear out but that the scene denies. Supplication in this register is not
+      weakness; it is interpretation offered in deference to a sign larger than either speaker.
   - n: 5
     scene: "Hector's refusal — 'one omen is best: to fight for your country'"
     force: wrath

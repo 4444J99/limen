@@ -26,7 +26,7 @@ but the cold, forward movement of a man spending himself deliberately.
 | 4 | Achilles refuses food — grief as refusal of the living world | **Schubert — *Winterreise*: "Der Leiermann"** | grief |
 | 5 | Achilles grieves while the army prepares around him | **Mahler — Symphony No. 9: IV. Adagio** | grief |
 | 6 | The arming scene — divine armor on a doomed man | **Beethoven — Symphony No. 7: II. Allegretto** | fate |
-| 7 | Xanthus speaks — the horse prophesies Achilles' death | **Berlioz — *Symphonie fantastique*: V. "Dream of a Witches' Sabbath"** | fate |
+| 7 | Xanthus speaks — the horse prophesies Achilles' death | **Bartók — *Music for Strings, Percussion and Celesta*: III. Adagio** | fate |
 | 8 | Achilles answers the prophecy — "I know it well; I will not stop" | **Beethoven — Piano Sonata No. 23 'Appassionata': III. Allegro ma non troppo** | wrath |
 | 9 | Achilles rides out — the Myrmidons follow, the battle begins | **Prokofiev — *Romeo and Juliet*: "Montagues and Capulets"** | wrath |
 
@@ -90,16 +90,18 @@ Seventh's Allegretto is the only movement that is simultaneously funeral march a
 its dotted rhythm is fate as cadence, neither fast nor slow, neither triumphant nor despairing.
 Beethoven found the exact tempo of necessity. Achilles is not celebrating. He is fulfilling.
 
-**7. Berlioz — *Symphonie fantastique*: V. "Dream of a Witches' Sabbath"** (fate)
+**7. Bartók — *Music for Strings, Percussion and Celesta*: III. Adagio** (fate)
 
 The horse Xanthus speaks. Hera has given him the power of speech for this moment; after he
 delivers his prophecy — that Achilles will die soon, not by any human failing but by a god and
 fate — the Erinyes silence him. A horse prophesies in human speech; the Furies restore the
 natural order. This is the uncanny irrupting into the heroic world: the boundary between animal
-and divine collapsed, fate speaking through the wrong mouth. Berlioz's Witches' Sabbath is the
-right register — the supernatural rendered sonically real, the *Dies Irae* quoted in grotesque
-diminution, the cosmos and the absurd occupying the same moment. The poem has been disrupting
-its own grammar; this is the loudest disruption yet.
+and divine collapsed, fate speaking through the wrong mouth. Bartók's third movement is the
+sonically exact register for this scene — xylophone, celesta, and strings in a tessiture where
+nothing is tonal and nothing resolves, the world briefly operating outside its own rules. It is
+not a funeral and not a march; it is fate as wrong-grammar, the cosmos tilting on its axis
+without warning. The poem has been disrupting its own grammar; this is the moment where the
+disruption goes all the way to the animal throat.
 
 **8. Beethoven — Piano Sonata No. 23 'Appassionata': III. Allegro ma non troppo** (wrath)
 

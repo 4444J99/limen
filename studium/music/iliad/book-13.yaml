@@ -12,13 +12,13 @@ principle: >
   is not a hero's glory-run but an old commander's methodical ferocity, shot through with
   the vertigo of the grinding line.
 force_arc:
+  - fate
   - divine-intervention
   - divine-intervention
-  - wrath
-  - wrath
   - fate
   - wrath
   - wrath
+  - metamorphosis
   - law
   - wrath
   - wrath
@@ -65,18 +65,18 @@ tracks:
       he is effective. The Achaean soldiers do not know what has touched them; they only
       know their legs hold.
   - n: 4
-    scene: "The two Aiantes form the defensive line / wrath crystallizes into formation"
-    force: wrath
+    scene: "The two Aiantes form the defensive line / fate crystallizes into formation"
+    force: fate
     composer: Beethoven
     work: "Symphony No. 5 — I. Allegro con brio"
     decision: added
     why: >
-      The Aiantes locking shields is where wrath stops being personal and becomes
-      structural — the hammering motif of Beethoven's Fifth is the only language for
-      a line that will not break by force of pressure per se, but by the weight of
-      absolute refusal. The book's central tension is not individual aristeia but
-      sustained formation pressure, and the Fifth's opening movement is that pressure
-      rendered in musical grammar: inexorable, asymmetric, not yet resolved.
+      The Aiantes locking shields is where the line's fate is set — the hammering motif
+      of Beethoven's Fifth is the canonical musical grammar of fate as inexorable pressure:
+      not one hero's fury but the structural insistence of a force that will not be denied.
+      Beethoven's Fifth is the fate exemplar (dominant-force.yaml cites it first); the
+      scene earns it because the defensive line, once formed, is the axis on which the
+      whole book turns — inexorable, asymmetric, not yet resolved.
   - n: 5
     scene: "Idomeneus arms himself — old commander entering the grind"
     force: wrath

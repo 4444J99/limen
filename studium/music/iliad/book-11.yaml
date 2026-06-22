@@ -29,14 +29,15 @@ tracks:
   - n: 2
     scene: "Agamemnon in his killing rage — the aristeia itself"
     force: wrath
-    composer: Holst
-    work: "The Planets — 'Mars, the Bringer of War'"
+    composer: Shostakovich
+    work: "Symphony No. 7 'Leningrad' — I. Allegretto (invasion episode)"
     decision: added
     why: >
       The aristeia is explicit, metronomic killing. Agamemnon cuts through Trojans — named deaths,
-      close detail, blood economy. Holst's 5/4 hostility is the right register: asymmetrical, never
-      settling, mechanically lethal. Book I used this for the verbal quarrel; Book XI earns it for
-      actual slaughter. The two books rhyme: the force has finally become external.
+      one after another, relentless accumulation. Shostakovich's invasion episode is the correct
+      register: a simple theme that repeats and repeats, growing mechanically louder, accumulating
+      mass without mercy or variation. It is not rage as psychology but killing as procedure —
+      exactly the grammar of an aristeia, where the hero becomes a machine of war rather than a man.
   - n: 3
     scene: "Agamemnon is wounded — the king falls back"
     force: grief
@@ -46,8 +47,10 @@ tracks:
     why: >
       Agamemnon takes a spear through the arm, fights on, then is forced from the field — his
       authority draining with his blood. "Nimrod" is not funeral music; it is the register of
-      private nobility under pressure, the moment a great man has to stop. The wound is physical
-      but the grief is tonal: something at the center of the Greek world has been punctured.
+      private nobility under pressure, the moment a great man has to stop. Elgar wrote "Nimrod"
+      for a friend who had talked him out of giving up composing; it carries that specific weight
+      of being held up when one's own force has given out. The wound is physical but the grief
+      is tonal: something at the center of the Greek world has been punctured.
   - n: 4
     scene: "The tide turns — Trojans advance across the plain"
     force: fate
@@ -84,18 +87,21 @@ tracks:
       force — the most interior of the heroes, suddenly unhoused from his usual cunning context.
       Sibelius' concerto opens with a solitary violin against silence, then resistance. The Nordic
       isolation and dark orchestral pressure match Odysseus' circumference of spears exactly.
+      He survives. But the fate force operates here because he should not have had to fight alone.
   - n: 7
     scene: "Machaon is shot — the healer felled"
     force: grief
-    composer: Fauré
-    work: "Requiem — 'Agnus Dei'"
+    composer: Barber
+    work: "Adagio for Strings, Op. 11"
     decision: added
     why: >
       Machaon the physician, son of Asclepius, takes Paris' arrow. This is the cruelest structural
-      irony of the book: the healer is wounded. Fauré's Agnus Dei is not terminal grief — it is
-      grief suspended in care, hovering between loss and release. Not the In Paradisum (salvation
-      register) and not the Lacrimosa (public funeral). Exactly the private register: the wound
-      that will now not be treated, because the one who treats is hurt.
+      irony of the book: the healer is wounded. Barber's Adagio is private grief without public
+      ceremony — not a funeral march, not a Dies Irae, but the slow inward collapse of something
+      essential. The wound that will not be treated because the one who treats is felled calls for
+      exactly this register: grief suspended in care, unresolved, hovering. The Adagio does not
+      end in peace or release — it shatters and falls silent, which is the correct finish for
+      the scene where the healers run out.
   - n: 8
     scene: "Achilles watches from the stern — the moment of watching"
     force: supplication
@@ -138,12 +144,29 @@ demoted:
     status: "explicitly forbidden before Book XXII; save for Hector's death"
     why: >
       The wounded heroes of Book XI are alive. The grief register here is private, inward,
-      ambulatory — Elgar/Schubert/Fauré territory. The funeral-march register opens only when
+      ambulatory — Barber/Schubert/Elgar territory. The funeral-march register opens only when
       Hector falls (Book XXII). Using it here would misread the poem's structure.
+  - composer: Fauré
+    work: "Requiem — 'Agnus Dei'"
+    status: "forbidden before Book XXII; requiem register reserved for the terminal"
+    why: >
+      Requiem movements, however gentle, carry the liturgy-of-the-dead register. Book XI's grief
+      is wounded grief — private, ambulatory, still-breathing. The healer felled calls for Barber's
+      Adagio (named in the pre-XXII grief register), not a mass for the dead. Fauré's Agnus Dei
+      belongs at or after Hector's death.
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "reserved for Book I; its natural home is the verbal quarrel"
+    why: >
+      Book I claimed 'Mars' for the Agamemnon/Achilles quarrel — the verbal-force register.
+      Rather than rhyme the books on the same piece, Book XI uses Shostakovich's invasion episode
+      for the aristeia itself: mechanical, accumulating, relentlessly procedural slaughter. That
+      is a more precise match for named deaths one after another than the 5/4 hostility of 'Mars,'
+      and it keeps the composers diverse across the cycle.
   - composer: Mahler
     work: "Symphony No. 5 — IV. Adagietto"
     status: "reserved; already used in Book I for Achilles and Thetis"
     why: >
       Book I claimed the Adagietto for private grief between Achilles and his mother. Book XI's
       grief is more numerous, more distributed — the whole Greek leadership wounded. The Elgar,
-      Schubert, and Fauré selections cover this field at different registers without repetition.
+      Schubert, and Barber selections cover this field at different registers without repetition.

@@ -12,7 +12,7 @@ principle: >
   malice; a duel whose outcome everyone already knows; a dying plea that is refused; and
   then the body lashed and dragged while the woman who loved him watches from the tower.
   This book is the precise moment where epic becomes tragedy.
-force_arc: [fate, grief, wrath, fate, wrath, fate, grief, grief, grief]
+force_arc: [fate, grief, fate, wrath, wrath, fate, grief, grief, grief, grief, grief]
 dominant_force: grief
 tracks:
   - n: 1
@@ -130,18 +130,19 @@ tracks:
       everything — not just for Troy, but for the poem itself.
   - n: 9
     scene: "Achilles lashes the body to the chariot — defilement"
-    force: wrath
+    force: grief
     composer: Bartók
     work: "Music for Strings, Percussion and Celesta — III. Adagio"
     decision: added
     why: >
-      After the death, wrath does not stop — it continues into the body. Achilles pierces
-      Hector's heels, threads the reins through, drags him in the dust around the walls.
-      Priam watches from above. Bartók's Adagio is the right register: string writing that
-      is beautiful and wrong, harmonically suspended in something that should not be
-      happening, a combination of grief and violence that refuses to resolve. Wrath here
-      has become something past anger — it is pathological, ritual, an act against the
-      body of the dead, which Homer presents as a violation of cosmic order.
+      After the death, grief does not stop — it is violated. Achilles pierces Hector's
+      heels, threads the reins through, drags him in the dust around the walls. Priam
+      watches from above. Bartók's Adagio is the right register: string writing that is
+      beautiful and wrong, harmonically suspended in something that should not be
+      happening. This is grief as cosmically prohibited wrongness — the body that should
+      be returned and buried is instead defiled. The music refuses to resolve because the
+      act itself refuses the order that grief requires. Slow, inward, and haunted: grief
+      at the scale of a violation of cosmic law.
   - n: 10
     scene: "The Trojan women tear their hair — public lamentation"
     force: grief

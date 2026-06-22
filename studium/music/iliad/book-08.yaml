@@ -9,7 +9,7 @@ principle: >
   The Achaean retreat is not a battle reversal; it is a cosmic adjustment. The book ends not in
   death but in light: Trojan watchfires burning on the plain like a second sky, ominous,
   magnificent, and utterly beyond Achaean control.
-force_arc: [law, divine-intervention, fate, wrath, exile, grief, fate, divine-intervention, law, fate]
+force_arc: [law, divine-intervention, fate, wrath, grief, wrath, divine-intervention, law, exile, fate]
 dominant_force: fate
 tracks:
   - n: 1
@@ -72,14 +72,16 @@ tracks:
   - n: 6
     scene: "Diomedes rescues Nestor / Hector advances"
     force: wrath
-    composer: Holst
-    work: "The Planets — 'Mars, the Bringer of War' (reprise register)"
+    composer: Shostakovich
+    work: "Symphony No. 7 'Leningrad' — I. Allegretto (the Invasion episode)"
     decision: added
     why: >
       The rescue galvanizes the scene: Diomedes, the ablest Greek fighter after Achilles,
       chooses to stand when others flee. But Hector is there and Zeus is behind him.
-      The 5/4 pulse of Mars returns — not for the Achaean quarrel of Book I, but for
-      the moment when two wills collide on the field with divine backing on one side only.
+      Shostakovich's Invasion episode begins as something almost still and builds, mechanically,
+      inexorably, to a force that cannot be argued with — not because the other side lacks courage,
+      but because what is pressing against them has ceased to be an equal. Diomedes has valor;
+      Hector has Zeus. The music knows the difference.
   - n: 7
     scene: "Zeus' thunderbolts / Achaean terror before the divine sign"
     force: divine-intervention

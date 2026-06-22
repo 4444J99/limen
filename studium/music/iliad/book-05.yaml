@@ -16,9 +16,10 @@ force_arc:
   - wrath
   - wrath
   - divine-intervention
-  - wrath
+  - revelation
   - divine-intervention
   - wrath
+  - comedy
   - comedy
 dominant_force: wrath
 tracks:
@@ -26,7 +27,7 @@ tracks:
     scene: "Athena fills Diomedes with valor — divine empowerment, eyes unclouded"
     force: divine-intervention
     composer: Strauss
-    work: "Also sprach Zarathustra — 'Von den Hinterweltlern' (opening sunrise)"
+    work: "Also sprach Zarathustra — Einleitung (sunrise)"
     decision: added
     why: >
       The book opens not with battle but with transformation: Athena pours menos into Diomedes,
@@ -50,15 +51,18 @@ tracks:
   - n: 3
     scene: "Diomedes kills Pandarus — aristeia at full violence"
     force: wrath
-    composer: Stravinsky
-    work: "The Rite of Spring — 'The Sage' / 'The Augurs of Spring'"
+    composer: Nielsen
+    work: "Symphony No. 4 'The Inextinguishable' — IV. Finale"
     decision: added
     why: >
-      The killing of Pandarus — the Trojan archer who broke the truce in Book IV — is not
-      merely a battle death; it is the aristeia at its pure annihilating mechanism. Stravinsky's
-      Augurs are rhythmic ritual violence, stamped and insistent. Each accent is a kill. The
-      sequence of Diomedes' victims in Book V has the same relentless stamp — not individual
-      combat but a harvesting force moving through the field.
+      The aristeia in Book V is not individual duels — it is a harvesting. Diomedes moves
+      through the Trojan field as mechanism, not man. Homer gives us name after name: Astynous,
+      Hypeiron, Abas, Polyidus, Xanthus, Thoon. Each one dies. Nielsen's finale is the one
+      passage in the symphonic repertoire where two sets of timpani battle each other in open
+      space — not violence as passion but violence as inextinguishable process, a force that
+      cannot be stopped because stopping is not in its nature. That is the aristeia's inner
+      logic: not rage, but inevitability. The timpani are Diomedes. The field keeps breaking
+      under them.
   - n: 4
     scene: "Aeneas wounded — Aphrodite intervenes, shields her son"
     force: divine-intervention
@@ -73,7 +77,7 @@ tracks:
       The flute is Aphrodite before she knows what Diomedes will do.
   - n: 5
     scene: "Diomedes wounds Aphrodite — mortal blade into divine flesh"
-    force: wrath
+    force: revelation
     composer: Bartók
     work: "Music for Strings, Percussion and Celesta — III. Adagio"
     decision: added

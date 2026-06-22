@@ -11,7 +11,7 @@ principle: >
   between killer and cosmos. The book moves: mass slaughter → river-god's fury → Achilles nearly
   drowned → fire defeating water → the gods themselves stripped of dignity in open combat. Wrath
   here is not heroic; it has gone past heroism into something vertiginous and almost inhuman.
-force_arc: [wrath, wrath, divine-intervention, fate, supplication, divine-intervention, wrath, divine-intervention, comedy]
+force_arc: [wrath, supplication, divine-intervention, fate, supplication, divine-intervention, wrath, revelation, comedy]
 dominant_force: wrath
 tracks:
   - n: 1
@@ -105,14 +105,14 @@ tracks:
       violence; the divine battle is the ritual violence of the cosmic order turned on itself.
   - n: 8
     scene: "Apollo refuses to fight Poseidon — the god of light steps back from the god of earth; Apollo and Artemis humiliated"
-    force: divine-intervention
+    force: revelation
     composer: Messiaen
     work: "Quartet for the End of Time — V. 'Louange à l'Éternité de Jésus'"
     decision: added
     why: >
       Apollo refuses to fight Poseidon — not from weakness but from something like divine restraint
       or irony; the earth-shaker and the far-shooter recognize that their combat would be undignified.
-      Apollo's refusal is an act of proportion, almost philosophical. Messiaen's Quintet movement is
+      Apollo's refusal is an act of proportion, almost philosophical. Messiaen's Quartet movement is
       stillness and verticality — revelation as non-combat, the force that does not strike. It scores
       the poem's remarkable moment where the most powerful god steps back into luminous refusal.
   - n: 9

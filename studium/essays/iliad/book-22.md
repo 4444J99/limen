@@ -19,7 +19,7 @@ The playlist does not score the Trojan War. It scores *this* book's specific mov
 | 6 | Zeus weighs the fates — Athena descends | fate | Verdi | La forza del destino — Overture |
 | 7 | The duel — Hector realizes the betrayal | grief | Schubert | String Quartet No. 14 'Death and the Maiden' — II. Andante con moto |
 | 8 | Hector's death and dying plea refused | grief | Wagner | Götterdämmerung — "Siegfried's Funeral March" |
-| 9 | Achilles lashes the body to the chariot | wrath | Bartók | Music for Strings, Percussion and Celesta — III. Adagio |
+| 9 | Achilles lashes the body to the chariot | grief | Bartók | Music for Strings, Percussion and Celesta — III. Adagio |
 | 10 | The Trojan women tear their hair | grief | Górecki | Symphony No. 3 'Symphony of Sorrowful Songs' — I. Lento |
 | 11 | Andromache's lament at the tower | grief | Mahler | Symphony No. 9 — IV. Adagio |
 
@@ -93,11 +93,11 @@ Wagner's Funeral March is built on Siegfried's leitmotifs cycling through their 
 
 ---
 
-**9. Bartók — Music for Strings, Percussion and Celesta, III. Adagio** *(wrath: rhythmic pressure, unresolved harmony)*
+**9. Bartók — Music for Strings, Percussion and Celesta, III. Adagio** *(grief: slow tempo, inward line)*
 
 Achilles pierces Hector's ankles, threads the reins through the wounds, lashes the body behind his chariot, and drags it around the walls. Priam watches from above. This is the defilement of the body, which Homer presents as a violation of cosmic order — the dead are owed their burial, their passage, their dignity. Achilles is committing an act that the gods will eventually punish him for, that Priam will eventually cross the lines to beg him to stop.
 
-Bartók's Adagio is string writing that is beautiful and wrong simultaneously: harmonics, muted passages, a night-music quality that is not peaceful but suspended in wrongness, grief and violence occupying the same sonic space without resolving into either. Wrath here has moved past anger into something pathological. The dragging of Hector's body is not a military act or even an emotional act. It is ritual, compulsive, an attempt to exceed the violence that was done to Patroclus. Bartók gives the music for an act that has no correct musical register, because the act itself has exceeded what is permitted.
+Bartók's Adagio is string writing that is beautiful and wrong simultaneously: harmonics, muted passages, a night-music quality that is not peaceful but suspended in wrongness, grief inhabiting a space that should not exist. This is grief as cosmic violation — not the private grief of recognition (track 7) or the public grief of death (track 8), but grief at the scale of a prohibited act, the grief of watching the body of the beloved dragged in the dust. The music is slow, inward, and refuses to resolve precisely because the act it scores refuses the order that grief requires. Bartók understood that some violations have no correct emotional register — only a sustained, harmonically suspended wrongness that holds the scene without explaining it.
 
 ---
 
@@ -122,7 +122,7 @@ Mahler's Ninth Adagio was the last thing he completed. Written in the knowledge 
 ## The Dominant Arc of Book XXII
 
 ```
-fate (waiting) → grief (supplication) → fate (deliberation) → wrath (flight / chase) → fate (divine betrayal) → grief (recognition) → grief (the death / the register opens) → wrath (defilement) → grief (communal lamentation) → grief (Andromache at the tower)
+fate (waiting) → grief (supplication) → fate (deliberation) → wrath (flight) → wrath (three circuits) → fate (divine betrayal) → grief (recognition) → grief (the death / the register opens) → grief (defilement) → grief (communal lamentation) → grief (Andromache at the tower)
 ```
 
 This is why the playlist moves Beethoven → Purcell → Brahms → Shostakovich → Ravel → Verdi → Schubert → Wagner → Bartók → Górecki → Mahler.

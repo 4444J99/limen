@@ -11,7 +11,7 @@ principle: >
   ships burn not because the Trojans are stronger but because the universe reasserts itself.
   Apollo does not lead Hector: he reconstitutes him, pours him back into the war like a force
   of nature resuming. Ajax on the ships is not heroism — it is a man fighting the tide.
-force_arc: [wrath, divine-intervention, law, divine-intervention, fate, wrath, fate, grief, wrath, fate]
+force_arc: [wrath, fate, law, divine-intervention, law, divine-intervention, fate, fate, wrath, fate]
 dominant_force: fate
 tracks:
   - n: 1
@@ -66,7 +66,7 @@ tracks:
     scene: "Poseidon yields — reluctant divine submission"
     force: law
     composer: Brahms
-    work: "Symphony No. 1 — IV. Adagio — Un poco Allegretto e grazioso"
+    work: "Symphony No. 1 — IV. Adagio (slow introduction)"
     decision: added
     why: >
       Poseidon's retreat is grudging and formal: equal rank, ancient grievance, but submission
@@ -77,7 +77,7 @@ tracks:
     scene: "Apollo descends — Hector revived"
     force: divine-intervention
     composer: Strauss
-    work: "Also sprach Zarathustra — 'Von den Hinterweltlern' (opening sunrise into first theme)"
+    work: "Also sprach Zarathustra — 'Einleitung' (sunrise opening)"
     decision: added
     why: >
       Apollo does not heal Hector gradually. He breathes life back into him the way a god
@@ -87,7 +87,7 @@ tracks:
       chorale erupts; the man is restored; the world tips.
   - n: 7
     scene: "Hector leads the Trojans — the flood reversal"
-    force: wrath
+    force: fate
     composer: Holst
     work: "The Planets — 'Jupiter, the Bringer of Jollity' (central march passage)"
     decision: added
@@ -95,8 +95,9 @@ tracks:
       The Trojan advance in Book XV is not Hector's personal fury — it is more than that: an
       entire army flowing forward because the divine permits it. Jupiter's central march has
       the quality of something irresistible without being savage — it is confident, immense,
-      forward, the pressure of a tide returning. Wrath here is not private rage but the rhythm
-      of a world returning to its appointed direction.
+      forward, the pressure of a tide returning. This is fate experienced from inside the
+      current: not a blow delivered from outside but the resumption of direction. The Trojans
+      are not angry. They are the current.
   - n: 8
     scene: "The Achaean ranks break — Trojan momentum as fate"
     force: fate
@@ -111,7 +112,7 @@ tracks:
       the motif returns; they lose ground again.
   - n: 9
     scene: "Ajax on the ships — the last-ditch defense, grief becoming wrath"
-    force: grief
+    force: wrath
     composer: Mahler
     work: "Symphony No. 6 — I. Allegro energico (first movement, march episode)"
     decision: added

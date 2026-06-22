@@ -11,7 +11,7 @@ principle: >
   That combination — courtesy and intransigence, warmth and immovability — is the
   book's specific register. The grief at the end is not public or funereal; it is the
   grief of connection refused, of a reconciliation that almost happened and didn't.
-force_arc: [supplication, law, law, law, wrath, wrath, law, wrath, grief, grief]
+force_arc: [supplication, law, law, law, wrath, wrath, supplication, wrath, grief, grief]
 dominant_force: wrath
 tracks:
   - n: 1
@@ -144,18 +144,20 @@ tracks:
   - n: 10
     scene: "Achilles alone — grief suspended in refusal"
     force: grief
-    composer: Fauré
-    work: "Requiem — 'In Paradisum' (Op. 48)"
+    composer: Brahms
+    work: "Intermezzo in A major (Op. 118, No. 2)"
     decision: added
     why: >
       Book IX ends on Achilles, not on the Greeks. He has made his choice. He is
       alone with Patroclus. He will sleep; he will grieve; he will not return — not
-      yet. Fauré's 'In Paradisum' is the most radiant piece of non-funereal grief
-      in the repertoire: it is not mourning the dead, it is a voice released into a
-      stillness that is neither triumph nor defeat. Achilles in Book IX is suspended
-      between two deaths — his companion's and his own — and does not know it. The
-      Fauré holds that suspension: still, inward, unreached by the arguments just
-      delivered, at rest in its own unresolvable condition.
+      yet. Brahms' Intermezzo Op. 118 No. 2 is the most private grief in the piano
+      literature: not mourning in public, not weeping in theater, but a man alone
+      with a feeling that has nowhere to go. The A-major theme breathes and returns
+      to itself; the middle section darkens without breaking; the reprise comes back
+      not as consolation but as the same weight now fully owned. Achilles in Book IX
+      is suspended between two deaths he cannot see yet. The Brahms holds that
+      suspension: still, inward, at rest in its own unresolvable condition — grief
+      that has become the texture of a settled soul, not the onset of a funeral.
 demoted:
   - composer: Wagner
     work: "Götterdämmerung — 'Siegfried's Funeral March'"
@@ -165,11 +167,20 @@ demoted:
       private and self-enclosed, not public-heroic-monumental. Wagner's Trauermarsch
       would be false to the scene: Achilles is still alive, still in control,
       surrounded by warmth. The grief here is the grief of refusal, not death.
+  - composer: Fauré
+    work: "Requiem — 'In Paradisum' (Op. 48)"
+    status: "forbidden before Book XXII — requiem register"
+    why: >
+      'In Paradisum' is the final movement of a Catholic funeral mass, regardless of
+      its radiance. Book IX's grief is private and alive — the grief of refusal, not
+      the grief of death. No requiem movement may open this register before Hector
+      falls in Book XXII. The Brahms Op. 118 No. 2 carries the same inward stillness
+      without the funeral-mass frame.
   - composer: Barber
     work: "Adagio for Strings"
     status: "too well-known, too undifferentiated for this book's specific register"
     why: >
       The Barber Adagio has become a cultural shorthand for grief-in-general. Book IX
       requires grief with a precise texture: inward, philosophical, courtesy-wrapped.
-      The Barber is too exposed, too weeping, too external. Fauré and Mahler carry
+      The Barber is too exposed, too weeping, too external. Brahms and Mahler carry
       the right combination of restraint and depth.

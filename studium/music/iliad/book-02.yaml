@@ -11,7 +11,7 @@ principle: >
   names: ships, places, captains, the weight of the world converging on one plain. The book is
   about what holds an army together — and how close it came to dissolution before the first spear
   was ever thrown.
-force_arc: [divine-intervention, wrath, law, comedy, law, memory, kingship, fate]
+force_arc: [divine-intervention, wrath, divine-intervention, law, comedy, law, memory, sacrifice, memory, kingship, fate]
 dominant_force: law
 tracks:
   - n: 1
@@ -109,16 +109,19 @@ tracks:
   - n: 8
     scene: "Agamemnon's sacrifice before battle / the altar on the plain"
     force: sacrifice
-    composer: Verdi
-    work: "Requiem — 'Dies Irae'"
+    composer: Stravinsky
+    work: "The Rite of Spring — Part II: 'Sacrificial Dance (The Chosen One)'"
     decision: added
     why: >
       Before the Catalogue, Agamemnon sacrifices a fat ox to Zeus — and Zeus rejects it (his
       thighs burn, the omen is dark, the favor is withheld). This is sacrifice as ritual weight
       without return: the processional gravity of the act, the fire, the priests, the sense of
-      a compact being offered to a god who is already arranging betrayal. Verdi's 'Dies Irae'
-      brings ritual weight and immolation-build at full scale. Sacrifice's requirement is
-      processional gravity and immolation; nothing in the canon matches Verdi here.
+      a compact being offered to a god who is already arranging betrayal. Stravinsky's Sacrificial
+      Dance — a different movement from Book I's 'Augurs of Spring' — brings ritual weight and
+      immolation-build at full scale without the terminal register of a requiem. The relentless
+      percussive drive and harmonic violence capture the act of a sacrifice that fails, fire
+      consuming what will not be answered. Sacrifice's requirement is processional gravity and
+      immolation build; the Sacrificial Dance is its most violent instantiation.
   - n: 9
     scene: "The Catalogue of Ships — name after name, fleet after fleet"
     force: memory
@@ -164,6 +167,13 @@ demoted:
     why: >
       The funeral-march / terminal-monumental-grief register opens only at Book XXII. Book II has
       death as implication and mobilization, not as event.
+  - composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    status: "save for Book XXII or later; forbidden before then"
+    why: >
+      The Dies Irae is the judgment-of-the-dead movement — terminal public-funeral register.
+      Book II's sacrifice is a dark omen, not a death-event; the rejected sacrifice needs
+      ritual-violence weight (Stravinsky), not a requiem's eschatological finality.
   - composer: Tchaikovsky
     work: "1812 Overture"
     status: "demoted — wrong affect"

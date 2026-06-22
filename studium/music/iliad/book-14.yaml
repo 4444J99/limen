@@ -12,7 +12,7 @@ principle: >
   The book moves from intimate feminine preparation through divine seduction to sudden
   martial reversal. The danger here is scoring it as battle music throughout; the book's
   center of gravity is a bedroom on a mountaintop.
-force_arc: [desire, metamorphosis, desire, divine-intervention, comedy, wrath, wrath, return]
+force_arc: [grief, metamorphosis, desire, desire, supplication, desire, comedy, divine-intervention, return, wrath, grief]
 dominant_force: desire
 tracks:
   - n: 1
@@ -58,31 +58,34 @@ tracks:
   - n: 4
     scene: "Hera borrows Aphrodite's girdle — the erotic instrument"
     force: desire
-    composer: Wagner
-    work: "Tristan und Isolde — 'Liebestod' (Act III finale)"
+    composer: Debussy
+    work: "Prélude à l'après-midi d'un faune"
     decision: added
     why: >
       The cestus, Aphrodite's girdle, contains "love, desire, sweet talk, the whisper
-      that steals away the minds even of the wise." Wagner's Liebestod is the most
-      ruthless harmonic statement of desire as dissolution of will — the moment Tristan
-      and Isolde's erotic longing consumes all other consideration. Hera is going to
-      use this object to dissolve the god who rules the universe. The Liebestod earns
-      its place here not as death music but as weapon music: desire as the one force
-      that can undo cosmic authority.
+      that steals away the minds even of the wise." Homer's description is the poem's
+      most dangerous moment: an object whose contents dissolve the will even of the wise.
+      Debussy's Faune is the most purely erotic piece in the orchestral canon without
+      terminal weight — chromatic longing that neither resolves nor dies, desire suspended
+      at the moment of reaching. The flute's opening gesture is the girdle being lifted
+      from the box: invitation, not consummation. Hera is arming herself with precisely
+      this: deferred desire that never closes, and therefore never stops pulling.
   - n: 5
     scene: "Hera approaches Sleep — the bribe of a Grace"
-    force: divine-intervention
+    force: supplication
     composer: Fauré
     work: "Pelléas et Mélisande Suite — 'Sicilienne'"
     decision: added
     why: >
       Hera must negotiate with Hypnos (Sleep) before she can reach Zeus. She promises
-      him one of the Graces — Pasithée — as a bride. This is divine transaction carried
-      out in a forest near Lemnos, all whisper and shimmer. Fauré's Sicilienne is the
-      exact register: delicate, just off-balance, carrying something slightly illicit
-      beneath its surface grace. The dominant-force requirement for divine-intervention
-      is "sudden color shift, brass/strings contrast" — Fauré achieves this subtly,
-      the strings carrying erotic lightness while the texture keeps shifting.
+      him one of the Graces — Pasithée — as a bride. This is supplication: a goddess
+      making an offer she cannot compel, in whisper, near Lemnos, all delicacy and
+      transacted air. The dominant-force requirement for supplication is "suspended
+      cadence, exposed melodic line." Fauré's Sicilienne is precisely this — the
+      flute line suspended over gently rocking strings, the melody exposed and
+      pleading in its very lightness. The just-off-balance quality carries the
+      transaction's slight illicitness: Hera is bargaining with supernatural Sleep,
+      and the outcome is not yet certain.
   - n: 6
     scene: "Hera and Zeus on Mount Ida — the seduction"
     force: desire
@@ -176,6 +179,15 @@ demoted:
     why: >
       Hector falls in Book XIV but does not die. The public-funeral register must
       wait for Book XXII. Mahler's Ninth (inward, suspended) holds the right pitch here.
+  - composer: Wagner
+    work: "Tristan und Isolde — 'Liebestod' (Act III finale)"
+    status: "not before Book XXII; terminal death register forbidden pre-XXII"
+    why: >
+      The Liebestod is desire-as-death: Isolde's transfiguration over Tristan's corpse
+      is its primary and inescapable affect. Arguing it as 'weapon music not death music'
+      does not override the register — the movement's terminus is a dying woman. That
+      weight belongs to Book XXII or later. Debussy's Faune carries the erotic-instrument
+      register without any terminal gravity.
   - composer: Strauss
     work: "Also sprach Zarathustra — opening"
     status: "demoted from divine-intervention"

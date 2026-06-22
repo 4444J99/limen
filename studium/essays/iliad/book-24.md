@@ -27,7 +27,7 @@ men began.
 | 5 | Priam clasps the hands of Achilles — the supplication | **Bach — *St. Matthew Passion*: "Erbarme dich, mein Gott"** | supplication |
 | 6 | Achilles and Priam weep together — each for his own dead | **Wagner — *Götterdämmerung*: "Siegfried's Funeral March"** | grief |
 | 7 | Achilles agrees — the ransom taken, the body prepared | **Barber — Adagio for Strings** | grief |
-| 8 | Achilles and Priam eat together — the scene of shared mortality | **Fauré — *Requiem*: "In Paradisum"** | grief |
+| 8 | Achilles and Priam eat together — the scene of shared mortality | **Fauré — *Requiem*: "In Paradisum"** | salvation |
 | 9 | Priam sleeps in Achilles' tent — Hermes wakes him before dawn | **Pärt — *Spiegel im Spiegel*** | supplication |
 | 10 | The return to Troy — Cassandra on the walls | **Berlioz — *Les Troyens*: "Malheureux roi!"** | grief |
 | 11 | Andromache's lament | **Purcell — *Dido and Aeneas*: "When I am laid in earth"** | grief |
@@ -146,7 +146,7 @@ quality — the grief that cannot complete itself — is exactly what Achilles' 
 is: an incomplete mercy, a kindness that costs something real, performed by a man who is not
 finished grieving and knows it.
 
-**8. Fauré — *Requiem*: "In Paradisum" — *grief***
+**8. Fauré — *Requiem*: "In Paradisum" — *salvation***
 
 Achilles tells Priam that even Niobe ate, after all her children died. They sit together at a
 table in the enemy's camp and share food, two men who have spent the better part of a decade

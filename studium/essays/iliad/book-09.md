@@ -15,7 +15,7 @@ Book IX is the moment where the poem tests whether Achilles can be bought back. 
 | 7 | Phoenix weeps — the old man who raised him, undone | supplication | **Pärt — *Spiegel im Spiegel*** |
 | 8 | Achilles' courtesy and his immovability — wine, warmth, and no | wrath | **Schubert — String Quintet in C major, II. Adagio (D. 956)** |
 | 9 | The embassy returns empty — the Greeks receive the refusal | grief | **Mahler — Symphony No. 9, IV. Adagio** |
-| 10 | Achilles alone — grief suspended in refusal | grief | **Fauré — *Requiem*: "In Paradisum" (Op. 48)** |
+| 10 | Achilles alone — grief suspended in refusal | grief | **Brahms — Intermezzo in A major (Op. 118, No. 2)** |
 
 ---
 
@@ -57,9 +57,9 @@ The strangest register in Book IX, and the one that most marks the book as unlik
 
 The ambassadors cross the beach in silence back to the Greek camp. They have nothing. Diomedes, in a few lines, will say: let him stay, we will win without him — but that is bravado to cover the catastrophe. The real feeling is in the walk itself: the recognition that the embassy failed, that the greatest soldier in the army has closed himself off, that the Greeks are now exposed to whatever happens next. Mahler's Ninth Symphony Adagio is the composer's farewell to the world — not heroic, not weeping, but releasing: the texture thins, phrases trail into silence, the line continues until it doesn't. This is the grief register appropriate to Book IX: private, inward, not yet funeral-monumental. The funeral register belongs to Books XXII and XXIV. This is earlier, quieter — the grief of an opening that closed.
 
-**10. Fauré — *Requiem*: "In Paradisum" (Op. 48)**
+**10. Brahms — Intermezzo in A major (Op. 118, No. 2)**
 
-Book IX ends on Achilles, not on the Greeks. He has made his choice. He will sleep; he will not go to Troy in the morning; he is going home when the wind is right. He is at rest in his refusal. He does not know that Patroclus will die. He does not know that his own death is near, closer now than ever, because of what he said tonight. Fauré's 'In Paradisum' is the most radiant piece of non-funereal grief in the repertoire: it is not mourning the dead, it is a voice released into a stillness that is neither triumph nor defeat — a radiance that holds sorrow inside it without being overcome by it. Achilles in Book IX is suspended between two deaths he cannot see yet. The Fauré holds that suspension exactly: still, inward, at rest in its own unresolvable condition.
+Book IX ends on Achilles, not on the Greeks. He has made his choice. He will sleep; he will not go to Troy in the morning; he is going home when the wind is right. He is at rest in his refusal. He does not know that Patroclus will die. He does not know that his own death is near, closer now than ever, because of what he said tonight. Brahms' Intermezzo Op. 118 No. 2 is the most private grief in the piano literature: not mourning in public, not weeping in theater, but a man alone with a feeling that has nowhere to go. The A-major theme breathes and returns to itself; the middle section darkens without breaking; the reprise comes back not as consolation but as the same weight now fully owned. Achilles in Book IX is suspended between two deaths he cannot see yet. The Brahms holds that suspension exactly: still, inward, at rest in its own unresolvable condition — grief that has become the texture of a settled soul, not the onset of a funeral.
 
 ---
 
@@ -69,4 +69,4 @@ Book IX ends on Achilles, not on the Greeks. He has made his choice. He will sle
 supplication → law → law → law → wrath → wrath → supplication → wrath → grief → grief
 ```
 
-That is why the playlist moves Bach/Handel/Brahms (three modes of appeal, three textures of law and persuasion) into Beethoven/Shostakovich (the two faces of wrath-as-philosophy), through Pärt (love that continues past argument), into Schubert (warmth and intransigence as one thing), and closes with Mahler/Fauré (two modes of private grief — the Greeks' and Achilles' own). The dominant force is wrath — but it is wrath that has become so settled it no longer looks like rage. That is what makes Book IX the most intellectually terrifying book in the poem.
+That is why the playlist moves Bach/Handel/Brahms (three modes of appeal, three textures of law and persuasion) into Beethoven/Shostakovich (the two faces of wrath-as-philosophy), through Pärt (love that continues past argument), into Schubert (warmth and intransigence as one thing), and closes with Mahler/Brahms (two modes of private grief — the Greeks' and Achilles' own). The dominant force is wrath — but it is wrath that has become so settled it no longer looks like rage. That is what makes Book IX the most intellectually terrifying book in the poem.

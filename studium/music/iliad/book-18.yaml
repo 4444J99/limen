@@ -11,7 +11,7 @@ principle: >
   larger and colder, and then Hephaestus hammers the entire human cosmos onto a shield. The Shield
   is not armor. It is creation. This book moves from the most wounded sound a man can make
   to the most comprehensive image of life ever assembled in the poem.
-force_arc: [grief, grief, supplication, grief, metamorphosis, law, law, metamorphosis, wrath]
+force_arc: [grief, grief, grief, grief, metamorphosis, law, law, metamorphosis, wrath]
 dominant_force: grief
 tracks:
   - n: 1
@@ -43,16 +43,18 @@ tracks:
   - n: 3
     scene: "The Nereids gather / Thetis' lament"
     force: grief
-    composer: Purcell
-    work: "Dido and Aeneas — 'When I am laid in earth' (Dido's Lament)"
-    decision: added
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: "replaces Purcell 'Dido's Lament' (terminal-death register; held back pre-XXII)"
     why: >
-      Thetis and the fifty Nereids gather and cry aloud — a chorus of sea-goddesses lamenting.
-      This is grief as formal mourning, shaped by repetition, shaped by the knowledge that the
-      loss is not yet death but is already irreversible. Purcell's ground bass is the structural
-      fact of Dido's lament: an inexorable descending line beneath which melody pleads, reaching,
-      never arriving. The Nereids know Achilles will return to battle and die. They are mourning
-      what is already decided. That foreknowledge is in Purcell's form.
+      Thetis and the fifty Nereids gather and cry aloud — a chorus of sea-goddesses lamenting
+      together. This is grief as timeless formal mourning, shaped by repetition, shaped by the
+      knowledge that the loss is not yet death but is already irreversible. They know. They know
+      Achilles will return to battle and die. Pärt's 'Spiegel im Spiegel' — mirror in the mirror —
+      is grief without terminus: a single sustained line in the piano, a violin melody that moves
+      in long arcs above it, neither arriving nor departing. The piece has no funeral weight; it
+      has no public ceremony. It is purely private, inward, ancient in grain. The Nereids do not
+      hold a funeral — they hold vigil. Pärt gives the vigil, not the burial.
   - n: 4
     scene: "Achilles and Thetis — she holds his face"
     force: grief
@@ -134,6 +136,16 @@ tracks:
       now animated entirely by death's logic. The percussion and strings do not argue with each
       other: they converge.
 demoted:
+  - composer: Purcell
+    work: "Dido and Aeneas — 'When I am laid in earth' (Dido's Lament)"
+    status: "held back; terminal-death register forbidden pre-XXII"
+    why: >
+      Dido sings this aria while dying — it is an in-the-grave lament, the sound of a life
+      extinguishing. That register (terminal, public, irrevocable death already underway) is
+      forbidden before Book XXII (Hector's death). Book XVIII's grief is private and wounded,
+      not terminal. The foreknowledge quality was right but the weight was wrong. Replaced by
+      Pärt 'Spiegel im Spiegel', which carries the same pre-knowing grief without the
+      funeral-pall register. Purcell belongs in XXII or XXIV.
   - composer: Wagner
     work: "Götterdämmerung — 'Siegfried's Funeral March'"
     status: "held back; do not deploy before Book XXII"

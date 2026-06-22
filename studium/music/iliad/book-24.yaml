@@ -12,7 +12,7 @@ principle: >
   should be impossible → shared humanity across the body of an enemy → the threefold lament →
   burial. This is the poem's act of mercy: not peace, not forgiveness, not reconciliation — mercy,
   which is different, and harder.
-force_arc: [divine-intervention, divine-intervention, supplication, supplication, grief, grief, grief]
+force_arc: [divine-intervention, divine-intervention, grief, supplication, supplication, grief, grief, salvation, supplication, grief, grief, grief, grief]
 dominant_force: grief
 tracks:
   - n: 1
@@ -134,7 +134,7 @@ tracks:
       genuine.
   - n: 8
     scene: "Achilles and Priam eat together — the scene of shared mortality"
-    force: grief
+    force: salvation
     composer: Fauré
     work: "Requiem — 'In Paradisum'"
     decision: added

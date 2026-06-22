@@ -22,7 +22,7 @@ That is what this playlist scores: not "the Trojans are winning" as a military f
 | 3 | The golden scales: Achaean doom sinks | **Beethoven — Symphony No. 5, I. Allegro con brio** | fate |
 | 4 | Trojans drive the Greeks back | **Prokofiev — *Alexander Nevsky*, 'The Crusaders in Pskov'** | wrath |
 | 5 | Nestor unhorsed / old heroism helpless | **Elgar — *Enigma Variations*, 'Nimrod'** | grief |
-| 6 | Diomedes rescues Nestor / Hector advances | **Holst — *The Planets*, 'Mars, the Bringer of War'** | wrath |
+| 6 | Diomedes rescues Nestor / Hector advances | **Shostakovich — Symphony No. 7 'Leningrad', I. Allegretto (the Invasion episode)** | wrath |
 | 7 | Zeus' thunderbolts / divine sign before the Greeks | **Berlioz — *Symphonie fantastique*, V. 'Songe d'une nuit du sabbat'** | divine-intervention |
 | 8 | Hera and Athena are rebuked from the sky | **Brahms — Symphony No. 1, I. Un poco sostenuto — Allegro** | law |
 | 9 | The goddesses turn back / divine exile from the field | **Sibelius — Symphony No. 7** | exile |
@@ -52,9 +52,9 @@ This is not Holst's Mars — that was Achilles' quarrel, personal and hot. The T
 
 Homer places Nestor's exposure carefully. He is not killed; he is unhorsed in the middle of the field — old, competent, famous, and suddenly helpless. It is one of the Iliad's most precise notes of private grief: the grief of a man who has known greatness and finds himself temporarily unable to act. Elgar's Nimrod is the piece for this register: private nobility under pressure, something whole and honored, suddenly exposed as fragile. It is not funeral music — Nestor will be rescued, will speak again for many books. But for this moment he is a great man, stuck.
 
-**6. Holst — *The Planets*, 'Mars, the Bringer of War' — Diomedes and Hector collide**
+**6. Shostakovich — Symphony No. 7 'Leningrad', I. Allegretto (Invasion episode) — Diomedes and Hector collide**
 
-Diomedes chooses to stand and rescue Nestor when other Greeks are already retreating. He is the ablest Achaean fighter on the field today, and for a moment the initiative shifts back. But Hector is there, and Zeus is behind Hector. The 5/4 pulse of Mars is the right music for this collision: asymmetrical, hard to settle into, the broken rhythm of two wills meeting when one side has divine backing and the other has only valor. The 5/4 doesn't let you rest into a groove. Neither does this scene.
+Diomedes chooses to stand and rescue Nestor when other Greeks are already retreating. He is the ablest Achaean fighter on the field today, and for a moment the initiative shifts back. But Hector is there, and Zeus is behind Hector. Shostakovich's Invasion episode begins almost as nothing — a bare, distant theme — then builds mechanically, iteration after iteration, until the force bearing down on you is not a rival but a world-rearrangement with rhythm. That is the asymmetry of this scene: Diomedes has valor; Hector has Zeus. The music knows the difference. It doesn't stop because one side is brave.
 
 **7. Berlioz — *Symphonie fantastique*, V. 'Songe d'une nuit du sabbat' — Zeus' thunderbolt**
 
