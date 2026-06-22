@@ -493,6 +493,83 @@ class AnthropicSynthesizer:
         )
 
 
+class ClaudeCliSynthesizer:
+    """THE CORE alchemy, KEYLESS — fold the ranked shots into ONE better version via
+    the ``claude`` CLI's print mode (``claude -p``) instead of the raw Anthropic API.
+
+    Why this exists: the live daemon dispatches the ``claude`` lane through the CLI,
+    which authenticates from the local subscription session — it has **no
+    ``ANTHROPIC_API_KEY``**. :class:`AnthropicSynthesizer` needs that key, so under the
+    daemon it silently fell back to the offline (concat) kit and the convergence
+    write-back never happened ("there and back again" never closed). This synthesizer
+    needs no key and spends nothing beyond the CLI budget already in use, so it is the
+    middle rung of the kit cascade: raw API (key present) → claude CLI (keyless) →
+    offline preview. Same JSON contract + same fail-soft parsing as the API path.
+    """
+
+    _PROMPT = AnthropicSynthesizer._PROMPT
+
+    def __init__(self, *, model: str | None = None, timeout: int = 120, binary: str = "claude") -> None:
+        import shutil
+
+        self.model = model
+        self.timeout = timeout
+        self._binary = shutil.which(binary) or binary
+        if shutil.which(binary) is None:
+            raise FileNotFoundError(
+                f"ClaudeCliSynthesizer requires the '{binary}' CLI on PATH "
+                "(the keyless, subscription-authed print mode). Install it, or use "
+                "AnthropicSynthesizer with ANTHROPIC_API_KEY for the raw-API path."
+            )
+
+    def _render_shots(self, ranked: list[Shot]) -> str:
+        blocks = []
+        for i, shot in enumerate(ranked, start=1):
+            src = f" (source: {shot.source})" if shot.source else ""
+            blocks.append(f"[rank {i}] id={shot.id}{src}\n{shot.text}")
+        return "\n\n".join(blocks)
+
+    def synthesize(self, idea: str, ranked: list[Shot]) -> Synthesis:  # pragma: no cover - requires claude CLI
+        import json
+        import subprocess
+
+        user = (
+            f"{self._PROMPT}\n\nIDEA:\n{idea}\n\n"
+            f"SHOTS (best-first):\n{self._render_shots(ranked)}"
+        )
+        argv = [self._binary, "-p", *( ["--model", self.model] if self.model else [] ), user]
+        proc = subprocess.run(argv, capture_output=True, text=True, timeout=self.timeout, check=False)
+        text = (proc.stdout or "").strip()
+        if proc.returncode != 0 or not text:
+            # Fail LOUD so the kit cascade / per-face guard can fall through to the next
+            # rung — never a silent offline no-op masquerading as a converged write.
+            raise RuntimeError(
+                f"claude CLI synth failed (rc={proc.returncode}): {(proc.stderr or '')[:200]}"
+            )
+        # The CLI may wrap the JSON in a ```json fence; strip a single leading/trailing fence.
+        if text.startswith("```"):
+            text = text.split("\n", 1)[-1]
+            if text.rstrip().endswith("```"):
+                text = text.rstrip()[: text.rstrip().rfind("```")]
+            text = text.strip()
+        try:
+            payload = json.loads(text)
+        except json.JSONDecodeError:
+            # Not clean JSON: treat the whole reply as the distillate, keep the top shot,
+            # drop the rest — never lose the alchemy (same policy as AnthropicSynthesizer).
+            kept = [ranked[0].id] if ranked else []
+            return Synthesis(
+                better_version=text,
+                kept_ids=kept,
+                dropped_ids=[s.id for s in ranked[1:]],
+            )
+        return Synthesis(
+            better_version=payload.get("better_version", ""),
+            kept_ids=list(payload.get("kept_ids", [])),
+            dropped_ids=list(payload.get("dropped_ids", [])),
+        )
+
+
 class CCEPromoter:
     """Reversible promotion via conversation_corpus_engine.corpus_candidates.
 
@@ -629,10 +706,20 @@ def _build_live_kit(args, *, anthropic_client=None) -> dict:
 
     # Synthesis: the core alchemy. Derive the model from the class default unless
     # explicitly overridden (derive-never-pin — no second copy of the model id here).
-    synth_kwargs = {"client": anthropic_client} if anthropic_client is not None else {}
-    if getattr(args, "model", None):
-        synth_kwargs["model"] = args.model
-    synthesizer: Synthesizer = AnthropicSynthesizer(**synth_kwargs)
+    import os
+
+    model_kwarg = {"model": args.model} if getattr(args, "model", None) else {}
+    # Synthesizer cascade ([[cascade-fallback-principle]] / never a silent no):
+    #   injected client (tests) or ANTHROPIC_API_KEY present → raw API (spends);
+    #   else the KEYLESS subscription-authed `claude -p` CLI — the live-daemon path,
+    #   whose launchd env carries no key, so this rung is what actually closes the
+    #   capture→converge write-back instead of silently degrading to offline preview.
+    if anthropic_client is not None:
+        synthesizer: Synthesizer = AnthropicSynthesizer(client=anthropic_client, **model_kwarg)
+    elif os.environ.get("ANTHROPIC_API_KEY"):
+        synthesizer = AnthropicSynthesizer(**model_kwarg)
+    else:
+        synthesizer = ClaudeCliSynthesizer(**model_kwarg)
 
     # Promotion: reversible CCE promoter ONLY when explicitly requested; else no-op.
     if getattr(args, "promote", False):

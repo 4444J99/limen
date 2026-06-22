@@ -198,9 +198,24 @@ def _kit(live: bool):
     if not live:
         return _build_dry_run_kit()
     try:
-        from limen.converge import (AnthropicSynthesizer, DeterministicScorer,
-                                     LexicalGapFinder, LexicalRanker, NoopPromoter)
-        return {"ranker": LexicalRanker(), "synthesizer": AnthropicSynthesizer(),
+        from limen.converge import (AnthropicSynthesizer, ClaudeCliSynthesizer,
+                                     DeterministicScorer, LexicalGapFinder,
+                                     LexicalRanker, NoopPromoter)
+        # Synthesizer cascade ([[cascade-fallback-principle]] / never a silent no):
+        #   1. raw Anthropic API   — only when ANTHROPIC_API_KEY is present (spends API)
+        #   2. claude CLI (keyless)— subscription-authed `claude -p`; the LIVE DAEMON path
+        #      (its launchd env has NO key, so this is the rung that actually closes the
+        #      capture→converge write-back instead of falling silently to offline preview)
+        #   3. offline preview     — handled by the outer except (no synthesizer available)
+        synth = None
+        if os.environ.get("ANTHROPIC_API_KEY"):
+            try:
+                synth = AnthropicSynthesizer()
+            except Exception as exc:
+                print(f"[corpus-converge] API synth unavailable ({exc}); trying claude CLI")
+        if synth is None:
+            synth = ClaudeCliSynthesizer()  # raises (→ outer except → offline) if no CLI
+        return {"ranker": LexicalRanker(), "synthesizer": synth,
                 "scorer": DeterministicScorer(), "promoter": NoopPromoter(),
                 "gap_finder": LexicalGapFinder()}
     except Exception as exc:

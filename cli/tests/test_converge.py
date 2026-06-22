@@ -18,6 +18,7 @@ import pytest
 
 from limen.converge import (
     AnthropicSynthesizer,
+    ClaudeCliSynthesizer,
     ConcatSynthesizer,
     ConvergeResult,
     DeterministicScorer,
@@ -335,6 +336,87 @@ def test_live_kit_model_override_is_passed_through():
     client = FakeAnthropicClient('{"better_version": "x", "kept_ids": [], "dropped_ids": []}')
     kit = _build_live_kit(_live_args(model="claude-opus-4-8"), anthropic_client=client)
     assert kit["synthesizer"].model == "claude-opus-4-8"
+
+
+# ─── Keyless claude-CLI synthesizer (the live-daemon path; no ANTHROPIC_API_KEY) ──
+
+
+class _FakeProc:
+    def __init__(self, stdout="", returncode=0, stderr=""):
+        self.stdout = stdout
+        self.returncode = returncode
+        self.stderr = stderr
+
+
+def _shots():
+    return [Shot(id="a", text="first draft", source="laneA"),
+            Shot(id="b", text="weaker second", source="laneB")]
+
+
+def test_claude_cli_synthesizer_parses_json(monkeypatch):
+    monkeypatch.setattr("shutil.which", lambda b: "/usr/bin/claude")
+    monkeypatch.setattr(
+        "subprocess.run",
+        lambda *a, **k: _FakeProc('{"better_version": "the one", "kept_ids": ["a"], "dropped_ids": ["b"]}'),
+    )
+    syn = ClaudeCliSynthesizer()
+    out = syn.synthesize("idea", _shots())
+    assert out.better_version == "the one"
+    assert out.kept_ids == ["a"] and out.dropped_ids == ["b"]
+
+
+def test_claude_cli_synthesizer_strips_code_fence(monkeypatch):
+    monkeypatch.setattr("shutil.which", lambda b: "/usr/bin/claude")
+    fenced = '```json\n{"better_version": "fenced", "kept_ids": [], "dropped_ids": []}\n```'
+    monkeypatch.setattr("subprocess.run", lambda *a, **k: _FakeProc(fenced))
+    out = ClaudeCliSynthesizer().synthesize("idea", _shots())
+    assert out.better_version == "fenced"
+
+
+def test_claude_cli_synthesizer_non_json_keeps_top_shot(monkeypatch):
+    """Non-JSON reply: the whole text is the distillate, top shot kept — never lose alchemy."""
+    monkeypatch.setattr("shutil.which", lambda b: "/usr/bin/claude")
+    monkeypatch.setattr("subprocess.run", lambda *a, **k: _FakeProc("a plain prose distillate"))
+    out = ClaudeCliSynthesizer().synthesize("idea", _shots())
+    assert out.better_version == "a plain prose distillate"
+    assert out.kept_ids == ["a"] and out.dropped_ids == ["b"]
+
+
+def test_claude_cli_synthesizer_raises_loud_on_failure(monkeypatch):
+    """A CLI failure must raise (so the kit cascade / per-face guard falls through) —
+    never a silent empty write masquerading as convergence."""
+    monkeypatch.setattr("shutil.which", lambda b: "/usr/bin/claude")
+    monkeypatch.setattr("subprocess.run", lambda *a, **k: _FakeProc("", returncode=1, stderr="boom"))
+    with pytest.raises(RuntimeError):
+        ClaudeCliSynthesizer().synthesize("idea", _shots())
+
+
+def test_claude_cli_synthesizer_missing_binary_raises(monkeypatch):
+    monkeypatch.setattr("shutil.which", lambda b: None)
+    with pytest.raises(FileNotFoundError):
+        ClaudeCliSynthesizer()
+
+
+def test_live_kit_uses_keyless_cli_when_no_api_key(monkeypatch):
+    """The crux fix: with no ANTHROPIC_API_KEY (the daemon's launchd env), the live kit
+    wires the KEYLESS claude CLI synthesizer instead of silently degrading to offline."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setattr("shutil.which", lambda b: "/usr/bin/claude")
+    kit = _build_live_kit(_live_args())
+    assert isinstance(kit["synthesizer"], ClaudeCliSynthesizer)
+
+
+def test_live_kit_prefers_api_when_key_present(monkeypatch):
+    """When a key IS present, the raw-API rung wins over the CLI rung."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-not-real")
+
+    class _FakeAPISynth:
+        def __init__(self, **kw):
+            self.model = kw.get("model")
+
+    monkeypatch.setattr("limen.converge.AnthropicSynthesizer", _FakeAPISynth)
+    kit = _build_live_kit(_live_args())
+    assert isinstance(kit["synthesizer"], _FakeAPISynth)
 
 
 def test_cli_requires_a_mode():
