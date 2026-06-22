@@ -1,0 +1,47 @@
+# His-Hand Registry — mail organism (session a290329e, 2026-06-22)
+
+Everything from the "tend both mail lanes" build that is **yours to pull or decide** — surfaced
+here (a new, non-contended file) rather than hand-driven, since other interactive sessions + the
+daemon are live. Nothing below blocks the keyless value already shipped; these only raise the
+ceiling. Nothing here ever sends or deletes — reversible only.
+
+## DEPLOY (one merge activates the autonomic mail lane)
+- **Merge this branch → `main`:** `worktree-glimmering-mapping-whistle` (limen). On merge,
+  `sync-release.sh` ff's it into the live checkout and the **`C_MAIL` voice** goes live: every 6
+  beats it sweeps the inbox (flag fires + archive folder-store noise, reversible), rebuilds the
+  obligations ledger, and refreshes the face. A PR is open for the merge organ / your one-tap merge.
+  Until merged, the live daemon runs the old `main` (no mail voice yet); all the work is staged + verified.
+- **What goes live:** `scripts/heartbeat-loop.sh` (+`C_MAIL` cadence), `scripts/mail-beat.sh`,
+  `scripts/obligations-view.py` → face at **http://127.0.0.1:8787/obligations.html**.
+
+## macOS Automation permission (operational, one-time)
+- The launchd daemon needs **Automation → Mail** permission to drive Mail.app via osascript. Without
+  it the sweep **fails open** (the ledger/face still rebuild from existing receipts; no crash). Grant
+  it once if you want the daemon to flag/archive new arrivals autonomically.
+
+## Cross-repo: universal-mail--automation (organvm/universal-mail--automation)
+- New mail-organ source is **already on disk** at `~/Workspace/universal-mail--automation` (the daemon
+  reads it directly, so it is effectively deployed): `core/protocols.py`, `core/unsubscribe.py`,
+  `obligations_build.py`, `draft_writer.py`, plus edits to `providers/mailapp.py` (keyless `create_draft`)
+  and `inbox_sweep.py` (`--flag-only-gmail`). The **capture organ** (C_BACKUP) commits + pushes every
+  workspace repo additively, so these durably reach `main` without me hand-merging that repo's contended main.
+
+## Levers — raise the ceiling (never forced; also rendered in the obligations face)
+- **L-MCP** — expand the Gmail MCP connector to write scope (`gmail.modify`) in claude.ai. Re-tested
+  2026-06-22: still read-only. Unlocks reliable keyless Gmail **archive + drafts** in any live session.
+- **L-IMAP-APP-PW** — generate a Google app-password (account.google.com → Security → App passwords).
+  Cleanest durable path for the **headless daemon**: reliable Gmail archive/draft over IMAP, no weekly
+  token death, no browser-driving. ~60s once.
+- **L-OAUTH** — revive the Gmail OAuth app: fresh consent + flip to **Production** publishing (stops the
+  7-day testing-mode token expiry). I can browser-drive the consent when you want it.
+- **`LIMEN_NTFY_TOPIC`** — set it to push high-priority obligations to your phone (opt-in).
+- **`LIMEN_MAIL_DRAFTS=1`** — turn ON persisting reply drafts to your Mail **Drafts** folder (keyless,
+  idempotent, capped, **never sent**). Default OFF; reply drafts are already visible in the ledger/face.
+
+## Housekeeping
+- A self-addressed test draft is in your Gmail **Drafts**: subject *"[Limen] draft-persistence
+  self-test — safe to delete"*. It proved the keyless draft path works; **safe to delete**.
+
+## Verification (before this was staged)
+- 5 adversarial safety verifiers, all green: never-sends ✅ · never-deletes ✅ · daemon-safe ✅
+  (bounded ≤240s/account; the 40-min Gmail-archive loop is skipped) · no-secrets ✅ · idempotent ✅.
