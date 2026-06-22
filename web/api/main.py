@@ -16,7 +16,11 @@ from typing import Any
 import yaml
 from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+VALID_STATUSES = {"open", "dispatched", "in_progress", "done", "failed", "failed_blocked", "needs_human", "archived"}
+VALID_PRIORITIES = {"critical", "high", "medium", "low", "backlog"}
+VALID_AGENTS = {"jules", "claude", "gemini", "opencode", "codex", "copilot", "agy", "warp", "oz", "github_actions", "any"}
 
 app = FastAPI(
     title="Limen API",
@@ -42,17 +46,38 @@ GITHUB_TOKEN = os.environ.get("LIMEN_GITHUB_TOKEN", "")
 
 
 class TaskCreate(BaseModel):
-    id: str
-    title: str
-    repo: str = ""
+    id: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
+    title: str = Field(min_length=1, max_length=512)
+    repo: str = Field(default="", max_length=256)
     type: str = "code"
-    target_agent: str = "jules"
+    target_agent: str = Field(default="jules", pattern=r"^[a-z][a-z_]*$")
     priority: str = "medium"
-    budget_cost: int = 1
+    budget_cost: int = Field(default=1, ge=1, le=100)
     status: str = "open"
-    labels: list[str] = Field(default_factory=list)
-    urls: list[str] = Field(default_factory=list)
-    context: str = ""
+    labels: list[str] = Field(default_factory=list, max_length=20)
+    urls: list[str] = Field(default_factory=list, max_length=20)
+    context: str = Field(default="", max_length=10000)
+
+    @field_validator("priority")
+    @classmethod
+    def validate_priority(cls, v: str) -> str:
+        if v not in VALID_PRIORITIES:
+            raise ValueError(f"priority must be one of {', '.join(sorted(VALID_PRIORITIES))}")
+        return v
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: str) -> str:
+        if v not in VALID_STATUSES:
+            raise ValueError(f"status must be one of {', '.join(sorted(VALID_STATUSES))}")
+        return v
+
+    @field_validator("target_agent")
+    @classmethod
+    def validate_target_agent(cls, v: str) -> str:
+        if v not in VALID_AGENTS:
+            raise ValueError(f"target_agent must be one of {', '.join(sorted(VALID_AGENTS))}")
+        return v
 
 
 class TaskUpdate(BaseModel):
@@ -60,18 +85,46 @@ class TaskUpdate(BaseModel):
     output: str | None = None
     agent: str | None = None
     session_id: str | None = None
-    context: str | None = None
+    context: str | None = Field(default=None, max_length=10000)
     urls: list[str] | None = None
     labels: list[str] | None = None
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: str | None) -> str | None:
+        if v is not None and v not in VALID_STATUSES:
+            raise ValueError(f"status must be one of {', '.join(sorted(VALID_STATUSES))}")
+        return v
 
 
 class AssignmentRequest(BaseModel):
     target_agent: str | None = None
     priority: str | None = None
-    budget_cost: int | None = Field(default=None, ge=1)
+    budget_cost: int | None = Field(default=None, ge=1, le=100)
     status: str | None = "open"
-    note: str = ""
-    session_id: str = "assignment"
+    note: str = Field(default="", max_length=2000)
+    session_id: str = Field(default="assignment", max_length=128)
+
+    @field_validator("priority")
+    @classmethod
+    def validate_priority(cls, v: str | None) -> str | None:
+        if v is not None and v not in VALID_PRIORITIES:
+            raise ValueError(f"priority must be one of {', '.join(sorted(VALID_PRIORITIES))}")
+        return v
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: str | None) -> str | None:
+        if v is not None and v not in VALID_STATUSES:
+            raise ValueError(f"status must be one of {', '.join(sorted(VALID_STATUSES))}")
+        return v
+
+    @field_validator("target_agent")
+    @classmethod
+    def validate_target_agent(cls, v: str | None) -> str | None:
+        if v is not None and v not in VALID_AGENTS:
+            raise ValueError(f"target_agent must be one of {', '.join(sorted(VALID_AGENTS))}")
+        return v
 
 
 class ArchiveRequest(BaseModel):
