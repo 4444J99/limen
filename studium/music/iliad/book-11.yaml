@@ -1,0 +1,149 @@
+# Iliad — Book XI — curated music arc
+# Follows gold-standard form established in book-01.yaml
+work: iliad
+book: 11
+title: "Iliad Book XI: The Great Wounded"
+length_minutes: 88
+principle: >
+  Do not score Book XI as "big battle." Score it as the book of falling — the systematic
+  wounding of every Greek who can fight. Agamemnon blazes first, then is driven off the
+  field; Diomedes takes an arrow; Odysseus is surrounded and speared; Machaon is shot.
+  The Achaean center collapses. Achilles watches from his ship. Then sends Patroclus
+  to find out who was wounded — and that errand, that small domestic act of curiosity,
+  becomes the hinge on which the whole Iliad turns. Book XI is not a victory or a defeat.
+  It is the wound that will not close: the moment the poem's final tragedy becomes inevitable.
+force_arc: [wrath, wrath, grief, fate, grief, fate, grief, supplication, fate, supplication]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "Dawn arms Agamemnon — the aristeia ignites"
+    force: wrath
+    composer: Prokofiev
+    work: "Symphony No. 5 — I. Andante (opening)"
+    decision: added
+    why: >
+      Agamemnon's aristeia opens with Dawn's golden armor-ceremony — formal, martial, inevitable.
+      Prokofiev's Fifth opens with a massive architectural statement of controlled power: not rage
+      as chaos but wrath as structure, a force that knows itself. The tempo is restrained and
+      monumental simultaneously — Agamemnon at peak authority before the fall begins.
+  - n: 2
+    scene: "Agamemnon in his killing rage — the aristeia itself"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    decision: added
+    why: >
+      The aristeia is explicit, metronomic killing. Agamemnon cuts through Trojans — named deaths,
+      close detail, blood economy. Holst's 5/4 hostility is the right register: asymmetrical, never
+      settling, mechanically lethal. Book I used this for the verbal quarrel; Book XI earns it for
+      actual slaughter. The two books rhyme: the force has finally become external.
+  - n: 3
+    scene: "Agamemnon is wounded — the king falls back"
+    force: grief
+    composer: Elgar
+    work: "Enigma Variations — 'Nimrod' (Variation IX)"
+    decision: added
+    why: >
+      Agamemnon takes a spear through the arm, fights on, then is forced from the field — his
+      authority draining with his blood. "Nimrod" is not funeral music; it is the register of
+      private nobility under pressure, the moment a great man has to stop. The wound is physical
+      but the grief is tonal: something at the center of the Greek world has been punctured.
+  - n: 4
+    scene: "The tide turns — Trojans advance across the plain"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    decision: added
+    why: >
+      Once Agamemnon leaves the field, the Trojan advance becomes inexorable — the four-note
+      hammer of fate operating at scale. Beethoven's Fifth is the canonical fate motif and earns
+      its place here not as cliché but as precision: the poem's structure is hammering the Greeks
+      toward catastrophe with the same relentless formal logic. Hector, the poem keeps saying,
+      was going to win today. Zeus said so. That is the Beethoven rhythm.
+  - n: 5
+    scene: "Diomedes is shot — the second hero falls"
+    force: grief
+    composer: Schubert
+    work: "String Quartet No. 14 in D minor 'Death and the Maiden' — II. Andante con moto"
+    decision: added
+    why: >
+      Paris' arrow finds Diomedes' right foot — the great killer of gods and men, reduced.
+      Diomedes calls it a woman's weapon (the bow) and limps off anyway. Schubert's variations
+      here are the perfect register: not surrender, but the slow attrition of vitality, theme
+      and variations as a life being worn down. The Death and the Maiden slow movement is grief
+      without collapse — wounded endurance.
+  - n: 6
+    scene: "Odysseus alone, surrounded — the pivot of his isolation"
+    force: fate
+    composer: Sibelius
+    work: "Violin Concerto in D minor — I. Allegro moderato"
+    decision: added
+    why: >
+      Odysseus is cut off when his companions break and run. He stands alone, takes a spear
+      through the ribs, kills several men, calls for help. It is Odysseus as exposed singular
+      force — the most interior of the heroes, suddenly unhoused from his usual cunning context.
+      Sibelius' concerto opens with a solitary violin against silence, then resistance. The Nordic
+      isolation and dark orchestral pressure match Odysseus' circumference of spears exactly.
+  - n: 7
+    scene: "Machaon is shot — the healer felled"
+    force: grief
+    composer: Fauré
+    work: "Requiem — 'Agnus Dei'"
+    decision: added
+    why: >
+      Machaon the physician, son of Asclepius, takes Paris' arrow. This is the cruelest structural
+      irony of the book: the healer is wounded. Fauré's Agnus Dei is not terminal grief — it is
+      grief suspended in care, hovering between loss and release. Not the In Paradisum (salvation
+      register) and not the Lacrimosa (public funeral). Exactly the private register: the wound
+      that will now not be treated, because the one who treats is hurt.
+  - n: 8
+    scene: "Achilles watches from the stern — the moment of watching"
+    force: supplication
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      The most important moment in Book XI is the moment Achilles does nothing. He stands on his
+      ship's stern, watching Greeks carried wounded past him. He sees — but does not yet act. Pärt's
+      'Mirror in the Mirror' is suspended cadence stretched to eternity: the piano's slowly rocking
+      intervals, the violin's unresolved melodic line. Achilles held in stasis. Grief and pride in
+      perfect terrible equilibrium.
+  - n: 9
+    scene: "Achilles sends Patroclus — the fatal errand"
+    force: fate
+    composer: Tchaikovsky
+    work: "Symphony No. 6 'Pathétique' — I. Allegro non troppo (opening Adagio)"
+    decision: added
+    why: >
+      Achilles tells Patroclus: go find out who that wounded man was. A domestic errand. The
+      smallest possible pivot. Tchaikovsky's Pathétique opens with a bassoon solo from the depths
+      — not yet in motion but gathering its fatality. This is the correct register: not the moment
+      of death (Patroclus will die in Book XVI), but the moment death becomes structurally inevitable.
+      The poem's reader already knows. The music should too.
+  - n: 10
+    scene: "Nestor detains Patroclus — the long counsel that will doom him"
+    force: supplication
+    composer: Bach
+    work: "St. Matthew Passion — 'Erbarme dich, mein Gott' (Aria, BWV 244)"
+    decision: added
+    why: >
+      Nestor talks and talks — the old man's gift — and what he plants in Patroclus is the idea:
+      put on Achilles' armor, lead the Myrmidons, drive the Trojans back. An act of love that is
+      also an act of destruction. Bach's great soprano aria of supplication is the register of
+      someone about to do something they cannot undo, asking at the threshold. Patroclus listens.
+      The melody falls and rises without resolution. He has already agreed before he leaves.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "explicitly forbidden before Book XXII; save for Hector's death"
+    why: >
+      The wounded heroes of Book XI are alive. The grief register here is private, inward,
+      ambulatory — Elgar/Schubert/Fauré territory. The funeral-march register opens only when
+      Hector falls (Book XXII). Using it here would misread the poem's structure.
+  - composer: Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    status: "reserved; already used in Book I for Achilles and Thetis"
+    why: >
+      Book I claimed the Adagietto for private grief between Achilles and his mother. Book XI's
+      grief is more numerous, more distributed — the whole Greek leadership wounded. The Elgar,
+      Schubert, and Fauré selections cover this field at different registers without repetition.

@@ -1,0 +1,175 @@
+# Iliad — Book IX — curated music arc
+work: iliad
+book: 9
+title: "Iliad Book IX: The Embassy, the Refusal"
+length_minutes: 88
+principle: >
+  Do not score Book IX as "the Trojan War." Score it as the moment where persuasion
+  fails at the level of the soul — where gifts, arguments, myth, and love are deployed
+  with full rhetorical force and none of it moves the man. Three ambassadors, three
+  registers of appeal. Achilles receives them with grace and refuses them with grace.
+  That combination — courtesy and intransigence, warmth and immovability — is the
+  book's specific register. The grief at the end is not public or funereal; it is the
+  grief of connection refused, of a reconciliation that almost happened and didn't.
+force_arc: [supplication, law, law, law, wrath, wrath, law, wrath, grief, grief]
+dominant_force: wrath
+tracks:
+  - n: 1
+    scene: "Agamemnon's embassy assembled — chastened authority, desperate overture"
+    force: supplication
+    composer: Bach
+    work: "St Matthew Passion — 'Erbarme dich, mein Gott' (BWV 244)"
+    decision: added
+    why: >
+      Agamemnon is humbled but not quite broken; the Greeks come to Achilles as
+      suppliants even if they cannot fully say so. Bach's aria is the archetype of
+      exposed, suspended supplication — a solo line reaching across a void with no
+      certainty of answer. The oboe sustains the plea; the voice confesses need. That
+      is Agamemnon's position: enormous in rank, small in agency, needing a man he
+      wronged to save him.
+  - n: 2
+    scene: "Odysseus opens the formal case — the rhetoric of gifts and return"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue — Contrapunctus I (BWV 1080)"
+    decision: added
+    why: >
+      Odysseus builds the argument with architectural precision: you were wronged,
+      here are the gifts, here is what you will gain, here is the honor restored.
+      It is the most lawyerly speech in Homer — formal, structured, gift-by-gift,
+      clause-by-clause. The Art of Fugue's opening Contrapunctus is pure architecture:
+      a subject exposed, answered, inverted, stacked. Rhetoric as counterpoint.
+      Nothing unresolved, nothing emotive — and exactly for that reason, it cannot
+      touch Achilles.
+  - n: 3
+    scene: "Phoenix tells the tale of Meleager — myth as moral instruction"
+    force: law
+    composer: Handel
+    work: "Solomon — 'The Arrival of the Queen of Sheba'"
+    decision: added
+    why: >
+      Phoenix's embedded narrative is the book's formal centerpiece: a cautionary
+      myth deployed as precedent, as law, as "this is how it goes when a hero refuses."
+      Meleager relented too late; the gifts were gone; he fought without honor. Handel's
+      'Queen of Sheba' carries the ceremonial bright intelligence of formal wisdom
+      offered: it is generous, brilliant, and structured — exactly the register of an
+      old man who has raised Achilles and is now offering him the accumulated moral
+      knowledge of the tradition. It shines. Achilles is unmoved.
+  - n: 4
+    scene: "Ajax's appeal — soldier to soldier, the blunt argument from fellowship"
+    force: law
+    composer: Brahms
+    work: "String Sextet No. 1 in B-flat major — I. Allegro ma non troppo (Op. 18)"
+    decision: added
+    why: >
+      Ajax is not a rhetorician. His speech is the shortest, the most direct, the most
+      human: accept the ransom, remember your comrades, a man can be paid for even a
+      brother's death. Brahms Op. 18 has the weight of that directness — chamber
+      textures, gravitas without ornament, masculine warmth without pleading. It is the
+      argument from solidarity, from the body, from standing together in the line.
+      Brahms' gravity is the right scale: neither monumental nor decorative, simply
+      serious and fully felt.
+  - n: 5
+    scene: "Achilles refuses — the great speech: 'I hate like the gates of Hades a man who says one thing and hides another'"
+    force: wrath
+    composer: Beethoven
+    work: "String Quartet No. 14 in C-sharp minor — I. Adagio quasi una fantasia (Op. 131)"
+    decision: added
+    why: >
+      Achilles' refusal is the most articulate speech of wrath in Western literature.
+      He does not rage; he argues. He has worked out a counter-philosophy: heroic honor
+      is a lie if the coward and the brave man get the same death, the same prizes. He
+      is not refusing gifts — he is refusing the entire grammar of the heroic economy.
+      Beethoven Op. 131 opens with a fugue-subject that is also a lament: slow, inward,
+      profoundly organized. It is wrath as settled conviction, not as eruption. The
+      music is both rigorous and bereft — a man who has thought his way through his own
+      anger to something larger and cannot be argued out of it.
+  - n: 6
+    scene: "Achilles names his choice — a short life with glory or a long life without it"
+    force: wrath
+    composer: Shostakovich
+    work: "String Quartet No. 8 in C minor — I. Largo (Op. 110)"
+    decision: added
+    why: >
+      This is Achilles staring at his own death and choosing it over dishonor. The
+      Shostakovich Eighth Quartet was written in three days by a man who thought he
+      was going to die; it opens with the composer's own musical monogram, a private
+      signature on a piece he expected to be his last. That self-inscription — the
+      compression of a whole life into a short, inward, dark utterance — is the exact
+      register of Achilles' two-fate speech. Not a theatrical announcement of death,
+      but a private reckoning. Wrath has become fate accepted.
+  - n: 7
+    scene: "Phoenix weeps — the old man who raised Achilles, undone"
+    force: supplication
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      After the refusal, Phoenix does not leave. He weeps and stays. The supplication
+      continues past argument into pure exposed vulnerability — an old man who has
+      nothing left but love. Pärt's 'Spiegel im Spiegel' (Mirror in the Mirror) is
+      suspended cadence made permanent: a melodic line over a slow piano shimmer,
+      repetitive, exposed, unresolved. It does not ask for much; it merely continues.
+      That continuation is Phoenix's whole posture: I will sleep here; I will not
+      abandon you.
+  - n: 8
+    scene: "Achilles' courtesy and his immovability — he offers them wine, a bed, warmth, and no"
+    force: wrath
+    composer: Schubert
+    work: "String Quintet in C major — II. Adagio (D. 956)"
+    decision: added
+    why: >
+      The strangest register in Book IX: Achilles is genuinely warm. He sings to
+      himself with a lyre when they arrive; he pours wine; he is a good host. And
+      he will not move. Schubert's Quintet Adagio holds two things in suspension that
+      should not coexist: profound inward peace and inconsolable grief. The second
+      movement is simultaneously the most serene and the most heartbroken thing in
+      the chamber repertoire. That doubleness — warmth and intransigence as two faces
+      of the same settled soul — is exactly what the book requires.
+  - n: 9
+    scene: "The embassy returns empty — the Greeks receive the refusal"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 9 — IV. Adagio"
+    decision: added
+    why: >
+      The ambassadors walk back across the beach to report failure. This is private,
+      inward grief — not Achilles grieving, but the Greeks absorbing that the greatest
+      instrument of their army has closed itself off. Mahler's Ninth Adagio is the
+      composer's farewell to the world: it does not storm or protest, it simply releases.
+      The texture thins; the line continues until it doesn't. That is the mood of the
+      Greeks' return: not tragedy-proper yet, but the grief of an opening that closed.
+      The Mahler Ninth Adagio is in the right register — private, inward, elegiac —
+      not the funeral-march register that belongs to Books XXII–XXIV.
+  - n: 10
+    scene: "Achilles alone — grief suspended in refusal"
+    force: grief
+    composer: Fauré
+    work: "Requiem — 'In Paradisum' (Op. 48)"
+    decision: added
+    why: >
+      Book IX ends on Achilles, not on the Greeks. He has made his choice. He is
+      alone with Patroclus. He will sleep; he will grieve; he will not return — not
+      yet. Fauré's 'In Paradisum' is the most radiant piece of non-funereal grief
+      in the repertoire: it is not mourning the dead, it is a voice released into a
+      stillness that is neither triumph nor defeat. Achilles in Book IX is suspended
+      between two deaths — his companion's and his own — and does not know it. The
+      Fauré holds that suspension: still, inward, unreached by the arguments just
+      delivered, at rest in its own unresolvable condition.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "forbidden until Book XXII"
+    why: >
+      The funeral-march register requires Hector's death to open. Book IX's grief is
+      private and self-enclosed, not public-heroic-monumental. Wagner's Trauermarsch
+      would be false to the scene: Achilles is still alive, still in control,
+      surrounded by warmth. The grief here is the grief of refusal, not death.
+  - composer: Barber
+    work: "Adagio for Strings"
+    status: "too well-known, too undifferentiated for this book's specific register"
+    why: >
+      The Barber Adagio has become a cultural shorthand for grief-in-general. Book IX
+      requires grief with a precise texture: inward, philosophical, courtesy-wrapped.
+      The Barber is too exposed, too weeping, too external. Fauré and Mahler carry
+      the right combination of restraint and depth.

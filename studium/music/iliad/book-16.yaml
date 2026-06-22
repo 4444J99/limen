@@ -1,0 +1,173 @@
+# Iliad — Book XVI — curated music arc (The Patrokleia)
+# THE gold-standard form. Every other book/work converges toward this shape.
+work: iliad
+book: 16
+title: "Iliad Book XVI: The Patrokleia"
+length_minutes: 101
+principle: >
+  Do not score Book XVI as "a battle scene." Score it as the book where mercy becomes catastrophe —
+  where Patroclus arms himself in Achilles' place out of pity, achieves aristeia, presses past
+  every boundary, and is unraveled in stages by a god, a spear, and a king. The emotional arc is
+  not wrath-and-victory; it is return → wrath → grief → wrath → grief, and the grief at the end
+  is not public funeral — it is the private, shocked grief of a death that should not have happened.
+  Zeus rains tears of blood for Sarpedon; Apollo dazes Patroclus before he falls. This book is
+  governed by the logic of transgression: each force that rises crests and breaks.
+force_arc: [return, wrath, wrath, grief, wrath, fate, divine-intervention, grief]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "Patroclus weeps before Achilles — supplication and the armor"
+    force: supplication
+    composer: Bach
+    work: "St. Matthew Passion — 'Erbarme dich, mein Gott'"
+    decision: added
+    why: >
+      Patroclus comes to Achilles weeping — not as a warrior demanding help, but as a man broken
+      by what he has witnessed. 'Erbarme dich' is Peter's aria after his denial: wrenching, inward,
+      the exposed melodic line of someone who has seen suffering and cannot bear it. Patroclus does
+      not argue strategy; he begs. The force here is supplication — suspended cadence, a long line
+      that aches and doesn't close.
+  - n: 2
+    scene: "The armor of Achilles — Patroclus dresses for the rescue"
+    force: return
+    composer: Beethoven
+    work: "Symphony No. 7 — II. Allegretto"
+    decision: added
+    why: >
+      The recognition motif of the force 'return': Patroclus puts on Achilles' armor and becomes
+      an image of what the Greeks have been waiting for. This is circular form — the return of a
+      shape, not the man inside it. Beethoven's Allegretto is a processional that accumulates
+      without resolution, a march that is also a carrying: the armor is returning to the field
+      while Achilles stays behind. The repetition is the point — the theme cycles back exactly
+      as Patroclus re-enacts Achilles without being him.
+  - n: 3
+    scene: "Aristeia — Patroclus drives the Trojans from the ships"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    decision: kept from Book I (re-earned here)
+    why: >
+      In Book I, Mars scored the quarrel-as-war; here it scores actual combat. Patroclus in
+      Achilles' armor is a weapon discharged — the 5/4 pulse fits the relentless, asymmetrical
+      pressure of an aristeia: the Greeks pressing forward, the Trojans yielding, Patroclus killing
+      with mechanical joy. The rhythm has no settling place — the perfect texture for a warrior who
+      cannot stop. We use Mars twice in the cycle because the force appears twice, in different
+      registers: quarrel-as-violence in I, combat-as-release in XVI.
+  - n: 4
+    scene: "Sarpedon enters the battle / Zeus considers saving his son"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    decision: added
+    why: >
+      Sarpedon is Zeus' son, mortal, fated to die. Homer pauses the battle for one of the poem's
+      strangest moments: Zeus genuinely considers breaking fate to save him. Hera talks him out of
+      it. The four-note fate motif of Beethoven's Fifth is not about armies — it is about the
+      inexorable structure that operates above even divine will. Zeus yields to fate. The hammered
+      insistence of the motif carries that submission: the law that even the king of gods obeys.
+  - n: 5
+    scene: "Zeus rains tears of blood for Sarpedon / Sarpedon falls"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 9 — IV. Adagio"
+    decision: added
+    why: >
+      This is not Mahler's Adagietto from Book I (Achilles' private wounded grief). This is
+      Mahler's Ninth — the last Adagio he completed, written in the shadow of his own death, a
+      farewell that cannot stop saying farewell. Zeus weeps blood: divine grief, cosmic grief,
+      a father's grief. It is not a public funeral — Sarpedon will be carried by Sleep and Death
+      to Lycia — but it is the deepest grief the poem has staged so far. The Ninth's Adagio is
+      inward but enormous, private but vast. It fits the scale of what Homer is doing: the gods
+      feel this, and the feeling is real.
+  - n: 6
+    scene: "Glaukos rallies the Trojans — grief becomes renewed battle"
+    force: wrath
+    composer: Shostakovich
+    work: "Symphony No. 7 'Leningrad' — I. Allegretto (invasion episode)"
+    decision: added
+    why: >
+      After Sarpedon falls, Glaukos shames the Trojans into fighting for the body. Grief converts
+      to wrath — the specific mechanism of Homeric aristeia, where mourning is metabolized into
+      battle pressure. Shostakovich's invasion episode is mechanized, relentless, inhuman — a
+      theme that keeps coming regardless of loss. The Trojans here are not avenging; they are
+      grinding. The music carries that grinding: wrath with the flavor of attrition, not glory.
+  - n: 7
+    scene: "Apollo intervenes — the god's warning, ignored"
+    force: divine-intervention
+    composer: Strauss
+    work: "Also sprach Zarathustra — 'Von den Hinterweltlern' (Of the Afterworldly)"
+    decision: added
+    why: >
+      Apollo approaches Patroclus and warns him three times not to press to the walls of Troy.
+      The divine-intervention force requires sudden color shift, brass/strings contrast — the
+      intrusion of a vertical force into horizontal movement. Strauss's 'Also sprach' carries the
+      uncanny registral shift from dark to bright, from human to something else. Patroclus does
+      not listen. The music does not resolve — it opens a register that mortal action cannot close.
+  - n: 8
+    scene: "Apollo dazes Patroclus — the armor struck away"
+    force: metamorphosis
+    composer: Debussy
+    work: "Prélude à l'après-midi d'un faune"
+    decision: added
+    why: >
+      Apollo strikes Patroclus from behind — not with a weapon but with force: the helmet falls,
+      the spear breaks, the armor loosens. This is metamorphosis: the dissolution of form. Patroclus
+      was armored in Achilles' identity; Apollo unmakes it. Debussy's 'Faune' is the dissolve of
+      will, the unmooring of the fixed self — not death yet, but the preparation for death, the
+      moment when a man is no longer himself before he falls. Fluid harmony, changing orchestral
+      color: the force that fits.
+  - n: 9
+    scene: "Euphorbos wounds Patroclus / Hector delivers the death-blow"
+    force: fate
+    composer: Verdi
+    work: "La forza del destino — Overture"
+    decision: added
+    why: >
+      Three forces converge on Patroclus: Apollo, Euphorbos, Hector. Homer is precise: no single
+      agent kills him; fate requires accumulation. Verdi's 'Force of Destiny' overture is built
+      on that logic — the fate motif announced at the opening keeps returning, insistently, across
+      shifting key areas. The overture does not build toward a climax; it enacts inevitability.
+      The three blows on Patroclus are exactly that: fate as layered mechanism, not single stroke.
+  - n: 10
+    scene: "Patroclus' dying prophecy of Hector's doom"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    decision: added (recontextualized from Book I)
+    why: >
+      In Book I the Adagietto scored Achilles' private grief at the shore — wounded, alive, loved.
+      Here it returns recontextualized: Patroclus speaks his last words while dying, and they are
+      not lamentation but prophecy. He names Hector's death before it happens. The Adagietto
+      carries this register: inward, suspended, self-enclosed — but now the inwardness belongs to
+      a dying man who sees what comes next. Grief and revelation are the same force at this moment.
+      The music does not change; what we hear in it does.
+  - n: 11
+    scene: "The body of Patroclus — Hector strips the armor"
+    force: grief
+    composer: Barber
+    work: "Adagio for Strings"
+    decision: added
+    why: >
+      The book ends with Hector stripping Achilles' armor from Patroclus' body. This is the
+      terminal image of Book XVI — not a funeral, not yet the great mourning of Books XVIII–XXIII,
+      but the raw fact of the body exposed. Barber's Adagio is the right scale: it is grief that
+      does not build to monument. It rises and cuts off. It is private grief on the verge of
+      becoming public — the precise threshold this book occupies. The funeral march register stays
+      closed. This is the wound before the ceremony.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "not yet — belongs to XXII (Hector's death) or XXIV (Priam and Achilles)"
+    why: >
+      Patroclus' death is not the public funeral register. The funeral music opens only when the
+      city mourns, when Hector falls, when the scale becomes civic. Book XVI is private, shocked,
+      intimate grief — the wrong register for the Funeral March. The CRITICAL REGISTER RULE holds:
+      terminal-monumental-grief does not appear before Book XXII.
+  - composer: Rachmaninoff
+    work: "Piano Concerto No. 2 — II. Adagio sostenuto"
+    status: "demoted — memory register, not grief register"
+    why: >
+      Considered for the Sarpedon death scene, but Rachmaninoff carries the memory/nostalgia
+      force (faded recapitulation, Romantic recall) rather than grief's slow inward line. The
+      distinction matters. Mahler's Ninth is the right instrument for divine grief; Rachmaninoff
+      would sentimentalize it.

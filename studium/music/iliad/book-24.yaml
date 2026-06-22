@@ -1,0 +1,259 @@
+# Iliad — Book XXIV — curated music arc (Priam and Achilles)
+# THE gold-standard form. Every other book/work converges toward this shape.
+work: iliad
+book: 24
+title: "Iliad Book XXIV: Ransom, Weeping, Burial"
+length_minutes: 108
+principle: >
+  Do not score Book XXIV as "the end of the Trojan War." Score it as the book where the war
+  momentarily stops being war — where two men, enemy and bereaved father, sit together and weep
+  for their own dead, neither comforting the other, neither persuading the other, simply occupying
+  the same grief. The arc is divine restraint → a journey through the night → supplication that
+  should be impossible → shared humanity across the body of an enemy → the threefold lament →
+  burial. This is the poem's act of mercy: not peace, not forgiveness, not reconciliation — mercy,
+  which is different, and harder.
+force_arc: [divine-intervention, divine-intervention, supplication, supplication, grief, grief, grief]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "The gods debate — Zeus restrains Achilles and sends Thetis"
+    force: divine-intervention
+    composer: Strauss
+    work: "Also sprach Zarathustra — 'Von den Hinterweltlern' (Of the Afterworldly)"
+    decision: added
+    why: >
+      Apollo has held the gods' anger at Achilles' abuse of Hector's body for twelve days; now
+      Zeus acts. He sends Thetis to Achilles with a command: release the body. This is the gods
+      operating as moral corrective — not manipulating battle-fate but imposing a limit on grief
+      gone feral. Strauss's 'Von den Hinterweltlern' carries the exact register: forces operating
+      from a remove, the hushed recalibration of the divine machinery before it descends. The
+      brass/strings contrast (divine-intervention's formal requirement) arrives as the order is
+      issued — a sudden color shift from dark deliberation to the golden urgency of divine command.
+      We used this piece for exactly this function in Books II and XVI; it earns a third use here
+      as the third divine-pivot of the poem, each one larger than the last.
+  - n: 2
+    scene: "Iris to Priam — the god's message and the old king's resolution"
+    force: divine-intervention
+    composer: Handel
+    work: "Solomon — 'The Arrival of the Queen of Sheba'"
+    decision: added
+    why: >
+      Zeus sends Iris to Priam with the instruction: go to Achilles with gifts, alone, at night.
+      The message is not comfort — it is a commission that overrides every rational instinct of
+      self-preservation. 'The Arrival of the Queen of Sheba' is the right piece not because it
+      is triumphalist (it is not scored here as triumph) but because it carries the divine
+      credential: a sudden, fleet brightness, the sense of something from a higher order arriving
+      and issuing a clear instruction. Handel's two-oboe brightness against the strings is exactly
+      the color of a god's messenger — divine-intervention's requirement of sudden color shift
+      realized in its most transparent, daylit form. After the dark weight of Strauss, this
+      arrival is brief, specific, certain: go.
+  - n: 3
+    scene: "Priam prepares the ransom — Hecuba's fear, the old king's grief-fury"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 9 — IV. Adagio (closing pages)"
+    decision: added
+    why: >
+      Before Priam leaves, he and Hecuba argue. She thinks he will die. He does not care: he
+      wants to see Hector's face one more time and touch the man who killed him. This is grief
+      operating as recklessness — Priam's wish to die is genuine; he has already survived what
+      no parent should survive. Mahler's Ninth Adagio (closing pages specifically — the passage
+      where the music begins to let go) is the right scale: it is not the private wounded grief
+      of the Adagietto (Book I's Achilles, Book XVI's Patroclus dying) but something larger and
+      more resigned. Mahler finished this movement with long silences between the final phrases —
+      the music does not close, it thins, as if losing its grip on existence. That is Priam
+      preparing to ransom his dead son: exhausted, grief-reckless, past fear.
+  - n: 4
+    scene: "Hermes guides Priam through the night — the crossing of the plain"
+    force: supplication
+    composer: Schubert
+    work: "String Quintet in C major — II. Adagio"
+    decision: added
+    why: >
+      Hermes comes in the shape of a young man and guides Priam's wagon through the dark, past
+      the sentries, across the plain to Achilles' compound. This passage is one of the strangest
+      and most beautiful in Homer: the old king moving through enemy territory at night, guided
+      by a god disguised as a boy, in total silence. No one is watching. No one knows. The
+      supplication force requires suspended cadence and exposed melodic line — the long,
+      suspended arc of a request still in transit. Schubert's C major Quintet Adagio is the
+      most naturally apt piece in the canon for this transit: two cellos create a warmth and a
+      depth that no string quartet achieves, and the melody suspends, suspended, unhurried, over
+      a harmonic space that never quite resolves. The crossing of the plain is night music —
+      intimate, unresolved, impossibly tender — and this is its score.
+  - n: 5
+    scene: "Priam clasps the hands of Achilles — the supplication"
+    force: supplication
+    composer: Bach
+    work: "St. Matthew Passion — 'Erbarme dich, mein Gott'"
+    decision: added
+    why: >
+      Priam takes Achilles' hands — the hands that killed his sons — and kisses them. He invokes
+      Peleus, Achilles' own father: pity me as you would pity him. This is the poem's supreme act
+      of supplication, the one that should not work and does. We used 'Erbarme dich' in Book XVI
+      for Patroclus' weeping before Achilles — and it earns its second use here because Homer
+      himself creates the rhyme: Patroclus wept and clasped Achilles' knees; Priam weeps and
+      clasps his hands. The two supplications are the moral architecture of the second half of
+      the poem. Peter's aria is the right vehicle for both: exposed melodic line, the single
+      violin's long-breathed ache over a walking bass that will not stop, the sense of a plea
+      being made to someone with all the power and none of the obligation. The cadence suspends
+      — as it must. This is the hinge of the entire poem.
+  - n: 6
+    scene: "Achilles and Priam weep together — two men, each for his own dead"
+    force: grief
+    composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    decision: "now — this is the moment the funeral march was saved for"
+    why: >
+      This is the moment. From Book I's note in the demoted list — "save for Patroclus, Hector,
+      Book XXIV" — through every subsequent book that held this piece back: the register opens
+      here, and only here, because only here are two worlds of grief in the same room. Achilles
+      weeps for Patroclus. Priam weeps for Hector. They do not weep for each other or with
+      each other — they weep alongside each other, each inside his own private catastrophe.
+      Wagner's Funeral March builds from a single, tolling figure into one of the largest
+      orchestral monuments in the canon — it is not one death but the idea of heroic mortality
+      itself, the full cost of the heroic world laid out in music. This is not private grief
+      (the Adagietto) or divine grief (Mahler's Ninth) or civic grief (what comes). This is
+      the grief of the entire poem condensed into a room with two men, each of whom has lost
+      the thing that made life worth living, each recognizing that fact in the other without
+      being able to do anything about it. The Funeral March is the right register because it
+      is at once intimate and monumental — it is the poem's coda in sound.
+  - n: 7
+    scene: "Achilles agrees — the ransom is taken, the body prepared"
+    force: grief
+    composer: Barber
+    work: "Adagio for Strings"
+    decision: added
+    why: >
+      After the weeping, Achilles speaks: he will give back the body. He has Patroclus' women
+      wash and wrap Hector so that Priam cannot see the wounds — so that the sight of what he
+      has done to Hector will not rekindle his own rage. This is Achilles functioning as a human
+      being rather than a weapon. The Barber Adagio was used in Book XVI for the terminal image
+      of Patroclus' body — and it returns here for the same function, one register lower: the
+      body attended to, the grief acknowledged without resolution. Barber's Adagio rises and
+      does not arrive; it cuts rather than lands. That is Achilles' mercy: incomplete, costly,
+      genuine.
+  - n: 8
+    scene: "Achilles and Priam eat together — the scene of shared mortality"
+    force: grief
+    composer: Fauré
+    work: "Requiem — 'In Paradisum'"
+    decision: added
+    why: >
+      Achilles tells Priam they must eat — even Niobe ate after all her children died. They sit
+      together at a table and share food, two men who are enemies, and they look at each other.
+      Homer gives us the detail: Priam marveled at Achilles' size and beauty; Achilles marveled
+      at the old man's nobility and words. This is not reconciliation — it is recognition, the
+      moment where the human form of the other becomes visible past the role of enemy. Fauré's
+      'In Paradisum' is the right piece because it is not the public grief of a Requiem Dies Irae
+      but the private, radiant stillness that comes after grief has been fully accepted. The force
+      here is still grief — but grief resolved into presence, not lamentation. The salvation force
+      has a 'resolving radiance, chorale apotheosis' requirement; Fauré is its most intimate
+      instance, and what Achilles and Priam share at the table is the poem's closest approach to
+      something like grace.
+  - n: 9
+    scene: "Priam sleeps in Achilles' tent — Hermes wakes him before dawn"
+    force: supplication
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      Priam sleeps in the enemy's compound, guarded by no one but a god. The scene is suspended,
+      surreal, almost dreamlike — the old king has accomplished the impossible and is now simply
+      asleep, exhausted, trusting in divine protection. Hermes wakes him at midnight: the Greeks
+      will demand ransom too; go before they find you. Pärt's 'Spiegel im Spiegel' (mirror in
+      the mirror) is pure suspended cadence — the supplication force's requirement at its most
+      elemental: a single piano arpeggio and a violin line that extends without arriving. It is
+      the music of a held breath, of time momentarily outside the war, of a man asleep in the
+      enemy's camp before the world resumes. The 'mirror' of the title is exact: Priam and
+      Achilles have become, for this one night, reflections of each other.
+  - n: 10
+    scene: "The return to Troy — Cassandra on the walls"
+    force: grief
+    composer: Berlioz
+    work: "Les Troyens — 'Cassandre: Malheureux roi!'"
+    decision: added
+    why: >
+      Hermes guides Priam back across the plain. Cassandra sees the cart from the walls of Troy
+      and raises the lamentation — the people pour out, and Homer specifically says they should
+      have gone to meet a living man returning but instead they meet a corpse. Berlioz used for
+      Book I's Trojan doom / Cassandra register, and it earns its return here because the cycle
+      has closed: Book I's Cassandra prophesied destruction; Book XXIV's Cassandra laments the
+      first installment of its fulfillment. The music of prophetic dread that opened the Trojan
+      register in Book I becomes the music of the first public mourning at Book XXIV's close.
+      Grief here is already crossing into civic mourning — the threshold between private and
+      public that the poem has maintained with such care.
+  - n: 11
+    scene: "Andromache's lament — 'Hector, you are gone'"
+    force: grief
+    composer: Purcell
+    work: "Dido and Aeneas — 'When I am laid in earth' (Dido's Lament)"
+    decision: added
+    why: >
+      Andromache's lament is the first and most specific of the three: she addresses Hector
+      directly. She describes exactly what has been lost — not an abstraction but the particular
+      husband, the warmth of the bed, the child who will grow up fatherless in a city that is
+      already doomed. Purcell's Dido's Lament is the paradigm of grief as direct address: a
+      woman speaking to what she has lost, the ground bass descending in measured steps that
+      do not stop, the voice above it sustained in the long line that cannot close. The grief
+      force's requirement — slow tempo, inward line — is nowhere more completely realized than
+      here. Andromache's speech is almost exactly this structure in Homer: the descending
+      repetition of everything lost, the sustained address that cannot find its ending.
+  - n: 12
+    scene: "Hecuba's lament — 'Of all my sons, you were dearest to the gods'"
+    force: grief
+    composer: Verdi
+    work: "Otello — 'Willow Song' (Salce, salce)"
+    decision: added
+    why: >
+      Hecuba's lament is different from Andromache's in a specific way: she marvels that Hector's
+      body has been preserved, untainted, in death — that the gods loved him even after death,
+      even through all of Achilles' fury. Her grief is therefore also a strange wonder, a
+      recognition of divine care for her son. Verdi's 'Willow Song' (Desdemona's lament, Act IV
+      of Otello) carries exactly this register: grief that is shot through with a kind of
+      bewildered tenderness, the voice moving between lamentation and something that keeps
+      reaching toward the beloved with amazement rather than only loss. It is grief that contains
+      within it a final recognition of beauty.
+  - n: 13
+    scene: "Helen's lament — 'Of all my brothers-in-law, you were kindest to me'"
+    force: grief
+    composer: Brahms
+    work: "Four Serious Songs (Vier ernste Gesänge) — No. 4: 'Wenn ich mit Menschen und mit Engelszungen redete'"
+    decision: added
+    why: >
+      Helen's lament is the last, the most isolated, and the most unexpected: she was the cause,
+      and she grieves for the one man in Troy who never blamed her for it. She says she has not
+      had a friend in Troy in all the years of the war — only Hector protected her from contempt.
+      This is grief with the specific texture of exile and guilt: the grief of the person who
+      knows themselves to be the origin of disaster mourning the one person who refused to treat
+      them as such. Brahms's Fourth Serious Song sets a text from 1 Corinthians on love — not
+      romantic love, but the love that covers all things, endures all things. The baritone voice
+      alone against the piano, the formal gravity of the Brahms late style, the sense of a final
+      reckoning: this is the right register for Helen's lament. Of the three, hers is the loneliest.
+      And Brahms's late style, with its formal architecture and inward line, gives grief the
+      grammar of endurance — which is what Helen has.
+demoted:
+  - composer: Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    status: "used in Books I and XVI; not re-used in Book XXIV"
+    why: >
+      The Adagietto belongs to the register of private, wounded, still-living grief — Achilles
+      at the shore (Book I), Patroclus dying (Book XVI). Book XXIV's grief is not that kind:
+      it is past the wound, past the anger, into something larger and more irremediable. The
+      Mahler Ninth Adagio (closing pages) opens at the larger scale this book demands.
+  - composer: Tchaikovsky
+    work: "Pathétique Symphony — VI. Finale. Adagio lamentoso"
+    status: "demoted — wrong kind of grief"
+    why: >
+      The Pathétique finale is grief as self-dissolution, grief as collapse — the Russian
+      'suffering as identity' register that does not fit the Homeric mode, which is grief held
+      inside heroic form. Priam's dignity, Achilles' restraint, the threefold lament's formal
+      structure: the poem does not dissolve. It holds. The Pathétique falls apart. That is not
+      what Book XXIV does.
+  - composer: Wagner
+    work: "Tristan und Isolde — Liebestod"
+    status: "demoted — wrong valence"
+    why: >
+      The Liebestod is grief transfigured into erotic apotheosis — the desire force completing
+      through death. That is Isolde's logic, not Helen's, not Hecuba's, not Andromache's. The
+      grief of Book XXIV does not transcend; it endures. The Wagner slot belongs to the
+      Funeral March.

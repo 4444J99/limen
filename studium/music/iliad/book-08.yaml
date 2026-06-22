@@ -1,0 +1,148 @@
+# Iliad — Book VIII — curated music arc
+work: iliad
+book: 8
+title: "Iliad Book VIII: The Golden Scales"
+length_minutes: 88
+principle: >
+  Do not score Book VIII as "the Trojans are winning." Score it as the moment where divine will
+  becomes visible as structure — Zeus forbids, weighs, rebukes, and the universe rearranges.
+  The Achaean retreat is not a battle reversal; it is a cosmic adjustment. The book ends not in
+  death but in light: Trojan watchfires burning on the plain like a second sky, ominous,
+  magnificent, and utterly beyond Achaean control.
+force_arc: [law, divine-intervention, fate, wrath, exile, grief, fate, divine-intervention, law, fate]
+dominant_force: fate
+tracks:
+  - n: 1
+    scene: "Zeus summons the gods and forbids intervention"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue — Contrapunctus I"
+    decision: added
+    why: >
+      Zeus' prohibition is not arbitrary — it is the proclamation of a law that was always true:
+      his will supersedes divine faction. Bach's fugue opens with a subject that announces itself
+      as architecture, then demonstrates that architecture by subordinating every voice to its
+      logic. This is Zeus as sovereign structure, not Zeus as passionate tyrant. The gods can
+      hear him; they cannot argue with him.
+  - n: 2
+    scene: "Zeus alone on Ida / the golden scales drawn"
+    force: divine-intervention
+    composer: Strauss
+    work: "Also sprach Zarathustra — 'Von den Hinterweltlern'"
+    decision: added
+    why: >
+      Before the scales appear, Zeus stations himself on the peak of Ida, outside the partisan
+      fray of Olympus — a god above gods. Strauss's second section withdraws from the opening
+      cosmic fanfare into something quieter and more unsettling: the voice of a world-principle
+      that has stepped back from ordinary life to survey it. The golden scales are the climax of
+      that withdrawal.
+  - n: 3
+    scene: "The golden scales: Achaean doom sinks"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    decision: added
+    why: >
+      The weighing is the book's pivot and the most famous image of fate as mechanism — not
+      prophecy, not will, but weight. Beethoven's opening motif is the canonical musical
+      equivalent of inexorable, hammered insistence. The fates of armies are not debated; they
+      fall. The rhythm neither asks nor apologizes.
+  - n: 4
+    scene: "Trojans drive the Greeks back / Diomedes' chariot retreat"
+    force: wrath
+    composer: Prokofiev
+    work: "Alexander Nevsky — 'The Crusaders in Pskov'"
+    decision: added
+    why: >
+      The Trojan tide is not Achilles' wrath — it is a different thing: collective, machine-like,
+      sustained military dominance. Prokofiev's march for the occupying army is cold, mechanical
+      pressure, rhythmically relentless, without the personal heat of the Holst. The Greeks fall
+      back not in passion but in the grinding logic of a divine rearrangement.
+  - n: 5
+    scene: "Nestor unhorsed / old heroism helpless"
+    force: grief
+    composer: Elgar
+    work: "Enigma Variations — 'Nimrod' (Variation IX)"
+    decision: added
+    why: >
+      Nestor unhorsed is one of Homer's most precise grief notes: an old man who has known
+      greatness, unable to act. This is not funeral grief — Nestor survives — but the grief of
+      competence overtaken by circumstance. Elgar's Nimrod is the private face of nobility under
+      pressure: something that was whole and honored, momentarily exposed as fragile.
+  - n: 6
+    scene: "Diomedes rescues Nestor / Hector advances"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War' (reprise register)"
+    decision: added
+    why: >
+      The rescue galvanizes the scene: Diomedes, the ablest Greek fighter after Achilles,
+      chooses to stand when others flee. But Hector is there and Zeus is behind him.
+      The 5/4 pulse of Mars returns — not for the Achaean quarrel of Book I, but for
+      the moment when two wills collide on the field with divine backing on one side only.
+  - n: 7
+    scene: "Zeus' thunderbolts / Achaean terror before the divine sign"
+    force: divine-intervention
+    composer: Berlioz
+    work: "Symphonie fantastique — V. 'Songe d'une nuit du sabbat'"
+    decision: added
+    why: >
+      Zeus hurls a thunderbolt before Diomedes' horses to stop the Greek advance. The divine
+      sign is terrifying because it is not aimed at a person — it is aimed at the ground, a
+      demonstration of power that carries no grief, only command. Berlioz's finale is not demonic
+      in the Gothic sense but in the older sense: a force that operates outside human categories.
+      The Dies irae quotation within it gives the moment its proper register — not death yet, but
+      the announcement of an authority that decides death.
+  - n: 8
+    scene: "Hera and Athena prepare to enter / Zeus rebukes them from the sky"
+    force: law
+    composer: Brahms
+    work: "Symphony No. 1 — I. Un poco sostenuto — Allegro"
+    decision: added
+    why: >
+      Hera and Athena harness the horses and are stopped cold by Zeus' message: they will not
+      intervene. Brahms's first symphony is the form that argues against itself and loses —
+      then keeps going. The slow introduction followed by the contained forward pressure of the
+      Allegro enacts exactly this: divine will that encounters resistance and overrides it not
+      with violence but with the weight of precedent. Athena and Hera are not destroyed; they
+      are checked. That is its own kind of force.
+  - n: 9
+    scene: "Hera and Athena turn back / divine exile from the field"
+    force: exile
+    composer: Sibelius
+    work: "Symphony No. 7 — single-movement form (opening)"
+    decision: added
+    why: >
+      The goddesses are sent back to Olympus. Their withdrawal from the field is not
+      defeated — it is imposed, which is worse. Sibelius's Seventh opens with a tonality
+      that seems to wander without landing, a gathering that hasn't yet arrived. That open,
+      searching quality fits the exile of divine powers who know they will return but cannot
+      act now. The intervention is deferred, not cancelled. The music doesn't resolve; it holds.
+  - n: 10
+    scene: "Night falls / Trojans camp on the plain"
+    force: fate
+    composer: Debussy
+    work: "Nocturnes — 'Nuages'"
+    decision: added
+    why: >
+      The book's final image is its most famous and most eerie: the Trojans, exultant, camp
+      on the open plain and light their watchfires — a thousand fires burning between the
+      ships and the walls of Troy, like stars reflected on the earth. Homer pauses the war
+      to describe this spectacle with a tenderness that is also a threat. Debussy's 'Nuages'
+      is the only piece that earns this: drifting, hovering, beautiful, without resolution.
+      The fires are gorgeous. They are also the enemy's army, and they will be there at dawn.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "save for Book XXII / XXIV; do not use before Hector's death"
+    why: >
+      Book VIII has grief (Nestor's exposure, the Greek retreat) but no public death that earns
+      the funeral-march register. The book ends in watchfires, not graves. The funeral march
+      opens only when the hero is already dead.
+  - composer: Verdi
+    work: "Requiem — 'Dies irae'"
+    status: "demoted to hint within Berlioz; do not use as standalone in Book VIII"
+    why: >
+      The Dies irae belongs to the fullest terror — it nearly fits Zeus' thunderbolts, but
+      the Requiem's mass-scale catastrophe is premature here. Book VIII ends with the Trojans
+      triumphant and alive; the day of wrath has not yet fully broken.

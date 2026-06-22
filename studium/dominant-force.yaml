@@ -1,0 +1,80 @@
+# DOMINANT-FORCE ENGINE — the spine linking reading ↔ music
+# Converged verbatim from studium/_seed/transmission-curriculum-spec.md ("Daily Classical Composition
+# System"). Each day's passage is tagged with one or more dominant forces; the force drives the music
+# selection (curated pairing if present, else synthesized) AND colors the face.
+# composer_hints seed the synthesizer when no curated pairing exists — NOT prescriptive, just gravity.
+
+forces:
+  wrath:
+    requirement: "rhythmic pressure, unresolved harmony"
+    color: "#c0392b"
+    composer_hints: ["Holst (Mars)", "Stravinsky (Rite of Spring)", "Wagner (Tristan prelude)"]
+  plague:
+    requirement: "descending motion, dark orchestration"
+    color: "#6c5b7b"
+    composer_hints: ["Berlioz (Les Troyens)", "Shostakovich", "Penderecki"]
+  supplication:
+    requirement: "suspended cadence, exposed melodic line"
+    color: "#2980b9"
+    composer_hints: ["Bach (Erbarme dich)", "Pärt (Spiegel im Spiegel)", "Barber (Adagio)"]
+  divine-intervention:
+    requirement: "sudden color shift, brass/strings contrast"
+    color: "#f39c12"
+    composer_hints: ["Wagner (Das Rheingold)", "Strauss (Also sprach)", "Messiaen"]
+  exile:
+    requirement: "wandering tonality, open intervals"
+    color: "#16a085"
+    composer_hints: ["Sibelius", "Dvořák (New World)", "Vaughan Williams"]
+  return:
+    requirement: "circular form, recognition motif"
+    color: "#27ae60"
+    composer_hints: ["Beethoven (7th, II)", "Schubert", "Brahms"]
+  revelation:
+    requirement: "stillness, chant, verticality"
+    color: "#ecf0f1"
+    composer_hints: ["Pärt", "Tavener", "Gregorian chant", "Messiaen (Quartet for the End of Time)"]
+  law:
+    requirement: "formal clarity, repetition, architecture"
+    color: "#7f8c8d"
+    composer_hints: ["Bach (fugue / Art of Fugue)", "Handel (Royal Fireworks)", "Stravinsky (neoclassical)"]
+  comedy:
+    requirement: "dance rhythm, courtly exaggeration"
+    color: "#e67e22"
+    composer_hints: ["Rameau (Platée)", "Offenbach", "Rossini", "Mozart (opera buffa)"]
+  grief:
+    requirement: "slow tempo, inward line"
+    color: "#34495e"
+    composer_hints: ["Mahler (5th Adagietto)", "Wagner (Siegfried's Funeral March)", "Barber (Adagio)"]
+  metamorphosis:
+    requirement: "changing orchestral color, fluid harmony"
+    color: "#9b59b6"
+    composer_hints: ["Debussy", "Ravel", "Strauss (Metamorphosen)", "Scriabin"]
+  ascent:
+    requirement: "rising sequence, luminous orchestration"
+    color: "#f1c40f"
+    composer_hints: ["Mahler (8th / 2nd finale)", "Bruckner", "Strauss (Death and Transfiguration)"]
+  # extended forces (his working-thesis vocabulary), for the wider canon
+  sacrifice:
+    requirement: "ritual weight, processional, immolation build"
+    color: "#a93226"
+    composer_hints: ["Stravinsky (Rite — Sacrificial Dance)", "Gluck (Iphigénie)"]
+  kingship:
+    requirement: "ceremonial grandeur, sovereign display"
+    color: "#b9770e"
+    composer_hints: ["Handel (Zadok the Priest)", "Elgar", "Walton"]
+  desire:
+    requirement: "chromatic longing, deferred resolution"
+    color: "#c2185b"
+    composer_hints: ["Wagner (Tristan)", "Scriabin", "Szymanowski"]
+  memory:
+    requirement: "nostalgic recall, faded recapitulation"
+    color: "#5d6d7e"
+    composer_hints: ["Elgar (Nimrod)", "Fauré", "Rachmaninoff"]
+  fate:
+    requirement: "inexorable motif, hammered insistence"
+    color: "#212f3d"
+    composer_hints: ["Beethoven (5th)", "Tchaikovsky (4th)", "Verdi (Force of Destiny)"]
+  salvation:
+    requirement: "resolving radiance, chorale apotheosis"
+    color: "#fdfefe"
+    composer_hints: ["Bach (chorales)", "Mahler (Resurrection)", "Fauré (Requiem — In Paradisum)"]

@@ -1,0 +1,152 @@
+# Iliad — Book V — curated music arc
+# THE gold-standard form. Every other book/work converges toward this shape.
+work: iliad
+book: 5
+title: "Iliad Book V: The Wounding of Gods"
+length_minutes: 102
+principle: >
+  Do not score Book V as "a battle scene." Score it as the moment where a mortal man — filled
+  by a goddess — exceeds the human register entirely: he wounds gods. The arc is not military
+  violence; it is the terrifying logic of divine inflation, overreach, hubris, and the comedy
+  of divine injury. Diomedes' aristeia is not heroic glory — it is a controlled catastrophe,
+  the point where the Iliad's governing principle (mortals do not touch gods) is violated
+  twice, and Olympus absorbs the shock as farce.
+force_arc:
+  - divine-intervention
+  - wrath
+  - wrath
+  - divine-intervention
+  - wrath
+  - divine-intervention
+  - wrath
+  - comedy
+dominant_force: wrath
+tracks:
+  - n: 1
+    scene: "Athena fills Diomedes with valor — divine empowerment, eyes unclouded"
+    force: divine-intervention
+    composer: Strauss
+    work: "Also sprach Zarathustra — 'Von den Hinterweltlern' (opening sunrise)"
+    decision: added
+    why: >
+      The book opens not with battle but with transformation: Athena pours menos into Diomedes,
+      lifts the mist from his eyes so he can see gods on the field. This is not a general
+      preparing; it is a human receiving a divine upgrade. Strauss's sunrise is the only piece
+      in the repertoire that captures the sensation of a consciousness suddenly expanded —
+      light breaking over the horizon of ordinary human perception. The brass is not martial;
+      it is revelatory. The chord that opens the universe is Athena's gift.
+  - n: 2
+    scene: "The aristeia begins — Diomedes rampages, a fire among men"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    decision: added
+    why: >
+      Homer gives Diomedes in full aristeia a simile of fire: he moves across the plain like
+      a winter torrent or a wildfire. Book I used Mars for the verbal war of Agamemnon vs.
+      Achilles; here it arrives for actual rampage, which is where it was always pointing.
+      The 5/4 pulse is not asymmetrical discomfort now — it is asymmetrical annihilation.
+      The meter refuses settlement because Diomedes refuses to stop.
+  - n: 3
+    scene: "Diomedes kills Pandarus — aristeia at full violence"
+    force: wrath
+    composer: Stravinsky
+    work: "The Rite of Spring — 'The Sage' / 'The Augurs of Spring'"
+    decision: added
+    why: >
+      The killing of Pandarus — the Trojan archer who broke the truce in Book IV — is not
+      merely a battle death; it is the aristeia at its pure annihilating mechanism. Stravinsky's
+      Augurs are rhythmic ritual violence, stamped and insistent. Each accent is a kill. The
+      sequence of Diomedes' victims in Book V has the same relentless stamp — not individual
+      combat but a harvesting force moving through the field.
+  - n: 4
+    scene: "Aeneas wounded — Aphrodite intervenes, shields her son"
+    force: divine-intervention
+    composer: Debussy
+    work: "Prélude à l'après-midi d'un faune"
+    decision: added
+    why: >
+      The pivot. Aphrodite descends to protect Aeneas and wraps him in her robes. She is
+      love-force on a battlefield, a category error — soft color where there should be iron.
+      Debussy's Faune is the only piece in this tradition that gives divine feminine presence
+      on the edge of the dangerous: shimmering, susceptible, beautiful, and about to be hurt.
+      The flute is Aphrodite before she knows what Diomedes will do.
+  - n: 5
+    scene: "Diomedes wounds Aphrodite — mortal blade into divine flesh"
+    force: wrath
+    composer: Bartók
+    work: "Music for Strings, Percussion and Celesta — III. Adagio"
+    decision: added
+    why: >
+      This is the first crossing of the absolute prohibition. Diomedes drives his spear through
+      Aphrodite's hand; ichor flows, not blood; she cries out. Bartók's Adagio from the Music
+      for Strings is the piece that sounds like a membrane rupturing — night harmonics, celesta
+      over muted strings, a texture that is wrong in the way a universe violating its own rules
+      is wrong. It does not sound like victory. It sounds like a transgression the world has
+      not yet processed.
+  - n: 6
+    scene: "Aphrodite rescued by Iris and Ares — gods in disarray on Olympus"
+    force: divine-intervention
+    composer: Berlioz
+    work: "La Damnation de Faust — 'Ride to the Abyss'"
+    decision: added
+    why: >
+      After Diomedes wounds Aphrodite, the Olympian machinery lurches into emergency response:
+      Iris and Ares swoop down and carry the wounded goddess upward. Berlioz's Ride is
+      headlong, vertical, and barely in control — the orchestral equivalent of divine beings
+      in panicked transit, a situation that should not exist happening at maximum speed. The
+      brass is not ceremonial here; it is emergency procedure.
+  - n: 7
+    scene: "Diomedes wounds Ares — the war-god bellows and flees"
+    force: wrath
+    composer: Shostakovich
+    work: "Symphony No. 10 — II. Allegro (Scherzo)"
+    decision: added
+    why: >
+      The climax. Diomedes, spear in hand with Athena guiding it, drives the bronze into
+      Ares' belly. The god bellows like ten thousand men and abandons the field. Shostakovich's
+      10th Scherzo is the most violent two minutes in the symphonic repertoire — not military
+      pomp but concentrated brutality, a force moving so fast it sounds like the world trying
+      to keep up. It is the sound of the war-god being hit. The bellowing is in the brass;
+      the retreat is in the disintegrating coda.
+  - n: 8
+    scene: "Ares on Olympus — complains to Zeus like a wounded child"
+    force: comedy
+    composer: Rameau
+    work: "Les Indes galantes — 'Danse des sauvages' / Entrée des dieux"
+    decision: added
+    why: >
+      The god of war arrives on Olympus weeping and clutching his wound, complaining to his
+      father like an injured child who expected protection. Zeus listens, barely disguises his
+      contempt, and sends Ares off to be healed. Homer finds the war-god ridiculous. Rameau's
+      court spectacle — theatrical, costumed, artificially gallant — is exactly the mode: gods
+      performing dignity while the scene is categorically undignified. The divine is revealed
+      as vain theater the moment a mortal touches it.
+  - n: 9
+    scene: "Olympus restores order — Paeon heals Ares, the cosmos renormalizes"
+    force: comedy
+    composer: Haydn
+    work: "Symphony No. 45 'Farewell' — IV. Presto / Adagio"
+    decision: added
+    why: >
+      Paeon, divine physician, heals Ares the way you might cure a bruise — quickly, efficiently,
+      as if this were routine maintenance on an immortal who got too close to the human world.
+      The cosmos reassembles its rules after the violation. Haydn's Farewell Symphony ends with
+      musicians leaving the stage one by one — a performance of order quietly restoring itself,
+      with humor built into the structure. The gods close ranks; the anomaly is absorbed; the
+      war continues. The comedy is that nothing has changed except that we have seen behind the
+      curtain once.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "not before Book XXII — terminal-monumental register; Book V's violence is transgression, not mourning"
+    why: >
+      Diomedes wounds gods; no major Achaean hero dies in Book V. The funeral-march register
+      belongs to Patroclus and Hector. Book V is overreach comedy, not funeral elegy.
+  - composer: Beethoven
+    work: "Symphony No. 3 'Eroica' — II. Marcia funebre"
+    status: "demoted; wrong register for Book V"
+    why: >
+      The Eroica funeral march is public heroic mourning, built for a dead titan. Book V ends
+      with the war-god running away and being healed on Olympus. The emotional register is
+      transgression, farce, cosmic embarrassment — not funerary grandeur.

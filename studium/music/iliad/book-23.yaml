@@ -1,0 +1,196 @@
+# Iliad — Book XXIII — curated music arc
+# Converged from studium format (gold-standard: book-01.yaml).
+work: iliad
+book: 23
+title: "Iliad Book XXIII: The Ghost, the Pyre, the Games"
+length_minutes: 102
+principle: >
+  Do not score Book XXIII as generic funeral music. Score it as the book where grief encounters
+  its own social necessity — where a society that cannot stop grieving must, anyway, compete.
+  The ghost of Patroclus is private, liminal, aching. The pyre is public ritual. The games are
+  the community reasserting life: violent, comic, unfair, warm, fully human. The dominant
+  movement is grief → law → return → comedy — from the private wound to the shared arena.
+force_arc: [grief, grief, sacrifice, law, law, return, return, wrath, comedy, comedy, comedy, return, grief]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "Patroclus' ghost appears to Achilles at night"
+    force: grief
+    composer: Schubert
+    work: "String Quartet No. 14 in D minor, D. 810 ('Death and the Maiden') — II. Andante con moto"
+    decision: added
+    why: >
+      The ghost comes in the dark while the army sleeps. Achilles reaches for him and grasps air.
+      Schubert's 'Death and the Maiden' slow movement is the right register: intimate, not
+      monumental; the theme set with infinite tenderness, then varied into something that presses
+      harder than comfort can answer. It is grief as a private nocturne, not a public procession.
+      The funeral-march register belongs to Book XXII (Hector). This is the wound before the
+      wound has a name.
+  - n: 2
+    scene: "Achilles weeps; the ghost begs burial and fades"
+    force: grief
+    composer: Fauré
+    work: "Requiem, Op. 48 — 'In Paradisum'"
+    decision: added
+    why: >
+      Patroclus asks for burial so his shade may pass. He is half-already gone — he has crossed
+      the threshold but cannot yet cross the river. Fauré's 'In Paradisum' is the only music that
+      holds both departure and suspension at once: serene, irreversible, unbearably gentle. It
+      does not mourn the way a funeral march mourns; it opens a gate. That is precisely the ghost's
+      grammar: not requiem for the dead man, but passage music for a soul still waiting.
+  - n: 3
+    scene: "The Myrmidons mourn at dawn; the great pyre is built"
+    force: sacrifice
+    composer: Gluck
+    work: "Alceste — Ouverture"
+    decision: added
+    why: >
+      The pyre for Patroclus is one of the most elaborate sacrificial rites in the poem: trees
+      felled, animals slaughtered, honey and oil poured, the bodies of twelve Trojan youths laid
+      alongside. Gluck's Alceste Overture opens into the underworld register — solemn, processional,
+      genuinely dark, without the camp theatricality of later funeral music. The Greeks know their
+      ritual and perform it correctly. That correctness is terrible.
+  - n: 4
+    scene: "Achilles calls the winds; the pyre is lit"
+    force: sacrifice
+    composer: Berlioz
+    work: "Symphonie fantastique — V. 'Songe d'une nuit du sabbat'"
+    decision: added
+    why: >
+      Achilles pours libations and calls upon Boreas and Zephyrus to fan the flames. The winds
+      answer. The pyre burns all night. Berlioz's 'Witches' Sabbath' is the right fever for this:
+      not military, but elemental — fire summoned by a human voice, a world lit from within by
+      forces that are older than any army. The Dies Irae quotation inside it catches the ritual's
+      underworld weight without becoming sentimental.
+  - n: 5
+    scene: "The bones of Patroclus are gathered; the burial mound raised"
+    force: law
+    composer: Bach
+    work: "Mass in B minor, BWV 232 — 'Agnus Dei'"
+    decision: added
+    why: >
+      The funerary rites have their grammar: bones wrapped in fat, placed in a golden urn, the
+      mound staked out with posts. This is law — not state law, but the deep ritual law that
+      structures how a civilization handles its dead. Bach's 'Agnus Dei' from the B minor Mass
+      is architecture under grief: the alto aria descends slowly, formally, with an inwardness
+      that never collapses into display. The ritual is being done correctly. That correctness
+      is its own solace.
+  - n: 6
+    scene: "Achilles announces the funeral games"
+    force: law
+    composer: Handel
+    work: "Zadok the Priest, HWV 258"
+    decision: added
+    why: >
+      Achilles stands before the Achaean assembly and announces prizes. He has cauldrons, horses,
+      mules, cattle, iron, women. He is performing kingship — the distribution of honor through
+      competitive display. Handel's 'Zadok the Priest' is ceremonial-sovereign: it names the
+      moment where grief becomes social order, where the community is re-constituted around its
+      prizes and its rules. This is the hinge of Book XXIII.
+  - n: 7
+    scene: "The chariot race — preparation and anticipation"
+    force: return
+    composer: Beethoven
+    work: "Symphony No. 7 in A major, Op. 92 — IV. Allegro con brio"
+    decision: added
+    why: >
+      The chariot race is the great set-piece of Book XXIII: Diomedes, Eumelus, Antilochus,
+      Menelaus, Meriones. Five drivers. A course with a turning post. Tricks and divine
+      interference. Beethoven's Seventh finale is irresistible forward motion — not aggressive
+      like Mars, but exhilarated, almost dance-drunk. It captures the collective surge of the
+      race: the crowd watching, the horses running, the community alive inside competition for
+      the first time since the grief began.
+  - n: 8
+    scene: "Apollo and Athena interfere; the crash of Eumelus"
+    force: wrath
+    composer: Stravinsky
+    work: "The Rite of Spring — 'The Sage'"
+    decision: added
+    why: >
+      Apollo dashes the whip from Diomedes' hand; Athena restores it and breaks Eumelus' chariot.
+      The divine interferences are quick, violent, asymmetrical — not the great sustained wrath
+      of Achilles, but the capricious, compressed micro-wrath of gods meddling in sport.
+      Stravinsky's 'The Sage' is the right needle: brief, hieratic, something ritual-ized between
+      two world-orders. The race continues. The gods retreat.
+  - n: 9
+    scene: "The chariot race dispute — Antilochus, Menelaus, the oath"
+    force: comedy
+    composer: Haydn
+    work: "Symphony No. 104 in D major ('London') — IV. Spiritoso"
+    decision: added
+    why: >
+      The race ends in a quarrel: Antilochus cut off Menelaus at the narrow pass; Menelaus
+      demands an oath; Antilochus capitulates and offers the horse as gift; Menelaus relents,
+      moved, almost laughing. This is Homeric comedy in its purest form — the social lubrication
+      of competitive honor. Haydn's London finale has that quality: brisk, good-natured, a little
+      aggressive, ending in reconciliation. The quarrel is real, and then it is over, and then
+      everybody is fine.
+  - n: 10
+    scene: "The boxing match — Epeius and Euryalus"
+    force: comedy
+    composer: Rossini
+    work: "La gazza ladra — Overture"
+    decision: added
+    why: >
+      Epeius openly boasts he will win the boxing, and does — knocking Euryalus cold, then
+      helping him up. The scene is almost affectionate: there is no real malice, and the crowd
+      laughs. Rossini's overture has exactly this register: quick, physical, a little absurd,
+      with a snare-drum military energy that resolves into pleasure rather than violence.
+      The boxing match in Book XXIII is not tragic; it is the community at play.
+  - n: 11
+    scene: "Wrestling, foot-race, spear-and-shield, discus — the games in full"
+    force: comedy
+    composer: Mozart
+    work: "Sinfonie Concertante in E-flat major, K. 364 — III. Presto"
+    decision: added
+    why: >
+      The remaining contests move quickly: Ajax and Odysseus in a wrestling stalemate; the foot-race
+      where Odysseus prays to Athena and Ajax slips in dung; the armed combat stopped before
+      blood is drawn; the discus and spear. The games are the poem's most communal passage — a
+      whole society showing its skills, adjudicating disputes, laughing, competing, alive. Mozart's
+      Sinfonie Concertante finale has this quality: two soloists in constantly shifting, playful
+      rivalry, the ensemble behind them warm and supportive. The community is the instrument.
+  - n: 12
+    scene: "Achilles gives a prize to Nestor; the old man remembers"
+    force: return
+    composer: Elgar
+    work: "Enigma Variations, Op. 36 — IX. 'Nimrod'"
+    decision: added
+    why: >
+      Achilles calls Nestor aside and gives him a prize because Nestor is too old to compete.
+      Nestor accepts and remembers the games of his youth — the Funeral Games of Amarynceus,
+      where he won nearly everything. It is the most tender passage in Book XXIII, and one of
+      the most tender in the Iliad: memory as gift, an old man honored in his past. Elgar's
+      'Nimrod' is exact: it is memory rendered as music, nostalgia without sentimentality,
+      the deep warmth of a friendship acknowledged.
+  - n: 13
+    scene: "The games end; Achilles alone with the grief that the games covered"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 9 in D major — I. Andante comodo (opening)"
+    decision: added
+    why: >
+      The games close. The community disperses to eat and sleep. Achilles returns to his grief.
+      Book XXIII ends not with triumph but with return to the private wound — Patroclus is
+      still gone, the burial is done, the rites are complete, and none of it fills the absence.
+      Mahler's Ninth opens with a broken pulse, a heartbeat rhythm that falters, something
+      that cannot quite sustain itself. It is not the Adagietto's suspended tenderness; it is
+      older, more fractured, more alone. The right music for Achilles after the games: a man
+      who has done everything correctly and is still bereaved.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "reserved for Book XXII / Book XXIV only"
+    why: >
+      The funeral-march register must not appear in Book XXIII. Hector's death in Book XXII
+      opens that register; Book XXIV closes it. Book XXIII is the community's answer to death
+      — games, prizes, laughter, memory — not the monumental funeral procession. Using the
+      Siegfried March here flattens the arc and misreads the book's emotional argument.
+  - composer: Barber
+    work: "Adagio for Strings"
+    status: "too generically elegiac; deferred"
+    why: >
+      Barber's Adagio has been over-used as generic funeral atmosphere. Book XXIII's grief is
+      specific: private before the pyre (Schubert/Fauré register), then sublimated into games,
+      then returned to at the end in a more fractured form (Mahler 9). Barber belongs to the
+      public-monument register that Book XXIII explicitly resists.

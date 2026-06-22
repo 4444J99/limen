@@ -1,0 +1,146 @@
+# Iliad — Book XIX — curated music arc
+# "The Doomed Arming" — the reconciliation, the grief, the prophecy, the ride out
+work: iliad
+book: 19
+title: "Iliad Book XIX: The Doomed Arming"
+length_minutes: 86
+principle: >
+  Do not score Book XIX as "Achilles returning to battle." Score it as the book where every
+  actor knows the ending — and proceeds anyway. The quarrel is healed by ceremony and
+  ignored in feeling; Briseis mourns Patroclus in private; Achilles refuses food because
+  the living world has become repellent; the divine armor is a shell for a man already half
+  in the underworld; Xanthus speaks and Achilles answers the prophecy without flinching.
+  This is the doomed arming: not heroic resolve but the specific gravity of a man walking
+  into his own death with open eyes.
+force_arc: [law, law, grief, grief, grief, fate, fate, wrath, wrath]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "Dawn and Thetis arriving with the armor — the world resumes its terrible machinery"
+    force: law
+    composer: Bach
+    work: "The Well-Tempered Clavier, Book I — Prelude in C Major, BWV 846"
+    decision: added
+    why: >
+      Dawn arrives mechanically, indifferently. Thetis carries the armor down from Olympus;
+      the world does not pause for grief. Bach's C Major Prelude is formal order continuing
+      regardless of human feeling — arpeggiated, inevitable, each bar following the last with
+      the cold grammar of necessity. It is not warm; it is structural. The reconciliation
+      assembly will be staged with the same ceremonial neutrality.
+  - n: 2
+    scene: "The public reconciliation — Agamemnon's long self-exculpating speech, the gifts paraded"
+    force: law
+    composer: Handel
+    work: "Giulio Cesare in Egitto — 'Va tacito e nascosto'"
+    decision: added
+    why: >
+      Agamemnon blames Ate, fate, the gods — anyone but himself. The gifts arrive. The
+      assembly witnesses. This is law as theater: a ceremony that heals nothing emotionally
+      but restores the social contract by following the prescribed form. Handel's Caesar
+      aria is political calculation wearing the face of stateliness — power moving quietly,
+      self-presenting as magnanimous while the real engine runs underneath.
+  - n: 3
+    scene: "Briseis returns and sees Patroclus dead — her lament over the body"
+    force: grief
+    composer: Purcell
+    work: "Dido and Aeneas — 'When I Am Laid in Earth'"
+    decision: added
+    why: >
+      Briseis laments Patroclus, who was kind to her when she had nothing. This is private
+      grief, intimate and gendered — a woman mourning a man who treated her as a person,
+      not a prize. Purcell's Dido lament is the benchmark for this register: slow, descending
+      bass, a voice over a falling ground, grief as the thing that outlasts all political
+      resolution. The gifts have just been given; the ceremony has just been performed; and
+      here is the actual human cost, weeping over a corpse.
+  - n: 4
+    scene: "Achilles refuses food — his grief as refusal of the living world"
+    force: grief
+    composer: Schubert
+    work: "Winterreise — 'Der Leiermann'"
+    decision: added
+    why: >
+      Achilles will not eat. The Greek commanders urge him; he refuses. This is not
+      asceticism or heroic discipline — it is the behavior of someone who has already partly
+      left the world. The living body demands food; Achilles is no longer fully reconciled
+      to having a body. Schubert's "Der Leiermann" is the most inward of Winterreise: the
+      hurdy-gurdy turns emptily, the harmony is a bare drone, nothing resolves — the song
+      of a man standing at the world's edge, not yet gone, not willing to stay.
+  - n: 5
+    scene: "Achilles grieves while the army prepares — the island of his private mourning"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 9 — IV. Adagio"
+    decision: added
+    why: >
+      Book I's grief was the Adagietto — wounded, private, still living. Book XIX's grief
+      is further. Achilles knows he will die after Hector. He is not asking his mother to
+      intercede; he is going through the motions of being alive. Mahler's Ninth Adagio is
+      the greatest music of willed farewell — it does not resist, it does not collapse; it
+      looks at everything and lets go. That is the register of Achilles standing apart from
+      the army he is about to rejoin, not yet arming, not yet speaking.
+  - n: 6
+    scene: "Achilles arms in the divine armor — the helmet's plumes, the shield, the breastplate"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 7 — II. Allegretto"
+    decision: added
+    why: >
+      The arming scene in Homer is ceremonial and terrible. The divine armor fits a man
+      already marked for death. Beethoven's Seventh Allegretto is the only movement in the
+      symphonic literature that sounds simultaneously like a funeral march and a coronation
+      — its dotted rhythm is fate as cadence, inexorable, neither fast nor slow, neither
+      triumphant nor despairing. Achilles is not celebrating; he is fulfilling. The armor
+      is a costume for a doomed king.
+  - n: 7
+    scene: "Xanthus speaks — the horse prophesies Achilles' death"
+    force: fate
+    composer: Berlioz
+    work: "Symphonie fantastique — V. 'Dream of a Witches' Sabbath'"
+    decision: added
+    why: >
+      A horse speaks. The Erinyes silence it. This is the uncanny irrupting into the heroic
+      world — the boundary between animal and divine collapses for one moment, and fate
+      speaks through an unexpected mouth. Berlioz's Witches' Sabbath is the right register:
+      the supernatural made sonically real, the Dies Irae quoted, the grotesque and the
+      cosmic occupying the same moment. This is not gentle prophecy; it is the world
+      breaking its own grammar to tell a man he will die.
+  - n: 8
+    scene: "Achilles answers the prophecy — 'I know it well; but I will not stop'"
+    force: wrath
+    composer: Beethoven
+    work: "Piano Sonata No. 23 'Appassionata' — III. Allegro ma non troppo"
+    decision: added
+    why: >
+      Achilles does not rage against the prophecy. He acknowledges it and rides out anyway.
+      This is not recklessness — it is wrath that has found its final form: the willingness
+      to spend oneself entirely. Beethoven's Appassionata finale is not uncontrolled;
+      it is controlled fire, driving forward with full knowledge of where it goes. The
+      resolution has already happened internally; what follows is the execution.
+  - n: 9
+    scene: "Achilles rides out — the Myrmidons follow, the battle resumes"
+    force: wrath
+    composer: Prokofiev
+    work: "Romeo and Juliet — 'Montagues and Capulets'"
+    decision: added
+    why: >
+      The army moves. Achilles leads. This is not the 5/4 hostility of Holst's Mars
+      (Book I's quarrel energy) — it is processional wrath, visible, collective, directed.
+      Prokofiev's Montagues and Capulets is the most cinematically exact music for armed
+      doom-forward movement: heavy, regal, wrong in a way that cannot be stopped. The
+      tragedy is already baked into the march; the march does not know it.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "held for Book XXII (Hector's death) or Book XXIV"
+    why: >
+      The funeral-march register — public, monumental, terminal — belongs to the death of
+      Hector and the grief of Priam, not here. Book XIX's grief is private and self-directed.
+      Achilles is not being mourned; he is mourning. The public register opens at Book XXII.
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "already used in Book I; avoided here for compositional diversity"
+    why: >
+      Mars scored the verbal war of Book I's quarrel. Book XIX's wrath has passed through
+      grief and arrived at something colder than Mars's asymmetrical aggression — a man
+      who has already accepted death does not fight with the same texture as a man whose
+      honor has been insulted.

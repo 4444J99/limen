@@ -1,0 +1,178 @@
+# Iliad — Book II — curated music arc
+# Schema: matches book-01.yaml exactly.
+work: iliad
+book: 2
+title: "Iliad Book II: The False Dream, the Assembly, the Catalogue"
+length_minutes: 88
+principle: >
+  Do not score Book II as "the army marching to Troy." Score it as the moment where divine
+  deception breaks open into human theater — a false dream, a nearly-disastrous test, a demagogue
+  beaten before the crowd, an old king counseling order, and then the vast inhuman roll-call of
+  names: ships, places, captains, the weight of the world converging on one plain. The book is
+  about what holds an army together — and how close it came to dissolution before the first spear
+  was ever thrown.
+force_arc: [divine-intervention, wrath, law, comedy, law, memory, kingship, fate]
+dominant_force: law
+tracks:
+  - n: 1
+    scene: "Zeus sends the False Dream to Agamemnon"
+    force: divine-intervention
+    composer: Berlioz
+    work: "Symphonie fantastique — IV. 'March to the Scaffold'"
+    decision: added
+    why: >
+      The False Dream (Oneiros) is not revelation — it is divine manipulation wearing the mask of
+      authority. Berlioz's 'March to the Scaffold' is processional and sinister: it moves with
+      ceremony toward catastrophe. The dream enters Agamemnon with pomp and false promise, exactly
+      as the march moves the condemned man toward the blade. The brass color-shift and ceremonial
+      rhythm fit divine-intervention's requirement (sudden color shift, brass/strings contrast)
+      while keeping the ambiguity of a divine act that is also a trap.
+  - n: 2
+    scene: "Agamemnon's test — the army breaks for the ships"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Uranus, the Magician'"
+    decision: added
+    why: >
+      Not 'Mars' — that belongs to Book I's quarrel. Here the army's rout is a different kind of
+      force: chaotic, unstoppable, almost comic in its suddenness. 'Uranus' is Holst's most
+      grotesque movement — massive, lurching, rhythmically irregular, brutally loud then
+      collapsing. It fits the scene's strange violence: ten years of suppressed frustration
+      erupting toward the ships in a mob that no general can stop. Wrath's requirement is
+      rhythmic pressure and unresolved harmony; Uranus provides exactly that with a tinge of the
+      grotesque the scene demands.
+  - n: 3
+    scene: "Hera and Athena move against the flight / divine counter-maneuver"
+    force: divine-intervention
+    composer: Strauss
+    work: "Also sprach Zarathustra — 'Von den Hinterweltlern' (Of the Backworldsmen)"
+    decision: added
+    why: >
+      Hera cannot bear to see the Greeks sail home; she dispatches Athena instantly. This is the
+      gods operating at speed, pivoting the mechanism of history. Strauss's 'Von den
+      Hinterweltlern' is an unexpected choice — hushed, searching, strings dissolving into
+      uncertainty — but it captures the gods as a force above the scene, calibrating mortals from
+      a remove. The brass/strings contrast (divine-intervention requirement) arrives in the
+      transition out, as Athena descends.
+  - n: 4
+    scene: "Odysseus rallies the troops — scepter, speech, authority"
+    force: law
+    composer: Bach
+    work: "Brandenburg Concerto No. 5 — I. Allegro"
+    decision: added
+    why: >
+      Odysseus takes Agamemnon's scepter and moves through the army, striking chiefs and commons
+      with words calibrated to rank. This is law as rhetoric — an act of architecture, not force.
+      The Brandenburg No. 5's first movement is exactly this: formal clarity driving forward,
+      authority articulated through structure, the harpsichord cadenza as the moment of one
+      commanding voice rising above the ensemble. Law's requirement is formal clarity, repetition,
+      architecture. Bach delivers it at full human scale.
+  - n: 5
+    scene: "Thersites — the demagogue's ugly speech"
+    force: comedy
+    composer: Mozart
+    work: "Le nozze di Figaro — Overture"
+    decision: added
+    why: >
+      Thersites is the poem's great comic grotesque: physically ugly, socially low, politically
+      correct (Agamemnon IS taking prizes and the war IS ruinous), and ritually humiliated before
+      the crowd. Mozart's Figaro Overture is the most apt equivalent — bourgeois cunning, verbal
+      speed, class comedy, the servant who almost outwits everyone. The overture's bright rushing
+      energy captures both Thersites' audacity and the comic deflation when Odysseus beats him
+      and the army laughs. Comedy's requirement: dance rhythm, courtly exaggeration.
+  - n: 6
+    scene: "Odysseus' speech answered — the crowd restored to assembly"
+    force: law
+    composer: Handel
+    work: "Messiah — 'And the Glory of the Lord' (chorus)"
+    decision: added
+    why: >
+      After Thersites' punishment, Odysseus delivers a full oration; Nestor seconds it; the army
+      returns to order. This is the restoration of political form after comic chaos. Handel's
+      choral writing at this scale (voices massed, diatonic, architecturally clear) is the musical
+      equivalent of the Greek assembly reassembling: many voices falling into one formal shape.
+      Law's requirement of formal clarity and architectural repetition — Handel's choral writing
+      is perhaps its purest instantiation in the canon.
+  - n: 7
+    scene: "Nestor counsels — the old king's memory of past wars"
+    force: memory
+    composer: Elgar
+    work: "Enigma Variations — IX. 'Nimrod'"
+    decision: added
+    why: >
+      Nestor's counsel is always the same structure: I have seen greater men than you. He invokes
+      Pirithous, Dryas, Caeneus, Exadius — the heroes of a prior age as guarantee of present
+      wisdom. 'Nimrod' is the paradigm instance of memory as force: the nostalgic recall of
+      something irretrievable, rendered not as loss but as gravity. The faded recapitulation in
+      the Enigma Variations gives Nestor's speech its true register — not vanity, but the weight
+      of what an old man has actually seen.
+  - n: 8
+    scene: "Agamemnon's sacrifice before battle / the altar on the plain"
+    force: sacrifice
+    composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    decision: added
+    why: >
+      Before the Catalogue, Agamemnon sacrifices a fat ox to Zeus — and Zeus rejects it (his
+      thighs burn, the omen is dark, the favor is withheld). This is sacrifice as ritual weight
+      without return: the processional gravity of the act, the fire, the priests, the sense of
+      a compact being offered to a god who is already arranging betrayal. Verdi's 'Dies Irae'
+      brings ritual weight and immolation-build at full scale. Sacrifice's requirement is
+      processional gravity and immolation; nothing in the canon matches Verdi here.
+  - n: 9
+    scene: "The Catalogue of Ships — name after name, fleet after fleet"
+    force: memory
+    composer: Elgar
+    work: "Symphony No. 1 — I. Andante. Nobilmente e semplice (opening Adagio)"
+    decision: added
+    why: >
+      The Catalogue is the poem's great memorial act: 1,186 ships, 29 contingents, every captain,
+      every place-name from the Greek world. It is not drama — it is invocation. Homer calls on
+      the Muses because no mortal memory could hold it. Elgar's First Symphony opens with a melody
+      of such plain, broad inevitability that it functions as an archetype of noble recollection —
+      memory's requirement of nostalgic recall and faded recapitulation, elevated to sovereign
+      grandeur. The Catalogue is an act of memory so large it becomes its own kind of authority.
+  - n: 10
+    scene: "The Trojan catalogue — Priam's allies gather, the world assembles"
+    force: kingship
+    composer: Walton
+    work: "Crown Imperial — March"
+    decision: added
+    why: >
+      The Trojan catalogue mirrors the Greek: king after king, people after people, the Eastern
+      world arraying itself. Priam's power here is described at its maximum — before Hector falls,
+      before the walls fail. Walton's Crown Imperial is ceremonial grandeur without irony:
+      sovereignty displayed, the full weight of rank and territory on parade. Kingship's
+      requirement is ceremonial grandeur and sovereign display; Walton is its 20th-century
+      embodiment.
+  - n: 11
+    scene: "Iris to the Trojans — the march to war begins"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    decision: added
+    why: >
+      Book II closes as the two armies move toward each other for the first time. Iris brings
+      Zeus's order to the Trojans; the march is not a choice — it is a mechanism already set in
+      motion. Fate's requirement is inexorable motif and hammered insistence. Beethoven's Fifth
+      is the canonical instance of fate as rhythmic inevitability. The armies begin to move and
+      the sound has to be something that does not stop.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "save for Book XXII (Hector's death); forbidden before then"
+    why: >
+      The funeral-march / terminal-monumental-grief register opens only at Book XXII. Book II has
+      death as implication and mobilization, not as event.
+  - composer: Tchaikovsky
+    work: "1812 Overture"
+    status: "demoted — wrong affect"
+    why: >
+      Too celebratory, too triumphalist. The Catalogue is not a victory parade; it is an act of
+      memory and a mobilization with a dark omen already embedded in it.
+  - composer: Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    status: "belongs to Book I (Achilles and Thetis); not re-used here"
+    why: >
+      Achilles does not appear in Book II. The Adagietto's private inward grief belongs to his
+      withdrawal, not to the assembly or catalogue.

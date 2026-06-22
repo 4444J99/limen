@@ -1,0 +1,150 @@
+# Iliad — Book XXI — curated music arc
+# Converged from the gold-standard Book I form. Score THIS book's specific movement, not "the Trojan War."
+work: iliad
+book: 21
+title: "Iliad Book XXI: River, Fire, the Gods at War"
+length_minutes: 102
+principle: >
+  Do not score Book XXI as epic battle music. Score it as the moment where Achilles becomes
+  something beyond human — a force so excessive that nature itself rises against him. The Scamander
+  is not a special effect; it is the world's immune response to a man who has broken the covenant
+  between killer and cosmos. The book moves: mass slaughter → river-god's fury → Achilles nearly
+  drowned → fire defeating water → the gods themselves stripped of dignity in open combat. Wrath
+  here is not heroic; it has gone past heroism into something vertiginous and almost inhuman.
+force_arc: [wrath, wrath, divine-intervention, fate, supplication, divine-intervention, wrath, divine-intervention, comedy]
+dominant_force: wrath
+tracks:
+  - n: 1
+    scene: "Achilles drives Trojans into the Scamander — mass slaughter, the river choked with corpses"
+    force: wrath
+    composer: Shostakovich
+    work: "Symphony No. 8 — II. Allegretto"
+    decision: added
+    why: >
+      The opening scene is mechanical killing at industrial scale — Achilles at the river is not
+      heroic combat, it is massacre. Shostakovich's Eighth is the great symphony of inhuman
+      violence: the Allegretto is relentless, march-pulsed, rhythmically inexorable — a machine
+      that will not stop. Where Holst's "Mars" gives the quarrel's aggression, Shostakovich gives
+      the aftermath of wrath turned to slaughter. The humor in it is black: men dying at the pace
+      of a mechanical scherzo.
+  - n: 2
+    scene: "Lycaon's supplication — Achilles refuses mercy, kills Priam's son at the water's edge"
+    force: supplication
+    composer: Bach
+    work: "St. Matthew Passion — 'Erbarme dich, mein Gott'"
+    decision: added
+    why: >
+      Lycaon falls at Achilles' knees: the supplication posture, the appeal to shared humanity, the
+      plea that Achilles remember his own mortality. Achilles refuses — coldly, philosophically,
+      without anger. "Erbarme dich" is Peter's weeping after the denial, an exposed solo voice
+      against slow orchestral pulse. The parallel is exact: the kneeling supplicant, the refusal,
+      the moment where mercy is structurally available and structurally foreclosed. Bach carries the
+      ache of the scene without sentimentalizing it.
+  - n: 3
+    scene: "The Scamander rises in fury — the river-god becomes a divine force opposing Achilles"
+    force: divine-intervention
+    composer: Sibelius
+    work: "The Oceanides, Op. 73"
+    decision: added
+    why: >
+      The Scamander's awakening is not a flood — it is the natural world reconstituting itself as
+      will. Sibelius' "The Oceanides" is water-music that is genuinely mythic: not decorative
+      wave-painting but something vast, cold, and impersonal rising from depth. It begins as
+      shimmer and builds into overwhelming force — the exact arc of the river-god's anger, from
+      undercurrent to towering wall of water. Where Debussy's sea is liminal and maternal (Book I),
+      this sea is antagonist.
+  - n: 4
+    scene: "The river's second attack — Achilles overwhelmed, the Scamander nearly drowns him"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    decision: added
+    why: >
+      Achilles nearly drowns. The invincible hero is under water, fingers failing to grip the bank,
+      calling to Zeus. This is the one moment in the poem — before the death of Patroclus makes it
+      permanent — where Achilles' fate presses directly against him. Beethoven's Fifth is fate as
+      inexorable motif, hammered insistence that will not be argued with. The Scamander does what
+      no Trojan can do: it reduces Achilles to mortal terror. The Fifth's opening is the knocking
+      of that fact.
+  - n: 5
+    scene: "Achilles prays to Zeus — supplication inside near-death, the cry of a man who faces his fate"
+    force: supplication
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      At the height of the flood Achilles calls on Zeus — not a warrior's prayer but a drowning
+      man's. It is one of the rawest moments of vulnerability in the poem: the greatest fighter
+      reduced to clinging to an elm. Pärt's "Spiegel im Spiegel" is suspended time, an exposed
+      melodic line over a pedal — exactly the formal requirement of supplication (suspended cadence,
+      open melodic line). It holds the scene at the edge without resolving it.
+  - n: 6
+    scene: "Hephaestus unleashes fire — flame beats back the Scamander, the river submits"
+    force: divine-intervention
+    composer: Strauss
+    work: "Also sprach Zarathustra — 'Von der Wissenschaft' through 'Das Tanzlied'"
+    decision: added
+    why: >
+      Hera commands Hephaestus; fire meets flood; the Scamander screams and yields. The sudden
+      color shift is explicit in the poem — water vs. fire is elemental contrast made cosmic. Strauss's
+      "Also sprach" carries exactly the dominant-force requirement for divine-intervention: sudden
+      orchestral color shift, brass/strings contrast, the sense of a force from outside human scale
+      imposing order on chaos. The Hephaestus fire is not heroic deed; it is divine machinery
+      overriding natural fury.
+  - n: 7
+    scene: "The gods clash on the plain — Ares vs. Athena, Aphrodite felled, Poseidon vs. Apollo"
+    force: wrath
+    composer: Stravinsky
+    work: "The Rite of Spring — 'The Sacrifice' (Danse sacrale)"
+    decision: added
+    why: >
+      The divine battle is simultaneously terrifying and absurd — gods striking gods, Aphrodite
+      groaning on the ground, Hera boxing Artemis' ears. Stravinsky's "Danse sacrale" is the right
+      register for this: it is violent, rhythmically irregular, near-chaotic — wrath operating at
+      the structural level, but with something almost obscene in its energy. The Rite gives ritual
+      violence; the divine battle is the ritual violence of the cosmic order turned on itself.
+  - n: 8
+    scene: "Apollo refuses to fight Poseidon — the god of light steps back from the god of earth; Apollo and Artemis humiliated"
+    force: divine-intervention
+    composer: Messiaen
+    work: "Quartet for the End of Time — V. 'Louange à l'Éternité de Jésus'"
+    decision: added
+    why: >
+      Apollo refuses to fight Poseidon — not from weakness but from something like divine restraint
+      or irony; the earth-shaker and the far-shooter recognize that their combat would be undignified.
+      Apollo's refusal is an act of proportion, almost philosophical. Messiaen's Quintet movement is
+      stillness and verticality — revelation as non-combat, the force that does not strike. It scores
+      the poem's remarkable moment where the most powerful god steps back into luminous refusal.
+  - n: 9
+    scene: "The gods disperse — laughter, absurdity, the Olympian household after its brawl"
+    force: comedy
+    composer: Rossini
+    work: "Il barbiere di Siviglia — Overture"
+    decision: added
+    why: >
+      Book XXI ends not with apocalypse but with embarrassment: Artemis weeping to Zeus; Hermes
+      declining to fight Leto; the gods returning to Olympus ruffled and ridiculous. Homer pivots
+      from near-catastrophe to divine farce with complete control. Rossini's Barber Overture is
+      irresistible comic velocity — organized chaos that always lands on its feet. It plays the gods'
+      brawl as social comedy, which is exactly what Homer intends: immortals who cannot be killed
+      cannot be tragic; they can only be absurd.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "not here; save for XXII (Hector's death) or XXIV"
+    why: >
+      The funeral-march / terminal-monumental-grief register opens at Book XXII with Hector's death.
+      Book XXI's grief register is operational terror (Achilles drowning) not public mourning.
+  - composer: Debussy
+    work: "La mer — 'De l'aube à midi sur la mer'"
+    status: "used in Book I (maternal/liminal sea); Book XXI's water is antagonist, not threshold"
+    why: >
+      Debussy's sea is liminal and maternal — Achilles calling Thetis. The Scamander is a fury,
+      not a mother. Sibelius' "The Oceanides" carries the right cold impersonal scale.
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "used in Book I; Book XXI's wrath has gone past the quarrel's martial aggression"
+    why: >
+      "Mars" scores heroic military aggression and status-combat. Book XXI's opening is past that:
+      it is massacre at the river, wrath-as-slaughter. Shostakovich's Eighth carries the
+      mechanized, post-heroic scale of what Achilles is doing.

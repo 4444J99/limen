@@ -1,0 +1,115 @@
+# Iliad — Book I — curated music arc (structured form of studium/_seed/iliad-book-01-playlist.md)
+# THE gold-standard form. Every other book/work converges toward this shape.
+work: iliad
+book: 1
+title: "Iliad Book I: Rage, Plague, Olympus"
+length_minutes: 94
+principle: >
+  Do not score Book I as "the Trojan War." Score it as the moment where private insult becomes
+  historical catastrophe — plague, quarrel, hierarchy, divine leverage, withheld murder, wounded
+  honor, withdrawal, supplication, Olympian pettiness.
+force_arc: [wrath, plague, wrath, supplication, wrath, sacrifice, law, exile, grief, divine-intervention, kingship, comedy, comedy]
+dominant_force: wrath
+tracks:
+  - n: 1
+    scene: "Invocation of rage"
+    force: wrath
+    composer: Wagner
+    work: "Tristan und Isolde — Prelude"
+    decision: added
+    why: >
+      Book I begins with rage as causality, not battle as spectacle. The Tristan Prelude is
+      unresolved pressure — it suspends, does not discharge. That is Achilles' mēnis: a force
+      introduced before it becomes visible. "Mars" begins too externally; Homer begins deeper.
+  - n: 2
+    scene: "Greek sacrificial horizon / war-before-war"
+    force: sacrifice
+    composer: Gluck
+    work: "Iphigénie en Aulide — Overture to Act I"
+    decision: added
+    why: >
+      The Achaean world is already morally contaminated by sacrifice, rank, command, forced exchange.
+      Book I turns on a brutal grammar of exchange: Chryseis, Briseis, ransom, honor-prizes, plague as
+      counterpayment.
+  - n: 3
+    scene: "Trojan doom / Cassandra register"
+    force: fate
+    composer: Berlioz
+    work: "Les Troyens — 'Malheureux roi!'"
+    decision: "replaces vague 'Les Troyens overture'"
+    why: "Berlioz as mythic atmosphere — Cassandra's prophetic dread, doomed royal knowledge, not generic epic grandeur."
+  - n: 4
+    scene: "Apollo's plague atmosphere"
+    force: plague
+    composer: Berlioz
+    work: "Les Troyens — Act II Introduction"
+    decision: "kept Berlioz, specified better"
+    why: "Chryses' prayer is a successful appeal to divine order; Apollo enforces insulted sacred hierarchy. A world where human arrogance triggers a force above human law."
+  - n: 5
+    scene: "Agamemnon vs. Achilles"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    decision: kept
+    why: "The 5/4 pulse is hostile, asymmetrical, hard to settle into — a broken heroic economy of prizes, status, command, possession, visible honor. The scene is verbal, but already war."
+  - n: 6
+    scene: "Quarrel as ritualized violence"
+    force: sacrifice
+    composer: Stravinsky
+    work: "The Rite of Spring — 'The Augurs of Spring'"
+    decision: added
+    why: "The ritual violence underneath heroic society. Holst gives military aggression; Stravinsky gives ritualized social violence — both levels of the quarrel."
+  - n: 7
+    scene: "Athena restrains Achilles"
+    force: law
+    composer: Brahms
+    work: "Symphony No. 4 — I. Allegro non troppo"
+    decision: "moved from Olympus"
+    why: "Achilles grips the sword and does not draw it. Brahms is form under pressure, rage under grammar — Athena redirects wrath from murder into speech, then withdrawal. The poem is haunted by the murder Achilles does not commit."
+  - n: 8
+    scene: "Achilles withdraws to the shore"
+    force: exile
+    composer: Debussy
+    work: "La mer — 'De l'aube à midi sur la mer'"
+    decision: added
+    why: "After the masculine assembly, Achilles returns to the shore and calls Thetis. The sea is maternal, pre-human, divine, liminal — a living threshold."
+  - n: 9
+    scene: "Achilles and Thetis"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    decision: "replaces Wagner funeral march"
+    why: "The funeral march belongs later (Patroclus, Hector, Book XXIV). In Book I, Achilles is insulted, wounded, alive, loved by his mother. The Adagietto is private, suspended, self-enclosed grief — wounded inwardness, not public heroic death."
+  - n: 10
+    scene: "Thetis before Zeus / cosmic machinery"
+    force: divine-intervention
+    composer: Wagner
+    work: "Das Rheingold — Prelude"
+    decision: added
+    why: "Grows like a world-system coming into being — Thetis converts Achilles' private injury into cosmic policy. Her appeal is geopolitical; Zeus' nod becomes a mechanism that will kill men."
+  - n: 11
+    scene: "Olympus: divine authority"
+    force: kingship
+    composer: Handel
+    work: "Music for the Royal Fireworks — Overture"
+    decision: added
+    why: "Ceremonial authority, court splendor, sovereign display — Zeus' world, power staged as grandeur. Olympus needs court music: rank, order, display, rule."
+  - n: 12
+    scene: "Olympus: gods as ridiculous"
+    force: comedy
+    composer: Rameau
+    work: "Platée — Ouverture"
+    decision: added
+    why: "The Olympian ending is grand and ridiculous at once: Zeus and Hera quarrel; Hephaestus mediates; the gods laugh; mortals suffer below. Book I ends in divine comedy."
+  - n: 13
+    scene: "Olympus: farcical immortal theater"
+    force: comedy
+    composer: Offenbach
+    work: "Orpheus in the Underworld — Overture"
+    decision: "added as ironic exit"
+    why: "Only at the end, after Hephaestus restores laughter — it exposes the scandal of the Olympians: immortals laugh, drink, flirt, quarrel while humans are arranged for death."
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "removed from Book I; save for XVI / XXII / XXIV"
+    why: "Too terminal. Book I is not yet funeral music — it is withdrawal music."

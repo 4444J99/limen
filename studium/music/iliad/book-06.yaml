@@ -1,0 +1,175 @@
+# Iliad — Book VI — curated music arc
+# THE gold-standard form. Every other book/work converges toward this shape.
+work: iliad
+book: 6
+title: "Iliad Book VI: Guest-Friendship, Prayer, Farewell"
+length_minutes: 88
+principle: >
+  Do not score Book VI as "the Trojan War." Score it as the one book in the Iliad where
+  violence pauses and human interiority fills the space: the courteous exchange of armor between
+  enemies, a mother at a temple altar, a husband who knows he will die, a wife who cannot stop
+  him, a child terrified by a bronze helmet-crest. This book is private grief beside public doom.
+force_arc: [law, law, supplication, grief, grief, fate, grief, fate]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "Glaucus and Diomedes — the moment of recognition across the battle-line"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue — Contrapunctus I (BWV 1080)"
+    decision: added
+    why: >
+      Guest-friendship (xenia) is the oldest of laws — not a sentiment but a structural obligation
+      binding enemies who share a common ancestor of hospitality. The contrapunctus opens with a
+      single subject stated simply, then answered, then woven into counterpoint without
+      ever abandoning the original rule. That is xenia: a formal architecture that holds, even here,
+      across the carnage. Formal clarity, repetition, architecture — precisely the force-requirement
+      for law.
+  - n: 2
+    scene: "The armor exchange — Glaucus gives gold for bronze (Zeus takes his wits)"
+    force: law
+    composer: Handel
+    work: "Giulio Cesare — 'Va tacito e nascosto' (Act I)"
+    decision: added
+    why: >
+      The exchange of armor is simultaneously a fulfillment of law and a satirical expose of its
+      absurdity: gold armor for bronze, a hundred oxen's worth for nine. Homer's parenthetical —
+      "Zeus took away his wits" — is deadpan comedy inside ceremonial procedure. Handel's aria
+      is ceremonial courtliness shot through with sly observation; the horn obligato gives it a
+      stately processional quality while the text is about something half-ridiculous. Law performed
+      with full gravity while the universe winks.
+  - n: 3
+    scene: "Hecuba leads the women to Athena's temple — prayer and supplication"
+    force: supplication
+    composer: Bach
+    work: "St. Matthew Passion — 'Erbarme dich, mein Gott' (BWV 244)"
+    decision: added
+    why: >
+      Hecuba's procession to the temple is the book's formal supplication: women of Troy bearing
+      robes, kneeling, praying to a goddess who has already decided against them. Bach's 'Erbarme
+      dich' is the supreme expression of supplication in the Western musical canon — an exposed
+      melodic line over suspended cadence, the voice hovering at the edge of the answer it will
+      not receive. Hecuba's prayer is not answered; Athena turns her face away. The music must hold
+      the petition without the consolation.
+  - n: 4
+    scene: "Hector rebukes Paris — the shame that cannot cure cowardice"
+    force: wrath
+    composer: Brahms
+    work: "Symphony No. 1 — IV. Allegro non troppo, ma con brio (opening Adagio)"
+    decision: added
+    why: >
+      Hector's reproach of Paris is wrath controlled — not Achilles' mēnis (that is volcanic,
+      bottomless) but a soldier's cold contempt for a beautiful man who hides while others die.
+      Brahms' first symphony fourth movement opens with a grave, suppressed weight before the
+      famous horn call releases it; that compression before release is exactly Hector's posture
+      — rage held inside duty, shame held inside love for a brother who does not deserve it.
+  - n: 5
+    scene: "Helen speaks to Hector — the self-indicting confession"
+    force: grief
+    composer: Fauré
+    work: "Pelléas et Mélisande Suite — III. Sicilienne (Op. 80)"
+    decision: added
+    why: >
+      Helen's speech to Hector is one of the most quietly devastating moments in the poem: she
+      calls herself a 'cold horror' and wishes she had died before she came to Troy. It is grief
+      in the key of self-knowledge — not melodrama, not weeping, but a still, lucid acknowledgment
+      of what she has cost. Fauré's Sicilienne is just that: a delicate, inward, almost fragile
+      melody with a steady lilt that never tips into sentimentality. Private grief that knows
+      itself, slow tempo, inward line.
+  - n: 6
+    scene: "Hector at the Scaean Gate — looking for Andromache, not finding her"
+    force: fate
+    composer: Tchaikovsky
+    work: "Symphony No. 6 'Pathétique' — II. Allegro con grazia"
+    decision: added
+    why: >
+      Hector crosses the city asking where Andromache is. He cannot find her. The waltz-like
+      5/4 of Tchaikovsky's second movement moves with a peculiar limping grace — forward but
+      not quite steady, beautiful but structurally unresolved. Hector walking through Troy he
+      will never see again: the city's texture (women at the gates, the bustling street, the
+      great tower) rendered in a movement that is luminous and already elegiac. Fate does not
+      announce itself here; it walks alongside him, keeping the same pace.
+  - n: 7
+    scene: "Hector and Andromache at the Scaean Gate — the farewell"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 9 — I. Andante comodo (opening pages)"
+    decision: added
+    why: >
+      The farewell is the emotional center of the Iliad's first half and one of the most perfect
+      scenes in world literature. Hector tells Andromache he knows Troy will fall, that he will
+      die, that she will be taken into slavery — and he still turns back to the battle. Mahler's
+      Ninth opens with a heartbeat that is already irregular, a farewell that has been written
+      into the opening bars: the music knows it is saying goodbye. The Adagietto of the Fifth
+      (used in Book I for Achilles and Thetis) is wound inwardness; the Ninth's first movement
+      is farewell — facing outward, knowing, choosing. This is the right register for this scene.
+      Not funeral, not eulogy: a living man saying goodbye.
+  - n: 8
+    scene: "Astyanax cries at the helmet-crest — Hector removes his helmet, the child laughs"
+    force: grief
+    composer: Schubert
+    work: "String Quartet No. 14 'Death and the Maiden' — II. Andante con moto"
+    decision: added
+    why: >
+      The moment when Astyanax recoils from the nodding crest and Hector laughs and removes
+      his helmet — holding his son, praying for him — is the tenderest scene in the Iliad and
+      the most terrible. It is tender because of what we know: this child will be thrown from
+      the walls. Schubert's 'Death and the Maiden' slow movement is grief that holds tenderness
+      inside it, a melody of such devastating simplicity that the variations never fully leave
+      its gravity. The register is private, not public; intimate, not monumental. Slow tempo,
+      inward line — but here the inwardness is a father's love, which the poem will not protect.
+  - n: 9
+    scene: "Hector's prayer for Astyanax — 'Let him be better than his father'"
+    force: supplication
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      Hector's prayer is the most quietly heartbreaking supplication in Book VI: he lifts his
+      son, prays to Zeus, asks that the boy might one day surpass him. It is a prayer that
+      reaches into a future the poem will deny. Pärt's mirror-music — piano and violin suspended
+      over each other in stillness — is pure suspended cadence, an exposed melodic line hanging
+      over open space. The supplication register requires exactly this: held breath, no resolution,
+      the petition sent into silence.
+  - n: 10
+    scene: "Andromache returns to the house — weeping among living women, for the living man"
+    force: grief
+    composer: Elgar
+    work: "Enigma Variations — XIV. Finale: E.D.U."
+    decision: "demoted from closer; replaced by Barber for the arc's final gravity"
+    why: >
+      Andromache goes home weeping. All the women weep with her — for Hector alive, knowing.
+      This is grief before death, which is the specific register of Book VI. Elgar's finale is
+      grandly valedictory but not funereal; it is a send-off while the subject still lives. It
+      swells rather than collapses. The arc needs this swell before the closing gravity.
+  - n: 11
+    scene: "The foreboding close — Troy is still standing, Hector is still alive, doom is visible"
+    force: fate
+    composer: Sibelius
+    work: "Symphony No. 7 in C major — closing pages"
+    decision: added
+    why: >
+      Book VI ends without a death — but you can feel the wall. Hector goes back out the Scaean
+      Gate. Andromache is at the house. The doom has not arrived but it is no longer deniable.
+      Sibelius's Seventh is a single-movement symphony that moves from dense polyphony toward a
+      close of almost unbearable weight and stillness — not a crash, not a funeral march, but
+      an inexorable arrival at a final silence. The fate force-requirement is inexorable motif,
+      hammered insistence: Sibelius builds that insistence over forty minutes and then stops,
+      without release. Book VI does the same. The door closes; Troy is quieter than it should be.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "refused; save for Book XXII (Hector's death) or Book XXIV"
+    why: >
+      The funeral-march / terminal-monumental-grief register must not appear before Hector's
+      actual death. In Book VI Hector is alive, armed, beloved, doomed-but-present. The
+      funeral march would collapse dramatic time and falsify the book's specific emotional
+      register: the tenderness of the living farewell, not the ceremony of the dead.
+  - composer: Barber
+    work: "Adagio for Strings"
+    status: "held in reserve; not used here"
+    why: >
+      Too public, too oratorical for Book VI's interior grief. Barber's Adagio is a civic
+      mourning piece — right for mass grief, for the scale of Book XXII or XXIV. Book VI's
+      grief is private: a wife, a child, a man at a gate. The Schubert and Mahler carry
+      this register more truly.

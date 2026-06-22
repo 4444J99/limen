@@ -1,0 +1,166 @@
+# Iliad — Book VII — curated music arc
+work: iliad
+book: 7
+title: "Iliad Book VII: Challenge, Duel, Wall"
+length_minutes: 87
+principle: >
+  Do not score Book VII as a war episode. Score it as the moment where the war formalizes itself —
+  a single combat that enacts the whole conflict in miniature, then refuses to resolve it. The book
+  moves through ceremony, violence, stalemate, law, mourning, and fortification: the human instinct
+  to build a structure against the knowledge that structures fail. Hector's challenge is kingship
+  and pride; the duel is wrath at its most ritualized; the draw is law masking irresolution;
+  the burial truce is grief kept brief and functional; the wall is law again — and Poseidon's
+  resentment is divine-intervention as jealousy, not rescue.
+force_arc: [kingship, wrath, wrath, law, grief, law, divine-intervention]
+dominant_force: law
+tracks:
+  - n: 1
+    scene: "Hector's challenge — one man steps forward"
+    force: kingship
+    composer: Elgar
+    work: "Enigma Variations — Variation IX 'Nimrod'"
+    decision: added
+    why: >
+      Hector's challenge is sovereign self-declaration: he steps out from the ranks, names himself,
+      and proposes a formal contest. This is not rage but the posture of a man who believes
+      the world should order itself around his excellence. 'Nimrod' carries that weight — ceremonial
+      grandeur without triumphalism, the slow accumulation of a man presenting himself for
+      history to notice. It is kingship as gravity, not as riot.
+  - n: 2
+    scene: "The Achaeans' silence — no one rises"
+    force: exile
+    composer: Sibelius
+    work: "Symphony No. 7 in C major — opening Adagio"
+    decision: added
+    why: >
+      The silence that follows Hector's challenge is one of Homer's great moments: the best
+      Greek warriors look at their feet. Sibelius' Seventh opens in a suspended tonal no-man's-land —
+      neither resolved nor moving, a held breath, an exposed vacuum. That is the Achaean camp before
+      Ajax is chosen: the wandering interval of men who do not want to volunteer for death.
+  - n: 3
+    scene: "The lot is cast — Ajax chosen"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 in C minor — I. Allegro con brio"
+    decision: added
+    why: >
+      The lot tumbles out of the helmet and it is Ajax. Fate rendered as a mechanical click.
+      Beethoven's Fifth opens with the hammered four-note motif that the whole nineteenth century
+      heard as fate knocking — but what Homer shows is stranger: fate is a pebble. The music
+      captures the irrevocability without the grandeur the occasion pretends to. Ajax did not
+      choose; he was designated.
+  - n: 4
+    scene: "Ajax arms — the approach"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    decision: added
+    why: >
+      Ajax arming is theater and menace at once. Homer slows the narrative to describe the
+      shield — huge, layered, like a tower. The 5/4 asymmetrical pulse of 'Mars' fits the
+      approach of something that does not move like ordinary men. 'Mars' already appeared in
+      Book I as the quarrel; here it recurs for legitimate formal combat — the same force,
+      differently channeled. Wrath wearing armor is still wrath.
+  - n: 5
+    scene: "The duel — blow and counterblow"
+    force: wrath
+    composer: Prokofiev
+    work: "Romeo and Juliet — 'Montagues and Capulets' (Dance of the Knights)"
+    decision: added
+    why: >
+      The Hector-Ajax duel is a choreography of violence, not a chaos of it. Each man strikes,
+      recoils, reassesses, strikes again. Prokofiev's 'Montagues and Capulets' is exactly this:
+      a stamping, processional, mechanically escalating antagonism — two houses, two bodies, a
+      collision that is almost balletic in its formalized brutality. The brass accents land like
+      spear-blows. It is wrath made ceremonial, which is exactly what Book VII's duel is.
+  - n: 6
+    scene: "Nightfall — heralds intervene, duel suspended"
+    force: law
+    composer: Bach
+    work: "The Well-Tempered Clavier, Book I — Prelude in C major, BWV 846"
+    decision: added
+    why: >
+      The heralds step in as darkness falls and declare the duel ended. Neither man has won.
+      Bach's C major Prelude is pure formal clarity — arpeggiated, architectural, without
+      argument. Law in Book VII is not justice; it is procedure. The prelude has no drama
+      in itself; it is the grammar underneath the drama. That is what the heralds represent:
+      the grammar that says 'stop here, observe the form.'
+  - n: 7
+    scene: "Exchange of gifts — Hector and Ajax honor each other"
+    force: law
+    composer: Handel
+    work: "Water Music — Suite No. 1 in F major: Air"
+    decision: added
+    why: >
+      After the non-victory, Hector and Ajax exchange gifts: sword, belt, purple scabbard.
+      The gesture is law rendered as courtesy — the formal acknowledgment that the other
+      man was a worthy equal. Handel's Air from the Water Music is ceremonial without being
+      heavy, gracious without being sentimental. It is the sound of two courts briefly
+      recognizing each other across a field of blood.
+  - n: 8
+    scene: "The Achaean camp feasts — brief relief"
+    force: comedy
+    composer: Haydn
+    work: "Symphony No. 94 in G major 'Surprise' — II. Andante"
+    decision: added
+    why: >
+      After the duel, Agamemnon feasts the chiefs. Homer lingers on the food, the wine,
+      the fellowship — a pause that knows it is a pause. Haydn's 'Surprise' Andante is
+      domestic, warm, slightly ironic: the famous 'surprise' chord arrives just as you've
+      settled in. The men feast knowing the war resumes. The music holds that doubleness —
+      comfort with a jolt underneath it.
+  - n: 9
+    scene: "Burial truce — both sides collect their dead"
+    force: grief
+    composer: Fauré
+    work: "Requiem, Op. 48 — 'In Paradisum'"
+    decision: added
+    why: >
+      The burial truce is grief at its most compressed and public: two armies face each other
+      silently, gathering bodies, building pyres. Homer does not dwell here — the war doesn't
+      allow it. Fauré's 'In Paradisum' is private grief disciplined into liturgical form —
+      quiet, children's voices rising, not funeral-march monumental. This is not Hector's
+      death; it is anonymous loss distributed across both sides. The register must stay
+      inward and brief, not terminal.
+  - n: 10
+    scene: "The Achaeans build their wall"
+    force: law
+    composer: Stravinsky
+    work: "Symphony in Three Movements — I. Quarter-note = 160"
+    decision: added
+    why: >
+      The Achaeans build a wall and ditch around the ships — the most architectural act of
+      the poem outside Troy itself. Stravinsky's neoclassical momentum here is exactly right:
+      organized labor, formal repetition, purposeful weight. Law as construction. The first
+      movement of the Symphony in Three Movements has the driving forward-press of men who
+      have agreed to a collective task and are executing it. Architecture is law made visible
+      in earth and stone.
+  - n: 11
+    scene: "Poseidon's jealousy — the gods resent the unsanctioned wall"
+    force: divine-intervention
+    composer: Strauss
+    work: "Also sprach Zarathustra — 'Von den Hinterweltlern' (Of the Backworldsmen)"
+    decision: added
+    why: >
+      Poseidon complains to Zeus: the Achaeans built this wall without offering hecatombs to
+      the gods. Their structure was unsanctioned. Zeus' reply is dismissive: the wall will be
+      destroyed anyway. Strauss captures divine-intervention as cosmic indifference rather than
+      rescue — the 'Backworldsmen' section of Zarathustra is eerie, world-behind-the-world,
+      beings who regard human constructions from an elevation so vast the constructions are
+      already ash. Poseidon is not angry in the human way; he is a force that does not like
+      being bypassed.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "forbidden before Book XXII"
+    why: >
+      The burial truce in Book VII is grief but not terminal grief. Hector still lives.
+      The funeral-march register opens only when Hector falls (Book XXII). Using it here
+      would exhaust the register ten books too early and misrepresent the scale of loss.
+  - composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    status: "demoted — wrong scale for Book VII"
+    why: >
+      The Dies Irae would overwhelm the burial truce's restrained, procedural grief.
+      Book VII buries anonymous dead under truce; the Dies Irae is eschatological fury.
+      Save for scenes of total annihilation.

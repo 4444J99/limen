@@ -1,0 +1,23 @@
+# Daily Study Protocol — his words (studium/_seed/transmission-curriculum-spec.md)
+# "Keep it finite. Do not let this become an infinite research swamp."
+
+loop:
+  - read the text
+  - copy the original script
+  - translate a small unit
+  - compare translations
+  - write one interpretive note
+  - listen to one composition
+  - log the resonance
+
+daily_minimum:
+  - {step: "Primary reading", minutes: "20–40", output: "Read one scene, not necessarily one chapter"}
+  - {step: "Script copying",  minutes: "10",    output: "Handwrite 3–5 lines / verses / sentences"}
+  - {step: "Translation",     minutes: "15",    output: "Literal translation + freer literary version"}
+  - {step: "Commentary",      minutes: "10",    output: "One paragraph: what changed in your understanding?"}
+  - {step: "Music",           minutes: "5–15",  output: "One composition matched to the day's dominant force"}
+  - {step: "Ledger",          minutes: "3",     output: "Log text, passage, script, composition, motif"}
+
+principle: >
+  The key is not fluency. The key is physical contact with the text. Handwriting slows you down enough
+  to notice structure. Script first, grammar second, translation third.

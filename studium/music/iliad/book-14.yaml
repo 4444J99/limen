@@ -1,0 +1,185 @@
+# Iliad — Book XIV — curated music arc
+# Dios Apate: The Deception of Zeus
+work: iliad
+book: 14
+title: "Iliad Book XIV: Desire, Deception, Stone"
+length_minutes: 88
+principle: >
+  Do not score Book XIV as "a battle scene." Score it as the moment where the cosmos is
+  bent by desire — Hera adorns herself, borrows the girdle of Aphrodite, seduces Zeus
+  into sleep on Mount Ida, and the whole machinery of divine will is subverted by erotic
+  cunning. Then the tide snaps: Poseidon surges, Ajax hurls a great stone, Hector falls.
+  The book moves from intimate feminine preparation through divine seduction to sudden
+  martial reversal. The danger here is scoring it as battle music throughout; the book's
+  center of gravity is a bedroom on a mountaintop.
+force_arc: [desire, metamorphosis, desire, divine-intervention, comedy, wrath, wrath, return]
+dominant_force: desire
+tracks:
+  - n: 1
+    scene: "Greek leaders survey the rout / the wound of the army"
+    force: grief
+    composer: Elgar
+    work: "Symphony No. 1 in A-flat — II. Allegro molto (scherzo)"
+    decision: added
+    why: >
+      The book opens on wounded men — Agamemnon, Odysseus, Diomedes — surveying the
+      carnage from the ships. This is not the private wounded inwardness of Achilles
+      (that belongs to Mahler's Adagietto register). This is public institutional grief:
+      generals watching a tide they cannot stop, injured, slow, afraid. Elgar's First
+      Symphony carries the weight of an establishment confronting its own fragility.
+      The scherzo movement is uneasy, wound-tense — not the finale's resolution.
+  - n: 2
+    scene: "Hera resolves to deceive Zeus — the plan takes shape"
+    force: metamorphosis
+    composer: Ravel
+    work: "La Valse"
+    decision: added
+    why: >
+      Hera's decision is a masterpiece of tactical cunning: she will adorn herself,
+      borrow Aphrodite's girdle, find Sleep, promise him one of the Graces, and lure
+      Zeus. La Valse begins as glittering ballroom surface and slowly reveals itself
+      as something ominous beneath — exactly the double register of Hera's scheme.
+      Beauty and danger wearing the same dress. The waltz idiom is intimate, feminine,
+      ornamental; the disintegration at the close is the seduction's hidden violence.
+  - n: 3
+    scene: "Hera adorns herself — the toilette of a goddess"
+    force: desire
+    composer: Szymanowski
+    work: "Symphony No. 3 'Song of the Night' — I"
+    decision: added
+    why: >
+      Homer lingers: Hera bathes, anoints herself with ambrosial oil, braids her hair,
+      puts on her divine robe, fastens her girdle, sets earrings in her ears, draws a
+      veil. This is not action — it is slow, erotic preparation, each object charged.
+      Szymanowski's Third Symphony opens in chromatic longing, voice dissolving into
+      orchestra — nocturnal, sensuous, searching. The dominant-force requirement for
+      desire is "chromatic longing, deferred resolution": Szymanowski is its truest
+      embodiment in the orchestral canon.
+  - n: 4
+    scene: "Hera borrows Aphrodite's girdle — the erotic instrument"
+    force: desire
+    composer: Wagner
+    work: "Tristan und Isolde — 'Liebestod' (Act III finale)"
+    decision: added
+    why: >
+      The cestus, Aphrodite's girdle, contains "love, desire, sweet talk, the whisper
+      that steals away the minds even of the wise." Wagner's Liebestod is the most
+      ruthless harmonic statement of desire as dissolution of will — the moment Tristan
+      and Isolde's erotic longing consumes all other consideration. Hera is going to
+      use this object to dissolve the god who rules the universe. The Liebestod earns
+      its place here not as death music but as weapon music: desire as the one force
+      that can undo cosmic authority.
+  - n: 5
+    scene: "Hera approaches Sleep — the bribe of a Grace"
+    force: divine-intervention
+    composer: Fauré
+    work: "Pelléas et Mélisande Suite — 'Sicilienne'"
+    decision: added
+    why: >
+      Hera must negotiate with Hypnos (Sleep) before she can reach Zeus. She promises
+      him one of the Graces — Pasithée — as a bride. This is divine transaction carried
+      out in a forest near Lemnos, all whisper and shimmer. Fauré's Sicilienne is the
+      exact register: delicate, just off-balance, carrying something slightly illicit
+      beneath its surface grace. The dominant-force requirement for divine-intervention
+      is "sudden color shift, brass/strings contrast" — Fauré achieves this subtly,
+      the strings carrying erotic lightness while the texture keeps shifting.
+  - n: 6
+    scene: "Hera and Zeus on Mount Ida — the seduction"
+    force: desire
+    composer: Scriabin
+    work: "Le Poème de l'extase, Op. 54"
+    decision: added
+    why: >
+      Zeus sees Hera and desire floods him instantly — Homer gives the simile: the
+      first time they lay together, hidden from their parents. Then Zeus throws a golden
+      cloud over them both. This is the erotic apex of the poem's divine comedy, and
+      it is also the fulcrum of the entire book's strategy. Scriabin's Poème de l'extase
+      is unapologetically about exactly this: ecstatic desire that climbs without
+      resolution until it explodes and stills. The brass climax is Zeus's thunderous
+      capitulation; the aftermath is sleep.
+  - n: 7
+    scene: "Sleep locks Zeus — Poseidon is free"
+    force: comedy
+    composer: Mozart
+    work: "The Marriage of Figaro — Overture"
+    decision: added
+    why: >
+      The moment Zeus goes under is the book's great comic reversal: the king of the
+      gods, who has been sustaining Trojan superiority with his personal authority, is
+      simply asleep because his wife seduced him into it. The comedy is structural, not
+      incidental — the entire Iliadic cosmos has been run by Zeus's promise to Thetis,
+      and a woman just switched it off with a borrowed girdle. Mozart's Figaro Overture
+      is the purest musical statement of comic plotting, female intelligence outsmarting
+      male authority, the brilliant scheme set in motion. It is not disrespectful; it
+      is exactly as smart as Homer is being here.
+  - n: 8
+    scene: "Poseidon surges — divine reversal unleashed"
+    force: divine-intervention
+    composer: Beethoven
+    work: "Symphony No. 7 — I. Vivace"
+    decision: added
+    why: >
+      With Zeus asleep, Poseidon storms onto the battlefield. The god who has been
+      chafing under Zeus's authority since Book XIII now moves without restraint —
+      rallying Greeks, breathing strength into tired men, turning the tide. The
+      dominant-force requirement for divine-intervention is "sudden color shift,
+      brass/strings contrast." Beethoven's Seventh opens with a vast slow introduction
+      and then detonates into a motor rhythm that will not stop — exactly Poseidon's
+      energy: coiled, then released, unstoppable, driving.
+  - n: 9
+    scene: "Greek rally — the battle turns"
+    force: return
+    composer: Brahms
+    work: "Symphony No. 1 — IV. Allegro non troppo, ma con brio (finale)"
+    decision: added
+    why: >
+      The Greek reversal in Book XIV is not a triumphal parade — it is a recognition,
+      a gathering of force that has been spent and is now refilling. The dominant-force
+      requirement for return is "circular form, recognition motif." Brahms's First
+      Symphony finale opens with the horn call over tremolo strings — one of the great
+      recognition moments in the orchestral canon — then builds to a chorale. This is
+      not the wrath-music of Ajax's stone; it is the restoration of a possibility the
+      Greeks had almost stopped believing in.
+  - n: 10
+    scene: "Ajax hurls the great stone — Hector falls"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    decision: added
+    why: >
+      The stone Ajax seizes is one of the ballast-stones used to wedge ships' keels.
+      He lifts it and hurls it at Hector's chest. Hector spins and falls like a top.
+      This is the book's culminating act of physical force — not clever, not seductive,
+      not divine: a man lifting a rock and breaking another man with it. The 5/4 pulse
+      of Mars is asymmetrical, brutal, grinding — the right register for martial wrath
+      that resolves nothing, just fells. (Mars returns here because Book XIV's wrath
+      is purely physical, not cosmic. The Stravinsky register belongs to ritualized
+      social violence; this is blunt force.)
+  - n: 11
+    scene: "The Trojans reel — Hector carried from the field"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 9 — I. Andante comodo (opening)"
+    decision: added
+    why: >
+      Hector is carried off the field — not dead, not yet, but felled and broken. The
+      Trojans are in shock. This is not the funeral register (that belongs to Book XXII);
+      this is the private grief of an army watching its champion carried away unconscious.
+      Mahler's Ninth Symphony opens with the most death-aware music in the repertoire —
+      but not terminal, not final. It is suspended, halting, the heartbeat motif in
+      the violas that keeps almost stopping. Exactly the register of Hector still
+      breathing, the Trojans not yet permitted to grieve fully, the battle still live.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "not before Book XXII; funeral-monumental register belongs to Hector's death"
+    why: >
+      Hector falls in Book XIV but does not die. The public-funeral register must
+      wait for Book XXII. Mahler's Ninth (inward, suspended) holds the right pitch here.
+  - composer: Strauss
+    work: "Also sprach Zarathustra — opening"
+    status: "demoted from divine-intervention"
+    why: >
+      Too autonomous and self-regarding for Poseidon's unleashing — Poseidon is released
+      BY Hera's scheme, not self-manifesting. Beethoven's Seventh carries the river-of-energy
+      quality more truthfully.

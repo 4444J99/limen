@@ -1,0 +1,191 @@
+# Iliad — Book XXII — curated music arc
+# THE DEATH OF HECTOR. The funeral-march register opens here — not before.
+work: iliad
+book: 22
+title: "Iliad Book XXII: The Death of Hector"
+length_minutes: 112
+principle: >
+  Do not score Book XXII as "a battle." Score it as a sequence of collapses: one man
+  waiting alone outside walls while everyone he loves begs him to come inside; a nerve
+  that breaks in front of the approaching enemy; a three-circuit chase that reduces a hero
+  to a fugitive; a divine betrayal so perfectly calibrated it could only be called cosmic
+  malice; a duel whose outcome everyone already knows; a dying plea that is refused; and
+  then the body lashed and dragged while the woman who loved him watches from the tower.
+  This book is the precise moment where epic becomes tragedy.
+force_arc: [fate, grief, wrath, fate, wrath, fate, grief, grief, grief]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "Hector alone at the Scaean Gate — the waiting"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    decision: added
+    why: >
+      The four-note fate motif is the correct grammar for this moment. Hector stands
+      outside, immovable — not from courage but from the inexorability of what is coming.
+      Everyone is already inside the walls. The gate is still open; he does not move.
+      Beethoven's first movement is fate as a rhythmic axiom, hammered without argument.
+      It does not announce catastrophe so much as install it as the condition of everything
+      that follows. This is not heroism's music. It is doom's antechamber.
+  - n: 2
+    scene: "Priam and Hecuba beg from the walls"
+    force: grief
+    composer: Purcell
+    work: "Dido and Aeneas — 'When I am laid in earth' (Dido's Lament)"
+    decision: added
+    why: >
+      Priam tears his hair and names the sons he has already lost; Hecuba bares her breast
+      and holds up the breast that nursed him and begs him to come inside. This is the
+      oldest grief in Western literature — parental supplication watching its object refuse.
+      Purcell's lament is built on a descending chromatic ground bass, a grief that circles
+      and cannot escape itself. The repetition is the point: Priam repeats his plea as the
+      bass line repeats, because there is nothing else to do. The inward line is exactly
+      right. This is private devastation, not yet public ceremony.
+  - n: 3
+    scene: "Hector deliberates — the soliloquy before the charge"
+    force: fate
+    composer: Brahms
+    work: "Symphony No. 1 — I. Un poco sostenuto — Allegro"
+    decision: added
+    why: >
+      Hector, alone on the plain, runs through the argument: come inside (Priam is right,
+      Hecuba is right), face Achilles (honor demands it), negotiate a truce (not possible,
+      Achilles will refuse). He arrives at the last option and knows it is not real.
+      Brahms' First opens under enormous formal tension — suppressed and then released into
+      the Allegro — because Brahms understood what it costs to choose forward motion when
+      you know where it leads. The architecture under pressure is right for Hector thinking
+      clearly toward his own death.
+  - n: 4
+    scene: "Hector's nerve breaks — the flight"
+    force: wrath
+    composer: Shostakovich
+    work: "Symphony No. 7 'Leningrad' — I. Allegretto (invasion episode)"
+    decision: added
+    why: >
+      As Achilles rounds the corner and the sun blazes off his armor, Hector simply runs.
+      Homer does not make it ambiguous. The great Trojan champion turns and sprints and
+      Achilles gives chase. The Shostakovich invasion episode is the correct machine for
+      this: a mechanical, unanswerable, rhythmically accelerating force that does not
+      relent. It is not battle music in the usual sense — it is the music of something
+      bearing down without variation or mercy. Wrath here is not Achilles' emotion;
+      it is his velocity, his inhumanity, his terrible forward motion.
+  - n: 5
+    scene: "The three circuits of Troy"
+    force: wrath
+    composer: Ravel
+    work: "Bolero"
+    decision: added
+    why: >
+      Three times around the walls of Troy. Homer slows the chase to almost mythological
+      duration: the gods watch; Zeus takes out his golden scales; the repetition is
+      structural, not narrative. Bolero is the only piece in the repertory that is
+      mechanically, formally, insistently repetitive — the same melody, the same rhythm,
+      the same accumulating pressure, three circuits of the same thing until the harmonic
+      breaking point. It serves the three-circuit chase the way no dramatic development
+      could: the relentlessness IS the point. This is wrath as inexorable structure.
+  - n: 6
+    scene: "Zeus weighs the fates — Athena descends to Hector"
+    force: fate
+    composer: Verdi
+    work: "La forza del destino — Overture"
+    decision: added
+    why: >
+      Zeus takes out the golden scales and weighs Hector's fate against Achilles'; Hector's
+      side sinks. Apollo abandons him. Athena descends and takes the form of Deiphobus,
+      Hector's brother. This is fate as mechanism — not tragedy, not accident, but divine
+      machinery executing a predetermined outcome through disguise. Verdi's Overture opens
+      with the three-note fate motif and builds to inevitable catastrophe. It is not
+      melancholy; it is inexorable. The force of destiny is not a feeling. It is a
+      structural fact of the universe that Homer — and Verdi — present without apology.
+  - n: 7
+    scene: "The duel — Hector realizes the betrayal"
+    force: grief
+    composer: Schubert
+    work: "String Quartet No. 14 in D minor 'Death and the Maiden' — II. Andante con moto"
+    decision: added
+    why: >
+      Hector turns to call for Deiphobus to hand him a second spear, and there is no one
+      there. He understands — not in a flash of anger, but in a sudden lucid grief — that
+      the gods have tricked him, that Athena has arranged his death, that there is no
+      escape and never was. Schubert's Andante is the right register for this recognition:
+      the theme from the song 'Death and the Maiden' played as a series of variations,
+      death as a patient visitor, grief that is perfectly calm because it has already
+      accepted what it cannot change. Hector draws his sword and walks forward.
+  - n: 8
+    scene: "Hector's death and dying plea refused"
+    force: grief
+    composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    decision: "unlocked here — this is the moment the register opens"
+    why: >
+      This is the track demoted from Book I, reserved for exactly this moment. Achilles'
+      spear finds the gap in the armor at Hector's throat. Hector falls. He asks Achilles
+      to return his body for burial; Achilles refuses, calls him a dog, says the vultures
+      will eat him. Hector dies with his plea unanswered. The Funeral March from
+      Götterdämmerung is not merely a funeral march — it is a monumental public statement
+      of a hero's irreversible death, built on Siegfried's leitmotif cycling through its
+      own annihilation. This is terminal-monumental grief: not inward, not private, but
+      world-historical. The funeral register belongs here because this death changes
+      everything — not just for Troy, but for the poem itself.
+  - n: 9
+    scene: "Achilles lashes the body to the chariot — defilement"
+    force: wrath
+    composer: Bartók
+    work: "Music for Strings, Percussion and Celesta — III. Adagio"
+    decision: added
+    why: >
+      After the death, wrath does not stop — it continues into the body. Achilles pierces
+      Hector's heels, threads the reins through, drags him in the dust around the walls.
+      Priam watches from above. Bartók's Adagio is the right register: string writing that
+      is beautiful and wrong, harmonically suspended in something that should not be
+      happening, a combination of grief and violence that refuses to resolve. Wrath here
+      has become something past anger — it is pathological, ritual, an act against the
+      body of the dead, which Homer presents as a violation of cosmic order.
+  - n: 10
+    scene: "The Trojan women tear their hair — public lamentation"
+    force: grief
+    composer: Górecki
+    work: "Symphony No. 3 'Symphony of Sorrowful Songs' — I. Lento — Sostenuto tranquillo ma cantabile"
+    decision: added
+    why: >
+      The walls of Troy are full of women watching. The city breaks into formal lamentation:
+      they tear their hair, they beat their breasts, they cry out. This is communal grief,
+      the ancient formal cry — threnos — performed by an entire city watching its protector
+      dragged in the dust. Górecki's Symphony of Sorrowful Songs was built from cries of
+      mourning (a mother's lament, inscriptions from a Gestapo prison wall). Its slow
+      string ascent is communal grief at the scale of catastrophe. The slow tempo, the
+      inward line descending toward silence — this is grief as public fact, not private
+      wound.
+  - n: 11
+    scene: "Andromache's lament at the tower"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 9 — IV. Adagio"
+    decision: added
+    why: >
+      Andromache does not know yet. She is inside, weaving, heating water for Hector's
+      bath when he comes home. She hears the cry from the wall, rushes to the tower,
+      and sees — the body dragged behind Achilles' chariot. She faints. When she comes
+      back she gives the fullest lament in the book: not for Hector's glory but for his
+      son, their son, who will now be an orphan tolerated at another man's table, who
+      will be pushed from the feast. Mahler's Ninth Adagio is his last completed movement —
+      a piece written in full knowledge of ending, an inward farewell that does not
+      sentimentalize its grief but holds it with formal clarity until it dissolves into
+      silence. Andromache's lament is the most human thing in Book XXII, and it belongs
+      to Mahler's last music.
+demoted:
+  - composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    status: "demoted — too choral/apocalyptic for this scene-by-scene movement"
+    why: >
+      The Dies Irae is tempting for Hector's death but scores the wrong register —
+      divine judgment, eschatological terror. Book XXII is not about divine punishment;
+      it is about human grief and its defilement. The funeral is not here yet.
+  - composer: Strauss
+    work: "Death and Transfiguration (Tod und Verklärung)"
+    status: "demoted — transfiguration is wrong; no apotheosis happens in Book XXII"
+    why: >
+      Hector's death has no transcendence. His body is dragged. His plea is refused.
+      Tod und Verklärung resolves into light; Book XXII refuses that resolution until
+      Book XXIV. Save for potential use in XXIV when Priam and Achilles weep together.

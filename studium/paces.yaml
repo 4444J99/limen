@@ -1,0 +1,27 @@
+# PACES — daily portion sizes, all three, switchable from logs/studium-state.json
+# His daily protocol: "Read one scene, not necessarily one chapter" (20–40 min). Portion is expressed
+# per division-kind so it adapts to each work (a Homeric "book" ~600 lines; a Dante "canto" ~140 lines;
+# a Quran "sura" varies wildly; a Tao "chapter" is tiny). Tunable knobs, no sacred numbers
+# ([[logic-over-inherited-config]]). lines_per_day is the cursor step for line-based works.
+
+default: standard
+
+paces:
+  gentle:
+    label: "Gentle (~20–30 min/day)"
+    description: "Sustainable for years. The whole canon over ~2–3 years."
+    lines_per_day: 120          # ~one Homeric scene; ~one short canto
+    divisions_per_day: {chapter: 1, sura: 1, canto: 1, tale: 0.5, fitt: 1, section: 1, tablet: 0.5,
+                        book: 0.3, parva: 0.1, kanda: 0.2, cycle: 0.3, fitt_default: 1}
+  standard:
+    label: "Standard (~45–60 min/day)"
+    description: "~one book of Homer or 1–2 cantos of Dante per day. The whole canon in ~12–18 months."
+    lines_per_day: 300
+    divisions_per_day: {chapter: 2, sura: 2, canto: 2, tale: 1, fitt: 2, section: 2, tablet: 1,
+                        book: 0.6, parva: 0.2, kanda: 0.3, cycle: 0.5, fitt_default: 2}
+  intensive:
+    label: "Intensive (~90 min+/day)"
+    description: "Bigger portions; the whole canon under a year."
+    lines_per_day: 600          # ~one full Homeric book
+    divisions_per_day: {chapter: 4, sura: 4, canto: 4, tale: 2, fitt: 4, section: 4, tablet: 2,
+                        book: 1, parva: 0.4, kanda: 0.5, cycle: 1, fitt_default: 4}

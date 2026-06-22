@@ -1,0 +1,168 @@
+# Iliad — Book III — curated music arc
+# THE gold-standard form. Every other book/work converges toward this shape.
+work: iliad
+book: 3
+title: "Iliad Book III: Desire, the Walls, the Duel, Aphrodite"
+length_minutes: 88
+principle: >
+  Do not score Book III as a battle scene. Score it as the book where desire produces
+  catastrophe — Paris quails, Helen names the dead, the duel is decided by divine fraud,
+  and Aphrodite drags Helen back to the bed where the war began. The dominant motion is
+  not military. It is erotic, elegiac, and cosmic: desire deferred, shame exposed, memory
+  embodied on the walls, force discharged and then snatched away, and desire reinstated
+  by divine compulsion.
+force_arc: [desire, wrath, law, memory, memory, wrath, wrath, divine-intervention, desire, desire]
+dominant_force: desire
+tracks:
+  - n: 1
+    scene: "The armies assemble / Paris steps forward and loses his nerve"
+    force: desire
+    composer: Scriabin
+    work: "Piano Sonata No. 4 in F-sharp major, Op. 30 — I. Andante"
+    decision: added
+    why: >
+      Paris advances to challenge, then flinches back into the ranks when he sees Menelaus.
+      This is desire without nerve — chromatic, beautiful, irresolute, trembling at its own
+      consequence. Scriabin's F-sharp Sonata opens in suspended longing, neither advancing
+      nor resolving. It is Paris exactly: a man made of wanting, not of will. "Mars" would
+      be wrong here; the armies have stalled because of a coward in a panther-skin.
+  - n: 2
+    scene: "Hector shames Paris — the speech as whip"
+    force: wrath
+    composer: Bartók
+    work: "Music for Strings, Percussion and Celesta — III. Adagio"
+    decision: added
+    why: >
+      Hector's rebuke is cold, precise, devastating. He does not shout; he dissects.
+      Bartók's Adagio from Music for Strings is not loud wrath but surgical dark pressure —
+      a descending chromatic figure, percussive punctuation underneath, the strings tightening.
+      It names Paris' cowardice without the explosion of Mars; Hector is too skilled a soldier
+      to waste heat on a brother he despises in this moment.
+  - n: 3
+    scene: "The truce / formal oath of single combat agreed"
+    force: law
+    composer: Bach
+    work: "Mass in B minor — 'Et in unum Dominum' (Credo, duet)"
+    decision: added
+    why: >
+      The truce is a ritual act — sacrifice, wine, prayer, the gods called as witnesses.
+      Bach's duet from the Credo has the architecture of binding agreement: two voices in
+      formal counterpoint, ceremonial weight, the feeling of something solemnized. The
+      ceremony of oaths, the cutting of lambs' throats, Agamemnon's prayer — all of it
+      is law, not battle. No composer gives ritual formality like Bach.
+  - n: 4
+    scene: "Teichoscopia I — Helen on the walls, naming the Achaean kings"
+    force: memory
+    composer: Elgar
+    work: "Enigma Variations — IX. 'Nimrod'"
+    decision: added
+    why: >
+      The teichoscopia is the emotional pivot of Book III and one of the strangest moments
+      in Homer: Helen stands on the walls of Troy naming the men who came to get her back,
+      and she does it with the preternatural calm of someone who has been watching the war
+      from the inside. It is memory performing itself for a king who has become her surrogate
+      father. Elgar's 'Nimrod' is the music of a gaze backward: nostalgic, stately,
+      inward, radiant with the past. The dominant force is memory — not grief, not exile —
+      because Helen names without weeping, she identifies with authority.
+  - n: 5
+    scene: "Teichoscopia II — Priam's question / Odysseus named"
+    force: memory
+    composer: Fauré
+    work: "Requiem, Op. 48 — III. Sanctus"
+    decision: added
+    why: >
+      Priam asks about Odysseus and Antenor answers with a portrait of him mid-speech —
+      hunched, deceptive, then suddenly overwhelming. The Sanctus is not grief; it is
+      suspended recognition, the quality of watching something vast and distant and naming
+      it. Fauré's luminous, almost weightless Sanctus keeps the scene on the walls: elevated,
+      removed, overlooking what cannot be stopped. It bridges the two memory tracks without
+      tipping into funeral.
+  - n: 6
+    scene: "The duel begins — Paris vs. Menelaus"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War' (from 2:30)"
+    decision: "kept from Book I use-case, but located specifically in the duel"
+    why: >
+      The duel is not an army engagement — it is two men, the personal violence the war was
+      always about, compressed to a single exchange. Mars is the right force here, but it
+      must land on the specific duel, not the general war: the spear strikes the shield,
+      Paris' helmet catches on the strap and chokes him, Menelaus is about to kill him.
+      The 5/4 rhythm is not majestic; it is asymmetrical, brutal, grinding — this is how
+      the poem strips away all the epic splendor to reveal two men trying to kill each other
+      on behalf of a woman neither truly possesses.
+  - n: 7
+    scene: "Menelaus seizes Paris by the helmet — the killing is seconds away"
+    force: wrath
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    decision: added
+    why: >
+      The hammer-motif of Beethoven's Fifth arrives at the moment Menelaus' hand closes on
+      Paris' helmet and drags him toward the Greek lines — fate's knock on the door. The
+      poem is seconds from Paris' death, the war's legitimate end, and the motif of
+      inexorable forward motion fits: Menelaus has won, justice is about to land. That
+      it does not land makes the interruption more violent by contrast.
+  - n: 8
+    scene: "Aphrodite snatches Paris away — divine intervention, the duel cancelled"
+    force: divine-intervention
+    composer: Messiaen
+    work: "Quartet for the End of Time — V. 'Louange à l'Éternité de Jésus'"
+    decision: added
+    why: >
+      Aphrodite breaks the 5th movement of Beethoven with a sudden color-shift that belongs
+      to a different order of reality. Messiaen's "Praise to the Eternity of Jesus" is still,
+      slow, absolutely other — a cello melody over static piano chords, not of this world.
+      That is the correct register for Aphrodite's intervention: not spectacular, not martial,
+      simply a force that operates outside the grammar of human cause and effect. The duel
+      is cancelled not by a sword but by a goddess whose attention is elsewhere than justice.
+      Messiaen gives the uncanny: the sudden silence where the killing should have been.
+  - n: 9
+    scene: "Aphrodite compels Helen — the divine eroticism that started the war reasserts itself"
+    force: desire
+    composer: Wagner
+    work: "Tristan und Isolde — 'Liebestod'"
+    decision: added
+    why: >
+      This is the book's most uncomfortable scene: Aphrodite, disguised as an old servant,
+      forces Helen back to Paris' bedchamber, and Helen goes — angry, ashamed, knowing, and
+      unable to resist. The Liebestod is the only music at the right register: chromatic
+      longing that overwhelms the will, deferred resolution that feels simultaneously like
+      ecstasy and annihilation. The war began in desire; Aphrodite reinstates desire as the
+      closing term of the book's equation. Homer is not romantic about it. Neither is Wagner.
+  - n: 10
+    scene: "Paris in the bedchamber / Helen's reluctant compliance / desire as the war's eternal engine"
+    force: desire
+    composer: Szymanowski
+    work: "Violin Concerto No. 1, Op. 35 — opening"
+    decision: added
+    why: >
+      The book closes with Paris and Helen in bed while Menelaus searches the battlefield for
+      a man who is no longer there. Szymanowski's First Violin Concerto opens in iridescent,
+      uncanny sensuality — the violin spiraling upward in post-Wagnerian chromatic lines that
+      are neither heroic nor tragic but purely, strangely erotic. It closes the book on desire
+      not as satisfaction but as recursion: the engine that produced the war is still running,
+      untouched by the duel, immune to military resolution.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "not this book; save for XXII / XXIV"
+    why: >
+      Book III contains no death. Paris lives; Menelaus survives. The funeral register must
+      not be imported before Hector falls. The grief in Book III is Helen's private shame
+      and Priam's distant sorrow on the walls — both are the memory register, not the
+      funeral-monumental register.
+  - composer: Strauss
+    work: "Also sprach Zarathustra — opening"
+    status: "demoted; too cosmogonic for Aphrodite's specific action"
+    why: >
+      Strauss is tempting for divine-intervention but operates at the scale of world-creation.
+      Aphrodite's intervention is intimate, local, domestic even — she moves one man to one
+      bed. Messiaen's uncanny stillness is the better scale.
+  - composer: Verdi
+    work: "La forza del destino — Overture"
+    status: "demoted; too operatically spectacular for the duel's intimacy"
+    why: >
+      The fate register is right for the duel but Verdi's overture is too much
+      machinery-of-fate for what is actually two men on a field. Beethoven's Fifth captures
+      the same inexorability at the right scale.

@@ -1,0 +1,191 @@
+# Iliad — Book XIII — curated music arc
+work: iliad
+book: 13
+title: "Iliad Book XIII: Poseidon's Surge"
+length_minutes: 86
+principle: >
+  Do not score Book XIII as generic Trojan War attrition. Score it as the structural
+  drama of divine defiance and lateral pressure — Poseidon moves against Zeus' prohibition,
+  galvanizes a defensive line on the edge of collapse, and the book grinds back and forth
+  in sustained melee. The dominant register is not martial triumph but the terrible
+  momentum of contested ground: every step pushed, every step answered. Idomeneus' aristeia
+  is not a hero's glory-run but an old commander's methodical ferocity, shot through with
+  the vertigo of the grinding line.
+force_arc:
+  - divine-intervention
+  - divine-intervention
+  - wrath
+  - wrath
+  - fate
+  - wrath
+  - wrath
+  - law
+  - wrath
+  - wrath
+  - grief
+  - fate
+dominant_force: wrath
+tracks:
+  - n: 1
+    scene: "Zeus looks away — the poem holds its breath"
+    force: fate
+    composer: Sibelius
+    work: "Symphony No. 7 in C major — opening"
+    decision: added
+    why: >
+      Before Poseidon descends, there is a suspended moment: Zeus turns his gaze to distant
+      peoples, and the poem pauses at the edge of divine prohibition about to be broken.
+      Sibelius' Seventh opens on a vast, unresolved tonic — not dread, not triumph, but
+      the sense of a system at the limit of its own gravity. That held breath before the
+      god moves is the book's structural hinge, and it needs music that holds without
+      collapsing.
+  - n: 2
+    scene: "Poseidon descends from Samothrace / divine defiance"
+    force: divine-intervention
+    composer: Strauss
+    work: "Also sprach Zarathustra — Introduction ('Sunrise')"
+    decision: added
+    why: >
+      Poseidon's descent is not subtle — he strides down from Samothrace, shakes the
+      mountains, moves as a force larger than the landscape, and the Achaeans feel him
+      before they see him. The Strauss sunrise gives that quality of something enormous
+      arriving from a position of geological authority. Not supernatural dread but
+      elemental arrival — a god moving through a world he half-owns, in open defiance
+      of his brother.
+  - n: 3
+    scene: "Poseidon rallies the Achaeans disguised as Calchas"
+    force: divine-intervention
+    composer: Handel
+    work: "Solomon — Overture (Act I)"
+    decision: added
+    why: >
+      Poseidon works by disguise and rhetoric — he speaks as a seer, and his words
+      function as divine law injected into human consciousness. Handel's Solomon overture
+      carries the grain of authority-speaking-through-ceremony: the god is not revealed,
+      he is effective. The Achaean soldiers do not know what has touched them; they only
+      know their legs hold.
+  - n: 4
+    scene: "The two Aiantes form the defensive line / wrath crystallizes into formation"
+    force: wrath
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    decision: added
+    why: >
+      The Aiantes locking shields is where wrath stops being personal and becomes
+      structural — the hammering motif of Beethoven's Fifth is the only language for
+      a line that will not break by force of pressure per se, but by the weight of
+      absolute refusal. The book's central tension is not individual aristeia but
+      sustained formation pressure, and the Fifth's opening movement is that pressure
+      rendered in musical grammar: inexorable, asymmetric, not yet resolved.
+  - n: 5
+    scene: "Idomeneus arms himself — old commander entering the grind"
+    force: wrath
+    composer: Brahms
+    work: "Symphony No. 2 — IV. Allegro con spirito"
+    decision: added
+    why: >
+      Idomeneus is not young. His aristeia in Book XIII is the most methodical in the
+      poem — deliberate, experienced, unheroic in its pacing. Brahms' Second's finale
+      has that quality: vigor that has earned its authority, forward motion with weight
+      behind it. The difference from a young hero's flash is audible in the Brahmsian
+      grammar — power that has been compressed, not ignited.
+  - n: 6
+    scene: "Idomeneus kills Othryoneus / spear-kills multiply"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    decision: kept (different scene than Book I)
+    why: >
+      Book XIII's spear-exchanges are the most densely populated in the Iliad —
+      kill follows kill, name follows name. The 5/4 pulse of Mars is the right
+      register for this: hostile, asymmetrical, grinding forward without
+      resolution. Each named death is a small rhythmic unit of the same relentless
+      pattern. Unlike Book I where the quarrel is verbal-but-already-war, here the
+      war is literal and mechanically recursive.
+  - n: 7
+    scene: "Deiphobus and the phantom Ascalaphus — divine deception multiplies"
+    force: metamorphosis
+    composer: Debussy
+    work: "Images — 'Ibéria': I. Par les rues et par les chemins"
+    decision: added
+    why: >
+      Book XIII's supernatural machinery is unusually lateral — gods enter as
+      recognizable faces, identities shift, Deiphobus is aided by a false Asius, the
+      battle changes shape not through one godly intervention but through repeated
+      small impostures. Debussy's 'Par les rues' is the right texture: movement that
+      seems familiar but keeps veering, color that doesn't resolve, a surface that
+      is never what it first appeared.
+  - n: 8
+    scene: "Meriones and Idomeneus debate courage before battle — law of aristeia"
+    force: law
+    composer: Bach
+    work: "Brandenburg Concerto No. 3 — I. Allegro"
+    decision: added
+    why: >
+      The Meriones-Idomeneus exchange is one of the poem's strangest insertions: two
+      fighters pause before the fray to give a formal account of what bravery is.
+      It is a brief oration inside a battle, and it has the quality of law being
+      articulated rather than illustrated. Bach's Third Brandenburg has that self-
+      evident formal clarity — multiple voices executing a shared architecture, no
+      sentiment, pure structure.
+  - n: 9
+    scene: "The grinding melee surges toward the Achaean ships"
+    force: wrath
+    composer: Shostakovich
+    work: "Symphony No. 8 — II. Allegretto"
+    decision: added
+    why: >
+      The book's central section is grinding attritional combat with no clear advantage —
+      push, counter, push again. Shostakovich's Eighth Symphony second movement is
+      relentless mechanism rather than heroic surge: march-like but hollow, force without
+      hope, rhythm as grinding rather than driving. The Achaeans are not winning; they
+      are not losing; they are sustaining a line at enormous cost. That is a Shostakovichian
+      register, not a Beethovenian one.
+  - n: 10
+    scene: "Hector's advance — Trojan pressure reaches its peak"
+    force: wrath
+    composer: Stravinsky
+    work: "The Rite of Spring — 'The Glorification of the Chosen One'"
+    decision: added
+    why: >
+      Hector at his most forceful in Book XIII is not yet the Hector of Books XVI-XVIII,
+      but he is the weight against which the whole Achaean defense is organized. Stravinsky's
+      'Glorification' is violent collective momentum — not individual, not subtle, a force
+      that treats the ground beneath it as already consecrated to its purpose. The Trojans
+      are not sacking the ships yet; they are at the threshold, convinced.
+  - n: 11
+    scene: "Achaean wounded — the cost visible, names catalogued"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 9 — I. Andante comodo (opening)"
+    decision: added
+    why: >
+      Book XIII ends its cycle of named deaths with a tally of the wounded: Deipyrus,
+      Antilochus, Menelaus' shield-strike, Leonteus' spear — the human cost enumerated
+      with Homeric attention. This is not Patroclus-grief, not funeral-monumental grief.
+      It is the private, specific grief of a body that has taken something from which
+      it cannot recover in this campaign. Mahler's Ninth opens on that frequency: a
+      heartbeat rhythm, something already ending at the point of its articulation. Inward,
+      specific, not yet catastrophic.
+  - n: 12
+    scene: "The lines hold — book ends unresolved, grinding"
+    force: fate
+    composer: Bruckner
+    work: "Symphony No. 8 — I. Allegro moderato (opening)"
+    decision: added
+    why: >
+      Book XIII does not end in victory or defeat — it ends in the continued fact of
+      the war. The ships have not been taken; the Achaeans have not routed; the Trojans
+      have not broken. Bruckner's Eighth opens on a tremolo surface that states a theme
+      and immediately withdraws it — fate as a ground that holds without resolving,
+      the sense of a structure too large for any single book to close. It is the right
+      exit: the grind continues, the sea is still there, Poseidon still moves beneath.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "held for Book XXII — Hector's death. Book XIII's grief register is private/wounded, not public-funeral."
+    why: "The funeral-march terminal register must not open before Hector's death. Mahler's Ninth first movement covers the wound register correctly."
+  - composer: Verdi
+    work: "Requiem — 'Dies irae'"
+    status: "too apocalyptic for Book XIII's grinding attrition"
+    why: "Dies irae suggests terminal reckoning. Book XIII is the middle of a sustained grind, not a judgment. The Shostakovich Eighth covers the correct register of institutional violence without transcendence."

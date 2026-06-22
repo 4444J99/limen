@@ -1,0 +1,36 @@
+# ORDERINGS — all reading paths, visualized & switchable ("all avenues / all paths visualized")
+# studium.py reads the active ordering from logs/studium-state.json and walks `sequence` work-by-work,
+# division-by-division. Three paths ship; add more freely. Sequences reference work ids in canon.yaml.
+# (Sequences are explicit for clarity in the face; they agree with canon.yaml order_indices.)
+
+default: interleaved
+
+orderings:
+  interleaved:
+    label: "Interleaved by era & theme"
+    description: >
+      Group across cultures by movement — epics together, then scripture & allegory together, then
+      renaissance/reception. Reuses the "Finalized 15-Week Macro Schedule" arc. Maximal cross-cultural
+      resonance: read Achilles' wrath beside Arjuna's, Dante's hell beside the Quran's.
+    phases:
+      - {phase: "I. Epic & Oral",        works: [gilgamesh, iliad, odyssey, mahabharata, ramayana, heike]}
+      - {phase: "II. Sacred & Allegory", works: [tanakh, bhagavad-gita, tao-te-ching, quran, divine-comedy, beowulf]}
+      - {phase: "III. Renaissance",      works: [aeneid, metamorphoses, analects, canterbury-tales, tale-of-genji, conference-of-birds, journey-to-the-west, shahnameh]}
+
+  western_eastern:
+    label: "Western spine, then Eastern counter-system"
+    description: >
+      His stated order first (the Greek–Roman–Abrahamic–medieval line), then a dedicated Eastern
+      movement read AS counter-system, not appendix.
+    movements:
+      - {movement: "M1 — West", works: [gilgamesh, iliad, odyssey, aeneid, metamorphoses, divine-comedy, tanakh, quran, beowulf, canterbury-tales]}
+      - {movement: "M2 — East", works: [bhagavad-gita, mahabharata, ramayana, analects, tao-te-ching, conference-of-birds, tale-of-genji, heike, journey-to-the-west, shahnameh]}
+
+  chronological:
+    label: "Chronological (oldest first)"
+    description: >
+      One timeline across all cultures — watch the whole human inheritance unfold in order.
+      Derived from canon.yaml order_indices.chronological.
+    sequence: [gilgamesh, iliad, odyssey, tanakh, analects, mahabharata, ramayana, bhagavad-gita,
+               tao-te-ching, aeneid, metamorphoses, quran, conference-of-birds, shahnameh, beowulf,
+               tale-of-genji, heike, divine-comedy, canterbury-tales, journey-to-the-west]

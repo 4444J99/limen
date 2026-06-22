@@ -1,0 +1,188 @@
+# Iliad — Book XII — curated music arc
+# THE gold-standard form. Every other book/work converges toward this shape.
+work: iliad
+book: 12
+title: "Iliad Book XII: Storming the Wall"
+length_minutes: 86
+principle: >
+  Do not score Book XII as "a battle." Score it as a crisis of interpretation — the moment when
+  the cosmos offers a legible warning (the eagle and the snake) and a king refuses it. The book
+  turns on four pivots: the siege as grinding pressure, the omen as cosmic speech, Sarpedon's
+  speech as the moral grammar of aristocracy, and Hector's final act — not skill, not strategy,
+  but a single stone that shatters a gate. Score the refusal, not the victory.
+force_arc: [wrath, wrath, fate, fate, kingship, kingship, wrath, wrath]
+dominant_force: wrath
+tracks:
+  - n: 1
+    scene: "The Trojan army massing at the wall — grinding siege pressure"
+    force: wrath
+    composer: Shostakovich
+    work: "Symphony No. 7 'Leningrad' — I. Allegretto (invasion episode)"
+    decision: added
+    why: >
+      The Trojans crossing the ditch and moving against the Achaean wall is not heroic cavalry;
+      it is mass mechanized pressure — wave after wave, five columns, relentless iteration.
+      The Leningrad's invasion episode builds exactly this way: a motif of mechanical repetition
+      that does not relent. Holst's 'Mars' was already used in Book I for the quarrel; this is
+      siege, which is a different mode of wrath — not explosive but grinding. Shostakovich gives
+      wrath as accumulation, not detonation.
+  - n: 2
+    scene: "The Achaean wall itself — architecture of dread"
+    force: law
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    decision: added
+    why: >
+      The wall is the law of the poem's second movement: it is the one structure the Trojans have
+      not yet broken. Book XII is organized around whether that law holds. Beethoven's first
+      movement has the quality of fate as formal constraint — the four-note hammer-motif is law
+      pressing back against chaos. This is the wall hearing the army arrive: architecture under
+      force. The force here is law because the wall represents the order that the siege is
+      testing.
+  - n: 3
+    scene: "The eagle and the snake — the omen appears"
+    force: fate
+    composer: Verdi
+    work: "La forza del destino — Overture"
+    decision: added
+    why: >
+      The omen is not background mythology. It is the cosmos making a statement directly into the
+      battle narrative: an eagle carries a living snake; the snake strikes back; the eagle drops
+      it and flies away. This is fate speaking in image. Verdi's overture to La forza del destino
+      is scored exactly for this — fate as an announced, inexorable arriving force, its brass
+      proclamation cutting through the texture like an augury. The omen is Verdi's overture
+      rendered visible.
+  - n: 4
+    scene: "Polydamas reads the omen — counsel of caution"
+    force: fate
+    composer: Bach
+    work: "St. Matthew Passion — 'Erbarme dich, mein Gott'"
+    decision: added
+    why: >
+      Polydamas, the counselor, is the figure who reads correctly. His warning is not cowardice —
+      it is the voice of interpretation, of deference to divine signal. 'Erbarme dich' is the
+      aria of the one who sees clearly and is not heard: Peter's weeping after the denial. In
+      Book XII, Polydamas is Peter — he understands what the sign means, states it plainly, and
+      is overruled. The suspended, inward melodic line of the aria is perfect for fate-accepted,
+      fate-spoken, fate-refused.
+  - n: 5
+    scene: "Hector's refusal — 'one omen is best: to fight for your country'"
+    force: wrath
+    composer: Beethoven
+    work: "Coriolan Overture, Op. 62"
+    decision: added
+    why: >
+      This is the pivot of the book and one of the pivots of the poem. Hector does not deny the
+      omen exists; he denies it has authority over him. His line — one omen is best: to fight
+      for your country — is simultaneously magnificent and catastrophically wrong. Beethoven's
+      Coriolan is built for exactly this: a hero whose will overrides counsel, whose force of
+      character is also his destruction, whose refusal is both admirable and fatal. The overture
+      has Hector's rhythm — wrath as autonomy, wrath as fatal clarity.
+  - n: 6
+    scene: "Sarpedon's speech — noblesse oblige, the cost of the front rank"
+    force: kingship
+    composer: Elgar
+    work: "Enigma Variations — IX. 'Nimrod'"
+    decision: added
+    why: >
+      Sarpedon's speech to Glaucus is the moral center of Books XII–XVI: we are honored above
+      all men; therefore we must stand in the front rank; honor is the wage for a mortal life
+      well spent at risk. This is not swagger. It is the logic of aristocratic obligation, spoken
+      by a man who knows he will die. 'Nimrod' is the most precise musical reading of this
+      register: sovereign inwardness, grandeur without triumphalism, ceremonial weight that
+      contains grief. It is kingship's self-knowledge — the crown understood as obligation, not
+      reward.
+  - n: 7
+    scene: "Sarpedon leads the charge at the battlements"
+    force: kingship
+    composer: Walton
+    work: "Crown Imperial — March"
+    decision: added
+    why: >
+      After the speech, Sarpedon acts. He does not send men; he goes first — and the Lycians
+      follow. This is kingship in its active, physical dimension: the king who leads the assault,
+      who earns the feast by being the first over the wall. Walton's Crown Imperial has the
+      quality of sovereign force made visible — ceremonial grandeur that is also real forward
+      motion. Elgar gave the interior; Walton gives the exterior, the leader at the front of the
+      charge.
+  - n: 8
+    scene: "The five Trojan columns attack — battle pressure mounts"
+    force: wrath
+    composer: Prokofiev
+    work: "Alexander Nevsky — V. 'The Battle on the Ice'"
+    decision: added
+    why: >
+      Homer organizes the assault with military precision: five columns, named captains, tactical
+      disposition. The siege becomes an orchestrated war machine. Prokofiev's 'Battle on the
+      Ice' is the closest classical analog to that feeling — massed force broken into columns,
+      martial rhythm driving toward the inevitable collision, orchestration that gives weight to
+      each wave. The force is wrath as organized military mass, wrath disciplined into siege
+      doctrine.
+  - n: 9
+    scene: "Achaean defense holds — Ajax and Teucer at the wall"
+    force: wrath
+    composer: Bartók
+    work: "Music for Strings, Percussion and Celesta — III. Adagio"
+    decision: added
+    why: >
+      The defense is not passive. Ajax and his brother hold the wall under bombardment, throwing
+      down stones, fighting in compressed quarters, refusing breach. Bartók's third movement is
+      the right register for contained violence: not the open-field wrath of Holst or Stravinsky,
+      but wrath at close quarters, under restriction, with dissonant harmonics that never resolve
+      to comfort. The wall is holding — barely — and this is what barely-holding sounds like.
+  - n: 10
+    scene: "Hector takes up the stone — the moment before the breach"
+    force: fate
+    composer: Beethoven
+    work: "Piano Sonata No. 14 'Moonlight' — III. Presto agitato"
+    decision: added
+    why: >
+      Homer slows the moment down. He describes the stone with geological precision — how heavy
+      it is, how strong Hector must be to lift it, how no two men of today could pry it. This is
+      fate being handed its instrument. The Moonlight's third movement is one of the great
+      musical images of inexorable approach: it does not build slowly, it is already moving at
+      full speed when it begins, and it does not stop. That is Hector with the stone: fate already
+      in motion, its instrument already in his hands.
+  - n: 11
+    scene: "Hector shatters the gate — the breach"
+    force: wrath
+    composer: Stravinsky
+    work: "The Rite of Spring — 'The Sacrificial Dance'"
+    decision: added
+    why: >
+      The gate shatters. Both doors fly open. The Trojans pour through. This is the climax of
+      Book XII — not a sword stroke but a boulder, not skill but mass. 'The Augurs of Spring'
+      was used in Book I for ritualized social violence; 'The Sacrificial Dance' is reserved for
+      the terminal act of the ritual, where the violence achieves its object. The gate shattering
+      is exactly that: the culmination of a sacrificial logic that Hector set in motion by
+      refusing the omen. The Sacrificial Dance has the quality of a thing that cannot be stopped
+      once begun.
+  - n: 12
+    scene: "The Trojans flood through — the wall has fallen"
+    force: metamorphosis
+    composer: Debussy
+    work: "La mer — III. 'Dialogue du vent et de la mer'"
+    decision: added
+    why: >
+      The book ends not with triumph but with a world changed. The wall — which existed as
+      permanent architecture — is now open. The poem has crossed a threshold it will never
+      uncross. Debussy's third movement of La mer is transformation as sound: the wind and sea
+      do not fight to a conclusion, they interpenetrate until the original condition no longer
+      exists. The Trojan breach is not a victory; it is a metamorphosis of the war's geometry.
+      Everything after Book XII will be inside a different poem.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "HARD RULE: save for Book XXII (Hector's death). Not before."
+    why: >
+      Hector is alive at the end of Book XII. The funeral register does not open here. Even
+      Sarpedon's death (Book XVI) is not yet the terminal-monumental; Mahler Adagietto register
+      serves personal/private grief in the interim books. The 'Funeral March' belongs to Book
+      XXII exclusively.
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "used in Book I; excluded from XII to avoid repetition"
+    why: >
+      Mars scores the verbal quarrel in Book I — wrath as political confrontation. Book XII's
+      wrath is physical siege; different instruments serve it. Shostakovich, Prokofiev, Bartók,
+      and Stravinsky carry the wrath arc without revisiting the Book I palette.

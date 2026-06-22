@@ -1,0 +1,154 @@
+# Iliad — Book XVIII — curated music arc
+# "The Shield of Achilles" — grief erupts, cosmos is forged
+work: iliad
+book: 18
+title: "Iliad Book XVIII: The Grief, the Lament, the Forging"
+length_minutes: 88
+principle: >
+  Do not score Book XVIII as "the Trojan War" or as "the forging of a weapon." Score it as the moment
+  where catastrophic private grief becomes cosmic order — where Achilles' cry cracks the world open,
+  Thetis and the sea-nymphs arrive to mourn, the rift with Agamemnon dissolves into something
+  larger and colder, and then Hephaestus hammers the entire human cosmos onto a shield. The Shield
+  is not armor. It is creation. This book moves from the most wounded sound a man can make
+  to the most comprehensive image of life ever assembled in the poem.
+force_arc: [grief, grief, supplication, grief, metamorphosis, law, law, metamorphosis, wrath]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "Antilochus brings the news — Achilles hears Patroclus is dead"
+    force: grief
+    composer: Schubert
+    work: "String Quartet No. 14 in D minor, D. 810 ('Death and the Maiden') — II. Andante con moto"
+    decision: added
+    why: >
+      The Andante is a set of variations on a theme of visitation — death arriving, pressing,
+      transforming. When Antilochus speaks the words, time stops for Achilles. This is private
+      catastrophe delivered by a messenger, intimate in scale but absolute in consequence.
+      Schubert's variations move through grief without resolution: each turn darkens rather than
+      releases. The register is chamber — not yet public, not yet monumental — exactly right for
+      the moment before Achilles' cry.
+  - n: 2
+    scene: "Achilles' terrible cry — Thetis hears him from the deep"
+    force: grief
+    composer: Britten
+    work: "Four Sea Interludes from Peter Grimes — I. 'Dawn'"
+    decision: added
+    why: >
+      Achilles rolls in the dust, pours ash on his head, and cries out so violently that Thetis
+      hears him in the sea-depths. This is grief as sonic event — a sound that crosses thresholds,
+      travels through elements. Britten's 'Dawn' interlude opens with strings climbing out of near-
+      silence, building toward a cry of weather: the sea as grief-resonator. Peter Grimes is a man
+      whose suffering sounds outward into the world; the sea absorbs and amplifies. The interlude
+      does not weep — it transmits.
+  - n: 3
+    scene: "The Nereids gather / Thetis' lament"
+    force: grief
+    composer: Purcell
+    work: "Dido and Aeneas — 'When I am laid in earth' (Dido's Lament)"
+    decision: added
+    why: >
+      Thetis and the fifty Nereids gather and cry aloud — a chorus of sea-goddesses lamenting.
+      This is grief as formal mourning, shaped by repetition, shaped by the knowledge that the
+      loss is not yet death but is already irreversible. Purcell's ground bass is the structural
+      fact of Dido's lament: an inexorable descending line beneath which melody pleads, reaching,
+      never arriving. The Nereids know Achilles will return to battle and die. They are mourning
+      what is already decided. That foreknowledge is in Purcell's form.
+  - n: 4
+    scene: "Achilles and Thetis — she holds his face"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 9 — I. Andante comodo (opening pages)"
+    decision: "replaces Mahler 5 Adagietto (already used Book I)"
+    why: >
+      Book I used the Adagietto for private, wounded grief — Achilles living. This is a different
+      Mahler and a different grief: the Ninth's opening is intermittent, faltering, as if the
+      music cannot hold itself together. The famous 'farewell' gesture is not yet resignation —
+      it is still fighting, still irregular, still human. Thetis holds her son's face and knows
+      he is choosing death. He knows it too. They do not argue it. The Ninth's opening movement
+      lives in that knowledge without collapsing into it.
+  - n: 5
+    scene: "Achilles declares he will return to battle — the rift dissolves into something colder"
+    force: metamorphosis
+    composer: Strauss, Richard
+    work: "Metamorphosen for 23 Solo Strings"
+    decision: added
+    why: >
+      The quarrel with Agamemnon — the entire wound of Book I — becomes irrelevant. Not healed:
+      irrelevant. Something larger has replaced it. Strauss's Metamorphosen is a sustained act of
+      transformation: it begins in grief, moves through memory, and ends having changed what it
+      was made of. The piece is not consolation — it is the sound of one form of a thing becoming
+      another. Achilles' rage is not over; it has metamorphosed into a colder, cleaner instrument
+      of destruction. This is the hinge.
+  - n: 6
+    scene: "Thetis goes to Hephaestus — the forge"
+    force: law
+    composer: Bach
+    work: "The Well-Tempered Clavier, Book I — Prelude and Fugue No. 1 in C major, BWV 846"
+    decision: added
+    why: >
+      The approach to Hephaestus is a formal visit to a maker. The forge is not violent — it is
+      systematic, architectural, precise. Bach's C major Prelude is pure structural act: arpeggios
+      that unfold a harmonic world from a single decision repeated. The fugue follows with the
+      logic of a craftsman's procedure — here is the subject, here is the answer, here is the
+      inversion. This is the music of making things that hold together by law, not force.
+  - n: 7
+    scene: "Hephaestus at the bellows — the Shield taking shape: the cities, the fields, the dance"
+    force: law
+    composer: Beethoven
+    work: "String Quartet No. 14 in C-sharp minor, Op. 131 — I. Adagio ma non troppo e semplice"
+    decision: added
+    why: >
+      The Shield of Achilles is the most architecturally organized image in Homer: the cosmos
+      arranged in concentric bands — stars, two cities, agriculture, marriage, legal dispute,
+      war, harvest, vintage, dance, and Ocean around the rim. It is not a painting; it is a
+      structure, a world held in order. Beethoven's Op. 131 opens with a fugue in C-sharp minor
+      that sounds like the first act of a world being constituted — a theme that generates
+      everything from itself, proceeding by law, not impulse. This is the sound of order laid
+      over chaos, which is exactly what the Shield does.
+  - n: 8
+    scene: "The Shield: city at peace / city at war / the dance"
+    force: metamorphosis
+    composer: Ravel
+    work: "Daphnis et Chloé — Suite No. 2 (complete)"
+    decision: added
+    why: >
+      The Shield is not static — it moves. Brides are led through the streets; armies attack;
+      reapers work; girls and boys dance in a ring; the river Ocean flows around the edge.
+      Ravel's second suite from Daphnis moves through exactly this sequence of human registers:
+      night sky opening to dawn, pastoral, then the ecstatic finale. The orchestral color changes
+      as scenes change on the Shield — this is metamorphosis as narrative, not transformation
+      as private event. The finale's dance matches Homer's dancers on the Shield: the godlike
+      young men, the circling girls, the crowd watching.
+  - n: 9
+    scene: "Achilles receives the armor — the wrath re-armed"
+    force: wrath
+    composer: Bartók
+    work: "Music for Strings, Percussion and Celesta — IV. Allegro molto"
+    decision: added
+    why: >
+      The book ends with Achilles receiving the Shield, the breastplate, the greaves — and
+      his eyes burning like fire. The wrath is not restored to its original form; it has passed
+      through grief and come out as something harder and more absolute. Bartók's finale is
+      driven, asymmetric, relentless — a Bulgarian-rhythm machine that hammers forward. Not
+      Holst's 'Mars' (that was the quarrel, the ego); this is the warrior past wounded pride,
+      now animated entirely by death's logic. The percussion and strings do not argue with each
+      other: they converge.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "held back; do not deploy before Book XXII"
+    why: >
+      Book XVIII is Achilles' grief, not Hector's death. The funeral-march register — public,
+      monumental, terminal — opens only when Hector falls (Book XXII). Deploying it here would
+      conflate private wounded grief with public-state mourning. Save for XXII or XXIV.
+  - composer: Barber
+    work: "Adagio for Strings"
+    status: "too legible, too contemporary-cinematic for this slot"
+    why: >
+      The Barber Adagio carries too much recent-century cultural weight (Vietnam memorials,
+      cinematic grief). Book XVIII's grief is archaic, divine, pre-Christian. It needs a form
+      with older or stranger grain.
+  - composer: Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    status: "already used Book I; cannot repeat"
+    why: "Holds its meaning in Book I (Achilles alive, wounded, loved). Mahler 9 takes its place here."

@@ -1,0 +1,53 @@
+{
+  "work": "iliad",
+  "book": 1,
+  "script": "greek",
+  "original": [
+    "μῆνιν ἄειδε θεὰ Πηληϊάδεω Ἀχιλῆος",
+    "οὐλομένην, ἣ μυρί' Ἀχαιοῖς ἄλγε' ἔθηκε,",
+    "πολλὰς δ' ἰφθίμους ψυχὰς Ἄϊδι προί̈αψεν",
+    "ἡρώων, αὐτοὺς δὲ ἑλώρια τεῦχε κύνεσσιν",
+    "οἰωνοῖσί τε πᾶσι, Διὸς δ' ἐτελείετο βουλή, 5"
+  ],
+  "parallels": {
+    "available_translations": [
+      "butler_1898",
+      "pope_1715",
+      "lang_1883",
+      "cowper_1791"
+    ],
+    "compare_via": [
+      "https://www.perseus.tufts.edu/hopper/text?doc=Perseus:text:1999.01.0133",
+      "https://scaife.perseus.org/library/urn:cts:greekLit:tlg0012.tlg001/"
+    ],
+    "corpus_dir": "/Users/4jp/Workspace/organvm/linguistic-atomization-framework/corpus/classical/iliad"
+  },
+  "gloss_scaffold": [
+    {
+      "word": "μῆνιν",
+      "translit": "",
+      "gloss": ""
+    },
+    {
+      "word": "ἄειδε",
+      "translit": "",
+      "gloss": ""
+    },
+    {
+      "word": "θεὰ",
+      "translit": "",
+      "gloss": ""
+    },
+    {
+      "word": "Πηληϊάδεω",
+      "translit": "",
+      "gloss": ""
+    },
+    {
+      "word": "Ἀχιλῆος",
+      "translit": "",
+      "gloss": ""
+    }
+  ],
+  "note": "compare-translations is live; transliteration + morphology are seed/synth/hand-filled"
+}

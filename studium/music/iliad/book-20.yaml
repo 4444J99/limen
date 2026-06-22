@@ -1,0 +1,185 @@
+# Iliad — Book XX — curated music arc
+work: iliad
+book: 20
+title: "Iliad Book XX: The Gods Enter the War"
+length_minutes: 88
+principle: >
+  Do not score Book XX as "a battle scene." Score it as the moment where divine containment
+  collapses — Zeus releases the gods, the cosmos tilts, and Achilles' aristeia begins not as
+  heroism but as a force of nature. Two registers alternate: the theomachy (divine powers
+  colliding above and below) and Achilles' wrath (a human engine running past the scale of
+  humanity). The book turns on a structural irony: Achilles is the most powerful mortal on
+  the field, yet the gods must intervene twice to prevent him from doing what fate has not yet
+  permitted. His rage exceeds even the gods' willingness to let it run.
+force_arc:
+  - divine-intervention
+  - wrath
+  - fate
+  - divine-intervention
+  - wrath
+  - wrath
+  - divine-intervention
+  - wrath
+  - wrath
+dominant_force: wrath
+tracks:
+  - n: 1
+    scene: "Zeus releases the gods — the divine embargo lifted"
+    force: divine-intervention
+    composer: Strauss
+    work: "Also sprach Zarathustra — Introduction ('Sunrise')"
+    decision: added
+    why: >
+      Zeus' edict to Themis is the hinge that releases everything. Up to this moment the gods
+      have watched from Olympus; now Zeus opens the gates and the immortals pour onto the plain
+      of Troy. Strauss' sunrise fanfare is not dawn-as-peace but dawn-as-threshold — the moment
+      before immeasurable force enters the world. The brass ascent gives the sudden color-shift
+      that divine-intervention demands: something vast is no longer held back.
+  - n: 2
+    scene: "Gods take the field — theomachy assembles"
+    force: wrath
+    composer: Berlioz
+    work: "Symphonie fantastique — V. 'Songe d'une nuit du sabbat'"
+    decision: added
+    why: >
+      The theomachy is not orderly divine assembly; it is supernatural riot. Gods loyal to
+      Greece (Hera, Athena, Poseidon, Hermes, Hephaestus) face gods loyal to Troy (Ares,
+      Apollo, Artemis, Leto, Aphrodite, Xanthus). The Berlioz Sabbath is the right register:
+      forces of enormous power behaving with grotesque, violent specificity — not the courtly
+      Handel of Book I's Olympus but a divine field gone strange and dangerous. Rhythmic
+      pressure plus orchestral chaos = wrath at cosmic scale.
+  - n: 3
+    scene: "Achilles at the front — the aristeia begins"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    decision: added
+    why: >
+      Book XX is the ignition of Achilles' aristeia, the most sustained act of destructive
+      excellence in the poem. Holst's "Mars" carried the quarrel in Book I; here it returns
+      in a different function — not verbal war but embodied, kinetic slaughter. The 5/4 pulse
+      is now not an argument but a machine. Achilles advancing on the Trojan line is
+      rhythmic pressure made flesh.
+  - n: 4
+    scene: "Achilles faces Aeneas — two heroes, an impossible symmetry"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    decision: added
+    why: >
+      Aeneas is brought to face Achilles by Apollo (who has temporarily deluded him into
+      courage). The confrontation is structurally fateful: Aeneas cannot die here — his
+      destiny leads elsewhere, to a different epic entirely. Beethoven's fifth opens on
+      the hammer-motif of fate because that is exactly what governs this scene: not will
+      or heroism but inexorable narrative geometry. Neither man can simply kill the other;
+      fate has written different endings for both.
+  - n: 5
+    scene: "Poseidon saves Aeneas — divine hand lifts a mortal from death"
+    force: divine-intervention
+    composer: Handel
+    work: "Water Music — Suite No. 1 in F major: Overture"
+    decision: added
+    why: >
+      Poseidon sees that Aeneas is about to die and carries him through the air to the edge
+      of the battle, explaining (with unusual candor) that Aeneas is beloved of the gods and
+      must survive. The Handel Water Music is the precise register: Poseidon is the god of
+      water, and this salvation has the quality of a sudden ceremonial deliverance — neither
+      dark nor triumphant, but sovereign and stately. Brass/strings contrast enacts the sudden
+      color-shift of divine-intervention: one moment Achilles' spear is in flight, the next
+      the field is empty.
+  - n: 6
+    scene: "Apollo warns Hector — stay back from Achilles"
+    force: divine-intervention
+    composer: Messiaen
+    work: "Quatuor pour la fin du Temps — I. 'Liturgie de cristal'"
+    decision: added
+    why: >
+      Apollo appears to Hector and tells him explicitly: do not face Achilles yet, do not
+      seek him out — you will die. This is the god's voice as restraining oracle, not as
+      battle-ally. Messiaen's "Crystal Liturgy" is the right register: transparency, suspension,
+      an otherworldly clarity that is not warm but not threatening — divine language delivered
+      at a different frequency than human speech. The sudden stillness after the theomachy chaos
+      marks how differently divine counsel sounds from divine combat.
+  - n: 7
+    scene: "Achilles kills Iphition — the aristeia runs"
+    force: wrath
+    composer: Stravinsky
+    work: "The Rite of Spring — 'The Sacrificial Dance'"
+    decision: added
+    why: >
+      Achilles begins his run through the Trojan ranks. Iphition is the first named kill:
+      Achilles splits his skull and his men strip the armor while the battle rolls over the
+      body. This is sacrificial violence in the oldest register — the aristeia is a ritual
+      form, a consecrated run of killing in which the hero performs something close to a
+      harvest. Stravinsky's "Sacrificial Dance" is the supreme piece for this: irregular
+      pulse, percussive violence, ceremonial repetition, forward-only momentum.
+  - n: 8
+    scene: "Achilles kills Demoleon, Hippodamas, Polydorus — the tally accumulates"
+    force: wrath
+    composer: Shostakovich
+    work: "Symphony No. 7 ('Leningrad') — I. Allegretto: the invasion episode"
+    decision: added
+    why: >
+      Homer catalogs the aristeia with mechanical precision: names, fathers, wounds, deaths.
+      The accumulation is the point — not individual tragedy but a drumbeat of destruction.
+      Shostakovich's invasion episode is the exact structural analogue: a theme repeating
+      with incremental intensity, gaining mass and horror not through complexity but through
+      relentless recurrence. The tally of Trojan dead is Homeric epic's version of that
+      obsessive crescendo — each name a beat on the same drum.
+  - n: 9
+    scene: "Achilles kills Polydorus — Priam's youngest son, the beloved"
+    force: grief
+    composer: Barber
+    work: "Adagio for Strings"
+    decision: added
+    why: >
+      Polydorus is Priam's youngest and most beloved son, killed by Achilles' spear through
+      the navel. Homer pauses the aristeia's momentum for this death — it is the first
+      intimate grief of the book, a father's specific loss glimpsed inside the general
+      slaughter. Barber's Adagio is private grief in a public catastrophe: slow tempo,
+      inward line, the string texture that opens like a wound. Not the funeral-march
+      register (save that for XXII) but the register of unbearable personal loss — wounded
+      inwardness inside an indifferent machine.
+  - n: 10
+    scene: "Hector charges Achilles — Apollo rescues him in the mist"
+    force: divine-intervention
+    composer: Wagner
+    work: "Lohengrin — Prelude to Act I"
+    decision: added
+    why: >
+      Hector, driven by rage at Polydorus' death, charges Achilles despite Apollo's warning.
+      Apollo wraps him in thick mist and removes him from the spear three times before
+      Achilles gives up, cursing, acknowledging the god's hand. Wagner's Lohengrin Prelude
+      is the precise texture: shimmering strings building from near-silence, something
+      otherworldly descending into the world, a radiant concealment. The mist that wraps
+      Hector is divine grace as opacity — a gleaming obscurity that saves and frustrates
+      simultaneously. Brass/strings contrast delivers the divine-intervention color shift.
+  - n: 11
+    scene: "Achilles rages through the Trojan ranks — wildfire close of the book"
+    force: wrath
+    composer: Scriabin
+    work: "Poem of Ecstasy, Op. 54"
+    decision: added
+    why: >
+      The book closes on Achilles driving the Trojans back toward the city like a wildfire
+      across dry fields, killing everything in reach. Homer's simile is explicit: fire driven
+      by wind across a mountainside, insatiable. Scriabin's Poem of Ecstasy is not a gentle
+      ascent but a building apocalypse of orchestral color — chromatic pressure accumulating
+      toward release without resolution. The "ecstasy" here is war-ecstasy, the dissolution
+      of self into pure destructive force. Achilles in his aristeia is no longer a man
+      making decisions; he is a force with a name. Scriabin gives that force its correct
+      musical body: metamorphic, consuming, total.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "not yet — save for XXII (Hector's death)"
+    why: >
+      Polydorus' death is intimate grief, not public funeral. The funeral-march / terminal
+      monumental register opens only when Hector falls. Book XX is slaughter, not mourning.
+  - composer: Beethoven
+    work: "Symphony No. 9 — IV. Finale"
+    status: "demoted — too triumphalist, wrong register"
+    why: >
+      Achilles' aristeia is not triumph; it is wrath pursuing itself past any goal. The
+      choral finale of the Ninth implies communal resolution — the opposite of what
+      Book XX shows, which is one man becoming a catastrophe.

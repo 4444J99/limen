@@ -1,0 +1,71 @@
+# Studium expansion backlog — STAGED gap-tasks (his "evolutionary expansion / all lanes occupied").
+# These are NOT written to the live tasks.yaml (release-hold). When Anthony opens the gate, route.py
+# can ingest this file to dispatch across all fleet lanes. Each is a bounded, win-class unit.
+# Owner: fleet (multi-vendor). Cheapest-path noted. ([[use-all-vendors-never-serialize]])
+
+meta:
+  status: staged
+  gate: "merge into tasks.yaml on Anthony's go; fleet executes across all lanes"
+  proof_of_form: "the Iliad cycle (24 force-matched arcs + essays) is the template these follow"
+
+tasks:
+  # ── Pillar B: per-work music arcs (like the Iliad cycle) ──────────────────────
+  - id: studium-music-odyssey
+    class: content
+    title: "Author force-matched arcs + essays for the Odyssey (24 books)"
+    how: "same workflow as the Iliad cycle; dominant forces center on return/exile/recognition"
+  - id: studium-music-aeneid
+    title: "Aeneid (12 books) — empire/fate/sacrifice arcs + essays"
+    class: content
+  - id: studium-music-metamorphoses
+    title: "Metamorphoses (15 books) — metamorphosis as the spine"
+    class: content
+  - id: studium-music-divine-comedy
+    title: "Divine Comedy — per-canto/cantica arcs (Inferno→Purgatorio→Paradiso = descent→ascent→revelation)"
+    class: content
+  - id: studium-music-rest-of-canon
+    title: "Remaining canon works (Tanakh, Quran, Gita, Mahabharata, Ramayana, Beowulf, Canterbury, Genji, Heike, Analects, Tao, Journey, Conference, Gilgamesh)"
+    class: content
+    how: "one arc per major division; the dominant-force engine drives selection"
+
+  # ── Pillar C: the language layer (9 more scripts; greek.md is the template) ────
+  - id: studium-script-latin
+    class: content
+    title: "Latin script lesson (Aeneid/Ovid) — alphabet/ductus · glossed reading · grammar"
+    how: "mirror studium/scripts/greek.md structure"
+  - id: studium-script-italian
+    title: "Italian (Dante, terza rima)"
+    class: content
+  - id: studium-script-hebrew
+    title: "Biblical Hebrew (Torah/Psalms) — alef-bet, niqqud, right-to-left ductus"
+    class: content
+  - id: studium-script-arabic
+    title: "Classical Arabic (Qur'an) — naskh, harakat, root-pattern awareness"
+    class: content
+  - id: studium-script-sanskrit
+    title: "Devanagari/Sanskrit (Gita/Ramayana/Mahabharata)"
+    class: content
+  - id: studium-script-old-english
+    title: "Old English (Beowulf) — insular letters (þ ð ƿ æ), alliteration"
+    class: content
+  - id: studium-script-chinese
+    title: "Classical Chinese/Hanzi (Tao/Analects/Journey)"
+    class: content
+  - id: studium-script-japanese
+    title: "Kana + Kanji (Genji/Heike)"
+    class: content
+  - id: studium-script-persian
+    title: "Persian/nastaʿliq (Shahnameh/Attar)"
+    class: content
+
+  # ── Gloss live-fill (Pillar C, the synth layer) ───────────────────────────────
+  - id: studium-gloss-livefill
+    class: content
+    title: "Run studium-gloss.py --live to synth-fill word-by-word gloss for the active passages"
+    how: "keyless claude -p; seed passages (Iliad I) already hand-glossed"
+
+  # ── Corpus gaps ───────────────────────────────────────────────────────────────
+  - id: studium-corpus-shahnameh
+    class: acquisition
+    title: "Acquire the Shahnameh (Persian original + a translation) into the LingFrame corpus"
+    how: "missing_from_corpus: true in canon.yaml; source: ganjoor.net / public-domain translation"

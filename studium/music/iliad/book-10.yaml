@@ -1,0 +1,172 @@
+# Iliad — Book X — curated music arc
+# THE DOLONEIA: night raid, Dolon, Rhesus, the theft of the white horses.
+work: iliad
+book: 10
+title: "Iliad Book X: Night, Dolon, the Thracian Slaughter"
+length_minutes: 72
+principle: >
+  Do not score Book X as "the Trojan War at night." Score it as the specific uncanny register
+  of the Doloneia: the hour that is neither day nor war but something older and more shameful —
+  cold reconnaissance, ambush, the extraction of intelligence from a terrified man, and then
+  the slaughter of sleepers who never wake to fight. The dominant emotional axis is not heroic
+  triumph but the wrongness of killing men in their sleep — the grief that attaches to
+  uncanny violence rather than to named loss.
+force_arc: [fate, exile, divine-intervention, wrath, law, wrath, divine-intervention, grief, grief, metamorphosis]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "The sleepless night — Agamemnon cannot rest, the army cannot rest"
+    force: fate
+    composer: Beethoven
+    work: "String Quartet No. 14 in C-sharp minor, Op. 131 — I. Adagio ma non troppo e semplice"
+    decision: added
+    why: >
+      Book X opens in the dark with a king who cannot sleep and an army under siege of its own
+      dread. Beethoven's C-sharp minor quartet opens with an unaccompanied fugue in total
+      darkness — no introduction, no ceremony, just a line emerging from nothing. The
+      inexorable quality of fate is not here Beethoven's Fifth's hammered motto but this:
+      the world turning without asking permission, night pressing down on men who know they
+      are losing. The specific fatedness of Book X is not thunder but insomnia.
+  - n: 2
+    scene: "Agamemnon and Menelaus move through the dark camp"
+    force: exile
+    composer: Sibelius
+    work: "Symphony No. 7 in C major — opening Adagio"
+    decision: added
+    why: >
+      The two Atreidae move through the sleeping camp in a liminal non-space: soldiers asleep,
+      fires banked, Troy silent across the plain. Sibelius's Seventh opens in wandering
+      tonality that refuses to settle, long solo trombone cutting through suspended strings —
+      it is the sound of men moving through a space that belongs to no one, the camp at the
+      hour before reconnaissance. Wandering tonality matches exile's requirement; the open
+      intervals give the scene physical cold.
+  - n: 3
+    scene: "The council of leaders — the decision to send spies"
+    force: law
+    composer: Bach
+    work: "Musical Offering, BWV 1079 — Ricercar a 6"
+    decision: added
+    why: >
+      Before anyone goes into the dark, the Greek commanders assemble and deliberate. This is
+      the last formal moment in Book X — law, architecture, the grammar of heroic counsel.
+      Bach's six-voice Ricercar is formal clarity under pressure: each voice enters with the
+      same subject, the structure is transparent but not simple. It is the sound of men
+      reasoning inside a dangerous situation, which is what the council does. After this piece,
+      law does not appear again in Book X — darkness takes over.
+  - n: 4
+    scene: "Odysseus and Diomedes arm and depart — the raid begins"
+    force: wrath
+    composer: Bartók
+    work: "Music for Strings, Percussion and Celesta — III. Adagio"
+    decision: added
+    why: >
+      Odysseus takes a boar's-tusk helmet; Diomedes takes a sword. They cross the ditch toward
+      the Trojan lines in silence. Bartók's Adagio from this work is one of the great night-
+      music pieces in the classical canon: xylophone, piano, strings, and percussion create a
+      night landscape that is genuinely menacing, the dark not as absence but as presence.
+      The rhythmic pressure is coiled, not discharged — wrath in stealth mode, violence that
+      has not yet announced itself. It matches the force requirement (rhythmic pressure,
+      unresolved harmony) while never becoming the open aggression of "Mars."
+  - n: 5
+    scene: "Athena sends a heron — the divine sign"
+    force: divine-intervention
+    composer: Messiaen
+    work: "Quartet for the End of Time — V. Louange à l'Éternité de Jésus"
+    decision: added
+    why: >
+      A heron cries in the dark; it is Athena's omen, her acknowledgment of the two men moving
+      toward the enemy. This is not the thunderous divine intervention of Zeus nodding the
+      heavens — it is intimate, avian, almost inaudible. Messiaen's Louange is for cello and
+      piano alone: an impossibly slow, radiantly certain melodic line. Sudden color shift
+      from the night-music of Bartók into this stillness is the heron's cry, divine attention
+      in a minor key, a god noticing without announcing. The movement's requirement (sudden
+      color shift, brass/strings contrast) is here expressed through contrast of texture, not
+      timbre — the heron is not trumpets.
+  - n: 6
+    scene: "Dolon: the Trojan spy departs — hubris and the wrong bet"
+    force: fate
+    composer: Verdi
+    work: "Macbeth — 'Patria oppressa' (Act IV Chorus)"
+    decision: added
+    why: >
+      Dolon, the Trojan counterspy, accepts Hector's bribe and goes out in a wolf-skin cloak,
+      hoping to reach the Greek ships and earn Achilles' horses. He will never reach them.
+      Verdi's chorus for the oppressed is not triumphant — it is the sound of a people who
+      already know the shape of what is coming, grieving preemptively. Inexorable motif,
+      hammered insistence: fate's requirement. Dolon is already a dead man when he accepts
+      the bet; Homer, unlike Dolon, knows it.
+  - n: 7
+    scene: "The capture of Dolon — interrogation in the dark"
+    force: wrath
+    composer: Shostakovich
+    work: "String Quartet No. 8 in C minor, Op. 110 — II. Allegro molto"
+    decision: added
+    why: >
+      Odysseus and Diomedes run Dolon down and interrogate him. He gives up the Trojan
+      positions, Rhesus, the Thracian camp, the white horses. Shostakovich's Second movement
+      is brutal, asymmetric, almost frenzied — violent rhythmic pressure and no resolution.
+      This is wrath as clinical extraction, not heroic rage: two men in the dark, one man
+      terrified, intelligence being removed by force. Shostakovich's own biography gives this
+      movement its interrogation quality; the form is wrath but the experience is something
+      closer to violation.
+  - n: 8
+    scene: "Diomedes kills Dolon"
+    force: grief
+    composer: Schubert
+    work: "String Quartet No. 14 in D minor, D. 810, 'Death and the Maiden' — II. Andante con moto"
+    decision: added
+    why: >
+      Dolon begs for his life. Diomedes kills him before he finishes speaking. Book X does not
+      dwell on this — it moves. But the listener needs a beat, because what just happened is
+      not heroic: a man was wrung of intelligence and executed. Schubert's "Death and the
+      Maiden" slow movement — the theme and variations built on the song of death speaking
+      gently to a girl — is private, wounded, inward grief exactly as the force requires.
+      Not public funeral (that belongs to Books XVI and XXII) but the specific grief of
+      uncanny violence: something just ended that should not have ended this way.
+  - n: 9
+    scene: "The slaughter of the sleeping Thracians — Rhesus killed in his bed"
+    force: grief
+    composer: Fauré
+    work: "Requiem, Op. 48 — 'In Paradisum'"
+    decision: added
+    why: >
+      Diomedes moves through the sleeping Thracians and kills twelve of them, then kills Rhesus
+      in his bed. Homer describes it as dreamlike: as if a lion coming among helpless flocks.
+      The men never wake. They die in their sleep, in their own camp, without a chance at the
+      heroic death the Iliad otherwise offers. The register is not triumph — it is the eeriest
+      section of the epic, violence without witness. Fauré's In Paradisum is not mournful but
+      suspended, luminous, utterly calm — the sound of souls departing without drama. Using it
+      here is not ironic; it is the only adequate music for twelve men who die without knowing
+      it. The slow tempo and inward line match grief's requirement. This is the furthest the
+      Doloneia goes from heroic convention.
+  - n: 10
+    scene: "Odysseus steals the white horses — escape across the plain"
+    force: metamorphosis
+    composer: Debussy
+    work: "Préludes, Book I — 'La cathédrale engloutie'"
+    decision: added
+    why: >
+      Odysseus drives the white horses of Rhesus — animals of supernatural quality, whiter
+      than snow — back across the plain toward the Greek camp. Dawn is still not here. The
+      horses transform the register of the book: the slaughter is over, something stolen and
+      beautiful moves through the dark. Debussy's "La cathédrale engloutie" rises from silence,
+      a world surfacing — changing orchestral color, fluid harmony, something vast emerging
+      from depth. The metamorphosis force is correct: Book X ends with a transformation of
+      register, from the uncanny darkness of the slaughter into the strangeness of those horses
+      moving through the pre-dawn Trojan plain.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "expressly forbidden before Book XXII"
+    why: >
+      The terminal-monumental grief register is blocked until Hector's death. The grief of
+      Book X is private and uncanny — sleepers, a terrified spy, the wrong kind of killing —
+      not the public heroic funeral. Fauré's In Paradisum carries that grief without the
+      funeral-march register.
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "demoted; used in Book I"
+    why: >
+      The Doloneia is not "Mars." Mars is the open asymmetric aggression of the quarrel.
+      Book X's violence is nocturnal, stealthy, without the hostile grandeur Mars supplies.
+      Bartók's night-music is the correct wrath register here.

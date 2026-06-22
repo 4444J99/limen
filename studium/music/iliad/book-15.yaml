@@ -1,0 +1,155 @@
+# Iliad — Book XV — curated music arc
+# THE gold-standard form. Converges toward book-01.yaml in structure and musicological rigor.
+work: iliad
+book: 15
+title: "Iliad Book XV: The Flood Returns"
+length_minutes: 88
+principle: >
+  Do not score Book XV as "the Trojans winning." Score it as the re-assertion of cosmic
+  order through divine fury — Zeus wakes, the machinery reverses, and what looked like
+  Achaean resilience is revealed as temporary interference in a fate already written. The
+  ships burn not because the Trojans are stronger but because the universe reasserts itself.
+  Apollo does not lead Hector: he reconstitutes him, pours him back into the war like a force
+  of nature resuming. Ajax on the ships is not heroism — it is a man fighting the tide.
+force_arc: [wrath, divine-intervention, law, divine-intervention, fate, wrath, fate, grief, wrath, fate]
+dominant_force: fate
+tracks:
+  - n: 1
+    scene: "Zeus wakes — cosmic wrath reasserted"
+    force: wrath
+    composer: Beethoven
+    work: "Symphony No. 9 — IV. opening bars (the catastrophe chord)"
+    decision: added
+    why: >
+      Zeus does not gradually wake. He opens his eyes and the world has been turned without
+      his consent. The Ninth's catastrophic opening gesture — that shattering re-entry after
+      the dreaming slow movement — is the exact register: a governing force reasserting itself
+      into a situation that has drifted wrong. Not march music. Not battle music. The
+      reassertion of a violated order, heard as overwhelming sound.
+  - n: 2
+    scene: "Zeus surveys the field — Hector down, Trojans retreating"
+    force: fate
+    composer: Verdi
+    work: "La forza del destino — Overture"
+    decision: added
+    why: >
+      Zeus sees the consequences of Hera's deception: Hector stunned, the Trojans broken back,
+      Poseidon's hand visible everywhere. The Force of Destiny Overture's relentless thematic
+      drive — fate as engine, not decoration — fits the moment when Zeus reads the field and
+      recognizes the exact shape of the deviation. The overture does not ask permission; it
+      states what will happen.
+  - n: 3
+    scene: "Zeus pronounces the decree — Hera confronted, the fate named aloud"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue — Contrapunctus I"
+    decision: added
+    why: >
+      Zeus's speech to Hera in Book XV is one of Homer's most formal architectures: the fate of
+      Patroclus named, the fate of Hector named, the fate of Troy named, each clause locking
+      into the next. Bach's fugue is formal clarity as inexorability — not military, not
+      emotional, but structural. What Zeus pronounces is grammar, not anger. The subject enters,
+      the answer follows, the countersubject completes. Every consequence already contained in
+      the opening statement.
+  - n: 4
+    scene: "Iris delivers the order / divine hierarchy restored"
+    force: divine-intervention
+    composer: Handel
+    work: "Messiah — 'And the Glory of the Lord'"
+    decision: added
+    why: >
+      The divine message system in Book XV is rapid: Iris to Poseidon, Iris back, Apollo
+      forward. Not coaxing — commanding. Handel's choral entry is ceremonial divine order
+      made audible, the announcement of a governing will that expects compliance. Poseidon
+      will resist briefly, then yield. The music already knows the outcome.
+  - n: 5
+    scene: "Poseidon yields — reluctant divine submission"
+    force: law
+    composer: Brahms
+    work: "Symphony No. 1 — IV. Adagio — Un poco Allegretto e grazioso"
+    decision: added
+    why: >
+      Poseidon's retreat is grudging and formal: equal rank, ancient grievance, but submission
+      nonetheless. Brahms in this transition movement — the slow chorale yielding into the
+      famous string melody — gives the precise texture of a great force standing down under
+      law rather than defeat. Not broken, not happy, but bound by the structure of things.
+  - n: 6
+    scene: "Apollo descends — Hector revived"
+    force: divine-intervention
+    composer: Strauss
+    work: "Also sprach Zarathustra — 'Von den Hinterweltlern' (opening sunrise into first theme)"
+    decision: added
+    why: >
+      Apollo does not heal Hector gradually. He breathes life back into him the way a god
+      breathes life — suddenly, completely, with surplus. The Strauss opening is not dawn as
+      prettiness; it is the eruption of a force through the threshold of silence. Hector rising
+      under Apollo's hand is not recovery — it is reconstitution by divine will. The brass
+      chorale erupts; the man is restored; the world tips.
+  - n: 7
+    scene: "Hector leads the Trojans — the flood reversal"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Jupiter, the Bringer of Jollity' (central march passage)"
+    decision: added
+    why: >
+      The Trojan advance in Book XV is not Hector's personal fury — it is more than that: an
+      entire army flowing forward because the divine permits it. Jupiter's central march has
+      the quality of something irresistible without being savage — it is confident, immense,
+      forward, the pressure of a tide returning. Wrath here is not private rage but the rhythm
+      of a world returning to its appointed direction.
+  - n: 8
+    scene: "The Achaean ranks break — Trojan momentum as fate"
+    force: fate
+    composer: Tchaikovsky
+    work: "Symphony No. 4 — I. Andante sostenuto (opening fate motif)"
+    decision: added
+    why: >
+      Book XV shows the Achaeans defending, retreating, fighting hard, and still losing ground —
+      not to inferior opponents but to the shape of things. Tchaikovsky's fate motif is the
+      right register: not a sudden blow but an inexorable pressure, brass over strings, the
+      recurring figure that returns regardless of what the development does. The Achaeans fight;
+      the motif returns; they lose ground again.
+  - n: 9
+    scene: "Ajax on the ships — the last-ditch defense, grief becoming wrath"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 6 — I. Allegro energico (first movement, march episode)"
+    decision: added
+    why: >
+      Ajax fighting alone on the ships is not triumphant heroism — it is desperate, beautiful,
+      and already inscribed as insufficient. The Sixth Symphony's first movement knows this:
+      the march theme is heroic in form but already shadowed by what the Sixth will do to it.
+      The grief register here is not the Adagietto (private, tender) — it is grief made
+      aggressive, grief that keeps moving because stopping means death. Ajax's pole-leaping
+      defiance is the Sixth's march: magnificent, doomed, unsurrendering.
+  - n: 10
+    scene: "Fire reaches the first ship — fate completed, the poem's hinge"
+    force: fate
+    composer: Stravinsky
+    work: "The Rite of Spring — 'The Sacrifice' (Part II finale)"
+    decision: added
+    why: >
+      When fire touches the first Achaean ship, the poem crosses its structural hinge — the
+      moment that makes Patroclus's death necessary, that makes Achilles' return possible,
+      that makes everything that follows inevitable. Stravinsky's Sacrificial Dance is not
+      metaphoric here: it IS the sacrificial logic. The pounding asymmetrical rhythms, the
+      driven insistence, the sense of a force completing what it began — this is fate as
+      physical event. The book ends here. The fire is not a battle image; it is the poem
+      announcing what it is about to cost.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "not yet — save for XXII (Hector's death) or XXIV (Priam and Achilles)"
+    why: >
+      The funeral-march / terminal-monumental-grief register opens only at Hector's death
+      (Book XXII). Book XV is crisis and the turning of the tide — Hector lives, the fire
+      touches the ships, everything is about to happen. Grief here is Ajax's desperate wrath,
+      not public mourning. The register is wrong.
+  - composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    status: "demoted; too familiar as 'fate' shorthand"
+    why: >
+      The Fifth's opening is so over-coded as 'fate motif' that it collapses the specificity
+      of Book XV's fate into generic epic. Tchaikovsky's Fourth carries the same inexorability
+      with more tonal complexity and less cultural cliché — better for a curriculum where
+      the pairing must teach, not confirm.

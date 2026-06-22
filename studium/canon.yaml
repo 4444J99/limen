@@ -1,0 +1,372 @@
+# THE STUDIUM CANON — master work list
+# Converged from: studium/_seed/transmission-curriculum-spec.md (his 9-phase Western sequence +
+# Eastern Tier 1/2) + organvm/linguistic-atomization-framework/corpus/corpus_index.yaml (on-disk
+# originals + translations) + the "Finalized 15-Week Macro Schedule" (interleaved arc).
+#
+# Per-work record. order_indices encode ALL reading paths so the face can switch among them
+# (his "all avenues / all paths visualized"). corpus_path is relative to:
+#   ~/Workspace/organvm/linguistic-atomization-framework/corpus/
+# Detailed per-division force-arcs + curated music live in studium/music/<id>/...
+# Names/divisions are derived, never pinned arbitrarily ([[derive-never-pin-hardcodes]]).
+
+meta:
+  corpus_root_env: LINGFRAME_CORPUS_ROOT
+  corpus_root_default: "~/Workspace/organvm/linguistic-atomization-framework/corpus"
+  forces: [wrath, plague, supplication, divine-intervention, exile, return, revelation, law,
+           comedy, grief, metamorphosis, ascent, sacrifice, kingship, desire, memory, fate, salvation]
+
+works:
+  # ── PROLOGUE (oldest) ───────────────────────────────────────────────────────
+  gilgamesh:
+    title: The Epic of Gilgamesh
+    original_title: "𒄑𒂆𒈦"
+    author: Anonymous
+    period: "c. 2100–1200 BCE"
+    tradition: mesopotamian
+    original_language: akk
+    script: cuneiform
+    corpus_path: classical/gilgamesh
+    original_file: null            # corpus holds translations only (Thompson 1928, Jastrow 1920)
+    translation_files: [english_thompson_1928.txt, english_jastrow_1920.txt]
+    source_rails: ["https://www.sacred-texts.com/ane/eog/"]
+    main_question: "What is mortality, and the friendship that defies it?"
+    divisions: {kind: tablet, count: 12, label: "Tablet"}
+    language: cuneiform
+    order_indices: {chronological: 1, western_eastern: "prologue", interleaved_phase: "I. Epic & Oral"}
+
+  # ── I. EPIC & ORAL ──────────────────────────────────────────────────────────
+  iliad:
+    title: The Iliad
+    original_title: "Ἰλιάς"
+    author: Homer
+    period: "c. 8th century BCE"
+    tradition: greek
+    original_language: grc
+    script: greek
+    corpus_path: classical/iliad
+    original_file: greek_original.txt        # 16,571 lines
+    translation_files: [english_butler_1898.txt, english_pope_1715.txt,
+                        english_lang_1883.txt, english_cowper_1791.txt]
+    source_rails: ["https://www.perseus.tufts.edu/hopper/text?doc=Perseus:text:1999.01.0133",
+                   "https://scaife.perseus.org/library/urn:cts:greekLit:tlg0012.tlg001/"]
+    main_question: "What is wrath?"
+    divisions: {kind: book, count: 24, label: "Book"}
+    language: greek
+    seeded: true                              # Book I arc seeded verbatim from his hand
+    order_indices: {chronological: 2, western_eastern: "M1", interleaved_phase: "I. Epic & Oral"}
+
+  odyssey:
+    title: The Odyssey
+    original_title: "Ὀδύσσεια"
+    author: Homer
+    period: "c. 8th century BCE"
+    tradition: greek
+    original_language: grc
+    script: greek
+    corpus_path: classical/odyssey
+    original_file: greek_original.txt        # 12,808 lines
+    translation_files: [english_butler_1900.txt, english_pope_1726.txt,
+                        english_lang_1879.txt, english_cowper_1791.txt]
+    source_rails: ["https://www.perseus.tufts.edu/hopper/text?doc=Perseus:text:1999.01.0135",
+                   "https://scaife.perseus.org/library/urn:cts:greekLit:tlg0012.tlg002/"]
+    main_question: "What is return?"
+    divisions: {kind: book, count: 24, label: "Book"}
+    language: greek
+    order_indices: {chronological: 3, western_eastern: "M1", interleaved_phase: "I. Epic & Oral"}
+
+  mahabharata:
+    title: The Mahabharata (selections, incl. the Bhagavad Gita)
+    original_title: "महाभारतम्"
+    author: "Vyasa (attrib.)"
+    period: "c. 400 BCE – 400 CE"
+    tradition: sanskrit
+    original_language: san
+    script: devanagari
+    corpus_path: sanskrit/mahabharata
+    original_file: null
+    translation_files: [english_ganguli_1896.txt]
+    source_rails: ["https://gretil.sub.uni-goettingen.de/gretil.html#MBh"]
+    main_question: "What is duty (dharma) when every choice destroys something?"
+    divisions: {kind: parva, count: 18, label: "Parva"}
+    language: sanskrit
+    order_indices: {chronological: 6, western_eastern: "M2", interleaved_phase: "I. Epic & Oral"}
+
+  ramayana:
+    title: The Ramayana
+    original_title: "रामायणम्"
+    author: Valmiki
+    period: "c. 7th–4th century BCE"
+    tradition: sanskrit
+    original_language: san
+    script: devanagari
+    corpus_path: sanskrit/ramayana
+    original_file: null
+    translation_files: [english_griffith_1874.txt]
+    source_rails: ["https://gretil.sub.uni-goettingen.de/gretil.html#Ram"]
+    main_question: "What is fidelity, exile, and the order of kingship?"
+    divisions: {kind: kanda, count: 7, label: "Kanda"}
+    language: sanskrit
+    order_indices: {chronological: 7, western_eastern: "M2", interleaved_phase: "I. Epic & Oral"}
+
+  heike:
+    title: The Tale of the Heike
+    original_title: "平家物語"
+    author: Anonymous
+    period: "c. 1330 (events 1180s)"
+    tradition: japanese
+    original_language: jpn
+    script: kana-kanji
+    corpus_path: japanese/heike-monogatari
+    original_file: japanese_original.txt
+    translation_files: []
+    source_rails: ["https://jti.lib.virginia.edu/japanese/heike/"]
+    main_question: "What is impermanence in the fall of the proud?"
+    divisions: {kind: book, count: 12, label: "Book"}
+    language: japanese
+    order_indices: {chronological: 16, western_eastern: "M2", interleaved_phase: "I. Epic & Oral"}
+
+  # ── II. SACRED & ALLEGORY ───────────────────────────────────────────────────
+  tanakh:
+    title: The Tanakh / Hebrew Bible (Torah · Nevi'im · Ketuvim)
+    original_title: "תַּנַ\"ךְ"
+    author: Traditional
+    period: "c. 1200–165 BCE"
+    tradition: hebrew
+    original_language: hbo
+    script: hebrew
+    corpus_path: hebrew/tanakh
+    original_file: hebrew_masoretic.txt
+    translation_files: [english_kjv_1611.txt, english_asv_1901.txt,
+                        english_darby_1890.txt, english_ylt_1898.txt]
+    source_rails: ["https://www.sefaria.org/texts/Tanakh"]
+    main_question: "What is covenant, law, creation, exile?"
+    divisions: {kind: book, count: 39, label: "Book"}
+    language: hebrew
+    order_indices: {chronological: 4, western_eastern: "M1", interleaved_phase: "II. Sacred & Allegory"}
+
+  quran:
+    title: The Qur'an
+    original_title: "ٱلْقُرْآن"
+    author: Traditional
+    period: "610–632 CE"
+    tradition: arabic
+    original_language: ara
+    script: arabic
+    corpus_path: arabic-persian/quran
+    original_file: arabic_original.txt
+    translation_files: [english_pickthall_1930.txt, english_yusufali_1934.txt,
+                        english_rodwell_1861.txt, english_sale_1734.txt]
+    source_rails: ["https://quran.com/"]
+    main_question: "What is revelation as recitation?"
+    divisions: {kind: sura, count: 114, label: "Sura"}
+    language: arabic
+    order_indices: {chronological: 12, western_eastern: "M1", interleaved_phase: "II. Sacred & Allegory"}
+
+  bhagavad-gita:
+    title: The Bhagavad Gita
+    original_title: "भगवद्गीता"
+    author: "Vyasa (attrib.)"
+    period: "c. 2nd century BCE"
+    tradition: sanskrit
+    original_language: san
+    script: devanagari
+    corpus_path: sanskrit/bhagavad-gita
+    original_file: sanskrit_original.txt
+    translation_files: [english_arnold_1885.txt, english_besant_1895.txt, english_telang_1882.txt]
+    source_rails: ["https://gretil.sub.uni-goettingen.de/gretil.html#BhG"]
+    main_question: "What is right action in the face of duty and death?"
+    divisions: {kind: chapter, count: 18, label: "Chapter"}
+    language: sanskrit
+    order_indices: {chronological: 8, western_eastern: "M2", interleaved_phase: "II. Sacred & Allegory"}
+
+  tao-te-ching:
+    title: The Dao De Jing
+    original_title: "道德經"
+    author: "Laozi (attrib.)"
+    period: "c. 4th century BCE"
+    tradition: chinese
+    original_language: lzh
+    script: hanzi
+    corpus_path: chinese-classical/tao-te-ching
+    original_file: chinese_original.txt
+    translation_files: [english_legge_1891.txt, english_goddard_1919.txt, english_medhurst_1905.txt]
+    source_rails: ["https://ctext.org/dao-de-jing"]
+    main_question: "What is the way that is not forced?"
+    divisions: {kind: chapter, count: 81, label: "Chapter"}
+    language: chinese
+    order_indices: {chronological: 9, western_eastern: "M2", interleaved_phase: "II. Sacred & Allegory"}
+
+  divine-comedy:
+    title: The Divine Comedy
+    original_title: "La Divina Commedia"
+    author: Dante Alighieri
+    period: "1308–1321"
+    tradition: italian
+    original_language: ita
+    script: latin-italian
+    corpus_path: medieval/divine-comedy
+    original_file: italian_original.txt
+    translation_files: [english_norton_1891.txt, english_longfellow_1867.txt, english_cary_1814.txt]
+    source_rails: ["https://digitaldante.columbia.edu/", "https://www.perseus.tufts.edu/hopper/"]
+    main_question: "What is ordered ascent?"
+    divisions: {kind: canto, count: 100, label: "Canto", cantiche: [Inferno, Purgatorio, Paradiso]}
+    language: italian
+    order_indices: {chronological: 17, western_eastern: "M1", interleaved_phase: "II. Sacred & Allegory"}
+
+  beowulf:
+    title: Beowulf
+    original_title: "Bēowulf"
+    author: Anonymous
+    period: "c. 8th–11th century"
+    tradition: old-english
+    original_language: ang
+    script: old-english
+    corpus_path: medieval/beowulf
+    original_file: old_english_original.txt
+    translation_files: [english_gummere_1910.txt, english_hall_1892.txt, english_morris_1895.txt]
+    source_rails: ["https://www.sacred-texts.com/neu/ascp/a04_01.htm"]
+    main_question: "What is heroic life under doom?"
+    divisions: {kind: fitt, count: 43, label: "Fitt"}
+    language: old-english
+    order_indices: {chronological: 14, western_eastern: "M1", interleaved_phase: "II. Sacred & Allegory"}
+
+  # ── III. RENAISSANCE / RECEPTION ────────────────────────────────────────────
+  aeneid:
+    title: The Aeneid
+    original_title: "Aeneis"
+    author: Virgil
+    period: "29–19 BCE"
+    tradition: roman
+    original_language: lat
+    script: latin
+    corpus_path: classical/aeneid
+    original_file: latin_original.txt
+    translation_files: [english_dryden_1697.txt, english_conington_1866.txt]
+    source_rails: ["https://www.perseus.tufts.edu/hopper/text?doc=Perseus:text:1999.02.0055"]
+    main_question: "What is empire built from?"
+    divisions: {kind: book, count: 12, label: "Book"}
+    language: latin
+    order_indices: {chronological: 10, western_eastern: "M1", interleaved_phase: "III. Renaissance"}
+
+  metamorphoses:
+    title: Metamorphoses
+    original_title: "Metamorphoses"
+    author: Ovid
+    period: "8 CE"
+    tradition: roman
+    original_language: lat
+    script: latin
+    corpus_path: classical/metamorphoses
+    original_file: latin_original.txt
+    translation_files: [english_more_1922.txt]
+    source_rails: ["https://www.perseus.tufts.edu/hopper/text?doc=Perseus:text:1999.02.0029"]
+    main_question: "What is form / change?"
+    divisions: {kind: book, count: 15, label: "Book"}
+    language: latin
+    order_indices: {chronological: 11, western_eastern: "M1", interleaved_phase: "III. Renaissance"}
+
+  analects:
+    title: The Analects
+    original_title: "論語"
+    author: "Confucius / disciples"
+    period: "c. 5th century BCE"
+    tradition: chinese
+    original_language: lzh
+    script: hanzi
+    corpus_path: chinese-classical/analects
+    original_file: chinese_original.txt
+    translation_files: [english_legge_1861.txt]
+    source_rails: ["https://ctext.org/analects"]
+    main_question: "What is ritual, conduct, and the well-governed self?"
+    divisions: {kind: book, count: 20, label: "Book"}
+    language: chinese
+    order_indices: {chronological: 5, western_eastern: "M2", interleaved_phase: "III. Renaissance"}
+
+  canterbury-tales:
+    title: The Canterbury Tales
+    original_title: "The Canterbury Tales"
+    author: Geoffrey Chaucer
+    period: "c. 1387–1400"
+    tradition: middle-english
+    original_language: enm
+    script: middle-english
+    corpus_path: medieval/canterbury-tales
+    original_file: middle_english_original.txt
+    translation_files: []
+    source_rails: ["https://chaucer.lib.harvard.edu/"]
+    main_question: "What is social speech?"
+    divisions: {kind: tale, count: 24, label: "Tale"}
+    language: middle-english
+    order_indices: {chronological: 18, western_eastern: "M1", interleaved_phase: "III. Renaissance"}
+
+  tale-of-genji:
+    title: The Tale of Genji
+    original_title: "源氏物語"
+    author: Murasaki Shikibu
+    period: "c. 1008"
+    tradition: japanese
+    original_language: jpn
+    script: kana-kanji
+    corpus_path: japanese/tale-of-genji
+    original_file: japanese_original.txt
+    translation_files: []
+    source_rails: ["https://www.aozora.gr.jp/"]
+    main_question: "What is the interior life, beauty, and impermanence?"
+    divisions: {kind: chapter, count: 54, label: "Chapter"}
+    language: japanese
+    order_indices: {chronological: 15, western_eastern: "M2", interleaved_phase: "III. Renaissance"}
+
+  journey-to-the-west:
+    title: Journey to the West
+    original_title: "西遊記"
+    author: "Wu Cheng'en (attrib.)"
+    period: "c. 1592"
+    tradition: chinese
+    original_language: lzh
+    script: hanzi
+    corpus_path: chinese-classical/journey-to-the-west
+    original_file: chinese_original.txt
+    translation_files: []
+    source_rails: ["https://ctext.org/xiyouji"]
+    main_question: "What is pilgrimage, transformation, and comic transcendence?"
+    divisions: {kind: chapter, count: 100, label: "Chapter"}
+    language: chinese
+    tier: 2
+    order_indices: {chronological: 19, western_eastern: "M2", interleaved_phase: "III. Renaissance"}
+
+  conference-of-birds:
+    title: The Conference of the Birds
+    original_title: "منطق الطیر"
+    author: Attar of Nishapur
+    period: "c. 1177"
+    tradition: persian
+    original_language: fas
+    script: persian
+    corpus_path: arabic-persian/conference-of-birds
+    original_file: null
+    translation_files: [english_fitzgerald_1889.txt]
+    source_rails: ["https://ganjoor.net/attar/manteghotteyr/"]
+    main_question: "What is the mystical ascent through the self?"
+    divisions: {kind: section, count: 45, label: "Section"}
+    language: persian
+    tier: 2
+    order_indices: {chronological: 13, western_eastern: "M2", interleaved_phase: "III. Renaissance"}
+
+  shahnameh:
+    title: The Shahnameh (Book of Kings)
+    original_title: "شاهنامه"
+    author: Ferdowsi
+    period: "977–1010 CE"
+    tradition: persian
+    original_language: fas
+    script: persian
+    corpus_path: null               # not yet in local corpus — gap-task on expansion
+    original_file: null
+    translation_files: []
+    source_rails: ["https://ganjoor.net/ferdousi/shahname/"]
+    main_question: "What is kingship, fate, and lineage across an age?"
+    divisions: {kind: cycle, count: 50, label: "Cycle"}
+    language: persian
+    tier: 2
+    missing_from_corpus: true
+    order_indices: {chronological: 13.5, western_eastern: "M2", interleaved_phase: "III. Renaissance"}

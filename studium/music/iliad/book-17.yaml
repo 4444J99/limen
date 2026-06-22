@@ -1,0 +1,199 @@
+# Iliad — Book XVII — curated music arc
+# Format mirrors book-01.yaml exactly. Gold-standard converge target.
+work: iliad
+book: 17
+title: "Iliad Book XVII: The Fight over Patroclus' Body"
+length_minutes: 88
+principle: >
+  Do not score Book XVII as "a battle scene." Score it as the long,
+  grinding agony of a corpse that will not stay still — grief becoming
+  wrath becoming grief again, the defenders running on loyalty after
+  all hope has left the field. This is private grief forced into
+  public contest: Menelaus and Ajax holding what they cannot keep,
+  Hector stripping divine armor from a dead friend, immortal horses
+  weeping by a broken chariot. The register is wounded and inward,
+  never monumental — the funeral register does not open until Book XXII.
+force_arc: [grief, wrath, wrath, sacrifice, grief, fate, wrath, grief, fate, fate]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "Menelaus stands over Patroclus' body — first grief, first watch"
+    force: grief
+    composer: Schubert
+    work: "String Quintet in C major, D. 956 — II. Adagio"
+    decision: added
+    why: >
+      The book opens with Menelaus planting himself over the fallen body —
+      a single man, alone at first, holding ground against the knowledge
+      that Patroclus is already dead. Schubert's Adagio is the most inward
+      sustained grief in the chamber repertoire: not wailing, not public,
+      but a man standing in the dark with full knowledge of loss. The
+      texture (two cellos, suspended descent) matches the physical scene —
+      Menelaus leaning over, no one else yet present.
+  - n: 2
+    scene: "Hector arrives, strips divine armor from Patroclus"
+    force: wrath
+    composer: Bartók
+    work: "Music for Strings, Percussion and Celesta — III. Adagio"
+    decision: added
+    why: >
+      Hector stripping Achilles' divine armor is an act of violent
+      appropriation that crosses a threshold — human arrogance claiming
+      god-forged objects. Bartók's third movement begins in nocturnal
+      shadow and builds through accumulating percussive weight, never
+      fully discharging. The xylophone-and-strings texture is dry,
+      slightly brutal, slightly supernatural — precisely the register of
+      armor being pried from a dead god-touched body. Wrath here is not
+      martial fanfare; it is cold, deliberate seizure.
+  - n: 3
+    scene: "Hector dons the divine armor / Zeus watches"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    decision: added
+    why: >
+      When Hector puts on Achilles' immortal armor, Zeus above watches
+      and grieves inwardly — the god knows Hector has claimed what will
+      not save him, that doom is now set. The Fifth Symphony's opening
+      motif is inexorable precisely because it returns: not external
+      aggression but the rhythm of what cannot be stopped. Fate here is
+      not a shock but a weight confirmed.
+  - n: 4
+    scene: "Menelaus calls Ajax — the defense assembles"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    decision: added
+    why: >
+      Menelaus cannot hold alone; he calls the greater Ajax, and the
+      Achaean defense organizes around the corpse. The 5/4 asymmetric
+      pulse of "Mars" fits a battle formation under duress — men not
+      charging for glory but grinding against a press that outnumbers
+      them. The rhythmic hostility without resolution is correct for
+      a defense that succeeds at enormous cost.
+  - n: 5
+    scene: "Euphorbus challenges Menelaus / single combat attempt"
+    force: sacrifice
+    composer: Gluck
+    work: "Iphigénie en Tauride — 'O malheureuse Iphigénie'"
+    decision: added
+    why: >
+      Euphorbus is the man who first speared Patroclus; now he faces
+      Menelaus and is killed. This exchange — wound-inflict, boast,
+      counter-kill — is the Homeric grammar of sacrifice: the loser
+      becomes the price that confirms the transaction. Gluck's aria
+      is stately, darkly ceremonial, the weight of a ritual death
+      without the ornamentation of triumph. The scene turns on duty
+      and irreversibility, not heroic excitement.
+  - n: 6
+    scene: "Achilles' immortal horses grieve at the chariot — divine lament"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 9 — I. Andante comodo"
+    decision: added
+    why: >
+      The most startling moment in Book XVII: Achilles' immortal horses
+      stand apart from the battle and weep for Patroclus. Homer gives
+      them grief as expansive as any human's. The Mahler Ninth's first
+      movement opens with an irregular pulse (the stumbling heartbeat
+      reading) and dissolves repeatedly into grief that cannot sustain
+      its own melodic line — an inward collapse, not a public funeral.
+      These horses are immortal creatures encountering mortal loss for
+      perhaps the first time; the music must be private and vast at
+      once. This is a different register than the Adagietto (Book I,
+      Achilles-and-Thetis wounded inwardness) — this is grief at the
+      edge of cosmic incomprehension. Still private, still not monumental.
+  - n: 7
+    scene: "Zeus pities the weeping horses / divine compassion"
+    force: divine-intervention
+    composer: Messiaen
+    work: "Quatuor pour la fin du Temps — V. 'Louange à l'Éternité de Jésus'"
+    decision: added
+    why: >
+      Zeus looks down at the weeping horses and pities them — a rare
+      moment of genuine divine tenderness, not manipulation or policy.
+      Messiaen's Louange is the stillest, most sustained reverence in
+      the modern chamber repertoire: a cello melody of vast slow breath,
+      harmonics that seem to come from beyond the instrument. The force
+      is divine-intervention but here without brass-shock; the color
+      shift is toward silence and luminosity. Zeus is moved.
+  - n: 8
+    scene: "The grinding battle — Trojans pressing, Achaeans holding"
+    force: wrath
+    composer: Shostakovich
+    work: "Symphony No. 8 — II. Allegretto"
+    decision: added
+    why: >
+      The central duration of Book XVII is attrition: no side routs,
+      the body is dragged back and forth, men fall on both sides,
+      the fight has no climax — only continuation. Shostakovich's
+      Eighth Symphony was composed inside a siege; the Allegretto
+      second movement is not triumphant war music but the sound of
+      machinery grinding against human flesh. Its sardonic, relentless
+      rhythm fits grinding defense under pressure better than any
+      heroic march.
+  - n: 9
+    scene: "Glaucus shames Hector — Trojan rallying cry"
+    force: wrath
+    composer: Verdi
+    work: "Otello — 'Esultate!'"
+    decision: added
+    why: >
+      When Hector temporarily retreats, Glaucus publicly shames him —
+      the Homeric mechanism of honor-wound driving a man back to danger.
+      Verdi's 'Esultate!' is pure masculine assertion, a single voice
+      claiming the field. The scene is not subtle; it is the high-status
+      public declaration that forces a Trojan return. Wrath here is
+      reactivated through shame, and Verdi knows that register.
+  - n: 10
+    scene: "Antilochus sent to tell Achilles — the messenger's grief"
+    force: grief
+    composer: Barber
+    work: "Adagio for Strings"
+    decision: added
+    why: >
+      At the end of the book, Menelaus sends Antilochus to carry the
+      news to Achilles — Patroclus is dead. The Adagio for Strings is
+      the exact register of a man walking toward someone to break the
+      worst news: sustained, aching, directional. It is not yet
+      Achilles' reaction (Book XVIII, where the grief explodes); it is
+      the approach, the errand of mourning. The piece's slow inevitability
+      mirrors Antilochus running toward a tent where nothing will ever be
+      the same again.
+  - n: 11
+    scene: "Loyalty under doom — the Achaeans hold, carrying the body back"
+    force: fate
+    composer: Sibelius
+    work: "Symphony No. 7 in C major"
+    decision: added
+    why: >
+      The book closes with the Achaeans successfully bearing the body
+      back toward the ships, Hector still pressing. They hold — not
+      because they win but because loyalty is its own force. The
+      Sibelius Seventh is a single-movement arc that reaches its
+      trombone climax and then resolves into something not triumphant
+      but affirmed: a thing completed under compression. The wandering
+      tonality of fate resolving through sustained endurance, not
+      through victory, is exactly what the Achaean rear-guard action
+      earns at the end of this book.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "explicitly excluded from Book XVII; save for XXII / XXIV"
+    why: >
+      The Funeral March is terminal, monumental, public — the sound of
+      a civilization pausing to honor its dead. Book XVII has no
+      pause. The body is being fought over, not mourned publicly.
+      Funeral-march register opens only when Hector dies (Book XXII)
+      or when Achilles finally keens over Patroclus (Book XVIII opening).
+      Book XVII's grief is contested, private, pressed — the Schubert
+      Quintet and Mahler Ninth register, not Wagner.
+  - composer: Brahms
+    work: "Symphony No. 4 — I. Allegro non troppo"
+    status: "used in Book I for Athena restraining Achilles; not reused here"
+    why: >
+      The 'law-under-pressure' register of Brahms 4/I belongs to
+      restraint and redirection. Book XVII is not about restraint —
+      it is about holding on without restraint, grinding under force.
+      The Shostakovich Eighth fills the sustained-pressure slot more
+      precisely.

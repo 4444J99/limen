@@ -1,0 +1,164 @@
+# Iliad — Book IV — curated music arc
+# THE BROKEN TRUCE: comedy(Olympian quarrel) → divine-intervention(Athena) → fate(oath-breaking) → kingship(epipolesis) → wrath(battle joined)
+work: iliad
+book: 4
+title: "Iliad Book IV: The Broken Truce"
+length_minutes: 88
+principle: >
+  Do not score Book IV as "battle begins." Score it as the moment where the promise of peace is
+  deliberately murdered — gods bicker over its corpse, Athena descends as divine saboteur, a
+  single arrow destroys everything sworn, Agamemnon stages his authority on a field that is not
+  yet a battlefield, and then war falls like a door coming off its hinges. The dominant movement
+  is not wrath outward but fate inward: the mechanism of doom closing.
+force_arc: [comedy, comedy, divine-intervention, fate, fate, fate, kingship, kingship, wrath, wrath]
+dominant_force: fate
+tracks:
+  - n: 1
+    scene: "The Olympian feast — gods deliberate over whether to let the truce hold"
+    force: comedy
+    composer: Rameau
+    work: "Hippolyte et Aricie — Prologue: 'Que ce rivage retentisse'"
+    decision: added
+    why: >
+      The gods open Book IV feasting and gloating. Hera and Athena are furious that Zeus flirts
+      with the idea of letting Troy stand. It is domestic, political, petty — not grand. Rameau's
+      operatic prologue carries divine assembly as theatrical court ritual: ceremony concealing
+      faction, grandeur masking spite. Where Book I ended in Olympian comedy (Offenbach), Book IV
+      opens with Olympian comedy as the machinery of catastrophe — these gods are about to decide
+      to kill thousands because a goddess is offended.
+  - n: 2
+    scene: "Hera's fury — she demands Troy's destruction at any cost"
+    force: comedy
+    composer: Rossini
+    work: "La gazza ladra — Overture"
+    decision: added
+    why: >
+      Hera's speech to Zeus is monstrous and absurd in equal measure: she offers to sacrifice
+      three of her own cities to see Troy burn. The moral weight is appalling; the dramatic
+      register is operatic farce — a goddess haggling over civilizations the way a merchant
+      haggles over goods. Rossini's overture holds both: propulsive energy, comic momentum,
+      and a current of violence just beneath the surface. The snare drum is the gavel coming down.
+  - n: 3
+    scene: "Athena descends — the divine saboteur sent to break the truce"
+    force: divine-intervention
+    composer: Strauss
+    work: "Also sprach Zarathustra — 'Von den Hinterweltern' (Von den Hinterweltlern)"
+    decision: added
+    why: >
+      Athena's descent is not rescue — it is assassination of peace. She enters the human world
+      as a comet entering an atmosphere: sudden, specific, catastrophic. Richard Strauss gives
+      divine-intervention as vertical rupture, a shift in register that cannot be undone. The
+      'Hinterweltern' section's slow brass rise into sudden color-shift captures the moment a
+      god crosses into the mortal plane with a designed purpose humans cannot refuse. Athena
+      appears to Pandarus not as a vision of terror but as a whisper — and that is worse.
+  - n: 4
+    scene: "Athena induces Pandarus to shoot — the oath is broken"
+    force: fate
+    composer: Verdi
+    work: "La forza del destino — Overture"
+    decision: added
+    why: >
+      The Force of Destiny Overture is the correct piece here and nowhere else in the Iliad:
+      it names what Book IV does. Pandarus draws his bow. The arrow flies. The truce — the
+      possibility of peace, of Menelaus walking away with Helen, of ten years of war ending
+      without more deaths — is annihilated by a single mechanical act. Verdi's driving opening
+      theme is inexorability: not dramatic accident but structural doom, the hammered motif of
+      a mechanism that was always going to close this way. Pandarus is an instrument, not an agent.
+  - n: 5
+    scene: "The arrow strikes Menelaus — wound, blood, near-death"
+    force: fate
+    composer: Shostakovich
+    work: "Symphony No. 10 — II. Allegro"
+    decision: added
+    why: >
+      Menelaus is wounded but not killed — the gods deflect the arrow enough to wound rather than
+      slay. But the wound is real, the blood is real, and the oath is dead. Shostakovich's second
+      movement is mechanical, inexorable, almost inhuman in its relentlessness — not grief over
+      the wound, but the merciless forward momentum of events that cannot now be stopped. This is
+      the wrong that has been seeded; everything after is merely its sprouting. The movement's
+      cold, driving energy is fate already in motion, not fate as abstraction.
+  - n: 6
+    scene: "Agamemnon's grief over the wound — the pathos of betrayal"
+    force: fate
+    composer: Schubert
+    work: "String Quartet No. 14 in D minor 'Death and the Maiden' — II. Andante con moto"
+    decision: added
+    why: >
+      Agamemnon's lament over the wounded Menelaus is one of the most human moments in the book:
+      he is afraid his brother will die, afraid the war has been made permanent, afraid Zeus will
+      not honor the oath. The grief here is not Book I withdrawal (Mahler Adagietto) — it is
+      public, fraternal, frightened grief, and underneath it runs the fatal pulse. Schubert's
+      'Death and the Maiden' variations hold both registers: the theme is elegiac and intimate,
+      but the forward motion of the variations is relentless. The wounded king weeping over his
+      brother — while the war machine begins to turn — is exactly this texture.
+  - n: 7
+    scene: "Agamemnon's epipolesis — the review of the troops, lord to lord"
+    force: kingship
+    composer: Elgar
+    work: "Enigma Variations — 'Nimrod' (Variation IX)"
+    decision: added
+    why: >
+      The epipolesis is the Iliad's great piece of sovereign theater: Agamemnon walks his lines,
+      praises the ready, shames the laggard, performs command as display. It is not intimacy —
+      it is a king enacting his kingship before men who will die. Elgar's Nimrod is the canonical
+      piece for a leader surveying what he loves and is about to spend: ceremonial, grave, tender
+      without sentimentality. The Enigma variations are about individuals seen clearly in their
+      distinctness — which is exactly what the epipolesis does, naming each commander in turn.
+  - n: 8
+    scene: "Agamemnon rebukes Odysseus and Diomedes — sovereignty displayed as pressure"
+    force: kingship
+    composer: Walton
+    work: "Crown Imperial — March"
+    decision: added
+    why: >
+      The second movement of the epipolesis turns harder: Agamemnon rebukes Odysseus for hanging
+      back, challenges Diomedes, reminds them of their fathers' greater glory. Kingship here is
+      not ceremonial but coercive — sovereign authority as pressure applied to pride. Walton's
+      Crown Imperial carries both registers: the grandeur of crown-right and the driving forward
+      push of command. It is ceremonial music with a fist in it. Diomedes takes the rebuke
+      silently, as he must. That silence is also kingship — the warrior's submission to rank.
+  - n: 9
+    scene: "Battle joined — the armies crash together for the first time"
+    force: wrath
+    composer: Beethoven
+    work: "Symphony No. 7 — IV. Allegro con brio"
+    decision: added
+    why: >
+      Book IV ends with the armies colliding — shields, spears, the noise Homer names as
+      'grinding mills' and 'winter rivers in flood.' This is not yet the wrath of Achilles:
+      it is the collective wrath of ten years of waiting released. Beethoven's Seventh finale
+      is the right piece because it is rhythmic inevitability as opposed to Holst's hostile
+      asymmetry. The armies have been built to this moment; the collision is not chaotic but
+      structural — two masses that were always going to meet. The finale's driving dactylic
+      pulse is heroic energy finally given its release, not rage but war's terrible completion
+      of what the broken truce began.
+  - n: 10
+    scene: "First blood, first deaths — the ground opens to receive them"
+    force: wrath
+    composer: Bartók
+    work: "Music for Strings, Percussion and Celesta — I. Andante tranquillo"
+    decision: added
+    why: >
+      The Iliad catalogs its dead with a cold, almost geological eye — men fall like trees,
+      like walls, named and instantly extinguished. The first deaths of Book IV are not elegized;
+      they are recorded. Bartók's opening movement grows from a fugal whisper to an overwhelming
+      structure and back again — life assembling and disassembling, the weight of accumulated
+      violence that somehow remains quiet in its mechanism. This is not grief (that register
+      stays private and small until much later); it is the ground registering the dead. Wrath
+      here is not heat but density — the weight of what the broken truce has now made inevitable.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "still reserved for Book XXII / XXIV — Hector's death opens the funeral register"
+    why: >
+      The deaths in Book IV do not yet earn the funeral-monumental register. They are the
+      first dead in a war that has just restarted — anonymous, accumulating, without
+      individual elegy. The funeral march belongs to a named hero publicly mourned.
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "retired to Book I; not reused"
+    why: >
+      Mars's 5/4 asymmetry scored the quarrel between Agamemnon and Achilles — two men
+      locked in broken hierarchy. Book IV's battle is a different register: not a duel of
+      pride but the machinery of war activated. Beethoven's Seventh finale and Bartók give
+      the correct texture — momentum and density rather than hostile rhythmic instability.

@@ -1,0 +1,71 @@
+{
+  "work": "bhagavad-gita",
+  "book": 1,
+  "script": "devanagari",
+  "original": [
+    "Bhagavadgītā with the commentary ascribed to Śaṃkara (Adhyāyas 1-17)",
+    "atha arjuna-viṣāda-yogo nāma prathamo 'dhyāyaḥ |",
+    "bhagavat-śaṅkarācārya-kṛta-bhāṣyam",
+    "upodghāṭaḥ",
+    "oṃ"
+  ],
+  "parallels": {
+    "available_translations": [
+      "arnold_1885",
+      "besant_1895",
+      "telang_1882"
+    ],
+    "compare_via": [
+      "https://gretil.sub.uni-goettingen.de/gretil.html#BhG"
+    ],
+    "corpus_dir": "/Users/4jp/Workspace/organvm/linguistic-atomization-framework/corpus/sanskrit/bhagavad-gita"
+  },
+  "gloss_scaffold": [
+    {
+      "word": "Bhagavadgītā",
+      "translit": "",
+      "gloss": ""
+    },
+    {
+      "word": "with",
+      "translit": "",
+      "gloss": ""
+    },
+    {
+      "word": "the",
+      "translit": "",
+      "gloss": ""
+    },
+    {
+      "word": "commentary",
+      "translit": "",
+      "gloss": ""
+    },
+    {
+      "word": "ascribed",
+      "translit": "",
+      "gloss": ""
+    },
+    {
+      "word": "to",
+      "translit": "",
+      "gloss": ""
+    },
+    {
+      "word": "Śaṃkara",
+      "translit": "",
+      "gloss": ""
+    },
+    {
+      "word": "Adhyāyas",
+      "translit": "",
+      "gloss": ""
+    },
+    {
+      "word": "1-17",
+      "translit": "",
+      "gloss": ""
+    }
+  ],
+  "note": "compare-translations is live; transliteration + morphology are seed/synth/hand-filled"
+}
