@@ -102,7 +102,9 @@ def test_agent_argv_injects_claude_model(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     _write_ledger(tmp_path, {"waste_classes": ["research"]})
     argv = D._agent_argv("claude", _task(type_="research"))
-    assert "-m" in argv and "sonnet" in argv, argv
+    # claude CLI uses --model, NOT -m (codex/opencode use -m; claude rejects it).
+    assert "--model" in argv and "sonnet" in argv, argv
+    assert "-m" not in argv, argv  # regression guard: never emit -m for the claude lane
     assert "-p" in D._agent_argv("claude")  # no task → no crash, static flags intact
 
 

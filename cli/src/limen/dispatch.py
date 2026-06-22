@@ -447,7 +447,9 @@ def _agent_argv(agent: str, task: Task | None = None) -> list[str]:
     elif agent == "claude":
         model = _claude_model(task)
         if model:
-            flags += ["-m", model]
+            # the claude CLI uses --model (it has NO -m short flag, unlike codex/opencode);
+            # `claude -m …` → "error: unknown option '-m'" and the whole dispatch fails.
+            flags += ["--model", model]
     return flags
 
 # Per-task lane failover cascade (best-efficiency-first → cloud last). On a genuine
