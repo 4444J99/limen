@@ -31,6 +31,7 @@ fi
 
 LANES="${LIMEN_LANES:-codex,opencode,agy,claude}"   # gemini auto-joins below iff its key is present
 [ -n "${GEMINI_API_KEY:-}" ] && LANES="$LANES,gemini"
+[ -n "${WARP_API_KEY:-}" ] && LANES="$LANES,warp,oz"
 LOCAL_LIMIT="${LIMEN_LOCAL_LIMIT:-50}"
 JULES_LIMIT="${LIMEN_JULES_LIMIT:-100}"
 MINE_LIMIT="${LIMEN_MINE_LIMIT:-25}"

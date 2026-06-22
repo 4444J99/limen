@@ -33,13 +33,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          repository: ${{ inputs.repo }}
-          fetch-depth: 1
 
       - name: Run Oz agent
         uses: warpdotdev/oz-agent-action@v1
         with:
-          prompt: ${{ inputs.prompt }}
+          prompt: |-
+            ${{ inputs.prompt }}
+
+            Target repository: ${{ inputs.repo }}
           name: limen-${{ inputs.agent }}-${{ inputs.task_id }}
           warp_api_key: ${{ secrets.WARP_API_KEY }}
