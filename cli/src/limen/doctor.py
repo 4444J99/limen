@@ -10,6 +10,12 @@ from typing import Any
 from limen.models import LimenFile, Task
 
 
+def _ensure_aware(dt: datetime) -> datetime:
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
 def stale_tasks(
     limen: LimenFile, hours: int = 24, agent: str | None = None
 ) -> list[Task]:
@@ -20,7 +26,7 @@ def stale_tasks(
             continue
         if agent and task.target_agent != agent:
             continue
-        events = [entry.timestamp for entry in task.dispatch_log if entry.timestamp]
+        events = [_ensure_aware(entry.timestamp) for entry in task.dispatch_log if entry.timestamp]
         latest = max(events) if events else None
         if latest is None or latest < cutoff:
             candidates.append(task)
@@ -127,7 +133,7 @@ def _iso(value: Any) -> str | None:
 
 def _task_lifecycle(task: Task, stale_ids: set[str]) -> dict[str, Any]:
     events = sorted(
-        [entry.timestamp for entry in task.dispatch_log if entry.timestamp],
+        [_ensure_aware(entry.timestamp) for entry in task.dispatch_log if entry.timestamp],
         reverse=True,
     )
     stale = task.id in stale_ids

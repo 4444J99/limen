@@ -61,6 +61,7 @@ echo $$ > "$LIMEN_ROOT/logs/heartbeat-loop.pid"
 
 LANES="${LIMEN_LANES:-codex,opencode,agy,claude}"
 [ -n "${GEMINI_API_KEY:-}" ] && LANES="$LANES,gemini"
+[ -n "${WARP_API_KEY:-}" ] && LANES="$LANES,warp,oz"
 # per-lane tasks PER BEAT kept low so no single lane hogs a beat — lanes rotate fast
 # (the safe throughput fix; real braking is the rate-limit detector in dispatch.py).
 LOCAL_LIMIT="${LIMEN_LOCAL_LIMIT:-3}"; JULES_LIMIT="${LIMEN_JULES_LIMIT:-100}"

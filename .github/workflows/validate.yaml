@@ -32,7 +32,7 @@ jobs:
               raise SystemExit("Per-agent sum exceeds 2x daily budget")
 
           required = ("id", "title", "status", "target_agent", "priority")
-          valid_statuses = {"open", "dispatched", "in_progress", "done", "failed", "cancelled"}
+          valid_statuses = {"open", "dispatched", "in_progress", "done", "failed", "cancelled", "needs_human", "failed_blocked", "archived", "superseded"}
           tasks = data.get("tasks", [])
           for task in tasks:
               missing = [field for field in required if task.get(field) is None]
