@@ -126,6 +126,11 @@ cleanup() {
 trap cleanup EXIT
 
 echo "═══ heartbeat-loop start $(date '+%F %T') tempo=${MIN}-${MAX}s lanes=$LANES ═══"
+# This freshly-started loop IS running the current body, so any prior "loop body changed —
+# kickstart pending" marker is now satisfied. sync-release only ever SETS this flag (on a
+# loop-body ff) and nothing else clears it, so without this it stays set forever and the
+# "kickstart needed" signal goes permanently stale. Clearing it on startup keeps the signal true.
+rm -f "$LIMEN_ROOT/logs/.loop-update-pending" 2>/dev/null || true
 # ensure the web dashboard is served from the start
 bash "$LIMEN_ROOT/scripts/refresh-web.sh" 2>&1 | tail -2 || true
 while true; do

@@ -546,9 +546,15 @@ def _clone_repo(task: Task) -> Path | None:
             return dest
         dest.parent.mkdir(parents=True, exist_ok=True)
         try:
-            r = subprocess.run(
-                ["gh", "repo", "clone", task.repo, str(dest)],
-                capture_output=True, text=True, timeout=600,
+            # _run_capture (process-group SIGKILL), NOT plain subprocess.run: a `gh repo clone`
+            # whose git / git-remote-https grandchild hangs holding the stdout pipe makes
+            # subprocess.run's post-timeout communicate() block FOREVER (the exact bug _run_capture
+            # was built for). And this runs under _GIT_PLUMBING_LOCK, so ONE hung clone freezes
+            # every clone-needing worker → the ThreadPoolExecutor never drains → dispatch-parallel
+            # wedges past the lane timeout and the daemon stalls (observed: ~30-min hang). The
+            # group-kill reaps the grandchildren so the clone is genuinely bounded → cascades clean.
+            r = _run_capture(
+                ["gh", "repo", "clone", task.repo, str(dest)], timeout=600,
             )
         except Exception as e:
             print(f"  clone {task.repo} errored: {e}")
