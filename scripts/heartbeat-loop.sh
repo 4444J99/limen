@@ -216,6 +216,7 @@ while true; do
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" 2>&1 | tail -1 || true   # real per-vendor usage
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/money-view.py" 2>&1 | tail -1 || true   # revenue-first money view (no network, can't time out)
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/corpus-view.py" 2>&1 | tail -1 || true   # knowledge-base view: THE ONE + convergence activity (no network)
+  play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/ingest-coverage.py" 2>&1 | tail -1 || true   # diagnostic: are we at 100% context? sources + freshness + adapter gaps (read-only over the manifest)
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/omni-view.py" 2>&1 | tail -1 || true   # THE ONE SURFACE: value verdict + board + fleet + revenue + everything, past/present/future (no network)
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/notify-events.py" 2>&1 | tail -1 || true   # push: your-gate ready / ship milestones
   play "$C_REPORT"  && python3 "$LIMEN_ROOT/scripts/conducting-report.py" 2>&1 | tail -1 || true   # RELAY: did the fleet burn its full force? (once/day push — so you never have to ask)
