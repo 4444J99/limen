@@ -360,13 +360,118 @@ works:
     tradition: persian
     original_language: fas
     script: persian
-    corpus_path: null               # not yet in local corpus — gap-task on expansion
-    original_file: null
+    corpus_path: arabic-persian/shahnameh
+    original_file: persian_original_seed.txt   # proem seed (3 sections, ganjoor.net) — face resolves real Persian for the opening
     translation_files: []
     source_rails: ["https://ganjoor.net/ferdousi/shahname/"]
     main_question: "What is kingship, fate, and lineage across an age?"
     divisions: {kind: cycle, count: 50, label: "Cycle"}
     language: persian
     tier: 2
-    missing_from_corpus: true
+    corpus_seed_only: true   # opening proem present; deeper cycles await full fetch (backlog: studium-corpus-shahnameh)
     order_indices: {chronological: 13.5, western_eastern: "M2", interleaved_phase: "III. Renaissance"}
+
+  # ── TIER 2 — "After the First Pass" (his spec §57) ──────────────────────────
+  # STAGED: enumerated + located so the canon reflects his full stated intent, but kept OUT of
+  # orderings.yaml so the daily face does not route to them until he opens the gate. Reading
+  # orientations + music arcs are deferred to expansion-backlog.yaml. They reuse existing script
+  # lessons (sanskrit/chinese/japanese/persian). Counter-systems, not "extra world literature."
+  upanishads:
+    title: The Principal Upanishads
+    original_title: "उपनिषद्"
+    author: "Anonymous (the seers)"
+    period: "c. 800–200 BCE"
+    tradition: sanskrit
+    original_language: san
+    script: devanagari
+    corpus_path: null
+    original_file: null
+    translation_files: []
+    source_rails: ["https://www.sacred-texts.com/hin/upan/", "https://gretil.sub.uni-goettingen.de/gretil.html#Upan"]
+    main_question: "What is the self (ātman) that is also the ground of all being (brahman)?"
+    divisions: {kind: upanishad, count: 13, label: "Upanishad"}
+    language: sanskrit
+    tier: 2
+    staged: true
+    missing_from_corpus: true
+    order_indices: {chronological: 4.5, western_eastern: "M2", interleaved_phase: "II. Sacred & Allegory"}
+
+  book-of-songs:
+    title: The Book of Songs (Shijing)
+    original_title: "詩經"
+    author: "Anonymous (compiled, attrib. Confucius)"
+    period: "c. 1000–600 BCE"
+    tradition: chinese
+    original_language: lzh
+    script: hanzi
+    corpus_path: null
+    original_file: null
+    translation_files: []
+    source_rails: ["https://ctext.org/book-of-poetry"]
+    main_question: "What is ritual lyric — song before 'literature' becomes private expression?"
+    divisions: {kind: part, count: 4, label: "Part", parts: [Guofeng, Xiaoya, Daya, Song]}
+    language: chinese
+    tier: 2
+    staged: true
+    missing_from_corpus: true
+    order_indices: {chronological: 4.2, western_eastern: "M2", interleaved_phase: "I. Epic & Oral"}
+
+  kojiki:
+    title: The Kojiki (Record of Ancient Matters)
+    original_title: "古事記"
+    author: "Ō no Yasumaro (compiler)"
+    period: "712 CE"
+    tradition: japanese
+    original_language: jpn
+    script: kana-kanji
+    corpus_path: null
+    original_file: null
+    translation_files: []
+    source_rails: ["https://www.sacred-texts.com/shi/kj/"]
+    main_question: "What is mythic origin — how a people narrates its own beginning?"
+    divisions: {kind: book, count: 3, label: "Book"}
+    language: japanese
+    tier: 2
+    staged: true
+    missing_from_corpus: true
+    order_indices: {chronological: 14.5, western_eastern: "M2", interleaved_phase: "I. Epic & Oral"}
+
+  rumi-hafez:
+    title: Rumi & Hafez — Mystical Lyric (selections)
+    original_title: "مثنوی · دیوانِ حافظ"
+    author: "Jalāl al-Dīn Rūmī · Ḥāfeẓ"
+    period: "13th–14th century"
+    tradition: persian
+    original_language: fas
+    script: persian
+    corpus_path: null
+    original_file: null
+    translation_files: []
+    source_rails: ["https://ganjoor.net/moulavi/", "https://ganjoor.net/hafez/"]
+    main_question: "What is mystical eros — annihilation (fanā) and divine longing?"
+    divisions: {kind: selection, count: 12, label: "Selection"}
+    language: persian
+    tier: 2
+    staged: true
+    missing_from_corpus: true
+    order_indices: {chronological: 16.5, western_eastern: "M2", interleaved_phase: "II. Sacred & Allegory"}
+
+  dream-of-red-chamber:
+    title: Dream of the Red Chamber (Honglou Meng)
+    original_title: "紅樓夢"
+    author: Cao Xueqin
+    period: "c. 1760 (Qing)"
+    tradition: chinese
+    original_language: zho
+    script: hanzi
+    corpus_path: null
+    original_file: null
+    translation_files: []
+    source_rails: ["https://ctext.org/hongloumeng"]
+    main_question: "What is desire, illusion, and the totality of a world in decline?"
+    divisions: {kind: chapter, count: 120, label: "Chapter"}
+    language: chinese
+    tier: 2
+    staged: true
+    missing_from_corpus: true
+    order_indices: {chronological: 18.5, western_eastern: "M2", interleaved_phase: "III. Renaissance"}

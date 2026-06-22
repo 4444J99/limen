@@ -2,7 +2,7 @@
 
 > Each work has its own `<work>/PLAN.md` enumerating every division. Method: tag each passage with a dominant force (`../dominant-force.yaml`) → choose a piece whose affect meets that force's musical requirement; justify every track the way Book I does. Gold standard: `iliad/book-01.yaml`. Iliad is complete (24/24).
 
-## Works
+## Works (first pass)
 - [`gilgamesh`](gilgamesh/PLAN.md) — The Epic of Gilgamesh · 1/12 arcs
 - [`iliad`](iliad/PLAN.md) — The Iliad · 24/24 arcs
 - [`odyssey`](odyssey/PLAN.md) — The Odyssey · 1/24 arcs
@@ -23,3 +23,10 @@
 - [`divine-comedy`](divine-comedy/PLAN.md) — The Divine Comedy · 1/100 arcs
 - [`canterbury-tales`](canterbury-tales/PLAN.md) — The Canterbury Tales · 1/24 arcs
 - [`journey-to-the-west`](journey-to-the-west/PLAN.md) — Journey to the West · 1/100 arcs
+
+## Tier 2 — staged (after the first pass)
+- [`book-of-songs`](book-of-songs/PLAN.md) — The Book of Songs (Shijing) · 0/4 arcs · staged
+- [`upanishads`](upanishads/PLAN.md) — The Principal Upanishads · 0/13 arcs · staged
+- [`kojiki`](kojiki/PLAN.md) — The Kojiki (Record of Ancient Matters) · 0/3 arcs · staged
+- [`rumi-hafez`](rumi-hafez/PLAN.md) — Rumi & Hafez — Mystical Lyric (selections) · 0/12 arcs · staged
+- [`dream-of-red-chamber`](dream-of-red-chamber/PLAN.md) — Dream of the Red Chamber (Honglou Meng) · 0/120 arcs · staged

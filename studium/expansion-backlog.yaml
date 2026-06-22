@@ -106,6 +106,47 @@ deepening:
       checklist: studium/music/ramayana/PLAN.md
       class: content
 
+# ── Pillar C — Tier 2 "after the first pass" (his spec §57): scaffolded in canon.yaml, STAGED ──
+# These 5 works are enumerated + located (canon.yaml tier:2 staged:true + music/<id>/PLAN.md) but
+# kept out of orderings.yaml so the daily face does not route to them until his gate. Each task =
+# author the reading orientation + the opening force-matched arc + essay (breadth), THEN deepen.
+tier2_staged:
+  note: "reuse existing script lessons (sanskrit/chinese/japanese/persian); counter-systems, not 'extra world lit'"
+  tasks:
+    - id: studium-tier2-upanishads
+      title: "Upanishads — reading orientation + opening arc (ātman/brahman); 13 divisions"
+      checklist: studium/music/upanishads/PLAN.md
+      class: content
+    - id: studium-tier2-book-of-songs
+      title: "Book of Songs (Shijing) — reading orientation + opening arc (ritual lyric); 4 parts"
+      checklist: studium/music/book-of-songs/PLAN.md
+      class: content
+    - id: studium-tier2-kojiki
+      title: "Kojiki — reading orientation + opening arc (mythic origin); 3 books"
+      checklist: studium/music/kojiki/PLAN.md
+      class: content
+    - id: studium-tier2-rumi-hafez
+      title: "Rumi & Hafez selections — reading orientation + opening arc (fanā/eros); 12 selections"
+      checklist: studium/music/rumi-hafez/PLAN.md
+      class: content
+    - id: studium-tier2-dream-of-red-chamber
+      title: "Dream of the Red Chamber — reading orientation + opening arc (desire/decline); 120 chapters"
+      checklist: studium/music/dream-of-red-chamber/PLAN.md
+      class: content
+
+# ── corpus gaps — original texts not yet in the linguistic-atomization-framework corpus ──
+# The face fails-open (degraded) for these until the original is fetched. Non-destructive: copy the
+# public-domain original from the source rail into corpus_path, then clear missing_from_corpus in canon.
+corpus_gaps:
+  acceptance: "after fetch, studium.py original_sample() resolves a real head sample for the work"
+  tasks:
+    - id: studium-corpus-shahnameh
+      title: "Fetch Shahnameh original (ganjoor.net) → corpus arabic-persian/shahnameh; clear canon missing_from_corpus"
+      class: content
+    - id: studium-corpus-tier2
+      title: "Fetch Tier-2 originals where public-domain (Upanishads/Shijing/Kojiki/Rumi-Hafez/Honglou-meng) from their source rails"
+      class: content
+
 # ── Pillar D — community / build-in-public (propose-only; SENDS NOTHING until his gate) ──
 community:
   - id: studium-community-discord

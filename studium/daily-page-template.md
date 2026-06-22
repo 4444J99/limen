@@ -33,3 +33,15 @@ Why this composition fits:
 
 KEEP / REPLACE:
 ```
+
+---
+
+**Scoring the day (optional).** The four `rubric/` guides turn the page into something you can weigh over
+time — score each 1–4, and let the music line decide KEEP/REPLACE on its own terms:
+
+- comprehension → [`rubric/comprehension.md`](rubric/comprehension.md) — did the scene's *force* land?
+- handwriting → [`rubric/handwriting.md`](rubric/handwriting.md) — script as the third commentary, not penmanship
+- translation → [`rubric/translation.md`](rubric/translation.md) — literal vs. literary; what each translator weights
+- music engagement → [`rubric/music-engagement.md`](rubric/music-engagement.md) — the day's KEEP/REPLACE on the pairing
+
+These are diagnostic, never gatekeeping — a low day is data, not failure ([[no-never-happens-again]]).

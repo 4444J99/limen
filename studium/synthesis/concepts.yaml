@@ -1,0 +1,171 @@
+# concepts.yaml — the cross-canon SYNTHESIS spine (operationalizing thesis.md).
+#
+# His thesis: "You are not just reading great books. You are studying how civilizations ENCODE:
+# violence · law · memory · fate · sacrifice · speech · revelation · empire · desire · death ·
+# return · transformation · salvation · comedy … read together, across cultures and in their own
+# scripts, they become a single conversation the species has been having with itself."
+#
+# This file makes that legible: each concept → the works that encode it (and HOW) → the nearest
+# dominant FORCE (so the synthesis face borrows its color + the music engine couples to it). The
+# Eastern works appear as COUNTER-SYSTEMS, not appendix (see counter-systems.md). Each concept has a
+# prose essay at synthesis/<concept>.md. Works/forces are derived from canon.yaml + dominant-force.yaml;
+# `force` is the coloring anchor, never a claim that the concept reduces to one force.
+
+meta:
+  thesis_source: studium/thesis.md
+  note: >
+    Read DOWN a concept to see one encoding answered by many traditions; read ACROSS a work (in the
+    daily face) to see one book answering many encodings. The synthesis layer is the vertical axis.
+  forces_source: studium/dominant-force.yaml
+
+concepts:
+  violence:
+    gloss: "The force that breaks the world open — and what a tradition does with it."
+    force: wrath
+    works:
+      - {id: iliad, how: "mēnis — wrath made the cosmic engine of the whole poem"}
+      - {id: mahabharata, how: "the war that must destroy dharma in order to fulfill it"}
+      - {id: aeneid, how: "furor against pietas — the violence empire is built from"}
+      - {id: beowulf, how: "heroic violence enacted under certain doom (wyrd)"}
+      - {id: shahnameh, how: "the violence of kingship recurring across an age"}
+
+  law:
+    gloss: "The force that reassembles broken social form — statute, ritual, custom."
+    force: law
+    works:
+      - {id: tanakh, how: "covenant law — the Sinai code as the spine of a people"}
+      - {id: analects, how: "ritual (li) and the rectified self as the ground of order"}
+      - {id: quran, how: "revelation that is also legislation — recited command"}
+      - {id: iliad, how: "Book II — law as the only thing between ten thousand men and the ships"}
+      - {id: canterbury-tales, how: "social speech as customary, negotiated law"}
+
+  memory:
+    gloss: "The past deployed as gravity — nostalgia become authority."
+    force: memory
+    works:
+      - {id: odyssey, how: "nostos — the memory of home as the engine of return"}
+      - {id: heike, how: "mono no aware — impermanence held by being remembered"}
+      - {id: aeneid, how: "Rome remembering the Troy it was founded out of"}
+      - {id: tale-of-genji, how: "a consciousness that outlasts itself by being attended to"}
+      - {id: mahabharata, how: "the epic as the act of remembering a vanished age"}
+
+  fate:
+    gloss: "The inexorable — and each tradition's answer to it."
+    force: fate
+    works:
+      - {id: iliad, how: "the will of Zeus being accomplished through every choice"}
+      - {id: aeneid, how: "fatum — empire as destiny one cannot refuse"}
+      - {id: beowulf, how: "wyrd — the hero's life lived knowingly toward its end"}
+      - {id: shahnameh, how: "fate and lineage turning across the cycles of kings"}
+      - {id: bhagavad-gita, how: "the counter-answer: act without attachment to the fruit"}
+
+  sacrifice:
+    gloss: "What must be given up — ritual offering and its costs."
+    force: sacrifice
+    works:
+      - {id: bhagavad-gita, how: "yajna — all right action as offering"}
+      - {id: tanakh, how: "the binding of Isaac; the sacrificial cult of the Temple"}
+      - {id: aeneid, how: "Dido, Pallas — the human cost empire exacts"}
+      - {id: iliad, how: "the sacrifices Zeus accepts and refuses (the dark omen)"}
+      - {id: quran, how: "Ibrahim's submission — sacrifice as surrender"}
+
+  speech:
+    gloss: "The word as act — survival, governance, revelation, comedy."
+    force: revelation
+    works:
+      - {id: odyssey, how: "the man of many turns — speech as the craft of survival"}
+      - {id: analects, how: "the rectification of names (zhengming) — speech that orders"}
+      - {id: quran, how: "revelation AS recitation — the word that is spoken, not read"}
+      - {id: canterbury-tales, how: "the human comedy carried entirely in voices"}
+      - {id: conference-of-birds, how: "the parliament of birds — a self argued in many voices"}
+
+  revelation:
+    gloss: "The veil drawn back — theophany, recitation, vision."
+    force: revelation
+    works:
+      - {id: quran, how: "the descent of the recited word onto the Prophet"}
+      - {id: tanakh, how: "theophany — the burning bush, the thunder of Sinai"}
+      - {id: divine-comedy, how: "the beatific vision at the summit of Paradiso"}
+      - {id: bhagavad-gita, how: "the Vishvarupa — Krishna's cosmic form (Ch. 11)"}
+      - {id: conference-of-birds, how: "the Simurgh — the thirty birds see themselves"}
+
+  empire:
+    gloss: "Power organized across time — its founding, its weight, its judgment."
+    force: kingship
+    works:
+      - {id: aeneid, how: "the founding myth of Rome, written for the founding"}
+      - {id: shahnameh, how: "kingship and the farr (royal glory) across an age"}
+      - {id: tanakh, how: "the united and divided monarchy under the covenant"}
+      - {id: divine-comedy, how: "Dante's just empire — the political vision under the vision"}
+      - {id: journey-to-the-west, how: "the Tang imperial pilgrimage westward"}
+
+  desire:
+    gloss: "The longing that drives — toward another, toward ascent, toward ruin."
+    force: desire
+    works:
+      - {id: tale-of-genji, how: "desire and its endless attenuations in a courtly world"}
+      - {id: divine-comedy, how: "Paolo and Francesca — love as both fall and ladder"}
+      - {id: ramayana, how: "the desire (Kaikeyi's) that springs the whole exile"}
+      - {id: metamorphoses, how: "desire as the engine that turns bodies into other forms"}
+      - {id: dream-of-red-chamber, how: "desire inseparable from illusion and decline (staged)"}
+
+  death:
+    gloss: "The wall every tradition meets — terror, grief, vapor, the pyre."
+    force: grief
+    works:
+      - {id: gilgamesh, how: "the first articulation of the terror of mortality"}
+      - {id: iliad, how: "the deaths of Patroclus and Hector — grief turning the poem"}
+      - {id: heike, how: "the fall of the proud — death as impermanence itself"}
+      - {id: tanakh, how: "Ecclesiastes — hevel, all is vapor and chasing wind"}
+      - {id: beowulf, how: "the hero's funeral; the doom that was always coming"}
+
+  return:
+    gloss: "The circle home — to Ithaca, to Ayodhya, to God, to right action."
+    force: return
+    works:
+      - {id: odyssey, how: "nostos — the archetype: the return home through trial"}
+      - {id: ramayana, how: "the return from exile to a kingdom restored"}
+      - {id: divine-comedy, how: "the soul's return to the God it came from"}
+      - {id: journey-to-the-west, how: "the return bearing the scriptures won"}
+      - {id: bhagavad-gita, how: "the return to action after the paralysis of doubt"}
+
+  transformation:
+    gloss: "Form become other form — the cosmos, the self, the wild made human."
+    force: metamorphosis
+    works:
+      - {id: metamorphoses, how: "change itself as the spine of the universe"}
+      - {id: journey-to-the-west, how: "the seventy-two transformations of the Monkey"}
+      - {id: tao-te-ching, how: "the Way as ceaseless, unforced change"}
+      - {id: gilgamesh, how: "Enkidu transformed from wild creature into human"}
+      - {id: conference-of-birds, how: "the self transmuted through the seven valleys"}
+
+  salvation:
+    gloss: "The way out and up — beatitude, the straight path, liberation, annihilation."
+    force: salvation
+    works:
+      - {id: divine-comedy, how: "the soul's ascent through purgation to beatitude"}
+      - {id: quran, how: "al-sirat al-mustaqim — the straight path prayed for daily"}
+      - {id: conference-of-birds, how: "fanā — annihilation of the self into the divine"}
+      - {id: bhagavad-gita, how: "moksha — liberation from the wheel of action"}
+      - {id: tanakh, how: "the messianic hope; return from exile as redemption"}
+
+  comedy:
+    gloss: "The laughter that restores — the gods', the pilgrims', the cosmos ending in joy."
+    force: comedy
+    works:
+      - {id: divine-comedy, how: "the Commedia proper — a journey that ends in joy"}
+      - {id: canterbury-tales, how: "the human comedy of pilgrims talking each other down"}
+      - {id: journey-to-the-west, how: "comic transcendence — the Monkey's irreverent path"}
+      - {id: iliad, how: "the unquenchable laughter of the gods that closes Book I"}
+      - {id: metamorphoses, how: "Ovid's wit playing across even the cruelest changes"}
+
+# Counter-system pairings (Eastern answer ↔ Western statement) — the spine of counter-systems.md.
+# "The Gita against Achilles, the Dao against force, the Heike against the Iliad's martial glory."
+counter_systems:
+  - {concept: violence,      west: iliad,        east: bhagavad-gita,  on: "Achilles' wrath ↔ Arjuna's renunciation of the fruit of war"}
+  - {concept: fate,          west: aeneid,       east: tao-te-ching,   on: "fatum driving empire ↔ wu wei, the Way that is not forced"}
+  - {concept: death,         west: iliad,        east: heike,          on: "martial glory ↔ the impermanence of the proud"}
+  - {concept: law,           west: tanakh,       east: analects,       on: "covenant law from above ↔ ritual order cultivated within"}
+  - {concept: return,        west: odyssey,      east: ramayana,       on: "nostos as cunning survival ↔ return as fidelity and dharma"}
+  - {concept: salvation,     west: divine-comedy, east: conference-of-birds, on: "ascent to the beatific vision ↔ annihilation into the Simurgh"}
+  - {concept: desire,        west: divine-comedy, east: tale-of-genji,  on: "love as ladder to God ↔ desire as the texture of a passing world"}
