@@ -41,17 +41,29 @@ def valid_forces():
     return set((data.get("forces") or {}).keys())
 
 
+def valid_objects():
+    """The Object Lessons taxonomy (studium/film/object-taxonomy.yaml). Empty if absent → checks skipped
+    (fail-open; objects are an optional bridge to objectlessons.film)."""
+    try:
+        data = yaml.safe_load((STUDIUM / "film" / "object-taxonomy.yaml").read_text()) or {}
+    except OSError:
+        return set()
+    return {(o.get("slug") or "").strip() for o in (data.get("objects") or []) if o.get("slug")}
+
+
 def arc_files():
     return sorted((STUDIUM / "music").glob("*/book-*.yaml"))
 
 
 def film_files():
-    return sorted((STUDIUM / "film").glob("*.yaml"))
+    # per-work companions only — object-taxonomy.yaml is the tracked-object dictionary, not a companion
+    return sorted(f for f in (STUDIUM / "film").glob("*.yaml") if f.name != "object-taxonomy.yaml")
 
 
-def validate_film(valid):
-    """The fourth commentary system: every film `force` (and adaptation scene force) ∈ taxonomy.
-    Non-breaking + fail-open — a missing film/ dir simply yields no checks."""
+def validate_film(valid, objs):
+    """The fourth commentary system: every film `force` (and adaptation scene force) ∈ force taxonomy, and
+    every `objects[]` ∈ the Object Lessons taxonomy (when that taxonomy is present). Non-breaking + fail-open
+    — a missing film/ dir simply yields no checks; an absent object-taxonomy.yaml skips the object checks."""
     viol = []
     for f in film_files():
         try:
@@ -64,6 +76,10 @@ def validate_film(valid):
             fc = (fm.get("force") or "").strip()
             if fc not in valid:
                 viol.append((rel, f"film {i} ({fm.get('title','?')}): invalid force {fc!r}"))
+            if objs:
+                for ob in fm.get("objects") or []:
+                    if (ob or "").strip() not in objs:
+                        viol.append((rel, f"film {i} ({fm.get('title','?')}): unknown object {ob!r} (not in object-taxonomy.yaml)"))
         for ad in doc.get("adaptations") or []:
             for sc in ad.get("scenes") or []:
                 fc = (sc.get("force") or "").strip()
@@ -135,7 +151,7 @@ def main():
 
     # film layer (the fourth commentary system) — additive, non-breaking
     films = film_files()
-    violations.extend(validate_film(VALID))
+    violations.extend(validate_film(VALID, valid_objects()))
 
     if reconciled:
         print(f"reconciled force_arc in {len(reconciled)} file(s):")

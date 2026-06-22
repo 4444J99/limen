@@ -6,138 +6,217 @@
 # (wrath, fate, grief, law …) meeting the poem on its own terms — sometimes a direct adaptation,
 # more often a film from anywhere that encodes the same force more truthfully than any adaptation does.
 #
-# Cadence: film is WEEKLY, not daily (the protocol is finite). The daily face surfaces the films whose
-# `force` matches the day's dominant force; the community "Watch-Along" screens one per week.
-# Each `force` is a key of dominant-force.yaml (validated by studium-validate.py --film).
-# Watch links resolve to LEGAL rails only (JustWatch / search) — never a pirated source.
+# Each film carries, beyond force:
+#   object_lesson  — the precise principle the film makes VISIBLE (the teachable takeaway; distinct from
+#                    `why`, which justifies the force tag). This is the bridge to Anthony's own
+#                    OBJECT LESSONS project (objectlessons.film) — see ./object-lessons.md.
+#   objects        — tracked cinematic objects present (milk/mirror/cigarette/clock/door/gun/egg/…),
+#                    the rail that joins this pick to the 253-film object-lessons database.
+#   divisions      — which book(s) the film speaks to (so the daily face can promote the right Film of
+#                    the Day for TODAY's passage, not just the work's global force).
+#   letterboxd     — the film's letterboxd slug (legal "where to watch" + the join to his watch history).
+#
+# Cadence: film is WEEKLY, not daily (the protocol is finite). The daily face promotes ONE Film of the
+# Day (best fit for today's division → force; the literal adaptation is the obvious one, set aside) and
+# lists the rest; the community "Watch-Along" screens one per week.
+# Each `force` is a key of dominant-force.yaml; each `object` of object-taxonomy.yaml (validated).
+# Watch links resolve to LEGAL rails only (JustWatch / Letterboxd / search) — never a pirated source.
 work: iliad
 title: "The Iliad — a cinema of wrath, doom, and the cost"
 principle: >
   Do not assemble a "movies about the Trojan War" list. Assemble the poem's FORCES given cinematic
   bodies. The Iliad is not primarily a war story; it is the study of mēnis — a wrath that detaches
   from its cause and consumes its own hero — set inside a world where the gods watch, fate is fixed,
-  and men choose glory knowing it kills them. The companion therefore reaches past Troy itself:
-  Vietnam (Apocalypse Now) for wrath unmoored, the Eastern Front (Come and See) for Apollo's plague
-  made flesh, a samurai apocalypse (Ran) for sovereignty collapsing, the doomed charge (Gallipoli) for
-  the sacrifice of youth to kleos. The grief-and-mercy films — the women's lament, the enemy humanized —
-  belong to the poem's last movement (Books 22-24); screen them late, as the music layer reserves the
-  funeral-march for the slaughter. A direct adaptation (Troy) is included as an overlay, honestly flawed,
-  useful mostly for staging the quarrel, the duel, and the ransom against the text.
+  and men choose glory knowing it kills them. Book 1 is not battle: it is the QUARREL — a slight to
+  honor (timē), a prize (Briseis, the geras) seized, and a ruinous withdrawal. The fitting and NOT
+  obvious film for it is therefore not a war epic but Raging Bull — wrath as a wound to the self-image.
+  The companion reaches past Troy itself: a boxer's self-destruction (Raging Bull) for mēnis as wounded
+  honor, Vietnam (Apocalypse Now) for wrath unmoored in the later aristeia, the Eastern Front (Come and
+  See) for Apollo's plague made flesh, a samurai apocalypse (Ran) for sovereignty collapsing, the doomed
+  charge (Gallipoli) for the sacrifice of youth to kleos. The grief-and-mercy films — the women's lament,
+  the enemy humanized — belong to the poem's last movement (Books 22-24); screen them late, as the music
+  layer reserves the funeral-march for the slaughter. A direct adaptation (Troy) is included only as an
+  overlay, honestly flawed — the obvious one, deliberately set aside; the force-companion carries the weight.
 force_coverage: [wrath, law, plague, divine-intervention, kingship, sacrifice, fate, grief, supplication]
 films:
+  - title: "Raging Bull"
+    director: "Martin Scorsese"
+    year: 1980
+    force: wrath
+    divisions: [1]
+    objects: [mirror]
+    letterboxd: raging-bull
+    scene_or_theme: "Book 1 — the mēnis of Achilles: the slighted prize, the wounded honor, the ruinous withdrawal"
+    object_lesson: >
+      Wrath is a wound to the self-image. Jake LaMotta — like Achilles — cannot tell his worth apart from
+      others' acknowledgment of it, so a slight becomes a rage that destroys everyone near him and finally
+      himself. The MIRROR is the object lesson: Jake rehearsing before his own reflection ("I coulda been
+      a contender") is Achilles brooding over his timē — the prize that was really only ever the self made
+      visible. Book 1's quarrel over Briseis is not about a woman; it is about a man who needs the geras to
+      know he exists. That is why the non-obvious, exactly-fitting film for the poem's first word (mēnin)
+      is not a war film at all.
+    why: >
+      The obvious wrath film is a battle picture; the truthful one is a chamber tragedy of pride. Scorsese
+      films rage from the inside — paranoia, jealousy, the body punishing itself — exactly the register of
+      Book 1, where the war stops and one man's honor-wound sets the whole machinery of ruin in motion.
+    content_note: "boxing brutality, domestic abuse; black-and-white, no glamour — the violence is the point"
   - title: "Apocalypse Now"
     director: "Francis Ford Coppola"
     year: 1979
     force: wrath
-    scene_or_theme: "Achilles' mēnis (Books 1, 9, 18-22) — wrath detached from its cause, consuming the hero"
+    divisions: [9, 18, 22]
+    objects: []
+    letterboxd: apocalypse-now
+    scene_or_theme: "the later mēnis (Books 9, 18-22) — wrath unmoored from its cause, consuming the hero"
+    object_lesson: >
+      Wrath, detached from its grievance, becomes its own metaphysics — a rage that is most itself at the
+      moment it is least human. Kurtz is Achilles after Patroclus: glory curdled into something the war can
+      no longer use. The lesson is that mēnis does not stay proportional to its cause; it grows its own law.
     why: >
-      Willard's journey upriver toward Kurtz is the closest cinema has come to mēnis as Homer means it:
-      a rage that begins with a grievance and becomes its own metaphysics, a warrior who is most himself
-      at the moment he is least human. Kurtz is Achilles after Patroclus — glory curdled into something
-      the war can no longer use. Coppola scores the helicopter assault to Wagner; the Iliad scores its
-      aristeia to the gods' attention. Both ask whether the wrath was righteous or monstrous and refuse
-      to answer.
-    content_note: "war violence, atrocity; the Redux/Final Cut runs long — the theatrical cut is enough"
+      Willard's journey upriver toward Kurtz is the closest cinema has come to mēnis as Homer means it in
+      the aristeia and the killing of Hector. Coppola scores the assault to Wagner; the Iliad scores its
+      aristeia to the gods' attention. Both ask whether the wrath was righteous or monstrous and refuse to answer.
+    content_note: "war violence, atrocity; the theatrical cut is enough (Redux/Final Cut run long)"
   - title: "Paths of Glory"
     director: "Stanley Kubrick"
     year: 1957
     force: law
+    divisions: [1]
+    objects: [gun]
+    letterboxd: paths-of-glory
     scene_or_theme: "Book 1 — the quarrel of Agamemnon and Achilles: honor, authority, and the abuse of command"
-    why: >
-      The Iliad opens not with battle but with a legal-political crisis: a king dishonors his best
-      warrior and the army pays for it. Paths of Glory is the same machinery — command treating men as
-      property of its own prestige, the form of authority used to commit an injustice the form cannot
-      answer. Watch it before Book 1 to feel why Achilles' withdrawal is not petulance but a strike
+    object_lesson: >
+      Authority can wear the FORM of justice to commit an injustice the form cannot answer. Command treats
+      men as property of its own prestige; the firing squad (the gun, the tribunal) is law used against the
+      very thing law exists to protect. It teaches why Achilles' withdrawal is not petulance but a strike
       against a sovereignty that has forfeited its claim.
+    why: >
+      The Iliad opens not with battle but with a legal-political crisis: a king dishonors his best warrior
+      and the army pays. Paths of Glory is the same machinery. Watch it before Book 1 to feel the stakes of the quarrel.
     content_note: "execution, military injustice; no graphic gore"
   - title: "Come and See"
     director: "Elem Klimov"
     year: 1985
     force: plague
+    divisions: [1]
+    objects: [gun]
+    letterboxd: come-and-see
     scene_or_theme: "Book 1 — Apollo's arrows: the nine days of pestilence, war as a descending sickness"
+    object_lesson: >
+      War is not combat but a pestilence that falls on a landscape and ages a face into a death-mask. The
+      boy's rifle (the gun he can never quite use) is the object lesson: the instrument of agency in a world
+      where agency has been cancelled by a force descending from above — Apollo's arrows, the god's plague.
     why: >
-      The Iliad begins with a plague the god rains on the camp; Come and See is what that plague looks
-      like from inside — war not as combat but as a pestilence that falls on a landscape and ages a
-      boy's face into a death-mask across two hours. It supplies the force's requirement (descending
-      motion, darkness closing) more truthfully than any depiction of arrows could. The most harrowing
-      war film ever made; it earns the comparison.
+      The Iliad begins with a plague the god rains on the camp; Come and See is what that plague looks like
+      from inside. It supplies the force's requirement (descending motion, darkness closing) more truthfully
+      than any depiction of arrows could. The most harrowing war film ever made; it earns the comparison.
     content_note: "extreme — massacre, sustained psychological horror; screen with full warning"
   - title: "2001: A Space Odyssey"
     director: "Stanley Kubrick"
     year: 1968
     force: divine-intervention
+    divisions: [4, 20, 21]
+    objects: []
+    letterboxd: 2001-a-space-odyssey
     scene_or_theme: "the gods above the plain (Books 4, 20-21) — forces of another order intervening without explanation"
+    object_lesson: >
+      The genuinely OTHER enters the human story on terms the humans cannot read — not comfort, but immensity.
+      The monolith arrives without announcement, indifferent to the frame it interrupts; this is exactly how
+      Homer's gods reach onto the field. The lesson: the divine in the Iliad is scale, not sympathy.
     why: >
-      Homer's gods are not metaphors; they reach onto the field, deflect spears, and break the action
-      with their own scale. 2001 is the rare film that makes the genuinely OTHER felt — the monolith
-      arriving without announcement, an intelligence indifferent to the human frame it interrupts. It
-      trains the eye for how the Iliad's divine machinery works: not comfort, but immensity entering
-      the human story on terms the humans cannot read.
+      Homer's gods are not metaphors; they deflect spears and break the action with their own magnitude. 2001
+      trains the eye for how that divine machinery works — immensity entering without explanation.
     content_note: "slow, non-narrative stretches by design"
   - title: "Ran"
     director: "Akira Kurosawa"
     year: 1985
     force: kingship
+    divisions: [2, 9]
+    objects: []
+    letterboxd: ran
     scene_or_theme: "Agamemnon's sovereignty and the catastrophe it sets in motion; the gods' indifference"
+    object_lesson: >
+      Sovereign display is real power and it brings the world down — watched over by heavens that do not
+      intervene to save anyone. "The gods… they kill us for their sport" is pure Iliad. The lesson: kingship
+      is the authority to cause catastrophe, and the cosmos does not underwrite the king.
     why: >
-      Kurosawa's Lear, set in the Sengoku wars, is the Iliad's vision of kingship: a warlord whose
-      authority is real and whose exercise of it brings the world down, watched over by heavens that do
-      not intervene to save anyone. The famous line — "the gods... they kill us for their sport" — is
-      pure Iliad. Screen it for the weight of sovereign display and the cost the display exacts.
+      Kurosawa's Lear, set in the Sengoku wars, is the Iliad's vision of kingship: a warlord whose authority
+      is real and whose exercise of it is ruinous. Screen it for the weight of sovereign display and its cost.
     content_note: "large-scale battle violence, immolation"
   - title: "Gallipoli"
     director: "Peter Weir"
     year: 1981
     force: sacrifice
-    scene_or_theme: "the heroes who run to death for kleos — the choice of the short glorious life"
+    divisions: [9, 18]
+    objects: [clock]
+    letterboxd: gallipoli
+    scene_or_theme: "the heroes who run to death for kleos — the choice of the short glorious life (Book 9)"
+    object_lesson: >
+      The young are spent for a name that will outlast them. The synchronized WATCH that fails to align the
+      barrage with the charge is the object lesson: a clock — time itself — mismanaged, and boys die on the
+      gap. Achilles' wager (die young and famous, or go home and fade) is given a body, and the trade is shown
+      to be both glorious and obscene.
     why: >
-      Achilles knows the prophecy: stay and die young and famous, or go home and fade. Gallipoli ends on
-      the freeze-frame of a sprinter-turned-soldier running into the guns — youth spent for nothing and
-      for glory at once. It gives the poem's central wager a body: the sacrifice of the young to a name
-      that will outlast them, and the unbearable question of whether the trade was worth it.
+      Achilles knows the prophecy. Gallipoli ends on the freeze-frame of a sprinter-turned-soldier running into
+      the guns — youth spent for nothing and for glory at once. It gives the poem's central wager a body.
     content_note: "war deaths; the ending is a gut-punch by design"
   - title: "The Thin Red Line"
     director: "Terrence Malick"
     year: 1998
     force: fate
+    divisions: [16, 22]
+    objects: []
+    letterboxd: the-thin-red-line
     scene_or_theme: "Books 16-22 — men living knowingly toward their deaths; the deaths of Patroclus and Hector"
+    object_lesson: >
+      Fate in the Iliad is not catastrophe-as-event but mortality as the MEDIUM everyone moves through — each
+      soldier carrying his own end inside him while the grass and light go on. The lesson: doom is ambient, not
+      punctual; the poem's pathos is that the world keeps being beautiful around the dying.
     why: >
-      Malick films war as the Iliad narrates it: lyric, doom-soaked, attentive to grass and light even
-      as men are killed, every soldier carrying his own end inside him. The voice-over's metaphysical
-      questions are the poem's questions — why does the world contain this? — asked without resolution.
-      The register is exactly the Iliad's fate: not catastrophe as event but mortality as the medium
-      everyone moves through.
+      Malick films war as the Iliad narrates it: lyric, doom-soaked, attentive to light even as men are killed.
+      The voice-over's questions are the poem's questions — why does the world contain this? — asked without resolution.
     content_note: "combat, death; meditative pace"
   - title: "The Trojan Women"
     director: "Michael Cacoyannis"
     year: 1971
     force: grief
+    divisions: [22, 24]
+    objects: []
+    letterboxd: the-trojan-women-1971
     scene_or_theme: "the poem's last movement (Books 22-24) — the women's lament, the cost counted"
+    object_lesson: >
+      Grief is not a beat in a battle; it is the whole remaining world. Seen from the side the poem keeps at
+      its edges — Hecuba, Andromache, Cassandra after the wall falls — the lesson is that the Iliad's lament
+      for Patroclus and Hector extends to everyone the heroes leave behind, and the war's real ledger is theirs.
     why: >
-      Euripides, not Homer — but it is the Iliad's grief seen from the side the poem keeps at its edges:
-      Hecuba, Andromache, Cassandra after the wall falls. Screen it late in the cycle, beside Hector's
-      death and funeral, to hear the lament the Iliad sounds for Patroclus and Hector extended to the
-      women who survive them. Grief here is not a beat in a battle; it is the whole remaining world.
+      Euripides, not Homer — but it is the Iliad's grief from the survivors' side. Screen it late in the cycle,
+      beside Hector's death and funeral, to hear the lament extended to the women who outlive the men.
     content_note: "grief, implied violence to women and a child; no graphic gore"
   - title: "Letters from Iwo Jima"
     director: "Clint Eastwood"
     year: 2006
     force: supplication
+    divisions: [24]
+    objects: []
+    letterboxd: letters-from-iwo-jima
     scene_or_theme: "Book 24 — Priam at Achilles' tent: the enemy seen as human, the ransom of the body"
+    object_lesson: >
+      The poem's final and greatest movement is mercy: a father kneels to the man who killed his son and kisses
+      the hands that did it; the killer weeps and gives the body back. The lesson is recognition across enmity —
+      finding the father and son inside the enemy soldier — and that an epic of wrath chooses to end there, not in slaughter.
     why: >
-      The Iliad's final and greatest movement is mercy: a father kneels to the man who killed his son
-      and kisses the hands that did it, and the killer weeps and gives the body back. Letters from Iwo
-      Jima performs the same reversal — the war film that makes the enemy fully human, that finds the
-      father and son inside the soldier. Screen it for Book 24, the supplication that lets the poem end
-      not in slaughter but in a shared and unbearable recognition.
+      Letters from Iwo Jima performs the same reversal as Book 24 — the war film that makes the enemy fully human.
+      Screen it for the supplication that lets the poem end in a shared and unbearable recognition.
     content_note: "war violence, suicide; the companion piece to Flags of Our Fathers"
 adaptations:
-  # Direct films OF the Iliad — useful for staging specific divisions against the text. Honestly flawed;
-  # the force-companion above carries the real weight. `division` ties a scene to its book.
+  # The OBVIOUS one — a direct film OF the Iliad, deliberately set aside (the Film of the Day picker never
+  # promotes it). Useful only for staging specific divisions against the text. Honestly flawed; the
+  # force-companion above carries the real weight. `division` ties a scene to its book.
   - title: "Troy"
     director: "Wolfgang Petersen"
     year: 2004
-    note: "compresses the war and cuts the gods entirely (a serious loss); strong on the duel and the ransom"
+    letterboxd: troy
+    note: "the obvious screen-Iliad — compresses the war and cuts the gods entirely (a serious loss); strong only on the duel and the ransom. Set aside; we screen the object lessons instead."
     scenes:
       - {division: 1, force: kingship, scene: "Agamemnon and Achilles quarrel over honor and the prize"}
       - {division: 22, force: wrath, scene: "Achilles and Hector before the walls — the duel"}

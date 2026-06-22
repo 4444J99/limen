@@ -162,6 +162,10 @@ def build_view():
     events = _load_jsonl(LOGS / "studium-events.jsonl")
     ev_types = Counter(e.get("type", "?") for e in events)
 
+    # the Object Lessons bridge (film ↔ object ↔ watched) — read-only crosswalk + watch history
+    cross = _load_json(LOGS / "objectlessons-crosswalk.json", {})
+    lb = _load_json(LOGS / "letterboxd-history.json", {})
+
     return {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "today": str(date.today()),
@@ -170,6 +174,7 @@ def build_view():
         "days": days, "streak": state.get("streak", 0),
         "kr": dict(kr),
         "events": len(events), "ev_types": dict(ev_types),
+        "cross": cross, "lb_count": (lb or {}).get("count", 0), "lb_source": (lb or {}).get("source"),
     }
 
 
@@ -233,6 +238,36 @@ def render_html(v):
        <b>consent-gated</b> (his lever); the solo streams above are live now.
      </div>"""
 
+    # Object Lessons bridge (film ↔ object ↔ watched)
+    cross = v.get("cross") or {}
+    olc_card = ""
+    if cross.get("ol_db"):
+        db = cross["ol_db"]
+        objs = db.get("objects") or {}
+        omax = max(objs.values()) if objs else 1
+        obars = ""
+        for o, n in list(objs.items())[:10]:
+            obars += (f'<div class="bar"><span class="bl">{_esc(o)}</span>'
+                      f'<span class="bt" style="width:{round(100*n/omax)}%;background:#6e8bbf"></span>'
+                      f'<span class="bn">{n}</span></div>')
+        prows = ""
+        for r in (cross.get("studium", {}).get("rows") or []):
+            badge = '<span class="indb">in DB</span>' if r.get("in_db") else '<span class="muted">— not yet in DB</span>'
+            seen = ' <span class="seen">✓ seen</span>' if r.get("seen") else ""
+            ol_o = ", ".join(r.get("ol_objects") or r.get("objects") or []) or "—"
+            prows += (f'<tr><td><b>{_esc(r.get("title"))}</b> <span class="muted">({_esc(r.get("year"))})</span>{seen}</td>'
+                      f'<td class="df">{_esc(r.get("force"))}</td><td>{_esc(ol_o)}</td><td>{badge}</td></tr>')
+        lbline = (f'{v.get("lb_count",0)} films in your Letterboxd ({_esc(v.get("lb_source") or "no source yet")}) · '
+                  f'{cross.get("letterboxd",{}).get("seen_in_db",0)} of them in the DB')
+        olc_card = f"""
+     <div class="card">
+       <h2>🎞 Object Lessons bridge <span class="muted">— {db.get('films',0)}-film DB · {cross.get('studium',{}).get('in_db',0)}/{cross.get('studium',{}).get('picks',0)} Studium picks already tracked</span></h2>
+       <div class="muted">film ↔ {{ force · object · watched }} — his <a href="https://objectlessons.film" target="_blank">objectlessons.film</a> catalogue's centre of gravity, and where the daily picks land in it</div>
+       {obars}
+       <table class="dt" style="margin-top:8px"><tbody>{prows}</tbody></table>
+       <div class="muted" style="margin-top:8px">{lbline}. Watch history ingests via <code>studium-letterboxd.py</code> (his export / username — GH issue filed).</div>
+     </div>"""
+
     return f"""<!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="refresh" content="3600"><title>LIMEN — studium · analysis</title>
@@ -251,11 +286,14 @@ def render_html(v):
  .cn{{font-weight:700;text-transform:capitalize;width:30%}} .cf{{color:#8a93a6;width:30%}} .cw{{color:#8a93a6}}
  .dd{{color:#8a93a6;width:96px}} .df{{color:#c9d1d9;width:110px}} .dk{{color:#8a93a6}}
  code{{background:#21262d;border-radius:4px;padding:0 4px}}
+ .indb{{font-size:11px;color:#06140c;background:#6e8bbf;border-radius:5px;padding:1px 7px;font-weight:700}}
+ .seen{{font-size:11px;color:#06140c;background:#e2a44a;border-radius:5px;padding:1px 7px;font-weight:700}}
  a{{color:#58a6ff}}
 </style></head><body><div class="wrap">
  <h1>LIMEN — studium · analysis</h1>
  <div class="sub">{_esc(v['today'])} · packaging the practice as data — the conductor's notebook for the "TBR book"</div>
  {dist_card}
+ {olc_card}
  {concept_card}
  {practice_card}
  {ev_card}

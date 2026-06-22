@@ -163,10 +163,13 @@ community:
 # studium/film/<work>.yaml: tag the work's forces → pick films that meet each force's register
 # (dominant-force.yaml film_hints are gravity, not pins) → justify every choice → adaptation overlay
 # where a real film-of-the-work exists → studium-validate.py --film. Watch links resolve to LEGAL rails only.
+# Each film carries object_lesson + objects (object-taxonomy.yaml) + divisions + letterboxd, so the daily
+# Film of the Day promotes a fitting, NOT-obvious pick per book and feeds objectlessons.film (see object-lessons.md).
 film:
-  method: "for each work: cover its force spectrum with films that ENCODE the force (not 'movies about it'); reserve grief/lament/mercy films for the work's late divisions, as the music layer reserves the funeral-march"
-  acceptance: "studium-validate.py passes the film pass (every film.force ∈ taxonomy)"
-  proof_of_form: "studium/film/iliad.yaml (9 force-matched films + the Troy adaptation overlay)"
+  method: "for each work: cover its force spectrum with films that ENCODE the force (not 'movies about it'); reserve grief/lament/mercy films for the work's late divisions, as the music layer reserves the funeral-march; give each film an object_lesson + tracked object + divisions[] + letterboxd slug; the literal adaptation goes in adaptations: (set aside, never promoted)"
+  acceptance: "studium-validate.py passes the film pass (every film.force ∈ taxonomy; every object ∈ object-taxonomy.yaml)"
+  proof_of_form: "studium/film/iliad.yaml (10 force-matched films, per-film object lessons, divisions, Letterboxd slugs + the set-aside Troy overlay)"
+  bridge: "studium-objectlessons.py joins picks to his 253-film objectlessons.film DB by Letterboxd slug; films not in_object_db are candidate catalogue additions (staged on object-lessons branch feat/studium-force-bridge, his gate)"
   first_pass:
     note: "one companion per first-pass work (19 remaining; Iliad done). Reuse the work's force_arc from its arcs."
     tasks:

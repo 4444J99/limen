@@ -211,13 +211,28 @@ def load_film(work_id):
     return _load_yaml(STUDIUM / "film" / f"{work_id}.yaml", None)
 
 
-def _watch_links(title, year=None):
-    """Legal rails only — JustWatch (where-to-stream) + a generic search. NEVER a pirated source."""
+def _watch_links(title, year=None, slug=None):
+    """Legal rails only — Letterboxd (his rail) + JustWatch (where-to-stream) + a search. NEVER a pirated source."""
     q = urllib.parse.quote_plus(f"{title} {year}".strip())
+    lb = (f"https://letterboxd.com/film/{slug}/" if slug
+          else f"https://letterboxd.com/search/{urllib.parse.quote_plus(str(title))}/")
     return {
+        "letterboxd": lb,
         "justwatch": f"https://www.justwatch.com/us/search?q={urllib.parse.quote_plus(str(title))}",
         "search": f"https://duckduckgo.com/?q={q}+film",
     }
+
+
+def load_letterboxd_history():
+    """logs/letterboxd-history.json (from studium-letterboxd.py) → {slug: record}. Empty if absent (fail-open)."""
+    data = _load_json(LOGS / "letterboxd-history.json", {})
+    films = data.get("films") if isinstance(data, dict) else data
+    by_slug = {}
+    for r in (films or []):
+        s = (r.get("slug") or "").strip()
+        if s:
+            by_slug[s] = r
+    return by_slug
 
 
 # ── original-script sample (real Greek/Latin/… from the corpus head) ─────────────
@@ -276,18 +291,36 @@ def build_view(state, advance=False):
 
     # film (fourth commentary system): the work's companion, with the day's-force films highlighted.
     film_doc = load_film(work_id)
+    seen_by_slug = load_letterboxd_history()        # his Letterboxd "watched" (empty until ingested)
     films = []
     if film_doc:
         for fm in film_doc.get("films", []):
             ff = (fm.get("force") or "").strip()
+            slug = (fm.get("letterboxd") or "").strip()
             films.append({
                 **fm,
                 "color": (forces.get(ff, {}) or {}).get("color", "#8a93a6"),
                 "match": ff == dom,           # surfaces on a day whose dominant force this film encodes
-                "links": _watch_links(fm.get("title", ""), fm.get("year")),
+                "in_div": div in (fm.get("divisions") or []),
+                "seen": bool(slug and slug in seen_by_slug),
+                "links": _watch_links(fm.get("title", ""), fm.get("year"), slug or None),
             })
         # day's-force films first, then the rest (the weekly companion still shows in full)
         films.sort(key=lambda x: (not x["match"]))
+
+    # Film of the Day: promote ONE pick best-fitting TODAY — his "a movie for today, fitting and not
+    # obvious." Division match first, then the day's force; the literal adaptation is never promoted (it
+    # lives in film_doc['adaptations'], deliberately set aside). This is the object lesson of the day.
+    film_of_day = None
+    if films:
+        def _score(fm):
+            return (2 if fm.get("match") else 0) + (1 if fm.get("in_div") else 0)
+        top = sorted(films, key=lambda fm: (-_score(fm), not fm.get("match")))[0]
+        if _score(top) > 0:                          # only promote a genuine fit for today
+            reason = ("today’s force, in this very book" if top.get("match") and top.get("in_div")
+                      else "this very book" if top.get("in_div") else "today’s force")
+            film_of_day = {**top, "reason": reason,
+                           "force_req": (forces.get((top.get("force") or "").strip(), {}) or {}).get("requirement", "")}
 
     # all orderings, for the canon map
     ord_views = []
@@ -330,7 +363,8 @@ def build_view(state, advance=False):
                   "force_arc": (music or {}).get("force_arc", []),
                   "tracks": tracks, "have_curated": bool(music)},
         "film": {"title": (film_doc or {}).get("title"), "have_companion": bool(film_doc),
-                 "dom_color": dom_color, "films": films},
+                 "dom_color": dom_color, "films": films, "of_day": film_of_day,
+                 "have_history": bool(seen_by_slug)},
         "orderings": ord_views,
         "all_paces": [(k, v.get("label", k)) for k, v in (paces.get("paces", {}) or {}).items()],
         "all_depths": list(depth_labels.items()),
@@ -346,6 +380,14 @@ def render_daily_page(v):
     if mus["tracks"]:
         t = mus["tracks"][0]
         track = f"{t.get('composer')} — {t.get('work')}"
+    fod = (v.get("film") or {}).get("of_day")
+    film_line = ""
+    if fod:
+        seen = " · ✓ in your Letterboxd" if fod.get("seen") else ""
+        film_line = f"{fod.get('title')} ({fod.get('director')}, {fod.get('year')}){seen}"
+        obj = ", ".join(fod.get("objects") or [])
+        ol = " ".join((fod.get("object_lesson") or "").split())
+        film_line += (f"\nObject: {obj or '—'}\nObject lesson: {ol}") if (obj or ol) else ""
     return f"""DATE: {v['today']}
 TEXT: {r['title']}
 BOOK / CHAPTER / LINES: {r['division_label']} {r['division']} (~{r['lines_per_day']} lines)
@@ -374,6 +416,9 @@ ONE INTERTEXT:
 
 TODAY'S COMPOSITION: {track}
 Why this composition fits:
+
+FILM / OBJECT LESSON (weekly): {film_line}
+What the film made visible that the page did not:
 
 KEEP / REPLACE:
 """
@@ -439,14 +484,17 @@ def render_html(v):
         for fm in fl["films"]:
             links = fm.get("links", {})
             badge = '<span class="todayf">today’s force</span>' if fm.get("match") else ""
+            seenm = '<span class="seen">✓ seen</span>' if fm.get("seen") else ""
+            objs = "".join(f'<span class="objchip">⬡ {_esc(o)}</span>' for o in (fm.get("objects") or []))
             cn = f'<div class="cnote">{_esc(fm.get("content_note",""))}</div>' if fm.get("content_note") else ""
             film_rows += f"""
         <tr class="{'match' if fm.get('match') else ''}">
           <td><span class="force" style="background:{_esc(fm.get('color'))}">{_esc(fm.get('force',''))}</span></td>
-          <td><b>{_esc(fm.get('title',''))}</b> <span class="muted">— {_esc(fm.get('director',''))}, {_esc(fm.get('year',''))}</span>{badge}
+          <td><b>{_esc(fm.get('title',''))}</b> <span class="muted">— {_esc(fm.get('director',''))}, {_esc(fm.get('year',''))}</span>{badge}{seenm}{objs}
               <div class="scene">{_esc(fm.get('scene_or_theme',''))}</div>
               <div class="why">{_esc(fm.get('why',''))}</div>{cn}</td>
-          <td class="lk"><a href="{_esc(links.get('justwatch','#'))}" target="_blank">▷ where</a>
+          <td class="lk"><a href="{_esc(links.get('letterboxd','#'))}" target="_blank">▤ LB</a>
+              <a href="{_esc(links.get('justwatch','#'))}" target="_blank">▷ where</a>
               <a href="{_esc(links.get('search','#'))}" target="_blank">🔎</a></td>
         </tr>"""
         film_card = f"""
@@ -460,6 +508,27 @@ def render_html(v):
      <div class="card">
        <h2 style="color:{_esc(fl['dom_color'])}">🎬 Film resonance</h2>
        <div class="muted">film companion pending for this work — staged in <code>expansion-backlog.yaml</code> (film pillar). Gold standard: <code>studium/film/iliad.yaml</code>.</div>
+     </div>"""
+
+    # Film of the Day — the headline object lesson, promoted above the weekly companion
+    fod = fl.get("of_day")
+    today_film_card = ""
+    if fod:
+        flinks = fod.get("links", {})
+        objs = "".join(f'<span class="objchip">⬡ {_esc(o)}</span>' for o in (fod.get("objects") or []))
+        seen = '<span class="seen">✓ in your Letterboxd</span>' if fod.get("seen") else ""
+        cn = f'<div class="cnote">{_esc(fod.get("content_note",""))}</div>' if fod.get("content_note") else ""
+        today_film_card = f"""
+     <div class="card todayfilm" style="border-color:{_esc(fl['dom_color'])}">
+       <h2 style="color:{_esc(fl['dom_color'])}">🎬 Today's film — an object lesson in {_esc(fod.get('force',''))}</h2>
+       <div class="filmtitle"><b>{_esc(fod.get('title',''))}</b> <span class="muted">— {_esc(fod.get('director',''))}, {_esc(fod.get('year',''))}</span> {objs} {seen}</div>
+       <div class="muted">fits {_esc(fod.get('reason',''))} · {_esc(fod.get('scene_or_theme',''))}</div>
+       <div class="objlesson">{_esc(' '.join((fod.get('object_lesson') or '').split()))}</div>
+       <div class="why">{_esc(' '.join((fod.get('why') or '').split()))}</div>{cn}
+       <div class="lk"><a href="{_esc(flinks.get('letterboxd','#'))}" target="_blank">▤ Letterboxd</a>
+           <a href="{_esc(flinks.get('justwatch','#'))}" target="_blank">▷ where to watch</a>
+           <a href="{_esc(flinks.get('search','#'))}" target="_blank">🔎</a></div>
+       <div class="muted" style="margin-top:6px">the obvious screen-adaptation is set aside — this is the non-obvious one; it feeds <a href="https://objectlessons.film" target="_blank">objectlessons.film</a></div>
      </div>"""
 
     # canon map (all orderings)
@@ -500,6 +569,11 @@ def render_html(v):
  .cnote{{color:#6e7681;font-size:11px;margin-top:3px;font-style:italic}}
  tr.match td{{background:#11281a}} tr.match{{box-shadow:inset 3px 0 0 #2ecc71}}
  .todayf{{font-size:10px;color:#06140c;background:#2ecc71;border-radius:4px;padding:0 5px;margin-left:6px;font-weight:700}}
+ .todayfilm{{border-width:1px;border-style:solid;background:#12171f}}
+ .filmtitle{{font-size:16px;margin:4px 0 6px}}
+ .objchip{{font-size:11px;background:#1f2a38;color:#9bb4d4;border-radius:5px;padding:1px 7px;margin-left:4px}}
+ .seen{{font-size:11px;color:#06140c;background:#e2a44a;border-radius:5px;padding:1px 7px;margin-left:4px;font-weight:700}}
+ .objlesson{{color:#e6edf3;font-size:14px;line-height:1.5;margin:8px 0;padding-left:10px;border-left:2px solid #2b3340}}
  .force{{color:#06140c;font-weight:700;border-radius:5px;padding:1px 7px;font-size:11px;text-transform:lowercase}}
  .lk a{{color:#58a6ff;font-size:12px;margin-right:6px;text-decoration:none;white-space:nowrap}}
  .ord{{margin:8px 0}} .ord.active .ordlbl{{color:#2ecc71}} .ordlbl{{font-size:13px;margin-bottom:4px}}
@@ -527,6 +601,8 @@ def render_html(v):
  </div>
 
  {music_card}
+
+ {today_film_card}
 
  {film_card}
 

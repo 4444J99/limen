@@ -31,6 +31,11 @@ How does this speak to another text in the sequence?
 TODAY'S COMPOSITION:
 Why this composition fits:
 
+FILM / OBJECT LESSON (weekly):
+What the film made visible that the page did not:
+# the day's force given a body in image + time — fitting, NOT obvious, from film history; carries a
+# tracked OBJECT (milk/mirror/clock/…) that feeds objectlessons.film. Picked by studium.py; screened weekly.
+
 KEEP / REPLACE:
 ```
 

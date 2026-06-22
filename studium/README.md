@@ -44,6 +44,8 @@ studium/
   thesis.md         the working thesis (how civilizations encode their forces)
   music/<work>/book-NN.yaml   curated force-matched arcs (his gold-standard format; Iliad seeded)
   film/<work>.yaml            the FOURTH commentary system — force-matched film companions (Iliad seeded)
+  film/object-lessons.md      the selection ethos (fitting · not obvious · from film history) + the bridge
+  film/object-taxonomy.yaml   the tracked-object dictionary (milk/mirror/clock/…) ↔ objectlessons.film
   essays/<work>/...           publishable per-book essays (the "why each track fits" prose)
   synthesis/                  the vertical axis — concepts across the canon + counter-systems (a face)
   scripts/<lang>.md           per-script learning (alphabet/ductus · glossed reading · grammar)
@@ -58,10 +60,14 @@ studium/
 
 ## Runtime — three faces at `127.0.0.1:8787`
 - `scripts/studium.py` → **`studium.html`** — today's passage (reading + script drill + glossed
-  translation + force-matched music + a 🎬 **film resonance** card with the day's-force films highlighted
-  + all orderings/paces/depths). Exports a daily-page to `ledger/` and a daily push. State (cursor,
-  ordering, pace, depth, streak) lives in `logs/studium-state.json` — editable; the face shows every
-  avenue and lets him switch. Reads ACROSS a work.
+  translation + force-matched music + a 🎬 **Film of the Day** — one *object-lesson* film for today's force,
+  fitting + not obvious, with the rest of the companion below + day's-force films highlighted + Letterboxd
+  "seen" marks + all orderings/paces/depths). Exports a daily-page to `ledger/` (with a `FILM / OBJECT LESSON`
+  line) and a daily push. State lives in `logs/studium-state.json` — editable; the face shows every avenue.
+  Reads ACROSS a work.
+- `scripts/studium-letterboxd.py` — ingests his Letterboxd watch history (CSV export → RSS) →
+  `logs/letterboxd-history.json` (read-only, fail-open; never posts). `scripts/studium-objectlessons.py` —
+  joins the film picks to his 253-film **objectlessons.film** DB by Letterboxd slug → `logs/objectlessons-crosswalk.json`.
 - `scripts/studium-synthesis.py` → **`synthesis.html`** — the cross-canon concept web + counter-systems.
   Reads DOWN a concept.
 - `scripts/studium-analysis.py` → **`analysis.html`** — packaging the practice as data: force

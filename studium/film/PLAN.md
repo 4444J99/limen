@@ -7,16 +7,24 @@
 
 ## The shape
 - **One `studium/film/<work>.yaml` per work** (not per-division — film is a *weekly* medium; the protocol
-  is deliberately finite). Each: `principle` · `force_coverage` · `films: [{title, director, year, force,
-  scene_or_theme, why, content_note}]`. Every `force` is a key of [`../dominant-force.yaml`](../dominant-force.yaml).
-- **`adaptations:`** (optional) — direct films OF the work, with `scenes: [{division, force, scene}]` tying a
-  scene to its book/canto. This is the per-division **overlay** where a real adaptation exists (e.g. *Troy* ↔ Iliad).
-- **Gold standard:** [`iliad.yaml`](iliad.yaml) — 9 force-matched films across the poem's spectrum + the *Troy* overlay.
+  is deliberately finite). Each film: `title · director · year · force · divisions · objects · letterboxd ·
+  scene_or_theme · object_lesson · why · content_note`. Every `force` is a key of
+  [`../dominant-force.yaml`](../dominant-force.yaml); every `object` of [`object-taxonomy.yaml`](object-taxonomy.yaml).
+  - **`object_lesson`** — the precise principle the film makes *visible* (the bridge to his
+    [Object Lessons](object-lessons.md) project, objectlessons.film); **`objects`** — tracked cinematic objects
+    (mirror/clock/gun/…); **`divisions`** — which book(s) it speaks to (so the daily face promotes the right pick).
+- **`adaptations:`** (optional) — direct films OF the work (the *obvious* one, deliberately set aside; never
+  promoted as Film of the Day), with `scenes: [{division, force, scene}]` tying a scene to its book/canto.
+- **Gold standard:** [`iliad.yaml`](iliad.yaml) — 10 force-matched films + per-film object lessons + the set-aside *Troy* overlay.
 
 ## How it surfaces
-- **Daily face** (`scripts/studium.py`): a 🎬 *film resonance* card lists the work's films and **highlights the
-  ones whose `force` matches the day's dominant force**, with legal watch links (JustWatch + search — never a
-  pirated source, mirroring the music layer's YouTube/Spotify *search* links).
+- **Film of the Day** (`scripts/studium.py`): promotes **one** pick best-fitting TODAY (its `divisions` includes
+  today's book → else the day's force), rendered as a headline **"🎬 Today's film — an object lesson in `<force>`"**
+  block above the weekly companion. The literal adaptation is never promoted. See [`object-lessons.md`](object-lessons.md).
+- **Daily face** card: lists the work's films, **highlights the day's-force ones**, marks any he has **seen**
+  (Letterboxd), with legal watch links (**Letterboxd** + JustWatch + search — never a pirated source).
+- **Letterboxd / Object Lessons bridge:** `scripts/studium-letterboxd.py` ingests his watch history →
+  `scripts/studium-objectlessons.py` joins the day's pick to his 253-film `objectlessons.film` DB by Letterboxd slug.
 - **Community** (`../community/`): the weekly **Watch-Along** ritual screens one film; `#screening-room` is its surface.
 - **Rubric:** [`../rubric/film-engagement.md`](../rubric/film-engagement.md) — film as a fourth reading, diagnostic not gatekeeping.
 - **Validator:** `python3 scripts/studium-validate.py --film` checks every `force` ∈ taxonomy.

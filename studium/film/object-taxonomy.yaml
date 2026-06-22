@@ -1,0 +1,25 @@
+# Object Lessons — the tracked-object taxonomy (the bridge to objectlessons.film)
+#
+# Anthony's own project — "Object Lessons: The Recurring Objects of Cinema" (objectlessons.film, the
+# AMP Lab Media YouTube channel) — traces a fixed set of recurring objects across a century of film,
+# with a 253-film database (organvm/object-lessons/src/data/films.yaml). These are THOSE objects.
+#
+# A Studium film's `objects:` field (studium/film/<work>.yaml) tags which of these a pick carries, so a
+# daily Film of the Day doubles as an Object Lessons entry — the concrete OBJECT that makes the text's
+# abstract FORCE visible. `slug` = the singular scene-level name used in films.yaml; `collection` = the
+# plural object-lessons content slug (src/content/objects/<collection>.mdx).
+#
+# DERIVED from his canon (transcribed once from object-lessons content/objects/ + films.yaml), never
+# pinned in code — the validator reads membership from here (fail-open if absent).
+source: "organvm/object-lessons (src/content/objects/, src/data/films.yaml)"
+objects:
+  - {slug: milk,      collection: milk,       note: "corrupted innocence; the body's last pure substance turned instrument of control"}
+  - {slug: mirror,    collection: mirrors,    note: "vanity-violence; self-recognition; the self as spectacle (widest object in his DB)"}
+  - {slug: cigarette, collection: cigarettes, note: "noir melancholy; rebellion; the most historically bounded object — disappears as it does from life"}
+  - {slug: clock,     collection: clocks,     note: "mortality; mechanism vs organism; time as fate"}
+  - {slug: door,      collection: doors,      note: "threshold; the seen/unseen; passage and refusal"}
+  - {slug: gun,       collection: guns,       note: "agency and its cancellation (tracked but excluded from density_score in his DB)"}
+  - {slug: egg,       collection: eggs,       note: "fragility; gestation; the latent"}
+  - {slug: telephone, collection: telephones, note: "connection at a distance; the disembodied voice"}
+  - {slug: balloon,   collection: balloons,   note: "ascent and bursting; the held breath"}
+  - {slug: cereal,    collection: cereal,     note: "the domestic everyday; American mornings (a V1 object)"}
