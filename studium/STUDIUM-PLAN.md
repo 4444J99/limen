@@ -9,7 +9,7 @@
 | --- | --- | :--: | :--: | --- |
 | The Epic of Gilgamesh | mesopotamian | ✓ | 1/12 | cuneiform ✓ |
 | The Iliad | greek | ✓ | 24/24 | greek ✓ |
-| The Odyssey | greek | ✓ | 1/24 | greek ✓ |
+| The Odyssey | greek | ✓ | 9/24 | greek ✓ |
 | The Tanakh / Hebrew Bible (Torah · Nevi'im · Ketuvim) | hebrew | ✓ | 1/39 | hebrew ✓ |
 | The Analects | chinese | ✓ | 1/20 | chinese ✓ |
 | The Mahabharata (selections, incl. the Bhagavad Gita) | sanskrit | ✓ | 1/18 | sanskrit ✓ |
@@ -28,7 +28,7 @@
 | The Canterbury Tales | middle-english | ✓ | 1/24 | middle-english ✓ |
 | Journey to the West | chinese | ✓ | 1/100 | chinese ✓ |
 
-**Totals:** reading 20/20 · scripts 12/12 · music 43 arcs authored of 812 divisions across the first-pass canon.
+**Totals:** reading 20/20 · scripts 12/12 · music 51 arcs authored of 812 divisions across the first-pass canon.
 
 ## Tier 2 — staged (after the first pass, his spec §57)
 Enumerated + located; kept out of `orderings.yaml` so the daily face does not route to them until his gate. Reading + arcs deferred to `expansion-backlog.yaml`.

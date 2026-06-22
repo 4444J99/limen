@@ -11,19 +11,19 @@
 - **Corpus:** `classical/odyssey` (greek_original.txt)
 - **Source rail:** https://www.perseus.tufts.edu/hopper/text?doc=Perseus:text:1999.01.0135
 - **Divisions:** 24 × Book
-- **Progress:** 1/24 arcs authored
+- **Progress:** 9/24 arcs authored
 
 | Book | dominant force | status |
 | --: | --- | :--: |
 | 1 | (author) | ✓ |
-| 2 | (author) | ☐ |
-| 3 | (author) | ☐ |
-| 4 | (author) | ☐ |
-| 5 | (author) | ☐ |
-| 6 | (author) | ☐ |
-| 7 | (author) | ☐ |
-| 8 | (author) | ☐ |
-| 9 | (author) | ☐ |
+| 2 | (author) | ✓ |
+| 3 | (author) | ✓ |
+| 4 | (author) | ✓ |
+| 5 | (author) | ✓ |
+| 6 | (author) | ✓ |
+| 7 | (author) | ✓ |
+| 8 | (author) | ✓ |
+| 9 | (author) | ✓ |
 | 10 | (author) | ☐ |
 | 11 | (author) | ☐ |
 | 12 | (author) | ☐ |

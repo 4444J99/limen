@@ -1,0 +1,241 @@
+# Odyssey — Book VI — curated music arc
+# NAUSICAA ON PHAEACIA: the threshold of civilization regained.
+work: odyssey
+book: 6
+title: "Odyssey Book VI: Nausicaa — The Threshold of Civilization"
+length_minutes: 72
+principle: >
+  Do not score Book VI as "a shipwreck rescued." Score it as the first re-entry into human
+  civilization after years of uncanny wandering — Calypso, Circe, the dead, the Sirens, the
+  sea as an entity that refuses to release him. Odysseus washes up stripped of everything:
+  no ship, no companions, no name, no clothes, no rank. Book VI is the scene where he
+  must reconstitute himself from nothing but his own voice and bearing. Nausicaa is not
+  a love interest — she is the test of whether he is still a man capable of civilization.
+  The dominant force is supplication: not weakness, but the formal ritual act by which a
+  naked, anonymous, terrifying-looking stranger asks to be received as a human being.
+  The music must carry the paradox of supplication's power — the prostrate man whose words
+  are an act of sovereignty. Athena's hand is everywhere but unseen; the river is the
+  threshold; the ball game is the world of youth and order into which the broken man erupts.
+  Score the transition from animal survival (huddled under leaves, barely alive) to the
+  formal courtesy of a man reminding a girl of the shape of a good marriage.
+force_arc: [exile, salvation, supplication, divine-intervention, supplication, comedy, desire, supplication, revelation, law, return, metamorphosis]
+dominant_force: supplication
+tracks:
+  - n: 1
+    scene: "Odysseus sleeps under leaves on the shore — the animal rest of a castaway"
+    force: exile
+    composer: Vaughan Williams
+    work: "A Sea Symphony — IV. The Explorers: Largo sostenuto (opening)"
+    decision: added
+    why: >
+      Odysseus lies heaped under a pile of leaves, barely alive, hidden from the elements —
+      the furthest point of his exile: no name, no ship, no companions, a body washed from
+      the sea and pressed into earth. Vaughan Williams's 'The Explorers' opens with a deep
+      oceanic stillness — vast, tonally unmoored, the open intervals of wandering without
+      destination. The sea has finally released him but left nothing in its place. This is
+      exile at its most complete: not the dramatic flight but the absolute negation of
+      belonging. The wandering tonality holds until the opening baritone line — 'O we can
+      wait no longer' — which arrives like breath returning to a held chest.
+  - n: 2
+    scene: "Athena sends a dream to Nausicaa — she must go to the river to wash linen"
+    force: salvation
+    composer: Bach
+    work: "Mass in B minor — 'Et in unum Dominum' (Credo duet)"
+    decision: added
+    why: >
+      Athena descends in the form of Nausicaa's childhood friend and plants the practical
+      idea: take the laundry to the river. It is the most mundane divine act in the Odyssey —
+      salvation dressed as domestic duty. Bach's 'Et in unum' is a duet of voices moving in
+      close parallel thirds and sixths, interdependent, luminous, resolving toward each other.
+      The radiance the salvation force requires is not thunderous here but domestic and
+      certain: two lines (goddess and girl, plan and action) converging toward the same end.
+      The chorale apotheosis is held in the wings; what we hear is the quiet, confident
+      alignment of divine purpose with a human morning.
+  - n: 3
+    scene: "Nausicaa and her handmaids at the river — the laundry, the meal, the ball game"
+    force: supplication
+    composer: Schubert
+    work: "String Quintet in C major, D. 956 — II. Adagio"
+    decision: added
+    why: >
+      The scene at the river is the Odyssey's most purely beautiful passage: girls washing
+      linen, eating, playing ball, singing in the sun. The world of youth, ceremony, and
+      human order — the world Odysseus has been excluded from for twenty years — exists here
+      in full sunlight beside the water. Schubert's C major Quintet Adagio is suspended,
+      exposed, an almost aching melodic line over held harmonies that do not resolve: the
+      suspended cadence supplication requires, but here not yet directed at anyone. It is
+      the world before the supplicant arrives — formal, poised, luminous, unknowing. The
+      second violin-viola inner voices beneath the cello melody are the handmaids moving
+      unsuspecting through their morning.
+  - n: 4
+    scene: "Athena deflects the ball into the river — Odysseus wakes"
+    force: divine-intervention
+    composer: Haydn
+    work: "The Creation — 'And God Said: Let There Be Light' (No. 2, chorus)"
+    decision: added
+    why: >
+      Athena tips the thrown ball into the current; the girls cry out; Odysseus wakes from
+      beneath his leaves. It is a small divine act with vast consequences — one deflected ball
+      and a naked, salt-crusted, terrifying man is suddenly present in a scene of young women
+      at play. Haydn's 'Let There Be Light' is exactly this: the sudden brass/strings contrast
+      the force requires, but in miniature and domestic scale rather than cosmological thunder.
+      The fortissimo eruption on 'licht' from a quiet choral recitative captures the
+      instantaneous quality of the intervention — one moment nothing, the next: Odysseus,
+      awake, among them.
+  - n: 5
+    scene: "Odysseus emerges from the thicket — the girls flee; Nausicaa stands her ground"
+    force: supplication
+    composer: Barber
+    work: "Adagio for Strings, Op. 11"
+    decision: added
+    why: >
+      The scene's center of gravity: Odysseus, naked and crusted with sea-salt, broken off
+      an olive branch to cover himself, steps into the open. The girls scatter. Nausicaa
+      holds. The moment before a supplication is always this — a terrible asymmetry of
+      power (the suppliant looks dangerous; the princess is exposed) that only the formal
+      act of supplication can resolve. Barber's Adagio is an exposed melodic line that will
+      not stop climbing against unresolved harmonic tension: the suspended cadence of
+      supplication, the plea that hangs in air while the outcome is still undetermined.
+      It carries the full weight of what is at stake — if Nausicaa runs, Odysseus dies.
+  - n: 6
+    scene: "Odysseus' deliberation — should he grasp her knees, or speak from a distance?"
+    force: comedy
+    composer: Haydn
+    work: "String Quartet in E-flat major, Op. 33 No. 2 'The Joke' — IV. Finale: Presto"
+    decision: added
+    why: >
+      Homer pauses the action to give us Odysseus's interior reasoning: grasp her knees
+      (proper supplication) or stay back (less terrifying to a girl)? He chooses words. This
+      is Odyssean cunning in its most micro-comic form — a naked man deciding on etiquette.
+      Haydn's 'The Joke' finale is quicksilver intelligence masquerading as dance: the
+      famous rondo in which Haydn tricks the listener into thinking the piece is over, then
+      starts again, then pauses, then ends when you least expect it. The comedy force's
+      dance rhythm and courtly exaggeration fit the delicate comic irony of the Odyssey's
+      greatest schemer calculating the appropriate form of address while standing naked in
+      a river-bank.
+  - n: 7
+    scene: "The speech to Nausicaa — 'Are you a goddess or a mortal? I liken you to Artemis'"
+    force: desire
+    composer: Szymanowski
+    work: "Stabat Mater — II. 'Któż człowiek jest' (Andante sostenuto)"
+    decision: added
+    why: >
+      Odysseus's speech to Nausicaa is the Odyssey's most formally perfect act of
+      seduction-as-supplication: he compares her to a young palm tree he once saw at Delos,
+      praises her beauty with awe rather than appetite, invokes her future husband's
+      happiness, and asks only for a rag to cover himself and directions to the city.
+      The desire force is not eros but chromatic longing at a formal remove — deferred,
+      shaped by courtesy, aching with what is not said. Szymanowski's Stabat Mater second
+      movement is exactly this: a melodic line of extraordinary tenderness over slow
+      harmonic shifts, longing held in strict formal bounds, chromatic ache that never
+      breaks into the open. Odysseus desires home, not Nausicaa — but the speech is
+      saturated with the form of desire redirected into courtesy.
+  - n: 8
+    scene: "Nausicaa answers — she gives him clothes, food, and promises to take him to the city"
+    force: supplication
+    composer: Fauré
+    work: "Requiem, Op. 48 — 'Pie Jesu'"
+    decision: added
+    why: >
+      The supplication is answered. Nausicaa does not just comply — she understands him,
+      argues to her handmaids that a suppliant sent by Zeus deserves care, and takes charge
+      of his reception with natural authority. The suspended cadence of supplication resolves
+      here into something close to grace: the plea received, the obligation recognized,
+      the threshold crossed. Fauré's 'Pie Jesu' is the Requiem's most exposed, most
+      suspended, most unarmored moment — a solo voice over the simplest harmonic support,
+      an exposed melodic line that has stopped pleading and is being held. This is
+      supplication at the moment of resolution: not the cry but the exhale after the answer.
+  - n: 9
+    scene: "Odysseus bathes in the river — Athena makes him beautiful"
+    force: revelation
+    composer: Pärt
+    work: "Tabula Rasa — II. Silentium"
+    decision: added
+    why: >
+      Odysseus bathes and Athena restores his stature — makes him taller, gives his hair
+      the curl of hyacinths, pours grace over his shoulders. The castaway becomes again
+      the hero. This is the Odyssey's first restoration — not yet Ithaca, but the body
+      itself made legible again as the body of a king. Pärt's Silentium is stillness
+      organized into revelation: the slow tintinnabuli lines accumulate from nothing, the
+      chant-like verticality of the force's requirement realized as an emergence from
+      silence into presence. The revelation is not announced but simply there, as Athena's
+      transformations always are — she changes him and steps back, and the change is simply
+      manifest.
+  - n: 10
+    scene: "Nausicaa sees him and says: 'I would he were my husband'"
+    force: law
+    composer: Mozart
+    work: "Symphony No. 41 in C major 'Jupiter' — IV. Molto allegro"
+    decision: added
+    why: >
+      Nausicaa's aside — 'would that such a man might be called my husband here, and that
+      it might please him to stay' — is the poem's most perfectly calibrated moment of
+      formal order: she does not act on it, she frames it as a wish that belongs to proper
+      channels (her parents, the gods), and then instructs her handmaids to feed him.
+      The law force here is the social architecture that converts desire into correct form:
+      the girl who knows the difference between appetite and institution. Mozart's Jupiter
+      finale is the summit of formal clarity in the orchestral canon — the famous five-theme
+      fugal synthesis, everything in its place, courtly exaggeration resolved into
+      counterpoint of astonishing architectural precision. Law's requirement of formal
+      clarity and repetition at its most brilliant.
+  - n: 11
+    scene: "The procession toward the city — Nausicaa's instructions for entering Phaeacia"
+    force: return
+    composer: Brahms
+    work: "Symphony No. 4 in E minor — III. Allegro giocoso"
+    decision: added
+    why: >
+      Nausicaa gives Odysseus precise instructions: walk with us until the outskirts, then
+      wait; enter the city separately so as not to fuel gossip; go to the palace, find my
+      mother Arete at the hearth, and supplicate her. This is the road-map of return —
+      not yet accomplished, but the exact formal path being laid out. Brahms's Fourth
+      Symphony third movement is the exception in his output: a circular, almost martial
+      dance in C major that interrupts the symphony's autumnal minor-key world with driving
+      rhythmic purpose. It is the sound of the direction becoming clear — circular form
+      (the mule-wagon on the road, the city in view) with a recognition motif beginning
+      to take shape. Return's requirement of circular form and recognition motif delivered
+      in motion rather than arrival.
+  - n: 12
+    scene: "Odysseus enters the olive grove of Athena — he prays; Nausicaa disappears into the city"
+    force: metamorphosis
+    composer: Ravel
+    work: "Ma mère l'Oye — V. 'Le jardin féerique' (The Fairy Garden)"
+    decision: added
+    why: >
+      The book ends with Odysseus alone in a sacred olive grove outside Phaeacia, having
+      prayed to Athena to receive him kindly among the Phaeacians. Nausicaa has entered
+      the city and the next transformation is about to begin — he will be received, named,
+      and launched home. The grove is a threshold, a held breath between the desolate shore
+      and the palace. Ravel's 'Jardin féerique' closes Ma mère l'Oye with a world-change:
+      fluid harmonic shifts, a landscape slowly transfigured, something held in suspension
+      becoming radiant. The metamorphosis force asks for changing orchestral color and fluid
+      harmony — Ravel gives the threshold its music, the moment between identities where
+      the exhausted castaway is becoming, for the first time since Troy, a guest.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "reserved for Book XXII (slaughter of the suitors); forbidden before then"
+    why: >
+      The terminal funeral-march register does not belong in Book VI. The deaths here are
+      all survived — Odysseus's near-death is behind him; civilization is opening.
+  - composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    status: "reserved for Book XXII or later; forbidden before then"
+    why: >
+      The eschatological judgment register is blocked until the suitors' catastrophe.
+      Book VI belongs to the threshold of return, not to doom.
+  - composer: Barber
+    work: "Adagio for Strings"
+    status: "used at track 5 — not repeated"
+    why: >
+      Already placed at the crisis-moment of Nausicaa holding her ground. If a second
+      Barber placement were needed, the Violin Concerto's slow movement would serve grief
+      or desire, but the book does not call for a second instance.
+  - composer: Bach
+    work: "St Matthew Passion — 'Erbarme dich, mein Gott'"
+    status: "used in Odyssey Book I for Athena's supplication to Zeus; avoid re-use in same work"
+    why: >
+      The canonical supplication anchor for the Odyssey cycle was spent in Book I.
+      Book VI's supplication register requires a different palette (Barber, Schubert, Fauré)
+      to show the force's range across registers — not just penitence but beauty, exposure,
+      and grace.

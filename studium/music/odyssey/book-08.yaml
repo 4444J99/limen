@@ -1,0 +1,239 @@
+# Odyssey — Book VIII — curated music arc
+# DEMODOCUS: the bard sings, the games are played, Odysseus weeps, and then asks for his own story.
+work: odyssey
+book: 8
+title: "Odyssey Book VIII: Demodocus Sings — Odysseus Weeps"
+length_minutes: 94
+principle: >
+  Do not score Book VIII as "the Phaeacian games" or as spectacle. Score it as the book where
+  the stranger in the feasting hall turns out to be the subject of the songs being sung about
+  him. Memory here is not nostalgic recall from a distance — it is surgical: a bard sings the
+  fall of Troy while the man who survived it sits in the same room, hiding his face. The
+  structure of the book is an ambush: Odysseus moves through athletic pride, through laughter,
+  through the test of the discus — then the bard opens the old wound and he cannot hold.
+  The dominant force is memory, but it operates through layers: Alcinous watching Odysseus
+  weep, Odysseus asking to hear his own disaster again, the way a man voluntarily returns to
+  the site of his breaking. Grief is the vehicle memory travels in; desire is what the games
+  briefly interrupt; revelation is what Odysseus conceals. Score each scene for its specific
+  quality — the games are not triumphant, the feast is not innocent, and the second song
+  (Ares and Aphrodite) is not an interruption but a deliberate act of mercy from the bard.
+force_arc: [memory, divine-intervention, kingship, memory, desire, comedy, wrath, desire, metamorphosis, kingship, grief, memory]
+dominant_force: memory
+tracks:
+  - n: 1
+    scene: "Dawn assembly — Alcinous summons the Phaeacians to honor the stranger"
+    force: memory
+    composer: Fauré
+    work: "Requiem — 'Introit et Kyrie'"
+    decision: added
+    why: >
+      The book opens as Alcinous convenes the assembly around a man no one yet knows: a stranger
+      washed ashore whose name has not been given, whose past is a sealed vessel. Fauré's Introit
+      begins in quiet, processional restraint — voices entering as if summoned from a great
+      distance, the music hovering between ceremony and elegy. This is how a Phaeacian dawn
+      feels: orderly, luminous, but structured around an absence no one yet can name. Memory's
+      requirement is nostalgic recall and faded recapitulation; here the recall is collective —
+      the Phaeacians assembling their ceremonial world around a man who carries the memory of its
+      destruction.
+  - n: 2
+    scene: "Athena disguised moves through the city — preparing Odysseus's reception"
+    force: divine-intervention
+    composer: Ravel
+    work: "Ma mère l'Oye — 'Laideronnette, Impératrice des Pagodes'"
+    decision: added
+    why: >
+      Athena, disguised as a young girl, runs ahead through the Phaeacian city preparing the
+      crowd's admiration for Odysseus, casting a shimmer of divine beauty over him as he enters.
+      Ravel's Laideronnette is one of the most delicate instances of divine enchantment in the
+      orchestral canon — percussion and woodwind in an unreal light, a scene that is domestic on
+      the surface but saturated with strangeness beneath. The sudden color shift from Fauré's
+      gravity into Ravel's shimmer is exactly the texture of Athena operating invisibly: the world
+      around Odysseus rearranges without announcing itself, and the brass/strings contrast arrives
+      in the brief climactic moment when the crowd turns to stare.
+  - n: 3
+    scene: "Alcinous feasts the nobles — Demodocus brought in, the bard's gift announced"
+    force: kingship
+    composer: Handel
+    work: "Zadok the Priest — Coronation Anthem"
+    decision: added
+    why: >
+      Alcinous seats his twelve lords, takes his own high seat, and introduces Demodocus as the
+      Muses' gift to mortals. This is the Phaeacian court at full ceremonial display — sovereign
+      hospitality as a demonstration of civilized power. Handel's Zadok the Priest is the paradigm
+      of sovereign ceremony: voices entering in staggered waves beneath and over the orchestra,
+      the whole designed to make a room feel the weight of legitimate authority. Kingship's
+      requirement is ceremonial grandeur and sovereign display; Zadok delivers it without
+      bombast, which is exactly Alcinous's register — gracious rather than martial.
+  - n: 4
+    scene: "Demodocus sings the quarrel of Achilles and Odysseus — Odysseus pulls his cloak"
+    force: memory
+    composer: Schumann
+    work: "Kinderszenen — No. 7, 'Träumerei'"
+    decision: added
+    why: >
+      The bard sings of a famous quarrel — Achilles and Odysseus disputing at a feast, whether
+      Troy would fall by force or cunning — and Odysseus pulls his great purple cloak over his
+      head and weeps. This is the wound finding its way in through art: the song reaches the man
+      who was there. Schumann's Träumerei is an interior world made briefly audible — private,
+      enclosed, the melody turning back on itself like memory turning over a detail. The
+      inwardness of it (one voice above a simple accompaniment, no development, just the thing
+      itself) is the right music for a man hiding his face in public while a song undoes him.
+      Memory's requirement: nostalgic recall, faded recapitulation. Träumerei provides this in its
+      smallest, most private register.
+  - n: 5
+    scene: "The games on the shore — running, wrestling, discus, the great athletes"
+    force: desire
+    composer: Brahms
+    work: "Academic Festival Overture, Op. 80"
+    decision: added
+    why: >
+      Alcinous, reading the stranger's tears, stops the song and calls for games. The Phaeacians
+      are the greatest athletes in the world; they desire excellence, reputation, the beautiful
+      display of physical power. Brahms's Academic Festival Overture is festive without being
+      militaristic — forward momentum, ebullience, the pleasure of a crowd seeing skill performed.
+      Desire here is not Eros but the athletic-competitive form: the longing to be seen as the
+      best, the body's pleasure in its own power. The overture's building energy and good-natured
+      swagger capture the games' competitive joy before it curdles into insult.
+  - n: 6
+    scene: "Euryalus taunts Odysseus — 'You look like a trader, not an athlete'"
+    force: comedy
+    composer: Rossini
+    work: "Il barbiere di Siviglia — Overture"
+    decision: added
+    why: >
+      Euryalus's taunt is Homer's sharpest comedy: he mistakes the greatest Greek hero for a
+      merchant who doesn't know how to throw. The situation is structurally comic — the audience
+      knows exactly who this man is; Euryalus does not — and the Rossini Overture has exactly
+      the right quality: bright, fast, a little aggressive, driven by social friction that is about
+      to resolve with someone looking very foolish. Comedy's requirement is dance rhythm and courtly
+      exaggeration; the Rossini Overture delivers both with the theatrical confidence the scene's
+      dramatic irony demands.
+  - n: 7
+    scene: "Odysseus hurls the discus far past every mark — declares his excellence"
+    force: wrath
+    composer: Prokofiev
+    work: "Scythian Suite — I. 'Invocation of Dazhbog and Procession of the Sun'"
+    decision: added
+    why: >
+      Stung by Euryalus, Odysseus seizes the heaviest discus and sends it past every Phaeacian
+      mark — then stands and offers to compete at everything. This is not serene superiority: it
+      is rage converted to demonstration, the suppressed pride of a man who has been hiding himself
+      suddenly unleashed. Prokofiev's first movement of the Scythian Suite is all forward percussive
+      pressure and brass aggression — primitive power suddenly shown, relentless and unresolved in
+      its harmonic drive. Wrath's requirement is rhythmic pressure and unresolved harmony; this is
+      wrath as controlled detonation, which is exactly Odysseus's affect in the discus throw.
+  - n: 8
+    scene: "Demodocus sings of Ares and Aphrodite — the gods' adultery laughed at"
+    force: desire
+    composer: Rameau
+    work: "Platée — Act II, Scene 4: 'Duo de la Folie'"
+    decision: added
+    why: >
+      Alcinous calls for the bard to sing of something lighter; Demodocus delivers the tale of
+      Ares and Aphrodite caught in Hephaestus's net, dragged before the laughing gods. This is
+      desire as comedy and as divine embarrassment: Eros tangled in its own trap, made ridiculous
+      before an audience. Rameau's Platée is the Western canon's supreme treatment of desire
+      as farce — chromatic longing (desire's requirement) rendered through baroque theatrical
+      excess, the longing real and the object absurd. The Duo de la Folie from Act II brings
+      exactly the right registers: courtly, sensual, tipped past dignity into laughter. Homer
+      is not mocking love — he is showing it from the outside, from the perspective of the gods
+      who cannot stop laughing, which is the same outside Hephaestus occupies.
+  - n: 9
+    scene: "The dancing — Phaeacian youth at their most beautiful, the hall at ease"
+    force: metamorphosis
+    composer: Ravel
+    work: "Daphnis et Chloé — Suite No. 2: 'Lever du jour' (Daybreak)"
+    decision: added
+    why: >
+      After the song of Ares and Aphrodite, the young Phaeacians dance — and Homer's description
+      is one of his most beautiful passages of pure grace: feet flashing, the hall radiant, the
+      stranger watching. Ravel's Daybreak from Daphnis is one of the most purely metamorphic
+      passages in the orchestral canon: the world changing color gradually, the orchestration
+      blooming from cool strings into full luminous texture, the transition from dark to light as
+      a sensory event rather than an announcement. The dancing scene transforms the hall's
+      register — from competition and taunt into beauty — and Ravel's changing orchestral color
+      and fluid harmony capture that transformation without sentimentality.
+  - n: 10
+    scene: "Gifts given — Alcinous and the lords offer Odysseus gold and clothing"
+    force: kingship
+    composer: Walton
+    work: "Coronation March — 'Orb and Sceptre'"
+    decision: added
+    why: >
+      The twelve Phaeacian lords file forward and offer gifts; Alcinous presents a great chest.
+      This is the formal ceremony of guest-gift exchange — xenia at its most elaborate, sovereignty
+      displayed through generosity. Walton's 'Orb and Sceptre' is ceremonial grandeur in its most
+      direct form: processional confidence, rank made audible, authority expressed through the
+      weight and pace of the music's movement. Kingship's requirement of ceremonial grandeur is
+      met here in the simple structural form of one noble after another bringing something of value
+      to a man who has nothing.
+  - n: 11
+    scene: "Odysseus asks Demodocus to sing the Trojan Horse — his own greatest deed"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 9 — I. Andante comodo (opening theme)"
+    decision: added
+    why: >
+      This is the book's most complex moment: Odysseus himself asks the bard to sing the story
+      of the wooden horse — his own plan, his own triumph, the thing that ended Troy. He knows
+      what will happen when he hears it. He asks anyway. This is grief seeking its own wound,
+      memory as self-inflicted necessity. Mahler's Ninth opens with a theme that seems to stammer
+      and recover, stammer and recover — a slow inward line that cannot maintain its own continuity,
+      breaking off and resuming. It is the sound of a man who knows the material is going to
+      destroy his composure and turns toward it anyway. Grief's requirement is slow tempo and
+      inward line; the Ninth's opening is grief not as passive suffering but as the deliberate
+      act of approaching the unbearable.
+  - n: 12
+    scene: "Demodocus sings — Odysseus weeps like a widow over her husband"
+    force: memory
+    composer: Rachmaninoff
+    work: "Piano Concerto No. 2 — II. Adagio sostenuto"
+    decision: added
+    why: >
+      Demodocus sings the Trojan Horse, and Odysseus weeps. Homer's simile is devastating: like
+      a woman weeping over her husband killed before the city, dragged to slavery, while enemies
+      prod her from behind with spears — and Odysseus, the man who caused exactly that grief for
+      Trojan women, weeps like one of them. It is the poem's most precise act of empathy and
+      self-reckoning. Rachmaninoff's Adagio from the Second Concerto is the sound of a memory
+      that will not be contained: the piano melody opening into full orchestral weight, the
+      movement building without resolution, circling a center of feeling it cannot fully name.
+      Memory's requirement — nostalgic recall, faded recapitulation — here reaches its most
+      burdened form: not the pleasure of remembering but the cost of it, the account finally
+      presented at the feast.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "reserved; forbidden before Book XXII (the slaughter of the suitors)"
+    why: >
+      The terminal-monumental-grief register belongs to the catastrophe at poem's end. Odysseus
+      weeping in the Phaeacian hall is private, inward grief — not public funeral march. Mahler's
+      Ninth opening covers the moment without opening the terminal register prematurely.
+  - composer: Verdi
+    work: "Requiem — 'Lacrimosa'"
+    status: "reserved; forbidden before Book XXII"
+    why: >
+      The Lacrimosa belongs to public mourning at eschatological scale. Book VIII's grief is one
+      man hiding his face while a bard sings. The terminal register must be held.
+  - composer: Beethoven
+    work: "Symphony No. 7 — II. Allegretto"
+    status: "demoted; used in Odyssey Book I for Telemachus's awakening"
+    why: >
+      Already deployed in Book I. The Allegretto's processional quality belongs to purposeful
+      forward motion; Book VIII's games need festive momentum (Brahms Academic Festival) rather
+      than the Seventh's grave march.
+  - composer: Elgar
+    work: "Enigma Variations — IX. 'Nimrod'"
+    status: "demoted; used in Iliad Book II and Odyssey Book I"
+    why: >
+      Nimrod has already appeared twice as the memory-leitmotif. Book VIII's climactic memory
+      moment (Odysseus weeping at the Demodocus song) needs a fresh vehicle — Rachmaninoff's
+      Second Concerto Adagio carries the same nostalgic-recall + faded-recapitulation requirement
+      at greater weight, without depleting a piece already heard.
+  - composer: Barber
+    work: "Adagio for Strings"
+    status: "demoted — public mourning register, wrong scale for Book VIII"
+    why: >
+      Barber's Adagio is a civic-grief piece — it requires public weight to function. Odysseus's
+      weeping in the Phaeacian hall is private, shameful, hidden under his cloak. The Adagio's
+      register is too large and too communal for this scene's specific quality of private grief
+      in a public space.

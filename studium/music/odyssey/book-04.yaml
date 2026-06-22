@@ -1,0 +1,246 @@
+# Odyssey — Book IV — curated music arc
+# AT SPARTA: Menelaus, Helen, nepenthe, Proteus, and the word that Odysseus lives.
+work: odyssey
+book: 4
+title: "Odyssey Book IV: At Sparta — Menelaus and Helen"
+length_minutes: 102
+principle: >
+  Do not score Book IV as "a visit to a king." Score it as the book of memory's double
+  nature — memory as drug and as wound. Sparta is Troy-haunted: Menelaus and Helen cannot
+  speak of the war without weeping, and Helen's solution is literal chemistry, nepenthe
+  poured into the wine to make grief dissolve. The book braids two registers of recollection:
+  the soft, narcotic warmth of stories told in a golden hall, and the raw truth delivered
+  by a god who must be seized and forced. Proteus is the shape-shifter who can only speak
+  after he has exhausted every evasion — metamorphosis as the price of revelation. The
+  climax is not the Trojan story but the single word at the end: Odysseus is alive, trapped
+  on Calypso's island, weeping. Every track should honor the particular quality of Book IV's
+  memory — nostalgia that has not yet curdled into despair, but that knows it could.
+force_arc: [kingship, memory, revelation, memory, metamorphosis, grief, supplication, wrath, exile, metamorphosis, fate, revelation, return]
+dominant_force: memory
+tracks:
+  - n: 1
+    scene: "Arrival at Sparta — Telemachus enters Menelaus's hall at feast"
+    force: kingship
+    composer: Handel
+    work: "Zadok the Priest, HWV 258"
+    decision: added
+    why: >
+      Telemachus and Peisistratos arrive to find Menelaus hosting a double wedding feast —
+      a hall of torchlight, music, and the full ceremonial weight of a victorious king at
+      peace. This is kingship at its most abundant: sovereign display, the hall organized
+      around the host's greatness. Handel's coronation anthem rises from silence to full
+      choral-orchestral grandeur in a single inexorable surge, exactly the sound of entering
+      a great house where the ruler is fully present and at ease. Kingship's requirement
+      (ceremonial grandeur, sovereign display) is met in Handel's most concentrated form.
+  - n: 2
+    scene: "Menelaus speaks of the wandering and of Odysseus — he weeps"
+    force: memory
+    composer: Rachmaninoff
+    work: "Symphony No. 2 — III. Adagio"
+    decision: added
+    why: >
+      Menelaus's first mention of Odysseus produces tears — not the dramatic outburst of
+      grief but the helpless welling that comes when a name summons an entire lost world.
+      Rachmaninoff's Adagio from the Second Symphony is the widest, most saturated statement
+      of nostalgic recall in the orchestral canon: a long melody that keeps expanding, never
+      quite resolving, warmth and sadness occupying the same phrase simultaneously. The
+      faded recapitulation is present without being defeated — Menelaus remembers with love,
+      not despair, which is this movement's precise register.
+  - n: 3
+    scene: "Helen descends and identifies Telemachus by his resemblance to his father"
+    force: revelation
+    composer: Pärt
+    work: "Cantus in Memoriam Benjamin Britten"
+    decision: added
+    why: >
+      Helen walks into the hall and reads the face of a young man she has never met: this
+      is Odysseus's son. The recognition arrives as stillness — not drama but a held breath,
+      a fact emerging from physical evidence. Pärt's Cantus is a single descending line in
+      the strings against a tolling bell, a piece of absolute vertical clarity — revelation's
+      requirement of stillness, chant, and verticality. The bell tolls like knowledge arriving;
+      the descending string lines are the eye that has seen and cannot unsee. Helen's
+      recognition is not joyful but precise, and the Cantus carries precision.
+  - n: 4
+    scene: "Menelaus and Helen trade stories of Odysseus at Troy — the wooden horse"
+    force: memory
+    composer: Schubert
+    work: "Piano Sonata in B-flat major, D. 960 — I. Molto moderato"
+    decision: added
+    why: >
+      The two of them take turns narrating: Menelaus a different Odyssey-story, Helen another.
+      This is oral memory as co-authorship, two people filling in a portrait neither could
+      complete alone. Schubert's final B-flat sonata opens in a mode of sustained retrospective
+      calm — the famous low trill in the bass creates a sub-surface unease beneath music of
+      extraordinary patience and breadth. This is memory that knows it cannot fully recover
+      what it holds, moving forward through long melodic sentences with a gravity that never
+      becomes sentimental. Nostalgic recall and faded recapitulation: the movement's entire
+      architecture is the act of remembering in full.
+  - n: 5
+    scene: "Helen pours nepenthe into the wine — the drug that dissolves grief"
+    force: metamorphosis
+    composer: Debussy
+    work: "Nocturnes — II. Fêtes"
+    decision: added
+    why: >
+      Nepenthe (νηπενθές) is the Odyssey's most uncanny pharmacology: an Egyptian drug that
+      transforms the very chemistry of grief, dissolving it in the blood. Helen pours it and
+      the room changes — the same people, the same stories, but now without the sting. Debussy's
+      Fêtes is a festival glimpsed through shifting veils of color: processions emerging and
+      receding, the orchestra flowing between textures with fluid, drugged ease. The changing
+      orchestral color is metamorphosis's requirement; here it traces the exact arc of nepenthe
+      — the hall is still the hall, but the light is different.
+  - n: 6
+    scene: "Menelaus tells of the soldiers weeping inside the horse / Helen circling it"
+    force: grief
+    composer: Brahms
+    work: "Intermezzo in A major, Op. 118 No. 2"
+    decision: added
+    why: >
+      Even after the nepenthe, Menelaus's story carries its own undertow: the men inside the
+      horse, hearing Helen call their wives' names, biting their lips not to answer — grief and
+      discipline at the same instant. Brahms's Intermezzo in A major is the paradigm of private,
+      inward grief in the keyboard canon: a slow, singing melody that returns to itself, always
+      finding the same ache from a slightly different angle. The slow tempo and inward melodic
+      line (grief's requirement) fit the closed, contained quality of men who cannot weep even
+      when they want to.
+  - n: 7
+    scene: "Telemachus asks after his father — the supplication he came to Sparta to make"
+    force: supplication
+    composer: Barber
+    work: "Adagio for Strings, Op. 11"
+    decision: added
+    why: >
+      Telemachus finally voices his errand: do you know anything of my father? This is the
+      formal supplication the entire journey has been building toward — a young man exposing
+      his need before a king who may or may not be able to help. Barber's Adagio for Strings
+      is the exposed melodic line over suspended harmonic motion that supplication requires:
+      it does not resolve, it appeals. The long string arch — rising, searching, never quite
+      finding its landing — is the body of a petitioner who does not know if the answer will
+      come. No other piece in the canon captures the aesthetic of a plea held in uncertainty
+      with this directness.
+  - n: 8
+    scene: "Menelaus curses the suitors — righteous indignation on Odysseus's behalf"
+    force: wrath
+    composer: Beethoven
+    work: "Piano Sonata No. 23 in F minor, Op. 57 ('Appassionata') — I. Allegro assai"
+    decision: added
+    why: >
+      Menelaus erupts: the suitors in Odysseus's hall are like a deer's fawn left in a lion's
+      den — they do not know what is coming to them. This is wrath that is righteous and
+      structural, not personal — the outrage of a king who recognizes an injustice being done
+      to a peer. Beethoven's Appassionata first movement is the non-symphonic apex of rhythmic
+      pressure and unresolved harmonic tension: the left hand's hammered triplets, the right
+      hand's jagged melodic bursts, a violence that is formal and inexorable. Menelaus's curse
+      has this quality — articulate, measured, and absolutely merciless.
+  - n: 9
+    scene: "Menelaus narrates his long wandering after Troy — Egypt, Phoenicia, Libya"
+    force: exile
+    composer: Dvořák
+    work: "Symphony No. 9 in E minor ('From the New World') — II. Largo"
+    decision: added
+    why: >
+      Menelaus was exiled from his homecoming for eight years, driven around the Mediterranean
+      by adverse winds and divine indifference. He recounts Egypt, Cyprus, Sidon, Phoenicia,
+      Libya — a catalogue of foreign coasts where he waited for return. Dvořák's Largo is the
+      purest statement of exile-as-longing in the symphonic canon: the famous English horn
+      melody is wandering tonality personified — beautiful, but tonally unmoored, hovering over
+      open intervals without a clear home. The geography of exile is always the same interval.
+  - n: 10
+    scene: "Menelaus seizes Proteus on the beach — the shape-shifter changes form"
+    force: metamorphosis
+    composer: Ravel
+    work: "Gaspard de la Nuit — II. Le Gibet"
+    decision: added
+    why: >
+      Proteus transforms under Menelaus's grip: lion, serpent, leopard, boar, water, tree —
+      every shape except the one that can speak. This is metamorphosis at its most violent and
+      systematic: transformation as evasion, the god cycling through forms to avoid being known.
+      Ravel's Le Gibet is built on a single obsessively repeated note (the bell of the hanged
+      man) while the harmonic world around it shifts color ceaselessly — the same center,
+      entirely different surfaces. The fluid harmony and changing orchestral color that
+      metamorphosis requires are here expressed as an entity that will not stop changing
+      around its terrible, fixed core.
+  - n: 11
+    scene: "Proteus reveals the fates — Ajax drowned, Agamemnon murdered, wanderers lost"
+    force: fate
+    composer: Verdi
+    work: "La forza del destino — Overture"
+    decision: added
+    why: >
+      Once forced to speak, Proteus delivers a reckoning: Ajax is dead, Agamemnon has been
+      butchered in his bath, Odysseus is trapped. This is fate as diagnosis — the god naming,
+      one by one, what the universe has already determined. Verdi's Overture to La forza del
+      destino opens with three hammer-blows and then releases a melody of driven, relentless
+      inevitability — fate's motif, stated and restated. The inexorable motif and hammered
+      insistence that fate requires are here at their operatic maximum, and the catalogue
+      quality of Proteus's revelations (Ajax, Agamemnon, Odysseus — one, two, three) matches
+      the overture's episodic structure.
+  - n: 12
+    scene: "Proteus speaks of Odysseus — alive, on Calypso's island, weeping"
+    force: revelation
+    composer: Messiaen
+    work: "Quartet for the End of Time — VIII. Louange à l'Immortalité de Jésus"
+    decision: added
+    why: >
+      The word arrives: Odysseus lives. He is on an island, held by a goddess, weeping every
+      day at the sea's edge for home. This is the revelation the book has been building toward —
+      the answer to Telemachus's journey, the fact that shifts everything. Messiaen's final
+      movement of the Quartet is for violin and piano alone: a line of such sustained, ascending
+      clarity that it sounds like certainty arriving in the register of tenderness rather than
+      triumph. Stillness, chant, verticality — revelation's requirements — and the ascending
+      arc carries the news: he is alive. The movement does not resolve into joy; it holds the
+      fact at height.
+  - n: 13
+    scene: "Telemachus and Peisistratos depart Sparta — the long road home begins"
+    force: return
+    composer: Beethoven
+    work: "Symphony No. 7 — IV. Allegro con brio"
+    decision: added
+    why: >
+      The book closes with departure — not arrival, but the beginning of the road back to
+      Ithaca with news. Return here is not completion but renewed direction: the young man
+      who came asking has received his answer and must now carry it. Beethoven's Seventh finale
+      is the most kinetic expression of return in the symphonic canon: it does not build — it
+      is already in motion, a circular form that propels itself forward by its own momentum,
+      recognition arriving not as static chord but as perpetual forward drive. The circular
+      form and recognition motif that return requires are here at full running speed.
+demoted:
+  - composer: Elgar
+    work: "Enigma Variations — IX. 'Nimrod'"
+    status: "already used in Odyssey Book I (track 2) and Iliad Book II (track 7); not re-used"
+    why: >
+      Nimrod is the paradigm instance of memory-as-force in both prior arcs. Book IV's memory
+      force is warmer and more pharmacological than Nimrod's gravity allows; Rachmaninoff's
+      Second Symphony Adagio and the Schubert B-flat Sonata cover the same force with
+      differentiated register.
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "expressly forbidden before Book XXII (the slaughter of the suitors)"
+    why: >
+      The terminal funeral-march register opens only at the poem's catastrophe. Book IV's
+      grief is the private, inward variety — men biting their lips inside a wooden horse,
+      a king weeping at a name. The Barber Adagio and Brahms Intermezzo carry that register
+      without crossing into the monumental-death zone reserved for Book XXII.
+  - composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    status: "expressly forbidden before Book XXII; terminal eschatological register"
+    why: >
+      Proteus's announcement of Ajax's and Agamemnon's deaths carries the weight of fate
+      but not of public funeral. The Verdi Force of Destiny Overture covers the inexorable
+      motif without invoking the judgment-of-the-dead that belongs to the books of slaughter.
+  - composer: Fauré
+    work: "Requiem — 'In Paradisum'"
+    status: "already used in Odyssey Book I (track 9); reserved for private suspended grief"
+    why: >
+      Book I used In Paradisum for Telemachus's memory of an absent father. Book IV's memory
+      force is more active and narrative — Menelaus and Helen are remembering together, in
+      speech, not sitting with an absence. The Rachmaninoff and Schubert cover the Book IV
+      register more precisely.
+  - composer: Debussy
+    work: "Prélude à l'après-midi d'un faune"
+    status: "already used in Odyssey Book I (track 7) for Athena's disguise; not re-used"
+    why: >
+      The Faune belongs to the disguise-metamorphosis of Athena-as-Mentes. Book IV's
+      metamorphosis forces (nepenthe, Proteus) are distinctly different in character — one
+      pharmacological and warm, one violent and cyclic. Debussy's Nocturnes and Ravel's
+      Gaspard serve these registers more precisely.

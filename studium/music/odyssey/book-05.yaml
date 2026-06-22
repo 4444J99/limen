@@ -1,0 +1,210 @@
+# Odyssey — Book V — curated music arc
+# Schema: matches iliad/book-02.yaml exactly.
+work: odyssey
+book: 5
+title: "Odyssey Book V: Calypso, the Raft, the Storm, Ino's Veil"
+length_minutes: 74
+principle: >
+  Do not score Book V as "the adventure begins." Score it as the specific registers of this book's
+  three acts: release, exposure, and arrival at the threshold of death. The divine council and
+  Hermes' embassy to Calypso carry the warm certainty of return — fate consenting to homecoming —
+  but it is immediately complicated by the pathos of Calypso's genuine love and Odysseus' genuine
+  ambivalence. When he sails, Book V pivots into exposure: the raft, the open sea, the storm
+  Poseidon sends in divine fury, near-drowning. The final act is survival at the edge of
+  annihilation — Ino's veil, the unnamed river-mouth, the body that barely arrives. The book's
+  emotional arc is not triumph but the cost of return: what it takes to get from
+  immortality-on-offer to a broken body on a foreign shore, still alive.
+force_arc: [divine-intervention, desire, return, exile, grief, return, wrath, fate, salvation, supplication, return]
+dominant_force: return
+tracks:
+  - n: 1
+    scene: "The divine council — Athena's petition, Zeus consents to release Odysseus"
+    force: divine-intervention
+    composer: Handel
+    work: "Water Music — Suite No. 1 in F major: Overture"
+    decision: added
+    why: >
+      The Olympian council is formal, unhurried, luminous — Athena speaks, Zeus agrees, the
+      mechanism of homecoming is unlocked in a single divine exchange. Handel's Water Music
+      Overture has exactly this quality: a ceremonial brass-and-strings declaration that opens
+      a new space without drama, as if a gate were being swung wide. The sudden color shift
+      from stateliness into the fast section enacts divine will becoming motion. The
+      brass/strings contrast fulfills divine-intervention's requirement while staying on the
+      waterborne, open-ocean register this book will inhabit throughout.
+  - n: 2
+    scene: "Calypso's cave — she receives Hermes, loves Odysseus, resents the order"
+    force: desire
+    composer: Debussy
+    work: "Pelléas et Mélisande — Act IV, scene 4 (prelude and love scene)"
+    decision: added
+    why: >
+      Calypso's resentment is not grief — it is thwarted longing. She offers Odysseus
+      immortality, she genuinely loves him, and she is ordered to let him go. Debussy's
+      Pelléas is the most precise musical analogue: chromatic longing that cannot resolve,
+      desire that does not know its own future, the color of a love that will be given no
+      permitted form. The deferred resolution in Debussy's harmonic language is desire's
+      requirement; the prelude to this scene gives Calypso the sonic weight her emotion
+      deserves without overcrowding the score with operatic declamation.
+  - n: 3
+    scene: "Odysseus weeps on the shore — he chooses Penelope over immortality"
+    force: return
+    composer: Brahms
+    work: "Symphony No. 4 in E minor — II. Andante moderato"
+    decision: added
+    why: >
+      This is one of the Odyssey's most quietly extraordinary moments: a man who could
+      become a god, weeping each evening on a beach, longing for a mortal wife and a
+      rocky island. Brahms's Fourth Symphony slow movement opens with a horn call that is
+      instantly recognizable as the sound of something returned to after long absence — the
+      circular form of return, the recognition motif that the force requires. The movement
+      is not joyful but certain; Odysseus is not doubting his choice, he is grieving its
+      cost. Brahms gives the listener both.
+  - n: 4
+    scene: "Calypso tells Odysseus he is free — the farewell feast"
+    force: exile
+    composer: Dvořák
+    work: "Symphony No. 9 in E minor, 'From the New World' — II. Largo"
+    decision: added
+    why: >
+      The farewell on Ogygia is bittersweet displacement in two directions: Odysseus is
+      leaving a place that is not home, for a home he cannot yet see. Dvořák's Largo —
+      with its famous cor anglais melody — is the canonical sound of homesickness given
+      musical form: wandering tonality that aches for resolution, open intervals that
+      suggest a distance too large to measure. The exile force is active not because
+      Odysseus is being expelled but because the scene crystallizes how long he has been
+      nowhere, and how far the shore he wants still is.
+  - n: 5
+    scene: "Calypso weeps — her loss, her love unreciprocated across seven years"
+    force: grief
+    composer: Purcell
+    work: "Dido and Aeneas — 'When I am laid in earth' (Dido's Lament)"
+    decision: added
+    why: >
+      Calypso is Dido's antecedent: the immortal/divine woman who loves a man fated to
+      leave, who loses him to a prior claim, who is left. Purcell's ground bass — the
+      inexorably descending line beneath Dido's final aria — is the slow tempo and inward
+      melodic line that grief demands. The lament form (ground + aria) maps perfectly onto
+      Calypso's situation: the bass never stops, as fate never stops, while the melody
+      enacts the specific color of a love that will not be remembered by the one who
+      caused it. Using Dido here is not anachronistic — it is the completion of a
+      mythological circuit Virgil himself will later close.
+  - n: 6
+    scene: "The raft is built — four days' labor, the mast raised, Calypso provisions him"
+    force: return
+    composer: Beethoven
+    work: "Symphony No. 7 in A major — II. Allegretto"
+    decision: added
+    why: >
+      The building of the raft is purposeful, patient, rhythmic work — a man constructing
+      the instrument of his own homecoming, plank by plank. Beethoven's Seventh Allegretto
+      is one of the supreme examples of circular form and recognition motif at work in
+      music: the repeated rhythmic figure functions as labor made beautiful, persistence
+      given a pulse. Return's requirement is exactly this — not the moment of arrival but
+      the form that makes arrival possible. The Allegretto is inexorable without being
+      aggressive, forward-moving without forgetting where it started.
+  - n: 7
+    scene: "Poseidon sees Odysseus at sea — his fury, the storm he sends"
+    force: wrath
+    composer: Sibelius
+    work: "The Oceanides (Aallottaret), Op. 73"
+    decision: added
+    why: >
+      Poseidon's wrath is oceanic — literally, as the god of the sea. He sees the raft from
+      far off, shakes his head, and sends a storm of world-ending scale. Sibelius's
+      Oceanides is the most direct engagement with the sea as a wrathful, inhuman force in
+      the entire orchestral canon: waves building through chromatic harmonic motion,
+      rhythmic pressure accumulating without relief, the brass entering as the storm crest
+      breaks. The work stays in the force's requirement (rhythmic pressure, unresolved
+      harmony) while being specifically, irreducibly marine — the exact register of
+      Poseidon's storm.
+  - n: 8
+    scene: "The storm — mast snapped, raft broken, Odysseus in open water"
+    force: fate
+    composer: Tchaikovsky
+    work: "Symphony No. 6 in B minor, 'Pathétique' — I. Allegro non troppo (development section)"
+    decision: added
+    why: >
+      Once the storm is fully deployed, the scene shifts from wrath to fate: Odysseus is
+      no longer subject to a deity's rage but to the fact of the sea, the body's limits,
+      the physics of drowning. Tchaikovsky's Pathétique first movement in its development
+      section is the sound of something structural breaking — the inexorable motif
+      hammered into fragments, harmonic insistence without the relief of resolution.
+      This is not the Pathétique finale (too inward, too grief-laden) but the first
+      movement's catastrophic middle section, where the form itself seems to be losing
+      coherence. Fate's requirement is hammered insistence; this movement section gives
+      it at the scale of shipwreck.
+  - n: 9
+    scene: "Ino's veil — the sea-nymph appears, gives Odysseus her veil, salvation offered"
+    force: salvation
+    composer: Fauré
+    work: "Requiem, Op. 48 — VII. 'In Paradisum'"
+    decision: added
+    why: >
+      Ino (Leucothea) rises from the sea at the moment Odysseus is closest to death and
+      gives him her veil — a supernatural gift that will hold him above the water. This
+      is salvation in its most precise classical sense: grace arriving from outside the
+      system, unearned, offered by a redeemed figure (Ino herself was once mortal,
+      transformed by divine mercy). Fauré's In Paradisum is the paradigm instance of
+      resolving radiance: soft choral light, no violence, the specific quality of
+      something terrible being lifted. It is the sound of a hand extended from above
+      the water — exactly what the scene is.
+  - n: 10
+    scene: "Odysseus trusts the veil — lets the raft go, swims for two days"
+    force: supplication
+    composer: Bach
+    work: "St. Matthew Passion, BWV 244 — 'Erbarme dich, mein Gott' (aria)"
+    decision: added
+    why: >
+      Odysseus addresses Ino with a prayer of desperate uncertainty — should he trust her?
+      Should he leave the broken raft? He prays, he leaps, he swims. This is the body as
+      prayer: exposed, suspended, asking. Bach's 'Erbarme dich' (Peter's aria of weeping
+      after the denial) is the defining classical example of supplication's requirement:
+      a suspended cadence that cannot resolve until mercy answers, an exposed melodic line
+      above a ground of grief. The obbligato violin enacts the specific quality of a plea
+      held aloft — exactly as Odysseus is held aloft only by a borrowed veil and hope.
+  - n: 11
+    scene: "Odysseus reaches the river-mouth — crawls ashore, hides in leaves, sleeps"
+    force: return
+    composer: Schubert
+    work: "Piano Sonata in B-flat major, D. 960 — I. Molto moderato (opening)"
+    decision: added
+    why: >
+      Book V ends not in triumph but in exhaustion: a man who has crossed the ocean and
+      survived a god's storm crawls onto a beach, hides himself under leaves like an ember
+      kept alive, and sleeps. It is the most reduced imaginable form of return — barely
+      alive, unrecognized, the body finally on land. Schubert's D. 960 Sonata opens with
+      one of the most searching circular melodies in the piano repertoire: the recognition
+      motif of return rendered at its most quiet and mortal. The trill in the bass (the
+      rumble still sounding, the sea not yet forgotten) underneath the tender, unresolved
+      melody captures exactly how Book V ends — arrived but not yet safe, home still a
+      world away, but back on earth at last.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "expressly forbidden before Book XXII equivalent; blocked by register rule"
+    why: >
+      The terminal funeral-march register is reserved. Odysseus's near-death in the storm
+      is survival, not death; the register must stay in struggle and salvation, not
+      monumental grief or eschatological finality.
+  - composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    status: "blocked; terminal register reserved for the suitors' slaughter"
+    why: >
+      The Dies Irae would import eschatological judgment into a scene of survival. The
+      storm is Poseidon's wrath, not divine judgment; salvation arrives. The terminal
+      register is inappropriate to a book whose final beat is Odysseus alive under leaves.
+  - composer: Wagner
+    work: "Der fliegende Holländer — Overture"
+    status: "demoted — too close to Sibelius's Oceanides in register"
+    why: >
+      The Flying Dutchman Overture is powerful storm-sea music, but Sibelius's Oceanides
+      is more tonally precise for Poseidon's oceanic wrath and avoids the Romantic-doom
+      register that would overdetermine the scene. The Holländer's storm is supernatural
+      curse; this scene's storm is divine fury, which is different.
+  - composer: Beethoven
+    work: "Symphony No. 6 in F major, 'Pastoral' — IV. 'Storm (Gewitter, Sturm)'"
+    status: "demoted — pastoral program conflicts with Odyssean register"
+    why: >
+      The Pastoral storm is a storm-in-nature as experienced from safety — resolved within
+      four minutes by sunlight. Poseidon's storm is a divine assault aimed at killing a
+      specific man. The Pastoral's program actively undercuts the scene's mortal stakes.

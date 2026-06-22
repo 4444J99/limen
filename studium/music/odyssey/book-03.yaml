@@ -1,0 +1,241 @@
+# Odyssey — Book III — curated music arc
+# Schema matches book-01.yaml / iliad/book-02.yaml exactly.
+work: odyssey
+book: 3
+title: "Odyssey Book III: At Pylos — Nestor's Memory"
+length_minutes: 65
+principle: >
+  Do not score Book III as a travelogue or a courtesy call. Score it as the Odyssey's first
+  encounter with the problem of memory: what does it mean to know where everyone went? Nestor
+  is not an oracle — he is a survivor. He holds the last coherent account of what happened
+  after Troy: who sailed together, who quarreled, who made it home, who did not. Telemachus
+  arrives ignorant, a boy in need of a father's story; Nestor delivers not Odysseus's story
+  but the structure into which Odysseus's story must fit — the nostoi, the returns, the
+  diverging roads of the homecoming army. The dominant force is memory, but it moves through
+  grief (the dead who did not return), exile (the wanderers), fate (Agamemnon's ruin),
+  supplication (Telemachus at the altar, a young man asking for what only a god can give),
+  and return (the ones who did come back, as contrast to those who did not). Score the gaps
+  between memory and knowledge — Nestor knows everything except the one thing Telemachus
+  needs.
+force_arc: [supplication, memory, return, memory, grief, fate, exile, memory, divine-intervention, revelation, memory, sacrifice, return]
+dominant_force: memory
+tracks:
+  - n: 1
+    scene: "Telemachus and Mentor arrive at Pylos — a stranger boy at a king's feast"
+    force: supplication
+    composer: Bach
+    work: "St Matthew Passion, BWV 244 — 'Erbarme dich, mein Gott' (tenor aria)"
+    decision: added
+    why: >
+      Telemachus has never spoken in assembly, never begged a king. Athena (as Mentor) has to
+      prod him to step forward and address Nestor. The scene is pure supplication: a young man
+      exposing his need before a stranger who has the power to help or dismiss. Bach's 'Erbarme
+      dich' — Peter weeping after the denial — is the paradigm of supplication's musical
+      requirement: suspended cadence, an exposed melodic line above trembling strings, a
+      vulnerability so naked it can barely sustain its own pitch. The aria does not collapse
+      into grief; it holds itself in the act of asking, which is exactly Telemachus's posture
+      before Nestor's court.
+  - n: 2
+    scene: "Nestor begins — the libations, the stories of the war-leaders at Troy"
+    force: memory
+    composer: Fauré
+    work: "Requiem in D minor, Op. 48 — IV. Pie Jesu"
+    decision: added
+    why: >
+      Nestor opens not with information but with the entire weight of the past: he summons the
+      war as something enormous and finished, naming the dead and the living in the same breath.
+      Fauré's Pie Jesu is memory's quietest and most piercing instrument — a solo soprano
+      moving through a melodic line of such plain sweetness that it aches. The nostalgic recall
+      requirement for memory is here met not through orchestral breadth but through the
+      concentrated inwardness of a single voice rehearsing a world that is over. Nestor does not
+      weep; the music does.
+  - n: 3
+    scene: "The quarrel of Agamemnon and Menelaus — the army divides at Troy's shore"
+    force: return
+    composer: Schubert
+    work: "Symphony No. 9 in C major, D. 944 — II. Andante con moto"
+    decision: added
+    why: >
+      Nestor describes the split: Menelaus sailed early with half the fleet; Agamemnon stayed
+      to appease Athena. This is the moment the homecoming army fragments — return becomes
+      multiple, conditional, some men's roads closing before they open. Schubert's Great C major
+      slow movement has a circular obsessiveness, a theme that keeps returning to its own
+      starting point without resolution, as if the road keeps looping back. Return's requirement
+      is circular form and a recognition motif; Schubert's Andante gives us return as something
+      that cannot quite close, the homecoming that replays itself without arriving.
+  - n: 4
+    scene: "Nestor names the nostoi — who came home, who was lost, who is still unknown"
+    force: memory
+    composer: Elgar
+    work: "Symphony No. 2 in E-flat major, Op. 63 — III. Rondo: Presto"
+    decision: added
+    why: >
+      Nestor catalogues: Diomedes home safe; Ajax the Lesser dead on the rocks; Agamemnon
+      murdered in his bath; Odysseus — unknown. The Rondo of Elgar's Second Symphony has a
+      quality unique in his output: it is memory cycling through several emotional registers
+      without settling, urgent but elegiac, driving but fading. The 'faded recapitulation'
+      that memory requires is embedded structurally in the rondo's returns — each recall of
+      the main theme arrives slightly altered, slightly dimmed, as each name in Nestor's list
+      arrives weighted differently from the last.
+  - n: 5
+    scene: "Agamemnon's ruin — Aegisthus, Clytemnestra, the bath and the sword"
+    force: grief
+    composer: Strauss
+    work: "Elektra, Op. 58 — Recognition Scene (Elektra and Orestes)"
+    decision: added
+    why: >
+      Nestor delivers the Agamemnon story as a cautionary tale, but its emotional content is
+      pure grief — a returning king killed by his wife's lover, a house destroyed, a son
+      exiled. Strauss's Recognition Scene from Elektra is the musical interior of this very
+      myth: a daughter weeping for her father's murder, the grief coiled in the house for
+      years before it can be spoken. The slow, inward melodic line across weeping strings
+      meets grief's requirement precisely; and using Strauss here ties the musical arc to the
+      Atreidae shadow that falls across the Odyssey's first books as a mirror for what
+      Telemachus must not let happen at Ithaca.
+  - n: 6
+    scene: "The fate of Agamemnon as counter-example — Zeus presides over just returns and unjust"
+    force: fate
+    composer: Tchaikovsky
+    work: "Symphony No. 4 in F minor, Op. 36 — I. Andante sostenuto (opening)"
+    decision: added
+    why: >
+      Nestor's implicit argument is that fate distributes returns according to piety and
+      justice — but the horror of Agamemnon's end proves the distribution is not clean.
+      Zeus presides, but Aegisthus kills who he likes. Tchaikovsky's Fourth opens with the
+      brass fanfare he explicitly called 'Fate' in his letters — inexorable, hammered,
+      returning after every respite. The motto opens the symphony as fate's requirement demands:
+      inexorable motif, hammered insistence, the sense of a force that does not negotiate.
+      Nestor cannot explain why Agamemnon died; he can only repeat that it happened.
+  - n: 7
+    scene: "Telemachus presses for word of Odysseus — no one knows where he is"
+    force: exile
+    composer: Dvořák
+    work: "Symphony No. 9 in E minor, Op. 95 'From the New World' — II. Largo"
+    decision: added
+    why: >
+      The emotional center of the scene: Telemachus needs to know where his father is, and
+      Nestor — who knows everything about the nostoi — cannot say. Odysseus is off the map.
+      Dvořák's Largo is the Odyssey's score for longing across an ocean that has no name yet
+      — wandering tonality, open intervals suspended above a lone cor anglais, the sound of
+      a place that is neither home nor away but the unbounded middle. Exile's requirement
+      (wandering tonality, open intervals) is met at the movement's most elemental register:
+      not the heroic exile of a wandering king but the exile of not-knowing, the space a
+      missing father occupies in his son's mind.
+  - n: 8
+    scene: "Nestor's own return — the king who came home clean, who made proper sacrifice"
+    force: memory
+    composer: Rachmaninoff
+    work: "Piano Concerto No. 2 in C minor, Op. 18 — II. Adagio sostenuto"
+    decision: added
+    why: >
+      Nestor describes his own return: swift, pious, uncomplicated — as if to model for
+      Telemachus what a homecoming should look like. He is proud of this. But memory's pull
+      is inward: even a clean homecoming, told in old age, sounds like something irretrievable.
+      Rachmaninoff's Second Concerto Adagio — the most perfectly calibrated nostalgic recall
+      in the concerto repertoire — moves with the warmth of a man remembering something
+      genuinely good, while the harmony never fully rests. The faded recapitulation of memory
+      is here tenderness rather than loss: Nestor's clean return, beautiful and distant.
+  - n: 9
+    scene: "Athena reveals herself — the goddess departs in the shape of a sea-eagle"
+    force: divine-intervention
+    composer: Wagner
+    work: "Lohengrin — Prelude to Act I"
+    decision: added
+    why: >
+      Athena, who has been Mentor throughout, departs by transforming into a sea-eagle before
+      the whole court of Pylos. The sudden color shift is literal: a woman becomes a bird,
+      the divine peels away from the human disguise, and everyone at the feast falls silent
+      in awe. Wagner's Lohengrin Prelude opens with violins at the very top of their range,
+      sustaining an almost inaudible shimmer that slowly materializes into a full brass-and-
+      string wash — the descent and ascent of the divine. The brass/strings contrast that
+      divine-intervention requires is intrinsic to the Prelude's architecture; it is the sound
+      of something divine becoming visible and then withdrawing into light.
+  - n: 10
+    scene: "Nestor and the court stand astonished — the goddess has been among them"
+    force: revelation
+    composer: Pärt
+    work: "Cantus in Memoriam Benjamin Britten"
+    decision: added
+    why: >
+      The moment after Athena's departure: Nestor recognizes that the goddess was with them.
+      'That was no mortal,' he says. The whole court is still. Revelation's requirement is
+      stillness, chant, verticality — and Pärt's Cantus delivers this with almost uncanny
+      precision: a single descending bell toll, strings entering one by one in a tintinnabuli
+      cascade, the sound of a community registering something it cannot speak. No piece in
+      the tintinnabuli canon is more purely vertical: time stops, sound arrives from above,
+      the bell marks what cannot be named.
+  - n: 11
+    scene: "Nestor prays and reflects — the old king's final counsel before sleep"
+    force: memory
+    composer: Brahms
+    work: "Intermezzo in A major, Op. 118 No. 2"
+    decision: added
+    why: >
+      Nestor has given everything he has: names, stories, warnings, the shape of a world
+      Telemachus was too young to witness. The book moves toward night; the old man composes
+      himself. Brahms's late Intermezzo — written in his own old age — is the paradigm of
+      an elder's interior recollection: not grief, not nostalgia precisely, but the slow
+      turning-over of a life that has been long and has cost something. The faded
+      recapitulation that memory requires is built into the Intermezzo's A-B-A form, each
+      return of the main melody gentler and more distant. This is Nestor putting the day
+      to rest.
+  - n: 12
+    scene: "The dawn sacrifice — Nestor honors Athena with a gold-tipped heifer at the altar"
+    force: sacrifice
+    composer: Gluck
+    work: "Iphigénie en Aulide — Overture"
+    decision: added
+    why: >
+      Book III's great ceremonial set-piece: a golden-horned heifer sacrificed at dawn, the
+      whole community of Pylos assembled, the priests, the fire, the solemn order. Gluck's
+      Iphigénie en Aulide Overture was written for exactly this register: slow processional
+      opening, then an accumulating urgency that never becomes violent, the music of a
+      community gathering around an altar in organized grief and piety. Sacrifice's requirement
+      is processional gravity and immolation build; Gluck provides the ritual without the
+      Stravinsky violence — Pylos's sacrifice is willing and ordered, not primordial.
+  - n: 13
+    scene: "Telemachus departs by chariot for Sparta — the road to Menelaus, the next witness"
+    force: return
+    composer: Beethoven
+    work: "Symphony No. 7 in A major, Op. 92 — II. Allegretto"
+    decision: added
+    why: >
+      Telemachus leaves Pylos not with Odysseus's location but with a direction: go to
+      Menelaus, who was last to come home and may know more. The book ends in motion —
+      the boy's quest continuing forward on a new road. Beethoven's Seventh Allegretto is
+      the Odyssey's great processional: a circular, inexorable rhythm that moves without
+      hurry, the recognition motif embedded in each return of the main theme, the circular
+      form of return's requirement built into its very DNA. It is not triumph — it is
+      continuance, the road opening again, the homecoming still in process.
+demoted:
+  - composer: Elgar
+    work: "Enigma Variations — IX. 'Nimrod'"
+    status: "already placed in Iliad Book II (Nestor's counsel scene); not re-used"
+    why: >
+      Nimrod is the canonical Nestor-memory piece, used precisely for his war-era counsel in
+      the Iliad arc. Using it again here, also for Nestor, collapses the range of the canon
+      and makes the Odyssey arc feel derivative. Fauré's Pie Jesu and the Brahms Intermezzo
+      serve memory's requirement with distinct emotional registers.
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "expressly forbidden before Book XXII (slaughter of the suitors)"
+    why: >
+      Agamemnon's death is narrated in Book III but it is not witnessed — it arrives as
+      reported past, not as present catastrophe. The terminal funeral-march / monumental-grief
+      register is reserved for the Odyssey's own catastrophe at Book 22. Strauss's Elektra
+      Recognition Scene covers the Agamemnon grief at the right register (private, mythic,
+      inward) without opening the terminal register prematurely.
+  - composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    status: "reserved for Book XXII or later; forbidden before then"
+    why: >
+      Agamemnon's fate is dark enough that the Dies Irae suggests itself, but the register
+      rule holds: Nestor is narrating a past event, not staging a catastrophe. The Odyssey's
+      catastrophe belongs to Ithaca, not Mycenae, and not until Book 22.
+  - composer: Mahler
+    work: "Symphony No. 9 — I. Andante comodo"
+    status: "demoted — too terminal for Books 1-21"
+    why: >
+      The Mahler Ninth's farewell register approaches the terminal-monumental boundary. It
+      would overdoom Nestor's counsel, which is elegiac but not terminal — the old king is
+      still alive, still advising, still sacrificing to the gods in the morning.

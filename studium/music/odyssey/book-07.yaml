@@ -1,0 +1,235 @@
+# Odyssey — Book VII — curated music arc
+# Schema: matches iliad/book-02.yaml exactly.
+work: odyssey
+book: 7
+title: "Odyssey Book VII: The Palace of Alcinous"
+length_minutes: 64
+principle: >
+  Do not score Book VII as "the wanderer arrives at court." Score it as the specific register of
+  threshold and disclosure: a man without identity moving invisible through a perfect city, then
+  entering the most beautiful palace in the world and collapsing at a queen's knees. The book
+  holds two simultaneous registers — the splendor of Phaeacia (bronze, gold, silver, the
+  inexhaustible garden, dogs of precious metal that never age) and the exhaustion and anonymity
+  of the man at its center. Athena's mist is not concealment for ambush; it is the grace that
+  lets a ruined man behold a world he has not yet earned entry to. The dominant force is kingship
+  — Alcinous in his hall is sovereignty at its most ceremonial and most human — but the arc must
+  earn that moment through the prior forces: divine favor, wandering, wonder, metamorphosis, the
+  timeless garden, supplication, revelation, protocol, exile's testimony, and the formal gift-
+  compact that seals safe passage. Score the garden passage as if time has stopped. Score the
+  supplication as if everything depends on the next thirty seconds.
+force_arc: [divine-intervention, exile, revelation, metamorphosis, memory, supplication, divine-intervention, kingship, law, exile, kingship, sacrifice]
+dominant_force: kingship
+tracks:
+  - n: 1
+    scene: "Athena wraps Odysseus in mist at the city gate"
+    force: divine-intervention
+    composer: Strauss
+    work: "Der Rosenkavalier — Prelude (Act I)"
+    decision: added
+    why: >
+      Athena does not appear to Odysseus as a goddess but disguises herself as a young girl
+      carrying a water-jug; she then veils him in divine mist so he can pass through the city
+      unseen. This is divine-intervention as intimate domestic magic, not celestial thunder.
+      Strauss's Rosenkavalier Prelude opens with a sudden eruption of horns that dissolves
+      almost immediately into shimmering strings — the brass/strings contrast the force requires
+      — and then becomes a private, conspiratorial warmth. The shift in color from the opening
+      fanfare to the soft chamber-music texture enacts exactly what Athena does: celestial power
+      applied with a small, careful hand to one exhausted man.
+  - n: 2
+    scene: "Odysseus moves invisible through the Phaeacian streets"
+    force: exile
+    composer: Vaughan Williams
+    work: "Symphony No. 6 in E minor — III. Scherzo"
+    decision: added
+    why: >
+      Moving through a city where no one sees you is the condition of exile made spatial: you
+      are present in a world that does not register your existence. Vaughan Williams's Sixth
+      Symphony Scherzo is one of the strangest pieces in the British canon — wandering tonality
+      that never resolves, fragments that almost cohere then dissolve, a muted rhythmic unease
+      that suggests movement without arrival. The open intervals exile requires are here not
+      nostalgic but restless; the piece sounds like a man passing through a beautiful place he
+      cannot yet claim. It is neither hostile nor welcoming — it is simply not-yet-arrived.
+  - n: 3
+    scene: "The palace disclosed — bronze walls, golden doors, silver posts, immortal dogs"
+    force: revelation
+    composer: Messiaen
+    work: "Éclairs sur l'Au-delà — XI. 'Les Élus marqués du sceau' (The Elect Marked with the Seal)"
+    decision: added
+    why: >
+      Homer's description of Alcinous's palace is one of the great verbal ekphrases: walls of
+      bronze, doors of gold, silver lintels, the threshold a blaze of precious metal, two golden
+      and silver youths holding torches at either side. It is not mere wealth — it is the world
+      disclosed as cosmically ordered beauty, almost eschatological. Messiaen's late orchestral
+      work is an extended meditation on light and transcendence; this movement achieves a
+      sustained stillness of verticality — chant-like in its tread, luminous in its orchestration
+      — that matches revelation's requirement of stillness, chant, and verticality. Nothing in
+      the canon better captures the moment of a sacred threshold seen for the first time.
+  - n: 4
+    scene: "The golden and silver dogs of Hephaestus, ageless and immortal"
+    force: metamorphosis
+    composer: Ravel
+    work: "Ma mère l'Oye — 'Laideronette, impératrice des pagodes'"
+    decision: added
+    why: >
+      Homer notes with calm wonder that Hephaestus made two golden and two silver dogs to guard
+      the palace, fashioned with art and intelligence, immortal and unaging. They are creatures
+      of craft transformed into something that bypasses nature: metal that breathes, art that
+      lives. Ravel's "Laideronette" from Mother Goose moves through exactly this register —
+      the sound of a world in which craft has crossed into enchantment, gamelan-like pentatonic
+      figures that shift the orchestral color completely, fluid harmony that refuses the gravity
+      of the natural. Metamorphosis requires changing orchestral color and fluid harmony;
+      Ravel's toy-world of the pagodas is art tipping over into life.
+  - n: 5
+    scene: "The garden of Alcinous — figs, olives, pears, vines that never cease"
+    force: memory
+    composer: Fauré
+    work: "Pelléas et Mélisande — III. Sicilienne"
+    decision: added
+    why: >
+      The garden scene is the book's most arresting pause: fruit that ripens through every season
+      without stopping, rows of vines whose grapes are always at some stage of ripening, beds of
+      every flower. Time does not pass normally here. Homer is describing something close to
+      paradise, an eternal recurrence of abundance. Fauré's Sicilienne — gentle, suspended,
+      circling in a rhythm that does not want to end — carries the quality of nostalgic recall
+      under a different sign: not grief for the past but the ache of a beauty that was always
+      there and will always be there, the faded recapitulation memory requires turned into
+      something that never fades. For Odysseus, standing in this garden, all of his lost years
+      are briefly legible.
+  - n: 6
+    scene: "Odysseus enters the hall and falls at Arete's knees"
+    force: supplication
+    composer: Bach
+    work: "St Matthew Passion — 'Erbarme dich, mein Gott' (Have mercy, Lord, BWV 244)"
+    decision: added
+    why: >
+      The supplication at the queen's knees is one of the poem's most carefully staged moments:
+      Odysseus bypasses Alcinous, goes to Arete, grasps her knees — the formal posture of
+      the suppliant — and speaks the simplest possible words: bring me home. Bach's Erbarme
+      dich is the paradigm instance of supplication in the classical canon: Peter has denied
+      Christ three times and now weeps; the oboe line suspends in an exposed melodic arc above
+      the bass, harmonically unresolved, the petition held open. Supplication's requirement is
+      suspended cadence and exposed melodic line; Bach gives us both and attaches to them the
+      specific weight of a man who has nothing left to offer but his need.
+  - n: 7
+    scene: "The mist dissolves — Odysseus visible, the hall astonished"
+    force: divine-intervention
+    composer: Wagner
+    work: "Das Rheingold — Scene 4, Entry of the Gods into Valhalla (transformed, via harp arpeggios)"
+    decision: added
+    why: >
+      Athena dissolves the mist, and Odysseus — who had been invisible — is suddenly present
+      before the whole Phaeacian court. This is divine-intervention as unmasking rather than
+      concealment: the moment a god removes the veil and the natural world reasserts its claim
+      on a man. Wagner's Entry of the Gods into Valhalla opens with the harp rainbow bridge and
+      then floods with brass splendor — sudden color shift, brass/strings contrast, the
+      fundamental requirement of the force. The movement begins in the sustained mystery of the
+      harp writing and breaks open into orchestral visibility; it is the sound of a concealment
+      ending and a presence being declared.
+  - n: 8
+    scene: "Alcinous rises and speaks — the king of Phaeacia in his hall"
+    force: kingship
+    composer: Handel
+    work: "Zadok the Priest — Coronation Anthem HWV 258"
+    decision: added
+    why: >
+      Alcinous rises, takes Odysseus by the hand, sets him in the silver chair of Laodamas his
+      son, and addresses his court. This is kingship at its fullest ceremonial expression:
+      sovereignty exercised through hospitality, the formal grammar of xenia activated by a
+      king's word. Handel's Zadok the Priest — the coronation anthem that has played at every
+      British coronation since 1727 — opens with its famous string shimmer and then detonates
+      into the full choral/orchestral blaze of anointing. It is sovereign display and ceremonial
+      grandeur at maximum scale, which is exactly what the force requires and what the Phaeacian
+      court scene demands: a king making visible, through ritual, what kind of world he governs.
+  - n: 9
+    scene: "Arete questions Odysseus — who gave you those clothes? where have you been?"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue, BWV 1080 — Contrapunctus I"
+    decision: added
+    why: >
+      Arete's interrogation is not hostile — it is the law of xenia demanding account: you cannot
+      receive hospitality without establishing who you are and where you come from. This is law as
+      formal protocol, the architecture of reciprocal obligation that governs heroic hospitality.
+      Bach's Contrapunctus I opens the Art of Fugue: a single subject, stated plainly, then
+      developed through strict formal architecture that makes the structure of obligation audible.
+      Law's requirement is formal clarity, repetition, and architecture; the first Contrapunctus
+      is the purest possible instance of a rule being stated and then systematically honored —
+      which is what the questioning of a suppliant at a Homeric court enacts.
+  - n: 10
+    scene: "Odysseus tells of Calypso, the raft, the storm, the wreck"
+    force: exile
+    composer: Sibelius
+    work: "The Swan of Tuonela, Op. 22 No. 2"
+    decision: added
+    why: >
+      Odysseus condenses his recent history for the Phaeacian court: seven years on Calypso's
+      island, the raft, Poseidon's storm, the wreck, the long swim. The telling is spare because
+      the exhaustion is total. Sibelius's Swan of Tuonela is the most sustained expression of
+      wandering tonality and open intervals in the Finnish canon: a solo cor anglais moving over
+      dark strings in a line that refuses resolution, the river of death as musical space. Exile's
+      requirement — wandering tonality, open intervals — is here at its most elemental; the
+      Swan's mournful line carries the specific texture of a man describing years of
+      displacement to people who have never been displaced.
+  - n: 11
+    scene: "Alcinous promises convoy and proposes Nausicaa — the gift-compact"
+    force: kingship
+    composer: Elgar
+    work: "Pomp and Circumstance March No. 1 in D major, Op. 39"
+    decision: added
+    why: >
+      Alcinous makes his declaration: tomorrow we launch the ship, we send fifty-two oarsmen,
+      and meanwhile you are our guest. The tone shifts from interrogation to proclamation —
+      a king exercising sovereignty through the dispensation of a gift that will cost him ships
+      and men. Elgar's first Pomp and Circumstance March is ceremonial grandeur without irony
+      but also without the eschatological solemnity of Zadok: it is sovereignty in motion,
+      the formal expression of power as generosity and display. The arc has now passed through
+      Alcinous's hall and arrived at its center: a king's word as the mechanism of return.
+  - n: 12
+    scene: "The feast and the pledge of safe passage — Odysseus will go home"
+    force: sacrifice
+    composer: Gluck
+    work: "Iphigénie en Tauride — 'Divinités du Styx' (Act II)"
+    decision: added
+    why: >
+      The book closes with feasting and the formal pledge: Alcinous will send Odysseus home
+      regardless of the cost, honoring the compact of xenia through the full weight of ritual
+      meal and royal promise. Sacrifice here is not blood on an altar but the structure of
+      formal covenant — the feast as the form that makes a vow binding, the processional gravity
+      of a hospitality-rite whose terms are absolute. Gluck's aria from Iphigénie en Tauride
+      carries ritual weight and an immolation-build without the terminal register: Iphigénie
+      swears by the gods of the underworld, her voice moving through processional gravity toward
+      a declaration that cannot be recalled. The sacrifice force's requirement — ritual weight,
+      processional character, immolation build — is here embodied in a compact that commits a
+      king's word and a fleet to a single exhausted stranger.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "reserved for Book XXII (the slaughter of the suitors); forbidden before then"
+    why: >
+      The terminal-monumental-grief register is expressly blocked until the poem's catastrophe.
+      Book VII's grief register, where it exists at all, belongs to exile and supplication —
+      private and suspended, not public-funeral. The Funeral March would overwhelm every
+      other register in this book and misrepresent the scene's emotional key.
+  - composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    status: "reserved for Book XXII or later; forbidden before then"
+    why: >
+      The Dies Irae is eschatological judgment — the terminal public-death register. Book VII
+      contains no death. The palace's splendor approaches the sacred but is celebratory and
+      welcoming, not catastrophic. Using a requiem movement here would be a category error.
+  - composer: Rachmaninoff
+    work: "Piano Concerto No. 2 — II. Adagio sostenuto"
+    status: "demoted — too personally inward for a sovereign hall"
+    why: >
+      The Rachmaninoff slow movement carries memory's nostalgic-recall requirement beautifully
+      but at an intimate, confessional scale that belongs to a private interior rather than the
+      Phaeacian hall. The garden scene needs Fauré's suspended circling rather than
+      Rachmaninoff's autobiographical ache.
+  - composer: Holst
+    work: "The Planets — 'Jupiter, the Bringer of Jollity'"
+    status: "demoted — wrong register for kingship here"
+    why: >
+      Jupiter's bluff grandeur is the wrong color for Alcinous's hall. The Phaeacian king is
+      ceremonial and generous, but the scene's stakes (a man pleading for his life and passage
+      home) demand a gravity that Jupiter cannot supply. Handel's Zadok carries the weight;
+      Jupiter would make it a celebration of itself rather than an act of sovereign hospitality.

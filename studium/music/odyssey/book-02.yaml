@@ -1,0 +1,222 @@
+# Odyssey — Book II — curated music arc
+# THE ASSEMBLY OF ITHACA: Telemachus calls the first assembly in 20 years.
+work: odyssey
+book: 2
+title: "Odyssey Book II: Telemachus and the Assembly of Ithaca"
+length_minutes: 76
+principle: >
+  Do not score Book II as "Telemachus grows up." Score it as the book of law under siege —
+  an assembly convened after twenty years of silence, by a boy who is not yet his father, in
+  a hall that belongs to a man who may be dead. The assembly is the poem's first formal civic
+  act, and it immediately reveals how far Ithaca has decayed: the suitors treat the agora as
+  entertainment; the old men are passive; only the birds and a seer remember what law looks
+  like. The dominant movement is from law (the assembly's structure) through its corruption
+  (suitor contempt, seer mocked) and back to law's last resort — the secret, solitary act of
+  departure. Telemachus cannot restore the assembly from within it; so he walks to the sea
+  in the dark and sails. The score honors the form of the assembly even as the suitors hollow
+  it out, tracks the divine intelligence working beneath the surface, and ends not with triumph
+  but with the sound of a ship moving into open water — which is law's last gesture, the only
+  one the situation permits.
+force_arc: [law, supplication, wrath, divine-intervention, revelation, comedy, law, divine-intervention, exile, fate, ascent]
+dominant_force: law
+tracks:
+  - n: 1
+    scene: "Telemachus rises at dawn and calls the assembly — first in twenty years"
+    force: law
+    composer: Handel
+    work: "Water Music Suite No. 1 in F major — Overture"
+    decision: added
+    why: >
+      Telemachus dons his cloak, takes his spear, and goes to the agora: the gestures of civic
+      authority assembled deliberately, item by item, like the putting on of a formal suit.
+      The assembly he calls has not been convened since Odysseus left — it is an act of
+      institutional memory as much as personal grievance. Handel's Water Music Overture
+      is exactly this: ceremonial form restored after an interval, played on the water with
+      all the pomp that public occasion demands. The formal clarity, the architectural brass
+      fanfares, and the regular phrase structure meet law's requirement squarely. This is not
+      Telemachus's triumph — it is law's form being put on, as a young man puts on a dead
+      man's coat to see if it fits.
+  - n: 2
+    scene: "Telemachus addresses the assembly — weeps, holds the scepter"
+    force: supplication
+    composer: Barber
+    work: "Adagio for Strings, Op. 11"
+    decision: added
+    why: >
+      Telemachus speaks and weeps. He holds the scepter — the object of authority — but his
+      voice breaks. The son is a suppliant inside the legal form: he is using the vocabulary
+      of civic right but the emotional register of a child who has lost a father. Barber's
+      Adagio is the paradigmatic modern instance of an exposed melodic line rising toward a
+      suspended cadence that never resolves — the string sound of grief that is also petition,
+      longing that does not collapse into despair. Supplication's requirement is exactly this:
+      suspended cadence, the line held open. Telemachus holds the scepter and weeps; the
+      Adagio holds a note and does not resolve it.
+  - n: 3
+    scene: "Antinous answers — the suitors' insolence, blaming Penelope"
+    force: wrath
+    composer: Prokofiev
+    work: "Romeo and Juliet — 'Montagues and Capulets' (Dance of the Knights)"
+    decision: added
+    why: >
+      Antinous stands and redirects the assembly's energy entirely: the fault is Penelope's,
+      not theirs; they are merely guests of her stalling. This is not hot anger but cold,
+      rhythmically precise dominance — the suitors are not raging; they are maneuvering.
+      Prokofiev's 'Montagues and Capulets' is precisely this kind of wrath: heavy, processional,
+      rhythmically insistent, dark and deliberate rather than explosive. The ostinato brass and
+      the grinding lower strings are the sound of a faction that believes it has the upper hand,
+      moving with contemptuous certainty. Rhythmic pressure and unresolved harmony: both present
+      in abundance, with the specific quality of power performing itself before an audience.
+  - n: 4
+    scene: "Zeus sends two eagles — the portent tears the air over the assembly"
+    force: divine-intervention
+    composer: Strauss
+    work: "Also sprach Zarathustra — 'Von der großen Sehnsucht' (the sunrise, opening)"
+    decision: added
+    why: >
+      Two eagles wheel from a mountaintop, fly above the assembly, clash together, and tear
+      at each other's faces before departing toward the city. The assembled men watch. It is
+      sudden and unmistakable — the gods have just interrupted the proceedings. Strauss's
+      famous sunrise opening (the 'Space Odyssey' section) is the canonical music of something
+      immense and other arriving without announcement: brass chorale breaking from silence,
+      colors shifting without preparation. Divine-intervention's requirement is sudden color
+      shift and brass/strings contrast; here it is the sun itself arriving in the form of two
+      birds, and the audience falls into involuntary attention.
+  - n: 5
+    scene: "Halitherses interprets the omen — Odysseus will return"
+    force: revelation
+    composer: Tavener
+    work: "Song for Athene"
+    decision: added
+    why: >
+      Halitherses, the old seer, stands and reads the eagles: Odysseus is near, bringing death
+      for the suitors. He has said this before; the assembly does not want to hear it again. But
+      the seer's speech is the book's only moment of chant-like prophetic stillness — a man
+      reading the divine through natural signs, speaking what he knows against what the room
+      wants. Tavener's Song for Athene is a piece of precisely this quality: choral, vertical,
+      built on held notes and religious certainty rather than harmonic progression. Revelation's
+      requirement is stillness, chant, verticality — the seer's voice has all three qualities,
+      and Tavener gives them musical form without ornament.
+  - n: 6
+    scene: "Eurymachus mocks the seer — the suitors laugh, propose nothing"
+    force: comedy
+    composer: Rossini
+    work: "Il barbiere di Siviglia — Overture"
+    decision: added
+    why: >
+      Eurymachus responds to Halitherses by reducing him to a fraud: 'There are many birds;
+      not all are signs.' He tells Telemachus to send his mother to her father for remarriage
+      and moves with comic self-assurance, as if the whole business were settled. This is
+      the suitors at their most Rossinian: rapid, self-satisfied, brilliant in the deployment
+      of surface ease to deflect genuine threat. The Barbiere Overture is exactly this —
+      rapid-fire, irresistibly charming, built on the mechanics of social manipulation.
+      Comedy's requirement is dance rhythm and courtly exaggeration; Rossini's overture
+      supplies both while maintaining the particular quality of the suitors: they are not
+      stupid, they are dangerously clever and know it.
+  - n: 7
+    scene: "Mentor rises and rebukes the assembly for its silence"
+    force: law
+    composer: Bach
+    work: "Brandenburg Concerto No. 3 in G major — I. Allegro"
+    decision: added
+    why: >
+      Mentor — the old man Odysseus left in charge of his house — stands and makes the
+      assembly's situation explicit: it is not the suitors who shame Ithaca, it is the silence
+      of the free men who sit and watch. This is law's self-awareness: a man naming the
+      collapse of civic form from within the form itself, using the right to speak to indict
+      those who will not speak. Bach's Third Brandenburg opens with nine voices in perfect
+      formal equality — each string group carrying the same material, order sustained through
+      shared participation, architecture that cannot stand without every voice engaged.
+      Law's requirement of formal clarity and architecture: Mentor's speech is the inverse,
+      a demonstration of what law looks like when the participating voices go silent.
+  - n: 8
+    scene: "Telemachus prays on the shore — Athena appears as Mentor"
+    force: divine-intervention
+    composer: Berlioz
+    work: "L'Enfance du Christ — 'L'Adieu des bergers' (The Shepherds' Farewell)"
+    decision: added
+    why: >
+      Telemachus walks away from the failed assembly to the sea and prays. Athena comes to him
+      disguised as Mentor — intimate, domestic, entirely unlike the eagles' theater over the
+      agora. This is divine-intervention in its gentlest register: a goddess arriving as a
+      friend, sitting beside a young man, telling him he already has what he needs inside him.
+      Berlioz's 'Shepherds' Farewell' is the paradigmatic music of a gentle, luminous divine
+      presence — choral, soft, completely without the expected grandeur of Strauss or Wagner.
+      The sudden color shift is from public failure to private comfort; the contrast is textural
+      rather than bombastic. A god becoming a friend is always a quiet revolution.
+  - n: 9
+    scene: "Telemachus gathers crew in secret — provisions loaded by night"
+    force: exile
+    composer: Dvořák
+    work: "Symphony No. 9 in E minor, 'From the New World' — II. Largo"
+    decision: added
+    why: >
+      Telemachus cannot use the assembly's doors — he goes quietly to the shore, gathers young
+      men he trusts, loads a black ship in secret, and prepares to leave Ithaca. He tells no
+      one, especially not Penelope. This is the departure from home not as heroic launch but as
+      necessary concealment — the exile's leaving, not the hero's sailing. Dvořák's Largo from
+      the New World Symphony is the music of one who has left and is already remembering: long
+      open intervals, a cor anglais singing above the strings with the sound of a homeland
+      already growing distant. Exile's requirement is wandering tonality and open intervals;
+      the Largo supplies these while maintaining the specific quality of Telemachus's secret:
+      tender, determined, already half-gone before the ship moves.
+  - n: 10
+    scene: "Athena sends sleep over the suitors — Telemachus slips past them"
+    force: fate
+    composer: Tchaikovsky
+    work: "Symphony No. 6 in B minor, 'Pathétique' — III. Allegro molto vivace (march)"
+    decision: added
+    why: >
+      Athena casts sleep over the suitors as Telemachus moves through the house. From this
+      moment forward, the departure cannot be stopped: the mechanism is in motion, the ship
+      is loaded, the goddess has cleared the path. Fate here is not catastrophe but inevitability
+      — the click of a mechanism engaging. Tchaikovsky's third movement of the Pathétique is
+      often mistaken for triumph, but it is something colder: a march that cannot stop, that
+      drives forward with a kind of blank necessity, rhythm overwhelming all other feeling.
+      Fate's requirement is inexorable motif and hammered insistence; the march provides this
+      without the eschatological finality that belongs to later books.
+  - n: 11
+    scene: "The ship moves out — Athena's wind fills the sail, Ithaca disappears"
+    force: ascent
+    composer: Vaughan Williams
+    work: "The Lark Ascending"
+    decision: added
+    why: >
+      The book ends with Telemachus on the open sea, a favoring wind from Athena, the ship
+      moving toward Pylos. It is not triumph — Ithaca is still occupied, his father still
+      missing — but it is genuine beginning. The young man has done what the assembly could
+      not do, and now he is moving. Vaughan Williams's The Lark Ascending is a rising line
+      that does not return — it moves upward, sustained, luminous, over an open landscape.
+      Ascent's requirement is rising sequence and luminous orchestration; this is its most
+      purely English instantiation, a solo voice lifting away from the earth into open sky.
+      Telemachus's ship and the lark share the same trajectory: up and out and into the light.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "expressly forbidden before Book XXII (the slaughter)"
+    why: >
+      The terminal-monumental grief register opens only at the catastrophe of the suitors'
+      death. Book II's losses are political and domestic, not yet mortal. The funeral-march
+      weight would destroy the book's actual register, which is civic frustration moving into
+      quiet resolve, not public mourning.
+  - composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    status: "expressly forbidden before Book XXII"
+    why: >
+      The Dies Irae is eschatological judgment. Book II ends with a ship departing, not a
+      slaughter completed. Reserve the Dies Irae for the catastrophe register of Books 22-24.
+  - composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    status: "demoted — fate-hammer belongs to heavier machinery"
+    why: >
+      The Fifth's opening was considered for the suitors' sleep scene but correctly belongs
+      to fate events of greater cosmic weight. Used in Iliad Book II for the armies marching;
+      do not repeat the same fate-piece across both epics' second books. Tchaikovsky's
+      Pathétique march is the correct register here: mechanical inevitability, not cosmic doom.
+  - composer: Brahms
+    work: "Symphony No. 4 — I. Allegro non troppo"
+    status: "demoted from law track — wrong for the assembly's formal opening"
+    why: >
+      Brahms's Fourth has autumnal weight appropriate to Mentor's rebuke but opens with
+      personal lyric utterance rather than civic ceremony. The assembly's opening needs
+      public architecture (Handel), not private elegy. The Fourth belongs to a later book
+      where law appears as memory and loss, not as institution being restored.
