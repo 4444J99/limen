@@ -51,6 +51,9 @@ def _scorecard(records: list[dict]) -> dict:
                                                    "wasted": 0, "spent": 0, "sunk": 0})
     repos: dict[str, dict] = defaultdict(lambda: {"spent": 0, "worth_it": 0, "wasted": 0, "sunk": 0})
     tot = {"tasks": 0, "worth_it": 0, "marginal": 0, "wasted": 0, "spent": 0, "sunk": 0}
+    # per-(lane, class) tallies — class = task.type ∪ labels — so routing can steer a lane away from the
+    # exact work-classes it wastes on, toward what it lands. [worth_it, total]
+    klass: dict[str, dict[str, list]] = defaultdict(lambda: defaultdict(lambda: [0, 0]))
 
     for r in records:
         g = r.get("grade")
@@ -60,6 +63,13 @@ def _scorecard(records: list[dict]) -> dict:
         repo = r.get("repo") or "?"
         spent = int(r.get("spent", 0) or 0)
         sunk = int(r.get("sunk", 0) or 0)
+        # tally this record against each of its classes (type + every label)
+        classes = {c for c in ([r.get("type")] + list(r.get("labels") or [])) if c}
+        for c in classes:
+            cell = klass[lane][c]
+            cell[1] += 1
+            if g == "worth_it":
+                cell[0] += 1
         for bucket, key in ((lanes[lane], None), (tot, None)):
             bucket["tasks"] += 1
             bucket[g] += 1
@@ -79,6 +89,25 @@ def _scorecard(records: list[dict]) -> dict:
         return d
 
     lane_board = {k: _enrich(dict(v)) for k, v in lanes.items()}
+    # waste/win classes: a lane WASTES a class if its worth-it rate there is below WASTE_RATE over a
+    # meaningful volume (>= WASTE_MIN); it WINS a class above WIN_RATE. Routing reads these to shed the
+    # waste-classes off the lane while keeping its winners. Thresholds env-tunable; data-driven, no pins.
+    waste_rate = float(os.environ.get("LIMEN_WASTE_RATE", "0.34"))
+    win_rate = float(os.environ.get("LIMEN_WIN_RATE", "0.6"))
+    min_vol = int(os.environ.get("LIMEN_WASTE_MIN", "5"))
+    for lane, board in lane_board.items():
+        waste, win = [], []
+        for c, (w, n) in klass.get(lane, {}).items():
+            if n < min_vol:
+                continue
+            rate = w / n
+            if rate < waste_rate:
+                waste.append((c, n))
+            elif rate >= win_rate:
+                win.append((c, n))
+        board["waste_classes"] = [c for c, _ in sorted(waste, key=lambda x: -x[1])]
+        board["win_classes"] = [c for c, _ in sorted(win, key=lambda x: -x[1])]
+
     # rank lanes by earns-its-keep: high success rate, low cost-per-shipped, low sunk.
     ranked = sorted(lane_board.items(),
                     key=lambda kv: (-kv[1]["success_rate"], kv[1]["cost_per_shipped"] or 1e9, kv[1]["sunk"]))

@@ -94,6 +94,10 @@ def grade(t: dict) -> dict | None:
         "sunk": spent if g == "wasted" else 0,
         "pr": pr,
         "note": note,
+        # class signals — what KIND of work this was, so routing can steer a lane away from the
+        # classes it wastes on (not blanket-demote a lane that wins elsewhere).
+        "type": t.get("type"),
+        "labels": t.get("labels") or [],
     }
 
 

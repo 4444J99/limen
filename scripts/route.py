@@ -175,6 +175,42 @@ def _learned_weights() -> dict[str, float]:
     return weights
 
 
+def _task_classes(task: dict) -> set[str]:
+    """The work-classes of one task — its type plus every label. The ledger grades a lane per class,
+    so this is the key we look the lane's waste/win record up against."""
+    return {c for c in ([task.get("type")] + list(task.get("labels") or [])) if c}
+
+
+def _ledger_bias(task: dict) -> dict[str, float]:
+    """Steer each lane AWAY from the work-classes the value ledger shows it wastes on — derived from
+    logs/ledger.json (lanes[lane].waste_classes / .win_classes), so no lane name is pinned and it self-
+    corrects as performance changes ([[value-is-discovered-never-assumed]] is the input side; this acts
+    on the output side). Returns {lane: floor} for lanes that waste THIS task's class, applied as a low
+    weight so the lane is picked far less for that work — but never 0 (floored → never starved), and a
+    lane that WINS any of the task's classes is exempt (we don't shed jules's revenue work just because
+    it also wastes generic 'code'). Gated by LIMEN_LEDGER_BIAS (default on); fail-open to {} (= today's
+    routing) on any missing/torn ledger."""
+    if os.environ.get("LIMEN_LEDGER_BIAS", "1") != "1":
+        return {}
+    floor = float(os.environ.get("LIMEN_LEDGER_BIAS_FLOOR", "0.2"))
+    try:
+        lanes = json.loads((ROOT / "logs" / "ledger.json").read_text()).get("lanes", {})
+    except Exception:
+        return {}
+    classes = _task_classes(task)
+    if not classes:
+        return {}
+    bias: dict[str, float] = {}
+    for lane, d in lanes.items():
+        if not isinstance(d, dict):
+            continue
+        if classes & set(d.get("win_classes") or []):
+            continue  # this lane LANDS this kind of work — never shed it
+        if classes & set(d.get("waste_classes") or []):
+            bias[lane] = floor
+    return bias
+
+
 def _pick_local(
     task: dict,
     health: dict[str, bool],
@@ -202,7 +238,9 @@ def _pick_local(
     if not candidates:
         return None
 
-    weights = _learned_weights()  # {} unless LIMEN_SI_APPLY=1 -> pure budget+runway split
+    # learned (self-improve) weights, then ledger bias on top — the ledger sheds a lane from the
+    # work-classes it wastes on (opencode off code/build-out here; it still won deploy above). Bias wins.
+    weights = {**_learned_weights(), **_ledger_bias(task)}
 
     def load(v: str) -> float:
         b = budget.get(v, 0) or 1
@@ -302,7 +340,13 @@ def route_task(
     agents, reasons = _capable_agents(task, health, planned_remaining, workdir)
     extended = [a for a in agents if a not in LOCAL_CHECKOUT_AGENTS]
     if extended:
-        pick = min(extended, key=lambda a: (assigned.get(a, 0), PAID_AGENT_ORDER.index(a)))
+        # ledger bias here steers jules off the busywork classes it wastes (coverage/docs/...) while
+        # KEEPING it for its winners (revenue/product/ship-now) and for any repo where it's the only
+        # capable lane (the penalty only reorders — min() still picks it when it's the sole option, so
+        # a no-local-checkout repo is never stranded). [[no-never-happens-again]]
+        bias = _ledger_bias(task)
+        pick = min(extended, key=lambda a: (1 if bias.get(a, 1.0) < 1.0 else 0,
+                                            assigned.get(a, 0), PAID_AGENT_ORDER.index(a)))
         return pick, reasons[pick]
     return "unroutable", "no reachable capable paid lane"
 
@@ -334,7 +378,7 @@ def main() -> int:
     # Remote/issue lanes (jules/copilot/github_actions/warp/oz) self-dispatch and aren't constrained.
     _lanes_env = os.environ.get("LIMEN_LANES")
     if _lanes_env:
-        _dispatchable = {l.strip() for l in _lanes_env.split(",") if l.strip()} | {"jules"}
+        _dispatchable = {ln.strip() for ln in _lanes_env.split(",") if ln.strip()} | {"jules"}
         health = {
             k: (v and (k in _dispatchable or k not in LOCAL_CHECKOUT_AGENTS))
             for k, v in health.items()

@@ -188,6 +188,14 @@ def render_html(v):
         lane_rows += (f"<tr><td><b>{_esc(lane)}</b></td><td>{d.get('tasks',0)}</td>"
                       f"<td><span style='color:{bar};font-weight:700'>{sr}%</span></td>"
                       f"<td>{d.get('sunk',0)}</td><td>{cps if cps is not None else '—'}</td></tr>")
+    # lane steering: which lanes are being shed from which work-classes (the ledger→routing loop)
+    steer = []
+    for lane, d in val.get("lanes", {}).items():
+        wc = d.get("waste_classes") or []
+        if wc:
+            steer.append(f"{_esc(lane)} ⤼ {_esc(', '.join(wc[:4]))}")
+    steer_html = (f'<div class="mut" style="margin-top:8px">steering away: {" · ".join(steer)}</div>'
+                  if steer else "")
 
     pres = v["present"]
     board = " · ".join(f"{k} {n}" for k, n in sorted(pres["board"].items(), key=lambda x: -x[1]))
@@ -249,6 +257,7 @@ def render_html(v):
    <div class="mut">{_esc(val.get('verdict') or 'no ledger yet — runs each heal beat')}</div>
    <table><thead><tr><th>lane</th><th>tasks</th><th>worth-it</th><th>sunk</th><th>cost/ship</th></tr></thead>
    <tbody>{lane_rows or '<tr><td class=mut colspan=5>scoring…</td></tr>'}</tbody></table>
+   {steer_html}
  </div>
 
  <div class="grid">
