@@ -64,6 +64,12 @@ TEMPLATES = [
 # statuses that count as "this (repo,lever) is already being worked" — don't duplicate those.
 _ACTIVE = {"open", "dispatched", "in_progress", "needs_human"}
 
+# The lanes the FLEET dispatcher can actually serve. github_actions/warp/oz are CI/service triggers,
+# NOT fleet-dispatchable — a queue full of those is NOT a full fleet queue (the overnight idle bug:
+# 79 github_actions/oz tasks made the floor look met while the dispatcher saw nothing to run). "any"
+# is routable (the router picks a live lane). Keep this in sync with the heartbeat LANES.
+_DISPATCH_LANES = {"codex", "opencode", "agy", "claude", "gemini", "jules", "any"}
+
 
 def _org_repos() -> list[str]:
     """The full candidate set = EVERY non-fork, non-archived repo in the org(s) — so the generator
@@ -131,16 +137,22 @@ def main() -> int:
     lf = load_limen_file(path)
     tasks = lf.tasks
 
-    # Floor on ROUTABLE open work, not total open. A queue held above floor purely by tasks stuck
-    # on a dead lane (e.g. jules exhausted → 67 unroutable) must NOT block coverage generation —
-    # otherwise the widened generator never fires while jules is down and dark repos stay uncovered.
-    # Count only open tasks whose target lane can actually produce right now.
+    # Floor on ROUTABLE-BY-THE-FLEET open work, not total open. Two ways a "full" queue can be a lie:
+    #   1. tasks stuck on a dead lane (e.g. jules exhausted → unroutable RIGHT NOW), and
+    #   2. tasks bound to a non-fleet lane (github_actions/warp/oz) the dispatcher never serves.
+    # Either masks an empty fleet queue → the generator never fires and the tank sits full while dark
+    # repos stay uncovered (the overnight idle bug). Count only open tasks on a LIVE DISPATCH lane.
     try:
         from limen.dispatch import _down_lanes
         _dead = _down_lanes()
     except Exception:
         _dead = set()
-    open_now = sum(1 for t in tasks if t.status == "open" and (t.target_agent or "any") not in _dead)
+    open_now = sum(
+        1 for t in tasks
+        if t.status == "open"
+        and (t.target_agent or "any") in _DISPATCH_LANES
+        and (t.target_agent or "any") not in _dead
+    )
     if open_now >= args.floor:
         print(f"queue healthy: routable-open={open_now} >= floor={args.floor} — nothing to generate.")
         return 0
@@ -157,13 +169,14 @@ def main() -> int:
         print("no candidate repos (org API unreachable + tasks.yaml empty) — nothing to generate.")
         return 0
 
-    # VALUE-TIER GATE: only generate work for the ranked revenue/conductor repos — never the ~174
-    # dead/zero-user repos that were the 70-80%-noise source. Fail-closed: an unconfigured tier
-    # generates NOTHING (better an idle feed beat than a flood of waste). value-repos.json is the tier.
+    # RANKED-TIER GATE (anti-flood, NOT starvation): build-out levers go ONLY to repos whose value is
+    # already DISCOVERED + ranked (value-repos.json) — so we don't dump 6 busywork levers × 174 repos.
+    # This is NOT "non-value repos get ignored": a repo with no discovered value isn't starved, it gets
+    # a DISCOVERY task from discover-value.py (the value is an OUTPUT of the fleet, not a precondition).
+    # value-repos.json is the OUTPUT of discovery, continuously re-ranked — never a hand-pinned allowlist.
     allowed = _allowed_repos()
     if not allowed:
-        print("value-tier: no value-repos.json configured — generating NOTHING (fail-closed). "
-              "Add repos to value-repos.json to fund fleet work.")
+        print("ranked tier empty — no build-out yet; discover-value.py will surface + rank value first.")
         return 0
     before = len(repos)
     repos = [r for r in repos if r in allowed]

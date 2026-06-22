@@ -22,11 +22,22 @@ set -uo pipefail
 export HOME="${HOME:-/Users/4jp}"
 export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 export LIMEN_ROOT="${LIMEN_ROOT:-$HOME/Workspace/limen}"
-# Prefer the daemon's dedicated venv python — a STABLE binary path (created with `venv --copies`)
-# so a one-time macOS Full Disk Access grant survives Homebrew python upgrades. The grant lets the
-# usage organ read vendor app-data (~/.codex, ~/.claude, ~/.gemini) without the TCC consent prompt.
-# Guarded: only prepended if present, so the daemon falls back to the system python otherwise.
-[ -x "$LIMEN_ROOT/.venv/bin/python3" ] && export PATH="$LIMEN_ROOT/.venv/bin:$PATH"
+# Pin the daemon to its OWN python — a STABLE binary path (created with `venv --copies`) so a single
+# one-time macOS Full Disk Access grant on that ONE binary survives Homebrew python upgrades and lets the
+# usage organ read vendor app-data (~/.codex, ~/.claude, ~/.gemini) WITHOUT the recurring TCC consent
+# prompt. Structural, not best-effort: prepend the venv AND verify python3 resolves inside it. If the venv
+# is missing we fall back to system python but LOG it loudly — so the daemon never silently runs an
+# ungranted interpreter that re-triggers the prompt, and never dead-stops. ([[no-never-happens-again]])
+LIMEN_VENV_PY="$LIMEN_ROOT/.venv/bin/python3"
+if [ -x "$LIMEN_VENV_PY" ]; then
+  export PATH="$LIMEN_ROOT/.venv/bin:$PATH"; hash -r 2>/dev/null || true
+  export LIMEN_PY="$LIMEN_VENV_PY"
+else
+  export LIMEN_PY="$(command -v python3 || echo python3)"
+  echo "$(date '+%F %T') WARN: $LIMEN_VENV_PY missing — using system python ($LIMEN_PY); the macOS TCC" \
+       "prompt may recur. Recreate the pinned interpreter: python3 -m venv --copies $LIMEN_ROOT/.venv" \
+       >> "$LIMEN_ROOT/logs/heartbeat.out.log" 2>/dev/null || true
+fi
 export LIMEN_TASKS="${LIMEN_TASKS:-$LIMEN_ROOT/tasks.yaml}"
 export LIMEN_WORKDIR="${LIMEN_WORKDIR:-$HOME/Workspace}"
 export LIMEN_ISOLATION="${LIMEN_ISOLATION:-worktree}"
@@ -84,6 +95,7 @@ C_HYGIENE="${LIMEN_BEAT_HYGIENE:-8}"; C_BACKUP="${LIMEN_BEAT_BACKUP:-48}"
 C_SYNC="${LIMEN_BEAT_SYNC:-2}"         # SELF-HEAL the substrate (re-converge checkout to the release)
 C_CORPUS="${LIMEN_BEAT_CORPUS:-24}"    # CONVERGE (distill his words toward ONE; expensive → rare)
 C_WEB="${LIMEN_BEAT_WEB:-4}"           # LEARN (refresh the visualized surfaces)
+C_REPORT="${LIMEN_BEAT_REPORT:-12}"    # RELAY (conducting report; self-limits to once per usage-day)
 LOCKD="$LIMEN_ROOT/logs/.queue.lock.d"   # shared with supervisory ops (two-scale safety)
 c=0
 play() { [ $(( c % $1 )) -eq 0 ]; }   # true on this voice's beat
@@ -158,7 +170,8 @@ while true; do
                            python3 -m limen release-stale --agent jules --hours 24 --apply 2>&1 | tail -1 || true; }
     play "$C_HEAL"    && python3 "$LIMEN_ROOT/scripts/recover.py" --apply 2>&1 | tail -1 || true   # HEAL
     play "$C_FEED"    && { python3 "$LIMEN_ROOT/scripts/mine-backlog.py" --limit "${LIMEN_MINE_LIMIT:-25}" --apply 2>&1 | tail -1 || true  # EXPLORE
-                           python3 "$LIMEN_ROOT/scripts/generate-backlog.py" --apply 2>&1 | tail -1 || true; }  # SELF-FEED: top queue to floor when mining is dry → never idle
+                           python3 "$LIMEN_ROOT/scripts/generate-backlog.py" --apply 2>&1 | tail -1 || true  # SELF-FEED: build-out levers on the ranked tier
+                           python3 "$LIMEN_ROOT/scripts/discover-value.py" --apply 2>&1 | tail -1 || true; }  # DISCOVER: no repo stays dark — surface latent value, burn the tank
     play "$C_BALANCE" && { python3 "$LIMEN_ROOT/scripts/route.py" --apply 2>&1 | tail -1 || true   # PLAN
                            if [ -n "$EFFECTIVE_LANES" ]; then
                              python3 "$LIMEN_ROOT/scripts/rebalance.py" --lanes "$EFFECTIVE_LANES" --apply 2>&1 | tail -1 || true
@@ -200,6 +213,7 @@ while true; do
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/money-view.py" 2>&1 | tail -1 || true   # revenue-first money view (no network, can't time out)
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/corpus-view.py" 2>&1 | tail -1 || true   # knowledge-base view: THE ONE + convergence activity (no network)
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/notify-events.py" 2>&1 | tail -1 || true   # push: your-gate ready / ship milestones
+  play "$C_REPORT"  && python3 "$LIMEN_ROOT/scripts/conducting-report.py" 2>&1 | tail -1 || true   # RELAY: did the fleet burn its full force? (once/day push — so you never have to ask)
   play "$C_WEB"     && bash "$LIMEN_ROOT/scripts/refresh-web.sh" 2>&1 | tail -2 || true   # web auto-refresh (best-effort; money.html is primary)
   # CAPTURE — get every workspace repo OFF disk into the canonical universal context (commit+push,
   # additive only). Implements the old backup voice; falls back to a legacy backup.sh if present.
