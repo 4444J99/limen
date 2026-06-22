@@ -311,7 +311,7 @@ works:
     original_file: japanese_original.txt
     translation_files: []
     source_rails: ["https://www.aozora.gr.jp/"]
-    main_question: "What is the interior life, beauty, and impermanence?"
+    main_question: "Can a consciousness attended to with enough care outlast the conditions of its own existence?"
     divisions: {kind: chapter, count: 54, label: "Chapter"}
     language: japanese
     order_indices: {chronological: 15, western_eastern: "M2", interleaved_phase: "III. Renaissance"}

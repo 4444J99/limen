@@ -6,16 +6,16 @@
 > [`../../dominant-force.yaml`](../../dominant-force.yaml). The publishable essay mirrors to
 > `../../essays/tale-of-genji/book-NN.md`. Status ✓ = the file exists.
 
-- **Main question:** What is the interior life, beauty, and impermanence?
+- **Main question:** Can a consciousness attended to with enough care outlast the conditions of its own existence?
 - **Tradition / script:** japanese / kana-kanji · **language lesson:** [`../../scripts/japanese.md`](../../scripts/japanese.md)
 - **Corpus:** `japanese/tale-of-genji` (japanese_original.txt)
 - **Source rail:** https://www.aozora.gr.jp/
 - **Divisions:** 54 × Chapter
-- **Progress:** 0/54 arcs authored
+- **Progress:** 1/54 arcs authored
 
 | Chapter | dominant force | status |
 | --: | --- | :--: |
-| 1 | (author) | ☐ |
+| 1 | (author) | ✓ |
 | 2 | (author) | ☐ |
 | 3 | (author) | ☐ |
 | 4 | (author) | ☐ |

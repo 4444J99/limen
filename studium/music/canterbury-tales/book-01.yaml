@@ -1,0 +1,183 @@
+# Canterbury Tales — General Prologue — curated music arc
+# THE GENERAL PROLOGUE: the world introduced as speech, type, and social comedy.
+work: canterbury-tales
+book: 1
+title: "Canterbury Tales — General Prologue: Spring, the Company, the Portraits"
+length_minutes: 87
+principle: >
+  Do not score the General Prologue as "medieval England" or "pilgrimage piety."
+  Score it as the moment where a single spring morning explodes into an entire social world —
+  renewal as premise, the Tabard as staging ground, and twenty-nine human beings rendered as
+  types who are also, disturbingly, individuals. The dominant motion is metamorphosis:
+  April changes the earth, the road changes people, and Chaucer's eye changes the estate
+  portrait into something the estate portrait was never supposed to be — satirical, alive,
+  fond, and complicit. Every figure is a performance; every portrait is a trap. The comedy
+  is not decoration. It IS the argument.
+force_arc: [metamorphosis, desire, desire, comedy, memory, desire, comedy, comedy, comedy, law, comedy]
+dominant_force: comedy
+tracks:
+  - n: 1
+    scene: "The April opening — spring as cosmic engine"
+    force: metamorphosis
+    composer: Debussy
+    work: "Prélude à l'après-midi d'un faune"
+    decision: added
+    why: >
+      'Whan that Aprille with his shoures soote / The droghte of March hath perced to the roote' —
+      the poem opens not with a narrator or a subject but with a season acting on the earth.
+      Debussy's Faun Prelude is the perfect analogue: warmth arriving, a world becoming
+      permeable and fluid, desire and movement stirring below the threshold of speech.
+      The flute's opening gesture is Chaucer's opening clause — something long-suppressed
+      beginning to move. Metamorphosis in its gentlest, most irresistible register.
+  - n: 2
+    scene: "Zephyr and the tender crops — the world made young"
+    force: desire
+    composer: Monteverdi
+    work: "L'Orfeo — Sinfonia (Act I)"
+    decision: added
+    why: >
+      The April opening continues with Zephyrus breathing life into 'holt and heeth,'
+      small birds singing all night with open eye, nature pricking their 'corages.'
+      Monteverdi's pastoral sinfonia carries exactly this register: a world in first-light
+      delight, desire structured as music, the body and the season in agreement. Orfeo is
+      the poem where song and spring are the same force. Chaucer's opening is too.
+  - n: 3
+    scene: "Then longen folk — pilgrimage as social desire"
+    force: desire
+    composer: Handel
+    work: "Messiah — 'He shall feed his flock' (Part I, No. 20)"
+    decision: added
+    why: >
+      'Thanne longen folk to goon on pilgrimages' — the turn from spring-physics
+      to human longing. Chaucer moves seamlessly from cosmology to sociology: the
+      same force that opens the buds drives people toward Canterbury. Handel's aria
+      is supplication and sweetness, a voice gathering a flock toward a destination —
+      pastoral, tender, communal. It catches the phrase 'palmers for to seken straunge strondes'
+      with its blend of piety and wanderlust. Not ironic yet. The irony will come.
+  - n: 4
+    scene: "The Tabard, the narrator, the fellowship by chance"
+    force: comedy
+    composer: Haydn
+    work: "String Quartet in C major, Op. 33 No. 3 'The Bird' — I. Allegro moderato"
+    decision: added
+    why: >
+      'Bifel that in that seson on a day / In Southwerk at the Tabard as I lay' —
+      the frame shifts from cosmic spring to a specific inn on a specific evening.
+      Twenty-nine strangers fall into fellowship 'by aventure.' Haydn's 'Bird' quartet
+      opens with the sociability of the Viennese salon: witty, light, alert to company,
+      slightly self-aware. The texture is plural — four voices finding arrangement —
+      which is exactly Chaucer's dramatic situation. Comedy here means the formal comedy
+      of social arrangement, not yet individual ridicule.
+  - n: 5
+    scene: "The Knight — the idealized type, worn armor, meek port"
+    force: memory
+    composer: Elgar
+    work: "Enigma Variations — Variation IX 'Nimrod'"
+    decision: added
+    why: >
+      The Knight is Chaucer's first portrait and his most formally composed: a man who
+      has ridden in fifteen mortal battles across the known Christian world, who 'never yet
+      no vilaynye ne sayde / In al his lyf unto no maner wight.' He is the type at its
+      noblest, but Chaucer notes his horse is 'nat gay' and his coat 'besmottered with his
+      habergeon.' Elgar's Nimrod is noble retrospection — the memory of greatness,
+      slightly elegiac, warm without being triumphant. The Knight is not ironic; he is
+      simply the thing that used to be the whole poem, before Chaucer invented something
+      better.
+  - n: 6
+    scene: "The Squire — youth, vanity, embroidered coat, sleepless for love"
+    force: desire
+    composer: Scarlatti
+    work: "Keyboard Sonata in D major, K. 119 (Allegro)"
+    decision: added
+    why: >
+      'Embrouded was he as it were a meede / Al ful of fresshe floures, white and reede.'
+      The Squire is the Knight's son, but his energy is entirely different: courtly, vain,
+      amorous, singing and fluting all day, sleeping no more than the nightingale. Scarlatti's
+      D major sonata is exactly this — a young man's bravura, quick and ornamental, pleased
+      with itself, brilliant. The ornamentation in the harpsichord mirrors the embroidery
+      on the Squire's coat.
+  - n: 7
+    scene: "The Prioress — courtly performance in a religious habit"
+    force: comedy
+    composer: Mozart
+    work: "Così fan tutte — Overture"
+    decision: added
+    why: >
+      Madame Eglentine's portrait is a sustained comic act: she speaks French 'after the
+      scole of Stratford atte Bowe,' she weeps for mice, she wears a brooch reading
+      'Amor vincit omnia.' She is performing refinement with total sincerity, which is
+      precisely Chaucer's comic mode — not mockery but the comedy of type pressing against
+      the limits of its pretension. Mozart's Così overture is playful irony: sparkling, slightly
+      mischievous, the comedy of people playing roles they half-believe. The Prioress would
+      recognize herself in it, which is the joke.
+  - n: 8
+    scene: "The Monk — the Rule flouted, fat swan, hunting-bells"
+    force: comedy
+    composer: Rossini
+    work: "The Barber of Seville — Overture"
+    decision: added
+    why: >
+      The Monk 'leet olde thynges pace / And heeld after the newe world the space.' He
+      hunts, he has fine horses, his bridle jingles like a chapel bell — the satirical
+      reversal is deliberate and comic. His dismissal of St. Augustine's rule ('Lat Austyn
+      have his swynk to hym reserved') is the poem's first great comic speech-act. Rossini
+      builds overtures from energy accumulating toward absurdity — the crescendo of a man
+      who is clearly, cheerfully wrong and knows it and doesn't care. The Monk and the
+      Barber of Seville occupy the same comic universe.
+  - n: 9
+    scene: "The Friar — 'wantoun and merye,' corruption as charm"
+    force: comedy
+    composer: Rameau
+    work: "Platée — Suite: Tambourins"
+    decision: added
+    why: >
+      Huberd the Friar is Chaucer's masterpiece of amiable corruption: he sells confessions,
+      arranges marriages 'of yonge wommen at his owene cost,' knows every tavern keeper,
+      and lisps 'for his wantownesse.' His eyes twinkle like stars on a frosty night.
+      Rameau's Platée is his comic ballet — a sustained act of burlesque in which pretension
+      is celebrated and exposed in the same gesture. The Tambourins carry exactly the Friar's
+      register: light, dance-driven, irresistibly charming, and entirely without moral weight.
+      Huberd performs piety the way Platée performs dignity — with great style and no self-awareness,
+      to an audience that is delighted in spite of itself.
+  - n: 10
+    scene: "The Clerk of Oxford — threadbare and learning-drunk"
+    force: law
+    composer: Bach
+    work: "Well-Tempered Clavier, Book I — Prelude No. 1 in C major (BWV 846)"
+    decision: added
+    why: >
+      'A Clerk ther was of Oxenford also / That unto logyk hadde longe ygo.' He has twenty
+      books instead of fine clothes, prays for the souls of those who gave him money to
+      study, and speaks only what is necessary, 'short and quyk and ful of hy sentence.'
+      Bach's C major Prelude is pure structural clarity — not cold, but economical,
+      self-contained, form without decoration. The Clerk and the Prelude share the same
+      ideal: maximum meaning from minimum material. 'Gladly wolde he lerne, and gladly teche.'
+  - n: 11
+    scene: "The procession of types — Wife of Bath ahead, Host as master"
+    force: comedy
+    composer: Offenbach
+    work: "Orpheus in the Underworld — 'Galop infernal' (Can-Can)"
+    decision: "added as ironic exit from the Prologue into the road"
+    why: >
+      The General Prologue ends not with a single portrait but with the Host's proposal:
+      let each tell a tale on the road to Canterbury and back, with a prize supper for the
+      best. The company agrees. They ride out. The Prologue's entire comic logic —
+      types from every estate, all headed somewhere holy, all carrying their contradictions —
+      now becomes a moving procession. Offenbach's Galop is the sound of a crowd in
+      motion, slightly too fast, slightly ridiculous, irresistibly energetic. It exposes
+      the Prologue's secret: this isn't a pious pilgrimage — it's a party. Chaucer knew it.
+demoted:
+  - composer: Vivaldi
+    work: "The Four Seasons — 'Spring' (La primavera), Op. 8 No. 1"
+    status: "demoted; too literal for Track 1"
+    why: >
+      The obvious choice for the April opening, and precisely wrong. Vivaldi literalizes
+      spring as pastoral weather; Chaucer uses spring as a cosmic argument for human motion.
+      The Faun Prelude catches the deeper register — not birds and brooks but the irresistible
+      stirring of desire.
+  - composer: Strauss
+    work: "Also sprach Zarathustra — opening"
+    status: "wrong register for an opening division; hold for later works with cosmological weight"
+    why: >
+      Too monumental, too teleological. Chaucer's spring is not cosmic revelation — it is
+      cosmic permission. The difference matters.

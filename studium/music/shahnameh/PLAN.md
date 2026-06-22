@@ -11,11 +11,11 @@
 - **Corpus:** `None` (translations only)
 - **Source rail:** https://ganjoor.net/ferdousi/shahname/
 - **Divisions:** 50 × Cycle
-- **Progress:** 0/50 arcs authored
+- **Progress:** 1/50 arcs authored
 
 | Cycle | dominant force | status |
 | --: | --- | :--: |
-| 1 | (author) | ☐ |
+| 1 | (author) | ✓ |
 | 2 | (author) | ☐ |
 | 3 | (author) | ☐ |
 | 4 | (author) | ☐ |

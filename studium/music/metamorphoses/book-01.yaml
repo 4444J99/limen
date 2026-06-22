@@ -1,0 +1,232 @@
+# Metamorphoses — Book I — curated music arc
+# Score the OPENING — not the poem "in general":
+# cosmogony, four ages, flood, Daphne.
+# Register rule: do not blow terminal/apotheosis weight here. This is the world's first breath.
+work: metamorphoses
+book: 1
+title: "Metamorphoses Book I: Chaos, Ages, Flood, Laurel"
+length_minutes: 88
+principle: >
+  Do not score Book I as "a collection of myths." Score it as the moment where
+  matter itself becomes unstable — where form is revealed as something the world
+  cannot hold for long. The cosmogony gives order; the four ages dissolve it; the
+  flood erases it; Daphne refuses it. The dominant force is metamorphosis, and
+  metamorphosis here is not magic trick but ontological argument: nothing in the
+  world — not gold, not human, not god, not body — is immune to transformation.
+  Ovid opens not with wrath but with the premise that everything is already turning
+  into something else. Score that premise, not its consequences.
+force_arc: [metamorphosis, law, fate, divine-intervention, fate, exile, metamorphosis, metamorphosis, desire, metamorphosis]
+dominant_force: metamorphosis
+tracks:
+  - n: 1
+    scene: "Invocation / In nova fert animus — the poem's opening claim"
+    force: metamorphosis
+    composer: Debussy
+    work: "Prélude à l'après-midi d'un faune"
+    decision: added
+    why: >
+      Ovid's first line is a manifesto: "In nova fert animus mutatas dicere formas /
+      corpora" — My mind drives me to speak of forms changed into new bodies. This is
+      not a conventional epic invocation to the Muse; it is a claim about what language
+      does and what the cosmos is. The Prélude begins with a single unaccompanied flute
+      — a line in pure form — and then dissolves the line through harmonic color-shifts
+      that make it impossible to locate tonally. Debussy achieves in music exactly what
+      Ovid claims for the poem: the fixed thing (melody, form, body) begins its change
+      the moment it appears. Metamorphosis requires changing orchestral color and fluid
+      harmony; the Prélude is its most concentrated instantiation.
+  - n: 2
+    scene: "Cosmogony — chaos to ordered world"
+    force: law
+    composer: Haydn
+    work: "The Creation — Overture and 'Representation of Chaos'"
+    decision: added
+    why: >
+      Before the gods separate the elements, there is chaos — formless, undifferentiated,
+      a mass in which land and sea and sky are undivided. Haydn composed music for exactly
+      this scene, and the 'Representation of Chaos' is perhaps the only piece in the
+      repertoire that knows what it is attempting: a world before grammar. The harmony
+      refuses to settle into a key; the orchestral mass is dense and unresolved. Then it
+      clarifies — "And there was light" — and the order arrives. The sequence maps directly
+      onto Ovid's cosmogony: chaos, divine separation of elements, ordered world. Law
+      requires formal clarity, repetition, architecture — but here law arrives at the end,
+      as conquest of prior formlessness. The sequence is uniquely suited.
+  - n: 3
+    scene: "The Four Ages — gold, silver, bronze, iron"
+    force: fate
+    composer: Shostakovich
+    work: "Symphony No. 5 — I. Moderato"
+    decision: added
+    why: >
+      The four ages of Ovid are not mythology but diagnosis: gold (ease, innocence,
+      spring), silver (seasons begin, first shelter), bronze (harder, more quarrelsome),
+      iron (war, treachery, greed, no shame). Each age is a diminishment — a falling
+      away from origin. Shostakovich's Fifth Symphony opens under the weight of
+      accumulated historical pressure: a descending theme that cannot fully arrest
+      its own decline, formal architecture that holds but only barely, grimly. The
+      Moderato is fate as inexorable slow erosion — the right register for a cosmic
+      sequence of loss in which the mechanism of decline cannot be questioned or
+      stopped, only watched. Fate requires inexorable motif and hammered insistence;
+      here it is the insistence of entropy.
+  - n: 4
+    scene: "The Giants attempt heaven — Jupiter's wrath and their destruction"
+    force: divine-intervention
+    composer: Beethoven
+    work: "Symphony No. 9 — II. Scherzo, Molto vivace"
+    decision: added
+    why: >
+      The Giants pile Pelion on Ossa to storm Olympus. Jupiter strikes them down with
+      thunderbolts. From their blood springs a new race of mankind — already violent,
+      already born from impiety. This is not a domestic divine intervention; it is
+      a cosmic police action, a force that expresses divine power through sudden and
+      total destruction. The Ninth's Scherzo is Beethoven's most percussively violent
+      movement: the timpani lead with an aggression that sounds like something hammering
+      the world into shape, and the brass-strings contrast is extreme — it arrives with
+      the shock of a force from above, undeniable, arbitrary-seeming, total. The Scherzo
+      has none of the Scherzo's usual dance-character; it is sheer energetic force,
+      which is exactly Jupiter here. Divine-intervention requires sudden color shift
+      and brass/strings contrast; this movement supplies both at maximum.
+  - n: 5
+    scene: "Lycaon transformed — impiety punished, the wolf"
+    force: fate
+    composer: Berlioz
+    work: "Symphonie fantastique — IV. 'March to the Scaffold'"
+    decision: added
+    why: >
+      Jupiter visits Lycaon in disguise to test whether the reports of human impiety are
+      accurate. Lycaon, not knowing his guest, tries to murder him in his sleep and serves
+      him human flesh. Jupiter overturns the table and destroys the palace with lightning.
+      Lycaon flees howling — and his howl is already a wolf's howl. His form has changed
+      before he has finished running. The March to the Scaffold is Berlioz at his most
+      sinister-ceremonial: the procession toward judgment is stately and dressed in official
+      music, right up to the drop. The transformation here is punitive — not a fluid
+      change but a sentencing. Berlioz gives the register of doom-that-arrives-as-ceremony,
+      which is exactly Jupiter's impersonation-as-test followed by the judicial
+      verdict. Fate of this kind is not a gift but a sentencing — inexorable, ceremonial, final.
+  - n: 6
+    scene: "The Flood — Jupiter drowns the world"
+    force: exile
+    composer: Sibelius
+    work: "Symphony No. 7 in C — single movement, opening through climax"
+    decision: added
+    why: >
+      Jupiter calls the gods to council, announces that the human race must be destroyed,
+      and the flood comes — not fire (which might set the heavens burning) but water.
+      Neptune releases the rivers; the sea rises over the plains; humanity drowns. Only
+      Deucalion and Pyrrha remain on Parnassus. The Seventh Symphony of Sibelius is the
+      most unified large-scale orchestral work of the 20th century — a single unbroken
+      movement in which a trombone melody functions as a kind of persistent tonality while
+      the rest of the orchestra ebbs and floods around it. This structural metaphor —
+      a single principle persisting through total immersion — is the right music for
+      a flood whose meaning is not simple destruction but cosmic reset. Exile here is
+      not the exile of a single person but of a species: humanity expelled from the world
+      it inhabited, adrift on water. The Sibelius has exactly the wandering tonality and
+      open intervals of exile — the trombone melody persists, recognizable, the last thread
+      of a world-form dissolving into total immersion.
+  - n: 7
+    scene: "Deucalion and Pyrrha — stones become people"
+    force: metamorphosis
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      The flood recedes. Deucalion and Pyrrha climb down from Parnassus, pray at the
+      temple of Themis. The goddess tells them to throw their mother's bones behind them.
+      They understand: the earth is their mother; stones are her bones. They throw the
+      stones. The stones behind Deucalion become men; those behind Pyrrha become women.
+      A world is made, again, from something below the threshold of life. Pärt's Spiegel
+      im Spiegel — mirror in the mirror — is a piano and violin piece of absolute
+      clarity: the piano marks the same arpeggio pattern while the violin holds long,
+      searching tones above it. The effect is emergence: something taking form out of
+      near-stillness, life assembling itself from geometric patience. The piece has the
+      stillness and verticality of revelation, which is the mode of this scene — something
+      miraculous occurring with religious quietness, without fanfare. The stones become
+      people and the world begins, again, in silence.
+  - n: 8
+    scene: "Earth's heat generates new creatures — the Python"
+    force: metamorphosis
+    composer: Stravinsky
+    work: "The Firebird — 'Infernal Dance of King Kashchei'"
+    decision: added
+    why: >
+      After the flood, the earth — warm and wet from the receding water — generates
+      new creatures spontaneously from the mud and slime. Among them, the monstrous
+      Python, enormous, unprecedented, born from the churned earth. Apollo finds it
+      and kills it with his arrows, and institutes the Pythian Games as memorial. The
+      'Infernal Dance' from The Firebird is not the same piece as the Rite of Spring's
+      Sacrificial Dance: it is wild, rhythmically irregular, percussive, but with a
+      demonic energy rather than ritual weight. The creatures that emerge from mud
+      do not emerge with ceremony; they emerge with chaotic vitality. The Python's
+      combat with Apollo is mythological action at its most kinetic — not a ritual
+      but a hunt. The Infernal Dance has both the metamorphic energy of spontaneous
+      creation and the violent directness of the combat. Metamorphosis here is not
+      change through divine judgment but change through fertility's excess.
+  - n: 9
+    scene: "Apollo's new pride — the golden bow that just killed a serpent"
+    force: desire
+    composer: Strauss
+    work: "Don Juan — opening"
+    decision: added
+    why: >
+      Apollo, fresh from killing Python with his golden bow, sees Cupid stringing a
+      smaller bow. He mocks the god: put down the weapons of a man of war, boy.
+      This is the trigger. Cupid's revenge is to shoot Apollo with the gold-tipped
+      arrow of desire and Daphne with the lead-tipped arrow of aversion. The
+      premise of the scene — pride in one's own power immediately preceding its
+      total reversal — is the same engine as Don Juan: a man who believes himself
+      master of the forces that will undone him, striding into the opening phrase
+      of a piece that begins with total assurance and escalating drive. Strauss's
+      opening is desire as expansive self-certainty, the precondition for the
+      catastrophe that follows. Desire requires chromatic longing and deferred
+      resolution; the Don Juan opening has chromatic longing beneath the surface
+      of its confident motion — the desire is there, it is merely not yet
+      admitted as desire.
+  - n: 10
+    scene: "Apollo pursues Daphne — she becomes the laurel"
+    force: metamorphosis
+    composer: Ravel
+    work: "Daphnis et Chloé — Suite No. 2, 'Lever du jour' (Daybreak)"
+    decision: added
+    why: >
+      Apollo chases Daphne. She is faster than most, but he is a god and he is
+      gaining. She calls on her father Peneus and on the earth to transform her,
+      to take away the form that has made her desirable. Even as she speaks, a
+      bark closes around her body, her hair becomes leaves, her arms become branches.
+      She is the laurel. Apollo stops, embraces the tree — it trembles — and claims
+      her as his own. The laurel will be his tree: crowning his lyre, his quiver,
+      his head, the heads of victors. Ravel's 'Lever du jour' opens with a wash of
+      sound — flutes, strings, harps — in which individual instruments emerge from
+      a texture of light. The dawn does not arrive; it appears, distributed through
+      the whole orchestra, shifting, luminous, the hard edges of night dissolving.
+      This is the right music for transformation by attrition — the body that
+      becomes a tree does not arrive at the tree suddenly but yields to it
+      gradually, the self dissolving into form. The 'Lever du jour' is metamorphosis
+      as emergence, desire meeting its final refusal in a change that is somehow
+      both death and survival. Metamorphosis requires changing orchestral color
+      and fluid harmony; Ravel here achieves the effect of form dissolving into
+      form.
+demoted:
+  - composer: Strauss
+    work: "Also sprach Zarathustra — 'Sunrise' opening"
+    status: "demoted; too apotheotic for an opening division"
+    why: >
+      The sunrise of Also sprach is the canonical musical Big Bang — but Book I of
+      the Metamorphoses is not the Big Bang as triumph. It is the Big Bang followed
+      immediately by decline and destruction. Using the Strauss opening would promise
+      an ascent the book does not sustain; save it for a later book whose dominant
+      force is ascent or revelation.
+  - composer: Mahler
+    work: "Symphony No. 2 — V. Resurrection finale"
+    status: "save for Book XV (the final book, Pythagoras, apotheosis of Caesar, Ovid's epilogue)"
+    why: >
+      The Resurrection finale is the apex of Western musical apotheosis. It belongs
+      at the end of the poem, not the beginning. Book I ends with a girl becoming a
+      tree, which is not a resurrection.
+  - composer: Wagner
+    work: "Das Rheingold — Prelude"
+    status: "declined; used for Iliad Book I's Thetis-before-Zeus scene"
+    why: >
+      The Rheingold Prelude is the right music for a world-system coming into being
+      from a single element. Haydn's Chaos is superior for Ovid's cosmogony because
+      it includes the moment of divine ordering, which the Rheingold does not —
+      and because re-using Wagner from the Iliad set flattens the distinction
+      between the two works' registers.

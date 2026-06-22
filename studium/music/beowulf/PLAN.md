@@ -11,11 +11,11 @@
 - **Corpus:** `medieval/beowulf` (old_english_original.txt)
 - **Source rail:** https://www.sacred-texts.com/neu/ascp/a04_01.htm
 - **Divisions:** 43 × Fitt
-- **Progress:** 0/43 arcs authored
+- **Progress:** 1/43 arcs authored
 
 | Fitt | dominant force | status |
 | --: | --- | :--: |
-| 1 | (author) | ☐ |
+| 1 | (author) | ✓ |
 | 2 | (author) | ☐ |
 | 3 | (author) | ☐ |
 | 4 | (author) | ☐ |

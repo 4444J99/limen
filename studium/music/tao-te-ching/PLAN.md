@@ -11,11 +11,11 @@
 - **Corpus:** `chinese-classical/tao-te-ching` (chinese_original.txt)
 - **Source rail:** https://ctext.org/dao-de-jing
 - **Divisions:** 81 × Chapter
-- **Progress:** 0/81 arcs authored
+- **Progress:** 1/81 arcs authored
 
 | Chapter | dominant force | status |
 | --: | --- | :--: |
-| 1 | (author) | ☐ |
+| 1 | (author) | ✓ |
 | 2 | (author) | ☐ |
 | 3 | (author) | ☐ |
 | 4 | (author) | ☐ |

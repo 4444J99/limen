@@ -1,0 +1,203 @@
+# Odyssey — Book I — curated music arc
+# THE gold-standard form. Converges with studium/music/iliad/book-01.yaml.
+work: odyssey
+book: 1
+title: "Odyssey Book I: The Man of Many Turns"
+length_minutes: 88
+principle: >
+  Do not score Book I as "a journey." Score it as the moment before return begins —
+  absence already stretched past the bearable point, and the world re-assembling around
+  a man who is not yet home. The proem names a type: πολύτροπον, the man of many turns.
+  Book I is not adventure; it is the diagnosis of a wound — absence's effect on a house,
+  a son, a wife held in suspension, and a hero held on an island by desire. The forces
+  are return (withheld), divine-intervention (already in motion), and memory (what the
+  household cannot stop rehearsing).
+force_arc: [return, memory, divine-intervention, supplication, exile, divine-intervention, metamorphosis, exile, memory, divine-intervention, return, memory, law]
+dominant_force: return
+tracks:
+  - n: 1
+    scene: "Proem — 'Tell me, Muse, of the man of many turns'"
+    force: return
+    composer: Schubert
+    work: "Symphony No. 8 in B minor — I. Allegro moderato ('Unfinished')"
+    decision: added
+    why: >
+      The Odyssey does not begin with war; it begins with a longing that cannot resolve.
+      Schubert's 'Unfinished' is the perfect instrument: it starts moving, accelerates toward
+      home, and cannot arrive — the symphony is formally incomplete, perpetually en route.
+      The proem announces a man who has 'suffered much on the sea' striving for νόστον,
+      homecoming. The first movement's opening — cellos growling in B minor, violins pleading
+      above — is the exact acoustic of striving without arrival.
+  - n: 2
+    scene: "The summary of wandering — many cities, many minds"
+    force: memory
+    composer: Elgar
+    work: "Enigma Variations — Variation IX 'Nimrod'"
+    decision: added
+    why: >
+      The proem does something unusual: it recapitulates before it begins. We hear of
+      Troy, of wandering, of the companions lost, before a single scene unfolds. That is
+      the voice of retrospective memory — not action but its residue. Elgar's Nimrod is
+      the memory of a man (his friend Jaeger), a feeling saturated with tenderness and
+      irreversibility. It is unhurried, personal, faded. The proem's 'πολλῶν δ' ἀνθρώπων
+      ἴδεν ἄστεα' — 'he saw the cities of many men' — is not triumph; it is inventory of a
+      life spent elsewhere.
+  - n: 3
+    scene: "Olympus in council — Zeus on human folly and Aegisthus"
+    force: divine-intervention
+    composer: Handel
+    work: "Music for the Royal Fireworks — Overture"
+    decision: added
+    why: >
+      The gods assemble while Poseidon is away at the Ethiopians' feast. Zeus opens by
+      complaining that mortals blame the gods for their own folly — using Aegisthus as
+      his example. This is not dark metaphysics; it is Olympian court politics, slightly
+      absurd in its self-congratulation. Handel's Fireworks Overture is sovereign display
+      tinged with ceremony and its own pomposity — Zeus addressing the immortals like a
+      chairman who has prepared his remarks.
+  - n: 4
+    scene: "Athena pleads for Odysseus to Zeus"
+    force: supplication
+    composer: Bach
+    work: "St Matthew Passion — 'Erbarme dich, mein Gott'"
+    decision: added
+    why: >
+      Athena's appeal to Zeus is the book's first act of supplication — 'my heart is rent
+      for wise Odysseus.' It is a plea made by a divine being on behalf of a mortal; it is
+      structurally the same gesture as Chryses before Agamemnon in Iliad Book I, but here
+      the supplicant wins. Bach's 'Erbarme dich' (Peter's aria after the denial) is an
+      exposed melodic line above a descending bass: suspended cadence, petition that has not
+      yet received its answer. The cello obbligato is Athena's voice — insistent, tender,
+      refusing to stop.
+  - n: 5
+    scene: "Poseidon's absence / the sea as cage"
+    force: exile
+    composer: Sibelius
+    work: "Symphony No. 7 in C major — single movement (opening)"
+    decision: added
+    why: >
+      Poseidon is absent — feasting far away — but his enmity still structures everything:
+      Odysseus cannot move because the sea-god hates him. Book I establishes the sea not as
+      freedom but as a locked corridor. Sibelius's Seventh opens with a long trombone theme
+      that seems to emerge from nowhere — tonally restless, wandering in register, the
+      harmonic equivalent of open ocean with no safe port. The exile force here is not
+      dramatic flight but structural imprisonment: every direction leads to water.
+  - n: 6
+    scene: "Zeus agrees — the gods decree Odysseus shall return"
+    force: divine-intervention
+    composer: Wagner
+    work: "Das Rheingold — Prelude"
+    decision: added
+    why: >
+      Zeus agrees: let Hermes go to Calypso, let Odysseus return. The decree is not yet
+      the return — it is the mechanism being set in motion, the cosmic machinery engaging.
+      Das Rheingold's Prelude grows from a single E-flat bass note into a world-system over
+      four minutes: this is what it sounds like when the universe is re-arranged by a divine
+      council. The decision is not heroic; it is administrative — the gears of fate shifting
+      by vote.
+  - n: 7
+    scene: "Athena descends to Ithaca, disguised as Mentes"
+    force: metamorphosis
+    composer: Debussy
+    work: "Prélude à l'après-midi d'un faune"
+    decision: added
+    why: >
+      Athena's descent to Ithaca is one of the poem's most delicate movements: a goddess
+      in disguise, arriving at a threshold, transforming herself into a stranger bearing
+      knowledge. Debussy's Faune opens with the solo flute's ambiguous melodic phrase —
+      neither quite here nor there, present but blurred, an arrival that feels like dream.
+      The disguise is the music: indeterminate, shimmering, a presence you cannot quite name.
+      The whole scene of Athena-as-Mentes has this quality — she is not who she appears to be,
+      and the scene's affect is both domestic and slightly uncanny.
+  - n: 8
+    scene: "The suitors at feast — disorder in Odysseus's house"
+    force: exile
+    composer: Stravinsky
+    work: "The Rake's Progress — Prelude"
+    decision: added
+    why: >
+      Telemachus sees the suitors feasting in his father's house. They are not villains yet —
+      they are simply there, filling the space of absence with appetite. Stravinsky's Rake's
+      Progress Prelude is neoclassical in idiom but with a sourness underneath the elegance —
+      a world of pleasure-seeking, appetite, disorder dressed in courtly form. The suitors are
+      not Ithaca; they are the hole where Ithaca used to be.
+  - n: 9
+    scene: "Telemachus and Mentes / the sleeping memory of a father"
+    force: memory
+    composer: Fauré
+    work: "Requiem — 'In Paradisum'"
+    decision: added
+    why: >
+      Telemachus tells the stranger-Athena: 'Men say he is my father; I cannot know — no
+      one knows his own begetting.' This is the wound at the book's center: the son who
+      cannot confirm his father exists. Fauré's 'In Paradisum' is the music of the barely
+      remembered — suspended, luminous, hovering between presence and absence. It is not
+      grief, exactly; it is the affect of holding a memory you cannot fully trust, attending
+      to someone who is not there.
+  - n: 10
+    scene: "Athena reveals herself and prophesies the father's return"
+    force: divine-intervention
+    composer: Messiaen
+    work: "Quatuor pour la fin du temps — I. Liturgie de cristal"
+    decision: added
+    why: >
+      The moment Athena-as-Mentes says: 'your father will return' is the book's pivot —
+      the first time the word νόστος is made into a promise rather than a longing. Messiaen's
+      'Liturgie de cristal' opens the Quartet for the End of Time with simultaneous, independent
+      melodic lines that never quite coincide — a crystalline revelation, time suspended, each
+      instrument in its own eternity. Athena's prophecy works this way: it is a pronouncement
+      from outside ordinary time, both certain and untethered from the present.
+  - n: 11
+    scene: "Telemachus rouses himself — 'I will not endure this'"
+    force: return
+    composer: Beethoven
+    work: "Symphony No. 7 — II. Allegretto"
+    decision: added
+    why: >
+      Telemachus, emboldened by Athena's visit, begins to act. He is not yet his father's
+      son in deed, but he is turning. Beethoven's Seventh Allegretto is a processional with
+      weight — not triumphant, not funereal, but purposeful. It has direction without fanfare:
+      the slow cumulative gathering of will. Telemachus standing up to the suitors is not yet
+      a victory, but it is the decision to move. The Allegretto is the sound of that decision
+      accumulating in the bones.
+  - n: 12
+    scene: "The suitors' feast, bard singing of Troy, Penelope's grief"
+    force: memory
+    composer: Rachmaninoff
+    work: "Vocalise, Op. 34 No. 14"
+    decision: added
+    why: >
+      Penelope descends and asks the bard Phemius to stop singing of the Greeks' return from
+      Troy — the song causes her pain because she remembers Odysseus. This is the poem's first
+      statement of memory as wound, and it is Penelope's wound specifically: the news keeps
+      arriving and the person it concerns does not. Rachmaninoff's Vocalise is a wordless voice
+      — textless longing, loss without a name, melody that cannot find its conclusion.
+  - n: 13
+    scene: "Telemachus sends Penelope upstairs — his house, his father's hall"
+    force: law
+    composer: Brahms
+    work: "Symphony No. 1 — IV. Adagio — Un poco allegretto e grazioso (transition into finale)"
+    decision: added
+    why: >
+      Telemachus asserts, for the first time, his claim to authority: 'speech belongs to men;
+      go to your rooms.' This is not misogyny as the poem means it — it is the assertion of
+      household order, the son claiming his father's role before the father has returned. Brahms's
+      First Symphony finale — the string chorale that opens the fourth movement before the famous
+      walking theme — is authority being reclaimed from disorder: not yet triumphant, but formal,
+      structured, measured. The rule of the house being stated against chaos.
+demoted:
+  - composer: Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    status: "reserved for a later book — Odysseus on Ogygia, weeping at the sea's edge"
+    why: >
+      Book I establishes absence but does not yet fully inhabit it. The Adagietto's private
+      inwardness belongs closer to Book V, where we first see Odysseus himself — sitting on
+      Calypso's shore, weeping toward the horizon. Do not deploy it here, where the texture
+      is political and Olympian rather than private and marine.
+  - composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    status: "demoted — fate-hammer is too blunt for this book's texture"
+    why: >
+      Book I's divine machinery is deliberate and somewhat bureaucratic, not fateful in
+      the hammered sense. The council of gods deciding Odysseus's return is a committee
+      meeting, not a cosmic blow. Save the Fifth's opening for moments of inexorable doom.

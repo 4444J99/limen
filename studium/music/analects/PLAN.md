@@ -11,11 +11,11 @@
 - **Corpus:** `chinese-classical/analects` (chinese_original.txt)
 - **Source rail:** https://ctext.org/analects
 - **Divisions:** 20 × Book
-- **Progress:** 0/20 arcs authored
+- **Progress:** 1/20 arcs authored
 
 | Book | dominant force | status |
 | --: | --- | :--: |
-| 1 | (author) | ☐ |
+| 1 | (author) | ✓ |
 | 2 | (author) | ☐ |
 | 3 | (author) | ☐ |
 | 4 | (author) | ☐ |

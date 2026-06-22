@@ -1,0 +1,193 @@
+# Journey to the West — Chapter 1 — curated music arc
+# Format mirrors iliad/book-01.yaml (the gold-standard form).
+work: journey-to-the-west
+book: 1
+title: "Journey to the West Chapter 1: Stone, Waterfall, King"
+length_minutes: 82
+principle: >
+  Do not score Chapter 1 as "the adventures of the Monkey King." Score it as the moment where
+  raw nature differentiates itself into personhood — a stone on a mountain absorbs sun and moon
+  for aeons, bursts into an egg, and the egg becomes a creature who immediately demands to know
+  the secret of immortality. Three forces govern: metamorphosis (substance changing form),
+  comedy (the monkey's braggadocio, the waterfall dare, the instant kingship), and ascent
+  (the drive upward — into kingship, into the quest for deathlessness). Hold all funeral
+  register for later; this chapter ends in laughter and a feast.
+force_arc: [metamorphosis, metamorphosis, metamorphosis, comedy, comedy, metamorphosis, ascent, comedy, comedy, metamorphosis, ascent, ascent]
+dominant_force: metamorphosis
+tracks:
+  - n: 1
+    scene: "Primordial chaos before the stone / cosmological opening poem"
+    force: metamorphosis
+    composer: Sibelius
+    work: "The Oceanides (Aallottaret), Op. 73"
+    decision: added
+    why: >
+      Chapter 1 opens not with action but with cosmology — the poem on chaos, the twelve cosmic
+      cycles, heaven opening from the void. Sibelius's Aallottaret is pure fluid emergence: no
+      themes, no arrival, only surface and depth becoming each other. It gives the feel of a
+      world before it has decided to be a world — exactly the register Wu Cheng'en demands
+      before the stone appears on the mountain.
+  - n: 2
+    scene: "The sacred stone on the Mountain of Flowers and Fruit — absorbing heaven's essence"
+    force: metamorphosis
+    composer: Scriabin
+    work: "Poem of Ecstasy (Poème de l'extase), Op. 54"
+    decision: added
+    why: >
+      The stone has lain there since the parting of chaos and order, taking in sun, moon, and
+      star-energy across aeons. Scriabin's Poem of Ecstasy is the music of a substance
+      transforming from the inside — chromatic pressure that does not yet break through,
+      shimmering and accumulating. The stone does not move; it saturates. That is Scriabin's
+      register: not event but process, not object but charged atmosphere.
+  - n: 3
+    scene: "Stone bursts: the egg, then the monkey"
+    force: metamorphosis
+    composer: Stravinsky
+    work: "The Firebird — 'Infernal Dance of King Kashchei'"
+    decision: added
+    why: >
+      The stone cracks. An egg. Wind touches it and the egg becomes a stone monkey with gold
+      eyes whose gaze shoots light into Heaven itself. This is not a gentle birth — it is a
+      rupture in the fabric of the natural order. The Infernal Dance is eruption without
+      preamble: sudden, rhythmically violent, completely committed to its energy. The Jade
+      Emperor's sentinels look south and report a gold-light anomaly; the music should feel
+      like what they saw.
+  - n: 4
+    scene: "The monkey bows to the four directions / Jade Emperor dismisses the anomaly"
+    force: comedy
+    composer: Haydn
+    work: "Symphony No. 94 in G major ('Surprise') — II. Andante"
+    decision: added
+    why: >
+      The Jade Emperor's celestial court, informed of a stone-born monkey with blazing eyes,
+      replies: "Things born of Heaven-and-Earth's essence are unremarkable." The cosmic
+      bureaucracy shrugs. This is the novel's first irony: the protagonist's birth is treated
+      as an administrative non-event. Haydn's Surprise movement plays the same trick — serene,
+      orderly, and then a sudden jolt that the music immediately normalizes. The monkey bows
+      to the four directions; Heaven files it under 'misc.'
+  - n: 5
+    scene: "Life among the monkeys — seasons, fruit, play"
+    force: comedy
+    composer: Rameau
+    work: "Les Indes galantes — 'Air pour les esclaves africains'"
+    decision: added
+    why: >
+      The monkey lives among the troupe: leaping in trees, drinking from streams, playing in
+      the sun. Wu Cheng'en gives a full catalogue of their pleasures — chasing dragonflies,
+      building pagodas of sand, scratching fleas, combing fur. Rameau's dance music from
+      Les Indes galantes has exactly this quality: physical pleasure organized into buoyant
+      rhythm, multiple creatures moving at once, zero gravity. Comedy here is not a joke but
+      a mode of being — the paradise-state before the quest.
+  - n: 6
+    scene: "Discovery of the waterfall / the dare"
+    force: metamorphosis
+    composer: Debussy
+    work: "La mer — 'Jeux de vagues'"
+    decision: added
+    why: >
+      The monkeys trace the stream to its source and find a cataract of white silk dropping
+      from the mountain. 'Jeux de vagues' ('Play of Waves') is water as pure kinetics —
+      not stable, not crossed, not yet conquered, only moving. The waterfall in Chapter 1
+      is a threshold: behind it is the Water-Curtain Cave. But first the monkeys must see
+      it, desire it, and dare it. Debussy gives the threshold its proper shimmer before
+      the monkey leaps.
+  - n: 7
+    scene: "The monkey leaps through — the Water-Curtain Cave revealed"
+    force: ascent
+    composer: Beethoven
+    work: "Piano Sonata No. 23 in F minor ('Appassionata'), Op. 57 — III. Allegro ma non troppo"
+    decision: added
+    why: >
+      He shuts his eyes, crouches, and jumps. Inside: no water, no danger — a stone bridge,
+      carved furnishings, a tablet reading 'Mountain of Flowers and Fruit, Blessed Land;
+      Water-Curtain Cave, Celestial Grotto.' The Appassionata's finale begins not with
+      grandeur but with momentum: a figure that starts quiet and continuously accelerates
+      toward inevitability. The leap is not heroic; it is simply what he does — decisive,
+      unsurprised, immediately claiming what he finds. Beethoven's finale has that same
+      quality: it does not announce its magnitude; it simply arrives at it.
+  - n: 8
+    scene: "The monkey announces the cave — 'Great fortune! Great fortune!'"
+    force: comedy
+    composer: Rossini
+    work: "Il barbiere di Siviglia — Overture"
+    decision: added
+    why: >
+      He reappears through the waterfall, shakes himself off, and crows: "大造化！大造化！"
+      — "Great fortune! Great fortune!" He reports the cave with the enthusiasm of a real-estate
+      agent who has just found paradise. The other monkeys mob him with questions. Rossini's
+      Barber overture is this scene's music: irrepressible forward motion, comic crescendo,
+      a protagonist who is never less than fully pleased with himself. The gap between the
+      monkey's self-satisfaction and the actual magnitude of what he found is the chapter's
+      deepest joke.
+  - n: 9
+    scene: "The monkeys enter and claim the cave — the kingship dare"
+    force: comedy
+    composer: Vivaldi
+    work: "Concerto for Strings in G major, RV 151 ('Alla rustica') — I. Presto"
+    decision: added
+    why: >
+      The monkeys flood in — the brave ones first, the timid ones stretching their necks and
+      scratching their ears before following — and immediately begin squabbling over pots and
+      beds and stones. Wu Cheng'en catalogues the chaos lovingly: 'Monkey nature is mischievous
+      and not for a moment still.' Then the stone monkey sits above them all and demands the
+      kingship he was promised. Vivaldi's Alla rustica Presto is the music of collective animal
+      pleasure turned suddenly purposeful — a rustic tumult that snaps, mid-phrase, into order.
+  - n: 10
+    scene: "The stone monkey enthroned: 'Henceforth Beautiful Monkey King'"
+    force: metamorphosis
+    composer: Handel
+    work: "Water Music Suite No. 2 in D major, HWV 349 — 'Alla Hornpipe'"
+    decision: added
+    why: >
+      He drops the word 'stone' from his name. He is now the Beautiful Monkey King (美猴王),
+      installed on a stone throne, receiving obeisance. Handel's Alla Hornpipe is court
+      ceremony made irresistible — pomp that knows it is also dance, sovereign display with
+      an undercurrent of pleasure. The monkey's coronation is exactly this: genuine authority
+      (the dare was real; the cave is real; the feast is real) rendered in a register that
+      cannot fully suppress the comedy of its own magnificence.
+  - n: 11
+    scene: "Three hundred years of rule — then the sudden fear of death"
+    force: ascent
+    composer: Mahler
+    work: "Symphony No. 2 in C minor ('Resurrection') — I. Allegro maestoso"
+    decision: added
+    why: >
+      Time passes — three hundred years of joy. Then the Monkey King falls silent mid-feast,
+      and weeps. The monkeys are confused: you have everything. He explains: Yama, the king
+      of death, governs all living things, and one day he will come for me too. This is
+      the chapter's hinge — the comic paradise suddenly cracks open and reveals mortality.
+      Mahler's Resurrection first movement begins in exactly this mode: not yet resurrection
+      (that belongs much later), but the confrontation with death as a force that must be
+      answered — heavy, unstoppable, demanding a response. The monkey's terror is the Mahler
+      tempo, not the Mahler apotheosis.
+  - n: 12
+    scene: "The quest announced — departure for the immortal world"
+    force: ascent
+    composer: Elgar
+    work: "Enigma Variations — 'Nimrod' (Variation IX)"
+    decision: "added as departure coda"
+    why: >
+      An elder monkey tells him: Buddhas, Immortals, and Holy Sages escape the wheel of death.
+      They live in ancient caves on sacred mountains. The Monkey King rises, laughing now:
+      'I leave tomorrow.' The monkeys prepare a farewell feast — rare fruits, carved stone
+      cups. This is not a military departure or a heroic commission; it is a young creature
+      who has decided he will not die, setting out alone toward something he cannot yet name.
+      Nimrod is not triumphant — it is the music of departure understood in retrospect, of
+      what it means to begin. The chapter closes on it because the journey has not yet happened;
+      only the resolve has.
+demoted:
+  - composer: Strauss
+    work: "Also sprach Zarathustra — Opening ('Sunrise')"
+    status: "removed; save for later climax chapters (the Monkey King's apotheosis scenes)"
+    why: >
+      The stone's birth is a tempting match for 'Sunrise,' but its register is terminal —
+      cosmic self-declaration at maximum brass. Chapter 1 ends in a feast and a departure,
+      not an apotheosis. Strauss belongs to a chapter where the monkey has actually become
+      great, not merely begun. Save for the chapters surrounding his proclamation as
+      'Great Sage Equal to Heaven.'
+  - composer: Bruckner
+    work: "Symphony No. 8 — IV. Finale"
+    status: "removed; belongs to pilgrimage's culmination, Chapters 98–100"
+    why: >
+      Bruckner's Eighth finale is the music of completed ascent — the long journey arriving
+      at transcendence. Chapter 1 is the first step, not the last. Register violation.

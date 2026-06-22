@@ -1,0 +1,234 @@
+# Mahabharata — Adi Parva (Book 1) — curated music arc
+# Gold-standard form matching iliad/book-01.yaml.
+# Score the OPENING of the poem: the nested frame, the snake sacrifice, the
+# cosmogony, the Bharata genealogy — not "the Kurukshetra war."
+work: mahabharata
+book: 1
+title: "Adi Parva: Memory, Frame, and the Wheel of Time"
+length_minutes: 102
+principle: >
+  Do not score Adi Parva as "the war that is coming." Score it as the moment
+  where a civilization builds a frame large enough to hold everything it will
+  ever need to remember. Three nested narrators (Ugrasravas → Vaisampayana →
+  Vyasa), a snake sacrifice that is itself an act of grieving kingship, a
+  cosmogony spoken before the story begins, and a genealogy that converts
+  divine origin into mortal catastrophe. The dominant forces here are
+  memory and fate — not yet wrath, not yet war. The register must be vast
+  but not terminal; apotheosis and funeral weight belong to Svarga Arohana
+  (Book 18), not here.
+force_arc: [memory, law, memory, sacrifice, kingship, revelation, fate, fate, supplication, fate, memory, law]
+dominant_force: memory
+tracks:
+  - n: 1
+    scene: "Invocation — 'Jaya': the poem names itself Victory"
+    force: memory
+    composer: Fauré
+    work: "Requiem, Op. 48 — I. Introitus et Kyrie"
+    decision: added
+    why: >
+      The Adi Parva opens not with war-cry but with an act of memorial
+      listening: Ugrasravas arrives at the forest of Naimisha, where ascetics
+      are already gathered at Saunaka's twelve-year sacrifice, and the sages
+      ask him to recite what he has heard. Memory as sacred hospitality — a
+      poem received, carried, offered. Fauré's Introit begins exactly this way:
+      suspended, reverential, the melody held gently over a bed of quiet strings.
+      It does not announce; it opens. The word Jaya (Victory) is spoken before
+      a single story is told; Fauré's Latin murmur has the same quality of
+      naming something sacred before it is earned.
+  - n: 2
+    scene: "The forest of Naimisha — a world already in recession"
+    force: law
+    composer: Bach
+    work: "Cello Suite No. 1 in G major, BWV 1007 — Prélude"
+    decision: added
+    why: >
+      The setting is a forest at the edge of civilization, a recluse abode,
+      ascetics of rigid vows. The world of the poem does not begin in a palace
+      or battlefield — it begins in withdrawal. Bach's Prélude enacts the same
+      formal clarity within apparent simplicity: a single line generating implied
+      harmony, law present without ostentation. The Naimisha forest is a law-
+      saturated space (Vedic ritual, the twelve-year sacrifice) but quietly so.
+      The cello's unaccompanied voice matches the bard's alone among the sages.
+  - n: 3
+    scene: "Ugrasravas recounts what he heard at Janamejaya's snake sacrifice"
+    force: memory
+    composer: Elgar
+    work: "Enigma Variations — IX. Nimrod"
+    decision: added
+    why: >
+      This is the hinge of the triple frame: Ugrasravas was present when
+      Vaisampayana recited the poem to King Janamejaya. He is now reciting
+      what he heard, at one remove. Memory is doing the work of transmission —
+      not writing, not commentary, but the living chain of oral custody. Elgar's
+      Nimrod is the supreme Western emblem of nostalgic recall: it carries the
+      weight of something known, loved, almost lost, faithfully remembered. In
+      this scene, the Mahabharata is not yet the Mahabharata; it is still what
+      Ugrasravas heard. Nimrod holds that quality of honored recollection without
+      breaking into elegy.
+  - n: 4
+    scene: "Janamejaya's snake sacrifice — grief converted into ritual violence"
+    force: sacrifice
+    composer: Stravinsky
+    work: "The Rite of Spring — Introduction (Part I)"
+    decision: added
+    why: >
+      The snake sacrifice (sarpa satra) is the outer frame's dark engine:
+      Janamejaya is destroying the serpent lineage in revenge for his father
+      Parikshit's death by snakebite. The sacrifice is grief weaponized into
+      cosmological ritual — a king using the grammar of sacred fire to enact
+      personal vengeance at planetary scale. Stravinsky's Introduction to Part I
+      carries exactly this quality: archaic, pre-rational, the earth stirring
+      under a sacrificial impulse no single consciousness controls. The bassoon
+      melody at the extreme of its range sounds like something emerging from
+      below ground. Do not use the Sacrificial Dance (that belongs to the poem's
+      true immolation scenes, much later); the Introduction is ritual preparation.
+  - n: 5
+    scene: "Kingship of Janamejaya — a sovereign's grief as historical force"
+    force: kingship
+    composer: Handel
+    work: "Zadok the Priest, HWV 258"
+    decision: added
+    why: >
+      Janamejaya is not simply a grieving son; he is a king whose grief becomes
+      policy, whose mourning reshapes the cosmos. The snake sacrifice is a royal
+      act on a civilizational scale, and the Mahabharata is formally dedicated to
+      him — he is its first human audience, the king who demands the poem be
+      recited in full. Handel's coronation anthem gives sovereign ceremony its
+      correct register: the long orchestral build before the chorus enters embodies
+      the preparatory weight of kingship, authority gathering before it speaks.
+      Not triumphant yet — purposeful, ceremonial, obligatory.
+  - n: 6
+    scene: "Vyasa composes the poem — the cosmos precedes the story"
+    force: revelation
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      Before Vyasa tells the story of the Kurus and Pandavas, he recites a
+      cosmogony: the egg of the world, Brahma emerging, the twenty-one Prajapatis,
+      the generations of gods and creatures, the wheel of time without beginning
+      or end. This is revelation — not narrative but ontology. Pärt's Spiegel im
+      Spiegel (Mirror in the Mirror) enacts the same quality: a tonic note held
+      in stillness, the piano's arpeggios opening outward like concentric circles.
+      The piece has no interior drama; it simply is. The cosmogony does not argue;
+      it names. Both suspend the listener in something vast and prior to story.
+  - n: 7
+    scene: "The wheel of time — Yugas cycling without cessation"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 in C minor, Op. 67 — I. Allegro con brio"
+    decision: added
+    why: >
+      The cosmogony culminates in a declaration of the wheel of time: at the end
+      of each Yuga, all things dissolve; at the beginning of the next, all things
+      are renovated. The Mahabharata situates itself explicitly at a cosmic hinge
+      — the transition between Dvapara and Kali Yuga, the age of degeneration.
+      Fate here is not personal doom (that register belongs to Duryodhana or
+      Karna, later); it is structural, cosmological, the mechanism of cycles.
+      Beethoven's first movement is fate as rhythmic insistence — the motif
+      hammered without relief, not yet resolved, not yet broken. The inexorable
+      quality is right; the scale is not yet terminal.
+  - n: 8
+    scene: "The Bharata genealogy — kingship descending into mortal catastrophe"
+    force: fate
+    composer: Verdi
+    work: "Simon Boccanegra — Prologue: Orchestral Introduction"
+    decision: added
+    why: >
+      The Adi Parva pours out genealogy: from Brahma through the sun-gods,
+      from Vivasvat through Manu, from Dasa-jyoti through the Kurus and Yadus
+      and Bharatas — an entire civilization assembled from divine origin into
+      mortal catastrophe. Verdi's Simon Boccanegra Prologue carries this
+      exact register: a family whose lineage produces tragedy not by villany
+      but by the logic of succession, time, and divided inheritance. The
+      orchestral introduction is dark, stately, resigned — fate wearing the
+      formal dress of dynasty. Not yet grief; not yet war; the mechanism
+      simply turning.
+  - n: 9
+    scene: "The story of Astika — poison, serpents, the plea that stops destruction"
+    force: supplication
+    composer: Bach
+    work: "St Matthew Passion, BWV 244 — 'Erbarme dich, mein Gott'"
+    decision: added
+    why: >
+      Embedded inside the Adi Parva is the sub-narrative of Astika, the
+      brahmin son of the snake princess Manasa, who interrupts Janamejaya's
+      sacrifice to save the remaining serpents. His supplication succeeds —
+      the king relents — and the sacrifice ends. Bach's Erbarme dich is the
+      supreme Western music for supplication that works: the oboe's sustained
+      melody over a walking bass line is grief offered formally, grief that
+      does not collapse into hysteria but sustains its pitch long enough to
+      compel a response. Astika's plea has exactly this quality — eloquent,
+      composed, persistent, effective. The sacrifice ends because the plea
+      holds.
+  - n: 10
+    scene: "Parikshit's death by snakebite — the originating wound"
+    force: fate
+    composer: Tchaikovsky
+    work: "Symphony No. 6 in B minor, Op. 74 'Pathétique' — II. Allegro con grazia"
+    decision: added
+    why: >
+      Parikshit's death is the wound that drives the whole outer frame: a
+      king died from a serpent's curse because he draped a dead snake around
+      a sage he thought was ignoring him. A moment of royal arrogance, a sage's
+      son's grief-curse, a bite, a death — and everything that follows flows
+      from it. The fate here is intimate, almost domestic, before it becomes
+      historical. Tchaikovsky's second movement of the Pathétique is not the
+      famous adagio (that is too terminal); it is the waltz in 5/4 — limping,
+      off-balance, elegance with an impediment built in. A life cut short that
+      still tries to maintain its form. The wound that precedes everything.
+  - n: 11
+    scene: "Vaisampayana recites to Janamejaya — the poem completes its frame"
+    force: memory
+    composer: Schubert
+    work: "String Quintet in C major, D. 956 — II. Adagio"
+    decision: added
+    why: >
+      At the end of the Adi Parva's opening movement, the structure snaps
+      into focus: Vaisampayana recites the whole poem to Janamejaya at the
+      snake sacrifice; Ugrasravas carries that recitation to the sages at
+      Naimisha; we are the fourth listener. Four levels of transmission held
+      in one act of telling. Schubert's Quintet Adagio is the closest Western
+      music comes to this quality of layered, unhurried recollection: two
+      cellos sustaining the foundation while the melody unfolds above — depth
+      supporting memory, time moving slowly enough to hold everything it has
+      received. The Adagio does not resolve; it rests.
+  - n: 12
+    scene: "Close: the poem extends into 'the three regions of the world'"
+    force: law
+    composer: Handel
+    work: "Music for the Royal Fireworks, HWV 351 — Ouverture"
+    decision: added
+    why: >
+      The Adi Parva's opening closes with a declaration: this poem is known
+      in all three regions (earth, sky, underworld); it is the source of all
+      Dharma, Artha, and Kama; it will be recited again and again. The poem
+      asserts itself as a kind of cosmic law — not one story but the frame
+      within which stories occur. Handel's Royal Fireworks Overture is
+      ceremonial architecture: it announces, it does not narrate. Sovereign
+      and spacious, it clears the air for what follows. The Mahabharata's
+      opening ends not with tragedy but with a claim about the necessity and
+      permanence of telling.
+demoted:
+  - composer: Mahler
+    work: "Symphony No. 9 — IV. Adagio"
+    status: "removed from Adi Parva; save for Svarga Arohana (Book 18) or Stri Parva (Book 11)"
+    why: >
+      Mahler 9's finale is valedictory, terminal, a farewell to the world.
+      Adi Parva is not a farewell — it is a beginning that already contains
+      the end inside its frame. The terminal register belongs where the poem
+      explicitly grieves its own closure.
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "not before Karna Parva (Book 8) at the earliest"
+    why: >
+      The funeral march weight belongs to the deaths of the great heroes —
+      Abhimanyu, Drona, Karna, Bhishma. Adi Parva is a world assembling
+      itself, not yet dissolving.
+  - composer: Messiaen
+    work: "Quartet for the End of Time — I. Liturgy of Crystal"
+    status: "save for Bhagavad Gita section (Book 6, Bhishma Parva)"
+    why: >
+      Messiaen's revelation-register is too eschatological for the frame
+      narrative. The Bhagavad Gita, with Krishna's revelation of the cosmic
+      form (Vishvarupa), is the natural home.

@@ -7,28 +7,28 @@
 ## The ~100 things — coverage matrix
 | Work | Tradition | Reading | Music (arcs/divs) | Script |
 | --- | --- | :--: | :--: | --- |
-| The Epic of Gilgamesh | mesopotamian | ☐ | 0/12 | cuneiform ☐ |
-| The Iliad | greek | ☐ | 24/24 | greek ✓ |
-| The Odyssey | greek | ☐ | 0/24 | greek ✓ |
-| The Tanakh / Hebrew Bible (Torah · Nevi'im · Ketuvim) | hebrew | ☐ | 0/39 | hebrew ☐ |
-| The Analects | chinese | ☐ | 0/20 | chinese ☐ |
-| The Mahabharata (selections, incl. the Bhagavad Gita) | sanskrit | ☐ | 0/18 | sanskrit ☐ |
-| The Ramayana | sanskrit | ☐ | 0/7 | sanskrit ☐ |
-| The Bhagavad Gita | sanskrit | ☐ | 0/18 | sanskrit ☐ |
-| The Dao De Jing | chinese | ☐ | 0/81 | chinese ☐ |
-| The Aeneid | roman | ☐ | 0/12 | latin ☐ |
-| Metamorphoses | roman | ☐ | 0/15 | latin ☐ |
-| The Qur'an | arabic | ☐ | 0/114 | arabic ☐ |
-| The Conference of the Birds | persian | ☐ | 0/45 | persian ☐ |
-| The Shahnameh (Book of Kings) | persian | ☐ | 0/50 | persian ☐ |
-| Beowulf | old-english | ☐ | 0/43 | old-english ☐ |
-| The Tale of Genji | japanese | ☐ | 0/54 | japanese ☐ |
-| The Tale of the Heike | japanese | ☐ | 0/12 | japanese ☐ |
-| The Divine Comedy | italian | ☐ | 0/100 | italian ☐ |
-| The Canterbury Tales | middle-english | ☐ | 0/24 | middle-english ☐ |
-| Journey to the West | chinese | ☐ | 0/100 | chinese ☐ |
+| The Epic of Gilgamesh | mesopotamian | ✓ | 1/12 | cuneiform ✓ |
+| The Iliad | greek | ✓ | 24/24 | greek ✓ |
+| The Odyssey | greek | ✓ | 1/24 | greek ✓ |
+| The Tanakh / Hebrew Bible (Torah · Nevi'im · Ketuvim) | hebrew | ✓ | 1/39 | hebrew ✓ |
+| The Analects | chinese | ✓ | 1/20 | chinese ✓ |
+| The Mahabharata (selections, incl. the Bhagavad Gita) | sanskrit | ✓ | 1/18 | sanskrit ✓ |
+| The Ramayana | sanskrit | ✓ | 1/7 | sanskrit ✓ |
+| The Bhagavad Gita | sanskrit | ✓ | 1/18 | sanskrit ✓ |
+| The Dao De Jing | chinese | ✓ | 1/81 | chinese ✓ |
+| The Aeneid | roman | ✓ | 1/12 | latin ✓ |
+| Metamorphoses | roman | ✓ | 1/15 | latin ✓ |
+| The Qur'an | arabic | ✓ | 1/114 | arabic ✓ |
+| The Conference of the Birds | persian | ✓ | 1/45 | persian ✓ |
+| The Shahnameh (Book of Kings) | persian | ✓ | 1/50 | persian ✓ |
+| Beowulf | old-english | ✓ | 1/43 | old-english ✓ |
+| The Tale of Genji | japanese | ✓ | 1/54 | japanese ✓ |
+| The Tale of the Heike | japanese | ✓ | 1/12 | japanese ✓ |
+| The Divine Comedy | italian | ✓ | 1/100 | italian ✓ |
+| The Canterbury Tales | middle-english | ✓ | 1/24 | middle-english ✓ |
+| Journey to the West | chinese | ✓ | 1/100 | chinese ✓ |
 
-**Totals:** reading 0/20 · scripts 1/12 · music 24 arcs authored of 812 divisions across the canon.
+**Totals:** reading 20/20 · scripts 12/12 · music 43 arcs authored of 812 divisions across the canon.
 
 ## Method
 Read → copy the original script → translate a unit → compare translations → one note → one fitting

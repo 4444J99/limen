@@ -1,0 +1,231 @@
+# Tale of Genji — Chapter 1 (Kiritsubo) — curated music arc
+# Score the CHAPTER, not the novel. Kiritsubo is a love story told in its
+# afterlight: the emperor's desire is absolute; the court's cruelty is structural;
+# the Kiritsubo Lady dies of it; and from that death a child of unearthly beauty
+# is born. Do not score "the Heian court." Score the moment where desire and
+# grief are discovered to be the same force, and where loss produces its most
+# beautiful issue.
+work: tale-of-genji
+book: 1
+title: "Kiritsubo: Desire, Ruin, Radiance"
+length_minutes: 82
+principle: >
+  Do not score Chapter 1 as "ancient Japan." Score it as the moment where the
+  emperor's overwhelming desire for one woman becomes the court's cruelest
+  mechanism, and where that mechanism destroys its object and leaves behind
+  something incandescent: Genji. Kiritsubo is not an origin story. It is a
+  grief story that generates beauty as a byproduct. The register is interior,
+  attenuated, chromatic — not ceremonial, not martial. Mono no aware (the
+  pathos of things) is already fully present in the chapter's first sentence.
+force_arc: [desire, desire, grief, grief, memory, comedy, fate, supplication, metamorphosis, ascent]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "The emperor's first sight of the Kiritsubo Lady / absolute desire"
+    force: desire
+    composer: Wagner
+    work: "Tristan und Isolde — Prelude to Act I"
+    decision: added
+    why: >
+      The Tristan Prelude is the architecture of desire that cannot be
+      consummated cleanly: the famous unresolved chord, the reaching without
+      arriving. Genji's world begins exactly here. The emperor's love for
+      the Kiritsubo Lady is not mere infatuation — it is an overwhelming
+      erotic fixation that distorts every other relationship and every
+      court protocol. Wagner gives the musical form of that distortion: a
+      longing that is also, from its first instant, already doomed. "Mars"
+      or Mahler would announce the wrong kind of gravity. The novel's
+      first movement is desire, not power and not death — death comes later,
+      as desire's consequence.
+  - n: 2
+    scene: "The court's jealousy / the ladies' cruelty as social machinery"
+    force: desire
+    composer: Schubert
+    work: "String Quartet No. 14 in D minor, D.810 ('Death and the Maiden') — II. Andante con moto"
+    decision: added
+    why: >
+      The court's jealousy is systemic, not personal. Every visit the emperor
+      makes to the Kiritsubo Lady's rooms requires traversing the corridors
+      where the senior ladies live, and each passage is an occasion for
+      calculated contempt — soiled hems, doors blocked, humiliations
+      arranged. Schubert's variations on 'Death and the Maiden' give what
+      that structural cruelty sounds like: serene on the surface, relentless
+      in motion, with a melody that is simultaneously beautiful and
+      annihilating. The Andante doesn't dramatize the cruelty — it inhabits
+      the mood of a world where one person is being worn away by a force
+      that has no particular malice, only its own smooth operation.
+  - n: 3
+    scene: "The Kiritsubo Lady's failing health / the emperor's helplessness"
+    force: grief
+    composer: Fauré
+    work: "Requiem, Op. 48 — 'Pie Jesu'"
+    decision: added
+    why: >
+      The Pie Jesu is not a funeral piece — it is a plea for rest, sung
+      before the fact, in the register of exhausted love. The Kiritsubo Lady
+      is not suddenly taken; she is worn to death by the court's attrition.
+      The emperor's love cannot protect her; his power is useless against
+      the slow violence of social exclusion. Fauré's soprano line — the
+      'dona eis requiem' — gives the sound of a world that is already
+      releasing someone, already preparing the separation, without anyone
+      having decided to. Not Barber's Adagio, which makes grief monumental;
+      not Bach, which makes it devotional. Fauré makes it private, specific,
+      and heartbreaking in exactly the Japanese sense: a grief without
+      grandeur.
+  - n: 4
+    scene: "The Kiritsubo Lady's death"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 9 — IV. Adagio (opening)"
+    decision: added
+    why: >
+      The Mahler 9 Adagio is not a eulogy — it is the sound of consciousness
+      preparing to relinquish itself, very slowly, without violence. The
+      Kiritsubo Lady's death in Genji is narrated with a kind of deliberate
+      restraint that is itself a form of grief: Murasaki Shikibu does not
+      dwell, she moves through. Mahler gives the emotional territory those
+      sentences inhabit — a sustained, harmonically unstable line that keeps
+      extending itself past the point where resolution seems possible, and
+      then, without fanfare, does not arrive. The register is NOT funeral
+      march (that would be Siegfried's March or the Eroica — too public,
+      too commemorative). Chapter 1's death is intimate, interior. This is
+      withdrawal music, not monument music.
+  - n: 5
+    scene: "The emperor's mourning / the palace empty of her"
+    force: memory
+    composer: Elgar
+    work: "Enigma Variations — 'Nimrod' (Variation IX)"
+    decision: added
+    why: >
+      After the Kiritsubo Lady dies, the emperor cannot stop mourning. The
+      palace is full of her absence: her rooms, her things, her child. Elgar's
+      'Nimrod' is not nostalgia — it is the specific musical shape of love
+      that cannot find its object anymore, love that has been converted by
+      death into memory without reducing its force. It grows from near-silence
+      and never arrives at anything you could call consolation; it arrives at
+      a kind of sustained tenderness that has no place to go. In the novel,
+      the emperor's grief is immense and socially disruptive — he neglects
+      state duties, neglects other consorts, keeps Genji at court when
+      protocol demands the boy go to another house. Elgar gives the interior
+      of that condition.
+  - n: 6
+    scene: "The Kokiden Lady's faction / political jealousy at court"
+    force: comedy
+    composer: Rameau
+    work: "Les Indes galantes — 'Musette en rondeau'"
+    decision: added
+    why: >
+      Rameau's court dance music is exactly what Heian court life sounds like
+      from the outside: graceful, formulaic, beautiful in its proportions,
+      and absolutely about rank, precedent, and political positioning. The
+      Kokiden Lady — mother of the Crown Prince, the legitimate heir — has
+      every structural reason to resent the Kiritsubo Lady and to resist
+      Genji's presence at court. Rameau gives that world's soundtrack: a
+      world where desire and grief are subordinated to social choreography,
+      where every gesture has a protocol, and where the most dangerous people
+      smile. Not Handel's Fireworks (too martial, too sovereign); Rameau's
+      dance forms have the aristocratic lightness and the coiled political
+      edge that the Heian court requires.
+  - n: 7
+    scene: "The emperor consults the Korean physiognomist / Genji's face read as fate"
+    force: fate
+    composer: Sibelius
+    work: "Symphony No. 5 — III. Allegro molto (finale)"
+    decision: added
+    why: >
+      A Korean diviner, summoned to read the infant Genji's features,
+      declares that this child shows the signs of imperial destiny — but also
+      warns that making him a prince could bring ruin to the realm. The
+      emperor resolves to keep Genji as a commoner who is a prince by nature.
+      Sibelius's Fifth finale is the sound of something inexorable being
+      acknowledged: those hammer blows at the end — six chords separated by
+      silences — are what it sounds like when the future is being named
+      rather than chosen. The physiognomist scene is the novel telling you,
+      before the story has begun, what the story is. Sibelius gives that
+      modal certainty without the operatic declaration that Beethoven or
+      Tchaikovsky would impose.
+  - n: 8
+    scene: "The emperor's supplication / longing to hear her voice again"
+    force: supplication
+    composer: Bach
+    work: "St. Matthew Passion, BWV 244 — 'Erbarme dich' (No. 39)"
+    decision: added
+    why: >
+      The emperor summons the Kiritsubo Lady's mother after the death,
+      desperately seeking some continuation of the woman he has lost. He asks
+      about her voice, her habits, her last days. 'Erbarme dich' — Peter's
+      aria after the denial, for solo violin and alto voice — is the sound
+      of supplication in its purest musical form: the violin's ascending line
+      is the petition, the voice is the grief, and the two never quite
+      resolve into mutual comfort. Bach built this for a religious context,
+      but the emotional mechanism is identical: a man in the presence of an
+      absence he cannot accept, asking for something that cannot be given.
+      Pärt would make it too modern and too still; Barber too uniformly
+      elegiac. Bach's counterpoint keeps the supplication moving, pressing,
+      not arriving.
+  - n: 9
+    scene: "Genji the child, 'the shining one' / beauty as inheritance and wound"
+    force: metamorphosis
+    composer: Debussy
+    work: "Préludes, Book I — 'La cathédrale engloutie'"
+    decision: added
+    why: >
+      Genji's beauty is the novel's central metamorphic fact: he is the
+      Kiritsubo Lady transformed, her loveliness crystallized and carried
+      forward in a new form. Murasaki Shikibu describes him as radiant,
+      otherworldly — 'Hikaru Genji,' the Shining One. Debussy's submerged
+      cathedral gives the right texture: something immense and luminous
+      surfacing slowly through water, not all at once, as if the beauty is
+      already old, already half-submerged in a grief that preceded it. The
+      whole prelude has the quality of something emerging from the
+      conditions of its own disappearance. That is precisely the logic of
+      Genji's beauty: it is his dead mother, made visible. Not Ravel
+      (too ironic, too surface-play); not Scriabin (too ecstatic). Debussy's
+      specific atmospheric depth is the right register.
+  - n: 10
+    scene: "Genji named / the novel's opening horizon"
+    force: ascent
+    composer: Mahler
+    work: "Symphony No. 2 ('Resurrection') — I. Allegro maestoso (opening)"
+    decision: added
+    why: >
+      The chapter closes with Genji named, placed, given his destiny —
+      commoner by rank, prince by nature, radiant, and already shaped by a
+      grief he did not witness but carries in his face. The first movement of
+      Mahler's Second begins with a cello-bass unison that sounds like a
+      world being called into existence from below: something vast and
+      unresolved being announced. This is NOT the Resurrection's final
+      apotheosis (that register belongs to later chapters, perhaps to
+      Genji's great triumphs or his final exile). The opening Allegro is
+      all inaugural weight, unresolved destiny — it announces something
+      enormous that has not yet arrived. Chapter 1 ends not in completion
+      but in the horizon of a life that has just begun under extraordinary
+      conditions. The register is earned; it is ascent as premise, not
+      ascent as achievement.
+demoted:
+  - composer: Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    status: "moved to Achilles/Thetis (Iliad Book I); inappropriate for Genji Chapter 1"
+    why: >
+      The Adagietto's wounded inwardness is perfect for Achilles but too
+      self-contained for Genji's opening, which moves through desire, social
+      violence, death, mourning, and birth in a single chapter. The Mahler
+      9 Adagio gives the chapter's death scene a larger and more
+      philosophically restless grief.
+  - composer: Barber
+    work: "Adagio for Strings"
+    status: "considered and demoted — save for a chapter with greater collective loss"
+    why: >
+      Barber is funeral music at the scale of public grief. Chapter 1's grief
+      is private, interior, the emperor's alone. The Adagio would impose a
+      monumentality that the chapter resists — Murasaki Shikibu's narration
+      is deliberately quiet. Save for a moment where the grief is collective
+      and public.
+  - composer: Ravel
+    work: "Pavane pour une infante défunte"
+    status: "demoted — too decorative for the chapter's emotional weight"
+    why: >
+      The Pavane was an early candidate for the court-jealousy scene.
+      It has the right lightness and historical distance, but it lacks the
+      structural coldness the Kokiden scenes demand. Rameau's dance forms
+      have more political edge.

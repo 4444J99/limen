@@ -1,0 +1,68 @@
+{
+  "work": "odyssey",
+  "book": 1,
+  "script": "greek",
+  "original": [
+    "ἄνδρα μοι ἔννεπε, μοῦσα, πολύτροπον, ὃς μάλα πολλὰ",
+    "πλάγχθη, ἐπεὶ Τροίης ἱερὸν πτολίεθρον ἔπερσεν:",
+    "πολλῶν δ' ἀνθρώπων ἴδεν ἄστεα καὶ νόον ἔγνω,",
+    "πολλὰ δ' ὅ γ' ἐν πόντῳ πάθεν ἄλγεα ὃν κατὰ θυμόν,",
+    "ἀρνύμενος ἥν τε ψυχὴν καὶ νόστον ἑταίρων. 5"
+  ],
+  "parallels": {
+    "available_translations": [
+      "butler_1900",
+      "pope_1726",
+      "lang_1879",
+      "cowper_1791"
+    ],
+    "compare_via": [
+      "https://www.perseus.tufts.edu/hopper/text?doc=Perseus:text:1999.01.0135",
+      "https://scaife.perseus.org/library/urn:cts:greekLit:tlg0012.tlg002/"
+    ],
+    "corpus_dir": "/Users/4jp/Workspace/organvm/linguistic-atomization-framework/corpus/classical/odyssey"
+  },
+  "gloss_scaffold": [
+    {
+      "word": "ἄνδρα",
+      "translit": "",
+      "gloss": ""
+    },
+    {
+      "word": "μοι",
+      "translit": "",
+      "gloss": ""
+    },
+    {
+      "word": "ἔννεπε",
+      "translit": "",
+      "gloss": ""
+    },
+    {
+      "word": "μοῦσα",
+      "translit": "",
+      "gloss": ""
+    },
+    {
+      "word": "πολύτροπον",
+      "translit": "",
+      "gloss": ""
+    },
+    {
+      "word": "ὃς",
+      "translit": "",
+      "gloss": ""
+    },
+    {
+      "word": "μάλα",
+      "translit": "",
+      "gloss": ""
+    },
+    {
+      "word": "πολλὰ",
+      "translit": "",
+      "gloss": ""
+    }
+  ],
+  "note": "compare-translations is live; transliteration + morphology are seed/synth/hand-filled"
+}

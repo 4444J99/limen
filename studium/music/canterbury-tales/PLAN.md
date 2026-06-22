@@ -11,11 +11,11 @@
 - **Corpus:** `medieval/canterbury-tales` (middle_english_original.txt)
 - **Source rail:** https://chaucer.lib.harvard.edu/
 - **Divisions:** 24 × Tale
-- **Progress:** 0/24 arcs authored
+- **Progress:** 1/24 arcs authored
 
 | Tale | dominant force | status |
 | --: | --- | :--: |
-| 1 | (author) | ☐ |
+| 1 | (author) | ✓ |
 | 2 | (author) | ☐ |
 | 3 | (author) | ☐ |
 | 4 | (author) | ☐ |

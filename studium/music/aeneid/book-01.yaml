@@ -1,0 +1,238 @@
+# Aeneid — Book I — curated music arc
+# Format follows the gold standard: studium/music/iliad/book-01.yaml
+work: aeneid
+book: 1
+title: "Aeneid Book I: Storm, Exile, Arrival"
+length_minutes: 88
+principle: >
+  Do not score Book I as "the founding of Rome." Score it as the moment where
+  divine wrath meets human endurance and cosmic purpose collides with personal
+  survival — the storm that wrecks a fleet, the shoreline of a foreign queen,
+  and the machinery of fate set in motion before anyone consents to it.
+  Virgil's opening is triple-voiced: Juno's wrath (personal, theological, historical),
+  Aeneas' exile (wandering, grief, duty), and Jupiter's fate (inexorable, impersonal,
+  vast). The music must hold all three without premature resolution.
+force_arc: [fate, wrath, wrath, law, exile, grief, supplication, fate, divine-intervention, exile, grief, desire]
+dominant_force: exile
+tracks:
+  - n: 1
+    scene: "Arma virumque cano — the invocation"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 7 — II. Allegretto"
+    decision: added
+    why: >
+      Virgil's first line announces not a man but a program: arma (Troy's war),
+      virum (Odysseus' wandering), and the trajectory toward Rome. This is fate
+      declared as grammar — the poem opens in past tense looking backward from
+      an accomplished destiny. Beethoven's Seventh Allegretto is fate as a
+      processional: an inexorable rhythmic cell (long-short-short-long) that
+      proceeds without urgency, without doubt, with the weight of something that
+      has already been decided. Not Wagner's hammered fate-motif but fate as
+      forward motion, irreversible, mourning what it must destroy to arrive. The
+      invocation does not excite — it consecrates.
+  - n: 2
+    scene: "Juno's undying wrath — Carthage, the goddess' grudge"
+    force: wrath
+    composer: Verdi
+    work: "Otello — Act I Storm Chorus and Entrance"
+    decision: added
+    why: >
+      Juno's wrath in Book I is operatic in the precise sense: personal, ancient,
+      theological, and disproportionate. She remembers the Judgment of Paris, the
+      rape of Ganymede, Hercules' birth from Alcmena — the insults stack up like
+      an opera prima donna's grievance catalog. Verdi's storm opening from Otello
+      brings the exact register: an orchestra that is also a tempest, elemental
+      force as emotional content, the divine and the meteorological indistinguishable.
+      Juno does not cause a storm — she IS the storm, and the storm IS her rage.
+      Wrath requires rhythmic pressure and unresolved harmony; Verdi's opening
+      chords are the definition of both.
+  - n: 3
+    scene: "The storm at sea — Aeolus releases the winds"
+    force: wrath
+    composer: Vivaldi
+    work: "The Four Seasons — 'Summer': III. Presto (Allegro — La Tempesta)"
+    decision: added
+    why: >
+      Aeolus opens the cave. Virgil's account of the storm is baroque in its specificity —
+      waves that uncover the seafloor, clouds that extinguish the sky, ships driven
+      east-west-north in the same breath. This is not vague catastrophe; it is
+      detailed, kinetic destruction. Vivaldi's Summer tempest is the right piece
+      because it is explicitly programmatic — descriptive rather than structural —
+      and its violence has the specific, almost agricultural texture of classical
+      weather-as-catastrophe. The driving semiquavers capture the fleet's splintering.
+      This is not a Romantic sublime storm; it is an ancient storm: purposeful,
+      divine-directed, metrically relentless.
+  - n: 4
+    scene: "Neptune stills the sea — order from chaos"
+    force: law
+    composer: Handel
+    work: "Water Music — Suite No. 1 in F major: Overture"
+    decision: added
+    why: >
+      Neptune's simile is one of the Aeneid's most famous: as a man of authority
+      (gravis auctoritate) quiets a rioting crowd with his words, so Neptune
+      stills the sea. Virgil gives us politics inside physics — the sea calms
+      not by force but by presence, rank, and legitimate authority recognizing its
+      own domain violated. Handel's Water Music Overture is exactly this register:
+      ceremonial, aquatic, the regal claim of order over chaos. It does not overwhelm
+      the storm; it supersedes it. Law requires formal clarity and architecture;
+      Handel's brass writing at this scale is sovereign command, not martial threat.
+  - n: 5
+    scene: "Aeneas washes ashore — survival, desolation"
+    force: exile
+    composer: Sibelius
+    work: "En saga, Op. 9"
+    decision: added
+    why: >
+      Aeneas washes up on the Libyan shore. He climbs a cliff to look for his ships.
+      He finds seven — out of the fleet he commanded. Virgil gives him a speech of
+      anguish (twice-blessed, those who died at Troy) and then, in the line that
+      defines the Aeneid's moral grammar: *spem vultu simulat, premit altum corde
+      dolorem* — "on his face he counterfeits hope, and drives the grief deep in
+      his heart." This is exile's psychic structure: the leader who must perform
+      courage while carrying private devastation. Sibelius's En saga is the piece
+      for this — long, Nordic, wandering, a melody that travels over open intervals
+      without arriving, searching without urgency, the sound of a man who survives
+      and does not yet know for what. Exile requires wandering tonality and open
+      intervals; En saga is their paradigm.
+  - n: 6
+    scene: "Aeneas and Achates on the Libyan shore — counting the ships"
+    force: grief
+    composer: Fauré
+    work: "Requiem — 'Pie Jesu'"
+    decision: added
+    why: >
+      Seven ships survive. Aeneas counts them. He finds Orontes' ship gone — Orontes
+      whom he names — and Amycus, and Lycus, and Gyas, and Cloanthus. The names
+      are the grief. Virgil insists on naming the dead and the surviving because
+      epic is the art of specific memorial — not "many died" but this one, and this
+      one, and this one. Fauré's Pie Jesu is the liturgical music of restrained,
+      personal, private grief — not the thunder of the Dies Irae but a solo soprano
+      asking for rest on behalf of the specific dead. The prayer stays in a single
+      register, does not escalate. Grief requires slow tempo and inward line; the
+      Pie Jesu is grief without display, which is exactly Aeneas' condition: the
+      deep heart, not the expressive face.
+  - n: 7
+    scene: "Venus pleads with Jupiter — the divine bargain"
+    force: supplication
+    composer: Bach
+    work: "St. Matthew Passion — 'Erbarme dich, mein Gott'"
+    decision: added
+    why: >
+      Venus descends to Jupiter in tears, accusing him of breaking his promise
+      to Rome's destiny. Her speech is at once maternal, political, and theological —
+      she is a suppliant at the feet of the highest god, demanding the contract
+      be honored. The scene's texture is extraordinary: great divine power asking
+      greater divine power for mercy, the vocabulary of supplication applied
+      upward. Bach's *Erbarme dich* — Peter's aria after the denial — is the
+      musical paradigm of supplication's suspended cadence and exposed melodic
+      line: a single instrument carrying the anguished question above the harmony,
+      not commanding resolution but asking for it. Venus before Jupiter is exactly
+      this: a held note above the machinery of fate, waiting.
+  - n: 8
+    scene: "Jupiter's prophecy — Rome's fated empire"
+    force: fate
+    composer: Elgar
+    work: "The Dream of Gerontius — 'Praise to the Holiest in the Height'"
+    decision: added
+    why: >
+      Jupiter answers Venus with the poem's most explicit statement of Roman destiny:
+      the walls of Troy rising in Italy, Caesar bearing the name of Troy, empire
+      without end (*imperium sine fine*). This is fate as theodicy — the suffering
+      is explained, the end is declared, the machinery is revealed to be purposeful.
+      Elgar's *Praise to the Holiest* — the great affirmative choral climax from
+      Gerontius — carries the register of cosmic purpose declared: not triumphalist
+      brass but layered choral affirmation, enormous without being martial, luminous
+      without being shallow. Fate here requires inexorable forward motion and
+      architectural architecture; Elgar delivers both from a deeply serious place.
+  - n: 9
+    scene: "Mercury sent to Carthage — divine machinery in motion"
+    force: divine-intervention
+    composer: Strauss
+    work: "Also sprach Zarathustra — Introduction 'Sonnenaufgang'"
+    decision: added
+    why: >
+      Jupiter dispatches Mercury to Carthage to ensure the Trojans receive
+      welcome from Dido. The mechanics of divine intervention here are sudden,
+      precise, and terrifyingly efficient — a god sent as a messenger to alter
+      the emotional state of an entire city. Strauss's Sunrise opening is the
+      right piece because its color-shift is the most sudden and complete in the
+      orchestral canon: absolute silence, then a vast tonic pedal in the low
+      brass, then the ascent — a world reorganized in forty seconds. Divine
+      intervention requires sudden color shift and brass/strings contrast; this
+      is its paradigm case, the musical equivalent of a god arriving in light.
+  - n: 10
+    scene: "Aeneas sees Carthage — the city under construction"
+    force: exile
+    composer: Dvořák
+    work: "Symphony No. 9 'From the New World' — II. Largo"
+    decision: added
+    why: >
+      Aeneas and Achates, still invisible under Venus' mist, watch Carthage being
+      built. Virgil's simile is a bee colony — each citizen purposeful, productive,
+      carrying stone, planning walls, electing magistrates. Aeneas watches in
+      wonder and longing: *O fortunati, quorum iam moenia surgunt!* — "O fortunate
+      ones, whose walls already rise!" He is the man without a city watching a
+      city being built. The exile's gaze on home, on belonging, on what has been
+      lost and what might be recovered — this is Dvořák's Largo to its marrow. The
+      English horn melody is one of the most sustained musical statements of
+      homesickness in the canon: open, wandering, folk-inflected, deeply specific
+      without being sentimental. Exile requires wandering tonality and open intervals;
+      the New World's Largo is exile dreaming of arrival.
+  - n: 11
+    scene: "The temple frieze — Aeneas sees Troy's fall depicted"
+    force: grief
+    composer: Barber
+    work: "Adagio for Strings, Op. 11"
+    decision: added
+    why: >
+      Inside Dido's temple, Aeneas finds a painted frieze depicting the fall of Troy:
+      the battles he lived through, the deaths of his companions, Priam, Achilles,
+      himself in armor. He weeps — *sunt lacrimae rerum* — "there are tears in things,
+      and mortal suffering touches the heart." This is the Aeneid's central
+      philosophical statement, uttered here at the poem's beginning: art about
+      tragedy is already a kind of lamentation. Barber's Adagio is the canonical
+      musical statement of this proposition — a single sustained arc of melodic
+      grief that does not resolve, that builds only to collapse, that is tears-in-things
+      made audible. Grief requires slow tempo and inward line; the Adagio is where
+      the line breaks open into the universal.
+  - n: 12
+    scene: "Dido receives the Trojans — hospitality, foreshadow of desire"
+    force: desire
+    composer: Purcell
+    work: "Dido and Aeneas — Act I, 'Shake the Cloud from off Your Brow'"
+    decision: added
+    why: >
+      Dido, widowed queen, newly arrived in Carthage, receives the Trojan survivors
+      with extraordinary generosity: "Not unknown to distress, I have learned to
+      help the wretched." The scene is warm, hospitable, politically intelligent —
+      but it is already the scene where Dido will fall. Virgil has Venus arranging
+      Cupid's entrance to ignite the queen's love even as the feast is prepared.
+      Purcell's Act I — before the catastrophe, when Dido is still regnant and
+      composed — is the perfect frame: his setting captures the original tragic
+      irony of the Dido narrative with period-specific gravity, the baroque understanding
+      that every feast is already elegiac. Desire requires chromatic longing and
+      deferred resolution; Purcell's Dido opens desire's account before it is paid.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "hold for Book IV (Dido's death) or Book VI (descent to the underworld)"
+    why: >
+      Too terminal and too funereal for Book I. Dido lives. The Trojans survive.
+      The weight of that march belongs where Virgil puts his full tragic register —
+      at the pyre, not the shipwreck.
+  - composer: Berlioz
+    work: "Les Troyens — Royal Hunt and Storm"
+    status: "Book IV, where Dido and Aeneas consummate their love in the cave"
+    why: >
+      Berlioz scored this exact situation. But the Royal Hunt and Storm belongs to
+      Book IV's crisis, not Book I's opening. Using it here would burn Book IV's
+      best available track on foreshadowing.
+  - composer: Respighi
+    work: "Pines of Rome — 'The Appian Way'"
+    status: "reserve for later books — Book VIII (Aeneas in Latium) or Book XII (final battle)"
+    why: >
+      The Appian Way is the music of Rome already built, of empire in its terminus
+      form — legions marching, the city at the center of the world. Book I has not
+      earned that weight yet. Aeneas is still on a shore, counting seven ships.

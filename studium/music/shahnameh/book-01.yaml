@@ -1,0 +1,191 @@
+# Shahnameh — Cycle 1 — The Opening (Keyumars) — curated music arc
+# Gold-standard format per studium/music/iliad/book-01.yaml
+work: shahnameh
+book: 1
+title: "Shahnameh Cycle 1: Creation, Kingship, the Line of Fate"
+length_minutes: 88
+principle: >
+  Do not score the Opening as "Persian epic grandeur." Score it as the moment where
+  the world acquires its first shape — where a man becomes a king because the cosmos
+  requires one, where fate does not arrive as an event but as a grammar. Keyumars is
+  not a hero in the Homeric sense; he is the hinge between creation and history. The
+  dominant problem is not conflict but origination: what does it mean to be first? To
+  be the first man, the first king, the first target of Ahriman's malice, the first
+  father to lose a son to darkness?
+  Ferdowsi opens the Shahnameh with a cosmogony, a praise of wisdom and God, then the
+  lineage of the first kings — Keyumars, Hushang, Tahmuras — as a single arc of divine
+  installation, not yet catastrophe. The catastrophe is being prepared. Score the
+  preparation: a world lit by its own first light.
+
+force_arc: [revelation, divine-intervention, kingship, law, fate, sacrifice, grief, kingship, fate, ascent]
+dominant_force: kingship
+tracks:
+  - n: 1
+    scene: "Ferdowsi's invocation — praise of Kherad (wisdom) and God"
+    force: revelation
+    composer: Pärt
+    work: "Tintinnabuli — 'Spiegel im Spiegel'"
+    decision: added
+    why: >
+      The Shahnameh does not begin with a king. It begins with reason — kherad — the
+      faculty that allows the world to be read. Ferdowsi's prologue is theological and
+      meditative: God, wisdom, the duty to use one's mind before one's sword. Pärt's
+      mirror-canon is the most literal musical embodiment of that opening: two lines
+      (piano and violin) moving in parallel thirds, neither dominating, generating a
+      space of perfect vertical calm. No other opening is as stripped of drama while
+      being as fully inhabited. The Shahnameh's first word is wisdom; the music should
+      feel like a mind settling into its task.
+  - n: 2
+    scene: "Cosmogony — water, fire, earth, wind; the world taking shape"
+    force: divine-intervention
+    composer: Haydn
+    work: "The Creation — 'In the beginning' (Representation of Chaos)"
+    decision: added
+    why: >
+      Ferdowsi, following Zoroastrian cosmology, describes a world that forms itself
+      from the four elements — a movement from undifferentiated substance to ordered
+      existence. Haydn's Chaos introduction is the greatest musical depiction of
+      creation-in-process: tonal centers dissolve and form, the orchestra cannot decide
+      what key it is in, matter seems to be trying to cohere. Nothing in the Western
+      repertoire holds the *process* of creation (as opposed to its triumph) with this
+      specificity. Bruckner and Mahler are too weighted toward majesty already achieved;
+      Haydn gives the moment just before.
+  - n: 3
+    scene: "Keyumars appears — the first man-king on the mountain"
+    force: kingship
+    composer: Elgar
+    work: "Enigma Variations — 'Nimrod' (Variation IX)"
+    decision: added
+    why: >
+      Keyumars descends from no one. He is the first. He wears animal skins, lives on
+      the mountain, and yet the world recognizes him as its sovereign — the animals bow,
+      the world orients around him. This is kingship as ontological fact, not political
+      achievement. Elgar's Nimrod is the sound of sovereign gravity at rest: not
+      ceremony (that is Handel's register), not imperial power (that is Walton), but the
+      deeper thing — the weight of a person whom the world accepts as necessary. It builds
+      slowly to a point of full orchestral weight and then does not linger. Keyumars is
+      ancient and simple and immovable. Nimrod is what that looks like.
+  - n: 4
+    scene: "The first civilization — people gather under Keyumars, learn to eat and clothe"
+    force: law
+    composer: Bach
+    work: "Goldberg Variations — Aria (BWV 988)"
+    decision: added
+    why: >
+      Under Keyumars, the world learns culture: what to eat, what to wear, how to live
+      together. This is the Persian equivalent of Enkidu learning bread and beer from
+      Shamhat — civilization instilled not as conquest but as pattern, repetition,
+      grammar. Bach's Aria is the ground beneath variation: a bass-line so stable that
+      thirty changes can unfold above it without it shifting. That is what Ferdowsi
+      describes in Keyumars' rule — the first laying-down of human order, modest and
+      total. The register is dignified but not grand; civilization at its first, plainest
+      moment.
+  - n: 5
+    scene: "Ahriman threatens — the dark spirit plots against the light"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 in C minor — I. Allegro con brio"
+    decision: added
+    why: >
+      The Shahnameh's cosmology is Zoroastrian dualism: Ahura Mazda (light, good) versus
+      Ahriman (darkness, evil). As soon as Keyumars establishes order, Ahriman moves
+      against it — not yet as catastrophe, but as the grammar of opposition that will
+      structure every event that follows. Beethoven's Fifth announces an adversarial force
+      with the specificity Ferdowsi requires: it is not random menace but organized
+      opposition, a pattern that will return. The four-note motif is fate-as-hammer,
+      not fate-as-mist. The darkness in the Shahnameh is this deliberate and this
+      structural.
+  - n: 6
+    scene: "Siamak — Keyumars' beloved son rides out against Ahriman's army"
+    force: sacrifice
+    composer: Gluck
+    work: "Iphigénie en Aulide — Overture to Act I"
+    decision: added
+    why: >
+      Siamak is the first sacrifice of the Shahnameh: the son of the first king, sent
+      against the darkness, killed. His death is not a battle-death in the Homeric sense
+      — it is the world's first demonstration that the light has a cost. Gluck's
+      overture for Iphigénie en Aulide was built for exactly this situation: a father
+      in sovereign authority whose child is about to be fed to the machinery of cosmic
+      necessity. The piece holds both the formal grandeur of the command-world and its
+      human wound. There is no melodrama in Gluck here — just weight.
+  - n: 7
+    scene: "Keyumars mourns Siamak — the first king's grief"
+    force: grief
+    composer: Mahler
+    work: "Kindertotenlieder — 'Nun will die Sonn' so hell aufgeh'n'"
+    decision: added
+    why: >
+      Keyumars weeps for a year. The Shahnameh is explicit: the first king tears his
+      clothes, gathers the world in mourning, and grief becomes a public, cosmic event.
+      This is not private inwardness (which would call for the Mahler Adagietto used in
+      the Iliad arc); it is a father's grief that has the quality of a natural disaster
+      — observable, immense, shared. Mahler's Kindertotenlieder opens its first song
+      with a cruel irony: the sun rises bright even on the day after the child dies. The
+      voice and the orchestra are not aligned — the world does not match the father's
+      interior. That gap is Keyumars' mourning exactly. The funeral march register (which
+      belongs later, to Sohrab and Rostam, to Esfandiyar) is too public too soon;
+      Kindertotenlieder holds the right private enormity.
+  - n: 8
+    scene: "Hushang avenges Siamak — the grandson kills Ahriman's demon-son"
+    force: kingship
+    composer: Handel
+    work: "Music for the Royal Fireworks — Overture (HWV 351)"
+    decision: added
+    why: >
+      Hushang is Siamak's son, Keyumars' grandson. He rides out, defeats the demon's
+      army, and the world rights itself — kingship replenished through righteous vengeance.
+      This is ceremonial restoration: the throne that was wounded is sealed. Handel's
+      Royal Fireworks Overture is court music at its most ceremonially exact — not war
+      music, not funeral music, but the music of order publicly re-established. Sovereign
+      display after legitimate victory. The register is somewhat lighter than Elgar's
+      Nimrod precisely because Hushang has done his work through military action, not
+      through mere ontological weight; there is swagger in Handel that Keyumars'
+      primordial sovereignty did not need.
+  - n: 9
+    scene: "The long lineage announced — Tahmuras, Jamshid, kings to come"
+    force: fate
+    composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    decision: added
+    why: >
+      Ferdowsi closes the Opening by announcing the kings who will follow: Hushang,
+      Tahmuras, Jamshid — names that carry their own fates already sealed. The Shahnameh's
+      structure is a king-list disguised as an epic; every name is a fatedness. Verdi's
+      Dies Irae is not death music in the narrow sense — it is the sound of a vast ledger
+      being read aloud, of fate operating at cosmological scale, of a roll-call whose
+      outcomes are already decided. The opening of the Shahnameh plants that weight before
+      a single heroic deed has been narrated. The kings to come are already doomed to
+      glory and to grief; the Dies Irae is the register in which their ledger opens.
+      This is not the terminal weight of an apotheosis (hold that for Rostam, for Sohrab);
+      it is the opening of an account-book.
+  - n: 10
+    scene: "Close: the world ordered under heaven, the poem's project declared"
+    force: ascent
+    composer: Bruckner
+    work: "Symphony No. 7 in E major — II. Adagio (opening)"
+    decision: added
+    why: >
+      The Shahnameh's opening cycle ends not with a battle-cry or a funeral but with a
+      declaration: Ferdowsi has set the world in motion, aligned his material under
+      heaven's grammar, and is about to narrate thirty-plus cycles of kings, heroes, and
+      catastrophes. The closing music must hold the horizon of what is about to unfold —
+      vast, unhurried, not yet tragic. Bruckner's Seventh Adagio opens with a horn
+      choir (Wagner tubas and horns) rising in a long, slow theme — an ascent of the
+      purest kind, no argument, just scope. It does not arrive anywhere in its first
+      minutes; it simply opens. That is the Shahnameh's first cycle exactly: the world
+      has been placed under kingship and fate, and the poem is beginning.
+
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "removed from Cycle 1; save for the deaths of Sohrab, Esfandiyar, Rostam"
+    why: "The Opening is not yet funeral music. No hero has died whose name the reader has learned to love. That weight is reserved."
+  - composer: Strauss
+    work: "Also sprach Zarathustra — Sunrise"
+    status: "rejected for the cosmogony"
+    why: "Too triumphalist. Strauss's sunrise is a monument erected after the fact; Haydn's Chaos gives the process, not the announcement."
+  - composer: Tchaikovsky
+    work: "Symphony No. 4 — I. Andante sostenuto (fate motif)"
+    status: "considered for Ahriman; replaced by Beethoven's Fifth"
+    why: "Tchaikovsky's fate is personal and Romantic; Ferdowsi's Ahriman is cosmological and dualist. Beethoven's structural hammer is the closer match."

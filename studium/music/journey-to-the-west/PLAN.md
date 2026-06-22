@@ -11,11 +11,11 @@
 - **Corpus:** `chinese-classical/journey-to-the-west` (chinese_original.txt)
 - **Source rail:** https://ctext.org/xiyouji
 - **Divisions:** 100 × Chapter
-- **Progress:** 0/100 arcs authored
+- **Progress:** 1/100 arcs authored
 
 | Chapter | dominant force | status |
 | --: | --- | :--: |
-| 1 | (author) | ☐ |
+| 1 | (author) | ✓ |
 | 2 | (author) | ☐ |
 | 3 | (author) | ☐ |
 | 4 | (author) | ☐ |

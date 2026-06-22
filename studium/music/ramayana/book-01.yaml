@@ -1,0 +1,238 @@
+# Ramayana — Bala Kanda (Book 1) — curated music arc
+# Bala Kanda: the book of origins — Valmiki's invocation, the birth of Rama, his training,
+# his marriage to Sita, the breaking of Shiva's bow. The register is NOT yet exile or war:
+# it is sacred kingship as light, before the shadow falls.
+work: ramayana
+book: 1
+title: "Ramayana Bala Kanda: Origin, Kingship, the Breaking of the Bow"
+length_minutes: 86
+principle: >
+  Do not score Bala Kanda as "the Ramayana in miniature." Score it as the moment where divine
+  order takes human form — the birth of Rama not as a king's son but as the avatar of dharma
+  itself entering a world that has become ungovernable. The kanda moves: sacred invocation →
+  kingship as cosmic vocation → divine birth into royal lineage → the guru's testing of the
+  prince → the swayamvara as fate-as-ceremony → Sita and Rama as the axis of the work. The
+  REGISTER throughout is luminous, ceremonial, and shot through with the barely-heard undertone
+  of what the next kanda will cost. Do not blow the elegy register here: that is Ayodhya Kanda.
+  Bala Kanda ends with a wedding, not a funeral — and that is its precise moral weight.
+force_arc: [revelation, kingship, divine-intervention, kingship, fate, exile, sacrifice, law, kingship, desire, divine-intervention, memory]
+dominant_force: kingship
+tracks:
+  - n: 1
+    scene: "Valmiki's invocation — the poet receives the story"
+    force: revelation
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      The Ramayana begins inside a forest, at the ashram of Valmiki, where the sage Narada
+      recites the story in compressed form before Valmiki has even composed it. Then Brahma
+      appears and commands Valmiki to give it full poetic form. This layered act of sacred
+      transmission — the story already existing before its telling, the poet receiving rather
+      than inventing — demands music of stillness, not assertion. Pärt's Spiegel im Spiegel
+      (mirror in mirror) is a single piano note and a violin line resolving infinitely into
+      each other. It is the sonic equivalent of the Sanskrit formula: the poem as eternal
+      already-known, the poet as vessel. Revelation requires stillness, chant, and verticality;
+      Pärt is its purest form without invoking a specific religious tradition that would
+      misframe the Hindu sacred.
+  - n: 2
+    scene: "Ayodhya — the city, the kingdom, Dasharatha's court"
+    force: kingship
+    composer: Handel
+    work: "Zadok the Priest — Coronation Anthem No. 1"
+    decision: added
+    why: >
+      Ayodhya is introduced as a perfect city: straight roads, full granaries, music in the
+      streets, a king beloved of gods and men. Dasharatha's court is idealized sovereign order —
+      not ironic grandeur, not the shadow of decline, but kingship as it is supposed to be,
+      before the world tilts. Handel's Zadok the Priest is the paradigm case of ceremonial
+      kingship in music: the slow string build, the moment of sudden choral arrival that feels
+      like the sky opening. It is sincere, not satirical. Ayodhya in Bala Kanda deserves that
+      sincerity — the poem has not yet earned its irony. Kingship requires ceremonial grandeur
+      and sovereign display; Handel gives it without reservation.
+  - n: 3
+    scene: "The putrakameshti — the fire sacrifice for sons"
+    force: divine-intervention
+    composer: Stravinsky
+    work: "Symphony of Psalms — II. Fugue"
+    decision: added
+    why: >
+      Dasharatha has no heir. He performs the putrakameshti yagna — a massive fire sacrifice —
+      to compel the gods. From the fire rises Agni, bearing a golden vessel of sacred food
+      (payasam), which Dasharatha distributes to his three wives. The scene is fire as divine
+      mechanism, sacrifice as the technology by which heaven is accessed. Stravinsky's Fugue
+      from the Symphony of Psalms is not serene piety but structured sacred pressure — the
+      fugal voices build like the accumulation of ritual action, and the arrival of the full
+      orchestra carries the weight of something beyond the human breaking into the ceremony.
+      Divine-intervention requires sudden color shift and brass/strings contrast; the Fugue
+      delivers both inside a formally rigorous architecture that matches the yagna's own
+      compulsive grammar.
+  - n: 4
+    scene: "The birth of Rama, Bharata, Lakshmana, Shatrughna"
+    force: kingship
+    composer: Elgar
+    work: "The Wand of Youth Suite No. 1 — 'Serenade'"
+    decision: added
+    why: >
+      Four princes are born in rapid succession. Rama's birth is described as luminous —
+      Vishnu has divided himself among the four sons, but Rama carries the divine fullness.
+      The scene is radiant without being thunderous: the birth of the avatara is not an
+      apocalypse but a quiet arrival, a child who is more than a child. Elgar's Serenade from
+      the Wand of Youth is the sound of something beginning in its most perfect form: not yet
+      tested, not yet diminished, purely itself. Kingship here is not the pomp of Handel but
+      the intimate sovereignty of potential — Elgar at his most luminous without a shadow of
+      Nimrod's grief anywhere near it.
+  - n: 5
+    scene: "Vishwamitra arrives — the demand for Rama"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    decision: added
+    why: >
+      The arrival of the sage Vishwamitra at Dasharatha's court is the hinge of Bala Kanda.
+      He demands Rama — a boy of perhaps sixteen — to accompany him into the forest and protect
+      his sacrifices from the rakshasas who defile them. Dasharatha's resistance is total and
+      anguished. But Vishwamitra's demand is not negotiable: it is fate wearing the face of
+      a brahmin's request. The king's grief is real and the outcome is predetermined. Beethoven's
+      Fifth opens with fate as rhythm — not as darkness exactly but as inexorability, the knock
+      at the door that cannot be un-heard. That is Vishwamitra arriving: not a villain, not
+      even an antagonist, but the mechanism by which the hero's education and destiny begin.
+      Fate requires inexorable motif and hammered insistence; the Fifth's first movement is its
+      canonical form.
+  - n: 6
+    scene: "Rama and Lakshmana leave with Vishwamitra"
+    force: exile
+    composer: Schubert
+    work: "Winterreise — 'Gute Nacht' (No. 1)"
+    decision: added
+    why: >
+      The two princes leave Ayodhya with Vishwamitra. This is the first departure — not yet
+      the great exile of Ayodhya Kanda, but its precursor and prefiguration. Dasharatha watches
+      his sons walk away. The grief is suppressed, the going is obedient, and the poem knows
+      (as the reader must learn to feel) that this small departure rhymes with a much larger one
+      to come. Schubert's 'Gute Nacht' — the opening of Winterreise — is departure without
+      sentimentality: the wanderer goes at night, the household does not wake, the leaving is
+      quiet and total. Exile requires wandering tonality and open intervals; Schubert's
+      'Gute Nacht' holds this without sentimentalizing it — the wanderer departs at night,
+      the household does not wake, and the going is absolute.
+  - n: 7
+    scene: "Vishwamitra's ashram — the rakshasas, Rama's first combat"
+    force: sacrifice
+    composer: Bartók
+    work: "Music for Strings, Percussion and Celesta — III. Adagio"
+    decision: added
+    why: >
+      In the forest, Rama and Lakshmana protect Vishwamitra's sacrifices from the demoness
+      Tataka and the rakshasa Maricha. Rama kills Tataka — his first kill, at the guru's
+      instruction, and a morally complex one: she is female, she was once a yaksha woman
+      transformed by a curse, and Rama hesitates before the killing. This is the world of
+      the forest at night, of ritual space being defiled and defended, of first combat as
+      both initiation and moral weight. Bartók's Adagio from the Music for Strings, Percussion
+      and Celesta is exactly this register: the night forest, xylophone and strings, something
+      ancient and strange moving at the edge of the light. Sacrifice requires ritual weight and
+      processional build; Bartók gives it the undertone of unease that this first forest killing
+      genuinely has — the darkness of the necessary act.
+  - n: 8
+    scene: "Vishwamitra teaches Rama the divine weapons (astras)"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue — Contrapunctus I"
+    decision: added
+    why: >
+      Vishwamitra transmits to Rama the bala and atibala (sustaining mantras), then the
+      celestial weapons — divyastras — each associated with a god and requiring precise
+      ritual invocation. This is transmission as formal law: weapon-knowledge is not power
+      freely given but structured gift, each astra bound to conditions of use, invocation,
+      and return. The scene is pedagogical, architecturally complete, and dense with the
+      grammar of sacred obligation. Bach's Contrapunctus I from the Art of Fugue is the
+      clearest musical analog to formal transmission: a single subject, unfolded through
+      every permitted transformation, each voice entering in its proper order. Law requires
+      formal clarity, repetition, architecture; the Art of Fugue is its most rigorous
+      instantiation in Western music.
+  - n: 9
+    scene: "Mithila — Janaka's court, the bow of Shiva"
+    force: kingship
+    composer: Walton
+    work: "Crown Imperial — March"
+    decision: added
+    why: >
+      Vishwamitra brings the princes to Mithila, city of King Janaka, for the swayamvara of
+      Sita. Janaka's court is the second great royal tableau of Bala Kanda — not as idealized
+      as Ayodhya, but grounded in a different kind of sovereign authority: the king who possesses
+      a divine object (Shiva's great bow, impossible to string) and has staked his daughter's
+      hand on it. The court assembles — kings and princes from across the known world — and
+      the atmosphere is sovereign display at maximum: rank, ceremony, the tension of the
+      impossible task. Walton's Crown Imperial gives Janaka's court its due without irony:
+      this is kingship on the terms the epic intends, before Rama makes the bow irrelevant.
+  - n: 10
+    scene: "Rama strings and breaks Shiva's bow — Sita's garland"
+    force: desire
+    composer: Wagner
+    work: "Lohengrin — Prelude to Act I"
+    decision: added
+    why: >
+      Rama alone can lift Shiva's bow. He strings it, draws it to its limit, and it shatters
+      with a sound like thunder. The room falls silent. Sita places her garland around his neck.
+      The scene is the moment of recognition — the avatara and his shakti finding each other,
+      divinity discovering divinity, the marriage that is not only human but cosmic. Desire here
+      is not erotic longing but its consummation in the form that was always already intended:
+      the deferred resolution of the entire kanda arriving. Wagner's Lohengrin Prelude builds
+      from nothing — violins so high they are almost inaudible — through a long arc of luminous
+      accumulation to a full orchestral arrival and then retreats again to silence. That arc is
+      Shiva's bow: the enormous tension, the moment of shattering, the Sita-recognition, the
+      garland as quiet resolution. Desire requires chromatic longing and deferred resolution;
+      Wagner's Lohengrin Prelude is desire resolved into recognition rather than catastrophe.
+  - n: 11
+    scene: "The marriage of Rama and Sita — the other weddings"
+    force: divine-intervention
+    composer: Vivaldi
+    work: "Gloria in D major, RV 589 — 'Et in terra pax'"
+    decision: added
+    why: >
+      The marriages are performed with full Vedic ceremony: Rama-Sita, and the three brothers
+      to their queens. The gods shower flowers from above; there are celestial omens of
+      blessing. This is divine-intervention in its benevolent register — heaven approving the
+      event below, not commandeering it. The scene is radiant without being ecstatic, joyful
+      without irony. Vivaldi's 'Et in terra pax' from the Gloria is choral celebration at
+      exactly this pitch: the kind of formal joy that is also a kind of peace, collective
+      voices in a major key that does not overreach into apotheosis. Divine-intervention
+      requires sudden color shift and brass/strings contrast; the Gloria's 'Et in terra pax'
+      arrives like the flower-shower — bright, clearly felt, not yet the machinery of fate.
+  - n: 12
+    scene: "Return to Ayodhya — the wedding procession closes the kanda"
+    force: memory
+    composer: Ravel
+    work: "Pavane pour une infante défunte"
+    decision: added
+    why: >
+      Bala Kanda closes with the return procession to Ayodhya. Rama and Sita enter the city
+      as the perfect couple: the ideal prince and his queen, joy without shadow, completion
+      without cost. The poem knows — and over hundreds of readings, the reader comes to know —
+      that this is the last fully unclouded moment. What comes next is Ayodhya Kanda and the
+      court intrigue that destroys everything. Ravel's Pavane has the register of something
+      radiant that is also already past: not nostalgic, but carrying within its beauty the
+      awareness that the beauty is temporary. It ends the kanda not with triumph but with
+      illuminated stillness — the poem holding its breath before it exhales into exile.
+      Memory requires nostalgic recall and faded recapitulation; Ravel's Pavane gives us the
+      procession as radiant-already-past — the unclouded moment held in the amber of its own
+      impermanence, known as precious precisely because it will not last.
+demoted:
+  - composer: Bruckner
+    work: "Symphony No. 8 — II. Scherzo"
+    status: "too massive for Bala Kanda's luminous register; save for Yuddha Kanda (the war)"
+    why: >
+      Bruckner's Eighth Scherzo has the cosmic weight of armies — right for the siege of Lanka,
+      wrong for a kanda that ends in a wedding. The register is too terminal, too inexorable.
+  - composer: Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    status: "save for Ayodhya Kanda (the exile grief), where it is perfect"
+    why: >
+      The Adagietto belongs to the moment Rama crosses the forest threshold into banishment,
+      not to the radiant marriage scene. Using it here would drain Ayodhya Kanda of its most
+      exact music.
+  - composer: Fauré
+    work: "Requiem — In Paradisum"
+    status: "save for Uttara Kanda or contemplative moments of resolution"
+    why: >
+      Too elegiac for an opening kanda. The salvation register belongs to the poem's resolution,
+      not its radiant beginning.

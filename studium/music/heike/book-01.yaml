@@ -1,0 +1,195 @@
+# Heike Monogatari — Book I — curated music arc
+# THE gold-standard form, matched to iliad/book-01.yaml.
+work: heike
+book: 1
+title: "Heike Book I: Bells, Clan, Hubris"
+length_minutes: 88
+principle: >
+  Do not score Book I as "the decline of the Heike." Score it as the moment where a clan
+  reaches its fullest expression of power and already contains within that fullness the seeds
+  of collapse. The bells of Gion Shoja announce impermanence before a single scene unfolds.
+  The book is then a portrait of overreach in its most seductive form — not evil triumphant,
+  but prowess that cannot read its own limit. Kiyomori is brilliant, magnetic, administratively
+  ruthless, and fatally blind to the cosmological grammar that governs his rise. He does not
+  fail; he is too large, and largeness in a world that preaches mujo (impermanence) is itself
+  the sentence. Score that paradox: grandeur that is already a form of grief.
+force_arc: [exile, kingship, fate, kingship, sacrifice, memory, wrath, kingship, metamorphosis, grief, revelation]
+dominant_force: fate
+tracks:
+  - n: 1
+    scene: "The bells of Gion Shoja — impermanence declared"
+    force: exile
+    composer: Sibelius
+    work: "Symphony No. 7 in C major — single movement"
+    decision: added
+    why: >
+      The opening sentence is philosophical before it is narrative: "The sound of the Gion Shoja
+      bells echoes the impermanence of all things." This is not foreboding — it is cosmological
+      framing. The Seventh Symphony opens in a vast, unmoored C major that circles without
+      resolving, as if the tonic itself is being questioned. Sibelius gives the bell-tone without
+      sentimentality, fate without melodrama. The wandering tonality matches the exile-force
+      requirement exactly; here it serves the text's deeper register: even tonic — even the key
+      of resolution — is impermanent.
+  - n: 2
+    scene: "The Taira lineage traced — clan rising from obscurity"
+    force: kingship
+    composer: Handel
+    work: "Coronation Anthem No. 1 — 'Zadok the Priest'"
+    decision: added
+    why: >
+      Kiyomori's genealogy is traced back to Emperor Kammu's fifth prince. The Taira are not
+      upstarts — they are a legitimate branch that had been demoted, provincial, then climbing
+      back. Handel's coronation anthem is the grammar of legitimate authority asserting itself:
+      ceremonial, layered, building through successive entries of voices until the whole
+      institutional world seems to proclaim it. That is exactly what this genealogical passage
+      performs — the clan re-inscribing itself into the hierarchy it had been displaced from.
+  - n: 3
+    scene: "The world of the proud perishes — the catalogue of fallen dynasties"
+    force: fate
+    composer: Verdi
+    work: "La forza del destino — Overture"
+    decision: added
+    why: >
+      After the genealogy, the text pivots to a list of fallen great men — Zhao Gao of Qin,
+      Wang Mang of Han, men who did not heed warnings, did not feel the people's grief, and
+      fell swiftly. This is the text's first explicit statement of the law: the proud do not
+      last. Verdi's overture opens with three hammered chords — destiny announcing itself —
+      then cycles through longing, violence, and an elegiac sweetness that is already tinged
+      with loss. The inexorable-motif requirement of the fate force is here not iron machinery
+      but something almost tender in its certainty. History does not hate these men; it simply
+      does not permit them.
+  - n: 4
+    scene: "Tadamori at court — the assassination-attempt and the wooden sword"
+    force: kingship
+    composer: Beethoven
+    work: "Symphony No. 7 — II. Allegretto"
+    decision: added
+    why: >
+      The Tadamori episode is the pivot between genealogy and Kiyomori's own story.
+      Tadamori enters the emperor's banquet armed (with what turns out to be a lacquered
+      wooden sword), survives a planned assassination by courtiers who mock him as cross-eyed,
+      and through wit and restraint — presenting the wooden sword to the palace stewards after
+      the fact — earns imperial commendation. The Beethoven Allegretto is form under pressure:
+      a relentless processional theme that neither relaxes nor erupts. It has the measured
+      authority of a man who knows the rules of power and plays them precisely, with no wasted
+      gesture. Tadamori's is a triumph of calculated restraint, not force.
+  - n: 5
+    scene: "Kiyomori's birth — illegitimacy and the supernatural"
+    force: sacrifice
+    composer: Bartók
+    work: "Music for Strings, Percussion and Celesta — I. Andante tranquillo"
+    decision: added
+    why: >
+      The corpus traditions give Kiyomori a complicated birth — there are hints of imperial
+      paternity, of a mother offered to a powerful man, of a child who is more than he appears.
+      Bartók's opening is chromatic unease built from a fugue that spirals outward: controlled,
+      but tracking something that cannot quite be contained by the voices given to it. The
+      ritual-weight requirement of sacrifice here applies not to immolation but to origins that
+      cost something — a woman's position, a lineage secret, an ambiguity that will shadow the
+      clan's legitimacy throughout.
+  - n: 6
+    scene: "Kiyomori rises — Governor, Commander, Minister: the meteoric ascent"
+    force: memory
+    composer: Elgar
+    work: "Enigma Variations — 'Nimrod' (Variation IX)"
+    decision: added
+    why: >
+      Kiyomori's rise through the court ranks is narrated with a kind of awe — he passes from
+      Governor of Aki to Harima, to Grand Controller of the Dazaifu, through military valor
+      in the Hogen and Heiji uprisings, to Grand Minister of State, to Senior First Rank —
+      faster than anyone had moved in nine generations. Elgar's Nimrod does not celebrate with
+      brass fanfares but with a swelling, almost disbelieving string melody that builds to
+      something just barely within the bounds of what a human achievement can hold. It is not
+      triumphalist; it is the emotional register of witnessing something extraordinary and
+      feeling the weight of it. Grandeur that makes one solemn, not merely glad.
+  - n: 7
+    scene: "The Taira supremacists — 'those outside this clan are not human'"
+    force: wrath
+    composer: Shostakovich
+    work: "Symphony No. 10 — II. Allegro"
+    decision: added
+    why: >
+      The text reaches its most chilling statement through Tokitada's mouth: "Those who are
+      not of this clan are not human." Kiyomori's 300 shaved-headed informers fill the streets
+      of Kyoto; anyone who speaks against the Taira is arrested. This is not military force —
+      it is the machinery of intimidation, the surveillance state dressed as court culture.
+      Shostakovich's second movement of the Tenth is one of music's most compact and ferocious
+      portraits of just this: power as rhythmic terror, relentless and asymmetrical, with no
+      warmth and no hesitation. The requirement — rhythmic pressure, unresolved harmony — is
+      met in its purest form. Holst's Mars would be too clean; this is internal.
+  - n: 8
+    scene: "Heike splendor — sixteen Taira ministers, sixty provincial governors"
+    force: kingship
+    composer: Rameau
+    work: "Les Indes galantes — 'Rondeau pour les Indes'"
+    decision: added
+    why: >
+      The text then pivots from menace to display: the Taira have sixteen clan members in the
+      Council of State, thirty nobles among court officials, sixty governors across the
+      provinces. Silk robes fill the hall; the household is flower-like in its beauty. Rameau
+      gives precisely this — court spectacle as aesthetic achievement, civilizational elegance
+      that is also political dominance. It is splendor that knows itself to be splendor and
+      performs accordingly. Ceremonial grandeur in the key of delight rather than solemnity.
+  - n: 9
+    scene: "The luckfish omen — Kiyomori hears the white fish, feasts his retainers"
+    force: metamorphosis
+    composer: Debussy
+    work: "La mer — 'Jeux de vagues'"
+    decision: added
+    why: >
+      Sailing to Kumano, Kiyomori's ship receives a great sea-bass that leaps aboard. The
+      omen-reader says it is a gift from the deity of Kumano; Kiyomori replies by invoking
+      the white fish that leaped into King Wu's boat before his righteous conquest. He has
+      the fish cooked and serves it to his men. This small scene is the text's diagnosis in
+      miniature: Kiyomori reads natural events as confirmation of his own destiny. Debussy's
+      "Play of the Waves" is neither ominous nor triumphant — it is fluid, iridescent,
+      metamorphic, the sea playing with itself with complete indifference to the human figures
+      upon it. The fate force here is not iron but water: the omen is real, the sea does not
+      care, and Kiyomori cannot tell the difference.
+  - n: 10
+    scene: "Gio and the court entertainers — beauty used, beauty dismissed"
+    force: grief
+    composer: Fauré
+    work: "Requiem — 'Pie Jesu'"
+    decision: added
+    why: >
+      The Gio episode is Book I's most sustained emotional passage. Gio is Kiyomori's favored
+      shirabyoshi dancer for three years. He then summons her back simply to entertain his new
+      favorite, Hotoke, seats her in a distant corner, humiliates her, and dismisses her. She
+      goes home and weeps for days. Her mother and sister eventually take Buddhist vows with
+      her at age twenty-one. The Faure Pie Jesu is the grief force precisely calibrated: not
+      funeral grandeur, not public lament, but the quietly exposed melodic line — a single
+      soprano voice, suspended, unguarded — that belongs to private suffering witnessed by
+      no one who could help it. The soul in the Pie Jesu asks for rest in a world that offers
+      none. Gio asks only to leave.
+  - n: 11
+    scene: "Hotoke's conversion — 'We are all Buddhas in the end'"
+    force: revelation
+    composer: Arvo Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      The book's final turn is startling: Hotoke herself eventually becomes a nun and joins Gio
+      in the mountain hermitage at Sagano. The passage closes with Gio's song of impermanence:
+      "We were all once common people; we shall all in the end become Buddhas / what sadness
+      that we draw distinctions among those who have the Buddha-nature." The Pärt mirrors that
+      exactly — Spiegel im Spiegel ("mirror in mirror") is infinite regression with no decay:
+      the same figure, reflected, returning, never resolving into something other than itself.
+      It does not conclude; it simply continues until it stops. Impermanence without grief,
+      stillness that is also revelation. The verticality requirement of revelation bleeds into
+      the fate requirement: the law is not tragic, it is just inexorable.
+demoted:
+  - composer: Mahler
+    work: "Symphony No. 6 — 'Tragic': IV. Andante moderato"
+    status: "removed from Book I; save for later books (the sea battles, the fall of the Heike at Dan-no-ura)"
+    why: >
+      Three hammer-blows of fate is the right register for Books XI-XII (Ichinotani, Yashima,
+      Dan-no-ura), when the clan actually perishes. Book I is not yet the hammer; it is the
+      moment when the hammer is being forged. Do not blow the terminal register on the opening.
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "removed from Book I; save for Atsumori (Book IX) or the drowning of the Heike child emperor"
+    why: >
+      The funeral march weight belongs to the moment of actual irreversible loss. Book I still
+      has grandeur unbroken; the wound is only the Gio episode, and that is private grief,
+      not heroic death.

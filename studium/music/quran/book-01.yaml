@@ -1,0 +1,163 @@
+# Qur'an — Sura 1 — curated music arc
+# Al-Fatiha (The Opening) — 7 verses, recited in every prayer
+work: quran
+book: 1
+title: "Sura 1: Al-Fatiha (The Opening)"
+length_minutes: 38
+principle: >
+  Do not score Al-Fatiha as a specimen of Islamic theology. Score it as the moment where
+  the act of speaking to God IS the arc — seven lines that are simultaneously address,
+  praise, declaration of creatureliness, and petition. The Fatiha is not a prologue to
+  the Qur'an; it is the Qur'an's heartbeat: every Muslim recites it 17 times a day.
+  The movement is interior and vertical, not narrative. What moves here is posture — the
+  soul orienting itself toward the divine before anything can be said or read or understood.
+  Two forces govern it: revelation (the Qur'an descending as recited speech-event) and
+  supplication (the creature's upward address, fully dependent, asking to be guided). These
+  are not sequential — they are simultaneous, the breath in and the breath out of prayer.
+force_arc: [revelation, revelation, supplication, kingship, supplication, revelation, supplication, supplication]
+dominant_force: supplication
+tracks:
+  - n: 1
+    scene: "Bismillah — the invocation before speech"
+    force: revelation
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      The Bismillah ("In the name of God, the Most Gracious, the Most Merciful") is not
+      a line — it is a threshold. Before the Fatiha begins, the speaker pauses at the door
+      of language and names the source from which everything will issue. Pärt's Spiegel im
+      Spiegel is that pause made audible: two instruments in perfect stillness, a single
+      melodic line over a mirror-pool of sustained harmony, nothing unresolved and nothing
+      driven. It gives the stillness-before-utterance that the Bismillah requires. The
+      danger of using something more imposing here is that you would swamp the smallness of
+      the gesture — and the Bismillah is small, quiet, exact.
+  - n: 2
+    scene: "Alhamdulillah — pure praise, the acknowledgment of divine sovereignty"
+    force: revelation
+    composer: Bach
+    work: "Mass in B Minor — Kyrie eleison (I. Kyrie)"
+    decision: added
+    why: >
+      "Praise be to God, Lord of the Worlds" — this is not warm feeling; it is an ontological
+      statement. Alhamdulillah functions in Arabic as a complete world-claim: the entire
+      cosmos is God's, and speech begins with acknowledging that. Bach's Kyrie from the B
+      Minor Mass opens with precisely this quality — not sentimental devotion but architectural
+      acknowledgment, a choir placing itself before a force it cannot contain, the voices
+      organized by a grammar larger than any of them. The fugal entries carry the feeling of
+      one truth arriving from multiple directions at once. This is not yet petition — it is
+      prior to petition: existence in the presence of its maker.
+  - n: 3
+    scene: "Al-Rahman al-Rahim — the doubled mercy, the attribute as invocation"
+    force: supplication
+    composer: Fauré
+    work: "Requiem — Agnus Dei"
+    decision: added
+    why: >
+      Verse 3 repeats what the Bismillah already said: al-Rahman, al-Rahim — the Merciful,
+      the Compassionate. This is not redundancy; it is incantation. In Arabic Qur'anic
+      theology, the repetition deepens the attribute rather than merely restating it: the
+      one who hears it twice is meant to feel mercy as a quality that exceeds the first
+      announcement. Fauré's Agnus Dei has exactly this structure: a phrase that curves
+      back on itself, always returning to the same consoling tonic but each return landing
+      differently — fuller, more settled. The sound is not resigned; it is confident in a
+      force that exceeds ordinary comfort. The doubled mercy lands like that.
+  - n: 4
+    scene: "Maliki yawm al-din — Lord of the Day of Judgment, time and sovereignty"
+    force: kingship
+    composer: Handel
+    work: "Messiah — 'And He shall reign for ever and ever' (Hallelujah Chorus)"
+    decision: added
+    why: >
+      "Master of the Day of Judgment" — the sole moment in the Fatiha that opens toward
+      eschatology. This is not a threatening line; in context it is a stabilizing one: the
+      same God who is Merciful is also sovereign over time and its terminus. The Hallelujah
+      Chorus is the only piece in the Western canon that carries both registers simultaneously
+      — jubilation and sovereignty, not as opposites but as the same thing apprehended from
+      below. The audience's instinct to stand is the instinct the Fatiha intends: the
+      creature oriented vertically, upright before what holds all of time. Not funeral music,
+      not thunder — sovereign clarity, which is what Maliki yawm al-din requires.
+  - n: 5
+    scene: "Iyyaka na'budu — 'You alone we worship': the turn from address to declaration"
+    force: supplication
+    composer: Bach
+    work: "St Matthew Passion — 'Erbarme dich, mein Gott'"
+    decision: added
+    why: >
+      Verse 5 is the pivot of the Fatiha: the grammar shifts from third person (praise of
+      God who is over there, in the cosmos) to second person (God who is here, directly
+      addressed). "You alone we worship / You alone we ask for help" — the soul suddenly
+      naked in front of the named. Erbarme dich is the closest classical music comes to
+      that exposure: Peter weeping after his denial, a solo voice begging for mercy from a
+      source it has wronged and still faces. The oboe line is the exposed melodic cry that
+      the dominant-force engine requires of supplication — suspended, forward, unable to
+      resolve by its own force. The Fatiha's turn requires exactly this shift in register.
+  - n: 6
+    scene: "Ihdinā al-sirāt al-mustaqīm — 'Guide us on the straight path': the petition"
+    force: revelation
+    composer: Tavener
+    work: "Song for Athene"
+    decision: added
+    why: >
+      The great petition: ihdinā — guide us — is the engine of the entire Fatiha. Everything
+      before it (praise, acknowledgment of mercy, sovereignty) was preparation for this
+      single verb. The Fatiha does not ask for rescue, wealth, health, victory — it asks for
+      orientation. Guide us. Not: save us from specific danger. Guide us: correct the
+      trajectory of the soul. Tavener's Song for Athene rises from low strings into upper
+      choral harmony along exactly this melodic geometry: the slow ascent of a line that is
+      not climbing a triumph but finding a direction, leaning toward something it cannot
+      yet see. The piece ends in luminosity without fanfare — the straight path, not the
+      arrival at the destination.
+  - n: 7
+    scene: "Sirāt alladhīna — 'The path of those You have blessed, not those who have gone astray'"
+    force: supplication
+    composer: Allegri
+    work: "Miserere mei, Deus"
+    decision: added
+    why: >
+      The Fatiha's last verse adds two negative clauses to the petition: not the path of
+      those who have earned anger, not those who have gone astray. The final word of the
+      Fatiha is a plea — the worshiper ends not with arrival but with the awareness that
+      wrong paths exist and that only mercy keeps the soul on course. Allegri's setting of
+      Psalm 51 — "Miserere mei, Deus," have mercy on me, O God — is that plea made exact:
+      a low chanted choir from which a single voice rises to an exposed, almost unbearable
+      high C and holds there, suspended, before falling back into the plainsong. That
+      soaring, undefended line is the exact "exposed melodic cry" supplication requires —
+      a creature pleading to be kept from the wrong path, the petition reaching higher than
+      it can sustain and trusting the answer to hold it. It is penitential, not funeral:
+      the living cry of the soul that knows the astray-path is real and asks, again, for
+      mercy. (Distinct from track 5's Erbarme dich — both petition, but this is the choral
+      ascent of the whole congregation, where track 5 was the single naked turn to address.)
+  - n: 8
+    scene: "The Fatiha recited — repetition as the structure of prayer"
+    force: supplication
+    composer: Ravel
+    work: "Pavane pour une infante défunte"
+    decision: added
+    why: >
+      The Fatiha is recited 17 times a day in the five canonical prayers: in every rak'ah
+      (prayer-unit), the worshiper recites it in full. This is not rote repetition; it is
+      liturgical deepening — the same text revealing different facets each time, the way
+      light on water differs with each pass. Ravel's Pavane is structured similarly: a
+      simple melodic phrase that circles back, each repetition slightly altered in
+      orchestration, each return landing with more weight than the last. It is grief held
+      inside ceremony — the recognition that what one asks for again and again is exactly
+      the thing one cannot guarantee oneself. The prayer of the Fatiha is the prayer that
+      cannot be said once and finished.
+demoted:
+  - composer: Messiaen
+    work: "Quartet for the End of Time — 'Louange à l'Éternité de Jésus'"
+    status: >
+      held for later suras (Al-Ikhlas, 112; or eschatological suras); too heavy for the
+      Fatiha's intimacy — save for moments where the Qur'an opens cosmological time
+    why: >
+      The Quartet movement carries the weight of eternity confronted directly, which
+      belongs to the Qur'an's cosmological suras. The Fatiha is intimate, recited in
+      closeness, not in awe of the infinite — the register must stay interior.
+  - composer: Mahler
+    work: "Symphony No. 8 — 'Veni Creator Spiritus'"
+    status: "held for Sura 2 or a sura of divine address and cosmic scale"
+    why: >
+      The Fatiha's supplication is private and repeated daily — it is small-scale prayer,
+      not a vision of creation's totality. Mahler's Eighth belongs where the Qur'an expands
+      into its largest scope (the Throne Verse, Ayat al-Kursi; the eschatological suras).

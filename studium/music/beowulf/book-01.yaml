@@ -1,0 +1,189 @@
+# Beowulf — Fitt I — curated music arc
+# THE gold-standard form. Every other fitt converges toward this shape.
+work: beowulf
+book: 1
+title: "Beowulf Fitt I: Glory, Grendel, Twelve Years of Night"
+length_minutes: 86
+principle: >
+  Do not score Fitt I as "the monster story." Score it as the poem's founding proposition:
+  that civilisation is a lit hall in the dark, and the dark has always been listening. The
+  movement traces two arcs in sequence — the ascending arc of Scyld Scefing's dynasty
+  (funeral ship, hall-building, the blaze of Heorot) and the descending arc of Grendel's
+  counter-claim (God's outcast, twelve years of slaughter, a hall emptied every night).
+  Kingship builds; grief names what cannot be built against; fate asserts that no hall lasts.
+force_arc: [kingship, grief, fate, kingship, kingship, grief, fate, grief, fate, fate]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "The praise of Scyld Scefing — the ancestral foundation-song"
+    force: kingship
+    composer: Elgar
+    work: "Enigma Variations — 'Nimrod' (Variation IX)"
+    decision: added
+    why: >
+      The poem opens not with Beowulf but with an ancestor — a founding king who arrived
+      from the sea as a child and grew to greatness. 'Hwæt!' is a hall-cry, demanding
+      attention in a mead-hall. 'Nimrod' carries the same quality: it is not triumphant
+      military music but commemorative grandeur, the slow, dignified recognition of someone
+      who was great and is now being remembered. Its swell is civic, collective, retrospective —
+      exactly the texture of the Anglo-Saxon reputation (dom) that opens the poem. 'Zadok the
+      Priest' is too coronational; we need elegy-tinged kingship, not enthronement.
+  - n: 2
+    scene: "Scyld's funeral — the ship put out to sea"
+    force: grief
+    composer: Grieg
+    work: "Peer Gynt Suite No. 1 — 'Åse's Death'"
+    decision: added
+    why: >
+      The funeral of Scyld is one of the most beautiful passages in Old English poetry: the
+      warrior-king laid on a treasure-ship, sent out onto the ocean alone, his destination
+      unknown. It is grief as ritual dignity — not lamentation but ceremony, the people
+      performing their knowledge that the king belongs ultimately to the sea. Grieg's piece
+      is extraordinarily restrained: a slow processional descent, the strings almost bare,
+      the emotional weight borne by harmonic simplicity. It refuses to be operatic. So does
+      the poem. Chopin's 'Funeral March' (Sonata No. 2) is too interior and nineteenth-century
+      in its grief; this is collective, public, Norse-adjacent mourning.
+  - n: 3
+    scene: "The genealogy of kings — time deepening"
+    force: fate
+    composer: Sibelius
+    work: "Symphony No. 7 in C major"
+    decision: added
+    why: >
+      After the funeral, the poem unfolds the genealogy: Scyld begat Beow, Beow begat
+      Healfdene, Healfdene begat Hrothgar. This is not mere list-making — it is the
+      accumulation of time, the sense of fate building through generations toward a crisis
+      none of them could see coming. Sibelius' Seventh is a single-movement world: it
+      unfolds from something ancient and undifferentiated into something inexorable, then
+      subsides. Its quality of time-as-weight — the slow inevitability of the trombone
+      theme appearing and returning — matches the genealogical mode. Beethoven's Fifth would
+      be too abrupt; this is the long destiny, not the sudden knock.
+  - n: 4
+    scene: "Heorot is built — the golden hall blazing"
+    force: kingship
+    composer: Handel
+    work: "Music for the Royal Fireworks — Overture"
+    decision: added
+    why: >
+      Hrothgar commands the greatest mead-hall ever built; Heorot rises, blazing with
+      torchlight, gold-bright, the height of human civilisation. This is the poem's
+      proudest moment of secular achievement — men gathering under a king's roof, feasting,
+      receiving gifts, hearing the scop sing of creation. Handel's overture is the right
+      music for this: ceremonial, sovereign, genuinely grand without irony. The Royal
+      Fireworks was written for public splendor; Heorot is public splendor. Note: this same
+      Handel works for Olympus in the Iliad — but here the grandeur is unironic, because
+      Fitt I has not yet earned irony. The ruin is coming; for now, let the hall blaze.
+  - n: 5
+    scene: "The scop sings of creation inside Heorot"
+    force: kingship
+    composer: Hildegard von Bingen
+    work: "O virtus Sapientiae"
+    decision: added
+    why: >
+      Inside Heorot, the court poet sings of the creation of the world — light, land, sun,
+      moon, all living things. This is Beowulf's equivalent of a Genesis-song, and it is
+      crucial: the poem embeds a song of God's creation at the moment of human festivity.
+      Hildegard gives us medieval Christian luminosity — not anachronistic here, because the
+      Beowulf poet was a Christian writing of a pagan past and this syncretism is the poem's
+      own texture. Her music has the quality of singing the world into being: open vowels,
+      ascending melisma, sacred clarity. No secular composer captures the exact register of
+      a man singing creation in a golden hall at night.
+  - n: 6
+    scene: "Grendel hears the feast — God's outcast outside the light"
+    force: grief
+    composer: Shostakovich
+    work: "Symphony No. 8 — II. Allegretto"
+    decision: added
+    why: >
+      Grendel is introduced immediately after the creation-song: he dwells in darkness,
+      descended from Cain, condemned to wander the moors. He hears Heorot's music and cannot
+      enter. This is the poem's first and most devastating structural irony — the joy that
+      fills the hall is the exact measure of Grendel's exclusion. Shostakovich's second
+      movement of the Eighth is march-like but grotesque, sardonic, relentless — it has the
+      quality of something moving toward light it cannot possess, a terrible anti-joy. The
+      Eighth Symphony is music of the excluded, the condemned, the ironized. Penderecki would
+      be too abstractly horrific; Grendel is not a monster-movie creature but a figure of
+      theological exile, which needs this darkly satirical register.
+  - n: 7
+    scene: "Grendel attacks — the first night of slaughter"
+    force: fate
+    composer: Bartók
+    work: "Music for Strings, Percussion and Celesta — III. Adagio"
+    decision: added
+    why: >
+      Grendel comes at night, takes thirty thanes, carries them to his lair. The horror of
+      this passage is not described in physical detail — it is described in the silence that
+      follows, the discovery at dawn, the grief of the Danes. Bartók's Adagio from the Music
+      for Strings is night music of enormous, controlled menace — chromatic clusters in the
+      strings, the celesta introducing an eerie, non-human luminosity, percussion mapping
+      footfalls. It is music that knows what happens in the dark without showing it. Stravinsky
+      (Rite) would turn this ritual-sacrificial; Bartók keeps it uncanny, specific, fateful.
+  - n: 8
+    scene: "Twelve years — Grendel's reign / the Danes' sustained grief"
+    force: grief
+    composer: Barber
+    work: "Adagio for Strings"
+    decision: added
+    why: >
+      This is Fitt I's most sustained and devastating passage: not one attack but twelve years
+      of attacks. The poem dwells on this duration — the Danes cannot sleep in Heorot, the
+      greatest hall of the age stands empty at night, no counsel can find a remedy. This is
+      collective, sustained, politically total grief. Barber's Adagio is the most precisely
+      calibrated piece in the Western canon for exactly this register: grief that doesn't
+      explode into tragedy but presses, ascends, presses further, never resolves. Its climax
+      and silence are the right analog to Fitt I's most despairing lines. Note: Mahler's
+      Adagietto (used for Achilles-Thetis in the Iliad) is private grief; the Barber is
+      public, sustained, civilisational grief. They are not interchangeable.
+  - n: 9
+    scene: "The Danes' failed counsel — idols and prayers to heathen gods"
+    force: fate
+    composer: Penderecki
+    work: "Threnody for the Victims of Hiroshima"
+    decision: added
+    why: >
+      The Danes, desperate, turn to heathen shrines and make offerings. The poem notes this
+      with the Beowulf-poet's characteristic theological double-vision: they knew no better,
+      but their counsel was wrong, and God's grace was not with them. This is a moment of
+      civilisational collapse into superstition — a people's institutions failing, their
+      spiritual resources exhausted, turning to sources they already suspect won't work.
+      Penderecki's Threnody captures this perfectly: it is not horror-film music but the
+      sound of structure itself failing, of the human acoustic going beyond the threshold of
+      form. It is used here sparingly, for this single dark passage — not for Grendel's
+      attack (which is fateful but controlled) but for the moment human counsel breaks down.
+  - n: 10
+    scene: "The news reaches Beowulf — the close of Fitt I, the turn"
+    force: fate
+    composer: Vaughan Williams
+    work: "Symphony No. 5 — I. Preludio"
+    decision: added
+    why: >
+      Fitt I ends not with resolution but with widening: the news of Heorot's suffering spreads
+      across the sea-roads. This is the poem turning toward its hero, the threshold between the
+      problem and the response. Vaughan Williams' Fifth Preludio has exactly the right quality
+      for this moment: it is neither triumphant nor despairing — it is searching, liminal, a
+      sustained open question. The symphony was written during the Second World War and carries
+      the texture of a world in terrible trouble that might, possibly, be answered. It does not
+      promise resolution; it creates readiness. This is the emotional posture Fitt I closes on:
+      not rescue, but the opening of the possibility of rescue.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "removed from Fitt I; save for Beowulf's death (Fitts 38–43)"
+    why: >
+      The poem opens with a funeral but it is Scyld's, not Beowulf's. Scyld is legendary,
+      ancestral, already-glorious; his death is triumph not tragedy. The Funeral March is
+      terminal weight; Fitt I earns grief but not yet tragedy. Reserve for the poem's end.
+  - composer: Britten
+    work: "War Requiem — Agnus Dei"
+    status: "removed; save for Fitt 38 or the collective death passages"
+    why: >
+      Britten is exactly right for Beowulf-as-elegy, but using him in Fitt I would blow the
+      poem's climactic register on its opening movement. Twelve years of Danish grief is great
+      suffering, but it is not yet the sacrificial grief of a whole people watching their king
+      die. Britten waits.
+  - composer: Mahler
+    work: "Symphony No. 9 — IV. Adagio"
+    status: "removed; too terminal for Fitt I"
+    why: >
+      Mahler's Ninth Adagio is farewell music of the highest order — right for the poem's
+      valedictory close. Fitt I is not farewell; it is the wound that requires the hero.

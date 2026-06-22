@@ -1,0 +1,164 @@
+# Bhagavad Gita — Chapter 1 — curated music arc
+# Arjuna Vishada Yoga: The Yoga of Arjuna's Grief
+work: bhagavad-gita
+book: 1
+title: "Bhagavad Gita Chapter 1: Grief, Kinsmen, the Dropped Bow"
+length_minutes: 78
+principle: >
+  Do not score Chapter 1 as "Hindu philosophy" or "battle epic." Score it as the moment
+  where a warrior is unmanned — not by cowardice but by seeing too clearly. The armies are
+  already drawn up; the war has already been decided by fate; and then Arjuna looks across
+  the field and sees every face he loves. Chapter 1 is grief as argument, grief as philosophy,
+  grief as the reason a great bow falls into the dust. The cosmic machinery is already in
+  motion; the chapter's drama is entirely internal. Do not anticipate Krishna's answer —
+  that belongs to Chapter 2 onward. Here we stay with the collapse.
+force_arc: [fate, fate, wrath, metamorphosis, grief, grief, grief, supplication, supplication]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "Dhritarashtra's question: 'What did they do on the field of Kurukshetra?'"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    decision: added
+    why: >
+      The opening verse is a blind king asking a seer what happened — already everything
+      is past, sealed, the motif hammered into being before the narrative begins. The famous
+      four-note motive of the Fifth is fate as inexorable structure, not as event: it arrives
+      before we understand what it means, and it will not be argued with. Dhritarashtra's
+      question is not a question — it is fate asking to be narrated.
+  - n: 2
+    scene: "Sanjaya narrates: Duryodhana surveys the armies and names the heroes on both sides"
+    force: fate
+    composer: Verdi
+    work: "Requiem — Dies irae"
+    decision: added
+    why: >
+      Duryodhana catalogs the heroes on both sides with cold military precision: name after
+      name, rank after rank. It is a roll-call that is also a death-list. The Dies irae is
+      not premature funeral music here — it is the ancient knowledge that naming the warriors
+      is also naming the dead. The catalog is fate wearing the grammar of military review.
+      Verdi's brass gives the ceremony its weight without giving it grief — that comes later.
+  - n: 3
+    scene: "The conchs blow: Bhishma's lion-roar, then both armies answered"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    decision: added
+    why: >
+      The conch-sequence is the poem's most explicitly martial passage: Bhishma roars, conchs
+      sound from every quarter, the tumult rends the hearts of Dhritarashtra's men. But like
+      the Iliad's martial machinery, it is not heroic excitement — it is pressure, asymmetry,
+      dread. The 5/4 pulse of Mars is hostile to settlement. The armies do not yet move; they
+      have simply declared themselves with noise. The scene is loud, but underneath it is
+      the recognition that the noise is irreversible.
+  - n: 4
+    scene: "Arjuna asks Krishna to drive the chariot between the two armies"
+    force: metamorphosis
+    composer: Debussy
+    work: "Prelude to the Afternoon of a Faun"
+    decision: added
+    why: >
+      This is the hinge of the chapter — and of the entire Gita. Arjuna does not yet know
+      what he will see; he simply wants to observe who he will fight. The request is ordinary.
+      But the chariot moving between the armies is a threshold crossing: the world before
+      seeing and the world after seeing. Debussy's Faun opens onto a space of suspended
+      half-consciousness, a held breath before full awareness arrives. The flute phrase is
+      liminal, not martial — exactly the quality of the chariot rolling into the no-man's-land
+      between the two hosts.
+  - n: 5
+    scene: "Arjuna sees his kinsmen on both sides — fathers, preceptors, uncles, sons"
+    force: grief
+    composer: Schubert
+    work: "String Quartet No. 14 in D minor ('Death and the Maiden') — II. Andante con moto"
+    decision: added
+    why: >
+      The scene of recognition is simple and devastating: Arjuna looks and sees not enemies
+      but family. Grandfathers. Teachers. Sons. Friends. The Andante of 'Death and the Maiden'
+      is a set of variations on a song about grief meeting the young — it is not funeral-heavy
+      but inward, intimate, the slow penetration of an unbearable knowledge into a body still
+      standing. Schubert's string writing at this tempo does not weep publicly; it discovers.
+      That is exactly Arjuna's register: not yet weeping, still looking, still understanding
+      what he sees.
+  - n: 6
+    scene: "Arjuna's body fails: limbs droop, mouth dries, bow slips, skin burns"
+    force: grief
+    composer: Barber
+    work: "Adagio for Strings"
+    decision: added
+    why: >
+      The physical collapse is the chapter's most precise passage: not metaphorical, not
+      philosophical — Arjuna's body simply stops cooperating. The Gandiva slips from his hand.
+      His hair stands on end. He cannot stand. Barber's Adagio is grief as physical phenomenon:
+      the long arch of the strings is the body's attempt to hold itself upright while something
+      essential gives way. It is not a funeral piece here — it is the music of the moment
+      before surrender, the last sustained effort before the bow falls.
+  - n: 7
+    scene: "Arjuna's philosophical argument: killing kin will destroy dynasty, corrupt women, pollute castes, send ancestors to hell"
+    force: grief
+    composer: Brahms
+    work: "Intermezzo in A major, Op. 118, No. 2"
+    decision: added
+    why: >
+      This is grief that has found its grammar. Arjuna does not simply weep — he constructs
+      an elaborate cosmological argument for not fighting, each step leading to the next with
+      terrible logic: kill kinsmen → destroy family rites → women become corrupt → castes mix
+      → ancestors fall to hell. The Brahms Intermezzo is grief that has become architecture:
+      the melodic line is not abandoned but exquisitely controlled, every phrase supporting
+      the next, the whole moving toward a conclusion that is also a dissolution. Brahms heard
+      this register; he scored it for a single instrument, inward, with no audience.
+  - n: 8
+    scene: "Arjuna: 'Let Dhritarashtra's sons kill me weaponless — that would be better'"
+    force: supplication
+    composer: Bach
+    work: "St. Matthew Passion — 'Erbarme dich, mein Gott' (Have mercy, Lord)"
+    decision: added
+    why: >
+      This is the moment of complete ethical surrender: Arjuna says he would rather die than
+      fight. It is not cowardice — it is supplication as its own form of pride, the refusal
+      to survive by killing what he loves. Bach's 'Erbarme dich' is the exposed melodic line
+      of supplication: the violin obbligato above the voice does not resolve but circles, the
+      cadences suspended, the appeal rising without an answer yet given. Peter wept. Arjuna
+      will sit down. Both are the same act — the self cast before something larger than will.
+  - n: 9
+    scene: "Arjuna casts his bow and arrows aside and sits in the chariot, his mind agitated by grief"
+    force: supplication
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      The chapter ends in stillness: Arjuna sits. The bow lies in the dust of the chariot floor.
+      The armies wait. Nothing happens. Pärt's Spiegel im Spiegel ('Mirror in the Mirror') is
+      the only music adequate to this ending — its tintinnabuli technique generates a sound
+      that is simultaneously present and suspended, inside and outside time. The piano holds
+      the tonic while the violin ascends and returns, ascends and returns: grief that has
+      become posture, the body folded into itself, waiting for something that has not yet
+      arrived. Chapter 1 ends here, unanswered. Chapter 2 is the answer. This silence between
+      them is the most important moment in the Gita.
+demoted:
+  - composer: Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    status: "reserved; used in Iliad Book I for Achilles and Thetis; the affect overlaps but this chapter needs more inward, less late-Romantic weight"
+    why: >
+      The Adagietto is private suspended grief, which is correct for Chapter 1 — but it carries
+      a late-Romantic signature that risks being too lush for the extreme interiority of
+      Arjuna's collapse. Schubert (track 5) and Barber (track 6) give the grief without
+      the Mahlerian apotheosis-shadow. Save the Adagietto for a later chapter where the
+      grief has earned its full orchestral weight (possibly Chapter 15, the tree of life, or
+      the closing verses).
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "never for Chapter 1; consider for Chapter 11 (Vishvarupa) or Chapter 18 close"
+    why: >
+      The Funeral March requires a hero already dead, a public act of mourning, a world
+      acknowledging catastrophe. Chapter 1 is precisely not that — it is private, pre-death,
+      the moment before any of the deaths occur. To play the Funeral March here would be to
+      score Arjuna's fear with the music of its vindication. Wrong register entirely.
+  - composer: Tchaikovsky
+    work: "Symphony No. 6 ('Pathétique') — IV. Adagio lamentoso"
+    status: "too terminal; save for a later chapter if needed"
+    why: >
+      The Pathétique finale is exhaustion and surrender after the fact — it belongs to a
+      chapter of aftermath, not a chapter of refusal. Arjuna's grief in Chapter 1 is still
+      arguing, still awake, still upright in its logic. Tchaikovsky's finale has already
+      given up. The registers do not match.

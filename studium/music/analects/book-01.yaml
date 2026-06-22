@@ -1,0 +1,250 @@
+# Analects — Book I — curated music arc
+# 學而 Xue Er — "Learning"
+# Score the actual movement of the 16 chapters — not "Confucianism in general."
+# The opening of the Analects is not temple grandeur or doctrinal proclamation.
+# It is a quiet question asked three times, each time spiraling inward: pleasure → delight → completeness.
+# The arc is: invitation → foundation → daily discipline → structure of the self under ritual law.
+# Hold funeral / apotheosis register for where it belongs (later books, later crises).
+work: analects
+book: 1
+title: "Analects Book I: Learning, Ritual, Return"
+length_minutes: 86
+principle: >
+  Do not score Book I as "the wisdom of Confucius." Score it as the moment where learning is named
+  as pleasure — and that naming is already the whole programme. The opening is an interrogative, not
+  a proclamation: three rhetorical questions that unfold from self (learning in season) to world
+  (friends arriving from far away) to ego-death (untroubled by others' ignorance). The rest of the
+  book answers how: through filial piety as root, daily self-examination as discipline, ritual as
+  the living architecture of a well-governed self, and the gentleman (君子) as the ideal form toward
+  which every aphorism aims. The register is domestic, intimate, recurrent — not grandly ceremonial.
+  Ritual here is not public pomp but repeated private practice, the way "learning and practicing in
+  season" is already a kind of music: something you return to, time and again, until it changes you.
+force_arc: [return, law, law, memory, law, law, return, law, memory, return, memory, law, law, return, return]
+dominant_force: law
+tracks:
+  - n: 1
+    scene: "Opening invocation — 'Is it not a pleasure to learn and practice in season?'"
+    force: return
+    composer: Bach
+    work: "Well-Tempered Clavier, Book I — Prelude No. 1 in C major (BWV 846)"
+    decision: added
+    why: >
+      The first sentence of the Analects is not a teaching — it is a question: 不亦說乎, "is it not
+      a pleasure?" Bach's C-major Prelude asks the same kind of question with the same formal
+      simplicity: a single arpeggiated figure, repeated, unfolding without harmonic drama until you
+      realize the whole world is inside it. The return of the pattern IS the point. Learning "in
+      season" (時習之) is exactly this: not the dramatic acquisition of knowledge but the practiced
+      return to what is known, until it becomes part of you. No better opening exists.
+  - n: 2
+    scene: "Filial piety and fraternal submission as root of benevolence"
+    force: law
+    composer: Haydn
+    work: "String Quartet in C major, Op. 76 No. 3 ('Emperor') — II. Poco adagio cantabile"
+    decision: added
+    why: >
+      Yu's teaching (有子曰) establishes the vertical social order — filial piety, hierarchy, the
+      root from which all benevolent action grows. Haydn's Emperor Variations build a simple theme
+      through four variations without ever losing the theme itself, each voice sustaining or
+      ornamenting it. The structure of Book I is exactly this: every subsequent chapter is a
+      variation on the theme of orderly human conduct, each voice (Yu, Zengzi, Tsze-hsia) adding
+      inflection without departing from the root. The theme is 仁 — benevolence. It must be stated
+      simply before it can be elaborated.
+  - n: 3
+    scene: "Fine words and insinuating appearance — the warning against performance"
+    force: law
+    composer: Scarlatti
+    work: "Sonata in D minor, K. 141 (L. 422)"
+    decision: added
+    why: >
+      "巧言令色，鮮矣仁" — fine words, insinuating appearance: rarely genuine virtue. This aphorism
+      is a knife-flash: the shortest and sharpest in Book I. Scarlatti's K. 141 is all surface
+      brilliance and decorative speed — except that something is wrong underneath, something agitated
+      and not-quite-resolved behind all that ornament. That is the warning: the glittering exterior
+      that performs virtue while evacuating it. The piece enacts what the sentence names.
+  - n: 4
+    scene: "Zengzi's daily self-examination on three points"
+    force: memory
+    composer: Schumann
+    work: "Kinderszenen, Op. 15 — No. 7 'Träumerei'"
+    decision: added
+    why: >
+      "吾日三省吾身" — I daily examine myself on three points: faithfulness, sincerity, practice.
+      Zengzi's discipline is not heroic; it is quiet, interior, habitual. Träumerei (Dreaming) is
+      exactly that quality of attention — a slow, inward, suspended piece that asks nothing external
+      of the world. The register is private. Self-examination happens below the threshold of public
+      conduct. Schumann finds the interior life without sentiment. Three questions asked daily,
+      without drama: this is memory as moral practice.
+  - n: 5
+    scene: "Governing a thousand-chariot state through reverence, economy, love"
+    force: law
+    composer: Handel
+    work: "Water Music, Suite No. 1 in F major — Alla hornpipe"
+    decision: added
+    why: >
+      Confucius turns from the private (self-examination) to the public: governance of a state.
+      The register shifts — not to pomp but to practical, graceful authority. Handel's Water Music
+      was composed for a royal progress down the Thames; it is administrative pleasure, governance as
+      occasion, authority worn lightly. The Alla hornpipe is ceremonial but unpretentious — it moves,
+      it does not loom. "敬事而信，節用而愛人，使民以時": reverence in business, sincerity, economy,
+      love for the people, employment in proper season. This is governance as the extension of the
+      self's daily discipline into the world.
+  - n: 6
+    scene: "The youth's education — at home filial, abroad respectful, overflow in love"
+    force: law
+    composer: Mozart
+    work: "Piano Sonata No. 16 in C major, K. 545 — I. Allegro"
+    decision: added
+    why: >
+      This is Confucius's curriculum for the young: the ordering of conduct from inside the home
+      outward, culminating in polite studies only after relational duties are secured. Mozart's
+      K. 545 was written "für Anfänger" — for beginners — with exactly this quality: a clear,
+      lucid architecture that is neither simple-minded nor prematurely complex. The young person's
+      formation is not about cramming knowledge; it is about getting the proportions right. The
+      sonata form itself — exposition, development, recapitulation — IS the structure of human
+      formation: encounter, complication, return with depth.
+  - n: 7
+    scene: "Tsze-hsia: application as real learning — filial, loyal, sincere"
+    force: return
+    composer: Schubert
+    work: "Impromptus, Op. 90 — No. 3 in G-flat major (D. 899)"
+    decision: added
+    why: >
+      Tsze-hsia's point is radical: the man who fulfills relational duties wholly, even without
+      formal study, has truly learned. Schubert's G-flat Impromptu moves like a river that has
+      found its channel — fluid, inevitable, not dramatic. It circles back to itself through the
+      middle section and returns changed but recognizable. The form enacts Tsze-hsia's insight:
+      virtue in practice IS the study; the circle of return IS the learning. The music is never
+      over-determined; it arrives at rightness through motion.
+  - n: 8
+    scene: "The scholar's gravity — faithfulness, sincerity, correcting faults without fear"
+    force: law
+    composer: Brahms
+    work: "Intermezzo in A major, Op. 118 No. 2"
+    decision: added
+    why: >
+      Confucius on the scholar's self-discipline: gravity, solid learning, faithfulness and sincerity
+      as first principles, willingness to correct faults. Brahms's A-major Intermezzo is the exact
+      emotional register: mature inwardness that has learned to hold tension without discharging it.
+      It is grave without being funereal, warm without sentimentality, architecturally controlled
+      while being deeply felt. The scholar described in Chapter VIII is a Brahmsian figure — form
+      under pressure, passion inside architecture.
+  - n: 9
+    scene: "Careful attention to funeral rites and ancestral sacrifice — memory preserves virtue"
+    force: memory
+    composer: Fauré
+    work: "Requiem, Op. 48 — V. Agnus Dei"
+    decision: added
+    why: >
+      Zengzi: "慎終追遠，民德歸厚矣" — careful attention at life's end and following the long-gone
+      with ancestral ceremony; the people's virtue returns to its proper excellence. This is memory
+      as moral infrastructure: the dead are not buried but maintained, their practice continued.
+      Fauré's Agnus Dei is not tragic — it is sustained, luminous, and quietly processional. It
+      is exactly not the Verdi Requiem's terror; it is the composed attention that Zengzi describes.
+      The people's virtue is sustained by this quiet, performed memory. Fauré holds grief without
+      breaking it into spectacle.
+  - n: 10
+    scene: "Confucius's character — benign, upright, courteous, temperate, complaisant"
+    force: return
+    composer: Elgar
+    work: "Enigma Variations, Op. 36 — Variation IX ('Nimrod')"
+    decision: added
+    why: >
+      Tsze-kung describes how Confucius obtains his information: not by demanding it but by being
+      benign, upright, courteous, temperate, and complaisant. The Master's mode of asking is
+      different from other men's. Elgar's Nimrod is the portrait of a friend — specifically, a
+      portrait of a conversation in which one person reveals another's greatness through sustained
+      attention. The variation rises and falls in a single arc, not heroic but human: the exact
+      texture of the Master's presence in the world, as described by his student. To hold this
+      quality is itself a form of ritual.
+  - n: 11
+    scene: "Filial observation across the father's life and death — three years without change"
+    force: memory
+    composer: Beethoven
+    work: "Symphony No. 7 in A major, Op. 92 — II. Allegretto"
+    decision: added
+    why: >
+      "父在，觀其志；父沒，觀其行；三年無改於父之道，可謂孝矣" — while the father lives, observe
+      his will; when he is dead, observe the son's conduct; three years without departing from the
+      father's way: that is filial piety. This is memory as temporal discipline — not sentiment but
+      sustained behavioral fidelity across the threshold of death. Beethoven's Allegretto (sometimes
+      called the "march of the dead") is processional, recurring, inexorable — it loops through its
+      theme as though time itself is keeping the obligation. Memory here is not passive nostalgia
+      but active maintenance of what was, across the silence of absence.
+  - n: 12
+    scene: "Ritual harmony — 禮之用，和為貴 — the supreme use of ritual is harmony"
+    force: law
+    composer: Palestrina
+    work: "Missa Papae Marcelli — Kyrie"
+    decision: added
+    why: >
+      "禮之用，和為貴" — in the practice of ritual propriety, natural harmony is prized. This is
+      the climax of Book I's formal teaching: law and harmony are not opposites but one thing.
+      Palestrina's polyphony is the precise equivalent: multiple voices moving under strict
+      counterpoint, each constrained by the law of part-writing, producing something that sounds
+      like pure freedom. The Kyrie opens in supplication and moves into resolution — the classic
+      expression of formal structure yielding grace. Ritual without harmony is coercion; harmony
+      without ritual is sentimentality. Palestrina holds both.
+  - n: 13
+    scene: "Agreements, respect, proper intimacy — the architecture of reliable conduct"
+    force: law
+    composer: Telemann
+    work: "Tafelmusik, Part II — Concerto in D major — I. Largo"
+    decision: added
+    why: >
+      Yu's three paired observations (agreements near to righteousness, respect near to propriety,
+      reliance on proper persons) build a small architecture of reliable human conduct. Telemann's
+      Tafelmusik is table music — social, measured, designed for the occasion of orderly life rather
+      than crisis or spectacle. The Largo's stateliness is precisely calibrated: not grand, not
+      humble, but at the right register for the occasion. This is the kind of music the well-governed
+      self inhabits in its daily round.
+  - n: 14
+    scene: "The gentleman in food, dwelling, speech — earnest in action, careful with words"
+    force: return
+    composer: Satie
+    work: "Gymnopédie No. 1"
+    decision: added
+    why: >
+      "君子食無求飽，居無求安" — the man of complete virtue seeks no excess in food, no ease in
+      dwelling; he is earnest in action and careful in speech. Satie's Gymnopédie is the musical
+      embodiment of voluntary simplicity: it refuses ornamentation, refuses development, refuses
+      climax. Its pleasure is in the return to a simple figure, slightly altered each time — a form
+      of daily practice. This is poverty-as-stance rather than as condition, the relinquishment of
+      appetite as discipline. The piece could play forever without exceeding itself.
+  - n: 15
+    scene: "Poor but cheerful, rich but loving ritual — cut and file, carve and polish"
+    force: return
+    composer: Schubert
+    work: "String Quintet in C major, D. 956 — II. Adagio"
+    decision: added
+    why: >
+      Tsze-kung quotes the Book of Poetry: "as you cut and then file, as you carve and then polish"
+      — meaning the work of self-cultivation is never finished, always refining. The Master replies
+      that this is exactly what he means. Schubert's C-major Quintet Adagio is the most sustained
+      music of refinement in the repertory: long melodic arcs that do not hurry, two cellos
+      providing a depth beneath the surface shimmer, the whole thing organized as patient return and
+      elaboration. It is the sound of cutting and filing — of cultivation that takes a lifetime and
+      does not resolve into closure but into deeper patience. Book I finds its terminal note here:
+      not arrival, but the sustained pleasure of the practice.
+demoted:
+  - composer: Bach
+    work: "Cello Suite No. 1 in G major — Prelude (BWV 1007)"
+    status: "removed; save for a later book where solitude is the subject (Book VII or Book IX)"
+    why: >
+      Nearly chosen for the opening — the solo cello is exactly the right register of intimate
+      practice. But the Well-Tempered Clavier C-major Prelude better captures the REPEATED PATTERN
+      that is the key to 時習之 (practice in season). The Cello Prelude is singular; the WTC Prelude
+      is iterative. Book I is about iteration.
+  - composer: Arvo Pärt
+    work: "Spiegel im Spiegel"
+    status: "removed; save for a moment of pure revelation (Book XI or in a later text)"
+    why: >
+      Tempting for the opening — the suspended quality matches the three-question opening. But Pärt
+      belongs to revelation, not return. Book I's opening is warm and affirmative, not suspended in
+      apophatic silence. The BWV 846 Prelude is more accurate.
+  - composer: Shostakovich
+    work: "String Quartet No. 8 — II. Allegro molto"
+    status: "wrong register entirely for Book I; belongs in crisis moments (Book XVIII, or the Iliad)"
+    why: >
+      Considered for the Scarlatti track (fine words / insinuating appearance) but too dystopian.
+      Confucius's warning in 1.3 is sharp and diagnostic, not anguished. Scarlatti's baroque
+      surface-that-has-gone-wrong is more precise.

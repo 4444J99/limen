@@ -1,0 +1,235 @@
+# Divine Comedy — Inferno, Canto I — curated music arc
+# Gold-standard form matching studium/music/iliad/book-01.yaml
+work: divine-comedy
+book: 1
+title: "Inferno, Canto I: Dark Wood, Beasts, Shade"
+length_minutes: 76
+principle: >
+  Do not score Canto I as "the beginning of a medieval allegory." Score it as the moment where
+  a man who has lost orientation discovers that the only path forward passes through the
+  underworld — and that he cannot make the journey alone. The canto moves through three distinct
+  phases: disorientation in the dark wood (exile, the terror of being lost without knowing how),
+  the thwarted ascent (three beasts, three blockages — concupiscence, pride, incontinence —
+  each a different kind of worldly entanglement), and the first meeting with Virgil (reason
+  appearing, uninvited, at the edge of despair). It ends not in arrival but in the act of turning:
+  Dante turns from the sunlit hill — which he cannot yet climb — toward a path that leads downward.
+  Hold the ascent register (Bruckner, Mahler 8th, apotheosis weight) for Paradiso. Canto I is
+  not yet ascent. It is the precondition: recognizing that you are lost.
+force_arc: [exile, fate, ascent, fate, wrath, desire, exile, fate, exile, supplication, divine-intervention, revelation]
+dominant_force: exile
+tracks:
+  - n: 1
+    scene: "Nel mezzo del cammin — the dark wood"
+    force: exile
+    composer: Sibelius
+    work: "Tapiola, Op. 112"
+    decision: added
+    why: >
+      The opening line — "Midway through the journey of our life / I came to myself in a dark
+      wood" — is one of the most precisely located disorientation events in all of literature.
+      It is not a forest. It is the condition of being lost internally while appearing externally
+      still alive, still in motion, still "midway." Sibelius's Tapiola is the only piece in the
+      orchestral canon that renders forest as hostile psychic environment rather than pastoral
+      backdrop — it circles, does not resolve, grows darker rather than lighter, and ends with
+      a violence that feels like weather and like fate simultaneously. The selva oscura is not
+      decorative. It is the poem's premise: there are people who lose the straight path without
+      knowing precisely when or how.
+  - n: 2
+    scene: "Che la diritta via era smarrita — the straight way lost"
+    force: fate
+    composer: Mahler
+    work: "Symphony No. 9 — I. Andante comodo (opening)"
+    decision: added
+    why: >
+      Dante does not say "I was lost." He says "the straight way had been abandoned" — passive,
+      without assignable moment, without clear agent. Mahler's Ninth opens with a heartbeat
+      rhythm that is already broken (arrhythmic, syncopated, like a heart that skips), and from
+      that broken pulse unfolds music of extreme inwardness and retrospection. This is not the
+      Ninth's terminal resignation — that belongs later in the symphony — but its opening: a man
+      taking account, discovering the ground beneath him is not what he assumed. The fallen fourth
+      motif (the 'farewell' gesture theorized by Alban Berg) is not yet grief; it is disorientation.
+      Save the Ninth's finale for Paradiso, Canto XXXIII.
+  - n: 3
+    scene: "Lo colle — first sight of the sunlit hill"
+    force: ascent
+    composer: Schubert
+    work: "Symphony No. 8 in B minor ('Unfinished') — I. Allegro moderato"
+    decision: added
+    why: >
+      The sunlit hill — what the commentators call the colle — appears at the end of the dark
+      wood and is Canto I's first object of longing. Dante sees it, sees that it is lit ("clothed
+      already in the rays of the planet that leads men straight on every road"), and begins to
+      climb toward it. This is the poem's first movement upward, immediately before it is blocked.
+      The Unfinished Symphony's first movement opens with an ominous rumble in the bass, then
+      ascends into a lyric second theme of extraordinary beauty — ascent and its shadow held
+      together. It is music of yearning toward something the work does not complete, which is
+      precisely what the colle enacts: a vista of destination that Dante cannot yet reach. The
+      "Unfinished" is correctly named for Canto I; the journey is just beginning and already
+      unfinishable.
+  - n: 4
+    scene: "La lonza — the leopard, first beast"
+    force: fate
+    composer: Stravinsky
+    work: "The Rite of Spring — 'The Augurs of Spring' (opening)"
+    decision: added
+    why: >
+      The leopard (lonza) — traditionally read as concupiscence, or in political-historical
+      readings as Florence — does not attack. It circles, stops, retreats, circles again, and
+      precisely by this refusal to resolve its threat, it blocks ascent. This is the structure
+      of compulsion: not a frontal force but a repetitive, rhythmically obsessive circling that
+      wears the pilgrim down. The 'Augurs of Spring' ostinato — the same chord, obsessively
+      reiterated, with irregular accents — is the musical equivalent of the leopard's circuit.
+      Stravinsky gave this same piece to the ritualized social violence in Iliad Book I; here it
+      meets the ritualized compulsion of concupiscence, which circles rather than advances.
+  - n: 5
+    scene: "Il leone — the lion, second beast"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    decision: added
+    why: >
+      The lion — traditionally pride, superbia — advances directly, chin raised, the air seeming
+      to tremble at his coming. Unlike the leopard's circling, the lion is frontal, hierarchical,
+      domineering: the beast of rank, the beast of the Roman imperium, the beast of social
+      conquest and overreaching. Holst's 5/4 Mars carries exactly this weight: asymmetrical
+      pressure, forward momentum, the tread of something massive that does not negotiate. The
+      lion's threat is political and moral simultaneously — the pride that destroyed Florence,
+      the pride that blocked the Guelph-Ghibelline possibility — and "Mars" gives it its
+      correctly martial, non-supernatural texture.
+  - n: 6
+    scene: "La lupa — the she-wolf, third beast"
+    force: desire
+    composer: Bartók
+    work: "Music for Strings, Percussion, and Celesta — I. Andante tranquillo"
+    decision: added
+    why: >
+      The she-wolf (lupa) — traditionally avarice, cupidigia — is the beast Virgil will identify
+      as the main obstacle, the one that will not be defeated until a prophesied Veltro arrives.
+      She is different from the first two: she has consumed many others, is insatiable by
+      definition, and drives Dante back into the dark wood rather than simply blocking him.
+      Bartók's Andante is a fugue that spirals from low strings upward in a massive chromatic
+      accumulation — it does not threaten from outside but builds from within, layer by layer,
+      until the whole texture is dark with it. That internal accretion is lupa's signature:
+      not an external attack but a consuming force that leaves the pilgrim emptied, driven back,
+      descending. The she-wolf is the hardest beast because she cannot be climbed past.
+  - n: 7
+    scene: "Mentre ch'i' rovinava — falling back into darkness"
+    force: exile
+    composer: Shostakovich
+    work: "String Quartet No. 8 in C minor, Op. 110 — I. Largo"
+    decision: added
+    why: >
+      Dante is not merely stopped; he is driven back. "While I was rushing to lower ground" —
+      the direction reverses, the ascent undone. This is the canto's lowest point before the
+      reversal, and it carries a specific texture: not dramatic catastrophe but quiet descent,
+      the particular despair of a man who saw the light and then lost it again. Shostakovich's
+      Eighth Quartet opens with the composer's monogram (D-Es-C-H) stated pianissimo in the
+      strings, a private signature on a piece written in three days in Dresden amid ruins —
+      personal, inward, collapsed. It is music of a man taking stock of devastation without
+      histrionics. That is Dante's exact register here: not howling but falling, quiet and
+      specific in the dark.
+  - n: 8
+    scene: "Apparve — Virgil appears"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 in C minor — I. Allegro con brio (opening)"
+    decision: added
+    why: >
+      A shade appears "faint through long silence." Dante's response is immediate dread, then
+      recognition, then the first great question: who is this? The five opening bars of the
+      Fifth Symphony are the most famous statement of inexorability in the canon — not because
+      they are loud, but because their brevity and force make them seem necessary, arrived at
+      from outside the human scale. Virgil's appearance has this quality: not a random rescue
+      but an event with the texture of being prepared by something larger than either pilgrim
+      or shade. Fate-as-irruption, not fate-as-drift. The opening is the right size for the
+      moment — it is not apotheosis (that is for Paradise), it is the hammer-blow that
+      reorients the situation.
+  - n: 9
+    scene: "Poeta fui — Virgil names himself"
+    force: exile
+    composer: Brahms
+    work: "Symphony No. 1 in C minor — II. Andante sostenuto"
+    decision: added
+    why: >
+      "I was a poet; I sang of the just son of Anchises who came from Troy after proud Ilium
+      was burned." Virgil introduces himself through his work and through absence: he cannot
+      return to Mantua; he lives in Limbo, a place "where there is no pain, only desire"
+      without hope of fulfillment. This is the poem's first presentation of a particular
+      register: the noble pagan exile, the unredeemable who is nevertheless dignified. Brahms's
+      Andante is the slow movement of a symphony that took forty years to arrive — music of
+      enormous patience and accomplished desolation, warm but not consoled, inward but not
+      collapsed. It gives Virgil the gravitas of a man who has stopped hoping for something and
+      has made something beautiful from the stopping.
+  - n: 10
+    scene: "Miserere di me — Dante's supplication"
+    force: supplication
+    composer: Bach
+    work: "St Matthew Passion — 'Erbarme dich' (Aria, Peter's tears)"
+    decision: added
+    why: >
+      "Have mercy on me," Dante says to Virgil, "whatever you are, shade or real man" — the
+      first formal supplication of a journey that will be structured by encounters with the
+      condemned, each requiring a particular ethical posture. The aria "Erbarme dich" (Have
+      mercy on me, my God) is Peter's weeping after the denial of Christ — the most
+      devastatingly personal supplication in the Lutheran choral tradition, a solo violin
+      and a voice asking for grace they have not earned. Dante's request for guidance is
+      structurally identical: he addresses a figure of uncertain ontological status, admits
+      incapacity, and asks to be taken somewhere he cannot reach alone.
+  - n: 11
+    scene: "Per me si va — Virgil's promise of the journey"
+    force: divine-intervention
+    composer: Monteverdi
+    work: "L'Orfeo — 'Possente spirto' (Orpheus before Charon)"
+    decision: added
+    why: >
+      Virgil explains: he was sent by Beatrice, who was moved by the Virgin Mary through
+      Lucia — a chain of divine intercession that extends from the pilgrim's crisis up through
+      the entire celestial hierarchy. This is the canto's revelation of cosmic structure: what
+      seemed like accident (a shade appearing at the lowest moment) was arranged from above.
+      Monteverdi's 'Possente spirto' is Orpheus's great aria before Charon's ferry — sung
+      with increasingly ornate variation, it is music that demonstrates mastery in order to
+      compel supernatural permission. It is not prayer but argument through beauty, and
+      Virgil's disclosure of the divine chain is structurally similar: the journey is not
+      improvised; it has cosmic authorization. The operatic register is correct for this
+      moment — Monteverdi is the beginning of the tradition that Dante helped make possible.
+  - n: 12
+    scene: "Allor si mosse — the turn, the descent begins"
+    force: revelation
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      The canto ends with a single gesture: Dante moves, and Virgil moves, and Dante follows.
+      No drama; no announcement. The journey has begun. Canto I's final discovery — that the
+      straight way to the light is not yet available, that the first step toward ascent is
+      descent — is the poem's deepest structural paradox, and it is stated without fanfare.
+      Pärt's 'Spiegel im Spiegel' (mirror in the mirror) is sustained, slow, harmonically
+      static, and of an almost unbearable clarity — two voices (piano and violin) moving
+      at different rates through the same tonal material, the simplest possible argument for
+      why music exists. It is revelation without ornament. The canto earned this ending.
+      Save Bruckner, Mahler 8th, and the full radiance for Paradiso. Canto I ends in
+      stillness and first motion, not in light.
+demoted:
+  - composer: Mahler
+    work: "Symphony No. 2 ('Resurrection') — Finale"
+    status: "removed from Canto I; save for Paradiso Canto XXXIII or Purgatorio's summit"
+    why: >
+      The apotheosis register is not earned in Canto I. Dante has not yet descended,
+      ascended, or been transfigured. The 'Resurrection' finale is the correct weight for
+      the moment the pilgrim emerges into the stars — not for the moment he turns away
+      from the sunlit hill and enters the dark.
+  - composer: Bruckner
+    work: "Symphony No. 9 — Adagio"
+    status: "removed from Canto I; save for Paradiso upper cantiche"
+    why: >
+      Bruckner's luminous slow movements belong at the top of the cantiche — their
+      overwhelming radiance is the correct affect for light-without-shadow. Canto I's
+      light is glimpsed, blocked, and lost; Bruckner requires the light to be sustained.
+  - composer: Wagner
+    work: "Parsifal — Prelude to Act I"
+    status: "considered, demoted; save for Purgatorio or Paradiso"
+    why: >
+      The Parsifal Prelude is sacred yearning — a music of wound-and-grace, Grail-and-spear.
+      Its affect is correct for Purgatorio (striving toward healing) but too Christianly
+      resolved for Canto I, where the grace of the divine chain has only just been
+      disclosed and not yet proven by the journey.

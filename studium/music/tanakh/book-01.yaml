@@ -1,0 +1,198 @@
+# Tanakh — Genesis 1 (Bereshit) — curated music arc
+# Score this chapter as what it actually is: not background mythology, not a naive cosmogony,
+# but a revolutionary act — a singular, unaccompanied voice calling order out of silence.
+# The opening of the Tanakh is the origin of the very concept of an origin.
+work: tanakh
+book: 1
+title: "Genesis 1: Bereshit — Creation, Word, and the First Sabbath"
+length_minutes: 78
+principle: >
+  Do not score Genesis 1 as a creation "myth" in the comparative-religion sense. Score it as
+  what the text actually does: it begins in absolute silence and non-being (tohu va-vohu),
+  then introduces the divine speech-act as the mechanism of reality itself. Each vayomer
+  Elohim ("and God said") is not description — it is ontological event. The dominant movement
+  is not spectacle but grammar: a voice that names, separates, blesses, and rests. The music
+  must honor that stillness-before-sound, then the incremental ordering from void to Sabbath,
+  and the turn at day six — the plural ("let us make") — where creation becomes reflexive:
+  the image of God making something in its own image.
+force_arc: [revelation, metamorphosis, revelation, law, metamorphosis, law, metamorphosis, divine-intervention, revelation, law, revelation]
+dominant_force: revelation
+tracks:
+  - n: 1
+    scene: "Tohu va-vohu — the formless void before the first word"
+    force: revelation
+    composer: Arvo Pärt
+    work: "Spiegel im Spiegel — for piano and violin"
+    decision: added
+    why: >
+      Bereshit opens not with sound but with what precedes sound: tohu va-vohu, formless
+      and void, darkness on the face of the deep. Pärt's "mirror in the mirror" is exactly
+      that — tintinnabuli suspended between two voices that never quite resolve, still,
+      barely-there, waiting. The revelation force here is not yet luminous; it is the
+      preparedness of silence for speech. Any louder or more populated texture violates the
+      text. This is not emptiness as absence — it is potentiality as presence.
+  - n: 2
+    scene: "Ruach Elohim — the breath of God moving over the waters"
+    force: metamorphosis
+    composer: Debussy
+    work: "Prélude à l'après-midi d'un faune"
+    decision: added
+    why: >
+      Before the first command, the divine ruach (breath/wind/spirit) hovers over the face
+      of the waters. This is the only transitional moment before language — a pre-verbal
+      animation. Debussy's Faune opens with the flute alone over still strings, a single
+      line hovering unresolved: fluid, pre-determined, about to become something without yet
+      being anything. The text gives no drama here — only a quality of imminence. Debussy
+      is that imminence made audible.
+  - n: 3
+    scene: "Yehi or — 'Let there be light' / the first speech-act"
+    force: revelation
+    composer: Haydn
+    work: "The Creation — 'And There Was Light' (Part I, No. 2)"
+    decision: added
+    why: >
+      The fiat lux is the text's fulcrum — the word that creates by being spoken. Haydn set
+      this moment with genius: a soft, searching passage in C minor that erupts on "und es
+      ward Licht" (and there was Light) into a blinding C-major fortissimo chord. No other
+      classical setting matches the grammar of this verse: the darkness, the command, the
+      immediate fulfillment. The decision uses Haydn because he literally scored this scene,
+      and the setting is too exact, too good, and too structurally honest to replace with
+      something ambient. The force is revelation in its sharpest form — punctuation, not
+      atmosphere.
+  - n: 4
+    scene: "Separation of light from darkness / naming of day and night"
+    force: law
+    composer: Bach
+    work: "The Well-Tempered Clavier, Book I — Prelude No. 1 in C Major (BWV 846)"
+    decision: added
+    why: >
+      After the first light comes the first act of naming and separation: God divides light
+      from darkness, calls the light Day and the darkness Night. This is the law-force in
+      its purest form — not prohibition, but ontological classification. Bach's C-major
+      Prelude is the architecture of ordered possibility: no melody, pure voice-leading,
+      every harmony a step in a grammar whose logic is total. It is form as law — not
+      constraint but the condition of intelligibility itself. The Tanakh's God, unlike the
+      gods of Babylon, does not fight chaos — God names it into submission.
+  - n: 5
+    scene: "Days 2–3 — firmament, waters, dry land, the earth made fruitful"
+    force: metamorphosis
+    composer: Sibelius
+    work: "The Oceanides (Aallottaret), Op. 73"
+    decision: added
+    why: >
+      The second and third days are the great orderings of water: the firmament separating
+      waters above from waters below, the gathering of the lower waters so that dry land
+      appears. Sibelius's orchestral poem about the daughters of the sea — water-spirits,
+      ocean as living entity — gives the right register: metamorphosis through elemental
+      process, tonal but fluid, a world reorganizing itself under instruction. The piece is
+      neither chaos nor final order but the gradient between them. Days 2–3 are exactly that
+      gradient: the world becoming legible, land emerging, vegetation commanded into being.
+  - n: 6
+    scene: "Day 4 — luminaries set in the firmament as signs and seasons"
+    force: law
+    composer: Handel
+    work: "Music for the Royal Fireworks — La Réjouissance"
+    decision: added
+    why: >
+      Day four places the sun, moon, and stars in the firmament "for signs and for seasons,
+      and for days and years" — they are not deities (a pointed departure from every
+      surrounding cosmology) but instruments of a rational calendar. The Tanakh is explicit:
+      the great light rules the day; the lesser light rules the night. Handel's La Réjouissance
+      (The Rejoicing) has exactly the bright ceremonial proclamation this requires — not
+      military, not solemn, but ordered festivity. The luminaries are appointed; creation is
+      getting its administration. Grandeur without idolatry.
+  - n: 7
+    scene: "Day 5 — swarming creatures of water and air, blessed and multiplying"
+    force: metamorphosis
+    composer: Saint-Saëns
+    work: "The Carnival of the Animals — 'Aquarium' and 'Birds'"
+    decision: added
+    why: >
+      The fifth day is the first appearance of living, moving creatures — the great sea
+      monsters (tanninim), every swarming creature of the waters, every winged bird. God
+      blesses them: "Be fruitful and multiply." Saint-Saëns is the correct register because
+      these movements give individual organism-texture to the swarming — not a single
+      heroic entity but a proliferating multiplicity. Aquarium gives the water-teeming; Birds
+      gives the air-teeming. The force is metamorphosis: life has arrived as a new ontological
+      category, and it keeps reproducing itself into variety. The whimsy is not wrong — the
+      text itself has a kind of delight in the catalogue.
+  - n: 8
+    scene: "Day 6 — beasts of the earth, then 'let us make adam'"
+    force: divine-intervention
+    composer: Beethoven
+    work: "Piano Sonata No. 23 in F minor, Op. 57 'Appassionata' — II. Andante con moto"
+    decision: added
+    why: >
+      The turn at the end of day six is the text's formal surprise: after the animals are
+      made, God speaks in the plural — "Let us make adam in our image, after our likeness."
+      The image (tselem) and likeness (demut) make humankind a different kind of thing from
+      what came before — not just living, not just fruitful, but reflexive, self-resembling-to-
+      God, given dominion. This is divine-intervention in the most radical sense: the creator
+      is about to put a creature in the world that is formally like itself. Beethoven's
+      Andante from the Appassionata is inward, weighty, processional without being ceremonial —
+      it is thought becoming form. The plural in Genesis 1 has generated more commentary than
+      almost any other word in the Bible. The music should match that gravity without blowing
+      the terminal register (save the full Appassionata storm for the expulsion in chapter 3).
+  - n: 9
+    scene: "The image of God — male and female created, blessed, given dominion"
+    force: revelation
+    composer: Messiaen
+    work: "Quartet for the End of Time — I. Liturgy of Crystal"
+    decision: added
+    why: >
+      The tselem — the image of God — is the Tanakh's deepest opening claim, and it names
+      something the text refuses to define. What does it mean to be made in God's image?
+      Messiaen's Quartet opens with birdsong and a bell-like piano figure over held cello —
+      it is morning-of-the-world music, timeless, present, uninterested in dramatic arc. The
+      Liturgy of Crystal gives the sensation of inhabiting a structure too large and too still
+      to be navigated: the human being has just been made in the image of something it cannot
+      see. The revelation force is at its most vertical here — not a bolt from the sky but a
+      permanent condition of being.
+  - n: 10
+    scene: "Vayehi erev vayehi voker — 'and it was evening, and it was morning'"
+    force: law
+    composer: Tavener
+    work: "Song for Athene"
+    decision: added
+    why: >
+      The refrain that closes each day — "and it was evening, and it was morning, day N" — is
+      liturgical repetition as structural law. Tavener's Song for Athene is built on exactly
+      this principle: a repeating low chord, a soprano line that returns and returns, each
+      iteration the same and different. Time, in Genesis 1, is not yet human time — it is
+      God's accounting, the rhythm of creation. Tavener gives chant-weight without being
+      explicitly liturgical, which is right: the text is pre-liturgy, the template from which
+      Shabbat observance will later derive.
+  - n: 11
+    scene: "Day 7 — God rests, blesses, sanctifies the Sabbath"
+    force: revelation
+    composer: Bruckner
+    work: "Symphony No. 8 in C minor — IV. Finale: Feierlich, nicht schnell (opening section)"
+    decision: added
+    why: >
+      The seventh day is the text's formal resolution — not another act of making but the
+      first act of ceasing. God rests (vayishbot) and thereby sanctifies time: not space,
+      not matter, not a creature, but a day. This is the Tanakh's most radical move in the
+      opening chapter. Bruckner's eighth symphony Finale opens with a vast, slow chorale in
+      the brass — not triumphant, not martial, but immense and still, a horizon rather than
+      a culmination. The REGISTER RULE is observed: do not use the Finale's full apotheosis
+      here; use only the opening pages, the stillness before the argument. The Sabbath is
+      rest, not victory parade. Save the full Bruckner for a later chapter that earns the
+      weight of the whole symphony.
+demoted:
+  - composer: Strauss (Richard)
+    work: "Also sprach Zarathustra — Introduction (Sunrise)"
+    status: "demoted — iconic but misregistered for Genesis 1"
+    why: >
+      The Sunrise opening is almost always the reflex choice for 'creation music', and it is
+      wrong here. It scores heroic human emergence (Nietzsche's Übermensch), not divine
+      speech-act. The opening of Genesis is not sunrise spectacle — it is verbal, precise,
+      incremental. Zarathustra is saved for a later register where human self-assertion is
+      the actual subject (perhaps much later in the Tanakh, or not at all).
+  - composer: Mahler
+    work: "Symphony No. 8 — 'Veni, creator spiritus'"
+    status: "demoted — too apotheotic for the opening book"
+    why: >
+      The Eighth's choral opening is everything Genesis 1 is not yet: massive, human-voiced,
+      liturgically accumulated. It belongs at the Sinai covenant or the dedication of the
+      Temple. Genesis 1 is spare, iterative, repetitive — a grammar lesson in seven days,
+      not a cathedral.

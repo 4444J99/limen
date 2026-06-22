@@ -1,0 +1,201 @@
+# Gilgamesh — Tablet I — curated music arc
+# Gold-standard form. Matches iliad/book-01.yaml exactly.
+work: gilgamesh
+book: 1
+title: "Gilgamesh Tablet I: Kingship, the Wild, Desire"
+length_minutes: 87
+principle: >
+  Do not score Tablet I as "ancient Mesopotamia" or "exotic myth." Score it as the moment
+  where absolute power, without a mirror, becomes monstrous — and the gods' answer is not
+  punishment but a double. Uruk's tyranny, Enkidu's formation in the wilderness, Shamhat's
+  civilizing act: three scenes, each a transformation. The dominant movement is not yet
+  friendship; it is the creation of the conditions for friendship. The register is
+  establishment, not catastrophe. Hold funeral and apotheosis weight for later tablets.
+force_arc: [memory, kingship, supplication, fate, exile, fate, desire, desire, metamorphosis, law, revelation, divine-intervention]
+dominant_force: metamorphosis
+tracks:
+  - n: 1
+    scene: "He who saw the deep — the epic's invocation and the walls of Uruk"
+    force: memory
+    composer: Elgar
+    work: "Enigma Variations — 'Nimrod' (Variation IX)"
+    decision: added
+    why: >
+      The Standard Version opens with a hymn to Gilgamesh as the one who saw all things,
+      who brought back knowledge from before the flood, who built the walls of Uruk. This
+      is not modesty — it is sovereign vaunt. Nimrod opens with quiet authority that grows
+      to full ceremonial weight: it is the sound of a civilization declaring itself complete
+      and monumental. The walls of Uruk are the first image; Elgar builds exactly that
+      architecture out of nothing.
+  - n: 2
+    scene: "Gilgamesh's tyranny — two-thirds god, one-third man"
+    force: kingship
+    composer: Handel
+    work: "Zadok the Priest — HWV 258"
+    decision: added
+    why: >
+      The tablets describe Gilgamesh as lord of Uruk, the rampant bull, two-thirds divine
+      — a king who takes the daughters, exhausts the sons, whose energy cannot be contained
+      by his people. Handel's coronation anthem is ceremonial sovereign excess: sovereign
+      power staged as glory, whose weight becomes pressure. The Urukians cry to the gods
+      not to overthrow Gilgamesh but to match him — they are not seeking liberation from
+      a tyrant, they are seeking a counterweight to unbound royal force.
+  - n: 3
+    scene: "The people's outcry / Anu hears Uruk's lament"
+    force: supplication
+    composer: Verdi
+    work: "Nabucco — 'Va, pensiero' (Chorus of the Hebrew Slaves)"
+    decision: added
+    why: >
+      The Urukians' cry to Anu is not revolution — it is supplication under pressure, a
+      collective voice rising from below into the divine register. Va, pensiero is the
+      formal sound of a people's communal grief and restraint: contained, but undeniable.
+      Holst's Mars would be too aggressive here — this is not rebellion but lamentation
+      that compels divine response. The right register is chorus, not army.
+  - n: 4
+    scene: "Anu and Aruru decree Enkidu's creation"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    decision: added
+    why: >
+      Anu's reply is inexorable: the gods will make a counterpart to Gilgamesh, one who
+      equals his force. Aruru pinches clay from the steppe and casts it. Beethoven's Fifth
+      opens with the most economical statement of fate as mechanism — four notes that do
+      not argue, do not elaborate, simply arrive. The creation of Enkidu is cosmological
+      inevitability, not improvisation.
+  - n: 5
+    scene: "Enkidu in the wilderness — hairy body, gazelles, waterhole"
+    force: exile
+    composer: Sibelius
+    work: "Symphony No. 2 — II. Tempo andante, ma rubato"
+    decision: added
+    why: >
+      Enkidu is formed from clay and lives among animals — he eats grass, drinks at
+      waterholes with the gazelles, knows nothing of cities, grain, or human craft. He
+      does not yet exist within human time. Sibelius gives the wilderness as a tonal
+      space without resolution: open, vast, unhurried. The second symphony's slow movement
+      is wandering without destination — not lost (Enkidu is perfectly adapted), but
+      outside human grammar entirely. Dvořák's New World would be too romanticized;
+      Sibelius stays closer to the ground.
+  - n: 6
+    scene: "The trapper's fear — Enkidu's strength undoes the pit-traps"
+    force: fate
+    composer: Holst
+    work: "The Planets — 'Saturn, the Bringer of Old Age'"
+    decision: added
+    why: >
+      The trapper finds his pit-traps filled, his nets torn open, his animals released.
+      He returns to his father in terror: something in the wilderness undoes human craft.
+      Saturn is the right planet — not Mars (which is war), but the slow, ominous,
+      systemic force of something operating outside human scale. Enkidu's counter-presence
+      in the wild is not violent attack; it is a deeper disruption of the trapper's ordered
+      economy of snares. The music needs weight without aggression.
+  - n: 7
+    scene: "Shamhat unveiled — the harlot at the waterhole"
+    force: desire
+    composer: Wagner
+    work: "Tristan und Isolde — Prelude to Act I"
+    decision: added
+    why: >
+      The trapper brings Shamhat to the waterhole. She unveils herself. For six days and
+      seven nights Enkidu lies with her. This is not erotic comedy — it is the most ancient
+      literary account of desire as civilizing force. Wagner's Tristan Prelude is chromatic
+      longing that neither resolves nor ends: desire as a state that transforms the one who
+      enters it. The Prelude is the correct register for the scene's weight. The Iliad
+      already used this for Achilles' rage (unresolved pressure) — here it is desire that
+      presses, delays, suspends. The parallel use is intentional: both forces reshape a world.
+  - n: 8
+    scene: "Enkidu weakened — the animals reject him; he has become something new"
+    force: desire
+    composer: Schubert
+    work: "Winterreise — 'Der Leiermann' (No. 24)"
+    decision: added
+    why: >
+      After the seven days, Enkidu turns back to his animals — the gazelles flee. He cannot
+      run with them. His legs that once matched theirs are diminished. He has crossed a
+      threshold that cannot be recrossed. Winterreise's final song is the loneliness of
+      changed knowledge: the hurdy-gurdy player stands at the edge, frozen, turning his
+      instrument that no one hears. Enkidu is not yet civilized; he is dispossessed. The
+      song's desolation is exact: desire's aftermath as a loss that is also an opening.
+  - n: 9
+    scene: "Shamhat speaks — she opens language, grain, bread, and beer to Enkidu"
+    force: metamorphosis
+    composer: Debussy
+    work: "Préludes, Book I — 'La cathédrale engloutie' (No. 10)"
+    decision: added
+    why: >
+      Shamhat tells Enkidu: I will take you to Uruk, to Gilgamesh. She teaches him bread,
+      teaches him beer, teaches him oil and clothing. Each element is a layer of human
+      culture settling over him. Debussy's sunken cathedral rises from the water slowly,
+      through accumulating harmonics, as if a whole civilization were surfacing. That is
+      the exact movement here: a world becoming legible to someone who had no name for it.
+      The piece's structure of emergence — submerged, then vast, then receding — matches
+      Enkidu's arc across this tablet.
+  - n: 10
+    scene: "Enkidu dressed, anointed, brought to the shepherd's camp"
+    force: law
+    composer: Bach
+    work: "Goldberg Variations — Aria"
+    decision: added
+    why: >
+      The shepherds dress Enkidu in clothing, set bread before him, pour beer. He is
+      inducted into the grammar of human social life: work, food-ritual, hierarchy, guard-
+      duty. Bach's Aria is ordered, clear, repetitive in its deepest structure — a
+      variation form that assimilates difference into pattern. This is what the shepherd's
+      camp does to Enkidu: it gives him a repeating structure to inhabit. The Goldberg
+      is not passive — it is architecture, law in the sense of form that makes culture
+      possible.
+  - n: 11
+    scene: "The dream of Gilgamesh — the meteorite and the axe"
+    force: revelation
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      Gilgamesh dreams twice: first a meteorite falls, heavy as the sky, which he cannot
+      lift but which he loves as a wife; then an axe lies in the street, beautiful, which
+      he takes to his mother Ninsun. Ninsun interprets both: a mighty companion will come.
+      Pärt's mirror-canon is the sound of a suspended cadence that never closes — two
+      lines slowly diverging and returning, the same harmonic space held open. Gilgamesh's
+      dreams are revelation held in suspension: something is coming, the form is not yet
+      visible. The music's exposed line and stillness are exactly the dream register.
+  - n: 12
+    scene: "Ninsun interprets — the companion is foretold"
+    force: divine-intervention
+    composer: Messiaen
+    work: "Quartet for the End of Time — V. 'Louange à l'Éternité de Jésus'"
+    decision: added
+    why: >
+      Ninsun, the divine mother, reads the dreams: you will love him as a wife, he will
+      never forsake you. This is the poem's first prophecy, delivered by a goddess to a
+      semi-divine king. Messiaen's movement is the stillness of divine speech: solo cello
+      over sustained chords, an extremity of slowness that is not quiet but overwhelming.
+      The divine interpretation arrives without urgency and without doubt — it simply is.
+      That is Ninsun's register: not drama, but the calm of cosmic grammar becoming
+      legible to a mortal. REGISTER NOTE: Do not use apotheosis or funeral weight yet.
+      Messiaen here is revelation, not transfiguration. Tablet XI (the flood) and Tablet
+      VIII (Enkidu's death) hold the terminal weights.
+demoted:
+  - composer: Strauss
+    work: "Also sprach Zarathustra — opening 'Sunrise'"
+    status: "removed from Tablet I; save for Gilgamesh's moment of recognition in later tablets"
+    why: >
+      The Sunrise is climactic transfiguration — it belongs to the moment Gilgamesh
+      truly becomes something new, or perhaps the discovery of the plant of life in Tablet
+      XI. Using it for Tablet I's opening invocation would exhaust the climactic register
+      before the poem has earned it.
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "removed from Tablet I; save for Tablet VIII (Enkidu's death and lament)"
+    why: >
+      Enkidu has not yet died. The funeral march belongs to Tablet VIII, which is among
+      the most devastating mourning passages in world literature. Depleting that register
+      here would be a musicological category error.
+  - composer: Mahler
+    work: "Symphony No. 8 — Part II finale"
+    status: "removed; save for Tablet XI (the flood, Utnapishtim, the plant of life) or XII"
+    why: >
+      Apotheosis belongs at the terminal register, not the opening. Tablet I is the
+      establishment of the world the poem will break. Mahler's Eighth finale is
+      transfiguration music; Enkidu is not yet transfigured — he is being formed.

@@ -1,0 +1,170 @@
+# Conference of the Birds — Section 1 — curated music arc
+# Opening Division: The Opening / the gathering
+work: conference-of-birds
+book: 1
+title: "Conference of the Birds, Section 1: The Gathering / The Summons"
+length_minutes: 78
+principle: >
+  Do not score this opening as mystical arrival or transcendent union. Score it as the moment
+  before the journey begins — a world full of creatures who have not yet chosen, who are about
+  to be called. The assembly is earthly, diverse, noisy; the hoopoe's speech drops into it like
+  a stone into still water. The music must hold the tension between the birds' ordinary being
+  (dispersed, particular, named) and the pull of a destination they cannot yet imagine. Ascent
+  begins here not as achieved elevation but as the first recognition of longing.
+force_arc: [ascent, revelation, ascent, desire, comedy, revelation, supplication, ascent, desire, salvation]
+dominant_force: ascent
+tracks:
+  - n: 1
+    scene: "The world assembles — all birds, all voices"
+    force: ascent
+    composer: Messiaen
+    work: "Le Merle noir — I. Moderato"
+    decision: added
+    why: >
+      Messiaen's bird catalogue is the only classical tradition that takes birds as theological
+      beings, not decorative atmosphere. The blackbird solo opens with ornithologically precise
+      transcriptions — actual birdsong rendered in the language of faith. Attar opens the same
+      way: not with symbol-birds but with named, particular creatures (the nightingale, the
+      parrot, the duck, the heron) who happen to carry allegorical weight. The assembly before
+      the assembly is always particular before it is universal.
+  - n: 2
+    scene: "The hoopoe rises to speak"
+    force: revelation
+    composer: Haydn
+    work: "The Creation — 'And God Said: Let There Be Light' (No. 2)"
+    decision: added
+    why: >
+      The hoopoe is Solomon's messenger, carrier of divine correspondence, the one bird who has
+      already seen the Simurgh's feather. When he rises and begins to speak, something shifts
+      register — he is not haranguing the crowd, he is disclosing a reality that was always
+      already there. Haydn's moment of Creation — the sudden fortissimo C major chord on 'Light'
+      after whispered chaos — is the closest Western music comes to this species of disclosure:
+      not argument, not persuasion, but a statement of what is. The analogy holds precisely
+      because both moves surprise by unveiling what was hidden in plain sight.
+  - n: 3
+    scene: "The hoopoe names the Simurgh and the seven valleys"
+    force: ascent
+    composer: Bruckner
+    work: "Symphony No. 7 — I. Allegro moderato (opening)"
+    decision: added
+    why: >
+      The hoopoe's speech is a cosmological map — it describes a journey whose end annihilates
+      the traveler and whose route passes through stages most birds will not survive. Bruckner's
+      Seventh opens with a long-arching cello theme that rises without rush, without aggression,
+      without destination anxiety — it simply ascends, as if the upward motion were natural law.
+      That is exactly the hoopoe's register: this is not rhetoric; the Simurgh exists, the
+      journey is possible, the difficulty is real and beside the point. Bruckner does not argue
+      for transcendence; he enacts its grammar.
+  - n: 4
+    scene: "The birds' first surge of longing"
+    force: desire
+    composer: Schubert
+    work: "Symphony No. 8 ('Unfinished') — I. Allegro moderato"
+    decision: added
+    why: >
+      After the hoopoe's speech, the birds want to go. The wanting is the poem's engine. But
+      Attar is precise about what this wanting is: not confident heroism but something more
+      vertiginous — the sensation of having been addressed by something incomparably larger
+      and finding oneself small and necessary at the same time. Schubert's Unfinished opens with
+      a bass theme that sounds like longing made audible — not the fulfillment of longing, not
+      its object, but its texture: forward-pulled, incomplete, shaded. The key of B minor holds
+      something unresolved. This is the birds at the start: they want, but they do not yet know
+      what wanting will cost.
+  - n: 5
+    scene: "The assembly stirs — a thousand birds moving at once"
+    force: comedy
+    composer: Rameau
+    work: "Les Indes galantes — 'Les sauvages' (Rondeau)"
+    decision: added
+    why: >
+      The gathering of the birds is not solemn. It is spectacular — creature-noise, wing-sound,
+      the friction of species who would not normally share sky. Rameau's ballet gives music that
+      dances without irony and moves without apology — there is a bodily collectivity here, a
+      human (or avian) group gathered in a formal act of preparation. The lightness is right:
+      this is not yet grief or death or annihilation. It is the moment of collective readiness
+      before departure, which has its own beauty, its own energy.
+  - n: 6
+    scene: "The hoopoe tells of the Simurgh's feather"
+    force: revelation
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      The central myth within Attar's opening: a feather of the Simurgh fell on China, and from
+      its impression the whole world was stirred. The feather is not proof; it is trace. The
+      Simurgh is known by what it leaves behind, not by what can be pointed to. Pärt's mirror
+      music — two voices moving in a still, infinite space, each reflecting the other, the piano
+      arpeggios and the violin melody never quite resolving — is the sound of a trace: you are
+      hearing evidence of something that is elsewhere. The stillness is the stillness of the
+      feather's impression.
+  - n: 7
+    scene: "The birds acknowledge their smallness"
+    force: supplication
+    composer: Bach
+    work: "St Matthew Passion — 'Erbarme dich, mein Gott' (No. 39)"
+    decision: added
+    why: >
+      After the hoopoe's cosmological mapping, the birds understand the scale of what is being
+      asked. Several speak honestly of their inadequacy. This is not cowardice — it is the
+      poem's necessary moment of honest self-measurement before commitment. Bach's aria for
+      Peter (who has just denied Christ) is supplication in its purest form: the violin line
+      weeping above a bass that does not relent, the voice confessing, the music holding all
+      of it without resolution. Attar's birds and Bach's Peter share the same recognition —
+      I am not large enough for this — before they proceed anyway.
+  - n: 8
+    scene: "The hoopoe summons courage — the journey declared"
+    force: ascent
+    composer: Sibelius
+    work: "Symphony No. 5 — III. Allegro molto (finale)"
+    decision: added
+    why: >
+      The declaration of the journey — the moment where the hoopoe stops describing and the
+      birds stop deliberating and the departure becomes actual — needs music that feels like
+      wings opening: not triumphant in the military sense, not coercive, but irresistible.
+      Sibelius's Fifth finale is built on six hammer-strokes with space between each — not
+      fanfare but affirmation, a pattern that sounds like a decision arrived at from inside
+      rather than imposed from outside. The birds choose to go. Sibelius sounds like choosing.
+  - n: 9
+    scene: "The nightingale's protest — love as excuse"
+    force: desire
+    composer: Schumann
+    work: "Dichterliebe — 'Im wunderschönen Monat Mai' (No. 1)"
+    decision: added
+    why: >
+      The nightingale's objection is one of Attar's great moments of ironic theology: the
+      nightingale loves the rose; the rose is beautiful; is this not enough? The hoopoe's
+      answer is precise — the rose's beauty is a veil for the Simurgh's, and the nightingale's
+      love is a lower form of the very longing that should drive it forward. Schumann opens his
+      song cycle with the yearning for a beloved that has not yet arrived — suspended harmony,
+      the tonic never quite landing, spring itself as an unrequited condition. The nightingale
+      and Schumann's poet share a beautiful error: mistaking the symbol for the thing.
+  - n: 10
+    scene: "All birds committed — the assembly rises"
+    force: salvation
+    composer: Fauré
+    work: "Requiem — 'In Paradisum'"
+    decision: added
+    why: >
+      The section closes with the birds committed, the journey begun in intention if not yet in
+      motion. This is the moment of collective aspiration — before the seven valleys, before the
+      losses, before the deaths — when all of it is still possible and desired and the direction
+      is upward. Fauré's 'In Paradisum' is the closing benediction of the Requiem: not grief
+      but release, not arrival but the gate of arrival, the threshold maintained in its
+      threshold-ness. It ends on a sustained chord of light that does not resolve into anything
+      because it has already arrived at what music can carry. That is exactly where Attar's
+      opening section arrives: at the gate, looking up, together, not yet departed.
+demoted:
+  - composer: Mahler
+    work: "Symphony No. 8 — Part I, 'Veni Creator Spiritus'"
+    status: "too terminal for the opening; save for the final section (the Simurgh / annihilation)"
+    why: >
+      Mahler's Eighth is apotheosis music — a thousand voices calling the Holy Spirit to descend
+      and transform creation. That is the register of the ending of the Conference of the Birds,
+      not its beginning. To use it here would be to blow the climactic register on the gathering.
+  - composer: Strauss
+    work: "Also sprach Zarathustra — Sunrise"
+    status: "removed; too triumphant, wrong spiritual register"
+    why: >
+      The Nietzschean sunrise is assertion of will, which is exactly the ego-register that the
+      seven valleys are designed to dissolve. Attar's opening summons not the will but its
+      surrender. The piece is too confident for what this opening actually demands.

@@ -11,11 +11,11 @@
 - **Corpus:** `classical/aeneid` (latin_original.txt)
 - **Source rail:** https://www.perseus.tufts.edu/hopper/text?doc=Perseus:text:1999.02.0055
 - **Divisions:** 12 × Book
-- **Progress:** 0/12 arcs authored
+- **Progress:** 1/12 arcs authored
 
 | Book | dominant force | status |
 | --: | --- | :--: |
-| 1 | (author) | ☐ |
+| 1 | (author) | ✓ |
 | 2 | (author) | ☐ |
 | 3 | (author) | ☐ |
 | 4 | (author) | ☐ |

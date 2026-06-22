@@ -1,0 +1,193 @@
+# Tao Te Ching — Chapter 1 — curated music arc
+# Do not score Chapter 1 as "Taoism in general." Score it as the moment the text performs
+# its own paradox: it names the unnameable, then tells you naming cannot reach it. The
+# movement is not mysticism-at-large but a specific five-beat philosophical operation:
+# (1) the opening double negation — Tao/name cannot be fixed by speech;
+# (2) the nameless as origin of heaven and earth (wu, 無);
+# (3) the named as mother of the ten thousand things (you, 有);
+# (4) desire vs. non-desire as the two lenses that show different faces of the same mystery;
+# (5) the gate — xuan zhi you xuan (玄之又玄) — the dark-within-dark as the opening into all
+# that is subtle. This is not ascent, not grief, not wrath. It is revelation through
+# sustained stillness, with metamorphosis at the hinge between named and nameless.
+work: tao-te-ching
+book: 1
+title: "Tao Te Ching Chapter 1: The Gate of All Mystery"
+length_minutes: 52
+principle: >
+  Do not score Chapter 1 as an overture to 81 chapters of Chinese wisdom. Score it as the
+  moment a text makes a statement that immediately refutes itself — and holds that refutation
+  as a philosophical method. The Tao that can be spoken is not the eternal Tao. The text then
+  proceeds to speak of it for 79 more chapters. Chapter 1 is the key to that strategy: the
+  two registers (wu / you, nameless / named), the double window of desire and non-desire, and
+  the recursive mystery玄 that does not resolve but deepens. The music must hold stillness
+  under pressure, ambiguity without collapse, and the paradox of a gateway that is itself
+  unnamed. Do NOT reach for terminal weight — no apotheosis, no funeral register. This is
+  the silence before the teaching, not its culmination.
+force_arc: [revelation, law, metamorphosis, revelation, metamorphosis, law, revelation, revelation, metamorphosis, law]
+dominant_force: revelation
+tracks:
+  - n: 1
+    scene: "The opening negation — 'Tao that can be told is not the eternal Tao'"
+    force: revelation
+    composer: Arvo Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      The first two lines of the Tao Te Ching enact a structural self-cancellation: to name
+      the Tao is to miss it; to name the name is to lose the eternal name. Pärt's Spiegel im
+      Spiegel is the closest music comes to embodying this: mirror within mirror, a single
+      melodic line reflected in held piano chords, arriving nowhere, unresolved, perfectly
+      lucid and perfectly still. The tintinnabuli method is itself a kind of via negativa —
+      sound that empties itself as it proceeds. Force requirement: stillness, chant, verticality.
+      This track is that requirement made audible.
+  - n: 2
+    scene: "Wu — the nameless as origin of heaven and earth"
+    force: law
+    composer: Johann Sebastian Bach
+    work: "The Art of Fugue — Contrapunctus I"
+    decision: added
+    why: >
+      Wu (無, the nameless) is not chaos — it is the un-differentiated ground from which
+      heaven and earth arise. Lao-tzu's wu is architecturally prior to everything, the way a
+      fugue subject is prior to all its entrances. Bach's Contrapunctus I opens with a subject
+      of severe economy — four voices, nothing wasted — and demonstrates that maximum structure
+      can arise from maximum simplicity. The force is law: formal clarity, repetition, the
+      architecture of the latent. You hear how the named world is already implicit in the
+      nameless, the way the entire fugue is implicit in its opening subject.
+  - n: 3
+    scene: "You — the named as mother of the ten thousand things"
+    force: metamorphosis
+    composer: Maurice Ravel
+    work: "Ma mère l'Oye — 'Pavane de la Belle au bois dormant'"
+    decision: added
+    why: >
+      You (有, the named) is the maternal face of the Tao — not opposed to wu but its
+      complement, the same mystery viewed from the angle of differentiation. Ravel's Mother
+      Goose suite begins with the Sleeping Beauty Pavane: tender, slow, the world of named
+      things held in a lullaby stasis. It is exactly the quality of you in Chapter 1: the ten
+      thousand things have a mother; they are held, not abandoned. The metamorphosis force
+      marks the hinge between wu and you — the same source, two faces. Ravel's orchestral
+      color shifts almost imperceptibly; that shimmer between states is the philosophical move.
+  - n: 4
+    scene: "Non-desire as window onto the mystery's root"
+    force: revelation
+    composer: John Tavener
+    work: "Song for Athene"
+    decision: added
+    why: >
+      Without desire, you see the Tao's root (miao, 妙) — the subtle, the marvelous, the
+      depth. This is one of the two windows Lao-tzu offers, and it is the more austere: pure
+      receptivity, the self emptied of wanting. Tavener's Song for Athene is Orthodox
+      chant-inflected, hovering, the voice ascending then resting in nothing decided. Its
+      stillness is not passive — it is the active attention of non-desire, the quality that
+      makes the subtle visible. Force requirement: stillness, chant, verticality — all met.
+  - n: 5
+    scene: "Desire as window onto the mystery's surface"
+    force: metamorphosis
+    composer: Claude Debussy
+    work: "Prélude à l'après-midi d'un faune"
+    decision: added
+    why: >
+      With desire, you see the Tao's boundary (jiao, 徼) — its outer fringe, the surface of
+      appearances, the world as it presents itself to wanting. This is not failure; Lao-tzu
+      holds both windows as valid views of the same mystery. The Prélude à l'après-midi d'un
+      faune is the perfect music of desire's surface: the opening flute line circles without
+      grounding, sensuous and restless, always at the edge of resolution. Debussy gives you
+      jiao — what the desiring eye finds — which is still part of the mystery, just its skin
+      rather than its root. The metamorphosis force: orchestral color is the argument.
+  - n: 6
+    scene: "Both aspects are the same — the mystery named"
+    force: law
+    composer: Johann Sebastian Bach
+    work: "Well-Tempered Clavier, Book I — Prelude in C Major (BWV 846)"
+    decision: added
+    why: >
+      'Under these two aspects, it is really the same; but as development takes place, it
+      receives different names. Together we call them the Mystery.' Bach's C Major Prelude is
+      the most famous demonstration in music that two seemingly distinct things — arpeggio and
+      chord, motion and harmony, time and structure — are the same thing viewed differently.
+      It is also architecturally clear, unhurried, without ornament: law at its most lucid.
+      The Prelude does not argue for unity; it demonstrates it in thirty-five measures of
+      perfect economy. That is what Lao-tzu does in lines 4-6 of Chapter 1.
+  - n: 7
+    scene: "Xuan — darkness within darkness, the deepening mystery"
+    force: revelation
+    composer: Olivier Messiaen
+    work: "Quartet for the End of Time — 'Abîme des oiseaux'"
+    decision: added
+    why: >
+      Xuan (玄) is the word Lao-tzu uses for the mystery: dark, obscure, remote. Xuan zhi you
+      xuan — the dark within the dark — is a recursive gesture: the mystery of the mystery,
+      the further deepening that opens rather than closes. Messiaen's 'Abîme des oiseaux'
+      (Abyss of the birds) is scored for solo clarinet: a descent into a still, dark space
+      where time appears to stop. Messiaen composed it as the abyss of Time, from which
+      birds spring (eternity). This is xuan exactly — not dread but depth, not void as
+      absence but void as the source of emergence. The force is revelation: stillness and
+      verticality in an abyssal register that is not terminal but foundational.
+  - n: 8
+    scene: "The gate of all mystery — miao men (妙門)"
+    force: revelation
+    composer: Gregorian chant
+    work: "Veni Creator Spiritus (Mode VIII)"
+    decision: added
+    why: >
+      The last line of Chapter 1: 'This is the gate of all that is subtle and wonderful.'
+      The Chinese is miao men — the gate of the marvelous/subtle. A gate is not a destination;
+      it is a threshold, a structured opening. Gregorian chant in Mode VIII (the Tetrardus
+      plagal mode) has this quality: it does not arrive, it holds a door open. Veni Creator
+      Spiritus is an invocation — not of arrival but of receptivity, the spirit invited in
+      through sustained communal tone. The plainchant texture (no harmony, no meter, voice as
+      pure melodic gesture) is as close to the quality of the text as Western music offers.
+      This is the right ending for Chapter 1: not resolution but the opening of the gate.
+  - n: 9
+    scene: "Silent close — the Tao that cannot be said"
+    force: metamorphosis
+    composer: Morton Feldman
+    work: "For Philip Guston — opening section"
+    decision: added
+    why: >
+      The final implicit beat of Chapter 1 is what the text does NOT say: the Tao itself,
+      unreachable by any of the preceding language. Feldman's For Philip Guston places sounds
+      in time with enormous intervals of near-silence between them — each gesture isolated,
+      each followed by what might be the thing the music cannot say. This is not ambient
+      music; it is music that has renounced the filling of space the way Lao-tzu's text
+      renounces the naming of the unnameable. The metamorphosis force: the color changes
+      after each silence, and you cannot predict what comes next, which is the Tao's
+      characteristic behavior.
+  - n: 10
+    scene: "Coda — the text returns to itself"
+    force: law
+    composer: Arvo Pärt
+    work: "Fratres (string quartet version)"
+    decision: added
+    why: >
+      The arc of Chapter 1 is circular: it ends where it began, at the same paradox, but you
+      have been taken through the two aspects and the deepening darkness, and you arrive back
+      at the gate a different reader. Fratres ('Brothers' — the same, returning) is built on
+      a repeating structural figure with variations: the tintinnabuli drone holds constant
+      while the melodic voices change. It is the same material, cyclically re-heard. That is
+      the chapter's logical shape: the same mystery, re-approached from wu and you and desire
+      and non-desire, always returning to xuan. The coda closes without closing.
+demoted:
+  - composer: Mahler
+    work: "Symphony No. 8 — finale"
+    status: "removed; save for late chapters on fullness/completion (77-81)"
+    why: >
+      The apotheosis weight of the Mahler 8th finale belongs to chapters where the Tao's
+      power is expressed at full volume (chapters 34, 77, 81). Chapter 1 is before the
+      teaching begins — it is the key, not the door opening. Apotheosis here would be a
+      category error.
+  - composer: Bruckner
+    work: "Symphony No. 9 — Adagio"
+    status: "removed; save for later void-of-form chapters"
+    why: >
+      Bruckner's Adagio has the right stillness but the wrong register — it carries the
+      weight of late Romantic tragedy. Chapter 1 is not tragic; it is the most serene
+      philosophical statement in the tradition. The grief-weight is wrong for the opening.
+  - composer: Messiaen
+    work: "Éclairs sur l'Au-Delà — 'Et Dieu essuya toute larme de leurs yeux'"
+    status: "demoted; save for chapters 16 or 52 (return to the root / return to the eternal)"
+    why: >
+      The luminous apotheosis of the late Messiaen belongs to the chapters on return and
+      stillness-as-fullness (16: 'Return to the root is called stillness'; 52: 'Return to
+      the eternal'). Chapter 1 is the entrance condition, not the state attained.
