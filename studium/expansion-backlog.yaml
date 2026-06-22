@@ -1,71 +1,118 @@
 # Studium expansion backlog — STAGED gap-tasks (his "evolutionary expansion / all lanes occupied").
-# These are NOT written to the live tasks.yaml (release-hold). When Anthony opens the gate, route.py
-# can ingest this file to dispatch across all fleet lanes. Each is a bounded, win-class unit.
-# Owner: fleet (multi-vendor). Cheapest-path noted. ([[use-all-vendors-never-serialize]])
+# NOT written to the live tasks.yaml (release-hold). When Anthony opens the gate, route.py can ingest
+# this file to dispatch across all fleet lanes. Each is a bounded, win-class unit. ([[use-all-vendors-never-serialize]])
+# Owner: fleet (multi-vendor). Proof-of-form: the Iliad cycle (24 force-matched arcs + essays).
+# Re-derive remaining counts from each music/<work>/PLAN.md (the authoritative ✓/☐ checklist) — counts
+# below are a snapshot taken after the breadth pass; names/counts are outputs, not pins.
 
 meta:
   status: staged
   gate: "merge into tasks.yaml on Anthony's go; fleet executes across all lanes"
-  proof_of_form: "the Iliad cycle (24 force-matched arcs + essays) is the template these follow"
+  acceptance: "scripts/studium-validate.py must pass (forces ∈ taxonomy; force_arc == track forces; no intra-arc duplicate pieces) for every new arc"
+  proof_of_form: "music/iliad/ (24/24 arcs + essays) is the template every deepening task follows"
+  register_rules:
+    - "the terminal funeral-march register (Wagner Siegfried's Funeral March) is reserved — never place it before a work's death/catastrophe division"
+    - "a force tag must match the PIECE's sonic character per dominant-force.yaml, not merely the scene"
+    - "force_arc renders as the day's scene-strip; reconcile it to the ordered track forces (the hand-seeded iliad/book-01 is the one intentional exception)"
 
-tasks:
-  # ── Pillar B: per-work music arcs (like the Iliad cycle) ──────────────────────
-  - id: studium-music-odyssey
-    class: content
-    title: "Author force-matched arcs + essays for the Odyssey (24 books)"
-    how: "same workflow as the Iliad cycle; dominant forces center on return/exile/recognition"
-  - id: studium-music-aeneid
-    title: "Aeneid (12 books) — empire/fate/sacrifice arcs + essays"
-    class: content
-  - id: studium-music-metamorphoses
-    title: "Metamorphoses (15 books) — metamorphosis as the spine"
-    class: content
-  - id: studium-music-divine-comedy
-    title: "Divine Comedy — per-canto/cantica arcs (Inferno→Purgatorio→Paradiso = descent→ascent→revelation)"
-    class: content
-  - id: studium-music-rest-of-canon
-    title: "Remaining canon works (Tanakh, Quran, Gita, Mahabharata, Ramayana, Beowulf, Canterbury, Genji, Heike, Analects, Tao, Journey, Conference, Gilgamesh)"
-    class: content
-    how: "one arc per major division; the dominant-force engine drives selection"
+# ── DONE — first-pass breadth (this session) ──────────────────────────────────
+breadth_complete:
+  opening_arcs: "19/19 non-Iliad works have music/<work>/book-01.yaml + essays/<work>/book-01.md (Iliad = 24/24)"
+  reading_orientations: "20/20 works have reading/<work>.md"
+  script_lessons: "12/12 languages (greek + latin, italian, hebrew, arabic, sanskrit, old-english, chinese, japanese, persian, middle-english, cuneiform)"
+  validated: "all 43 arcs pass studium-validate.py"
 
-  # ── Pillar C: the language layer (9 more scripts; greek.md is the template) ────
-  - id: studium-script-latin
-    class: content
-    title: "Latin script lesson (Aeneid/Ovid) — alphabet/ductus · glossed reading · grammar"
-    how: "mirror studium/scripts/greek.md structure"
-  - id: studium-script-italian
-    title: "Italian (Dante, terza rima)"
-    class: content
-  - id: studium-script-hebrew
-    title: "Biblical Hebrew (Torah/Psalms) — alef-bet, niqqud, right-to-left ductus"
-    class: content
-  - id: studium-script-arabic
-    title: "Classical Arabic (Qur'an) — naskh, harakat, root-pattern awareness"
-    class: content
-  - id: studium-script-sanskrit
-    title: "Devanagari/Sanskrit (Gita/Ramayana/Mahabharata)"
-    class: content
-  - id: studium-script-old-english
-    title: "Old English (Beowulf) — insular letters (þ ð ƿ æ), alliteration"
-    class: content
-  - id: studium-script-chinese
-    title: "Classical Chinese/Hanzi (Tao/Analects/Journey)"
-    class: content
-  - id: studium-script-japanese
-    title: "Kana + Kanji (Genji/Heike)"
-    class: content
-  - id: studium-script-persian
-    title: "Persian/nastaʿliq (Shahnameh/Attar)"
-    class: content
+# ── Pillar B — Phase 3: per-work deepening (fill each work to its full division count) ──
+# Each task = author the REMAINING divisions for that work as force-matched arcs + essays, in the
+# Iliad gold-standard format. The division checklist (which book-NN are ☐) lives in the work's PLAN.md.
+deepening:
+  method: "for each ☐ division: tag its dominant force(s) → choose a piece meeting that force's requirement → justify every track → mirror an essay → studium-validate.py"
+  remaining_total: 769
+  tasks:
+    - id: studium-deepen-quran            # 113 remaining
+      title: "Qur'an — suras 2..114 (113 arcs)"
+      checklist: studium/music/quran/PLAN.md
+      class: content
+    - id: studium-deepen-journey-to-the-west   # 99
+      title: "Journey to the West — chapters 2..100 (99 arcs)"
+      checklist: studium/music/journey-to-the-west/PLAN.md
+      class: content
+    - id: studium-deepen-divine-comedy    # 99
+      title: "Divine Comedy — cantos 2..100 (99 arcs; Inferno→Purgatorio→Paradiso = descent→ascent→revelation)"
+      checklist: studium/music/divine-comedy/PLAN.md
+      class: content
+    - id: studium-deepen-tao-te-ching     # 80
+      title: "Dao De Jing — chapters 2..81 (80 arcs)"
+      checklist: studium/music/tao-te-ching/PLAN.md
+      class: content
+    - id: studium-deepen-tale-of-genji    # 53
+      title: "Tale of Genji — chapters 2..54 (53 arcs)"
+      checklist: studium/music/tale-of-genji/PLAN.md
+      class: content
+    - id: studium-deepen-shahnameh        # 49
+      title: "Shahnameh — cycles 2..50 (49 arcs)"
+      checklist: studium/music/shahnameh/PLAN.md
+      class: content
+    - id: studium-deepen-conference-of-birds   # 44
+      title: "Conference of the Birds — sections 2..45 (44 arcs)"
+      checklist: studium/music/conference-of-birds/PLAN.md
+      class: content
+    - id: studium-deepen-beowulf          # 42
+      title: "Beowulf — fitts 2..43 (42 arcs)"
+      checklist: studium/music/beowulf/PLAN.md
+      class: content
+    - id: studium-deepen-tanakh           # 38
+      title: "Tanakh — books 2..39 (38 arcs; Torah · Nevi'im · Ketuvim)"
+      checklist: studium/music/tanakh/PLAN.md
+      class: content
+    - id: studium-deepen-odyssey          # 23
+      title: "Odyssey — books 2..24 (23 arcs; return/exile/recognition)"
+      checklist: studium/music/odyssey/PLAN.md
+      class: content
+    - id: studium-deepen-canterbury-tales      # 23
+      title: "Canterbury Tales — tales 2..24 (23 arcs)"
+      checklist: studium/music/canterbury-tales/PLAN.md
+      class: content
+    - id: studium-deepen-analects         # 19
+      title: "Analects — books 2..20 (19 arcs)"
+      checklist: studium/music/analects/PLAN.md
+      class: content
+    - id: studium-deepen-mahabharata      # 17
+      title: "Mahabharata — parvas 2..18 (17 arcs)"
+      checklist: studium/music/mahabharata/PLAN.md
+      class: content
+    - id: studium-deepen-bhagavad-gita    # 17
+      title: "Bhagavad Gita — chapters 2..18 (17 arcs)"
+      checklist: studium/music/bhagavad-gita/PLAN.md
+      class: content
+    - id: studium-deepen-metamorphoses    # 14
+      title: "Metamorphoses — books 2..15 (14 arcs; metamorphosis as the spine)"
+      checklist: studium/music/metamorphoses/PLAN.md
+      class: content
+    - id: studium-deepen-aeneid           # 11
+      title: "Aeneid — books 2..12 (11 arcs; empire/fate/sacrifice)"
+      checklist: studium/music/aeneid/PLAN.md
+      class: content
+    - id: studium-deepen-gilgamesh        # 11
+      title: "Gilgamesh — tablets 2..12 (11 arcs)"
+      checklist: studium/music/gilgamesh/PLAN.md
+      class: content
+    - id: studium-deepen-heike            # 11
+      title: "Tale of the Heike — books 2..12 (11 arcs)"
+      checklist: studium/music/heike/PLAN.md
+      class: content
+    - id: studium-deepen-ramayana         # 6
+      title: "Ramayana — kandas 2..7 (6 arcs)"
+      checklist: studium/music/ramayana/PLAN.md
+      class: content
 
-  # ── Gloss live-fill (Pillar C, the synth layer) ───────────────────────────────
-  - id: studium-gloss-livefill
+# ── Pillar D — community / build-in-public (propose-only; SENDS NOTHING until his gate) ──
+community:
+  - id: studium-community-discord
+    title: "Stand up the simplified Studium Discord (studium/community/discord-plan.md) — 2 rituals / 6 channels / 3 roles"
+    gate: "his go; invite/post nothing autonomously"
     class: content
-    title: "Run studium-gloss.py --live to synth-fill word-by-word gloss for the active passages"
-    how: "keyless claude -p; seed passages (Iliad I) already hand-glossed"
-
-  # ── Corpus gaps ───────────────────────────────────────────────────────────────
-  - id: studium-corpus-shahnameh
-    class: acquisition
-    title: "Acquire the Shahnameh (Persian original + a translation) into the LingFrame corpus"
-    how: "missing_from_corpus: true in canon.yaml; source: ganjoor.net / public-domain translation"
+  - id: studium-publish-cadence
+    title: "Build-in-public posts from studium/publish/_drafts/ (Wings: post/thread/discord/playlist per arc) — drafts exist, sending is his lever"
+    gate: "his go"
+    class: content
