@@ -204,4 +204,3 @@ vercel --prod
 | Dispatch | `limen dispatch --agent <name> --live` |
 | Harvest | `limen harvest --agent <name>` |
 | Init new | `limen init --root <path>` |
-| Sync with SaaS | `limen sync` |

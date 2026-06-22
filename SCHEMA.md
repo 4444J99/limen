@@ -22,7 +22,7 @@ All paths and configuration come from environment variables. No hardcoded paths.
 | `LIMEN_API_TOKEN` | no | — | Bearer token required by the FastAPI backend when set |
 | `LIMEN_OWNER_TOKEN` | no | — | Additional owner persona bearer token for all sanctioned endpoints |
 | `LIMEN_CLIENT_TOKEN` | no | — | Client persona bearer token for client/public status and manifest endpoints |
-| `LIMEN_REPO` | no | — | Git remote URL (optional, enables `limen sync`) |
+| `LIMEN_REPO` | no | — | Git remote URL |
 | `LIMEN_TASKS` | no | `$LIMEN_ROOT/tasks.yaml` | Path to the task file |
 | `LIMEN_GITHUB_REPO` | no | — | `owner/repo` for hosted API storage via GitHub Contents |
 | `LIMEN_GITHUB_BRANCH` | no | `main` | Branch used by hosted API GitHub storage |
