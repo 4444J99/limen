@@ -4,7 +4,6 @@ import re
 import secrets
 import shlex
 import subprocess
-import tempfile
 import contextlib
 import threading
 import time
@@ -379,7 +378,6 @@ def _opencode_model() -> str:
         return env
     binv = os.environ.get("LIMEN_OPENCODE_BIN", "opencode")
     try:
-        import json
         r = subprocess.run([binv, "models"], capture_output=True, text=True, timeout=20)
         models = [ln.strip() for ln in r.stdout.splitlines() if "/" in ln and " " not in ln.strip()]
         # Prefer a FREE coding model (works with no auth). We deliberately DON'T read

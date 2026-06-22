@@ -5,7 +5,6 @@ health="exhausted") yet the dispatcher kept assigning to it because _down_lanes(
 static hand-maintained file. The fix derives the down-set from logs/usage.json (self-healing)."""
 import json
 
-import pytest
 
 from limen.dispatch import _down_lanes, _usage_dead_lanes
 

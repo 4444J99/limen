@@ -8,7 +8,6 @@ import json
 import sys
 from pathlib import Path
 
-import pytest
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -56,7 +55,8 @@ def test_classification_includes_async_running_marker(tmp_path, monkeypatch):
     monkeypatch.setattr(sys, "argv", ["verify-dispatch"])
     m.main()
     det = json.loads((tmp_path / "logs" / "dispatch-verify.json").read_text())["detail"]
-    ids = lambda k: [x["id"] for x in det.get(k, [])]
+    def ids(k):
+        return [x["id"] for x in det.get(k, [])]
     assert "MERGED" in ids("PR_MERGED")
     assert "RUNNING_ASYNC" in ids("DISPATCHED_RUNNING")  # live .running marker → not reopened
     assert "STRANDED" in ids("DISPATCHED_NO_PR")         # old, no marker → genuinely stranded

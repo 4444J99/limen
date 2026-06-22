@@ -52,7 +52,10 @@ _VIEW = {
 
 
 class _R:
-    def __init__(self, out): self.returncode = 0; self.stdout = out; self.stderr = ""
+    def __init__(self, out):
+        self.returncode = 0
+        self.stdout = out
+        self.stderr = ""
 
 
 def _fake_gh(args, timeout=60):

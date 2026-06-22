@@ -53,7 +53,6 @@ CLI (dependency-free in ``--dry-run``)::
 from __future__ import annotations
 
 import argparse
-import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Protocol, runtime_checkable

@@ -9,7 +9,6 @@ append-tasks.py) now routes through atomic_write_text — see limen/io.py.
 """
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from unittest import mock
 
@@ -56,8 +55,6 @@ def test_atomic_write_never_truncates_on_failure(tmp_path: Path) -> None:
     heartbeat."""
     target = tmp_path / "tasks.yaml"
     target.write_text("good queue with 691 tasks")
-
-    real_replace = os.replace
 
     def boom(src, dst):  # explode after the temp file exists, before the swap
         raise OSError("simulated crash mid-write")

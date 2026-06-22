@@ -10,7 +10,6 @@ import os
 import sys
 from pathlib import Path
 
-import pytest
 
 CLI_SRC = Path(__file__).resolve().parents[1] / "src"
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "dispatch-async.py"

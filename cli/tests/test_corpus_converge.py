@@ -5,11 +5,9 @@ distilled into it. Offline (dry-run kit) — no network. Write-back is gated on 
 fallback can never bloat the real corpus.
 """
 import importlib.util
-import json
 import os
 import subprocess
 import sys
-import types
 from pathlib import Path
 
 import yaml
@@ -140,9 +138,11 @@ def test_main_offline_apply_emits_gaps_but_never_writes_faces(tmp_path, monkeypa
     corpus = _make_corpus(tmp_path / "kc", {
         "prompts": "# Prompts\n\nprompt atom hand",  # missing tokens vs idea → gap finder fires
     })
-    sm = tmp_path / "sm"; sm.mkdir()
+    sm = tmp_path / "sm"
+    sm.mkdir()
     (sm / "d.md").write_text("prompt atom hand keystroke")
-    tasks = tmp_path / "tasks.yaml"; tasks.write_text(yaml.safe_dump({"tasks": []}))
+    tasks = tmp_path / "tasks.yaml"
+    tasks.write_text(yaml.safe_dump({"tasks": []}))
     env = dict(os.environ, LIMEN_ROOT=str(REPO), LIMEN_CORPUS_ROOT=str(corpus),
                LIMEN_SESSION_META=str(sm), LIMEN_TASKS=str(tasks),
                LIMEN_CORPUS_STATE=str(tmp_path / "state.json"),

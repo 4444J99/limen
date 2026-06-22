@@ -9,7 +9,6 @@ import json
 import sys
 from pathlib import Path
 
-import pytest
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "watchdog.py"
 
@@ -121,15 +120,15 @@ def test_alert_fires_once_and_is_idempotent(tmp_path, monkeypatch):
     assert rec1["active"] and "daemon-up" in rec1["failed_checks"]
     fired_at = rec1["fired_at"]
     log_lines_1 = m.WDLOG.read_text().splitlines()
-    assert sum(1 for l in log_lines_1 if "FIRED" in l) == 1
+    assert sum(1 for line in log_lines_1 if "FIRED" in line) == 1
 
     # second run, SAME failure → must NOT re-fire (no new FIRED line, fired_at unchanged)
     assert m.main() == 1
     rec2 = json.loads(m.ALERT.read_text())
     assert rec2["fired_at"] == fired_at
     log_lines_2 = m.WDLOG.read_text().splitlines()
-    assert sum(1 for l in log_lines_2 if "FIRED" in l) == 1
-    assert any("STILL" in l for l in log_lines_2)
+    assert sum(1 for line in log_lines_2 if "FIRED" in line) == 1
+    assert any("STILL" in line for line in log_lines_2)
 
 
 def test_alert_clears_when_health_returns(tmp_path, monkeypatch):
@@ -145,7 +144,7 @@ def test_alert_clears_when_health_returns(tmp_path, monkeypatch):
     assert m.main() == 0
     rec = json.loads(m.ALERT.read_text())
     assert rec["active"] is False and "resolved_at" in rec
-    assert any("RESOLVED" in l for l in m.WDLOG.read_text().splitlines())
+    assert any("RESOLVED" in line for line in m.WDLOG.read_text().splitlines())
 
 
 # --- heal is double-gated -------------------------------------------------------
@@ -169,4 +168,4 @@ def test_heal_triggered_with_both_gates(tmp_path, monkeypatch):
     monkeypatch.setattr(sys, "argv", ["watchdog", "--heal"])
     m.main()
     assert calls == [1]
-    assert any("HEAL ok" in l for l in m.WDLOG.read_text().splitlines())
+    assert any("HEAL ok" in line for line in m.WDLOG.read_text().splitlines())
