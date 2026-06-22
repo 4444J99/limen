@@ -22,6 +22,11 @@ set -uo pipefail
 export HOME="${HOME:-/Users/4jp}"
 export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 export LIMEN_ROOT="${LIMEN_ROOT:-$HOME/Workspace/limen}"
+# Prefer the daemon's dedicated venv python — a STABLE binary path (created with `venv --copies`)
+# so a one-time macOS Full Disk Access grant survives Homebrew python upgrades. The grant lets the
+# usage organ read vendor app-data (~/.codex, ~/.claude, ~/.gemini) without the TCC consent prompt.
+# Guarded: only prepended if present, so the daemon falls back to the system python otherwise.
+[ -x "$LIMEN_ROOT/.venv/bin/python3" ] && export PATH="$LIMEN_ROOT/.venv/bin:$PATH"
 export LIMEN_TASKS="${LIMEN_TASKS:-$LIMEN_ROOT/tasks.yaml}"
 export LIMEN_WORKDIR="${LIMEN_WORKDIR:-$HOME/Workspace}"
 export LIMEN_ISOLATION="${LIMEN_ISOLATION:-worktree}"

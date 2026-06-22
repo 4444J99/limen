@@ -148,18 +148,32 @@ def _recent(p: Path) -> bool:
 def codex_5h():
     base = HOME / ".codex" / "sessions"
     total = sessions = 0
-    if base.exists():
-        for f in base.rglob("*.jsonl"):
-            if not _recent(f):
-                continue
-            sessions += 1
-            try:
-                txt = f.read_text(errors="ignore")
-                mi = max([int(x) for x in _IN.findall(txt)] or [0])   # cumulative → max ≈ session total
-                mo = max([int(x) for x in _OUT.findall(txt)] or [0])
-                total += mi + mo  # billable (input+output), excludes cached
-            except Exception:
-                pass
+    gated = False
+    try:
+        if base.exists():
+            with os.scandir(base):   # explicit probe — TCC/permission denial raises HERE
+                pass                  # (rglob silently skips unreadable dirs, so it can't detect it)
+            for f in base.rglob("*.jsonl"):
+                if not _recent(f):
+                    continue
+                sessions += 1
+                try:
+                    txt = f.read_text(errors="ignore")
+                    mi = max([int(x) for x in _IN.findall(txt)] or [0])   # cumulative → max ≈ session total
+                    mo = max([int(x) for x in _OUT.findall(txt)] or [0])
+                    total += mi + mo  # billable (input+output), excludes cached
+                except (PermissionError, OSError):
+                    gated = True       # macOS TCC denied this app-data file — skip, don't crash
+                except Exception:
+                    pass
+    except (PermissionError, OSError):
+        # macOS TCC ("access data from other apps") denied the whole ~/.codex scan. Treat usage as
+        # UNKNOWN, not zero — and unknown ⇒ HEALTHY (real headroom), never bench. ([[meter-lie-and-dead-daemon-incident]])
+        gated = True
+    if gated:
+        return {"signal": "tokens", "window": "5h rolling", "consumed": total,
+                "unit": "tokens", "sessions": sessions, "health": "ok", "tcc_gated": True,
+                "note": "codex usage source TCC-gated — assuming healthy; grant FDA to read ~/.codex"}
     return {"signal": "tokens", "window": "5h rolling", "consumed": total,
             "unit": "tokens", "sessions": sessions,
             "health": "ok", "note": "billable codex tokens (input+output, 5h)"}
@@ -169,8 +183,18 @@ def claude_5h():
     base = HOME / ".claude" / "projects"
     total = msgs = rate_limit_events = 0
     recent_rl = False
-    if base.exists():
-        for f in base.rglob("*.jsonl"):
+    gated = False
+    try:
+        if base.exists():
+            with os.scandir(base):   # explicit probe — TCC/permission denial raises HERE
+                pass                  # (rglob silently skips unreadable dirs, so it can't detect it)
+            _it = base.rglob("*.jsonl")
+        else:
+            _it = []
+    except (PermissionError, OSError):
+        _it, gated = [], True   # TCC denied the ~/.claude scan — unknown ⇒ healthy, never bench
+    if not gated:
+        for f in _it:
             if not _recent(f):
                 continue
             try:
@@ -194,8 +218,15 @@ def claude_5h():
                     total += (u.get("input_tokens", 0) + u.get("output_tokens", 0)
                               + u.get("cache_creation_input_tokens", 0))  # billable; exclude cheap cache_read
                     msgs += 1
+            except (PermissionError, OSError):
+                gated = True       # macOS TCC denied this app-data file — skip, don't crash
             except Exception:
                 pass
+    if gated:
+        return {"signal": "tokens", "window": "5h rolling", "consumed": total,
+                "unit": "tokens", "messages": msgs, "health": "ok", "tcc_gated": True,
+                "rate_limit_events": rate_limit_events, "recent_rate_limit": recent_rl,
+                "note": "claude usage source TCC-gated — assuming healthy; grant FDA to read ~/.claude"}
     return {"signal": "tokens", "window": "5h rolling", "consumed": total,
             "unit": "tokens", "messages": msgs,
             "health": "rate-limited" if recent_rl else "ok",
@@ -309,6 +340,10 @@ def main():
     print(f"usage-telemetry: codex {vendors['codex']['consumed']}tok/5h · "
           f"claude {vendors['claude']['consumed']}tok/5h · jules {vendors['jules']['consumed']}/100 · "
           f"gemini {vendors['gemini']['consumed']} · opencode {vendors['opencode']['consumed']} · agy {vendors['agy']['consumed']}")
+    gated = [n for n, v in vendors.items() if v.get("tcc_gated")]
+    if gated:
+        print(f"  usage: {','.join(gated)} source TCC-gated (assuming healthy) — "
+              f"grant Full Disk Access to the daemon python to silence the macOS prompt")
 
 
 if __name__ == "__main__":

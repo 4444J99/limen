@@ -62,13 +62,16 @@ def _vendor_health() -> dict[str, bool]:
     def has(bin_: str) -> bool:
         return subprocess.run(["which", bin_], capture_output=True).returncode == 0
 
-    gemini_auth = bool(os.environ.get("GEMINI_API_KEY")) or (
-        Path.home() / ".gemini" / "settings.json"
-    ).exists() and "auth" in (
-        (Path.home() / ".gemini" / "settings.json").read_text(errors="ignore")
-        if (Path.home() / ".gemini" / "settings.json").exists()
-        else ""
-    )
+    def _gemini_settings_has_auth() -> bool:
+        # ~/.gemini is another app's data — on macOS TCC the read can be denied. Never crash;
+        # a denied/absent read just means "no settings-file auth" (env key is checked first).
+        try:
+            f = Path.home() / ".gemini" / "settings.json"
+            return f.exists() and "auth" in f.read_text(errors="ignore")
+        except (PermissionError, OSError):
+            return False
+
+    gemini_auth = bool(os.environ.get("GEMINI_API_KEY")) or _gemini_settings_has_auth()
     return {
         "jules": has("jules"),
         "codex": has("codex"),
