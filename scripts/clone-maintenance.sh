@@ -46,6 +46,9 @@ now = time.time(); freed = 0; n = 0; kept = 0
 for nm in glob.glob(os.path.join(ws, "**", "node_modules"), recursive=True):
     if "/node_modules/" in nm:            # only a repo's TOP-level node_modules, not nested
         continue
+    if "/.claude/worktrees/" in nm or "/.home-cartridge/" in nm:
+        continue   # HARD: interactive Claude sessions live in .claude/worktrees — never touch them
+
     repo = os.path.dirname(nm)
     try:
         top = subprocess.run(["git", "-C", repo, "rev-parse", "--show-toplevel"],
