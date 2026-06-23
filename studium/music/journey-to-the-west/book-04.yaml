@@ -1,0 +1,76 @@
+work: journey-to-the-west
+book: 4
+title: "Chapter 4: Bima Wen and the Great Sage Equal to Heaven"
+length_minutes: 75
+principle: >
+  The absurdity of assigning a chaotic immortal to manage horses, the realization of the insult,
+  and the self-declaration of equal status with Heaven itself.
+force_arc: [ascent, comedy, wrath, return, kingship, divine-intervention]
+dominant_force: comedy
+tracks:
+  - n: 1
+    scene: "Ascension to Heaven"
+    force: ascent
+    composer: Bruckner
+    work: "Symphony No. 4 ('Romantic') — I. Bewegt, nicht zu schnell"
+    decision: added
+    why: >
+      Monkey follows the Spirit of Venus up to the celestial gates. Bruckner's expansive, glowing
+      orchestration provides the luminous, rising sequence of entering the true upper world for the
+      first time.
+  - n: 2
+    scene: "Appointed 'Protector of the Horses'"
+    force: comedy
+    composer: Mozart
+    work: "Eine kleine Nachtmusik — I. Allegro"
+    decision: added
+    why: >
+      The Jade Emperor appoints him Bima Wen (Protector of the Horses). Monkey takes the job very
+      seriously, organizing the stables perfectly. Mozart's crisp, light, courtly rhythm plays
+      as Monkey energetically applies himself to what is, secretly, a completely insulting and
+      meaningless task.
+  - n: 3
+    scene: "Discovering the rank is unclassified / The rebellion"
+    force: wrath
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    decision: added
+    why: >
+      Monkey learns from the other officials that 'Protector of the Horses' is the lowest possible
+      rank, not even classified. The realization of the insult triggers immediate fury. He kicks
+      over the desk, pulls out his rod, and smashes his way out of the Heavenly Gates. Beethoven's
+      hammered, inexorable insistence is the sound of Monkey's offended dignity becoming a force
+      of nature.
+  - n: 4
+    scene: "Return to the mountain and raising the banner"
+    force: return
+    composer: Brahms
+    work: "Symphony No. 3 — I. Allegro con brio"
+    decision: added
+    why: >
+      He returns to the Mountain of Flowers and Fruit and declares the Heavenly Court a joke.
+      When two horned demon kings suggest he title himself 'Great Sage Equal to Heaven', he
+      immediately agrees and orders a massive banner raised. Brahms provides the sweeping, heroic
+      circular form of returning home and claiming one's true identity.
+  - n: 5
+    scene: "Defeating the Heavenly Vanguard"
+    force: kingship
+    composer: Elgar
+    work: "Enigma Variations — 'E.D.U.' (Variation XIV)"
+    decision: added
+    why: >
+      Heaven sends Mighty Miracle God and Prince Nezha to arrest him. Monkey defeats them both
+      easily, mocking their youth and weakness. Elgar's 'E.D.U.' is a triumphant, self-assured
+      declaration of sovereignty — Monkey proving his self-proclaimed title through absolute
+      martial superiority.
+  - n: 6
+    scene: "The Spirit of Venus returns — official recognition"
+    force: divine-intervention
+    composer: Wagner
+    work: "Die Meistersinger von Nürnberg — Prelude to Act I"
+    decision: added
+    why: >
+      Rather than risk further humiliation, the Jade Emperor listens to Venus again: give him the
+      empty title 'Great Sage Equal to Heaven' to keep him quiet. Venus descends again. Wagner's
+      pompous, majestic prelude is Heaven rearranging its own hierarchy to accommodate the anomaly
+      it cannot defeat, cloaking a surrender in the language of a promotion.

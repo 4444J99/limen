@@ -127,6 +127,12 @@ C_REPORT="${LIMEN_BEAT_REPORT:-12}"    # RELAY (conducting report; self-limits t
 LOCKD="$LIMEN_ROOT/logs/.queue.lock.d"   # shared with supervisory ops (two-scale safety)
 c=0
 play() { [ $(( c % $1 )) -eq 0 ]; }   # true on this voice's beat
+# PROPRIOCEPTION — stamp the instant a voice plays so organ-health.py can read GROUND TRUTH
+# (did this rung actually fire?) instead of inferring liveness from a downstream artifact's mtime.
+# One tiny file per voice, overwritten each fire (no growth, single writer = the daemon). Fail-open:
+# a stamp failure never touches the beat. ([[no-never-happens-again]])
+VOICED="$LIMEN_ROOT/logs/.voice"; mkdir -p "$VOICED" 2>/dev/null || true
+stamp() { printf '%s\n' "$(date -u +%FT%TZ)" > "$VOICED/$1" 2>/dev/null || true; }
 healthy_lanes() {
   python3 - "$1" <<'PY'
 import sys
@@ -213,6 +219,10 @@ while true; do
                            else
                              echo "no live local lanes available for rebalance"
                            fi; }
+    # proprioception stamps — record that these voices played this beat (route rides the balance voice)
+    play "$C_DRAIN"   && stamp drain
+    play "$C_FEED"    && stamp feed
+    play "$C_BALANCE" && stamp balance
 
     # #11: RELEASE the queue-lock BEFORE the slow dispatch so supervisors (seed / heal / verify)
     # aren't starved through the multi-minute run. dispatch-parallel.py now self-acquires the
@@ -241,6 +251,7 @@ while true; do
     fi
     echo "$out" | tail -8
     echo "$out" | grep -qE "→ PR|dispatched/PR|  dispatched:|launched|harvested" && worked=1
+    stamp dispatch
   else
     echo "── queue lock held by a supervisor — skipping mutation this beat ──"
   fi
@@ -254,15 +265,19 @@ while true; do
                       # roll up the value verdict (which lane earns its keep / what was sunk money).
                       python3 "$LIMEN_ROOT/scripts/score-dispatch.py" 2>&1 | tail -1 || true
                       python3 "$LIMEN_ROOT/scripts/ledger.py" 2>&1 | tail -1 || true; }
+  play "$C_HEAL"    && stamp heal
   play "$C_HYGIENE" && bash "$LIMEN_ROOT/scripts/clone-maintenance.sh" 2>&1 | tail -3 || true
+  play "$C_HYGIENE" && stamp hygiene
   python3 "$LIMEN_ROOT/scripts/emit-tick.py" 2>&1 | tail -1 || true   # tick voice — every beat
+  stamp tick
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" 2>&1 | tail -1 || true   # real per-vendor usage
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/money-view.py" 2>&1 | tail -1 || true   # revenue-first money view (no network, can't time out)
+  play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/organ-health.py" 2>&1 | tail -1 || true   # PROPRIOCEPTION: does each self-* rung actually fire? (reads voice stamps + artifacts; no network)
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/corpus-view.py" 2>&1 | tail -1 || true   # knowledge-base view: THE ONE + convergence activity (no network)
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/ingest-coverage.py" 2>&1 | tail -1 || true   # diagnostic: are we at 100% context? sources + freshness + adapter gaps (read-only over the manifest)
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/omni-view.py" 2>&1 | tail -1 || true   # THE ONE SURFACE: value verdict + board + fleet + revenue + everything, past/present/future (no network)
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/obligations-view.py" 2>&1 | tail -1 || true   # mail obligations face refresh (no network)
-  play "$C_MAIL"    && bash "$LIMEN_ROOT/scripts/mail-beat.sh" 2>&1 | tail -3 || true   # COMMS: sweep inbound (flag fires/archive noise, reversible) + rebuild obligations ledger
+  play "$C_MAIL"    && { bash "$LIMEN_ROOT/scripts/mail-beat.sh" 2>&1 | tail -3 || true; stamp mail; }   # COMMS: sweep inbound (flag fires/archive noise, reversible) + rebuild obligations ledger
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/notify-events.py" 2>&1 | tail -1 || true   # push: your-gate ready / ship milestones
   play "$C_WEB"     && [ "${LIMEN_STUDIUM:-0}" = "1" ] && python3 "$LIMEN_ROOT/scripts/studium.py" --daily 2>&1 | tail -1 || true   # daily transmission-curriculum face (gated; advances once/day, no network, can't time out)
   play "$C_REPORT"  && python3 "$LIMEN_ROOT/scripts/conducting-report.py" 2>&1 | tail -1 || true   # RELAY: did the fleet burn its full force? (once/day push — so you never have to ask)
@@ -277,6 +292,7 @@ while true; do
     # caches + the reversible iCloud local-cache (copy→verify→brctl-evict). Solves the recurring
     # local-storage creep autonomically; safe/reversible only; fails open if Archive4T is unmounted.
     LIMEN_LIB_APPLY="${LIMEN_LIB_APPLY:-1}" python3 "$LIMEN_ROOT/scripts/library-preserve.py" 2>&1 | tail -4 || true
+    stamp backup
   fi
   # FEED his WORDS — atomize EVERY live Claude Code prompt (~/.claude/projects) into the SINGLE
   # session-meta manifest+atoms, BEFORE converge, so the conductor holds his ENTIRE prompt corpus
@@ -297,7 +313,7 @@ while true; do
   # (LIMEN_CORPUS_CONVERGE=1); the script self-selects live synthesis (LIMEN_CORPUS_CONVERGE_LIVE=1)
   # + graph shots (LIMEN_CORPUS_GRAPH=1). Bounded + fail-open — never gates the beat.
   play "$C_CORPUS"  && [ "${LIMEN_CORPUS_CONVERGE:-0}" = "1" ] && \
-    python3 "$LIMEN_ROOT/scripts/corpus-converge.py" --apply 2>&1 | tail -3 || true
+    { python3 "$LIMEN_ROOT/scripts/corpus-converge.py" --apply 2>&1 | tail -3 || true; stamp corpus; }
   # ATOMIZE his personal MEDIA — strand D slice 1: docs (from the durable Archive4T copy) → first-class
   # Shot atoms in the SAME converge engine, so his media remixes with his words. Gated OFF by default
   # (LIMEN_MEDIA_ATOMIZE=1); bounded + fail-open; READ-ONLY on sources (never deletes/evicts in slice 1).

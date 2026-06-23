@@ -3,19 +3,22 @@
 
 The Studium's breadth (per-work music deepening, film companions, corpus fetches) is staged in
 studium/expansion-backlog.yaml under a release-hold. This is the SANCTIONED funnel that merges the
-CONTENT-class tasks into the daemon-contended tasks.yaml WITHOUT racing it:
+CONTENT-class tasks into the daemon-contended tasks.yaml as a re-emitting C_FEED voice:
 
-  * the whole read-modify-write runs UNDER queue_lock (the same mkdir-mutex the heartbeat and the
-    dispatchers hold — cooperate with the daemon, never a torn hand-edit), and
-  * the write is atomic (save_limen_file -> atomic_write_text: temp file -> os.replace), and
-  * it is IDEMPOTENT — only NEW task ids are appended, so a re-run is a no-op.
+  * LOCKLESS + atomic — exactly like the sibling generate-backlog / generate-revenue-backlog voices.
+    The daemon does NOT hold the queue lock across a beat, so taking queue_lock here would only STARVE
+    this voice (it times out under live contention and skips every beat — the tasks never land). It
+    re-reads fresh right before the write, then atomic-saves (temp file -> os.replace).
+  * IDEMPOTENT + SELF-HEALING — only NEW task ids are appended, so it runs every beat as a no-op once
+    seeded; if a long concurrent dispatch save ever clobbers the rows, the next beat simply re-adds
+    them. (A one-shot lock-guarded apply was the bug; a re-emitting voice is the cure.)
 
 It respects the backlog's OWN internal gates: only the content-authoring sections are released
 (deepening — MINUS the in-flight odyssey — plus corpus_gaps and film.first_pass). The his-gate
 sections (community / community_interaction / analysis / tier2_staged / Letterboxd posting) and any
 row carrying a `gate:` field are NEVER released here.
 
-Read-only by default (prints exactly what it WOULD add). With --apply it appends under the lock.
+Read-only by default (prints exactly what it WOULD add). With --apply it appends losslessly + atomically.
 Never dispatches; the live daemon (autonomy mode "dispatch") routes the new tasks on its own beats.
 
 PRECONDITION (executability): the fleet executes a task by cloning the repo's DEFAULT branch. These
@@ -43,7 +46,7 @@ except ImportError:  # pragma: no cover
 
 HERE = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(HERE / "cli" / "src"))
-from limen.io import load_limen_file, queue_lock, save_limen_file  # noqa: E402
+from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.models import Task  # noqa: E402
 
 SRC_DEFAULT = HERE / "studium" / "expansion-backlog.yaml"
@@ -114,7 +117,7 @@ def main() -> int:
             str(Path(os.path.expanduser(os.environ.get("LIMEN_ROOT", "~/Workspace/limen"))) / "tasks.yaml"),
         ),
     )
-    ap.add_argument("--apply", action="store_true", help="append to tasks.yaml under queue_lock (atomic)")
+    ap.add_argument("--apply", action="store_true", help="append to tasks.yaml losslessly (atomic, re-emitting)")
     args = ap.parse_args()
 
     src = Path(os.path.expanduser(args.source))
@@ -139,22 +142,26 @@ def main() -> int:
         print("|---|---|")
         for t in new:
             print(f"| {t.id} | {t.title} |")
-        print(f"\ndry-run — re-run with --apply to append {len(new)} tasks under queue_lock.")
+        print(f"\ndry-run — re-run with --apply to append {len(new)} tasks (lossless atomic, re-emitting).")
         return 0
 
-    # APPLY: the WHOLE read-modify-write under the shared lock (never race the daemon-contended file).
-    with queue_lock(path) as got:
-        if not got:
-            print("queue busy (lock timeout) — skipped; re-run (self-corrects, never racing the daemon).")
-            return 1
-        lf = load_limen_file(path)  # fresh read UNDER the lock
-        existing = {t.id for t in lf.tasks}
-        new = [t for t in candidates if t.id not in existing]
-        if not new:
-            print("nothing new — every staged content task already in the queue (idempotent no-op).")
-            return 0
-        lf.tasks.extend(new)
-        save_limen_file(path, lf)  # atomic temp -> os.replace
+    # APPLY — lockless + atomic, exactly like the generate-revenue-backlog / generate-backlog voices it
+    # runs beside in the C_FEED block. The daemon does NOT hold the queue lock across a beat, so taking
+    # queue_lock here only STARVES this voice: under live contention it times out and skips EVERY beat,
+    # so the tasks never land (observed live — "queue busy ... skipped" each beat). Instead, re-read
+    # fresh right before the write (pick up ids a sibling added this beat, never double-land), extend,
+    # and atomic-save. NEVER skip on contention: the id-dedupe makes this idempotent, so if a long
+    # concurrent dispatch save ever clobbers, the next C_FEED beat simply re-adds (self-healing — the
+    # "never a silent no" invariant; a one-shot lock-guarded apply was the bug, a re-emitting voice is
+    # the cure).
+    fresh = load_limen_file(path)  # fresh re-read right before the write
+    existing = {t.id for t in fresh.tasks}
+    new = [t for t in candidates if t.id not in existing]
+    if not new:
+        print("nothing new — every staged content task already in the queue (idempotent no-op).")
+        return 0
+    fresh.tasks.extend(new)
+    save_limen_file(path, fresh)  # atomic temp -> os.replace
     print(f"applied: appended {len(new)} Studium content tasks -> {path} "
           f"(the daemon routes them on its own beats; never dispatched here).")
     for t in new:

@@ -1,0 +1,79 @@
+# Divine Comedy — Inferno, Canto 2 — curated music arc
+# Gold-standard form matching studium/music/iliad/book-01.yaml
+work: divine-comedy
+book: 2
+title: 'Inferno, Canto II: The Three Blessed Women'
+length_minutes: 60
+principle: Do not score Canto II as action, but as the internal drama of hesitation
+  and the revelation of divine grace interceding in history.
+force_arc:
+- grief
+- law
+- divine-intervention
+- supplication
+- salvation
+- metamorphosis
+- fate
+dominant_force: divine-intervention
+tracks:
+- n: 1
+  scene: Dante's hesitation
+  force: grief
+  composer: Barber
+  work: Adagio for Strings
+  decision: added
+  why: Dante falters, doubting his worthiness to undertake the journey. The slow,
+    inward line of Barber's Adagio captures the heavy introspection and fear of the
+    pilgrim.
+- n: 2
+  scene: Virgil's rebuke
+  force: law
+  composer: Stravinsky
+  work: Octet
+  decision: added
+  why: Virgil counters Dante's fear with reason and structure. Stravinsky's neoclassical
+    clarity represents the firmness of classical reason restoring order to Dante's
+    panicked mind.
+- n: 3
+  scene: Beatrice's descent to Limbo
+  force: divine-intervention
+  composer: Messiaen
+  work: "L'Ascension \u2014 I. Majest\xE9 du Christ demandant sa gloire \xE0 son P\xE8\
+    re"
+  decision: added
+  why: Beatrice leaves Heaven to enter Limbo. The sudden color shift and verticality
+    of Messiaen's chords announce a power from outside the system of Hell intervening.
+- n: 4
+  scene: Beatrice's plea to Virgil
+  force: supplication
+  composer: "P\xE4rt"
+  work: Cantus in Memoriam Benjamin Britten
+  decision: added
+  why: "Beatrice asks Virgil to help Dante out of love. The descending bell-like quality\
+    \ of P\xE4rt's work perfectly scores the gentle but inexorable descent of grace."
+- n: 5
+  scene: The Virgin Mary and Lucia
+  force: salvation
+  composer: Bach
+  work: "Mass in B minor \u2014 'Crucifixus'"
+  decision: added
+  why: The chain of grace originates with Mary and Lucia. The resolving radiance of
+    Bach's choral work reflects the ultimate, unquestionable salvation that initiates
+    the entire journey.
+- n: 6
+  scene: Dante's courage renewed
+  force: metamorphosis
+  composer: Strauss
+  work: Metamorphosen
+  decision: added
+  why: Like a flower opening to the sun, Dante's will is restored. The fluid harmony
+    of Strauss captures this internal, psychological transformation from paralysis
+    to readiness.
+- n: 7
+  scene: Entering the deep wood
+  force: fate
+  composer: Tchaikovsky
+  work: "Symphony No. 4 \u2014 II. Andantino in modo di canzona"
+  decision: added
+  why: The journey begins in earnest. The inevitable tread of fate, but quieter and
+    more resolute now, carries them forward into the darkness.

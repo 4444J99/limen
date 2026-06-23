@@ -521,5 +521,20 @@ def main() -> int:
     return 0
 
 
+def _stamp_health() -> None:
+    """Proprioception: record that the ROUTE organ fired this beat, so organ-health.py can read it
+    as a fresh artifact (mtime). Fail-open — a missed stamp never blocks routing."""
+    try:
+        logs = ROOT / "logs"
+        logs.mkdir(exist_ok=True)
+        (logs / "route-health.json").write_text(
+            json.dumps({"timestamp": time.strftime("%Y-%m-%dT%H:%M:%S")}) + "\n"
+        )
+    except OSError:
+        pass
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    rc = main()
+    _stamp_health()
+    sys.exit(rc)

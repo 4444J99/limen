@@ -23,7 +23,7 @@ import json
 import os
 import sys
 from collections import Counter
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
@@ -268,5 +268,20 @@ def main() -> int:
     return 0
 
 
+def _stamp_health() -> None:
+    """Proprioception: record that the FEED organ fired this beat (generate-backlog runs every feed
+    beat, ungated), so organ-health.py reads it as a fresh artifact (mtime). Fail-open."""
+    try:
+        logs = Path(__file__).resolve().parent.parent / "logs"
+        logs.mkdir(exist_ok=True)
+        (logs / "feed-health.json").write_text(
+            json.dumps({"timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}) + "\n"
+        )
+    except OSError:
+        pass
+
+
 if __name__ == "__main__":
-    raise SystemExit(main())
+    rc = main()
+    _stamp_health()
+    raise SystemExit(rc)

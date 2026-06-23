@@ -175,12 +175,14 @@ def test_reclaim_keeps_dirty_unpushed_and_active(tmp_path):
     main, bare, wtroot = _wt_root_with(tmp_path)
     (main / "logs").mkdir(exist_ok=True)
 
-    dirty = _add_wt(main, wtroot, "dirty"); _age(dirty, 5)
+    dirty = _add_wt(main, wtroot, "dirty")
+    _age(dirty, 5)
     (dirty / "scratch.txt").write_text("uncommitted\n")  # untracked -> dirty
 
-    unpushed = _add_wt(main, wtroot, "unpushed");
+    unpushed = _add_wt(main, wtroot, "unpushed")
     _git("checkout", "-q", "-b", "feat", cwd=unpushed)
-    (unpushed / "new.txt").write_text("x\n"); _git("add", "new.txt", cwd=unpushed)
+    (unpushed / "new.txt").write_text("x\n")
+    _git("add", "new.txt", cwd=unpushed)
     _git("commit", "-q", "-m", "unpushed", cwd=unpushed)
     _age(unpushed, 5)
 
@@ -194,7 +196,8 @@ def test_reclaim_keeps_dirty_unpushed_and_active(tmp_path):
 
 def test_reclaim_dry_run_removes_nothing(tmp_path):
     main, bare, wtroot = _wt_root_with(tmp_path)
-    dead = _add_wt(main, wtroot, "dead"); _age(dead, 5)
+    dead = _add_wt(main, wtroot, "dead")
+    _age(dead, 5)
     (main / "logs").mkdir(exist_ok=True)
     r = _run_reclaim(wtroot, main, apply=False)
     assert r.returncode == 0

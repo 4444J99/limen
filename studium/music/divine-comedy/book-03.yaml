@@ -1,0 +1,71 @@
+# Divine Comedy — Inferno, Canto 3 — curated music arc
+# Gold-standard form matching studium/music/iliad/book-01.yaml
+work: divine-comedy
+book: 3
+title: 'Inferno, Canto III: The Gate and the Neutrals'
+length_minutes: 60
+principle: Canto III is the shock of the first sensory encounter with Hell. It moves
+  from the terror of the Gate's inscription to the pathetic horror of the Neutrals,
+  culminating in the sublime dread of Charon and the crossing of Acheron.
+force_arc:
+- fate
+- exile
+- wrath
+- law
+- desire
+- metamorphosis
+dominant_force: law
+tracks:
+- n: 1
+  scene: The Gate of Hell
+  force: fate
+  composer: Beethoven
+  work: "Symphony No. 5 \u2014 II. Andante con moto"
+  decision: added
+  why: The inscription 'Abandon all hope, ye who enter here' is not angry; it is an
+    eternal, inexorable decree. Beethoven's solemn procession captures the weight
+    of this permanence.
+- n: 2
+  scene: The sighs of the uncommitted
+  force: exile
+  composer: Sibelius
+  work: Valse Triste
+  decision: added
+  why: The Neutrals chose nothing, and so they are given nothing. The wandering, mournful
+    tonality of Valse Triste fits their pathetic, aimless rushing after a blank banner.
+- n: 3
+  scene: The wasps and the worms
+  force: wrath
+  composer: Holst
+  work: "The Planets \u2014 Mars, the Bringer of War"
+  decision: added
+  why: They are stung eternally by wasps and hornets, weeping tears mixed with blood.
+    The rhythmic, unrelenting pressure of Mars embodies their endless, meaningless
+    torment.
+- n: 4
+  scene: Charon the ferryman
+  force: law
+  composer: Stravinsky
+  work: "Symphony of Psalms \u2014 I. Exaudi orationem meam, Domine"
+  decision: added
+  why: Charon enforces the boundary of Hell. He is institutional, not personal. Stravinsky's
+    rigid, monumental architecture conveys the uncompromising rule of divine justice
+    that Charon enacts.
+- n: 5
+  scene: The souls gathering on the shore
+  force: desire
+  composer: Wagner
+  work: "Tristan und Isolde \u2014 Prelude"
+  decision: added
+  why: Divine justice spurs the damned so that fear becomes desire; they are eager
+    to cross. Wagner's chromatic longing captures the tragic paradox of their compulsion
+    toward their own ruin.
+- n: 6
+  scene: The earthquake and the swoon
+  force: metamorphosis
+  composer: Scriabin
+  work: The Poem of Ecstasy
+  decision: added
+  why: The earth shakes, a red light flashes, and Dante faints. The overwhelming sensory
+    flood and changing orchestral color of Scriabin perfectly match Dante's collapse
+    into unconsciousness.
