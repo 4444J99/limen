@@ -9,26 +9,25 @@ Idempotent and concurrency-safe: if another agent already merged a PR, gh report
 we count it, no error. Touches only GitHub — not tasks.yaml ownership or agent worktrees —
 so it cannot race the dispatcher.
 
-  --scan N    max open PRs to assess this run (default 30)
-  --limit N   max PRs to merge this run   (default 10)
-  --dry-run   assess + report only
+  --scan N      assess WINDOW per run — PRs classified this beat, rotating over the full backlog
+  --scan-max N  cap on the cheap full-fleet enumeration the window draws from (default 500)
+  --limit N     max PRs to merge this run   (default 10)
+  --dry-run     assess + report only (cursor untouched)
 """
-import argparse, json, subprocess, sys, datetime, concurrent.futures as cf
+import argparse, json, os, subprocess, sys, datetime, concurrent.futures as cf
 from pathlib import Path
 
-OWNERS = ["organvm", "4444J99"]
-LOG = Path(__file__).resolve().parent.parent / "logs" / "merge-drain.log"
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _pr_scan
+from _pr_scan import enumerate_open_prs, rotating_window  # noqa: E402
+
+# DERIVED from env (derive-not-pin) so the conductor survives relocation; same default + classifier
+# as self-heal.py — the two organs are two halves of one verdict and must agree on the PR universe.
+OWNERS = [o.strip() for o in os.environ.get("LIMEN_OWNERS", "organvm,4444J99").split(",") if o.strip()]
+ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent))
+LOG = ROOT / "logs" / "merge-drain.log"
 
 def gh(args, timeout=60):
     return subprocess.run(["gh", *args], capture_output=True, text=True, timeout=timeout)
-
-def open_prs(scan):
-    r = gh(["search", "prs", "--author", "@me", "--state", "open", "--limit", str(scan),
-            *sum([["--owner", o] for o in OWNERS], []),
-            "--json", "number,repository"])
-    if r.returncode != 0:
-        return []
-    return [(p["repository"]["nameWithOwner"], p["number"]) for p in json.loads(r.stdout or "[]")]
 
 def _is_trivial(repo, num):
     """True if the PR diff is a no-op / pure reformat (whitespace or line-ending only) or empty — the
@@ -90,13 +89,21 @@ def merge(repo, num):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--scan", type=int, default=30)
-    ap.add_argument("--limit", type=int, default=10)
+    ap.add_argument("--scan", type=int, default=int(os.environ.get("LIMEN_MERGE_SCAN", "30")),
+                    help="assess WINDOW per run — PRs classified this beat, rotating")
+    ap.add_argument("--scan-max", type=int, default=int(os.environ.get("LIMEN_MERGE_SCAN_MAX", "500")),
+                    help="cap on the cheap full-fleet enumeration the window draws from")
+    ap.add_argument("--limit", type=int, default=int(os.environ.get("LIMEN_MERGE_LIMIT", "10")))
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
-    prs = open_prs(a.scan)
-    if not prs:
+    # FULL-FLEET coverage (shared with self-heal): enumerate every open PR once, assess a rotating
+    # --scan window this beat so a READY PR below the old head-of-list 30 finally gets landed
+    # instead of sitting forever. Own cursor so MERGE and HEAL rotate independently.
+    allprs = enumerate_open_prs(OWNERS, gh, max_total=a.scan_max, want_url=False)
+    if not allprs:
         print("[merge-drain] no open PRs (or gh unavailable)"); return
+    prs = rotating_window(allprs, a.scan, str(ROOT / "logs" / ".pr-scan-cursor.merge"),
+                          persist=not a.dry_run)
     with cf.ThreadPoolExecutor(max_workers=10) as ex:
         rows = list(ex.map(assess, prs))
     import collections
@@ -108,7 +115,7 @@ def main():
             if merge(repo, num):
                 merged.append(f"{repo}#{num}")
     ts = datetime.datetime.now().strftime("%F %T")
-    summary = (f"[merge-drain] {ts} scanned={len(prs)} ready={b['READY']} "
+    summary = (f"[merge-drain] {ts} window={len(prs)}/{len(allprs)} ready={b['READY']} "
                f"merged={len(merged)} trivial-skipped={b['TRIVIAL']} | blocked: conflict={b['CONFLICT']} "
                f"ci-red={b['CI-RED']} ci-pending={b['CI-PENDING']}")
     print(summary)

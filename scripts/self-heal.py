@@ -21,12 +21,15 @@ Safety / shape (matches the sibling organs exactly):
   • IDEMPOTENT: each heal task has a STABLE id derived from kind+owner+repo+num
     (HEAL-cifix-… / HEAL-rebase-…). If that id already exists in tasks.yaml (any status), no
     duplicate is emitted — re-running is a no-op until the PR's state changes.
-  • BOUNDED: --scan caps PRs assessed (default 30, like merge-drain), --limit caps heal tasks
-    emitted this run (default 10). Never dispatches, merges, pushes, or closes anything.
+  • FULL COVERAGE, BOUNDED COST: one cheap enumeration of EVERY open PR (shared _pr_scan), then a
+    rotating --scan window is assessed per beat (default 30) so the whole backlog is covered over
+    successive beats — not just the head-of-list 30 forever. --limit caps heal tasks emitted this
+    run (default 10, lifted up to 3x when vendor capacity is idle). Never dispatches/merges/pushes.
 
-  --scan N    max open PRs to assess this run     (default 30)
-  --limit N   max heal tasks to EMIT this run     (default 10)
-  --dry-run   assess + report what WOULD be emitted; make ZERO writes (lock untouched)
+  --scan N      assess WINDOW per run — PRs classified this beat, rotating (default 30)
+  --scan-max N  cap on the cheap full-fleet enumeration the window draws from (default 500)
+  --limit N     max heal tasks to EMIT this run, headroom-scaled (default 10)
+  --dry-run     assess + report what WOULD be emitted; make ZERO writes (cursor + lock untouched)
 """
 import argparse
 import collections
@@ -40,8 +43,10 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _pr_scan
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.models import Task  # noqa: E402
+from _pr_scan import enumerate_open_prs, rotating_window, scaled_limit  # noqa: E402
 
 # DERIVED from env so the conductor survives relocation; same defaults as merge-drain.py.
 OWNERS = [o.strip() for o in os.environ.get("LIMEN_OWNERS", "organvm,4444J99").split(",") if o.strip()]
@@ -82,16 +87,6 @@ KINDS = {
 
 def gh(args, timeout=60):
     return subprocess.run(["gh", *args], capture_output=True, text=True, timeout=timeout)
-
-
-def open_prs(scan):
-    r = gh(["search", "prs", "--author", "@me", "--state", "open", "--limit", str(scan),
-            *sum([["--owner", o] for o in OWNERS], []),
-            "--json", "number,repository,url"])
-    if r.returncode != 0:
-        return []
-    return [(p["repository"]["nameWithOwner"], p["number"], p.get("url", ""))
-            for p in json.loads(r.stdout or "[]")]
 
 
 def assess(pr):
@@ -159,22 +154,34 @@ def acquire_lock(timeout=15):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--scan", type=int, default=int(os.environ.get("LIMEN_HEAL_SCAN", "30")))
-    ap.add_argument("--limit", type=int, default=int(os.environ.get("LIMEN_HEAL_LIMIT", "10")))
+    ap.add_argument("--scan", type=int, default=int(os.environ.get("LIMEN_HEAL_SCAN", "30")),
+                    help="assess WINDOW per run — how many PRs to classify this beat (rotates)")
+    ap.add_argument("--scan-max", type=int, default=int(os.environ.get("LIMEN_HEAL_SCAN_MAX", "500")),
+                    help="cap on the cheap full-fleet enumeration the rotating window draws from")
+    ap.add_argument("--limit", type=int, default=int(os.environ.get("LIMEN_HEAL_LIMIT", "10")),
+                    help="max heal tasks to EMIT this run (headroom-scaled up to 3x on a full tank)")
     ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS", str(ROOT / "tasks.yaml")))
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
 
-    prs = open_prs(a.scan)
-    if not prs:
+    # FULL-FLEET coverage: one cheap enumeration of EVERY open PR (not just the first 30), then
+    # assess a rotating window of --scan PRs this beat. Over a full rotation every red/conflict PR
+    # gets seen → a heal task → merge-drain lands it. The cursor is per-organ so HEAL and MERGE
+    # rotate independently. ([[self-star-ladder-shipped-live]])
+    allprs = enumerate_open_prs(OWNERS, gh, max_total=a.scan_max, want_url=True)
+    if not allprs:
         print("[self-heal] no open PRs (or gh unavailable)")
         return 0
+    cursor = ROOT / "logs" / ".pr-scan-cursor.heal"
+    prs = rotating_window(allprs, a.scan, str(cursor), persist=not a.dry_run)
     with cf.ThreadPoolExecutor(max_workers=10) as ex:
         rows = list(ex.map(assess, prs))
     b = collections.Counter(r[3] for r in rows)
 
-    # the stuck PRs this organ exists to heal, capped per run.
-    sick = [(r[3], r[0], r[1], r[2]) for r in rows if r[3] in KINDS][:a.limit]
+    # the stuck PRs this organ exists to heal, capped per run (the cap lifts when vendor capacity
+    # is idle, so a full tank drains the red pile faster instead of trickling 10/beat).
+    limit = scaled_limit(a.limit, ROOT)
+    sick = [(r[3], r[0], r[1], r[2]) for r in rows if r[3] in KINDS][:limit]
     stamp = datetime.date.today().isoformat()
 
     tasks_path = Path(a.tasks)
@@ -189,7 +196,7 @@ def main():
                 dup += 1
             else:
                 would.append((tid, verdict, repo, num))
-        print(f"[self-heal] DRY-RUN scanned={len(prs)} ready={b['READY']} "
+        print(f"[self-heal] DRY-RUN window={len(prs)}/{len(allprs)} ready={b['READY']} "
               f"ci-red={b['CI-RED']} conflict={b['CONFLICT']} ci-pending={b['CI-PENDING']} "
               f"| would-emit={len(would)} already-queued={dup}")
         print("| heal task id (would emit) | kind | repo | pr |")
@@ -225,8 +232,8 @@ def main():
             pass
 
     ts = datetime.datetime.now().strftime("%F %T")
-    summary = (f"[self-heal] {ts} scanned={len(prs)} ready={b['READY']} ci-red={b['CI-RED']} "
-               f"conflict={b['CONFLICT']} ci-pending={b['CI-PENDING']} | emitted={len(emitted)}")
+    summary = (f"[self-heal] {ts} window={len(prs)}/{len(allprs)} ready={b['READY']} ci-red={b['CI-RED']} "
+               f"conflict={b['CONFLICT']} ci-pending={b['CI-PENDING']} | emitted={len(emitted)} (limit={limit})")
     print(summary)
     for tid in emitted:
         print(f"    emit: {tid}")

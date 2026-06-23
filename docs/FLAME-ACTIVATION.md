@@ -45,6 +45,17 @@ Atoms 1–2 are what make a *month* unattended real. Atoms 3–5 are the revenue
 gates already tracked in the live `needs_human` digest; they're repeated here so
 the whole "month away" picture is one page.
 
+## Optional throughput accelerator (not an atom — a knob)
+
+The HEAL/MERGE organs now scan the **full** open-PR backlog (306 PRs as of this
+writing) via a rotating window instead of only the first 30, so every CI-red PR is
+seen and gets a heal task over successive beats. Healing then *runs* on whatever lane
+the router picks; repos without a local checkout already ride **Jules** (async, non-
+blocking). To let the daemon launch more local repairs per beat without a blocking
+beat, set `LIMEN_DISPATCH_ASYNC=1` (and optionally raise `LIMEN_ASYNC_MAX` from its
+default 12) in `container/launchd/com.limen.heartbeat.plist`. Reversible; purely a
+speed dial on draining the red pile — the coverage fix above works without it.
+
 ## Verify the flame after arming
 
 - `launchctl list | grep com.limen` → both `heartbeat` and `watchdog` present.
