@@ -177,12 +177,13 @@ def _learned_weights() -> dict[str, float]:
     """Conservative lane weights LEARNED by the self-improve organ — the feedback that closes the
     self-IMPROVE rung (route consumes what improve learned). Read from the proposal the organ already
     writes (logs/self-improve-proposal.json: lane_adjustments[].target_weight). Applied to the local
-    split ONLY when LIMEN_SI_APPLY=1 — OFF by default, so improve stays proposal-only until the flip.
+    split by default now that the ladder is closed — set LIMEN_SI_APPLY=0 to disable (clean rollback).
+    Still a no-op until a proposal exists (fail-open below), so the flip is safe before the first run.
 
     A down-weighted lane gets a proportionally higher effective load (picked less), but every weight
     is floored (LIMEN_SI_WEIGHT_FLOOR, default 0.25) so no lane is ever fully STARVED — it can still
     win work and recover as its later tries succeed. Missing lane -> 1.0 (no effect). Derive-not-pin."""
-    if os.environ.get("LIMEN_SI_APPLY") != "1":
+    if os.environ.get("LIMEN_SI_APPLY", "1") != "1":
         return {}
     floor = float(os.environ.get("LIMEN_SI_WEIGHT_FLOOR", "0.25"))
     try:
