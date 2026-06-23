@@ -1,0 +1,96 @@
+work: journey-to-the-west
+book: 2
+title: "Chapter 2: The Secret of Immortality and the First Return"
+length_minutes: 85
+principle: >
+  Score the acquisition of supreme power not as heroic montage, but as comic transcendence,
+  followed by the sudden snapping back to physical defense.
+force_arc: [revelation, metamorphosis, comedy, metamorphosis, return, wrath, comedy, kingship]
+dominant_force: metamorphosis
+tracks:
+  - n: 1
+    scene: "Subhuti's midnight instruction — the secret of immortality"
+    force: revelation
+    composer: Messiaen
+    work: "Quartet for the End of Time — 'Louange à l'Éternité de Jésus'"
+    decision: added
+    why: >
+      Monkey cracks Subhuti's riddle, sneaks to his chamber at the third watch, and receives the
+      oral formula for immortality. This is genuine esoteric transmission. Messiaen provides the
+      stillness and verticality required for a secret that arrests the cycle of death. It is not
+      magical action yet; it is profound concentration.
+  - n: 2
+    scene: "Mastering the 72 earthly transformations"
+    force: metamorphosis
+    composer: Ravel
+    work: "Daphnis et Chloé — Suite No. 2: 'Lever du jour'"
+    decision: added
+    why: >
+      Having learned the base formula, Monkey must now avoid the Three Calamities by mastering
+      transformation. Ravel's fluid, shimmering dawn captures the feeling of a physical form losing
+      its fixed boundaries and learning to flow into any shape.
+  - n: 3
+    scene: "The somersault cloud — a comic physical miracle"
+    force: comedy
+    composer: Offenbach
+    work: "Orpheus in the Underworld — Overture (Galop infernal)"
+    decision: added
+    why: >
+      Immortals fly, but Monkey's nature is a macaque: he somersaults. Subhuti invents a
+      custom cloud-soaring technique just for him, allowing him to cross 108,000 li in a single
+      flip. The sheer ridiculousness and kinetic joy of this requires Offenbach's Galop. Supreme
+      spiritual achievement rendered as slapstick momentum.
+  - n: 4
+    scene: "Showing off the pine tree transformation / Expulsion"
+    force: metamorphosis
+    composer: Strauss
+    work: "Metamorphosen — Opening"
+    decision: added
+    why: >
+      He shows off his new powers to the other disciples by turning into a pine tree. Subhuti
+      catches him, explains that power displayed is power contested, and expels him. The music
+      needs to darken — Strauss's Metamorphosen captures the sudden loss of the safe, sheltered
+      learning environment and the forced return to a dangerous world.
+  - n: 5
+    scene: "Return to the Mountain of Flowers and Fruit — finding the cave desolate"
+    force: return
+    composer: Schubert
+    work: "String Quartet No. 14 in D minor ('Death and the Maiden') — I. Allegro"
+    decision: added
+    why: >
+      He somersaults back to his home, only to find it ruined. The little monkeys are crying,
+      hiding from the Demon King of Confusion who has enslaved them. Schubert's driving,
+      apprehensive D minor captures the shock of homecoming turned sour — the realization that
+      the world did not wait for him.
+  - n: 6
+    scene: "Confronting the Demon King of Confusion"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    decision: added
+    why: >
+      Monkey, armed with no weapon but his newly invulnerable body and magic, goes to kill the
+      demon who tormented his "children." This is the first time we see him fight. Holst's Mars
+      gives the aggressive, asymmetrical pulse of real physical violence entering the story.
+  - n: 7
+    scene: "The clones of hair — overwhelming the demon"
+    force: comedy
+    composer: Mozart
+    work: "The Marriage of Figaro — Overture"
+    decision: added
+    why: >
+      The Demon King has a huge sword, but Monkey bites off a handful of his own hair, chews it,
+      and spits out hundreds of little monkeys that swarm and overwhelm the demon. It's a completely
+      unorthodox, hilarious, and overwhelming tactic. Mozart's fizzing, hyperactive overture
+      matches the energy of a hundred biting, scratching clones.
+  - n: 8
+    scene: "Reclaiming the cave and establishing martial law"
+    force: kingship
+    composer: Elgar
+    work: "Pomp and Circumstance March No. 1"
+    decision: added
+    why: >
+      Monkey returns victorious, bringing the captured weapons. He organizes the monkeys into a
+      militia. The playful apes of Chapter 1 are now an armed force, and Monkey is a true king.
+      Elgar provides the pomp of a sovereign solidifying his realm — but applied to a tribe of
+      macaques brandishing stolen swords.
