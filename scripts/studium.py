@@ -624,9 +624,12 @@ def render_html(v):
 def main():
     state = load_state()
     advance = "--advance" in sys.argv
-    # --daily (the heartbeat cadence): advance the cursor once when the date rolls, else just refresh.
+    # --daily (the heartbeat cadence): advance the cursor once when the date rolls — but NEVER on the
+    # first-ever run. A fresh cursor already points at division 1, so day one IS division 1; advancing
+    # then would silently skip it. Once last_advanced is set, advance only when the date has rolled.
     if "--daily" in sys.argv and not advance:
-        advance = state.get("last_advanced") != str(date.today())
+        last = state.get("last_advanced")
+        advance = last is not None and last != str(date.today())
     view, state = build_view(state, advance=advance)
     LOGS.mkdir(parents=True, exist_ok=True)
 
@@ -645,7 +648,14 @@ def main():
             continue
 
     if not view.get("error"):
-        _atomic_write(LEDGER / f"studium-{view['today']}.md", render_daily_page(view))
+        # The dated ledger is the handwriting artifact, not a derived face: write the day's template
+        # ONCE (the first beat it appears), then NEVER overwrite it — so a hand-filled page (gloss,
+        # translation, notes) survives every subsequent beat. A new date gets its own fresh file;
+        # an existing date is sacrosanct. (The HTML/JSON faces above are derived and rewritten freely.)
+        ledger_path = LEDGER / f"studium-{view['today']}.md"
+        if not ledger_path.exists():
+            LEDGER.mkdir(parents=True, exist_ok=True)
+            _atomic_write(ledger_path, render_daily_page(view))
         r = view["reading"]
         m = view["music"]
         print(f"studium: {r['title']} {r['division_label']} {r['division']} · force={m.get('dominant_force')} · "
