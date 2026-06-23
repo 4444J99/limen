@@ -1,0 +1,195 @@
+# Heike Monogatari — Book VI — curated music arc
+# The death of the founder: a body burns while holding absolute power, and then it ends.
+work: heike
+book: 6
+title: "Heike Book VI: Kiyomori's Descent — Fever, Fever, Death"
+length_minutes: 99
+principle: >
+  Book VI is the story of one man's body at war with itself while his empire collapses around him.
+  Kiyomori is struck with an illness — a fever that will not break, that burns him alive from within.
+  Medical treatments fail. Spiritual interventions are attempted and fail. Servants bring water;
+  the water cools him briefly, then the fire returns, worse. The Taira clan is still holding the
+  capital, but Kiyomori knows — and the text knows — that his grip is loosening. He makes one last
+  attempt to shore up his power by forcing the abdication of the Emperor he had previously
+  controlled, but the act comes too late and only accelerates his own isolation. He dies in agony,
+  calling for cold water that will not come, his last words a curse upon his enemies. The bells of
+  impermanence that opened the work are now manifest in the flesh: what was strong is burning; what
+  was certain is ending; what seemed eternal is revealed as time-bound. Book VI is the inversion of
+  Book I: instead of a man at the height of power, we have a man whose power has become meaningless
+  because the vessel containing it is being consumed from within. Score this as the intersection of
+  personal destruction and political ending, the place where the micro and macro arcs converge: one
+  body dying and one empire falling, synchronized, each illuminating the other. This is the work's
+  pivot. After this, the Taira will be a clan without its founder, trying to preserve something that
+  cannot be preserved. The bells have become the tolling of a particular, irreplaceable man burning up
+  inside the armor of his own power.
+force_arc: [ascent, metamorphosis, fever, fever, grief, sacrifice, revelation, supplication, law, fate, salvation]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "Kiyomori at the height — the last moment of absolute command"
+    force: ascent
+    composer: Wagner
+    work: "Tristan und Isolde — Act III, 'Der Liebe Herrlichkeit'"
+    decision: added
+    why: >
+      The book opens with Kiyomori in his final moment of absolute authority. He forces through an
+      imperial abdication and places a new Emperor on the throne — one more devoted to Taira interests.
+      It is the last time Kiyomori will wield political will successfully. But Wagner's passage, while
+      luminous, is also broken — the love-radiance it describes is framed by pain and death and the
+      knowledge that what is ascending is also already falling. The ascent force requirement is met, but
+      it is an ascent that knows it is ending. Rising sequences and luminous orchestration, yes — but
+      they are the light of a star just before it collapses into itself.
+  - n: 2
+    scene: "The first sign — heat in the body that will not go away"
+    force: metamorphosis
+    composer: Strauss
+    work: "Death and Transfiguration — the Sickenbed passage"
+    decision: added
+    why: >
+      Within days of the abdication, Kiyomori is struck with fever. It is described simply: he
+      complains of heat; servants are sent to fetch cool water. At first, it is treated as a minor
+      ailment; but the fever does not break. It grows worse. The body is metamorphosing: what was
+      solid is becoming fluid; what was controlled is becoming subject to forces beyond control.
+      Strauss's passage is fluid harmony, changing orchestral color — the sound of transformation in
+      progress, the threshold between health and catastrophe. The fever is not yet understood as
+      terminal; it is simply presented as transformation without known endpoint.
+  - n: 3
+    scene: "The physicians' failure — ice and potions cannot cool the fire"
+    force: plague
+    composer: Berlioz
+    work: "Les Troyens — 'Malheureux roi!' (the descending motif)"
+    decision: added
+    why: >
+      The finest physicians of Kyoto are summoned. They offer ice, water, medicines, charms.
+      Nothing works. The fever cycles: it breaks briefly and Kiyomori believes recovery is near; then
+      it returns, hotter than before. The descending motion that Berlioz achieves so completely is
+      exact here — the sense of a decline that accelerates, that cannot be arrested. The dark
+      orchestration matches the metaphor: the light is draining, the heat consuming, and medical
+      science is powerless. Impermanence is now written in fever and pain. The plague force (descending
+      motion, dark orchestration) captures exactly the sense of a body betrayed by its own nature,
+      subject to laws that learning cannot override.
+  - n: 4
+    scene: "The fever intensifies — Kiyomori's mind begins to wander"
+    force: plague
+    composer: Penderecki
+    work: "Polish Requiem — Lacrymosa"
+    decision: added
+    why: >
+      As the fever progresses, Kiyomori's consciousness begins to fragment. He has visions; he
+      shouts commands that make no sense; servants find him arguing with people who are not present.
+      The fever is now not just consuming the body but fragmenting the mind that has been so precise,
+      so capable of strategic control. Penderecki's Lacrymosa is the sound of consciousness dissolving,
+      of harmony becoming dissonance, of the self fragmenting under a force it cannot oppose. The dark
+      orchestration and descending motion are absolute. This is the plague force at its most devastating:
+      it is not an external enemy but the body and mind turning against their own unity.
+  - n: 5
+    scene: "The wives weep — the household in mourning even as he lives"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    decision: added
+    why: >
+      Kiyomori's wives and concubines have begun to grieve as if he were already dead. They weep in
+      their chambers; some begin wearing mourning clothes under their regular garments. The household
+      is operating as if the death has already occurred — only the formality remains. Mahler's
+      Adagietto is the grief of the living mourning the living, the intimate exposure of sorrow that
+      cannot be expressed to the one who causes it. Slow tempo, inward line — the complete exposure of
+      suffering. The grief force is here at its most private and most absolute.
+  - n: 6
+    scene: "Monks offer prayers — sacrifice offered for salvation"
+    force: sacrifice
+    composer: Tavener
+    work: "Total Eclipse"
+    decision: added
+    why: >
+      Buddhist priests are hired to perform elaborate rituals for Kiyomori's recovery. They chant;
+      they offer sacrifices; they invoke the Buddha to heal this man who has been both their persecutor
+      and their patron. The sacrifice here is the monks' offering — their labor, their ritual, their
+      spiritual authority, all offered to the hope that salvation can still intervene. But the text
+      makes clear: the prayers are going unanswered. The fever continues. Tavener's "Total Eclipse"
+      is sacrifice that is also abandonment, the sense of offering something that falls into darkness.
+      The ritual weight is there; the immolation-build is there — but what is being offered is being
+      received into an abyss.
+  - n: 7
+    scene: "The revelation in fever — Kiyomori understands his own ending"
+    force: revelation
+    composer: Messiaen
+    work: "Saint François d'Assise — the leper passage"
+    decision: added
+    why: >
+      In a moment of lucidity within the delirium, Kiyomori understands that he is dying. The
+      revelation is not gradual; it is sudden and complete. He has spent his life building a world
+      that he will not inhabit; he has achieved an empire he will leave behind. The knowledge is
+      absolute. Messiaen's passage is the sound of revelation piercing through noise and fever —
+      sudden clarity, the world recognized as it truly is. A man confronting his own death is confronting
+      the truth that the text has been announcing since the opening bells: what rises must fall; what
+      seems eternal is only briefly, brilliantly temporal. Stillness, chant, verticality — the
+      revelation force in its highest form.
+  - n: 8
+    scene: "The supplication to the Buddha — Kiyomori calls for mercy"
+    force: supplication
+    composer: Barber
+    work: "Adagio for Strings (orchestration as a prayer)"
+    decision: added
+    why: >
+      In moments of extremity, Kiyomori ceases to be the tyrant and becomes simply a man burning
+      alive, calling out. He asks his priests to invoke the Buddha; he begs for forgiveness for his
+      cruelties; he asks for a swift end to the suffering. The supplication is without pride; it is the
+      exposure of a man completely powerless, completely at the mercy of forces beyond him. Barber's
+      Adagio is the exposed melodic line, suspended cadence, the voice completely unguarded in its
+      request for rest. This is Kiyomori as the text has never shown him: not commanding, not
+      strategic, but helpless, asking.
+  - n: 9
+    scene: "The logic of his own making — the surveillance apparatus becomes his prison"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue — Contrapunctus IV (the one that seems to hold together)"
+    decision: added
+    why: >
+      The machinery that Kiyomori built to maintain order now works against him. Servants are
+      restricted in who can visit; the physicians' cures cannot be questioned; the priests' rituals
+      cannot be interrupted. The structure of absolute authority now serves to isolate him completely.
+      No one dares to touch him without permission; no one will bring him water if it contradicts the
+      physicians' order; no one will open a window or allow air when the prescribed treatment forbids
+      it. The formal architecture of his rule has become his tomb. Bach's Contrapunctus is law in its
+      most elegant form — each voice entering properly, the system working as designed — but the system
+      itself is the prison. Formal clarity and architectural precision, yes — but they are the bars of a
+      cage he built for others and now occupies.
+  - n: 10
+    scene: "The end approaching — the last words are curses"
+    force: fate
+    composer: Verdi
+    work: "La forza del destino — the final chorus"
+    decision: added
+    why: >
+      As death approaches, Kiyomori calls out to his sons: "After my death, see that my enemies are
+      destroyed. Burn their bodies and scatter the ashes in the wind." His last words are not spiritual;
+      they are not forgiveness; they are rage and vengeance, the voice of a man still trying to wield
+      power from the moment of death. But fate is inexorable: the words die with him. His sons will
+      try to follow his will, but they will fail. The inexorable motif of Verdi's opera is exactly this
+      moment: the will of the deceased cannot override the will of what is to come. Hammered insistence,
+      inexorable motion — fate in its purest form, and Kiyomori is finally subject to it completely.
+  - n: 11
+    scene: "After the death — the promise of rebirth through the Buddha"
+    force: salvation
+    composer: Fauré
+    work: "Requiem — Paradis"
+    decision: added
+    why: >
+      The text closes not with Kiyomori's death but with what comes after. The priests perform
+      rituals for his spirit; they assure his family that, despite his sins, the Buddha will accept him
+      in rebirth if his family performs the proper devotions. A new life is possible beyond this one —
+      not for Kiyomori in power, but for Kiyomori as a being in the cycle of existence. The salvation
+      force brings the book to a place beyond the temporal drama: the body is gone; the power is gone;
+      but what is eternal, what moves through lifetimes, may still be saved. Fauré's Paradis is
+      resolving radiance, chorale apotheosis, the sound of a door opening to something beyond the
+      temporal world. Kiyomori's personal ending is also a threshold to something else, something the
+      text proposes is more real than the empire he leaves behind.
+
+demoted:
+  - composer: Mahler
+    work: "Symphony No. 2 — the funeral march"
+    status: "reserved for Book X-XI (the actual Taira catastrophe)"
+    why: >
+      Book VI is one man's death. The funeral music on the scale of Mahler's march belongs to the
+      death of an entire clan.
