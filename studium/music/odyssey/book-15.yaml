@@ -1,0 +1,291 @@
+# Odyssey — Book XV — curated music arc
+# TELEMACHUS SAILS HOME: Athena speeds Telemachus; Theoclymenus the seer; the eagle omen; Eumaeus's life-story; father and son converging unknowing.
+work: odyssey
+book: 15
+title: "Odyssey Book XV: The Seer, the Eagle, and the Converging Return"
+length_minutes: 100
+principle: >
+  Do not score Book XV as a bridge chapter. Score it as the book where two return-journeys
+  run in parallel without touching: Telemachus sailing south from Sparta, Odysseus still at
+  Eumaeus's hut on the island he cannot yet name as home. Homer holds them apart deliberately.
+  The dominant architecture is convergence-in-delay — two arcs bending toward the same point
+  while the narrative withholds the moment of meeting. That structural fact governs every scene.
+  Athena's intervention is not the book's climax but its ignition; the real center is Eumaeus's
+  long life-story, a swineherd who was once a king's son, stolen by Phoenician traders, sold
+  across the sea, and tended these pigs for decades without complaint. His story is the Odyssey's
+  hidden mirror: a man displaced from his right place, making what dignity he can in the wrong
+  life, waiting without knowing he is waiting. Set beside Telemachus's urgency and Odysseus's
+  patience, Eumaeus becomes the book's moral ballast — proof that exile can be survived with
+  grace. The eagle clutching the goose is fate made visible: the omen does not promise a happy
+  ending, only that the return is already in motion, already geometrically certain. Score each
+  scene for the force that operates beneath its surface: divine acceleration, nostalgic farewell,
+  portentous arrival, the slow seduction of the past, a child taken, and two men moving toward
+  the same fire without knowing it.
+force_arc: [divine-intervention, memory, fate, exile, fate, revelation, memory, desire, grief, exile, return, return]
+dominant_force: return
+tracks:
+  - n: 1
+    scene: "Athena appears to Telemachus in Sparta — urges him to sail at once, warns of the suitors' ambush"
+    force: divine-intervention
+    composer: Mendelssohn
+    work: "A Midsummer Night's Dream — Overture, Op. 21"
+    decision: added
+    why: >
+      Athena's appearance has the quality of a dream that arrives fully formed before dawn:
+      precise, urgent, already departing before Telemachus can ask the next question. Mendelssohn's
+      Overture opens with four quiet woodwind chords — an entrance from nowhere, without preparation —
+      and then the fairy-string figure that establishes a world operating at a different speed from
+      the one we inhabit. Divine-intervention requires sudden color shift and brass-strings contrast;
+      the Overture has both, and adds something the requirement does not name: the quality of a
+      presence that is not quite of this world acting in it with complete practical authority. Athena
+      in Book XV is not majestic; she is quick, specific, and gone. Mendelssohn captures that
+      mercurial divine efficiency better than any of the more thunderous options — Wagner's Valhalla
+      entry would make the goddess too heavy; the Overture makes her exactly as light and exact as
+      she is.
+  - n: 2
+    scene: "Telemachus takes leave of Menelaus and Helen — gifts given, farewell at the door"
+    force: memory
+    composer: Brahms
+    work: "Symphony No. 3 in F major — III. Poco allegretto"
+    decision: added
+    why: >
+      The farewell at Sparta is steeped in the late amber of a place that has already become a
+      memory even as it is inhabited. Menelaus pressing gifts on a boy who is not yet sure what
+      kind of man he is; Helen who was the cause of everything watching a child of the war's
+      children leave her palace. Brahms's Poco allegretto is the most purely nostalgic movement
+      in his symphonic output — the cello melody arising out of the strings like something half-
+      remembered, the harmony never quite settling into certainty, the whole movement coloring
+      itself with a tenderness that knows it is describing something already past. Memory requires
+      nostalgic recall and faded recapitulation; the third movement of the Third offers those
+      qualities without sentimentality, in a key of warm regret that fits the Spartan farewell
+      precisely. Telemachus is leaving a house where the Trojan War is still the present tense,
+      and the music must hold that temporal dislocation without making it tragic.
+  - n: 3
+    scene: "Theoclymenus the fugitive seer asks passage — Telemachus receives him aboard"
+    force: fate
+    composer: Shostakovich
+    work: "Symphony No. 5 in D minor, Op. 47 — I. Moderato"
+    decision: added
+    why: >
+      Theoclymenus arrives at the dockside as a man running from blood he has shed, a seer who
+      reads the future as a professional obligation and cannot stop knowing what he knows. He boards
+      the ship not as a passenger but as a loaded instrument: something that will speak when the
+      moment is right. Shostakovich's first movement of the Fifth opens with a massive unison
+      descending figure, fate as architecture, each voice locked to the same inexorable interval
+      and rhythm. The movement's character is of something massive arriving with absolute
+      deliberateness, patient and overwhelming. Fate requires inexorable motif and hammered
+      insistence; the opening Moderato's slow tread — not the famous finale's brutal march but the
+      first movement's controlled weight — captures the quality of a seer boarding a ship: nothing
+      flashy, nothing exalted, just the quiet arrival of something that changes what the voyage
+      means. Every line in the movement seems to know where it is going. So does Theoclymenus.
+  - n: 4
+    scene: "The ship clears the harbor — Telemachus puts to sea, sailing south through the night"
+    force: exile
+    composer: Britten
+    work: "Four Sea Interludes from Peter Grimes — II. 'Sunday Morning'"
+    decision: added
+    why: >
+      The voyage south is not flight — it is the deliberate, purposeful motion of a young man
+      who is becoming certain of himself over open water. Britten's "Sunday Morning" interlude
+      is sea music that moves in long luminous swells, the texture bright rather than threatening,
+      the harmonic motion open and unresolved in the way of a horizon that recedes as you approach
+      it. Exile requires wandering tonality and open intervals; this is exile in its active form —
+      not the longing of the dispossessed but the particular quality of being at sea between two
+      places, belonging fully to neither, the self contracted to the hull and the sail and the
+      bearing. The interlude's transparency, its brass light against string ground, gives the
+      night crossing the sense of a young man measuring himself against the water and finding
+      the measurement adequate.
+  - n: 5
+    scene: "The eagle clutching a white goose flies out on the right — the omen over the ship"
+    force: fate
+    composer: Messiaen
+    work: "Oiseaux exotiques"
+    decision: added
+    why: >
+      The eagle appears without warning from above the right side of the ship, a goose from
+      someone's barnyard held in its talons, and the sailors watch in silence because they know
+      what they are seeing. Homer's omen-birds are not decorative — they are fate made visible,
+      the moment when the gods show the geometry of what is already happening. Messiaen's Oiseaux
+      exotiques is built from transcribed birdsong — actual birds rendered in the orchestra with
+      startling exactness, each species recognizable, each call precise and irrupting against the
+      ensemble texture. Fate requires inexorable motif and hammered insistence; here the motif is
+      avian — the bird-call as the irreducible sign, repetitive and unmistakable, arriving from
+      outside the human score with a certainty that requires no interpretation. The eagle over the
+      ship is the Odyssey's fate speaking in its own medium. Messiaen understood that bird-voices
+      carry a kind of announcement that human music can only impersonate.
+  - n: 6
+    scene: "Helen reads the omen — 'As this eagle came from the mountain, so Odysseus will return and take vengeance'"
+    force: revelation
+    composer: Tavener
+    work: "The Protecting Veil — I. Eisodion (opening)"
+    decision: added
+    why: >
+      Helen's reading of the omen is one of the great moments of prophetic stillness in the
+      Odyssey: she does not perform divination, she simply states what she sees, with the calm
+      authority of someone who has watched men and gods make and destroy things for twenty years
+      and knows the sign when she sees it. Tavener's Eisodion — the opening of The Protecting
+      Veil — is sustained cello line over trembling strings, a single melodic thread emerging into
+      silence with the quality of a veil being drawn aside to reveal what was always there.
+      Revelation requires stillness, chant, verticality; the Eisodion has all three, and adds a
+      quality of feminine authority that is exactly Helen's register in this scene: not vision from
+      outside but recognition from within, the serenity of someone whose knowledge precedes her
+      speaking of it. The cello line is inevitable from its first note, the way Helen's prophecy
+      is inevitable — not because she is inspired but because she has always already known.
+  - n: 7
+    scene: "Eumaeus begins his life-story — born a king's son on the island of Syria"
+    force: memory
+    composer: Schubert
+    work: "Winterreise — 'Der Lindenbaum' (No. 5, D. 911)"
+    decision: added
+    why: >
+      Eumaeus tells his story without self-pity: once I was the son of a king, my father loved me,
+      I remember the house, the servants, the life. The past is not a wound he revisits; it is
+      something he holds at the exact distance memory requires — close enough to feel, far enough
+      not to destroy the present. Schubert's "Der Lindenbaum" is the definitive song of recollected
+      place: a man passing the tree where he once carved names and felt at home, the wind calling
+      him back, the man walking on. Memory requires nostalgic recall and faded recapitulation; the
+      Lindenbaum does both in three minutes — the major-key verse, the minor-key away-from-home
+      section, the return that is not a return but a passing-by. Eumaeus is not trying to recover
+      his past. He is passing the linden tree of his own life and doing it with the grace that
+      Schubert understood better than almost anyone else.
+  - n: 8
+    scene: "The Phoenician merchant seduces the nurse — a woman's longing and a ship in the harbor"
+    force: desire
+    composer: Ravel
+    work: "Gaspard de la Nuit — I. 'Ondine'"
+    decision: added
+    why: >
+      In Eumaeus's story, the Phoenician trader does not abduct by force: he seduces. A beautiful
+      woman, one of his father's Phoenician slaves, is brought to the ships by flattery and the
+      promise of return to her homeland. The scene has the quality of water pulling at sand —
+      desire as patient erosion, the promise of one homeland becoming the means of losing a child
+      from another. Ravel's "Ondine" is desire as liquid seduction: the water-spirit's call to
+      the narrator, the chromatic melody that seems to offer arrival while it is only extending
+      the approach, the final evaporation into nothing resolved. Desire requires chromatic longing
+      and deferred resolution; "Ondine" is the most complete realization of that requirement in
+      the piano repertoire — beauty that cannot be possessed without dissolution, the promise of
+      union that is always only ever the act of vanishing. The Phoenician's offer to the nurse
+      is exactly this: something that sounds like home and moves like water.
+  - n: 9
+    scene: "Child Eumaeus carried off on the Phoenician ship — his father's household lost"
+    force: grief
+    composer: Vaughan Williams
+    work: "Fantasia on a Theme by Thomas Tallis"
+    decision: "replaces Elgar (Cello Concerto) — de-saturation"
+    why: >
+      The abduction of the child is not dramatized with violence in Homer — it is narrated by
+      Eumaeus himself, quietly, decades later, from the other side of the loss. A boy taken from
+      a king's house and carried across the sea becomes, over thirty years, a man who has learned
+      to live inside the wrong life without bitterness. Grief here is not acute but chronic:
+      the slow ache of something irreversibly settled into the shape of a whole existence.
+      Vaughan Williams's Fantasia on a Theme by Thomas Tallis sets two string orchestras and a
+      quartet in a kind of spatial grief — one ensemble near, one distant, one searching, the
+      other answering from somewhere further away, as if the lost childhood and the man it made
+      are both present in the same room but cannot fully reach each other. The slow tempo and
+      inward melodic line that grief requires are both intrinsic to the Fantasia's architecture;
+      Vaughan Williams adds what neither the concert hall nor the liturgy can quite name: the
+      quality of a sorrow that has become spacious, that no longer fills the whole frame but
+      inhabits a permanent corner of it, the grief of a man who was once a king's son and has
+      tended these pigs for decades and is still, somewhere inside, the child on the ship.
+      Eumaeus carries this without complaint. The Fantasia understands exactly how that is done.
+  - n: 10
+    scene: "Eumaeus arrives in Ithaca as a slave, tended by Laertes' household — his second life begins"
+    force: exile
+    composer: Dvořák
+    work: "String Quartet No. 12 in F major, Op. 96 'American' — II. Lento"
+    decision: added
+    why: >
+      The arrival in Ithaca is not a homecoming — it is the beginning of the wrong life that
+      will last decades. Eumaeus did not choose Ithaca; he was sold there. The island where
+      Odysseus longs to return is the island from which Eumaeus cannot leave, tending another
+      man's pigs, living in a hut that is not his, in a country that is not his, with a master
+      who is not home. Dvořák's Lento from the "American" Quartet is slow, expansive, and carries
+      in every bar the quality of longing for a place that cannot be returned to — written by a
+      Czech composer in the American wilderness, hearing something across a distance that cannot
+      be crossed. Exile requires wandering tonality and open intervals; the Lento's melodic line
+      wanders without arriving, the harmonies open at their edges, the music of someone who has
+      learned to inhabit displacement without being destroyed by it. Eumaeus and Dvořák are in
+      the same country: alive in the wrong place, making music anyway.
+  - n: 11
+    scene: "Telemachus sails through the night — the ship runs before the wind toward Ithaca"
+    force: return
+    composer: Sibelius
+    work: "Symphony No. 2 in D major, Op. 43 — IV. Allegro moderato"
+    decision: added
+    why: >
+      The final night crossing is Telemachus becoming the man who comes home, not the boy who
+      left. The wind is with him; the sea is running clean. Sibelius's second symphony finale
+      is the most emotionally unambiguous movement he ever wrote — the great D major theme
+      emerging from the development section's ambiguity like landfall after a long passage, the
+      orchestral mass accumulating around a recognition motif that grows with each repetition
+      until it becomes something approaching the absolute. Return requires circular form and
+      recognition motif; the finale's structure is precisely that — the same melodic element
+      returning enlarged, brighter, more certain of itself with each cycle. Telemachus does not
+      yet know who he is about to become; the music knows, and builds toward it with the patient
+      confidence of a composer who understands that the recognition, when it arrives, must feel
+      inevitable rather than sudden.
+  - n: 12
+    scene: "Father and son converging unknowing toward the same hut — the book closes on the approach"
+    force: return
+    composer: Brahms
+    work: "Symphony No. 3 in F major, Op. 90 — IV. Allegro"
+    decision: added
+    why: >
+      The book ends before the meeting. Homer holds the convergence at the last second: Telemachus
+      beaching the ship, Odysseus at the swineherd's fire, the two arcs bending toward the same
+      point and not yet touching. Brahms's Fourth Symphony finale is the supreme orchestral example
+      of circular form returning on itself — the same material coming back transformed by the
+      journey through the movement, the famous closing recall of the opening that does not resolve
+      but recedes, pianissimo, like something almost reached. Return requires circular form and
+      recognition motif; this finale offers both while withholding the arrival, which is exactly
+      what Book XV requires: two men moving toward each other, the music knowing what they do not
+      know, the recognition not yet happening but already audible in the structure. The quiet end
+      is the book's true last line — not a fanfare but a held breath.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "expressly forbidden before Book XXII equivalent; save for the suitors' slaughter"
+    why: >
+      The terminal funeral-register belongs to the mass death of the suitors. Eumaeus's grief
+      and the displaced child are losses borne in private, not publicly announced catastrophes.
+      Vaughan Williams's Tallis Fantasia carries the correct inward register for grief-as-sustained-fact,
+      without opening the terminal monument that should wait for Book 22.
+  - composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    status: "forbidden before the suitors' slaughter; save for the terminal books"
+    why: >
+      The eschatological register is not activated by a seer boarding a ship or an eagle omen,
+      however portentous. Shostakovich's Fifth gives Theoclymenus the inexorable weight of fate
+      without invoking judgment-of-the-dead scale.
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "demoted — the Iliad's wrath leitmotif; the Odyssey must not borrow it"
+    why: >
+      Mars is the Iliad cycle's established wrath signature. Book XV has no wrath — it has fate,
+      exile, and return. Even the omen scene operates in fate's register of inexorable certainty,
+      not combat violence. Messiaen's bird-music gives the eagle its correct sonic form.
+  - composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    status: "demoted — fate leitmotif of the Iliad; seek fresh fate colorings for the Odyssey"
+    why: >
+      The hammered-motto fate of the Fifth is the Iliad's canonical fate signature. Book XV's
+      fate operates differently: as a seer's quiet arrival (Shostakovich) and as the geometric
+      certainty of an omen (Messiaen). Both are fate, but neither is the catastrophic hammer of
+      Beethoven's first movement.
+  - composer: Dvořák
+    work: "Symphony No. 9 in E minor 'From the New World' — II. Largo"
+    status: "demoted — already used across three Odyssey arcs; seek freshness for Eumaeus's exile"
+    why: >
+      The New World Largo has become the cycle's default exile coloring through repeated use in
+      Books 2, 3, 4, and 5. Dvořák's own American Quartet Lento occupies the same composer's
+      exile-longing register with a chamber intimacy that better fits Eumaeus's understated
+      narration of displacement. The chamber scale is the correct one for a swineherd telling
+      his story by a fire.
+  - composer: Sibelius
+    work: "The Oceanides, Op. 73"
+    status: "demoted — already used in Books 5 and 9 for the hostile sea; a different Sibelius coloring required"
+    why: >
+      The Oceanides carries the threatening, unresolved exile of Poseidon's curse and the
+      hostile sea. Telemachus's crossing in Book XV is not cursed — it is purposeful and wind-
+      favored. The Symphony No. 2 finale's return-register, also Sibelius but warmer and more
+      certain, is the correct replacement.

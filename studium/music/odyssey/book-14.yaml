@@ -1,0 +1,278 @@
+# Odyssey — Book XIV — curated music arc
+# EUMAEUS: the beggar-king at the swineherd's steading; poor but perfect hospitality; the false
+# Cretan tale; Eumaeus' grief for a master he believes dead; the night by the fire; the borrowed cloak.
+work: odyssey
+book: 14
+title: "Odyssey Book XIV: The Loyal Swineherd and the Law He Does Not Know He Is Keeping"
+length_minutes: 88
+principle: >
+  Do not score Book XIV as a rest-stop between the palace and the bow. Score it as the book
+  where Homer proves that the law of hospitality does not depend on knowing whom you are
+  hosting. Eumaeus has no idea the beggar at his threshold is Odysseus. He feeds him first,
+  asks questions second, weeps for the absent master who is sitting at his fire in disguise —
+  and gives him a cloak he does not have. Every act in this book is performed in ignorance of
+  its own meaning, which is precisely what makes it the poem's moral center. Xenia is not a
+  social nicety; it is the law the gods audit. Eumaeus keeps it perfectly because he keeps it
+  from character, not from recognition. Score each scene for the force that is actually doing
+  the work: supplication at the threshold (the dogs, the danger, the call for mercy); law as
+  the pure enactment of hospitality before identity is known; memory as the grief that names
+  the absent master; revelation as the false oracle that is also true; metamorphosis as the
+  Cretan lie, which is Odysseus wearing a different self the way he wore the rams' bellies;
+  and return — not yet accomplished, only gestured toward — in the fire and the cloak and the
+  sleeping household that does not yet know its king has come home. The dominant force is law:
+  not the law of courts but the law of the threshold, the oldest law in the poem, tested here
+  at its most austere: a poor man with a few pigs, a fire, and a guest he does not recognize.
+force_arc: [supplication, law, memory, grief, revelation, metamorphosis, law, memory, comedy, supplication, return]
+dominant_force: law
+tracks:
+  - n: 1
+    scene: "The beggar arrives at the steading — the dogs rush him, Eumaeus calls them off"
+    force: supplication
+    composer: Poulenc
+    work: "Stabat Mater — I. 'Stabat Mater dolorosa'"
+    decision: added
+    why: >
+      The disguised Odysseus rounds the path and meets four dogs that would have torn him apart
+      had Eumaeus not thrown his staff and called them back. It is a man crouching, shielding
+      himself, entirely dependent on the mercy of a stranger. Supplication's requirement is
+      suspended cadence and exposed melodic line; Poulenc's opening movement of the Stabat Mater
+      gives both in their starkest form — the soprano's naked entry over a chord that refuses to
+      settle, the music held in a register of vulnerable address before resolution is offered.
+      Eumaeus' intervention is not heroic; it is the minimum response to a human in danger, which
+      is the threshold of supplication — the moment when another person's mercy is the only thing
+      between you and the dogs. The piece has not appeared in the cycle; Poulenc's severity, so
+      different from Fauré's softness, gives the scene its correct edge.
+  - n: 2
+    scene: "Eumaeus feeds the beggar — bread, pork, wine — before asking his name"
+    force: law
+    composer: Bach
+    work: "Musical Offering, BWV 1079 — Ricercar a 3"
+    decision: added
+    why: >
+      The swineherd sets food and wine before the stranger without asking who he is or where he
+      came from. This is xenia in its canonical sequence: welcome, food, questions — never
+      questions first. Homer marks this explicitly, and it is the book's first great enactment
+      of the thesis. Law's requirement is formal clarity, repetition, architecture; the Ricercar
+      a 3 from the Musical Offering is pure structural logic made audible — a three-voice fugue
+      that unfolds the theme with patient inevitability, each voice entering at its appointed
+      time, the form transparent and self-evident. The Ricercar a 6 has been used in Iliad Book
+      X for its more dense, pressurized architecture; this simpler, more luminous three-voice
+      version is right for the hospitable plainness of Eumaeus' gesture: nothing elaborate, just
+      the form obeyed.
+  - n: 3
+    scene: "Eumaeus grieves aloud for his absent master — 'a man the gods loved'"
+    force: memory
+    composer: Mahler
+    work: "Kindertotenlieder — No. 1 'Nun will die Sonn' so hell aufgeh'n'"
+    decision: added
+    why: >
+      Eumaeus begins his lament for Odysseus while the man sits across the fire from him in
+      disguise. He recounts his master's virtues, his kindness to slaves, his quality — and
+      grieves him as dead. Memory's requirement is nostalgic recall and faded recapitulation;
+      Mahler's first Kindertotenlied opens with an alto voice singing over a spare orchestral
+      texture, a man describing morning light that continues to rise as if the beloved had not
+      vanished — the dissonance between the world's indifference and the interior wound of loss.
+      The song's affect is not weeping but something more sustained and more truthful: the grief
+      of someone who has accepted the loss and still has not stopped feeling it. Eumaeus has
+      tended his pigs and kept his loyalty for twenty years; Mahler's song gives that grief
+      its correct patient register. The Kindertotenlieder has not appeared in the cycle.
+  - n: 4
+    scene: "Eumaeus weeps — he cannot speak of Odysseus without tears"
+    force: grief
+    composer: Schubert
+    work: "Winterreise — 'Der Lindenbaum'"
+    decision: added
+    why: >
+      The swineherd pauses, turns away. Homer notes that Eumaeus cannot finish the speech about
+      his master without tears; he pulls his tunic up and wipes his eyes. Grief's requirement
+      is slow tempo and inward line. Schubert's 'Der Lindenbaum' is the wanderer passing the
+      linden tree at midnight, the wind in the branches murmuring of rest and peace — a
+      traveler who loved a place he cannot return to, who carries it entirely inside himself.
+      The song is not a lament but a sustained, gentle, unsentimental holding of loss; the
+      accompaniment rocks like breathing, the line never breaks. Eumaeus does not rage; he
+      grieves the way a faithful man grieves — quietly, privately, without resolution — and
+      Schubert's song is the exact temperature of that loyalty held in loss. The Winterreise
+      cycle is represented by 'Der Leiermann' in the Iliad arc; 'Der Lindenbaum' has not
+      appeared.
+  - n: 5
+    scene: "The beggar offers false hope — 'I have heard that Odysseus lives and is near'"
+    force: revelation
+    composer: Tavener
+    work: "The Protecting Veil — I. Theotokos (opening)"
+    decision: added
+    why: >
+      Odysseus in disguise tells Eumaeus that he has certain news: the wanderer is alive and
+      will return. He names the season — before this winter is out. It is a lie that is
+      simultaneously a truth, a prophecy spoken by the man who will fulfill it. Revelation's
+      requirement is stillness, chant, verticality; Tavener's opening movement of The Protecting
+      Veil is a single sustained cello line above tremolo strings, the veil of protection
+      descending in a harmonic column that does not develop so much as deepen — not a melody
+      but a disclosure, a vertical presence. The beggar's oracle has the same character: it
+      does not unfold; it simply stands, and Eumaeus does not know whether to believe it.
+      Tavener's Song for Athene was used in Book II; The Protecting Veil has not appeared in
+      the cycle and offers a longer, more sustained stillness for the scene's duration.
+  - n: 6
+    scene: "The false Cretan tale — Odysseus constructs an elaborate identity: raids, Egypt, ruin"
+    force: metamorphosis
+    composer: Ravel
+    work: "Ma mère l'Oye — II. 'Petit Poucet' (Tom Thumb)"
+    decision: added
+    why: >
+      Odysseus invents a Cretan nobleman who fought at Troy, who prospered, who raided Egypt,
+      was captured, freed, and wandered — a plausible life assembled from real geography and
+      plausible disaster. The false Cretan tale is the poem's most elaborate exercise in identity
+      as costume: Odysseus wearing a life that is not his, scattering enough true detail to make
+      the false one hold. Metamorphosis requires changing orchestral color and fluid harmony;
+      Ravel's 'Petit Poucet' scores the fairy-tale child who scatters bread crumbs in the forest
+      to mark the path home, only for the birds to eat them — the music wanders through an
+      enchanted, chromatically uncertain forest, the harmony never settling on a home key, the
+      path perpetually being erased as it is laid. The false Cretan tale is exactly this: a
+      trail of identities scattered for misdirection, the real man moving beneath the story like
+      Odysseus beneath the ram.
+  - n: 7
+    scene: "Eumaeus' skeptical loyalty — he doubts the oracle but feeds the stranger anyway"
+    force: law
+    composer: Stravinsky
+    work: "Symphony of Psalms — II. Fugue: 'Expectans expectavi Dominum'"
+    decision: added
+    why: >
+      Eumaeus tells the beggar gently but firmly that he does not believe Odysseus is coming
+      back — wanderers always bring false hope, he has heard too many already — and then refills
+      the cup and cuts more meat. This is the book's moral thesis made explicit: the law of
+      hospitality does not depend on whether you believe the guest's story. Eumaeus keeps xenia
+      despite his skepticism, which is to keep it purely. Law's requirement is formal clarity,
+      repetition, architecture; Stravinsky's fugue from the Symphony of Psalms opens with
+      oboes and a four-voice double fugue of absolute formal severity — 'I waited, I waited for
+      the Lord' — the architecture of patient, unsentimental faithfulness, the law observed
+      regardless of the emotional weather. The Symphony of Psalms has not appeared in the cycle;
+      this movement's double-fugue structure gives Eumaeus' practical fidelity its correct
+      weight: not warm, not cold, just architecturally correct.
+  - n: 8
+    scene: "Eumaeus tells his own story — a prince sold into slavery, loyal to a master he chose"
+    force: memory
+    composer: Fauré
+    work: "Après un rêve, Op. 7 No. 1"
+    decision: "replaces Elgar (Cello Concerto) — de-saturation"
+    why: >
+      The swineherd, prompted by the conversation, tells his own past: he was the son of a
+      king, sold as a child into Laertes' household, raised among Odysseus's family, and chose
+      — when he could have fled — to stay. His loyalty to Odysseus is not servitude; it is a
+      love freely renewed. Memory's requirement is nostalgic recall and faded recapitulation;
+      Fauré's 'Après un rêve' is scored precisely in that register — a song about waking from
+      a dream in which the beloved was present and finding them gone, the melody's long arching
+      line carrying the exact quality of something remembered rather than possessed. Eumaeus is
+      narrating a dream of himself: the prince he was, the household he grew up in, the life
+      that was taken from him before he could inhabit it fully. He tells the story not with
+      bitterness but with a sustained, gentle ache — the affect of someone who has made peace
+      with the loss without ceasing to feel it. The song's characteristic motion — the voice
+      reaching up and falling back, the piano's soft harmonic cushion beneath — enacts the
+      shape of recollection itself: the mind extending toward what it once had, finding only
+      the shadow, the warmth of the dream still on the skin. 'Après un rêve' has not appeared
+      in the cycle; none of the other Fauré works used across the arc (Requiem movements,
+      Pelléas Sicilienne) share this song's particular elegiac intimacy.
+  - n: 9
+    scene: "The fox-tale cloak trick — Odysseus engineers a borrowed cloak through mischievous storytelling"
+    force: comedy
+    composer: Mozart
+    work: "Horn Concerto No. 4 in E-flat major, K. 495 — III. Rondo: Allegro vivace"
+    decision: added
+    why: >
+      The night is cold, Odysseus has no cloak. He cannot ask directly — that would give away
+      the game — so he tells a story: a night raid at Troy, a soldier who faked illness to
+      borrow Odysseus's cloak, the trick that worked. The story is pointed enough that Eumaeus
+      understands and offers his own cloak immediately. This is Odysseus doing what he always
+      does — working sideways, the trick with the story, the laugh beneath the ask. Comedy's
+      requirement is dance rhythm and courtly exaggeration; Mozart's K. 495 Rondo finale is the
+      most playful of the four horn concerto finales, a hunting-call theme that keeps returning
+      with fresh mischief each time, exuberant and slightly absurd, the horn always a half-step
+      ahead of where you expect it. Odysseus telling a story to get a cloak is as buffo as the
+      poem gets in these middle books: not the Cyclops's comedy of a name, but the domestic comedy
+      of a man too clever to be cold.
+  - n: 10
+    scene: "The cold night, the beggar shivers — Eumaeus gives his own cloak without being asked"
+    force: supplication
+    composer: Victoria
+    work: "O vos omnes"
+    decision: added
+    why: >
+      Whether through the trick or simply through compassion, Eumaeus wraps his own great cloak
+      around the stranger and goes to sleep among the pigs in the cold himself. The beggar is
+      warmed by the loyalty of a man who does not know whom he is keeping warm. Supplication's
+      requirement is suspended cadence and exposed melodic line; Victoria's motet O vos omnes is
+      the lament of Jerusalem — 'O all ye that pass by, behold and see if there be any sorrow
+      like unto my sorrow' — a four-voice texture built on a melodic line of absolute, uncomplicated
+      exposure, the cadences suspended in what sounds like an eternal question. The stranger's
+      cold is a supplication without words; Eumaeus answers it without being asked. Victoria's
+      motet has not appeared in the cycle and gives the scene a register more ancient and plainly
+      human than the Bach arias that carry supplication elsewhere in the arc.
+  - n: 11
+    scene: "The king sleeps wrapped in a borrowed cloak at his own servant's fire — return deferred"
+    force: return
+    composer: Brahms
+    work: "Symphony No. 3 in F major, Op. 90 — III. Poco allegretto"
+    decision: added
+    why: >
+      The book ends on an image: the disguised king, warm in a cloak he does not own, sleeping
+      at the fire of the most faithful man in his household, who does not know he is there.
+      The return has not happened. It is held in potentia, circling, almost. Return's requirement
+      is circular form and recognition motif; Brahms's third movement of the Third Symphony is
+      among the most quietly inexorable examples in the canon of a theme that keeps coming back
+      to itself — the famous cello melody, its intervals slightly altered each time it appears,
+      a circling that is not resolution but an approach to resolution, home visible at a distance
+      and not yet entered. The cloak scene is exactly this: the king at his threshold, the
+      recognition deferred, the return structurally present and experientially withheld. The
+      Brahms Third Poco allegretto has not appeared in the cycle.
+demoted:
+  - composer: Bach
+    work: "St Matthew Passion, BWV 244 — 'Erbarme dich, mein Gott'"
+    status: "demoted — used in odyssey-1, odyssey-3, odyssey-5, odyssey-7, iliad-6, iliad-9, iliad-11, iliad-12, iliad-16, iliad-21, iliad-24"
+    why: >
+      The canonical supplication piece of the cycle has done its work across eleven prior books.
+      Book XIV's supplication is low-register and domestic — a man crouching from dogs, a
+      stranger cold at a fire — and needs a less monumental piece. Poulenc's Stabat Mater and
+      Victoria's O vos omnes give the same suspended-cadence exposed-melodic-line requirement
+      at a more intimate, less liturgically overwhelming scale.
+  - composer: Pärt
+    work: "Spiegel im Spiegel"
+    status: "demoted — used in odyssey-9, iliad-6, iliad-9, iliad-10, iliad-21, iliad-24"
+    why: >
+      Spiegel im Spiegel has accumulated enough appearances in the supplication and revelation
+      registers across the cycle that further use would reduce it to a tic. Tavener's Protecting
+      Veil gives the revelation scene the same stillness-and-verticality requirement without
+      repeating the specific tintinnabuli texture.
+  - composer: Elgar
+    work: "Enigma Variations — IX. 'Nimrod'"
+    status: "demoted — Iliad leitmotif for memory/kingship; avoid importing Iliad signatures into the Odyssey"
+    why: >
+      'Nimrod' has served as the Iliad's memory and kingship signature in Books I, II, III, IV,
+      VII, VIII, XI, XII, and XXIII. Bringing it into Odyssey Book XIV would collapse the tonal
+      difference between the two cycles. Elgar's Cello Concerto gives the memory register a
+      fresh voice with the same autumnal, nostalgic weight.
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "register-reserved — forbidden before the suitors' slaughter (Book XXII equivalent)"
+    why: >
+      The terminal-monumental grief register remains held for the mass death. Book XIV's grief
+      is entirely intimate: Eumaeus weeping for one man at a fire. Schubert's 'Der Lindenbaum'
+      is the right scale — private, patient, the grief of loyalty rather than the grief of
+      catastrophe.
+  - composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    status: "register-reserved — forbidden before the suitors' slaughter"
+    why: >
+      The eschatological judgment register belongs to the terminal books. Eumaeus' grief is the
+      opposite of eschatological: domestic, enduring, unwitnessed. No apocalyptic fire here.
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "demoted — established as the Iliad's wrath leitmotif; not appropriate here"
+    why: >
+      Book XIV has no wrath. The exclusion is structural. Mars belongs to the Iliad cycle and
+      must not migrate.
+  - composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    status: "demoted — established as the Iliad's fate leitmotif; Book XIV has no fate register"
+    why: >
+      The Iliad's hammered fate signature would be tonal noise in this intimate, domestic book.
+      Book XIV's closest encounter with fate is Eumaeus' skepticism about false prophecy —
+      which is better scored through law (what he keeps regardless) than through the Iliad's
+      four-note destiny motor.

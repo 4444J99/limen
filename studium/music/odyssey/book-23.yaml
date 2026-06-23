@@ -1,0 +1,253 @@
+# Odyssey — Book XXIII — curated music arc
+# THE TOKEN OF THE BED: recognition of husband and wife
+work: odyssey
+book: 23
+title: "Odyssey Book XXIII: The Token of the Bed — Recognition of Husband and Wife"
+length_minutes: 88
+principle: >
+  Do not score Book XXIII as a love scene. Score it as the book where the Odyssey's
+  central question — is this really him? — is answered not by Odysseus but by a bed.
+  The whole poem has been converging on this moment: the disguise, the bow, the slaughter
+  — all of it was preparation for Penelope's test, which is the most intimate authentication
+  in Western literature. She does not weep when she sees him. She does not throw her arms
+  around him. She makes him prove it. The bed is rooted in the living house — an olive tree
+  that Odysseus built the bridal chamber around, impossible to move, known only to two
+  people and one servant. When Odysseus erupts in furious, exact description of the bed's
+  construction, Penelope knows. The recognition is not visual but architectural: twenty years
+  compressed into the knowledge of a joint, a post, a room that cannot be disassembled.
+  The dominant force is return: not the Cyclops-blinding cunning of Books IX-XII, not the
+  disguise of Books XVII-XXII, but the circular form that completes when a man and a woman
+  share a secret that no impostor could possess. Every scene before the eruption is
+  suspension — supplication, scrutiny, law, wrath — and everything after is the release of
+  twenty years of held tension into the rest Athena extends by holding back the dawn.
+force_arc: [revelation, memory, law, wrath, revelation, grief, return, return, desire, divine-intervention, salvation]
+dominant_force: return
+tracks:
+  - n: 1
+    scene: "Eurycleia wakes Penelope — 'Odysseus is here, and has killed the suitors'"
+    force: revelation
+    composer: Bach
+    work: "Cantata BWV 82, 'Ich habe genug' — Aria 'Schlummert ein' (Sleep, sleep)"
+    decision: added
+    why: >
+      Eurycleia's breathless announcement breaks into Penelope's sleep like a voice from
+      another world — news so enormous the queen cannot process it. Bach's aria 'Schlummert
+      ein' from the cantata 'Ich habe genug' is scored for bass voice and muted strings,
+      a lullaby-in-reverse: the soul at the threshold between worlds, not yet believing
+      in what it has been told. Revelation's requirement is stillness, chant, verticality;
+      this aria delivers all three through the most intimate means — a single line sustained
+      over plucked accompaniment, the sound of something held at the edge of waking.
+      The choice avoids the large choral announcement (those belong elsewhere) and finds
+      instead the private register of a woman who has waited twenty years and cannot yet
+      trust that waiting has ended.
+  - n: 2
+    scene: "Penelope descends to the hall, studies the stranger — 'Is this really him?'"
+    force: memory
+    composer: Ravel
+    work: "Pavane pour une infante défunte"
+    decision: added
+    why: >
+      Penelope sits opposite Odysseus in the firelight and says nothing. Homer gives us
+      her interior: she wonders whether to keep her distance or go to him, touch his face,
+      take his hands. She is caught between twenty years of imagining this moment and the
+      fact of the grimy, blood-stained man in front of her. Ravel's Pavane is nostalgic
+      recall carried to the point of suspension — a melody that circles its own memory,
+      faded at the edges, each phrase a return that never quite arrives at certainty.
+      Memory's requirement is nostalgic recall and faded recapitulation; the Pavane gives
+      the queen's scrutiny its exact sonic grammar: not cold calculation but the ache of
+      a woman holding a very long memory against the evidence before her, afraid of being
+      wrong in either direction.
+  - n: 3
+    scene: "Penelope devises the test — she orders the marriage-bed moved outside the chamber"
+    force: law
+    composer: Handel
+    work: "Messiah, HWV 56 — 'I Know That My Redeemer Liveth' (soprano aria)"
+    decision: added
+    why: >
+      The bed test is a legal procedure: Penelope has constructed a verification ritual
+      precise enough to exclude any impostor, and she deploys it with the formal clarity
+      of a judge. Handel's soprano aria is built on a single, architecturally clear melodic
+      statement restated in graduated forms — formal clarity, repetition, architecture —
+      the exact sonic shape of law's requirement. The aria's text ('I know') is itself a
+      claim about certain knowledge, which is precisely what Penelope is engineering: not
+      an appeal to emotion but a test whose logic compels a unique answer. The choice of
+      a soprano line over spare continuo mirrors the queen's cool composure — she is not
+      performing grief or desire here; she is executing a structure.
+  - n: 4
+    scene: "Odysseus erupts — furious, exact, describing the bed's olive-tree foundation"
+    force: wrath
+    composer: Walton
+    work: "Symphony No. 1 in B-flat minor — I. Allegro assai"
+    decision: added
+    why: >
+      Odysseus's response to the order to move the bed is not gentle correction — it is
+      eruption. He describes the bed's construction in precise, overwhelming detail: the
+      olive tree he built the chamber around, the post he cut and planed himself, the inlaid
+      gold and silver and ivory. The specificity is the fury: no man who had not made this
+      bed could know it. Walton's First Symphony opens with rhythmic pressure that does not
+      resolve — cross-rhythms, harmonic refusal, an engine that builds and refuses to let
+      the listener settle. Wrath's requirement is rhythmic pressure and unresolved harmony;
+      the eruption is not marital anger but the indignation of a man whose most private
+      construction has been casually ordered disassembled, a man who built that bed as the
+      proof of his identity and will not let it be reduced to furniture.
+  - n: 5
+    scene: "The secret of the bed laid bare — only two people alive could know this"
+    force: revelation
+    composer: Bach
+    work: "St Matthew Passion, BWV 244 — Opening Chorus 'Kommt, ihr Töchter, helft mir klagen'"
+    decision: added
+    why: >
+      The moment Odysseus finishes describing the bed's rooted olive trunk, Penelope's
+      knees loosen — but before the weeping, there is a suspended instant of pure
+      recognition: this is the secret. No one else. Only him. Bach's opening chorus of the
+      Matthew Passion opens on a vast double-choir and orchestra, a sustained vertical
+      structure that is not narrative but testimony — voices layered into a architecture
+      of revelation that holds the listener in arrested stillness before the passion begins.
+      Revelation's requirement is stillness, chant, verticality; here the verticality is
+      not quiet but enormous, because the recognition that the bed cannot move and that
+      therefore this is Odysseus is itself enormous — twenty years and a war and an ocean
+      compressed into a single structural fact about a rooted tree.
+  - n: 6
+    scene: "Penelope weeps — her knees loosen, she runs to him, she weeps on his neck"
+    force: grief
+    composer: Górecki
+    work: "Symphony No. 3 'Symphony of Sorrowful Songs' — II. Lento e largo"
+    decision: added
+    why: >
+      Penelope's weeping at the moment of recognition is not grief for a loss but grief
+      released from twenty years of deferral — the specific grief of a woman who held
+      herself together precisely by not believing, and who now can let down every
+      defense at once. Górecki's second movement uses a soprano line set over a bass
+      inscription scratched in a Gestapo cell: 'O Mamo nie płacz' — 'O Mama do not weep.'
+      It is grief at the intersection of reunion and horror, the sound of held suffering
+      finally given permission to surface. The inward slow line, the sustained weight,
+      the held breath of it: this is Penelope releasing twenty years in a single moment,
+      the specific quality of grief that is also the end of waiting.
+  - n: 7
+    scene: "Recognition complete — she embraces him, holds him as a swimmer holds the land"
+    force: return
+    composer: Brahms
+    work: "Violin Concerto in D major, Op. 77 — II. Adagio"
+    decision: added
+    why: >
+      Homer gives one of the most precise similes in the poem: Penelope holds Odysseus
+      as a swimmer whose ship has been wrecked holds the land — the land itself welcoming,
+      the man who has been in the water too long unable to let go. Brahms's Adagio is the
+      single most lucent slow movement in his concerto output: the oboe opens alone, the
+      violin enters as a second voice in recognition of the first, the two converging on
+      a shared harmonic center that neither could have reached alone. Return's requirement
+      is circular form and recognition motif; the Brahms concerto Adagio is literally two
+      voices finding each other after the violence of the first movement, the reunion of
+      melody with its own reflection.
+  - n: 8
+    scene: "They speak — he tells her all, she tells him all, their night unhurried"
+    force: return
+    composer: Mahler
+    work: "Symphony No. 2 in C minor 'Resurrection' — IV. 'Urlicht' (Primeval Light)"
+    decision: added
+    why: >
+      Homer describes the two of them talking through the night: Penelope tells of her
+      long endurance of the suitors, Odysseus tells of his wanderings. Neither rushes.
+      This is the return completed not by an action but by the resumption of speech between
+      two people who know each other. Mahler's 'Urlicht' — the solo contralto movement
+      from the Resurrection Symphony — is the most intimate return-music in the symphonic
+      canon: a voice that has traveled through darkness arriving at a simple, circular
+      melodic statement, 'O Röschen rot,' a folk-song held in memory through catastrophe
+      now sung plainly. Return's recognition motif is here the restored intimacy of two
+      people resuming a conversation that was interrupted twenty years ago.
+  - n: 9
+    scene: "Athena's gift — their night together, unhurried desire after twenty years apart"
+    force: desire
+    composer: Chausson
+    work: "Poème for Violin and Orchestra in E-flat major, Op. 25"
+    decision: added
+    why: >
+      Homer is explicit: Athena holds back the dawn so the night can be longer, and
+      Odysseus and Penelope take their pleasure and then their ease in bed. Chausson's
+      Poème is among the most sustained expressions of chromatic longing and deferred
+      resolution in the orchestral repertoire — a single long-breathed melodic arc that
+      never quite arrives, always unfolding toward a cadence just beyond reach, the
+      harmonic language of desire that is its own destination. Desire's requirement is
+      chromatic longing and deferred resolution; here that deferral has been twenty years
+      in the making, and the Poème's refusal to resolve quickly gives the reunion its
+      correct temporal weight — not a hasty consummation but a night that Athena herself
+      refused to cut short.
+  - n: 10
+    scene: "Athena holds back the dawn — the goddess lengthens the night over Ocean"
+    force: divine-intervention
+    composer: Bruckner
+    work: "Symphony No. 7 in E major — II. Adagio: Sehr feierlich und sehr langsam (opening)"
+    decision: added
+    why: >
+      Athena restrains the goddess of dawn, keeps long-maned Night stationary above
+      Ocean, and holds back Eos who brings light to men. The intervention is not dramatic;
+      it is vast and slow and impersonal — a goddess extending the physics of the night
+      because the reunion in the room below requires more time. Bruckner's Adagio from
+      the Seventh Symphony opens with Wagner tubas in a gradual brass color-shift that
+      sounds like the bending of time itself — sudden against the night stillness, then
+      sustained into immensity. Divine-intervention's requirement is sudden color shift
+      and brass/strings contrast; the opening tubas achieve this without announcement or
+      catastrophe, simply a divine weight descending over the sleeping world, holding
+      the night in place.
+  - n: 11
+    scene: "Dawn is finally released — Odysseus and Penelope rest in the light of homecoming"
+    force: salvation
+    composer: Bach
+    work: "Mass in B minor, BWV 232 — 'Et resurrexit' (Credo, chorus)"
+    decision: added
+    why: >
+      When dawn is at last released, the night ends in fullness rather than interruption:
+      both of them have spoken, both of them have rested, the homecoming is no longer an
+      action in progress but a state achieved. Bach's 'Et resurrexit' is the most radiant
+      resolving chorus in the Mass — the full choir and orchestra arriving at a chorale
+      apotheosis without equivocation, the harmonic grammar of completion. Salvation's
+      requirement is resolving radiance and chorale apotheosis; here the radiance is not
+      religious but structural: the Odyssey has been building toward this resolution for
+      twenty-four books, and the dawn that the poem allows to arrive is a dawn that means
+      the wandering is over, the suitors are dead, the bed is standing, and both of them
+      are still alive to see it.
+demoted:
+  - composer: Beethoven
+    work: "Symphony No. 7 — II. Allegretto"
+    status: "demoted — return leitmotif already deployed in odyssey-1, odyssey-3, odyssey-4, odyssey-5; Book XXIII needs fresh return coloring"
+    why: >
+      The Allegretto has been the cycle's primary return-music across five Odyssey books.
+      Book XXIII is the return completed — it deserves its own sonic identity rather than
+      the established circular motif. Brahms's concerto Adagio and Mahler's Urlicht carry
+      the recognition and intimacy the scene requires without collapsing into a leitmotif
+      that the listener has already heard resolve in earlier books.
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "forbidden before Book XXII equivalent; used in iliad-22 and iliad-24; not appropriate for reunion"
+    why: >
+      The funeral register belongs to the suitors' slaughter in Book XXII. Book XXIII
+      is explicitly a book of reunion not death; the terminal-monumental-public grief
+      register would misread every scene in it. The grief in this book is the grief
+      of released waiting, scored with Górecki's intimate second movement, not with
+      Wagner's world-historical elegy.
+  - composer: Debussy
+    work: "Pelléas et Mélisande — Act IV, scene 4 (prelude and love scene)"
+    status: "demoted — already used for desire in odyssey-5; prefer fresh desire coloring"
+    why: >
+      Pelléas et Mélisande carries the wrong desire register for this reunion: Debussy's
+      opera is about doomed, transgressive love meeting catastrophe. Odysseus and Penelope's
+      reunion is desire that has earned its resolution through endurance. Chausson's Poème
+      gives the same chromatic longing without the tragic frame — deferred resolution that
+      resolves because the two people have survived, not despite their surviving.
+  - composer: Fauré
+    work: "Requiem, Op. 48 — 'In Paradisum'"
+    status: "demoted — used in iliad-24 for salvation and odyssey-1 for memory; seek fresh salvation coloring"
+    why: >
+      In Paradisum has been the salvation signature across multiple books. Book XXIII's
+      salvation is not the peace of death but the peace of a homecoming that survived —
+      the Odyssey's structural resolution rather than its eschatological resolution.
+      Bach's 'Et resurrexit' gives salvation its radiance through affirmation and forward
+      momentum rather than valediction.
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "forbidden — established Iliad wrath leitmotif; Book XXIII needs different wrath register"
+    why: >
+      Mars belongs to the Iliad's wrath signature. Odysseus's eruption about the bed is
+      not battlefield fury but architectural indignation — a precise, specific, defensive
+      anger. Walton's First Symphony carries that rhythmic pressure and unresolved harmony
+      without invoking the war-wrath register that would misplace the scene.

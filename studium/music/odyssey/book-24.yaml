@@ -1,0 +1,307 @@
+# Odyssey — Book XXIV — curated music arc
+# THE SECOND NEKYIA; LAERTES; THE PEACE: the suitors' shades descend; Agamemnon praises Penelope;
+# Odysseus tests and is recognized by Laertes in the orchard; the kinsmen rise; battle; Athena
+# and Zeus impose the covenant; the poem closes.
+work: odyssey
+book: 24
+title: "Odyssey Book XXIV: The Second Nekyia, the Orchard, and the Covenant of Peace"
+length_minutes: 105
+principle: >
+  Do not score Book XXIV as a coda or an epilogue. Score it as the poem's second descent and
+  its final metamorphosis: the dead still speaking, the living still unrecognized, the world
+  still requiring one last test before it will grant the hero his rest. The book opens in
+  Hades — not, as in Book XI, with the living man descending but with the suitors arriving,
+  brought by Hermes, filling the meadow of asphodel. That opening is the poem's great formal
+  rhyme: it began in medias res with a man trying to get home; it ends with the men who
+  invaded his home being escorted by the same divine guide who escorts every shade. They are
+  not mourned. Homer gives them their arrival and moves on. The grief in this book is older and
+  deeper: it belongs to Agamemnon, who cannot stop comparing marriages, and to Laertes, who
+  has been grieving in an orchard for twenty years, dressed in rags, digging around the roots
+  of trees his son gave him as a boy.
+  That orchard scene is the book's emotional center and the reason its dominant force is grief:
+  not spectacular, not combat-grief, but the slow weight of time on an old man who believes
+  his son is dead. Odysseus cannot bear it. He tests Laertes with a false tale — gives him a
+  fake name, a fake history — and watches his father weep for news of Odysseus. Then he yields.
+  The recognition comes not through the scar this time but through the trees: the orchard rows
+  Laertes gave the boy, thirteen pear trees and ten apple trees and forty fig trees, walked
+  together once in the father's hand. Memory encoded in root and bark and the shape of a path
+  through an orchard. This is the Odyssey's final and most tender recognition, and it arrives
+  through the most intimate ledger — not heroic proof but a child's inheritance of planted things.
+  The arc resolves through grief into salvation. The violence of the kinsmen's counter-attack
+  is real but brief; Athena and Zeus intervene with an authority that has been waiting since
+  Book I to close what the Iliad opened. The peace is imposed, not negotiated. It is a divine
+  covenant, structured as law, and it ends the poem in a stillness that is not triumph but rest.
+  Score that stillness as the thing the whole cycle has been trying to reach.
+force_arc: [grief, memory, memory, grief, grief, revelation, return, wrath, wrath, divine-intervention, law, salvation]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "Hermes leads the suitors' shades across Oceanus to the meadow of asphodel"
+    force: grief
+    composer: Gluck
+    work: "Orfeo ed Euridice — 'Che farò senza Euridice' (Act III aria)"
+    decision: added
+    why: >
+      The suitors arrive in Hades not in agony but in bafflement, the way all Homer's dead
+      arrive — the shade is the faded copy of the man, deprived of purpose. Hermes leads them
+      with his golden wand and they follow like bats knocked from their roost. This is not
+      the underworld as punishment; it is the underworld as permanent diminishment, the register
+      of souls who no longer have a body's weight to anchor them to the world. Gluck's great
+      aria is the canonical musical encounter with death's boundary: Orfeo has lost Euridice
+      again at the threshold and sings 'What shall I do without Euridice? Where shall I go
+      without my darling?' — the grief of standing at the edge of the land of the dead with
+      nothing left to bargain with. Grief requires slow tempo and inward line; Gluck's aria is
+      nothing else, the melodic phrase looping back on itself as grief does, the question
+      returning because it has no answer. The suitors are not mourned, but the meadow of
+      asphodel requires this music: it is the grammar of the threshold.
+  - n: 2
+    scene: "Agamemnon's shade hears Amphimedon recount the slaughter of the suitors"
+    force: memory
+    composer: Schubert
+    work: "Winterreise — 'Der Lindenbaum' (No. 5, D. 911)"
+    decision: added
+    why: >
+      Agamemnon listens to Amphimedon's account of the whole plot — the web, the stringing of
+      the bow, the slaughter — as if listening to news from a country he once visited. The dead
+      receive stories of the living the way the very old receive news of what their families
+      have done after them: with a kind of wondering distance, memory-edged, not quite real.
+      Schubert's 'Der Lindenbaum' is the great Winterreise song of nostalgic recall: the
+      wanderer passes the linden tree where he had once carved his name and whispered his hopes
+      into its branches, and the tree seems to call him back. The song is faded recapitulation
+      exactly — memory's requirement — a moment of sweetness at the border of despair, the mind
+      reaching back toward something it cannot recover. Agamemnon in Hades receiving the story
+      of the house he will never see again is precisely this register: nostalgic recognition
+      at a permanent remove.
+  - n: 3
+    scene: "Agamemnon praises Penelope's faithfulness against the shadow of Clytemnestra"
+    force: memory
+    composer: Brahms
+    work: "Horn Trio in E-flat major, Op. 40 — I. Andante"
+    decision: added
+    why: >
+      Agamemnon calls Penelope blessed and famous forever — her virtue will be a song — and
+      then contrasts her directly with Clytemnestra, whose treachery made Agamemnon's name
+      hateful in song forever. Two marriages, two outcomes, the same war's aftermath measured
+      in what the wives chose to do with the years the men were gone. The horn trio's Andante
+      movement is Brahms at his most autumnal: the horn provides a warm nostalgic color
+      (Brahms required the natural horn, which carries the sound of hunting and memory and
+      loss intertwined), the strings complete the thought, and the whole movement moves in
+      the faded-recapitulation mode that memory requires. The two marriages Agamemnon places
+      side by side are both remembered events: he is the dead man talking, and the tone is
+      not bitter but elegy-colored, the way an old man speaks of a life that ended badly
+      when he can now see it whole. This is memory's most refined register — not grief,
+      but understanding arrived at too late to use.
+  - n: 4
+    scene: "Odysseus finds Laertes wasted in the orchard, dressed in rags, digging alone"
+    force: grief
+    composer: Mahler
+    work: "Kindertotenlieder — No. 1 'Nun will die Sonn' so hell aufgeh'n'"
+    decision: added
+    why: >
+      Homer's description of Laertes is among the most quietly devastating passages in the
+      poem: the father who outlived every hope, dressed in filthy patched clothing, wearing
+      his grief on the outside the way the destitute do, bent over the earth in his own
+      orchard. He has been tending the trees because it is the only thing left that connects
+      him to the son who used to tend them beside him. Odysseus watches from a distance and
+      his own heart tears. Mahler wrote his Kindertotenlieder on Rückert's poems for dead
+      children — the first song opens with the observation that the sun rises as bright this
+      morning as if nothing had changed, as if a child had not died, and the bitterness of
+      that brightness is the grief's full weight. Grief requires slow tempo and inward line;
+      Mahler's orchestral web beneath the voice is grief made interior, made cellular, grief
+      felt as the wrongness of a world continuing on its ordinary courses when something
+      essential is missing. Laertes in the orchard is the image of a man for whom everything
+      has continued and nothing has continued.
+  - n: 5
+    scene: "Odysseus gives Laertes a false name and tale; Laertes weeps for his lost son"
+    force: grief
+    composer: Elgar
+    work: "Cello Concerto in E minor, Op. 85 — I. Adagio — Moderato"
+    decision: added
+    why: >
+      Odysseus — for reasons that have troubled readers since antiquity — tells his father a
+      false tale first, gives him a false name, watches him grieve. Laertes does not pretend
+      to be well; he pours dirt on his head, he weeps in full sight of his son standing before
+      him. It is the most prolonged and strange of all the recognition scenes in the Odyssey,
+      and its strangeness is precisely the strangeness of grief — that Odysseus cannot yet
+      speak, cannot enter the scene as himself, must stand one more moment in the role of
+      witness before becoming the son. Elgar's Cello Concerto is the work of a man who had
+      outlived his world: written after the First World War had ended the England he knew,
+      the opening Adagio is an inward-turned soliloquy, the cello speaking to itself in a
+      register that is not performance but private reckoning. Grief's slow tempo and inward
+      line reach their most refined form here: not demonstrative, not decorative, but the
+      sound of something very old being held one last time before it changes.
+  - n: 6
+    scene: "Odysseus yields — 'I am that man' — and the revelation comes through the trees"
+    force: revelation
+    composer: Messiaen
+    work: "Éclairs sur l'Au-delà — X. 'Le chemin de l'invisible'"
+    decision: added
+    why: >
+      Odysseus cannot bear it. He crosses the scene, takes his father in his arms, and names
+      himself. But this recognition reaches its full proof not through embrace but through the
+      orchard itself: Odysseus recites the trees Laertes gave him as a boy — the thirteen
+      pear trees, the forty fig trees, the fifty vine rows — the inheritance of a father's
+      hand through planted things. Laertes' knees give out. He knows. This is the poem's most
+      intimate revelation: not a scar displayed, not a feat of strength, but a child's memory
+      of walking a path with his father and being told the names of what grew there.
+      Messiaen's 'Le chemin de l'invisible' — The Path of the Invisible — from his final
+      orchestral cycle is built on stillness, vertical harmonic columns, and chant-like melodic
+      lines: revelation's requirement exactly. Messiaen spent his whole career composing the
+      sound of divine disclosure in time; here the disclosure is as simple as tree-names and
+      a boy's memory, and it requires the same register: the silence before the voice, the
+      moment of pure verticality when the world stops being disguised.
+  - n: 7
+    scene: "Laertes, revived and armed, stands with his son; the recognition sealed"
+    force: return
+    composer: Dvořák
+    work: "Symphony No. 8 in G major, Op. 88 — IV. Allegro ma non troppo"
+    decision: added
+    why: >
+      After the recognition in the orchard, Athena restores Laertes — Homer says she gives
+      him stature back, the bloom of age returning — and the old man arms himself to stand
+      beside his son and grandson in the coming fight. Return's requirement is circular form
+      and recognition motif; Dvořák's Eighth Symphony finale is the classical repertoire's
+      most exuberant and structurally pure embodiment of homecoming as theme-and-variation
+      return: the movement opens with a trumpet fanfare that is immediately recalled, spun
+      out, and recovered in joyful circular episodes that keep arriving back at the same
+      recognition point. It is not triumph — Dvořák's Eighth is too warm for triumph — but
+      the sound of something being restored to its right place, the tonic recovered through
+      an abundance of melodic invention that circles without losing its center. Laertes
+      restored is exactly this: the orchard, the father, the son, the right order of things
+      briefly and improbably re-established.
+  - n: 8
+    scene: "The kinsmen of the slaughtered suitors arm and march for vengeance"
+    force: wrath
+    composer: Shostakovich
+    work: "Symphony No. 11 in G minor 'The Year 1905' — II. Allegretto ('The Ninth of January')"
+    decision: added
+    why: >
+      Eupeithes, father of Antinous, arms the kinsmen and leads them toward Odysseus. They
+      are not wrong to want revenge; the law of blood-debt was as binding as any law Homer's
+      world knew. But they are too late, they are outnumbered, and the gods have already
+      decided against them. Shostakovich's second movement from his Eleventh Symphony depicts
+      the massacre of peaceful demonstrators on Palace Square in St. Petersburg — but its
+      musical effect is the terrible mechanism of collective violence building without check:
+      a march-rhythm that accumulates mass, unresolved dissonances beneath the surface,
+      rhythmic pressure that does not relent. Wrath requires rhythmic pressure and unresolved
+      harmony; the kinsmen's march is not individual rage but institutional momentum, a
+      community's obligation pressing forward against its own inevitable end.
+  - n: 9
+    scene: "Battle joins — Odysseus, Telemachus, and Laertes fight the kinsmen"
+    force: wrath
+    composer: Walton
+    work: "Belshazzar's Feast — 'Praise ye the God of Gold' (opening invocation and first section)"
+    decision: added
+    why: >
+      Odysseus and Laertes fight side by side; Laertes, newly restored, kills Eupeithes with a
+      spear-throw and shouts with joy. The battle is brief but genuinely violent, a last burst
+      of the poem's martial energy before the gods terminate it. Walton's Belshazzar's Feast
+      opens with a baritone proclamation over brass and percussion that gathers mass into
+      collective violence — the Babylonian feast of triumphant excess — and the choral writing
+      piles rhythmic pressure layer upon layer, the harmony never quite resolving into rest.
+      Wrath requires rhythmic pressure and unresolved harmony; Walton's choral-orchestral engine
+      gives the battle its correct sonic register: not the Iliad's tragic battlefield, but the
+      Odyssey's terminal flash of violence, urgent and contained, the last expenditure of a
+      force that has been building since Ithaca was taken over. It burns hard and brief.
+  - n: 10
+    scene: "Athena cries out; Zeus launches a thunderbolt; the fighters freeze"
+    force: divine-intervention
+    composer: Handel
+    work: "Messiah, HWV 56 — 'Hallelujah' Chorus"
+    decision: added
+    why: >
+      Athena shouts in the voice of Mentor, and Zeus fires his warning thunderbolt between
+      the forces. It is not a request. Olympian intervention at this scale is sovereign
+      command, and Homer's text registers it as pure vertical authority landing in the middle
+      of human business and stopping it by divine fiat. The fighters freeze. The war is over
+      because the gods say so, and the gods saying so is not a negotiation. Handel's Hallelujah
+      Chorus arrives with exactly this quality of sudden, absolute, brass-driven sovereign
+      declaration: the opening cry lands without preparation, the choral mass asserts its
+      conclusion with no development required, and the sustained repetition is not doubt but
+      the formal reiteration of a fact already established. Divine-intervention requires sudden
+      color shift and brass/strings contrast; the Hallelujah Chorus is the most famous instance
+      of both in the repertoire, and its theological claim — that the kingdom of this world
+      has become the kingdom of the Lord — is structurally identical to what Zeus's thunderbolt
+      asserts: that the order of human events just became the order of divine authority.
+  - n: 11
+    scene: "Athena imposes the covenant — Odysseus and the kinsmen swear peace"
+    force: law
+    composer: Bach
+    work: "Mass in B minor, BWV 232 — 'Et in terra pax' (Gloria, chorus)"
+    decision: added
+    why: >
+      Athena commands the covenants of peace and the fighting stops. The families of the dead
+      swear oaths; the law that will govern Ithaca going forward is established by divine
+      authority acting through the same figure who has guided the poem from its beginning.
+      Law requires formal clarity, repetition, and architecture; Bach's 'Et in terra pax'
+      from the Gloria of the B minor Mass is the musical form of a covenant: the chorus
+      declares 'and on earth peace, goodwill toward men' in a contrapuntal texture of perfect
+      formal architecture, each voice entering in ordered succession to build the structure
+      of a declaration that is also a law. The movement is brief, clear, and structurally
+      inevitable — the kind of formal close that knows exactly what it is doing and does
+      it without ornament. The covenant of peace is not sentimental in Homer; it is a legal
+      act between parties with legitimate grievances, imposed by a god, sealed by oath. Bach
+      understood exactly what that structure sounds like.
+  - n: 12
+    scene: "The poem closes — Ithaca at rest, the cycle complete"
+    force: salvation
+    composer: Beethoven
+    work: "Missa Solemnis, Op. 123 — 'Agnus Dei: Dona nobis pacem'"
+    decision: added
+    why: >
+      Homer's last line: Athena urges the peace; both sides agree; the poem ends. There is no
+      triumphant procession, no feast, no elaborate ceremony — the ending is a breath. After
+      twenty years of war and wandering, after the slaughter and the reunions and the tests
+      and the false names and the orchard, the poem simply stops in a stillness that the whole
+      cycle has been working toward. Salvation requires resolving radiance and chorale apotheosis;
+      Beethoven's 'Dona nobis pacem' at the close of the Missa Solemnis is the most hard-won
+      version of peace-as-resolution in the Western choral tradition — the movement begins in
+      anxiety (Beethoven marks a passage 'a plea for inward and outward peace'), builds through
+      martial interruptions that recall the violence that makes peace necessary, and then
+      achieves its final settlement not as a triumph over conflict but as a reconciliation with
+      it. The peace is real but it has been earned through the full knowledge of what it cost.
+      That is the Odyssey's peace precisely: not the absence of grief but the presence of
+      stillness after grief has been fully inhabited.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "already used in Iliad Book XXII (the Hector death scene) and Iliad Book XXIV; the terminal-monumental register has been spent"
+    why: >
+      The suitors' shades are not elegized at this scale in Homer's text — their descent is
+      presented with clinical efficiency, not lamentation. The Funeral March is the terminal-
+      monumental public grief for a hero; these are the men who ate Odysseus's cattle. Gluck's
+      Orfeo aria gives the underworld threshold its correct register without claiming a heroic
+      funeral weight that the scene does not earn.
+  - composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    status: "forbidden before Book XXII equivalent; now usable, but the suitors' death is not the eschatological event — Book XXII (the slaughter) was that moment"
+    why: >
+      The Dies Irae register belongs to the slaughter in Book XXII, not to the shades' arrival
+      in Book XXIV. The second Nekyia opens in elegy, not judgment. Using the Dies Irae here
+      would misread Homer's tonal control: he does not re-strike the catastrophe bell for the
+      shades' arrival but instead opens the register of the quietly dead.
+  - composer: Fauré
+    work: "Requiem, Op. 48 — 'In Paradisum'"
+    status: "demoted — already used in odyssey-5 (Calypso island) and iliad-24 (Priam's lament); its particular salvation register would repeat too many prior uses"
+    why: >
+      The 'In Paradisum' is the cycle's established salvation signature and has been placed at
+      key resolution points in both epics. The Missa Solemnis 'Dona nobis pacem' earns the
+      closing register through the harder path — through anxiety and martial interruption and
+      final settlement — which is structurally truer to the Odyssey's ending than the
+      luminous-passive release of the Fauré.
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "demoted — the Iliad's wrath leitmotif; the Odyssey's terminal violence needs a different register"
+    why: >
+      The kinsmen's attack is real violence but not the Iliad's mythological-scale martial
+      register. Shostakovich's 'Ninth of January' and Walton's Belshazzar's Feast give the
+      battle its correct Odyssey coloring — urgent, collectively driven, morally complex —
+      without importing the Iliad's sonic signature into the Odyssey's closing movement.
+  - composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    status: "demoted — the Iliad's fate leitmotif; Book XXIV's fate-register belongs to the peace covenant, not to hammered-motto doom"
+    why: >
+      Book XXIV does not end in fate but in salvation. The five-note motto would misread
+      the book's tonal direction, which moves from grief through wrath into divine settlement.
+      Bach's architectural 'Et in terra pax' and Beethoven's own harder-won Missa Solemnis
+      give the closing sequence its correct formal weight without the Iliad's sign.

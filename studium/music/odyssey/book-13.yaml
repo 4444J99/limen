@@ -1,0 +1,282 @@
+# Odyssey — Book XIII — curated music arc
+# THE RETURN TO ITHACA: Phaeacian convoy, Poseidon's stone, the mist, Athena's reveal, the disguise.
+work: odyssey
+book: 13
+title: "Odyssey Book XIII: Ithaca Unseen — Arrival, Mist, and the First Disguise"
+length_minutes: 108
+principle: >
+  Do not score Book XIII as a triumphant homecoming. Score it as the book where homecoming
+  is withheld at the very moment of completion — where the goal of ten years of war and ten
+  years of wandering is achieved and then immediately made invisible by the will of a goddess.
+  Odysseus arrives. He is home. He does not know it. That gap — between arrival and recognition —
+  is the book's fundamental subject, and it is the structural gap that will govern the entire
+  second half of the Odyssey. The dominant force is return: not as achievement but as
+  architecture of longing finally reaching its object, only to find the object shrouded. The
+  Phaeacians' night convoy is the most serene passage in the poem — Odysseus sleeps like death
+  while sailors who barely know him row him home out of sheer hospitality and grace. Poseidon
+  punishes that grace. The punishment reveals that return, in this poem, cannot be simple.
+  Every piece in this arc must be chosen for its sonic relationship to circular form and
+  recognition, or its disruption: the sudden color-shift of divine presence, the wandering
+  tonality of unknowing, the fluid harmony of disguise. The arc moves from the perfection of
+  arrival through the shock of divine wrath and the vertigo of unrecognition to the scheming
+  reconciliation between man and goddess — and ends in metamorphosis, with Odysseus wearing the
+  face of someone he is not, standing in a country he does not yet know he knows.
+force_arc: [return, memory, divine-intervention, wrath, fate, exile, supplication, divine-intervention, metamorphosis, revelation, return, metamorphosis]
+dominant_force: return
+tracks:
+  - n: 1
+    scene: "The Phaeacian convoy — Odysseus sleeping on the ship, rowed through the night toward Ithaca"
+    force: return
+    composer: Sibelius
+    work: "Symphony No. 5 in E-flat major — III. Allegro molto (finale)"
+    decision: added
+    why: >
+      Homer gives the convoy an uncanny stillness: Odysseus sleeps the sleep of the dead while
+      Phaeacian oarsmen pull through dark water with inhuman smoothness. The arrival is already
+      accomplished before it is acknowledged. Sibelius's Fifth Symphony finale is the only
+      orchestral movement built around a circular figure that returns and returns — the great
+      horn theme cycling through itself, gaining nothing and losing nothing, simply turning —
+      before the hammer-blows of the final cadence bring the arc down. Return's requirement is
+      circular form and recognition motif; the finale gives both: the cycling theme is the
+      night-long voyage, the hammer-blows are the shore. The movement is massive but unhurried,
+      which matches exactly the Phaeacians' effortless competence and Odysseus's unknowing sleep.
+  - n: 2
+    scene: "The shore at dawn — treasure laid beside the sleeping hero, the ships pull away"
+    force: memory
+    composer: Ravel
+    work: "Piano Concerto in G major — II. Adagio assaï"
+    decision: added
+    why: >
+      The Phaeacians lay Odysseus down on the sand with every gift the Phaeacians have given him
+      heaped around his still form. Then they leave, silently, having fulfilled a sacred obligation.
+      This is the most elegiac image in the book — the gifts of hospitality surrounding the sleeping
+      wanderer like the furnishings of a tomb, or a life summarized in objects. Ravel's Adagio
+      assaï from the G major Concerto is the most extraordinary piece of nostalgic single-line
+      recall in twentieth-century music: the right hand plays a long, unbroken melodic thread over
+      the quietest possible accompaniment, barely touching the sustain pedal, the sound of something
+      too delicate to grasp fully. Memory's requirement is nostalgic recall and faded recapitulation.
+      The movement holds the moment on the shore as a held breath — the hero at rest in the middle
+      of everything he has survived, not yet awake to any of it.
+  - n: 3
+    scene: "Poseidon sees the Phaeacian fleet returning — his anger rises to Zeus, who grants permission"
+    force: divine-intervention
+    composer: Bruckner
+    work: "Symphony No. 4 in E-flat major 'Romantic' — II. Andante quasi Allegretto"
+    decision: added
+    why: >
+      Poseidon has watched Odysseus arrive. He does not intervene there — Zeus would not permit
+      the breaking of a guest's sacred passage. Instead he waits for the Phaeacians to turn home,
+      then goes to Zeus to complain that his authority is being overridden by mortal hospitality.
+      Zeus grants permission for a contained punishment. Bruckner's second movement of the Fourth
+      is his most powerful evocation of divine weight in motion — slow, brass-heavy, the strings
+      and brass alternating in the great contrasting blocks that the divine-intervention force
+      requires. The color shifts are not dramatic cuts but tectonic: the movement feels like
+      watching something enormous change course with geological deliberateness. This is the correct
+      sonic grammar for Poseidon petitioning Zeus: not fury (that comes next) but oceanic authority
+      operating through formal channels, the patience of a god who knows he will be permitted.
+  - n: 4
+    scene: "Poseidon strikes — his palm turns the Phaeacian ship to stone within sight of harbor"
+    force: wrath
+    composer: Britten
+    work: "Four Sea Interludes from Peter Grimes — IV. Storm"
+    decision: added
+    why: >
+      The Phaeacians are watching their own ship return. It stops. It does not slow or veer —
+      it simply stops in the water and becomes stone, sinking to the harbor bottom as a crag.
+      Homer gives the moment a terrible speed: Poseidon strikes once, with his palm, and it is
+      done. Britten's Storm interlude from Peter Grimes is among the most precisely violent pieces
+      of sea-music in the orchestral repertoire — not a gradual building storm but a statement of
+      overwhelming force from the outset, rhythmic pressure that does not build up to a climax but
+      arrives at one, the harmonic resolution refused because the sea does not care about resolution.
+      Wrath requires rhythmic pressure and unresolved harmony. The ship turns to stone mid-rhythm,
+      mid-sentence; the Britten refuses to let the ear settle after the blow.
+  - n: 5
+    scene: "The Phaeacians gather at the harbor — Alcinous recalls the old prophecy, its fulfillment confirmed"
+    force: fate
+    composer: Sibelius
+    work: "Finlandia, Op. 26"
+    decision: added
+    why: >
+      Alcinous knew this would happen. There was a prophecy that Poseidon would one day punish
+      Phaeacia for safe-conducts given to wanderers. Alcinous stood at the harbor earlier and named
+      it. Now the prophecy is confirmed in stone before their eyes. The people of Scheria prepare
+      to appease Poseidon — to stop the worse outcome the prophecy also hinted at, a mountain
+      swallowing their city. Sibelius's Finlandia opens with a crushing brass statement — fate not
+      as a four-note motto but as a weight pressing down on an entire people, collective dread made
+      into sustained harmonic mass — then releases into a chorale that is not triumph but endurance.
+      Fate requires inexorable motif and hammered insistence. The Phaeacians' scene is not individual
+      doom but civic catastrophe: a whole city understanding that their gift of hospitality has cost
+      them something permanent, that the world has locked into a new configuration they cannot undo.
+  - n: 6
+    scene: "Odysseus wakes in a mist — Ithaca is before him but Athena has veiled it; he does not know his home"
+    force: exile
+    composer: Sibelius
+    work: "Symphony No. 6 in D minor, Op. 104 — I. Allegro molto moderato"
+    decision: added
+    why: >
+      Homer's description is precise and devastating: Athena has poured a mist over Ithaca so
+      Odysseus will not recognize it, so she can make him cautious before he acts. He looks at the
+      harbor he has been dreaming of for twenty years and does not know it. He beats his thighs
+      and despairs, thinking himself still far from home. Sibelius's Sixth Symphony is the most
+      uncomfortably tonally unmoored piece he wrote — it refuses the warm D minor of its nominal
+      key in favor of Dorian mode, maintaining a wandering atonality that never settles into the
+      resolution the harmonic language seems to promise. Exile requires wandering tonality and open
+      intervals. The Sixth's first movement is not melancholy but vertiginous: the listener is
+      always slightly unsure where they are, the key signatures providing none of the usual comfort.
+      This is precisely the epistemological condition of the man standing on his own shore without
+      knowing it.
+  - n: 7
+    scene: "Odysseus laments — he weeps, names every land he has failed to reach, wonders where he has been taken"
+    force: supplication
+    composer: Tavener
+    work: "The Protecting Veil — I. (The Protecting Veil)"
+    decision: added
+    why: >
+      Odysseus's lament here is not heroic. He names all the gifts the Phaeacians have given him,
+      heaped on the shore around him, and cries for home. He does not know he is there. He asks,
+      to no one, what man will take him in, what country is this, whether the people are just or
+      savage. The asking is formal and exposed — the most vulnerable moment in the Odyssey's second
+      half, a man stripped of orientation, crying. Tavener's Protecting Veil opens with a solo cello
+      line over a held string chord, the most sustained single melodic thread in his output: one
+      instrument searching for something, the harmony underneath providing shelter but not resolution.
+      Supplication requires suspended cadence and exposed melodic line. The opening movement of
+      The Protecting Veil is literal supplication — it was composed as a meditation on the Virgin
+      Mary as protector of the lost — and its formal structure (a single unbroken cello voice over
+      unchanging support) matches Odysseus's condition exactly: one man, exposed, asking.
+  - n: 8
+    scene: "Athena appears — the goddess takes the form of a young shepherd, and speaks to Odysseus"
+    force: divine-intervention
+    composer: Haydn
+    work: "The Creation — No. 13, 'The Heavens Are Telling' (chorus)"
+    decision: added
+    why: >
+      The appearance of Athena in disguise is the structural hinge of the book. One moment Odysseus
+      is weeping on an unrecognized shore; the next, a young shepherd is beside him. The shift is
+      instantaneous in Homer's text — no footsteps, no herald, simply a presence that was not there
+      before. Haydn's 'The Heavens Are Telling' is the choral announcement that the creation has been
+      accomplished — a sudden, blazing opening-out from the quiet texture that preceded it, full chorus
+      and orchestra arriving without gradual preparation. The divine-intervention requirement is sudden
+      color shift and brass/strings contrast. Haydn's chorus delivers both: the opening declamation
+      brings the full orchestra in a single moment, the contrast with the preceding recitative
+      absolute. Athena's appearance is always an event, not a development; 'The Heavens Are Telling'
+      knows how to announce the arrival of something enormous in a small disguise.
+  - n: 9
+    scene: "Odysseus's lying tale — he conceals his identity to the stranger, spinning a fiction of Crete"
+    force: metamorphosis
+    composer: Strauss
+    work: "Till Eulenspiegels lustige Streiche, Op. 28"
+    decision: added
+    why: >
+      Odysseus, even in distress, even speaking to an apparently ordinary shepherd on what he thinks
+      is a foreign shore, cannot reveal himself. He invents a long elaborate lie on the spot — a
+      Cretan exile who killed a man, fled on a Phoenician ship, was wrecked — a coherent fiction with
+      a different name, a different history, delivered with full conviction. Strauss's Till Eulenspiegel
+      is the canonical portrait of the quicksilver liar in disguise: the opening horn theme that
+      announces Till is immediately replaced by his first assumed identity, then his second, then his
+      third, the music shape-shifting through harmonic color and character in real-time, changing
+      orchestral identity without stopping, the fluid harmony of a man who is always someone else.
+      Metamorphosis requires changing orchestral color and fluid harmony. Till Eulenspiegel does
+      nothing else — it is eleven minutes of identity flux, and Odysseus's lying tale is the same
+      art: a man who can be anyone except, in this moment, himself.
+  - n: 10
+    scene: "Athena unmasks — she takes her true form, names Ithaca, and laughs at his deceptions"
+    force: revelation
+    composer: Messiaen
+    work: "Quatuor pour la fin du temps — VII. 'Fouillis d'arcs-en-ciel, pour l'Ange qui annonce la fin du Temps'"
+    decision: added
+    why: >
+      Athena's unveiling is one of the great moments of the Odyssey. The shepherd shimmer and is gone;
+      in its place is the goddess, tall, beautiful, laughing. She says: you would have to be a god
+      yourself to out-deceive you, you incorrigible liar. She names the island. Ithaca. He is home.
+      The moment of recognition — twenty years of wandering collapsing into a single word — requires
+      music that enacts stillness and verticality in the same instant as a blazing appearance. Messiaen's
+      seventh movement of the Quartet — the angel who announces the end of time, the rainbow-flash
+      of revelation — opens with the violin alone playing a line that seems to ascend without ever
+      quite resolving, the piano entering like a beam of light. Revelation requires stillness, chant,
+      verticality. The seventh movement has all three: it is the angel's announcement, vertical and
+      pure, the music of something that has descended from outside normal time to deliver a message
+      to a bewildered man on a shore.
+  - n: 11
+    scene: "They hide the treasure in the cave of the Nymphs — Odysseus and Athena survey his homeland"
+    force: return
+    composer: Dvořák
+    work: "String Quartet in F major, Op. 96 'American' — II. Lento"
+    decision: added
+    why: >
+      Now that Ithaca is named, Odysseus and Athena go through his treasure together — lifting,
+      counting, hiding it in the cave of the Nymphs — and for the first time in the book Odysseus
+      touches his own island's earth with knowledge. He looks at the harbor, the olive trees, the
+      cave. He has been here. He kneels and kisses the ground. This is the recognition that the
+      return force requires: circular form, the long arc closing. Dvořák's 'American' Quartet slow
+      movement is the most lucid homecoming in chamber music — the pentatonic melody, open and
+      un-harmonically-overloaded, the kind of tune that feels like something you already knew before
+      you heard it. Return requires circular form and recognition motif. The Dvořák Lento is not
+      triumphant; it is quieter than triumph, the recognition arriving not as an event but as a
+      settling, the way Odysseus touches his own land: not with ceremony but with the hands of a
+      man who had given up expecting to touch it again.
+  - n: 12
+    scene: "Athena disguises Odysseus as an old beggar — withered skin, clouded eyes, rags"
+    force: metamorphosis
+    composer: Berlioz
+    work: "Symphonie fantastique — II. 'Un Bal'"
+    decision: added
+    why: >
+      The disguise is Athena's gift and Athena's necessity. Odysseus cannot walk into Ithaca as
+      himself — the suitors would kill him before he could reach the hall. She transforms him: the
+      skin wrinkles, the golden hair whitens, the eyes cloud, the body bends. He is handed a staff
+      and a wallet. He is now a beggar. Every identity he will use in Books 14-22 passes through
+      this moment. Berlioz's 'Un Bal' is the Symphonie fantastique's masked ballroom — fluid waltz
+      harmony that never fully resolves into a single stable character, the melody glimpsed and lost,
+      the atmosphere of a room full of people who may or may not be what they seem. Metamorphosis
+      requires changing orchestral color and fluid harmony, and 'Un Bal' gives both in a social
+      register: this is disguise as entertainment, as survival, as art form. The second movement
+      is also the lightest moment in the Symphonie — after the opium-dream of the first, the
+      ballroom is almost gay — which captures something true about the disguise scene: Athena
+      laughs, she is delighted by his deceit, the metamorphosis is play as much as strategy.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "expressly forbidden before Book XXII equivalent; reserved for the slaughter of the suitors"
+    why: >
+      The terminal-monumental funeral register belongs to the suitors' slaughter, not to Book XIII's
+      return. The book ends in hope (however provisional), not death. Poseidon's punishment of the
+      Phaeacians has grief-weight, but it is civic grief, not elegy for a hero — the Britten Storm
+      carries the correct sudden-violence register without unlocking the funeral monument.
+  - composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    status: "forbidden before the terminal books; reserve for Books 22-24"
+    why: >
+      The eschatological judgment register has no foothold in Book XIII. The Phaeacians suffer a
+      punitive metamorphosis, not a mass death. Finlandia's collective-dread fate register carries
+      their catastrophe correctly without the Dies Irae's finality.
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "demoted — the Iliad's established wrath leitmotif; the Odyssey must find its own wrath"
+    why: >
+      Mars is the Iliad cycle's sonic signature for war-wrath. Poseidon's act in Book XIII is
+      divine punishment, not battlefield violence — Britten's Storm interlude captures the sudden
+      oceanic blow without collapsing the Odyssey's sonic identity into the Iliad's.
+  - composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    status: "demoted — the Iliad's fate leitmotif; seek fresh fate colorings for the Odyssey"
+    why: >
+      The hammered-motto fate of the Fifth is already the Iliad cycle's dominant fate sign and
+      has been used in almost every Iliad book. Book XIII's fate operates collectively and
+      prophetically — Finlandia's mass-weight is the correct register for a whole people
+      confronting a prophecy made stone, without importing the Iliad's individual-hero fate grammar.
+  - composer: Schubert
+    work: "Symphony No. 8 'Unfinished' — I. Allegro moderato"
+    status: "demoted — already used as odyssey-1's return anchor; seek fresh return colorings"
+    why: >
+      The Unfinished's opening was the return-coloring for Book I's structural opening. Book XIII
+      needs a different sonic shape for return — the Sibelius Fifth's circular finale gives the
+      same homecoming gravity without reusing the same work and losing the Odyssey's internal
+      palette variety.
+  - composer: Debussy
+    work: "Prélude à l'après-midi d'un faune"
+    status: "demoted — heavily used across Iliad and Odyssey arcs; seek fresh metamorphosis coloring"
+    why: >
+      The Prélude has been used for metamorphosis and desire across multiple books in both cycles.
+      Strauss's Till Eulenspiegel offers a fundamentally different metamorphosis register — social,
+      comic, verbal, kinetic — that fits Odysseus's lying tale more precisely than the Prélude's
+      sensual-dissolution register, and avoids palette fatigue.

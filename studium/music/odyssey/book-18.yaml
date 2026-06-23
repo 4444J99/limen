@@ -1,0 +1,275 @@
+# Odyssey — Book XVIII — curated music arc
+# THE FIGHT WITH IRUS; PENELOPE BEFORE THE SUITORS
+work: odyssey
+book: 18
+title: "Odyssey Book XVIII: The Beggar-Fight and Penelope's Power"
+length_minutes: 88
+principle: >
+  Do not score Book XVIII as a comedy that turns serious. Score it as a book about
+  power operating through disguise on two simultaneous tracks — Odysseus hiding his
+  strength behind rags while Penelope hides her intent behind beauty — and the suitors
+  comprehending neither. The Irus sequence is not comic relief; it is a demonstration:
+  Odysseus, still in the beggar's body, defeats the town bully with one blow, and the
+  suitors who laugh at Irus have no idea they are watching their own defeat rehearsed
+  in miniature. Athena's intervention when Penelope descends is the book's second
+  demonstration: divine beauty as weapon, deployed to extract gifts from men who think
+  they are the hunters. The force arc moves from the broad comedy of the buffo brawl
+  into the chromatic longing of desire — Penelope's entrance ignites the suitors and
+  devastates Odysseus, who watches the woman he sailed home for work the room that
+  belongs to him. The dominant force is desire precisely because the book turns on what
+  desire does to men who cannot see past it: the suitors' gift-giving is erotic tribute,
+  and Odysseus's held tears watching his wife among them are desire's underside — the
+  longing of a man who cannot yet claim what is his. Fate and grief close the book
+  because Penelope herself is beginning to feel the approach of something irreversible;
+  the foreboding that settles over the hall as the torches burn low is not dramatic
+  convention — it is the book's true weather.
+force_arc: [comedy, comedy, comedy, divine-intervention, desire, desire, memory, fate, grief, fate, revelation]
+dominant_force: desire
+tracks:
+  - n: 1
+    scene: "Irus the town beggar arrives and challenges the stranger — posturing, threats, the suitors amused"
+    force: comedy
+    composer: Mozart
+    work: "Così fan tutte, K. 588 — Overture"
+    decision: added
+    why: >
+      Irus is opera buffa made flesh: a bully who is only a bully because no one has
+      yet tested him, his bluster the exact sonic equivalent of a patter aria. Mozart's
+      Overture to Così fan tutte opens with a swaggering three-note figure that the rest
+      of the orchestra immediately undercuts — the musical equivalent of a large man
+      discovering that the person he threatened did not flinch. Comedy's requirement is
+      dance rhythm and courtly exaggeration; the Overture delivers both with the mechanical
+      precision of a comic plot already wound and ready to spring. The suitors' laughter
+      and their offhand bets on the fight are Mozartean ensemble comedy: everyone in the
+      scene except the audience believes they understand the stakes, and no one does.
+  - n: 2
+    scene: "The match is formally arranged — Antinous proposes the prize, the suitors stake a goat-paunch on the outcome"
+    force: comedy
+    composer: Offenbach
+    work: "La Belle Hélène — Overture"
+    decision: added
+    why: >
+      Offenbach's La Belle Hélène is the work that most precisely understands the comic
+      dimension of Homeric epic — the Trojan War rendered as operetta, heroic pretension
+      deflated by waltz rhythm. Its Overture is not a reduction of Homer but a commentary
+      on his comic machinery: the pomp, the absurd formality around trivial stakes, the
+      way men who should know better make elaborate ceremony out of a prize that is a
+      stuffed goat's stomach. Comedy requires dance rhythm and courtly exaggeration, and
+      Offenbach provides both while keeping an eye on the Homeric original: the overture's
+      bright brass fanfares are the same fanfares the suitors use to announce themselves,
+      puncturing their own dignity without realizing it. No other piece in the repertoire
+      scores the specifically Homeric buffo mode as precisely as this.
+  - n: 3
+    scene: "One blow — Irus falls; the suitors laugh; Odysseus props the body at the gate"
+    force: comedy
+    composer: Rossini
+    work: "La scala di seta — Overture"
+    decision: added
+    why: >
+      The fight is not a fight. Odysseus lifts his rags, shows the thighs of a war-veteran
+      to a man who had been using his size as a credential, and fells Irus with a single
+      blow to the jaw. Rossini's La scala di seta Overture is pure mechanism: a joke set
+      up with exquisite care and delivered in a single accelerating gesture that arrives
+      before the audience can brace for it. The comedy requirement is dance rhythm and
+      courtly exaggeration; this overture is courtly exaggeration compressed into
+      something like a punch — the long orchestral wind-up, the rapid triplet figures, the
+      abrupt cadence that arrives as relief and absurdity simultaneously. Irus propped at
+      the gate with his staff, still technically alive, is the punch-line: the bully as
+      permanent decoration, a warning no one in the hall understands.
+  - n: 4
+    scene: "Athena breathes grace and beauty on Penelope — she descends the stair transformed"
+    force: divine-intervention
+    composer: Strauss
+    work: "Tod und Verklärung (Death and Transfiguration), Op. 24 — the Transfiguration passage (closing section)"
+    decision: added
+    why: >
+      Athena's touch on Penelope is among the strangest divine acts in the Odyssey:
+      not armor, not weapons, not advice — but beauty, intensified past its natural
+      state, the goddess making the woman luminous in a way that Penelope herself cannot
+      feel or account for. The suitors' knees go slack. Strauss's Transfiguration passage
+      is the orchestral canon's most precise enactment of sudden luminous transformation:
+      from the quiet strings of the death-bed into brass-lit apotheosis, the color shift
+      arriving like a held breath released. Divine-intervention requires sudden color shift
+      and brass-strings contrast; the passage delivers exactly this — the dying theme
+      reborn in a light it could not have predicted. Athena does not change Penelope's
+      face; she changes the register in which it operates. Strauss changes the register
+      in which the dying man operates. The structural parallel is exact.
+  - n: 5
+    scene: "Penelope stands among the suitors — they are struck with longing; gifts are promised, knees are weakened"
+    force: desire
+    composer: Debussy
+    work: "Nocturnes — III. Sirènes"
+    decision: added
+    why: >
+      Penelope in the hall is a siren scene — not in the Book XII sense of supernatural
+      predation, but in the older sense: a woman whose presence makes men stop thinking
+      in anything other than the grammar of wanting. Debussy's Sirènes is the third
+      Nocturne, and it is the only orchestral movement in the canon that requires a
+      wordless female chorus to dissolve consonant harmony into chromatic suspension —
+      desire as sonic phenomenon, the longing itself becoming the texture of the air.
+      Desire's requirement is chromatic longing and deferred resolution; Sirènes gives
+      the audience desire from the outside, from the perspective of those watching Penelope
+      work the room the way the Homeric suitors watch her — pulled toward a resolution
+      that the music, like she, deliberately withholds. Odysseus is watching too. He knows
+      what the suitors cannot: that this woman is operating the scene.
+  - n: 6
+    scene: "Penelope solicits gifts from each suitor — tribute extracted through the performance of desire"
+    force: desire
+    composer: Strauss
+    work: "Salome, Op. 54 — Dance of the Seven Veils"
+    decision: added
+    why: >
+      Penelope's gift-soliciting is the most economically precise act in the book: she
+      uses desire — the suitors' desire, displayed and offered back to them as theater —
+      to extract wealth from men who believe themselves in control of the negotiation.
+      Strauss's Dance of the Seven Veils is the operatic canon's most exact score for
+      desire weaponized as display: the chromatic saturation, the deferred resolution
+      at each harmonic turn, the way the dance accumulates harmonic pressure without
+      ever completing the cadence that the tension demands. Desire's requirement is
+      chromatic longing and deferred resolution; the Dance delivers both and adds
+      something else — the performer's perfect awareness of what she is doing to the
+      audience, the self-possession that Salome and Penelope share. The suitors believe
+      they are watching a woman court them. They are watching a woman strip them.
+  - n: 7
+    scene: "Odysseus watches — he sees his wife work the room with gifts extracted, feels pride and grief together"
+    force: memory
+    composer: Rachmaninoff
+    work: "Symphonic Dances, Op. 45 — I. Non allegro"
+    decision: "replaces Elgar (Cello Concerto) — de-saturation"
+    why: >
+      Homer tells us Odysseus is glad — glad that she extracted the gifts — but his
+      gladness has a wound in it. He is watching the person he has been trying to get
+      back to for ten years negotiate with the men who want to replace him, and he cannot
+      yet intervene. Memory's requirement is nostalgic recall and faded recapitulation:
+      the great thing held at a distance while standing in the same room with it.
+      Rachmaninoff wrote the Symphonic Dances as his final completed work, in American
+      exile, looking back across a lost world — Russia, the nineteenth century, his own
+      earlier music — and the opening movement's long-breathed melody is the most
+      saturated nostalgic recall in his catalog: a theme that does not develop so much as
+      recapitulate itself from the first bar, already half-memory at the moment of its
+      statement. The saxophone line that enters midway is pure Rachmaninoff interiority —
+      a voice that does not belong to the hall it inhabits, displaced, unable to speak
+      its own name in the grammar available. Odysseus in the beggar's rags, watching
+      Penelope work the room he sailed home for, occupies exactly this position: present,
+      excluded, everything recognizable, nothing yet claimable.
+  - n: 8
+    scene: "The torches burn low — the maids grow insolent; a chill enters the hall's air"
+    force: fate
+    composer: Sibelius
+    work: "Tapiola, Op. 112"
+    decision: added
+    why: >
+      When the torches begin to gutter and the evening draws on, the hall's atmosphere
+      shifts. The maids' insolence with Odysseus is the first sign of a household's moral
+      fabric fraying — servants who no longer know who is master because no master has
+      enforced the order for twenty years. Sibelius's Tapiola is among the most precisely
+      foreboding works in the orchestral canon: not a storm or a battle but a sustained,
+      implacable tonal pressure, a Nordic forest that does not threaten but simply is,
+      vast and indifferent and inexorable. Fate's requirement is inexorable motif and
+      hammered insistence; Tapiola delivers this without drama, as atmosphere — the sense
+      of a vast mechanism that has been operating all along, now becoming perceptible.
+      The hall under the suitors is exactly this: a thing that has been going wrong for
+      years, now becoming visible in a torch-lit room.
+  - n: 9
+    scene: "Odysseus holds his tears — he endures the maids' insults, bites down the grief"
+    force: grief
+    composer: Shostakovich
+    work: "Piano Trio No. 2 in E minor, Op. 67 — III. Largo"
+    decision: added
+    why: >
+      The grief in this scene is interior and enforced: Odysseus cannot weep, cannot
+      speak his name, cannot react to the insults of maids who do not know they are
+      insulting their king. He must contain everything. Shostakovich's Largo from the
+      Second Piano Trio is grief under compression — the violin line is exposed and slow,
+      the piano harmonics cold, the cello sustaining the low register with a patience
+      that makes the restraint itself audible. Shostakovich composed the Trio as an
+      elegy in which open lamentation was not available; the public grief of the war years
+      required private encoding. Grief's requirement is slow tempo and inward line; the
+      Largo finds the interior register of a man who is watching his house be occupied by
+      men who will die for it, containing himself until the moment arrives, weeping in
+      the form of not weeping.
+  - n: 10
+    scene: "Penelope and Odysseus exchange words in the firelight — she speaks of the suitors' pressure; foreboding deepens"
+    force: fate
+    composer: Bruckner
+    work: "Symphony No. 9 in D minor — I. Feierlich, misterioso (opening)"
+    decision: added
+    why: >
+      Penelope tells the disguised Odysseus about the suitors, about her ruse with the
+      shroud, about the pressure closing in. She does not know she is speaking to her
+      husband. Odysseus tells her — with careful indirection — that her husband will
+      return. The scene is fate made conversational: two people who are on the same side
+      of an approaching catastrophe speaking obliquely around it, neither able to say
+      directly what they know. Bruckner's Ninth opens with an orchestral tremolo from
+      which thematic material slowly assembles — not a theme announced but fate
+      materializing from resonance, the sense of something enormous approaching from
+      an infinite distance at an unvarying speed. Fate's requirement is inexorable motif
+      and hammered insistence; Bruckner finds the cosmic scale of this inexorability,
+      the doom not as explosion but as the sound of approach itself, the hall under the
+      suitors as a room in which the walls are closing without moving.
+  - n: 11
+    scene: "The book closes — the suitors disperse; the hall goes quiet; Odysseus alone by the dying fire"
+    force: revelation
+    composer: Tavener
+    work: "Funeral Ikos"
+    decision: added
+    why: >
+      The book does not end in action. It ends in stillness: the suitors gone, the hall
+      emptying, Odysseus left alone with the low fire and the full knowledge of what is
+      coming. He has seen the house, seen Penelope, seen the scale of the insolence he
+      must answer. The revelation here is not joyful — it is the clarification that
+      arrives when the noise stops, when the comedy and the desire and the foreboding
+      have played out and a man is left alone with what he knows. Tavener's Funeral Ikos
+      takes the Byzantine Orthodox chant for the departed and unfolds it in a single long
+      breath of extreme formal stillness — melody over drone, the voice alone against the
+      silence, a text that moves between what the living owe the dead and what the dying
+      ask of God. Revelation requires stillness, chant, verticality; the Funeral Ikos
+      gives Odysseus by the fire the same register: a man who has descended among his own
+      dead house and is about to begin the ascent back. The suitors do not know this yet.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "expressly forbidden before Book XXII equivalent; save for the suitors' slaughter"
+    why: >
+      The terminal funeral-march register does not belong to Book XVIII's foreboding.
+      Bruckner's Ninth opening and Sibelius's Tapiola carry the book's inexorable doom
+      weight without crossing into the irreversible monumental register that belongs to
+      the slaughter in Book XXII.
+  - composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    status: "forbidden before the suitors' slaughter; save for the terminal books"
+    why: >
+      Eschatological judgment belongs to Book 22's mass death. The foreboding in Book
+      XVIII is atmospheric, not judicial; Tapiola and Bruckner's Ninth carry the
+      inexorable-fate color without the finality the Dies Irae requires.
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "demoted — the Iliad's wrath leitmotif; must not colonize the Odyssey cycle"
+    why: >
+      Book XVIII has no battlefield wrath. The violence of the Irus fight is buffo, not
+      martial; Mars would import the Iliad's sonic identity into a scene whose comedy
+      depends on deflation, not elevation.
+  - composer: Wagner
+    work: "Tristan und Isolde — Prelude"
+    status: "demoted — already used as wrath in iliad-1; desire here needs a different register"
+    why: >
+      The Tristan Prelude is established in the cycle as wrath-desire (iliad-1), and
+      the Liebestod was used in iliad-3. Debussy's Sirènes and Strauss's Dance of the
+      Seven Veils find desire's chromatic longing through feminine performance — the
+      correct register for Penelope's agency — rather than through Tristan's consuming
+      mutual dissolution.
+  - composer: Debussy
+    work: "Pelléas et Mélisande — Act IV love scene"
+    status: "demoted — already used in odyssey-5; seek fresh desire colorings"
+    why: >
+      Pelléas carried desire in Book V's Calypso sequence. Penelope's desire-weapon is
+      a different register — performative, strategic, public rather than intimate —
+      and the Sirènes and Dance of the Seven Veils find that public/weaponized quality
+      that the Pelléas love scene, which is private and mutual, cannot.
+  - composer: Brahms
+    work: "Academic Festival Overture, Op. 80"
+    status: "demoted — already used as desire in odyssey-8; prefer freshness"
+    why: >
+      The Academic Festival Overture's desire register is male, institutional, and
+      relatively unthreatening. Penelope's scene requires something with more chromatic
+      heat and formal ambiguity; Debussy and Strauss supply both.

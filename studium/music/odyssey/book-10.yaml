@@ -1,0 +1,299 @@
+# Odyssey — Book X — curated music arc
+# AEOLUS, THE LAESTRYGONIANS, AND CIRCE: the bag of winds; in sight of Ithaca; the storm back;
+# the Laestrygonian slaughter; landfall at Aiaia; scouts turned to swine; the moly; Odysseus
+# masters Circe; the year of forgetting; the command to descend to the dead.
+work: odyssey
+book: 10
+title: "Odyssey Book X: The Bag of Winds, the Cannibal Giants, and the Enchantress"
+length_minutes: 102
+principle: >
+  Do not score Book X as a catalogue of supernatural hazards. Score it as the book where the
+  same hope that nearly saved Odysseus (Ithaca in sight) is destroyed by the very men he is
+  trying to save (the crew who open the bag), and the same power that nearly kills him (Circe)
+  becomes the instrument of his only real rest — and his next descent. The book's governing
+  principle is metamorphosis, but it is not the simple kind. Every transformation in Book X
+  has a double: the winds that could carry Odysseus home are also the winds that hurl him back;
+  the enchantress who turns men into swine is also the woman who turns them back and turns
+  Odysseus himself into something new; the island that should be a pause becomes the year that
+  must be forgotten before the journey can resume. Even the Laestrygonian catastrophe is a
+  metamorphosis — twelve ships become one, a fleet becomes a remnant, an army becomes a crew
+  too small to mourn what it has lost. The book begins with a gift from a god of the air and
+  ends with a command to visit the dead. Between those poles every state of being is unstable,
+  every identity is subject to revision, and the only authority that holds is the one Odysseus
+  seizes with a drawn sword. Score for that instability — the color that shifts before the
+  harmonic arrival, the promise that cannot be trusted, the transformation that is simultaneously
+  loss and rescue.
+force_arc: [divine-intervention, fate, exile, wrath, grief, metamorphosis, divine-intervention, law, desire, metamorphosis, memory, revelation]
+dominant_force: metamorphosis
+tracks:
+  - n: 1
+    scene: "Aeolus gives the bag of winds — the fleet sails nine days, Ithaca almost visible"
+    force: divine-intervention
+    composer: Mendelssohn
+    work: "A Midsummer Night's Dream — Overture, Op. 21"
+    decision: added
+    why: >
+      The gift of the bag of winds is divine provision at its most theatrical: Aeolus, king of
+      the winds, ties up all the hostile gales in a bag of oxhide and sends a westerly to carry
+      the ships straight home. The fleet sails for nine days in perfect order, Ithaca rising on
+      the horizon. Mendelssohn's Overture is the exact sonic equivalent of this benevolent
+      enchantment — the famous string pianissimo opening conjures a world of invisible, ordered
+      magical forces; brass punctuations arrive like gusts of favorable wind; the whole piece
+      enacts the passage from ordinary reality into a zone where the rules are different and gifts
+      are enormous. The divine-intervention requirement of sudden color shift and brass/strings
+      contrast is met here with exhilarating lightness: the gods have arranged something good, and
+      for nine days it actually holds. The overture's comic-magical register is not ironic; it
+      describes the real sweetness of those nine days before the crew wakes.
+  - n: 2
+    scene: "In sight of Ithaca — the crew opens the bag, the storm drives them back"
+    force: fate
+    composer: Tchaikovsky
+    work: "Symphony No. 4 in F minor, Op. 36 — IV. Allegro con fuoco"
+    decision: added
+    why: >
+      Odysseus falls asleep within sight of home. The crew, certain the bag holds treasure, open
+      it. The winds escape and the storm drives the fleet back past everything they have crossed.
+      Tchaikovsky's Fourth Symphony is built around a fate motif introduced in the first movement's
+      brass fanfare; the finale brings that motif back precisely at the moment when the folk-dance
+      celebrations collapse — a brief promise of festivity consumed by the inevitable return of the
+      hammered brass. The finale's Allegro con fuoco is fate as re-eruption: the thing that was
+      suppressed returns at full force, destroying the temporary brightness. Fate requires inexorable
+      motif and hammered insistence; the finale supplies it in the exact form the scene demands —
+      not a new blow but the resumption of one already announced, the storm that was always waiting
+      in the bag Aeolus tied shut.
+  - n: 3
+    scene: "Aeolus turns them away — the fleet driven back into the open sea, exile compounded"
+    force: exile
+    composer: Sibelius
+    work: "Tapiola, Op. 112"
+    decision: added
+    why: >
+      Odysseus returns to Aeolia and begs again. Aeolus looks at the fleet and refuses: a man the
+      gods hate cannot be helped; the king sends him away without provisions, without wind, without
+      hope. The fleet must row. From this moment the sea is not a path but a territory of punishment,
+      and Ithaca — visible nine days ago — is farther away than the beginning. Sibelius's Tapiola
+      is among the most sustained pieces of wandering, unresolvable tonality in the orchestral
+      repertoire: a single theme for the great forest god dispersed into endless harmonic permutations,
+      the tonality never arriving, the texture opening outward into something that has no center and
+      no edge. The exile requirement of wandering tonality and open intervals is here taken to its
+      natural extreme — a sound-world that stretches in every direction without destination, that
+      moves without progressing, that is neither storm nor calm but the unrelenting condition of
+      being sent away from the only place you wanted to reach.
+  - n: 4
+    scene: "The Laestrygonian harbor — cannibal giants smash eleven ships with boulders"
+    force: wrath
+    composer: Janáček
+    work: "Sinfonietta — I. Fanfare (Allegretto)"
+    decision: added
+    why: >
+      The Laestrygonians are unlike anything the Odyssey has shown before: giants who fish from
+      the cliffs and hurl boulders, who spear the crews like fish and carry them home for eating.
+      The harbor is a trap — the other eleven ships entered; only Odysseus's, moored outside, can
+      flee. The giants swarm the cliffs and smash the fleet. Janáček's Fanfare from the Sinfonietta
+      is rhythmic assault made ceremonial — the brass writing is insistent, asymmetric, physically
+      pressurized, a sound of force operating at a register beyond argument. Wrath requires rhythmic
+      pressure and unresolved harmony; Janáček's fanfare does not build to a climax and release but
+      sustains its hammered rhythmic cells without resolution or sympathy. The Laestrygonians are
+      not angry — they are simply enormous and hungry, and the Fanfare catches the impersonal
+      violence of scale that makes this scene so terrible: not hatred, not war, just a world where
+      the proportions are wrong.
+  - n: 5
+    scene: "One ship survives — the wreckage and grief as the sole remnant rows in silence"
+    force: grief
+    composer: Górecki
+    work: "Symphony No. 3 in F major 'Symphony of Sorrowful Songs' — II. Lento e largo"
+    decision: added
+    why: >
+      Eleven crews are dead. Odysseus cuts the mooring rope and escapes; his men row in
+      silence. Homer does not pause for lamentation — the poem moves past the dead with the
+      same brutal speed as the Laestrygonians themselves — but the silence of the surviving
+      crew is the poem's grief even when the text refuses to speak it. Górecki's second
+      movement is built from the inscription scratched into the wall of a Gestapo cell by
+      an eighteen-year-old girl who did not survive: 'O Mamo nie płacz.' The music beneath
+      it is an ostinato of unbearable simplicity, a piano-over-strings lament that does not
+      melodramatize its subject but holds it with absolute formal quietness. Grief requires
+      slow tempo and an inward line; this movement has both, and it has the specific inwardness
+      of grief that cannot be spoken aloud — the grief of people who are still moving, still
+      rowing, and cannot yet afford to stop.
+  - n: 6
+    scene: "Circe turns the scouting party into swine — Eurylochus escapes to report"
+    force: metamorphosis
+    composer: Ravel
+    work: "Gaspard de la Nuit — I. 'Ondine'"
+    decision: added
+    why: >
+      The scouts approach Circe's palace through the forest, hearing her singing inside. They
+      enter. She feeds them, drugs the food, and touches each man with her wand: they grow
+      bristles, snouts, become swine while retaining human minds. Ravel's 'Ondine' is the most
+      seductive metamorphic surface in the piano repertoire — the water-spirit who beckons from
+      her shimmering, harmonically unstable world, promising transformation, dissolving identity
+      into her own element. The metamorphosis requirement of changing orchestral color and fluid
+      harmony is here enacted with Ravel's signature: every moment of seeming arrival immediately
+      liquefies into the next texture, the form itself refusing to solidify. Circe's enchantment
+      is not violent — it is a seduction, a beautiful dissolution of the human into something less
+      and more. 'Ondine' is that beauty: dangerous, fluid, impossible to resist, and utterly
+      incompatible with the maintenance of ordinary identity.
+  - n: 7
+    scene: "Hermes appears, gives Odysseus the moly — the counter-charm against Circe"
+    force: divine-intervention
+    composer: Weber
+    work: "Oberon — Overture"
+    decision: added
+    why: >
+      Hermes meets Odysseus in the forest on the way to Circe's house — a young man, beautiful,
+      carrying his golden staff — and gives him the moly: a plant with a black root and white
+      flower that no mortal can pull from the earth, but the gods can. Weber's Oberon Overture
+      opens with a solo horn call of unearthly clarity — the fairy-king's summons — and then
+      produces one of the most formally complete sudden-color-shift sequences in romantic opera:
+      the horn dissolves into shimmering string harmonics, which give way to an allegro of
+      irresistible forward motion. The divine-intervention requirement of sudden color shift and
+      brass/strings contrast is here caught at its most precisely magical register. Hermes does
+      not arrive to punish or warn; he arrives with a gift that is also a lesson in the real
+      nature of Circe's world — that it can be traversed, that the gods' tools are stranger and
+      more beautiful than mortals suppose, that the enchanted forest has its own counter-logic
+      and Odysseus now holds it.
+  - n: 8
+    scene: "Odysseus masters Circe — sword drawn, the oath, the terms of peace"
+    force: law
+    composer: Bach
+    work: "Goldberg Variations, BWV 988 — Aria"
+    decision: added
+    why: >
+      When Circe's drug fails and Odysseus draws his sword, she falls to her knees and asks:
+      who are you, who cannot be enchanted? She has been told by Hermes that a man like this
+      would come. Odysseus demands an oath — sworn by the gods — that she will not harm him.
+      She swears. The scene's formality is precise: a pact with exact terms, witnessed by the
+      gods, enforcing mutual obligation between a mortal and an immortal. Bach's Goldberg Aria
+      is the most architecturally transparent piece of formal music in the keyboard repertoire —
+      a ground bass of perfect regularity over which a melody of great elaboration moves, every
+      note derivable from the governing structure, nothing arbitrary, everything in its lawful
+      place. The law requirement of formal clarity, repetition, and architecture is here enacted
+      without drama: the Aria does not argue or press; it simply is what it is, as Circe's oath
+      is simply what it is. The treaty between Odysseus and Circe is a legal instrument, and the
+      Aria is the sonic form of a legal instrument — beautiful, exact, and binding.
+  - n: 9
+    scene: "Circe and Odysseus — feasting, union, the enchanted island as paradise"
+    force: desire
+    composer: Ravel
+    work: "Shéhérazade — III. 'L'Indifférent'"
+    decision: added
+    why: >
+      After the oath, Circe bathes Odysseus, feeds him, and he refuses to eat until his men are
+      restored. She restores them — younger than before, she says, and better looking. Then
+      feasting, then union. The island is abundant; the magic is now his, not against him.
+      Ravel's 'L'Indifférent' is the most erotically ambiguous of the Shéhérazade songs — the
+      beloved who passes without stopping, the singer who watches with longing too complicated
+      to name, a chromatic desire that is part possession, part distance, part transformation
+      of the watching self into the object of its own gaze. The desire requirement of chromatic
+      longing and deferred resolution is here given its most exquisitely suspended form: not
+      consummation but proximity, the charged space between Odysseus and the goddess who was
+      his enemy and is now his host and lover, in a house where the doors are always open and
+      the wine is inexhaustible and the sea is temporarily irrelevant.
+  - n: 10
+    scene: "Men restored to human form — the enchantment reversed, the island made luminous"
+    force: metamorphosis
+    composer: Debussy
+    work: "Nocturnes — III. 'Sirènes'"
+    decision: added
+    why: >
+      Circe goes to the sty and anoints each man; the bristles fall, the snouts recede, they
+      are men again — and Homer says taller and more beautiful than before, the transformation
+      having passed through degradation into something better. Debussy's 'Sirènes' is the only
+      major choral-orchestral nocturne that renders enchantment as a sustained change of sonic
+      state: wordless women's voices dissolve into the orchestral texture and re-emerge, the
+      harmonic surface shifts continuously, the music inhabits a register between the natural and
+      the supernatural without resolving into either. The metamorphosis requirement of changing
+      orchestral color and fluid harmony is here given its most luminous form — not the dark
+      fluid dissolution of Ondine (track 6) but the restored, clarified, almost impossible beauty
+      of men who passed through swine and came out the other side as themselves, only more so.
+      The reverse transformation is the book's quiet miracle, and 'Sirènes' gives it its correct
+      impossible radiance.
+  - n: 11
+    scene: "The year of forgetting — the men feast and rest, refusing to remember the way home"
+    force: memory
+    composer: Schubert
+    work: "Winterreise, D. 911 — 'Der Lindenbaum' (No. 5)"
+    decision: added
+    why: >
+      A year passes. The men eat and drink and sleep in Circe's house and forget — not through
+      enchantment now but through the simple abundance of comfort — that they are trying to go
+      home. When they finally remind Odysseus, he weeps. He has been the one to forget longest.
+      Schubert's 'Der Lindenbaum' is the most precisely structured song of memory in the song
+      literature: the linden tree by the gate where the traveler once carved his sweethearts'
+      names, the wind through its branches calling him back, the knowledge that if he had turned
+      aside there he would have found rest. It is not nostalgia in the sentimental sense but
+      memory as a gravitational force that competes with motion — the held image of what could
+      have been if you had stopped. The memory requirement of nostalgic recall and faded
+      recapitulation is here given its correct wintry register: the men are not unhappy in
+      Circe's house; they are exactly the Lindenbaum traveler, moving past something that offered
+      rest, not yet knowing what that rest will cost them in the dark that follows.
+  - n: 12
+    scene: "Circe sends Odysseus to the underworld — the instruction, the departure at dawn"
+    force: revelation
+    composer: Mahler
+    work: "Symphony No. 2 in C minor 'Resurrection' — V. Finale: 'Aufersteh'n' (opening chorus)"
+    decision: added
+    why: >
+      Circe's final gift to Odysseus is the most terrible: she tells him the path forward leads
+      through the land of the dead. He must go to Hades and speak with the shade of the blind
+      prophet Tiresias to learn how to reach home. She gives exact instructions — the sacrifice,
+      the trench, the blood — and he sits in silence all night. This is revelation in its most
+      austere form: not comfort but knowledge, the disclosure of the necessary path that passes
+      through what no living man should traverse. Mahler's 'Aufersteh'n' chorus opens in a
+      register of absolute stillness — the vast orchestra hushed, the chorus entering with the
+      Klopstock text as if from an immense distance, the music organized around the vertical
+      fact of death and what stands on the other side of it. The revelation requirement of
+      stillness, chant, and verticality is here fulfilled at the scale the scene demands: not
+      whispered but vast, not a private vision but a cosmic instruction, the moment when the
+      wandering is given its true structure — descent before return, the dead before the living,
+      night before any possible morning.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "expressly forbidden before Book XXII equivalent; save for the suitors' slaughter"
+    why: >
+      The Laestrygonian slaughter is enormous — eleven ships, hundreds of men — but the text
+      does not elegize them; it moves past with predatory speed. The terminal-monumental funeral
+      register belongs to the slaughter of the suitors in the Odyssey's Book XXII equivalent.
+      Górecki's second movement carries the grief of incomprehensible loss without opening the
+      irreversible monument register prematurely.
+  - composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    status: "forbidden before the suitors' slaughter; save for the terminal books"
+    why: >
+      The eschatological judgment register is reserved. The Laestrygonian dead are not judged;
+      they are simply consumed. The scene's violence is pre-moral, not terminal-cosmic.
+      Janáček's Fanfare takes the violence at its correct impersonal register.
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "demoted — reserved as Iliad leitmotif; find fresh wrath coloring for the Odyssey"
+    why: >
+      Mars is the established wrath signature of the Iliad cycle and cannot migrate to the
+      Odyssey without collapsing the two poems' sonic identities. Janáček's Fanfare provides
+      wrath as rhythmic-brass assault in a register that belongs specifically to the Odyssey's
+      inhuman scale of violence — giants, not warriors.
+  - composer: Strauss
+    work: "Metamorphosen"
+    status: "demoted — used in Book IX for Polyphemus's blinding; seek fresh metamorphic coloring"
+    why: >
+      Metamorphosen was the correct choice for Book IX's central irreversible transformation.
+      Circe's swine-making is a different kind of metamorphosis — seductive, recoverable,
+      beautiful in its menace — and Ravel's Ondine finds that register where Strauss would
+      reprise a too-solemn weight. The double metamorphosis (swine and restoration) is better
+      served by two Ravel/Debussy impressionist surfaces than by Strauss's elegiac continuous arc.
+  - composer: Debussy
+    work: "Prélude à l'après-midi d'un faune"
+    status: "demoted — Iliad leitmotif for divine-intervention; register too familiar"
+    why: >
+      The Faun Prélude was used in the Iliad cycle (Books V and XVI) as a divine-intervention
+      signature and has accumulated associations that would blur the Odyssey's distinct sonic
+      world. Mendelssohn's Overture and Weber's Oberon find the same luminous magical register
+      with fresh orchestral color.
+  - composer: Scriabin
+    work: "Piano Sonata No. 5, Op. 53"
+    status: "demoted — used in Book IX for the escape under the rams; seek distinct metamorphic coloring"
+    why: >
+      Book IX's escape scene already used Scriabin's continuous harmonic flux for metamorphosis-
+      as-concealment. Circe's metamorphosis is a different kind — outward, sensory, liquid —
+      better served by Ravel's Ondine, which provides fluid harmony without Scriabin's compressed
+      single-movement urgency.

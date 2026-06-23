@@ -1,0 +1,272 @@
+# Odyssey — Book XXII — curated music arc
+# THE MNESTEROPHONIA: Odysseus strips his rags; Antinous shot; the revelation; the sealed hall;
+# arrows then spears; Athena's aegis; suitors cut to the last; the maids hanged; Melanthius
+# mutilated; the hall fumigated with fire and sulphur.
+work: odyssey
+book: 22
+title: "Odyssey Book XXII: The Mnesterophonia — Slaughter in the Hall"
+length_minutes: 105
+principle: >
+  Do not score Book XXII as a battle. Score it as an execution — premeditated, architecturally
+  sealed, theologically ratified. Every preparation of Books XVI through XXI has been aimed at
+  this single hour. The bow is the key that unlocks the door that has been locked since Odysseus
+  left Ithaca twenty years ago. When he strips his rags and leaps to the threshold, he is not
+  beginning a fight; he is completing a structure. The score must feel that way: not escalation
+  but revelation of what was always there.
+
+  Book XXII is the Odyssey's catastrophe in the technical dramatic sense — the decisive turn from
+  which nothing can be undone — and it is the book that unlocks the two forbidden registers held
+  in reserve since Book I: the Wagner funeral-march and the Verdi Dies Irae. These pieces are not
+  used here for sentiment or horror. They are used because the slaughter of the suitors is a
+  theological event: 108 men judged, condemned, and executed by the restored king of Ithaca acting
+  as the instrument of Zeus. The hall becomes a court, then an abattoir, then a site of ritual
+  purification. The arc must move through wrath (the instrument of justice) into fate (the shape
+  that justice takes) into grief (the weight of mass death even when merited) into sacrifice and
+  then into salvation — the sulphur and fire that closes the wound in the house and makes the house
+  habitable again.
+
+  The dominant force is wrath — not the Iliad's heroic rage of a grieving man, but the cold wrath
+  of a righteous account rendered. Odysseus does not weep during the slaughter. He is operating
+  in a different register: the register of restoration through annihilation. Every music choice
+  must honor both sides of that: the violence is real and the violence is just, and the two cannot
+  be separated.
+force_arc: [wrath, fate, revelation, law, wrath, divine-intervention, fate, grief, sacrifice, grief, salvation]
+dominant_force: wrath
+tracks:
+  - n: 1
+    scene: "Odysseus strips his rags and leaps to the great threshold, bow in hand and quiver at his feet"
+    force: wrath
+    composer: Janáček
+    work: "Sinfonietta — I. Fanfare"
+    decision: added
+    why: >
+      The moment of stripping and leaping is instantaneous — one action that transforms the
+      beggar into the king, the suppliant into the avenger, the rags into the bow. Janáček's
+      Sinfonietta opens with twelve brass instruments playing a fanfare of such compressed,
+      asymmetric energy that it feels less like announcement than detonation. The piece was written
+      as a civic fanfare for gymnasts but its sonic character is pure sudden revelation of force:
+      something large that was coiled has sprung. Wrath's requirement is rhythmic pressure and
+      unresolved harmony; the Sinfonietta fanfare delivers both in a form so concentrated that
+      it cannot be extended or developed — it simply erupts, holds, and arrests. This is the
+      threshold moment: twenty years compressed into a single physical act.
+  - n: 2
+    scene: "Antinous shot through the throat as he lifts the wine-cup — the first suitor falls"
+    force: fate
+    composer: Sibelius
+    work: "Symphony No. 5 in E-flat major — III. Allegro molto (closing bars)"
+    decision: added
+    why: >
+      Antinous does not know the arrow is coming. He is lifting his golden cup to drink — Homer
+      insists on this detail, the cup in the air, the wine not yet at his lips — when the shaft
+      takes him through the throat. The other suitors do not understand immediately; they think
+      it was an accident. Sibelius's Fifth Symphony closes with six hammered chords separated
+      by silence — the most formally strange ending in the symphonic repertoire, each chord a
+      statement that does not resolve into the next, each silence between them a held breath.
+      Fate's requirement is inexorable motif and hammered insistence; the closing bars of the
+      Fifth give fate exactly that structure: not a rushing tide but a sequence of irreversible
+      individual blows, each complete and final, the silence between them the silence of a man
+      who does not yet know he is already dead.
+  - n: 3
+    scene: "Odysseus reveals his identity — 'Dogs, you thought I would never return from Troy'"
+    force: revelation
+    composer: Messiaen
+    work: "Éclairs sur l'Au-delà — I. Apparition du Christ glorieux"
+    decision: added
+    why: >
+      The revelation speech is among the most electrifying in the Odyssey: Odysseus strips the
+      disguise of his name as he stripped his rags, speaking with the full authority of the
+      returned king, the man who outwitted Troy, the man who has been patient twenty years
+      precisely for this moment. Messiaen's first movement of Éclairs sur l'Au-delà — his final
+      orchestral work — opens with a blaze of high string writing and is titled the appearance
+      of Christ in glory: sudden, total, preceded by nothing, requiring no preparation. Revelation's
+      requirement is stillness, chant, verticality; the Apparition achieves this by arriving with
+      overwhelming clarity rather than gradual emergence, the light not building but simply present.
+      The suitors hear the name Odysseus and a great terror seizes them — Homer's word is the
+      same one used for the terror of battle. The music must carry that vertical shock.
+  - n: 4
+    scene: "Telemachus arms; Eumaeus and the cowherd take stations; the doors and postern sealed"
+    force: law
+    composer: Bach
+    work: "Musical Offering, BWV 1079 — Ricercar a 3"
+    decision: added
+    why: >
+      The sealing of the hall is an act of architectural precision: Telemachus takes the armor
+      from the storeroom, the loyal servants post at every exit, Melanthius finds the arms-room
+      locked. What looks like preparation for a brawl is in fact the formal construction of a
+      closed system from which nothing can escape. Bach's Ricercar a 3 from the Musical Offering
+      is counterpoint as architecture — three voices that enter and interlock, each constrained by
+      the others, the whole structure formally complete and impenetrable from outside. Law's
+      requirement is formal clarity, repetition, architecture; the three-voice Ricercar is the
+      sealed hall in sound: each voice is a sentry at a door, the structure holds because every
+      voice is executing its function without deviation. Note: the Ricercar a 6 was used in
+      Iliad Book X; the three-voice version is a distinct work with a lighter, more precise texture.
+  - n: 5
+    scene: "The arrows — Odysseus shoots through the hall until the quiver is empty"
+    force: wrath
+    composer: Penderecki
+    work: "Threnody for the Victims of Hiroshima"
+    decision: added
+    why: >
+      Homer counts the arrows with terrible economy: they fly and men fall, and the description
+      does not pause for each death individually but renders the mass event as sustained mechanism.
+      Penderecki's Threnody deploys fifty-two string instruments as collective noise rather than
+      individual voices — tone clusters, sul ponticello, col legno, glissandi — transforming the
+      orchestra into a mass cry that no individual line can escape. Wrath's requirement is rhythmic
+      pressure and unresolved harmony; Penderecki delivers both in their most extreme form, a sound
+      that is not music-as-melody but music-as-mass-event. The arrows flying through the hall are
+      not duels; they are a single extended action, and the Threnody is the only piece that renders
+      violence at this sustained collective scale without resolving into heroic narrative. The title
+      is not ironic: these deaths, however deserved, have mass-death weight.
+  - n: 6
+    scene: "Athena raises her aegis from the roof-beam — suitors scatter like cattle stung by a gadfly"
+    force: divine-intervention
+    composer: Mahler
+    work: "Symphony No. 2 in C minor 'Resurrection' — II. Andante moderato (Ländler)"
+    decision: added
+    why: >
+      The aegis is Athena's terror-shield, the weapon that scatters armies. Homer's simile is
+      precise: the suitors fly in all directions like cattle when a gadfly appears in the pasture
+      in spring — sudden, animal, collective panic without logic or direction. What is strange about
+      this divine intervention is its tonal shift: the aegis appears not with thunder but with
+      a sudden inexplicable terror, the kind of god-sent fear that Homer distinguishes from ordinary
+      battle-fear. Mahler's second movement of the Resurrection Symphony is a Ländler — a dance,
+      deliberately simple and pastoral, deliberately out of register with the symphony's weight on
+      either side of it. Divine-intervention's requirement is sudden color shift and brass-strings
+      contrast; Mahler achieves this by using a completely different tonal world, the terror of
+      divine presence rendered as pastoral simplicity that refuses to explain itself. The aegis
+      is not thunder; it is a shift in the air, a change of key in the hall.
+  - n: 7
+    scene: "The suitors cut down to the last — Leiodes begs in vain; Phemios the singer spared"
+    force: fate
+    composer: Bruckner
+    work: "Symphony No. 8 in C minor — IV. Finale: Feierlich, nicht schnell"
+    decision: added
+    why: >
+      The suitors fall in numbers until only the supplications of Leiodes and Phemios interrupt
+      the killing. Leiodes — the one suitor who never touched Penelope, who had prayed against
+      the suitors' behavior — is killed anyway. Phemios the singer is spared. These individual
+      fates within the mass death are the moments where fate becomes visible as a sorting mechanism:
+      not everyone dies, but the rule by which some survive and others do not is Odysseus's
+      judgment operating below the level of argument. Bruckner's Eighth finale is the longest
+      sustained meditation on fate-as-architecture in the symphonic repertoire: enormous spans of
+      unchanging harmonic motion, the sense of something too large to hurry, chorale passages that
+      feel like cosmic sentences being read aloud. Fate requires inexorable motif and hammered
+      insistence; Bruckner provides this not through violence but through scale — the sheer temporal
+      weight of a finale that will not accelerate, that moves at fate's own pace regardless of
+      the listener's urgency.
+  - n: 8
+    scene: "The hall littered with the bodies of the slain — Odysseus surveys the dead"
+    force: grief
+    composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    decision: added
+    why: >
+      This track has been locked since Book I of this cycle, waiting for the one moment that
+      requires the terminal funeral-march register: mass death in a closed space, the aftermath
+      of righteous violence, the silence after the killing stops. Homer does not celebrate. The
+      hall is described in the aftermath as a fishing-ground where the catch lies gasping —
+      108 men heaped together, noble and base alike, all dead. Odysseus does not exult; he
+      surveys. Wagner's Funeral March is built from Siegfried's leitmotifs cycling through
+      their own annihilation — each theme associated with life, heroism, joy now played as
+      elegy, each surfacing and sinking. Grief requires slow tempo and inward line; the Funeral
+      March is slow, inward, and simultaneously world-historical in scale — the music for a death
+      whose consequences extend beyond the event itself. The suitors' deaths end a world that
+      existed in Ithaca for twenty years. The Funeral March honors the weight of what has ended,
+      regardless of whether it deserved to end.
+  - n: 9
+    scene: "The disloyal maids made to haul out the bodies and scrub the hall, then hanged in a row 'like thrushes in a snare'"
+    force: sacrifice
+    composer: Verdi
+    work: "Requiem — II. Dies Irae: Dies irae (opening)"
+    decision: added
+    why: >
+      The hanging of the maids is the book's most disturbing act. Telemachus refuses the quick
+      death by sword that Odysseus had suggested and instead hangs them — twelve women who had
+      slept with the suitors — in a row from the ship's cable strung across the courtyard. Homer
+      gives them the simile of thrushes or doves caught in a snare: they kick a little while, then
+      are still. This is sacrifice in the specific sense of ritual purification through killing:
+      the house cannot be clean until every trace of the corruption has been removed. The Verdi
+      Dies Irae is now unlocked — the text is explicit: "Day of wrath, that day will dissolve the
+      world in ash." Sacrifice requires ritual weight, processional, immolation build; the Dies Irae
+      opens with the full orchestra and chorus in unanimous declaration, a sound that is not a
+      description of judgment but judgment itself in sonic form. The maids are not warriors and they
+      do not die nobly. The music does not mitigate this; it places it in the register of cosmic
+      reckoning where Homer's text places it.
+  - n: 10
+    scene: "Melanthius the goatherd mutilated in the courtyard — ears, nose, hands, feet, genitals cut away"
+    force: grief
+    composer: Britten
+    work: "War Requiem, Op. 66 — I. Requiem aeternam: Requiem aeternam (opening)"
+    decision: added
+    why: >
+      The mutilation of Melanthius is the most extreme act in the book, and Homer describes it
+      without flinching and without apparent disapproval. The loyal servants carry it out, and
+      Odysseus does not intervene. What does the listener do with this? The correct musical
+      response is not justification and not condemnation but the register of grief at what human
+      violence becomes when it is given institutional sanction. Britten's War Requiem opens with
+      the soprano and chorus singing "grant them rest" over a harmonic field of quiet, unresolved
+      anguish — the text is liturgical mercy; the sound is sorrow that the text cannot fully
+      address. Grief requires slow tempo and inward line; Britten's opening achieves this while
+      holding both the human cost of violence and the theological request that the dead — even
+      the dead who deserved death — be granted rest. After the Dies Irae, this is the inward turn:
+      the house is not clean because the violence is over; it is clean only when the grief has
+      been named.
+  - n: 11
+    scene: "The hall fumigated with fire and sulphur — Odysseus calls Penelope; the house is whole"
+    force: salvation
+    composer: Bach
+    work: "Mass in B minor, BWV 232 — VI. Dona nobis pacem"
+    decision: added
+    why: >
+      The final act of Book XXII is purification: Odysseus commands that the hall be cleaned with
+      fire and sulphur, the ancient method for dispelling miasma — the ritual pollution left by
+      blood and death. The sulphur is lit; the fumes roll through the rooms; the house breathes
+      again. Then Odysseus calls Penelope. The book ends not with the slaughter but with the
+      call toward reunion. Bach's Dona nobis pacem — the final chorus of the B minor Mass — is
+      the supreme instance of salvation as resolving radiance and chorale apotheosis: a fugue that
+      builds from individual voices into a collective utterance of peace, the harmonic motion
+      arriving at last at the stability it has been seeking through the entire Mass. Salvation
+      requires resolving radiance and chorale apotheosis; the Dona nobis pacem provides both while
+      remaining formally austere — it is not sentimental resolution but the resolution of a
+      structure that earned its final chord through everything that preceded it. The house is
+      clean. The king is home. The arc closes.
+demoted:
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "demoted — the Iliad's wrath leitmotif; never used for the Odyssey cycle"
+    why: >
+      Mars is the established wrath signature of the Iliad. Odysseus's wrath in the hall is a
+      different register — cold, architectural, predetermined — and requires fresh sonic characterization.
+      Penderecki's Threnody captures the mass-violence character more precisely without borrowing
+      the Iliad's heroic-combat identity.
+  - composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    status: "demoted — fate leitmotif of the Iliad cycle; seek fresh fate colorings"
+    why: >
+      The four-note fate motto is already the Iliad's fate signature. Book XXII's fate operates
+      as an architectural closing (Sibelius's hammered chords) and a cosmic weighing (Bruckner's
+      finale) — both convey inexorable insistence through different means that do not collapse
+      the Odyssey's sonic identity into the Iliad's.
+  - composer: Stravinsky
+    work: "The Rite of Spring — 'The Sacrificial Dance'"
+    status: "demoted — reuse risk; prefer Verdi Dies Irae now unlocked for this book"
+    why: >
+      The Rite's Sacrificial Dance has been used throughout the Iliad cycle and appears in
+      odyssey-15 (sacrifice). The Verdi Dies Irae is unlocked specifically for Books 22-24,
+      and its eschatological judgment register fits the hanging of the maids with more precision
+      than the Rite's primitive-ritual register.
+  - composer: Prokofiev
+    work: "Alexander Nevsky — 'The Battle on the Ice'"
+    status: "demoted — already used in Iliad Books VIII and XII; prefer fresh orchestral color"
+    why: >
+      The battle-episode scoring is already claimed in the Iliad cycle. The Mnesterophonia is
+      not a battle between armies but a judicial execution in a sealed room, and its music
+      should reflect that architectural difference.
+  - composer: Shostakovich
+    work: "Symphony No. 11 'The Year 1905' — II. Allegretto (The Ninth of January)"
+    status: "considered for mass-death scene; demoted in favor of Bruckner's archival scale"
+    why: >
+      The Shostakovich Eleventh's massacre episode was a strong candidate for the suitors cut
+      to the last. Demoted because the wrath register was already covered by Penderecki, and
+      Bruckner's Eighth finale provided a fate-as-scale reading that Shostakovich's episodic
+      violence does not offer.

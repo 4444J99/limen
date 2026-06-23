@@ -1,0 +1,291 @@
+# Odyssey — Book XIX — curated music arc
+# PENELOPE'S INTERVIEW; EURYCLEIA AND THE SCAR: the firelight interview, the false Cretan tale,
+# the nurse's recognition, the scar and the Parnassus flashback, the silencing, the dream of the
+# eagle and the geese, and the announcement of the bow contest.
+work: odyssey
+book: 19
+title: "Odyssey Book XIX: The Scar That Names Him"
+length_minutes: 100
+principle: >
+  Do not score Book XIX as "the scene where the nurse recognizes Odysseus." Score it as the
+  book where identity is simultaneously a wound and a law — where the body carries the archive
+  that the disguise cannot erase, and where every conversation between Penelope and the stranger
+  is a negotiation between two people who are each, in different ways, pretending not to know
+  what they know. The scar is not a plot device; it is the counter-argument to every false
+  name Odysseus has spoken since leaving Troy. Autolycus named him "man of pain" before the
+  wound existed, and the wound completed the naming. Homer's digression into Parnassus is the
+  longest retrospective flashback in the poem, and it arrives precisely when the hands of an
+  old woman discover the truth the eyes cannot see in a darkened hall. Score that digression
+  as the full weight it is: not backstory but the living past made suddenly, touchably present.
+  The book's movement is from desire (the charged firelight space) through memory and grief
+  (the false tale, Penelope weeping) into the body's revelation (the scar, the naming) and
+  back out through metamorphosis and desire to the formal law of the bow. The dominant force
+  is memory — not as nostalgia but as a physical fact that rises to the surface when touched.
+force_arc: [desire, memory, grief, supplication, revelation, memory, law, revelation, fate, metamorphosis, desire, law]
+dominant_force: memory
+tracks:
+  - n: 1
+    scene: "The hall cleared; Penelope descends by firelight; the stranger and the queen begin to circle each other"
+    force: desire
+    composer: Schumann
+    work: "Dichterliebe, Op. 48 — No. 1: 'Im wunderschönen Monat Mai'"
+    decision: added
+    why: >
+      The scene's atmosphere is charged before a word is spoken: the great hall emptied of suitors,
+      firelight, a queen and a stranger who is her husband seated across from each other, the whole
+      situation vibrating with what cannot be said. Schumann's opening song from the Dichterliebe
+      cycle is the perfect sonic register because it famously refuses to resolve — the piano
+      introduction establishes a half-cadence that the song never answers, the voice entering over
+      harmonically suspended ground, desire as an open question. Desire requires chromatic longing
+      and deferred resolution; Schumann's A-sharp rising to B over an unresolved chord gives the
+      scene its exact pitch: two people circling the truth, everything stated in the oblique grammar
+      of what is not yet said. The piano's final two bars after the voice stops do not resolve
+      either. Nothing in this scene resolves. That is the music.
+  - n: 2
+    scene: "Penelope questions the stranger — who are you, where do you come from, who were your parents"
+    force: memory
+    composer: Ravel
+    work: "Pavane pour une infante défunte"
+    decision: added
+    why: >
+      Penelope's questioning is not interrogation — it is the particular grief of a woman who has
+      spent nineteen years reconstructing a face she cannot fully remember. She asks about origin
+      and lineage because she is also asking: do you carry any trace of the man I am trying to
+      remember? Ravel's Pavane is the most perfectly calibrated piece of nostalgic recall in the
+      French repertoire — a stately dance for someone who is no longer there, played at a tempo
+      that holds the memory in suspension rather than advancing it, the melodic line almost a
+      quotation of something the listener cannot quite place. Memory's requirement is nostalgic
+      recall and faded recapitulation; the Pavane fades rather than cadences, and Penelope's
+      questioning is its sonic environment: the patient circling of an absence that has a shape.
+  - n: 3
+    scene: "The false Cretan tale — Odysseus claims to have met the real Odysseus; Penelope weeps"
+    force: grief
+    composer: Schubert
+    work: "Symphony No. 8 in B minor, D. 759 — II. Andante con moto"
+    decision: added
+    why: >
+      Penelope weeps at a fiction. The stranger tells her he hosted Odysseus in Crete twenty years
+      ago, and the detail is so particular, the description so exactly right, that she cannot stop
+      the grief from coming. She weeps for someone whose existence is being handed back to her
+      through the mouth of the man who is him. Schubert's second movement of the Unfinished
+      Symphony — the work already used at its first movement for the odyssey's opening note of
+      return — has a different character entirely: a searching oboe theme over tremolando strings,
+      the most vulnerable texture in the orchestral repertoire, grief held in the throat rather than
+      released. The slow tempo and inward melodic line are grief's requirements; what makes this
+      movement specific is its quality of searching rather than lamenting — Penelope is not
+      collapsing, she is absorbing information that reopens the wound with precision. The oboe finds
+      the melody and cannot hold it cleanly. That is weeping in the dark at a story you believe.
+  - n: 4
+    scene: "Eurycleia called to wash the stranger's feet — the aged nurse, the intimate act, the exposed vulnerability"
+    force: supplication
+    composer: Monteverdi
+    work: "L'Orfeo — 'Possente spirto' (Act III)"
+    decision: added
+    why: >
+      Penelope calls for her old nurse — the woman who raised Odysseus from birth — to wash the
+      stranger's feet. The act is an ancient ritual of hospitality; it is also the most intimate
+      physical contact possible between a host and guest, the servant handling the body of a man
+      whose identity she is about to discover by touch. Monteverdi's 'Possente spirto' is the
+      supreme aria of supplication in Baroque opera: Orpheus pleading with the powers of the
+      underworld to return what death has taken, his voice ornate and trembling over suspended
+      cadences that refuse to close. Supplication requires suspended cadence and exposed melodic
+      line; the aria's remarkable quality is that its ornamentation is itself a form of vulnerability —
+      each grace note a small pleading, the line stretching beyond what the breath should sustain.
+      Eurycleia's hands moving toward the stranger's body carry the same register: she does not
+      know what she is about to touch, and the not-knowing is itself a kind of pleading.
+  - n: 5
+    scene: "Eurycleia's hands find the scar — the first moment of contact, the shock of recognition beginning"
+    force: revelation
+    composer: Messiaen
+    work: "Éclairs sur l'Au-delà — I. 'Apparition du Christ glorieux'"
+    decision: added
+    why: >
+      The hand finds the scar before the mind understands what the hand has found. This is the
+      book's central moment of revelation — not the full recognition yet, which comes two tracks
+      later, but the instant when the body's knowledge precedes conscious thought, when Eurycleia's
+      fingers close around a raised ridge of tissue on the stranger's thigh and the whole world
+      pauses before catching up. Messiaen's first movement of Éclairs sur l'Au-delà opens in
+      absolute stillness — sustained string chords, pianissimo, no pulse, the harmony poised at
+      the edge of tonal gravity — before the brass arrives with the 'appearance' the title names.
+      Revelation requires stillness, chant, verticality; Messiaen's first movement holds the
+      stillness longer than the listener can comfortably bear, the way the scar holds in
+      Eurycleia's hand for a suspended beat before anything happens. Recognition is not always
+      sudden. Sometimes it is a pause in which everything reorganizes itself before it speaks.
+  - n: 6
+    scene: "The scar flashback — the boar hunt on Parnassus, young Odysseus, grandfather Autolycus and the wound"
+    force: memory
+    composer: Chopin
+    work: "Nocturne in B major, Op. 62 No. 1"
+    decision: "replaces Elgar (Cello Concerto) — de-saturation"
+    why: >
+      Homer suspends the recognition for nearly two hundred lines to tell the story of the scar.
+      The flashback moves to Parnassus, to young Odysseus visiting his grandfather Autolycus, to
+      the great boar hunt in the woods above Delphi, to the tusk that opened the wound in the
+      boy's thigh before the boar was killed. This digression is not an interruption — it is
+      the past arriving in the present with full weight, the memory that the body carries made
+      visible in its origin. Chopin's Nocturne in B major, Op. 62 No. 1 — one of his final
+      nocturnes, written as his powers were failing — is the most inward backward-glance in
+      his late piano literature: the melody unfolds with the quality of something retrieved from
+      far away, ornamented as if the mind keeps returning to a phrase it cannot let go, the
+      filigree around the line not decoration but the texture of obsessive recall. Memory requires
+      nostalgic recall and faded recapitulation; the Nocturne's B major has an autumnal warmth
+      that does not brighten into triumph but deepens into the amber-preserved quality of youth
+      recovered across decades — the boar hunt on Parnassus arriving not as vivid action but as
+      something touched and known in the dark, the way the scar itself is known, by feel rather
+      than sight. The young Odysseus on Parnassus is far away from the scarred man in the hall;
+      Chopin's fading ornamental line gives the distance its correct acoustic weight.
+  - n: 7
+    scene: "Autolycus names the child — 'let his name be Odysseus, the man of pain' — the ancestral gift"
+    force: law
+    composer: Bach
+    work: "Goldberg Variations, BWV 988 — Aria"
+    decision: added
+    why: >
+      Autolycus gives the child a name, and the name is a destiny. The naming in Homeric epic is
+      a constitutional act: to name something is to install the law by which it will be known,
+      a formal structure that generates all subsequent variations. Bach's Goldberg Aria is the
+      purest example in the repertoire of a formal structure (the bass-line's harmonic sequence)
+      that generates everything else — the thirty variations that follow are all derivations from
+      this initial law, the Aria that opens and closes the whole work as the frame that makes
+      the variations possible. Law requires formal clarity, repetition, architecture; the Aria
+      is an architecture of repetition so pure that the variations are not departures from it
+      but revelations of what it already contained. Autolycus naming Odysseus is the Aria;
+      the twenty years of wandering are the variations; Book XIX, when the name surfaces
+      through the scar, is the Aria returning at the work's end.
+  - n: 8
+    scene: "Eurycleia recognizes him fully — she drops his leg into the basin; the water spills"
+    force: revelation
+    composer: Pärt
+    work: "Fratres (for string orchestra and percussion)"
+    decision: added
+    why: >
+      The recognition is complete. Eurycleia's hand has held the scar long enough; she looks up
+      at the stranger's face and knows. His leg drops; the basin tilts; water spills onto the
+      floor. Homer gives this moment extraordinary physical precision — the water, the bronze
+      basin ringing on the stone — and then suspends time. Pärt's Fratres is built entirely on
+      a cyclic repetition of a simple tintinnabuli pattern with a single sustained melody moving
+      through it in long, still arcs, the percussion marking the structural beats with absolute
+      calm. Revelation requires stillness, chant, verticality; Fratres has all three, but its
+      specific quality is the way the vertical harmonics and the measured pulse create a space
+      outside ordinary time — the recognition is not a moment but a new state of knowing that
+      the old nurse must inhabit before she can speak. The water spreads on the floor; the music
+      holds the moment in its bell-toned stillness. Eurycleia's eyes and the stranger's face
+      are suspended in this space.
+  - n: 9
+    scene: "Odysseus seizes Eurycleia's throat — 'Do you want to destroy me? Be silent.'"
+    force: fate
+    composer: Nielsen
+    work: "Symphony No. 5, Op. 50 — I. Tempo giusto (the side-drum episode)"
+    decision: added
+    why: >
+      The recognition is immediately interrupted by compulsion. Odysseus's hand goes to the
+      nurse's throat before she can speak — not cruelty but necessity, the plot's iron logic
+      asserting itself with absolute priority over everything else: feeling, reunion, gratitude.
+      The disguise must hold. The plan must proceed. His identity must remain sealed. Nielsen's
+      Fifth Symphony contains the most extraordinary passage of inexorable mechanical insistence
+      in the symphonic canon: a solo side-drummer is instructed to improvise 'as if at all costs
+      to disturb the music,' while the orchestra drives forward with absolute rhythmic insistence,
+      neither yielding to the drum nor being destroyed by it — the will of the structure overwhelming
+      every disruption. Fate requires inexorable motif and hammered insistence; the passage is
+      fate as a force that simply cannot be argued with, that seizes the moment before any other
+      response is possible. Odysseus's grip on the nurse's throat is the orchestra's forward drive:
+      the plan will not be stopped by a single recognition, however true.
+  - n: 10
+    scene: "Penelope's dream — the eagle swoops, kills all twenty geese; the geese are the suitors"
+    force: metamorphosis
+    composer: Ravel
+    work: "Gaspard de la nuit — I. Ondine"
+    decision: added
+    why: >
+      Penelope tells the stranger her dream: she has twenty geese she loves, and an eagle
+      comes from the mountain and kills them all, and she weeps for the geese, and then the
+      eagle speaks to her in the voice of a man and says he is Odysseus and the geese were
+      the suitors and their death is coming. The dream is the book's metamorphic center —
+      birds become men, men become birds, the eagle speaks with a human voice, and the dreamer
+      does not understand what she has been told even as she hears it. Ravel's 'Ondine' from
+      Gaspard de la nuit is the most completely fluid piece of piano writing in the repertoire:
+      the water-sprite's music has no stable harmonic ground, only constant transformation of
+      color and texture, the melody surfacing and dissolving, the whole piece a sustained state
+      of becoming-something-else. Metamorphosis requires changing orchestral color and fluid
+      harmony; the dream's imagery of animals that are men and men that are birds finds in
+      Ondine's iridescent flux its exact sonic environment — the dream world where identity
+      is not fixed but perpetually re-forming itself in the firelight.
+  - n: 11
+    scene: "The stranger interprets the dream — 'The eagle was Odysseus himself; the suitors are already dead'"
+    force: desire
+    composer: Wagner
+    work: "Siegfried Idyll"
+    decision: added
+    why: >
+      The stranger tells Penelope that the dream is clear — the eagle was Odysseus, the geese
+      were the suitors, the killing is coming. He is interpreting his own dream, speaking of
+      himself in the third person with the intimacy of a man who can barely sustain the
+      distance. The interpretation trembles with what is not said: he is here, he is the eagle,
+      he is telling her what is going to happen while she looks at his face and does not know.
+      Wagner's Siegfried Idyll was written in secret as a birthday gift for Cosima — played
+      outside her window at dawn — and is built entirely on the Tristan chromatic-longing
+      language transposed into something private, intimate, and domestic: yearning that has found
+      its object but cannot yet announce itself. Desire requires chromatic longing and deferred
+      resolution; the Idyll's Tristan harmonies in chamber scoring give the stranger's interpretation
+      its exact temperature — desire so close to its object that the voice must be kept carefully
+      level to avoid breaking. He tells her Odysseus is coming. He is Odysseus. The music holds
+      the unbearable gap between those two sentences.
+  - n: 12
+    scene: "Penelope announces the contest of the bow — twelve axes, the arc they must string and shoot through"
+    force: law
+    composer: Handel
+    work: "Messiah, HWV 56 — 'Hallelujah' chorus"
+    decision: added
+    why: >
+      Penelope ends the interview by declaring the terms of the succession: she will marry the
+      man who can string Odysseus's bow and shoot an arrow through the axes. This is a sovereign
+      act — a queen constituting the formal structure that will determine who rules Ithaca. The
+      bow contest is law as architecture: a precise formal test with defined parameters, announced
+      publicly, binding on everyone in the hall. Handel's Hallelujah chorus is the most completely
+      architectural choral declaration in the canon — the repeated 'Hallelujah' as a hammered
+      formal statement, each voice entering in its structural position, the counterpoint building
+      a structure as regular and inevitable as a legal judgment. Law requires formal clarity,
+      repetition, architecture; the chorus's formal weight gives Penelope's announcement its
+      correct register: not a desperate gambit but a sovereign decree, the queen imposing order
+      on a house that has been lawless for twenty years. The structure will hold. The bow will
+      reveal who has the right.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "expressly forbidden before Book XXII equivalent; save for the slaughter of the suitors"
+    why: >
+      The terminal funeral-march register is blocked until the poem's catastrophe. Book XIX
+      contains grief (Penelope weeping) but it is intimate and private, not monumental public
+      elegy. Schubert's Unfinished second movement carries the correct inward grief register
+      without crossing into the irreversible monument register that belongs to Books 22-24.
+  - composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    status: "forbidden before the suitors' slaughter; save for the terminal books"
+    why: >
+      The eschatological judgment register belongs to Book 22's mass death. The suitors are
+      not yet dead; Penelope does not yet know her husband is present. The Dies Irae's
+      catastrophic finality would destroy the book's carefully maintained suspension.
+  - composer: Elgar
+    work: "Enigma Variations — Variation IX 'Nimrod'"
+    status: "demoted — already dominant in multiple Iliad and Odyssey books; too familiar for fresh memory"
+    why: >
+      Nimrod has appeared in odyssey-1 (memory), iliad-2 (memory), iliad-3 (memory), iliad-4
+      (kingship), and multiple other books. The scar flashback and Penelope's questioning demand
+      fresh colorings of memory — Ravel's Pavane and Elgar's own Cello Concerto provide the
+      autumnal recall register without the Nimrod association. The Cello Concerto is the better
+      Elgar choice for this book precisely because it is less canonically overdetermined.
+  - composer: Rachmaninoff
+    work: "Piano Concerto No. 2 in C minor, Op. 18 — II. Adagio sostenuto"
+    status: "demoted — used in odyssey-3 and odyssey-8 for memory; seek fresh coloring"
+    why: >
+      The Rachmaninoff Adagio is already the cycle's established memory signature for large-scale
+      romantic-nostalgic recall. Book XIX's memory operates more precisely — the scar's specific
+      wound, the specific hunt on Parnassus — and benefits from the more autumnal, searching
+      quality of the Elgar Cello Concerto rather than the broad Rachmaninoff sweep.
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "demoted — Iliad wrath leitmotif; forbidden as Odyssey signature"
+    why: >
+      Mars is the established wrath signature of the Iliad cycle. Book XIX has no wrath track;
+      and in any case the Odyssey cycle builds its own sonic vocabulary distinct from the Iliad's
+      canonical force colorings.

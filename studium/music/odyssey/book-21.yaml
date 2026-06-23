@@ -1,0 +1,262 @@
+# Odyssey — Book XXI — curated music arc
+# THE CONTEST OF THE BOW: the great bow brought down, the suitors' failure, the beggar strings it,
+# the arrow flies through twelve axes.
+work: odyssey
+book: 21
+title: "Odyssey Book XXI: The Bow That Only One Man Can String"
+length_minutes: 90
+principle: >
+  Do not score Book XXI as "the setup for the slaughter." Score it as the book where an
+  instrument decides the truth. The great bow of Iphitus is not a weapon here — it is an
+  epistemological device. It knows who Odysseus is. The suitors cannot string it not because
+  they lack muscle but because the bow does not recognize them as legitimate; the test is
+  ontological before it is physical. Penelope carries this bow down from the storeroom weeping,
+  because she knows what it means that she is doing this — she has made the decision that
+  the waiting is over, even if she does not yet know what the ending will be. The book's
+  dominant motion is fate operating through a specific object: the bow selects, the string
+  tests, the axes verify. Every scene is structured as elimination — the wrong hands, the
+  wrong grip, the string that will not yield — until the one hand arrives for which the bow
+  was always waiting. The arc moves from grief-saturated memory (Penelope descending) through
+  formal law (the contest's architecture), through fate's repeated verdict on the suitors,
+  through revelation (the loyal servants receive the secret), through comedy (the suitors'
+  mockery of the beggar), through desire (Odysseus's fingers on the string of his own
+  identity), through the recognition-form of return (the bow strung as a lyre is strung), to
+  the sovereign confirmation of kingship (the arrow through twelve axes). Score each scene for
+  its dominant epistemological act: what does this moment reveal, and to whom?
+force_arc: [memory, law, fate, kingship, revelation, fate, comedy, law, desire, return, kingship]
+dominant_force: fate
+tracks:
+  - n: 1
+    scene: "Penelope descends to the storeroom — she lifts the great bow and weeps, remembering Iphitus"
+    force: memory
+    composer: Fauré
+    work: "Élégie in C minor, Op. 24"
+    decision: "replaces Elgar (Cello Concerto) — de-saturation"
+    why: >
+      Penelope does not carry the bow down triumphantly. Homer has her weep as she touches it,
+      remembering Iphitus who gave it to Odysseus and who was killed by Heracles — two men who met
+      as guests, exchanged gifts, and never saw each other again. The bow is already an elegy before
+      it becomes a test: it is the object-trace of a friendship interrupted by death, carried now by
+      the wife of the man who received it. Memory's requirement is nostalgic recall and faded
+      recapitulation; Fauré's Élégie in C minor is the most concentrated form of this register in
+      the chamber-and-orchestra cello repertoire — a single cello line over hushed strings, the
+      melody not weeping loudly but holding its grief in the way that grief is held after years of
+      practice, with a formal dignity that has become indistinguishable from the shape of loss itself.
+      The Élégie was written as a memorial piece, its C minor tonality a key Fauré returned to for
+      music that needed to carry weight without breaking under it. Penelope descending the stairs
+      with Iphitus's bow is not a woman in the first shock of grief; she is a woman who has lived
+      inside grief so long that carrying it has become a posture, a bearing, a way of moving through
+      a room — and the Élégie gives that specific quality its exact sonic register, the cello sustaining
+      a line that knows everything it has lost and continues nonetheless.
+  - n: 2
+    scene: "The contest announced — Penelope sets twelve axes in a row, declares the test"
+    force: law
+    composer: Bach
+    work: "Musical Offering, BWV 1079 — Ricercar a 3"
+    decision: added
+    why: >
+      Penelope's announcement is a legal act. She names the terms: string the bow, shoot the arrow
+      through twelve axe-helve holes, and I will follow the man who succeeds. Homer presents the
+      contest with architectural precision — the axes are not set roughly but in a row, straight,
+      a formal geometry. Bach's three-voice Ricercar from the Musical Offering is formal clarity
+      taken to its most transparent extreme: a single subject treated with perfect structural
+      regularity, each voice entry a rule applied, the whole edifice composed of nothing but the
+      logic of its own design. Law requires formal clarity, repetition, architecture; the Ricercar
+      enacts the contest's structure in sonic form — this is what order looks like when it is
+      assembled from first principles, before the test has produced its result.
+  - n: 3
+    scene: "The suitors fail one by one — the bow will not bend for Antinous, Eurymachus, each in turn"
+    force: fate
+    composer: Sibelius
+    work: "Symphony No. 5 in E-flat major, Op. 82 — III. Allegro molto (finale)"
+    decision: added
+    why: >
+      The suitors are not individually unworthy by the poem's own terms — they are rich, athletic,
+      Ithacan nobility. The bow refuses them not by chance but by a necessity that the poem renders
+      as fate's verdict, not physics. Sibelius's Fifth Symphony finale is built on a rhythmic figure
+      called the "swan theme" swinging across the orchestra in hammered insistence, culminating in
+      the famous separated chords — six blows of absolute irrevocability — that end the work.
+      Fate requires inexorable motif and hammered insistence; the finale gives the suitors' collective
+      failure its correct sonic grammar: not a series of individual disappointments but a single
+      pronouncement, repeated with each attempt, the bow's refusal as structural fact. Each suitor
+      who fails is not a man who tried and missed; he is fate making its argument again.
+  - n: 4
+    scene: "Telemachus tries the bow — nearly strings it on the third attempt, stops at Odysseus's signal"
+    force: kingship
+    composer: Elgar
+    work: "Pomp and Circumstance March No. 4 in G major, Op. 39"
+    decision: added
+    why: >
+      Telemachus is not a suitor. When he tries the bow he almost strings it — three pulls, the
+      fourth would have done it — and Odysseus signals him to stop. This near-stringing is not a
+      near-miss but a proof: the son of Odysseus has the blood, has the potential sovereignty, lacks
+      only the years that his father has already paid for. Elgar's Fourth Pomp and Circumstance
+      March is less triumphant than its famous sibling — it has a ceremonial grandeur that is
+      latent rather than declared, sovereign display as promise rather than arrival. Kingship
+      requires ceremonial grandeur and sovereign display; the Fourth March gives Telemachus's
+      moment its correct register: authority present but not yet exercised, the rightful heir
+      stopping himself because the moment is not his.
+  - n: 5
+    scene: "Odysseus reveals himself to Eumaeus and Philoetius — they weep and embrace him"
+    force: revelation
+    composer: Tavener
+    work: "The Lamb"
+    decision: added
+    why: >
+      This is one of the most intimate recognition scenes in the Odyssey. Odysseus takes the two
+      loyal servants outside while the suitors heat the bow. He shows them the scar — the mark
+      of Autolycus's boar, the fact of his identity — and asks for their allegiance. They weep.
+      He sets them at their tasks: Eumaeus to bring the bow through to him, Philoetius to lock
+      the courtyard gates. Tavener's "The Lamb" is the closest the choral canon comes to pure
+      vertical stillness — each phrase a question answered by itself, the harmonic language reduced
+      to the plainest possible chant, the sound of truth spoken without decoration. Revelation
+      requires stillness, chant, verticality; this piece places the scene in an interior register
+      where three men who know the truth stand briefly outside the hall in which a false world is
+      still operating.
+  - n: 6
+    scene: "Eurymachus fails at last — the suitors' humiliation complete, the hall falls quiet"
+    force: fate
+    composer: Shostakovich
+    work: "Symphony No. 5 in D minor, Op. 47 — IV. Allegro non troppo"
+    decision: added
+    why: >
+      Eurymachus, the most formidable of the suitors, is the last to fail. His failure is not
+      quiet — he speaks of shame, of mockery they will suffer before other men, of the bow's
+      refusal as a public verdict on all of them. Homer lets the failure land with full weight.
+      Shostakovich's Fifth Symphony finale is formally controversial — its relentless hammer pulse
+      reads as either triumph or compelled acclamation, a machine running that cannot be stopped —
+      and that ambiguity is precisely right here. Fate requires inexorable motif and hammered
+      insistence; the finale's inexorable pulse is what the suitors experience as they fail: not
+      malice, not bad luck, but a mechanism operating beneath human influence, hammering its verdict
+      without variation. The hall's quiet at the end is the echo of machinery that has run its course.
+  - n: 7
+    scene: "The beggar asks to try the bow — the suitors mock him, Penelope insists he be given it"
+    force: comedy
+    composer: Mozart
+    work: "Don Giovanni, K. 527 — Overture"
+    decision: added
+    why: >
+      The suitors' reaction to the beggar's request is pure buffo — their mockery is the laughter
+      of men who do not yet understand that they are in a different story than they think. Penelope
+      overrules them with a logic they cannot refute: if the beggar strings it, she still will not
+      marry him, so what do they fear? The scene is comedy with an ominous undertone. Mozart's Don
+      Giovanni Overture is the precise sonic equivalent of this doubled register: D minor declaration
+      of catastrophe at the opening, then a fast major-key rush of wit and social surface that cannot
+      quite suppress what the opening announced. Comedy requires dance rhythm and courtly exaggeration;
+      the overture provides both while embedding in its DNA the knowledge of what is about to happen
+      to the people who cannot stop laughing.
+  - n: 8
+    scene: "Telemachus commands Eumaeus to bring the bow — suitors threaten, the command holds"
+    force: law
+    composer: Bach
+    work: "Cantata BWV 147, 'Herz und Mund und Tat und Leben' — 'Jesu, Joy of Man's Desiring'"
+    decision: added
+    why: >
+      Telemachus asserts his authority for the first time in Book XXI with absolute directness:
+      bring the bow to the stranger, and I will throw you off this island if you disobey. The
+      suitors back down. Eumaeus carries the bow through the hall, weeping, and sets it in the
+      beggar's hands. Bach's "Jesu, Joy" is not sentimental music; beneath the famous treble
+      melody the lower voices move in formal repetition, a perpetual-motion pattern of complete
+      architectural clarity — order operating continuously as though it had always been in charge.
+      Law requires formal clarity, repetition, architecture; the chorale's steady lower-voice
+      mechanism gives Telemachus's command its correct register: not an eruption of authority
+      but authority discovering that it was always there, now exercised as simply as breathing.
+  - n: 9
+    scene: "The beggar turns the bow over in his hands — examining it, testing the string like a harper"
+    force: desire
+    composer: Wagner
+    work: "Parsifal, WWV 111 — Prelude to Act I"
+    decision: added
+    why: >
+      Homer's description of this moment is among the most extraordinary in the Odyssey: Odysseus
+      turns the bow this way and that, testing it as a skilled musician tests a new instrument,
+      checking whether worm has touched the horn, whether the string has dried. The suitors watch
+      and mock. But what Homer describes is not checking — it is reunion. A man touching an object
+      that carries twenty years of absence. Wagner's Parsifal Prelude moves in sustained chromatic
+      longing over a harmonic field that seems permanently about to resolve and consistently
+      declines to do so — desire held in pure suspension, the hand reaching toward something it
+      knows but cannot yet claim. Desire requires chromatic longing and deferred resolution;
+      the Prelude gives Odysseus's hands on the bow their correct emotional interior: not
+      calculation but recognition deferred one final moment before the string speaks.
+  - n: 10
+    scene: "Odysseus strings the bow — the cord sings like a swallow; Zeus sends his thunder-crack"
+    force: return
+    composer: Sibelius
+    work: "Symphony No. 2 in D major, Op. 43 — IV. Allegro moderato"
+    decision: added
+    why: >
+      Homer's simile is perfect and untranslatable in its precision: Odysseus strings the bow as
+      easily as a harper strings a lyre, plucks the string, and it sings like a swallow. Then
+      Zeus sends a thunderclap from clear sky. The string's song is the recognition motif of the
+      whole poem — a sound that identifies its source unmistakably, the voice of the instrument
+      restored to the hands that know it. Sibelius's Second Symphony finale arrives after three
+      movements of wandering and unresolved tonality and launches into D major with one of the
+      most luminous recognition-forms in the symphonic canon — not a surprise but a return that
+      has been made inevitable by everything that preceded it, a circular form closing on itself.
+      Return requires circular form and recognition motif; the finale gives the strung bow its
+      correct register: not triumph but homecoming, the sound of a thing that has come back to
+      where it belongs.
+  - n: 11
+    scene: "The arrow flies through all twelve axes — the test complete, the bow has chosen"
+    force: kingship
+    composer: Handel
+    work: "Messiah, HWV 56 — 'Hallelujah' (Part II, chorus)"
+    decision: added
+    why: >
+      The arrow passes through twelve axe-helve holes without touching the sides. The test is
+      complete. Odysseus looks at Telemachus and nods. Everything that follows — the locked doors,
+      the slaughter, the restoration — proceeds from this single fact: the bow has declared its
+      owner. This is not a military victory; it is a sovereign confirmation, the instrument
+      of the kingdom acknowledging its king. Handel's "Hallelujah" chorus is the western canon's
+      most direct expression of ceremonial grandeur as sovereign display — not the celebration
+      of an individual but the declaration of a legitimacy that was never in doubt, now announced
+      at full orchestral and choral scale. Kingship requires ceremonial grandeur and sovereign
+      display; the chorus does not celebrate a new king's arrival but the revelation of a king
+      who was always there, now finally visible to the hall that had forgotten him.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "expressly forbidden before Book XXII equivalent; reserved for the suitors' slaughter (odyssey-22)"
+    why: >
+      The terminal funeral-march register is blocked until the poem's mass-death catastrophe.
+      Book XXI is the preparation, not the execution; the Funeral March's world-historical grief
+      belongs to the book that uses the bow, not the book that strings it.
+  - composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    status: "forbidden before the suitors' slaughter; reserved for odyssey-22 or later"
+    why: >
+      The eschatological judgment register belongs to the mass death of the suitors. Book XXI
+      ends with an arrow through twelve axes, not with bodies on a floor; the Dies Irae's finality
+      would foreclose the book's specific tension — the declaration of kingship before the act
+      of reclamation.
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "demoted — the Iliad's established wrath leitmotif; excluded from Odyssey by leitmotif discipline"
+    why: >
+      Mars is the sonic signature of the Iliad's wrath arc. Book XXI has no wrath scene in its
+      arc; and even if it did, Mars would collapse the Odyssey's distinct sonic identity into
+      the Iliad's. The Shostakovich Fifth finale serves the fate requirement with fresh coloring.
+  - composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    status: "demoted — fate leitmotif of the Iliad cycle; seek fresh fate colorings"
+    why: >
+      The hammered-motto of the Fifth is the Iliad cycle's established fate sign. Book XXI's
+      fate is the bow's structural refusal — an ontological verdict, not a hammered catastrophe —
+      and benefits from Sibelius's cleaner inexorable insistence and Shostakovich's ambiguous
+      mechanical force rather than the canonical four-note stamp.
+  - composer: Handel
+    work: "Zadok the Priest, HWV 258"
+    status: "demoted — used in odyssey-4 and odyssey-7 and odyssey-8; seek fresh kingship coloring"
+    why: >
+      Zadok has carried the kingship force in earlier Odyssey books. For the consummating
+      kingship moment of Book XXI — the arrow through the axes — the "Hallelujah" chorus offers
+      the same sovereign-display register with a different orchestral and choral architecture,
+      bringing fresh sonic weight to the cycle's most important pre-slaughter declaration.
+  - composer: Elgar
+    work: "Pomp and Circumstance March No. 1 in D major, Op. 39"
+    status: "demoted — used in odyssey-7; No. 4 chosen for Telemachus's latent kingship instead"
+    why: >
+      The famous No. 1 with its Trio ("Land of Hope and Glory") is already the cycle's grandest
+      Elgar statement and was used for a different kingship scene. No. 4 in G major carries a
+      more subdued, latent ceremonial grandeur appropriate to a son who stops himself short of
+      full sovereign claim at his father's signal.

@@ -1,0 +1,298 @@
+# Odyssey — Book XVII — curated music arc
+# THE BEGGAR IN HIS OWN HALL: Odysseus walks to town; Argos the dog; the suitors' contempt; Antinous and the footstool.
+work: odyssey
+book: 17
+title: "Odyssey Book XVII: Argos, the Footstool, and the Invisible King"
+length_minutes: 102
+principle: >
+  Do not score Book XVII as "the beggar episode." Score it as the book where grief is the
+  controlling intelligence — grief rendered invisible by disguise, grief wearing the form of
+  abjection so it can move through the hall without detonating. Odysseus walks into his own
+  kingdom as a stranger. He has done this on purpose. The cunning that drives the entire Odyssey
+  reaches its most extreme form here: the cleverest man alive, performing helplessness, begging
+  at his own table from men who are eating his food and courting his wife. Every scene in the
+  book turns on concealment — and the great exception, the crack in the armor, is Argos.
+
+  Argos is the book's structural and emotional center. He cannot perform anything. He has no
+  capacity for disguise, no understanding of why his master has returned in rags. He simply
+  knows. He lifts his head, wags his tail once, and dies. Homer gives him ten lines — one of
+  the most compressed elegies in Western literature — and moves on, because the poem cannot
+  afford to stop there or it will break. The arc scores what the text cannot afford to: the full
+  weight of a grief that Odysseus must swallow and walk past.
+
+  After Argos, the book is a study in controlled fury. Odysseus reads the suitors systematically,
+  begging his way around the hall, taking the measure of each man. The contempt escalates to
+  Antinous's footstool. The dominant force is grief: not the public grief of lamentation but the
+  sustained interior grief of a man who must not show that he knows what he has lost and how much.
+  The wrath that builds across the book's final scenes is grief's other face — grief that has
+  waited long enough and is beginning, under the surface, to turn.
+force_arc: [exile, memory, divine-intervention, wrath, memory, grief, return, supplication, revelation, wrath, wrath, fate]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "Odysseus and Eumaeus walk the path toward town — the king in beggar's rags on his own road"
+    force: exile
+    composer: Sibelius
+    work: "Symphony No. 2 in D major, Op. 43 — II. Andante e quasi adagio"
+    decision: added
+    why: >
+      The walk to town is exile crystallized: Odysseus moving through his own kingdom as though
+      it belongs to someone else, the swineherd at his side treating him with the courtesy owed
+      a stranger. Sibelius's second symphony slow movement is among the darkest and most rootless
+      pieces in the Romantic symphonic canon — pizzicato strings mapping a landscape without
+      orientation, the melodic line searching for a tonal center it cannot find. Exile's requirement
+      is wandering tonality and open intervals; this movement supplies both without the pastoral
+      warmth of the Dvořák Largo or the oceanic scale of Vaughan Williams. It is exile at ground
+      level, on foot, in the cold — a man moving through familiar roads that no longer feel like
+      his. The piece also has an undertow of suppressed grief that will define the book's dominant
+      force before it is named.
+  - n: 2
+    scene: "Eumaeus speaks of Odysseus's wife and home — the loyal swineherd's memory of what was"
+    force: memory
+    composer: Schubert
+    work: "Winterreise, D. 911 — No. 5, 'Der Lindenbaum'"
+    decision: added
+    why: >
+      As they walk, Eumaeus and the disguised king speak of Ithaca — of the household's former
+      order, of Penelope's faithfulness, of what the suitors are consuming. This is memory being
+      recited aloud to the man whose memory it is, a cruelty the swineherd cannot know he is
+      inflicting. Schubert's 'Lindenbaum' is the Winterreise cycle's great song of nostalgic
+      recall: a wanderer passing the linden tree where he once carved his name, hearing the
+      branches whisper that he could rest there. Memory's requirement is nostalgic recall and
+      faded recapitulation; the 'Lindenbaum' has both — the major-key recollection, the minor-key
+      reality, the traveler who cannot stop and will not turn back. Odysseus cannot turn back
+      either. He listens to his own history narrated by someone who loves him and walks forward.
+  - n: 3
+    scene: "The fountain of the Nymphs — a sign at the threshold before entering the town"
+    force: divine-intervention
+    composer: Handel
+    work: "Messiah, HWV 56 — 'Hallelujah' (chorus, Part II)"
+    decision: added
+    why: >
+      At the fountain sacred to the Nymphs, built by Ithacans in an earlier age, Odysseus is on
+      the threshold between the pastoral world of Eumaeus's farm and the world of the suitors'
+      hall. This fountain marks divine presence at the crossing-point — the gods have arranged this
+      return and have been arranging it since Book I. Handel's 'Hallelujah' chorus supplies the
+      divine-intervention requirement of sudden color shift and brass-strings contrast with an
+      authority nothing else can match: the full orchestra and chorus entering in a moment of
+      proclamatory arrival, sovereign and sudden. The choice is not ironic — the divine machinery
+      that has brought Odysseus to this threshold is genuinely triumphant machinery, even if what
+      follows is beggary and a footstool. The gods are not mocking him; they are fulfilling the
+      plan. The brass announces the arrival. The return is beginning.
+  - n: 4
+    scene: "Melanthius the goatherd meets them on the road — mocks Odysseus and kicks him"
+    force: wrath
+    composer: Prokofiev
+    work: "Scythian Suite, Op. 20 — II. 'The Enemy God and the Dance of the Dark Spirits'"
+    decision: added
+    why: >
+      Melanthius the goatherd is the first act of humiliation: he taunts Eumaeus for bringing a
+      worthless beggar, prophesies that the beggar will find only abuse in the hall, and kicks
+      Odysseus in the hip as he passes. Odysseus grips his fists and considers killing him but
+      holds back. This is wrath impacted — force absorbed, not released. Prokofiev's second
+      movement of the Scythian Suite is the darkest piece in his early orchestral work: bass
+      figures lurching in asymmetric rhythms, dissonant brass writing that never resolves into
+      anything comfortable, a grinding malevolence without the explosive release of Bartók or
+      Shostakovich. Wrath's requirement is rhythmic pressure and unresolved harmony; the Scythian
+      Suite's dark-spirits movement delivers both at a register of sullen brutality that fits
+      Melanthius exactly — not heroic villainy but mean contempt from a lesser man.
+  - n: 5
+    scene: "Argos on the dung-heap — old, neglected, flea-ridden, but he knows his master"
+    force: memory
+    composer: Pärt
+    work: "Für Alina"
+    decision: "replaces Elgar (Cello Concerto) — de-saturation"
+    why: >
+      Homer introduces Argos in the past tense: once Odysseus raised him, trained him, hunted
+      with him across the plains of Ithaca while the dog was young and great; now he lies on
+      the dung-heap by the gate, flea-ridden, too old to stand, waiting without knowing what
+      he waits for. This is the book's greatest memory scene — not a human recollecting a past
+      self, but an animal whose entire body is the recollection, twenty years of fidelity held
+      in a single lifted head. Pärt's Für Alina is one of the most tender and small pieces in
+      the twentieth-century piano repertoire: a single melody, tintinnabuli style, each note
+      placed with absolute deliberateness, the silences between notes as weighty as the notes
+      themselves — the sonic shape of something very old and very still, attending. Memory's
+      requirement is nostalgic recall and faded recapitulation; Für Alina supplies both without
+      sentimentality, its harmonic economy mirroring the economy of the scene: Homer gives Argos
+      ten lines, Pärt gives the piece barely a minute's material, and both achieve compression
+      rather than reduction. What is recalled here is not a grand life but a particular fidelity —
+      a dog lying on a dung-heap, recognizing his master across twenty years of abandonment —
+      and Für Alina is the most tender small death in the repertoire, music for the moment just
+      before something very faithful stops.
+  - n: 6
+    scene: "Argos wags his tail once and dies — Odysseus wipes away a tear and walks past"
+    force: grief
+    composer: Górecki
+    work: "Symphony No. 3 'Symphony of Sorrowful Songs', Op. 36 — II. Lento e largo"
+    decision: added
+    why: >
+      Ten lines in the Greek, one of the most devastating passages in Western literature. Argos
+      sees Odysseus, drops his ears, wags his tail — the only gesture of welcome the king will
+      receive until the bow is strung — and dies. Odysseus cannot stop. He cannot acknowledge
+      the dog. He turns his head, wipes his eye, moves on. Górecki's second movement of the
+      Symphony of Sorrowful Songs sets a single text: words scratched on the wall of a Gestapo
+      cell by an eighteen-year-old girl who would not survive her imprisonment — 'O Mamo nie
+      płacz' (Oh Mother do not weep). The soprano line is completely exposed, a single thread
+      of melody over trembling strings, a voice speaking into an absence. Grief's requirement
+      is slow tempo and inward line; the second movement's particular inward quality — a message
+      left where no one is expected to find it, a gesture of recognition that costs everything —
+      is the exact register of Argos's death. Both are acts of fidelity performed without
+      audience, witnessed by no one who can act on what they see.
+  - n: 7
+    scene: "Odysseus enters his own hall as a beggar — the suitors eating and drinking at his tables"
+    force: return
+    composer: Schubert
+    work: "Symphony No. 8 in B minor, D. 759 ('Unfinished') — II. Andante con moto"
+    decision: added
+    why: >
+      This is the strangest and most painful return in Western literature: the king entering his
+      own hall, dressed as nothing, to find strangers occupying it. The hall is recognizable —
+      the same pillars, the same threshold, the same fire — but inhabited by men who have claimed
+      what is his. Return's requirement is circular form and recognition motif; Schubert's second
+      movement of the Unfinished provides this in the most ambiguous register possible. Where the
+      first movement (used for Odysseus's departure-and-return in Book I of this cycle) is driven
+      and forward-reaching, the second is interior and suspended — a theme that circles back on
+      itself without fully resolving, recognition without arrival, the familiar made strange. This
+      is return as trauma: you are home, but home has not been keeping your place. The movement
+      neither celebrates nor laments; it holds the wrongness of the scene in formal suspension.
+  - n: 8
+    scene: "Telemachus secretly instructs the herald to feed the stranger — bread and meat across the hall"
+    force: supplication
+    composer: Handel
+    work: "Samson, HWV 57 — 'Total Eclipse' (Act I, aria)"
+    decision: added
+    why: >
+      Telemachus cannot publicly acknowledge his father and cannot allow him to starve. He instructs
+      the herald Medon to carry food to the beggar, performing charity for a stranger who is his
+      father. Handel's aria from Samson — sung by the blinded hero, standing captive among the
+      Philistines who torment him — is the great supplication of a diminished king: 'Total eclipse!
+      No sun, no moon, all dark amidst the blaze of noon.' Supplication's requirement is suspended
+      cadence and exposed melodic line; the aria delivers both in the register of a great man
+      reduced, unable to name himself, receiving care that cannot name what it knows. The thematic
+      parallel is exact: Samson, like Odysseus, is a hero in abjection, kept alive by the fidelity
+      of those who must pretend not to know him. The exposed vocal line — Handel at his most
+      stripped and inward — is the sonic shape of receiving bread from your own son.
+  - n: 9
+    scene: "Odysseus begs his way around the hall, reading each suitor — a census of the enemy"
+    force: revelation
+    composer: Bach
+    work: "Mass in B minor, BWV 232 — 'Qui tollis' (Chorus, Credo)"
+    decision: added
+    why: >
+      The begging-circuit is not humiliation but intelligence work: Odysseus moves from man to man,
+      offering his bowl, reading contempt and generosity, building his knowledge of who will die
+      and who might be spared. This is revelation as strategic stillness — not a flash of divine
+      knowledge but the slow, chant-like accumulation of fact. Bach's 'Qui tollis' from the Mass
+      in B minor is the most formally vertical piece in the canon: a chorus of absolute liturgical
+      weight, the harmonic movement glacial and authoritative, each voice entry arriving with the
+      inevitability of evidence. Revelation's requirement is stillness, chant, and verticality;
+      the 'Qui tollis' builds its structure the way Odysseus builds his list — deliberately, note
+      by note, without hurry, until the full architecture stands. The text ('who takes away the
+      sins of the world') is not ironic here: Odysseus performing this survey is, in the poem's
+      logic, the instrument of justice, and justice requires this kind of attention.
+  - n: 10
+    scene: "Antinous refuses the beggar — the worst of the suitors holds back his bread"
+    force: wrath
+    composer: Nielsen
+    work: "Symphony No. 5, Op. 50 — I. Tempo giusto (snare-drum episode)"
+    decision: added
+    why: >
+      Antinous's refusal is the first open act of aggression: where other suitors give grudgingly,
+      Antinous speechifies against the beggar and holds back his bread. Odysseus answers him with
+      controlled precision, exposing the injustice without losing the beggar's persona, and the
+      hall watches. Nielsen's Fifth Symphony first movement contains the most startling episode of
+      unresolved wrath in the symphonic canon: a snare drummer is instructed to play a disruptive
+      improvisation against the orchestra, refusing to be silenced or absorbed, its rhythmic pressure
+      operating outside the harmonic language of everything surrounding it. Wrath's requirement is
+      rhythmic pressure and unresolved harmony; Nielsen's snare-drum episode is wrath as sustained
+      contention — not explosion but refusal, a force that will not be integrated, that holds its
+      pressure against the surrounding texture without resolution. This is Antinous at the table.
+  - n: 11
+    scene: "Antinous hurls the footstool — it strikes Odysseus on the right shoulder"
+    force: wrath
+    composer: Shostakovich
+    work: "Symphony No. 4 in C minor, Op. 43 — III. Presto"
+    decision: added
+    why: >
+      The footstool is the act that crystallizes what the suitors are: not merely insolent guests
+      but men who will strike a beggar in someone else's hall and laugh. The hall goes quiet;
+      even some suitors are uneasy. Odysseus bears it without moving. Shostakovich's Fourth
+      Symphony finale is the most brutal closing movement he ever wrote — a Presto of grotesque,
+      mechanized force, rhythmic patterns of savage regularity, harmonic dissonance that never
+      offers relief, the orchestral weight crushing in its indifference. Wrath's requirement is
+      rhythmic pressure and unresolved harmony; the Fourth Symphony finale delivers these at a
+      scale of systematic, institutional violence — not a passion but a reflex, the reflex of
+      men who have been allowed to do what they like for so long that they no longer notice what
+      they do. The footstool is not Antinous at his angriest. It is Antinous at his most casual.
+      Shostakovich understood that register.
+  - n: 12
+    scene: "Penelope hears of the stranger's treatment — she summons him; the meeting approaches"
+    force: fate
+    composer: Sibelius
+    work: "Symphony No. 5 in E-flat major, Op. 82 — III. Allegro molto (the hammer-blow finale)"
+    decision: added
+    why: >
+      Penelope learns a beggar has been struck in her hall and demands to see him: she suspects
+      he may have news of Odysseus. The summons is the book's final event and its most freighted —
+      the meeting between wife and disguised husband, which will extend into Book XIX's recognition
+      scene, has now been set in motion. Something is closing. Sibelius's Fifth Symphony finale
+      is formally extraordinary: a long, restless, searching movement that ends not with resolution
+      but with six isolated hammer-blows — chords separated by silence, arriving with the
+      inevitability of a mechanism completing itself. Fate's requirement is inexorable motif and
+      hammered insistence; the Fifth Symphony's hammer-blows are the most formally precise
+      enactment of that requirement in the symphonic repertoire. Penelope's summons is not a
+      dramatic climax — it is a structural click, a mechanism engaging, the irreversible step
+      in a sequence that has been running since Odysseus left for Troy. The hammer-blows fall.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "expressly forbidden before Book XXII equivalent; save for the suitors' slaughter"
+    why: >
+      The terminal-monumental grief register belongs to the suitors' slaughter (Odyssey Book 22).
+      Argos's death is the most elegiac moment in Book XVII and one of the most elegiac in the
+      entire poem, but Homer deliberately does not elegize it — he gives it ten lines and moves on.
+      The Funeral March's world-historical weight would break the compression the poem requires.
+      Górecki's second movement finds the correct register: intimate, exposed, a grief that
+      cannot stop because the man feeling it must keep walking.
+  - composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    status: "forbidden before the suitors' slaughter"
+    why: >
+      The eschatological judgment register is held for the mass death of Book 22. Antinous's
+      footstool is violence, not apocalypse. Shostakovich's Fourth Symphony finale carries the
+      correct weight of institutional brutality without crossing into the terminal-judgment register.
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "demoted — established Iliad wrath leitmotif; Odyssey needs fresh wrath colorings"
+    why: >
+      Mars is the Iliad cycle's wrath signature. Melanthius's kick and Antinous's footstool are
+      wrath as domestic contempt — smaller in scale than Achilles' rampage but no less revealing
+      of character. Prokofiev's dark spirits and Shostakovich's Fourth Symphony finale find the
+      correct register: grinding, asymmetric, institutional — the violence of men in a hall, not
+      of gods on a battlefield.
+  - composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    status: "demoted — Iliad fate leitmotif; seek fresh fate colorings for the Odyssey"
+    why: >
+      The four-note hammered fate of the Fifth is already the Iliad cycle's fate signature. Book
+      XVII's fate operates differently: not a hero confronting his doom at a gate, but a plot
+      mechanism clicking into position. Sibelius's hammer-blows are formal and precise in a way
+      that exactly fits the impersonal machinery of the gods' long plan. The Fifth would import
+      the wrong heroic register.
+  - composer: Elgar
+    work: "Enigma Variations — IX. 'Nimrod'"
+    status: "demoted — overused across both cycles; Elgar Cello Concerto provides the same nostalgic register with more specificity"
+    why: >
+      Nimrod has appeared so frequently across the Iliad and Odyssey arcs that its use risks
+      feeling automatic. The Elgar Cello Concerto opening finds the same nostalgic-recall register
+      but with a quality of diminishment and solitude — a great performer at the end of a long
+      road — that is more precisely calibrated to Argos's condition than the orchestral breadth
+      of Nimrod.
+  - composer: Barber
+    work: "Adagio for Strings, Op. 11"
+    status: "demoted — too frequently deployed across both cycles for the Argos scene"
+    why: >
+      Barber's Adagio is the Odyssey cycle's most-used grief piece and risks becoming a generic
+      grief signal rather than a specific one. Argos's death needs a grief that is intimate and
+      exposed rather than broadly elegiac. Górecki's second movement provides this specificity:
+      a single voice, a specific text, a grief that is private and unanswered, not communal.

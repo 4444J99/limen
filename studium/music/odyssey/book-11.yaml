@@ -1,0 +1,273 @@
+# Odyssey — Book XI — curated music arc
+# THE NEKYIA: the blood-pit, Elpenor, Teiresias, Anticleia, the heroines, Agamemnon, Achilles, Ajax, Heracles.
+work: odyssey
+book: 11
+title: "Odyssey Book XI: The Nekyia — the Book of the Dead"
+length_minutes: 98
+principle: >
+  Do not score Book XI as "the journey to the underworld." Score it as the book where
+  the dead speak and the living cannot hold them. Odysseus digs a trench at the edge of
+  the world, pours blood, and the shades come — but they cannot be touched, only briefly
+  animated into speech by the blood they drink. Every encounter in the Nekyia turns on
+  this asymmetry: Odysseus has a body; the dead do not. When he tries to embrace his
+  mother three times, she dissolves in his arms. This is not failure of love — it is the
+  structural condition of death, which the book makes you feel through repetition. The
+  dominant force is grief: not heroic mourning but the grief of non-arrival, of presence
+  that cannot be grasped, of speech without touch. Score each scene for what its shade
+  reveals that the living world conceals: Elpenor reveals that the unburied are still
+  pleading; Teiresias reveals the shape of fate before Odysseus can avoid it; Anticleia
+  reveals what longing for the absent can do to a body; Agamemnon reveals that homecoming
+  is a trap; Achilles reveals that glory is worth nothing when you are dead. Ajax reveals
+  that the deepest wounds never become speech — he turns away in silence. The Nekyia is
+  the book that knows more than it is saying, and the music must hold that excess without
+  resolving it.
+force_arc: [sacrifice, supplication, revelation, grief, memory, fate, revelation, memory, wrath, metamorphosis, exile]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "The blood-pit at the edge of the world — libations, prayers, the trench dug at the boundary of the living"
+    force: sacrifice
+    composer: Britten
+    work: "War Requiem, Op. 66 — I. Requiem Aeternam"
+    decision: added
+    why: >
+      Odysseus follows Circe's instructions precisely: dig the trench, pour honey and milk and wine and water,
+      scatter barley, slaughter the sheep and let the dark blood fill the pit. This is liturgy, not improvisation —
+      a ritual protocol for crossing the boundary between worlds, each action calibrated to its cosmic function.
+      Britten's Requiem Aeternam opens with the most exact music for this threshold in the modern canon: a boys'
+      choir singing the Introit against a solo tenor singing Wilfred Owen's "What passing-bells for these who die
+      as cattle?" — the ancient text and the broken modern witness layered simultaneously. Sacrifice requires
+      ritual weight, processional, immolation build; the opening of the War Requiem has precisely this — the
+      ceremony of the dead correctly observed against the knowledge of what ceremony cannot repair. The blood-pit
+      is not dramatic; it is procedural, which is what makes it terrible.
+  - n: 2
+    scene: "Elpenor unburied — the shade of the man who fell from Circe's roof begs for burial"
+    force: supplication
+    composer: Allegri
+    work: "Miserere mei, Deus"
+    decision: added
+    why: >
+      Elpenor is the first shade to speak — not one of the great dead, just the youngest man in the crew, who
+      fell drunk from Circe's roof before the departure and lay unburied on the island. He begs Odysseus to
+      sail back and give him fire and a grave-mound and an oar planted on the shore: the minimum a sailor needs.
+      Allegri's Miserere is the most sustained piece of supplication in Western choral music — the nine-voice
+      setting divides into a high choir and a low choir, the famous soaring soprano line ascending to its
+      impossible high C against the low voices that cannot reach it, an exposed melodic thread over suspended
+      cadence. Supplication requires exactly this architecture: the suspended harmonic moment, the voice
+      reaching toward something it cannot quite grasp. Elpenor's position — unburied, between worlds, unable
+      to cross the river until he has been properly mourned — is supplication as structural condition, not
+      temporary plea. The Miserere holds that suspension without resolving it.
+  - n: 3
+    scene: "Teiresias prophesies — the cattle of the Sun, a late and lonely homecoming, slaughter waiting in Ithaca"
+    force: revelation
+    composer: Messiaen
+    work: "Quatuor pour la fin du temps — III. Abîme des oiseaux"
+    decision: added
+    why: >
+      Teiresias alone of the dead retains his mind intact — Persephone has given him reason even in death.
+      He drinks the blood and delivers the arc of Odysseus's future in three movements: do not touch the cattle
+      of Helios or everyone dies; even if you survive, you return late and alone on a foreign ship; even then,
+      you must make another journey inland with an oar until someone mistakes it for a winnowing fan. This is
+      prophecy as a kind of unbearable verticality — the whole future present at once, without comfort or
+      evasion. Messiaen's Abîme des oiseaux is a solo clarinet movement that descends into silence and then
+      soars without harmonic support, time suspended around a single voice outside time. Revelation requires
+      stillness, chant, verticality; this is the most extreme enactment of that requirement in the chamber
+      repertoire. The abyss of birds is Messiaen's image for eternity — here it is the abyss from which
+      Teiresias speaks, a single voice with perfect knowledge, the silence between the notes as important
+      as the notes themselves.
+  - n: 4
+    scene: "Anticleia his mother — she died of longing for him; he reaches for her three times and cannot hold her"
+    force: grief
+    composer: Mahler
+    work: "Kindertotenlieder — I. 'Nun will die Sonn' so hell aufgeh'n'"
+    decision: added
+    why: >
+      Anticleia explains what killed her: not age or disease, but longing for Odysseus — she wasted away
+      waiting. He reaches for her shade three times and each time she slips through his arms like a shadow
+      or a dream. She explains that this is the nature of the dead: the sinews no longer hold the flesh
+      and bone, and the shade flitters away like smoke. The grief here is not the sudden grief of death
+      but the sustained grief of something that cannot be grasped, grief that repeats itself by structural
+      necessity. Mahler's first Kindertotenlieder song — the father watching the sun rise on the morning
+      after his children have died, incredulous that the world continues — is grief as unbearable cognitive
+      fact: the beloved is gone and yet nothing in the physical world has changed. The orchestration is
+      inward, almost chamber-like, with solo oboe and horn against hushed strings; it does not swell into
+      lamentation but holds the grief at the level of exact attention. Odysseus attempting the embrace three
+      times is exactly this — grief held in the posture of action, the body still trying what the mind
+      already knows is impossible.
+  - n: 5
+    scene: "The catalogue of heroines — Tyro, Alcmene, Epicaste, Phaedra, Ariadne: women whose loves destroyed them"
+    force: memory
+    composer: Massenet
+    work: "Thaïs — Méditation (Act II intermezzo)"
+    decision: "replaces Elgar (Cello Concerto) — de-saturation"
+    why: >
+      The catalogue of heroines is Homer's formal survey of love as catastrophe: Tyro who fell for a river-god,
+      Alcmene who bore Heracles, Epicaste (Jocasta) who unknowingly married her son, Phaedra and Ariadne each
+      undone by desire entangled with divine caprice. The list is not dramatic — it is elegiac, archival, a
+      record of what love costs when the gods interfere. Each name surfaces a whole life and then recedes; the
+      catalogue is memory as form, nostalgic recall and faded recapitulation at once, one voice after another
+      dissolving back into silence. Massenet's Méditation is the intermezzo between the acts of Thaïs, the
+      point in the opera where a courtesan's life turns on the axis of love and transformation — a solo violin
+      singing without words, the line hovering between longing and resignation, never releasing into resolution.
+      The memory force requires nostalgic recall and faded recapitulation; the Méditation delivers both in their
+      most stripped form: a single sustained voice above slow harmonic motion, reaching toward something it
+      names without seizing. Thaïs herself is a heroine whose love destroyed her, and the intermezzo is the
+      sound of that destruction held at the moment before it becomes irreversible — the exact register of
+      Homer's catalogue, each name a melody spoken once and then gone.
+  - n: 6
+    scene: "Agamemnon murdered — he describes the bath, the sword, Clytemnestra's hands; warns Odysseus to trust no woman"
+    force: fate
+    composer: Shostakovich
+    work: "Symphony No. 5 in D minor, Op. 47 — I. Moderato"
+    decision: added
+    why: >
+      Agamemnon's shade arrives carrying the wound of his death: murdered in his own bath by his wife and her
+      lover, betrayed at the moment of homecoming. He describes the scene with the clinical clarity of someone
+      who has had too long to think about it — Clytemnestra standing over him, not closing his eyes or mouth
+      even at the moment of death. His warning to Odysseus is bitter and absolute: trust no woman, return home
+      in secret, verify everything. This is fate as the shape revealed from the inside, the pattern of a life
+      seen whole only after the end. Shostakovich's Fifth Symphony opens under conditions of imposed fate: after
+      the censure of his Fourth, the composer built this first movement as a demonstration of what happens when
+      force is applied from above without mercy. The opening bars — strings in unison descending against a
+      grinding bass — have the quality of fate as machinery, inexorable motif hammered through every register.
+      Agamemnon's wound is a lesson in what fate looks like to the person it has already processed. The
+      Moderato holds that lesson at full architectural weight without granting the dignity of tragedy — only
+      the grinding, insistent account of what happened.
+  - n: 7
+    scene: "Achilles — 'better a slave among the living than king of the dead'; then asks about his son Neoptolemus"
+    force: revelation
+    composer: Sibelius
+    work: "Symphony No. 4 in A minor, Op. 63 — I. Tempo molto moderato, quasi adagio"
+    decision: added
+    why: >
+      Odysseus greets Achilles as the most blessed of the dead — he who was honored like a god in life. Achilles
+      answers with the most radical line in the Odyssey: do not speak to him of death's consolations; he would
+      rather be a landless slave in the upper world than king of all the dead. This is the heroic code reversed,
+      the man who chose glory over long life now testifying that the choice was wrong. Then — and this is the
+      scene's counterweight — he asks about Neoptolemus his son, and when Odysseus describes his bravery,
+      Achilles' shade strides away rejoicing. Even in the underworld, a father's pride can pierce despair.
+      Sibelius's Fourth Symphony is the most austere thing in the Nordic repertoire — scored with radical
+      economy, harmonically unresolved, cold in a way that is not romantic darkness but the actual void looking
+      back. The first movement's quasi adagio quality is revelation as confrontation with what cannot be adorned:
+      no warm development, no consoling climax, just the verticality of an absolute statement about what
+      remains when everything ornamental is stripped away. Achilles in the underworld is Sibelius Four — the
+      man who has arrived at the condition that makes decoration impossible.
+  - n: 8
+    scene: "Ajax turns away in silence — the wound of the armor-judgment still unhealed, he will not speak"
+    force: memory
+    composer: Brahms
+    work: "Violin Sonata No. 1 in G major, Op. 78 — I. Vivace ma non troppo"
+    decision: added
+    why: >
+      Ajax was judged to have lost Achilles' armor to Odysseus and killed himself in the shame. In the
+      underworld, when Odysseus speaks to him and tries to justify himself, Ajax simply turns away and
+      walks back into the dark. He has not forgiven; there is no mechanism in the underworld for
+      forgiveness, only the wound preserved intact. Odysseus expresses regret — he says he wishes
+      the gods had never granted him the victory — but Ajax is already gone. This is memory as unresolvable
+      wound: the past held with perfect fidelity because the dead cannot revise it. Brahms wrote his First
+      Violin Sonata as an elegy — it borrows its main theme from his song "Regenlied," a rain song about
+      childhood memory returning unbidden. The first movement's nostalgic recall is not sweet but insistent,
+      a theme that returns not because the music chooses it but because it cannot be otherwise. Ajax's
+      memory of the armor-judgment is exactly this: the theme that returns without permission, that cannot
+      be revised or forgiven because the person who carries it is beyond the reach of revision. The sonata's
+      faded recapitulation at the close is the back of a man walking away.
+  - n: 9
+    scene: "Heracles' shade — his image in Hades while he himself feasts on Olympus among the gods"
+    force: wrath
+    composer: Prokofiev
+    work: "Piano Sonata No. 7 in B-flat major, Op. 83 — III. Precipitato"
+    decision: added
+    why: >
+      Homer gives Heracles' shade a peculiar double structure: his image roams in Hades strung with a terrible
+      golden baldric depicting scenes of violence — bear, boar, lion, battle — while the man himself feasts
+      immortally among the gods. The shade is pure wrath preserved in image: the great laborer frozen at his
+      most violent aspect, still carrying his bow with arrow nocked, the inscription of force without the
+      release of force. Prokofiev's Precipitato is the most compressed wrath in the solo piano literature —
+      a single mechanical movement of rhythmic pressure that never pauses, never softens, never introduces a
+      lyrical counterweight to its driving insistence. The unresolved harmonic grinding and the relentless
+      rhythmic machine are wrath as pure image without the catharsis of actual action: Heracles in Hades
+      is wrath that cannot be discharged, the bow drawn but never loosed, the baldric's scenes of violence
+      trapped in metal. The Precipitato is three minutes of exactly that — force with nowhere to arrive.
+  - n: 10
+    scene: "The terror of the dead — the roar of the gathering shades, Odysseus flees before Persephone sends something worse"
+    force: metamorphosis
+    composer: Strauss
+    work: "Tod und Verklärung (Death and Transfiguration), Op. 24"
+    decision: added
+    why: >
+      After Heracles, the shades press in — the roar of the gathered dead rises and Odysseus seizes the sword
+      and cuts at them to keep them back, but the crowd thickens. He is afraid that Persephone will send
+      something from deeper in the underworld, some Gorgon-head or monster. He turns and runs back to the
+      ship. The terror is not of individual shades but of the mass transformation: the underworld becoming
+      something that the living cannot survive, the boundary between death and life beginning to dissolve
+      in the wrong direction. Strauss's Death and Transfiguration traces the great metamorphic arc from
+      mortal struggle through death into transcendence — the harmonic color shifts continuously through
+      states that cannot be reversed, each phase emerging from the dissolution of the previous one. The
+      work's fluid harmony and changing orchestral color enact metamorphosis at the scale of existence
+      itself: not one thing becoming another, but the categories of living and dead becoming unstable.
+      Odysseus's flight is the moment the underworld stops being a space to visit and becomes a force
+      exerting pressure on him, a metamorphic field that will reshape whatever remains in it too long.
+  - n: 11
+    scene: "The ships pull away — Poseidon's sea again, the exile's route restored, the living world receding behind them"
+    force: exile
+    composer: Britten
+    work: "Four Sea Interludes from Peter Grimes, Op. 33a — IV. Storm"
+    decision: added
+    why: >
+      The Nekyia ends abruptly: Odysseus commands the crew to loose the lines, the ships pull away on the
+      current, and the underworld's shore recedes. They are back on the open sea — not on any route toward
+      Ithaca but moving again through the world's uncertain geography, still years from home. The exile
+      resumes its wandering. Britten's Storm interlude from Peter Grimes is ocean as hostile, tonally
+      unstable force — open intervals, churning harmonics, a musical world without clear tonal home, the
+      sea that does not welcome the sailor or grant him passage but simply continues its own cold business.
+      Exile requires wandering tonality and open intervals; the Storm gives both at full orchestral scale,
+      the waves indifferent to who is on the water. After the underworld's terrible closed intimacy —
+      the faces of the dead, the hands that could not be taken — the open sea is not freedom but the
+      resumption of homelessness, the exile reclaiming a man who briefly, in the company of the dead,
+      had been among something like his own kind.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "forbidden — reserved for the suitors' slaughter register (Book 22 equivalent)"
+    why: >
+      The Funeral March's terminal-monumental-public grief belongs to mass death, not to the Nekyia's register
+      of intimate, unresolvable encounter with the individual dead. Hector's death unlocked this register in
+      the Iliad cycle; the equivalent in the Odyssey is the slaughter of the suitors. Using it here would
+      exhaust the register on the wrong catastrophe.
+  - composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    status: "forbidden — reserved for Books 22-24"
+    why: >
+      The eschatological judgment register is blocked until the poem's terminal act. The dead in Book XI are
+      not being judged — they are being interviewed. The Dies Irae's cosmic condemnation is the wrong mode
+      for an underworld of suspended suffering and memory intact.
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "demoted — Iliad cycle's established wrath leitmotif; avoid in Odyssey"
+    why: >
+      The wrath in Book XI is Heracles' image frozen in metal, Ajax's cold unspoken refusal — neither of
+      which is the martial battlefield wrath that Mars correctly scores. Prokofiev's Precipitato finds
+      the mechanical, imagelike quality of wrath-without-release that the scene demands.
+  - composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    status: "demoted — Iliad cycle's established fate leitmotif; seek fresh fate colorings"
+    why: >
+      Agamemnon's fate is not the hammer-blow of heroic doom but the grinding machine of domestic betrayal
+      and institutional cruelty. Shostakovich's Fifth, written under imposed state power, finds a more
+      precise register for fate as a force applied from above by those who control the apparatus — closer
+      to what the house of Atreus actually was.
+  - composer: Gluck
+    work: "Orfeo ed Euridice — 'Che farò senza Euridice'"
+    status: "demoted — considered for Anticleia scene but too well-known as the underworld aria"
+    why: >
+      The great aria of loss from Gluck's underworld opera was the obvious candidate for Anticleia's
+      dissolution. Demoted because its cultural over-familiarity (every listener supplies Orpheus, not
+      Odysseus) would collapse the scene's specific character. Mahler's Kindertotenlieder finds a less
+      traveled but equally precise grief — the repeated gesture of reaching toward what is gone.
+  - composer: Mahler
+    work: "Symphony No. 9 — IV. Adagio"
+    status: "demoted — already the Odyssey's closing grief register; hold for terminal books"
+    why: >
+      The Mahler Ninth Adagio has already been used (Odyssey Book 8) and its register of valedictory
+      farewell-held-in-formal-clarity is too terminal for the Nekyia's unresolved grief. The Kindertotenlieder
+      keeps the grief specific and unreconciled, which is what the encounter with Anticleia requires.

@@ -1,0 +1,282 @@
+# Odyssey — Book XII — curated music arc
+# THE SIRENS, SCYLLA AND CHARYBDIS, THE CATTLE OF THE SUN
+work: odyssey
+book: 12
+title: "Odyssey Book XII: The Lure, the Strait, and the Forbidden Cattle"
+length_minutes: 108
+principle: >
+  Do not score Book XII as a sequence of famous obstacles. Score it as the book in which
+  Odysseus learns that knowledge of fate does not protect you from it — and that the men
+  around him, unbriefed by Circe, walk into the forbidden act with open eyes. Every scene
+  in Book XII is about the gap between warning and transgression: Circe has told Odysseus
+  everything, in precise detail, and it happens anyway. The Sirens' song is desire made
+  epistemological — they offer not pleasure but the claim that they know all things, and
+  that is what nearly destroys him. Scylla is pure fate, inescapable and bureaucratic:
+  six men, one from each bench, no more, no less. Charybdis is the void that swallows
+  the whole sea and gives it back, the anti-law. The cattle of Helios are the book's
+  moral center: a transgression committed by exhausted, starving men who know it is
+  forbidden, who rationalize it, who slaughter and feast while the cooked flesh bellows
+  on the spits. Zeus answers with the thunderbolt, and Odysseus is alone on a keel in
+  the middle of the sea. The dominant force is fate: not as prophecy but as structural
+  closure — the Sirens, Scylla, the cattle, the storm are a mechanism that reduces twelve
+  ships and hundreds of men to a single man clinging to wood. Book XII is the last chapter
+  of the great reduction.
+force_arc: [return, desire, desire, fate, fate, sacrifice, sacrifice, law, divine-intervention, sacrifice, plague, fate]
+dominant_force: fate
+tracks:
+  - n: 1
+    scene: "Return to Aeaea — Circe's island at dawn, the burial of Elpenor, the night with Circe"
+    force: return
+    composer: Britten
+    work: "Four Sea Interludes from Peter Grimes — I. 'Dawn'"
+    decision: added
+    why: >
+      The ships row back to Aeaea in the night, arriving at dawn to bury Elpenor — the crewman
+      who fell drunk from Circe's roof and whose ghost they met first in the underworld. Britten's
+      Dawn interlude from Peter Grimes opens with trembling high strings over sustained low brass,
+      a light that is not warm but cold and estranging — the gray of a sea-approach, not a
+      homecoming. Return's requirement is circular form and recognition motif; here the return is
+      to a dangerous harbor, to a witch's island, to the place that sent them into death and
+      receives them back changed. Britten's sea-dawn has that precise quality: recognition without
+      comfort, arrival without rest, the water the same and the men not. The interlude was written
+      to score a community that cannot absorb its outcast; Aeaea is the world outside the world,
+      and the ships returning to it carry men who have spoken with the dead.
+  - n: 2
+    scene: "Circe's warning — the Sirens, the strait, Scylla, Charybdis, the cattle of Helios"
+    force: desire
+    composer: Debussy
+    work: "Nocturnes — III. Sirènes"
+    decision: added
+    why: >
+      Circe tells Odysseus everything: the Sirens who kill through song, the clashing rocks,
+      Scylla's six heads, Charybdis's three daily swallowings, the sacred cattle of Helios
+      that must not be touched on pain of the ship's destruction. This is the book of perfect
+      foreknowledge. Debussy's Sirènes — the third Nocturne, scored for orchestra and women's
+      chorus singing wordless vowels — is the only orchestral work in the standard repertoire
+      that renders the Siren phenomenon directly: a lure built not from meaning but from pure
+      vocal beauty, a call that the listener cannot parse because it has no text to argue with.
+      Desire requires chromatic longing and deferred resolution; Debussy's chorus materializes
+      behind the orchestra, slips in and out of the texture, never resolves. Circe's recitation
+      of what Odysseus will face has this quality — she describes the Siren song with such
+      precision that it becomes seductive even in the warning.
+  - n: 3
+    scene: "The Sirens — Odysseus bound to the mast, the crew with waxed ears, the song"
+    force: desire
+    composer: Wagner
+    work: "Tristan und Isolde — 'Liebestod'"
+    decision: added
+    why: >
+      The ships approach the Sirens' island in dead calm — the wind drops, the sea goes flat,
+      as if the world is holding its breath to help the lure. Odysseus hears the song: the Sirens
+      claim to know all that happened at Troy, all that will happen everywhere on earth. They
+      offer not pleasure but omniscience — total knowledge as the ultimate desire. He strains
+      against the mast, shouting at his crew to untie him. The waxed men row on without hearing.
+      Wagner's Liebestod is desire pushed to its structural limit: Isolde's final aria resolves
+      the Tristan harmonic suspension only by dissolving the desiring subject entirely —
+      resolution through obliteration, the deferred cadence arriving as annihilation. The
+      Sirens offer the same bargain: to know everything, to hear everything, you must come
+      ashore and die. Odysseus survives only because his body is bound; his desire is genuine
+      and total. The chromatic longing and deferred resolution are here taken to their terminal
+      logic.
+  - n: 4
+    scene: "Approaching the strait — the roar of Charybdis, the men's terror"
+    force: fate
+    composer: Sibelius
+    work: "Symphony No. 4 in A minor, Op. 63 — I. Tempo molto moderato, quasi adagio"
+    decision: added
+    why: >
+      The ships approach the narrowing water. Odysseus has not told the crew about Scylla —
+      Circe warned him that if the men know, they will stop rowing in panic and he will lose
+      them to Charybdis rather than Scylla. So they row toward a strait only he understands,
+      toward a loss he has already accepted. The roar of Charybdis reaches them before they
+      can see it. The men drop their oars in terror. Sibelius's Fourth Symphony is the most
+      austerely fated work in the symphonic canon — it refuses every gesture of reassurance,
+      opens with a cello/bass motif that is not a theme but a gravitational field, and moves
+      toward its ends without acceleration or drama. The inexorable motif and hammered insistence
+      of fate are here rendered as absence: no brass fanfare, no romantic surge, only the cold
+      withdrawal of all comfort as the strait fills the horizon.
+  - n: 5
+    scene: "Scylla seizes the six men — their hands outstretched, calling Odysseus by name"
+    force: fate
+    composer: Shostakovich
+    work: "String Quartet No. 8 in C minor, Op. 110 — I. Largo"
+    decision: added
+    why: >
+      Scylla takes exactly six men, one from each bench, while Odysseus watches and cannot
+      prevent it. Homer gives the scene its most terrible detail: the men hang in the air
+      above the water, in Scylla's mouths, stretching their hands toward Odysseus and calling
+      his name — the way fish hang on a line, he says. Odysseus calls this the most pitiful
+      thing he ever saw in all his wanderings on the sea. Shostakovich's Eighth Quartet opens
+      with a Largo of almost unbearable self-quotation — themes that circle back on themselves,
+      the sound of a man who knows exactly what he is witnessing and cannot look away. Fate
+      here is not impersonal machinery; it is the specific, named removal of six men from the
+      world while the man who commanded them watches. The inexorable motif is Scylla: she
+      takes her six and no more, with mechanical precision, while the ship passes on.
+  - n: 6
+    scene: "Arrival at Thrinacia — the island of Helios, the lowing cattle, Odysseus's warning"
+    force: sacrifice
+    composer: Gluck
+    work: "Iphigénie en Tauride — Overture"
+    decision: added
+    why: >
+      The ships land on Thrinacia. Odysseus tells the crew: we must not touch the cattle of
+      Helios. He has Circe's warning and Tiresias's warning. He wants to sail past without
+      landing. But Eurylochus speaks for the exhausted crew — they have survived the Sirens
+      and Scylla and Charybdis; they need to rest on solid ground. Odysseus extracts an oath
+      from every man: they will not touch the cattle. The cattle are visible, enormous, perfect,
+      walking in the sun. Gluck's overture to Iphigénie en Tauride opens in calm and then erupts
+      into the storm that wrecks Orestes on Tauris — a passage from safety into the catastrophe
+      of an island where you must not do the thing the place demands you do. Sacrifice's
+      requirement of ritual weight and processional build is here the cattle themselves: sacred
+      animals moving in procession, the visible form of a prohibition, a ritual structure
+      demanding violation.
+  - n: 7
+    scene: "The month-long trap — adverse winds, the oath beginning to erode, the crew's starvation"
+    force: sacrifice
+    composer: Stravinsky
+    work: "Oedipus Rex — Prelude (orchestral introduction)"
+    decision: added
+    why: >
+      A south wind rises and holds for a month. The ships cannot sail. The crew exhausts their
+      provisions. Eurylochus argues: better to anger the gods through a quick death than to
+      die slowly of starvation on a foreign shore. Odysseus sleeps — Homer underlines this,
+      the moment of absence that lets the transgression happen. The crew slaughters the cattle.
+      Stravinsky's Oedipus Rex prelude is scored for the moment before a tragedy that everyone
+      already knows will happen: the instrumental opening is not suspense but preparation for a
+      ritual outcome, the processional weight of a drama moving toward its already-inscribed end.
+      Sacrifice requires ritual weight and immolation build; Eurylochus's speech is the rational
+      case for the transgression, the moment the community votes to burn the thing they swore
+      to protect. The wind that will not lift is fate's instrument; starvation is its argument.
+  - n: 8
+    scene: "The slaughter and feast — hides that crawl, meat that bellows on the spits"
+    force: law
+    composer: Bach
+    work: "Mass in B minor, BWV 232 — 'Kyrie eleison' (opening chorus)"
+    decision: added
+    why: >
+      The crew slaughters the best of Helios's cattle, roasts the thighs with ritual form,
+      pours the libations — but they have no wine and use water. And then the signs: the hides
+      crawl along the ground, the meat on the spits bellows, the flesh speaks. Homer gives the
+      transgression its supernatural annunciation: the law violated announces its own violation.
+      Bach's opening Kyrie from the B minor Mass is the most architecturally severe invocation
+      of law as form in the choral canon — the fugue subject enters in staggered voices, each
+      one submitting to the structure, the whole building toward a judgment that the text names
+      directly: Lord, have mercy. Law's requirement is formal clarity, repetition, architecture.
+      The crawling hides and the bellowing meat are the law speaking back through the bodies
+      of what was killed: this is what transgression looks like when the world still has structure.
+  - n: 9
+    scene: "Helios's complaint to Zeus — the threat to shine among the dead, divine sanction"
+    force: divine-intervention
+    composer: Haydn
+    work: "The Creation — No. 26, 'Achieved Is the Glorious Work' (chorus and trio)"
+    decision: added
+    why: >
+      Helios appears to Zeus on Olympus and demands satisfaction: if his cattle are not avenged,
+      he will descend to the underworld and shine among the dead, withdrawing his light from
+      the living world. Zeus answers immediately: I will strike the ship with my white thunderbolt.
+      The divine machinery clicks into place with the cold efficiency of a cosmic mechanism.
+      Haydn's 'Achieved Is the Glorious Work' is the culminating chorus of The Creation, in which
+      the created order is ratified by the voices of angels — the universe declared complete and
+      subject to its own laws. Divine-intervention requires sudden color shift and brass/strings
+      contrast; Haydn's brass entries arrive with exactly that quality of sovereign declaration,
+      the announcement of a judgment that has already been rendered. The parallel is exact: the
+      created order, whose law Helios represents, has been violated, and Zeus ratifies the penalty
+      with the same finality as the creation's completion.
+  - n: 10
+    scene: "The storm and the thunderbolt — Zeus splits the ship, the crew drowns"
+    force: sacrifice
+    composer: Berlioz
+    work: "Symphonie fantastique — IV. 'Marche au supplice' (March to the Scaffold)"
+    decision: added
+    why: >
+      The crew sails. Zeus sends a black squall. The mast snaps, falls on the steersman's head,
+      kills him. The thunderbolt strikes the ship. The men fall into the sea like gulls. Odysseus
+      sees them carried past, then gone. He watches every man he commanded die in the same
+      moment, in a single bolt. Berlioz's March to the Scaffold is a procession toward an
+      irreversible execution — the drum-heavy tread, the moment of the blade, the head displayed
+      to the crowd. Sacrifice requires immolation build and ritual weight; the thunderbolt is
+      the cleanest act in the poem, the judgment rendered exactly as promised. Each of the crew
+      who ate the cattle is taken. Berlioz's procession moves with that awful precision: not rage,
+      not chaos, but the mechanical execution of a predetermined sentence. The men did not die
+      in a storm; they were executed by a storm.
+  - n: 11
+    scene: "Odysseus lashes the keel to the mast — alone on the wreck, drifting back toward Charybdis"
+    force: plague
+    composer: Penderecki
+    work: "Threnody for the Victims of Hiroshima"
+    decision: added
+    why: >
+      Odysseus ties the keel to the mast with his belt and lies on them as the sea carries him.
+      By dawn he is carried back to Charybdis. He watches the whirlpool swallow the keel and mast
+      he clings to. He grabs a fig tree growing above the rock and hangs there while the abyss
+      churns below. He waits for Charybdis to disgorge — and when the timbers emerge, he drops
+      onto them. The scene is pestilential in the Greek sense: one man left living among hundreds
+      of dead, carried through the remains of destruction, the sea full of the evidence of what
+      happened. Penderecki's Threnody opens with fifty-two string instruments in sustained, cluster-
+      tone noise — not melody but the sound of mass death reverberating through structure.
+      Plague's requirement is descending motion and dark orchestration; what Odysseus drifts
+      through is the sonic and physical aftermath of annihilation, a man alive in a field of the
+      dead, the wreckage his only world.
+  - n: 12
+    scene: "Alone — nine days on the keel, carried toward Calypso's island, the sea his only company"
+    force: fate
+    composer: Schubert
+    work: "Winterreise, D. 911 — No. 24, 'Der Leiermann' (The Hurdy-Gurdy Man)"
+    decision: added
+    why: >
+      Nine days Odysseus drifts. Homer does not fill these days. They are simply duration,
+      the time it takes for the sea to do what it does with what it has left. On the tenth
+      night, the gods bring him to Ogygia, Calypso's island, where he will spend seven years.
+      Schubert's final song of Winterreise shows a man at the absolute end of possibility: a
+      beggar turning a hurdy-gurdy in the snow, no one listening, no destination, the melody
+      the same again and again while the drone never changes. The wanderer asks: will you let
+      me join my songs to your turning? There is no answer. Fate's requirement is inexorable
+      motif and hammered insistence; Der Leiermann is the quietest possible form of that
+      insistence — not a hammer but a drone, not catastrophe but the sustained, unchangeable
+      fact of being alive when everyone else is dead, turning on the water with nowhere to go.
+      This is the book's final image: Odysseus alone, the great reduction complete.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "expressly forbidden before Book 22 equivalent; register belongs to the suitors' slaughter"
+    why: >
+      The terminal-monumental grief register is blocked until the poem's catastrophic center.
+      The crew's death is mass destruction, not heroic elegy; Penderecki's Threnody carries the
+      correct weight — the sound of mass death as pestilential aftermath, not monumental mourning.
+  - composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    status: "forbidden before the suitors' slaughter"
+    why: >
+      The eschatological judgment-of-the-dead register belongs to Book 22. Zeus's thunderbolt
+      is swift executive judgment, not the final reckoning; Berlioz's March to the Scaffold
+      captures the executionary precision without the Last Judgment scale.
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "demoted — the Iliad's wrath signature; forbidden for Odyssey use"
+    why: >
+      Mars is established as the Iliad cycle's wrath leitmotif. Scylla's removal of six men
+      is wrath as bureaucratic precision, not heroic battle; Shostakovich's Eighth Quartet
+      Largo renders that specific, named, individual grief without collapsing into the Iliad's
+      sonic identity.
+  - composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    status: "demoted — Iliad's fate leitmotif; seek fresh fate colorings for the Odyssey"
+    why: >
+      The four-note fate motto belongs to the Iliad cycle. Book XII's fate operates as cold
+      withdrawal (Sibelius Fourth), specific named removal (Shostakovich Eighth), and sustained
+      terminal drone (Schubert Winterreise) — three registers the Fifth cannot supply without
+      importing the Iliad's grammar.
+  - composer: Debussy
+    work: "La Mer — I. 'De l'aube à midi sur la mer'"
+    status: "demoted — already used in odyssey-9 (metamorphosis)"
+    why: >
+      La Mer's first movement was the storm-metamorphosis piece for Book IX. Book XII needs
+      fresh sea-music; Britten's Dawn interlude gives a sea-approach with the correct estranging
+      quality — cold recognition rather than romantic color-transformation.
+  - composer: Bartók
+    work: "The Miraculous Mandarin — 'The Chase' (fugue)"
+    status: "demoted — already used in odyssey-9 (wrath/Polyphemus)"
+    why: >
+      The chase-fugue wrath was correctly placed at Polyphemus's predation in Book IX. Scylla's
+      taking of the six men is mechanically precise, not relentlessly pursuing; Shostakovich's
+      Largo captures specific grief-in-witnessing rather than predatory momentum.

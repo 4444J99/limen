@@ -1,0 +1,285 @@
+# Odyssey — Book XX — curated music arc
+# THE LAST NIGHT: Odysseus sleepless, portents, hysterical laughter, the seer's bloody vision.
+work: odyssey
+book: 20
+title: "Odyssey Book XX: The Trap That Has Already Closed"
+length_minutes: 106
+principle: >
+  Do not score Book XX as a night of waiting. Score it as a book where the trap has
+  already closed — where every event is fate announcing itself through the wrong register.
+  The suitors laugh, but the laughter is wrong: Homer calls it hysterical, unnatural,
+  meat dripping with blood while they laugh. Theoclymenus sees walls running with blood
+  and ghosts filling the hall, and no one believes him. Odysseus lies awake, his heart
+  growling, and holds himself still. The book's structural irony is total: the men who are
+  about to die are feasting and laughing; the one man who could stop it is lying on the
+  floor disguised as a beggar; the seer who sees the truth walks out alone into the light.
+  The dominant force is fate — specifically, fate in its cruelest posture: not announced
+  as thunder but visible only to the prophet, dressed as comedy for the condemned. The arc
+  moves from suppressed wrath through the thin membrane of divine-intervention, through
+  supplication and law into the doubling of fate, then erupts briefly into the grotesque
+  comedy of that unnatural laughter before the revelation shatters everything — and ends
+  with the seer's solitary exodus, the only honest response to what is coming.
+force_arc: [wrath, grief, divine-intervention, supplication, fate, supplication, law, fate, metamorphosis, wrath, revelation, exile]
+dominant_force: fate
+tracks:
+  - n: 1
+    scene: "Odysseus sleepless on the floor — his heart 'growling like a bitch over her pups'"
+    force: wrath
+    composer: Janáček
+    work: "String Quartet No. 1 'Kreutzer Sonata' — I. Adagio con moto"
+    decision: added
+    why: >
+      Homer's image is among the most charged in the poem: Odysseus lying on an oxhide,
+      watching the maids slip out to meet the suitors, his heart growling like a dog
+      protecting her young — not action, not explosion, but the sound of rage held at
+      the threshold of violence. Janáček's First String Quartet opens with exactly this
+      register: suppressed violence in a chamber texture, asymmetric rhythms that surge
+      and are pulled back, harmonic dissonance that never quite breaks into open conflict.
+      Wrath's requirement is rhythmic pressure and unresolved harmony; Janáček supplies
+      both without release, the way Odysseus in this scene supplies both — the restraint
+      is itself the dramatic event. The Tolstoy novel behind the quartet (a man who cannot
+      stop himself from violence) gives the piece its correct moral gravity: wrath looking
+      at itself in the dark.
+  - n: 2
+    scene: "Odysseus holds himself still — striking his chest, choosing patience over revenge"
+    force: grief
+    composer: Shostakovich
+    work: "Piano Trio No. 2 in E minor, Op. 67 — III. Largo"
+    decision: added
+    why: >
+      He strikes his chest and says: 'Endure, my heart.' The self-address is grief as
+      interior discipline — not the public mourning of a warrior but a man keeping himself
+      from destroying the plan, holding loss inside like a coal. Shostakovich's Piano Trio
+      No. 2 was written to mourn a dead friend and to encode atrocity, and the Largo
+      movement's writing is grief at the level of pure interiority: the piano line sparse
+      and searching, the strings barely above silence, the emotional content suspended
+      between what is felt and what can be expressed. Grief's requirement is slow tempo
+      and inward line; the Largo is inward almost to the point of disappearance — which
+      is precisely where Odysseus is, pressing his rage below the threshold so the plan
+      can survive.
+  - n: 3
+    scene: "Athena descends and stands beside him — 'Why are you awake, most unlucky of men?'"
+    force: divine-intervention
+    composer: Elgar
+    work: "The Dream of Gerontius, Op. 38 — Part II: 'Praise to the Holiest in the Height' (chorus)"
+    decision: added
+    why: >
+      Athena's arrival in Book XX is intimate and decisive: she stands by him, speaks
+      his full grief back to him, asks why he cannot sleep, and then — with a touch —
+      gives him sleep. It is the kind of divine intervention that happens in private,
+      the god not as spectacle but as presence, standing beside a mortal in the dark
+      and doing what a mortal cannot do alone. Elgar's chorus from Gerontius builds
+      from a solo thread to full orchestral and choral mass, a sudden illumination of
+      the surrounding dark, presence made audible. Divine-intervention requires sudden
+      color shift and brass-strings contrast; the chorus erupts with the structural
+      confidence of something arriving from outside the natural order, which is what
+      Athena is. Chosen over Handel's court grandeur precisely because Athena here is
+      not coronation but care.
+  - n: 4
+    scene: "Odysseus prays before dawn — asking Zeus for a sign"
+    force: supplication
+    composer: Pergolesi
+    work: "Stabat Mater in F minor — I. 'Stabat Mater dolorosa' (opening duet)"
+    decision: added
+    why: >
+      He wakes to the sound of Zeus's thunder in the night and hears a grinding-woman's
+      prayer — an omen that completes his own petition. But the primary act here is the
+      prayer itself: Odysseus on his knees before dawn, asking for a sign before the
+      killing begins. Pergolesi's opening duet is suspended cadence and an exposed dual
+      melodic line — soprano and alto weaving an intercession that cannot force an answer,
+      that waits with formal patience for what may or may not come. Supplication's
+      requirement is suspended cadence and exposed melodic line; the 'Stabat Mater
+      dolorosa' is grief and petition woven into a single, exquisitely vulnerable texture.
+      The harmonic language is simple and achingly sincere, which matches Odysseus's
+      urgency — this is not a formal ritual, this is a man asking before dawn if the plan
+      will succeed.
+  - n: 5
+    scene: "Thunder from a clear sky — the first portent, Zeus answering"
+    force: fate
+    composer: Sibelius
+    work: "Symphony No. 4 in A minor, Op. 63 — I. Tempo molto moderato, quasi adagio"
+    decision: added
+    why: >
+      Thunder from a clear sky is not a weather event — it is fate speaking in the wrong
+      register, the sky announcing catastrophe in a form that bypasses the rational. Sibelius's
+      Fourth Symphony is among the bleakest and most inexorable works in the symphonic
+      canon: no consolation, no resolution, harmonic language stripped of warmth, a tritone
+      shadow over everything. The first movement does not build toward anything; it maintains
+      a sustained dark pressure that refuses the customary grammar of symphonic argument,
+      as if the music knows something the listener cannot yet face. Fate's requirement is
+      inexorable motif and hammered insistence; Sibelius's Fourth supplies inexorability
+      without the hammered surface — the pressure is tectonic, coming from below, which
+      is exactly how Zeus's sign operates in this book.
+  - n: 6
+    scene: "The grinding-woman's prayer — she hears the thunder and prays it is the last day of the suitors"
+    force: supplication
+    composer: Tallis
+    work: "Spem in alium (Motet for 40 voices in 8 choirs)"
+    decision: added
+    why: >
+      Homer gives the grinding-woman a name and a prayer: she is tired, she has worked
+      all night, and when she hears the thunder she lifts her hands and asks that this
+      day be the suitors' last. It is the most ordinary supplication in the poem — not
+      a king or a hero praying to Olympus but a servant asking for relief from labor —
+      and Homer presents it as itself an omen, interlaced with Zeus's sign. Tallis's
+      Spem in alium distributes a single supplication across 40 voices in 8 choirs: each
+      line is a suspended melodic thread, the harmonic density created not by force but
+      by the accumulation of individual pleading voices. Supplication's requirement is
+      suspended cadence and exposed melodic line; here the suspension is collective,
+      every voice holding an unresolved petition simultaneously. The grinding-woman's
+      prayer is tiny and cosmic at once — Tallis holds both dimensions.
+  - n: 7
+    scene: "Dawn arrives — servants light fires, the household stirs, the normal day begins"
+    force: law
+    composer: Stravinsky
+    work: "Symphony of Psalms — I. Prelude: Exaudi orationem meam (Allegro moderato)"
+    decision: added
+    why: >
+      The dawn sequence in Book XX has a quality of ritual exactness: fires are lit,
+      the swineherd arrives, the cowherd arrives, each in order, each performing the
+      tasks the day requires. It is the household's law — the diurnal order that has
+      continued through twenty years of the suitors' presence, the form that survives
+      content — and Homer describes it with care because this order is about to be
+      destroyed. Stravinsky's Symphony of Psalms opens with formal, architectural
+      assertion: the E minor chord struck twice before the choral entry, the layered
+      voices moving in strict counterpoint, the formal clarity of a liturgical order
+      that precedes and outlasts any individual's presence within it. Law's requirement
+      is formal clarity, repetition, architecture; the Psalm prelude provides the
+      structural grammar of an order being observed for perhaps the last time.
+  - n: 8
+    scene: "The suitors arrive and feast — the plot to kill Telemachus thickens unseen"
+    force: fate
+    composer: Bruckner
+    work: "Symphony No. 9 in D minor — I. Feierlich, misterioso (opening)"
+    decision: added
+    why: >
+      The suitors come in their usual order, planning their usual crimes — the ambush
+      of Telemachus, the theft of the estate, the disposal of Odysseus — and they know
+      nothing. The feast proceeds. Bruckner's Ninth opens with one of the most
+      extraordinary passages in the symphonic repertoire: a sustained tremolo in the
+      strings that is not introduction but the sound of something enormous gathering
+      before it speaks, the D minor chord arriving from silence with the weight of
+      geological time. Fate's requirement is inexorable motif and hammered insistence;
+      Bruckner's inexorability is not hammered but tidal — an accumulation from near
+      nothing to full orchestra that cannot be stopped, exactly like the trap the suitors
+      are sitting inside without knowing it. The 'feierlich, misterioso' marking — solemn,
+      mysterious — is the book's exact atmosphere.
+  - n: 9
+    scene: "The suitors seized by unnatural laughter — meat dripping blood, weeping without knowing why"
+    force: metamorphosis
+    composer: Ligeti
+    work: "Atmosphères for Large Orchestra (1961)"
+    decision: added
+    why: >
+      Homer's description of the suitors' laughter is one of the most unsettling passages
+      in the poem: they are laughing, but the laughter is not theirs — it is something
+      seizing them from outside, turning their faces. The meat they eat drips blood. They
+      weep and do not know why. Normal categories of emotion have dissolved; what looks
+      like comedy is possession, what looks like feasting is a death-rite already begun.
+      Ligeti's Atmosphères is the single most apt piece in the modern orchestral canon for
+      a scene where substance dissolves into something else entirely: static harmonics
+      built from 87 independent lines, color without motion, texture without theme,
+      the sound of a world whose categories have been suspended. Metamorphosis requires
+      changing orchestral color and fluid harmony; Ligeti gives not change but the dissolution
+      of categories themselves — which is what happens to the suitors' laughter when fate
+      claims it.
+  - n: 10
+    scene: "Ctesippus hurls an ox-hoof at the disguised Odysseus — Telemachus rebukes him"
+    force: wrath
+    composer: Stravinsky
+    work: "Petrushka — Scene III: 'The Moor's Dance'"
+    decision: added
+    why: >
+      The thrown ox-hoof is the book's one act of open violence, and it misses — Odysseus
+      ducks aside. But it releases the tone that the book has been suppressing: the suitors'
+      contempt made physical, the casual cruelty that has been the house's atmosphere for
+      years. Stravinsky's 'Moor's Dance' from Petrushka is sudden, percussive, asymmetric
+      violence in a theatrical context — the Moor is powerful and stupid, his dance a
+      sequence of lurching, rhythmically displaced attacks that never build into anything
+      genuinely dangerous but are menacing in their unearned confidence. Wrath requires
+      rhythmic pressure and unresolved harmony; the Moor's Dance has both at a register
+      of grotesque force, which is exactly Ctesippus: dangerous enough to throw, not wise
+      enough to understand what he is throwing at.
+  - n: 11
+    scene: "Theoclymenus sees the vision — blood on the walls, faces wrapped in night, screaming shades"
+    force: revelation
+    composer: Schoenberg
+    work: "Verklärte Nacht (Transfigured Night), Op. 4 — string sextet version (opening)"
+    decision: added
+    why: >
+      Theoclymenus's vision is the book's climax and its most extraordinary passage: the
+      walls dripping with blood, the porch filled with ghosts heading to Erebus, the sun
+      blotted from the sky, the air full of doom. The suitors laugh at him. He sees what
+      no one else can see. Schoenberg's Verklärte Nacht opens in D minor with a sustained,
+      chromatic darkness that does not resolve — the harmonic language moves through
+      Wagner's late chromatic world into something even less stable, less anchored, the
+      sound of a reality that has changed its nature without announcing it. Revelation
+      requires stillness, chant, and verticality; Schoenberg's opening provides the vertical
+      harmonic weight (stacked, unmoving chords beneath the melodic cry) while the chromatic
+      instability gives the vision its correct quality: not a supernatural spectacle but
+      an irruption of truth into a space where truth is not welcome. The prophet sees and
+      no one believes him; the music holds what he sees without asking for belief.
+  - n: 12
+    scene: "Theoclymenus walks out alone into the light — 'I leave you to your doom'"
+    force: exile
+    composer: Mahler
+    work: "Das Lied von der Erde — VI. 'Der Abschied' (The Farewell)"
+    decision: added
+    why: >
+      He is the only person in the hall who sees correctly, and so he leaves. Theoclymenus
+      exits into sunlight while the suitors sit inside the closing trap and laugh. His
+      departure is not triumph or cowardice — it is the prophet's traditional isolation:
+      the one who sees is the one who cannot remain. Mahler's 'Der Abschied' is the longest
+      movement in Das Lied von der Erde and one of the great farewell structures in all music:
+      a sustained dissolution over nearly half an hour, a man taking leave of the world
+      with perfect clarity, wandering tonality resolving into the eternally recurring
+      'ewig… ewig…' that dissolves rather than ends. Exile requires wandering tonality and
+      open intervals; Mahler's Abschied gives the seer's departure its correct scale —
+      not a narrative exit but a leave-taking from a world that will no longer make sense
+      after tomorrow, an opening onto a silence that is both loss and release.
+demoted:
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "demoted — the Iliad's established wrath leitmotif; forbidden in Odyssey cycle"
+    why: >
+      Mars is the wrath signature of the Iliad. Using it for the suppressed wrath of
+      Odysseus lying on the floor would collapse two fundamentally different registers
+      of anger: Achilles' declared, heroic rage versus Odysseus's strategic, held fury.
+      Janáček's chamber violence is the correct Odyssean register.
+  - composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    status: "demoted — the Iliad's fate leitmotif; seek fresh colorings for the Odyssey"
+    why: >
+      The four-note fate stamp is the Iliad cycle's fate signature. Book XX's fate operates
+      differently — as invisible enclosure rather than announced doom — and benefits from
+      the tectonic quality of Sibelius 4 and Bruckner 9 rather than the declared motif.
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "expressly forbidden before Book 22 (the suitors' slaughter)"
+    why: >
+      The terminal-monumental-public grief register is held for the mass death of Book 22.
+      Book XX has no death; it has the approach of death, which requires a different sonic
+      grammar entirely — the pressure of what has not yet happened.
+  - composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    status: "forbidden before the suitors' slaughter; save for the terminal books"
+    why: >
+      The eschatological judgment-day register belongs to Book 22's mass execution. Book XX
+      scores the eve, not the day. The suitors' doomed feast needs enclosure and dissolution,
+      not the trumpet of final reckoning.
+  - composer: Messiaen
+    work: "Quartet for the End of Time — V. 'Louange à l'Éternité de Jésus'"
+    status: "demoted — heavily used across both cycles; prefer fresher revelation colorings"
+    why: >
+      The Messiaen Quartet's slow-movement louange has appeared in odyssey-4, iliad-3,
+      iliad-10, iliad-17, and iliad-20. Schoenberg's Verklärte Nacht supplies the
+      revelation of corrupted vision with fresher orchestral color appropriate to a prophet
+      seeing blood on walls in broad daylight.
+  - composer: Pärt
+    work: "Spiegel im Spiegel"
+    status: "demoted — used in odyssey-9 and multiple Iliad books; reserve for supplication register"
+    why: >
+      Spiegel im Spiegel has been the cycle's primary supplication/revelation piece and
+      risks becoming a signature rather than a choice. Pergolesi's Stabat Mater and
+      Tallis's Spem in alium bring fresh textures to the two supplication moments in
+      Book XX.
