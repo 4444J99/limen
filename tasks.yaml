@@ -44365,3 +44365,30 @@ tasks:
   created: '2026-06-22'
   updated: '2026-06-22T19:23:53.407512Z'
   dispatch_log: []
+- id: studium-film-odyssey
+  title: Odyssey film companion (return/exile/recognition)
+  repo: organvm/limen
+  type: content
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: done
+  labels:
+  - studium
+  - content
+  - expansion-backlog
+  urls: []
+  context: 'STUDIUM content task (staged in studium/expansion-backlog.yaml, released
+    to the fleet). Odyssey film companion (return/exile/recognition). Acceptance:
+    scripts/studium-validate.py must PASS (every force in studium/dominant-force.yaml;
+    force_arc equals the ordered track forces; no intra-arc duplicate pieces). One
+    green PR.'
+  depends_on: []
+  created: '2026-06-23'
+  updated: '2026-06-23T23:00:00Z'
+  dispatch_log:
+  - timestamp: '2026-06-23T23:00:00Z'
+    agent: opencode
+    session_id: current
+    status: done
+    output: "Created studium/film/odyssey.yaml — 12 force-matched films (return/exile/revelation/comedy/metamorphosis/desire/memory/divine-intervention/wrath/grief/fate/law) + set-aside adaptation overlay (The Odyssey 1997). Forces validated against dominant-force.yaml; objects validated against object-taxonomy.yaml. studium-validate.py passes."
