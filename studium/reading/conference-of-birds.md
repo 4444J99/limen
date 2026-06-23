@@ -118,35 +118,3 @@ tells you what they think the poem's ending is *about*.
 Ganjoor site renders the text with full voweling (harakat) where traditional, and the nastaliq
 handwriting tradition is worth examining visually even before any grammar — the calligraphic
 tradition that Attar's poem was transmitted through is itself an ascent practice.
-
----
-
-## Film Companion: The Seven Valleys in Cinema
-
-A complete film companion mapping each valley to authentic cinematic parallels has been created
-at `studium/film/conference-of-birds.yaml`. The companion pairs each spiritual transformation with
-films that handle mystical states at the level of *allegory* rather than plot — serious, contemplative
-cinema from Tarkovsky, Bresson, Wong Kar-wai, Koreeda, Lynch, Parajanov, and others.
-
-**The seven valleys and their cinematic forms:**
-
-| Valley | Transformation | Dominant Force | Example Films |
-|--------|---|---|---|
-| **Talab** (Search) | Awakening to the journey; recognition of the call | ascent, longing | *Stalker*, *Sunrise*, *The Holy Mountain* |
-| **Eshq** (Love) | The self consumed in the furnace of desire; ecstatic dissolution | desire, dissolution, illumination | *In the Mood for Love*, *Jeanne Dielman*, *Colour of Pomegranates* |
-| **Ma'rifat** (Knowledge) | Intellectual vertigo; the mind's annihilation by direct knowing | revelation, memory, dissolution | *Persona*, *A Ghost Story*, *The Turin Horse* |
-| **Isteghnā** (Detachment) | Radical relinquishment; the soul stripped of all consolations | salvation, exile, supplication | *A Man Escaped*, *La Haine*, *Come and See* |
-| **Tawhīd** (Unity) | The collapse of duality; subject and object as one being | illumination, memory, divine-intervention | *Ikiru*, *The Sacrifice*, *Sans Soleil* |
-| **Hayrat** (Bewilderment) | The mind's final confusion; the threshold language cannot cross | fate, longing, metamorphosis | *The Seventh Seal*, *The Night*, *Safe* |
-| **Fanā** (Annihilation) | Extinction of self; the traveler becomes the destination (si murgh) | dissolution, illumination, metamorphosis | *Uncle Boonmee*, *Mulholland Drive*, *After Life* |
-
-**How to use the film companion:**
-
-- Read the valley description in Attar's text (usually in Sections 9–22 in translations).
-- Then read the corresponding section in `studium/film/conference-of-birds.yaml` to see how cinema enacts
-  the same spiritual state through form, duration, image, and sound.
-- Notice that these films are not "about" the valleys—they *embody* them. A film is chosen because its
-  formal properties (editing rhythm, camera distance, color palette, narrative structure) create a cinematic
-  analogue of the mystical transformation.
-- The films can be watched in any order, but watching them in sequence (Talab → Fanā) creates a parallel
-  cinema-experience of annihilation and return.
