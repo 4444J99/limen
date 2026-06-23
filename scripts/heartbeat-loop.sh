@@ -51,6 +51,30 @@ cd "$LIMEN_ROOT" || exit 1
 # opencode runs on a Google model → it needs the Google generative-AI key (reuse gemini's)
 [ -n "${GEMINI_API_KEY:-}" ] && export GOOGLE_GENERATIVE_AI_API_KEY="${GOOGLE_GENERATIVE_AI_API_KEY:-$GEMINI_API_KEY}"
 
+# HARD DISPATCH CEILING — a shell-level backstop so ONE hung agent run can never freeze the whole
+# beat. The synchronous beat waits for the slowest lane; the per-lane Python timeout (LIMEN_LANE_TIMEOUT,
+# enforced in dispatch.py via _run_capture) is SUPPOSED to bound each run, but a 2026-06-23 incident saw
+# an `opencode run` blow ~3× past it (87min vs the 30min cap) and dark the daemon for ~91min — no tick,
+# the whole organism frozen, recovered only by luck when the agent finally died. A SIGKILL ceiling around
+# the entire dispatch GUARANTEES the beat is bounded regardless of any Python-timeout hole. It is
+# wedge-SAFE: dispatch.py's _run_capture pipes each agent's stdout into its OWN pipe (never this
+# command-substitution pipe), so SIGKILLing dispatch closes the substitution pipe cleanly — no tail-EOF
+# hang ([[no-never-happens-again]]). Ceiling DERIVED from the per-lane cap + slack, never pinned.
+DISPATCH_TIMEOUT_BIN="$(command -v timeout || command -v gtimeout || true)"
+: "${LIMEN_LANE_TIMEOUT:=1800}"
+: "${LIMEN_DISPATCH_CEILING:=$(( LIMEN_LANE_TIMEOUT + ${LIMEN_DISPATCH_CEILING_SLACK:-600} ))}"
+export LIMEN_LANE_TIMEOUT LIMEN_DISPATCH_CEILING
+[ -n "$DISPATCH_TIMEOUT_BIN" ] || echo "$(date '+%F %T') WARN: no timeout/gtimeout on PATH — dispatch runs" \
+  "UNBOUNDED (fail-open; a hung lane could freeze the beat). brew install coreutils to restore the ceiling." \
+  >> "$LIMEN_ROOT/logs/heartbeat.out.log" 2>/dev/null || true
+dispatch_bounded() {  # dispatch_bounded <cmd...> — run dispatch under the SIGKILL ceiling (fail-open if no timeout bin)
+  if [ -n "$DISPATCH_TIMEOUT_BIN" ]; then
+    "$DISPATCH_TIMEOUT_BIN" -s KILL "$LIMEN_DISPATCH_CEILING" "$@"
+  else
+    "$@"
+  fi
+}
+
 # SINGLETON GUARD (ATOMIC) — only one heartbeat-loop may run. mkdir is atomic, so two
 # near-simultaneous launchd respawns cannot both win (the pidfile read-then-write did).
 # Stale-lock (dead holder) is recovered with a single rmdir+retry; lose that race → exit.
@@ -200,12 +224,20 @@ while true; do
     # slowest agent). Opt in to ASYNC (LIMEN_DISPATCH_ASYNC=1): fire detached workers + harvest
     # finished runs → fast beats, a slow agent never gates the beat (the throughput 10x). Async is
     # OFF by default; flip the env + restart between beats to enable. See dispatch-async.py.
+    _dt0=$SECONDS
     if [ "${LIMEN_DISPATCH_ASYNC:-0}" = "1" ]; then
-      out="$(python3 "$LIMEN_ROOT/scripts/dispatch-async.py" --lanes "$EFFECTIVE_LANES,jules" \
-              --per-lane "$LOCAL_LIMIT" --max "${LIMEN_ASYNC_MAX:-12}" 2>&1)"
+      out="$(dispatch_bounded python3 "$LIMEN_ROOT/scripts/dispatch-async.py" --lanes "$EFFECTIVE_LANES,jules" \
+              --per-lane "$LOCAL_LIMIT" --max "${LIMEN_ASYNC_MAX:-12}" 2>&1)"; _drc=$?
     else
-      out="$(python3 "$LIMEN_ROOT/scripts/dispatch-parallel.py" --lanes "$EFFECTIVE_LANES,jules" \
-              --per-lane "$LOCAL_LIMIT" --workers "${LIMEN_WORKERS:-8}" 2>&1)"
+      out="$(dispatch_bounded python3 "$LIMEN_ROOT/scripts/dispatch-parallel.py" --lanes "$EFFECTIVE_LANES,jules" \
+              --per-lane "$LOCAL_LIMIT" --workers "${LIMEN_WORKERS:-8}" 2>&1)"; _drc=$?
+    fi
+    # timeout(1) exits 124 (TERM) or 128+9=137 (our -s KILL) when the ceiling fires → a lane run
+    # blew past its per-lane bound and dispatch.py's Python timeout failed to kill it. SURFACE it
+    # loudly so the regression is visible in the beat log (and to the watchdog) instead of a silent
+    # ~90min dark window; the beat is already UNBLOCKED (dispatch was SIGKILLed). ([[no-never-happens-again]])
+    if [ "$_drc" = 137 ] || [ "$_drc" = 124 ]; then
+      echo "── ⚠ DISPATCH CEILING HIT after ${LIMEN_DISPATCH_CEILING}s (beat dispatch took $((SECONDS-_dt0))s) — a lane run exceeded its bound and was SIGKILLed; beat unblocked. Per-lane timeout failed to fire → investigate dispatch.py _run_capture. ──"
     fi
     echo "$out" | tail -8
     echo "$out" | grep -qE "→ PR|dispatched/PR|  dispatched:|launched|harvested" && worked=1
