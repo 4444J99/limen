@@ -1,0 +1,4 @@
+{
+  "_comment": "Single source of truth for the backend runtime URL. The Firebase static dashboard is backed by this deployed Cloudflare Worker (web/worker; see README). next.config.js, web/app/scripts/generate-static-data.mjs, and cli/src/limen/doctor.py all derive from this, with NEXT_PUBLIC_API_URL / LIMEN_API_URL as a per-deployment override. Update here, not in code.",
+  "apiUrl": "https://limen-runtime.ivixivi.workers.dev"
+}
