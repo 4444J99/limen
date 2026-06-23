@@ -10,12 +10,18 @@ move the most. Surfaced once; nothing here is a nag, and nothing irreversible ha
 
 ---
 
-## 1. Open the merge gate — ASK-5  ·  **~111 PRs land, incl. the revenue chain**
-**Action:** say "open the merge gate" (or grant `Bash(gh pr merge:*)`) for a parallel merge pass on the
-CLEAN subset (green CI, no conflict), revenue-first.
-**Why it's #1:** the fleet is *building* faster than it *ships* — merge-ready PRs sit because merging is
-outward + irreversible, so the classifier holds it. One go/no-go releases the largest backlog of finished work.
-**Unblocks:** the ChatGPT-Exporter PR chain (Pro tier + funding) + ~40–50 other merge-ready PRs immediately.
+## 1. Open the merge gate — ASK-5  ·  **20 clean PRs land** (corrected from "~111")
+**Action:** say "open the merge gate" (or grant `Bash(gh pr merge:*)`) for a merge pass on the CLEAN
+subset. The exact list is `docs/MERGE-READY.md` (live-scanned, ranked) — `merge-drain.py` merges precisely it.
+**Ground-truth correction (2026-06-23):** a live scan of all **200** open PRs found only **20 actually
+clean** (mergeable + CI-green + non-trivial). The "~111 merge-ready" figure was never verified against
+CI — the real wall is **138 PRs with red CI** + 32 conflicts. So the merge gate is real but *small*.
+**The revenue catch:** **none of the 20 clean PRs are revenue-repo PRs** — every exporter / scrapper /
+universal-mail / ledger / mirror PR is sitting in the CI-red or conflict bucket. So opening the gate
+ships 20 *non-revenue* PRs; it does **not** unblock the revenue chain.
+**What actually unblocks revenue = fleet CI-healing (NOT your hand):** the 138 CI-red are the binding
+constraint, and healing them is HEAL-rung fleet work. The honest human atom here shrank to: *approve the
+20-PR clean merge pass.* The revenue unblock is now a machine-side lever, not a gate you pull.
 
 ## 2. Cloudflare deploy auth — **unblocks 16 BLD2 deploys (all 6 revenue products go live)**
 **Action:** `wrangler login` (or export `CLOUDFLARE_API_TOKEN` into the lane env), then re-dispatch.
@@ -50,6 +56,10 @@ dirs (`~/.claude`, `~/.codex`, `~/.gemini`).
 ---
 
 ## Reclassify — *not actually human atoms* (recommend → `open` so the fleet does them)
+> Now formalized + executable: `docs/RECLASSIFY-PROPOSAL.md` (from `scripts/reclassify-needs-human.py`)
+> splits all 37 by signal into **KEEP 22 / FLIP 10 / STALE 1 / REVIEW 4**. `--apply` flips only the 10
+> FLIP (fleet-buildable) to `open`; KEEP/STALE/REVIEW are never auto-touched. One word and it runs.
+
 These sit in `needs_human` but are fleet-doable build/verify work or already satisfied. Recommend flipping them
 to `open` (one decision) rather than leaving them as false human blocks:
 
