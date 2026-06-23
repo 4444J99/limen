@@ -526,6 +526,23 @@ def _is_rate_limited(text: str) -> bool:
     return bool(_RATE_PATTERNS.search(text or ""))
 
 
+# A TRANSIENT auth flap — NOT a real rate limit. Concurrent Claude Code processes share one
+# rotating OAuth credential (the macOS Keychain item), so when the access token expires several
+# race to refresh: the winner rotates the single-use refresh token, the losers present a now-stale
+# token and report "Not logged in" (anthropics/claude-code#48786). A FRESH process re-reads the
+# rotated token, so a single retry self-heals it. Kept DISTINCT from _is_rate_limited — a real
+# limit must cool+cascade the lane, an auth blip must just retry the same lane once.
+_AUTH_BLIP_PATTERNS = re.compile(
+    r"not logged in|please run /login|invalid[_ ]grant|oauth[^.]*(expired|invalid|revoked)|"
+    r"authentication_error|\b401\b|unauthorized",
+    re.IGNORECASE,
+)
+
+
+def _is_auth_blip(text: str) -> bool:
+    return bool(_AUTH_BLIP_PATTERNS.search(text or "")) and not _is_rate_limited(text)
+
+
 def _resolve_repo_dir(task: Task) -> Path | None:
     """Find a local git checkout of task.repo (owner/name) across known roots.
 
@@ -746,10 +763,42 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
                        / "scripts" / "agy-noop-shim")
             run_env["PATH"] = shim + os.pathsep + run_env.get("PATH", "")
             run_env["BROWSER"] = "true"  # belt-and-suspenders for libs that honor $BROWSER (no-op command)
+        # claude: keep the FLEET's auth OFF the interactive session's shared macOS Keychain, so the
+        # daemon's concurrent `claude -p` never rotate the OAuth token out from under a live session
+        # (anthropics/claude-code#48786). Precedence — all fleet-scoped (set in ~/.limen.env, which
+        # ONLY the daemon sources) and fail-open (neither set → unchanged: shares the Keychain, but
+        # the auth-blip retry below makes that race self-healing):
+        #   LIMEN_CLAUDE_AUTH_TOKEN → ANTHROPIC_AUTH_TOKEN  (a `claude setup-token`: subscription-
+        #       billed + stable = the FREE isolation; VERIFY with scripts/claude-fleet-auth-probe.sh
+        #       that it bills to the sub and leaves the Keychain intact before trusting it)
+        #   LIMEN_CLAUDE_API_KEY    → ANTHROPIC_API_KEY     (documented-safe, API-credit-billed fallback)
+        # NEVER export CLAUDE_CODE_OAUTH_TOKEN here: on macOS it DELETES the global Keychain item on
+        # exit (anthropics/claude-code#37512, closed not-planned), which would knock out the live session.
+        if agent == "claude":
+            _ftok = os.environ.get("LIMEN_CLAUDE_AUTH_TOKEN")
+            _fkey = os.environ.get("LIMEN_CLAUDE_API_KEY")
+            if _ftok:
+                run_env["ANTHROPIC_AUTH_TOKEN"] = _ftok
+                run_env.pop("ANTHROPIC_API_KEY", None)
+            elif _fkey:
+                run_env["ANTHROPIC_API_KEY"] = _fkey
+            run_env.pop("CLAUDE_CODE_OAUTH_TOKEN", None)  # belt-and-suspenders: never wipe the Keychain
         try:
             run = _run_capture(
                 agent_cmd, cwd=str(wt), timeout=lane_timeout, env=run_env,
             )  # own process group → timeout SIGKILLs grandchildren too (no beat-stall hang)
+            # SELF-HEAL the credential-refresh race (#48786): if claude lost the token rotation,
+            # a fresh process re-reads the now-rotated token. ONE retry only — a persistent failure
+            # still falls through to the rate-limit/cascade handling below. claude-lane only.
+            if (
+                agent == "claude"
+                and run.returncode != 0
+                and _is_auth_blip((run.stderr or "") + (run.stdout or ""))
+            ):
+                print(f"  AUTH-BLIP {task.id}: claude credential-refresh race — re-reading token, one retry")
+                run = _run_capture(
+                    agent_cmd, cwd=str(wt), timeout=lane_timeout, env=run_env,
+                )
         except subprocess.TimeoutExpired:
             print(f"  TIMEOUT {task.id} after {lane_timeout}s — too big for sync local → routing to jules (async)")
             return _TIMEOUT  # finally drops the worktree; task re-routes to the async lane
