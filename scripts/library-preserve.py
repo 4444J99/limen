@@ -53,12 +53,35 @@ REGENERABLE = [
 
 # ── IRREPLACEABLE sliver — small, high-value, documented as lacking an offsite 3rd copy ─
 # (Big media — Photos, Messages Attachments — are partly iCloud-held; PROPOSED, not auto-copied.)
-SLIVER = [
-    ".claude",                       # agent-memory + projects (this very memory)
-    "Library/Mail",                  # mail store
-    "Library/Messages/chat.db",      # message TEXT history (the irreplaceable part)
+# Split by TCC posture: SAFE paths are this user's OWN data (no Full Disk Access needed); FDA paths
+# (Mail, Messages) are TCC-protected stores that REQUIRE Full Disk Access. We only ever reference the
+# FDA paths when this process actually holds FDA — otherwise even touching them makes macOS raise the
+# recurring "python3 would like to access data from other apps" consent dialog. See _has_fda().
+SLIVER_SAFE = [
+    ".claude",                       # agent-memory + projects (this very memory) — own data, no FDA
+]
+SLIVER_FDA = [
+    "Library/Mail",                  # mail store — TCC/Full-Disk-Access protected
+    "Library/Messages/chat.db",      # message TEXT history (the irreplaceable part) — FDA protected
     "Library/Messages/chat.db-wal", "Library/Messages/chat.db-shm",
 ]
+
+
+def _has_fda() -> bool:
+    """True iff this process holds Full Disk Access. SILENT probe: reading the TCC database returns
+    a PermissionError WITHOUT raising a GUI consent dialog (verified on this machine), so this check
+    never itself prompts. Used to decide whether we may touch FDA-protected stores (Mail/Messages) —
+    if we lack FDA we skip them entirely, so the OS has no reason to prompt. The grant can't be
+    scripted (SIP-protected system DB); eliminating the trigger is the durable, hands-off fix."""
+    probe = os.path.join(HOME, "Library/Application Support/com.apple.TCC/TCC.db")
+    try:
+        with open(probe, "rb"):
+            return True
+    except PermissionError:
+        return False
+    except OSError:
+        # absent/odd → don't gate on this probe; SLIVER_FDA paths still self-skip if missing
+        return True
 
 
 def _du(path: str) -> int:
@@ -111,7 +134,17 @@ def preserve_sliver() -> int:
     copied = total = 0
     if APPLY:
         os.makedirs(PRESERVE_DST, exist_ok=True)
-    for rel in SLIVER:
+    # FDA-protected stores (Mail/Messages) are reached ONLY when we actually hold Full Disk Access —
+    # otherwise even an os.path.exists on them triggers the recurring macOS consent dialog. Skipping
+    # them when FDA is absent raises NO prompt and is non-destructive (the .claude sliver is still
+    # preserved; granting FDA to ~/Workspace/limen/.venv/bin/python3 later resumes them automatically).
+    sliver = list(SLIVER_SAFE)
+    if _has_fda():
+        sliver += SLIVER_FDA
+    else:
+        print("  Mail/Messages preservation parked: no Full Disk Access (no prompt raised); "
+              ".claude sliver still preserved. KNOWN·OWNED — not nagged.")
+    for rel in sliver:
         src = os.path.join(HOME, rel)
         if not os.path.exists(src):
             continue
