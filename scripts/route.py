@@ -40,6 +40,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -196,6 +197,41 @@ def _learned_weights() -> dict[str, float]:
         if lane and isinstance(w, (int, float)):
             weights[lane] = max(floor, min(1.0, float(w)))
     return weights
+
+
+def _refresh_self_improve_proposal() -> None:
+    """Run the self-IMPROVE *producer* at low cadence so its proposal stays fresh for the *consumer*
+    (_learned_weights, above) to apply — the other half of the self-improve rung.
+
+    Why it lives here: the live heartbeat loop (scripts/heartbeat-loop.sh) calls route.py every beat
+    but has NO separate self-improve step, and the only other caller of scripts/self-improve.py is
+    metabolize.sh — which the live loop never invokes (only saturate.sh does). So without this, the
+    proposal was never generated in the running system and _learned_weights always fell through to {}
+    (the rung was wired into a script the daemon doesn't run). Co-locating the producer in route — the
+    organ that already consumes it — keeps the WHOLE rung in the spawned-subprocess layer: route.py is
+    re-exec'd fresh each beat, so this deploys on the next sync-release ff with NO loop-body edit and
+    NO daemon kickstart (the original design intent for this rung).
+
+    Proposal-only + read-only (self-improve.py never writes tasks.yaml). LIMEN_SI_APPLY=0 disables the
+    whole rung (producer + consumer) for a clean rollback; cadence-gated by LIMEN_SI_CADENCE hours so
+    most beats are a cheap mtime check; timeout-bounded and FAIL-OPEN — any error just leaves the last
+    proposal in place (or none → _learned_weights → {}, today's split) and never blocks routing."""
+    if os.environ.get("LIMEN_SI_APPLY", "1") != "1":
+        return
+    try:
+        cadence_h = float(os.environ.get("LIMEN_SI_CADENCE", "10"))
+        proposal = ROOT / "logs" / "self-improve-proposal.json"
+        if proposal.exists() and (time.time() - proposal.stat().st_mtime) / 3600.0 < cadence_h:
+            return  # fresh enough — skip the producer this beat
+        script = ROOT / "scripts" / "self-improve.py"
+        if not script.exists():
+            return
+        subprocess.run(
+            ["python3", str(script)], cwd=str(ROOT),
+            timeout=float(os.environ.get("LIMEN_SI_TIMEOUT", "120")), capture_output=True,
+        )
+    except Exception:
+        return  # fail-open: a stale/absent proposal just means _learned_weights -> {} (no effect)
 
 
 def _task_classes(task: dict) -> set[str]:
@@ -390,6 +426,10 @@ def main() -> int:
     ap.add_argument("--apply", action="store_true",
                     help="rewrite target_agent in tasks.yaml (reversible); never dispatches")
     args = ap.parse_args()
+
+    # PRODUCE the self-improve proposal (low cadence) before we CONSUME it in routing below — this is
+    # the live home of the improve producer (the heartbeat loop has no separate self-improve step).
+    _refresh_self_improve_proposal()
 
     tasks_path = Path(args.tasks)
     workdir = Path(args.workdir).expanduser()
