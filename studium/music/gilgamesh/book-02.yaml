@@ -1,0 +1,180 @@
+# Gilgamesh — Tablet II — curated music arc
+# Gold-standard form. Matches iliad/book-01.yaml exactly.
+work: gilgamesh
+book: 2
+title: "Gilgamesh Tablet II: Wrestling, Recognition, Brotherhood"
+length_minutes: 82
+principle: >
+  Tablet II is the moment where the constructed equals become witnessed equals.
+  Enkidu and Gilgamesh do not meet as allies. They meet as forces in collision.
+  The wrestling-match is not combat sport — it is the physical enactment of two beings
+  discovering they are matched. Out of wrath comes desire; out of desire comes something
+  the tablets will call friendship but which the poem identifies as the condition for everything
+  that follows. Watch how the story moves from Enkidu as Gilgamesh's artificial counterpart
+  to Enkidu as Gilgamesh's witness, his mirror, his salvation, and — by the end — his doom.
+force_arc: [metamorphosis, revelation, fate, wrath, wrath, law, desire, grief, desire, law, return, divine-intervention]
+dominant_force: desire
+tracks:
+  - n: 1
+    scene: "Enkidu enters Uruk — the city reveals itself"
+    force: metamorphosis
+    composer: Debussy
+    work: "Préludes, Book I — 'Pagodes' (No. 5)"
+    decision: added
+    why: >
+      Enkidu has never seen a city. The shepherds bring him to Uruk: walls, crowds, architecture,
+      ritual. Everything he knew — grass, water, animals — is suddenly surrounded and contained
+      by human making. Debussy's Pagodes is the sound of a world being perceived as a totality:
+      Eastern instruments and harmonics suggesting vastness within order. The piece emerges slowly
+      into a pattern that felt impossible from the opening — exactly Enkidu's register as the city
+      becomes legible to him.
+  - n: 2
+    scene: "The people see Enkidu — who is this wild-haired one?"
+    force: revelation
+    composer: Messiaen
+    work: "Quartet for the End of Time — I. 'Liturgie de cristal'"
+    decision: added
+    why: >
+      Enkidu appears in Uruk. The people stop. They have never seen a being like him — neither
+      fully wild nor fully human. His presence is a revelation in the truest sense: something unknown
+      made suddenly visible. Messiaen's opening movement is the sound of the sacred entering time:
+      bird-song (the unseen made audible) and harmonies that do not resolve but establish themselves
+      as a new world. Enkidu is the revelation that Gilgamesh is not alone in his power.
+  - n: 3
+    scene: "Enkidu blocks Gilgamesh's path — fate brings them face-to-face"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 — III. Allegro"
+    decision: added
+    why: >
+      Gilgamesh goes to his customary act: he takes a bride on her wedding night. Enkidu stands
+      in the doorway. Neither was seeking this encounter, yet it arrives with mechanical inevitability.
+      Beethoven's Scherzo is the sound of forces that cannot refuse collision: rhythmic, driving,
+      inescapable. The moment recognizes itself as cosmological — not chance, but the machinery
+      of Aruru's creation working exactly as designed.
+  - n: 4
+    scene: "The wrestling-match begins — Gilgamesh meets his match"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    decision: added
+    why: >
+      They wrestle. The tablets give no quarter to the physicality — these are two beings of
+      extraordinary power pushing against each other. Holst's Mars is relentless, asymmetrical (5/4),
+      hostile energy that does not resolve into victory but persists. The piece has no mercy because
+      the wrestling has none: it is wrath not as anger but as the raw force of two wills colliding.
+  - n: 5
+    scene: "They grapple — each discovering the other's strength"
+    force: wrath
+    composer: Stravinsky
+    work: "The Rite of Spring — 'The Ritual of the Abduction'"
+    decision: added
+    why: >
+      Still wrestling, still locked in battle. Stravinsky's abduction scene is violence organized
+      into ritual: there is pattern, there is weight, but it is the pattern of something being
+      *taken*, *moved*, *transformed*. Gilgamesh cannot overcome Enkidu; Enkidu cannot overcome
+      Gilgamesh. The wrestling becomes a ritual with no predetermined outcome — a dance of equals
+      testing the structure of their equality.
+  - n: 6
+    scene: "Gilgamesh falls — or does he? The match resolves"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue — Contrapunctus I"
+    decision: added
+    why: >
+      The wrestling resolves (the tablets vary on who prevails; the point is that one yields).
+      In that yielding, a structure becomes audible. Bach's first Contrapunctus is two voices
+      in perfect counterpoint — neither leads, both follow. The law here is not imposed; it is
+      discovered in the wrestling itself. The match ends not because one is defeated but because
+      both recognize they have found the form of their equality.
+  - n: 7
+    scene: "They look at each other — and something shifts from battle to recognition"
+    force: desire
+    composer: Wagner
+    work: "Tristan und Isolde — Prelude to Act III"
+    decision: added
+    why: >
+      This is not the Prelude to Act I (Shamhat's desire, eros unresolved). This is Act III:
+      desire that has suffered, endured, and arrives at a threshold where it might become
+      something else. The wrestling ends. They look at each other. In that moment, wrath
+      transmutes into something that has desire's intensity but a different direction. Wagner's
+      third-act prelude is yearning that is not sexual but absolute: recognition, not conquest.
+  - n: 8
+    scene: "Gilgamesh weeps — tears fall on Enkidu's face"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    decision: added
+    why: >
+      Gilgamesh has found someone he cannot defeat, someone who is his equal. In that moment,
+      he grieves: for his isolation before this meeting, for the knowledge that now he is bound
+      to another being, for the vulnerability that equality requires. Mahler's Adagietto is the
+      sound of a solitary being opening to another — not gladly, but inevitably. The grief is
+      recognition made visible in tears.
+  - n: 9
+    scene: "Enkidu speaks — 'I will be your companion'"
+    force: desire
+    composer: Schubert
+    work: "String Quintet in C Major — IV. Allegretto"
+    decision: added
+    why: >
+      Enkidu, who was wild, who has newly learned human speech, now speaks a vow. The words
+      are desire in a different register: not the desire of conquest or eros, but the desire
+      to remain, to serve, to mirror. Schubert's Allegretto (the slow movement of his final
+      string quintet, composed shortly before his death) is the most human sound in the chamber
+      repertoire — vulnerability that is also strength, affection without sentimentality. This
+      is the moment friendship is named.
+  - n: 10
+    scene: "They embrace — the equality becomes embracement"
+    force: law
+    composer: Fauré
+    work: "Pavane"
+    decision: added
+    why: >
+      Gilgamesh and Enkidu hold each other. The gestures have become formal, ceremonial,
+      structured. Fauré's Pavane is a dance that is also a procession — it moves with weight
+      and dignity. The embrace is not passion now but the establishment of a bond that will
+      have legal weight in what follows: loyalty, oath, mutual obligation. Law in the sense
+      of the grammar that will govern their actions henceforth.
+  - n: 11
+    scene: "Gilgamesh brings Enkidu to Ninsun — return homeward"
+    force: return
+    composer: Brahms
+    work: "Symphony No. 3 — III. Poco allegretto"
+    decision: added
+    why: >
+      The episode closes with return: Gilgamesh brings Enkidu back to his mother, to the
+      palace, to the place of origin. Brahms' third symphony slow movement is homecoming
+      transformed — you return to a place, but you are not the same. The music is gentle,
+      grateful, but shadowed with the knowledge that everything has changed. Ninsun will
+      recognize Enkidu as the fulfillment of her son's dreams. She does not know yet that
+      Enkidu is also the gateway to his doom.
+  - n: 12
+    scene: "Ninsun sees Enkidu — the prophecy is fulfilled"
+    force: divine-intervention
+    composer: Messiaen
+    work: "Harawi — 'La Ville Celeste' (movement IV)"
+    decision: added
+    why: >
+      Ninsun, the goddess-mother, receives Enkidu. She recognizes him as the one the dreams
+      foretold. In that recognition, divine knowledge affirms human bond: what was made by
+      Aruru is now acknowledged and blessed by Ninsun. Messiaen's celestial city is the sound
+      of the divine order confirming what mortals have enacted. The piece is luminous and
+      absolute — not doubt, but the calm of divine certainty. The friendship is no longer
+      just human; it is cosmologically confirmed.
+demoted:
+  - composer: Prokofiev
+    work: "Romeo and Juliet — 'Meeting' (TN. 20)"
+    status: "considered and removed"
+    why: >
+      Too explicitly romantic. The wrestling-match is not courtship. The friendship that emerges
+      is not erotic passion — it is a deeper bond. Prokofiev's version of meeting reads as infatuation;
+      the tablets present something more like recognition of one's own soul in another body.
+  - composer: Strauss
+    work: "Also sprach Zarathustra — sunrise"
+    status: "reserved for climactic moment"
+    why: >
+      The temptation is to use climactic apotheosis here. Tablet II is not yet the register
+      for transfiguration. The friendship has just been named; the full weight of what it means
+      — what loss it will bring — comes later. Save Strauss for the moment of true transcendence
+      or true devastation.
