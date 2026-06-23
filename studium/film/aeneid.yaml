@@ -1,0 +1,319 @@
+# The Aeneid — film companion (the FOURTH commentary system)
+# Format mirrors studium/film/iliad.yaml (gold standard).
+#
+# The Aeneid's forces orbit three poles — empire, fate, sacrifice — and the grief and wrath
+# they leave in their wake. Virgil's question ("What is empire built from?") receives no single
+# answer; the poem accumulates answers the way Aeneas accumulates losses. The films that
+# companion it are not "movies about Rome" but independent accounts of the same forces —
+# sovereign display (kingship), the spoken destiny (fate), the human cost (sacrifice), and
+# the terrible patience of the gods who will not let go of their grievances (wrath).
+#
+# Each film carries:
+#   object_lesson  — the precise principle the film makes VISIBLE (bridge to objectlessons.film)
+#   objects        — tracked cinematic objects (rail to the 253-film Object Lessons database)
+#   divisions      — which book(s) the film speaks to (so the daily face promotes the right pick)
+#   letterboxd     — the film's letterboxd slug (legal watch link + join to watch history)
+work: aeneid
+title: "The Aeneid — a cinema of fate, sacrifice, and the weight of empire"
+principle: >
+  Do not assemble "movies about the Roman Empire." Assemble the poem's FORCES given cinematic
+  bodies. The Aeneid is not a founding epic that happens to cost something; it is a cost-accounting
+  disguised as a founding epic. Aeneas is told his destiny early — imperium sine fine, empire without
+  limit — and spends twelve books paying for it in the currency of everything he loves. The fitting
+  and NOT obvious film for Book I is therefore not Gladiator but Lawrence of Arabia — a man consumed
+  by the destiny assigned to him, becoming the instrument of an empire he cannot refuse. Dido is
+  not a romance but the sacrifice the fatum requires before it will proceed. Juno is not a villain
+  but a wounded goddess whose wrath has the structure of a Salieri's envy — personal, ancient, and
+  impotent against a destiny she cannot change. The companion reaches past Rome itself: a desert
+  epic for fatum as vocation (Lawrence of Arabia), a chamber tragedy for sacrifice as the price of
+  covenant (The Sacrifice), the American frontier for the exile who cannot come home (The Searchers),
+  a Sicilian ballroom for the sunset of sovereign display (The Leopard), a Tokyo apartment for grief
+  that survives the story (Tokyo Story), a San Francisco vertigo for desire as possession of a
+  ghost (Vertigo), a divine grudge in eighteenth-century Vienna for Juno's unappeasable fury
+  (Amadeus), an abandoned Zone for the gods whose intentions cannot be read (Stalker), a Berlin
+  divided by the invisible for revelation breaking into the everyday (Wings of Desire), and a
+  Danish heath where the dead return for supplication as the poem's final grammar (Ordet).
+  The direct adaptation (the Franco Rossi miniseries) is included as an overlay — honest, partial,
+  set aside; the force-companion carries the weight.
+force_coverage: [fate, sacrifice, exile, grief, kingship, desire, wrath, divine-intervention, revelation, supplication]
+films:
+  - title: "Lawrence of Arabia"
+    director: "David Lean"
+    year: 1962
+    force: fate
+    divisions: [1, 4, 6, 12]
+    objects: [mirror]
+    letterboxd: lawrence-of-arabia
+    scene_or_theme: "the inexorable progress of fatum through a man — Books I, IV, VI, XII: fate as vocation, the imperial instrument"
+    object_lesson: >
+      Fate is not a prophecy you receive but a role you grow into until there is no one left
+      outside the role. Lawrence's narcissism — the mirror of his own legend, the self-image
+      that becomes the public image that consumes the private man — is Aeneas' condition:
+      he is not a man having a destiny, he IS the destiny, and the fatum has hollowed out the
+      space where a private life would have been. The MIRROR is the object lesson: Lawrence
+      checking his reflection in the desert is Aeneas checking his reflection in the frieze at
+      Dido's temple — seeing himself as history will see him, already becoming a monument.
+      Book I opens with the arma virumque, the man and the wars, the man already inseparable
+      from the wars. Lawrence, by the end, IS the Arab Revolt. There is no Lawrence beneath.
+    why: >
+      The obvious fate film for an epic about destiny would be something more literal — a film
+      about oracles or prophecy. The truthful one is about a man who becomes the thing he was
+      fated to be and cannot survive it. Lean films history as a current that carries individuals
+      who believe they are steering. That register — inexorable, impersonal, vast — is exactly
+      the register of Jupiter's prophecy in Book I and the descent to the underworld in Book VI.
+      Screen it for the weight of fatum as a lived, not declared, condition.
+    content_note: "epic length (228 min), desert warfare, no graphic gore; the director's cut restores essential character scenes"
+
+  - title: "The Sacrifice"
+    director: "Andrei Tarkovsky"
+    year: 1986
+    force: sacrifice
+    divisions: [2, 4, 12]
+    objects: []
+    letterboxd: the-sacrifice-1986
+    scene_or_theme: "the offering that sets the world right — Books II (Laocoön), IV (Dido), XII (Turnus)"
+    object_lesson: >
+      Sacrifice is the act that cannot be undone and does not ask whether it was enough. The
+      protagonist offers everything — his house, his family, his speech, himself — in a bargain
+      with God to prevent catastrophe. He keeps the bargain even when the catastrophe does
+      not come. That is the Aeneid's cost-structure: Dido gives her throne, her body, her
+      reputation, and her life; Aeneas gives every human attachment; the sacrifice is not
+      transactional — it is constitutive. The immolation at the end — the burning house that
+      Alexander destroys methodically, piece by piece, as if performing a rite — is the
+      Aeneid's pyre: Dido's, Troy's, Turnus', the thing that must be burned so the fatum may
+      proceed. The film is the definitive cinematic statement of sacrifice as ritual obligation,
+      not exchange.
+    why: >
+      Stravinsky's Sacrificial Dance is the music paradigm; Tarkovsky's Sacrifice is the film
+      paradigm. The Aeneid builds Rome on a series of immolations: Troy (Book II), Dido
+      (Book IV), Pallas (Book X), Turnus (Book XII). Tarkovsky asks the same question Virgil
+      asks: what if the fire is the answer, not the cost? Screen it for the poem's central
+      and unanswerable register.
+    content_note: "slow, meditative; the house-burning finale is devastating by design; Swedish/English with subtitles"
+
+  - title: "The Searchers"
+    director: "John Ford"
+    year: 1956
+    force: exile
+    divisions: [1, 3, 5]
+    objects: [door]
+    letterboxd: the-searchers
+    scene_or_theme: "the man who cannot come home — Books I, III, V: exile as a permanent condition of the soul"
+    object_lesson: >
+      Exile is not the absence of a home but the inability to inhabit one once found. Ethan
+      Edwards spends years crossing the American desert to find his niece, and when he finds
+      her, the final shot frames him in the DOORWAY of the homestead — outside, not crossing
+      the threshold, turning back to the wilderness. This is Aeneas at every moment of the
+      Aeneid: he is the man for whom every shore is temporary, every welcome a prelude to
+      departure, every home already burning. Virgil gives him *spem vultu simulat, premit
+      altum corde dolorem* — the face performs hope, the deep heart carries grief. Exile in
+      the Aeneid is not a geographic condition; it is the condition of having loved what is
+      gone. The door that Ethan cannot enter is the door of every house Aeneas builds and
+      leaves, from Carthage to Latium.
+    why: >
+      The Aeneid is an epic of exile disguised as an epic of foundation. Aeneas is always
+      in passage — Books I's shipwreck, III's wandering, V's funeral games for a father
+      already lost. Ford films the American frontier as Virgil films the Mediterranean: a
+      space of wandering that becomes destiny. Screen it for the doorframe that frames the
+      exile's permanent threshold.
+    content_note: "western violence, racial language of its period; the final shot is one of cinema's great frames"
+
+  - title: "Tokyo Story"
+    director: "Yasujirō Ozu"
+    year: 1953
+    force: grief
+    divisions: [4, 5, 11, 12]
+    objects: [clock]
+    letterboxd: tokyo-story
+    scene_or_theme: "the grief that survives the story — Books IV (Dido), V (Anchises), XI (Mezentius), XII (Turnus)"
+    object_lesson: >
+      Grief is not a climax but an aftermath. The old parents visit their grown children in
+      Tokyo; the children are too busy for them; the mother dies; the family gathers and
+      disperses; the widower sits alone at the window watching boats pass. No one screams,
+      no one rends their clothes, no one makes a monument. The CLOCK on the wall ticks, time
+      passes, the world continues, and the grief is in the continuation. This is Virgil's
+      great discovery: the Aeneid's grief is not in the pyre (Book IV) or the funeral
+      (Book V) or the treaty broken (Book XII) — it is in the next morning, when Aeneas has
+      already sailed, when the journey continues, when the world has already moved on and
+      the dead are already furniture of the past. Ozu films the grief of survivors who must
+      go on living, which is the only grief the Aeneid ever truly registers.
+    why: >
+      The Iliad reserves grief for its last movement; the Aeneid installs grief as its
+      atmosphere. Ozu's still camera, his refusal of drama, his attention to the ordinary —
+      this is the cinematic form of *sunt lacrimae rerum* (there are tears in things).
+      Screen it for the register of grief that is not spectacle but medium.
+    content_note: "no violence; emotional devastation through restraint; Japanese with subtitles"
+
+  - title: "The Leopard"
+    director: "Luchino Visconti"
+    year: 1963
+    force: kingship
+    divisions: [1, 8, 12]
+    objects: [mirror]
+    letterboxd: il-gattopardo
+    scene_or_theme: "sovereign display and the cost of founding a new order — Books I, VIII (the future of Rome), XII (the new kingdom)"
+    object_lesson: >
+      Sovereign display is the public enactment of power, and the public is always watching.
+      The Prince of Salina presides over a ballroom that is the funeral of his class — the
+      old aristocracy giving way to the bourgeoisie, everything changing so that everything
+      can stay the same. He watches himself in the MIRROR at the ball: the last moment of
+      true kingship, aware that his power is already becoming ceremonial. Aeneas at the
+      end of the Aeneid does not found a city; he kills a man and the poem ends. The
+      sovereign display of the new order — the walls of Rome, the temple of Palatine —
+      is always deferred, always future, always the thing the present cannot yet see.
+      Visconti's ballroom is the space where Virgil's prophecy (Book VIII's shield, the
+      future of Rome) meets the reality of what power costs: not in treasure but in the self.
+    why: >
+      Kingship in the Aeneid is not triumph but the inheritance of a weight. Anchises'
+      parade of future Roman heroes (Book VI) and the shield of Aeneas (Book VIII) are
+      backward-looking prophecies — the future seen from the perspective of its completion.
+      Visconti does the same: the ballroom scene is the completed empire looking back at
+      the moment it died. Screen it for the register of kingship as a sunset, not a sunrise.
+    content_note: "the ballroom sequence is 45 minutes of cinema's greatest sovereign display; Italian with subtitles; some war violence"
+
+  - title: "Vertigo"
+    director: "Alfred Hitchcock"
+    year: 1958
+    force: desire
+    divisions: [4]
+    objects: [cigarette]
+    letterboxd: vertigo
+    scene_or_theme: "the desire that remakes its object — Book IV: Dido and Aeneas, passion as fate and catastrophe"
+    object_lesson: >
+      Desire, when it cannot have its object, remakes the object into what it can have —
+      and the remaking is a violence. Scottie falls in love with a woman who is a fiction
+      (a wife pretending to be haunted), loses her, meets a woman who resembles her, and
+      remakes the second woman into the first — hair, clothes, gestures, the same. The
+      CIGARETTE that Madeleine/Judy lights in the green neon is the object of desire
+      infinitely deferred: you can possess the gesture but not the woman behind it. Aeneas
+      loves Dido, leaves Dido, and the poem never speaks of her again — she is remade into
+      a scar, a story, a reason for Carthage's later enmity with Rome. The Aeneid cannot
+      look directly at what it does to Dido; Vertigo can. Book IV is the site of the poem's
+      most intense desire and its most violent suppression. Vertigo shows what that
+      suppression looks like from inside the man doing the suppressing.
+    why: >
+      Virgil structures Dido's tragedy with the psychology of obsession — the cave, the
+      hunt, the abandoned feast, the pyre — but the poem cannot call it obsession because
+      the hero must remain pious. Hitchcock can call it what it is: desire that has lost
+      its object and refuses to let go. Screen it for Book IV's true register — not love
+      but the vertigo of love that destroys what it touches.
+    content_note: "psychological intensity, suicide; the film is a study of obsession, not a romance"
+
+  - title: "Amadeus"
+    director: "Miloš Forman"
+    year: 1984
+    force: wrath
+    divisions: [1, 7, 10]
+    objects: [mirror]
+    letterboxd: amadeus
+    scene_or_theme: "the grudge that cannot accept destiny — Juno's wrath against Troy (Books I, VII, X)"
+    object_lesson: >
+      Wrath, when it is personal and cosmic at once, is the rage of a minor deity who
+      watches a greater destiny unfold and can do nothing to stop it. Salieri serves God
+      with his music, composes for His glory, and watches Mozart — a vulgar, childish
+      prodigy — receive the divine gift he prayed for. His mirror-wrestle ("From now on,
+      we are enemies, You and I") is Juno's theology: a powerful being who believes her
+      due has been slighted, who spends the entire narrative attempting to thwart a destiny
+      she cannot change. Juno's wrath in the Aeneid is Salieri's: ancient, personal,
+      justified from her perspective, and entirely impotent against the fatum she opposes.
+      The MIRROR is the object lesson — the face that watches its own grievance grow.
+    why: >
+      Juno's opening soliloquy in Book I — the catalog of grievances, the refusal to
+      accept that Troy's destiny has been written — is Salieri's complaint set in the
+      language of epic. Forman films envy as a theological crisis: the wound that comes
+      from watching another receive what you believe you earned. Screen it for Juno's
+      register — the wrath that is not monstrous but comprehensible, and therefore more
+      terrible.
+    content_note: "theatrical performances of Mozart's operas; Salieri's crisis may be triggering for artists; some sexual content"
+
+  - title: "Stalker"
+    director: "Andrei Tarkovsky"
+    year: 1979
+    force: divine-intervention
+    divisions: [2, 6]
+    objects: [telephone]
+    letterboxd: stalker-1979
+    scene_or_theme: "the gods whose intentions cannot be read — Books II (the fall of Troy) and VI (the underworld)"
+    object_lesson: >
+      The divine does not explain itself. It changes the laws of the space it occupies,
+      grants wishes according to a logic no one fully understands, and leaves the humans
+      who enter it more lost than before. The Zone is the divine as Virgil encodes it —
+      present, active, operating at a scale that makes human intention irrelevant. The
+      TELEPHONE that rings in the abandoned Zone, with no one on the line, is the divine
+      signifier emptied of message: the gods of the Aeneid, who send signs (the burning
+      ships in Book V, the sow and the thirty piglets in Book VIII) and sometimes explain
+      them and sometimes do not. Neptune stills the sea with a word; Venus veils her son
+      in mist; Jupiter dispatches Mercury without warning — each is an intervention as
+      inscrutable, as final, as the laws of the Zone.
+    why: >
+      Divine intervention requires sudden color shift and the sense that a world has been
+      reorganized. Tarkovsky does not cut to the gods on Olympus; he films the world as
+      it looks when the gods have been there — changed, charged, unaccountable. Screen it
+      for the register of divine presence as a material condition of the world.
+    content_note: "slow, densely philosophical; the Zone is never explained — that is the point; Russian with subtitles"
+
+  - title: "Wings of Desire"
+    director: "Wim Wenders"
+    year: 1987
+    force: revelation
+    divisions: [2, 6]
+    objects: [cigarette]
+    letterboxd: wings-of-desire
+    scene_or_theme: "the revelation of the invisible — Books II (Venus unveils the gods) and VI (the underworld's vision)"
+    object_lesson: >
+      Revelation is not the transmission of information but the tearing of a veil. The
+      angels in Wenders' Berlin walk invisibly among humans, hearing their thoughts,
+      touching their shoulders, able to see the world they cannot fully enter. Damiel,
+      the angel who chooses to fall into human experience, performs the same movement as
+      Aeneas in Book VI — crossing from the invisible order into the visible, from
+      knowledge to experience, from hearing the prophecy to living it. The CIGARETTE that
+      Damiel lights after he becomes human — the first ordinary act of a mortal body —
+      is the whole of revelation: knowledge descending into habit, the invisible made
+      tactile. Venus in Book II lifts the mist from Aeneas' eyes and he sees the gods
+      tearing Troy down. The veil is removed. That is revelation as Virgil means it: not
+      a message but the capacity to see what was always there.
+    why: >
+      Book VI of the Aeneid is a descent into revelation — the underworld that is also
+      the future of Rome, the parade of heroes yet unborn. Wenders' Berlin is Book VI's
+      underworld filmed as a modern city: the dead walking among the living, the invisible
+      history pressing against the present. Screen it for the register of revelation as
+      the sudden visibility of what was always present.
+    content_note: "black-and-white shifting to color; meditative pace; German, English, French with subtitles"
+
+  - title: "Ordet"
+    director: "Carl Theodor Dreyer"
+    year: 1955
+    force: supplication
+    divisions: [4, 6, 12]
+    objects: []
+    letterboxd: ordet
+    scene_or_theme: "the posture of waiting for a sign — Books IV (Dido's prayer), VI (Anchises' revelation), XII (Turnus' plea)"
+    object_lesson: >
+      Supplication is the suspended moment before an answer that may never come. The
+      characters in Dreyer's film pray, wait, argue theology, and — at the last possible
+      moment — receive what they asked for in the only form that could satisfy: the dead
+      girl opens her eyes and speaks the word of faith. "Ordet" means "the Word," and the
+      film is composed entirely of the register of supplication: the held breath, the
+      unanswered question, the unbearable suspension between petition and response. Venus
+      before Jupiter (Book I), Dido praying to the gods (Book IV), Aeneas in the underworld
+      (Book VI), Turnus begging for his life (Book XII) — the Aeneid is a poem of
+      suppliants. Some are heard. Some are not. The film does not resolve the difference;
+      it shows that the posture of suspension is itself the theophany.
+    why: >
+      Supplication requires a suspended cadence and an exposed melodic line. Dreyer films
+      the human face in extreme close-up — the face of someone who is asking, who has
+      nowhere else to turn, who has exhausted every other resource. This is the Aeneid's
+      final grammar: not triumph but petition. Screen it for the register of asking, which
+      is the poem's truest voice.
+    content_note: "theological dialogue; a miracle ending that must be earned; Danish with subtitles; the opposite of spectacle"
+adaptations:
+  - title: "The Aeneid"
+    director: "Franco Rossi"
+    year: 1971
+    letterboxd: the-aeneid
+    note: "the only complete screen-Aeneid — a six-hour Italian TV miniseries shot on location in Tunisia and Italy. It follows the text faithfully, uses classical Latin (the actors speak in Latin), and has a genuinely powerful Dido (Olga Karlatos). Its weaknesses are the limitations of 1971 television production (stagy direction, flat lighting, variable performances) and the compression that six hours still cannot avoid. Most importantly, it dramatizes ALL the violence and none of the interior cost — the film of the poem without the poem's conscience. Set aside; we screen the object lessons instead."
+    scenes:
+      - {division: 1, force: fate, scene: "Jupiter's prophecy to Venus — the fatum of Rome declared"}
+      - {division: 4, force: desire, scene: "Dido and Aeneas in the cave — the hunt and the storm"}
+      - {division: 6, force: revelation, scene: "Aeneas' descent to the underworld — Anchises shows the future"}
+      - {division: 12, force: sacrifice, scene: "Aeneas kills Turnus — the poem's final, unresolved act"}

@@ -1,0 +1,324 @@
+# Analects — Book IV — curated music arc
+# 里仁 Li Ren — "Benevolence as Dwelling"
+# Score the actual movement of the 26 chapters — not "Confucius on virtue in general."
+# Book IV is the philosophical heart of the early Analects: the book where ren (benevolence,
+# human-heartedness) is named as the form of the well-governed life. The arc is not about
+# what virtue is in the abstract but about how it is dwelt in — the neighborhood, the
+# habitation, the constant companionship of the good.
+work: analects
+book: 4
+title: "Analects Book IV: Benevolence, Dwelling, the Constant Practice"
+length_minutes: 85
+principle: >
+  Do not score Book IV as "a list of virtues." Score it as a meditation on what it means to
+  dwell in goodness — the way a person inhabits a neighborhood or a house, the constant
+  attention required to stay in the right space. "里仁為美" — dwelling in benevolence is
+  beautiful. The book unfolds from that opening claim through a series of discriminations:
+  the gentleman vs. the small man, the Way vs. profit, the constant practice of self-
+  examination, the difficulty of the ideal. This is not aspirational; it is architectural.
+  The dominant force is return: every chapter returns to the same question — "what is the
+  shape of a virtuous life?" — and each answer returns to the same root: the person who has
+  learned to dwell in goodness.
+force_arc: [return, return, return, return, memory, memory, memory, law, law, ascent, desire, return, law, memory, sacrifice, grief, grief, revelation, return, desire]
+dominant_force: return
+tracks:
+  - n: 1
+    scene: "Dwelling in benevolence — the beautiful neighborhood"
+    force: return
+    composer: Bach
+    work: "Cello Suite No. 1 in G major, BWV 1007 — Allemande"
+    decision: added
+    why: >
+      "里仁為美。擇不處仁，焉得知？" — dwelling in benevolence is beautiful. If you do not
+      choose to dwell in goodness, how can you be wise? The book opens with a spatial claim:
+      virtue is a place you inhabit, not an attribute you possess. Bach's First Cello Suite
+      Allemande is a dance of dwelling: the notes move through the space of the D-major
+      harmony (the Allemande is in D, having moved from G) as though exploring a room, each
+      phrase finding its proper place. The return of the opening figure at the end is the
+      confirmation that this space is habitable. Return requires circular form and recognition
+      motif; the Allemande is the dance of one who has found where he belongs.
+  - n: 2
+    scene: "The man of benevolence — fixed, knowing, powerful"
+    force: return
+    composer: Schubert
+    work: "Impromptu in E-flat major, Op. 90 No. 2 (D. 899)"
+    decision: added
+    why: >
+      "仁者安仁，知者利仁" — the man of benevolence rests in benevolence; the wise man
+      profits from it. The distinction is crucial: one person dwells in goodness as a natural
+      home; the other knows that goodness is the path to advantage. Both are on the Way, but
+      one is at home and one is en route. Schubert's E-flat Impromptu is a cascade of triplet
+      arpeggios over a simple melody — it stays in one key, one texture, one mood, but within
+      that dwelling it moves with extraordinary freedom. To be fixed is not to be immobile;
+      it is to have found the key that opens every door.
+  - n: 3
+    scene: "Only the benevolent can love and hate rightly"
+    force: return
+    composer: Mozart
+    work: "Piano Concerto No. 21 in C major, K. 467 — II. Andante"
+    decision: added
+    why: >
+      "唯仁者能好人，能惡人" — only the person of benevolence can truly love and truly
+      hate. The point is that only someone who dwells in the correct space can see clearly
+      enough to make accurate judgments of character. Mozart's Andante is music of pure
+      discriminative clarity: the strings move in measured steps, the piano enters with a
+      melody that judges each phrase with perfect placement. There is no sentimentality and
+      no harshness — just the calm competence of one who sees what is.
+  - n: 4
+    scene: "Set your heart on the Way — no shame in poor clothes or poor food"
+    force: return
+    composer: Satie
+    work: "Gymnopédie No. 3"
+    decision: added
+    why: >
+      "士志於道，而恥惡衣惡食者，未足與議也" — a scholar who sets his heart on the Way but
+      is ashamed of poor clothes and poor food is not worth consulting. The return to the
+      theme of voluntary simplicity: the person who dwells in the Way does not need the
+      external marks of status. Satie's Gymnopédie No. 3 is the quietest of the three —
+      the simplest, the least ornamented, the one that least advertises itself. It is the
+      sound of a person who does not need to be impressive because he is already where he
+      should be. Return as the unshowy persistence of the genuine.
+  - n: 5
+    scene: "The gentleman considers virtue; the small man considers the land"
+    force: memory
+    composer: Schumann
+    work: "Kreisleriana, Op. 16 — No. 1 'Äußerst bewegt'"
+    decision: added
+    why: >
+      "君子喻於義，小人喻於利" — the gentleman understands rightness; the small man
+      understands profit. This is one of the great discriminations of the book, and it is
+      not sociology but epistemology: the two kinds of people see different things when they
+      look at the same world. Schumann's Kreisleriana No. 1 is agitated, searching, torn
+      between two tempos — it is the sound of a mind that cannot settle on the correct
+      principle. Memory here is the accumulated habit of perception: the gentleman has trained
+      his seeing so that rightness is what he notices; the small man sees profit because
+      that is what he has practiced.
+  - n: 6
+    scene: "When you see a worthy person, think of equaling them"
+    force: memory
+    composer: Elgar
+    work: "Symphony No. 2 in E-flat major, Op. 63 — II. Larghetto"
+    decision: added
+    why: >
+      "見賢思齊焉，見不賢而內自省也" — when you see a worthy person, think of equaling them;
+      when you see an unworthy person, examine your own heart. This is the engine of moral
+      development: every encounter is an occasion for self-cultivation. Elgar's Larghetto is
+      a slow movement of immense dignity — it is what a person sounds like when they have
+      spent a lifetime examining their own heart. The theme rises and falls as though testing
+      itself against an inner standard. Memory is the faculty that holds both examples
+      together — the worthy and the unworthy — and draws the lesson.
+  - n: 7
+    scene: "Serving parents — remonstrate gently, do not abandon"
+    force: memory
+    composer: Brahms
+    work: "Intermezzo in B-flat minor, Op. 117 No. 2"
+    decision: added
+    why: >
+      "事父母幾諫，見志不從，又敬不違，勞而不怨" — in serving parents, remonstrate gently;
+      if they do not follow, maintain respect without abandoning them. This is the most
+      psychologically acute passage on filial piety in the Analects: the child must tell the
+      truth, and must not give up. Brahms's B-flat minor Intermezzo is held between two
+      impulses — a brooding, dark opening and a middle section that reaches for light. The
+      piece never resolves its tension; it ends in the same minor key, as though the
+      remonstration succeeded only in being heard, not in changing the outcome. But the
+      music was spoken, and that is the duty.
+  - n: 8
+    scene: "The constant companionship of the Way — do not abandon for a single meal"
+    force: law
+    composer: Telemann
+    work: "Viola Concerto in G major, TWV 51:G9 — III. Allegro"
+    decision: added
+    why: >
+      "君子無終食之間違仁，造次必於是，顛沛必於是" — the gentleman does not abandon
+      benevolence for the space of a single meal. Even in haste, even in chaos, he is there.
+      Telemann's Allegro is the most cheerful music of constancy in the repertory: it moves
+      quickly but never loses its shape, its theme returning at regular intervals as though
+      to say "I am still here." Law as the shape that persists through every tempo — the
+      structure of the self that does not dissolve under pressure.
+  - n: 9
+    scene: "Hold the Way and die for it — the unshakeable ground"
+    force: law
+    composer: Beethoven
+    work: "Symphony No. 3 in E-flat major ('Eroica'), Op. 55 — I. Allegro con brio"
+    decision: added
+    why: >
+      "朝聞道，夕死可矣" — if I hear the Way in the morning, I can die in the evening.
+      This is the most radical statement in Book IV: the hearing of the Way makes life
+      complete at any moment. Beethoven's Eroica is the music of this claim: a symphony
+      that announces a new order of heroic selfhood, that opens with two crashing chords
+      and then unfolds a theme of such certainty that it seems to have already heard what
+      it is looking for. Law as the space that opens when the Way is heard — the shape of
+      a life that has received its ground and can therefore face death without fear.
+  - n: 10
+    scene: "The gentleman longs for virtue; the small man longs for ease"
+    force: ascent
+    composer: Bruckner
+    work: "Symphony No. 7 in E major — II. Adagio"
+    decision: added
+    why: >
+      "君子懷德，小人懷土；君子懷刑，小人懷惠" — the gentleman cherishes virtue; the small
+      man cherishes his land. The gentleman cherishes the law; the small man cherishes
+      favors. The discrimination is not static but dynamic: the gentleman is oriented toward
+      the transcendent, the small man toward the immediate. Bruckner's Adagio is music that
+      longs upward: its great string theme rises through the orchestra like a cathedral nave,
+      reaching for something beyond the merely heard. Ascent requires rising sequence and
+      luminous orchestration; Bruckner gives the sound of virtue as vertical longing.
+  - n: 11
+    scene: "Profit is not the measure — choose the Way instead"
+    force: desire
+    composer: Debussy
+    work: "Clair de lune (Suite bergamasque)"
+    decision: added
+    why: >
+      "放於利而行，多怨" — if you act on profit alone, you will incur much resentment.
+      The critique of profit-based action is not that profit is bad but that it is not a
+      stable ground — what serves you today injures you tomorrow. Debussy's Clair de lune
+      is the sound of a world not organized by utility: harmonies that do not want anything,
+      that dissolve into each other without purpose, existing purely as shape and color.
+      Desire here is not longing for gain but longing for the beautiful form that profit-
+      seeking can never produce. The piece is what profit cannot buy.
+  - n: 12
+    scene: "Why the gentleman is not anxious about the Way"
+    force: return
+    composer: Schubert
+    work: "String Quartet No. 14 in D minor, D. 810 ('Death and the Maiden') — II. Andante con moto"
+    decision: added
+    why: >
+      "君子憂道不憂貧" — the gentleman is anxious about the Way, not about poverty. This
+      returns the book to its opening claim: where you dwell determines what you worry
+      about. The gentleman's anxiety is not economic but spiritual — and that anxiety is
+      itself the form of his attention. Schubert's Death and the Maiden variations are
+      music that knows its own fragility but continues to elaborate its theme anyway: the
+      anxiety is present in the minor key, in the march rhythm, in the memory of the song
+      about death. But the variations do not stop; they keep finding new shapes in the
+      same material. That is the gentleman's anxiety — it does not paralyze; it elaborates.
+  - n: 13
+    scene: "The Way of the ancient kings — not merely filial but extending to all"
+    force: law
+    composer: Handel
+    work: "Concerto Grosso in B-flat major, Op. 3 No. 2 — I. Largo"
+    decision: added
+    why: >
+      "參乎！吾道一以貫之" — Tseng heard: "My Way is threaded on one principle." The single
+      thread that runs through all of Confucius's teaching: the extension of filial care to
+      the whole world. Handel's Largo moves with ceremonial patience, a single idea unfolding
+      through the ensemble as through the generations — each voice entering with the same
+      material, each in its turn, the thread passing from hand to hand. Law here is the thread
+      that nothing breaks.
+  - n: 14
+    scene: "The constant human — the model of Yao and Shun still distant"
+    force: memory
+    composer: Fauré
+    work: "Requiem, Op. 48 — II. Offertoire"
+    decision: added
+    why: >
+      "舜其大知也與！舜好問而好察邇言" — Shun was truly great in knowledge: he loved to
+      ask questions and examine near-at-hand words. The distance between the ancient model
+      and the present is the space in which memory operates: the sage kings are remembered
+      as patterns to be studied. Fauré's Offertoire (Domine Jesu Christe) is a prayer for
+      the dead that sounds like a conversation with those who have gone before: the baritone
+      solo rises and falls in measured phrases as though repeating the questions Shun used
+      to ask. Memory as the form that keeps the ancient pattern audible in the present.
+  - n: 15
+    scene: "The man who is not loved — self-examination without limit"
+    force: sacrifice
+    composer: Bach
+    work: "St. John Passion, BWV 245 — 'Es ist vollbracht' (aria for viola da gamba)"
+    decision: added
+    why: >
+      "不患無位，患所以立。不患莫己知，求為可知也" — do not worry about position; worry
+      about being worthy of it. Do not worry that no one knows you; seek to be worth knowing.
+      This turns the entire question of reputation inward: the only failure is the failure
+      to be what you should be. Bach's 'Es ist vollbracht' is consummation music — the
+      viola da gamba climbing through its lines as though the work of being oneself is the
+      only sacrifice required. Sacrifice here is not ritual death but the offering of the
+      self's true form.
+  - n: 16
+    scene: "The loss of the Way — the three jade rings and the three slips"
+    force: grief
+    composer: Mahler
+    work: "Kindertotenlieder — No. 1 'Nun will die Sonn' so hell aufgeh'n'"
+    decision: added
+    why: >
+      "道不行，乘桴浮於海" — when the Way does not prevail, I will take a raft and drift
+      on the sea. This is the moment of deepest resignation in Book IV: the Master imagines
+      abandoning the world that will not hear. Mahler's Kindertotenlieder is music of
+      grief so inward that it does not weep — it simply observes the sun rising as though
+      nothing has been lost, while everything has. 'Nun will die Sonn' so hell aufgeh'n'
+      is the grief of a world that continues to be beautiful after the thing that made it
+      meaningful has gone. Grief requires slow tempo and inward line; Mahler gives the
+      most inward grief in the repertory.
+  - n: 17
+    scene: "The three hundred poems are one — the thread through all"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 9 in D major — IV. Adagio (opening)"
+    decision: added
+    why: >
+      The closing of the book returns to the theme of the single thread: all of Confucius's
+      teaching, from poetry to ritual to government to self-cultivation, is held by one
+      principle. The Ninth Symphony's final movement is the most sustained farewell in
+      music — but it is not a farewell to hope; it is a farewell to the illusion that the
+      thread can be broken. The music disintegrates and reforms, disintegrates and reforms,
+      until the last pages where it simply dissolves into silence — not as defeat but as
+      the dissolution of the self into the principle that has held it all along.
+  - n: 18
+    scene: "The Master rarely spoke of profit — the final discrimination"
+    force: revelation
+    composer: Pärt
+    work: "Cantus in Memoriam Benjamin Britten"
+    decision: added
+    why: >
+      "子罕言利與命與仁" — the Master rarely spoke of profit, or of the Mandate of Heaven,
+      or of benevolence. The three things he did not discuss — profit, fate, and the highest
+      virtue — are the things that can only be inhabited, not analyzed. Pärt's Cantus is a
+      descending scale in canon, the strings entering one by one as though each voice is
+      coming to rest in the same descending truth. The piece is the sound of the things that
+      cannot be spoken: the Mandate, the profit, the benevolence — all of them close as a
+      palm held open, and all of them impossible to name. Revelation requires stillness,
+      chant, verticality; the Cantus is the most sustained stillness in Pärt's work.
+  - n: 19
+    scene: "Choosing the dwelling — closing return to benevolence"
+    force: return
+    composer: Bach
+    work: "Well-Tempered Clavier, Book I — Prelude No. 4 in C-sharp minor, BWV 849"
+    decision: added
+    why: >
+      "德不孤，必有鄰" — virtue is not solitary; it always has neighbors. The closing claim
+      of Book IV returns to the opening image of dwelling: if you settle in goodness, you
+      will find others there. Bach's C-sharp minor Prelude is the most searching of the WTC
+      opening set — it moves through distant keys as though looking for the company of related
+      tones, and finds them. The prelude is solitary only in its opening; by its end, it has
+      gathered the whole harmonic world around its tonic. Virtue, like the C-sharp minor
+      prelude, draws its neighbors not by seeking them but by being fully itself. Return
+      as the shape that attracts its proper company.
+  - n: 20
+    scene: "The well-governed house — the closing of Book IV"
+    force: desire
+    composer: Ravel
+    work: "Pavane pour une infante défunte"
+    decision: added
+    why: >
+      The final chapter: "以約失之者鮮矣" — one who holds to restraint rarely misses the
+      mark. Book IV closes not with a grand statement but with a small practical observation
+      — that the person who is restrained, who has learned to dwell within boundaries, rarely
+      goes wrong. Ravel's Pavane is a dance for a dead princess, but it is not sad; it is
+      restrained, formal, perfectly within its limits. The piece is the sound of holding
+      to restraint: it does not reach, does not grasp, does not exceed its own form. And
+      within that form, it is complete. That IS the well-governed house.
+demoted:
+  - composer: Wagner
+    work: "Tristan und Isolde — Prelude and Liebestod"
+    status: "removed; save for a book of crisis (Book XIV or Book XVIII)"
+    why: >
+      Considered for the track on the single thread (track 13) but the Liebestod resolves
+      into consummation and death — too terminal for a book about dwelling. Book IV is a
+      habitation, not a dissolution.
+  - composer: Beethoven
+    work: "Symphony No. 9 — 'Ode to Joy'"
+    status: "removed; too triumphal for the register of Book IV"
+    why: >
+      Book IV's opening claim — "dwelling in benevolence is beautiful" — might seem to
+      invite the Ninth's finale. But the Ode to Joy is a public declaration, not a private
+      dwelling. Book IV's register is domestic, intimate, architectural — the Ninth belongs
+      to the public square (Book XVI or a political book).

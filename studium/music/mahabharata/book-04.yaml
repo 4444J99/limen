@@ -1,0 +1,225 @@
+# Mahabharata — Virata Parva (Book 4) — curated music arc
+# Gold-standard form matching iliad/book-01.yaml.
+# Score the YEAR IN DISGUISE: role-playing as survival, a court of kings
+# pretending to be servants, a queen serving as a maid, a eunuch teaching
+# dance, a cook who is a god-son, and the slow revelation that a kingdom
+# waiting for war is hiding in plain sight.
+work: mahabharata
+book: 4
+title: "Virata Parva: The Masquerade, the Dancing Master, and the Bow That Sings Again"
+length_minutes: 82
+principle: >
+  Do not score Virata Parva as "the Pandavas hide in a palace." Score it as
+  the theatre of survival: a court in which everyone is a role-player, a queen
+  who serves as a handmaid, a king who spends a year as a dice-thrower in
+  someone else's hall, a warrior-god who teaches dance to princesses. The
+  comedy of disguise is never purely comic — behind every false identity is
+  a real weapon, a real vengeance waiting for the mask to slip. When the
+  mask finally slips, the bow sings and a kingdom is reminded of what it
+  forgot. The dominant force is comedy — but comedy as camouflage, as the
+  social form of survival under impossible pressure.
+force_arc: [comedy, comedy, exile, desire, comedy, wrath, fate, comedy, revelation, return]
+dominant_force: comedy
+tracks:
+  - n: 1
+    scene: "The Pandavas choose their disguises — the comedy of roles"
+    force: comedy
+    composer: Rameau
+    work: "Platée — Ouverture"
+    decision: added
+    why: >
+      Before entering Virata's city, the Pandavas decide who they will
+      become: Yudhishthira a brahmin courtier who plays dice, Bhima a
+      cook, Arjuna a eunuch who teaches dance and music, Nakula a
+      horseman, Sahadeva a cowherd, Draupadi a handmaid skilled in
+      garland-making. The decision to become someone else is a comic
+      premise — and a deadly serious one, since discovery means another
+      twelve years. Rameau's Platée overture is comedy as courtly
+      exaggeration: the repeated notes, the dance rhythms, the sense
+      of a world in which everyone is playing a part assigned by
+      convention. The music is not mocking — it is delighted by the
+      virtuosity of the performance, exactly as the Pandavas are.
+      Comedy requires dance rhythm and courtly exaggeration; Rameau's
+      Platée is the paradigm case of baroque laughter.
+  - n: 2
+    scene: "Yudhishthira as Kanka — the king who throws dice for others"
+    force: comedy
+    composer: Rossini
+    work: "Il barbiere di Siviglia — Overture"
+    decision: added
+    why: >
+      Yudhishthira, emperor of the four directions, becomes a professional
+      dice-thrower in the court of King Virata. Every day he plays dice
+      with the courtiers, winning their gold, maintaining his cover, and
+      watching the man who sits on a throne that should, by cosmic order,
+      be his. Rossini's Barber overture is comic velocity — the quick
+      crescendos, the sudden dynamic shifts, the sense of a mechanism
+      running at top speed while maintaining perfect control. Comedy
+      requires dance rhythm and courtly exaggeration; Rossini's crescendo
+      is the sound of someone maintaining a role at ever-increasing speed,
+      the surface control hiding a deep unsteadiness beneath.
+  - n: 3
+    scene: "Draupadi as Sairandhri — the queen as handmaid"
+    force: exile
+    composer: Vaughan Williams
+    work: "Fantasia on a Theme by Thomas Tallis"
+    decision: added
+    why: >
+      Draupadi, born of fire, queen of the Pandavas, serves Queen Sudeshna
+      as a handmaid, dressing her hair, arranging her garlands. Each day is
+      a performance of subservience by a woman whose pride is legendary and
+      whose vow of vengeance is still burning. Vaughan Williams's Fantasia
+      is exile as sustained, beautiful tension: the divided strings, the
+      antiphonal distances between the two orchestras, a melody that seems
+      to exist in a space between two worlds. Exile requires wandering
+      tonality and open intervals — the Fantasia holds its D major keynote
+      like a memory, never fully in the key, never fully outside it,
+      exactly the condition of a queen who is and is not a handmaid.
+  - n: 4
+    scene: "Kichaka's desire — the general who cannot have her"
+    force: desire
+    composer: Wagner
+    work: "Tristan und Isolde — Prelude and Liebestod"
+    decision: added
+    why: >
+      Kichaka, Virata's commander-in-chief and Sudeshna's brother, sees
+      Draupadi and burns for her. He offers her wealth, position, anything
+      — she refuses. Her refusal only sharpens his obsession. Wagner's
+      Tristan Prelude is the canonical music of desire as deferred
+      resolution: the chromatic harmony that reaches toward a cadence
+      it never achieves, the longing that intensifies precisely because
+      it is never consummated. Desire requires chromatic longing and
+      deferred resolution; Tristan is the founding document of longing
+      as musical structure. Kichaka's desire is not romantic — it is
+      the desire of the powerful for the inaccessible, and Wagner's
+      harmony captures its specific agony.
+  - n: 5
+    scene: "Arjuna as Brihannala — the eunuch dancing master"
+    force: comedy
+    composer: Mozart
+    work: "Le nozze di Figaro — Overture"
+    decision: added
+    why: >
+      Arjuna, the greatest archer of his age, wears bracelets and braids
+      his hair, teaches dance to Virata's daughter Uttara, and lives among
+      the women of the palace. His masculinity — the core of his identity
+      in the epic — is entirely concealed. Mozart's Figaro overture is
+      the great comic opera of hidden identities, servants who are more
+      than they seem, masters who understand less than they think. The
+      overture's breathless pace and quick modulations are the sound of
+      someone maintaining a fiction at high speed. Comedy requires dance
+      rhythm and courtly exaggeration; Figaro is comic velocity itself,
+      and Arjuna as Brihannala is playing the longest game of 'who is
+      really who' in the epic.
+  - n: 6
+    scene: "Kichaka's death — Bhima in the dark"
+    force: wrath
+    composer: Stravinsky
+    work: "The Rite of Spring — Part II, 'Sacrificial Dance (The Chosen One)'"
+    decision: added
+    why: >
+      Draupadi, pushed beyond endurance by Kichaka's advances, asks Bhima
+      to kill him. Bhima comes to the rendezvous in her place and crushes
+      Kichaka into a ball of flesh — every bone broken, no wound visible
+      on the surface. The killing is a ritual of vengeance: private,
+      hidden, absolute. Stravinsky's Sacrificial Dance is the Western
+      canon's purest sound of ritual violence — the percussive drive, the
+      irregular accents, the sense of a sacrifice that cannot be stopped
+      once it has begun. Wrath requires rhythmic pressure; here the wrath
+      is exact, precise, the body reduced to geometry by a force that has
+      been waiting a year to act.
+  - n: 7
+    scene: "The Kauravas sense the Pandavas — fate tightens"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 in C minor, Op. 67 — III. Scherzo: Allegro"
+    decision: added
+    why: >
+      Kichaka's death reaches Duryodhana's ears. The manner of the killing
+      — a body crushed from within, no wounds — is Bhima's signature. The
+      Kauravas suspect the Pandavas are nearby; the year of hiding may be
+      discovered. Fate here is not cosmological but investigative — the
+      threads tightening, the noose of identity drawing closer. Beethoven's
+      Fifth's third movement — the Scherzo — is fate moving underground:
+      the cello-bass fugato, the hesitant pulse, the sense of something
+      gathering its strength before the release into the finale. Fate
+      requires inexorable motif, and the Scherzo's rhythm (the ghost of
+      the four-note figure) is fate as whisper before it becomes thunder.
+  - n: 8
+    scene: "Uttar's terror — the prince who will not fight"
+    force: comedy
+    composer: Rossini
+    work: "La gazza ladra — Overture"
+    decision: added
+    why: >
+      The Kauravas invade Virata's kingdom to steal cattle. King Virata's
+      son, Uttar (with whom Arjuna has been teaching dance), must lead the
+      defence — but he is terrified. He has never fought. The comedy of
+      the scene lies in the inversion: the dancing master (Arjuna) must
+      become the charioteer, and the prince must be coaxed onto the
+      battlefield. Rossini's La gazza ladra overture is comedy as
+      military farce — the drum rolls, the martial parody, the sense that
+      the whole scene is an opera buffa of heroic postures without heroes.
+      Uttar's terror is funny because we know what he does not: the
+      dancing master at his side is the greatest living warrior.
+  - n: 9
+    scene: "Arjuna reveals himself — the bow Gandiva is strung"
+    force: revelation
+    composer: Sibelius
+    work: "Symphony No. 5 in E-flat major, Op. 82 — III. Allegro molto (finale)"
+    decision: added
+    why: >
+      On the battlefield, Arjuna takes the bow Gandiva from its hiding
+      place among the dance instruments. He strings it, and the sound
+      is a thunderclap across the field. The disguise falls: Brihannala
+      is Arjuna, the Pandavas are here, the exile is over. Sibelius's
+      Fifth finale — with its famous staggered-six note theme in the
+      horns, the brass chorale, the sudden swing into the closing
+      gesture — is revelation as arrival: not gradual emergence but
+      the full thing, suddenly present, impossible to ignore. The horns
+      calling across the forest are Arjuna's bowstring, the knowledge
+      that the age of hiding is finished. Revelation requires stillness,
+      verticality, and sudden colour shift; Sibelius's finale shifts the
+      colour of the entire symphony in its last pages.
+  - n: 10
+    scene: "The masks fall — the Pandavas stand revealed"
+    force: return
+    composer: Handel
+    work: "Music for the Royal Fireworks, HWV 351 — La Réjouissance"
+    decision: added
+    why: >
+      The Pandavas declare themselves before Virata's court. Yudhishthira
+      is Yudhishthira, Bhima is Bhima, Draupadi is Draupadi — the year of
+      disguise ends in a single moment of recognition. Virata offers his
+      kingdom, his army, his allegiance. Return requires circular form and
+      recognition: the Pandavas have completed the cycle from Indraprastha
+      through the forest through the masquerade and back to the threshold
+      of their kingdom. Handel's La Réjouissance is the purest expression
+      of formal, public joy — the trumpets, the drum, the D-major
+      brightness, a nation celebrating its own recognition. The joy is
+      not yet triumphant — the war is still ahead — but the return from
+      disguise is the first movement of recovery, and Handel gives it
+      the right register of ceremonial gladness.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "still reserved; not before Book 7 (Drona Parva) at the earliest"
+    why: >
+      Virata Parva has a killing (Kichaka) and a battle (the cattle raid)
+      but no deaths of the epic's central warriors. The terminal register
+      of the funeral march is not yet earned.
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "belongs to the Kurukshetra books (5-10); Virata's cattle raid is a skirmish, not the war"
+    why: >
+      The cattle raid is a comic battle — Uttar terrified, Arjuna revealing
+      himself mid-fight, the Kauravas fleeing. It is not pitched war. Mars
+      belongs to the plain of Kurukshetra, not to Virata's pastures.
+  - composer: Mozart
+    work: "Requiem — 'Dies Irae'"
+    status: "far too terminal; Virata Parva is comedy before it is war"
+    why: >
+      The Dies Irae is the judgment of the dead. Virata Parva has no dead
+      of significance (Kichaka is a villain, not a hero). The apocalyptic
+      register belongs to the war books, where it will carry the weight
+      of actual catastrophe.

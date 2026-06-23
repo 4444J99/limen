@@ -11,14 +11,14 @@
 - **Corpus:** `classical/metamorphoses` (latin_original.txt)
 - **Source rail:** https://www.perseus.tufts.edu/hopper/text?doc=Perseus:text:1999.02.0029
 - **Divisions:** 15 × Book
-- **Progress:** 1/15 arcs authored
+- **Progress:** 4/15 arcs authored
 
 | Book | dominant force | status |
 | --: | --- | :--: |
 | 1 | (author) | ✓ |
-| 2 | (author) | ☐ |
-| 3 | (author) | ☐ |
-| 4 | (author) | ☐ |
+| 2 | (author) | ✓ |
+| 3 | (author) | ✓ |
+| 4 | (author) | ✓ |
 | 5 | (author) | ☐ |
 | 6 | (author) | ☐ |
 | 7 | (author) | ☐ |

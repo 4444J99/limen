@@ -1,0 +1,114 @@
+work: metamorphoses
+book: 2
+title: 'Metamorphoses Book II: The Chariot, The Bear, The Bull'
+length_minutes: 85
+principle: "Book II is governed by the catastrophic consequences of approaching the\
+  \ gods too closely, or of the gods approaching mortals too closely. Phaethon demands\
+  \ to drive the sun and burns the world; Callisto is raped by Jupiter and banished;\
+  \ Coronis is killed by Apollo; Europa is abducted. The dominant force is desire\u2014\
+  not as romance, but as a gravitation that destroys the boundary between the divine\
+  \ and the mortal."
+force_arc:
+- kingship
+- desire
+- fate
+- supplication
+- divine-intervention
+- metamorphosis
+- comedy
+- exile
+- wrath
+- desire
+dominant_force: desire
+tracks:
+- n: 1
+  scene: Palace of the Sun
+  force: kingship
+  composer: Walton
+  work: Crown Imperial
+  decision: added
+  why: "The Palace of the Sun is described as an architectural marvel of gold, bronze,\
+    \ and ivory. Phoebus sits in state surrounded by the Days, Months, Years, and\
+    \ Ages. This requires ceremonial grandeur and sovereign display\u2014music of\
+    \ absolute courtly authority."
+- n: 2
+  scene: Phaethon's request
+  force: desire
+  composer: Scriabin
+  work: The Poem of Ecstasy
+  decision: added
+  why: Phaethon asks for a day driving the sun's chariot. Phoebus warns him it is
+    certain death, but the boy's longing for glory overpowers his reason. Scriabin
+    provides chromatic longing and a soaring, perilous ambition.
+- n: 3
+  scene: The chariot out of control
+  force: fate
+  composer: Tchaikovsky
+  work: "Symphony No. 4 \u2014 I. Andante sostenuto"
+  decision: added
+  why: Phaethon loses the reins. The horses leave the track, and the world begins
+    to burn. Fate here is not a sudden judgment but a hammered insistence of disaster
+    unfolding, a mechanism set in motion that cannot be stopped.
+- n: 4
+  scene: Earth's plea
+  force: supplication
+  composer: Barber
+  work: Adagio for Strings
+  decision: added
+  why: The Earth itself, burning and cracking, raises a voice to Jupiter begging for
+    an end to the torment. Supplication requires a suspended cadence and an exposed,
+    agonizing melodic line.
+- n: 5
+  scene: Jupiter's thunderbolt
+  force: divine-intervention
+  composer: Verdi
+  work: "Requiem \u2014 'Dies irae'"
+  decision: added
+  why: Jupiter intervenes not with mercy but with overwhelming force, striking Phaethon
+    from the chariot with a thunderbolt. The Dies irae provides the sudden color shift
+    and massive brass/strings contrast of a cosmic execution.
+- n: 6
+  scene: The Heliades mourning
+  force: metamorphosis
+  composer: Strauss
+  work: Metamorphosen
+  decision: added
+  why: Phaethon's sisters weep on his grave until their bodies harden into bark and
+    their tears become amber. Metamorphosis here is an elegy, changing orchestral
+    color and fluid harmony capturing the slow descent of flesh into wood.
+- n: 7
+  scene: Jupiter and Callisto
+  force: comedy
+  composer: Mozart
+  work: "Le nozze di Figaro \u2014 Overture"
+  decision: added
+  why: "Jupiter disguises himself as Diana to seduce Callisto. The scene operates\
+    \ on the theatrical logic of farce\u2014a god wearing another god's face to bypass\
+    \ a nymph's defenses\u2014requiring courtly exaggeration and rapid, plotting energy."
+- n: 8
+  scene: Callisto as a bear
+  force: exile
+  composer: Vaughan Williams
+  work: "Symphony No. 3 (Pastoral) \u2014 II. Lento moderato"
+  decision: added
+  why: Banished by Diana and turned into a bear by Juno, Callisto wanders the forests
+    she once hunted in, terrified of the other beasts. Exile requires wandering tonality
+    and open intervals, the sound of a vast, empty landscape.
+- n: 9
+  scene: Apollo kills Coronis
+  force: wrath
+  composer: Shostakovich
+  work: "String Quartet No. 8 \u2014 II. Allegro molto"
+  decision: added
+  why: The raven tells Apollo of Coronis' infidelity. In a flash of rage, Apollo shoots
+    her, immediately regretting it but unable to call back the arrow. Wrath here requires
+    frantic, rhythmic pressure and unresolved harmony.
+- n: 10
+  scene: Europa and the Bull
+  force: desire
+  composer: Szymanowski
+  work: Violin Concerto No. 1
+  decision: added
+  why: Jupiter turns himself into a beautiful, gentle white bull to lure Europa into
+    the sea. The abduction is smooth, almost dreamlike. Szymanowski's concerto provides
+    the shimmering, chromatic longing of deferred resolution.

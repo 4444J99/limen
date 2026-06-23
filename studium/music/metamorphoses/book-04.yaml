@@ -1,0 +1,114 @@
+work: metamorphoses
+book: 4
+title: 'Metamorphoses Book IV: Weavers, Lovers, Monsters'
+length_minutes: 88
+principle: "Book IV concerns the boundaries of the permitted and the spaces where\
+  \ transformations occur in secret. The daughters of Minyas stay indoors weaving\
+  \ and telling stories; Perseus flies across the ends of the earth fighting sea monsters.\
+  \ The dominant force is memory\u2014the act of storytelling itself, as the weavers\
+  \ recall old tragedies while inadvertently sealing their own doom."
+force_arc:
+- law
+- grief
+- comedy
+- supplication
+- metamorphosis
+- divine-intervention
+- wrath
+- memory
+- ascent
+- revelation
+dominant_force: memory
+tracks:
+- n: 1
+  scene: The Minyades weave
+  force: law
+  composer: Bach
+  work: "The Art of Fugue \u2014 Contrapunctus I"
+  decision: added
+  why: "While the city worships Bacchus, the daughters of Minyas remain inside, devoted\
+    \ to Minerva, weaving wool and following the rules of their craft. Law requires\
+    \ formal clarity and architecture\u2014the rigorous, interlocking logic of the\
+    \ loom."
+- n: 2
+  scene: Pyramus and Thisbe
+  force: grief
+  composer: Elgar
+  work: "Enigma Variations \u2014 'Nimrod'"
+  decision: added
+  why: A tale of two lovers whispering through a crack in a wall, ending in a double
+    suicide under a mulberry tree, staining its berries red forever. Grief requires
+    a slow tempo and an inward line that builds to a tragic nobility.
+- n: 3
+  scene: Mars and Venus trapped
+  force: comedy
+  composer: Mozart
+  work: "Cos\xEC fan tutte \u2014 Overture"
+  decision: added
+  why: "Vulcan forges an invisible net and catches his wife Venus in bed with Mars,\
+    \ inviting all the gods to laugh at them. Comedy requires dance rhythm and courtly\
+    \ exaggeration\u2014the brilliant, cynical farce of Olympian adultery."
+- n: 4
+  scene: Clytie turning to a sunflower
+  force: supplication
+  composer: Bach
+  work: "Matth\xE4us-Passion \u2014 'Erbarme dich'"
+  decision: added
+  why: Abandoned by the Sun god, Clytie sits on the bare ground for nine days, doing
+    nothing but watching the sun move across the sky until she becomes a sunflower.
+    Supplication requires a suspended cadence and an agonizingly exposed line of devotion.
+- n: 5
+  scene: Salmacis and Hermaphroditus
+  force: metamorphosis
+  composer: Schoenberg
+  work: "Verkl\xE4rte Nacht"
+  decision: added
+  why: The nymph Salmacis pulls the boy Hermaphroditus into her pool and prays they
+    may never be separated. Their bodies melt together into a single, dual-sexed form.
+    Fluid, chromatic harmony captures the unsettling dissolution of boundaries.
+- n: 6
+  scene: Minyades turned to bats
+  force: divine-intervention
+  composer: Strauss
+  work: "Elektra \u2014 Agamemnon motif"
+  decision: added
+  why: Bacchus finally punishes the weavers. Their looms turn to vines, the room fills
+    with phantom beasts, and the sisters shrink into squeaking bats. A sudden, terrifying
+    color shift and heavy brass represent the god's vengeance crashing in.
+- n: 7
+  scene: Tisiphone's madness
+  force: wrath
+  composer: Berlioz
+  work: "Symphonie fantastique \u2014 V. 'Dream of a Witches' Sabbath'"
+  decision: added
+  why: Juno descends to the underworld and hires the Fury Tisiphone to drive Ino and
+    Athamas mad. The fury arrives with poison and snakes. Rhythmic pressure and grotesque
+    orchestral colors capture the infected, spiraling horror of insanity.
+- n: 8
+  scene: Cadmus and Harmonia as serpents
+  force: memory
+  composer: Tchaikovsky
+  work: "Symphony No. 6 ('Path\xE9tique') \u2014 IV. Finale"
+  decision: added
+  why: Old and broken by their family's tragedies, Cadmus and Harmonia leave Thebes
+    and are transformed into gentle serpents, remembering the humans they once were.
+    The faded recapitulation of grief marks the end of their human timeline.
+- n: 9
+  scene: Perseus takes flight
+  force: ascent
+  composer: Strauss
+  work: "Ein Heldenleben \u2014 'The Hero'"
+  decision: added
+  why: With Medusa's head in a bag, Perseus flies on winged sandals, casting his shadow
+    on the earth below. Ascent requires a rising sequence and luminous orchestration,
+    the sheer swagger of a hero moving through the sky.
+- n: 10
+  scene: Perseus creates coral
+  force: revelation
+  composer: Messiaen
+  work: "Quatuor pour la fin du temps \u2014 VIII. Louange \xE0 l'Immortalit\xE9 de\
+    \ J\xE9sus"
+  decision: added
+  why: Perseus slays the sea monster, saves Andromeda, and places Medusa's head face-down
+    in seaweed. The weeds instantly harden into coral. Stillness and verticality capture
+    the quiet, magical hardening of the ocean's first reef.

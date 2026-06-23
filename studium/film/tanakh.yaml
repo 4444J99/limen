@@ -1,0 +1,139 @@
+# The Tanakh — film companion (covenant, law, exile)
+#
+# Like the Iliad companion, this is not an illustration of "Bible stories".
+# It scores the forces that make up the covenant history: revelation, law, exile, and sacrifice.
+
+work: tanakh
+title: "The Tanakh — covenant, law, and exile"
+principle: >
+  Do not assemble a list of "Bible movies". The Tanakh is not a loose anthology of moral fables; it is the 
+  continuous history of a covenant. The forces it tracks are revelation (the word from outside), law 
+  (the architecture of daily obedience), kingship (the danger of human sovereignty), and exile (the 
+  wandering away from the presence). A film companion must treat these not as literal adaptations but as 
+  ontological conditions. The chosen films must reflect the weight of the covenant, the terror of its 
+  demands, and the consequences of its breaking.
+force_coverage: [revelation, law, exile, divine-intervention, sacrifice, kingship, plague, return]
+films:
+  - title: "The Tree of Life"
+    director: "Terrence Malick"
+    year: 2011
+    force: divine-intervention
+    divisions: [1, 18]
+    objects: [door]
+    letterboxd: the-tree-of-life
+    scene_or_theme: "Job's question and the creation of the world"
+    object_lesson: >
+      When humans ask why they suffer, the divine response is not an explanation but a demonstration of scale.
+      The door represents the threshold between the domestic sorrow of a single family and the cosmic 
+      immensity of creation. The lesson: divine intervention often arrives as awe, not as a comfortable answer.
+    why: >
+      Malick explicitly frames the film with God's question to Job ("Where were you when I laid the foundations 
+      of the earth?"). It scores the origin of the world (Genesis 1) and the incomprehensible scale of 
+      divine will without domesticating either.
+    content_note: "grief, domestic tension; meditative pacing"
+  - title: "The Sacrifice"
+    director: "Andrei Tarkovsky"
+    year: 1986
+    force: sacrifice
+    divisions: [1]
+    objects: [milk]
+    letterboxd: the-sacrifice
+    scene_or_theme: "The binding of Isaac (the Akedah) — the absolute cost of the covenant"
+    object_lesson: >
+      To secure the future, one must be willing to burn everything that makes the present tenable. The spilled
+      milk (corrupted innocence) represents the breaking of the world's safety. The lesson is that the 
+      covenant requires a total, often incomprehensible renunciation.
+    why: >
+      Tarkovsky's final film is a modern Akedah. A man offers everything he has to avert the end of the world.
+      It captures the sheer terror and absurdity of the demand made on Abraham better than any literal 
+      biblical adaptation ever could.
+    content_note: "slow cinematic pacing, existential dread"
+  - title: "A Man for All Seasons"
+    director: "Fred Zinnemann"
+    year: 1966
+    force: law
+    divisions: [2, 3, 5]
+    objects: [door]
+    letterboxd: a-man-for-all-seasons
+    scene_or_theme: "The giving of the law and the refusal to break it"
+    object_lesson: >
+      The law is not a suggestion; it is the structure of the self. To break the law is to unclasp one's 
+      own fingers and let the self fall. The door is the threshold of the cell and the court—the dividing 
+      line between convenience and integrity.
+    why: >
+      More's defense of the law against the sovereign is the exact dynamic of the prophets against the 
+      kings of Israel. The law is higher than the king, and obedience to it is the only safety, even if 
+      it means death.
+    content_note: "execution, political maneuvering"
+  - title: "The Prince of Egypt"
+    director: "Brenda Chapman, Steve Hickner, Simon Wells"
+    year: 1998
+    force: plague
+    divisions: [2]
+    objects: [egg]
+    letterboxd: the-prince-of-egypt
+    scene_or_theme: "The ten plagues and the Passover"
+    object_lesson: >
+      The plagues are not mere magic tricks; they are the unmaking of an empire's false order. The egg 
+      (fragility, the firstborn) represents what is lost when human sovereignty refuses to yield to the divine.
+    why: >
+      An adaptation, yes, but its scoring of the plagues—particularly the final one—as a descending, 
+      unbearable sorrow rather than a triumphant victory matches the solemnity of the Passover event.
+    content_note: "animated violence, death of children (implied/shadow)"
+  - title: "The Lion in Winter"
+    director: "Anthony Harvey"
+    year: 1968
+    force: kingship
+    divisions: [8, 9]
+    objects: [mirror]
+    letterboxd: the-lion-in-winter
+    scene_or_theme: "The anointing of kings and the curse of dynastic succession"
+    object_lesson: >
+      Human kingship is inherently flawed and ruinous. The mirror shows the aging sovereign confronting 
+      his own mortality and the wreck of his family. The lesson: when Israel asks for a king, they 
+      are asking for their own ruin.
+    why: >
+      Henry II and his family war over the succession with exactly the treacherous, heartbreaking 
+      dynastic politics of David, Absalom, and Solomon. It strips the romance from sovereignty.
+    content_note: "family cruelty, political backstabbing"
+  - title: "A Serious Man"
+    director: "Joel Coen, Ethan Coen"
+    year: 2009
+    force: exile
+    divisions: [13, 25]
+    objects: [telephone]
+    letterboxd: a-serious-man
+    scene_or_theme: "The silence of God and the exile of the soul"
+    object_lesson: >
+      Exile is not just geographic; it is the condition of waiting for an answer that does not come.
+      The telephone (the unanswered call to the rabbi) represents the distance between the human 
+      question and the divine response.
+    why: >
+      The film wrestles with the problem of suffering and the opacity of the divine will (Hashem) in 
+      a deeply Jewish context. It is the book of Job, or the feeling of exile in Babylon, transposed 
+      to the American Midwest.
+    content_note: "existential despair, dark comedy"
+  - title: "The Return"
+    director: "Andrey Zvyagintsev"
+    year: 2003
+    force: return
+    divisions: [39]
+    objects: [clock]
+    letterboxd: the-return-2003
+    scene_or_theme: "The return from exile and the unrecognizable father"
+    object_lesson: >
+      To return is never to find things exactly as they were. The clock measures the lost time that 
+      cannot be recovered. The lesson is that restoration is often as painful as the exile itself.
+    why: >
+      A father returns after a 12-year absence, and his sons do not know how to relate to his severe 
+      authority. It mirrors the fraught, partial, and difficult return of Israel to a silent God 
+      and a ruined temple.
+    content_note: "child endangerment, tragedy"
+adaptations:
+  - title: "The Ten Commandments"
+    director: "Cecil B. DeMille"
+    year: 1956
+    letterboxd: the-ten-commandments-1956
+    note: "The obvious spectacle of the Exodus. Set aside because it substitutes theatricality for the severe, architectural weight of the covenant."
+    scenes:
+      - {division: 2, force: revelation, scene: "The giving of the law at Sinai"}
