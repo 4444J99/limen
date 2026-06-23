@@ -39,12 +39,17 @@ runbook. Nothing else blocks dollar #1.
 > new LLC/Stripe). Verified live 2026-06-23: FUNDING.yml shipped on `master`; both destinations still
 > empty shells (`hasSponsorsListing:false`, `ko-fi.com/4444J99` unclaimed).
 
-### 2. ENC1101 → D2L build — *deadline 6/25*
-Package staged **100%** at `edu-organism/classes/enc1101-summer-2026/prep/` (syllabus, schedule,
-`d2l-checklist.md`, `announcements-summer2026-IMPORT.csv` = 21 rows, `intelligentagents_summer2026_d2l.xml`).
-Shell is date-empty/unpublished. **Owner:** you (D2L login + cadence confirm). **Cheapest path:** ~30 min
-Claude-in-Chrome drives Manage Dates + Announcements (CSV) + Intelligent Agents (XML) → publish → verify.
-Say go and I co-drive while you're logged in. [[education-monolith-canon]]
+### 2. ENC1101 → D2L build — *deadline 6/25 (2 days)*
+Package staged **100%** at `edu-organism/classes/enc1101-summer-2026/prep/`. One-page decision +
+readiness + sequence now lives in **`prep/GO-LIVE-BRIEF.md`** (read that first). **Owner:** you.
+**Two small hands, then I co-drive (~30 min via Claude-in-Chrome):**
+1. **Confirm the cadence** — the proposed 6-week compression in `prep/schedule-summer2026.md` (yes / move dates).
+2. **Greenlight the §3 fix** — the staged announcement drip mislabeled the back half a "Research Essay";
+   shell Unit 4 = **Problem/Solution Essay** (capstone, 250 pts). Corrected import staged at
+   `prep/instructor-layer-ready/announcements-summer2026-IMPORT-aligned.csv` (relabeled + Reflection added,
+   dates unchanged; original untouched) — use the **aligned** CSV when posting.
+Then I drive Manage Dates + Announcements + Intelligent Agents → you click **Set Active** → verify.
+[[education-monolith-canon]] [[session-center-of-gravity]]
 
 ### 3. Mail daemon credential — *the app-pw ALREADY EXISTS; one paste lands it*
 > Reconciled 2026-06-23 against verified reality — this entry previously implied you needed to
