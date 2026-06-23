@@ -49,7 +49,7 @@ class TaskCreate(BaseModel):
     id: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
     title: str = Field(min_length=1, max_length=512)
     repo: str = Field(default="", max_length=256)
-    type: str = "code"
+    type: str = Field(default="code", max_length=64)
     target_agent: str = Field(default="jules", pattern=r"^[a-z][a-z_]*$")
     priority: str = "medium"
     budget_cost: int = Field(default=1, ge=1, le=100)
@@ -57,6 +57,14 @@ class TaskCreate(BaseModel):
     labels: list[str] = Field(default_factory=list, max_length=20)
     urls: list[str] = Field(default_factory=list, max_length=20)
     context: str = Field(default="", max_length=10000)
+
+    @field_validator("labels", "urls")
+    @classmethod
+    def validate_list_items(cls, v: list[str]) -> list[str]:
+        for item in v:
+            if len(item) > 256:
+                raise ValueError("list items must not exceed 256 characters")
+        return v
 
     @field_validator("priority")
     @classmethod
@@ -82,12 +90,21 @@ class TaskCreate(BaseModel):
 
 class TaskUpdate(BaseModel):
     status: str | None = None
-    output: str | None = None
-    agent: str | None = None
-    session_id: str | None = None
+    output: str | None = Field(default=None, max_length=100000)
+    agent: str | None = Field(default=None, max_length=128, pattern=r"^[a-z][a-z_]*$")
+    session_id: str | None = Field(default=None, max_length=128)
     context: str | None = Field(default=None, max_length=10000)
-    urls: list[str] | None = None
-    labels: list[str] | None = None
+    urls: list[str] | None = Field(default=None, max_length=20)
+    labels: list[str] | None = Field(default=None, max_length=20)
+
+    @field_validator("labels", "urls")
+    @classmethod
+    def validate_list_items(cls, v: list[str] | None) -> list[str] | None:
+        if v is not None:
+            for item in v:
+                if len(item) > 256:
+                    raise ValueError("list items must not exceed 256 characters")
+        return v
 
     @field_validator("status")
     @classmethod
@@ -128,22 +145,29 @@ class AssignmentRequest(BaseModel):
 
 
 class ArchiveRequest(BaseModel):
-    note: str = ""
-    session_id: str = "archive"
+    note: str = Field(default="", max_length=2000)
+    session_id: str = Field(default="archive", max_length=128)
 
 
 class VerifyRequest(BaseModel):
     status: str = Field(default="done", pattern="^(done|needs_human|failed|failed_blocked)$")
-    note: str = ""
-    session_id: str = "qa-verify"
+    note: str = Field(default="", max_length=2000)
+    session_id: str = Field(default="qa-verify", max_length=128)
 
 
 class DispatchRequest(BaseModel):
-    agent: str = "jules"
-    limit: int = 1
+    agent: str = Field(default="jules", pattern=r"^[a-z][a-z_]*$")
+    limit: int = Field(default=1, ge=1, le=1000)
     live: bool = False
-    task_id: str | None = None
-    session_id: str = "api"
+    task_id: str | None = Field(default=None, max_length=128)
+    session_id: str = Field(default="api", max_length=128)
+
+    @field_validator("agent")
+    @classmethod
+    def validate_agent(cls, v: str) -> str:
+        if v not in VALID_AGENTS:
+            raise ValueError(f"agent must be one of {', '.join(sorted(VALID_AGENTS))}")
+        return v
 
 
 @dataclass
@@ -886,14 +910,14 @@ def health() -> dict[str, Any]:
 
 
 @app.get("/api/status")
-def get_status(authorization: str | None = Header(None)) -> dict[str, Any]:
+def get_status(authorization: str | None = Header(None, max_length=1024)) -> dict[str, Any]:
     require_persona(authorization, {"owner"})
     data = load_board()
     return {"status": "ok", "surface": "internal", "portal": data.get("portal", {}), "summary": summary(data), "storage": storage_status()}
 
 
 @app.get("/api/client-status")
-def get_client_status(authorization: str | None = Header(None)) -> dict[str, Any]:
+def get_client_status(authorization: str | None = Header(None, max_length=1024)) -> dict[str, Any]:
     require_persona(authorization, {"owner", "client"})
     data = load_board()
     return {"status": "ok", "surface": "client", "summary": client_summary(data), "storage": storage_status()}
@@ -906,28 +930,28 @@ def get_public_status() -> dict[str, Any]:
 
 
 @app.get("/api/qa-status")
-def get_qa_status(authorization: str | None = Header(None), agent: str = Query("jules")) -> dict[str, Any]:
+def get_qa_status(authorization: str | None = Header(None, max_length=1024), agent: str = Query("jules", max_length=128, pattern=r"^[a-z][a-z_]*$")) -> dict[str, Any]:
     require_persona(authorization, {"owner"})
     return qa_status(load_board(), agent=agent)
 
 
 @app.get("/api/surface-manifest")
-def get_surface_manifest(authorization: str | None = Header(None)) -> dict[str, Any]:
+def get_surface_manifest(authorization: str | None = Header(None, max_length=1024)) -> dict[str, Any]:
     return surface_manifest(load_board(), persona=resolve_persona(authorization, allow_public=True))
 
 
 @app.get("/api/readiness")
-def get_readiness(authorization: str | None = Header(None), agent: str = Query("jules")) -> dict[str, Any]:
+def get_readiness(authorization: str | None = Header(None, max_length=1024), agent: str = Query("jules", max_length=128, pattern=r"^[a-z][a-z_]*$")) -> dict[str, Any]:
     require_persona(authorization, {"owner"})
     return readiness(load_board(), agent=agent)
 
 
 @app.get("/api/tasks")
 def list_tasks(
-    authorization: str | None = Header(None),
-    status: str | None = Query(None),
-    agent: str | None = Query(None),
-    repo: str | None = Query(None),
+    authorization: str | None = Header(None, max_length=1024),
+    status: str | None = Query(None, max_length=64, pattern=r"^[a-z_]+$"),
+    agent: str | None = Query(None, max_length=128, pattern=r"^[a-z][a-z_]*$"),
+    repo: str | None = Query(None, max_length=256),
 ) -> dict[str, Any]:
     require_persona(authorization, {"owner"})
     tasks = load_board().get("tasks", [])
@@ -941,13 +965,13 @@ def list_tasks(
 
 
 @app.get("/api/tasks/{task_id}")
-def get_task(task_id: str, authorization: str | None = Header(None)) -> dict[str, Any]:
+def get_task(task_id: str, authorization: str | None = Header(None, max_length=1024)) -> dict[str, Any]:
     require_persona(authorization, {"owner"})
     return find_task(load_board(), task_id)
 
 
 @app.post("/api/tasks")
-def create_task(req: TaskCreate, authorization: str | None = Header(None)) -> dict[str, Any]:
+def create_task(req: TaskCreate, authorization: str | None = Header(None, max_length=1024)) -> dict[str, Any]:
     require_persona(authorization, {"owner"})
     doc = load_board_doc()
     data = doc.data
@@ -963,7 +987,7 @@ def create_task(req: TaskCreate, authorization: str | None = Header(None)) -> di
 
 
 @app.patch("/api/tasks/{task_id}")
-def update_task(task_id: str, req: TaskUpdate, authorization: str | None = Header(None)) -> dict[str, Any]:
+def update_task(task_id: str, req: TaskUpdate, authorization: str | None = Header(None, max_length=1024)) -> dict[str, Any]:
     require_persona(authorization, {"owner"})
     doc = load_board_doc()
     data = doc.data
@@ -985,7 +1009,7 @@ def update_task(task_id: str, req: TaskUpdate, authorization: str | None = Heade
 
 
 @app.post("/api/tasks/{task_id}/assign")
-def assign_task(task_id: str, req: AssignmentRequest, authorization: str | None = Header(None)) -> dict[str, Any]:
+def assign_task(task_id: str, req: AssignmentRequest, authorization: str | None = Header(None, max_length=1024)) -> dict[str, Any]:
     require_persona(authorization, {"owner"})
     doc = load_board_doc()
     data = doc.data
@@ -1022,7 +1046,7 @@ def assign_task(task_id: str, req: AssignmentRequest, authorization: str | None 
 
 
 @app.post("/api/tasks/{task_id}/archive")
-def archive_task(task_id: str, req: ArchiveRequest, authorization: str | None = Header(None)) -> dict[str, Any]:
+def archive_task(task_id: str, req: ArchiveRequest, authorization: str | None = Header(None, max_length=1024)) -> dict[str, Any]:
     require_persona(authorization, {"owner"})
     doc = load_board_doc()
     data = doc.data
@@ -1040,7 +1064,7 @@ def archive_task(task_id: str, req: ArchiveRequest, authorization: str | None = 
 
 
 @app.post("/api/tasks/{task_id}/verify")
-def verify_task(task_id: str, req: VerifyRequest, authorization: str | None = Header(None)) -> dict[str, Any]:
+def verify_task(task_id: str, req: VerifyRequest, authorization: str | None = Header(None, max_length=1024)) -> dict[str, Any]:
     require_persona(authorization, {"owner"})
     doc = load_board_doc()
     data = doc.data
@@ -1058,7 +1082,7 @@ def verify_task(task_id: str, req: VerifyRequest, authorization: str | None = He
 
 
 @app.post("/api/dispatch")
-def dispatch(req: DispatchRequest, authorization: str | None = Header(None)) -> dict[str, Any]:
+def dispatch(req: DispatchRequest, authorization: str | None = Header(None, max_length=1024)) -> dict[str, Any]:
     require_persona(authorization, {"owner"})
     doc = load_board_doc()
     data = doc.data
@@ -1124,9 +1148,9 @@ def dispatch(req: DispatchRequest, authorization: str | None = Header(None)) -> 
 
 @app.post("/api/release-stale")
 def release_stale(
-    authorization: str | None = Header(None),
-    hours: int = 24,
-    dry_run: bool = True,
+    authorization: str | None = Header(None, max_length=1024),
+    hours: int = Query(24, ge=1, le=720),
+    dry_run: bool = Query(True),
 ) -> dict[str, Any]:
     require_persona(authorization, {"owner"})
     doc = load_board_doc()

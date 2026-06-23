@@ -31,6 +31,16 @@ export LIMEN_ROOT=~/limen
 limen init --root $LIMEN_ROOT
 ```
 
+## Adding Tasks
+
+```bash
+# Add a task for Jules
+limen add --title "Fix TypeScript errors" --repo owner/repo --agent jules --priority high --cost 2
+
+# Add a documentation task
+limen add --title "Write API docs" --repo owner/repo --agent gemini --priority medium --cost 1
+```
+
 ## Dispatching Tasks
 
 ```bash

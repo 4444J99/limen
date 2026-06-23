@@ -6,7 +6,6 @@ import datetime
 import importlib
 import importlib.util
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -42,8 +41,7 @@ def _write_logs(m, *, pid=4242, tick_age=10, pr_beats=(6, 6, 6)):
     m.BEATLOG.write_text("\n".join(lines) + "\n")
 
 
-def _mock_system(m, monkeypatch, *, pid_alive=True, launchd_running=True, pid=4242,
-                 dispatch_running=False):
+def _mock_system(m, monkeypatch, *, pid_alive=True, launchd_running=True, pid=4242):
     def fake_run(args, timeout=15):
         cmd = args[0]
         if cmd == "ps":
@@ -54,22 +52,8 @@ def _mock_system(m, monkeypatch, *, pid_alive=True, launchd_running=True, pid=42
             return _CP(args, 0, stdout=row + "\n")
         if cmd == "launchctl" and args[1] == "kickstart":
             return _CP(args, 0, stdout="kickstarted")
-        if cmd == "pgrep":  # _dispatch_running probe (dispatch-parallel.py / dispatch-async.py)
-            return _CP(args, 0 if dispatch_running else 1)
         return _CP(args, 1)
     monkeypatch.setattr(m, "_run", fake_run)
-
-
-def _set_loop_mtimes(m, *, daemon_start_age, disk_age, pid=4242):
-    """Pin the two mtimes the loop-body signal compares: pidfile (== daemon start) at now-
-    daemon_start_age, heartbeat-loop.sh at now-disk_age. Drift (disk newer than the running
-    daemon) ⟺ disk_age < daemon_start_age."""
-    now = datetime.datetime.now(datetime.timezone.utc).timestamp()
-    m.PIDFILE.write_text(str(pid))
-    os.utime(m.PIDFILE, (now, now - daemon_start_age))
-    m.LOOPSCRIPT.parent.mkdir(parents=True, exist_ok=True)
-    m.LOOPSCRIPT.write_text("#!/usr/bin/env bash\n# loop body\nwhile true; do :; done\n")
-    os.utime(m.LOOPSCRIPT, (now, now - disk_age))
 
 
 class _CP:
@@ -185,84 +169,3 @@ def test_heal_triggered_with_both_gates(tmp_path, monkeypatch):
     m.main()
     assert calls == [1]
     assert any("HEAL ok" in line for line in m.WDLOG.read_text().splitlines())
-
-
-# --- loop-body soft signal: drift detection -------------------------------------
-def test_loop_body_drift_detected(tmp_path, monkeypatch):
-    m = _fresh_module(tmp_path, monkeypatch)
-    _set_loop_mtimes(m, daemon_start_age=3600, disk_age=200)  # daemon old, file fresh → drift
-    ok, ev = m.check_loop_body_current()
-    assert ok is False and ev["drift"] is True
-    assert ev["disk_newer_by_sec"] > 0
-
-
-def test_loop_body_current_when_disk_older(tmp_path, monkeypatch):
-    m = _fresh_module(tmp_path, monkeypatch)
-    _set_loop_mtimes(m, daemon_start_age=200, disk_age=3600)  # daemon newer than file → current
-    ok, ev = m.check_loop_body_current()
-    assert ok is True and ev["drift"] is False
-
-
-def test_loop_body_no_pidfile_is_ok(tmp_path, monkeypatch):
-    m = _fresh_module(tmp_path, monkeypatch)  # no pidfile written → nothing to assert against
-    ok, ev = m.check_loop_body_current()
-    assert ok is True and ev["drift"] is False
-
-
-# --- loop-body self-reload: fires only when armed + settled + between beats ------
-def _reload_setup(tmp_path, monkeypatch, *, disk_age=300, dispatch_running=False, **env):
-    """Healthy daemon + a SETTLED loop-body drift; returns (module, calls-list) with heal mocked."""
-    m = _fresh_module(tmp_path, monkeypatch, LIMEN_WATCHDOG_HEAL=1, **env)
-    _write_logs(m)  # healthy: fresh tick + non-wedged PR beats + pidfile
-    _mock_system(m, monkeypatch, dispatch_running=dispatch_running)
-    _set_loop_mtimes(m, daemon_start_age=3600, disk_age=disk_age)  # drift; settle = disk_age
-    calls = []
-    monkeypatch.setattr(m, "heal", lambda: (calls.append(1), (True, "kickstarted"))[1])
-    return m, calls
-
-
-def test_reload_fires_on_drift_when_armed_settled_between_beats(tmp_path, monkeypatch):
-    m, calls = _reload_setup(tmp_path, monkeypatch, disk_age=300)  # settled (>120), between beats
-    monkeypatch.setattr(sys, "argv", ["watchdog", "--heal"])
-    assert m.main() == 0  # daemon is healthy — reload is a separate, quiet action
-    assert calls == [1]
-    assert any("RELOAD ok" in line for line in m.WDLOG.read_text().splitlines())
-
-
-def test_reload_suppressed_when_dispatch_running(tmp_path, monkeypatch):
-    m, calls = _reload_setup(tmp_path, monkeypatch, disk_age=300, dispatch_running=True)
-    monkeypatch.setattr(sys, "argv", ["watchdog", "--heal"])
-    assert m.main() == 0
-    assert calls == []  # mid-beat → never SIGKILL a live dispatch
-
-
-def test_reload_suppressed_when_unsettled(tmp_path, monkeypatch):
-    m, calls = _reload_setup(tmp_path, monkeypatch, disk_age=5)  # < 120s settle → still writing
-    monkeypatch.setattr(sys, "argv", ["watchdog", "--heal"])
-    assert m.main() == 0
-    assert calls == []
-
-
-def test_reload_suppressed_when_disabled(tmp_path, monkeypatch):
-    m, calls = _reload_setup(tmp_path, monkeypatch, disk_age=300, LIMEN_WATCHDOG_RELOAD=0)
-    monkeypatch.setattr(sys, "argv", ["watchdog", "--heal"])
-    assert m.main() == 0
-    assert calls == []
-
-
-def test_reload_not_armed_without_heal_flag(tmp_path, monkeypatch):
-    m, calls = _reload_setup(tmp_path, monkeypatch, disk_age=300)
-    monkeypatch.setattr(sys, "argv", ["watchdog"])  # no --heal → no kickstart authority at all
-    assert m.main() == 0
-    assert calls == []
-
-
-def test_drift_does_not_raise_red_alert(tmp_path, monkeypatch):
-    m, _calls = _reload_setup(tmp_path, monkeypatch, disk_age=300)
-    monkeypatch.setattr(sys, "argv", ["watchdog", "--heal"])
-    assert m.main() == 0  # drift is deploy-pending, not unhealthy
-    # no red alert fired; healthy path never writes an active alert
-    if m.ALERT.exists():
-        assert json.loads(m.ALERT.read_text()).get("active") is not True
-    log = m.WDLOG.read_text() if m.WDLOG.exists() else ""
-    assert "FIRED" not in log

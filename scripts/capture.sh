@@ -37,27 +37,12 @@ mkdir -p "$LIMEN_ROOT/logs" 2>/dev/null || true
 SECRET_GLOBS=( '*.env' '.env' '.env.*' '*.pem' '*.key' 'id_rsa*' 'id_ed25519*' '*.secret' \
                '*credentials*' '*.p12' '*.pfx' '*token*' )
 
-# Daemon-OWNED live state the capture organ must NEVER commit out-of-band. On the live checkout the
-# heartbeat rewrites tasks.yaml every beat UNDER queue_lock; an out-of-band capture commit of a torn /
-# transient queue races the daemon and clobbers its writes — the exact failure logged in
-# [[self-star-ladder-shipped-live]] ("out-of-band tasks.yaml writes clobbered"). The daemon commits the
-# queue deliberately on its own cadence; capture leaves it alone. Pinned to exact names (NOT a broad
-# '*.lock', which would wrongly drop legitimate tracked lockfiles like Cargo.lock / poetry.lock).
-RUNTIME_GLOBS=( 'tasks.yaml' 'tasks.yaml.lock' )
-
 captured=0 pushed=0 skipped=0 failed=0
 
 _unstage_secrets() {  # belt-and-suspenders: drop anything secret-looking from the index.
   # git pathspecs match the full path (no FNM_PATHNAME), so '*.env' already matches a/b/c.env.
   local pat
   for pat in "${SECRET_GLOBS[@]}"; do
-    git reset -q -- "$pat" >/dev/null 2>&1 || true
-  done
-}
-
-_unstage_runtime() {  # keep the daemon-owned live queue out of capture commits (anti-clobber).
-  local pat
-  for pat in "${RUNTIME_GLOBS[@]}"; do
     git reset -q -- "$pat" >/dev/null 2>&1 || true
   done
 }
@@ -78,7 +63,6 @@ _capture_repo() {
     else
       git add -A >/dev/null 2>&1 || true
       _unstage_secrets
-      _unstage_runtime
       if ! git diff --cached --quiet 2>/dev/null; then
         git commit -q -m "capture: autonomic off-disk sync $STAMP" >/dev/null 2>&1 && did_commit=1
       fi

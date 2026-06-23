@@ -68,52 +68,6 @@ _DEFAULT_LIMITS = {
 # "reserve_pct" key in logs/usage-limits.json.
 _DEFAULT_RESERVE_PCT = 15.0
 
-# The reserve is only useful EARLY in a window (don't bottom out mid-cycle); near a reset it is pure
-# waste — the budget refills to full anyway, so headroom held back just EXPIRES. So the EFFECTIVE
-# reserve decays from the full reserve early in the window down to this hard floor near the reset:
-# we recover the otherwise-wasted headroom while still never cutting a task off at zero. Logic, not a
-# pinned cap. Override via env LIMEN_RESERVE_FLOOR_PCT.
-_DEFAULT_RESERVE_FLOOR_PCT = 5.0
-
-
-def load_reserve_floor_pct():
-    env = os.environ.get("LIMEN_RESERVE_FLOOR_PCT")
-    if env:
-        try:
-            return float(env)
-        except ValueError:
-            pass
-    path = ROOT / "logs" / "usage-limits.json"
-    if path.exists():
-        try:
-            v = json.loads(path.read_text()).get("reserve_floor_pct")
-            if v is not None:
-                return float(v)
-        except Exception:
-            pass
-    return _DEFAULT_RESERVE_FLOOR_PCT
-
-
-def _time_left_frac(agent: str, reset_map: dict, window_hours: float) -> float:
-    """Fraction of the agent's budget window still remaining, from the dispatcher's per-agent reset
-    timestamp (track.per_agent_reset). 1.0 = just reset, 0.0 = at the cliff. Unknown → 1.0 (treat as
-    fresh, keep the full reserve — never under-reserve on missing data)."""
-    last_iso = reset_map.get(agent)
-    if not last_iso or not window_hours:
-        return 1.0
-    last = _parse_ts(last_iso)
-    if last is None:
-        return 1.0
-    elapsed_h = max(0.0, (NOW - last).total_seconds() / 3600.0)
-    return max(0.0, min(1.0, (window_hours - elapsed_h) / window_hours))
-
-
-def _effective_reserve(reserve_pct: float, floor_pct: float, time_left_frac: float) -> float:
-    """Linear decay of the reserve across the window: full reserve at the start, floor near the
-    cliff. floor is clamped to ≤ reserve so a tiny reserve never INFLATES near a reset."""
-    floor = min(floor_pct, reserve_pct)
-    return round(floor + (reserve_pct - floor) * time_left_frac, 2)
-
 
 def load_limits():
     path = ROOT / "logs" / "usage-limits.json"
@@ -194,32 +148,18 @@ def _recent(p: Path) -> bool:
 def codex_5h():
     base = HOME / ".codex" / "sessions"
     total = sessions = 0
-    gated = False
-    try:
-        if base.exists():
-            with os.scandir(base):   # explicit probe — TCC/permission denial raises HERE
-                pass                  # (rglob silently skips unreadable dirs, so it can't detect it)
-            for f in base.rglob("*.jsonl"):
-                if not _recent(f):
-                    continue
-                sessions += 1
-                try:
-                    txt = f.read_text(errors="ignore")
-                    mi = max([int(x) for x in _IN.findall(txt)] or [0])   # cumulative → max ≈ session total
-                    mo = max([int(x) for x in _OUT.findall(txt)] or [0])
-                    total += mi + mo  # billable (input+output), excludes cached
-                except (PermissionError, OSError):
-                    gated = True       # macOS TCC denied this app-data file — skip, don't crash
-                except Exception:
-                    pass
-    except (PermissionError, OSError):
-        # macOS TCC ("access data from other apps") denied the whole ~/.codex scan. Treat usage as
-        # UNKNOWN, not zero — and unknown ⇒ HEALTHY (real headroom), never bench. ([[meter-lie-and-dead-daemon-incident]])
-        gated = True
-    if gated:
-        return {"signal": "tokens", "window": "5h rolling", "consumed": total,
-                "unit": "tokens", "sessions": sessions, "health": "ok", "tcc_gated": True,
-                "note": "codex usage source TCC-gated — assuming healthy; grant FDA to read ~/.codex"}
+    if base.exists():
+        for f in base.rglob("*.jsonl"):
+            if not _recent(f):
+                continue
+            sessions += 1
+            try:
+                txt = f.read_text(errors="ignore")
+                mi = max([int(x) for x in _IN.findall(txt)] or [0])   # cumulative → max ≈ session total
+                mo = max([int(x) for x in _OUT.findall(txt)] or [0])
+                total += mi + mo  # billable (input+output), excludes cached
+            except Exception:
+                pass
     return {"signal": "tokens", "window": "5h rolling", "consumed": total,
             "unit": "tokens", "sessions": sessions,
             "health": "ok", "note": "billable codex tokens (input+output, 5h)"}
@@ -229,18 +169,8 @@ def claude_5h():
     base = HOME / ".claude" / "projects"
     total = msgs = rate_limit_events = 0
     recent_rl = False
-    gated = False
-    try:
-        if base.exists():
-            with os.scandir(base):   # explicit probe — TCC/permission denial raises HERE
-                pass                  # (rglob silently skips unreadable dirs, so it can't detect it)
-            _it = base.rglob("*.jsonl")
-        else:
-            _it = []
-    except (PermissionError, OSError):
-        _it, gated = [], True   # TCC denied the ~/.claude scan — unknown ⇒ healthy, never bench
-    if not gated:
-        for f in _it:
+    if base.exists():
+        for f in base.rglob("*.jsonl"):
             if not _recent(f):
                 continue
             try:
@@ -264,15 +194,8 @@ def claude_5h():
                     total += (u.get("input_tokens", 0) + u.get("output_tokens", 0)
                               + u.get("cache_creation_input_tokens", 0))  # billable; exclude cheap cache_read
                     msgs += 1
-            except (PermissionError, OSError):
-                gated = True       # macOS TCC denied this app-data file — skip, don't crash
             except Exception:
                 pass
-    if gated:
-        return {"signal": "tokens", "window": "5h rolling", "consumed": total,
-                "unit": "tokens", "messages": msgs, "health": "ok", "tcc_gated": True,
-                "rate_limit_events": rate_limit_events, "recent_rate_limit": recent_rl,
-                "note": "claude usage source TCC-gated — assuming healthy; grant FDA to read ~/.claude"}
     return {"signal": "tokens", "window": "5h rolling", "consumed": total,
             "unit": "tokens", "messages": msgs,
             "health": "rate-limited" if recent_rl else "ok",
@@ -316,8 +239,8 @@ def main():
     data = load_tasks_data()
     tasks = data.get("tasks", [])
     budget = (data.get("portal") or {}).get("budget") or {}
+    caps = budget.get("per_agent", {}) or {}
     track = (budget.get("track") or {}).get("per_agent", {}) or {}
-    reset_map = (budget.get("track") or {}).get("per_agent_reset", {}) or {}
     dc = dispatch_counts(tasks)
     rl = last_ratelimit()
     limits = load_limits()
@@ -337,7 +260,6 @@ def main():
     # The split decision: never run a live lane to 0. Burning faster than safe_rate_per_h
     # (cap / window) will exhaust the window; staying at-or-below it self-refreshes forever.
     reserve_pct = load_reserve_pct()
-    reserve_floor = load_reserve_floor_pct()
     for name, v in vendors.items():
         lim = limits.get(name, {})
         possible = lim.get("limit")
@@ -351,29 +273,16 @@ def main():
             burn = round(v["consumed"] / wh) if wh else 0       # consumed-per-hour, in-window
             safe = round(possible / wh) if wh else 0            # cap-per-hour = steady-state ceiling
             v["window_hours"] = round(wh, 2)
-            # the EFFECTIVE reserve decays toward the floor as this lane nears its reset, so headroom
-            # that would just expire is spent instead — while a task in flight is never cut off at 0.
-            tlf = _time_left_frac(name, reset_map, wh)
-            eff_reserve = _effective_reserve(reserve_pct, reserve_floor, tlf)
             v["reserve_pct"] = reserve_pct
-            v["time_left_frac"] = round(tlf, 3)
-            v["effective_reserve_pct"] = eff_reserve
             v["burn_rate_per_h"] = burn
             v["safe_rate_per_h"] = safe
             v["runway_h"] = round(remaining / burn, 1) if burn > 0 else None  # hrs to 0 at this pace
-            # FRONT-LOAD signal: budget that will EXPIRE unused if the lane keeps pacing evenly =
-            # how far its unspent fraction outruns its time-left fraction, in raw units. >0 ⇒ the
-            # accelerator should burn this before the reset wipes it. (headroom held for the floor
-            # is excluded — that part is meant to survive to the reset.)
-            headroom_frac = v["headroom_pct"] / 100.0
-            v["required_rate_per_h"] = round(remaining / (wh * tlf), 1) if (wh and tlf > 0) else None
-            v["will_expire"] = round(max(0.0, (headroom_frac - tlf - eff_reserve / 100.0)) * possible)
             pre_health = v.get("health")
             # A lane is hard-DOWN only on a real, recent 429 (rl marker is now tail-bounded; the
             # claude structured-error check is cooldown-bounded). Everything else is paced, not
             # benched. THE INVARIANT: real headroom + no recent 429 ⇒ never gated. ([[no-never-happens-again]])
             recent_rl = bool(rl.get(name)) or v.get("recent_rate_limit") or pre_health == "rate-limited"
-            healthy_headroom = v["headroom_pct"] > 2 * eff_reserve
+            healthy_headroom = v["headroom_pct"] > 2 * reserve_pct
             if recent_rl:
                 v["health"] = "rate-limited"
             elif healthy_headroom:
@@ -385,8 +294,8 @@ def main():
                 v["health"] = "throttle" if (v["headroom_pct"] <= 0 or burn > safe) else "ok"
             elif remaining <= 0:
                 v["health"] = "exhausted"   # count lanes: real dispatch count hit the real cap
-            elif v["headroom_pct"] <= eff_reserve:
-                v["health"] = "low"         # at/below the (decaying) reserve → stop, fuel still in tank
+            elif v["headroom_pct"] <= reserve_pct:
+                v["health"] = "low"         # at/below reserve → stop with fuel still in the tank
             else:
                 v["health"] = "throttle"    # in (reserve, 2*reserve] or burn>safe → pace down, still up
         else:
@@ -400,20 +309,6 @@ def main():
     print(f"usage-telemetry: codex {vendors['codex']['consumed']}tok/5h · "
           f"claude {vendors['claude']['consumed']}tok/5h · jules {vendors['jules']['consumed']}/100 · "
           f"gemini {vendors['gemini']['consumed']} · opencode {vendors['opencode']['consumed']} · agy {vendors['agy']['consumed']}")
-    gated = [n for n, v in vendors.items() if v.get("tcc_gated")]
-    if gated:
-        print(f"  usage: {','.join(gated)} source TCC-gated (assuming healthy) — "
-              f"grant Full Disk Access to the daemon python to silence the macOS prompt")
-    # front-load visibility: which lanes will lose budget at their reset if pacing stays even, so the
-    # accelerator's job is visible on screen (and on omni.html) instead of inferred.
-    accel_on = os.environ.get("LIMEN_ACCEL", "1") == "1"
-    expiring = sorted(((n, v) for n, v in vendors.items() if v.get("will_expire")),
-                      key=lambda kv: -kv[1]["will_expire"])
-    if expiring:
-        parts = [f"{n} ~{v['will_expire']}{('tok' if v.get('unit') == 'tokens' else '')}"
-                 f"@{round((v.get('time_left_frac') or 0) * (v.get('window_hours') or 0), 1)}h"
-                 for n, v in expiring[:6]]
-        print(f"  front-load [{'ON' if accel_on else 'OFF'}]: would-expire {' · '.join(parts)}")
 
 
 if __name__ == "__main__":

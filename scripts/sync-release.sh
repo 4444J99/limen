@@ -29,44 +29,10 @@ REMOTE="$(git rev-parse "origin/$BRANCH" 2>/dev/null || echo)"
 [ -n "$REMOTE" ] || { echo "sync-release: no origin/$BRANCH — fail open"; exit 0; }
 [ "$LOCAL" = "$REMOTE" ] && { echo "sync-release: at release ${REMOTE:0:7} ✓"; exit 0; }
 
-# fast-forward ONLY — never touch a diverged or rewound history…
+# fast-forward ONLY — never touch a diverged or rewound history
 if ! git merge-base --is-ancestor "$LOCAL" "$REMOTE" 2>/dev/null; then
-  # …EXCEPT the one provably-safe divergence: every local-only commit is ALREADY on origin by
-  # content (git patch-id). That is the observed "session redid work that already landed" drift
-  # (e.g. the Studium Odyssey commits replayed on a stale checkout). No unique work exists to lose,
-  # so re-converging to the release is loss-free. We still NEVER force-move when ANY local commit
-  # is genuinely unique — that path stays fail-open + hand-reconcile (the live-checkout-chaos guard).
-  BASE="$(git merge-base "$LOCAL" "$REMOTE" 2>/dev/null || echo)"
-  unique=1
-  if [ -n "$BASE" ]; then
-    unique=0
-    upstream_ids="$(git log --no-merges --format=%H "$BASE..$REMOTE" 2>/dev/null \
-      | while read -r h; do git show "$h" 2>/dev/null | git patch-id --stable 2>/dev/null | cut -d' ' -f1; done)"
-    while read -r h; do
-      [ -n "$h" ] || continue
-      pid="$(git show "$h" 2>/dev/null | git patch-id --stable 2>/dev/null | cut -d' ' -f1)"
-      [ -n "$pid" ] || { unique=1; break; }                       # empty diff / unknown ⇒ treat as unique (safe)
-      printf '%s\n' "$upstream_ids" | grep -qxF "$pid" || { unique=1; break; }
-    done <<EOF
-$(git log --no-merges --format=%H "$BASE..$LOCAL" 2>/dev/null)
-EOF
-  fi
-  CUR="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo)"
-  if [ "$unique" = 0 ] && [ "$CUR" = "$BRANCH" ]; then
-    TMP="$(mktemp 2>/dev/null || echo "$ROOT/logs/.tasks.sync.$$")"
-    [ -f tasks.yaml ] && cp -f tasks.yaml "$TMP" 2>/dev/null || true
-    # reset --hard leaves UNTRACKED runtime (logs/, usage.json) untouched; patch-id proved no unique
-    # committed work is lost; tasks.yaml (daemon-owned) is restored after.
-    if git reset --hard "origin/$BRANCH" --quiet 2>/dev/null; then
-      [ -f "$TMP" ] && cp -f "$TMP" tasks.yaml 2>/dev/null || true
-      rm -f "$TMP" 2>/dev/null || true
-      echo "sync-release: diverged but all local commits already upstream (patch-id) — re-converged ${LOCAL:0:7} → ${REMOTE:0:7} ✓ (no unique work lost)"
-      exit 0
-    fi
-    rm -f "$TMP" 2>/dev/null || true
-  fi
-  echo "sync-release: local (${LOCAL:0:7}) diverged from origin/$BRANCH (${REMOTE:0:7}) with UNIQUE local work — fail open"
-  echo "sync-release: cheapest path = reconcile by hand (this organ NEVER force-moves genuinely-unique history)"
+  echo "sync-release: local (${LOCAL:0:7}) diverged from origin/$BRANCH (${REMOTE:0:7}) — fail open"
+  echo "sync-release: cheapest path = reconcile by hand (this organ NEVER force-moves a branch)"
   exit 0
 fi
 CUR="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo)"

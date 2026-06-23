@@ -93,13 +93,11 @@ def test_spreads_across_distinct_repos(tmp_path: Path):
 
 
 def test_value_tier_gate_fail_closed_and_filters(tmp_path: Path):
-    # No ranked tier → generate NO build-out levers (anti-flood: never dump levers on every repo).
-    # NOT starvation: dark repos get a DISCOVERY task from discover-value.py, so the message points
-    # there instead of dead-ending. ([[distillation-not-reduction]])
+    # No tier configured → generate NOTHING (fail-closed: never flood all repos).
     p = tmp_path / "tasks.yaml"
     _board(p, [f"o/r{i}" for i in range(20)], n_open_per_repo=1)
     out = _run(p, "--floor", "100", "--max-new", "12", "--apply", value_repos="")
-    assert "discover-value" in out
+    assert "fail-closed" in out
     assert _count_generated(p) == 0
 
     # Tier set to ONE repo → generation only for that repo, never the others.

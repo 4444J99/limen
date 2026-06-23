@@ -176,6 +176,10 @@ def reset_circuit_breaker() -> str:
 @mcp.tool()
 def list_tasks(status: Optional[str] = None, agent: Optional[str] = None) -> List[dict]:
     """List tasks in the pipeline, optionally filtered by status or agent."""
+    if status and len(status) > 64:
+        raise ValueError("status must not exceed 64 characters")
+    if agent and len(agent) > 128:
+        raise ValueError("agent must not exceed 128 characters")
     _check_circuit_breaker()
     data = _load_data()
     tasks = [t.model_dump() for t in data.tasks]
@@ -188,6 +192,8 @@ def list_tasks(status: Optional[str] = None, agent: Optional[str] = None) -> Lis
 @mcp.tool()
 def get_task(task_id: str) -> dict:
     """Get details for a specific task by ID."""
+    if len(task_id) > 128:
+        raise ValueError("task_id must not exceed 128 characters")
     _check_circuit_breaker()
     
     # Layer 3: Hard Loop Limits
@@ -205,6 +211,12 @@ def get_task(task_id: str) -> dict:
 @mcp.tool()
 def add_task(title: str, repo: str, agent: str = "jules", priority: str = "medium", budget_cost: int = 1) -> str:
     """Add a new task to the pipeline."""
+    if len(title) > 512:
+        raise ValueError("title must not exceed 512 characters")
+    if len(repo) > 256:
+        raise ValueError("repo must not exceed 256 characters")
+    if len(agent) > 128:
+        raise ValueError("agent must not exceed 128 characters")
     _check_circuit_breaker()
     data = _load_data()
     
@@ -236,6 +248,12 @@ def add_task(title: str, repo: str, agent: str = "jules", priority: str = "mediu
 @mcp.tool()
 def update_task_status(task_id: str, status: str, context: Optional[str] = None) -> str:
     """Update the status and context of a task. Allows 'failed_blocked' to evict dependencies."""
+    if len(task_id) > 128:
+        raise ValueError("task_id must not exceed 128 characters")
+    if len(status) > 64:
+        raise ValueError("status must not exceed 64 characters")
+    if context and len(context) > 10000:
+        raise ValueError("context must not exceed 10000 characters")
     _check_circuit_breaker()
     data = _load_data()
     
