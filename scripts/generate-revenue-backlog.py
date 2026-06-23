@@ -32,7 +32,7 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
-from limen.io import load_limen_file, queue_lock, save_limen_file  # noqa: E402
+from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.models import Task  # noqa: E402
 
 # Stages that still have build work between here and a paying dollar. live/monetized are already
@@ -250,24 +250,21 @@ def main() -> int:
         print(f"\ndry-run — re-run with --apply to append {len(new)} tasks.")
         return 0
 
-    # Apply under the canonical queue lock: re-load fresh inside the critical section and re-dedup, so
-    # a concurrent dispatch write can never be clobbered and no id can double-land. Honor a lock miss
-    # by skipping (never block the beat — self-corrects next run).
-    new_ids = {t.id for t in new}
-    with queue_lock(path) as got:
-        if not got:
-            print("\nqueue lock busy — skipping apply this run (self-corrects next beat).")
-            return 0
-        fresh = load_limen_file(path)
-        have = {t.id for t in fresh.tasks}
-        to_add = [t for t in new if t.id not in have]
-        if not to_add:
-            print("\n(all planned tasks already present after fresh re-read — nothing applied.)")
-            return 0
-        fresh.tasks.extend(to_add)
-        save_limen_file(path, fresh)
-    print(f"\napplied: appended {len(to_add)} revenue tasks -> {path} "
-          f"(route+dispatch separately). ids: {sorted(new_ids & {t.id for t in to_add})}")
+    # Apply lockless + atomic, exactly like the sibling generate-backlog voice it runs beside in the
+    # C_FEED block (sequential within the beat; later loaders preserve these). Re-read fresh right
+    # before the write so we pick up tasks an earlier sibling (mine-backlog) added this beat and never
+    # double-land an id. NEVER skip on contention: the floor-gate makes this idempotent, so if a long
+    # concurrent dispatch save ever clobbers, the next C_FEED beat simply re-adds (self-healing — no
+    # silent "no").
+    fresh = load_limen_file(path)
+    have = {t.id for t in fresh.tasks}
+    to_add = [t for t in new if t.id not in have]
+    if not to_add:
+        print("\n(all planned tasks already present after fresh re-read — nothing applied.)")
+        return 0
+    fresh.tasks.extend(to_add)
+    save_limen_file(path, fresh)
+    print(f"\napplied: appended {len(to_add)} revenue tasks -> {path} (route+dispatch separately).")
     return 0
 
 
