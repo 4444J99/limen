@@ -1,0 +1,277 @@
+# The Qur'an — film companion (revelation, law, and the straight path)
+# FORCE-MATCHED films for Islam's recited scripture
+#
+# Film is not illustration. The Qur'an does not describe a war or a journey; it describes a REVELATION,
+# then the law that revelation contains, then the creature's response — petition, orientation, alignment.
+# The forces are not sequential in the text; they are simultaneous in every sura. The opening (Al-Fatiha,
+# Sura 1) is recited 17 times daily and contains them all: revelation (the word descending), law (the
+# sovereignty of judgment), supplication (the creature's upward turn).
+#
+# A film for revelation is not "about Islam" but rather a film that captures SPEECH as revelation — the
+# moment when an utterance is not the speaker's invention but arrives from beyond and overturns the frame.
+# A film for law is one where justice or judgment moves not as sentiment but as formal architecture. A film
+# for supplication is the naked petition of a creature who cannot guarantee the answer. The Qur'an at every
+# level is these three things at once.
+#
+# The first-pass companion covers the opening suras and the main forces. The force_coverage below reflects
+# what appears in the Qur'an's first movement (Meccan suras and the opening of Medina); later deepenings
+# will reserve the mercy films (compassion, forgiveness) for the Qur'an's late suras (Sura 109-114),
+# as the music layer reserves the funeral-march for endings.
+
+work: quran
+title: "The Qur'an — a cinema of revelation, law, and petition"
+principle: >
+  Do not assemble a "movies about Islam" list. Assemble the Qur'an's FORCES given cinematic bodies.
+  The Qur'an is primarily a recitation — an utterance that claims to come from beyond the speaker,
+  that reorganizes the listener's relation to time, judgment, and duty. The film companion is not
+  illustration but resonance: films that encode the condition of hearing revelation, the weight of
+  law, and the structure of petition. Book 1 (Al-Fatiha) is not a prologue; it is the heartbeat
+  recited in every prayer. The companion reaches across the whole Qur'an: the vertical moment of
+  revelation (Sura 1, 53, 96); the legal judgment (Sura 2, 4, 5); the merciful response (Sura 112,
+  114). A direct adaptation or "the Qur'an on screen" is not possible (the text's power is recitation,
+  not narrative); the force-companion carries the weight instead.
+
+force_coverage: [revelation, law, supplication, divine-intervention, salvation, kingship]
+
+films:
+  - title: "Into Great Silence"
+    director: "Philip Gröning"
+    year: 2005
+    force: revelation
+    divisions: [1, 53, 96]
+    objects: []
+    letterboxd: into-great-silence
+    scene_or_theme: "Sura 1 & 53 & 96 — the moment of revelation: the word descending into stillness"
+    object_lesson: >
+      Revelation is not a narrative event but a shift in the frame: the moment when the listener realizes
+      the utterance is not the speaker's own voice. Gröning's film of Carthusian monks in near-silence
+      captures this exactly — not what they do but the quality of attention by which they orient themselves
+      to a source beyond their own making. The Qur'an's first revelation (Sura 96) is "Recite! In the name
+      of your Lord who created" — the command to speak something not invented. Into Great Silence trains
+      the eye (and ear) for how that originating moment works: the self surrendered to an utterance that
+      exceeds it.
+    why: >
+      The Qur'an's claim is radical: I am not the speaker; I am the vessel. Film cannot depict this claim
+      directly, but it can film the condition that makes it intelligible — a human frame dissolving into
+      attentiveness to an order not of one's own making. Gröning's monastery, with its Rule older than any
+      monk, is the closest cinema comes to the Qur'anic posture.
+    content_note: "meditative, sparse; 3 hours; deliberately slow; designed for patient attention"
+
+  - title: "The Passion of Joan of Arc"
+    director: "Carl Theodor Dreyer"
+    year: 1928
+    force: revelation
+    divisions: [1, 18, 25]
+    objects: []
+    letterboxd: the-passion-of-joan-of-arc
+    scene_or_theme: "Sura 1 (Al-Fatiha) & Sura 18 (Al-Kahf) & Sura 25 (Al-Furqan) — the soul receiving the word directly"
+    object_lesson: >
+      Joan hears a voice and must stand by it, alone, against authority. The Qur'an opens with the same
+      structure: the listener is addressed directly, without intermediary, and must respond. Dreyer's close-ups
+      of Renée Jeanne Falconetti's face — the eyes steady despite everything — capture the interior posture
+      of a being who hears an utterance she cannot deny and knows it will cost her everything. The Qur'an's
+      earliest suras are addressed to individuals (the Prophet, the listener) with this same naked exposure.
+    why: >
+      The Qur'an is not a doctrine laid down from outside but an address to the soul: you are spoken to,
+      directly, by a source that cannot be dismissed. Joan of Arc is not an adaptation but a parallel case
+      of how that address works — the clash between the voice heard inwardly and the authority that denies it.
+    content_note: "silent film; stark black-and-white; intense close-ups; the trial and execution are the frame"
+
+  - title: "Ordet"
+    director: "Carl Theodor Dreyer"
+    year: 1955
+    force: divine-intervention
+    divisions: [2, 36, 67]
+    objects: []
+    letterboxd: ordet
+    scene_or_theme: "Sura 2 & Sura 36 & Sura 67 — the divine intervening in the human order without explanation"
+    object_lesson: >
+      A young man on a Danish farm believes he is Christ and his belief becomes, somehow, real. The Qur'an
+      does not narrate divine action as psychology or metaphor; God acts in the world (healing, guidance,
+      raising the dead) on terms the human frame cannot fully read. Ordet films this without irony — the
+      genuinely other entering history and undoing the visible order. The result is not sentimental but
+      austere and unsettling, exactly the register of the Qur'an's accounts of divine intervention.
+    why: >
+      The Qur'an's cosmology includes direct divine action — not influence, but action. Ordet (The Word)
+      shows how to film this without reducing it to feeling: a shift in the frame where something outside
+      the human calculus becomes operative. Dreyer is the only filmmaker who captures this register.
+    content_note: "meditative pacing; Scandinavian austerity; the ending is a violation of naturalism by design"
+
+  - title: "12 Angry Men"
+    director: "Sidney Lumet"
+    year: 1957
+    force: law
+    divisions: [2, 4, 5]
+    objects: [gun]
+    letterboxd: 12-angry-men
+    scene_or_theme: "Sura 2 & 4 & 5 — the Qur'anic law as formal architecture; judgment as reason, not power"
+    object_lesson: >
+      Twelve men must reach consensus on a life-or-death verdict. The gun on the table (the object lesson)
+      is the instrument of judgment — but judgment here is not the gun's work; it is reason's. The Qur'an's
+      legal suras (especially Sura 4, which addresses the community's legal responsibilities) present law
+      not as the ruler's will but as an architecture that must be reasoned through, with evidence and
+      argument. No voice drowns out another; the deliberation IS the law.
+    why: >
+      The Qur'an is unique among scriptures in addressing the community as the locus of judgment — believers
+      are commanded to judge justly, to reason about difficult cases. 12 Angry Men films exactly this: law
+      as formal deliberation, not as the imposition of a single will. The gun (the means of execution) is
+      present but inert; the law does its work through argument.
+    content_note: "black-and-white; a single room; dialogue-driven; no violence but the constant weight of judgment"
+
+  - title: "A Man for All Seasons"
+    director: "Fred Zinnemann"
+    year: 1966
+    force: law
+    divisions: [2, 16, 60]
+    objects: [door]
+    letterboxd: a-man-for-all-seasons
+    scene_or_theme: "Sura 2 & 16 & 60 — the conscience standing against sovereignty; law as the boundary that holds"
+    object_lesson: >
+      Thomas More refuses the king's will because conscience and law — for him, the same thing — require it.
+      The DOOR is the object lesson: the threshold between obedience and integrity, between the state's demand
+      and the soul's non-negotiable ground. The Qur'an addresses individuals who must choose between power's
+      comfort and the path (Sura 114: "the straight path"). More's stand is the same architecture: I will not
+      pass through that door, though death waits on the other side.
+    why: >
+      The Qur'an is not addressed to rulers alone but to the conscience of each believer. A Man for All Seasons
+      films the condition of law-bearing: a human who holds the line not because punishment will not fall but
+      because the law requires it. The door is the boundary that defines the self.
+    content_note: "courtroom drama; the execution is offscreen; an English Catholic martyr, but the structure is universal"
+
+  - title: "Tokyo Story"
+    director: "Yasujirō Ozu"
+    year: 1953
+    force: supplication
+    divisions: [1, 111, 114]
+    objects: []
+    letterboxd: tokyo-story
+    scene_or_theme: "Sura 1 (Al-Fatiha) & Sura 111 & Sura 114 — the creature's petition, asking to be held on the path"
+    object_lesson: >
+      An elderly couple visits their son in Tokyo. The film is about what cannot be said directly: the aging
+      parents' unspoken need that their son be well, that the world continue, that they be remembered. This is
+      the structure of supplication — not commanded petition (gimme / fix me) but the exposed exposure of one's
+      condition to a power one cannot control. The Fatiha ends in petition: "guide us on the straight path" —
+      not a demand but a need spoken into the silence of being alive and uncertain.
+    why: >
+      Ozu never shows violence, scandal, or dramatic crisis. What he shows is the daily smallness of human
+      relation and the impossible wish that it not break. Supplication in the Qur'an is not performative
+      display but the structure of creatureliness: I cannot guarantee what comes next, and I ask to be held.
+      Tokyo Story films that with unsurpassed tenderness.
+    content_note: "slow, meditative; conversations over tea; the absence of dramatic event is the point"
+
+  - title: "Stalker"
+    director: "Andrei Tarkovsky"
+    year: 1979
+    force: divine-intervention
+    divisions: [18, 36, 48]
+    objects: [door]
+    letterboxd: stalker
+    scene_or_theme: "Sura 18 (Al-Kahf) & Sura 36 & Sura 48 — the mysterious guide; the journey toward the divine; the hidden power"
+    object_lesson: >
+      A guide leads two men into the Zone, toward a door (the object lesson) that grants wishes. The door is
+      closed, present, immovable — and its power is not magical but ontological; you cannot enter by force.
+      The Qur'an often speaks of guides sent by God (prophets, signs, the straight path itself as a guide) and
+      the seeker's disorientation without them. Tarkovsky's Stalker is a quest-film where the quest is interior:
+      the seekers must surrender their calculus to be led at all.
+    why: >
+      Tarkovsky films revelation through landscape and time, not through dialogue or event. The Zone itself is
+      the revelation — a place where the ordinary rules dissolve and another order becomes visible. The Qur'an
+      opens many passages with this sense: the moment when the frame shifts and you see you have been on a
+      journey without knowing it.
+    content_note: "long (163 min); painterly; very slow; requires patient attention; the philosophical dialogue may challenge but does not resolve"
+
+  - title: "Judgment at Nuremberg"
+    director: "Stanley Kramer"
+    year: 1961
+    force: law
+    divisions: [4, 5, 90]
+    objects: [gun]
+    letterboxd: judgment-at-nuremberg
+    scene_or_theme: "Sura 4 & 5 & Sura 90 — law applied to power; the possibility and impossibility of justice"
+    object_lesson: >
+      A tribunal judges Nazi judges for crimes they committed under orders. The gun (the instrument of the state's
+      power) is never shown, but its logic saturates the trial. The Qur'an addresses the problem that the Nuremberg
+      trial addressed: when power and law diverge, which holds? Sura 4 commands believers to "judge with justice"
+      and "do not betray the trusts"; it assumes law can fail. Sura 5 addresses the same impossibility: "the party
+      of God will be victorious" suggests that the current power is not the final word.
+    why: >
+      Judgment at Nuremberg is rare among films in taking law seriously as an architectural problem, not just a
+      setting. The judges on trial are not evil in the melodramatic sense; they are competent men who made legal
+      decisions. The film asks what law means when power has corrupted its form. The Qur'an asks the same thing.
+    content_note: "long (3.5 hrs); courtroom drama; testimony from witnesses; the verdict does not resolve the moral complexity"
+
+  - title: "The Life of Oharu"
+    director: "Kenji Mizoguchi"
+    year: 1952
+    force: salvation
+    divisions: [76, 97, 112, 114]
+    objects: []
+    letterboxd: the-life-of-oharu
+    scene_or_theme: "Sura 76 & Sura 97 & Sura 112 & Sura 114 — compassion and mercy; the soul restored; the straight path made visible"
+    object_lesson: >
+      An aging woman who has been cast down by every circumstance and every person she trusted finds, at the end,
+      a moment of grace — not rescue, but recognition. The Qur'an's closing suras (especially Sura 112, "Say He is
+      God, One and Unique," and Sura 114, "Lord of the creatures") speak of God's mercy as not contingent on the
+      creature's merit. Mizoguchi's Oharu is shown the same thing: that being is held, even when everything else fails.
+      It is not sentimental salvation; it is the recognition that one was never alone.
+    why: >
+      The Qur'an is often read as judgment; its later suras emphasize mercy equally. Mizoguchi is the only filmmaker
+      who can film mercy without sentimentality — as the condition of being seen by an order larger than shame and
+      failure. The film shows a soul recognizing itself as held, which is the structure of Qur'anic salvation.
+    content_note: "meditative; the protagonist suffers throughout; no triumphant ending, but a final grace; requires emotional stamina"
+
+  - title: "Dekalog"
+    director: "Krzysztof Kieślowski"
+    year: 1989
+    force: law
+    divisions: [2, 17, 30, 40]
+    objects: []
+    letterboxd: dekalog
+    scene_or_theme: "Sura 2 & 17 & 30 & Sura 40 — the ten commandments as the form of human relation; law as what binds"
+    object_lesson: >
+      Ten episodes, each structured around one commandment, show how the law is not abstract but relational —
+      not "do not steal" but "do not steal from your neighbor, the person whose face you see." The Qur'an, like
+      the Torah, roots law in community: Sura 2 addresses "O you who have believed" and lays out the mutual
+      obligations. Kieślowski shows law not as rule but as the architecture that makes love (and human community)
+      possible at all.
+    why: >
+      Dekalog is unique in treating the commandments as living questions, not settled doctrine. Each episode shows
+      a commandment in crisis, where obedience and mercy clash. The Qur'an does the same: it commands justice but
+      addresses a community where justice is hard and mercy is harder. Kieślowski films the tension without resolving it.
+    content_note: "10 one-hour episodes; meditative; Polish setting; each episode is self-contained but they comment on each other"
+
+  - title: "The Sacrifice"
+    director: "Andrei Tarkovsky"
+    year: 1986
+    force: salvation
+    divisions: [21, 37, 67, 108]
+    objects: [door]
+    letterboxd: the-sacrifice
+    scene_or_theme: "Sura 21 & 37 & 67 & 108 — the willingness to surrender all; salvation as the soul turning back to God"
+    object_lesson: >
+      A man facing annihilation makes a vow: if the world is spared, he will sacrifice everything. The door to his
+      house (the object lesson) becomes the threshold between the world as it was and the world renewed. The Qur'an's
+      concept of sacrifice (not only ritual but the surrender of the soul's attachments) culminates in willingness —
+      the creature offering back to God what was only ever on loan. Sura 21 speaks of this; Sura 37 contains the story
+      of Abraham's willingness to sacrifice his son.
+    why: >
+      Tarkovsky's final film is about prayer and vow — the soul addressing the divine not as petition but as offering.
+      The Qur'an's vision of salvation includes this movement: from asking to offering, from need to surrender. The fire
+      that opens and closes the film is the boundary between the human and the divine.
+    content_note: "Tarkovsky's final work; very slow; Swedish setting; allegorical but not abstract; the final scene is ambiguous by design"
+
+adaptations:
+  # Direct film adaptations or dramatizations OF the Qur'an are rare (the Qur'an is not narrative but
+  # recitation). Where they exist (historical dramas about the Prophet, or Qur'anic narratives given dramatic form),
+  # they are included here as overlays — useful for staging specific suras against their scenes, but less truthful
+  # to the Qur'an's nature than the force-companions above. The force-companion carries the weight.
+  - title: "The Message"
+    director: "Moustapha Akkad"
+    year: 1976
+    letterboxd: the-message
+    note: "biographical drama of Prophet Muhammad's life and the revelation of the Qur'an — the closest cinema has come to adapting the Qur'an's story, though the Qur'an itself is not narrative. Inclusion here is for reference only; the force-companion films above are more faithful to the Qur'an's register."
+    scenes:
+      - {division: 1, force: revelation, scene: "The opening of revelation to Muhammad in the cave of Hira; the word arriving unasked"}
+      - {division: 96, force: revelation, scene: "Sura 96 (Iqra): 'Recite!' — the command to speak what was not invented"}
+      - {division: 2, force: law, scene: "The establishment of the Muslim community's legal and social order in Medina"}
+      - {division: 109, force: salvation, scene: "The Conquest of Mecca and the restoration of the Ka'ba to monotheism"}
