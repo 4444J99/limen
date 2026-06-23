@@ -16,6 +16,7 @@ from limen.capacity import (
     capacity_census,
     format_capacity_census,
     github_issue_ref,
+    ollama_model,
 )
 from limen.io import load_limen_file, save_limen_file
 from limen.models import DispatchLogEntry, LimenFile, Task
@@ -174,6 +175,34 @@ def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool | str:
     return _run_cmd(["agent-dispatch", agent, _build_prompt(task)], task, dry_run)
 
 
+_FLAME_CACHE: dict[str, str] = {}
+
+
+def _flame_preamble() -> str:
+    """The Continuity Kernel ($LIMEN_ROOT/FLAME.md), prepended to EVERY lane's prompt so the
+    *self* rides every dispatch — codex, claude, opencode, agy, gemini, jules, ollama, whatever
+    comes next. Whichever model runs the beat acts AS VLTIMA, not as a generic coder: the model is
+    the substrate, the kernel is the flame. This is what makes the flame survive a model swap —
+    when tokens run dry on Claude and the beat falls to a local model, the identity + invariants +
+    state-pointers ride along in the prompt itself, not in any one harness.
+
+    Gated by LIMEN_FLAME_KERNEL (default on; '0' → bare task prompt, today's behavior). Cached by
+    path+mtime so we re-read only when the kernel actually changes. Fail-open to '' everywhere:
+    a missing/unreadable kernel must NEVER block a dispatch (derive-never-pin, fail-open)."""
+    if os.environ.get("LIMEN_FLAME_KERNEL", "1") != "1":
+        return ""
+    root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
+    f = root / os.environ.get("LIMEN_FLAME_FILE", "FLAME.md")
+    try:
+        key = f"{f}:{f.stat().st_mtime_ns}"
+        if key not in _FLAME_CACHE:
+            _FLAME_CACHE.clear()  # only ever hold the current mtime's text
+            _FLAME_CACHE[key] = f.read_text(encoding="utf-8")
+        return _FLAME_CACHE[key]
+    except (OSError, ValueError):
+        return ""  # no kernel on disk yet → bare prompt, never a blocked lane
+
+
 def _build_prompt(task: Task) -> str:
     parts = [f"Complete task {task.id}: {task.title}"]
     if task.repo:
@@ -182,7 +211,14 @@ def _build_prompt(task: Task) -> str:
         parts.append(f"\nContext: {task.context}")
     if task.urls:
         parts.append(f"\nReferences: {', '.join(task.urls)}")
-    return "".join(parts)
+    body = "".join(parts)
+    flame = _flame_preamble()
+    if not flame:
+        return body
+    # Kernel first (who you are + the invariants + where to resume from), then a hard divider,
+    # then THIS beat's concrete task. The divider keeps the model from mistaking the standing
+    # identity for the work item.
+    return f"{flame}\n\n--- YOUR TASK THIS BEAT ---\n{body}"
 
 
 def _run_cmd(cmd: list[str], task: Task, dry_run: bool, cwd: str | None = None) -> bool | str:
@@ -410,6 +446,10 @@ _LOCAL_AGENTS: dict[str, list[str]] = {
     "agy": ["--dangerously-skip-permissions", "-p"],
     "antigravity": ["--dangerously-skip-permissions", "-p"],
     "claude": ["-p", "--permission-mode", "acceptEdits"],
+    # ollama: the local, unmetered floor. `ollama run <model> <prompt>` runs once,
+    # non-interactively. The <model> is a POSITIONAL after `run` (not a -m flag), injected
+    # lazily in _agent_argv() and DERIVED from `ollama list` — never pinned (see ollama_model).
+    "ollama": ["run"],
 }
 _LOCAL_BIN: dict[str, str] = {}
 _CONFIGURED_SERVICE_AGENTS = {"warp", "oz"}
@@ -450,6 +490,13 @@ def _agent_argv(agent: str, task: Task | None = None) -> list[str]:
             # the claude CLI uses --model (it has NO -m short flag, unlike codex/opencode);
             # `claude -m …` → "error: unknown option '-m'" and the whole dispatch fails.
             flags += ["--model", model]
+    elif agent == "ollama":
+        # `ollama run <model> <prompt>` — model is a POSITIONAL right after `run`, derived at
+        # call-time. No model pulled → no model arg (the run will error and the lane stays the
+        # inert floor until `ollama pull` lights it), never a pinned name.
+        model = ollama_model()
+        if model:
+            flags += [model]
     return flags
 
 # Per-task lane failover cascade (best-efficiency-first → cloud last). On a genuine
@@ -459,7 +506,7 @@ def _agent_argv(agent: str, task: Task | None = None) -> list[str]:
 # Exhausting the list marks the task failed. Keep this order == heartbeat.sh LANES order.
 # agy/antigravity KEPT and HEALED: it writes to a scratch dir, so _bridge_agy_scratch carries
 # that work into the worktree after the run (see _isolated_local_run) — productive lane again.
-_LANE_CASCADE = ["codex", "opencode", "agy", "claude", "gemini", "jules"]
+_LANE_CASCADE = ["codex", "opencode", "agy", "claude", "gemini", "jules", "ollama"]
 _NOOP = "__noop__"  # agent ran but produced no diff — do NOT cascade lanes
 
 
