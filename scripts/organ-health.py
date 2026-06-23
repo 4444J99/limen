@@ -146,10 +146,10 @@ def _registry():
              probe=lambda: _mtime(LOGS / "ticks.jsonl")),
         dict(key="route", rung="ROUTE", voice="balance", cadence_key="BALANCE",
              what="capacity-aware routing across the lanes",
-             probe=lambda: None),  # route writes no dedicated artifact → blind until voice-stamping lands
+             probe=lambda: _mtime(LOGS / "route-health.json")),  # route.py stamps this every balance beat
         dict(key="feed", rung="FEED", voice="feed", cadence_key="FEED",
              what="mine + generate backlog (revenue-first)",
-             probe=lambda: None),  # no dedicated artifact → blind until voice-stamping lands
+             probe=lambda: _mtime(LOGS / "feed-health.json")),  # generate-backlog.py stamps this every feed beat
         dict(key="merge", rung="MERGE", voice="merge", cadence_beats=1, gate_note="merges gated on permission",
              what="merge-ready assessment; CLEAN PRs ship",
              probe=lambda: _last_log_ts(LOGS / "merge-drain.log")),
