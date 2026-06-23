@@ -1,0 +1,320 @@
+# The Epic of Gilgamesh — film companion (mortality, friendship, the kingship that defies death)
+# Gilgamesh discovers mortality through a friend, then spends the rest of the poem trying to answer
+# what friendship means when it ends in death. Tablet I establishes the world before this recognition:
+# the tyrant-king, the created counterpart, desire as the threshold into civilization. The grief that
+# gives the work its meaning arrives later (Tablets VII–VIII, Enkidu's death and lament). This companion
+# for Tablet I covers the FORMATION: how a world of kingship, wildness, desire, and law creates the
+# conditions for a friendship that will break the protagonist.
+#
+work: gilgamesh
+title: "The Epic of Gilgamesh — a cinema of kingship, desire, and the made companion"
+principle: >
+  Gilgamesh is not a fantasy. It is the first record of a man learning that his mortality is not
+  negotiable. Tablet I shows the world *before* that learning: a king so complete he seems
+  untouchable, a wild man who knows nothing of cities, a woman whose touch rewrites the boundary
+  between nature and culture, and a dream that foretells it all. Film should not illustrate the
+  Mesopotamian setting (that is archaeology, not poetry); it should encode the *forces* — kingship
+  as overwhelming presence, civilization as desire-driven threshold, fate as the architecture the
+  gods install without asking. The companion reaches past Mesopotamia: sovereign excess (Ran) for
+  the king's tyranny, wilderness transformation (Spirited Away) for Enkidu's becoming, intimate
+  desire (In the Mood for Love) for the harlot's civilizing touch, and the fateful arrival of
+  the known-unknown (2001) for the gods' intervention. The grief and funeral weight belong to
+  Tablet VIII (Enkidu's death); Tablet I is the stage before the breaking.
+force_coverage: [memory, kingship, supplication, fate, exile, desire, metamorphosis, law, revelation, divine-intervention]
+films:
+  - title: "Hiroshima mon amour"
+    director: "Alain Resnais"
+    year: 1959
+    force: memory
+    divisions: [1]
+    objects: [cigarette]
+    letterboxd: hiroshima-mon-amour
+    scene_or_theme: "Tablet I — the opening hymn: 'He who saw the deep' — memory as the monument itself"
+    object_lesson: >
+      Memory is not private recovery; it is the *form* through which a civilization survives.
+      "Hiroshima mon amour" opens with bodies (the lovers) and cities (Hiroshima) in the same
+      frame, inseparable. The cigarette smoke curls through both. Gilgamesh begins with a monument
+      — the walls of Uruk — and then tells you how those walls came to matter. Resnais teaches how
+      a person and a place are the same story: you cannot separate the king from his city, or the
+      lover from the ash. Tablet I's opening is this exactly: Gilgamesh *is* Uruk, and Uruk *is*
+      the poem about him. Memory and monument are one.
+    why: >
+      The obvious choice is a film of ancient Mesopotamia; the truthful one is a film about how
+      aftermath becomes the only present tense. Resnais' parallel editing between bodies and cities,
+      and between past and present, trains the eye for how Tablet I works: the poem is already
+      written when the story begins. The king has already seen it all, already done it all. You are
+      reading a monument, a memory of a life, before you read that life's narrative.
+    content_note: "intimate scenes, war aftermath memory, no graphic violence"
+  - title: "Ran"
+    director: "Akira Kurosawa"
+    year: 1985
+    force: kingship
+    divisions: [1]
+    objects: []
+    letterboxd: ran
+    scene_or_theme: "Tablet I — Gilgamesh's tyranny: two-thirds divine, one-third man; overwhelming sovereign force"
+    object_lesson: >
+      Kingship is real power and it is ruin. Lear divides his kingdom and the world tears.
+      Gilgamesh does not divide his authority — he exercises it completely: he takes the daughters,
+      exhausts the sons, rules Uruk as unquestionable force. The Urukians do not rebel; they *beg
+      the gods for a counterweight*. Ran shows how sovereignty works: visible, ceremonial, absolute,
+      and catastrophic. The lesson is not that kings are evil, but that the exercise of absolute
+      power *is itself* the catastrophe, however magnificent the display. Kurosawa's warlords are
+      Gilgamesh: their authority is real, their majesty is visible, and their presence alone
+      unmakes the world.
+    why: >
+      Kurosawa filmed Lear in a Sengoku landscape: a king issuing commands that ripple into chaos,
+      watched by heavens that do not intervene to save anyone. This is Mesopotamian monarchy: not
+      a tyrant to be overthrown but a force of nature to be balanced. Ran's ceremonial grandeur and
+      its refusal to judge the king makes it the exact register for Tablet I's depiction of
+      Gilgamesh's overwhelming presence.
+    content_note: "large-scale battle violence, immolation, suicide"
+  - title: "The Seventh Seal"
+    director: "Ingmar Bergman"
+    year: 1957
+    force: supplication
+    divisions: [1]
+    objects: []
+    letterboxd: the-seventh-seal
+    scene_or_theme: "Tablet I — the Urukians' outcry to Anu: a collective lamentation that compels divine response"
+    object_lesson: >
+      Supplication is a form that forces the divine to answer. The knight plays chess with Death;
+      the Urukians cry to Anu. Neither can be refused. The Seventh Seal teaches how a human cry,
+      offered to a power not obliged to listen, *changes the terms* just by being heard. Anu hears
+      Uruk's lament and replies: I will make a counterpart. That is not mercy; it is the
+      architecture of balance. The supplication works not because it is morally righteous but
+      because it exposes a pressure the divine system cannot ignore. Bergman's formality — the
+      still images, the direct address, the chess game as ritual — captures exactly this register.
+    why: >
+      The obvious parallel is prayer in a temple; the truthful one is a negotiation with forces
+      greater than the self. Bergman strips the scene to essentials: a man and an immensity,
+      speaking through the only form available (ritual, game, formal address). The Urukians do not
+      pray to Anu as saviors; they present their condition as a problem the gods must solve.
+      Bergman knows how that works.
+    content_note: "medieval plague, danse macabre, existential weight"
+  - title: "No Country for Old Men"
+    director: "Joel and Ethan Coen"
+    year: 2007
+    force: fate
+    divisions: [1]
+    objects: [gun]
+    letterboxd: no-country-for-old-men
+    scene_or_theme: "Tablet I — Anu and Aruru decree Enkidu's creation: inexorable mechanism, no negotiation"
+    object_lesson: >
+      Fate is not destiny to avoid; it is a *machine* that has already begun. The moment Anu
+      speaks, the creation of Enkidu is inevitable. It does not unfold as tragedy but as mechanism
+      — each cause exact, each consequence foreknown. No Country films fate this way: a chain of
+      action and reaction, logical and mechanical, that grinds forward regardless of the will of
+      the men inside it. The gun is the object lesson: the instrument that carries the law forward,
+      indifferent to argument. Gilgamesh is doomed the moment Anu speaks, not because the gods are
+      cruel but because the mechanism has no cancel. The poem teaches this over 12 tablets; No
+      Country teaches it in two hours.
+    why: >
+      The Coen Brothers' refusal to resolve, to explain, or to judge the machine in motion — their
+      matter-of-fact tracking of consequence — is exactly the register of Mesopotamian divine
+      decree. When the gods decide, it is done. The poem does not argue about justice; it states
+      mechanism.
+    content_note: "modern violence, assassination, remorseless killing"
+  - title: "The Searchers"
+    director: "John Ford"
+    year: 1956
+    force: exile
+    divisions: [1]
+    objects: []
+    letterboxd: the-searchers
+    scene_or_theme: "Tablet I — Enkidu in the wilderness: outside human settlement, living among animals, knowing nothing of cities"
+    object_lesson: >
+      Exile is not punishment; it is *separation from the grammar that makes you human*. Enkidu
+      eats grass, drinks at waterholes with gazelles, knows nothing of bread, beer, or cities.
+      He is not enslaved; he is perfectly adapted to the world he inhabits. But he is outside
+      human time entirely. The Searchers follows a man exiled into the frontier, moving through
+      landscapes where civilization is memory and the wilderness is present tense. The lesson is
+      that exile is not desolation — the land is beautiful, the survival is real — but it is a
+      *separation* from the terms that make you legible to the world you came from. Ford's
+      landscapes are Enkidu's: vast, open, complete in themselves, and utterly foreign to the
+      city.
+    why: >
+      Ford films the frontier as a state of being outside: the exile does not belong to the world
+      he moves through, and the world does not speak his language. Enkidu in the wilderness is
+      this exactly. The Searchers is the correct register for how to film *being* outside, not
+      *going* outside.
+    content_note: "frontier violence, racism (period piece requiring context), family death"
+  - title: "Okjah / Okja"
+    director: "Bong Joon-ho"
+    year: 2017
+    force: fate
+    divisions: [1]
+    objects: []
+    letterboxd: okja
+    scene_or_theme: "Tablet I — the trapper's discovery: Enkidu's strength undoes the pit-traps, releases the animals"
+    object_lesson: >
+      A force outside human scale enters the human system and breaks it. The trapper's snares
+      (human craft, accumulated knowledge, economy of labor) are unmade by a presence he does not
+      understand. Okja is a film about a being whose existence *undoes the machinery* around it —
+      not through malice, but through scale. The lesson is that when something larger than your
+      system arrives, your system does not contain it. The trapper returns in terror because his
+      craft has been rendered obsolete, his precautions useless. That is Enkidu's second appearance
+      — not as attack but as the arrival of something the human economy was not built for.
+    why: >
+      Bong Joon-ho films scale and dispossession: systems that rely on the captured finding the
+      capture unmade. The trapper's fear is not moral judgment; it is recognition that his system
+      has a threshold, and it has been crossed. Gilgamesh records this moment as the breaking of
+      traps and the flight of animals; Okja records it as the impossible existing within the
+      logical, and the logical's collapse.
+    content_note: "industrial animal farming, corporate violence, child endangerment"
+  - title: "In the Mood for Love"
+    director: "Wong Kar-wai"
+    year: 2000
+    force: desire
+    divisions: [1]
+    objects: [cigarette, mirror]
+    letterboxd: in-the-mood-for-love
+    scene_or_theme: "Tablet I — Shamhat at the waterhole: the unveiling, the six days and seven nights, desire as threshold"
+    object_lesson: >
+      Desire is not passion; it is the *mechanism of transformation*. Chow Mo-wan and Su Li-zhen
+      circle each other through empty hallways and narrow rooms: desire as chromatic longing that
+      never resolves, never arrives, only *suspends* the one who enters it. The cigarette smoke,
+      the mirrors, the repetition of gesture — Wong Kar-wai films desire as a *state*, not an event.
+      For six days and seven nights, Enkidu lies with Shamhat. For those six days and seven nights,
+      he is being remade: his body weakens, his alignment with the animals dissolves, language
+      begins. Desire is the *mechanism*, not the cause. The poem knows this: after Shamhat, Enkidu
+      cannot return to the wilderness. He has entered a new system. Wong Kar-wai knows it too:
+      desire is not about another person; it is about being *suspended in transformation*.
+    why: >
+      Wong Kar-wai's camera *is* the chromatic longing, the deferral, the suspension of resolution.
+      His lovers are trapped in frames within frames, circling each other without arrival. This is
+      the exact register for Shamhat's scene: not seduction (that is plot) but desire as the
+      threshold into civilization, filmed as chromatic suspension, colored light, and the space
+      between bodies that does not close.
+    content_note: "longing, intimate scenes, cigarette smoke (period style)"
+  - title: "Phantom Thread"
+    director: "Paul Thomas Anderson"
+    year: 2017
+    force: desire
+    divisions: [1]
+    objects: [needle, dress]
+    letterboxd: phantom-thread
+    scene_or_theme: "Tablet I — Enkidu weakened: 'his legs that once matched the gazelles' are diminished; he cannot return"
+    object_lesson: >
+      Desire remakes the self irreversibly. Alma is brought into Reynolds' world; Enkidu is brought
+      into human culture. Both are transformed by proximity to a force greater than themselves.
+      Alma's needle and thread become her fate; Enkidu's bread and beer become his. The lesson is
+      that once the threshold is crossed, the old self is *gone* — not mourned, not resisted, simply
+      *unavailable*. Enkidu returns to the animals and the gazelles flee. Alma works the needle and
+      the dress takes its final form. Phantom Thread teaches that desire is not mutual; it is the
+      work of being unmade and reformed by being known. Anderson's precision — the stitch, the
+      seam, the hand at work — is the register of desire as the slow, exact transformation of the
+      self.
+    why: >
+      Phantom Thread is a film about desire as work, as craft, as the precise moment-by-moment
+      unmmaking of a self in the presence of another. The intimacy is not warmth; it is precision
+      and displacement. Enkidu after Shamhat is exactly this: precisely remade, displaced from the
+      wilderness, unable to return. Anderson knows how to film that with absolute seriousness.
+    content_note: "psychological manipulation, intimate scenes, needle work"
+  - title: "Spirited Away"
+    director: "Hayao Miyazaki"
+    year: 2001
+    force: metamorphosis
+    divisions: [1]
+    objects: []
+    letterboxd: spirited-away
+    scene_or_theme: "Tablet I — Shamhat teaches: bread, beer, oil, clothing; Enkidu enters human civilization layer by layer"
+    object_lesson: >
+      Metamorphosis is not sudden; it is the *accumulation of small transformations* until you
+      recognize you are no longer the self that entered. Spirited Away tracks Chihiro through a
+      landscape where each encounter — each food eaten, each name given, each bath taken — is a
+      step into a different grammar. She does not choose to transform; she *inhabits* each
+      threshold and discovers she cannot return. Shamhat teaches Enkidu in the same way: bread
+      changes him, beer changes him, oil and clothing change him. Not punishment, not seduction —
+      *culture entering the body*. Miyazaki's animation makes this visible: the shift in Chihiro's
+      posture, the way she moves through space differently, the moment she almost forgets her own
+      name. That is metamorphosis: not become a bird, but become *no longer what you were*.
+    why: >
+      Miyazaki's genius is showing transformation as the slow *inhabitation* of a new world, not
+      as rupture. The spirit world is not alien until Chihiro is inside it; then it becomes the
+      only present tense. Tablet I works exactly this way: Enkidu enters human culture not as
+      rebellion but as each small acceptance (bread, then beer, then clothing) that together
+      constitute a *new being*. Spirited Away is the film that knows this.
+    content_note: "fantasy violence, no-faces, unsettling imagery (suitable for all ages)"
+  - title: "12 Angry Men"
+    director: "Sidney Lumet"
+    year: 1957
+    force: law
+    objects: []
+    letterboxd: 12-angry-men
+    scene_or_theme: "Tablet I — Enkidu dressed and anointed; brought to the shepherd's camp; inducted into law"
+    object_lesson: >
+      Law is not justice; it is *form that makes community possible*. The jurors argue inside a
+      room, constrained by the form of the deliberation itself: each voice, each presentation, each
+      counter-argument follows the structure that makes collective judgment possible. Without the
+      form, there is only chaos; with the form, there is the *possibility* of wisdom. The shepherds
+      dress Enkidu, give him food in the ritual of the camp, assign him work within the social
+      order. He is inducted into law: the *form* through which human beings cohere into something
+      larger than themselves. Lumet's camera stays in the jury room, never escaping it — the form
+      is the only real space. Enkidu's space is now Uruk, the camp, the city: bounded, ordered,
+      rhythmic. Both are law.
+    why: >
+      Lumet is a formalist: he knows that law is not content but *architecture*, and that
+      architecture is the condition for human society. Enkidu's transition from wilderness to camp
+      is his entry into law — not oppression, but the grammar that makes him legible to others and
+      makes others legible to him. 12 Angry Men is this exactly: form as the condition for truth.
+    content_note: "tension, argument, confined space (adults only from the era)"
+  - title: "2001: A Space Odyssey"
+    director: "Stanley Kubrick"
+    year: 1968
+    force: revelation
+    divisions: [1]
+    objects: []
+    letterboxd: 2001-a-space-odyssey
+    scene_or_theme: "Tablet I — Gilgamesh's dream: the meteorite he loves as a wife; the axe he carries to his mother; prophecy unveiled"
+    object_lesson: >
+      The divine speaks not in words but in *immensity*. The monolith arrives without explanation,
+      without announcement, indifferent to the frame it interrupts. This is how Homer's gods reach
+      into the action; this is how Mesopotamian prophecy works: the form arrives before the meaning,
+      and you must interpret the form itself. Gilgamesh dreams: a meteorite, heavy as the sky,
+      which he cannot lift but loves. An axe, beautiful, which he takes to his mother. Both are
+      Enkidu — one impossible to lift, one to be carried, both destined. Kubrick's monolith is the
+      exact register: the appearance of something *other* whose scale you cannot contain, whose
+      meaning you must interpret without instruction. Ninsun interprets the dreams, as the monolith
+      cannot be interpreted — it can only be received.
+    why: >
+      Kubrick films the divine as scale, not as narrative. The monolith is not a character; it is
+      an *interruption of the known by the unknown*. The moment Gilgamesh dreams, he is already
+      spoken to by the gods — not in words, but in the form of a companion foretold. That is
+      revelation in the ancient sense: the future *arriving* in the form of a dream, legible only
+      after the gods have translated it. Kubrick's refusal to explain the monolith makes it a
+      revelation — something that must be *lived with*, not understood.
+    content_note: "slow, non-narrative stretches by design; metaphysical themes"
+  - title: "Ordet"
+    director: "Carl Theodor Dreyer"
+    year: 1955
+    force: divine-intervention
+    divisions: [1]
+    objects: []
+    letterboxd: ordet
+    scene_or_theme: "Tablet I — Ninsun interprets the dreams: the divine mother's prophecy that the companion will come, will love, will never forsake"
+    object_lesson: >
+      The divine intervenes not as punishment but as *the architecture of what will be*. Ninsun
+      speaks: "You will love him as a wife, he will never forsake you." The prophecy does not
+      command; it *announces*. The poem knows what comes after, but the prophecy speaks it as if
+      it has already been decided in the divine councils — because it has. In Ordet, a man prays at
+      his daughter's grave and she returns. The miracle is not *surprising the death*; it is the
+      *arrival of what was always meant to be*. Dreyer films this with absolute stillness: the
+      presence of something already decided, simply becoming visible. That is how Ninsun's
+      interpretation works: it is not new knowledge; it is the revelation of the divine plan
+      already made.
+    why: >
+      Dreyer's genius is his still camera and his faith in presence: he films the moment of divine
+      fact *becoming* human knowledge without drama, without music, without explanation. Ninsun's
+      interpretation is this exactly: the divine *order* simply becoming legible to the one who
+      hears it. Ordet knows how to film this — the moment when the other world's decision *arrives*
+      in the human world as presence and is received.
+    content_note: "Christian theology, prayer and grace, death and resurrection (no sensationalism)"
+adaptations:
+  # The obvious choice — a direct film OF Gilgamesh. Only one serious cinematic adaptation exists;
+  # it is obscure and frankly flawed. Include it as reference only. The force-companion above carries the weight.
+  - title: "Gilgamesh the King"
+    director: "Harry O. Hoyt / Sergei Komarov (incomplete versions, various edits)"
+    year: 1923
+    letterboxd: ~
+    note: "A 1923 silent film, incomplete and lost in most versions; restored prints difficult to source. Included as historical marker only — the companionship here is far stronger. Search 'Gilgamesh 1923' for extant fragments if curious, but the force-matching films above carry the weight of the work."
