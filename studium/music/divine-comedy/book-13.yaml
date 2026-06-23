@@ -1,0 +1,94 @@
+# Divine Comedy — Inferno, Canto 13 — curated music arc
+work: divine-comedy
+book: 13
+title: "Inferno, Canto XIII: Wood of the Suicides — Violence Against the Self"
+length_minutes: 80
+principle: >
+  Canto XIII is Inferno's most intimate trauma. The suicides are transformed into
+  trees, their human form lost. When a branch is broken, it bleeds and speaks. The
+  wound is never healed; the trauma is eternally renewed. The register is profound
+  despair, the violation of the self, shame without resolution. Pier della Vigna
+  speaks with eloquence and dignity even as he is reduced to timber. The Harpies
+  shriek above; Black Dogs hunt the Spendthrifts. The music must be beautiful and
+  broken simultaneously—lyric despair, the sound of a voice trying to explain the
+  inexplicable.
+force_arc: [grief, metamorphosis, supplication, wrath, fate, wrath]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "The second ring of the seventh circle — violence against self"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    decision: added
+    why: >
+      Dante and Virgil enter a dark forest where no trees should be, where strange voices speak.
+      This is the Wood of the Suicides—the souls transformed into trees, deprived of human form.
+      The opening registers the profound sorrow of self-violation, the grief of a soul that has
+      destroyed itself. Mahler's Adagietto is intimate, inward, the sound of a private wound.
+  - n: 2
+    scene: "The metamorphosis — human becomes timber"
+    force: metamorphosis
+    composer: Debussy
+    work: "Jeux — climax and dissolution"
+    decision: added
+    why: >
+      The suicides are described in their transformation: how the soul becomes root and trunk,
+      human consciousness imprisoned in wood. The change is not instantaneous but permanent;
+      the personality persists within the timber. Debussy's Jeux captures form dissolving into
+      something other—beauty and horror merged at the moment of transition.
+  - n: 3
+    scene: "Pier della Vigna speaks — eloquence from ruin"
+    force: supplication
+    composer: Fauré
+    work: "Requiem — Kyrie eleison"
+    decision: added
+    why: >
+      Pier della Vigna, chancellor to the emperor, falsely accused and driven to suicide, speaks.
+      His words are articulate, dignified, pleading to be understood. He does not beg for
+      mercy—he asks for his story to be told, for his memory to be defended. Fauré's Kyrie is
+      supplication made beautiful, asking for grace from a source that may not grant it.
+  - n: 4
+    scene: "The Harpies descend — shrieking violation"
+    force: wrath
+    composer: Penderecki
+    work: "Threnody for the Victims of Hiroshima — section II"
+    decision: added
+    why: >
+      The Harpies descend, shrieking, tearing at the branches of the wood. Each time they feed,
+      the branches bleed, the wound is renewed, and the voice speaks again from the broken
+      timber. The violation is not one-time; it is perpetual, the same wound opened eternally.
+      Penderecki's Threnody is wounding sound made audible.
+  - n: 5
+    scene: "The Spendthrifts hunted by Black Dogs"
+    force: fate
+    composer: Shostakovich
+    work: "String Quartet No. 8 — II. Allegro molto"
+    decision: added
+    why: >
+      Through the wood, the Black Dogs hunt the Spendthrifts—those who destroyed their own
+      wealth, who enacted violence against property by wasting it. They are perpetually chased,
+      perpetually torn. The hunted are the hunters; the pursuers are the pursued. Shostakovich's
+      Allegro is relentless pursuit, the machinery of consequence grinding forward.
+  - n: 6
+    scene: "Pier's final plea — asking for remembrance"
+    force: wrath
+    composer: Wagner
+    work: "Tristan und Isolde — Act III, Liebestod, but fragmented and ending unresolved"
+    decision: added
+    why: >
+      Pier closes with a request that his story be known, that the world remember him. But his
+      words fade into the wood; the Harpies return; the wound opens again. Wagner's Liebestod
+      is here fragmented, unresolved, the ecstasy of yearning never arriving at rest. The wrath
+      here is not external but internal—the soul's own rage at its own destruction.
+demoted:
+  - composer: Bartók
+    work: "Music for Strings, Percussion, and Celesta"
+    status: "removed from Canto XIII; save for climactic violence moments"
+    why: "The wood of suicides requires grief and metamorphosis, not Bartók's cold architecture.
+      Save Bartók for less intimate horrors."
+  - composer: Holst
+    work: "The Planets — Mars"
+    status: "removed from Canto XIII; save for martial violence"
+    why: "Violence against the self is not martial. It is inward, intimate, desperate. The
+      music must be grief, not aggression."

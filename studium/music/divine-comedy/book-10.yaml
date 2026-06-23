@@ -1,0 +1,88 @@
+# Divine Comedy — Inferno, Canto 10 — curated music arc
+work: divine-comedy
+book: 10
+title: "Inferno, Canto X: Circle of Heresy — Historical Judgment and Prophecy"
+length_minutes: 70
+principle: >
+  Canto X enters the City of Dis and the circle of the heretics—those who rejected
+  the faith through intellectual pride. The register shifts from the spectacle of
+  punishment to the weight of historical judgment. The souls are Dante's contemporaries:
+  Farinata degli Uberti, a Ghibelline leader; Cavalcante dei Cavalcanti, father of
+  Dante's friend. They speak from burning tombs, their voices distorted by flame.
+  They prophesy futures that only they can see. The music must register both
+  personal recognition and the impersonal machinery of eternal judgment.
+force_arc: [fate, memory, fate, grief, law, fate]
+dominant_force: fate
+tracks:
+  - n: 1
+    scene: "The iron city — tombs of fire"
+    force: fate
+    composer: Verdi
+    work: "La forza del destino — Act III, 'Solenne in quest' ora'"
+    decision: added
+    why: >
+      The City of Dis appears as a landscape of burning sepulchers—tombs of iron, eternally
+      aflame. The souls are not merely punished; they are preserved in their monuments, their
+      pride crystallized into architecture. Verdi's solemnity captures the weight of historical
+      consequence made visible.
+  - n: 2
+    scene: "Farinata rises from his tomb — Guelph and Ghibelline"
+    force: memory
+    composer: Elgar
+    work: "Enigma Variations — 'Nimrod'"
+    decision: added
+    why: >
+      Farinata degli Uberti, leader of the Ghibellines in Florence, rises and recognizes Dante
+      as a Guelph. His memory is historical weight—the factional wars, the struggle for power,
+      the pride of political allegiance. Elgar's Nimrod is nostalgic recall transformed into
+      monumental weight.
+  - n: 3
+    scene: "Farinata's prophecy — Dante's future exile"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 in C minor — I. Allegro con brio, second statement"
+    decision: added
+    why: >
+      Farinata prophesies that Dante will himself be exiled from Florence, that he will taste
+      the bitterness of that particular loss. The prophecy is not warning but foreknowledge—
+      the moment where Dante learns that his own fate has already been determined by the
+      machinery of Florentine politics. Beethoven's returning motif announces the inexorable.
+  - n: 4
+    scene: "Cavalcante's question — a father's confusion about his son"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 9 — I. Andante comodo (with inner strings)"
+    decision: added
+    why: >
+      Cavalcante dei Cavalcanti, father of the poet Guido (Dante's friend), asks about his son,
+      mistaking Dante's words as confirmation of his death. The father's grief at the
+      misunderstanding—thinking his son is already damned—is the canto's most intimate moment
+      of personal sorrow. Mahler's broken heartbeat captures this inwardness.
+  - n: 5
+    scene: "The heretics' prison — intellectual pride made eternal"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue — Contrapunctus I"
+    decision: added
+    why: >
+      The circle of heresy is not one of violence but of intellectual rebellion against faith.
+      The souls are trapped in the very arguments that damned them, forever constructing logical
+      mazes that lead nowhere. Bach's perfect counterpoint—the most beautiful and most rigid
+      architecture—captures the prison of reason divorced from grace.
+  - n: 6
+    scene: "The passage through the circle — history made landscape"
+    force: fate
+    composer: Tchaikovsky
+    work: "Symphony No. 4 in F minor — I. Andante sostenuto"
+    decision: added
+    why: >
+      Dante and Virgil pass through the circle of heresy toward the next descent. The historical
+      weight of Florence, of Guelphs and Ghibellines, of intellectual pride, settles over the
+      landscape. Tchaikovsky's fateful opening—the motto that returns throughout the symphony—
+      announces that fate has spoken.
+demoted:
+  - composer: Scriabin
+    work: "The Poem of Ecstasy"
+    status: "removed from Canto X; save for desire circles"
+    why: "Heresy requires the clarity of reason and the weight of history, not the yearning
+      of desire."

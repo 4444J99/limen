@@ -1,0 +1,74 @@
+# Divine Comedy — Inferno, Canto 11 — curated music arc
+work: divine-comedy
+book: 11
+title: "Inferno, Canto XI: The Plan of Hell — Theology and Architecture"
+length_minutes: 65
+principle: >
+  Canto XI is a pause in the descent—a moment of exposition where Virgil explains
+  to Dante the structure of Hell itself, the ordering of sins, and the theological
+  principles underlying the architecture of damnation. The register is philosophical,
+  theological, and formal. This is the poem's most abstract moment, where narrative
+  action ceases and the pilgrim listens to instruction in the cosmos's architecture.
+  Music here must be clarity, stillness, and the beauty of revealed order.
+force_arc: [revelation, law, law, metamorphosis, fate]
+dominant_force: revelation
+tracks:
+  - n: 1
+    scene: "The ledge — resting before final descent"
+    force: revelation
+    composer: Tavener
+    work: "The Protecting Veil — opening"
+    decision: added
+    why: >
+      Dante and Virgil rest on a cliff above the final circles of Hell. The moment is one of
+      stillness and preparation. The music must be vertical, contemplative, revealing structure
+      through silence. Tavener's opening is revelation through minimal means—a single voice
+      singing over a silent void.
+  - n: 2
+    scene: "Virgil explains the order of sins — incontinence, violence, fraud"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue — Contrapunctus XIV, opening"
+    decision: added
+    why: >
+      Virgil unfolds the theological ordering of sin: the sins of incontinence (weakness;
+      circles 2–4), the sins of violence and malice (circles 5–7), and the sins of fraud
+      (circles 8–9). Each category is worse than the last because each involves a greater
+      corruption of the will. Bach's perfectly structured counterpoint—the most intellectually
+      rigorous music in the canon—captures the clarity of this ordering.
+  - n: 3
+    scene: "Fraud as the worst sin — betrayal of trust"
+    force: law
+    composer: Stravinsky
+    work: "Symphony of Psalms — I. Exaudi orationem meam"
+    decision: added
+    why: >
+      Virgil explains that fraud is worse than violence because it involves the rational will—
+      the deliberate choice to betray trust. The music must be formal, architectural, the
+      logic of damnation laid bare. Stravinsky's neoclassical rigor captures the cold precision
+      of this theological argument.
+  - n: 4
+    scene: "The Minotaur waits below — hybrid violence"
+    force: metamorphosis
+    composer: Bartók
+    work: "Music for Strings, Percussion, and Celesta — transitional passage"
+    decision: added
+    why: >
+      Below the ledge lies the circle of violence, guarded by the Minotaur—the hybrid beast,
+      human and animal, embodying the corruption of reason by appetite. The music shifts to
+      Bartók's building, spiraling complexity—the promise of violence to come.
+  - n: 5
+    scene: "The descent continues — inevitability"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 in C minor — II. Andante con moto"
+    decision: added
+    why: >
+      The explanation concludes. Dante and Virgil must descend into the lower circles. The
+      music returns to the solemn procession—fate advancing, the next trial approaching.
+      Beethoven's Andante announces that the education has ended; the trial now begins.
+demoted:
+  - composer: Mahler
+    work: "Symphony No. 5 — Adagietto"
+    status: "removed from Canto XI; save for grief circles"
+    why: "This canto requires clarity and revelation, not inward private grief."

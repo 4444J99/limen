@@ -1,0 +1,143 @@
+# Divine Comedy — Inferno, Canto 5 — curated music arc
+# Gold-standard form matching studium/music/iliad/book-01.yaml
+work: divine-comedy
+book: 5
+title: "Inferno, Canto V: Circle of Lust — Paolo and Francesca"
+length_minutes: 70
+principle: >
+  Do not score Canto V as a morality play about lust. Score it as the moment where
+  the most articulate, sympathetic, and beautiful souls in Hell reveal that the
+  greatest force is not wrath or malice but desire — and that desire, when made
+  eternal, becomes indistinguishable from punishment. The whirlwind is not imposed
+  externally; it *is* the lovers themselves, their passion made perpetual and inescapable.
+  Francesca's speech is so moving that Dante faints. This is the canto's revelation:
+  beauty and suffering, made permanent.
+force_arc: [fate, desire, supplication, fate, desire, metamorphosis, grief, supplication, desire, revelation]
+dominant_force: desire
+tracks:
+  - n: 1
+    scene: "Minos the judge — hellish geometry"
+    force: fate
+    composer: Verdi
+    work: "La forza del destino — Overture"
+    decision: added
+    why: >
+      Minos sits at the entrance to the circle, wrapping his tail around himself a number of times
+      to indicate which circle each soul must descend to. He is not angry; he is mechanical,
+      judicial, inexorable. Verdi's hammered opening — the irruption of fate as institutional
+      structure — captures the moment where personal desire meets the machinery of judgment.
+  - n: 2
+    scene: "The whirlwind — lovers eternally circling"
+    force: desire
+    composer: Scriabin
+    work: "The Poem of Ecstasy, Op. 54"
+    decision: added
+    why: >
+      The lustful are eternally tossed by a whirlwind, unable to rest, circling in pairs.
+      This is desire itself made visible: perpetual seeking, perpetual motion, perpetual
+      incompleteness. Scriabin's Poem of Ecstasy is chromatic yearning at its most intense —
+      desire that builds, swells, reaches toward resolution, and perpetually defers the moment
+      of arrival. The music spirals; it does not rest.
+  - n: 3
+    scene: "Dante calls to the lovers — supplication to beauty"
+    force: supplication
+    composer: Fauré
+    work: "Pavane for orchestra and choir"
+    decision: added
+    why: >
+      Dante, moved by the whirlwind and the lovers' eternal circling, calls out: "O weary souls...
+      with courteous courtesy I ask you." His address to Paolo and Francesca is the first
+      supplication motivated not by fear but by aesthetic admiration. Fauré's Pavane is
+      supplication made beautiful — asking grace from something lovely.
+  - n: 4
+    scene: "Paolo and Francesca approach — the separated lovers reunite, briefly"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 7 in A major — II. Allegretto"
+    decision: added
+    why: >
+      Two lovers, eternally separated by the wind, pause and approach Dante. They are not
+      freed but briefly granted the terrible mercy of proximity. Beethoven's Allegretto is
+      music of tragic reunion: a hymnic, stately theme that carries both grandeur and
+      inescapable sorrow. The lovers' appearance is both gift and punishment.
+  - n: 5
+    scene: "Francesca's speech begins — love's narrative"
+    force: desire
+    composer: Wagner
+    work: "Tristan und Isolde — Prelude, opening"
+    decision: added
+    why: >
+      Francesca recounts how she and Paolo fell in love: reading together the tale of Lancelot,
+      she confesses "Galeotto was the book and he who wrote it" — desire kindled by literature,
+      by beauty, by the power of story itself. Wagner's Tristan Prelude is the canonical music
+      of chromatic desire — yearning, unresolved, suspended. It is the most famous depiction
+      of desire as cosmic principle, not personal failing.
+  - n: 6
+    scene: "The kiss — the moment of damnation"
+    force: metamorphosis
+    composer: Debussy
+    work: "Prélude à l'après-midi d'un faune"
+    decision: added
+    why: >
+      At the climax of Francesca's story — "when we read the longed-for smile being kissed
+      by such a lover" — Paolo and Francesca kiss, and in that moment their fate is sealed.
+      The physical act becomes eternal; the transformation from innocence to condemnation
+      happens instantaneously. Debussy's Prélude captures the sensuousness and the
+      simultaneous shimmer-and-dissolution: beauty that is also the moment of falling.
+  - n: 7
+    scene: "Paolo's silence — grief without words"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    decision: added
+    why: >
+      Paolo says nothing; he weeps. While Francesca speaks, Paolo is silent, his voice stolen
+      by sorrow. The Adagietto is Mahler's most intimate music of private, inward grief —
+      sustained, achingly beautiful, without resolution. Paolo's silence is more moving than
+      speech.
+  - n: 8
+    scene: "Francesca's final plea — asking for remembrance"
+    force: supplication
+    composer: Pärt
+    work: "Cantus in Memoriam Benjamin Britten"
+    decision: added
+    why: >
+      Francesca closes with a request that Dante remember them: "If you one day return to
+      the world..." She asks not for release but for memory, for the tribute of being
+      remembered. Pärt's Cantus is vertical, spare, a single descending line (in the tradition
+      of medieval lamentation). It is supplication made minimal: the plea for remembrance,
+      stripped to its essence.
+  - n: 9
+    scene: "Dante's response — empathy becomes desire"
+    force: desire
+    composer: Szymanowski
+    work: "Symphony No. 3 ('Song of the Night'), Op. 27 — opening"
+    decision: added
+    why: >
+      Dante's response to Francesca is so moved that he "comes to himself" — a phrase
+      suggesting that her beauty and eloquence have overwhelmed his moral judgment. He desires
+      to understand her; his empathy transforms into a kind of desire to hold her story. Szymanowski's
+      nocturnal, perfumed chromatic harmony captures this shift — sympathy that becomes
+      identification, which becomes a kind of forbidden desire for the souls themselves.
+  - n: 10
+    scene: "Dante faints — the descent into darkness"
+    force: revelation
+    composer: Sibelius
+    work: "Tapiola, Op. 112 — ending"
+    decision: added
+    why: >
+      Unable to bear the beauty and the tragedy, Dante faints. The canto ends in darkness and
+      unconsciousness — a revelation achieved through overwhelming sensation. Sibelius's Tapiola,
+      which opened Canto I, returns here at its most violent and most final: the forest reclaims
+      the wanderer; beauty and darkness become indistinguishable.
+demoted:
+  - composer: Holst
+    work: "The Planets — Mars, the Bringer of War"
+    status: "removed from Canto V; save for wrath circles"
+    why: "Lust is not wrath. The circle of the lustful is not violent; it is beautiful and
+      damned. Mars would introduce false aggression."
+  - composer: Bartók
+    work: "Music for Strings, Percussion, and Celesta — I. Andante tranquillo"
+    status: "removed from Canto V; save for other circles"
+    why: "This music better serves the she-wolf (Canto I) or the wood of suicides (Canto XIII).
+      Canto V requires Scriabin and Wagner, not Bartók's architectural coldness."
