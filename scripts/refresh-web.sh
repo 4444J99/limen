@@ -60,6 +60,8 @@ PY
 
 # ensure the static server is up (idempotent)
 if ! pgrep -f "http.server $PORT" >/dev/null 2>&1; then
-  ( cd "$APP/out" && nohup python3 -m http.server "$PORT" --bind 127.0.0.1 >"$ROOT/logs/portal-web.log" 2>&1 & )
+  # </dev/null detaches stdin and, with the >file 2>&1 redirects, keeps the backgrounded server from
+  # inheriting a caller's pipe write-end (defense-in-depth for the tail-EOF wedge fixed at the call sites).
+  ( cd "$APP/out" && nohup python3 -m http.server "$PORT" --bind 127.0.0.1 >"$ROOT/logs/portal-web.log" 2>&1 </dev/null & )
   echo "  web: server (re)started → http://127.0.0.1:$PORT/internal.html"
 fi
