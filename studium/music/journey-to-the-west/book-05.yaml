@@ -1,0 +1,170 @@
+work: journey-to-the-west
+book: 5
+title: "Chapter 5: The Apex of Transgression — Celestial Consumption"
+length_minutes: 91
+principle: >
+  Score Chapter 5 not as triumph but as escalating violation. Monkey arrives in Heaven
+  with an empty title and systematically consumes the three sources of immortality: Peaches,
+  Pills, Elixir. The comedy of his appetite masks a darker truth — this is not desperation
+  but pure assertion of metaphysical equality with the celestial order itself. The chapter
+  builds through comic abundance turning grotesque, then collapses into defiant isolation
+  as Monkey recognizes his true position and raises his banner in rebellion. Hold menace
+  beneath comedy; by the chapter's end, the register should darken.
+force_arc: [comedy, desire, comedy, desire, comedy, desire, wrath, desire, wrath, arrogance, arrogance, arrogance]
+dominant_force: arrogance
+tracks:
+  - n: 1
+    scene: "Arrival in Heaven — the empty title and courtly reception"
+    force: comedy
+    composer: Handel
+    work: "Music for the Royal Fireworks — Overture"
+    decision: added
+    why: >
+      Monkey arrives at the Jade Emperor's court, installed as "Great Sage Equal to Heaven"
+      with pomp and ceremony. But the title carries no real authority — no temple, no priests,
+      no power. Handel's Royal Fireworks provides the courtly grandeur and sovereign display,
+      but undercuts it with a register that cannot quite suppress its own absurdity. The
+      monkey is ceremonially installed in a role designed to contain him without granting
+      actual agency.
+  - n: 2
+    scene: "Discovering the empty commission — wandering the celestial bureaucracy"
+    force: desire
+    composer: Scriabin
+    work: "Poem of Ecstasy, Op. 54 — Opening"
+    decision: added
+    why: >
+      Monkey wanders Heaven's offices expecting substantive duty and finds nothing — no
+      bureaucratic function, no responsibility, only a title that means nothing. The
+      frustration is palpable. Scriabin's chromatic longing captures the feeling of pressure
+      building within a confined system, of desire pressing against an invisible boundary.
+      He has not yet broken free; he is merely beginning to feel the walls.
+  - n: 3
+    scene: "The Peach Garden discovered — paradise of sensual abundance"
+    force: comedy
+    composer: Rameau
+    work: "Les Indes galantes — 'Rondeau des Sauvages'"
+    decision: added
+    why: >
+      Monkey stumbles upon the Peach Garden where the Peaches of Immortality grow — fruit
+      the size of a child's fist, taking six thousand years to mature. He tastes one and
+      discovers transcendent sweetness. Rameau's rondeau captures sensual pleasure organized
+      into buoyant rhythm, the comedy of a crude creature discovering refined delicacy. The
+      register is still primarily comic — we delight in his delight.
+  - n: 4
+    scene: "Systematic consumption of the peaches — appetite becoming insatiable"
+    force: desire
+    composer: Scriabin
+    work: "Piano Sonata No. 5, Op. 53 — opening movements"
+    decision: added
+    why: >
+      He tastes one peach, then two, then many. The text catalogs his consumption with comic
+      precision: he eats all the peaches ripened in the last six thousand years. But the music
+      must darken the comedy — Scriabin's saturated chromatic language suggests appetite
+      becoming compulsive, pleasure turning into something closer to obsession. The register
+      shifts from joyful tasting to driven consumption.
+  - n: 5
+    scene: "The Hall of Eight Treasures — the Pills of Immortality"
+    force: comedy
+    composer: Rossini
+    work: "Il barbiere di Siviglia — Overture"
+    decision: added
+    why: >
+      Having emptied the Peach Garden, Monkey discovers the Hall of Eight Treasures,
+      where the Pills of Immortality are stored. Again he tastes and again he consumes
+      indiscriminately. Rossini's Barber overture returns us to irrepressible comic energy,
+      but now the comedy is shadowed by escalation. He is not satisfied; he moves from
+      garden to hall, from peaches to pills. The appetite is no longer curiosity but
+      compulsion dressed as play.
+  - n: 6
+    scene: "The Imperial Elixir and cosmic transgression — the apex of consumption"
+    force: desire
+    composer: Wagner
+    work: "Tristan und Isolde — Act II, 'Isolde's Liebestod'"
+    decision: added
+    why: >
+      The climax of transgression arrives when Monkey discovers the Elixir of Great Return,
+      the most precious of all celestial medicines. He drinks the whole vat. Now he has
+      consumed the three sources of immortality the cosmos offers. Wagner's Liebestod
+      captures the moment where desire achieves its object and continues burning — resolution
+      that is no resolution, satisfaction that transforms into something darker. The boundary
+      between joy and violation has dissolved.
+  - n: 7
+    scene: "Recognition of total transgression — descent into wrath"
+    force: wrath
+    composer: Stravinsky
+    work: "The Rite of Spring — 'The Evocation of Ancestors'"
+    decision: added
+    why: >
+      Monkey suddenly recognizes the enormity of what he has done. He has consumed Heaven's
+      most precious substances. The magical invulnerability that comes from this consumption
+      is now confirmed within his body — he feels it. Stravinsky's ritual violence captures
+      the moment where comedy collapses into genuine transgression. The tone shifts from
+      burlesque to something approaching genuine menace.
+  - n: 8
+    scene: "Flight from the Peach Garden — seeking refuge in his own kingdom"
+    force: desire
+    composer: Debussy
+    work: "La mer — 'Jeux de vagues'"
+    decision: added
+    why: >
+      Realizing he cannot hide what he has done, Monkey escapes from Heaven, descending back
+      to his own mountain stronghold. Debussy's fluid, kinetic music captures the sense of
+      motion through threshold space, the dissolution of celestial order as he departs. The
+      desire here is for escape, for return to his own realm where he can claim power without
+      cosmic hierarchy's authority.
+  - n: 9
+    scene: "Gathering his army — the militarization of the monkey tribe"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    decision: added
+    why: >
+      Returned to his mountain, Monkey organizes the four monkey generals and his tribe into a
+      martial force. He begins training them in combat formations, distributing weapons. The
+      playful tribe from Chapter 1 becomes an army. Holst's Mars provides the aggressive,
+      asymmetrical pulse of genuine military organization — no longer comedy, but preparation
+      for war.
+  - n: 10
+    scene: "The proclamation — Monkey declares himself against Heaven"
+    force: arrogance
+    composer: Strauss
+    work: "Also sprach Zarathustra — Opening ('Sunrise')"
+    decision: added
+    why: >
+      Monkey makes his formal declaration: he will no longer serve Heaven's authority. He
+      raises a banner reading "Great Sage Equal to Heaven" and makes clear to the other monkeys
+      that Heaven will come for him. Strauss's Sunrise provides the cosmic self-proclamation
+      at maximum force — not humility but explicit claim of metaphysical standing equal to the
+      celestial order. The arrogance is now declarative and absolute.
+  - n: 11
+    scene: "Monkey's solitary defiance — standing on his mountain"
+    force: arrogance
+    composer: Mahler
+    work: "Symphony No. 2 — I. Allegro maestoso"
+    decision: added
+    why: >
+      Isolated on his mountain, Monkey waits for Heaven's response. He is confident in his
+      invulnerability — he has consumed the three immortality sources and proven through
+      celestial consumption that he is beyond the reach of ordinary power. Mahler's first
+      movement captures both the grandeur of cosmic scale and the ominous weight of what is
+      coming. Arrogance and solitude coincide; menace gathers on the horizon.
+  - n: 12
+    scene: "Chapter closes on defiance — the mountain isolated against Heaven"
+    force: arrogance
+    composer: Bruckner
+    work: "Symphony No. 8 — I. Allegro maestoso"
+    decision: added
+    why: >
+      The chapter ends not in triumph but in suspended defiance. Monkey stands alone, his
+      mountain a fortress, his forces mobilized, his conviction absolute. Bruckner's opening
+      movement provides vast orchestral weight and prophetic inevitability — we sense cosmic
+      consequence approaching, but it has not yet arrived. The register is monumental and
+      menacing, preparing the ground for the conflicts to come.
+demoted:
+  - composer: Offenbach
+    work: "Orpheus in the Underworld — Overture"
+    status: "removed (save for later comic interludes within the battles of Chapter 6)"
+    why: >
+      Offenbach's farcical energy would undermine the chapter's turn toward genuine arrogance.
+      It belongs to moments of comic triumph within the trials; it does not belong to the
+      chapter that establishes the foundation of Monkey's defiance.

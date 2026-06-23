@@ -1,0 +1,195 @@
+work: journey-to-the-west
+book: 7
+title: "Chapter 7: The Buddha's Intervention and Imprisonment — Illusion Dissolved, Transformation Begun"
+length_minutes: 127
+principle: >
+  Score Chapter 7 in two distinct registers. First half: catastrophic collapse of Monkey's world.
+  Buddha descends and proposes a wager — if Monkey can somersault out of Buddha's palm, he rules
+  Heaven; if not, he undergoes austerity for five hundred years. Monkey accepts, certain of
+  victory. He somersaults through void to what he believes are the five pillars at creation's
+  edge, inscribes proof, and returns triumphant. Catastrophic revelation: those five pillars
+  were Buddha's fingers. He never left the palm. Everything he believed about his freedom and
+  invulnerability is exposed as illusion. Buddha's five fingers transform into Five Elements
+  Mountain and descend onto Monkey's body. A golden seal is placed on the mountain — not passive
+  lock but active constraint, a teaching instrument. Second half: vast temporal compression of five
+  hundred years. Monkey's rage, his daily suffering, the slow dissolution of anger into acceptance,
+  the simple kindnesses of villagers bringing food, the gradual recognition that constraint is
+  teaching him truth. By the end: still proud and strong-willed, but tempered by time and
+  absolute helplessness into something approaching readiness for transformation. The arc moves
+  from explosive violence to quiet temporal processes to patient acceptance.
+force_arc: [desire, revelation, desire, fate, divine-intervention, grace, memory, memory, memory, memory, memory, memory, salvation]
+dominant_force: fate
+tracks:
+  - n: 1
+    scene: "Buddha descends from the Western Paradise — cosmic authority enters"
+    force: desire
+    composer: Messiaen
+    work: "From the Canyons to the Stars — 'Hymn to the Holy Sacrament' (opening revelation)"
+    decision: added
+    why: >
+      The Jade Emperor, despairing that force cannot contain Monkey, reaches out to the Buddha
+      in the Western Paradise. Buddha descends — not as warrior but as cosmic presence. The
+      transition from martial registers to the Buddha's register is epochal. Messiaen's harmonic
+      language suggests transcendent authority, stillness beneath which infinite power rests.
+      Desire gives way to something beyond desire: the recognition of law.
+  - n: 2
+    scene: "The wager proposed — Buddha's deceptive simplicity"
+    force: revelation
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      Buddha proposes a simple test: "Can you somersault out of my palm? If yes, rule Heaven.
+      If no, undergo austerity five hundred years." The simplicity masks cosmic scaffolding.
+      Pärt's minimalist clarity provides the perfect register — apparent simplicity containing
+      infinite depth. The wager is presented as if it is genuinely in doubt; the audience does
+      not yet know it is predetermined.
+  - n: 3
+    scene: "Monkey accepts and closes his eyes — confidence before catastrophe"
+    force: desire
+    composer: Scriabin
+    work: "Poem of Ecstasy, Op. 54 — climactic apotheosis section"
+    decision: added
+    why: >
+      Monkey is absolutely confident. He has consumed three sources of immortality; he has
+      defeated every heavenly army. This wager feels like a final proof of his supremacy.
+      Scriabin's ecstatic apotheosis captures his certainty, his conviction that victory is
+      assured. The music builds with chromatic pressure toward what seems inevitable triumph.
+  - n: 4
+    scene: "The somersault through void — false journey to the pillars"
+    force: fate
+    composer: Debussy
+    work: "La mer — entire prelude (undulating, disorienting, boundless)"
+    decision: added
+    why: >
+      Monkey closes his eyes and somersaults into what he experiences as endless void. The text
+      describes vast emptiness. He travels great distances and encounters what he believes are
+      the five pillars at creation's edge. Debussy's La mer captures the disorientation of
+      boundless space, undulating surfaces that seem to promise arrival without ever delivering
+      it. The movement is eternal and directionless — exactly the illusion's register.
+  - n: 5
+    scene: "The inscription and marking — proof in illusory space"
+    force: divine-intervention
+    composer: Wagner
+    work: "Das Rheingold — Prelude (the fundamental transformation)"
+    decision: added
+    why: >
+      Monkey inscribes the pillars: "The Great Sage Equal to Heaven was here." He defecates at
+      the base. He believes he has marked the edge of creation itself with his presence. Wagner's
+      prelude captures the moment where a world-system is established through will. Monkey's
+      inscription feels like cosmic claim-staking — the confirmation of his metaphysical standing.
+      But the musical register should also suggest something fundamentally wrong, a force moving
+      in the wrong direction.
+  - n: 6
+    scene: "Return and triumphant declaration — the moment before revelation"
+    force: grace
+    composer: Elgar
+    work: "Enigma Variations — 'Nimrod' (variation IX)"
+    decision: added
+    why: >
+      Monkey returns to the Buddha, absolutely certain of victory, and announces his triumph.
+      The music swells with what seems like justified apotheosis. Elgar's Nimrod provides the
+      moment of understood glory before catastrophic collapse. The listener hears it as
+      triumphant; we do not yet know it is the moment before devastation.
+  - n: 7
+    scene: "The revelation — Monkey never left the palm"
+    force: memory
+    composer: Bartók
+    work: "Music for Strings, Percussion and Celesta — I. Andante tranquillo"
+    decision: added
+    why: >
+      Buddha shows Monkey his hand. The five pillars were his five fingers. The inscription is
+      on the fingertips. The excrement is at the wrist. **Monkey never left the palm.** The
+      entire journey was illusion. In this moment, Monkey's understanding of reality collapses.
+      Bartók's shattering dissonance and inverted harmonics capture the dissolution of
+      fundamental assumptions — the world turns inside out. Memory reveals itself as false.
+  - n: 8
+    scene: "The wager lost — Monkey's recognition of defeat"
+    force: memory
+    composer: Mahler
+    work: "Symphony No. 6 in A minor — I. Allegro energico (Titan)"
+    decision: added
+    why: >
+      Monkey understands: he has lost. His freedom was illusion. His somersault took him
+      nowhere. The Buddha kept him in his palm the entire time. Mahler's Sixth Titan suggests
+      both the magnitude of realization and the weight of defeat. The movement is not tragic
+      but inexorably logical — the universe asserting its structure and Monkey's place within it.
+  - n: 9
+    scene: "The transformation of Buddha's hand — Five Elements Mountain descends"
+    force: memory
+    composer: Penderecki
+    work: "Threnody for the Victims of Hiroshima"
+    decision: added
+    why: >
+      The Buddha transforms his hand. The five fingers become the Five Elements Mountain —
+      Earth, Metal, Water, Fire, Wood. The mountain descends onto Monkey's body with cosmic
+      inevitability. Penderecki's Threnody captures the catastrophic weight of elemental force,
+      the annihilation of previous identity through overwhelming mass. The register is not
+      punishment but cosmic mechanism asserting its necessity.
+  - n: 10
+    scene: "The golden seal placed on the mountain — teaching, not mere imprisonment"
+    force: memory
+    composer: Satie
+    work: "Gymnopédies No. 1"
+    decision: added
+    why: >
+      A golden seal with the Buddha's mantra is placed on the Five Elements Mountain. This is
+      not a passive lock but an active constraint — when Monkey moves, the mantra causes pain.
+      It is a teaching instrument. Satie's still, repetitive harmonic language captures the
+      quality of constraint that becomes a teacher through constant presence. The pain will
+      become the path.
+  - n: 11
+    scene: "Temporal compression — five hundred years in a few minutes of music"
+    force: memory
+    composer: Szymanowski
+    work: "Symphony No. 3 ('Song of the Night') — opening sections"
+    decision: added
+    why: >
+      The text catalogs five hundred years. First: Monkey's daily rage and futile resistance.
+      The pain never stops. Gradually, over centuries, anger becomes less useful. Villagers
+      begin leaving food — rice, fruit, water. First the food is survival; then it becomes
+      habit; then it becomes relationship. Szymanowski's slowly unfurling, meditative language
+      captures vast temporal duration compressed into present awareness. Memory becomes the
+      substance of time itself.
+  - n: 12
+    scene: "The slow transformation — from resistance to acceptance"
+    force: memory
+    composer: Tavener
+    work: "The Protecting Veil — opening (Ave Maria)"
+    decision: added
+    why: >
+      By the end of five hundred years, Monkey has not changed his nature — he remains proud,
+      strong-willed, defiant. But something has shifted. He has watched empires rise and fall.
+      He has experienced the kindness of villagers day after day. He has learned that resistance
+      to the mountain only causes pain; acceptance does not remove the mountain but makes it
+      bearable. Tavener's chant-like simplicity suggests spiritual transformation not through
+      virtue but through patient time and the gradual dissolution of the self that resists.
+  - n: 13
+    scene: "The promise and the threshold — waiting for liberation through relation"
+    force: salvation
+    composer: Mahler
+    work: "Symphony No. 2 in C minor ('Resurrection') — V. Finale (resurrection apotheosis)"
+    decision: added
+    why: >
+      The Buddha tells Monkey: "When the time comes, a monk from the East will free you, and
+      you will begin your true path." Five hundred years of containment is not ending but
+      becoming threshold. True freedom is coming, but it will arrive through relationship — not
+      with Buddha or Heaven, but with a human pilgrim. True transcendence will be found not
+      through individual defiance but through mutual transformation with others. Mahler's Resurrection
+      finale provides the apotheosis not of individual triumph but of collectivity, the
+      recognition that salvation is relational, not solitary.
+demoted:
+  - composer: Strauss
+    work: "Also sprach Zarathustra — Opening ('Sunrise')"
+    status: "removed from Chapter 7; save for moments of Monkey's brief triumphalism before revelation"
+    why: >
+      Zarathustra's self-proclamation belongs to Monkey's false confidence before the wager.
+      But once the Buddha speaks, the register must shift permanently away from individual apotheosis
+      toward cosmic law. Strauss would undermine the chapter's turn toward grace through constraint.
+  - composer: Beethoven
+    work: "Symphony No. 5 in C minor"
+    status: "removed; belongs to the persistence phase of external resistance (Chapter 6)"
+    why: >
+      The Fifth's fate-motif works for Heaven's recognition of force's failure. But Monkey's
+      interior transformation across five hundred years requires a different register — not
+      the triumph of will against fate, but the dissolution of will into acceptance.
