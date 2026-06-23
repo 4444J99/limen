@@ -1,0 +1,127 @@
+# The Tale of the Heike — film companion (the FOURTH commentary system)
+work: heike
+title: "The Tale of the Heike — a cinema of mono no aware and the fall of the proud"
+principle: >
+  The Tale of the Heike is an epic of impermanence. It is not just about a clan falling from power, it is a Buddhist diagnosis of history: "the sound of the Gion Shoja bells echoes the impermanence of all things." The films we choose must capture this resonance — mono no aware (the pathos of things). It tracks the Taira clan's dizzying rise (kingship, wrath) to their catastrophic destruction (fate, grief, sacrifice) at Dan-no-ura. We do not select these films merely as samurai action; we select them because they show the weight of destiny, the cruelty of power, and the sorrow of loss. The films should be watched as a meditation on how human glory is ultimately swept away by the tide.
+force_coverage: [fate, kingship, wrath, sacrifice, exile, memory, grief, revelation, metamorphosis]
+films:
+  - title: "Kagemusha"
+    director: "Akira Kurosawa"
+    year: 1980
+    force: fate
+    divisions: [1, 11]
+    objects: [mirror]
+    letterboxd: kagemusha
+    scene_or_theme: "The illusion of power and the inevitability of clan destruction"
+    object_lesson: >
+      A clan's power rests on an image, and when the image breaks, the clan falls. The shadow warrior looking into the water or the MIRROR sees that he is nothing but a reflection of a dying authority. The Takeda clan's annihilation is the Heike's fall at Dan-no-ura: an inevitable sweep of history that erases the proud.
+    why: >
+      Kagemusha is Kurosawa's ultimate film on the mechanics of a clan's collapse. It tracks the exact arc of the Heike—from an overwhelming presence to an agonizing massacre where the banners wash away in the tide.
+    content_note: "battle violence, tragic massacre"
+
+  - title: "The Last Emperor"
+    director: "Bernardo Bertolucci"
+    year: 1987
+    force: kingship
+    divisions: [2, 11]
+    objects: [door]
+    letterboxd: the-last-emperor
+    scene_or_theme: "The child emperor trapped by the machinery of state"
+    object_lesson: >
+      Kingship is often a prison disguised as a palace. The child emperor Antoku, carrying the sacred regalia into the sea, is a symbol of innocence crushed by the weight of a dynasty. The immense, closed DOOR of the Forbidden City is the object lesson: sovereignty that traps its own figurehead.
+    why: >
+      Bertolucci's epic captures the tragic scale of dynastic power focused on a child who has no agency. It perfectly parallels the fate of Emperor Antoku, the boy sovereign of the Heike, caught in a war he cannot understand.
+    content_note: "historical violence, suicide"
+
+  - title: "Princess Mononoke"
+    director: "Hayao Miyazaki"
+    year: 1997
+    force: wrath
+    divisions: [6]
+    objects: []
+    letterboxd: princess-mononoke
+    scene_or_theme: "Kiyomori's consuming fever; the corruption that burns from within"
+    object_lesson: >
+      Anger and ambition are a literal contagion, a demon that blackens the flesh and consumes the host. Wrath is an ecological and spiritual disease that destroys the one who wields it.
+    why: >
+      In Book 6, Kiyomori dies of a fever so hot that water sprayed on him boils. It is the physical manifestation of his karmic debt. Miyazaki's curse—a burning, hateful corruption—is the exact visual equivalent of Kiyomori's end.
+    content_note: "animated violence, body horror"
+
+  - title: "Harakiri"
+    director: "Masaki Kobayashi"
+    year: 1962
+    force: sacrifice
+    divisions: [9]
+    objects: []
+    letterboxd: harakiri
+    scene_or_theme: "The hollow code of the warrior; the death of Atsumori"
+    object_lesson: >
+      The warrior's code is an architecture of cruelty that demands the sacrifice of the young to maintain the honor of the powerful. The facade of the samurai structure is laid bare as a machine that eats its own.
+    why: >
+      While the Heike glorifies some aspects of samurai valor, it also deeply mourns the senseless deaths of young warriors like Atsumori. Harakiri deconstructs the warrior myth with cold fury, aligning with the epic's underlying lament for the wasted lives of the young.
+    content_note: "graphic ritual suicide, sword violence"
+
+  - title: "Sansho the Bailiff"
+    director: "Kenji Mizoguchi"
+    year: 1954
+    force: exile
+    divisions: [3, 4]
+    objects: []
+    letterboxd: sansho-the-bailiff
+    scene_or_theme: "The nobility cast down and forced into suffering"
+    object_lesson: >
+      The wheel of fortune turns, and those who governed are made slaves. The lesson is that human cruelty is vast, but endurance and mercy are the only meaningful responses to the loss of station.
+    why: >
+      Mizoguchi's masterpiece is the definitive cinematic account of aristocratic exile in medieval Japan. It shares the Heike's deep Buddhist sorrow and its focus on the vulnerability of the displaced.
+    content_note: "slavery, cruelty, suicide"
+
+  - title: "Ugetsu"
+    director: "Kenji Mizoguchi"
+    year: 1953
+    force: memory
+    divisions: [10, 11]
+    objects: []
+    letterboxd: ugetsu
+    scene_or_theme: "The ghosts of war; the lingering attachments of the dead"
+    object_lesson: >
+      The dead do not leave quietly; they linger as phantoms bound by their earthly desires and regrets. War creates a landscape where the living and the dead share the same mist.
+    why: >
+      The later books of the Heike are haunted by those who have died. Ugetsu's ghostly elegance and its meditation on the devastation war brings to ordinary people make it the perfect companion for the epic's spectral grief.
+    content_note: "violence, supernatural themes"
+
+  - title: "Spring, Summer, Fall, Winter... and Spring"
+    director: "Kim Ki-duk"
+    year: 2003
+    force: revelation
+    divisions: [12]
+    objects: [door]
+    letterboxd: spring-summer-fall-winter-and-spring
+    scene_or_theme: "Kenreimon-in taking vows; the cycle of karma and detachment"
+    object_lesson: >
+      After the world has burned away, what remains is the slow, repetitive work of spiritual purification. The free-standing DOOR on the lake is the lesson: a boundary that is entirely spiritual, separating the noise of desire from the quiet of revelation.
+    why: >
+      The Tale of the Heike ends with the Empress Dowager surviving the destruction of her family and retreating to a mountain hermitage to pray. Kim Ki-duk's film is the cinematic embodiment of this Buddhist retreat from the wheel of suffering.
+    content_note: "animal cruelty, sexual content, suicide"
+
+  - title: "Late Spring"
+    director: "Yasujiro Ozu"
+    year: 1949
+    force: metamorphosis
+    divisions: [5, 12]
+    objects: [clock]
+    letterboxd: late-spring
+    scene_or_theme: "The passing of an era; the inevitable parting"
+    object_lesson: >
+      Mono no aware is the quiet acceptance of an ending. The CLOCK marks time passing not as a violent rupture, but as a gentle, inexorable drift that separates the present from what was loved.
+    why: >
+      No one films impermanence like Ozu. While the Heike is an epic of war, its soul is the sorrow of transience. Late Spring is the distillation of that feeling—an ending accepted with tears but without rage.
+    content_note: "none"
+
+adaptations:
+  - title: "Kwaidan"
+    director: "Masaki Kobayashi"
+    year: 1964
+    letterboxd: kwaidan
+    note: "The 'Hoichi the Earless' segment is the ultimate Heike adaptation—a blind biwa player summoned by the ghosts of the Heike to sing of Dan-no-ura. It makes the telling of the tale itself a cinematic event."
+    scenes:
+      - {division: 11, force: grief, scene: "Hoichi sings the Battle of Dan-no-ura to the dead Heike court"}
