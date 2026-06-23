@@ -1,0 +1,125 @@
+# Tao Te Ching — Chapter 7 — curated music arc
+# Longevity through selflessness: heaven and earth persist because they do not live for themselves.
+# The sage puts himself last and finds himself first.
+work: tao-te-ching
+book: 7
+title: "Tao Te Ching Chapter 7: Longevity Through Selflessness"
+length_minutes: 56
+principle: >
+  Chapter 7 argues that heaven and earth persist because they do not live for themselves. 'Heaven
+  and earth last long. Why do they last long? Because they do not live for themselves; therefore
+  they can live long.' The text moves from the cosmic image to direct teaching: therefore, the sage
+  puts himself last and finds himself first; he forgets himself and is preserved. This chapter is
+  about the paradox of ego-death as life-gift: the self that dies is the separated self, the
+  illusion of an 'I' apart from the whole. The music must embody the letting-go of temporal urgency,
+  the freedom that comes from ceasing to defend a false boundary. The arc is a slow unraveling of
+  attachment, a gradual opening where the self becomes transparent to what it is not separate from.
+force_arc: [kingship, memory, salvation, metamorphosis, revelation, memory, kingship, salvation, metamorphosis, revelation]
+dominant_force: revelation
+tracks:
+  - n: 1
+    scene: "The image: heaven and earth endure without grasping"
+    force: kingship
+    composer: Carl Maria von Weber
+    work: "Clarinet Concerto No. 1 in F minor — II. Adagio ma non troppo"
+    decision: added
+    why: >
+      Weber's Adagio for clarinet has the quality of royal ease, not earned but inherent. Heaven and
+      earth reign without effort, without defending their position. The clarinet floats above the
+      orchestra like the cosmos itself, serene and eternal.
+  - n: 2
+    scene: "The secret: non-attachment is the path to permanence"
+    force: memory
+    composer: Frédéric Chopin
+    work: "Nocturne in E-flat Major, Op. 9 No. 2"
+    decision: added
+    why: >
+      Chopin's nocturne embodies the memory of what does not cling: the melody that is always there,
+      yet does not grasp the listener; the night that returns eternally because it does not mourn the
+      passing day. Non-attachment as the structure of return.
+  - n: 3
+    scene: "The paradox: putting oneself last brings first place"
+    force: salvation
+    composer: Giuseppe Verdi
+    work: "Otello — 'Credo in un Dio crudel' (Iago's Credo)"
+    decision: added
+    why: >
+      The paradoxical moment when the truth is spoken from the mouth of the one who denies it. Iago's
+      creed of self-assertion becomes the revelation of its own falsity. Salvation comes from the
+      recognition that the self's assertion is its own destruction.
+  - n: 4
+    scene: "The self that forgets itself begins to dissolve"
+    force: metamorphosis
+    composer: Claude Debussy
+    work: "String Quartet in G Major, IV. Très modéré"
+    decision: added
+    why: >
+      Debussy's final movement of the quartet is colored by the dissolution of the self. The four
+      instruments no longer assert individual identity but become fluid, exchanging materials,
+      boundaries dissolving. This is the metamorphosis from self to no-self.
+  - n: 5
+    scene: "Transparency: the boundary between self and other dissolves"
+    force: revelation
+    composer: John Tavener
+    work: "Song for Athene"
+    decision: added
+    why: >
+      Tavener's piece reveals the moment when the singer becomes transparent, no longer a separate
+      voice but a vehicle for something larger. The self is still present but as a window, not a
+      wall. The revelation is that separation was always an illusion.
+  - n: 6
+    scene: "Eternity is now, when there is no grasping"
+    force: memory
+    composer: Erik Satie
+    work: "Gymnopédie No. 3"
+    decision: added
+    why: >
+      Satie's final Gymnopédie holds the eternal present in the memory of each moment that passes. The
+      piece does not progress toward anything; it simply is. This is the memory of eternity, the
+      recognition that time itself is selfless.
+  - n: 7
+    scene: "The sage: transparent, unremarkable, always in the right place"
+    force: kingship
+    composer: Igor Stravinsky
+    work: "Petrushka — 'Russian Dance'"
+    decision: added
+    why: >
+      Stravinsky's Russian Dance captures the presence that is unremarkable, simply present. The sage
+      is like this: no drama, no assertion, yet always at the center of things. Kingship that claims
+      nothing and rules everything.
+  - n: 8
+    scene: "Cessation of effort: the paradox of action without actor"
+    force: salvation
+    composer: Olivier Messiaen
+    work: "Un Vitrail et Ses Lumières (Stained Glass and Its Light)"
+    decision: added
+    why: >
+      Messiaen's piece shows the paradox: the light shines through the glass without the glass doing
+      anything. Action without actor, light without the sun visible. Salvation as the ceasing of
+      effort.
+  - n: 9
+    scene: "Coda: the self returns as no-self, preserved forever"
+    force: metamorphosis
+    composer: Gustav Mahler
+    work: "Symphony No. 9, Adagio — final measures"
+    decision: added
+    why: >
+      Mahler's farewell, the self fading into eternity, is preserved in that very fading. The
+      transformation is complete: Mahler's own selflessness, his surrender to the music larger than
+      himself, becomes his immortality. The last notes dissolve into silence that is more alive than
+      sound.
+  - n: 10
+    scene: "Final revelation: persistence through selflessness"
+    force: revelation
+    composer: Arvo Pärt
+    work: "Tabula Rasa — Part II (Spiegel)"
+    decision: added
+    why: >
+      Pärt's final mirror reveals the completion: heaven and earth and the sage are one thing, seen
+      from the perspective of selflessness. The revelation is that what was always one became
+      transparent when the grasping self dissolved.
+demoted:
+  - composer: Richard Wagner
+    work: "Das Rheingold — 'Entrance of the Gods into Valhalla'"
+    status: "removed; save for chapters on power and kingship"
+    why: "Wagner's assertion of divine rule belongs to chapters where kingship is about power. Chapter 7 is about kingship that comes from relinquishment."

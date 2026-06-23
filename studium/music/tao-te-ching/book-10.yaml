@@ -1,0 +1,125 @@
+# Tao Te Ching — Chapter 10 — curated music arc
+# Holding contradiction without ego: can you be like an infant, before separation?
+# Can you embody all paradoxes and claim none of them?
+work: tao-te-ching
+book: 10
+title: "Tao Te Ching Chapter 10: Holding Contradiction Without Ego"
+length_minutes: 58
+principle: >
+  Chapter 10 is the culmination of the foundational chapters: holding opposites, yielding, emptiness,
+  receptivity, selflessness, water-like goodness, and now the ultimate paradox — being able to
+  embody all of these without the 'self' that would claim them. 'Can you hold the two aspects
+  without separation? Can you blend your qi until it is like an infant?' The chapter asks whether
+  you can return to the condition before time, before the split into subject and object, before the
+  ego formed. The music must convey regression not as loss but as returning home, a state of being
+  held rather than holding. The infant does not know itself as separate; it does not grasp or resist.
+  The arc is a descent into pre-egoic consciousness, a dissolution of the boundary between inside
+  and outside.
+force_arc: [salvation, metamorphosis, revelation, memory, return, salvation, revelation, memory, metamorphosis, return]
+dominant_force: revelation
+tracks:
+  - n: 1
+    scene: "The call to return: 'can you become like an infant again?'"
+    force: salvation
+    composer: John Tavener
+    work: "Song for Athene"
+    decision: added
+    why: >
+      Tavener's invocation calls the listener to the state before self-knowing. The voice hovers,
+      undecided between earth and heaven, asking whether the descent into infancy is a descent at all.
+      Salvation as the return to original innocence.
+  - n: 2
+    scene: "The dissolution of separation: the boundary weakens"
+    force: metamorphosis
+    composer: Claude Debussy
+    work: "String Quartet in G Major — II. Scherzo"
+    decision: added
+    why: >
+      Debussy's quartet movement shows the boundary between instruments softening. The four voices
+      cease to assert individual identity and begin to merge, like an infant who does not yet know
+      itself as separate from its mother.
+  - n: 3
+    scene: "Revelation: you were never separate"
+    force: revelation
+    composer: Arvo Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      Pärt's mirror reveals the ultimate revelation: the self and other were always one, reflected
+      endlessly in each other. The infant knows this without knowing it knows. Pärt's tintinnabuli
+      renders this paradox audible.
+  - n: 4
+    scene: "Memory of origin: before the split, what was there?"
+    force: memory
+    composer: Frédéric Chopin
+    work: "Nocturne in E-flat Major, Op. 9 No. 2"
+    decision: added
+    why: >
+      Chopin's nocturne carries the memory of what was before language, before naming. The melody
+      circles in the dark, searching for something it has always known. The memory of union before
+      differentiation.
+  - n: 5
+    scene: "The descent into infancy: breath, milk, sleep without knowing the names"
+    force: return
+    composer: Hildegard von Bingen
+    work: "O tu illustris"
+    decision: added
+    why: >
+      Hildegard's voice descends through the medieval intervals, following the breath back to its
+      source. The descent is not loss but homecoming. The infant's sleep is the return to the ground
+      before all knowing.
+  - n: 6
+    scene: "The paradox: knowing nothing, the infant knows all"
+    force: salvation
+    composer: Olivier Messiaen
+    work: "Quartet for the End of Time — 'Liturgie de cristal'"
+    decision: added
+    why: >
+      Messiaen's crystal liturgy captures the paradox: the infant knows everything through knowing
+      nothing. The music has no narrative, no development, yet contains infinite possibility. This is
+      the paradise of ignorance.
+  - n: 7
+    scene: "Holding contradiction: the infant holds hunger and satiation without naming them"
+    force: revelation
+    composer: Gregorian chant
+    work: "Kyrie Eleison (Mode I)"
+    decision: added
+    why: >
+      The chant holds mercy and judgment, absolution and penitence, without choosing between them.
+      The infant holds hunger and milk in the same gesture of trust. The plainchant reveals what the
+      infant knows.
+  - n: 8
+    scene: "The primordial memory: return to what-was-before"
+    force: memory
+    composer: Samuel Barber
+    work: "Knoxville: Summer of 1915 — childhood section"
+    decision: added
+    why: >
+      Barber's childhood memories carry the quality of the pre-egoic state. The voice does not
+      narrate but inhabits; it does not grasp but receives. The memory of infancy is a return to
+      the time before grasping began.
+  - n: 9
+    scene: "All polarities held at once: waking and sleeping, breath and emptiness"
+    force: metamorphosis
+    composer: Arvo Pärt
+    work: "Tabula Rasa — Part I"
+    decision: added
+    why: >
+      Pärt's return to the erased tablet shows all possibilities held in potential. The infant mind
+      contains all contradictions unresolved, not as confusion but as infinite openness. Metamorphosis
+      from one state to another happens in this still point.
+  - n: 10
+    scene: "Coda: the return complete, the circle closes"
+    force: return
+    composer: Hildegard von Bingen
+    work: "In Principio erat Verbum (In the Beginning Was the Word)"
+    decision: added
+    why: >
+      We return to the Word that was before all words, the breath that preceded all speech. Hildegard's
+      final invocation cycles back to the source. The infant, the return, the dissolution of the
+      self into the Self is complete. The circle closes without closing.
+demoted:
+  - composer: Gustav Mahler
+    work: "Symphony No. 3 — finale 'O Mensch, gib acht!'"
+    status: "removed; save for later chapters on voice and teaching"
+    why: "Mahler's teaching voice belongs to later chapters. Chapter 10 is before all teaching, before language itself."

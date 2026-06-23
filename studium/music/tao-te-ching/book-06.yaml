@@ -1,0 +1,124 @@
+# Tao Te Ching — Chapter 6 — curated music arc
+# The valley spirit: the eternal feminine, receptivity as power.
+# The lowest place, where water collects, is the root of heaven and earth.
+work: tao-te-ching
+book: 6
+title: "Tao Te Ching Chapter 6: The Valley Spirit"
+length_minutes: 59
+principle: >
+  Chapter 6 names the feminine principle explicitly: 'The valley spirit never dies. It is called
+  the eternal feminine. The gate of the eternal feminine is the root of heaven and earth.' The
+  valley is the lowest point, where water collects, where the receptive quality is strongest. This
+  chapter shifts from technique (wu wei, yielding) to essence (yin, the feminine). The music must
+  convey depth, receptivity, the power of the lowest place. This is not romantic femininity but the
+  dark, fertile, generative principle that is prior to all differentiation. The arc descends into
+  the valley, discovers its living presence, and emerges with the recognition that this lowest point
+  is also the root of all ascent.
+force_arc: [return, memory, revelation, return, memory, desire, salvation, kingship, revelation, return]
+dominant_force: desire
+tracks:
+  - n: 1
+    scene: "The descent into the valley; the journey downward into receptivity"
+    force: return
+    composer: Hildegard von Bingen
+    work: "O tu illustris"
+    decision: added
+    why: >
+      Hildegard's voice descends through the intervals in a gesture of return — not loss but the
+      homecoming to the feminine source. The medieval modal space allows for the movement into the
+      valley without the drama of modern tonality. This is the first descent, the yielding downward.
+  - n: 2
+    scene: "The valley floor: cool, dark, alive with hidden streams"
+    force: memory
+    composer: Claude Debussy
+    work: "La Cathédrale engloutie (The Sunken Cathedral)"
+    decision: added
+    why: >
+      Debussy's piece emerges from profound depths, bells sounding underwater. The cool darkness of
+      the valley floor is alive with ancient presence. This is the memory of what has always been
+      present in the depths — the cathedral, the temple, the sacred place beneath the surface.
+  - n: 3
+    scene: "The discovery: the valley spirit is not empty but eternally present"
+    force: revelation
+    composer: John Tavener
+    work: "The Protecting Veil — 'The Protecting Veil' (Mother)"
+    decision: added
+    why: >
+      Tavener's music reveals the presence that is already there. The veil itself is revelation — not
+      obscuring but revealing the Virgin, the feminine principle that holds and sustains all. The
+      valley spirit is the Mother who was never absent.
+  - n: 4
+    scene: "Deeper still: the valley as the mother of all forms"
+    force: return
+    composer: Arvo Pärt
+    work: "Tabula Rasa, Part I"
+    decision: added
+    why: >
+      Pärt's return to the tablet-erased-clean is also a return to the womb, the pregnant emptiness
+      from which all forms emerge. The mirror structure echoes the feminine principle: two voices
+      reflecting each other, neither dominant, both necessary.
+  - n: 5
+    scene: "The feminine principle at rest: stillness as absolute potency"
+    force: memory
+    composer: Samuel Barber
+    work: "Knoxville: Summer of 1915 — middle section (childhood memory)"
+    decision: added
+    why: >
+      Barber's memory-suffused section captures the eternal present of childhood, where nothing is
+      forced and all is received. The feminine principle at rest is not passive but absolutely potent —
+      the pregnant silence of the mother listening to her child.
+  - n: 6
+    scene: "Desire arises from this depth: all wanting flows from the valley spirit"
+    force: desire
+    composer: Maurice Ravel
+    work: "Ondine (from Gaspard de la Nuit)"
+    decision: added
+    why: >
+      The water-nymph Ondine in Ravel's piano piece embodies the feminine principle as desire: the
+      seductive power of the depths, the calling from the valley. All desire originates in the valley
+      spirit, the eternal feminine that invites us to return.
+  - n: 7
+    scene: "The valley speaks: salvation as the return to the source"
+    force: salvation
+    composer: Olivier Messiaen
+    work: "Méditations sur le Mystère de la Sainte-Trinité — 'La Sainte-Trinité, Dieu est amour'"
+    decision: added
+    why: >
+      Messiaen's meditation on divine love speaks to the feminine principle as redemptive. The
+      salvation is in returning to the source, in recognizing the Mother of all things. The valley
+      spirit calls us home.
+  - n: 8
+    scene: "The valley as kingdom: the lowest place is also the most powerful"
+    force: kingship
+    composer: Erik Satie
+    work: "Gnossienne No. 1"
+    decision: added
+    why: >
+      Satie's piece has the quality of royal rest at the lowest place. The valley is not a place of
+      exile but of queenly repose. The feminine principle rules from the depth, from the place where
+      all beings must return to drink.
+  - n: 9
+    scene: "Rising awareness: the valley spirit rises as recognition"
+    force: revelation
+    composer: Gregorian chant
+    work: "In Paradisum (Mode II)"
+    decision: added
+    why: >
+      The medieval chant rises from the depths with the revelation that paradise is found by descent,
+      not ascent alone. The valley spirit rises in consciousness, no longer hidden but fully present as
+      the revelation that sustains all.
+  - n: 10
+    scene: "Coda: return to the valley, the root of heaven and earth"
+    force: return
+    composer: Hildegard von Bingen
+    work: "O virtus Sapientiae (O Power of Wisdom)"
+    decision: added
+    why: >
+      We return to Hildegard, but now with the full recognition of the feminine principle's power.
+      The valley spirit, the eternal feminine, the root of heaven and earth — all return in this final
+      invocation, complete and present.
+demoted:
+  - composer: Richard Wagner
+    work: "Tristan und Isolde — 'Liebestod' (Love-Death)"
+    status: "removed; save for chapters on desire and romantic love"
+    why: "Wagner's romantic desire belongs to later chapters. Chapter 6 is not romantic but archetypal — the feminine principle before gender."

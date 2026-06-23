@@ -1,0 +1,135 @@
+# Tao Te Ching — Chapter 2 — curated music arc
+# Score this as the moment when the undifferentiated ground becomes aware of itself as difference.
+# Being and non-being emerge together. Beauty and ugliness define each other in the same breath.
+# This is not conflict but the joy of emergence. Do NOT score this as struggle.
+work: tao-te-ching
+book: 2
+title: "Tao Te Ching Chapter 2: Being and Non-Being"
+length_minutes: 58
+principle: >
+  Chapter 2 begins where Chapter 1 left the gate: inside, where the paradox takes concrete form.
+  The text moves from abstract impossibility of naming to the lived dialectic of opposites — beauty
+  and ugliness, good and bad, being and non-being — each pair inseparable, each defining the other
+  in the moment they appear different. This is not relativism. Rather, it is the recognition that
+  the named world (you, 有) exists only as difference: there is no beauty without the ugly, no good
+  without bad. The music must embody this active holding of opposites without resolving them.
+  The arc begins in clarity (the emergence of distinction) and traces through several dialectical
+  pairs, always returning to the originating unity before each pair emerges. The force arc is not
+  conflict but the creative tension of mutual arising — what Lao-tzu calls 'bringing them together at
+  birth.' Do NOT score this as struggle. Score it as the joy of emergence: the moment water recognizes
+  itself against not-water.
+force_arc: [law, metamorphosis, law, metamorphosis, desire, memory, desire, memory, law, metamorphosis]
+dominant_force: metamorphosis
+tracks:
+  - n: 1
+    scene: "Opening clarity: the undifferentiated ground becomes aware of itself"
+    force: law
+    composer: Johann Sebastian Bach
+    work: "The Well-Tempered Clavier, Book I — Prelude in C Major (BWV 846)"
+    decision: added
+    why: >
+      The beginning of distinction is an act of perfect clarity. Bach's C Major Prelude demonstrates
+      that two seemingly disparate things — arpeggio and chord — are the same thing viewed differently.
+      The uninterrupted flow of sixteenth notes is the ground of clarity; the underlying harmony is
+      the unity from which distinction arises. This is the opening gesture: the Tao, still undifferentiated,
+      begins to show its inner architecture.
+  - n: 2
+    scene: "Beauty arises and is named"
+    force: metamorphosis
+    composer: Claude Debussy
+    work: "String Quartet in G Major — II. Scherzo (Assez vif et bien rhythmé)"
+    decision: added
+    why: >
+      The moment beauty appears, the world shifts color. Debussy's String Quartet shimmers with the
+      quality of appearance itself — subtle orchestrations, emerging from whisper and blooming into
+      clarity. This is the first dialectical pair: beauty names itself by appearing, and in that
+      naming, ugliness is immediately defined as its shadow.
+  - n: 3
+    scene: "Against beauty, ugliness immediately appears (not separate, but simultaneous)"
+    force: law
+    composer: Béla Bartók
+    work: "Mikrokosmos — 'Rondo' (No. 143)"
+    decision: added
+    why: >
+      Bartók's piece embodies the necessary tension — the 'ugly' (harsh intervals, irregular rhythm)
+      and the 'beautiful' (lyrical melody) are inseparable in the same gesture. This is not Bartók as
+      dissonance but Bartók as the recognition that beauty and its opposite arise together, in the
+      same moment, not in opposition but as mutual definition.
+  - n: 4
+    scene: "The dialectic holds steady: both are necessary, neither is absolute"
+    force: metamorphosis
+    composer: Igor Stravinsky
+    work: "The Rite of Spring — 'Game of Abduction'"
+    decision: added
+    why: >
+      Stravinsky's shifting harmonies and asymmetrical rhythms embody the dance of opposites held
+      in equilibrium. Neither force dominates; both are equally essential. The music shifts constantly,
+      refusing to settle into a single pole, mirroring the text's assertion that the two aspects
+      define each other.
+  - n: 5
+    scene: "Illusion of separation: the desiring mind sees them as enemies"
+    force: desire
+    composer: Maurice Ravel
+    work: "Miroirs — 'Scarbo'"
+    decision: added
+    why: >
+      Ravel's nightmarish piece embodies the desiring mind's perception of the dialectical pair as
+      conflict rather than complementarity. The music is restless, grasping, unable to find resolution.
+      This is the consciousness that has forgotten that opposites arise together.
+  - n: 6
+    scene: "The deeper truth: they are two aspects of one breath"
+    force: law
+    composer: Johann Sebastian Bach
+    work: "The Art of Fugue — Contrapunctus I"
+    decision: added
+    why: >
+      We return to Bach, but now to the Art of Fugue, where a single subject generates infinite
+      variations through strict architectural law. This is the revelation: the many are implicit
+      in the one; opposites are variations of a single principle. The law is not coercive but
+      generative — the principle from which all difference arises.
+  - n: 7
+    scene: "Good is named, and bad immediately shadows it"
+    force: metamorphosis
+    composer: Benjamin Britten
+    work: "Young Person's Guide to the Orchestra — 'Fugue on a Theme of Purcell'"
+    decision: added
+    why: >
+      Britten's work teaches through orchestration: each instrument is distinct, each is essential.
+      In the fugue, good and bad, wise and foolish, strong and weak all appear together in the
+      weave. None is absolute; all are necessary voices in the whole.
+  - n: 8
+    scene: "Neither triumphs; both recede back into the nameless"
+    force: desire
+    composer: Frédéric Chopin
+    work: "Nocturne in E-flat Major, Op. 9 No. 2"
+    decision: added
+    why: >
+      The Nocturne carries the quality of yearning, the desire that holds opposites in suspension
+      without resolving them. The melody circles without landing, embodies the moment when the named
+      world begins to fade back into the nameless, before distinction reappears.
+  - n: 9
+    scene: "The cycle returns: emergence happens again, eternally"
+    force: memory
+    composer: Max Reger
+    work: "Benedictus, Op. 59 No. 6"
+    decision: added
+    why: >
+      Reger's brief piece holds in memory all the cycles that have passed before. It is not nostalgic
+      but archetypal — the eternal pattern of emergence and return, distinction and unity, playing out
+      again as it always has. Memory here is the deep time in which these cycles recur.
+  - n: 10
+    scene: "Coda: both-and-neither, the gate of arrival and departure"
+    force: metamorphosis
+    composer: Arvo Pärt
+    work: "Tabula Rasa — Part I"
+    decision: added
+    why: >
+      Pärt's Tabula Rasa returns us to the opening still point, but now charged with the
+      understanding of dialectical emergence. The mirror form (note against note, voice against
+      voice) embodies both-and-neither: the opposites are held in perfect suspension, preparing
+      for the next emergence.
+demoted:
+  - composer: Richard Wagner
+    work: "The Ring Cycle — various sections"
+    status: "removed; save for chapters on conflict/kingship"
+    why: "Wagner's cosmic drama belongs to later chapters where the dialectic becomes human struggle. Chapter 2 is still at the level of principle, not drama."

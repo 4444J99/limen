@@ -1,0 +1,128 @@
+# Tao Te Ching — Chapter 3 — curated music arc
+# The paradox: non-action is the deepest form of strength. Yielding is invincible.
+# Score this as the moment when aggressive assertion gives way to receptive stillness.
+work: tao-te-ching
+book: 3
+title: "Tao Te Ching Chapter 3: The Power of Non-Contention"
+length_minutes: 61
+principle: >
+  Chapter 3 shifts from the structure of opposites to the dynamics of power. Lao-tzu argues that
+  non-action (wu wei, 無為) and yielding are not weakness but the deepest form of strength. The
+  chapter warns against aggressive rule ('exhausting people / wearying their minds') and offers
+  instead the paradox: if you do not value scarce goods, people will not steal; if you do not praise
+  the worthy, people will not compete; if you do not display what is desirable, people's hearts will
+  not be confused. This is not pacifism. It is the recognition that resistance creates counter-resistance,
+  while yielding allows natural order to emerge. The music must convey the power of emptiness, the
+  strength of non-contention. This is the valley-bottom position: water flows around all obstacles,
+  always downward, always patient. The arc traces the moment when aggressive assertion gives way to
+  receptive stillness, and paradoxically, the receptive body becomes invincible.
+force_arc: [wrath, metamorphosis, wrath, salvation, wrath, metamorphosis, salvation, kingship, metamorphosis, salvation]
+dominant_force: salvation
+tracks:
+  - n: 1
+    scene: "Scene of striving, assertion, the tyranny of control"
+    force: wrath
+    composer: Richard Wagner
+    work: "The Ring Cycle — 'Ride of the Valkyries'"
+    decision: added
+    why: >
+      The opening establishes the noise of assertion: aggressive will, the demand for mastery, the
+      insistence that things bend to intention. Wagner's Valkyries ride with unstoppable force, yet
+      they are bound to Wotan's will. This is the illusion of power through force.
+  - n: 2
+    scene: "The strain shows; nothing holds; the grasping begins to fail"
+    force: metamorphosis
+    composer: Pyotr Ilyich Tchaikovsky
+    work: "Swan Lake — Act I, opening"
+    decision: added
+    why: >
+      The music shifts: tension appears beneath the surface. Tchaikovsky's Swan Lake opens with a
+      sense of something imminent, unstable. The aggressive force is beginning to show its fragility.
+      The beautiful form is already shifting, already breaking apart.
+  - n: 3
+    scene: "Escalation: more effort is applied, more resistance emerges"
+    force: wrath
+    composer: Modest Mussorgsky
+    work: "Pictures at an Exhibition — 'Baba Yaga'"
+    decision: added
+    why: >
+      The aggressive assertion doubles down. Mussorgsky's witch rides in fury, but the music is
+      chaotic, not unified. More force creates more chaos. The paradox appears: strength through
+      force generates its own counter-force.
+  - n: 4
+    scene: "The breaking point: surrender becomes visible as an alternative"
+    force: salvation
+    composer: Giuseppe Verdi
+    work: "La traviata — 'Addio del passato' (Farewell to the Past)"
+    decision: added
+    why: >
+      The moment of reversal. Verdi's aria is the music of release, of letting go of what cannot be
+      held. Not death but the recognition that surrender is the only true strength. The voice opens,
+      the grasping releases, and paradoxically, what was lost in the grasping is recovered in the
+      release.
+  - n: 5
+    scene: "Letting go: the body releases, the will unclenches"
+    force: metamorphosis
+    composer: Claude Debussy
+    work: "Clair de lune (Moonlight)"
+    decision: added
+    why: >
+      The image of the Tao as moonlight, reflected in water. The music has no aggressive gesture, no
+      assertion. It simply shines, and in that shining, it transforms everything it touches. This is
+      the beginning of the recognition that non-force is not weakness.
+  - n: 6
+    scene: "The mystery: in yielding, a new power emerges, untraceable"
+    force: salvation
+    composer: Arvo Pärt
+    work: "Spiegel im Spiegel (Mirror in the Mirror)"
+    decision: added
+    why: >
+      Pärt's tintinnabuli method embodies yielding: one voice holds steady while the other reflects
+      it, both necessary, neither dominating. The resulting sound is paradoxically more powerful than
+      any assertion could be. This is wu wei made audible: action that is not-action.
+  - n: 7
+    scene: "Non-contention becomes a visible truth: obstacles dissolve in the path of water"
+    force: kingship
+    composer: Erik Satie
+    work: "Gymnopédie No. 1"
+    decision: added
+    why: >
+      Satie's piece has the quality of royal ease — not earned through struggle but inherent in the
+      nature of yielding. The authority here is not assertion but presence. Nothing fights; everything
+      flows. The king who does nothing is the true ruler.
+  - n: 8
+    scene: "The valley spirit: receptivity as the ground of all transformation"
+    force: metamorphosis
+    composer: Olivier Messiaen
+    work: "Méditations sur le Mystère de la Sainte-Trinité — 'Présence multipliée'"
+    decision: added
+    why: >
+      Messiaen's complex harmonies and shifting modes embody the feminine principle of receptivity
+      at work. The valley spirit transforms everything through pure openness; the music shows no
+      resistance, only infinite capacity to receive and reflect.
+  - n: 9
+    scene: "The quiet victory of emptiness becomes audible"
+    force: kingship
+    composer: John Tavener
+    work: "Song for Athene"
+    decision: added
+    why: >
+      Tavener's setting of the Orthodox prayer moves without haste, without assertion. Yet in that
+      stillness, a profound authority emerges. This is the victory that needs no conquest, the rule
+      that asks nothing and commands everything.
+  - n: 10
+    scene: "Coda: the triumph of non-contention, the way that is not forced"
+    force: salvation
+    composer: Arvo Pärt
+    work: "Fratres (string quartet version)"
+    decision: added
+    why: >
+      We end where we began the arc, but transformed. Fratres (brothers/returns) cycles through its
+      material without forcing it. The power is in the pattern itself, not in the assertion of power.
+      The string quartet embodies the ideal: four voices, none dominant, all necessary, all yielding
+      to a harmony none of them could create alone.
+demoted:
+  - composer: Ludwig van Beethoven
+    work: "Symphony No. 5 — 'Fate knocking'"
+    status: "removed; save for chapters on destiny/kingship"
+    why: "Beethoven's triumph through struggle belongs to chapters where conflict is the theme. Chapter 3 teaches that true power requires no struggle."

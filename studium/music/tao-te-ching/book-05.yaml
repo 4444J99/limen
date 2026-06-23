@@ -1,0 +1,124 @@
+# Tao Te Ching — Chapter 5 — curated music arc
+# The usefulness of emptiness: what is not there is what is essential.
+# We shape a cup but use the emptiness. We build a house but use the space inside.
+work: tao-te-ching
+book: 5
+title: "Tao Te Ching Chapter 5: The Usefulness of Emptiness"
+length_minutes: 53
+principle: >
+  Chapter 5 is the practical demonstration of Chapter 4: it teaches through images. 'We shape clay
+  into a cup, but it is the emptiness inside that holds the drink. We build a house, but it is the
+  space inside that makes it livable. We work with being, but it is non-being that we use.' This
+  chapter is about utility, about the recognition that what has no name, no form, no market value
+  is precisely what is essential. The music must embody the paradox of potentiality: emptiness is
+  not absence but pregnant possibility. A room's emptiness is not lack but capacity. The arc traces
+  the moment when the ear begins to hear what is not sounding, when silence becomes more eloquent
+  than sound.
+force_arc: [law, metamorphosis, revelation, law, memory, revelation, metamorphosis, memory, law, revelation]
+dominant_force: revelation
+tracks:
+  - n: 1
+    scene: "The room before it is used: pure potential"
+    force: law
+    composer: Erik Satie
+    work: "Vexations — opening phrase (minimally repeated)"
+    decision: added
+    why: >
+      Satie's Vexations uses extreme repetition to create a space that is architecturally simple yet
+      infinitely expandable. The emptiness of the form is its potential: each repetition occupies the
+      same space yet is eternally new. This is the law of potential: maximum stillness, maximum capacity.
+  - n: 2
+    scene: "The cup is shaped, but the emptiness is what matters"
+    force: metamorphosis
+    composer: Arvo Pärt
+    work: "Te Deum — opening (sustained chords)"
+    decision: added
+    why: >
+      Pärt's opening holds the silence between the notes as palpably as the notes themselves. The
+      space within the harmony is the space where sound becomes meaningful. This is the transformation:
+      from object (cup) to utility (emptiness that holds the drink).
+  - n: 3
+    scene: "The space inside speaks louder than the walls"
+    force: revelation
+    composer: Morton Feldman
+    work: "For Philip Guston"
+    decision: added
+    why: >
+      Feldman's sparse placement of sounds in vast silences makes the silence the protagonist. Each
+      gesture is isolated, each followed by what the music does not say. This is the revelation: the
+      emptiness is what is heard.
+  - n: 4
+    scene: "Building with emptiness: the house becomes a breathing vessel"
+    force: law
+    composer: Johann Sebastian Bach
+    work: "The Art of Fugue, Contrapunctus XIV (unfinished)"
+    decision: added
+    why: >
+      Bach's final contrapunctus, left incomplete, creates an architecture that is simultaneously
+      finished and unfinished. The empty space where the resolution would be becomes the most powerful
+      gesture. The house (the fugue) is completed by its incompleteness.
+  - n: 5
+    scene: "Non-being at work: the carpenter's skill is in knowing what to remove"
+    force: memory
+    composer: Frédéric Chopin
+    work: "Ballade No. 1 in G Minor — opening"
+    decision: added
+    why: >
+      Chopin's opening contains within it the memory of what has been removed, what is not played.
+      The carpentry is in the silences: knowing that some notes must be absent for the whole to
+      breathe. The useful shape emerges from absence.
+  - n: 6
+    scene: "Usefulness: the hidden architecture that sustains all visible things"
+    force: revelation
+    composer: John Cage
+    work: "4'33\" (the work as silence)"
+    decision: added
+    why: >
+      Cage's most radical gesture: the revelation that silence itself, the ambient sounds in the room,
+      the space usually ignored, are the real music. The emptiness is not lack but the fullness that
+      has always been present, invisible until attention makes it visible.
+  - n: 7
+    scene: "The paradox made tangible: emptiness as essence"
+    force: metamorphosis
+    composer: Claude Debussy
+    work: "Silence (from Preludes Book II) — concept"
+    decision: added
+    why: >
+      Though Debussy wrote no piece titled 'Silence,' his Preludes are pervaded by the use of silence
+      as material. The transformation here is in the listener's ear: learning to hear the gaps as part
+      of the music, not interruptions to it. Emptiness reveals itself as essential.
+  - n: 8
+    scene: "Sitting in the room: the listener becomes the hearer of emptiness"
+    force: memory
+    composer: Alvin Lucier
+    work: "I Am Sitting in a Room"
+    decision: added
+    why: >
+      Lucier's piece places the listener's own experience in the room as the subject. The recorded
+      voice degrading through repeated playback reveals the room's hidden signature. Memory and
+      presence merge; the emptiness becomes a character.
+  - n: 9
+    scene: "Return: emptiness is never absence but the ground of all presence"
+    force: law
+    composer: Johann Sebastian Bach
+    work: "Well-Tempered Clavier, Book I, Prelude in C Minor (BWV 847)"
+    decision: added
+    why: >
+      Bach returns with the architecture of law applied to the minor key: the emptiness is now
+      integral to the structure. Every note is necessary; every silence is architectural. The house
+      stands through the perfect balance of presence and absence.
+  - n: 10
+    scene: "Coda: the revelation of hidden form"
+    force: revelation
+    composer: Arvo Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      We return to where we began, but transformed. Pärt's mirror form makes the emptiness between
+      the reflecting voices as important as the voices themselves. The revelation is now complete: the
+      cup, the house, the room, the silence — all are one thing, utility embracing emptiness.
+demoted:
+  - composer: Gustav Mahler
+    work: "Symphony No. 2 — 'Resurrection' finale"
+    status: "removed; save for later chapters on fullness and return"
+    why: "Mahler's apotheosis of sound belongs to chapters where emptiness has been filled and returns to fullness. Chapter 5 is still in the discovery of emptiness."
