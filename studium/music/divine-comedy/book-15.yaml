@@ -1,0 +1,74 @@
+# Divine Comedy — Inferno, Canto 15 — curated music arc
+work: divine-comedy
+book: 15
+title: "Inferno, Canto 15: The Florentine Sodomites"
+length_minutes: 74
+principle: >
+  In Canto 15, Dante and Virgil remain on the same burning plain, but the emotional
+  terrain turns sharply from cartography to encounter. Dante meets punished souls who
+  are culturally and politically intimate, turning Hell into memory. The canto's force
+  comes through recognition and compassion: those who once walked history now walk in
+  flames, and Dante must learn how far sympathy can stretch without falsifying judgment.
+force_arc: [grief, grief, grief, supplication, supplication, fate]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "The burning bank and flame-shaded passage"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    decision: added
+    why: >
+      The canto begins in the same relentless register as Canto 13 and 14, but now the
+      movement is inwardly weighted. Mahler's Adagietto is grief in a disciplined
+      register—private pain moving through a public landscape.
+  - n: 2
+    scene: "Running souls descend from the sand and fix their eyes on Dante"
+    force: grief
+    composer: Fauré
+    work: "Requiem — In paradisum"
+    decision: added
+    why: >
+      The first direct contact is not terror but stunned recognition. The music must hold
+      shameful suffering without sentimentality. Fauré's choral writing allows the listener
+      to hear pain as stillness in motion.
+  - n: 3
+    scene: "Brunetto Latini is recognized"
+    force: grief
+    composer: Shostakovich
+    work: "Symphony No. 8 — IV. Allegro non troppo"
+    decision: added
+    why: >
+      Brunetto's recognition converts abstract Hell into a personal wound. Shostakovich's
+      late-symphonic grief carries both admiration and refusal: Dante's teacher is still
+      grand, but already consumed by the register of the place.
+  - n: 4
+    scene: "Brunetto begs for remembrance of his treasury"
+    force: supplication
+    composer: Bach
+    work: "St. John Passion — 'Bist du bei uns' (arrangement motif)"
+    decision: added
+    why: >
+      The plea is not for pardon and not for power. It is the request that memory stay
+      truthful. A suppressed supplication fits this moment: the plea is gentle, dignified,
+      and therefore piercing.
+  - n: 5
+    scene: "Dante's emotional response and refusal to turn away"
+    force: supplication
+    composer: Pärt
+    work: "Fratres (for strings and percussion)"
+    decision: added
+    why: >
+      After Brunetto's plea, Dante responds as a son and a poet in the same breath.
+      Pärt's suspended phrases hold compassion without collapse. The music asks for
+      attention and restraint at the same time.
+  - n: 6
+    scene: "The canto releases and presses on toward the hidden depths"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 in C minor — III. Allegro"
+    decision: added
+    why: >
+      This is not emotional catharsis. It is an engine that restarts. The canto must end
+      by returning to forward pressure, and Beethoven's hard-won forward surge gives the
+      descent its legal right to continue.

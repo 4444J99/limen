@@ -1,0 +1,75 @@
+# Divine Comedy — Inferno, Canto 17 — curated music arc
+work: divine-comedy
+book: 17
+title: "Inferno, Canto 17: The Usurers and the Summoning of Geryon"
+length_minutes: 82
+principle: >
+  Canto 17 begins with the final, explicit turn into fraud's borderland.
+  Virgil keeps Dante in motion while the canto displays the taxonomy of sin: blasphemy,
+  sodomy, usury—each distinct yet gathered on one burning strip. Then, at the edge,
+  the register of deception appears as form. Geryon is summoned not as a spectacle but
+  as an instrument of lawless transport: the machinery that carries reason into a deeper
+  corruption.
+force_arc: [law, wrath, revelation, fate, law, metamorphosis]
+dominant_force: law
+tracks:
+  - n: 1
+    scene: "Virgil reads the boundary and signals for descent"
+    force: law
+    composer: Handel
+    work: "Music for the Royal Fireworks — Overture"
+    decision: added
+    why: >
+      Before Geryon appears, the canto rests on structure: what follows is not a random
+      miracle. Handel's ceremonial precision fits the moment when action shifts from
+      description to exact procedure.
+  - n: 2
+    scene: "The blasphemers on the sands curse and writhe"
+    force: wrath
+    composer: Holst
+    work: "The Planets — Mars, the Bringer of War"
+    decision: added
+    why: >
+      The blasphemers are still violent, still frontal in their defiance. The same
+      asymmetrical pressure that moved Virgil's first lessons now moves here in a more
+      exhausted, more public key.
+  - n: 3
+    scene: "Geryon emerges—calm face, predatory tail"
+    force: revelation
+    composer: Berlioz
+    work: "Les Troyens — Act II Prelude"
+    decision: added
+    why: >
+      Geryon is paradox: courtly appearance with predatory architecture. Berlioz' prelude
+      supports the contradiction—majestic surface, volcanic motion. The shape appears before
+      language catches up.
+  - n: 4
+    scene: "Dante inspects the usurers and their heraldic insignia"
+    force: fate
+    composer: Debussy
+    work: "Jeux — climax and dissolution"
+    decision: added
+    why: >
+      Usury in this canto is less about bodily torture than about fixed signs of attachment
+      and status. Debussy's unstable chromatic movement reflects a life made of fixation:
+      forms that cannot open into grace.
+  - n: 5
+    scene: "The sinners explain the currency of their punishment"
+    force: law
+    composer: Brahms
+    work: "Symphony No. 1 in C minor — I. Un poco sostenuto — Allegro"
+    decision: added
+    why: >
+      Once the specific sinners are named, the canto returns to its legal architecture.
+      Brahms' first movement opens with argument, then conflict. The music insists that even
+      this horror belongs to a recognisable structure.
+  - n: 6
+    scene: "Geryon carries Virgil and Dante beyond the Seventh Circle"
+    force: metamorphosis
+    composer: Strauss
+    work: "Metamorphosen"
+    decision: added
+    why: >
+      The descent changes regime. The seventh-circle economy is replaced by the eighth's
+      counterfeit brilliance. Strauss' late elegiac architecture carries the emotional logic
+      of crossing: not release, but a total register shift.

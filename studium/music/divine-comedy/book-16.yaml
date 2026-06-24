@@ -1,0 +1,75 @@
+# Divine Comedy — Inferno, Canto 16 — curated music arc
+work: divine-comedy
+book: 16
+title: "Inferno, Canto 16: Three Florentines on the Fire-Sand"
+length_minutes: 80
+principle: >
+  Canto 16 narrows from vast landscapes to singulars. Three famous Florentines,
+  punished among the violent against God, nature, and art, force Dante to confront
+  civic memory directly at the edge of another descent. He responds with visible
+  compassion, but that compassion must now coexist with method: Virgil keeps the path,
+  the timing, and the risk of panic in disciplined rhythm. This canto is grief held
+  to law.
+force_arc: [grief, grief, supplication, fate, divine-intervention, metamorphosis]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "The three Florentines emerge from the burning ring"
+    force: grief
+    composer: Brahms
+    work: "Symphony No. 1 in C minor — II. Andante sostenuto"
+    decision: added
+    why: >
+      The canto turns in an instant from topography to persons: men of history burning on
+      the sand, speaking from familiar civic identities now unrecognizable. Brahms'
+      Andante gives Dante's response a measured compassion: it is grief that keeps moral shape.
+  - n: 2
+    scene: "Rusticucci, Aldobrandino, Tegghiaio circle and identify themselves"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 2 ('Resurrection') — first movement"
+    decision: added
+    why: >
+      The three names are not all equally known, but all equally intimate to the poet.
+      Mahler's long-opening lament makes room for that range: admiration, discomfort,
+      and unresolved attachment.
+  - n: 3
+    scene: "Dante answers them and accepts their command to report the city"
+    force: supplication
+    composer: Monteverdi
+    work: "L'Orfeo — 'Possente spirto' (selection)"
+    decision: added
+    why: >
+      This is not merely pity. Dante accepts responsibility as a witness. Monteverdi's
+      supple vocal architecture makes the encounter feel dialogic: a line offered, returned,
+      and held.
+  - n: 4
+    scene: "They ask to hear news of Florence; Dante speaks as witness"
+    force: fate
+    composer: Tavener
+    work: "The Whale — 'The Whale'"
+    decision: added
+    why: >
+      Canto 16 still sounds like civic biography turned to warning. What is told here is
+      not just poetry; it is an irreversible report. Tavener's restrained gravity fits this
+      burden of truth-bearing.
+  - n: 5
+    scene: "Virgil throws the belt over the abyss and summons the unthinkable"
+    force: divine-intervention
+    composer: Beethoven
+    work: "Symphony No. 4 in B-flat major — II. Andante"
+    decision: added
+    why: >
+      Virgil's act is precise and impossible at once. The music should hold that paradox:
+      the same gesture both practical and transcendent. Beethoven's inwardly propulsive lyricism
+      gives this moment a disciplined awe.
+  - n: 6
+    scene: "An unearthly shape rises from the abyss"
+    force: metamorphosis
+    composer: Strauss
+    work: "Metamorphosen"
+    decision: added
+    why: >
+      The canto closes with transformation before it explains itself. Strauss' *Metamorphosen*
+      is that exact sensation: structure changing under pressure, beauty arriving as a
+      fracture of prior expectations.
