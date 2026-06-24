@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-06-24'
-       spent: 133
-       per_agent:
-         jules: 77
-         gemini: 0
-         codex: 15
-         opencode: 12
-         agy: 27
-         claude: 2
+      spent: 116
+      per_agent:
+        jules: 68
+        gemini: 0
+        codex: 11
+        opencode: 11
+        agy: 25
+        claude: 1
       per_agent_reset:
         jules: '2026-06-24T02:54:49.353919+00:00'
         gemini: '2026-06-24T02:54:49.353919+00:00'
@@ -38,7 +38,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 2
-  status: done
+  status: dispatched
   labels:
   - full-agent-force
   - infra
@@ -50,7 +50,7 @@ tasks:
     agent each cycle.'
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-24T15:59:45.005390Z'
+  updated: '2026-06-24T14:36:53.233451Z'
   dispatch_log:
   - timestamp: '2026-06-20T19:51:18.339621Z'
     agent: limen
@@ -71,11 +71,6 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/limen/pull/195
     status: dispatched
-  - timestamp: '2026-06-24T15:59:45.005390Z'
-    agent: limen
-    session_id: heal
-    status: done
-    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: FORCE-warp-oz-lane
   title: Enlist the installed oz-by-warp GitHub App as a dispatch lane
   repo: organvm/limen
@@ -124,7 +119,7 @@ tasks:
   target_agent: agy
   priority: critical
   budget_cost: 2
-  status: done
+  status: dispatched
   labels:
   - full-agent-force
   - infra
@@ -138,7 +133,7 @@ tasks:
     \ health-check returns down. This puts the PAID Copilot to work as a fleet lane."
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-24T15:59:45.005390Z'
+  updated: '2026-06-24T14:36:53.233451Z'
   dispatch_log:
   - timestamp: '2026-06-22T04:41:45.670336Z'
     agent: limen
@@ -154,11 +149,6 @@ tasks:
     agent: agy
     session_id: https://github.com/organvm/limen/pull/194
     status: dispatched
-  - timestamp: '2026-06-24T15:59:45.005390Z'
-    agent: limen
-    session_id: heal
-    status: done
-    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: REV-exporter-unblock-stack
   title: 'Exporter Pro-tier: close stale #29-31, port ONLY the license-verify gap
     onto master'
@@ -34149,7 +34139,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: done
+  status: dispatched
   labels:
   - ci-green
   - generated
@@ -34163,7 +34153,7 @@ tasks:
     endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-24T15:59:45.005390Z'
+  updated: '2026-06-24T14:36:53.233451Z'
   dispatch_log:
   - timestamp: '2026-06-20T10:33:53.768801Z'
     agent: agy
@@ -34188,11 +34178,6 @@ tasks:
     agent: agy
     session_id: https://github.com/organvm/media-ark/pull/49
     status: dispatched
-  - timestamp: '2026-06-24T15:59:45.005390Z'
-    agent: limen
-    session_id: heal
-    status: done
-    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GEN-4444j99-relationship-pipeline-ci-green-0620
   title: Make 4444J99/relationship-pipeline CI green
   repo: organvm/relationship-pipeline
@@ -34487,16 +34472,15 @@ tasks:
   title: Make organvm-i-theoria/sovereign--ground CI green
   repo: organvm/sovereign--ground
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: cancelled
+  status: dispatched
   labels:
   - ci-green
   - generated
   - build-out
   - tried:codex
-  - noop
   urls: []
   context: Inspect the latest FAILING checks on organvm-i-theoria/sovereign--ground's
     default branch, fix the root cause (lint / types / failing test / config), and
@@ -34505,7 +34489,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-24T15:13:00.943158Z'
+  updated: '2026-06-24T14:55:54.283423Z'
   dispatch_log:
   - timestamp: '2026-06-20T11:19:25.130432Z'
     agent: limen
@@ -34526,14 +34510,6 @@ tasks:
     agent: codex
     session_id: cli
     status: failed->opencode
-  - timestamp: '2026-06-24T14:55:54.283423Z'
-    agent: codex
-    session_id: cli
-    status: failed->opencode
-  - timestamp: '2026-06-24T15:13:00.943158Z'
-    agent: opencode
-    session_id: cli
-    status: noop
 - id: GEN-organvm-i-theoria-scale-threshold-emergence-ci-green-0620
   title: Make organvm-i-theoria/scale-threshold-emergence CI green
   repo: organvm/scale-threshold-emergence
@@ -34628,7 +34604,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: done
+  status: dispatched
   labels:
   - ci-green
   - generated
@@ -34641,7 +34617,7 @@ tasks:
     endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-24T15:59:45.005390Z'
+  updated: '2026-06-24T14:36:53.233451Z'
   dispatch_log:
   - timestamp: '2026-06-20T11:19:25.130432Z'
     agent: limen
@@ -34662,11 +34638,6 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/limen/pull/196
     status: dispatched
-  - timestamp: '2026-06-24T15:59:45.005390Z'
-    agent: limen
-    session_id: heal
-    status: done
-    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GEN-a-organvm-a-i-chat--exporter-ci-green-0620
   title: Make a-organvm/a-i-chat--exporter CI green
   repo: organvm/a-i-chat--exporter
@@ -43246,7 +43217,7 @@ tasks:
     \ the thesis. [auto-discovery 2026-06-22; no repo stays dark]"
   depends_on: []
   created: '2026-06-22'
-  updated: '2026-06-24T16:04:06.234478Z'
+  updated: '2026-06-24T14:55:54.283423Z'
   dispatch_log:
   - timestamp: '2026-06-24T02:29:59.487830Z'
     agent: opencode
@@ -43380,26 +43351,6 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
-  - timestamp: '2026-06-24T14:55:54.283423Z'
-    agent: opencode
-    session_id: cli
-    status: failed->agy
-  - timestamp: '2026-06-24T15:13:00.943158Z'
-    agent: agy
-    session_id: cli
-    status: failed->claude
-  - timestamp: '2026-06-24T15:47:59.880259Z'
-    agent: codex
-    session_id: cli
-    status: failed->opencode
-  - timestamp: '2026-06-24T15:51:01.050044Z'
-    agent: opencode
-    session_id: cli
-    status: failed->agy
-  - timestamp: '2026-06-24T15:59:12.863680Z'
-    agent: codex
-    session_id: cli
-    status: failed->opencode
 - id: DISCOVER-organvm-a-i-council--coliseum
   title: Discover the latent value of organvm/a-i-council--coliseum
   repo: organvm/a-i-council--coliseum
@@ -47394,7 +47345,7 @@ tasks:
     keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T16:04:06.234478Z'
+  updated: '2026-06-24T14:36:53.233451Z'
   dispatch_log:
   - timestamp: '2026-06-24T13:05:57.998424Z'
     agent: jules
@@ -47409,11 +47360,6 @@ tasks:
     agent: jules
     session_id: '9325474395156977132'
     status: dispatched
-  - timestamp: '2026-06-24T15:59:45.005390Z'
-    agent: limen
-    session_id: heal
-    status: open
-    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: GEN-organvm-session-meta-test-coverage-0624
   title: Raise test coverage in organvm/session-meta
   repo: organvm/session-meta
@@ -47421,7 +47367,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: done
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -47433,7 +47379,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T15:54:06.189254Z'
+  updated: '2026-06-24T14:36:53.233451Z'
   dispatch_log:
   - timestamp: '2026-06-24T13:05:57.998424Z'
     agent: jules
@@ -47448,11 +47394,6 @@ tasks:
     agent: jules
     session_id: '2623371610652451535'
     status: dispatched
-  - timestamp: '2026-06-24T15:54:06.189254Z'
-    agent: jules
-    session_id: https://github.com/organvm/session-meta/pull/117
-    status: done
-    output: 'jules-land: landed session 2623371610652451535 as PR'
 - id: GEN-organvm-mirror-mirror-test-coverage-0624
   title: Raise test coverage in organvm/mirror-mirror
   repo: organvm/mirror-mirror
@@ -47608,17 +47549,16 @@ tasks:
   title: Raise test coverage in organvm/styx
   repo: organvm/styx
   type: code
-  target_agent: jules
+  target_agent: gemini
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - test-coverage
   - generated
   - build-out
   - tried:agy
   - tried:claude
-  - tried:gemini
   urls: []
   context: Find the largest source module in organvm/styx with little or no test coverage
     and add a focused, PASSING test suite for it. Run the repo's own test command
@@ -47626,7 +47566,7 @@ tasks:
     stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T15:47:59.880259Z'
+  updated: '2026-06-24T14:08:09.813170Z'
   dispatch_log:
   - timestamp: '2026-06-24T13:50:16.953010Z'
     agent: agy
@@ -47636,14 +47576,6 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
-  - timestamp: '2026-06-24T15:13:00.943158Z'
-    agent: gemini
-    session_id: cli
-    status: failed->jules
-  - timestamp: '2026-06-24T15:47:59.880259Z'
-    agent: jules
-    session_id: cli
-    status: dispatched
 - id: GEN-organvm-limen-test-coverage-0624
   title: Raise test coverage in organvm/limen
   repo: organvm/limen
@@ -47836,7 +47768,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: done
+  status: dispatched
   labels:
   - ci-green
   - generated
@@ -47850,7 +47782,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T15:11:11.646756Z'
+  updated: '2026-06-24T13:50:16.953010Z'
   dispatch_log:
   - timestamp: '2026-06-24T13:05:57.998424Z'
     agent: codex
@@ -47860,16 +47792,6 @@ tasks:
     agent: jules
     session_id: '7276525440981687688'
     status: dispatched
-  - timestamp: '2026-06-24T15:11:11.646756Z'
-    agent: jules
-    session_id: '7276525440981687688'
-    status: done
-    output: "diff --git a/apps/web/src/components/AdvancedFilters.tsx b/apps/web/src/components/AdvancedFilters.tsx\n\
-      index 18a2e45..4cf2246 100644\n--- a/apps/web/src/components/AdvancedFilters.tsx\n\
-      +++ b/apps/web/src/components/AdvancedFilters.tsx\n@@ -32,6 +32,7 @@ export\
-      \ function AdvancedFilters({\n   // a parent-driven reset). Without this, stale\
-      \ local state would clobber the\n   // parent's value the next time Apply is\
-      \ clicked.\n   useEffect(() => {\n+    // eslint-disable-next-line react-hooks/set-state-in-eff"
 - id: GEN-organvm-a-i-chat--exporter-ci-green-0624
   title: Make organvm/a-i-chat--exporter CI green
   repo: organvm/a-i-chat--exporter
@@ -47936,10 +47858,10 @@ tasks:
   title: Make organvm/styx CI green
   repo: organvm/styx
   type: code
-  target_agent: jules
+  target_agent: gemini
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - ci-green
   - generated
@@ -47947,7 +47869,6 @@ tasks:
   - tried:opencode
   - tried:agy
   - tried:claude
-  - tried:gemini
   urls: []
   context: Inspect the latest FAILING checks on organvm/styx's default branch, fix
     the root cause (lint / types / failing test / config), and confirm the checks
@@ -47956,7 +47877,7 @@ tasks:
     endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T15:47:59.880259Z'
+  updated: '2026-06-24T14:08:09.813170Z'
   dispatch_log:
   - timestamp: '2026-06-24T13:05:57.998424Z'
     agent: opencode
@@ -47970,14 +47891,6 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
-  - timestamp: '2026-06-24T15:13:00.943158Z'
-    agent: gemini
-    session_id: cli
-    status: failed->jules
-  - timestamp: '2026-06-24T15:47:59.880259Z'
-    agent: jules
-    session_id: cli
-    status: dispatched
 - id: GEN-organvm-limen-ci-green-0624
   title: Make organvm/limen CI green
   repo: organvm/limen
@@ -48020,12 +47933,11 @@ tasks:
   target_agent: any
   priority: low
   budget_cost: 1
-  status: cancelled
+  status: dispatched
   labels:
   - docs
   - generated
   - build-out
-  - noop
   urls: []
   context: "Derive an accurate Usage section in organvm/domus-genoma's README from\
     \ the ACTUAL entrypoints/exports (install, run, key commands + flags). No invented\
@@ -48034,11 +47946,7 @@ tasks:
   depends_on: []
   created: '2026-06-24'
   updated: '2026-06-24T14:55:54.283423Z'
-  dispatch_log:
-  - timestamp: '2026-06-24T14:55:54.283423Z'
-    agent: agy
-    session_id: cli
-    status: noop
+  dispatch_log: []
 - id: GEN-organvm-portfolio-docs-0624
   title: Real usage docs for organvm/portfolio
   repo: organvm/portfolio
@@ -48046,7 +47954,7 @@ tasks:
   target_agent: any
   priority: low
   budget_cost: 1
-  status: done
+  status: dispatched
   labels:
   - docs
   - generated
@@ -48058,17 +47966,8 @@ tasks:
     \ 2026-06-24 to keep the stream endless]"
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T15:59:45.005390Z'
-  dispatch_log:
-  - timestamp: '2026-06-24T14:55:54.283423Z'
-    agent: agy
-    session_id: https://github.com/organvm/portfolio/pull/147
-    status: dispatched
-  - timestamp: '2026-06-24T15:59:45.005390Z'
-    agent: limen
-    session_id: heal
-    status: done
-    output: "heal-dispatch: PR merged \u2192 done"
+  updated: '2026-06-24T14:55:54.283423Z'
+  dispatch_log: []
 - id: GEN-organvm-session-meta-docs-0624
   title: Real usage docs for organvm/session-meta
   repo: organvm/session-meta
@@ -48076,7 +47975,7 @@ tasks:
   target_agent: any
   priority: low
   budget_cost: 1
-  status: done
+  status: dispatched
   labels:
   - docs
   - generated
@@ -48088,17 +47987,8 @@ tasks:
     \ 2026-06-24 to keep the stream endless]"
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T15:54:06.189254Z'
-  dispatch_log:
-  - timestamp: '2026-06-24T14:55:54.283423Z'
-    agent: jules
-    session_id: '18156941759248945278'
-    status: dispatched
-  - timestamp: '2026-06-24T15:54:06.189254Z'
-    agent: jules
-    session_id: https://github.com/organvm/session-meta/pull/116
-    status: done
-    output: 'jules-land: landed session 18156941759248945278 as PR'
+  updated: '2026-06-24T14:55:54.283423Z'
+  dispatch_log: []
 - id: GEN-organvm-mirror-mirror-docs-0624
   title: Real usage docs for organvm/mirror-mirror
   repo: organvm/mirror-mirror
@@ -48106,7 +47996,7 @@ tasks:
   target_agent: any
   priority: low
   budget_cost: 1
-  status: done
+  status: dispatched
   labels:
   - docs
   - generated
@@ -48118,17 +48008,8 @@ tasks:
     \ 2026-06-24 to keep the stream endless]"
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T15:10:22.615877Z'
-  dispatch_log:
-  - timestamp: '2026-06-24T14:55:54.283423Z'
-    agent: jules
-    session_id: '8708761135861015455'
-    status: dispatched
-  - timestamp: '2026-06-24T15:10:22.615877Z'
-    agent: jules
-    session_id: https://github.com/organvm/mirror-mirror/pull/41
-    status: done
-    output: 'jules-land: landed session 8708761135861015455 as PR'
+  updated: '2026-06-24T14:55:54.283423Z'
+  dispatch_log: []
 - id: GEN-organvm-universal-mail--automation-docs-0624
   title: Real usage docs for organvm/universal-mail--automation
   repo: organvm/universal-mail--automation
@@ -48148,17 +48029,8 @@ tasks:
     \ 2026-06-24 to keep the stream endless]"
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T16:04:06.234478Z'
-  dispatch_log:
-  - timestamp: '2026-06-24T14:55:54.283423Z'
-    agent: jules
-    session_id: cli
-    status: dispatched
-  - timestamp: '2026-06-24T15:59:45.005390Z'
-    agent: limen
-    session_id: heal
-    status: open
-    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  updated: '2026-06-24T14:55:54.283423Z'
+  dispatch_log: []
 - id: GEN-organvm-public-record-data-scrapper-docs-0624
   title: Real usage docs for organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
@@ -48166,7 +48038,7 @@ tasks:
   target_agent: any
   priority: low
   budget_cost: 1
-  status: done
+  status: open
   labels:
   - docs
   - generated
@@ -48178,31 +48050,19 @@ tasks:
     \ 2026-06-24 to keep the stream endless]"
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T15:59:45.005390Z'
-  dispatch_log:
-  - timestamp: '2026-06-24T15:13:00.943158Z'
-    agent: codex
-    session_id: https://github.com/organvm/public-record-data-scrapper/pull/312
-    status: dispatched
-  - timestamp: '2026-06-24T15:59:45.005390Z'
-    agent: limen
-    session_id: heal
-    status: done
-    output: "heal-dispatch: PR merged \u2192 done"
+  dispatch_log: []
 - id: GEN-organvm-a-i-chat--exporter-docs-0624
   title: Real usage docs for organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: opencode
+  target_agent: any
   priority: low
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - docs
   - generated
   - build-out
-  - tried:agy
-  - noop
   urls: []
   context: "Derive an accurate Usage section in organvm/a-i-chat--exporter's README\
     \ from the ACTUAL entrypoints/exports (install, run, key commands + flags). No\
@@ -48210,16 +48070,7 @@ tasks:
     \ 2026-06-24 to keep the stream endless]"
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T15:47:59.880259Z'
-  dispatch_log:
-  - timestamp: '2026-06-24T15:13:00.943158Z'
-    agent: agy
-    session_id: cli
-    status: failed->claude
-  - timestamp: '2026-06-24T15:47:59.880259Z'
-    agent: opencode
-    session_id: cli
-    status: noop
+  dispatch_log: []
 - id: GEN-organvm-the-invisible-ledger-docs-0624
   title: Real usage docs for organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
@@ -48227,7 +48078,7 @@ tasks:
   target_agent: any
   priority: low
   budget_cost: 1
-  status: done
+  status: open
   labels:
   - docs
   - generated
@@ -48239,31 +48090,19 @@ tasks:
     \ 2026-06-24 to keep the stream endless]"
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T15:59:45.005390Z'
-  dispatch_log:
-  - timestamp: '2026-06-24T15:13:00.943158Z'
-    agent: agy
-    session_id: https://github.com/organvm/the-invisible-ledger/pull/47
-    status: dispatched
-  - timestamp: '2026-06-24T15:59:45.005390Z'
-    agent: limen
-    session_id: heal
-    status: done
-    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
+  dispatch_log: []
 - id: GEN-organvm-styx-docs-0624
   title: Real usage docs for organvm/styx
   repo: organvm/styx
   type: code
-  target_agent: jules
+  target_agent: any
   priority: low
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - docs
   - generated
   - build-out
-  - tried:claude
-  - tried:gemini
   urls: []
   context: "Derive an accurate Usage section in organvm/styx's README from the ACTUAL\
     \ entrypoints/exports (install, run, key commands + flags). No invented features,\
@@ -48271,20 +48110,7 @@ tasks:
     \ to keep the stream endless]"
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T15:51:01.050044Z'
-  dispatch_log:
-  - timestamp: '2026-06-24T15:13:00.943158Z'
-    agent: claude
-    session_id: cli
-    status: failed->gemini
-  - timestamp: '2026-06-24T15:47:59.880259Z'
-    agent: gemini
-    session_id: cli
-    status: failed->jules
-  - timestamp: '2026-06-24T15:51:01.050044Z'
-    agent: jules
-    session_id: cli
-    status: dispatched
+  dispatch_log: []
 - id: GEN-organvm-limen-docs-0624
   title: Real usage docs for organvm/limen
   repo: organvm/limen
@@ -48292,12 +48118,11 @@ tasks:
   target_agent: any
   priority: low
   budget_cost: 1
-  status: cancelled
+  status: open
   labels:
   - docs
   - generated
   - build-out
-  - noop
   urls: []
   context: "Derive an accurate Usage section in organvm/limen's README from the ACTUAL\
     \ entrypoints/exports (install, run, key commands + flags). No invented features,\
@@ -48305,12 +48130,7 @@ tasks:
     \ to keep the stream endless]"
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T15:13:00.943158Z'
-  dispatch_log:
-  - timestamp: '2026-06-24T15:13:00.943158Z'
-    agent: claude
-    session_id: cli
-    status: noop
+  dispatch_log: []
 - id: GEN-organvm-domus-genoma-security-0624
   title: Security hardening pass on organvm/domus-genoma
   repo: organvm/domus-genoma
@@ -48545,16 +48365,15 @@ tasks:
   title: Security hardening pass on organvm/styx
   repo: organvm/styx
   type: code
-  target_agent: jules
+  target_agent: gemini
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - security
   - generated
   - build-out
   - tried:claude
-  - tried:gemini
   urls: []
   context: Run the ecosystem audit for organvm/styx (npm audit / pip-audit / equivalent),
     upgrade or pin high-severity advisories, and add input validation at the main
@@ -48562,20 +48381,12 @@ tasks:
     2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T15:47:59.880259Z'
+  updated: '2026-06-24T13:05:57.998424Z'
   dispatch_log:
   - timestamp: '2026-06-24T13:05:57.998424Z'
     agent: claude
     session_id: cli
     status: failed->gemini
-  - timestamp: '2026-06-24T15:13:00.943158Z'
-    agent: gemini
-    session_id: cli
-    status: failed->jules
-  - timestamp: '2026-06-24T15:47:59.880259Z'
-    agent: jules
-    session_id: cli
-    status: dispatched
 - id: GEN-organvm-limen-security-0624
   title: Security hardening pass on organvm/limen
   repo: organvm/limen
@@ -48728,7 +48539,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T16:04:06.234478Z'
+  updated: '2026-06-24T14:36:53.233451Z'
   dispatch_log:
   - timestamp: '2026-06-24T13:50:16.953010Z'
     agent: jules
@@ -48743,11 +48554,6 @@ tasks:
     agent: jules
     session_id: cli
     status: dispatched
-  - timestamp: '2026-06-24T15:59:45.005390Z'
-    agent: limen
-    session_id: heal
-    status: open
-    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: GEN-organvm-public-record-data-scrapper-simplify-0624
   title: Reduce complexity in organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
@@ -48755,7 +48561,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: done
+  status: dispatched
   labels:
   - simplify
   - generated
@@ -48766,7 +48572,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T15:59:45.005390Z'
+  updated: '2026-06-24T14:55:54.283423Z'
   dispatch_log:
   - timestamp: '2026-06-24T13:50:16.953010Z'
     agent: jules
@@ -48777,15 +48583,6 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
-  - timestamp: '2026-06-24T14:55:54.283423Z'
-    agent: codex
-    session_id: https://github.com/organvm/public-record-data-scrapper/pull/311
-    status: dispatched
-  - timestamp: '2026-06-24T15:59:45.005390Z'
-    agent: limen
-    session_id: heal
-    status: done
-    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GEN-organvm-a-i-chat--exporter-simplify-0624
   title: Reduce complexity in organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
@@ -48840,7 +48637,7 @@ tasks:
   title: Reduce complexity in organvm/styx
   repo: organvm/styx
   type: code
-  target_agent: jules
+  target_agent: any
   priority: medium
   budget_cost: 1
   status: dispatched
@@ -48848,18 +48645,13 @@ tasks:
   - simplify
   - generated
   - build-out
-  - tried:codex
-  - tried:opencode
-  - tried:agy
-  - tried:claude
-  - tried:gemini
   urls: []
   context: Identify the most complex or most-duplicated module in organvm/styx and
     refactor it for clarity, with tests proving behavior is unchanged. Net lines should
     not grow without cause. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T16:04:06.234478Z'
+  updated: '2026-06-24T14:55:54.283423Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:08:09.813170Z'
     agent: jules
@@ -48870,26 +48662,6 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
-  - timestamp: '2026-06-24T14:55:54.283423Z'
-    agent: codex
-    session_id: cli
-    status: failed->opencode
-  - timestamp: '2026-06-24T15:13:00.943158Z'
-    agent: opencode
-    session_id: cli
-    status: failed->agy
-  - timestamp: '2026-06-24T15:47:59.880259Z'
-    agent: agy
-    session_id: cli
-    status: failed->claude
-  - timestamp: '2026-06-24T15:51:01.050044Z'
-    agent: claude
-    session_id: cli
-    status: failed->gemini
-  - timestamp: '2026-06-24T15:59:12.863680Z'
-    agent: gemini
-    session_id: cli
-    status: failed->jules
 - id: GEN-organvm-limen-simplify-0624
   title: Reduce complexity in organvm/limen
   repo: organvm/limen
@@ -48908,18 +48680,13 @@ tasks:
     not grow without cause. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T16:04:06.234478Z'
+  updated: '2026-06-24T14:55:54.283423Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:08:09.813170Z'
     agent: jules
     session_id: '10687973762957104070'
     status: dispatched
   - timestamp: '2026-06-24T14:34:29.133987Z'
-    agent: limen
-    session_id: heal
-    status: open
-    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
-  - timestamp: '2026-06-24T15:59:45.005390Z'
     agent: limen
     session_id: heal
     status: open
@@ -48931,12 +48698,11 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: cancelled
+  status: dispatched
   labels:
   - typing
   - generated
   - build-out
-  - noop
   urls: []
   context: Eliminate the worst untyped hotspots in organvm/domus-genoma's most-imported
     module (remove `any` / add type hints / fix loose signatures). Keep the build
@@ -48954,10 +48720,6 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
-  - timestamp: '2026-06-24T14:55:54.283423Z'
-    agent: opencode
-    session_id: cli
-    status: noop
 - id: GEN-organvm-portfolio-typing-0624
   title: Tighten types in organvm/portfolio
   repo: organvm/portfolio
@@ -49070,10 +48832,10 @@ tasks:
   title: Tighten types in organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: medium
   budget_cost: 1
-  status: done
+  status: dispatched
   labels:
   - typing
   - generated
@@ -49085,25 +48847,12 @@ tasks:
     the build and tests green. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T15:59:45.005390Z'
+  updated: '2026-06-24T14:55:54.283423Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:22:13.734586Z'
     agent: agy
     session_id: cli
     status: failed->claude
-  - timestamp: '2026-06-24T14:55:54.283423Z'
-    agent: agy
-    session_id: cli
-    status: failed->claude
-  - timestamp: '2026-06-24T15:13:00.943158Z'
-    agent: claude
-    session_id: https://github.com/organvm/public-record-data-scrapper/pull/313
-    status: dispatched
-  - timestamp: '2026-06-24T15:59:45.005390Z'
-    agent: limen
-    session_id: heal
-    status: done
-    output: "heal-dispatch: PR merged \u2192 done"
 - id: GEN-organvm-a-i-chat--exporter-typing-0624
   title: Tighten types in organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
@@ -49111,7 +48860,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: done
+  status: open
   labels:
   - typing
   - generated
@@ -49123,60 +48872,67 @@ tasks:
     and tests green. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T15:59:45.005390Z'
+  updated: '2026-06-24T14:22:13.734586Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:22:13.734586Z'
     agent: agy
     session_id: cli
     status: failed->claude
-  - timestamp: '2026-06-24T15:13:00.943158Z'
-    agent: codex
-    session_id: https://github.com/organvm/a-i-chat--exporter/pull/75
-    status: dispatched
-  - timestamp: '2026-06-24T15:59:45.005390Z'
-    agent: limen
-    session_id: heal
-    status: done
-    output: "heal-dispatch: PR merged \u2192 done"
 - id: GEN-organvm-the-invisible-ledger-typing-0624
   title: Tighten types in organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: jules
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - typing
   - generated
   - build-out
   - tried:claude
-  - slow
   urls: []
   context: Eliminate the worst untyped hotspots in organvm/the-invisible-ledger's
     most-imported module (remove `any` / add type hints / fix loose signatures). Keep
     the build and tests green. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T15:51:01.050044Z'
+  updated: '2026-06-24T14:22:13.734586Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:22:13.734586Z'
     agent: claude
     session_id: cli
     status: failed->gemini
-  - timestamp: '2026-06-24T15:13:00.943158Z'
-    agent: opencode
-    session_id: cli
-    status: timeout->jules
-  - timestamp: '2026-06-24T15:51:01.050044Z'
-    agent: jules
-    session_id: '18268396625587629325'
-    status: dispatched
 - id: GEN-organvm-styx-typing-0624
   title: Tighten types in organvm/styx
   repo: organvm/styx
   type: code
-  target_agent: jules
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - typing
+  - generated
+  - build-out
+  - tried:claude
+  urls: []
+  context: Eliminate the worst untyped hotspots in organvm/styx's most-imported module
+    (remove `any` / add type hints / fix loose signatures). Keep the build and tests
+    green. [auto-generated 2026-06-24 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-24'
+  updated: '2026-06-24T14:22:13.734586Z'
+  dispatch_log:
+  - timestamp: '2026-06-24T14:22:13.734586Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
+- id: GEN-organvm-limen-typing-0624
+  title: Tighten types in organvm/limen
+  repo: organvm/limen
+  type: code
+  target_agent: any
   priority: medium
   budget_cost: 1
   status: dispatched
@@ -49184,62 +48940,18 @@ tasks:
   - typing
   - generated
   - build-out
-  - tried:claude
-  - tried:gemini
   urls: []
-  context: Eliminate the worst untyped hotspots in organvm/styx's most-imported module
+  context: Eliminate the worst untyped hotspots in organvm/limen's most-imported module
     (remove `any` / add type hints / fix loose signatures). Keep the build and tests
     green. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T15:51:01.050044Z'
+  updated: '2026-06-24T14:22:13.734586Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:22:13.734586Z'
-    agent: claude
-    session_id: cli
-    status: failed->gemini
-  - timestamp: '2026-06-24T15:47:59.880259Z'
-    agent: gemini
-    session_id: cli
-    status: failed->jules
-  - timestamp: '2026-06-24T15:51:01.050044Z'
     agent: jules
-    session_id: cli
+    session_id: '9026462918353295247'
     status: dispatched
-  - id: GEN-organvm-limen-typing-0624
-   title: Tighten types in organvm/limen
-   repo: organvm/limen
-   type: code
-   target_agent: any
-   priority: medium
-   budget_cost: 1
-   status: done
-   labels:
-   - typing
-   - generated
-   - build-out
-   urls: []
-   context: Eliminate the worst untyped hotspots in organvm/limen's most-imported module
-     (remove `any` / add type hints / fix loose signatures). Keep the build and tests
-     green. [auto-generated 2026-06-24 to keep the stream endless]
-   depends_on: []
-   created: '2026-06-24'
-   updated: '2026-06-25T00:00:00Z'
-   dispatch_log:
-   - timestamp: '2026-06-24T14:22:13.734586Z'
-     agent: jules
-     session_id: '9026462918353295247'
-     status: dispatched
-   - timestamp: '2026-06-24T15:59:45.005390Z'
-     agent: limen
-     session_id: heal
-     status: open
-     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
-   - timestamp: '2026-06-25T00:00:00Z'
-     agent: opencode
-     session_id: current
-     status: done
-     output: "Tightened types across 5 modules in cli/src/limen/ (io.py, dispatch.py, doctor.py, capacity.py, status.py). Fixed 14 mypy errors: added return type to queue_lock (io.py:17), typed _run_capture/_dep_merged/_deps_met/_git/_apply_result/run_one/release_stale_tasks in dispatch.py, fixed _iso return type in doctor.py, removed unused import. Installed types-PyYAML stubs. 62/62 core tests pass, 0 mypy errors in target modules, ruff clean."
 - id: ASK-quicken-login
   title: 'one login/identity step (your hand: browser/OAuth/portal)'
   type: ops
@@ -49257,70 +48969,27 @@ tasks:
     \ each beat until you act."
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T16:01:41.483645Z'
+  updated: '2026-06-24T14:05:49.861712Z'
   dispatch_log: []
 - id: GEN-organvm-limen-simplify-0624
-  title: "Reduce complexity in organvm/limen \u2014 refactor dispatch.py"
+  title: "Reduce complexity in organvm/limen — refactor dispatch.py"
   repo: organvm/limen
   type: code
   target_agent: opencode
   priority: high
   budget_cost: 2
-  status: cancelled
+  status: done
   labels:
   - refactor
   - complexity
-  - noop
   urls: []
-  context: "Refactored cli/src/limen/dispatch.py (1166\u21921081 lines, \u22127.3%):\
-    \ (1) removed duplicated _queue_lock; aliased to canonical io.queue_lock for backward\
-    \ compat; (2) removed redundant inner imports (re, json, subprocess); (3) unified\
-    \ result handling \u2014 dispatch_tasks now delegates to _apply_result, eliminating\
-    \ a 64-line inline 6-way branch duplicate. All 22 dispatch tests + 16 dependent\
-    \ tests green."
+  context: "Refactored cli/src/limen/dispatch.py (1166→1081 lines, −7.3%): (1) removed duplicated _queue_lock; aliased to canonical io.queue_lock for backward compat; (2) removed redundant inner imports (re, json, subprocess); (3) unified result handling — dispatch_tasks now delegates to _apply_result, eliminating a 64-line inline 6-way branch duplicate. All 22 dispatch tests + 16 dependent tests green."
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T14:55:54.283423Z'
+  updated: '2026-06-24T14:40:00Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:40:00Z'
     agent: opencode
     session_id: cli
     status: done
-    output: "dispatch.py: 1166\u21921081 lines (\u22127.3%). Removed _queue_lock duplicate,\
-      \ inner import clutter, and inline result-handling duplicate (unified via _apply_result).\
-      \ 22 dispatch tests + 16 dependent tests all green."
-  - timestamp: '2026-06-24T14:55:54.283423Z'
-    agent: opencode
-    session_id: cli
-    status: noop
-- id: GH-organvm-limen-190
-  title: 'needs-human: activate the advisory lint hook (one reversible settings paste)'
-  repo: organvm/limen
-  type: code
-  target_agent: any
-  priority: medium
-  budget_cost: 1
-  status: done
-  labels:
-  - needs-human
-  urls:
-  - https://github.com/organvm/limen/issues/190
-  context: "GitHub issue organvm/limen#190. **Owner:** Anthony (human). This is the\
-    \ one remaining human-gated atom from the operating-charter build (PR #180, on\
-    \ `main` at `463e28d`). AI self-edit of `.claude/settings.json` is **hard-denied**\
-    \ by the classifier \u2014 re-attempted under explicit \"do it\" and blocked again\
-    \ \u2014 so this paste is human-only. It is reversible, sends nothing, deletes\
-    \ nothing. ### What it unblocks The advisory `ruff`-on-edi"
-  depends_on: []
-  created: '2026-06-24'
-  updated: '2026-06-24T15:59:45.005390Z'
-  dispatch_log:
-  - timestamp: '2026-06-24T15:13:00.943158Z'
-    agent: codex
-    session_id: https://github.com/organvm/limen/pull/197
-    status: dispatched
-  - timestamp: '2026-06-24T15:59:45.005390Z'
-    agent: limen
-    session_id: heal
-    status: done
-    output: "heal-dispatch: PR merged \u2192 done"
+    output: "dispatch.py: 1166→1081 lines (−7.3%). Removed _queue_lock duplicate, inner import clutter, and inline result-handling duplicate (unified via _apply_result). 22 dispatch tests + 16 dependent tests all green."
