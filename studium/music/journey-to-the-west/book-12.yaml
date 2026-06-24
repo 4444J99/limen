@@ -1,0 +1,106 @@
+work: journey-to-the-west
+book: 12
+title: "Chapter 12: Departure and First Exposures — The Road Begins"
+length_minutes: 104
+dominant_force: exile
+principle: >
+  Score Chapter 12 as the first friction between vow and world. Xuanzang has left court and family but not
+  yet met his companions; this is the phase where solitude becomes testing, where every ordinary mile reveals
+  whether the monk can remain in service under uncertainty.
+force_arc: [exile, law, supplication, revelation, law, memory, supplication, grief, exile, fate]
+tracks:
+  - n: 1
+    scene: "From capital gate to frontier road"
+    force: exile
+    composer: Ravel
+    work: "Daphnis et Chloé — Suite No. 2, I. Lever du jour"
+    decision: added
+    why: >
+      Chapter 12’s first movement is not victory but distance.
+      The departure is physically beautiful and existentially isolating; Ravel’s opening arc keeps that
+      mixed register clear: dawn light with unresolved loneliness.
+  - n: 2
+    scene: "Routine observances continue on the journey"
+    force: law
+    composer: Mozart
+    work: "Symphony No. 40 — I. Molto Allegro"
+    decision: added
+    why: >
+      The road does not suspend monastic form.
+      Mozart’s measured momentum supports the chapter’s insistence that ritual discipline is portable and
+      non-negotiable even when the environment changes.
+  - n: 3
+    scene: "Food, shelter, and fear begin to test generosity"
+    force: supplication
+    composer: Barber
+    work: "Agnus Dei (orchestral arrangement)"
+    decision: added
+    why: >
+      Need now appears concretely. What looked abstract in court becomes practical: hunger, vulnerability,
+      dependence. Barber’s Agnus Dei registers this appeal to care and trust.
+  - n: 4
+    scene: "First illusions and warnings indicate hidden hazards"
+    force: revelation
+    composer: Debussy
+    work: "Nuages"
+    decision: added
+    why: >
+      The path immediately contradicts idealized expectation.
+      These scenes are not full-fledged monsters yet; they are atmospheric disturbances and deceptive
+      appearances that force the monk to read signs better than he reads faces. Debussy keeps the ambiguity
+      unresolved in texture.
+  - n: 5
+    scene: "Monastic protocol remains the only stable anchor"
+    force: law
+    composer: Stravinsky
+    work: "Pulcinella — Overture"
+    decision: added
+    why: >
+      Every uncertainty amplifies the value of procedure. Xuanzang’s adherence to order is not
+      bureaucracy but protection from panic. Stravinsky’s crisp structures mirror form as a portable refuge.
+  - n: 6
+    scene: "A recurring dream returns the cicada promise"
+    force: memory
+    composer: Fauré
+    work: "Pavane, Op. 50"
+    decision: added
+    why: >
+      Memory becomes practical guidance now. It is no longer only past-life mythology; it is a cue for
+      responsibility at the edge of fear. Fauré’s pavane provides reflective poise without sentimental drift.
+  - n: 7
+    scene: "Compassion remains active after the first trials begin"
+    force: supplication
+    composer: Elgar
+    work: "Nimrod (Symphony No. 1)"
+    decision: added
+    why: >
+      The chapter tests whether devotion survives friction.
+      Nimrod marks compassionate persistence: dignified, vulnerable, and still disciplined.
+  - n: 8
+    scene: "Loss and fatigue reveal the road's emotional cost"
+    force: grief
+    composer: Mahler
+    work: "Kindertotenlieder — 'Nun will die Sonn'?"
+    decision: added
+    why: >
+      The first real hardship is not grand tragedy but cumulative wear.
+      This is grief as depletion rather than finality; the music tracks fatigue becoming awareness.
+  - n: 9
+    scene: "No return path is obvious"
+    force: exile
+    composer: Brahms
+    work: "Intermezzo Op. 116 No. 4"
+    decision: added
+    why: >
+      The chapter’s emotional line now turns toward one-way movement.
+      There is no heroic climax yet, only a steady refusal to turn back. Brahms’s chamber intimacy supports
+      that inward admission.
+  - n: 10
+    scene: "Fate turns from abstraction into lived proximity"
+    force: fate
+    composer: Bruckner
+    work: "Symphony No. 8 in C minor — I. Allegro maestoso"
+    decision: added
+    why: >
+      By the chapter’s end, Xuanzang’s mission has entered destiny’s field.
+      Bruckner’s inevitability gives the right scale: the road is now truly the text.

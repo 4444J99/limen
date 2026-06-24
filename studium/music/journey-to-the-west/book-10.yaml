@@ -1,0 +1,104 @@
+work: journey-to-the-west
+book: 10
+title: "Chapter 10: Discipline Before the Road — Xuanzang Becomes the Monk"
+length_minutes: 98
+dominant_force: law
+principle: >
+  Score Chapter 10 as the conversion from potential to practice. Xuanzang’s spiritual identity becomes
+  legible through routine: study, ritual, compassion, grief, and vows that are repeatedly tested against daily
+  life. The chapter’s force is law because the journey is earned through obedience to form.
+force_arc: [law, supplication, revelation, law, grief, memory, law, supplication, grief, fate]
+tracks:
+  - n: 1
+    scene: "Monastic routine as the first wall against randomness"
+    force: law
+    composer: Bach
+    work: "Goldberg Variations — Aria"
+    decision: added
+    why: >
+      Chapter 10 makes discipline visible. Xuanzang enters regular hours, recitation, and ritual repetition.
+      Bach’s Aria is an exemplary beginning for constrained repetition: a beautiful pattern that asks for attention,
+      not intensity, and makes form itself spiritually legible.
+  - n: 2
+    scene: "Compassion matures as practical habit"
+    force: supplication
+    composer: Barber
+    work: "Adagio for Strings"
+    decision: added
+    why: >
+      He begins by helping before reasoning. This is not passive gentleness but an active training in response.
+      Barber gives that register directly: an appeal held in stillness, not rhetoric.
+  - n: 3
+    scene: "First encounters with Buddhist teaching ignite recollection"
+    force: revelation
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      The chapter’s teaching scenes are initially simple: one phrase, one verse, one ethical hinge.
+      Pärt’s line and harmony stay minimal, allowing the register of revelation to feel incremental rather than theatrical.
+  - n: 4
+    scene: "Official paths and courtly comforts are declined"
+    force: law
+    composer: Brahms
+    work: "Symphony No. 1 — I. Allegro"
+    decision: added
+    why: >
+      Xuanzang’s life can drift into prestige, but the chapter turns him toward constraint.
+      Brahms’s first movement keeps that refusal from feeling heroic; it feels procedural, with internal cost.
+  - n: 5
+    scene: "Witnessing public suffering refines ethical response"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 5 — I. Trauermarsch (selected movement)"
+    decision: added
+    why: >
+      The monk-in-formation is no longer sheltered from impermanence.
+      Suffering appears first as visible social consequence; Mahler’s funerary motion gives this register
+      a civic sorrow without collapsing it into private tragedy.
+  - n: 6
+    scene: "The cicada past-life is no longer lore, but responsibility"
+    force: memory
+    composer: Fauré
+    work: "Requiem — 'Pie Jesu'"
+    decision: added
+    why: >
+      Memory in Chapter 10 is not nostalgia; it is the pressure of unfinished duty.
+      Fauré’s pie can remain tender while carrying doctrinal consequence.
+  - n: 7
+    scene: "Formal vows are internalized as a pilgrimage grammar"
+    force: law
+    composer: Beethoven
+    work: "Symphony No. 3 — I. Allegro con brio"
+    decision: added
+    why: >
+      Vows give continuity to intention. The chapter depicts this moment as deliberate practice over
+      personality. Beethoven’s large form gives veneration to discipline without sentimentalizing it.
+  - n: 8
+    scene: "Prayer shifts from private plea to shared ethic"
+    force: supplication
+    composer: Szymanowski
+    work: "Symphony No. 4 — I. Allegro deciso"
+    decision: added
+    why: >
+      Xuanzang’s practice becomes social: he prays not for exemption, but for steadiness.
+      The music tracks this social register of devotion—communal aspiration expressed as ordered motion.
+  - n: 9
+    scene: "Farewells reveal the emotional strain of renunciation"
+    force: grief
+    composer: Schubert
+    work: "Winterreise — 'Der Lindenbaum'"
+    decision: added
+    why: >
+      The chapter’s relational pain is not melodramatic; it is real but disciplined.
+      Schubert’s voice of restrained departure captures the cost of walking away from what is loved.
+  - n: 10
+    scene: "The vow is now a road, not an idea"
+    force: fate
+    composer: Bruckner
+    work: "Symphony No. 4 — II. Andante"
+    decision: added
+    why: >
+      By Chapter 10’s end, Xuanzang is no longer a possibility.
+      The inevitability is structural: the path has chosen him as much as he chose it. Bruckner’s broad
+      harmonic span conveys that momentum.
