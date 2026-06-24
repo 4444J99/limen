@@ -54,6 +54,15 @@ LEDGER = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
 # atoms whose permanent home is a STANDING posture already hung once — never multiply into a task.
 _POSTURE = {"push": "ASK-5-open-merge-gate (the standing gate-hold)"}
 
+# ── the CLOSEOUT ritual, autonomic: a finished session leaves a spent isolation worktree behind.
+#    These are the only trees the reaper may touch (never a clone or the live main checkout). ────────
+WORKTREE_MARKERS = ("/.claude/worktrees/", "/.worktrees/", "/.limen-worktrees/")
+# SessionEnd hook drops a breadcrumb here so a deliberately-ended session is reaped on the NEXT beat
+# instead of waiting out CLOSED_HRS. The reap itself still happens here (you can't remove your own cwd).
+CLOSEOUT_LOG = ROOT / "logs" / "session-closeout.jsonl"
+# the reaper is ON by default (it IS the requested behavior); kill-switch for a cautious operator.
+REAP_ON = os.environ.get("LIMEN_QUICKEN_REAP", "1") == "1"
+
 # A session idle longer than this (and with pending work) is STALLED, not "working".
 STALE_MIN = int(os.environ.get("LIMEN_QUICKEN_STALE_MIN", "20"))
 # Ignore FleetView sessions untouched for this many days (ancient/done history).
@@ -230,10 +239,22 @@ def cascade_decide(sess: dict, todos: list[dict]) -> dict:
             "n_pending": len(pending), "n_done": len([t for t in todos if t["status"] == "completed"])}
 
 
+def _ended_sids() -> set[str]:
+    """Sessions the SessionEnd hook marked as deliberately ended → CLOSED now, not after CLOSED_HRS.
+    Fail-open: a missing/garbled breadcrumb log just yields the empty set (timing falls back to idle)."""
+    out: set[str] = set()
+    for e in _read_jsonl(CLOSEOUT_LOG):
+        sid = e.get("sid")
+        if sid:
+            out.add(sid)
+    return out
+
+
 def gather(now: float, self_sid: str | None) -> list[dict]:
     rows = []
     if not PROJECTS.is_dir():
         return rows
+    ended = _ended_sids()
     horizon = now - HORIZON_DAYS * 86400
     for stream in PROJECTS.glob("*/*.jsonl"):
         try:
@@ -249,6 +270,10 @@ def gather(now: float, self_sid: str | None) -> list[dict]:
             continue
         todos = load_todos(sess["sessionId"])
         sess["state"] = classify_state(sess, todos, now)
+        # a deliberately-ended (ctrl+x'd) session is CLOSED immediately — reap-eligible without the
+        # 18h idle wait — unless it is still genuinely moving (errs safe: never reap an ALIVE tree).
+        if sess["sessionId"] in ended and sess["state"] != "ALIVE":
+            sess["state"] = "CLOSED"
         sess["todos"] = todos
         sess["decision"] = cascade_decide(sess, todos)
         sess["is_self"] = (sess["sessionId"] == self_sid)
@@ -379,6 +404,98 @@ def write_residue(rows: list[dict]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _git(cwd: str, *args: str) -> tuple[int, str, str]:
+    """git -C cwd … , fail-open: any exception → (1, '', msg). Bounded, offline (no fetch)."""
+    import subprocess
+    try:
+        cp = subprocess.run(["git", "-C", cwd, *args], capture_output=True, text=True, timeout=30)
+        return cp.returncode, cp.stdout.strip(), cp.stderr.strip()
+    except Exception as e:
+        return 1, "", str(e)
+
+
+def _gh_merged(cwd: str, branch: str) -> bool:
+    """Does a MERGED PR exist for this branch? Last-resort merge proof for squash merges whose
+    patch-ids drifted during conflict resolution. Fail-open: any error → False (don't reap)."""
+    import subprocess
+    try:
+        cp = subprocess.run(
+            ["gh", "pr", "list", "--head", branch, "--state", "merged", "--json", "number",
+             "-q", ".[].number"], cwd=cwd, capture_output=True, text=True, timeout=30)
+        return cp.returncode == 0 and bool(cp.stdout.strip())
+    except Exception:
+        return False
+
+
+def _branch_merged(cwd: str, branch: str) -> tuple[bool, str]:
+    """VERIFIED-merged = safe to reap. Handles fast-forward AND squash/rebase (where SHAs differ) —
+    the exact guard memory says to run before any worktree-remove / branch -D. Fail CLOSED: any
+    uncertainty returns (False, why) so an unmerged branch is NEVER reaped."""
+    rc, ahead, _ = _git(cwd, "rev-list", "--count", f"origin/main..{branch}")
+    if rc == 0 and ahead == "0":
+        return True, "0 commits ahead of origin/main"
+    # squash/rebase: git cherry marks '+' for any commit whose patch is NOT yet upstream.
+    rc, out, _ = _git(cwd, "cherry", "origin/main", branch)
+    if rc == 0 and not any(ln.startswith("+") for ln in out.splitlines()):
+        return True, "all commits patch-present in origin/main (squash/rebase)"
+    if _gh_merged(cwd, branch):
+        return True, "a merged PR exists for this branch"
+    return False, "commits unique to branch — NOT verified-merged"
+
+
+def reap_done(rows: list[dict], self_cwd: str, apply: bool) -> dict:
+    """The CLOSEOUT ritual, autonomic. A session whose purpose is finished (DONE) or that was
+    deliberately ended (CLOSED) leaves a spent isolation worktree behind; drive it to its terminal
+    state by reversibly reaping the worktree + branch — but ONLY when verified safe on every axis:
+      * the cwd is an isolation worktree (never a clone or the live main checkout);
+      * not our own / a live / a contended tree (errs safe — skip on any doubt);
+      * the tree is CLEAN — fail closed on a single uncommitted byte;
+      * the branch is VERIFIED fully-merged into origin/main (see _branch_merged).
+    Reversible by construction: the content lives in main, the branch SHA stays in reflog ~90d, and the
+    working copy regenerates from the branch — this is reap, not data-delete. Fail-open: any error
+    leaves the tree intact and never crashes the beat. Without `apply` it only previews (no mutation)."""
+    res = {"reaped": [], "kept": [], "would": [], "on": REAP_ON}
+    if not REAP_ON:
+        return res
+    alive = {r["cwd"] for r in rows if r["state"] == "ALIVE"}
+    live_main = str(ROOT).split("/.claude/worktrees/")[0]
+    for r in rows:
+        if r["state"] not in ("DONE", "CLOSED"):
+            continue
+        cwd = r["cwd"] or ""
+        title = r["title"][:40]
+        if not any(m in cwd for m in WORKTREE_MARKERS):
+            continue                                          # only spent isolation worktrees
+        if r["is_self"] or cwd in (self_cwd, live_main, str(ROOT)) or cwd in alive:
+            continue                                          # live / self / contended — never reap
+        if not Path(cwd).is_dir():
+            continue                                          # already gone
+        rc, st, _ = _git(cwd, "status", "--porcelain")
+        if rc != 0 or st:
+            res["kept"].append((title, "uncommitted changes"))
+            continue
+        rc, branch, _ = _git(cwd, "rev-parse", "--abbrev-ref", "HEAD")
+        if rc != 0 or branch in ("", "HEAD", "main", "master"):
+            res["kept"].append((title, f"unsafe branch ref ({branch or 'detached'})"))
+            continue
+        merged, why = _branch_merged(cwd, branch)
+        if not merged:
+            res["kept"].append((title, why))
+            continue
+        if not apply:
+            res["would"].append((title, branch, why))
+            continue
+        rc1, _, e1 = _git(live_main, "worktree", "remove", cwd)     # refuses if dirty/locked
+        if rc1 != 0:
+            res["kept"].append((title, f"worktree remove failed: {e1[:60]}"))
+            continue
+        rc2, _, e2 = _git(live_main, "branch", "-D", branch)        # -D after OUR merge-verify
+        res["reaped"].append((title, branch, why))
+        if rc2 != 0:
+            res["kept"].append((title, f"worktree reaped; branch {branch} kept: {e2[:50]}"))
+    return res
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="QUICKEN — finish stalled sessions' purposes")
     ap.add_argument("--apply", action="store_true",
@@ -395,12 +512,27 @@ def main() -> int:
     rows = gather(now, args.self_sid)
     print(fmt_report(rows))
 
+    # CLOSEOUT — reap spent, verified-merged isolation worktrees (preview unless --apply).
+    reap = reap_done(rows, os.getcwd(), apply=args.apply)
+    if not reap["on"]:
+        print("\n[reap] disabled (LIMEN_QUICKEN_REAP=0)")
+    elif reap["reaped"]:
+        for t, b, why in reap["reaped"]:
+            print(f"[reap] removed worktree+branch {b} ({t}) — {why}")
+    elif reap["would"]:
+        for t, b, why in reap["would"]:
+            print(f"[reap] WOULD remove worktree+branch {b} ({t}) — {why}  (run --apply)")
+    if reap["kept"]:
+        for t, why in reap["kept"]:
+            print(f"[reap] kept {t}: {why}")
+
     if args.apply or args.breathe:
         JOURNAL.parent.mkdir(parents=True, exist_ok=True)
         rec = {"ts": int(now), "sessions": len(rows),
                "stalled": [r["sessionId"] for r in rows if r["state"] == "STALLED"],
                "alive": [r["sessionId"] for r in rows if r["state"] == "ALIVE"],
-               "done": [r["sessionId"] for r in rows if r["state"] == "DONE"]}
+               "done": [r["sessionId"] for r in rows if r["state"] == "DONE"],
+               "reaped": [b for _t, b, _w in reap["reaped"]]}
         with JOURNAL.open("a") as fh:
             fh.write(json.dumps(rec) + "\n")
         RESIDUE_OUT.parent.mkdir(parents=True, exist_ok=True)
