@@ -361,7 +361,7 @@ works:
     original_language: fas
     script: persian
     corpus_path: arabic-persian/shahnameh
-    original_file: persian_original.txt        # ganjoor.net — 61 cycles, section incipits (chrome-stripped)
+    original_file: persian_original.txt        # complete corpus; 61 cycles from ganjoor.net
     translation_files: []
     source_rails: ["https://ganjoor.net/ferdousi/shahname/"]
     main_question: "What is kingship, fate, and lineage across an age?"

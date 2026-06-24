@@ -11,14 +11,14 @@
 - **Corpus:** `sanskrit/ramayana` (translations only)
 - **Source rail:** https://gretil.sub.uni-goettingen.de/gretil.html#Ram
 - **Divisions:** 7 × Kanda
-- **Progress:** 4/7 arcs authored
+- **Progress:** 1/7 arcs authored
 
 | Kanda | dominant force | status |
 | --: | --- | :--: |
-| 1 | kingship | ✓ |
-| 2 | exile | ✓ |
-| 3 | desire | ✓ |
-| 4 | return | ✓ |
+| 1 | (author) | ✓ |
+| 2 | (author) | ☐ |
+| 3 | (author) | ☐ |
+| 4 | (author) | ☐ |
 | 5 | (author) | ☐ |
 | 6 | (author) | ☐ |
 | 7 | (author) | ☐ |

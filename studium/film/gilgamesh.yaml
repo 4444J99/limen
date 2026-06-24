@@ -2,25 +2,23 @@
 # Gilgamesh discovers mortality through a friend, then spends the rest of the poem trying to answer
 # what friendship means when it ends in death. Tablet I establishes the world before this recognition:
 # the tyrant-king, the created counterpart, desire as the threshold into civilization. The grief that
-# gives the work its meaning arrives later (Tablets VII–VIII, Enkidu's death and lament). This companion
-# for Tablet I covers the FORMATION: how a world of kingship, wildness, desire, and law creates the
-# conditions for a friendship that will break the protagonist.
+# gives the work its meaning arrives later (Tablets VII–VIII, Enkidu's death and lament), sending
+# Gilgamesh into exile to search for the impossible escape from fate.
 #
 work: gilgamesh
-title: "The Epic of Gilgamesh — a cinema of kingship, desire, and the made companion"
+title: "The Epic of Gilgamesh — a cinema of kingship, desire, mortality, and grief"
 principle: >
   Gilgamesh is not a fantasy. It is the first record of a man learning that his mortality is not
-  negotiable. Tablet I shows the world *before* that learning: a king so complete he seems
-  untouchable, a wild man who knows nothing of cities, a woman whose touch rewrites the boundary
-  between nature and culture, and a dream that foretells it all. Film should not illustrate the
-  Mesopotamian setting (that is archaeology, not poetry); it should encode the *forces* — kingship
-  as overwhelming presence, civilization as desire-driven threshold, fate as the architecture the
-  gods install without asking. The companion reaches past Mesopotamia: sovereign excess (Ran) for
-  the king's tyranny, wilderness transformation (Spirited Away) for Enkidu's becoming, intimate
-  desire (In the Mood for Love) for the harlot's civilizing touch, and the fateful arrival of
-  the known-unknown (2001) for the gods' intervention. The grief and funeral weight belong to
-  Tablet VIII (Enkidu's death); Tablet I is the stage before the breaking.
-force_coverage: [memory, kingship, supplication, fate, exile, desire, metamorphosis, law, revelation, divine-intervention]
+  negotiable. The epic moves from the world *before* that learning (a king so complete he seems
+  untouchable, desire as the threshold into civilization) into the shattering arrival of grief
+  (Enkidu's death), and finally into terminal exile and the acceptance of limits. Film should not
+  illustrate the Mesopotamian setting; it should encode these *forces*. The companion reaches past
+  Mesopotamia: sovereign excess (Ran) for the king's tyranny, intimate desire (In the Mood for Love)
+  for the civilizing touch, the unyielding mechanism of fate (No Country for Old Men), and the
+  absolute weight of unresolvable mourning (Three Colors: Blue, Manchester by the Sea). The grief
+  and funeral weight carry the poem's terminal message: you cannot defeat mortality, you can only
+  return to your city.
+force_coverage: [memory, kingship, supplication, fate, exile, desire, metamorphosis, law, revelation, divine-intervention, grief]
 films:
   - title: "Hiroshima mon amour"
     director: "Alain Resnais"
@@ -310,6 +308,43 @@ films:
       hears it. Ordet knows how to film this — the moment when the other world's decision *arrives*
       in the human world as presence and is received.
     content_note: "Christian theology, prayer and grace, death and resurrection (no sensationalism)"
+  - title: "Three Colors: Blue"
+    director: "Krzysztof Kieślowski"
+    year: 1993
+    force: grief
+    divisions: [8]
+    objects: []
+    letterboxd: three-colors-blue
+    scene_or_theme: "Tablet VIII — Gilgamesh's lament over Enkidu: the refusal to let the body go, the absolute weight of mortality"
+    object_lesson: >
+      Grief reorganizes the entire sensorium. The survivor attempts to sever all ties to the past to avoid the
+      pain, but the world keeps intruding. Gilgamesh stays by Enkidu's body until a worm falls from its nose;
+      he cannot accept the reality of the loss. The lesson is that mortality is not an event you witness; it is
+      a state you are left in. Kieślowski's Blue teaches this exactly: the attempt to become untouchable after
+      loss is impossible.
+    why: >
+      Kieślowski films mourning from the inside out. Julie's grief is absolute, stripping away her previous
+      identity, just as Gilgamesh tears off his royal robes and puts on animal skins to wander the steppe.
+      Screen this for Tablet VIII to carry the poem's terminal weight.
+    content_note: "car crash, profound emotional pain"
+  - title: "Manchester by the Sea"
+    director: "Kenneth Lonergan"
+    year: 2016
+    force: grief
+    divisions: [8, 9, 10]
+    objects: []
+    letterboxd: manchester-by-the-sea
+    scene_or_theme: "Tablets VIII-X — The aftermath of death: the grief that cannot be resolved"
+    object_lesson: >
+      Some grief has no resolution. Gilgamesh wanders the earth seeking Utnapishtim because he cannot accept
+      that Enkidu is gone and that he too will die. Lee Chandler in Manchester by the Sea lives in a similar
+      wasteland of unresolved sorrow. The lesson is that true grief does not necessarily heal; sometimes the
+      best one can do is simply continue to exist. Gilgamesh eventually returns to Uruk not healed, but
+      resigned to his human limits.
+    why: >
+      Lonergan refuses the standard Hollywood healing arc. The film stays true to the paralyzing nature of
+      profound loss, matching Gilgamesh's terrified flight from death across the steppe.
+    content_note: "tragic loss of children, deep depression, explicit language"
 adaptations:
   # The obvious choice — a direct film OF Gilgamesh. Only one serious cinematic adaptation exists;
   # it is obscure and frankly flawed. Include it as reference only. The force-companion above carries the weight.

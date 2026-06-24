@@ -183,7 +183,7 @@ film:
       - {id: studium-film-beowulf,            title: "Beowulf film companion (wyrd/heroic doom)",                 class: content}
       - {id: studium-film-canterbury-tales,   title: "Canterbury Tales film companion (the human comedy)",       class: content}
       - {id: studium-film-mahabharata,        title: "Mahabharata film companion (dharma/war)",                  class: content}
-      # - {id: studium-film-bhagavad-gita,      title: "Bhagavad Gita film companion (right action/renunciation)", class: content} # DONE
+      - {id: studium-film-bhagavad-gita,      title: "Bhagavad Gita film companion (right action/renunciation)", class: content}
       - {id: studium-film-ramayana,           title: "Ramayana film companion (fidelity/return)",                class: content}
       - {id: studium-film-analects,           title: "Analects film companion (ritual order/the rectified self)", class: content}
       - {id: studium-film-tao-te-ching,       title: "Dao De Jing film companion (wu wei/the Way)",              class: content}
