@@ -106,7 +106,7 @@ For a **website-sensitive** PR, merging *is* the deploy — so it requires **gre
 
 - exit **0 CLEARED** → `gh pr merge <PR#> --squash --delete-branch`. Do it; don't ask.
 - exit **2 HOLD** → website-sensitive with CI not yet green+complete, a draft, or non-deploy checks still running. Wait for green, then merge.
-- exit **3 BLOCKED** → conflicts (DIRTY) or stale base (BEHIND). Rebase onto current `main` first (the PR#111 silent-revert guard), then re-run.
+- exit **3 BLOCKED** → GitHub itself refuses the merge: conflicts (DIRTY), stale base (BEHIND), or a branch-protection gate unsatisfied (BLOCKED — e.g. the required `pr-gate` check never ran on a PR opened before that check existed). Rebase onto current `main` first (the PR#111 silent-revert guard; a rebase also retriggers the required checks), then re-run. If BLOCKED persists after a clean green rebase, a required review or admin merge is needed — surface it, don't force it.
 
 The script carries a **staleness guard**: if the deploy-trigger paths in `deploy*.yml` ever drift from its hardcoded list, it warns and fails *toward caution* (treats the PR as website-sensitive). Keep the path list in the script and in this section in lockstep with the workflows.
 

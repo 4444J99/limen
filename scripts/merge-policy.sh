@@ -11,8 +11,12 @@
 #   exit 2  HOLD    — website-sensitive AND CI not yet green/complete, or the PR is a draft,
 #                     or a non-deploy PR still has checks running. Wait for green; never
 #                     blind-merge a live deploy.
-#   exit 3  BLOCKED — not mergeable as-is: conflicts (DIRTY) or stale base (BEHIND). Rebase
-#                     onto current main first (the PR#111 silent-revert guard), then re-run.
+#   exit 3  BLOCKED — GitHub itself refuses the merge right now: conflicts (DIRTY), stale base
+#                     (BEHIND), or a branch-protection gate not satisfied (BLOCKED — e.g. the
+#                     required `pr-gate` check hasn't run on a pre-existing PR). Rebase onto
+#                     current main (the PR#111 silent-revert guard; also retriggers required
+#                     checks), then re-run. Distinct from HOLD: HOLD means GitHub would allow
+#                     the merge but the website-safety policy says wait; BLOCKED means it can't.
 #
 # Usage:  scripts/merge-policy.sh [PR_NUMBER] [--repo OWNER/NAME]
 #         (no PR number → resolves the PR open for the current branch)
@@ -124,9 +128,21 @@ fi
 echo "  checks: total=$total_checks failing=$failing pending=$pending"
 
 # --- verdict ---
+# GitHub's mergeStateStatus is authoritative on whether a merge is even POSSIBLE. Handle every
+# not-mergeable / indeterminate state explicitly; NEVER fall through to CLEARED on an unhandled
+# state (an UNKNOWN-during-recompute or a future enum value must not read as "safe to merge").
 case "$mss" in
   DIRTY)  echo "VERDICT: BLOCKED — merge conflicts. Rebase onto origin/$base, then re-run."; exit 3 ;;
   BEHIND) echo "VERDICT: BLOCKED — stale base (branch is behind $base). Rebase onto current $base first (PR#111 silent-revert guard), then re-run."; exit 3 ;;
+  BLOCKED)
+    # BLOCKED means branch protection won't merge yet — but it covers two cases. If a required
+    # check is still RUNNING, the remedy is simply to wait (HOLD); only when nothing is pending is
+    # it genuinely stuck (required check never ran, or a required review is missing → action needed).
+    if [ "$pending" -gt 0 ]; then
+      echo "VERDICT: HOLD — branch protection is waiting on $pending required check(s) still running. Wait for green, then re-run."; exit 2
+    fi
+    echo "VERDICT: BLOCKED — branch protection won't allow the merge: a required check never ran, or a required review is missing. For a PR opened before a required check was added this is almost always the missing 'pr-gate' context, which only runs after the head is pushed/rebased — rebase onto origin/$base to retrigger it, then re-run. If it persists after a rebase with green checks, a required review or admin merge is needed: surface to human, don't force it."; exit 3 ;;
+  UNKNOWN) echo "VERDICT: HOLD — GitHub is still computing mergeability (mergeState=UNKNOWN); this is transient. Re-run in a few seconds."; exit 2 ;;
 esac
 if [ "$draft" = "true" ]; then
   echo "VERDICT: HOLD — PR is a draft. Mark ready, then re-run."; exit 2
@@ -134,6 +150,11 @@ fi
 if [ "$failing" -gt 0 ]; then
   echo "VERDICT: HOLD — $failing CI check(s) failing. Fix before merge."; exit 2
 fi
+# Past the not-mergeable states: only an explicitly mergeable state may proceed toward CLEARED.
+case "$mss" in
+  CLEAN|UNSTABLE|HAS_HOOKS) : ;;  # GitHub will permit the merge
+  *) echo "VERDICT: HOLD — unrecognized merge state '$mss'; refusing to clear on an unhandled state. Re-run, or inspect the PR manually."; exit 2 ;;
+esac
 if [ "$sensitive" = 1 ]; then
   if [ "$pending" -gt 0 ] || [ "$total_checks" -eq 0 ]; then
     echo "VERDICT: HOLD — website-sensitive: a live deploy fires on merge and CI is not GREEN+COMPLETE (${pending} pending, ${total_checks} total). Wait for green; never blind-merge a deploy."

@@ -11,7 +11,10 @@ step() {
 step "Compile Python modules and validate shell syntax"
 cd "$ROOT"
 python3 -m py_compile web/api/main.py cli/src/limen/*.py scripts/probe-runtime-adapter.py scripts/validate-lifecycle-adapters.py
-bash -n scripts/preflight-cloud-run.sh scripts/probe-local-runtime.sh scripts/probe-local-worker.sh scripts/verify-whole.sh
+bash -n scripts/preflight-cloud-run.sh scripts/probe-local-runtime.sh scripts/probe-local-worker.sh scripts/verify-whole.sh scripts/merge-policy.sh scripts/tests/merge-policy.test.sh
+
+step "Verify the merge-policy predicate (verdict matrix regression test)"
+bash scripts/tests/merge-policy.test.sh
 
 step "Parse GitHub workflow YAML"
 python3 - <<'PY'
