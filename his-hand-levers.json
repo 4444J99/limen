@@ -1,7 +1,7 @@
 {
   "_doc": "The PERMANENT home for his-hand atoms — the levers only Anthony can pull. A his-hand task NEVER hangs on him or in a recall-only memory file; it hangs HERE, in git, and obligations-view.py unions these into the obligations face beside the mail levers. This file is separate from obligations-ledger.json ON PURPOSE: the mail builder regenerates that ledger every sweep, which would wipe any lever placed in it — these survive regen. Add/retire a lever by editing this file; nothing here is ever auto-pulled. Source: the needs_human digest reduction (37 tasks -> 8 human actions) plus the per-session closeout atoms. Generic mail-credential levers are NOT duplicated here (they live as L-MCP / L-IMAP-APP-PW / L-OAUTH in the ledger); the ONE exception is L-GMAIL-CRED, which corrects their misleading 'generate a credential' framing (the app-pw already exists — one paste lands it).",
   "generated_at": "2026-06-24",
-  "spine": "10 human actions own the whole revenue + go-live spine; the first two (merge gate + accounts) move the most, and L-ENC1101-GOLIVE is time-boxed to 6/25. Surfaced once, never nagged, never forced. COST SPINE (added 2026-06-24): two levers own why spend concentrates on Claude — L-MODEL-TIER (interactive sessions all pinned to Opus-4.8 + 1M context = the dominant burn) and L-FLEET-CAPACITY (the three cheapest async lanes — gemini 1000 free runs/day, opencode 200, ollama unlimited-local — are dark behind unlanded auth, so the metered token lanes carry everything). The router (route.py) already steers by headroom and skips dead lanes; it simply cannot reach a lane that has no auth. Both are one-toggle/one-paste.",
+  "spine": "10 human actions own the whole revenue + go-live spine; the first two (merge gate + accounts) move the most, and L-ENC1101-GOLIVE is time-boxed to 6/25. Surfaced once, never nagged, never forced. COST SPINE (added 2026-06-24): two levers own why spend concentrates on Claude — L-MODEL-TIER (interactive sessions all pinned to Opus-4.8 + 1M context = the dominant burn) and L-FLEET-CAPACITY (the cheapest async lanes sat dark — gemini 1000 free runs/day, opencode 200 — NOT for lack of credentials but because the fleet never read the ones already in 1Password). The credential HYDRATION ORGAN (PR #217, merged) cures that root cause: 1Password → ~/.limen.env → every lane each beat, so L-FLEET-CAPACITY is now ACTIVATION (one launchd bootstrap + keep op unlocked), not re-login. L-MODEL-TIER stays a one-toggle.",
   "levers": [
     {
       "id": "L-MERGE-GATE",
@@ -163,19 +163,20 @@
     },
     {
       "id": "L-FLEET-CAPACITY",
-      "label": "Light the three cheapest async lanes so the metered token lanes (claude/codex) stop being the only producers. LIVE usage @ 2026-06-24 16:33Z: claude 129% of cap (THROTTLED, rate-limited 5x), codex 96% (0.2h runway) — both maxed; meanwhile gemini 0/1000 free runs, opencode 1/200, ollama floor unlit. route.py already routes by headroom and would feed all three, but each is auth-dark: gemini 'auth not configured', opencode silently no-ops without `opencode auth login` + a model, ollama has no model pulled. ~1,400+ free runs/day + an unlimited LOCAL floor are stranded behind three one-time setups. This is the gmail-cred / excavate-before-redoing pattern: the routing was built right; the capacity is dark behind unlanded auth.",
+      "label": "Light the dark async lanes — but the cure is NO LONGER 're-login'. Root cause (found 2026-06-24): the credentials ALREADY EXIST in 1Password (op://Personal/Gemini API Key, /OpenAI, the GitHub tokens) and `op` is signed in; a set 53-char GEMINI_API_KEY even sat in ~/.limen.env — the fleet just never READ from the source of truth at the point of use (dispatch ran agent CLIs with env=None). The credential HYDRATION ORGAN (scripts/creds-hydrate.py + dispatch._load_limen_env, PR #217, MERGED main 2026-06-24) closes this: 1Password → ~/.limen.env → every lane, re-hydrated each beat/login. So you authenticate each service ONCE (already done) and never re-enter a login. The remaining atoms are ACTIVATION, not auth.",
       "owner": "yours",
-      "cost": "~5 min total, durable — three independent one-time auths",
-      "unlocks": "~1,400 free runs/day (gemini 1000 + opencode 200 + agy headroom) + the unmetered ollama floor — token-lane load (claude/codex) shifts onto free lanes",
-      "source_task": "logs/usage.json + route.py capacity census (2026-06-24)",
-      "gate": "per-vendor auth (credentials / OAuth) — AI cannot hold these",
+      "cost": "~2 min activation (one launchd bootstrap + keep op unlocked); the per-vendor logins are RETIRED",
+      "unlocks": "~1,400 free runs/day (gemini 1000 + opencode 200) auto-hydrated from 1Password forever; the per-tool re-login class is dead",
+      "source_task": "credential-durability (session efb53173) — supersedes the manual-login framing of this lever",
+      "gate": "ACTIVATION only: (1) the daemon's checkout must sync to main to get the organ; (2) arm the launchd login agent; (3) keep the 1Password session unlocked",
       "steps": [
-        "gemini (1000 free runs/day): run `gemini` once to OAuth-login the free tier (no billing), OR export GEMINI_API_KEY into the lane env (~/.limen.env). route.py flips it from 'down' to a producing lane the next beat.",
-        "opencode (200 runs/day): `opencode auth login` once (writes auth.json), then confirm a model resolves via `opencode models`. Without auth the lane is marked 'up' but silently produces nothing.",
-        "ollama (unmetered LOCAL floor): `ollama pull qwen2.5-coder:7b` — lights the pilot-light lane that runs when every cloud/metered vendor is spent (the exact 'didn't pace tokens perfectly between refreshes' case).",
-        "Verify: `python3 scripts/route.py --tasks tasks.yaml` — the three should move from 'down' to 'up' in the capacity census."
+        "Arm the login agent (one bootstrap, then it self-runs at login + every 30 min): cp container/launchd/com.limen.creds-hydrate.plist ~/Library/LaunchAgents/ && launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.limen.creds-hydrate.plist",
+        "Keep `op` unlocked (op signin / Touch-ID / a 1Password service account) — the ONLY recurring human atom, a per-boot biometric touch at most. Never a vendor re-login.",
+        "Verify hydration: python3 scripts/creds-hydrate.py --check  (then `python3 scripts/route.py` — gemini/opencode flip to 'up').",
+        "ollama floor (separate, not a login): `ollama pull qwen2.5-coder:7b` lights the unmetered local lane (a one-time model download, your hand).",
+        "ACTIVATION DEPENDENCY: the daemon's live checkout (~/Workspace/limen) was 17 commits behind main and dirty (tasks.yaml churn + untracked files) → its ff-sync is stuck, so the organ won't run there until that tree is reconciled. Tracked separately as the live-checkout-drift heal; do NOT hand-reconcile a daemon-contended tree mid-beat."
       ],
-      "note": "Honest code gap (Claude's lane, PR-able on your go): route.py marks opencode 'up' on binary-present alone, so it ASSIGNS work that no-ops without auth — the opencode health-probe should check auth like gemini's does, so it shows 'down — opencode auth login needed' instead of falsely up."
+      "note": "The credential map is a NAMED tweakable param (DEFAULT_MAP in scripts/creds-hydrate.py, or LIMEN_CREDS_MAP=<file>). Add a vendor by adding one {ref, env} entry — never by adding a login step. See memory: credential-durability-organ, [[gmail-mutation-cascade-avenues]], [[excavate-before-redoing-solved-work]]."
     }
   ]
 }
