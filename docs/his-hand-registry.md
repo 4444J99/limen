@@ -82,3 +82,14 @@ the fraud hold. Defers the subscription/Stripe path only — individual MoR rail
 No completed backup. Data already has **3 copies** (iCloud + Archive4T + Backblaze), so TM is a
 convenience, not a durability gap. **Owner:** you. **Cheapest path:** staging drive →
 `tmutil setdestination`. Not blocking anything.
+
+### 6. Flame branch deploy + self-resurrection arm — *machine-side; one merge, then two one-liners*
+The "runs a month without me" body is **staged, not live**: branch `worktree-woolly-forging-sedgewick`
+(`84fb255`, 3 ahead of `origin/main`, 279 tests green) carries the rotating full-fleet PR scan (HEAL+MERGE
+now drain all 306 open PRs, not the first 30), the `FLAME.md` continuity kernel, the ollama local floor,
+and the watchdog dead-man's switch. **Owner:** you (release-gate HOLD — merge/deploy is your lever).
+**Cheapest path:** merge the branch to main, then the two one-time arming acts from
+[`FLAME-ACTIVATION.md`](FLAME-ACTIVATION.md) atoms 1–2 — `launchctl bootstrap gui/$(id -u)
+"$LIMEN_ROOT/container/launchd/com.limen.watchdog.plist"` (self-resurrection) and `ollama pull
+qwen2.5-coder:7b` (unmetered floor). Full month-away table + the optional `LIMEN_DISPATCH_ASYNC` throughput
+knob live in that file; this entry is the permanent hook so the gate isn't hung on a conversation.
