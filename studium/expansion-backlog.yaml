@@ -188,7 +188,7 @@ film:
       - {id: studium-film-analects,           title: "Analects film companion (ritual order/the rectified self)", class: content}
       - {id: studium-film-tao-te-ching,       title: "Dao De Jing film companion (wu wei/the Way)",              class: content}
       - {id: studium-film-journey-to-the-west, title: "Journey to the West film companion (pilgrimage/comic transcendence)", class: content}
-      - {id: studium-film-tale-of-genji,      title: "Tale of Genji film companion (desire/impermanence)",       class: content}
+      # - {id: studium-film-tale-of-genji,      title: "Tale of Genji film companion (desire/impermanence)",       class: content} # DONE
       - {id: studium-film-heike,              title: "Tale of the Heike film companion (mono no aware)",          class: content}
       - {id: studium-film-conference-of-birds, title: "Conference of the Birds film companion (the seven valleys/fanā)", class: content}
       - {id: studium-film-shahnameh,          title: "Shahnameh film companion (kingship/the farr)",             class: content}

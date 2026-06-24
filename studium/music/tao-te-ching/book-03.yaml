@@ -16,7 +16,7 @@ principle: >
   strength of non-contention. This is the valley-bottom position: water flows around all obstacles,
   always downward, always patient. The arc traces the moment when aggressive assertion gives way to
   receptive stillness, and paradoxically, the receptive body becomes invincible.
-force_arc: [wrath, metamorphosis, wrath, salvation, wrath, metamorphosis, salvation, kingship, metamorphosis, salvation]
+force_arc: [wrath, metamorphosis, wrath, salvation, metamorphosis, salvation, kingship, metamorphosis, kingship, salvation]
 dominant_force: salvation
 tracks:
   - n: 1
