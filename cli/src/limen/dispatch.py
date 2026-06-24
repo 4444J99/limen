@@ -4,7 +4,6 @@ import re
 import secrets
 import shlex
 import subprocess
-import contextlib
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -17,36 +16,12 @@ from limen.capacity import (
     format_capacity_census,
     github_issue_ref,
 )
-from limen.io import load_limen_file, save_limen_file
+from limen.io import load_limen_file, save_limen_file, queue_lock
 from limen.models import DispatchLogEntry, LimenFile, Task
 from limen.doctor import stale_tasks
 
-@contextlib.contextmanager
-def _queue_lock(tasks_path: Path, timeout: int = 90):
-    """Cross-process mutex on tasks.yaml writes. The lockdir is derived from tasks_path
-    (its sibling logs/.queue.lock.d) so in production it is the SAME dir the heartbeat +
-    supervisors use ($LIMEN_ROOT/logs/.queue.lock.d), while tests with a temp tasks.yaml get
-    an isolated lock instead of blocking on the real repo's. Lets dispatch self-protect its
-    reserve/commit saves now that the heartbeat releases the lock BEFORE the slow run (#11)
-    — so a seed/heal written during the run isn't clobbered by a stale-copy save."""
-    lockd = tasks_path.parent / "logs" / ".queue.lock.d"
-    got = False
-    lockd.parent.mkdir(parents=True, exist_ok=True)
-    for _ in range(timeout):
-        try:
-            lockd.mkdir()
-            got = True
-            break
-        except FileExistsError:
-            time.sleep(1)
-    try:
-        yield got
-    finally:
-        if got:
-            try:
-                lockd.rmdir()
-            except OSError:
-                pass
+# Backward compat alias — the canonical lock lives in io.py
+_queue_lock = queue_lock
 
 def _usage_dead_lanes() -> set[str]:
     """Lanes the LIVE usage meter (logs/usage.json, written by usage-telemetry.py) reports as
@@ -199,8 +174,6 @@ def _run_cmd(cmd: list[str], task: Task, dry_run: bool, cwd: str | None = None) 
             print(f"  dispatched: {task.id}")
             # Try to extract session ID from output if it's jules
             if cmd[0].endswith("jules"):
-                import re
-
                 match = re.search(r"session\s+(\d+)", result.stdout, re.IGNORECASE)
                 if match:
                     return match.group(1)
@@ -248,8 +221,6 @@ def _call_copilot(task: Task, dry_run: bool) -> bool | str:
       user(login: $actor) { id }
     }
     """
-    import json
-    import subprocess
     q_cmd = [
         gh, "api", "graphql",
         "-f", f"query={query}",
@@ -788,7 +759,6 @@ def _window_hours(agent: str) -> float:
     (5h rolling windows) refill ~5x/day instead of being throttled by a once-a-day cap,
     while jules/gemini/opencode/agy refill daily."""
     try:
-        import json
         root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
         limits = json.load(open(root / "logs" / "usage-limits.json"))
         window = str((limits.get(agent) or {}).get("window", ""))
@@ -900,70 +870,15 @@ def dispatch_tasks(
         if remaining < task.budget_cost:
             break
 
-        entry = DispatchLogEntry(
-            timestamp=now,
-            agent=agent_filter,
-            session_id=session_id(),
-            status="dispatched",
-        )
-
         result = call_agent_dispatch(agent_filter, task, dry_run)
         if not dry_run:
-            if result == _NOOP:
-                # agent ran but had nothing to change — task-intrinsic, never cascade
-                entry.status = "noop"
-                task.status = "cancelled"
-                if "noop" not in task.labels:
-                    task.labels.append("noop")
-                task.updated = now
-                task.dispatch_log.append(entry)
+            _apply_result(task, agent_filter, result, now, track)
+            if result and result not in (_NOOP, _RATELIMIT, _TIMEOUT):
+                remaining -= task.budget_cost
             elif result == _RATELIMIT:
-                # the lane hit its REAL (token/rate) limit — cool the lane for this cycle
-                # and cascade THIS task down; do not spend budget, do not mark task failed.
-                nxt = _next_lane(agent_filter)
-                entry.status = f"ratelimited->{nxt or 'requeue'}"
-                task.target_agent = nxt or agent_filter
-                task.status = "open"
-                task.updated = now
-                task.dispatch_log.append(entry)
                 save_limen_file(tasks_path, limen)
                 print(f"── lane {agent_filter} rate-limited — cooling, {dispatched} dispatched this cycle")
                 return
-            elif result == _TIMEOUT:
-                # too big for a sync local lane → route to jules (async, no wall-clock cap)
-                entry.status = "timeout->jules"
-                task.target_agent = "jules"
-                task.status = "open"
-                if "slow" not in task.labels:
-                    task.labels.append("slow")
-                task.updated = now
-                task.dispatch_log.append(entry)
-            elif result:
-                if isinstance(result, str):
-                    entry.session_id = result
-                task.status = "dispatched"
-                task.updated = now
-                task.dispatch_log.append(entry)
-                track.spent += task.budget_cost
-                track.per_agent[agent_filter] = (
-                    track.per_agent.get(agent_filter, 0) + task.budget_cost
-                )
-                remaining -= task.budget_cost
-            else:
-                # genuine lane failure (down/error/timeout) — cascade DOWN the spectrum
-                tried = f"tried:{agent_filter}"
-                if tried not in task.labels:
-                    task.labels.append(tried)
-                nxt = _next_lane(agent_filter)
-                if nxt:
-                    entry.status = f"failed->{nxt}"
-                    task.target_agent = nxt
-                    task.status = "open"  # re-routed: a later lane retries (this tick or next)
-                else:
-                    entry.status = "failed"
-                    task.status = "failed"  # spectrum exhausted
-                task.updated = now
-                task.dispatch_log.append(entry)
 
         dispatched += 1
 
@@ -1064,7 +979,7 @@ def dispatch_parallel(
     if not picked:
         print(f"── PARALLEL: nothing to dispatch for {agents} within budget")
         return
-    with _queue_lock(tasks_path):
+    with queue_lock(tasks_path):
         save_limen_file(tasks_path, limen)  # reserve commit (atomic vs supervisor writes)
 
     # ── RUN: concurrent agent executions (worktree→PR / jules), no tasks.yaml access here
@@ -1091,7 +1006,7 @@ def dispatch_parallel(
     # during the unlocked run aren't clobbered; re-apply each result to the fresh task by id.
     # This is the #11 keystone — without the reload, this save would silently overwrite seeds.
     n_pr = n_noop = n_fail = n_rl = n_to = 0
-    with _queue_lock(tasks_path):
+    with queue_lock(tasks_path):
         fresh = load_limen_file(tasks_path)
         fid = {t.id: t for t in fresh.tasks}
         ftrack = fresh.portal.budget.track
