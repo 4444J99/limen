@@ -1,0 +1,122 @@
+# Tanakh — Exodus 2 (Shemot) — curated music arc
+work: tanakh
+book: 2
+title: "Exodus 2: Shemot — Bondage, Plagues, and the Covenant Threshold"
+length_minutes: 84
+principle: >
+  Exodus is the turning point where a slave identity becomes a covenant body. Every plague,
+  passage, and statute is a forceful interruption: the God of the text does not negotiate a
+  policy with empire, but reorders reality by staging the impossible in history itself. The
+  dominant arc is the movement from grief and humiliation to formalized obedience under law,
+  so the music should track both catastrophe and compositional repair.
+dominant_force: revelation
+force_arc: [grief, revelation, divine-intervention, wrath, plague, sacrifice, divine-intervention, law, revelation, law]
+tracks:
+  - n: 1
+    scene: "Egyptian bondage: memory of hunger, labor, and silence"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 5: IV. Adagietto"
+    decision: added
+    why: >
+      The opening of Exodus is framed by an exhausted people. Before miracles are spoken, the
+      book has to hear the ache of a laboring body that has been stripped of personhood. The
+      Adagietto carries inward grief without melodrama, preserving the fact that this is not
+      a theatrical tragedy yet but a people still not asking for revolution.
+  - n: 2
+    scene: "Burning bush: Moses hears the divine question"
+    force: revelation
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      The bush does not merely appear; it destabilizes Moses' whole biography. Divine revelation
+      in Exodus is first an address to him, not a system explanation. Pärt's suspended chamber
+      grammar mirrors that moment: revelation arrives as clarity in stillness, before argument,
+      before compliance.
+  - n: 3
+    scene: "Moses confronts Pharaoh as a bearer of impossible instructions"
+    force: divine-intervention
+    composer: Wagner
+    work: "Das Rheingold — Prelude"
+    decision: added
+    why: >
+      The scene is not just diplomacy; it is a reality rupture entering politics. The opening
+      of Das Rheingold dramatizes emergence from below the surface into a new order, the right
+      kind of sonic transition for "Let my people go" becoming a theological declaration.
+  - n: 4
+    scene: "Escalation of plague and hardening of imperial denial"
+    force: wrath
+    composer: Holst
+    work: "Mars, the Bringer of War"
+    decision: added
+    why: >
+      The first cycle of plagues is measured escalation. Wrath here is structural, not random:
+      each decree widens the scale of reality's fracture. Holst's asymmetrical menace keeps the
+      listener in pressure without relief, like negotiations that can no longer remain
+      political language.
+  - n: 5
+    scene: "The plague sequence as divine enforcement"
+    force: plague
+    composer: Berlioz
+    work: "Les Troyens: Act II Introduction"
+    decision: added
+    why: >
+      The text makes plague literal: arrows, wounds, and ritual contamination in a society that
+      treated foreign lives as expendable. Berlioz's orchestral prelude captures a force that is
+      atmospheric and bodily at once, where destiny weighs on an entire population.
+  - n: 6
+    scene: "Passover covenant meal: blood as boundary and memory"
+    force: sacrifice
+    composer: Gluck
+    work: "Iphigénie en Aulide — Overture to Act I"
+    decision: added
+    why: >
+      Passover turns sacrifice from private offering into communal preservation. Gluck's
+      overture holds moral ceremony and grief at once. The register is apt: a ritual already
+      carrying the burden of history and preparing the people to cross without erasing what they
+      have suffered.
+  - n: 7
+    scene: "Crossing the sea and the flood that reassigns power"
+    force: divine-intervention
+    composer: Sibelius
+    work: "The Oceanides (Aallottaret), Op. 73"
+    decision: added
+    why: >
+      Water at sea is not metaphor in Exodus 14; it is instrument. Sibelius' oceanic writing gives
+      movement and rupture with the same emotional logic: a medium that can close and open as an
+      absolute force. The piece sustains the register of awe without turning the crossing into a
+      sentimental escape scene.
+  - n: 8
+    scene: "Sinai: speech descends as law"
+    force: law
+    composer: Bach
+    work: "The Well-Tempered Clavier, Book I — Prelude No. 1 in C Major"
+    decision: added
+    why: >
+      The first legal architecture appears at Sinai and Sinai appears as grammar. Bach's Prelude
+      embodies law as form: every gesture is bounded, recurring, and exact. The scene is law becoming
+      audible, because law in Exodus is not only command but a rhythm the whole community must
+      inhabit.
+  - n: 9
+    scene: "Theophany and the people's fearful awe"
+    force: revelation
+    composer: Messiaen
+    work: "Quartet for the End of Time — I. Liturgy of Crystal"
+    decision: added
+    why: >
+      Sinai's thunder and cloud are not simply spectacles; they are perceptual transformation.
+      Messiaen's first movement gives sacred stasis without theatrical comfort, holding the same
+      paradox as revelation-as-overwhelm: overwhelming presence, and still no fully settled
+      interpretation.
+  - n: 10
+    scene: "Covenant sealed: tablets, fear, and the re-ordered camp"
+    force: law
+    composer: Handel
+    work: "Music for the Royal Fireworks — Overture"
+    decision: added
+    why: >
+      The camp returns to structure after a sequence of shocks. Handel's ceremonial force and
+      precise architecture are better than softer options because the scene is now about public
+      life under explicit law. This is the register of law as public architecture, not private
+      devotion.

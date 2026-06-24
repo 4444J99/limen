@@ -1,0 +1,122 @@
+# Tanakh — Leviticus 3 (Vayikra) — curated music arc
+work: tanakh
+book: 3
+title: "Leviticus 3: Vayikra — Holiness as Instruction"
+length_minutes: 82
+principle: >
+  Leviticus is the most misunderstood book in the canon because it sounds procedural.
+  But procedure is the point: holiness is modeled as a stable relationship between body,
+  speech, and community, encoded in ritual precision. These scenes are not decorative;
+  they are the grammar that keeps a fragile people intact after liberation. The dominant
+  force is law, but the law is felt as grief, mercy, and transformation before it becomes
+  habit.
+dominant_force: law
+force_arc: [law, sacrifice, metamorphosis, law, supplication, grief, revelation, law, memory, return]
+tracks:
+  - n: 1
+    scene: "Camps in preparation: altar, tent, and priestly service begin"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue, Contrapunctus 1"
+    decision: added
+    why: >
+      Vayikra starts by translating a liberation into form: people must become serviceable.
+      Bach's Contrapunctus 1 gives a clear architecture of independent lines entering a shared
+      structure. The scene is not chaos controlled by ritual, but a community learning to move
+      in lawful relation to each other under explicit rules.
+  - n: 2
+    scene: "Burnt offerings and grain offerings: giving as covenant maintenance"
+    force: sacrifice
+    composer: Stravinsky
+    work: "The Rite of Spring: Sacrificial Dance"
+    decision: added
+    why: >
+      Every offering sequence in Leviticus is both sacrifice and pedagogy. The Rite's block
+      percussion and unrelenting motion keep the moral energy of giving without turning it
+      sentimental. The people are trained to risk exactness, because nothing in this book can be
+      approximate.
+  - n: 3
+    scene: "Washings and separations: purity as enacted transformation"
+    force: metamorphosis
+    composer: Debussy
+    work: "Prélude à l'après-midi d'un faune"
+    decision: added
+    why: >
+      Purity law here is not cosmetic; it is a form of transformation. Debussy's oblique
+      flute line and changing orchestral haze keep everything in a state of becoming. This is the
+      right color for Levitical transitions: moving from unfit condition to ritual readiness
+      through careful reconfiguration of body and space.
+  - n: 4
+    scene: "Priestly office is formed and bounded by vesture"
+    force: law
+    composer: Handel
+    work: "Music for the Royal Fireworks — La Réjouissance"
+    decision: added
+    why: >
+      Priestly office could be dismissed as ceremonial, but it is the concrete means by which
+      the book anchors covenant obligations. Handel's ceremonial writing balances grandeur and
+      control: this is not triumphalist law, it is dignified constraint made audible.
+  - n: 5
+    scene: "Sin offerings and confession before consecration"
+    force: supplication
+    composer: Bach
+    work: "Erbarme dich — from Matthäus Passion"
+    decision: added
+    why: >
+      Supplication appears frequently in this book where guilt is not abstract but public and
+      embodied. Bach's Erbarme dich keeps the plea intimate and uncluttered, making legal
+      restitution feel humanly costly rather than technically easy. Vow, plea, and offering are
+      all present at once.
+  - n: 6
+    scene: "Impurity in body and camp life: collective grief with practical consequence"
+    force: grief
+    composer: Barber
+    work: "Adagio for Strings"
+    decision: added
+    why: >
+      Leviticus speaks repeatedly to people carrying impurity, not as private sin-story but as
+      public consequence. Barber's line-based sorrow is plain and unsparing. It captures the
+      gravity of laws designed to keep communal life intact even when the communal body is
+      already damaged.
+  - n: 7
+    scene: "The sanctuary interior: holiness as unbearable proximity"
+    force: revelation
+    composer: Pärt
+    work: "Fratres (for string orchestra)"
+    decision: added
+    why: >
+      The inner sanctuary does not represent transcendence for spectacle; it represents a
+      threshold where ordinary language no longer works. Pärt's Fratres creates a suspended field
+      around stillness and interruption. That is the Levitical register at its best: revelation as
+      sustained compression.
+  - n: 8
+    scene: "Day of Atonement process and the people re-gathering after transgression"
+    force: law
+    composer: Fauré
+    work: "Requiem: Offertoire"
+    decision: added
+    why: >
+      On Yom Kippur, law ceases being instruction and becomes a communal act of resetting.
+      Fauré's Offertoire avoids punitive violence and stays on the register of solemn repair.
+      The community is not absolved in theory; it is re-ordered.
+  - n: 9
+    scene: "Festal rhythm: memory held in recurring liturgical time"
+    force: memory
+    composer: Elgar
+    work: "Enigma Variations — Nimrod"
+    decision: added
+    why: >
+      Feasts in Leviticus do not merely mark anniversaries; they produce memory as civic discipline.
+      Nimrod is often heard as elegiac, but it can be heard here as institutional remembrance:
+      a motif that returns, teaches, and recalibrates the community's emotional horizon.
+  - n: 10
+    scene: "Return from sanctuary into ordinary obedience"
+    force: return
+    composer: Beethoven
+    work: "Symphony No. 7, II"
+    decision: added
+    why: >
+      Every ritual in this book is a controlled departure from ordinary life and then a return.
+      Beethoven's broad second movement offers circular motion with dignified persistence. It lands
+      the arc exactly: law is not the antithesis of life, it is life trained to re-enter
+      itself without collapsing.
