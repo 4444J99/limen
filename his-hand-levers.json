@@ -69,16 +69,15 @@
     },
     {
       "id": "L-BRANCH-PROTECT-072",
-      "label": "Authorize branch-protection rules across the organ repos (needs admin; run the descent script). URGENT for organvm/limen `main`: it was CI-poisoned twice by direct pushes that bypass CI (f9325a8 ruff, 3069587 web) — each landed red on main and jammed the whole merge-drain until hand-fixed (#78). Require the python/web/worker status checks on main so no un-CI'd commit lands again.",
+      "label": "Branch-protection across the organ repos. RESOLVED for organvm/limen `main` 2026-06-24 (applied under granted admin): protected with an always-on required `pr-gate` check after #192 then 25ce902 each landed red and twice wedged the daemon — healed in #203/#212/#213, Censor #198 unblocked. REMAINING: fleet-wide rollout to the other organ repos.",
       "owner": "yours",
-      "cost": "~5 min, admin",
-      "unlocks": "branch protection fleet-wide + no more main CI-poison jams",
+      "cost": "fleet-wide rollout only (limen done) — ~5 min admin per repo, or one descent run",
+      "unlocks": "branch protection fleet-wide (limen main already gated → no more CI-poison jams there)",
       "source_task": "LIMEN-072",
-      "note": "Root cause: CI lints/builds PRs only, not direct pushes, so an un-gated push lands red on main and poisons every open PR's merge. When you protect main, decide the daemon's content-push path: route its commits through the merge organ, or exempt the limen[bot]/App actor so studium dailies still flow.",
+      "note": "limen/main DONE: required check = the always-on `pr-gate` workflow (ruff · py_compile · tasks.yaml parses+loads · nomenclator · pytest web/api+cli). Couldn't just require ci.yml's python/web/worker — they're path-filtered on pull_request and never report on content-only PRs (#79/#80), which would brick them forever; pr-gate has no path filter. enforce_admins=false, no required reviews, allow_auto_merge=true. Daemon verified PR-only (capture.sh→feature branches, merge organ merges, sync-release FF-pulls) so no App-actor exemption was needed. FLEET-WIDE GAP: scripts/setup-rulesets.py is the descent tool but its _GATE check-detection regex doesn't match limen-style job names (python/web/pr-gate) — fix that regex first, or pass explicit contexts.",
       "steps": [
-        "GitHub → organvm/limen → Settings → Branches → protect `main`: require status checks python, web, worker (limen-specific, ~2 min)",
-        "Fleet-wide: run the descent script to apply the same across the organ repos",
-        "Decide the daemon's direct-push path: route via the merge organ, or exempt the App actor"
+        "DONE 2026-06-24: organvm/limen `main` protected — required status check `pr-gate` (always-on workflow added in #211; protection set via gh api).",
+        "Fleet-wide: apply the same to the other organ repos — first fix scripts/setup-rulesets.py's _GATE regex so it detects python/web/pr-gate, then run --apply."
       ]
     },
     {
