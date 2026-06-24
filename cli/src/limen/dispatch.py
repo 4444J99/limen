@@ -23,6 +23,40 @@ from limen.io import load_limen_file, save_limen_file
 from limen.models import BudgetTrack, DispatchLogEntry, LimenFile, Task
 from limen.doctor import stale_tasks
 
+
+def _load_limen_env() -> int:
+    """Load ~/.limen.env into os.environ so agent subprocesses (gemini/codex/opencode/…) INHERIT the
+    credentials. Without this, _run_cmd runs the CLIs with the daemon's bare env and a key that was
+    landed in ~/.limen.env (or hydrated from 1Password by creds-hydrate.py) never reaches the tool —
+    the exact reason a SET GEMINI_API_KEY still read as 'auth not configured'.
+
+    No-overwrite: an explicitly-exported env var always wins (only fills what's MISSING). Idempotent,
+    fail-open (any parse/IO error loads nothing rather than crash the beat). Returns the count loaded.
+    Honors $LIMEN_ENV; values are never logged. See scripts/creds-hydrate.py (the hydration source)."""
+    path = Path(os.environ.get("LIMEN_ENV", str(Path.home() / ".limen.env")))
+    loaded = 0
+    try:
+        if not path.exists():
+            return 0
+        for raw in path.read_text().splitlines():
+            line = raw.strip()
+            if not line or line.startswith("#"):
+                continue
+            if line.startswith("export "):
+                line = line[len("export "):]
+            if "=" not in line:
+                continue
+            key, val = line.split("=", 1)
+            key = key.strip()
+            val = val.strip().strip('"').strip("'")
+            if key and val and key not in os.environ:
+                os.environ[key] = val
+                loaded += 1
+    except OSError:
+        return loaded
+    return loaded
+
+
 @contextlib.contextmanager
 def _queue_lock(tasks_path: Path, timeout: int = 90):
     """Cross-process mutex on tasks.yaml writes. The lockdir is derived from tasks_path
@@ -1015,6 +1049,7 @@ def dispatch_tasks(
     now = datetime.now(timezone.utc)
     budget = budget or limen.portal.budget.daily
 
+    _load_limen_env()  # hydrate creds into os.environ so agent CLIs inherit them (gemini/codex/opencode/…)
     _reset_budget_if_needed(limen, now)
     track = limen.portal.budget.track
 

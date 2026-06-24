@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  The credential hydration login agent. The metabolize beat already hydrates each daemon cycle;
+  this closes the two gaps the beat can't reach: LOGIN time (so a fresh boot has fleet creds before
+  any agent runs) and INTERACTIVE/worktree sessions (which aren't the daemon). RunAtLoad fires it at
+  login; StartInterval re-runs every 30 min so a lapsed OAuth/refresh token self-heals from 1Password
+  with no human re-login. Fail-open: creds-hydrate.py skips silently when `op` is locked or absent.
+
+  The ONLY human atom: the 1Password session must be unlocked (op signin / Touch-ID / a service
+  account). Everything else — gemini, codex, opencode, gh, cloudflare — flows from the ONE source of
+  truth and is never re-entered. Loading is his-hand (one launchctl bootstrap):
+
+    cp container/launchd/com.limen.creds-hydrate.plist ~/Library/LaunchAgents/
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.limen.creds-hydrate.plist
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.limen.creds-hydrate</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <!-- Mirror the heartbeat's PATH + pinned-venv interpreter so the SAME python3 resolves
+             (avoids the macOS TCC python prompt + import drift). `op` lives on the homebrew PATH. -->
+        <string>export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin"; PY="$LIMEN_ROOT/.venv/bin/python3"; [ -x "$PY" ] || PY="$(command -v python3 || echo python3)"; exec "$PY" "$LIMEN_ROOT/scripts/creds-hydrate.py" --apply</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key><string>/Users/4jp</string>
+        <key>LIMEN_ROOT</key><string>/Users/4jp/Workspace/limen</string>
+        <key>PYTHONPATH</key><string>/Users/4jp/Workspace/limen/cli/src</string>
+    </dict>
+    <!-- RunAtLoad hydrates at login; StartInterval re-hydrates every 30 min (token-lapse self-heal).
+         One-shot assess-and-exit model, so no KeepAlive. -->
+    <key>StartInterval</key><integer>1800</integer>
+    <key>RunAtLoad</key><true/>
+    <key>ProcessType</key><string>Background</string>
+    <key>StandardOutPath</key><string>/Users/4jp/Workspace/limen/logs/creds-hydrate.out.log</string>
+    <key>StandardErrorPath</key><string>/Users/4jp/Workspace/limen/logs/creds-hydrate.err.log</string>
+</dict>
+</plist>

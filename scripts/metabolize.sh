@@ -24,6 +24,15 @@ cd "$LIMEN_ROOT" || exit 1
 
 echo "═══ metabolize $(date '+%F %T') — dispatch=${LIMEN_DISPATCH:-0} isolation=$LIMEN_ISOLATION ═══"
 
+echo "── 0a. hydrate credentials (1Password → ~/.limen.env → every lane; never re-login) ──"
+# Refresh fleet creds from the ONE source of truth so a one-time login never has to be repeated
+# (lapsed tokens / fresh worktrees self-heal). Fail-open: skips silently if op is locked/absent.
+if [ "${LIMEN_CREDS_HYDRATE:-1}" = "1" ]; then
+  python3 "$LIMEN_ROOT/scripts/creds-hydrate.py" --apply || echo "  (creds-hydrate skipped — op locked/absent)"
+fi
+# Source the cred cache so THIS shell + every child (route.py, the agent CLIs) inherit the keys.
+if [ -f "$HOME/.limen.env" ]; then set -a; . "$HOME/.limen.env"; set +a; fi
+
 echo "── 0. refresh usage telemetry / lane health ──"
 python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" || echo "  (usage telemetry skipped)"
 
