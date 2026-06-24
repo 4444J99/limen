@@ -1,0 +1,11 @@
+#!/bin/sh
+# No-op `open` shim. dispatch._isolated_local_run prepends THIS directory to the PATH of the
+# agy/antigravity subprocess ONLY, so the antigravity-cli can NEVER spawn a Google sign-in browser
+# tab from the unattended daemon. On macOS every browser-opener path ultimately runs `open <url>`
+# resolved via PATH; with this shim first, that "open" becomes a logged no-op. The lane fails the
+# beat cleanly instead of littering the desktop with OAuth tabs (root cause of the 2026-06-24 flood).
+# This only triggers in the rare race where the network drops mid-run AFTER the _oauth_unreachable_lanes
+# preflight passed — the preflight is the primary cure; this is the fail-closed guarantee.
+# It is scoped to the dispatch subprocess; running `agy` interactively by hand is unaffected.
+echo "limen: suppressed browser open from unattended agy lane -> $*" >&2
+exit 0

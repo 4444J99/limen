@@ -64,21 +64,65 @@ def _usage_dead_lanes() -> set[str]:
             if isinstance(info, dict) and info.get("health") in ("exhausted", "rate-limited", "low")}
 
 
+# Lanes whose CLI authenticates ONLY via an interactive browser OAuth flow — no headless / device-code
+# fallback. agy (the antigravity-cli) is the case in point: in print mode it first tries a SILENT token
+# refresh against the host below; if that network call fails it MISREADS the failure as "not logged in"
+# and launches a Google sign-in browser tab (its browser.go: consumerOAuth). Unattended, that's one tab
+# per beat. The refresh only fails when the host is unreachable — exactly what happens when the Mac is
+# asleep / in dark-wake with no network (observed 2026-06-24, 01:34–05:37: ~20 tabs; the agy logs show
+# `dial tcp: lookup oauth2.googleapis.com: no such host` → "silent auth failed, triggering OAuth"). So
+# we map each such lane to the host its silent auth must reach, and gate dispatch on reaching it.
+_BROWSER_OAUTH_LANES: dict[str, str] = {
+    "agy": "oauth2.googleapis.com",
+    "antigravity": "oauth2.googleapis.com",
+}
+
+
+def _oauth_unreachable_lanes() -> set[str]:
+    """Browser-OAuth lanes whose silent-auth endpoint is unreachable RIGHT NOW — skip them THIS beat so
+    they can't fall through to an interactive browser tab (the overnight tab-flood root cause). The probe
+    is the SAME precondition the CLI's own silent refresh needs: a DNS + TCP:443 reach of the host. Fails
+    → lane down for this beat; succeeds → lane runs and does real work. Self-heals the instant the network
+    returns (on wake) — no manual file, no static disable, no human. The probe never raises and is cheap:
+    an online check is sub-100ms; an offline one caps at the (short) timeout — and offline beats are
+    exactly the ones we want to short-circuit. Set LIMEN_OAUTH_PREFLIGHT=0 to disable the gate."""
+    if os.environ.get("LIMEN_OAUTH_PREFLIGHT", "1") != "1":
+        return set()
+    import socket
+    timeout = float(os.environ.get("LIMEN_OAUTH_PREFLIGHT_TIMEOUT", "3"))
+    reachable: dict[str, bool] = {}
+    down: set[str] = set()
+    for lane, host in _BROWSER_OAUTH_LANES.items():
+        ok = reachable.get(host)
+        if ok is None:
+            try:
+                socket.create_connection((host, 443), timeout=timeout).close()
+                ok = True
+            except OSError:
+                ok = False  # gaierror (DNS down in dark-wake) and connect failures both subclass OSError
+            reachable[host] = ok
+        if not ok:
+            down.add(lane)
+    return down
+
+
 def _down_lanes() -> set[str]:
-    """Lanes currently DOWN/unproductive. Two sources, unioned:
+    """Lanes currently DOWN/unproductive. Three sources, unioned:
       1. logs/lanes-down.txt — a manual override file (one lane per line, '#' comments ok) for
          lanes a human knows are dead (e.g. agy bin missing); NOT pinned in code.
       2. the LIVE usage meter (_usage_dead_lanes) — lanes token-exhausted or rate-limited RIGHT NOW.
+      3. browser-OAuth lanes whose silent-auth endpoint is unreachable this beat (_oauth_unreachable_lanes)
+         — so agy/antigravity can't spawn a Google sign-in tab while the Mac is asleep/offline.
     Rebalance + dispatch + route skip these so tasks aren't wasted on a lane that can't produce.
-    Source 2 self-heals (a lane rejoins when its window refills); remove a line from source 1 when
-    that lane is healthy again (e.g. a paid GEMINI_API_KEY)."""
+    Sources 2 & 3 self-heal (a lane rejoins when its window refills / the network returns); remove a line
+    from source 1 when that lane is healthy again (e.g. a paid GEMINI_API_KEY)."""
     f = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen"))) / "logs" / "lanes-down.txt"
     manual: set[str] = set()
     try:
         manual = {ln.split("#")[0].strip() for ln in f.read_text().splitlines() if ln.split("#")[0].strip()}
     except OSError:
         pass
-    return manual | _usage_dead_lanes()
+    return manual | _usage_dead_lanes() | _oauth_unreachable_lanes()
 
 
 def _run_capture(cmd, cwd=None, timeout=600, env=None):
@@ -691,6 +735,17 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
         if agent == "gemini" and os.environ.get("LIMEN_GEMINI_OAUTH") == "1":
             for k in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENERATIVE_AI_API_KEY"):
                 run_env.pop(k, None)
+        # agy/antigravity FAIL-CLOSED browser neuter (defense-in-depth behind the _oauth_unreachable_lanes
+        # gate): if the network drops MID-run, the antigravity-cli would still fall to interactive OAuth and
+        # try to open a Google sign-in tab. On macOS every browser-opener lib ultimately runs `open <url>`
+        # resolved via PATH, so we prepend a no-op `open` shim to THIS subprocess's PATH only — the cli can
+        # then "open" the tab into a script that just logs + exits 0. The lane fails the beat instead of
+        # littering the desktop. Scoped to the agy subprocess; interactive `agy` you run by hand is untouched.
+        if agent in ("agy", "antigravity"):
+            shim = str(Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
+                       / "scripts" / "agy-noop-shim")
+            run_env["PATH"] = shim + os.pathsep + run_env.get("PATH", "")
+            run_env["BROWSER"] = "true"  # belt-and-suspenders for libs that honor $BROWSER (no-op command)
         try:
             run = _run_capture(
                 agent_cmd, cwd=str(wt), timeout=lane_timeout, env=run_env,
