@@ -61,10 +61,10 @@ python3 -m limen doctor 2>&1 | head -12
 # logs/self-improve-proposal.json (down-weight 0%-lanes, retire chronic-fail
 # patterns, boost what ships). Proposal-only + read-only — never writes tasks.yaml.
 # It's a slow-moving signal, so run it only every Nth beat, not per-beat.
-# Wired live: low-cadence voice (every LIMEN_SI_CADENCE hours) — the last rung that closes the ladder.
-N="${LIMEN_SI_CADENCE:-10}"
-if [ "$(( $(date +%s) / 3600 % N ))" = "0" ]; then
-  python3 "$LIMEN_ROOT/scripts/self-improve.py" || echo "  (self-improve skipped)"
-fi
+# NOT wired live yet — uncomment to activate as a low-cadence voice:
+#   N="${LIMEN_SI_CADENCE:-10}"
+#   if [ "$(( $(date +%s) / 3600 % N ))" = "0" ]; then
+#     python3 "$LIMEN_ROOT/scripts/self-improve.py" || echo "  (self-improve skipped)"
+#   fi
 
 echo "═══ metabolize done $(date '+%F %T') ═══"

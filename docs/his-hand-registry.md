@@ -13,15 +13,6 @@
   reclaim caches + iCloud local-cache (copy→verify→`brctl evict`, reversible). 19.78 GB reclaimed in one
   pass; finishes the rest each C_BACKUP beat. [[storage-autonomic-solve]]
 - **node_modules creep** — `clone-maintenance.sh`, every 8 beats; `.claude/worktrees/` hard-excluded.
-- **Session / worktree closeout** — DAEMON-OWNED (`quicken.py reap_done`, every `C_QUICKEN` beat): a
-  finished (DONE) or deliberately-ended (CLOSED) session's spent isolation worktree is reversibly
-  reaped — worktree + branch removed — but ONLY when verified clean **and** fully-merged into
-  `origin/main` (rev-list empty, or `git cherry` shows every commit patch-present for squash/rebase,
-  or a merged PR exists). Reversible by construction (content in main, branch SHA in reflog ~90d).
-  You **never** run `git worktree remove` / `git branch -D` by hand again; ctrl+x and the daemon reaps
-  it within a few beats. (Optional accelerator: a `SessionEnd` hook `scripts/hooks/session-closeout.sh`
-  drops a breadcrumb so a ctrl+x'd session is reaped next beat instead of after the idle window — the
-  daemon already covers the common case, so registering it is nice-to-have, not required.)
 - **Value measurement** — LIVE: every dispatched task carries a weight (`budget_cost`) and a graded
   return (`score-dispatch.py` → `ledger.py`). Current verdict: *"net WORTH IT — 514 shipped, 252 wasted;
   1110/1253 debits productive."* The "justify your value or die" loop is structural, not a slogan.
@@ -91,28 +82,3 @@ the fraud hold. Defers the subscription/Stripe path only — individual MoR rail
 No completed backup. Data already has **3 copies** (iCloud + Archive4T + Backblaze), so TM is a
 convenience, not a durability gap. **Owner:** you. **Cheapest path:** staging drive →
 `tmutil setdestination`. Not blocking anything.
-
-### 6. Session residue (from QUICKEN) — *hung in the permanent queue, not this doc*
-QUICKEN drives every reversible step of a sitting session to done, **reaps the spent worktree itself**
-once it's clean+merged (see the closeout bullet under *Already autonomic*), then hangs the one touch a
-loop can't make in the **permanent `needs_human` queue** as `ASK-quicken-<key>` (lockless/atomic into
-`tasks.yaml`; surfaced by `obligations-view` / `organ-health` / `reclassify`; capture-pushed off-disk).
-The running system holds these — this doc is the annotated view, not the home; nothing waits on memory.
-- **One login/identity step** → hung as `ASK-quicken-login` when surfaced. **Cheapest path:**
-  `claude setup-token` (credential-race self-heal staged at `fix/claude-credential-race@b1274bf`,
-  probes ready) + reconnect the hotspot.
-- **Open the gate** → already hung as **`ASK-5-open-merge-gate`** (a standing posture, never
-  duplicated). **Cheapest path:** say the word; the staged pushes land with no re-asking. Until then
-  **held, not hanging** — daemon-owned, catalogued, deploy on gate-open. Staged payloads include:
-  branch **`worktree-optimized-wishing-crayon`** — the complete QUICKEN organ (from `d586e63`, tree
-  clean, merge to main) — plus `unblock-pr-fix-deploy-gates` and Etceter4.
-
-### 7. Flame self-resurrection arm — *machine-side; two one-liners, post-deploy*
-The "runs a month without me" body — `FLAME.md` continuity kernel, ollama local floor, watchdog
-dead-man's switch, and the rotating full-fleet PR scan — is **deployed to main** (2026-06-24, the
-same merge that healed the #111 daemon regression). What remains your hand is the one-time **arming**,
-from [`FLAME-ACTIVATION.md`](FLAME-ACTIVATION.md) atoms 1–2: `launchctl bootstrap gui/$(id -u)
-"$LIMEN_ROOT/container/launchd/com.limen.watchdog.plist"` (self-resurrection) and `ollama pull
-qwen2.5-coder:7b` (unmetered floor). **Owner:** you. Until armed, the heartbeat still runs and self-heals;
-arming is what makes it relight itself and survive a total vendor exhaustion. Optional `LIMEN_DISPATCH_ASYNC`
-throughput knob is documented in that file. This entry is the permanent hook so the arming isn't hung on a conversation.

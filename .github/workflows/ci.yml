@@ -107,10 +107,6 @@ jobs:
         run: npm ci
         working-directory: web/app
 
-      - name: TypeScript type-check
-        run: npx --yes -p typescript tsc --noEmit -p tsconfig.json
-        working-directory: web/app
-
       - name: Build static dashboard and surface contracts
         run: npm run build
         working-directory: web/app

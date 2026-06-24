@@ -11,15 +11,15 @@
 - **Corpus:** `medieval/beowulf` (old_english_original.txt)
 - **Source rail:** https://www.sacred-texts.com/neu/ascp/a04_01.htm
 - **Divisions:** 43 × Fitt
-- **Progress:** 5/43 arcs authored
+- **Progress:** 1/43 arcs authored
 
 | Fitt | dominant force | status |
 | --: | --- | :--: |
-| 1 | grief | ✓ |
-| 2 | wrath | ✓ |
-| 3 | grief | ✓ |
-| 4 | desire | ✓ |
-| 5 | law | ✓ |
+| 1 | (author) | ✓ |
+| 2 | (author) | ☐ |
+| 3 | (author) | ☐ |
+| 4 | (author) | ☐ |
+| 5 | (author) | ☐ |
 | 6 | (author) | ☐ |
 | 7 | (author) | ☐ |
 | 8 | (author) | ☐ |

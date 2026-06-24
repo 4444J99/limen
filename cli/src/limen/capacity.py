@@ -15,11 +15,6 @@ PAID_AGENT_ORDER: tuple[str, ...] = (
     "opencode",
     "agy",
     "gemini",
-    # ollama: the LOCAL, UNMETERED floor of the cascade — the pilot light. It has no token
-    # budget and no rate-limit window, so when every metered/cloud vendor is spent (the exact
-    # "we didn't pace tokens perfectly between refreshes" case), the beat still has a lane that
-    # can produce. Self-activating: reachable only once a model is pulled (see agent_status).
-    "ollama",
     "jules",
     "copilot",
     "warp",
@@ -34,7 +29,7 @@ AGENT_ALIASES: dict[str, str] = {
     "antigravity": "agy",
 }
 
-LOCAL_CHECKOUT_AGENTS = frozenset({"codex", "claude", "opencode", "agy", "gemini", "ollama"})
+LOCAL_CHECKOUT_AGENTS = frozenset({"codex", "claude", "opencode", "agy", "gemini"})
 ISSUE_ASSIGNMENT_AGENTS = frozenset({"copilot"})
 
 _DEFAULT_BINARIES: dict[str, str] = {
@@ -43,7 +38,6 @@ _DEFAULT_BINARIES: dict[str, str] = {
     "opencode": "opencode",
     "agy": "agy",
     "gemini": "gemini",
-    "ollama": "ollama",
     "jules": "jules",
     "copilot": "gh",
     "warp": "warp",
@@ -57,7 +51,6 @@ _KINDS: dict[str, str] = {
     "opencode": "local-cli",
     "agy": "local-cli",
     "gemini": "local-cli",
-    "ollama": "local-cli",
     "jules": "cloud-cli",
     "copilot": "github-issue",
     "warp": "paid-service",
@@ -129,28 +122,6 @@ def _gemini_auth_configured() -> bool:
         return True
     settings = Path.home() / ".gemini" / "settings.json"
     return settings.exists() and "auth" in settings.read_text(errors="ignore")
-
-
-def ollama_model() -> str | None:
-    """The local model that lights the pilot. DERIVED, never pinned: an explicit
-    LIMEN_OLLAMA_MODEL wins; otherwise pick the first model `ollama list` reports. Returns None
-    when the binary is missing or no model is pulled — that is the only thing standing between
-    a fresh install and a live floor lane (one `ollama pull`). Fail-soft to None on any error."""
-    env = os.environ.get("LIMEN_OLLAMA_MODEL")
-    if env:
-        return env
-    binary = os.environ.get("LIMEN_OLLAMA_BIN", _DEFAULT_BINARIES["ollama"])
-    if not shutil.which(binary):
-        return None
-    try:
-        r = subprocess.run([binary, "list"], capture_output=True, text=True, timeout=10)
-        for line in r.stdout.splitlines()[1:]:  # skip the "NAME  ID  SIZE …" header
-            name = line.split()[0] if line.split() else ""
-            if name:
-                return name
-    except Exception:
-        pass
-    return None
 
 
 def _truthy(value: str | None) -> bool:
@@ -250,16 +221,6 @@ def agent_status(agent: str) -> dict[str, Any]:
     if agent == "gemini" and ok and not _gemini_auth_configured():
         ok = False
         detail = "gemini auth not configured"
-    if agent == "ollama" and ok:
-        # Self-activating floor: reachable ONLY once a model is pulled. Install present but no
-        # model → down with the exact one-command path, so it joins the cascade automatically
-        # the instant `ollama pull <model>` lands (no flag flip, mirrors lane auto-rejoin).
-        model = ollama_model()
-        if model:
-            detail = f"{detail}; model={model} (local, unmetered floor)"
-        else:
-            ok = False
-            detail = f"{detail}; no model pulled — run `ollama pull qwen2.5-coder:7b` to light the floor lane"
     if agent == "github_actions" and ok:
         workflow = os.environ.get("LIMEN_GITHUB_ACTIONS_WORKFLOW", "limen-agent.yml")
         detail = f"{detail}; workflow={workflow}"

@@ -35,10 +35,9 @@ installed — each raises a clear error only when actually constructed/used:
     ``mesh dead-zones --structural``).
   * :class:`AnthropicSynthesizer` — THE CORE alchemy. Calls the Anthropic SDK
     (``anthropic`` package, import-guarded) with the ranked shots and asks for ONE
-    better version plus the kept/dropped accounting. The model is DERIVED per tier by
-    :func:`resolve_tier_model` (env-overridable; sonnet falls back to
-    ``claude-sonnet-4-6``), never pinned, and :class:`LadderSynthesizer` climbs the
-    tiers haiku→sonnet→opus under a cheap :class:`Scorer` gate.
+    better version plus the kept/dropped accounting. Default model
+    ``claude-sonnet-4-6`` (a current, active model id — adaptive thinking only;
+    no ``budget_tokens``), overridable via the constructor.
   * :class:`CCEPromoter` — wraps ``conversation_corpus_engine.corpus_candidates``:
     promote = ``stage_corpus_candidate`` -> ``review_corpus_candidate(decision=
     'approve')`` -> ``promote_corpus_candidate``; rollback =
@@ -412,43 +411,6 @@ class MeshGapFinder:
         return [f"explore dead-zone: {z.get('atom_title', '')}".strip() for z in zones]
 
 
-# ─── Earned-tier model ladder (haiku-first-with-cheap-verify) ────────
-
-LADDER_TIERS: tuple[str, ...] = ("haiku", "sonnet", "opus")
-
-# Last-resort fallback model ids — OUTPUTS used only when the env override is absent
-# ([[derive-never-pin-hardcodes]]). The model id lives in exactly this one place; each
-# tier is independently overridable via LIMEN_CONVERGE_MODEL_<TIER>. The CLI path prefers
-# the bare tier alias (the `claude` CLI resolves it to the current dated model itself), so
-# nothing is pinned there at all.
-_TIER_FALLBACK_API: dict[str, str] = {
-    "haiku": "claude-haiku-4-5",
-    "sonnet": "claude-sonnet-4-6",
-    "opus": "claude-opus-4-8",
-}
-
-
-def resolve_tier_model(tier: str, *, cli: bool = False) -> str:
-    """Resolve a ladder tier to the model string, env-override-first (derive-never-pin).
-
-    Order mirrors ``dispatch._opencode_model`` / ``_codex_model``:
-      1. ``LIMEN_CONVERGE_MODEL_<TIER>`` — an explicit pin always wins (api or cli);
-      2. ``cli=True``  → the bare CLI tier alias (``haiku``/``sonnet``/``opus``); the
-         ``claude`` CLI resolves it to the current dated model, so nothing is pinned and
-         it survives model renames;
-         ``cli=False`` → the env-overridable last-resort fallback id from
-         :data:`_TIER_FALLBACK_API`.
-    """
-    import os
-
-    env = os.environ.get(f"LIMEN_CONVERGE_MODEL_{tier.upper()}")
-    if env:
-        return env
-    if cli:
-        return tier
-    return _TIER_FALLBACK_API[tier]
-
-
 class AnthropicSynthesizer:
     """THE CORE alchemy — fold the ranked shots into ONE better version via Claude.
 
@@ -457,11 +419,9 @@ class AnthropicSynthesizer:
     report which shots it kept vs dropped. The model returns a small JSON object so
     the kept/dropped accounting is machine-readable.
 
-    The default model is DERIVED from the sonnet tier via :func:`resolve_tier_model`
-    (env ``LIMEN_CONVERGE_MODEL_SONNET``; falls back to ``claude-sonnet-4-6``) rather
-    than pinned here — Sonnet 4.6 uses adaptive thinking (no ``budget_tokens``).
-    Override with ``model=``. The Anthropic client reads ``ANTHROPIC_API_KEY`` from the
-    environment by default.
+    Default model ``claude-sonnet-4-6`` (a current, active model id; Sonnet 4.6 uses
+    adaptive thinking — no ``budget_tokens``), overridable via ``model=``. The
+    Anthropic client reads ``ANTHROPIC_API_KEY`` from the environment by default.
     """
 
     _PROMPT = (
@@ -478,8 +438,8 @@ class AnthropicSynthesizer:
         '  "dropped_ids": [string]   — ids of shots you dropped (cited as losers)\n'
     )
 
-    def __init__(self, *, model: str | None = None, max_tokens: int = 4096, client=None) -> None:
-        self.model = model or resolve_tier_model("sonnet", cli=False)
+    def __init__(self, *, model: str = "claude-sonnet-4-6", max_tokens: int = 4096, client=None) -> None:
+        self.model = model
         self.max_tokens = max_tokens
         if client is not None:
             self._client = client
@@ -531,150 +491,6 @@ class AnthropicSynthesizer:
             kept_ids=list(payload.get("kept_ids", [])),
             dropped_ids=list(payload.get("dropped_ids", [])),
         )
-
-
-class ClaudeCliSynthesizer:
-    """THE CORE alchemy, KEYLESS — fold the ranked shots into ONE better version via
-    the ``claude`` CLI's print mode (``claude -p``) instead of the raw Anthropic API.
-
-    Why this exists: the live daemon dispatches the ``claude`` lane through the CLI,
-    which authenticates from the local subscription session — it has **no
-    ``ANTHROPIC_API_KEY``**. :class:`AnthropicSynthesizer` needs that key, so under the
-    daemon it silently fell back to the offline (concat) kit and the convergence
-    write-back never happened ("there and back again" never closed). This synthesizer
-    needs no key and spends nothing beyond the CLI budget already in use, so it is the
-    middle rung of the kit cascade: raw API (key present) → claude CLI (keyless) →
-    offline preview. Same JSON contract + same fail-soft parsing as the API path.
-    """
-
-    _PROMPT = AnthropicSynthesizer._PROMPT
-
-    def __init__(self, *, model: str | None = None, timeout: int | None = None, binary: str = "claude") -> None:
-        import os
-        import shutil
-
-        self.model = model
-        # Full face distillation via `claude -p` routinely exceeds a couple minutes
-        # (large reduced faces + many shots); a too-short timeout skips the heaviest,
-        # most-valuable faces every cadence. Generous default, env-overridable for the
-        # outliers — a timeout fail-opens (face skipped, retried next beat), never corrupts.
-        self.timeout = int(os.environ.get("LIMEN_CORPUS_SYNTH_TIMEOUT", "600")) if timeout is None else timeout
-        self._binary = shutil.which(binary) or binary
-        if shutil.which(binary) is None:
-            raise FileNotFoundError(
-                f"ClaudeCliSynthesizer requires the '{binary}' CLI on PATH "
-                "(the keyless, subscription-authed print mode). Install it, or use "
-                "AnthropicSynthesizer with ANTHROPIC_API_KEY for the raw-API path."
-            )
-
-    def _render_shots(self, ranked: list[Shot]) -> str:
-        blocks = []
-        for i, shot in enumerate(ranked, start=1):
-            src = f" (source: {shot.source})" if shot.source else ""
-            blocks.append(f"[rank {i}] id={shot.id}{src}\n{shot.text}")
-        return "\n\n".join(blocks)
-
-    def synthesize(self, idea: str, ranked: list[Shot]) -> Synthesis:  # pragma: no cover - requires claude CLI
-        import json
-        import subprocess
-
-        user = (
-            f"{self._PROMPT}\n\nIDEA:\n{idea}\n\n"
-            f"SHOTS (best-first):\n{self._render_shots(ranked)}"
-        )
-        argv = [self._binary, "-p", *( ["--model", self.model] if self.model else [] ), user]
-        proc = subprocess.run(argv, capture_output=True, text=True, timeout=self.timeout, check=False)
-        text = (proc.stdout or "").strip()
-        if proc.returncode != 0 or not text:
-            # Fail LOUD so the kit cascade / per-face guard can fall through to the next
-            # rung — never a silent offline no-op masquerading as a converged write.
-            raise RuntimeError(
-                f"claude CLI synth failed (rc={proc.returncode}): {(proc.stderr or '')[:200]}"
-            )
-        # The CLI may wrap the JSON in a ```json fence; strip a single leading/trailing fence.
-        if text.startswith("```"):
-            text = text.split("\n", 1)[-1]
-            if text.rstrip().endswith("```"):
-                text = text.rstrip()[: text.rstrip().rfind("```")]
-            text = text.strip()
-        try:
-            payload = json.loads(text)
-        except json.JSONDecodeError:
-            # Not clean JSON: treat the whole reply as the distillate, keep the top shot,
-            # drop the rest — never lose the alchemy (same policy as AnthropicSynthesizer).
-            kept = [ranked[0].id] if ranked else []
-            return Synthesis(
-                better_version=text,
-                kept_ids=kept,
-                dropped_ids=[s.id for s in ranked[1:]],
-            )
-        return Synthesis(
-            better_version=payload.get("better_version", ""),
-            kept_ids=list(payload.get("kept_ids", [])),
-            dropped_ids=list(payload.get("dropped_ids", [])),
-        )
-
-
-class LadderSynthesizer:
-    """Earned-tier ladder — Haiku-first-with-cheap-verify, escalate only on a failed check.
-
-    Wraps a per-tier *factory* (one synthesis MECHANISM — API or CLI — parametrised by
-    tier) plus the SAME cheap :class:`Scorer` ``converge()`` uses. Drafts at the cheapest
-    tier, scores it, accepts if ``score >= threshold``; only on a failed check does it
-    spend the next rung up (haiku → sonnet → opus). The tier ladder nests INSIDE one
-    availability rung (api/cli/offline is the kit's job) so it never double-spends the
-    cascade, and each tier is built at most once and only when reached — no double-spend
-    within the ladder either.
-
-    Fail-open and bounded: a per-rung failure (timeout, API/CLI error) is swallowed and
-    the next rung tried; if every rung fails the gate, the BEST-scoring draft is returned;
-    if every rung RAISES, an empty :class:`Synthesis` is returned so ``converge()`` scores
-    it low and rolls back — never an exception up the stack, never a corrupting write.
-    Capped at the top tier (no infinite escalation).
-
-    The cheapest rung is built EAGERLY in ``__init__`` so a missing MECHANISM (no
-    ``claude`` CLI / no ``anthropic`` package) raises here at construction — exactly as the
-    single-tier synthesizer did — keeping the kit's construction-time api→cli→offline
-    fallback intact. Higher rungs stay lazy.
-    """
-
-    def __init__(
-        self,
-        *,
-        tier_factory,
-        scorer: Scorer,
-        threshold: float = 0.7,
-        tiers: tuple[str, ...] = LADDER_TIERS,
-    ) -> None:
-        self._factory = tier_factory
-        self._scorer = scorer
-        self._threshold = threshold
-        self._tiers = tiers
-        # Eager cheapest rung: validates the mechanism at construction (see docstring).
-        self._built: dict[str, Synthesizer] = {tiers[0]: tier_factory(tiers[0])}
-
-    def _tier(self, tier: str) -> Synthesizer:
-        if tier not in self._built:
-            self._built[tier] = self._factory(tier)
-        return self._built[tier]
-
-    def synthesize(self, idea: str, ranked: list[Shot]) -> Synthesis:
-        best: Synthesis | None = None
-        best_score = -1.0
-        for tier in self._tiers:
-            try:
-                result = self._tier(tier).synthesize(idea, ranked)
-            except Exception:
-                continue  # fail-open per rung — try the next, never corrupt
-            score = self._scorer.score(idea, result.better_version, ranked)
-            if score >= self._threshold:
-                return result  # cheap check PASSED — accept, spend no higher rung
-            if score > best_score:
-                best, best_score = result, score
-        if best is not None:
-            return best  # all rungs failed the gate → accept the best draft (fail-open)
-        # every rung RAISED → empty Synthesis so converge() scores low and rolls back
-        return Synthesis(better_version="", kept_ids=[], dropped_ids=[s.id for s in ranked])
 
 
 class CCEPromoter:
@@ -786,29 +602,6 @@ def _build_dry_run_kit() -> dict:
     }
 
 
-def _api_tier_factory(client=None):
-    """tier → an :class:`AnthropicSynthesizer` at that tier's resolved API model id (the
-    raw-API rung). ``client`` is the test/injection seam, threaded to every rung."""
-
-    def build(tier: str) -> Synthesizer:
-        model = resolve_tier_model(tier, cli=False)
-        if client is not None:
-            return AnthropicSynthesizer(model=model, client=client)
-        return AnthropicSynthesizer(model=model)
-
-    return build
-
-
-def _cli_tier_factory():
-    """tier → a :class:`ClaudeCliSynthesizer` at that tier's CLI alias (the keyless,
-    subscription-authed live-daemon rung)."""
-
-    def build(tier: str) -> Synthesizer:
-        return ClaudeCliSynthesizer(model=resolve_tier_model(tier, cli=True))
-
-    return build
-
-
 def _build_live_kit(args, *, anthropic_client=None) -> dict:
     """The live adapter set for --live: REAL synthesis, promotion gated OFF by default.
 
@@ -834,39 +627,12 @@ def _build_live_kit(args, *, anthropic_client=None) -> dict:
         ranker = LexicalRanker()
         gap_finder = LexicalGapFinder()
 
-    # Synthesis: the core alchemy, now an EARNED-TIER LADDER (haiku-first-with-cheap-verify,
-    # escalate only on a failed check) nested INSIDE the availability cascade. The cascade
-    # ([[cascade-fallback-principle]] / never a silent no) still picks the MECHANISM first —
-    #   injected client (tests) or ANTHROPIC_API_KEY → raw API (spends);
-    #   else the KEYLESS subscription-authed `claude -p` CLI — the live-daemon path, whose
-    #   launchd env carries no key, so this rung closes the capture→converge write-back.
-    # The ladder then climbs tiers WITHIN the chosen mechanism (it eagerly builds its
-    # cheapest rung, so a missing mechanism still raises here just like before). An explicit
-    # --model pins one tier (opts out of the ladder); LIMEN_CONVERGE_LADDER=0 disables it
-    # (rollback to single-tier). Threshold = converge's own promote gate, so an accepted
-    # rung also promotes — no surprise rollback of a ladder-accepted draft.
-    import os
-
-    model_kwarg = {"model": args.model} if getattr(args, "model", None) else {}
-    ladder_on = os.environ.get("LIMEN_CONVERGE_LADDER", "1") == "1" and not getattr(args, "model", None)
-    threshold = getattr(args, "threshold", 0.7)
-    scorer = DeterministicScorer()  # the cheap gate — same instance the kit returns below
-
-    if anthropic_client is not None:
-        synthesizer: Synthesizer = (
-            LadderSynthesizer(tier_factory=_api_tier_factory(anthropic_client), scorer=scorer, threshold=threshold)
-            if ladder_on else AnthropicSynthesizer(client=anthropic_client, **model_kwarg)
-        )
-    elif os.environ.get("ANTHROPIC_API_KEY"):
-        synthesizer = (
-            LadderSynthesizer(tier_factory=_api_tier_factory(), scorer=scorer, threshold=threshold)
-            if ladder_on else AnthropicSynthesizer(**model_kwarg)
-        )
-    else:
-        synthesizer = (
-            LadderSynthesizer(tier_factory=_cli_tier_factory(), scorer=scorer, threshold=threshold)
-            if ladder_on else ClaudeCliSynthesizer(**model_kwarg)
-        )
+    # Synthesis: the core alchemy. Derive the model from the class default unless
+    # explicitly overridden (derive-never-pin — no second copy of the model id here).
+    synth_kwargs = {"client": anthropic_client} if anthropic_client is not None else {}
+    if getattr(args, "model", None):
+        synth_kwargs["model"] = args.model
+    synthesizer: Synthesizer = AnthropicSynthesizer(**synth_kwargs)
 
     # Promotion: reversible CCE promoter ONLY when explicitly requested; else no-op.
     if getattr(args, "promote", False):
@@ -877,7 +643,7 @@ def _build_live_kit(args, *, anthropic_client=None) -> dict:
     return {
         "ranker": ranker,
         "synthesizer": synthesizer,
-        "scorer": scorer,
+        "scorer": DeterministicScorer(),
         "promoter": promoter,
         "gap_finder": gap_finder,
     }

@@ -21,15 +21,12 @@ Safety / shape (matches the sibling organs exactly):
   • IDEMPOTENT: each heal task has a STABLE id derived from kind+owner+repo+num
     (HEAL-cifix-… / HEAL-rebase-…). If that id already exists in tasks.yaml (any status), no
     duplicate is emitted — re-running is a no-op until the PR's state changes.
-  • FULL COVERAGE, BOUNDED COST: one cheap enumeration of EVERY open PR (shared _pr_scan), then a
-    rotating --scan window is assessed per beat (default 30) so the whole backlog is covered over
-    successive beats — not just the head-of-list 30 forever. --limit caps heal tasks emitted this
-    run (default 10, lifted up to 3x when vendor capacity is idle). Never dispatches/merges/pushes.
+  • BOUNDED: --scan caps PRs assessed (default 30, like merge-drain), --limit caps heal tasks
+    emitted this run (default 10). Never dispatches, merges, pushes, or closes anything.
 
-  --scan N      assess WINDOW per run — PRs classified this beat, rotating (default 30)
-  --scan-max N  cap on the cheap full-fleet enumeration the window draws from (default 500)
-  --limit N     max heal tasks to EMIT this run, headroom-scaled (default 10)
-  --dry-run     assess + report what WOULD be emitted; make ZERO writes (cursor + lock untouched)
+  --scan N    max open PRs to assess this run     (default 30)
+  --limit N   max heal tasks to EMIT this run     (default 10)
+  --dry-run   assess + report what WOULD be emitted; make ZERO writes (lock untouched)
 """
 import argparse
 import collections
@@ -43,10 +40,8 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
-sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _pr_scan
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.models import Task  # noqa: E402
-from _pr_scan import enumerate_open_prs, rotating_window, scaled_limit, stale_base_verdict  # noqa: E402
 
 # DERIVED from env so the conductor survives relocation; same defaults as merge-drain.py.
 OWNERS = [o.strip() for o in os.environ.get("LIMEN_OWNERS", "organvm,4444J99").split(",") if o.strip()]
@@ -82,46 +77,21 @@ KINDS = {
             "PR: {url}"
         ),
     },
-    # STALE-BASE family — the #111 guard. A mergeable+green PR off an OLD base would silently REVERT
-    # work that landed since. merge-drain refuses it; these tasks rebase it onto the CURRENT base,
-    # keeping the PR's own work and dropping only the reverting hunks. ([[pr111-daemon-regression-healed]])
-    "STALE-CORE": {
-        "slug": "rebase-stale",
-        "priority": "high",
-        "labels": ["rebase", "self-heal", "stale-base", "core"],
-        "title": "rebase {repo}#{num} onto current base — stale base touches the daemon body",
-        "context": (
-            "PR {repo}#{num} is MERGEABLE + green BUT its base is STALE and its diff touches CORE "
-            "daemon files (cli/src/limen, scripts/*.py|sh, mcp/src, web/api, container). Merging "
-            "as-is would silently REVERT newer code on the base — the #111 failure mode. Check out "
-            "the PR branch and REBASE it onto the CURRENT base (git fetch origin && git rebase "
-            "origin/<base>). During the rebase, KEEP every change that is genuinely this PR's own "
-            "work and DROP any hunk that would revert a file the PR did not intend to change "
-            "(especially core files it only carries because it branched old). Push --force-with-lease "
-            "to the SAME PR branch; confirm it reports MERGEABLE, current with base, and green. Do "
-            "NOT open a new PR and do NOT drop any unique work — absorb the branch toward current "
-            "ideal form. PR: {url}"
-        ),
-    },
-    "STALE-BASE": {
-        "slug": "rebase-stale",
-        "priority": "normal",
-        "labels": ["rebase", "self-heal", "stale-base"],
-        "title": "rebase {repo}#{num} onto current base — branched far behind",
-        "context": (
-            "PR {repo}#{num} is MERGEABLE + green but branched well behind its current base — the "
-            "structural condition for a stale-base silent revert. Check out the branch, REBASE it "
-            "onto the current base, KEEP all of the PR's genuine changes and DROP any hunk that "
-            "merely reverts base files it didn't mean to touch, push --force-with-lease to the SAME "
-            "branch, and confirm MERGEABLE + current + green. Do NOT open a new PR; preserve all "
-            "unique work. PR: {url}"
-        ),
-    },
 }
 
 
 def gh(args, timeout=60):
     return subprocess.run(["gh", *args], capture_output=True, text=True, timeout=timeout)
+
+
+def open_prs(scan):
+    r = gh(["search", "prs", "--author", "@me", "--state", "open", "--limit", str(scan),
+            *sum([["--owner", o] for o in OWNERS], []),
+            "--json", "number,repository,url"])
+    if r.returncode != 0:
+        return []
+    return [(p["repository"]["nameWithOwner"], p["number"], p.get("url", ""))
+            for p in json.loads(r.stdout or "[]")]
 
 
 def assess(pr):
@@ -130,8 +100,7 @@ def assess(pr):
     repo, num, url = pr
     try:
         r = gh(["pr", "view", str(num), "-R", repo, "--json",
-                "mergeable,mergeStateStatus,state,statusCheckRollup,isDraft,files,baseRefName,headRefOid"],
-               timeout=40)
+                "mergeable,mergeStateStatus,state,statusCheckRollup,isDraft"], timeout=40)
         if r.returncode != 0:
             return (repo, num, url, "ERR")
         d = json.loads(r.stdout)
@@ -145,12 +114,6 @@ def assess(pr):
         if d.get("mergeable") == "CONFLICTING":
             return (repo, num, url, "CONFLICT")
         if d.get("mergeable") == "MERGEABLE":
-            # STALE-BASE GATE (identical to merge-drain.assess — one verdict): refuse a green+mergeable
-            # PR off an old base that would silently revert work, and emit a rebase-to-current heal task.
-            paths = [f.get("path", "") for f in (d.get("files") or [])]
-            sb = stale_base_verdict(repo, paths, d.get("baseRefName"), d.get("headRefOid"), gh)
-            if sb:
-                return (repo, num, url, sb)  # STALE-CORE / STALE-BASE → rebase task below
             return (repo, num, url, "READY")
         return (repo, num, url, "BLOCKED")
     except Exception:
@@ -196,34 +159,22 @@ def acquire_lock(timeout=15):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--scan", type=int, default=int(os.environ.get("LIMEN_HEAL_SCAN", "30")),
-                    help="assess WINDOW per run — how many PRs to classify this beat (rotates)")
-    ap.add_argument("--scan-max", type=int, default=int(os.environ.get("LIMEN_HEAL_SCAN_MAX", "500")),
-                    help="cap on the cheap full-fleet enumeration the rotating window draws from")
-    ap.add_argument("--limit", type=int, default=int(os.environ.get("LIMEN_HEAL_LIMIT", "10")),
-                    help="max heal tasks to EMIT this run (headroom-scaled up to 3x on a full tank)")
+    ap.add_argument("--scan", type=int, default=int(os.environ.get("LIMEN_HEAL_SCAN", "30")))
+    ap.add_argument("--limit", type=int, default=int(os.environ.get("LIMEN_HEAL_LIMIT", "10")))
     ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS", str(ROOT / "tasks.yaml")))
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
 
-    # FULL-FLEET coverage: one cheap enumeration of EVERY open PR (not just the first 30), then
-    # assess a rotating window of --scan PRs this beat. Over a full rotation every red/conflict PR
-    # gets seen → a heal task → merge-drain lands it. The cursor is per-organ so HEAL and MERGE
-    # rotate independently. ([[self-star-ladder-shipped-live]])
-    allprs = enumerate_open_prs(OWNERS, gh, max_total=a.scan_max, want_url=True)
-    if not allprs:
+    prs = open_prs(a.scan)
+    if not prs:
         print("[self-heal] no open PRs (or gh unavailable)")
         return 0
-    cursor = ROOT / "logs" / ".pr-scan-cursor.heal"
-    prs = rotating_window(allprs, a.scan, str(cursor), persist=not a.dry_run)
     with cf.ThreadPoolExecutor(max_workers=10) as ex:
         rows = list(ex.map(assess, prs))
     b = collections.Counter(r[3] for r in rows)
 
-    # the stuck PRs this organ exists to heal, capped per run (the cap lifts when vendor capacity
-    # is idle, so a full tank drains the red pile faster instead of trickling 10/beat).
-    limit = scaled_limit(a.limit, ROOT)
-    sick = [(r[3], r[0], r[1], r[2]) for r in rows if r[3] in KINDS][:limit]
+    # the stuck PRs this organ exists to heal, capped per run.
+    sick = [(r[3], r[0], r[1], r[2]) for r in rows if r[3] in KINDS][:a.limit]
     stamp = datetime.date.today().isoformat()
 
     tasks_path = Path(a.tasks)
@@ -238,9 +189,8 @@ def main():
                 dup += 1
             else:
                 would.append((tid, verdict, repo, num))
-        print(f"[self-heal] DRY-RUN window={len(prs)}/{len(allprs)} ready={b['READY']} "
+        print(f"[self-heal] DRY-RUN scanned={len(prs)} ready={b['READY']} "
               f"ci-red={b['CI-RED']} conflict={b['CONFLICT']} ci-pending={b['CI-PENDING']} "
-              f"stale-core={b['STALE-CORE']} stale-base={b['STALE-BASE']} "
               f"| would-emit={len(would)} already-queued={dup}")
         print("| heal task id (would emit) | kind | repo | pr |")
         print("|---|---|---|---|")
@@ -275,9 +225,8 @@ def main():
             pass
 
     ts = datetime.datetime.now().strftime("%F %T")
-    summary = (f"[self-heal] {ts} window={len(prs)}/{len(allprs)} ready={b['READY']} ci-red={b['CI-RED']} "
-               f"conflict={b['CONFLICT']} ci-pending={b['CI-PENDING']} stale-core={b['STALE-CORE']} "
-               f"stale-base={b['STALE-BASE']} | emitted={len(emitted)} (limit={limit})")
+    summary = (f"[self-heal] {ts} scanned={len(prs)} ready={b['READY']} ci-red={b['CI-RED']} "
+               f"conflict={b['CONFLICT']} ci-pending={b['CI-PENDING']} | emitted={len(emitted)}")
     print(summary)
     for tid in emitted:
         print(f"    emit: {tid}")

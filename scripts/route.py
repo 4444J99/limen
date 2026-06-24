@@ -40,7 +40,6 @@ import json
 import os
 import subprocess
 import sys
-import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -63,16 +62,13 @@ def _vendor_health() -> dict[str, bool]:
     def has(bin_: str) -> bool:
         return subprocess.run(["which", bin_], capture_output=True).returncode == 0
 
-    def _gemini_settings_has_auth() -> bool:
-        # ~/.gemini is another app's data — on macOS TCC the read can be denied. Never crash;
-        # a denied/absent read just means "no settings-file auth" (env key is checked first).
-        try:
-            f = Path.home() / ".gemini" / "settings.json"
-            return f.exists() and "auth" in f.read_text(errors="ignore")
-        except (PermissionError, OSError):
-            return False
-
-    gemini_auth = bool(os.environ.get("GEMINI_API_KEY")) or _gemini_settings_has_auth()
+    gemini_auth = bool(os.environ.get("GEMINI_API_KEY")) or (
+        Path.home() / ".gemini" / "settings.json"
+    ).exists() and "auth" in (
+        (Path.home() / ".gemini" / "settings.json").read_text(errors="ignore")
+        if (Path.home() / ".gemini" / "settings.json").exists()
+        else ""
+    )
     return {
         "jules": has("jules"),
         "codex": has("codex"),
@@ -118,28 +114,6 @@ def _vendor_runway() -> dict[str, float]:
     return out
 
 
-def _vendor_cliff_urgency() -> dict[str, float]:
-    """Per-vendor 'budget about to EXPIRE unused' pressure, from the live meter (usage.json, written
-    by usage-telemetry.py: headroom_pct + time_left_frac). urgency = headroom_frac * (1 - time_left_frac):
-    HIGH when a lane has lots of unspent budget AND little time left in its window → drain it FIRST so
-    it ships value before the reset wipes the headroom. ~0 early in a window (runway breaks the tie as
-    before). Derived from the live signal, never pinned; missing meter → {} → no effect (today's routing)."""
-    f = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen"))) / "logs" / "usage.json"
-    try:
-        vendors = (json.loads(f.read_text()) or {}).get("vendors", {})
-    except (OSError, ValueError):
-        return {}
-    out: dict[str, float] = {}
-    for name, info in vendors.items():
-        if not isinstance(info, dict):
-            continue
-        hp = info.get("headroom_pct")
-        tlf = info.get("time_left_frac")
-        if isinstance(hp, (int, float)) and isinstance(tlf, (int, float)):
-            out[name] = max(0.0, (hp / 100.0) * (1.0 - tlf))
-    return out
-
-
 def _local_checkout(repo: str | None, workdir: Path) -> Path | None:
     """Mirror of dispatch._resolve_repo_dir: does a local git checkout exist?"""
     if not repo:
@@ -178,13 +152,12 @@ def _learned_weights() -> dict[str, float]:
     """Conservative lane weights LEARNED by the self-improve organ — the feedback that closes the
     self-IMPROVE rung (route consumes what improve learned). Read from the proposal the organ already
     writes (logs/self-improve-proposal.json: lane_adjustments[].target_weight). Applied to the local
-    split by default now that the ladder is closed — set LIMEN_SI_APPLY=0 to disable (clean rollback).
-    Still a no-op until a proposal exists (fail-open below), so the flip is safe before the first run.
+    split ONLY when LIMEN_SI_APPLY=1 — OFF by default, so improve stays proposal-only until the flip.
 
     A down-weighted lane gets a proportionally higher effective load (picked less), but every weight
     is floored (LIMEN_SI_WEIGHT_FLOOR, default 0.25) so no lane is ever fully STARVED — it can still
     win work and recover as its later tries succeed. Missing lane -> 1.0 (no effect). Derive-not-pin."""
-    if os.environ.get("LIMEN_SI_APPLY", "1") != "1":
+    if os.environ.get("LIMEN_SI_APPLY") != "1":
         return {}
     floor = float(os.environ.get("LIMEN_SI_WEIGHT_FLOOR", "0.25"))
     try:
@@ -197,77 +170,6 @@ def _learned_weights() -> dict[str, float]:
         if lane and isinstance(w, (int, float)):
             weights[lane] = max(floor, min(1.0, float(w)))
     return weights
-
-
-def _refresh_self_improve_proposal() -> None:
-    """Run the self-IMPROVE *producer* at low cadence so its proposal stays fresh for the *consumer*
-    (_learned_weights, above) to apply — the other half of the self-improve rung.
-
-    Why it lives here: the live heartbeat loop (scripts/heartbeat-loop.sh) calls route.py every beat
-    but has NO separate self-improve step, and the only other caller of scripts/self-improve.py is
-    metabolize.sh — which the live loop never invokes (only saturate.sh does). So without this, the
-    proposal was never generated in the running system and _learned_weights always fell through to {}
-    (the rung was wired into a script the daemon doesn't run). Co-locating the producer in route — the
-    organ that already consumes it — keeps the WHOLE rung in the spawned-subprocess layer: route.py is
-    re-exec'd fresh each beat, so this deploys on the next sync-release ff with NO loop-body edit and
-    NO daemon kickstart (the original design intent for this rung).
-
-    Proposal-only + read-only (self-improve.py never writes tasks.yaml). LIMEN_SI_APPLY=0 disables the
-    whole rung (producer + consumer) for a clean rollback; cadence-gated by LIMEN_SI_CADENCE hours so
-    most beats are a cheap mtime check; timeout-bounded and FAIL-OPEN — any error just leaves the last
-    proposal in place (or none → _learned_weights → {}, today's split) and never blocks routing."""
-    if os.environ.get("LIMEN_SI_APPLY", "1") != "1":
-        return
-    try:
-        cadence_h = float(os.environ.get("LIMEN_SI_CADENCE", "10"))
-        proposal = ROOT / "logs" / "self-improve-proposal.json"
-        if proposal.exists() and (time.time() - proposal.stat().st_mtime) / 3600.0 < cadence_h:
-            return  # fresh enough — skip the producer this beat
-        script = ROOT / "scripts" / "self-improve.py"
-        if not script.exists():
-            return
-        subprocess.run(
-            ["python3", str(script)], cwd=str(ROOT),
-            timeout=float(os.environ.get("LIMEN_SI_TIMEOUT", "120")), capture_output=True,
-        )
-    except Exception:
-        return  # fail-open: a stale/absent proposal just means _learned_weights -> {} (no effect)
-
-
-def _task_classes(task: dict) -> set[str]:
-    """The work-classes of one task — its type plus every label. The ledger grades a lane per class,
-    so this is the key we look the lane's waste/win record up against."""
-    return {c for c in ([task.get("type")] + list(task.get("labels") or [])) if c}
-
-
-def _ledger_bias(task: dict) -> dict[str, float]:
-    """Steer each lane AWAY from the work-classes the value ledger shows it wastes on — derived from
-    logs/ledger.json (lanes[lane].waste_classes / .win_classes), so no lane name is pinned and it self-
-    corrects as performance changes ([[value-is-discovered-never-assumed]] is the input side; this acts
-    on the output side). Returns {lane: floor} for lanes that waste THIS task's class, applied as a low
-    weight so the lane is picked far less for that work — but never 0 (floored → never starved), and a
-    lane that WINS any of the task's classes is exempt (we don't shed jules's revenue work just because
-    it also wastes generic 'code'). Gated by LIMEN_LEDGER_BIAS (default on); fail-open to {} (= today's
-    routing) on any missing/torn ledger."""
-    if os.environ.get("LIMEN_LEDGER_BIAS", "1") != "1":
-        return {}
-    floor = float(os.environ.get("LIMEN_LEDGER_BIAS_FLOOR", "0.2"))
-    try:
-        lanes = json.loads((ROOT / "logs" / "ledger.json").read_text()).get("lanes", {})
-    except Exception:
-        return {}
-    classes = _task_classes(task)
-    if not classes:
-        return {}
-    bias: dict[str, float] = {}
-    for lane, d in lanes.items():
-        if not isinstance(d, dict):
-            continue
-        if classes & set(d.get("win_classes") or []):
-            continue  # this lane LANDS this kind of work — never shed it
-        if classes & set(d.get("waste_classes") or []):
-            bias[lane] = floor
-    return bias
 
 
 def _pick_local(
@@ -297,9 +199,7 @@ def _pick_local(
     if not candidates:
         return None
 
-    # learned (self-improve) weights, then ledger bias on top — the ledger sheds a lane from the
-    # work-classes it wastes on (opencode off code/build-out here; it still won deploy above). Bias wins.
-    weights = {**_learned_weights(), **_ledger_bias(task)}
+    weights = _learned_weights()  # {} unless LIMEN_SI_APPLY=1 -> pure budget+runway split
 
     def load(v: str) -> float:
         b = budget.get(v, 0) or 1
@@ -312,17 +212,9 @@ def _pick_local(
     def runway_of(v: str) -> float:
         return runway.get(v, float("inf"))
 
-    # cliff-urgency: a lane near its reset with unspent budget should DRAIN FIRST (its headroom expires
-    # otherwise). Read from the live meter; ~0 away from a cliff, so this only reorders near a reset.
-    cliff = _vendor_cliff_urgency()
-
-    def urgency_of(v: str) -> float:
-        return cliff.get(v, 0.0)
-
-    # least-loaded by budget ratio; then HIGHEST cliff-urgency (drain expiring budget before reset);
-    # then MOST refresh runway (freshest window); then higher-budget lane; then name (stable).
-    return min(candidates,
-               key=lambda v: (load(v), -urgency_of(v), -runway_of(v), -budget.get(v, 0), v))
+    # least-loaded by budget ratio; then MOST refresh runway (freshest window); then higher-budget
+    # lane; then name (stable).
+    return min(candidates, key=lambda v: (load(v), -runway_of(v), -budget.get(v, 0), v))
 
 
 def _capable_agents(
@@ -407,13 +299,7 @@ def route_task(
     agents, reasons = _capable_agents(task, health, planned_remaining, workdir)
     extended = [a for a in agents if a not in LOCAL_CHECKOUT_AGENTS]
     if extended:
-        # ledger bias here steers jules off the busywork classes it wastes (coverage/docs/...) while
-        # KEEPING it for its winners (revenue/product/ship-now) and for any repo where it's the only
-        # capable lane (the penalty only reorders — min() still picks it when it's the sole option, so
-        # a no-local-checkout repo is never stranded). [[no-never-happens-again]]
-        bias = _ledger_bias(task)
-        pick = min(extended, key=lambda a: (1 if bias.get(a, 1.0) < 1.0 else 0,
-                                            assigned.get(a, 0), PAID_AGENT_ORDER.index(a)))
+        pick = min(extended, key=lambda a: (assigned.get(a, 0), PAID_AGENT_ORDER.index(a)))
         return pick, reasons[pick]
     return "unroutable", "no reachable capable paid lane"
 
@@ -426,10 +312,6 @@ def main() -> int:
     ap.add_argument("--apply", action="store_true",
                     help="rewrite target_agent in tasks.yaml (reversible); never dispatches")
     args = ap.parse_args()
-
-    # PRODUCE the self-improve proposal (low cadence) before we CONSUME it in routing below — this is
-    # the live home of the improve producer (the heartbeat loop has no separate self-improve step).
-    _refresh_self_improve_proposal()
 
     tasks_path = Path(args.tasks)
     workdir = Path(args.workdir).expanduser()
@@ -449,7 +331,7 @@ def main() -> int:
     # Remote/issue lanes (jules/copilot/github_actions/warp/oz) self-dispatch and aren't constrained.
     _lanes_env = os.environ.get("LIMEN_LANES")
     if _lanes_env:
-        _dispatchable = {ln.strip() for ln in _lanes_env.split(",") if ln.strip()} | {"jules"}
+        _dispatchable = {l.strip() for l in _lanes_env.split(",") if l.strip()} | {"jules"}
         health = {
             k: (v and (k in _dispatchable or k not in LOCAL_CHECKOUT_AGENTS))
             for k, v in health.items()
@@ -521,20 +403,5 @@ def main() -> int:
     return 0
 
 
-def _stamp_health() -> None:
-    """Proprioception: record that the ROUTE organ fired this beat, so organ-health.py can read it
-    as a fresh artifact (mtime). Fail-open — a missed stamp never blocks routing."""
-    try:
-        logs = ROOT / "logs"
-        logs.mkdir(exist_ok=True)
-        (logs / "route-health.json").write_text(
-            json.dumps({"timestamp": time.strftime("%Y-%m-%dT%H:%M:%S")}) + "\n"
-        )
-    except OSError:
-        pass
-
-
 if __name__ == "__main__":
-    rc = main()
-    _stamp_health()
-    sys.exit(rc)
+    sys.exit(main())
