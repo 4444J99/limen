@@ -1,0 +1,217 @@
+# The Ramayana — film companion (the FOURTH commentary system)
+# Mirrors the Iliad gold standard (studium/film/iliad.yaml). Film is not illustration: it is an
+# independent account of the same FORCE meeting the poem on its own terms. Each `force` is a key of
+# dominant-force.yaml; each `object` of object-taxonomy.yaml (both validated by scripts/studium-validate.py).
+# Watch links resolve to LEGAL rails only (Letterboxd / JustWatch / search) — never a pirated source.
+work: ramayana
+title: "The Ramayana — a cinema of fidelity, exile, and the long return"
+principle: >
+  Do not assemble a list of "mythological Indian epics." Assemble the poem's FORCES given cinematic
+  bodies. The Ramayana is not primarily an adventure; it is the study of DHARMA held as fidelity — to a
+  father's word, to a wife, to a king, to a vow — across the rupture of exile and the long arc back. Its
+  spine is two faithfulnesses that mirror each other: Rama, who accepts banishment without flinching to
+  keep his father's boon, and Sita, who keeps faith with Rama through abduction, captivity, and fire.
+  Bala Kanda is consecration (the rightful prince, the breaking of Shiva's bow); Ayodhya is the wound (a
+  boon weaponized, the sandals set on the empty throne); Aranya is the lure (the golden deer, Ravana's
+  desire, the empty forest); Kishkindha and Sundara are the search and the leap (a pact, an arrow,
+  Hanuman's devotion crossing the sea); Yuddha is the war and its cost; Uttara is the bitter coda where
+  the faithful wife, doubted by the kingdom she was rescued for, returns not to the throne but to the
+  earth. The fitting films are therefore not costume spectacles but studies of kept faith under pressure:
+  obsessive remaking for the golden deer (Vertigo), a tormented captive who will not recant (Joan of Arc),
+  a soldier's long walk home to a woman who waited (Cold Mountain), a miracle that vindicates the doubted
+  (Ordet). Direct adaptations are listed as honest overlays — the force-companion carries the weight.
+force_coverage: [kingship, exile, desire, supplication, wrath, sacrifice, return, revelation, grief]
+films:
+  - title: "Ran"
+    director: "Akira Kurosawa"
+    year: 1985
+    force: kingship
+    divisions: [1, 2]
+    objects: []
+    letterboxd: ran
+    scene_or_theme: "The Ikshvaku throne — Dasharatha, the dynasty, and a sovereign undone by his own word"
+    object_lesson: >
+      Kingship in this tradition is not power but binding: the sovereign is the man least free to act on
+      his own desire. Dasharatha's tragedy is that the very thing that makes him a great king — the
+      inviolability of a granted boon — is the thing that destroys his house when Kaikeyi calls it in.
+      The lesson: a throne is a set of obligations wearing a crown, and the king who keeps faith with his
+      word may have to break his own heart to do it.
+    why: >
+      Kurosawa films sovereignty as a structure that crushes the man inside it. Hidetora, like Dasharatha,
+      sets a succession in motion that consumes him; the grandeur of the court only sharpens the ruin. Ran
+      gives the Ikshvaku weight — a dynasty, an old king, and a fatal act of favor — its true cinematic scale.
+    content_note: "battlefield carnage, familial betrayal"
+  - title: "Nostalghia"
+    director: "Andrei Tarkovsky"
+    year: 1983
+    force: exile
+    divisions: [2]
+    objects: []
+    letterboxd: nostalghia
+    scene_or_theme: "The sandals on the throne — banishment accepted, home carried as an ache"
+    object_lesson: >
+      Rama's exile is not punishment but obedience: he walks into the forest the moment the word is
+      spoken, and Bharata, refusing the throne he is handed, rules only as regent over a pair of sandals.
+      Exile here is a discipline of fidelity — the kingdom kept faith with by being left empty. The lesson:
+      true homelessness is to carry the rightful home inside you, unoccupied, until you can return to it whole.
+    why: >
+      Tarkovsky films exile as a sickness of the soul that no movement cures — a longing for a home that
+      the body has left but the spirit will not relinquish. The candle carried slowly across the empty pool
+      is fidelity made visible: a vow kept for no audience. It is Bharata's sandals in another language.
+    content_note: "extreme slow cinema, spiritual desolation"
+  - title: "Vertigo"
+    director: "Alfred Hitchcock"
+    year: 1958
+    force: desire
+    divisions: [3]
+    objects: [mirror]
+    letterboxd: vertigo
+    scene_or_theme: "The golden deer — desire as illusion, the lure that empties the forest"
+    object_lesson: >
+      Aranya Kanda turns on a counterfeit: Maricha takes the form of a jeweled deer because desire always
+      wears a beautiful disguise, and the moment Rama and Lakshmana chase it the protection around Sita
+      dissolves and Ravana strikes. Desire is the force that makes you abandon what you were guarding. The
+      lesson: the most dangerous longing is the one for an image — a thing made gorgeous precisely to draw
+      you off your post.
+    why: >
+      Hitchcock builds the purest film about desire-as-illusion: a man so possessed by an image of a woman
+      that he remakes a living one into a phantom, and is destroyed by the gap between them. The golden
+      deer and Madeleine are the same lure — a fabricated beauty that costs the seeker everything real.
+    content_note: "obsession, death, psychological manipulation"
+  - title: "The Passion of Joan of Arc"
+    director: "Carl Theodor Dreyer"
+    year: 1928
+    force: supplication
+    divisions: [4, 5]
+    objects: []
+    letterboxd: the-passion-of-joan-of-arc
+    scene_or_theme: "Sita in the Ashoka grove — the faithful captive who will not recant, Hanuman's devotion"
+    object_lesson: >
+      Sundara Kanda is the heart of the poem's fidelity: Sita, held in Lanka and pressed by Ravana, refuses
+      him utterly, and Hanuman crosses the ocean by the sheer force of devotion to find her. Supplication
+      here is not weakness but the unbreakable exposed thread of faith under torment. The lesson: fidelity is
+      proven only in captivity, when recanting would end the suffering and the faithful one chooses the fire instead.
+    why: >
+      Dreyer films faith as a face in close-up under interrogation — a soul tormented by powerful men who
+      want it to break, and the more it is pressed the more luminous its refusal becomes. Joan in the cell is
+      Sita in the grove: a captive whose only weapon is the integrity she will not surrender.
+    content_note: "interrogation, religious persecution, execution"
+  - title: "Apocalypse Now"
+    director: "Francis Ford Coppola"
+    year: 1979
+    force: wrath
+    divisions: [6]
+    objects: []
+    letterboxd: apocalypse-now
+    scene_or_theme: "Yuddha Kanda — the crossing to Lanka and the war against a monstrous king"
+    object_lesson: >
+      The war for Sita is a journey to the seat of a brilliant, monstrous sovereign — Ravana, the learned
+      ten-headed king whose pride has made him a devourer. Wrath in the Ramayana is double-edged: righteous
+      in Rama, ruinous in Ravana, and the campaign that joins them is a passage into a darkness that tests
+      whether the avenger can win without becoming what he destroys. The lesson: the road to the tyrant's
+      throne runs through the wrath he awakens in you.
+    why: >
+      Coppola films war as a river journey toward a magnetic, terrible king at the end of the world — Kurtz,
+      a sovereign of madness whose intellect makes him more frightening, not less. The upriver crossing into
+      Kurtz's compound is the army's crossing of the sea to Lanka: into the lair of a king too gifted to be sane.
+    content_note: "war atrocity, drug use, psychological horror"
+  - title: "The Sacrifice"
+    director: "Andrei Tarkovsky"
+    year: 1986
+    force: sacrifice
+    divisions: [3, 6]
+    objects: []
+    letterboxd: the-sacrifice
+    scene_or_theme: "Jatayu's death and the agni pariksha — the body offered to keep faith"
+    object_lesson: >
+      The poem is studded with offerings of the self: Jatayu the old vulture flies at Ravana's chariot and
+      is torn apart for a fidelity that cannot win, dying so that Rama will know which way the abductor flew;
+      and at the war's end Sita walks into fire to answer the kingdom's doubt. Sacrifice here is ritual weight
+      — a life laid down not for victory but as proof of faith. The lesson: the highest fidelity is the one
+      that gives the body knowing it gains nothing but the keeping of the vow.
+    why: >
+      Tarkovsky films sacrifice as a vow consummated in fire — a man who burns his own house to honor a
+      promise made in the dark. The immolation that ends The Sacrifice is the agni pariksha's exact register:
+      fire as the instrument by which an unprovable faith is made absolute.
+    content_note: "self-immolation, apocalyptic dread, slow cinema"
+  - title: "Cold Mountain"
+    director: "Anthony Minghella"
+    year: 2003
+    force: return
+    divisions: [4, 6]
+    objects: []
+    letterboxd: cold-mountain
+    scene_or_theme: "The long return — a soldier's walk home to the one who kept faith"
+    object_lesson: >
+      The Ramayana's gravity is homeward: the pact with Sugriva, the search, the war, the flying chariot
+      back to Ayodhya all bend toward a single reunion. Return is the form of the whole poem — exile bent
+      into a circle by fidelity on both ends, the one who comes back and the one who waited. The lesson: a
+      homecoming is earned twice, once by the traveler who endures the road and once by the keeper who holds
+      the home unbroken until he arrives.
+    why: >
+      Minghella films the structure of the Ramayana without knowing it: a man crosses a ruined world to
+      return to a woman who waited, the whole film a single arc of fidelity straining toward reunion. Inman
+      walking home to Ada is Rama's return to Sita — the circular form the music layer reserves for "return."
+    content_note: "war violence, sexual assault, bereavement"
+  - title: "Ordet"
+    director: "Carl Theodor Dreyer"
+    year: 1955
+    force: revelation
+    divisions: [6, 7]
+    objects: []
+    letterboxd: ordet
+    scene_or_theme: "The fire that does not burn — the divine vindicating the doubted faithful"
+    object_lesson: >
+      Beneath the war is a revelation withheld until the end: Rama is an avatar of Vishnu, and the fire that
+      should consume Sita instead returns her unharmed, the god of fire himself testifying to her purity.
+      Revelation here is the moment the divine breaks stillness to vindicate a faith the world has doubted.
+      The lesson: the truth of the faithful is not argued but disclosed — a verticality that descends only
+      when human judgment has failed them.
+    why: >
+      Dreyer films the one thing cinema rarely dares: a miracle that vindicates the doubted, the dead wife
+      restored by a faith everyone around her had dismissed as madness. The hush before the resurrection is
+      the hush before Agni gives Sita back unburnt — revelation as the divine answering an unprovable fidelity.
+    content_note: "death, religious crisis, a depicted miracle"
+  - title: "Three Colors: Blue"
+    director: "Krzysztof Kieślowski"
+    year: 1993
+    force: grief
+    divisions: [7]
+    objects: []
+    letterboxd: three-colors-blue
+    scene_or_theme: "Uttara Kanda — the faithful one doubted, and the withdrawal into the earth"
+    object_lesson: >
+      The poem's coda is its cruelest: rescued and vindicated, Sita is still doubted by the kingdom, exiled
+      again while pregnant, and at the end — asked to prove herself once more — calls on the earth to take her
+      back, and it does. Grief here is the sorrow of a fidelity that was never enough for the world it kept
+      faith with. The lesson: the deepest mourning is not for a death but for a devotion that went unhonored.
+    why: >
+      Kieślowski films grief as a woman's withdrawal from a world that has wounded her — a retreat into blue
+      silence, the slow work of a soul deciding whether to remain. Julie's withdrawal is Sita's descent: the
+      faithful one, doubted past endurance, turning away from the human order toward an older, quieter ground.
+    content_note: "bereavement, suicidal ideation, emotional desolation"
+adaptations:
+  - title: "Sita Sings the Blues"
+    director: "Nina Paley"
+    year: 2008
+    letterboxd: sita-sings-the-blues
+    note: >
+      A buoyant, heartbroken retelling that re-centers the epic on Sita and her fidelity, intercut with the
+      director's own abandonment — the Ramayana read honestly from the wronged wife's side. Public-domain;
+      legally free to stream.
+    scenes:
+      - {division: 3, force: desire, scene: "Ravana abducts Sita from the forest"}
+      - {division: 6, force: revelation, scene: "The fire ordeal — Sita walks unharmed from the flames"}
+      - {division: 7, force: grief, scene: "Banished while pregnant, Sita returns to the earth"}
+  - title: "Ramayana: The Legend of Prince Rama"
+    director: "Yugo Sako, Ram Mohan"
+    year: 1992
+    letterboxd: ramayana-the-legend-of-prince-rama
+    note: >
+      The Indo-Japanese animated adaptation — the most faithful screen telling of the main arc, reverent and
+      sweeping, though it sets aside the bitter Uttara coda for a triumphal close.
+    scenes:
+      - {division: 2, force: exile, scene: "Rama accepts banishment to honor his father's boon"}
+      - {division: 5, force: supplication, scene: "Hanuman leaps the ocean and finds Sita in the Ashoka grove"}
+      - {division: 6, force: wrath, scene: "The war on Lanka and the fall of Ravana"}
+      - {division: 6, force: return, scene: "The flying chariot bears Rama and Sita home to Ayodhya"}
