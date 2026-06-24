@@ -17,7 +17,8 @@ set -uo pipefail
 ENV_FILE="${LIMEN_ENV:-$HOME/.limen.env}"
 # the keys the conductor knows how to use (extend freely; --check reports on these)
 EXPECTED=(GEMINI_API_KEY GOOGLE_GENERATIVE_AI_API_KEY GITHUB_TOKEN OPENAI_API_KEY \
-          ANTHROPIC_API_KEY GCP_SA_KEY)
+          ANTHROPIC_API_KEY GCP_SA_KEY \
+          LIMEN_CLAUDE_AUTH_TOKEN LIMEN_CLAUDE_API_KEY)
 
 ensure_file() { [ -f "$ENV_FILE" ] || touch "$ENV_FILE"; chmod 600 "$ENV_FILE"; }
 has_key() { grep -qE "^(export )?$1=" "$ENV_FILE" 2>/dev/null; }
