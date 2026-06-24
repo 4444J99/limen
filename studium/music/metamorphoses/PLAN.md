@@ -11,17 +11,17 @@
 - **Corpus:** `classical/metamorphoses` (latin_original.txt)
 - **Source rail:** https://www.perseus.tufts.edu/hopper/text?doc=Perseus:text:1999.02.0029
 - **Divisions:** 15 × Book
-- **Progress:** 4/15 arcs authored
+- **Progress:** 7/15 arcs authored
 
 | Book | dominant force | status |
 | --: | --- | :--: |
-| 1 | (author) | ✓ |
-| 2 | (author) | ✓ |
-| 3 | (author) | ✓ |
-| 4 | (author) | ✓ |
-| 5 | (author) | ☐ |
-| 6 | (author) | ☐ |
-| 7 | (author) | ☐ |
+| 1 | metamorphosis | ✓ |
+| 2 | desire | ✓ |
+| 3 | fate | ✓ |
+| 4 | memory | ✓ |
+| 5 | grief | ✓ |
+| 6 | wrath | ✓ |
+| 7 | fate | ✓ |
 | 8 | (author) | ☐ |
 | 9 | (author) | ☐ |
 | 10 | (author) | ☐ |

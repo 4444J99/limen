@@ -1,0 +1,88 @@
+work: metamorphoses
+book: 5
+title: 'Metamorphoses Book V: The Brawl, The Muses, The Underworld'
+length_minutes: 81
+principle: "Book V moves from the bloody, chaotic brawl at Perseus's wedding banquet to the elevated, competitive singing of the Muses on Mount Helicon. The central narrative is the abduction of Proserpina and Ceres's desperate, world-withering search for her daughter. The dominant force is grief—the mourning of a mother that freezes the earth, contrasting with the chaotic violence of men and the arrogance of rivals."
+force_arc:
+- wrath
+- divine-intervention
+- law
+- comedy
+- desire
+- grief
+- fate
+- supplication
+- metamorphosis
+- metamorphosis
+dominant_force: grief
+tracks:
+- n: 1
+  scene: Phineus interrupts the wedding
+  force: wrath
+  composer: Stravinsky
+  work: "The Rite of Spring \u2014 'Sacrificial Dance'"
+  decision: added
+  why: "Phineus, Andromeda's uncle and former betrothed, attacks Perseus at the wedding feast. The banquet hall descends into an absolute bloodbath of flying spears, crushed skulls, and burning altars. The Sacrificial Dance brings the pure, unhinged rhythmic violence necessary for a scene that dissolves civilization into slaughter."
+- n: 2
+  scene: Perseus uses Medusa's head
+  force: divine-intervention
+  composer: Messiaen
+  work: "Turangal\xEEla-Symphonie \u2014 V. Joie de sang des \xE9toiles"
+  decision: added
+  why: "Outnumbered, Perseus warns his friends to look away and pulls out the Gorgon's head. Two hundred men are instantly turned to stone mid-strike, their rage frozen into statues. A sudden, massive, dissonant chordal shock represents the petrifying gaze that ends the battle in an instant."
+- n: 3
+  scene: Minerva visits the Muses
+  force: law
+  composer: Bach
+  work: "Brandenburg Concerto No. 3 \u2014 I. Allegro"
+  decision: added
+  why: "Leaving Perseus, Minerva flies to Mount Helicon to see the new spring created by the hooves of Pegasus. She greets the Muses, who live in ordered, intellectual harmony. Law requires formal clarity and architectural perfection—the crystalline polyphony of Bach captures the divine order of the arts."
+- n: 4
+  scene: The Pierides challenge the Muses
+  force: comedy
+  composer: Rossini
+  work: "Il barbiere di Siviglia \u2014 Overture"
+  decision: added
+  why: "Nine mortal sisters, the Pierides, arrive and arrogantly challenge the Muses to a singing contest, mocking the Olympian gods in their song. Their foolish pride is inherently comedic, a fast-paced, chattering overconfidence that is destined for a disastrous deflation."
+- n: 5
+  scene: Pluto struck by Cupid's arrow
+  force: desire
+  composer: Wagner
+  work: "Tristan und Isolde \u2014 Prelude"
+  decision: added
+  why: "Venus sees Pluto inspecting the foundations of Sicily and orders Cupid to shoot him. The god of the underworld is suddenly pierced by agonizing, uncharacteristic love for Proserpina. The deep, unresolved chromaticism of the Tristan chord is the heavy, subterranean awakening of desire."
+- n: 6
+  scene: The rape of Proserpina and the mourning of Ceres
+  force: grief
+  composer: Mahler
+  work: "Symphony No. 5 \u2014 IV. Adagietto"
+  decision: added
+  why: "Pluto abducts the terrified girl in his black chariot. Her mother, Ceres, wanders the earth searching for her, tearing her hair and refusing to let the crops grow, bringing famine to the world. A slow, agonizing inward line captures a mother's absolute sorrow that withers the living earth."
+- n: 7
+  scene: Arethusa flees Alpheus
+  force: fate
+  composer: Beethoven
+  work: "Symphony No. 5 \u2014 I. Allegro con brio"
+  decision: added
+  why: "The nymph Arethusa bathes in a river, but the river god Alpheus rises up and chases her across the land. The pursuit is relentless, terrifying, an inexorable pounding rhythm of a predator closing in on its exhausted prey until she prays to Diana for help."
+- n: 8
+  scene: Arethusa becomes a spring
+  force: supplication
+  composer: Barber
+  work: "Adagio for Strings"
+  decision: added
+  why: "Diana covers Arethusa in a thick cloud, but Alpheus waits. Terrified, Arethusa dissolves into cold sweat, melting entirely into a subterranean stream to escape him. The suspended, exposed agony of the strings represents her desperate prayer and her dissolution into tears and water."
+- n: 9
+  scene: The compromise of the seasons
+  force: metamorphosis
+  composer: Ravel
+  work: "Daphnis et Chlo\xE9 \u2014 Suite No. 2, 'Lever du jour'"
+  decision: added
+  why: "Jupiter rules that Proserpina will spend half the year in the underworld and half with her mother. Ceres smiles again, and the frozen earth immediately blooms. The sweeping, colorful orchestration captures the fluid transformation from winter's death to the vibrant rebirth of spring."
+- n: 10
+  scene: The Pierides turned to magpies
+  force: metamorphosis
+  composer: Debussy
+  work: "Jeux"
+  decision: added
+  why: "The Muses win the contest. When the Pierides complain, they are transformed into chattering, scolding magpies, their voices turning into harsh squawks. Shifting, elusive harmonies and sudden woodwind flurries reflect the bizarre, fluttering change from arrogant women to noisy birds."

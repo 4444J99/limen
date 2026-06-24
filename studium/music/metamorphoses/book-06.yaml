@@ -1,0 +1,88 @@
+work: metamorphoses
+book: 6
+title: 'Metamorphoses Book VI: Arachne, Niobe, Philomela'
+length_minutes: 84
+principle: "Book VI is perhaps the darkest book in the epic, entirely concerned with the savage punishment of mortals who challenge or offend the gods. Arachne weaves better than Minerva; Niobe boasts she is greater than Latona; Tereus commits unspeakable crimes against Philomela. The dominant force is wrath—divine and human vengeance carried out with horrific precision, leaving behind weeping stones and screaming birds."
+force_arc:
+- law
+- wrath
+- divine-intervention
+- grief
+- metamorphosis
+- fate
+- supplication
+- wrath
+- desire
+- metamorphosis
+dominant_force: wrath
+tracks:
+- n: 1
+  scene: Arachne's loom
+  force: law
+  composer: Bach
+  work: "The Art of Fugue \u2014 Contrapunctus I"
+  decision: added
+  why: "Arachne refuses to credit Minerva for her weaving skill and challenges the goddess. The act of weaving itself is a rigorous, mathematical art. Law requires formal clarity and repetition—the steady, interlocking logic of the threads creating a flawless tapestry."
+- n: 2
+  scene: Arachne beaten and hung
+  force: wrath
+  composer: Stravinsky
+  work: "The Rite of Spring \u2014 'Sacrificial Dance'"
+  decision: added
+  why: "Enraged by Arachne's flawless tapestry depicting the gods' crimes, Minerva beats the girl with a shuttle until Arachne hangs herself. Unresolved harmony and violent rhythmic pressure capture the sudden explosion of divine spite and brutal physical punishment."
+- n: 3
+  scene: Niobe's boast and Apollo's arrows
+  force: divine-intervention
+  composer: Strauss
+  work: "Elektra \u2014 Agamemnon motif"
+  decision: added
+  why: "Niobe boasts she has fourteen children while Latona has only two. In response, Apollo and Diana silently descend from the sky and slaughter all her sons and daughters one by one. A sudden, terrifying color shift and heavy brass mark the lethal, unanswerable arrival of the gods."
+- n: 4
+  scene: Niobe turns to stone
+  force: grief
+  composer: Barber
+  work: "Adagio for Strings"
+  decision: added
+  why: "Surrounded by the corpses of her entire family, Niobe ceases to move. Her blood freezes, her eyes become fixed, and she hardens into a weeping mountain of marble. A slow, agonizing inward line captures the absolute paralysis of a grief so deep it petrifies the body."
+- n: 5
+  scene: The Lycian peasants turned to frogs
+  force: metamorphosis
+  composer: Ravel
+  work: "L'Enfant et les sortil\xE8ges \u2014 'Duo des rainettes'"
+  decision: added
+  why: "Latona, thirsty from flight, tries to drink from a pond, but local peasants stir up the mud to stop her. She curses them to live in the pond forever, their necks disappearing and their voices turning to croaks. Changing orchestral colors and grotesque mimicry reflect the degrading transformation."
+- n: 6
+  scene: Marsyas flayed alive
+  force: fate
+  composer: Penderecki
+  work: "Threnody to the Victims of Hiroshima"
+  decision: added
+  why: "The satyr Marsyas loses a musical contest to Apollo, and his prize is to be stripped of his skin while still alive. He screams as his veins and organs are exposed to the air. The inexorable, hammered dissonance and shrieking strings capture the pure, agonizing horror of his doom."
+- n: 7
+  scene: Philomela's tongue cut out
+  force: supplication
+  composer: P\xE4rt
+  work: "Cantus in Memoriam Benjamin Britten"
+  decision: added
+  why: "Tereus rapes his wife's sister, Philomela, and cuts out her tongue to ensure her silence. She is left bleeding, unable to speak, pleading with her eyes. The suspended, falling lines capture the profound vulnerability and silenced desperation of a victim entirely stripped of agency."
+- n: 8
+  scene: Procne reads the tapestry
+  force: wrath
+  composer: Shostakovich
+  work: "Symphony No. 10 \u2014 II. Allegro"
+  decision: added
+  why: "Philomela weaves her story into a tapestry and sends it to Procne. Upon reading it, Procne does not weep; she silently burns with the desire for absolute vengeance. Relentless rhythmic pressure and furious string runs embody the cold, violent engine of her impending retaliation."
+- n: 9
+  scene: The murder and feast of Itys
+  force: desire
+  composer: Strauss
+  work: "Salome \u2014 'Dance of the Seven Veils'"
+  decision: added
+  why: "Driven by a perverse, twisted hunger for revenge, Procne murders her own son, Itys, cooks his flesh, and feeds him to his father Tereus. The chromatic longing and unsettling seduction of the music reflect a mind that has crossed the boundary into monstrous, taboo-breaking obsession."
+- n: 10
+  scene: The transformation into birds
+  force: metamorphosis
+  composer: Debussy
+  work: "Pr\xE9lude \xE0 l'apr\xE8s-midi d'un faune"
+  decision: added
+  why: "Tereus realizes what he has eaten and draws his sword to kill the sisters. Suddenly, they sprout wings and fly away—a swallow, a nightingale, and a hoopoe. Fluid, shifting harmonies capture the escape from human horror into the amoral, fluttering air of the avian world."
