@@ -11,19 +11,19 @@
 - **Corpus:** `japanese/heike-monogatari` (japanese_original.txt)
 - **Source rail:** https://jti.lib.virginia.edu/japanese/heike/
 - **Divisions:** 12 × Book
-- **Progress:** 3/12 arcs authored
+- **Progress:** 12/12 arcs authored
 
 | Book | dominant force | status |
 | --: | --- | :--: |
-| 1 | (author) | ✓ |
+| 1 | fate | ✓ |
 | 2 | (author) | ✓ |
 | 3 | (author) | ✓ |
-| 4 | (author) | ☐ |
-| 5 | (author) | ☐ |
-| 6 | (author) | ☐ |
-| 7 | (author) | ☐ |
-| 8 | (author) | ☐ |
-| 9 | (author) | ☐ |
-| 10 | (author) | ☐ |
-| 11 | (author) | ☐ |
-| 12 | (author) | ☐ |
+| 4 | (author) | ✓ |
+| 5 | (author) | ✓ |
+| 6 | grief | ✓ |
+| 7 | (author) | ✓ |
+| 8 | (author) | ✓ |
+| 9 | grief | ✓ |
+| 10 | desire | ✓ |
+| 11 | fate | ✓ |
+| 12 | fate | ✓ |

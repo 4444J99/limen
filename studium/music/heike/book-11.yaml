@@ -1,0 +1,207 @@
+# Heike Monogatari — Book XI — curated music arc
+# The gathering darkness — the noose tightens as the final battle approaches.
+work: heike
+book: 11
+title: "Heike Book XI: The Last Days at Yashima"
+length_minutes: 97
+principle: >
+  Book XI is the Heike's long meditation on waiting, dread, and the claustrophobic time before an
+  inevitable ending. The Taira remain at Yashima, but the world outside has changed irreversibly.
+  Yoshitsune now commands Genji forces that far outnumber the Taira fleet; the blockade tightens;
+  food grows scarce; ships arrive less frequently. Within the fortress, the court maintains its
+  ceremonies, but everyone knows what is coming. The book's atmosphere is not one of desperate
+  fighting but of suspended dread — the knowledge of the end, the watching for its arrival. There
+  are moments of beauty and moments of bargaining (priests pray, monks chant, the child Emperor is
+  blessed), but underneath runs a current of fatalism. The Taira understand, now, that they will
+  not survive this. The question is only how, and with what dignity, the falling will occur. Score
+  this as the meditation on doom — not dramatic collapse but the slow, unbearable recognition that
+  what comes next cannot be avoided, cannot be changed, can only be endured. The dominant force is
+  **fate** — not the wrath or passion of earlier books, but the cold recognition that destiny has
+  become visible and is approaching like the tide. The characters are no longer trying to change
+  it; they are trying to accept it.
+force_arc: [memory, fate, law, supplication, sacrifice, ascent, desire, revelation, metamorphosis, wrath, salvation]
+dominant_force: fate
+tracks:
+  - n: 1
+    scene: "Taira no Noritsune's final lament — remembering victories that no longer matter"
+    force: memory
+    composer: Fauré
+    work: "Requiem — In Paradisum"
+    decision: added
+    why: >
+      Taira no Noritsune, a great military commander who helped smash the Genji at Kurikara, now
+      realizes that those victories have been erased. Everything he fought for is being undone, and
+      the skills that made him famous are now useless in a situation where fighting will only delay
+      the inevitable. He remembers the moment of triumph — the valley, the rout, the Genji fleeing
+      in confusion — and that memory is both treasure and torture. Fauré's In Paradisum is nostalgic
+      recall elevated to the sacred: the voice reaching not for judgment but for peace, the past
+      becoming a kind of heaven that the living can see but not enter. The memory force is met as
+      the paradox of recollection in extremity: Noritsune's victories are now his greatest sorrow,
+      because they were true, because they happened, because they could not be sustained, and because
+      he will die having lost what his life was spent securing.
+  - n: 2
+    scene: "The Genji fleet is sighted — Yoshitsune's ships block the sea road"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio (the fate knock)"
+    decision: added
+    why: >
+      The Genji forces are no longer distant rumors. They are visible — ships on the horizon, numbers
+      so vast that no one bothers counting anymore. There is no strategy that will defeat them; no
+      negotiation will persuade them to leave; no reinforcements will arrive. The door has closed.
+      Beethoven's Fifth is fate as the relentless engine, the three-note tread that appears at the
+      opening and continues through every movement — never stopping, never turning aside. The fate
+      force is met as the moment when fighting becomes not a means to victory but a ritual of
+      resistance, performed because the alternative — surrender — is unthinkable. The Taira see the
+      fleet and know, with absolute certainty, that the ships they are looking at will not leave.
+  - n: 3
+    scene: "The court maintains its order — one final time, absolutely"
+    force: law
+    composer: Handel
+    work: "Music for the Royal Fireworks — Overture (the sovereign's entrance)"
+    decision: added
+    why: >
+      Knowing that the end is near, the child Emperor's court performs its ceremonial functions with
+      intensified formality. If this is to be the last ceremony, let it be perfect. Courtiers take their
+      seats according to rank; offerings are made with precision; the sacred vessels are polished and
+      displayed. The law force is not about constraint but about defiance through form: if all else
+      has been lost, then the order itself, maintained perfectly, becomes a kind of victory. Handel's
+      overture is ceremonial grandeur, sovereign display — but it is also a kind of farewell, a
+      performance that everyone knows is being given for the last time. The law force requirement is
+      met as the strange power of form maintained against chaos: the court is not saving itself through
+      ceremony, but it is saving something — the dignity of order, the insistence that even at the
+      edge of the abyss, one may stand upright.
+  - n: 4
+    scene: "The child Emperor's prayer — supplication to the Buddha"
+    force: supplication
+    composer: Pärt
+    work: "Te Deum — opening (I. We praise Thee)"
+    decision: added
+    why: >
+      The child Emperor, now a boy of perhaps eight or nine, is brought to the temple to make
+      supplication to the Buddha for safety, for the preservation of the realm, for an outcome other
+      than the one everyone can see approaching. His voice is young and clear; the prayers are
+      recited from texts thousands of years old; the forms are perfect. And no one believes for a
+      moment that the prayers will be answered. Pärt's opening is suspended cadence, exposed melodic
+      line — a voice reaching toward something just beyond its grasp. The supplication force is met
+      not as the belief that the prayer will be answered, but as the act of prayer itself becoming
+      an end in itself: the boy reaches toward heaven knowing that what he seeks is already lost,
+      reaching because reaching is the only thing left to do.
+  - n: 5
+    scene: "The Taira fleet prepares for the final voyage — ritual immolation"
+    force: sacrifice
+    composer: Wagner
+    work: "Götterdämmerung — Brunhilde's final immolation"
+    decision: added
+    why: >
+      The Taira understand now that Yashima cannot hold forever. Plans are made — not for escape,
+      because there is nowhere to escape to, but for the final voyage. The ships will carry the child
+      Emperor and the court to Dan-no-ura, and there, in the waters of the Inland Sea, the last act
+      will be played. The decision to sail toward the end is itself a kind of sacrifice — the acceptance
+      that the journey will end in death, and the journey itself becomes sacred because of that ending.
+      Wagner's Brunhilde scene is the supreme musical statement of immolation: the whole orchestral
+      weight building toward the final act, toward the fire, toward transformation through ending.
+      The sacrifice force is met as the embrace of the inevitable made into something honorable: the
+      Taira are not jumping into the sea in despair; they are sailing toward it with the dignity of
+      those who have chosen their end.
+  - n: 6
+    scene: "A warrior's final ascent to beauty — the fanfare of the condemned"
+    force: ascent
+    composer: Bartók
+    work: "Miraculous Mandarin — finale (the slow ascent into light)"
+    decision: added
+    why: >
+      Before the ending, there comes a moment — brief, brilliant, entirely incidental to the outcome
+      — where beauty appears. A young warrior performs a feat of archery or horsemanship that is
+      remembered for its pure grace. An old general recalls a moment from his youth when he was
+      invincible. A courtier composes a poem that is noted for its perfection. These moments ascend
+      in the consciousness of those who witness them not despite the ending that is coming, but because
+      of it — beauty's intensity heightened by the knowledge that this is the last moment in which such
+      things will be created. Bartók's finale is luminous orchestration, rising sequence — but it is
+      brief, and it ends. The ascent force is met as beauty existing in the crack between now and
+      annihilation, radiant precisely because it is temporary.
+  - n: 7
+    scene: "The longing for an escape that will not come — hope's last stand"
+    force: desire
+    composer: Szymanowski
+    work: "Stabat Mater — the plea (Inflammatus)"
+    decision: added
+    why: >
+      Even now, there is desire. The Taira want things: safety for the child Emperor; a ship that
+      might run through the blockade; a miracle; an army that might arrive to save them; a wind that
+      might blow the Genji fleet away. The desire is without any rational hope — everyone knows that
+      these things will not happen — and yet it persists, because desire is not rational. It is the
+      reaching toward the impossible that defines the moment. Szymanowski's Inflammatus is desire as
+      the keening cry, the longing that becomes prayer that becomes lamentation all at once. The music
+      knows that what it desires will not be granted; and it desires anyway, with greater intensity
+      because the denial is certain. The desire force is met as the final, desperate reaching toward
+      what cannot be had.
+  - n: 8
+    scene: "The night before the sailing — a revelation in darkness"
+    force: revelation
+    composer: Kaikhosru Sorabji
+    work: "Opus Clavicembalisticum — the passacaglia (the light emerges)"
+    decision: added
+    why: >
+      On the night before the fleet will sail toward Dan-no-ura, something shifts in the consciousness
+      of the Taira. They have been waiting, dreading, hoping, praying — all the active states of those
+      who have not yet accepted the inevitable. And in this night, acceptance comes. Not resignation
+      — something deeper. The revelation is that what is coming is not punishment or catastrophe, but
+      the completing of a shape that was always there. The text speaks of clarity, of certainty, of a
+      kind of peace that descends on the fortress. Sorabji's passacaglia is verticality without
+      resolution, revelation as the sudden stopping of all horizontal motion — the music resolves not
+      into new movement but into a kind of absolute stillness, the revelation that what is, is complete
+      in itself. The revelation force is met as the acceptance that the falling is not a mistake or a
+      tragedy to be avoided, but the shape the story was always going to make.
+  - n: 9
+    scene: "The fleet begins to move — the last departure"
+    force: metamorphosis
+    composer: Britten
+    work: "Peter Grimes — Four Sea Interludes: IV. Storm"
+    decision: added
+    why: >
+      The ships push off from Yashima. The child Emperor is aboard the imperial barge, the regalia
+      secured, the court assembled. The transformation is final now — the Taira are no longer a fortress
+      holding a position but a fleet moving through water toward an end that is visible and certain.
+      The journey itself is a metamorphosis: they leave as a people fighting for survival; by the time
+      they arrive at Dan-no-ura, they will be something else — not refugees or soldiers or courtiers,
+      but participants in an ending that will transform them into history, into legend, into the ghosts
+      that will haunt the tale of the Heike forever. Britten's Storm interlude is fluid harmony,
+      changing orchestral color at every moment, the sea becoming the dominant character and the humans
+      simply being transformed by what moves around them. The metamorphosis force is met as the
+      movement from one state of being into a fundamentally different one — the journey that does not
+      return.
+  - n: 10
+    scene: "The Genji draw close — rage and final resistance"
+    force: wrath
+    composer: Shostakovich
+    work: "Symphony No. 7 'Leningrad' — I. Allegretto (the invasion theme)"
+    decision: added
+    why: >
+      As the Taira ships move toward Dan-no-ura, the Genji forces close in from all sides. The water
+      between the fleets narrows. There is nowhere to run now, and the last possibility of avoiding
+      what is coming vanishes. In this moment, all the wrath that has been suppressed rises up — not
+      in the hope of victory, but as the final human response to being cornered, the last assertion of
+      will against the inevitable. Shostakovich's invasion theme is wrath as mechanical force, rhythm
+      without mercy, the sound of an army that will not stop and cannot be stopped. The wrath force is
+      met as the fury that has no object except the universe itself — not anger at specific enemies,
+      but rage at the condition of being alive at the moment when everything is being taken.
+  - n: 11
+    scene: "The child Emperor looks toward the western sky — salvation in the Buddha-lands"
+    force: salvation
+    composer: Messiaen
+    work: "Visions de l'Amen — VII. Amen of Judgment"
+    decision: added
+    why: >
+      Book XI closes with the child Emperor, frightened but dignified, looking toward the western
+      horizon where the Pure Land of Buddha is said to dwell. The moment is not about Christian
+      salvation but about the Buddhist promise that even in ending, there is continuation — that the
+      child Emperor, and all those who die with him, will not cease but will be reborn in a realm beyond
+      the suffering of the Inland Sea. The music does not promise rescue but transformation — not into
+      a life spared, but into a state where the distinction between life and death, gain and loss, is
+      recognized as illusion. Messiaen's resolving radiance, the chorale apotheosis, meets the salvation
+      force not as the rescue of the doomed but as the acceptance that there is no doom worth fearing
+      because there is no dying that is permanent. The child Emperor turns toward the west, and the book
+      closes on that turning — the opening toward what comes after, whatever that may be.
+
+demoted: []
