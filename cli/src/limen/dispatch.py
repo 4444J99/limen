@@ -5,10 +5,10 @@ import secrets
 import shlex
 import subprocess
 import threading
-import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+from typing import Any
 
 from limen.capacity import (
     canonical_agent,
@@ -17,7 +17,7 @@ from limen.capacity import (
     github_issue_ref,
 )
 from limen.io import load_limen_file, save_limen_file, queue_lock
-from limen.models import DispatchLogEntry, LimenFile, Task
+from limen.models import BudgetTrack, DispatchLogEntry, LimenFile, Task
 from limen.doctor import stale_tasks
 
 # Backward compat alias — the canonical lock lives in io.py
@@ -56,7 +56,7 @@ def _down_lanes() -> set[str]:
     return manual | _usage_dead_lanes()
 
 
-def _run_capture(cmd, cwd=None, timeout=600, env=None):
+def _run_capture(cmd: list[str], cwd: str | None = None, timeout: int = 600, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
     """Like subprocess.run(capture_output, text, timeout) but launches the process in its OWN
     session/group and, on timeout, SIGKILLs the WHOLE group. Plain subprocess.run only kills the
     direct child — if an agent CLI (codex/claude/…) spawns grandchildren that inherit the stdout
@@ -87,7 +87,7 @@ def _run_capture(cmd, cwd=None, timeout=600, env=None):
     return subprocess.CompletedProcess(cmd, proc.returncode, out, err)
 
 
-def _dep_merged(dep_task) -> bool:
+def _dep_merged(dep_task: Task | None) -> bool:
     """A dependency is satisfied only when its PR is MERGED (in the base branch), not merely built.
     The reconcile (verify-dispatch→heal-dispatch) stamps a 'PR merged → done' dispatch_log entry on
     merge; we detect that marker. An unknown dep id is treated as unsatisfied (fail-safe)."""
@@ -99,7 +99,7 @@ def _dep_merged(dep_task) -> bool:
                for e in (dep_task.dispatch_log or []))
 
 
-def _deps_met(task, by_id) -> bool:
+def _deps_met(task: Task, by_id: dict[str, Task]) -> bool:
     """True if every task in task.depends_on has a merged PR (or the task has no deps). Lets a
     dependent increment sit OPEN but un-dispatched until its predecessor lands — so the product
     roadmap self-advances as PRs merge, with no parallel-built conflicts."""
@@ -532,7 +532,7 @@ _ISOLATION_ROOT = Path(
 )
 
 
-def _git(args: list[str], cwd, timeout: int = 120) -> subprocess.CompletedProcess:
+def _git(args: list[str], cwd: Path, timeout: int = 120) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         ["git", *args], cwd=str(cwd), capture_output=True, text=True,
         timeout=timeout, stdin=subprocess.DEVNULL,
@@ -888,7 +888,7 @@ def dispatch_tasks(
     print(f"── {mode}: {dispatched} task(s)")
 
 
-def _apply_result(task: Task, agent: str, result, now, track) -> None:
+def _apply_result(task: Task, agent: str, result: bool | str, now: datetime, track: BudgetTrack) -> None:
     """Apply one dispatch result to a task (same semantics as the serial path):
     success → dispatched + spend; no-op → cancelled; rate-limit/fail → cascade."""
     entry = DispatchLogEntry(timestamp=now, agent=agent, session_id=session_id(), status="dispatched")
@@ -986,7 +986,7 @@ def dispatch_parallel(
     id2task = {t.id: t for t in limen.tasks}
     cooled: set[str] = set()  # lanes that hit their real rate-limit this round
 
-    def run_one(at: tuple[str, str]):
+    def run_one(at: tuple[str, str]) -> tuple[str, str, bool | str]:
         agent, tid = at
         try:
             res = call_agent_dispatch(agent, id2task[tid], dry_run=False)
@@ -1036,7 +1036,7 @@ def release_stale_tasks(
     hours: int = 24,
     dry_run: bool = True,
     agent: str | None = None,
-) -> dict:
+) -> dict[str, Any]:
     now = datetime.now(timezone.utc)
     candidates = stale_tasks(limen, hours=hours, agent=agent)
 

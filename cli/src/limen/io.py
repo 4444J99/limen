@@ -3,6 +3,7 @@ import os
 import sys
 import tempfile
 import time
+from collections.abc import Iterator
 from pathlib import Path
 
 import yaml
@@ -13,7 +14,7 @@ _DLOG_REQUIRED = {"timestamp", "agent", "session_id", "status"}
 
 
 @contextlib.contextmanager
-def queue_lock(tasks_path: Path, timeout: int = 90):
+def queue_lock(tasks_path: Path, timeout: int = 90) -> Iterator[bool]:
     """Cross-process mutex on tasks.yaml writes — the CANONICAL home of the lock (dispatch.py's
     _queue_lock and heal-dispatch.py's acquire_lock are the same mkdir-mutex; this is the shared
     one every mutator should converge on so they can't drift). The lockdir is DERIVED from
