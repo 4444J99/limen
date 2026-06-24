@@ -1,7 +1,7 @@
 {
   "_doc": "The PERMANENT home for his-hand atoms — the levers only Anthony can pull. A his-hand task NEVER hangs on him or in a recall-only memory file; it hangs HERE, in git, and obligations-view.py unions these into the obligations face beside the mail levers. This file is separate from obligations-ledger.json ON PURPOSE: the mail builder regenerates that ledger every sweep, which would wipe any lever placed in it — these survive regen. Add/retire a lever by editing this file; nothing here is ever auto-pulled. Source: the needs_human digest reduction (37 tasks -> 8 human actions) plus the per-session closeout atoms. Generic mail-credential levers are NOT duplicated here (they live as L-MCP / L-IMAP-APP-PW / L-OAUTH in the ledger); the ONE exception is L-GMAIL-CRED, which corrects their misleading 'generate a credential' framing (the app-pw already exists — one paste lands it).",
   "generated_at": "2026-06-24",
-  "spine": "10 human actions own the whole revenue + go-live spine; the first two (merge gate + accounts) move the most, and L-ENC1101-GOLIVE is time-boxed to 6/25. Surfaced once, never nagged, never forced.",
+  "spine": "10 human actions own the whole revenue + go-live spine; the first two (merge gate + accounts) move the most, and L-ENC1101-GOLIVE is time-boxed to 6/25. Surfaced once, never nagged, never forced. COST SPINE (added 2026-06-24): two levers own why spend concentrates on Claude — L-MODEL-TIER (interactive sessions all pinned to Opus-4.8 + 1M context = the dominant burn) and L-FLEET-CAPACITY (the three cheapest async lanes — gemini 1000 free runs/day, opencode 200, ollama unlimited-local — are dark behind unlanded auth, so the metered token lanes carry everything). The router (route.py) already steers by headroom and skips dead lanes; it simply cannot reach a lane that has no auth. Both are one-toggle/one-paste.",
   "levers": [
     {
       "id": "L-MERGE-GATE",
@@ -145,6 +145,37 @@
         "bash ianva/scripts/ianva-tunnel.sh                   # refuses unless /mcp returns 401 unauth'd; prints the public URL",
         "Set gateway.public_url in ianva.toml to <url>/mcp, then in claude.ai add ONE custom connector at that URL with the bearer in its auth header — it replaces the per-service connectors"
       ]
+    },
+    {
+      "id": "L-MODEL-TIER",
+      "label": "Stop the interactive Claude burn at the source: every Claude Code session you spawn is pinned to Opus 4.8 + the 1M-context beta — the single most expensive config that exists, and the dominant reason you hit 30% in half a day. Most sessions (game-test reports, GH-infra setup, version-upgrade summaries, insights consolidation) need Sonnet, not Opus, and almost none need 1M context (you pay a premium PER TOKEN on the 1M tier, on top of the long-context tokens themselves). Default new sessions to Sonnet 4.6 and drop the 1M pin; reserve Opus(-1M) for explicit canon-synthesis. The async fleet already tiers models (model-tiering-policy is WIRED on main) — only the interactive front door is un-tiered. AI editing settings.json is permission-denied, so this is your one toggle.",
+      "owner": "yours",
+      "cost": "1 toggle, durable — biggest single cut to your Claude spend",
+      "unlocks": "interactive Claude burn drops ~5–10x on routine sessions; Opus-1M reserved for work that needs it",
+      "source_task": "usage-spend (30% in half a day, 7 parallel Opus-1M sessions); see latency-automatic-selection + model-tiering-policy",
+      "gate": "settings.json / harness model default (AI-edit denied) — your toggle",
+      "steps": [
+        "Per session NOW: type /model and pick Sonnet 4.6 for any session that isn't canon-synthesis; drop the [1m] pin unless the task truly needs >200k context",
+        "Make it the DEFAULT: set the model default to sonnet in ~/.claude/settings.json (\"model\": \"claude-sonnet-4-6\") and remove the 1M-context pin, OR set it via /config — new FleetView sessions then inherit Sonnet",
+        "Keep an Opus escape hatch: /model opus (and /model opus[1m] when a session genuinely needs the 1M window) for canon-synthesis work",
+        "Optional structural: a session-spawn default that DEDUCES the tier from task class (the automatic capability+model selection in latency-automatic-selection) — propose to Claude to build behind a flag"
+      ]
+    },
+    {
+      "id": "L-FLEET-CAPACITY",
+      "label": "Light the three cheapest async lanes so the metered token lanes (claude/codex) stop being the only producers. LIVE usage @ 2026-06-24 16:33Z: claude 129% of cap (THROTTLED, rate-limited 5x), codex 96% (0.2h runway) — both maxed; meanwhile gemini 0/1000 free runs, opencode 1/200, ollama floor unlit. route.py already routes by headroom and would feed all three, but each is auth-dark: gemini 'auth not configured', opencode silently no-ops without `opencode auth login` + a model, ollama has no model pulled. ~1,400+ free runs/day + an unlimited LOCAL floor are stranded behind three one-time setups. This is the gmail-cred / excavate-before-redoing pattern: the routing was built right; the capacity is dark behind unlanded auth.",
+      "owner": "yours",
+      "cost": "~5 min total, durable — three independent one-time auths",
+      "unlocks": "~1,400 free runs/day (gemini 1000 + opencode 200 + agy headroom) + the unmetered ollama floor — token-lane load (claude/codex) shifts onto free lanes",
+      "source_task": "logs/usage.json + route.py capacity census (2026-06-24)",
+      "gate": "per-vendor auth (credentials / OAuth) — AI cannot hold these",
+      "steps": [
+        "gemini (1000 free runs/day): run `gemini` once to OAuth-login the free tier (no billing), OR export GEMINI_API_KEY into the lane env (~/.limen.env). route.py flips it from 'down' to a producing lane the next beat.",
+        "opencode (200 runs/day): `opencode auth login` once (writes auth.json), then confirm a model resolves via `opencode models`. Without auth the lane is marked 'up' but silently produces nothing.",
+        "ollama (unmetered LOCAL floor): `ollama pull qwen2.5-coder:7b` — lights the pilot-light lane that runs when every cloud/metered vendor is spent (the exact 'didn't pace tokens perfectly between refreshes' case).",
+        "Verify: `python3 scripts/route.py --tasks tasks.yaml` — the three should move from 'down' to 'up' in the capacity census."
+      ],
+      "note": "Honest code gap (Claude's lane, PR-able on your go): route.py marks opencode 'up' on binary-present alone, so it ASSIGNS work that no-ops without auth — the opencode health-probe should check auth like gemini's does, so it shows 'down — opencode auth login needed' instead of falsely up."
     }
   ]
 }
