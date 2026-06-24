@@ -1,0 +1,200 @@
+# Heike Monogatari — Book VIII — curated music arc
+# The tyrant in the capital: a victor squanders his triumph and is encircled.
+work: heike
+book: 8
+title: "Heike Book VIII: The Tyrant in the Capital"
+length_minutes: 95
+principle: >
+  Book VIII is the Heike's bitter joke: it shows what happens after the long-awaited victory, and the
+  answer is ruin. Kiso Yoshinaka, who broke the Taira at Kurikara and rode into the abandoned capital
+  as the savior of the imperial house, proves utterly unable to govern it. His mountain warriors
+  plunder the city; his own manners — the famous scenes of his ignorance of court etiquette — make
+  him a figure of grim comedy at court even as his soldiers make him hated in the streets. Famine
+  grips Kyoto. The Taira, far from finished, regroup at Yashima across the Inland Sea and reconstitute
+  a court-in-exile around the child-Emperor; at the sea-battle of Mizushima they defeat Yoshinaka's
+  fleet under an eclipse that terrifies the Minamoto as an omen. Cornered by his own failures,
+  Yoshinaka turns on the Retired Emperor Go-Shirakawa himself, storming and burning the Hojuji Palace
+  and taking the sovereign captive — the sacrilege that finally unites everyone against him. And in
+  the east, Yoritomo, who has never left Kamakura, dispatches his brothers Noriyori and Yoshitsune
+  westward with a fresh army. Book VIII is the structural rhyme of Kiyomori's whole arc compressed
+  into one man and a few months: dominance curdling into brutality, brutality breeding isolation,
+  isolation summoning the force that will destroy it. Score this as wrath that cannot build anything —
+  the dominant force is **wrath**, the rage of a conqueror who has won everything and can hold nothing.
+force_arc: [comedy, wrath, plague, kingship, divine-intervention, exile, wrath, supplication, fate, revelation, fate]
+dominant_force: wrath
+tracks:
+  - n: 1
+    scene: "Yoshinaka the boor — the mountain warrior at court"
+    force: comedy
+    composer: Rameau
+    work: "Platée — suite (the burlesque divertissement)"
+    decision: added
+    why: >
+      The book opens in a register the Heike rarely uses: comedy, sharp and cruel. Yoshinaka, master
+      of the capital, is hopeless at the elaborate etiquette of the court — he eats wrongly, speaks
+      bluntly, rides in a nobleman's ox-carriage facing the wrong way and is mocked behind silk
+      sleeves. Rameau's Platée is the perfect mirror: a baroque comedy built on courtly exaggeration,
+      its dance rhythms dressing up a figure who does not belong and does not know it. The comedy force
+      requirement — dance rhythm, courtly exaggeration — is met as satire with a blade in it. The court
+      laughs at Yoshinaka, and the laughter is the first sign that the man who took the capital by
+      storm will never be allowed to keep it. Comedy, in the Heike, is how contempt announces itself
+      before it kills.
+  - n: 2
+    scene: "The soldiers plunder Kyoto — discipline collapses"
+    force: wrath
+    composer: Prokofiev
+    work: "Scythian Suite — II. The Enemy God and the Dance of the Black Spirits"
+    decision: added
+    why: >
+      Beneath the comedy is the violence that makes Yoshinaka hated. His provincial soldiers, unpaid
+      and ungoverned, strip the capital — seizing rice, robbing temples, breaking into the houses of
+      nobles. The savior's army becomes indistinguishable from an occupying horde. Prokofiev's Scythian
+      Suite is barbarism scored in primary colors — pounding, percussive, deliberately uncivilized,
+      the sound of a force that has no use for the refinements of the place it has overrun. The wrath
+      force requirement — rhythmic pressure, unresolved harmony — is met as appetite without discipline.
+      Kiyomori's wrath was at least a machine of governance; Yoshinaka's is mere consumption, a victory
+      that devours the very capital it was supposed to save.
+  - n: 3
+    scene: "Famine in the capital — the rice runs out"
+    force: plague
+    composer: Shostakovich
+    work: "Symphony No. 8 — I. Adagio"
+    decision: added
+    why: >
+      War and plunder have a sum, and the sum is hunger. The text describes a Kyoto where the markets
+      are empty, where the dead lie in the streets, where the great and the low alike go without.
+      Shostakovich's Eighth opens in a vast grey Adagio — grief and exhaustion stretched to the
+      breaking point, dark orchestration sinking under its own weight. The plague force requirement —
+      descending motion, dark orchestration — is met as the slow attrition of a starving city. This
+      is not a battle and not a massacre; it is the quiet arithmetic of a place that has been fought
+      over until nothing is left to eat. The capital the Taira fled and Yoshinaka seized is being
+      emptied of life by both of them at once.
+  - n: 4
+    scene: "The Taira court-in-exile at Yashima"
+    force: kingship
+    composer: Elgar
+    work: "Symphony No. 1 — I. Andante nobilmente e semplice"
+    decision: added
+    why: >
+      Across the Inland Sea, the Taira are not finished. At Yashima they build a makeshift palace and
+      reconstitute a court around the child-Emperor and the regalia — a sovereignty in temporary
+      quarters, but a real one, with its rituals and its claim intact. Elgar's First opens with the
+      great nobilmente theme, ceremonial and dignified and shadowed by a melancholy that never quite
+      lifts. The kingship force requirement — ceremonial grandeur, sovereign display — is met as
+      majesty in reduced circumstances: the forms of empire performed on a beach, the court that fled
+      the capital insisting, with real dignity, that it is still the court. As long as Yashima holds
+      the Emperor, Yoshinaka's possession of Kyoto is legally hollow — and everyone knows it.
+  - n: 5
+    scene: "Mizushima — the sea-battle under an eclipse"
+    force: divine-intervention
+    composer: Strauss
+    work: "Also sprach Zarathustra — Sonnenaufgang (the opening sunrise)"
+    decision: added
+    why: >
+      At the sea-battle of Mizushima the Taira, expert sailors, defeat Yoshinaka's land-bred force —
+      and at the climax of the fighting the sun goes dark. The Heike records the eclipse as the
+      Genji's panic: the Minamoto, unprepared, read the darkening sky as a verdict from heaven and
+      break. Strauss's famous sunrise — the slow swell from darkness into a blazing C-major chord —
+      is the cosmic gesture inverted here: light withdrawn instead of given, the heavens performing a
+      sign in the middle of a battle. The divine-intervention force requirement — sudden color shift,
+      brass and strings in contrast — is met as the sky itself entering the war. Whether or not the
+      eclipse means anything, the men who see it act as though it does, and the Taira win.
+  - n: 6
+    scene: "Yoshinaka estranged — the conqueror alone in the city he holds"
+    force: exile
+    composer: Vaughan Williams
+    work: "Symphony No. 6 — IV. Epilogue (Moderato)"
+    decision: added
+    why: >
+      Defeats abroad and hatred at home leave Yoshinaka isolated in the very capital he conquered. The
+      court despises him; the people fear his soldiers; his allies fall away; he trusts almost no one.
+      He holds Kyoto and belongs to it less than any beggar in its streets. Vaughan Williams's Sixth
+      ends with one of the strangest movements in the repertoire — a long, hushed Epilogue that drifts
+      pianissimo through an empty harmonic landscape and never rises, never resolves, never finds
+      another living voice. The exile force requirement — wandering tonality, open intervals — is met
+      as inner exile: a man surrounded by a city and utterly alone in it. Yoshinaka took everything
+      and now possesses nothing, not even a single friend at court who is not calculating his fall.
+  - n: 7
+    scene: "The burning of Hojuji Palace — the assault on the Retired Emperor"
+    force: wrath
+    composer: Mussorgsky
+    work: "A Night on Bald Mountain"
+    decision: added
+    why: >
+      Cornered, Yoshinaka commits the act that dooms him: he attacks the Hojuji Palace, the residence
+      of the Retired Emperor Go-Shirakawa, burns it, and takes the sovereign prisoner. To raise arms
+      against the imperial person is the one unforgivable sacrilege, the line even Kiyomori never quite
+      crossed. Mussorgsky's Bald Mountain is the music of unleashed demonic chaos — a witches' sabbath,
+      order overrun by the powers that order exists to contain. The wrath force requirement — rhythmic
+      pressure, unresolved harmony — is met as desecration. With this fire Yoshinaka converts every
+      faction in the realm into his enemy at once. The man who entered the capital as the protector
+      of the throne has set fire to it; there is no coming back from that.
+  - n: 8
+    scene: "The captive sovereign appeals to heaven"
+    force: supplication
+    composer: Bach
+    work: "St Matthew Passion — Erbarme dich"
+    decision: added
+    why: >
+      Go-Shirakawa, the supreme survivor of the whole story, the Retired Emperor who outmaneuvered
+      Kiyomori himself, is reduced to a prisoner in Yoshinaka's hands. The text gives the indignity
+      its full weight: the sovereign of the realm, held captive in a burned palace, with nothing left
+      but appeal. Bach's Erbarme dich — "have mercy" — is the deepest supplication in Western music, a
+      single violin and a single voice bent together in a plea that asks for nothing but pity. The
+      supplication force requirement — suspended cadence, exposed melodic line — is met as the
+      sovereign brought to petition. But this captivity is also a trap closing on the captor: holding
+      the Emperor by force is precisely what makes Yoshinaka unforgivable, and the prayer of the
+      prisoner is also, unknowingly, the sentence of the jailer.
+  - n: 9
+    scene: "Yoritomo sends the eastern army"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    decision: added
+    why: >
+      In Kamakura, far from all of this, Yoritomo — the Minamoto chief who has never set foot in the
+      capital — makes the decision that ends Yoshinaka. He sends his brothers Noriyori and Yoshitsune
+      west with a fresh, disciplined army to destroy his own cousin and take the capital for the
+      Kamakura cause. Beethoven's Fifth opens with the four most famous notes in music — fate knocking,
+      the short-short-short-long motif that the whole symphony cannot escape. The fate force
+      requirement — inexorable motif, hammered insistence — is met as the announcement of an end
+      already decided. Yoshinaka is still maneuvering in Kyoto as though he has options; in fact the
+      army that will kill him is already on the road, and the motif has already sounded.
+  - n: 10
+    scene: "Yoshinaka sees the noose tighten"
+    force: revelation
+    composer: Messiaen
+    work: "L'Ascension — III. Alléluia sur la trompette, alléluia sur la cymbale"
+    decision: added
+    why: >
+      There comes a moment when Yoshinaka understands his position: enemies on every side, the court
+      against him, the eastern army descending, his own men deserting, and no ally left. The knowledge
+      arrives whole, the way such knowledge does. Messiaen's Alléluia is paradoxical here — radiant,
+      transfixed, a sudden vertical blaze of brass and color — because revelation in the Heike is not
+      comfort but clarity, the terrible lucidity of seeing exactly where one stands. The revelation
+      force requirement — stillness, chant, verticality — is met as the conqueror's recognition that
+      the conquest is finished. He will go down fighting, and the next book gives that death; but here,
+      in a still moment, Yoshinaka sees the whole shape of his fall at once.
+  - n: 11
+    scene: "The hammer of destiny descends"
+    force: fate
+    composer: Mahler
+    work: "Symphony No. 6 (Tragic) — IV. Finale (the hammer-blows)"
+    decision: added
+    why: >
+      The book closes on momentum that can no longer be stopped — the eastern army crossing the
+      mountains, the months of Yoshinaka's reign collapsing toward their end at Awazu. Mahler's Sixth
+      ends with the famous hammer-blows: literal strokes of a great mallet that fell the hero, the
+      orchestra building vast structures only to have them struck down. The fate force requirement —
+      inexorable motif, hammered insistence — is met as the descending blow itself. Book VIII has
+      shown the entire mechanism of self-destruction: a man wins everything and, lacking the wisdom
+      to hold it, calls down upon himself precisely the force that destroyed the rivals he replaced.
+      The hammer is raised at the end of Book VIII. It falls at the start of Book IX.
+
+demoted:
+  - composer: Mahler
+    work: "Symphony No. 2 (Resurrection) — V. Finale"
+    status: "reserved for the Initiates' Book / Dan-no-ura aftermath"
+    why: >
+      Book VIII has no resurrection in it — only a victory rotting into ruin. The apotheosis of
+      Mahler's Second belongs to the work's final consolation, not to Yoshinaka's squandered triumph.
