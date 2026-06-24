@@ -24,11 +24,10 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 LOGS = ROOT / "logs"
 OUT_DIRS = [ROOT / "web" / "app" / "out", ROOT / "web" / "app" / "public"]
 LEDGER = Path(os.environ.get("LIMEN_OBLIGATIONS_LEDGER", ROOT / "obligations-ledger.json"))
-# Durable, git-tracked home for his-hand levers the mail organ does NOT produce (fleet/infra/etc.).
-# The mail ledger above is regenerated every beat, so anything hand-added there evaporates; levers
-# hung here persist and are unioned into the same face below. Append to it — never leave a his-hand
-# task in a chat or a memory file where it hangs on a person.
-HIS_HAND_LEVERS = Path(os.environ.get("LIMEN_HIS_HAND_LEVERS", ROOT / "his-hand-levers.json"))
+# His-hand atoms hang HERE, in git — a separate file from the ledger ON PURPOSE: the mail
+# builder regenerates obligations-ledger.json every sweep, so any lever placed there is wiped.
+# These are unioned in below and survive regen. A his-hand task never hangs on him or in memory.
+HIS_HAND = Path(os.environ.get("LIMEN_HIS_HAND_LEVERS", ROOT / "his-hand-levers.json"))
 
 
 def _load_json(path, default):
@@ -38,12 +37,24 @@ def _load_json(path, default):
         return default
 
 
+def _union_levers(ledger):
+    """His-hand levers (git, durable) first, then the mail ledger's levers; dedup by id.
+    Fail-open: a missing/torn his-hand file just yields the ledger levers, never a crash."""
+    his_hand = _load_json(HIS_HAND, {})
+    his = his_hand.get("levers", []) if isinstance(his_hand, dict) else []
+    out, seen = [], set()
+    for lev in list(his) + list(ledger.get("levers", [])):
+        lid = lev.get("id")
+        if lid in seen:
+            continue
+        seen.add(lid)
+        out.append(lev)
+    return out
+
+
 def build_view():
     ledger = _load_json(LEDGER, {})
     obligations = ledger.get("obligations", [])
-    # Union the mail-derived levers (regenerated each beat) with the durable his-hand levers
-    # (git-tracked, survive regeneration). Fail-open: a missing/torn file yields [], never a crash.
-    levers = ledger.get("levers", []) + _load_json(HIS_HAND_LEVERS, {}).get("levers", [])
     return {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "built_at": ledger.get("generated_at", ""),
@@ -53,7 +64,7 @@ def build_view():
         "obligations": obligations,
         "verify_first": [o for o in obligations if o.get("verify_first")],
         "noise_killers": ledger.get("noise_killers", []),
-        "levers": levers,
+        "levers": _union_levers(ledger),
     }
 
 
@@ -140,7 +151,8 @@ def render_html(v):
 
     levers = "".join(
         f'<li><b>{_esc(l.get("id"))}</b> — {_esc(l.get("label"))} '
-        f'<span class="cost">({_esc(l.get("cost",""))})</span></li>'
+        f'<span class="cost">({_esc(l.get("cost",""))})</span>'
+        f'{(" &rarr; <b>" + _esc(l.get("unlocks")) + "</b>") if l.get("unlocks") else ""}</li>'
         for l in v["levers"])
 
     return f"""<!doctype html><html lang="en"><head>

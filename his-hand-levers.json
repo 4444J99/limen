@@ -1,11 +1,31 @@
 {
-  "spine": "His-hand items the mail organ does NOT produce — hung here permanently (git-tracked, single canonical file) and unioned into the obligations face so they surface next to the mail levers and survive every ledger regeneration. Nothing here is forced; nothing sends or deletes; reversible only. Append a lever object to add the next his-hand item — it auto-surfaces, never hangs on a person or in a memory file.",
+  "_doc": "The PERMANENT home for his-hand atoms — the levers only Anthony can pull. A his-hand task NEVER hangs on him or in a recall-only memory file; it hangs HERE, in git, and obligations-view.py unions these into the obligations face beside the mail levers. This file is separate from obligations-ledger.json ON PURPOSE: the mail builder regenerates that ledger every sweep, which would wipe any lever placed in it — these survive regen. Add/retire a lever by editing this file; nothing here is ever auto-pulled. Source: the needs_human digest reduction (37 tasks -> 8 human actions) plus the per-session closeout atoms. Generic mail-credential levers are NOT duplicated here (they live as L-MCP / L-IMAP-APP-PW / L-OAUTH in the ledger); the ONE exception is L-GMAIL-CRED, which corrects their misleading 'generate a credential' framing (the app-pw already exists — one paste lands it).",
+  "generated_at": "2026-06-24",
+  "spine": "10 human actions own the whole revenue + go-live spine; the first two (merge gate + accounts) move the most, and L-ENC1101-GOLIVE is time-boxed to 6/25. Surfaced once, never nagged, never forced.",
   "levers": [
     {
-      "id": "L-CLAUDE-AUTH",
-      "label": "Stop the recurring 'Not logged in' flap: the 24/7 fleet and your interactive session share ONE rotating Keychain OAuth token, so the fleet keeps rotating it out from under your login. Staged cascade fixes it (branch fix/claude-credential-race). Activate: (1) `claude setup-token`; (2) `bash scripts/claude-fleet-auth-probe.sh`; (3) `bash scripts/set-credential.sh LIMEN_CLAUDE_AUTH_TOKEN` (or LIMEN_CLAUDE_API_KEY if the probe says the Keychain was wiped); (4) deploy the branch (reconcile the live-checkout divergence first). Rung 0 self-heals on deploy with NONE of these done.",
-      "cost": "~3 min once, durable · Rung 0 free the moment it deploys",
+      "id": "L-MERGE-GATE",
+      "label": "Open the merge gate: say \"open the merge gate\" and merge-drain.py squash-merges exactly the clean set in docs/MERGE-READY.md (20 PRs, revenue-first, branches deleted, never force-merged).",
       "owner": "yours",
+      "cost": "1 word",
+      "unlocks": "20 clean PRs land",
+      "source_task": "ASK-5",
+      "note": "Ground-truth: only 20 of 200 open PRs are clean; the 138 CI-red are fleet HEAL work, not your hand."
+    },
+    {
+      "id": "L-REVENUE-ACCT",
+      "label": "Revenue first-dollar accounts: create Ko-fi + GitHub Sponsors on the Exporter, create a LemonSqueezy product and paste LEMONSQUEEZY_STORE_ID into CI. FUNDING.yml + Pro-tier checkout are already staged — only account creation is missing.",
+      "owner": "yours",
+      "cost": "~10 min, no code",
+      "unlocks": "first dollar (income before August)",
+      "source_task": "revenue-ladder (whose_hand: yours)"
+    },
+    {
+      "id": "L-CLAUDE-AUTH",
+      "label": "Stop the recurring 'Not logged in' flap: the 24/7 fleet and your interactive session share ONE rotating Keychain OAuth token, so the fleet keeps rotating it out from under your login. Staged cascade fixes it (branch fix/claude-credential-race). Rung 0 self-heals on deploy with NONE of the steps done.",
+      "owner": "yours",
+      "cost": "~3 min once, durable · Rung 0 free the moment it deploys",
+      "unlocks": "stable Claude auth across the fleet + your session",
       "branch": "fix/claude-credential-race",
       "gate": "HOLD",
       "steps": [
@@ -16,43 +36,70 @@
       ]
     },
     {
-      "id": "L-CI-BRANCH-PROTECTION",
-      "label": "Close the CI-poison class: CI only lints/builds PULL REQUESTS, so a direct push to main can land red code — it happened twice (f9325a8 ruff, 3069587 web) and each time jammed every open PR's merge until hand-fixed. Cure = require the CI checks on main so nothing un-green lands. Cheapest: GitHub → organvm/limen → Settings → Branches → add a protection rule/ruleset for `main` requiring status checks python + web + worker, plus 'require a pull request before merging'. NOTE: the daemon commits some content (e.g. studium dailies) directly to main — either route those through the merge organ too, or scope the rule to exempt the limen[bot]/App actor; your governance call. Reversible: relax the rule anytime.",
-      "cost": "~2 min once, durable — retires the whole un-gated-push poison class",
+      "id": "L-CLOUDFLARE-DEPLOY",
+      "label": "Cloudflare deploy auth: run `wrangler login` (or export CLOUDFLARE_API_TOKEN into the lane env), then re-dispatch. Every BLD2-*-deploy fails because wrangler isn't authenticated.",
       "owner": "yours",
-      "branch": null,
-      "gate": "his GitHub repo-admin (or the limen[bot] App once installed)",
-      "steps": [
-        "GitHub → organvm/limen → Settings → Branches → new branch ruleset (or protection rule) targeting `main`",
-        "Require status checks to pass before merging: python, web, worker",
-        "Require a pull request before merging (blocks un-CI'd direct pushes from sessions)",
-        "Decide the daemon's content path: route its commits through the merge organ, OR add limen[bot]/App as a bypass actor so studium dailies still flow",
-        "Save — no un-CI'd commit can poison main again"
-      ]
+      "cost": "~2 min once, durable",
+      "unlocks": "16 BLD2 deploys — all 6 revenue products go live",
+      "source_task": "BLD2-* (16 tasks)"
+    },
+    {
+      "id": "L-CONTAINER-CUTOVER",
+      "label": "One-container cutover: mount an external backup, run container/migrate.sh S4-S13, confirm symlinks + the COMPLETE marker. ASK-20 extends container/manifest.tsv to relocate ~/.claude, ~/.codex, ~/.gemini. Irreversible and backup-gated — the durability the whole organism stands on.",
+      "owner": "yours",
+      "cost": "~30 min, irreversible",
+      "unlocks": "durable single-body identity",
+      "source_task": "ASK-2, ASK-20"
+    },
+    {
+      "id": "L-JWT-091",
+      "label": "Provide JWT_SECRET + org_id so PR #234's security gate passes (organvm/public-record-data-scrapper).",
+      "owner": "yours",
+      "cost": "~1 min",
+      "unlocks": "scrapper security PR merges",
+      "source_task": "LIMEN-091"
+    },
+    {
+      "id": "L-GH-LAUNCHD-077",
+      "label": "Give gh a token under launchd (GH_TOKEN in the plist/keychain) so the soak-test LaunchAgent's gh auth works (organvm/organvm-engine).",
+      "owner": "yours",
+      "cost": "~2 min once",
+      "unlocks": "soak-test LaunchAgent lane",
+      "source_task": "LIMEN-077"
+    },
+    {
+      "id": "L-BRANCH-PROTECT-072",
+      "label": "Authorize branch-protection rules across the organ repos (needs admin; run the descent script).",
+      "owner": "yours",
+      "cost": "~5 min, admin",
+      "unlocks": "branch protection fleet-wide",
+      "source_task": "LIMEN-072"
     },
     {
       "id": "L-ENC1101-GOLIVE",
-      "label": "Take ENC1101 Summer 2026 (771624) live in D2L — content is 100% staged, the only gaps are your cadence call + a label greenlight + the Set Active click. Term 6/25 → 8/04. Read prep/GO-LIVE-BRIEF.md first (one page). Two small hands: (1) confirm the proposed 6-week cadence in prep/schedule-summer2026.md (say 'cadence is good' or name dates to move); (2) greenlight the §3 fix — the staged announcement drip mislabeled the back half a 'Research Essay' but shell Unit 4 = Problem/Solution Essay (250-pt capstone); corrected import is staged at prep/instructor-layer-ready/announcements-summer2026-IMPORT-aligned.csv (dates unchanged, original untouched). Then I browser-drive Manage Dates + Announcements + Intelligent Agent, you click Set Offering to Active (yours — students can't see it until then), and I verify Student View.",
-      "cost": "~2 min decision + a Set Active click; then ~30 min I co-drive via Claude-in-Chrome",
+      "label": "Take ENC1101 Summer 2026 (771624) live in D2L — content is 100% staged; only your cadence call + a label greenlight + the Set Active click remain. Read edu-organism/classes/enc1101-summer-2026/prep/GO-LIVE-BRIEF.md (one page). (1) Confirm the 6-week cadence in prep/schedule-summer2026.md ('cadence is good' or name dates to move); (2) greenlight the §3 fix — the staged announcement drip mislabeled the back half a 'Research Essay' but shell Unit 4 = Problem/Solution Essay (250-pt capstone); the corrected import is staged at prep/instructor-layer-ready/announcements-summer2026-IMPORT-aligned.csv (dates unchanged, original untouched). Then I browser-drive dates + announcements + intelligent agent; you click Set Offering to Active; I verify Student View.",
       "owner": "yours",
+      "cost": "~2 min decision + a Set Active click; then ~30 min I co-drive via Claude-in-Chrome",
+      "unlocks": "ENC1101 live for students (term 6/25 → 8/04)",
+      "source_task": "edu-organism ENC1101 771624",
       "deadline": "2026-06-25",
-      "branch": null,
       "gate": "your cadence-confirm + §3 greenlight + the Set Active click (outward/identity — never automated)",
       "steps": [
-        "Read edu-organism/classes/enc1101-summer-2026/prep/GO-LIVE-BRIEF.md",
+        "Read prep/GO-LIVE-BRIEF.md",
         "Confirm the 6-week cadence in prep/schedule-summer2026.md (or name dates to move)",
         "Greenlight the §3 relabel (use the -IMPORT-aligned.csv when posting)",
-        "I browser-drive: paste syllabus → set dates → post announcements → enable intelligent agent",
+        "I browser-drive: syllabus → Manage Dates → announcements → intelligent agent",
         "You click Set Offering to Active; I verify Student View"
       ]
     },
     {
       "id": "L-GMAIL-CRED",
-      "label": "Revive the autonomous mail lane with ONE paste — the app-password ALREADY EXISTS (op://Private/gmail-app-pw-2026-06-06); nothing needs generating (the generic mail levers L-IMAP-APP-PW/L-OAUTH imply you must create one — you don't). The single endpoint is the GitHub secret GMAIL_APP_PASSWORD on organvm/domus (currently unset). Once set, the C_MAIL voice's keyless drafts/sweep path has its credential and inbox-clean is no longer gated on you. Cheapest path streams the value op→gh, never on screen.",
-      "cost": "~30s once, durable",
+      "label": "Revive the autonomous mail lane with ONE paste — the app-password ALREADY EXISTS (op://Private/gmail-app-pw-2026-06-06); nothing needs generating. This supersedes the generic L-IMAP-APP-PW/L-OAUTH framing (which implies you must create a credential — you don't). The single endpoint is the GitHub secret GMAIL_APP_PASSWORD on organvm/domus (currently unset). Once set, the C_MAIL voice's keyless drafts/sweep path has its credential and inbox-clean is no longer gated on you. Value streams op→gh, never on screen.",
       "owner": "yours",
-      "branch": null,
-      "gate": "credential-write (only the secret-write classifier blocks it; the secret itself exists)",
+      "cost": "~30s once, durable",
+      "unlocks": "headless C_MAIL drafts/sweep — inbox-clean no longer gated on you",
+      "source_task": "gmail-mutation-cascade (app-pw EXISTS, one paste)",
+      "gate": "credential-write classifier (the secret itself already exists)",
       "steps": [
         "op read op://Private/gmail-app-pw-2026-06-06/password | gh secret set GMAIL_APP_PASSWORD -R organvm/domus",
         "OR add a Bash allow-rule Bash(gh secret set:*) so any session lands it autonomically",
