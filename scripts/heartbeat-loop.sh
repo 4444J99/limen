@@ -80,6 +80,7 @@ C_SYNC="${LIMEN_BEAT_SYNC:-2}"         # SELF-HEAL the substrate (re-converge ch
 C_CORPUS="${LIMEN_BEAT_CORPUS:-24}"    # CONVERGE (distill his words toward ONE; expensive → rare)
 C_WEB="${LIMEN_BEAT_WEB:-4}"           # LEARN (refresh the visualized surfaces)
 C_NOMENCLATOR="${LIMEN_BEAT_NOMENCLATOR:-4}"     # NOMENCLATOR (INDEX·NOMINVM — hold names to the naming canon)
+C_CENSOR="${LIMEN_BEAT_CENSOR:-4}"     # CENSOR (insights→actions; hourly/daily/weekly tiers self-gate on wall-clock)
 LOCKD="$LIMEN_ROOT/logs/.queue.lock.d"   # shared with supervisory ops (two-scale safety)
 c=0
 play() { [ $(( c % $1 )) -eq 0 ]; }   # true on this voice's beat
@@ -196,6 +197,11 @@ while true; do
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/money-view.py" 2>&1 | tail -1 || true   # revenue-first money view (no network, can't time out)
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/corpus-view.py" 2>&1 | tail -1 || true   # knowledge-base view: THE ONE + convergence activity (no network)
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/notify-events.py" 2>&1 | tail -1 || true   # push: your-gate ready / ship milestones
+  # CENSOR — the insights→actions institution. Records its decisions + renders censor.html EVERY
+  # run so it is observable BEFORE it is autonomous; the executive only acts when armed
+  # (LIMEN_CENSOR_APPLY=1). Tiers (hourly/daily/weekly) self-gate on wall-clock. Bounded + fail-open.
+  play "$C_CENSOR"  && python3 "$LIMEN_ROOT/scripts/censor.py" $([ "${LIMEN_CENSOR_APPLY:-0}" = "1" ] && echo --apply) 2>&1 | tail -1 || true
+  play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/censor-view.py" 2>&1 | tail -1 || true   # the Censor's face (no network, can't time out)
   play "$C_WEB"     && bash "$LIMEN_ROOT/scripts/refresh-web.sh" 2>&1 | tail -2 || true   # web auto-refresh (best-effort; money.html is primary)
   # CAPTURE — get every workspace repo OFF disk into the canonical universal context (commit+push,
   # additive only). Implements the old backup voice; falls back to a legacy backup.sh if present.

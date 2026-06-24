@@ -1,0 +1,101 @@
+# protocols.yaml — THE CENSOR'S LEGISLATIVE BRANCH.
+#
+# The Censor is limen's insights→actions institution: it reads the system's own
+# signals (fleet performance, organ health, behavioural drift) and acts on them
+# on calendar cadences (hourly / daily / weekly) to make the system change and grow.
+#
+# It is governed by a CONSTITUTION — separation of powers, so no single process
+# both decides and executes unchecked (branches exist "for a reason at scale"):
+#   • LEGISLATIVE  = this file. Defines WHAT may be done and by WHICH branch.
+#   • EXECUTIVE    = the actuators (self-improve --apply, insights-snapshot, …).
+#                    They ONLY do what the cascade authorised; they never decide.
+#   • JUDICIAL     = the verifier. Authorises irreversible actions BEFORE, and
+#                    reviews outcomes AFTER → writing case law to precedents.jsonl.
+#                    The branch that applies a change is never the branch that judged it.
+#
+# Every candidate action runs the DECISION CASCADE (logic prevails — no flat dial):
+#   1. PROTOCOL dictates   → if a rule here covers it, the action is determined.
+#   2. else PRECEDENT      → a prior like-case with a good outcome suggests it.
+#   3. else EXPLORATION    → emit a study, never dead-stop ([[no-never-happens-again]]).
+#   4. until IDEAL-FORM    → certainty derived → take it AND propose the new rule
+#                            back here as an amendment (law is reviewed before it binds).
+#
+# AUTONOMY FALLS OUT of reversibility + signing branch — it is never set as a level:
+#   reversible + executive          → auto-applied, no human
+#   gated / irreversible            → judicial review (v1: proposed, surfaced, not auto)
+#   his_lever (money/email/identity/send/wipe/large-spend/behavioural-rule) → surfaced to you
+#
+# Status is DERIVED at run time; nothing here is a hardcoded "done"
+# ([[derive-never-pin-hardcodes]], [[cascade-fallback-principle]], [[pillars-platform-convergence]]).
+
+meta:
+  reversibility_classes: [reversible, gated, irreversible]
+  cadences: {hourly: 3600, daily: 86400, weekly: 604800}
+  his_levers: [money, email, identity, send, wipe, large-spend, behavioural-rule]
+  branches:
+    legislative: this file — defines what may be done and by whom
+    executive: applies authorised actions (never decides)
+    judicial: authorises irreversible actions + writes precedent from outcomes
+
+# Each protocol matches a signal and dictates the action + who signs off.
+#   when:        signal type + optional field matchers (a "<field>_in" key = membership test)
+#   reversible:  reversibility class → drives the disposition
+#   branch:      executive (auto when reversible) | judicial (review/propose/surface)
+#   cadence:     which tier raises this signal
+#   mechanism:   the concrete actuator the executive runs
+#   his_lever:   present → always surfaced to you, regardless of reversibility
+protocols:
+  - id: PROTO-INSIGHTS-CAPTURE
+    when: {signal: cadence_tick, tier: hourly}
+    action: archive the rolling /insights report before its window slides away
+    reversible: reversible
+    branch: executive
+    cadence: hourly
+    mechanism: "insights-snapshot --only-if-newer --quiet"
+    rationale: "the snapshot dir was empty — the learning signal was being thrown away every ~5h"
+
+  - id: PROTO-ORGAN-PROPRIOCEPTION
+    when: {signal: cadence_tick, tier: hourly}
+    action: refresh organ-health so staleness/down is detected within the hour
+    reversible: reversible
+    branch: executive
+    cadence: hourly
+    mechanism: "organ-health.py"
+
+  - id: PROTO-ORGAN-STALE
+    when: {signal: organ_health, status_in: [stale, down]}
+    action: recommend healing the stale/down organ
+    reversible: gated          # emitting work into the live queue has no precedent yet
+    branch: judicial           # v1 → proposed on the face; graduates to auto once precedent accrues
+    cadence: hourly
+
+  - id: PROTO-LANE-REWEIGHT
+    when: {signal: lane_adjustment, verdict_in: [down-weight, up-weight, keep]}
+    action: apply learned lane weights so routing follows real productivity
+    reversible: reversible
+    branch: executive
+    cadence: daily
+    mechanism: "self-improve.py --apply (LIMEN_SI_APPLY=1 → route.py _learned_weights)"
+
+  - id: PROTO-RERANK
+    when: {signal: rerank, move_in: [boost, deprioritise]}
+    action: re-prioritise OPEN tasks by demonstrated ship-rate (idempotent)
+    reversible: reversible
+    branch: executive
+    cadence: daily
+    mechanism: "self-improve.py --apply (idempotent priority set on OPEN tasks)"
+
+  - id: PROTO-RETIRE-PATTERN
+    when: {signal: retire_pattern}
+    action: supersede / re-route a chronically-failing task pattern
+    reversible: irreversible   # destructive — marks tasks superseded
+    branch: judicial           # gated behind LIMEN_SI_RETIRE=1; never auto in v1
+    cadence: daily
+
+  - id: PROTO-BEHAVIOURAL-CORRECTION
+    when: {signal: recurring_friction}
+    action: codify a standing correction (CLAUDE.md / a memory / a lever)
+    reversible: gated
+    branch: judicial
+    cadence: weekly
+    his_lever: behavioural-rule   # rewriting how the agent behaves is yours to bless

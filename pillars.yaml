@@ -69,3 +69,10 @@ pillars:
     owner: limen
     path: ~/Workspace/limen
     health_signal: logs/omni-view.json
+  - id: censor
+    name: The Censor
+    role: Insights → actions on cadence — reads the system's own signals (fleet, organs, drift) and acts to change/grow, governed by separation of powers + the protocol→precedent→exploration→ideal-form cascade.
+    owner: limen
+    path: ~/Workspace/limen/scripts/censor.py
+    producer: scripts/censor.py
+    health_signal: logs/censor-view.json
