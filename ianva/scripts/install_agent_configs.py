@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -27,6 +28,11 @@ sys.path.insert(0, str(ROOT / "src"))
 from ianva.config import load_config            # noqa: E402
 from ianva.gen import Endpoint, build_entries   # noqa: E402
 from ianva import creds                          # noqa: E402
+
+
+def _redact(text: str) -> str:
+    """Never echo a bearer token to stdout — redact any 'Bearer <tok>' before display."""
+    return re.sub(r"(Bearer\s+)\S+", r"\1****", text)
 
 STAMP = datetime.now().strftime("%Y%m%d-%H%M%S")
 
@@ -104,13 +110,14 @@ def apply_toml_codex(path: Path, rendered: str, apply: bool) -> None:
 def apply_claude(rendered: str, apply: bool) -> None:
     print("  claude mcp (via CLI)")
     if not apply:
-        print(f"    would run: {rendered} (dry run)")
+        print(f"    would run: {_redact(rendered)} (dry run)")
         return
     # idempotent: drop any prior entry, ignore if absent
     subprocess.run(["claude", "mcp", "remove", "--scope", "user", "ianva"],
                    capture_output=True, text=True)
-    r = subprocess.run(rendered.split(), capture_output=True, text=True)
-    print(f"    {'ok' if r.returncode == 0 else 'FAILED'}: {(r.stdout or r.stderr).strip()[:200]}")
+    # shlex.split (not str.split) so a quoted --header "Authorization: Bearer <tok>" stays one arg
+    r = subprocess.run(shlex.split(rendered), capture_output=True, text=True)
+    print(f"    {'ok' if r.returncode == 0 else 'FAILED'}: {_redact((r.stdout or r.stderr).strip()[:200])}")
 
 
 def main() -> int:

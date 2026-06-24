@@ -7,3 +7,6 @@ run/
 logs/
 locks/
 mcp_settings.json
+# generated agent-config entries: regenerable output, and carry the bearer when the cloud
+# face is on — must never be committed. Regenerate any time with `ianva gen-configs`.
+generated/
