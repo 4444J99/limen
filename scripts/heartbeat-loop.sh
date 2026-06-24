@@ -79,7 +79,7 @@ C_HYGIENE="${LIMEN_BEAT_HYGIENE:-8}"; C_BACKUP="${LIMEN_BEAT_BACKUP:-48}"
 C_SYNC="${LIMEN_BEAT_SYNC:-2}"         # SELF-HEAL the substrate (re-converge checkout to the release)
 C_CORPUS="${LIMEN_BEAT_CORPUS:-24}"    # CONVERGE (distill his words toward ONE; expensive → rare)
 C_WEB="${LIMEN_BEAT_WEB:-4}"           # LEARN (refresh the visualized surfaces)
-C_CENSOR="${LIMEN_BEAT_CENSOR:-4}"     # CENSOR (INDEX·NOMINVM — hold names to the naming canon)
+C_NOMENCLATOR="${LIMEN_BEAT_NOMENCLATOR:-4}"     # NOMENCLATOR (INDEX·NOMINVM — hold names to the naming canon)
 LOCKD="$LIMEN_ROOT/logs/.queue.lock.d"   # shared with supervisory ops (two-scale safety)
 c=0
 play() { [ $(( c % $1 )) -eq 0 ]; }   # true on this voice's beat
@@ -208,11 +208,11 @@ while true; do
   # + graph shots (LIMEN_CORPUS_GRAPH=1). Bounded + fail-open — never gates the beat.
   play "$C_CORPUS"  && [ "${LIMEN_CORPUS_CONVERGE:-0}" = "1" ] && \
     python3 "$LIMEN_ROOT/scripts/corpus-converge.py" --apply 2>&1 | tail -3 || true
-  # CENSOR — hold the roll of names (INDEX·NOMINVM) to the canon. --apply records liveness for
-  # organ-health. Gated OFF by default (LIMEN_CENSOR=1) so estate-wide enforcement is your knob;
+  # NOMENCLATOR — hold the roll of names (INDEX·NOMINVM) to the canon. --apply records liveness for
+  # organ-health. Gated OFF by default (LIMEN_NOMENCLATOR=1) so estate-wide enforcement is your knob;
   # the CI gate already protects the canon on every PR. Bounded + fail-open — never gates the beat.
-  play "$C_CENSOR"  && [ "${LIMEN_CENSOR:-0}" = "1" ] && \
-    python3 "$LIMEN_ROOT/scripts/censor.py" --apply 2>&1 | tail -2 || true
+  play "$C_NOMENCLATOR"  && [ "${LIMEN_NOMENCLATOR:-0}" = "1" ] && \
+    python3 "$LIMEN_ROOT/scripts/nomenclator.py" --apply 2>&1 | tail -2 || true
 
   # adaptive tempo: tighten to MIN whenever work is flowing OR the OPEN QUEUE is non-empty (so a
   # beat that produced no PR this cycle — all no-op / still-running — doesn't back off to 30min

@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
-"""censor.py — CENSOR, the enforcer of INDEX·NOMINVM (the roll of names).
+"""nomenclator.py — NOMENCLATOR, the enforcer of INDEX·NOMINVM (the roll of names).
 
-In Rome the *censor* kept the census — the album of names — and enforced the *regimen morum*,
-marking any violation with the **nota censoria**. This is its analogue: it validates names against
-the naming canon and issues a nota against any that break it.
+In Rome the *nomenclator* was the official who knew and announced every name — the keeper of the
+album of names. This is its analogue: it validates names against the naming canon and marks any that
+break it. (Its sibling magistrate, the **Censor**, governs conduct — the *regimen morum* — and is a
+distinct organ; see scripts/censor.py. The Index Nominum's first ruling was to keep the two apart:
+Nomenclator for names, Censor for conduct.)
 
 The canon is DERIVED from spec/index-nominum/canon.yaml (never pinned here) per derive-never-pin:
-retune a substitution there and CENSOR follows. Two charters sit above the machine form —
+retune a substitution there and the Nomenclator follows. Two charters sit above the machine form —
 NAMING.md (orthography, prose) and spec/index-nominum/README.md (the institution).
 
 What it enforces (v1): ORTHOGRAPHIA (Tier-1 letter substitutions — U→V, J→I, W→VV, QU→QV) and the
 FORBIDDEN set (ASCII-only; no shell/URL/DNS-breaking characters). Morphologia is advisory in --check.
 
 Usage:
-  python3 scripts/censor.py                 # validate the roll; exit 1 if any nota (CI gate)
-  python3 scripts/censor.py --apply         # also write logs/censor.json (organ-health probe)
-  python3 scripts/censor.py --check "<name>" # derive a candidate's canon form (mint helper)
+  python3 scripts/nomenclator.py                 # validate the roll; exit 1 if any nota (CI gate)
+  python3 scripts/nomenclator.py --apply         # also write logs/nomenclator.json (organ-health probe)
+  python3 scripts/nomenclator.py --check "<name>" # derive a candidate's canon form (mint helper)
 """
 import json
 import os
@@ -26,7 +28,7 @@ from pathlib import Path
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 CANON = ROOT / "spec" / "index-nominum" / "canon.yaml"
 ROLL = ROOT / "spec" / "index-nominum" / "roll.yaml"
-OUT = ROOT / "logs" / "censor.json"
+OUT = ROOT / "logs" / "nomenclator.json"
 
 try:
     import yaml
@@ -98,7 +100,7 @@ def notae(name, canon, register="classical", domain=None):
 
 
 def fail(message):
-    print(f"censor: {message}", file=sys.stderr)
+    print(f"nomenclator: {message}", file=sys.stderr)
     raise SystemExit(2)
 
 
@@ -122,7 +124,7 @@ def check_one(canon, name):
 def validate_roll(canon):
     """Default + --apply: validate every name on the roll. Returns (violations, checked_count)."""
     if not ROLL.exists():
-        print("censor: no roll (spec/index-nominum/roll.yaml absent) — nothing to validate")
+        print("nomenclator: no roll (spec/index-nominum/roll.yaml absent) — nothing to validate")
         return [], 0
     roll = _load(ROLL)
     default_reg = (canon.get("orthographia") or {}).get("register_default", "classical")
@@ -141,7 +143,7 @@ def validate_roll(canon):
 
 def main():
     if not yaml:
-        print("censor: pyyaml unavailable")
+        print("nomenclator: pyyaml unavailable")
         return 2
     if not CANON.exists():
         fail(f"canon missing: {CANON}")
@@ -165,7 +167,7 @@ def main():
         }, indent=2))
 
     if violations:
-        print(f"\n{len(violations)} nota censoria on the roll:")
+        print(f"\n{len(violations)} nota on the roll:")
         for name, m in violations:
             print(f"  ✗ {name}: {m}")
         return 1

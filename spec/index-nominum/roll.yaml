@@ -1,6 +1,6 @@
-# INDEX·NOMINVM — the roll (the census of canonical names). The Roman censor kept the album of
+# INDEX·NOMINVM — the roll (the census of canonical names). The Roman nomenclator kept the album of
 # citizens; this is its analogue. Every entry must satisfy the canon (spec/index-nominum/canon.yaml)
-# or CENSOR issues a nota. Seeded from the canon already in use across the estate.
+# or NOMENCLATOR issues a nota. Seeded from the canon already in use across the estate.
 #
 #   display — the wordmark (may carry caps / interpunct / numerals; layout, not letter-substitution)
 #   domain  — the lowercased domain-safe label (Tier-1 substitutions only; a-z0-9-)

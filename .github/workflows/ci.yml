@@ -47,8 +47,8 @@ jobs:
       - name: Check shell scripts
         run: bash -n scripts/preflight-cloud-run.sh
 
-      - name: Validate naming canon (CENSOR · INDEX·NOMINVM)
-        run: python scripts/censor.py
+      - name: Validate naming canon (NOMENCLATOR · INDEX·NOMINVM)
+        run: python scripts/nomenclator.py
 
       - uses: actions/setup-node@v6
         with:

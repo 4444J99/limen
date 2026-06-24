@@ -1,10 +1,10 @@
-# INDEX·NOMINVM — the canon of names. The single source CENSOR reads (derive-never-pin).
+# INDEX·NOMINVM — the canon of names. The single source NOMENCLATOR reads (derive-never-pin).
 #
 # Two human charters sit above this machine form:
 #   - NAMING.md                       — the orthography canon (U→V …), prose + worked examples
 #   - spec/index-nominum/README.md    — the institution: its five layers and the convergence plan
 #
-# CENSOR (scripts/censor.py) derives every name's canon form from THIS file. Retune a rule here
+# NOMENCLATOR (scripts/nomenclator.py) derives every name's canon form from THIS file. Retune a rule here
 # and the enforcer follows automatically — never pin a substitution in code.
 schema_version: 1
 
@@ -23,7 +23,7 @@ orthographia:
   greek_markers: [y, z]             # kept as-is — Y/Z mark a Greek root; their rarity is the signal
 
 forbidden:
-  # A name containing any of these earns a nota censoria — it would break terminal, Finder, or DNS.
+  # A name containing any of these earns a nota — it would break terminal, Finder, or DNS.
   ascii_only: true                  # any non-ASCII byte (macron, ligature æ/œ, Greek letter, thorn, ·)
   chars:                            # ASCII characters that are individually unsafe
     - {char: "&", why: "shell background / URL query operator"}
@@ -55,7 +55,7 @@ morphologia:
     materia: "physicalization, embodiment"
 
 layers:
-  # The five layers of the institution and where each currently lives. CENSOR enforces `orthographia`
+  # The five layers of the institution and where each currently lives. NOMENCLATOR enforces `orthographia`
   # today; the rest are the convergence targets (Phase III). Paths are evidence, not yet absorbed.
   orthographia: {status: in-canon, here: "NAMING.md"}
   morphologia:  {status: scattered, converge_from: ["organvm-corpvs-testamentvm/docs/standards/22-essence-function-naming-convention.md", "organvm/brainstorm-20260423/schemas/03-latin-naming-schema--…"]}
