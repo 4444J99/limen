@@ -82,3 +82,17 @@ the fraud hold. Defers the subscription/Stripe path only — individual MoR rail
 No completed backup. Data already has **3 copies** (iCloud + Archive4T + Backblaze), so TM is a
 convenience, not a durability gap. **Owner:** you. **Cheapest path:** staging drive →
 `tmutil setdestination`. Not blocking anything.
+
+### 6. Session residue (from QUICKEN) — *hung in the permanent queue, not this doc*
+QUICKEN drives every reversible step of a sitting session to done, then hangs the one touch a loop
+can't make in the **permanent `needs_human` queue** as `ASK-quicken-<key>` (lockless/atomic into
+`tasks.yaml`; surfaced by `obligations-view` / `organ-health` / `reclassify`; capture-pushed off-disk).
+The running system holds these — this doc is the annotated view, not the home; nothing waits on memory.
+- **One login/identity step** → hung as `ASK-quicken-login` when surfaced. **Cheapest path:**
+  `claude setup-token` (credential-race self-heal staged at `fix/claude-credential-race@b1274bf`,
+  probes ready) + reconnect the hotspot.
+- **Open the gate** → already hung as **`ASK-5-open-merge-gate`** (a standing posture, never
+  duplicated). **Cheapest path:** say the word; the staged pushes land with no re-asking. Until then
+  **held, not hanging** — daemon-owned, catalogued, deploy on gate-open. Staged payloads include:
+  branch **`worktree-optimized-wishing-crayon`** — the complete QUICKEN organ (from `d586e63`, tree
+  clean, merge to main) — plus `unblock-pr-fix-deploy-gates` and Etceter4.
