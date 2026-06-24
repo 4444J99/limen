@@ -171,6 +171,10 @@ def _registry():
              gate="GMAIL_OAUTH_OP_REF", gate_default="", gate_truthy_nonempty=True,
              what="sweep inbound (flag/archive) + rebuild obligations ledger",
              probe=lambda: _mtime(LOGS / "obligations-view.json")),
+        dict(key="censor", rung="CENSOR", voice="censor", cadence_key="CENSOR",
+             gate="LIMEN_CENSOR", gate_default="0",
+             what="INDEX·NOMINVM — hold the roll of names to the canon (nota censoria)",
+             probe=lambda: _mtime(LOGS / "censor.json")),
     ]
 
 

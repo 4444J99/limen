@@ -1,0 +1,70 @@
+# INDEX·NOMINVM — the canon of names. The single source CENSOR reads (derive-never-pin).
+#
+# Two human charters sit above this machine form:
+#   - NAMING.md                       — the orthography canon (U→V …), prose + worked examples
+#   - spec/index-nominum/README.md    — the institution: its five layers and the convergence plan
+#
+# CENSOR (scripts/censor.py) derives every name's canon form from THIS file. Retune a rule here
+# and the enforcer follows automatically — never pin a substitution in code.
+schema_version: 1
+
+orthographia:
+  # Tier-1 letter substitutions — pure letter-for-letter, so they survive into a domain label.
+  # Applied left-to-right to the LOWERCASED name to derive its canon form. Multi-char rules first.
+  register_default: classical
+  substitutions:
+    classical:                       # Augustan / monumental — the default register
+      - {from: "w",  to: "vv", why: "double-V; W is absent from Latin, built by doubling V"}
+      - {from: "qu", to: "qv", why: "QV; follows from U=V (AQVA, QVINTVS)"}
+      - {from: "u",  to: "v",  why: "one letter V served both /u/ and /v/; U is medieval"}
+      - {from: "j",  to: "i",  why: "J is a 16th-c. split off I (Trissino, ~1524)"}
+    archaic_extra:                   # Old Latin — applied IN ADDITION to classical, on request
+      - {from: "g",  to: "c",  why: "earliest Latin had no G; C did both /k/ and /g/ (C.=Gaius)"}
+  greek_markers: [y, z]             # kept as-is — Y/Z mark a Greek root; their rarity is the signal
+
+forbidden:
+  # A name containing any of these earns a nota censoria — it would break terminal, Finder, or DNS.
+  ascii_only: true                  # any non-ASCII byte (macron, ligature æ/œ, Greek letter, thorn, ·)
+  chars:                            # ASCII characters that are individually unsafe
+    - {char: "&", why: "shell background / URL query operator"}
+  domain_charset: "abcdefghijklmnopqrstuvwxyz0123456789-."   # what a domain string may contain
+  whitespace_to: "-"                # spaces/tabs become hyphens in the derived domain form
+  replacements:                     # advisory: what to write instead (suggestion only)
+    "æ": "ae"
+    "œ": "oe"
+    "·": "."
+    "&": "et"
+
+morphologia:
+  # Structural grammar for repo / product identifiers (advisory in v1; orthography is the hard gate).
+  pattern: "<essence>--<function>[-<cadence>]"
+  separator: "--"
+  token_vocabulary:                 # the canonical 'function' words (genus)
+    machina: "engines, transforming apparatus"
+    codex: "rulebooks, registries, constitutions"
+    chronicon: "append-only records, ledgers, memory"
+    scriptorium: "writing, narrative composition"
+    fabrica: "production, fabrication, pipeline"
+    officina: "bounded operational workshops"
+    ludus: "interactive, playable, performative"
+    speculum: "reflection, analytics, observability"
+    persona: "user / agent role classes"
+    forma: "templates, schemas, designs"
+    vestigium: "logs, traces, residues"
+    sigillum: "signatures, seals, provenance"
+    materia: "physicalization, embodiment"
+
+layers:
+  # The five layers of the institution and where each currently lives. CENSOR enforces `orthographia`
+  # today; the rest are the convergence targets (Phase III). Paths are evidence, not yet absorbed.
+  orthographia: {status: in-canon, here: "NAMING.md"}
+  morphologia:  {status: scattered, converge_from: ["organvm-corpvs-testamentvm/docs/standards/22-essence-function-naming-convention.md", "organvm/brainstorm-20260423/schemas/03-latin-naming-schema--…"]}
+  identitas:    {status: scattered, converge_from: ["organvm/system-system--system--monad/system--naming-calculus.md"]}
+  lentes:       {status: scattered, converge_from: ["sovereign-systems--elevate-align/src/data/aesthetics-vocabulary.ts"]}
+  vox:          {status: scattered, converge_from: ["organvm/editorial-standards/"]}
+
+constitution:
+  index: "Index Nominum"            # the planned third register of the four-part Latin index apparatus
+  irf_id: "IRF-IDX-002"
+  home: "organvm-corpvs-testamentvm"
+  status: "planned — to incorporate (Phase II, his gate)"

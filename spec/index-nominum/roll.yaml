@@ -1,0 +1,22 @@
+# INDEX·NOMINVM — the roll (the census of canonical names). The Roman censor kept the album of
+# citizens; this is its analogue. Every entry must satisfy the canon (spec/index-nominum/canon.yaml)
+# or CENSOR issues a nota. Seeded from the canon already in use across the estate.
+#
+#   display — the wordmark (may carry caps / interpunct / numerals; layout, not letter-substitution)
+#   domain  — the lowercased domain-safe label (Tier-1 substitutions only; a-z0-9-)
+#   register — classical (default) | archaic | greek
+#   note    — provenance / why
+schema_version: 1
+
+names:
+  - {display: LIMEN,     domain: limen,     register: classical, note: "already prima materia — nothing to strip"}
+  - {display: STVDIVM,   domain: stvdivm,   register: classical, note: "studium (two u's → two v's) · the curriculum organ"}
+  - {display: VLTIMA,    domain: vltima,    register: classical, note: "VLTIMA MATERIA — the platform identity"}
+  - {display: ORGANVM,   domain: organvm,   register: classical, note: "the organism / instrument; root of the constitutional order"}
+  - {display: CORPVS,    domain: corpvs,    register: classical, note: "organvm-corpvs-testamentvm — the governance corpus"}
+  - {display: SPECVLA,   domain: specvla,   register: classical, note: "speculum · reflection/observability (specvla-ergon)"}
+  - {display: AVDITOR,   domain: avditor,   register: classical, note: "auditor (avditor-mvndi)"}
+  - {display: MVNDI,     domain: mvndi,     register: classical, note: "mundi · of the world"}
+  - {display: QVICKEN,   domain: qvicken,   register: classical, note: "the session-lifecycle organ"}
+  - {display: DOMVS,     domain: domvs,     register: classical, note: "domus · the life-domain monolith"}
+  - {display: STYX,      domain: styx,      register: greek,     note: "Greek root — Y kept by canon"}
