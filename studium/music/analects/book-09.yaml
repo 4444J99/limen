@@ -1,0 +1,125 @@
+# Analects — Book IX — curated music arc
+# 鄉黨 Xiang Dang — "The Work of Conduct in the Village"
+# Book IX shifts from doctrine to practice in public register: offices, family ties,
+# neighboring obligations, and the social cost of good character.
+work: analects
+book: 9
+title: "Analects Book IX: Public Conduct, Friendship, and Unfinished Governance"
+length_minutes: 82
+principle: >
+  Book IX is not a single argument but a social instrument. The Master demonstrates
+  what it means to be a person in networks: who you trust, how you speak in a room,
+  how you stand in local custom, and how you keep conduct intact under social pressure.
+  The force of the book is law, but law here is practical, not hierarchical:
+  law as the shape that lets people inhabit the same village without dissolving one another.
+force_arc: [law, memory, law, return, memory, sacrifice, law, grief, law, memory, law, return]
+dominant_force: law
+tracks:
+  - n: 1
+    scene: "Conduct is local before it is global"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue, BWV 1080 — Contrapunctus I"
+    decision: added
+    why: >
+      The first chapter of this register is always local: how to move in bounded community.
+      Bach's Contrapunctus provides strict adjacency and reciprocal hearing.
+  - n: 2
+    scene: "Character appears in repeated encounters"
+    force: memory
+    composer: Schubert
+    work: "String Quartet No. 15 in G major, D. 887 — I. Allegro un poco moto"
+    decision: added
+    why: >
+      Local trust is cumulative memory. Schubert's opening movement reintroduces the
+      same motive until it becomes communal.
+  - n: 3
+    scene: "Public office and the weight of appointment"
+    force: law
+    composer: Handel
+    work: "Music for the Royal Fireworks — Overture"
+    decision: added
+    why: >
+      Office in this book is ceremonial and procedural; it is less authority than form.
+      Handel's overture keeps the ceremonial burden audible without triumphalism.
+  - n: 4
+    scene: "Return when the room grows difficult"
+    force: return
+    composer: Bruckner
+    work: "Symphony No. 7 in E major — II. Adagio"
+    decision: added
+    why: >
+      The strongest teaching in the book is the discipline of returning to measure.
+      Bruckner's long middle-ground phrasing makes return a temporal form.
+  - n: 5
+    scene: "How to read motives in neighbors and friends"
+    force: memory
+    composer: Verdi
+    work: "Requiem — Dies Irae"
+    decision: added
+    why: >
+      Memory in Book IX is practical, not sentimental. Verdi's choral severity mirrors
+      the cost of being wrong about another person.
+  - n: 6
+    scene: "When social order is already damaged"
+    force: sacrifice
+    composer: Gluck
+    work: "Iphigénie en Aulide — Overture to Act I"
+    decision: added
+    why: >
+      This is where order is offered up and rebuilt. Gluck's overture keeps ritual
+      tension without sentiment.
+  - n: 7
+    scene: "Ceremony as civic repair"
+    force: law
+    composer: Brahms
+    work: "Symphony No. 3 in F major — III. Poco allegretto"
+    decision: added
+    why: >
+      Social life is not pure feeling; it is repaired by repeated structure.
+      Brahms keeps that structural insistence without theatrical aggression.
+  - n: 8
+    scene: "Mourning and the discipline of grief"
+    force: grief
+    composer: Fauré
+    work: "Requiem, Op. 48 — III. Sanctus"
+    decision: added
+    why: >
+      Mourning is not always about private tears; it is about preserving relation after rupture.
+      Fauré offers a contained liturgical tenderness.
+  - n: 9
+    scene: "Neighbors and rulers require reciprocal steadiness"
+    force: law
+    composer: Debussy
+    work: "Suite Bergamasque — Clair de lune"
+    decision: added
+    why: >
+      Reciprocal steadiness is the opposite of performance. Debussy’s moonlit pacing
+      makes shared rhythm audible without insistence.
+  - n: 10
+    scene: "Speech must be accountable to aftermath"
+    force: memory
+    composer: Mozart
+    work: "Symphony No. 40 in G minor — I. Molto allegro"
+    decision: added
+    why: >
+      Words in public always persist beyond the moment of speaking.
+      Mozart's opening movement makes that immediacy and its cost unmistakable.
+  - n: 11
+    scene: "The ordinary person in extraordinary local pressure"
+    force: law
+    composer: Beethoven
+    work: "Symphony No. 3 in E-flat major — II. Marcia funebre"
+    decision: added
+    why: >
+      Book IX's social scenes repeatedly require composure.
+      The Eroica funeral march motion translates ordinary pressure into steady law.
+  - n: 12
+    scene: "The circle closes without finality"
+    force: return
+    composer: Pärt
+    work: "Fratres for Strings"
+    decision: added
+    why: >
+      The social register does not conclude with victory; it returns toward a harder question
+      of conduct. Pärt gives that return as an austere, unfinalized symmetry.
