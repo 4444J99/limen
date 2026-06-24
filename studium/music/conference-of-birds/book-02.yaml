@@ -1,0 +1,133 @@
+# Conference of the Birds — Section 2 — curated music arc
+# The Nightingale's Objection: Love as Veil and Bind
+work: conference-of-birds
+book: 2
+title: "Conference of the Birds, Section 2: The Nightingale and the Rose"
+length_minutes: 62
+principle: >
+  Do not score this section as romantic longing or sentimental attachment. Score it as the
+  soul's first honest objection to the path: I have already found what I love, and that love
+  is absolute, particular, and sufficient. The hoopoe's reply is not that love is wrong but that
+  the nightingale mistakes a beautiful veil for the face beneath it. The music must hold both
+  the genuine beauty of the nightingale's attachment AND the terrible clarity that such beauty,
+  however real, is only a threshold to something incomparably larger.
+force_arc: [desire, supplication, desire, revelation, ascent, desire, grief, salvation]
+dominant_force: desire
+tracks:
+  - n: 1
+    scene: "The nightingale's confession of love"
+    force: desire
+    composer: Schumann
+    work: "Dichterliebe — 'Im wunderschönen Monat Mai' (No. 1)"
+    decision: added
+    why: >
+      The nightingale does not choose to be in love — it is chosen by love. Schumann's opening
+      to the song cycle captures this exactly: the spring comes, the poet's longing awakens,
+      the beloved has not yet arrived but the longing is total. The suspended harmony, the
+      tonic never quite landing, the spring itself as an unrequited condition — these are the
+      nightingale's state. The beauty is genuine; the incompleteness is genuine. The music
+      does not diminish the feeling, which is essential. To dismiss the nightingale's love
+      would be to miss Attar's point entirely.
+  - n: 2
+    scene: "The nightingale refuses the journey"
+    force: supplication
+    composer: Mahler
+    work: "Symphony No. 2 — V. 'Urlicht' (from Des Knaben Wunderhorn)"
+    decision: added
+    why: >
+      The nightingale's refusal is not defiance but supplication: How can I leave? How can I
+      abandon what my entire being is devoted to? Mahler's setting of 'Urlicht' is the cry of
+      the soul before the divine: "I am from God and shall return to God." But here, the
+      nightingale cannot imagine returning to anything but the rose. The exposed melodic line,
+      the deep accompanying sorrow, the question posed to an unresponsive sky — this is the
+      texture of the nightingale's condition. The supplication is not weak; it is the strongest
+      kind of honesty.
+  - n: 3
+    scene: "The rose appears — its beauty undeniable"
+    force: desire
+    composer: Debussy
+    work: "Clair de lune — (moonlight and the beloved's face)"
+    decision: added
+    why: >
+      The rose in Sufi poetry is not merely a flower but the beloved, and the beloved is always
+      a face, a presence, a particular and irreplaceable thing. The music here must embody that
+      particularity — not the idea of beauty but the exact, sensory, devastating beauty of a
+      specific beloved. Debussy's 'Clair de lune' is the only Western music that achieves this
+      without sentimentality: the moonlit beauty is absolute, it is enough, it is the reason for
+      being. And that is precisely the problem the hoopoe must address.
+  - n: 4
+    scene: "The hoopoe speaks: the rose as veil"
+    force: revelation
+    composer: Messiaen
+    work: "Quartet for the End of Time — 'Louange à l'Éternité de Jésus'"
+    decision: added
+    why: >
+      The hoopoe's teaching is a revelation, but not a dismissal. The rose is real, beautiful,
+      worthy of love. But it is a veil — *hijab* in the Sufi vocabulary — that obscures, not by
+      its fault but by its nature as a particular manifestation. The Simurgh is the source from
+      which the rose's beauty flows. Messiaen's movement from the Quartet is the closest Western
+      music comes to this layering of revelations: the eternal beneath the temporal, the infinite
+      face behind the beloved's face. The slow unfolding, the vertical simplicity, the sense of
+      infinite space within finite melody — this is the hoopoe's teaching.
+  - n: 5
+    scene: "The nightingale recognizes the path upward"
+    force: ascent
+    composer: Bruckner
+    work: "Symphony No. 7 — I. Allegro moderato (opening)"
+    decision: added
+    why: >
+      The hoopoe has not asked the nightingale to stop loving. He has asked the nightingale to
+      recognize that the very fire that burns in its breast is the mechanism of ascent. Love is
+      not what holds the nightingale back; love, properly understood, is what propels it forward.
+      The nightingale begins to understand: the rose did not create this longing; the longing
+      created the rose. Bruckner's long-arching cello theme that rises without rush, without
+      aggression, as if upward motion were natural law — this is the nightingale's recognition
+      that surrender is not loss but direction.
+  - n: 6
+    scene: "The nightingale still hesitates — the rose is still itself"
+    force: desire
+    composer: Wagner
+    work: "Tristan und Isolde — Prelude (the unresolved chord)"
+    decision: added
+    why: >
+      But the rose is still there. The teaching does not erase the object of desire; it reframes
+      it. The nightingale has heard the hoopoe's words, has recognized the path, but the rose
+      has not ceased to be beautiful. The desire is still present, still absolute. Wagner's Tristan
+      Prelude is the music of desire that knows itself to be desire — unresolved, forward-pulled,
+      unable to discharge itself in satisfaction. This is the nightingale's condition at the end of
+      the section: caught between the particular love (which is real) and the call to transcendence
+      (which is also real).
+  - n: 7
+    scene: "The loss implied in the journey"
+    force: grief
+    composer: Fauré
+    work: "Requiem — 'Sanctus'"
+    decision: added
+    why: >
+      Underneath the revelation is a grief that cannot be ignored: the nightingale will have to
+      leave the rose. The hoopoe's teaching does not deny this. The journey will cost the nightingale
+      everything it has built its being around. Fauré's 'Sanctus' — not lamenting but witnessing,
+      holding the space between life and whatever comes after — gives voice to this necessary grief.
+      The music is gentle, not harsh, because the grief is the grain of a true opening, not a
+      punishment.
+  - n: 8
+    scene: "The nightingale commits to the ascent"
+    force: salvation
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      The section ends with the nightingale's commitment: I will go. I will leave the rose. I will
+      follow the path whose end I cannot imagine. Pärt's mirror music — two voices moving in still,
+      infinite space, each reflecting the other — is the sound of a soul that has surrendered the
+      particular beloved and, in that surrender, achieved a strange peace. The simplicity is not
+      emptiness; it is the simplicity of a being that has let go of one love in order to discover
+      a larger one.
+demoted:
+  - composer: Szymanowski
+    work: "Symphony No. 3 — 'Song of the Night'"
+    status: "too ecstatic, too triumphant for the nightingale's hesitation"
+    why: >
+      The nightingale does not leap into joy. It moves, step by step, from attachment through
+      teaching to commitment. Szymanowski's Eucharistic fervor is too confident. The section
+      requires the texture of ambivalence.

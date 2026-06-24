@@ -1,0 +1,126 @@
+# Conference of the Birds — Section 3 — curated music arc
+# The Parrot's Objection: Immortality as Cage
+work: conference-of-birds
+book: 3
+title: "Conference of the Birds, Section 3: The Parrot and the Cage"
+length_minutes: 58
+principle: >
+  Do not score this section as the parrot's greed or cowardice. Score it as the soul's
+  attachment to continuity, to the known, to the possibility of endless life. The parrot's
+  wish is not contemptible — it expresses a real human/bird fear: if I die, I will be gone.
+  If I change, I will not be myself. The hoopoe's reply is that immortality, in the way the
+  parrot understands it, is itself a death: an endless stasis, a refusal of transformation,
+  a cage disguised as safety. True immortality comes through annihilation.
+force_arc: [desire, memory, supplication, revelation, metamorphosis, grief, ascent, salvation]
+dominant_force: desire
+tracks:
+  - n: 1
+    scene: "The parrot's desire for eternal life"
+    force: desire
+    composer: Rachmaninoff
+    work: "Piano Concerto No. 2 — I. Moderato"
+    decision: added
+    why: >
+      The parrot's longing for immortality is not abstract philosophy; it is a visceral desire
+      to remain, to persist, to not lose what it has. The opening of Rachmaninoff's Second Concerto
+      is desire made audible — a melody that rises and falls, always reaching toward something
+      that cannot be held. The trembling, the forward-pull, the romantic excess — this is the
+      parrot's condition. It wants forever. It wants to be guaranteed against loss. The music
+      does not mock this desire; it validates it while also revealing its impossibility.
+  - n: 2
+    scene: "The parrot's memory of paradise"
+    force: memory
+    composer: Elgar
+    work: "Nimrod (from Enigma Variations)"
+    decision: added
+    why: >
+      The parrot has a memory — of a place it once belonged, of paradise, of a time when it was
+      safe and whole. This is not a false memory; it is the memory every being carries of a state
+      before exile. But memory is also a cage: it keeps the parrot looking backward when the
+      journey requires it to move forward. Elgar's 'Nimrod' is a meditation on nobility and loss,
+      on the dignity of a being aware of its own distance from a former greatness. The music is
+      not bitter; it is elegiac and noble, which makes it all the more binding.
+  - n: 3
+    scene: "The parrot refuses to leave — the cage is safety"
+    force: supplication
+    composer: Barber
+    work: "Knoxville: Summer of 1915 (opening movement)"
+    decision: added
+    why: >
+      The parrot's refusal is not reasoned argument but a plea: Let me stay. Let me keep what I
+      have. The cage is not a prison; it is a home. The routine is not oppressive; it is order,
+      safety, continuity. Barber's setting of James Agee's prose is the music of a being wanting
+      to hold time still, to keep a moment from passing. The voice (or in our case, the implied
+      voice) is gentle, almost childlike, pleading for the day never to end. This is the parrot's
+      supplication.
+  - n: 4
+    scene: "The hoopoe speaks: true immortality requires dissolution"
+    force: revelation
+    composer: Tavener
+    work: "The Protecting Veil (opening)"
+    decision: added
+    why: >
+      The hoopoe's teaching on immortality is radical: the parrot already possesses immortality.
+      Not the immortality of endless identical days, but the immortality of the soul that has
+      surrendered its claim on continuation. The parrot fears annihilation, but annihilation is
+      the gateway to the only true immortality available. Tavener's opening to 'The Protecting
+      Veil' has a vertical simplicity that speaks to this teaching: a single note held, then a
+      gradual opening into vast space. The revelation is not that the parrot must die but that
+      the parrot is already deathless, if it will only let go of the cage.
+  - n: 5
+    scene: "The parrot's form begins to change — metamorphosis approaches"
+    force: metamorphosis
+    composer: Ravel
+    work: "Daphnis et Chloé — Lever du jour (sunrise)"
+    decision: added
+    why: >
+      The parrot cannot stay the same and continue. This is the hard truth. The journey requires
+      the parrot to change, to leave behind the fixed form it has come to identify as itself. But
+      change is not destruction; it is transformation. Ravel's 'Lever du jour' is a musical sunrise
+      where the world comes gradually into being. It is not violent; it is patient. New forms
+      emerge from darkness. The parrot will not lose its essence, but it will lose its fixity,
+      its certainty about what it is. This is the beginning of acceptance.
+  - n: 6
+    scene: "The grief of losing the cage"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    decision: added
+    why: >
+      Before the parrot can move, it must grieve what it is leaving. The cage was not only a
+      prison; it was also a home. The routine was not only oppressive; it was also comforting.
+      The parrot must acknowledge this loss without either denying it or using it as a reason to
+      stay. Mahler's Adagietto is wound, grief, and tenderness at once. The parrot's sadness
+      here is not weakness; it is the acknowledgment that immortality requires loss.
+  - n: 7
+    scene: "The parrot understands: true life requires risk"
+    force: ascent
+    composer: Sibelius
+    work: "Symphony No. 2 — III. Scherzo (finale passage)"
+    decision: added
+    why: >
+      The turning point: the parrot begins to understand that the fear of death is the thing
+      that keeps it from life. To live is to risk. To grow is to change. To journey is to
+      accept that the being who arrives will not be the being who departed. This is the ascent:
+      not escape from mortality but acceptance of it, which paradoxically brings the parrot to
+      life. Sibelius's passage — driving, insistent, rhythmically alive — gives voice to this
+      awakening. The parrot is now ready to move.
+  - n: 8
+    scene: "The parrot commits — the cage door opens"
+    force: salvation
+    composer: Part
+    work: "Tabula Rasa (first movement)"
+    decision: added
+    why: >
+      The section ends with the parrot's commitment: I will leave. I will accept change. I will
+      die so that I can be reborn. This is not a sacrifice forced from outside; it is a
+      recognition that the being worth becoming requires the being that is to yield. Pärt's
+      'Tabula Rasa' — 'blank slate' — is music that begins again from stillness. The parrot has
+      emptied itself. Now it is ready to be filled with something new.
+demoted:
+  - composer: Scriabin
+    work: "The Poem of Ecstasy"
+    status: "too triumphant, too certain; removed for ambivalence"
+    why: >
+      The parrot's journey is not ecstatic joy but terrified acceptance. Scriabin's symphonic
+      ecstasy is too assured. The parrot must move through doubt.
