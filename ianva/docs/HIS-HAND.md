@@ -1,11 +1,18 @@
 # ianva — the gated flips (his-hand)
 
-Everything buildable is built and verified locally. What remains is irreversible or touches your
-machine/installation, so it waits for an explicit "go." Each is one command. In rough order:
+Everything buildable is built, merged (#199/#201), and verified locally. What remains is irreversible
+or touches your machine/installation, so it waits for an explicit "go." Each is one command.
 
-### 1. Point your local agents at ianva  (cures disease B)
-Writes the `ianva` entry into the 7 agent configs. **Backs up every file first; idempotent; dry-run
-by default.** This is the "all agent config files" deliverable.
+**Verified state (2026-06-24 `ianva doctor`):** ✅ code merged · ✅ gateway running on `127.0.0.1:7666`
+(`npx @samanhappy/mcphub`) · ✅ 7 agent configs wired · ❌ **0 upstreams** (`~/.agents/mcp/servers.json`
+missing — step 2) · ❌ no bearer (loopback-only, no cloud face — step 3) · ❌ not under launchd
+(step 4) · ❌ disease-C creds unset (step 5). **The binding gap is step 2: a running door that fronts
+nothing.** In rough order:
+
+### 1. Point your local agents at ianva  (cures disease B)  ✅ DONE
+The `ianva` entry is already written into the 7 agent configs (`install-configs --apply` ran, backups
+taken) and the **gateway is already running** (`npx @samanhappy/mcphub` on `127.0.0.1:7666`). Commands
+kept for re-install / manual restart until launchd is set up (step 4):
 ```bash
 cd ianva && export PYTHONPATH="$PWD/src"
 python3 -m ianva.cli up                       # start the gateway (first run downloads MCPHub via npx)
@@ -52,6 +59,6 @@ bash /Users/4jp/Workspace/limen/scripts/claude-fleet-auth-probe.sh              
 This is the un-merged `fix/claude-credential-race` work; merging that branch is the durable fix, and
 the 39 stale `Claude Code-credentials-<hex>` Keychain forks can then be pruned.
 
-### 6. Land the code
-Branch `worktree-ianva-doorway` is staged (not pushed, not merged). Open a PR / merge to limen `main`
-when you want ianva to ship to the fleet.
+### 6. Land the code  ✅ DONE
+Merged to `main` via **PR #199** (the doorway) + **PR #201** (security: bearer never echoed to stdout,
+untrack generated golden files). `ianva/` ships to the fleet — nothing left to do here.
