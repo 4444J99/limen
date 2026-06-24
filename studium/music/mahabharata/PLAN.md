@@ -19,8 +19,8 @@
 | 2 | fate | ✓ |
 | 3 | exile | ✓ |
 | 4 | comedy | ✓ |
-| 5 | (author) | ☐ |
-| 6 | (author) | ☐ |
+| 5 | (author) | ✓ |
+| 6 | (author) | ✓ |
 | 7 | (author) | ☐ |
 | 8 | (author) | ☐ |
 | 9 | (author) | ☐ |
