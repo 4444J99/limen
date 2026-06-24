@@ -7,7 +7,7 @@
 # the same endpoint. Requires Docker Desktop (brew install --cask docker), then `docker compose up -d`.
 services:
   ianva-core:
-    image: samanhappy/mcphub:latest      # verified image; pin a digest in production
+    image: samanhappy/mcphub:1.0.18      # verified image; pin a digest in production
     container_name: ianva-core
     restart: unless-stopped
     ports:

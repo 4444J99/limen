@@ -15,7 +15,7 @@ backend = "mcphub"   # mcphub | docker
 # Verified npm package: @samanhappy/mcphub (NOT bare "mcphub", which is unrelated). MCPHub reads
 # mcp_settings.json from its CWD; ianva runs it in ~/.config/ianva and passes PORT via env.
 # {port}/{settings} are available if you point this at a custom backend. Confirm with `ianva doctor`.
-backend_cmd = "npx -y @samanhappy/mcphub@latest"
+backend_cmd = "npx -y @samanhappy/mcphub@1.0.18"
 
 [bridge]
 # sparfenyuk/mcp-proxy (PyPI: mcp-proxy) as the stdio<->HTTP shim for agents without first-class HTTP MCP.

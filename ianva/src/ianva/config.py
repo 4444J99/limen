@@ -31,7 +31,7 @@ class GatewayConfig:
     # MCPHub (verified npm pkg @samanhappy/mcphub) reads mcp_settings.json from its CWD;
     # ianva runs it in IANVA_HOME (where it materializes that file) and passes PORT via env.
     # {port}/{settings} remain available for a custom backend command. Verify with `ianva doctor`.
-    backend_cmd: str = "npx -y @samanhappy/mcphub@latest"
+    backend_cmd: str = "npx -y @samanhappy/mcphub@1.0.18"
 
     proxy_bin: str = "uvx"
     # mcp-proxy client mode: --transport streamablehttp connects to ianva's streamable-HTTP endpoint.
