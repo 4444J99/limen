@@ -108,7 +108,7 @@ trap cleanup EXIT
 
 echo "═══ heartbeat-loop start $(date '+%F %T') tempo=${MIN}-${MAX}s lanes=$LANES ═══"
 # ensure the web dashboard is served from the start
-bash "$LIMEN_ROOT/scripts/refresh-web.sh" 2>&1 | tail -2 || true
+bash "$LIMEN_ROOT/scripts/refresh-web.sh" >>"$LIMEN_ROOT/logs/refresh-web.log" 2>&1 || true  # NO pipe: refresh-web backgrounds http.server which inherits the pipe write-end → tail never gets EOF → daemon wedges at startup (line 110, before beat 1) and under C_WEB (line 198). 2026-06-23 fix lost in the loop refactor; restored.
 while true; do
   # OWNERSHIP BACKSTOP — if any acquisition race let a second loop through, the one whose
   # pid is NOT in the lockfile exits here. Converges to exactly one daemon within a beat.
@@ -136,7 +136,7 @@ while true; do
   if [ "$MODE" != "dispatch" ]; then
     echo "autonomy mode=$MODE — telemetry/status only; queue mutation and dispatch skipped"
     python3 "$LIMEN_ROOT/scripts/emit-tick.py" 2>&1 | tail -1 || true
-    play "$C_WEB" && bash "$LIMEN_ROOT/scripts/refresh-web.sh" 2>&1 | tail -2 || true
+    play "$C_WEB" && bash "$LIMEN_ROOT/scripts/refresh-web.sh" >>"$LIMEN_ROOT/logs/refresh-web.log" 2>&1 || true  # NO pipe: refresh-web backgrounds http.server which inherits the pipe write-end → tail never gets EOF → daemon wedges at startup (line 110, before beat 1) and under C_WEB (line 198). 2026-06-23 fix lost in the loop refactor; restored.
     beat="$MAX"
     echo "── tempo: observe → ${beat}s ──"
     sleep "$beat"
@@ -196,7 +196,7 @@ while true; do
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/money-view.py" 2>&1 | tail -1 || true   # revenue-first money view (no network, can't time out)
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/corpus-view.py" 2>&1 | tail -1 || true   # knowledge-base view: THE ONE + convergence activity (no network)
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/notify-events.py" 2>&1 | tail -1 || true   # push: your-gate ready / ship milestones
-  play "$C_WEB"     && bash "$LIMEN_ROOT/scripts/refresh-web.sh" 2>&1 | tail -2 || true   # web auto-refresh (best-effort; money.html is primary)
+  play "$C_WEB"     && bash "$LIMEN_ROOT/scripts/refresh-web.sh" >>"$LIMEN_ROOT/logs/refresh-web.log" 2>&1 || true  # NO pipe: refresh-web backgrounds http.server which inherits the pipe write-end → tail never gets EOF → daemon wedges at startup (line 110, before beat 1) and under C_WEB (line 198). 2026-06-23 fix lost in the loop refactor; restored.   # web auto-refresh (best-effort; money.html is primary)
   # QUICKEN — a session has a lifecycle that ends in COMPLETION; a sitting (no-movement) FleetView
   # session is stalled work, not a thing to file away. --apply records the lifecycle + deduped
   # residue every beat (read-only on sessions, no spend). Breathing — headless `claude --resume` to
