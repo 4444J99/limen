@@ -1,0 +1,260 @@
+# Ramayana — Ayodhya Kanda (Book 2) — curated music arc
+# Ayodhya Kanda: the book of the fall. The coronation that becomes a banishment — Manthara's
+# whisper, Kaikeyi's two boons, Dasharatha trapped by his own word, Rama's serene acceptance,
+# the departure into the forest, the king's death of grief, Bharata's refusal of a stolen throne.
+# The register is NOT yet forest or war: it is the catastrophe inside a palace — order undone
+# from within by a single corrupted desire, and the dharma that holds even as everything breaks.
+work: ramayana
+book: 2
+title: "Ramayana Ayodhya Kanda: The Boon, the Banishment, the Sandals on the Throne"
+length_minutes: 88
+principle: >
+  Do not score Ayodhya Kanda as a war or a forest. Score it as a catastrophe that happens
+  entirely inside a palace and a family — the most intimate book of the epic, and the one where
+  the most is destroyed. Bala Kanda ended in a wedding; this kanda opens with a coronation being
+  prepared and turns, in the space of a single conversation, into a fourteen-year exile, a
+  father's death, and a kingdom hollowed of its king. The dominant force is EXILE — not because
+  exile is the loudest event but because it is the one the whole kanda is bent toward: every
+  scene either causes the banishment, suffers it, or refuses to undo it. The register moves from
+  ceremonial joy → the poison of a single whisper → the cold mechanism of the claimed boons →
+  the trapped king's grief → Rama's terrifying serenity → the loyalty of Sita and Lakshmana →
+  the threshold crossed → the death that grief causes → Bharata's refusal to profit from the
+  crime. Keep the grief INWARD and the dharma AUDIBLE. The horror of Ayodhya Kanda is that
+  everyone behaves according to a law — Dasharatha keeps his word, Rama obeys his father, Bharata
+  refuses what is not his — and the law, kept perfectly, produces a disaster. Do not resolve it.
+  The kanda ends not with a death but with a pair of sandals placed on an empty throne: rule
+  held in trust for an absent king. That image is the kanda's exact moral weight.
+force_arc: [kingship, plague, fate, grief, law, desire, wrath, supplication, exile, grief, sacrifice, memory]
+dominant_force: exile
+tracks:
+  - n: 1
+    scene: "The eve of the coronation — Ayodhya prepares to crown Rama"
+    force: kingship
+    composer: Parry
+    work: "I was glad (Coronation anthem)"
+    decision: added
+    why: >
+      Dasharatha, feeling his age, resolves to consecrate Rama as yuvaraja — heir-apparent. The
+      city is decorated overnight: banners, water-pots, garlands, the streets washed and strewn
+      with flowers, the people half-delirious with joy that the beloved prince will be crowned at
+      dawn. This is the last unclouded ceremony of Rama's life, and the poem lets it be fully
+      radiant before it is taken away. Parry's "I was glad" — written for a coronation, opening
+      with that immense upward choral surge on the first word — is sincere processional joy, the
+      whole city's gladness gathered into a single rising chord. It must be played without irony,
+      because the people feel none. The shadow is entirely in the listener's foreknowledge: we
+      know, as they do not, that the coronation will not happen. Kingship here is ceremonial
+      anticipation at its most luminous — the joy the rest of the kanda exists to destroy.
+  - n: 2
+    scene: "Manthara's whisper — the hunchback poisons Kaikeyi's mind"
+    force: plague
+    composer: Shostakovich
+    work: "Symphony No. 10 — II. Allegro"
+    decision: added
+    why: >
+      Kaikeyi is happy at Rama's elevation — she loves Rama more than her own son. Then her
+      servant Manthara, deformed and bitter, begins to talk: Rama crowned means Bharata enslaved,
+      means Kaikeyi reduced to a co-wife's servant, means her line extinguished. The poison works
+      slowly, then all at once; by the end of the scene Kaikeyi has become unrecognizable, lying
+      in the "chamber of wrath," stripped of her jewels, weaponized. This is corruption as
+      contagion — a single voice infecting a healthy mind until it turns. Shostakovich's Tenth
+      Symphony scherzo is the most concentrated portrait of malevolent driving force in the
+      orchestral literature: relentless, accelerating, vicious, often heard as a portrait of
+      tyranny itself. It is the whisper that will not stop, the thought that takes over the host.
+      Plague requires descending motion and dark orchestration; the scherzo's pressure is the
+      poison spreading through Kaikeyi in real time, faster than she can resist it.
+  - n: 3
+    scene: "Kaikeyi claims her two boons — exile for Rama, the throne for Bharata"
+    force: fate
+    composer: Verdi
+    work: "La forza del destino — Overture"
+    decision: added
+    why: >
+      Long ago, in a battle, Kaikeyi saved Dasharatha's life, and he granted her two boons, then
+      unredeemed. Now she calls them in: Bharata to be crowned in Rama's place, and Rama exiled
+      to the Dandaka forest for fourteen years. The boons are a debt that cannot be refused — a
+      mechanism set in motion years before that now closes with absolute finality. Verdi's
+      "Force of Destiny" overture opens with the brass hammering the fate-motif, then drives
+      through its restless, recurring theme of a doom that pursues and cannot be escaped. This is
+      precisely the structure of the boons: a promise made in the past, sprung in the present,
+      irreversible. Fate requires an inexorable motif and hammered insistence; Verdi's overture
+      is the sound of a destiny that was agreed to long ago arriving exactly on schedule. The
+      catastrophe is not random — it is a contract being honored.
+  - n: 4
+    scene: "Dasharatha broken — the king who cannot break his word"
+    force: grief
+    composer: Bruckner
+    work: "Symphony No. 7 — II. Adagio"
+    decision: added
+    why: >
+      Dasharatha collapses. He begs, he rages, he faints, he offers Kaikeyi anything but this; he
+      cannot bring himself to say the words that will banish his son. But a king's word, once
+      given, is the foundation of dharma — if the king lies, the cosmos itself is unmoored. So he
+      is destroyed by the very thing that makes him a king: he must keep his promise though it
+      kills him. Bruckner's Seventh Adagio — composed in anticipation of Wagner's death, crowned
+      by the great cymbal-clash of grief and then its long subsidence — is the sound of a vast,
+      slow, immovable sorrow. It does not rage; it sinks. That is Dasharatha: not a man fighting
+      his fate but a man being crushed beneath the weight of his own integrity. Grief requires
+      slow tempo and an inward line; Bruckner gives the grief monumental scale because what is
+      breaking is not just a father's heart but the keystone of a kingdom.
+  - n: 5
+    scene: "Rama accepts the sentence — dharmic serenity"
+    force: law
+    composer: Bach
+    work: "Ich habe genug, BWV 82 — I. Aria"
+    decision: added
+    why: >
+      Rama is told he is to be exiled instead of crowned. His response is the moral center of the
+      kanda — and one of the most extraordinary moments in world literature: he feels no grief at
+      all. Losing a kingdom and gaining a forest are equal to him; what matters is only that his
+      father's word be kept true. His calm terrifies everyone around him, because it is the calm
+      of someone wholly identified with dharma rather than with his own fortune. Bach's "Ich habe
+      genug" ("I have enough") is the serenity of complete acceptance — a man laying down the
+      world without struggle, the oboe and voice in unhurried, contented surrender. It is not
+      resignation and not grief; it is peace. Law requires formal clarity and architecture, and
+      Rama's acceptance is law made flesh: the self dissolved into obedience so completely that
+      the loss of everything produces no disturbance at all. Bach's aria is that impossible
+      tranquility, scored.
+  - n: 6
+    scene: "Sita insists on following Rama into exile"
+    force: desire
+    composer: Strauss
+    work: "Morgen!, Op. 27 No. 4"
+    decision: added
+    why: >
+      Rama tries to leave Sita behind in the palace, safe. She refuses — in one of the epic's
+      great speeches, she argues that a wife's place is beside her husband, that the forest with
+      him is heaven and the palace without him is exile, that she will walk on thorns gladly if
+      he is there. It is not erotic desire but its deepest form: the longing to be where the
+      beloved is, to share his fate completely. Strauss's "Morgen!" — "And tomorrow the sun will
+      shine again, and on the path we will take, we will be united" — is the most luminous love
+      song of quiet union in the repertoire, the violin and voice meeting over a hushed
+      accompaniment as if the world had narrowed to two people and one shared road. Desire
+      requires chromatic longing and deferred resolution; here the longing is for togetherness
+      itself, and Strauss resolves it into the radiant certainty of Sita's choice — wherever he
+      goes, she goes.
+  - n: 7
+    scene: "Lakshmana's restrained fury at the injustice"
+    force: wrath
+    composer: Beethoven
+    work: "Coriolan Overture, Op. 62"
+    decision: added
+    why: >
+      Lakshmana, Rama's brother and shadow, erupts. He wants to take up arms, depose the doddering
+      king, kill anyone who stands in the way, and crown Rama by force — the injustice is so naked
+      that violence seems the only honest response. Rama calms him: dharma is not served by a coup.
+      Lakshmann's rage is righteous and useless, and he swallows it to follow his brother into the
+      forest instead. Beethoven's Coriolan Overture is exactly this: the portrait of a warrior's
+      fury that has no permissible outlet, the C-minor agitation surging against a restraint that
+      finally breaks it down to silence. Coriolanus, like Lakshmana, is a man whose wrath is real
+      and whose action is forbidden. Wrath requires rhythmic pressure and unresolved harmony;
+      Beethoven gives us the anger that must be mastered rather than indulged — the fury of the
+      loyal brother who would burn the kingdom down and is told, instead, to pack for exile.
+  - n: 8
+    scene: "The people follow — the night departure from Ayodhya"
+    force: supplication
+    composer: Górecki
+    work: "Symphony No. 3 (Symphony of Sorrowful Songs) — I. Lento"
+    decision: added
+    why: >
+      Rama, Sita, and Lakshmana leave in Sumantra's chariot. The entire city pours out after them,
+      weeping, begging Rama not to go, following the chariot until they can follow no more. To
+      escape them, Rama travels through the night and slips across the river while the people
+      sleep on the far bank, so that they wake to find him gone. This is collective supplication —
+      a whole population pleading with a man to stay, and the man refusing because he must.
+      Górecki's Third Symphony, the "Symphony of Sorrowful Songs," opens with a vast, slow,
+      rising canon of strings — grief made communal, a sorrow sung by many voices as one.
+      Supplication requires a suspended cadence and an exposed melodic line; Górecki gives the
+      people's plea the quality of a prayer that is not answered, a whole city's voice raised and
+      the chariot receding into the dark regardless.
+  - n: 9
+    scene: "Crossing the threshold — into the forest of banishment"
+    force: exile
+    composer: Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    decision: added
+    why: >
+      They cross the Ganga with Guha the boatman, leave the chariot and Sumantra behind, put on
+      bark garments, and walk into the Dandaka forest. The threshold is exact and irreversible:
+      on one side the kingdom, on the other fourteen years of wilderness. This is the kanda's
+      title-image — the moment the banishment stops being a sentence and becomes a life. Mahler's
+      Adagietto, scored for strings and harp alone, is the most concentrated exile-grief in the
+      repertoire: a slow, aching line that walks forward without resolving, beautiful and bereft
+      at once. It was held in reserve for exactly this scene — not the death of a father, not the
+      rage of a brother, but the quiet crossing of the threshold into the years of wandering.
+      Exile requires wandering tonality and open intervals; the Adagietto walks the three of them
+      across the river and into the trees, and the strings do not look back at the kingdom they
+      have left.
+  - n: 10
+    scene: "Dasharatha dies — the curse of Shravana fulfilled"
+    force: grief
+    composer: Wagner
+    work: "Götterdämmerung — Siegfried's Funeral March"
+    decision: added
+    why: >
+      Sumantra returns to Ayodhya alone. Dasharatha, unable to bear the loss of Rama, dies that
+      night — and as he dies he remembers why: years before, hunting in the dark, he killed by
+      accident a young ascetic drawing water, mistaking the sound for an elephant, and the boy's
+      blind parents cursed him to die one day grieving for a son, as they grieved for theirs. The
+      death is grief and the closing of an old account at once. Wagner's Funeral March from
+      Götterdämmerung is the supreme orchestral cortège — the brass intoning the hero's themes one
+      last time over the tread of the death-march, monumental and final. Grief requires a slow
+      tempo and an inward line, but a king's death also requires public weight, and Wagner
+      supplies both: the private sorrow of a father who died of love and the state funeral of a
+      monarch whose kingdom is now leaderless. The curse is paid; the king is gone; the throne is
+      empty.
+  - n: 11
+    scene: "Bharata refuses the throne and denounces his mother"
+    force: sacrifice
+    composer: Brahms
+    work: "Ein deutsches Requiem — II. Denn alles Fleisch, es ist wie Gras"
+    decision: added
+    why: >
+      Bharata, summoned home, learns that his mother schemed to win him the crown and that it cost
+      his father's life and his brother's exile. He is horrified. He denounces Kaikeyi, refuses
+      the throne absolutely, performs Dasharatha's funeral rites, and then marches to the forest
+      to beg Rama to return and rule. Rama refuses — the exile must be honored — and Bharata
+      sacrifices his own claim entirely rather than profit from a crime. Brahms's "Denn alles
+      Fleisch, es ist wie Gras" ("For all flesh is as grass") is a slow, immense processional in
+      triple meter, a funeral march that becomes a renunciation: the dead are mourned and the
+      living are stripped of their illusions of permanence. Sacrifice requires ritual weight and
+      processional build; Brahms gives Bharata's refusal the gravity of a man laying down a crown
+      he was never willing to wear, walking behind his father's bier into a renunciation as total
+      as his brother's exile.
+  - n: 12
+    scene: "The sandals on the throne — Bharata rules as regent from Nandigrama"
+    force: memory
+    composer: Elgar
+    work: "Enigma Variations — IX. Nimrod"
+    decision: added
+    why: >
+      Rama gives Bharata his golden sandals. Bharata carries them home, places them on the throne,
+      and rules for fourteen years not as king but as the sandals' regent — governing from the
+      village of Nandigrama, wearing bark like an ascetic, holding the kingdom in trust for an
+      absent man whose footwear is the only sovereign present. It is one of the most haunting
+      images in the epic: rule as pure fidelity, the throne occupied by a memory. Elgar's "Nimrod"
+      is the music of noble absence held in honor — a slow, swelling elegy that is also a kind of
+      vow, grief transfigured into steadfastness. Memory requires nostalgic recall and faded
+      recapitulation; "Nimrod" gives the sandals their due: not triumph, not mourning exactly, but
+      the long faithful holding of a place for someone who is gone, the kingdom kept warm against
+      a return that is still thirteen years away. The kanda ends on this — not a death, but a vigil.
+demoted:
+  - composer: Holst
+    work: "The Planets — Mars, the Bringer of War"
+    status: "no war in Ayodhya Kanda; save for Yuddha Kanda (the siege of Lanka)"
+    why: >
+      Mars is the music of armies and the field. Ayodhya Kanda's catastrophe is entirely domestic
+      — a whisper, a boon, a father's word — and its violence is restrained (Lakshmana's wrath is
+      swallowed, not unleashed). Mars belongs to Book 6, where the war actually comes.
+  - composer: Barber
+    work: "Adagio for Strings"
+    status: "too unitary a grief; the kanda needs grief differentiated (king vs. people vs. exile)"
+    why: >
+      The Barber Adagio is a single overwhelming wave of sorrow. Ayodhya Kanda needs grief in
+      distinct registers — Bruckner's monumental collapse, Górecki's communal plea, Mahler's exile
+      ache — and a single Adagio would flatten that differentiation into one color.
+  - composer: Fauré
+    work: "Requiem — In Paradisum"
+    status: "save for Uttara Kanda (the poem's final resolution)"
+    why: >
+      Its salvation-radiance belongs to the very end of the epic, not to a book that resolves on a
+      vigil rather than a release. Using it here would spend the poem's last consolation far too early.

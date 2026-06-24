@@ -1,0 +1,238 @@
+# Ramayana — Aranya Kanda (Book 3) — curated music arc
+# Aranya Kanda: the book of the forest and the abduction. The long years among the hermitages,
+# Shurpanakha's desire and disfigurement, the slaughter of Khara's host, the golden deer that is
+# a demon in disguise, the false cry that empties the hut, Ravana's seizure of Sita, Jatayu's
+# doomed defense, and Rama's discovery of the empty forest. The register is pastoral peace giving
+# way to disordered desire, and disordered desire producing catastrophe. This is the kanda where
+# the engine of the whole epic — the abduction — is sprung.
+work: ramayana
+book: 3
+title: "Ramayana Aranya Kanda: The Golden Deer, the Abduction, the Empty Forest"
+length_minutes: 80
+principle: >
+  Do not score Aranya Kanda as adventure. Score it as the book where DESIRE — wanting what is
+  not yours to have — becomes the hinge of the cosmos. Two desires drive it: Shurpanakha's, the
+  rakshasi who wants Rama and is mutilated for pressing her claim, and Ravana's, the demon-king
+  who wants Sita and tears the world apart to take her. Between them the kanda moves from
+  pastoral exile-peace through a sudden eruption of violence into the most famous trap in the
+  epic: a golden deer that is a demon, a cry for help in the husband's voice, a protective line
+  crossed, and a hut left undefended at exactly the wrong moment. The dominant force is DESIRE,
+  and the kanda's terrible lesson is that desire indulged — even a single demon's lust — can
+  collapse an entire order. Keep the early forest LUMINOUS and pastoral so the rupture lands.
+  Keep the abduction itself overheated, not heroic — Ravana is not a worthy adversary here but a
+  thief in a beggar's disguise. And give Jatayu, the old vulture who dies trying to stop him, the
+  full weight of doomed sacrifice: he is the one creature in the kanda who does the right thing
+  and is destroyed for it. The kanda ends not in rescue but in absence — Rama returning to an
+  empty hut, the forest silent, the search not yet begun. Score the silence.
+force_arc: [exile, supplication, desire, wrath, metamorphosis, fate, desire, sacrifice, grief, grief, revelation]
+dominant_force: desire
+tracks:
+  - n: 1
+    scene: "The forest years — the hermitages, the pastoral of exile"
+    force: exile
+    composer: Vaughan Williams
+    work: "Symphony No. 5 in D major — I. Preludio"
+    decision: added
+    why: >
+      The three exiles move through the Dandaka forest, visiting the ashrams of sages, living
+      simply, the years passing in a kind of grave pastoral. The poem dwells on the beauty of the
+      wilderness and the holiness of the hermits — it is exile, but exile that has become a way of
+      life, even a kind of peace. Vaughan Williams's Fifth Symphony, written in the depths of war
+      but radiating an almost unbearable serenity, opens with horns over a quiet modal landscape:
+      English pastoral raised to the level of the visionary. Exile requires wandering tonality and
+      open intervals; the Preludio wanders through an open, luminous country without urgency,
+      which is exactly the register of the forest years before Shurpanakha arrives. The listener
+      should feel settled here — at home in the exile — so that the rupture to come is felt as the
+      loss of a peace that had become real.
+  - n: 2
+    scene: "The rishis beg protection from the rakshasas"
+    force: supplication
+    composer: Allegri
+    work: "Miserere mei, Deus"
+    decision: added
+    why: >
+      The forest hermits come to Rama with a plea: the rakshasas are defiling their sacrifices,
+      devouring ascetics, making holy life impossible. They show him the bones of the sages
+      already eaten. Rama vows to protect them — the vow that will, by the kanda's logic, bring
+      the rakshasa world down on his own household. This is supplication in its sacred form: the
+      defenseless holy appealing to the one who can defend them. Allegri's "Miserere" — the
+      psalm of penitence sung in alternating plainchant and soaring polyphony, the treble line
+      arching impossibly high — is the sound of pure plea raised toward a power above. Supplication
+      requires a suspended cadence and an exposed melodic line; the "Miserere" gives the hermits'
+      petition its proper register of trembling holiness, the voice reaching up out of vulnerability
+      toward a protection it cannot compel, only ask for.
+  - n: 3
+    scene: "Shurpanakha desires Rama"
+    force: desire
+    composer: Saint-Saëns
+    work: "Samson et Dalila — Mon cœur s'ouvre à ta voix"
+    decision: added
+    why: >
+      Ravana's sister Shurpanakha, a rakshasi, sees Rama and is overwhelmed with desire. She takes
+      a beautiful form and propositions him directly, offers to devour Sita so as to have him to
+      herself, presses her claim with mounting heat. This is desire as appetite — frank, predatory,
+      refusing the answer "no." Saint-Saëns's "Mon cœur s'ouvre à ta voix" ("My heart opens to your
+      voice") is the great seduction aria of the repertoire, Delilah's voluptuous, chromatic line
+      winding around its target with total confidence of conquest. Desire requires chromatic
+      longing and deferred resolution; here the longing is rapacious rather than tender, and the
+      aria's gorgeous, encircling melody is exactly Shurpanakha's pitch — a desire that believes
+      it will be satisfied and is enraged when it is refused. The refusal is what triggers
+      everything that follows.
+  - n: 4
+    scene: "Shurpanakha disfigured — Khara's host destroyed"
+    force: wrath
+    composer: Walton
+    work: "Symphony No. 1 in B-flat minor — I. Allegro assai"
+    decision: added
+    why: >
+      Rebuffed and mocking Sita, Shurpanakha attacks her — and Lakshmana cuts off the rakshasi's
+      nose and ears. Humiliated and bleeding, she runs to her brother Khara, who sends fourteen
+      thousand rakshasas to annihilate the three exiles. Rama faces the entire host alone and
+      destroys it, Khara included. This is the first true eruption of wrath in the kanda — a
+      mutilation answered by an army, an army answered by a single archer. Walton's First Symphony
+      first movement is one of the most ferociously driven things in the orchestral repertoire:
+      relentless rhythmic pressure, grinding dissonance, an energy that never relaxes. Wrath
+      requires rhythmic pressure and unresolved harmony; Walton's Allegro assai is sustained
+      combat-fury without release, the sound of one man against a horde and the horde breaking
+      against him. But the wrath has a cost not yet visible: Shurpanakha, twice wronged in her own
+      eyes, runs next to Ravana.
+  - n: 5
+    scene: "The golden deer — Maricha's enchantment"
+    force: metamorphosis
+    composer: Stravinsky
+    work: "The Firebird — Dance of the Firebird"
+    decision: added
+    why: >
+      Ravana, inflamed by Shurpanakha's account of Sita's beauty, plots her abduction. He compels
+      the demon Maricha to take the form of a marvelous golden deer, jeweled and shimmering, and
+      let it stray near the hut. Sita, enchanted, begs Rama to catch it for her. The deer is a
+      shape-shift — a demon wearing beauty as a lure, the trap disguised as a gift. Stravinsky's
+      "Dance of the Firebird" is the supreme orchestral portrait of a magical, shimmering,
+      not-quite-real creature: iridescent, darting, impossibly bright, gorgeous and uncanny at
+      once. Metamorphosis requires changing orchestral color and fluid harmony; the Firebird's
+      music shimmers between registers exactly as the golden deer shimmers between animal and
+      demon. The beauty is the bait. Sita wants it; Rama goes after it; the trap is sprung the
+      moment the deer is desired.
+  - n: 6
+    scene: "The false cry — Sita sends Lakshmana, the line is crossed"
+    force: fate
+    composer: Tchaikovsky
+    work: "Symphony No. 5 in E minor — I. Andante – Allegro con anima"
+    decision: added
+    why: >
+      Rama chases the deer deep into the forest and finally shoots it; as it dies, Maricha cries
+      out in Rama's own voice — "Ah, Sita! Ah, Lakshmana!" — a perfect imitation of a man in
+      mortal danger. Sita, panicking, orders Lakshmana to go to Rama's aid. Lakshmana, who knows
+      it is a trick, refuses — until Sita accuses him of wanting Rama dead so as to have her
+      himself, and he leaves in wounded fury, drawing a protective line around the hut and
+      forbidding her to cross it. Every link in the chain is a small, human, comprehensible
+      choice, and together they are an unbreakable mechanism. Tchaikovsky's Fifth opens with the
+      brooding "fate" motto that returns, transformed, to govern every movement — a destiny-theme
+      that stalks the whole symphony. Fate requires an inexorable motif and hammered insistence;
+      the Fifth's motto is the trap closing one click at a time: the deer, the cry, the accusation,
+      the line drawn, the hut left open.
+  - n: 7
+    scene: "Ravana seizes Sita"
+    force: desire
+    composer: Scriabin
+    work: "The Poem of Ecstasy, Op. 54"
+    decision: added
+    why: >
+      With the hut undefended, Ravana comes — first as a wandering ascetic begging alms, then,
+      when Sita steps across the line to give him food, in his true towering form. He seizes her,
+      mounts his flying chariot, and carries her screaming into the sky toward Lanka. This is the
+      kanda's catastrophe and the desire that drives the whole epic: Ravana wants Sita and will
+      unmake the world to possess her. Scriabin's "Poem of Ecstasy" is desire as consuming
+      overreach — a vast, overheated, chromatic surge toward a climax it pursues with megalomaniac
+      intensity, the trumpet-theme straining ever upward toward an apotheosis of pure wanting.
+      Desire requires chromatic longing and deferred resolution; Scriabin gives us desire that has
+      lost all restraint, the appetite of a being who recognizes no law but his own craving. This
+      is not love. It is possession as cosmic crime, and the whole remaining epic is the cost of it.
+  - n: 8
+    scene: "Jatayu fights Ravana and is mortally wounded"
+    force: sacrifice
+    composer: Strauss
+    work: "Tod und Verklärung (Death and Transfiguration), Op. 24"
+    decision: added
+    why: >
+      The aged vulture-king Jatayu, an old friend of Dasharatha, hears Sita's screams and hurls
+      himself at Ravana's chariot — one ancient bird against the demon-king. He fights heroically,
+      breaks the chariot, tears at Ravana, and is at last cut down, his wings severed, left dying
+      on the forest floor. He is the one being in the kanda who does the right thing at the right
+      moment, and he is destroyed for it. Strauss's "Death and Transfiguration" traces exactly
+      this arc: the struggle of a dying man, the fevered battle against the end, and finally the
+      transfiguration-theme rising in radiance as the spirit is released. Sacrifice requires
+      ritual weight and an immolation build; Strauss gives Jatayu's doomed defense its full tragic
+      dignity — not a futile death but a noble one, the old hero spending his life in the one act
+      of resistance the kanda allows, dying so that someone may later learn the truth from him.
+  - n: 9
+    scene: "Sita carried over Lanka — she drops her jewels"
+    force: grief
+    composer: Purcell
+    work: "Dido and Aeneas — When I am laid in earth (Dido's Lament)"
+    decision: added
+    why: >
+      Borne helpless through the air, Sita does the one thing she can: seeing a band of monkeys on
+      a mountain below, she gathers her jewels and ornaments in her garment and lets them fall,
+      a trail of tokens scattered for whoever may come to find her. It is grief made into the only
+      possible action — a captive woman marking her passage with the last things she owns. Purcell's
+      "When I am laid in earth," Dido's lament over its descending ground bass, is the supreme song
+      of a woman's sorrow at being torn from love — "Remember me, but ah! forget my fate." Grief
+      requires a slow tempo and an inward line; the lament's inexorable falling bass is the jewels
+      falling, the descent of everything Sita has, released into the air as the one message she can
+      send. She does not despair. She drops her rings and prays that they will be found.
+  - n: 10
+    scene: "Rama returns to the empty hut — the discovery"
+    force: grief
+    composer: Tchaikovsky
+    work: "Symphony No. 6 in B minor (Pathétique) — IV. Adagio lamentoso"
+    decision: added
+    why: >
+      Rama returns from the deer-hunt to find the hut empty, Sita gone, no answer in the silent
+      forest. His grief breaks every restraint he has shown until now: he raves, he searches, he
+      questions the trees and the river and the deer, he half-loses his mind. The most composed man
+      in the epic comes apart. Tchaikovsky's Pathétique finale is the most desolate movement in the
+      symphonic literature — a slow descent into a grief that finds no consolation, the strings
+      sinking finally into near-silence and stopping. Grief requires a slow tempo and an inward
+      line, and the Adagio lamentoso refuses the comfort of any resolution at all. This is the
+      bottom of the kanda: not the abduction itself but the discovery of it, the empty hut, the
+      collapse of Rama's superhuman calm into a human being who has lost everything and does not
+      yet know where it has gone.
+  - n: 11
+    scene: "The dying Jatayu names Ravana — the first revelation"
+    force: revelation
+    composer: Messiaen
+    work: "Quatuor pour la fin du temps — V. Louange à l'Éternité de Jésus"
+    decision: added
+    why: >
+      Searching, the brothers find Jatayu dying. With his last breath the old vulture tells them
+      what happened: Ravana, king of Lanka, has carried Sita to the south. Then he dies, and Rama
+      cremates him with the rites due a father. Out of the kanda's lowest moment comes its first
+      light — a direction, a name, the thread that the whole rest of the epic will follow. Messiaen's
+      "Louange à l'Éternité de Jésus," the slow movement for cello and piano at the heart of the
+      Quartet for the End of Time, is a single endless line of unearthly stillness — a praise that
+      seems to come from outside time itself. Revelation requires stillness, chant, and verticality;
+      Messiaen gives the dying Jatayu's testimony the quality of sacred disclosure, truth spoken
+      from the threshold of death. The bird's last words are the kanda's gift to everything that
+      follows: now Rama knows where to go. The search can begin.
+demoted:
+  - composer: Holst
+    work: "The Planets — Mars, the Bringer of War"
+    status: "Khara's slaughter is a skirmish, not the war; save Mars for Yuddha Kanda"
+    why: >
+      Rama destroys Khara's host alone in a single passage — fierce, but a forest skirmish, not the
+      mobilized war of armies. Mars's mechanized march belongs to the siege of Lanka in Book 6, not
+      to a one-man stand among the trees.
+  - composer: Wagner
+    work: "Die Walküre — Ride of the Valkyries"
+    status: "too triumphal for the abduction; Ravana's flight is a crime, not a glory"
+    why: >
+      The Ride is exhilarating, heroic, airborne triumph — the wrong moral color for Ravana carrying
+      Sita off. The abduction must sound like overreaching crime (Scriabin), not like a glorious
+      flight, or the kanda's whole moral weight inverts.
+  - composer: Bach
+    work: "Mass in B minor — Crucifixus"
+    status: "save for Sundara/Yuddha — Sita's true ordeal is still ahead"
+    why: >
+      The deepest passion-music should attend Sita's captivity in the Ashoka grove and the fire-ordeal,
+      not the abduction itself. Spending it here would leave the later, harder sufferings underscored.
