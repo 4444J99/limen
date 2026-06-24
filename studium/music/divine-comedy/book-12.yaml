@@ -1,0 +1,86 @@
+# Divine Comedy — Inferno, Canto 12 — curated music arc
+work: divine-comedy
+book: 12
+title: "Inferno, Canto XII: Circle of Violence — Against Persons, Tyrants, and Warriors"
+length_minutes: 75
+principle: >
+  Canto XII descends into the first ring of the seventh circle—violence against
+  persons. The Minotaur guards the approach, his rage incarnate. Centaurs patrol
+  the River Phlegethon, where tyrants and murderers are submerged in boiling blood.
+  The register is raw violence, the beast-nature of those who used force as their
+  law. The music must not shy from aggression, but must also maintain the cold
+  clarity of judicial architecture underneath the rage.
+force_arc: [wrath, metamorphosis, fate, wrath, law, wrath]
+dominant_force: wrath
+tracks:
+  - n: 1
+    scene: "The descent of the cliff with the Minotaur in pursuit"
+    force: wrath
+    composer: Holst
+    work: "The Planets — Mars, the Bringer of War"
+    decision: added
+    why: >
+      The Minotaur—hybrid of man and beast, embodying rage and appetite intertwined—pursues
+      Dante and Virgil. His wrath is not rational but visceral, the howl of a creature that
+      is part-human, part-animal, consumed by fury. Holst's Mars is the music of raw,
+      asymmetrical power.
+  - n: 2
+    scene: "The Minotaur's rage, Virgil's calm address"
+    force: metamorphosis
+    composer: Bartók
+    work: "Music for Strings, Percussion, and Celesta — I. Andante tranquillo, climax"
+    decision: added
+    why: >
+      Virgil addresses the Minotaur, reminding him of a prophecy that a hero will come who will
+      destroy him. The Minotaur's form seems to shimmer and shift with rage. This is the moment
+      of metamorphosis—the beast caught between what it is and what it fears. Bartók's
+      escalating, chromatic music captures this shape-shifting uncertainty.
+  - n: 3
+    scene: "The River Phlegethon — boiling blood"
+    force: fate
+    composer: Verdi
+    work: "La forza del destino — Final scene, violent climax"
+    decision: added
+    why: >
+      The River Phlegethon appears, a vast river of boiling blood where tyrants and murderers
+      are submerged according to the violence they inflicted. This is the consequence made
+      visible: violence receives violence; the murderer is murdered eternally. Verdi's final
+      climax is inexorable, inevitable, the machinery of retribution turning.
+  - n: 4
+    scene: "Nessus the Centaur — hunter and enforcer"
+    force: wrath
+    composer: Wagner
+    work: "Die Walküre — Ride of the Valkyries"
+    decision: added
+    why: >
+      Centaurs ride the banks of Phlegethon, arrows drawn, shooting any soul that rises above
+      the surface. Nessus, one of the centaurs, recognizes Dante and offers to carry him across.
+      The music is the Valkyries—forward-driving, aggressive, the embodiment of warrior force
+      as spectacle and as terror.
+  - n: 5
+    scene: "Jason's betrayal narrated — violence and seduction intertwined"
+    force: law
+    composer: Bach
+    work: "St. Matthew Passion — 'Es ist vollbracht' (It is finished)"
+    decision: added
+    why: >
+      As Nessus carries Dante across the river, he narrates Jason's journey, his seduction and
+      abandonment of Hypsipyle. The violence here is not physical but relational: the weaponization
+      of desire, the betrayal of trust through seduction. Bach's chorale captures the weight of
+      concluded judgment—a moment of reckoning.
+  - n: 6
+    scene: "The far shore — descent into greater violence"
+    force: wrath
+    composer: Shostakovich
+    work: "Symphony No. 7 ('Leningrad') — I. Allegretto, full force"
+    decision: added
+    why: >
+      Dante and Virgil reach the far shore of Phlegethon. Below them lie the deeper circles—
+      violence against the self, and violence against property. The music amplifies, the
+      machinery of wrath grinding toward the next threshold.
+demoted:
+  - composer: Debussy
+    work: "Prélude à l'après-midi d'un faune"
+    status: "removed from Canto XII; save for the kiss (Canto V)"
+    why: "Sensuous beauty has no place in the circle of violence. Canto XII requires raw force
+      and the cold precision of retribution."

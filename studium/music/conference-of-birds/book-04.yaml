@@ -1,0 +1,136 @@
+# Conference of the Birds — Section 4 — curated music arc
+# The Peacock's Objection: Beauty as Exile
+work: conference-of-birds
+book: 4
+title: "Conference of the Birds, Section 4: The Peacock's Exile"
+length_minutes: 60
+principle: >
+  Do not score this section as vanity or petty attachment to appearance. Score it as the soul's
+  complex relationship to its own beauty and the exile that beauty can create. The peacock once
+  belonged in paradise; its beauty was a sign of belonging. Now in exile, that beauty is a wound,
+  a reminder of loss, proof that the peacock is too exquisite for this fallen world. The peacock
+  cannot accept being here; it wants restoration, return, the place where beauty makes sense. The
+  hoopoe's reply is that the very beauty the peacock mourns is the mechanism of its ascent, and
+  paradise was never lost because the soul's true home is not a place but a state.
+force_arc: [memory, desire, grief, supplication, revelation, desire, metamorphosis, ascent]
+dominant_force: memory
+tracks:
+  - n: 1
+    scene: "The peacock remembers paradise"
+    force: memory
+    composer: Fauré
+    work: "Pavane (orchestral version)"
+    decision: added
+    why: >
+      The peacock's entire being is shaped by a memory of a place where it belonged, where its
+      beauty was not an anomaly but a sign of order, of belonging, of harmony with its world.
+      Paradise is not fantasy; it is loss. Fauré's 'Pavane' is a stately dance for a court that
+      no longer exists — it moves with the weight of a world that has ceased to be. The elegance
+      is real; so is the absence it ornaments. The peacock, listening to 'Pavane', recognizes
+      itself: a creature of exquisite form, now homeless, now a stranger to the world it inhabits.
+  - n: 2
+    scene: "The peacock's beauty in a fallen world"
+    force: desire
+    composer: Debussy
+    work: "Jardins sous la pluie (Gardens in the Rain)"
+    decision: added
+    why: >
+      In paradise, the peacock's beauty made sense. It was proportionate, fitting, a natural
+      expression of an ordered world. But here, in exile, the beauty is disproportionate, is too
+      much, is a kind of violence. The peacock is more beautiful than this world deserves. The
+      desire here is not for adornment or admiration; it is for the world that would be worthy
+      of the peacock's form. Debussy's piece moves through shifting harmonic waters, ornate and
+      complex, but always somehow undermined, always caught in the rain, the gardens themselves
+      fragmentary and incomplete. The beauty is real, but it exists in a world that does not know
+      what to do with it.
+  - n: 3
+    scene: "The peacock grieves its exile"
+    force: grief
+    composer: Barber
+    work: "Adagio for Strings"
+    decision: added
+    why: >
+      The peacock's grief is not sentimental; it is the recognition that it does not belong here,
+      that every feather is a witness to its exile from the world that created it. The sorrow is
+      that the peacock is too beautiful for this place, that its form is a kind of curse. Barber's
+      'Adagio for Strings' has been called the sound of a nation mourning; it is the sound of
+      beings mourning themselves, beings aware that they carry something precious in a world that
+      cannot honor it.
+  - n: 4
+    scene: "The peacock's supplication: restoration, not ascent"
+    force: supplication
+    composer: Gregorian Chant
+    work: "Ave Regina Caelorum"
+    decision: added
+    why: >
+      The peacock does not ask the hoopoe for wisdom or instruction. It asks for restoration. It
+      asks to return to the place where its beauty made sense. The supplication is formal, almost
+      liturgical, because it is asking for something that feels holy: the return to paradise, the
+      restoration of order. Gregorian chant is the sound of the soul addressing the divine in the
+      only language available: the acknowledgment of separation, the plea for reunion. The peacock's
+      prayer is not arrogant; it is desperate. And it is precisely on this point that the hoopoe
+      will teach.
+  - n: 5
+    scene: "The hoopoe speaks: paradise was never lost"
+    force: revelation
+    composer: Messiaen
+    work: "Contemplation of the Holy Ghost (from Quatuor pour la Fin du Temps)"
+    decision: added
+    why: >
+      The hoopoe's reply is that the peacock's search for restoration is based on a fundamental
+      misunderstanding. Paradise was not a place the peacock left; paradise is the state of the
+      soul that has recognized itself. The peacock's beauty is not exile from paradise; it is the
+      trace of paradise within the peacock. The kingdom is within. The hoopoe does not ask the
+      peacock to abandon its beauty or to stop longing for restoration. He teaches that the
+      longing itself is paradise, properly understood. Messiaen's 'Contemplation of the Holy
+      Ghost' has the quality of unveiling: what was hidden in plain sight is suddenly visible.
+      The music does not ascend to heaven; it recognizes that heaven is already present, already
+      woven into the structure of being.
+  - n: 6
+    scene: "The peacock's beauty begins to seem like wings"
+    force: desire
+    composer: Ravel
+    work: "The Scarlet Ibis (images of a voyage)"
+    decision: added
+    why: >
+      As the hoopoe's teaching begins to work, the peacock starts to understand something new:
+      the beauty it mourns as exile is actually the mechanism of ascent. The feathers, the colors,
+      the form — these are not weights that keep it here; they are instruments of flight. The
+      desire that was attached to restoration begins to redirect toward ascent. This is not loss
+      of beauty but the recognition that beauty's true purpose is flight, not display. Ravel's
+      music suggests movement, color, the vivid transformation of material into something that can
+      move through air.
+  - n: 7
+    scene: "The peacock sheds its old understanding of beauty"
+    force: metamorphosis
+    composer: Stravinsky
+    work: "The Rite of Spring — 'Evocation of the Ancestors'"
+    decision: added
+    why: >
+      The peacock must undergo a metamorphosis: the beauty it has understood as a sign of exile
+      must be experienced as a sign of origin. The feathers are not a curse; they are a gift. But
+      to accept this gift, the peacock must shed the understanding that has bound it. This is
+      frightening. The transformation is not gentle; it is violent in the way growth is violent,
+      the way a being becoming itself requires a rupture with what it thought it was. Stravinsky's
+      primal, rhythmic music enacts this rupture.
+  - n: 8
+    scene: "The peacock recognizes its wings — ascent"
+    force: ascent
+    composer: Mahler
+    work: "Symphony No. 8 — Part II, 'Alles Vergängliche' (climax)"
+    decision: added
+    why: >
+      The section ends with the peacock's recognition: I am not exiled from paradise. I am a
+      vessel of paradise. My beauty is not a curse; it is the mechanism of my flight. The ascent
+      is not away from the beloved paradise but the recognition that paradise was always within,
+      always accessible, always calling. The peacock spreads its wings — not for display but for
+      flight. Mahler's climactic moment — the union of the mystical and the material — captures
+      the peacock's transformation: it is still beautiful, but now that beauty serves not
+      self-image but movement toward the divine.
+demoted:
+  - composer: Wagner
+    work: "Lohengrin — 'Prelude to Act III'"
+    status: "too triumphant, too courtly; removed for complexity"
+    why: >
+      The peacock's journey is not a return to court splendor. It is a recognition that the
+      beauty it carried as exile was always the gateway to ascent.

@@ -1,0 +1,310 @@
+# The Mahabharata — film companion (the FOURTH commentary system)
+# Mirrors studium/film/iliad.yaml (the gold standard). Film is not illustration: like the daily
+# composition is a second commentary system and the handwriting a third, a film that "relates" is a
+# fourth — an independent account of the same FORCE (dharma-as-fate, wrath, grief, kingship, law …)
+# meeting the epic on its own terms. Most picks are NOT adaptations; they encode the force more
+# truthfully than any screen-Mahabharata does. The literal adaptation (Brook) is set aside as overlay.
+#
+# Sibling note: the Bhagavad Gita IS Bhishma Parva (Parva 6); studium/film/bhagavad-gita.yaml already
+# carries that single dialogue's forces (grief→law→sacrifice→theophany via Oppenheimer/Tree of Life).
+# This companion deliberately shares NO pick with it — it covers the WHOLE 18-parva sweep, and hands the
+# Vishvarupa back to the Gita file while taking the war's gods, vengeance, and final reckoning for itself.
+#
+# Each film carries, beyond force: object_lesson (the principle it makes VISIBLE — the bridge to
+# objectlessons.film), objects (tracked cinematic objects, the join to the 253-film DB), divisions
+# (which parva it speaks to, so the daily face promotes the right Film of the Day), and the letterboxd
+# slug (legal "where to watch" + the join to his watch history). Each `force` is a key of
+# dominant-force.yaml; each `object` of object-taxonomy.yaml (validated). Watch links resolve to LEGAL
+# rails only. Grief/lament/ascent films are reserved for the late parvas, as the music layer reserves
+# the funeral-march.
+work: mahabharata
+title: "The Mahabharata — a cinema of dharma, the wheel, and the cost of every choice"
+principle: >
+  Do not assemble a "great Indian war epics" list, and do not reduce the poem to its battle. The
+  Mahabharata is the study of DHARMA under impossible pressure: duty when every course destroys
+  something one is bound to protect. It is built as a wheel — a frame-tale told at a snake-sacrifice
+  (Adi), a rigged dice game that stakes a kingdom and a wife (Sabha), twelve years of forest exile and
+  questions (Vana), a year of disguise (Virata), a failed embassy for peace (Udyoga), eighteen days of
+  war that grind every rule of honor to dust (Bhishma→Shalya), a night massacre of sleeping men
+  (Sauptika), the women walking the corpse-field (Stri), a dying patriarch teaching statecraft from a
+  bed of arrows (Shanti/Anushasana), and the survivors' last walk up the mountain to a final moral test
+  (Mahaprasthanika/Svarga). Each parva is a different force. The fitting and NOT-obvious film for the
+  dice game is therefore not a battle picture but a study of fortune's rigged wheel (Barry Lyndon) and a
+  woman alone before powerful, silent men (The Passion of Joan of Arc) — Draupadi in the hall. The
+  companion reaches anywhere cinema has filmed these forces truthfully: a Russian memory-film for the
+  lineage (The Mirror), Kurosawa's wilderness for the forest (Dersu Uzala) and his Lear for the kingdom
+  burning (Ran), a Korean revenge-spiral for vengeance recoiling on the avenger (Oldboy), the Eastern
+  Front for atrocity-as-pestilence (Come and See), an animated firebombing for the women's ledger of
+  grief (Grave of the Fireflies), a tribunal for dharma weighed after slaughter (Judgment at
+  Nuremberg), and a celestial trial for the soul's last test at heaven's gate (A Matter of Life and
+  Death). The literal adaptation — Brook's The Mahabharata — is included only as an overlay, honestly
+  partial: the obvious one, set aside; the force-companion carries the weight.
+force_coverage: [memory, fate, supplication, exile, comedy, divine-intervention, wrath, kingship, plague, grief, law, ascent]
+films:
+  - title: "The Mirror"
+    director: "Andrei Tarkovsky"
+    year: 1975
+    force: memory
+    divisions: [1]
+    objects: [mirror]
+    letterboxd: mirror
+    scene_or_theme: "Adi Parva — the frame and the wheel: a story told to a snake-sacrifice, lineage upon lineage, time turning back on itself"
+    object_lesson: >
+      A self is the recapitulation of its ancestors; identity is inheritance, not invention. Tarkovsky
+      dissolves a man, his mother, and his wife into one another across decades — the same actress, the
+      same house, the same burning barn returning — exactly as the Mahabharata opens not with a hero but
+      with a GENEALOGY recited at Janamejaya's serpent-sacrifice, the Kuru line wheeling toward its own
+      ruin. The MIRROR is the object lesson: memory is the surface in which generations recognize that
+      they are repeating one another. Adi Parva is not prologue; it is the claim that the war was already
+      written in the blood that begat it.
+    why: >
+      The poem's first force is not battle but memory — the frame-tale, the curse-haunted ancestors, the
+      wheel of time (kala) that the whole epic turns on. The Mirror is cinema's purest study of that
+      force: non-linear, recursive, a single family standing for the turning of time. Screen it first, to
+      feel that the catastrophe is being remembered, not merely told.
+    content_note: "non-linear, plotless by design; archival war footage; meditative"
+  - title: "Barry Lyndon"
+    director: "Stanley Kubrick"
+    year: 1975
+    force: fate
+    divisions: [2]
+    objects: [clock]
+    letterboxd: barry-lyndon
+    scene_or_theme: "Sabha Parva — the dice game: a dharma-king bound by his vow to keep playing, staking kingdom, brothers, self, and wife on a loaded die"
+    object_lesson: >
+      Fate is a rigged game one cannot stop playing, narrated as already lost. Yudhishthira, the most
+      righteous of kings, gambles away everything to Shakuni's loaded dice because his code forbids him to
+      refuse a challenge — virtue itself becomes the mechanism of ruin. Kubrick's narrator announces every
+      catastrophe before it arrives; Barry rises by fortune and is destroyed by it on the same indifferent
+      wheel. The lesson: the dice are not the danger — the VOW to keep throwing them is, and a clock's
+      hands move one way only.
+    why: >
+      Sabha Parva is the hinge of the epic: a single rigged contest converts a kingdom into an exile and
+      sows every vengeance to come. Barry Lyndon films fortune as the Mahabharata means fate — inexorable,
+      foreknown, hammering a man flat on a wheel he mistook for a game he could win.
+    content_note: "slow, painterly; duels; the doom is announced in advance by design"
+  - title: "The Passion of Joan of Arc"
+    director: "Carl Theodor Dreyer"
+    year: 1928
+    force: supplication
+    divisions: [2]
+    objects: []
+    letterboxd: the-passion-of-joan-of-arc
+    scene_or_theme: "Sabha Parva — Draupadi dragged into the assembly: a woman alone before a hall of powerful, silent men, her cry reaching past them to heaven"
+    object_lesson: >
+      The supplication that men refuse to answer is heard by another order entirely. Draupadi, staked and
+      dragged by her hair into the Kuru hall while elders and kings sit silent, appeals first to the law of
+      the assembly — is a man who has already gambled himself away free to wager his wife? — and, unanswered,
+      to Krishna, who alone responds. Dreyer films Joan in the same posture: a humiliated woman in a room of
+      robed authority, the camera fixed on the exposed face, the only true witness above the frame. The
+      lesson: when the institutions of men forfeit justice, the cry does not stop — it changes its address.
+    why: >
+      The disrobing of Draupadi is the epic's most famous miracle, but its force is supplication, not
+      spectacle: an unanswerable question put to silent power, an exposed melodic line over a suspended
+      cadence. Dreyer's faces supply that requirement more truthfully than any depiction of an
+      endlessly-unspooling sari could. Screen it against Sabha to hear the appeal beneath the miracle.
+    content_note: "silent; trial, humiliation, execution; overwhelming in close-up"
+  - title: "Dersu Uzala"
+    director: "Akira Kurosawa"
+    year: 1975
+    force: exile
+    divisions: [3]
+    objects: []
+    letterboxd: dersu-uzala
+    scene_or_theme: "Vana Parva — twelve years in the forest: wandering, waiting, the well of questions, the wilderness as teacher"
+    object_lesson: >
+      Exile is not punishment but a schooling the kingdom could never give — the forest reads the man the
+      palace flattered. Dersu, who survives the taiga by reading wind, water, and tiger, is the wilderness
+      wisdom the exiled Pandavas must learn: how to wait, how to ask the right question, how to receive a
+      gift from the wild. Vana Parva's heart is the Yaksha Prashna — a spirit at a poisoned lake who will
+      not let Yudhishthira drink until he answers what is the greatest wonder, the surest road. The lesson:
+      the forest strips the king to the questioner, and only the questioner is fit to return.
+    why: >
+      The poem's central exile is twelve years long and made of stories, ordeals, and riddles — open
+      tonality, wandering, the open interval of waiting. Kurosawa films the wilderness as exactly that: a
+      vast indifferent teacher under open sky. Screen it for the long middle of the epic, where nothing is
+      conquered and everything is learned.
+    content_note: "deliberate pace; survival hardship; an elegy for a friend"
+  - title: "Some Like It Hot"
+    director: "Billy Wilder"
+    year: 1959
+    force: comedy
+    divisions: [4]
+    objects: []
+    letterboxd: some-like-it-hot
+    scene_or_theme: "Virata Parva — the year of disguise: warriors hidden as a dance-master, a cook, a handmaid; Arjuna the great archer as the eunuch Brihannala"
+    object_lesson: >
+      Comedy is dharma in disguise — the form held even when the role is absurd, identity suspended without
+      being lost. The Pandavas pass their thirteenth year inside Virata's court as servants and entertainers;
+      Arjuna, the world's deadliest bowman, teaches dance in women's dress as Brihannala, his true nature
+      bound and waiting. Wilder's musicians, hiding in drag from the men who would kill them, inhabit the
+      identical comic engine: concealment, mistaken roles, courtly exaggeration, the truth one breath from
+      exposure. The lesson: a vow can demand you play the fool flawlessly, and the discipline of the disguise
+      is itself a kind of honor.
+    why: >
+      Virata Parva is the epic's one sustained comedy — masquerade, cross-dressing, courtly farce before the
+      war's gravity descends. Some Like It Hot supplies the force's requirement (dance rhythm, disguise,
+      exaggeration) and the exact Brihannala note — the hero suspended inside a role that hides his deadliness.
+    content_note: "farce; cross-dressing comedy; the rare wholly-light pick in the cycle"
+  - title: "2001: A Space Odyssey"
+    director: "Stanley Kubrick"
+    year: 1968
+    force: divine-intervention
+    divisions: [6]
+    objects: []
+    letterboxd: 2001-a-space-odyssey
+    scene_or_theme: "Bhishma Parva — the gods above the war: Krishna the charioteer-god intervening on the field (the Gita's theophany is handled by the Bhagavad Gita companion)"
+    object_lesson: >
+      The genuinely OTHER enters the human battle on terms the combatants cannot read — immensity, not
+      comfort. Krishna stands in Arjuna's chariot as a god disguised as a driver, bending the war by powers
+      that exceed the warriors entirely (later he will hide the sun to engineer a killing); the monolith
+      arrives the same way, indifferent to the frame it interrupts, advancing a story by a scale outside it.
+      The lesson: the divine in the Mahabharata is magnitude and design, not sympathy — the cosmos is a
+      driver in the chariot, and it is steering toward an end already chosen.
+    why: >
+      Bhishma Parva CONTAINS the Bhagavad Gita, whose Vishvarupa the sibling companion films through
+      Oppenheimer; this pick deliberately takes the OTHER half — the god moving inside the war as immense,
+      unreadable order. 2001 trains the eye for that: the divine as scale entering without explanation.
+      Screen it for the charioteer, not the sermon.
+    content_note: "non-narrative stretches by design; complements (does not duplicate) the Gita companion"
+  - title: "Oldboy"
+    director: "Park Chan-wook"
+    year: 2003
+    force: wrath
+    divisions: [7]
+    objects: []
+    letterboxd: oldboy
+    scene_or_theme: "Drona Parva — the war's honor breaks: the boy Abhimanyu trapped and killed by many, the lie that fells Drona; vengeance escalating past every rule"
+    object_lesson: >
+      Vengeance is a wheel that grinds the avenger as fine as the avenged. The Mahabharata's engine is
+      reciprocal wrath — Draupadi's unbound hair, Bhima's vow to drink Dushasana's blood, the gang-killing
+      of a trapped boy, the deceit that beheads a teacher — each retaliation more dishonorable than the last
+      until dharma itself is unrecognizable. Park's spiral of revenge ends with the avenger discovering his
+      vengeance has destroyed exactly what he loved. The lesson: wrath does not stay proportional to its
+      cause; it grows its own law and turns, at the last, on the hand that fed it.
+    why: >
+      Drona Parva is where the war stops being noble — the rules of single combat collapse into ambush,
+      lie, and the killing of the young. Oldboy films wrath the way the epic narrates it here: a rage that
+      seems righteous, executes brilliantly, and reveals itself as self-cannibalizing. The truthful wrath
+      film is not a battle but a study of revenge consuming its author.
+    content_note: "extreme violence, a devastating incest reveal; screen with full warning"
+  - title: "Ran"
+    director: "Akira Kurosawa"
+    year: 1985
+    force: kingship
+    divisions: [8, 9]
+    objects: []
+    letterboxd: ran
+    scene_or_theme: "Karna and Shalya Parvas — sovereignty consuming itself: a kingdom set aflame by heirs at war, the fall of Karna and Duryodhana"
+    object_lesson: >
+      Kingship is the authority to bring a whole world down, watched over by heavens that do not intervene
+      to save anyone. Kurosawa's Lear, set among warlords whose sons turn the realm to ash, is the
+      Mahabharata's own vision: cousins of one house — Kaurava and Pandava — burning a kingdom over a
+      throne while the gods look on and let it burn. The lesson: the war has no innocent side and no
+      sovereign who can stop it; legitimacy is real power and real power is ruin, and the cosmos does not
+      underwrite the king.
+    why: >
+      Ran is the Mahabharata's force-twin: a Lear of warring heirs, sovereign display made catastrophe,
+      battle filmed as an indifferent inferno. Screen it across the war's collapse (the falls of Bhishma,
+      Karna, Duryodhana) for the weight of kingship and the heaven that watches without rescuing.
+    content_note: "large-scale battle, immolation; an indifferent, godless cruelty by design"
+  - title: "Come and See"
+    director: "Elem Klimov"
+    year: 1985
+    force: plague
+    divisions: [10]
+    objects: [gun]
+    letterboxd: come-and-see
+    scene_or_theme: "Sauptika Parva — the night massacre: Ashwatthama slaughters the sleeping Pandava camp; the most dishonorable atrocity of the war"
+    object_lesson: >
+      War's final form is not combat but a pestilence that descends in the dark and ages a face into a
+      death-mask. Sauptika Parva is the epic's nadir — a warrior, maddened by grief and night, kills sleeping
+      men, children, and the unborn, an act so far past dharma that it earns an eternal curse. The boy's
+      rifle in Klimov's film — the gun he can never quite use against the horror — is the object lesson:
+      agency cancelled by a force descending from above. The lesson: there is a violence that is no longer
+      war but plague, and the Mahabharata insists on showing it rather than looking away.
+    why: >
+      The night raid is the Mahabharata's plague — descending motion, darkness closing, the survivors
+      walking a field of the slaughtered. Come and See is what that looks like from inside; the most
+      harrowing war film ever made supplies the force more truthfully than any staging of the raid could.
+    content_note: "extreme — massacre, sustained psychological horror; screen with full warning"
+  - title: "Grave of the Fireflies"
+    director: "Isao Takahata"
+    year: 1988
+    force: grief
+    divisions: [11]
+    objects: []
+    letterboxd: grave-of-the-fireflies
+    scene_or_theme: "Stri Parva — the women on the corpse-field: Gandhari, Kunti, and the widows walking among the dead; Gandhari's lament and her curse"
+    object_lesson: >
+      Grief is the war's true ledger, and it is paid by those who did not fight. Stri Parva turns the whole
+      epic over to the women who walk the battlefield naming their dead — a hundred mothers of a hundred
+      slain sons — and to Gandhari, who curses the architect of it all from the bottom of her loss.
+      Takahata films the same accounting: a war's cost rendered as two children starving in its margins,
+      the firebombing's victims who never chose it. The lesson: every glory in the first seventeen parvas
+      is a debt, and Stri is the bill — counted in the bereaved, not the slain.
+    why: >
+      The poem reserves its grief for late, as the music layer reserves the funeral-march: the women's
+      lament is the seventeenth movement, not a beat within the battle. Grave of the Fireflies is that
+      grief from the survivors' and innocents' side — the war seen as pure bereavement. Screen it after the
+      slaughter, beside Gandhari's curse, to hear the lament extended to everyone the heroes left behind.
+    content_note: "child death, starvation; one of the most devastating films ever animated"
+  - title: "Judgment at Nuremberg"
+    director: "Stanley Kramer"
+    year: 1961
+    force: law
+    divisions: [12, 13]
+    objects: []
+    letterboxd: judgment-at-nuremberg
+    scene_or_theme: "Shanti and Anushasana Parvas — Bhishma teaches dharma, kingship, and responsibility from his deathbed of arrows; how to weigh guilt after a just-yet-ruinous war"
+    object_lesson: >
+      After the killing, the hardest question is jurisprudential: what is duty, who is responsible, and how
+      does law judge those who served a cause that consumed everything? The dying Bhishma spends two whole
+      parvas — the epic's longest — teaching Yudhishthira statecraft, the duties of kings, and the limits of
+      dharma in extremity, so the survivor can rule the ashes lawfully. Kramer's tribunal asks the same:
+      can law reckon honestly with men who did terrible things inside a structure that sanctioned them? The
+      lesson: the war is not over when the fighting stops — it is over when someone sits down to judge it.
+    why: >
+      Shanti and Anushasana are the Mahabharata's law-books: formal, architectural, repetitive, a victor
+      taught how to govern by a dying enemy he revered. Judgment at Nuremberg supplies the force's
+      requirement — clarity, procedure, the weight of judgment — and the exact post-war task of measuring
+      guilt and duty when both sides invoked dharma. Screen it for the teaching, not the trial.
+    content_note: "courtroom drama; atrocity testimony, archival footage; no graphic action"
+  - title: "A Matter of Life and Death"
+    director: "Michael Powell, Emeric Pressburger"
+    year: 1946
+    force: ascent
+    divisions: [17, 18]
+    objects: []
+    letterboxd: a-matter-of-life-and-death
+    scene_or_theme: "Mahaprasthanika and Svarga Parvas — the final walk up the mountain, the Pandavas dropping one by one; Yudhishthira's refusal to abandon the dog; the last test at heaven's gate"
+    object_lesson: >
+      The soul's last ordeal is a trial, and the verdict turns on a single act of fidelity. The Pandavas
+      climb the Himalaya toward heaven and die in turn for their one hidden flaw; only Yudhishthira reaches
+      the gate, and there refuses to enter unless the stray dog who followed him — Dharma in disguise — is
+      admitted too, then must pass a final illusion of heaven and hell. Powell and Pressburger stage exactly
+      this: a man between worlds pleading his case before a celestial tribunal, the verdict hanging on love
+      and loyalty rather than merit. The lesson: ascent is not earned by victory in the war but by the
+      refusal, at the very threshold, to abandon the least creature that trusted you.
+    why: >
+      The epic ends not in battle but in a luminous rising and a moral test — the force's requirement of
+      ascent, rising sequence, luminous orchestration, a tribunal of the soul. A Matter of Life and Death
+      films the heavenly court and the stairway between worlds with exactly that radiance. Screen it last,
+      for the dog at the gate and the final illusion, where the whole epic's question — what is dharma? —
+      gets its quietest, hardest answer.
+    content_note: "wartime romance; the celestial-court fantasy is gentle, not grim; a luminous close"
+adaptations:
+  # The OBVIOUS one — a direct screen-Mahabharata, deliberately set aside (the Film of the Day picker
+  # never promotes it). Useful only for staging specific parvas against the text. Honestly partial; the
+  # force-companion above carries the real weight. `division` ties a scene to its parva.
+  - title: "The Mahabharata"
+    director: "Peter Brook"
+    year: 1989
+    letterboxd: the-mahabharata-1989
+    note: "Brook's celebrated stage-to-screen distillation — a multinational cast speaking the whole epic in a few luminous hours. Definitive as theatre and faithful to the philosophy, but it compresses eighteen parvas to a frieze and stylizes the war past recognition (a real loss of scale). Set aside; we screen the force-companion instead. The full theatrical version (~5h) carries the arc; the broadcast cut is thinner."
+    scenes:
+      - {division: 1, force: memory, scene: "Vyasa dictates the poem to Ganesha — the frame and the wheel of time begin"}
+      - {division: 2, force: fate, scene: "the dice game: Yudhishthira gambles the kingdom, his brothers, himself, and Draupadi away"}
+      - {division: 6, force: divine-intervention, scene: "on the field, Krishna counsels the collapsed Arjuna — the Gita in the chariot"}
+      - {division: 9, force: kingship, scene: "the war grinds to its end; the great warriors fall and the kingdom is ash"}
+      - {division: 18, force: ascent, scene: "the survivors reach the gate; the last illusion of heaven and hell, and the dog at the threshold"}

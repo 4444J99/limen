@@ -1,0 +1,203 @@
+# Heike Monogatari — Book III — curated music arc
+# The escalation of menace: power becomes predatory, resistance organizes.
+work: heike
+book: 3
+title: "Heike Book III: The Machinery of Menace"
+length_minutes: 98
+principle: >
+  By Book III, Kiyomori's dominance has curdled into something darker. The arbitrary cruelties
+  increase. A minor noble is beaten for a casual slight. A monk who speaks against the Taira
+  is mutilated. The logic is no longer military but psychological: Kiyomori is no longer merely
+  holding power but actively performing its violence, ensuring that fear is the primary relation
+  between the ruler and the ruled. And yet — and this is the book's crucial turn — the fear is
+  not one-directional. The Buddhist monasteries, which hold ancient authority and own vast lands,
+  begin to organize themselves as a counter-force. They send warrior-monks to resist Taira
+  encroachment. Go-Shirakawa moves in shadow, plotting ways to diminish Kiyomori's absolute control.
+  The retired Emperor and the ruling despot begin the long dance of antagonism that will destroy
+  the Taira. Book III is when the absolute victor's absolute isolation becomes visible as such:
+  Kiyomori sits atop the social world he has created, and everything beneath him is organizing
+  against him. He cannot hear this organizing because he no longer listens to anything but his
+  own power. Score this as the moment when dominance morphs into despotism, and despotism creates
+  the conditions of its own destruction. The bells that began this story are no longer distant —
+  they are tolling in shadow.
+force_arc: [wrath, kingship, divine-intervention, wrath, sacrifice, desire, fate, kingship, revelation, metamorphosis, grief]
+dominant_force: wrath
+tracks:
+  - n: 1
+    scene: "The machinery of fear — an example made of a minor noble"
+    force: wrath
+    composer: Shostakovich
+    work: "Symphony No. 4 — I. Allegretto poco moderato"
+    decision: added
+    why: >
+      The book opens with a scene of casual brutality. A young courtier misspoke in Kiyomori's
+      presence. For this minor infraction, the man is beaten until he loses consciousness. He
+      survives; he is released; and the message is sent: nothing is safe, not even the appearance
+      of safety. The text takes no moral stance — it simply records the machinery. Shostakovich's
+      fourth symphony opens in a fury that is both personal and impersonal, a rage that operates
+      through system rather than passion. The wrath force requirement is met in its purest,
+      most devastating form — not the wrath of a moment but the wrath of an apparatus that has
+      decided it is justified to crush anything in its way. The music is savage and relentless.
+  - n: 2
+    scene: "Kiyomori presides — the court as extension of his will"
+    force: kingship
+    composer: Verdi
+    work: "Rigoletto — 'La donna è mobile' (orchestral context, court scene scoring)"
+    decision: added
+    why: >
+      The court gathers and Kiyomori presides. Every gesture, every ritual, has been rearranged
+      to foreground his dominion. Men bow lower; women avert their eyes; the ceremonies themselves
+      have been rewritten to center his authority. The court is no longer a place where the
+      Emperor holds symbolic authority with Kiyomori as instrument; it is a place where Kiyomori
+      is the Emperor in all but name, and everyone knows it. Verdi's orchestral context from
+      Rigoletto gives the register of a court that has become a theater of display and cruelty,
+      where beauty and menace have become indistinguishable. Kingship here is not ceremonial
+      but nakedly predatory.
+  - n: 3
+    scene: "Mount Hiei rises — the Buddhist monasteries assert divine authority"
+    force: divine-intervention
+    composer: Messiaen
+    work: "Quartet for the End of Time — III. Abîme des oiseaux"
+    decision: added
+    why: >
+      The great monastery at Mount Hiei — oldest in Japan, repository of Buddhist learning,
+      owner of vast territories — sends word: if Taira encroachment continues, the monks will
+      descend to Kyoto in armed procession. This is not military force in the conventional sense.
+      These are monks who have trained as warriors and who act in the name of dharma. They represent
+      a form of authority that Kiyomori's military power cannot suppress without committing
+      sacrilege. Messiaen's "Abîme des oiseaux" is exactly the register: divine intervention
+      through what appears as natural order, sudden color shift, a world reorganizing itself
+      according to principles outside human control. The monks are declaring that there is a
+      force in Japan older and more absolute than the Taira, and it is preparing to move.
+  - n: 4
+    scene: "Kiyomori's response — the burning of temples, the murder of priests"
+    force: wrath
+    composer: Penderecki
+    work: "Polish Requiem — Dies irae section"
+    decision: added
+    why: >
+      Rather than negotiate or compromise, Kiyomori responds with escalated violence. Temples
+      are burned. Monks are slaughtered, sometimes on the altar itself. The text records this
+      with the same clinical precision it used for the beating of the courtier: this is what happens
+      when sacred authority meets secular force and refuses to bend. Penderecki's Dies irae is
+      apocalyptic — it is the sound of a world that knows it is ending. The wrath requirement is
+      met in its most extreme form: unresolved harmony, rhythmic pressure that builds toward
+      destruction. This is not rage anymore; it is annihilation.
+  - n: 5
+    scene: "A warrior-priest's vow — the monastery's sacrifice"
+    force: sacrifice
+    composer: Tavener
+    work: "Song for Athene"
+    decision: added
+    why: >
+      Against the annihilation, the monasteries organize themselves as warriors. Monks take vows
+      to stand against the Taira, to fight if necessary, to die if required. The text records their
+      determination with a kind of awe: these men have chosen a path that may lead to death, and
+      they have chosen it consciously. Tavener's "Song for Athene" is sacrifice in its highest form —
+      it is not victimhood but deliberate self-offering. The revelation-like quality of the music
+      (Tavener's particular genius) gives the sense of a higher law asserting itself. The monks
+      are sacrificing comfort, safety, and perhaps life itself for something they believe is more
+      important than the Taira's dominion.
+  - n: 6
+    scene: "Go-Shirakawa moves in shadow — the plots thicken"
+    force: desire
+    composer: Szymanowski
+    work: "Symphony No. 4 — III. Finale with fugue"
+    decision: added
+    why: >
+      The retired Emperor is no longer an ally but a hidden antagonist. He plots with courtiers
+      who resent Kiyomori; he whispers to monks who resist Taira power; he positions his own
+      supporters in places where they can weaken Taira control. None of this is overt — Go-Shirakawa
+      is too skilled a politician to move openly. Instead, he operates through indirection, through
+      whispered suggestion, through the subtle withdrawal of imperial sanction. Szymanowski's finale
+      is desire that has become scheming — chromatic longing that now has a target (the diminishment
+      of Kiyomori) and a price (the Emperor's own freedom). The music is intricate and secretive,
+      the sound of plans being made in the shadows of power.
+  - n: 7
+    scene: "The sense of movement — something is shifting under the surface"
+    force: fate
+    composer: Mahler
+    work: "Symphony No. 6 — I. Allegro energico, fate motif"
+    decision: added
+    why: >
+      The text does not narrate explicit conspiracy or military preparation. Instead, it conveys
+      a shift in the quality of the air itself: people who were afraid are becoming less afraid;
+      people who were supportive are withdrawing; even the physical space of the court seems to be
+      rearranging itself according to some new geometry. The narrator notes, almost casually, that
+      the order of succession is being questioned; that younger imperial princes are being educated
+      without Taira supervision; that resources are flowing away from Taira coffers. Mahler's fate
+      motif is exactly this: the inexorable sense that something is moving beneath the surface,
+      that history is shifting, that the configuration Kiyomori thought was permanent is becoming
+      liquid again.
+  - n: 8
+    scene: "Kiyomori in his stronghold — the emperor's court transformed into a fortress"
+    force: kingship
+    composer: Wagner
+    work: "Die Meistersinger von Nürnberg — Prelude"
+    decision: added
+    why: >
+      Kiyomori, sensing the shifts, begins to fortify. The imperial palace becomes less like a
+      ceremonial space and more like a military stronghold. Guards are positioned; access is
+      restricted; what was once a place of public ceremony becomes a place where only those
+      Kiyomori trusts are permitted. The irony is precise: in trying to hold absolute power,
+      Kiyomori has isolated himself from the very court he dominates. Wagner's Meistersinger
+      prelude is court music — it is the sound of a community gathered together — but it is
+      being scored here for a court that can no longer gather, that has become atomized into
+      the ruler and the ruled with no middle ground. Kingship in its most fortified and most
+      desperate form.
+  - n: 9
+    scene: "The revelation in the night — Kiyomori understands his isolation"
+    force: revelation
+    composer: Arvo Pärt
+    work: "Te Deum"
+    decision: added
+    why: >
+      The book reaches a strange moment: Kiyomori, alone at night, begins to understand, without
+      knowing how he understands, that his empire is no longer an empire but an island. Everyone
+      is plotting against him; no one can be trusted; and yet removing the plotters would require
+      the very machinery of fear that is now turning against him. The revelation is not gradual —
+      it is sudden and disorienting. Pärt's "Te Deum" is thanksgiving and terror at once, the
+      sound of a recognition that comes from outside the self, a light breaking through darkness
+      that illuminates precisely how trapped the illuminated one is. Revelation in its highest form:
+      sudden clarity about the true structure of things.
+  - n: 10
+    scene: "The world he built — rearranging itself against him"
+    force: metamorphosis
+    composer: Debussy
+    work: "Prélude à l'après-midi d'un faune"
+    decision: added
+    why: >
+      The book shows Kiyomori's creation turning against its creator. The court machinery he
+      perfected — the surveillance, the informants, the strict hierarchy — now works without his
+      knowledge to undermine his position. The very officers he appointed are in secret
+      correspondence with Go-Shirakawa. The fortress he built has become a cage. The world does
+      not reshape itself overnight; it shifts like Debussy's music — continuous, fluid, the same
+      elements rearranging themselves into new configurations. The changing orchestral color of
+      the Faune is exactly what is happening: the music is recognizable, yet what it means has
+      completely changed. Metamorphosis not as violent transformation but as the slow, irreversible
+      rearrangement of everything Kiyomori thought was fixed.
+  - n: 11
+    scene: "The bells of Gion Shoja echo again — impermanence is no longer distant"
+    force: grief
+    composer: Mahler
+    work: "Kindertotenlieder — I. Nun will die Sonn' so hell aufgehn"
+    decision: added
+    why: >
+      The book closes with a return to the opening motif of the entire work: the bells of Gion
+      Shoja tolling impermanence. But the bells are no longer distant. They are immediately present,
+      tolling not at the beginning of a story but at the moment when the protagonist is beginning
+      to understand that the story is already over, that his supremacy has already passed into
+      memory even though he still holds the title and the throne. Mahler's "Kindertotenlieder"
+      is not funeral music but the grief of a parent who realizes that what was precious and
+      seemed eternal has been secretly, inexorably, slipping away. This is Kiyomori listening to
+      the bells and beginning to hear them not as philosophical annotation but as a prediction
+      already in its final chapter.
+
+demoted:
+  - composer: Stravinsky
+    work: "The Rite of Spring — Sacrificial Dance finale"
+    status: "reserved for Books X-XII (actual military catastrophe)"
+    why: >
+      Book III is the escalation of internal conflict and menace, not yet the mass violence
+      of military catastrophe. The Sacrificial Dance belongs to the moment when the Taira clan
+      actually drowns at Dan-no-ura, not to the shadow-boxing of Books II-III.

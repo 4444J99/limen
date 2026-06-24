@@ -1,0 +1,191 @@
+# The Divine Comedy — film companion
+#
+# Mirroring the studium/film/iliad.yaml gold standard.
+work: divine-comedy
+title: "The Divine Comedy — a cinema of descent, ascent, and beatitude"
+principle: >
+  Do not assemble a list of "movies about Hell." Assemble the poem's FORCES given cinematic
+  bodies. The Divine Comedy is an architecture of the soul: an absolute descent into the
+  consequences of sin (Inferno), a grueling, communal ascent of purification (Purgatorio),
+  and a final revelation of the intellect dissolving into love (Paradiso). The companion
+  must cover this entire vertical spectrum. We use Fincher and the Coens for the relentless
+  machinery of contrapasso and fate in the Inferno; Wong Kar-wai for the airless trap of
+  pure desire; Cronenberg for the theft of the human form. For Purgatorio, we pivot to
+  Bresson and Powell & Pressburger—films of intercession, trial, and the agonizing climb.
+  For Paradiso, Malick and Dreyer provide the rare cinematic vocabulary for actual
+  salvation and the blinding light of the divine. The literal adaptations are set aside;
+  the force-companion carries the weight of the cosmic journey.
+force_coverage: [law, desire, divine-intervention, metamorphosis, plague, fate, ascent, supplication, revelation, salvation]
+films:
+  - title: "Se7en"
+    director: "David Fincher"
+    year: 1995
+    force: law
+    divisions: [5, 28, 32]
+    objects: []
+    letterboxd: se7en
+    scene_or_theme: "The architecture of Hell — the contrapasso (punishment fitting the crime)"
+    object_lesson: >
+      Hell is not chaos; it is law taken to its absolute, unforgiving conclusion. The contrapasso is justice
+      devoid of mercy. The meticulously designed murders are the object lesson: sin is its own eternal trap.
+    why: >
+      Fincher's city is a descending circle of tailored punishments. It perfectly encodes Dante's mechanism
+      where the sin becomes its own cage. The detective's journey mirrors the pilgrim's descent into the depths
+      of human depravity.
+    content_note: "Graphic violence, psychological horror; the ultimate contrapasso cinema."
+
+  - title: "In the Mood for Love"
+    director: "Wong Kar-wai"
+    year: 2000
+    force: desire
+    divisions: [5]
+    objects: [mirror, clock]
+    letterboxd: in-the-mood-for-love
+    scene_or_theme: "Inferno 5 — the wind of lust and the tragedy of romantic love"
+    object_lesson: >
+      Desire that orbits only itself becomes an inescapable room. The mirror reflects a love that cannot build
+      a world, only an endless cycle of longing. Canto 5 pities the lovers, but places them in Hell because
+      their love is entirely closed off from the divine.
+    why: >
+      Wong Kar-wai films desire as an exquisite, airless trap. The slow-motion pacing and repetitive
+      encounters match the eternal wind that tosses Paolo and Francesca. It is the tragedy of a love that goes nowhere.
+    content_note: "Themes of infidelity and emotional repression."
+
+  - title: "Stalker"
+    director: "Andrei Tarkovsky"
+    year: 1979
+    force: divine-intervention
+    divisions: [9]
+    objects: [door]
+    letterboxd: stalker
+    scene_or_theme: "Inferno 9 (Gates of Dis) — the messenger from Heaven opening the way"
+    object_lesson: >
+      When human agency hits its absolute limit, the path forward must come from outside the system.
+      The door to the Room represents a threshold that human reason (Virgil) cannot breach alone.
+    why: >
+      The Zone operates by rules alien to human logic, requiring a special guide. Tarkovsky's vision of
+      traversing a metaphysical landscape perfectly matches the pilgrims waiting for divine grace to open
+      the closed gates of the lower Hell.
+    content_note: "Meditative pace, philosophical density."
+
+  - title: "The Fly"
+    director: "David Cronenberg"
+    year: 1986
+    force: metamorphosis
+    divisions: [24, 25]
+    objects: [mirror]
+    letterboxd: the-fly-1986
+    scene_or_theme: "Inferno 24-25 (The Thieves) — the horrific fusion and theft of the human form"
+    object_lesson: >
+      To lose one's form is to lose the self. The mirror reveals the body becoming something alien, punishing
+      the sin of theft by stealing the very boundaries of the person.
+    why: >
+      Dante's thieves constantly mutate, violently exchanging human and serpentine shapes. Cronenberg's body
+      horror is the cinematic equivalent of this ultimate loss of identity, a literal unraveling of the flesh.
+    content_note: "Extreme body horror, gore."
+
+  - title: "No Country for Old Men"
+    director: "Joel & Ethan Coen"
+    year: 2007
+    force: fate
+    divisions: [3, 33]
+    objects: [gun]
+    letterboxd: no-country-for-old-men
+    scene_or_theme: "The inexorable mechanism of damnation — the coin toss"
+    object_lesson: >
+      You cannot barter with the end of the line. Damnation is not a surprise; it is the final coin toss
+      of a life that has already chosen its path.
+    why: >
+      Anton Chigurh is a force of pure, mechanical inevitability, much like the demons and judgments that
+      process the damned. The film's bleak, deterministic universe mirrors the absolute finality of the Inferno.
+    content_note: "Intense violence, suspense."
+
+  - title: "A Matter of Life and Death"
+    director: "Michael Powell, Emeric Pressburger"
+    year: 1946
+    force: ascent
+    divisions: [35, 67]
+    objects: [door]
+    letterboxd: a-matter-of-life-and-death
+    scene_or_theme: "Purgatorio — the climb toward the earthly paradise and the trial of the soul"
+    object_lesson: >
+      Ascent is an active defense of one's worth in the face of eternity. The heavenly staircase is the
+      geography of moral elevation, requiring both effort and advocacy.
+    why: >
+      Powell & Pressburger give us a literal staircase between worlds and a trial to determine the soul's
+      fate. It captures the hopeful, rising trajectory of Purgatorio and the belief that the soul can be argued for.
+    content_note: "None; a classic romance of the afterlife."
+
+  - title: "Diary of a Country Priest"
+    director: "Robert Bresson"
+    year: 1951
+    force: supplication
+    divisions: [37, 45]
+    objects: [milk]
+    letterboxd: diary-of-a-country-priest
+    scene_or_theme: "The souls in Purgatory — intercession, suffering, and the community of grace"
+    object_lesson: >
+      Grace flows through weakness. The priest's diet of bread and milk—the body's purest sustenance—becomes
+      a symbol of his earthly failure and spiritual purification. Suffering is endured willingly for others.
+    why: >
+      Bresson's stripped-down spiritual realism perfectly embodies the penitent tone of Purgatorio, where
+      the focus is on internal cleansing, prayer, and the mysterious exchange of grace between the living and dead.
+    content_note: "Themes of illness, theological despair."
+
+  - title: "The Tree of Life"
+    director: "Terrence Malick"
+    year: 2011
+    force: revelation
+    divisions: [68, 90]
+    objects: [door]
+    letterboxd: the-tree-of-life
+    scene_or_theme: "Paradiso — the vision of the cosmos bound by love"
+    object_lesson: >
+      The universe is held together not by mechanics, but by a luminous, pervasive love. The camera's upward
+      gaze is the soul attempting to comprehend the infinite and the reconciliation of nature and grace.
+    why: >
+      Malick's film is one of the few that attempts to visually represent the divine light and the
+      interconnectedness of all creation, which is the entire abstract project of Dante's Paradiso.
+    content_note: "Abstract, non-narrative sequences."
+
+  - title: "Ordet"
+    director: "Carl Theodor Dreyer"
+    year: 1955
+    force: salvation
+    divisions: [100]
+    objects: [clock]
+    letterboxd: ordet
+    scene_or_theme: "Canto 100 — the final beatific vision, the direct experience of the divine"
+    object_lesson: >
+      True faith requires the suspension of the rational for the miraculous. The ticking clock of mortality
+      is halted by the absolute presence of life giving itself back.
+    why: >
+      The ending of Ordet is a pure, blinding moment of salvation and grace descending into the physical world,
+      analogous to Dante's final vision where the intellect fails and love moves the sun and the other stars.
+    content_note: "Themes of death, grief, and religious fanaticism."
+
+  - title: "The Seventh Seal"
+    director: "Ingmar Bergman"
+    year: 1957
+    force: plague
+    divisions: [29]
+    objects: []
+    letterboxd: the-seventh-seal
+    scene_or_theme: "The Malebolge — disease as a reflection of spiritual corruption"
+    object_lesson: >
+      Sickness in the body is the visible manifestation of a sickness in the world's order. Death plays
+      chess not to win, but to pass the time he already owns.
+    why: >
+      The landscape of plague and the stark, medieval confrontation with mortality align perfectly with
+      the diseased, scabbing bodies of Dante's lower Hell (the falsifiers).
+    content_note: "Dark themes, plague imagery."
+
+adaptations:
+  - title: "L'Inferno"
+    director: "Francesco Bertolini, Adolfo Padovan, Giuseppe de Liguoro"
+    year: 1911
+    letterboxd: linferno
+    note: "The classic silent adaptation, heavily inspired by Gustave Doré's illustrations. Visually stunning but inherently limited to illustration. Set aside in favor of the force-companions."
+    scenes:
+      - {division: 5, force: desire, scene: "Paolo and Francesca in the whirlwind"}
+      - {division: 34, force: fate, scene: "Lucifer chewing the traitors"}

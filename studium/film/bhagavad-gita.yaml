@@ -1,0 +1,149 @@
+work: bhagavad-gita
+title: "The Bhagavad Gita — a cinema of right action, renunciation, and theophany"
+principle: >
+  Do not assemble a list of "Indian historical epics." Assemble the poem's FORCES given cinematic
+  bodies. The Bhagavad Gita is fundamentally an internal, philosophical crisis occurring on the threshold 
+  of action: what is right action in the face of duty, death, and an immense, indifferent cosmos? 
+  The text moves from Arjuna's collapse in grief (Chapter 1) through rigorous epistemological arguments 
+  (the Yoga of Knowledge, Action, Renunciation) to the terrifying cosmic revelation of Chapter 11, 
+  and finally back to a reconstituted will. The fitting films must capture this inward scale suddenly
+  broken open by absolute reality. We track fate as structure, duty as sacrifice, revelation as 
+  shattering scale, and renunciation not as inaction, but as unattached execution.
+force_coverage: [grief, law, sacrifice, metamorphosis, divine-intervention, revelation, fate]
+films:
+  - title: "First Reformed"
+    director: "Paul Schrader"
+    year: 2017
+    force: grief
+    divisions: [1, 2]
+    objects: [mirror]
+    letterboxd: first-reformed
+    scene_or_theme: "Arjuna's collapse — the impossibility of action in a corrupted world"
+    object_lesson: >
+      Grief can become an epistemological paralysis, an argument against continued participation in the 
+      machinery of the world. Toller's despair in the face of climate collapse matches Arjuna's vision 
+      of familial ruin: both look at the future and see only desecration. The lesson: true despair 
+      is not sadness, but a rigorous, structured refusal of duty.
+    why: >
+      Schrader films spiritual crisis as physical sickness and architectural constraint. Before Krishna
+      offers metaphysics, Arjuna experiences a bodily and moral failure. First Reformed captures this 
+      exact register of paralyzed conscience — the agony of knowing too much to act.
+    content_note: "self-harm, environmental dread, slow cinema"
+  - title: "A Man for All Seasons"
+    director: "Fred Zinnemann"
+    year: 1966
+    force: law
+    divisions: [2, 3, 4]
+    objects: []
+    letterboxd: a-man-for-all-seasons
+    scene_or_theme: "Karma Yoga — action according to Dharma, unattached to the outcome"
+    object_lesson: >
+      Duty (Dharma) is not a feeling, but a structure one inhabits even when it leads to ruin. 
+      Thomas More's adherence to the law, stripped of all personal desire for survival, is the exact 
+      posture Krishna demands of Arjuna. The lesson: right action is a technical, almost legal 
+      adherence to one's station, unaffected by fear or favor.
+    why: >
+      The film is a masterclass in unattached action. More does not want to die, but he will not 
+      break the structure of his conscience to live. This is Karma Yoga in European dress: 
+      doing the prescribed work while surrendering the fruits of the action.
+    content_note: "execution, political maneuvering"
+  - title: "Seven Samurai"
+    director: "Akira Kurosawa"
+    year: 1954
+    force: sacrifice
+    divisions: [3, 4, 18]
+    objects: []
+    letterboxd: seven-samurai
+    scene_or_theme: "The warrior's duty — fighting without claim to the harvest"
+    object_lesson: >
+      The true warrior fights not for victory, wealth, or even the gratitude of the protected, 
+      but simply because fighting is his Dharma. The samurai win the battle but lose the war 
+      (the farmers inherit the earth), yet their action was necessary. The lesson: you have a right 
+      to the work, but never to the fruits of the work.
+    why: >
+      Kurosawa perfects the cinematic expression of selfless action. The samurai do what they must 
+      because of who they are (Kshatriya dharma), knowing they will gain nothing. The final shot 
+      is the ultimate statement of renunciation in victory.
+    content_note: "combat violence, prolonged battle sequences"
+  - title: "Stalker"
+    director: "Andrei Tarkovsky"
+    year: 1979
+    force: metamorphosis
+    divisions: [6, 13]
+    objects: []
+    letterboxd: stalker
+    scene_or_theme: "Dhyana Yoga — the inward journey and the discipline of the mind"
+    object_lesson: >
+      The mind is a treacherous landscape that must be navigated with strict discipline. The Zone 
+      is not a physical place but an exteriorization of the soul; the Stalker's careful, almost 
+      ritualistic progression mirrors the yogi's disciplined meditation. The lesson: transformation 
+      requires total submission to a reality that does not obey ordinary human desire.
+    why: >
+      Tarkovsky's pacing forces the viewer into a meditative state. The journey into the Zone is 
+      an exact parallel to Chapter 6's instructions on controlling the wandering mind — a slow, 
+      dangerous, and necessary turning inward.
+    content_note: "extreme slow cinema, philosophical density"
+  - title: "Oppenheimer"
+    director: "Christopher Nolan"
+    year: 2023
+    force: divine-intervention
+    divisions: [11]
+    objects: [clock]
+    letterboxd: oppenheimer-2023
+    scene_or_theme: "Vishvarupa Darshana — the terrifying revelation of cosmic scale and destruction"
+    object_lesson: >
+      Absolute reality is not comforting; it is a mechanism of infinite power that annihilates 
+      human scale. The Trinity test is the modern secular equivalent of Krishna revealing his 
+      universal form. The lesson: seeing the truth of the cosmos ("I am become Death") permanently 
+      shatters the illusion of individual human agency.
+    why: >
+      Nolan literally quotes the Gita, but more importantly, he films the *experience* of seeing 
+      a force too immense for the human mind to hold. The sound design of the explosion — the delayed, 
+      overwhelming thunder — perfectly maps to Arjuna's terror when Krishna's thousands of eyes open.
+    content_note: "nuclear dread, psychological intensity"
+  - title: "The Tree of Life"
+    director: "Terrence Malick"
+    year: 2011
+    force: revelation
+    divisions: [10, 11, 15]
+    objects: [door]
+    letterboxd: the-tree-of-life
+    scene_or_theme: "Vibhuti Yoga — recognizing the divine presence in all of creation"
+    object_lesson: >
+      The divine is not elsewhere; it is the animating principle of every leaf, star, and moment 
+      of grace. The creation sequence is Krishna's catalog of his own manifestations ("Of lights I am 
+      the radiant sun..."). The lesson: recognizing the universal self requires a total reorientation 
+      of perception, seeing the infinite inside the granular.
+    why: >
+      Malick films the world as if it is already radiating its divine origin. The film shifts between 
+      microscopic domestic intimacy and cosmic formation, visually executing the Gita's core claim 
+      that the supreme spirit is the thread upon which all reality is strung.
+    content_note: "non-linear narrative, grief"
+  - title: "No Country for Old Men"
+    director: "Joel Coen, Ethan Coen"
+    year: 2007
+    force: fate
+    divisions: [18]
+    objects: [clock]
+    letterboxd: no-country-for-old-men
+    scene_or_theme: "The inescapable machinery of karma and the necessity of acceptance"
+    object_lesson: >
+      Fate is an indifferent, inexorable force that cannot be bargained with or outrun. Chigurh is 
+      the embodiment of karmic inevitability. The lesson: true peace (what Bell seeks at the end) 
+      comes not from defeating fate, but from recognizing one's powerlessness against it and 
+      surrendering to the reality of what is coming.
+    why: >
+      The Gita ends with Arjuna saying "My delusion is destroyed... I will act according to your word." 
+      It is a surrender to the cosmic design. The Coens' film is a masterclass in the terrifying 
+      weight of inevitability, forcing the protagonist (and the audience) into a position of 
+      necessary surrender.
+    content_note: "intense violence, suspense"
+adaptations:
+  - title: "The Mahabharata"
+    director: "Peter Brook"
+    year: 1989
+    letterboxd: the-mahabharata-1989
+    note: "The definitive theatrical staging translated to film. Brook captures the philosophical weight, though it encompasses the entire epic, not just the Gita."
+    scenes:
+      - {division: 1, force: grief, scene: "Arjuna drops his bow before the battle"}
+      - {division: 11, force: divine-intervention, scene: "Krishna reveals his cosmic form to Arjuna"}

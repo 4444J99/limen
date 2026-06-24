@@ -1,0 +1,208 @@
+# Heike Monogatari — Book VII — curated music arc
+# The flight from the capital: the proud clan becomes a procession of wanderers.
+work: heike
+book: 7
+title: "Heike Book VII: The Flight from the Capital"
+length_minutes: 97
+principle: >
+  Book VII is the great inversion. For six books the Taira have been the center of gravity — the
+  power that bends the court, the wealth that buys the world, the violence that silences resistance.
+  In Book VII all of that becomes weight, and the weight begins to fall. From the northern mountains
+  Kiso Yoshinaka raises a Minamoto army and comes down like weather. At Kurikara Pass he destroys the
+  main Taira host in a single night, driving them — by the famous stratagem of oxen with torches
+  lashed to their horns — over the cliff into the ravine, where thousands are crushed and drowned in
+  the dark. The news reaches Kyoto and the unthinkable becomes plan: the Taira cannot hold the capital.
+  They decide to abandon it. They burn their own mansions at Rokuhara rather than leave them to the
+  enemy. They gather the child-Emperor Antoku and the three sacred regalia and carry them out of the
+  city westward, becoming overnight what they had made of so many others: exiles, refugees, people of
+  no fixed place. The book lingers on the partings — Koremori leaving his wife and children behind;
+  the poet Tadanori turning back through the burning city to entrust his life's verses to his teacher
+  Shunzei, so that something of him might survive in the imperial anthology even if his name cannot.
+  Score this as the moment when impermanence stops being the bells' philosophy and becomes a road
+  walked west under the autumn sky. The dominant force is **exile**: wandering tonality, open intervals,
+  the home dissolving behind the travelers. What rose in Book I is, in Book VII, on the road.
+force_arc: [ascent, wrath, plague, fate, metamorphosis, grief, memory, kingship, exile, supplication, grief]
+dominant_force: exile
+tracks:
+  - n: 1
+    scene: "The north rises — Kiso Yoshinaka gathers his storm"
+    force: ascent
+    composer: Bruckner
+    work: "Symphony No. 8 — IV. Finale"
+    decision: added
+    why: >
+      The book opens far from the capital, in the northern provinces, where Kiso Yoshinaka — a
+      Minamoto cousin raised in the mountains — has been gathering men. The text describes the
+      Minamoto resurgence not as a single event but as an accumulation, a pressure building in the
+      provinces the Taira had assumed were pacified. Bruckner's Eighth finale is exactly this register
+      of accumulation: a rising sequence that gathers mass as it climbs, brass piling on brass until
+      the orchestra seems to lift the whole world with it. The ascent force requirement — rising
+      sequence, luminous orchestration — is met as the sound of a force coming up out of the ground.
+      But ascent in the Heike is never innocent; what rises here rises to throw down what has already
+      risen. The mountain wind is gathering, and it is blowing toward Kyoto.
+  - n: 2
+    scene: "Kurikara Pass — the night attack and the fire-oxen"
+    force: wrath
+    composer: Holst
+    work: "The Planets — I. Mars, the Bringer of War"
+    decision: added
+    why: >
+      The central military event of the book is the battle at Kurikara (Tonamiyama). Yoshinaka pins
+      the Taira host against the head of a ravine and, at nightfall, releases a herd of oxen with
+      lighted torches bound to their horns, driving them into the Taira camp. In the panic and the
+      dark the great army stampedes over the cliff edge. Holst's Mars is the perfect engine of this:
+      its relentless 5/4 ostinato is mechanical, impersonal, a war-machine that does not feel and
+      cannot be reasoned with. The wrath force requirement — rhythmic pressure, unresolved harmony —
+      is met as pure momentum, the sound of a mass of bodies and animals carried past the point of
+      control toward the edge. This is not a duel of heroes; it is the apparatus of catastrophe in
+      motion.
+  - n: 3
+    scene: "The ravine of the dead — thousands crushed in the dark"
+    force: plague
+    composer: Penderecki
+    work: "Threnody to the Victims of Hiroshima"
+    decision: added
+    why: >
+      The text turns from the stratagem to its result: the ravine choked with men and horses, the
+      crushed and the drowned heaped in the dark, the river dammed with bodies. The Heike records the
+      scale of the death plainly, and the plainness is its horror. Penderecki's Threnody is the only
+      adequate sound — fifty-two strings sliding and clustering into a single mass of dissonance that
+      is not melody and not chord but the texture of disaster itself. The plague force requirement —
+      descending motion, dark orchestration — is met as something below music, a glissando into the
+      pit. The Taira have not been defeated in the ordinary sense; a piece of their world has simply
+      fallen into a hole in the earth.
+  - n: 4
+    scene: "The news reaches Kyoto — the capital cannot be held"
+    force: fate
+    composer: Tchaikovsky
+    work: "Symphony No. 4 — I. Andante sostenuto (the fate fanfare)"
+    decision: added
+    why: >
+      Word of Kurikara reaches the capital, and with it a recognition that no one in the Taira
+      council can any longer avoid: the heart of their army is gone, the Minamoto are coming down out
+      of the hills, and Kyoto is indefensible. Tchaikovsky's Fourth opens with the brass fanfare the
+      composer himself called Fate — the implacable announcement that hangs over everything that
+      follows in the symphony and cannot be argued away. The fate force requirement — inexorable motif,
+      hammered insistence — is met as the moment a possibility hardens into a certainty. The Taira do
+      not decide to lose the capital; they discover that they already have, and that the only remaining
+      decision is how to leave.
+  - n: 5
+    scene: "They burn their own mansions at Rokuhara"
+    force: metamorphosis
+    composer: Ravel
+    work: "La Valse"
+    decision: added
+    why: >
+      Rather than leave their palaces to the enemy, the Taira set fire to Rokuhara — the very seat of
+      their power, the mansions from which they ruled the realm. The text watches the smoke rise over
+      the city the clan built. Ravel's La Valse is the exact image: a waltz, the music of an
+      aristocratic order at its most opulent, that swells and spins and then disintegrates from within,
+      the elegant figures dissolving into a roar. The metamorphosis force requirement — changing
+      orchestral color, fluid harmony — is met as the transformation of solid into smoke, the world
+      of fixed mansions becoming a fluid of ash and flame. The Taira are not merely leaving Rokuhara;
+      they are unmaking it with their own hands, so that nothing of their grandeur survives to be taken.
+  - n: 6
+    scene: "Koremori parts from his wife and children"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 9 — IV. Adagio"
+    decision: added
+    why: >
+      The flight forces an impossible choice on Koremori, Shigemori's eldest son: the road west is no
+      place for women and children, and so he must leave his wife and his small son and daughter
+      behind in the doomed city, not knowing if he will ever return. The text gives the parting in
+      full — the children clinging, the wife's collapse, Koremori tearing himself away because the
+      clan is moving and will not wait. Mahler's Ninth Adagio is the music of last farewells, the long
+      descending lines that keep trying to resolve and keep failing, the orchestra letting go of a
+      world it loves. The grief force requirement — slow tempo, inward line — is met as the most
+      private wound inside the public catastrophe: not the fall of a clan but one father's hand pulled
+      out of his children's hands.
+  - n: 7
+    scene: "Tadanori turns back — the poet entrusts his verses to Shunzei"
+    force: memory
+    composer: Elgar
+    work: "Variations on an Original Theme (Enigma) — IX. Nimrod"
+    decision: added
+    why: >
+      The book's most quietly famous scene: Taira no Tadanori, warrior and poet, turns his horse
+      around in the middle of the flight and rides back through the burning city to the house of
+      Fujiwara no Shunzei, the great anthologist who is compiling an imperial collection of verse.
+      Tadanori asks one thing — that a poem of his be included, even if, as a member of the now-rebel
+      Taira, it must appear under "author unknown." He wants not his name but his art to survive.
+      Elgar's Nimrod is the sound of exactly this devotion: a slow, nobly building elegy for friendship
+      and for everything worth preserving. The memory force requirement — nostalgic recall, faded
+      recapitulation — is met as the act of a man trying to leave one true thing behind him in a world
+      that is about to erase his entire house. The poem survives. The name is lost. Tadanori chose
+      correctly.
+  - n: 8
+    scene: "The child-Emperor and the regalia carried into flight"
+    force: kingship
+    composer: Walton
+    work: "Crown Imperial (march)"
+    decision: added
+    why: >
+      The Taira carry with them the one thing that gives their flight any claim to legitimacy: the
+      child-Emperor Antoku, Kiyomori's grandson, and the three sacred imperial regalia — the mirror,
+      the sword, the jewel. As long as they hold the Emperor and the regalia, they can argue that the
+      court travels with them and the Minamoto in Kyoto are mere rebels. Walton's Crown Imperial is
+      ceremonial sovereignty in full pomp — but scored here for a coronation in reverse, a sovereignty
+      being carried out the back gate of its own capital. The kingship force requirement — ceremonial
+      grandeur, sovereign display — is met and then hollowed: the grandeur is real, the regalia are
+      genuine, and they are being loaded onto boats to flee. Majesty in motion is still majesty, but
+      it is majesty that no longer has a throne to sit on.
+  - n: 9
+    scene: "The road west — the clan becomes wanderers"
+    force: exile
+    composer: Sibelius
+    work: "Symphony No. 4 — I. Tempo molto moderato"
+    decision: added
+    why: >
+      This is the book's title and its center: the Taira on the road, leaving the capital their
+      ancestors won, becoming exiles in their own country. The text follows them west under the autumn
+      sky, past places named in old poems, each name a reminder of the world they are losing. Sibelius's
+      Fourth is the bleakest, most wandering music he wrote — open intervals that refuse to settle,
+      a tonality that drifts without ever finding home, vast cold spaces between the notes. The exile
+      force requirement — wandering tonality, open intervals — is met absolutely. This is the dominant
+      force of the whole book made audible: the proud clan that bent the realm to its will is now a
+      line of travelers on a road, with no fixed place and no certainty of arrival, carrying their
+      Emperor and their grief toward the sea.
+  - n: 10
+    scene: "Prayers on the road — the clan appeals to heaven"
+    force: supplication
+    composer: Arvo Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      Stripped of their fortresses and their army, the Taira have little left but prayer. The text
+      records the devotions of the fleeing clan — invocations to the Buddha, to the gods of the
+      shrines they pass, to whatever power might still intervene for a house that has lost the
+      Mandate. Pärt's Spiegel im Spiegel is the most exposed possible supplication: a single melodic
+      line over the slow rocking of a piano, nothing hidden, nothing defended, a prayer with no
+      ornament left on it. The supplication force requirement — suspended cadence, exposed melodic
+      line — is met as the sound of a great power reduced to asking. There is no demand left in the
+      Taira voice now, only petition: spare us, receive us, let something of us survive.
+  - n: 11
+    scene: "The bells over the abandoned capital"
+    force: grief
+    composer: Górecki
+    work: "Symphony No. 3 (Symphony of Sorrowful Songs) — I. Lento"
+    decision: added
+    why: >
+      The book closes by turning back to look at the empty city. The capital the Taira ruled for a
+      generation stands open and masterless, its great houses burned, the autumn wind in the gardens,
+      the bells of the temples sounding over streets from which the clan has vanished. Górecki's Third,
+      with its long canon rising out of silence and its setting of a mother's lament, is the grief of
+      a whole place mourning at once — not one death but the death of an order. The grief force
+      requirement — slow tempo, inward line — is met as a stillness that has outlived the catastrophe.
+      The bells of Gion Shoja that opened the whole work toll here for a fulfilled prophecy: the proud
+      did not last; they were as a dream on a spring night; and the city they left behind is the
+      silence after the dream.
+
+demoted:
+  - composer: Stravinsky
+    work: "The Rite of Spring — Sacrificial Dance finale"
+    status: "reserved for Book XI (Dan-no-ura, the drowning of the clan)"
+    why: >
+      Book VII is flight, not annihilation. The Taira escape westward intact enough to carry the
+      Emperor and the regalia; the Sacrificial Dance belongs to the sea-grave at Dan-no-ura, where
+      the clan actually ends.

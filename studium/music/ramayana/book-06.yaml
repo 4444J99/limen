@@ -1,0 +1,226 @@
+# Ramayana — Yuddha Kanda (Book 6) — curated music arc
+# Yuddha Kanda: the book of war and cosmic confrontation. Rama's war council, the construction of
+# the bridge to Lanka, the siege of the city, the awakening and death of Kumbhakarna (the epic's
+# greatest warrior), Rama's transformation into a god-warrior, and the final duel between Rama and
+# Ravana that resolves the poem's moral and cosmic weight. The register is not triumph but
+# necessity: this is the war that has to happen, and every inch of it carries cost. The kanda
+# is the epic's longest and most emotionally complex — not a simple good-versus-evil narrative but
+# the mechanics of dharma defending itself against the entropy of unbounded desire.
+work: ramayana
+book: 6
+title: "Ramayana Yuddha Kanda: The Bridge, the Siege, the Last Duel, the Victory of Dharma"
+length_minutes: 95
+principle: >
+  Do not score Yuddha Kanda as a triumph. Score it as FATE and SACRIFICE — the inexorable movement
+  of dharma toward its resolution, and the terrible cost that resolution requires. The kanda moves:
+  Rama's war council and the alliance of nations → the bridge-building and the advance to Lanka →
+  the siege of the city, armies clashing, the great combat → Kumbhakarna's sudden awakening
+  (the demon-general undefeated in the field, the one warrior who nearly turns the war) and his
+  final duel with Rama and death → the realization of Ravana's mortality, his last stand → Rama's
+  transformation into a god-warrior (the moment he fully embodies his divinity and becomes
+  unstoppable) → the final duel: Rama and Ravana face each other across the field of corpses →
+  Rama draws his divine arrow and fires it; Ravana falls; the war is over. The register throughout
+  is weighted and necessary: wrath without cruelty, sacrifice without sentimentality, victory
+  without glory. The kanda knows that Ravana dies because he chose to, not because he was evil,
+  and that Rama's victory is Rama's burden, not Rama's triumph. Keep the war VAST but rooted;
+  keep the individual duels HUMAN even as the god-form emerges; keep the final arrow necessary
+  rather than triumphal. The kanda ends with victory and a kingdom saved — but Rama has been
+  changed by the weight of what he has done, and that change is the true register of the ending.
+force_arc: [law, wrath, sacrifice, fate, wrath, divine-intervention, metamorphosis, fate, sacrifice, kingship]
+dominant_force: fate
+tracks:
+  - n: 1
+    scene: "The war council — Rama's generals assemble, the plan is forged"
+    force: law
+    composer: Handel
+    work: "Music for the Royal Fireworks — II. Allegro (La Réjouissance)"
+    decision: added
+    why: >
+      In the camp at the shore of the sea, Rama convenes his generals: Hanuman reports what he has
+      seen; Sugriva marshals the monkey nations; Vibhishana, Ravana's own brother, has defected to
+      Rama's side and offers counsel. Together they devise the plan: a bridge will be built across
+      the sea, the armies will advance, and Lanka will be besieged until Ravana surrenders or falls.
+      This is law at its most architecturally complete: a plan, a council of state, the machinery
+      of war assembled with formal precision. Handel's "La Réjouissance" from the Royal Fireworks
+      Music is ceremonial assembly rendered as music — grand, clear, architecturally sound, the
+      sound of a state making its formal decision. Law requires formal clarity, repetition, and
+      architecture; Handel gives the war council its proper weight as the moment when private grief
+      becomes public action, when one man's loss becomes the law's machinery rolling forward.
+  - n: 2
+    scene: "The bridge-building — Nala's architecture spans the impossible gap"
+    force: wrath
+    composer: Holst
+    work: "The Planets — Mars, the Bringer of War"
+    decision: added
+    why: >
+      The armies begin construction of a bridge across the sea — a feat described as impossible
+      until Nala, the monkey engineer, devises a way to gather the mountains' stones and lay them
+      across the waters. The work is vast, the labor immense, the bridge itself an assertion of
+      will against the resistance of the sea. It is not yet battle, but it is the machinery of
+      battle assembling. Holst's Mars, with its relentless, driving rhythm and grinding brass, is
+      the sound of a vast force moving forward with inexorable momentum — not individual wrath but
+      the mechanized power of an army mobilizing. Wrath requires rhythmic pressure and unresolved
+      harmony; Mars is the bridge becoming real, the stones being laid one by one, the sea being
+      conquered by sheer determined force. It is the prelude to war, not war itself, but it carries
+      war's inevitability.
+  - n: 3
+    scene: "The armies advance to Lanka — thousands upon thousands crossing the bridge"
+    force: sacrifice
+    composer: Wagner
+    work: "Die Walküre — Ride of the Valkyries"
+    decision: added
+    why: >
+      The monkey armies, millions strong, cross the bridge in a vast, moving procession — an
+      unstoppable tide of creatures converging on Lanka's gates. The advance is magnificent and
+      terrible: these millions will die before the war is done. Every monkey that crosses knows
+      that many will not return. Sacrifice requires ritual weight and processional build; Wagner's
+      Ride of the Valkyries, scored for those who ride to death, is the perfect music of an army
+      in motion, not triumphant but moving toward what they must do, the ride of warriors knowing
+      the cost. The kanda holds this vision of the armies crossing the bridge without irony — they
+      are beautiful and they are doomed, and both are necessary.
+  - n: 4
+    scene: "The siege of Lanka — armies clash at the gates, the defense"
+    force: fate
+    composer: Tchaikovsky
+    work: "Symphony No. 1812 in E-flat major — finale"
+    decision: added
+    why: >
+      The monkeys batter at the gates of Lanka; Ravana's armies pour out to meet them. The clash
+      is immense — tens of thousands of demons against the monkey forces, the field becoming a
+      grinding mill of combat. Neither side can gain decisive advantage. The siege becomes a war
+      of attrition, day after day of combat, neither retreating, neither advancing. The mechanism
+      of fate grinds on: more and more must die, and still the gate does not fall. Tchaikovsky's
+      1812 finale, with its famous cannon-fire, is the sound of battle rendered as symphonic power
+      — the clashing of armies, the artillery grinding away, the conflict consuming everything in
+      its path. Fate requires inexorable motif and hammered insistence; the 1812 gives the siege
+      its sense of relentless grinding, destiny advancing one cannon-shot at a time. The fate that
+      is working itself out is larger than any individual will, and the symphony knows it.
+  - n: 5
+    scene: "Kumbhakarna awakens — the demon-general rises, Lanka's last hope"
+    force: wrath
+    composer: Bruckner
+    work: "Symphony No. 8 in C minor — III. Scherzo"
+    decision: added
+    why: >
+      Ravana, desperate, awakens Kumbhakarna — his brother, the greatest demon-warrior, who has
+      slept for months, insatiable and immense. Kumbhakarna rises — towering, ancient, terrible —
+      and takes the field. His impact is immediate and decisive: the monkey armies are driven back,
+      their numbers dwindling under his onslaught. He is an irresistible force, a being of such
+      power that Rama's armies tremble. For a moment, the war turns: Lanka may yet prevail.
+      Bruckner's Scherzo from the Eighth is one of the most ferocious, grinding forces in the
+      orchestral literature — a vast, stamping, irresistible mechanical force advancing through the
+      texture with unstoppable weight. Wrath requires rhythmic pressure and unresolved harmony;
+      Bruckner gives Kumbhakarna his emergence as a being of pure destructive power, the wrath of
+      an ancient being waking to remake the world in his image. But his time will be brief.
+  - n: 6
+    scene: "Rama and Kumbhakarna duel — the encounter of titans"
+    force: divine-intervention
+    composer: Messiaen
+    work: "Et exspecto resurrectionem mortuorum (And I await the resurrection of the dead)"
+    decision: added
+    why: >
+      Rama comes forth to meet Kumbhakarna, and the two engage in single combat — an encounter
+      between two vast forces, one human (but god-dwelling), one demonic (but of the ancient world).
+      They grapple; they hurl weapons; the earth shakes with their impact. In the end, Rama's
+      arrow finds its mark, and Kumbhakarna falls — killed by the one hero capable of killing him,
+      his immense body falling to earth like a mountain brought low. At the moment of his death,
+      something shifts: divine favor has touched the field, and Lanka's last unchallengeable
+      defender is gone. Divine-intervention requires sudden color shift and brass/strings contrast;
+      Messiaen's Et exspecto gives the moment of Kumbhakarna's fall its register of sudden,
+      overwhelming change — the insertion of the divine into the frame of the demonic, the moment
+      when the outcome becomes visible.
+  - n: 7
+    scene: "Rama's transformation — the god-form emerges, Rama becomes Narayana"
+    force: metamorphosis
+    composer: Scriabin
+    work: "Prometheus: The Poem of Fire, Op. 60"
+    decision: added
+    why: >
+      Seeing Kumbhakarna fall, and with the tide of battle turning, Rama fully abandons the
+      restraint that has bound him throughout the war. He ascends into his full divine form,
+      transcending the merely-human prince he has appeared to be. Arjuna-like, he becomes the
+      god-warrior Narayana, and the very sight of him causes the remaining demon-armies to falter.
+      His power is no longer constrained by dharma's caution; it is absolute, unmediated divine
+      force. Scriabin's Prometheus is ecstatic metamorphosis rendered as music — a dissolution of
+      form into luminous color, the emergence of something transcendent from the constraints of
+      matter. Metamorphosis requires changing orchestral color and fluid harmony; Scriabin gives
+      Rama's transformation its visionary register — the prince shedding his human skin and
+      becoming the god-force he always contained. The musical color itself shifts and ascends,
+      reflecting the shift in Rama's nature.
+  - n: 8
+    scene: "Ravana's last stand — the demon-king faces Rama across the field"
+    force: fate
+    composer: Verdi
+    work: "Rigoletto — La donna è mobile (ironic reading for the duel prelude)"
+    decision: kept
+    why: >
+      Alternative: Verdi, "Aida" — Grand March. Reconsidered and rejected because it suggests
+      triumph rather than fate's working.
+      Ravana, seeing his general fallen and the god-form emerging, takes the field himself. He is
+      no longer the seducer or the arrogant king of Lanka: he is a warrior on his last stand, and
+      he is magnificent. He has committed himself to this path, and he will see it through to the
+      end. Rama and Ravana face each other across a field strewn with the corpses of the war,
+      and the moment has the weight of fate accomplished: two paths, taken long ago, converging on
+      this exact meeting. Verdi's Rigoletto — particularly the prelude to Rigoletto's final scene —
+      is fate as the inevitable working-out of choices made, the past returning to demand payment.
+      Fate requires inexorable motif and hammered insistence; Verdi gives the duel its register
+      of convergence, the two fates meeting at the point of their appointed crossing. One of them
+      will not leave this field.
+  - n: 9
+    scene: "The final duel — arrows exchanged, the Brahmashira released"
+    force: sacrifice
+    composer: Brahms
+    work: "Ein deutsches Requiem — VI. Denn wir haben keine bleibende Statt hier"
+    decision: added
+    why: >
+      Rama and Ravana duel with all the weapons the epic contains: ordinary arrows, celestial
+      weapons, devices of magic and ancient power. The combat goes back and forth; Ravana, for all
+      his arrogance, is a great warrior, and he nearly prevails. But in the end, Rama draws forth
+      the Brahmashira — the ultimate weapon, given to him by the gods, untold in power — and
+      releases it. There is no defense against this arrow. Ravana is struck; he falls; his life
+      leaves him. The war is ended. Sacrifice requires ritual weight and processional build; Brahms's
+      "We have here no lasting city" is the funeral-register applied to the warrior-king: Ravana is
+      acknowledged not as a villain but as a man who chose wrongly and paid with his life, his power
+      returning to the cosmic forces from which it came. The arrow that kills him is a sacrifice of
+      himself — the ultimate warrior choosing the moment of his own transfiguration through defeat.
+  - n: 10
+    scene: "The victory and the return — Rama king of Lanka, crowned and called home"
+    force: kingship
+    composer: Elgar
+    work: "Pomp and Circumstance — March No. 1 in D major"
+    decision: added
+    why: >
+      The war is ended. Ravana is dead; his city is claimed; Lanka submits. The alliance breaks:
+      Sugriva returns to rule the monkey-kingdom, Vibhishana is installed as Ravana's successor,
+      and Rama is crowned king of both by acclamation. But the triumph is heavy: he has lost
+      friends, the armies have paid a terrible price, and Rama himself has been changed by the
+      weight of what he has done. The kanda closes not with ecstatic joy but with ceremony and the
+      formal assumption of kingship — Rama crowned, but also Rama burdened, the god-form subsiding
+      back into the prince, who must now rule the world he has saved. Elgar's Pomp and
+      Circumstance March is the sound of an orderly, ceremonial victory — not triumphalist ecstasy
+      but the formal procession of a king assuming power, aware of what it cost to win. Kingship
+      requires ceremonial grandeur and sovereign display; Elgar gives the victory its formal weight
+      — not the unbounded joy of conquest but the solemn, necessary ceremony of a kingdom restored
+      and a hero crowned by the very act that has cost him everything he thought was his own.
+demoted:
+  - composer: Mahler
+    work: "Symphony No. 2 (Resurrection) — V. Finale"
+    status: "save for Uttara Kanda (the coronation in Ayodhya) where resurrection is fully earned"
+    why: >
+      The Mahler Resurrection finale is apotheosis and transcendence — the wrong register for a
+      kanda that ends with victory achieved through death and cost. Yuddha Kanda's ending is
+      crowned kingship, not apotheosis; the true resurrection belongs to Book 7.
+  - composer: Stravinsky
+    work: "The Rite of Spring — Sacrificial Dance (finale)"
+    status: "too overwhelming for the narrative arc; its ritual violence better distributed"
+    why: >
+      The full sacrificial intensity is stronger than what the kanda's moral center needs — the
+      war is just and necessary, not a blind ritual. Deploying Stravinsky's full Rite finale
+      would overweight the register toward automatism rather than dharmic justification.
+  - composer: Beethoven
+    work: "Symphony No. 9 — IV. Ode to Joy (Finale)"
+    status: "save for Book 7 (the true homecoming); Book 6 ends in kingship, not apotheosis"
+    why: >
+      The Ninth's "Ode to Joy" is the poem's full celebration — too exalted for a victory earned
+      through war and loss. Rama is crowned king, but the kanda knows the cost. The Ninth belongs
+      to the return to Ayodhya and the fuller resolution of Book 7.

@@ -1,0 +1,235 @@
+# Beowulf — film companion (the FOURTH commentary system)
+# WYRD / HEROIC DOOM — the forces of a world where civilization is a lit hall in the dark
+#
+# The poem is not primarily a monster-slaying story. It is a meditation on kingship, grief, and fate —
+# how one man's glory casts the long shadow of his doom. The opening moves trace the rise of Heorot
+# (the golden hall, sovereign display) only to show us the dark outside it (Grendel, exile, the void).
+# Fitt I spans two dynasties and twelve years of suffering; the poem's arc is not victory but the price
+# of having been great at all.
+#
+# The films gathered here do not adapt Beowulf directly. Instead, they encode its FORCES: kingship as
+# the exercise of power that dooms the exerciser; grief as the lingering aftermath; fate as the
+# inexorable approach of death that no hall, no hero, no gold can keep at bay.
+
+work: beowulf
+title: "Beowulf — a cinema of wyrd, heroic doom, and the cost of the hall"
+principle: >
+  Do not assemble a "Norse epics" list. Assemble the poem's FORCES given cinematic bodies.
+  Beowulf is not primarily a battle story; it is the study of wyrd — fate as the ground of existence,
+  not as punishment. The poem opens with kingship at its most resplendent (Scyld's funeral, Heorot's
+  founding, dynastic glory) and closes with the hero old, the hall destroyed, the people mourning.
+  The fitting film for it is therefore not a sword-and-sorcery epic but an elegy of sovereignty — a
+  king's power as the exact measure of what he will lose. Heorot is not Troy; it is not conquered by
+  enemies but hollowed by time. A ruler's greatness becomes the shape of his grief.
+force_coverage: [kingship, grief, fate, sacrifice, law, desire, supplication]
+films:
+  - title: "Ran"
+    director: "Akira Kurosawa"
+    year: 1985
+    force: kingship
+    divisions: [1, 2]
+    objects: []
+    letterboxd: ran
+    scene_or_theme: "The opening fitts — Heorot's founding and the sovereign's display"
+    object_lesson: >
+      Kingship is the real power to bring the world down — the ruler's will becomes the people's fate.
+      In Ran, an aging warlord divides his realm among his sons and watches the structure of order
+      dissolve into chaos. This is Heorot's mirror: the golden hall is not safe because it is golden.
+      The poem opens not with battle but with dynasty — Scyld's founding, Hrothgar's building — and
+      then shows us the dark that was always waiting outside. Kingship confers the capacity to preside
+      over ruin.
+    why: >
+      Kurosawa's vision of sovereignty matches Beowulf's: the king's greatness is inseparable from his
+      vulnerability. The poem does not mock Hrothgar's ambition; it shows us that ambition and doom
+      are the same thing. Screen Ran for the weight of sovereign display and what it costs.
+    content_note: "large-scale battle violence, immolation, chaos; the film is an elegy, not a spectacle"
+  - title: "No Country for Old Men"
+    director: "Joel Coen, Ethan Coen"
+    year: 2007
+    force: fate
+    divisions: [1, 37, 38, 39, 40, 41, 42, 43]
+    objects: [gun, clock]
+    letterboxd: no-country-for-old-men
+    scene_or_theme: "Wyrd — the inexorable approach of death, the indifference of time"
+    object_lesson: >
+      Fate in Beowulf is not personified but ambient — it is the condition of existence. The poem
+      does not ask whether Beowulf will die; it asks when, and how, and what meaning his death will
+      carry. The gun (agency without control) and the clock (time as the true killer) are the objects:
+      Llewelyn Moss runs from Chigurh, and we know it ends in death; the question is only where, and
+      whether anyone will remember it mattered. The poem's closing fitts carry the same register —
+      Beowulf dying, the dragon dying, the treasure returned to the earth, the people mourning.
+    why: >
+      The Coens capture wyrd as a force that cannot be outrun. Chigurh is not a person; he is the
+      personification of inevitability — the hammer-blow that falls without warning, without mercy,
+      without meaning. The old sheriff at the end knows he has seen something he cannot name. That is
+      exactly Beowulf's register: the knowledge that we move through a world that has no obligation
+      to make sense to us.
+    content_note: "violence, sustained tension; the violence is the point — it is not glamorous"
+  - title: "Manchester by the Sea"
+    director: "Kenneth Lonergan"
+    year: 2016
+    force: grief
+    divisions: [8, 23, 36, 37, 38, 39, 40, 41, 42, 43]
+    objects: []
+    letterboxd: manchester-by-the-sea
+    scene_or_theme: "Grief as the work of surviving — twelve years of Grendel's reign, the hero's aging"
+    object_lesson: >
+      The poem's second most sustained passage is the Danes' grief: not one attack by Grendel but
+      twelve years of attacks, twelve years of sleeplessness, twelve years of a great hall standing
+      empty. Barber's Adagio carries this in the music; Manchester by the Sea carries it in the face.
+      Lee Chandler has survived an unbearable thing and the film is the study of how he continues to
+      live in the world knowing what he knows. Beowulf, aging, carries the same knowledge — he has
+      survived his youth, his glory, and now the dragon waits. Grief here is not lamentation; it is
+      the texture of a life lived after loss.
+    why: >
+      Lonergan's film is the closest cinema has come to the Danes' sustained grief. It does not
+      resolve the loss; it simply shows what it means to wake up every day and carry it. The poem's
+      closing fitts have this same register — the people mourning their king, the treasure returned
+      to the earth, the knowledge that greatness does not prevent death.
+    content_note: "grief, loss, difficult family dynamics; meditative pace, no action sequences"
+  - title: "The Sacrifice"
+    director: "Andrei Tarkovsky"
+    year: 1986
+    force: sacrifice
+    divisions: [38, 39, 40, 41, 42, 43]
+    objects: []
+    letterboxd: the-sacrifice
+    scene_or_theme: "The hero's final choice — to give everything for the people, to buy grace with death"
+    object_lesson: >
+      Beowulf's last fitt is not primarily about battle. It is about willing surrender — the old hero
+      descends to face the dragon knowing he will die, and that his death will buy the people time.
+      This is sacrifice in the highest register: not coerced death but chosen, ritual, a transaction
+      with fate. Tarkovsky's film is the study of a man who gives up everything — his home, his
+      sanity, his life — to intervene in a cosmic order that has no obligation to hear him. The weight
+      is unbearable. So is Beowulf's choice.
+    why: >
+      Tarkovsky films sacrifice not as heroic but as the enactment of grace — the moment when a man
+      steps outside himself and becomes, briefly, a channel for something larger. This matches the
+      poem's register exactly: Beowulf is not rushing to glory; he is walking, slowly, into a dark
+      where he knows his people need him to go.
+    content_note: "metaphysical, slow; the film's power is in its restraint and its refusal to resolve"
+  - title: "Stalker"
+    director: "Andrei Tarkovsky"
+    year: 1979
+    force: desire
+    divisions: [3, 4, 5, 6, 7, 8, 9, 10]
+    objects: [door]
+    letterboxd: stalker-1979
+    scene_or_theme: "The quest for something beyond — Beowulf's journey across the sea, the seeker's path"
+    object_lesson: >
+      After Fitt I sets the problem (Grendel's terror, the Danes' grief), Beowulf hears the news and
+      crosses the sea. This is not a march to war but a seeking — a journey toward something the hero
+      has heard about but never seen. Tarkovsky's Stalker is the cinema of pure seeking: three men
+      journeying toward a room that promises to grant desire, unable to name what they desire until
+      they arrive. The DOOR is the object: the threshold between the known and the unknown. Beowulf
+      crosses that threshold when he leaves his own land and enters Hrothgar's danger.
+    why: >
+      Tarkovsky captures the register of desire as the unnamed thing that draws a man forward — not
+      ambition (which is specific and grasping) but the deeper pull toward significance, toward the
+      place where one's life will matter. This is exactly the texture of Beowulf's journey: the hero
+      hears of a need and cannot not answer it.
+    content_note: "meditative, slow, metaphysical; patience required; the reward is not action but understanding"
+  - title: "A Man for All Seasons"
+    director: "Fred Zinnemann"
+    year: 1966
+    force: law
+    divisions: [2, 5, 12, 13]
+    objects: []
+    letterboxd: a-man-for-all-seasons
+    scene_or_theme: "Law and duty — the order of the hall, the counsel that must be heeded"
+    object_lesson: >
+      The poem opens with Hrothgar summoning his council, calling for help, consulting the wisest men.
+      This is law in its deepest sense: not rules but the ordering of counsel that holds civilization
+      together. Thomas More's trial is a study of a man who honors the law even when the law has turned
+      against him — who refuses to break the form even to save his life. The poem's early fitts have
+      this same texture: the Danes do not abandon order even as Grendel destroys them; they continue
+      to hold counsel, to make offerings, to maintain the structure of their civilization. When Beowulf
+      arrives, he honors the forms of greeting and deference; he does not seize power but awaits
+      Hrothgar's recognition of his right to fight.
+    why: >
+      Zinnemann's film is the study of a man for whom the form IS the meaning — in whom obedience to
+      law becomes identical with moral clarity. This matches the poem's opening register: the Danes
+      are not weak for holding counsel; they are civilized. Their order is their strength.
+    content_note: "dialogue-heavy, formal; the power is in the clarity of principle, not in action"
+  - title: "The Passion of Joan of Arc"
+    director: "Carl Theodor Dreyer"
+    year: 1928
+    force: supplication
+    divisions: [38, 39, 40, 41, 42, 43]
+    objects: []
+    letterboxd: the-passion-of-joan-of-arc
+    scene_or_theme: "The hero in extremity — dignity, mercy, the final word"
+    object_lesson: >
+      The poem's closing movement (Fitts 38–43) is about the hero's death and the people's lament.
+      This is not tragedy in the modern sense but something older: the enactment of a meaning that
+      extends beyond the individual. Joan faces her judges knowing they will kill her; her power lies
+      not in the ability to change her fate but in the absolute clarity with which she meets it.
+      Beowulf faces the dragon with the same clarity. He is old, he is alone, and he descends into the
+      darkness knowing he will not emerge. The supplication here is not prayer but the stance of one
+      who has surrendered everything to something larger than himself.
+    why: >
+      Dreyer's film achieves something almost unprecedented: a portrait of a human face as a threshold
+      between the mortal and the eternal. Joan's absolute conviction becomes visible in her face, her
+      stillness, her refusal to recant even when recanting would save her. This is the register of the
+      poem's end: not defeat but the achievement of absolute clarity through absolute loss.
+    content_note: "trial, execution; the power is in the restraint; black-and-white; silent film (with orchestral accompaniment)"
+  - title: "Come and See"
+    director: "Elem Klimov"
+    year: 1985
+    force: plague
+    divisions: [12, 13, 14, 15, 16, 17, 18, 19, 20]
+    objects: [gun]
+    letterboxd: come-and-see
+    scene_or_theme: "The cost of conflict — violence as descending sickness, the destruction of innocence"
+    object_lesson: >
+      Between Grendel's first attack and the final battle, the poem dwells on the texture of sustained
+      war — the sleepless nights, the grief, the slow erosion of hope. This is not the excitement of
+      combat but the experience of a landscape being consumed. Come and See takes a boy and shows us
+      how a face ages into a death-mask under the weight of sustained violence. The gun is present but
+      it is not agency; it is the instrument of a force descending from above. This matches the poem's
+      register: the Danes cannot overcome Grendel through strength; the thing that is killing them is
+      outside the economy of human power.
+    why: >
+      Klimov's film is the most harrowing portrait of war as plague in cinema — not as combat but as a
+      sickness that falls on a landscape. The poem's middle fitts carry this same register: the
+      people enduring, the hero preparing, the knowledge that only a greater sacrifice will end it.
+    content_note: "extreme — massacre, sustained psychological horror, child soldiers; the violence is not glamorous; screen with full warning"
+  - title: "Three Colors: Blue"
+    director: "Krzysztof Kieślowski"
+    year: 1993
+    force: grief
+    divisions: [36, 37, 38, 39, 40, 41, 42, 43]
+    objects: []
+    letterboxd: three-colors-blue
+    scene_or_theme: "The solitude of grief — the survivor left alone to choose how to live"
+    object_lesson: >
+      Julie's husband and daughter die in a car accident and the film is her journey toward the
+      decision to live. This is a different register of grief than Manchester by the Sea — it is the
+      question of how one chooses to exist when the structure that gave life meaning has collapsed.
+      Beowulf, in his final fitts, faces a similar question: the hall is gone (or will be), his time
+      is ending, and he must choose whether to fight the dragon. The choice is made; the grief
+      precedes and follows it.
+    why: >
+      Kieślowski captures the texture of grief as solitude — not the shared mourning of the Danes but
+      the interior work of a single consciousness deciding whether to live. This is the register of
+      Beowulf's aging fitts: the hero alone with his knowledge, his choice, his fate.
+    content_note: "grief, death, solitude; luminous cinematography; the power is in the restraint"
+adaptations:
+  # Beowulf has been adapted multiple times; the most recent (2007, Zemeckis) uses motion-capture.
+  # The obvious adaptation carries less force than the film companions above. Listed here for
+  # reference only; the daily face does not promote it as Film of the Day.
+  - title: "Beowulf & Grendel"
+    director: "Sturla Gunnarsson"
+    year: 2005
+    letterboxd: beowulf-and-grendel
+    note: "the Beowulf adaptation — humanizes Grendel, reframes the poem as a family tragedy; direct but not force-matched; set aside."
+    scenes:
+      - {division: 12, force: fate, scene: "Beowulf fights Grendel — the hero and monster as figures of wyrd"}
+  - title: "Beowulf"
+    director: "Robert Zemeckis"
+    year: 2007
+    letterboxd: beowulf-2007
+    note: "motion-capture spectacle — emphasizes the supernatural; flattens the poem's meditation on kingship and grief; set aside."
+    scenes:
+      - {division: 12, force: fate, scene: "The fight with Grendel"}
+      - {division: 38, force: sacrifice, scene: "The final battle with the dragon"}

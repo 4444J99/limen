@@ -1,0 +1,164 @@
+work: tale-of-genji
+title: "The Tale of Genji — a cinema of desire and impermanence"
+principle: >
+  The Tale of Genji is the masterwork of interiority, aesthetics, and mono no aware (the pathos of things). 
+  It is not a plot-driven epic of external conquest, but a delicate, devastating accumulation of longing, 
+  courtly ritual, secrecy, and the inexorable passage of time. The film companion tracks this interior 
+  weather. The defining forces are desire (the chromatic longing that drives Genji and his successors) 
+  and memory/grief (the weight of what is lost). We are not looking for historical Japanese costume dramas 
+  simply because they wear Heian robes; we are looking for the exact register of deferred resolution, 
+  haunted memory, and the aestheticization of sorrow.
+force_coverage: [desire, memory, grief, exile, fate, comedy, law]
+films:
+  - title: "In the Mood for Love"
+    director: "Wong Kar-wai"
+    year: 2000
+    force: desire
+    divisions: [1, 2, 5, 9]
+    objects: [mirror, clock]
+    letterboxd: in-the-mood-for-love
+    scene_or_theme: "The concealed affair, the aestheticized longing, the burden of secrecy"
+    object_lesson: >
+      Desire, when constrained by extreme social observation, becomes an aesthetic obsession. 
+      The MIRROR captures the divided self, and the CLOCK marks the agonizing duration of a love 
+      that cannot be fully realized. It teaches us how Genji's world operates: the real event 
+      is not the consummation, but the longing, the exchanged poetry, the mood of a room.
+    why: >
+      No film better understands desire as an atmospheric condition rather than a narrative event. 
+      Wong Kar-wai's slow-motion tracking shots and deferred glances are the exact cinematic equivalent 
+      of Murasaki Shikibu's prose.
+    content_note: "emotional devastation; no graphic content"
+
+  - title: "Phantom Thread"
+    director: "Paul Thomas Anderson"
+    year: 2017
+    force: desire
+    divisions: [10, 12]
+    objects: [mirror]
+    letterboxd: phantom-thread
+    scene_or_theme: "The obsessive aestheticization of the beloved"
+    object_lesson: >
+      The beloved is often an aesthetic project for the lover. Genji's shaping of Murasaki from childhood 
+      into his ideal woman is echoed in Woodcock's tyrannical yet fragile need for Alma. The MIRROR is 
+      the object lesson: love bound up inextricably with the precise, obsessive arrangement of beauty.
+    why: >
+      Genji is an aesthete first. His desire is often indistinguishable from his taste. Phantom Thread 
+      gives us the danger and the strange intimacy of a love that is also a project of total aesthetic control.
+    content_note: "psychological intensity, mild poisoning"
+
+  - title: "The Age of Innocence"
+    director: "Martin Scorsese"
+    year: 1993
+    force: law
+    divisions: [3, 4]
+    objects: [telephone]
+    letterboxd: the-age-of-innocence
+    scene_or_theme: "The absolute power of courtly manners and unspoken rules"
+    object_lesson: >
+      The most brutal violence can be enacted entirely through manners, seating arrangements, and 
+      meaningful glances. The TELEPHONE (or the message delivered) represents connection at a distance 
+      mediated by social structure. It shows how the Heian court's seemingly delicate world is 
+      actually an iron cage of propriety.
+    why: >
+      Scorsese treats 1870s New York like a mafia family, where a raised eyebrow is an execution. 
+      This is precisely how the Heian court functions—scandal and political death occur entirely 
+      in the realm of whispers and fan placements.
+    content_note: "none"
+
+  - title: "Vertigo"
+    director: "Alfred Hitchcock"
+    year: 1958
+    force: memory
+    divisions: [41]
+    objects: [mirror]
+    letterboxd: vertigo
+    scene_or_theme: "The attempt to replace the lost beloved; the haunting of the past"
+    object_lesson: >
+      Memory can become a sickness that demands the present conform to the shape of the dead. 
+      Scottie's recreation of Madeleine is Genji's lifelong search for the image of his mother 
+      (Fujitsubo) and later, his attempt to find Murasaki's shadow in others. The MIRROR reflects 
+      the double, the ghost superimposed on the living.
+    why: >
+      Genji is haunted. His loves are a chain of substitutions. Vertigo is cinema's greatest 
+      study of necrotic romantic obsession and the compulsion to remake the living in the image of the lost.
+    content_note: "psychological instability, suicide themes"
+
+  - title: "The Leopard"
+    director: "Luchino Visconti"
+    year: 1963
+    force: fate
+    divisions: [34, 35]
+    objects: [mirror]
+    letterboxd: the-leopard
+    scene_or_theme: "The fading of an aristocratic epoch; the realization of decline"
+    object_lesson: >
+      Even the highest elegance is subject to time. The Prince watching the dust gather on his class 
+      is the late Genji realizing his era of splendor is passing. The MIRROR in the grand ballroom 
+      reflects not just a face, but a dying world.
+    why: >
+      Visconti's sweeping, melancholic ballroom sequence is the cinematic equivalent of Genji's later 
+      years—a supreme aesthetic achievement steeped in the knowledge that it is all coming to an end.
+    content_note: "long runtime, historical scale"
+
+  - title: "A Ghost Story"
+    director: "David Lowery"
+    year: 2017
+    force: grief
+    divisions: [40, 41]
+    objects: [clock]
+    letterboxd: a-ghost-story
+    scene_or_theme: "The endurance of sorrow across time; the house left behind"
+    object_lesson: >
+      Grief outlasts the grieving. The CLOCK marks the passage of time not in minutes, but in epochs. 
+      It teaches us that sorrow in Genji's world (like the spirit possessions and the lingering regrets) 
+      is an actual, geographic presence that remains even as the world moves on.
+    why: >
+      The later chapters of Genji (the Uji chapters) are steeped in an almost unbearable melancholia 
+      and the presence of the dead. This film physicalizes the lingering, unresolved attachment to 
+      a place and a memory.
+    content_note: "meditative pacing, existential themes"
+
+  - title: "The Rules of the Game"
+    director: "Jean Renoir"
+    year: 1939
+    force: comedy
+    divisions: [7, 8]
+    objects: [gun]
+    letterboxd: the-rules-of-the-game
+    scene_or_theme: "The aristocratic farce; love as an elaborate game of masks"
+    object_lesson: >
+      When love is entirely bound by social performance, it borders on farce before collapsing 
+      into tragedy. The GUN represents the sudden intrusion of lethal reality into the game. 
+      It echoes the lighter, early chapters of Genji where romantic exploits are a courtly sport.
+    why: >
+      Renoir's masterpiece captures the dizzying, morally ambiguous carousel of aristocratic 
+      flirtation better than any other film. It maps perfectly to Genji's youthful indiscretions.
+    content_note: "satire, minor violence"
+
+  - title: "The Searchers"
+    director: "John Ford"
+    year: 1956
+    force: exile
+    divisions: [12, 13]
+    objects: [door]
+    letterboxd: the-searchers
+    scene_or_theme: "The wanderer cast out from the center; Suma and Akashi"
+    object_lesson: >
+      The exile is fundamentally separated from the home he longs for, even when he returns to it. 
+      The DOOR framing the wilderness at the beginning and the end shows the threshold the exile 
+      cannot cross. Genji at Suma is the radiant prince reduced to gazing at the moon in isolation.
+    why: >
+      Ford's vision of the wanderer who restores the order but cannot live inside it speaks to 
+      Genji's time in exile—a period of profound loneliness that matures him, but forever separates 
+      him from simple belonging.
+    content_note: "racism in context of the period, implied violence"
+
+adaptations:
+  - title: "The Tale of Genji"
+    director: "Kozaburo Yoshimura"
+    year: 1951
+    letterboxd: the-tale-of-genji
+    note: "A post-war adaptation that attempts to condense the massive narrative. It focuses on Genji's romances but struggles under the weight of the book's interiority. Useful for visualizing the Heian court, but the true emotional equivalents lie in the force films."
+    scenes:
+      - {division: 1, force: memory, scene: "The Emperor's grief for Kiritsubo"}
+      - {division: 9, force: fate, scene: "Lady Rokujo's living spirit"}

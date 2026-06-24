@@ -1,0 +1,112 @@
+work: journey-to-the-west
+book: 9
+title: "Chapter 9: The Mortal Vessel — Tang Sanzang's Birth and Karmic Return"
+length_minutes: 101
+principle: >
+  Score Chapter 9 as the first total turn of the narrative gravity from mythic contest to human vocation.
+  The Buddha's cosmic design is now embodied in one ordinary life: a child born with signs, a mother and
+  father whose virtue creates the conditions for pilgrimage, and a memory that predates the present body.
+  Music should not announce triumph; it should register the weight of being chosen and the discipline required
+  to remain worthy of the call.
+force_arc: [divine-intervention, revelation, law, revelation, memory, supplication, law, memory, salvation, revelation]
+dominant_force: revelation
+tracks:
+  - n: 1
+    scene: "Heaven chooses the human instrument under Guanyin's care"
+    force: divine-intervention
+    composer: Tavener
+    work: "The Protecting Veil — opening movement"
+    decision: added
+    why: >
+      Before the chapter’s human story appears, the force driving it is still cosmic and impersonal.
+      Guanyin does not invent a mission; she confirms what has already become inevitable in the
+      karmic geometry of the world. Tavener’s suspended harmony captures that pre-accidental quality.
+  - n: 2
+    scene: "Household markers — the monk is located within history"
+    force: revelation
+    composer: Pärt
+    work: "Fratres (for strings and percussion)"
+    decision: added
+    why: >
+      The text marks the vessel through signs, omens, and a convergence of conditions.
+      This is revelation as recognition, not spectacle: no single dramatic action, only a patient opening.
+      Fratres works as a minimal score for inevitability, where the motif keeps returning and
+      never quite resolves.
+  - n: 3
+    scene: "The family lineage enters as an ethical frame"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue — Contrapunctus VIII"
+    decision: added
+    why: >
+      A human vessel needs institutional and familial form. The chapter anchors Xuanzang’s destiny in
+      parentage and ritual context; this is law not as punishment but as inherited architecture.
+      Bach’s contrapuntal logic mirrors a life shaped by obligations before desire.
+  - n: 4
+    scene: "Miraculous conception and birth are narrated through signs"
+    force: revelation
+    composer: Debussy
+    work: "La cathédrale engloutie"
+    decision: added
+    why: >
+      The birth sequence is not grand in scale yet feels suspended from ordinary causality.
+      Debussy’s submerged, emerging harmonic shape mirrors the chapter’s paradox:
+      Xuanzang is ordinary enough to be born and miraculous enough to be expected by the narrative.
+  - n: 5
+    scene: "Prior-life debt surfaces as latent memory"
+    force: memory
+    composer: Fauré
+    work: "Requiem — 'In Paradisum'"
+    decision: added
+    why: >
+      The golden cicada memory is not sentimental recollection; it is the moral cost of prior negligence.
+      Fauré’s In Paradisum provides a quiet register where mercy arrives through delayed grief rather than
+      instant redemption.
+  - n: 6
+    scene: "Childhood compassion discloses the monk already forming"
+    force: supplication
+    composer: Handel
+    work: "Messiah — 'He was despised' "
+    decision: added
+    why: >
+      The chapter repeatedly shows Xuanzang responding to suffering before he has doctrinal sophistication.
+      This is supplication as practice: he serves before he can claim mastery. Handel’s line work keeps this
+      compassion direct, inward, and unspectacular.
+  - n: 7
+    scene: "Early study binds instinct to discipline"
+    force: law
+    composer: Brahms
+    work: "Piano Quartet No. 1 in G minor — II. Andante"
+    decision: added
+    why: >
+      The path to enlightenment requires learned form. Xuanzang’s education phase is repetitive, slow,
+      and structurally constraining; Brahms’s quartal movement captures that necessary shaping.
+  - n: 8
+    scene: "Dream residues of the cicada life remain unresolved"
+    force: memory
+    composer: Mahler
+    work: "Symphony No. 5 in C-sharp major — IV. Adagietto"
+    decision: added
+    why: >
+      These are not full memories of narrative scale but recurring residues that color temperament.
+      The Adagietto offers that inward, unresolved tonal memory: gentleness with weight,
+      warmth with a permanent ache.
+  - n: 9
+    scene: "Naming and ordination language fix a destiny in words"
+    force: salvation
+    composer: Arvo Pärt
+    work: "Fratres (piano and strings)"
+    decision: added
+    why: >
+      Naming creates public responsibility. "Sanzang" is more than an identity marker; it marks a task
+      that must become conduct. Pärt’s ritual repetitions turn naming into liturgical commitment.
+  - n: 10
+    scene: "The mission is now intelligible in human terms"
+    force: revelation
+    composer: Elgar
+    work: "Enigma Variations — Nimrod"
+    decision: added
+    why: >
+      The chapter closes as revelation descends from heaven into daily life: a child is now a pilgrim-in-waiting.
+      Nimrod’s broad ceremonial arc captures this hinge from private origin to public vocation without
+      forcing certainty too soon.

@@ -1,0 +1,278 @@
+# The Canterbury Tales — film companion (the FOURTH commentary system)
+# Gold-standard per studium/film/iliad.yaml. The Canterbury Tales' forces orbit comedy,
+# desire, and the metamorphosis of self through social encounter.
+#
+# The Canterbury Tales is not a collection of stories but a mirror held up to social types
+# — the Knight, Miller, Pardoner, Wife of Bath, and twenty-five others — who are simultaneously
+# products of their estates (their role in society) and disturbingly individual, alive,
+# aware of their own performance. The work is a study in metamorphosis: the journey to Canterbury
+# changes people. It is also a study in desire: each pilgrim wants something — redemption, sex,
+# money, glory — and each uses the pilgrimage as cover for that wanting. It is a comedy not of
+# jokes but of types colliding, of the social order made visible and somehow, tenderly, seen through.
+#
+# The film companion does not assemble "movies about pilgrimage" or "medieval stories." It assembles
+# the Canterbury Tales' forces given cinematic bodies: the performance of social type (Some Like It Hot,
+# The Grand Budapest Hotel), desire running beneath the surface (In the Mood for Love, Brief Encounter),
+# the sudden illumination of a life lived (Wild Strawberries), the fragility of social order (The Rules
+# of the Game), and the acceptance of death (The Seventh Seal). Each force finds its film not in
+# adaptation but in cinema's own study of how people are both their masks and something truer underneath.
+#
+# Every force tag is a key of dominant-force.yaml; every object of object-taxonomy.yaml.
+work: canterbury-tales
+title: "The Canterbury Tales — a cinema of social type, desire, and the human comedy"
+principle: >
+  Do not assemble a "movies about the Canterbury Tales" list. Assemble the poem's FORCES given
+  cinematic bodies. The Canterbury Tales is not primarily a narrative collection; it is the study
+  of social types — people rendered first as their estate (Knight, Miller, Pardoner, Wife of Bath)
+  and then as disturbingly alive human beings underneath that performance. Book 1 (the General
+  Prologue) is not introduction but metamorphosis: twenty-nine strangers gathering by chance in
+  spring, each of them changing by the act of being witnessed, by the act of speaking. The dominant
+  motion is the collision of desire with social order — the Wife of Bath's sexuality against marriage
+  law, the Pardoner's greed dressed as piety, the Knight's idealized virtue containing violence.
+  The comedy is neither mockery nor decoration; it IS the argument. Chaucer loves his pilgrims the
+  way a naturalist loves specimens: with precision, affection, and a steady refusal to condescend.
+  The fitting films are therefore not medieval epics but studies in social performance: Renoir's
+  rendering of French society as a machine that destroys the individuals inside it, Anderson's
+  hotel as a microcosm of service and desire, Wilder's comedy as the most serious art (identity is
+  a costume and it changes everything), Wong Kar-wai's lovers separated by space and social form,
+  Bergman's old man and the Reaper encountering the people he has known. The literal adaptation
+  is set aside; the force-companion carries the weight.
+force_coverage: [comedy, desire, memory, metamorphosis, law]
+films:
+  - title: "The Rules of the Game"
+    director: "Jean Renoir"
+    year: 1939
+    force: comedy
+    divisions: [1, 5, 11, 18, 22]
+    objects: [gun, mirror]
+    letterboxd: the-rules-of-the-game
+    scene_or_theme: "The entire frame of social order — the rules that govern who can speak to whom, how desire circulates through hierarchy, the collision of class and individual"
+    object_lesson: >
+      Comedy is the crystalline form of social order made visible. Renoir's film opens at an
+      aristocratic estate and reveals it as a machine: every character follows a rule (the rule
+      that permits desire, the rule that forbids it, the rule that demands silence). The gun
+      appears twice and kills the wrong man — a perfect emblem of how rules generate chaos they
+      cannot control. The mirror in Schumacher's room is the object lesson: people seeing themselves
+      as their role, then seeing something else. The Canterbury Tales' General Prologue is exactly
+      this: Chaucer presents the Knight as the type of knighthood, then shows the Knight's actual
+      gentleness, then reveals that gentleness as a form of violence. The wife of Bath is the wife
+      of marriage, then is the woman wanting sex, then is the woman wanting authority. Each is both
+      and neither. Renoir's film is the perfect register for Chaucer's double vision: social comedy
+      as the truest thing.
+    why: >
+      The Rules of the Game is cinema's greatest essay on social type and desire. Every character
+      is positioned by their role (master, servant, lover, wife), and every character transgresses
+      that position. The hunting scene is a massacre disguised as sport — the order of the estate
+      breaking down into violence dressed as game. It is Chaucer's General Prologue: types in a
+      machine, speaking, desiring, colliding. The film is a tragedy about comedy; the Canterbury
+      Tales is a comedy that contains tragedy. Both refuse to let you choose a side.
+    content_note: "French with English subtitles; a game of desire and infidelity; complex ensemble, nearly 2 hours"
+  - title: "Some Like It Hot"
+    director: "Billy Wilder"
+    year: 1959
+    force: desire
+    divisions: [3, 6, 20]
+    objects: [dress]
+    letterboxd: some-like-it-hot
+    scene_or_theme: "Desire masked by social costume — the self hidden, revealed, and transformed by the performance"
+    object_lesson: >
+      Desire is the thing you want that your social role forbids. In Wilder's film, two men fleeing
+      gangsters put on dresses to hide, and the dresses reveal something more true than the men's
+      original identity. The dress is the object lesson: a costume that is paradoxically the most
+      honest thing. Sugar Kane desires a millionaire but can only find her desire when speaking to
+      someone she thinks is rich. Joe desires Sugar but can only express it under the false name
+      Josephine. The Canterbury Tales' Wife of Bath is the perfect precedent: she has been married
+      five times and desires to speak authority over her own sexuality, so she speaks that desire
+      as rebellion against the estate-system that claims to own her body. She is in costume (the
+      pilgrim, the wife, the penitent) and the costume is the truth. Wilder's comedy knows this:
+      identity is not revealed by stripping away the mask; it is revealed through the mask.
+    why: >
+      Some Like It Hot is Wilder's masterwork about how desire lives through the self that denies
+      it, how a costume is not a lie but a permission. The film is outrageously funny and completely
+      serious: I'm a girl, I'm a boy, I'm a millionaire, I'm nobody, I'm exactly who I said I wasn't.
+      It is the Register perfect for desire as Chaucer means it: not sentiment but force, not
+      expression but pressure. The Canterbury Tales' pilgrims are all in costume and all desiring
+      something their costume is supposed to prevent. Some Like It Hot knows that the costume is
+      the pilgrimage, the performance is the destination.
+    content_note: "screwball comedy, tight pacing; drag performance integral to the plot and comedy; some dated gender humor"
+  - title: "The Grand Budapest Hotel"
+    director: "Wes Anderson"
+    year: 2014
+    force: comedy
+    divisions: [2, 9, 12, 19, 24]
+    objects: [door, mirror]
+    letterboxd: the-grand-budapest-hotel
+    scene_or_theme: "The comedy of service and hierarchy — types performing their place in an ornate system, order and chaos colliding"
+    object_lesson: >
+      Comedy is the geometry of social hierarchy made symmetrical and then broken. Anderson's hotel
+      is a perfect machine: every employee knows their function, every guest knows their role, every
+      color and line is in place. It is Chaucer's Tabard Inn: a space where types gather and a space
+      where order is constantly about to collapse. The door is the object lesson: the Grand Budapest's
+      doors open and close with precision, permitting and forbidding passage through hierarchies that
+      are both absolute and absurd. The mirror shows each character in their role — the concierge,
+      the lobby boy — and then Anderson tilts the mirror to show the person underneath. The Canterbury
+      Tales' Miller is a type (the buffoon, the teller of ribald tales) and also a man. Chaucer holds
+      both at once. So does Anderson: M. Gustave is perfectly performing the role of concierge and
+      is also completely, desperately himself. The film's form — nested stories, declining sizes,
+      the past tense — is Chaucer's form: a man telling a man who heard a story that he is telling
+      a story. It is comedy as the truest medium for the double vision.
+    why: >
+      The Grand Budapest Hotel is Anderson's most directly Chaucerian film: a portrait gallery of
+      types (each carefully symmetrical and completely alive), a story about how order contains chaos,
+      a meditation on how we perform our roles and become those roles. Gustave and Zero are the
+      Knight and the Page; the hotel is the Tabard; the wars outside are the social forces that will
+      transform everyone. The film is built of nested stories and precise symmetries, but the content
+      is loss, displacement, and the tenderness of service. It is exactly Chaucer's register.
+    content_note: "stylized, symmetrical composition; deaths and violence; political upheaval offscreen; multiple timelines"
+  - title: "In the Mood for Love"
+    director: "Wong Kar-wai"
+    year: 2000
+    force: desire
+    divisions: [7, 10, 15, 21]
+    objects: [cigarette, door, mirror]
+    letterboxd: in-the-mood-for-love
+    scene_or_theme: "Desire deferred and constrained by social form — longing that circulates through the space between two people and never touches"
+    object_lesson: >
+      Desire is the absence that defines presence. In Wong's film, two neighbors discover their
+      spouses are having an affair; they decide to re-enact the affair to understand it, and in
+      doing so, become each other's desire — which they then refuse to consummate. The cigarette
+      is the object lesson: a wisp of smoke between two people, connection that is not touch. The
+      door is the second object: every scene is a threshold — entering a room, leaving a room, the
+      space where meeting is possible and never happens. The mirror shows them both, never quite
+      together. The Canterbury Tales understands this: desire in the General Prologue is the spring
+      that sends people toward Canterbury, but the actual motion is constantly deferred — every tale
+      is a detour from desire's expression. The Wife of Bath speaks of desire; the Merchant's tale
+      enacts it; the Franklin's tale circles it. In each case, desire is the force that moves the
+      poem and the force most carefully managed by social form. Wong's film is the perfect register:
+      chromatic longing, deferred resolution, the knowledge that the closest two people get is the
+      space between them.
+    why: >
+      In the Mood for Love is cinema's most perfectly rendered meditation on desire as social
+      constraint. The film's entire form is the form of desire: sustained, repetitive, escalating,
+      never released. Chow Mo-wan and So Kam-wan are the Prologue's pilgrims: seen across distances,
+      known through the space between them, speaking to each other across rooms. Every hallway is
+      the road to Canterbury; every elevator is a threshold; every button never pressed is the word
+      never spoken. The film knows that desire is most itself when most constrained, that longing
+      is the entire content when consummation is forbidden.
+    content_note: "slow, contemplative; color-saturated; minimal dialogue; Cantonese with English subtitles; about infidelity and its borders"
+  - title: "Brief Encounter"
+    director: "David Lean"
+    year: 1945
+    force: desire
+    divisions: [4, 8, 14, 16]
+    objects: [cigarette, mirror, door]
+    letterboxd: brief-encounter
+    scene_or_theme: "Desire as social transgression — the meeting of two people across the boundary that must not be crossed"
+    object_lesson: >
+      Desire is the thing you want and the thing your life forbids. Lean's film is Chaucer's
+      Merchant's tale compressed to its essence: two married people meet by chance (at a railway
+      junction instead of the Tabard Inn), and a desire emerges that cannot be expressed without
+      destroying the lives they have built. The mirror in the refreshment room is the object lesson:
+      Celia Johnson's reflection shows the woman she is (married, mother, respectable) and the woman
+      she wants to be (free, passionate, unfaithful). The cigarette is the second object: Alec Harvey
+      smoking, the small action that makes him present, the thing Celia's husband never does. The door
+      is the third: every meeting is a threshold; every goodbye is a closing. The Canterbury Tales'
+      Merchant describes marriage as a prison; the Knight's tale describes desire as the force that
+      destabilizes everything; the Wife of Bath describes desire as the right that marriage should
+      grant. Lean's film is the perfect register: chromatic longing constrained by social form, the
+      knowledge that the most intense desire is the desire that must remain unexpressed.
+    why: >
+      Brief Encounter is the film version of the Merchant's tale: two people meeting in a social
+      space, discovering desire, discovering that desire cannot be lived. The film is built on the
+      impossibility of touch, on meetings that are always in public, on words that must be careful.
+      It is Chaucer's register exactly: the full consciousness of the desire and the full refusal to
+      act on it. The final scene — Celia returning to her husband and his complete unawareness of
+      what has happened — is the perfect image for how desire operates in social form: it has happened,
+      it changes everything, and no one can ever know.
+    content_note: "English cinema; restrained emotions, enormous intensity; suburban repression; black-and-white; orchestral romanticism"
+  - title: "Wild Strawberries"
+    director: "Ingmar Bergman"
+    year: 1957
+    force: memory
+    divisions: [17, 18, 23]
+    objects: [mirror, door, cigarette]
+    letterboxd: wild-strawberries
+    scene_or_theme: "Memory as the meeting of the self and the people one has known — the parade of types that make a life"
+    object_lesson: >
+      Memory is the space where the types you have known become real again. Bergman's film opens
+      with an old man driving toward his own death, and along the way, he encounters people from his
+      past — a woman he loved, a son he failed to know, a young couple on their honeymoon, the maid
+      who raised him. Each encounter is a type (the lover, the son, the young bride, the mother) and
+      also utterly individual, alive in the present even as they are remembered. The mirror is the
+      object lesson: the old man looking at his reflection and seeing the young man he was, the woman
+      he could not marry, the life he did not live. The door is the second object: every memory is a
+      doorway through which the past enters the present. The Canterbury Tales is structured as memory:
+      the narrator says "I remember these pilgrims" and in remembering them, they become alive,
+      distinct, real. Each type — the Knight, the Miller, the Pardoner — is both a social role and a
+      person who has lived, wanted, suffered, performed. Bergman's film is the perfect register for
+      memory as Chaucer means it: not sentiment but precision, not nostalgia but recognition.
+    why: >
+      Wild Strawberries is Bergman's meditation on a life as a parade of types — each person you have
+      known entering again in the space of memory, each one both less and more than they were. The old
+      man's road journey is his life condensed; each mile is a year; each encounter is a type made
+      human. It is exactly Chaucer's method: the General Prologue presents types, and then the tales
+      present the things those types contain — the Knight's tale reveals violence beneath courtesy, the
+      Miller's tale reveals desire beneath bawdiness. Bergman's film knows that memory is the only way
+      these types become real, and the only way they remain types. The old man remembering his past is
+      the narrator remembering his pilgrims.
+    content_note: "Swedish with English subtitles; an elderly man's reflection on his life; death, sexuality, failure; slow meditative pace; some disturbing dream sequences"
+  - title: "The Seventh Seal"
+    director: "Ingmar Bergman"
+    year: 1957
+    force: metamorphosis
+    divisions: [11, 13, 20, 24]
+    objects: [mirror, door]
+    letterboxd: the-seventh-seal
+    scene_or_theme: "Metamorphosis through encounter with death — the self transformed by the knowledge that it will end"
+    object_lesson: >
+      Metamorphosis is the transformation that happens when the fixed self encounters the absolute.
+      In Bergman's film, a knight returning from Crusade encounters Death personified, and the
+      encounter changes everything — his doubt becomes vivid, his faith becomes questioned, his sense
+      of self becomes permeable. The mirror is the object lesson: Antonius Block looking at his
+      reflection and seeing Death. The door is the second object: the film is structured as a series
+      of thresholds — the knight moving from one encounter to the next, each one a doorway through
+      which something essential is revealed. The Canterbury Tales' General Prologue is structured as
+      a metamorphosis: the poem begins with spring (cosmic change) and ends with the gathering of
+      pilgrims (social change). Each pilgrim will be changed by the journey, by the act of telling,
+      by the encounter with the others. They begin as types and become people. Bergman's film is the
+      perfect register: the knowledge of ending as the force that transforms the living.
+    why: >
+      The Seventh Seal is Bergman's meditation on metamorphosis as the effect of confronting death.
+      The knight's game with Death is a game where every move is a transformation — doubt, faith,
+      love, despair, all in motion, all unstable. It is Chaucer's register exactly: the knowledge that
+      you are journeying toward an end, and the end is in the journey itself. The film's opening
+      image — Death arriving during an eclipse — is the image of the spring at the start of the
+      Canterbury Tales: something absolute entering the ordinary world and changing everything it
+      touches.
+    content_note: "Swedish with English subtitles; the famous Death-as-character; existential themes; stark black-and-white cinematography; medieval plague setting"
+  - title: "12 Angry Men"
+    director: "Sidney Lumet"
+    year: 1957
+    force: law
+    divisions: [2, 12]
+    objects: [gun]
+    letterboxd: 12-angry-men
+    scene_or_theme: "Law as the form that must contain justice — the machinery of order and the people inside it"
+    object_lesson: >
+      Law is the form that society uses to make justice visible, and it often fails. Lumet's film is
+      a jury room where twelve men must decide guilt or innocence, and the decision becomes a
+      negotiation between the law (what is formally true) and justice (what is actually right). The
+      gun is the object lesson: the murder weapon, present in the room as evidence, real and
+      objective, and yet its significance keeps changing as the men understand it differently. A
+      legal object becomes a metaphor becomes a reality. The Canterbury Tales' Knight's tale is
+      structured as a legal problem: two men love one woman; the law says they cannot both have her;
+      how is the conflict resolved? The poem's form is built on legal questions: marriage law (the
+      Wife of Bath against it), theft law (the Cook's tale), sin law (the Parson's tale). Each is a
+      form trying to contain something that exceeds the form. Lumet's film is the perfect register:
+      law as a conversation about what form should govern behavior, and the knowledge that the form
+      and the behavior can never quite align.
+    why: >
+      12 Angry Men is Lumet's essay on law as the collision between the form (the legal system) and
+      the people inside it (twelve individual men with individual moral senses). The jury room is
+      like Chaucer's Tabard Inn: a space where types gather and have to negotiate a common decision.
+      The law says guilty; some men think innocent; the form must contain the disagreement and reach
+      a verdict. It is Chaucer's register exactly: the social form trying to contain the individual
+      will, and the individual will pushing against the social form. The film ends when the form
+      contains the disagreement; Chaucer's poem ends when the form breaks (the Knight interrupts the
+      Monk, the Cook interrupts the Reeve, the Pardoner and the Host nearly come to blows).
+    content_note: "black-and-white, claustrophobic single room; a jury room discussion becoming intense psychological drama; no violence shown but judicial themes throughout"

@@ -361,14 +361,13 @@ works:
     original_language: fas
     script: persian
     corpus_path: arabic-persian/shahnameh
-    original_file: persian_original_seed.txt   # proem seed (3 sections, ganjoor.net) — face resolves real Persian for the opening
+    original_file: persian_original.txt        # complete corpus; 61 cycles from ganjoor.net
     translation_files: []
     source_rails: ["https://ganjoor.net/ferdousi/shahname/"]
     main_question: "What is kingship, fate, and lineage across an age?"
     divisions: {kind: cycle, count: 50, label: "Cycle"}
     language: persian
     tier: 2
-    corpus_seed_only: true   # opening proem present; deeper cycles await full fetch (backlog: studium-corpus-shahnameh)
     order_indices: {chronological: 13.5, western_eastern: "M2", interleaved_phase: "III. Renaissance"}
 
   # ── TIER 2 — "After the First Pass" (his spec §57) ──────────────────────────

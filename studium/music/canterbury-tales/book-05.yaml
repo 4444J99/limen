@@ -1,0 +1,135 @@
+# Canterbury Tales — The Cook's Tale: appetite, show, and collapse
+work: canterbury-tales
+book: 5
+title: "Canterbury Tales — The Cook's Tale: appetite, vanity, and collapse"
+length_minutes: 64
+principle: >
+  Do not score the Cook's Tale as a complete comedy. Score it as a social fracture:
+  a young man is briefly lifted into fashionable appetite, then loses the social grammar
+  that made his rise feel real. The dominant force is desire under pressure, with law
+  and fate arriving too late to stabilize him.
+force_arc: [comedy, law, desire, desire, law, desire, wrath, exile, fate, grief, law]
+dominant_force: desire
+tracks:
+  - n: 1
+    scene: "The Cook takes the floor and the company braces for the low register"
+    force: comedy
+    composer: Rossini
+    work: "Il barbiere di Siviglia — Overture"
+    decision: added
+    why: >
+      The Cook follows the Reeve with a tonal drop into tavern sociality. Rossini gives
+      a quick, theatrical opening that maps a tale told not from lofty ethics but from
+      appetite and performance. This is the register where the contest goes from courtly
+      to improvised, and the comedy is no longer gentle.
+
+  - n: 2
+    scene: "The Cook frames the apprentice as a respectable social project"
+    force: law
+    composer: Bach
+    work: "Art of Fugue — Contrapunctus 14"
+    decision: added
+    why: >
+      Even a bawdy tale is introduced by a social contract. The apprentice is introduced
+      through role, contract, and order: this is social law, even before indulgence takes
+      over. Bach's counterpoint fits this: every motion begins with formal relations.
+
+  - n: 3
+    scene: "Perkyn rises through craft and quickly learns the grammar of display"
+    force: desire
+    composer: Monteverdi
+    work: "L'Orfeo — Sinfonia (Act I)"
+    decision: added
+    why: >
+      The tale's first promise is artistic and social upward mobility. Monteverdi's
+      sinfonia moves from composure into ornamented momentum, like craft itself becoming
+      a way of being seen. Perkyn's rise is not yet collapse; it is the polished first
+      step of desire.
+
+  - n: 4
+    scene: "Food, cloth, and social vanity become performance"
+    force: desire
+    composer: Dvořák
+    work: "Symphony No. 9 in E minor — 'From the New World': I. Allegro"
+    decision: added
+    why: >
+      Desire in this tale is not abstract; it is textile, posture, and appetite.
+      Dvořák's first movement gives outward energy and emotional acceleration, the
+      mood of someone who has learned how to borrow prestige from spectacle.
+
+  - n: 5
+    scene: "Marriage becomes a public contract, not a private promise"
+    force: law
+    composer: Handel
+    work: "Water Music Suite No. 1 in F major — Hornpipe"
+    decision: added
+    why: >
+      The Cook's Tale is one of social contract and social embarrassment. The Hornpipe's
+      ceremonial motion gives the wedding register a false sense of completion. It sounds
+      like law even as the story has begun to escape it.
+
+  - n: 6
+    scene: "The household economy begins to drift under appetite"
+    force: desire
+    composer: Debussy
+    work: "Prélude à l'après-midi d'un faune"
+    decision: added
+    why: >
+      Desire is no longer elegant and now turns repetitive. Debussy's faune is sensual
+      without restraint and can move beautifully right up to fatigue. That is the register
+      of appetite becoming habit.
+
+  - n: 7
+    scene: "Pride turns from showmanship into social injury"
+    force: wrath
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    decision: added
+    why: >
+      The poem's comic violence is often mechanical. Beethoven's famous propulsion
+      gives Perkyn's overreach a harsher edge: not private rage, but social energy with no
+      stable object, moving as if consequence were optional.
+
+  - n: 8
+    scene: "Perkyn loses place, place loses face, place becomes exile"
+    force: exile
+    composer: Brahms
+    work: "Symphony No. 4 — I. Allegro non troppo"
+    decision: added
+    why: >
+      What happens after overindulgence is often quiet and administrative: removal from the
+      room. Brahms carries displacement without loudness. This is the story after the music
+      got too fast.
+
+  - n: 9
+    scene: "The abrupt break: the narrative is interrupted and the social form snaps"
+    force: fate
+    composer: Tchaikovsky
+    work: "Piano Concerto No. 1 in B-flat minor — I"
+    decision: added
+    why: >
+      The Cook's Tale breaks in the middle, and the force here is not catharsis.
+      Tchaikovsky's opening surge is forceful and uncontainable, matching a narrative that
+      cannot settle itself into completion.
+
+  - n: 10
+    scene: "The company absorbs loss where the tale cannot continue"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    decision: added
+    why: >
+      Unfinishedness produces a specific grief: not mourning an event, but mourning an
+      absent continuation. Mahler's inward movement keeps the frame open; it does not close
+      the tale, it records what a truncated life looks like in social terms.
+
+  - n: 11
+    scene: "The Host restores procedure and the game moves forward"
+    force: law
+    composer: Handel
+    work: "Music for the Royal Fireworks — Overture"
+    decision: added
+    why: >
+      The frame does the final repair. A fragmentary tale always leaves a debt.
+      Handel's ceremonial shape reintroduces order without pretending that the Cook's
+      register was ever fully repaired.

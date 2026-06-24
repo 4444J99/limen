@@ -1,0 +1,127 @@
+# Tao Te Ching — Chapter 4 — curated music arc
+# The Tao as an inexhaustible well from which all things flow, yet it never empties.
+# Score this as the discovery of unfathomable depth and endless generosity.
+work: tao-te-ching
+book: 4
+title: "Tao Te Ching Chapter 4: The Inexhaustible Well"
+length_minutes: 55
+principle: >
+  Chapter 4 returns to the image of the Tao as a well (or abyss) from which all things flow, yet
+  it itself never empties. The text describes it as 'a vessel that is never full, ever being used,
+  it grows not old; like a deep abyss.' This chapter is about inexhaustibility — not because the
+  well is infinite in space but because its nature is to flow without diminishment. The music must
+  embody this quality: a source that gives and gives without depletion, a depth that is not darkness
+  but luminous emptiness. The arc begins with the discovery of depth, traces through the paradox of
+  generosity without loss, and culminates in the recognition that the source is always present
+  because it was never exhausted.
+force_arc: [revelation, law, metamorphosis, memory, ascent, revelation, memory, metamorphosis, law, ascent]
+dominant_force: revelation
+tracks:
+  - n: 1
+    scene: "The discovery of unfathomable depth"
+    force: revelation
+    composer: Olivier Messiaen
+    work: "Quartet for the End of Time — 'Liturgie de cristal' (Crystal Liturgy)"
+    decision: added
+    why: >
+      Messiaen's opening of the Quartet places the listener in a space beyond time, at the threshold
+      of the abyss. The clarity of the opening gesture (piano and viola repeating the same motif while
+      cello and clarinet move in complementary rhythms) reveals depth without darkness — luminous
+      emptiness that is the Tao itself.
+  - n: 2
+    scene: "The architecture of that depth: order within boundlessness"
+    force: law
+    composer: Johann Sebastian Bach
+    work: "Goldberg Variations — Aria"
+    decision: added
+    why: >
+      Bach's Aria opens the Goldberg Variations with perfect simplicity: a theme of mathematical
+      elegance from which infinite variations will emerge without exhausting it. This is the well's
+      infinite architecture — order not imposed but inherent, structure that generates without
+      diminishment.
+  - n: 3
+    scene: "The flowing forth: from the well, all things emerge endlessly"
+    force: metamorphosis
+    composer: Robert Schumann
+    work: "Kinderszenen — 'Träumerei' (Dreaming)"
+    decision: added
+    why: >
+      Schumann's piece embodies the quality of emergence: gentle, natural, unforced. Things arise
+      from the well as dreams arise from sleep — endlessly, without effort, without exhaustion. The
+      piece flows without narrative, without destination, pure unfolding.
+  - n: 4
+    scene: "Time does not diminish the source; it is eternally present"
+    force: memory
+    composer: Samuel Barber
+    work: "Knoxville: Summer of 1915 — opening"
+    decision: added
+    why: >
+      Barber's setting of James Agee's prose captures the eternal present held within time. The well
+      is not outside time but within it, not threatened by duration but renewed by it. Memory here
+      becomes the recognition of eternal return, the present moment always fresh from the source.
+  - n: 5
+    scene: "The ascent of all beings, each drinking, none depleting"
+    force: ascent
+    composer: Maurice Ravel
+    work: "Le Gibet (The Gallows, from Gaspard de la Nuit)"
+    decision: added
+    why: >
+      Ravel's piece, with its obsessive repetition of a single note above changing harmonies, captures
+      the paradox: the note (the well) remains constant while everything around it transforms. All
+      beings rise from the well, yet the well is untouched. The suspended register captures the
+      eternal ascent.
+  - n: 6
+    scene: "Deepening awareness: the source is not mystical but actual"
+    force: revelation
+    composer: John Tavener
+    work: "The Protecting Veil — opening"
+    decision: added
+    why: >
+      Tavener's work opens with the revelation that the source is here, now, actual. Not an idea of
+      the well but the well itself, audible in the simplicity and depth of the opening gesture. The
+      voice carries the revelation without commentary — this is the direct apprehension of the source.
+  - n: 7
+    scene: "The well itself does not age; it is untouched by use"
+    force: memory
+    composer: Erik Satie
+    work: "Gnossienne No. 1"
+    decision: added
+    why: >
+      Satie's hypnotic piece, with its unchanging bass and slowly shifting upper voice, embodies the
+      paradox of eternal youth within time. The well is ancient and always new, worn smooth by use
+      yet never diminished. Memory here is the recognition of the eternal constant beneath change.
+  - n: 8
+    scene: "The paradox made audible: giving is receiving"
+    force: metamorphosis
+    composer: Claude Debussy
+    work: "Voiles (Sails, from Preludes Book I)"
+    decision: added
+    why: >
+      Debussy's piece moves like water, taking the shape of each moment without grasping it.
+      The whole-tone scale creates a sense of floating, of receiving without holding, giving without
+      loss. This is the well's characteristic behavior made audible.
+  - n: 9
+    scene: "Return to silence: the well rests, fathomless"
+    force: law
+    composer: Anton Bruckner
+    work: "Symphony No. 9 — Adagio"
+    decision: added
+    why: >
+      Bruckner's final Adagio (left incomplete at his death) returns to the profound silence from
+      which all emerges. The architecture is intact, the law is revealed, yet the work opens onto
+      mystery. The well is accessible through rest, through ceasing to demand.
+  - n: 10
+    scene: "Coda: ascent and descent are the same journey"
+    force: ascent
+    composer: Arvo Pärt
+    work: "Fratres (string quartet version)"
+    decision: added
+    why: >
+      We return to the cycling form, but now understood as the circulation of the well: down to the
+      source, up to the surface, down again. There is no distinction between ascent and descent
+      because both are part of the same flow from the inexhaustible source.
+demoted:
+  - composer: Richard Strauss
+    work: "Thus Spoke Zarathustra — 'Sunrise'"
+    status: "removed; save for chapters on will and power"
+    why: "Strauss's apotheosis belongs to later chapters where the human will is fully activated. Chapter 4 is the source before will, the ground before emergence."

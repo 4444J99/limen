@@ -1,0 +1,72 @@
+# Divine Comedy — Inferno, Canto 4 — curated music arc
+# Gold-standard form matching studium/music/iliad/book-01.yaml
+work: divine-comedy
+book: 4
+title: 'Inferno, Canto IV: Limbo'
+length_minutes: 60
+principle: Limbo is characterized by 'desire without hope.' It is not a place of torment,
+  but of an immense, dignified sorrow. The music must reflect the noble melancholy
+  of the virtuous pagans.
+force_arc:
+- fate
+- grief
+- law
+- memory
+- revelation
+- exile
+dominant_force: grief
+tracks:
+- n: 1
+  scene: Waking on the brink
+  force: fate
+  composer: Verdi
+  work: "La forza del destino \u2014 Overture"
+  decision: added
+  why: Dante wakes to thunder and finds himself on the edge of the abyss. The hammered
+    insistence of Verdi's opening establishes the absolute reality of his descent
+    into the underworld.
+- n: 2
+  scene: The sighs of the unbaptized
+  force: grief
+  composer: Mahler
+  work: "Symphony No. 5 \u2014 Adagietto"
+  decision: added
+  why: Limbo echoes with sighs, not wails. The slow, inward line of Mahler's Adagietto
+    captures the vast, quiet sorrow of those who are suspended forever in unfulfilled
+    longing.
+- n: 3
+  scene: The noble castle
+  force: law
+  composer: Bach
+  work: "The Art of Fugue \u2014 Contrapunctus 1"
+  decision: added
+  why: The castle of the great pagans is an island of light and reason in the dark.
+    Bach's formal clarity and perfect architecture represent the highest achievements
+    of human intellect without divine grace.
+- n: 4
+  scene: The great poets
+  force: memory
+  composer: Elgar
+  work: "Enigma Variations \u2014 'Nimrod'"
+  decision: added
+  why: Homer, Horace, Ovid, and Lucan welcome Virgil back. Elgar's nostalgic, expansive
+    recall perfectly scores this meeting of minds, full of dignity and the shared
+    memory of greatness.
+- n: 5
+  scene: The philosophers
+  force: revelation
+  composer: Tavener
+  work: The Protecting Veil
+  decision: added
+  why: Aristotle, Socrates, and Plato sit in the green enamel. Tavener's stillness
+    and verticality reflect the contemplation of truth, the closest the pagan mind
+    can come to heavenly light.
+- n: 6
+  scene: Departure into darkness
+  force: exile
+  composer: Vaughan Williams
+  work: Fantasia on a Theme by Thomas Tallis
+  decision: added
+  why: Dante and Virgil leave the light of the castle and return to the dark, wandering
+    path. The open intervals and ancient, haunting tonality signify their exit back
+    into the true exile of Hell.

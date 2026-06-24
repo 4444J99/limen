@@ -1,0 +1,83 @@
+# Divine Comedy — Inferno, Canto 14 — curated music arc
+work: divine-comedy
+book: 14
+title: "Inferno, Canto 14: The Blasphemers' Plain"
+length_minutes: 78
+principle: >
+  Canto 14 is the first sustained passage through the middle of the seventh circle:
+  the heat itself becomes an argument. Dante and Virgil move across a plain
+  where punishment is less person-by-person than system-wide. The canto becomes a
+  cartography of causality: one famous sinner speaks to the violence of pride, and
+  then the architecture of Hell itself is explained in terms of ages, metals,
+  and rivers. The dominant register is not private grief but the political
+  theology of retribution, where wrath, cosmic law, and the exhaustion of
+  self-will meet.
+force_arc: [wrath, wrath, revelation, law, fate, fate]
+dominant_force: wrath
+tracks:
+  - n: 1
+    scene: "Dante and Virgil begin crossing the burning sandy plain"
+    force: wrath
+    composer: Stravinsky
+    work: "The Rite of Spring — 'The Augurs of Spring' (opening)"
+    decision: added
+    why: >
+      The plain of burning sand is relentless motion and interruption: the souls cannot
+      simply pass through it, but are continually marked by an impersonal pressure.
+      Stravinsky's driving repetitions make this movement feel both ritual and
+      punitive, matching the canto's insistence that this violence is now part of the
+      landscape.
+  - n: 2
+    scene: "Capaneus' statue and his impossible defiance"
+    force: wrath
+    composer: Wagner
+    work: "Das Rheingold — Prelude"
+    decision: added
+    why: >
+      Dante identifies Capaneus, whose defiant curses are the pure form of the canto's
+      politics: the self-justifying fury of pride that survives humiliation by naming
+      itself invincible. Wagner's submerged brass-and-chord architecture in the opening
+      of the *Rheingold* turns this boastful violence into something almost cosmic:
+      a force that shatters itself against the structure that already contains it.
+  - n: 3
+    scene: "Virgil recounts the four Rivers of Hell"
+    force: revelation
+    composer: Pärt
+    work: "Passio — Agnus Dei"
+    decision: added
+    why: >
+      The canto pivots from encounter to exposition. What looked random becomes
+      structured. Pärt's concentrated choral lines are aural exposition: still,
+      severe, unornamented, and explanatory. The shift here is not away from music's
+      drama but toward an intellectual register in which order itself is revealed.
+  - n: 4
+    scene: "Saturn's hidden child and the age-stratified statue"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue — Contrapunctus XIV, opening"
+    decision: added
+    why: >
+      Virgil's description of the statue and the ages converts myth into legal history.
+      Bach's Contrapunctus XIV is the right kind of explanation: form itself is the
+      proposition. Here, architecture and law are inseparable; each age, each metal,
+      each sin has its assigned position in a system.
+  - n: 5
+    scene: "The channel from the suicides and Phlegethon blood current"
+    force: fate
+    composer: Verdi
+    work: "La forza del destino — III. Scene"
+    decision: added
+    why: >
+      Dante sees the river of boiling blood as a flow of consequence, not of choice.
+      Verdi's fifth-act machinery of return and response suits this transition to
+      the deeper mechanics of retribution.
+  - n: 6
+    scene: "Preparing to descend toward the next ring of violence"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 in C minor — I. Allegro con brio"
+    decision: added
+    why: >
+      By the end of the canto, theological explanation hardens into inevitability. The
+      motif-like inevitability of Beethoven's famous opening is not an individual rage;
+      it is the onward pressure of the descent itself.

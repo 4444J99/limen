@@ -1,0 +1,96 @@
+# Divine Comedy — Inferno, Canto 8 — curated music arc
+work: divine-comedy
+book: 8
+title: "Inferno, Canto VIII: The Furies and the City of Dis — Demonic Obstruction"
+length_minutes: 75
+principle: >
+  Canto VIII is the moment where external punishment gives way to active demonic
+  resistance. The gates of the City of Dis are barred. The pilgrims are stopped.
+  Virgil, for the first time, shows hesitation. The Furies shriek from the towers;
+  Medusa threatens from beyond the walls. This is the threshold between incontinence
+  and malice, and Hell itself will not permit easy passage. The register is escalating
+  wrath, mounting threat, and the waiting for grace that is not yet manifest.
+force_arc: [wrath, wrath, revelation, divine-intervention, wrath, law, fate]
+dominant_force: wrath
+tracks:
+  - n: 1
+    scene: "Filippo Argenti — personal enmity on the marsh"
+    force: wrath
+    composer: Holst
+    work: "The Planets — Mars, the Bringer of War"
+    decision: added
+    why: >
+      A wrathful soul, Filippo Argenti, recognizes Dante and curses him with all the fury
+      of personal enmity. His rage is not institutional but personal, a reflection of worldly
+      hatred crystallized into eternal combat. Holst's Mars embodies this asymmetrical,
+      forward-pressing hostility.
+  - n: 2
+    scene: "Dante's own wrath — the pilgrim's anger flares"
+    force: wrath
+    composer: Wagner
+    work: "Die Walküre — Ride of the Valkyries"
+    decision: added
+    why: >
+      For the first time in the poem, Dante himself is moved to wrath. Virgil praises this
+      moment, suggesting that righteous anger is a virtue. But the music—Wagner's Valkyries—
+      shows that Dante's wrath, however justified, remains wrath: aggressive, forward-driving,
+      potentially destructive. Even virtue moves through passion.
+  - n: 3
+    scene: "The City of Dis revealed — towers aflame, gates barred"
+    force: revelation
+    composer: Messiaen
+    work: "L'Ascension — II. Alléluia sur la trompette, Alléluia sur la cornemuse"
+    decision: added
+    why: >
+      The City of Dis appears in sudden radiance and terror—a revelation of the architecture
+      of Hell itself. Messiaen's sudden color-shift and orchestral brilliance capture the
+      moment where the abstract machinery of punishment becomes a visible, burning fortress.
+      The revelation is both beautiful and dreadful.
+  - n: 4
+    scene: "The Furies howl from the towers — blocking passage"
+    force: divine-intervention
+    composer: Tarkovsky/Stalker aesthetic — Pärt
+    work: "Cantus in Memoriam Benjamin Britten"
+    decision: added
+    why: >
+      The Furies—Alecto, Megaera, Tisiphone—shriek from the walls, and Medusa threatens
+      beyond them. The pilgrims are stopped. Virgil's authority, which has sufficed until
+      now, reaches its limit. The music must convey waiting, threshold, the moment before
+      grace arrives. Pärt's vertical stillness is the music of standing at the boundary,
+      awaiting authorization from above.
+  - n: 5
+    scene: "Virgil's hesitation — the guide's first doubt"
+    force: wrath
+    composer: Shostakovich
+    work: "String Quartet No. 8 — III. Allegro non troppo"
+    decision: added
+    why: >
+      Virgil hesitates, and for the first time in the poem, the pilgrim feels doubt in his
+      guide. Virgil's confidence is shaken by demonic resistance. The wrath here is internal—
+      the grinding frustration of a guide who has lost his authority.
+  - n: 6
+    scene: "The demonic hierarchy — organized rebellion against grace"
+    force: law
+    composer: Stravinsky
+    work: "Symphony of Psalms — III. Laudate Dominum"
+    decision: added
+    why: >
+      The gates of the City are not a natural barrier; they are organized by demonic will,
+      a structured rebellion against the possibility of grace. Stravinsky's rigid,
+      architectural, almost mechanical structure captures the cold logic of Hell's governance.
+  - n: 7
+    scene: "The messenger awaited — grace not yet manifest"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 in C minor — IV. Allegro (opening gesture)"
+    decision: added
+    why: >
+      The canto ends in suspension, awaiting the arrival of grace. The opening motif of the
+      Fifth—brief, forceful, announcing something necessary—signals that deliverance is
+      prepared, though not yet arrived. Fate hammers; the breakthrough is imminent.
+demoted:
+  - composer: Debussy
+    work: "Prélude à l'après-midi d'un faune"
+    status: "removed from Canto VIII; save for the kiss (Canto V)"
+    why: "Sensuous beauty has no place at the gates of Hell. Canto VIII requires menace and
+      the waiting for grace."

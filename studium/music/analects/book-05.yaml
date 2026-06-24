@@ -1,0 +1,446 @@
+# Analects — Book V — curated music arc
+# 公冶長 Gongye Chang — "Gongye Chang"
+# Score the actual movement of the 28 chapters — not "Confucius's opinions on his disciples."
+# Book V is a portrait gallery: Confucius evaluates his students, their qualities and their
+# limits, and in doing so reveals what he values in a human being. The book is not about
+# who is good or bad but about what it means to evaluate — how the Master sees character,
+# where he draws the line between strength and excess, what he will not judge.
+work: analects
+book: 5
+title: "Analects Book V: The Character of Others, the Limit of Judgment"
+length_minutes: 80
+principle: >
+  Do not score Book V as "grading the disciples." Score it as a sustained act of character
+  discernment conducted by a man who knows that the final judgment belongs to heaven, not
+  to him. The book opens with a question: is Gongye Chang marriageable? — and the answer is
+  yes, even though he was once in prison. This is the key: the Master sees past circumstance
+  to substance. The book then moves through a series of evaluations — each disciple praised
+  with precision, each limitation noted without condemnation — until the closing chapters
+  where Confucius himself refuses to claim the virtue of benevolence or wisdom for his own
+  person. The force arc is memory: not the memory of the past but the memory of character,
+  the capacity to read the accumulated evidence of a person's life and discern where the
+  thread of virtue runs through it.
+force_arc: [memory, memory, memory, law, memory, sacrifice, memory, memory, return, memory, memory, grief, memory, memory, comedy, memory, return, return, memory, desire, memory, law, memory, law, memory, memory, grief, memory]
+dominant_force: memory
+tracks:
+  - n: 1
+    scene: "Gongye Chang — marrying the worthy prisoner"
+    force: memory
+    composer: Mozart
+    work: "Eine kleine Nachtmusik, K. 525 — II. Romance (Andante)"
+    decision: added
+    why: >
+      "公冶長可妻也" — Gongye Chang can be married to my daughter. The opening is a choice
+      that reveals the Master's method: he judges by substance, not reputation. The prisoner
+      is worthy of alliance. Mozart's Romance is measured, gracious, and quietly decisive —
+      it makes its judgment without fanfare, the way a person who can read character chooses
+      a son-in-law. Memory is already operative here: the accumulated evidence of Gongye
+      Chang's days in prison is the only relevant data; his reputation is nothing.
+  - n: 2
+    scene: "Nan Yung — the man of the white jade"
+    force: memory
+    composer: Haydn
+    work: "String Quartet in D minor, Op. 76 No. 2 ('Fifths') — I. Allegro"
+    decision: added
+    why: >
+      "南容三復白圭" — Nan Yung repeated the White Jade poem three times until he mastered it.
+      Confucius gives him his niece. The White Jade poem from the Odes warns: a flaw in
+      jade can be polished; a flaw in speech cannot be undone. Nan Yung's repetition of the
+      poem until it became part of him is the model of learning — and the act of giving a
+      niece confirms that this discipline is what makes a man trustworthy. Haydn's Quinten
+      Quartet (named for the falling fifths of its opening) is music built on a recurring
+      figure that sounds like a question repeated until the answer becomes inevitable. The
+      education of the self is exactly this patient repetition.
+  - n: 3
+    scene: "Zi-jian — the superior man of the south"
+    force: memory
+    composer: Schubert
+    work: "Symphony No. 5 in B-flat major, D. 485 — II. Andante con moto"
+    decision: added
+    why: >
+      "子謂子賤，君子哉若人" — the Master said of Zi-jian: a superior man indeed. And the
+      quality is not personal perfection but the fact that he gathers worthy people around
+      him. The superior man is known by his neighborhood — another return to the theme of
+      Book IV. Schubert's Fifth Symphony Andante is music of open-hearted composure — it
+      moves with a grace that is neither forced nor careless, the quality of a person who
+      has chosen his company well. The melody seems to gather its surroundings into itself
+      as it unfolds.
+  - n: 4
+    scene: "Zi-gong's modesty — measuring the Master's measure"
+    force: law
+    composer: Beethoven
+    work: "Piano Sonata No. 30 in E major, Op. 109 — II. Prestissimo"
+    decision: added
+    why: >
+      "賜也何如？子曰：『女器也。』曰：『何器也？』曰：『瑚璉也。』" — Zi-gong asks:
+      "What of me?" The Master says: "You are a vessel — a sacred jade vessel of the temple."
+      It is the highest praise for a vessel — and still, a gentleman is not a vessel. The
+      praise is real and the limit is noted in the same sentence. Beethoven's Op. 109
+      Prestissimo is explosive, compressed, brilliant — it is the sound of a sacred vessel
+      in the temple, one that is magnificent but still only usable for one thing. Law here
+      is the discrimination that sees both excellence and limitation at once.
+  - n: 5
+    scene: "Yan Hui — never mistaken twice"
+    force: memory
+    composer: Brahms
+    work: "Piano Concerto No. 2 in B-flat major, Op. 83 — II. Allegro appassionato"
+    decision: added
+    why: >
+      "回也聞一以知十" — Yan Hui: from one thing, he knows ten. This is the character of
+      the disciple Confucius loved most — not knowledge accumulated but understanding that
+      generates. Zi-gong can infer from one thing to two; Hui from one to ten. Brahms's
+      Second Piano Concerto scherzo is ferocious and densely thematic: every gesture is
+      derived from the opening, the whole movement unfolding from a single kernel. That is
+      Hui's mind: the capacity to see the ten in the one, the whole in the seed.
+  - n: 6
+    scene: "Zai Yu asleep in the daytime — the rotten wood"
+    force: sacrifice
+    composer: Stravinsky
+    work: "The Rite of Spring — Part I: 'Ritual of the Rival Tribes'"
+    decision: added
+    why: >
+      "朽木不可雕也，糞土之牆不可朽也" — rotten wood cannot be carved; a dung wall cannot
+      be plastered. Zai Yu, sleeping during the day, receives the Master's most withering
+      judgment — and yet the point is not the condemnation but the lesson: "I changed my
+      method: formerly I believed people's actions after hearing their words; now I watch
+      what they do." The judgment of Zai Yu is the occasion for epistemology. Stravinsky's
+      Ritual of the Rival Tribes is percussive, blunt, and rhythmically violent — the sound
+      of a judgment that is harsh but not personal. Sacrifice here is the offering of a
+      false expectation on the altar of reality.
+  - n: 7
+    scene: "I have never seen a man of real integrity"
+    force: memory
+    composer: Elgar
+    work: "Falstaff, Op. 68 — I. 'I know you all, and will awhile uphold the unyoked
+      humour of your idleness'"
+    decision: added
+    why: >
+      "未見剛者" — I have never seen a man of real integrity. The reply to the disciples who
+      name several candidates: they are driven by desire, and true integrity does not come
+      from desire. Elgar's Falstaff is the portrait of a man whose appetites drive him
+      — the opening of the tone poem is all swagger, roistering, the sound of a man with
+      desire at the wheel. But there is also the note of knowing melancholy: Elgar's Falstaff
+      knows his own limits. Memory in Book V is this ability to see through the performance
+      to the true quality — and to know that integrity may be rarer than we think.
+  - n: 8
+    scene: "The man of the Way — speaking, laughing, taking"
+    force: memory
+    composer: Schumann
+    work: "Humoreske in B-flat major, Op. 20 — 'Einfach'"
+    decision: added
+    why: >
+      "始吾於人也，聽其言而信其行；今吾於人也，聽其言而觀其行" — formerly I heard a man's
+      words and trusted his actions; now I hear his words and watch his actions. This is
+      the epistemological turning point of Book V: the modification of method based on
+      disillusioning experience. Schumann's Humoreske is a piece in which the composer
+      constantly shifts register — simple sections that sound trusting, interrupted by
+      more knowing passages. The "einfach" (simple) marking at the opening is the former
+      self; the complications that follow are the learning that comes from having been
+      deceived.
+  - n: 9
+    scene: "Zi-lu — fearless, discreet, the man of action"
+    force: return
+    composer: Rossini
+    work: "William Tell Overture — IV. Finale (March of the Swiss Soldiers)"
+    decision: added
+    why: >
+      "道不行，乘桴浮於海。從我者，其由與？" — when the Way does not prevail, I will take a
+      raft. Zi-lu will come with me. The affection in this line is unmistakable: Zi-lu is
+      the disciple who will follow the Master out to sea, the one whose loyalty is physical.
+      Rossini's William Tell finale is the most famous music of fearless action in the
+      repertory — but its galloping charge is tempered by the lyricism of the preceding
+      sections. The final movement is the sound of Zi-lu: impetuous, magnificent, not quite
+      knowing his own limits, but the first to follow where the Master leads. Return here
+      is the return of loyalty: the man who will always be there.
+  - n: 10
+    scene: "The three wishes of the disciples — the Master's amendment"
+    force: memory
+    composer: Mozart
+    work: "Le nozze di Figaro — 'Non più andrai'"
+    decision: added
+    why: >
+      Each disciple states his wish: Zi-lu wants to govern a state; Yan Hui wants to govern
+      without boasting; Zi-gong wants to know the Master's view. And Confucius gives his
+      own wish: to bring peace to the aged, trust among friends, and care for the young.
+      The scene is a small utopia — each voice in turn, one amendment, and a vision of
+      social harmony that is as close as Book V comes to political philosophy. Figaro's
+      "Non più andrai" is a farewell to the old order and an announcement of a better one
+      — the Count's page, Cherubino, must leave the court and become a soldier. The aria is
+      comic on the surface but serious underneath, exactly like the disciples' wishes: each
+      of them is leaving something behind.
+  - n: 11
+    scene: "Yan Hui again — the Master's regret"
+    force: memory
+    composer: Fauré
+    work: "Requiem, Op. 48 — III. Sanctus"
+    decision: added
+    why: >
+      "回也非助我者也，於吾言無所不說" — Yan Hui is no help to me: he never disagreed with
+      anything I said, and was delighted by everything. This sounds like a complaint but
+      is unmistakably fond — the recognition that some students do not need to argue because
+      they already understand. Fauré's Sanctus is a vision of complete understanding: the
+      soprano soars above the choir in a line that receives and does not question. The
+      Sanctus is the sound of perfect agreement — not because of submission but because
+      of recognition. The disciple has heard exactly what the Master meant.
+  - n: 12
+    scene: "The orphan's choice — who is wiser?"
+    force: grief
+    composer: Bach
+    work: "Violin Sonata No. 1 in G minor, BWV 1001 — I. Adagio"
+    decision: added
+    why: >
+      "顏回也其心三月不違仁，其餘則日月至焉而已矣" — Yan Hui's heart does not depart from
+      benevolence for three months; the others only reach the state for a day or a month.
+      The discrimination is not moral but temporal: the difference between those who can
+      sustain virtue and those who can only visit it. Bach's G-minor Adagio for solo violin
+      is a single line that sustains its intensity across its entire length without support
+      — it holds its shape through force of inner gravity alone. Three months of sustained
+      virtue is this kind of line: unaccompanied, unsupported, held by nothing but its own
+      form. Memory is the ability to sustain the pattern across time.
+  - n: 13
+    scene: "Zi-gong's question — how do you judge?"
+    force: memory
+    composer: Mozart
+    work: "String Quintet in G minor, K. 516 — I. Allegro"
+    decision: added
+    why: >
+      "眾惡之，必察焉；眾好之，必察焉" — if everyone dislikes a person, investigate; if
+      everyone likes a person, investigate. This is the methodological conclusion of Book V:
+      the Master judges character by investigation, not by reputation. Mozart's G-minor
+      Quintet opens with a chromatic, searching theme that seems to explore every corner
+      before arriving at judgment. The five voices interrogate each other, each presenting
+      evidence. The piece is the sound of investigation — and the pathos of knowing that
+      judgment, even when correct, is still only judgment.
+  - n: 14
+    scene: "The man of hidden virtue — carving without showing"
+    force: memory
+    composer: Brahms
+    work: "Clarinet Sonata No. 2 in E-flat major, Op. 120 No. 2 — I. Allegro amabile"
+    decision: added
+    why: >
+      "巧言、令色、足恭，左丘明恥之，丘亦恥之" — fine words, insinuating appearance,
+      excessive deference — Qiu-ming found these shameful, and so do I. The distinction
+      between genuine virtue and its performance is the book's moral center. Brahms's
+      late Clarinet Sonata is music that has no interest in appearing impressive: it is
+      autumnal, interior, its beauties available only to those who listen closely. The
+      piece is the sound of virtue that does not advertise itself — the character of the
+      man who carves without showing, who is ashamed of all performance.
+  - n: 15
+    scene: "The man of complete virtue — never attained but never abandoned"
+    force: comedy
+    composer: Haydn
+    work: "Symphony No. 82 in C major ('The Bear') — IV. Finale: Vivace"
+    decision: added
+    why: >
+      "十室之邑，必有忠信如丘者焉，不如丘之好學也" — in any village of ten houses, there
+      will be someone as loyal and trustworthy as I am — but none as fond of learning.
+      This is one of the most self-aware lines in the Analects: a claim of superiority
+      that is also a claim of limitation — the only thing the Master claims to have is
+      the discipline of learning. Haydn's Bear Symphony finale is boisterous, good-humored,
+      and utterly unpretentious — it knows exactly what it is and does not pretend to be
+      more. Comedy requires dance rhythm and good-humored exaggeration; Haydn gives the
+      sound of a man who can laugh at himself while still naming his one genuine excellence.
+  - n: 16
+    scene: "The question of perfect virtue — the Master refuses to claim it"
+    force: memory
+    composer: Bach
+    work: "Cello Suite No. 5 in C minor, BWV 1011 — Sarabande"
+    decision: added
+    why: >
+      "若聖與仁，則吾豈敢？抑為之不厭，誨人不倦" — as for sage and benevolent, how dare I
+      claim them? I only practice without tiring and teach without weariness. The disciples'
+      question about perfect virtue receives the Master's refusal: he will not name himself
+      by the highest terms, only by the daily discipline. Bach's C-minor Sarabande is the
+      most inward dance of the Cello Suites: slow, chromatic, a single line that carries
+      the weight of an entire life's practice. The opening intervals — a descending fifth
+      that sounds like a sigh — are the sound of a man who will not claim what he cannot
+      be sure of, but who has practiced every day anyway.
+  - n: 17
+    scene: "The Master's final refusal — the man who will not say he is wise"
+    force: return
+    composer: Schubert
+    work: "String Quartet No. 15 in G major, D. 887 — II. Andante un poco moto"
+    decision: added
+    why: >
+      "君子道者三，我無能焉" — the gentleman's Way has three parts — benevolence, wisdom,
+      courage — and I have none of them. The disciples report that the Master describes
+      himself: "The benevolent do not worry; the wise are not confused; the courageous
+      are not afraid." And when the disciples say these are exactly the Master's qualities,
+      he says only: "I have not yet attained them." This is the final subtlety of Book V:
+      the Master's refusal to accept the highest praise may be the surest sign that he
+      deserves it. Schubert's D. 887 Andante is music of profound stillness that moves
+      through dark and luminous harmonies as though assessing itself against an invisible
+      standard. It ends unresolved, still searching — the sound of a man who will not claim
+      what he has, and therefore has it.
+  - n: 18
+    scene: "Zi-lu's courage and the Master's compassion"
+    force: return
+    composer: Beethoven
+    work: "Piano Sonata No. 31 in A-flat major, Op. 110 — III. Adagio ma non troppo"
+    decision: added
+    why: >
+      "由也好勇過我，無所取材" — Zi-lu surpasses me in courage, but does not know how to
+      measure the material. The Master judges Zi-lu's quality and his limitation in one
+      breath — the courage is real, the judgement incomplete. Beethoven's Op. 110 Adagio
+      is music that has passed through courage into something more difficult: the recitative
+      that opens the third movement is the sound of a man who has survived his own courage
+      and is now trying to find the way back to form. Return here is the return of the
+      Master's affection: he loves Zi-lu's courage while knowing its limit. The music
+      knows the same thing about itself.
+  - n: 19
+    scene: "The man who can be entrusted with the orphan — a portrait of integrity"
+    force: memory
+    composer: Elgar
+    work: "Enigma Variations, Op. 36 — I. (C.A.E.)"
+    decision: added
+    why: >
+      "可以託六尺之孤，可以寄百里之命" — a man who can be entrusted with an orphaned child
+      and with the command of a hundred-league state — that is a superior man. The test of
+      character is not brilliance but reliability: the man who will not break when the
+      inheritance is fragile. Elgar's first Enigma Variation (his wife) is the portrait of
+      absolute trustworthiness: the theme is simple, the devotion unmistakable, the
+      variation's form the perfectly adequate vessel. Memory is the capacity to recognize
+      such a person when you see one — and to be one.
+  - n: 20
+    scene: "The man of faith — looking through to the inner person"
+    force: desire
+    composer: Ravel
+    work: "String Quartet in F major — II. Assez vif, très rythmé"
+    decision: added
+    why: >
+      "始吾聞其言而信其行，今吾聞其言而觀其行" — this is the second statement of the
+      epistemological revision in Book V, now deepened: the Master has learned to read
+      character through action, not speech. Ravel's String Quartet second movement is a
+      pizzicato scherzo that is all surface brilliance — but the harmonies underneath are
+      darker, stranger, more questioning. The surface is not what it seems; the piece is
+      exactly the distinction between speech and action that the Master has learned to make.
+      Desire here is the longing to see through to the truth of the other person.
+  - n: 21
+    scene: "The man of the Way — a man of few words"
+    force: memory
+    composer: Bach
+    work: "Partita No. 2 in D minor for solo violin, BWV 1004 — Allemande"
+    decision: added
+    why: >
+      "君子欲訥於言而敏於行" — the gentleman desires slowness of speech and swiftness of
+      action. This is the closing virtue of Book V: speech is the thing that must be
+      restrained; action is the thing that must be quick. Bach's D-minor Allemande is the
+      sound of a dancer moving through a form that requires complete presence — no time for
+      words, only the immediate responsiveness of the body. The violin speaks only in
+      motion, and the motion is the meaning. Recollection here is not memory of the past
+      but the gathered wisdom of a life that has learned to measure speech by action.
+  - n: 22
+    scene: "The Master's daily practice — the ordinary is the Way"
+    force: law
+    composer: Telemann
+    work: "Concerto for Two Flutes in E minor, TWV 52:e1 — I. Largo"
+    decision: added
+    why: >
+      "德不孤，必有鄰" — virtue is never solitary; it always has neighbors. The closing
+      chapters return to the social dimension of virtue: the person who lives the Way is
+      never alone, because the form of his life draws others. Telemann's Concerto for Two
+      Flutes is a conversation between equals: the two voices intertwine, support, answer
+      each other, neither dominating. It is the sound of virtue having neighbors — the
+      shape of a life that naturally attracts companionship because its form is generous.
+  - n: 23
+    scene: "The disciple who asked — the answer is in the question"
+    force: memory
+    composer: Mozart
+    work: "Clarinet Concerto in A major, K. 622 — II. Adagio"
+    decision: added
+    why: >
+      "我不欲人之加諸我也，吾亦欲無加諸人" — what I do not want others to do to me, I do
+      not wish to do to others. Zi-gong asks if this is enough. The Master says: "Ci, that
+      is beyond you." The disciple is praised for understanding the principle and warned
+      that he is not yet equal to it. Mozart's Clarinet Concerto Adagio is music that
+      understands its own limits: the clarinet sings above the strings, but the phrase
+      that opens the movement never reaches for more than it can hold. The knowledge of
+      what one can and cannot do is itself the highest learning.
+  - n: 24
+    scene: "The Master speaks of his own practice — the common thread"
+    force: law
+    composer: Haydn
+    work: "Symphony No. 104 in D major ('London') — I. Adagio — Allegro"
+    decision: added
+    why: >
+      "參乎！吾道一以貫之" — my Way is threaded on one principle. The book builds toward
+      this: the single thread of reciprocity and human-heartedness that runs through
+      every teaching. Haydn's London Symphony opening is the most masterful single-thread
+      construction in the classical repertory: a slow introduction that seems to gather
+      every possible thematic strand, followed by an Allegro that unfolds each of them
+      from the single opening kernel. The whole symphony is the one thread made audible.
+  - n: 25
+    scene: "The disciple's search — who does not understand the Way"
+    force: memory
+    composer: Brahms
+    work: "Symphony No. 3 in F major, Op. 90 — III. Poco allegretto"
+    decision: added
+    why: >
+      "二三子以我為隱乎？吾無隱乎爾" — do you disciples think I am concealing something?
+      I conceal nothing. This is the Master's response to the suspicion that he has a
+      secret teaching: the Way is not hidden; it is in front of everyone. Brahms's Poco
+      allegretto is the most famous melody of the Third Symphony — a cello theme that
+      pours out as though it had always been there, waiting to be heard. The Master's
+      teaching is exactly this: not concealed, not esoteric, but requiring the quality
+      of attention that can hear what is openly spoken.
+  - n: 26
+    scene: "Zi-lu's four questions — the education of the impatient"
+    force: memory
+    composer: Dvořák
+    work: "String Quartet No. 12 in F major ('American'), Op. 96 — I. Allegro ma non troppo"
+    decision: added
+    why: >
+      "由也，女聞六言六蔽矣乎" — Zi-lu, have you heard of the six virtues and their six
+      obscurations? The Master lists the ways each virtue can go wrong without learning:
+      benevolence produces foolishness; wisdom produces dissipation; faith produces injury;
+      etc. This is the practical epistemology of Book V: the virtues need the corrective
+      of learning. Dvořák's American Quartet is fresh, open, and direct — the sound of a
+      virtue that has not yet been obscured, played with the sweetness of a person who
+      still has learning ahead of him. The simplicity of the opening is the sound of
+      Zi-lu's eagerness, before the complications set in.
+  - n: 27
+    scene: "The Master's grief — the lost disciple"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 5 in C-sharp minor — I. Trauermarsch"
+    decision: added
+    why: >
+      "朽木不可雕也" — rotten wood cannot be carved. The grief in Book V is not grief for
+      the dead but grief for the living who will not learn — the disciple Zai Yu, who sleeps
+      in the daytime, whose potential is not realized. Mahler's Trauermarsch begins with
+      a trumpet solo that sounds like a question no one can answer: why do some people
+      learn and others sleep? The march is a funeral for the promise of those who will not
+      awaken. Grief requires slow tempo and inward line; Mahler's march is slow, public,
+      and entirely interior — the grief of a teacher who has seen what could have been.
+  - n: 28
+    scene: "The closing — the Master's generosity fills the void"
+    force: memory
+    composer: Fauré
+    work: "Pavane, Op. 50"
+    decision: added
+    why: >
+      "老者安之，朋友信之，少者懷之" — to bring peace to the aged, trust among friends, and
+      care for the young. The book ends with the Master's three wishes — the simplest
+      possible statement of the good society, quietly closing a book that has been about
+      the difficulty of knowing character. After all the evaluations, all the discriminations,
+      all the careful judgments of who is worthy of what, the book ends with a statement
+      of pure generosity: this is what I want. Fauré's Pavane is the sound of this wish:
+      it is not triumphant, not argumentative, just a slow procession through a beautiful
+      form, the way a generous wish moves through the world. Memory as the form that holds
+      the best of what we hope for.
+demoted:
+  - composer: Wagner
+    work: "Parsifal — 'Good Friday Spell'"
+    status: "removed; save for a book where the question of hidden wisdom is central (Book VII)"
+    why: >
+      Considered for the Master's "I conceal nothing" chapter (track 25) but Wagner's
+      Good Friday Spell is too explicitly Christian and redemptive. The Brahms Poco
+      allegretto is more human, less hieratic — the Master's words are ordinary availability,
+      not sacred revelation.
+  - composer: Bruckner
+    work: "Symphony No. 9 — III. Adagio"
+    status: "too terminal for Book V; reserved for a book of direct crisis"
+    why: >
+      Bruckner's final unfinished symphony Adagio was considered for the Master's grief
+      (track 27) but it is too large, too final. Book V's grief is quiet and local — a
+      master disappointed in a student, not the death of worlds.

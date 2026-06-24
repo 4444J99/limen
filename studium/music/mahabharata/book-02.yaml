@@ -1,0 +1,287 @@
+# Mahabharata — Sabha Parva (Book 2) — curated music arc
+# Gold-standard form matching iliad/book-01.yaml.
+# Score the ASSEMBLY HALL and the DICE GAME: the rajasuya as imperial apex,
+# the hall as illusory paradise, the game as fate's pure mechanism, and the
+# disrobing as the wound that will not heal.
+work: mahabharata
+book: 2
+title: "Sabha Parva: The Dice, the Hall, and the Unanswered Question"
+length_minutes: 96
+principle: >
+  Do not score Sabha Parva as "the Pandavas lose a bet." Score it as the
+  architecture of catastrophe: a golden hall built by a demon as a gift,
+  an empire consecrated under the wrong sign, a game that cannot stop
+  even when the player has nothing left, a woman dragged by her hair into
+  an assembly of kings who will not answer her question. The dominant force
+  is fate — not the fate of personal doom but the fate that operates through
+  the wooden face of dice, the throw that cannot be called back, the king
+  who keeps playing because he has forgotten how to stop. Fate as grammar,
+  not as destiny.
+force_arc: [kingship, revelation, kingship, wrath, comedy, fate, fate, wrath, law, supplication, divine-intervention, law, fate, exile]
+dominant_force: fate
+tracks:
+  - n: 1
+    scene: "Indraprastha rises — the Pandava capital"
+    force: kingship
+    composer: Elgar
+    work: "Pomp and Circumstance March No. 1, Op. 39"
+    decision: added
+    why: >
+      The Pandavas emerge from the burning of Khandava forest into a city
+      that rivals heaven itself — golden, walled, resplendent at the river
+      Yamuna's banks. Elgar's first Pomp and Circumstance March is ceremonial
+      arrival at full imperial register: the broad melody, the processional
+      build, the sense of a kingdom announcing itself to the world. Not yet
+      shadowed — the Pandava prosperity is real, earned, and the point is that
+      it will not last. Kingship requires ceremonial grandeur and sovereign
+      display; Elgar delivers it without a trace of irony.
+  - n: 2
+    scene: "Mayasabha — the hall of illusions"
+    force: revelation
+    composer: Debussy
+    work: "Prélude à l'après-midi d'un faune"
+    decision: added
+    why: >
+      Maya the demon-architect builds an assembly hall unlike any on earth:
+      floors that appear to be water, pools that appear to be solid, walls
+      that shimmer with jewel-light and change color. It is an architecture
+      of enchantment — the world as Maya (illusion) literally made manifest.
+      Debussy's Prélude is the closest Western music comes to this register:
+      a melody that cannot decide its key, a harmony that exists in suspension,
+      a structure that unfolds without announcing its logic. Revelation requires
+      stillness, expanded harmony, and verticality; Debussy's flute — opening
+      alone, unchaperoned — has the quality of something seen in a dream that
+      we later insist was real.
+  - n: 3
+    scene: "The rajasuya — Yudhishthira emperor of the four directions"
+    force: kingship
+    composer: Handel
+    work: "Zadok the Priest, HWV 258"
+    decision: added
+    why: >
+      Yudhishthira's imperial consecration (rajasuya) gathers all the kings
+      of the earth to Indraprastha. He is crowned sovereign of the four
+      directions — the earth acknowledged him as paramount. The same Handel
+      coronation anthem that scored Janamejaya's kingship in Book 1 appears
+      here at full ceremony: the long orchestral ramp, the choir entering
+      with the weight of tradition, the conviction that a king confirmed by
+      sacred rite is king forever. Which, of course, he is not. The repetition
+      of the piece across Books 1 and 2 is deliberate: the same ceremony,
+      the same genre of kingship, the same exposure to the mechanism that
+      will destroy it.
+  - n: 4
+    scene: "Shishupala's beheading — Krishna's wrath at the sacrifice"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    decision: added
+    why: >
+      Shishupala, king of Chedi, cannot endure the honours paid to Krishna
+      at Yudhishthira's sacrifice. He denounces the assembly, challenges
+      Krishna, and is killed by the discus — a hundred insults tallied, the
+      hundredth releasing the blade. The violence is instantaneous, ritual,
+      and public: the sacrifice running red with blood. Wrath requires
+      rhythmic pressure and unresolved harmony; Holst's Mars is the canonical
+      instance — its 5/4 pulse is unrelenting, asymmetrical, the sound of
+      something that will not be pacified. Krishna's discus is not an act of
+      rage without form; it is the form that rage takes when the count has
+      reached its limit.
+  - n: 5
+    scene: "Duryodhana's humiliation in the hall — water where there is none"
+    force: comedy
+    composer: Offenbach
+    work: "Orpheus in the Underworld — Overture"
+    decision: added
+    why: >
+      Duryodhana enters the Mayasabha and sees a crystalline pool. Assuming
+      it is a solid floor, he steps forward and falls into the water. Draupadi
+      and the Pandava women laugh at him. The insult is not political or
+      martial — it is social, the laughter of a woman at a prince who has
+      been made ridiculous. Comedy requires dance rhythm and courtly
+      exaggeration; Offenbach's galloping can-can carries the exact register
+      of comic humiliation — bright, merciless, rhythmically giddy. The
+      laughter that Duryodhana hears in this moment will become the war.
+      Comedy as cause, not as relief.
+  - n: 6
+    scene: "Shakuni proposes the dice game — the trap laid"
+    force: fate
+    composer: Verdi
+    work: "La forza del destino — Overture"
+    decision: added
+    why: >
+      After the rajasuya, Shakuni approaches Duryodhana with a plan: invite
+      Yudhishthira to a game of dice. Shakuni's dice are loaded — they obey
+      his will. But the deeper trap is the game itself, the form of it: the
+      invitation that cannot be refused, the king's obligation to accept a
+      challenge, the ritualized play that binds both players to its outcome.
+      Verdi's La forza del destino overture is fate as pure operatic mechanism:
+      the three hammered chords, the dark melodies, the sense of a world
+      moving toward a conclusion no one in it has chosen. The dice are fate
+      — not because the gods decree it, but because the grammar of the game
+      permits no stopping.
+  - n: 7
+    scene: "The cascade — Yudhishthira loses everything"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 7 in A major, Op. 92 — II. Allegretto"
+    decision: added
+    why: >
+      One by one: his jewels, his treasury, his kingdom, his brothers, himself.
+      Yudhishthira sits on the dice mat and throws, and each throw takes
+      another piece of the world away. The court watches in silence —
+      Dhritarashtra on his throne, Bhishma and Drona bound by their vows
+      to the throne, Vidura's warnings ignored. Beethoven's Seventh's second
+      movement is the inexorable register: the same rhythmic figure repeated
+      with variations, each iteration darker, deeper, more resigned. Fate
+      requires inexorable motif and hammered insistence, and this movement
+      — for all its beauty — is the sound of something being driven into
+      the ground by its own weight.
+  - n: 8
+    scene: "Draupadi is dragged into the hall"
+    force: wrath
+    composer: Berlioz
+    work: "Symphonie fantastique — IV. 'March to the Scaffold'"
+    decision: added
+    why: >
+      Dushasana drags Draupadi by her hair — she is menstruating, wearing a
+      single cloth, dragged across the floor of the assembly where the elders
+      of the Kuru dynasty sit in silence. The court is full of armed men and
+      no one moves. Berlioz's March to the Scaffold has the exact quality:
+      ceremonial, processional, moving toward violence with formal precision.
+      The trumpet fanfares, the grinding march rhythm, the drop into the
+      guillotine's final chord. Berlioz's symphonic march is a sovereign
+      ritual that ends in death — exactly the idiom of a hall of kings
+      that permits a woman to be dragged across its floor.
+  - n: 9
+    scene: "Draupadi's question — was I lawfully won?"
+    force: law
+    composer: Bach
+    work: "The Well-Tempered Clavier, Book I — Fugue in C-sharp minor, BWV 849"
+    decision: added
+    why: >
+      Draupadi asks the question that undermines the entire game: did
+      Yudhishthira wager her before or after he lost himself? If he had
+      already lost himself, he had no legal right to wager anyone else.
+      The assembly of kings — the Dharmic authority of the entire Kuru
+      court — cannot answer. Bhishma, bound by his oath to the throne,
+      says only: dharma is subtle. The C-sharp minor fugue from Book I
+      of the Well-Tempered Clavier is law at its most intricate: five
+      voices moving through a single architectural idea, the subject
+      appearing and reappearing in inversion and augmentation, each
+      entrance clarifying the structure and complicating the answer.
+      Law requires formal clarity and architecture; Bach's five-voice
+      fugue is the canon's supreme demonstration that the most rigorous
+      form can also be the most ambiguous.
+  - n: 10
+    scene: "The disrobing — Draupadi's prayer"
+    force: supplication
+    composer: Barber
+    work: "Adagio for Strings, Op. 11"
+    decision: added
+    why: >
+      Dushasana pulls at Draupadi's sari to strip her before the court.
+      She calls out to Krishna — not to the court, not to her husbands,
+      but to the Lord. The sari becomes infinite: yard after yard of cloth
+      unspooling, Dushasana's arms tiring, the heap of fabric growing on
+      the floor. Barber's Adagio for Strings is suppressed supplication
+      that nonetheless achieves its effect: the single line climbing by
+      step through the ensemble, each repetition reaching higher, the
+      pressure accumulating without release until the climax. Then the
+      drop — the fabric stops, Dushasana falls exhausted, the prayer has
+      been answered. Supplication requires suspended cadence and exposed
+      melodic line; Barber's Adagio is the purest American instance of
+      prayer as musical form.
+  - n: 11
+    scene: "Krishna saves — the infinite cloth"
+    force: divine-intervention
+    composer: Wagner
+    work: "Das Rheingold — Prelude (opening, through first forte entrance)"
+    decision: added
+    why: >
+      At the moment of Draupadi's extremity, Krishna acts — invisibly,
+      from within her faith. The sari does not stop. Dushasana pulls and
+      the cloth grows, and the court watches a miracle unfold in the
+      language of textiles. Wagner's Rheingold Prelude is the sound of
+      a world-system coming into being — the E-flat major chord sustained
+      through minute after minute of gradual thickening, the orchestra
+      gaining weight and presence until the full brass entrance reveals
+      that what seemed to be nothing was actually everything assembling
+      beneath the surface. Divine-intervention requires sudden color shift
+      and brass/strings contrast; Wagner's prelude gives the shift within
+      a single held chord, a miracle born of stasis.
+  - n: 12
+    scene: "Dhritarashtra's boons — the restoration undone"
+    force: law
+    composer: Brahms
+    work: "Symphony No. 4 in E minor, Op. 98 — I. Allegro non troppo"
+    decision: added
+    why: >
+      Fearing the destruction Draupadi's curse will bring, Dhritarashtra
+      grants Yudhishthira his freedom and returns his kingdom. It lasts
+      an hour. Duryodhana demands one more game: the loser goes to the
+      forest for twelve years and lives incognito for a thirteenth, and
+      if discovered, repeats the exile. Brahms's Fourth Symphony opens
+      with form under pressure — the descending thirds that generate the
+      entire movement are a kind of law (sonata form, thematic logic)
+      strained from within by harmonies that want to break free. The
+      restoration of law (Dhritarashtra's boon) and its immediate collapse
+      (the second game) are the same process: the form holds and breaks
+      in the same moment.
+  - n: 13
+    scene: "The last throw — thirteen years on the road"
+    force: fate
+    composer: Tchaikovsky
+    work: "Symphony No. 4 in F minor, Op. 36 — I. Andante sostenuto — Moderato con anima"
+    decision: added
+    why: >
+      The dice fall again. Yudhishthira loses again. The Pandavas leave
+      Indraprastha in deerskin garments, Draupadi's hair unbound, her
+      vow burning in silence. The mechanism of fate has completed its
+      cycle: prosperity, game, loss, exile. Tchaikovsky's Fourth Symphony
+      opens with the brass fanfare that is fate itself — a statement of
+      inescapable fact — and moves into the yearning strings, the melody
+      that wants to go somewhere and cannot. The fanfare returns twice
+      more in the movement, each time more absolute. Fate as announcement:
+      this is what is, and it cannot be undone.
+  - n: 14
+    scene: "Draupadi's hair — the vow that will not break"
+    force: exile
+    composer: Sibelius
+    work: "Finlandia, Op. 26"
+    decision: added
+    why: >
+      As the Pandavas exit Indraprastha's gates, Draupadi vows: her hair
+      will remain unbound, tangled and wild, until she washes it in
+      Dushasana's blood. She will not enter the palace of any king until
+      she has seen the Kuru line reduced to ash. It is a vow of exile
+      within exile — the woman's body as the territory of unfinished
+      vengeance. Sibelius's Finlandia begins in darkness: the cellos and
+      bassoons in the low register, a nation under oppression, a people
+      walking into a long night. Then the hymn emerges — the melody that
+      insists on survival, the brass that declares, over the dark ground,
+      that this is not the end. Exile requires wandering tonality and
+      open intervals; Sibelius gives them at the scale of an entire
+      people walking into history.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "save for Drona Parva or Karna Parva (Books 7-8); forbidden before then"
+    why: >
+      The funeral march register belongs to the deaths of the great warriors
+      in the war itself. Sabha Parva has humiliation, defeat, and exile —
+      not death. The wound is political, not martial; the grief comes later.
+  - composer: Mozart
+    work: "Requiem — 'Lacrimosa'"
+    status: "too terminal for Sabha Parva; save for Stri Parva (Book 11)"
+    why: >
+      The Lacrimosa is the weeping of the women over the bodies of the dead.
+      There are no dead yet in Sabha Parva — only the living who have been
+      broken. The weeping belongs where the war has actually ended.
+  - composer: Mahler
+    work: "Symphony No. 2 'Resurrection' — V. 'Auferstehung'"
+    status: "save for Svarga Arohana (Book 18)"
+    why: >
+      The Resurrection finale is apotheosis at full eschatological register.
+      Sabha Parva ends in defeat and exile, not in transcendence. The
+      resurrection of the Pandava kingdom belongs to the end of the epic,
+      not to the end of its first movement.

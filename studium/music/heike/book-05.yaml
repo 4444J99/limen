@@ -1,0 +1,195 @@
+# Heike Monogatari — Book V — curated music arc
+# Erosion and flight: the capital trembles, alliances collapse, the Taira consider retreat.
+work: heike
+book: 5
+title: "Heike Book V: The Flight from the Capital"
+length_minutes: 94
+principle: >
+  Book V is where abstract threat becomes concrete crisis. Go-Shirakawa makes his move more openly:
+  he allies with the Minamoto, who have been regrouping in the provinces. Kiyomori's response is
+  military escalation, which backfires. A revolt is crushed, but the act of crushing it makes clear
+  that the Taira can no longer rule through civilian authority — only through naked force. This
+  marks the transition from the Taira as political rulers to the Taira as military occupiers. The
+  court itself becomes precarious. Kiyomori considers evacuating the capital to a more defensible
+  position in the Kii Peninsula. For the first time, the Taira are in a posture of evacuation rather
+  than consolidation. The bells of impermanence are no longer distant; they are immediate. Book V
+  is the moment when flight becomes not a distant possibility but a present plan. Score this as the
+  dissolution of the settled world into one of constant motion, uncertainty, and the corrosion of
+  the civilian structures that gave Taira rule its aesthetic legitimacy. Aesthetics are giving way
+  to survival.
+force_arc: [exile, return, desire, sacrifice, supplication, revelation, wrath, law, metamorphosis, grief, salvation]
+dominant_force: exile
+tracks:
+  - n: 1
+    scene: "The capital in shadow — uncertainty about the Emperor's true will"
+    force: exile
+    composer: Dvořák
+    work: "Symphony No. 9 'From the New World' — II. Largo (not the famous passage)"
+    decision: added
+    why: >
+      The court is in Kyoto, but it is no longer a seat of power with a clear center. The Emperor
+      is present but powerless; Go-Shirakawa rules from the shadows; Kiyomori has military authority
+      but no clear political mandate. Everyone is displaced within their own city. The open intervals
+      and wandering tonality of the Dvořák Largo — that sense of searching for home in a place that
+      is home — captures this exactly. The exile force does not require that people physically leave;
+      it requires that they be internally displaced, separated from belonging even while present. The
+      capital is becoming a place of exile for everyone inside it.
+  - n: 2
+    scene: "Mongaku is allowed to return — a symbolic victory for the Emperor's authority"
+    force: return
+    composer: Beethoven
+    work: "Symphony No. 7 — II. Allegretto (circular form, recognition motif)"
+    decision: added
+    why: >
+      A sign that Go-Shirakawa's power is real: Mongaku is permitted to return from exile. He enters
+      the capital as a teacher and mediator, but his presence is a statement that Kiyomori's will is
+      no longer absolute. The return is not triumphant fanfare but something quieter: the recognition
+      that what was displaced is being re-established in a transformed position. Beethoven's Allegretto
+      is exactly the return force requirement — circular form, recognition motif. It is the moment of
+      recognizing what was lost and finding it again, changed but intact. Mongaku's return is the
+      court's acknowledgment that spiritual authority exists on a different plane from Kiyomori's
+      secular power.
+  - n: 3
+    scene: "Taira and Minamoto — the alliance against Kiyomori is named"
+    force: desire
+    composer: Wagner
+    work: "Tristan und Isolde — Act I, 'O König, das kann ich dir nicht sagen'"
+    decision: added
+    why: >
+      For the first time, the text openly discusses the alliance between Go-Shirakawa and the
+      Minamoto. It is not yet war — it is desire operating at the level of grand strategy. Desire
+      for the restoration of the old balance; desire to diminish the Taira; desire for a world
+      where military power serves the Emperor rather than commanding him. Wagner's Tristan passage
+      is chromatic longing deferred, the sense of two forces drawn toward confrontation but not yet
+      meeting. The musical requirement (chromatic longing, deferred resolution) is exactly the
+      political situation: the parties want the confrontation, but neither is yet ready, and so the
+      desire circulates without discharge.
+  - n: 4
+    scene: "Kiyomori's son leads an army — the crushing of a provincial rebellion"
+    force: sacrifice
+    composer: Stravinsky
+    work: "Rite of Spring — 'The Augurs of Spring' into the ritual passage"
+    decision: added
+    why: >
+      A rebellion in the provinces (framed as Minamoto-affiliated) is crushed by Kiyomori's son at
+      the head of a Taira army. The violence is extreme; the suppression is complete. But the text
+      records it with a new tone: this is no longer the elegant machinery of power shown in Book I.
+      This is sacrifice — the offering up of human life on the altar of political order. The Rite of
+      Spring requires ritual weight and processional build; here it is the sound of a civilization
+      discovering that it can only maintain itself through killing, and accepting that discovery.
+      Kiyomori has crossed a line: his rule is now nakedly military. The sacrifice force applies to
+      both sides — the rebels sacrificed, but also the Taira's sacrifice of their own legitimacy.
+  - n: 5
+    scene: "The Empress moves to safety — women and children are sent to temples"
+    force: supplication
+    composer: Fauré
+    work: "Requiem — Sanctus"
+    decision: added
+    why: >
+      Sensing that the capital is becoming dangerous, Kiyomori orders the Empress and other women
+      of the family to be placed in temple sanctuaries. This is formally presented as a religious
+      devotion, but it is actually precautionary: temples are neutral ground; if the Taira fall,
+      temple inmates are protected by sacred law. The women's transfer is a supplication to the
+      sacred order to preserve the family even if secular power falls. Fauré's Sanctus is sanctity
+      invoked as asylum — holy ground offered, protection sought. The music is luminous and grave
+      at once, the sense of moving into a space that transcends temporal power. The women leaving
+      the capital is an admission that the Taira expect the capital to fall.
+  - n: 6
+    scene: "The revelation in the chronicles — scribes record what is to come"
+    force: revelation
+    composer: Pärt
+    work: "Tabula Rasa — I. Ludus Severus"
+    decision: added
+    why: >
+      Court scribes and historians, in their official records, begin to note signs and portents.
+      Comets appear; rains fall unseasonably; the Kamo River overflows and sweeps away buildings.
+      These are read, by some, as heaven's judgment on the Taira. The revelation is not personal but
+      written into official documents, becoming part of the permanent record. The era is being named
+      in a way that suggests ending: historians are already looking at this moment as if it were past.
+      Pärt's Ludus Severus is revelation in its stark form — a clarity about the structure of things,
+      the sense that what appears as present is actually already history. The stillness and verticality
+      of the music are the sound of truth being inscribed.
+  - n: 7
+    scene: "Kiyomori's rage at his diminishment — wrath turned inward and outward"
+    force: wrath
+    composer: Penderecki
+    work: "Threnody for the Victims of Hiroshima — the climactic passage"
+    decision: added
+    why: >
+      Kiyomori, watching his authority drain, grows increasingly unstable. He erupts in rages;
+      servants are beaten for minor mistakes; he orders massive expenditures on military preparations.
+      The wrath is no longer the cool machinery of Book III; it is the wrath of someone losing control,
+      knowing it, and trying to reassert power through escalated violence. Penderecki's Threnody reaches
+      a climax of screaming violin strings and fractured percussion — it is the sound of structures
+      collapsing, of system breaking down into anguish. The unresolved harmony and rhythmic pressure
+      are absolute; this is wrath at its most desperate and most self-defeating.
+  - n: 8
+    scene: "The law fragments — imperial authority and Taira authority no longer coincide"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue — Contrapunctus XIV (unfinished)"
+    decision: added
+    why: >
+      The legal structure that held the realm together in Book III is visibly splintering. Kiyomori
+      issues commands as a minister; Go-Shirakawa counters with imperial decrees. Both claim to act
+      in the Emperor's name; the Emperor himself is caught between them, unable to resolve the
+      contradiction without clearly favoring one side. Law — the formal clarity and architecture that
+      held the realm — is breaking down into competing authorities. Bach's unfinished Contrapunctus is
+      a fugue that sets out to build a complete system but fragments before completion: each voice
+      enters in proper order, but the expected resolution does not come. The music suggests a system
+      understanding that it cannot hold together, that it was built on premises that are no longer
+      valid. Formal clarity giving way to structural collapse.
+  - n: 9
+    scene: "Evacuation is planned — the Taira consider leaving the capital"
+    force: metamorphosis
+    composer: Debussy
+    work: "La mer — 'Dialogue du vent et de la mer'"
+    decision: added
+    why: >
+      For the first time in Taira history, retreat becomes not a distant possibility but a present
+      plan. Kiyomori orders plans for evacuation to the Kii Peninsula, to a fortress at Yodo or
+      further south to Shikoku. The entire apparatus of power — the court, the imperial regalia, the
+      records and treasures — would have to move. The world is transforming: the capital is becoming
+      a place of flight rather than rule. Debussy's "Dialogue" is changing orchestral color, fluid
+      harmony, the sense of one state dissolving into another without clear boundaries. The sea and
+      wind reshape the landscape; the Taira are preparing to become riders on the storm they can no
+      longer control.
+  - n: 10
+    scene: "The old courtiers weep — the end of the settled world"
+    force: grief
+    composer: Mahler
+    work: "Kindertotenlieder — V. In diesem Wetter, in diesem Braus"
+    decision: added
+    why: >
+      An aged court official, watching the capital prepare for evacuation, weeps for the world that
+      is ending. The ceremonies, the order, the beauty of the imperial court as it had been — all of
+      it is dissolving. The Heike are not defeated yet, but the sense of their defeat is already
+      present. Grief is not only for loss but for the knowledge that what was stable is becoming
+      liquid. Mahler's Kindertotenlieder — the song of dead children — is not literal here but
+      metaphorical: the death of the world one has known. The slow tempo, the inward line, the
+      complete exposure of suffering is the grief force at its deepest.
+  - n: 11
+    scene: "Faith reasserts itself — the promise of salvation through Buddha"
+    force: salvation
+    composer: Fauré
+    work: "Requiem — In Paradisum"
+    decision: added
+    why: >
+      Against the political catastrophe, the spiritual order offers hope. Priests assure the Taira
+      that, though worldly power may fall, salvation is still possible through Buddhist practice and
+      faith. Some Taira members intensify their religious devotions, building temples and making
+      donations to monasteries, seeking merit that will carry them past this life into a better
+      rebirth. The text shifts its register here: the mundane political struggle is being set against
+      an eternal spiritual possibility. Fauré's "In Paradisum" is the sound of a door opening to
+      something beyond the temporal world, resolving radiance, the chorale apotheosis that suggests
+      that there is a rest beyond the struggle. The salvation force requirement is met exactly:
+      resolving radiance, the sense that what is falling away on earth is being redeemed in a realm
+      beyond time.
+
+demoted:
+  - composer: Berlioz
+    work: "La damnation de Faust — the Ride to the Abyss"
+    status: "reserved for Book VI (Kiyomori's death)"
+    why: >
+      Book V is about evacuation and erosion. Kiyomori is still alive and fighting. The great
+      descent belongs to the moment of his final illness.

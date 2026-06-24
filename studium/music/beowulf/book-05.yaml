@@ -1,0 +1,96 @@
+# Beowulf — Fitt V — curated music arc
+# Arrival in Denmark: the threshold crossing and the protocol of kingship
+work: beowulf
+book: 5
+title: "Beowulf Fitt V: Arrival and the Law of Hospitality"
+length_minutes: 65
+principle: >
+  Fitt V moves from the physical arrival of the hero to the ceremonial threshold of the Danish court. The fitt opens with the coast-guard — Hrothgar's sentinel — challenging the strangers who have landed on the Danish shore. This is the first test of language, lineage, and purpose. Beowulf answers clearly: he names himself, his father, his lineage, his errand. The poem emphasizes the hero's courtesy and clarity — he does not boast yet, but he declares himself with absolute confidence. The coast-guard, recognizing the quality of the stranger, grants passage and directs the heroes toward Heorot. The fitt traces the movement from exterior (the shore, the threshold) to interior (the approach to the hall), with the law of hospitality reasserting itself. This is kingship and supplication in balance: the hero asks for the right to attempt the trial, the king's men evaluate and accept. The dominant force is law — the orderly framework within which heroism becomes possible.
+force_arc: [law, kingship, supplication, law, desire, kingship, supplication, supplication, law, ascent]
+dominant_force: law
+tracks:
+  - n: 1
+    scene: "The coast-guard sees the strangers — the challenge at the threshold"
+    force: law
+    composer: Brahms
+    work: "Symphony No. 4 — III. Scherzo (Allegro giocoso)"
+    decision: added
+    why: >
+      The coast-guard of Denmark spots the foreign warriors coming ashore and immediately takes his post. This is the threshold guardian, the sentinel who enforces the law of the realm. Brahms' Scherzo from the Fourth — rigorous, alert, with a quality of formal inspection — captures the moment of challenge. It is not hostile but it is clear: who are you, and what is your purpose? The music is the sound of law being asserted at a boundary.
+  - n: 2
+    scene: "Beowulf names himself — lineage and fathers"
+    force: kingship
+    composer: Handel
+    work: "Zadok the Priest"
+    decision: added
+    why: >
+      Beowulf answers: he names himself, his father (Ecgtheow), his lineage (grandson of Hrethel, king of the Geats), and his errand (to fight the thing that plagues Hrothgar). There is no boasting here, only clarity and authority. The poem emphasizes the hero's confidence and courtesy. Handel's Zadok the Priest — the coronation music par excellence, the sound of authority and rightful lineage — captures the quality of this declaration. When Beowulf speaks, his words carry the weight of genuine kingship behind them. The coast-guard hears a man of consequence.
+  - n: 3
+    scene: "The hero's petition — ask and receive"
+    force: supplication
+    composer: Fauré
+    work: "Pavane"
+    decision: added
+    why: >
+      Though Beowulf is confident, his approach to Hrothgar is formally supplicatory. He has come to ask the right to attempt the trial; he does not claim it by force. This balance — the hero's strength held in courtesy — is essential. Fauré's Pavane is slow, measured, deeply respectful, the music of formal approach and petition. It is not weakness but courtesy, the recognition that even heroic action requires the law's permission. The music is the sound of grace under control.
+  - n: 4
+    scene: "The coast-guard evaluates — recognition of excellence"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue — Contrapunctus I"
+    decision: added
+    why: >
+      The coast-guard, hearing Beowulf's clarity and recognizing the quality of the man, makes his judgment: these are warriors of genuine capacity, and their errand is righteous. The judgment is made according to law — the evaluation of character, purpose, and excellence. Bach's Art of Fugue — the music of absolute clarity and logical structure — captures the moment of evaluation. There is no doubt here; the law sees what the law requires, and grants passage.
+  - n: 5
+    scene: "The grant of passage — the threshold opened"
+    force: desire
+    composer: Scriabin
+    work: "Poem of Ecstasy"
+    decision: added
+    why: >
+      The coast-guard directs the heroes toward Heorot and grants them safe passage through the realm. The threshold opens. Scriabin's Ecstasy — luminous, ascending, the sense of a barrier falling away — captures the moment where the exterior trial (proving oneself worthy) is passed and the interior trial (the actual encounter) opens ahead. The music is the sense of being received and welcomed into a realm previously closed.
+  - n: 6
+    scene: "The approach to Heorot — seeing the hall in its glory"
+    force: kingship
+    composer: Elgar
+    work: "Pomp and Circumstance — March No. 1"
+    decision: added
+    why: >
+      The heroes walk inland and see Heorot for the first time: the great hall blazing with light and gold, Hrothgar's seat of power. Elgar's Pomp and Circumstance — ceremonial, grand, the music of human achievement and civilisational pride — captures the sight of the hall in its beauty. But this is not irony; it is the recognition of what is at stake. Heorot is worth saving precisely because it is magnificent, and Grendel's attacks are terrible precisely because they threaten this splendor.
+  - n: 7
+    scene: "Standing before the doors of Heorot — the final threshold"
+    force: supplication
+    composer: Pärt
+    work: "Tabula Rasa"
+    decision: added
+    why: >
+      The heroes reach the doors of Heorot and stand before them. This is the moment of ultimate petition — they are about to enter the hall where Grendel has killed so many. The poem emphasizes the silence and the significance of this moment. Pärt's Tabula Rasa — stark, clear, the sound of approaching something sacred — captures the quality of standing at this final threshold. The doors are about to open; everything will change.
+  - n: 8
+    scene: "Beowulf makes his supplication to Hrothgar — the formal request"
+    force: supplication
+    composer: Barber
+    work: "Knoxville: Summer of 1915"
+    decision: added
+    why: >
+      Beowulf enters Heorot and addresses Hrothgar formally. He explains his lineage, his knowledge of Hrothgar's suffering, his determination to fight Grendel. He does not demand the right; he petitions for it. Barber's Knoxville — lyrical, graceful, the music of human earnestness and clarity — captures the quality of this formal speech. Beowulf is utterly confident in his capacity, but he approaches the king with perfect courtesy. The music is the sound of strength held in deference.
+  - n: 9
+    scene: "Hrothgar accepts — the law re-established"
+    force: law
+    composer: Brass Ensemble
+    work: "Giovanni Gabrieli — Canzona per sonare 'La Spiritata'"
+    decision: added
+    why: >
+      Hrothgar accepts Beowulf's petition. The king recognizes the quality of the man and grants him the right to fight Grendel. The law is restored: the king exercises his authority to receive aid, and the hero exercises his right to offer it. Gabrieli's brass canzona — brilliant, clear, the sound of ceremony and proclamation — marks the moment where kingship re-establishes order through acceptance. The law is working; justice is beginning to move.
+  - n: 10
+    scene: "The entry into Heorot — the hero accepted"
+    force: ascent
+    composer: Messiaen
+    work: "Visions of the Amen — 'Amen of the Desires'"
+    decision: added
+    why: >
+      The fitt closes as Beowulf and his companions enter Heorot, accepted, received, ready for the night that will come. Messiaen's Amen of the Desires — ecstatic, ascending, the sense of moving toward transcendence — marks the moment of acceptance and the closing of the formal threshold. The actual trial has not yet begun, but the law has been satisfied and the way is open. The hero stands in the hall; Grendel comes.
+demoted:
+  - composer: Stravinsky
+    work: "The Rite of Spring — Introduction"
+    status: "removed; wrong energy"
+    why: "Stravinsky's primitive power is right for Grendel's eruption but wrong for the formal threshold of the court. The law must assert its own clarity first; the violation comes after."

@@ -1,0 +1,124 @@
+# Tao Te Ching — Chapter 9 — curated music arc
+# Balance and fullness: to hold, first you must let go. Grasp and you lose.
+# Never fill the vessel to the brim; thus it never fails.
+work: tao-te-ching
+book: 9
+title: "Tao Te Ching Chapter 9: Balance and Fullness"
+length_minutes: 54
+principle: >
+  Chapter 9 warns against the danger of fullness without yielding. 'Grasp and you lose. To hold,
+  first you must open your hand. To keep, first you must let go. When you have gathered things,
+  then you must disperse them.' This is the inverse of hoarding; it is the recognition that fullness
+  must flow to remain full. The chapter teaches that the wise person overfills nothing, completes
+  nothing perfectly, and thus never fails. There is no attempt to make the perfect thing — for
+  perfection grasped becomes death. The arc is the moment when abundance tips toward clinging, when
+  the gesture must reverse. The music must embody the danger of saturation and the liberation of
+  release.
+force_arc: [metamorphosis, desire, memory, law, desire, memory, metamorphosis, salvation, law, revelation]
+dominant_force: desire
+tracks:
+  - n: 1
+    scene: "Fullness approaches; the cup is nearly brimming"
+    force: metamorphosis
+    composer: Maurice Ravel
+    work: "Scarbo (from Gaspard de la Nuit)"
+    decision: added
+    why: >
+      Ravel's piece builds to a frenzy of accumulation — the goblin's treasure overflows, the moment
+      of saturation where the cup cannot hold more. The shifting orchestration and frantic energy
+      embody the tipping point, the moment just before the reversal.
+  - n: 2
+    scene: "The desire to hold: the grasping impulse toward perfection"
+    force: desire
+    composer: Richard Wagner
+    work: "Tristan und Isolde — Prelude"
+    decision: added
+    why: >
+      Wagner's Prelude is the music of impossible desire, the yearning that seeks to grasp and hold.
+      The unresolved harmony, the suspended cadence — all embody the moment of desperate grasping.
+      This is the desire to fill the cup to overflowing.
+  - n: 3
+    scene: "The memory of loss: all things that are grasped slip away"
+    force: memory
+    composer: Frédéric Chopin
+    work: "Ballade No. 1 in G Minor — opening"
+    decision: added
+    why: >
+      Chopin's memory-haunted opening recalls the moment when fullness turned to loss. The melody
+      winds through harmonic space, seeking the thing that escaped. Memory of the grasping that
+      destroyed what it sought to hold.
+  - n: 4
+    scene: "The law is revealed: to keep, you must release"
+    force: law
+    composer: Johann Sebastian Bach
+    work: "The Art of Fugue, Contrapunctus I"
+    decision: added
+    why: >
+      Bach's severe principle: the subject of the fugue holds maximum meaning because it never tries
+      to contain everything at once. The law operates through release, not grasping. The fugue holds
+      more by giving more away.
+  - n: 5
+    scene: "The moment of reversal: the hand must open"
+    force: desire
+    composer: Claude Debussy
+    work: "Ondine (from Gaspard de la Nuit)"
+    decision: added
+    why: >
+      Debussy's water-nymph calls the listener to release, to let go of the grasping. The desire is
+      inverted: now the desire is to open the hand, to flow like water. The reversal is audible in
+      the shift from Ravel's goblin to Debussy's nymph.
+  - n: 6
+    scene: "Scattering is the path to preservation"
+    force: memory
+    composer: Samuel Barber
+    work: "Knoxville: Summer of 1915 — opening"
+    decision: added
+    why: >
+      Barber's nostalgic opening shows the paradox: what we scatter, what we let go, is what we
+      preserve in memory. The voice that does not grasp the moment is the one that holds it eternal.
+      Loss becomes preservation through release.
+  - n: 7
+    scene: "Coda approach: the gesture of letting go"
+    force: metamorphosis
+    composer: Arvo Pärt
+    work: "Fratres (string quartet version)"
+    decision: added
+    why: >
+      Pärt's cycling form embodies the reversal: the material that spirals through the piece is
+      released and re-received with each cycle. Nothing is grasped; everything is preserved. The
+      transformation is in the letting go.
+  - n: 8
+    scene: "The salvation of incompleteness"
+    force: salvation
+    composer: Olivier Messiaen
+    work: "Méditations sur le Mystère de la Sainte-Trinité"
+    decision: added
+    why: >
+      Messiaen's meditation reveals the paradox: salvation lies in never completing the work,
+      leaving space for the divine to enter. The incomplete is the open hand, the cup with room to
+      receive. Salvation is in the not-yet-filled.
+  - n: 9
+    scene: "Return to clarity: the law restated"
+    force: law
+    composer: Johann Sebastian Bach
+    work: "Well-Tempered Clavier, Book II — Prelude in C Major"
+    decision: added
+    why: >
+      Bach returns with the law clear: the well-tempered keyboard allows infinite music because it
+      holds nothing back. All keys are possible precisely because none is the final resolution.
+      Clarity through incompleteness.
+  - n: 10
+    scene: "Final insight: balance is the revelation of non-grasping"
+    force: revelation
+    composer: John Tavener
+    work: "The Protecting Veil"
+    decision: added
+    why: >
+      Tavener's final revelation shows that balance was always the reality, hidden beneath grasping.
+      The veil falls away, and what was always perfectly balanced — neither overflowing nor empty,
+      always at exactly the right fullness — is revealed.
+demoted:
+  - composer: Gustav Mahler
+    work: "Symphony No. 8 — 'Hymnus: Veni Creator Spiritus' finale"
+    status: "removed; save for chapters on fullness achieved"
+    why: "Mahler's triumphant fullness belongs to later chapters. Chapter 9 is still in the dialectic of fullness and emptiness."

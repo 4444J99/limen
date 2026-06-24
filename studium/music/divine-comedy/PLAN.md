@@ -11,23 +11,23 @@
 - **Corpus:** `medieval/divine-comedy` (italian_original.txt)
 - **Source rail:** https://digitaldante.columbia.edu/
 - **Divisions:** 100 × Canto · cantiche: Inferno, Purgatorio, Paradiso
-- **Progress:** 1/100 arcs authored
+- **Progress:** 13/100 arcs authored
 
 | Canto | dominant force | status |
 | --: | --- | :--: |
 | 1 | (author) | ✓ |
-| 2 | (author) | ☐ |
-| 3 | (author) | ☐ |
-| 4 | (author) | ☐ |
-| 5 | (author) | ☐ |
-| 6 | (author) | ☐ |
-| 7 | (author) | ☐ |
-| 8 | (author) | ☐ |
-| 9 | (author) | ☐ |
-| 10 | (author) | ☐ |
-| 11 | (author) | ☐ |
-| 12 | (author) | ☐ |
-| 13 | (author) | ☐ |
+| 2 | (author) | ✓ |
+| 3 | (author) | ✓ |
+| 4 | (author) | ✓ |
+| 5 | (author) | ✓ |
+| 6 | (author) | ✓ |
+| 7 | (author) | ✓ |
+| 8 | (author) | ✓ |
+| 9 | (author) | ✓ |
+| 10 | (author) | ✓ |
+| 11 | (author) | ✓ |
+| 12 | (author) | ✓ |
+| 13 | (author) | ✓ |
 | 14 | (author) | ☐ |
 | 15 | (author) | ☐ |
 | 16 | (author) | ☐ |

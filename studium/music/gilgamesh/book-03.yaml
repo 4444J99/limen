@@ -1,0 +1,74 @@
+# Gilgamesh — Tablet 3 — curated music arc
+work: gilgamesh
+book: 3
+title: "The Blessing and the Departure"
+length_minutes: 64
+principle: >
+  Score Tablet III as a sequence of rituals. The wild energy of Tablet II is formalized here into statecraft, prayer, and adoption. The dominant register is not action, but heavy, solemn preparation. Do not rush Ninsun's prayer; it is the emotional core of the tablet. The forces move upward to the gods and then lock the heroes into their fate.
+force_arc: [law, kingship, sacrifice, ascent, supplication, metamorphosis, fate, law]
+dominant_force: supplication
+tracks:
+  - n: 1
+    scene: "The Elders counsel caution"
+    force: law
+    composer: Brahms
+    work: "Symphony No. 4 — I. Allegro non troppo"
+    decision: added
+    why: >
+      The elders of Uruk try to dissuade Gilgamesh. They speak for tradition, for the safety of the city walls, for caution. Brahms's Fourth Symphony opening is grounded, complex, and deeply serious—it is the sound of institutional wisdom warning against tragic overreach.
+  - n: 2
+    scene: "Gilgamesh ignores the elders"
+    force: kingship
+    composer: Mozart
+    work: "Don Giovanni — Overture"
+    decision: added
+    why: >
+      Gilgamesh laughs off their warnings. He is driven by sovereign pride and the desire for eternal fame. The Don Giovanni overture holds this exact tension: terrifying divine retribution waiting in the chords, but driven forward by an unstoppable, arrogant vitality.
+  - n: 3
+    scene: "Ninsun bathes and dresses in royal robes"
+    force: sacrifice
+    composer: Gluck
+    work: "Iphigénie en Tauride — O toi qui prolongeas mes jours"
+    decision: added
+    why: >
+      They seek the blessing of Ninsun, the wild cow goddess. She prepares herself for ritual. Gluck provides the solemn, ceremonial weight of a priestess preparing for intercession. The ritual is formal, slow, and heavy with consequence.
+  - n: 4
+    scene: "Ninsun ascends the roof"
+    force: ascent
+    composer: Bruckner
+    work: "Symphony No. 7 — I. Allegro moderato"
+    decision: added
+    why: >
+      Ninsun goes to the roof to offer incense to Shamash, the sun god. Bruckner's long, rising tremolos and slowly building brass chorales perfectly capture the physical and spiritual ascent toward the divine realm. It is luminous orchestration rising upward.
+  - n: 5
+    scene: "The prayer to Shamash"
+    force: supplication
+    composer: Barber
+    work: "Adagio for Strings"
+    decision: added
+    why: >
+      Ninsun asks Shamash why he gave her son such a restless heart, and begs the sun god to protect him. Barber's Adagio is an exposed, suspended melodic line of pure petition. It is the sound of unbearable parental fear projected into the sky.
+  - n: 6
+    scene: "Ninsun adopts Enkidu as her son"
+    force: metamorphosis
+    composer: Ravel
+    work: "Daphnis et Chloé — Lever du jour"
+    decision: added
+    why: >
+      In a profoundly moving political and spiritual act, Ninsun adopts the wild man Enkidu, elevating him to the status of her son and Gilgamesh's true brother. Ravel's daybreak music is radiant, expanding harmonic color—a life fundamentally elevated into a new dawn.
+  - n: 7
+    scene: "The amulet is placed on Enkidu's neck"
+    force: fate
+    composer: Wagner
+    work: "Parsifal — Prelude to Act I"
+    decision: added
+    why: >
+      Ninsun places an amulet on Enkidu, marking him, binding him to her son's fate, and making him responsible for Gilgamesh's life. The slow, inexorable, holy solemnity of the Parsifal prelude seals the covenant. It is fate disguised as protection.
+  - n: 8
+    scene: "The final departure from Uruk"
+    force: law
+    composer: Handel
+    work: "Music for the Royal Fireworks — La Réjouissance"
+    decision: added
+    why: >
+      The city officials give their final blessings; the heroes depart through the gates of Uruk. The state formally sanctions their mythic endeavor. Handel provides the necessary formal clarity and architectural grandeur of a city sending its greatest weapons into the unknown.

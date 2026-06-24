@@ -1,0 +1,145 @@
+# The Shahnameh — film companion (the FOURTH commentary system)
+work: shahnameh
+title: "The Shahnameh — a cinema of kingship, the farr, and the turn of fate"
+principle: >
+  The Shahnameh is the epic of kingship — not merely the political exercise of power, but
+  the possession of the 'farr' (the divine grace that makes a king legitimate). When the
+  farr is held, the world flourishes; when it departs through hubris, the world descends
+  into catastrophe. Do not assemble a "movies about ancient Persia" list. Assemble the epic's
+  forces: the cosmological weight of sovereign authority, the inevitability of fate, the
+  tragedy of the father killing the son (Rostam and Sohrab), and the slow ascent of
+  civilization against the dark. The films must capture the immense scale of this ledger,
+  where heroes act in a world structured by Zoroastrian dualism and the indifferent turning
+  of the heavens.
+force_coverage: [revelation, divine-intervention, kingship, law, fate, sacrifice, grief, ascent]
+films:
+  - title: "Lawrence of Arabia"
+    director: "David Lean"
+    year: 1962
+    force: kingship
+    divisions: [1, 4, 15]
+    objects: [mirror]
+    letterboxd: lawrence-of-arabia
+    scene_or_theme: "The possession and loss of the 'farr' (divine grace) — the charismatic leader who wins the world and loses himself"
+    object_lesson: >
+      Kingship in the Shahnameh is not bureaucracy; it is a radiant, charismatic authority (the farr). But the farr
+      is fragile; when a leader like Jamshid claims to be God, the grace departs. Lawrence of Arabia is the cinema's
+      greatest study of a man who becomes an almost divine figure in the desert, only to lose his humanity to his own
+      myth. The mirror is the object lesson: Lawrence checking his reflection in his dagger or his robes is the king
+      beginning to worship himself.
+    why: >
+      David Lean's epic has the vast, unforgiving scale of the Shahnameh. The desert is a crucible where authority
+      is forged and broken. Screen it to understand how sovereign display works and how easily it curdles into madness.
+    content_note: "epic violence, psychological breakdown"
+  - title: "The Tree of Life"
+    director: "Terrence Malick"
+    year: 2011
+    force: ascent
+    divisions: [1]
+    objects: [door]
+    letterboxd: the-tree-of-life
+    scene_or_theme: "The cosmogony and the long view of time — creation from the elements"
+    object_lesson: >
+      The Shahnameh opens with the creation of the world from the elements and closes with a vast view of time passing.
+      The ascent of life from nothingness is the bedrock of the epic. Malick's The Tree of Life gives us the creation
+      of the universe not as an abstraction, but as a luminous, awe-inspiring process. The door is the threshold
+      between the mundane and the eternal.
+    why: >
+      Malick films the origin of the cosmos and the grace of existence. Screen it alongside Cycle 1, where Ferdowsi
+      lays out the Zoroastrian cosmogony.
+    content_note: "non-linear narrative, cosmic sequences"
+  - title: "A Man for All Seasons"
+    director: "Fred Zinnemann"
+    year: 1966
+    force: law
+    divisions: [1, 2, 5]
+    objects: []
+    letterboxd: a-man-for-all-seasons
+    scene_or_theme: "The institution of civilization and the boundary of the king's power"
+    object_lesson: >
+      Civilization requires law that even the king must answer to. Thomas More holds to the law against the absolute
+      sovereignty of Henry VIII. In the early cycles of the Shahnameh, civilization is built through laws, agriculture,
+      and institutions, setting boundaries against chaos.
+    why: >
+      The film is a masterclass in the tension between raw power and structural order. It perfectly captures the
+      weight of establishing an ordered human society.
+    content_note: "political execution"
+  - title: "No Country for Old Men"
+    director: "Joel Coen, Ethan Coen"
+    year: 2007
+    force: fate
+    divisions: [1, 8, 22]
+    objects: [gun]
+    letterboxd: no-country-for-old-men
+    scene_or_theme: "The inexorable turning of the wheel of fortune — Ahriman's advance"
+    object_lesson: >
+      Fate is an adversary that cannot be bargained with. Anton Chigurh operates like Ahriman or the cruel turning
+      of the heavens in Ferdowsi's poem: a force that arrives with its own rules, indifferent to the moral worth of
+      its victims. The coin toss and the captive bolt gun (the gun) are the instruments of a mechanized doom.
+    why: >
+      The Shahnameh constantly reminds the reader that the heavens turn and crush even the greatest kings.
+      No Country for Old Men gives that turning wheel a terrifying, modern face.
+    content_note: "intense suspense, violence"
+  - title: "Silence"
+    director: "Martin Scorsese"
+    year: 2016
+    force: sacrifice
+    divisions: [1, 14]
+    objects: [milk]
+    letterboxd: silence
+    scene_or_theme: "The cost of fidelity — the good son fed to the cosmic machinery"
+    object_lesson: >
+      A sacrifice that demands the stripping away of one's own purity. The milk of innocence sours when confronted
+      with a world that tortures the righteous. Siamak's death and later sacrifices in the Shahnameh carry this exact
+      burden: virtue is not armor against the dark.
+    why: >
+      Scorsese asks what it costs to maintain faith in a hostile world. It translates the Shahnameh's tragic
+      sacrifices into a grueling test of spirit.
+    content_note: "torture, intense religious suffering"
+  - title: "Manchester by the Sea"
+    director: "Kenneth Lonergan"
+    year: 2016
+    force: grief
+    divisions: [1, 18]
+    objects: []
+    letterboxd: manchester-by-the-sea
+    scene_or_theme: "The father mourning the son — a catastrophe that cannot be undone"
+    object_lesson: >
+      Grief that outlives the event and becomes the geography the survivor must inhabit. Lee Chandler carries the
+      accidental death of his children like Rostam carrying the death of Sohrab — an unbearable weight that cannot
+      be resolved, only carried.
+    why: >
+      The Shahnameh is filled with fathers mourning sons. Manchester by the Sea is the definitive modern study
+      of a sorrow that provides no closure, matching Ferdowsi's public and crushing laments.
+    content_note: "profanity, deep emotional trauma"
+  - title: "Ordet"
+    director: "Carl Theodor Dreyer"
+    year: 1955
+    force: revelation
+    divisions: [1, 10]
+    objects: [clock]
+    letterboxd: ordet
+    scene_or_theme: "Wisdom and the word — the sudden irruption of truth into the everyday"
+    object_lesson: >
+      Revelation is madness to those who cannot read it. Johannes speaks the word of God, and the dead rise.
+      The clock ticks, measuring ordinary time against the eternal. Ferdowsi's invocation to wisdom (kherad)
+      asks for this exact alignment: a mind settled enough to recognize the divine.
+    why: >
+      Dreyer's masterpiece stops time and demands that the viewer witness the impossible. It embodies the
+      purest form of revelation, a perfect companion to the opening cosmological meditations.
+    content_note: "meditative pacing, childbirth complications"
+  - title: "2001: A Space Odyssey"
+    director: "Stanley Kubrick"
+    year: 1968
+    force: divine-intervention
+    divisions: [1, 12]
+    objects: []
+    letterboxd: 2001-a-space-odyssey
+    scene_or_theme: "The monolith — forces of another order shifting human history"
+    object_lesson: >
+      The divine enters history without explaining itself, permanently altering the trajectory of the species.
+      Like the farr descending or Ahriman plotting, the monolith is an intervention that dictates the next era.
+    why: >
+      It gives cinematic scale to cosmological shifts. The Shahnameh's early kings are guided and tested by
+      forces much larger than themselves, perfectly mirrored in Kubrick's vast canvas.
+    content_note: "slow, non-narrative stretches by design"

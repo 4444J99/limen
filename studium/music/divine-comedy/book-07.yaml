@@ -1,0 +1,95 @@
+# Divine Comedy — Inferno, Canto 7 — curated music arc
+work: divine-comedy
+book: 7
+title: "Inferno, Canto VII: Circle of Avarice & Wrath — The Hoarders, Wasters, and the Sullen"
+length_minutes: 70
+principle: >
+  Canto VII reveals the structure of circular punishment. The hoarders and wasters
+  eternally push great weights, opposing forces locked in futility. The wrathful fight
+  on the surface of the Stygian Marsh; the sullen drown beneath it, choking on their
+  own rage. The register is mechanical, cyclic, the grinding repetition of punishment
+  that mirrors the repetition of sin. There is no escape, no ascent, only the eternal
+  return of the same gesture.
+force_arc: [fate, wrath, plague, wrath, law, law, wrath]
+dominant_force: wrath
+tracks:
+  - n: 1
+    scene: "The fourth circle opens — avarice and wrath intertwined"
+    force: fate
+    composer: Verdi
+    work: "La forza del destino — Act II finale"
+    decision: added
+    why: >
+      The fourth circle presents two opposed vices—avarice and wrath—eternally locked together.
+      Verdi's Act II finale captures the moment of inexorable structure: opposing forces bound
+      by a fate neither can escape.
+  - n: 2
+    scene: "The hoarders and wasters — pushing great weights"
+    force: wrath
+    composer: Holst
+    work: "The Planets — Saturn, the Bringer of Old Age"
+    decision: added
+    why: >
+      The hoarders and wasters eternally push great weights in opposite directions, calling
+      curses upon each other. Their rage is directed not at external enemies but at the opposite
+      force, creating a machine of perpetual conflict. Holst's Saturn—slow, heavy, grinding—
+      is the weight that crushes and accumulates.
+  - n: 3
+    scene: "Phlegyas the ferryman — the wrathful incarnate"
+    force: plague
+    composer: Penderecki
+    work: "Polymorphia"
+    decision: added
+    why: >
+      Phlegyas, the ferryman of the Styx, is driven by wrath itself. His voice is the sound of
+      rage without focus, anger that has become his entire being. Penderecki's Polymorphia
+      is transforming, shape-shifting anger—orchestral forces in continual mutation.
+  - n: 4
+    scene: "The wrathful fighting on the surface of Stygian Marsh"
+    force: wrath
+    composer: Shostakovich
+    work: "Symphony No. 7 ('Leningrad') — I. Allegretto"
+    decision: added
+    why: >
+      On the surface of the Stygian Marsh, the openly wrathful souls fight each other viciously,
+      beating and cursing. The conflict is endless, the combatants locked in perpetual enmity.
+      Shostakovich's first movement is mechanical rage, the grinding repetition of industrial
+      violence.
+  - n: 5
+    scene: "The sullen beneath the surface — accidia and silence"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue — Contrapunctus XIV (incomplete)"
+    decision: added
+    why: >
+      Beneath the surface of the marsh, the sullen—those who were angry inwardly, who nursed
+      their wrath in silence—dwell submerged, their cries gurgling indistinctly. They are
+      trapped by their own refusal to express their rage. Bach's incomplete fugue, endlessly
+      intricate and unresolved, captures the internal architecture of suppressed wrath.
+  - n: 6
+    scene: "The passage across the Stygian Marsh — Phlegyas carries Dante"
+    force: law
+    composer: Stravinsky
+    work: "Symphony of Psalms — I. Exaudi orationem meam"
+    decision: added
+    why: >
+      Virgil and Dante cross the marsh in Phlegyas's boat, moving toward the City of Dis.
+      The passage is structured, architectural, governed by rules. Stravinsky's neoclassical
+      clarity—rigid, monumental, formal—captures the institutional order underlying this
+      circle.
+  - n: 7
+    scene: "The City of Dis appears — new threshold of Hell"
+    force: wrath
+    composer: Bartók
+    work: "Music for Strings, Percussion, and Celesta — I. Andante tranquillo"
+    decision: added
+    why: >
+      At the far shore of the Stygian Marsh, the City of Dis appears, its walls and towers
+      burning. The music shifts to Bartók's immense, building fugue—a spiral of accumulating
+      intensity, chromatic voices rising from nothing toward a climax that signals danger ahead.
+demoted:
+  - composer: Wagner
+    work: "Tristan und Isolde — Prelude"
+    status: "removed from Canto VII; save for desire circles"
+    why: "Avarice and wrath require mechanical, cyclic music, not desire's yearning chromatic
+      language."

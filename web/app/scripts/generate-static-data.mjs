@@ -8,17 +8,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const appRoot = join(__dirname, "..");
 const repoRoot = join(appRoot, "..", "..");
 const limenRoot = process.env.LIMEN_ROOT || repoRoot;
-// Single source of truth for the backend runtime URL: env override → committed runtime.config.json.
-// Mirrors next.config.js + cli/src/limen/doctor.py so checks and the deployed dashboard agree.
-const runtimeApiUrl = (() => {
-  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
-  if (process.env.LIMEN_API_URL) return process.env.LIMEN_API_URL;
-  try {
-    return JSON.parse(readFileSync(join(repoRoot, "runtime.config.json"), "utf8")).apiUrl || "";
-  } catch {
-    return "";
-  }
-})();
 const sourcePath = join(repoRoot, "tasks.yaml");
 const privateDir = join(appRoot, ".generated", "surfaces");
 const outPath = join(privateDir, "tasks.json");
@@ -262,7 +251,7 @@ function readinessReport(data, summary) {
   const checks = [
     { id: "static_surfaces", status: "pass", detail: "public-safe static shells generated" },
     { id: "surface_contracts", status: "pass", detail: "public hosted contracts and private validation snapshots generated" },
-    { id: "api_runtime", status: runtimeApiUrl ? "pass" : "warn", detail: runtimeApiUrl || "backend runtime not attached to Firebase static hosting" },
+    { id: "api_runtime", status: process.env.NEXT_PUBLIC_API_URL ? "pass" : "warn", detail: process.env.NEXT_PUBLIC_API_URL || "backend runtime not attached to Firebase static hosting" },
     { id: "stale_claims", status: summary.stale_count ? "warn" : "pass", detail: `${summary.stale_count} stale active tasks` },
     { id: "open_jules_queue", status: openJules ? "pass" : "warn", detail: `${openJules} open Jules tasks` },
     { id: "jules_budget", status: remaining > 0 ? "pass" : "fail", detail: `${remaining}/${julesLimit} Jules runs remaining` },
@@ -274,10 +263,10 @@ function readinessReport(data, summary) {
       : "ready";
   const nextActions = [];
   if (summary.stale_count) {
-    nextActions.push(runtimeApiUrl ? "POST /api/release-stale?hours=24&dry_run=false" : "limen release-stale --agent jules --hours 24 --apply");
+    nextActions.push(process.env.NEXT_PUBLIC_API_URL ? "POST /api/release-stale?hours=24&dry_run=false" : "limen release-stale --agent jules --hours 24 --apply");
   }
   if (openJules && remaining > 0) nextActions.push(`limen dispatch --agent jules --limit ${Math.min(openJules, remaining)} --live`);
-  if (!runtimeApiUrl) nextActions.push("Attach a backend runtime and rebuild with NEXT_PUBLIC_API_URL");
+  if (!process.env.NEXT_PUBLIC_API_URL) nextActions.push("Attach a backend runtime and rebuild with NEXT_PUBLIC_API_URL");
   return {
     status,
     generated_at: summary.generated_at,
@@ -427,9 +416,9 @@ function surfaceManifest(summary) {
     source: {
       type: "static-build",
       task_file: "tasks.yaml",
-      api_runtime: runtimeApiUrl ? "connected" : "not_connected",
-      api_url_configured: Boolean(runtimeApiUrl),
-      blocker: runtimeApiUrl ? null : "backend runtime not attached to Firebase static hosting",
+      api_runtime: process.env.NEXT_PUBLIC_API_URL ? "connected" : "not_connected",
+      api_url_configured: Boolean(process.env.NEXT_PUBLIC_API_URL),
+      blocker: process.env.NEXT_PUBLIC_API_URL ? null : "backend runtime not attached to Firebase static hosting",
     },
     surfaces: [
       {

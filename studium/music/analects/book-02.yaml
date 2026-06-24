@@ -1,0 +1,285 @@
+# Analects — Book II — curated music arc
+# 為政 Wei Zheng — "Conducting Government"
+# Score the actual movement of the 24 chapters — not "Confucianism on governance in general."
+# Book II is about the shape of authority: how government operates through virtue, not force;
+# how filial piety is the root of administration; how knowing (knowledge of self, of limits,
+# of others) is the prerequisite for governing.
+work: analects
+book: 2
+title: "Analects Book II: Government, Virtue, the Arc of a Life"
+length_minutes: 82
+principle: >
+  Do not score Book II as "routine political advice." Score it as a radical claim about the
+  form of legitimate authority: governing by virtue is like the Pole Star — it stays in place
+  and everything moves around it. The book opens with this image and then unfolds its practical
+  logic: filial piety in the home is already administration; knowing the causes of things is
+  the precondition for ordering them; the ruler's self-cultivation (Confucius's own biography
+  from 15 to 70) IS the curriculum of the state. The register is architectural: these are not
+  exhortations but descriptions of how power actually works when it is well-formed. Law is the
+  dominant force because Book II is about the structure that produces good government — not the
+  content of policy but the form of the governing person.
+force_arc: [law, law, law, ascent, memory, law, memory, revelation, law, law, revelation, memory, law, law, law, comedy, return]
+dominant_force: law
+tracks:
+  - n: 1
+    scene: "Governing by virtue — the Pole Star"
+    force: law
+    composer: Handel
+    work: "Music for the Royal Fireworks — La Réjouissance"
+    decision: added
+    why: >
+      "為政以德，譬如北辰，居其所而眾星共之" — governing by virtue is like the Pole Star, fixed
+      while everything orbits it. This is the opening theorem of Book II, not a metaphor but a
+      claim about the physics of legitimate power. Handel's La Réjouissance is ceremonial without
+      being heavy: it is the sound of a center that holds, a tonic that everything else ornaments.
+      The fanfares return to the same figure as though the star's fixity is itself a kind of
+      gravitational authority. Law requires formal clarity and repetition; Handel gives both
+      at full ceremonial scale.
+  - n: 2
+    scene: "Three hundred poems — one principle of good government"
+    force: law
+    composer: Mozart
+    work: "The Magic Flute — Overture"
+    decision: added
+    why: >
+      "詩三百，一言以蔽之，曰『思無邪』" — the three hundred poems are gathered in one phrase:
+      without depraved thoughts. The Overture to The Magic Flute is the sonic equivalent of this:
+      a fugal opening (law, architecture, learned form) that unfolds into Masonic clarity — an
+      orderly procession toward enlightenment, not through prohibition but through orientation.
+      The three opening chords, sounding three times, are a structure that gathers the whole into
+      a single shape — exactly as Confucius claims about the Odes.
+  - n: 3
+    scene: "Punishment versus shame — the two foundations of order"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue, BWV 1080 — Contrapunctus I"
+    decision: added
+    why: >
+      "道之以政，齊之以刑，民免而無恥" — govern by law and punishment, the people avoid but
+      feel no shame. "道之以德，齊之以禮，有恥且格" — govern by virtue and ritual, they feel
+      shame AND arrive at good order. Bach's Art of Fugue is the nearest music ever came to
+      making the distinction audible: a single subject unfolded through law (the fugal structure)
+      that produces, at its highest moments, something that sounds like freedom. The difference
+      between punishment and ritual is the difference between a rule imposed and a form inhabited.
+  - n: 4
+    scene: "Confucius's autobiography — from 15 to 70"
+    force: ascent
+    composer: Mahler
+    work: "Symphony No. 1 in D major — III. Feierlich und gemessen, ohne zu schleppen"
+    decision: added
+    why: >
+      "吾十有五而志於學，三十而立，四十而不惑，五十而知天命，六十而耳順，七十而從心所欲，不踰矩"
+      — at 15 I set my heart on learning; at 30 I stood firm; at 40 I had no doubts; at 50 I
+      knew the mandate of heaven; at 60 my ear was attuned; at 70 I could follow my heart's
+      desire without overstepping the line. This is the single most important autobiographical
+      passage in the Analects — a life described as the progressive refinement of limits.
+      Mahler's Funeral March is the dark center of the First Symphony, built around the folk
+      song "Frère Jacques" in a minor key, growing from a children's round into something vast
+      and strangely triumphant. It is the only music that can hold the movement from 15 to 70:
+      the mournful giving-way of youth, the funeral of earlier selves, the ascent through
+      patience. Ascent requires rising sequence and luminous orchestration; Mahler's irony —
+      the children's song at the bottom, the blazing chorale at the top — enacts Confucius's
+      transformation exactly.
+  - n: 5
+    scene: "Filial piety — the root of administration"
+    force: memory
+    composer: Fauré
+    work: "Requiem, Op. 48 — IV. Pie Jesu"
+    decision: added
+    why: >
+      Confucius's answer to Meng Yi about filial piety: careful attention during life, prolonged
+      mourning and continuing remembrance after death. This is not about grief but about
+      administration: the person who has learned to sustain relation across the threshold of
+      death can be trusted with the state. Fauré's Pie Jesu is the purest expression of this:
+      a soprano over organ and strings, asking mercy with no drama, no terror, no baroque
+      pleading. It is the sound of memory as law — the dead maintained in the form of prayer.
+      Memory requires nostalgic recall, faded recapitulation; Fauré provides exactly the quality
+      of attention that filing the ancestors requires.
+  - n: 6
+    scene: "Filial piety without disobedience — the shape of rectitude"
+    force: law
+    composer: Haydn
+    work: "String Quartet in C major, Op. 76 No. 3 ('Emperor') — I. Allegro"
+    decision: added
+    why: >
+      "無違" — filial piety means no disobedience: not in the sense of servility but in the
+      sense that the relation between parent and child has a proper form, and maintaining that
+      form IS the content of reverence. Haydn's Emperor theme, stated in the first movement
+      quartet, is form as content: a simple melodic line that every subsequent movement will
+      vary, ornament, invert, but never abandon. Law as the architecture that preserves shape
+      across time — that is what filial piety is.
+  - n: 7
+    scene: "Observing a man's motives and seeing where they came from"
+    force: memory
+    composer: Schumann
+    work: "Waldszenen, Op. 82 — No. 7 'Vogel als Prophet'"
+    decision: added
+    why: >
+      "視其所以，觀其所由，察其所安。人焉廋哉？人焉廋哉？" — look at what he does, examine his
+      motives, observe what satisfies him: how can a man hide who he is? Schumann's Prophet
+      Bird is the perfect musical correlative: an unearthly little piece that seems to hear
+      through surfaces, a two-voice counterpoint where one voice asks and the other answers.
+      Its register is third-person perception: you are not being told who someone is; you are
+      shown how to see. Memory here is not about the past but about the accumulated evidence
+      of character that reveals itself to patient attention.
+  - n: 8
+    scene: "Reviewing the old to know the new — memory as method"
+    force: revelation
+    composer: Mozart
+    work: "Ave verum corpus, K. 618"
+    decision: added
+    why: >
+      "溫故而知新，可以為師矣" — reviewing the old and understanding the new qualifies one to
+      be a teacher. This small sentence contains the whole Confucian epistemology: knowledge is
+      not accumulation but depth — you stay with the received forms until they open. Mozart's
+      Ave verum corpus is 46 bars of sustained stillness, a piece that reviews the oldest form
+      (the Eucharistic hymn) and makes it new through absolute transparency of texture. It is
+      what teaching should be: the transmission of what has been received, made present through
+      the clarity of the vessel. Revelation requires stillness, chant, verticality; Mozart gives
+      it at the scale of a single breath.
+  - n: 9
+    scene: "The gentleman is not a vessel"
+    force: law
+    composer: Brahms
+    work: "Intermezzo in E-flat major, Op. 117 No. 1"
+    decision: added
+    why: >
+      "君子不器" — the gentleman is not a vessel: he is not limited to one function, not
+      specialized into utility. Brahms's E-flat Intermezzo is music that refuses to be a vessel:
+      it is formally ambiguous, tonally restless, held between lullaby and lament. The piece
+      is a vessel that is also not one — it serves no function except to hold the space between
+      sleep and waking, and that is exactly the form of the gentleman's availability to every
+      situation. Law here is not the law of function but the law of adequate form.
+  - n: 10
+    scene: "Learning without thinking and thinking without learning"
+    force: law
+    composer: Beethoven
+    work: "String Quartet No. 15 in A minor, Op. 132 — III. 'Heiliger Dankgesang' (Molto adagio)"
+    decision: added
+    why: >
+      "學而不思則罔，思而不學則殆" — learning without thinking is confusion; thinking without
+      learning is danger. This dialectic is the intellectual engine of the Confucian project.
+      Beethoven's Heiliger Dankgesang is a song of gratitude recovered from illness — but its
+      two alternating tempos (the chorale of meditation, the andante of convalescent energy)
+      can be heard as the alternation of learning and thinking: a sustained, patient dwelling
+      in the given form (the Lydian mode chant) and the active, recuperative working-through
+      of what that form means. The two modes intertwine without collapsing into one another.
+      The Law here is the discipline of holding both poles.
+  - n: 11
+    scene: "Knowing that you know and knowing that you do not"
+    force: revelation
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      "知之為知之，不知為不知，是知也" — knowing that you know, knowing that you do not know:
+      this IS knowledge. This is the epistemological climax of Book II; the simple sentence
+      contains the structure of all genuine learning — the humility of the knower before the
+      limit of the known. Pärt's Spiegel im Spiegel is the perfect register: a piano playing
+      single triads, a violin holding long tones, each note suspended as though it might be the
+      last certainty before silence. The piece knows exactly what it knows and exactly what it
+      does not need to say. Revelation requires stillness, chant, verticality; Pärt's is the
+      most radical stillness in the repertory.
+  - n: 12
+    scene: "The orphaned path — service to worthy and unworthy rulers"
+    force: memory
+    composer: Elgar
+    work: "Symphony No. 1 in A-flat major, Op. 55 — I. Andante nobilmente e semplice"
+    decision: added
+    why: >
+      "篤信好學，守死善道。危邦不入，亂邦不居。天下有道則見，無道則隱" — hold faith and love
+      learning; guard the good way unto death. Do not enter a failing state; withdraw when the
+      Way is absent. This is the wisdom of the man who knows when to serve and when to wait.
+      Elgar's First Symphony opening is the noblest expression of service withheld: the theme
+      is ceremonial but private, as though accompanying a ceremony only the orchestra sees.
+      Memory here is the accumulated wisdom of when the time is right — which is the hardest
+      knowledge of all.
+  - n: 13
+    scene: "The eight trigrams and the governance of knowledge"
+    force: law
+    composer: Bach
+    work: "Well-Tempered Clavier, Book II — Fugue No. 22 in B-flat minor, BWV 891"
+    decision: added
+    why: >
+      "殷因於夏禮，所損益，可知也" — the Shang built on the Xia's ritual; what was added and
+      removed can be known. This is Confucius's philosophy of historical knowledge: the structure
+      of tradition is not opaque but legible, because form persists across change. Bach's
+      B-flat minor Fugue is the most complex in the WTC, a masterpiece of formal continuity that
+      sustains its subject through the most daring modulations without ever losing the thread.
+      That IS the knowledge tradition makes available: the form persists; the surface changes;
+      the knower reads the pattern.
+  - n: 14
+    scene: "Without trust, nothing stands — the root of all government"
+    force: law
+    composer: Telemann
+    work: "Viola Concerto in G major, TWV 51:G9 — I. Largo"
+    decision: added
+    why: >
+      "人而無信，不知其可也" — a man without trustworthiness: how can he stand? Like a cart
+      without a yoke-bar, it cannot move one step. This is the practical foundation of
+      Confucian political theory: trust is not a virtue added to government but the mechanism
+      of government itself. Telemann's Largo is patient and quietly architectural: the solo
+      viola states a simple idea and develops it with the absolute integrity of one who keeps
+      his word. Trust has no ornament; it is the thing that holds the cart together. The piece
+      is unshowy, adequate, reliable — as trustworthy as a good official.
+  - n: 15
+    scene: "Looking forward and back — the order of ancient and modern"
+    force: law
+    composer: Mozart
+    work: "Piano Sonata No. 12 in F major, K. 332 — I. Allegro"
+    decision: added
+    why: >
+      "殷因於夏禮，周因於殷禮，其或繼周者，雖百世可知也" — the pattern of succession: what is
+      added, what is removed, what persists. The hundredth generation is legible from the first.
+      Mozart's K. 332 opening is a sonata whose structure is entirely about the relation of
+      past material to present development: the first theme is simple, declarative, almost
+      archaic; the second a flowing response; the development works through both as though
+      tracing the additions and removals of dynastic history. The form itself enacts the
+      knowledge Confucius describes: you can know what will come because you understand the
+      structure of what already was.
+  - n: 16
+    scene: "Sacrificing to wrong spirits — the limit of religious action"
+    force: comedy
+    composer: Rossini
+    work: "The Barber of Seville — Overture"
+    decision: added
+    why: >
+      "非其鬼而祭之，諂也" — sacrificing to spirits not your own is flattery. "見義不為，無勇也"
+      — seeing right and not doing it is cowardice. The pairing is comic and sharp: the
+      busybody who offers sacrifices to the wrong spirits while neglecting the obvious moral
+      action directly in front of him. Rossini's overture is the perfect comic register: fast,
+      light, building to climaxes that are slightly absurd — the musical equivalent of someone
+      making elaborate offerings to the wrong god while the neighbor starves. Comedy requires
+      dance rhythm and courtly exaggeration; Rossini gives the exact speed of moral comedy.
+  - n: 17
+    scene: "Gathering the village and returning to the teacher"
+    force: return
+    composer: Bach
+    work: "Cello Suite No. 1 in G major, BWV 1007 — Prelude"
+    decision: added
+    why: >
+      The closing chapters of Book II gather practical advice — taking counsel from the village,
+      correcting wrongs without vengeance, considering the day's actions — and return the reader
+      to the note struck at the beginning: government IS the shape of a life. Bach's First Cello
+      Suite Prelude is the most natural image of return in the repertory: an arpeggiated figure
+      that never leaves the tonic, that travels through all six strings to arrive exactly where
+      it started — but having made the whole space of the instrument known. The life that has
+      governed itself well ends where it began, but the space in between has been discovered.
+      Return requires circular form, recognition motif; Bach gives the most perfect circle in
+      western music.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "reserved for a book of genuine loss and crisis (Analects Book IX or Book XI)"
+    why: >
+      Considered for Confucius's autobiography (track 4) to underscore the gravity of the
+      passage from youth to mastery. But Book II is about the ASCENT of a life, not its end.
+      The Funeral March would pre-empt the mortal register of Books IX and XI, where Confucius
+      weeps for his disciples. Autobiography here is ascent, not elegy.
+  - composer: Verdi
+    work: "Requiem — Dies Irae"
+    status: "wrong register for Book II entirely; save for a crisis book or the Iliad"
+    why: >
+      Considered for the critique of punishment (track 3) but the Dies Irae is terror, not
+      structural analysis. Confucius's distinction between punishment-based and virtue-based
+      governance is cool and diagnostic; Verdi is apocalyptic. The Bach fugue is more precise.

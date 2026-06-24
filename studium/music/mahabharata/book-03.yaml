@@ -1,0 +1,239 @@
+# Mahabharata — Vana Parva (Book 3) — curated music arc
+# Gold-standard form matching iliad/book-01.yaml.
+# Score the FOREST EXILE: the long wandering, the nested stories that
+# sustain a dispossessed civilization, the acquisition of divine weapons,
+# the testing of Yudhishthira's dharma, and the slow approach of return.
+work: mahabharata
+book: 3
+title: "Vana Parva: The Forest of Stories, Waiting, and the Well of Questions"
+length_minutes: 108
+principle: >
+  Do not score Vana Parva as "the Pandavas wait out their exile." Score it
+  as the period when narrative becomes survival: a dispossessed court
+  preserving itself through stories told around forest fires. Nala and
+  Damayanti — a king who also lost everything at dice — is told to console
+  Yudhishthira. The Ramayana is recited to teach him fortitude. The
+  Yaksha's questions test his dharma at the deepest level. The forest is
+  not a pause between catastrophe and war; it is the crucible in which
+  the Pandavas become the people who can survive the war. The dominant force
+  is exile — not as punishment but as education, the bardic longueur of a
+  displaced court holding itself together by telling itself who it is.
+force_arc: [exile, grief, memory, exile, metamorphosis, divine-intervention, revelation, wrath, law, fate, return]
+dominant_force: exile
+tracks:
+  - n: 1
+    scene: "The gate of Indraprastha — leaving the city of gold"
+    force: exile
+    composer: Dvořák
+    work: "Symphony No. 9 in E minor, Op. 95 'From the New World' — II. Largo"
+    decision: added
+    why: >
+      The Pandavas cross the threshold of Indraprastha in deerskin and
+      matted hair — kings reduced to forest-dwellers. The gates close,
+      the city they built recedes behind them, and the road opens into
+      the unknown. Dvořák's Largo is the archetype of departure into a
+      new world: the English horn's melody over hushed strings is a
+      song of leaving, of a landscape that does not know your name. Exile
+      requires wandering tonality and open intervals; the Largo is built
+      on the spaciousness between notes, the distances a displaced people
+      must cross.
+  - n: 2
+    scene: "Draupadi's lament — the queen speaks her grief"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 5 in C-sharp minor — IV. Adagietto"
+    decision: added
+    why: >
+      In the forest of Kamyaka, Draupadi turns on Yudhishthira: you are
+      not a king, you are a gambler who threw away his wife. Her grief is
+      not internal — it is spoken, public, a performance of injury before
+      the sages and her husbands. Mahler's Adagietto is set aside for this
+      precise register: the strings-only texture, the long melodic arc,
+      grief that is not whispered but declared. Unlike the Adagietto in
+      Iliad Book I (Achilles' private grief with Thetis), this is grief
+      spoken aloud in a forest clearing, addressed to the person who caused
+      it. Grief requires slow tempo and an inward line; the Adagietto is
+      both — private in its intimacy, public in its scale.
+  - n: 3
+    scene: "The story of Nala — the king who lost everything too"
+    force: memory
+    composer: Fauré
+    work: "Requiem, Op. 48 — II. Offertoire"
+    decision: added
+    why: >
+      The sage Brihadasva tells Yudhishthira the story of Nala: a king who
+      also lost his kingdom at dice, was separated from his wife Damayanti,
+      and after years of wandering and suffering, regained everything. The
+      story is told as consolation — you are not the first, you will not be
+      the last, and the arc of the narrative bends toward restoration. Fauré's
+      Offertoire from the Requiem is memory as elevation: the organ and
+      strings moving in smooth, unhurried parallel, a melody that seems to
+      recall something without requiring its return. Memory requires nostalgic
+      recall and faded recapitulation; Fauré gives it the quality of a story
+      told by a fire that has been burning a long time.
+  - n: 4
+    scene: "The wandering — twelve years in the wilderness"
+    force: exile
+    composer: Vaughan Williams
+    work: "The Lark Ascending"
+    decision: added
+    why: >
+      The forest years are not a single scene but a condition: the Pandavas
+      move from hermitage to hermitage, hearing the Vedas recited by sages,
+      learning the geography of their own land through pilgrimage. Vaughan
+      Williams's The Lark Ascending is the purest musical expression of
+      sustained wandering: the solo violin floating above the orchestral
+      ground, a melody that never arrives and never departs, the feeling
+      of a landscape passing beneath you at the speed of walking. Exile
+      requires wandering tonality and open intervals — the lark's flight
+      is chromatic, unpredictable, and entirely free, exactly the register
+      of a court that has become a pilgrimage.
+  - n: 5
+    scene: "Arjuna in the Himalayas — the quest for celestial weapons"
+    force: metamorphosis
+    composer: Ravel
+    work: "Daphnis et Chloé — Suite No. 2, 'Lever du jour'"
+    decision: added
+    why: >
+      Arjuna leaves the forest and climbs into the Himalayas to obtain the
+      weapons that will be necessary for the war he knows is coming. He stands
+      on one leg in the snow, performs tapasya (austerity) so intense that
+      the mountain itself begins to burn. Ravel's 'Lever du jour' (Daybreak)
+      from Daphnis et Chloé is metamorphosis at its most fluid: the orchestral
+      colour shifting from darkness through predawn grey to gold, the flute's
+      awakening runs, the sense of a world being remade at the edge of
+      consciousness. Metamorphosis requires changing orchestral colour and
+      fluid harmony; Ravel's dawn sequence is the repertoire's most precise
+      mapping of a single transition from one state to another.
+  - n: 6
+    scene: "Shiva as the Kirata — the hunter who is God"
+    force: divine-intervention
+    composer: Messiaen
+    work: "Quatuor pour la fin du temps — I. Liturgie de cristal"
+    decision: added
+    why: >
+      Shiva appears to Arjuna in the form of a Kirata hunter, and they
+      fight over a boar. Only when the hunter reveals his true nature does
+      Arjuna understand: he has been wrestling God. The encounter is
+      revelation through combat — the divine entering the world not as
+      vision but as contest. Messiaen's Liturgie de cristal is the sound
+      of something that has always been present becoming visible: the
+      birdsong fragments in the piano and clarinet occurring within a grid
+      of unchanging rhythmic sequences, time suspended inside time, the
+      fabric of the ordinary torn open to show the structure beneath.
+      Divine-intervention requires sudden colour shift; Messiaen shifts
+      the colour of time itself.
+  - n: 7
+    scene: "Pashupatastra — Arjuna receives the supreme weapon"
+    force: revelation
+    composer: Tavener
+    work: "The Protecting Veil — I. The Protecting Veil (opening)"
+    decision: added
+    why: >
+      Shiva, revealed, grants Arjuna the Pashupatastra — the weapon that
+      cannot be resisted, the missile that will lay waste to armies. Arjuna
+      receives it not as a warrior but as a disciple: the weapon is a
+      teaching, its power inseparable from the ethical discipline of its
+      use. Tavener's The Protecting Veil opens with the solo cello in
+      sustained, chant-like melody over a still orchestral bed — revelation
+      as stillness, as the weight of something given that transforms the
+      receiver. Revelation requires stillness, chant, and verticality;
+      Tavener's Byzantine-inflected register is the revelation-music of
+      the late twentieth century, hieratic and unhurried.
+  - n: 8
+    scene: "Jayadratha abducts Draupadi — the forest violated"
+    force: wrath
+    composer: Stravinsky
+    work: "The Rite of Spring — Part I, 'The Augurs of Spring (Dances of the Young Girls)'"
+    decision: added
+    why: >
+      While the Pandavas are away hunting, Jayadratha, king of Sindhu,
+      sees Draupadi alone in the forest and takes her by force. The forest
+      sanctuary — the only safety the exiled Pandavas have — is violated.
+      Bhima finds them, pursues Jayadratha, and humiliates him before
+      Draupadi. Stravinsky's Augurs of Spring is ritual violence at full
+      volume — the hammered chords in the strings, the off-balance accents,
+      the sense of a social order cracking open under percussive pressure.
+      Wrath requires rhythmic pressure and unresolved harmony; the Augurs
+      is the twentieth century's founding statement of rhythm as physical
+      force.
+  - n: 9
+    scene: "The Yaksha's questions — dharma tested at the water's edge"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue, BWV 1080 — Contrapunctus I"
+    decision: added
+    why: >
+      Near the end of the exile, a Yaksha (nature spirit) blocks the
+      Pandavas' access to a lake. One by one, the brothers drink from the
+      water without answering his questions, and one by one, they fall
+      dead. Yudhishthira approaches last. The Yaksha asks him questions
+      — not riddles, but questions about the nature of dharma: what makes
+      the world shine? (The sun.) What awakens the dead? (Truth.) What is
+      heavier than earth? (The mother.) Yudhishthira answers each one.
+      Bach's Art of Fugue Contrapunctus I is law as pure structure: a
+      single subject examined from every angle, the form generating its
+      own clarity without external reference. The subject is not beautiful
+      particularly — it is rigorous, and its rigour produces the beauty.
+      Law requires formal clarity and architecture; fugue is law's most
+      complete musical expression, and Yudhishthira's answers are fugal:
+      each question receives the answer that the structure demands.
+  - n: 10
+    scene: "Nakula lives — Yudhishthira chooses the right brother"
+    force: fate
+    composer: Schubert
+    work: "String Quintet in C major, D. 956 — II. Adagio (closing section)"
+    decision: added
+    why: >
+      The Yaksha offers to revive one of Yudhishthira's brothers. Yudhishthira
+      chooses Nakula — his stepbrother, not his full brother — so that neither
+      of his mothers (Kunti and Madri) will be left without a son. The choice
+      is the proof of everything the questions have tested: dharma is not
+      abstract principle but the specific allegiance to justice over
+      preference. The Adagio of Schubert's Quintet, in its closing section,
+      is the sound of fate operating as recognition rather than mechanism:
+      the two cellos in their sustained foundation, the first violin's
+      melody achieving resolution by submitting to the form. Fate requires
+      inexorable motif, but here fate is not hammered — it is chosen, and
+      the choice releases the dead back into life.
+  - n: 11
+    scene: "The exile ends — the horizon before the last year"
+    force: return
+    composer: Beethoven
+    work: "Symphony No. 6 in F major, Op. 68 'Pastoral' — V. Shepherd's Song: Allegretto"
+    decision: added
+    why: >
+      Twelve years in the forest are complete. One year of incognito remains,
+      and then — return. The Pandavas emerge from the deeper forest toward
+      the cultivated edge of the world, carrying the weapons Arjuna obtained,
+      the knowledge Yudhishthira earned, the stories that have sustained
+      them. Beethoven's Pastoral's final movement — the shepherd's song of
+      thanks after the storm — is return as gratitude, not triumph: the
+      clarinet's melody over the drone bass, the horns calling from a
+      distance, the sense of having been through something terrible and
+      arrived on the other side. Return requires circular form and
+      recognition; Beethoven circles back to the tonic in the sunlit
+      key of F major, the storm over, the road ahead opening.
+demoted:
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "belongs to the war parvas (Books 5-9); Vana Parva has no pitched battle"
+    why: >
+      The forest is the pre-war condition. Mars's martial rhythm belongs
+      to the battlefield, not the wilderness. The violence of Vana Parva
+      (Jayadratha's abduction, the Yaksha's deaths) is ritual, spiritual,
+      or domestic — not military.
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "still reserved; Vana Parva has deaths (the Pandavas' temporary death at the lake) but they are reversed and instructive, not terminal"
+    why: >
+      The funeral march is for the irreversible dead of the Kurukshetra
+      war. The Yaksha's deaths are pedagogical — a lesson in dharma, not
+      a catastrophe. The terminal register is still forbidden.
+  - composer: Gluck
+    work: "Iphigénie en Aulide — Overture"
+    status: "register too Greek/tragic for the Sanskrit forest; save for the Iliad corpus"
+    why: >
+      Gluck's operatic sacrifice-music belongs to the Greek world's
+      ritual register. Vana Parva's sacrifices are quieter — tapasya,
+      not blood — and require music with a different ritual grammar.

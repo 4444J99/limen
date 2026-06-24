@@ -1,0 +1,212 @@
+# Heike Monogatari — Book IX — curated music arc
+# Atsumori: two beautiful deaths and the warrior who could no longer bear his trade.
+work: heike
+book: 9
+title: "Heike Book IX: The Death of Atsumori"
+length_minutes: 101
+principle: >
+  Book IX is the emotional summit of the entire work, the book to which everything before it has been
+  rising and from which everything after it will fall. It opens with the death of Kiso Yoshinaka at
+  Awazu — the conqueror of Book VIII run down in a frozen rice-field, his horse mired, an arrow through
+  his face, and beside him his foster-brother Imai Kanehira, who holds off the enemy long enough for
+  Yoshinaka to die well and then kills himself in despair, the two milk-brothers ending together. Then
+  the scene shifts to Ichi-no-tani, the Taira's great fortified position, and to Yoshitsune's
+  legendary stroke: the descent of Hiyodorigoe, where he leads his cavalry straight down a cliff the
+  Taira believed no horse could descend, falling on their camp from the one direction left unguarded.
+  In the rout that follows, the book gives its two unforgettable deaths. Taira no Tadanori, the
+  poet of Book VII, is killed, and a slip of paper bearing one of his poems is found tied in his
+  quiver. And Kumagai Naozane, a gruff eastern warrior, pulls a young rider from the surf, tears off
+  his helmet to take his head, and finds a boy of sixteen — Atsumori — the age of his own son, a flute
+  still tucked in his armor; he kills him weeping, and the killing breaks him so completely that he
+  renounces the warrior's life and becomes a monk. Score this as grief that turns the sword in the
+  hand of the one who wields it. The dominant force is **grief** — the recognition, across the line of
+  battle, that the enemy was beautiful, and young, and a person, and is now dead by your hand.
+force_arc: [fate, sacrifice, grief, ascent, divine-intervention, wrath, memory, revelation, grief, metamorphosis, exile]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "Awazu — Yoshinaka in the frozen field"
+    force: fate
+    composer: Verdi
+    work: "La forza del destino — Overture"
+    decision: added
+    why: >
+      The book opens with the death promised by the end of Book VIII. Yoshinaka, reduced to a handful
+      of riders, makes his last stand at Awazu in the dead of winter. The text is merciless with the
+      detail: his horse plunges into the deep mud of a frozen paddy, he cannot urge it free, and as he
+      turns his head an arrow takes him in the face. Verdi's Forza overture is fate as the Italians
+      heard it — the relentless three-note tread of destiny that opens the opera and recurs through it,
+      an engine that cannot be turned aside. The fate force requirement — inexorable motif, hammered
+      insistence — is met as the closing of an account. The conqueror of one book becomes the corpse
+      of the next; the mud holds the horse; the arrow finds the gap; nothing in the scene could have
+      gone otherwise.
+  - n: 2
+    scene: "Imai Kanehira's loyal death — the foster-brothers end together"
+    force: sacrifice
+    composer: Wagner
+    work: "Götterdämmerung — Siegfried's Funeral Music"
+    decision: added
+    why: >
+      The death of Yoshinaka is given its meaning by the death beside it. Imai Kanehira, his
+      foster-brother, holds the pursuers off so that Yoshinaka may die a clean death rather than be
+      taken; and when he learns his lord is dead, Imai puts the point of his sword in his mouth and
+      throws himself from his horse, so that the milk-brothers who grew up together die within minutes
+      of each other. Wagner's Funeral Music is the supreme orchestral elegy for a hero — the great
+      dotted rhythm tolling under the leitmotifs of a whole life, grief raised to the level of ritual.
+      The sacrifice force requirement — ritual weight, processional, immolation-build — is met as
+      loyalty carried past survival: Imai does not outlive his lord by choice, and the music gives that
+      choice the weight of a rite. In a book full of grief, this is the one death that is also a gift.
+  - n: 3
+    scene: "Yoshinaka falls"
+    force: grief
+    composer: Tchaikovsky
+    work: "Symphony No. 6 (Pathétique) — IV. Adagio lamentoso"
+    decision: added
+    why: >
+      The text pauses over Yoshinaka's body in the snow — the wild northern cousin who came down out
+      of the mountains in Book VII, took the capital, and lost everything in a single season, now
+      still in a frozen field. Tchaikovsky's Pathétique ends not with triumph but with the Adagio
+      lamentoso, a finale that sinks rather than rises, the strings descending in waves until the music
+      goes out like a held breath. The grief force requirement — slow tempo, inward line — is met as
+      mourning even for a man the book has given us no reason to love. This is the Heike's deepest
+      claim, sounded early in its greatest book: grief does not check the ledger of the dead man's
+      deeds. Yoshinaka was brutal and doomed, and his death is still a loss, and the music grieves him
+      anyway.
+  - n: 4
+    scene: "Yoshitsune arrives — the young commander from the east"
+    force: ascent
+    composer: Sibelius
+    work: "Symphony No. 5 — III. Allegro molto (the swan theme)"
+    decision: added
+    why: >
+      The book's second movement begins as the first ends a force and raises another: Minamoto no
+      Yoshitsune, Yoritomo's brilliant younger brother, arrives at the head of the eastern army to
+      finish the war the Taira thought they had escaped. Sibelius's Fifth ends with the great swan
+      hymn — a broad, soaring theme in the brass that lifts the whole symphony into the light, the
+      sound of a heroic figure ascending into legend. The ascent force requirement — rising sequence,
+      luminous orchestration — is met as the entrance of the one genuinely dazzling soldier in the
+      whole epic. Yoshitsune is the rising star of the Genji, the tactician whose name will outlast
+      everyone's; the music gives him the soaring entrance the legend demands. That his own brother
+      will destroy him in the end is a sorrow the Heike saves for later. Here, he ascends.
+  - n: 5
+    scene: "The descent of Hiyodorigoe — down the impossible cliff"
+    force: divine-intervention
+    composer: Wagner
+    work: "Das Rheingold — Descent into Nibelheim (orchestral interlude)"
+    decision: added
+    why: >
+      Yoshitsune's masterstroke at Ichi-no-tani is one of the most famous feats in Japanese arms: the
+      Taira fortress is unassailable from the front and the sides, so he leads his cavalry to the top
+      of the cliff at Hiyodorigoe and rides straight down a slope so steep the Taira left it unguarded,
+      reasoning no horse could descend it. He sends a few riderless horses down first; when most reach
+      the bottom, he follows, and the army pours down onto the camp from above. Wagner's Descent into
+      Nibelheim is, literally, descent-music — the relentless downward sequence, the anvils, the
+      orchestra plunging through a tunnel in the earth. The divine-intervention force requirement —
+      sudden color shift, brass and strings in contrast — is met as the impossible made real: an act
+      so audacious it reads to both armies as something more than human, the war reorganized in an
+      hour by a single descending stroke.
+  - n: 6
+    scene: "Ichi-no-tani breaks — the rout"
+    force: wrath
+    composer: Bartók
+    work: "The Miraculous Mandarin — the chase (final pursuit)"
+    decision: added
+    why: >
+      With the cavalry down the cliff and the camp aflame, Ichi-no-tani collapses into rout. The Taira,
+      caught from the unguarded side, break for the sea and the boats; the Minamoto ride them down on
+      the beach; the fighting dissolves into pursuit and slaughter at the waterline. Bartók's chase
+      music from the Mandarin is breathless, savage, propulsive — strings and brass in a headlong
+      scramble that does not let up. The wrath force requirement — rhythmic pressure, unresolved
+      harmony — is met as the chaos of a broken line: not the ordered violence of a battle but the
+      formless violence of a rout, men cut down as they run, horses in the surf, the sea filling with
+      the boats of those who reach it and the bodies of those who do not.
+  - n: 7
+    scene: "Tadanori's death — the poem in the quiver"
+    force: memory
+    composer: Rachmaninoff
+    work: "Vocalise, Op. 34 No. 14"
+    decision: added
+    why: >
+      Among the dead at Ichi-no-tani is Taira no Tadanori, the poet who in Book VII rode back through
+      the burning capital to entrust his verses to Shunzei. He is killed in the rout, and when his body
+      is searched a slip of paper is found tied to his quiver, bearing a poem he had written — a verse
+      about lodging for a night under the blossoms of a wayside tree. The enemy who reads it understands
+      that he has killed a poet, and the book mourns him by name. Rachmaninoff's Vocalise is a song
+      without words, a single wordless melodic line of pure longing — the voice surviving its own
+      silence. The memory force requirement — nostalgic recall, faded recapitulation — is met as the
+      poem outliving the poet: Tadanori is dead, his clan is breaking, but the verse in the quiver
+      survives, and through it so does he. He wanted his art to outlast his name. At Ichi-no-tani it did.
+  - n: 8
+    scene: "Kumagai sees the boy's face"
+    force: revelation
+    composer: Tavener
+    work: "The Protecting Veil — opening (The Protecting Veil)"
+    decision: added
+    why: >
+      The book arrives at its central encounter. Kumagai Naozane, a hard eastern warrior, spots a
+      richly armored young horseman riding out to the rescue boats, challenges him back to the beach in
+      the etiquette of single combat, throws him, and pulls off his helmet to take his head — and finds
+      a boy of perhaps sixteen, beautiful, his teeth blackened in the court fashion, no older than
+      Kumagai's own son who fought in the same battle. Tavener's Protecting Veil opens with a high,
+      sustained, almost unbearable radiance in the solo cello over the strings — stillness made
+      luminous, a veil drawn back. The revelation force requirement — stillness, chant, verticality —
+      is met as the moment everything stops: the warrior looking into the face of the enemy and seeing,
+      with absolute clarity, a child. Everything the Heike has been saying about the cost of all this
+      is concentrated into that one held, terrible recognition.
+  - n: 9
+    scene: "The death of Atsumori — and the flute"
+    force: grief
+    composer: Mahler
+    work: "Das Lied von der Erde — VI. Der Abschied (The Farewell)"
+    decision: added
+    why: >
+      Kumagai wants to spare the boy and cannot: other Minamoto are riding up, the youth will be killed
+      anyway and more cruelly, and so — weeping, begging the boy's forgiveness — Kumagai takes his head.
+      The boy is Atsumori, nephew of Kiyomori, and when Kumagai wraps the body he finds a flute tucked
+      in the armor: the youth had brought music to a battle. It was Atsumori's flute, the text tells us,
+      that Kumagai had heard playing from the Taira camp at dawn. Mahler's Der Abschied is the longest
+      farewell in music — half an hour of a voice and an orchestra letting go of the world, ending on
+      the word "ewig," forever, repeated into silence. The grief force requirement — slow tempo, inward
+      line — is met as the dominant force of the whole book in its fullest statement. This is the death
+      the entire epic has been circling: not a clan's fall in the abstract but one boy with a flute,
+      killed by a man who did not want to, on a beach, in the spring.
+  - n: 10
+    scene: "Kumagai becomes a monk — the warrior breaks"
+    force: metamorphosis
+    composer: Strauss
+    work: "Metamorphosen (study for 23 solo strings)"
+    decision: added
+    why: >
+      Atsumori's death does not leave Kumagai. He cannot return to the warrior's life; the killing of
+      the boy with the flute has unmade his world. He renounces arms, takes the tonsure, and becomes a
+      monk, devoting the rest of his life to praying for the soul of the youth he killed. Strauss's
+      Metamorphosen is music written by an old man watching his entire civilization burn — twenty-three
+      solo strings winding through a continuous, grieving transformation that ends quoting Beethoven's
+      funeral march. The metamorphosis force requirement — changing orchestral color, fluid harmony —
+      is met as a soul remade by grief: the warrior dissolving and a monk emerging from the same man.
+      Kumagai's conversion is the Heike's answer to its own violence — the recognition that the only
+      possible response to having killed Atsumori is to stop being the kind of person who could.
+  - n: 11
+    scene: "The diminished clan flees to Yashima"
+    force: exile
+    composer: Britten
+    work: "Peter Grimes — Four Sea Interludes: I. Dawn"
+    decision: added
+    why: >
+      The book closes on the sea. The Taira survivors who escaped Ichi-no-tani take to the boats again
+      and withdraw to Yashima, fewer than before, carrying their dead and their child-Emperor across
+      the grey water toward the next refuge that will not be a refuge for long. Britten's "Dawn" —
+      high violins and flutes over the low heave of brass and harp — is the sound of the open sea at
+      first light, cold and vast and indifferent, the element that surrounds the whole Inland Sea
+      campaign and will close over the clan at Dan-no-ura. The exile force requirement — wandering
+      tonality, open intervals — is met as the homeless drift of a diminished people across water that
+      does not care. The Taira are smaller now by Atsumori and Tadanori and a beach full of the dead,
+      and the sea carries them on toward an ending the next books will name.
+
+demoted:
+  - composer: Stravinsky
+    work: "The Rite of Spring — Sacrificial Dance finale"
+    status: "reserved for Book XI (Dan-no-ura, the drowning of the clan)"
+    why: >
+      Ichi-no-tani is a rout and two unbearable single deaths, not the final immolation of the house.
+      The Sacrificial Dance is held for the sea-grave at Dan-no-ura, where the Taira end as a clan.

@@ -1,0 +1,108 @@
+work: journey-to-the-west
+book: 11
+title: "Chapter 11: The Imperial Mandate — A Monk is Made Public"
+length_minutes: 110
+principle: >
+  Score Chapter 11 as the political crystallization of Xuanzang’s private vocation.
+  What was personal obligation becomes recognized duty, and the court, despite skepticism, becomes
+  the ritual machine that places him on the road. The music should balance state formality with
+  the inward cost of entering public service.
+dominant_force: kingship
+force_arc: [kingship, law, supplication, divine-intervention, law, law, grief, salvation, exile, fate]
+tracks:
+  - n: 1
+    scene: "The Tang court hears of the monk’s reputation"
+    force: kingship
+    composer: Handel
+    work: "Water Music — Overture in F major (HWV 348)"
+    decision: added
+    why: >
+      The chamber of governance enters the narrative not as secular interruption but as a formal
+      threshold. Handel’s stateful ceremonial logic captures the machinery of recognition:
+      the court appears grand, and the stakes are high.
+  - n: 2
+    scene: "Administrative deliberation: who can cross where ordinary people cannot"
+    force: law
+    composer: Brahms
+    work: "Symphony No. 3 — II. Andante"
+    decision: added
+    why: >
+      The chapter spends significant energy on process. Xuanzang is assessed, debated, and ultimately
+      positioned as one who can bear danger. Brahms’s andante registers procedural patience without
+      minimizing the pressure.
+  - n: 3
+    scene: "Xuanzang petitions to serve Dharma over comfort"
+    force: supplication
+    composer: Pärt
+    work: "Cantus in Memory of Benjamin Britten"
+    decision: added
+    why: >
+      He is not requesting honor; he is requesting the burden of a dangerous task.
+      Pärt’s sparse motion makes this a petition of integrity rather than ambition.
+  - n: 4
+    scene: "A sign confirms the mission beyond courtly logic"
+    force: divine-intervention
+    composer: Messiaen
+    work: "Quartet for the End of Time — 'Louange à l'Éternité de Jésus'"
+    decision: added
+    why: >
+      The court can legalize departure, but the chapter also insists that the mission is not a human invention.
+      Messiaen’s spiritual stillness provides the register of sanctioned transcendence that court procedure
+      can only partially carry.
+  - n: 5
+    scene: "Edict language gives Xuanzang a destination"
+    force: law
+    composer: Mozart
+    work: "Requiem — 'Lacrimosa'"
+    decision: added
+    why: >
+      The imperial order gives shape to destiny. The chapter treats language as instrument:
+      naming the mission publicly transforms intention into responsibility. Mozart’s measured drama
+      suits this conversion from desire into mandate.
+  - n: 6
+    scene: "Logistical burden and ritual authorization"
+    force: law
+    composer: Beethoven
+    work: "Symphony No. 5 — III. Allegro"
+    decision: added
+    why: >
+      There are robes, escorts, routes, and procedural obligations. This phase is not mystical
+      spectacle; it is material governance. Beethoven provides durable thrust without dissolving into
+      sentiment.
+  - n: 7
+    scene: "Family grief at institutional separation"
+    force: grief
+    composer: Schubert
+    work: "String Quintet in C, D. 956 — II. Andante con moto"
+    decision: added
+    why: >
+      Xuanzang’s departure is now collective loss. The chapter does not sentimentalize filial ties; it lets
+      separation become the final domestic cost of dharmic vocation.
+  - n: 8
+    scene: "Monastic elders frame the journey as shared merit"
+    force: salvation
+    composer: Brahms
+    work: "Intermezzo in A major, Op. 118 — No. 1"
+    decision: added
+    why: >
+      No single individual can bear this alone; the scene reminds the reader that pilgrimage is relational.
+      Brahms’s intimacy carries the chapter’s sense of grace without grandiloquence.
+  - n: 9
+    scene: "Departure from the capital at the edge of imperial order"
+    force: exile
+    composer: Vaughan Williams
+    work: "The Lark Ascending — Introduction"
+    decision: added
+    why: >
+      This is still Xuanzang’s first step, and the world beyond remains distant.
+      The piece’s floating line and open horizon signal the move from center to boundary.
+  - n: 10
+    scene: "The road begins to answer for every vow made in court"
+    force: fate
+    composer: Stravinsky
+    work: "The Rite of Spring — 'Augurs of Spring'"
+    decision: added
+    why: >
+      The chapter ends with uncertainty becoming inevitable. Having accepted power’s blessing and burden,
+      Xuanzang now enters a world where his discipline will either hold or collapse. Stravinsky gives
+      this transition the right edge: beautiful, unstable, unavoidable.

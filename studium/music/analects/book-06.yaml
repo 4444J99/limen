@@ -1,0 +1,360 @@
+# Analects — Book VI — curated music arc
+# 述而 Shuo Er — "Assembled by memory, practiced by discipline"
+# Do not score this as a linear biography. Score it as the architecture of repetition:
+# how repeated, unheroic habits become the field in which the Way takes root.
+work: analects
+book: 6
+title: "Analects Book VI: Practice, Continuity, and the Ordinary Way"
+length_minutes: 95
+principle: >
+  Book VI is not a dramatic new scene; it is the long score of continuity under pressure.
+  The Master says what he does, what he refuses, what he avoids, what he repeats, and what
+  he refuses to perform. Learning here is not acquisition but habit, not novelty but
+  reassembly. The force is law: habits that hold when eloquence and status fail.
+force_arc: [memory, law, law, law, revelation, law, law, law, grief, grief, memory, law, law, revelation, law, memory, law, law, law, law, revelation, memory, revelation, law, law, law, law, memory, law, revelation, law, revelation, law, law, supplication, law, return, law]
+dominant_force: law
+tracks:
+  - n: 1
+    scene: "No invention, no vanity: transmitting what came before"
+    force: memory
+    composer: Bach
+    work: "The Art of Fugue — Contrapunctus I"
+    decision: added
+    why: >
+      "述而不作，信而好古" becomes a compositional principle: the arc begins not with invention
+      but with disciplined transmission. Bach’s contrapuntal opening makes this explicit by showing
+      how identity can be preserved through variation.
+  - n: 2
+    scene: "Learning without exhaustion"
+    force: law
+    composer: Mozart
+    work: "Eine kleine Nachtmusik, K. 525 — II. Romance"
+    decision: added
+    why: >
+      "默而識之，學而不厭" is not intensity but sustained order. Mozart’s Romance uses a
+      calm phrase grammar that carries repeated attention without strain, matching the discipline of
+      learning to continue.
+  - n: 3
+    scene: "Integrity above rhetoric"
+    force: law
+    composer: Beethoven
+    work: "Symphony No. 5 in C minor — I. Allegro con brio"
+    decision: added
+    why: >
+      "德之不脩，學之不講" names unfinished ethics as failure. Beethoven’s Fifth does not permit
+      delay: the first movement’s pressure is the force of ethical consequence without ornament.
+  - n: 4
+    scene: "A measured walk through life"
+    force: law
+    composer: Schubert
+    work: "String Quartet No. 15 in G major, D. 887 — I. Allegro"
+    decision: added
+    why: >
+      The image of restrained composure in "子之燕居" asks for the grammar of ordinary conduct.
+      Schubert’s movement is a small formal life, patient and repeated.
+  - n: 5
+    scene: "The Master's late remorse"
+    force: revelation
+    composer: Brahms
+    work: "Piano Concerto No. 2 in B-flat major — II. Allegro appassionato"
+    decision: added
+    why: >
+      "甚矣吾衰也" is an abrupt epistemic disclosure: the old scholar naming his own collapse.
+      Brahms here gives a late, intense admission of distance between capacity and realization.
+  - n: 6
+    scene: "Resolve toward the Way"
+    force: law
+    composer: Haydn
+    work: "Trumpet Concerto in E-flat major — I. Allegro con spirito"
+    decision: added
+    why: >
+      "志於道，據於德，依於仁，游於藝" is not mood; it is order. Haydn gives
+      an architecture that can hold confidence without display.
+  - n: 7
+    scene: "Teaching must be timely"
+    force: law
+    composer: Schumann
+    work: "Humoreske in B-flat major, Op. 20 — I"
+    decision: added
+    why: >
+      In "不憤不啟，不悱不發" silence itself is a rule. Schumann’s elastic opening mirrors the
+      discipline of withholding premature response until necessity appears.
+  - n: 8
+    scene: "Mourning without appetite"
+    force: law
+    composer: Debussy
+    work: "Clair de lune"
+    decision: added
+    why: >
+      "子食於有喪者之側，未嘗飽也" reframes need as restraint under grief. Debussy’s
+      suspended harmony supports a practice of appetite that does not become indulgence.
+  - n: 9
+    scene: "Public grief, no performance"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    decision: added
+    why: >
+      "子於是日哭，則不歌" is ritual grief stripped of theater. Mahler’s slow movement is
+      precisely private, interior, and non-declamatory.
+  - n: 10
+    scene: "Song that follows tears"
+    force: grief
+    composer: Fauré
+    work: "Requiem, Op. 48 — III. Offertoire"
+    decision: added
+    why: >
+      After mourning, expression can only return as prayer. Fauré’s Offertoire keeps the pulse light
+      and inward, the right shape for disciplined sorrow.
+  - n: 11
+    scene: "Words become action"
+    force: memory
+    composer: Bach
+    work: "Goldberg Variations — Aria"
+    decision: added
+    why: >
+      "用之則行，舍之則藏" is memory translated into conduct. Bach’s Aria gives the
+      same principle: one line returns, transfigured through exact variation.
+  - n: 12
+    scene: "Fearless courage and practical fear"
+    force: law
+    composer: Mozart
+    work: "Piano Concerto No. 21 in C major, K. 467 — II. Andante"
+    decision: added
+    why: >
+      "暴虎馮河，死而無悔者，吾不與也" makes courage a regulated condition. Mozart’s
+      middle movement gives a calm where bravery remains visible without becoming posturing.
+  - n: 13
+    scene: "What can be sought without losing the self"
+    force: law
+    composer: Beethoven
+    work: "Piano Sonata No. 30 in E major, Op. 109 — II. Prestissimo"
+    decision: added
+    why: >
+      "富而可求也，雖執鞭之士，吾亦為之" frames desire as a conditional decision. Beethoven’s
+      compressed textures keep the line disciplined to its own limits.
+  - n: 14
+    scene: "Three dangers in one life"
+    force: revelation
+    composer: Schubert
+    work: "Symphony No. 8 in B minor — II. Andante con moto"
+    decision: added
+    why: >
+      "齊，戰，疾" reduces governance, conflict, and health to one attentional axis. Schubert’s
+      unresolved movement makes vulnerability audible without dramatizing it.
+  - n: 15
+    scene: "Astonishment at true enjoyment"
+    force: law
+    composer: Brahms
+    work: "Clarinet Trio, Op. 114 — I. Allegro"
+    decision: added
+    why: >
+      In Qi-like shock at musical fullness, the lesson is not excess but calibration. Brahms’s opening
+      movement carries that balanced astonishment.
+  - n: 16
+    scene: "Simple food, true abundance"
+    force: memory
+    composer: Ravel
+    work: "Pavane pour une infante défunte"
+    decision: added
+    why: >
+      "飯疏食飲水，曲肱而枕之，樂亦在其中矣" names frugality as interior wealth.
+      Ravel’s Pavane is stately and sparse, hearing the dignity of plain living.
+  - n: 17
+    scene: "Years as correction"
+    force: law
+    composer: Brahms
+    work: "Symphony No. 3 in F major — III. Poco allegretto"
+    decision: added
+    why: >
+      "加我數年，五十以學易" links maturity and reduced error. Brahms’s movement moves by
+      correction, not by accumulation.
+  - n: 18
+    scene: "Song and ritual as one voice"
+    force: law
+    composer: Schumann
+    work: "Kinderszenen, Op. 15 — No. 7"
+    decision: added
+    why: >
+      "子所雅言，詩、書、執禮，皆雅言也" places the classics as daily instrument, not museum
+      object. Schumann’s miniature prose gives familiar form disciplined by memory.
+  - n: 19
+    scene: "The weight of standards"
+    force: law
+    composer: Handel
+    work: "Music for the Royal Fireworks — Overture"
+    decision: added
+    why: >
+      "伯夷、叔齊" are moral witnesses, not abstractions. Handel’s ceremonial gravity gives
+      standards the shape of public responsibility.
+  - n: 20
+    scene: "Knowing when one does not know"
+    force: law
+    composer: Mozart
+    work: "Symphony No. 40 in G minor — I. Molto allegro"
+    decision: added
+    why: >
+      "我非生而知之者" is methodological humility. Mozart’s fast opening does not dissolve
+      humility; it channels energy through craft.
+  - n: 21
+    scene: "Strange powers, strange order"
+    force: revelation
+    composer: Tchaikovsky
+    work: "Symphony No. 6 in B minor — I. Adagio lamentoso"
+    decision: added
+    why: >
+      "子不語怪，力，亂，神" rejects naïve certainty. Tchaikovsky’s opening presents inner
+      force as something unmastered but acknowledged.
+  - n: 22
+    scene: "Learning from three to find one"
+    force: memory
+    composer: Beethoven
+    work: "Piano Sonata No. 8 in C minor ('Pathétique') — I"
+    decision: added
+    why: >
+      "三人行，必有我師焉" treats every encounter as a memory bank. Beethoven’s early movement
+      repeatedly introduces and revisits ideas as if learning from peers.
+  - n: 23
+    scene: "Inborn virtue and public vulnerability"
+    force: revelation
+    composer: Bach
+    work: "Well-Tempered Clavier, Book II — Prelude and Fugue in C minor"
+    decision: added
+    why: >
+      "天生德於予" is both confidence and warning. Bach’s contrapuntal line shows that inheritance
+      must still be shaped in the present.
+  - n: 24
+    scene: "No hidden agenda before friends"
+    force: law
+    composer: Brahms
+    work: "Piano Sonata No. 3 in F minor, Op. 5 — II. Andante"
+    decision: added
+    why: >
+      The refusal to hide from companions is a procedural ethic, not sentiment. Brahms’s middle tempo
+      keeps the line open while preserving structure.
+  - n: 25
+    scene: "Four teachings for ordinary life"
+    force: law
+    composer: Elgar
+    work: "Cello Concerto in E minor — I. Allegro"
+    decision: added
+    why: >
+      "子以四教" gives a practical grammar: 文, 行, 忠, 信. Elgar’s movement proceeds through
+      four registers at once, a useful analogue for layered formation.
+  - n: 26
+    scene: "The one who can remain"
+    force: law
+    composer: Haydn
+    work: "Symphony No. 103 in E-flat major — I. Adagio—Allegro"
+    decision: added
+    why: >
+      "得見有恆者" puts endurance above spectacle. Haydn’s movement asks for persistence across
+      repeated exposition, not loudness.
+  - n: 27
+    scene: "The man who still reels in discipline"
+    force: law
+    composer: Dvořák
+    work: "Cello Concerto in B minor — I. Allegro"
+    decision: added
+    why: >
+      "子釣而不綱，弋不射宿" is control without theatrics. Dvořák’s concerto opening is
+      energetic but bounded.
+  - n: 28
+    scene: "Not making what cannot be known"
+    force: memory
+    composer: Mahler
+    work: "Kindertotenlieder — Ich bin der Welt abhanden gekommen"
+    decision: added
+    why: >
+      "多聞擇其善者而從之" is the epistemology of curation. Mahler’s setting gives voice to
+      selection and refusal, not accumulation.
+  - n: 29
+    scene: "Speech, restraint, and public return"
+    force: law
+    composer: Telemann
+    work: "Concerto in E major for 2 Violins"
+    decision: added
+    why: >
+      "與其進也，不與其退也" values forward action without force. Telemann’s balanced lines
+      embody restrained return.
+  - n: 30
+    scene: "Mercy is not passive"
+    force: revelation
+    composer: Debussy
+    work: "La mer — De l'aube à midi sur la mer"
+    decision: added
+    why: >
+      "仁遠乎哉" rejects empty moralism and asks whether the intention is right. Debussy’s
+      sea movement suggests that depth can emerge without spectacle.
+  - n: 31
+    scene: "Friendship tested by partisanship"
+    force: law
+    composer: Fauré
+    work: "Requiem, Op. 48 — IV. Pie Jesu"
+    decision: added
+    why: >
+      The "知禮" scene is about fidelity within social heat. Fauré’s liturgical line turns
+      evaluation into composure.
+  - n: 32
+    scene: "The teaching that must be sung back"
+    force: revelation
+    composer: Rachmaninoff
+    work: "Vocalise, Op. 34 No. 14"
+    decision: added
+    why: >
+      "子與人歌而善，必使反之" makes response a second-order act. Rachmaninoff’s vocal line
+      lives in return.
+  - n: 33
+    scene: "Not human imitation"
+    force: law
+    composer: Schubert
+    work: "String Quintet in C major, D. 956 — I. Allegro ma non troppo"
+    decision: added
+    why: >
+      "文，莫吾猶人也" says imitation has no value unless transformed. Schubert’s quintet asks
+      for individuality within shared lines, a close analogue.
+  - n: 34
+    scene: "Being without exhaustion"
+    force: law
+    composer: Brahms
+    work: "Intermezzo in C major, Op. 117 No. 1"
+    decision: added
+    why: >
+      To teach without fatigue is labor organized, not sentiment sustained. Brahms’s intermezzo
+      uses patience as structure.
+  - n: 35
+    scene: "Persistent prayer for a long course of life"
+    force: supplication
+    composer: Handel
+    work: "Messiah — He was despised"
+    decision: added
+    why: >
+      The prayer scene is the rare explicit request for divine hearing. Handel’s line makes petition
+      precise and unembellished.
+  - n: 36
+    scene: "Frugality over display"
+    force: law
+    composer: Bruckner
+    work: "Symphony No. 8 — II. Adagio"
+    decision: added
+    why: >
+      "奢則不孫，儉則固" prefers durable steadiness. Bruckner’s broad adagio makes constraint feel
+      large and structural.
+  - n: 37
+    scene: "Wide openness and controlled authority"
+    force: return
+    composer: Prokofiev
+    work: "Alexander Nevsky — Introduction"
+    decision: added
+    why: >
+      "君子坦蕩蕩，小人長戚戚" marks the return of inward scale to outward action. Prokofiev’s
+      opening keeps the line open yet controlled.
+  - n: 38
+    scene: "Gentle severity"
+    force: law
+    composer: Sibelius
+    work: "Symphony No. 2 — I. Allegro moderato"
+    decision: added
+    why: >
+      "子溫而厲，威而不猛，恭而安" closes with a paradox: tenderness with edge. Sibelius’s
+      measured opening gives exactly that quality of contained force.

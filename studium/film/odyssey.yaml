@@ -1,0 +1,365 @@
+# The Odyssey — film companion (the FOURTH commentary system)
+# Gold-standard per studium/film/iliad.yaml. The Odyssey's forces orbit return, exile, and
+# recognition — νόστος as the shape of the whole poem, not just its end.
+#
+# The Odyssey is the poem of homecoming — not as arrival but as the long architecture of return:
+# absence (exile), the moment of seeing-home (return), and the recognition of what has been in
+# front of you all along (revelation). Its other forces — memory (the entire poem is a flashback),
+# divine-intervention (Athena's constant presence), metamorphosis (disguise, transformation),
+# desire (Penelope weaving/unweaving), wrath (the suitors' slaughter), grief (the Nekyia, Argos,
+# the families of the dead), comedy (the Cyclops trick, the beggar episodes), fate (Tiresias's
+# prophecy), law (the re-establishment of order) — orbit this central triad.
+# Every force tag is a key of dominant-force.yaml; every object of object-taxonomy.yaml.
+work: odyssey
+title: "The Odyssey — a cinema of return, exile, and the long gaze homeward"
+principle: >
+  Do not assemble a "movies about the Odyssey" list. Assemble the poem's FORCES given cinematic
+  bodies. The Odyssey is not a travelogue; it is the study of νόστος — homecoming understood not
+  as an event (you arrive) but as a condition (you are always coming home, always in the space
+  between departure and recognition). Book 1 is not adventure; it is the diagnosis of a wound —
+  absence stretched past bearing, a son who cannot confirm his father exists, a wife whose web
+  is the emblem of deferred hope. The fitting and NOT obvious film for it is therefore not a
+  sea epic but Ulysses' Gaze — the return as a gaze that searches across a landscape that has
+  forgotten you. The companion reaches across film history: a Russian poet in Italian exile
+  (Nostalghia) for exile as divided being; a miracle in a Danish farmhouse (Ordet) for recognition
+  as resurrection; a Depression-era chain gang adapting the Cyclops (O Brother, Where Art Thou?)
+  for comedy that knows survival is undignified; a body-horror dissolution (The Fly) for Circe's
+  metamorphosis; a Hong Kong corridor of deferred touch (In the Mood for Love) for Penelope's
+  desire; archives of memory from wartime France and Japan (Hiroshima mon amour) for a poem that
+  begins with the proem's recapitulation; Berlin angels (Wings of Desire) for Athena walking
+  unseen; a 15-year revenge (Oldboy) for the wrath of the slaughter; the quiet devastation of
+  aging parents (Tokyo Story) for the poem's grief; a desert coin toss (No Country for Old Men)
+  for Tiresias's inexorable fate; and a jury room (12 Angry Men) for the law that must be
+  re-established in the hall. The literal adaptation (The Odyssey, 1997) is set aside, honestly
+  flawed — the obvious one, never promoted; the force-companion carries the weight.
+force_coverage: [return, exile, revelation, comedy, metamorphosis, desire, memory, divine-intervention, wrath, grief, fate, law]
+films:
+  - title: "Ulysses' Gaze"
+    director: "Theo Angelopoulos"
+    year: 1995
+    force: return
+    divisions: [1, 5, 13, 15, 23]
+    objects: [mirror]
+    letterboxd: ulysses-gaze
+    scene_or_theme: "The entire arc of homecoming — the man who returns and finds his home changed while he was away, the gaze that searches across time for what was lost"
+    object_lesson: >
+      Return is not arrival; it is the work of seeing what you have come back to as if for the
+      first time. The mirror is the object lesson: A's gaze into the old film reels is the same
+      act as Odysseus looking at the shore of Ithaca in Book XIII — the long, excruciating effort
+      to recognize what has been in front of him all along. Angelopoulos's protagonist travels
+      through the Balkans holding the gaze of the first filmmakers, searching for three lost reels
+      that are themselves a kind of home — an origin that recedes the closer one gets to it. The
+      Odyssey understands this: return is not the end of wandering but wandering's most intense
+      form — the struggle to see one's own home.
+    why: >
+      Ulysses' Gaze is the most explicit cinematic meditation on νόστος since the Odyssey itself.
+      A's journey from Greece through the former Yugoslavia to Sarajevo is the hero's path in
+      reverse — not away from home but toward it through a landscape that has become unrecognizable.
+      The film's title names the poem's central act: the gaze of the man who has come back and
+      cannot stop looking. Every scene of A watching old footage is Penelope watching the sea,
+      Telemachus watching the horizon, Odysseus watching the shore of Scheria from the raft.
+      Screen it for the return force: circular form, recognition motif, the terrible patience of
+      coming home to a place that has forgotten you.
+    content_note: "war landscapes, political violence; slow, contemplative pace; 3-hour runtime"
+  - title: "Nostalghia"
+    director: "Andrei Tarkovsky"
+    year: 1983
+    force: exile
+    divisions: [5, 7, 9, 10, 14]
+    objects: [cigarette, door]
+    letterboxd: nostalghia
+    scene_or_theme: "The exile condition — a man who cannot leave Italy but cannot go home, the novella of longing itself"
+    object_lesson: >
+      Exile is not being in the wrong place; it is being divided between two places, neither of
+      which can fully contain you. The cigarette is the object lesson: Gortchakov's constant
+      smoking is the nervous habit of the displaced — a small, repetitive act of presence in a
+      world where he is not quite present, a wisp of smoke going nowhere. The door is the second
+      object: his hotel room, the village church, the drained pool at the film's end — thresholds
+      he passes through but never inhabits. Tarkovsky coined 'nostalghia' from the Greek nostos
+      (return) + algia (pain) — the pain of return. The word is the Odyssey's wound made manifest:
+      not the ache of absence but the knowledge that the return itself is the problem.
+    why: >
+      Tarkovsky's film is the Odyssey through the end of the exile's tether — not the hero who
+      will complete the journey but the man who realizes the journey may never complete him.
+      Domenico's self-immolation is the final act of the exile who has given up the body that held
+      the longing. Gortchakov's last scene — carrying a lit candle across a drained pool — is
+      Odysseus on the raft, Odysseus in Calypso's bed, Odysseus weeping on the shore: the
+      impossible task of bringing the flame of home across a world that will not sustain it.
+    content_note: "slow, meditative; self-immolation; the final sequence is an endurance in patience"
+  - title: "Ordet"
+    director: "Carl Theodor Dreyer"
+    year: 1955
+    force: revelation
+    divisions: [16, 19, 23]
+    objects: [door, milk]
+    letterboxd: ordet
+    scene_or_theme: "Recognition as resurrection — the moment the dead return, the moment the absence becomes presence"
+    object_lesson: >
+      Revelation is the word spoken at the threshold when the door opens and the dead walk in.
+      The door is the object lesson: every revelation in the film is a door opening — the door of
+      the farmhouse, the door of the room where Inger lies dead, the door through which the miracle
+      enters. The milk is the second object: the simple substance of domestic life that the
+      resurrected woman brings back into the world — the material sign that the return is not just
+      spirit but flesh, not just witness but the resumption of care. In Book XXIII of the Odyssey,
+      Penelope says 'move the bed' — the bed Odysseus built from the olive tree rooted in the
+      house's foundation. That is the ordet — the word that proves the return. The bed that cannot
+      be moved is the door that opens.
+    why: >
+      Ordet is the revelation force given its most radical filmic body: the dead are not a metaphor.
+      Inger rises from her coffin in a room of unbelievers and declares that she was dead and is
+      now alive — the word (Ordet) that faith speaks. This is the recognition of Odysseus and
+      Penelope, Telemachus and his father, Laertes and his son: the return of the one who had been
+      given up for dead, and the moment of seeing that rewrites everything. Screen it for the books
+      of recognition — Odysseus revealed to Telemachus in Book XVI, the scar-recognition in XIX,
+      the bed-proof in XXIII — where the door opens and the lost are found.
+    content_note: "religious theme; slow, formal compositions; a 4-minute one-shot of the family at the threshold"
+  - title: "O Brother, Where Art Thou?"
+    director: "Joel Coen"
+    year: 2000
+    force: comedy
+    divisions: [9, 10, 12, 21]
+    objects: [cigarette, telephone]
+    letterboxd: o-brother-where-art-thou
+    scene_or_theme: "The Odyssey as American folk comedy — Cyclops (Big Dan), Sirens (the baptism-women), Lotus Eaters (the baptism itself), the bow-contest as radio-show recording"
+    object_lesson: >
+      The comic register of the Odyssey is real and intentional — Odysseus's adventures in Books
+      9-12 are dark but also absurd, a man who gives the Cyclops a fake name ('Nobody') and escapes
+      by clinging to a ram's belly. The joke is not at the epic's expense but at the epic's own
+      recognition that survival is undignified, that the hero is also a clown. The cigarette is the
+      object lesson: Everett's constant smoking — the Depression-era con-man's prop — signals that
+      the hero is a performance, a fiction the man tells others and himself. The telephone is the
+      second object: the medium of connection across distance — a constant motif — that never quite
+      delivers the message home. When Everett finally calls Penny, he learns she is about to marry
+      another man. Comedy does not cancel the wound; it makes it bearable.
+    why: >
+      The Coens' film is the best direct adaptation of the Odyssey that does not announce itself as
+      one — it translates the epic's episodic structure, its monsters, its temptations, and its
+      homecoming into the American vernacular with a lightness that reveals how much comedy was
+      already in Homer. The Odyssey gives its hero the capacity to laugh and lie his way through
+      nearly every situation; the Coens give Everett just enough wit to survive — and just enough
+      dignity to earn the recognition at the end when his wife and daughters don't know him.
+    content_note: "mild comic violence, racial stereotypes (period-accurate); the Soggy Bottom Boys' recording is the poet's song"
+  - title: "The Fly"
+    director: "David Cronenberg"
+    year: 1986
+    force: metamorphosis
+    divisions: [4, 10, 13, 19]
+    objects: [egg, mirror]
+    letterboxd: the-fly
+    scene_or_theme: "Books IV, X, XIII, XIX — Helen in Egypt (she who was stolen and returned changed), Circe's transformations, Athena's disguises, the scar that names"
+    object_lesson: >
+      Metamorphosis in the Odyssey is never merely physical — it is the changing of identity's
+      visible form. Circe turns men into swine, Athena turns Odysseus into a beggar, Helen claims
+      she recognized Odysseus in disguise in Troy. The egg is the object lesson: the pod that
+      Seth enters is a chamber of becoming — the body undone and remade, the self becoming
+      something its former self cannot recognize. The mirror is the second object: Seth watches
+      his own face change and cannot stop looking — the horror of seeing transformation from
+      inside, exactly as Odysseus bears his changed face through Ithaca, neither himself nor not
+      himself, the beggar-king who must hold two identities at once.
+    why: >
+      The Fly is metamorphosis as the Odyssey would have it: not a one-time transformation but a
+      process — the slow dissolution of the original into the new. Seth Brundle is Circe's victim
+      and Odysseus's disguise in one: he changes without choosing it, and his body becomes a prison
+      of its new shape. The film's central tragedy — Seth's love for Veronica cannot survive his
+      transformation — is the Odyssey's recognition scene inverted: Penelope must prove the beggar
+      is her husband; Veronica must watch the man she loves cease to exist while still in front of
+      her.
+    content_note: "body horror, gore; Cronenberg's most accessible film, but genuinely horrifying"
+  - title: "In the Mood for Love"
+    director: "Wong Kar-wai"
+    year: 2000
+    force: desire
+    divisions: [1, 5, 18, 19]
+    objects: [cigarette, telephone]
+    letterboxd: in-the-mood-for-love
+    scene_or_theme: "Desire as deferral — Penelope waiting, Calypso longing, Circe wanting what she cannot keep, the whole poem's architecture of unfulfilled reaching"
+    object_lesson: >
+      Desire in the Odyssey is never satisfied at the moment it is felt. Penelope weaves and
+      unweaves, Calypso houses a man who longs to leave her, Circe surrenders Odysseus to his
+      onward journey. The cigarette is the object lesson: Mrs. Chan and Mr. Chow smoke in the
+      stairwell, the shared small act of presence that substitutes for touch — the wisp that rises
+      and disappears, the contact that never fully arrives. The telephone is the second object:
+      the ringing that connects but does not deliver — the call to the wrong person, the
+      conversation that says everything without saying the thing itself. Wong Kar-wai films desire
+      as a condition of deferral: the slow-motion corridor, the repeated gesture, the look that
+      refuses itself.
+    why: >
+      In the Mood for Love films desire as the Odyssey structures it: a longing held across years
+      by the sheer will not to act. Mrs. Chan and Mr. Chow share a hotel room to write martial-arts
+      serials, never the thing they are feeling — their restraint is Penelope's web, the repeated
+      postponement of consummation. The Odyssey's secret is that desire is not about fulfillment
+      but about holding the shape of the beloved across the distance that makes the shape possible.
+      The film gives that shape its most beautiful and painful body.
+    content_note: "emotional, no explicit content; the slow-motion staircase walks are the film's signature"
+  - title: "Hiroshima mon amour"
+    director: "Alain Resnais"
+    year: 1959
+    force: memory
+    divisions: [3, 4, 8, 11, 19]
+    objects: [cigarette, mirror]
+    letterboxd: hiroshima-mon-amour
+    scene_or_theme: "The memory of loss — Nestor at Pylos telling Telemachus what he remembers of Troy; Menelaus at Sparta retelling Odysseus's spy mission; Demodocus singing the fall of Troy; the Nekyia; Penelope's scar-recognition"
+    object_lesson: >
+      Memory is not the past; it is the wound the past keeps open in the present. The cigarette
+      is the object lesson: the Frenchwoman's hand holding a cigarette in Hiroshima is the same
+      gesture she made as a young woman in Nevers — the repetition of the habit across the space
+      of a destroyed life, the small continuity that proves the self has a history. The mirror is
+      the second object: she looks at herself in the hotel bathroom and sees the girl she was
+      before Nevers, before the shaved head, before the German lover's death. Memory is not recall;
+      it is the gaze that sees two selves in one reflection. In the Odyssey, every act of memory —
+      Nestor remembering the siege, Helen remembering Odysseus in disguise, Demodocus singing the
+      fall of Troy — is a mirror held up to the present, changing what is seen.
+    why: >
+      Resnais's film is the most radical cinematic treatment of memory as simultaneous presence
+      and distance — the past is not behind us but running alongside, bleeding into every frame.
+      The Odyssey is a poem built on this structure: almost every book contains a flashback, a
+      retelling, a memory. Odysseus weeping at Demodocus's song, Penelope hearing the bard sing
+      of Troy, Nestor telling Telemachus his war stories — the poem knows that memory is not
+      narration but the wound that will not heal and the only thing that keeps the dead alive.
+    content_note: "graphic archival footage of Hiroshima aftermath; the Frenchwoman's story of her German lover; emotionally devastating"
+  - title: "Wings of Desire"
+    director: "Wim Wenders"
+    year: 1987
+    force: divine-intervention
+    divisions: [1, 5, 13, 16, 22]
+    objects: [cigarette]
+    letterboxd: wings-of-desire
+    scene_or_theme: "The gods walking unseen among mortals — Athena's disguised appearances on Olympus, at Scheria, on the shore of Ithaca, beside Odysseus in the hall"
+    object_lesson: >
+      The divine in the Odyssey is not remote majesty; it is the presence that walks beside you
+      without your knowledge, the hand that turns events while appearing to do nothing. Damiel and
+      Cassiel are Athena's angels: they stand in libraries, on subway platforms, beside dying men,
+      and no one sees them — but the narrative moves because of what they observe and, sometimes,
+      choose. The cigarette is the object lesson: the angel who puts down his wings and picks up a
+      cigarette is choosing mortality, choosing the limited life — the moment when the divine
+      chooses to become human. Athena chooses to walk beside Odysseus in disguise; she could remain
+      on Olympus, but she comes down. The choice to intervene is also the choice to be seen, to be
+      known, to love the mortal you are helping.
+    why: >
+      Wenders films the invisible attendants of Berlin as Homer films the Olympians: present,
+      watchful, capable of intervention but bound by rules. Damiel's fall into human love is
+      Athena's investment in Odysseus: the god who cannot stay away from the mortal she cares
+      about. The film's central movement — from the divine watching to the divine choosing the
+      finite — is the Odyssey's structural engine: the gods care about this war, this journey, this
+      man, and their care changes the course of the poem. Screen it for the divine-intervention
+      books — Athena descending to Telemachus, to Odysseus on Scheria, to Odysseus on Ithaca,
+      to Odysseus in the hall.
+    content_note: "black-and-white shifting to color; some mild language; the angels' perspective is the Olympian viewpoint"
+  - title: "Oldboy"
+    director: "Park Chan-wook"
+    year: 2003
+    force: wrath
+    divisions: [17, 22]
+    objects: [gun, clock, mirror]
+    letterboxd: oldboy
+    scene_or_theme: "Books XVII and XXII — the penetration of the house, the humiliation and preparation, the slaughter of the suitors"
+    object_lesson: >
+      Wrath, in the Odyssey as in Oldboy, is a long game — years of patience, a carefully concealed
+      identity, the terrible undeniability of the vengeance when it arrives. The clock is the
+      object lesson: fifteen years in a hotel room, every day the same — the slow ticking of
+      revenge being prepared, the mechanism turning. The mirror is the second object: Oh Dae-su
+      at the end, the hypnotist's suggestion erasing his memory of what he knows — a man choosing
+      to un-know the worst thing, as Odysseus chooses to un-know the man he became in the
+      slaughter. The gun (the hammer in Oldboy) is the instrument: not the weapon of the moment
+      but the tool of wrath's long circuit. Oh Dae-su's final embrace of his daughter, the memory
+      erased, is Odysseus holding Penelope after the bed-proof: the wrath is spent, and the man
+      who held it is left with the cost.
+    why: >
+      Oldboy arrives at the same place as the Odyssey by its own path. A man is imprisoned for
+      years by a hidden enemy, escapes, and exacts a vengeance that consumes the thing he thought
+      he was protecting. The revelations of parentage and forbidden love at the film's end are the
+      Odyssey's own deepest wounds: Odysseus returns to find his house full of men who want his
+      wife and kingdom; Oh Dae-su returns to find the revenge narrative built on a revelation he
+      cannot live with. The wrath of Book XXII — the systematic killing of every suitor — is not
+      triumph; it is the necessary, terrible act of purification that leaves the hero
+      unrecognizable to himself.
+    content_note: "extreme violence, torture; the corridor hammer fight is a single long take; the ending is one of cinema's darkest revelations"
+  - title: "Tokyo Story"
+    director: "Yasujiro Ozu"
+    year: 1953
+    force: grief
+    divisions: [11, 17, 19, 24]
+    objects: [cigarette, mirror]
+    letterboxd: tokyo-story
+    scene_or_theme: "Books XI, XVII, XIX, XXIV — the Nekyia and the grief of the dead; Argos's death; the second Nekyia, the final grief of the poem's resolution"
+    object_lesson: >
+      Grief, in the Odyssey, is the condition that outlasts every action — not an emotion that
+      passes but the medium in which the survivors live. The mirror is the object lesson: the
+      daughter-in-law Noriko looking at herself alone in the house after everyone has left, the
+      face that holds the loss of a husband she barely had. The cigarette is the second object:
+      the old man Shukishi on the pier, lighting one in the silence after the funeral — the small
+      act of continuation that contains all the unsaid. Ozu films grief as Ozu films everything:
+      in the spaces between, in the quiet, in the shot of the empty room that no one will enter
+      together again.
+    why: >
+      Ozu's film is the grief of the Odyssey's last movement: not the great fury of Achilles or
+      the catharsis of the slaughter but the silence after — the second Nekyia, the families who
+      come to claim their dead, the old king Laertes in his orchard. Shukishi and Tomiko are
+      Laertes and Penelope at the poem's end: old, in need of care, given to the distant routines
+      of living while the grief settles into the bones. Noriko is the most Odyssean figure — the
+      one who weeps after everyone else has gone — and is given nothing but the dignity of her
+      grief.
+    content_note: "one of cinema's quietest films — no dramatic incidents, no resolution; the grief accumulates in the viewer"
+  - title: "No Country for Old Men"
+    director: "Joel Coen"
+    year: 2007
+    force: fate
+    divisions: [11, 12, 20, 21]
+    objects: [gun, telephone]
+    letterboxd: no-country-for-old-men
+    scene_or_theme: "Books XI, XII, XX, XXI — the inexorable will of the gods, Tiresias's prophecy, the foreordained contest, the bow that determines everything"
+    object_lesson: >
+      Fate in the Odyssey is not a plan; it is the certainty that events are moving toward an
+      outcome that the people inside them can sense but cannot alter. The gun is the object lesson:
+      Chigurh's compressed-air cattle gun is the instrument of fate — not a weapon of choice or
+      passion but of mechanical, preordained dispatch. The telephone is the second object: the
+      calls that arrive with terrible news, the receiver that carries the voice that changes
+      everything. When Llewelyn Moss picks up the phone and learns the tracking device is with the
+      money, he has already lost — the call is not news but confirmation of what was written.
+    why: >
+      The Coens' desert noir is the closest cinema has come to filming the Odyssey's fatality —
+      not the fatality of tragedy (the hero's flaw) but the fatality of prophecy (Tiresias's words
+      that are the shape of the poem, not its warning). Chigurh is not a villain; he is the law of
+      the poem, the force that cannot be pleaded with or outrun. The coin toss is the same gesture
+      as the drawing of the bow: the outcome is already written; what matters is how you meet it.
+      Llewelyn is Odysseus and the suitors: the man fated to survive and the man whose fortune has
+      run out, both at once.
+    content_note: "graphic violence; Chigurh is one of cinema's most unsettling antagonists; the coin toss is the signature scene"
+  - title: "12 Angry Men"
+    director: "Sidney Lumet"
+    year: 1957
+    force: law
+    divisions: [2, 14, 21]
+    objects: [gun, door]
+    letterboxd: 12-angry-men
+    scene_or_theme: "Books II, XIV, XXI — the assembly of Ithaca in Telemachus's first act; the swineherd Eumaeus maintaining the code of hospitality; the contest of the bow as a legal procedure"
+    object_lesson: >
+      Law is the architecture that stands when the king is absent — the principle that the house
+      will be judged by its rules, not by its strongest man. The gun is the object lesson: the
+      switchblade that killed the father is the object around which the whole jury debate turns —
+      not the deed itself but the evidence of the deed, the interpretation of the object. The door
+      is the second object: the door to the jury room, the door through which the lone dissenter
+      walks out and back in, the door to the courthouse — thresholds through which justice passes.
+      Juror 8 standing alone against the room is Telemachus in Book II calling on the assembly,
+      Eumaeus in Book XIV maintaining the codes in his absent master's hall.
+    why: >
+      Lumet's film is law as the Odyssey practices it: not a written code but a process of
+      deliberation that tests every claim. The bow-contest of Book XXI is, among other things, a
+      legal proceeding — a test of identity conducted in public, with witnesses, the outcome
+      determining who has the right to the house. The jury room's debate is that same structure:
+      twelve men deciding the fate of one defendant, the law hanging on their agreement. The film's
+      architecture — the slow inward zoom, the single room, the heat, the sweat — is the formal
+      clarity law requires, and its ending — the name spoken at the door — is the Odyssey's last
+      act: the restoration of lawful order to the house of the returning king.
+    content_note: "no violence, no strong language; the tightest script in American cinema; the heat of the room is a character"
+adaptations:
+  - title: "The Odyssey"
+    director: "Andrei Konchalovsky"
+    year: 1997
+    letterboxd: the-odyssey-1997
+    note: "the obvious screen-Odyssey — a TV miniseries that covers the whole poem faithfully but compresses the wandering and rushes the recognition. Strongest on the monsters (Cyclops, Sirens, Scylla) and the slaughter; loses the poem's interiority and its grief. Set aside; we screen the object lessons instead."
+    scenes:
+      - {division: 9, force: metamorphosis, scene: "Odysseus and the Cyclops — the Nobody trick, the ram-escape"}
+      - {division: 12, force: fate, scene: "The Sirens, Scylla and Charybdis — Odysseus bound to the mast"}
+      - {division: 22, force: wrath, scene: "The slaughter of the suitors — the bow, the arrows, the hall"}
+      - {division: 23, force: return, scene: "The recognition by Penelope — the bed, the olive-tree, the tears"}

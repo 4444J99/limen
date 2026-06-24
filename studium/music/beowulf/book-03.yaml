@@ -1,0 +1,96 @@
+# Beowulf — Fitt III — curated music arc
+# Transition: the crisis reaches bottom; hope kindles at the edge
+work: beowulf
+book: 3
+title: "Beowulf Fitt III: The Nadir and the Widening"
+length_minutes: 71
+principle: >
+  Fitt III traces the moment where the poem's despair reaches absolute bottom before the possibility of rescue opens. The fitt is structured in two movements. First: Hrothgar's helpless grief and the Danes' failed counsel — they turn to heathen shrines and make offerings, desperate for aid from any source. The poet notes this with theological irony: they knew no better, but their counsel was wrong, and God's grace was absent from it. This is the nadir: civilisation, reduced to superstition, abandoning its own resources. Then, at the fitt's turning point, the news reaches Beowulf across the sea. He hears of the calamity and feels the call to act. The music arc moves from the deepest grief and spiritual collapse, through the moment of desperate prayer, and begins to turn toward the possibility of answer. The dominant force shifts from sustained grief toward law: the reimposition of order and purpose.
+force_arc: [grief, law, fate, wrath, fate, fate, fate, law, law, ascent]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "Hrothgar's isolation — the king helpless"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 9 — I. Andante comodo"
+    decision: added
+    why: >
+      Hrothgar, the greatest king of the age, cannot save his people or his hall. He is isolated not by malice but by the sheer fact of his impotence. Mahler's Ninth — his last symphony, his farewell music — opens with the king in absolute solitude, the orchestra around him fragmented and distant. The music has the quality of a sovereign reduced to watching, unable to act. This is not the triumph of Hrothgar in Fitt I but the terrible reversal: the builder of Heorot is now its prisoner.
+  - n: 2
+    scene: "The counsel of the Danes — all remedies exhausted"
+    force: law
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      The Danes gather in counsel to find a remedy. But there is none. The poem notes that they turned to remedies that were useless — heathen prayers, offerings to false gods. The music here is stark, minimal: Pärt's absolute clarity and transparency, a single line ascending and descending in mirror form. The simplicity is not comfort; it is emptiness. The law of the Danes — counsel, debate, the king seeking wisdom from his thegns — is reduced to repetition, finding no exit.
+  - n: 3
+    scene: "The knowledge that no help will come from human counsel"
+    force: fate
+    composer: Sibelius
+    work: "The Swan of Tuonela"
+    decision: added
+    why: >
+      The realisation settles: no human resource will solve this. The Danes accept that they must endure Grendel's occupation without remedy. Sibelius' Swan of Tuonela — the music of accepting a passage into death, of acknowledging that some boundaries cannot be crossed — captures this moment of final resignation. The piece is funeral but not spectacular; it is the sound of moving toward an inevitable conclusion without struggle.
+  - n: 4
+    scene: "Desperation manifests as superstition — offerings to idol-shrines"
+    force: wrath
+    composer: Stravinsky
+    work: "The Rite of Spring — 'Ritual Action of the Ancestors'"
+    decision: added
+    why: >
+      The Danes, in their extremity, turn to sources they suspect will not help: they make offerings at heathen temples, pray to idols, perform the ritual actions of a culture already superseded by Christianity. The poet notes this with double vision: pity for the Danes (they knew no better), but judgment that their spiritual compass is broken. Stravinsky's ritualistic wrath here is not directed outward but inward — the Danes performing violence against their own souls, so to speak, seeking remedy from sources they no longer truly believe in.
+  - n: 5
+    scene: "The emptiness where the remedy should be"
+    force: fate
+    composer: Shostakovich
+    work: "Symphony No. 8 — III. Allegro non troppo"
+    decision: added
+    why: >
+      Offerings are made; prayers are offered; nothing changes. Grendel comes again. The emptiness is not the absence of something but the active *negation* of hope — Shostakovich's third movement is sharp, discordant, the fragments of melody appearing and being cut off. It is music that shows a system breaking, meaning itself fragmenting. The Danes have exhausted their own spiritual resources and found them wanting.
+  - n: 6
+    scene: "The continuation of Grendel's attacks — the occupation persists"
+    force: fate
+    composer: Penderecki
+    work: "Threnody for the Victims of Hiroshima"
+    decision: added
+    why: >
+      Night after night, Grendel returns. No prayer has changed anything. Penderecki's Threnody — used once before (Fitt I, the moment of spiritual collapse) — appears here again because the Danes' situation has not improved; it has deepened into absolute devastation. The structure of human resistance has been broken. The music is less about hope than about the annihilation of hope.
+  - n: 7
+    scene: "The state of Heorot — monument to emptiness"
+    force: fate
+    composer: Debussy
+    work: "La mer — 'Jeux de vagues'"
+    decision: added
+    why: >
+      Heorot stands, architecturally magnificent, functionally empty. It has become a tomb, a monument to what cannot be. Debussy's middle movement of La Mer — rolling, fluid, restless — captures the sense of movement without direction, surface without content. The hall exists but does not *live*. It is a beautiful corpse.
+  - n: 8
+    scene: "The threshold moment — something begins to shift"
+    force: law
+    composer: Brahms
+    work: "Symphony No. 4 — I. Allegro non troppo"
+    decision: added
+    why: >
+      At the fitt's turning point, something changes. The poem does not mark this precisely, but it is real: the question is no longer "how will this end?" but "will someone come to answer it?" Brahms' Fourth — its form severe, its argument rigorous — begins to impose a new order on the chaos. The symphony is not triumphant but purposeful; it moves forward with a kind of historical inevitability, the sense that what has been broken will be remade according to different laws.
+  - n: 9
+    scene: "The news reaches Geatland — the knowledge spreads"
+    force: law
+    composer: Vaughan Williams
+    work: "Fantasia on a Theme by Thomas Tallis"
+    decision: added
+    why: >
+      The poem shifts its focus: across the sea, in Geatland, a young warrior named Beowulf hears of Heorot's suffering. The knowledge spreads, carried on wind and water. Vaughan Williams' Fantasia — a meditation on an older melody, expanding and returning to it, the sense of something being passed hand to hand across generations — captures this moment where the story moves beyond the Danes. The Fantasia has the quality of a theme being recognised and accepted across time.
+  - n: 10
+    scene: "Beowulf hears and feels the call — the turn"
+    force: ascent
+    composer: Messiaen
+    work: "Visions of the Amen — 'Amen of the Desires'"
+    decision: added
+    why: >
+      Beowulf hears and immediately feels the call to act. The young warrior comprehends that this is the test the world has been waiting for. Messiaen's Amen of the Desires — an ecstatic, ascending music of yearning toward transcendence — captures the moment where the narrative moves from stasis into motion, from question into response. The fitt closes on the beginning of ascent; Grendel's reign has not ended, but the answer is now in motion.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — Rheingold Prelude (inverted)"
+    status: "removed; wrong direction"
+    why: "Wagner's descents are necessary for Fitt II and the ending, but Fitt III turns upward. Save the descents for when the arc genuinely closes."

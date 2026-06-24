@@ -1,0 +1,186 @@
+================================================================================
+BEOWULF FITTS 2–5: VISUAL SUMMARY OF THEMATIC PROGRESSION
+================================================================================
+
+FITT 2: GRENDEL'S CHARACTERIZATION & ERUPTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Scene 1: GRENDEL HEARS JOY
+  Emotional: Torment, envy, exclusion
+  Force: GRIEF (hearing joy one cannot enter)
+  Music: Dissonant isolation theme
+
+    ↓
+
+Scene 2: FIRST NIGHT RAID
+  Emotional: Violence, shock, sudden loss
+  Force: WRATH (eruption into violence)
+  Music: Crescendo into violence → silence
+
+    ↓
+
+Scene 3: TWELVE YEARS OF REIGN
+  Emotional: Endurance, despair, institutional collapse
+  Force: GRIEF (accumulated loss over time)
+  Music: Sustained minor/diminished harmony
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DOMINANT ARC: Torment → Violence → Endurance
+EMOTIONAL CENTER: The weight of 12 years of unrelenting occupation
+KEY INSIGHT: Monster's exclusion generates wrath; wrath generates grief
+
+
+FITT 3: TRANSITION — GRENDEL'S TERROR TO BEOWULF'S SUMMONING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Scene 1: HROTHGAR'S HELPLESS MOURNING
+  Emotional: Helplessness, aging, despair
+  Force: GRIEF (king isolated by inability to protect)
+  Music: Dirge-like exhaustion theme
+
+    ↓
+
+Scene 2: HEATHEN VOWS AT IDOL-SHRINES
+  Emotional: Desperation, spiritual emptiness, misplaced faith
+  Force: FATE (resources exhausted; all counsel fails)
+  Music: Dissonant sacrifice sequence (structure failing)
+
+    ↓ NADIR
+
+Scene 3: NEWS REACHES BEOWULF
+  Emotional: Resolution, hope rekindled, heroic calling
+  Force: FATE (the turn; destiny opens)
+  Music: Ascending heroic motif
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DOMINANT ARC: Helplessness → Spiritual Collapse → THE TURN
+EMOTIONAL CENTER: The valley—where all resources exhaust, then turn
+KEY INSIGHT: Human counsel and law reach their limit; only answering from outside breaks the impasse
+
+
+FITT 4: BEOWULF'S VOYAGE ACROSS THE WHALE-ROAD
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Scene 1: CHOOSING COMPANY & LAUNCHING
+  Emotional: Resolve, preparation, camaraderie
+  Force: DESIRE (unnamed pull toward answering the need)
+  Music: Martial gathering theme
+
+    ↓
+
+Scene 2: THE VOYAGE OVER WHALE-ROAD
+  Emotional: Journey, liminal space, forward momentum
+  Force: DESIRE (moving toward something called but unknown)
+  Music: Flowing, rhythmic seafaring theme
+
+    ↓
+
+Scene 3: SIGHTING CLIFFS & BEACHING
+  Emotional: Relief, arrival, gratitude
+  Force: FATE (good passage; the arrival)
+  Music: Triumphant landfall fanfare
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DOMINANT ARC: Resolve → Passage → Arrival
+EMOTIONAL CENTER: Forward momentum; the hero answering un-summoned
+KEY INSIGHT: The hero moves from hope (Fitt 3 end) through passage to landfall
+
+
+FITT 5: BEOWULF'S ARRIVAL IN DENMARK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Scene 1: COAST-GUARD CHALLENGES STRANGERS
+  Emotional: Tension, protocol, assessment
+  Force: LAW (order tests the newcomers at the border)
+  Music: Formal challenge theme
+
+    ↓
+
+Scene 2: BEOWULF'S REPLY: LINEAGE & ERRAND
+  Emotional: Courtesy, clarity, offer of aid
+  Force: SUPPLICATION (proper forms honored)
+  Music: Clear statement of purpose
+
+    ↓
+
+Scene 3: COAST-GUARD GRANTS PASSAGE
+  Emotional: Acceptance, hospitality, transition
+  Force: LAW (protocol satisfied; threshold opens)
+  Music: Welcoming transition theme
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DOMINANT ARC: Challenge → Declaration → Acceptance
+EMOTIONAL CENTER: Proper form honored; the stranger accepted
+KEY INSIGHT: Law and protocol, not force, are what hold civilization together
+
+
+================================================================================
+THE FOUR-FITT OVERALL ARC
+================================================================================
+
+DESPAIR                    HOPE                    JOURNEY                   ARRIVAL
+  ↓                         ↓                         ↓                        ↓
+
+[FITT 2]              [FITT 3]                [FITT 4]                 [FITT 5]
+Monster's           Kingdom's              Hero's                    Hero's
+Eruption            Collapse               Answering                 Entry
+                    ↓ NADIR ↓
+
+    Torment         Helplessness           Resolve               Challenge
+    Violence    →   Spiritual Nadir    →   Passage           →    Declaration
+    Endurance       Hope Rekindled         Arrival               Acceptance
+
+
+EMOTIONAL TRAJECTORY (Overall):
+- Fitt 2: Stuck (12 years, no remedy)
+- Fitt 3: Lowest point (all counsel fails)
+- Fitt 4: Breaking through (hero answers, journey begins)
+- Fitt 5: Re-entry (proper forms, law reasserts)
+
+
+================================================================================
+KEY COMPOSITIONAL INSIGHTS
+================================================================================
+
+1. HARMONIC CONTINUITY ACROSS FITTS
+   Fitt 2's dissonance should echo through Fitts 3–5 as unspoken shadow.
+   Grendel remains the underlying threat.
+
+2. THE NADIR IS FITT 3, SCENE 2
+   Heathen sacrifice is where human resources are exhausted.
+   This should reach the darkest, most structurally broken moment.
+
+3. FITT 3 SCENE 3 IS THE PIVOT
+   "News reaches Beowulf" begins the upward turn.
+   Shift to ascending harmonic motion should be clear and marked.
+
+4. TRANSITION MOMENTS ARE CRUCIAL
+   - Fitt 2→3: From eruption to helplessness
+   - Fitt 3→4: From nadir to hope
+   - Fitt 4→5: From passage to threshold
+
+5. LAW IS STRENGTH, NOT WEAKNESS
+   Fitt 5's formality is the poem's claim that order is civilization's foundation.
+   Music should reflect law as structural beauty.
+
+================================================================================
+TWELVE-SCENE QUICK REFERENCE
+================================================================================
+
+F2S1: Grendel hears joy         → Dissonant isolation theme
+F2S2: First night raid          → Crescendo into violence, then silence
+F2S3: Twelve years of reign     → Sustained minor/diminished harmony
+
+F3S1: Hrothgar's mourning       → Dirge-like exhaustion theme
+F3S2: Heathen sacrifice (NADIR) → Dissonant collapse (structure failing)
+F3S3: News reaches Beowulf      → Ascending heroic motif (THE TURN)
+
+F4S1: Choosing company          → Martial gathering theme
+F4S2: Whale-road voyage         → Flowing, rhythmic seafaring theme
+F4S3: Sighting cliffs           → Triumphant landfall fanfare
+
+F5S1: Coast-guard challenge     → Formal challenge theme
+F5S2: Beowulf's declaration     → Clear statement of purpose
+F5S3: Gate opens, escort begins → Welcoming transition theme
+
+================================================================================

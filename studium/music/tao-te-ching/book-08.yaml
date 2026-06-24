@@ -1,0 +1,125 @@
+# Tao Te Ching — Chapter 8 — curated music arc
+# Like water: supreme goodness without contention, yields to all, yet wears away stone.
+# Goodness is like water that flows to the lowest place.
+work: tao-te-ching
+book: 8
+title: "Tao Te Ching Chapter 8: Like Water, Goodness"
+length_minutes: 57
+principle: >
+  Chapter 8 opens with a single image: 'Supreme goodness is like water, which benefits all things
+  without contention and rests in places the rest of the world disdains.' Water is the element
+  that resists nothing, seeks the lowest place, and is incomparably strong precisely because it
+  yields. This is wu wei in its most concrete form — not effort but alignment. The chapter continues:
+  water is malleable yet can wear away stone; it is selfless yet sustains all life; it adapts to
+  all vessels yet loses nothing of itself. The music must embody this quality: grace that is neither
+  desperate nor assertive, a flowing that dissolves obstacles by flowing around them. The arc is
+  the path of water itself: from source to sea, following gravity, taking the shape of every
+  container, yet never ceasing to be water.
+force_arc: [salvation, metamorphosis, law, desire, memory, salvation, metamorphosis, law, memory, ascent]
+dominant_force: salvation
+tracks:
+  - n: 1
+    scene: "The image of water: perfect goodness without striving"
+    force: salvation
+    composer: Arvo Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      Water has no agenda, no goal other than to flow. Pärt's mirror-within-mirror embodies the
+      quality: not striving yet perfectly effective. The reflection in water is not forced but arises
+      naturally from stillness. This is the image of goodness itself.
+  - n: 2
+    scene: "Water's nature: it becomes every shape, loses nothing"
+    force: metamorphosis
+    composer: Claude Debussy
+    work: "Cathédrale engloutie (The Submerged Cathedral)"
+    decision: added
+    why: >
+      Debussy shows water's capacity: it takes the shape of every cavity, every form, from cathedral
+      bells to hidden pools. Yet in changing shape, water loses nothing of its essential nature.
+      Metamorphosis that preserves identity.
+  - n: 3
+    scene: "The paradox: softness wears away hardness"
+    force: law
+    composer: Johann Sebastian Bach
+    work: "The Well-Tempered Clavier, Book I — Prelude and Fugue in C Minor (BWV 847)"
+    decision: added
+    why: >
+      Bach's demonstration of how architectural law emerges from minimal means. The fugue subject is
+      soft, delicate, yet generates overwhelming structure. This is water's paradox: the weak thing
+      is stronger than stone because it acts through law, not force.
+  - n: 4
+    scene: "The lowest places where water rests: ignored by pride"
+    force: desire
+    composer: Maurice Ravel
+    work: "Scarbo (from Gaspard de la Nuit)"
+    decision: added
+    why: >
+      Ravel's nightmarish goblin skitters through the piece, visiting the lowest places in the
+      castle, the ignored chambers where water pools. The desiring eye (the goblin's eye) sees what
+      pride overlooks — the sacred places beneath notice.
+  - n: 5
+    scene: "Yet water is the mirror of heaven: what is seen in it is sacred"
+    force: memory
+    composer: Frédéric Chopin
+    work: "Prelude in D-flat Major, Op. 28 No. 15 ('Raindrop')"
+    decision: added
+    why: >
+      Chopin's prelude, named for the raindrop that repeats beneath the melody, is the water that
+      mirrors the sky. The repeating note is the raindrop; the melody above is the heavens reflected.
+      Memory of the sacred in the simple, persistent image.
+  - n: 6
+    scene: "The river flows toward the sea without resistance"
+    force: salvation
+    composer: Olivier Messiaen
+    work: "Transports de joie d'une âme devant la gloire du Christ qui est la sienne"
+    decision: added
+    why: >
+      Messiaen's soaring piece captures the joy of water flowing toward its destination. The river
+      does not fight the slope; it celebrates the descent. Salvation through surrender to the natural
+      law of flow.
+  - n: 7
+    scene: "Water takes the shape of all containers; it is never diminished"
+    force: metamorphosis
+    composer: Claude Debussy
+    work: "Voiles (Sails, from Preludes Book I)"
+    decision: added
+    why: >
+      Debussy's whole-tone scale floats like water taking the shape of the air, the vessel, the
+      moment. Constant change, no grasping, yet the essential quality persists. This is
+      metamorphosis that preserves what it transforms.
+  - n: 8
+    scene: "Goodness is like this: it works without claiming work"
+    force: law
+    composer: Johann Sebastian Bach
+    work: "Goldberg Variations, Variation 25"
+    decision: added
+    why: >
+      Bach's variation works without announcing itself. The law operates invisibly, the work of
+      goodness appears effortless because it aligns with the grain of things. The variation is
+      simultaneously change and constancy.
+  - n: 9
+    scene: "Time and water: the gentle persistence that transforms stone"
+    force: memory
+    composer: Samuel Barber
+    work: "Adagio for Strings"
+    decision: added
+    why: >
+      Barber's Adagio carries the memory of all the tears shed by water, all the stone worn smooth by
+      its passage. Gentle persistence, the memory of time itself working without haste. The stone's
+      memory of its own transformation.
+  - n: 10
+    scene: "Coda: the ascent of water, returning to the sky"
+    force: ascent
+    composer: Antonio Vivaldi
+    work: "The Four Seasons — Spring, 'Allegro'"
+    decision: added
+    why: >
+      Water ascends in vapor, returns to the sky, completes the cycle. Vivaldi's springtime energy
+      captures the joy of return, the eternal cycle of descent and ascent. Water completes its
+      journey by beginning again.
+demoted:
+  - composer: George Frideric Handel
+    work: "Music for the Royal Fireworks — Overture"
+    status: "removed; save for chapters on kingship and assertion"
+    why: "Handel's ceremonial authority belongs to chapters where power is visible. Chapter 8 teaches that real power works without display."

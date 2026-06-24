@@ -1,0 +1,176 @@
+# Shahnameh — Cycle 6 — Manuchehr: Vengeance, and the Rise of Sam and Zal — curated music arc
+# Gold-standard format per studium/music/iliad/book-01.yaml
+work: shahnameh
+book: 6
+title: "Shahnameh Cycle 6: Manuchehr — Vengeance, and the Rise of Sam and Zal"
+length_minutes: 86
+principle: >
+  Do not score this cycle as "the sequel where the avenger wins." Score it as the closing of one
+  account and the opening of the heroic age. The first half answers Cycle 5: Manuchehr, raised by
+  Fereydun, comes of age, wars on Turan, kills Tur and then Salm, and sends their heads to his
+  great-grandfather — the curse fulfilled, the blood-debt for Iraj paid. Fereydun, at last
+  vindicated, crowns Manuchehr and dies in peace. But the cycle's deeper gift is its second half,
+  where the Shahnameh turns from kings to heroes: the champion Sam fathers a son, Zal, born with
+  white hair and judged an ill omen; Sam, ashamed, exposes the infant on Mount Alborz; the Simurgh,
+  the divine bird, finds him and raises him in her nest until Sam, struck by remorse, climbs the
+  mountain to reclaim the son he threw away. The dominant problem is the return of right order —
+  vengeance discharged, kingship restored, and a discarded child redeemed into the hero who will
+  father Rostam. Score the avenging, the old king's death-in-peace, and then the cruelty,
+  miracle, and reconciliation of Zal.
+
+force_arc: [return, wrath, fate, ascent, kingship, exile, divine-intervention, salvation, ascent]
+dominant_force: return
+tracks:
+  - n: 1
+    scene: "Manuchehr comes of age; Fereydun arms him; the host gathers for vengeance"
+    force: return
+    composer: Sibelius
+    work: "Symphony No. 2 in D major — IV. Finale (Allegro moderato)"
+    decision: added
+    why: >
+      The avenger Fereydun prayed for has grown. Manuchehr is armed, blessed, and set at the head
+      of Iran's host to answer Iraj's murder; the long-deferred redress finally moves. Sibelius's
+      Second closes with a finale that climbs out of struggle into a broad, repeated hymn of
+      arrival — a theme that returns and returns, each time more massive, until it becomes a
+      nation's affirmation. Return's register is the homeward surge after long absence; this is the
+      wheel that began turning at Iraj's death now coming round with full force, the promised
+      vindicator riding out and the music swelling toward the justice it has waited a generation
+      to deliver.
+  - n: 2
+    scene: "The war on Turan — Manuchehr kills Tur in battle"
+    force: wrath
+    composer: Prokofiev
+    work: "Alexander Nevsky — 'The Battle on the Ice'"
+    decision: added
+    why: >
+      Manuchehr meets Tur — Iraj's murderer — in the field and cuts him down, beginning the
+      reckoning sword-in-hand. Prokofiev's Battle on the Ice is the canon's great medieval clash:
+      a long, grinding build of galloping ostinato and braying brass that erupts into full
+      collision and does not relent until one side breaks. Wrath's register is rhythmic pressure
+      and unresolved violence; the music is two hosts meeting on a frozen plain, and at its center
+      the single death the whole campaign exists to accomplish — the first of the two heads that
+      will go back to Fereydun.
+  - n: 3
+    scene: "The death of Salm — the avenging completed, the heads sent to Fereydun"
+    force: fate
+    composer: Shostakovich
+    work: "Symphony No. 5 in D minor — IV. Finale (Allegro non troppo)"
+    decision: added
+    why: >
+      Salm, the elder conspirator, flees to a fortress by the sea; Manuchehr hunts him down and
+      kills him, and the heads of both brothers are carried to Fereydun. The curse is discharged
+      to the letter. Shostakovich's Fifth ends with a finale whose triumph is hammered, forced,
+      relentless — a major-key conclusion driven home by repeated unison D's that feel less like
+      joy than like the completion of something decreed. Fate's register is the inexorable,
+      hammered close; the avenging of Iraj arrives exactly so — not as celebration but as a
+      sentence carried out, the account closed because it could not have stayed open.
+  - n: 4
+    scene: "Fereydun, vindicated, dies; he crowns Manuchehr and departs in peace"
+    force: ascent
+    composer: "Richard Strauss"
+    work: "Tod und Verklärung (Death and Transfiguration), Op. 24"
+    decision: added
+    why: >
+      With his sons avenged, the grief that had broken Fereydun is at last answered; he sets the
+      crown on Manuchehr, blesses him, and dies — the only one of the early great kings granted a
+      death in peace. Strauss's Death and Transfiguration is precisely this arc: a dying man's
+      struggle resolving into a radiant final transfiguration theme that rises and broadens into
+      light. Ascent's register is the upward, scope-opening line; Fereydun's death is not a fall
+      but a rising-out — the old king released from the long wound of Iraj into the
+      transfiguration the music names, his account on earth fully settled.
+  - n: 5
+    scene: "Manuchehr crowned — the new reign of justice established"
+    force: kingship
+    composer: Parry
+    work: "I was glad (Coronation Anthem, 'I was glad when they said unto me')"
+    decision: added
+    why: >
+      Manuchehr ascends the throne of a world set right, the line of Iraj restored to the center it
+      had lost. Parry's I was glad is the English coronation processional itself — a full-throated
+      choral entrance, antiphonal and architecturally grand, written for a sovereign walking into
+      the abbey amid the acclamation of an assembled realm. Kingship's register is ceremonial
+      grandeur and sovereign display; the anthem is legitimate succession given its full public
+      sound, the new king received by a world that has been waiting for the rightful order to take
+      its seat again.
+  - n: 6
+    scene: "Sam's son Zal is born white-haired; judged an ill omen, the infant is exposed on the mountain"
+    force: exile
+    composer: Mahler
+    work: "Symphony No. 1 in D major — III. Feierlich und gemessen (the funeral march on 'Bruder Martin')"
+    decision: added
+    why: >
+      The champion Sam longs for a son, and one is born — perfect but for hair white as snow. Sam,
+      ashamed, reads the whiteness as a demon's mark and orders the newborn carried to Mount Alborz
+      and abandoned. A living child is cast out for the color of his hair. Mahler's First turns the
+      nursery round "Frère Jacques" into a cold minor-key funeral march, a child's tune made
+      desolate and wrong — innocence set in a frozen, alien landscape. Exile's register is the
+      unhoused, abandoned line; the movement is exactly an infant left to the wild, a familiar
+      tenderness twisted into something orphaned and exposed on a mountainside.
+  - n: 7
+    scene: "The Simurgh finds Zal and raises him; the divine bird nurtures the outcast"
+    force: divine-intervention
+    composer: Stravinsky
+    work: "The Firebird — 'Berceuse' and Finale"
+    decision: added
+    why: >
+      What the world threw away, heaven adopts. The Simurgh — the great wise bird of Persian myth —
+      hears the infant's cry, lifts him to her nest on the peak, and raises him among her own
+      young. Stravinsky's Firebird is the canon's miraculous bird made audible: the Berceuse a
+      hushed, otherworldly lullaby, the Finale a slow dawn-glow swelling to radiance. Divine-
+      intervention's register is the sudden vertical color-shift, the breaking-in of another order;
+      the Simurgh descending to save the abandoned child is that intervention exactly — the
+      numinous reaching down to gather up a life that men had condemned, and the music rising from
+      lullaby to sunrise as the outcast is kept alive by wings.
+  - n: 8
+    scene: "Sam's remorse — he climbs to the nest and reclaims his son; the Simurgh gives a feather"
+    force: salvation
+    composer: Wagner
+    work: "Parsifal — 'Good Friday Music' (Karfreitagszauber)"
+    decision: added
+    why: >
+      Sam dreams of his abandoned son and is overcome with remorse; he climbs to the Simurgh's
+      nest and begs the boy back, and the bird, releasing her foster-child, gives Zal a feather to
+      burn whenever he needs her. A father's cruelty is undone; the broken bond is healed. Wagner's
+      Good Friday Music is the repertoire's purest sound of redemption and reconciliation — a slow,
+      forgiving radiance, the world made gentle again after long suffering. Salvation's register is
+      the lifted, restoring line; Sam's reclaiming of Zal, and the Simurgh's parting gift, have
+      that quality of grace returning to a place that had known only shame — the feather a promise
+      that the divine help will come again when it is called.
+  - n: 9
+    scene: "Zal grows to greatness — the heroic age dawns, the line toward Rostam opens"
+    force: ascent
+    composer: "Richard Strauss"
+    work: "Ein Heldenleben (A Hero's Life), Op. 40 — opening"
+    decision: added
+    why: >
+      Restored to his father, raised in the lore of the Simurgh, Zal grows into the foremost
+      champion of the age — the hero who will love Rudabeh and father Rostam, the mightiest figure
+      of the whole poem. With him the Shahnameh's center of gravity shifts from kings to heroes.
+      Strauss's Ein Heldenleben opens by striding upward through the orchestra in a single
+      sweeping theme — a hero announced at full scope, the horizon of a great life thrown open.
+      Ascent's register is the upward, scope-opening line; Zal's coming-of-age is the dawn of the
+      heroic age itself, and the music is that age standing up to its full height, with the
+      greatest stories of the poem still ahead.
+
+demoted:
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "spent in Cycle 4 (the blow on Zahhak); the Turan war needs collision, not mechanism"
+    why: >
+      Mars is the engine of foreordained doom — right for the dream-fated stroke on Zahhak, wrong
+      for Manuchehr's hand-to-hand reckoning. Prokofiev's Battle on the Ice gives two hosts
+      actually meeting, the human clash rather than the descending machine.
+  - composer: Bruckner
+    work: "Symphony No. 7 — II. Adagio"
+    status: "held — its opening-of-scope closed Cycle 1; the heroic dawn wants a hero's own theme"
+    why: >
+      Bruckner's Adagio opens the whole poem's horizon; Zal's rise wants something striding and
+      personal. Strauss's Heldenleben names a single hero stepping into his life, which is exactly
+      the register the age of Rostam requires.
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "still reserved for the great hero-deaths (Sohrab, Esfandiyar, Rostam)"
+    why: >
+      Fereydun's death is a transfiguration, not a catastrophe — he dies vindicated and at peace,
+      which calls for Strauss's rising light, not the terminal funeral monument the later heroes'
+      deaths will require.

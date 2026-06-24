@@ -1,0 +1,91 @@
+# Aeneid — Book III — curated music arc
+work: aeneid
+book: 3
+title: "Aeneid Book III: The Wanderings"
+length_minutes: 80
+principle: >
+  Score Book III as the disorientation of exile. The Trojans are searching for a home they
+  do not yet understand, misinterpreting prophecies, and encountering the monstrous and the
+  ruined. It is a journey defined by false starts, faded memories, and harsh natural forces.
+force_arc: [metamorphosis, revelation, plague, fate, memory, law, wrath, grief]
+dominant_force: exile
+tracks:
+  - n: 1
+    scene: "Polydorus — the bleeding bush"
+    force: metamorphosis
+    composer: Strauss
+    work: "Metamorphosen"
+    decision: added
+    why: >
+      Aeneas tears a branch, and blood flows. The horror of a human transformed into a suffering
+      plant. Strauss's fluid, dark string lines capture the tragic, unsettled mutation of matter.
+  - n: 2
+    scene: "Delos — the oracle of Apollo"
+    force: revelation
+    composer: Tavener
+    work: "The Protecting Veil"
+    decision: added
+    why: >
+      Apollo's command to 'seek your ancient mother' is chanted in a moment of stillness.
+      Tavener's static, luminous string writing captures the timeless verticality of the divine
+      voice breaking into human wandering.
+  - n: 3
+    scene: "Crete — the plague"
+    force: plague
+    composer: Penderecki
+    work: "Symphony No. 3 — I. Passacaglia"
+    decision: added
+    why: >
+      The Trojans mistake Crete for their home, and a pestilence destroys their crops and men.
+      Penderecki's descending, dark ostinato embodies the creeping, invisible destruction of the
+      plague.
+  - n: 4
+    scene: "The Harpies — Celaeno's curse"
+    force: fate
+    composer: Tchaikovsky
+    work: "Symphony No. 4 — I. Andante sostenuto"
+    decision: added
+    why: >
+      The Harpies defile the feast, and Celaeno prophesies that hunger will force the Trojans
+      to eat their tables. Tchaikovsky's hammered brass fate motif perfectly suits this
+      inexorable, menacing decree.
+  - n: 5
+    scene: "Buthrotum — Andromache mourning"
+    force: memory
+    composer: Elgar
+    work: "Enigma Variations — 'Nimrod'"
+    decision: added
+    why: >
+      Aeneas finds Andromache performing rites at an empty tomb for Hector, living entirely in
+      the past. Elgar's noble, nostalgic recall provides the precise register of memory as a
+      beautifully faded, paralyzed recapitulation.
+  - n: 6
+    scene: "Helenus' prophecy"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue — Contrapunctus I"
+    decision: added
+    why: >
+      Helenus maps out the exact route and the signs Aeneas must look for. Bach's fugal
+      architecture represents this formal clarity, repetition, and the laying down of a precise
+      cosmic map.
+  - n: 7
+    scene: "Scylla, Charybdis, and the Cyclops"
+    force: wrath
+    composer: Prokofiev
+    work: "Scythian Suite — 'The Enemy God and the Dance of the Dark Spirits'"
+    decision: added
+    why: >
+      The monstrous threats of the sea and the blind rage of Polyphemus require a brutal, rhythmic
+      pressure. Prokofiev's driving, dissonant score captures the sheer physical hostility of the
+      world against the exiles.
+  - n: 8
+    scene: "Death of Anchises at Drepanum"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 9 — IV. Adagio"
+    decision: added
+    why: >
+      Aeneas loses his father, his final link to Troy, just before reaching Carthage. Mahler's
+      slow, dissolving Adagio is the ultimate music of letting go, an inward line fading into
+      silence.

@@ -1,0 +1,113 @@
+work: metamorphoses
+book: 3
+title: 'Metamorphoses Book III: Thebes, Dogs, Reflections'
+length_minutes: 92
+principle: "Book III is the tragedy of looking. Actaeon sees Diana naked; Semele demands\
+  \ to see Jupiter in his true form; Narcissus sees himself; Pentheus spies on the\
+  \ Bacchic rites. Every instance of unpermitted sight is punished by a total dissolution\
+  \ of the body. The dominant force is fate\u2014the inexorable doom that hangs over\
+  \ the house of Cadmus from its founding."
+force_arc:
+- fate
+- wrath
+- metamorphosis
+- sacrifice
+- desire
+- divine-intervention
+- revelation
+- memory
+- exile
+- fate
+dominant_force: fate
+tracks:
+- n: 1
+  scene: Cadmus and the Dragon
+  force: fate
+  composer: Verdi
+  work: "La forza del destino \u2014 Overture"
+  decision: added
+  why: Cadmus slays the serpent of Mars and is told he too will one day be a serpent.
+    The house of Thebes is founded under a curse. Fate requires an inexorable motif,
+    the sound of a destiny that cannot be outrun.
+- n: 2
+  scene: The sown men fight
+  force: wrath
+  composer: Prokofiev
+  work: "Romeo and Juliet \u2014 'Dance of the Knights'"
+  decision: added
+  why: Cadmus sows the dragon's teeth, and armed men sprout from the soil, instantly
+    turning on each other in a frenzy of slaughter until only five remain. The rhythmic
+    pressure and heavy orchestration capture an immediate, violent tribalism.
+- n: 3
+  scene: Actaeon discovers Diana
+  force: metamorphosis
+  composer: Debussy
+  work: Jeux
+  decision: added
+  why: Actaeon wanders away from the hunt and accidentally sees the goddess bathing.
+    She splashes water in his face, and antlers begin to branch from his head. Fluid
+    harmony and shifting orchestral color capture the sudden, silent rewriting of
+    his body.
+- n: 4
+  scene: Actaeon torn apart
+  force: sacrifice
+  composer: Stravinsky
+  work: "The Rite of Spring \u2014 'Sacrificial Dance'"
+  decision: added
+  why: "Unable to speak, Actaeon is hunted and torn to pieces by his own dogs while\
+    \ his friends cheer them on. Sacrifice requires ritual weight and an immolation\
+    \ build\u2014the brutal, collective destruction of a victim."
+- n: 5
+  scene: Semele's demand
+  force: desire
+  composer: Wagner
+  work: "Tristan und Isolde \u2014 'Liebestod'"
+  decision: added
+  why: Tricked by Juno, Semele makes Jupiter swear on the Styx to grant her a wish,
+    then asks him to make love to her in his full divine splendor. It is a suicide
+    by desire, requiring chromatic longing and an ecstatic, fatal climax.
+- n: 6
+  scene: Semele incinerated
+  force: divine-intervention
+  composer: Messiaen
+  work: "Turangal\xEEla-Symphonie \u2014 V. Joie du sang des \xE9toiles"
+  decision: added
+  why: Jupiter arrives in his lightning. Semele's mortal frame cannot withstand the
+    presence of a god, and she is reduced to ashes. The sudden color shifts and overwhelming
+    brass/piano contrast of Messiaen capture a cosmic, lethal radiance.
+- n: 7
+  scene: Tiresias' prophecy
+  force: revelation
+  composer: "P\xE4rt"
+  work: Cantus in Memoriam Benjamin Britten
+  decision: added
+  why: Tiresias, having lived as both man and woman, is blinded by Juno but given
+    prophecy by Jupiter. He sees what others cannot. Revelation requires stillness,
+    chanting strings, and a descending verticality that feels like pure sight.
+- n: 8
+  scene: Narcissus at the pool
+  force: memory
+  composer: "Faur\xE9"
+  work: Pavane
+  decision: added
+  why: "Narcissus falls in love with his own reflection, unable to grasp it, slowly\
+    \ wasting away on the bank. Memory requires nostalgic recall and faded recapitulation\u2014\
+    a delicate, trapped circling around an image that is already lost."
+- n: 9
+  scene: Echo fades away
+  force: exile
+  composer: Vaughan Williams
+  work: The Lark Ascending
+  decision: added
+  why: Rejected by Narcissus, Echo hides in caves until her body wastes away and only
+    her voice remains. Exile requires wandering tonality and an exposed, solitary
+    line drifting upward into nothingness.
+- n: 10
+  scene: Pentheus torn apart
+  force: fate
+  composer: Beethoven
+  work: "Symphony No. 5 \u2014 I. Allegro con brio"
+  decision: added
+  why: Pentheus mocks the rites of Bacchus and goes to the mountain to spy on them.
+    He is spotted by his own mother, Agave, who in her madness sees him as a boar
+    and tears off his head. The hammered insistence of fate closes the book on Thebes.

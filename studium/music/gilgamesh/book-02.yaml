@@ -1,0 +1,82 @@
+# Gilgamesh — Tablet 2 — curated music arc
+work: gilgamesh
+book: 2
+title: "The Collision and the Pact"
+length_minutes: 68
+principle: >
+  Score Tablet II as the birth of a binary star system. The collision between Gilgamesh and Enkidu is not a battle of enemies; it is the violent calibration of equals. When they fight, it must sound like tectonic plates locking into place. The friendship that follows is profound metamorphosis. End on the terrifying momentum of the newly formed pact as they turn their sights to the Cedar Forest.
+force_arc: [law, revelation, wrath, wrath, return, metamorphosis, kingship, grief, fate]
+dominant_force: wrath
+tracks:
+  - n: 1
+    scene: "Enkidu hears of the wedding and is angered"
+    force: law
+    composer: Stravinsky
+    work: "Symphony of Psalms — I. Exaudi orationem meam"
+    decision: added
+    why: >
+      Enkidu learns of Gilgamesh's right to the bride on her wedding night. His reaction is not a wild man's rage, but the dawn of a moral sense. He recognizes a violation of order. Stravinsky's Symphony of Psalms opens with stark, objective chords—it is not emotional, it is structural. It sounds like an ancient law being invoked.
+  - n: 2
+    scene: "The people of Uruk behold Enkidu"
+    force: revelation
+    composer: Mussorgsky
+    work: "Pictures at an Exhibition — The Great Gate of Kiev (orch. Ravel)"
+    decision: added
+    why: >
+      Enkidu arrives in Uruk, and the people gather. They see a man who matches their king. It is a moment of monumental arrival. The Great Gate of Kiev is exactly this: massive, undeniable presence, the architecture of the city meeting the architecture of the hero.
+  - n: 3
+    scene: "Enkidu blocks the marital chamber"
+    force: wrath
+    composer: Bartók
+    work: "Allegro barbaro, Sz. 49"
+    decision: added
+    why: >
+      Gilgamesh approaches; Enkidu puts his foot in the door. The collision begins. Bartók's piano piece is percussive, grounded, unyielding. It is the sound of two unstoppable physical forces refusing to give way, stripping away the ceremonial to reveal the primal.
+  - n: 4
+    scene: "The wrestling match shakes the walls"
+    force: wrath
+    composer: Stravinsky
+    work: "The Rite of Spring — The Augurs of Spring"
+    decision: added
+    why: >
+      They fight in the street, breaking the doorposts, shaking the very walls of Uruk. This is violence at a tectonic scale. The pounding, asymmetrical rhythms of the Rite of Spring's Augurs movement perfectly capture the chaotic but intensely grounded physical struggle of demigods.
+  - n: 5
+    scene: "Gilgamesh prevails, the fight ends"
+    force: return
+    composer: Brahms
+    work: "Symphony No. 3 — III. Poco allegretto"
+    decision: added
+    why: >
+      Gilgamesh throws Enkidu, or they fight to a standstill. Enkidu acknowledges Gilgamesh's strength. The wrath dissipates. Brahms's third movement is a sigh of cyclical recognition—a deep, melancholic but resolute understanding between equals. The violence gives way to profound mutual respect.
+  - n: 6
+    scene: "The kiss and pact of friendship"
+    force: metamorphosis
+    composer: Strauss
+    work: "Metamorphosen (opening)"
+    decision: added
+    why: >
+      They kiss and form a bond. This is the exact moment Gilgamesh ceases to be a tyrant and becomes a friend. Strauss's Metamorphosen begins with lines of counterpoint weaving together, fundamentally altering each other. Two lonely solitudes fuse into a singular, complex chord.
+  - n: 7
+    scene: "Gilgamesh proposes the Cedar Forest"
+    force: kingship
+    composer: Walton
+    work: "Crown Imperial"
+    decision: added
+    why: >
+      Gilgamesh, his energy no longer destructive but directed, proposes an expedition to the Cedar Forest to slay Humbaba and win eternal fame. Walton's march is the epitome of sovereign ambition—confident, sweeping, and undeniably grand. It is the king announcing his glory.
+  - n: 8
+    scene: "Enkidu weeps in terror"
+    force: grief
+    composer: Tchaikovsky
+    work: "Symphony No. 6 'Pathétique' — Finale"
+    decision: added
+    why: >
+      Enkidu, who knows the wild, weeps. He knows Humbaba is a terror placed by Enlil. The contrast is sharp: Gilgamesh dreams of glory, Enkidu feels the icy touch of mortality. Tchaikovsky's finale descends into darkness, a heavy, premonitory grief that grounds the king's ambition in fatal reality.
+  - n: 9
+    scene: "The casting of the weapons"
+    force: fate
+    composer: Wagner
+    work: "Das Rheingold — Descent into Nibelheim"
+    decision: added
+    why: >
+      They order the armorers to cast massive axes and swords, weighing hundreds of pounds. This is the industrial preparation for a mythic confrontation. Wagner's anvils in the descent to Nibelheim provide exactly this: the rhythmic, metallic pounding of fate being forged in fire.

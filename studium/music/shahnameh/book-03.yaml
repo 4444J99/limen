@@ -1,0 +1,166 @@
+# Shahnameh — Cycle 3 — Zahhak: The Serpent King — curated music arc
+# Gold-standard format per studium/music/iliad/book-01.yaml
+work: shahnameh
+book: 3
+title: "Shahnameh Cycle 3: Zahhak — The Serpent King and the Thousand Years of Darkness"
+length_minutes: 84
+principle: >
+  Do not score Zahhak as "the villain." Score him as a wound the world is forced to wear for a
+  thousand years. Ferdowsi's account is the most explicitly diabolic in the poem: Iblis (the
+  devil) seduces the Arab prince Zahhak into murdering his own father; then, disguised as a cook,
+  Iblis kisses Zahhak's shoulders, and from each kiss a black serpent grows — serpents that can
+  be quieted only by being fed two human brains a day. The reign that follows is devouring made
+  into government: two youths slaughtered every dawn for the snakes, righteousness driven
+  underground, the world dimmed. The dominant problem is not evil-as-event but evil-as-duration —
+  the long grinding habituation of a planet to its own consumption. Score the seduction, the
+  monstrous transformation, the daily devouring, the world in hiding — and then the two hinges of
+  rescue Ferdowsi plants inside the horror: the cook who secretly spares one of each pair, and
+  the blacksmith Kaveh who finally refuses. The cycle ends not with deliverance (that is Cycle 4)
+  but with the banner raised and the people streaming toward a name they have only dreamed.
+
+force_arc: [desire, metamorphosis, plague, exile, salvation, revelation, wrath, return]
+dominant_force: plague
+tracks:
+  - n: 1
+    scene: "Iblis seduces Zahhak — the murder of his father Mardas"
+    force: desire
+    composer: Liszt
+    work: "Mephisto Waltz No. 1 ('The Dance in the Village Inn')"
+    decision: added
+    why: >
+      The serpent-reign begins with a whisper. Iblis comes to the young Zahhak as a flatterer and
+      feeds his appetite for the throne until the prince consents to his father's murder. The
+      lever is desire — the covetous wish for a crown, dressed by the devil as destiny. Liszt's
+      Mephisto Waltz is the canon's definitive music of diabolic seduction: Mephistopheles tuning
+      a fiddle and luring a dance into ever-hotter abandon, sweetness and rot in the same phrase.
+      Desire's register is saturation and over-reach; here it is the devil playing on a young
+      man's want until the want commits a murder. The dance is irresistible, which is precisely
+      the problem.
+  - n: 2
+    scene: "The kiss of Iblis — serpents grow from Zahhak's shoulders"
+    force: metamorphosis
+    composer: Bartók
+    work: "The Miraculous Mandarin — Suite, Sz. 73 (the grotesque pursuit)"
+    decision: added
+    why: >
+      Iblis, now a cook who has taught Zahhak the eating of flesh, asks to kiss the king's
+      shoulders — and where his lips touch, two black serpents spring up, ineradicable, hungry.
+      The sovereign body becomes a monster's body. This is metamorphosis at its most physically
+      horrifying: a man transformed into an organism of appetite. Bartók's Mandarin is the
+      repertoire's great study of a body that will not behave, that goes on craving and moving
+      past every limit — lurching, grotesque, unkillable. Metamorphosis's register is the
+      unstable, shape-shifting line; the Mandarin's music is flesh that has stopped obeying its
+      own form, which is exactly what Zahhak has become.
+  - n: 3
+    scene: "The reign of devouring — two youths slain every day to feed the serpents"
+    force: plague
+    composer: Shostakovich
+    work: "Symphony No. 11 in G minor 'The Year 1905' — II. 'The Ninth of January'"
+    decision: added
+    why: >
+      The horror of Zahhak's rule is administrative and daily: every dawn, two young men are
+      killed and their brains fed to the snakes. It is slaughter as routine, death as a standing
+      institution. Shostakovich's "Ninth of January" depicts a massacre — a crowd, then the
+      guns, then a silence full of the dead — with a relentlessness that refuses catharsis. Plague's
+      register is the spreading, impersonal, repeating death; this movement is exactly that, a
+      machinery of killing that does not vary and does not stop. It scores not one death but the
+      principle of death-as-quota that defines the serpent-reign.
+  - n: 4
+    scene: "A thousand years of darkness — righteousness goes into hiding, the world dimmed"
+    force: exile
+    composer: Górecki
+    work: "Symphony No. 3 'Symphony of Sorrowful Songs' — I. Lento"
+    decision: added
+    why: >
+      Ferdowsi compresses a millennium into a verdict: under Zahhak, virtue hid itself, the wise
+      kept silent, and the world wore mourning. This is exile not of a person but of the good
+      itself — justice driven underground, the rightful order banished from the open air.
+      Górecki's Third opens with a vast, slow canon that rises out of the lowest strings like
+      grief becoming geological — a whole world's sorrow held at a single unhurried tempo. Exile's
+      register is the long unhoused line; the Sorrowful Songs give the duration of the darkness,
+      the sense that this has gone on so long it has become the climate.
+  - n: 5
+    scene: "The cook's mercy — one youth of each pair secretly spared (the Kurds' origin)"
+    force: salvation
+    composer: "J. S. Bach"
+    work: "St Matthew Passion — 'Erbarme dich, mein Gott' (BWV 244)"
+    decision: added
+    why: >
+      Inside the slaughterhouse Ferdowsi plants a small, decisive mercy: the two royal cooks
+      conspire to kill only one of each day's pair, mixing sheep's brains with the dead man's,
+      and they smuggle the spared youths into the mountains — and from those rescued lives, the
+      poem says, the Kurds descend. Salvation in the Shahnameh begins this quietly. Bach's
+      "Erbarme dich" — a single alto voice and a solo violin pleading for mercy over the steady
+      grief of the strings — is the most concentrated music of mercy-in-extremity in the canon.
+      Salvation's register is the lifted, redemptive line emerging from darkness; here it is one
+      act of disobedient kindness keeping a remnant alive inside a thousand years of death.
+  - n: 6
+    scene: "Zahhak's nightmare — three warriors, the youngest fells him with an ox-headed mace"
+    force: revelation
+    composer: Sibelius
+    work: "The Swan of Tuonela (Lemminkäinen Suite, Op. 22)"
+    decision: added
+    why: >
+      The tyrant dreams: three warriors come against him, and the youngest, with a mace shaped
+      like an ox's head, binds him and drags him to a mountain. He wakes screaming; the
+      astrologers, terrified, finally name the doom — a child not yet grown, Fereydun. This is
+      revelation as dread: the future disclosed against the dreamer's will. Sibelius's Swan glides
+      on the black river that circles the land of the dead — a cor anglais singing over muted,
+      shrouded strings, an omen given form. Revelation's register is the thing suddenly made
+      visible; here the visible thing is the king's own death, floating toward him on dark water,
+      and no astrologer can unsee it.
+  - n: 7
+    scene: "Kaveh the blacksmith — his sons seized for the snakes; he tears the decree and revolts"
+    force: wrath
+    composer: Wagner
+    work: "Das Rheingold — 'Nibelheim' (Descent / the anvils)"
+    decision: added
+    why: >
+      Zahhak, to shore up his name, has his nobles sign a testament of his justice. The
+      blacksmith Kaveh — who has already lost sons to the serpents — is dragged in to sign, and
+      instead he roars his grief into fury, tears the document to pieces, tramples it, and walks
+      out with his last son. The forge rises against the throne. Wagner's "Nibelheim" is built on
+      the sound of anvils — eighteen of them hammering in rhythm, the music of labor and metal
+      and the rage of the worked-upon. Wrath's register is rhythmic pressure and unresolved
+      harmony; the anvils give the blacksmith's revolt its literal instrument, the hammer turned
+      from making into refusal.
+  - n: 8
+    scene: "The leather apron raised as a banner — the people stream toward Fereydun"
+    force: return
+    composer: Sibelius
+    work: "Finlandia, Op. 26"
+    decision: added
+    why: >
+      Kaveh lifts his leather smith's apron on a spear — the Derafsh Kaviani, the banner that will
+      lead Persia's armies for a thousand years — and the oppressed of the world gather behind it
+      and march to find Fereydun. The cycle of darkness pivots, in its final image, toward the
+      return of the rightful order. Sibelius wrote Finlandia as a coded hymn of a subjugated
+      nation rising against its oppressor: a brooding, grinding opening that breaks into a hymn so
+      plain and broad it became an anthem. Return's register is the homeward surge after long
+      absence; the apron-banner and the hymn are the same gesture — a downtrodden people
+      discovering they are a host, and turning toward the light they had given up expecting.
+
+demoted:
+  - composer: Stravinsky
+    work: "The Firebird — 'Infernal Dance of King Kashchei'"
+    status: "held for the Simurgh's cycle, not spent on Zahhak"
+    why: >
+      Kashchei is an immortal evil king — a tempting Zahhak analog — but the Firebird's true gift
+      to this poem is its title bird, the Simurgh, who saves the outcast Zal in Cycle 6. Spending
+      the Firebird on Zahhak would forfeit the more exact match. Bartók's Mandarin carries the
+      monstrous-body horror without borrowing the bird the Shahnameh actually needs.
+  - composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    status: "reserved (per Cycle 1) for the great deaths and the closing of fated accounts"
+    why: >
+      The Dies Irae is the ledger of judgment read aloud — it belongs to the deaths of named
+      heroes and the settling of the Iran–Turan blood-debt, not to the diffuse, durational horror
+      of the serpent-reign. Plague needs spreading repetition (Shostakovich), not eschatological
+      finality.
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "held for the overthrow itself (Cycle 4)"
+    why: >
+      Mars is the mechanized doom of the blow that lands — it belongs to Fereydun striking Zahhak
+      down, not to the reign or the gathering revolt. Cycle 3 ends on the banner raised (return),
+      not on the killing stroke.

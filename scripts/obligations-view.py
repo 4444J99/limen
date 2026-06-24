@@ -24,6 +24,10 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 LOGS = ROOT / "logs"
 OUT_DIRS = [ROOT / "web" / "app" / "out", ROOT / "web" / "app" / "public"]
 LEDGER = Path(os.environ.get("LIMEN_OBLIGATIONS_LEDGER", ROOT / "obligations-ledger.json"))
+# His-hand atoms hang HERE, in git — a separate file from the ledger ON PURPOSE: the mail
+# builder regenerates obligations-ledger.json every sweep, so any lever placed there is wiped.
+# These are unioned in below and survive regen. A his-hand task never hangs on him or in memory.
+HIS_HAND = Path(os.environ.get("LIMEN_HIS_HAND_LEVERS", ROOT / "his-hand-levers.json"))
 
 
 def _load_json(path, default):
@@ -31,6 +35,21 @@ def _load_json(path, default):
         return json.loads(Path(path).read_text())
     except (OSError, ValueError):
         return default
+
+
+def _union_levers(ledger):
+    """His-hand levers (git, durable) first, then the mail ledger's levers; dedup by id.
+    Fail-open: a missing/torn his-hand file just yields the ledger levers, never a crash."""
+    his_hand = _load_json(HIS_HAND, {})
+    his = his_hand.get("levers", []) if isinstance(his_hand, dict) else []
+    out, seen = [], set()
+    for lev in list(his) + list(ledger.get("levers", [])):
+        lid = lev.get("id")
+        if lid in seen:
+            continue
+        seen.add(lid)
+        out.append(lev)
+    return out
 
 
 def build_view():
@@ -45,7 +64,7 @@ def build_view():
         "obligations": obligations,
         "verify_first": [o for o in obligations if o.get("verify_first")],
         "noise_killers": ledger.get("noise_killers", []),
-        "levers": ledger.get("levers", []),
+        "levers": _union_levers(ledger),
     }
 
 
@@ -132,7 +151,8 @@ def render_html(v):
 
     levers = "".join(
         f'<li><b>{_esc(l.get("id"))}</b> — {_esc(l.get("label"))} '
-        f'<span class="cost">({_esc(l.get("cost",""))})</span></li>'
+        f'<span class="cost">({_esc(l.get("cost",""))})</span>'
+        f'{(" &rarr; <b>" + _esc(l.get("unlocks")) + "</b>") if l.get("unlocks") else ""}</li>'
         for l in v["levers"])
 
     return f"""<!doctype html><html lang="en"><head>

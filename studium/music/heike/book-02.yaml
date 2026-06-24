@@ -1,0 +1,190 @@
+# Heike Monogatari — Book II — curated music arc
+# Consolidation and unease: the court transformed, yet restless.
+work: heike
+book: 2
+title: "Heike Book II: Court Ascendancy, Rising Unease"
+length_minutes: 92
+principle: >
+  Book II is the consolidation arc. The Taira have won the Heiji Uprising;
+  Kiyomori now rules the court through proxy-control of the retired Emperor Go-Shirakawa.
+  The clan's power is absolute and aesthetic — they dress the court in their style, appoint
+  their men to every significant post, marry into the imperial line. And yet the book itself
+  grows uneasy. The narrative does not celebrate; it documents. Power resting on force rather
+  than legitimacy shows its cost: the court fears the Taira now rather than reveres them.
+  Monasteries begin to murmur. Kiyomori, at the height of his reach, is incapable of hearing
+  that the ground beneath him is shifting. Score this as the moment when absolute dominance
+  begins to poison itself — not through external threat, but through the isolation that
+  supremacy creates. The Gio episode's spiritual consequences ripple outward: a court in
+  which beauty and cruelty have become indistinguishable.
+force_arc: [kingship, memory, desire, desire, wrath, sacrifice, fate, kingship, metamorphosis, supplication, grief]
+dominant_force: kingship
+tracks:
+  - n: 1
+    scene: "After Heiji — the victor surveys his kingdom"
+    force: kingship
+    composer: Berlioz
+    work: "Rákóczy March from La damnation de Faust"
+    decision: added
+    why: >
+      The Heiji Uprising is over. Kiyomori has defeated the imperial faction, destroyed the
+      Minamoto, consolidated his hold. The text pauses to show him at a moment of absolute
+      triumph: every great house has either submitted or been eliminated. The Rákóczy March is
+      ceremonial grandeur with an undertone — it is triumphant, yes, but with the quality of
+      victory in a world that knows it is already fighting for something that cannot last.
+      Military grandeur married to foreknowledge. Kingship in its most militant form, yet
+      scored by a composer of elegiac temperament.
+  - n: 2
+    scene: "The court reconstituted — Taira appointments and placement"
+    force: memory
+    composer: Fauré
+    work: "Pelléas et Mélisande — Prelude"
+    decision: added
+    why: >
+      The book then catalogs the offices: Kiyomori's son as Grand Minister; his son-in-law
+      appointed to the imperial secretariat; thirty Taira nobles placed in the upper ranks;
+      their offices held not by merit but by the accident of birth into the victorious clan.
+      What was once a court of scholars and ritualists is now a court of warriors dressed as
+      courtiers. The Fauré prelude does not celebrate this — it introduces a kind of mist,
+      a haze of veils over the proceedings. Something is being occluded, obscured. The court
+      the music suggests is no longer quite visible to itself. Memory without history; form
+      without substance.
+  - n: 3
+    scene: "Go-Shirakawa and Kiyomori — alliance and hidden resentment"
+    force: desire
+    composer: Wagner
+    work: "Tristan und Isolde — Act II, 'O sink' hernieder'"
+    decision: added
+    why: >
+      The retired Emperor Go-Shirakawa seems to have appointed Kiyomori as his instrument.
+      They appear to work in concert — until they don't. The text introduces an unspoken
+      tension: Go-Shirakawa wants the Taira as military power, but Kiyomori has already
+      begun to see the relationship differently. He wants not to serve but to possess. Wagner's
+      duet is exactly this — two figures who desire not the same thing but who desire the same
+      person, or rather, who desire to control the same symbolic space. The music is ravishing
+      and poisoned. Desire requires chromatic longing and deferred resolution; here, the
+      resolution will never come — instead, the desire will calcify into antagonism.
+  - n: 4
+    scene: "Taira wives and mothers — the clan reproduces itself"
+    force: desire
+    composer: Szymanowski
+    work: "Symphony No. 3 — 'Wielki Miłość' (Great Love), II. Andante doloroso"
+    decision: added
+    why: >
+      Marriage alliances scatter the Taira daughters through the great houses; Taira women
+      enter the imperial chambers; imperial sons are born to Taira mothers. This is political
+      strategy performed as intimacy. Szymanowski gives the register of desire tinged with
+      pathos — beauty that is also instrumentality, passion that is also calculation. The
+      music is sensual and withdrawn; it suggests a world in which reproduction has become
+      a matter of state policy, and even motherhood is a form of conquest. The loveliness
+      here is real, but it is being used.
+  - n: 5
+    scene: "Kiyomori's arbitrary cruelties — the temple monks and their resistance"
+    force: wrath
+    composer: Penderecki
+    work: "Threnody for the Victims of Hiroshima"
+    decision: added
+    why: >
+      The book documents episodes of spectacular cruelty. Monks who dare to resist Taira power
+      are beaten; their temples are burned; a monk-general's head is severed and paraded. These
+      are not scenes of warfare but of civilian violence — the machinery of terror applied to
+      institutions older than the Taira. Penderecki's Threnody is wrath not as passionate anger
+      but as a system: relentless, impersonal, without mercy or comprehension. It is the sound
+      of power that has become pure machinery, operating without human hesitation. The monks
+      represent something Kiyomori cannot understand: authority that does not derive from
+      military force. His response is the only response available to such incomprehension —
+      destruction.
+  - n: 6
+    scene: "A cloistered nun's prayer — the spiritual counter-motion"
+    force: sacrifice
+    composer: Arvo Pärt
+    work: "Cantus in Memoriam Benjamin Britten"
+    decision: added
+    why: >
+      Against the violence runs an invisible current. Women and men begin to withdraw from
+      the court, taking vows, renouncing the world Kiyomori is building. They sacrifice
+      status, beauty, position — everything the court prizes — for something the text calls
+      "the unimpeded path." The Pärt is not mournful; it is resolute. It is the sound of a
+      choice made with full clarity: the world of power cannot hold us, so we will become
+      wholly other to it. Sacrifice here is not victimhood but deliberate self-removal.
+      The verticality and stillness match the requirement exactly — these are souls turning
+      toward what does not pass.
+  - n: 7
+    scene: "The child emperor's seclusion — power isolates its own"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 — IV. Allegro, fate motif complex"
+    decision: added
+    why: >
+      Kiyomori controls the emperor, yet the emperor is imprisoned by that control. The child
+      is kept isolated, educated in Taira culture, raised to see the clan as synonymous with
+      legitimate authority. He will have no other source of knowledge or loyalty. This is not
+      malice but systemic: total victory requires the next generation to be remade in its
+      image. Beethoven's fate motif here operates not as external doom but as internalized
+      constraint — the child's future is written already, and he does not know it. Kingship
+      has become a form of captivity.
+  - n: 8
+    scene: "Taira pageantry — the clan at festival"
+    force: kingship
+    composer: Vivaldi
+    work: "Gloria — I. Gloria in excelsis Deo"
+    decision: added
+    why: >
+      The book showcases the Taira's aesthetic dominion: festivals, ceremonies, elegant
+      entertainments. They fill the capital with color and music. The court itself has become
+      their instrument. Vivaldi's Gloria is unabashed magnificence — it is celebration without
+      irony, grandeur at full display. And that is the text's point: they are genuinely magnificent.
+      The unease comes not from the performance but from the fact that such beauty is being
+      marshaled as an instrument of power. The music is honest; the use to which it is put
+      is problematic. Kingship in its most radiant form, yet radiating something rotten at
+      the center.
+  - n: 9
+    scene: "The world transforms — old hierarchies dissolve"
+    force: metamorphosis
+    composer: Ravel
+    work: "Daphnis et Chloé — Sunrise / Final Bacchanal"
+    decision: added
+    why: >
+      Under Taira dominion, the entire social world is rearranged. The old Fujiwara families
+      fade; warrior clans rise; courtiers must bend to military logic. Nothing is stable; everything
+      is being reconstituted according to Taira preference. Ravel's bacchanal is fluidity and
+      transformation at a grand scale — colors shifting, hierarchies dissolving and reforming,
+      a world in flux. The changing orchestral color matches the requirement exactly. What was
+      is no longer; what will be is not yet stable. Kiyomori has unleashed forces he cannot
+      contain — the court itself is being metamorphosed into something it has never been.
+  - n: 10
+    scene: "A Buddhist monk's letter of remonstration — warning unheeded"
+    force: supplication
+    composer: Barber
+    work: "Adagio for Strings"
+    decision: added
+    why: >
+      A elder monk sends a letter begging Kiyomori to change his course, to return to the
+      dharma, to remember that power is impermanent and that his clan's dominance already
+      contains its own destruction. The letter is not angry — it is desperate and precise.
+      Kiyomori does not answer. Barber's Adagio is exactly this tone: profound supplication
+      suspended in the knowledge that it will not be heard. The exposed melodic line carries
+      the monk's clarity and the futility of his appeal simultaneously. He is right. He will
+      be ignored. And both things are true at once.
+  - n: 11
+    scene: "Kiyomori alone at night — premonition without form"
+    force: grief
+    composer: Shostakovich
+    work: "String Quartet No. 8 — I. Largo"
+    decision: added
+    why: >
+      The book closes with an image not from the narrative but from the text's internal rhythm:
+      Kiyomori at the height of his power, alone, seized by something like unease that he cannot
+      name. He has everything. He has everything. And something is wrong. Shostakovich's Eighth
+      quartet opens in a grief that is not mourning but premonition — the slow realization that
+      victory has been hollow, that the apparatus of power isolates its wielder from everything
+      that makes life intelligible. This is not yet the fall; it is the moment when the fall
+      becomes inevitable, when the victor begins to feel the ground shifting beneath him. It is
+      private, inward, and implacable.
+demoted:
+  - composer: Mahler
+    work: "Symphony No. 6 — 'Tragic' complex"
+    status: "reserved for Books VI-XII (the actual military collapse)"
+    why: >
+      Book II is psychological and political collapse-in-formation, not yet military
+      catastrophe. Save the hammer-blows for when the Genpei War begins and the Taira are
+      actually being destroyed on the battlefield.

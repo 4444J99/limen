@@ -11,14 +11,14 @@
 - **Corpus:** `classical/gilgamesh` (translations only)
 - **Source rail:** https://www.sacred-texts.com/ane/eog/
 - **Divisions:** 12 × Tablet
-- **Progress:** 1/12 arcs authored
+- **Progress:** 4/12 arcs authored
 
 | Tablet | dominant force | status |
 | --: | --- | :--: |
 | 1 | (author) | ✓ |
-| 2 | (author) | ☐ |
-| 3 | (author) | ☐ |
-| 4 | (author) | ☐ |
+| 2 | (author) | ✓ |
+| 3 | (author) | ✓ |
+| 4 | (author) | ✓ |
 | 5 | (author) | ☐ |
 | 6 | (author) | ☐ |
 | 7 | (author) | ☐ |

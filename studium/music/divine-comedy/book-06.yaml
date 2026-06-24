@@ -1,0 +1,85 @@
+# Divine Comedy — Inferno, Canto 6 — curated music arc
+# Gold-standard form matching studium/music/iliad/book-01.yaml
+work: divine-comedy
+book: 6
+title: "Inferno, Canto VI: Circle of Gluttony"
+length_minutes: 65
+principle: >
+  Canto VI is the music of degradation. The gluttons are not refined; they are
+  reduced to appetite, their humanity erased by the very indulgence that was their sin.
+  The register is not beauty but decay—the body consuming itself, the stench, the rain,
+  the loss of measure. Cerberus guards the circle, a hybrid beast embodying appetite
+  made visible. Ciacco, a Florentine, speaks prophecy from the filth, a voice from ruin.
+force_arc: [fate, wrath, plague, desire, wrath, metamorphosis]
+dominant_force: plague
+tracks:
+  - n: 1
+    scene: "The stench and the air — descending into corruption"
+    force: fate
+    composer: Verdi
+    work: "La forza del destino — Act III opening"
+    decision: added
+    why: >
+      Dante descends further into the depths and encounters a new register of sensory horror:
+      stench, not just darkness. The opening movement must establish the inexorability of
+      descent and the corruption that marks this circle. Verdi's opening re-establishes fate
+      as the governing principle.
+  - n: 2
+    scene: "Cerberus — appetite as guardian beast"
+    force: wrath
+    composer: Holst
+    work: "The Planets — Mars, the Bringer of War"
+    decision: added
+    why: >
+      Cerberus, the three-headed dog, guards the gluttons, barking from all three mouths
+      simultaneously. His rage is not moral judgment but appetite itself defending its territory.
+      Holst's Mars is the music of brute, asymmetrical power — the beast that serves appetite
+      as its enforcer.
+  - n: 3
+    scene: "The gluttons in filth — eternal degradation"
+    force: plague
+    composer: Penderecki
+    work: "Threnody for the Victims of Hiroshima"
+    decision: added
+    why: >
+      The gluttons lie in slime and mire, weeping, their faces swollen, their mouths stuffed
+      in life and punished in death. Penderecki's Threnody is descending, dark, accumulating
+      in dissonance — orchestral decay and the sense of irreversible corruption.
+  - n: 4
+    scene: "Ciacco recognizes Dante — desire for remembrance"
+    force: desire
+    composer: Debussy
+    work: "Nocturnes — I. Nuages"
+    decision: added
+    why: >
+      Ciacco, a Florentine, speaks to Dante, seeking recognition and remembrance from the world
+      above. Even in degradation, there is the desire to be known, to be remembered by one who
+      still walks in the light. Debussy's Nocturnes drifts, yearns, desires connection without
+      being able to achieve it.
+  - n: 5
+    scene: "Ciacco's prophecy — fate of Florence"
+    force: wrath
+    composer: Shostakovich
+    work: "String Quartet No. 8, III. Allegro non troppo"
+    decision: added
+    why: >
+      Ciacco prophesies the factional violence and exile that will define Florence's future and
+      Dante's own fate. The wrath of the city is announced from the depths, a prophetic voice
+      of coming conflict and destruction.
+  - n: 6
+    scene: "Descent continues — Cerberus and the threshold"
+    force: metamorphosis
+    composer: Scriabin
+    work: "Poem of Ecstasy — climax and dissolution"
+    decision: added
+    why: >
+      As Dante and Virgil move past Cerberus toward the next circle, the landscape shifts. The
+      circle of gluttony gives way to the vastness of the circle of avarice. The transformation
+      of the infernal landscape is captured in Scriabin's final dissolution — beauty and horror
+      merging as one.
+demoted:
+  - composer: Mahler
+    work: "Symphony No. 5 — Adagietto"
+    status: "removed from Canto VI; save for Paolo's silence (Canto V) or grief circles"
+    why: "Gluttony requires descent and degradation, not inward private grief. Save Mahler for
+      more intimate sorrows."

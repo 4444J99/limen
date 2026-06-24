@@ -1,0 +1,146 @@
+work: journey-to-the-west
+book: 6
+title: "Chapter 6: The Insufficiency of Celestial Force — Heaven's Repetitive Collapse"
+length_minutes: 99
+principle: >
+  Score Chapter 6 as the revelation that force does not scale. The Jade Emperor dispatches
+  successive waves of generals and armies, each with specialized magic and greater authority.
+  Each wave is defeated utterly; each defeat proves zero progress. The comedy of victory
+  drains through repetition as a structural truth becomes visible: quantitative increase in
+  celestial soldiers produces zero qualitative change. By the chapter's end, the register has
+  darkened completely. What began as triumphant slapstick becomes menacing stalemate. Monkey's
+  conviction of Heaven's powerlessness deepens with each battle; Heaven's recognition of
+  systemic inadequacy grows. The chapter ends not with victory or defeat but with terrified
+  recognition that force cannot solve this problem.
+force_arc: [comedy, wrath, comedy, comedy, wrath, wrath, wrath, wrath, arrogance, arrogance]
+dominant_force: arrogance
+tracks:
+  - n: 1
+    scene: "Heavenly council convenes — the Jade Emperor mobilizes response"
+    force: comedy
+    composer: Mozart
+    work: "The Marriage of Figaro — Act II Finale ('A colossal crisis')"
+    decision: added
+    why: >
+      The Jade Emperor's court erupts in bureaucratic chaos as news arrives that Monkey has
+      openly rebelled. Celestial officials argue, propose solutions, escalate and retreat from
+      various strategies. Mozart's Act II finale captures organizational pandemonium — multiple
+      voices overlapping, each certain of their authority, none able to dominate. The comedy
+      is pure bureaucratic confusion, but it masks genuine alarm.
+  - n: 2
+    scene: "Four Heavenly Kings dispatched with their armies"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    decision: added
+    why: >
+      The first military response: four ranking celestial officers with their full armies march
+      toward Monkey's mountain. Each king commands thousands. They are confident in numerical
+      superiority and celestial power. Holst's Mars provides the aggressive, asymmetrical pulse
+      of genuine military force mobilized at scale.
+  - n: 3
+    scene: "Monkey defeats the Four Heavenly Kings — instantaneous rout"
+    force: comedy
+    composer: Rossini
+    work: "Il barbiere di Siviglia — 'La calunnia' (expanded into burlesque swiftness)"
+    decision: added
+    why: >
+      The Four Heavenly Kings are routed almost instantly. Monkey's newly invulnerable body
+      shrugs off their weapons; his martial skill proves superior. The celestial armies break
+      and retreat. The scene is rendered as slapstick comedy — the gap between their
+      preparations and their utter failure is comical. Rossini's hyperactive swiftness captures
+      the momentum of uncontested victory.
+  - n: 4
+    scene: "Return of armies — more generals volunteer for combat"
+    force: comedy
+    composer: Vivaldi
+    work: "The Four Seasons — Summer, III. Presto"
+    decision: added
+    why: >
+      Undeterred, more heavenly generals volunteer for the next wave. Each believes his
+      particular martial skill or magic will succeed where the previous generation failed.
+      Vivaldi's ferocious summer tempo captures the whirlwind of successive escalations, the
+      willingness to engage again and again with the same result.
+  - n: 5
+    scene: "Subsequent battles in rapid succession — pattern established"
+    force: wrath
+    composer: Shostakovich
+    work: "Symphony No. 7 in C major, Op. 60 ('Leningrad') — I. Allegretto"
+    decision: added
+    why: >
+      Five heavenly generals with different magical specialties arrive and are defeated in
+      succession. Each brings unique powers: one commands wind, one controls water, one summons
+      plagues. Each is routed. The music here begins to darken as the pattern becomes visible.
+      Shostakovich's Leningrad first movement captures repetition without resolution, the
+      mechanical return of the same failure. Comedy begins to curdle.
+  - n: 6
+    scene: "Monkey's growing dominance — the menace beneath the laughter"
+    force: wrath
+    composer: Strauss
+    work: "Also sprach Zarathustra — 'Of the Disciples'"
+    decision: added
+    why: >
+      By the sixth battle, it is clear that Monkey is not merely holding his ground but actively
+      dominant. Each victory confirms his conviction that Heaven possesses no power capable of
+      subduing him. The music must register the shift from comedy toward genuine menace — Strauss's
+      section captures Monkey's growing sense of metaphysical superiority, his understanding that
+      this is not a contest but an exhibition of Heaven's inadequacy.
+  - n: 7
+    scene: "Heaven's escalation ceiling — the realization that force has failed"
+    force: wrath
+    composer: Beethoven
+    work: "Symphony No. 5 in C minor — I. Allegro con brio"
+    decision: added
+    why: >
+      The Jade Emperor convenes another emergency council. Attempt after attempt has failed.
+      The generals are suffering casualties; morale is cracking. The realization sets in:
+      quantitative increase in military force has not produced any change in outcome. Beethoven's
+      Fifth captures this terrible clarity — the famous "fate motif" hammering home the
+      inescapability of a problem that force cannot solve. The register is no longer comic but
+      darkly inexorable.
+  - n: 8
+    scene: "Final great generals volunteer — but the outcome is predetermined"
+    force: wrath
+    composer: Wagner
+    work: "Die Walküre — Ride of the Valkyries"
+    decision: added
+    why: >
+      Despite evidence of systematic failure, the most powerful celestial generals volunteer for
+      combat. They believe their greater power will succeed. But the audience — and Monkey — already
+      knows the outcome. Wagner's Valkyries provides the sense of apocalyptic inevitability, power
+      riding forward toward predetermined doom. The register is prophetic and menacing.
+  - n: 9
+    scene: "These generals too are defeated — Heaven's military exhaustion"
+    force: arrogance
+    composer: Mahler
+    work: "Symphony No. 8 in E-flat major — I. Hymnus"
+    decision: added
+    why: >
+      The final great generals are defeated. Heaven's military response is now exhausted —
+      there are no more generals who have not already tried. Monkey stands alone on his mountain,
+      unbothered, triumphant. Mahler's Eighth hymnus captures both cosmic grandeur and the
+      terrible weight of systemic failure. Monkey's arrogance is now proven through the sheer
+      inadequacy of Heaven's every attempt.
+  - n: 10
+    scene: "Heavenly despair — recognition that warfare cannot solve this"
+    force: arrogance
+    composer: Bruckner
+    work: "Symphony No. 8 in C minor — I. Allegro maestoso"
+    decision: added
+    why: >
+      The Jade Emperor faces the truth: force does not work. Military action has failed
+      completely. Some celestial officials propose that perhaps the solution lies not in warfare
+      but in recognition — that Monkey's rebellion stems from feeling that his title is empty,
+      that authentic authority might satisfy him. Bruckner's vast opening movement provides the
+      weight of cosmic desperation and the slow dawning of psychological insight. The chapter
+      ends with the realization that the next move must be diplomatic, not martial. Monkey's
+      arrogance has forced Heaven to recognize its own limits.
+demoted:
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "reserved for individual battle scenes only; overuse dilutes impact"
+    why: >
+      While Mars appears in Track 2, subsequent battles shift through varied composers to prevent
+      the register from becoming monotonous. Each battle is a variation on the same defeat;
+      the music must express that through subtle shifts in instrumentation, not repetition of
+      the same piece.

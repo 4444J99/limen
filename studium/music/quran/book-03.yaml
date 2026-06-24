@@ -1,0 +1,116 @@
+# Qur'an — Sura 3 — curated music arc
+work: quran
+book: 3
+title: "Sura 3: Al-i-Imran (The Family of Imran)"
+length_minutes: 118
+principle: >
+  Sura 3 develops the same civic register as Sura 2 but moves through theological
+  consolidation: continuity with earlier scripture, devotion under trial, and a
+  community surviving loss. Its dominant move is revelation repeatedly returning as
+  direct address. The sura does not stay in legal instruction mode; it tests whether
+  legal and historical claims can survive grief, conflict, and correction.
+force_arc: [revelation, memory, law, revelation, sacrifice, wrath, grief, supplication]
+dominant_force: revelation
+tracks:
+  - n: 1
+    scene: "Unity of the message over inherited traditions"
+    force: revelation
+    composer: Fauré
+    work: "Requiem — Agnus Dei"
+    decision: added
+    why: >
+      Al-i-Imran begins by placing later communities and earlier prophets inside one
+      divine grammar. That requires revelation without rupture: a claim that continuity
+      itself can be recited as a form of mercy and warning. Fauré's Agnus Dei returns
+      to a same phrase with ever sharper spiritual focus, the right model for this
+      register of doctrinal continuity.
+  - n: 2
+    scene: "Family lineages and inherited grief in the Imran narrative"
+    force: memory
+    composer: Elgar
+    work: "Symphony No. 1 — I. Andante. Nobilmente e semplice (opening Adagio)"
+    decision: added
+    why: >
+      The family passages are not genealogy as data. They are memory as theological load:
+      lineage becomes the medium through which revelation becomes embodied. Elgar's opening
+      movement carries that load as ceremonial recollection, where every phrase acknowledges
+      prior knowledge and still insists on what remains unresolved now.
+  - n: 3
+    scene: "Household law, communal obligations, and social boundaries"
+    force: law
+    composer: Bach
+    work: "Art of Fugue — Contrapunctus 15"
+    decision: added
+    why: >
+      Al-i-Imran repeatedly moves from declaration to obligation: marriage, conduct, truth
+      claims. Fugal writing gives this in miniature: a strict form in which every line
+      must enter and yield to others. The force is law because household regulation
+      here is not private ethics; it is public grammar.
+  - n: 4
+    scene: "Mary and Jesus as revealed signs"
+    force: revelation
+    composer: Tavener
+    work: "Song for Athene"
+    decision: added
+    why: >
+      The Mary cycle is an event of annunciation, not debate. The same voice that
+      legislates in earlier sections turns and becomes pure recitative address here.
+      Tavener's long melodic breath provides that register: devotion as direct hearing of
+      sign over interpretation, revelation as a visible-in-the-voice register.
+  - n: 5
+    scene: "The Uhud horizon and collective consequence"
+    force: sacrifice
+    composer: Stravinsky
+    work: "The Rite of Spring — Part II: 'Sacrificial Dance (The Chosen One)'"
+    decision: added
+    why: >
+      The Uhud narrative is social and military, but its force is ritual loss: the community
+      is asked what sacrifice is required for preservation and what sacrifice is required for
+      dignity. Stravinsky's ritual violence and processional insistence fit this section's
+      register: sacrifice not as bloodlust, but as the cost of refusing collapse.
+  - n: 6
+    scene: "The believers tested by war and betrayal"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    decision: added
+    why: >
+      Wrath appears as a field condition in this sura: not only as battle, but as the way
+      betrayal, panic, and political miscalculation enter religious life as force.
+      Holst's asymmetrical propulsion matches that social and moral dissonance where the
+      question is not whether pain exists, but who is allowed to remain faithful inside pain.
+  - n: 7
+    scene: "Wounded conscience after victory and loss"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    decision: added
+    why: >
+      The sura's grief is not merely for the dead; it is the grief of the living who remain
+      accountable. Mahler's Adagietto is inward without sentimentality. It holds one exposed
+      line over an almost still emotional field — exactly the same register as believers who must
+      continue after humiliation and sorrow.
+  - n: 8
+    scene: "Final invocations of firmness and hope"
+    force: supplication
+    composer: Bach
+    work: "St Matthew Passion — 'Erbarme dich, mein Gott'"
+    decision: added
+    why: >
+      Sura 3 repeatedly asks for steadfastness after strain, not escape from struggle.
+      Bach's 'Erbarme dich' gives a single line where the plea is exposed and exposed again
+      without theatrical closure. Supplication here is disciplined and communal: not an end,
+      but the condition for continuing lawful devotion after defeat.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "held for death-event divisions"
+    why: >
+      This register requires terminal public grief after irreversible closure. Sura 3
+      processes mourning within ongoing community life; that register belongs later.
+  - composer: Berlioz
+    work: "Symphonie fantastique — IV. 'March to the Scaffold'"
+    status: "held for scenes of divine-mythic deception"
+    why: >
+      The false-triumph register is not the dominant texture of Sura 3. Its scenes need
+      theological continuity and measured communal strain, not melodramatic ceremonial threat.

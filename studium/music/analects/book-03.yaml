@@ -1,0 +1,322 @@
+# Analects — Book III — curated music arc
+# 八佾 Ba Yi — "Eight Rows"
+# Score the actual movement of the 26 chapters — not "Confucius on ritual in general."
+# Book III is the most critical book of the early Analects: it names the structure of
+# legitimate ritual authority, diagnoses the violations of his contemporaries, and opens
+# the philosophical distinction between ritual form and ritual meaning that will sustain
+# the entire Confucian tradition.
+work: analects
+book: 3
+title: "Analects Book III: Ritual, Authority, the Dissolution of Form"
+length_minutes: 79
+principle: >
+  Do not score Book III as "ritual instruction." Score it as a sustained act of cultural
+  diagnosis: the age has forgotten the meaning of the forms it still performs. The book opens
+  with the scandal of the Eight Rows — an imperial rite performed by a mere noble — and deepens
+  through a series of questions in which Confucius points to the inner meaning of sacrifice,
+  ceremony, and music. The key question is not "what ritual is correct" but "what does ritual
+  mean when the spirit that gave it life is gone?" The dominant force is law — not merely
+  formal correctness but the crisis of form when form no longer communicates. The arc moves
+  from violation to diagnosis to the depths of ritual meaning to the comedy of failed ceremony.
+force_arc: [law, law, kingship, sacrifice, sacrifice, law, law, law, memory, comedy, sacrifice, memory, law, desire, comedy, law, kingship, law, revelation, return]
+dominant_force: law
+tracks:
+  - n: 1
+    scene: "Eight rows of eight — the scandal of usurped ritual"
+    force: law
+    composer: Stravinsky
+    work: "Symphony of Psalms — I. Exaudi orationem meam, Domine"
+    decision: added
+    why: >
+      "八佾舞於庭，是可忍也，孰不可忍也" — eight rows of dancers performing in the court.
+      The imperial dance, performed by a noble: the violation is not of a rule but of the
+      structure that makes ritual meaning possible. Stravinsky's Symphony of Psalms opens with
+      an E-minor chord that sounds like a question asked of heaven — an archaic liturgy in
+      modern dress, a ritual whose form has been broken and reassembled. The driving ostinato
+      beneath the choir is the law of the old form persisting underneath the broken surface.
+      Book III requires this: the age has kept the forms but lost the key.
+  - n: 2
+    scene: "The three families — Yung ode at the clearing"
+    force: law
+    composer: Handel
+    work: "Saul, HWV 53 — 'Dead March' (Act III)"
+    decision: added
+    why: >
+      The three noble families use the Yung ode — a hymn reserved for imperial sacrifice — at
+      the clearing of their ancestral temple vessels. Confucius quotes the ode and asks: "what
+      face can set this to music?" The Dead March from Handel's Saul is stately and ceremonial
+      but haunted by the king who has fallen from divine favor — exactly the register of a
+      form that continues to be performed after its meaning has died. The law persists; the
+      spirit is elsewhere. The weight of the procession is the weight of a ceremony that only
+      the musicians still believe in.
+  - n: 3
+    scene: "Ritual without reverence — the empty vessel"
+    force: kingship
+    composer: Elgar
+    work: "Pomp and Circumstance March No. 1 in D major, Op. 39"
+    decision: added
+    why: >
+      "人而不仁，如禮何？人而不仁，如樂何？" — a man without benevolence: what can ritual do
+      for him? What can music do? This is the thesis of Book III in one sentence: form without
+      the inner quality is empty — and that emptiness is ceremonially performed every day by
+      the rulers of Confucius's age. Elgar's march is the exact sound of ceremony performed
+      after the death of its inner meaning: grand, imperial, completely convincing on the
+      surface — and underneath, merely grand. Kingship's requirement is ceremonial grandeur
+      and sovereign display; Elgar provides it with an edge of irony that the piece may not
+      itself intend, but that Book III's analysis makes audible.
+  - n: 4
+    scene: "The question of the ancestral temple — 'What do you mean by difficult?'"
+    force: sacrifice
+    composer: Gluck
+    work: "Iphigénie en Tauride — 'O malheureuse Iphigénie'"
+    decision: added
+    why: >
+      "與其媚於奧，寧媚於竈" — it is better to pray to the kitchen god than the household
+      god. Confucius is being evasive: when pressed about the meaning of the ancestral
+      sacrifice, he refuses to answer directly. Gluck's aria from Iphigénie en Tauride is
+      the sound of a question deferred: Iphigenia, caught between loyalty to her brother and
+      the demands of the goddess, singing a prayer that knows it cannot be answered. Sacrifice
+      requires ritual weight and processional gravity; Gluck's line is tense with withheld
+      meaning — like the Master's reply.
+  - n: 5
+    scene: "Sacrifice as presence — 'I sacrifice as though they are there'"
+    force: sacrifice
+    composer: Fauré
+    work: "Cantique de Jean Racine, Op. 11"
+    decision: added
+    why: >
+      "祭如在，祭神如神在" — sacrifice to the dead as though they are present; sacrifice to
+      the spirits as though they are present. This is Confucius's great teaching on ritual
+      meaning: the authenticity of the sacrifice does not depend on the objective existence
+      of the spirits but on the quality of presence the sacrificer brings. Fauré's Cantique
+      is a chorale of sustained, luminous attention — the text (Racine's paraphrase of the
+      Psalms) asks for the Word to descend, and the music holds space for that descent. The
+      "comme si" — the as-if — of ritual is the same structure as Fauré's suspension: the
+      music treats the absence as a presence, and by treating it so, makes the presence real.
+  - n: 6
+    scene: "Explaining the imperial sacrifice — the master who avoids the question"
+    force: law
+    composer: Bach
+    work: "St. Matthew Passion, BWV 244 — 'Erbarme dich, mein Gott' (alto aria)"
+    decision: added
+    why: >
+      "諦之說，不知也" — Confucius is asked about the meaning of the Ti sacrifice and says
+      "I do not know." That he knows but will not say is the implication: ritual meaning is
+      too deep to teach as information; it must be lived into. The Erbarme dich aria from the
+      St. Matthew Passion is the most sustained musical expression of a truth too large for
+      direct statement: Peter's denial, the cock's crow, the knowledge of what has been done.
+      Not the content but the withholding is the teaching.
+  - n: 7
+    scene: "The form of the ancestral temple — the structure of sacred space"
+    force: law
+    composer: Tallis
+    work: "Spem in alium (40-part motet)"
+    decision: added
+    why: >
+      The description of the ancestral temple: the arrangement of vessels, the order of the
+      sacrifices, the hierarchy of spirits. Confucius knows the ritual structure of every
+      aspect because the structure IS the meaning — there is no inner meaning separable from
+      the order of the vessels. Tallis's 40-part motet is the musical equivalent of a cathedral
+      built in sound: 40 individual voices moving in absolute architectural counterpoint, each
+      in its place, the whole producing a structure that IS the prayer. The law of the form
+      IS the content of the devotion. This is what the ancestral temple is.
+  - n: 8
+    scene: "The meaning of 'di' — axial sacrifice as heaven-axis"
+    force: law
+    composer: Bruckner
+    work: "Symphony No. 4 in E-flat major ('Romantic') — I. Bewegt, nicht zu schnell"
+    decision: added
+    why: >
+      "禘自既灌而往者，吾不欲觀之矣" — from the first libation at the Ti sacrifice onward, I
+      do not wish to look. The meaning of the axial sacrifice is lost at the moment the wine
+      is poured — the ceremony continues but the spirit has already fled. Bruckner's Fourth
+      Symphony opening is exactly this: a horn call rising from silence, the whole orchestra
+      building as though assembling at an altar — but the development is already a falling-away
+      from the initial revelation. The law of the form is stated, then the form dissolves into
+      the merely orchestral. This is the Ti sacrifice in sound.
+  - n: 9
+    scene: "The question of the master who preserved the rites of the conquered dynasty"
+    force: memory
+    composer: Elgar
+    work: "Cello Concerto in E minor, Op. 85 — I. Adagio — Moderato"
+    decision: added
+    why: >
+      "夏禮吾能言之，杞不足徵也" — I can describe the rites of the Xia, but K'i is not
+      sufficient to attest them; I can describe those of the Shang, but Sung is not sufficient.
+      This is the tragedy of memory: the documents are missing; the tradition has been broken.
+      Elgar's Cello Concerto opens with a recitative that sounds like an old man trying to
+      remember a tune he once knew — the notes search, find their way, lose it, find it again.
+      Memory is the force that holds what is disappearing; Elgar writes the disappearance
+      into the music.
+  - n: 10
+    scene: "The empty ritual — the alternative to the great sacrifice"
+    force: comedy
+    composer: Offenbach
+    work: "La vie parisienne — Overture"
+    decision: added
+    why: >
+      "或問禘之說。子曰：『不知也。知其說者之於天下也，其如示諸斯乎！』指其掌" — asked about
+      the Ti sacrifice, Confucius says he does not know, then points to the palm of his hand.
+      The gesture is abrupt, almost comic: the knowledge is that close and that impossible to
+      speak. Offenbach's overture is fast, ironic, and slightly grotesque — the court where
+      everyone performs the rites without understanding them, like Offenbach's Parisians
+      performing aristocracy without being aristocrats. Comedy requires dance rhythm and
+      exaggeration; the flurry of the Offenbach is the right speed for a court that does the
+      ritual without knowing why.
+  - n: 11
+    scene: "Sacrificing to the mountain — Fan Chih's question and the refusal of the spirit"
+    force: sacrifice
+    composer: Stravinsky
+    work: "Les Noces — Part I: The Tresses"
+    decision: added
+    why: >
+      "嗚呼！曾謂泰山不如林放乎？" — Confucius is indignant: the ruler sacrifices to Mount
+      Tai, which requires imperial authority, but he has forfeited the moral right. Can
+      Mount Tai, the spirit of the mountain, accept an offering from a ruler who has abandoned
+      the Way? Stravinsky's Les Noces is a Russian peasant wedding ritual stripped to
+      percussive bone: the voices are not decorative but functional, beating their way through
+      the ritual like workers at a task. The rite, when performed by those who have no right
+      to it, becomes grotesque — as grotesque as a usurper sacrificing to a mountain.
+  - n: 12
+    scene: "The ode about the deer — ritual grief remembered"
+    force: memory
+    composer: Brahms
+    work: "Alto Rhapsody, Op. 53"
+    decision: added
+    why: >
+      The ode about the deer that finds its companions is a memory of genuine social harmony
+      — the time before the forms went hollow. Confucius recommends this ode as the proper
+      music for the guest ceremony. Brahms's Alto Rhapsody is a setting of Goethe's text about
+      the solitary wanderer — but its middle section, with the male chorus entering, sounds
+      like a lost social world being remembered from within isolation. Memory as the force
+      that preserves the shape of what was good, against the corruption of the present.
+  - n: 13
+    scene: "The ceremony of archery — ritual competition and proper form"
+    force: law
+    composer: Vivaldi
+    work: "Concerto for Two Cellos in G minor, RV 531 — I. Allegro"
+    decision: added
+    why: >
+      "君子無所爭，必也射乎" — the gentleman has no contentions — except at archery, perhaps.
+      But even the contest is regulated by ritual: bowing, yielding, drinking. Vivaldi's
+      Double Cello Concerto is a contest between two equal voices: they chase, imitate,
+      answer each other — but always within the form, always returning to the tonic as the
+      archer returns to the mark. Competition is only legitimate inside the ceremony; once
+      the ceremony ends, the competition ends too. Law here is the boundary that keeps
+      competition from becoming enmity.
+  - n: 14
+    scene: "The ode to Guan Ju — joy without excess, grief without wound"
+    force: desire
+    composer: Debussy
+    work: "Prélude à l'après-midi d'un faune"
+    decision: added
+    why: >
+      "關雎，樂而不淫，哀而不傷" — the ode Guan Ju: joy without excess, grief without wounding.
+      This is Confucius's aesthetic principle in one sentence: the well-formed emotion stays
+      within its proper bounds — and that boundedness IS what makes it beautiful. Debussy's
+      Prélude is the most perfectly poised music of desire in the repertory: the flute line
+      rises, the harmonies shift with languorous precision, everything is held just short of
+      consummation. The faun's dream is joy without excess and grief without wound — the
+      emotion is entirely present, entirely formalized. Desire's chromatic longing is here
+      exactly bounded by form.
+  - n: 15
+    scene: "The empty music of the border guard — the Master laughs"
+    force: comedy
+    composer: Mozart
+    work: "Eine kleine Nachtmusik, K. 525 — I. Allegro"
+    decision: added
+    why: >
+      The Master of the Western Border station asks the musicians performing at the court:
+      "How can the music be performed by men without understanding?" — and the Master laughs,
+      approving the question. Mozart's Eine kleine Nachtmusik is the sound of music that is
+      all surface — it is the opposite of empty ritual because its form IS complete without
+      needing an interpreter. The border guard's question is serious, but the Master's laughter
+      is not dismissive: he laughs because the guard has understood the form by seeing that
+      others don't understand it. Comedy as the recognition of the gap — Mozart plays it
+      straight, and the gap is between the music's completeness and the musicians'
+      incomprehension.
+  - n: 16
+    scene: "The expression of Tsze-kung — a sheep is not the sacrifice"
+    force: law
+    composer: Bach
+    work: "Cantata BWV 140 'Wachet auf, ruft uns die Stimme' — IV. Chorale 'Zion hört die Wächter singen'"
+    decision: added
+    why: >
+      Tsze-kung wants to stop the sacrifice of a sheep at the new moon ceremony. Confucius
+      says: "You love the sheep; I love the ceremony." The form of the ceremony — even with
+      the sheep — preserves the structure through which the meaning might return. Bach's
+      chorale is the form itself: a simple melody harmonized in four parts, the same structure
+      through which generations have encountered the sacred. The sheep is not the sacrifice;
+      the shape of the ceremony IS the sacrifice. Law is the preservation of the form against
+      the impulse to discard it.
+  - n: 17
+    scene: "Complete the ceremony — the distance of the ruler"
+    force: kingship
+    composer: Purcell
+    work: "Funeral Music for Queen Mary — March"
+    decision: added
+    why: >
+      To the question of how a ruler should conduct himself at the Great Sacrifice: after the
+      libation, he should not watch the rest. Complete presence at the opening, then withdrawal
+      — the king's proximity to the sacred is a matter of timing, not of duration. Purcell's
+      March is processional and austere, the sound of a sovereign moving through ceremony with
+      absolute measured intent. The king enters, performs his part, and exits; the ceremony
+      continues without him. The architecture of ritual knows where the sovereign sits.
+  - n: 18
+    scene: "The spirit of the vase — why wine is poured on the ground"
+    force: law
+    composer: Byrd
+    work: "Mass for Four Voices — Agnus Dei"
+    decision: added
+    why: >
+      "禘之說，吾不欲觀之矣" — the deep meaning of the sacrifice is that the spirit of the
+      offering descends into the form. The wine poured on the ground is not wasted; it is
+      the structure of communication between worlds. Byrd's Agnus Dei for unaccompanied voices
+      is the sound of pure form communicating content beyond words: the polyphony rises and
+      falls through the petitions for mercy as though the harmony itself is the prayer. Law
+      here is the structure that carries meaning when words fail.
+  - n: 19
+    scene: "The archery master — penetrating the hide of the target"
+    force: revelation
+    composer: Sibelius
+    work: "Symphony No. 5 in E-flat major, Op. 82 — III. Allegro molto"
+    decision: added
+    why: >
+      "射不主皮" — in archery, the point is not to penetrate the hide; strength is not the
+      measure. The meaning is not in force but in form: a person who forces his way through
+      everything has lost access to the Way. Sibelius's Fifth Symphony finale — with its
+      famous six-note theme that seems to swing and ascend — is the sound of effort that has
+      become grace: the long struggle of the first two movements resolving not into brute
+      strength but into a soaring, open-textured theme that moves through the air like a
+      well-aimed arrow. Revelation requires stillness and verticality; Sibelius's final
+      chords — the six hammer-blow cadence — are a form so complete it transcends effort.
+  - n: 20
+    scene: "Finding the lesson everywhere — closing return to form"
+    force: return
+    composer: Bach
+    work: "Well-Tempered Clavier, Book I — Prelude No. 2 in C minor, BWV 847"
+    decision: added
+    why: >
+      "賜也，爾愛其羊，我愛其禮" — You love the sheep, I love the ceremony. And then, closing
+      Book III: the Master says that the meaning of ritual can be found in the humblest
+      elements if you know how to read them. Bach's C-minor Prelude (paired with the great
+      fugue that follows) is a restless, chromatic journey that returns to the tonic not
+      through resolution but through persistence — the pattern stays, even through the most
+      agitated passage. Book III ends where it began: with the form. But now we understand
+      why the form matters. Return requires circular form and recognition motif; Bach's C-minor
+      returns to the same ground, but having traversed the whole landscape of doubt.
+demoted:
+  - composer: Verdi
+    work: "Requiem — Dies Irae"
+    status: "removed; save for a crisis book"
+    why: >
+      Considered for the violation of the Eight Rows (track 1) but too explicitly apocalyptic.
+      Confucius's horror at the eight rows is diagnostic, not terrified. The Stravinsky is
+      more precise: archaic, broken, questioning.
+  - composer: Wagner
+    work: "Parsifal — Prelude"
+    status: "reserved for a later book where the question of sacred meaning is more explicit"
+    why: >
+      The Grail prelude was considered for the Ti sacrifice discourse but belongs to a book
+      where the question of sacred presence is more directly treated (possibly Book VII or
+      Book XV, where the theme of the Master's own practice emerges).

@@ -1,0 +1,151 @@
+# Mahabharata — Bhishma Parva (Book 6) — curated music arc
+# Gold-standard form matching iliad/book-01.yaml.
+# Score the first war books: the first strike, the revelation that justifies
+# action, and the collapse of Bhishma as the elder who still knows the rules.
+work: mahabharata
+book: 6
+title: "Bhishma Parva: The War Begins, the Gita, and the First Great Wound"
+length_minutes: 114
+principle: >
+  Do not score Bhishma Parva as sheer battle statistics. Score it as the moment
+  where action and instruction become inseparable. Arjuna's hesitation, Krishna's
+  teaching, and Bhishma's tactical ferocity are one arc: war is now not an idea
+  but a burden the hero must carry.
+force_arc: [kingship, revelation, grief, revelation, wrath, wrath, divine-intervention, wrath, law, fate, return]
+dominant_force: wrath
+tracks:
+  - n: 1
+    scene: "The opening formation: kings and banners on Kurukshetra"
+    force: kingship
+    composer: Handel
+    work: "Music for the Royal Fireworks, HWV 351 — La Réjouissance"
+    decision: added
+    why: >
+      The first chapter of this parva is a ceremony of war in full public form:
+      banners, command, alliances, and formalized violence. The opening of
+      the Fireworks suite is ceremonial, structured, and unmistakably about
+      public authority becoming movement.
+  - n: 2
+    scene: "Krishna parks the chariot between armies and asks Arjuna to look"
+    force: revelation
+    composer: Wagner
+    work: "Tristan und Isolde — Prelude and Liebestod"
+    decision: added
+    why: >
+      Revelation here is not mystical fireworks; it is disorientation through
+      recognition. Arjuna can now see every face he must face. Wagner's opening
+      and suspended harmonic progression mirrors that suspended cognition before
+      any strike lands.
+  - n: 3
+    scene: "Arjuna names teachers, elders, and cousins across the line"
+    force: grief
+    composer: Barber
+    work: "Adagio for Strings, Op. 11"
+    decision: added
+    why: >
+      The Gita's preface is a crisis of relation: the enemy and the beloved are
+      indistinguishable on the battlefield. Barber's single-line suspension gives
+      the exact quality of private collapse before public duty: there is pressure,
+      but no violence in the sound yet, only the refusal to strike.
+  - n: 4
+    scene: "The Gita teaches action in the middle of catastrophe"
+    force: revelation
+    composer: Brahms
+    work: "Symphony No. 4 in E minor, Op. 98 — I. Allegro non troppo"
+    decision: added
+    why: >
+      The instruction of the Gita reorganizes action, but without cancelling
+      grief. Brahms's movement embodies this same reorganization: the material is
+      controlled, descending and reconfigured until the emotional center has
+      shifted. It is instruction without sentimentality and structure with a
+      metaphysical charge.
+  - n: 5
+    scene: "Bhishma launches the Kuru opening assault"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    decision: added
+    why: >
+      Once instruction ends, the old order strikes. Bhishma's first charge
+      makes war feel mechanical and deliberate. Mars carries that register:
+      a relentless engine already in motion, no longer argument but impact.
+  - n: 6
+    scene: "The first day of slaughter breaks through Arjuna's restraint"
+    force: wrath
+    composer: Stravinsky
+    work: "The Rite of Spring — Part I, 'The Augurs of Spring'"
+    decision: added
+    why: >
+      The first day is not choreographed by rhetoric; it is kinetic violence.
+      Stravinsky's irregular accents and ritual percussion translate military
+      acceleration with brutal clarity. The battle becomes something that
+      continues regardless of a single individual choice.
+  - n: 7
+    scene: "Krishna steadies the charioteer as Arjuna drifts toward paralysis"
+    force: divine-intervention
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      Krishna's role here is the impossible: he does not remove Arjuna from
+      war, he restores Arjuna's capacity to be in it. Pärt's stillness-based
+      vertical texture sounds like a hand on the wheel during panic. The movement
+      is not triumphant; it is stabilizing.
+  - n: 8
+    scene: "Duryodhana confronts Bhishma for not matching the Pandava pace"
+    force: wrath
+    composer: Berlioz
+    work: "Symphonie fantastique — IV. 'March to the Scaffold'"
+    decision: added
+    why: >
+      Duryodhana's accusation of soft command turns command itself into
+      public rage. Berlioz's processional violence fits this tension:
+      ceremonial tempo that hardens into punitive energy. It is a grievance
+      made military.
+  - n: 9
+    scene: "Bhishma regroups the formation by formal rank, even while wounded"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue, BWV 1080 — Contrapunctus I"
+    decision: added
+    why: >
+      Bhishma remains the only commander who can transform battlefield panic
+      into compositional structure. The formation scenes are legal and formal:
+      every unit shifts but the war-law remains. Bach's counterpoint is
+      exact, disciplined structure under repeated stress.
+  - n: 10
+    scene: "Shikhandi enters Bhishma's line and war law is bent"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 in C minor, Op. 67 — I. Allegro con brio"
+    decision: added
+    why: >
+      The Shikhandi encounter is strategic fate, not accident: the old general
+      has chosen the ethics of his own non-violence toward one life category,
+      and his adversaries convert that vow into tactical advantage. Beethoven's
+      first movement gives fate as repetitive architecture: one pattern, one
+      pattern, and the only question is what that pattern permits next.
+  - n: 11
+    scene: "Bhishma's arrows create the bed of waiting fire"
+    force: return
+    composer: Sibelius
+    work: "Symphony No. 5 in E-flat major, Op. 82 — III. Allegro molto"
+    decision: added
+    why: >
+      Bhishma's fall does not resolve the war; it relocates it. The old titan
+      survives as an axis while both armies recognize a new order. Sibelius's
+      finale surge gives the same effect of a cycle changing direction: the
+      brass calls do not end battle, they announce that a world has shifted.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "reserved for post-Bhishma book-completion casualties"
+    why: >
+      Bhishma's fall is terminal for a commander but not a funeral closure for
+      the epic yet. The funeral march would be too final at this stage.
+  - composer: Beethoven
+    work: "Symphony No. 7 in A major, Op. 92 — II. Allegretto"
+    status: "save for exile books where fate is process, not first-war shock"
+    why: >
+      The Allegretto is one of destiny-as-process at its best, but this book
+      needs shock and rupture before long-form procession.

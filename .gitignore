@@ -40,3 +40,5 @@ MASTER-PLAN.md
 domus-genoma/
 # build artifacts
 *.tsbuildinfo
+# QUICKEN residue digest — a regenerated VIEW of the permanent needs_human queue (not source)
+docs/QUICKEN-RESIDUE.md

@@ -1,0 +1,201 @@
+# Heike Monogatari — Book IV — curated music arc
+# The breaking begins: spiritual authority challenges secular power, the impossible becomes visible.
+work: heike
+book: 4
+title: "Heike Book IV: The Breaking Begins — Mongaku, Monks, Flight"
+length_minutes: 96
+principle: >
+  Book IV is where the cracks in Kiyomori's edifice begin to show, not through military defeat
+  but through spiritual resistance. Mongaku, a Buddhist priest of immense charisma and conviction,
+  emerges as a figure of moral authority that Kiyomori's violence cannot suppress without losing
+  legitimacy. The monks organize at Mount Hiei and Mount Koya. Go-Shirakawa's plotting becomes
+  overt. The retired Emperor is no longer hidden but actively mobilizing forces against the Taira.
+  The book shows a power structure beginning to fray from within. Kiyomori responds with escalating
+  violence, but violence is no longer the currency that works. The court begins to evacuate: people
+  are making plans to leave the capital if the Taira's grip loosens. Book IV is the moment when
+  the absolutely dominant power begins to lose the ability to command obedience through fear alone.
+  Score this as the transition from mastery to desperation — Kiyomori is still powerful, but power
+  is beginning to slip like water through his hands. The bells are no longer a philosophical opening;
+  they are becoming an audible prophecy.
+force_arc: [divine-intervention, revelation, wrath, sacrifice, exile, desire, supplication, law, fate, metamorphosis, ascent]
+dominant_force: divine-intervention
+tracks:
+  - n: 1
+    scene: "Mongaku emerges — a voice not silenced by Taira power"
+    force: divine-intervention
+    composer: Messiaen
+    work: "Quartet for the End of Time — VIII. Anthème (finale)"
+    decision: added
+    why: >
+      Mongaku, a Buddhist priest of extraordinary moral force, begins to speak against Kiyomori's
+      rule. Unlike courtiers, monks, or other supplicants, Mongaku cannot be intimidated. He has
+      renounced the world; there is nothing Kiyomori can take from him. He calls for Kiyomori to
+      repent and offers to intercede with the Buddha on behalf of the clan's salvation. This is a
+      form of power that Kiyomori's apparatus cannot touch: the power of moral witness, of one who
+      has nothing and therefore fears nothing. Messiaen's Anthème is divine intervention in its
+      highest register — it is not force entering the world, but the world recognizing it has been
+      in the presence of something absolute. The sudden color shift, the brass and strings in sudden
+      contrast, give the register of moral authority asserting itself against temporal power. Mongaku
+      is speaking in the name of something beyond the Taira.
+  - n: 2
+    scene: "Kiyomori's dilemma — to kill Mongaku would be to incur cosmic retribution"
+    force: revelation
+    composer: Arvo Pärt
+    work: "Fratres — full orchestration"
+    decision: added
+    why: >
+      For the first time, Kiyomori faces a limit that is not political or military but sacred.
+      If he murders Mongaku, he will have murdered a priest — a crime that brings Buddhist retribution.
+      If he allows Mongaku to speak and teach, his moral authority spreads. The revelation is
+      precise: Kiyomori has power over bodies and offices, but not over the sacred order. Pärt's
+      Fratres is the sound of that revelation — it is not dramatic but absolute, a structure that
+      cannot be altered or avoided, only recognized. The music is stark, vertical, and impossible
+      to resist. It has the quality of a truth that was already present, now simply disclosed.
+  - n: 3
+    scene: "Kiyomori's command — Mongaku is imprisoned, then exiled"
+    force: wrath
+    composer: Shostakovich
+    work: "Symphony No. 5 — I. Moderato"
+    decision: added
+    why: >
+      Unable to kill Mongaku without sacrilege, Kiyomori chooses a middle path: Mongaku is
+      imprisoned in harsh conditions, then exiled from Kyoto. It is a show of force, but it is
+      also an admission of powerlessness. Kiyomori cannot silence the priest; he can only remove
+      him. Shostakovich's Fifth opens with muted, obsessive pressure — the wrath of a system that
+      knows it is not invulnerable, that must assert itself again and again precisely because its
+      grip is loosening. The rhythmic pressure is relentless, but there is also a quality of
+      defensiveness, of repetition masking doubt.
+  - n: 4
+    scene: "The monasteries mobilize — prayer becomes politics"
+    force: sacrifice
+    composer: Tavener
+    work: "The Protecting Veil — I. The Protecting Veil"
+    decision: added
+    why: >
+      Mongaku's exile catalyzes the monasteries. Mount Hiei and Mount Koya coordinate their
+      resistance. Monks take vows of non-violence and sacred duty simultaneously — they will not
+      submit to Taira authority, and they will offer prayers for the realm's salvation. This is
+      sacrifice in its pure form: the renunciation of temporal power in favor of spiritual authority.
+      The monks know they will not win a military confrontation with the Taira; what they are doing
+      is winning a moral confrontation that will outlast military power. Tavener's "The Protecting
+      Veil" is the sound of sacrifice offered — not to be destroyed, but to protect the sacred order
+      itself. The music is devotional and resolute.
+  - n: 5
+    scene: "The court begins to splinter — uncertainty about which way to face"
+    force: exile
+    composer: Sibelius
+    work: "Finlandia — the wandering passage (not the fanfare)"
+    decision: added
+    why: >
+      People who have been certain about the Taira's permanence begin to hedge their bets. Some
+      courtiers quietly move assets out of the capital. Some send family members to temples,
+      ostensibly for religious instruction but actually to establish a fallback position. The
+      unified court of Book III is beginning to fragment: everyone is asking, sotto voce, "how long
+      will this last?" The city itself becomes a place of displacement, where people are present but
+      no longer fully committed, wandering tonally and morally. Sibelius's Finlandia, in its
+      wandering passages, gives the register of displacement, of being caught between home and exile,
+      present and absent. The open intervals suggest questions that have no immediate answer.
+  - n: 6
+    scene: "Go-Shirakawa's power grows — alliances shift toward the Emperor"
+    force: desire
+    composer: Scriabin
+    work: "Prometheus, the Poem of Fire — The Mystic Chord passage"
+    decision: added
+    why: >
+      The retired Emperor's hidden plotting is beginning to bear fruit. Courtiers who owe their
+      positions to the Taira are simultaneously cultivating favor with Go-Shirakawa. The Emperor
+      embodies the older, deeper legitimacy: he is the Son of Heaven by birth, not by conquest.
+      Desiring Kiyomori's diminishment is now not treason but a return to correct cosmic order.
+      Scriabin's Mystic Chord floats above conventional tonality — it suggests a desire that has
+      a hold on things beyond the visible, that calls to something transcendent. The chromatic
+      longing requirement is met in its most visionary form: people are desiring not power but
+      legitimacy, not acquisition but restoration.
+  - n: 7
+    scene: "The mother of the Emperor speaks — a supplication to the Taira's conscience"
+    force: supplication
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      The Empress-Mother, a woman of piety and learning, formally petitions Kiyomori to show mercy
+      toward the monks, to allow Mongaku to return, to restore a sense of peace between the secular
+      and sacred orders. She offers no threat, makes no demand. She simply pleads, from a position of
+      powerlessness, that Kiyomori's greatness be expressed not through cruelty but through clemency.
+      The act of supplication itself is a form of judgment: it says, "your power is so great that you
+      can afford mercy." Pärt's "Spiegel im Spiegel" — mirror in mirror — is supplication in its
+      highest form: a figure offered, reflected, returned, a petition that is also a meditation on the
+      state of being powerless before power. Suspended cadence, exposed melodic line, the voice
+      completely unguarded.
+  - n: 8
+    scene: "The law reasserts itself — imperial decree through Go-Shirakawa"
+    force: law
+    composer: Handel
+    work: "Concerti Grossi, Op. 6 No. 8 (the 'Christmas Concerto')"
+    decision: added
+    why: >
+      Go-Shirakawa issues a series of imperial decrees that are formally correct but politically
+      devastating. He restores certain offices to non-Taira nobles; he reduces Kiyomori's military
+      appointments in the provinces; he formally reinstates the authority of the monasteries over
+      their own lands. Each decree is legal, each is issued in the Emperor's name, and each is a
+      subtle erosion of Taira dominance. Kiyomori cannot refuse without openly defying the Emperor,
+      but defiance would destroy the fiction that the Taira rule in the Emperor's name. Handel's
+      Concerti Grossi give the register of law reasserting itself: formal clarity, architectural
+      precision, the sound of institutional order putting weight behind itself. The music is not
+      hostile; it is inexorable.
+  - n: 9
+    scene: "The sense of inevitability — the ground shifting under the Taira"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 3 — I. Allegro con brio (Eroica, the funeral march passage)"
+    decision: added
+    why: >
+      The text shifts tone here. The narrator, who has been close to Kiyomori, begins to narrate
+      with distance, as if already looking back at events that are passing into history. Even as
+      Kiyomori holds the highest offices, the sense of his reign as something ending becomes
+      palpable. Prophecies circulate: a Buddhist nun predicts the Taira's fall; astrologers read
+      the heavens as inauspicious. None of this is rational prediction; it is the atmosphere of a
+      time that knows it is transitional. Beethoven's Eroica funeral march — or rather, the inexorable
+      quality of the first movement that carries within it the knowledge of funeral — gives this
+      register: fate moving, not fought but felt, the moment when what was triumphant becomes
+      elegiac.
+  - n: 10
+    scene: "Kiyomori's illness begins — the body's rebellion against the spirit"
+    force: metamorphosis
+    composer: Strauss
+    work: "Metamorphosen — full orchestra version"
+    decision: added
+    why: >
+      The book introduces a detail that will consume the next book: Kiyomori begins to show signs
+      of illness. He complains of heat; servants bring him cold water, which soothes him only briefly.
+      He burns with fever that will not break. The narrative does not yet make this a major theme,
+      but it is present, a metamorphosis of his body even as his power is metamorphosing politically.
+      Strauss's Metamorphosen is transformation without resolution, the orchestra bending and
+      fragmenting, all the voices trying to hold a coherent form but the form itself becoming fluid.
+      It is the sound of a body and a realm beginning to transform, both simultaneously, into
+      something else. The illness and the loss of power are not separate; they are the same process
+      in different registers.
+  - n: 11
+    scene: "The stars align differently — the heavens declare a new order"
+    force: ascent
+    composer: Messiaen
+    work: "Des canyons aux étoiles... — XII. Intégrales"
+    decision: added
+    why: >
+      The book closes with a passage of cosmic scale: the text notes the appearance of a new star
+      and the movements of the celestial bodies as if the heavens themselves are announcing a shift
+      in the earthly order. This is not literally believed by the educated courtiers, but it is
+      recorded, and the recording itself is an act of interpretation: what is happening on earth is
+      aligned with what is happening in the sky. A new configuration is being born. Messiaen's
+      passage is one of luminous ascent, rising sequences, the sense of a new order emerging from
+      the old. The orchestration is radiant. The ascent force requirement (rising sequence, luminous
+      orchestration) is met in a passage that is not triumphalist but sacred: what is ascending is
+      not Kiyomori but the Buddha's plan, history's true direction, the order that underlies the
+      visible world.
+
+demoted:
+  - composer: Stravinsky
+    work: "The Rite of Spring — Sacrificial Dance finale"
+    status: "reserved for Books VIII-XII (actual military catastrophe)"
+    why: >
+      Book IV is still political and spiritual contestation. The masses are not yet dying in
+      battle. The Rite's Sacrificial Dance belongs to the open warfare of the Genpei War.

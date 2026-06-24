@@ -11,14 +11,14 @@
 - **Corpus:** `sanskrit/mahabharata` (translations only)
 - **Source rail:** https://gretil.sub.uni-goettingen.de/gretil.html#MBh
 - **Divisions:** 18 × Parva
-- **Progress:** 1/18 arcs authored
+- **Progress:** 4/18 arcs authored
 
 | Parva | dominant force | status |
 | --: | --- | :--: |
-| 1 | (author) | ✓ |
-| 2 | (author) | ☐ |
-| 3 | (author) | ☐ |
-| 4 | (author) | ☐ |
+| 1 | memory | ✓ |
+| 2 | fate | ✓ |
+| 3 | exile | ✓ |
+| 4 | comedy | ✓ |
 | 5 | (author) | ☐ |
 | 6 | (author) | ☐ |
 | 7 | (author) | ☐ |

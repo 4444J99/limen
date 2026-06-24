@@ -1,0 +1,201 @@
+# Mahabharata — Udyoga Parva (Book 5) — curated music arc
+# Gold-standard form matching iliad/book-01.yaml.
+# Score the LAST attempt at peace: lawful process, diplomatic force, and the
+# irreversible choice that makes war morally and politically unavoidable.
+work: mahabharata
+book: 5
+title: "Udyoga Parva: The Embassy, the Refusal, and the Edge of War"
+length_minutes: 108
+principle: >
+  Do not score Udyoga Parva as "the start of battle." Score it as the
+  long-form legal argument before battle: each side rehearses obligation,
+  claims and counter-claims, and one divine decision that can no longer
+  be postponed. If Sabha shows catastrophe beginning with humiliation,
+  Udyoga shows catastrophe becoming policy.
+force_arc: [law, law, kingship, supplication, wrath, revelation, fate, fate, wrath, revelation, revelation, grief, law, fate]
+dominant_force: fate
+tracks:
+  - n: 1
+    scene: "Hastinapura gathers elders and rulers for the final arbitration"
+    force: law
+    composer: Handel
+    work: "Music for the Royal Fireworks, HWV 351 — Overture"
+    decision: added
+    why: >
+      The war does not begin with a trumpet blast; it begins with a formal
+      court assembled to decide whether two blood relations can still
+      remain within the same legal world. A process is staged before any
+      spear is thrown. Handel's overture is the sound of sovereign ceremony
+      before violence, of law in public form. It creates the register that
+      Udyoga is all about: the appearance that procedure can still govern
+      catastrophe.
+  - n: 2
+    scene: "Vidura lays out the full cost of war in Dhritarashtra's hall"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue, BWV 1080 — Contrapunctus I"
+    decision: added
+    why: >
+      Vidura speaks in nested argument, not in slogans. He maps consequences
+      and obligations with strict logical structure. Bach's Contrapunctus is
+      the canonical form of that structure: a subject tested in every register
+      and every angle, each entry required by the same architecture. The
+      argument is legal before it is emotional, and the music keeps that
+      form visible.
+  - n: 3
+    scene: "Duryodhana invokes dynastic kingship against compromise"
+    force: kingship
+    composer: Elgar
+    work: "Pomp and Circumstance March No. 1, Op. 39"
+    decision: added
+    why: >
+      Duryodhana frames the impasse as sovereign right: he controls the
+      institutions, the treasury, the command chain, and therefore the terms
+      of peace. Elgar's March has the same overt register of empire on show:
+      broad orchestral certainty, ceremonial posture, the sound of a throne
+      that thinks ceremony can become immunity.
+  - n: 4
+    scene: "The Pandava envoys ask for five villages as the final offer"
+    force: supplication
+    composer: Barber
+    work: "Adagio for Strings, Op. 11"
+    decision: added
+    why: >
+      This is not surrender; it is an effort to preserve the structure of
+      kinship without conceding dharma entirely. The request is procedural
+      and restrained. Barber's Adagio has the force of repeated appeal held
+      steady — no grand climax, no rhetorical victory, only the pressure of
+      a restrained voice asking if history can still turn.
+  - n: 5
+    scene: "Public contempt hardens, and compromise is rejected"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    decision: added
+    why: >
+      The hall's humiliation ritual converts counsel into fury. Refusal to
+      negotiate moves the arc from law to force. Holst's asymmetrical 5/4
+      pulse has always served as institutionalized wrath: it does not shout,
+      it commits. That is the exact movement of this scene.
+  - n: 6
+    scene: "Krishna enters as mediator, offering a final nonviolent opening"
+    force: revelation
+    composer: Debussy
+    work: "Prélude à l'après-midi d'un faune"
+    decision: added
+    why: >
+      Krishna arrives as envoy, but every prior arrangement in the hall has
+      already failed. He does not introduce a new kingdom; he introduces
+      a different order of vision. Debussy's opening haze of suspended
+      harmony is an invitation to a perception that cannot be resolved by
+      procedural logic alone.
+  - n: 7
+    scene: "Krishna offers himself or his army; power is reduced to a choice"
+    force: fate
+    composer: Verdi
+    work: "La forza del destino — Overture"
+    decision: added
+    why: >
+      This is the hinge where diplomacy reveals inevitability: one side gets
+      divine counsel, the other gets massive military mass. Verdi's overture
+      has the same narrative grammar as this scene: once the motif is set, the
+      outcome is not decided by preference but by who can carry the burden of
+      what has been chosen. Fate in Udyoga is the shape of a fair bargain
+      turned into permanent conflict.
+  - n: 8
+    scene: "Duryodhana commits by force-counting his war machine"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 in C minor, Op. 67 — I. Allegro con brio"
+    decision: added
+    why: >
+      Duryodhana's final act is not improvisation. He chooses force as method
+      and numbers as destiny. Beethoven's first movement gives that exact
+      texture: repeated motifs that do not ask whether battle is desirable,
+      only whether it is now inescapable. The music does not narrate
+      intention, it narrates commitment.
+  - n: 9
+    scene: "The court attempts to detain Krishna during the embassy"
+    force: wrath
+    composer: Stravinsky
+    work: "The Rite of Spring — Part I, 'Introduction'"
+    decision: added
+    why: >
+      Institutional arrogance turns violent when the envoy cannot be controlled.
+      The attempt to seize a messenger is the first private act of war inside
+      a peace chamber. Stravinsky's ritual percussion and strained opening
+      capture that moment before battle has formally begun: raw, defensive,
+      and already committed.
+  - n: 10
+    scene: "Krishna discloses the cosmic register of the moment"
+    force: revelation
+    composer: Wagner
+    work: "Das Rheingold — Prelude (opening, through first forte entrance)"
+    decision: added
+    why: >
+      What begins as a political stalemate becomes a theological event.
+      The embassy is no longer about territory, it is about the scale of
+      reality that will survive the dispute. Wagner's gradual emergence of
+      the sustained E-flat chord gives that exact movement: the world changes
+      texture in place before any battle music has begun.
+  - n: 11
+    scene: "Kunti reveals Karna's birth before the war can begin"
+    force: revelation
+    composer: Messiaen
+    work: "Quatuor pour la fin du temps — I. Liturgie de cristal"
+    decision: added
+    why: >
+      Kunti's secret transforms the field from policy to lineage. A single
+      biological fact recasts loyalty, grief, and guilt. Messiaen's crystalline
+      opening is revelation as tonal fracture: continuity is not broken, but
+      it becomes a different continuity after a threshold. This is the sound
+      of a truth that reorganizes the field.
+  - n: 12
+    scene: "Karna accepts honor over inheritance and refuses retreat"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 5 in C-sharp minor — IV. Adagietto"
+    decision: added
+    why: >
+      The scene is grief turned inward: Karna receives what could have been
+      a life of return, then chooses loyalty to the man who gave him
+      identity. Grief here is not weeping; it is disciplined refusal.
+      Mahler's Adagietto holds that register: deeply inward motion that
+      sounds beautiful while the listener already knows it costs everything.
+  - n: 13
+    scene: "War drums rise; the peace road is closed"
+    force: law
+    composer: Sibelius
+    work: "Finlandia, Op. 26"
+    decision: added
+    why: >
+      The opening of conflict has its own legal register too: once the rules
+      are crossed, the field adopts another grammar. Finlandia moves from
+      dark resistance into a public, organized hymn of return, fitting a
+      moment where procedure has ended and war now imposes a new order.
+  - n: 14
+    scene: "The host advances toward Kurukshetra"
+    force: fate
+    composer: Tchaikovsky
+    work: "Symphony No. 4 in F minor, Op. 36 — I. Andante sostenuto — Moderato con anima"
+    decision: added
+    why: >
+      Tchaikovsky's First movement of the Fourth Symphony has the sound of an
+      irreversible summons: the brass statement arrives like a fact, then the
+      orchestra drags forward with it. Nothing in Udyoga is accidental after this
+      point; movement itself becomes the proof of fate.
+demoted:
+  - composer: Brahms
+    work: "Symphony No. 4 in E minor, Op. 98 — I. Allegro non troppo"
+    status: "still reserved for Book 4; same formal tension but Book 5 carries explicit divine escalation"
+    why: >
+      Udyoga's escalation is accelerated by embassy failure and divinity in
+      the court. That is a different historical pressure than the domestic
+      legal pressure of Book 4.
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "too terminal for Udyoga"
+    why: >
+      This is the funeral register of heroic completion. Udyoga does not yet
+      stand in the register of irrecoverable death; it still has a final opening
+      for one last legal and ritual reversal.

@@ -1,0 +1,76 @@
+# Divine Comedy — Inferno, Canto 9 — curated music arc
+work: divine-comedy
+book: 9
+title: "Inferno, Canto IX: The Messenger from Heaven — Gates Opened by Grace"
+length_minutes: 70
+principle: >
+  Canto IX is the moment where supernatural grace forcibly breaks through demonic
+  resistance. An angel from Heaven appears in light, crosses the Stygian Marsh,
+  scatters the demons with a word, and opens the gates of the City of Dis.
+  This is the poem's second revelation of divine intercession (the first was Beatrice
+  descending in Canto II). The register swings from threat to sudden radiance, from
+  petrifying dread to overwhelming grace. The gates do not yield to reason or request;
+  they yield to authority from above.
+force_arc: [wrath, metamorphosis, divine-intervention, revelation, law]
+dominant_force: divine-intervention
+tracks:
+  - n: 1
+    scene: "The Furies shriek — Medusa threatens"
+    force: wrath
+    composer: Penderecki
+    work: "Threnody for the Victims of Hiroshima — climax"
+    decision: added
+    why: >
+      Alecto, Megaera, and Tisiphone howl from the towers. Medusa appears, her snakes hissing,
+      her gaze capable of turning the pilgrim to stone. The moment of maximum demonic menace
+      requires music of escalating horror and accumulated dread.
+  - n: 2
+    scene: "Virgil shields Dante from Medusa's gaze"
+    force: metamorphosis
+    composer: Bartók
+    work: "Music for Strings, Percussion, and Celesta — culmination"
+    decision: added
+    why: >
+      Virgil tells Dante to cover his eyes, to turn away from the petrifying gaze. The danger
+      here is transformation—the loss of self through being turned to stone. The music captures
+      the moment where the world threatens to reshape the pilgrim into something inhuman.
+  - n: 3
+    scene: "The angel appears in light"
+    force: divine-intervention
+    composer: Messiaen
+    work: "L'Ascension — Majestéé du Christ demandant sa gloire à son Père"
+    decision: added
+    why: >
+      Suddenly, from beyond the reach of Hell, a messenger from Heaven appears. The text says
+      simply: "I saw a light come toward us." The angel is accompanied by a sudden color-shift,
+      a change in orchestral texture—brass and strings contrasted, the world made luminous.
+      Messiaen's sudden harmonic shift from darkness to overwhelming radiance is the only music
+      equal to this moment.
+  - n: 4
+    scene: "The angel walks across the marsh — demons scatter"
+    force: revelation
+    composer: Strauss
+    work: "Also sprach Zarathustra — Sunrise section"
+    decision: added
+    why: >
+      The angel walks across the water of the Stygian Marsh as though it were dry ground. The
+      demons flee before him. Strauss's sunrise motif is revelation made audible—the moment
+      where the human scale is overwhelmed by something vaster and more luminous. The gates are
+      not negotiated with; they are opened by the presence itself.
+  - n: 5
+    scene: "The gates of Dis open — the passage revealed"
+    force: law
+    composer: Bach
+    work: "St. Matthew Passion — 'Wenn ich einmal soll scheiden' (final chorale)"
+    decision: added
+    why: >
+      The gates swing open not because Virgil argues or appeals but because grace descends.
+      The law of Hell must yield to the law of Heaven. Bach's final chorale—the simplest,
+      most formal statement of acceptance—captures the moment where disorder yields to order,
+      where the demonic hierarchy bows before the celestial.
+demoted:
+  - composer: Wagner
+    work: "Tristan und Isolde — Prelude"
+    status: "removed from Canto IX; save for desire circles"
+    why: "Desire has no place in the moment of grace breaking through. Canto IX requires the
+      sudden shift from menace to radiance."

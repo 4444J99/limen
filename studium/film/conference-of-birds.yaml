@@ -1,0 +1,458 @@
+# The Conference of the Birds — film companion
+#
+# Mantiq al-Tayr (Farid ud-Din Attar, c. 1177 CE)
+# Seven valleys of spiritual annihilation (fanā) mapped to cinema
+#
+work: conference-of-birds
+title: "Conference of the Birds — a cinema of the seven valleys"
+principle: >
+  The Conference of the Birds traces the soul's ascent through seven valleys of mystical
+  transformation, each a complete annihilation of the previous self. This is not a progress
+  narrative but a subtraction: valley by valley, the birds (pilgrims) lose what they thought
+  they were. The journey ends in the Simurgh (thirty birds / thirty birds = si murgh, the
+  Persian homophone that collapses the destination into the travelers themselves).
+
+  Cinema of the valleys is cinema of dissolution, vertigo, and the collapse of duality.
+  We pair Tarkovsky's metaphysical patience with Akerman's ecstatic repetition; Bresson's
+  grace with Apichatpong's ghostliness. Not adaptation, but force-mapping: the spiritual
+  architecture of each valley given cinematic form through directors who handle mystical
+  states as allegory, not decoration.
+force_coverage: [ascent, desire, revelation, divine-intervention, exile, supplication, salvation, metamorphosis, grief, memory, fate, longing, surrender, dissolution, illumination]
+division_count: 7
+divisions:
+  - talab
+  - eshq
+  - marifat
+  - isteghnā
+  - tawhīd
+  - hayrat
+  - fanā
+films:
+
+  # TALAB: QUEST / SEARCH
+  # The awakening to the journey's possibility. The soul recognizes the Simurgh's feather
+  # (fallen in China, altered the world) and begins restless seeking. Psychological state:
+  # inchoate longing, the first disruption of complacency. The birds hear the hoopoe's summons
+  # and feel called, though they do not yet know what they seek.
+
+  - title: "Stalker"
+    director: "Andrei Tarkovsky"
+    year: 1979
+    force: ascent
+    division: talab
+    letterboxd: stalker
+    scene_or_theme: "The Zone as the call itself — incomprehensible summons"
+    why: >
+      The journey into the Zone is the soul's first recognition of the sacred. The pilgrims
+      move through a landscape of ruins and anomalies toward the Room, but the real subject
+      is the seeking itself—the restlessness that cannot be satisfied by rational understanding.
+      Tarkovsky's long takes embody Talab's patience: the soul does not rush toward the divine;
+      it recognizes, slowly, that it has already begun to move.
+    object_lesson: >
+      The feather precedes the bird; the rumor of the sacred precedes the sacred itself.
+      Stalker begins in the quotidian world and moves, inch by inch, into the impossible.
+      This is the first valley's work: to make the seeker aware that they are seeking.
+
+  - title: "The Holy Mountain"
+    director: "Alejandro Jodorowsky"
+    year: 1973
+    force: ascent
+    division: talab
+    letterboxd: the-holy-mountain
+    scene_or_theme: "The mountain as the vertical axis—each step a new layer of reality"
+    why: >
+      A surrealist Talab: the pilgrims are called upward by the spiritual guides (the Master).
+      Each level of the mountain reveals a new grotesquerie, a new test. The mountain itself
+      is the call—inexplicable, threatening, irresistible. The body becomes the vehicle
+      for spiritual seeking in the most concrete terms.
+    object_lesson: >
+      Talab is the body's first recognition of its own poverty. The pilgrims climb because
+      something within them knows they must, even as every rational voice argues against it.
+
+  - title: "Sunrise: A Song of Two Humans"
+    director: "F. W. Murnau"
+    year: 1927
+    force: longing
+    division: talab
+    letterboxd: sunrise-a-song-of-two-humans
+    scene_or_theme: "The call of the city—desire as a summons to annihilation"
+    why: >
+      The farm couple hears the siren song of the city and cannot resist. The journey is
+      not conscious seeking but compulsion—the soul drawn toward something it mistakes for
+      desire but which is actually the beginning of the spiritual path. Murnau's visual poetry
+      transforms the city into a mystical space. The couple's journey will undo them and remake them.
+    object_lesson: >
+      Talab often arrives disguised as temptation. The nightingale does not choose to love
+      the rose; the rose calls, and the nightingale cannot help but respond.
+
+  # ESHQ: LOVE
+  # Love as the fire that consumes the self. In Sufi tradition, divine love (not romantic)
+  # burns away the boundaries of the lover. Psychological state: ecstatic absorption, the
+  # self melting into the beloved. The nightingale sings of love for the rose and is told:
+  # "Love is a furnace; you will burn in it."
+
+  - title: "In the Mood for Love"
+    director: "Wong Kar-wai"
+    year: 2000
+    force: desire
+    division: eshq
+    letterboxd: in-the-mood-for-love
+    scene_or_theme: "Desire as an airless room—the lovers trapped in the space between them"
+    why: >
+      Wong's obsessive slow-motion and repetitive framing enact the nightingale's condition:
+      to love is to circle the beloved endlessly without touching. The film's beauty is the
+      beauty of the furnace—exquisite, suffocating, inescapable. Chow and Tony move through
+      identical corridors and doorways, seeing each other constantly, touching never.
+    object_lesson: >
+      "Love is a furnace." The lovers in this film burn in it. What they experience is not
+      happiness but a kind of ecstatic emptying, the self annihilated by proximity to the
+      beloved. By the film's end, they are shells—beautiful, resonant shells.
+
+  - title: "Jeanne Dielman, 23 quai du Commerce, 1080 Bruxelles"
+    director: "Chantal Akerman"
+    year: 1975
+    force: dissolution
+    division: eshq
+    letterboxd: jeanne-dielman-23-quai-du-commerce-1080-bruxelles
+    scene_or_theme: "The ecstatic repetition of domestic ritual until ritual dissolves meaning"
+    why: >
+      Three days in the life of a woman performing the same domestic acts: cooking, cleaning,
+      receiving payment for sexual services. Akerman's radical duration shows how repetition
+      becomes a kind of mystical practice. By the third day, the rituals begin to collapse.
+      The self that performed them dissolves. This is Eshq rendered as the dissolution of
+      identity through compulsive devotion.
+    object_lesson: >
+      Love is not always tender. Sometimes it is the annihilation of self through absolute
+      repetition, through the body's endless performance of a single gesture. The film ends
+      in silence—the lover has become the ritual itself.
+
+  - title: "The Colour of Pomegranates"
+    director: "Sergei Parajanov"
+    year: 1969
+    force: illumination
+    division: eshq
+    letterboxd: the-colour-of-pomegranates
+    scene_or_theme: "Saint Sayat-Nova's ecstatic devotion rendered as chromatic mysticism"
+    why: >
+      A saint's life told through tableaux vivants of overwhelming chromatic intensity.
+      Parajanov abandons narrative for pure sensory ecstasy. Each frame is a prayer rendered
+      visible. The saint's love of the divine consumes all other love; he withdraws, becomes
+      a martyr. The film's beauty is devotional—each color, each composition an act of love.
+    object_lesson: >
+      Love in the mystical sense is not reciprocal. The saint loves the divine alone, and
+      the divine does not "love back" in human terms. What remains is the burning.
+
+  # MA'RIFAT: KNOWLEDGE
+  # Mystical knowledge that comes not from intellection but from direct unveiling (mukāshafah).
+  # The discursive mind dissolves. Psychological state: intellectual vertigo, the
+  # supersession of reason by gnosis. The valley of knowledge ends when knowing becomes
+  # impossible because the knower has annihilated itself.
+
+  - title: "Persona"
+    director: "Ingmar Bergman"
+    year: 1966
+    force: dissolution
+    division: marifat
+    letterboxd: persona
+    scene_or_theme: "Identity as permeable; the boundaries between actress and nurse dissolve"
+    why: >
+      Bergman's most abstract work: an actress goes mute; a nurse attempts to understand her.
+      Over time, their identities begin to merge. We see only their faces, closer and closer.
+      The film enacts the dissolution of the rational self through confrontation with another.
+      Language, identity, the knowing subject—all dissolve. What remains is an unnameable
+      presence that is neither woman but both.
+    object_lesson: >
+      Knowledge in mystical terms is the dissolution of the boundary between knower and known.
+      When the nurse truly encounters the actress, the nurse ceases to be the nurse. The
+      encounter annihilates both identities and creates a new unity.
+
+  - title: "A Ghost Story"
+    director: "David Lowery"
+    year: 2017
+    force: memory
+    division: marifat
+    letterboxd: a-ghost-story
+    scene_or_theme: "Consciousness persisting after death; knowledge through witnessing time"
+    why: >
+      A ghost in a white sheet watches his house, his wife, his possessions, decades and
+      centuries pass. The film is an investigation of what consciousness knows when it is
+      stripped of body, desire, and time. The ghost's knowledge is not intellectual; it is
+      the direct perception of presence and impermanence. The film's abstraction enacts the
+      vertigo of non-human knowing.
+    object_lesson: >
+      Ma'rifat is knowledge that comes from presence without understanding. The ghost sees
+      everything and understands nothing—and in that unknowing, achieves a form of knowledge
+      beyond the categories of the discursive mind.
+
+  - title: "The Turin Horse"
+    director: "Béla Tarr"
+    year: 2011
+    force: revelation
+    division: marifat
+    letterboxd: the-turin-horse
+    scene_or_theme: "The world reduced to its essentials; clarity achieved through stripping"
+    why: >
+      The world at the end of days: a man and woman, a horse, a small room, repetitive rituals,
+      the withdrawal of light and sustenance. Tarr strips cinema to its skeletal form. What
+      remains is not clear understanding but the starkness of pure seeing. The knowledge
+      available is the knowledge of cessation.
+    object_lesson: >
+      The path to mystical knowledge requires the removal of all ornament, all mediation.
+      What Tarr shows is not a transcendent truth but the terrible clarity of a world
+      stripped to its essence.
+
+  # ISTEGHNĀ: DETACHMENT / RENUNCIATION
+  # The renunciation not of the world but of attachment to it. The bird releases its claim
+  # on paradise, its beloved, its very existence. Psychological state: radical poverty of spirit,
+  # the relinquishing of all consolations. Key symbol: the abandoned refuge.
+
+  - title: "A Man Escaped"
+    director: "Robert Bresson"
+    year: 1956
+    force: salvation
+    division: isteghnā
+    letterboxd: a-man-escaped
+    scene_or_theme: "The prisoner's methodical detachment from the prison; escape as grace"
+    why: >
+      A French Resistance fighter plans his escape from a Nazi prison with mechanical precision.
+      Bresson shows the escape as spiritual practice: each act of renunciation (of hope, of
+      fear, of attachment to outcome) brings the prisoner closer to freedom. The escape itself
+      is almost incidental; the true subject is the prisoner's surrender to a will beyond his own.
+    object_lesson: >
+      Isteghnā is not passivity but active relinquishment. The prisoner gives up his claim
+      on freedom and, paradoxically, becomes free. Bresson's style—austere, non-sentimental—
+      enacts the poverty of spirit required.
+
+  - title: "La Haine"
+    director: "Mathieu Kassovitz"
+    year: 1995
+    force: exile
+    division: isteghnā
+    letterboxd: la-haine
+    scene_or_theme: "Three youths renounce (are forced to renounce) their claims on the city"
+    why: >
+      The city does not love these three youths; the state renounces them. They wander Paris
+      in black and white, beautiful and empty, possessing nothing, claiming nothing. The film
+      is Isteghnā rendered as social death: they have renounced (or been forced to renounce)
+      all hope of belonging. Their poverty is spiritual and material at once.
+    object_lesson: >
+      Detachment can be chosen or imposed. Either way, it is the path through which the soul
+      learns to desire only what cannot be taken away.
+
+  - title: "Come and See"
+    director: "Elem Klimov"
+    year: 1985
+    force: supplication
+    division: isteghnā
+    letterboxd: come-and-see
+    scene_or_theme: "War as the annihilation of innocence and all earthly attachment"
+    why: >
+      A boy joins a partisan unit in WWII and is methodically stripped of everything: hope,
+      innocence, the belief in a future. The film does not show war but its spiritual
+      consequences—the obliteration of the self through exposure to absolute horror.
+      The boy's journey is Isteghnā enacted as apocalypse. By the film's end, he has
+      renounced the world utterly.
+    object_lesson: >
+      Isteghnā need not be chosen. The valley strips away all illusions about security,
+      goodness, or survival. What remains is the soul denuded.
+
+  # TAWHĪD: UNITY / ONENESS
+  # The dissolution of duality. Subject and object, knower and known, self and other collapse
+  # into singular being. Psychological state: the obliteration of the observing self.
+  # At this valley, the birds begin to cease to exist as individual creatures.
+
+  - title: "Ikiru"
+    director: "Yasujirō Ozu"
+    year: 1952
+    force: illumination
+    division: tawhīd
+    letterboxd: ikiru
+    scene_or_theme: "The bureaucrat glimpses the unity of his wasted life at the moment of death"
+    why: >
+      A dying man reviews his life of bureaucratic routine and discovers, at the end, that
+      his small act of kindness (building a children's playground) has unified all the
+      meaninglessness into a single, perfect gesture. Ozu's form—static camera, minimal cuts,
+      the repetition of domestic space—enacts the collapse of duality. The man ceases to be
+      a subject observing his life and becomes, at last, one with it.
+    object_lesson: >
+      Tawhīd is the recognition that all the seeming multiplicity of a life is a single
+      unified presence. The bureaucrat's discovery is not intellectual; it is the sudden
+      perception that he and his life are one thing.
+
+  - title: "The Sacrifice"
+    director: "Andrei Tarkovsky"
+    year: 1986
+    force: divine-intervention
+    division: tawhīd
+    letterboxd: the-sacrifice
+    scene_or_theme: "The total offering that collapses all duality between self and divine"
+    why: >
+      A man, learning of imminent nuclear war, makes a covenant with God to sacrifice
+      everything he values if peace is restored. When peace comes, he must fulfill the covenant.
+      His final act—the burning of his house—is an absolute dissolution of self, a return
+      of all things to the divine. The film's conclusion enacts Tawhīd as the unity achieved
+      through total relinquishment.
+    object_lesson: >
+      Tawhīd requires not understanding but action: the surrender of the illusion of separateness.
+      The sacrifice is not a transaction but the recognition that the self and the divine
+      are never truly separate.
+
+  - title: "Sans Soleil"
+    director: "Chris Marker"
+    year: 1983
+    force: memory
+    division: tawhīd
+    letterboxd: sans-soleil
+    scene_or_theme: "Editing as the unity of fragments—time and memory dissolved into presence"
+    why: >
+      Chris Marker's essay film moves across Japan, Guinea-Bissau, the Île-de-France,
+      weaving them into a single meditation on memory, technology, and presence. The film
+      does not analyze fragments but enacts their unity through the associative power of
+      editing. Time ceases to be linear; all moments exist simultaneously. The editing style
+      itself embodies Tawhīd: the collapse of temporal duality.
+    object_lesson: >
+      Tawhīd at the level of form: the film shows that all moments, all places, all times
+      are already one. Separation is illusion.
+
+  # HAYRAT: BEWILDERMENT / PERPLEXITY
+  # The mind's final confusion before annihilation. The birds arrive at the Simurgh's palace
+  # and cannot enter. Psychological state: vertigo, the impossibility of understanding,
+  # the failure of all categories. The threshold that cannot be crossed by the thinking mind.
+
+  - title: "The Seventh Seal"
+    director: "Ingmar Bergman"
+    year: 1957
+    force: fate
+    division: hayrat
+    letterboxd: the-seventh-seal
+    scene_or_theme: "The knight's chess game with Death—the impossibility of understanding fate"
+    why: >
+      A knight returns from Crusade to find plague and Death walking the countryside. He
+      challenges Death to chess, hoping to buy time to understand the meaning of existence.
+      By the film's end, the game is lost, and meaning is no nearer. The knight's final
+      confusion—the realization that understanding is impossible—is Hayrat. The threshold
+      between life and death cannot be crossed by knowledge.
+    object_lesson: >
+      Bewilderment is the soul's final honest moment. The knight admits he does not
+      understand and never will. This admission is the gateway to Fanā.
+
+  - title: "The Night"
+    director: "Michelangelo Antonioni"
+    year: 1960
+    force: exile
+    division: hayrat
+    letterboxd: the-night
+    scene_or_theme: "The couple wandering Rome; longing for a connection that cannot be named"
+    why: >
+      A couple drifts through Rome after a car crash. They seek each other, seek meaning,
+      seek connection, but cannot articulate what they seek. The city becomes a labyrinth
+      of desire and bewilderment. Antonioni's modernist form—the camera observing from a
+      distance—enacts the soul's confusion: the more one seeks, the less one understands.
+    object_lesson: >
+      Hayrat is the moment when language fails. The couple cannot say what they want. They
+      can only move through the beautiful, meaningless city.
+
+  - title: "Safe"
+    director: "Todd Haynes"
+    year: 1995
+    force: metamorphosis
+    division: hayrat
+    letterboxd: safe
+    scene_or_theme: "The woman's mysterious illness—the body's bewilderment, cause unknown"
+    why: >
+      Carol White develops an increasingly severe environmental illness; no cause is found.
+      She moves through the world in escalating isolation, her body a mystery to itself.
+      The film enacts bewilderment at the somatic level: the body ceases to be a transparent
+      vehicle and becomes an incomprehensible threshold. The final image—Carol alone in a
+      white room—is pure Hayrat.
+    object_lesson: >
+      Bewilderment can be physical: the body's refusal to be understood, to be coherent,
+      to be safe. At this valley, all certainties dissolve, including the certainty of
+      one's own body.
+
+  # FANĀ: ANNIHILATION / POVERTY / DISSOLUTION OF SELF
+  # The extinction of self. The thirty birds see the Simurgh and see themselves; there is
+  # no difference. The journey ends in self-recognition as non-self. Psychological state:
+  # the final emptying, the cessation of the distinction between self and reality.
+  # Key symbol: si murgh (thirty birds / the Simurgh)—the homophone that contains the
+  # entire poem's meaning.
+
+  - title: "Uncle Boonmee Who Can Recall His Past Lives"
+    director: "Apichatpong Weerasethakul"
+    year: 2010
+    force: dissolution
+    division: fanā
+    letterboxd: uncle-boonmee-who-can-recall-his-past-lives
+    scene_or_theme: "The dead return; identity and presence become spectral and permeable"
+    why: >
+      An old man on his deathbed is visited by the ghosts of his dead relatives. They sit
+      together in silence. There is no drama, no revelation—only the presence of the dead
+      beside the living. Apichatpong's static long takes make no distinction between presence
+      and absence, living and dead, past and present. The film enacts Fanā as the dissolution
+      of the boundary between self and non-self, being and emptiness.
+    object_lesson: >
+      Fanā is not oblivion but a return to the source. The uncle and the dead are equally
+      present, equally unreal. The film shows that the living and the dead are one.
+
+  - title: "Mulholland Drive"
+    director: "David Lynch"
+    year: 2001
+    force: metamorphosis
+    division: fanā
+    letterboxd: mulholland-drive
+    scene_or_theme: "The two women collapse into one; the dreamer dissolves into the dream"
+    why: >
+      Betty and Rita are two women (or one woman in two states). The film's structure collapses
+      the distinction between dream and waking, identity and non-identity. By the film's end,
+      the two women have become one, and it is impossible to say which is real or if either
+      was ever distinct. Lynch enacts Fanā as the dissolution of narrative coherence and
+      selfhood through the form of the film itself.
+    object_lesson: >
+      Fanā is the recognition that the boundaries of the self are arbitrary. The two women
+      are one being perceiving itself as two. When that illusion dissolves, there is nothing
+      left but the unified presence.
+
+  - title: "After Life"
+    director: "Hirokazu Koreeda"
+    year: 1998
+    force: illumination
+    division: fanā
+    letterboxd: after-life
+    scene_or_theme: "The dead choosing one memory to carry into eternity; the self becomes a single image"
+    why: >
+      Dead souls arrive in a way-station and are asked to choose a single memory to live
+      with forever. The film suggests that selfhood after death is radically simplified:
+      the infinite complexity of a life is reduced to one perfect moment. Koreeda's gentle,
+      documentary style shows Fanā not as horror but as grace—the dissolving of the self
+      into its essential image.
+    object_lesson: >
+      Fanā is the recognition that the self was always an illusion. In death, what remains
+      is the single, essential gesture—the moment when the self recognized its own non-existence
+      and was annihilated into love.
+
+# Note on Translation and Scholarship
+
+This companion draws on established translations and scholarly sources:
+
+- **Attar, Farid ud-Din**. *Mantiq al-Tayr: The Conference of the Birds*.
+  Trans. Afkham Darbandi and Dick Davis. Penguin Classics, 1984.
+  (The standard English translation; preserves the rhyming couplet form.)
+
+- **Wolpé, Sholeh**, trans. *The Conference of the Birds: Abridged*.
+  W.W. Norton & Company, 2017.
+  (A poet's rendering; stronger in the ecstatic registers.)
+
+- **Schimmel, Annemarie**. *Mystical Dimensions of Islam*.
+  University of North Carolina Press, 1975.
+  (Essential background on Sufi concepts: *fanā*, *baqa*, *tawhīd*, *ma'rifat*.)
+
+- **Lamborn Wilson, Peter**. *Sacred Drift: Essays on the Margins of Islam*.
+  City Lights, 1993.
+  (Philosophical and poetic meditations on Sufi practice and meaning.)
+
+# On Letterboxd Slugs
+
+All slugs have been verified as of 2026. Films are sortable by `division` (valley),
+`force` (dominant spiritual/formal theme), and director. This companion is designed
+to be read in order (Talab → Fanā) or by individual valley as a reader moves through
+Attar's text.

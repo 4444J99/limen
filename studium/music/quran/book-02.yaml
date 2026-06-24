@@ -1,0 +1,128 @@
+# Qur'an — Sura 2 — curated music arc
+work: quran
+book: 2
+title: "Sura 2: Al-Baqarah (The Cow)"
+length_minutes: 128
+principle: >
+  Sura 2 is the first full civic score of the Qur'anic voice: after the heartbeat
+  of Al-Fatiha, it builds the architecture of a reciting community. It is not a
+  single story but a long civic-liturgical process: legal argument, ethical
+  dispute, battle memory, family law, and repeated returns to direct recitation.
+  The sura’s dominant movement is law as recitation practice: social order is not
+  discovered once and then kept; it is repeatedly re-enunciated in speech, rhythm,
+  and correction.
+force_arc: [revelation, law, memory, law, sacrifice, wrath, revelation, divine-intervention]
+dominant_force: law
+tracks:
+  - n: 1
+    scene: "Opening revelation before lawmaking"
+    force: revelation
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      The sura opens by placing law under revelation rather than the reverse. Before
+      injunctions and prohibitions, the voice of recitation establishes the
+      governing force. Pärt's stillness and suspended clarity make this transition
+      legible: the law is already present as cadence before it is present as statute.
+      Revelation here is not a source of information but an event of form, and this
+      piece is that event in miniature.
+  - n: 2
+    scene: "Community thresholds: believers, disbelievers, and the cost of conviction"
+    force: law
+    composer: Bach
+    work: "Mass in B Minor — Kyrie eleison (I. Kyrie)"
+    decision: added
+    why: >
+      The first major section of Al-Baqarah repeatedly sorts belief, hypocrisy, and
+      social risk. Law here is not merely legal text; it is social sorting under
+      pressure. Bach's Kyrie gives that same pressure through strict choral architecture:
+      each entrance is a claim to order, each response a corrective frame. The
+      force is law because this opening legal-spiritual triage is the poem's first
+      durable social form.
+  - n: 3
+    scene: "Stories of earlier communities as remembered warning"
+    force: memory
+    composer: Elgar
+    work: "Symphony No. 1 — I. Andante. Nobilmente e semplice (opening Adagio)"
+    decision: added
+    why: >
+      The sura turns repeatedly to prior communities and prior covenants as memory
+      structures the present. The weight is not nostalgia; it is juridical recollection.
+      Elgar's opening Andante moves with ceremonial spaciousness, carrying one
+      remembered world while making clear that memory cannot replace present responsibility.
+      Memory in this force means the weight of precedent, not sentimental return.
+  - n: 4
+    scene: "Ordinances for charity, testimony, and social trust"
+    force: law
+    composer: Handel
+    work: "Music for the Royal Fireworks — Overture"
+    decision: added
+    why: >
+      Charity and testimony scenes test whether words can become public commitments.
+      Handel's ceremonial clarity is the right counterpoint to legal prose: every phrase
+      has rank, sequence, and return. This is legal force not as punishment but as
+      social architecture audible as music. Law requires form; this overture is form as
+      civic ceremony.
+  - n: 5
+    scene: "The cow narrative and the cost of ritual precision"
+    force: sacrifice
+    composer: Gluck
+    work: "Iphigénie en Aulide — Overture to Act I"
+    decision: added
+    why: >
+      The symbolic centrality of the cow story is not blood but the legal burden of
+      ritual. An act that begins with doubt ends in exacting communal compliance.
+      Gluck's overture carries ritual gravity without ornament, a processional pull
+      toward a rite whose outcome depends on precision. Sacrifice requires ritual
+      weight and formal burden; this scene sounds that burden without terminal
+      darkness.
+  - n: 6
+    scene: "Conflict and restraint after Badr and Uhud echoes"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    decision: added
+    why: >
+      The sura's war references are not battle poetry; they are the memory of conflict
+      translated into social rules. Wrath is present as aftermath: how violence leaves
+      legal and psychological residue. Holst's asymmetrical engine gives that residue
+      a relentless register without making each verse a battle scene.
+  - n: 7
+    scene: "Return to direct devotion: fasting, prayer, and orientation"
+    force: revelation
+    composer: Tavener
+    work: "Song for Athene"
+    decision: added
+    why: >
+      In the middle of ordinances and disputes, the sura repeatedly re-centers recitation
+      itself — devotion is the form that prevents the legal code from becoming
+      lifeless. Tavener's long-breathed ascent matches the return-to-source move in the
+      text: not escalation, but orientation. Revelation remains the engine.
+  - n: 8
+    scene: "Final covenantal closing of the early sura cycle"
+    force: divine-intervention
+    composer: Wagner
+    work: "Das Rheingold — Prelude"
+    decision: added
+    why: >
+      The closing register in this early sura-segment is not merely legal closure; it is
+      theological reweighting. The listener must hear the whole community as already inside
+      a larger order than its own decisions can manage. Wagner's Rheingold Prelude
+      renders a force larger than the immediate scene and the transition from human
+      agency to divine mechanism — exactly the moment this section seeks.
+demoted:
+  - composer: Berlioz
+    work: "Symphonie fantastique — IV. 'March to the Scaffold'"
+    status: "held for Book I-like divine-machinery scenes"
+    why: >
+      The scene of false authority and divine manipulation is already present elsewhere in
+      the corpus. Al-Baqarah's legal arc needs the opposite: ceremonial deliberation, not
+      mockery by sovereign deception.
+  - composer: Brahms
+    work: "Symphony No. 4 — I. Allegro non troppo"
+    status: "held for scenes of redirected wrath"
+    why: >
+      This register belongs to the personal force arc of withheld violence. Sura 2 is
+      primarily civic and jurisprudential in its first movement; Brahms would pull it
+      toward private ethical rupture too early.

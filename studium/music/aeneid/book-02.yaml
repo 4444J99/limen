@@ -1,0 +1,99 @@
+# Aeneid — Book II — curated music arc
+work: aeneid
+book: 2
+title: "Aeneid Book II: The Fall of Troy"
+length_minutes: 85
+principle: >
+  Score Book II not as an action sequence, but as a nightmare of memory. Aeneas is telling this story
+  at a banquet; the violence is already past, filtered through his trauma. The destruction of Troy is
+  the collision of inexorable fate with desperate human resistance.
+force_arc: [memory, fate, sacrifice, grief, wrath, sacrifice, divine-intervention, exile, revelation]
+dominant_force: fate
+tracks:
+  - n: 1
+    scene: "Infandum, regina — the pain of memory"
+    force: memory
+    composer: Rachmaninoff
+    work: "Symphony No. 2 — III. Adagio"
+    decision: added
+    why: >
+      Aeneas begins not with action but with the cost of remembering. Rachmaninoff's Adagio captures
+      the sweeping, nostalgic recall of a lost world, establishing the entire book as a flashback
+      filtered through trauma.
+  - n: 2
+    scene: "Sinon and the Wooden Horse"
+    force: fate
+    composer: Verdi
+    work: "La forza del destino — Overture"
+    decision: added
+    why: >
+      The Trojans are tricked not just by a man, but by destiny. Verdi's hammered fate motif drives
+      the inescapable momentum of Troy's doom, blind to the Trojans' hope.
+  - n: 3
+    scene: "Death of Laocoön"
+    force: sacrifice
+    composer: Stravinsky
+    work: "The Rite of Spring — 'Sacrificial Dance'"
+    decision: added
+    why: >
+      Laocoön is a priest killed at the altar by divine serpents — a terrifying immolation.
+      Stravinsky provides the ritual weight and asymmetrical violence of a sacrifice demanded by
+      indifferent gods.
+  - n: 4
+    scene: "Ghost of Hector"
+    force: grief
+    composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    decision: "demoted in Book I, deployed here"
+    why: >
+      Hector appears to Aeneas mutilated, carrying the death of the city. The terminal, funereal
+      weight of Wagner's march belongs here, where the greatest hero's ghost confirms that the war
+      is irrevocably lost.
+  - n: 5
+    scene: "Battle in the burning city"
+    force: wrath
+    composer: Shostakovich
+    work: "Symphony No. 8 — III. Allegro non troppo"
+    decision: added
+    why: >
+      Aeneas rushes into a hopeless fight. Shostakovich's relentless, mechanical scherzo embodies
+      the chaotic, suffocating violence of urban warfare and the desperate rage of doomed defenders.
+  - n: 6
+    scene: "Death of Priam"
+    force: sacrifice
+    composer: Mozart
+    work: "Requiem — 'Confutatis'"
+    decision: added
+    why: >
+      Priam is slaughtered on his own altar by Pyrrhus. The scene is a grotesque profanation.
+      The 'Confutatis' opposes the violent flames of the damned with the plea for salvation,
+      matching the horror of the old king's sacrificial death.
+  - n: 7
+    scene: "Venus reveals the gods destroying Troy"
+    force: divine-intervention
+    composer: Bruckner
+    work: "Symphony No. 8 — IV. Finale"
+    decision: added
+    why: >
+      Venus lifts the mortal mist from Aeneas' eyes, revealing Neptune, Juno, and Pallas physically
+      tearing the city apart. Bruckner's massive brass architecture captures this sudden, terrifying
+      verticality of divine machinery destroying human works.
+  - n: 8
+    scene: "Flight with Anchises"
+    force: exile
+    composer: Vaughan Williams
+    work: "Fantasia on a Theme by Thomas Tallis"
+    decision: added
+    why: >
+      Aeneas leaves Troy carrying his father and leading his son. The open intervals and wandering
+      strings of Vaughan Williams capture the lonely, solemn threshold between the destroyed past
+      and the unknown future.
+  - n: 9
+    scene: "Ghost of Creusa"
+    force: revelation
+    composer: Pärt
+    work: "Cantus in Memoriam Benjamin Britten"
+    decision: added
+    why: >
+      Creusa's ghost appears not to mourn, but to prophesy Aeneas' destiny in Hesperia.
+      Pärt's descending bells and stillness transform personal grief into luminous, quiet revelation.

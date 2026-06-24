@@ -1,0 +1,127 @@
+# Analects — Book VIII — curated music arc
+# 子罕 Zihan — "A few good words and their weight"
+# Do not score this as a dramatic manifesto. Book VIII is the register of restraint:
+# what the Master refuses to amplify, what he repeats as practice, and where conduct
+# holds together when rhetoric ends.
+work: analects
+book: 8
+title: "Analects Book VIII: Restraint, Silence, and the Hard Center"
+length_minutes: 80
+principle: >
+  Book VIII is a compact pedagogy of limits. The Master speaks less than one expects.
+  He refuses spectacle, avoids spiritual gossip, and insists that conduct be judged in
+  ordinary repetitions: how one eats, speaks, governs, and stays with what one has accepted.
+  This is not a book of revelation by novelty; it is a book of repeated reorientation from
+  appetite toward form.
+force_arc: [law, memory, law, memory, desire, law, revelation, grief, law, law, return, law]
+dominant_force: law
+tracks:
+  - n: 1
+    scene: "Reserve as method, not obscurity"
+    force: law
+    composer: Brahms
+    work: "Symphony No. 1 in C minor — I. Allegro"
+    decision: added
+    why: >
+      The opening register is not performance but governance of speech.
+      Brahms' first movement gives one sentence with enough pressure to define form
+      and enough refusal to remain open.
+  - n: 2
+    scene: "Learning what matters before discussing what dazzles"
+    force: memory
+    composer: Mozart
+    work: "Piano Sonata No. 16 in C major, K. 545 — I. Allegro"
+    decision: added
+    why: >
+      The text marks a refusal of verbal excess; this sonata holds to one line of
+      conduct, repeated and corrected by listening.
+  - n: 3
+    scene: "No reward without interior amendment"
+    force: law
+    composer: Beethoven
+    work: "Piano Sonata No. 8 in C minor, Op. 13 — I. Grave"
+    decision: added
+    why: >
+      Restraint at the level of intention is law as grammar: it does not announce virtue,
+      it disciplines desire. Beethoven's opening turns force into shape.
+  - n: 4
+    scene: "Honor in small forms"
+    force: memory
+    composer: Handel
+    work: "Royal Fireworks Suite No. 1 in F major — III. Bourrée"
+    decision: added
+    why: >
+      The Master repeatedly turns to known forms for reliable conduct.
+      Handel's ceremonial dance registers the dignity of ordinary structure.
+  - n: 5
+    scene: "Desire in public life"
+    force: desire
+    composer: Ravel
+    work: "Pavane pour une infante défunte"
+    decision: added
+    why: >
+      Austerity does not erase desire, it disqualifies its theatrical version.
+      Ravel's pavane holds elegance without appetite.
+  - n: 6
+    scene: "Discerning silence from indifference"
+    force: law
+    composer: Schubert
+    work: "Impromptu in E-flat major, Op. 90 No. 2"
+    decision: added
+    why: >
+      This passage distinguishes refusal of noise from refusal of care.
+      Schubert's impromptu keeps the shape intact while withdrawing display.
+  - n: 7
+    scene: "What can be said, what should not be said"
+    force: revelation
+    composer: Palestrina
+    work: "Missa Papae Marcelli — Kyrie"
+    decision: added
+    why: >
+      Revelation here is not disclosure but the ethics of disclosure.
+      Palestrina's polyphony is formal devotion: every tone known, nothing forced.
+  - n: 8
+    scene: "Compassion without melodrama"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    decision: added
+    why: >
+      Grief appears as sustained interior pressure: visible only at the level of conduct.
+      Mahler provides this inward, inward-facing sorrow without rhetorical excess.
+  - n: 9
+    scene: "Duty before delight"
+    force: law
+    composer: Satie
+    work: "Gymnopédie No. 1"
+    decision: added
+    why: >
+      The arc returns to duty as the only non-selfing register in this book.
+      Satie's minimal motion makes refusal of appetite audible.
+  - n: 10
+    scene: "Public authority and private standards"
+    force: law
+    composer: Schumann
+    work: "Kinderszenen, Op. 15 — II. Traumerei"
+    decision: added
+    why: >
+      Private standards outlive public acclaim. Schumann's dreamlike simplicity
+      keeps the moral center visible where the crowd cannot.
+  - n: 11
+    scene: "Return to a single principle"
+    force: return
+    composer: Brahms
+    work: "Piano Sonata No. 2 in B-flat major — I. Allegro non troppo"
+    decision: added
+    why: >
+      The Master repeats, returns, and then returns again. Brahms' sonata follows
+      a disciplined return without claiming novelty.
+  - n: 12
+    scene: "Form sustained, not performed"
+    force: law
+    composer: Arvo Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      End-state is not theatrical. Spiegel im Spiegel keeps tone as witness:
+      steady, repetitive, and structurally honest.

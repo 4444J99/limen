@@ -9,8 +9,9 @@ Limen is a cross-agent, cross-repo, budget-capped task intake system. It lives i
 ```bash
 curl -sSL https://raw.githubusercontent.com/4444J99/limen/main/install.sh | bash
 limen init
-limen status
+limen add --title 'Refactor auth' --repo my-org/my-repo --agent jules
 limen dispatch --agent jules --live
+limen status
 ```
 
 ## CLI Commands
@@ -18,12 +19,13 @@ limen dispatch --agent jules --live
 | Command | Description |
 |---------|-------------|
 | `limen init` | Initialize a portal in the current directory |
+| `limen add` | Add a new task (interactive or flags) |
 | `limen dispatch` | Claim open tasks and dispatch to agents |
 | `limen release-stale` | Reopen stale dispatched/in-progress claims before redispatch |
-| `limen doctor` | Report local readiness for dispatch and stale-claim recovery |
 | `limen qa` | Report lifecycle gates, QA queues, steering mechanisms, and archive-ready work |
 | `limen status` | Show the task board with budget tracking |
 | `limen harvest` | Collect results from completed agent runs |
+| `limen sync` | Sync with the SaaS API |
 
 ## Architecture
 

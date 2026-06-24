@@ -1,0 +1,203 @@
+# Analects Book VII — curated music arc
+# 泰伯 Tai Bo — "What endures when the age is judged"
+# Book VII is the long register of exemplars: how rulers are remembered, how duty survives
+# instability, and how ethical reputation survives public contradiction.
+work: analects
+book: 7
+title: "Analects Book VII: Exemplars, Memory, and Restraint"
+length_minutes: 85
+principle: >
+  Book VII asks what makes conduct recoverable when times are unstable. Through recollections of
+  earlier sages and terse directives, it insists that reputation is not decoration but accumulated
+  governance under risk. The dominant motion is return: each scene returns the way of rule to a
+  prior standard while forcing each listener to judge whether they can endure it.
+force_arc: [return, law, law, memory, law, law, law, law, law, law, law, memory, law, law, law, law, memory, law, memory, return, return, law, memory]
+dominant_force: return
+tracks:
+  - n: 1
+    scene: "Tai Bo as kingly yielding"
+    force: return
+    composer: Debussy
+    work: "La mer — De l'aube à midi sur la mer"
+    decision: added
+    why: >
+      "三以天下讓，民無得而稱焉" establishes renunciation as a structural force, not a personal
+      gesture. Debussy’s opening sea movement is wide enough to contain a whole order stepping aside.
+  - n: 2
+    scene: "Courtesy before hierarchy"
+    force: law
+    composer: Handel
+    work: "Music for the Royal Fireworks — Overture"
+    decision: added
+    why: >
+      "恭而無禮則勞" and its variants are about form before display. Handel’s ceremonial precision
+      makes protocol audible.
+  - n: 3
+    scene: "The deathward warning of the prince"
+    force: law
+    composer: Brahms
+    work: "Symphony No. 3 in F major — III. Poco allegretto"
+    decision: added
+    why: >
+      The text to Zengzi turns mortality into instruction. Brahms keeps the lesson in movement rather than
+      confession.
+  - n: 4
+    scene: "How the sage should face death and speech"
+    force: memory
+    composer: Mozart
+    work: "Ave verum corpus, K. 618"
+    decision: added
+    why: >
+      The scene that compares the dying bird and mortal voice is not fear but inheritance. Mozart’s
+      Ave verum holds stillness and transmission.
+  - n: 5
+    scene: "Learning from difference and not forcing"
+    force: law
+    composer: Beethoven
+    work: "Symphony No. 7 in E-flat major — I. Allegro con brio"
+    decision: added
+    why: >
+      The saying about inquiry over certainty requires procedural patience. Beethoven’s formal logic gives
+      that pressure without collapse.
+  - n: 6
+    scene: "Trust that can be relied upon in danger"
+    force: law
+    composer: Schubert
+    work: "String Quartet No. 15 in G major — IV. Allegro molto"
+    decision: added
+    why: >
+      "可以託六尺之孤" ties responsibility to reliability. Schubert’s movement is a stable trustline of
+      chamber argument.
+  - n: 7
+    scene: "Bearing weight without spectacle"
+    force: law
+    composer: Brahms
+    work: "Intermezzo in A major, Op. 117 No. 2"
+    decision: added
+    why: >
+      Greatness under load is not display. Brahms’ inward intermezzo gives this directly through controlled
+      progression.
+  - n: 8
+    scene: "Learn first, then be moved by rites"
+    force: law
+    composer: Bruckner
+    work: "Symphony No. 7 — II. Adagio"
+    decision: added
+    why: >
+      "興於詩，立於禮。成於樂" is staged instruction. Bruckner extends one principle across space.
+  - n: 9
+    scene: "Rule by law, not by possession"
+    force: law
+    composer: Schumann
+    work: "Kinderszenen — No. 13 'Der Dichter spricht'"
+    decision: added
+    why: >
+    People are guided by what can be made knowable, not by what can be made immediate. Schumann keeps
+      this chapter from becoming slogan.
+  - n: 10
+    scene: "Reward with order, not appetite"
+    force: law
+    composer: Mozart
+    work: "Symphony No. 39 — I. Allegro"
+    decision: added
+    why: >
+      The condemnation of lazy courage is practical not moralistic. Mozart’s clean architecture preserves
+      the same procedural strictness.
+  - n: 11
+    scene: "The danger of talent without restraint"
+    force: memory
+    composer: Tchaikovsky
+    work: "Piano Concerto No. 1 — II. Canzonetta"
+    decision: added
+    why: >
+      The anecdote of Zhou Gong’s talent warns against overreach. Tchaikovsky’s lyrical center keeps the
+      warning from turning into sentiment.
+  - n: 12
+    scene: "Learning requires years and a standard"
+    force: law
+    composer: Rachmaninoff
+    work: "Symphony No. 2 — III. Adagio"
+    decision: added
+    why: >
+      "三年學，不至於穀，不易得也" is the long horizon principle. Rachmaninoff’s broad arc can hold
+      years in one movement.
+  - n: 13
+    scene: "Guarding the Way through safe withdrawal"
+    force: law
+    composer: Mahler
+    work: "Symphony No. 5 — III. Scherzo"
+    decision: added
+    why: >
+      "危邦不入，亂邦不居" is protective governance in a few syllables. Mahler’s structural turns
+      preserve distance as a value.
+  - n: 14
+    scene: "Position before politics"
+    force: law
+    composer: Dvorak
+    work: "Symphony No. 9 ('From the New World') — II. Largo"
+    decision: added
+    why: >
+      The warning on office is simple and severe. Dvořák’s Largo has a spacious moral patience.
+  - n: 15
+    scene: "First beginnings leave a trace"
+    force: law
+    composer: Vivaldi
+    work: "The Four Seasons — Spring, 'Allegro'"
+    decision: added
+    why: >
+      "師摯之始" is about origins and continuity. Vivaldi’s spring motion gives a cyclical register to
+      remembered beginnings.
+  - n: 16
+    scene: "Straightness over force"
+    force: memory
+    composer: Mahler
+    work: "Symphony No. 6 — III. Scherzo"
+    decision: added
+    why: >
+      "狂而不直，侗而不願" turns crooked force into clear diagnostic language. Mahler’s rough scherzo
+      marks crookedness by contrast with discipline.
+  - n: 17
+    scene: "Learning as persistent pursuit"
+    force: law
+    composer: Satie
+    work: "Gymnopédie No. 1"
+    decision: added
+    why: >
+      "學如不及，猶恐失之" is urgency without panic. Satie gives the paradox of lightness under
+      anxiety.
+  - n: 18
+    scene: "The impossible stature of Yao and Yu"
+    force: memory
+    composer: Debussy
+    work: "Children's Corner — Doctor Gradus ad Parnassum"
+    decision: added
+    why: >
+      The impossibility of repeating Yao-Yu order is itself the lesson. Debussy’s miniature exercise
+      structure echoes repeated striving.
+  - n: 19
+    scene: "A ruler’s measure in speech"
+    force: return
+    composer: Stravinsky
+    work: "The Rite of Spring — Les augures du printemps"
+    decision: added
+    why: >
+      The portrait of Yao’s kingly scale is ceremonial return to first principles. Stravinsky here provides
+      that pre-political force.
+  - n: 20
+    scene: "Yu as model of disciplined humility"
+    force: return
+    composer: Verdi
+    work: "Requiem — Dies Irae"
+    decision: added
+    why: >
+      "禹，吾無間然矣" honors a ruler who embodies difficult restraint. Verdi gives monumental
+      scale without losing procedural clarity.
+  - n: 21
+    scene: "Yao and Shun as standards for action"
+    force: law
+    composer: Weber
+    work: "Der Freischütz — Overture"
+    decision: added
+    why: >
+      The final appeal to ancient example binds ethics to practical governance. Weber gives a forward, legal
+      rhythm for collective recognition.
