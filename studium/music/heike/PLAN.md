@@ -11,16 +11,16 @@
 - **Corpus:** `japanese/heike-monogatari` (japanese_original.txt)
 - **Source rail:** https://jti.lib.virginia.edu/japanese/heike/
 - **Divisions:** 12 × Book
-- **Progress:** 6/12 arcs authored
+- **Progress:** 3/12 arcs authored
 
 | Book | dominant force | status |
 | --: | --- | :--: |
 | 1 | (author) | ✓ |
 | 2 | (author) | ✓ |
 | 3 | (author) | ✓ |
-| 4 | (author) | ✓ |
-| 5 | (author) | ✓ |
-| 6 | (author) | ✓ |
+| 4 | (author) | ☐ |
+| 5 | (author) | ☐ |
+| 6 | (author) | ☐ |
 | 7 | (author) | ☐ |
 | 8 | (author) | ☐ |
 | 9 | (author) | ☐ |
