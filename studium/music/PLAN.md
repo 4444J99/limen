@@ -22,7 +22,7 @@
 - [`heike`](heike/PLAN.md) — The Tale of the Heike · 1/12 arcs
 - [`divine-comedy`](divine-comedy/PLAN.md) — The Divine Comedy · 1/100 arcs
 - [`canterbury-tales`](canterbury-tales/PLAN.md) — The Canterbury Tales · 1/24 arcs
-- [`journey-to-the-west`](journey-to-the-west/PLAN.md) — Journey to the West · 5/100 arcs
+- [`journey-to-the-west`](journey-to-the-west/PLAN.md) — Journey to the West · 1/100 arcs
 
 ## Tier 2 — staged (after the first pass)
 - [`book-of-songs`](book-of-songs/PLAN.md) — The Book of Songs (Shijing) · 0/4 arcs · staged
