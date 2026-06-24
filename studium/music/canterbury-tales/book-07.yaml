@@ -1,0 +1,129 @@
+# Canterbury Tales — The Wife of Bath's Tale: sovereignty, desire, and reform
+work: canterbury-tales
+book: 7
+title: "Canterbury Tales — The Wife of Bath's Tale: desire, sovereignty, and wisdom"
+length_minutes: 87
+principle: >
+  The tale begins in law court and ends in altered desire. The Wife's larger argument is not
+  whether women can rule desire, but whether desire can be ruled without surrendering human
+  dignity. The dominant force is desire, repeatedly resisted and then transmuted through
+  social law.
+force_arc: [comedy, law, memory, law, fate, exile, desire, desire, metamorphosis, desire, law, desire]
+dominant_force: desire
+tracks:
+  - n: 1
+    scene: "The Company prepares for the Wife's voice after earlier contestations"
+    force: comedy
+    composer: Offenbach
+    work: "Orpheus in the Underworld — 'Galop infernal'"
+    decision: added
+    why: >
+      The Wife enters the arc as a social force in her own right. The company has been trained
+      by previous tales to expect roughness and inversion. Offenbach marks that tonal pivot
+      before the prologue begins serious legal self-assertion.
+
+  - n: 2
+    scene: "The Wife of Bath stakes her authority in the law of marriage"
+    force: law
+    composer: Handel
+    work: "Water Music Suite No. 1 in F major — Overture"
+    decision: added
+    why: >
+      Her prologue is less confession than declaration. Handel gives courtly architecture with
+      enough room for her to occupy it as sovereign. She speaks as though legal terms are
+      negotiable and already hers.
+
+  - n: 3
+    scene: "She recounts marriages as the long memory of desire's cost"
+    force: memory
+    composer: Schubert
+    work: "Symphony No. 8 in B minor, Unfinished — I"
+    decision: added
+    why: >
+      The long prelude to the prologue is lived memory, not nostalgia. Schubert's Unfinished
+      makes longing into unfinished social work: it repeats, returns, and still asks to be
+      resolved.
+
+  - n: 4
+    scene: "The Knight is judged by the royal court and set a year-bound test"
+    force: law
+    composer: Brahms
+    work: "Symphony No. 1 — I. Allegro"
+    decision: added
+    why: >
+      The tale requires an official clock. The courtly sentence transforms private offense
+      into legal condition. Brahms provides measured pressure, a music of consequence and
+      public accountability.
+
+  - n: 5
+    scene: "The death sentence gives the tale forward momentum"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 7 — II. Allegretto"
+    decision: added
+    why: >
+      Fate is not random punishment here. It is an administered schedule, and then an opening.
+      Beethoven's measured pulse has no sentimental escape; it gives the quest a strict gait.
+
+  - n: 6
+    scene: "The Knight leaves under the pressure of public failure"
+    force: exile
+    composer: Debussy
+    work: "La mer"
+    decision: added
+    why: >
+      He leaves courtly ground into the uncertainty where everyone is forced to ask what they
+      value. Debussy's fluid sea music gives exile as open horizon, not private despair.
+
+  - n: 7
+    scene: "The old woman appears as judge, temptation, and tutor"
+    force: desire
+    composer: Strauss
+    work: "Also sprach Zarathustra — 'Von der großen Sehnsucht'"
+    decision: added
+    why: >
+      Desire is now externalized as a contractual paradox: the old woman offers knowledge
+      only in exchange for submission. Strauss gives a register where awe and appetite
+      share one register.
+
+  - n: 8
+    scene: "Sovereignty is tested through the old wife's hidden law of equality"
+    force: divine-intervention
+    composer: Messiaen
+    work: "Quartet for the End of Time — 'Louange'"
+    decision: added
+    why: >
+      Whether by providence or timing, this turning point exceeds ordinary causality. Messiaen's
+      devotional texture gives a register for revelation within domestic narrative.
+
+  - n: 9
+    scene: "The answer appears as transformation of the woman and the man"
+    force: metamorphosis
+    composer: Elgar
+    work: "Cello Concerto in E minor — I. Adagio — Allegro"
+    decision: added
+    why: >
+      The knight discovers that desire cannot be forced by domination. Elgar's movement lets
+      form change shape while retaining forward energy, mirroring the conversion from coercion
+      to shared claim.
+
+  - n: 10
+    scene: "The marriage holds when sovereignty is finally shared"
+    force: desire
+    composer: Ravel
+    work: "Daphnis et Chloé — Suite No. 2: Lever du jour"
+    decision: added
+    why: >
+      Desire shifts from possession to mutuality. Ravel's luminous pastoral movement makes that
+      transition from hunger to relation audible without romanticizing coercion.
+
+  - n: 11
+    scene: "The Host and company absorb the tale as social correction"
+    force: law
+    composer: Mozart
+    work: "Don Giovanni — Overture"
+    decision: added
+    why: >
+      The tale ends where it began, but with a different social grammar. Mozart's concise
+      overture gives a courtroom-turned-dance energy: law remains, but desire now has a new
+      legitimacy.

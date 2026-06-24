@@ -1,0 +1,133 @@
+# Canterbury Tales — The Man of Law's Tale: exile, testimony, and civic restoration
+work: canterbury-tales
+book: 6
+title: "Canterbury Tales — The Man of Law's Tale: judgment, providence, and return"
+length_minutes: 79
+principle: >
+  The Man of Law's Tale is a compressed epic of social jurisdiction. Constance moves
+  through multiple courts, nations, and humiliations while still being judged as if
+  her truth had to be certified by institutions. Its dominant motion is law, repeatedly
+  interrupted by fate and restored in moments of grace.
+force_arc: [law, law, fate, exile, divine-intervention, grief, law, fate, desire, salvation, law]
+dominant_force: law
+tracks:
+  - n: 1
+    scene: "The Man of Law establishes the tale as a juridical witness"
+    force: law
+    composer: Handel
+    work: "Music for the Royal Fireworks — Overture"
+    decision: added
+    why: >
+      This tale announces itself as legal process. The Man of Law is not merely telling
+      a story; he is staging a tribunal. Handel's overture supplies ceremonial order:
+      public, audible, and explicit that procedure is the frame.
+
+  - n: 2
+    scene: "Constance enters through royal decree and courtly consequence"
+    force: law
+    composer: Brahms
+    work: "Symphony No. 4 — I. Allegro non troppo"
+    decision: added
+    why: >
+      Constance's first turns are not private choices. They are mediated by kingly command.
+      Brahms keeps pressure in proportion to ceremony, matching how institutions decide whose
+      grief counts and whose does not.
+
+  - n: 3
+    scene: "Capture and violence interrupt civic structure"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    decision: added
+    why: >
+      Fate in this tale behaves as event-before-explanation. The capture and transport are
+      a mechanical blow to social status. Beethoven's opening movement has that same
+      inevitability: events arrive as if already recorded.
+
+  - n: 4
+    scene: "Constance is displaced across sea and polity"
+    force: exile
+    composer: Sibelius
+    work: "Finlandia"
+    decision: added
+    why: >
+      Exile is a public act with private consequence. Sibelius holds grandeur and distance
+      together, which is exactly Constance's register: she keeps dignity while being moved
+      from one jurisdiction to another without agency.
+
+  - n: 5
+    scene: "Divine signs interrupt the machinery of politics"
+    force: divine-intervention
+    composer: Wagner
+    work: "Das Rheingold — Prelude"
+    decision: added
+    why: >
+      The tale repeatedly shifts from courtly logic to providential interruption.
+      Wagner's opening, with its long harmonic emergence, resembles the force that reorders
+      the scene without changing the social language that surrounds it.
+
+  - n: 6
+    scene: "Constance bears loss without surrendering her speech"
+    force: grief
+    composer: Barber
+    work: "Adagio for Strings, Op. 11"
+    decision: added
+    why: >
+      This is the emotional center of the tale: survival is not relief but endurance.
+      Barber gives grief the inward, stripped register needed to keep the story from
+      becoming mere moralizing about resilience.
+
+  - n: 7
+    scene: "The court debates her right to testify to her own innocence"
+    force: law
+    composer: Elgar
+    work: "Enigma Variations — 'Nimrod'"
+    decision: added
+    why: >
+      If her truth is valid, law must make room for it; if not, justice fails publicly.
+      Elgar's 'Nimrod' carries the strain of public deliberation into inward patience,
+      which is the legal register in this arc.
+
+  - n: 8
+    scene: "The old order misreads her again; testimony becomes accusation"
+    force: fate
+    composer: Stravinsky
+    work: "The Rite of Spring — Sacrificial Dance"
+    decision: added
+    why: >
+      Fate is often institutional as much as natural. Here suspicion and rumor do the same
+      work as accident. Stravinsky's violent ritual motion captures the way reputation can
+      execute judgment before a case is fairly heard.
+
+  - n: 9
+    scene: "Constance negotiates desire, identity, and public reputation"
+    force: desire
+    composer: Don Giovanni
+    work: "Overture"
+    decision: added
+    why: >
+      Desire here is not erotic release; it is the desire for legitimate recognition.
+      Don Giovanni's overture is sharp enough to show a desire with legal consequences:
+      every gesture is public, every turn is judged.
+
+  - n: 10
+    scene: "Providence restores what institutions kept breaking"
+    force: salvation
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      The tale's restorative logic is finally vertical: there are forms that do not belong
+      to the court and yet repair it. Pärt's sparse verticality gives the arc its final
+      clarity without emotional excess.
+
+  - n: 11
+    scene: "The tale returns to civic order and closes on lawful witness"
+    force: law
+    composer: Messiaen
+    work: "Quartet for the End of Time — I. Liturgie de cristal"
+    decision: added
+    why: >
+      The ending does not erase the wounds. It re-routes Constance's truth through durable
+      institutions. Messiaen's crystalline structure provides that sense of order emerging
+      from interruption.
