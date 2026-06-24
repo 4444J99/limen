@@ -1,0 +1,85 @@
+# Tale of Genji — Chapter 4 (Yugao / Evening Faces) — curated music arc
+work: tale-of-genji
+book: 4
+title: "Evening Faces: The Violence of Jealousy"
+length_minutes: 65
+principle: >
+  Score the progression from an idyllic, downward-class romance into pure,
+  supernatural terror. Yugao is destroyed not by Genji, but by the psychic
+  residue of his other affairs. The register shifts from intimate lyricism
+  to the suffocating horror of the Rokujo Lady's living ghost.
+force_arc: [desire, revelation, desire, plague, grief, memory]
+dominant_force: plague
+tracks:
+  - n: 1
+    scene: "The white flowers on the ruined wall / the discovery of Yugao"
+    force: desire
+    composer: Fauré
+    work: "Pavane, Op. 50"
+    decision: added
+    why: >
+      Genji finds Yugao living in a dilapidated, lower-class neighborhood,
+      her identity concealed. Fauré's Pavane gives the exact mood of this
+      discovery: fragile, slightly melancholic, and entirely separate from
+      the heavy, political architecture of the imperial court. It is the
+      sound of a desire that feels, temporarily, like innocence.
+  - n: 2
+    scene: "The sealed carriage / love without identity"
+    force: revelation
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      Genji and Yugao conduct their affair without revealing their true names
+      to each other. It is an intimacy built on a suspension of social reality.
+      Pärt's Spiegel im Spiegel provides the stillness of this suspended
+      state: a pure, floating verticality where time and rank seem
+      temporarily abolished.
+  - n: 3
+    scene: "The excursion to the ruined mansion / the erotic isolation"
+    force: desire
+    composer: Wagner
+    work: "Siegfried Idyll"
+    decision: added
+    why: >
+      Genji takes Yugao to a desolate, overgrown estate to be entirely alone.
+      The isolation is intensely romantic but structurally unsafe. Wagner's
+      Siegfried Idyll gives the sound of this sequestered, overgrown love:
+      tender, domestic, but vibrating with an intensity that the surrounding
+      architecture cannot contain.
+  - n: 4
+    scene: "The apparition of the Rokujo Lady / the possession and death"
+    force: plague
+    composer: Penderecki
+    work: "Threnody to the Victims of Hiroshima"
+    decision: added
+    why: >
+      In the night, the living spirit of the Rokujo Lady—Genji's aristocratic,
+      neglected lover—appears at the bedside and kills Yugao through sheer
+      jealous force. Penderecki's shrieking string clusters are the only music
+      adequate to this terror. It is not human anger; it is psychic violence
+      rendered as physical trauma, an infection of the idyllic romance.
+  - n: 5
+    scene: "Genji's collapse and the removal of the body / the aftermath"
+    force: grief
+    composer: Shostakovich
+    work: "String Quartet No. 8 in C minor — I. Largo"
+    decision: added
+    why: >
+      Yugao is dead, and Genji is incapacitated by terror and grief. Her body
+      must be smuggled out to avoid a scandal. Shostakovich's Largo gives the
+      sound of this numb, paralyzed aftermath. The descending, suffocating
+      motif is the exact texture of a world where the floor has simply dropped
+      out.
+  - n: 6
+    scene: "Genji recovers but keeps the memory / the permanent scar"
+    force: memory
+    composer: Elgar
+    work: "Cello Concerto in E minor, Op. 85 — III. Adagio"
+    decision: added
+    why: >
+      Genji eventually recovers from his illness, but Yugao's death marks the
+      end of his carelessness. The tragedy is locked into his psychology
+      permanently. Elgar's Adagio provides the voice for this specific kind
+      of survival: a beautiful, weeping line that carries the weight of an
+      unfixable mistake.

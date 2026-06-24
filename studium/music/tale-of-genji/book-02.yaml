@@ -1,0 +1,75 @@
+# Tale of Genji — Chapter 2 (Hahakigi / The Broom Tree) — curated music arc
+work: tale-of-genji
+book: 2
+title: "The Broom Tree: The Taxonomy of Desire"
+length_minutes: 50
+principle: >
+  Score the shift from the abstract, social categorization of women in the
+  'rainy night' conversation to the sudden, specific, and uncontainable reality
+  of Genji's desire for Utsusemi. The register begins in courtly comedy and
+  descends into chromatic longing.
+force_arc: [comedy, memory, desire, law, desire]
+dominant_force: desire
+tracks:
+  - n: 1
+    scene: "The rainy night conversation / classifying women"
+    force: comedy
+    composer: Mozart
+    work: "Così fan tutte, K. 588 — Overture"
+    decision: added
+    why: >
+      The famous 'rainy night ranking of women' is a cynical, stylized male
+      conversation about the categories of female availability and virtue.
+      Mozart's overture gives the exact texture of this social geometry:
+      brilliant, perfectly proportioned, and fundamentally unserious. It is
+      the sound of desire treated as a solvable equation rather than a
+      destructive force.
+  - n: 2
+    scene: "To no Chujo's tale of the vanished woman / the reality of regret"
+    force: memory
+    composer: Fauré
+    work: "Élégie, Op. 24"
+    decision: added
+    why: >
+      The conversation shifts from abstract taxonomy to To no Chujo's specific
+      memory of a woman who disappeared from neglect. The cello line in
+      Fauré's Élégie drops the temperature of the room—it is the sound of past
+      carelessness returning as permanent regret. The comedy evaporates,
+      replaced by the specific weight of a lost object.
+  - n: 3
+    scene: "Genji travels to the Governor of Kii's house / escaping the palace"
+    force: desire
+    composer: Debussy
+    work: "Prélude à l'après-midi d'un faune"
+    decision: added
+    why: >
+      Genji's excursion to the middle-class house of the Governor of Kii
+      introduces a new kind of atmosphere: less formal, more sensual, outside
+      the suffocating protocols of the imperial court. Debussy's Prélude gives
+      the exact climate of this displacement—a fluid, heat-heavy chromaticism
+      where boundaries begin to dissolve and unexpected desires can surface.
+  - n: 4
+    scene: "Utsusemi's rigid morality / the barrier of her modesty"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue, BWV 1080 — Contrapunctus I"
+    decision: added
+    why: >
+      Utsusemi is not a court lady; she is a provincial governor's wife who
+      understands her precarious social position. Her resistance to Genji is
+      not coquetry; it is a desperate defense of the only architecture that
+      protects her: the rules of propriety. Bach's strict counterpoint is the
+      sound of that defensive architecture—beautiful, unyielding, and entirely
+      built on rule.
+  - n: 5
+    scene: "Genji enters Utsusemi's room / the consummation"
+    force: desire
+    composer: Scriabin
+    work: "Symphony No. 4, 'The Poem of Ecstasy' (opening)"
+    decision: added
+    why: >
+      Genji's intrusion and the subsequent consummation bypass Utsusemi's
+      defenses completely. Scriabin's chromatic longing gives the texture of
+      this overriding force. It is not aggressive or martial; it is
+      overwhelming, sweeping away the strict counterpoint of her resistance
+      in a wash of harmonically unresolved, narcotic beauty.

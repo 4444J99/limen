@@ -1,196 +1,74 @@
-# Gilgamesh — Tablet III — curated music arc
-# Gold-standard form. Matches iliad/book-01.yaml exactly.
+# Gilgamesh — Tablet 3 — curated music arc
 work: gilgamesh
 book: 3
-title: "Gilgamesh Tablet III: The Journey Begins — Toward Humbaba"
-length_minutes: 79
+title: "The Blessing and the Departure"
+length_minutes: 64
 principle: >
-  Tablet III is the moment of departure. Gilgamesh and Enkidu, now bound together,
-  choose to journey toward the Cedar Forest to confront Humbaba, the monster who guards
-  it. This is not a rescue mission or a theft — it is a deliberate walk toward a known
-  danger. The tablet moves from preparation through the gathering of companions to the
-  moment when the gates of Uruk close behind them and the wilderness begins. Watch for
-  the shift in register: this is no longer the domestic drama of Uruk. This is the moment
-  heroic action begins — not in the sense of martial valor, but in the sense of a being
-  consciously choosing to step toward his own possible doom. The dominant movement is
-  fate drawing them forward, alongside the exile that begins the moment they leave.
-force_arc: [law, desire, ascent, wrath, exile, fate, memory, supplication, revelation, sacrifice, ascent, fate]
-dominant_force: fate
+  Score Tablet III as a sequence of rituals. The wild energy of Tablet II is formalized here into statecraft, prayer, and adoption. The dominant register is not action, but heavy, solemn preparation. Do not rush Ninsun's prayer; it is the emotional core of the tablet. The forces move upward to the gods and then lock the heroes into their fate.
+force_arc: [law, kingship, sacrifice, ascent, supplication, metamorphosis, fate, law]
+dominant_force: supplication
 tracks:
   - n: 1
-    scene: "Gilgamesh proposes the journey — 'We will cut down the cedar'"
+    scene: "The Elders counsel caution"
     force: law
-    composer: Stravinsky
-    work: "The Firebird — 'The Sacrifice' suite (introduction and dances)"
+    composer: Brahms
+    work: "Symphony No. 4 — I. Allegro non troppo"
     decision: added
     why: >
-      Gilgamesh announces the plan with formal authority: he and Enkidu will journey to the
-      Cedar Forest and slay Humbaba. This is not a request or a suggestion — it is a decision
-      that has the weight of kingly decree. Stravinsky's Firebird introduction is ceremonial
-      and formal, establishing the magical world that the narrative is about to enter. The
-      piece has the gravity of ritual — an announcement that will reshape the world through
-      action. The decision to depart is law in the sense of establishing a new order: we leave,
-      and in leaving, we become different.
+      The elders of Uruk try to dissuade Gilgamesh. They speak for tradition, for the safety of the city walls, for caution. Brahms's Fourth Symphony opening is grounded, complex, and deeply serious—it is the sound of institutional wisdom warning against tragic overreach.
   - n: 2
-    scene: "Enkidu counsels caution — 'I know Humbaba's voice'"
-    force: desire
-    composer: Strauss
-    work: "Salome — Dance of the Seven Veils"
+    scene: "Gilgamesh ignores the elders"
+    force: kingship
+    composer: Mozart
+    work: "Don Giovanni — Overture"
     decision: added
     why: >
-      Enkidu, who was wild, who once lived near the Cedar Forest, speaks a warning. He knows
-      Humbaba — knows the monster's voice, his terrible power. Yet he does not refuse the journey.
-      Instead, his warning becomes a kind of desire: the desire to protect Gilgamesh, to stay
-      close, to witness what comes. Strauss's dance is sensuous but not erotic — it is movement
-      that reveals hidden knowledge with each gesture. Enkidu's caution is desire in protective
-      form: he wants to go, but he wants to go together, to guard and be guarded.
+      Gilgamesh laughs off their warnings. He is driven by sovereign pride and the desire for eternal fame. The Don Giovanni overture holds this exact tension: terrifying divine retribution waiting in the chords, but driven forward by an unstoppable, arrogant vitality.
   - n: 3
-    scene: "The companions gather — the expedition is assembled"
+    scene: "Ninsun bathes and dresses in royal robes"
+    force: sacrifice
+    composer: Gluck
+    work: "Iphigénie en Tauride — O toi qui prolongeas mes jours"
+    decision: added
+    why: >
+      They seek the blessing of Ninsun, the wild cow goddess. She prepares herself for ritual. Gluck provides the solemn, ceremonial weight of a priestess preparing for intercession. The ritual is formal, slow, and heavy with consequence.
+  - n: 4
+    scene: "Ninsun ascends the roof"
     force: ascent
     composer: Bruckner
-    work: "Symphony No. 4 — I. Allegro (Romantic)"
+    work: "Symphony No. 7 — I. Allegro moderato"
     decision: added
     why: >
-      Gilgamesh and Enkidu gather companions for the journey: soldiers, counselors, craftsmen.
-      The expedition grows in size and in purpose. Each person who joins changes the character
-      of what is beginning. Bruckner's Romantic Symphony first movement is the sound of something
-      expanding, of a great idea taking on corporeal form. The brass enters gradually, the whole
-      orchestra assembles, and there is a sense of mounting momentum. The gathering of the expedition
-      is an ascent in the sense that it lifts the journey from personal quest to public enterprise.
-  - n: 4
-    scene: "Gilgamesh speaks to the assembled company — exhortation and farewell"
-    force: wrath
-    composer: Wagner
-    work: "Die Walküre — 'Ride of the Valkyries'"
-    decision: added
-    why: >
-      Gilgamesh addresses the men who will accompany him. His words are not gentle. He is summoning
-      them to danger, to possible death, to a confrontation with a force that has defeated all who
-      came before. Wagner's Valkyries charge is the sound of human will organized into collective
-      force — not peaceful, but determined. The wrath here is not personal anger but the militant
-      energy required to ask men to walk toward known danger. The piece captures the moment when
-      fear is transformed into resolve.
+      Ninsun goes to the roof to offer incense to Shamash, the sun god. Bruckner's long, rising tremolos and slowly building brass chorales perfectly capture the physical and spiritual ascent toward the divine realm. It is luminous orchestration rising upward.
   - n: 5
-    scene: "The gates of Uruk close behind them — exile begins"
-    force: exile
-    composer: Sibelius
-    work: "Symphony No. 4 — I. Tempo molto moderato"
-    decision: added
-    why: >
-      Departure. The walls of Uruk recede. The journey has begun and cannot be unmade. There is
-      a threshold being crossed — from the domestic, the known, the governed, into the wild and
-      the unpredictable. Sibelius's fourth symphony is austere and distant: angular harmonies,
-      sparse orchestration, the sense of entering a landscape that has no comfort to offer. The
-      exile force is activated the moment the gates close — they are no longer citizens of Uruk,
-      but wanderers in wilderness.
-  - n: 6
-    scene: "They walk toward the Cedar Forest — fate pulls them forward"
-    force: fate
-    composer: Beethoven
-    work: "Symphony No. 3 — I. Allegro con brio (Eroica)"
-    decision: added
-    why: >
-      The journey itself becomes the music. They walk. Days pass. The landscape changes. And with
-      each step, they move closer to a confrontation that is already written into their nature:
-      Gilgamesh and Enkidu are the beings created for this quest. Beethoven's Eroica is fate as
-      heroic momentum — not gentle, not kind, but inexorable and grand. The symphony does not ask
-      whether the journey is wise. It enacts the journey as necessary, as the inevitable unfolding
-      of powers that were set in motion long before this moment.
-  - n: 7
-    scene: "They recall Gilgamesh's dreams — the companions foretold"
-    force: memory
-    composer: Elgar
-    work: "Cello Concerto — IV. Allegro"
-    decision: added
-    why: >
-      As they travel, Gilgamesh remembers his dreams from Tablet I: the meteorite he loved, the
-      axe he carried to his mother. Those dreams foretold this moment. Enkidu was the companion
-      the dreams promised, and now Enkidu walks beside him toward the trial the dreams prefigured.
-      Memory here is not nostalgia but prophecy retroactively understood. Elgar's cello concerto
-      final movement is intimate and personal — a solo voice reflecting on what it has come to
-      understand. Memory in Mesopotamian poetry is not sentimental; it is the structure through which
-      the present becomes legible as the fulfillment of the past.
-  - n: 8
-    scene: "Enkidu's prayer — 'May the gods protect us'"
+    scene: "The prayer to Shamash"
     force: supplication
     composer: Barber
     work: "Adagio for Strings"
     decision: added
     why: >
-      Enkidu prays. In the wilderness, approaching the monster's domain, he calls upon the gods
-      for protection. It is a supplication without certainty of answer — a plea made in the face
-      of approaching darkness. Barber's Adagio is the sound of human vulnerability before forces
-      larger than itself: exposed, unadorned, without hope of resolution, yet with unshakable
-      dignity. The prayer is not answered. The gods do not intervene. But the act of praying is
-      the moment when the human confronts the sacred and accepts what may come.
-  - n: 9
-    scene: "They approach the Cedar Forest — revelation of the guardian"
-    force: revelation
-    composer: Penderecki
-    work: "Threnody for the Victims of Hiroshima"
+      Ninsun asks Shamash why he gave her son such a restless heart, and begs the sun god to protect him. Barber's Adagio is an exposed, suspended melodic line of pure petition. It is the sound of unbearable parental fear projected into the sky.
+  - n: 6
+    scene: "Ninsun adopts Enkidu as her son"
+    force: metamorphosis
+    composer: Ravel
+    work: "Daphnis et Chloé — Lever du jour"
     decision: added
     why: >
-      The Cedar Forest comes into view. With it comes the knowledge of Humbaba's presence — the
-      monster is real, is vast, is guarding his domain. This is revelation as terror: something
-      unknown becomes suddenly visible, and what is visible is overwhelming. Penderecki's Threnody
-      is the sound of forces that exceed human scale appearing in human time. The piece has no
-      beauty in the conventional sense — it is terrible, it is loud, it is absolute. The approach
-      to Humbaba's domain has that quality: the moment when what was abstract becomes undeniably,
-      overwhelmingly real.
-  - n: 10
-    scene: "Gilgamesh and Enkidu stand at the forest's edge — the threshold approaches"
-    force: sacrifice
-    composer: Gluck
-    work: "Iphigénie en Aulide — Prelude to Act I"
-    decision: added
-    why: >
-      They stand at the threshold. Behind this moment lies the decision that must be sacrificed:
-      safety, comfort, return. They know, even now, that crossing this threshold may mean death.
-      The sacrifice has not yet happened, but it is already chosen. Gluck's Iphigénie prelude is
-      the moment before sacrifice, when the decision has been made but the act is still in futurity.
-      The music is solemn, aware of what is being given up, but resolved. There is no negotiation
-      in Gluck. There is only the ceremonial weight of something being offered up to a power larger
-      than the one offering.
-  - n: 11
-    scene: "Gilgamesh walks first into the forest — ascent toward trial"
-    force: ascent
-    composer: Mahler
-    work: "Symphony No. 8 — Part II (the Mystical Chorus)"
-    decision: added
-    why: >
-      Gilgamesh leads the way into the Cedar Forest. This is ascent in the sense that he is
-      rising toward his destiny — toward the confrontation with Humbaba that will define him,
-      that may destroy him, that will certainly change him. Mahler's eighth symphony second part
-      is the sound of movement toward transcendence: there is triumph here, but also the knowledge
-      that transcendence may be indistinguishable from annihilation. Gilgamesh walks into the
-      darkness of the forest knowing he may not return. The ascent is toward something greater than
-      himself.
-  - n: 12
-    scene: "The forest closes behind them — fate is sealed"
+      In a profoundly moving political and spiritual act, Ninsun adopts the wild man Enkidu, elevating him to the status of her son and Gilgamesh's true brother. Ravel's daybreak music is radiant, expanding harmonic color—a life fundamentally elevated into a new dawn.
+  - n: 7
+    scene: "The amulet is placed on Enkidu's neck"
     force: fate
-    composer: Tchaikovsky
-    work: "Fate Symphony (Symphony No. 4) — I. Andante sostenuto"
+    composer: Wagner
+    work: "Parsifal — Prelude to Act I"
     decision: added
     why: >
-      The forest has closed. The way back is obscured. Fate is sealed — they are now committed
-      to the journey's conclusion, whatever that may be. Tchaikovsky's fourth symphony opens with
-      a fateful motif that will drive the whole work forward: the sound of an inescapable destiny
-      that was not chosen but is now being enacted. The fate force returns to complete the arc: it
-      began with them being pulled toward the Cedar Forest, and it ends with them trapped within its
-      darkness. The machinery of their doom (or their apotheosis) is now fully engaged.
-demoted:
-  - composer: Holst
-    work: "The Planets — 'Jupiter, the Bringer of Jollity'"
-    status: "removed from Tablet III"
+      Ninsun places an amulet on Enkidu, marking him, binding him to her son's fate, and making him responsible for Gilgamesh's life. The slow, inexorable, holy solemnity of the Parsifal prelude seals the covenant. It is fate disguised as protection.
+  - n: 8
+    scene: "The final departure from Uruk"
+    force: law
+    composer: Handel
+    work: "Music for the Royal Fireworks — La Réjouissance"
+    decision: added
     why: >
-      The temptation is to use celebratory ascent here. But Tablet III is not joyous. It is
-      solemn, aware of danger, moved by a momentum that cannot be stopped. Jupiter's joy would
-      underestimate what the journey requires: the acceptance of possible death. Save Jupiter for
-      moments of genuine triumph, if they come.
-  - composer: Strauss
-    work: "Also sprach Zarathustra — sunrise"
-    status: "reserved for moment of true transformation or devastation"
-    why: >
-      The temptation is to use climactic sunrise here as Gilgamesh steps toward his fate. But
-      the sunrise belongs to the moment when he has truly been transformed — either by encountering
-      the transcendent or by confronting his own mortality. Tablet III is preparation, not arrival.
+      The city officials give their final blessings; the heroes depart through the gates of Uruk. The state formally sanctions their mythic endeavor. Handel provides the necessary formal clarity and architectural grandeur of a city sending its greatest weapons into the unknown.

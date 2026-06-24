@@ -1,0 +1,74 @@
+# Gilgamesh — Tablet 4 — curated music arc
+work: gilgamesh
+book: 4
+title: "The Journey and the Dreams"
+length_minutes: 62
+principle: >
+  Score Tablet IV as a psychological descent. The physical journey is massive, but the real action happens in the terror of Gilgamesh's dreams. The music should alternate between the vast emptiness of the steppe, the rigid control of Enkidu's magical wards, and the terrifying, violent eruptions of the subconscious. End with the imposing, ancient terror of the forest itself.
+force_arc: [exile, memory, law, fate, revelation, divine-intervention, wrath, fate]
+dominant_force: fate
+tracks:
+  - n: 1
+    scene: "Fifty leagues a day — the massive journey"
+    force: exile
+    composer: Vaughan Williams
+    work: "A London Symphony — II. Lento"
+    decision: added
+    why: >
+      They travel an inhuman distance: fifty leagues a day, crossing vast tracts of wilderness. The music needs a sense of endless, wandering space, distant from the walls of Uruk. Vaughan Williams's Lento is expansive, open, and slightly desolate.
+  - n: 2
+    scene: "Pitching the first camp"
+    force: memory
+    composer: Fauré
+    work: "Pavane, Op. 50"
+    decision: added
+    why: >
+      At the end of three days, they stop to pitch camp and dig for water. The rhythmic repetition of the journey gives way to the fading light and the quiet rituals of survival. Fauré's Pavane offers a nostalgic, faded recapitulation, a brief moment of gentle humanity before the terrors of the night.
+  - n: 3
+    scene: "The magic circle of flour"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue — Contrapunctus I"
+    decision: added
+    why: >
+      Enkidu draws a magic circle of flour on the ground to protect Gilgamesh while he seeks a dream from Shamash. This is the application of ancient, geometric ritual to ward off chaos. Bach's precise, architectural counterpoint is the perfect sonic equivalent to drawing a circle of order in the dirt.
+  - n: 4
+    scene: "The first dream: the mountain falls"
+    force: fate
+    composer: Mahler
+    work: "Symphony No. 6 — I. Allegro energico"
+    decision: added
+    why: >
+      Gilgamesh wakes in terror: a mountain fell on them. The sheer, crushing weight of the omen requires inexorable, hammering force. Mahler's 6th opens with exactly this relentless, fatalistic march.
+  - n: 5
+    scene: "Enkidu interprets the mountain as victory"
+    force: revelation
+    composer: Pärt
+    work: "Cantus in Memoriam Benjamin Britten"
+    decision: added
+    why: >
+      Enkidu turns the terror into promise: the mountain is Humbaba, and it falls because they will defeat him. Pärt's descending bell and strings provide a chilling but luminous stillness—the omen is translated from fear into divine truth.
+  - n: 6
+    scene: "The second dream: the wild bull"
+    force: divine-intervention
+    composer: Wagner
+    work: "Das Rheingold — Entry of the Gods into Valhalla"
+    decision: added
+    why: >
+      Gilgamesh dreams of a terrifying wild bull, but someone brings him water. Enkidu interprets: the bull is not their enemy, it is Shamash the protector. The sudden realization of divine presence shielding them demands bright, massive brass.
+  - n: 7
+    scene: "The third dream: fire and ash"
+    force: wrath
+    composer: Stravinsky
+    work: "The Firebird — Infernal Dance"
+    decision: added
+    why: >
+      The sky goes dark, thunder rolls, fire rains down and turns to ash. This is the pure, chaotic violence of the coming battle with Humbaba manifesting in sleep. Stravinsky's Infernal Dance provides the jagged, rhythmic pressure and unresolved terror.
+  - n: 8
+    scene: "Arrival at the edge of the Cedar Forest"
+    force: fate
+    composer: Sibelius
+    work: "Tapiola, Op. 112"
+    decision: added
+    why: >
+      They finally reach the gate of the forest. Gilgamesh's courage falters; they stare into the dark, towering cedars. Sibelius's Tapiola is the ultimate evocation of ancient, terrifying, non-human forest spirits. It is ominous, vast, and completely indifferent to the heroes.

@@ -1,0 +1,72 @@
+# Tale of Genji — Chapter 3 (Utsusemi / The Shell of the Locust) — curated music arc
+work: tale-of-genji
+book: 3
+title: "The Shell of the Locust: The Geometry of Evasion"
+length_minutes: 42
+principle: >
+  Score the asymmetry between Genji's expectation of submission and Utsusemi's
+  successful evasion. The chapter is about the gap between what power assumes
+  and what agency can withhold. The register is tense, quiet, and unresolved.
+force_arc: [desire, desire, metamorphosis, comedy, memory]
+dominant_force: desire
+tracks:
+  - n: 1
+    scene: "Genji returns to the house / the assumed conquest"
+    force: desire
+    composer: Szymanowski
+    work: "Violin Concerto No. 1, Op. 35 (opening)"
+    decision: added
+    why: >
+      Genji returns expecting a repetition of his victory. Szymanowski's
+      ecstatic, shimmering violin lines give the sound of an anticipation
+      that assumes its own fulfillment. The orchestration is dense with
+      night-scents and aristocratic entitlement, vibrating with a chromatic
+      heat that belongs entirely to Genji's internal state.
+  - n: 2
+    scene: "Genji observing the women playing Go / the visual trap"
+    force: desire
+    composer: Ravel
+    work: "String Quartet in F major — II. Assez vif. Très rythmé"
+    decision: added
+    why: >
+      Genji spies on Utsusemi and her stepdaughter Nokiba no Ogi playing Go.
+      It is a scene of intense, covert looking. Ravel's pizzicato second
+      movement gives the precise texture of this voyeurism: plucked, rhythmic,
+      intensely focused, and slightly predatory. It is the sound of a trap
+      being visually set.
+  - n: 3
+    scene: "Utsusemi slips away, leaving only her robe / the empty shell"
+    force: metamorphosis
+    composer: Strauss
+    work: "Metamorphosen (closing section)"
+    decision: added
+    why: >
+      When Genji finally breaches the room, Utsusemi has vanished, leaving
+      only her perfumed robe—the 'shell of the locust.' She has transformed
+      from an available object into an absolute absence. Strauss's shifting,
+      grieving string textures capture the unreality of this moment: Genji
+      is left holding the form of the woman without the woman herself.
+  - n: 4
+    scene: "Genji sleeps with Nokiba no Ogi instead / the substitution"
+    force: comedy
+    composer: Mozart
+    work: "Le nozze di Figaro, K. 492 — Act IV Finale (selections)"
+    decision: added
+    why: >
+      In the dark, Genji sleeps with the stepdaughter, Nokiba no Ogi, who
+      assumes he is a normal suitor, while Genji pretends she is Utsusemi.
+      Mozart's Act IV Figaro finale is the ultimate music of nocturnal
+      substitution and aristocratic farce, capturing the hollow, almost
+      mechanical comedy of the displaced consummation.
+  - n: 5
+    scene: "Genji returns with the robe / the fixation on the trace"
+    force: memory
+    composer: Rachmaninoff
+    work: "Symphonic Dances, Op. 45 — I. Non allegro (coda)"
+    decision: added
+    why: >
+      Genji keeps the robe and obsesses over it. The object becomes a fetish
+      for the experience he was denied. Rachmaninoff's nostalgic, faded
+      recapitulations provide the exact emotional weather of this fixation:
+      a clinging to the trace of something that was never fully possessed in
+      the first place.
