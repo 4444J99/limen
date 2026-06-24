@@ -19,6 +19,7 @@ Pure + dependency-injected (the caller passes its own `gh`), so it carries no li
 trivially unit-testable. Every filesystem touch is atomic and FAIL-OPEN: a cursor read/write error
 degrades to "start at 0", never raising into the heartbeat. ([[no-never-happens-again]])
 """
+import fnmatch
 import json
 import os
 import tempfile
@@ -111,3 +112,87 @@ def scaled_limit(base, root, lo=50.0, span=25.0, max_mult=3.0):
         return base
     mult = 1.0 + min(max_mult - 1.0, (hr - lo) / span)
     return int(round(base * mult))
+
+
+# ── STALE-BASE GATE ───────────────────────────────────────────────────────────────────────────
+# A PR that is mergeable + CI-green can STILL be poison: if it branched from an old base, merging it
+# silently REVERTS work that landed on the base since — under an innocent title. That is exactly the
+# #111 incident: a "Bhagavad Gita chapters" CONTENT PR, branched weeks back, reverted 23 daemon files
+# (model-tiering, proprioception, route/converge/watchdog) the moment it merged. CI was green because
+# CI ran on its own stale tree. ([[pr111-daemon-regression-healed]] [[live-checkout-is-chaotic]])
+#
+# The cure, shared by BOTH organs so they stay "two halves of one verdict": before treating a
+# mergeable PR as READY, refuse it if merging would revert work — and route it to a rebase-onto-current
+# heal task that KEEPS the PR's genuine changes and DROPS only the reverting hunks. No unique work is
+# lost; the branch is absorbed toward current ideal form, then merged. Two tiers:
+#   • STALE-CORE — the PR touches the daemon BODY (code/orchestration) AND is not current with base.
+#     Core changes must ALWAYS be current before merge; any staleness — or a base we can't verify —
+#     is refused. Near-zero false positives (core-touching PRs are rare; a stale one is precisely the
+#     danger). This is the surgical #111 guard.
+#   • STALE-BASE — a generic PR branched far enough behind base (≥ LIMEN_STALE_BASE_MAX) to risk a
+#     silent revert. Repo-agnostic backstop; fails open to "available" so a transient API error never
+#     strands a healthy content PR.
+
+# The daemon's BODY — the code/orchestration that IS the organism, vs. content (courses/corpus/
+# studium/docs/tasks.yaml). DERIVED default, env-overridable (LIMEN_PROTECTED_PATHS), so a relocation
+# or layout change re-tunes it without a hardcode edit ([[derive-never-pin-hardcodes]]).
+_DEFAULT_PROTECTED = (
+    "cli/src/limen/*", "mcp/src/*", "web/api/*", "scripts/*.py", "scripts/*.sh", "container/*",
+)
+STALE_BASE_MAX_DEFAULT = 10
+
+
+def protected_globs():
+    raw = os.environ.get("LIMEN_PROTECTED_PATHS", "")
+    return [p.strip() for p in raw.split(",") if p.strip()] or list(_DEFAULT_PROTECTED)
+
+
+def repo_is_conductor(repo):
+    """True for the repo(s) where the protected globs denote the live daemon body. Default: the
+    `limen` conductor repo (nameWithOwner endswith /limen); LIMEN_CONDUCTOR_REPOS extends it to
+    other code repos sharing the layout. Other repos skip the core gate (no per-repo false positives)."""
+    raw = os.environ.get("LIMEN_CONDUCTOR_REPOS", "")
+    listed = [r.strip() for r in raw.split(",") if r.strip()]
+    if listed:
+        return repo in listed
+    return repo.split("/")[-1].lower() == "limen"
+
+
+def touches_protected(repo, paths):
+    """Does this PR's changed-file set include any daemon-body path in a conductor repo?"""
+    if not repo_is_conductor(repo):
+        return False
+    globs = protected_globs()
+    return any(any(fnmatch.fnmatch(p, g) for g in globs) for p in paths if p)
+
+
+def pr_behind_by(repo, base, head, gh_fn):
+    """Commits the PR's base is AHEAD of its head = how STALE the branch is. One `gh api compare`
+    call. Returns an int ≥ 0, or -1 when it can't be determined (missing refs / API error / fork)."""
+    if not base or not head:
+        return -1
+    try:
+        r = gh_fn(["api", f"repos/{repo}/compare/{base}...{head}", "--jq", ".behind_by"])
+        if getattr(r, "returncode", 1) != 0:
+            return -1
+        return int((getattr(r, "stdout", "") or "").strip())
+    except Exception:
+        return -1
+
+
+def stale_base_verdict(repo, paths, base, head, gh_fn, generic_max=None):
+    """Decide whether an otherwise-READY PR must be rebased before it can safely merge.
+    Returns "STALE-CORE", "STALE-BASE", or None (safe). Bounded: ONE compare call, only invoked for
+    ready candidates. The asymmetry is deliberate — the catastrophic case (reverting the body) is
+    fully guarded even when the base is unverifiable; the low-stakes generic case stays available."""
+    if generic_max is None:
+        try:
+            generic_max = int(os.environ.get("LIMEN_STALE_BASE_MAX", STALE_BASE_MAX_DEFAULT))
+        except ValueError:
+            generic_max = STALE_BASE_MAX_DEFAULT
+    behind = pr_behind_by(repo, base, head, gh_fn)
+    if touches_protected(repo, paths):
+        # core change: must be CURRENT. behind>0 (stale) OR behind<0 (unverifiable) ⇒ rebase first.
+        return None if behind == 0 else "STALE-CORE"
+    # generic PR: only flag when it branched FAR behind base. Unverifiable (-1) stays available.
+    return "STALE-BASE" if behind >= generic_max else None

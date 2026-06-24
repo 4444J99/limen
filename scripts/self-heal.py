@@ -46,7 +46,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _pr_scan
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.models import Task  # noqa: E402
-from _pr_scan import enumerate_open_prs, rotating_window, scaled_limit  # noqa: E402
+from _pr_scan import enumerate_open_prs, rotating_window, scaled_limit, stale_base_verdict  # noqa: E402
 
 # DERIVED from env so the conductor survives relocation; same defaults as merge-drain.py.
 OWNERS = [o.strip() for o in os.environ.get("LIMEN_OWNERS", "organvm,4444J99").split(",") if o.strip()]
@@ -82,6 +82,41 @@ KINDS = {
             "PR: {url}"
         ),
     },
+    # STALE-BASE family — the #111 guard. A mergeable+green PR off an OLD base would silently REVERT
+    # work that landed since. merge-drain refuses it; these tasks rebase it onto the CURRENT base,
+    # keeping the PR's own work and dropping only the reverting hunks. ([[pr111-daemon-regression-healed]])
+    "STALE-CORE": {
+        "slug": "rebase-stale",
+        "priority": "high",
+        "labels": ["rebase", "self-heal", "stale-base", "core"],
+        "title": "rebase {repo}#{num} onto current base — stale base touches the daemon body",
+        "context": (
+            "PR {repo}#{num} is MERGEABLE + green BUT its base is STALE and its diff touches CORE "
+            "daemon files (cli/src/limen, scripts/*.py|sh, mcp/src, web/api, container). Merging "
+            "as-is would silently REVERT newer code on the base — the #111 failure mode. Check out "
+            "the PR branch and REBASE it onto the CURRENT base (git fetch origin && git rebase "
+            "origin/<base>). During the rebase, KEEP every change that is genuinely this PR's own "
+            "work and DROP any hunk that would revert a file the PR did not intend to change "
+            "(especially core files it only carries because it branched old). Push --force-with-lease "
+            "to the SAME PR branch; confirm it reports MERGEABLE, current with base, and green. Do "
+            "NOT open a new PR and do NOT drop any unique work — absorb the branch toward current "
+            "ideal form. PR: {url}"
+        ),
+    },
+    "STALE-BASE": {
+        "slug": "rebase-stale",
+        "priority": "normal",
+        "labels": ["rebase", "self-heal", "stale-base"],
+        "title": "rebase {repo}#{num} onto current base — branched far behind",
+        "context": (
+            "PR {repo}#{num} is MERGEABLE + green but branched well behind its current base — the "
+            "structural condition for a stale-base silent revert. Check out the branch, REBASE it "
+            "onto the current base, KEEP all of the PR's genuine changes and DROP any hunk that "
+            "merely reverts base files it didn't mean to touch, push --force-with-lease to the SAME "
+            "branch, and confirm MERGEABLE + current + green. Do NOT open a new PR; preserve all "
+            "unique work. PR: {url}"
+        ),
+    },
 }
 
 
@@ -95,7 +130,8 @@ def assess(pr):
     repo, num, url = pr
     try:
         r = gh(["pr", "view", str(num), "-R", repo, "--json",
-                "mergeable,mergeStateStatus,state,statusCheckRollup,isDraft"], timeout=40)
+                "mergeable,mergeStateStatus,state,statusCheckRollup,isDraft,files,baseRefName,headRefOid"],
+               timeout=40)
         if r.returncode != 0:
             return (repo, num, url, "ERR")
         d = json.loads(r.stdout)
@@ -109,6 +145,12 @@ def assess(pr):
         if d.get("mergeable") == "CONFLICTING":
             return (repo, num, url, "CONFLICT")
         if d.get("mergeable") == "MERGEABLE":
+            # STALE-BASE GATE (identical to merge-drain.assess — one verdict): refuse a green+mergeable
+            # PR off an old base that would silently revert work, and emit a rebase-to-current heal task.
+            paths = [f.get("path", "") for f in (d.get("files") or [])]
+            sb = stale_base_verdict(repo, paths, d.get("baseRefName"), d.get("headRefOid"), gh)
+            if sb:
+                return (repo, num, url, sb)  # STALE-CORE / STALE-BASE → rebase task below
             return (repo, num, url, "READY")
         return (repo, num, url, "BLOCKED")
     except Exception:
@@ -198,6 +240,7 @@ def main():
                 would.append((tid, verdict, repo, num))
         print(f"[self-heal] DRY-RUN window={len(prs)}/{len(allprs)} ready={b['READY']} "
               f"ci-red={b['CI-RED']} conflict={b['CONFLICT']} ci-pending={b['CI-PENDING']} "
+              f"stale-core={b['STALE-CORE']} stale-base={b['STALE-BASE']} "
               f"| would-emit={len(would)} already-queued={dup}")
         print("| heal task id (would emit) | kind | repo | pr |")
         print("|---|---|---|---|")
@@ -233,7 +276,8 @@ def main():
 
     ts = datetime.datetime.now().strftime("%F %T")
     summary = (f"[self-heal] {ts} window={len(prs)}/{len(allprs)} ready={b['READY']} ci-red={b['CI-RED']} "
-               f"conflict={b['CONFLICT']} ci-pending={b['CI-PENDING']} | emitted={len(emitted)} (limit={limit})")
+               f"conflict={b['CONFLICT']} ci-pending={b['CI-PENDING']} stale-core={b['STALE-CORE']} "
+               f"stale-base={b['STALE-BASE']} | emitted={len(emitted)} (limit={limit})")
     print(summary)
     for tid in emitted:
         print(f"    emit: {tid}")

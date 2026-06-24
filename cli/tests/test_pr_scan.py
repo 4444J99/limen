@@ -97,3 +97,77 @@ def test_scaled_limit_headroom(tmp_path):
     assert m.scaled_limit(10, tmp_path) == 10
     usage.unlink()
     assert m.scaled_limit(10, tmp_path) == 10, "no usage.json → base limit (fail-open)"
+
+
+# ── STALE-BASE GATE (the #111 guard) ────────────────────────────────────────────────────────────
+
+def _defaults(monkeypatch):
+    # exercise the DERIVED defaults, immune to whatever the live shell exports.
+    for k in ("LIMEN_PROTECTED_PATHS", "LIMEN_CONDUCTOR_REPOS", "LIMEN_STALE_BASE_MAX"):
+        monkeypatch.delenv(k, raising=False)
+
+
+def _gh_behind(n, rc=0):
+    """fake gh: `gh api …compare…` → behind_by = n (rc!=0 ⇒ unverifiable)."""
+    def f(args, timeout=60):
+        if args and args[0] == "api":
+            return _R(str(n), rc=rc)
+        return _R("", rc=1)
+    return f
+
+
+def test_touches_protected_only_in_conductor_repo(monkeypatch):
+    m = _load()
+    _defaults(monkeypatch)
+    # core path in the limen conductor repo → protected
+    assert m.touches_protected("organvm/limen", ["cli/src/limen/dispatch.py", "README.md"])
+    assert m.touches_protected("organvm/limen", ["scripts/self-heal.py"])
+    # content path in the conductor repo → not protected
+    assert not m.touches_protected("organvm/limen", ["studium/gita.md", "docs/x.md", "tasks.yaml"])
+    # the SAME core-looking path in a NON-conductor repo → not protected (no per-repo false positives)
+    assert not m.touches_protected("organvm/exporter", ["cli/src/limen/dispatch.py"])
+
+
+def test_conductor_repos_env_override(monkeypatch):
+    m = _load()
+    _defaults(monkeypatch)
+    monkeypatch.setenv("LIMEN_CONDUCTOR_REPOS", "organvm/widget")
+    assert m.repo_is_conductor("organvm/widget")
+    assert not m.repo_is_conductor("organvm/limen"), "explicit list replaces the /limen default"
+
+
+def test_pr_behind_by_parses_counts_and_fails_to_minus1(monkeypatch):
+    m = _load()
+    assert m.pr_behind_by("organvm/limen", "main", "deadbeef", _gh_behind(7)) == 7
+    assert m.pr_behind_by("organvm/limen", "main", "deadbeef", _gh_behind(0)) == 0
+    assert m.pr_behind_by("organvm/limen", "main", "deadbeef", _gh_behind(0, rc=1)) == -1
+    assert m.pr_behind_by("organvm/limen", None, "deadbeef", _gh_behind(7)) == -1, "missing ref ⇒ -1"
+
+
+def test_stale_verdict_core_must_be_current(monkeypatch):
+    m = _load()
+    _defaults(monkeypatch)
+    core = ["cli/src/limen/dispatch.py"]
+    # stale core → STALE-CORE ; current core → safe ; UNVERIFIABLE core → still refused (safety)
+    assert m.stale_base_verdict("organvm/limen", core, "main", "h", _gh_behind(3)) == "STALE-CORE"
+    assert m.stale_base_verdict("organvm/limen", core, "main", "h", _gh_behind(0)) is None
+    assert m.stale_base_verdict("organvm/limen", core, "main", "h", _gh_behind(0, rc=1)) == "STALE-CORE"
+
+
+def test_stale_verdict_generic_only_when_far_behind(monkeypatch):
+    m = _load()
+    _defaults(monkeypatch)
+    content = ["studium/gita.md"]
+    # far behind (≥ default 10) → STALE-BASE ; mildly behind → safe ; unverifiable → available
+    assert m.stale_base_verdict("organvm/exporter", content, "main", "h", _gh_behind(15)) == "STALE-BASE"
+    assert m.stale_base_verdict("organvm/exporter", content, "main", "h", _gh_behind(3)) is None
+    assert m.stale_base_verdict("organvm/exporter", content, "main", "h", _gh_behind(0, rc=1)) is None
+
+
+def test_stale_verdict_threshold_env_override(monkeypatch):
+    m = _load()
+    _defaults(monkeypatch)
+    monkeypatch.setenv("LIMEN_STALE_BASE_MAX", "5")
+    content = ["studium/gita.md"]
+    assert m.stale_base_verdict("organvm/exporter", content, "main", "h", _gh_behind(6)) == "STALE-BASE"
+    assert m.stale_base_verdict("organvm/exporter", content, "main", "h", _gh_behind(4)) is None
