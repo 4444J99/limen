@@ -1,0 +1,96 @@
+# Beowulf — Fitt II — curated music arc
+# Grendel alone: the monster in full knowledge of what he excludes
+work: beowulf
+book: 2
+title: "Beowulf Fitt II: Grendel in Full"
+length_minutes: 78
+principle: >
+  Fitt II is Grendel's monologue, though he does not speak. The fitt opens on the creature itself — not the fear he causes but his own condition. He is God's outcast, descended from Cain, consigned to darkness and exile. He hears the creation-song from Heorot and knows himself as its opposite: non-creation, un-blessing, the thing that God made by making *against*. The fitt then traces the eruption: the night-raid, the taking of thirty men, the establishment of his terrible kingship over Heorot's night. Grendel is not here a monster but a being with theological weight — a perverse mirror of human kingship, ruling over devastation instead of glory.
+force_arc: [fate, exile, wrath, wrath, fate, wrath, fate, grief, fate, wrath]
+dominant_force: wrath
+tracks:
+  - n: 1
+    scene: "Grendel's genealogy — descended from Cain"
+    force: fate
+    composer: Shostakovich
+    work: "Symphony No. 8 — I. Adagio"
+    decision: added
+    why: >
+      Grendel is introduced not as a creature but as a theological figure — the distant descendant of the first murderer, cursed by God to wander the earth, excluded from light and fellowship. Shostakovich's First Movement of the Eighth is slow, chromatic, opening with the sense of something ancient and doomed already in motion. The music carries the weight of inherited curse — not sudden monstrosity but the grinding pressure of a genealogy that ends in darkness. The fitt immediately establishes that Grendel's exclusion is not circumstantial but written into his very origin.
+  - n: 2
+    scene: "The moors where Grendel dwells — exile made visible"
+    force: exile
+    composer: Sibelius
+    work: "Tapiola"
+    decision: added
+    why: >
+      Grendel lives on the moors, in marshes and fens, in a landscape where no human can follow safely. Tapiola — Sibelius' sole tone-poem — captures the essence of this unreclaimed wilderness: a place of Finnish forests and deep water, music that sounds like geography itself, ancient and indifferent. It is exile made audible, not lamentation but the actual landscape of exclusion. The music does not sympathize with Grendel; it locates him in a physical reality that precedes human sympathy.
+  - n: 3
+    scene: "Hearing Heorot's feast — the moment of eruption"
+    force: wrath
+    composer: Stravinsky
+    work: "The Rite of Spring — 'The Sacrificial Dance'"
+    decision: added
+    why: >
+      The poem says Grendel hears the joy of the feast, and in that moment "his heart swelled with wrath." This is the ignition point: the creature hears what he cannot be part of, feels the precise measure of his exclusion. Stravinsky's sacrificial dance — its irregular rhythms, its primitive force, its sense of building pressure toward inevitable violence — captures this rage as a kind of inverted ritual. Grendel will become a counter-priest, offering the Danes' bodies as his own sacrifice.
+  - n: 4
+    scene: "The night-journey to Heorot — darkness to light"
+    force: wrath
+    composer: Wagner
+    work: "Tristan und Isolde — Prelude"
+    decision: added
+    why: >
+      Grendel crosses the dark moors toward the golden hall, drawn by light and sound. The Tristan Prelude — unresolved, suspended, building toward a climax that never fully arrives — matches the dread tension of this approach. It is Wagner's music of desire and impossibility: Grendel moves toward something he will seize but cannot ever possess, toward violence that is itself a form of claiming. The prelude's characteristic chromaticism is the sound of crossing a threshold that cannot be un-crossed.
+  - n: 5
+    scene: "The attack — the taking of thirty thanes"
+    force: fate
+    composer: Bartók
+    work: "Music for Strings, Percussion and Celesta — II. Allegro"
+    decision: added
+    why: >
+      The actual violence of the attack is not described in detail in the poem — we see the bodies and the grief, but not the killing itself. Bartók's second movement is violent, structured, implacable: pizzicato strings, driving ostinatos, percussion like weapons themselves. Unlike the Adagio (used in Fitt I for the silence after the attack), this movement is *action* — the creature moving with purpose, with terrifying economy. It is fate executing itself through Grendel's will.
+  - n: 6
+    scene: "The dragging back to the moor — claiming the lair"
+    force: wrath
+    composer: Penderecki
+    work: "Stabat Mater"
+    decision: added
+    why: >
+      The bodies are carried away into darkness, into Grendel's realm. Penderecki's Stabat Mater — a work of profound grief and rage at human suffering — here inverts: it is the sound of the sufferer transforming into the taker, the mourned into the mourner. The piece's dissonant layers and its quality of lamentation made perverse capture the moment where violence converts to possession, where Grendel establishes his counter-kingdom under Heorot.
+  - n: 7
+    scene: "The discovery at dawn — the Danes' horror"
+    force: fate
+    composer: Grieg
+    work: "In the Hall of the Mountain King"
+    decision: added
+    why: >
+      When the Danes discover the attack, they find Grendel's arm torn off (he will escape, but leaves proof). The discovery itself is a moment of absolute reversal: the greatest hall in the world reveals itself as penetrable, as a place where the Danes' confidence has been catastrophically wrong. Grieg's cavern-music — menacing, vast, making the small figures seem insignificant — transforms Heorot into a space where human order has been violated. The music establishes that the creature was *in the hall* and is now gone into darkness, a reality the Danes cannot deny.
+  - n: 8
+    scene: "Twelve years of unrelenting reign — Grendel's kingship"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 6 — IV. Finale (Allegro moderato)"
+    decision: added
+    why: >
+      From the first attack, Grendel returns again and again, every night for twelve years. The fitt insists on this duration: it is not a siege but an occupation, a perverse counter-monarchy. Grendel rules the night; Hrothgar rules the day. Mahler's Sixth finale — a movement of crushing, unrelenting downward motion, the collapse of the protagonist's world — captures the weight of these twelve years. The music is not explosive tragedy but a slow wearing down, the repeated hammer blows of fate hammering the same victim night after night.
+  - n: 9
+    scene: "No thane dares sleep in Heorot — the hall stands empty"
+    force: fate
+    composer: Vaughan Williams
+    work: "The Lark Ascending"
+    decision: added
+    why: >
+      This inverts the earlier triumph: the great hall, built for feasting and fellowship, becomes a space of terror. The Danes abandon it at night, leaving it empty and dark — a complete inversion of its purpose. Vaughan Williams' Lark — a piece of English pastoral beauty rendered uncanny here — captures the sense of something that should be innocent (a great hall, a feast-place) made terrible through occupation by the other. The lark's ascending melody is now the sound of creatures who are not human, not bound by the laws that bind men.
+  - n: 10
+    scene: "Fitt II closes — Grendel in absolute dominion"
+    force: wrath
+    composer: Messiaen
+    work: "Oraison pour le silence de l'amour"
+    decision: added
+    why: >
+      The fitt ends not with resolution but with a question: twelve years, and no remedy. Grendel has established his reign as absolute. Messiaen's "Prayer for the Silence of Love" — one of his most desolate works, a prayer offered to void rather than divinity — captures the moment where human hope seems exhausted. Grendel is not yet challenged; his dominion is complete. The music acknowledges that no human counsel, no prayer to heathen gods, has produced any avenue of escape.
+demoted:
+  - composer: Britten
+    work: "War Requiem — Sanctus"
+    status: "removed; save for the mass death passage in Fitt 38–43"
+    why: "The Dies Irae energy would anticipate the ending too early. Grendel's reign is terrible but not yet terminal; save Britten's eschatological weight for the dragon and Beowulf's death."

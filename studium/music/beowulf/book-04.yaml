@@ -1,0 +1,88 @@
+# Beowulf — Fitt IV — curated music arc
+# Beowulf's voyage: the young warrior crossing the whale-road
+work: beowulf
+book: 4
+title: "Beowulf Fitt IV: The Voyage Across the Whale-Road"
+length_minutes: 68
+principle: >
+  Fitt IV is the hero's movement from Geatland toward Denmark — a sea-crossing that is both literal and metaphorical. The fitt opens with Beowulf choosing his companions and preparing the ship, moves through the crossing itself (the "whale-road," the open sea, the liminal space between worlds), and closes with the sighting of the Danish cliffs and the landing. This is the moment where the hero transforms from a figure who heard the call into a figure actively answering it. The movement is not triumphant but purposeful, marked by the young warrior's confidence and the elemental power of the sea itself. The dominant force is desire — not the selfish desire of Grendel but the desire that aligns individual will with what the world requires. The fitt traces the hero's commitment: he leaves behind everything familiar and ventures toward a challenge that is not his by birth, merely by choice.
+force_arc: [desire, desire, kingship, desire, fate, fate, return, return, ascent]
+dominant_force: desire
+tracks:
+  - n: 1
+    scene: "Beowulf chooses his companions — the gathering of warriors"
+    force: desire
+    composer: Wagner
+    work: "Die Meistersinger von Nürnberg — Overture"
+    decision: added
+    why: >
+      Beowulf selects the fifteen best warriors of Geatland to accompany him. The gathering is not a military muster but a choosing, a recognition of excellence and shared purpose. Wagner's Meistersinger Overture — with its sense of guild-fellowship, its celebration of craft and human excellence, its themes of apprenticeship and mastery — captures the moment where the hero identifies those who will stand with him. The music is robust, confident, fundamentally collective in its joy.
+  - n: 2
+    scene: "The preparation of the ship — the arming and provisioning"
+    force: desire
+    composer: Holst
+    work: "The Planets — 'Jupiter, the Bringer of Jollity'"
+    decision: added
+    why: >
+      The ship is readied: weapons loaded, supplies stowed, the vessel made ready for the open sea. There is a quality of preparation here that is almost ceremonial, a sense of purpose being embodied in material form. Holst's Jupiter — expansive, generous, the music of human joy and fellowship — captures the confidence of this moment. The hero is fully committed; the material world is aligned with his intention. The music is triumph-ready but not yet triumphant; it is preparation as fulfilment.
+  - n: 3
+    scene: "The launch — setting out from Geatland"
+    force: kingship
+    composer: Dvorak
+    work: "Symphony No. 9 in E minor — II. Largo"
+    decision: added
+    why: >
+      The ship departs. Beowulf leaves his own kingship (as king-in-waiting), his own people, everything secure and known, to answer a call from a foreign land. Dvorak's Largo — from the New World Symphony, the music of migration and departure — carries the weight of this moment. It is not melancholic but solemn, the recognition that the hero is leaving behind a world of certainty for a world of trial. The movement has the quality of a threshold being crossed, a vow being made manifest.
+  - n: 4
+    scene: "The first days at sea — the rhythm of the voyage"
+    force: desire
+    composer: Debussy
+    work: "La mer — 'Dialogue du vent et de la mer'"
+    decision: added
+    why: >
+      The open sea. Days pass in the rhythm of the waves, the wind filling the sail, the ship moving steadily toward the unknown. Debussy's final movement of La mer — the wind and sea in conversation, the rhythm of waves and the shimmer of light on water — captures the elemental quality of this passage. It is not hostile but not friendly either; it is the sea as itself, indifferent and vast. The hero moves through it, committed, awake to every sensation.
+  - n: 5
+    scene: "The sea's moods — weather and night-crossing"
+    force: fate
+    composer: Sibelius
+    work: "The Oceanides"
+    decision: added
+    why: >
+      The voyage is not untroubled. The poem notes that the sea had moods, that the crossing demanded the heroes' vigilance and courage. Sibelius' Oceanides — the nymphs of the sea — captures the sense of the water as a living force, neither hostile nor welcoming but present and powerful. The music is fluid, shifting, the sense of forces moving beneath the surface. The heroes cross not by conquering the sea but by moving through it with skill and readiness.
+  - n: 6
+    scene: "The long watch through storm and darkness"
+    force: fate
+    composer: Penderecki
+    work: "Polymorphia"
+    decision: added
+    why: >
+      The night watch on the sea: the darkness complete, the ship moving through unknown waters, the heroes alert against every possibility. Penderecki's Polymorphia — dense, shifting, the texture of it like a ship cutting through black water — captures the intensity of this moment. The music does not dramatize but sustains; it is the quality of being awake and vigilant in the face of vast forces. The heroes do not conquer; they endure and persist.
+  - n: 7
+    scene: "The turning of the voyage — the approach to land"
+    force: return
+    composer: Grieg
+    work: "Peer Gynt Suite No. 1 — 'Morning Mood'"
+    decision: added
+    why: >
+      After days at sea, the heroes see it: the cliffs of Denmark appearing at dawn. The moment of return — return to land, return to human settlement, return from the liminal space of the sea to the threshold of the unknown kingdom. Grieg's Morning Mood — the sun rising over familiar land, the sense of a world coming into visibility — captures this moment perfectly. It is not triumph but arrival, the recognition that the crossing has been achieved and a new trial is about to begin.
+  - n: 8
+    scene: "The sighting of Hrothgar's realm — cliffs and coast-buildings"
+    force: return
+    composer: Vaughan Williams
+    work: "The Lark Ascending"
+    decision: added
+    why: >
+      The cliffs emerge into clear view; the coast of Hrothgar's realm becomes visible. The heroes see evidence of human civilisation — the works of men, the architecture of a kingdom. Vaughan Williams' Lark Ascending — the pastoral beauty of the English landscape rendered in music, the sense of something familiar and strange at once — captures this moment where the unknown land is transformed into a specific place, a realm with its own character. The music is not welcoming but recognitional; it is the quality of seeing a place for the first time as a place.
+  - n: 9
+    scene: "The beaching — arrival in Denmark"
+    force: ascent
+    composer: Handel
+    work: "Music for the Royal Fireworks — Finale"
+    decision: added
+    why: >
+      The ship reaches land; the heroes disembark. The crossing is complete. Beowulf and his companions have traveled the whale-road and arrived. Handel's Finale of the Royal Fireworks — celebratory, clear, the music of triumph and arrival — marks the moment. The fitt closes with the heroes standing on Danish soil, ready to advance inland toward Heorot. The ascent continues; the next trial is ahead.
+demoted:
+  - composer: Wagner
+    work: "Der fliegende Holländer — Overture"
+    status: "removed; wrong tone"
+    why: "The Flying Dutchman is curse-music, eternal wandering. Beowulf's voyage is purposeful, bounded, moving toward a destination. Save Wagner's doom-journeys for the dragon."

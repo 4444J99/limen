@@ -1,0 +1,167 @@
+{
+  "beowulf_fitts_2_5_analysis": [
+    {
+      "fitt": 2,
+      "title": "Grendel's Characterization",
+      "dominant_themes": [
+        "grief",
+        "fate",
+        "wrath"
+      ],
+      "scenes": [
+        {
+          "scene_number": 1,
+          "title": "Grendel hears the joy of Heorot",
+          "description": "Grendel, dwelling in the moors as a cursed outcast (Cain's kin), endures torment hearing the nightly harp and creation-song from the lit hall. Defined as a theological exile unable to enter.",
+          "narrative_beat": "Opening — establishes antagonist as spiritual exile; envy motivates violence",
+          "emotional_tone": "torment, envy, exclusion"
+        },
+        {
+          "scene_number": 2,
+          "title": "The first night raid",
+          "description": "Grendel seizes thirty sleeping thanes, slaughters them, and carries bodies back to his lair. Dawn reveals emptied benches and grief in the hall.",
+          "narrative_beat": "Middle — inciting catastrophe; converts threat to concrete loss",
+          "emotional_tone": "violence, shock, grief"
+        },
+        {
+          "scene_number": 3,
+          "title": "Twelve years of unrelenting reign",
+          "description": "Attacks continue nightly for twelve winters with no truce or wergild. Heorot stands empty after dark—darkness against daylight rule.",
+          "narrative_beat": "Closing — duration establishes scale of civilizational failure",
+          "emotional_tone": "endurance, despair, civilizational collapse"
+        }
+      ],
+      "dramatic_arc": "Exclusion/envy → eruption → endurance (twelve years of grief)",
+      "music_arc_potential": [
+        "Opening dissonance (isolation theme)",
+        "Crescendo into violence",
+        "Sustained minor/diminished chords reflecting 12-year occupation"
+      ]
+    },
+    {
+      "fitt": 3,
+      "title": "Transition: Grendel's Terror to Beowulf's Summoning",
+      "dominant_themes": [
+        "grief",
+        "law",
+        "fate"
+      ],
+      "scenes": [
+        {
+          "scene_number": 1,
+          "title": "Hrothgar's helpless mourning",
+          "description": "Aged king sits sleepless and joyless; strongest counsels prove useless. Councils debate but find no answer.",
+          "narrative_beat": "Opening — exhaustion of human law and counsel",
+          "emotional_tone": "helplessness, aging, despair"
+        },
+        {
+          "scene_number": 2,
+          "title": "Heathen vows at idol-shrines",
+          "description": "In despair, Danes sacrifice at pagan temples, praying to the soul-slayer. Christian poet notes misplaced hope.",
+          "narrative_beat": "Middle — spiritual nadir; all resources fail",
+          "emotional_tone": "desperation, spiritual emptiness, misplaced faith"
+        },
+        {
+          "scene_number": 3,
+          "title": "News reaches Beowulf in Geatland",
+          "description": "Word of Grendel crosses the sea. Beowulf, strongest man living, hears and resolves to seek Hrothgar.",
+          "narrative_beat": "Closing — narrative pivot; focus shifts to hero's response",
+          "emotional_tone": "resolution, hope rekindled, heroic calling"
+        }
+      ],
+      "dramatic_arc": "Helplessness → spiritual failure → the turn (hero hears and resolves)",
+      "music_arc_potential": [
+        "Dirge-like opening (exhaustion theme)",
+        "Dissonant sacrifice sequence",
+        "Shift to resolute, ascending heroic motif"
+      ]
+    },
+    {
+      "fitt": 4,
+      "title": "Beowulf's Voyage Across the Whale-Road",
+      "dominant_themes": [
+        "desire",
+        "fate",
+        "sacrifice"
+      ],
+      "scenes": [
+        {
+          "scene_number": 1,
+          "title": "Choosing the company and launching",
+          "description": "Beowulf selects fourteen warriors; guided by skilled seaman, leads them to prepared ship. Warriors bear bright war-gear.",
+          "narrative_beat": "Opening — gathering will and means; hero answers un-summoned need",
+          "emotional_tone": "resolve, preparation, camaraderie"
+        },
+        {
+          "scene_number": 2,
+          "title": "The voyage over the whale-road",
+          "description": "Foamy-necked ship runs like a bird; sea crossed in good time as prow cuts swell. Open ocean imagery dominates.",
+          "narrative_beat": "Middle — threshold-crossing between known world and danger",
+          "emotional_tone": "journey, liminal space, forward momentum"
+        },
+        {
+          "scene_number": 3,
+          "title": "Sighting Danish cliffs and beaching",
+          "description": "On day two, Geats sight gleaming sea-cliffs and disembark; warriors shake mail-shirts, give thanks for easy passage.",
+          "narrative_beat": "Closing — arrival; journey resolves into landfall",
+          "emotional_tone": "relief, arrival, gratitude"
+        }
+      ],
+      "dramatic_arc": "Resolve and embarkation → whale-road passage → landfall on imperiled shore",
+      "music_arc_potential": [
+        "Martial gathering (assembly theme)",
+        "Flowing, rhythmic passage (seafaring theme)",
+        "Triumphant landfall (arrival fanfare)"
+      ]
+    },
+    {
+      "fitt": 5,
+      "title": "Beowulf's Arrival in Denmark",
+      "dominant_themes": [
+        "law",
+        "kingship",
+        "supplication"
+      ],
+      "scenes": [
+        {
+          "scene_number": 1,
+          "title": "The coast-guard challenges strangers",
+          "description": "Hrothgar's watchman sees armed band, demands to know who they are and their right to land. Notes one appears a noble.",
+          "narrative_beat": "Opening — law/order tests newcomers at the border",
+          "emotional_tone": "tension, protocol, assessment"
+        },
+        {
+          "scene_number": 2,
+          "title": "Beowulf's reply: lineage and errand",
+          "description": "Beowulf answers courteously: Geats, Hygelac's companions, seeking to help Hrothgar overcome the secret destroyer.",
+          "narrative_beat": "Middle — hero states identity, kin, and purpose; supplication in proper forms",
+          "emotional_tone": "courtesy, clarity, offer of aid"
+        },
+        {
+          "scene_number": 3,
+          "title": "Coast-guard grants passage",
+          "description": "Watchman accepts them as friends, pledges the ship safe, leads them toward the gold-roofed hall.",
+          "narrative_beat": "Closing — threshold opens; gatekeeper becomes escort",
+          "emotional_tone": "acceptance, hospitality, transition"
+        }
+      ],
+      "dramatic_arc": "Challenge at border → declaration and offered help → acceptance and guidance toward king",
+      "music_arc_potential": [
+        "Formal challenge (protocol theme)",
+        "Clear statement of purpose (heroic declaration)",
+        "Welcoming transition (hospitality theme)"
+      ]
+    }
+  ],
+  "synthesis": {
+    "overarching_4fitt_arc": [
+      "Grendel's exclusion and eruption (Fitt 2)",
+      "Kingdom's helplessness and the hero's summoning (Fitt 3)",
+      "Hero's embarkation and whale-road passage (Fitt 4)",
+      "Hero's arrival and formal greeting at the Danish threshold (Fitt 5)"
+    ],
+    "thematic_progression": "From monster-alienation through civilizational failure, to hero-answered calling, to the re-establishment of lawful order and supplication",
+    "dominant_emotional_trajectory": "Despair → Hope → Journey → Arrival & Protocol",
+    "music_composition_guidance": "Consider a four-movement structure mirroring the four fitts: (I) dissonant, isolated monster-music; (II) exhausted, dirge-like civic collapse; (III) resolute, rhythmic seafaring march; (IV) formal, ceremonial threshold-crossing with hints of hope"
+  }
+}

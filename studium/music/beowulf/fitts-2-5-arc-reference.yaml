@@ -1,0 +1,303 @@
+# Beowulf — Fitts II–V — Music Arc Reference
+# SCENE ANCHORS FOR COMPOSITION
+#
+# This file provides the scene-based structure for scoring Fitts 2–5.
+# Each fitt has 3 major scene anchors and a dominant emotional arc.
+# Use these to guide music composition, track selection, and transition moments.
+
+fitts_2_5_overview:
+  description: >
+    The four-fitt arc from Grendel's eruption through the hero's arrival.
+    Movement: Monster's isolation → Kingdom's collapse → Hero's answering → Threshold-crossing.
+    Thematic: Despair → Hope → Journey → Arrival & Protocol
+  dominant_emotional_arc: "despair → hope → journey → arrival"
+  force_arc: [wrath, grief, fate, grief, law, fate, desire, fate, sacrifice, law, kingship, supplication]
+
+---
+
+fitt_2:
+  title: "Grendel's Characterization & Eruption"
+  lines: "53–114"
+  duration_minutes: null  # To be determined by composer
+  dominant_force: grief
+  secondary_forces: [fate, wrath]
+
+  principle: >
+    Do not score Fitt II as "the monster attacks." Score it as the poem's first full statement
+    of the problem: alienation generates wrath, wrath generates suffering, suffering endures
+    as an institution. The fitt moves from Grendel's psychological torment (hearing joy he
+    cannot enter) through the violence of his eruption to the twelve-year occupation that
+    will define the Danes' entire world.
+
+  force_arc: [wrath, wrath, grief, fate, grief]
+
+  scenes:
+    - n: 1
+      title: "Grendel hears the joy of Heorot"
+      force: grief
+      emotional_tone: "torment, envy, exclusion"
+      key_narrative: >
+        Grendel dwells in the moors, descended from Cain, cursed to wander. He hears the
+        nightly harp and creation-song from inside the golden hall. Defined as a theological
+        exile—unable to enter the light, tormented by the joy he cannot possess.
+      music_anchor: >
+        Dissonant isolation theme. The sound of something pressing against glass—hearing
+        joy from which one is excluded. Harmonic territory: grinding, resentful, outside
+        the light. Think dissonance as claustrophobia.
+
+    - n: 2
+      title: "The first night raid"
+      force: wrath
+      emotional_tone: "violence, shock, sudden grief"
+      key_narrative: >
+        Grendel seizes thirty sleeping thanes, slaughters them, carries bodies to his lair.
+        At dawn, the benches are emptied. The great hall is shocked into silence and grief.
+      music_anchor: >
+        Crescendo into violence, then descent into silence. The music of sleep broken,
+        of disruption, of the sudden loss revealed. Percussion for the attack; then
+        harmonic descent into the silence of discovery.
+
+    - n: 3
+      title: "Twelve years of unrelenting reign"
+      force: grief
+      emotional_tone: "endurance, despair, civilizational collapse"
+      key_narrative: >
+        Attacks continue nightly for twelve winters with no truce, no wergild, no remedy.
+        Heorot stands empty after dark. Grendel rules the night; Hrothgar rules the day.
+        Neither can dislodge the other. The poem dwells on duration, not the violence.
+      music_anchor: >
+        Sustained minor/diminished harmonic territory. The music of watching something
+        continue year after year with no resolution. This is the fitt's emotional center—
+        not the moment of attack but the weight of twelve years of institutional failure.
+
+  demoted: []
+
+---
+
+fitt_3:
+  title: "Transition: Grendel's Terror to Beowulf's Summoning"
+  lines: "115–174"
+  duration_minutes: null
+  dominant_force: grief
+  secondary_forces: [law, fate]
+
+  principle: >
+    Fitt III is the valley—the moment where the Danes' own resources are exhausted.
+    The arc descends from helpless counsel through spiritual nadir (heathen sacrifice)
+    to the turn where Beowulf hears and resolves. This is the poem's demonstration that
+    no human law, no human counsel, can overcome what Grendel represents. Only something
+    from outside—the hero answering un-summoned—can break the impasse.
+
+  force_arc: [grief, law, fate, fate, fate]
+
+  scenes:
+    - n: 1
+      title: "Hrothgar's helpless mourning"
+      force: grief
+      emotional_tone: "helplessness, aging, despair"
+      key_narrative: >
+        Hrothgar sits sleepless and joyless. His strongest warriors debate in council.
+        All counsel proves useless. He cannot command the creature to cease. The king is
+        isolated by his own inability to protect his people.
+      music_anchor: >
+        Dirge-like, exhausted. The sound of institutions failing, of counsel reaching
+        its limit. Not dramatic despair but the weariness of watched time—a king aging
+        without rest.
+
+    - n: 2
+      title: "Heathen vows at idol-shrines"
+      force: fate
+      emotional_tone: "desperation, spiritual emptiness, misplaced faith"
+      key_narrative: >
+        In despair, the Danes sacrifice at heathen temples, praying to the soul-slayer.
+        The Beowulf-poet notes (with theological double-vision) that their counsel was
+        wrong, that God's grace was absent, that they were lost without knowing better.
+      music_anchor: >
+        Dissonant sacrifice sequence. The sound of structure itself failing. Breach the
+        acoustic threshold of form—something beyond human order crying out. This is
+        spiritual nadir.
+
+    - n: 3
+      title: "News reaches Beowulf in Geatland"
+      force: fate
+      emotional_tone: "resolution, hope rekindled, heroic calling"
+      key_narrative: >
+        Word of Grendel crosses the sea. Beowulf, the strongest man living, hears and
+        resolves to seek Hrothgar. He does not wait to be summoned; he answers an
+        un-summoned need. The narrative pivots. Focus shifts to the hero's response.
+      music_anchor: >
+        Shift to ascending heroic motif. The sound of answering, of hope beginning to
+        kindle, of direction being found. The music here opens the threshold between
+        nadir and arrival.
+
+  demoted: []
+
+---
+
+fitt_4:
+  title: "Beowulf's Voyage Across the Whale-Road"
+  lines: "175–228"
+  duration_minutes: null
+  dominant_force: desire
+  secondary_forces: [fate, sacrifice]
+
+  principle: >
+    Fitt IV is the hero's answer given form. The arc moves from will (assembling companions)
+    through passage (the whale-road) to arrival (Danish cliffs). This is a movement fitt—
+    the music of motion and transformation. The sea in Beowulf is both obstacle and kinship;
+    Beowulf comes from the sea to save a people who came from the sea. The music should
+    reflect passage as threshold-crossing, not merely as travel.
+
+  force_arc: [desire, desire, sacrifice, fate, fate]
+
+  scenes:
+    - n: 1
+      title: "Choosing the company and launching"
+      force: desire
+      emotional_tone: "resolve, preparation, camaraderie"
+      key_narrative: >
+        Beowulf selects fourteen warriors. They are guided by a skilled seaman. Warriors
+        bear bright war-gear. The ship is prepared. This is resolve made manifest—will
+        becoming action, a band assembling for un-summoned aid.
+      music_anchor: >
+        Martial gathering theme. The sound of preparation, of will becoming action.
+        Camaraderie, bright gear, the texture of a war-band assembling with purpose.
+
+    - n: 2
+      title: "The voyage over the whale-road"
+      force: desire
+      emotional_tone: "journey, liminal space, forward momentum"
+      key_narrative: >
+        The foamy-necked ship runs like a bird over the whale-road. The prow cuts the
+        swell. The voyage is swift and good. The Geats pass through the liminal space
+        between home and danger—the sea as both obstacle and kinship.
+      music_anchor: >
+        Flowing, rhythmic seafaring theme. The motion of the ship, the rhythm of oars
+        or sail. The sea-passage as transformation. Think: the texture of moving toward
+        something unknown but called.
+
+    - n: 3
+      title: "Sighting Danish cliffs and beaching"
+      force: fate
+      emotional_tone: "relief, arrival, gratitude"
+      key_narrative: >
+        On day two, the Geats sight gleaming sea-cliffs. They disembark, shake out mail-shirts,
+        give thanks for the easy passage. The journey resolves into landfall on imperiled shore.
+      music_anchor: >
+        Triumphant landfall fanfare. The sound of arrival, the resolution of the voyage into
+        place. The gratitude for safe passage. Something that suggests: here, at last—
+        though the danger waits.
+
+  demoted: []
+
+---
+
+fitt_5:
+  title: "Beowulf's Arrival in Denmark & Coast-Guard Challenge"
+  lines: "229–266"
+  duration_minutes: null
+  dominant_force: law
+  secondary_forces: [kingship, supplication]
+
+  principle: >
+    Fitt V is the ritual of arrival—the poem's insistence that Beowulf enters not by force
+    but by proper form. The arc moves from tension (border challenge) through declaration
+    (identity and purpose) to acceptance (threshold opens). This is a threshold fitt—the
+    poem's claim that law and protocol, even under mortal threat, are what hold civilization
+    together. Beowulf honors the form even as he comes to serve it.
+
+  force_arc: [law, law, kingship, supplication, law]
+
+  scenes:
+    - n: 1
+      title: "The coast-guard challenges strangers"
+      force: law
+      emotional_tone: "tension, protocol, assessment"
+      key_narrative: >
+        Hrothgar's watchman sees the armed band on the shore. He challenges them, demands
+        to know who they are and their right to land. He notes one warrior appears noble—
+        he can read rank in strangers. He performs his duty: law tests the newcomers at
+        the border.
+      music_anchor: >
+        Formal challenge theme. The sound of duty being performed, of order testing newcomers.
+        The border as a place where protocol matters. Not hostile, but formal—the texture
+        of law asserting itself.
+
+    - n: 2
+      title: "Beowulf's reply: lineage and errand"
+      force: supplication
+      emotional_tone: "courtesy, clarity, offer of aid"
+      key_narrative: >
+        Beowulf answers courteously. He states his people (Geats), his king (Hygelac), his
+        purpose (to help Hrothgar overcome the secret destroyer). He does not claim power.
+        He offers aid in proper forms: he supplicates, honoring the law he serves.
+      music_anchor: >
+        Clear statement of purpose. The sound of declaration—identity, lineage, intent.
+        Supplication in proper register. The texture of one who honors the form even as
+        he comes to serve it.
+
+    - n: 3
+      title: "Coast-guard grants passage and becomes guide"
+      force: law
+      emotional_tone: "acceptance, hospitality, transition"
+      key_narrative: >
+        The watchman accepts them as friends. He pledges the ship safe. He becomes their
+        guide, leading them toward the gold-roofed hall. The border opens. The stranger
+        is accepted. The threshold is crossed by proper form, not force.
+      music_anchor: >
+        Welcoming transition theme. The sound of protocol satisfied, the threshold opening,
+        the guide leading the hero forward. Hospitality in the formal register. The border
+        becomes a gateway.
+
+  demoted: []
+
+---
+
+synthesis:
+  four_fitt_structure:
+    - fitt: 2
+      summary: "Monster's isolation and eruption"
+      emotional_center: "the weight of twelve years of occupation"
+    - fitt: 3
+      summary: "Kingdom's helplessness and the hero's summoning"
+      emotional_center: "spiritual nadir; the turn"
+    - fitt: 4
+      summary: "Hero's embarkation and whale-road passage"
+      emotional_center: "forward momentum; answering the call"
+    - fitt: 5
+      summary: "Hero's arrival and threshold-crossing"
+      emotional_center: "proper form honored; the border opens"
+
+  thematic_progression: >
+    From monster-alienation through civilizational failure, to hero-answered calling,
+    to the re-establishment of lawful order and supplication. The arc moves from what
+    cannot be governed (Grendel, twelve years of failure) through what is answering
+    (the hero, his will, his passage) to what is eternal (law, protocol, the proper
+    crossing of thresholds).
+
+  force_distribution:
+    - fitt: 2
+      forces: {primary: grief, secondary: [fate, wrath]}
+    - fitt: 3
+      forces: {primary: grief, secondary: [law, fate]}
+    - fitt: 4
+      forces: {primary: desire, secondary: [fate, sacrifice]}
+    - fitt: 5
+      forces: {primary: law, secondary: [kingship, supplication]}
+
+  composition_guidance: >
+    Consider a four-movement structure mirroring the four fitts:
+    (I) Dissonant, isolated monster-music (Fitt 2);
+    (II) Exhausted, dirge-like civic collapse shifting to ascending heroic motif (Fitt 3);
+    (III) Resolute, rhythmic seafaring march with triumphant arrival (Fitt 4);
+    (IV) Formal, ceremonial threshold-crossing with proper protocol honored (Fitt 5).
+
+    The transition moments are crucial: Fitt 2→3 (eruption to helplessness); Fitt 3→4
+    (nadir to hope); Fitt 4→5 (passage to threshold). The music should reflect both
+    discrete moments and continuous movement.
+
+    Grendel's presence extends beyond Fitt 2—he is the unspoken background of Fitts 3–5.
+    The music should carry harmonic memory of Fitt 2's dissonance.
+
+# Source rail: Reading Orientation Fitt I (for reference on structure and approach)
+# Reference: beowulf.md, book-01.md (Fitt I music arc), film/beowulf.yaml (force mappings)

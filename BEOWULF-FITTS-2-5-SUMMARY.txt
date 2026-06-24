@@ -1,0 +1,223 @@
+================================================================================
+BEOWULF FITTS 2–5: THEMATIC DIVISIONS & SCENE PROGRESSION — SUMMARY
+================================================================================
+
+Three documents have been generated to support music arc composition for Beowulf
+Fitts 2–5. This summary outlines what each document provides.
+
+================================================================================
+DOCUMENT 1: BEOWULF-FITTS-2-5-MUSIC-COMPOSITION-GUIDE.md
+================================================================================
+
+PURPOSE: Comprehensive structured outline for each fitt.
+
+STRUCTURE:
+- Fitt 2: Grendel's Characterization & Eruption
+- Fitt 3: Transition—Grendel's Terror to Beowulf's Summoning
+- Fitt 4: Beowulf's Voyage Across the Whale-Road
+- Fitt 5: Beowulf's Arrival in Denmark
+
+FOR EACH FITT:
+1. Dominant Thematic Force (primary + secondary)
+2. Scene Structure (3 major anchors)
+   - Scene 1 (Opening)
+   - Scene 2 (Middle)
+   - Scene 3 (Closing)
+3. Dramatic Arc (summary of emotional progression)
+4. Music Arc Potential (scene-by-scene music guidance)
+5. Dominant Force Registry (breakdown of which forces appear where)
+
+SYNTHESIS SECTION:
+- Overarching 4-fitt structure
+- Thematic progression (monster alienation → civilization failure → hero answer → threshold crossing)
+- Dominant emotional trajectory (despair → hope → journey → arrival)
+- Music composition guidance (4-movement structure recommendations)
+- Force distribution across all fitts
+- Notes on continuity, the importance of transition moments, and the role of law/protocol
+
+USE THIS DOCUMENT: When you need a full, detailed breakdown of the 12 scenes
+(3 per fitt) and how they connect. Provides the intellectual foundation for
+all musical decisions.
+
+================================================================================
+DOCUMENT 2: studium/music/beowulf/fitts-2-5-arc-reference.yaml
+================================================================================
+
+PURPOSE: Scene-based structure file in YAML format, matching the style of
+book-01.yaml (Fitt I music arc).
+
+STRUCTURE:
+- Overview of 4-fitt arc
+- 4 separate fitt entries (Fitts 2–5)
+
+FOR EACH FITT:
+1. Title and line numbers
+2. Dominant force + secondary forces
+3. Principle (what NOT to do, what to emphasize)
+4. Force arc (sequence of forces through scenes)
+5. Scenes array (each with scene number, title, force, emotional tone, narrative,
+   and music anchor)
+
+SYNTHESIS SECTION:
+- 4-fitt structure summary
+- Thematic progression
+- Force distribution table
+- Composition guidance
+
+USE THIS DOCUMENT: For quick reference during actual curation. Provides the
+scene structure in a concise, machine-readable format. Good for moving between
+documents or for generating track lists.
+
+================================================================================
+DOCUMENT 3: studium/music/beowulf/FITTS-2-5-COMPOSER-GUIDANCE.md
+================================================================================
+
+PURPOSE: Detailed guidance on composer and musical-work selection for each scene.
+
+STRUCTURE:
+- Separate guidance for each of the 12 scenes (4 fitts × 3 scenes)
+
+FOR EACH SCENE:
+1. Thematic requirement (what the music needs to convey)
+2. Emotional register (the texture, not the content)
+3. Suggested composer approaches (3–4 options with reasoning)
+4. Critical notes (what to avoid, why)
+
+ADDITIONAL SECTIONS:
+- Cross-fitt continuities (how to bridge scenes across fitts)
+- Practical notes for composition (timing, reprises, voice vs. instrument, tempo/dynamics)
+- Reference: Fitt I force arc (for comparative perspective)
+
+USE THIS DOCUMENT: When selecting actual composers/works. Provides concrete
+guidance on what each scene requires and which musical traditions or composers
+can deliver it. Offers options rather than fixed selections, allowing flexibility.
+
+================================================================================
+QUICK REFERENCE: THE 12 SCENE ANCHORS
+================================================================================
+
+FITT 2: GRENDEL'S CHARACTERIZATION & ERUPTION
+  Scene 1: Grendel hears the joy of Heorot [dissonant isolation theme]
+  Scene 2: The first night raid [crescendo into violence, then silence]
+  Scene 3: Twelve years of unrelenting reign [sustained minor/diminished harmony]
+
+FITT 3: TRANSITION—GRENDEL'S TERROR TO BEOWULF'S SUMMONING
+  Scene 1: Hrothgar's helpless mourning [dirge-like exhaustion theme]
+  Scene 2: Heathen vows at idol-shrines [dissonant sacrifice sequence]
+  Scene 3: News reaches Beowulf in Geatland [ascending heroic motif]
+
+FITT 4: BEOWULF'S VOYAGE ACROSS THE WHALE-ROAD
+  Scene 1: Choosing the company and launching [martial gathering theme]
+  Scene 2: The voyage over the whale-road [flowing, rhythmic seafaring theme]
+  Scene 3: Sighting Danish cliffs and beaching [triumphant landfall fanfare]
+
+FITT 5: BEOWULF'S ARRIVAL IN DENMARK & THRESHOLD-CROSSING
+  Scene 1: The coast-guard challenges strangers [formal challenge theme]
+  Scene 2: Beowulf's reply—lineage and errand [clear statement of purpose]
+  Scene 3: The coast-guard grants passage and becomes guide [welcoming transition theme]
+
+================================================================================
+THEMATIC BREAKDOWN
+================================================================================
+
+DOMINANT FORCES ACROSS FITTS 2–5:
+  Fitt 2: wrath, grief, fate (monster's exclusion and eruption)
+  Fitt 3: grief, law, fate (kingdom's resources exhaust)
+  Fitt 4: desire, fate, sacrifice (hero's answering call)
+  Fitt 5: law, kingship, supplication (proper threshold-crossing)
+
+EMOTIONAL TRAJECTORY:
+  Fitt 2: Torment → Violence → Endurance
+  Fitt 3: Helplessness → Spiritual collapse → Turn (hero hears)
+  Fitt 4: Resolve → Passage → Arrival
+  Fitt 5: Challenge → Declaration → Acceptance
+
+OVERALL ARC: Despair → Hope → Journey → Arrival & Protocol
+
+================================================================================
+KEY INSIGHTS FOR COMPOSITION
+================================================================================
+
+1. GRENDEL'S PRESENCE EXTENDS BEYOND FITT 2
+   While Fitt 2 establishes Grendel, his occupation continues as an unspoken
+   background through Fitts 3–5. The music should carry harmonic memory of
+   Fitt 2's dissonance.
+
+2. THE EMOTIONAL CENTER IS FITT 3
+   This is where the Danes reach their deepest despair. The Fitt 3 nadir is
+   the valley that gives meaning to both Fitts 2 (the source of the crisis)
+   and Fitts 4–5 (the answering).
+
+3. LAW AND PROTOCOL ARE STRUCTURAL VALUES
+   Fitt 5's insistence on proper form (coast-guard challenges, Beowulf answers
+   courteously) is not decoration. It is the poem's claim that order, even under
+   mortal threat, is what holds civilization together.
+
+4. TRANSITION MOMENTS SHAPE THE ARC
+   - Fitt 2→3: From eruption to helplessness (the question: can this be endured?)
+   - Fitt 3→4: From nadir to hope (Beowulf hears; the hero answers)
+   - Fitt 4→5: From passage to threshold (the hero arrives; law tests him)
+
+5. THE STRUCTURE IS NATURALLY FOUR-MOVEMENT
+   (I) Dissonant, isolated monster-music (Fitt 2)
+   (II) Exhausted, dirge-like civic collapse shifting to ascending heroic motif (Fitt 3)
+   (III) Resolute, rhythmic seafaring march with triumphant arrival (Fitt 4)
+   (IV) Formal, ceremonial threshold-crossing with protocol honored (Fitt 5)
+
+================================================================================
+FILES CREATED
+================================================================================
+
+1. BEOWULF-FITTS-2-5-MUSIC-COMPOSITION-GUIDE.md
+   Location: /Users/4jp/Workspace/.limen-worktrees/studium-deepen-beowulf-ac7b/
+   Type: Comprehensive reference document
+   Size: ~3500 words
+
+2. studium/music/beowulf/fitts-2-5-arc-reference.yaml
+   Location: /Users/4jp/Workspace/.limen-worktrees/studium-deepen-beowulf-ac7b/studium/music/beowulf/
+   Type: YAML scene-structure file
+   Format: Matches book-01.yaml structure for Fitt I
+
+3. studium/music/beowulf/FITTS-2-5-COMPOSER-GUIDANCE.md
+   Location: /Users/4jp/Workspace/.limen-worktrees/studium-deepen-beowulf-ac7b/studium/music/beowulf/
+   Type: Composer and work-selection guidance
+   Size: ~5000 words
+
+4. beowulf-fitts-2-5-structure.json
+   Location: /Users/4jp/Workspace/.limen-worktrees/studium-deepen-beowulf-ac7b/
+   Type: JSON structure file (generated by agent)
+
+================================================================================
+HOW TO USE THESE DOCUMENTS
+================================================================================
+
+FOR UNDERSTANDING THE POEM:
+→ Read BEOWULF-FITTS-2-5-MUSIC-COMPOSITION-GUIDE.md first (establishes thematic
+  structure and emotional arcs)
+
+FOR QUICK REFERENCE DURING CURATION:
+→ Use fitts-2-5-arc-reference.yaml (scene anchors in concise format)
+
+FOR SELECTING COMPOSERS/WORKS:
+→ Reference FITTS-2-5-COMPOSER-GUIDANCE.md (specific recommendations with reasoning)
+
+FOR OVERALL STRUCTURE:
+→ The emotional trajectory (despair → hope → journey → arrival) should guide
+  the overall arc of the four fitts
+→ Transition moments between fitts are crucial for maintaining continuity
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+1. Use the 12 scene anchors as the starting points for track curation
+2. Consider the suggested composers/works as options, not prescriptions
+3. Ensure continuity of thematic force across fitts (harmony, tempo, instrumentation)
+4. Pay special attention to:
+   - The bridge from Fitt 2 → Fitt 3 (threat continues despite exhaustion)
+   - The bridge from Fitt 3 → Fitt 4 (nadir shifts to hope)
+   - The bridge from Fitt 4 → Fitt 5 (arrival becomes threshold)
+5. Test the arc with the reading: does the music guide the listener through
+   the same emotional progression as the poem?
+
+================================================================================
