@@ -24,6 +24,11 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 LOGS = ROOT / "logs"
 OUT_DIRS = [ROOT / "web" / "app" / "out", ROOT / "web" / "app" / "public"]
 LEDGER = Path(os.environ.get("LIMEN_OBLIGATIONS_LEDGER", ROOT / "obligations-ledger.json"))
+# Durable, git-tracked home for his-hand levers the mail organ does NOT produce (fleet/infra/etc.).
+# The mail ledger above is regenerated every beat, so anything hand-added there evaporates; levers
+# hung here persist and are unioned into the same face below. Append to it — never leave a his-hand
+# task in a chat or a memory file where it hangs on a person.
+HIS_HAND_LEVERS = Path(os.environ.get("LIMEN_HIS_HAND_LEVERS", ROOT / "his-hand-levers.json"))
 
 
 def _load_json(path, default):
@@ -36,6 +41,9 @@ def _load_json(path, default):
 def build_view():
     ledger = _load_json(LEDGER, {})
     obligations = ledger.get("obligations", [])
+    # Union the mail-derived levers (regenerated each beat) with the durable his-hand levers
+    # (git-tracked, survive regeneration). Fail-open: a missing/torn file yields [], never a crash.
+    levers = ledger.get("levers", []) + _load_json(HIS_HAND_LEVERS, {}).get("levers", [])
     return {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "built_at": ledger.get("generated_at", ""),
@@ -45,7 +53,7 @@ def build_view():
         "obligations": obligations,
         "verify_first": [o for o in obligations if o.get("verify_first")],
         "noise_killers": ledger.get("noise_killers", []),
-        "levers": ledger.get("levers", []),
+        "levers": levers,
     }
 
 

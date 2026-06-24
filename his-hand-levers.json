@@ -1,0 +1,19 @@
+{
+  "spine": "His-hand items the mail organ does NOT produce — hung here permanently (git-tracked, single canonical file) and unioned into the obligations face so they surface next to the mail levers and survive every ledger regeneration. Nothing here is forced; nothing sends or deletes; reversible only. Append a lever object to add the next his-hand item — it auto-surfaces, never hangs on a person or in a memory file.",
+  "levers": [
+    {
+      "id": "L-CLAUDE-AUTH",
+      "label": "Stop the recurring 'Not logged in' flap: the 24/7 fleet and your interactive session share ONE rotating Keychain OAuth token, so the fleet keeps rotating it out from under your login. Staged cascade fixes it (branch fix/claude-credential-race). Activate: (1) `claude setup-token`; (2) `bash scripts/claude-fleet-auth-probe.sh`; (3) `bash scripts/set-credential.sh LIMEN_CLAUDE_AUTH_TOKEN` (or LIMEN_CLAUDE_API_KEY if the probe says the Keychain was wiped); (4) deploy the branch (reconcile the live-checkout divergence first). Rung 0 self-heals on deploy with NONE of these done.",
+      "cost": "~3 min once, durable · Rung 0 free the moment it deploys",
+      "owner": "yours",
+      "branch": "fix/claude-credential-race",
+      "gate": "HOLD",
+      "steps": [
+        "claude setup-token",
+        "bash scripts/claude-fleet-auth-probe.sh",
+        "bash scripts/set-credential.sh LIMEN_CLAUDE_AUTH_TOKEN   # or LIMEN_CLAUDE_API_KEY if probe says wiped",
+        "deploy fix/claude-credential-race (reconcile divergence first; dispatch.py picked up next beat, no restart)"
+      ]
+    }
+  ]
+}
