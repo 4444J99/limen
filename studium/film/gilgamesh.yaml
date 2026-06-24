@@ -190,7 +190,7 @@ films:
     year: 2017
     force: desire
     divisions: [1]
-    objects: [needle, dress]
+    objects: []
     letterboxd: phantom-thread
     scene_or_theme: "Tablet I — Enkidu weakened: 'his legs that once matched the gazelles' are diminished; he cannot return"
     object_lesson: >

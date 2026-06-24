@@ -339,7 +339,7 @@ films:
   - title: "The Night"
     director: "Michelangelo Antonioni"
     year: 1960
-    force: longing
+    force: exile
     division: hayrat
     letterboxd: the-night
     scene_or_theme: "The couple wandering Rome; longing for a connection that cannot be named"
@@ -430,9 +430,7 @@ films:
       is the single, essential gesture—the moment when the self recognized its own non-existence
       and was annihilated into love.
 
----
-
-## Note on Translation and Scholarship
+# Note on Translation and Scholarship
 
 This companion draws on established translations and scholarly sources:
 
@@ -452,9 +450,7 @@ This companion draws on established translations and scholarly sources:
   City Lights, 1993.
   (Philosophical and poetic meditations on Sufi practice and meaning.)
 
----
-
-## On Letterboxd Slugs
+# On Letterboxd Slugs
 
 All slugs have been verified as of 2026. Films are sortable by `division` (valley),
 `force` (dominant spiritual/formal theme), and director. This companion is designed
