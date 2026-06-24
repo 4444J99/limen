@@ -305,20 +305,30 @@ while true; do
     LIMEN_LIB_APPLY="${LIMEN_LIB_APPLY:-1}" python3 "$LIMEN_ROOT/scripts/library-preserve.py" 2>&1 | tail -4 || true
     stamp backup
   fi
-  # FEED his WORDS — atomize EVERY live Claude Code prompt (~/.claude/projects) into the SINGLE
-  # session-meta manifest+atoms, BEFORE converge, so the conductor holds his ENTIRE prompt corpus
-  # (the structural answer to "I am not repeating myself again"). --merge preserves the offloaded
-  # historical index; .jsonl-only + the claude-projects adapter exclude sub-agent sidechain traffic,
-  # tool I/O, and harness machinery — only his prompts + the written replies + his question-answers.
-  # Default-ON (LIMEN_CORPUS_FEED=1; set 0 to roll back). Content-addressed + idempotent → cheap
-  # re-run. The WHOLE feed is timeout-bounded so it can NEVER wedge the beat (the prior wedge bug).
+  # FEED his WORDS — atomize his FULL multi-provider transcript corpus (Claude Code,
+  # codex, opencode, + gemini/chatgpt once re-hydrated) into the SINGLE session-meta
+  # manifest+atoms, BEFORE converge, so the conductor holds his ENTIRE prompt corpus
+  # across every agent (the structural answer to "I am not repeating myself again").
+  # Canonical producer = session-meta's ingest/refresh-atoms.sh: it DERIVES providers at
+  # run time (a source dir is walked only if present, so new providers auto-join) and
+  # routes opencode through the atomize DB-extractor. --merge preserves the offloaded
+  # historical index; redaction is enforced at ingest. Until refresh-atoms.sh has synced
+  # into the session-meta tree it falls back to the legacy single-source command, so the
+  # cutover is zero-gap. Default-ON (LIMEN_CORPUS_FEED=1; set 0 to roll back). Content-
+  # addressed + idempotent → cheap re-run. The WHOLE feed is timeout-bounded so it can
+  # NEVER wedge the beat (the prior wedge bug); the multi-provider rescan is heavier than
+  # the old one-provider run, hence the larger default budget.
   if play "$C_CORPUS_FEED" && [ "${LIMEN_CORPUS_FEED:-1}" = "1" ]; then
     SM="${LIMEN_SESSION_META:-$HOME/Workspace/session-meta}"
-    [ -d "$SM" ] && ( cd "$SM" && timeout "${LIMEN_CORPUS_FEED_TIMEOUT:-180}" sh -c '
-        python3 ingest/manifest.py data/session-transcripts \
-          --extra-root "$HOME/.claude/projects:claude-projects" --out ingest/manifest.jsonl --merge \
-        && python3 ingest/atomize.py --manifest ingest/manifest.jsonl --out ingest/atoms.jsonl
-      ' 2>&1 | tail -4 ) || true
+    [ -d "$SM" ] && ( cd "$SM" && timeout "${LIMEN_CORPUS_FEED_TIMEOUT:-600}" sh -c '
+        if [ -x ingest/refresh-atoms.sh ]; then
+          bash ingest/refresh-atoms.sh
+        else
+          python3 ingest/manifest.py data/session-transcripts \
+            --extra-root "$HOME/.claude/projects:claude-projects" --out ingest/manifest.jsonl --merge \
+          && python3 ingest/atomize.py --manifest ingest/manifest.jsonl --out ingest/atoms.jsonl
+        fi
+      ' 2>&1 | tail -6 ) || true
   fi
   # CONVERGE his WORDS — distill the knowledge base toward ONE. Gated OFF by default
   # (LIMEN_CORPUS_CONVERGE=1); the script self-selects live synthesis (LIMEN_CORPUS_CONVERGE_LIVE=1)
