@@ -75,14 +75,23 @@ fi
 
 j="$(mktemp)"; trap 'rm -f "$j"' EXIT
 gh pr view "$PR" "${repo_args[@]}" \
-  --json number,title,url,isDraft,mergeStateStatus,baseRefName,headRefName,files,statusCheckRollup \
+  --json number,title,url,state,isDraft,mergeStateStatus,baseRefName,headRefName,files,statusCheckRollup \
   > "$j" 2>/dev/null || { echo "merge-policy: cannot read PR #$PR (wrong repo?)." >&2; exit 3; }
 
 title=$(jq -r '.title' "$j")
 url=$(jq -r '.url' "$j")
+state=$(jq -r '.state' "$j")
 base=$(jq -r '.baseRefName' "$j")
 mss=$(jq -r '.mergeStateStatus' "$j")
 draft=$(jq -r '.isDraft' "$j")
+
+# Only an OPEN PR can be merged — guard against a false CLEARED on an already-merged/closed PR.
+if [ "$state" != "OPEN" ]; then
+  echo "PR #$PR — $title"
+  echo "  $url"
+  echo "VERDICT: BLOCKED — PR is $state, nothing to merge."
+  exit 3
+fi
 
 deploy_hits=$(jq -r '.files[].path' "$j" | grep -E "$DEPLOY_RE" || true)
 sensitive=0
