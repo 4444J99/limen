@@ -1,0 +1,176 @@
+# Shahnameh — Cycle 4 — Fereydun: The Binding of the Serpent — curated music arc
+# Gold-standard format per studium/music/iliad/book-01.yaml
+work: shahnameh
+book: 4
+title: "Shahnameh Cycle 4: Fereydun — The Binding of the Serpent"
+length_minutes: 88
+principle: >
+  Do not score Fereydun as "the hero who slays the dragon." Score him as the deliverer who is
+  forbidden to kill. Ferdowsi's overthrow of Zahhak is the poem's great act of liberation —
+  the hidden heir raised in secret, the ox-headed mace forged, Kaveh's banner at the head of the
+  host, the river crossed, the tyrant's palace stormed, the captive princesses freed — and at the
+  climax, when Fereydun raises the mace for the killing blow, the angel Sorush stays his hand:
+  Zahhak is not to be slain but bound, chained in a cave inside Mount Damavand, suspended there
+  until the end of the world. The dominant problem is what deliverance actually requires — not the
+  satisfaction of vengeance but the *containment* of an evil that cannot be allowed to die and
+  cannot be allowed to rule. Score the rescue at full heroic scale, and then score the strange,
+  forbidding mercy that refuses the heroic ending. The cycle closes on five hundred years of
+  justice — the only long peace the Shahnameh grants.
+
+force_arc: [exile, revelation, return, wrath, salvation, fate, divine-intervention, law, kingship]
+dominant_force: salvation
+tracks:
+  - n: 1
+    scene: "The child Fereydun hidden on Mount Alborz; the cow Barmayeh; Zahhak's hunters close in"
+    force: exile
+    composer: "Vaughan Williams"
+    work: "Fantasia on a Theme by Thomas Tallis"
+    decision: added
+    why: >
+      The deliverer begins his life as a fugitive. Zahhak, warned by his dream, hunts the
+      newborn; Fereydun's mother hides him with a guardian of the wondrous cow Barmayeh, who
+      suckles him, and when the hunters near, carries him to a holy man on Mount Alborz. The
+      rightful line survives only by hiding. Vaughan Williams's Tallis Fantasia is the sound of
+      something ancient and good kept safe in seclusion — a sixteenth-century hymn-tune
+      enveloped in shimmering, sheltering string-choirs, antique and protected and apart. Exile's
+      register is the unhoused, preserved line; here it is the heir of light raised out of sight,
+      a flame kept covered until it is strong enough to be carried into the open.
+  - n: 2
+    scene: "Fereydun learns his lineage; the ox-headed mace is forged"
+    force: revelation
+    composer: Wagner
+    work: "Siegfried — Act I, 'Forging Song' (Nothung! Nothung!)"
+    decision: added
+    why: >
+      Grown, Fereydun is told the truth: his father murdered by Zahhak, the cow Barmayeh
+      slaughtered, the throne stolen from his blood. The disclosure makes him; he commissions
+      smiths to forge a mace whose head is shaped like an ox, in memory of Barmayeh — the weapon
+      and the knowledge arrive together. Wagner's Forging Song is the canon's definitive scene of
+      a hero discovering his destiny by making the instrument of it: Siegfried reforges the
+      shattered sword in a blaze of hammer-strokes, singing his own becoming. Revelation's
+      register is the thing suddenly made plain; here the plain thing is who Fereydun is, and the
+      mace ringing on the anvil is the sound of a young man learning it.
+  - n: 3
+    scene: "Kaveh's banner joins Fereydun; the host marches; the crossing of the great river"
+    force: return
+    composer: Smetana
+    work: "Má vlast — 'Vltava (The Moldau)'"
+    decision: added
+    why: >
+      Kaveh's banner-bearing host meets Fereydun and acclaims him; the army marches on Zahhak's
+      seat, and at the Arvand (Tigris) the waters, refused passage by the ferryman, are crossed
+      regardless — the host pouring toward the capital like a river finding its sea. Return's
+      register is the homeward surge, and Smetana's Vltava is literally a river-journey: a stream
+      gathering tributaries, broadening, sweeping past forest and wedding and moonlit nymphs into
+      a great flowing theme. The march of the dispossessed toward the throne that is theirs by
+      right has the same shape — many waters becoming one current, moving home.
+  - n: 4
+    scene: "The storming of Zahhak's palace — the seat of tyranny breached"
+    force: wrath
+    composer: Prokofiev
+    work: "Romeo and Juliet — 'Montagues and Capulets (Dance of the Knights)'"
+    decision: added
+    why: >
+      Fereydun's force takes Zahhak's palace by storm while the serpent-king is away — the
+      idol-temple of the tyranny entered, its talismans broken, the throne seized. Prokofiev's
+      Dance of the Knights is the heaviest, most implacable advance in the repertoire: a brass-and-
+      timpani tread that does not hurry and cannot be stopped, armored menace as pure forward
+      mass. Wrath's register is rhythmic pressure and harmonic weight bearing down; the music is
+      the gate giving way, the assault arriving as an inevitability the defenders can only watch
+      approach.
+  - n: 5
+    scene: "The captive princesses freed — Shahrnaz and Arnavaz brought out of bondage"
+    force: salvation
+    composer: Beethoven
+    work: "Fidelio — 'O welche Lust' (Prisoners' Chorus)"
+    decision: added
+    why: >
+      Inside the palace Fereydun finds Jamshid's two sisters, Shahrnaz and Arnavaz, held by
+      Zahhak, and frees them — captives of the serpent-age brought back into the light. There is
+      no more exact music for this than Beethoven's Prisoners' Chorus: men who have not seen the
+      sun emerging blinking from the dungeon, voices rising hesitantly toward "O welche Lust" —
+      oh, what joy — half-afraid to believe in air and daylight. Salvation's register is the
+      lifted, redemptive line; the chorus is liberation caught at the trembling instant before it
+      dares to become joy, which is exactly the freed princesses' first breath.
+  - n: 6
+    scene: "Fereydun confronts Zahhak — the ox-mace raised, the dream fulfilled"
+    force: fate
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    decision: added
+    why: >
+      Zahhak returns and the two meet; Fereydun lifts the ox-headed mace and strikes him down —
+      the exact blow the tyrant saw a thousand years ago in his dream. The killing stroke was
+      foretold; it arrives as mechanism, not surprise. Holst's Mars is the canon's great engine
+      of inexorable doom: a 5/4 ostinato grinding forward under brutal brass, war as a machine
+      that has been set running and cannot be switched off. Fate's register is the hammered,
+      unstoppable motif; the mace falling on Zahhak is the dream completing itself, the future
+      catching up to the present exactly on schedule.
+  - n: 7
+    scene: "The angel Sorush forbids the killing — Zahhak is to be bound, not slain"
+    force: divine-intervention
+    composer: Wagner
+    work: "Lohengrin — Prelude to Act I"
+    decision: added
+    why: >
+      As Fereydun raises the mace a second time to finish Zahhak, the angel Sorush descends and
+      stays his hand: this evil must not be killed but contained. Heaven overrules the hero at the
+      decisive instant. Wagner's Lohengrin Prelude is the repertoire's purest descent of the
+      otherworldly — high divided strings shimmering down from an impossible height, the Grail's
+      light lowering into the human world and lifting away again. Divine-intervention's register
+      is the sudden vertical color-shift, the brass-and-strings contrast of another order breaking
+      in; Sorush's voice arrives like that light, and the killing blow that fate had readied does
+      not fall.
+  - n: 8
+    scene: "Zahhak chained in the cave of Mount Damavand, suspended until the end of the world"
+    force: law
+    composer: Wagner
+    work: "Die Walküre — 'Wotan's Farewell and Magic Fire Music'"
+    decision: added
+    why: >
+      Fereydun drives Zahhak to Mount Damavand and chains him in a deep cave, hung between earth
+      and sky, neither dead nor free, to remain there until time ends. It is a sentence, not a
+      slaughter — evil placed under permanent judicial seal. Wagner's close to Die Walküre is the
+      same gesture made music: a god lays his disobedient daughter to enchanted sleep on a rock
+      and rings her with fire by decree, binding her against a destined far-off waking. Law's
+      register is formal finality, the decreed shape that holds; the Magic Fire Music is a
+      sentence sung — solemn, encircling, irrevocable — the serpent bound by command rather than
+      destroyed by force.
+  - n: 9
+    scene: "Fereydun reigns in justice — the world healed, the long peace"
+    force: kingship
+    composer: Handel
+    work: "Zadok the Priest (Coronation Anthem No. 1, HWV 258)"
+    decision: added
+    why: >
+      With Zahhak bound, Fereydun takes the throne and rules five hundred years in justice — the
+      longest untroubled peace the Shahnameh allows. The mandate, lost since Jamshid, is restored
+      to a king who has earned and not claimed it. Handel's Zadok the Priest is the coronation
+      anthem itself — the slow string crescendo gathering for half a minute and then the choir's
+      blazing "Zadok the priest... and all the people rejoiced" — sovereignty conferred and a
+      whole people consenting to it in one sound. Kingship's register is ceremonial grandeur and
+      sovereign display; Zadok is legitimate accession given its full public voice, the world
+      agreeing, at last, on who its king is.
+
+demoted:
+  - composer: Elgar
+    work: "Enigma Variations — 'Nimrod'"
+    status: "held — its sovereign-gravity-at-rest belongs to the primordial kings (Cycle 1)"
+    why: >
+      Nimrod is kingship as ontological weight, the register of Keyumars. Fereydun's kingship is
+      earned by deliverance and crowned by public acclamation; Handel's Zadok carries the rejoicing
+      consent that Nimrod's inward gravity does not.
+  - composer: Stravinsky
+    work: "The Rite of Spring"
+    status: "rejected for the storming of the palace"
+    why: >
+      The Rite is ritual-sacrifice violence — wrong affect for a liberating assault. Prokofiev's
+      Dance of the Knights gives the armored, advancing weight of a host taking a fortress, where
+      the Rite would make the storming a rite of death.
+  - composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    status: "reserved for the fated deaths and the blood-account (Cycles 5 and beyond)"
+    why: >
+      Zahhak is bound, not killed, and the cycle ends in restoration and rejoicing, not judgment.
+      The Dies Irae's ledger of the dead belongs to the Iran–Turan deaths that begin in Cycle 5,
+      not to a deliverance that closes in coronation.

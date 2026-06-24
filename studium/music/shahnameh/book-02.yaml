@@ -1,0 +1,183 @@
+# Shahnameh — Cycle 2 — Jamshid: The Golden Age and the Sin of Pride — curated music arc
+# Gold-standard format per studium/music/iliad/book-01.yaml
+work: shahnameh
+book: 2
+title: "Shahnameh Cycle 2: Jamshid — The Golden Age and the Glory that Departed"
+length_minutes: 86
+principle: >
+  Do not score Jamshid as "the great king." Score him as the king who had everything and
+  forfeited it — the longest reign and the most total civilization in the poem, undone by a
+  single sentence. Ferdowsi gives Jamshid seven hundred years of perfect rule: he divides
+  society into its classes, teaches weaving and metallurgy and medicine and shipbuilding,
+  discovers wine by accident, and on the day he rises into the sky on a throne borne by demons
+  he founds Nowruz, the New Year, the festival that still survives. And then he says the thing
+  no king may say — "there is no lord but me" — and the *farr*, the divine radiance that makes a
+  Persian king a king, lifts off him like a bird and does not return. The cycle is not a tragedy
+  of action; it is a tragedy of grammar. The dominant problem is the mandate of heaven and the
+  exact moment it is withdrawn. Score the height first, in full, so the fall has something to
+  fall from. Tahmuras the Demon-Binder opens the gate (writing wrested from bound demons); then
+  Jamshid builds the world; then he loses it, and the serpent-age waits in the wings.
+
+force_arc: [revelation, kingship, law, comedy, ascent, desire, fate, exile, sacrifice]
+dominant_force: kingship
+tracks:
+  - n: 1
+    scene: "Tahmuras 'the Div-band' binds the demons; in ransom they teach him writing"
+    force: revelation
+    composer: Mussorgsky
+    work: "Night on Bald Mountain"
+    decision: added
+    why: >
+      Before Jamshid comes Tahmuras, who masters the demons (divs) and, as the price of their
+      lives, forces them to surrender the secret of script — writing in thirty tongues. The
+      Shahnameh's literacy is wrung out of darkness. Mussorgsky's tone poem is the exact shape of
+      that transaction: a demonic horde at full riot, mastered, and then — at the dawn bell — a
+      cold clear light that the night has been made to yield. Revelation here is not a gift
+      descending but a knowledge taken by force from things that did not want to give it. The
+      bell that ends the witches' sabbath is the alphabet emerging from the subdued dark.
+  - n: 2
+    scene: "Jamshid enthroned — the golden age opens, the world radiant under one king"
+    force: kingship
+    composer: Walton
+    work: "Crown Imperial — March"
+    decision: added
+    why: >
+      Jamshid takes the throne and the world reorganizes around a single radiant sovereign. This
+      is kingship at its zenith, before any flaw shows — pure ceremonial sun. Walton's Crown
+      Imperial is sovereignty displayed without irony: rank, territory, and light on parade. It
+      is deliberately a different register from Cycle 1's Nimrod (Keyumars' primordial, earned-
+      by-being-first weight); Jamshid's glory is *constructed*, imperial, magnificent, and that
+      magnificence is precisely what will become unbearable to him. The march sounds the height
+      so that the listener has felt the full altitude before the king claims he is a god.
+  - n: 3
+    scene: "The great ordering — Jamshid divides the classes and teaches the crafts"
+    force: law
+    composer: Bach
+    work: "Brandenburg Concerto No. 3 in G — I. Allegro (BWV 1048)"
+    decision: added
+    why: >
+      Jamshid is the supreme civilizer of the Shahnameh: he separates priests, warriors,
+      farmers, and artisans into their stations; teaches the working of metal, the weaving of
+      cloth, the building of baths and ships, the use of perfume and medicine. This is law as
+      architecture — society laid down as a structure, every part in its place. The Brandenburg
+      No. 3, scored for nothing but strings in three choirs of three, is the purest architectural
+      object in the canon: motion generated entirely from the relation of equal parts. Law's
+      requirement is formal clarity and structural repetition; Bach gives civilization as a
+      machine of perfectly fitted gears, which is exactly what Jamshid builds.
+  - n: 4
+    scene: "The discovery of wine — the 'royal poison' that turns out to heal"
+    force: comedy
+    composer: "Johann Strauss II"
+    work: "Die Fledermaus — Overture"
+    decision: added
+    why: >
+      Ferdowsi tells the wine story as a court comedy: grapes stored in a jar ferment, are
+      thought to be poison, and a woman in despair drinks the "poison" to die — and instead
+      finds joy, sleep, and health. Jamshid declares the discovery a royal medicine. The episode
+      is the Shahnameh's one moment of pure courtly delight, and it demands the register of
+      intoxication-as-comedy. Johann Strauss's Fledermaus Overture is champagne in orchestral
+      form — waltzing, effervescent, a little tipsy, entirely without menace. Comedy's
+      requirement is dance rhythm and courtly exaggeration; nothing in the repertoire is more
+      literally about the happy accident of drink.
+  - n: 5
+    scene: "Nowruz — Jamshid rises into the heavens on a throne borne by demons"
+    force: ascent
+    composer: "Richard Strauss"
+    work: "Also sprach Zarathustra — 'Sunrise' (Einleitung)"
+    decision: added
+    why: >
+      On the day of his greatest glory Jamshid orders the demons to lift his jeweled throne into
+      the sky; he sits in the air like the sun, and the people, seeing it, name the day Nowruz —
+      the New Year. This is the literal ascent of the king into the place of light. Strauss's
+      Sunrise was rejected in Cycle 1 as too triumphalist for the cosmogony — and that is exactly
+      why it belongs here. What is wrong for the modest first dawn of creation is right for a
+      king's deliberate, demon-powered self-elevation into the heavens. The C-major monument that
+      Haydn's Chaos withheld, Jamshid erects over his own head. The title is no small irony: it
+      is the sunrise of Zarathustra's land, and the next track is the sentence that brings the
+      sun down.
+  - n: 6
+    scene: "Pride — 'Who dares say there is any lord but me?'"
+    force: desire
+    composer: Scriabin
+    work: "The Poem of Ecstasy (Le Poème de l'extase), Op. 54"
+    decision: added
+    why: >
+      Here is the sentence that breaks the age. After seven hundred years Jamshid gathers his
+      nobles and declares that the world's order, its crafts, its very life, are his own
+      creation — that there is no god but himself. The sin is not lust or greed; it is the
+      desire to be worshipped, the self swelling until it claims the place of heaven. Scriabin's
+      Poem of Ecstasy is the canon's purest music of self-deification: a single ego inflating
+      through wave after wave of harmonic intensification toward a trumpet-crowned climax that
+      announces the self as the creating principle of the universe. Desire's register is
+      saturation and over-reach; Scriabin's theosophical megalomania is Jamshid's "there is no
+      lord but me" rendered as sound. The ecstasy is real, and it is the disease.
+  - n: 7
+    scene: "The farr departs — the divine radiance lifts off the king"
+    force: fate
+    composer: Sibelius
+    work: "Symphony No. 4 in A minor — IV. Allegro"
+    decision: added
+    why: >
+      The instant Jamshid claims godhood, the *farr* — the kingly glory, the visible mandate of
+      heaven — leaves him "like a bird." Nothing strikes him; something simply withdraws, and
+      with it the world's allegiance. This is fate not as a hammer but as a draining: the light
+      going out of a thing from inside. Sibelius's Fourth is the bleakest, most desolate music he
+      wrote — a finale that gathers toward a triumph it cannot reach and dies away into the cold,
+      a tonal world losing its center. Fate's requirement is inexorability; here the inexorable
+      thing is subtraction. The king is still on his throne, but the necessary radiance is gone,
+      and everyone can feel that it is gone. The wheel has turned, silently.
+  - n: 8
+    scene: "The realm fractures — nobles abandon Jamshid; he flees and hides"
+    force: exile
+    composer: Schubert
+    work: "Winterreise — 'Gute Nacht' (D. 911, No. 1)"
+    decision: added
+    why: >
+      With the farr gone, the world turns from Jamshid as it once turned toward him. Nobles
+      defect, the realm fragments, and the greatest king of the age becomes a fugitive — wandering,
+      hidden, for a hundred years. Schubert's Winterreise opens with a man setting out alone into
+      the snow, dispossessed, walking away from everything that was his. "Gute Nacht" is the
+      archetype of exile as a single figure trudging into a cold that will not end. Exile's
+      register is the wandering, unhoused line; the king who rode a throne into the sky now puts
+      one foot in front of the other in the dark, and the music knows there is no return at the
+      end of this road.
+  - n: 9
+    scene: "Jamshid captured by Zahhak and sawn in two"
+    force: sacrifice
+    composer: Bartók
+    work: "Music for Strings, Percussion and Celesta — III. Adagio"
+    decision: added
+    why: >
+      After a century in hiding Jamshid is caught by the serpent-king Zahhak and sawn in half —
+      the most physically appalling death in the early Shahnameh, the sun-king's body fed to the
+      new age of darkness. This is sacrifice in its terminal, horrific sense: the old sovereign
+      destroyed so the serpent-reign can be complete. Bartók's "night music" Adagio is the sound
+      of a body alone in the dark with something coming for it — eerie celesta, xylophone bones,
+      a glissando like a blade, dread that swells and recedes and swells again. It is processional
+      gravity emptied of all consolation. There is no requiem here because no one is left to mourn
+      the king; the world has already turned. The age of Jamshid ends on a saw, and the serpent
+      that did it is the subject of the next cycle.
+
+demoted:
+  - composer: Handel
+    work: "Music for the Royal Fireworks — Overture"
+    status: "held — already spent in Cycle 1 (Hushang's restoration); Jamshid's glory needs the colder imperial register"
+    why: >
+      Handel's Fireworks is restoration-after-victory, court music with swagger earned in battle.
+      Jamshid's glory is constructed and self-regarding; Walton's Crown Imperial carries the
+      imperial-monument quality that will curdle into hubris. Reusing Handel would blur Hushang's
+      register into Jamshid's.
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "still reserved (per Cycle 1) for Sohrab, Esfandiyar, Rostam"
+    why: >
+      Jamshid's death is grotesque, not noble; the terminal funeral-march register belongs to
+      heroes the reader has come to love. Bartók's night-dread is the correct horror; the
+      funeral march would dignify a death that Ferdowsi renders as butchery.
+  - composer: Orff
+    work: "Carmina Burana — 'O Fortuna'"
+    status: "rejected for the fall of the farr"
+    why: >
+      Too blunt, too external — Fortune's wheel as spectacle. The departure of the farr is
+      interior and silent, a withdrawal rather than a reversal. Sibelius's draining Fourth holds
+      the subtraction; O Fortuna would announce it like a headline.

@@ -1,0 +1,164 @@
+# Shahnameh — Cycle 5 — The Division of the World and the Murder of Iraj — curated music arc
+# Gold-standard format per studium/music/iliad/book-01.yaml
+work: shahnameh
+book: 5
+title: "Shahnameh Cycle 5: The Division of the World — Salm, Tur, and the Murder of Iraj"
+length_minutes: 82
+principle: >
+  Do not score this cycle as "a quarrel among brothers." Score it as the original wound of
+  Persian history — the fratricide from which the Iran–Turan blood-feud flows for the rest of the
+  poem. Fereydun, grown old, tests his three sons with a dragon (himself in disguise), names them
+  by how they meet it, and divides the world: the West (Rum) to Salm the eldest, the East (Turan,
+  China) to Tur the middle son, and Iran — the radiant heartland — to Iraj, the youngest and
+  best-beloved. Envy does the rest. Salm and Tur, enraged that the youngest holds the center,
+  demand a redivision and then murder Iraj when he comes to them in peace, offering even to
+  renounce the crown. They send his severed head to their father. Fereydun's grief becomes a
+  curse and a prayer for a vindicator, and the wheel of vengeance — which will turn for centuries
+  — begins. The dominant problem is grief: the first irreparable loss, and the discovery that
+  some wounds the poem will never close. Score the test, the gift, the envy, the gentle prince's
+  doomed peace-offering, the murder, the father's grief, and the seed of redress.
+
+force_arc: [revelation, kingship, desire, supplication, sacrifice, grief, fate, return]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "The dragon-test — Fereydun in disguise tries his three sons; their natures revealed"
+    force: revelation
+    composer: Sibelius
+    work: "Pohjola's Daughter, Op. 49"
+    decision: added
+    why: >
+      Before he divides the world, Fereydun takes the shape of a dragon and confronts his sons on
+      the road. The eldest, Salm, flees ("a wise man does not fight a dragon"); the middle, Tur,
+      attacks blindly; the youngest, Iraj, faces it with measured courage and address. The test
+      discloses three characters — and three fates — at a stroke. Sibelius's Pohjola's Daughter is
+      a tone-poem of a hero set an impossible trial, the music probing and testing and weighing,
+      restless with the question of what a man will prove to be. Revelation's register is the
+      thing brought suddenly to light; here the light falls on the sons' souls, and what it shows
+      will decide everything.
+  - n: 2
+    scene: "The division of the world — Iran given to the youngest, best-beloved Iraj"
+    force: kingship
+    composer: Holst
+    work: "The Planets — 'Jupiter, the Bringer of Jollity' (the central hymn)"
+    decision: added
+    why: >
+      Fereydun apportions the earth: Rum to Salm, Turan to Tur, and to Iraj the heartland — Iran,
+      the seat, the best of the three. It is a king's most generous and most dangerous act, the
+      bestowal of realms. Holst's Jupiter, and above all its broad central hymn ("I vow to thee my
+      country"), is the canon's great music of magnanimous, large-hearted sovereignty — the open-
+      handed king giving with both hands. Kingship's register is ceremonial grandeur and sovereign
+      display; Jupiter's generosity is the gift itself, radiant and well-meant, with no idea yet
+      that the very fairness of the gift — the youngest given the center — is the spark that will
+      burn the family down.
+  - n: 3
+    scene: "The envy of Salm and Tur — the elder brothers covet Iran"
+    force: desire
+    composer: Verdi
+    work: "Otello — Iago's 'Credo in un Dio crudel'"
+    decision: added
+    why: >
+      Salm, the eldest, cannot bear that the youngest holds the center; he infects Tur with the
+      same poison, and together they send Fereydun an ultimatum demanding Iran. This is desire as
+      envy — the covetous conviction that what another has is owed to oneself. Verdi's Credo is the
+      canon's blackest aria of motiveless malignity: Iago declaring his faith in a cruel god and a
+      cruel self, glorying in destruction for its own sake. Desire's register is the over-reaching
+      want that will not be satisfied; the brothers' envy speaks in exactly Iago's voice — a
+      grievance dressed as a principle, sharpening itself toward murder.
+  - n: 4
+    scene: "Iraj goes to his brothers in peace — offering even to renounce the crown"
+    force: supplication
+    composer: Fauré
+    work: "Requiem, Op. 48 — 'Pie Jesu'"
+    decision: added
+    why: >
+      Iraj, refusing to wage war on his own blood, rides unarmed to Salm and Tur and offers them
+      everything — the throne, Iran, all of it — asking only for peace between brothers. It is the
+      Shahnameh's purest act of supplication: the powerless gesture of a good man kneeling before
+      hatred with open hands. Fauré's Pie Jesu — a single soprano asking, simply and without
+      defense, for rest and mercy — is the gentlest plea in the repertoire, and its very
+      defenselessness is the point. Supplication's register is the exposed, kneeling line; Iraj's
+      peace-offering has the Pie Jesu's terrible vulnerability, and the listener already knows that
+      this kind of gentleness, met with this kind of envy, does not survive.
+  - n: 5
+    scene: "The murder of Iraj — Tur strikes the gentle prince down"
+    force: sacrifice
+    composer: Mahler
+    work: "Symphony No. 6 in A minor — IV. Finale (the hammer-blows)"
+    decision: added
+    why: >
+      The peace-offering fails. Tur seizes a golden stool, or a dagger, and kills Iraj where he
+      stands — the best-beloved son murdered by his brothers, the innocent center of the world
+      struck out of it. Mahler's Sixth ends with the hammer-blows of fate: enormous, muffled
+      strokes that fell the symphonic hero mid-stride, each one an irreversible event. Sacrifice's
+      register is the gravity of a life given up to forces larger than itself; here the life is
+      taken, not given, and the hammer-blows are the exact sound of a brother's hand ending the
+      one good son — a blow the whole poem will spend centuries trying to answer.
+  - n: 6
+    scene: "Iraj's severed head sent to Fereydun — the father's grief"
+    force: grief
+    composer: Barber
+    work: "Adagio for Strings, Op. 11"
+    decision: added
+    why: >
+      Salm and Tur fill Iraj's skull with musk and send it to their father in a casket. Fereydun
+      opens it, and the king who bound Zahhak and ruled the world in justice is destroyed — he
+      falls to the earth, tears the throne-room, and grief becomes total. Barber's Adagio is the
+      canon's most universal music of mourning, a single line climbing by slow steps to an almost
+      unbearable height and then breaking off into silence. Grief's register is the descending,
+      unconsoled lament; the Adagio's long ascent and its terrible pause are a father's whole
+      being rising into the loss and finding nothing on the far side. The terminal funeral-march
+      register still belongs to later heroes; this is grief held in pure strings, and it is enough.
+  - n: 7
+    scene: "Fereydun's curse — the king prays for a vindicator; the blood-feud begins"
+    force: fate
+    composer: Beethoven
+    work: "Coriolan Overture, Op. 62"
+    decision: added
+    why: >
+      Out of his grief Fereydun pronounces a curse on his murdering sons and a prayer to heaven for
+      an avenger to rise from Iraj's line — and with that vow the Iran–Turan war is born, a feud
+      that will run for centuries and bury generations. Beethoven's Coriolan is the music of a
+      fatal resolve: hammered C-minor unisons, a tragic will setting itself against the world and
+      sealing a doom it cannot now revoke. Fate's register is the inexorable, hammered motif; the
+      overture is a vow turning into a destiny — Fereydun's curse becoming the engine that will
+      drive the poem's longest tragedy.
+  - n: 8
+    scene: "Iraj's line preserved — a daughter, then the birth of the avenger Manuchehr"
+    force: return
+    composer: Dvořák
+    work: "Symphony No. 9 in E minor 'From the New World' — IV. Allegro con fuoco"
+    decision: added
+    why: >
+      The prayer is answered slowly. Iraj left a daughter; she bears a child, and from that line
+      comes Manuchehr, raised by Fereydun to be the redress the old king prayed for. Out of the
+      worst loss, the wheel turns back toward justice. Dvořák's New World finale gathers its
+      earlier themes into a surging, fire-lit drive home — grief transmuted into forward momentum,
+      a destiny assembling itself out of what was nearly destroyed. Return's register is the
+      homeward surge after long absence; the avenger's birth is the first turn of the wheel back
+      toward the light, the promise that Iraj's murder will not be the end of his line. Manuchehr's
+      war of vengeance — and the rise of the house of Sam — is the next cycle.
+
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "still reserved (per Cycle 1) for Sohrab, Esfandiyar, Rostam"
+    why: >
+      Iraj's death is the poem's first great grief, but the terminal funeral-march monument is
+      held for the heroes whose lives the reader follows at length. Barber's Adagio carries
+      Fereydun's grief in pure lament; the funeral march would pre-spend a register the later
+      catastrophes need at full force.
+  - composer: Stravinsky
+    work: "The Rite of Spring — 'Sacrificial Dance'"
+    status: "held — its ritual-violence belongs to sacrifices offered, not murders committed"
+    why: >
+      The Rite is a chosen victim dancing to death by communal rite; Iraj is murdered by envy, not
+      immolated by ritual. Mahler's hammer-blows give the irreversible private stroke of a brother's
+      hand without the Rite's pagan-altar machinery.
+  - composer: Tchaikovsky
+    work: "Symphony No. 6 'Pathétique' — IV. Adagio lamentoso"
+    status: "considered for Fereydun's grief; replaced by Barber"
+    why: >
+      The Pathétique finale is grief as a slow dying of the self — magnificent, but it spends its
+      whole length sinking. Barber's Adagio rises into the wound and then breaks, which is closer
+      to a father opening a casket: the surge of disbelief before the silence.
