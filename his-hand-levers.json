@@ -69,11 +69,17 @@
     },
     {
       "id": "L-BRANCH-PROTECT-072",
-      "label": "Authorize branch-protection rules across the organ repos (needs admin; run the descent script).",
+      "label": "Authorize branch-protection rules across the organ repos (needs admin; run the descent script). URGENT for organvm/limen `main`: it was CI-poisoned twice by direct pushes that bypass CI (f9325a8 ruff, 3069587 web) — each landed red on main and jammed the whole merge-drain until hand-fixed (#78). Require the python/web/worker status checks on main so no un-CI'd commit lands again.",
       "owner": "yours",
       "cost": "~5 min, admin",
-      "unlocks": "branch protection fleet-wide",
-      "source_task": "LIMEN-072"
+      "unlocks": "branch protection fleet-wide + no more main CI-poison jams",
+      "source_task": "LIMEN-072",
+      "note": "Root cause: CI lints/builds PRs only, not direct pushes, so an un-gated push lands red on main and poisons every open PR's merge. When you protect main, decide the daemon's content-push path: route its commits through the merge organ, or exempt the limen[bot]/App actor so studium dailies still flow.",
+      "steps": [
+        "GitHub → organvm/limen → Settings → Branches → protect `main`: require status checks python, web, worker (limen-specific, ~2 min)",
+        "Fleet-wide: run the descent script to apply the same across the organ repos",
+        "Decide the daemon's direct-push path: route via the merge organ, or exempt the App actor"
+      ]
     },
     {
       "id": "L-ENC1101-GOLIVE",
