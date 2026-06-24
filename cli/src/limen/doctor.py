@@ -10,6 +10,20 @@ from typing import Any
 from limen.models import LimenFile, Task
 
 
+def _runtime_api_url() -> str:
+    """Single source of truth for the backend runtime URL: env override → committed runtime.config.json.
+    Mirrors web/app/next.config.js + generate-static-data.mjs so the doctor check and the deployed
+    dashboard agree on one value (env LIMEN_API_URL / NEXT_PUBLIC_API_URL wins for per-deploy overrides)."""
+    env = os.environ.get("NEXT_PUBLIC_API_URL") or os.environ.get("LIMEN_API_URL")
+    if env:
+        return env
+    root = Path(os.environ.get("LIMEN_ROOT") or Path(__file__).resolve().parents[3])
+    try:
+        return json.loads((root / "runtime.config.json").read_text()).get("apiUrl", "") or ""
+    except (OSError, ValueError):
+        return ""
+
+
 def _ensure_aware(dt: datetime) -> datetime:
     if dt.tzinfo is None:
         return dt.replace(tzinfo=timezone.utc)
@@ -88,8 +102,8 @@ def readiness_report(
         },
         {
             "id": "api_runtime",
-            "status": "pass" if os.environ.get("NEXT_PUBLIC_API_URL") else "warn",
-            "detail": os.environ.get("NEXT_PUBLIC_API_URL")
+            "status": "pass" if _runtime_api_url() else "warn",
+            "detail": _runtime_api_url()
             or "backend runtime not attached to Firebase static hosting",
         },
     ]

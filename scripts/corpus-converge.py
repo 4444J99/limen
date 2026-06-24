@@ -50,8 +50,66 @@ def _corpus_root() -> Path:
     return Path(os.environ.get("LIMEN_CORPUS_ROOT", Path.home() / "Workspace" / "knowledge-corpus"))
 
 
+def _media_atoms_root() -> Path:
+    # The media-atoms store produced by scripts/media-atomize.py (strand D). Kept in sync
+    # with that script's default so his docs/photos remix with his words.
+    return Path(os.environ.get("LIMEN_MEDIA_ATOMS", _corpus_root() / "02-media-atoms"))
+
+
 def _session_meta_root() -> Path:
     return Path(os.environ.get("LIMEN_SESSION_META", Path.home() / "Workspace" / "session-meta"))
+
+
+def _atoms_path() -> Path:
+    # The unified, redacted, multi-provider atom corpus produced by session-meta's
+    # ingest/refresh-atoms.sh (Claude, codex, opencode, …). Derived, never pinned.
+    return Path(os.environ.get("LIMEN_EXPORT_ATOMS", _session_meta_root() / "ingest" / "atoms.jsonl"))
+
+
+def _export_source_gate() -> set[str] | None:
+    """THE EXPORT GATE (his policy: ALL providers flow INTO atoms.jsonl unfiltered; the gate is at
+    EXPORT, not ingest). LIMEN_EXPORT_SOURCES is a comma-separated allowlist of atom `source`s
+    eligible to distill into THE ONE. Empty/unset = ALL sources eligible — the default he chose.
+    Returns None for 'all', else the allowed-source set. Destination is LOCAL only (knowledge-corpus,
+    git-backed to the private corpus repo) — this gate never authorizes outward/public publish."""
+    raw = os.environ.get("LIMEN_EXPORT_SOURCES", "").strip()
+    if not raw:
+        return None
+    return {s.strip() for s in raw.split(",") if s.strip()}
+
+
+def _collect_atoms(limit: int, absorbed: set[str]) -> list[dict]:
+    """Newest substantive shots from the UNIFIED multi-provider atom corpus (atoms.jsonl), filtered
+    by the export source-gate. Bounded + fail-open. This is the bridge that lets his words across
+    EVERY agent — not just Claude dialogue — distill into THE ONE ([[pillars-platform-convergence]]).
+    A trivial one-liner carries no idea, so a minimum length keeps faces substantive."""
+    path = _atoms_path()
+    if not path.is_file():
+        return []                       # never-NO: no atom store yet just means no atom shots
+    gate = _export_source_gate()
+    rows: list[dict] = []
+    try:
+        with path.open(errors="replace") as f:
+            for line in f:
+                try:
+                    a = json.loads(line)
+                except Exception:
+                    continue
+                if gate is not None and a.get("source", "") not in gate:
+                    continue
+                if len((a.get("text") or "").strip()) < 80:
+                    continue
+                rows.append(a)
+    except OSError:
+        return []
+    rows.sort(key=lambda a: a.get("ts") or "", reverse=True)   # newest-first; ts-less sink
+    out: list[dict] = []
+    for a in rows[: max(limit * 8, 40)]:
+        iid = a.get("content_sha") or a.get("atom_id") or _hash(a.get("text", ""))
+        if iid in absorbed:
+            continue
+        out.append({"id": iid, "text": a["text"][:20000], "source": f"atoms:{a.get('source', '?')}"})
+    return out
 
 
 def _state_path() -> Path:
@@ -140,6 +198,35 @@ def gather_new_material(limit: int, *, with_graph: bool = False, absorbed: set[s
                 continue
             items.append({"id": iid, "text": text, "source": f"collection:{p.name}"})
 
+    # personal-media atoms (strand D): doc/photo Shots produced by media-atomize.py, read from
+    # the canonical media-atoms store so his MEDIA remixes with his WORDS through the same engine.
+    # Fail-open (missing store → no media shots this beat); bounded like the other sources.
+    atoms_dir = _media_atoms_root()
+    if atoms_dir.is_dir():
+        atom_files = []
+        for p in atoms_dir.glob("*.json"):
+            try:
+                atom_files.append((p.stat().st_mtime, p))
+            except Exception:
+                continue
+        atom_files.sort(reverse=True)
+        for _, p in atom_files[: max(limit * 8, 40)]:
+            try:
+                a = json.loads(p.read_text())
+            except Exception:
+                continue
+            text = (a.get("text") or "").strip()
+            iid = a.get("id") or _hash(str(p))
+            if not text or iid in absorbed:
+                continue
+            items.append({"id": iid, "text": text[:20000], "source": a.get("source") or f"media:{p.name}"})
+
+    # the UNIFIED multi-provider atom corpus (atoms.jsonl) — his words across EVERY agent
+    # (Claude, codex, opencode, …), gated at EXPORT by LIMEN_EXPORT_SOURCES. Realizes
+    # "all providers in, gate on export": ingest is unfiltered, this converge step is where the
+    # source-gate decides what distills into THE ONE. Bounded + fail-open like the others.
+    items.extend(_collect_atoms(limit, absorbed))
+
     # the universal context: a bounded slice of the GitHub graph (issues/PRs as shots).
     if with_graph:
         items.extend(_gather_graph_shots(limit, absorbed))
@@ -193,15 +280,45 @@ def assign_to_faces(faces: list[dict], items: list[dict]) -> dict[str, list[dict
 
 # ─── distill + write-back ────────────────────────────────────────────
 
-def _kit(live: bool):
+def _kit(live: bool, threshold: float | None = None):
     from limen.converge import _build_dry_run_kit
     if not live:
         return _build_dry_run_kit()
     try:
-        from limen.converge import (AnthropicSynthesizer, DeterministicScorer,
-                                     LexicalGapFinder, LexicalRanker, NoopPromoter)
-        return {"ranker": LexicalRanker(), "synthesizer": AnthropicSynthesizer(),
-                "scorer": DeterministicScorer(), "promoter": NoopPromoter(),
+        from limen.converge import (AnthropicSynthesizer, ClaudeCliSynthesizer,
+                                     DeterministicScorer, LadderSynthesizer,
+                                     LexicalGapFinder, LexicalRanker, NoopPromoter,
+                                     _api_tier_factory, _cli_tier_factory)
+        # Synthesizer cascade ([[cascade-fallback-principle]] / never a silent no), now an
+        # EARNED-TIER LADDER nested inside each reachable rung (haiku-first-with-cheap-verify,
+        # escalate only on a failed check; LIMEN_CONVERGE_LADDER=0 reverts to single-tier):
+        #   1. raw Anthropic API   — only when ANTHROPIC_API_KEY is present (spends API)
+        #   2. claude CLI (keyless)— subscription-authed `claude -p`; the LIVE DAEMON path
+        #      (its launchd env has NO key, so this is the rung that actually closes the
+        #      capture→converge write-back instead of falling silently to offline preview)
+        #   3. offline preview     — handled by the outer except (no synthesizer available)
+        # The ladder eagerly builds its cheapest rung, so a missing mechanism still raises at
+        # construction here and the cascade's fallbacks fire exactly as before.
+        ladder_on = os.environ.get("LIMEN_CONVERGE_LADDER", "1") == "1"
+        # The ladder accept-gate MUST equal the threshold converge() promotes on, else a ladder
+        # -accepted rung gets surprise-rolled-back. main() passes args.threshold (which already
+        # defaults from LIMEN_CORPUS_THRESHOLD) as the single source of truth; fall back to the
+        # env only for callers that don't pass one.
+        if threshold is None:
+            threshold = float(os.environ.get("LIMEN_CORPUS_THRESHOLD", "0.7"))
+        scorer = DeterministicScorer()
+        synth = None
+        if os.environ.get("ANTHROPIC_API_KEY"):
+            try:
+                synth = (LadderSynthesizer(tier_factory=_api_tier_factory(), scorer=scorer, threshold=threshold)
+                         if ladder_on else AnthropicSynthesizer())
+            except Exception as exc:
+                print(f"[corpus-converge] API synth unavailable ({exc}); trying claude CLI")
+        if synth is None:
+            synth = (LadderSynthesizer(tier_factory=_cli_tier_factory(), scorer=scorer, threshold=threshold)
+                     if ladder_on else ClaudeCliSynthesizer())  # raises (→ outer except → offline) if no CLI
+        return {"ranker": LexicalRanker(), "synthesizer": synth,
+                "scorer": scorer, "promoter": NoopPromoter(),
                 "gap_finder": LexicalGapFinder()}
     except Exception as exc:
         print(f"[corpus-converge] live kit unavailable ({exc}); using offline kit")
@@ -330,7 +447,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[corpus-converge] {len(items)} new shots, none assigned to a face — nothing to distill")
         return 0
 
-    kit = _kit(args.live)
+    kit = _kit(args.live, threshold=args.threshold)  # ladder gate == converge() promote gate
     can_write = args.live and args.apply  # write-back requires REAL synthesis (concat would bloat)
     log_path = _log_path()
     log_path.parent.mkdir(parents=True, exist_ok=True)

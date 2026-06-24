@@ -51,7 +51,7 @@ def read_board(path: Path) -> dict:
 
 
 def test_capacity_census_lists_every_paid_lane(tmp_path: Path, monkeypatch) -> None:
-    for binary in ("codex", "claude", "opencode", "agy", "gemini", "jules", "gh", "agent-dispatch"):
+    for binary in ("codex", "claude", "opencode", "agy", "gemini", "jules", "ollama", "gh", "agent-dispatch"):
         path = tmp_path / binary
         path.write_text("#!/bin/sh\nexit 0\n")
         path.chmod(0o755)
@@ -59,6 +59,9 @@ def test_capacity_census_lists_every_paid_lane(tmp_path: Path, monkeypatch) -> N
     monkeypatch.setenv("GEMINI_API_KEY", "test-key")
     monkeypatch.setenv("WARP_API_KEY", "test-key")
     monkeypatch.setenv("LIMEN_COPILOT_ENABLED", "1")
+    # ollama's floor lane is reachable only once a model is pulled — set the pin so the
+    # "everything configured" census sees it up (mirrors GEMINI_API_KEY/WARP_API_KEY above).
+    monkeypatch.setenv("LIMEN_OLLAMA_MODEL", "test-model")
 
     tasks_path = tmp_path / "tasks.yaml"
     write_board(tasks_path, [])

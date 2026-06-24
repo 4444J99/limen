@@ -51,12 +51,22 @@ ALERT = LOGS / "watchdog-alert.json"
 WDLOG = LOGS / "watchdog.log"
 LABEL = os.environ.get("LIMEN_LAUNCHD_LABEL", "com.limen.heartbeat")
 
-# Staleness: derive from the loop's OWN slowest tempo, not a magic literal. The daemon
-# emits a tick EVERY beat and backs off at most to LIMEN_LOOP_MAX (default 1800s). So a
-# healthy loop ticks at least once per MAX. 3× MAX absorbs one slow/backed-off beat plus
-# startup/clock skew before we call it dead — same "3× tempo" rule named in the brief.
+# Staleness: derive from the loop's REAL max inter-tick gap, not a magic literal. The daemon
+# emits a tick at the END of every beat, so the longest healthy gap between ticks is:
+#   idle BACKOFF sleep (≤ LIMEN_LOOP_MAX) + dispatch work + reconcile/web overhead.
+# The OLD basis (3 × LOOP_MAX) ignored dispatch duration entirely — it only coincidentally
+# absorbed it, which is why a 2026-06-23 ~91min dispatch freeze barely tripped the 5400s ceiling
+# (recovered by luck, not the watchdog). Dispatch is now HARD-bounded by the loop's SIGKILL
+# ceiling (LIMEN_DISPATCH_CEILING), so we derive a TRUE upper bound from the real components
+# ([[logic-over-inherited-config]] — rederive the knob, never inherit the literal).
 _MAX_BEAT = int(os.environ.get("LIMEN_LOOP_MAX", "1800") or "1800")
-STALE_SEC = int(os.environ.get("LIMEN_WATCHDOG_STALE_SEC", str(3 * _MAX_BEAT)))
+_LANE_TIMEOUT = int(os.environ.get("LIMEN_LANE_TIMEOUT", "1800") or "1800")
+# mirror heartbeat-loop.sh's default ceiling (lane cap + slack) so STALE tracks the real bound
+_DISPATCH_CEILING = int(os.environ.get("LIMEN_DISPATCH_CEILING", str(_LANE_TIMEOUT + 600))
+                        or str(_LANE_TIMEOUT + 600))
+_OVERHEAD = int(os.environ.get("LIMEN_WATCHDOG_OVERHEAD_SEC", "600") or "600")
+STALE_SEC = int(os.environ.get("LIMEN_WATCHDOG_STALE_SEC",
+                               str(_MAX_BEAT + _DISPATCH_CEILING + _OVERHEAD)))
 # Wedged: N consecutive most-recent dispatch beats that produced ZERO PRs. A single
 # all-no-op beat is normal (queue lull); a run of them = a real wedge (the secrets-bug
 # class of failure where every dispatch silently fails). Default 3 = brief's value.

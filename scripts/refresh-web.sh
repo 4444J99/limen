@@ -20,8 +20,10 @@ with_timeout() {
   fi
 }
 
-# re-export static site from live tasks.yaml (prebuild regenerates data, postbuild validates)
-if LIMEN_TASKS="$ROOT/tasks.yaml" with_timeout "${LIMEN_WEB_BUILD_TIMEOUT:-90}" \
+# re-export static site from live tasks.yaml (prebuild regenerates data, postbuild validates).
+# Skip the TS typecheck (next.config.js honours LIMEN_WEB_SKIP_TYPECHECK): the beat only needs a
+# fast data re-export, and the typecheck is the slow phase that overran the timeout. CI still types.
+if LIMEN_TASKS="$ROOT/tasks.yaml" LIMEN_WEB_SKIP_TYPECHECK=1 with_timeout "${LIMEN_WEB_BUILD_TIMEOUT:-90}" \
     npm run build >"$ROOT/logs/web-refresh.log" 2>&1; then
   echo "  web: rebuilt from live tasks.yaml"
 else
@@ -58,6 +60,8 @@ PY
 
 # ensure the static server is up (idempotent)
 if ! pgrep -f "http.server $PORT" >/dev/null 2>&1; then
-  ( cd "$APP/out" && nohup python3 -m http.server "$PORT" --bind 127.0.0.1 >"$ROOT/logs/portal-web.log" 2>&1 & )
+  # </dev/null detaches stdin and, with the >file 2>&1 redirects, keeps the backgrounded server from
+  # inheriting a caller's pipe write-end (defense-in-depth for the tail-EOF wedge fixed at the call sites).
+  ( cd "$APP/out" && nohup python3 -m http.server "$PORT" --bind 127.0.0.1 >"$ROOT/logs/portal-web.log" 2>&1 </dev/null & )
   echo "  web: server (re)started → http://127.0.0.1:$PORT/internal.html"
 fi
