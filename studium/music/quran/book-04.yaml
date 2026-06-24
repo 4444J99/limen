@@ -1,0 +1,114 @@
+# Qur'an — Sura 4 — curated music arc
+work: quran
+book: 4
+title: "Sura 4: An-Nisa (The Women)"
+length_minutes: 130
+principle: >
+  Sura 4 is the clearest long-form test of law as social mercy: family rights, inheritance,
+  orphans, marriage, testimony, and governance are no longer peripheral; they are the
+  sura's central dramatic architecture. Yet the force is never merely legal in the
+  technical sense. The text insists that social law is a recited ethic: justice
+  must be voiced, practiced, and corrected before it can become ordinary life.
+force_arc: [revelation, law, law, law, kingship, grief, wrath, supplication]
+dominant_force: law
+tracks:
+  - n: 1
+    scene: "Bismillah and the moral opening of social obligation"
+    force: revelation
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      The sura begins with a familiar liturgical posture but quickly redirects into household
+      structure and ethical instruction. Pärt remains necessary here because the first movement
+      says: we are entering law that is still under revelation, not merely inherited custom.
+      The piece keeps the line clear, uncluttered, and responsive.
+  - n: 2
+    scene: "Inheritance and distribution under divine accountability"
+    force: law
+    composer: Handel
+    work: "Royal Fireworks: Overture"
+    decision: added
+    why: >
+      The inheritance sections demand measurable fairness and formal order. Handel's ceremonial
+      grandeur is not excess for its own sake; it turns administration into moral architecture.
+      The force is law because this is the scene where private attachment is translated into
+      public distribution, a transition the sura handles with high stakes.
+  - n: 3
+    scene: "Marriage, guardianship, and kinship rights"
+    force: law
+    composer: Bach
+    work: "Brandenburg Concerto No. 3 — I. Allegro"
+    decision: added
+    why: >
+      The kinship sections require precision with no melodrama. Bach's Brandenburg No. 3
+      is spare, formal, and rigorously relational — one of the strongest ways to render
+      social rules that must hold under scrutiny. Law in this force is about balance:
+      voices are distinct, yet all must remain within a shared grammar.
+  - n: 4
+    scene: "Protection of orphans and vulnerable households"
+    force: law
+    composer: Brahms
+    work: "Symphony No. 4 — I. Allegro non troppo"
+    decision: added
+    why: >
+      The concern for vulnerable dependents is both practical and moral; no dramatic explosion
+      can replace the force of structure here. Brahms' movement gives that restraint:
+      dense development, controlled emotional pressure, form as responsibility. Law as
+      care is the register this section needs.
+  - n: 5
+    scene: "Authority and false witness at the center of social order"
+    force: kingship
+    composer: Mozart
+    work: "Requiem — Lacrimosa"
+    decision: added
+    why: >
+      This section tests political trust. Truth is no longer private; false testimony can ruin
+      whole households. The Lacrimosa, though known as funerary, here functions in a reduced
+      register: a warning through dignity and loss. Kingship is appropriate because the
+      authority being defended is not monarchy as a spectacle but accountability in governance.
+  - n: 6
+    scene: "Moral fatigue after repeated social warning"
+    force: grief
+    composer: Fauré
+    work: "Requiem — In Paradisum"
+    decision: added
+    why: >
+      Repeated injunctions can become spiritually numbing, but Sura 4 lets a quieter grief
+      appear: grief for people made vulnerable by systems that should have protected them.
+      Fauré's final movement offers a softened, suspended line that captures this fatigue
+      without dramatizing it into spectacle.
+  - n: 7
+    scene: "Hypocrisy, coercion, and the social cost of betrayal"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    decision: added
+    why: >
+      Hypocrisy in this sura is not merely doctrinal; it is social injury. Holst gives a forceful
+      register for betrayal becoming conflict. Wrath is therefore not private anger but the structural
+      force that appears when legal trust has already been eroded.
+  - n: 8
+    scene: "Persistent prayer as the only durable corrective"
+    force: supplication
+    composer: Bach
+    work: "St Matthew Passion — 'Erbarme dich, mein Gott'"
+    decision: added
+    why: >
+      The final move of the section is a return to dependence. After legal precision and social
+      conflict, the force must shift to direct human address. Bach's plea-centered writing
+      keeps that address intimate and sustained: the burden of law remains, but mercy is
+      what allows it to be practiced without becoming violence.
+demoted:
+  - composer: Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    status: "held for divisions where private grief is the sole field"
+    why: >
+      This sura's grief is systemic and social. Adagietto works best when private bereavement
+      is already dominant; here the register is communal correction in public law.
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "held for terminal death/catastrophe divisions only"
+    why: >
+      The Funeral March imports terminal public-funeral inevitability. Sura 4 is active legal
+      correction, not terminal memorial closure.

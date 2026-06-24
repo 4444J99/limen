@@ -11,14 +11,14 @@
 - **Corpus:** `arabic-persian/quran` (arabic_original.txt)
 - **Source rail:** https://quran.com/
 - **Divisions:** 114 × Sura
-- **Progress:** 1/114 arcs authored
+- **Progress:** 4/114 arcs authored
 
 | Sura | dominant force | status |
 | --: | --- | :--: |
 | 1 | (author) | ✓ |
-| 2 | (author) | ☐ |
-| 3 | (author) | ☐ |
-| 4 | (author) | ☐ |
+| 2 | law | ✓ |
+| 3 | revelation | ✓ |
+| 4 | law | ✓ |
 | 5 | (author) | ☐ |
 | 6 | (author) | ☐ |
 | 7 | (author) | ☐ |
