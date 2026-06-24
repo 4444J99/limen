@@ -1,0 +1,131 @@
+# Canterbury Tales — The Reeve's Tale: retaliation, accounting, and social reversal
+work: canterbury-tales
+book: 4
+title: "Canterbury Tales — The Reeve's Tale: the mill and the mirror"
+length_minutes: 71
+principle: >
+  Read this tale as a counter-ledger to the Miller. If the Miller turns piety into appetite,
+  the Reeve turns appetite into accounting. Every joke is a form of recalculation, and the narrative
+  machine keeps scoring bodies against the social roles they tried to claim as stable.
+force_arc: [comedy, law, desire, desire, comedy, wrath, comedy, fate, grief, law, comedy]
+dominant_force: comedy
+tracks:
+  - n: 1
+    scene: "The Reeve opens by answering the Miller with comic legal precision"
+    force: comedy
+    composer: Rossini
+    work: "Il barbiere di Siviglia — Overture"
+    decision: added
+    why: >
+      The opening move is playful but pointed: the Reeve replies to a previous mode of vulgarity with
+      his own formal joke. Rossini's overture is quick, precise, and exacting in social pacing.
+
+  - n: 2
+    scene: "The mill becomes the tale's governing institution: food, accounts, and authority"
+    force: law
+    composer: Brahms
+    work: "Symphony No. 4 — I. Allegro non troppo"
+    decision: added
+    why: >
+      The mill is not only setting; it is the first legal apparatus of the tale. Brahms gives the
+      force of order that appears dignified but has room for violence beneath it.
+
+  - n: 3
+    scene: "Two young clerks enter the miller's household and begin their coded campaign"
+    force: desire
+    composer: Monteverdi
+    work: "L'Orfeo — Sinfonia"
+    decision: added
+    why: >
+      The students are not merely comic intruders; they are tactically sensual. Monteverdi's
+      Orpheus opening has dance and intrigue folded together, a good fit for appetite wrapped in deference.
+
+  - n: 4
+    scene: "The housewife and daughter become agents of mirrored retaliation"
+    force: desire
+    composer: Mozart
+    work: "The Magic Flute — Overture"
+    decision: added
+    why: >
+      The household reverses agency. Desire no longer belongs only to the visiting sons; the women
+      run the scene toward vengeance. Mozart's overture is elegant and alert, with social tactics
+      built into its bright surfaces.
+
+  - n: 5
+    scene: "John is sent out in performative confidence, believing the world obeys him"
+    force: comedy
+    composer: Offenbach
+    work: "Orpheus in the Underworld — Galop infernal"
+    decision: added
+    why: >
+      John leaves believing in his own unbroken authority, and that confidence creates its own comedy.
+      Offenbach's velocity turns confidence into a trap.
+
+  - n: 6
+    scene: "The two students execute the mill theft and deepen the social bargain"
+    force: wrath
+    composer: Beethoven
+    work: "Symphony No. 9 in D minor — IV. Finale"
+    decision: added
+    why: >
+      Theft here is not panic; it is a tactical strike wrapped in laughter. Beethoven's finale supplies
+      social force at scale: a crowd in motion, conviction turned into action.
+
+  - n: 7
+    scene: "Nighttime role-reversal turns the household into a comic tribunal"
+    force: comedy
+    composer: Schubert
+    work: "Symphony No. 9 in C major — II. Scherzo"
+    decision: added
+    why: >
+      As identities switch in the dark, everything depends on timing. Schubert's scherzo grammar
+      carries this lightness of form and the sudden violence hidden inside it.
+
+  - n: 8
+    scene: "Punishment arrives with wrong timing and wrong bodies"
+    force: fate
+    composer: Stravinsky
+    work: "The Rite of Spring — Rite Scene"
+    decision: added
+    why: >
+      The tale pivots when the retaliation cannot tell who was intended. Fate in this episode is
+      procedural error as justice. Stravinsky's Rite sequence gives a ritual inevitability to social
+      misfire.
+
+  - n: 9
+    scene: "The revelation of humiliation lands and the house cannot pretend innocence"
+    force: grief
+    composer: Barber
+    work: "Adagio for Strings, Op. 11"
+    decision: added
+    why: >
+      The joke becomes physical pain. Barber's Adagio gives the moment a narrow sorrow, the grief that
+      follows from overreaching social performance.
+
+  - n: 10
+    scene: "The final settlement reframes everyone as both offender and victim"
+    force: law
+    composer: Handel
+    work: "Royal Fireworks Suite No. 2 in F major"
+    decision: added
+    why: >
+      The mill ledger returns, now with all parties implicated. Handel's formal register is the right
+      frame: public speech again, now with less authority and more consequences.
+
+  - n: 11
+    scene: "The Reeve closes on comic restitution: the game has already won on itself"
+    force: comedy
+    composer: Rameau
+    work: "Platée — Ouverture"
+    decision: added
+    why: >
+      Restitution in this tale is never clean. It is comic because it restores and unsettles at once.
+      Rameau's overture gives that final tonal wink.
+
+demoted:
+  - composer: Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    status: "reserved for scenes of private love-mourning"
+    why: >
+      The Reeve's Tale needs speed, barter, and structural mockery. The Adagietto would collapse the
+      arc into lyric sorrow and flatten the tale's procedural cruelty.

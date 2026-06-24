@@ -1,0 +1,133 @@
+# Canterbury Tales — The Knight's Tale: justice, longing, and the cost of desire
+work: canterbury-tales
+book: 2
+title: "Canterbury Tales — The Knight's Tale: honor, rivalry, and desire"
+length_minutes: 82
+principle: >
+  Score the tale as a social mechanics problem disguised as romance. The Knight's Tale is
+  not only the story of two men in love with one woman; it is the story of a city under law,
+  two bodies in captivity, and the point where private desire can only move through public
+  institutions. The dominant force is law as a stage, and desire as the pressure that keeps
+  testing that stage.
+force_arc: [law, exile, desire, desire, law, exile, desire, divine-intervention, fate, grief, law]
+dominant_force: law
+tracks:
+  - n: 1
+    scene: "The Host calls for a tale and the company shifts from framing to formal competition"
+    force: law
+    composer: Handel
+    work: "Music for the Royal Fireworks — Overture"
+    decision: added
+    why: >
+      This is the first official act of legal speech in the company's storytelling game: law
+      as procedure, not punishment. Handel's ceremonial brass and formal architecture model the
+      courtly frame that the tale is about to test.
+
+  - n: 2
+    scene: "Palamon and Arcite, captured after war, are confined in a tower"
+    force: exile
+    composer: Sibelius
+    work: "Finlandia"
+    decision: added
+    why: >
+      Chivalric rivalry begins in confinement. Neither man is yet in action; both are already
+      expelled from civic center and held within an imposed exteriority. Sibelius's Finlandia
+      captures this paradoxical public displacement: monumental, dignified, and separated from
+      courtly life.
+
+  - n: 3
+    scene: "Palamon sees Emily and desire breaks the prison wall"
+    force: desire
+    composer: Wagner
+    work: "Tristan und Isolde — Prelude"
+    decision: added
+    why: >
+      The first sight of Emily converts captivity into interior combustion. Wagner's Prelude is
+      the sound of an unspoken condition that turns everything else into consequence.
+
+  - n: 4
+    scene: "Arcite hears the same description and begins to live only in rivalry"
+    force: desire
+    composer: Ravel
+    work: "Daphnis et Chloé — Suite No. 2: Lever du jour"
+    decision: added
+    why: >
+      The second desire is never innocent; it is immediately mirrored and sharpened by rivalry.
+      Ravel's bright and sensuous sonority gives this scene its tonal grammar: desire as an
+      echo in which self and other quickly collapse into one another.
+
+  - n: 5
+    scene: "Theseus presents himself as lawgiver and reorganizes the household of Athens"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue — Contrapunctus 14"
+    decision: added
+    why: >
+      The poem keeps insisting that no private longing is free from civic consequence. Bach's
+      Contrapunctus is disciplined and explicit: voices are heard because the frame is explicit,
+      not because any one voice is sovereign.
+
+  - n: 6
+    scene: "Arcite is forgiven, then exiled, and turns desire into strategy"
+    force: exile
+    composer: Dvořák
+    work: "Symphony No. 9 in E minor, From the New World — II. Largo"
+    decision: added
+    why: >
+      Exile is not disappearance; it is intensified attachment under constraint. Dvořák's Largo
+      is physically gentle and emotionally open — exactly the tone of longing that has been pushed
+      outside normal city law but cannot be dissolved.
+
+  - n: 7
+    scene: "Emelye and her companions negotiate between ritual role and private longing"
+    force: desire
+    composer: Mozart
+    work: "Don Giovanni — Overture"
+    decision: added
+    why: >
+      Emelye's emotional position is often treated as passive, but the force here is active
+      desire under social pressure. Mozart's Don Giovanni overture compresses pursuit, flirtation,
+      and moral hazard into one bright, dangerous current.
+
+  - n: 8
+    scene: "Venus and Mars shape the men toward a single unavoidable ending"
+    force: divine-intervention
+    composer: Strauss
+    work: "Also sprach Zarathustra — 'Von der großen Sehnsucht'"
+    decision: added
+    why: >
+      The gods in this tale do not announce themselves as modern interventionists; they enter by
+      changing what outcomes are possible. Strauss's opening opens a sonic seam where public order
+      is suddenly recontextualized by cosmic register.
+
+  - n: 9
+    scene: "The tournament hour is fixed and the city accepts the final wager"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    decision: added
+    why: >
+      The contest is no longer about two men choosing each other; it is about a mechanism already
+      in motion. Beethoven's Fifth supplies inexorable forward motion and the sense that once the
+      form begins, all alternatives are being scored against themselves.
+
+  - n: 10
+    scene: "Arcite wins then dies, and the social machine reveals its cost"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    decision: added
+    why: >
+      The triumph that should resolve desire ends in private catastrophe. Mahler's Adagietto is
+      inward, suspended grief — public ritual with private wounds still vibrating beneath it.
+
+  - n: 11
+    scene: "Theseus restores civic order by giving Emily to Palamon"
+    force: law
+    composer: Brahms
+    work: "Symphony No. 4 — I. Allegro non troppo"
+    decision: added
+    why: >
+      The tale closes as a juridical restoration rather than a romantic rescue. Brahms's first
+      movement keeps grief from dissolving into catharsis by forcing form to hold and adjudicate
+      what passion has broken.

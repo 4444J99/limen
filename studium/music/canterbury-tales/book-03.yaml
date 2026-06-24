@@ -1,0 +1,127 @@
+# Canterbury Tales — The Miller's Tale: appetite, deceit, and comic fracture
+work: canterbury-tales
+book: 3
+title: "Canterbury Tales — The Miller's Tale: appetite, deceit, and comic fracture"
+length_minutes: 74
+principle: >
+  Score this tale as a collision between moral rhetoric and private appetite. The Miller's Tale is
+  the Canterbury experiment in social speech as sabotage: every public claim to piety can become a tool
+  of private seduction, and every private desire invents a public argument to hide itself.
+force_arc: [comedy, law, desire, desire, comedy, desire, comedy, comedy, grief, grief, law]
+dominant_force: desire
+tracks:
+  - n: 1
+    scene: "The Miller breaks the previous decorum and declares a tale of rough social truth"
+    force: comedy
+    composer: Offenbach
+    work: "Orpheus in the Underworld — 'Galop infernal' (Can-Can)"
+    decision: added
+    why: >
+      The tale opens by shattering tonal expectations, and the Company knows this is sanctioned
+      mockery. Offenbach's can-can is pure civic derangement: social order is still present, but
+      everyone is now grinning at what it cannot admit.
+
+  - n: 2
+    scene: "John the carpenter's house is introduced as a household governed by plain economic law"
+    force: law
+    composer: Bach
+    work: "Brandenburg Concerto No. 3 in G major — I. Allegro"
+    decision: added
+    why: >
+      Before deception begins, the tale gives us institutions, not sentiment: housework, debt,
+      marriage, and reputation. Bach's tightly structured contrapuntal grammar fits the house as
+      a legal ledger, not a romance space.
+
+  - n: 3
+    scene: "Nicholas reads signs and enters John and Alison's household as a pious opportunist"
+    force: desire
+    composer: Wagner
+    work: "Tristan und Isolde — Prelude"
+    decision: added
+    why: >
+      The first turn of the tale is not theology but appetite claiming theology's voice. Wagner's
+      Prelude gives that tension: a force that appears as longing while organizing everything else
+      against itself.
+
+  - n: 4
+    scene: "Nicholas and Alison discover a language of private complicity"
+    force: desire
+    composer: Mozart
+    work: "Don Giovanni — Overture"
+    decision: added
+    why: >
+      Desire in the Miller's Tale is playful and tactical. Mozart's Overture is elegant and
+      predatory at once: wit as instrument, motion as seduction.
+
+  - n: 5
+    scene: "Nicholas performs the parody of clerical warning to hide a plan"
+    force: comedy
+    composer: Rameau
+    work: "Platée — Suite: Tambourins"
+    decision: added
+    why: >
+      The comic register shifts when a role becomes camouflage. Rameau's Tambourins are ornate
+      laughter: polished, theatrical, and fully aware of how authority sounds when it is being used
+      for other ends.
+
+  - n: 6
+    scene: "Absolon enters with courtly desire and the game widens"
+    force: desire
+    composer: Schubert
+    work: "Symphony No. 8 in B minor (Unfinished) — I. Allegro moderato"
+    decision: added
+    why: >
+      Absolon's entrance raises the stakes by adding formal performance. Desire ceases being private
+      and becomes a public competition staged under the guise of decorum.
+
+  - n: 7
+    scene: "The false weather sign binds everyone into a shared farce"
+    force: comedy
+    composer: Rossini
+    work: "Il barbiere di Siviglia — Overture"
+    decision: added
+    why: >
+      The tale's great joke is mechanical: the characters consent to the sign because it lets each
+      perform what they want. Rossini's overture is that consent made quick, bright, and impossible
+      to resist.
+
+  - n: 8
+    scene: "The night sequence in the loft exposes the comic geometry of windows and bodies"
+    force: comedy
+    composer: Tchaikovsky
+    work: "Piano Concerto No. 1 in B-flat minor — I. Allegro non troppo e molto maestoso"
+    decision: added
+    why: >
+      One body, then another, then another: the scene is architecture as farce. Tchaikovsky's
+      concerto opening uses weight, turns, and theatrical cadence to match the clumsy, fast choreography
+      of social misrecognition.
+
+  - n: 9
+    scene: "Absolon is ridiculed in the nocturnal reversal at the window"
+    force: grief
+    composer: Barber
+    work: "Adagio for Strings, Op. 11"
+    decision: added
+    why: >
+      The humiliation is comic in structure and bodily in experience. Barber's Adagio gives the
+      moment a sudden inwardness: the social laugh has an edge of pity.
+
+  - n: 10
+    scene: "John wakes into revelation and bodily loss, his authority permanently reduced"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 5 — I. Trauermarsch"
+    decision: added
+    why: >
+      Grief here is not elegiac; it is humiliating. What had been household power turns into public
+      weakness. Mahler's funeral cadence clarifies the irreversible tone-change from mockery to ache.
+
+  - n: 11
+    scene: "The company closes with laughter while the household remains a legal shell of itself"
+    force: law
+    composer: Handel
+    work: "Water Music Suite No. 1 in F major — Overture"
+    decision: added
+    why: >
+      The tale closes where it began: with form pretending to hold. The law persists, but it now
+      carries comic damage. Handel restores civic ceremony while refusing to erase the injury.
