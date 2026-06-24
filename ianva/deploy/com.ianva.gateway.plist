@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  ianva gateway keepalive (LaunchAgent), mirroring com.limen.heartbeat.
+
+  INSTALL (his-hand): replace __IANVA_DIR__ with the absolute path to the ianva/ dir, then:
+    cp deploy/com.ianva.gateway.plist ~/Library/LaunchAgents/
+    sed -i '' "s#__IANVA_DIR__#$PWD#g" ~/Library/LaunchAgents/com.ianva.gateway.plist
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.ianva.gateway.plist
+  RESTART:  launchctl kickstart -k gui/$(id -u)/com.ianva.gateway
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>            <string>com.ianva.gateway</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>__IANVA_DIR__/scripts/ianva-serve.sh</string>
+  </array>
+  <key>RunAtLoad</key>        <true/>
+  <key>KeepAlive</key>        <true/>
+  <key>ThrottleInterval</key> <integer>10</integer>
+  <key>StandardOutPath</key>  <string>__IANVA_DIR__/logs/gateway.out.log</string>
+  <key>StandardErrorPath</key><string>__IANVA_DIR__/logs/gateway.err.log</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+  </dict>
+</dict>
+</plist>

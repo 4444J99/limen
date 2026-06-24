@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+# runtime state never belongs in git
+run/
+logs/
+locks/
+mcp_settings.json

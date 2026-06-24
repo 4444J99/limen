@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "ianva": {
+      "command": "uvx",
+      "args": [
+        "mcp-proxy",
+        "--transport",
+        "streamablehttp",
+        "http://127.0.0.1:7666/mcp"
+      ]
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "_comment": "Example ianva upstream set. Copy to ~/.config/ianva/upstreams.json and edit, or let build-mcp-registry.py populate ~/.agents/mcp/servers.json. ianva merges both (this file wins on name collisions). stdio upstreams give {command,args,env}; remote upstreams give {url,type} and oauth:true when MCPHub should hold + auto-refresh their OAuth.",
+
+  "limen": {
+    "command": "uv",
+    "args": ["--directory", "/Users/4jp/Workspace/limen/mcp", "run", "limen-mcp"],
+    "enabled": true,
+    "group": "fleet"
+  },
+
+  "github": {
+    "command": "/Users/4jp/.local/bin/github-mcp-server-with-token",
+    "args": ["stdio"],
+    "enabled": true,
+    "group": "dev"
+  },
+
+  "notion": {
+    "url": "https://mcp.notion.com/mcp",
+    "type": "streamable-http",
+    "oauth": true,
+    "enabled": true,
+    "group": "knowledge"
+  },
+
+  "sentry": {
+    "url": "https://mcp.sentry.dev/mcp",
+    "type": "streamable-http",
+    "oauth": true,
+    "enabled": true,
+    "group": "ops"
+  }
+}

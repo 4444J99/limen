@@ -1,0 +1,29 @@
+# ianva — the doorway's own config. Every value is a derived default; override here.
+# Backend commands are knobs (exact flags are version-specific — verify with `ianva doctor`),
+# never pinned literals baked into code.
+
+[gateway]
+host = "127.0.0.1"
+port = 7666
+path = "/mcp"
+# Set once the public connector tunnel is up (cloud face). When set, agents that support
+# remote transport get this URL instead of the loopback one.
+public_url = ""
+
+[core]
+backend = "mcphub"   # mcphub | docker
+# Verified npm package: @samanhappy/mcphub (NOT bare "mcphub", which is unrelated). MCPHub reads
+# mcp_settings.json from its CWD; ianva runs it in ~/.config/ianva and passes PORT via env.
+# {port}/{settings} are available if you point this at a custom backend. Confirm with `ianva doctor`.
+backend_cmd = "npx -y @samanhappy/mcphub@latest"
+
+[bridge]
+# sparfenyuk/mcp-proxy (PyPI: mcp-proxy) as the stdio<->HTTP shim for agents without first-class HTTP MCP.
+proxy_bin = "uvx"
+proxy_args = ["mcp-proxy", "--transport", "streamablehttp"]
+
+[upstreams]
+# build-mcp-registry.py's inventory (its first real consumer). Empty = ~/.agents/mcp/servers.json.
+registry = ""
+# ianva's own additions/overrides. Empty = ~/.config/ianva/upstreams.json.
+extra = ""

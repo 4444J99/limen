@@ -111,6 +111,41 @@
         "OR add a Bash allow-rule Bash(gh secret set:*) so any session lands it autonomically",
         "OR run one `claude --dangerously-skip-permissions` session — the agent lands it"
       ]
+    },
+    {
+      "id": "L-IANVA-LOCAL",
+      "label": "Kill the per-agent MCP re-auth for every non-claude.ai agent in ONE move — this is most of the 'why do I keep authorizing MCP servers over and over' rage. Today Codex/Gemini/agy/opencode/Copilot/Cline each authorize every MCP upstream separately, and again whenever a token lapses. ianva (built + verified, commit c832ca3) fronts every upstream behind ONE gateway that holds each refresh token and auto-renews it silently, so each agent gets ONE config entry and you consent once per upstream, never again. Fully local, fully reversible — every config is backed up first; `claude mcp remove --scope user ianva` or restoring any *.ianva-bak undoes it. This is the core of your original ask: 'all agent config files point at our own server.'",
+      "cost": "~5 min once, durable — retires the per-agent re-auth class across 6 agents",
+      "owner": "yours",
+      "unlocks": "every non-claude.ai agent authenticates each MCP upstream ONCE, never per-agent again",
+      "source_task": "ianva (session 6cdc53d9) — disease B",
+      "branch": "worktree-ianva-doorway",
+      "gate": "HOLD — merge the branch, then one global-config write (writing the ianva entry into your 7 installed agent configs; it backs up every file first and is dry-run by default)",
+      "steps": [
+        "Merge worktree-ianva-doorway into limen main (or open a PR) — ships ianva to the fleet",
+        "cd ianva && export PYTHONPATH=\"$PWD/src\"; python3 -m ianva.cli up   # first run fetches MCPHub via npx",
+        "Populate upstreams: run build-mcp-registry.py, OR cp ianva/upstreams.example.json ~/.config/ianva/upstreams.json and edit (remote OAuth upstreams get \"oauth\": true)",
+        "python3 -m ianva.cli install-configs          # preview, writes nothing",
+        "python3 -m ianva.cli install-configs --apply  # write the entry into all 7 agent configs (backs up each first)",
+        "Optional durability: cp ianva/deploy/com.ianva.gateway.plist ~/Library/LaunchAgents/ then sed the __IANVA_DIR__ placeholder and launchctl bootstrap it"
+      ]
+    },
+    {
+      "id": "L-IANVA-CLOUD",
+      "label": "Stop the claude.ai connector prompts (the /doctor 'Sentry needs authentication' class) — the ONE re-auth disease a local gateway physically cannot fix, because claude.ai runs that OAuth from Anthropic's cloud, not your machine. Cure = expose ianva as ONE public, bearer-enforced HTTPS connector that holds every upstream's creds behind it and never returns 401, then add a SINGLE custom connector in claude.ai pointing at it — replacing the dozen per-service connectors. Needs the local face (L-IANVA-LOCAL) running first. The cost is real and honest: it is internet-reachable, so it goes up bearer-first and the tunnel script REFUSES to expose an endpoint that answers /mcp without auth.",
+      "cost": "~15 min once + a security pass; durable — one connector that never expires from your side",
+      "owner": "yours",
+      "unlocks": "the claude.ai connector re-auth prompts stop — one bearer'd connector replaces the ~17 per-service ones",
+      "source_task": "ianva (session 6cdc53d9) — disease A",
+      "branch": "worktree-ianva-doorway",
+      "gate": "HOLD — touches your claude.ai account and exposes a public endpoint; do L-IANVA-LOCAL first",
+      "steps": [
+        "python3 -m ianva.cli bearer --new",
+        "bash scripts/set-credential.sh IANVA_BEARER_TOKEN   # silent prompt, lands in ~/.limen.env",
+        "python3 -m ianva.cli up                              # restart so the gateway ENFORCES the bearer",
+        "bash ianva/scripts/ianva-tunnel.sh                   # refuses unless /mcp returns 401 unauth'd; prints the public URL",
+        "Set gateway.public_url in ianva.toml to <url>/mcp, then in claude.ai add ONE custom connector at that URL with the bearer in its auth header — it replaces the per-service connectors"
+      ]
     }
   ]
 }

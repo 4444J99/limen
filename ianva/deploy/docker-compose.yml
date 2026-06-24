@@ -1,0 +1,25 @@
+# ianva — DOCKER face (alternate aggregation backend).
+#
+# The fleet's 2026-03-25 decision picked the Docker MCP gateway as the single MCP layer, but
+# docker isn't installed on this machine today. This compose keeps that option live without
+# making it mandatory: it runs MCPHub in a container instead of via `npx`. Switch ianva to it
+# by setting core.backend_cmd to a no-op (the container is the backend) and pointing agents at
+# the same endpoint. Requires Docker Desktop (brew install --cask docker), then `docker compose up -d`.
+services:
+  ianva-core:
+    image: samanhappy/mcphub:latest      # verified image; pin a digest in production
+    container_name: ianva-core
+    restart: unless-stopped
+    ports:
+      - "7666:3000"                       # host 7666 -> MCPHub's in-container port
+    volumes:
+      # MUST be read-write: MCPHub writes refreshed/rotated OAuth tokens back to this file so
+      # they survive restarts — a :ro mount would break "authenticate once, forever".
+      - ${HOME}/.config/ianva/mcp_settings.json:/app/mcp_settings.json
+    environment:
+      - PORT=3000
+      - MCPHUB_SETTING_PATH=/app/mcp_settings.json
+    # Note: upstream OAuth is held inside MCPHub's settings/store, so ~/.limen.env is NOT mounted
+    # in (avoids exposing unrelated fleet secrets to the container). Pass only vars MCPHub needs.
+    # The Docker MCP gateway proper (docker/mcp-gateway) is the alternative if you prefer
+    # Docker-managed OAuth + interceptors:  `docker mcp gateway run`  (see docs/ARCHITECTURE.md).
