@@ -14,6 +14,21 @@
         "bash scripts/set-credential.sh LIMEN_CLAUDE_AUTH_TOKEN   # or LIMEN_CLAUDE_API_KEY if probe says wiped",
         "deploy fix/claude-credential-race (reconcile divergence first; dispatch.py picked up next beat, no restart)"
       ]
+    },
+    {
+      "id": "L-CI-BRANCH-PROTECTION",
+      "label": "Close the CI-poison class: CI only lints/builds PULL REQUESTS, so a direct push to main can land red code — it happened twice (f9325a8 ruff, 3069587 web) and each time jammed every open PR's merge until hand-fixed. Cure = require the CI checks on main so nothing un-green lands. Cheapest: GitHub → organvm/limen → Settings → Branches → add a protection rule/ruleset for `main` requiring status checks python + web + worker, plus 'require a pull request before merging'. NOTE: the daemon commits some content (e.g. studium dailies) directly to main — either route those through the merge organ too, or scope the rule to exempt the limen[bot]/App actor; your governance call. Reversible: relax the rule anytime.",
+      "cost": "~2 min once, durable — retires the whole un-gated-push poison class",
+      "owner": "yours",
+      "branch": null,
+      "gate": "his GitHub repo-admin (or the limen[bot] App once installed)",
+      "steps": [
+        "GitHub → organvm/limen → Settings → Branches → new branch ruleset (or protection rule) targeting `main`",
+        "Require status checks to pass before merging: python, web, worker",
+        "Require a pull request before merging (blocks un-CI'd direct pushes from sessions)",
+        "Decide the daemon's content path: route its commits through the merge organ, OR add limen[bot]/App as a bypass actor so studium dailies still flow",
+        "Save — no un-CI'd commit can poison main again"
+      ]
     }
   ]
 }
