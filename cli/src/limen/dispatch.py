@@ -4,7 +4,9 @@ import re
 import secrets
 import shlex
 import subprocess
+import contextlib
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -15,13 +17,38 @@ from limen.capacity import (
     capacity_census,
     format_capacity_census,
     github_issue_ref,
+    ollama_model,
 )
-from limen.io import load_limen_file, save_limen_file, queue_lock
+from limen.io import load_limen_file, save_limen_file
 from limen.models import BudgetTrack, DispatchLogEntry, LimenFile, Task
 from limen.doctor import stale_tasks
 
-# Backward compat alias — the canonical lock lives in io.py
-_queue_lock = queue_lock
+@contextlib.contextmanager
+def _queue_lock(tasks_path: Path, timeout: int = 90):
+    """Cross-process mutex on tasks.yaml writes. The lockdir is derived from tasks_path
+    (its sibling logs/.queue.lock.d) so in production it is the SAME dir the heartbeat +
+    supervisors use ($LIMEN_ROOT/logs/.queue.lock.d), while tests with a temp tasks.yaml get
+    an isolated lock instead of blocking on the real repo's. Lets dispatch self-protect its
+    reserve/commit saves now that the heartbeat releases the lock BEFORE the slow run (#11)
+    — so a seed/heal written during the run isn't clobbered by a stale-copy save."""
+    lockd = tasks_path.parent / "logs" / ".queue.lock.d"
+    got = False
+    lockd.parent.mkdir(parents=True, exist_ok=True)
+    for _ in range(timeout):
+        try:
+            lockd.mkdir()
+            got = True
+            break
+        except FileExistsError:
+            time.sleep(1)
+    try:
+        yield got
+    finally:
+        if got:
+            try:
+                lockd.rmdir()
+            except OSError:
+                pass
 
 def _usage_dead_lanes() -> set[str]:
     """Lanes the LIVE usage meter (logs/usage.json, written by usage-telemetry.py) reports as
@@ -39,21 +66,65 @@ def _usage_dead_lanes() -> set[str]:
             if isinstance(info, dict) and info.get("health") in ("exhausted", "rate-limited", "low")}
 
 
+# Lanes whose CLI authenticates ONLY via an interactive browser OAuth flow — no headless / device-code
+# fallback. agy (the antigravity-cli) is the case in point: in print mode it first tries a SILENT token
+# refresh against the host below; if that network call fails it MISREADS the failure as "not logged in"
+# and launches a Google sign-in browser tab (its browser.go: consumerOAuth). Unattended, that's one tab
+# per beat. The refresh only fails when the host is unreachable — exactly what happens when the Mac is
+# asleep / in dark-wake with no network (observed 2026-06-24, 01:34–05:37: ~20 tabs; the agy logs show
+# `dial tcp: lookup oauth2.googleapis.com: no such host` → "silent auth failed, triggering OAuth"). So
+# we map each such lane to the host its silent auth must reach, and gate dispatch on reaching it.
+_BROWSER_OAUTH_LANES: dict[str, str] = {
+    "agy": "oauth2.googleapis.com",
+    "antigravity": "oauth2.googleapis.com",
+}
+
+
+def _oauth_unreachable_lanes() -> set[str]:
+    """Browser-OAuth lanes whose silent-auth endpoint is unreachable RIGHT NOW — skip them THIS beat so
+    they can't fall through to an interactive browser tab (the overnight tab-flood root cause). The probe
+    is the SAME precondition the CLI's own silent refresh needs: a DNS + TCP:443 reach of the host. Fails
+    → lane down for this beat; succeeds → lane runs and does real work. Self-heals the instant the network
+    returns (on wake) — no manual file, no static disable, no human. The probe never raises and is cheap:
+    an online check is sub-100ms; an offline one caps at the (short) timeout — and offline beats are
+    exactly the ones we want to short-circuit. Set LIMEN_OAUTH_PREFLIGHT=0 to disable the gate."""
+    if os.environ.get("LIMEN_OAUTH_PREFLIGHT", "1") != "1":
+        return set()
+    import socket
+    timeout = float(os.environ.get("LIMEN_OAUTH_PREFLIGHT_TIMEOUT", "3"))
+    reachable: dict[str, bool] = {}
+    down: set[str] = set()
+    for lane, host in _BROWSER_OAUTH_LANES.items():
+        ok = reachable.get(host)
+        if ok is None:
+            try:
+                socket.create_connection((host, 443), timeout=timeout).close()
+                ok = True
+            except OSError:
+                ok = False  # gaierror (DNS down in dark-wake) and connect failures both subclass OSError
+            reachable[host] = ok
+        if not ok:
+            down.add(lane)
+    return down
+
+
 def _down_lanes() -> set[str]:
-    """Lanes currently DOWN/unproductive. Two sources, unioned:
+    """Lanes currently DOWN/unproductive. Three sources, unioned:
       1. logs/lanes-down.txt — a manual override file (one lane per line, '#' comments ok) for
          lanes a human knows are dead (e.g. agy bin missing); NOT pinned in code.
       2. the LIVE usage meter (_usage_dead_lanes) — lanes token-exhausted or rate-limited RIGHT NOW.
+      3. browser-OAuth lanes whose silent-auth endpoint is unreachable this beat (_oauth_unreachable_lanes)
+         — so agy/antigravity can't spawn a Google sign-in tab while the Mac is asleep/offline.
     Rebalance + dispatch + route skip these so tasks aren't wasted on a lane that can't produce.
-    Source 2 self-heals (a lane rejoins when its window refills); remove a line from source 1 when
-    that lane is healthy again (e.g. a paid GEMINI_API_KEY)."""
+    Sources 2 & 3 self-heal (a lane rejoins when its window refills / the network returns); remove a line
+    from source 1 when that lane is healthy again (e.g. a paid GEMINI_API_KEY)."""
     f = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen"))) / "logs" / "lanes-down.txt"
     manual: set[str] = set()
     try:
         manual = {ln.split("#")[0].strip() for ln in f.read_text().splitlines() if ln.split("#")[0].strip()}
     except OSError:
         pass
-    return manual | _usage_dead_lanes()
+    return manual | _usage_dead_lanes() | _oauth_unreachable_lanes()
 
 
 def _run_capture(cmd: list[str], cwd: str | None = None, timeout: int = 600, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
@@ -149,6 +220,34 @@ def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool | str:
     return _run_cmd(["agent-dispatch", agent, _build_prompt(task)], task, dry_run)
 
 
+_FLAME_CACHE: dict[str, str] = {}
+
+
+def _flame_preamble() -> str:
+    """The Continuity Kernel ($LIMEN_ROOT/FLAME.md), prepended to EVERY lane's prompt so the
+    *self* rides every dispatch — codex, claude, opencode, agy, gemini, jules, ollama, whatever
+    comes next. Whichever model runs the beat acts AS VLTIMA, not as a generic coder: the model is
+    the substrate, the kernel is the flame. This is what makes the flame survive a model swap —
+    when tokens run dry on Claude and the beat falls to a local model, the identity + invariants +
+    state-pointers ride along in the prompt itself, not in any one harness.
+
+    Gated by LIMEN_FLAME_KERNEL (default on; '0' → bare task prompt, today's behavior). Cached by
+    path+mtime so we re-read only when the kernel actually changes. Fail-open to '' everywhere:
+    a missing/unreadable kernel must NEVER block a dispatch (derive-never-pin, fail-open)."""
+    if os.environ.get("LIMEN_FLAME_KERNEL", "1") != "1":
+        return ""
+    root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
+    f = root / os.environ.get("LIMEN_FLAME_FILE", "FLAME.md")
+    try:
+        key = f"{f}:{f.stat().st_mtime_ns}"
+        if key not in _FLAME_CACHE:
+            _FLAME_CACHE.clear()  # only ever hold the current mtime's text
+            _FLAME_CACHE[key] = f.read_text(encoding="utf-8")
+        return _FLAME_CACHE[key]
+    except (OSError, ValueError):
+        return ""  # no kernel on disk yet → bare prompt, never a blocked lane
+
+
 def _build_prompt(task: Task) -> str:
     parts = [f"Complete task {task.id}: {task.title}"]
     if task.repo:
@@ -157,7 +256,14 @@ def _build_prompt(task: Task) -> str:
         parts.append(f"\nContext: {task.context}")
     if task.urls:
         parts.append(f"\nReferences: {', '.join(task.urls)}")
-    return "".join(parts)
+    body = "".join(parts)
+    flame = _flame_preamble()
+    if not flame:
+        return body
+    # Kernel first (who you are + the invariants + where to resume from), then a hard divider,
+    # then THIS beat's concrete task. The divider keeps the model from mistaking the standing
+    # identity for the work item.
+    return f"{flame}\n\n--- YOUR TASK THIS BEAT ---\n{body}"
 
 
 def _run_cmd(cmd: list[str], task: Task, dry_run: bool, cwd: str | None = None) -> bool | str:
@@ -174,6 +280,8 @@ def _run_cmd(cmd: list[str], task: Task, dry_run: bool, cwd: str | None = None) 
             print(f"  dispatched: {task.id}")
             # Try to extract session ID from output if it's jules
             if cmd[0].endswith("jules"):
+                import re
+
                 match = re.search(r"session\s+(\d+)", result.stdout, re.IGNORECASE)
                 if match:
                     return match.group(1)
@@ -221,6 +329,8 @@ def _call_copilot(task: Task, dry_run: bool) -> bool | str:
       user(login: $actor) { id }
     }
     """
+    import json
+    import subprocess
     q_cmd = [
         gh, "api", "graphql",
         "-f", f"query={query}",
@@ -381,6 +491,10 @@ _LOCAL_AGENTS: dict[str, list[str]] = {
     "agy": ["--dangerously-skip-permissions", "-p"],
     "antigravity": ["--dangerously-skip-permissions", "-p"],
     "claude": ["-p", "--permission-mode", "acceptEdits"],
+    # ollama: the local, unmetered floor. `ollama run <model> <prompt>` runs once,
+    # non-interactively. The <model> is a POSITIONAL after `run` (not a -m flag), injected
+    # lazily in _agent_argv() and DERIVED from `ollama list` — never pinned (see ollama_model).
+    "ollama": ["run"],
 }
 _LOCAL_BIN: dict[str, str] = {}
 _CONFIGURED_SERVICE_AGENTS = {"warp", "oz"}
@@ -401,15 +515,33 @@ def _call_configured_paid_service(agent: str, task: Task, dry_run: bool) -> bool
     return _run_cmd(cmd, task, dry_run)
 
 
-def _agent_argv(agent: str) -> list[str]:
+def _agent_argv(agent: str, task: Task | None = None) -> list[str]:
     """Static lane flags + any LAZILY-derived per-run flags, so nothing is pinned or
-    resolved at import time. opencode's model is derived here (only when it actually
-    runs) from `opencode models` — names are outputs, not inputs."""
+    resolved at import time. opencode's/codex's model is derived here (only when it actually
+    runs); claude's TIER is derived per task (the earned-tier ladder) — names are outputs.
+    `task` is optional (codex/opencode ignore it) so existing callers stay valid."""
     flags = list(_LOCAL_AGENTS[agent])
     if agent == "opencode":
         model = _opencode_model()
         if model:
             flags += ["-m", model]
+    elif agent == "codex":
+        model = _codex_model()
+        if model:
+            flags += ["-m", model]
+    elif agent == "claude":
+        model = _claude_model(task)
+        if model:
+            # the claude CLI uses --model (it has NO -m short flag, unlike codex/opencode);
+            # `claude -m …` → "error: unknown option '-m'" and the whole dispatch fails.
+            flags += ["--model", model]
+    elif agent == "ollama":
+        # `ollama run <model> <prompt>` — model is a POSITIONAL right after `run`, derived at
+        # call-time. No model pulled → no model arg (the run will error and the lane stays the
+        # inert floor until `ollama pull` lights it), never a pinned name.
+        model = ollama_model()
+        if model:
+            flags += [model]
     return flags
 
 # Per-task lane failover cascade (best-efficiency-first → cloud last). On a genuine
@@ -419,7 +551,7 @@ def _agent_argv(agent: str) -> list[str]:
 # Exhausting the list marks the task failed. Keep this order == heartbeat.sh LANES order.
 # agy/antigravity KEPT and HEALED: it writes to a scratch dir, so _bridge_agy_scratch carries
 # that work into the worktree after the run (see _isolated_local_run) — productive lane again.
-_LANE_CASCADE = ["codex", "opencode", "agy", "claude", "gemini", "jules"]
+_LANE_CASCADE = ["codex", "opencode", "agy", "claude", "gemini", "jules", "ollama"]
 _NOOP = "__noop__"  # agent ran but produced no diff — do NOT cascade lanes
 
 
@@ -451,6 +583,23 @@ _RATE_PATTERNS = re.compile(
 
 def _is_rate_limited(text: str) -> bool:
     return bool(_RATE_PATTERNS.search(text or ""))
+
+
+# A TRANSIENT auth flap — NOT a real rate limit. Concurrent Claude Code processes share one
+# rotating OAuth credential (the macOS Keychain item), so when the access token expires several
+# race to refresh: the winner rotates the single-use refresh token, the losers present a now-stale
+# token and report "Not logged in" (anthropics/claude-code#48786). A FRESH process re-reads the
+# rotated token, so a single retry self-heals it. Kept DISTINCT from _is_rate_limited — a real
+# limit must cool+cascade the lane, an auth blip must just retry the same lane once.
+_AUTH_BLIP_PATTERNS = re.compile(
+    r"not logged in|please run /login|invalid[_ ]grant|oauth[^.]*(expired|invalid|revoked)|"
+    r"authentication_error|\b401\b|unauthorized",
+    re.IGNORECASE,
+)
+
+
+def _is_auth_blip(text: str) -> bool:
+    return bool(_AUTH_BLIP_PATTERNS.search(text or "")) and not _is_rate_limited(text)
 
 
 def _resolve_repo_dir(task: Task) -> Path | None:
@@ -506,9 +655,15 @@ def _clone_repo(task: Task) -> Path | None:
             return dest
         dest.parent.mkdir(parents=True, exist_ok=True)
         try:
-            r = subprocess.run(
-                ["gh", "repo", "clone", task.repo, str(dest)],
-                capture_output=True, text=True, timeout=600,
+            # _run_capture (process-group SIGKILL), NOT plain subprocess.run: a `gh repo clone`
+            # whose git / git-remote-https grandchild hangs holding the stdout pipe makes
+            # subprocess.run's post-timeout communicate() block FOREVER (the exact bug _run_capture
+            # was built for). And this runs under _GIT_PLUMBING_LOCK, so ONE hung clone freezes
+            # every clone-needing worker → the ThreadPoolExecutor never drains → dispatch-parallel
+            # wedges past the lane timeout and the daemon stalls (observed: ~30-min hang). The
+            # group-kill reaps the grandchildren so the clone is genuinely bounded → cascades clean.
+            r = _run_capture(
+                ["gh", "repo", "clone", task.repo, str(dest)], timeout=600,
             )
         except Exception as e:
             print(f"  clone {task.repo} errored: {e}")
@@ -617,7 +772,7 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
     suffix = secrets.token_hex(2)
     branch = f"limen/{slug}-{suffix}"
     wt = _ISOLATION_ROOT / (re.sub(r"[^a-zA-Z0-9._-]+", "-", task.id.lower()) + "-" + suffix)
-    agent_cmd = [binary, *_agent_argv(agent), _build_prompt(task)]
+    agent_cmd = [binary, *_agent_argv(agent, task), _build_prompt(task)]
     # 1800s (was 900): local lanes have ABUNDANT budget headroom (codex/claude/opencode ~60-92 left
     # per window) while jules is scarce (≈100/day). At 900s, big tasks — incl. the revenue/deploy
     # tasks (BLD2-*-deploy, REV-*) — timed out locally then bled to jules, exhausting the scarce lane
@@ -628,7 +783,7 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
     if dry_run:
         print(
             f"  would isolate {task.id}: worktree {wt} off origin/{base} "
-            f"→ branch {branch} → {binary} {' '.join(_agent_argv(agent))} "
+            f"→ branch {branch} → {binary} {' '.join(_agent_argv(agent, task))} "
             f"→ commit → push → PR  (live checkout untouched)"
         )
         return True
@@ -662,10 +817,53 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
         if agent == "gemini" and os.environ.get("LIMEN_GEMINI_OAUTH") == "1":
             for k in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENERATIVE_AI_API_KEY"):
                 run_env.pop(k, None)
+        # agy/antigravity FAIL-CLOSED browser neuter (defense-in-depth behind the _oauth_unreachable_lanes
+        # gate): if the network drops MID-run, the antigravity-cli would still fall to interactive OAuth and
+        # try to open a Google sign-in tab. On macOS every browser-opener lib ultimately runs `open <url>`
+        # resolved via PATH, so we prepend a no-op `open` shim to THIS subprocess's PATH only — the cli can
+        # then "open" the tab into a script that just logs + exits 0. The lane fails the beat instead of
+        # littering the desktop. Scoped to the agy subprocess; interactive `agy` you run by hand is untouched.
+        if agent in ("agy", "antigravity"):
+            shim = str(Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
+                       / "scripts" / "agy-noop-shim")
+            run_env["PATH"] = shim + os.pathsep + run_env.get("PATH", "")
+            run_env["BROWSER"] = "true"  # belt-and-suspenders for libs that honor $BROWSER (no-op command)
+        # claude: keep the FLEET's auth OFF the interactive session's shared macOS Keychain, so the
+        # daemon's concurrent `claude -p` never rotate the OAuth token out from under a live session
+        # (anthropics/claude-code#48786). Precedence — all fleet-scoped (set in ~/.limen.env, which
+        # ONLY the daemon sources) and fail-open (neither set → unchanged: shares the Keychain, but
+        # the auth-blip retry below makes that race self-healing):
+        #   LIMEN_CLAUDE_AUTH_TOKEN → ANTHROPIC_AUTH_TOKEN  (a `claude setup-token`: subscription-
+        #       billed + stable = the FREE isolation; VERIFY with scripts/claude-fleet-auth-probe.sh
+        #       that it bills to the sub and leaves the Keychain intact before trusting it)
+        #   LIMEN_CLAUDE_API_KEY    → ANTHROPIC_API_KEY     (documented-safe, API-credit-billed fallback)
+        # NEVER export CLAUDE_CODE_OAUTH_TOKEN here: on macOS it DELETES the global Keychain item on
+        # exit (anthropics/claude-code#37512, closed not-planned), which would knock out the live session.
+        if agent == "claude":
+            _ftok = os.environ.get("LIMEN_CLAUDE_AUTH_TOKEN")
+            _fkey = os.environ.get("LIMEN_CLAUDE_API_KEY")
+            if _ftok:
+                run_env["ANTHROPIC_AUTH_TOKEN"] = _ftok
+                run_env.pop("ANTHROPIC_API_KEY", None)
+            elif _fkey:
+                run_env["ANTHROPIC_API_KEY"] = _fkey
+            run_env.pop("CLAUDE_CODE_OAUTH_TOKEN", None)  # belt-and-suspenders: never wipe the Keychain
         try:
             run = _run_capture(
                 agent_cmd, cwd=str(wt), timeout=lane_timeout, env=run_env,
             )  # own process group → timeout SIGKILLs grandchildren too (no beat-stall hang)
+            # SELF-HEAL the credential-refresh race (#48786): if claude lost the token rotation,
+            # a fresh process re-reads the now-rotated token. ONE retry only — a persistent failure
+            # still falls through to the rate-limit/cascade handling below. claude-lane only.
+            if (
+                agent == "claude"
+                and run.returncode != 0
+                and _is_auth_blip((run.stderr or "") + (run.stdout or ""))
+            ):
+                print(f"  AUTH-BLIP {task.id}: claude credential-refresh race — re-reading token, one retry")
+                run = _run_capture(
+                    agent_cmd, cwd=str(wt), timeout=lane_timeout, env=run_env,
+                )
         except subprocess.TimeoutExpired:
             print(f"  TIMEOUT {task.id} after {lane_timeout}s — too big for sync local → routing to jules (async)")
             return _TIMEOUT  # finally drops the worktree; task re-routes to the async lane
@@ -741,12 +939,12 @@ def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str:
         return _isolated_local_run(agent, task, dry_run)
     # ── legacy in-place path (escape hatch; edits the live checkout directly)
     binary = os.environ.get(f"LIMEN_{agent.upper()}_BIN", _LOCAL_BIN.get(agent, agent))
-    cmd = [binary, *_agent_argv(agent), _build_prompt(task)]
+    cmd = [binary, *_agent_argv(agent, task), _build_prompt(task)]
     cwd = _resolve_repo_dir(task)
     if cwd is None:
         msg = f"no local checkout of {task.repo or '(no repo)'}"
         if dry_run:
-            print(f"  would [{msg}; clone first]: {binary} {' '.join(_agent_argv(agent))} …")
+            print(f"  would [{msg}; clone first]: {binary} {' '.join(_agent_argv(agent, task))} …")
             return True
         print(f"  SKIP {task.id}: {msg} — clone it under $LIMEN_WORKDIR first")
         return False
@@ -759,6 +957,7 @@ def _window_hours(agent: str) -> float:
     (5h rolling windows) refill ~5x/day instead of being throttled by a once-a-day cap,
     while jules/gemini/opencode/agy refill daily."""
     try:
+        import json
         root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
         limits = json.load(open(root / "logs" / "usage-limits.json"))
         window = str((limits.get(agent) or {}).get("window", ""))
@@ -870,15 +1069,70 @@ def dispatch_tasks(
         if remaining < task.budget_cost:
             break
 
+        entry = DispatchLogEntry(
+            timestamp=now,
+            agent=agent_filter,
+            session_id=session_id(),
+            status="dispatched",
+        )
+
         result = call_agent_dispatch(agent_filter, task, dry_run)
         if not dry_run:
-            _apply_result(task, agent_filter, result, now, track)
-            if result and result not in (_NOOP, _RATELIMIT, _TIMEOUT):
-                remaining -= task.budget_cost
+            if result == _NOOP:
+                # agent ran but had nothing to change — task-intrinsic, never cascade
+                entry.status = "noop"
+                task.status = "cancelled"
+                if "noop" not in task.labels:
+                    task.labels.append("noop")
+                task.updated = now
+                task.dispatch_log.append(entry)
             elif result == _RATELIMIT:
+                # the lane hit its REAL (token/rate) limit — cool the lane for this cycle
+                # and cascade THIS task down; do not spend budget, do not mark task failed.
+                nxt = _next_lane(agent_filter)
+                entry.status = f"ratelimited->{nxt or 'requeue'}"
+                task.target_agent = nxt or agent_filter
+                task.status = "open"
+                task.updated = now
+                task.dispatch_log.append(entry)
                 save_limen_file(tasks_path, limen)
                 print(f"── lane {agent_filter} rate-limited — cooling, {dispatched} dispatched this cycle")
                 return
+            elif result == _TIMEOUT:
+                # too big for a sync local lane → route to jules (async, no wall-clock cap)
+                entry.status = "timeout->jules"
+                task.target_agent = "jules"
+                task.status = "open"
+                if "slow" not in task.labels:
+                    task.labels.append("slow")
+                task.updated = now
+                task.dispatch_log.append(entry)
+            elif result:
+                if isinstance(result, str):
+                    entry.session_id = result
+                task.status = "dispatched"
+                task.updated = now
+                task.dispatch_log.append(entry)
+                track.spent += task.budget_cost
+                track.per_agent[agent_filter] = (
+                    track.per_agent.get(agent_filter, 0) + task.budget_cost
+                )
+                remaining -= task.budget_cost
+            else:
+                # genuine lane failure (down/error/timeout) — cascade DOWN the spectrum
+                tried = f"tried:{agent_filter}"
+                if tried not in task.labels:
+                    task.labels.append(tried)
+                nxt = _next_lane(agent_filter)
+                if nxt:
+                    entry.status = f"failed->{nxt}"
+                    task.target_agent = nxt
+                    task.status = "open"  # re-routed: a later lane retries (this tick or next)
+                else:
+                    entry.status = "failed"
+                    task.status = "failed"  # spectrum exhausted
+                task.updated = now
+                task.dispatch_log.append(entry)
 
         dispatched += 1
 
@@ -931,6 +1185,215 @@ def _apply_result(task: Task, agent: str, result: bool | str, now: datetime, tra
     task.dispatch_log.append(entry)
 
 
+# ── RESET-WINDOW FRONT-LOAD ACCELERATOR ──────────────────────────────────────────────────────
+# The daemon paces dispatch EVENLY across each vendor window, so 40–60% of usable headroom expires
+# unspent at every reset (verified live). This converts the budget about to EXPIRE into shipped value
+# before the cliff: as a lane under-spends vs. the time left in its window, raise its per-beat pick
+# count so it lands near-full at reset instead of idle. Two brakes keep "use the capacity" from
+# becoming "burn money": (1) only LEDGER-WON work-classes ride the acceleration tail (a pure-pit lane
+# never accelerates; a clean earner accelerates freely) — same ledger the routing bias reads; (2) it
+# is lane-AWARE — async/remote lanes (jules) absorb big bursts without blocking the beat, while local
+# SYNC lanes (codex/claude/agy) are wall-clock bound (the thread pool blocks the beat) so they stay at
+# base unless explicitly allowed. Env-gated LIMEN_ACCEL (default on); fail-open to base everywhere.
+_ASYNC_LANES = {"jules", "github_actions", "copilot", "warp", "oz"}  # remote dispatch — non-blocking
+
+
+def _ledger_lanes() -> dict:
+    """logs/ledger.json lanes map (waste_classes/win_classes per lane) — fail-open to {}."""
+    try:
+        root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
+        return json.loads((root / "logs" / "ledger.json").read_text()).get("lanes", {}) or {}
+    except Exception:
+        return {}
+
+
+def _task_classes(task: Task) -> set[str]:
+    """A task's work-classes — its type plus every label — the key the ledger grades a lane on."""
+    return {c for c in ([getattr(task, "type", None)] + list(getattr(task, "labels", []) or [])) if c}
+
+
+def _accel_allows(agent: str, task: Task, lanes: dict) -> bool:
+    """May this task ride the acceleration TAIL for this lane? Acceleration needs POSITIVE ledger
+    evidence so we never pour expiring budget into junk: a CLEAN earner (no waste_classes) accelerates
+    on anything; a MIXED lane accelerates only its win_classes; a lane with NO record / a pure pit does
+    not accelerate (tail stays empty → base only). Fail-open is toward base, never toward over-spend."""
+    d = lanes.get(agent)
+    if not isinstance(d, dict):
+        return False  # no ledger evidence for this lane → don't accelerate (base only)
+    waste = set(d.get("waste_classes") or [])
+    win = set(d.get("win_classes") or [])
+    if not waste:
+        return True  # clean earner — earns across the board, accelerate freely
+    return bool(_task_classes(task) & win)  # mixed lane — only its proven winners ride the tail
+
+
+def _accel_window(limen: LimenFile, agent: str, now: datetime) -> tuple[float, float]:
+    """(remaining_fraction, time_left_fraction) for a lane's current window. remaining = unspent
+    budget / cap; time_left = (window_hours - hours_since_reset) / window_hours. Perfect pacing keeps
+    them equal; remaining > time_left means the lane will UNDER-spend → accelerate. Fail-open (1,1)."""
+    try:
+        cap = limen.portal.budget.per_agent.get(agent)
+        if not cap:
+            return 1.0, 1.0
+        spent = limen.portal.budget.track.per_agent.get(agent, 0)
+        remaining_frac = max(0.0, (cap - spent) / cap)
+        wh = _window_hours(agent) or 24.0
+        last_iso = limen.portal.budget.track.per_agent_reset.get(agent)
+        elapsed_h = 0.0
+        if last_iso:
+            last = datetime.fromisoformat(last_iso)
+            if last.tzinfo is None:
+                last = last.replace(tzinfo=timezone.utc)
+            elapsed_h = max(0.0, (now - last).total_seconds() / 3600.0)
+        time_left_frac = max(0.0, min(1.0, (wh - elapsed_h) / wh))
+        return remaining_frac, time_left_frac
+    except Exception:
+        return 1.0, 1.0
+
+
+def _accel_limit(limen: LimenFile, agent: str, base_limit: int, now: datetime) -> int:
+    """The per-beat pick cap for a lane, scaled UP toward its reset cliff. urgency = remaining_frac /
+    time_left_frac (>1 ⇒ under-spending). Floored at base (never decelerate — the budget gate handles
+    over-spend). The CEILING is set by what the dispatch PATH can physically absorb without stalling
+    the beat — pure logic, not a pinned cap: async/remote runs (jules, or any lane when
+    LIMEN_DISPATCH_ASYNC=1) are non-blocking, so they burst toward their cliff (this is where the idle
+    headroom is — e.g. jules 22/100); sync local runs share one ThreadPoolExecutor that BLOCKS the
+    beat, so picking far past the pool just lengthens the beat with no extra throughput — its ceiling
+    is the pool, not the budget. Both ceilings are env-tunable. Fail-open to base."""
+    if os.environ.get("LIMEN_ACCEL", "1") != "1":
+        return base_limit
+    try:
+        remaining_frac, time_left_frac = _accel_window(limen, agent, now)
+        floor = float(os.environ.get("LIMEN_ACCEL_TLEFT_FLOOR", "0.08"))
+        urgency = remaining_frac / max(time_left_frac, floor)
+        if urgency <= 1.0:
+            return base_limit
+        non_blocking = agent in _ASYNC_LANES or os.environ.get("LIMEN_DISPATCH_ASYNC") == "1"
+        ceiling = int(os.environ.get(
+            "LIMEN_ACCEL_ASYNC_CEIL" if non_blocking else "LIMEN_ACCEL_LOCAL_CEIL",
+            "25" if non_blocking else "8"))
+        eff = int(round(base_limit * urgency))
+        return max(base_limit, min(eff, ceiling))
+    except Exception:
+        return base_limit
+
+
+def _codex_model() -> str | None:
+    """Lazily pick the codex model so codex KEEPS PRODUCING when its main weekly pool is spent: fail
+    over to the separate, fresh Spark weekly pool (gpt-5.3-codex-spark) instead of benching the whole
+    lane. Explicit LIMEN_CODEX_MODEL always wins (manual pin). Otherwise, when the live meter shows the
+    codex lane degraded (throttle/low/exhausted/rate-limited), switch to Spark. Gated by
+    LIMEN_CODEX_SPARK_FAILOVER (default on); fail-open to None (bare = main model). Mirrors
+    _opencode_model(): names are outputs, resolved only when codex actually runs."""
+    env = os.environ.get("LIMEN_CODEX_MODEL")
+    if env:
+        return env
+    if os.environ.get("LIMEN_CODEX_SPARK_FAILOVER", "1") != "1":
+        return None
+    try:
+        root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
+        v = json.loads((root / "logs" / "usage.json").read_text()).get("vendors", {}).get("codex", {})
+        if v.get("health") in ("throttle", "low", "exhausted", "rate-limited"):
+            return os.environ.get("LIMEN_CODEX_SPARK_MODEL", "gpt-5.3-codex-spark")
+    except Exception:
+        pass
+    return None
+
+
+# ─── Claude-lane earned-tier ladder (haiku-first-with-cheap-verify) ──────────
+# The claude lane invoked `claude -p` with NO -m, so the account picked the tier. Now the
+# tier is DERIVED per task: a coding task's failure is cheaply detectable (CI/PR/auto-merge/
+# reconcile), so verifiable classes start at HAIKU and rely on the EXISTING _LANE_CASCADE +
+# chronic escalation as the escalate rung — only UNDETECTABLE-failure classes get a higher
+# tier up front. No new escalation machinery. Mirrors _codex_model/_opencode_model: env pin
+# wins, derive at call-time, fail-open. ([[model-tiering-policy]], [[value-is-discovered-never-assumed]])
+_CLAUDE_TIER_ORDER = ("haiku", "sonnet", "opus")
+
+# Reserved-Opus classes: the doctrine's small principled set whose failure is BOTH undetectable
+# AND high-stakes (final/canon synthesis, irreversible go-live reasoning, kernel abstraction). A
+# stated principle, env-overridable (comma-separated LIMEN_CLAUDE_OPUS_CLASSES) — not inherited config.
+_CLAUDE_OPUS_CLASSES_DEFAULT = ("canon", "synthesis", "kernel", "go-live", "irreversible")
+
+
+def _claude_opus_classes() -> set[str]:
+    raw = os.environ.get("LIMEN_CLAUDE_OPUS_CLASSES")
+    if raw is not None:
+        return {c.strip() for c in raw.split(",") if c.strip()}
+    return set(_CLAUDE_OPUS_CLASSES_DEFAULT)
+
+
+def _claude_tier_overrides() -> dict:
+    """Optional operator OVERRIDE map logs/model-tiers.json → the claude lane's {tier: [classes]}.
+    Fail-open to {} (→ the ledger-DISCOVERED default). Demoted to an override: the default
+    pre-assign set is discovered from the ledger, not pinned. Same read pattern as _ledger_lanes()."""
+    try:
+        root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
+        return (json.loads((root / "logs" / "model-tiers.json").read_text()).get("claude") or {})
+    except Exception:
+        return {}
+
+
+def _claude_tier_for(task: Task | None) -> str:
+    """DERIVE the Claude tier for a task. Default = haiku (verifiable → escalate via the existing
+    cascade). Pre-assign a higher tier ONLY where failure is undetectable:
+      • opus  — the reserved principled set (_claude_opus_classes) or an explicit override;
+      • sonnet— classes the ledger has DISCOVERED this lane wastes on (waste_classes): work that
+                shipped low-value yet passed whatever gate exists ⇒ failure not caught cheaply here.
+    A per-task `claude_tier` pin and an optional logs/model-tiers.json override layer on top.
+    Fail-open → haiku, never block."""
+    if task is None:
+        return "haiku"
+    pin = getattr(task, "claude_tier", None)
+    if pin in _CLAUDE_TIER_ORDER:
+        return pin
+    classes = _task_classes(task)
+    override = _claude_tier_overrides()
+    if classes & (_claude_opus_classes() | set(override.get("opus") or [])):
+        return "opus"
+    waste = set((_ledger_lanes().get("claude") or {}).get("waste_classes") or [])
+    if classes & (waste | set(override.get("sonnet") or [])):
+        return "sonnet"
+    return "haiku"
+
+
+def _bump_tier(tier: str, task: Task | None) -> str:
+    """Escalate-on-failed-cheap-check, in-tier: if THIS task already failed on the claude lane
+    (carries the cascade's own 'tried:claude' breadcrumb), the cheap verify failed once here, so
+    step up one rung (capped at opus). State lives in the EXISTING label — no new retry counter,
+    no schema change. Env-gated LIMEN_CLAUDE_RETRY_BUMP (default on)."""
+    if task is None or os.environ.get("LIMEN_CLAUDE_RETRY_BUMP", "1") != "1":
+        return tier
+    if "tried:claude" not in (getattr(task, "labels", None) or []):
+        return tier
+    i = _CLAUDE_TIER_ORDER.index(tier)
+    return _CLAUDE_TIER_ORDER[min(i + 1, len(_CLAUDE_TIER_ORDER) - 1)]
+
+
+def _resolve_claude_model(tier: str) -> str:
+    """tier → the `claude -m` value. Env pin wins (LIMEN_CLAUDE_<TIER>_MODEL); else the bare CLI
+    tier alias, which the `claude` CLI resolves to the current dated model itself (nothing pinned,
+    survives renames). ([[derive-never-pin-hardcodes]])"""
+    return os.environ.get(f"LIMEN_CLAUDE_{tier.upper()}_MODEL") or tier
+
+
+def _claude_model(task: Task | None = None) -> str | None:
+    """Lazily pick the Claude tier for THIS task, resolved only when the claude lane runs (names
+    are outputs). Order mirrors _codex_model:
+      1. explicit LIMEN_CLAUDE_MODEL — a manual pin always wins;
+      2. feature flag LIMEN_CLAUDE_TIER_SELECT (default on; off → None = today's bare invocation);
+      3. derive the tier (class-based), bump it if the task already failed here, resolve to a model.
+    Fail-open to None everywhere → bare `claude -p` (account default), never a blocked lane."""
+    env = os.environ.get("LIMEN_CLAUDE_MODEL")
+    if env:
+        return env
+    if os.environ.get("LIMEN_CLAUDE_TIER_SELECT", "1") != "1":
+        return None
+    try:
+        return _resolve_claude_model(_bump_tier(_claude_tier_for(task), task))
+    except Exception:
+        return None  # never block the lane on a tier-selection hiccup
+
+
 def dispatch_parallel(
     limen: LimenFile,
     tasks_path: Path,
@@ -952,6 +1415,7 @@ def dispatch_parallel(
     picked: list[tuple[str, str]] = []  # (agent, task_id)
     spent_daily = track.spent
     id2 = {t.id: t for t in limen.tasks}  # for dependency resolution
+    ledger_lanes = _ledger_lanes()  # waste/win classes — gates the acceleration tail (read once)
     for agent in agents:
         cap = limen.portal.budget.per_agent.get(agent)
         agent_spent = track.per_agent.get(agent, 0)
@@ -962,8 +1426,22 @@ def dispatch_parallel(
                  if t.status == "open" and (t.target_agent == agent or t.target_agent == "any")
                  and t.budget_cost <= rem and _deps_met(t, id2)]
         cands.sort(key=lambda t: _PRIORITY_ORDER.get(t.priority, 99))
-        cands = cands[:per_agent_limit]
-        for t in cands:
+        # FRONT-LOAD: base picks by priority, then an ACCELERATION TAIL (only when the lane is
+        # under-spending toward its reset cliff) drawn ONLY from work-classes the ledger says this
+        # lane lands — so expiring budget converts to shipped value, never to junk. Cumulative
+        # budget_cost is held within the lane's real remaining headroom (rem).
+        eff = _accel_limit(limen, agent, per_agent_limit, now)
+        ordered = list(cands[:per_agent_limit])
+        if eff > per_agent_limit:
+            ordered += [t for t in cands[per_agent_limit:] if _accel_allows(agent, t, ledger_lanes)]
+        chosen: list = []
+        spent_here = 0
+        for t in ordered[:eff]:
+            if spent_here + t.budget_cost > rem:
+                continue
+            chosen.append(t)
+            spent_here += t.budget_cost
+        for t in chosen:
             if dry_run:
                 picked.append((agent, t.id))
                 continue
@@ -979,7 +1457,7 @@ def dispatch_parallel(
     if not picked:
         print(f"── PARALLEL: nothing to dispatch for {agents} within budget")
         return
-    with queue_lock(tasks_path):
+    with _queue_lock(tasks_path):
         save_limen_file(tasks_path, limen)  # reserve commit (atomic vs supervisor writes)
 
     # ── RUN: concurrent agent executions (worktree→PR / jules), no tasks.yaml access here
@@ -1006,7 +1484,7 @@ def dispatch_parallel(
     # during the unlocked run aren't clobbered; re-apply each result to the fresh task by id.
     # This is the #11 keystone — without the reload, this save would silently overwrite seeds.
     n_pr = n_noop = n_fail = n_rl = n_to = 0
-    with queue_lock(tasks_path):
+    with _queue_lock(tasks_path):
         fresh = load_limen_file(tasks_path)
         fid = {t.id: t for t in fresh.tasks}
         ftrack = fresh.portal.budget.track

@@ -274,6 +274,7 @@ def test_readiness_report_all_pass(tmp_path: Path, monkeypatch) -> None:
     p = tmp_path / "tasks.yaml"
     p.write_text("version: '1.0'\nportal:\n  budget:\n    daily: 100\n    track:\n      date: '2026-06-20'\n      spent: 0\n      per_agent:\n        jules: 0\n  name: Test\n")
     monkeypatch.setenv("NEXT_PUBLIC_API_URL", "http://localhost:8000")
+    monkeypatch.setenv("LIMEN_JULES_BIN", "python3")
     limen = _limen(tasks=[_task(status="open")])
     report = readiness_report(limen, p, agent="jules")
     assert report["status"] in ("ready", "degraded")

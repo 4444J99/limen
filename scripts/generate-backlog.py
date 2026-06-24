@@ -23,7 +23,7 @@ import json
 import os
 import sys
 from collections import Counter
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
@@ -63,6 +63,12 @@ TEMPLATES = [
 
 # statuses that count as "this (repo,lever) is already being worked" — don't duplicate those.
 _ACTIVE = {"open", "dispatched", "in_progress", "needs_human"}
+
+# The lanes the FLEET dispatcher can actually serve. github_actions/warp/oz are CI/service triggers,
+# NOT fleet-dispatchable — a queue full of those is NOT a full fleet queue (the overnight idle bug:
+# 79 github_actions/oz tasks made the floor look met while the dispatcher saw nothing to run). "any"
+# is routable (the router picks a live lane). Keep this in sync with the heartbeat LANES.
+_DISPATCH_LANES = {"codex", "opencode", "agy", "claude", "gemini", "jules", "any"}
 
 
 def _org_repos() -> list[str]:
@@ -117,6 +123,22 @@ def _allowed_repos() -> set[str]:
     return repos
 
 
+def _avg_headroom_pct() -> float | None:
+    """Average live per-vendor headroom (0–100) from logs/usage.json, or None if unreadable. A full
+    tank ⇒ lift the backlog floor so the routable queue can't cap out while capacity sits idle — the
+    SAME accelerator discover-value.py uses, applied here too (the asymmetry was: discovery scaled with
+    headroom but the larger backlog generator did not, so a full tank still hit the flat floor and the
+    queue starved the daemon mid-window)."""
+    fpath = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent)) / "logs" / "usage.json"
+    try:
+        vendors = (json.loads(fpath.read_text()) or {}).get("vendors", {})
+        hs = [v["headroom_pct"] for v in vendors.values()
+              if isinstance(v, dict) and isinstance(v.get("headroom_pct"), (int, float))]
+        return sum(hs) / len(hs) if hs else None
+    except Exception:
+        return None
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS", "tasks.yaml"))
@@ -131,20 +153,34 @@ def main() -> int:
     lf = load_limen_file(path)
     tasks = lf.tasks
 
-    # Floor on ROUTABLE open work, not total open. A queue held above floor purely by tasks stuck
-    # on a dead lane (e.g. jules exhausted → 67 unroutable) must NOT block coverage generation —
-    # otherwise the widened generator never fires while jules is down and dark repos stay uncovered.
-    # Count only open tasks whose target lane can actually produce right now.
+    # Floor on ROUTABLE-BY-THE-FLEET open work, not total open. Two ways a "full" queue can be a lie:
+    #   1. tasks stuck on a dead lane (e.g. jules exhausted → unroutable RIGHT NOW), and
+    #   2. tasks bound to a non-fleet lane (github_actions/warp/oz) the dispatcher never serves.
+    # Either masks an empty fleet queue → the generator never fires and the tank sits full while dark
+    # repos stay uncovered (the overnight idle bug). Count only open tasks on a LIVE DISPATCH lane.
     try:
         from limen.dispatch import _down_lanes
         _dead = _down_lanes()
     except Exception:
         _dead = set()
-    open_now = sum(1 for t in tasks if t.status == "open" and (t.target_agent or "any") not in _dead)
-    if open_now >= args.floor:
-        print(f"queue healthy: routable-open={open_now} >= floor={args.floor} — nothing to generate.")
+    open_now = sum(
+        1 for t in tasks
+        if t.status == "open"
+        and (t.target_agent or "any") in _DISPATCH_LANES
+        and (t.target_agent or "any") not in _dead
+    )
+    # Headroom accelerator (symmetric with discover-value.py): a full tank lifts the floor up to 3x so
+    # the routable queue stays deep enough to feed the accelerated dispatch toward each reset cliff;
+    # a near-empty tank keeps the base floor (don't pile on). 50%→1x … 100%→3x.
+    floor = args.floor
+    avg_hr = _avg_headroom_pct()
+    if avg_hr is not None and avg_hr >= 50:
+        floor = int(round(args.floor * (1 + min(2.0, (avg_hr - 50) / 25))))
+    if open_now >= floor:
+        print(f"queue healthy: routable-open={open_now} >= floor={floor} "
+              f"(avg headroom {avg_hr if avg_hr is None else round(avg_hr)}%) — nothing to generate.")
         return 0
-    need = min(args.floor - open_now, args.max_new)
+    need = min(floor - open_now, args.max_new)
 
     # candidate repos = EVERY real repo in the org (so every owner gets covered, not just the ~60
     # already in tasks.yaml) ∪ any repo already referenced in the queue. Falls back to the tasks.yaml
@@ -157,13 +193,14 @@ def main() -> int:
         print("no candidate repos (org API unreachable + tasks.yaml empty) — nothing to generate.")
         return 0
 
-    # VALUE-TIER GATE: only generate work for the ranked revenue/conductor repos — never the ~174
-    # dead/zero-user repos that were the 70-80%-noise source. Fail-closed: an unconfigured tier
-    # generates NOTHING (better an idle feed beat than a flood of waste). value-repos.json is the tier.
+    # RANKED-TIER GATE (anti-flood, NOT starvation): build-out levers go ONLY to repos whose value is
+    # already DISCOVERED + ranked (value-repos.json) — so we don't dump 6 busywork levers × 174 repos.
+    # This is NOT "non-value repos get ignored": a repo with no discovered value isn't starved, it gets
+    # a DISCOVERY task from discover-value.py (the value is an OUTPUT of the fleet, not a precondition).
+    # value-repos.json is the OUTPUT of discovery, continuously re-ranked — never a hand-pinned allowlist.
     allowed = _allowed_repos()
     if not allowed:
-        print("value-tier: no value-repos.json configured — generating NOTHING (fail-closed). "
-              "Add repos to value-repos.json to fund fleet work.")
+        print("ranked tier empty — no build-out yet; discover-value.py will surface + rank value first.")
         return 0
     before = len(repos)
     repos = [r for r in repos if r in allowed]
@@ -231,5 +268,20 @@ def main() -> int:
     return 0
 
 
+def _stamp_health() -> None:
+    """Proprioception: record that the FEED organ fired this beat (generate-backlog runs every feed
+    beat, ungated), so organ-health.py reads it as a fresh artifact (mtime). Fail-open."""
+    try:
+        logs = Path(__file__).resolve().parent.parent / "logs"
+        logs.mkdir(exist_ok=True)
+        (logs / "feed-health.json").write_text(
+            json.dumps({"timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}) + "\n"
+        )
+    except OSError:
+        pass
+
+
 if __name__ == "__main__":
-    raise SystemExit(main())
+    rc = main()
+    _stamp_health()
+    raise SystemExit(rc)
