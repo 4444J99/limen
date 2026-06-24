@@ -29,6 +29,35 @@
         "Decide the daemon's content path: route its commits through the merge organ, OR add limen[bot]/App as a bypass actor so studium dailies still flow",
         "Save — no un-CI'd commit can poison main again"
       ]
+    },
+    {
+      "id": "L-ENC1101-GOLIVE",
+      "label": "Take ENC1101 Summer 2026 (771624) live in D2L — content is 100% staged, the only gaps are your cadence call + a label greenlight + the Set Active click. Term 6/25 → 8/04. Read prep/GO-LIVE-BRIEF.md first (one page). Two small hands: (1) confirm the proposed 6-week cadence in prep/schedule-summer2026.md (say 'cadence is good' or name dates to move); (2) greenlight the §3 fix — the staged announcement drip mislabeled the back half a 'Research Essay' but shell Unit 4 = Problem/Solution Essay (250-pt capstone); corrected import is staged at prep/instructor-layer-ready/announcements-summer2026-IMPORT-aligned.csv (dates unchanged, original untouched). Then I browser-drive Manage Dates + Announcements + Intelligent Agent, you click Set Offering to Active (yours — students can't see it until then), and I verify Student View.",
+      "cost": "~2 min decision + a Set Active click; then ~30 min I co-drive via Claude-in-Chrome",
+      "owner": "yours",
+      "deadline": "2026-06-25",
+      "branch": null,
+      "gate": "your cadence-confirm + §3 greenlight + the Set Active click (outward/identity — never automated)",
+      "steps": [
+        "Read edu-organism/classes/enc1101-summer-2026/prep/GO-LIVE-BRIEF.md",
+        "Confirm the 6-week cadence in prep/schedule-summer2026.md (or name dates to move)",
+        "Greenlight the §3 relabel (use the -IMPORT-aligned.csv when posting)",
+        "I browser-drive: paste syllabus → set dates → post announcements → enable intelligent agent",
+        "You click Set Offering to Active; I verify Student View"
+      ]
+    },
+    {
+      "id": "L-GMAIL-CRED",
+      "label": "Revive the autonomous mail lane with ONE paste — the app-password ALREADY EXISTS (op://Private/gmail-app-pw-2026-06-06); nothing needs generating (the generic mail levers L-IMAP-APP-PW/L-OAUTH imply you must create one — you don't). The single endpoint is the GitHub secret GMAIL_APP_PASSWORD on organvm/domus (currently unset). Once set, the C_MAIL voice's keyless drafts/sweep path has its credential and inbox-clean is no longer gated on you. Cheapest path streams the value op→gh, never on screen.",
+      "cost": "~30s once, durable",
+      "owner": "yours",
+      "branch": null,
+      "gate": "credential-write (only the secret-write classifier blocks it; the secret itself exists)",
+      "steps": [
+        "op read op://Private/gmail-app-pw-2026-06-06/password | gh secret set GMAIL_APP_PASSWORD -R organvm/domus",
+        "OR add a Bash allow-rule Bash(gh secret set:*) so any session lands it autonomically",
+        "OR run one `claude --dangerously-skip-permissions` session — the agent lands it"
+      ]
     }
   ]
 }
