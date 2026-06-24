@@ -41,7 +41,7 @@ Do **not** declare work "done" or "fully done" until verified end-to-end:
 - **Prefer minimal in-place edits**, especially during closeouts and cleanups. **Do not create new files unless asked** or genuinely required by the task.
 - **Case-insensitive filesystem (macOS):** never let near-identical filenames (`Foo.md` vs `foo.md`) silently overwrite each other or drop a file from a commit — check before writing.
 - **Confine edits to your worktree + branch.** Stage explicitly with `git add <path>` — **never `git add -A`** in a live checkout. Do not hand-merge contended `main` or edit daemon-contended runtime files.
-- **Merge and deploy are human-gated.** Stage, push, and open PRs with green proof — but **leave the merge/deploy to Anthony.**
+- **Merge is a standing grant — Claude merges its own green PRs into `main` without asking** (the routine-merge human-gate is lifted; see [Merge & Branch Protocol](#merge--branch-protocol)). Deploy is *automatic* on merge to `main` for deploy-trigger paths, so the **one guardrail** is the live website: never merge a change that breaks the deployed site/API — a website-sensitive PR requires green CI first. Mass cross-org/fleet merges, sends, wipes, and large spends stay Anthony's levers.
 
 ## Output Discipline (Concise Mode)
 
@@ -73,4 +73,41 @@ Isolate work in a **git worktree so the live fleet is untouched** (see `GEMINI.m
 
 - For each failure, **fix root-to-leaf and re-run the full matrix** — loop until every gate passes end-to-end. Do not chase one gate green while another regresses.
 - **Surface masked failures from dependency bumps** — a green that only passes because a check was skipped or a dependency silently changed behavior.
-- **Only after every gate is green locally**, push and open the PR, pasting the full green run as proof. **Leave the merge to Anthony.**
+- **Only after every gate is green locally**, push and open the PR, pasting the full green run as proof. **Then merge it yourself** the moment `scripts/merge-policy.sh <PR#>` exits `0` (CLEARED) — that predicate enforces the website guardrail; never merge on a HOLD/BLOCKED. See [Merge & Branch Protocol](#merge--branch-protocol).
+
+## Merge & Branch Protocol
+
+Authoritative and permanent. Claude **owns the branch cadence and the merge decision** — Anthony does not have to think about either. This realizes the cascade *protocol → precedent → exploration → ideal-form*: the protocol is below; the executable predicate **`scripts/merge-policy.sh`** is the ideal-form that decides each case by logic, never by memory.
+
+**Branch cadence.** Never commit to `main` directly. Every change is a topic branch, isolated in a worktree, named by intent:
+
+| Prefix | For |
+|--------|-----|
+| `feat/` | new capability |
+| `fix/` | bug / regression fix |
+| `heal/` | reconcile a divergence or a self-healed regression |
+| `chore/` | tooling, deps, config |
+| `docs/` | docs / memory / charter only |
+| `refactor/` | behavior-preserving restructure |
+| `worktree-*` | auto-named isolation branches (fleet / bg jobs) |
+
+One PR per branch → `main`. Squash-merge, delete the branch. `main` is the trunk **and** the live deploy source.
+
+**Merge authority (standing grant).** Claude merges its own PRs into `main` *without asking*, the moment they are green and mergeable. No "leave it to Anthony" on routine merges. The grant has exactly one guardrail.
+
+**The website guardrail.** A merge to `main` **auto-deploys** the live public site/API — but *only* when the diff touches a deploy-trigger path:
+
+- **Dashboard** (`deploy.yml` → Firebase Hosting): `web/app/**`, `firebase.json`, `tasks.yaml`, `.github/workflows/deploy.yml`
+- **API** (`deploy-api.yml` → Cloud Run / Worker): `web/api/**`, `cli/**`, `scripts/preflight-cloud-run.sh`, `.github/workflows/deploy-api.yml`
+
+For a **website-sensitive** PR, merging *is* the deploy — so it requires **green CI first** (plus a local `web/app` build for dashboard changes). Never blind-merge a live deploy. For every **other** PR (docs, corpus, mcp, ianva, memory, `web/worker`, most of `scripts/**`), merge freely once CLEAN. (`web/worker` is the live runtime but deploys on-demand via wrangler, not on merge — so its merges don't auto-deploy.)
+
+**The predicate decides — not your memory.** Run `scripts/merge-policy.sh <PR#>` (or no arg for the current branch):
+
+- exit **0 CLEARED** → `gh pr merge <PR#> --squash --delete-branch`. Do it; don't ask.
+- exit **2 HOLD** → website-sensitive with CI not yet green+complete, a draft, or non-deploy checks still running. Wait for green, then merge.
+- exit **3 BLOCKED** → conflicts (DIRTY) or stale base (BEHIND). Rebase onto current `main` first (the PR#111 silent-revert guard), then re-run.
+
+The script carries a **staleness guard**: if the deploy-trigger paths in `deploy*.yml` ever drift from its hardcoded list, it warns and fails *toward caution* (treats the PR as website-sensitive). Keep the path list in the script and in this section in lockstep with the workflows.
+
+**Still Anthony's levers** (unchanged): mass cross-org/fleet merges, anything that **sends** (email) or **wipes/deletes**, and **large spends**. Those stay human-gated; routine code merges do not.
