@@ -1,0 +1,20 @@
+# INDEX·NOMINVM — DOMAINS (the canonical domain registry). Closes the "no domain registry" gap.
+#
+# Every domain the estate owns or reserves. The `label` of each (the part before the TLD) is a name
+# under the canon — NOMENCLATOR validates it against the orthography/forbidden rules. A registered
+# domain is a fact (owned); a candidate is a derived canon form not yet acquired (do not imply ownership).
+schema_version: 1
+
+registered:   # owned + live FACTS (never fabricate ownership). NOT canon-gated — an owned domain
+              # can't be retroactively renamed, and English brands sit outside the classical register.
+  - {domain: objectlessons.film, label: objectlessons, status: live, for: "Object Lessons · studium film face"}
+
+candidate:    # canon forms derived from the roll — RESERVED-IN-NAME-ONLY, not acquired
+  - {domain: stvdivm.com,  label: stvdivm,  for: STVDIVM,  note: "derive via nomenclator --check"}
+  - {domain: vltima.com,   label: vltima,   for: VLTIMA}
+  - {domain: limen.com,    label: limen,    for: LIMEN}
+
+rule: >
+  A domain label is a name under the canon. Before registering any domain, derive its label with
+  `python3 scripts/nomenclator.py --check "<name>"` and use the printed `domain` line. Labels must
+  satisfy the DNS charset (a-z 0-9 -) — which the Tier-1 substitutions already guarantee.

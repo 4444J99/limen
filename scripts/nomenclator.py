@@ -21,13 +21,16 @@ Usage:
 """
 import json
 import os
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
-CANON = ROOT / "spec" / "index-nominum" / "canon.yaml"
-ROLL = ROOT / "spec" / "index-nominum" / "roll.yaml"
+SPEC = ROOT / "spec" / "index-nominum"
+CANON = SPEC / "canon.yaml"
+ROLL = SPEC / "roll.yaml"
+DOMAINS = SPEC / "domains.yaml"
 OUT = ROOT / "logs" / "nomenclator.json"
 
 try:
@@ -99,6 +102,53 @@ def notae(name, canon, register="classical", domain=None):
     return out, canon_ortho, derived_domain
 
 
+def morphology_notae(name, canon):
+    """Advisory structural checks (Morphologia + Identitas id-schemes). Never a hard gate."""
+    out = []
+    m = canon.get("morphologia") or {}
+    idt = canon.get("identitas") or {}
+    # ID schemes (DOC-/ATM-/IRF-): if it looks like one, it must match the grammar.
+    for key, pat in (idt.get("id_schemes") or {}).items():
+        if name.upper().startswith(key + "-") and not re.match(pat, name):
+            out.append(f"id-scheme {key}: {name!r} ✗ {pat}")
+    up = idt.get("uid_pattern")
+    if up and re.match(r"^(ent|rel|evt|met|ses|rec)_", name) and not re.match(up, name):
+        out.append(f"uid: {name!r} ✗ {up}")
+    # anti-pattern: cadence used as a prefix (it is a suffix)
+    for cad in (m.get("cadence_suffixes") or []):
+        if name.lower().startswith(cad + "-"):
+            out.append(f"cadence {cad!r} as prefix — cadence is a suffix, not a prefix")
+    # essence--function: the function head should be a known token
+    sep = m.get("separator", "--")
+    if sep in name:
+        head = name.split(sep, 1)[1].split("-")[0].lower()
+        vocab = m.get("token_vocabulary") or {}
+        if head and head not in vocab:
+            out.append(f"function head {head!r} not in token_vocabulary")
+    return out
+
+
+def validate_domains(canon):
+    """Hard-check CANDIDATE domain labels against the canon (orthography). CI-gated.
+
+    Registered domains are facts (already owned, may be English brands that predate or sit outside the
+    classical register) — they cannot be retroactively renamed, so they are not a hard gate. The canon
+    governs names we are about to mint, i.e. the `candidate` bucket.
+    """
+    if not DOMAINS.exists():
+        return []
+    data = _load(DOMAINS)
+    register = (canon.get("orthographia") or {}).get("register_default", "classical")
+    out = []
+    for e in data.get("candidate") or []:
+        label = (e.get("label") or "").strip()
+        if not label:
+            continue
+        marks, _, _ = notae(label, canon, register)
+        out += [(f"domain:{label}", mk) for mk in marks]
+    return out
+
+
 def fail(message):
     print(f"nomenclator: {message}", file=sys.stderr)
     raise SystemExit(2)
@@ -118,6 +168,11 @@ def check_one(canon, name):
             print(f"    ✗ {m}")
     else:
         print("  ✓ in canon")
+    morph = morphology_notae(name, canon)
+    if morph:
+        print("  morphology (advisory):")
+        for m in morph:
+            print(f"    · {m}")
     return 1 if hard else 0
 
 
@@ -156,6 +211,7 @@ def main():
         return check_one(canon, sys.argv[i + 1])
 
     violations, n = validate_roll(canon)
+    violations += validate_domains(canon)
 
     if "--apply" in sys.argv:
         OUT.parent.mkdir(parents=True, exist_ok=True)
@@ -171,7 +227,7 @@ def main():
         for name, m in violations:
             print(f"  ✗ {name}: {m}")
         return 1
-    print(f"\n✓ all {n} names on the roll satisfy the canon (orthographia + forbidden)")
+    print(f"\n✓ {n} roll names + all domain labels satisfy the canon (orthographia + forbidden)")
     return 0
 
 

@@ -14,16 +14,18 @@ pillar — one canon, enforced everywhere.
 
 ## The five layers
 
-The institution unifies naming knowledge that today is smeared across the estate. Layer one is
-in-canon and enforced; the rest are convergence targets (Phase III).
+The institution unifies naming knowledge that was smeared across ≥8 sites. **All five layers are now
+converged into this institution** (`limen` is the single home); the right-hand column records the
+source each was distilled from. Orthographia + Morphologia + the Identitas id-schemes are
+machine-enforced by NOMENCLATOR; Lentes + Vox are reference layers it holds but does not gate.
 
-| Layer | Governs | Status | Converge from |
+| Layer | Governs | Status | Distilled from |
 |---|---|---|---|
-| **Orthographia** | letterforms — `U→V`, `J→I`, `W→VV`, `QU→QV`; the forbidden set | ✅ in canon | `NAMING.md` |
-| **Morphologia** | structure `essence--function--cadence` + Latin token vocab (Machina·Codex·Speculum·Materia…) | ◻ scattered | `…/standards/22-essence-function-naming-convention.md` · `organvm/brainstorm-…/03-latin-naming-schema…` |
-| **Identitas** | identity math — content-addressed UID, genus–differentia | ◻ scattered | `organvm/system-system--system--monad/system--naming-calculus.md` |
-| **Lentes** | semantic naming-chains (13 substrates × 7 traditions, HYDOR…) | ◻ scattered | `sovereign-systems--elevate-align/src/data/aesthetics-vocabulary.ts` |
-| **Vox** | editorial voice, frontmatter + tag governance | ◻ scattered | `organvm/editorial-standards/` |
+| **Orthographia** | letterforms — `U→V`, `J→I`, `W→VV`, `QU→QV`; the forbidden set | ✅ enforced | `NAMING.md` + `canon.yaml#orthographia` |
+| **Morphologia** | structure `essence--function--cadence`, Latin token vocab, artifact classes, anti-patterns | ✅ converged (advisory enforce) | std 22 + `organvm/…/03-latin-naming-schema…` |
+| **Identitas** | identity math — content-addressed UID, genus–differentia, ID-scheme grammars | ✅ converged (id-schemes enforced) | `organvm/…/system--naming-calculus.md` |
+| **Lentes** | semantic naming-chains (13 substrates × 7 traditions, HYDOR…) | ✅ converged (reference) | `sovereign-systems…/naming-chains.ts` |
+| **Vox** | editorial voice, frontmatter + tag governance, quality rubric | ✅ converged (reference) | `organvm/editorial-standards/` |
 
 ---
 
@@ -38,6 +40,10 @@ in-canon and enforced; the rest are convergence targets (Phase III).
 - **`roll.yaml`** — the census: the roll of canonical names. Every entry must satisfy the canon or
   NOMENCLATOR issues a nota. Seeded from the canon already in use (`LIMEN`, `STVDIVM`, `VLTIMA`,
   `ORGANVM`, `CORPVS`, `SPECVLA`, `AVDITOR MVNDI`, `QVICKEN`, `STYX`…).
+- **`lentes.yaml`** — the Lentes reference: 13 substrates × 7 tradition-lenses + the derivation rule.
+- **`vox.yaml`** — the Vox reference: voice principles, frontmatter schema, categories, tag governance, quality rubric.
+- **`domains.yaml`** — the canonical domain registry (registered facts + canon-checked candidates).
+- **`glossary.yaml`** — the unified glossary (one definition per term, institution + estate).
 
 ---
 
@@ -84,9 +90,10 @@ $ python3 scripts/nomenclator.py --check "Studium IV"
 
 | Phase | What | Owner / gate |
 |---|---|---|
-| **I — NOMENCLATOR** | canon + roll + enforcer + CI gate + heartbeat beat + organ-health rung | ✅ built |
-| **II — Incorporation** | PR to `organvm-corpvs-testamentvm`: register `INDEX·NOMINVM` as `IRF-IDX-002`; mirror the canon as canonical | **your gate** |
-| **III — Convergence** | fold Morphologia · Identitas · Lentes · Vox in; close gaps (domain registry, branch/PR style guide, unified glossary, design-token export) | deliberate sweep |
+| **I — NOMENCLATOR** | canon + roll + enforcer + CI gate + heartbeat beat + organ-health rung | ✅ merged (#200, #205) |
+| **II — Incorporation** | register `INDEX·NOMINVM` as `IRF-IDX-002`; the naming law in the constitution | ✅ PR open (`organvm-corpvs-testamentvm#515`) — **your merge** |
+| **III — Convergence** | five layers folded in (Morphologia/Identitas enforced; Lentes/Vox reference); gaps closed: domain registry, branch/PR guide, glossary. Design-tokens deferred (needs a real design system) | ✅ this PR |
+| **IV — Estate rollout** | NOMENCLATOR as a required check across the 149-repo registry | **your gate** (org admin) |
 | **IV — Estate rollout** | NOMENCLATOR as a required check across the 149-repo registry | **your gate** |
 
 ---

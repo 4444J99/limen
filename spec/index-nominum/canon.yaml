@@ -36,9 +36,13 @@ forbidden:
     "&": "et"
 
 morphologia:
-  # Structural grammar for repo / product identifiers (advisory in v1; orthography is the hard gate).
+  # Structural grammar for identifiers. Converged from std 22 + the Latin naming schema.
+  # NOMENCLATOR validates the --form + token via `--morphology` (advisory); orthographia is the hard gate.
   pattern: "<essence>--<function>[-<cadence>]"
-  separator: "--"
+  separator: "--"                   # the genus--differentia binding (== identitas.parametric_naming)
+  case_machine: "lowercase-kebab"   # codex-canonis
+  case_display: "Capitalized Latin, genitive-bound"   # Codex Canonis
+  cadence_suffixes: [daily, weekly, monthly]   # OPTIONAL, suffix-only (never prefix); metadata, not identity
   token_vocabulary:                 # the canonical 'function' words (genus)
     machina: "engines, transforming apparatus"
     codex: "rulebooks, registries, constitutions"
@@ -53,18 +57,63 @@ morphologia:
     vestigium: "logs, traces, residues"
     sigillum: "signatures, seals, provenance"
     materia: "physicalization, embodiment"
+  artifact_classes:                 # for artifacts (not organs): <Class> <Domain-genitive>
+    formula: "formal specification"
+    theoria: "conceptual / academic artifact"
+    tabula: "structured dataset / registry table"
+    schema: "draft / intermediate structured form"
+    opus: "executable / deployable build artifact"
+    iudicium: "evaluation, audit, verdict"
+  anti_patterns:                    # FORBIDDEN identifier shapes
+    - "cadence as prefix (daily-*, weekly-*) — cadence is a suffix"
+    - "no essence or no function (do-stuff-tool, cleanup-script, helper.py)"
+    - "metaphorical-not-precise names"
+
+branches:
+  # Branch + PR naming (closes the 'no branch/PR style guide' gap).
+  prefixes: {feat: "new capability", fix: "bug fix", heal: "repair a regression", chore: "maintenance", docs: "documentation"}
+  pattern: "<prefix>/<essence>-<short-purpose>"   # e.g. feat/index-nominum-convergence
+  note: "harness worktree branches (worktree-<random>) are exempt — auto-named by the daemon"
+
+identitas:
+  # Identity math (converged from system--naming-calculus.md). Content-addressed, immutable.
+  # NOMENCLATOR validates the ID-scheme regexes via `--morphology`; it does not compute UIDs.
+  uid_formula: "U_id(P,G) = P + '_' + SHA256(G)[0:5].upper()"
+  uid_prefixes: [ent, rel, evt, met, ses, rec]    # e.g. ent_C15F4
+  uid_pattern: "^(ent|rel|evt|met|ses|rec)_[A-Z0-9]{5}$"
+  parametric_naming: "N(x) = Genus + '--' + Differentia"   # rule--logic (same '--' as morphologia)
+  id_schemes:                       # enumerated registry id grammars
+    DOC: "^DOC-[A-Z]{1,2}-[0-9]+$"      # DOC-F-04
+    ATM: "^ATM-[A-Z]{1,2}-[0-9]+$"      # ATM-F-061
+    IRF: "^IRF-[A-Z]{2,4}-[0-9]+$"      # IRF-SYS-059
+  location_calculus: "flat — L(x)=registry_root/data; hierarchy derived from relationship edges, not folders"
+  invariants:
+    - "UID immutable + content-addressed (SHA256 of genesis)"
+    - "display name/slug mutable via aliases (backwards-compatible)"
+    - "edges versioned (valid_from/valid_to), never deleted"
 
 layers:
-  # The five layers of the institution and where each currently lives. NOMENCLATOR enforces `orthographia`
-  # today; the rest are the convergence targets (Phase III). Paths are evidence, not yet absorbed.
-  orthographia: {status: in-canon, here: "NAMING.md"}
-  morphologia:  {status: scattered, converge_from: ["organvm-corpvs-testamentvm/docs/standards/22-essence-function-naming-convention.md", "organvm/brainstorm-20260423/schemas/03-latin-naming-schema--…"]}
-  identitas:    {status: scattered, converge_from: ["organvm/system-system--system--monad/system--naming-calculus.md"]}
-  lentes:       {status: scattered, converge_from: ["sovereign-systems--elevate-align/src/data/aesthetics-vocabulary.ts"]}
-  vox:          {status: scattered, converge_from: ["organvm/editorial-standards/"]}
+  # The five layers, now CONVERGED into this institution (limen = single home). Each names its
+  # canonical home + the source it was distilled from.
+  orthographia: {status: enforced,  home: "canon.yaml#orthographia + NAMING.md"}
+  morphologia:  {status: converged, home: "canon.yaml#morphologia", from: "std 22 + organvm latin-naming-schema"}
+  identitas:    {status: converged, home: "canon.yaml#identitas",   from: "organvm system--naming-calculus.md"}
+  lentes:       {status: converged, home: "lentes.yaml",            from: "sovereign-systems naming-chains.ts"}
+  vox:          {status: converged, home: "vox.yaml",               from: "organvm/editorial-standards/"}
+
+companion_files:   # the institution's full surface
+  - "canon.yaml — orthographia + morphologia + identitas + branches (the law NOMENCLATOR reads)"
+  - "roll.yaml — the census of canonical names"
+  - "lentes.yaml — semantic naming-chains (reference)"
+  - "vox.yaml — editorial voice + metadata governance (reference)"
+  - "domains.yaml — the canonical domain registry"
+  - "glossary.yaml — the unified glossary"
+
+gaps_remaining:
+  design_tokens: "deferred — needs a real design system (CSS/Tailwind/Figma export); not fabricated here"
 
 constitution:
   index: "Index Nominum"            # the planned third register of the four-part Latin index apparatus
   irf_id: "IRF-IDX-002"
   home: "organvm-corpvs-testamentvm"
-  status: "planned — to incorporate (Phase II, his gate)"
+  status: "incorporation PR open — organvm-corpvs-testamentvm#515 (his merge gate)"

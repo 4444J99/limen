@@ -1,0 +1,52 @@
+# INDEX·NOMINVM — VOX (editorial voice + metadata governance reference).
+#
+# The voice layer: how the estate's prose names itself (voice principles) and how documents declare
+# their metadata (frontmatter, categories, tags, quality). Converged from organvm/editorial-standards/.
+# Voice principles are human-judgment (not machine-gated); frontmatter/tags/categories ARE machine-
+# validatable — owned by essay-pipeline in ORGAN-V, mirrored here as the canonical reference.
+schema_version: 1
+scope: "organvm-v-logos/public-process/_posts/"
+source_of_record: "organvm/editorial-standards/ (schema v1.0)"
+
+voice_principles:   # human-judgment, not machine-enforced
+  - substantive_over_performative: "every sentence carries information; cut filler"
+  - honest_over_polished: "acknowledge false starts, failures, uncertainty; process is the product"
+  - technical_but_accessible: "define jargon on first use; plain words when they suffice"
+  - process_oriented: "how & why matter as much as what; explain the path"
+  - structurally_transparent: "descriptive headings; section order follows logical dependency"
+
+frontmatter:   # machine-validatable
+  required:
+    layout:              {type: enum, values: [essay]}
+    title:               {type: string, min: 10, max: 200, note: "no colon in first 40 chars"}
+    author:              {type: string, pattern: "^@", note: "GitHub handle"}
+    date:                {type: date, format: "YYYY-MM-DD", constraint: not_future}
+    tags:                {type: list, min: 2, max: 8, pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"}
+    category:            {type: enum, values: [meta-system, case-study, guide, methodology, retrospective]}
+    excerpt:             {type: string, min: 50, max: 400}
+    portfolio_relevance: {type: enum, values: [CRITICAL, HIGH, MEDIUM]}
+    related_repos:       {type: list, pattern: "^(organvm-|meta-organvm)"}
+    reading_time:        {type: string, pattern: "^[0-9]+ min$"}
+    word_count:          {type: int, min: 500}
+  optional:
+    word_count_policy:          {type: enum, values: [computed, external]}
+    word_count_override_reason: {type: string, min: 20, max: 300, when: "word_count_policy == external"}
+
+document_types:   # category → word-count range + structure arc
+  meta-system:   {words: "3000-6000", arc: "intro → body → cross-refs → conclusion"}
+  case-study:    {words: "2000-4000", arc: "context → challenge → approach → outcome → reflection"}
+  guide:         {words: "2000-4000", arc: "motivation → prior-art → method → tradeoffs → application"}
+  retrospective: {words: "1500-3000", arc: "scope → objectives → execution → delta → lessons"}
+  methodology:   {words: "2000-5000", arc: "motivation → prior-art → method → tradeoffs → application"}
+deprecated_categories: {subsidiary: case-study, governance-practice: meta-system, product-update: case-study, reflection: retrospective}
+
+tag_governance:
+  min: 2
+  max: 8
+  pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"   # lowercase-hyphenated; no camelCase/space/underscore
+  policy: "new tags allowed but deliberate; tight curation prevents sprawl"
+
+quality_rubric:   # 5 dimensions × 20 = 100; advisory diagnostic, threshold gates enforceable
+  dimensions: [substance, honesty, structure, specificity, completeness]
+  per_dimension_max: 20
+  thresholds: {publish: 60, flagship: 80, exemplar: 90, return_to_draft_below: 40}

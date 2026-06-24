@@ -1,0 +1,30 @@
+# INDEX·NOMINVM — GLOSSARY (the unified glossary). Closes the "no unified glossary" gap.
+#
+# One controlled definition per term so the estate's vocabulary stays single-valued. Institution
+# terms first (load-bearing), then estate terms. New terms: add here, lowercase-kebab key.
+schema_version: 1
+
+institution:
+  index-nominum: "the institution of names — registry of named entities + the naming law (constitution IRF-IDX-002)"
+  nomenclator: "the names magistrate / enforcer (scripts/nomenclator.py) — marks any name that breaks canon"
+  censor: "the CONDUCT magistrate (the insights→actions institution, scripts/censor.py) — a DISTINCT organ; not names"
+  nota: "the mark a magistrate issues against a violation"
+  roll: "the census — the list of canonical names (roll.yaml)"
+  canon: "the machine-readable naming law (canon.yaml) the Nomenclator reads"
+  orthographia: "layer 1 — letterforms (U→V, J→I, W→VV, QU→QV) + the forbidden set; ENFORCED"
+  morphologia: "layer 2 — structure: essence--function--cadence + Latin token vocabulary"
+  identitas: "layer 3 — identity math: content-addressed UID, genus--differentia"
+  lentes: "layer 4 — semantic naming-chains: one essence named across traditions"
+  vox: "layer 5 — editorial voice + metadata governance"
+  register: "a depth of the canon: classical (default) · archaic · greek-inflected"
+  substrate: "an immutable metaphysical essence in the Lentes layer (e.g. HYDOR)"
+  lens: "a tradition that names a substrate (e.g. greek-classical)"
+
+estate:
+  limen: "the conductor — the autonomic heartbeat/organ host where the enforcer lives"
+  organvm: "the organism / instrument; the constitutional order (organon → organvm, U→V)"
+  organon: "Greek: instrument; root of organvm and of each organ (theoria…kerygma)"
+  studium: "STVDIVM — the curriculum/education organ"
+  vltima-materia: "VLTIMA MATERIA — the platform identity (ultima materia, U→V)"
+  organ: "a named function of the organism with a domain boundary and a governing instrument"
+  index-apparatus: "the four classical indices: Rerum Faciendarum · Locorum · Nominum · Rerum"

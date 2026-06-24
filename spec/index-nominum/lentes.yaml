@@ -1,0 +1,57 @@
+# INDEX·NOMINVM — LENTES (the naming-chain reference).
+#
+# The semantic layer: one metaphysical essence ("substrate") named across many traditions ("lenses").
+# Converged from sovereign-systems--elevate-align/src/data/{naming-chains,lens-geometry,hub.config}.ts.
+# This is REFERENCE data, not an orthography gate — NOMENCLATOR does not enforce it; the institution
+# holds it so a name can be derived from a tradition rather than pinned arbitrarily.
+#
+# DERIVATION RULE: the substrate (identity) is IMMUTABLE; each surface name DERIVES from its lens and
+# is mutable. Uniqueness is on the (substrate, lens) pair. Names sort by era (genealogical reading).
+schema_version: 1
+
+substrates:   # 13, immutable — (envVar · icon · essence)
+  - {envVar: PYR,        icon: Sunburst,         essence: "primordial fire / radiance"}
+  - {envVar: OCULUS,     icon: Eye,              essence: "witness / observation"}
+  - {envVar: DYAD,       icon: Yin-Yang,         essence: "polarity / opposing balance"}
+  - {envVar: PYRAMIS,    icon: Triangle,         essence: "pyramid / ascending volume"}
+  - {envVar: HYDOR,      icon: Teardrop,         essence: "water / source / solvent"}
+  - {envVar: MANDORLA,   icon: "Vesica Piscis",  essence: "overlap / sacred gate"}
+  - {envVar: KENOSIS,    icon: Crescent,         essence: "emptying / receptive vessel"}
+  - {envVar: SHATKONA,   icon: Hexagram,         essence: "six-pointed union"}
+  - {envVar: PADMA,      icon: Lotus,            essence: "bloom / unfolding"}
+  - {envVar: BODHI,      icon: "Eye-in-Triangle", essence: "awakened seeing / direct knowing"}
+  - {envVar: TETRAD,     icon: "Solar Cross",    essence: "fourfold cardinal order"}
+  - {envVar: OKTAEDRON,  icon: Octahedron,       essence: "eightfold crystalline form"}
+  - {envVar: ANKH,       icon: "Ankh ☥",         essence: "eternal life / continuance"}
+
+lenses:   # 7, canonical display order (oldest tradition → newest)
+  - egyptian
+  - sanskrit-vedic
+  - greek-classical
+  - christian-mystical
+  - jungian
+  - physics-elemental
+  - modern-wellness
+
+binding_shape:   # one (substrate, lens) entry — the data shape of a naming-chain link
+  envVar: "required — the immutable substrate"
+  lens: "required — the tradition that names this essence"
+  name: "required — the surface name in this tradition"
+  era: "optional — human-readable era label"
+  eraSort: "optional — numeric era anchor (negative = BCE), for chronological sort"
+  script: "optional — native script"
+  connotation: "required — one-line essence in the tradition's framing"
+  source: "optional — canonical source attribution"
+
+worked_example:   # HYDOR across the seven lenses — the genealogy of one essence
+  substrate: HYDOR
+  chain:
+    - {lens: egyptian,          name: "Nun",                    era: "~2400 BCE", source: "Heliopolitan cosmogony"}
+    - {lens: sanskrit-vedic,    name: "Apah / Amrita",          era: "~1500 BCE", source: "Rigveda"}
+    - {lens: greek-classical,   name: "HYDOR (ὕδωρ)",           era: "~600 BCE",  source: "Thales"}
+    - {lens: christian-mystical, name: "Living Water",          era: "1st c. CE", source: "John 4:14"}
+    - {lens: jungian,           name: "The Unconscious as Ocean", era: "20th c.", source: "Jung"}
+    - {lens: physics-elemental, name: "H₂O / Universal Solvent", era: "1781",     source: "Cavendish/Lavoisier"}
+    - {lens: modern-wellness,   name: "Root Healing",           era: "2026",      source: "Sovereign Systems Spiral"}
+
+source_of_record: "sovereign-systems--elevate-align/src/data/naming-chains.ts (91 bindings = 13×7)"
