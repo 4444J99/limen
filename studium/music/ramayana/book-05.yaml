@@ -1,0 +1,228 @@
+# Ramayana — Sundara Kanda (Book 5) — curated music arc
+# Sundara Kanda: the book of beauty and reconnaissance. Hanuman crosses the sea on his own power,
+# reaches Lanka, discovers Sita imprisoned in Ravana's Ashoka garden, reveals himself and his message,
+# sets the city ablaze, and returns across the sea with the news that Sita lives. The register is
+# heroic action tempered by beauty: Hanuman is the gentle servant, not a warrior — his crossing is
+# an impossible grace, his reconnaissance is luminous, his destruction of Lanka is regretful fury,
+# and his return is the pivot toward war. This kanda is the turning point: the search becomes rescue.
+work: ramayana
+book: 5
+title: "Ramayana Sundara Kanda: The Sea Crossed, Lanka Burned, Sita Found"
+length_minutes: 85
+principle: >
+  Do not score Sundara Kanda as adventure or conquest. Score it as the kanda of ASCENT and
+  REVELATION — the hero rising into his truest form, and through him, the hidden beloved is made
+  known. The dominant forces are ASCENT (Hanuman's impossible journey) and REVELATION (Sita's
+  discovery and recognition). The kanda moves: the solitary leap across the ocean → entry into the
+  demonic city → the reconnaissance, creeping through Lanka undetected, hiding in the Ashoka grove →
+  the first sight of Sita, imprisoned, guarded, but alive → the revelation of himself to her, the
+  delivery of the signet ring, the proof of Rama's love → the regretful destruction of the city
+  (Hanuman burning Lanka not from wrath but from tragic necessity) → the final leap home. The
+  register is luminous but weighted: Hanuman moves like light through darkness, and the beauty
+  he witnesses in the Ashoka grove (the garden itself is one of the poem's most lush passages) is
+  what makes him have to burn it all down. Keep the ascent RISING; keep the revelation STILL;
+  keep the destruction necessary rather than triumphant. The kanda ends with Hanuman returning
+  to the shore, growing small, leaping back across the sea — the return-hero carrying the message
+  that will launch the war.
+force_arc: [ascent, revelation, divine-intervention, revelation, desire, metamorphosis, wrath, sacrifice, ascent, return]
+dominant_force: revelation
+tracks:
+  - n: 1
+    scene: "Hanuman at the shore — gathering power for the leap"
+    force: ascent
+    composer: Bruckner
+    work: "Symphony No. 8 in C minor — I. Allegro moderato"
+    decision: added
+    why: >
+      Hanuman stands on the southern shore of the continent, the sea between him and Lanka. He
+      begins to swell, drawing on the divine power latent in his body — the power of wind (his
+      father is Vayu), of immortal strength, of the impossible made real. He swells to the size of
+      a mountain, then rises and hurls himself across the hundred leagues of ocean in a single
+      bound. This is the kanda's opening movement: pure ascent, the servant becoming the hero,
+      the impossible made actual. Bruckner's Eighth Symphony, in its towering first movement,
+      builds from dark origins toward a luminous, architectural grandeur — the slow rise of a vast
+      force gathering itself. Ascent requires rising sequence and luminous orchestration; Bruckner's
+      first movement is the sound of something immense standing up, the mountain growing to touch
+      the sky. The leap across the sea is Hanuman's transfiguration: he is no longer the minister
+      but the being the minister was always capable of becoming.
+  - n: 2
+    scene: "Lanka seen from the air — the demonic city, beautiful and terrible"
+    force: revelation
+    composer: Debussy
+    work: "La Mer — I. De l'aube à midi sur la mer"
+    decision: added
+    why: >
+      From the height of his flight, Hanuman sees Lanka rising below him: Ravana's city, jeweled
+      and golden, surrounded by walls, the harbor full of ships, the gardens radiant. The revelation
+      is ambiguous: this is an enemy city, a place of demons, yet it is extraordinarily beautiful.
+      Hanuman must now enter it unseen, and what he sees changes the register of the kanda entirely.
+      Debussy's "From Dawn to Noon on the Sea" is the perfect music of a vast, luminous, shifting
+      vision — seascape and light rendered in orchestral color that shimmers without settling. It is
+      not yet the descent into Lanka; it is the bird's-eye vision of a place of terrible beauty
+      glimpsed from above. Revelation requires stillness, chant, and verticality, but here the
+      verticality is the height from which all is seen — the revelation of what Lanka is to the
+      one who will destroy it.
+  - n: 3
+    scene: "Hanuman shrinks and enters the city — disguised among the demons"
+    force: divine-intervention
+    composer: Ravel
+    work: "Daphnis et Chloé — Lever du jour"
+    decision: added
+    why: >
+      Hanuman shrinks to the size of a man and enters Lanka undetected, moving through the streets
+      like a shadow, invisible to every demon-eye, guided by something more than mortal sight.
+      He is protected by a divine power that allows him to pass unseen, his presence undetected.
+      This is divine-intervention in its subtlest form: not the sudden color shift of catastrophe
+      but the hidden hand that allows the hero to move unobserved. Ravel's "Lever du jour," the
+      sunrise scene from Daphnis et Chloé, is luminous awakening rendered as a presence that is
+      felt rather than announced — strings and woodwinds unfolding in a radiance that is both
+      delicate and inevitable. The divine protection is like light breaking through — the hero is
+      made invisible by the same power that makes daybreak, and moves through Lanka like the sun
+      moves through the sky: unobstructed, essential, unseen by those who are blind to what is
+      divine.
+  - n: 4
+    scene: "The Ashoka grove — Sita sitting alone, guarded, mourning"
+    force: revelation
+    composer: Fauré
+    work: "Pavane, Op. 50"
+    decision: added
+    why: >
+      Hanuman reaches the Ashoka grove where Sita is held prisoner, surrounded by demonic guards,
+      tended by rakshasa women. She sits on a stone, her beauty still radiant but her heart broken,
+      counting the days, waiting for rescue or death. She has refused Ravana's advances with absolute
+      refusal, and nothing Ravana offers — jewels, kingdoms, immortal life — can move her. Hanuman
+      sees her and knows: she is the one. She is alive. The proof is in her face. Fauré's "Pavane"
+      is a slow, luminous processional with an aching grace — a woman of nobility held in sorrow,
+      her beauty untouched by captivity, her inner light visible despite everything. Revelation
+      requires stillness, chant, and verticality; the Pavane gives Sita her sacred moment: not a
+      victim awaiting rescue but a queen imprisoned, her virtue intact, her faithfulness absolute.
+      She is revealed to Hanuman — and will be revealed through him to Rama.
+  - n: 5
+    scene: "Hanuman reveals himself — the signet ring, Rama's love"
+    force: desire
+    composer: Strauss
+    work: "Four Last Songs — 'Im Abendrot' (In the Evening Red)"
+    decision: added
+    why: >
+      Hanuman shows himself, tells Sita of Rama's grief, proves his message by showing her the
+      signet ring Rama gave him. Sita, at first frightened, recognizes the ring and believes: Rama
+      remembers her, Rama has sent word, rescue will come. Hanuman speaks of Rama's longing, his
+      refusal of every comfort, his vow to recover her — and Sita's heart, which had been stone,
+      breaks into hope and love renewed. This is desire revealed as reunion: the long separation
+      ending in the knowledge that love has bridged it. Strauss's "Im Abendrot" — "In the evening
+      red / after a day of storm, we sit together quietly" — is the music of two souls recognizing
+      each other across distance and loss. It is not erotic; it is the tenderness of a bond
+      unbroken, the recognition that love does not die, only waits. Desire here is the deepest
+      form: the longing that is answered by proof of return, the faithfulness that discovers
+      faithfulness. Strauss gives Sita's moment of hope its exact register — not ecstasy but the
+      quiet, profound relief of knowing she is not forgotten.
+  - n: 6
+    scene: "The Ashoka grove in flames — Hanuman burns Lanka, moving like fire through the city"
+    force: metamorphosis
+    composer: Berlioz
+    work: "Symphonie fantastique — V. Songe d'une nuit du sabbat"
+    decision: added
+    why: >
+      Hanuman, his mission accomplished but his heart heavy with what he has seen, is nearly
+      discovered. Rather than allow himself to be captured and tortured into revealing Rama's
+      plans, he transforms his power into destruction: he grows to enormous size and sets the city
+      ablaze, leaping from palace to palace, touching torches to hangings, his tail a whip of flame.
+      The Ashoka grove itself — that place of beauty where he found Sita — burns. Lanka burns.
+      He is no longer the servant moving invisibly but a force of transformation, fire itself.
+      Berlioz's "Dream of a Witches' Sabbath" is chaos and conflagration rendered as music — a
+      nightmare-carnival where familiar themes distort into grotesque forms, the city burning in
+      the musician's own vision. Metamorphosis requires changing orchestral color and fluid harmony;
+      Berlioz gives the burning of Lanka its hallucinatory, destructive power — not glorious warfare
+      but the terrible alchemy of a servant forced to become a destroyer. The beauty of Lanka is
+      unmade by the one who came to rescue, and the register is tragic rather than triumphant.
+  - n: 7
+    scene: "Hanuman hunted — wrath of Ravana's armies, the closing in"
+    force: wrath
+    composer: Stravinsky
+    work: "The Rite of Spring — Part II: The Sacrifice (Mystic Circles)"
+    decision: added
+    why: >
+      As Lanka burns, Ravana's armies turn against Hanuman — the demon-king's wrath is fully
+      aroused. He is hunted through the burning streets, surrounded, attacked, his clothes torn
+      away by demonic hands, the city's defenders closing in. It is a moment of terrible danger,
+      surrounded by the full might of Lanka's martial power, and Hanuman is one against thousands.
+      Yet he escapes: his power is greater, his speed superior, his purpose unshakeable. Stravinsky's
+      "Mystic Circles of the Sacrifice" is ritual violence and elemental chaos — the heavy, stamping
+      rhythms of sacrificial movement, the wrath of a people defending their city, the closing in
+      of ancestral forces. Wrath requires rhythmic pressure and unresolved harmony; Stravinsky gives
+      the hunt of Hanuman its register of primal, mechanized destruction — ancient ritual turned
+      weaponized, the city's full power reaching out to crush the invader. But he is not crushed.
+  - n: 8
+    scene: "Ravana's laments and rage — his generals counsel caution"
+    force: sacrifice
+    composer: Purcell
+    work: "King Arthur — Come if you Dare (Frost scene)"
+    decision: added
+    why: >
+      Hanuman escapes, and Ravana's fury knows no bounds. He laments his city's burning, his
+      arrogance wounded. Yet his generals counsel him: this is a sign. The monkey is no ordinary
+      creature, and his master is no ordinary man. Perhaps the war is not wise. Ravana, for a
+      moment, wavers — and then his pride reasserts itself. He has committed himself; he has taken
+      Sita; he has defied the world; and he will not yield. The moment of potential turning passes,
+      and Ravana's doom is sealed. Purcell's "Come if you Dare" from King Arthur — the frost
+      scene where even the gods tremble — is the sound of a great force acknowledging the cost of
+      its own pride, the ice-clarity that comes when the consequences suddenly become real. Sacrifice
+      requires ritual weight and processional build; Purcell gives the moment of Ravana's last
+      choice the weight of a ritual decision from which no return is possible. He will sacrifice
+      everything — his city, his life, his kingdom — to his refusal to yield.
+  - n: 9
+    scene: "Hanuman at the southern shore — gathering himself for the return"
+    force: ascent
+    composer: Mahler
+    work: "Symphony No. 8 in E-flat major — Part II: Chorus Mysticus (excerpt)"
+    decision: added
+    why: >
+      Hanuman reaches the shore of Lanka, bruised but alive, his mission accomplished. He swells
+      again — larger still than when he came, burning with the news he carries — and turns his face
+      toward the north. He has seen Sita. He has touched her hope. He carries the message that will
+      light the path forward. Mahler's "Chorus Mysticus" — the final moments of the Eighth Symphony,
+      where the chorus sings of the "Eternal Feminine that draws us on" — is transcendent ascent,
+      the soul rising toward the light it recognizes. Here, it is Hanuman rising into the full
+      recognition of his own power and purpose, no longer the servant but the messenger, the one
+      who will be the hinge on which the entire rescue turns. Ascent requires rising sequence and
+      luminous orchestration; Mahler gives the moment its transcendent registration — not apotheosis
+      yet, but the recognition of the form Hanuman was always meant to take. He is no longer
+      shrinking. He is growing into his truest self.
+  - n: 10
+    scene: "The return leap across the sea — bearing the news to Rama"
+    force: return
+    composer: Liszt
+    work: "Les Préludes, Symphonic Poem No. 3"
+    decision: added
+    why: >
+      Hanuman leaps the ocean again, but this time the crossing is not ascent into the unknown but
+      return carrying the knowledge that will transform everything. The return journey is swift,
+      purposeful, bearing news: Sita lives, she is waiting, the rescue is possible, and war is
+      inevitable. Liszt's "Les Préludes" is the music of destiny recognized and acted upon — the
+      symphonic poem that moves from questioning into affirmation, from seeking into finding, from
+      wandering into purpose. Return requires circular form and recognition motif; the Préludes
+      brings the hero home carrying the prize not yet won but now known-to-be-winnable. The kanda
+      closes not in Lanka but in the air, on the leap, on the crossing — Hanuman returning to tell
+      Rama what he has seen, and to set in motion the final, irrevocable movement toward war.
+demoted:
+  - composer: Holst
+    work: "The Planets — Mercury, the Winged Messenger"
+    status: "tempting but too courtly for Hanuman's dangerous traverse of an enemy city"
+    why: >
+      Mercury's elegant, scurrying swiftness seems right for a messenger moving quickly, but Sundara
+      Kanda requires more weight than Holst's Mercury provides. Hanuman is not a courtly herald but
+      a warrior-servant on a dangerous reconnaissance, and the music needs the numinous quality of
+      one moving under divine protection through demonic territory.
+  - composer: Wagner
+    work: "The Flying Dutchman — Overture"
+    status: "spent in the ocean-imagery but needs the entire kanda, not just one scene"
+    why: >
+      The Dutchman's ocean-crossing and doomed quest have echoes in Hanuman's leap, but the
+      Ramayana's register is different — not doom but triumphant possibility. The Dutchman's
+      overture is too elegiac for the sunrise-quality of Hanuman's return.
+  - composer: Barber
+    work: "Knoxville: Summer of 1915"
+    status: "save for Uttara Kanda — the homecoming resolution, not the reconnaissance"
+    why: >
+      Its lyric nostalgia belongs to the final book's return home, not to the middle of the epic's
+      action. Sundara Kanda's register is ascent and revelation, not yet the homecoming it prefigures.

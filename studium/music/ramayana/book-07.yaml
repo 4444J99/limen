@@ -1,0 +1,211 @@
+# Ramayana — Uttara Kanda (Book 7) — curated music arc
+# Uttara Kanda: the book of the return, coronation, and ultimate resolution. The journey back to
+# Ayodhya in the flying Pushpaka chariot, the coronation ceremony (the full consecration of a king
+# returned from exile), the question of Sita's purity (the doubt that shadows even the victory),
+# the trial by fire and Sita's ascension, and the final governance of the kingdom. The register
+# is transcendent resolution shadowed by ambiguity: not everything is healed, and the poem knows it.
+# This is the most spiritually complex kanda — the victory achieved but the cost not forgotten.
+work: ramayana
+book: 7
+title: "Ramayana Uttara Kanda: The Return, the Coronation, the Fire, the Eternal Form"
+length_minutes: 82
+principle: >
+  Do not score Uttara Kanda as a simple happy ending. Score it as SALVATION and TRANSCENDENCE —
+  the movement from temporal victory into eternal return, but with the knowledge that some things
+  broken cannot be remade. The kanda moves: the journey home in the Pushpaka chariot, passing
+  over the landmarks of the exile, Rama returning to Ayodhya → the coronation ceremony (the full
+  Vedic consecration that Bala Kanda's breaking of the bow prefigured) → the reunion with the
+  kingdom and the people → the doubt: Rama, aware that court gossip questions Sita's purity
+  (the very thing he has rescued her from), is torn between loyalty to her and duty to the
+  kingdom → Sita's trial by fire (the ultimate revelation of her virtue, untouched despite
+  captivity) → her apotheosis and disappearance into the earth, claimed by her mother Bhumi
+  (the earth-goddess), released from the burden of proof, ascending into eternal form → the final
+  governance: Rama ruling a perfect kingdom for ten thousand years, the remembered age of gold →
+  and the final dissolution: all returns to the eternal, all cycles turn. The register throughout
+  must be luminous and transcendent but never naive — there is loss even in triumph, and the poem
+  ends with the knowledge that kingdoms end and heroes fade, and that the only permanence is the
+  story itself, told eternally. Keep the coronation RADIANT and FULL; keep the doubt HUMAN
+  and REAL; keep the fire-trial REVELATION rather than punishment; keep the ascension
+  LIBERATING rather than tragic. The kanda ends not with a final image but with a return to the
+  eternal: Valmiki's voice, the story as cycle, the poem's own eternal circulation.
+force_arc: [return, revelation, kingship, law, divine-intervention, salvation, memory, law]
+dominant_force: salvation
+tracks:
+  - n: 1
+    scene: "The Pushpaka chariot — the return journey, seeing all the landmarks of exile"
+    force: return
+    composer: Beethoven
+    work: "Symphony No. 7 in A major — II. Allegretto"
+    decision: kept
+    why: >
+      Rama, Sita, and Lakshmana board the Pushpaka chariot — Ravana's flying vessel, now captured
+      and turned toward home. As they ascend, they pass over the landmarks of their exile: the
+      Dandaka forest, the Godavari river, Chitrakuta mountain where they lived in hiding, the
+      Ganga, and finally the approaches to Ayodhya. Each sight is a memory: grief transformed into
+      recognition, the path of exile revisited from above. The journey home is not instantaneous —
+      the kanda lingers on the return, watching the kingdom come into view, the long separation
+      ending. Beethoven's Seventh Allegretto is the supreme music of purposeful return — the
+      processional march that moves forward with the certainty of homecoming, familiar themes
+      recurring, a vast, measured rhythm of something gathering itself to cross the threshold.
+      Return requires circular form and recognition motif; the Allegretto gives the return journey
+      its exact shape — the slow, sure movement of the exile finally coming home, the landmarks
+      recognized, the city coming into view.
+  - n: 2
+    scene: "Arrival in Ayodhya — the city rejoices, Bharata steps down from the throne"
+    force: revelation
+    composer: Messiaen
+    work: "L'Ascension — III. Transports de joie (d'une âme devant la gloire du Christ)"
+    decision: added
+    why: >
+      The Pushpaka descends over Ayodhya, and the people know: Rama has returned. The city erupts
+      in joy — not the muted, obedient joy of Bala Kanda's wedding but the wild, releasing joy of
+      vindication, of exile ended, of the true king returning. Bharata, who has held the kingdom
+      in trust for fourteen years, comes forward and surrenders the sandals he has guarded — the
+      symbol of a burden he never wanted, held faithfully, now finally relinquished. The revelation
+      is twofold: Rama is vindicated, and Bharata is freed from his solemn watch. Messiaen's
+      "Transports of Joy" is transcendent joy rendered as music — a chorus and orchestra in radiant
+      ascension, the soul overwhelmed by recognition of the beloved. Revelation requires stillness,
+      chant, and verticality, but here the verticality is ecstatic — the lifting up of hearts, the
+      recognition of what was lost now returned. The city's joy is itself a kind of grace, and
+      Messiaen gives it the register of the transcendent made audible.
+  - n: 3
+    scene: "The coronation ceremony — Rama crowned king of Ayodhya"
+    force: kingship
+    composer: Handel
+    work: "Zadok the Priest — Coronation Anthem No. 1 (reprise and deepening)"
+    decision: added
+    why: >
+      The full coronation ceremony is performed — not the anticipated coronation of Bala Kanda,
+      aborted by exile, but the real coronation earned by suffering. Rama is anointed, crowned,
+      seated on the ancient throne. The assembly of the realm witnesses the installation of the
+      true king, the one who has not only claimed the throne but vindicated his claim by every
+      standard the dharma recognizes. Handel's Zadok the Priest — the same piece that opened
+      Bala Kanda's idealized court — returns here transformed: no longer the coronation that will
+      be taken away, but the coronation that is earned and final. Kingship requires ceremonial
+      grandeur and sovereign display; Handel gives Rama's coronation its proper register of
+      absolute, justified sovereignty — the blessing of the gods made audible, the realm
+      recognizing the one who is worthy to rule it.
+  - n: 4
+    scene: "The governance — the rule of dharma, the kingdom perfect under Rama"
+    force: law
+    composer: Bach
+    work: "B-minor Mass — Kyrie (fugue)"
+    decision: added
+    why: >
+      With Rama crowned, the kanda describes the perfect governance that follows: justice,
+      prosperity, the kingdom ordered according to dharma. It is rule as formal law, each thing in
+      its proper place, the architecture of order itself made manifest. The people flourish; the
+      harvests are abundant; everyone knows their duty and performs it. It is not the register of
+      individual happiness but of systemic rightness, the whole organism functioning as it is meant
+      to. Bach's B-minor Kyrie, scored as a fugue where every voice enters in its proper turn and
+      the whole builds into a unified architecture, is the perfect music of law as order made
+      audible — each element in its place, each voice necessary, the form emerging from the
+      precision of constraint. Law requires formal clarity, repetition, and architecture; Bach
+      gives the perfect kingdom its proper register — not spontaneous joy but the deeper satisfaction
+      of order achieved and maintained.
+  - n: 5
+    scene: "The doubt — court gossip questions Sita's virtue"
+    force: divine-intervention
+    composer: Wagner
+    work: "Tristan und Isolde — Prelude (the waiting)"
+    decision: added
+    why: >
+      Into the perfect kingdom comes a shadow: a washerman speaks carelessly to his wife, implying
+      that he cannot serve a king whose wife was another man's captive, no matter how innocent.
+      The gossip spreads. Rama, deeply loyal to Sita, is torn: he loves her absolutely, but he is
+      also the king, and his authority depends on the kingdom's confidence in the virtue of the
+      throne. The ancient problem: how can Sita prove what she has already proven by surviving
+      captivity? How is virtue testified to when the proof is not belief but the kingdom's silence?
+      The doubt is the kanda's most human moment — the moment where victory is shadowed by the
+      real limits of moral knowledge. Wagner's Tristan Prelude is the music of longing and doubt
+      intertwined, desire and doubt melting into each other, the beloved-and-doubted simultaneously
+      desired and questioned. Divine-intervention requires sudden color shift and brass/strings
+      contrast, and here it is the intervention of the real world — gossip, the limits of loyalty
+      in a kingdom, the test that neither duty nor love can escape.
+  - n: 6
+    scene: "The fire trial — Sita walks into the flames and emerges untouched"
+    force: salvation
+    composer: Fauré
+    work: "Requiem — In Paradisum"
+    decision: added
+    why: >
+      Sita, rather than submit to endless doubt, demands trial by fire — the ancient test. She
+      enters the flames and emerges untouched: the fire recognizes her virtue and does not consume
+      her. It is the ultimate revelation: not moral argument but the elements themselves
+      acknowledging her purity. At this moment, Agni (the fire-god) lifts her out of the flames
+      and sets her down before Rama, and the assembly witnesses: she is vindicated beyond doubt.
+      Fauré's "In Paradisum" is the music of salvation achieved, the soul entering peace after
+      trial — the choir singing in a major key free of all minor intrusion, the melody rising in a
+      simple, absolute affirmation that suffering has been transcended. Salvation requires
+      resolving radiance and chorale apotheosis; Fauré gives Sita's emergence from the fire its
+      register of redemption — not reward, but the recognition that virtue is real, that the good
+      survives, that the just are vindicated. The kanda's emotional center is here: not the doubt
+      itself but the moment when doubt is burned away by the revelation of what already was.
+  - n: 7
+    scene: "Sita's apotheosis — the earth claims her, she returns to eternal form"
+    force: memory
+    composer: Mahler
+    work: "Symphony No. 2 in C minor (Resurrection) — V. Finale (Auferstehung)"
+    decision: added
+    why: >
+      After the trial, Sita is no longer fully of the world. The earth — Bhumi, her mother — opens
+      and claims her. Sita, released from the burden of proof, ascends (or descends, depending on
+      perspective) into the eternal. She returns to the goddess from which she came, released from
+      the requirement to be a mortal woman, a queen, a victim, a proof. She becomes eternal form
+      again, the shakti, the divine feminine power that has moved through the epic from its
+      beginning. Rama does not die; he does not follow her. He remains, to rule, to grieve, to
+      know that his beloved has been released into something larger than marriage or kingdom. It is
+      simultaneously the kanda's most painful and most transcendent moment. Mahler's "Resurrection"
+      finale, with its soaring chorus and its themes of ascension and return to eternal light, is
+      the music of a soul being raised beyond the temporal into something eternal and perfect. The
+      work is a kind of apotheosis-through-release: Sita is not being taken from Rama but being
+      freed into the form she always contained. Memory requires nostalgic recall and faded
+      recapitulation, but Mahler's finale transfigures memory into something eternal — the beloved
+      returned not to the beloved but to the eternal, which is more real than presence. The kanda
+      holds Rama's grief and his understanding at once.
+  - n: 8
+    scene: "The eternal rule and the dissolution — the story returns to Valmiki"
+    force: law
+    composer: Arvo Pärt
+    work: "Spiegel im Spiegel (reprise and final stillness)"
+    decision: added
+    why: >
+      The kanda closes with the description of Rama's rule extended across the ages — ten thousand
+      years, the remembered age of gold, a kingdom so perfect it exists almost outside history.
+      And then, in the end, all returns to the cosmic order from which it came. The story cycles:
+      Valmiki, the poet who received it from Brahma at the beginning, remains, and the poem is
+      eternal. The Ramayana is told and re-told, each telling a new birth, each listener a new
+      discovery. The work ends not with Rama's death (which is not described) but with the knowledge
+      that the story itself is eternal, that what matters is not the historical Rama but the
+      archetypal Rama, the pattern repeated in each age and each soul. Pärt's "Spiegel im Spiegel,"
+      which opened Bala Kanda's invocation, returns here as the final statement: still, eternal,
+      the infinite recursion of the sacred story. Law here is the dharma itself, the law of the
+      cosmos that moves the stars and cycles. Pärt's infinite mirror gives the poem its closure
+      without closure — the story as eternal, the beloved as eternal, the dharma as eternal, the
+      listener as eternally present to the telling. The kanda ends on the threshold of another
+      telling, another cycle, another soul hearing Rama's name and knowing it as their own deepest
+      self.
+demoted:
+  - composer: Beethoven
+    work: "Symphony No. 9 in D minor — IV. Ode to Joy"
+    status: "too exultant for a kanda shadowed by Sita's departure; save for a separate celebration"
+    why: >
+      The Ninth's full "Ode to Joy" chorus is absolute triumph and universal brotherhood — the
+      wrong register for Uttara Kanda, where victory is achieved but the beloved is lost, and the
+      king must rule alone. The joy is real but it is not ecstatic; it is tempered by loss and the
+      knowledge of mortality.
+  - composer: Holst
+    work: "The Planets — Jupiter, the Bringer of Jollity"
+    status: "joy without shadow; Uttara Kanda requires both radiance and sorrow together"
+    why: >
+      Jupiter is unshadowed grandeur and joy — Holst's most untroubled piece. Uttara Kanda ends
+      in a wisdom that knows both joy and sorrow, the eternal and the mortal, the beloved as real
+      and the beloved as departed. The register is too simple for the kanda's complexity.
+  - composer: Barber
+    work: "Adagio for Strings"
+    status: "tried for the Sita-departure but Mahler's Resurrection is more precise to the elevation"
+    why: >
+      Barber's Adagio is a single wave of unarticulated sorrow — appropriate for grief, but Sita's
+      apotheosis is not purely grief. It is the joy of release, the ecstasy of return to the
+      eternal, the relief of the burden lifted. Mahler's Resurrection gives both the transcendence
+      and the acknowledgment of loss at once, in a single vision.
