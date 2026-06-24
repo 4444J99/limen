@@ -1,0 +1,71 @@
+# pillars.yaml — the "platform of pillars" registry (a CONVERGENCE map, not a rebuild).
+#
+# This declares the STRUCTURE only: which pillars exist, who owns each, and where to read its
+# live health. STATUS is DERIVED at render time by scripts/pillars-view.py from each pillar's
+# `health_signal` / `path` — never pinned here, because a hardcoded "done" drifts the moment the
+# system moves ([[derive-never-pin-hardcodes]], [[value-is-discovered-never-assumed]]). The pillars
+# were "built many times far and wide"; this map points at the ONE live instance of each so the
+# convergence is visible instead of re-litigated ([[pillars-platform-convergence]]).
+
+# The P0 → P2 convergence program. `status` is the only hand-set field (a program milestone is a
+# decision, not a derivable signal); keep it honest.
+program:
+  - id: P0
+    title: Insights-over-time tooling
+    status: live
+    note: "insights-{diff,snapshot,list,drift} + session-end auto-capture — live on chezmoi"
+  - id: P1
+    title: Multi-provider ingest spine
+    status: live
+    note: "atoms.jsonl produced from ALL providers by session-meta/ingest/refresh-atoms.sh; the limen C_CORPUS_FEED beat was re-anchored onto it 2026-06-24 (was single-source claude-projects)"
+  - id: P1.5
+    title: Gate-on-export distillation
+    status: armed
+    note: "corpus-converge.py reads atoms.jsonl behind the LIMEN_EXPORT_SOURCES gate (default: all sources eligible); write-back stays gated (LIMEN_CORPUS_CONVERGE=1 + --live --apply), destination LOCAL only"
+  - id: P2
+    title: Unified pillars view
+    status: live
+    note: "this page (pillars.html, rendered by the C_WEB beat)"
+
+# The pillars. `path` and `health_signal` are how the view derives whether each is alive.
+#   path           absolute (or ~) location on disk; missing → pillar reads ABSENT.
+#   health_signal  a logs/<name>.json the view reads for a freshness stamp + a headline metric.
+pillars:
+  - id: ingest
+    name: Ingest spine
+    role: Atomize every agent's transcripts into one redacted, deduped atom corpus.
+    owner: session-meta
+    path: ~/Workspace/session-meta
+    producer: ingest/refresh-atoms.sh
+    health_signal: logs/ingest-coverage.json
+  - id: distillation
+    name: Distillation
+    role: Distill the corpus toward ONE — THE ONE plus the canonical faces.
+    owner: knowledge-corpus
+    path: ~/Workspace/knowledge-corpus
+    health_signal: logs/corpus-view.json
+  - id: federation
+    name: Federation / corpus engine
+    role: Collect and promote divergent shots; the engine behind the corpus.
+    owner: conversation-corpus-engine
+    path: ~/Workspace/conversation-corpus-engine
+  - id: config
+    name: Config
+    role: Dotfiles and environment as one source of truth.
+    owner: domus-genoma
+    path: ~/.local/share/chezmoi
+  - id: memory
+    name: Memories + plans
+    role: Agent memory, plans, and insights history.
+    owner: claude-runtime-state
+    path: ~/.claude
+  - id: portal
+    name: Portal
+    role: The outward stakeholder face (Hermeneus).
+    owner: stakeholder-portal
+  - id: views
+    name: Local views
+    role: Where you already look — corpus / money / omni / obligations / pillars faces + the heartbeat.
+    owner: limen
+    path: ~/Workspace/limen
+    health_signal: logs/omni-view.json
