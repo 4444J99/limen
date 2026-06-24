@@ -11,17 +11,17 @@
 - **Corpus:** `medieval/canterbury-tales` (middle_english_original.txt)
 - **Source rail:** https://chaucer.lib.harvard.edu/
 - **Divisions:** 24 × Tale
-- **Progress:** 7/24 arcs authored
+- **Progress:** 1/24 arcs authored
 
 | Tale | dominant force | status |
 | --: | --- | :--: |
 | 1 | (author) | ✓ |
-| 2 | (author) | ✓ |
-| 3 | (author) | ✓ |
-| 4 | (author) | ✓ |
-| 5 | desire | ✓ |
-| 6 | law | ✓ |
-| 7 | desire | ✓ |
+| 2 | (author) | ☐ |
+| 3 | (author) | ☐ |
+| 4 | (author) | ☐ |
+| 5 | (author) | ☐ |
+| 6 | (author) | ☐ |
+| 7 | (author) | ☐ |
 | 8 | (author) | ☐ |
 | 9 | (author) | ☐ |
 | 10 | (author) | ☐ |

@@ -11,14 +11,14 @@
 - **Corpus:** `sanskrit/ramayana` (translations only)
 - **Source rail:** https://gretil.sub.uni-goettingen.de/gretil.html#Ram
 - **Divisions:** 7 × Kanda
-- **Progress:** 7/7 arcs authored ✓ COMPLETE
+- **Progress:** 1/7 arcs authored
 
 | Kanda | dominant force | status |
 | --: | --- | :--: |
-| 1 (Bala) | kingship | ✓ |
-| 2 (Ayodhya) | exile | ✓ |
-| 3 (Aranya) | desire | ✓ |
-| 4 (Kishkindha) | return | ✓ |
-| 5 (Sundara) | revelation | ✓ |
-| 6 (Yuddha) | fate | ✓ |
-| 7 (Uttara) | salvation | ✓ |
+| 1 | (author) | ✓ |
+| 2 | (author) | ☐ |
+| 3 | (author) | ☐ |
+| 4 | (author) | ☐ |
+| 5 | (author) | ☐ |
+| 6 | (author) | ☐ |
+| 7 | (author) | ☐ |
