@@ -1,0 +1,90 @@
+# The Dao De Jing — film companion (the FOURTH commentary system)
+# GOLD STANDARD. Every other work's studium/film/<work>.yaml mirrors this shape.
+
+work: tao-te-ching
+title: "The Dao De Jing — a cinema of wu wei, stillness, and the uncarved block"
+principle: >
+  Do not assemble a "movies about ancient China" list. Assemble the text's FORCES given cinematic
+  bodies. The Dao De Jing is not a narrative; it is a description of wu wei — action through non-action,
+  water overcoming stone, the uncarved block, the void that makes the wheel useful. The fitting films
+  are those where stillness holds power, where yielding is strength, and where the camera observes
+  emergence rather than forcing a plot. Stalker (Tarkovsky) captures the Zone as a space that punishes
+  force and rewards yielding (revelation). Spring, Summer, Fall, Winter... and Spring (Kim Ki-duk) captures
+  the inevitable cycle of nature and consequence (metamorphosis). Paterson (Jarmusch) captures the poetry
+  of the unforced, everyday routine (law/rhythm). The films must embody the Way, not just depict it.
+force_coverage: [revelation, metamorphosis, law, salvation, ascent, return]
+films:
+  - title: "Stalker"
+    director: "Andrei Tarkovsky"
+    year: 1979
+    force: revelation
+    divisions: [1, 4, 8, 14, 21]
+    objects: [door]
+    letterboxd: stalker
+    scene_or_theme: "The Zone as the Way — yielding as survival"
+    object_lesson: >
+      The Zone cannot be commanded. Those who try to force their way through it are destroyed; those
+      who yield, who move indirectly (wu wei), survive. The DOOR to the Room represents the threshold
+      of true desire, but getting there requires unlearning the ego's demand for straight lines.
+      Tarkovsky's camera itself practices wu wei: it waits, it breathes, it lets the truth emerge
+      from the stillness rather than cutting to force a reaction.
+    why: >
+      The text speaks of the mystery that cannot be named (Chapter 1) and the highest good being like water,
+      benefiting all without striving (Chapter 8). Stalker is the supreme cinematic embodiment of a space
+      where human striving is useless and only profound humility allows passage.
+
+  - title: "Spring, Summer, Fall, Winter... and Spring"
+    director: "Kim Ki-duk"
+    year: 2003
+    force: metamorphosis
+    divisions: [2, 16, 23, 42]
+    objects: [door]
+    letterboxd: spring-summer-fall-winter-and-spring
+    scene_or_theme: "The inevitable cycle and the return to the root"
+    object_lesson: >
+      Nature does not hurry, yet everything is accomplished. The isolated monastery on the lake,
+      approached through a freestanding DOOR, is a microcosm of the Dao. Actions have consequences
+      that ripen over seasons, and the attempt to possess or control (the boy with the animals)
+      brings suffering. The return to the root is the return to stillness.
+    why: >
+      "Empty yourself of everything. Let the mind become still. The ten thousand things rise and fall while
+      the Self watches their return" (Chapter 16). The film's circular structure mirrors the Daoist
+      understanding of time and change.
+
+  - title: "Paterson"
+    director: "Jim Jarmusch"
+    year: 2016
+    force: law
+    divisions: [17, 32, 80]
+    objects: [clock]
+    letterboxd: paterson
+    scene_or_theme: "The uncarved block (pu) in daily life"
+    object_lesson: >
+      Paterson lives a life of absolute routine (the CLOCK, the bus route, the dog walk), yet within
+      that routine, profound poetry emerges effortlessly. He does not strive to be a great artist;
+      he simply observes and records. This is the uncarved block: potential untampered with by
+      ambition.
+    why: >
+      The text praises the leader who goes unnoticed (Chapter 17) and the small, contented state
+      (Chapter 80). Paterson is a film devoid of manufactured conflict; it finds its meaning entirely
+      in the quiet rhythms of the unforced life.
+
+  - title: "Perfect Days"
+    director: "Wim Wenders"
+    year: 2023
+    force: salvation
+    divisions: [15, 22, 33]
+    objects: [mirror]
+    letterboxd: perfect-days-2023
+    scene_or_theme: "Yielding to the present moment"
+    object_lesson: >
+      Hirayama cleans toilets in Tokyo, a task he approaches with complete presence and without
+      resentment. In the MIRROR of his daily routine, we see a man who has yielded his ego to the
+      flow of life (komorebi — the light filtering through leaves). His joy is not an achievement,
+      but a byproduct of non-contention.
+    why: >
+      "Yield and overcome; Bend and be straight; Empty and be full" (Chapter 22). Wenders films
+      a life that has achieved the state of wu wei, where the lowest task is performed with the
+      highest grace.
+
+adaptations: []
