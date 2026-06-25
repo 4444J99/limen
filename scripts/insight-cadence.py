@@ -139,6 +139,7 @@ def _severity_from_age(age_h, expected_h):
 
 
 def aggregate_hourly():
+    """Fresh anomalies in the last hour."""
     insights = []
     health = _load_json(LOGS / "organ-health.json", {})
     for o in health.get("organs", []):
@@ -190,7 +191,8 @@ def aggregate_hourly():
 
 
 def aggregate_daily():
-    insights = aggregate_hourly()
+    """Digest of the day's signals across all sources."""
+    insights = []
     censor_decisions = _load_jsonl(LOGS / "censor-decisions.jsonl")
     if censor_decisions:
         recent = [d for d in censor_decisions if 1 < len(censor_decisions) < 50]
@@ -239,7 +241,8 @@ def aggregate_daily():
 
 
 def aggregate_weekly():
-    insights = aggregate_daily()
+    """Trends — recurring patterns, spending drift, lane health over the week."""
+    insights = []
     ledger = _load_json(LOGS / "ledger.json", {})
     for lane_name, lane_data in ledger.get("lanes", {}).items():
         sr = lane_data.get("success_rate", 0)
@@ -273,8 +276,9 @@ def aggregate_weekly():
 
 
 def aggregate_monthly():
-    insights = aggregate_weekly()
-    ledger = _load_json(LOGS / "ledger.json", {})
+    """Strategic rollup — overall system health, worst sinks, revenue attribution gaps."""
+    insights = []
+    ledger = _load_json(LOGS / "ledger.json")
     totals = ledger.get("totals", {})
     sr = totals.get("success_rate", 0)
     spent = totals.get("spent", 0)
