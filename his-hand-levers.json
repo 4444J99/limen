@@ -1,23 +1,13 @@
 {
-  "_doc": "The PERMANENT home for his-hand atoms — the levers only Anthony can pull. A his-hand task NEVER hangs on him or in a recall-only memory file; it hangs HERE, in git, and obligations-view.py unions these into the obligations face beside the mail levers. This file is separate from obligations-ledger.json ON PURPOSE: the mail builder regenerates that ledger every sweep, which would wipe any lever placed in it — these survive regen. Add/retire a lever by editing this file; nothing here is ever auto-pulled. Source: the needs_human digest reduction (37 tasks -> 8 human actions) plus the per-session closeout atoms. Generic mail-credential levers are NOT duplicated here (they live as L-MCP / L-IMAP-APP-PW / L-OAUTH in the ledger); the ONE exception is L-GMAIL-CRED, which corrects their misleading 'generate a credential' framing (the app-pw already exists — one paste lands it).",
+  "_doc": "The PERMANENT home for his-hand atoms \u2014 the levers only Anthony can pull. A his-hand task NEVER hangs on him or in a recall-only memory file; it hangs HERE, in git, and obligations-view.py unions these into the obligations face beside the mail levers. This file is separate from obligations-ledger.json ON PURPOSE: the mail builder regenerates that ledger every sweep, which would wipe any lever placed in it \u2014 these survive regen. Add/retire a lever by editing this file; nothing here is ever auto-pulled. Source: the needs_human digest reduction (37 tasks -> 8 human actions) plus the per-session closeout atoms. Generic mail-credential levers are NOT duplicated here (they live as L-MCP / L-IMAP-APP-PW / L-OAUTH in the ledger); the ONE exception is L-GMAIL-CRED, which corrects their misleading 'generate a credential' framing (the app-pw already exists \u2014 one paste lands it).",
   "generated_at": "2026-06-25",
-  "spine": "10 human actions own the whole revenue + go-live spine; the first two (merge gate + accounts) move the most, and L-ENC1101-GOLIVE is time-boxed to 6/25. Surfaced once, never nagged, never forced. COST SPINE: the hydration PLUMBING is solid (PR #217: 1Password -> ~/.limen.env -> every lane each beat) but the materialized tokens went STALE and were masked by a presence-only --check. The new creds-hydrate --verify (PR fix/creds-hydrate-validity-probe) authenticates each cred and exits 1 on a dead one; it now runs every beat in metabolize.sh. Today it rejects two (gemini CONSUMER_SUSPENDED, cloudflare Invalid API Token) -> L-FLEET-CAPACITY is a 2-token RE-MINT, not done. gh was closed in-lane (#251): creds-hydrate now derives GH_TOKEN from the valid keyring (4444J99) instead of the revoked PAT that was shadowing it — zero human action, green every beat. L-MODEL-TIER (interactive Claude pinned to Opus-4.8 + 1M context = the dominant burn) stays a one-toggle. EDU course-ops atoms now hang HERE too (L-ENC1102-GRADEBOOK gradebook-path decision, L-EDU-PERTERM per-term LMS export/fill) — not only in edu-organism issue comments — so every surfaced his-hand task has a permanent registry home on the obligations face, never parked in a chat closeout. INBOUND SPINE (added 2026-06-25): L-POSITIONING-ACTIVATE owns the whole built-but-inert inbound-magnet system — every remaining atom is a one-line/one-toggle/one-paste lever (activate capture, arm lane, publish front door, apply discoverability, publish the 3 verified private repos, decide styx, seed the rest); full detail in docs/positioning/_his-hand.md, surfaced once, never forced.",
+  "spine": "10 human actions own the whole revenue + go-live spine; the first two (merge gate + accounts) move the most, and L-ENC1101-GOLIVE is time-boxed to 6/25. Surfaced once, never nagged, never forced. COST SPINE: the hydration PLUMBING is solid (PR #217: 1Password -> ~/.limen.env -> every lane each beat) but the materialized tokens went STALE and were masked by a presence-only --check. The new creds-hydrate --verify (PR fix/creds-hydrate-validity-probe) authenticates each cred and exits 1 on a dead one; it now runs every beat in metabolize.sh. Today it rejects two (gemini CONSUMER_SUSPENDED, cloudflare Invalid API Token) -> L-FLEET-CAPACITY is a 2-token RE-MINT, not done. gh was closed in-lane (#251): creds-hydrate now derives GH_TOKEN from the valid keyring (4444J99) instead of the revoked PAT that was shadowing it \u2014 zero human action, green every beat. L-MODEL-TIER (interactive Claude pinned to Opus-4.8 + 1M context = the dominant burn) stays a one-toggle. EDU course-ops atoms now hang HERE too (L-ENC1102-GRADEBOOK gradebook-path decision, L-EDU-PERTERM per-term LMS export/fill) \u2014 not only in edu-organism issue comments \u2014 so every surfaced his-hand task has a permanent registry home on the obligations face, never parked in a chat closeout. INBOUND SPINE (added 2026-06-25): L-POSITIONING-ACTIVATE owns the whole built-but-inert inbound-magnet system \u2014 every remaining atom is a one-line/one-toggle/one-paste lever (activate capture, arm lane, publish front door, apply discoverability, publish the 3 verified private repos, decide styx, seed the rest); full detail in docs/positioning/_his-hand.md, surfaced once, never forced.",
   "levers": [
     {
-      "id": "L-MERGE-GATE",
-      "label": "Open the merge gate: say \"open the merge gate\" and merge-drain.py squash-merges exactly the clean set in docs/MERGE-READY.md (20 PRs, revenue-first, branches deleted, never force-merged).",
-      "owner": "yours",
-      "cost": "1 word",
-      "unlocks": "20 clean PRs land",
-      "source_task": "ASK-5",
-      "note": "Ground-truth: only 20 of 200 open PRs are clean; the 138 CI-red are fleet HEAL work, not your hand.",
-      "issue": 252
-    },
-    {
       "id": "L-REVENUE-ACCT",
-      "label": "FIRST DOLLAR SHIPPED: Ko-fi rail is LIVE — slug `4444j99` wired into the Exporter's FUNDING.yml (organvm/a-i-chat--exporter#79, merged to master), so GitHub renders the live Sponsor/donate button; a 'yes' can pay today. ONLY your-side check left on this leg: confirm a payout method (PayPal/Stripe) is connected in Ko-fi settings so tips actually land (~1 min). PRO TIER NOW SOVEREIGN (replaces the Lemon Squeezy/processor path): organvm/a-i-chat--exporter#81 ships a self-hosted Bitcoin mint that signs the Exporter's own Pro license on confirmed payment — no Stripe/LemonSqueezy/Ko-fi/processor, verified against a keyless public block explorer. Code-complete + merged; it activates the moment it is pointed at a Bitcoin address you control (MINT_BTC_ADDRESS — any self-custodied wallet, no account/KYC). That address is yours by design — the key to your own money, not a task on a list. (GitHub Sponsors for `organvm` stays an optional extra surface.)",
+      "label": "FIRST DOLLAR SHIPPED: Ko-fi rail is LIVE \u2014 slug `4444j99` wired into the Exporter's FUNDING.yml (organvm/a-i-chat--exporter#79, merged to master), so GitHub renders the live Sponsor/donate button; a 'yes' can pay today. ONLY your-side check left on this leg: confirm a payout method (PayPal/Stripe) is connected in Ko-fi settings so tips actually land (~1 min). PRO TIER NOW SOVEREIGN (replaces the Lemon Squeezy/processor path): organvm/a-i-chat--exporter#81 ships a self-hosted Bitcoin mint that signs the Exporter's own Pro license on confirmed payment \u2014 no Stripe/LemonSqueezy/Ko-fi/processor, verified against a keyless public block explorer. Code-complete + merged; it activates the moment it is pointed at a Bitcoin address you control (MINT_BTC_ADDRESS \u2014 any self-custodied wallet, no account/KYC). That address is yours by design \u2014 the key to your own money, not a task on a list. (GitHub Sponsors for `organvm` stays an optional extra surface.)",
       "owner": "yours",
-      "cost": "~1 min to confirm Ko-fi payout connected. Pro tier: sovereign Bitcoin mint built+merged (#81); activates when pointed at a self-custodied address — no processor/account/KYC.",
+      "cost": "~1 min to confirm Ko-fi payout connected. Pro tier: sovereign Bitcoin mint built+merged (#81); activates when pointed at a self-custodied address \u2014 no processor/account/KYC.",
       "unlocks": "first dollar (income before August)",
       "source_task": "revenue-ladder (whose_hand: yours)",
       "issue": 253
@@ -27,13 +17,13 @@
       "label": "Cloudflare deploy auth: run `wrangler login` (or export CLOUDFLARE_API_TOKEN into the lane env), then re-dispatch. Every BLD2-*-deploy fails because wrangler isn't authenticated.",
       "owner": "yours",
       "cost": "~2 min once, durable",
-      "unlocks": "16 BLD2 deploys — all 6 revenue products go live",
+      "unlocks": "16 BLD2 deploys \u2014 all 6 revenue products go live",
       "source_task": "BLD2-* (16 tasks)",
       "issue": 254
     },
     {
       "id": "L-CONTAINER-CUTOVER",
-      "label": "One-container cutover: mount an external backup, run container/migrate.sh S4-S13, confirm symlinks + the COMPLETE marker. ASK-20 extends container/manifest.tsv to relocate ~/.claude, ~/.codex, ~/.gemini. Irreversible and backup-gated — the durability the whole organism stands on.",
+      "label": "One-container cutover: mount an external backup, run container/migrate.sh S4-S13, confirm symlinks + the COMPLETE marker. ASK-20 extends container/manifest.tsv to relocate ~/.claude, ~/.codex, ~/.gemini. Irreversible and backup-gated \u2014 the durability the whole organism stands on.",
       "owner": "yours",
       "cost": "~30 min, irreversible",
       "unlocks": "durable single-body identity",
@@ -51,229 +41,229 @@
     },
     {
       "id": "L-BRANCH-PROTECT-072",
-      "label": "Branch-protection across the organ repos. RESOLVED for organvm/limen `main` 2026-06-24 (applied under granted admin): protected with an always-on required `pr-gate` check after #192 then 25ce902 each landed red and twice wedged the daemon — healed in #203/#212/#213, Censor #198 unblocked. REMAINING: fleet-wide rollout to the other organ repos.",
+      "label": "Branch-protection across the organ repos. RESOLVED for organvm/limen `main` 2026-06-24 (applied under granted admin): protected with an always-on required `pr-gate` check after #192 then 25ce902 each landed red and twice wedged the daemon \u2014 healed in #203/#212/#213, Censor #198 unblocked. REMAINING: fleet-wide rollout to the other organ repos.",
       "owner": "yours",
-      "cost": "fleet-wide rollout only (limen done) — ~5 min admin per repo, or one descent run",
-      "unlocks": "branch protection fleet-wide (limen main already gated → no more CI-poison jams there)",
+      "cost": "fleet-wide rollout only (limen done) \u2014 ~5 min admin per repo, or one descent run",
+      "unlocks": "branch protection fleet-wide (limen main already gated \u2192 no more CI-poison jams there)",
       "source_task": "LIMEN-072",
-      "note": "limen/main DONE: required check = the always-on `pr-gate` workflow (ruff · py_compile · tasks.yaml parses+loads · nomenclator · pytest web/api+cli). Couldn't just require ci.yml's python/web/worker — they're path-filtered on pull_request and never report on content-only PRs (#79/#80), which would brick them forever; pr-gate has no path filter. enforce_admins=false, no required reviews, allow_auto_merge=true. Daemon verified PR-only (capture.sh→feature branches, merge organ merges, sync-release FF-pulls) so no App-actor exemption was needed. DESCENT TOOL READY (code precursor done): scripts/setup-rulesets.py's _GATE regex now detects the limen-style job names (pr-gate/python/web/worker) and accepts a --contexts override to force check names where detection is imperfect — so the fleet-wide run no longer mis-reports 'no checks detected'. REMAINING (your lever): the gated `--apply` run across the other organ repos — it writes branch-protection to repos you own (org-admin mutation), so it stays human-pulled.",
+      "note": "limen/main DONE: required check = the always-on `pr-gate` workflow (ruff \u00b7 py_compile \u00b7 tasks.yaml parses+loads \u00b7 nomenclator \u00b7 pytest web/api+cli). Couldn't just require ci.yml's python/web/worker \u2014 they're path-filtered on pull_request and never report on content-only PRs (#79/#80), which would brick them forever; pr-gate has no path filter. enforce_admins=false, no required reviews, allow_auto_merge=true. Daemon verified PR-only (capture.sh\u2192feature branches, merge organ merges, sync-release FF-pulls) so no App-actor exemption was needed. DESCENT TOOL READY (code precursor done): scripts/setup-rulesets.py's _GATE regex now detects the limen-style job names (pr-gate/python/web/worker) and accepts a --contexts override to force check names where detection is imperfect \u2014 so the fleet-wide run no longer mis-reports 'no checks detected'. REMAINING (your lever): the gated `--apply` run across the other organ repos \u2014 it writes branch-protection to repos you own (org-admin mutation), so it stays human-pulled.",
       "steps": [
-        "DONE 2026-06-24: organvm/limen `main` protected — required status check `pr-gate` (always-on workflow added in #211; protection set via gh api).",
-        "DONE: scripts/setup-rulesets.py's _GATE regex now detects pr-gate/python/web/worker (+ a --contexts override) — the descent tool is ready.",
-        "Fleet-wide (your lever): dry-run `python3 scripts/setup-rulesets.py` to review the per-repo plan, then `--apply` to write branch protection across the other organ repos (org-admin mutation — human-pulled)."
+        "DONE 2026-06-24: organvm/limen `main` protected \u2014 required status check `pr-gate` (always-on workflow added in #211; protection set via gh api).",
+        "DONE: scripts/setup-rulesets.py's _GATE regex now detects pr-gate/python/web/worker (+ a --contexts override) \u2014 the descent tool is ready.",
+        "Fleet-wide (your lever): dry-run `python3 scripts/setup-rulesets.py` to review the per-repo plan, then `--apply` to write branch protection across the other organ repos (org-admin mutation \u2014 human-pulled)."
       ],
       "issue": 257
     },
     {
       "id": "L-ENC1101-GOLIVE",
-      "label": "Take ENC1101 Summer 2026 (771624) live in D2L — content is 100% staged; only your cadence call + a label greenlight + the Set Active click remain. Read edu-organism/classes/enc1101-summer-2026/prep/GO-LIVE-BRIEF.md (one page). (1) Confirm the 6-week cadence in prep/schedule-summer2026.md ('cadence is good' or name dates to move); (2) greenlight the §3 fix — the staged announcement drip mislabeled the back half a 'Research Essay' but shell Unit 4 = Problem/Solution Essay (250-pt capstone); the corrected import is staged at prep/instructor-layer-ready/announcements-summer2026-IMPORT-aligned.csv (dates unchanged, original untouched). Then I browser-drive dates + announcements + intelligent agent; you click Set Offering to Active; I verify Student View.",
+      "label": "Take ENC1101 Summer 2026 (771624) live in D2L \u2014 content is 100% staged; only your cadence call + a label greenlight + the Set Active click remain. Read edu-organism/classes/enc1101-summer-2026/prep/GO-LIVE-BRIEF.md (one page). (1) Confirm the 6-week cadence in prep/schedule-summer2026.md ('cadence is good' or name dates to move); (2) greenlight the \u00a73 fix \u2014 the staged announcement drip mislabeled the back half a 'Research Essay' but shell Unit 4 = Problem/Solution Essay (250-pt capstone); the corrected import is staged at prep/instructor-layer-ready/announcements-summer2026-IMPORT-aligned.csv (dates unchanged, original untouched). Then I browser-drive dates + announcements + intelligent agent; you click Set Offering to Active; I verify Student View.",
       "owner": "yours",
       "cost": "~2 min decision + a Set Active click; then ~30 min I co-drive via Claude-in-Chrome",
-      "unlocks": "ENC1101 live for students (term 6/25 → 8/04)",
+      "unlocks": "ENC1101 live for students (term 6/25 \u2192 8/04)",
       "source_task": "edu-organism ENC1101 771624",
       "deadline": "2026-06-25",
-      "gate": "your cadence-confirm + §3 greenlight + the Set Active click (outward/identity — never automated)",
+      "gate": "your cadence-confirm + \u00a73 greenlight + the Set Active click (outward/identity \u2014 never automated)",
       "steps": [
         "Read prep/GO-LIVE-BRIEF.md",
         "Confirm the 6-week cadence in prep/schedule-summer2026.md (or name dates to move)",
-        "Greenlight the §3 relabel (use the -IMPORT-aligned.csv when posting)",
-        "I browser-drive: syllabus → Manage Dates → announcements → intelligent agent",
+        "Greenlight the \u00a73 relabel (use the -IMPORT-aligned.csv when posting)",
+        "I browser-drive: syllabus \u2192 Manage Dates \u2192 announcements \u2192 intelligent agent",
         "You click Set Offering to Active; I verify Student View"
       ],
       "issue": 258
     },
     {
       "id": "L-ENC1102-GRADEBOOK",
-      "label": "Resolve the ENC1102 D2L gradebook weighting — a one-decision-then-transcribe atom. The shell today has 6 support categories at 10% each (=60%), leaving 40% unaccounted and the major essays NOT carrying the 'largest share' the syllabus documents. The reconciliation is fully worked at edu-organism courses/enc1102/memory/gradebook-weights.md against the syllabus's OWN documented points (Working Thesis 100 / Critique 150 / Antithesis 150 / Argument Research 200 = 600): Path A restructures per-category so the majors carry 60% (WT 10 / Crit 15 / Anti 15 / ARE 20) and support carries 40% = 100%; Path B keeps flat weights and adds a Grade-Calculation note. Pick the path (turns on whether Broward's institutional gradebook master allows per-category weights — the only part I can't decide), then key the chosen weights into D2L.",
+      "label": "Resolve the ENC1102 D2L gradebook weighting \u2014 a one-decision-then-transcribe atom. The shell today has 6 support categories at 10% each (=60%), leaving 40% unaccounted and the major essays NOT carrying the 'largest share' the syllabus documents. The reconciliation is fully worked at edu-organism courses/enc1102/memory/gradebook-weights.md against the syllabus's OWN documented points (Working Thesis 100 / Critique 150 / Antithesis 150 / Argument Research 200 = 600): Path A restructures per-category so the majors carry 60% (WT 10 / Crit 15 / Anti 15 / ARE 20) and support carries 40% = 100%; Path B keeps flat weights and adds a Grade-Calculation note. Pick the path (turns on whether Broward's institutional gradebook master allows per-category weights \u2014 the only part I can't decide), then key the chosen weights into D2L.",
       "owner": "yours",
       "cost": "~5 min: pick A or B, then type the weights into D2L's gradebook",
       "unlocks": "ENC1102 gradebook sums to 100% with majors weighted as the syllabus states",
       "source_task": "edu-organism #18 (gradebook-weights.md staged; verify.sh-safe filename)",
-      "gate": "the per-category-vs-flat choice depends on Broward's gradebook master (institutional policy — yours); the D2L write is outward/LMS — never automated",
+      "gate": "the per-category-vs-flat choice depends on Broward's gradebook master (institutional policy \u2014 yours); the D2L write is outward/LMS \u2014 never automated",
       "steps": [
         "Read edu-organism courses/enc1102/memory/gradebook-weights.md (one note, two worked paths to 100%)",
-        "Pick Path A (per-category, majors=60%) or Path B (flat + calc note) — turns on whether Broward's master permits per-category weights",
+        "Pick Path A (per-category, majors=60%) or Path B (flat + calc note) \u2014 turns on whether Broward's master permits per-category weights",
         "Key the chosen weights into the ENC1102 D2L gradebook; I verify the column math sums to 100%"
       ],
       "issue": 259
     },
     {
       "id": "L-EDU-PERTERM",
-      "label": "The per-term recapitulation ritual is autonomic EXCEPT two irreducibly-yours points, and they recur every term: (1) export the LMS course shell (D2L cartridge / Canvas course export) — only you can reach inside the LMS; (2) fill the real ref / section / dates into the term YAML (courses/<course>/terms/<term>.yaml — 'the only file a human edits each term'). Then the engine generates the whole cartridge. The NEXT instance is already staged: ENC1101 Fall 2026 has a fill-after-export template at courses/enc1101/terms/fall-2026.yaml (seed dates + a proportional 16-week unit_layout rescale; loud TODOs for ref/section/intake). The ENG101/ENG204 Canvas export path (#28) is the same class. This lever is the standing home for that cadence so it never lives only in a per-term issue.",
+      "label": "The per-term recapitulation ritual is autonomic EXCEPT two irreducibly-yours points, and they recur every term: (1) export the LMS course shell (D2L cartridge / Canvas course export) \u2014 only you can reach inside the LMS; (2) fill the real ref / section / dates into the term YAML (courses/<course>/terms/<term>.yaml \u2014 'the only file a human edits each term'). Then the engine generates the whole cartridge. The NEXT instance is already staged: ENC1101 Fall 2026 has a fill-after-export template at courses/enc1101/terms/fall-2026.yaml (seed dates + a proportional 16-week unit_layout rescale; loud TODOs for ref/section/intake). The ENG101/ENG204 Canvas export path (#28) is the same class. This lever is the standing home for that cadence so it never lives only in a per-term issue.",
       "owner": "yours",
       "cost": "~10 min per term: export the shell + type ref/section/dates into the term YAML; the engine does the rest",
       "unlocks": "each new term's cartridge generates from one human edit; nothing course-side waits on me except the LMS export",
       "source_task": "edu-organism #16 (ENC1101 fall-2026.yaml staged) + #28 (Canvas per-term export); recapitulation-engine cadence",
       "gate": "the LMS export + the real ref/dates are yours (inside the LMS / your registrar data); the engine + generated files are mine",
       "steps": [
-        "Export the term's LMS shell (D2L: Course Admin → Import/Export/Copy → Export as cartridge; Canvas: Settings → Export Course Content)",
+        "Export the term's LMS shell (D2L: Course Admin \u2192 Import/Export/Copy \u2192 Export as cartridge; Canvas: Settings \u2192 Export Course Content)",
         "Fill the real ref / section / start / end into courses/<course>/terms/<term>.yaml (fall-2026.yaml is pre-stubbed with loud TODOs)",
-        "Run the recapitulation engine — it writes terms/<term>/generated/; I gate it green (verify.sh + pytest) and surface anything left"
+        "Run the recapitulation engine \u2014 it writes terms/<term>/generated/; I gate it green (verify.sh + pytest) and surface anything left"
       ],
       "issue": 260
     },
     {
       "id": "L-GMAIL-CRED",
-      "label": "Revive the autonomous mail lane with ONE paste — the app-password ALREADY EXISTS (op://Private/gmail-app-pw-2026-06-06); nothing needs generating. This supersedes the generic L-IMAP-APP-PW/L-OAUTH framing (which implies you must create a credential — you don't). The single endpoint is the GitHub secret GMAIL_APP_PASSWORD on organvm/domus (currently unset). Once set, the C_MAIL voice's keyless drafts/sweep path has its credential and inbox-clean is no longer gated on you. Value streams op→gh, never on screen.",
+      "label": "Revive the autonomous mail lane with ONE paste \u2014 the app-password ALREADY EXISTS (op://Private/gmail-app-pw-2026-06-06); nothing needs generating. This supersedes the generic L-IMAP-APP-PW/L-OAUTH framing (which implies you must create a credential \u2014 you don't). The single endpoint is the GitHub secret GMAIL_APP_PASSWORD on organvm/domus (currently unset). Once set, the C_MAIL voice's keyless drafts/sweep path has its credential and inbox-clean is no longer gated on you. Value streams op\u2192gh, never on screen.",
       "owner": "yours",
       "cost": "~30s once, durable",
-      "unlocks": "headless C_MAIL drafts/sweep — inbox-clean no longer gated on you",
+      "unlocks": "headless C_MAIL drafts/sweep \u2014 inbox-clean no longer gated on you",
       "source_task": "gmail-mutation-cascade (app-pw EXISTS, one paste)",
       "gate": "credential-write classifier (the secret itself already exists)",
       "steps": [
         "op read op://Private/gmail-app-pw-2026-06-06/password | gh secret set GMAIL_APP_PASSWORD -R organvm/domus",
         "OR add a Bash allow-rule Bash(gh secret set:*) so any session lands it autonomically",
-        "OR run one `claude --dangerously-skip-permissions` session — the agent lands it"
+        "OR run one `claude --dangerously-skip-permissions` session \u2014 the agent lands it"
       ],
       "issue": 261
     },
     {
       "id": "L-IANVA-LOCAL",
-      "label": "Kill the per-agent MCP re-auth for every non-claude.ai agent in ONE move — this is most of the 'why do I keep authorizing MCP servers over and over' rage. ianva fronts every upstream behind ONE gateway that holds each refresh token and auto-renews it silently, so each agent gets ONE config entry and you consent once per upstream, never again. SHIPPED + PROVEN: this is the core of your original ask, 'all agent config files point at our own server' — done.",
+      "label": "Kill the per-agent MCP re-auth for every non-claude.ai agent in ONE move \u2014 this is most of the 'why do I keep authorizing MCP servers over and over' rage. ianva fronts every upstream behind ONE gateway that holds each refresh token and auto-renews it silently, so each agent gets ONE config entry and you consent once per upstream, never again. SHIPPED + PROVEN: this is the core of your original ask, 'all agent config files point at our own server' \u2014 done.",
       "cost": "config-wiring DONE; ~2 min remaining = one launchctl bootstrap so the gateway survives reboot",
       "owner": "yours",
-      "unlocks": "every non-claude.ai agent authenticates each MCP upstream ONCE, never per-agent again — and survives reboot/logout",
-      "source_task": "ianva (session 6cdc53d9) — disease B",
+      "unlocks": "every non-claude.ai agent authenticates each MCP upstream ONCE, never per-agent again \u2014 and survives reboot/logout",
+      "source_task": "ianva (session 6cdc53d9) \u2014 disease B",
       "branch": "merged to limen main (#199, #201, #204, #206, #208)",
-      "gate": "ALMOST DONE — config-wiring shipped & verified (merged #199–#208; .claude.json/.codex/.gemini all point at ianva, each backed up first; handshake verified `claude mcp get ianva` -> ✔ Connected). SOLE remaining flip is launchd persistence: the gateway has already died between sessions, silently breaking every agent until restart, so without launchd you keep hand-restarting it.",
+      "gate": "ALMOST DONE \u2014 config-wiring shipped & verified (merged #199\u2013#208; .claude.json/.codex/.gemini all point at ianva, each backed up first; handshake verified `claude mcp get ianva` -> \u2714 Connected). SOLE remaining flip is launchd persistence: the gateway has already died between sessions, silently breaking every agent until restart, so without launchd you keep hand-restarting it.",
       "steps": [
-        "DONE — ianva merged to limen main (#199/#201/#204/#206/#208); shipped to the fleet.",
-        "DONE — install-configs --apply ran: .claude.json, .codex/config.toml, .gemini/settings.json (+opencode/Copilot/Cline) all point at ianva, each backed up first; handshake verified (claude mcp get ianva -> ✔ Connected).",
-        "REMAINING (the one flip) — keep it alive across reboot: cp ianva/deploy/com.ianva.gateway.plist ~/Library/LaunchAgents/ ; sed -i '' \"s#__IANVA_DIR__#$PWD#g\" ~/Library/LaunchAgents/com.ianva.gateway.plist ; launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.ianva.gateway.plist  (auto-starts the npm gateway + triggers a one-time macOS Login-Items approval — that is why it is yours, not mine).",
+        "DONE \u2014 ianva merged to limen main (#199/#201/#204/#206/#208); shipped to the fleet.",
+        "DONE \u2014 install-configs --apply ran: .claude.json, .codex/config.toml, .gemini/settings.json (+opencode/Copilot/Cline) all point at ianva, each backed up first; handshake verified (claude mcp get ianva -> \u2714 Connected).",
+        "REMAINING (the one flip) \u2014 keep it alive across reboot: cp ianva/deploy/com.ianva.gateway.plist ~/Library/LaunchAgents/ ; sed -i '' \"s#__IANVA_DIR__#$PWD#g\" ~/Library/LaunchAgents/com.ianva.gateway.plist ; launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.ianva.gateway.plist  (auto-starts the npm gateway + triggers a one-time macOS Login-Items approval \u2014 that is why it is yours, not mine).",
         "Until launchd lands, after any reboot/logout restart in one line: cd ianva && PYTHONPATH=$PWD/src python3 -m ianva.cli up  (binds :7666 in ~7s).",
-        "Optional, later — populate upstreams (build-mcp-registry.py, or ~/.config/ianva/upstreams.json); the local face needs none, upstreams only matter for the cloud connector (see L-IANVA-CLOUD)."
+        "Optional, later \u2014 populate upstreams (build-mcp-registry.py, or ~/.config/ianva/upstreams.json); the local face needs none, upstreams only matter for the cloud connector (see L-IANVA-CLOUD)."
       ],
       "issue": 262
     },
     {
       "id": "L-IANVA-CLOUD",
-      "label": "Stop the claude.ai connector prompts (the /doctor 'Sentry needs authentication' class) — the ONE re-auth disease a local gateway physically cannot fix, because claude.ai runs that OAuth from Anthropic's cloud, not your machine. Cure = expose ianva as ONE public, bearer-enforced HTTPS connector that holds every upstream's creds behind it and never returns 401, then add a SINGLE custom connector in claude.ai pointing at it — replacing the dozen per-service connectors. Needs the local face (L-IANVA-LOCAL) running first. The cost is real and honest: it is internet-reachable, so it goes up bearer-first and the tunnel script REFUSES to expose an endpoint that answers /mcp without auth.",
-      "cost": "~15 min once + a security pass; durable — one connector that never expires from your side",
+      "label": "Stop the claude.ai connector prompts (the /doctor 'Sentry needs authentication' class) \u2014 the ONE re-auth disease a local gateway physically cannot fix, because claude.ai runs that OAuth from Anthropic's cloud, not your machine. Cure = expose ianva as ONE public, bearer-enforced HTTPS connector that holds every upstream's creds behind it and never returns 401, then add a SINGLE custom connector in claude.ai pointing at it \u2014 replacing the dozen per-service connectors. Needs the local face (L-IANVA-LOCAL) running first. The cost is real and honest: it is internet-reachable, so it goes up bearer-first and the tunnel script REFUSES to expose an endpoint that answers /mcp without auth.",
+      "cost": "~15 min once + a security pass; durable \u2014 one connector that never expires from your side",
       "owner": "yours",
-      "unlocks": "the claude.ai connector re-auth prompts stop — one bearer'd connector replaces the ~17 per-service ones",
-      "source_task": "ianva (session 6cdc53d9) — disease A",
+      "unlocks": "the claude.ai connector re-auth prompts stop \u2014 one bearer'd connector replaces the ~17 per-service ones",
+      "source_task": "ianva (session 6cdc53d9) \u2014 disease A",
       "branch": "worktree-ianva-doorway",
-      "gate": "HOLD — touches your claude.ai account and exposes a public endpoint; do L-IANVA-LOCAL first",
+      "gate": "HOLD \u2014 touches your claude.ai account and exposes a public endpoint; do L-IANVA-LOCAL first",
       "steps": [
         "python3 -m ianva.cli bearer --new",
         "bash scripts/set-credential.sh IANVA_BEARER_TOKEN   # silent prompt, lands in ~/.limen.env",
         "python3 -m ianva.cli up                              # restart so the gateway ENFORCES the bearer",
         "bash ianva/scripts/ianva-tunnel.sh                   # refuses unless /mcp returns 401 unauth'd; prints the public URL",
-        "Set gateway.public_url in ianva.toml to <url>/mcp, then in claude.ai add ONE custom connector at that URL with the bearer in its auth header — it replaces the per-service connectors"
+        "Set gateway.public_url in ianva.toml to <url>/mcp, then in claude.ai add ONE custom connector at that URL with the bearer in its auth header \u2014 it replaces the per-service connectors"
       ],
       "issue": 263
     },
     {
       "id": "L-MODEL-TIER",
-      "label": "Stop the interactive Claude burn at the source: every Claude Code session you spawn is pinned to Opus 4.8 + the 1M-context beta — the single most expensive config that exists, and the dominant reason you hit 30% in half a day. Most sessions (game-test reports, GH-infra setup, version-upgrade summaries, insights consolidation) need Sonnet, not Opus, and almost none need 1M context (you pay a premium PER TOKEN on the 1M tier, on top of the long-context tokens themselves). Default new sessions to Sonnet 4.6 and drop the 1M pin; reserve Opus(-1M) for explicit canon-synthesis. The async fleet already tiers models (model-tiering-policy is WIRED on main) — only the interactive front door is un-tiered. AI editing settings.json is permission-denied, so this is your one toggle.",
+      "label": "Stop the interactive Claude burn at the source: every Claude Code session you spawn is pinned to Opus 4.8 + the 1M-context beta \u2014 the single most expensive config that exists, and the dominant reason you hit 30% in half a day. Most sessions (game-test reports, GH-infra setup, version-upgrade summaries, insights consolidation) need Sonnet, not Opus, and almost none need 1M context (you pay a premium PER TOKEN on the 1M tier, on top of the long-context tokens themselves). Default new sessions to Sonnet 4.6 and drop the 1M pin; reserve Opus(-1M) for explicit canon-synthesis. The async fleet already tiers models (model-tiering-policy is WIRED on main) \u2014 only the interactive front door is un-tiered. AI editing settings.json is permission-denied, so this is your one toggle.",
       "owner": "yours",
-      "cost": "1 toggle, durable — biggest single cut to your Claude spend",
-      "unlocks": "interactive Claude burn drops ~5–10x on routine sessions; Opus-1M reserved for work that needs it",
+      "cost": "1 toggle, durable \u2014 biggest single cut to your Claude spend",
+      "unlocks": "interactive Claude burn drops ~5\u201310x on routine sessions; Opus-1M reserved for work that needs it",
       "source_task": "usage-spend (30% in half a day, 7 parallel Opus-1M sessions); see latency-automatic-selection + model-tiering-policy",
-      "gate": "settings.json / harness model default (AI-edit denied) — your toggle",
+      "gate": "settings.json / harness model default (AI-edit denied) \u2014 your toggle",
       "steps": [
         "Per session NOW: type /model and pick Sonnet 4.6 for any session that isn't canon-synthesis; drop the [1m] pin unless the task truly needs >200k context",
-        "Make it the DEFAULT: set the model default to sonnet in ~/.claude/settings.json (\"model\": \"claude-sonnet-4-6\") and remove the 1M-context pin, OR set it via /config — new FleetView sessions then inherit Sonnet",
+        "Make it the DEFAULT: set the model default to sonnet in ~/.claude/settings.json (\"model\": \"claude-sonnet-4-6\") and remove the 1M-context pin, OR set it via /config \u2014 new FleetView sessions then inherit Sonnet",
         "Keep an Opus escape hatch: /model opus (and /model opus[1m] when a session genuinely needs the 1M window) for canon-synthesis work",
-        "Optional structural: a session-spawn default that DEDUCES the tier from task class (the automatic capability+model selection in latency-automatic-selection) — propose to Claude to build behind a flag"
+        "Optional structural: a session-spawn default that DEDUCES the tier from task class (the automatic capability+model selection in latency-automatic-selection) \u2014 propose to Claude to build behind a flag"
       ],
       "issue": 264
     },
     {
       "id": "L-FLEET-CAPACITY",
-      "label": "Re-mint the 2 remaining fleet credentials — they are MATERIALIZED but DEAD. The hydration organ (PR #217) correctly carries 1Password -> ~/.limen.env -> every lane, but two op values are stale, so the validity predicate `creds-hydrate --verify` rejects them: gemini 403 CONSUMER_SUSPENDED (the Google project behind the key is suspended — likely downstream of the card-0186 billing hold) and cloudflare 401 Invalid API Token, leaving those two async lanes dark. (gh is NO LONGER yours — it was closed in-lane by PR #251: creds-hydrate now DERIVES GH_TOKEN from the live gh keyring [account 4444J99, `gh auth token`, env-scrubbed] instead of the revoked master-org PAT, which had been SHADOWING the valid keyring; gh verifies green every beat with zero human action.) The earlier 'activation complete' was a FALSE done: --check tests PRESENCE, not validity, so dead tokens read ✓.",
+      "label": "Re-mint the 2 remaining fleet credentials \u2014 they are MATERIALIZED but DEAD. The hydration organ (PR #217) correctly carries 1Password -> ~/.limen.env -> every lane, but two op values are stale, so the validity predicate `creds-hydrate --verify` rejects them: gemini 403 CONSUMER_SUSPENDED (the Google project behind the key is suspended \u2014 likely downstream of the card-0186 billing hold) and cloudflare 401 Invalid API Token, leaving those two async lanes dark. (gh is NO LONGER yours \u2014 it was closed in-lane by PR #251: creds-hydrate now DERIVES GH_TOKEN from the live gh keyring [account 4444J99, `gh auth token`, env-scrubbed] instead of the revoked master-org PAT, which had been SHADOWING the valid keyring; gh verifies green every beat with zero human action.) The earlier 'activation complete' was a FALSE done: --check tests PRESENCE, not validity, so dead tokens read \u2713.",
       "owner": "yours",
       "cost": "~5 min: 2 re-mints into the EXISTING op:// items, then `creds-hydrate --apply && --verify` self-heals every lane",
       "unlocks": "the cheap async lanes (gemini free runs, cloudflare deploys) actually light",
       "source_task": "credential-validity (creds-hydrate --verify, #246) + gh keyring-derive (#251, gh closed in-lane); only gemini + cloudflare re-mints remain",
-      "gate": "credential mint — 2 tokens (gemini/cloudflare) must be regenerated BY YOU and pasted into 1Password; the organ cannot mint them. Confirm with `python3 scripts/creds-hydrate.py --verify` (exit 0 = all green).",
+      "gate": "credential mint \u2014 2 tokens (gemini/cloudflare) must be regenerated BY YOU and pasted into 1Password; the organ cannot mint them. Confirm with `python3 scripts/creds-hydrate.py --verify` (exit 0 = all green).",
       "steps": [
-        "gemini: the Google project for op://Personal/Gemini API Key is SUSPENDED (403 CONSUMER_SUSPENDED) — resolve the suspension (likely the card-0186 billing hold in life-os-mandate) or mint a key in a non-suspended project, then update the op item.",
+        "gemini: the Google project for op://Personal/Gemini API Key is SUSPENDED (403 CONSUMER_SUSPENDED) \u2014 resolve the suspension (likely the card-0186 billing hold in life-os-mandate) or mint a key in a non-suspended project, then update the op item.",
         "cloudflare: regenerate the API token (dash.cloudflare.com -> My Profile -> API Tokens), then update op://Personal/Cloudflare API Token.",
-        "Then: `python3 scripts/creds-hydrate.py --apply && python3 scripts/creds-hydrate.py --verify` — all ✓ means every lane authenticates. metabolize.sh now runs --verify each beat, so a dead cred surfaces in the beat log automatically and self-heals the moment you re-mint into op."
+        "Then: `python3 scripts/creds-hydrate.py --apply && python3 scripts/creds-hydrate.py --verify` \u2014 all \u2713 means every lane authenticates. metabolize.sh now runs --verify each beat, so a dead cred surfaces in the beat log automatically and self-heals the moment you re-mint into op."
       ],
-      "note": "The validity GAP is fixed in code (creds-hydrate --verify + the metabolize.sh wiring + tests): the organ can no longer report a dead token as good, and route.py's presence census is no longer the only signal. gh was further closed in-lane (#251 keyring-derive) — only the gemini + cloudflare re-mints are yours. Map stays a NAMED param (DEFAULT_MAP / LIMEN_CREDS_MAP). See memory: credential-durability-organ.",
+      "note": "The validity GAP is fixed in code (creds-hydrate --verify + the metabolize.sh wiring + tests): the organ can no longer report a dead token as good, and route.py's presence census is no longer the only signal. gh was further closed in-lane (#251 keyring-derive) \u2014 only the gemini + cloudflare re-mints are yours. Map stays a NAMED param (DEFAULT_MAP / LIMEN_CREDS_MAP). See memory: credential-durability-organ.",
       "issue": 265
     },
     {
       "id": "L-HEALTH-GOLIVE",
-      "label": "Decide the health-office content DISPOSITION — and note this is TIME-BOUNDED, not passive. The executive health-office scaffold shipped green locally on 2026-06-25 (commit ff43850); your actual record (PII) lives only off-repo in _health-private/ at 700. The repo-committed parts (the office CHARTER + a general clinical reference library) name no patient and hold no chart data, but their topic selection reveals your conditions inferentially. CRITICAL — leaving this as-is does NOT keep it private: ff43850 sits on the live checkout's main, and the daemon's capture side-ref carries HEAD's full ancestry, so it will eventually PUBLISH that tree to the public repo ON ITS OWN, ungated by any PR. So the real choice is PUBLISH or PRIVATIZE, and there is a clock. MY RECOMMENDATION: privatize — move the CHARTER + reference library off-repo alongside the Chart (reversible; the organ reads the Chart, not these docs, so it keeps working). On one word I execute the privatize extraction (and, if you want, carefully purge the existing committed copy from history, coordinated with the daemon); I will NOT decide it or do history surgery unilaterally. The commit is preserved loss-proof on LOCAL ref heal/health-office-staged-0625. SEPARATELY: the office still needs a few CLINICAL inputs from you — held PII-safe off-repo; open ~/Workspace/_health-private/human-atoms.md to see them. They are never written here, to keep PHI out of git.",
+      "label": "Decide the health-office content DISPOSITION \u2014 and note this is TIME-BOUNDED, not passive. The executive health-office scaffold shipped green locally on 2026-06-25 (commit ff43850); your actual record (PII) lives only off-repo in _health-private/ at 700. The repo-committed parts (the office CHARTER + a general clinical reference library) name no patient and hold no chart data, but their topic selection reveals your conditions inferentially. CRITICAL \u2014 leaving this as-is does NOT keep it private: ff43850 sits on the live checkout's main, and the daemon's capture side-ref carries HEAD's full ancestry, so it will eventually PUBLISH that tree to the public repo ON ITS OWN, ungated by any PR. So the real choice is PUBLISH or PRIVATIZE, and there is a clock. MY RECOMMENDATION: privatize \u2014 move the CHARTER + reference library off-repo alongside the Chart (reversible; the organ reads the Chart, not these docs, so it keeps working). On one word I execute the privatize extraction (and, if you want, carefully purge the existing committed copy from history, coordinated with the daemon); I will NOT decide it or do history surgery unilaterally. The commit is preserved loss-proof on LOCAL ref heal/health-office-staged-0625. SEPARATELY: the office still needs a few CLINICAL inputs from you \u2014 held PII-safe off-repo; open ~/Workspace/_health-private/human-atoms.md to see them. They are never written here, to keep PHI out of git.",
       "owner": "yours",
       "cost": "~1 word to pick publish-or-privatize (I execute the extraction); + a 2-min read of human-atoms.md for the clinical inputs",
       "unlocks": "health-office content disposition settled before the daemon settles it by default; office stays fully functional either way",
       "source_task": "health-office-organ (local commit ff43850; 2026-06-25 verification pass)",
-      "gate": "outward-facing disposition of your own health data + the reference-library question — your call, TIME-BOUNDED by the daemon's auto-publish; NEVER auto-decided",
+      "gate": "outward-facing disposition of your own health data + the reference-library question \u2014 your call, TIME-BOUNDED by the daemon's auto-publish; NEVER auto-decided",
       "steps": [
-        "PICK: publish, or privatize (recommended). On 'privatize' I move docs/health-office (CHARTER + reference library) off-repo into _health-private/ — reversible, organ unaffected.",
-        "Until you pick, the content can auto-publish via the daemon's capture side-ref (condition-inferential only — no name, no chart, no PII). If that urgency matters, say so and I prioritize the privatize extraction now.",
+        "PICK: publish, or privatize (recommended). On 'privatize' I move docs/health-office (CHARTER + reference library) off-repo into _health-private/ \u2014 reversible, organ unaffected.",
+        "Until you pick, the content can auto-publish via the daemon's capture side-ref (condition-inferential only \u2014 no name, no chart, no PII). If that urgency matters, say so and I prioritize the privatize extraction now.",
         "The earlier reference-library question (where the reference library lives) is answered by this same publish/privatize choice.",
-        "Clinical inputs the office still needs (PII-safe): open ~/Workspace/_health-private/human-atoms.md — never recorded in git or this registry. See memory: health-office-organ, health-pii-in-generator-code, life-os-mandate"
+        "Clinical inputs the office still needs (PII-safe): open ~/Workspace/_health-private/human-atoms.md \u2014 never recorded in git or this registry. See memory: health-office-organ, health-pii-in-generator-code, life-os-mandate"
       ],
       "issue": 266
     },
     {
       "id": "L-POSITIONING-ACTIVATE",
-      "label": "Switch the inbound-magnet system from built-and-inert to live. The derivation layer (positioning generator + seeds + price guard), the form/operation split, the capture funnel, the autonomic lane, and the portfolio-seeding pass are all built, tested, and merged (PRs #226 #228 #230 #237 #239 #240 #243). What remains is purely your hand — every item publishes to your public identity, spends, or is a judgment only you can make. Nothing here blocks the system; it sits inert and observable until you pull a lever.",
+      "label": "Switch the inbound-magnet system from built-and-inert to live. The derivation layer (positioning generator + seeds + price guard), the form/operation split, the capture funnel, the autonomic lane, and the portfolio-seeding pass are all built, tested, and merged (PRs #226 #228 #230 #237 #239 #240 #243). What remains is purely your hand \u2014 every item publishes to your public identity, spends, or is a judgment only you can make. Nothing here blocks the system; it sits inert and observable until you pull a lever.",
       "owner": "yours",
-      "cost": "each item is one line / one toggle / one paste — see steps",
+      "cost": "each item is one line / one toggle / one paste \u2014 see steps",
       "unlocks": "the 200+ repos start pulling warm inbound by simply existing; the front door + discoverability go live; the 3 verified private repos render the moment they're public",
       "source_task": "inbound-magnet seeding pass (PR #243); full per-trigger detail with cheapest path lives in the owner-record docs/positioning/_his-hand.md",
       "steps": [
-        "Activate capture — set frontdoor.contact in positioning-seeds.json to a dedicated inbound alias (one line). Every CTA then becomes a repo+door-tagged mailto:. Until set, CTAs render as plain text, no address published.",
-        "Validate the price anchors — the bands are my proposals; the number is yours. Read docs/positioning/*.internal.md (gitignored) and adjust the internal_anchor values in positioning-seeds.json. They never reach a public page either way.",
-        "Arm the autonomic lane — LIMEN_POSITIONING=1 in ~/.limen.env. Surfaces self-refresh every 12 beats; organ-health.py already shows POSITIONING:gated until armed.",
-        "Publish the front door — paste docs/positioning/_frontdoor.md onto a public profile README (4444J99/4444J99 or organvm/.github). Outward-facing to your identity.",
-        "Apply discoverability — run the copy-paste gh commands in docs/positioning/_discoverability.md (one block per repo). Mutates public repo topics/descriptions.",
-        "Publish the 3 verified-but-private repos — mirror-mirror, the-invisible-ledger, domus-genoma are seeded with awaiting_publish:true (banked + tested, kept off every public surface; a private repo's link 404s). Make a repo public, then delete its awaiting_publish line — it renders next pass.",
-        "Decide styx — value-repos key organvm/styx 404s; the real public product is organvm/peer-audited--behavioral-blockchain, which is pre-revenue (deck live, API undeployed). Tell me to deploy it or reframe the door to admit built-but-not-live systems, and I'll seed it.",
-        "Seed the remaining value-repos — session-meta, portfolio, the two limen mirrors. Point me at a repo's real proof (tests/deploy/scale) or just name it; I verify and draft the seed. No fabricated weight. Seeded & live: public-record-data-scrapper, universal-mail--automation, a-i-chat--exporter.",
-        "Optional: deeper lead capture — the 3-step inbound-lead protocol-class recipe is in docs/positioning/_capture.md; gives leads a first-class lane beyond today's tagged-inbox classification."
+        "Activate capture \u2014 set frontdoor.contact in positioning-seeds.json to a dedicated inbound alias (one line). Every CTA then becomes a repo+door-tagged mailto:. Until set, CTAs render as plain text, no address published.",
+        "Validate the price anchors \u2014 the bands are my proposals; the number is yours. Read docs/positioning/*.internal.md (gitignored) and adjust the internal_anchor values in positioning-seeds.json. They never reach a public page either way.",
+        "Arm the autonomic lane \u2014 LIMEN_POSITIONING=1 in ~/.limen.env. Surfaces self-refresh every 12 beats; organ-health.py already shows POSITIONING:gated until armed.",
+        "Publish the front door \u2014 paste docs/positioning/_frontdoor.md onto a public profile README (4444J99/4444J99 or organvm/.github). Outward-facing to your identity.",
+        "Apply discoverability \u2014 run the copy-paste gh commands in docs/positioning/_discoverability.md (one block per repo). Mutates public repo topics/descriptions.",
+        "Publish the 3 verified-but-private repos \u2014 mirror-mirror, the-invisible-ledger, domus-genoma are seeded with awaiting_publish:true (banked + tested, kept off every public surface; a private repo's link 404s). Make a repo public, then delete its awaiting_publish line \u2014 it renders next pass.",
+        "Decide styx \u2014 value-repos key organvm/styx 404s; the real public product is organvm/peer-audited--behavioral-blockchain, which is pre-revenue (deck live, API undeployed). Tell me to deploy it or reframe the door to admit built-but-not-live systems, and I'll seed it.",
+        "Seed the remaining value-repos \u2014 session-meta, portfolio, the two limen mirrors. Point me at a repo's real proof (tests/deploy/scale) or just name it; I verify and draft the seed. No fabricated weight. Seeded & live: public-record-data-scrapper, universal-mail--automation, a-i-chat--exporter.",
+        "Optional: deeper lead capture \u2014 the 3-step inbound-lead protocol-class recipe is in docs/positioning/_capture.md; gives leads a first-class lane beyond today's tagged-inbox classification."
       ],
-      "note": "INVARIANT: none of this sends, deletes, or spends without you — capture drafts, it never reaches out. The system record docs/positioning/_his-hand.md is the full owner-record; this lever is its single canonical pointer on the obligations face (per this file's _doc: a his-hand task hangs HERE, not only in a satellite doc). See memory: [[repos-are-inbound-signal-surface]], [[publish-form-rent-operation]], [[his-hand-tasks-hang-in-permanent-registry]].",
+      "note": "INVARIANT: none of this sends, deletes, or spends without you \u2014 capture drafts, it never reaches out. The system record docs/positioning/_his-hand.md is the full owner-record; this lever is its single canonical pointer on the obligations face (per this file's _doc: a his-hand task hangs HERE, not only in a satellite doc). See memory: [[repos-are-inbound-signal-surface]], [[publish-form-rent-operation]], [[his-hand-tasks-hang-in-permanent-registry]].",
       "issue": 267
     },
     {
       "id": "L-CARD-FRAUD-HOLD",
-      "label": "Clear the card-0186 Santander fraud hold — one phone call. This hold is the ROOT of the billing locks: clearing it frees the Stripe/subscription path AND Anthropic + GitHub autopay, and likely unsticks the gemini Google-project suspension (403 CONSUMER_SUSPENDED) behind L-FLEET-CAPACITY. Not required for dollar #1 — the individual MoR rails (Ko-fi/PayPal/Lemon Squeezy on a-i-chat--exporter) are already unblocked — but it is the single upstream cause of the most downstream locks.",
+      "label": "Clear the card-0186 Santander fraud hold \u2014 one phone call. This hold is the ROOT of the billing locks: clearing it frees the Stripe/subscription path AND Anthropic + GitHub autopay, and likely unsticks the gemini Google-project suspension (403 CONSUMER_SUSPENDED) behind L-FLEET-CAPACITY. Not required for dollar #1 \u2014 the individual MoR rails (Ko-fi/PayPal/Lemon Squeezy on a-i-chat--exporter) are already unblocked \u2014 but it is the single upstream cause of the most downstream locks.",
       "owner": "yours",
       "cost": "one Santander call",
       "unlocks": "Stripe/subscription path + Anthropic & GitHub autopay; likely clears the gemini project suspension behind L-FLEET-CAPACITY",
       "source_task": "billing-lock root (life-os-mandate: card-0186 fraud-hold)",
-      "gate": "a phone call only you can place to your bank — never automatable",
+      "gate": "a phone call only you can place to your bank \u2014 never automatable",
       "issue": 182
     },
     {
       "id": "L-AGENT-BASH-PROMPT",
-      "label": "Apply the agent bash-prompt fix — ONE reversible paste. Plan/auto/fleet agents get prompted on nearly every `cd ~/Workspace/<repo> && <cmd>` because the PreToolUse hook allow-trusted-cd-git.sh only auto-approves the `git` form, and Claude Code v2.1.x prompts on every compound-cd (upstream #32985). This floods autonomous agents and holds the fleet back. It is YOUR hand because the auto-mode classifier hard-denies an agent widening its own hook / settings.json allow array.",
+      "label": "Apply the agent bash-prompt fix \u2014 ONE reversible paste. Plan/auto/fleet agents get prompted on nearly every `cd ~/Workspace/<repo> && <cmd>` because the PreToolUse hook allow-trusted-cd-git.sh only auto-approves the `git` form, and Claude Code v2.1.x prompts on every compound-cd (upstream #32985). This floods autonomous agents and holds the fleet back. It is YOUR hand because the auto-mode classifier hard-denies an agent widening its own hook / settings.json allow array.",
       "owner": "yours",
       "cost": "one reversible paste (~1 min)",
-      "unlocks": "the fleet stops drowning in compound-cd permission prompts — autonomous lanes run unblocked",
+      "unlocks": "the fleet stops drowning in compound-cd permission prompts \u2014 autonomous lanes run unblocked",
       "source_task": "fleet-permission-prompt-fix (memory carries the exact block + rationale)",
-      "gate": "the classifier denies an agent editing its own hook/settings.json — opens only from your side",
+      "gate": "the classifier denies an agent editing its own hook/settings.json \u2014 opens only from your side",
       "steps": [
-        "Paste the prepared block from memory/fleet-permission-prompt-fix.md — backs up settings.json, overwrites the hook with the directory-trust version (trust the directory + any inner command inside ~/Workspace / *.claude/worktrees/* / ~/.claude/jobs/* / /tmp), idempotently merges the missing allow families",
+        "Paste the prepared block from memory/fleet-permission-prompt-fix.md \u2014 backs up settings.json, overwrites the hook with the directory-trust version (trust the directory + any inner command inside ~/Workspace / *.claude/worktrees/* / ~/.claude/jobs/* / /tmp), idempotently merges the missing allow families",
         "Closes when the hook is generalized (no longer git-only). Full detail in issue #183."
       ],
       "issue": 183
     },
     {
       "id": "L-BACKUP-FDA",
-      "label": "OPTIONAL enhancements — nothing is blocked without these; filed only so they have a permanent home, never nagged. (1) Time Machine destination: no completed TM backup, but data already has 3 copies (iCloud + Archive4T + Backblaze) so TM is convenience, not a durability gap. (2) Full Disk Access for Mail/Messages preservation: the 'python3 wants data from other apps' dialog is already neutralized (library-preserve.py skips FDA-gated stores when it lacks FDA, 7ad100f) — act only if you want Mail+Messages added to the offsite sliver.",
+      "label": "OPTIONAL enhancements \u2014 nothing is blocked without these; filed only so they have a permanent home, never nagged. (1) Time Machine destination: no completed TM backup, but data already has 3 copies (iCloud + Archive4T + Backblaze) so TM is convenience, not a durability gap. (2) Full Disk Access for Mail/Messages preservation: the 'python3 wants data from other apps' dialog is already neutralized (library-preserve.py skips FDA-gated stores when it lacks FDA, 7ad100f) \u2014 act only if you want Mail+Messages added to the offsite sliver.",
       "owner": "yours",
       "cost": "TM: a staging drive + `tmutil setdestination`. FDA: grant Full Disk Access to ~/Workspace/limen/.venv/bin/python3 in System Settings",
       "unlocks": "(optional) a 4th backup tier (Time Machine); Mail+Messages added to offsite preservation",
       "source_task": "needs_human digest (optional tier)",
-      "gate": "both are local-machine settings only you can grant — never automatable; neither blocks anything",
+      "gate": "both are local-machine settings only you can grant \u2014 never automatable; neither blocks anything",
       "issue": 184
     },
     {
       "id": "L-LINT-HOOK",
-      "label": "Activate the advisory ruff-on-edit hook — ONE reversible settings paste. The hook shipped in 463e28d (scripts/hooks/lint-edited-file.sh) runs ruff on each edited *.py and ALWAYS exits 0 (advisory, never blocks a lane); it is inert until the PostToolUse + permissions block is pasted into .claude/settings.json. YOUR hand because AI self-edit of .claude/settings.json is hard-denied by the classifier (re-attempted under explicit 'do it' and blocked). Reversible — delete the hooks block to undo; sends nothing, deletes nothing.",
+      "label": "Activate the advisory ruff-on-edit hook \u2014 ONE reversible settings paste. The hook shipped in 463e28d (scripts/hooks/lint-edited-file.sh) runs ruff on each edited *.py and ALWAYS exits 0 (advisory, never blocks a lane); it is inert until the PostToolUse + permissions block is pasted into .claude/settings.json. YOUR hand because AI self-edit of .claude/settings.json is hard-denied by the classifier (re-attempted under explicit 'do it' and blocked). Reversible \u2014 delete the hooks block to undo; sends nothing, deletes nothing.",
       "owner": "yours",
       "cost": "~30s reversible paste",
       "unlocks": "advisory ruff feedback on every edited Python file (never blocking)",
       "source_task": "operating-charter build (PR #180, 463e28d)",
-      "gate": "AI-edit of .claude/settings.json is classifier-denied — your paste only",
+      "gate": "AI-edit of .claude/settings.json is classifier-denied \u2014 your paste only",
       "steps": [
         "Paste the PostToolUse hook + permissions.allow block from issue #190 into .claude/settings.json (merge into existing keys)",
         "Reversible: delete the hooks block to undo. Closes when pasted."
@@ -282,11 +272,11 @@
     },
     {
       "id": "L-FIREWALL-PROMPT",
-      "label": "Silence the 'python/node wants to accept incoming connections' dialog FOR GOOD. ROOT (found 2026-06-25): the macOS Application Firewall is ON, and the ianva gateway's mcphub backend (@samanhappy/mcphub) calls app.listen(port) with NO host arg, so node binds ALL interfaces (*:7666) instead of loopback — and mcphub exposes no HOST/BIND env to fix it. node is ad-hoc-signed, so every `brew upgrade node` rotates its path+cdhash and the firewall re-prompts. An AI cannot lower this: socketfilterfw needs root (sudo has no NOPASSWD here) — that impossibility is the guardrail. THE CURE (your hand, once): turn the app firewall off (defensible on a single-user box behind NAT, fully reversible) or allow node explicitly. `bash scripts/dialogs-silenced.sh` prints the exact paste and verifies the whole dialog estate.",
+      "label": "Silence the 'python/node wants to accept incoming connections' dialog FOR GOOD. ROOT (found 2026-06-25): the macOS Application Firewall is ON, and the ianva gateway's mcphub backend (@samanhappy/mcphub) calls app.listen(port) with NO host arg, so node binds ALL interfaces (*:7666) instead of loopback \u2014 and mcphub exposes no HOST/BIND env to fix it. node is ad-hoc-signed, so every `brew upgrade node` rotates its path+cdhash and the firewall re-prompts. An AI cannot lower this: socketfilterfw needs root (sudo has no NOPASSWD here) \u2014 that impossibility is the guardrail. THE CURE (your hand, once): turn the app firewall off (defensible on a single-user box behind NAT, fully reversible) or allow node explicitly. `bash scripts/dialogs-silenced.sh` prints the exact paste and verifies the whole dialog estate.",
       "owner": "yours",
       "cost": "one `sudo` paste (~30s, one Touch-ID), then silent forever",
       "unlocks": "the 'node/python wants to accept incoming connections' firewall dialog never appears again",
-      "gate": "turning the OS firewall off is a security-posture decision — your call; the allow-list alternative keeps it on but re-prompts on each node upgrade unless you also `brew pin node`",
+      "gate": "turning the OS firewall off is a security-posture decision \u2014 your call; the allow-list alternative keeps it on but re-prompts on each node upgrade unless you also `brew pin node`",
       "steps": [
         "Recommended (zero prompts, reversible): sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate off",
         "Conservative (keep firewall on): N=\"$(readlink -f $(command -v node))\"; sudo /usr/libexec/ApplicationFirewall/socketfilterfw --add \"$N\" --unblockapp \"$N\"",
