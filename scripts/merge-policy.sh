@@ -33,6 +33,9 @@ while [ $# -gt 0 ]; do
 done
 
 repo_args=(); [ -n "$REPO" ] && repo_args=(--repo "$REPO")
+# bash 3.2 (macOS /bin/bash) errors on a bare empty-array expansion under `set -u`. Use the
+# array-plus idiom at each call site below, which expands to nothing for an empty array and to
+# the elements otherwise — safe in bash 3.2 and 4+.
 
 # Deploy-trigger paths — kept in lockstep with .github/workflows/deploy*.yml `on.push.paths`.
 # A push/merge to `main` that touches one of these auto-deploys the live public site/API.
@@ -73,12 +76,12 @@ _check_workflow_paths "$_wf_dir/deploy-api.yml"
 
 # Resolve the PR for the current branch when not given.
 if [ -z "$PR" ]; then
-  PR="$(gh pr view "${repo_args[@]}" --json number -q .number 2>/dev/null || true)"
+  PR="$(gh pr view "${repo_args[@]+"${repo_args[@]}"}" --json number -q .number 2>/dev/null || true)"
   [ -z "$PR" ] && { echo "merge-policy: no PR number given and none open for the current branch." >&2; exit 3; }
 fi
 
 j="$(mktemp)"; trap 'rm -f "$j"' EXIT
-gh pr view "$PR" "${repo_args[@]}" \
+gh pr view "$PR" "${repo_args[@]+"${repo_args[@]}"}" \
   --json number,title,url,state,isDraft,mergeStateStatus,baseRefName,headRefName,files,statusCheckRollup \
   > "$j" 2>/dev/null || { echo "merge-policy: cannot read PR #$PR (wrong repo?)." >&2; exit 3; }
 
