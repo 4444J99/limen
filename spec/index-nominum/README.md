@@ -91,10 +91,9 @@ $ python3 scripts/nomenclator.py --check "Studium IV"
 | Phase | What | Owner / gate |
 |---|---|---|
 | **I — NOMENCLATOR** | canon + roll + enforcer + CI gate + heartbeat beat + organ-health rung | ✅ merged (#200, #205) |
-| **II — Incorporation** | register `INDEX·NOMINVM` as `IRF-IDX-002`; the naming law in the constitution | ✅ PR open (`organvm-corpvs-testamentvm#515`) — **your merge** |
-| **III — Convergence** | five layers folded in (Morphologia/Identitas enforced; Lentes/Vox reference); gaps closed: domain registry, branch/PR guide, glossary. Design-tokens deferred (needs a real design system) | ✅ this PR |
-| **IV — Estate rollout** | NOMENCLATOR as a required check across the 149-repo registry | **your gate** (org admin) |
-| **IV — Estate rollout** | NOMENCLATOR as a required check across the 149-repo registry | **your gate** |
+| **II — Incorporation** | register `INDEX·NOMINVM` as `IRF-IDX-002`; the naming law in the constitution | ✅ ratified — merged `organvm-corpvs-testamentvm#515` |
+| **III — Convergence** | five layers folded in (Morphologia/Identitas enforced; Lentes/Vox reference); gaps closed: domain registry, branch/PR guide, glossary. Design-tokens deferred (needs a real design system) | ✅ merged (#209) |
+| **IV — Estate rollout** | NOMENCLATOR as a required check across the estate registry — folds into the org-admin branch-protection action | ⏳ **your gate**, hung permanently as `L-BRANCH-PROTECT-072` in `his-hand-levers.json` (never left in a chat or recall-only note) |
 
 ---
 

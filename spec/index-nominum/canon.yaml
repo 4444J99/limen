@@ -116,4 +116,4 @@ constitution:
   index: "Index Nominum"            # the planned third register of the four-part Latin index apparatus
   irf_id: "IRF-IDX-002"
   home: "organvm-corpvs-testamentvm"
-  status: "incorporation PR open — organvm-corpvs-testamentvm#515 (his merge gate)"
+  status: "ratified — merged organvm-corpvs-testamentvm#515; Index Nominum is now IRF-IDX-002 in the constitution"
