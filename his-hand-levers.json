@@ -1,7 +1,7 @@
 {
   "_doc": "The PERMANENT home for his-hand atoms — the levers only Anthony can pull. A his-hand task NEVER hangs on him or in a recall-only memory file; it hangs HERE, in git, and obligations-view.py unions these into the obligations face beside the mail levers. This file is separate from obligations-ledger.json ON PURPOSE: the mail builder regenerates that ledger every sweep, which would wipe any lever placed in it — these survive regen. Add/retire a lever by editing this file; nothing here is ever auto-pulled. Source: the needs_human digest reduction (37 tasks -> 8 human actions) plus the per-session closeout atoms. Generic mail-credential levers are NOT duplicated here (they live as L-MCP / L-IMAP-APP-PW / L-OAUTH in the ledger); the ONE exception is L-GMAIL-CRED, which corrects their misleading 'generate a credential' framing (the app-pw already exists — one paste lands it).",
   "generated_at": "2026-06-25",
-  "spine": "10 human actions own the whole revenue + go-live spine; the first two (merge gate + accounts) move the most, and L-ENC1101-GOLIVE is time-boxed to 6/25. Surfaced once, never nagged, never forced. COST SPINE: the hydration PLUMBING is solid (PR #217: 1Password -> ~/.limen.env -> every lane each beat) but the materialized tokens went STALE and were masked by a presence-only --check. The new creds-hydrate --verify (PR fix/creds-hydrate-validity-probe) authenticates each cred and exits 1 on a dead one; it now runs every beat in metabolize.sh. Today it rejects all three (gemini CONSUMER_SUSPENDED, cloudflare + gh tokens revoked) -> L-FLEET-CAPACITY is a RE-MINT, not done. gh ops still run via the valid keyring (4444J99). L-MODEL-TIER (interactive Claude pinned to Opus-4.8 + 1M context = the dominant burn) stays a one-toggle.",
+  "spine": "10 human actions own the whole revenue + go-live spine; the first two (merge gate + accounts) move the most, and L-ENC1101-GOLIVE is time-boxed to 6/25. Surfaced once, never nagged, never forced. COST SPINE: the hydration PLUMBING is solid (PR #217: 1Password -> ~/.limen.env -> every lane each beat) but the materialized tokens went STALE and were masked by a presence-only --check. The new creds-hydrate --verify (PR fix/creds-hydrate-validity-probe) authenticates each cred and exits 1 on a dead one; it now runs every beat in metabolize.sh. Today it rejects all three (gemini CONSUMER_SUSPENDED, cloudflare + gh tokens revoked) -> L-FLEET-CAPACITY is a RE-MINT, not done. gh ops still run via the valid keyring (4444J99). L-MODEL-TIER (interactive Claude pinned to Opus-4.8 + 1M context = the dominant burn) stays a one-toggle. EDU course-ops atoms now hang HERE too (L-ENC1102-GRADEBOOK gradebook-path decision, L-EDU-PERTERM per-term LMS export/fill) — not only in edu-organism issue comments — so every surfaced his-hand task has a permanent registry home on the obligations face, never parked in a chat closeout.",
   "levers": [
     {
       "id": "L-MERGE-GATE",
@@ -73,6 +73,34 @@
         "Greenlight the §3 relabel (use the -IMPORT-aligned.csv when posting)",
         "I browser-drive: syllabus → Manage Dates → announcements → intelligent agent",
         "You click Set Offering to Active; I verify Student View"
+      ]
+    },
+    {
+      "id": "L-ENC1102-GRADEBOOK",
+      "label": "Resolve the ENC1102 D2L gradebook weighting — a one-decision-then-transcribe atom. The shell today has 6 support categories at 10% each (=60%), leaving 40% unaccounted and the major essays NOT carrying the 'largest share' the syllabus documents. The reconciliation is fully worked at edu-organism courses/enc1102/memory/gradebook-weights.md against the syllabus's OWN documented points (Working Thesis 100 / Critique 150 / Antithesis 150 / Argument Research 200 = 600): Path A restructures per-category so the majors carry 60% (WT 10 / Crit 15 / Anti 15 / ARE 20) and support carries 40% = 100%; Path B keeps flat weights and adds a Grade-Calculation note. Pick the path (turns on whether Broward's institutional gradebook master allows per-category weights — the only part I can't decide), then key the chosen weights into D2L.",
+      "owner": "yours",
+      "cost": "~5 min: pick A or B, then type the weights into D2L's gradebook",
+      "unlocks": "ENC1102 gradebook sums to 100% with majors weighted as the syllabus states",
+      "source_task": "edu-organism #18 (gradebook-weights.md staged; verify.sh-safe filename)",
+      "gate": "the per-category-vs-flat choice depends on Broward's gradebook master (institutional policy — yours); the D2L write is outward/LMS — never automated",
+      "steps": [
+        "Read edu-organism courses/enc1102/memory/gradebook-weights.md (one note, two worked paths to 100%)",
+        "Pick Path A (per-category, majors=60%) or Path B (flat + calc note) — turns on whether Broward's master permits per-category weights",
+        "Key the chosen weights into the ENC1102 D2L gradebook; I verify the column math sums to 100%"
+      ]
+    },
+    {
+      "id": "L-EDU-PERTERM",
+      "label": "The per-term recapitulation ritual is autonomic EXCEPT two irreducibly-yours points, and they recur every term: (1) export the LMS course shell (D2L cartridge / Canvas course export) — only you can reach inside the LMS; (2) fill the real ref / section / dates into the term YAML (courses/<course>/terms/<term>.yaml — 'the only file a human edits each term'). Then the engine generates the whole cartridge. The NEXT instance is already staged: ENC1101 Fall 2026 has a fill-after-export template at courses/enc1101/terms/fall-2026.yaml (seed dates + a proportional 16-week unit_layout rescale; loud TODOs for ref/section/intake). The ENG101/ENG204 Canvas export path (#28) is the same class. This lever is the standing home for that cadence so it never lives only in a per-term issue.",
+      "owner": "yours",
+      "cost": "~10 min per term: export the shell + type ref/section/dates into the term YAML; the engine does the rest",
+      "unlocks": "each new term's cartridge generates from one human edit; nothing course-side waits on me except the LMS export",
+      "source_task": "edu-organism #16 (ENC1101 fall-2026.yaml staged) + #28 (Canvas per-term export); recapitulation-engine cadence",
+      "gate": "the LMS export + the real ref/dates are yours (inside the LMS / your registrar data); the engine + generated files are mine",
+      "steps": [
+        "Export the term's LMS shell (D2L: Course Admin → Import/Export/Copy → Export as cartridge; Canvas: Settings → Export Course Content)",
+        "Fill the real ref / section / start / end into courses/<course>/terms/<term>.yaml (fall-2026.yaml is pre-stubbed with loud TODOs)",
+        "Run the recapitulation engine — it writes terms/<term>/generated/; I gate it green (verify.sh + pytest) and surface anything left"
       ]
     },
     {
