@@ -11,7 +11,7 @@ principle: >
   earlier sages and terse directives, it insists that reputation is not decoration but accumulated
   governance under risk. The dominant motion is return: each scene returns the way of rule to a
   prior standard while forcing each listener to judge whether they can endure it.
-force_arc: [return, law, law, memory, law, law, law, law, law, law, law, memory, law, law, law, law, memory, law, memory, return, return, law, memory]
+force_arc: [return, law, law, memory, law, law, law, law, law, law, memory, law, law, law, law, memory, law, memory, return, return, law]
 dominant_force: return
 tracks:
   - n: 1
@@ -92,7 +92,7 @@ tracks:
     work: "Kinderszenen — No. 13 'Der Dichter spricht'"
     decision: added
     why: >
-    People are guided by what can be made knowable, not by what can be made immediate. Schumann keeps
+      People are guided by what can be made knowable, not by what can be made immediate. Schumann keeps
       this chapter from becoming slogan.
   - n: 10
     scene: "Reward with order, not appetite"

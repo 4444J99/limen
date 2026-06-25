@@ -179,7 +179,7 @@ film:
       - {id: studium-film-divine-comedy,      title: "Divine Comedy film companion (descent/ascent/beatitude)",  class: content}
       - {id: studium-film-tanakh,             title: "Tanakh film companion (covenant/law/exile)",               class: content}
       - {id: studium-film-quran,              title: "Qur'an film companion (revelation/law/the straight path)", class: content}
-      - {id: studium-film-gilgamesh,          title: "Gilgamesh film companion (mortality/grief)",               class: content}
+#     - {id: studium-film-gilgamesh,          title: "Gilgamesh film companion (mortality/grief)",               class: content} # DONE
       - {id: studium-film-beowulf,            title: "Beowulf film companion (wyrd/heroic doom)",                 class: content}
       - {id: studium-film-canterbury-tales,   title: "Canterbury Tales film companion (the human comedy)",       class: content}
       - {id: studium-film-mahabharata,        title: "Mahabharata film companion (dharma/war)",                  class: content}

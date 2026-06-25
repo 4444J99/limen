@@ -72,7 +72,7 @@ films:
     year: 1959
     force: desire
     divisions: [3, 6, 20]
-    objects: [dress]
+    objects: []
     letterboxd: some-like-it-hot
     scene_or_theme: "Desire masked by social costume — the self hidden, revealed, and transformed by the performance"
     object_lesson: >

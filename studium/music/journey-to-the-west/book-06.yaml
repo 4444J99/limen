@@ -12,8 +12,8 @@ principle: >
   conviction of Heaven's powerlessness deepens with each battle; Heaven's recognition of
   systemic inadequacy grows. The chapter ends not with victory or defeat but with terrified
   recognition that force cannot solve this problem.
-force_arc: [comedy, wrath, comedy, comedy, wrath, wrath, wrath, wrath, arrogance, arrogance]
-dominant_force: arrogance
+force_arc: [comedy, wrath, comedy, comedy, wrath, wrath, wrath, wrath, kingship, kingship]
+dominant_force: kingship
 tracks:
   - n: 1
     scene: "Heavenly council convenes — the Jade Emperor mobilizes response"
@@ -111,7 +111,7 @@ tracks:
       riding forward toward predetermined doom. The register is prophetic and menacing.
   - n: 9
     scene: "These generals too are defeated — Heaven's military exhaustion"
-    force: arrogance
+    force: kingship
     composer: Mahler
     work: "Symphony No. 8 in E-flat major — I. Hymnus"
     decision: added
@@ -123,7 +123,7 @@ tracks:
       inadequacy of Heaven's every attempt.
   - n: 10
     scene: "Heavenly despair — recognition that warfare cannot solve this"
-    force: arrogance
+    force: kingship
     composer: Bruckner
     work: "Symphony No. 8 in C minor — I. Allegro maestoso"
     decision: added

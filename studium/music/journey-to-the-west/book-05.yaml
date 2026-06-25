@@ -10,8 +10,8 @@ principle: >
   builds through comic abundance turning grotesque, then collapses into defiant isolation
   as Monkey recognizes his true position and raises his banner in rebellion. Hold menace
   beneath comedy; by the chapter's end, the register should darken.
-force_arc: [comedy, desire, comedy, desire, comedy, desire, wrath, desire, wrath, arrogance, arrogance, arrogance]
-dominant_force: arrogance
+force_arc: [comedy, desire, comedy, desire, comedy, desire, wrath, desire, wrath, kingship, kingship, kingship]
+dominant_force: kingship
 tracks:
   - n: 1
     scene: "Arrival in Heaven — the empty title and courtly reception"
@@ -126,7 +126,7 @@ tracks:
       for war.
   - n: 10
     scene: "The proclamation — Monkey declares himself against Heaven"
-    force: arrogance
+    force: kingship
     composer: Strauss
     work: "Also sprach Zarathustra — Opening ('Sunrise')"
     decision: added
@@ -138,7 +138,7 @@ tracks:
       celestial order. The arrogance is now declarative and absolute.
   - n: 11
     scene: "Monkey's solitary defiance — standing on his mountain"
-    force: arrogance
+    force: kingship
     composer: Mahler
     work: "Symphony No. 2 — I. Allegro maestoso"
     decision: added
@@ -150,7 +150,7 @@ tracks:
       coming. Arrogance and solitude coincide; menace gathers on the horizon.
   - n: 12
     scene: "Chapter closes on defiance — the mountain isolated against Heaven"
-    force: arrogance
+    force: kingship
     composer: Bruckner
     work: "Symphony No. 8 — I. Allegro maestoso"
     decision: added

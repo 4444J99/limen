@@ -72,7 +72,7 @@ films:
   - title: "Sunrise: A Song of Two Humans"
     director: "F. W. Murnau"
     year: 1927
-    force: longing
+    force: desire
     division: talab
     letterboxd: sunrise-a-song-of-two-humans
     scene_or_theme: "The call of the city—desire as a summons to annihilation"
@@ -111,7 +111,7 @@ films:
   - title: "Jeanne Dielman, 23 quai du Commerce, 1080 Bruxelles"
     director: "Chantal Akerman"
     year: 1975
-    force: dissolution
+    force: grief
     division: eshq
     letterboxd: jeanne-dielman-23-quai-du-commerce-1080-bruxelles
     scene_or_theme: "The ecstatic repetition of domestic ritual until ritual dissolves meaning"
@@ -129,7 +129,7 @@ films:
   - title: "The Colour of Pomegranates"
     director: "Sergei Parajanov"
     year: 1969
-    force: illumination
+    force: revelation
     division: eshq
     letterboxd: the-colour-of-pomegranates
     scene_or_theme: "Saint Sayat-Nova's ecstatic devotion rendered as chromatic mysticism"
@@ -151,7 +151,7 @@ films:
   - title: "Persona"
     director: "Ingmar Bergman"
     year: 1966
-    force: dissolution
+    force: grief
     division: marifat
     letterboxd: persona
     scene_or_theme: "Identity as permeable; the boundaries between actress and nurse dissolve"
@@ -264,7 +264,7 @@ films:
   - title: "Ikiru"
     director: "Yasujirō Ozu"
     year: 1952
-    force: illumination
+    force: revelation
     division: tawhīd
     letterboxd: ikiru
     scene_or_theme: "The bureaucrat glimpses the unity of his wasted life at the moment of death"
@@ -380,7 +380,7 @@ films:
   - title: "Uncle Boonmee Who Can Recall His Past Lives"
     director: "Apichatpong Weerasethakul"
     year: 2010
-    force: dissolution
+    force: grief
     division: fanā
     letterboxd: uncle-boonmee-who-can-recall-his-past-lives
     scene_or_theme: "The dead return; identity and presence become spectral and permeable"
@@ -415,7 +415,7 @@ films:
   - title: "After Life"
     director: "Hirokazu Koreeda"
     year: 1998
-    force: illumination
+    force: revelation
     division: fanā
     letterboxd: after-life
     scene_or_theme: "The dead choosing one memory to carry into eternity; the self becomes a single image"
@@ -430,29 +430,29 @@ films:
       is the single, essential gesture—the moment when the self recognized its own non-existence
       and was annihilated into love.
 
-# Note on Translation and Scholarship
-
-This companion draws on established translations and scholarly sources:
-
-- **Attar, Farid ud-Din**. *Mantiq al-Tayr: The Conference of the Birds*.
-  Trans. Afkham Darbandi and Dick Davis. Penguin Classics, 1984.
-  (The standard English translation; preserves the rhyming couplet form.)
-
-- **Wolpé, Sholeh**, trans. *The Conference of the Birds: Abridged*.
-  W.W. Norton & Company, 2017.
-  (A poet's rendering; stronger in the ecstatic registers.)
-
-- **Schimmel, Annemarie**. *Mystical Dimensions of Islam*.
-  University of North Carolina Press, 1975.
-  (Essential background on Sufi concepts: *fanā*, *baqa*, *tawhīd*, *ma'rifat*.)
-
-- **Lamborn Wilson, Peter**. *Sacred Drift: Essays on the Margins of Islam*.
-  City Lights, 1993.
-  (Philosophical and poetic meditations on Sufi practice and meaning.)
-
-# On Letterboxd Slugs
-
-All slugs have been verified as of 2026. Films are sortable by `division` (valley),
-`force` (dominant spiritual/formal theme), and director. This companion is designed
-to be read in order (Talab → Fanā) or by individual valley as a reader moves through
-Attar's text.
+# # Note on Translation and Scholarship
+# 
+# This companion draws on established translations and scholarly sources:
+# 
+# - **Attar, Farid ud-Din**. *Mantiq al-Tayr: The Conference of the Birds*.
+#   Trans. Afkham Darbandi and Dick Davis. Penguin Classics, 1984.
+#   (The standard English translation; preserves the rhyming couplet form.)
+# 
+# - **Wolpé, Sholeh**, trans. *The Conference of the Birds: Abridged*.
+#   W.W. Norton & Company, 2017.
+#   (A poet's rendering; stronger in the ecstatic registers.)
+# 
+# - **Schimmel, Annemarie**. *Mystical Dimensions of Islam*.
+#   University of North Carolina Press, 1975.
+#   (Essential background on Sufi concepts: *fanā*, *baqa*, *tawhīd*, *ma'rifat*.)
+# 
+# - **Lamborn Wilson, Peter**. *Sacred Drift: Essays on the Margins of Islam*.
+#   City Lights, 1993.
+#   (Philosophical and poetic meditations on Sufi practice and meaning.)
+# 
+# # On Letterboxd Slugs
+# 
+# All slugs have been verified as of 2026. Films are sortable by `division` (valley),
+# `force` (dominant spiritual/formal theme), and director. This companion is designed
+# to be read in order (Talab → Fanā) or by individual valley as a reader moves through
+# Attar's text.

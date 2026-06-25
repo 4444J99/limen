@@ -17,7 +17,7 @@ principle: >
   teaching him truth. By the end: still proud and strong-willed, but tempered by time and
   absolute helplessness into something approaching readiness for transformation. The arc moves
   from explosive violence to quiet temporal processes to patient acceptance.
-force_arc: [desire, revelation, desire, fate, divine-intervention, grace, memory, memory, memory, memory, memory, memory, salvation]
+force_arc: [desire, revelation, desire, fate, divine-intervention, salvation, memory, memory, memory, memory, memory, memory, salvation]
 dominant_force: fate
 tracks:
   - n: 1
@@ -82,7 +82,7 @@ tracks:
       in the wrong direction.
   - n: 6
     scene: "Return and triumphant declaration — the moment before revelation"
-    force: grace
+    force: salvation
     composer: Elgar
     work: "Enigma Variations — 'Nimrod' (variation IX)"
     decision: added
