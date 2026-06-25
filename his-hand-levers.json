@@ -91,20 +91,19 @@
     },
     {
       "id": "L-IANVA-LOCAL",
-      "label": "Kill the per-agent MCP re-auth for every non-claude.ai agent in ONE move — this is most of the 'why do I keep authorizing MCP servers over and over' rage. Today Codex/Gemini/agy/opencode/Copilot/Cline each authorize every MCP upstream separately, and again whenever a token lapses. ianva (built + verified, commit c832ca3) fronts every upstream behind ONE gateway that holds each refresh token and auto-renews it silently, so each agent gets ONE config entry and you consent once per upstream, never again. Fully local, fully reversible — every config is backed up first; `claude mcp remove --scope user ianva` or restoring any *.ianva-bak undoes it. This is the core of your original ask: 'all agent config files point at our own server.'",
-      "cost": "~5 min once, durable — retires the per-agent re-auth class across 6 agents",
+      "label": "Kill the per-agent MCP re-auth for every non-claude.ai agent in ONE move — this is most of the 'why do I keep authorizing MCP servers over and over' rage. ianva fronts every upstream behind ONE gateway that holds each refresh token and auto-renews it silently, so each agent gets ONE config entry and you consent once per upstream, never again. SHIPPED + PROVEN: this is the core of your original ask, 'all agent config files point at our own server' — done.",
+      "cost": "config-wiring DONE; ~2 min remaining = one launchctl bootstrap so the gateway survives reboot",
       "owner": "yours",
-      "unlocks": "every non-claude.ai agent authenticates each MCP upstream ONCE, never per-agent again",
+      "unlocks": "every non-claude.ai agent authenticates each MCP upstream ONCE, never per-agent again — and survives reboot/logout",
       "source_task": "ianva (session 6cdc53d9) — disease B",
-      "branch": "worktree-ianva-doorway",
-      "gate": "HOLD — merge the branch, then one global-config write (writing the ianva entry into your 7 installed agent configs; it backs up every file first and is dry-run by default)",
+      "branch": "merged to limen main (#199, #201, #204, #206, #208)",
+      "gate": "ALMOST DONE — config-wiring shipped & verified (merged #199–#208; .claude.json/.codex/.gemini all point at ianva, each backed up first; handshake verified `claude mcp get ianva` -> ✔ Connected). SOLE remaining flip is launchd persistence: the gateway has already died between sessions, silently breaking every agent until restart, so without launchd you keep hand-restarting it.",
       "steps": [
-        "Merge worktree-ianva-doorway into limen main (or open a PR) — ships ianva to the fleet",
-        "cd ianva && export PYTHONPATH=\"$PWD/src\"; python3 -m ianva.cli up   # first run fetches MCPHub via npx",
-        "Populate upstreams: run build-mcp-registry.py, OR cp ianva/upstreams.example.json ~/.config/ianva/upstreams.json and edit (remote OAuth upstreams get \"oauth\": true)",
-        "python3 -m ianva.cli install-configs          # preview, writes nothing",
-        "python3 -m ianva.cli install-configs --apply  # write the entry into all 7 agent configs (backs up each first)",
-        "Optional durability: cp ianva/deploy/com.ianva.gateway.plist ~/Library/LaunchAgents/ then sed the __IANVA_DIR__ placeholder and launchctl bootstrap it"
+        "DONE — ianva merged to limen main (#199/#201/#204/#206/#208); shipped to the fleet.",
+        "DONE — install-configs --apply ran: .claude.json, .codex/config.toml, .gemini/settings.json (+opencode/Copilot/Cline) all point at ianva, each backed up first; handshake verified (claude mcp get ianva -> ✔ Connected).",
+        "REMAINING (the one flip) — keep it alive across reboot: cp ianva/deploy/com.ianva.gateway.plist ~/Library/LaunchAgents/ ; sed -i '' \"s#__IANVA_DIR__#$PWD#g\" ~/Library/LaunchAgents/com.ianva.gateway.plist ; launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.ianva.gateway.plist  (auto-starts the npm gateway + triggers a one-time macOS Login-Items approval — that is why it is yours, not mine).",
+        "Until launchd lands, after any reboot/logout restart in one line: cd ianva && PYTHONPATH=$PWD/src python3 -m ianva.cli up  (binds :7666 in ~7s).",
+        "Optional, later — populate upstreams (build-mcp-registry.py, or ~/.config/ianva/upstreams.json); the local face needs none, upstreams only matter for the cloud connector (see L-IANVA-CLOUD)."
       ]
     },
     {
