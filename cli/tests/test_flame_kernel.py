@@ -56,6 +56,73 @@ def test_missing_kernel_fails_open(tmp_path, monkeypatch):
     assert p.startswith("Complete task T1")  # bare prompt, never a blocked lane
 
 
+def test_jules_prompt_leads_with_directive(tmp_path, monkeypatch):
+    # The jules lane MUST lead with the hard "implement directly, do NOT ask for feedback"
+    # directive — that is the proven anti-stall lever (the jules CLI has no approve/reply verb, so
+    # a planner that stops to ask is a dead session). The task still leads the body (task-first)
+    # under the directive, with the kernel riding after.
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.delenv("LIMEN_FLAME_KERNEL", raising=False)
+    monkeypatch.delenv("LIMEN_JULES_DIRECTIVE", raising=False)
+    _write_kernel(tmp_path)
+    D._FLAME_CACHE.clear()
+    p = D._build_jules_prompt(_task())
+    assert p.startswith("Implement this directly")       # anti-stall lead dominates
+    assert "Do NOT ask for feedback" in p
+    assert "do a thing" in p                              # the concrete task is present
+    assert p.index("do a thing") < p.index("You are VLTIMA.")  # task before kernel
+
+
+def test_jules_directive_disabled_is_task_first(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("LIMEN_JULES_DIRECTIVE", "0")
+    monkeypatch.delenv("LIMEN_FLAME_KERNEL", raising=False)
+    _write_kernel(tmp_path)
+    D._FLAME_CACHE.clear()
+    p = D._build_jules_prompt(_task())
+    assert not p.startswith("Implement this directly")
+    assert p.startswith("Complete task T1")              # bare task-first prompt
+
+
+def test_call_jules_uses_remote_new(tmp_path, monkeypatch):
+    # `jules remote new` (autonomous VM) — NOT `jules new` (web plan-approval → "Awaiting User
+    # Feedback"). The task is fed via --session, and the directive leads the prompt.
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.delenv("LIMEN_FLAME_KERNEL", raising=False)
+    monkeypatch.delenv("LIMEN_JULES_DIRECTIVE", raising=False)
+    captured = {}
+
+    def fake_run_cmd(cmd, task, dry_run, cwd=None):
+        captured["cmd"] = cmd
+        return "5450674856461095192"
+
+    monkeypatch.setattr(D, "_run_cmd", fake_run_cmd)
+    t = Task(id="T1", title="do a thing", repo="org/repo",
+             target_agent="jules", created=date(2026, 6, 23))
+    sid = D._call_jules(t, dry_run=False)
+    cmd = captured["cmd"]
+    assert cmd[:5] == ["jules", "remote", "new", "--repo", "org/repo"]
+    assert cmd[5] == "--session"
+    assert cmd[6].startswith("Implement this directly")  # directive-led prompt as the task
+    assert sid == "5450674856461095192"                  # session id flows back for dispatch_log
+
+
+def test_run_cmd_captures_jules_session_id(monkeypatch):
+    # The id must be captured from `jules remote new` stdout (ID: line) so it lands in dispatch_log
+    # and harvest matches by id, never the truncated/directive-led session title.
+    class _R:
+        returncode = 0
+        stdout = ("Session is created.\nID: 5450674856461095192\n"
+                  "URL: https://jules.google.com/session/5450674856461095192\n")
+        stderr = ""
+
+    monkeypatch.setattr(D, "_run_capture", lambda *a, **k: _R())
+    t = Task(id="T1", title="x", repo="org/repo", target_agent="jules", created=date(2026, 6, 23))
+    out = D._run_cmd(["jules", "remote", "new", "--repo", "org/repo", "--session", "p"],
+                     t, dry_run=False)
+    assert out == "5450674856461095192"
+
+
 def test_ollama_is_cascade_floor():
     assert "ollama" in C.PAID_AGENT_ORDER
     assert "ollama" in C.LOCAL_CHECKOUT_AGENTS

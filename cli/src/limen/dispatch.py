@@ -292,16 +292,18 @@ def _run_cmd(cmd: list[str], task: Task, dry_run: bool, cwd: str | None = None) 
         )  # own process group → timeout SIGKILLs grandchildren too (no beat-stall hang)
         if result.returncode == 0:
             print(f"  dispatched: {task.id}")
-            # Try to extract session ID from output if it's jules
+            # Capture the jules session id from stdout. `jules remote new` prints:
+            #   Session is created.
+            #   ID: <19-20 digit id>
+            #   URL: https://jules.google.com/session/<id>
+            # Record it durably (dispatch_log) so harvest matches task->session by id, NEVER by the
+            # truncated, directive-led session title. Try the explicit ID: line, then the URL, then
+            # any long digit-run as a last resort.
             if cmd[0].endswith("jules"):
-
-                match = re.search(r"session\s+(\d+)", result.stdout, re.IGNORECASE)
-                if match:
-                    return match.group(1)
-                # Just look for any large number
-                match = re.search(r"\b(\d{15,20})\b", result.stdout)
-                if match:
-                    return match.group(1)
+                for pat in (r"^\s*ID:\s*(\d{6,})", r"session/(\d{6,})", r"\b(\d{15,20})\b"):
+                    m = re.search(pat, result.stdout, re.IGNORECASE | re.MULTILINE)
+                    if m:
+                        return m.group(1)
             return True
         print(f"  FAILED ({result.returncode}): {task.id}")
         if result.stderr:
@@ -315,12 +317,40 @@ def _run_cmd(cmd: list[str], task: Task, dry_run: bool, cwd: str | None = None) 
         return False
 
 
+# Leads EVERY jules prompt. `jules remote new` runs the session autonomously in a VM, but a
+# big/ambiguous task can still make the planner stop and ask — and the jules CLI has NO
+# approve/reply verb, so an "Awaiting User Feedback" session is unrecoverable headlessly. A hard
+# "implement directly, do NOT ask for feedback" lead is the proven anti-stall lever: it built work
+# when every other lane was down, while kernel-led prompts stalled (live `jules remote list` shows
+# the split — "Implement this directly…" sessions Completed, "# FLAME…" ones Awaiting Feedback).
+# Gated by LIMEN_JULES_DIRECTIVE (default on; '0' → bare task_first prompt).
+_JULES_DIRECTIVE = (
+    "Implement this directly and open a pull request. Do NOT ask for feedback or approval — "
+    "the task below is complete enough to build. Proceed autonomously to a complete, mergeable "
+    "change and keep the repo's lint and tests green.\n\n"
+)
+
+
+def _build_jules_prompt(task: Task) -> str:
+    body = _build_prompt(task, task_first=True)
+    if os.environ.get("LIMEN_JULES_DIRECTIVE", "1") != "1":
+        return body
+    return f"{_JULES_DIRECTIVE}{body}"
+
+
 def _call_jules(task: Task, dry_run: bool) -> bool | str:
     repo = task.repo or os.environ.get("LIMEN_ROOT", ".")
-    # task_first: jules names the session from the prompt's first line, so lead with the task
-    # (keeps the session title harvestable + the work unambiguous; the kernel still rides after it).
-    prompt = _build_prompt(task, task_first=True)
-    cmd = [os.environ.get("LIMEN_JULES_BIN", "jules"), "new", "--repo", repo, prompt]
+    # `jules remote new` runs the session autonomously in a VM and yields a pullable result; plain
+    # `jules new` routes through the web-UI plan-approval flow, which strands every headless
+    # dispatch at "Awaiting User Feedback" (no CLI verb can approve it) — the bug that made jules
+    # unusable from the conductor. The harvest path (jules-land.py / harvest.py) already speaks
+    # `jules remote list/pull`, so remote-new is the matching half that was missing. remote-new
+    # takes the task via --session, not as a bare positional. The session id is captured from
+    # stdout and recorded in dispatch_log so harvest matches by id, never the (truncated,
+    # directive-led) title. See memory: jules-harvest-stranded-by-flame-prompt.
+    prompt = _build_jules_prompt(task)
+    jb = os.environ.get("LIMEN_JULES_BIN", "jules")
+    cmd = [jb, "remote", "new", "--repo", repo, "--session", prompt]
     return _run_cmd(cmd, task, dry_run)
 
 
