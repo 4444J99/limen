@@ -288,7 +288,24 @@
       "unlocks": "fully-automatic promptless credential hydration of the op:// lanes restored; daemon re-mints lapsed tokens with zero dialogs",
       "source_task": "1Password prompt-storm fix (fix/creds-hydrate-noninteractive-guard; 2026-06-25)",
       "gate": "minting a standing read-credential for your whole vault is a security decision — your call; NOT required (the prompts are already gone without it)",
-      "note": "A service-account token is a long-lived secret with read access to the granted vaults. It is the ONLY auth that makes `op read` non-interactive — the desktop-app integration ALWAYS prompts when locked. Sibling levers L-AGENT-BASH-PROMPT / L-LINT-HOOK / L-BACKUP-FDA cover the OTHER approval-dialog sources. See memory: macos-tcc-gatekeeper-dialogs-solved, credential-durability-organ."
+      "note": "A service-account token is a long-lived secret with read access to the granted vaults. It is the ONLY auth that makes `op read` non-interactive — the desktop-app integration ALWAYS prompts when locked. Sibling levers L-AGENT-BASH-PROMPT / L-LINT-HOOK / L-BACKUP-FDA cover the OTHER approval-dialog sources. See memory: macos-tcc-gatekeeper-dialogs-solved, credential-durability-organ.",
+      "issue": 288
+    },
+    {
+      "id": "L-FIREWALL-PROMPT",
+      "label": "Silence the 'python/node wants to accept incoming connections' dialog FOR GOOD. ROOT (found 2026-06-25): the macOS Application Firewall is ON, and the ianva gateway's mcphub backend (@samanhappy/mcphub) calls app.listen(port) with NO host arg, so node binds ALL interfaces (*:7666) instead of loopback — and mcphub exposes no HOST/BIND env to fix it. node is ad-hoc-signed, so every `brew upgrade node` rotates its path+cdhash and the firewall re-prompts. An AI cannot lower this: socketfilterfw needs root (sudo has no NOPASSWD here) — that impossibility is the guardrail. THE CURE (your hand, once): turn the app firewall off (defensible on a single-user box behind NAT, fully reversible) or allow node explicitly. `bash scripts/dialogs-silenced.sh` prints the exact paste and verifies the whole dialog estate.",
+      "owner": "yours",
+      "cost": "one `sudo` paste (~30s, one Touch-ID), then silent forever",
+      "unlocks": "the 'node/python wants to accept incoming connections' firewall dialog never appears again",
+      "gate": "turning the OS firewall off is a security-posture decision — your call; the allow-list alternative keeps it on but re-prompts on each node upgrade unless you also `brew pin node`",
+      "steps": [
+        "Recommended (zero prompts, reversible): sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate off",
+        "Conservative (keep firewall on): N=\"$(readlink -f $(command -v node))\"; sudo /usr/libexec/ApplicationFirewall/socketfilterfw --add \"$N\" --unblockapp \"$N\"",
+        "Verify: bash scripts/dialogs-silenced.sh must print ALL CLEAR. Closes when the firewall class is silenced."
+      ],
+      "source_task": "dialogs-silenced predicate (fix/silence-permission-dialogs; 2026-06-25)",
+      "note": "Sibling levers cover the OTHER dialog classes: L-OP-SERVICE-ACCOUNT (1Password/Touch-ID), L-AGENT-BASH-PROMPT #183 (Claude bash prompts), L-BACKUP-FDA #184 (file-access FDA). scripts/dialogs-silenced.sh is the single executable predicate over all of them. See memory: macos-tcc-gatekeeper-dialogs-solved.",
+      "issue": 289
     }
   ]
 }
