@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-06-25'
-      spent: 2
+      spent: 12
       per_agent:
-        jules: 1
+        jules: 10
         gemini: 0
         codex: 0
-        opencode: 1
+        opencode: 2
         agy: 0
         claude: 0
       per_agent_reset:
@@ -44406,6 +44406,10 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-25T14:14:19.028613Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: REV-organvm-a-i-chat--exporter-revenue-funding-0623
   title: Stage the donation funnel for ChatGPT Exporter
   repo: organvm/a-i-chat--exporter
@@ -44508,6 +44512,10 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-25T14:14:19.028613Z'
+    agent: jules
+    session_id: '8713032879030189227'
+    status: dispatched
 - id: REV-organvm-mirror-mirror-revenue-ship-0623
   title: Drive Mirror Mirror to deploy-ready
   repo: organvm/mirror-mirror
@@ -44619,6 +44627,10 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-25T14:14:19.028613Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: REV-organvm-a-i-chat--exporter-revenue-pro-tier-0623
   title: Make the Pro-tier checkout merge-ready for ChatGPT Exporter
   repo: organvm/a-i-chat--exporter
@@ -47684,16 +47696,17 @@ tasks:
   title: Raise test coverage in organvm/styx
   repo: organvm/styx
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - test-coverage
   - generated
   - build-out
   - tried:agy
   - tried:claude
+  - tried:gemini
   urls: []
   context: Find the largest source module in organvm/styx with little or no test coverage
     and add a focused, PASSING test suite for it. Run the repo's own test command
@@ -47711,6 +47724,10 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
+  - timestamp: '2026-06-25T13:58:52.030958Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: GEN-organvm-limen-test-coverage-0624
   title: Raise test coverage in organvm/limen
   repo: organvm/limen
@@ -48003,7 +48020,7 @@ tasks:
   title: Make organvm/styx CI green
   repo: organvm/styx
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: dispatched
@@ -48014,6 +48031,7 @@ tasks:
   - tried:opencode
   - tried:agy
   - tried:claude
+  - tried:gemini
   urls: []
   context: Inspect the latest FAILING checks on organvm/styx's default branch, fix
     the root cause (lint / types / failing test / config), and confirm the checks
@@ -48022,7 +48040,7 @@ tasks:
     endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-25T13:58:52.030958Z'
+  updated: '2026-06-25T14:44:33.791714Z'
   dispatch_log:
   - timestamp: '2026-06-24T13:05:57.998424Z'
     agent: opencode
@@ -48036,6 +48054,14 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
+  - timestamp: '2026-06-25T13:58:52.030958Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+  - timestamp: '2026-06-25T14:44:33.791714Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GEN-organvm-limen-ci-green-0624
   title: Make organvm/limen CI green
   repo: organvm/limen
@@ -48180,14 +48206,15 @@ tasks:
   title: Real usage docs for organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
   type: code
-  target_agent: any
+  target_agent: codex
   priority: low
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - docs
   - generated
   - build-out
+  - tried:codex
   urls: []
   context: "Derive an accurate Usage section in organvm/public-record-data-scrapper's\
     \ README from the ACTUAL entrypoints/exports (install, run, key commands + flags).\
@@ -48196,19 +48223,24 @@ tasks:
   depends_on: []
   created: '2026-06-24'
   updated: '2026-06-25T13:58:52.030958Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-25T13:58:52.030958Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
 - id: GEN-organvm-a-i-chat--exporter-docs-0624
   title: Real usage docs for organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: low
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - docs
   - generated
   - build-out
+  - tried:codex
   urls: []
   context: "Derive an accurate Usage section in organvm/a-i-chat--exporter's README\
     \ from the ACTUAL entrypoints/exports (install, run, key commands + flags). No\
@@ -48217,7 +48249,11 @@ tasks:
   depends_on: []
   created: '2026-06-24'
   updated: '2026-06-25T13:58:52.030958Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-25T13:58:52.030958Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
 - id: GEN-organvm-the-invisible-ledger-docs-0624
   title: Real usage docs for organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
@@ -48225,11 +48261,12 @@ tasks:
   target_agent: any
   priority: low
   budget_cost: 1
-  status: dispatched
+  status: cancelled
   labels:
   - docs
   - generated
   - build-out
+  - noop
   urls: []
   context: "Derive an accurate Usage section in organvm/the-invisible-ledger's README\
     \ from the ACTUAL entrypoints/exports (install, run, key commands + flags). No\
@@ -48238,19 +48275,24 @@ tasks:
   depends_on: []
   created: '2026-06-24'
   updated: '2026-06-25T13:58:52.030958Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-25T13:58:52.030958Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: GEN-organvm-styx-docs-0624
   title: Real usage docs for organvm/styx
   repo: organvm/styx
   type: code
-  target_agent: any
+  target_agent: agy
   priority: low
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - docs
   - generated
   - build-out
+  - tried:opencode
   urls: []
   context: "Derive an accurate Usage section in organvm/styx's README from the ACTUAL\
     \ entrypoints/exports (install, run, key commands + flags). No invented features,\
@@ -48259,19 +48301,24 @@ tasks:
   depends_on: []
   created: '2026-06-24'
   updated: '2026-06-25T13:58:52.030958Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-25T13:58:52.030958Z'
+    agent: opencode
+    session_id: cli
+    status: failed->agy
 - id: GEN-organvm-limen-docs-0624
   title: Real usage docs for organvm/limen
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: agy
   priority: low
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - docs
   - generated
   - build-out
+  - tried:agy
   urls: []
   context: "Derive an accurate Usage section in organvm/limen's README from the ACTUAL\
     \ entrypoints/exports (install, run, key commands + flags). No invented features,\
@@ -48280,7 +48327,11 @@ tasks:
   depends_on: []
   created: '2026-06-24'
   updated: '2026-06-25T13:58:52.030958Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-25T13:58:52.030958Z'
+    agent: agy
+    session_id: cli
+    status: failed->claude
 - id: GEN-organvm-domus-genoma-security-0624
   title: Security hardening pass on organvm/domus-genoma
   repo: organvm/domus-genoma
@@ -48515,7 +48566,7 @@ tasks:
   title: Security hardening pass on organvm/styx
   repo: organvm/styx
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: dispatched
@@ -48524,6 +48575,7 @@ tasks:
   - generated
   - build-out
   - tried:claude
+  - tried:gemini
   urls: []
   context: Run the ecosystem audit for organvm/styx (npm audit / pip-audit / equivalent),
     upgrade or pin high-severity advisories, and add input validation at the main
@@ -48531,12 +48583,20 @@ tasks:
     2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-25T13:58:52.030958Z'
+  updated: '2026-06-25T14:44:33.791714Z'
   dispatch_log:
   - timestamp: '2026-06-24T13:05:57.998424Z'
     agent: claude
     session_id: cli
     status: failed->gemini
+  - timestamp: '2026-06-25T13:58:52.030958Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+  - timestamp: '2026-06-25T14:44:33.791714Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GEN-organvm-limen-security-0624
   title: Security hardening pass on organvm/limen
   repo: organvm/limen
@@ -49007,7 +49067,7 @@ tasks:
   title: Tighten types in organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: dispatched
@@ -49016,18 +49076,23 @@ tasks:
   - generated
   - build-out
   - tried:agy
+  - tried:codex
   urls: []
   context: Eliminate the worst untyped hotspots in organvm/a-i-chat--exporter's most-imported
     module (remove `any` / add type hints / fix loose signatures). Keep the build
     and tests green. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-25T13:58:52.030958Z'
+  updated: '2026-06-25T15:11:55.617328Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:22:13.734586Z'
     agent: agy
     session_id: cli
     status: failed->claude
+  - timestamp: '2026-06-25T13:58:52.030958Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
 - id: GEN-organvm-the-invisible-ledger-typing-0624
   title: Tighten types in organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
@@ -49035,19 +49100,20 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: done
+  status: cancelled
   labels:
   - typing
   - generated
   - build-out
   - tried:claude
+  - noop
   urls: []
   context: Eliminate the worst untyped hotspots in organvm/the-invisible-ledger's
     most-imported module (remove `any` / add type hints / fix loose signatures). Keep
     the build and tests green. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-25T14:00:00Z'
+  updated: '2026-06-25T13:58:52.030958Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:22:13.734586Z'
     agent: claude
@@ -49057,13 +49123,18 @@ tasks:
     agent: opencode
     session_id: cli
     status: done
-    output: 'Eliminated all `any` from src/lib/ — 24 occurrences in 8 files replaced
-      with proper types. Consolidated 6 duplicate Spark KV wrappers into shared getSparkKvStore().
-      Fixed Record<string,any> → Record<string,unknown>, Promise<any> → Promise<Organization|null>,
-      (window/globalThis as any) → typed SparkGlobal. Build passes, 0 new test failures
-      (3 pre-existing remain). Files changed: billing.ts, compliance-reports.ts, file-versioning.ts,
-      sharefile-auth.ts, sharefile-webhooks.ts, storage/spark-kv.ts, stripe-org.ts,
-      types.ts, usage-tracker.ts.'
+    output: "Eliminated all `any` from src/lib/ \u2014 24 occurrences in 8 files replaced\
+      \ with proper types. Consolidated 6 duplicate Spark KV wrappers into shared\
+      \ getSparkKvStore(). Fixed Record<string,any> \u2192 Record<string,unknown>,\
+      \ Promise<any> \u2192 Promise<Organization|null>, (window/globalThis as any)\
+      \ \u2192 typed SparkGlobal. Build passes, 0 new test failures (3 pre-existing\
+      \ remain). Files changed: billing.ts, compliance-reports.ts, file-versioning.ts,\
+      \ sharefile-auth.ts, sharefile-webhooks.ts, storage/spark-kv.ts, stripe-org.ts,\
+      \ types.ts, usage-tracker.ts."
+  - timestamp: '2026-06-25T13:58:52.030958Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: GEN-organvm-styx-typing-0624
   title: Tighten types in organvm/styx
   repo: organvm/styx
@@ -49177,7 +49248,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -49189,6 +49260,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
+  updated: '2026-06-25T15:11:55.617328Z'
   dispatch_log: []
 - id: GEN-organvm-mirror-mirror-test-coverage-0625
   title: Raise test coverage in organvm/mirror-mirror
@@ -49197,7 +49269,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -49209,6 +49281,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
+  updated: '2026-06-25T15:11:55.617328Z'
   dispatch_log: []
 - id: GEN-organvm-a-i-chat--exporter-test-coverage-0625
   title: Raise test coverage in organvm/a-i-chat--exporter
@@ -49217,7 +49290,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -49229,6 +49302,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
+  updated: '2026-06-25T15:11:55.617328Z'
   dispatch_log: []
 - id: GEN-organvm-universal-mail--automation-test-coverage-0625
   title: Raise test coverage in organvm/universal-mail--automation
@@ -49237,7 +49311,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -49249,6 +49323,7 @@ tasks:
     2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
+  updated: '2026-06-25T15:11:55.617328Z'
   dispatch_log: []
 - id: GEN-organvm-the-invisible-ledger-test-coverage-0625
   title: Raise test coverage in organvm/the-invisible-ledger
@@ -49257,7 +49332,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -49269,6 +49344,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
+  updated: '2026-06-25T15:11:55.617328Z'
   dispatch_log: []
 - id: GEN-organvm-public-record-data-scrapper-test-coverage-0625
   title: Raise test coverage in organvm/public-record-data-scrapper
@@ -49277,7 +49353,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -49289,6 +49365,7 @@ tasks:
     2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
+  updated: '2026-06-25T15:11:55.617328Z'
   dispatch_log: []
 - id: GEN-organvm-limen-test-coverage-0625
   title: Raise test coverage in organvm/limen
@@ -49314,7 +49391,7 @@ tasks:
   title: Make organvm/domus-genoma CI green
   repo: organvm/domus-genoma
   type: code
-  target_agent: any
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: dispatched
@@ -49322,6 +49399,8 @@ tasks:
   - ci-green
   - generated
   - build-out
+  - tried:codex
+  - tried:gemini
   urls: []
   context: Inspect the latest FAILING checks on organvm/domus-genoma's default branch,
     fix the root cause (lint / types / failing test / config), and confirm the checks
@@ -49330,8 +49409,16 @@ tasks:
     endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T14:14:19.028613Z'
-  dispatch_log: []
+  updated: '2026-06-25T15:11:55.617328Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T14:14:19.028613Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-06-25T14:44:33.791714Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: GEN-organvm-mirror-mirror-ci-green-0625
   title: Make organvm/mirror-mirror CI green
   repo: organvm/mirror-mirror
@@ -49339,11 +49426,12 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: cancelled
   labels:
   - ci-green
   - generated
   - build-out
+  - noop
   urls: []
   context: Inspect the latest FAILING checks on organvm/mirror-mirror's default branch,
     fix the root cause (lint / types / failing test / config), and confirm the checks
@@ -49353,7 +49441,11 @@ tasks:
   depends_on: []
   created: '2026-06-25'
   updated: '2026-06-25T14:14:19.028613Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-25T14:14:19.028613Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: GEN-organvm-session-meta-ci-green-0625
   title: Make organvm/session-meta CI green
   repo: organvm/session-meta
@@ -49361,11 +49453,12 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: in_progress
+  status: cancelled
   labels:
   - ci-green
   - generated
   - build-out
+  - noop
   urls: []
   context: Inspect the latest FAILING checks on organvm/session-meta's default branch,
     fix the root cause (lint / types / failing test / config), and confirm the checks
@@ -49380,6 +49473,10 @@ tasks:
     agent: opencode
     session_id: current
     status: in_progress
+  - timestamp: '2026-06-25T14:14:19.028613Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: GEN-organvm-portfolio-ci-green-0625
   title: Make organvm/portfolio CI green
   repo: organvm/portfolio
@@ -49387,11 +49484,12 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: cancelled
   labels:
   - ci-green
   - generated
   - build-out
+  - noop
   urls: []
   context: Inspect the latest FAILING checks on organvm/portfolio's default branch,
     fix the root cause (lint / types / failing test / config), and confirm the checks
@@ -49401,12 +49499,16 @@ tasks:
   depends_on: []
   created: '2026-06-25'
   updated: '2026-06-25T14:14:19.028613Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-25T14:14:19.028613Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: GEN-organvm-a-i-chat--exporter-ci-green-0625
   title: Make organvm/a-i-chat--exporter CI green
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: dispatched
@@ -49414,6 +49516,8 @@ tasks:
   - ci-green
   - generated
   - build-out
+  - tried:agy
+  - tried:codex
   urls: []
   context: Inspect the latest FAILING checks on organvm/a-i-chat--exporter's default
     branch, fix the root cause (lint / types / failing test / config), and confirm
@@ -49422,20 +49526,30 @@ tasks:
     the stream endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T14:14:19.028613Z'
-  dispatch_log: []
+  updated: '2026-06-25T15:11:55.617328Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T14:14:19.028613Z'
+    agent: agy
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-06-25T14:44:33.791714Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
 - id: GEN-organvm-universal-mail--automation-ci-green-0625
   title: Make organvm/universal-mail--automation CI green
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: cancelled
   labels:
   - ci-green
   - generated
   - build-out
+  - tried:agy
+  - noop
   urls: []
   context: Inspect the latest FAILING checks on organvm/universal-mail--automation's
     default branch, fix the root cause (lint / types / failing test / config), and
@@ -49444,13 +49558,21 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T14:14:19.028613Z'
-  dispatch_log: []
+  updated: '2026-06-25T14:44:33.791714Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T14:14:19.028613Z'
+    agent: agy
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-06-25T14:44:33.791714Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: GEN-organvm-the-invisible-ledger-ci-green-0625
   title: Make organvm/the-invisible-ledger CI green
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: any
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: dispatched
@@ -49458,6 +49580,7 @@ tasks:
   - ci-green
   - generated
   - build-out
+  - tried:agy
   urls: []
   context: Inspect the latest FAILING checks on organvm/the-invisible-ledger's default
     branch, fix the root cause (lint / types / failing test / config), and confirm
@@ -49466,20 +49589,30 @@ tasks:
     the stream endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T14:14:19.028613Z'
-  dispatch_log: []
+  updated: '2026-06-25T15:11:55.617328Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T14:14:19.028613Z'
+    agent: agy
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-06-25T14:44:33.791714Z'
+    agent: agy
+    session_id: cli
+    status: failed->claude
 - id: GEN-organvm-public-record-data-scrapper-ci-green-0625
   title: Make organvm/public-record-data-scrapper CI green
   repo: organvm/public-record-data-scrapper
   type: code
-  target_agent: any
+  target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: cancelled
   labels:
   - ci-green
   - generated
   - build-out
+  - tried:claude
+  - noop
   urls: []
   context: Inspect the latest FAILING checks on organvm/public-record-data-scrapper's
     default branch, fix the root cause (lint / types / failing test / config), and
@@ -49488,13 +49621,21 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T14:14:19.028613Z'
-  dispatch_log: []
+  updated: '2026-06-25T14:44:33.791714Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T14:14:19.028613Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
+  - timestamp: '2026-06-25T14:44:33.791714Z'
+    agent: claude
+    session_id: cli
+    status: noop
 - id: GEN-organvm-domus-genoma-security-0625
   title: Security hardening pass on organvm/domus-genoma
   repo: organvm/domus-genoma
   type: code
-  target_agent: any
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: dispatched
@@ -49502,6 +49643,8 @@ tasks:
   - security
   - generated
   - build-out
+  - tried:claude
+  - tried:gemini
   urls: []
   context: Run the ecosystem audit for organvm/domus-genoma (npm audit / pip-audit
     / equivalent), upgrade or pin high-severity advisories, and add input validation
@@ -49509,8 +49652,16 @@ tasks:
     2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T14:14:19.028613Z'
-  dispatch_log: []
+  updated: '2026-06-25T15:11:55.617328Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T14:14:19.028613Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
+  - timestamp: '2026-06-25T14:44:33.791714Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: GEN-organvm-mirror-mirror-security-0625
   title: Security hardening pass on organvm/mirror-mirror
   repo: organvm/mirror-mirror
@@ -49518,11 +49669,12 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: cancelled
   labels:
   - security
   - generated
   - build-out
+  - noop
   urls: []
   context: Run the ecosystem audit for organvm/mirror-mirror (npm audit / pip-audit
     / equivalent), upgrade or pin high-severity advisories, and add input validation
@@ -49531,12 +49683,16 @@ tasks:
   depends_on: []
   created: '2026-06-25'
   updated: '2026-06-25T14:14:19.028613Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-25T14:14:19.028613Z'
+    agent: claude
+    session_id: cli
+    status: noop
 - id: GEN-organvm-session-meta-security-0625
   title: Security hardening pass on organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: any
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: dispatched
@@ -49544,6 +49700,7 @@ tasks:
   - security
   - generated
   - build-out
+  - tried:gemini
   urls: []
   context: Run the ecosystem audit for organvm/session-meta (npm audit / pip-audit
     / equivalent), upgrade or pin high-severity advisories, and add input validation
@@ -49551,13 +49708,21 @@ tasks:
     2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T14:14:19.028613Z'
-  dispatch_log: []
+  updated: '2026-06-25T14:44:33.791714Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T14:14:19.028613Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+  - timestamp: '2026-06-25T14:44:33.791714Z'
+    agent: jules
+    session_id: '17471962598716020352'
+    status: dispatched
 - id: GEN-organvm-portfolio-security-0625
   title: Security hardening pass on organvm/portfolio
   repo: organvm/portfolio
   type: code
-  target_agent: any
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: dispatched
@@ -49565,6 +49730,7 @@ tasks:
   - security
   - generated
   - build-out
+  - tried:gemini
   urls: []
   context: Run the ecosystem audit for organvm/portfolio (npm audit / pip-audit /
     equivalent), upgrade or pin high-severity advisories, and add input validation
@@ -49572,20 +49738,25 @@ tasks:
     2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T14:14:19.028613Z'
-  dispatch_log: []
+  updated: '2026-06-25T15:11:55.617328Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T14:14:19.028613Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: GEN-organvm-a-i-chat--exporter-security-0625
   title: Security hardening pass on organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: any
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - security
   - generated
   - build-out
+  - tried:gemini
   urls: []
   context: Run the ecosystem audit for organvm/a-i-chat--exporter (npm audit / pip-audit
     / equivalent), upgrade or pin high-severity advisories, and add input validation
@@ -49594,19 +49765,24 @@ tasks:
   depends_on: []
   created: '2026-06-25'
   updated: '2026-06-25T14:14:19.028613Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-25T14:14:19.028613Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: GEN-organvm-universal-mail--automation-security-0625
   title: Security hardening pass on organvm/universal-mail--automation
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - security
   - generated
   - build-out
+  - tried:codex
   urls: []
   context: Run the ecosystem audit for organvm/universal-mail--automation (npm audit
     / pip-audit / equivalent), upgrade or pin high-severity advisories, and add input
@@ -49614,12 +49790,17 @@ tasks:
     green. [auto-generated 2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  dispatch_log: []
+  updated: '2026-06-25T15:11:55.617328Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T14:44:33.791714Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
 - id: GEN-organvm-the-invisible-ledger-security-0625
   title: Security hardening pass on organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -49627,6 +49808,7 @@ tasks:
   - security
   - generated
   - build-out
+  - tried:codex
   urls: []
   context: Run the ecosystem audit for organvm/the-invisible-ledger (npm audit / pip-audit
     / equivalent), upgrade or pin high-severity advisories, and add input validation
@@ -49634,7 +49816,12 @@ tasks:
     2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  dispatch_log: []
+  updated: '2026-06-25T14:44:33.791714Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T14:44:33.791714Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
 - id: GEN-organvm-public-record-data-scrapper-security-0625
   title: Security hardening pass on organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
@@ -49642,11 +49829,12 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: open
+  status: cancelled
   labels:
   - security
   - generated
   - build-out
+  - noop
   urls: []
   context: Run the ecosystem audit for organvm/public-record-data-scrapper (npm audit
     / pip-audit / equivalent), upgrade or pin high-severity advisories, and add input
@@ -49654,19 +49842,25 @@ tasks:
     green. [auto-generated 2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  dispatch_log: []
+  updated: '2026-06-25T14:44:33.791714Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T14:44:33.791714Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: GEN-organvm-limen-security-0625
   title: Security hardening pass on organvm/limen
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - security
   - generated
   - build-out
+  - tried:agy
   urls: []
   context: Run the ecosystem audit for organvm/limen (npm audit / pip-audit / equivalent),
     upgrade or pin high-severity advisories, and add input validation at the main
@@ -49674,7 +49868,12 @@ tasks:
     2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  dispatch_log: []
+  updated: '2026-06-25T15:11:55.617328Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T14:44:33.791714Z'
+    agent: agy
+    session_id: cli
+    status: failed->claude
 - id: GEN-organvm-domus-genoma-simplify-0625
   title: Reduce complexity in organvm/domus-genoma
   repo: organvm/domus-genoma
@@ -49869,16 +50068,17 @@ tasks:
   title: Stage the donation funnel for ChatGPT Exporter
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: critical
   budget_cost: 2
-  status: dispatched
+  status: done
   labels:
   - revenue-funding
   - revenue
   - product
   - ship-order
   - generated
+  - tried:codex
   urls: []
   context: "In organvm/a-i-chat--exporter, add .github/FUNDING.yml (ko_fi + github\
     \ sponsors entries \u2014 use the owner handle; if the exact Ko-fi slug isn't\
@@ -49889,22 +50089,38 @@ tasks:
     \ tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T14:14:19.028613Z'
-  dispatch_log: []
+  updated: '2026-06-25T22:47:00Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T14:14:19.028613Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-06-25T14:44:33.791714Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-06-25T22:47:00Z'
+    agent: opencode
+    session_id: current
+    status: done
+    output: "Already done. PR #68 (ca556dc) merged into origin/master 2026-06-24:\
+      \ .github/FUNDING.yml (github: organvm, ko_fi: TODO_KO_FI_SLUG) + README Support/Sponsor\
+      \ section present. No new PR needed."
 - id: REV-organvm-universal-mail--automation-revenue-ship-0625
   title: Drive Universal Mail Automation to deploy-ready
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: any
+  target_agent: claude
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue-ship
   - revenue
   - product
   - ship-order
   - generated
+  - tried:agy
   urls: []
   context: "In organvm/universal-mail--automation, clear the concrete blockers between\
     \ the current state and a DEPLOYABLE product: get open PRs green + merged, fix\
@@ -49913,7 +50129,12 @@ tasks:
     \ rank 3, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-25'
-  dispatch_log: []
+  updated: '2026-06-25T15:11:55.617328Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T14:44:33.791714Z'
+    agent: agy
+    session_id: cli
+    status: failed->claude
 - id: REV-organvm-mirror-mirror-revenue-ship-0625
   title: Drive Mirror Mirror to deploy-ready
   repo: organvm/mirror-mirror
@@ -49921,13 +50142,14 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: open
+  status: cancelled
   labels:
   - revenue-ship
   - revenue
   - product
   - ship-order
   - generated
+  - noop
   urls: []
   context: "In organvm/mirror-mirror, clear the concrete blockers between the current\
     \ state and a DEPLOYABLE product: get open PRs green + merged, fix the critical\
@@ -49936,7 +50158,12 @@ tasks:
     \ stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-25'
-  dispatch_log: []
+  updated: '2026-06-25T14:44:33.791714Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T14:44:33.791714Z'
+    agent: claude
+    session_id: cli
+    status: noop
 - id: REV-organvm-public-record-data-scrapper-revenue-ship-0625
   title: Drive Public Record Data Scraper to deploy-ready
   repo: organvm/public-record-data-scrapper
@@ -49944,13 +50171,14 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: open
+  status: cancelled
   labels:
   - revenue-ship
   - revenue
   - product
   - ship-order
   - generated
+  - noop
   urls: []
   context: "In organvm/public-record-data-scrapper, clear the concrete blockers between\
     \ the current state and a DEPLOYABLE product: get open PRs green + merged, fix\
@@ -49959,21 +50187,28 @@ tasks:
     \ rank 2, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-25'
-  dispatch_log: []
+  updated: '2026-06-25T14:44:33.791714Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T14:44:33.791714Z'
+    agent: claude
+    session_id: cli
+    status: noop
 - id: REV-organvm-a-i-chat--exporter-revenue-pro-tier-0625
   title: Make the Pro-tier checkout merge-ready for ChatGPT Exporter
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: critical
   budget_cost: 2
-  status: dispatched
+  status: cancelled
   labels:
   - revenue-pro-tier
   - revenue
   - product
   - ship-order
   - generated
+  - tried:codex
+  - noop
   urls: []
   context: "In organvm/a-i-chat--exporter, rebase the stacked Pro-tier / LemonSqueezy\
     \ checkout PRs onto the default branch, resolve conflicts, and get every check\
@@ -49984,8 +50219,16 @@ tasks:
     \ \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T14:14:19.028613Z'
-  dispatch_log: []
+  updated: '2026-06-25T14:44:33.791714Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T14:14:19.028613Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-06-25T14:44:33.791714Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: REV-organvm-universal-mail--automation-revenue-readiness-0625
   title: First-paying-customer readiness pass on Universal Mail Automation
   repo: organvm/universal-mail--automation
@@ -49993,13 +50236,14 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: open
+  status: cancelled
   labels:
   - revenue-readiness
   - revenue
   - product
   - ship-order
   - generated
+  - noop
   urls: []
   context: "In organvm/universal-mail--automation, find the single highest-leverage\
     \ gap between the current product and something a stranger would pay for (first-dollar\
@@ -50008,12 +50252,17 @@ tasks:
     \ 3, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-25'
-  dispatch_log: []
+  updated: '2026-06-25T14:44:33.791714Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T14:44:33.791714Z'
+    agent: claude
+    session_id: cli
+    status: noop
 - id: REV-organvm-mirror-mirror-revenue-readiness-0625
   title: First-paying-customer readiness pass on Mirror Mirror
   repo: organvm/mirror-mirror
   type: code
-  target_agent: any
+  target_agent: jules
   priority: high
   budget_cost: 2
   status: open
@@ -50023,6 +50272,7 @@ tasks:
   - product
   - ship-order
   - generated
+  - tried:gemini
   urls: []
   context: "In organvm/mirror-mirror, find the single highest-leverage gap between\
     \ the current product and something a stranger would pay for (first-dollar path:\
@@ -50031,7 +50281,12 @@ tasks:
     \ tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-25'
-  dispatch_log: []
+  updated: '2026-06-25T14:44:33.791714Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T14:44:33.791714Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: REV-organvm-public-record-data-scrapper-revenue-readiness-0625
   title: First-paying-customer readiness pass on Public Record Data Scraper
   repo: organvm/public-record-data-scrapper
@@ -50039,7 +50294,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue-readiness
   - revenue
@@ -50054,6 +50309,7 @@ tasks:
     \ rank 2, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-25'
+  updated: '2026-06-25T15:11:55.617328Z'
   dispatch_log: []
 - id: REV-organvm-the-invisible-ledger-revenue-readiness-0625
   title: First-paying-customer readiness pass on The Invisible Ledger
@@ -50062,7 +50318,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue-readiness
   - revenue
@@ -50077,6 +50333,7 @@ tasks:
     \ spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-25'
+  updated: '2026-06-25T15:11:55.617328Z'
   dispatch_log: []
 - id: REV-organvm-a-i-chat--exporter-revenue-landing-0625
   title: Ship a landing page for ChatGPT Exporter
@@ -50085,7 +50342,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue-landing
   - revenue
@@ -50100,6 +50357,7 @@ tasks:
     \ 1, stage deploy-ready \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-25'
+  updated: '2026-06-25T15:11:55.617328Z'
   dispatch_log: []
 - id: REV-organvm-a-i-chat--exporter-revenue-launch-post-0625
   title: Draft the build-in-public launch post for ChatGPT Exporter
@@ -50108,7 +50366,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue-launch-post
   - revenue
@@ -50123,4 +50381,5 @@ tasks:
     \ spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-25'
+  updated: '2026-06-25T15:11:55.617328Z'
   dispatch_log: []
