@@ -127,6 +127,7 @@ C_NOMENCLATOR="${LIMEN_BEAT_NOMENCLATOR:-4}"     # NOMENCLATOR (INDEX·NOMINVM �
 C_CENSOR="${LIMEN_BEAT_CENSOR:-4}"     # CENSOR (insights→actions; hourly/daily/weekly tiers self-gate on wall-clock)
 C_MAIL="${LIMEN_BEAT_MAIL:-6}"         # COMMS (sweep inbound mail + rebuild the obligations ledger/faces)
 C_REPORT="${LIMEN_BEAT_REPORT:-12}"    # RELAY (conducting report; self-limits to once per usage-day)
+C_INSIGHT="${LIMEN_BEAT_INSIGHT:-4}"   # INSIGHT (insight-cadence: aggregate signals → reports at wall-clock cadence)
 C_QUICKEN="${LIMEN_BEAT_QUICKEN:-4}"   # QUICKEN (give stalled FleetView sessions life to finish)
 C_HEALTH="${LIMEN_BEAT_HEALTH:-6}"     # CARE (refresh the personal health office: chart digest + visit-prep)
 LOCKD="$LIMEN_ROOT/logs/.queue.lock.d"   # shared with supervisory ops (two-scale safety)
@@ -307,6 +308,8 @@ while true; do
   # run so it is observable BEFORE it is autonomous; the executive only acts when armed
   # (LIMEN_CENSOR_APPLY=1). Tiers (hourly/daily/weekly) self-gate on wall-clock. Bounded + fail-open.
   play "$C_CENSOR"  && python3 "$LIMEN_ROOT/scripts/censor.py" $([ "${LIMEN_CENSOR_APPLY:-0}" = "1" ] && echo --apply) 2>&1 | tail -1 || true
+  play "$C_INSIGHT" && python3 "$LIMEN_ROOT/scripts/insight-cadence.py" --once 2>&1 | tail -1 || true  # INSIGHT: aggregate signals → cadence reports (wall-clock gated, fail-open)
+  play "$C_INSIGHT" && stamp insight
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/censor-view.py" 2>&1 | tail -1 || true   # the Censor's face (no network, can't time out)
   play "$C_WEB"     && [ "${LIMEN_STUDIUM:-0}" = "1" ] && python3 "$LIMEN_ROOT/scripts/studium.py" --daily 2>&1 | tail -1 || true   # daily transmission-curriculum face (gated; advances once/day, no network, can't time out)
   play "$C_REPORT"  && python3 "$LIMEN_ROOT/scripts/conducting-report.py" 2>&1 | tail -1 || true   # RELAY: did the fleet burn its full force? (once/day push — so you never have to ask)

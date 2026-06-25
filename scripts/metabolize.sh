@@ -76,4 +76,11 @@ if [ "$(( $(date +%s) / 3600 % N ))" = "0" ]; then
   python3 "$LIMEN_ROOT/scripts/self-improve.py" || echo "  (self-improve skipped)"
 fi
 
+echo "── 7. insight-cadence (aggregate signals → cadence reports; gated LIMEN_INSIGHT_CADENCE=1) ──"
+if [ "${LIMEN_INSIGHT_CADENCE:-0}" = "1" ]; then
+  python3 "$LIMEN_ROOT/scripts/insight-cadence.py" --once || echo "  (insight-cadence skipped/failed)"
+else
+  echo "  skipped (set LIMEN_INSIGHT_CADENCE=1 to enable insight production)"
+fi
+
 echo "═══ metabolize done $(date '+%F %T') ═══"
