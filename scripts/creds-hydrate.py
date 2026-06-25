@@ -76,6 +76,9 @@ ENV_FILE = Path(os.environ.get("LIMEN_ENV", str(Path.home() / ".limen.env")))
 #          reads GH_TOKEN/GITHUB_TOKEN).
 #   file:  optional tool-native target {"path": "~/.x/auth.json", "template": "...{value}..."} for
 #          tools that only read a file. Omit when env alone suffices.
+#   derive: optional ["cmd", "arg", ...] that MINTS the value from a live local source (e.g. the gh
+#          keyring via `gh auth token`) instead of a static op:// secret. Tried BEFORE `ref`; runs with
+#          GH_TOKEN/GITHUB_TOKEN unset so a dead floor token can't shadow the keyring. Fail-open → ref.
 #   enabled: set False to park an entry (e.g. claude — its token is owned by the credential-race
 #          fix / Rung-0 self-heal; hydrating it here could fight that handler).
 DEFAULT_MAP: list[dict] = [
@@ -121,6 +124,14 @@ DEFAULT_MAP: list[dict] = [
         "ref": "op://GitHub-Tokens/master-org-token-011726/password",
         "env": ["GH_TOKEN", "GITHUB_TOKEN"],
         "enabled": True,
+        # The static op:// PAT (master-org-token-011726) is REVOKED — --verify reports 401 Bad
+        # credentials — and once materialized it SHADOWS the still-valid `gh` keyring (account 4444J99)
+        # in every process that sources ~/.limen.env. So mint GH_TOKEN from the live keyring instead:
+        # `derive` runs `gh auth token` (with GH_TOKEN/GITHUB_TOKEN unset so gh reads the keyring, not
+        # the dead env token), preferred over `ref`; op:// stays the last-resort fallback. Self-heals
+        # each beat from a source that already works — closing the gh credential with ZERO human atoms
+        # (no PAT re-mint, no un-wired GitHub App). [[credential-durability-organ]] / L-FLEET-CAPACITY.
+        "derive": ["gh", "auth", "token"],
         # validity probe: GET /user with the token. A revoked/expired PAT answers 401 Bad credentials.
         "verify": {"url": "https://api.github.com/user", "auth": "bearer"},
     },
@@ -168,6 +179,26 @@ def op_read(ref: str, timeout: int = 15) -> str | None:
             stdin=subprocess.DEVNULL,
         )
     except (FileNotFoundError, subprocess.TimeoutExpired):
+        return None
+    if r.returncode != 0:
+        return None
+    val = (r.stdout or "").strip()
+    return val or None
+
+
+def derive_value(cmd: list[str], timeout: int = 15) -> str | None:
+    """Mint a credential from a LIVE local source (e.g. `gh auth token` → the gh keyring) rather than a
+    static op:// secret. Runs with GH_TOKEN/GITHUB_TOKEN scrubbed from the child env so a dead floor
+    token can't shadow the keyring gh would otherwise read. Returns the value (never printed) or None on
+    any failure — fail-open, so the caller falls back to the op:// ref."""
+    child_env = {k: v for k, v in os.environ.items() if k not in ("GH_TOKEN", "GITHUB_TOKEN")}
+    try:
+        r = subprocess.run(
+            cmd,
+            capture_output=True, text=True, timeout=timeout,
+            stdin=subprocess.DEVNULL, env=child_env,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
         return None
     if r.returncode != 0:
         return None
@@ -371,13 +402,18 @@ def main() -> int:
     hydrated, skipped = 0, 0
     for e in cred_map:
         ref, envs, fspec = e["ref"], e.get("env", []), e.get("file")
+        dcmd = e.get("derive")
         targets = ", ".join(envs) + (f" + {fspec['path']}" if fspec else "")
+        source = f"`{' '.join(dcmd)}` (op:// fallback)" if dcmd else ref_display(ref)
         if not apply:
-            print(f"  plan: {e['lane']:28} {ref_display(ref)} -> {targets}")
+            print(f"  plan: {e['lane']:28} {source} -> {targets}")
             continue
-        val = op_read(ref)
+        # Prefer a live-minted value (e.g. the gh keyring) over the static op:// secret; fall back to op.
+        val = derive_value(dcmd) if dcmd else None
         if not val:
-            print(f"  SKIP {e['lane']:28} {ref_display(ref)} — unreadable (check op signin / the field name)")
+            val = op_read(ref)
+        if not val:
+            print(f"  SKIP {e['lane']:28} {source} — unreadable (check op signin / the field name)")
             skipped += 1
             continue
         for k in envs:

@@ -163,6 +163,46 @@ def test_probe_cred_classifies_valid_invalid_unverifiable(monkeypatch):
     assert mod.probe_cred(entry, "tok")[0] == "unverifiable"  # offline never cries wolf
 
 
+# --- DERIVE (live-minted source, e.g. gh keyring) --------------------------------------------------
+
+def test_derive_value_runs_with_dead_floor_token_scrubbed(monkeypatch):
+    """The gh keyring must be read with GH_TOKEN/GITHUB_TOKEN unset — else a dead floor token shadows it."""
+    mod = _hydrate_module()
+    monkeypatch.setenv("GH_TOKEN", "dead_pat")
+    monkeypatch.setenv("GITHUB_TOKEN", "dead_pat")
+    seen = {}
+
+    class _R:
+        returncode = 0
+        stdout = "  keyring_tok\n"
+
+    def _run(cmd, **kw):
+        seen["cmd"] = cmd
+        seen["env"] = kw.get("env", {})
+        return _R()
+
+    monkeypatch.setattr(mod.subprocess, "run", _run)
+    assert mod.derive_value(["gh", "auth", "token"]) == "keyring_tok"   # stripped
+    assert seen["cmd"] == ["gh", "auth", "token"]
+    assert "GH_TOKEN" not in seen["env"] and "GITHUB_TOKEN" not in seen["env"]  # dead token can't shadow
+
+
+def test_derive_value_failopen(monkeypatch):
+    """Missing binary / nonzero exit / empty output → None, so the caller falls back to op://."""
+    mod = _hydrate_module()
+
+    def _missing(*a, **k):
+        raise FileNotFoundError("gh")
+    monkeypatch.setattr(mod.subprocess, "run", _missing)
+    assert mod.derive_value(["gh", "auth", "token"]) is None
+
+    class _Fail:
+        returncode = 1
+        stdout = ""
+    monkeypatch.setattr(mod.subprocess, "run", lambda *a, **k: _Fail())
+    assert mod.derive_value(["gh", "auth", "token"]) is None
+
+
 def test_verify_cli_no_creds_materialized_exits_zero(tmp_path):
     """--verify over an empty floor reports 'not materialized' and exits 0 — no network, no false alarm."""
     env_file = tmp_path / ".limen.env"  # does not exist
