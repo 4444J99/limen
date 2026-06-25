@@ -1,6 +1,7 @@
 import os
 import base64
 import json
+import re
 import subprocess
 import tempfile
 import urllib.error
@@ -22,6 +23,12 @@ VALID_STATUSES = {"open", "dispatched", "in_progress", "done", "failed", "failed
 VALID_PRIORITIES = {"critical", "high", "medium", "low", "backlog"}
 VALID_AGENTS = {"jules", "claude", "gemini", "opencode", "codex", "copilot", "agy", "warp", "oz", "github_actions", "any"}
 
+def get_cors_origins() -> list[str]:
+    cors_env = os.environ.get("LIMEN_CORS_ORIGINS", "")
+    if not cors_env or cors_env == "*":
+        return ["http://localhost:*", "http://localhost:3000", "http://localhost:8000"]
+    return [origin.strip() for origin in cors_env.split(",") if origin.strip()]
+
 app = FastAPI(
     title="Limen API",
     description="Universal agent task intake backend",
@@ -30,7 +37,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[origin for origin in os.environ.get("LIMEN_CORS_ORIGINS", "*").split(",") if origin],
+    allow_origins=get_cors_origins(),
     allow_credentials=True,
     allow_methods=["GET", "POST", "PATCH"],
     allow_headers=["*"],
@@ -43,6 +50,20 @@ GITHUB_REPO = os.environ.get("LIMEN_GITHUB_REPO", "")
 GITHUB_BRANCH = os.environ.get("LIMEN_GITHUB_BRANCH", "main")
 GITHUB_PATH = os.environ.get("LIMEN_GITHUB_PATH", "tasks.yaml")
 GITHUB_TOKEN = os.environ.get("LIMEN_GITHUB_TOKEN", "")
+
+
+def is_valid_url(url: str) -> bool:
+    url_pattern = re.compile(
+        r'^https?://'
+        r'(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?|'
+        r'localhost|'
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|'
+        r'\[(?:[0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}\])'
+        r'(?::\d+)?'
+        r'(?:/[a-zA-Z0-9._~:/?#[\]@!$&\'()*+,;=-]*)?$',
+        re.UNICODE
+    )
+    return bool(url_pattern.match(url)) and len(url) <= 2048
 
 
 class TaskCreate(BaseModel):
@@ -79,6 +100,18 @@ class TaskCreate(BaseModel):
             raise ValueError(f"target_agent must be one of {', '.join(sorted(VALID_AGENTS))}")
         return v
 
+    @field_validator("urls", mode="before")
+    @classmethod
+    def validate_urls(cls, v: list[str]) -> list[str]:
+        if not isinstance(v, list):
+            raise ValueError("urls must be a list")
+        for url in v:
+            if not isinstance(url, str):
+                raise ValueError("each url must be a string")
+            if not is_valid_url(url):
+                raise ValueError(f"invalid URL format: {url}")
+        return v
+
 
 class TaskUpdate(BaseModel):
     status: str | None = None
@@ -94,6 +127,20 @@ class TaskUpdate(BaseModel):
     def validate_status(cls, v: str | None) -> str | None:
         if v is not None and v not in VALID_STATUSES:
             raise ValueError(f"status must be one of {', '.join(sorted(VALID_STATUSES))}")
+        return v
+
+    @field_validator("urls", mode="before")
+    @classmethod
+    def validate_urls(cls, v: list[str] | None) -> list[str] | None:
+        if v is None:
+            return None
+        if not isinstance(v, list):
+            raise ValueError("urls must be a list")
+        for url in v:
+            if not isinstance(url, str):
+                raise ValueError("each url must be a string")
+            if not is_valid_url(url):
+                raise ValueError(f"invalid URL format: {url}")
         return v
 
 
@@ -780,7 +827,15 @@ def readiness(data: dict[str, Any], agent: str = "jules") -> dict[str, Any]:
     }
 
 
+def validate_task_id(task_id: str) -> None:
+    if not isinstance(task_id, str) or len(task_id) < 1 or len(task_id) > 128:
+        raise HTTPException(status_code=400, detail="invalid task_id format")
+    if not re.match(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$", task_id):
+        raise HTTPException(status_code=400, detail="invalid task_id format")
+
+
 def find_task(data: dict[str, Any], task_id: str) -> dict[str, Any]:
+    validate_task_id(task_id)
     for task in data.get("tasks", []):
         if task.get("id") == task_id:
             return task
@@ -908,6 +963,8 @@ def get_public_status() -> dict[str, Any]:
 @app.get("/api/qa-status")
 def get_qa_status(authorization: str | None = Header(None), agent: str = Query("jules")) -> dict[str, Any]:
     require_persona(authorization, {"owner"})
+    if agent not in VALID_AGENTS:
+        raise HTTPException(status_code=400, detail=f"agent must be one of {', '.join(sorted(VALID_AGENTS))}")
     return qa_status(load_board(), agent=agent)
 
 
@@ -919,6 +976,8 @@ def get_surface_manifest(authorization: str | None = Header(None)) -> dict[str, 
 @app.get("/api/readiness")
 def get_readiness(authorization: str | None = Header(None), agent: str = Query("jules")) -> dict[str, Any]:
     require_persona(authorization, {"owner"})
+    if agent not in VALID_AGENTS:
+        raise HTTPException(status_code=400, detail=f"agent must be one of {', '.join(sorted(VALID_AGENTS))}")
     return readiness(load_board(), agent=agent)
 
 
@@ -930,6 +989,12 @@ def list_tasks(
     repo: str | None = Query(None),
 ) -> dict[str, Any]:
     require_persona(authorization, {"owner"})
+    if status is not None and status not in VALID_STATUSES:
+        raise HTTPException(status_code=400, detail=f"status must be one of {', '.join(sorted(VALID_STATUSES))}")
+    if agent is not None and agent not in VALID_AGENTS:
+        raise HTTPException(status_code=400, detail=f"agent must be one of {', '.join(sorted(VALID_AGENTS))}")
+    if repo is not None and not isinstance(repo, str):
+        raise HTTPException(status_code=400, detail="repo must be a string")
     tasks = load_board().get("tasks", [])
     if status:
         tasks = [task for task in tasks if task.get("status") == status]
