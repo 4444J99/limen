@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-06-25'
-      spent: 12
+      spent: 21
       per_agent:
-        jules: 10
+        jules: 17
         gemini: 0
         codex: 0
-        opencode: 2
+        opencode: 4
         agy: 0
         claude: 0
       per_agent_reset:
@@ -36057,7 +36057,7 @@ tasks:
     Reject session-start calls that do'
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-24T14:22:13.734586Z'
+  updated: '2026-06-25T15:35:53.897653Z'
   dispatch_log:
   - timestamp: '2026-06-22T03:01:00.689305Z'
     agent: gemini
@@ -36075,6 +36075,15 @@ tasks:
   - timestamp: '2026-06-24T14:22:13.734586Z'
     agent: jules
     session_id: '16980995886769690638'
+    status: dispatched
+  - timestamp: '2026-06-25T15:33:05.572984Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-25T15:35:53.897653Z'
+    agent: jules
+    session_id: '15122909066446553167'
     status: dispatched
 - id: GH-4444j99-hokage-chess-48
   title: "[V-B] Phase 3 \u2014 substrate-doc canonical-home promotion + seed.yaml\
@@ -36565,7 +36574,7 @@ tasks:
     \ (verified: SKILL.md + assets + scripts). ## Fix"
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-24T14:22:13.734586Z'
+  updated: '2026-06-25T16:00:42.494866Z'
   dispatch_log:
   - timestamp: '2026-06-22T03:35:38.489610Z'
     agent: gemini
@@ -36584,6 +36593,11 @@ tasks:
     agent: jules
     session_id: '18235718483838312072'
     status: dispatched
+  - timestamp: '2026-06-25T15:33:05.572984Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: GH-4444j99-hokage-chess-14
   title: '[AF-3] Deepen Stratum 2 timeslices (real research, not seed prose)'
   repo: 4444J99/hokage-chess
@@ -48287,7 +48301,7 @@ tasks:
   target_agent: agy
   priority: low
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - docs
   - generated
@@ -48300,7 +48314,7 @@ tasks:
     \ to keep the stream endless]"
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-25T13:58:52.030958Z'
+  updated: '2026-06-25T16:00:42.494866Z'
   dispatch_log:
   - timestamp: '2026-06-25T13:58:52.030958Z'
     agent: opencode
@@ -49070,20 +49084,22 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: cancelled
   labels:
   - typing
   - generated
   - build-out
   - tried:agy
   - tried:codex
+  - tried:claude
+  - noop
   urls: []
   context: Eliminate the worst untyped hotspots in organvm/a-i-chat--exporter's most-imported
     module (remove `any` / add type hints / fix loose signatures). Keep the build
     and tests green. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-25T15:11:55.617328Z'
+  updated: '2026-06-25T15:35:53.897653Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:22:13.734586Z'
     agent: agy
@@ -49093,6 +49109,14 @@ tasks:
     agent: codex
     session_id: cli
     status: failed->opencode
+  - timestamp: '2026-06-25T15:11:55.617328Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
+  - timestamp: '2026-06-25T15:35:53.897653Z'
+    agent: claude
+    session_id: cli
+    status: noop
 - id: GEN-organvm-the-invisible-ledger-typing-0624
   title: Tighten types in organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
@@ -49245,14 +49269,16 @@ tasks:
   title: Raise test coverage in organvm/domus-genoma
   repo: organvm/domus-genoma
   type: code
-  target_agent: any
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - test-coverage
   - generated
   - build-out
+  - tried:agy
+  - tried:gemini
   urls: []
   context: Find the largest source module in organvm/domus-genoma with little or no
     test coverage and add a focused, PASSING test suite for it. Run the repo's own
@@ -49260,13 +49286,21 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T15:11:55.617328Z'
-  dispatch_log: []
+  updated: '2026-06-25T15:35:53.897653Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T15:11:55.617328Z'
+    agent: agy
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-06-25T15:35:53.897653Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: GEN-organvm-mirror-mirror-test-coverage-0625
   title: Raise test coverage in organvm/mirror-mirror
   repo: organvm/mirror-mirror
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: dispatched
@@ -49274,6 +49308,8 @@ tasks:
   - test-coverage
   - generated
   - build-out
+  - tried:agy
+  - tried:codex
   urls: []
   context: Find the largest source module in organvm/mirror-mirror with little or
     no test coverage and add a focused, PASSING test suite for it. Run the repo's
@@ -49281,20 +49317,30 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T15:11:55.617328Z'
-  dispatch_log: []
+  updated: '2026-06-25T16:00:42.494866Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T15:11:55.617328Z'
+    agent: agy
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-06-25T15:35:53.897653Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
 - id: GEN-organvm-a-i-chat--exporter-test-coverage-0625
   title: Raise test coverage in organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: cancelled
   labels:
   - test-coverage
   - generated
   - build-out
+  - tried:agy
+  - noop
   urls: []
   context: Find the largest source module in organvm/a-i-chat--exporter with little
     or no test coverage and add a focused, PASSING test suite for it. Run the repo's
@@ -49302,20 +49348,29 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T15:11:55.617328Z'
-  dispatch_log: []
+  updated: '2026-06-25T15:35:53.897653Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T15:11:55.617328Z'
+    agent: agy
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-06-25T15:35:53.897653Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: GEN-organvm-universal-mail--automation-test-coverage-0625
   title: Raise test coverage in organvm/universal-mail--automation
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: any
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - test-coverage
   - generated
   - build-out
+  - tried:gemini
   urls: []
   context: Find the largest source module in organvm/universal-mail--automation with
     little or no test coverage and add a focused, PASSING test suite for it. Run the
@@ -49324,19 +49379,24 @@ tasks:
   depends_on: []
   created: '2026-06-25'
   updated: '2026-06-25T15:11:55.617328Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-25T15:11:55.617328Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: GEN-organvm-the-invisible-ledger-test-coverage-0625
   title: Raise test coverage in organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: any
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - test-coverage
   - generated
   - build-out
+  - tried:gemini
   urls: []
   context: Find the largest source module in organvm/the-invisible-ledger with little
     or no test coverage and add a focused, PASSING test suite for it. Run the repo's
@@ -49345,19 +49405,24 @@ tasks:
   depends_on: []
   created: '2026-06-25'
   updated: '2026-06-25T15:11:55.617328Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-25T15:11:55.617328Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: GEN-organvm-public-record-data-scrapper-test-coverage-0625
   title: Raise test coverage in organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
   type: code
-  target_agent: any
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - test-coverage
   - generated
   - build-out
+  - tried:gemini
   urls: []
   context: Find the largest source module in organvm/public-record-data-scrapper with
     little or no test coverage and add a focused, PASSING test suite for it. Run the
@@ -49366,12 +49431,16 @@ tasks:
   depends_on: []
   created: '2026-06-25'
   updated: '2026-06-25T15:11:55.617328Z'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-06-25T15:11:55.617328Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: GEN-organvm-limen-test-coverage-0625
   title: Raise test coverage in organvm/limen
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -49379,6 +49448,7 @@ tasks:
   - test-coverage
   - generated
   - build-out
+  - tried:codex
   urls: []
   context: Find the largest source module in organvm/limen with little or no test
     coverage and add a focused, PASSING test suite for it. Run the repo's own test
@@ -49386,7 +49456,12 @@ tasks:
     keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  dispatch_log: []
+  updated: '2026-06-25T15:35:53.897653Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T15:35:53.897653Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
 - id: GEN-organvm-domus-genoma-ci-green-0625
   title: Make organvm/domus-genoma CI green
   repo: organvm/domus-genoma
@@ -49419,6 +49494,10 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-25T15:11:55.617328Z'
+    agent: jules
+    session_id: '14840852267879797921'
+    status: dispatched
 - id: GEN-organvm-mirror-mirror-ci-green-0625
   title: Make organvm/mirror-mirror CI green
   repo: organvm/mirror-mirror
@@ -49511,13 +49590,14 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: cancelled
   labels:
   - ci-green
   - generated
   - build-out
   - tried:agy
   - tried:codex
+  - noop
   urls: []
   context: Inspect the latest FAILING checks on organvm/a-i-chat--exporter's default
     branch, fix the root cause (lint / types / failing test / config), and confirm
@@ -49536,6 +49616,10 @@ tasks:
     agent: codex
     session_id: cli
     status: failed->opencode
+  - timestamp: '2026-06-25T15:11:55.617328Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: GEN-organvm-universal-mail--automation-ci-green-0625
   title: Make organvm/universal-mail--automation CI green
   repo: organvm/universal-mail--automation
@@ -49575,12 +49659,13 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: cancelled
   labels:
   - ci-green
   - generated
   - build-out
   - tried:agy
+  - noop
   urls: []
   context: Inspect the latest FAILING checks on organvm/the-invisible-ledger's default
     branch, fix the root cause (lint / types / failing test / config), and confirm
@@ -49599,6 +49684,10 @@ tasks:
     agent: agy
     session_id: cli
     status: failed->claude
+  - timestamp: '2026-06-25T15:11:55.617328Z'
+    agent: claude
+    session_id: cli
+    status: noop
 - id: GEN-organvm-public-record-data-scrapper-ci-green-0625
   title: Make organvm/public-record-data-scrapper CI green
   repo: organvm/public-record-data-scrapper
@@ -49662,6 +49751,10 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-25T15:11:55.617328Z'
+    agent: jules
+    session_id: '7562912821735641448'
+    status: dispatched
 - id: GEN-organvm-mirror-mirror-security-0625
   title: Security hardening pass on organvm/mirror-mirror
   repo: organvm/mirror-mirror
@@ -49744,6 +49837,10 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-25T15:11:55.617328Z'
+    agent: jules
+    session_id: '2915183685192770862'
+    status: dispatched
 - id: GEN-organvm-a-i-chat--exporter-security-0625
   title: Security hardening pass on organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
@@ -49751,7 +49848,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - security
   - generated
@@ -49764,12 +49861,16 @@ tasks:
     2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T14:14:19.028613Z'
+  updated: '2026-06-25T15:35:53.897653Z'
   dispatch_log:
   - timestamp: '2026-06-25T14:14:19.028613Z'
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-25T15:35:53.897653Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GEN-organvm-universal-mail--automation-security-0625
   title: Security hardening pass on organvm/universal-mail--automation
   repo: organvm/universal-mail--automation
@@ -49777,12 +49878,13 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: cancelled
   labels:
   - security
   - generated
   - build-out
   - tried:codex
+  - noop
   urls: []
   context: Run the ecosystem audit for organvm/universal-mail--automation (npm audit
     / pip-audit / equivalent), upgrade or pin high-severity advisories, and add input
@@ -49796,19 +49898,24 @@ tasks:
     agent: codex
     session_id: cli
     status: failed->opencode
+  - timestamp: '2026-06-25T15:11:55.617328Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: GEN-organvm-the-invisible-ledger-security-0625
   title: Security hardening pass on organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: opencode
+  target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - security
   - generated
   - build-out
   - tried:codex
+  - tried:agy
   urls: []
   context: Run the ecosystem audit for organvm/the-invisible-ledger (npm audit / pip-audit
     / equivalent), upgrade or pin high-severity advisories, and add input validation
@@ -49816,12 +49923,16 @@ tasks:
     2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T14:44:33.791714Z'
+  updated: '2026-06-25T16:00:42.494866Z'
   dispatch_log:
   - timestamp: '2026-06-25T14:44:33.791714Z'
     agent: codex
     session_id: cli
     status: failed->opencode
+  - timestamp: '2026-06-25T15:35:53.897653Z'
+    agent: agy
+    session_id: cli
+    status: failed->claude
 - id: GEN-organvm-public-record-data-scrapper-security-0625
   title: Security hardening pass on organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
@@ -49855,12 +49966,13 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: cancelled
   labels:
   - security
   - generated
   - build-out
   - tried:agy
+  - noop
   urls: []
   context: Run the ecosystem audit for organvm/limen (npm audit / pip-audit / equivalent),
     upgrade or pin high-severity advisories, and add input validation at the main
@@ -49874,11 +49986,15 @@ tasks:
     agent: agy
     session_id: cli
     status: failed->claude
+  - timestamp: '2026-06-25T15:11:55.617328Z'
+    agent: claude
+    session_id: cli
+    status: noop
 - id: GEN-organvm-domus-genoma-simplify-0625
   title: Reduce complexity in organvm/domus-genoma
   repo: organvm/domus-genoma
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -49886,13 +50002,19 @@ tasks:
   - simplify
   - generated
   - build-out
+  - tried:codex
   urls: []
   context: Identify the most complex or most-duplicated module in organvm/domus-genoma
     and refactor it for clarity, with tests proving behavior is unchanged. Net lines
     should not grow without cause. [auto-generated 2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  dispatch_log: []
+  updated: '2026-06-25T15:35:53.897653Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T15:35:53.897653Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
 - id: GEN-organvm-mirror-mirror-simplify-0625
   title: Reduce complexity in organvm/mirror-mirror
   repo: organvm/mirror-mirror
@@ -49900,37 +50022,49 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: cancelled
   labels:
   - simplify
   - generated
   - build-out
+  - noop
   urls: []
   context: Identify the most complex or most-duplicated module in organvm/mirror-mirror
     and refactor it for clarity, with tests proving behavior is unchanged. Net lines
     should not grow without cause. [auto-generated 2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  dispatch_log: []
+  updated: '2026-06-25T15:35:53.897653Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T15:35:53.897653Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: GEN-organvm-session-meta-simplify-0625
   title: Reduce complexity in organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: any
+  target_agent: claude
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - simplify
   - generated
   - build-out
+  - tried:agy
   urls: []
   context: Identify the most complex or most-duplicated module in organvm/session-meta
     and refactor it for clarity, with tests proving behavior is unchanged. Net lines
     should not grow without cause. [auto-generated 2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  dispatch_log: []
+  updated: '2026-06-25T16:00:42.494866Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T15:35:53.897653Z'
+    agent: agy
+    session_id: cli
+    status: failed->claude
 - id: GEN-organvm-portfolio-simplify-0625
   title: Reduce complexity in organvm/portfolio
   repo: organvm/portfolio
@@ -49938,42 +50072,54 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: cancelled
   labels:
   - simplify
   - generated
   - build-out
+  - noop
   urls: []
   context: Identify the most complex or most-duplicated module in organvm/portfolio
     and refactor it for clarity, with tests proving behavior is unchanged. Net lines
     should not grow without cause. [auto-generated 2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  dispatch_log: []
+  updated: '2026-06-25T15:35:53.897653Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T15:35:53.897653Z'
+    agent: agy
+    session_id: cli
+    status: noop
 - id: GEN-organvm-a-i-chat--exporter-simplify-0625
   title: Reduce complexity in organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: any
+  target_agent: gemini
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - simplify
   - generated
   - build-out
+  - tried:claude
   urls: []
   context: Identify the most complex or most-duplicated module in organvm/a-i-chat--exporter
     and refactor it for clarity, with tests proving behavior is unchanged. Net lines
     should not grow without cause. [auto-generated 2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  dispatch_log: []
+  updated: '2026-06-25T16:00:42.494866Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T15:35:53.897653Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
 - id: GEN-organvm-the-invisible-ledger-simplify-0625
   title: Reduce complexity in organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: any
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -49981,18 +50127,24 @@ tasks:
   - simplify
   - generated
   - build-out
+  - tried:claude
   urls: []
   context: Identify the most complex or most-duplicated module in organvm/the-invisible-ledger
     and refactor it for clarity, with tests proving behavior is unchanged. Net lines
     should not grow without cause. [auto-generated 2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  dispatch_log: []
+  updated: '2026-06-25T15:35:53.897653Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T15:35:53.897653Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
 - id: GEN-organvm-mirror-mirror-typing-0625
   title: Tighten types in organvm/mirror-mirror
   repo: organvm/mirror-mirror
   type: code
-  target_agent: any
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -50000,13 +50152,19 @@ tasks:
   - typing
   - generated
   - build-out
+  - tried:gemini
   urls: []
   context: Eliminate the worst untyped hotspots in organvm/mirror-mirror's most-imported
     module (remove `any` / add type hints / fix loose signatures). Keep the build
     and tests green. [auto-generated 2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  dispatch_log: []
+  updated: '2026-06-25T15:35:53.897653Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T15:35:53.897653Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: GEN-organvm-session-meta-typing-0625
   title: Tighten types in organvm/session-meta
   repo: organvm/session-meta
@@ -50014,7 +50172,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - typing
   - generated
@@ -50025,6 +50183,7 @@ tasks:
     and tests green. [auto-generated 2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
+  updated: '2026-06-25T16:00:42.494866Z'
   dispatch_log: []
 - id: GEN-organvm-portfolio-typing-0625
   title: Tighten types in organvm/portfolio
@@ -50033,7 +50192,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - typing
   - generated
@@ -50044,6 +50203,7 @@ tasks:
     and tests green. [auto-generated 2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
+  updated: '2026-06-25T16:00:42.494866Z'
   dispatch_log: []
 - id: GEN-organvm-universal-mail--automation-typing-0625
   title: Tighten types in organvm/universal-mail--automation
@@ -50052,7 +50212,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - typing
   - generated
@@ -50063,6 +50223,7 @@ tasks:
     the build and tests green. [auto-generated 2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
+  updated: '2026-06-25T16:00:42.494866Z'
   dispatch_log: []
 - id: REV-organvm-a-i-chat--exporter-revenue-funding-0625
   title: Stage the donation funnel for ChatGPT Exporter
@@ -50071,7 +50232,7 @@ tasks:
   target_agent: opencode
   priority: critical
   budget_cost: 2
-  status: done
+  status: cancelled
   labels:
   - revenue-funding
   - revenue
@@ -50079,6 +50240,7 @@ tasks:
   - ship-order
   - generated
   - tried:codex
+  - noop
   urls: []
   context: "In organvm/a-i-chat--exporter, add .github/FUNDING.yml (ko_fi + github\
     \ sponsors entries \u2014 use the owner handle; if the exact Ko-fi slug isn't\
@@ -50089,7 +50251,7 @@ tasks:
     \ tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T22:47:00Z'
+  updated: '2026-06-25T15:11:55.617328Z'
   dispatch_log:
   - timestamp: '2026-06-25T14:14:19.028613Z'
     agent: codex
@@ -50103,9 +50265,13 @@ tasks:
     agent: opencode
     session_id: current
     status: done
-    output: "Already done. PR #68 (ca556dc) merged into origin/master 2026-06-24:\
-      \ .github/FUNDING.yml (github: organvm, ko_fi: TODO_KO_FI_SLUG) + README Support/Sponsor\
-      \ section present. No new PR needed."
+    output: 'Already done. PR #68 (ca556dc) merged into origin/master 2026-06-24:
+      .github/FUNDING.yml (github: organvm, ko_fi: TODO_KO_FI_SLUG) + README Support/Sponsor
+      section present. No new PR needed.'
+  - timestamp: '2026-06-25T15:11:55.617328Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: REV-organvm-universal-mail--automation-revenue-ship-0625
   title: Drive Universal Mail Automation to deploy-ready
   repo: organvm/universal-mail--automation
@@ -50113,7 +50279,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: cancelled
   labels:
   - revenue-ship
   - revenue
@@ -50121,6 +50287,7 @@ tasks:
   - ship-order
   - generated
   - tried:agy
+  - noop
   urls: []
   context: "In organvm/universal-mail--automation, clear the concrete blockers between\
     \ the current state and a DEPLOYABLE product: get open PRs green + merged, fix\
@@ -50135,6 +50302,10 @@ tasks:
     agent: agy
     session_id: cli
     status: failed->claude
+  - timestamp: '2026-06-25T15:11:55.617328Z'
+    agent: claude
+    session_id: cli
+    status: noop
 - id: REV-organvm-mirror-mirror-revenue-ship-0625
   title: Drive Mirror Mirror to deploy-ready
   repo: organvm/mirror-mirror
@@ -50265,7 +50436,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue-readiness
   - revenue
@@ -50281,26 +50452,32 @@ tasks:
     \ tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T14:44:33.791714Z'
+  updated: '2026-06-25T15:35:53.897653Z'
   dispatch_log:
   - timestamp: '2026-06-25T14:44:33.791714Z'
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-25T15:35:53.897653Z'
+    agent: jules
+    session_id: '17716666438908889285'
+    status: dispatched
 - id: REV-organvm-public-record-data-scrapper-revenue-readiness-0625
   title: First-paying-customer readiness pass on Public Record Data Scraper
   repo: organvm/public-record-data-scrapper
   type: code
-  target_agent: any
+  target_agent: claude
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: cancelled
   labels:
   - revenue-readiness
   - revenue
   - product
   - ship-order
   - generated
+  - tried:codex
+  - noop
   urls: []
   context: "In organvm/public-record-data-scrapper, find the single highest-leverage\
     \ gap between the current product and something a stranger would pay for (first-dollar\
@@ -50309,13 +50486,21 @@ tasks:
     \ rank 2, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T15:11:55.617328Z'
-  dispatch_log: []
+  updated: '2026-06-25T15:35:53.897653Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T15:11:55.617328Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-06-25T15:35:53.897653Z'
+    agent: claude
+    session_id: cli
+    status: noop
 - id: REV-organvm-the-invisible-ledger-revenue-readiness-0625
   title: First-paying-customer readiness pass on The Invisible Ledger
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: any
+  target_agent: jules
   priority: high
   budget_cost: 2
   status: dispatched
@@ -50325,6 +50510,8 @@ tasks:
   - product
   - ship-order
   - generated
+  - tried:codex
+  - tried:gemini
   urls: []
   context: "In organvm/the-invisible-ledger, find the single highest-leverage gap\
     \ between the current product and something a stranger would pay for (first-dollar\
@@ -50333,22 +50520,31 @@ tasks:
     \ spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T15:11:55.617328Z'
-  dispatch_log: []
+  updated: '2026-06-25T16:00:42.494866Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T15:11:55.617328Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-06-25T15:35:53.897653Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: REV-organvm-a-i-chat--exporter-revenue-landing-0625
   title: Ship a landing page for ChatGPT Exporter
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: done
   labels:
   - revenue-landing
   - revenue
   - product
   - ship-order
   - generated
+  - tried:codex
   urls: []
   context: "Create a single deploy-ready product page for ChatGPT Exporter in organvm/a-i-chat--exporter\
     \ (docs/ or a gh-pages-ready index) explaining the real value and linking install\
@@ -50357,22 +50553,41 @@ tasks:
     \ 1, stage deploy-ready \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T15:11:55.617328Z'
-  dispatch_log: []
+  updated: '2026-06-25T16:02:00Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T15:11:55.617328Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-06-25T15:35:53.897653Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-06-25T16:02:00Z'
+    agent: opencode
+    session_id: current
+    status: done
+    output: 'Verified and built deploy-ready landing page. site/index.html was already
+      shipped in PR #64 (Jun 23) — verified copy accuracy against README, fixed Sponsors
+      URL (4444J99→organvm) and footer repo URL (a-organvm→organvm-iii-ergon), ran
+      pnpm run site:build → dist-site/ index.html + chatgpt.user.js + _headers.
+      Output is deploy-ready via Vercel (vercel.json → dist-site/) or Cloudflare Pages.'
 - id: REV-organvm-a-i-chat--exporter-revenue-launch-post-0625
   title: Draft the build-in-public launch post for ChatGPT Exporter
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: cancelled
   labels:
   - revenue-launch-post
   - revenue
   - product
   - ship-order
   - generated
+  - tried:codex
+  - noop
   urls: []
   context: "Write a ready-to-post launch announcement for ChatGPT Exporter (Show HN\
     \ + Reddit + X variants), grounded in what it ACTUALLY does and its real users.\
@@ -50381,5 +50596,707 @@ tasks:
     \ spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T15:11:55.617328Z'
+  updated: '2026-06-25T15:35:53.897653Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T15:11:55.617328Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-06-25T15:35:53.897653Z'
+    agent: opencode
+    session_id: cli
+    status: noop
+- id: GEN-organvm-the-invisible-ledger-docs-0625
+  title: Real usage docs for organvm/the-invisible-ledger
+  repo: organvm/the-invisible-ledger
+  type: code
+  target_agent: any
+  priority: low
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - docs
+  - generated
+  - build-out
+  urls: []
+  context: "Derive an accurate Usage section in organvm/the-invisible-ledger's README\
+    \ from the ACTUAL entrypoints/exports (install, run, key commands + flags). No\
+    \ invented features, no TODOs \u2014 only what the code actually does. [auto-generated\
+    \ 2026-06-25 to keep the stream endless]"
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T16:00:42.494866Z'
+  dispatch_log: []
+- id: GEN-organvm-the-invisible-ledger-typing-0625
+  title: Tighten types in organvm/the-invisible-ledger
+  repo: organvm/the-invisible-ledger
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - typing
+  - generated
+  - build-out
+  urls: []
+  context: Eliminate the worst untyped hotspots in organvm/the-invisible-ledger's
+    most-imported module (remove `any` / add type hints / fix loose signatures). Keep
+    the build and tests green. [auto-generated 2026-06-25 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T16:00:42.494866Z'
+  dispatch_log: []
+- id: INBOUND-POS-mirror-mirror
+  title: Inbound front-door treatment for organvm/mirror-mirror (positioning page
+    + README CTA)
+  repo: organvm/mirror-mirror
+  type: docs
+  target_agent: codex
+  priority: high
+  budget_cost: 2
+  status: dispatched
+  labels:
+  - inbound-magnet
+  - positioning
+  - revenue-lure
+  urls:
+  - https://github.com/organvm/mirror-mirror
+  context: "Apply the inbound-magnet FRONT-DOOR treatment to this repo so the buyer\
+    \ who has the expensive problem finds it and already knows they'll pay before\
+    \ a price is ever spoken. Follow the LOCKED doctrine in organvm/limen `docs/inbound-magnet-system.md`\
+    \ and the exemplar `docs/positioning/public-record-data-scrapper.md`. Two non-negotiables:\
+    \ (1) HIGH-TICKET ONLY \u2014 no Fiverr, no negotiation, the engagement starts\
+    \ serious; (2) NO DOLLAR SIGNS on the page \u2014 the production-grade weight\
+    \ of the work IS the price signal; the number stays off until they're in the door.\
+    \ Serve BOTH buyers with the same proof: clients who need it built/run, and recruiters/employers\
+    \ ($100-200k roles). DELIVERABLE (one PR in THIS repo): a top-of-README front-door\
+    \ section that names the expensive problem this solves and offers ONE door \u2014\
+    \ 'Deploy this for your shop \u2192' / 'Work with the team that built this \u2192\
+    ' \u2014 routing to inbox, NO price; plus a POSITIONING.md capturing who pays,\
+    \ why it's high-ticket, and the engagement-depth ladder (internal anchors only,\
+    \ never published). Read the repo's actual code/tests/deploy to ground the claims\
+    \ \u2014 no invented capabilities. Docs-only; do not touch runtime/deploy paths."
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T16:00:42.494866Z'
+  dispatch_log: []
+- id: INBOUND-POS-universal-mail--automation
+  title: Inbound front-door treatment for organvm/universal-mail--automation (positioning
+    page + README CTA)
+  repo: organvm/universal-mail--automation
+  type: docs
+  target_agent: gemini
+  priority: high
+  budget_cost: 2
+  status: dispatched
+  labels:
+  - inbound-magnet
+  - positioning
+  - revenue-lure
+  urls:
+  - https://github.com/organvm/universal-mail--automation
+  context: "Apply the inbound-magnet FRONT-DOOR treatment to this repo so the buyer\
+    \ who has the expensive problem finds it and already knows they'll pay before\
+    \ a price is ever spoken. Follow the LOCKED doctrine in organvm/limen `docs/inbound-magnet-system.md`\
+    \ and the exemplar `docs/positioning/public-record-data-scrapper.md`. Two non-negotiables:\
+    \ (1) HIGH-TICKET ONLY \u2014 no Fiverr, no negotiation, the engagement starts\
+    \ serious; (2) NO DOLLAR SIGNS on the page \u2014 the production-grade weight\
+    \ of the work IS the price signal; the number stays off until they're in the door.\
+    \ Serve BOTH buyers with the same proof: clients who need it built/run, and recruiters/employers\
+    \ ($100-200k roles). DELIVERABLE (one PR in THIS repo): a top-of-README front-door\
+    \ section that names the expensive problem this solves and offers ONE door \u2014\
+    \ 'Deploy this for your shop \u2192' / 'Work with the team that built this \u2192\
+    ' \u2014 routing to inbox, NO price; plus a POSITIONING.md capturing who pays,\
+    \ why it's high-ticket, and the engagement-depth ladder (internal anchors only,\
+    \ never published). Read the repo's actual code/tests/deploy to ground the claims\
+    \ \u2014 no invented capabilities. Docs-only; do not touch runtime/deploy paths."
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T16:00:42.494866Z'
+  dispatch_log: []
+- id: INBOUND-POS-the-invisible-ledger
+  title: Inbound front-door treatment for organvm/the-invisible-ledger (positioning
+    page + README CTA)
+  repo: organvm/the-invisible-ledger
+  type: docs
+  target_agent: opencode
+  priority: high
+  budget_cost: 2
+  status: dispatched
+  labels:
+  - inbound-magnet
+  - positioning
+  - revenue-lure
+  urls:
+  - https://github.com/organvm/the-invisible-ledger
+  context: "Apply the inbound-magnet FRONT-DOOR treatment to this repo so the buyer\
+    \ who has the expensive problem finds it and already knows they'll pay before\
+    \ a price is ever spoken. Follow the LOCKED doctrine in organvm/limen `docs/inbound-magnet-system.md`\
+    \ and the exemplar `docs/positioning/public-record-data-scrapper.md`. Two non-negotiables:\
+    \ (1) HIGH-TICKET ONLY \u2014 no Fiverr, no negotiation, the engagement starts\
+    \ serious; (2) NO DOLLAR SIGNS on the page \u2014 the production-grade weight\
+    \ of the work IS the price signal; the number stays off until they're in the door.\
+    \ Serve BOTH buyers with the same proof: clients who need it built/run, and recruiters/employers\
+    \ ($100-200k roles). DELIVERABLE (one PR in THIS repo): a top-of-README front-door\
+    \ section that names the expensive problem this solves and offers ONE door \u2014\
+    \ 'Deploy this for your shop \u2192' / 'Work with the team that built this \u2192\
+    ' \u2014 routing to inbox, NO price; plus a POSITIONING.md capturing who pays,\
+    \ why it's high-ticket, and the engagement-depth ladder (internal anchors only,\
+    \ never published). Read the repo's actual code/tests/deploy to ground the claims\
+    \ \u2014 no invented capabilities. Docs-only; do not touch runtime/deploy paths."
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T16:00:42.494866Z'
+  dispatch_log: []
+- id: INBOUND-POS-domus-genoma
+  title: Inbound front-door treatment for organvm/domus-genoma (positioning page +
+    README CTA)
+  repo: organvm/domus-genoma
+  type: docs
+  target_agent: agy
+  priority: high
+  budget_cost: 2
+  status: dispatched
+  labels:
+  - inbound-magnet
+  - positioning
+  - revenue-lure
+  urls:
+  - https://github.com/organvm/domus-genoma
+  context: "Apply the inbound-magnet FRONT-DOOR treatment to this repo so the buyer\
+    \ who has the expensive problem finds it and already knows they'll pay before\
+    \ a price is ever spoken. Follow the LOCKED doctrine in organvm/limen `docs/inbound-magnet-system.md`\
+    \ and the exemplar `docs/positioning/public-record-data-scrapper.md`. Two non-negotiables:\
+    \ (1) HIGH-TICKET ONLY \u2014 no Fiverr, no negotiation, the engagement starts\
+    \ serious; (2) NO DOLLAR SIGNS on the page \u2014 the production-grade weight\
+    \ of the work IS the price signal; the number stays off until they're in the door.\
+    \ Serve BOTH buyers with the same proof: clients who need it built/run, and recruiters/employers\
+    \ ($100-200k roles). DELIVERABLE (one PR in THIS repo): a top-of-README front-door\
+    \ section that names the expensive problem this solves and offers ONE door \u2014\
+    \ 'Deploy this for your shop \u2192' / 'Work with the team that built this \u2192\
+    ' \u2014 routing to inbox, NO price; plus a POSITIONING.md capturing who pays,\
+    \ why it's high-ticket, and the engagement-depth ladder (internal anchors only,\
+    \ never published). Read the repo's actual code/tests/deploy to ground the claims\
+    \ \u2014 no invented capabilities. Docs-only; do not touch runtime/deploy paths."
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T16:00:42.494866Z'
+  dispatch_log: []
+- id: INBOUND-POS-styx
+  title: Inbound front-door treatment for organvm/styx (positioning page + README
+    CTA)
+  repo: organvm/styx
+  type: docs
+  target_agent: jules
+  priority: high
+  budget_cost: 2
+  status: dispatched
+  labels:
+  - inbound-magnet
+  - positioning
+  - revenue-lure
+  urls:
+  - https://github.com/organvm/styx
+  context: "Apply the inbound-magnet FRONT-DOOR treatment to this repo so the buyer\
+    \ who has the expensive problem finds it and already knows they'll pay before\
+    \ a price is ever spoken. Follow the LOCKED doctrine in organvm/limen `docs/inbound-magnet-system.md`\
+    \ and the exemplar `docs/positioning/public-record-data-scrapper.md`. Two non-negotiables:\
+    \ (1) HIGH-TICKET ONLY \u2014 no Fiverr, no negotiation, the engagement starts\
+    \ serious; (2) NO DOLLAR SIGNS on the page \u2014 the production-grade weight\
+    \ of the work IS the price signal; the number stays off until they're in the door.\
+    \ Serve BOTH buyers with the same proof: clients who need it built/run, and recruiters/employers\
+    \ ($100-200k roles). DELIVERABLE (one PR in THIS repo): a top-of-README front-door\
+    \ section that names the expensive problem this solves and offers ONE door \u2014\
+    \ 'Deploy this for your shop \u2192' / 'Work with the team that built this \u2192\
+    ' \u2014 routing to inbox, NO price; plus a POSITIONING.md capturing who pays,\
+    \ why it's high-ticket, and the engagement-depth ladder (internal anchors only,\
+    \ never published). Read the repo's actual code/tests/deploy to ground the claims\
+    \ \u2014 no invented capabilities. Docs-only; do not touch runtime/deploy paths."
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T16:00:42.494866Z'
+  dispatch_log: []
+- id: INBOUND-POS-a-i-chat--exporter
+  title: Inbound front-door treatment for organvm/a-i-chat--exporter (positioning
+    page + README CTA)
+  repo: organvm/a-i-chat--exporter
+  type: docs
+  target_agent: codex
+  priority: high
+  budget_cost: 2
+  status: dispatched
+  labels:
+  - inbound-magnet
+  - positioning
+  - revenue-lure
+  urls:
+  - https://github.com/organvm/a-i-chat--exporter
+  context: "Apply the inbound-magnet FRONT-DOOR treatment to this repo so the buyer\
+    \ who has the expensive problem finds it and already knows they'll pay before\
+    \ a price is ever spoken. Follow the LOCKED doctrine in organvm/limen `docs/inbound-magnet-system.md`\
+    \ and the exemplar `docs/positioning/public-record-data-scrapper.md`. Two non-negotiables:\
+    \ (1) HIGH-TICKET ONLY \u2014 no Fiverr, no negotiation, the engagement starts\
+    \ serious; (2) NO DOLLAR SIGNS on the page \u2014 the production-grade weight\
+    \ of the work IS the price signal; the number stays off until they're in the door.\
+    \ Serve BOTH buyers with the same proof: clients who need it built/run, and recruiters/employers\
+    \ ($100-200k roles). DELIVERABLE (one PR in THIS repo): a top-of-README front-door\
+    \ section that names the expensive problem this solves and offers ONE door \u2014\
+    \ 'Deploy this for your shop \u2192' / 'Work with the team that built this \u2192\
+    ' \u2014 routing to inbox, NO price; plus a POSITIONING.md capturing who pays,\
+    \ why it's high-ticket, and the engagement-depth ladder (internal anchors only,\
+    \ never published). Read the repo's actual code/tests/deploy to ground the claims\
+    \ \u2014 no invented capabilities. Docs-only; do not touch runtime/deploy paths."
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T16:00:42.494866Z'
+  dispatch_log: []
+- id: INBOUND-POS-portfolio
+  title: Inbound front-door treatment for organvm/portfolio (positioning page + README
+    CTA)
+  repo: organvm/portfolio
+  type: docs
+  target_agent: gemini
+  priority: high
+  budget_cost: 2
+  status: dispatched
+  labels:
+  - inbound-magnet
+  - positioning
+  - revenue-lure
+  urls:
+  - https://github.com/organvm/portfolio
+  context: "Apply the inbound-magnet FRONT-DOOR treatment to this repo so the buyer\
+    \ who has the expensive problem finds it and already knows they'll pay before\
+    \ a price is ever spoken. Follow the LOCKED doctrine in organvm/limen `docs/inbound-magnet-system.md`\
+    \ and the exemplar `docs/positioning/public-record-data-scrapper.md`. Two non-negotiables:\
+    \ (1) HIGH-TICKET ONLY \u2014 no Fiverr, no negotiation, the engagement starts\
+    \ serious; (2) NO DOLLAR SIGNS on the page \u2014 the production-grade weight\
+    \ of the work IS the price signal; the number stays off until they're in the door.\
+    \ Serve BOTH buyers with the same proof: clients who need it built/run, and recruiters/employers\
+    \ ($100-200k roles). DELIVERABLE (one PR in THIS repo): a top-of-README front-door\
+    \ section that names the expensive problem this solves and offers ONE door \u2014\
+    \ 'Deploy this for your shop \u2192' / 'Work with the team that built this \u2192\
+    ' \u2014 routing to inbox, NO price; plus a POSITIONING.md capturing who pays,\
+    \ why it's high-ticket, and the engagement-depth ladder (internal anchors only,\
+    \ never published). Read the repo's actual code/tests/deploy to ground the claims\
+    \ \u2014 no invented capabilities. Docs-only; do not touch runtime/deploy paths."
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T16:00:42.494866Z'
+  dispatch_log: []
+- id: VIGILIA-VITALS
+  title: "VITALS executive \u2014 don't-crash reaction function on the heartbeat (CFO)"
+  repo: organvm/limen
+  type: code
+  target_agent: codex
+  priority: high
+  budget_cost: 3
+  status: open
+  labels:
+  - vigilia
+  - autonomic
+  - vitals
+  - build-1
+  urls: []
+  context: "EXECUTION CONTRACT (read first):\n- Base off the LATEST origin/main: `git\
+    \ fetch origin && git worktree add -b <branch> <path> origin/main`. The institutio/\
+    \ spec files (CHARTER.md, HIERARCHY.md, governance/parameters.yaml, registry/organs.yaml)\
+    \ are on origin/main (#232/#234) but the local main checkout is stale \u2014 branch\
+    \ off origin/main or they will be MISSING.\n- Isolate in a git worktree (see GEMINI.md);\
+    \ never touch the live checkout or other worktrees.\n- Read CLAUDE.md gate matrix.\
+    \ Before pushing, ALL gates green locally: `python -m ruff check cli/src cli/tests\
+    \ web/api mcp`, `python -m pytest web/api/tests cli/tests -q`, and `scripts/verify-whole.sh`.\n\
+    - Open ONE PR, babysit it through CI (GEMINI.md PR-babysitting loop), then write\
+    \ status back to tasks.yaml.\n- Scope is BOUNDED to this task's deliverable +\
+    \ done-proof. Do not expand. Federation, not fusion: INDEX organs where they live;\
+    \ do not move the live daemon, ~/.claude, launchd, or 4444J99/_diagnostics.\n\n\
+    OBJECTIVE: Build the VITALS executive \u2014 the missing 'don't crash' hand that\
+    \ caused the 08:47 kernel panic (see institutio/FOUNDING-EVENT.md: memory livelock\
+    \ -> watchdog).\nSPEC (source of truth = institutio/governance/parameters.yaml\
+    \ VITALS_* + HIERARCHY.md 'CFO' row):\n- Each heartbeat, read the gauge VITALS_PRESSURE_GAUGE\
+    \ (kern.memorystatus_vm_pressure_level).\n- At >= VITALS_PRESSURE_WARN (1): stop\
+    \ opening NEW dispatch lanes this beat (idle-beat, mirror the #224 offline-gate\
+    \ pattern in scripts/heartbeat-loop.sh).\n- At >= VITALS_PRESSURE_CRITICAL (2):\
+    \ shed running discretionary load (stop ollama) before jetsam escalates.\n- Enforce\
+    \ VITALS_HEAVY_SURFACE_LIMIT (1 heavy AI surface on the 16GB host, FIND-005).\n\
+    - Drive LIMEN_DISPATCH_CEILING DOWN under pressure (the cross-organ link noted\
+    \ in parameters.yaml).\n- Read all thresholds from the parameter panel; NO hardcodes.\n\
+    DONE-PROOF: a `vitals` probe (CLI subcommand or scripts/ probe) prints {level,\
+    \ decision}; it is invoked from scripts/heartbeat-loop.sh; ruff+pytest+verify-whole.sh\
+    \ green; new unit tests cover warn/critical branches."
+  depends_on: []
+  created: '2026-06-25'
+  dispatch_log: []
+- id: VIGILIA-CONTINUITY
+  title: "CONTINUITY executive \u2014 auto-reconstruct a degenerate handoff (CKO)"
+  repo: organvm/limen
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 3
+  status: open
+  labels:
+  - vigilia
+  - autonomic
+  - continuity
+  - build-1
+  urls: []
+  context: "EXECUTION CONTRACT (read first):\n- Base off the LATEST origin/main: `git\
+    \ fetch origin && git worktree add -b <branch> <path> origin/main`. The institutio/\
+    \ spec files (CHARTER.md, HIERARCHY.md, governance/parameters.yaml, registry/organs.yaml)\
+    \ are on origin/main (#232/#234) but the local main checkout is stale \u2014 branch\
+    \ off origin/main or they will be MISSING.\n- Isolate in a git worktree (see GEMINI.md);\
+    \ never touch the live checkout or other worktrees.\n- Read CLAUDE.md gate matrix.\
+    \ Before pushing, ALL gates green locally: `python -m ruff check cli/src cli/tests\
+    \ web/api mcp`, `python -m pytest web/api/tests cli/tests -q`, and `scripts/verify-whole.sh`.\n\
+    - Open ONE PR, babysit it through CI (GEMINI.md PR-babysitting loop), then write\
+    \ status back to tasks.yaml.\n- Scope is BOUNDED to this task's deliverable +\
+    \ done-proof. Do not expand. Federation, not fusion: INDEX organs where they live;\
+    \ do not move the live daemon, ~/.claude, launchd, or 4444J99/_diagnostics.\n\n\
+    OBJECTIVE: Build the CONTINUITY executive \u2014 the missing 'don't forget' hand\
+    \ that lost the session thread (the ~200-char degenerate handoff stub).\nSPEC\
+    \ (source of truth = institutio/governance/parameters.yaml CONTINUITY_* + HIERARCHY.md\
+    \ 'CKO' row):\n- Detect a degenerate handoff: a continuation summary shorter than\
+    \ CONTINUITY_MIN_SUMMARY_CHARS (400).\n- On detection, RECONSTRUCT the thread\
+    \ from CONTINUITY_TRANSCRIPT_GLOB (~/.claude/projects/*/*.jsonl): parse one JSON\
+    \ row per line; message.content is a list of blocks; collect user prompts + assistant\
+    \ text blocks + tool_use summaries. The last row with isCompactSummary=true is\
+    \ the last good manual summary; everything after it is intact raw. Subagent results\
+    \ survive at <session>/subagents/agent-<id>.jsonl.\n- Emit a reconstructed summary\
+    \ >= the threshold so the receiving session is not blind.\nDONE-PROOF: given a\
+    \ fixture degenerate stub + a transcript fixture, the executive emits a reconstructed\
+    \ summary >= CONTINUITY_MIN_SUMMARY_CHARS; ruff+pytest+verify-whole.sh green;\
+    \ unit tests cover the isCompactSummary anchor + the 'nothing lost' raw-tail recovery."
+  depends_on: []
+  created: '2026-06-25'
+  dispatch_log: []
+- id: VIGILIA-INTEGRITY
+  title: "INTEGRITY executive \u2014 govern the autoupdater + verify signatures (CISO)"
+  repo: organvm/limen
+  type: code
+  target_agent: opencode
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - vigilia
+  - autonomic
+  - integrity
+  - build-1
+  urls: []
+  context: "EXECUTION CONTRACT (read first):\n- Base off the LATEST origin/main: `git\
+    \ fetch origin && git worktree add -b <branch> <path> origin/main`. The institutio/\
+    \ spec files (CHARTER.md, HIERARCHY.md, governance/parameters.yaml, registry/organs.yaml)\
+    \ are on origin/main (#232/#234) but the local main checkout is stale \u2014 branch\
+    \ off origin/main or they will be MISSING.\n- Isolate in a git worktree (see GEMINI.md);\
+    \ never touch the live checkout or other worktrees.\n- Read CLAUDE.md gate matrix.\
+    \ Before pushing, ALL gates green locally: `python -m ruff check cli/src cli/tests\
+    \ web/api mcp`, `python -m pytest web/api/tests cli/tests -q`, and `scripts/verify-whole.sh`.\n\
+    - Open ONE PR, babysit it through CI (GEMINI.md PR-babysitting loop), then write\
+    \ status back to tasks.yaml.\n- Scope is BOUNDED to this task's deliverable +\
+    \ done-proof. Do not expand. Federation, not fusion: INDEX organs where they live;\
+    \ do not move the live daemon, ~/.claude, launchd, or 4444J99/_diagnostics.\n\n\
+    OBJECTIVE: Build the INTEGRITY executive \u2014 the missing 'don't self-corrupt'\
+    \ hand behind the corrupt-app dialog (autoupdater/signature/version-path churn).\n\
+    SPEC (source of truth = institutio/governance/parameters.yaml INTEGRITY_* + HIERARCHY.md\
+    \ 'CISO' row):\n- Enforce INTEGRITY_AUTOUPDATER=disabled (the documented lever\
+    \ DISABLE_AUTOUPDATER=1).\n- Each beat, run `codesign --verify` on INTEGRITY_VERIFY_TARGETS\
+    \ (/Applications/Claude.app, ~/.local/bin/claude); alert on signature/version\
+    \ drift. Version-path churn is the root of the corrupt-app dialog + TCC re-prompts.\n\
+    - Read targets from the parameter panel; NO hardcodes.\nDONE-PROOF: an `integrity`\
+    \ probe prints {autoupdater, verify-status, drift}; invoked from heartbeat-loop.sh;\
+    \ ruff+pytest+verify-whole.sh green; tests cover the drift-alert branch."
+  depends_on: []
+  created: '2026-06-25'
+  dispatch_log: []
+- id: VIGILIA-EXECUTIVE-HAND
+  title: "The autonomic executive \u2014 VITALS+CONTINUITY+INTEGRITY on ONE hand each\
+    \ beat"
+  repo: organvm/limen
+  type: code
+  target_agent: codex
+  priority: high
+  budget_cost: 3
+  status: open
+  labels:
+  - vigilia
+  - autonomic
+  - integration
+  - build-1
+  urls: []
+  context: "EXECUTION CONTRACT (read first):\n- Base off the LATEST origin/main: `git\
+    \ fetch origin && git worktree add -b <branch> <path> origin/main`. The institutio/\
+    \ spec files (CHARTER.md, HIERARCHY.md, governance/parameters.yaml, registry/organs.yaml)\
+    \ are on origin/main (#232/#234) but the local main checkout is stale \u2014 branch\
+    \ off origin/main or they will be MISSING.\n- Isolate in a git worktree (see GEMINI.md);\
+    \ never touch the live checkout or other worktrees.\n- Read CLAUDE.md gate matrix.\
+    \ Before pushing, ALL gates green locally: `python -m ruff check cli/src cli/tests\
+    \ web/api mcp`, `python -m pytest web/api/tests cli/tests -q`, and `scripts/verify-whole.sh`.\n\
+    - Open ONE PR, babysit it through CI (GEMINI.md PR-babysitting loop), then write\
+    \ status back to tasks.yaml.\n- Scope is BOUNDED to this task's deliverable +\
+    \ done-proof. Do not expand. Federation, not fusion: INDEX organs where they live;\
+    \ do not move the live daemon, ~/.claude, launchd, or 4444J99/_diagnostics.\n\n\
+    OBJECTIVE: Integrate the three autonomic executives into ONE hand that runs each\
+    \ beat \u2014 the missing organ from institutio/CHARTER.md build order #1.\nSPEC:\
+    \ One entrypoint (e.g. cli `autonomic` subcommand or scripts/autonomic-executive.sh)\
+    \ runs the VITALS, CONTINUITY, and INTEGRITY checks in sequence and reports a\
+    \ single autonomic-status record. Wire it into the ALREADY-RESIDENT heartbeat\
+    \ (scripts/heartbeat-loop.sh) \u2014 separation of powers: EXECUTE rides the existing\
+    \ heartbeat, do NOT spawn a new resident process (CHARTER.md Rule #9). Register\
+    \ the organ in institutio/registry/organs.yaml with status+home+residual.\nDEPENDS\
+    \ ON the three predecessor PRs being MERGED first (depends_on is set).\nDONE-PROOF:\
+    \ one command runs all three; heartbeat-loop.sh invokes it once per beat; organ-health.py\
+    \ shows the autonomic organ live; ruff+pytest+verify-whole.sh green."
+  depends_on:
+  - VIGILIA-VITALS
+  - VIGILIA-CONTINUITY
+  - VIGILIA-INTEGRITY
+  created: '2026-06-25'
+  dispatch_log: []
+- id: VIGILIA-PARAM-PANEL
+  title: "Parameter panel \u2014 fold the ~70 scattered LIMEN_* vars into one surface\
+    \ (CTO)"
+  repo: organvm/limen
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 3
+  status: open
+  labels:
+  - vigilia
+  - spine
+  - params
+  - build-3
+  urls: []
+  context: "EXECUTION CONTRACT (read first):\n- Base off the LATEST origin/main: `git\
+    \ fetch origin && git worktree add -b <branch> <path> origin/main`. The institutio/\
+    \ spec files (CHARTER.md, HIERARCHY.md, governance/parameters.yaml, registry/organs.yaml)\
+    \ are on origin/main (#232/#234) but the local main checkout is stale \u2014 branch\
+    \ off origin/main or they will be MISSING.\n- Isolate in a git worktree (see GEMINI.md);\
+    \ never touch the live checkout or other worktrees.\n- Read CLAUDE.md gate matrix.\
+    \ Before pushing, ALL gates green locally: `python -m ruff check cli/src cli/tests\
+    \ web/api mcp`, `python -m pytest web/api/tests cli/tests -q`, and `scripts/verify-whole.sh`.\n\
+    - Open ONE PR, babysit it through CI (GEMINI.md PR-babysitting loop), then write\
+    \ status back to tasks.yaml.\n- Scope is BOUNDED to this task's deliverable +\
+    \ done-proof. Do not expand. Federation, not fusion: INDEX organs where they live;\
+    \ do not move the live daemon, ~/.claude, launchd, or 4444J99/_diagnostics.\n\n\
+    OBJECTIVE: Realize the spine / '100x' \u2014 every name, path, threshold, and\
+    \ secret-REFERENCE the body uses becomes ONE declared parameter in institutio/governance/parameters.yaml\
+    \ (read its header \u2014 it documents exactly this mandate and the param schema).\n\
+    SPEC: Excavation found ~70 LIMEN_* vars scattered across 5 env files + 7 YAML\
+    \ + 3 JSON + 3 py-defaults. Migrate them into the panel (default/env/self_update/owner/note\
+    \ per the existing schema) and point the code at the panel via a single loader.\
+    \ CONSOLIDATION, not behavior change: defaults must be byte-identical to today's\
+    \ effective values (logic-over-inherited-config: rederive each knob, don't blindly\
+    \ copy a sacred value).\nDONE-PROOF: a loader resolves every migrated var from\
+    \ the panel; an inventory test asserts no stray LIMEN_* literal remains in the\
+    \ migrated files; ruff+pytest+verify-whole.sh green; behavior unchanged."
+  depends_on: []
+  created: '2026-06-25'
+  dispatch_log: []
+- id: VIGILIA-NOHARDCODE-GATE
+  title: "No-hardcodes CI gate \u2014 fail the build on a stray hardcoded path/threshold\
+    \ (CTO)"
+  repo: organvm/limen
+  type: code
+  target_agent: copilot
+  priority: medium
+  budget_cost: 2
+  status: open
+  labels:
+  - vigilia
+  - spine
+  - ci-gate
+  - build-3
+  urls: []
+  context: "EXECUTION CONTRACT (read first):\n- Base off the LATEST origin/main: `git\
+    \ fetch origin && git worktree add -b <branch> <path> origin/main`. The institutio/\
+    \ spec files (CHARTER.md, HIERARCHY.md, governance/parameters.yaml, registry/organs.yaml)\
+    \ are on origin/main (#232/#234) but the local main checkout is stale \u2014 branch\
+    \ off origin/main or they will be MISSING.\n- Isolate in a git worktree (see GEMINI.md);\
+    \ never touch the live checkout or other worktrees.\n- Read CLAUDE.md gate matrix.\
+    \ Before pushing, ALL gates green locally: `python -m ruff check cli/src cli/tests\
+    \ web/api mcp`, `python -m pytest web/api/tests cli/tests -q`, and `scripts/verify-whole.sh`.\n\
+    - Open ONE PR, babysit it through CI (GEMINI.md PR-babysitting loop), then write\
+    \ status back to tasks.yaml.\n- Scope is BOUNDED to this task's deliverable +\
+    \ done-proof. Do not expand. Federation, not fusion: INDEX organs where they live;\
+    \ do not move the live daemon, ~/.claude, launchd, or 4444J99/_diagnostics.\n\n\
+    OBJECTIVE: Build the no-hardcodes CI gate (CHARTER.md build order #3) \u2014 the\
+    \ same way nomenclator.py already fails the build on a bad name, this fails the\
+    \ build on a stray hardcoded path/threshold/secret that should be a parameter.\n\
+    SPEC: A checker (scripts/ + wired into pr-gate/CI) scans the agreed source dirs\
+    \ for literals that belong in institutio/governance/parameters.yaml; allowlist\
+    \ the unavoidable; exit non-zero on a violation with a clear message naming the\
+    \ offending literal + the param it should become.\nDEPENDS ON VIGILIA-PARAM-PANEL\
+    \ being MERGED.\nDONE-PROOF: the gate flags a deliberately planted hardcode and\
+    \ passes the clean tree; it runs in CI; ruff+pytest+verify-whole.sh green."
+  depends_on:
+  - VIGILIA-PARAM-PANEL
+  created: '2026-06-25'
+  dispatch_log: []
+- id: VIGILIA-CISO-FOLD
+  title: Fold identity + authority under the CISO in the seat (consolidation)
+  repo: organvm/limen
+  type: code
+  target_agent: opencode
+  priority: medium
+  budget_cost: 2
+  status: open
+  labels:
+  - vigilia
+  - autonomic
+  - ciso
+  - build-2
+  urls: []
+  context: "EXECUTION CONTRACT (read first):\n- Base off the LATEST origin/main: `git\
+    \ fetch origin && git worktree add -b <branch> <path> origin/main`. The institutio/\
+    \ spec files (CHARTER.md, HIERARCHY.md, governance/parameters.yaml, registry/organs.yaml)\
+    \ are on origin/main (#232/#234) but the local main checkout is stale \u2014 branch\
+    \ off origin/main or they will be MISSING.\n- Isolate in a git worktree (see GEMINI.md);\
+    \ never touch the live checkout or other worktrees.\n- Read CLAUDE.md gate matrix.\
+    \ Before pushing, ALL gates green locally: `python -m ruff check cli/src cli/tests\
+    \ web/api mcp`, `python -m pytest web/api/tests cli/tests -q`, and `scripts/verify-whole.sh`.\n\
+    - Open ONE PR, babysit it through CI (GEMINI.md PR-babysitting loop), then write\
+    \ status back to tasks.yaml.\n- Scope is BOUNDED to this task's deliverable +\
+    \ done-proof. Do not expand. Federation, not fusion: INDEX organs where they live;\
+    \ do not move the live daemon, ~/.claude, launchd, or 4444J99/_diagnostics.\n\n\
+    OBJECTIVE: VIGILIA build #2 \u2014 fold IDENTITY + AUTHORITY under the CISO. Excavation\
+    \ verdict: these are MOSTLY BUILT (creds-hydrate.py for identity; ~/.claude settings+hooks\
+    \ for authority), so this is CONSOLIDATION, not a rebuild. Do NOT recreate working\
+    \ machinery.\nSPEC (source of truth = institutio/registry/organs.yaml + HIERARCHY.md\
+    \ 'CISO' row): index the identity organ (creds-hydrate.py + ~/.limen.env) and\
+    \ the authority organ (~/.claude/settings.json + hooks) in organs.yaml with home+status+residual,\
+    \ and verify hydration is exercised on the beat. Federation not fusion \u2014\
+    \ index where they live; do not move ~/.claude or 1Password.\nDONE-PROOF: organs.yaml\
+    \ CISO entries point at the real files; organ-health.py reflects their liveness;\
+    \ ruff+pytest+verify-whole.sh green."
+  depends_on: []
+  created: '2026-06-25'
+  dispatch_log: []
+- id: VIGILIA-FACE
+  title: "The face \u2014 one pane that renders the C-suite from the seat (CCO)"
+  repo: organvm/limen
+  type: code
+  target_agent: agy
+  priority: low
+  budget_cost: 2
+  status: open
+  labels:
+  - vigilia
+  - face
+  - build-4
+  urls: []
+  context: "EXECUTION CONTRACT (read first):\n- Base off the LATEST origin/main: `git\
+    \ fetch origin && git worktree add -b <branch> <path> origin/main`. The institutio/\
+    \ spec files (CHARTER.md, HIERARCHY.md, governance/parameters.yaml, registry/organs.yaml)\
+    \ are on origin/main (#232/#234) but the local main checkout is stale \u2014 branch\
+    \ off origin/main or they will be MISSING.\n- Isolate in a git worktree (see GEMINI.md);\
+    \ never touch the live checkout or other worktrees.\n- Read CLAUDE.md gate matrix.\
+    \ Before pushing, ALL gates green locally: `python -m ruff check cli/src cli/tests\
+    \ web/api mcp`, `python -m pytest web/api/tests cli/tests -q`, and `scripts/verify-whole.sh`.\n\
+    - Open ONE PR, babysit it through CI (GEMINI.md PR-babysitting loop), then write\
+    \ status back to tasks.yaml.\n- Scope is BOUNDED to this task's deliverable +\
+    \ done-proof. Do not expand. Federation, not fusion: INDEX organs where they live;\
+    \ do not move the live daemon, ~/.claude, launchd, or 4444J99/_diagnostics.\n\n\
+    OBJECTIVE: VIGILIA build #4 \u2014 the FACE: one operator pane that renders the\
+    \ institution's state. The face is SKIN, not an organ: it is a READ-ONLY projection\
+    \ of the seat.\nSPEC (source of truth = HIERARCHY.md 'CCO' row + registry/organs.yaml):\
+    \ render the C-suite (CFO/CISO/CKO/CTO/COO/GC/CCO) with each officer's liveness\
+    \ + residual, sourced ONLY from registry/organs.yaml and the organ-health.json\
+    \ that organ-health.py emits. NO hand-authored repo/organ list \u2014 if it is\
+    \ not derived from the seat it is dead at the next organ. A simple tui or a static\
+    \ page is fine.\nDONE-PROOF: the pane renders every officer from the seat with\
+    \ zero hardcoded entries; adding an organ to organs.yaml makes it appear; ruff+pytest+verify-whole.sh\
+    \ green."
+  depends_on: []
+  created: '2026-06-25'
+  dispatch_log: []
+- id: VIGILIA-ATLAS-GEN
+  title: "The atlas \u2014 generate the COMPLETE map of all repos, live (the operator-full\
+    \ view)"
+  repo: organvm/limen
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 3
+  status: open
+  labels:
+  - vigilia
+  - atlas
+  - in-portal
+  urls: []
+  context: "EXECUTION CONTRACT (read first):\n- Base off the LATEST origin/main: `git\
+    \ fetch origin && git worktree add -b <branch> <path> origin/main`. The institutio/\
+    \ spec files (CHARTER.md, HIERARCHY.md, governance/parameters.yaml, registry/organs.yaml)\
+    \ are on origin/main (#232/#234) but the local main checkout is stale \u2014 branch\
+    \ off origin/main or they will be MISSING.\n- Isolate in a git worktree (see GEMINI.md);\
+    \ never touch the live checkout or other worktrees.\n- Read CLAUDE.md gate matrix.\
+    \ Before pushing, ALL gates green locally: `python -m ruff check cli/src cli/tests\
+    \ web/api mcp`, `python -m pytest web/api/tests cli/tests -q`, and `scripts/verify-whole.sh`.\n\
+    - Open ONE PR, babysit it through CI (GEMINI.md PR-babysitting loop), then write\
+    \ status back to tasks.yaml.\n- Scope is BOUNDED to this task's deliverable +\
+    \ done-proof. Do not expand. Federation, not fusion: INDEX organs where they live;\
+    \ do not move the live daemon, ~/.claude, launchd, or 4444J99/_diagnostics.\n\n\
+    OBJECTIVE: Build the ATLAS \u2014 the one genuinely-missing layer. The portal\
+    \ into the work renders only curated slices today (front-door seeds 1 repo, value-repos.json\
+    \ lists 12, the portfolio site shows 16) but the universe is ~273 repos (organvm\
+    \ + 4444J99) and GROWING. There is NO complete enumeration anywhere. Build it.\n\
+    SPEC: A generator enumerates ALL repos LIVE: `gh repo list organvm --limit 1000\
+    \ --json ...` + `gh repo list 4444J99 --limit 1000 --json ...` and emits a complete\
+    \ registry at institutio/registry/atlas.json (name, description, visibility, pushedAt,\
+    \ url, topics). Regenerate each beat \u2014 NEVER hand-maintain it (it grows).\
+    \ Wire generation into the heartbeat.\nCRITICAL LAYER DISTINCTION \u2014 do not\
+    \ collapse these: the ATLAS is the complete MAP (every repo, just known). value-repos.json\
+    \ is the fail-closed SPEND tier (the only repos the fleet may burn a token on).\
+    \ Building the atlas must NOT make the fleet spend on all 273 \u2014 leave value-repos.json\
+    \ fail-closed and untouched.\nDONE-PROOF: atlas.json lists every repo from both\
+    \ orgs; its count matches the `gh repo list` totals; re-running the generator\
+    \ is idempotent (no diff when nothing changed upstream); ruff+pytest+verify-whole.sh\
+    \ green."
+  depends_on: []
+  created: '2026-06-25'
+  dispatch_log: []
+- id: VIGILIA-ATLAS-PROJECT
+  title: Curated doors become projections of the atlas (stop hardcoding the repo subset)
+  repo: organvm/limen
+  type: code
+  target_agent: codex
+  priority: medium
+  budget_cost: 3
+  status: open
+  labels:
+  - vigilia
+  - atlas
+  - in-portal
+  - inbound-magnet
+  urls: []
+  context: "EXECUTION CONTRACT (read first):\n- Base off the LATEST origin/main: `git\
+    \ fetch origin && git worktree add -b <branch> <path> origin/main`. The institutio/\
+    \ spec files (CHARTER.md, HIERARCHY.md, governance/parameters.yaml, registry/organs.yaml)\
+    \ are on origin/main (#232/#234) but the local main checkout is stale \u2014 branch\
+    \ off origin/main or they will be MISSING.\n- Isolate in a git worktree (see GEMINI.md);\
+    \ never touch the live checkout or other worktrees.\n- Read CLAUDE.md gate matrix.\
+    \ Before pushing, ALL gates green locally: `python -m ruff check cli/src cli/tests\
+    \ web/api mcp`, `python -m pytest web/api/tests cli/tests -q`, and `scripts/verify-whole.sh`.\n\
+    - Open ONE PR, babysit it through CI (GEMINI.md PR-babysitting loop), then write\
+    \ status back to tasks.yaml.\n- Scope is BOUNDED to this task's deliverable +\
+    \ done-proof. Do not expand. Federation, not fusion: INDEX organs where they live;\
+    \ do not move the live daemon, ~/.claude, launchd, or 4444J99/_diagnostics.\n\n\
+    OBJECTIVE: Make the existing public doors FILTERED PROJECTIONS of the atlas instead\
+    \ of hand-maintained subsets. Today's inbound-magnet front-door (scripts/generate-positioning.py\
+    \ + positioning-seeds.json -> docs/positioning/_frontdoor.md, merged #226/#228/#230)\
+    \ and the portfolio site (organvm/portfolio) each carry their own curated repo\
+    \ list. Re-point them at the atlas.\nSPEC: the published-form slice = atlas.json\
+    \ INTERSECT value-repos.json (publish the FORM, rent the OPERATION: only value-tier\
+    \ repos are shown as lures). The front-door generator should derive its shown\
+    \ repos from that intersection rather than a hardcoded seed list; document how\
+    \ the portfolio site consumes the same source. Keep value-repos.json fail-closed\
+    \ (empty list -> nothing rendered).\nDEPENDS ON VIGILIA-ATLAS-GEN being MERGED.\n\
+    DONE-PROOF: adding a repo to value-repos.json surfaces it in the rendered front-door\
+    \ WITHOUT editing the generator; removing the atlas entry removes it; ruff+pytest+verify-whole.sh\
+    \ green."
+  depends_on:
+  - VIGILIA-ATLAS-GEN
+  created: '2026-06-25'
   dispatch_log: []
