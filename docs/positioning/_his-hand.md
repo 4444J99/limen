@@ -11,6 +11,10 @@ three verified repos banked behind `awaiting_publish`) are all **built, tested, 
 publishes to your identity, spends, or is a judgment call that's yours to make. Nothing here
 blocks the system; it sits inert and observable until you act.
 
+> Canonical lever: this record is mirrored on your obligations face as **`L-POSITIONING-ACTIVATE`**
+> in `his-hand-levers.json` — one pointer, surfaced beside the mail levers, never nagged. This doc
+> stays the full per-trigger detail; the registry entry is the index.
+
 | # | Trigger | Why it's yours | Cheapest path |
 |---|---------|----------------|---------------|
 | 1 | **Activate capture** | Publishes a contact address to the public surface | Set `frontdoor.contact` in `positioning-seeds.json` to a **dedicated inbound alias** (wiser than a personal inbox — it gets indexed). One line. Every CTA then becomes a repo+door-tagged `mailto:`. |
