@@ -1,0 +1,70 @@
+# ═══════════════════════════════════════════════════════════════════════════════════════════
+# EVOCATOR · THE CANON OF TRVTHS
+# ═══════════════════════════════════════════════════════════════════════════════════════════
+# This is the single declarative source the EVOCATOR organ ("the summoner") reads to keep each
+# canonical truth PRESENT in every channel a found truth must live in — FLAME (so every beat
+# holds it), the knowledge-corpus collection (so it converges into THE ONE), and a read-only
+# verify of the memory dir (so the per-session channel stays honest).
+#
+# This is what "find" produces. When Anthony says "find X" he is not asking for a chat search
+# whose answer dies at session end — he is asking for THE PORTAL that summons the answer into
+# every place it must exist, forever. The portal is: excavate the truth → add ONE entry here →
+# the organ lands it everywhere, every beat, and self-heals drift.  (See spec/evocator/README.md)
+#
+# Each truth:
+#   id              — stable handle (EVO-NNN). Passes the INDEX·NOMINVM canon (no U/J/W/QU).
+#   claim           — the headline, one phrase.
+#   line            — the DENSE one-liner rendered into FLAME (rides every beat — keep it tight).
+#   summons         — the fuller statement (corpus shot + CANON.md; the rich body lives in memory).
+#   source_of_record— the repo/path that OWNS this truth (where to go to change or reverse it).
+#   confidence      — high | medium | low (an input to a human's judgment, never a substitute).
+#   resolved        — ISO date the truth was determined.
+#   reversible_via  — the cheapest path to undo/correct it (kept reversible by design).
+#   channels        — where it must live: flame (bool), corpus (bool), memory (<memory-file slug>).
+# ═══════════════════════════════════════════════════════════════════════════════════════════
+version: 1
+
+truths:
+  - id: EVO-001
+    claim: "MPO = NPO (Non-Profit Organization)"
+    line: >-
+      "MPO" = NPO; the nonprofit = Cind & Sol (organvm-vi-koinonia/cind-and-sol-foundation),
+      its grant-finding engine + system-of-record = organvm-iii-ergon/quaestor.
+      Resolved 2026-06-25; reversible via quaestor#4.
+    summons: >-
+      "MPO" = NPO / "Non-Profit Organization" — Anthony's spoken term, apposed directly to
+      "the non-profit" ("the non-profit, the MPO, right?") and found in ZERO written text
+      (prompts, exports, ask-ledger, Maddie history). The nonprofit is Cind & Sol; its
+      money-finding ENGINE — and the system-of-record owner of the MPO / grant-machine concept —
+      is organvm-iii-ergon/quaestor. The name "quaestor" is kept (accurate for a grant/treasury
+      organ). Submitting any application and moving any money remain permanent human-hand gates.
+    source_of_record: "organvm-iii-ergon/quaestor"
+    confidence: high
+    resolved: "2026-06-25"
+    reversible_via: "reopen quaestor issue #4 / its decisions card"
+    channels:
+      flame: true
+      corpus: true
+      memory: mpo-resolved-quaestor-owns
+
+  - id: EVO-002
+    claim: '"find" = build the portal'
+    line: >-
+      When Anthony says "find X / find everything / find the answers", BUILD THE PORTAL that
+      summons that context into every surface (every prompt, every session, every beat) —
+      not a chat that searches & loses. This organ (EVOCATOR) IS that portal.
+    summons: >-
+      "When I ask you to find everything, I'm asking you to build the portal that summons that
+      context into every single place it needs to exist, not for a chat to search and then lose
+      when the session ends." A found truth that is not propagated into the durable channels is
+      lost. So "find" is a BUILD instruction: excavate the answer, enumerate every injection
+      surface, land it in all of them, and prefer a durable autopoietic mechanism over
+      hand-propagation so future truths flow automatically.
+    source_of_record: "limen/spec/evocator"
+    confidence: high
+    resolved: "2026-06-25"
+    reversible_via: "edit spec/evocator/canon.yaml"
+    channels:
+      flame: true
+      corpus: true
+      memory: find-means-build-the-portal
