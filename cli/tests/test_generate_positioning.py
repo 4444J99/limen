@@ -161,6 +161,34 @@ def test_frontdoor_guard_refuses_price_leak(tmp_path: Path):
     assert not (tmp_path / "out" / "_frontdoor.md").exists()
 
 
+def test_discoverability_recommends_topics_and_apply_command(tmp_path: Path):
+    seed = _seed()
+    seed["search_topics"] = ["merchant-cash-advance", "ucc-leads", "lead-scoring"]
+    seed["seo_description"] = "Fresh, scored MCA leads via API."
+    env = _env(tmp_path, seed)
+    r = _run(env, "--discoverability", "--apply")
+    assert r.returncode == 0, r.stderr
+    disc = (tmp_path / "out" / "_discoverability.md").read_text()
+    assert "merchant-cash-advance" in disc
+    assert "Recommended description" in disc
+    # Hands over an explicit apply command — never auto-mutates the public repo.
+    assert f"repos/{REPO}/topics" in disc
+    assert "names[]=ucc-leads" in disc
+
+
+def test_discoverability_flags_invalid_topics(tmp_path: Path):
+    seed = _seed()
+    # Uppercase + a space are illegal GitHub topics — must be surfaced, not silently mangled.
+    seed["search_topics"] = ["good-topic", "BadTopic", "has space"]
+    env = _env(tmp_path, seed)
+    r = _run(env, "--discoverability", "--apply")
+    assert r.returncode == 0, r.stderr
+    disc = (tmp_path / "out" / "_discoverability.md").read_text()
+    assert "Invalid topics" in disc
+    assert "BadTopic" in disc
+    assert "good-topic" in disc
+
+
 def test_default_target_is_seeded_value_repos_only(tmp_path: Path):
     # value-repos lists two repos; only one is seeded → only that one renders.
     (tmp_path / "value-repos.json").write_text(

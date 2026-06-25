@@ -63,7 +63,20 @@
       ],
       "cta_client": "Deploy this for your shop",
       "cta_recruiter": "Work with the team that built this",
-      "recruiter_bridge_level": 4
+      "recruiter_bridge_level": 4,
+      "seo_description": "50-state UCC public-records intelligence — fresh, enriched, scored MCA / financing leads via dashboard, REST API, and CLI.",
+      "search_topics": [
+        "merchant-cash-advance",
+        "mca-leads",
+        "ucc-filings",
+        "ucc-leads",
+        "lead-generation",
+        "alternative-lending",
+        "small-business-financing",
+        "public-records",
+        "data-enrichment",
+        "lead-scoring"
+      ]
     }
   }
 }
