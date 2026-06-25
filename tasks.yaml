@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-06-25'
-      spent: 49
+      spent: 50
       per_agent:
         jules: 44
         gemini: 0
         codex: 0
-        opencode: 5
+        opencode: 6
         agy: 0
         claude: 0
       per_agent_reset:
@@ -49402,33 +49402,38 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
+  status: done
+  labels:
+  - typing
+  - generated
+  - build-out
+  urls: []
+  context: Eliminate the worst untyped hotspots in organvm/limen's most-imported module
+    (remove `any` / add type hints / fix loose signatures). Keep the build and tests
+    green. [auto-generated 2026-06-24 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-24'
+  updated: '2026-06-25T18:30:00Z'
+  dispatch_log:
+  - timestamp: '2026-06-24T14:22:13.734586Z'
+    agent: jules
+    session_id: '9026462918353295247'
     status: dispatched
-    labels:
-    - typing
-    - generated
-    - build-out
-    urls: []
-    context: Eliminate the worst untyped hotspots in organvm/limen's most-imported module
-      (remove `any` / add type hints / fix loose signatures). Keep the build and tests
-      green. [auto-generated 2026-06-24 to keep the stream endless]
-    depends_on: []
-    created: '2026-06-24'
-    updated: '2026-06-25T18:18:00Z'
-    dispatch_log:
-    - timestamp: '2026-06-24T14:22:13.734586Z'
-      agent: jules
-      session_id: '9026462918353295247'
-      status: dispatched
-    - timestamp: '2026-06-25T17:39:31.714266Z'
-      agent: limen
-      session_id: heal
-      status: open
-      output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
-    - timestamp: '2026-06-25T18:18:00Z'
-      agent: opencode
-      session_id: current
-      status: dispatched
-      output: Claimed by opencode for typing tightening pass
+  - timestamp: '2026-06-25T17:39:31.714266Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-25T18:18:00Z'
+    agent: opencode
+    session_id: current
+    status: dispatched
+    output: Claimed by opencode for typing tightening pass
+  - timestamp: '2026-06-25T18:30:00Z'
+    agent: opencode
+    session_id: current
+    status: done
+    output: "Tightened types across 3 modules: (1) capacity.py: replaced `Any` with `Task | dict[str, Any]` for task_value, github_issue_ref, task_has_github_issue, _get; narrowed _int to `object`, _budget_from_board/capacity_census to `dict[str, Any] | None`; imported Task from models. (2) doctor.py: narrowed _iso to `datetime | date | str | None`. (3) status.py: narrowed _as_date to `date | datetime | str | None`; removed unused `Any` import. All 16 dispatch tests + imports green."
 - id: ASK-quicken-login
   title: 'one login/identity step (your hand: browser/OAuth/portal)'
   type: ops

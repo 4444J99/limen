@@ -8,6 +8,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from limen.models import Task
 
 PAID_AGENT_ORDER: tuple[str, ...] = (
     "codex",
@@ -73,13 +74,13 @@ def canonical_agent(agent: str | None) -> str:
     return AGENT_ALIASES.get(value, value)
 
 
-def task_value(task: Any, key: str, default: Any = None) -> Any:
+def task_value(task: Task | dict[str, Any], key: str, default: Any = None) -> Any:
     if isinstance(task, dict):
         return task.get(key, default)
     return getattr(task, key, default)
 
 
-def github_issue_ref(task: Any) -> tuple[str, str] | None:
+def github_issue_ref(task: Task | dict[str, Any]) -> tuple[str, str] | None:
     """Return (repo, issue_number) when a task already points at a GitHub issue."""
     fields: list[str] = []
     urls = task_value(task, "urls", []) or []
@@ -95,7 +96,7 @@ def github_issue_ref(task: Any) -> tuple[str, str] | None:
     return None
 
 
-def task_has_github_issue(task: Any) -> bool:
+def task_has_github_issue(task: Task | dict[str, Any]) -> bool:
     return github_issue_ref(task) is not None
 
 
@@ -286,27 +287,27 @@ def agent_status(agent: str) -> dict[str, Any]:
     }
 
 
-def _get(value: Any, key: str, default: Any = None) -> Any:
+def _get(value: Task | dict[str, Any], key: str, default: Any = None) -> Any:
     if isinstance(value, dict):
         return value.get(key, default)
     return getattr(value, key, default)
 
 
-def _budget_from_board(board: Any) -> Any:
+def _budget_from_board(board: dict[str, Any] | None) -> dict[str, Any]:
     if board is None:
         return {}
-    portal = _get(board, "portal", {})
+    portal: dict[str, Any] = _get(board, "portal", {})
     return _get(portal, "budget", {})
 
 
-def _int(value: Any, default: int = 0) -> int:
+def _int(value: object, default: int = 0) -> int:
     try:
         return int(value)
     except (TypeError, ValueError):
         return default
 
 
-def capacity_census(board: Any = None, budget_limit: int | None = None) -> list[dict[str, Any]]:
+def capacity_census(board: dict[str, Any] | None = None, budget_limit: int | None = None) -> list[dict[str, Any]]:
     budget = _budget_from_board(board)
     daily = _int(budget_limit if budget_limit is not None else _get(budget, "daily", 0))
     track = _get(budget, "track", {})

@@ -1,11 +1,9 @@
 from datetime import date, datetime
 from math import ceil
-from typing import Any
-
 from limen.models import LimenFile
 
 
-def _as_date(value: Any) -> date | None:
+def _as_date(value: date | datetime | str | None) -> date | None:
     if value is None:
         return None
     if isinstance(value, datetime):

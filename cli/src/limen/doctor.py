@@ -137,7 +137,7 @@ def readiness_report(
     }
 
 
-def _iso(value: Any) -> str | None:
+def _iso(value: datetime | date | str | None) -> str | None:
     if value is None:
         return None
     if isinstance(value, (datetime, date)):
