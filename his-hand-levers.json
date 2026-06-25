@@ -138,13 +138,14 @@
     },
     {
       "id": "L-IANVA-CLOUD",
-      "label": "Stop the claude.ai connector prompts (the /doctor 'Sentry needs authentication' class) \u2014 the ONE re-auth disease a local gateway physically cannot fix, because claude.ai runs that OAuth from Anthropic's cloud, not your machine. Cure = expose ianva as ONE public, bearer-enforced HTTPS connector that holds every upstream's creds behind it and never returns 401, then add a SINGLE custom connector in claude.ai pointing at it \u2014 replacing the dozen per-service connectors. Needs the local face (L-IANVA-LOCAL) running first. The cost is real and honest: it is internet-reachable, so it goes up bearer-first and the tunnel script REFUSES to expose an endpoint that answers /mcp without auth.",
+      "label": "Stop the claude.ai connector prompts (the /doctor claude.ai-connector 'needs authentication' class \u2014 Sentry, Scholar Gateway, Indeed, Candid, Cloudflare Developer Platform, Jam, Netlify; every one shows '! Needs authentication' in `claude mcp list`) \u2014 the ONE re-auth disease a local gateway physically cannot fix, because claude.ai runs that OAuth from Anthropic's cloud, not your machine. Cure = expose ianva as ONE public, bearer-enforced HTTPS connector that holds every upstream's creds behind it and never returns 401, then add a SINGLE custom connector in claude.ai pointing at it \u2014 replacing the dozen per-service connectors. Needs the local face (L-IANVA-LOCAL) running first. The cost is real and honest: it is internet-reachable, so it goes up bearer-first and the tunnel script REFUSES to expose an endpoint that answers /mcp without auth.",
       "cost": "~15 min once + a security pass; durable \u2014 one connector that never expires from your side",
       "owner": "yours",
       "unlocks": "the claude.ai connector re-auth prompts stop \u2014 one bearer'd connector replaces the ~17 per-service ones",
       "source_task": "ianva (session 6cdc53d9) \u2014 disease A",
       "branch": "worktree-ianva-doorway",
       "gate": "HOLD \u2014 touches your claude.ai account and exposes a public endpoint; do L-IANVA-LOCAL first",
+      "note": "This lever owns the WHOLE claude.ai-connector re-auth class, not just Sentry. As of 2026-06-25 `claude mcp list` shows seven needing auth, each fronted by the one bearer'd ianva connector once pulled: Sentry (mcp.sentry.dev/mcp), Scholar Gateway (connector.scholargateway.ai/mcp), Indeed (mcp.indeed.com/claude/mcp), Candid (mcp.candid.org/mcp), Cloudflare Developer Platform (bindings.mcp.cloudflare.com/mcp), Jam (mcp.jam.dev/mcp), Netlify (netlify-mcp.netlify.app/mcp). Machine-readable inventory: ianva/upstreams.example.json (oauth:true per upstream). Any future claude.ai connector that surfaces '! Needs authentication' belongs to THIS class \u2014 add it to the inventory and this note, never relay it in a chat.",
       "steps": [
         "python3 -m ianva.cli bearer --new",
         "bash scripts/set-credential.sh IANVA_BEARER_TOKEN   # silent prompt, lands in ~/.limen.env",

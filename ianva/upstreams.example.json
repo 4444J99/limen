@@ -29,5 +29,55 @@
     "oauth": true,
     "enabled": true,
     "group": "ops"
+  },
+
+  "_comment_claude_ai_class": "The remote OAuth upstreams below are the claude.ai-connector class — each shows '! Needs authentication' in `claude mcp list` because claude.ai runs its OAuth from Anthropic's cloud, the exact re-auth disease the public ianva face (lever L-IANVA-CLOUD / issue #263) replaces with ONE bearer'd connector. Any new claude.ai connector that needs auth belongs here, not in a chat.",
+
+  "scholar-gateway": {
+    "url": "https://connector.scholargateway.ai/mcp",
+    "type": "streamable-http",
+    "oauth": true,
+    "enabled": true,
+    "group": "research"
+  },
+
+  "indeed": {
+    "url": "https://mcp.indeed.com/claude/mcp",
+    "type": "streamable-http",
+    "oauth": true,
+    "enabled": true,
+    "group": "careers"
+  },
+
+  "candid": {
+    "url": "https://mcp.candid.org/mcp",
+    "type": "streamable-http",
+    "oauth": true,
+    "enabled": true,
+    "group": "nonprofit"
+  },
+
+  "cloudflare": {
+    "url": "https://bindings.mcp.cloudflare.com/mcp",
+    "type": "streamable-http",
+    "oauth": true,
+    "enabled": true,
+    "group": "ops"
+  },
+
+  "jam": {
+    "url": "https://mcp.jam.dev/mcp",
+    "type": "streamable-http",
+    "oauth": true,
+    "enabled": true,
+    "group": "dev"
+  },
+
+  "netlify": {
+    "url": "https://netlify-mcp.netlify.app/mcp",
+    "type": "streamable-http",
+    "oauth": true,
+    "enabled": true,
+    "group": "deploy"
   }
 }
