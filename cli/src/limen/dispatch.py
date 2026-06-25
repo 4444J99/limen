@@ -554,6 +554,7 @@ def _agent_argv(agent: str, task: Task | None = None) -> list[str]:
     resolved at import time. opencode's/codex's model is derived here (only when it actually
     runs); claude's TIER is derived per task (the earned-tier ladder) — names are outputs.
     `task` is optional (codex/opencode ignore it) so existing callers stay valid."""
+    model: str | None = None
     flags = list(_LOCAL_AGENTS[agent])
     if agent == "opencode":
         model = _opencode_model()

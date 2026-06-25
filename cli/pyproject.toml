@@ -22,5 +22,24 @@ test = [
 [project.scripts]
 limen = "limen.cli:main"
 
+[tool.mypy]
+strict = false
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = false
+warn_return_any = false
+warn_unused_ignores = true
+exclude = ["tests/"]
+
+[[tool.mypy.overrides]]
+module = [
+  "mesh.*",
+  "anthropic",
+  "conversation_corpus_engine",
+  "conversation_corpus_engine.*",
+  "yaml",
+]
+ignore_missing_imports = true
+
 [tool.setuptools.packages.find]
 where = ["src"]
