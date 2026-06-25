@@ -53,5 +53,8 @@ jobs:
       - name: Validate naming canon (NOMENCLATOR · INDEX·NOMINVM)
         run: python scripts/nomenclator.py
 
+      - name: No-hardcode gate (VIGILIA parameter panel ratchet)
+        run: python scripts/check-params.py
+
       - name: Run API and CLI tests
         run: python -m pytest web/api/tests cli/tests -q

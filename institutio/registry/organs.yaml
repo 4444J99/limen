@@ -16,10 +16,10 @@ organs:
   # ----------------------------------------------------------------- SPINE / GENOME
   - name: parameter-panel
     layer: spine
-    home: limen/institutio/governance/parameters.yaml
+    home: "limen/institutio/governance/parameters.yaml + scripts/check-params.py (the no-hardcode gate)"
     status: partial
     role: "Every name/path/threshold/secret-ref = one declared parameter. The '100x'."
-    residual: "Enumerate all ~70 LIMEN_* vars (scattered across 5 env + 7 YAML + 3 JSON + 3 py-defaults) into one panel; add the no-hardcodes CI gate (build order #3)."
+    residual: "No-hardcode gate BUILT (build #3, 2026-06-25): scripts/check-params.py ratchets against undeclared-params-baseline.txt — wired into pr-gate.yml + ci.yml, fails on any NEW undeclared LIMEN_* var. Excavation found ~258 LIMEN_* vars (not the seed's ~70); 22 declared so far. Residual = fold the remaining vars in incrementally (each fold prunes the baseline via --update); not a big-bang."
 
   - name: index-nominum
     layer: spine
