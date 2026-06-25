@@ -1,5 +1,4 @@
 from datetime import date, datetime
-from typing import Optional
 from pydantic import BaseModel, Field
 
 
@@ -8,14 +7,14 @@ class DispatchLogEntry(BaseModel):
     agent: str
     session_id: str
     status: str
-    output: Optional[str] = None
+    output: str | None = None
 
 
 class Task(BaseModel):
     id: str
     title: str
-    description: Optional[str] = None
-    repo: Optional[str] = None
+    description: str | None = None
+    repo: str | None = None
     type: str = "code"
     target_agent: str
     priority: str = "medium"
@@ -23,17 +22,17 @@ class Task(BaseModel):
     status: str = "open"
     labels: list[str] = Field(default_factory=list)
     urls: list[str] = Field(default_factory=list)
-    context: Optional[str] = None
+    context: str | None = None
     # Optional per-task Claude tier pin ("haiku"|"sonnet"|"opus") — an escape hatch that
     # overrides the earned-tier ladder's class-based derivation for THIS task (the env
     # LIMEN_CLAUDE_MODEL still wins above it). None → derive the tier. See dispatch._claude_model.
-    claude_tier: Optional[str] = None
+    claude_tier: str | None = None
     # task ids that must have a MERGED PR before this task is eligible to dispatch. Lets a
     # dependent increment be seeded NOW and auto-build only once its predecessor lands in the
-    # base branch (avoids parallel-built PRs that conflict / reference not-yet-merged code).
+    # base branch (avoids parallel-built PRs that conflict / reference not-yet-created code).
     depends_on: list[str] = Field(default_factory=list)
     created: date
-    updated: Optional[datetime] = None
+    updated: datetime | None = None
     dispatch_log: list[DispatchLogEntry] = Field(default_factory=list)
 
 

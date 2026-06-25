@@ -6,9 +6,24 @@ import shlex
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Any
+from typing import TypedDict
 
 from limen.models import Task
+
+
+class AgentStatus(TypedDict):
+    agent: str
+    kind: str
+    reachable: bool
+    detail: str
+    command: list[str] | None
+
+
+class CapacityRow(AgentStatus):
+    limit: int
+    spent: int
+    remaining: int | None
+    reachable: bool
 
 PAID_AGENT_ORDER: tuple[str, ...] = (
     "codex",
@@ -74,13 +89,13 @@ def canonical_agent(agent: str | None) -> str:
     return AGENT_ALIASES.get(value, value)
 
 
-def task_value(task: Task | dict[str, Any], key: str, default: Any = None) -> Any:
+def task_value(task: Task | dict[str, object], key: str, default: object = None) -> object:
     if isinstance(task, dict):
         return task.get(key, default)
     return getattr(task, key, default)
 
 
-def github_issue_ref(task: Task | dict[str, Any]) -> tuple[str, str] | None:
+def github_issue_ref(task: Task | dict[str, object]) -> tuple[str, str] | None:
     """Return (repo, issue_number) when a task already points at a GitHub issue."""
     fields: list[str] = []
     urls = task_value(task, "urls", []) or []
@@ -96,7 +111,7 @@ def github_issue_ref(task: Task | dict[str, Any]) -> tuple[str, str] | None:
     return None
 
 
-def task_has_github_issue(task: Task | dict[str, Any]) -> bool:
+def task_has_github_issue(task: Task | dict[str, object]) -> bool:
     return github_issue_ref(task) is not None
 
 
@@ -195,7 +210,7 @@ def _copilot_assignable(binary: str, repo: str, actor: str) -> bool:
     return False
 
 
-def agent_status(agent: str) -> dict[str, Any]:
+def agent_status(agent: str) -> AgentStatus:
     agent = canonical_agent(agent)
     if agent not in PAID_AGENT_ORDER:
         return {
@@ -287,16 +302,16 @@ def agent_status(agent: str) -> dict[str, Any]:
     }
 
 
-def _get(value: Task | dict[str, Any], key: str, default: Any = None) -> Any:
+def _get(value: object, key: str, default: object = None) -> object:
     if isinstance(value, dict):
         return value.get(key, default)
     return getattr(value, key, default)
 
 
-def _budget_from_board(board: dict[str, Any] | None) -> dict[str, Any]:
+def _budget_from_board(board: object | None) -> object:
     if board is None:
         return {}
-    portal: dict[str, Any] = _get(board, "portal", {})
+    portal = _get(board, "portal", {})
     return _get(portal, "budget", {})
 
 
@@ -307,20 +322,23 @@ def _int(value: object, default: int = 0) -> int:
         return default
 
 
-def capacity_census(board: dict[str, Any] | None = None, budget_limit: int | None = None) -> list[dict[str, Any]]:
+def capacity_census(board: object | None = None, budget_limit: int | None = None) -> list[CapacityRow]:
     budget = _budget_from_board(board)
     daily = _int(budget_limit if budget_limit is not None else _get(budget, "daily", 0))
     track = _get(budget, "track", {})
-    total_spent = _int(_get(track, "spent", 0))
-    per_agent_caps = _get(budget, "per_agent", {}) or {}
-    per_agent_spent = _get(track, "per_agent", {}) or {}
+    track_dict = track if isinstance(track, dict) else {}
+    total_spent = _int(track_dict.get("spent", 0))
+    per_agent_caps_obj = _get(budget, "per_agent", {})
+    per_agent_spent_obj = _get(track_dict, "per_agent", {})
+    caps_dict = per_agent_caps_obj if isinstance(per_agent_caps_obj, dict) else {}
+    spent_dict = per_agent_spent_obj if isinstance(per_agent_spent_obj, dict) else {}
     daily_remaining = max(0, daily - total_spent) if daily else None
 
-    rows: list[dict[str, Any]] = []
+    rows: list[CapacityRow] = []
     for agent in PAID_AGENT_ORDER:
         status = agent_status(agent)
-        cap = _int(per_agent_caps.get(agent), daily)
-        spent = _int(per_agent_spent.get(agent), 0)
+        cap = _int(caps_dict.get(agent), daily)
+        spent = _int(spent_dict.get(agent), 0)
         if daily_remaining is None:
             remaining = max(0, cap - spent) if cap else None
         else:
@@ -338,7 +356,7 @@ def capacity_census(board: dict[str, Any] | None = None, budget_limit: int | Non
     return rows
 
 
-def format_capacity_census(rows: list[dict[str, Any]]) -> str:
+def format_capacity_census(rows: list[CapacityRow]) -> str:
     lines = ["-- capacity census"]
     for row in rows:
         state = "up" if row["reachable"] else "down"

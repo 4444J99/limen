@@ -7,10 +7,11 @@ import subprocess
 import contextlib
 import threading
 import time
+from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from typing import Any
+from typing import TypedDict
 
 from limen.capacity import (
     canonical_agent,
@@ -58,7 +59,7 @@ def _load_limen_env() -> int:
 
 
 @contextlib.contextmanager
-def _queue_lock(tasks_path: Path, timeout: int = 90):
+def _queue_lock(tasks_path: Path, timeout: int = 90) -> Iterator[bool]:
     """Cross-process mutex on tasks.yaml writes. The lockdir is derived from tasks_path
     (its sibling logs/.queue.lock.d) so in production it is the SAME dir the heartbeat +
     supervisors use ($LIMEN_ROOT/logs/.queue.lock.d), while tests with a temp tasks.yaml get
@@ -1233,11 +1234,14 @@ def _apply_result(task: Task, agent: str, result: bool | str, now: datetime, tra
 _ASYNC_LANES = {"jules", "github_actions", "copilot", "warp", "oz"}  # remote dispatch — non-blocking
 
 
-def _ledger_lanes() -> dict:
+def _ledger_lanes() -> dict[str, object]:
     """logs/ledger.json lanes map (waste_classes/win_classes per lane) — fail-open to {}."""
     try:
         root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
-        return json.loads((root / "logs" / "ledger.json").read_text()).get("lanes", {}) or {}
+        lanes = json.loads((root / "logs" / "ledger.json").read_text()).get("lanes", {}) or {}
+        if isinstance(lanes, dict):
+            return lanes
+        return {}
     except Exception:
         return {}
 
@@ -1247,7 +1251,7 @@ def _task_classes(task: Task) -> set[str]:
     return {c for c in ([getattr(task, "type", None)] + list(getattr(task, "labels", []) or [])) if c}
 
 
-def _accel_allows(agent: str, task: Task, lanes: dict) -> bool:
+def _accel_allows(agent: str, task: Task, lanes: dict[str, object]) -> bool:
     """May this task ride the acceleration TAIL for this lane? Acceleration needs POSITIVE ledger
     evidence so we never pour expiring budget into junk: a CLEAN earner (no waste_classes) accelerates
     on anything; a MIXED lane accelerates only its win_classes; a lane with NO record / a pure pit does
@@ -1357,13 +1361,16 @@ def _claude_opus_classes() -> set[str]:
     return set(_CLAUDE_OPUS_CLASSES_DEFAULT)
 
 
-def _claude_tier_overrides() -> dict:
+def _claude_tier_overrides() -> dict[str, object]:
     """Optional operator OVERRIDE map logs/model-tiers.json → the claude lane's {tier: [classes]}.
     Fail-open to {} (→ the ledger-DISCOVERED default). Demoted to an override: the default
     pre-assign set is discovered from the ledger, not pinned. Same read pattern as _ledger_lanes()."""
     try:
         root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
-        return (json.loads((root / "logs" / "model-tiers.json").read_text()).get("claude") or {})
+        overrides = json.loads((root / "logs" / "model-tiers.json").read_text()).get("claude") or {}
+        if isinstance(overrides, dict):
+            return overrides
+        return {}
     except Exception:
         return {}
 
@@ -1543,13 +1550,23 @@ def dispatch_parallel(
           f"{' (lanes cooled: '+','.join(sorted(cooled))+')' if cooled else ''}")
 
 
+class StaleReleaseResult(TypedDict):
+    status: str
+    agent: str | None
+    hours: int
+    tasks_path: str
+    count: int
+    released: list[str]
+    candidates: list[dict[str, object]]
+
+
 def release_stale_tasks(
     limen: LimenFile,
     tasks_path: Path,
     hours: int = 24,
     dry_run: bool = True,
     agent: str | None = None,
-) -> dict[str, Any]:
+) -> StaleReleaseResult:
     now = datetime.now(timezone.utc)
     candidates = stale_tasks(limen, hours=hours, agent=agent)
 

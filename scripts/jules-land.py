@@ -33,8 +33,16 @@ JULES = os.environ.get("LIMEN_JULES_BIN", "jules")
 _TASK_ID_RE = re.compile(r"Complete task (\S+?):")
 
 
-def completed_sessions():
-    """(sid, task_id) for every COMPLETED jules session (task_id from the description)."""
+def completed_sessions(sid_map: dict | None = None):
+    """(sid, task_id) for every COMPLETED jules session.
+
+    task_id resolves FIRST from sid_map (session id → task id, built from tasks.yaml dispatch_log
+    when we dispatched the task) and only THEN from the description regex. The regex path is
+    fragile: `jules remote list` truncates the title, and the FLAME kernel can lead the prompt, so
+    "Complete task <id>:" is often pushed out of the visible line — which silently broke harvesting
+    (completed sessions never matched → never landed as PRs). sid_map is the robust primary matcher;
+    the regex stays as a fallback for sessions we have no local record of."""
+    sid_map = sid_map or {}
     r = subprocess.run([JULES, "remote", "list", "--session"],
                        capture_output=True, text=True, timeout=90)
     out = []
@@ -44,8 +52,9 @@ def completed_sessions():
             continue
         if "completed" not in line.lower():
             continue
+        sid = parts[0]
         m = _TASK_ID_RE.search(line)
-        out.append((parts[0], m.group(1) if m else ""))
+        out.append((sid, sid_map.get(sid) or (m.group(1) if m else "")))
     return out
 
 
@@ -64,9 +73,10 @@ def land_one(task: Task, sid: str, apply: bool) -> str:
     if add.returncode != 0:
         return f"FAIL {task.id}: worktree add ({add.stderr.strip()[:120]})"
     try:
-        # apply the jules session patch directly into the isolated worktree
-        pull = subprocess.run([JULES, "remote", "pull", "--session", sid, "--apply"],
-                              cwd=str(wt), capture_output=True, text=True, timeout=180)
+        # apply the jules session patch directly into the isolated worktree (the staged-diff check
+        # below is the real signal — a failed pull just yields an empty diff → no-op, never a crash)
+        subprocess.run([JULES, "remote", "pull", "--session", sid, "--apply"],
+                       cwd=str(wt), capture_output=True, text=True, timeout=180)
         _git(["add", "-A"], wt)
         if _git(["diff", "--cached", "--quiet"], wt).returncode == 0:
             return f"no-op {task.id}: jules session {sid} produced no diff"
@@ -104,11 +114,21 @@ def main() -> int:
     by_id = {t.id: t for t in lf.tasks}
     now = datetime.datetime.now(datetime.timezone.utc)
 
+    # session id → task id, from every jules dispatch we recorded. Lets a completed remote session
+    # match its task even when the session title doesn't carry "Complete task <id>:". Numeric ids
+    # only — jules-land stores PR urls in session_id too, and those are not sessions.
+    sid_map: dict[str, str] = {}
+    for t in lf.tasks:
+        for e in (t.dispatch_log or []):
+            sid = str(e.session_id or "")
+            if sid.isdigit():
+                sid_map[sid] = t.id
+
     def ever_pr(t) -> bool:
         return any("/pull/" in str(e.session_id or "") for e in (t.dispatch_log or []))
 
     done = 0
-    for sid, tid in completed_sessions():
+    for sid, tid in completed_sessions(sid_map):
         if done >= args.limit:
             break
         t = by_id.get(tid)

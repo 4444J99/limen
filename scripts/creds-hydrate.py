@@ -20,8 +20,13 @@ Token lapse self-heals: the next beat re-hydrates from 1Password. A fresh worktr
 from 1Password too — because 1Password is everywhere your login is. So you authenticate each service
 exactly ONCE (the first mint into 1Password), and never re-enter a vendor login again.
 
-The ONLY irreducible human atom left: the 1Password session must be unlocked (`op signin` /
-Touch-ID / a service account) — a per-boot biometric touch at most, never a per-tool re-login.
+1Password is OPT-IN, never automatic. By default this organ touches `op` on NO codepath — not the
+launchd login agent, not a metabolize beat, not an interactive session — so it can never raise a
+Touch-ID/GUI dialog unattended (the app's BiometricsOnly/never-cache policy turns every `op read`
+into a fresh biometric prompt, and service accounts — the only promptless `op` — are Business-only,
+unavailable on a personal account). The promptless `derive` lanes (gh keyring via `gh auth token`)
+hydrate every time. To (re)hydrate the static op:// creds you run `--apply --op` at a terminal once
+and accept a single touch — a deliberate act, never a surprise storm.
 
 Companion pieces (same PR):
   - dispatch._load_limen_env() — loads ~/.limen.env into os.environ so agent subprocesses inherit it.
@@ -391,6 +396,11 @@ def main() -> int:
     g.add_argument("--check", action="store_true", help="report PRESENCE of env targets (names only; offline) — not validity")
     g.add_argument("--verify", action="store_true", help="authenticate each materialized cred against its service (VALIDITY) — exit 1 if any is dead")
     g.add_argument("--dry-run", action="store_true", help="print the op://→target plan; NO reads, NO writes (default)")
+    ap.add_argument("--op", action="store_true",
+                    help="ALSO read op:// lanes — may raise a 1Password Touch-ID/GUI prompt. OFF by default: "
+                         "without it, only promptless lanes (derive, e.g. the gh keyring) hydrate, so NO dialog "
+                         "ever fires from a daemon beat or an interactive session. Pass it deliberately, at a "
+                         "terminal, when you want to (re)hydrate the op:// creds and accept one biometric touch.")
     args = ap.parse_args()
 
     load_service_account_token()  # hydrate OP_SERVICE_ACCOUNT_TOKEN from its file if present → silent `op read`
@@ -440,21 +450,27 @@ def main() -> int:
 
     apply = args.apply  # default (no flag) == dry-run
 
-    # ── NON-INTERACTIVE OP GATE — the actual fix for the recurring 1Password Touch-ID/GUI dialogs ──
-    # `op read` under the desktop-app integration raises a biometric prompt whenever the vault is
-    # locked. This organ runs from the daemon (launchd login agent + EVERY metabolize beat), so an
-    # ungated `op read` there fires that dialog on a relentless cadence — the prompt storm the user
-    # sees. The plist's "fail-open / skips silently when op is locked" promise was never honored.
-    # Honor it now: call `op read` ONLY when it can succeed WITHOUT a prompt (a service-account token)
-    # or when a human is at a terminal (the prompt is then expected). PER-ENTRY, not a blanket skip —
-    # `derive` lanes (e.g. the gh keyring via `gh auth token`) are promptless and MUST still hydrate
-    # every beat; only the op:// fallback is gated.
-    op_ok = op_can_read_silently() or running_interactively()
+    # ── OP IS OPT-IN — the root-to-leaf fix for the recurring 1Password Touch-ID/GUI dialogs ──────
+    # ROOT CAUSE (confirmed from 1Password's own daemon logs): the app's unlock policy is
+    # `BiometricsOnly` with "Ask Again After: -1" (never cache) — so EVERY `op read` re-locks
+    # immediately and demands a fresh Touch-ID. Nothing is cached, so each access is its own prompt.
+    # On personal accounts a service-account token (the only promptless `op`) is NOT available
+    # (Business-only), so there is no token path to make `op read` silent here.
+    # The earlier gate still let `op read` fire whenever stdin/stdout was a TTY — but the daemon's
+    # metabolize beat and ~10 concurrent interactive sessions ALL present as TTYs, so that clause WAS
+    # the storm (20+ biometric prompts in rapid succession). The cure: `op` is now strictly OPT-IN.
+    # It runs ONLY with an explicit `--op` flag (a human deliberately accepting one touch) or a real
+    # service-account/Connect token. Default: never touch 1Password — so no daemon beat and no
+    # interactive session can pop a dialog. The promptless `derive` lanes (gh keyring via `gh auth
+    # token`) hydrate every time regardless; only the op:// fallback is gated. PER-ENTRY, not a blanket
+    # skip. [[macos-tcc-gatekeeper-dialogs-solved]]
+    op_ok = op_can_read_silently() or args.op
     if apply and not op_ok:
-        print("creds-hydrate: op:// reads GATED — no non-interactive 1Password auth "
-              f"(OP_SERVICE_ACCOUNT_TOKEN unset) and not a TTY. Avoiding a Touch-ID/GUI prompt storm "
-              f"(fail-open). `derive` lanes still hydrate. Mint a service account → {SA_TOKEN_FILE}, "
-              "or run in a terminal, to hydrate op:// lanes.")
+        hint = ("re-run with `--op` at a terminal to hydrate them (accepts one Touch-ID)."
+                if running_interactively()
+                else "they hydrate only with `--op` or a service-account token.")
+        print("creds-hydrate: op:// lanes SKIPPED (opt-in) — not touching 1Password, so no Touch-ID/GUI "
+              f"prompt fires. Promptless `derive` lanes still hydrate. To (re)hydrate the op:// creds, {hint}")
 
     print(f"creds-hydrate {'--apply' if apply else '--dry-run (no reads, no writes — pass --apply to hydrate)'}:")
     hydrated, skipped = 0, 0
@@ -489,8 +505,11 @@ def main() -> int:
         print(f"creds-hydrate: {hydrated} hydrated, {skipped} skipped. "
               f"Apply to the running daemon: launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat")
         if skipped:
-            print("  (skipped = `op` couldn't read it: unlock with `op signin`, or fix the field in the map. "
-                  "Never a vendor re-login — only the 1Password unlock.)")
+            print("  (skipped = `op` couldn't read it: unlock with `op signin`, then re-run with `--op`, "
+                  "or fix the field in the map. Never a vendor re-login — only the 1Password unlock.)"
+                  if op_ok else
+                  "  (skipped = op:// lanes are opt-in and `--op` was not passed — this is the NO-PROMPT "
+                  "default. Promptless `derive` lanes hydrated. Pass `--op` at a terminal to hydrate op://.)")
     return 0
 
 

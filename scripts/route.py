@@ -42,6 +42,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "cli" / "src"))
@@ -83,7 +84,7 @@ def _vendor_health() -> dict[str, bool]:
     }
 
 
-def _fleet_health(data) -> dict[str, bool]:
+def _fleet_health(data: dict[str, Any]) -> dict[str, bool]:
     """One health map for the WHOLE PAID_AGENT_ORDER. Origin's local-CLI probe for the six vendor
     lanes, UNIONed with the capacity census's reachability for the extended paid fleet
     (copilot/github_actions/warp/oz) so fan-all coverage is REAL, not just declared — a remote-only
@@ -157,7 +158,7 @@ def _local_checkout(repo: str | None, workdir: Path) -> Path | None:
     return None
 
 
-def _task_cost(task: dict) -> int:
+def _task_cost(task: dict[str, Any]) -> int:
     try:
         return int(task.get("budget_cost", 1))
     except (TypeError, ValueError):
@@ -234,13 +235,13 @@ def _refresh_self_improve_proposal() -> None:
         return  # fail-open: a stale/absent proposal just means _learned_weights -> {} (no effect)
 
 
-def _task_classes(task: dict) -> set[str]:
+def _task_classes(task: dict[str, Any]) -> set[str]:
     """The work-classes of one task — its type plus every label. The ledger grades a lane per class,
     so this is the key we look the lane's waste/win record up against."""
     return {c for c in ([task.get("type")] + list(task.get("labels") or [])) if c}
 
 
-def _ledger_bias(task: dict) -> dict[str, float]:
+def _ledger_bias(task: dict[str, Any]) -> dict[str, float]:
     """Steer each lane AWAY from the work-classes the value ledger shows it wastes on — derived from
     logs/ledger.json (lanes[lane].waste_classes / .win_classes), so no lane name is pinned and it self-
     corrects as performance changes ([[value-is-discovered-never-assumed]] is the input side; this acts
@@ -271,7 +272,7 @@ def _ledger_bias(task: dict) -> dict[str, float]:
 
 
 def _pick_local(
-    task: dict,
+    task: dict[str, Any],
     health: dict[str, bool],
     assigned: dict[str, int],
     budget: dict[str, int],
@@ -326,7 +327,7 @@ def _pick_local(
 
 
 def _capable_agents(
-    task: dict,
+    task: dict[str, Any],
     health: dict[str, bool],
     planned_remaining: dict[str, int],
     workdir: Path,
@@ -377,7 +378,7 @@ def _capable_agents(
 
 
 def route_task(
-    task: dict,
+    task: dict[str, Any],
     health: dict[str, bool],
     workdir: Path,
     assigned: dict[str, int] | None = None,
