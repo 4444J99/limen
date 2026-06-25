@@ -15,9 +15,9 @@
     },
     {
       "id": "L-REVENUE-ACCT",
-      "label": "Revenue first-dollar accounts: create Ko-fi + GitHub Sponsors on the Exporter, create a LemonSqueezy product and paste LEMONSQUEEZY_STORE_ID into CI. FUNDING.yml + Pro-tier checkout are already staged — only account creation is missing.",
+      "label": "FASTEST FIRST DOLLAR = Ko-fi alone, ~60 sec, NO bank/KYC: create a free account at ko-fi.com and reply with the slug. The donate button + FUNDING.yml + GreasyFork-live Exporter are already wired — the moment you give the slug it ships, no further code. (Bigger revenue is a SEPARATE, slower, KYC-gated follow-on, not part of the first dollar: GitHub Sponsors for `organvm`, and a Lemon Squeezy product to light the Pro-license 'Buy Pro' button via LEMONSQUEEZY_STORE_ID.) Account creation is policy-irreducibly yours — Claude cannot sign up on your behalf.",
       "owner": "yours",
-      "cost": "~10 min, no code",
+      "cost": "~60 sec for the first dollar (just the Ko-fi slug); merchant/KYC paths are separate and slower",
       "unlocks": "first dollar (income before August)",
       "source_task": "revenue-ladder (whose_hand: yours)",
       "issue": 253
