@@ -1,0 +1,109 @@
+# VIGILIA — THE PARAMETER PANEL (the spine; the "100x").
+#
+# Mandate: every name, path, threshold, and secret-REFERENCE the body uses is ONE
+# declared parameter here — with a default, an env override, and (where it makes
+# sense) a self-update rule. No hardcodes. This is enforced by a CI gate (build
+# order #3), the same way the nomenclator gate already fails the build on a bad name.
+#
+# This file is a SEED, not the finished panel. The excavation found ~70 LIMEN_* vars
+# scattered across 5 env files + 7 YAML + 3 JSON + 3 py-defaults. Folding all of them
+# in here — and pointing the code at this panel — is its own focused PR.
+#
+# param schema:
+#   <KEY>:
+#     default:     the reversible default
+#     env:         the env var that overrides it (usually the key itself)
+#     self_update: none | <rule>   # how/whether the body may re-tune it
+#     owner:       which organ owns it (see registry/organs.yaml)
+#     note:        optional
+
+schema_version: 0.1
+
+parameters:
+
+  # --- the institution names ITSELF as the first parameter ---------------------
+  INSTITVTIO_NOMEN:
+    default: "VIGILIA"          # provisional codename — NOT ratified
+    env: INSTITVTIO_NOMEN
+    self_update: "ratified once, via INDEX·NOMINVM"
+    owner: index-nominum
+    note: "Even the name is a parameter. Do not treat VIGILIA as final."
+
+  INSTITVTIO_HOME:
+    default: "limen/institutio"  # provisional; may extract to its own repo
+    env: INSTITVTIO_HOME
+    self_update: none
+    owner: the-seat
+    note: "Repo home is a decision, not a constant. Extracting later is a clean git subtree."
+
+  # --- VITALS: the missing executive's thresholds (build order #1) --------------
+  # These are the published 'reaction function' the heartbeat will enact. Seeds —
+  # tune against _diagnostics FIND-005 ('treat 16GB as a budget, not a floor').
+  VITALS_PRESSURE_GAUGE:
+    default: "kern.memorystatus_vm_pressure_level"
+    env: LIMEN_VITALS_GAUGE
+    self_update: none
+    owner: vitals
+    note: "The kernel's own jetsam signal — correct gauge; free-pages stays ~0 even when healthy."
+  VITALS_PRESSURE_WARN:
+    default: 1                  # macOS: 1=normal, 2=warn, 4=critical
+    env: LIMEN_VITALS_WARN
+    self_update: none
+    owner: vitals
+    note: "At >=warn: stop opening new dispatch lanes (idle beat, mirror #224 offline gate)."
+  VITALS_PRESSURE_CRITICAL:
+    default: 2
+    env: LIMEN_VITALS_CRIT
+    self_update: none
+    owner: vitals
+    note: "At >=critical: shed running discretionary load (e.g. ollama) before jetsam escalates."
+  VITALS_HEAVY_SURFACE_LIMIT:
+    default: 1
+    env: LIMEN_VITALS_HEAVY_LIMIT
+    self_update: none
+    owner: vitals
+    note: "FIND-005: one heavy AI surface at a time on a 16GB host."
+
+  # --- CONTINUITY: make hand-recovery automatic (build order #1) ----------------
+  CONTINUITY_MIN_SUMMARY_CHARS:
+    default: 400
+    env: LIMEN_CONTINUITY_MIN_SUMMARY
+    self_update: none
+    owner: continuity
+    note: "A handoff summary shorter than this is degenerate (this session got 200). Trigger transcript reconstruction."
+  CONTINUITY_TRANSCRIPT_GLOB:
+    default: "~/.claude/projects/*/*.jsonl"
+    env: LIMEN_CONTINUITY_TRANSCRIPTS
+    self_update: none
+    owner: continuity
+
+  # --- INTEGRITY: govern the autoupdater lever (build order #1) ------------------
+  INTEGRITY_AUTOUPDATER:
+    default: "disabled"        # the documented lever (DISABLE_AUTOUPDATER=1)
+    env: DISABLE_AUTOUPDATER
+    self_update: none
+    owner: integrity
+    note: "Version-path churn is the root of the corrupt-app dialog + TCC re-prompts."
+  INTEGRITY_VERIFY_TARGETS:
+    default:
+      - "/Applications/Claude.app"
+      - "~/.local/bin/claude"
+    env: LIMEN_INTEGRITY_TARGETS
+    self_update: none
+    owner: integrity
+    note: "codesign --verify on the heartbeat; alert on signature/version drift."
+
+  # --- SEED of the existing scattered surface (illustrative; not exhaustive) -----
+  # The real work: migrate ALL of these from heartbeat-loop.sh / tasks.yaml / *.json
+  # into this panel, then point the code here. (~70 total — see registry residual.)
+  LIMEN_ROOT:
+    default: "~/Workspace/limen"
+    env: LIMEN_ROOT
+    self_update: none
+    owner: limen-daemon
+  LIMEN_DISPATCH_CEILING:
+    default: null              # currently in heartbeat-loop.sh
+    env: LIMEN_DISPATCH_CEILING
+    self_update: "may lower under VITALS pressure"
+    owner: arms-agents
+    note: "First cross-organ link: VITALS pressure should drive this ceiling down."

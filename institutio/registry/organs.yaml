@@ -1,0 +1,105 @@
+# VIGILIA — THE SEAT: the single registry of every organ of the body.
+#
+# This is the legibility gift: one place that holds it all. Seeded from the
+# 2026-06-25 excavation (creds / permissions / config + diagnostics/institution map).
+# Each organ records its own home and its own residual work (per the closeout charter).
+#
+# layer:    spine | autonomic | somatic | face
+# status:   built | partial | missing
+# residual: the cheapest path to its remaining 10% (or [] if none)
+
+schema_version: 0.1
+seeded_from: "excavation 2026-06-25 (sessions 38f777fe; packets recovered into 6b107f0b)"
+
+organs:
+
+  # ----------------------------------------------------------------- SPINE / GENOME
+  - name: parameter-panel
+    layer: spine
+    home: limen/institutio/governance/parameters.yaml
+    status: partial
+    role: "Every name/path/threshold/secret-ref = one declared parameter. The '100x'."
+    residual: "Enumerate all ~70 LIMEN_* vars (scattered across 5 env + 7 YAML + 3 JSON + 3 py-defaults) into one panel; add the no-hardcodes CI gate (build order #3)."
+
+  - name: index-nominum
+    layer: spine
+    home: organvm/limen (scripts/nomenclator.py) + IRF-IDX-002
+    status: built
+    role: "Naming institution (U>V…). CI gate already fails on bad names."
+    residual: []
+
+  - name: the-seat
+    layer: spine
+    home: limen/institutio/registry/organs.yaml
+    status: partial
+    role: "This registry — the single index of every organ. Legibility."
+    residual: "Auto-derive liveness per organ from organ-health.py rather than hand-maintained status."
+
+  # ----------------------------------------------------------------- AUTONOMIC (keep-self-alive)
+  - name: vitals
+    layer: autonomic
+    home: "SENSE: 4444J99/_diagnostics (sysdiag, memdiag, mem-pressure-snapshot) | EXECUTE: limen heartbeat (MISSING)"
+    status: missing            # the executive is missing; the sensor is built
+    role: "mem/cpu/disk/swap → don't crash. Sheds fleet load before pressure → panic."
+    evidence: "08:47 kernel panic; FIND-005 'treat 16GB as a budget' diagnosed a month ago, never acted on."
+    residual: "BUILD the executive: read kern.memorystatus_vm_pressure_level on the heartbeat; throttle/pause dispatch under pressure (mirror the #224 offline-idle-beat gate)."
+
+  - name: continuity
+    layer: autonomic
+    home: organvm/session-meta + corpus feed (claude_projects.py)
+    status: partial
+    role: "Session thread → don't forget. Survives crash/rollover; reconstructs from transcript."
+    evidence: "~13:42 auto-compaction handed off a 200-char stub; full thread recovered by hand from the .jsonl transcript."
+    residual: "Make the by-hand recovery automatic: on a degenerate/short handoff summary, reconstruct from ~/.claude/projects/*.jsonl + last good /compact + session-meta."
+
+  - name: integrity
+    layer: autonomic
+    home: "lever: DISABLE_AUTOUPDATER (see macos-tcc memory) — ungoverned"
+    status: missing
+    role: "app/binary/signature → don't self-corrupt. Pin + verify the operating apps."
+    evidence: "'Claude app is corrupt' dialog this session; CLI symlink flipped version dir 06-24; desktop app signature valid now (transient churn)."
+    residual: "Pin/verify Claude.app + claude CLI signature on the heartbeat; govern the autoupdater lever; alert on signature/version drift instead of letting Gatekeeper interrupt."
+
+  - name: identity
+    layer: autonomic
+    home: limen (creds-hydrate.py, _load_limen_env, com.limen.creds-hydrate.plist)
+    status: partial
+    role: "creds/secrets/env → don't break, don't re-ask. 1Password → ~/.limen.env → tools."
+    residual: "6 of 7 creds never minted/wired; Claude auth deliberately disabled; Gmail app-pw not in the map (op://Private/gmail-app-pw-2026-06-06 → GH secret GMAIL_APP_PASSWORD). Mostly his-lever mints + 2 wiring fixes."
+
+  - name: authority
+    layer: autonomic
+    home: ~/.claude (settings.json allowlist, hooks/allow-trusted-cd-git.sh)
+    status: partial
+    role: "permissions/dialogs → stop asking for consent already granted."
+    residual: "Hook isn't silent; daemon still execs bare binary (upstream); no TCC audit view. Largely solved."
+
+  # ----------------------------------------------------------------- SOMATIC (do-the-work; indexed, not absorbed)
+  - name: limen-daemon
+    layer: somatic
+    home: limen (scripts/heartbeat-loop.sh, metabolize.sh; cli/src/limen/dispatch.py)
+    status: built
+    role: "Metabolism / heartbeat / dispatch. ~9 self-* organs on cadence."
+    residual: "Indexed here; governed by the seat, not absorbed."
+
+  - name: arms-agents
+    layer: somatic
+    home: limen dispatch lanes (agent-all / _arms) + vendor fleet
+    status: built
+    role: "The vendor lanes that act (claude/gemini/codex/jules/opencode/…)."
+    residual: "Indexed here; the parameter panel owns its limits/cadences."
+
+  - name: proprioception
+    layer: somatic
+    home: limen (scripts/organ-health.py, watchdog.py, autonomy-governor.py, usage-telemetry.py)
+    status: built
+    role: "The body feels whether its own organs are firing (9-rung liveness + self-heal)."
+    residual: "Feed the-seat: organ-health.json should drive this registry's per-organ status."
+
+  # ----------------------------------------------------------------- FACE
+  - name: face
+    layer: face
+    home: "tui / portus / web dashboard (web/app)"
+    status: partial
+    role: "One pane onto the seat — how the operator sees & steers."
+    residual: "Render from the-seat (organs.yaml + organ-health.json). Build order #4."
