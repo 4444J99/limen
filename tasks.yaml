@@ -15,13 +15,13 @@ portal:
       opencode: 100
     track:
       date: '2026-06-25'
-      spent: 68
+      spent: 74
       per_agent:
         agy: 1
         claude: 0
         codex: 0
         gemini: 0
-        jules: 59
+        jules: 65
         opencode: 9
       per_agent_reset:
         agy: '2026-06-25T13:58:52.030958+00:00'
@@ -43253,16 +43253,17 @@ tasks:
   title: Discover the latent value of organvm/visual-substrate-inquiry
   repo: organvm/visual-substrate-inquiry
   type: research
-  target_agent: codex
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - discover
   - value-discovery
   - tried:opencode
   - tried:agy
   - tried:claude
+  - tried:codex
   urls: []
   context: "DISCOVER the latent value of organvm/visual-substrate-inquiry. This repo\
     \ currently has NO ranked value \u2014 your job is to find it (value is discovered,\
@@ -43433,6 +43434,10 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
+  - timestamp: '2026-06-25T19:34:48.657660Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
 - id: DISCOVER-organvm-a-i-council--coliseum
   title: Discover the latent value of organvm/a-i-council--coliseum
   repo: organvm/a-i-council--coliseum
@@ -49237,10 +49242,10 @@ tasks:
   title: Reduce complexity in organvm/styx
   repo: organvm/styx
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - simplify
   - generated
@@ -49249,6 +49254,7 @@ tasks:
   - tried:opencode
   - tried:agy
   - tried:claude
+  - tried:gemini
   urls: []
   context: Identify the most complex or most-duplicated module in organvm/styx and
     refactor it for clarity, with tests proving behavior is unchanged. Net lines should
@@ -49287,6 +49293,10 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
+  - timestamp: '2026-06-25T19:34:48.657660Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: GEN-organvm-limen-simplify-0624
   title: Reduce complexity in organvm/limen
   repo: organvm/limen
@@ -51352,6 +51362,10 @@ tasks:
     agent: claude
     session_id: conductor
     status: 'reopened->jules (was noop/stalled; prompt fix #271 acd98af)'
+  - timestamp: '2026-06-25T19:34:48.657660Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: INBOUND-POS-the-invisible-ledger
   title: Inbound front-door treatment for organvm/the-invisible-ledger (positioning
     page + README CTA)
@@ -51395,6 +51409,10 @@ tasks:
     agent: claude
     session_id: conductor
     status: 'reopened->jules (was noop/stalled; prompt fix #271 acd98af)'
+  - timestamp: '2026-06-25T19:34:48.657660Z'
+    agent: jules
+    session_id: '14403756960100741487'
+    status: dispatched
 - id: INBOUND-POS-domus-genoma
   title: Inbound front-door treatment for organvm/domus-genoma (positioning page +
     README CTA)
@@ -51443,6 +51461,10 @@ tasks:
     agent: claude
     session_id: conductor
     status: 'reopened->jules (was noop/stalled; prompt fix #271 acd98af)'
+  - timestamp: '2026-06-25T19:34:48.657660Z'
+    agent: jules
+    session_id: '11825436459510213989'
+    status: dispatched
 - id: INBOUND-POS-styx
   title: Inbound front-door treatment for organvm/styx (positioning page + README
     CTA)
@@ -52311,15 +52333,16 @@ tasks:
   title: Real usage docs for organvm/limen
   repo: organvm/limen
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: low
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - docs
   - generated
   - build-out
   - tried:codex
+  - tried:agy
   urls: []
   context: "Derive an accurate Usage section in organvm/limen's README from the ACTUAL\
     \ entrypoints/exports (install, run, key commands + flags). No invented features,\
@@ -52337,6 +52360,10 @@ tasks:
     agent: codex
     session_id: cli
     status: ratelimited->opencode
+  - timestamp: '2026-06-25T19:34:48.657660Z'
+    agent: agy
+    session_id: cli
+    status: failed->claude
 - id: GEN-organvm-session-meta-test-coverage-0625
   title: Raise test coverage in organvm/session-meta
   repo: organvm/session-meta
@@ -52401,14 +52428,15 @@ tasks:
   title: Real usage docs for organvm/portfolio
   repo: organvm/portfolio
   type: code
-  target_agent: claude
+  target_agent: gemini
   priority: low
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - docs
   - generated
   - build-out
+  - tried:claude
   urls: []
   context: "Derive an accurate Usage section in organvm/portfolio's README from the\
     \ ACTUAL entrypoints/exports (install, run, key commands + flags). No invented\
@@ -52422,18 +52450,23 @@ tasks:
     agent: codex
     session_id: cli
     status: ratelimited->opencode
+  - timestamp: '2026-06-25T19:34:48.657660Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
 - id: GEN-organvm-universal-mail--automation-docs-0625
   title: Real usage docs for organvm/universal-mail--automation
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: low
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - docs
   - generated
   - build-out
+  - tried:gemini
   urls: []
   context: "Derive an accurate Usage section in organvm/universal-mail--automation's\
     \ README from the ACTUAL entrypoints/exports (install, run, key commands + flags).\
@@ -52447,14 +52480,18 @@ tasks:
     agent: codex
     session_id: cli
     status: ratelimited->opencode
+  - timestamp: '2026-06-25T19:34:48.657660Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: GEN-organvm-domus-genoma-docs-0625
   title: Real usage docs for organvm/domus-genoma
   repo: organvm/domus-genoma
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: low
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - docs
   - generated
@@ -52469,6 +52506,10 @@ tasks:
   updated: '2026-06-25T19:34:48.657660Z'
   dispatch_log:
   - timestamp: '2026-06-25T18:04:03.531673Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-25T19:34:48.657660Z'
     agent: codex
     session_id: cli
     status: ratelimited->opencode
@@ -52680,29 +52721,42 @@ tasks:
     session_id: '6728380593286373412'
     status: dispatched
 - id: GEN-organvm-limen-typing-0625
-  title: Tighten types in organvm/limen — remove Any / add type hints / fix loose signatures
+  title: "Tighten types in organvm/limen \u2014 remove Any / add type hints / fix\
+    \ loose signatures"
   repo: organvm/limen
   type: code
   target_agent: opencode
   priority: high
   budget_cost: 2
-  status: done
+  status: cancelled
   labels:
   - typing
   - housekeeping
+  - noop
   urls: []
-  context: "Eliminate worst untyped hotspots in most-imported modules. Fixes in dispatch.py (5 signatures: _queue_lock return type, _ledger_lanes, _accel_allows, _claude_tier_overrides bare dict to dict[str, Any], release_stale_tasks return type) and scripts/route.py (7 signatures: _fleet_health param type, bare dict to dict[str, Any] on _task_cost, _task_classes, _ledger_bias, _pick_local, _capable_agents, route_task). 112 tests green, ruff clean."
+  context: 'Eliminate worst untyped hotspots in most-imported modules. Fixes in dispatch.py
+    (5 signatures: _queue_lock return type, _ledger_lanes, _accel_allows, _claude_tier_overrides
+    bare dict to dict[str, Any], release_stale_tasks return type) and scripts/route.py
+    (7 signatures: _fleet_health param type, bare dict to dict[str, Any] on _task_cost,
+    _task_classes, _ledger_bias, _pick_local, _capable_agents, route_task). 112 tests
+    green, ruff clean.'
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T20:30:00Z'
+  updated: '2026-06-25T19:34:48.657660Z'
   dispatch_log:
   - timestamp: '2026-06-25T20:30:00Z'
     agent: opencode
     session_id: cli
     status: dispatched
-    output: Fixing untyped hotspots — dispatch.py + route.py
+    output: "Fixing untyped hotspots \u2014 dispatch.py + route.py"
   - timestamp: '2026-06-25T20:31:00Z'
     agent: opencode
     session_id: cli
     status: done
-    output: "Fixed 5 signatures in dispatch.py (Iterator[bool], dict[str, Any] for bare dict) and 7 signatures in route.py (param type for _fleet_health, dict[str, Any] for bare dict params). 112 tests green, ruff clean."
+    output: Fixed 5 signatures in dispatch.py (Iterator[bool], dict[str, Any] for
+      bare dict) and 7 signatures in route.py (param type for _fleet_health, dict[str,
+      Any] for bare dict params). 112 tests green, ruff clean.
+  - timestamp: '2026-06-25T19:34:48.657660Z'
+    agent: opencode
+    session_id: cli
+    status: noop
