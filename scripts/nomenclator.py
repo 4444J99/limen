@@ -18,6 +18,7 @@ Usage:
   python3 scripts/nomenclator.py                 # validate the roll; exit 1 if any nota (CI gate)
   python3 scripts/nomenclator.py --apply         # also write logs/nomenclator.json (organ-health probe)
   python3 scripts/nomenclator.py --check "<name>" # derive a candidate's canon form (mint helper)
+  python3 scripts/nomenclator.py --census         # take the roll's own census from the living estate
 """
 import json
 import os
@@ -196,6 +197,56 @@ def validate_roll(canon):
     return violations, len(names)
 
 
+def _estate_names():
+    """Discover names in the LIVING estate — the institutions under spec/ and the heartbeat organs.
+    This is the metabolize limb: the roll seeds, the estate is the source of truth. The institution
+    crawls itself rather than waiting to be hand-fed (the autopoiesis 'past' tense)."""
+    names = set()
+    spec_root = ROOT / "spec"
+    if spec_root.exists():
+        for d in spec_root.iterdir():
+            if d.is_dir():
+                names.add(d.name)
+    hb = ROOT / "scripts" / "heartbeat-loop.sh"
+    if hb.exists():
+        for m in re.finditer(r"^C_([A-Z][A-Z_]*)=", hb.read_text(), re.M):
+            names.add(m.group(1).lower())
+    return sorted(names)
+
+
+def census(canon):
+    """--census: take the roll's own census. Crawl the estate, derive each name's canon form, and
+    report drift against the roll — so the roll metabolizes the living estate instead of being
+    hand-fed. Plain-english identifiers needing U→V are PROPOSED for enrollment (not failures);
+    only a genuinely broken name (non-ASCII / shell- or DNS-unsafe) is a hard nota → exit 1."""
+    register = (canon.get("orthographia") or {}).get("register_default", "classical")
+    roll_domains = set()
+    if ROLL.exists():
+        for e in (_load(ROLL).get("names") or []):
+            dom = (e.get("domain") or "").lower()
+            if dom:
+                roll_domains.add(dom)
+    names = _estate_names()
+    enrolled, propose, broken = 0, [], []
+    for nm in names:
+        marks, _ortho, dom = notae(nm, canon, register)
+        hard = [m for m in marks if m.startswith(("non-ASCII", "unsafe"))]
+        if hard:
+            broken.append((nm, hard))
+        elif dom in roll_domains:
+            enrolled += 1
+        else:
+            propose.append((nm, dom))
+    print(f"nomenclator census: {len(names)} names in the living estate "
+          f"(spec/ institutions + heartbeat organs)")
+    print(f"  on the roll: {enrolled} · propose to enroll: {len(propose)} · broken: {len(broken)}")
+    for nm, dom in propose:
+        print(f"  + {nm} → {dom}  (estate name; derive canon form and add to roll.yaml)")
+    for nm, hard in broken:
+        print(f"  ✗ {nm}: {'; '.join(hard)}")
+    return 1 if broken else 0
+
+
 def main():
     if not yaml:
         print("nomenclator: pyyaml unavailable")
@@ -209,6 +260,9 @@ def main():
         if i + 1 >= len(sys.argv):
             fail("--check needs a name, e.g. --check \"Studium IV\"")
         return check_one(canon, sys.argv[i + 1])
+
+    if "--census" in sys.argv:
+        return census(canon)
 
     violations, n = validate_roll(canon)
     violations += validate_domains(canon)

@@ -1,0 +1,53 @@
+# AVTOPOIESIS — the law that each door must be alive in its own existence.
+#
+# The single source scripts/avtopoiesis.py reads. This file is the rubric; the script is the
+# mechanism. NOT A SOLID, by construction:
+#   - the door-list is DISCOVERED from the living heartbeat (discovery.source) — never a hand-roster
+#   - the rubric below is DERIVED at use — retune a weight/threshold here and the gate follows
+#   - the verdict is REGENERATED every run — there is no stored scorecard to rot
+#   - the gate INCLUDES ITSELF — it has its own heartbeat beat, so it is discovered like any door
+#     (operational closure — the Maturana/Varela signature: the system is a subject of its own law)
+#
+# The ideal form is APPROACHED, not reached: this canon carries its own gaps_remaining, and the gate
+# reports DISTANCE-FROM-IDEAL per tense — never a frozen pass/fail stamp. We are liquid; so is the law.
+schema_version: 1
+
+discovery:
+  # Where the living door-list is read FROM. Each heartbeat beat is a door.
+  source: "scripts/heartbeat-loop.sh"
+  # C_<NAME>="${LIMEN_BEAT_<NAME>:-<cadence>}"   # <role>   → captures name, cadence, role (role optional)
+  beat_pattern: 'C_([A-Z][A-Z_]*)="\$\{LIMEN_BEAT_\1:-([0-9]+)\}"(?:[^#\n]*#\s*([^\n]*))?'
+  # a beat guarded by  [ "${LIMEN_<NAME>:-0}" = "1" ]  is gated OFF by default (dormant until his knob).
+  # %s is filled with the beat NAME at use; do not pre-substitute.
+  gate_pattern: '\[\s*"\$\{LIMEN_%s:-0\}"\s*=\s*"1"\s*\]'
+
+tenses:
+  # The three tenses of aliveness. weight sums to 1.0; each door scores 0..1 per tense.
+  past:
+    gloss: "metabolizes its own history — its source regenerates state from the estate, not fed by hand"
+    weight: 0.34
+  present:
+    gloss: "runs unbidden — wired to a heartbeat beat and not gated dormant"
+    weight: 0.33
+  future:
+    gloss: "self-evolves, asks less — carries no open his-hand lever of its own"
+    weight: 0.33
+
+# a door is 'alive' at/above this fraction of the ideal; below earns a nota (strict-mode → exit 1)
+alive_threshold: 0.67
+
+senses:
+  # The tunable knobs of each sense. The sensing MECHANISM lives in code; these are its parameters.
+  past:
+    # source-signatures that prove a door CRAWLS/regenerates rather than reads a hand-authored input
+    metabolize_signatures: [".iterdir(", "rglob(", "os.walk(", ".glob(", "--census", "def census", "glob.glob"]
+  future:
+    his_hand_registry: "his-hand-levers.json"
+    penalty_per_lever: 0.5          # each open lever a door owns subtracts this from its future score
+
+gaps_remaining:
+  # Recorded, not hidden — the distance still to close. A liquid law names its own incompleteness.
+  organ_health_roster: "organ-health.py _registry() is still a hand-roster — converge it onto discovery.source so there is ONE door-list, not two that can silently drift"
+  past_sense_is_heuristic: "the 'past' score reads source-signatures (does it crawl?); deepen to whether the metabolized history actually changed an output"
+  present_sense_is_binary: "present = wired-and-not-dormant; deepen to organ-health's real last-fire-vs-cadence liveness"
+  door_to_script_by_name: "a door's metabolize limb is found by name-matching scripts/; deepen to resolve the exact script each beat invokes"
