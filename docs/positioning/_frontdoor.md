@@ -14,6 +14,16 @@ Not demos. Live platforms — tested, deployed, and running. Each repo below is 
 
 ## The systems
 
+### [ChatGPT Conversation Exporter](https://github.com/organvm/a-i-chat--exporter)
+
+A browser userscript that exports your ChatGPT conversations into five portable formats — Markdown, HTML, JSON, PNG, and plain text — entirely in-browser. No account, no server, no data leaves your machine; it authenticates through your existing ChatGPT session and runs on chatgpt.com, chat.openai.com, and new.oaifree.com.
+
+`170 tests across 16 suites` · `~5,900 lines of TypeScript` · `distributed on GreasyFork, GitHub, Docker (GHCR), and Cloudflare Pages` · `5 export formats` · `9-language UI` · `MIT-licensed · 549 commits, actively maintained`
+
+**Solves:** ChatGPT conversations are ephemeral by design. There's no native export to Markdown or HTML and no bulk download — the official dump is one unwieldy JSON blob most people can't use. Knowledge you paid for in thinking time evaporates or gets locked in a format you can't pipe anywhere.
+
+→ **Build this into my product** · see [the ways to work together](docs/positioning/a-i-chat--exporter.md)
+
 ### [50-State UCC Public-Records Intelligence Platform](https://github.com/organvm/public-record-data-scrapper)
 
 A production platform that collects UCC-1 filings from all 50 Secretary-of-State portals, enriches each record with SEC / OSHA / USPTO / Census and key-gated premium sources, and scores every prospect 0–100 on financing likelihood with an A–F health grade — delivered via dashboard, REST API, and CLI.

@@ -145,6 +145,289 @@
         "cloudflare-workers",
         "email-management"
       ]
+    },
+    "organvm/a-i-chat--exporter": {
+      "display_name": "ChatGPT Conversation Exporter",
+      "what_it_is": "A browser userscript that exports your ChatGPT conversations into five portable formats — Markdown, HTML, JSON, PNG, and plain text — entirely in-browser. No account, no server, no data leaves your machine; it authenticates through your existing ChatGPT session and runs on chatgpt.com, chat.openai.com, and new.oaifree.com.",
+      "proof_signals": [
+        "170 tests across 16 suites",
+        "~5,900 lines of TypeScript",
+        "distributed on GreasyFork, GitHub, Docker (GHCR), and Cloudflare Pages",
+        "5 export formats",
+        "9-language UI",
+        "MIT-licensed · 549 commits, actively maintained"
+      ],
+      "buyer": "Researchers, writers, developers, and knowledge workers who live in ChatGPT and need their conversations out — into Obsidian or Notion, a RAG pipeline, version control, or a compliance archive.",
+      "expensive_problem": "ChatGPT conversations are ephemeral by design. There's no native export to Markdown or HTML and no bulk download — the official dump is one unwieldy JSON blob most people can't use. Knowledge you paid for in thinking time evaporates or gets locked in a format you can't pipe anywhere.",
+      "cost_of_not_having_it": "Every lost thread is research you have to redo, context you can't feed your tools, and an archive you don't have the day a client, a court, or a coauthor asks for it.",
+      "public_face": "the entire userscript — every exporter, all 170 tests, the build, the localization. MIT-licensed; fork it, read it, ship it.",
+      "private_operation": "the maintained Pro build and the keyed bulk pipeline, kept working as ChatGPT's DOM shifts under it — plus the export engine built into your own product or workflow. The script is open; what you pay for is that it keeps working, at scale, the morning OpenAI changes everything.",
+      "ladder": [
+        {
+          "level": 1,
+          "name": "Go Pro",
+          "kind": "Self-serve",
+          "what_they_get": "Bulk export, multi-conversation, and the premium formats — the product, today, no call required.",
+          "internal_anchor": "self-serve Pro via Lemon Squeezy (the product's own rail — see exporter pricing)",
+          "cadence": "Self-serve"
+        },
+        {
+          "level": 2,
+          "name": "Run it for my team",
+          "kind": "Managed",
+          "what_they_get": "We run bulk export across your team's accounts and hand back a clean, organized archive on a recurring basis — your formats, your destinations (Obsidian, Notion, a data lake).",
+          "internal_anchor": "$2k–$8k / mo by volume · seats",
+          "cadence": "Recurring"
+        },
+        {
+          "level": 3,
+          "name": "Build it into my product",
+          "kind": "Custom",
+          "what_they_get": "The export engine embedded in your app — your providers (Claude, Gemini), your formats, your branding. The hard part — surviving DOM churn across providers — already solved.",
+          "internal_anchor": "$25k–$80k project",
+          "cadence": "Project + optional retainer"
+        },
+        {
+          "level": 4,
+          "name": "Run my data-portability layer",
+          "kind": "Fractional / retainer",
+          "what_they_get": "We own the moving-data-out problem across every AI tool your org uses — this exporter, the next provider, the next format — so your knowledge is never trapped.",
+          "internal_anchor": "$8k–$18k / mo retainer",
+          "cadence": "Ongoing"
+        }
+      ],
+      "cta_client": "Build this into my product",
+      "cta_recruiter": "Work with the builder",
+      "recruiter_bridge_level": 4,
+      "seo_description": "Export ChatGPT conversations to Markdown, HTML, JSON, PNG, or text — in-browser, no account, no server. Bulk export and your own provider integrations.",
+      "search_topics": [
+        "chatgpt",
+        "chatgpt-export",
+        "chatgpt-exporter",
+        "conversation-export",
+        "markdown-export",
+        "userscript",
+        "tampermonkey",
+        "data-portability",
+        "obsidian",
+        "notion",
+        "rag",
+        "ai-tools"
+      ]
+    },
+    "organvm/mirror-mirror": {
+      "awaiting_publish": true,
+      "_publish_note": "VERIFIED 2026-06-25 (HIGH confidence). organvm/mirror-mirror is currently PRIVATE — flip it public to render this onto the inbound surface (his hand: publishing source is an outward-facing identity change). Proof: ~42,800 lines TS, 152 source files, 60 feature components across a 40-tab app, 158 test files, Stripe + Lemon Squeezy billing, live on Netlify, Docker + Vercel + Netlify + Pages deploy.",
+      "display_name": "Virtual Try-On Platform for Beauty & Salons",
+      "what_it_is": "A 'phygital' beauty platform: hyper-realistic AR/3D virtual try-on, medical-grade skin diagnostics, AI style coaching, and salon booking in one app. Two modes — clients try on looks and book; stylists run a dashboard, manage consultations and proposals, and coordinate their team.",
+      "proof_signals": [
+        "~42,800 lines of TypeScript",
+        "158 test files",
+        "60 feature components across a 40-tab app",
+        "Stripe + Lemon Squeezy billing",
+        "live on Netlify",
+        "Docker + Vercel + Netlify + Pages deploy"
+      ],
+      "buyer": "Beauty brands, salon groups, and cosmetics companies who want virtual try-on and consultation inside their own customer experience — and the consumers and stylists who use it.",
+      "expensive_problem": "A salon visit costs hours and real money, and a wrong cut or color carries a six-to-eight-week regret cycle — so customers hesitate and bookings stall. A brand with no try-on misses the digital-first shopper entirely.",
+      "cost_of_not_having_it": "Every hesitant customer is a booking that doesn't happen and a consultation that drags; for a brand, it's the engagement and conversion a try-on experience would have captured — going to a competitor who has one.",
+      "public_face": "the full application — the try-on engine, the diagnostics, the 158 test suites, the billing integrations, every one of the 60 feature components. The whole build is readable.",
+      "private_operation": "the running, branded instance — your catalog, your salons, your booking flow, the try-on engine licensed into your app and kept current. The code is open; the live experience your customers actually touch is the product.",
+      "ladder": [
+        {
+          "level": 1,
+          "name": "Use the platform",
+          "kind": "SaaS",
+          "what_they_get": "Clients try on looks and book; the subscription tier unlocks the premium try-on and diagnostics.",
+          "internal_anchor": "Mirror+ / Studio subscription (self-serve)",
+          "cadence": "Recurring"
+        },
+        {
+          "level": 2,
+          "name": "Run it for my salon",
+          "kind": "White-label",
+          "what_they_get": "The stylist dashboard, consultations, proposals, and booking under your brand, for your team.",
+          "internal_anchor": "$15k–$50k setup + $2k–$8k / mo",
+          "cadence": "Setup + recurring"
+        },
+        {
+          "level": 3,
+          "name": "Build try-on into my product",
+          "kind": "Custom / API",
+          "what_they_get": "The try-on engine licensed and embedded in your own app — your catalog, your AR filters, your branding.",
+          "internal_anchor": "$40k–$150k project + license",
+          "cadence": "Project + license"
+        },
+        {
+          "level": 4,
+          "name": "Run my virtual-try-on org",
+          "kind": "Fractional / retainer",
+          "what_they_get": "We become the team behind your try-on and beauty-tech surface — this platform, the next integration, the next brand.",
+          "internal_anchor": "$10k–$25k / mo retainer",
+          "cadence": "Ongoing"
+        }
+      ],
+      "cta_client": "Build try-on into my product",
+      "cta_recruiter": "Work with the builder",
+      "recruiter_bridge_level": 4,
+      "seo_description": "Virtual try-on for beauty and salons — AR/3D try-on, medical-grade skin diagnostics, AI coaching, and booking. White-label it or embed the engine in your app.",
+      "search_topics": [
+        "virtual-try-on",
+        "augmented-reality",
+        "beauty-tech",
+        "ar",
+        "skincare",
+        "salon-software",
+        "cosmetics",
+        "face-tracking",
+        "react",
+        "saas",
+        "ai-coaching",
+        "booking"
+      ]
+    },
+    "organvm/the-invisible-ledger": {
+      "awaiting_publish": true,
+      "_publish_note": "VERIFIED 2026-06-25 (HIGH confidence). organvm/the-invisible-ledger is currently PRIVATE — flip it public to render (his hand). Proof: ~76,000 lines TS, 207 source files, 115 React components, 13 test suites (Vitest), Stripe checkout verified in code + tests, live on Netlify, Docker + GHCR + CI/CD, SHA-256 hash-chained audit log.",
+      "display_name": "Chain-of-Custody Operations Platform for Privacy-First Firms",
+      "what_it_is": "An operations dashboard for tax, wealth, and family-office firms whose clients are deliberately analog — air-gapped, courier-based, no cloud. It tracks every physical document from intake to vault with cryptographically-hashed custody events, routes by client psychographics, visualizes money flow, and runs anomaly detection and incident drills — so staff get mission-control visibility without ever putting a privacy-first client in the cloud.",
+      "proof_signals": [
+        "~76,000 lines of TypeScript",
+        "207 source files · 115 React components",
+        "13 test suites (Vitest)",
+        "Stripe checkout, verified in tests",
+        "live on Netlify",
+        "Docker + GHCR + CI/CD",
+        "SHA-256 hash-chained audit log"
+      ],
+      "buyer": "Boutique tax & accounting firms, family offices, and wealth/estate practices serving privacy-conscious, high-net-worth clients who refuse cloud storage.",
+      "expensive_problem": "When clients are air-gapped, custody lives in couriers, USB drives, and filing cabinets — and a single 'who touched this?' you can't answer, or one mishandled return, costs a relationship worth far more than any tooling. Off-the-shelf tools assume digital-native clients and solve none of it.",
+      "cost_of_not_having_it": "One unprovable custody chain or mishandled document can end a high-net-worth relationship; the hours staff spend tracking paper by hand are the expensive ones, and the regulatory exposure has no ceiling.",
+      "public_face": "the full platform — the custody tracker, the psychographic routing, the money-flow visualization, all 115 components and 13 test suites, the Stripe billing. Read the whole thing.",
+      "private_operation": "the running instance keyed to your firm — your offices, your clients, your compliance vertical, the hash-chained ledger kept current and your staff's mission control live. The code is open; the operating system of record for your custody is the service.",
+      "ladder": [
+        {
+          "level": 1,
+          "name": "Run it for my firm",
+          "kind": "Managed SaaS",
+          "what_they_get": "The platform hosted and managed for your team — custody tracking, dashboards, compliance reports — per seat.",
+          "internal_anchor": "$49–$199 / mo per tier (self-serve) → managed",
+          "cadence": "Recurring"
+        },
+        {
+          "level": 2,
+          "name": "Run it on my infra",
+          "kind": "White-label",
+          "what_they_get": "The platform under your brand, on your infrastructure — you own the custody pipeline instead of trusting a vendor's cloud.",
+          "internal_anchor": "$25k–$75k setup + $3k–$10k / mo",
+          "cadence": "Setup + recurring"
+        },
+        {
+          "level": 3,
+          "name": "Build it for my vertical",
+          "kind": "Custom",
+          "what_they_get": "Your compliance regime, your client psychographics, integration into your document and practice-management stack.",
+          "internal_anchor": "$40k–$150k project",
+          "cadence": "Project + optional retainer"
+        },
+        {
+          "level": 4,
+          "name": "Run my operations-tech org",
+          "kind": "Fractional / retainer",
+          "what_they_get": "We become the engine behind your firm's operational software — this platform, the next compliance surface, the next integration.",
+          "internal_anchor": "$10k–$25k / mo retainer",
+          "cadence": "Ongoing"
+        }
+      ],
+      "cta_client": "Run this for my firm",
+      "cta_recruiter": "Work with the builder",
+      "recruiter_bridge_level": 4,
+      "seo_description": "Chain-of-custody operations platform for privacy-first tax, wealth, and family-office firms — hashed custody events, money-flow visualization, compliance reporting.",
+      "search_topics": [
+        "chain-of-custody",
+        "compliance",
+        "wealth-management",
+        "family-office",
+        "document-tracking",
+        "fintech",
+        "regtech",
+        "audit-trail",
+        "tax-software",
+        "react",
+        "typescript",
+        "saas"
+      ]
+    },
+    "organvm/domus-genoma": {
+      "awaiting_publish": true,
+      "_publish_note": "VERIFIED 2026-06-25 (HIGH confidence). organvm/domus-genoma is currently PRIVATE — flip it public to render (his hand). Proof: 8,106 lines (shell/Python/TS), 32 test files (BATS + pytest), 13 CI jobs, chezmoi provisioning + self-healing daemons + 1Password injection, tier catalog + Stripe infra (checkout endpoint pending). No public hosted demo — positioned honestly as a running framework, not a hosted SaaS.",
+      "display_name": "Declarative Dev-Environment Provisioning & Self-Healing Platform",
+      "what_it_is": "A productized provisioning platform built on chezmoi: declarative, templated configs that stand up an entire development environment across machines, with 1Password secret injection, self-healing daemons that detect and repair config drift, and a unified CLI. Three-tier licensing (personal, multi-machine, team) gated by JWT entitlements.",
+      "proof_signals": [
+        "8,106 lines (shell, Python, TypeScript)",
+        "32 test files (BATS + pytest)",
+        "13 CI jobs (ShellCheck, gitleaks, template validation, …)",
+        "236 managed configs · 59 templates",
+        "self-healing daemons + drift detection",
+        "1Password secret injection · zero secrets in Git"
+      ],
+      "buyer": "Engineering and platform teams running more than one machine who are bleeding hours to environment setup, fighting config drift, and risking secrets leaking into Git.",
+      "expensive_problem": "Standing up a new machine takes hours, configs silently drift between devices until something breaks, and secrets slip into Git history — and when it breaks there's no clean way back. Multiply that across a team and it's a standing tax on every engineer.",
+      "cost_of_not_having_it": "Hours per machine per engineer, the security liability of secrets in repos, and the downtime when a divergent environment finally breaks mid-deploy — recurring, and entirely avoidable.",
+      "public_face": "the entire framework — the chezmoi templates, the self-healing daemons, the CLI, all 32 test files, the 13 CI gates, the licensing server. Clone it and run it.",
+      "private_operation": "the managed, fleet-wide operation — cloud-synced config across every machine in your org, drift caught and healed automatically, secrets injected from your vault, kept running. The framework is open; standing it up and keeping your whole fleet self-healing is the service.",
+      "ladder": [
+        {
+          "level": 1,
+          "name": "Run it on my machines",
+          "kind": "Self-serve",
+          "what_they_get": "The framework, free for a single machine; the paid tiers add cloud-sync and multi-machine.",
+          "internal_anchor": "Personal free · Pro / Team tiers ($8 / $20 / mo, self-serve)",
+          "cadence": "Self-serve"
+        },
+        {
+          "level": 2,
+          "name": "Provision my team",
+          "kind": "Managed",
+          "what_they_get": "We stand up and manage cloud-synced, self-healing dev environments across your whole team's machines.",
+          "internal_anchor": "$10k–$30k setup + $2k–$6k / mo",
+          "cadence": "Setup + recurring"
+        },
+        {
+          "level": 3,
+          "name": "Build my internal developer platform",
+          "kind": "Custom",
+          "what_they_get": "Your stack, your secrets backend, your compliance constraints — provisioning and self-healing built to your org's exact shape.",
+          "internal_anchor": "$40k–$120k project",
+          "cadence": "Project + optional retainer"
+        },
+        {
+          "level": 4,
+          "name": "Run my platform-engineering org",
+          "kind": "Fractional / retainer",
+          "what_they_get": "We become your platform-engineering team — dev environments, fleet health, the next internal tool.",
+          "internal_anchor": "$12k–$25k / mo retainer",
+          "cadence": "Ongoing"
+        }
+      ],
+      "cta_client": "Provision my team's environments",
+      "cta_recruiter": "Hire the platform engineer who built this",
+      "recruiter_bridge_level": 4,
+      "seo_description": "Declarative dev-environment provisioning on chezmoi — templated configs, 1Password secret injection, self-healing drift repair, cloud-sync across machines.",
+      "search_topics": [
+        "dotfiles",
+        "chezmoi",
+        "developer-tools",
+        "devops",
+        "platform-engineering",
+        "provisioning",
+        "self-healing",
+        "1password",
+        "configuration-management",
+        "cli",
+        "developer-experience",
+        "infrastructure-as-code"
+      ]
     }
   }
 }

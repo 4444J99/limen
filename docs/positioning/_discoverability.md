@@ -7,6 +7,20 @@ repo by searching their own problem. **Nothing here is applied automatically** �
 setting topics/description on a public repo is an outward-facing change; run the
 commands below when you want them live.
 
+## ChatGPT Conversation Exporter — `organvm/a-i-chat--exporter`
+
+- **Recommended topics:** chatgpt, chatgpt-export, chatgpt-exporter, conversation-export, markdown-export, userscript, tampermonkey, data-portability, obsidian, notion, rag, ai-tools
+- **Recommended description:** Export ChatGPT conversations to Markdown, HTML, JSON, PNG, or text — in-browser, no account, no server. Bulk export and your own provider integrations.
+
+```sh
+# apply topics (his hand — outward-facing public change):
+gh api -X PUT repos/organvm/a-i-chat--exporter/topics \
+  -H 'Accept: application/vnd.github+json' \
+  -f 'names[]=chatgpt' -f 'names[]=chatgpt-export' -f 'names[]=chatgpt-exporter' -f 'names[]=conversation-export' -f 'names[]=markdown-export' -f 'names[]=userscript' -f 'names[]=tampermonkey' -f 'names[]=data-portability' -f 'names[]=obsidian' -f 'names[]=notion' -f 'names[]=rag' -f 'names[]=ai-tools'
+# apply description:
+gh repo edit organvm/a-i-chat--exporter --description "Export ChatGPT conversations to Markdown, HTML, JSON, PNG, or text — in-browser, no account, no server. Bulk export and your own provider integrations."
+```
+
 ## 50-State UCC Public-Records Intelligence Platform — `organvm/public-record-data-scrapper`
 
 - **Recommended topics:** merchant-cash-advance, mca-leads, ucc-filings, ucc-leads, lead-generation, alternative-lending, small-business-financing, public-records, data-enrichment, lead-scoring

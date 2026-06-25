@@ -239,6 +239,71 @@ def test_discoverability_flags_invalid_topics(tmp_path: Path):
     assert "good-topic" in disc
 
 
+PRIVATE_REPO = "organvm/not-public-yet"
+PRIVATE_SLUG = "not-public-yet"
+
+
+def _two_repo_env(tmp_path: Path) -> dict:
+    """One public-and-seeded repo + one seeded-but-awaiting_publish repo, both in value-repos."""
+    (tmp_path / "value-repos.json").write_text(
+        json.dumps({"repos": [REPO, PRIVATE_REPO]}))
+    held = _seed()
+    held["awaiting_publish"] = True
+    held["display_name"] = "Held Private Platform"
+    (tmp_path / "seeds.json").write_text(json.dumps({
+        "frontdoor": _frontdoor(),
+        "repos": {REPO: _seed(), PRIVATE_REPO: held},
+    }))
+    env = dict(os.environ)
+    env.update({
+        "LIMEN_ROOT": str(tmp_path),
+        "LIMEN_VALUE_REPOS": str(tmp_path / "value-repos.json"),
+        "LIMEN_POSITIONING_SEEDS": str(tmp_path / "seeds.json"),
+        "LIMEN_POSITIONING_DIR": str(tmp_path / "out"),
+    })
+    return env
+
+
+def test_awaiting_publish_held_from_default_render(tmp_path: Path):
+    # A private repo isn't a lure — its page (in the public limen repo) would link to a 404.
+    # The seed is banked but must not render until the repo is public.
+    env = _two_repo_env(tmp_path)
+    r = _run(env, "--apply")
+    assert r.returncode == 0, r.stderr
+    assert (tmp_path / "out" / f"{SLUG}.md").exists()
+    assert not (tmp_path / "out" / f"{PRIVATE_SLUG}.md").exists()
+    # The hold is surfaced, never silent.
+    assert "AWAITING PUBLISH" in r.stderr
+    assert PRIVATE_REPO in r.stderr
+
+
+def test_awaiting_publish_skipped_even_when_named_explicitly(tmp_path: Path):
+    # Even --repo on a private seed must not write a public page that links to a 404.
+    env = _two_repo_env(tmp_path)
+    r = _run(env, "--repo", PRIVATE_REPO, "--apply")
+    assert r.returncode == 0, r.stderr
+    assert not (tmp_path / "out" / f"{PRIVATE_SLUG}.md").exists()
+
+
+def test_awaiting_publish_excluded_from_frontdoor(tmp_path: Path):
+    env = _two_repo_env(tmp_path)
+    r = _run(env, "--frontdoor", "--apply")
+    assert r.returncode == 0, r.stderr
+    fd = (tmp_path / "out" / "_frontdoor.md").read_text()
+    assert "Test Platform" in fd                  # the public system is shown
+    assert "Held Private Platform" not in fd      # the private one is not
+    assert f"github.com/{PRIVATE_REPO}" not in fd  # and its 404 link never ships
+
+
+def test_awaiting_publish_excluded_from_discoverability(tmp_path: Path):
+    env = _two_repo_env(tmp_path)
+    r = _run(env, "--discoverability", "--apply")
+    assert r.returncode == 0, r.stderr
+    disc = (tmp_path / "out" / "_discoverability.md").read_text()
+    assert f"`{REPO}`" in disc
+    assert PRIVATE_REPO not in disc
+
+
 def test_default_target_is_seeded_value_repos_only(tmp_path: Path):
     # value-repos lists two repos; only one is seeded → only that one renders.
     (tmp_path / "value-repos.json").write_text(

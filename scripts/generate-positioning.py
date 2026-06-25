@@ -83,6 +83,16 @@ def _slug(repo: str) -> str:
     return repo.split("/", 1)[-1]
 
 
+# A seed can be fully authored + proof-verified before its repo is public. The whole doctrine is
+# "publish the form" — a PRIVATE repo is no lure at all: the GitHub link 404s for every buyer, and
+# the positioning page itself (committed to the *public* limen repo) would advertise a system no
+# one can see. Flipping a repo public exposes his source — that's his hand, never ours. So a seed
+# marked `awaiting_publish` is banked and tested but kept OFF every public surface until the repo
+# is live; clearing the flag (his switch, one line) is all that stands between it and rendering.
+def _awaiting_publish(seed: dict) -> bool:
+    return bool(seed.get("awaiting_publish"))
+
+
 # --- capture funnel -------------------------------------------------------------------------
 # The cheapest capture that actually works today: the CTA is a `mailto:` whose subject is
 # pre-tagged with the repo and the door (deploy = client, hire = recruiter). A click lands in
@@ -420,7 +430,8 @@ def main(argv: list[str] | None = None) -> int:
     contact = (doc.get("frontdoor", {}) or {}).get("contact") or None
 
     if args.frontdoor:
-        ordered = [(r, seeds[r]) for r in _value_repos(_value_repos_path()) if r in seeds]
+        ordered = [(r, seeds[r]) for r in _value_repos(_value_repos_path())
+                   if r in seeds and not _awaiting_publish(seeds[r])]
         if not ordered:
             print("generate-positioning: no seeded value-repos to render a front door from.",
                   file=sys.stderr)
@@ -437,7 +448,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.discoverability:
-        ordered = [(r, seeds[r]) for r in _value_repos(_value_repos_path()) if r in seeds]
+        ordered = [(r, seeds[r]) for r in _value_repos(_value_repos_path())
+                   if r in seeds and not _awaiting_publish(seeds[r])]
         if not ordered:
             print("generate-positioning: no seeded value-repos for a discoverability pass.",
                   file=sys.stderr)
@@ -452,10 +464,15 @@ def main(argv: list[str] | None = None) -> int:
             print(page)
         return 0
 
+    held = []
     if args.repo:
         targets = [args.repo]
     else:
-        targets = [r for r in _value_repos(_value_repos_path()) if r in seeds]
+        all_value = [r for r in _value_repos(_value_repos_path()) if r in seeds]
+        # Surface (never silently drop) the verified-but-private repos: they're authored and
+        # banked, waiting only on his publish switch. Logged below so the hold is visible.
+        held = [r for r in all_value if _awaiting_publish(seeds[r])]
+        targets = [r for r in all_value if not _awaiting_publish(seeds[r])]
 
     if not targets:
         print("generate-positioning: no seeded value-repos to render. Add entries to "
@@ -469,6 +486,11 @@ def main(argv: list[str] | None = None) -> int:
         if not seed:
             skipped.append(repo)
             continue
+        # Never render a public artifact for a repo that isn't public yet — even when named
+        # explicitly with --repo. The page lives in the public limen repo and links to a 404.
+        if _awaiting_publish(seed):
+            held.append(repo)
+            continue
         result = generate_for(repo, seed, apply=args.apply, fetch=args.fetch, out_dir=out_dir,
                               contact=contact)
         rendered += 1
@@ -477,6 +499,10 @@ def main(argv: list[str] | None = None) -> int:
         if not args.apply:
             print(result["public"])
 
+    if held:
+        print(f"\ngenerate-positioning: {len(held)} repo(s) authored + verified but "
+              f"AWAITING PUBLISH (private repo → not rendered until it's public): "
+              f"{', '.join(held)}", file=sys.stderr)
     if skipped:
         print(f"\ngenerate-positioning: {len(skipped)} repo(s) have no seed yet "
               f"(positioning not yet authored): {', '.join(skipped)}", file=sys.stderr)
