@@ -21,21 +21,6 @@
       "source_task": "revenue-ladder (whose_hand: yours)"
     },
     {
-      "id": "L-CLAUDE-AUTH",
-      "label": "Stop the recurring 'Not logged in' flap: the 24/7 fleet and your interactive session share ONE rotating Keychain OAuth token, so the fleet keeps rotating it out from under your login. Staged cascade fixes it (branch fix/claude-credential-race). Rung 0 self-heals on deploy with NONE of the steps done.",
-      "owner": "yours",
-      "cost": "~3 min once, durable · Rung 0 free the moment it deploys",
-      "unlocks": "stable Claude auth across the fleet + your session",
-      "branch": "fix/claude-credential-race",
-      "gate": "HOLD",
-      "steps": [
-        "claude setup-token",
-        "bash scripts/claude-fleet-auth-probe.sh",
-        "bash scripts/set-credential.sh LIMEN_CLAUDE_AUTH_TOKEN   # or LIMEN_CLAUDE_API_KEY if probe says wiped",
-        "deploy fix/claude-credential-race (reconcile divergence first; dispatch.py picked up next beat, no restart)"
-      ]
-    },
-    {
       "id": "L-CLOUDFLARE-DEPLOY",
       "label": "Cloudflare deploy auth: run `wrangler login` (or export CLOUDFLARE_API_TOKEN into the lane env), then re-dispatch. Every BLD2-*-deploy fails because wrangler isn't authenticated.",
       "owner": "yours",
@@ -50,14 +35,6 @@
       "cost": "~30 min, irreversible",
       "unlocks": "durable single-body identity",
       "source_task": "ASK-2, ASK-20"
-    },
-    {
-      "id": "L-JWT-091",
-      "label": "Provide JWT_SECRET + org_id so PR #234's security gate passes (organvm/public-record-data-scrapper).",
-      "owner": "yours",
-      "cost": "~1 min",
-      "unlocks": "scrapper security PR merges",
-      "source_task": "LIMEN-091"
     },
     {
       "id": "L-GH-LAUNCHD-077",
@@ -174,7 +151,7 @@
         "Keep `op` unlocked (op signin / Touch-ID / a 1Password service account) — the ONLY recurring human atom, a per-boot biometric touch at most. Never a vendor re-login.",
         "Verify hydration: python3 scripts/creds-hydrate.py --check  (then `python3 scripts/route.py` — gemini/opencode flip to 'up').",
         "ollama floor (separate, not a login): `ollama pull qwen2.5-coder:7b` lights the unmetered local lane (a one-time model download, your hand).",
-        "ACTIVATION DEPENDENCY (the live-checkout-drift heal — OWNED HERE, not elsewhere): the daemon runs from ~/Workspace/limen, which is 0 ahead / 20 behind origin/main — a CLEAN ancestor (no divergence), so it WILL get the organ on its next clean ff. It is dirty only with regenerable files (tasks.yaml is rewritten every beat; web/app build artifacts), and those block the ff. Cheapest safe path: one guarded one-shot reconcile (discard only the regenerable tracked files, then ff to origin/main) — Claude does it on your one-word go, since charter forbids unilaterally touching a daemon-contended tree mid-beat. After that the organ runs there with ZERO further action. Until then, the credential SYSTEM is fully shipped on main; only its propagation to this one checkout waits."
+        "ACTIVATION DEPENDENCY (the live-checkout-drift heal — OWNED HERE): CORRECTED 2026-06-24 — the daemon checkout ~/Workspace/limen is NOT a clean ancestor; it DIVERGED (22 behind, 1 AHEAD). Root cause found this session: the capture organ committed a `capture: autonomic off-disk sync` commit (fac550f) directly onto the live `main`; it could not push (local main was behind origin) and the stranded unique commit then made sync-release REFUSE to fast-forward (it never force-moves unique work). That single deadlock stranded EVERY merged release — this credential organ included. STRUCTURAL CURE shipped: PR #227 (fix/capture-sync-deadly-embrace) makes capture divert dirty work to a pushable side ref whenever the branch is behind, never polluting main again, so this cannot recur. The stranded commit is preserved loss-proof on origin at branch capture/live-checkout-stranded-2026-06-24. REMAINING (one-time, your one-word go — charter forbids unilaterally resetting a daemon-contended tree mid-beat): once #227 is on main, reconcile the live checkout (preserve tasks.yaml, git reset --hard origin/main, restore tasks.yaml, then launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat). That one act installs #227 AND deploys all stranded releases at once; the checkout then self-maintains forever. Until then the credential SYSTEM is fully shipped on main — only its propagation to this one checkout waits."
       ],
       "note": "The credential map is a NAMED tweakable param (DEFAULT_MAP in scripts/creds-hydrate.py, or LIMEN_CREDS_MAP=<file>). Add a vendor by adding one {ref, env} entry — never by adding a login step. See memory: credential-durability-organ, [[gmail-mutation-cascade-avenues]], [[excavate-before-redoing-solved-work]]."
     }
