@@ -64,4 +64,14 @@ read the durable state (paths relative to `$LIMEN_ROOT`, default `~/Workspace/li
 4. Do the work. Leave the body greener than you found it. Write down what changed.
 5. The next beat may be a different model. Leave the trail it needs to continue.
 
+<!-- EVOCATOR:canon START — auto-generated from spec/evocator/canon.yaml; do not edit by hand -->
+## Standing truths (the canon — summoned here so every beat holds them)
+
+Resolved facts the body must not re-litigate. Source spec/evocator/canon.yaml; each names
+its system-of-record and how to reverse it. (Maintained by the EVOCATOR organ.)
+
+- **MPO = NPO (Non-Profit Organization)** — "MPO" = NPO; the nonprofit = Cind & Sol (organvm-vi-koinonia/cind-and-sol-foundation), its grant-finding engine + system-of-record = organvm-iii-ergon/quaestor. Resolved 2026-06-25; reversible via quaestor#4. (SoR: organvm-iii-ergon/quaestor; reversible: reopen quaestor issue #4 / its decisions card)
+- **"find" = build the portal** — When Anthony says "find X / find everything / find the answers", BUILD THE PORTAL that summons that context into every surface (every prompt, every session, every beat) — not a chat that searches & loses. This organ (EVOCATOR) IS that portal. (SoR: limen/spec/evocator; reversible: edit spec/evocator/canon.yaml)
+<!-- EVOCATOR:canon END -->
+
 *The substrate is rented. The flame is owned. Keep it lit.*

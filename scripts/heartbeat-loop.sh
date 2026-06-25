@@ -129,6 +129,7 @@ C_REPORT="${LIMEN_BEAT_REPORT:-12}"    # RELAY (conducting report; self-limits t
 C_QUICKEN="${LIMEN_BEAT_QUICKEN:-4}"   # QUICKEN (give stalled FleetView sessions life to finish)
 C_POSITIONING="${LIMEN_BEAT_POSITIONING:-12}"  # POSITIONING (refresh inbound-magnet surfaces; gated OFF)
 C_AVTOPOIESIS="${LIMEN_BEAT_AVTOPOIESIS:-12}"  # AVTOPOIESIS (is each door alive? past/present/future — distance-from-ideal; gated OFF)
+C_EVOCATOR="${LIMEN_BEAT_EVOCATOR:-6}"   # EVOCATOR (the summoner — keep canonical truths present in every channel: FLAME/beat, corpus, memory)
 LOCKD="$LIMEN_ROOT/logs/.queue.lock.d"   # shared with supervisory ops (two-scale safety)
 c=0
 play() { [ $(( c % $1 )) -eq 0 ]; }   # true on this voice's beat
@@ -407,6 +408,18 @@ while true; do
   # (operational closure). Gated OFF by default (LIMEN_AVTOPOIESIS=1 your knob); never gates the beat.
   play "$C_AVTOPOIESIS"  && [ "${LIMEN_AVTOPOIESIS:-0}" = "1" ] && \
     python3 "$LIMEN_ROOT/scripts/avtopoiesis.py" 2>&1 | tail -3 || true
+
+  # EVOCATOR — the SVMMONER: keep every canonical truth (spec/evocator/canon.yaml) present in every
+  # channel a found truth must live in — FLAME (so every beat holds it — the reach the memory dir and
+  # corpus never had), the knowledge-corpus collection (so it converges into THE ONE), and a read-only
+  # verify of the memory dir (per-session channel) — and self-heal drift. "find" = build this portal:
+  # register one truth, it lands everywhere, forever. Idempotent (writes only on change → NO git churn),
+  # no network, no tokens, can't time out. Default-ON (LIMEN_EVOCATOR=1; set 0 to roll back) — a portal
+  # that doesn't run isn't a portal. Bounded + fail-open — never gates the beat.
+  if play "$C_EVOCATOR" && [ "${LIMEN_EVOCATOR:-1}" = "1" ]; then
+    python3 "$LIMEN_ROOT/scripts/evocator.py" --apply 2>&1 | tail -2 || true
+    stamp evocator
+  fi
 
   # adaptive tempo: tighten to MIN whenever work is flowing OR the OPEN QUEUE is non-empty (so a
   # beat that produced no PR this cycle — all no-op / still-running — doesn't back off to 30min

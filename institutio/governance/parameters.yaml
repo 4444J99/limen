@@ -99,6 +99,38 @@ parameters:
     owner: integrity
     note: "codesign --verify on the heartbeat; alert on signature/version drift."
 
+  # --- EVOCATOR: the summoner (keep canonical truths present in every channel) ---
+  LIMEN_EVOCATOR:
+    default: "1"               # ON — a portal that doesn't run isn't a portal
+    env: LIMEN_EVOCATOR
+    self_update: none
+    owner: evocator
+    note: "Gate for the EVOCATOR organ. =0 rolls it back; the FLAME canon block persists regardless (git-tracked)."
+  LIMEN_BEAT_EVOCATOR:
+    default: 6                  # cadence: summon every 6 beats
+    env: LIMEN_BEAT_EVOCATOR
+    self_update: none
+    owner: evocator
+    note: "How often the summoner reconciles every channel. Idempotent (writes only on change) → safe to run often."
+  LIMEN_EVOCATOR_CANON:
+    default: "limen/spec/evocator/canon.yaml"
+    env: LIMEN_EVOCATOR_CANON
+    self_update: none
+    owner: evocator
+    note: "The declarative canon of truths the organ summons everywhere."
+  LIMEN_KNOWLEDGE_CORPUS:
+    default: "~/Workspace/knowledge-corpus"
+    env: LIMEN_KNOWLEDGE_CORPUS
+    self_update: none
+    owner: evocator
+    note: "Path to the knowledge-corpus repo; the corpus channel writes a collection shot here (guarded, fail-open)."
+  LIMEN_MEMORY_DIR:
+    default: "~/.claude/projects/<workspace-slug>/memory"   # derived from LIMEN_WORKDIR; override here
+    env: LIMEN_MEMORY_DIR
+    self_update: none
+    owner: evocator
+    note: "Per-session memory dir the organ verifies (read-only) for each truth's file + MEMORY.md index line."
+
   # --- SEED of the existing scattered surface (illustrative; not exhaustive) -----
   # The real work: migrate ALL of these from heartbeat-loop.sh / tasks.yaml / *.json
   # into this panel, then point the code here. (~70 total — see registry residual.)
