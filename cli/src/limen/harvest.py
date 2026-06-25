@@ -47,6 +47,30 @@ def _get_jules_sessions(harvest_dir: Path) -> dict[str, str]:
     return mapping
 
 
+def _diff_is_real(diff_text: str) -> bool:
+    """True only if a harvested diff represents actual work.
+
+    A jules result counts as 'done' only when a hand actually moved: a non-empty
+    unified diff with real content changes. Rejects the empty placeholder (e.g. a
+    ``patch.diff`` of ``index 0000000..e69de29`` with no hunks) and whitespace-only
+    output. Exposed by the 2026-06-25 VIGILIA dispatch, where harvest marked tasks
+    'done' the instant a ``.diff`` file existed — 'done' must mean done.
+    """
+    text = (diff_text or "").strip()
+    if not text:
+        return False
+    if "diff --git" not in text and not text.lstrip().startswith("--- "):
+        return False
+    for line in text.splitlines():
+        if line.startswith(("+++", "---")):
+            continue
+        if line[:1] in ("+", "-") and line[1:].strip():
+            return True
+        if line.startswith("Binary files") and line.rstrip().endswith("differ"):
+            return True
+    return False
+
+
 def check_jules_harvest(limen: LimenFile, harvest_dir: Path) -> list[str]:
     updated: list[str] = []
     if not harvest_dir.exists():
@@ -70,6 +94,24 @@ def check_jules_harvest(limen: LimenFile, harvest_dir: Path) -> list[str]:
             if diff_file.exists():
                 now = datetime.now(timezone.utc)
                 result = diff_file.read_text().strip()
+                if not _diff_is_real(result):
+                    # jules finished but produced nothing usable (empty/garbage
+                    # diff). Do NOT mark done — that was the false-done lie. Mark
+                    # cancelled (matches the local-lane no-op semantics) so the
+                    # conductor can absorb it instead of trusting a phantom 'done'.
+                    task.status = "cancelled"
+                    task.updated = now
+                    task.dispatch_log.append(
+                        DispatchLogEntry(
+                            timestamp=now,
+                            agent="jules",
+                            session_id=session_id,
+                            status="rejected-empty",
+                            output=result[:500],
+                        )
+                    )
+                    print(f"  rejected {task.id}: jules diff empty/garbage — not 'done'")
+                    continue
                 task.status = "done"
                 task.updated = now
                 task.dispatch_log.append(
@@ -88,6 +130,9 @@ def check_jules_harvest(limen: LimenFile, harvest_dir: Path) -> list[str]:
         if task_dir.exists() and (task_dir / "result.txt").exists():
             now = datetime.now(timezone.utc)
             result = (task_dir / "result.txt").read_text().strip()
+            if not result:
+                # empty result file is not completion — don't false-done it.
+                continue
             task.status = "done"
             task.updated = now
             task.dispatch_log.append(
