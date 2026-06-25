@@ -15,14 +15,14 @@ portal:
       opencode: 100
     track:
       date: '2026-06-25'
-      spent: 74
+      spent: 81
       per_agent:
-        agy: 1
+        agy: 0
         claude: 0
         codex: 0
         gemini: 0
-        jules: 65
-        opencode: 9
+        jules: 75
+        opencode: 6
       per_agent_reset:
         agy: '2026-06-25T13:58:52.030958+00:00'
         claude: '2026-06-25T19:29:15.756534+00:00'
@@ -43253,17 +43253,16 @@ tasks:
   title: Discover the latent value of organvm/visual-substrate-inquiry
   repo: organvm/visual-substrate-inquiry
   type: research
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - discover
   - value-discovery
   - tried:opencode
   - tried:agy
   - tried:claude
-  - tried:codex
   urls: []
   context: "DISCOVER the latent value of organvm/visual-substrate-inquiry. This repo\
     \ currently has NO ranked value \u2014 your job is to find it (value is discovered,\
@@ -43434,10 +43433,6 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
-  - timestamp: '2026-06-25T19:34:48.657660Z'
-    agent: codex
-    session_id: cli
-    status: failed->opencode
 - id: DISCOVER-organvm-a-i-council--coliseum
   title: Discover the latent value of organvm/a-i-council--coliseum
   repo: organvm/a-i-council--coliseum
@@ -45635,7 +45630,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - studium
   - content
@@ -45654,7 +45649,7 @@ tasks:
     \ green PR."
   depends_on: []
   created: '2026-06-23'
-  updated: '2026-06-25T17:37:36.053018Z'
+  updated: '2026-06-25T19:56:22.622960Z'
   dispatch_log:
   - timestamp: '2026-06-24T04:59:14.502431Z'
     agent: agy
@@ -45677,6 +45672,17 @@ tasks:
     agent: jules
     session_id: '1146596943805066946'
     status: dispatched
+  - timestamp: '2026-06-25T19:56:22.622960Z'
+    agent: jules
+    session_id: '1146596943805066946'
+    status: done
+    output: "diff --git a/scripts/verify-whole.sh b/scripts/verify-whole.sh\nindex\
+      \ fd678f0..ddb4778 100755\n--- a/scripts/verify-whole.sh\n+++ b/scripts/verify-whole.sh\n\
+      @@ -40,10 +40,10 @@ node scripts/validate-contract-schemas.mjs\n \n step \"\
+      Run API and CLI tests\"\n env -u LIMEN_API_TOKEN -u LIMEN_OWNER_TOKEN -u LIMEN_CLIENT_TOKEN\
+      \ \\\n-  PYTHONPATH=\"$PYTHONPATH_VALUE\" python3 -m pytest web/api/tests cli/tests\
+      \ -q\n+  PYTHONPATH=\"$PYTHONPATH_VALUE:cli/src\" python3 -m pytest web/api/tests\
+      \ cli/tests -q\n \n step \"Probe lo"
 - id: studium-deepen-ramayana
   title: "Ramayana \u2014 kandas 2..7 (6 arcs)"
   repo: organvm/limen
@@ -45684,7 +45690,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - studium
   - content
@@ -45704,7 +45710,7 @@ tasks:
     \ green PR."
   depends_on: []
   created: '2026-06-23'
-  updated: '2026-06-25T17:42:46.467766Z'
+  updated: '2026-06-25T19:56:22.632883Z'
   dispatch_log:
   - timestamp: '2026-06-24T04:59:14.502431Z'
     agent: agy
@@ -45747,6 +45753,17 @@ tasks:
     agent: jules
     session_id: '4782218089698360587'
     status: dispatched
+  - timestamp: '2026-06-25T19:56:22.632883Z'
+    agent: jules
+    session_id: '4782218089698360587'
+    status: done
+    output: "diff --git a/studium/expansion-backlog.yaml b/studium/expansion-backlog.yaml\n\
+      index 6b82576..9a52c21 100644\n--- a/studium/expansion-backlog.yaml\n+++ b/studium/expansion-backlog.yaml\n\
+      @@ -101,10 +101,10 @@ deepening:\n       title: \"Tale of the Heike \u2014 books\
+      \ 2..12 (11 arcs)\"\n       checklist: studium/music/heike/PLAN.md\n       class:\
+      \ content\n-    - id: studium-deepen-ramayana         # 6\n-      title: \"\
+      Ramayana \u2014 kandas 2..7 (6 arcs)\"\n-      checklist: studium/music/ramayana/PLAN.md\n\
+      -      class: co"
 - id: studium-corpus-shahnameh
   title: "Fetch Shahnameh original (ganjoor.net) \u2192 corpus arabic-persian/shahnameh;\
     \ clear canon missing_from_corpus"
@@ -45968,7 +45985,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - studium
   - content
@@ -45983,7 +46000,7 @@ tasks:
     track forces; no intra-arc duplicate pieces). One green PR.'
   depends_on: []
   created: '2026-06-23'
-  updated: '2026-06-25T17:55:34.220844Z'
+  updated: '2026-06-25T19:56:22.654136Z'
   dispatch_log:
   - timestamp: '2026-06-24T04:59:14.502431Z'
     agent: jules
@@ -46019,6 +46036,17 @@ tasks:
     agent: jules
     session_id: '2858359369494825227'
     status: dispatched
+  - timestamp: '2026-06-25T19:56:22.654136Z'
+    agent: jules
+    session_id: '2858359369494825227'
+    status: done
+    output: "diff --git a/studium/expansion-backlog.yaml b/studium/expansion-backlog.yaml\n\
+      index 6b82576..2eae842 100644\n--- a/studium/expansion-backlog.yaml\n+++ b/studium/expansion-backlog.yaml\n\
+      @@ -175,7 +175,7 @@ film:\n     tasks:\n       - {id: studium-film-odyssey,\
+      \            title: \"Odyssey film companion (return/exile/recognition)\", \
+      \       class: content}\n       - {id: studium-film-aeneid,             title:\
+      \ \"Aeneid film companion (empire/fate/sacrifice)\",            class: content}\n\
+      -      - {id: studium"
 - id: studium-film-divine-comedy
   title: Divine Comedy film companion (descent/ascent/beatitude)
   repo: organvm/limen
@@ -46086,7 +46114,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - studium
   - content
@@ -46100,7 +46128,7 @@ tasks:
     green PR.'
   depends_on: []
   created: '2026-06-23'
-  updated: '2026-06-25T18:04:03.531673Z'
+  updated: '2026-06-25T19:55:17.905578Z'
   dispatch_log:
   - timestamp: '2026-06-24T05:34:10.422812Z'
     agent: jules
@@ -46128,6 +46156,11 @@ tasks:
     agent: jules
     session_id: '13374411089645583567'
     status: dispatched
+  - timestamp: '2026-06-25T19:55:17.905578Z'
+    agent: jules
+    session_id: https://github.com/organvm/limen/pull/292
+    status: done
+    output: 'jules-land: landed session 13374411089645583567 as PR'
 - id: studium-film-gilgamesh
   title: Gilgamesh film companion (mortality/grief)
   repo: organvm/limen
@@ -46135,7 +46168,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - studium
   - content
@@ -46148,7 +46181,7 @@ tasks:
     track forces; no intra-arc duplicate pieces). One green PR.'
   depends_on: []
   created: '2026-06-23'
-  updated: '2026-06-25T18:04:03.531673Z'
+  updated: '2026-06-25T19:55:17.905578Z'
   dispatch_log:
   - timestamp: '2026-06-24T07:14:26.386441Z'
     agent: opencode
@@ -46167,6 +46200,11 @@ tasks:
     agent: jules
     session_id: '13977375395037508542'
     status: dispatched
+  - timestamp: '2026-06-25T19:55:17.905578Z'
+    agent: jules
+    session_id: https://github.com/organvm/limen/pull/290
+    status: done
+    output: 'jules-land: landed session 13977375395037508542 as PR'
 - id: studium-film-beowulf
   title: Beowulf film companion (wyrd/heroic doom)
   repo: organvm/limen
@@ -46354,7 +46392,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - studium
   - content
@@ -46367,7 +46405,7 @@ tasks:
     track forces; no intra-arc duplicate pieces). One green PR.'
   depends_on: []
   created: '2026-06-23'
-  updated: '2026-06-25T14:13:09.328224Z'
+  updated: '2026-06-25T20:25:53.657550Z'
   dispatch_log:
   - timestamp: '2026-06-24T07:14:26.386441Z'
     agent: jules
@@ -46391,6 +46429,15 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-25T19:59:18.020533Z'
+    agent: jules
+    session_id: '3384596577263289184'
+    status: dispatched
+  - timestamp: '2026-06-25T20:25:53.657550Z'
+    agent: jules
+    session_id: https://github.com/organvm/limen/pull/302
+    status: done
+    output: 'jules-land: landed session 3384596577263289184 as PR'
 - id: studium-film-analects
   title: Analects film companion (ritual order/the rectified self)
   repo: organvm/limen
@@ -46441,7 +46488,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - studium
   - content
@@ -46454,7 +46501,7 @@ tasks:
     track forces; no intra-arc duplicate pieces). One green PR.'
   depends_on: []
   created: '2026-06-23'
-  updated: '2026-06-25T14:13:09.328224Z'
+  updated: '2026-06-25T20:18:49.211642Z'
   dispatch_log:
   - timestamp: '2026-06-24T08:21:42.581233Z'
     agent: opencode
@@ -46469,6 +46516,15 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-25T20:03:53.482372Z'
+    agent: jules
+    session_id: '6184940620283609411'
+    status: dispatched
+  - timestamp: '2026-06-25T20:18:49.211642Z'
+    agent: jules
+    session_id: https://github.com/organvm/limen/pull/300
+    status: done
+    output: 'jules-land: landed session 6184940620283609411 as PR'
 - id: studium-film-journey-to-the-west
   title: Journey to the West film companion (pilgrimage/comic transcendence)
   repo: organvm/limen
@@ -46553,7 +46609,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - studium
   - content
@@ -46568,7 +46624,7 @@ tasks:
     track forces; no intra-arc duplicate pieces). One green PR.'
   depends_on: []
   created: '2026-06-23'
-  updated: '2026-06-25T14:13:09.328224Z'
+  updated: '2026-06-25T20:03:53.482372Z'
   dispatch_log:
   - timestamp: '2026-06-24T08:21:42.581233Z'
     agent: agy
@@ -46591,6 +46647,10 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-25T20:03:53.482372Z'
+    agent: jules
+    session_id: '13523465674838728831'
+    status: dispatched
 - id: studium-film-conference-of-birds
   title: "Conference of the Birds film companion (the seven valleys/fan\u0101)"
   repo: organvm/limen
@@ -47383,7 +47443,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - discover
   - value-discovery
@@ -47402,7 +47462,7 @@ tasks:
     \ stays dark]"
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-25T14:13:09.328224Z'
+  updated: '2026-06-25T20:03:53.482372Z'
   dispatch_log:
   - timestamp: '2026-06-24T10:57:06.855735Z'
     agent: gemini
@@ -47417,6 +47477,10 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-25T20:03:53.482372Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: DISCOVER-organvm-domus-genoma
   title: Discover the latent value of organvm/domus-genoma
   repo: organvm/domus-genoma
@@ -47953,7 +48017,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -47968,7 +48032,7 @@ tasks:
     stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-25T13:58:52.030958Z'
+  updated: '2026-06-25T20:07:34.515470Z'
   dispatch_log:
   - timestamp: '2026-06-24T13:50:16.953010Z'
     agent: agy
@@ -47982,6 +48046,10 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-25T20:07:34.515470Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GEN-organvm-limen-test-coverage-0624
   title: Raise test coverage in organvm/limen
   repo: organvm/limen
@@ -48456,7 +48524,7 @@ tasks:
   target_agent: opencode
   priority: low
   budget_cost: 1
-  status: cancelled
+  status: done
   labels:
   - docs
   - generated
@@ -48470,7 +48538,7 @@ tasks:
     \ 2026-06-24 to keep the stream endless]"
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-25T18:04:03.531673Z'
+  updated: '2026-06-25T19:57:31.257464Z'
   dispatch_log:
   - timestamp: '2026-06-25T17:39:31.714266Z'
     agent: limen
@@ -48489,6 +48557,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: noop
+  - timestamp: '2026-06-25T19:57:31.257464Z'
+    agent: jules
+    session_id: https://github.com/organvm/mirror-mirror/pull/48
+    status: done
+    output: 'jules-land: landed session 8708761135861015455 as PR'
 - id: GEN-organvm-universal-mail--automation-docs-0624
   title: Real usage docs for organvm/universal-mail--automation
   repo: organvm/universal-mail--automation
@@ -49242,10 +49315,10 @@ tasks:
   title: Reduce complexity in organvm/styx
   repo: organvm/styx
   type: code
-  target_agent: jules
+  target_agent: gemini
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - simplify
   - generated
@@ -49254,7 +49327,6 @@ tasks:
   - tried:opencode
   - tried:agy
   - tried:claude
-  - tried:gemini
   urls: []
   context: Identify the most complex or most-duplicated module in organvm/styx and
     refactor it for clarity, with tests proving behavior is unchanged. Net lines should
@@ -49293,10 +49365,6 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
-  - timestamp: '2026-06-25T19:34:48.657660Z'
-    agent: gemini
-    session_id: cli
-    status: failed->jules
 - id: GEN-organvm-limen-simplify-0624
   title: Reduce complexity in organvm/limen
   repo: organvm/limen
@@ -49304,11 +49372,12 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: cancelled
   labels:
   - simplify
   - generated
   - build-out
+  - duplicate
   urls: []
   context: Identify the most complex or most-duplicated module in organvm/limen and
     refactor it for clarity, with tests proving behavior is unchanged. Net lines should
@@ -49331,6 +49400,11 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-25T17:42:46.467766Z'
+    agent: opencode
+    session_id: current
+    status: cancelled
+    output: "duplicate of second GEN-organvm-limen-simplify-0624 entry (status done, PR #297)"
 - id: GEN-organvm-domus-genoma-typing-0624
   title: Tighten types in organvm/domus-genoma
   repo: organvm/domus-genoma
@@ -49338,7 +49412,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - typing
   - generated
@@ -49352,7 +49426,7 @@ tasks:
     and tests green. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-25T18:04:03.531673Z'
+  updated: '2026-06-25T20:07:34.515470Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:08:09.813170Z'
     agent: jules
@@ -49380,6 +49454,10 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-25T20:07:34.515470Z'
+    agent: jules
+    session_id: '1601274965672343373'
+    status: dispatched
 - id: GEN-organvm-portfolio-typing-0624
   title: Tighten types in organvm/portfolio
   repo: organvm/portfolio
@@ -49495,7 +49573,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - typing
   - generated
@@ -49508,7 +49586,7 @@ tasks:
     the build and tests green. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-25T17:55:34.220844Z'
+  updated: '2026-06-25T20:07:34.515470Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:22:13.734586Z'
     agent: agy
@@ -49527,6 +49605,10 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-25T20:07:34.515470Z'
+    agent: jules
+    session_id: '15086964018480274992'
+    status: dispatched
 - id: GEN-organvm-a-i-chat--exporter-typing-0624
   title: Tighten types in organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
@@ -49718,7 +49800,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: done
   labels:
   - refactor
   - complexity
@@ -49733,7 +49815,7 @@ tasks:
     \ tests green."
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-25T19:29:15.756534Z'
+  updated: '2026-06-25T20:05:00.422453Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:40:00Z'
     agent: opencode
@@ -49758,6 +49840,11 @@ tasks:
     agent: jules
     session_id: '5276172816526256973'
     status: dispatched
+  - timestamp: '2026-06-25T20:05:00.422453Z'
+    agent: jules
+    session_id: https://github.com/organvm/limen/pull/297
+    status: done
+    output: 'jules-land: landed session 5276172816526256973 as PR'
 - id: GEN-organvm-domus-genoma-test-coverage-0625
   title: Raise test coverage in organvm/domus-genoma
   repo: organvm/domus-genoma
@@ -49765,7 +49852,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -49779,7 +49866,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T15:35:53.897653Z'
+  updated: '2026-06-25T20:16:02.046332Z'
   dispatch_log:
   - timestamp: '2026-06-25T15:11:55.617328Z'
     agent: agy
@@ -49863,7 +49950,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -49876,7 +49963,7 @@ tasks:
     2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T15:11:55.617328Z'
+  updated: '2026-06-25T20:16:02.046332Z'
   dispatch_log:
   - timestamp: '2026-06-25T15:11:55.617328Z'
     agent: gemini
@@ -49889,7 +49976,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -49902,7 +49989,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T15:11:55.617328Z'
+  updated: '2026-06-25T20:16:02.046332Z'
   dispatch_log:
   - timestamp: '2026-06-25T15:11:55.617328Z'
     agent: gemini
@@ -50304,7 +50391,7 @@ tasks:
     2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T16:37:25.750182Z'
+  updated: '2026-06-25T19:57:31.257464Z'
   dispatch_log:
   - timestamp: '2026-06-25T14:14:19.028613Z'
     agent: gemini
@@ -50325,6 +50412,11 @@ tasks:
       +        print(f\"Error: manifest file not found at {manifest_path}\")\n+  \
       \      sys.exit(1)\n+\n     load_adapters()\n     atoms: dict[str, AtomRecord]\
       \ = {}     # content_sha -> canon"
+  - timestamp: '2026-06-25T19:57:31.257464Z'
+    agent: jules
+    session_id: https://github.com/organvm/session-meta/pull/120
+    status: done
+    output: 'jules-land: landed session 17471962598716020352 as PR'
 - id: GEN-organvm-portfolio-security-0625
   title: Security hardening pass on organvm/portfolio
   repo: organvm/portfolio
@@ -51267,7 +51359,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: done
   labels:
   - inbound-magnet
   - positioning
@@ -51293,7 +51385,7 @@ tasks:
     \ \u2014 no invented capabilities. Docs-only; do not touch runtime/deploy paths."
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T19:29:15.756534Z'
+  updated: '2026-06-25T19:55:17.905578Z'
   dispatch_log:
   - timestamp: '2026-06-25T16:00:42.494866Z'
     agent: codex
@@ -51315,6 +51407,11 @@ tasks:
     agent: jules
     session_id: '17139224545692070761'
     status: dispatched
+  - timestamp: '2026-06-25T19:55:17.905578Z'
+    agent: jules
+    session_id: https://github.com/organvm/mirror-mirror/pull/47
+    status: done
+    output: 'jules-land: landed session 17139224545692070761 as PR'
 - id: INBOUND-POS-universal-mail--automation
   title: Inbound front-door treatment for organvm/universal-mail--automation (positioning
     page + README CTA)
@@ -51362,10 +51459,6 @@ tasks:
     agent: claude
     session_id: conductor
     status: 'reopened->jules (was noop/stalled; prompt fix #271 acd98af)'
-  - timestamp: '2026-06-25T19:34:48.657660Z'
-    agent: jules
-    session_id: cli
-    status: dispatched
 - id: INBOUND-POS-the-invisible-ledger
   title: Inbound front-door treatment for organvm/the-invisible-ledger (positioning
     page + README CTA)
@@ -51409,10 +51502,6 @@ tasks:
     agent: claude
     session_id: conductor
     status: 'reopened->jules (was noop/stalled; prompt fix #271 acd98af)'
-  - timestamp: '2026-06-25T19:34:48.657660Z'
-    agent: jules
-    session_id: '14403756960100741487'
-    status: dispatched
 - id: INBOUND-POS-domus-genoma
   title: Inbound front-door treatment for organvm/domus-genoma (positioning page +
     README CTA)
@@ -51461,10 +51550,6 @@ tasks:
     agent: claude
     session_id: conductor
     status: 'reopened->jules (was noop/stalled; prompt fix #271 acd98af)'
-  - timestamp: '2026-06-25T19:34:48.657660Z'
-    agent: jules
-    session_id: '11825436459510213989'
-    status: dispatched
 - id: INBOUND-POS-styx
   title: Inbound front-door treatment for organvm/styx (positioning page + README
     CTA)
@@ -51473,7 +51558,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - inbound-magnet
   - positioning
@@ -51497,7 +51582,7 @@ tasks:
     \ \u2014 no invented capabilities. Docs-only; do not touch runtime/deploy paths."
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T18:13:27.592408Z'
+  updated: '2026-06-25T19:59:18.020533Z'
   dispatch_log:
   - timestamp: '2026-06-25T16:00:42.494866Z'
     agent: jules
@@ -51507,6 +51592,10 @@ tasks:
     agent: claude
     session_id: conductor
     status: 'reopened->jules (was noop/stalled; prompt fix #271 acd98af)'
+  - timestamp: '2026-06-25T19:59:18.020533Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: INBOUND-POS-a-i-chat--exporter
   title: Inbound front-door treatment for organvm/a-i-chat--exporter (positioning
     page + README CTA)
@@ -51515,7 +51604,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - inbound-magnet
   - positioning
@@ -51542,7 +51631,7 @@ tasks:
     \ \u2014 no invented capabilities. Docs-only; do not touch runtime/deploy paths."
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T18:13:27.592408Z'
+  updated: '2026-06-25T19:59:18.020533Z'
   dispatch_log:
   - timestamp: '2026-06-25T16:00:42.494866Z'
     agent: codex
@@ -51560,6 +51649,10 @@ tasks:
     agent: claude
     session_id: conductor
     status: 'reopened->jules (was noop/stalled; prompt fix #271 acd98af)'
+  - timestamp: '2026-06-25T19:59:18.020533Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: INBOUND-POS-portfolio
   title: Inbound front-door treatment for organvm/portfolio (positioning page + README
     CTA)
@@ -51593,7 +51686,7 @@ tasks:
     \ \u2014 no invented capabilities. Docs-only; do not touch runtime/deploy paths."
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T16:37:25.752396Z'
+  updated: '2026-06-25T19:57:31.257464Z'
   dispatch_log:
   - timestamp: '2026-06-25T16:00:42.494866Z'
     agent: gemini
@@ -51614,6 +51707,11 @@ tasks:
       \ legacy, fragility, and noise. You need a centralized, zero-defect orchestration\
       \ hub that proves architectural mastery without saying a word.\n+> \n+> **The\
       \ Proof is this Repository:** 100/100 Lighthouse performa"
+  - timestamp: '2026-06-25T19:57:31.257464Z'
+    agent: jules
+    session_id: https://github.com/organvm/portfolio/pull/150
+    status: done
+    output: 'jules-land: landed session 13120778394213157788 as PR'
 - id: VIGILIA-VITALS
   title: "VITALS executive \u2014 don't-crash reaction function on the heartbeat (CFO)"
   repo: organvm/limen
@@ -51717,7 +51815,7 @@ tasks:
     \ unit tests cover the isCompactSummary anchor + the 'nothing lost' raw-tail recovery."
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T19:35:13.440086Z'
+  updated: '2026-06-25T19:57:31.257464Z'
   dispatch_log:
   - timestamp: '2026-06-25T16:15:24.604238Z'
     agent: jules
@@ -51744,6 +51842,11 @@ tasks:
     session_id: conductor
     status: done
     output: 'Built by Claude (hybrid). Merged: https://github.com/organvm/limen/pull/277'
+  - timestamp: '2026-06-25T19:57:31.257464Z'
+    agent: jules
+    session_id: https://github.com/organvm/limen/pull/295
+    status: done
+    output: 'jules-land: landed session 15714664235346034844 as PR'
 - id: VIGILIA-INTEGRITY
   title: "INTEGRITY executive \u2014 govern the autoupdater + verify signatures (CISO)"
   repo: organvm/limen
@@ -51783,7 +51886,7 @@ tasks:
     \ ruff+pytest+verify-whole.sh green; tests cover the drift-alert branch."
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T19:35:13.440086Z'
+  updated: '2026-06-25T19:57:31.257464Z'
   dispatch_log:
   - timestamp: '2026-06-25T16:15:24.604238Z'
     agent: gemini
@@ -51838,6 +51941,11 @@ tasks:
     session_id: conductor
     status: done
     output: 'Built by Claude (hybrid). Merged: https://github.com/organvm/limen/pull/277'
+  - timestamp: '2026-06-25T19:57:31.257464Z'
+    agent: jules
+    session_id: https://github.com/organvm/limen/pull/294
+    status: done
+    output: 'jules-land: landed session 17571866522091988881 as PR'
 - id: VIGILIA-EXECUTIVE-HAND
   title: "The autonomic executive \u2014 VITALS+CONTINUITY+INTEGRITY on ONE hand each\
     \ beat"
@@ -51903,7 +52011,7 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 3
-  status: done
+  status: in_progress
   labels:
   - vigilia
   - spine
@@ -51935,7 +52043,7 @@ tasks:
     \ migrated files; ruff+pytest+verify-whole.sh green; behavior unchanged."
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T19:50:11.019691Z'
+  updated: '2026-06-25T18:00:33.201074Z'
   dispatch_log:
   - timestamp: '2026-06-25T18:00:33.201074Z'
     agent: claude
@@ -51944,11 +52052,6 @@ tasks:
     output: 'Hybrid 2026-06-25: fleet noop/false-done on organ-build; Claude builds
       this organ directly in worktree+PR. Parked in_progress so the autonomous dispatcher
       won''t re-noop it.'
-  - timestamp: '2026-06-25T19:50:11.019691Z'
-    agent: claude
-    session_id: conductor
-    status: done
-    output: 'Built by Claude (hybrid). Merged: https://github.com/organvm/limen/pull/285'
 - id: VIGILIA-NOHARDCODE-GATE
   title: "No-hardcodes CI gate \u2014 fail the build on a stray hardcoded path/threshold\
     \ (CTO)"
@@ -51957,7 +52060,7 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 2
-  status: done
+  status: in_progress
   labels:
   - vigilia
   - spine
@@ -51988,7 +52091,7 @@ tasks:
   depends_on:
   - VIGILIA-PARAM-PANEL
   created: '2026-06-25'
-  updated: '2026-06-25T19:50:11.019691Z'
+  updated: '2026-06-25T18:00:33.201074Z'
   dispatch_log:
   - timestamp: '2026-06-25T18:00:33.201074Z'
     agent: claude
@@ -51997,11 +52100,6 @@ tasks:
     output: 'Hybrid 2026-06-25: fleet noop/false-done on organ-build; Claude builds
       this organ directly in worktree+PR. Parked in_progress so the autonomous dispatcher
       won''t re-noop it.'
-  - timestamp: '2026-06-25T19:50:11.019691Z'
-    agent: claude
-    session_id: conductor
-    status: done
-    output: 'Built by Claude (hybrid). Merged: https://github.com/organvm/limen/pull/285'
 - id: VIGILIA-CISO-FOLD
   title: Fold identity + authority under the CISO in the seat (consolidation)
   repo: organvm/limen
@@ -52230,12 +52328,11 @@ tasks:
   - needs-human
   urls: []
   context: "Cheapest path \u2192 land the credential/secret (your account/identity).\
-    \ Unblocks: Optimize token usage across AI models, Unify browser bookmarks and\
-    \ data across browsers. Auto-hung by QUICKEN (finish-not-park); refreshes each\
-    \ beat until you act."
+    \ Unblocks: Optimize token usage across AI models. Auto-hung by QUICKEN (finish-not-park);\
+    \ refreshes each beat until you act."
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T16:30:37.269766Z'
+  updated: '2026-06-25T20:04:55.957109Z'
   dispatch_log: []
 - id: GEN-organvm-a-i-chat--exporter-typing-0625
   title: Tighten types in organvm/a-i-chat--exporter
@@ -52333,16 +52430,15 @@ tasks:
   title: Real usage docs for organvm/limen
   repo: organvm/limen
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: low
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - docs
   - generated
   - build-out
   - tried:codex
-  - tried:agy
   urls: []
   context: "Derive an accurate Usage section in organvm/limen's README from the ACTUAL\
     \ entrypoints/exports (install, run, key commands + flags). No invented features,\
@@ -52360,10 +52456,6 @@ tasks:
     agent: codex
     session_id: cli
     status: ratelimited->opencode
-  - timestamp: '2026-06-25T19:34:48.657660Z'
-    agent: agy
-    session_id: cli
-    status: failed->claude
 - id: GEN-organvm-session-meta-test-coverage-0625
   title: Raise test coverage in organvm/session-meta
   repo: organvm/session-meta
@@ -52428,15 +52520,14 @@ tasks:
   title: Real usage docs for organvm/portfolio
   repo: organvm/portfolio
   type: code
-  target_agent: gemini
+  target_agent: claude
   priority: low
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - docs
   - generated
   - build-out
-  - tried:claude
   urls: []
   context: "Derive an accurate Usage section in organvm/portfolio's README from the\
     \ ACTUAL entrypoints/exports (install, run, key commands + flags). No invented\
@@ -52450,23 +52541,18 @@ tasks:
     agent: codex
     session_id: cli
     status: ratelimited->opencode
-  - timestamp: '2026-06-25T19:34:48.657660Z'
-    agent: claude
-    session_id: cli
-    status: failed->gemini
 - id: GEN-organvm-universal-mail--automation-docs-0625
   title: Real usage docs for organvm/universal-mail--automation
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: jules
+  target_agent: gemini
   priority: low
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - docs
   - generated
   - build-out
-  - tried:gemini
   urls: []
   context: "Derive an accurate Usage section in organvm/universal-mail--automation's\
     \ README from the ACTUAL entrypoints/exports (install, run, key commands + flags).\
@@ -52480,18 +52566,14 @@ tasks:
     agent: codex
     session_id: cli
     status: ratelimited->opencode
-  - timestamp: '2026-06-25T19:34:48.657660Z'
-    agent: gemini
-    session_id: cli
-    status: failed->jules
 - id: GEN-organvm-domus-genoma-docs-0625
   title: Real usage docs for organvm/domus-genoma
   repo: organvm/domus-genoma
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: low
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - docs
   - generated
@@ -52506,10 +52588,6 @@ tasks:
   updated: '2026-06-25T19:34:48.657660Z'
   dispatch_log:
   - timestamp: '2026-06-25T18:04:03.531673Z'
-    agent: codex
-    session_id: cli
-    status: ratelimited->opencode
-  - timestamp: '2026-06-25T19:34:48.657660Z'
     agent: codex
     session_id: cli
     status: ratelimited->opencode
@@ -52571,14 +52649,15 @@ tasks:
     producer + self-wiring + done-predicate)
   repo: organvm/limen
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - insight-cadence
   - autopoiesis
   - build-out
+  - noop
   urls: []
   context: "Create scripts/insight-cadence.py \u2014 an autonomous organ that, each\
     \ heartbeat, DRAFTS insight reports at FOUR wall-clock cadences. Define TIER_SECONDS\
@@ -52609,13 +52688,30 @@ tasks:
     \ ruff + pytest green and open a PR."
   depends_on: []
   created: '2026-06-25'
-  dispatch_log: []
+  updated: '2026-06-25T20:50:51.684544Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T19:59:18.020533Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-25T20:01:59.214482Z'
+    agent: jules
+    session_id: '11203840877917902217'
+    status: dispatched
+  - timestamp: '2026-06-25T20:43:37.758422Z'
+    agent: opencode
+    session_id: cli
+    status: noop
+  - timestamp: '2026-06-25T20:50:51.684544Z'
+    agent: jules
+    session_id: '5903333291754721304'
+    status: dispatched
 - id: INSIGHT-CADENCE-ROUTING
   title: Route cadenced insights to their proper owners for healing (close the report
     -> owner -> heal loop)
   repo: organvm/limen
   type: code
-  target_agent: agy
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: dispatched
@@ -52648,25 +52744,30 @@ tasks:
   depends_on:
   - INSIGHT-CADENCE-SPINE
   created: '2026-06-25'
-  updated: '2026-06-25T19:48:38.228809Z'
+  updated: '2026-06-25T20:50:59.159342Z'
   dispatch_log:
-  - timestamp: '2026-06-25T19:48:38.228809Z'
-    agent: agy
-    session_id: https://github.com/organvm/limen/pull/286
+  - timestamp: '2026-06-25T20:02:06.801936Z'
+    agent: jules
+    session_id: '15092960966680983329'
+    status: dispatched
+  - timestamp: '2026-06-25T20:50:59.159342Z'
+    agent: jules
+    session_id: '11635419247943741803'
     status: dispatched
 - id: CENSOR-MONTHLY-TIER
   title: Add the missing MONTHLY cadence (2592000s) to the censor insights->actions
     engine
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - insight-cadence
   - censor
   - build-out
+  - noop
   urls: []
   context: "scripts/censor.py defines TIER_SECONDS = {'hourly':3600,'daily':86400,'weekly':604800}\
     \ \u2014 the MONTHLY cadence is absent (the gap that makes the cadence engine\
@@ -52679,12 +52780,21 @@ tasks:
     \ + pytest green and open a PR."
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T00:00:00Z'
+  updated: '2026-06-25T20:18:49.211642Z'
   dispatch_log:
-  - timestamp: '2026-06-25T00:00:00Z'
+  - timestamp: '2026-06-25T19:48:40.675336Z'
     agent: opencode
-    session_id: current
+    session_id: cli
+    status: noop
+  - timestamp: '2026-06-25T20:02:14.052373Z'
+    agent: jules
+    session_id: '12338335558080514013'
     status: dispatched
+  - timestamp: '2026-06-25T20:18:49.211642Z'
+    agent: jules
+    session_id: https://github.com/organvm/limen/pull/301
+    status: done
+    output: 'jules-land: landed session 12338335558080514013 as PR'
 - id: INSIGHT-CADENCE-DASHBOARD
   title: 'Read-only dashboard face: latest insight per cadence per owner'
   repo: organvm/limen
@@ -52692,7 +52802,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - insight-cadence
   - dashboard
@@ -52714,49 +52824,55 @@ tasks:
   depends_on:
   - INSIGHT-CADENCE-SPINE
   created: '2026-06-25'
-  updated: '2026-06-25T19:48:14.554328Z'
+  updated: '2026-06-25T20:11:55.191142Z'
   dispatch_log:
   - timestamp: '2026-06-25T19:48:14.554328Z'
     agent: jules
     session_id: '6728380593286373412'
     status: dispatched
-- id: GEN-organvm-limen-typing-0625
-  title: "Tighten types in organvm/limen \u2014 remove Any / add type hints / fix\
-    \ loose signatures"
-  repo: organvm/limen
+  - timestamp: '2026-06-25T20:11:55.191142Z'
+    agent: jules
+    session_id: https://github.com/organvm/limen/pull/299
+    status: done
+    output: 'jules-land: landed session 6728380593286373412 as PR'
+- id: GEN-organvm-mirror-mirror-docs-0625
+  title: Real usage docs for organvm/mirror-mirror
+  repo: organvm/mirror-mirror
   type: code
-  target_agent: opencode
-  priority: high
-  budget_cost: 2
-  status: cancelled
+  target_agent: any
+  priority: low
+  budget_cost: 1
+  status: dispatched
   labels:
-  - typing
-  - housekeeping
-  - noop
+  - docs
+  - generated
+  - build-out
   urls: []
-  context: 'Eliminate worst untyped hotspots in most-imported modules. Fixes in dispatch.py
-    (5 signatures: _queue_lock return type, _ledger_lanes, _accel_allows, _claude_tier_overrides
-    bare dict to dict[str, Any], release_stale_tasks return type) and scripts/route.py
-    (7 signatures: _fleet_health param type, bare dict to dict[str, Any] on _task_cost,
-    _task_classes, _ledger_bias, _pick_local, _capable_agents, route_task). 112 tests
-    green, ruff clean.'
+  context: "Derive an accurate Usage section in organvm/mirror-mirror's README from\
+    \ the ACTUAL entrypoints/exports (install, run, key commands + flags). No invented\
+    \ features, no TODOs \u2014 only what the code actually does. [auto-generated\
+    \ 2026-06-25 to keep the stream endless]"
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T19:34:48.657660Z'
-  dispatch_log:
-  - timestamp: '2026-06-25T20:30:00Z'
-    agent: opencode
-    session_id: cli
-    status: dispatched
-    output: "Fixing untyped hotspots \u2014 dispatch.py + route.py"
-  - timestamp: '2026-06-25T20:31:00Z'
-    agent: opencode
-    session_id: cli
-    status: done
-    output: Fixed 5 signatures in dispatch.py (Iterator[bool], dict[str, Any] for
-      bare dict) and 7 signatures in route.py (param type for _fleet_health, dict[str,
-      Any] for bare dict params). 112 tests green, ruff clean.
-  - timestamp: '2026-06-25T19:34:48.657660Z'
-    agent: opencode
-    session_id: cli
-    status: noop
+  updated: '2026-06-25T20:16:02.046332Z'
+  dispatch_log: []
+- id: GEN-organvm-public-record-data-scrapper-simplify-0625
+  title: Reduce complexity in organvm/public-record-data-scrapper
+  repo: organvm/public-record-data-scrapper
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - simplify
+  - generated
+  - build-out
+  urls: []
+  context: Identify the most complex or most-duplicated module in organvm/public-record-data-scrapper
+    and refactor it for clarity, with tests proving behavior is unchanged. Net lines
+    should not grow without cause. [auto-generated 2026-06-25 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T20:16:02.046332Z'
+  dispatch_log: []
