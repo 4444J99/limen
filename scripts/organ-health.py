@@ -4,8 +4,8 @@
 The self-* ladder is asserted from code ("all rungs wired and live") but, until now, nothing
 SHOWED whether each rung actually fires on cadence. A liveness belief that the logs can quietly
 contradict is not autonomic — it's faith. This organ closes that gap: for every rung
-(SUSTAIN · ROUTE · FEED · MERGE · HEAL · IMPROVE · PRESERVE · CONVERGE · MAIL) it derives the
-LAST time the organ fired and marks it green / stale / down / gated against its OWN cadence.
+(SUSTAIN · ROUTE · FEED · MERGE · HEAL · IMPROVE · PRESERVE · CONVERGE · MAIL · HEALTH) it derives
+the LAST time the organ fired and marks it green / stale / down / gated against its OWN cadence.
 
 Two signal sources, in priority order:
   1. logs/.voice/<voice>   — a stamp the heartbeat writes the instant a voice plays (ground truth).
@@ -175,6 +175,9 @@ def _registry():
              gate="LIMEN_NOMENCLATOR", gate_default="0",
              what="INDEX·NOMINVM — hold the roll of names to the canon (nota)",
              probe=lambda: _mtime(LOGS / "nomenclator.json")),
+        dict(key="health", rung="HEALTH", voice="health", cadence_key="HEALTH",
+             what="personal health office — chase open clinical loops + prep visits (PII local)",
+             probe=lambda: _mtime(LOGS / "health-organ-state.json")),
     ]
 
 

@@ -43,6 +43,7 @@ fi
 export LIMEN_TASKS="${LIMEN_TASKS:-$LIMEN_ROOT/tasks.yaml}"
 export LIMEN_WORKDIR="${LIMEN_WORKDIR:-$HOME/Workspace}"
 export LIMEN_ISOLATION="${LIMEN_ISOLATION:-worktree}"
+export LIMEN_HEALTH_DIR="${LIMEN_HEALTH_DIR:-$HOME/Workspace/_health-private}"  # personal health PII — lives OUTSIDE any git checkout, never committed
 export GEMINI_CLI_TRUST_WORKSPACE="${GEMINI_CLI_TRUST_WORKSPACE:-true}"
 export PYTHONPATH="$LIMEN_ROOT/cli/src"
 cd "$LIMEN_ROOT" || exit 1
@@ -127,6 +128,7 @@ C_CENSOR="${LIMEN_BEAT_CENSOR:-4}"     # CENSOR (insights→actions; hourly/dail
 C_MAIL="${LIMEN_BEAT_MAIL:-6}"         # COMMS (sweep inbound mail + rebuild the obligations ledger/faces)
 C_REPORT="${LIMEN_BEAT_REPORT:-12}"    # RELAY (conducting report; self-limits to once per usage-day)
 C_QUICKEN="${LIMEN_BEAT_QUICKEN:-4}"   # QUICKEN (give stalled FleetView sessions life to finish)
+C_HEALTH="${LIMEN_BEAT_HEALTH:-6}"     # CARE (refresh the personal health office: chart digest + visit-prep)
 LOCKD="$LIMEN_ROOT/logs/.queue.lock.d"   # shared with supervisory ops (two-scale safety)
 c=0
 play() { [ $(( c % $1 )) -eq 0 ]; }   # true on this voice's beat
@@ -319,6 +321,9 @@ while true; do
     [ "${LIMEN_QUICKEN_BREATHE:-0}" = "1" ] && \
       python3 "$LIMEN_ROOT/scripts/quicken.py" --breathe all 2>&1 | tail -3 || true
   fi
+  # HEALTH — the personal health office (PII stays local, off-repo; lockless, read-only). Refreshes
+  # the chart digest + visit-prep + the autopoietic office-log every C_HEALTH beats. Fail-open.
+  play "$C_HEALTH"  && { python3 "$LIMEN_ROOT/scripts/health-organ.py" 2>&1 | tail -1 || true; stamp health; }
   # CAPTURE — get every workspace repo OFF disk into the canonical universal context (commit+push,
   # additive only). Implements the old backup voice; falls back to a legacy backup.sh if present.
   if play "$C_BACKUP"; then

@@ -33,6 +33,12 @@ container/state/
 *.premigrate
 .limen.env
 MASTER-PLAN.md
+# Personal health PII — the Chart lives OUTSIDE the repo (~/Workspace/_health-private);
+# these patterns are a defensive backstop so medical data can never be committed in-tree.
+_health-private/
+health-private/
+health/chart.json
+*health-chart*.json
 # git worktree dirs (isolation checkouts — never tracked)
 .worktrees/
 .claude/worktrees/
