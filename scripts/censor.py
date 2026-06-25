@@ -45,7 +45,7 @@ LEDGER_PATH = LOGS / "censor-decisions.jsonl"      # high-volume audit trail →
 PRECEDENTS_PATH = CENSOR_DIR / "precedents.jsonl"  # judicial case law → durable, committed
 LAST_PATH = LOGS / "censor-last.json"   # compact summary the view reads
 
-TIER_SECONDS = {"hourly": 3600, "daily": 86400, "weekly": 604800}
+TIER_SECONDS = {"hourly": 3600, "daily": 86400, "weekly": 604800, "monthly": 2592000}
 ACTUATOR_TIMEOUT = int(os.environ.get("LIMEN_CENSOR_TIMEOUT", "300"))
 
 

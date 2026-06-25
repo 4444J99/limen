@@ -33,7 +33,7 @@ def _ts(dt):
 
 def test_due_tiers_first_run_all_due():
     now = datetime(2026, 6, 24, 12, 0, tzinfo=timezone.utc)
-    assert set(censor.due_tiers({"last_run": {}}, now)) == {"hourly", "daily", "weekly"}
+    assert set(censor.due_tiers({"last_run": {}}, now)) == {"hourly", "daily", "weekly", "monthly"}
 
 
 def test_due_tiers_respects_elapsed():
@@ -42,9 +42,19 @@ def test_due_tiers_respects_elapsed():
         "hourly": _ts(now - timedelta(minutes=30)),   # not yet (needs 60m)
         "daily": _ts(now - timedelta(hours=25)),       # due (needs 24h)
         "weekly": _ts(now - timedelta(days=2)),        # not yet (needs 7d)
+        "monthly": _ts(now - timedelta(days=25)),      # not yet (needs 30d)
     }}
     due = censor.due_tiers(state, now)
-    assert "hourly" not in due and "daily" in due and "weekly" not in due
+    assert "hourly" not in due and "daily" in due and "weekly" not in due and "monthly" not in due
+
+
+def test_due_tiers_respects_elapsed_monthly():
+    now = datetime(2026, 6, 24, 12, 0, tzinfo=timezone.utc)
+    state = {"last_run": {
+        "monthly": _ts(now - timedelta(days=31)),      # due (needs 30d)
+    }}
+    due = censor.due_tiers(state, now)
+    assert "monthly" in due
 
 
 def test_force_tier_overrides_cadence():
