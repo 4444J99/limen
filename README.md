@@ -7,25 +7,26 @@ Limen is a cross-agent, cross-repo, budget-capped task intake system. It lives i
 ## Quick Start
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/4444J99/limen/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/4444J99/limen/main/install.sh | bash
+# restart shell or: source ~/.zshenv
 limen init
-limen add --title 'Refactor auth' --repo my-org/my-repo --agent jules
-limen dispatch --agent jules --live
+# add tasks by editing tasks.yaml directly, then:
+limen dispatch --agent jules          # dry-run preview
+limen dispatch --agent jules --live   # real dispatch
 limen status
 ```
 
 ## CLI Commands
 
-| Command | Description |
-|---------|-------------|
-| `limen init` | Initialize a portal in the current directory |
-| `limen add` | Add a new task (interactive or flags) |
-| `limen dispatch` | Claim open tasks and dispatch to agents |
-| `limen release-stale` | Reopen stale dispatched/in-progress claims before redispatch |
-| `limen qa` | Report lifecycle gates, QA queues, steering mechanisms, and archive-ready work |
-| `limen status` | Show the task board with budget tracking |
-| `limen harvest` | Collect results from completed agent runs |
-| `limen sync` | Sync with the SaaS API |
+| Command | Key flags | Description |
+|---------|-----------|-------------|
+| `limen init` | `--root DIR`, `--budget N` | Scaffold a tasks.yaml in LIMEN_ROOT or current directory |
+| `limen dispatch` | `--agent`, `--live`, `--task ID`, `--limit N`, `--budget N` | Read tasks.yaml and dispatch open tasks to agents (default: dry-run) |
+| `limen release-stale` | `--hours N`, `--agent`, `--apply`, `--json-output`, `--report-file` | Reopen stale dispatched/in-progress claims (default: dry-run preview) |
+| `limen doctor` | `--agent`, `--json-output`, `--report-file` | Report local readiness for dispatch and stale-claim recovery |
+| `limen qa` | `--agent`, `--json-output`, `--report-file` | Report lifecycle gates and QA steering queues without mutating tasks |
+| `limen status` | `--agent`, `--status` | Show the task board with budget tracking |
+| `limen harvest` | `--agent` | Collect results from completed agent runs and update task states |
 
 ## Architecture
 
