@@ -175,6 +175,10 @@ def _registry():
              gate="LIMEN_NOMENCLATOR", gate_default="0",
              what="INDEX·NOMINVM — hold the roll of names to the canon (nota)",
              probe=lambda: _mtime(LOGS / "nomenclator.json")),
+        dict(key="positioning", rung="POSITIONING", voice="positioning", cadence_key="POSITIONING",
+             gate="LIMEN_POSITIONING", gate_default="0",
+             what="refresh inbound-magnet surfaces (form/operation pages + front door + discoverability)",
+             probe=lambda: _mtime(ROOT / "docs" / "positioning" / "_frontdoor.md")),
     ]
 
 

@@ -127,6 +127,7 @@ C_CENSOR="${LIMEN_BEAT_CENSOR:-4}"     # CENSOR (insights→actions; hourly/dail
 C_MAIL="${LIMEN_BEAT_MAIL:-6}"         # COMMS (sweep inbound mail + rebuild the obligations ledger/faces)
 C_REPORT="${LIMEN_BEAT_REPORT:-12}"    # RELAY (conducting report; self-limits to once per usage-day)
 C_QUICKEN="${LIMEN_BEAT_QUICKEN:-4}"   # QUICKEN (give stalled FleetView sessions life to finish)
+C_POSITIONING="${LIMEN_BEAT_POSITIONING:-12}"  # POSITIONING (refresh inbound-magnet surfaces; gated OFF)
 LOCKD="$LIMEN_ROOT/logs/.queue.lock.d"   # shared with supervisory ops (two-scale safety)
 c=0
 play() { [ $(( c % $1 )) -eq 0 ]; }   # true on this voice's beat
@@ -318,6 +319,18 @@ while true; do
     python3 "$LIMEN_ROOT/scripts/quicken.py" --apply 2>&1 | tail -2 || true
     [ "${LIMEN_QUICKEN_BREATHE:-0}" = "1" ] && \
       python3 "$LIMEN_ROOT/scripts/quicken.py" --breathe all 2>&1 | tail -3 || true
+  fi
+  # POSITIONING — keep the inbound-magnet surfaces fresh as seeds/repos drift: the form/operation
+  # buyer pages + the two-door front door + the discoverability recommendations. No --fetch (no
+  # network, can't time out on a stuck API); writes ONLY the public docs/positioning artifacts, and
+  # the no-price guard refuses any page that leaks a currency token. Gated OFF behind LIMEN_POSITIONING=1
+  # (his knob) so the surfaces auto-refresh only once he arms it — generation alone never publishes.
+  # Runs just before CAPTURE so a refreshed surface is committed+pushed the same beat. Bounded + fail-open.
+  if play "$C_POSITIONING" && [ "${LIMEN_POSITIONING:-0}" = "1" ]; then
+    timeout "${LIMEN_POSITIONING_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/generate-positioning.py" --apply 2>&1 | tail -1 || true
+    timeout "${LIMEN_POSITIONING_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/generate-positioning.py" --frontdoor --apply 2>&1 | tail -1 || true
+    timeout "${LIMEN_POSITIONING_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/generate-positioning.py" --discoverability --apply 2>&1 | tail -1 || true
+    stamp positioning
   fi
   # CAPTURE — get every workspace repo OFF disk into the canonical universal context (commit+push,
   # additive only). Implements the old backup voice; falls back to a legacy backup.sh if present.
