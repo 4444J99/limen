@@ -1,0 +1,5 @@
+{
+  "_doc": "Durable ledger of money ACTUALLY RECEIVED (cleared), in cents. This is proof, not a forecast — the Aug-1 gate reads the trailing-7d sum from here for the $10k/wk run-rate. Append one record per cleared payment; never delete, never inflate. Today it is empty, and the gate is honestly FALSE.",
+  "currency": "USD",
+  "received": []
+}

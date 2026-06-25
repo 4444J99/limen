@@ -1,0 +1,4 @@
+{
+  "_doc": "The close ledger: consulting engagements (Offer A/B/C). An engagement counts for the gate ONLY when status=='signed' AND deposit_cleared==true. status flows lead -> sent -> signed. This tracks the un-automatable act — talking to a human and getting a yes — not code. Today it is empty.",
+  "engagements": []
+}
