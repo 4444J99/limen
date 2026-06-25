@@ -15,10 +15,12 @@
 # re-runnable); atomic write; chmod 600; touches ONLY ~/.limen.env (never a shell rc).
 set -uo pipefail
 ENV_FILE="${LIMEN_ENV:-$HOME/.limen.env}"
-# the keys the conductor knows how to use (extend freely; --check reports on these)
-EXPECTED=(GEMINI_API_KEY GOOGLE_GENERATIVE_AI_API_KEY GITHUB_TOKEN OPENAI_API_KEY \
-          ANTHROPIC_API_KEY GCP_SA_KEY \
-          LIMEN_CLAUDE_AUTH_TOKEN LIMEN_CLAUDE_API_KEY)
+# The keys the fleet actually hydrates + reads at the point of use (the enabled creds-hydrate map).
+# --check reports on these. Deliberately NOT listed: OPENAI_API_KEY / OPENROUTER_API_KEY (phantom —
+# codex uses ChatGPT OAuth, opencode derives a free model; no fleet code reads either; retired
+# 2026-06-25), and the Claude token (owned by the credential-race / Rung-0 self-heal, not this floor).
+EXPECTED=(GEMINI_API_KEY GOOGLE_GENERATIVE_AI_API_KEY \
+          GH_TOKEN GITHUB_TOKEN CLOUDFLARE_API_TOKEN)
 
 ensure_file() { [ -f "$ENV_FILE" ] || touch "$ENV_FILE"; chmod 600 "$ENV_FILE"; }
 has_key() { grep -qE "^(export )?$1=" "$ENV_FILE" 2>/dev/null; }

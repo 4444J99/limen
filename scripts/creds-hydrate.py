@@ -3,7 +3,7 @@
 
 THE DISEASE this cures: you log into a vendor (gemini / opencode / codex / …) ONCE — and then a new
 worktree, a fresh machine state, or a lapsed token makes you do it AGAIN. The credentials already
-EXIST (minted once into 1Password: `op://Personal/Gemini API Key`, `op://Personal/OpenAI`, the
+EXIST (minted once into 1Password: `op://Personal/Gemini API Key`, the Cloudflare token, the
 GitHub tokens, …). The fleet just never READS from that source of truth at the point of use:
   - the value lands in ~/.limen.env but the daemon never loads it into the subprocess env
     (dispatch.py ran agent CLIs with env=None → they inherit a daemon env that lacks the key); and
@@ -76,16 +76,31 @@ DEFAULT_MAP: list[dict] = [
         "enabled": True,
     },
     {
+        # Parked — PHANTOM env var, retired 2026-06-25 (session efb53173) after walking it to certainty.
+        # codex authenticates via ChatGPT OAuth (`codex login`): ~/.codex/auth.json shows auth_mode=chatgpt,
+        # live OAuth tokens, and OPENAI_API_KEY=null — codex never reads OPENAI_API_KEY. No fleet code reads
+        # it either (grep of cli/src: zero consumers). And the user runs ChatGPT by subscription, never minted
+        # an OpenAI API key, so op://Personal/OpenAI never resolved (17 failed reads across history, no alt
+        # name ever existed). Hydrating it was a no-op chasing a key that does not and need not exist.
+        # The codex lane is ALREADY UP via its own OAuth — disabling this changes nothing but the SKIP noise.
+        # Enable only if the user ever mints a real OpenAI API key AND a tool is switched to key-auth.
         "lane": "codex/opencode (openai)",
         "ref": "op://Personal/OpenAI/credential",
         "env": ["OPENAI_API_KEY"],
-        "enabled": True,
+        "enabled": False,
     },
     {
+        # Parked — PHANTOM env var, retired 2026-06-25 (same investigation). opencode derives its model from
+        # `opencode models` (see dispatch._opencode_model): paid tier comes from `opencode auth login` writing
+        # opencode's OWN auth.json, else it falls back to a FREE coding model — it never reads OPENROUTER_API_KEY.
+        # No fleet code reads OPENROUTER_API_KEY (grep of cli/src: zero consumers), no opencode provider auth
+        # exists on this host, and op://Personal/OpenRouter API Key never resolved (only-ever-tried ref, always
+        # failed). The opencode lane runs on its free model regardless. Enable only if an OpenRouter key is
+        # minted AND opencode is configured to consume the env var.
         "lane": "opencode (openrouter)",
         "ref": "op://Personal/OpenRouter API Key/credential",
         "env": ["OPENROUTER_API_KEY"],
-        "enabled": True,
+        "enabled": False,
     },
     {
         "lane": "gh/copilot/jules",
