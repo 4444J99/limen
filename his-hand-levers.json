@@ -155,6 +155,21 @@
         "✅ DONE 2026-06-25 (session efb53173) — the live-checkout-drift heal, RESOLVED on your 'full go'. Reconciled the daemon checkout ~/Workspace/limen via git reset --hard origin/main (now 0 ahead / 0 behind; the credential organ is present there). The stranded `capture: autonomic off-disk sync` commit (fac550f) is preserved loss-proof on origin/capture/live-checkout-stranded-2026-06-24; uncommitted mypy-CI work discovered dirty in the tree was rescued FIRST to origin/heal/mypy-ci-typecheck (nothing lost). HISTORICAL root cause: the capture organ committed fac550f directly onto live `main`; it could not push (local main was behind origin) and that stranded unique commit made sync-release REFUSE to fast-forward — deadlocking EVERY merged release, this credential organ included. STRUCTURAL CURE: PR #227 (fix/capture-sync-deadly-embrace) makes capture divert dirty work to a pushable side ref when the branch is behind, so it cannot recur; the reset also installed #227 on the checkout. The checkout now self-maintains forever."
       ],
       "note": "The credential map is a NAMED tweakable param (DEFAULT_MAP in scripts/creds-hydrate.py, or LIMEN_CREDS_MAP=<file>). Add a vendor by adding one {ref, env} entry — never by adding a login step. See memory: credential-durability-organ, [[gmail-mutation-cascade-avenues]], [[excavate-before-redoing-solved-work]]."
+    },
+    {
+      "id": "L-HEALTH-GOLIVE",
+      "label": "Decide the health-office go-live. The executive health-office scaffold is built and ran green on 2026-06-25 (commit ff43850, PII-free BY DESIGN — chart data lives only in _health-private/chart.json at 700, off-repo). It is NOT on origin: a PHI-breach (hardcoded medication literals in source) was caught at the push-boundary and scrubbed (history purged), so publishing now is gated on you. The commit is preserved loss-proof on the LOCAL ref heal/health-office-staged-0625 — it was deliberately NOT pushed, because publishing health-adjacent work to the public origin is outward-facing and irreversible (cached/indexed even if later deleted). Two atoms are yours: (1) answer the open REFERENCE-LIBRARY question (where the health reference library lives / what it holds), and (2) greenlight a PR of the PII-free scaffold AFTER a residual-PHI re-audit of ff43850. Your actual clinical to-dos are intentionally NOT recorded here — they live off-repo in _health-private/ so PHI never enters git or this registry.",
+      "owner": "yours",
+      "cost": "~5 min: one reference-library decision + a greenlight on the re-audited PR",
+      "unlocks": "the health-office scaffold goes live on origin (clinical data stays strictly off-repo)",
+      "source_task": "health-office-organ (shipped local 2026-06-25, commit ff43850)",
+      "gate": "outward-facing PHI-adjacent publish + the reference-library design question — your call, NEVER auto-pushed",
+      "steps": [
+        "Answer the reference-library question (where the health reference library lives / what it contains)",
+        "On your word, I re-audit ff43850 for residual PHI (no medication literals or chart values in tracked source)",
+        "Then I open a PR for the PII-free scaffold from heal/health-office-staged-0625 → main (non-clinical only)",
+        "Clinical actions stay off-repo in _health-private/ — never in git, never in this registry. See memory: health-office-organ, health-pii-in-generator-code, life-os-mandate"
+      ]
     }
   ]
 }
