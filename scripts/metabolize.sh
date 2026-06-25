@@ -29,6 +29,10 @@ echo "── 0a. hydrate credentials (1Password → ~/.limen.env → every lane;
 # (lapsed tokens / fresh worktrees self-heal). Fail-open: skips silently if op is locked/absent.
 if [ "${LIMEN_CREDS_HYDRATE:-1}" = "1" ]; then
   python3 "$LIMEN_ROOT/scripts/creds-hydrate.py" --apply || echo "  (creds-hydrate skipped — op locked/absent)"
+  # PRESENCE is not VALIDITY: a stale/revoked/suspended token sits in the floor looking ✓ while every
+  # lane it feeds is dead. Probe each materialized cred against its service and surface the dead ones.
+  # Non-fatal (never breaks the beat) and fail-open offline; a re-mint into op self-heals on next --apply.
+  python3 "$LIMEN_ROOT/scripts/creds-hydrate.py" --verify || echo "  ↑ DEAD credential(s) above — re-mint into the op:// item, then they self-heal next beat"
 fi
 # Source the cred cache so THIS shell + every child (route.py, the agent CLIs) inherit the keys.
 if [ -f "$HOME/.limen.env" ]; then set -a; . "$HOME/.limen.env"; set +a; fi

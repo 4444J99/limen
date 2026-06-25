@@ -33,9 +33,16 @@ Fail-open by contract: any `op` error skips that one credential (logged by NAME 
 the beat. Read-only by default (`--dry-run` prints the op://→target plan with NO secret reads); writes
 only with `--apply`.
 
+PRESENCE is not VALIDITY. `--check` (and route.py's capacity census) only ask "is the env var set?" —
+a stale/revoked/suspended token sits in ~/.limen.env looking ✓ while every lane it feeds is dead. The
+durable predicate is `--verify`: it authenticates each materialized credential against its own service
+(gh /user, cloudflare /tokens/verify, gemini /models) and exits non-zero on a dead token. Run it after
+--apply and on a cadence — a green --check over dead creds is the precise way "done" silently rots.
+
 Usage:
   python3 scripts/creds-hydrate.py --dry-run     # print the plan (no reads, no writes) — default
-  python3 scripts/creds-hydrate.py --check       # which canonical refs + targets are present (NAMES only)
+  python3 scripts/creds-hydrate.py --check       # PRESENCE of env targets (NAMES only; offline) — not validity
+  python3 scripts/creds-hydrate.py --verify      # VALIDITY — authenticate each cred against its service; exit 1 if any dead
   python3 scripts/creds-hydrate.py --apply        # op read → materialize into ~/.limen.env + tool files
   LIMEN_CREDS_MAP=/path/map.json python3 scripts/creds-hydrate.py --apply   # override the named map
 
@@ -47,11 +54,14 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import stat
 import subprocess
 import sys
 import tempfile
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 ENV_FILE = Path(os.environ.get("LIMEN_ENV", str(Path.home() / ".limen.env")))
@@ -74,6 +84,10 @@ DEFAULT_MAP: list[dict] = [
         "ref": "op://Personal/Gemini API Key/credential",
         "env": ["GEMINI_API_KEY", "GOOGLE_GENERATIVE_AI_API_KEY"],
         "enabled": True,
+        # validity probe: a 200 from the model list means the key authenticates. A suspended
+        # Google project answers 403 PERMISSION_DENIED / CONSUMER_SUSPENDED — caught by --verify.
+        "verify": {"url": "https://generativelanguage.googleapis.com/v1beta/models",
+                   "auth": "query", "param": "key"},
     },
     {
         # Parked — PHANTOM env var, retired 2026-06-25 (session efb53173) after walking it to certainty.
@@ -107,12 +121,16 @@ DEFAULT_MAP: list[dict] = [
         "ref": "op://GitHub-Tokens/master-org-token-011726/password",
         "env": ["GH_TOKEN", "GITHUB_TOKEN"],
         "enabled": True,
+        # validity probe: GET /user with the token. A revoked/expired PAT answers 401 Bad credentials.
+        "verify": {"url": "https://api.github.com/user", "auth": "bearer"},
     },
     {
         "lane": "cloudflare (wrangler deploy)",
         "ref": "op://Personal/Cloudflare API Token/credential",
         "env": ["CLOUDFLARE_API_TOKEN"],
         "enabled": True,
+        # validity probe: the canonical token self-verify endpoint. Invalid → 401 code 1000.
+        "verify": {"url": "https://api.cloudflare.com/client/v4/user/tokens/verify", "auth": "bearer"},
     },
     {
         # Parked: the Claude token is owned by the credential-race fix + Rung-0 self-heal
@@ -211,11 +229,97 @@ def write_tool_file(spec: dict, value: str) -> str:
     return str(path)
 
 
+# --- VALIDITY PROBE ---------------------------------------------------------------------------------
+# --check answers "is the env var present?" (cheap, offline). It does NOT answer "does the credential
+# still authenticate?" — a stale/revoked/suspended token sits in ~/.limen.env looking ✓ while every
+# lane it feeds is dead (the exact failure that masked a suspended Google project + revoked CF/GH
+# tokens behind a green --check). --verify closes that gap: it authenticates each materialized cred
+# against its own service. Values are used only for the request and never logged.
+_SECRET_RX = (
+    re.compile(r"AIza[\w\-]{4}[\w\-]+"),          # Google API keys
+    re.compile(r"gh[pousr]_[A-Za-z0-9]{4}[A-Za-z0-9]+"),  # GitHub tokens
+    re.compile(r"api_key:\S+"),                   # Google's error echoes the key inline
+)
+
+
+def _scrub(s: str) -> str:
+    """Redact anything key-shaped from a provider message before we print it."""
+    for rx in _SECRET_RX:
+        s = rx.sub("<redacted>", s)
+    return s
+
+
+def _env_value(key: str) -> str | None:
+    """Read the MATERIALIZED value of a key from ENV_FILE — used only to probe validity, never printed.
+    Mirrors _env_has (matches both `KEY=` and `export KEY=`) but returns the value."""
+    if not ENV_FILE.exists():
+        return None
+    for line in ENV_FILE.read_text().splitlines():
+        s = line.strip()
+        for pre in (f"{key}=", f"export {key}="):
+            if s.startswith(pre):
+                return s[len(pre):].strip().strip('"').strip("'") or None
+    return None
+
+
+def _probe_reason(body: bytes) -> str:
+    """Pull a short, key-free reason out of a provider error body."""
+    try:
+        d = json.loads(body.decode("utf-8", "replace"))
+    except Exception:
+        return ""
+    out = ""
+    if isinstance(d, dict):
+        err = d.get("error")
+        if isinstance(err, dict):  # google style — prefer the machine reason over the prose message
+            det = err.get("details")
+            reason = det[0].get("reason", "") if isinstance(det, list) and det and isinstance(det[0], dict) else ""
+            out = reason or err.get("status", "") or str(err.get("message", ""))
+        elif "message" in d:  # github style
+            out = str(d.get("message", ""))
+        else:  # cloudflare style
+            errs = d.get("errors")
+            if isinstance(errs, list) and errs and isinstance(errs[0], dict):
+                out = f"{errs[0].get('code', '')} {errs[0].get('message', '')}".strip()
+    return _scrub(out)[:80]
+
+
+def probe_cred(entry: dict, value: str, timeout: int = 6) -> tuple[str, str]:
+    """Authenticate a credential against its service. Returns (state, detail):
+      'valid'        — accepted (HTTP 200)
+      'invalid'      — rejected (400/401/403) — a DEAD credential
+      'unverifiable' — no probe defined, or no network / service error (fail-open)
+    The value is used only to build the request and is never logged."""
+    spec = entry.get("verify")
+    if not spec:
+        return "unverifiable", "no probe defined"
+    url, headers = spec["url"], {"User-Agent": "limen-creds-hydrate"}
+    if spec.get("auth") == "bearer":
+        headers["Authorization"] = f"Bearer {value}"
+    elif spec.get("auth") == "query":
+        sep = "&" if "?" in url else "?"
+        url = f"{url}{sep}{spec.get('param', 'key')}={value}"
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=timeout) as r:
+            return ("valid", "HTTP 200") if r.status == 200 else ("invalid", f"HTTP {r.status}")
+    except urllib.error.HTTPError as e:
+        try:
+            reason = _probe_reason(e.read())
+        except Exception:
+            reason = ""
+        if e.code in (400, 401, 403):
+            return "invalid", (f"HTTP {e.code}: {reason}".rstrip(": ") if reason else f"HTTP {e.code}")
+        return "unverifiable", f"HTTP {e.code} (service error)"
+    except Exception as e:  # URLError (no network), timeout, DNS — fail open, do not cry wolf offline
+        return "unverifiable", f"unreachable ({type(e).__name__})"
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Hydrate fleet credentials from 1Password — once minted, never re-logged-in.")
     g = ap.add_mutually_exclusive_group()
     g.add_argument("--apply", action="store_true", help="op read → materialize into ~/.limen.env + tool files")
-    g.add_argument("--check", action="store_true", help="report presence of canonical refs + env targets (names only)")
+    g.add_argument("--check", action="store_true", help="report PRESENCE of env targets (names only; offline) — not validity")
+    g.add_argument("--verify", action="store_true", help="authenticate each materialized cred against its service (VALIDITY) — exit 1 if any is dead")
     g.add_argument("--dry-run", action="store_true", help="print the op://→target plan; NO reads, NO writes (default)")
     args = ap.parse_args()
 
@@ -223,6 +327,28 @@ def main() -> int:
     if not cred_map:
         print("creds-hydrate: map is empty (all entries disabled) — nothing to do")
         return 0
+
+    # --verify: authenticate each MATERIALIZED cred against its service. Reads the floor, not op —
+    # so it runs without a 1Password session and tests exactly what the lanes inherit. Exit 1 if any
+    # enabled cred is definitively rejected (a dead token); offline/service errors stay fail-open.
+    if args.verify:
+        print(f"creds-hydrate --verify ({ENV_FILE}) — authenticating each materialized credential:")
+        any_invalid = False
+        for e in cred_map:
+            envs = e.get("env", [])
+            val = _env_value(envs[0]) if envs else None
+            if not val:
+                print(f"  ? {e['lane']:28} {','.join(envs) or '(file only)'} — not materialized (run --apply)")
+                continue
+            state, detail = probe_cred(e, val)
+            del val
+            mark = {"valid": "✓", "invalid": "✗", "unverifiable": "?"}[state]
+            print(f"  {mark} {e['lane']:28} {state.upper()}" + (f" — {detail}" if detail else ""))
+            any_invalid = any_invalid or state == "invalid"
+        if any_invalid:
+            print("creds-hydrate: ✗ = a DEAD credential (presence ✓ is not validity). Re-mint it into its "
+                  "op:// item, then `--apply`. Re-run `--verify` to confirm green.")
+        return 1 if any_invalid else 0
 
     if not have_op():
         print("creds-hydrate: `op` (1Password CLI) not found — install it, then `op signin`. Skipping (fail-open).")
@@ -236,6 +362,8 @@ def main() -> int:
             present = all(_env_has(k) for k in envs) if envs else False
             mark = "✓" if present else "✗"
             print(f"  {mark} {e['lane']:28} {ref_display(e['ref'])} -> {','.join(envs) or '(file only)'}")
+        print("  (presence only — ✓ means the env var is SET, not that it still authenticates. "
+              "Run `--verify` to probe validity against each service.)")
         return 0
 
     apply = args.apply  # default (no flag) == dry-run

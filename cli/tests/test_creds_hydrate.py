@@ -1,15 +1,26 @@
 """Credential durability: a credential minted ONCE (into ~/.limen.env / 1Password) must reach the
 agent subprocess env — so a SET key never reads as 'auth not configured' again, and a one-time login
 is never repeated. Covers dispatch._load_limen_env() (the propagation fix) and the creds-hydrate
-organ's --dry-run/--check (no `op`, no secret reads, no writes)."""
+organ's --dry-run/--check (no `op`, no secret reads, no writes) and --verify (VALIDITY, not just
+presence — the predicate that catches a dead token sitting behind a green --check)."""
+import importlib.util
+import io
 import os
 import subprocess
 import sys
+import urllib.error
 from pathlib import Path
 
 from limen.dispatch import _load_limen_env
 
 HYDRATE = Path(__file__).resolve().parents[2] / "scripts" / "creds-hydrate.py"
+
+
+def _hydrate_module(name="creds_hydrate_t"):
+    spec = importlib.util.spec_from_file_location(name, HYDRATE)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 
 
 def test_load_limen_env_fills_missing_keys(tmp_path, monkeypatch):
@@ -89,3 +100,76 @@ def test_hydrate_write_env_idempotent(tmp_path, monkeypatch):
     lines = [ln for ln in env_file.read_text().splitlines() if ln.startswith("export FOO=")]
     assert lines == ["export FOO=v2"]
     assert oct(env_file.stat().st_mode)[-3:] == "600"
+
+
+# --- VALIDITY PROBE (--verify): presence is not validity -------------------------------------------
+
+def test_scrub_redacts_key_shapes():
+    """A provider error must never carry a live key into our logs."""
+    mod = _hydrate_module()
+    s = mod._scrub("Consumer 'api_key:AIzaSyCO8P_ooVY6dCYzNm7rPK15WdRrPYR63F0' suspended; ghp_abcd1234EFGH5678ijkl")
+    assert "AIzaSy" not in s and "ghp_abcd1234" not in s and "api_key:AIza" not in s
+    assert "<redacted>" in s
+
+
+def test_env_value_reads_both_forms_and_strips_quotes(tmp_path):
+    mod = _hydrate_module()
+    f = tmp_path / ".limen.env"
+    f.write_text('export GH_TOKEN=ghp_plain\nCLOUDFLARE_API_TOKEN="cf_quoted"\n')
+    mod.ENV_FILE = f
+    assert mod._env_value("GH_TOKEN") == "ghp_plain"          # export form
+    assert mod._env_value("CLOUDFLARE_API_TOKEN") == "cf_quoted"  # bare form, quotes stripped
+    assert mod._env_value("ABSENT") is None
+
+
+def test_probe_reason_extracts_clean_reason_per_provider():
+    mod = _hydrate_module()
+    # gemini — prefers the machine `reason`, never echoes the inline key
+    gem = b'{"error":{"code":403,"status":"PERMISSION_DENIED","message":"Consumer api_key:AIzaSyXYZ suspended","details":[{"reason":"CONSUMER_SUSPENDED"}]}}'
+    assert mod._probe_reason(gem) == "CONSUMER_SUSPENDED"
+    # github
+    assert mod._probe_reason(b'{"message":"Bad credentials"}') == "Bad credentials"
+    # cloudflare
+    assert "Invalid API Token" in mod._probe_reason(b'{"success":false,"errors":[{"code":1000,"message":"Invalid API Token"}]}')
+
+
+def test_probe_cred_unverifiable_without_spec():
+    mod = _hydrate_module()
+    assert mod.probe_cred({"lane": "x"}, "tok")[0] == "unverifiable"
+
+
+def test_probe_cred_classifies_valid_invalid_unverifiable(monkeypatch):
+    mod = _hydrate_module()
+    entry = {"verify": {"url": "https://svc.example/whoami", "auth": "bearer"}}
+
+    class _OK:
+        status = 200
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+
+    monkeypatch.setattr(mod.urllib.request, "urlopen", lambda *a, **k: _OK())
+    assert mod.probe_cred(entry, "tok") == ("valid", "HTTP 200")
+
+    def _raise_401(*a, **k):
+        raise urllib.error.HTTPError(entry["verify"]["url"], 401, "Unauthorized", {},
+                                     io.BytesIO(b'{"message":"Bad credentials"}'))
+    monkeypatch.setattr(mod.urllib.request, "urlopen", _raise_401)
+    state, detail = mod.probe_cred(entry, "tok")
+    assert state == "invalid" and "Bad credentials" in detail
+
+    def _raise_neterr(*a, **k):
+        raise urllib.error.URLError("name resolution failed")
+    monkeypatch.setattr(mod.urllib.request, "urlopen", _raise_neterr)
+    assert mod.probe_cred(entry, "tok")[0] == "unverifiable"  # offline never cries wolf
+
+
+def test_verify_cli_no_creds_materialized_exits_zero(tmp_path):
+    """--verify over an empty floor reports 'not materialized' and exits 0 — no network, no false alarm."""
+    env_file = tmp_path / ".limen.env"  # does not exist
+    r = subprocess.run(
+        [sys.executable, str(HYDRATE), "--verify"],
+        capture_output=True, text=True, timeout=30,
+        env={**os.environ, "LIMEN_ENV": str(env_file)},
+    )
+    assert r.returncode == 0
+    assert "not materialized" in r.stdout
