@@ -15,14 +15,14 @@ portal:
       opencode: 100
     track:
       date: '2026-06-25'
-      spent: 81
+      spent: 95
       per_agent:
         agy: 0
         claude: 0
         codex: 0
         gemini: 0
-        jules: 75
-        opencode: 6
+        jules: 87
+        opencode: 8
       per_agent_reset:
         agy: '2026-06-25T13:58:52.030958+00:00'
         claude: '2026-06-25T19:29:15.756534+00:00'
@@ -48488,7 +48488,7 @@ tasks:
   target_agent: jules
   priority: low
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - docs
   - generated
@@ -48502,7 +48502,7 @@ tasks:
     \ 2026-06-24 to keep the stream endless]"
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-25T17:55:34.220844Z'
+  updated: '2026-06-25T21:17:19.195709Z'
   dispatch_log:
   - timestamp: '2026-06-25T17:39:31.714266Z'
     agent: limen
@@ -48517,6 +48517,10 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-25T21:17:19.195709Z'
+    agent: jules
+    session_id: '8420791685271551461'
+    status: dispatched
 - id: GEN-organvm-mirror-mirror-docs-0624
   title: Real usage docs for organvm/mirror-mirror
   repo: organvm/mirror-mirror
@@ -48696,7 +48700,7 @@ tasks:
   target_agent: jules
   priority: low
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - docs
   - generated
@@ -48712,7 +48716,7 @@ tasks:
     \ to keep the stream endless]"
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-25T16:39:03.106740Z'
+  updated: '2026-06-25T21:17:19.195709Z'
   dispatch_log:
   - timestamp: '2026-06-25T13:58:52.030958Z'
     agent: opencode
@@ -48730,6 +48734,10 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-25T21:17:19.195709Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GEN-organvm-limen-docs-0624
   title: Real usage docs for organvm/limen
   repo: organvm/limen
@@ -49315,7 +49323,7 @@ tasks:
   title: Reduce complexity in organvm/styx
   repo: organvm/styx
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: dispatched
@@ -49327,13 +49335,14 @@ tasks:
   - tried:opencode
   - tried:agy
   - tried:claude
+  - tried:gemini
   urls: []
   context: Identify the most complex or most-duplicated module in organvm/styx and
     refactor it for clarity, with tests proving behavior is unchanged. Net lines should
     not grow without cause. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-25T19:34:48.657660Z'
+  updated: '2026-06-25T21:05:57.633629Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:08:09.813170Z'
     agent: jules
@@ -49365,6 +49374,14 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
+  - timestamp: '2026-06-25T20:49:23.709249Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+  - timestamp: '2026-06-25T21:05:57.633629Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GEN-organvm-limen-simplify-0624
   title: Reduce complexity in organvm/limen
   repo: organvm/limen
@@ -49404,7 +49421,8 @@ tasks:
     agent: opencode
     session_id: current
     status: cancelled
-    output: "duplicate of second GEN-organvm-limen-simplify-0624 entry (status done, PR #297)"
+    output: 'duplicate of second GEN-organvm-limen-simplify-0624 entry (status done,
+      PR #297)'
 - id: GEN-organvm-domus-genoma-typing-0624
   title: Tighten types in organvm/domus-genoma
   repo: organvm/domus-genoma
@@ -49806,6 +49824,7 @@ tasks:
   - complexity
   - tried:codex
   - slow
+  - noop
   urls: []
   context: "Refactored cli/src/limen/dispatch.py (1166\u21921081 lines, \u22127.3%):\
     \ (1) removed duplicated _queue_lock; aliased to canonical io.queue_lock for backward\
@@ -49815,7 +49834,7 @@ tasks:
     \ tests green."
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-25T20:05:00.422453Z'
+  updated: '2026-06-25T21:20:08.833804Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:40:00Z'
     agent: opencode
@@ -49843,6 +49862,15 @@ tasks:
   - timestamp: '2026-06-25T20:05:00.422453Z'
     agent: jules
     session_id: https://github.com/organvm/limen/pull/297
+    status: done
+    output: 'jules-land: landed session 5276172816526256973 as PR'
+  - timestamp: '2026-06-25T20:49:23.709249Z'
+    agent: opencode
+    session_id: cli
+    status: noop
+  - timestamp: '2026-06-25T21:20:08.833804Z'
+    agent: jules
+    session_id: https://github.com/organvm/limen/pull/310
     status: done
     output: 'jules-land: landed session 5276172816526256973 as PR'
 - id: GEN-organvm-domus-genoma-test-coverage-0625
@@ -50002,7 +50030,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - test-coverage
   - generated
@@ -50015,12 +50043,21 @@ tasks:
     2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T15:11:55.617328Z'
+  updated: '2026-06-25T21:20:08.833804Z'
   dispatch_log:
   - timestamp: '2026-06-25T15:11:55.617328Z'
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-25T20:49:23.709249Z'
+    agent: jules
+    session_id: '14812642110779091445'
+    status: dispatched
+  - timestamp: '2026-06-25T21:20:08.833804Z'
+    agent: jules
+    session_id: https://github.com/organvm/public-record-data-scrapper/pull/315
+    status: done
+    output: 'jules-land: landed session 14812642110779091445 as PR'
 - id: GEN-organvm-limen-test-coverage-0625
   title: Raise test coverage in organvm/limen
   repo: organvm/limen
@@ -50608,7 +50645,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - simplify
   - generated
@@ -50621,7 +50658,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T16:15:24.604238Z'
+  updated: '2026-06-25T21:20:08.833804Z'
   dispatch_log:
   - timestamp: '2026-06-25T15:35:53.897653Z'
     agent: codex
@@ -50631,6 +50668,15 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-25T20:49:23.709249Z'
+    agent: jules
+    session_id: '12956812692898599763'
+    status: dispatched
+  - timestamp: '2026-06-25T21:20:08.833804Z'
+    agent: jules
+    session_id: https://github.com/organvm/domus-genoma/pull/132
+    status: done
+    output: 'jules-land: landed session 12956812692898599763 as PR'
 - id: GEN-organvm-mirror-mirror-simplify-0625
   title: Reduce complexity in organvm/mirror-mirror
   repo: organvm/mirror-mirror
@@ -50718,7 +50764,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - simplify
   - generated
@@ -50731,7 +50777,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T16:00:42.494866Z'
+  updated: '2026-06-25T20:49:23.709249Z'
   dispatch_log:
   - timestamp: '2026-06-25T15:35:53.897653Z'
     agent: claude
@@ -50741,6 +50787,10 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-25T20:49:23.709249Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GEN-organvm-the-invisible-ledger-simplify-0625
   title: Reduce complexity in organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
@@ -50748,7 +50798,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - simplify
   - generated
@@ -50762,7 +50812,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T16:39:03.106740Z'
+  updated: '2026-06-25T21:05:57.633629Z'
   dispatch_log:
   - timestamp: '2026-06-25T15:35:53.897653Z'
     agent: claude
@@ -50780,6 +50830,10 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-06-25T21:05:57.633629Z'
+    agent: jules
+    session_id: '12591500706046743774'
+    status: dispatched
 - id: GEN-organvm-mirror-mirror-typing-0625
   title: Tighten types in organvm/mirror-mirror
   repo: organvm/mirror-mirror
@@ -50787,7 +50841,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - typing
   - generated
@@ -50799,12 +50853,16 @@ tasks:
     and tests green. [auto-generated 2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T15:35:53.897653Z'
+  updated: '2026-06-25T21:05:57.633629Z'
   dispatch_log:
   - timestamp: '2026-06-25T15:35:53.897653Z'
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-25T21:05:57.633629Z'
+    agent: jules
+    session_id: '13796797096676849856'
+    status: dispatched
 - id: GEN-organvm-session-meta-typing-0625
   title: Tighten types in organvm/session-meta
   repo: organvm/session-meta
@@ -50876,7 +50934,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - typing
   - generated
@@ -50890,7 +50948,7 @@ tasks:
     the build and tests green. [auto-generated 2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T16:39:03.106740Z'
+  updated: '2026-06-25T21:08:59.253179Z'
   dispatch_log:
   - timestamp: '2026-06-25T16:00:42.494866Z'
     agent: codex
@@ -50904,6 +50962,10 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-25T21:08:59.253179Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: REV-organvm-a-i-chat--exporter-revenue-funding-0625
   title: Stage the donation funnel for ChatGPT Exporter
   repo: organvm/a-i-chat--exporter
@@ -51328,7 +51390,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - typing
   - generated
@@ -51341,7 +51403,7 @@ tasks:
     the build and tests green. [auto-generated 2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T16:15:24.604238Z'
+  updated: '2026-06-25T21:08:59.253179Z'
   dispatch_log:
   - timestamp: '2026-06-25T16:00:42.494866Z'
     agent: agy
@@ -51351,6 +51413,10 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-25T21:08:59.253179Z'
+    agent: jules
+    session_id: '4762527584443444622'
+    status: dispatched
 - id: INBOUND-POS-mirror-mirror
   title: Inbound front-door treatment for organvm/mirror-mirror (positioning page
     + README CTA)
@@ -52341,7 +52407,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - typing
   - generated
@@ -52354,7 +52420,7 @@ tasks:
     and tests green. [auto-generated 2026-06-25 to keep the stream endless]
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T17:13:46.770148Z'
+  updated: '2026-06-25T21:08:59.253179Z'
   dispatch_log:
   - timestamp: '2026-06-25T16:39:03.106740Z'
     agent: codex
@@ -52364,6 +52430,10 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-25T21:08:59.253179Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GEN-organvm-a-i-chat--exporter-docs-0625
   title: Real usage docs for organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
@@ -52402,7 +52472,7 @@ tasks:
   target_agent: jules
   priority: low
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - docs
   - generated
@@ -52416,7 +52486,7 @@ tasks:
     \ 2026-06-25 to keep the stream endless]"
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T17:55:34.220844Z'
+  updated: '2026-06-25T21:17:19.195709Z'
   dispatch_log:
   - timestamp: '2026-06-25T17:37:36.053018Z'
     agent: codex
@@ -52426,19 +52496,25 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-25T21:17:19.195709Z'
+    agent: jules
+    session_id: '8221048938702306197'
+    status: dispatched
 - id: GEN-organvm-limen-docs-0625
   title: Real usage docs for organvm/limen
   repo: organvm/limen
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: low
   budget_cost: 1
-  status: dispatched
+  status: cancelled
   labels:
   - docs
   - generated
   - build-out
   - tried:codex
+  - tried:agy
+  - noop
   urls: []
   context: "Derive an accurate Usage section in organvm/limen's README from the ACTUAL\
     \ entrypoints/exports (install, run, key commands + flags). No invented features,\
@@ -52446,7 +52522,7 @@ tasks:
     \ to keep the stream endless]"
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T19:34:48.657660Z'
+  updated: '2026-06-25T21:08:59.253179Z'
   dispatch_log:
   - timestamp: '2026-06-25T17:37:36.053018Z'
     agent: codex
@@ -52456,6 +52532,18 @@ tasks:
     agent: codex
     session_id: cli
     status: ratelimited->opencode
+  - timestamp: '2026-06-25T20:49:23.709249Z'
+    agent: agy
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-06-25T21:05:57.633629Z'
+    agent: agy
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-06-25T21:08:59.253179Z'
+    agent: claude
+    session_id: cli
+    status: noop
 - id: GEN-organvm-session-meta-test-coverage-0625
   title: Raise test coverage in organvm/session-meta
   repo: organvm/session-meta
@@ -52523,11 +52611,12 @@ tasks:
   target_agent: claude
   priority: low
   budget_cost: 1
-  status: dispatched
+  status: cancelled
   labels:
   - docs
   - generated
   - build-out
+  - noop
   urls: []
   context: "Derive an accurate Usage section in organvm/portfolio's README from the\
     \ ACTUAL entrypoints/exports (install, run, key commands + flags). No invented\
@@ -52535,24 +52624,29 @@ tasks:
     \ 2026-06-25 to keep the stream endless]"
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T19:34:48.657660Z'
+  updated: '2026-06-25T20:49:23.709249Z'
   dispatch_log:
   - timestamp: '2026-06-25T18:04:03.531673Z'
     agent: codex
     session_id: cli
     status: ratelimited->opencode
+  - timestamp: '2026-06-25T20:49:23.709249Z'
+    agent: claude
+    session_id: cli
+    status: noop
 - id: GEN-organvm-universal-mail--automation-docs-0625
   title: Real usage docs for organvm/universal-mail--automation
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: low
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - docs
   - generated
   - build-out
+  - tried:gemini
   urls: []
   context: "Derive an accurate Usage section in organvm/universal-mail--automation's\
     \ README from the ACTUAL entrypoints/exports (install, run, key commands + flags).\
@@ -52560,12 +52654,16 @@ tasks:
     \ 2026-06-25 to keep the stream endless]"
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T19:34:48.657660Z'
+  updated: '2026-06-25T20:49:23.709249Z'
   dispatch_log:
   - timestamp: '2026-06-25T18:04:03.531673Z'
     agent: codex
     session_id: cli
     status: ratelimited->opencode
+  - timestamp: '2026-06-25T20:49:23.709249Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: GEN-organvm-domus-genoma-docs-0625
   title: Real usage docs for organvm/domus-genoma
   repo: organvm/domus-genoma
@@ -52652,7 +52750,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: cancelled
   labels:
   - insight-cadence
   - autopoiesis
@@ -52688,7 +52786,7 @@ tasks:
     \ ruff + pytest green and open a PR."
   depends_on: []
   created: '2026-06-25'
-  updated: '2026-06-25T20:50:51.684544Z'
+  updated: '2026-06-25T20:49:23.709249Z'
   dispatch_log:
   - timestamp: '2026-06-25T19:59:18.020533Z'
     agent: codex
@@ -52706,6 +52804,10 @@ tasks:
     agent: jules
     session_id: '5903333291754721304'
     status: dispatched
+  - timestamp: '2026-06-25T20:49:23.709249Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: INSIGHT-CADENCE-ROUTING
   title: Route cadenced insights to their proper owners for healing (close the report
     -> owner -> heal loop)
@@ -52856,6 +52958,43 @@ tasks:
   created: '2026-06-25'
   updated: '2026-06-25T20:16:02.046332Z'
   dispatch_log: []
+- id: GEN-organvm-limen-typing-0625
+  title: Tighten types in organvm/limen's most-imported module
+  repo: organvm/limen
+  type: code
+  target_agent: opencode
+  priority: high
+  budget_cost: 1
+  status: cancelled
+  labels:
+  - types
+  - typing
+  - cleanup
+  - noop
+  urls: []
+  context: "Eliminated the worst untyped hotspots (Any) across limen's most-imported\
+    \ modules: capacity.py (11 Any\u2192TypedDict+object), doctor.py (8 Any\u2192\
+    TypedDict), dispatch.py (5 Any\u2192TypedDict+object), models.py (Optional\u2192\
+    | None). All 331 tests green. [completed 2026-06-25 by opencode]"
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T20:49:23.709249Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T20:16:02Z'
+    agent: opencode
+    session_id: current
+    status: done
+    output: "Tightened types across 4 modules:\n   - capacity.py: 11 Any \u2192 TypedDicts\
+      \ (AgentStatus, CapacityRow) + object; removed `from typing import Any`\n  \
+      \ - doctor.py: 8 Any \u2192 TypedDicts (Check, Counts, BudgetInfo, ReadinessReport,\
+      \ TaskLifecycle, Steering, LifecycleCounts, Mechanism, QaReport)\n   - dispatch.py:\
+      \ 5 Any \u2192 TypedDict (StaleReleaseResult) + dict[str, object]; removed `from\
+      \ typing import Any`\n   - models.py: 6 Optional[str] \u2192 str | None\n  \
+      \ All 331 tests green."
+  - timestamp: '2026-06-25T20:49:23.709249Z'
+    agent: opencode
+    session_id: cli
+    status: noop
 - id: GEN-organvm-public-record-data-scrapper-simplify-0625
   title: Reduce complexity in organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
@@ -52875,4 +53014,445 @@ tasks:
   depends_on: []
   created: '2026-06-25'
   updated: '2026-06-25T20:16:02.046332Z'
+  dispatch_log: []
+- id: GH-organvm-limen-289
+  title: "needs-human (L-FIREWALL-PROMPT): Silence the 'python/node wants to accept\
+    \ incoming connections' dialog\u2026"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/289
+  context: "GitHub issue organvm/limen#289. **Owner:** Anthony (human-gated lever\
+    \ `L-FIREWALL-PROMPT`). Surfaced once, never nagged, never auto-pulled. This issue\
+    \ is the lever's permanent, individually-closeable home in the graph \u2014 the\
+    \ registry `his-hand-levers.json` is its source of truth. Silence the 'python/node\
+    \ wants to accept incoming connections' dialog FOR GOOD. ROOT (found 2026-06-25):\
+    \ the macOS Application Firewall is ON, and the i"
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T21:23:23.736265Z'
+  dispatch_log: []
+- id: GH-organvm-limen-269
+  title: 'fleet: drain the PR + branch backlog (73 open PRs / 157 unmerged branches)
+    to a predicate-backed floor'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - lane:fleet
+  urls:
+  - https://github.com/organvm/limen/issues/269
+  context: "GitHub issue organvm/limen#269. **Owner:** the merge + heal organs (async\
+    \ fleet) \u2014 **not** a claude session. This issue exists so the backlog can\
+    \ never silently accrete again: it has an owner, a decision predicate, and a closeable\
+    \ target. The fleet has produced faster than the graph drains. Ground truth (2026-06-25):\
+    \ - **73 open PRs** - **157 local branches ahead of `origin/main`** ### Decision\
+    \ rule (no human memory \u2014 the predic"
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T21:23:23.736265Z'
+  dispatch_log: []
+- id: GH-organvm-limen-267
+  title: 'needs-human (L-POSITIONING-ACTIVATE): Switch the inbound-magnet system from
+    built-and-inert to live'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs-human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/267
+  context: "GitHub issue organvm/limen#267. **Owner:** Anthony (human-gated lever\
+    \ `L-POSITIONING-ACTIVATE`). Surfaced once, never nagged, never auto-pulled. This\
+    \ issue is the lever's permanent, individually-closeable home in the graph \u2014\
+    \ the registry `his-hand-levers.json` is its source of truth. Switch the inbound-magnet\
+    \ system from built-and-inert to live. The derivation layer (positioning generator\
+    \ + seeds + price guard), the form/operati"
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T21:23:23.736265Z'
+  dispatch_log:
+  - timestamp: '2026-06-25T21:23:23.736265Z'
+    agent: opencode
+    session_id: current
+    status: needs-human
+    output: "Registered L-POSITIONING-ACTIVATE in his-hand-levers.json with cheapest\
+      \ path (8 one-line actions). Lever surfaced once, never nagged. Issue #267 is\
+      \ the permanent individually-closeable home. The inbound-magnet system is built,\
+      \ merged, and inert — 9 PRs deployed (positioning generator + seeds + price\
+      \ guard + front door + discoverability + capture). Waiting on Anthony: (1)\
+      \ set frontdoor.contact in positioning-seeds.json, (2) validate price anchors,\
+      \ (3) arm LIMEN_POSITIONING=1, (4) publish front door to profile README, (5)\
+      \ apply discoverability gh commands, (6) publish 3 private repos, (7) decide\
+      \ styx, (8) seed remaining value-repos."
+- id: GH-organvm-limen-266
+  title: "needs-human (L-HEALTH-GOLIVE): Decide the health-office content DISPOSITION\
+    \ \u2014 and note this is TIME-\u2026"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/266
+  context: "GitHub issue organvm/limen#266. **Owner:** Anthony (human-gated lever\
+    \ `L-HEALTH-GOLIVE`). Surfaced once, never nagged, never auto-pulled. This issue\
+    \ is the lever's permanent, individually-closeable home in the graph \u2014 the\
+    \ registry `his-hand-levers.json` is its source of truth. Decide the health-office\
+    \ content DISPOSITION \u2014 and note this is TIME-BOUNDED, not passive. The executive\
+    \ health-office scaffold shipped green locally on 2"
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T21:23:23.736265Z'
+  dispatch_log: []
+- id: GH-organvm-limen-265
+  title: "needs-human (L-FLEET-CAPACITY): Re-mint the 3 fleet credentials \u2014 they\
+    \ are MATERIALIZED but DEAD"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/265
+  context: "GitHub issue organvm/limen#265. **Owner:** Anthony (human-gated lever\
+    \ `L-FLEET-CAPACITY`). Surfaced once, never nagged, never auto-pulled. This issue\
+    \ is the lever's permanent, individually-closeable home in the graph \u2014 the\
+    \ registry `his-hand-levers.json` is its source of truth. Re-mint the 3 fleet\
+    \ credentials \u2014 they are MATERIALIZED but DEAD. The hydration organ (PR #217)\
+    \ correctly carries 1Password -> ~/.limen.env -> every lane"
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T21:23:23.736265Z'
+  dispatch_log: []
+- id: GH-organvm-limen-264
+  title: 'needs-human (L-MODEL-TIER): Stop the interactive Claude burn at the source'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/264
+  context: "GitHub issue organvm/limen#264. **Owner:** Anthony (human-gated lever\
+    \ `L-MODEL-TIER`). Surfaced once, never nagged, never auto-pulled. This issue\
+    \ is the lever's permanent, individually-closeable home in the graph \u2014 the\
+    \ registry `his-hand-levers.json` is its source of truth. Stop the interactive\
+    \ Claude burn at the source: every Claude Code session you spawn is pinned to\
+    \ Opus 4.8 + the 1M-context beta \u2014 the single most expensive c"
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T21:23:23.736265Z'
+  dispatch_log: []
+- id: GH-organvm-limen-263
+  title: "needs-human (L-IANVA-CLOUD): Stop the claude.ai connector prompts (the /doctor\
+    \ 'Sentry needs authe\u2026"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/263
+  context: "GitHub issue organvm/limen#263. **Owner:** Anthony (human-gated lever\
+    \ `L-IANVA-CLOUD`). Surfaced once, never nagged, never auto-pulled. This issue\
+    \ is the lever's permanent, individually-closeable home in the graph \u2014 the\
+    \ registry `his-hand-levers.json` is its source of truth. Stop the claude.ai connector\
+    \ prompts (the /doctor 'Sentry needs authentication' class) \u2014 the ONE re-auth\
+    \ disease a local gateway physically cannot fix, beca"
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T21:23:23.736265Z'
+  dispatch_log: []
+- id: GH-organvm-limen-262
+  title: "needs-human (L-IANVA-LOCAL): Kill the per-agent MCP re-auth for every non-claude.ai\
+    \ agent in ONE m\u2026"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/262
+  context: "GitHub issue organvm/limen#262. **Owner:** Anthony (human-gated lever\
+    \ `L-IANVA-LOCAL`). Surfaced once, never nagged, never auto-pulled. This issue\
+    \ is the lever's permanent, individually-closeable home in the graph \u2014 the\
+    \ registry `his-hand-levers.json` is its source of truth. Kill the per-agent MCP\
+    \ re-auth for every non-claude.ai agent in ONE move \u2014 this is most of the\
+    \ 'why do I keep authorizing MCP servers over and over' rage. i"
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T21:23:23.736265Z'
+  dispatch_log: []
+- id: GH-organvm-limen-261
+  title: "needs-human (L-GMAIL-CRED): Revive the autonomous mail lane with ONE paste\
+    \ \u2014 the app-password ALR\u2026"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/261
+  context: "GitHub issue organvm/limen#261. **Owner:** Anthony (human-gated lever\
+    \ `L-GMAIL-CRED`). Surfaced once, never nagged, never auto-pulled. This issue\
+    \ is the lever's permanent, individually-closeable home in the graph \u2014 the\
+    \ registry `his-hand-levers.json` is its source of truth. Revive the autonomous\
+    \ mail lane with ONE paste \u2014 the app-password ALREADY EXISTS (op://Private/gmail-app-pw-2026-06-06);\
+    \ nothing needs generating. This super"
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T21:23:23.736265Z'
+  dispatch_log: []
+- id: GH-organvm-limen-260
+  title: "needs-human (L-EDU-PERTERM): The per-term recapitulation ritual is autonomic\
+    \ EXCEPT two irreducibl\u2026"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/260
+  context: "GitHub issue organvm/limen#260. **Owner:** Anthony (human-gated lever\
+    \ `L-EDU-PERTERM`). Surfaced once, never nagged, never auto-pulled. This issue\
+    \ is the lever's permanent, individually-closeable home in the graph \u2014 the\
+    \ registry `his-hand-levers.json` is its source of truth. The per-term recapitulation\
+    \ ritual is autonomic EXCEPT two irreducibly-yours points, and they recur every\
+    \ term: (1) export the LMS course shell (D2L cartrid"
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T21:23:23.736265Z'
+  dispatch_log: []
+- id: GH-organvm-limen-259
+  title: "needs-human (L-ENC1102-GRADEBOOK): Resolve the ENC1102 D2L gradebook weighting\
+    \ \u2014 a one-decision-then-tra\u2026"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/259
+  context: "GitHub issue organvm/limen#259. **Owner:** Anthony (human-gated lever\
+    \ `L-ENC1102-GRADEBOOK`). Surfaced once, never nagged, never auto-pulled. This\
+    \ issue is the lever's permanent, individually-closeable home in the graph \u2014\
+    \ the registry `his-hand-levers.json` is its source of truth. Resolve the ENC1102\
+    \ D2L gradebook weighting \u2014 a one-decision-then-transcribe atom. The shell\
+    \ today has 6 support categories at 10% each (=60%), leavin"
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T21:23:23.736265Z'
+  dispatch_log: []
+- id: GH-organvm-limen-258
+  title: "needs-human (L-ENC1101-GOLIVE): Take ENC1101 Summer 2026 (771624) live in\
+    \ D2L \u2014 content is 100% stage\u2026"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/258
+  context: "GitHub issue organvm/limen#258. **Owner:** Anthony (human-gated lever\
+    \ `L-ENC1101-GOLIVE`). Surfaced once, never nagged, never auto-pulled. This issue\
+    \ is the lever's permanent, individually-closeable home in the graph \u2014 the\
+    \ registry `his-hand-levers.json` is its source of truth. Take ENC1101 Summer\
+    \ 2026 (771624) live in D2L \u2014 content is 100% staged; only your cadence call\
+    \ + a label greenlight + the Set Active click remain. Read e"
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T21:23:23.736265Z'
+  dispatch_log: []
+- id: GH-organvm-limen-257
+  title: 'needs-human (L-BRANCH-PROTECT-072): Branch-protection across the organ repos'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/257
+  context: "GitHub issue organvm/limen#257. **Owner:** Anthony (human-gated lever\
+    \ `L-BRANCH-PROTECT-072`). Surfaced once, never nagged, never auto-pulled. This\
+    \ issue is the lever's permanent, individually-closeable home in the graph \u2014\
+    \ the registry `his-hand-levers.json` is its source of truth. Branch-protection\
+    \ across the organ repos. RESOLVED for organvm/limen `main` 2026-06-24 (applied\
+    \ under granted admin): protected with an always-on req"
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T21:23:23.736265Z'
+  dispatch_log: []
+- id: GH-organvm-limen-256
+  title: "needs-human (L-GH-LAUNCHD-077): Give gh a token under launchd (GH_TOKEN\
+    \ in the plist/keychain) so the\u2026"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/256
+  context: "GitHub issue organvm/limen#256. **Owner:** Anthony (human-gated lever\
+    \ `L-GH-LAUNCHD-077`). Surfaced once, never nagged, never auto-pulled. This issue\
+    \ is the lever's permanent, individually-closeable home in the graph \u2014 the\
+    \ registry `his-hand-levers.json` is its source of truth. Give gh a token under\
+    \ launchd (GH_TOKEN in the plist/keychain) so the soak-test LaunchAgent's gh auth\
+    \ works (organvm/organvm-engine). ### What it unlocks"
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T21:23:23.736265Z'
+  dispatch_log: []
+- id: GH-organvm-limen-255
+  title: 'needs-human (L-CONTAINER-CUTOVER): One-container cutover'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/255
+  context: "GitHub issue organvm/limen#255. **Owner:** Anthony (human-gated lever\
+    \ `L-CONTAINER-CUTOVER`). Surfaced once, never nagged, never auto-pulled. This\
+    \ issue is the lever's permanent, individually-closeable home in the graph \u2014\
+    \ the registry `his-hand-levers.json` is its source of truth. One-container cutover:\
+    \ mount an external backup, run container/migrate.sh S4-S13, confirm symlinks\
+    \ + the COMPLETE marker. ASK-20 extends container/man"
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T21:23:23.736265Z'
+  dispatch_log: []
+- id: GH-organvm-limen-254
+  title: 'needs-human (L-CLOUDFLARE-DEPLOY): Cloudflare deploy auth'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/254
+  context: "GitHub issue organvm/limen#254. **Owner:** Anthony (human-gated lever\
+    \ `L-CLOUDFLARE-DEPLOY`). Surfaced once, never nagged, never auto-pulled. This\
+    \ issue is the lever's permanent, individually-closeable home in the graph \u2014\
+    \ the registry `his-hand-levers.json` is its source of truth. Cloudflare deploy\
+    \ auth: run `wrangler login` (or export CLOUDFLARE_API_TOKEN into the lane env),\
+    \ then re-dispatch. Every BLD2-*-deploy fails because w"
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T21:23:23.736265Z'
+  dispatch_log: []
+- id: GH-organvm-limen-253
+  title: 'needs-human (L-REVENUE-ACCT): Revenue first-dollar accounts'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/253
+  context: "GitHub issue organvm/limen#253. **Owner:** Anthony (human-gated lever\
+    \ `L-REVENUE-ACCT`). Surfaced once, never nagged, never auto-pulled. This issue\
+    \ is the lever's permanent, individually-closeable home in the graph \u2014 the\
+    \ registry `his-hand-levers.json` is its source of truth. Revenue first-dollar\
+    \ accounts: create Ko-fi + GitHub Sponsors on the Exporter, create a LemonSqueezy\
+    \ product and paste LEMONSQUEEZY_STORE_ID into CI. FUNDI"
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T21:23:23.736265Z'
+  dispatch_log: []
+- id: GH-organvm-limen-252
+  title: 'needs-human (L-MERGE-GATE): Open the merge gate'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/252
+  context: "GitHub issue organvm/limen#252. **Owner:** Anthony (human-gated lever\
+    \ `L-MERGE-GATE`). Surfaced once, never nagged, never auto-pulled. This issue\
+    \ is the lever's permanent, individually-closeable home in the graph \u2014 the\
+    \ registry `his-hand-levers.json` is its source of truth. Open the merge gate:\
+    \ say \"open the merge gate\" and merge-drain.py squash-merges exactly the clean\
+    \ set in docs/MERGE-READY.md (20 PRs, revenue-first, branches"
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T21:23:23.736265Z'
+  dispatch_log: []
+- id: GEN-organvm-limen-simplify-0625
+  title: Reduce complexity in organvm/limen
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - simplify
+  - generated
+  - build-out
+  urls: []
+  context: Identify the most complex or most-duplicated module in organvm/limen and
+    refactor it for clarity, with tests proving behavior is unchanged. Net lines should
+    not grow without cause. [auto-generated 2026-06-25 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-25'
+  updated: '2026-06-25T21:23:23.736265Z'
   dispatch_log: []
