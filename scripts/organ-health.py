@@ -12,9 +12,12 @@ Two signal sources, in priority order:
   2. an artifact the organ produces (mtime or embedded timestamp) — works TODAY, before stamping
      lands in the live loop.
 
-Derive, never pin: cadences (C_*) and the adaptive tempo (LOOP_MIN/MAX) are PARSED out of
-heartbeat-loop.sh, so if he retunes a voice the health window follows automatically. Gate flags are
-read from ~/.limen.env so a gated-OFF organ reads "gated" (intentional), never a false "down".
+Derive, never pin: the door-list itself, the cadences (C_*), and the adaptive tempo (LOOP_MIN/MAX)
+are all PARSED out of heartbeat-loop.sh — membership is the heartbeat's, never a hand-roster, so a
+beat added or removed upstream is FELT, not silently missed (the door-discovery CONTRACT is shared
+with AVTOPOIESIS via spec/avtopoiesis/canon.yaml). _registry() only ENRICHES discovered beats with
+their signal specifics. Gate flags are read from ~/.limen.env so a gated-OFF organ reads "gated"
+(intentional), never a false "down".
 
 Anti-waste + never-"NO": read-only on the fleet's data; writes only its own logs/organ-health.json
 and the self-contained organ-health.html face. Every probe fails OPEN — a missing artifact yields
@@ -33,6 +36,12 @@ VOICED = LOGS / ".voice"
 LOOP_SH = ROOT / "scripts" / "heartbeat-loop.sh"
 ENV_FILE = Path(os.environ.get("LIMEN_ENV_FILE", Path.home() / ".limen.env"))
 OUT_DIRS = [ROOT / "web" / "app" / "out", ROOT / "web" / "app" / "public"]
+CANON = ROOT / "spec" / "avtopoiesis" / "canon.yaml"  # the SINGLE door-discovery contract (shared with AVTOPOIESIS)
+
+try:
+    import yaml
+except ImportError:        # fail-open: proprioception must never crash on a missing dep
+    yaml = None
 
 _TS_RE = re.compile(r"(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2})")
 
@@ -65,6 +74,45 @@ def _parse_tempo(text):
         except ValueError:
             return fallback
     return grab("LIMEN_LOOP_MIN", 120), grab("LIMEN_LOOP_MAX", 1800)
+
+
+# ── the living door-list: DISCOVERED from the heartbeat, never hand-rostered ───────────────────
+# A degraded-mode mirror of spec/avtopoiesis/canon.yaml's discovery patterns. Kept in lockstep with
+# the canon by a test — when canon/PyYAML is present the canon wins; this only keeps the organ alive
+# if the spec is absent (an older checkout) so proprioception never crashes.
+_BEAT_PATTERN_FALLBACK = r'C_([A-Z][A-Z_]*)="\$\{LIMEN_BEAT_\1:-([0-9]+)\}"(?:[^#\n]*#\s*([^\n]*))?'
+_GATE_PATTERN_FALLBACK = r'\[\s*"\$\{LIMEN_%s:-0\}"\s*=\s*"1"\s*\]'
+
+
+def _discovery_contract():
+    """The (beat_pattern, gate_pattern) used to read the heartbeat — sourced from
+    spec/avtopoiesis/canon.yaml so organ-health and AVTOPOIESIS share ONE contract (derive, never
+    pin). Fail-open to the mirrored inline patterns above."""
+    if yaml is not None:
+        try:
+            disc = (yaml.safe_load(CANON.read_text()) or {}).get("discovery") or {}
+            return (disc.get("beat_pattern") or _BEAT_PATTERN_FALLBACK,
+                    disc.get("gate_pattern") or _GATE_PATTERN_FALLBACK)
+        except OSError:
+            pass
+    return _BEAT_PATTERN_FALLBACK, _GATE_PATTERN_FALLBACK
+
+
+def _discover_doors(text):
+    """Every C_<NAME> beat the heartbeat declares is a door. MEMBERSHIP lives here, in the loop —
+    never in a hand-roster — so a beat can be neither silently missed (added upstream) nor silently
+    kept (removed upstream). A beat the loop gates OFF by default reads dormant."""
+    beat_pat, gate_pat = _discovery_contract()
+    out, seen = [], set()
+    for name, cadence, role in re.findall(beat_pat, text):
+        key = name.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        dormant = bool("%s" in gate_pat and re.search(gate_pat % name, text))
+        out.append({"key": key, "name": name, "cadence": int(cadence),
+                    "role": role.strip(), "dormant": dormant})
+    return out
 
 
 def _env_flag(name, default=""):
@@ -134,11 +182,12 @@ def _json_field_ts(path, *fields):
     return None
 
 
-# ── the organ registry ──────────────────────────────────────────────────────────────────────
-# Each organ: rung label, the heartbeat VOICE that fires it (→ voice-stamp + cadence key), the
-# fallback artifact probe (used until stamping is live), an optional gate, and a one-line "what".
-# cadence is a beats key into the parsed C_* map; IMPROVE runs on a wall-clock producer cadence,
-# expressed in seconds directly.
+# ── the enrichment table ──────────────────────────────────────────────────────────────────────
+# NOT the door-list (that is DISCOVERED from the heartbeat — see _doors). This only ENRICHES a
+# discovered beat with the signal specifics the loop can't express: which VOICE stamps it, which
+# artifact probe proves a fire until stamping is live, how it's gated, and a one-line "what". The
+# few rungs with NO cadence_key (sustain/merge/improve) are conceptual — they ride the base tick or
+# a wall-clock producer rather than their own C_ beat — and are carried through as first-class rungs.
 def _registry():
     return [
         dict(key="sustain", rung="SUSTAIN", voice="tick", cadence_beats=1,
@@ -182,13 +231,45 @@ def _registry():
     ]
 
 
+def _doors(text):
+    """The fused door-list (no I/O). The curated self-* ladder rungs come FIRST — each cross-checked
+    against the heartbeat so a beat it names but the loop no longer declares is flagged as drift, not
+    silently kept. Then every OTHER beat the heartbeat declares is appended as a first-class door, so
+    a beat added upstream is felt, never silently missed. Membership is the heartbeat's; _registry()
+    only enriches it. (Synthetic rungs — sustain/merge/improve — carry no cadence_key and pass through
+    untouched.)"""
+    discovered = _discover_doors(text)
+    by_key = {d["key"]: d for d in discovered}
+    rungs, claimed = [], set()
+    for o in _registry():
+        spec = dict(o)
+        bk = (o.get("cadence_key") or "").lower()
+        if bk:
+            claimed.add(bk)
+            if bk not in by_key:
+                spec["_absent"] = True
+                spec["gate_note"] = "beat absent from heartbeat — drift"
+            elif by_key[bk].get("dormant"):
+                spec["_dormant"] = True
+        rungs.append(spec)
+    for d in discovered:
+        if d["key"] in claimed:
+            continue
+        rungs.append(dict(
+            key=d["key"], rung=d["name"], voice=d["key"], cadence_key=d["name"],
+            what=d["role"] or f"{d['key']} beat", probe=lambda: None,
+            _dormant=bool(d.get("dormant")),
+            gate_note="gated OFF by default" if d.get("dormant") else ""))
+    return rungs
+
+
 def build():
     text = _loop_text()
     cadences = _parse_cadences(text)
     loop_min, loop_max = _parse_tempo(text)
 
     organs = []
-    for o in _registry():
+    for o in _doors(text):
         # cadence → expected seconds between fires, worst-case (idle beats run at LOOP_MAX).
         if "interval_s" in o:
             expected = o["interval_s"]
@@ -198,14 +279,13 @@ def build():
             expected = beats * loop_max
             cadence_desc = "every beat" if beats == 1 else f"every {beats} beats"
 
-        # gate state
+        # gate state — an explicit env-flag gate, or a beat the heartbeat itself gates OFF by default
         gated = False
-        if o.get("gate"):
+        if o.get("_dormant"):
+            gated = True
+        elif o.get("gate"):
             val = _env_flag(o["gate"], o.get("gate_default", ""))
-            if o.get("gate_truthy_nonempty"):
-                gated = (val == "")
-            else:
-                gated = (val != "1")
+            gated = (val == "") if o.get("gate_truthy_nonempty") else (val != "1")
 
         # best signal: voice-stamp (ground truth) else artifact probe
         src = "voice-stamp"
@@ -228,6 +308,8 @@ def build():
         elif age <= expected * 4:
             status = "stale"
         else:
+            status = "down"
+        if o.get("_absent"):       # ladder names a beat the heartbeat no longer declares → loud, not silent
             status = "down"
 
         organs.append({

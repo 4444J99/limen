@@ -1,13 +1,18 @@
 """positioning-organ: the gated daemon lane (C_POSITIONING) that refreshes the inbound-magnet
 surfaces on cadence. Offline — reads the organ registry + the loop source; no daemon run, no
 network. The lane is gated OFF by default (LIMEN_POSITIONING=1 is his knob): generation alone
-never publishes."""
+never publishes.
+
+Also guards organ-health's NON-SOLID property: its door-list is DISCOVERED from the heartbeat (the
+same contract AVTOPOIESIS reads), not a hand-roster, so no beat can silently drift out of view."""
 import importlib.util
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 ORGAN = ROOT / "scripts" / "organ-health.py"
 LOOP = ROOT / "scripts" / "heartbeat-loop.sh"
+CANON = ROOT / "spec" / "avtopoiesis" / "canon.yaml"
 
 
 def _load(monkeypatch, root):
@@ -41,3 +46,42 @@ def test_loop_defines_cadence_and_gates_the_lane():
     assert "stamp positioning" in text
     # no --fetch on the lane: the daemon stays offline/deterministic (no stuck-API timeout risk)
     assert "generate-positioning.py --fetch" not in text
+
+
+# ── convergence: organ-health feels EVERY heartbeat beat (the door-list is not a solid) ─────────
+def test_organ_health_feels_every_heartbeat_beat(monkeypatch):
+    """No silent drift: every C_<NAME> beat the heartbeat declares must appear in the fused
+    door-list. Independently re-parse the loop here (a different regex than the SUT) as the oracle."""
+    m = _load(monkeypatch, ROOT)
+    beat_keys = {n.lower() for n in re.findall(r'C_([A-Z][A-Z_]*)="\$\{LIMEN_BEAT_', LOOP.read_text())}
+    assert beat_keys, "loop must declare at least one beat"
+    doors = m._doors(m._loop_text())
+    door_keys = {o["key"] for o in doors}
+    # a beat is FELT if a door directly is it (key) or a ladder rung claims it (cadence_key) — the
+    # same join _doors() uses. A beat in neither is silently dropped: the drift we forbid.
+    covered = door_keys | {o["cadence_key"].lower() for o in doors if o.get("cadence_key")}
+    missing = beat_keys - covered
+    assert not missing, f"organ-health silently omits heartbeat beats: {sorted(missing)}"
+    # beats organ-health used to ignore are now first-class doors …
+    assert {"drain", "web", "censor", "quicken", "avtopoiesis"} <= door_keys
+    # … and the conceptual rungs with no C_ beat (synthetic) still survive
+    assert {"sustain", "merge", "improve"} <= door_keys
+
+
+def test_orphaned_ladder_rung_is_flagged_not_silently_kept(monkeypatch):
+    """The other drift direction: a ladder rung naming a beat the heartbeat NO LONGER declares is
+    flagged (_absent), never silently shown as fine. Synthetic rungs (no cadence_key) are exempt."""
+    m = _load(monkeypatch, ROOT)
+    fused = {o["key"]: o for o in m._doors("# a heartbeat with no beats at all\n")}
+    assert fused["positioning"].get("_absent"), "a beat-backed rung with no live beat must flag drift"
+    assert not fused["sustain"].get("_absent"), "a synthetic rung (no cadence_key) must not flag drift"
+
+
+def test_fallback_patterns_mirror_canon(monkeypatch):
+    """derive-never-pin: the degraded-mode inline patterns must equal the canon's — else the two
+    discovery paths could silently diverge (a solid sneaking back in)."""
+    m = _load(monkeypatch, ROOT)
+    import yaml
+    disc = (yaml.safe_load(CANON.read_text()) or {})["discovery"]
+    assert m._BEAT_PATTERN_FALLBACK == disc["beat_pattern"]
+    assert m._GATE_PATTERN_FALLBACK == disc["gate_pattern"]

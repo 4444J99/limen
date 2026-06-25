@@ -69,6 +69,8 @@ lever — which the gate reports honestly rather than rounding up.)
 
 ## Gaps remaining (recorded, not hidden — a liquid law names its own incompleteness)
 
-Tracked in `canon.yaml#gaps_remaining`. The largest: `organ-health.py`'s `_registry()` is still a
-hand-roster that can drift from the heartbeat — the next convergence is to derive *its* door-list from
-the same `discovery.source`, so there is one living door-list, not two.
+Tracked in `canon.yaml#gaps_remaining`. **Closed:** `organ-health.py` no longer hand-rosters its
+doors — it now DISCOVERS them from this same `discovery.source` (its `_doors`/`_discover_doors`), and
+`_registry()` was demoted from the roster to an enrichment table. There is one living door-list, not
+two that drift. The residual is shallower: the beats organ-health used to ignore now appear but lack a
+last-fire probe, so they read `unknown` until each is enriched.

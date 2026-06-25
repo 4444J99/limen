@@ -47,7 +47,10 @@ senses:
 
 gaps_remaining:
   # Recorded, not hidden — the distance still to close. A liquid law names its own incompleteness.
-  organ_health_roster: "organ-health.py _registry() is still a hand-roster — converge it onto discovery.source so there is ONE door-list, not two that can silently drift"
+  # CLOSED: organ-health.py now DISCOVERS its door-list from this same discovery contract (see its
+  # _doors/_discover_doors); _registry() was demoted from the roster to an enrichment table, so the
+  # two organs can no longer hold two door-lists that drift.
+  organ_health_probe_depth: "organ-health now FEELS every beat, but the newly-surfaced beats (drain/sync/web/censor/report/quicken/corpus_feed) carry no artifact probe yet — they read 'unknown' until each is enriched with a last-fire signal"
   past_sense_is_heuristic: "the 'past' score reads source-signatures (does it crawl?); deepen to whether the metabolized history actually changed an output"
   present_sense_is_binary: "present = wired-and-not-dormant; deepen to organ-health's real last-fire-vs-cadence liveness"
   door_to_script_by_name: "a door's metabolize limb is found by name-matching scripts/; deepen to resolve the exact script each beat invokes"
