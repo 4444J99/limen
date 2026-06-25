@@ -15,9 +15,9 @@
     },
     {
       "id": "L-REVENUE-ACCT",
-      "label": "FASTEST FIRST DOLLAR = Ko-fi alone, ~60 sec, NO bank/KYC: create a free account at ko-fi.com and reply with the slug. The donate button + FUNDING.yml + GreasyFork-live Exporter are already wired — the moment you give the slug it ships, no further code. (Bigger revenue is a SEPARATE, slower, KYC-gated follow-on, not part of the first dollar: GitHub Sponsors for `organvm`, and a Lemon Squeezy product to light the Pro-license 'Buy Pro' button via LEMONSQUEEZY_STORE_ID.) Account creation is policy-irreducibly yours — Claude cannot sign up on your behalf.",
+      "label": "FIRST DOLLAR SHIPPED: Ko-fi rail is LIVE — slug `4444j99` wired into the Exporter's FUNDING.yml (organvm/a-i-chat--exporter#79, merged to master), so GitHub renders the live Sponsor/donate button; a 'yes' can pay today. ONLY your-side check left on this leg: confirm a payout method (PayPal/Stripe) is connected in Ko-fi settings so tips actually land (~1 min). SEPARATE slower KYC follow-ons (NOT the first dollar): enable GitHub Sponsors for `organvm`, and create a Lemon Squeezy product to light the Pro-license 'Buy Pro' button via LEMONSQUEEZY_STORE_ID.",
       "owner": "yours",
-      "cost": "~60 sec for the first dollar (just the Ko-fi slug); merchant/KYC paths are separate and slower",
+      "cost": "~1 min (confirm Ko-fi payout connected); merchant/KYC follow-ons separate & slower",
       "unlocks": "first dollar (income before August)",
       "source_task": "revenue-ladder (whose_hand: yours)",
       "issue": 253
