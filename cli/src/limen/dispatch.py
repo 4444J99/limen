@@ -282,7 +282,7 @@ def _flame_preamble() -> str:
         return ""  # no kernel on disk yet → bare prompt, never a blocked lane
 
 
-def _build_prompt(task: Task) -> str:
+def _build_prompt(task: Task, task_first: bool = False) -> str:
     parts = [f"Complete task {task.id}: {task.title}"]
     if task.repo:
         parts.append(f" in repository {task.repo}")
@@ -297,6 +297,15 @@ def _build_prompt(task: Task) -> str:
     # Kernel first (who you are + the invariants + where to resume from), then a hard divider,
     # then THIS beat's concrete task. The divider keeps the model from mistaking the standing
     # identity for the work item.
+    #
+    # task_first inverts the order for lanes that derive a session TITLE from the prompt's first
+    # line (jules: `jules new <prompt>`). Kernel-first buried "Complete task <id>:" under the FLAME
+    # header, which (a) broke jules-land's session→task matching — the listing truncates the title,
+    # so the harvester never saw the task id and completed sessions NEVER landed as PRs — and (b)
+    # fed the 200-line kernel to jules as if it were the work item (sessions drifted to "Awaiting
+    # User Feedback"). Task-first keeps the flame riding along, just after the task, not in the title.
+    if task_first:
+        return f"{body}\n\n--- STANDING KERNEL (who you are; the task above is the work) ---\n{flame}"
     return f"{flame}\n\n--- YOUR TASK THIS BEAT ---\n{body}"
 
 
@@ -338,7 +347,9 @@ def _run_cmd(cmd: list[str], task: Task, dry_run: bool, cwd: str | None = None) 
 
 def _call_jules(task: Task, dry_run: bool) -> bool | str:
     repo = task.repo or os.environ.get("LIMEN_ROOT", ".")
-    prompt = _build_prompt(task)
+    # task_first: jules names the session from the prompt's first line, so lead with the task
+    # (keeps the session title harvestable + the work unambiguous; the kernel still rides after it).
+    prompt = _build_prompt(task, task_first=True)
     cmd = [os.environ.get("LIMEN_JULES_BIN", "jules"), "new", "--repo", repo, prompt]
     return _run_cmd(cmd, task, dry_run)
 
