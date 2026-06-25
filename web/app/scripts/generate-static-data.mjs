@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { copyFileSync, existsSync, readFileSync, writeFileSync, mkdirSync, unlinkSync } from "fs";
+import { copyFileSync, existsSync, readFileSync, writeFileSync, mkdirSync, unlinkSync, readdirSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import YAML from "yaml";
@@ -511,6 +511,38 @@ function sanctionedManifest(manifest, persona) {
   };
 }
 
+
+function mirrorInsights() {
+  const tiers = ["hourly", "daily", "weekly", "monthly"];
+  const insightDir = join(limenRoot, "logs", "insight-cadence");
+  let insightFiles = [];
+  if (existsSync(insightDir)) {
+    insightFiles = readdirSync(insightDir).filter(f => f.endsWith(".json"));
+  }
+
+  for (const tier of tiers) {
+    const dest = join(appRoot, "public", `${tier}-insights.json`);
+    const tierFiles = insightFiles.filter(f => f.startsWith(`${tier}-`));
+    
+    // Find the latest file by sorting alphabetically (timestamp is in ISO format)
+    tierFiles.sort();
+    const latestFile = tierFiles.length > 0 ? tierFiles[tierFiles.length - 1] : null;
+
+    if (latestFile) {
+      const src = join(insightDir, latestFile);
+      copyFileSync(src, dest);
+    } else {
+      // Create empty payload if missing so build succeeds
+      writeFileSync(dest, JSON.stringify({
+        tier,
+        generated_at: new Date().toISOString(),
+        window_start: new Date().toISOString(),
+        insights: []
+      }));
+    }
+  }
+}
+
 const data = YAML.parse(readFileSync(sourcePath, "utf8"));
 const summary = deriveSummary(data);
 const output = {
@@ -557,5 +589,6 @@ writeFileSync(publicSurfaceManifestPath, `${JSON.stringify(publicManifest, null,
 writeFileSync(readinessPath, `${JSON.stringify(readiness, null, 2)}\n`);
 writeFileSync(qaStatusPath, `${JSON.stringify(qa, null, 2)}\n`);
 mirrorFleetStatus();
+mirrorInsights();
 console.log(`Generated ${outPath} with ${output.tasks?.length || 0} tasks`);
 console.log("Generated public-safe hosted contracts and private validation snapshots");

@@ -73,8 +73,8 @@ const ownerOnlyUiNeedles = [
 ];
 
 assertLabels("index.html", ["Public"]);
-assertLabels("internal.html", ["Internal", "QA", "Client", "Public"]);
-assertLabels("qa.html", ["Internal", "QA", "Client", "Public"]);
+assertLabels("internal.html", ["Internal", "QA", "Insights", "Client", "Public"]);
+assertLabels("qa.html", ["Internal", "QA", "Insights", "Client", "Public"]);
 assertLabels("client.html", ["Client", "Public"]);
 assertLabels("public.html", ["Public"]);
 
@@ -181,3 +181,4 @@ for (const needle of ["lifecycleGates", "getLifecycleGate", "getLifecycleGateLab
 }
 
 console.log("Exported page persona/runtime checks verified");
+assertLabels("insights.html", ["Internal", "QA", "Insights", "Client", "Public"]);
