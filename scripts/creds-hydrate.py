@@ -3,7 +3,7 @@
 
 THE DISEASE this cures: you log into a vendor (gemini / opencode / codex / …) ONCE — and then a new
 worktree, a fresh machine state, or a lapsed token makes you do it AGAIN. The credentials already
-EXIST (minted once into 1Password: `op://Personal/Gemini API Key`, `op://Personal/OpenAI`, the
+EXIST (minted once into 1Password: `op://Personal/Gemini API Key`, the Cloudflare token, the
 GitHub tokens, …). The fleet just never READS from that source of truth at the point of use:
   - the value lands in ~/.limen.env but the daemon never loads it into the subprocess env
     (dispatch.py ran agent CLIs with env=None → they inherit a daemon env that lacks the key); and
@@ -33,9 +33,16 @@ Fail-open by contract: any `op` error skips that one credential (logged by NAME 
 the beat. Read-only by default (`--dry-run` prints the op://→target plan with NO secret reads); writes
 only with `--apply`.
 
+PRESENCE is not VALIDITY. `--check` (and route.py's capacity census) only ask "is the env var set?" —
+a stale/revoked/suspended token sits in ~/.limen.env looking ✓ while every lane it feeds is dead. The
+durable predicate is `--verify`: it authenticates each materialized credential against its own service
+(gh /user, cloudflare /tokens/verify, gemini /models) and exits non-zero on a dead token. Run it after
+--apply and on a cadence — a green --check over dead creds is the precise way "done" silently rots.
+
 Usage:
   python3 scripts/creds-hydrate.py --dry-run     # print the plan (no reads, no writes) — default
-  python3 scripts/creds-hydrate.py --check       # which canonical refs + targets are present (NAMES only)
+  python3 scripts/creds-hydrate.py --check       # PRESENCE of env targets (NAMES only; offline) — not validity
+  python3 scripts/creds-hydrate.py --verify      # VALIDITY — authenticate each cred against its service; exit 1 if any dead
   python3 scripts/creds-hydrate.py --apply        # op read → materialize into ~/.limen.env + tool files
   LIMEN_CREDS_MAP=/path/map.json python3 scripts/creds-hydrate.py --apply   # override the named map
 
@@ -47,11 +54,14 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import stat
 import subprocess
 import sys
 import tempfile
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 ENV_FILE = Path(os.environ.get("LIMEN_ENV", str(Path.home() / ".limen.env")))
@@ -66,6 +76,9 @@ ENV_FILE = Path(os.environ.get("LIMEN_ENV", str(Path.home() / ".limen.env")))
 #          reads GH_TOKEN/GITHUB_TOKEN).
 #   file:  optional tool-native target {"path": "~/.x/auth.json", "template": "...{value}..."} for
 #          tools that only read a file. Omit when env alone suffices.
+#   derive: optional ["cmd", "arg", ...] that MINTS the value from a live local source (e.g. the gh
+#          keyring via `gh auth token`) instead of a static op:// secret. Tried BEFORE `ref`; runs with
+#          GH_TOKEN/GITHUB_TOKEN unset so a dead floor token can't shadow the keyring. Fail-open → ref.
 #   enabled: set False to park an entry (e.g. claude — its token is owned by the credential-race
 #          fix / Rung-0 self-heal; hydrating it here could fight that handler).
 DEFAULT_MAP: list[dict] = [
@@ -74,30 +87,61 @@ DEFAULT_MAP: list[dict] = [
         "ref": "op://Personal/Gemini API Key/credential",
         "env": ["GEMINI_API_KEY", "GOOGLE_GENERATIVE_AI_API_KEY"],
         "enabled": True,
+        # validity probe: a 200 from the model list means the key authenticates. A suspended
+        # Google project answers 403 PERMISSION_DENIED / CONSUMER_SUSPENDED — caught by --verify.
+        "verify": {"url": "https://generativelanguage.googleapis.com/v1beta/models",
+                   "auth": "query", "param": "key"},
     },
     {
+        # Parked — PHANTOM env var, retired 2026-06-25 (session efb53173) after walking it to certainty.
+        # codex authenticates via ChatGPT OAuth (`codex login`): ~/.codex/auth.json shows auth_mode=chatgpt,
+        # live OAuth tokens, and OPENAI_API_KEY=null — codex never reads OPENAI_API_KEY. No fleet code reads
+        # it either (grep of cli/src: zero consumers). And the user runs ChatGPT by subscription, never minted
+        # an OpenAI API key, so op://Personal/OpenAI never resolved (17 failed reads across history, no alt
+        # name ever existed). Hydrating it was a no-op chasing a key that does not and need not exist.
+        # The codex lane is ALREADY UP via its own OAuth — disabling this changes nothing but the SKIP noise.
+        # Enable only if the user ever mints a real OpenAI API key AND a tool is switched to key-auth.
         "lane": "codex/opencode (openai)",
         "ref": "op://Personal/OpenAI/credential",
         "env": ["OPENAI_API_KEY"],
-        "enabled": True,
+        "enabled": False,
     },
     {
+        # Parked — PHANTOM env var, retired 2026-06-25 (same investigation). opencode derives its model from
+        # `opencode models` (see dispatch._opencode_model): paid tier comes from `opencode auth login` writing
+        # opencode's OWN auth.json, else it falls back to a FREE coding model — it never reads OPENROUTER_API_KEY.
+        # No fleet code reads OPENROUTER_API_KEY (grep of cli/src: zero consumers), no opencode provider auth
+        # exists on this host, and op://Personal/OpenRouter API Key never resolved (only-ever-tried ref, always
+        # failed). The opencode lane runs on its free model regardless. Enable only if an OpenRouter key is
+        # minted AND opencode is configured to consume the env var.
         "lane": "opencode (openrouter)",
         "ref": "op://Personal/OpenRouter API Key/credential",
         "env": ["OPENROUTER_API_KEY"],
-        "enabled": True,
+        "enabled": False,
     },
     {
         "lane": "gh/copilot/jules",
         "ref": "op://GitHub-Tokens/master-org-token-011726/password",
         "env": ["GH_TOKEN", "GITHUB_TOKEN"],
         "enabled": True,
+        # The static op:// PAT (master-org-token-011726) is REVOKED — --verify reports 401 Bad
+        # credentials — and once materialized it SHADOWS the still-valid `gh` keyring (account 4444J99)
+        # in every process that sources ~/.limen.env. So mint GH_TOKEN from the live keyring instead:
+        # `derive` runs `gh auth token` (with GH_TOKEN/GITHUB_TOKEN unset so gh reads the keyring, not
+        # the dead env token), preferred over `ref`; op:// stays the last-resort fallback. Self-heals
+        # each beat from a source that already works — closing the gh credential with ZERO human atoms
+        # (no PAT re-mint, no un-wired GitHub App). [[credential-durability-organ]] / L-FLEET-CAPACITY.
+        "derive": ["gh", "auth", "token"],
+        # validity probe: GET /user with the token. A revoked/expired PAT answers 401 Bad credentials.
+        "verify": {"url": "https://api.github.com/user", "auth": "bearer"},
     },
     {
         "lane": "cloudflare (wrangler deploy)",
         "ref": "op://Personal/Cloudflare API Token/credential",
         "env": ["CLOUDFLARE_API_TOKEN"],
         "enabled": True,
+        # validity probe: the canonical token self-verify endpoint. Invalid → 401 code 1000.
+        "verify": {"url": "https://api.cloudflare.com/client/v4/user/tokens/verify", "auth": "bearer"},
     },
     {
         # Parked: the Claude token is owned by the credential-race fix + Rung-0 self-heal
@@ -126,6 +170,45 @@ def have_op() -> bool:
     return shutil.which("op") is not None
 
 
+# Where a 1Password service-account token lives if the user mints one. Kept OUTSIDE the repo
+# (chmod 600, never committed) so the secret never lands in git. Override with LIMEN_OP_SA_TOKEN_FILE.
+SA_TOKEN_FILE = Path(os.environ.get(
+    "LIMEN_OP_SA_TOKEN_FILE", str(Path.home() / ".config" / "op" / "service-account-token")))
+
+
+def load_service_account_token() -> None:
+    """If OP_SERVICE_ACCOUNT_TOKEN isn't already in the env, hydrate it from SA_TOKEN_FILE.
+    A service-account token is the ONLY way `op read` authenticates with ZERO interactive prompt —
+    the desktop-app integration always raises a Touch-ID/GUI dialog when locked, which is exactly
+    the prompt storm this organ must not trigger from the daemon (launchd + every metabolize beat)."""
+    if os.environ.get("OP_SERVICE_ACCOUNT_TOKEN"):
+        return
+    try:
+        tok = SA_TOKEN_FILE.read_text().strip()
+    except (FileNotFoundError, PermissionError, OSError):
+        return
+    if tok:
+        os.environ["OP_SERVICE_ACCOUNT_TOKEN"] = tok
+
+
+def op_can_read_silently() -> bool:
+    """True only when `op read` can succeed WITHOUT raising an interactive prompt — i.e. a
+    service-account token (or a Connect server) is configured. Under the desktop-app integration
+    this is False: a locked vault pops Touch-ID, which is the dialog we refuse to trigger unattended."""
+    return bool(
+        os.environ.get("OP_SERVICE_ACCOUNT_TOKEN")
+        or (os.environ.get("OP_CONNECT_HOST") and os.environ.get("OP_CONNECT_TOKEN"))
+    )
+
+
+def running_interactively() -> bool:
+    """A human is at a terminal — an `op` Touch-ID prompt is then expected and wanted."""
+    try:
+        return sys.stdin.isatty() and sys.stdout.isatty()
+    except (ValueError, OSError):
+        return False
+
+
 def op_read(ref: str, timeout: int = 15) -> str | None:
     """Read ONE secret from 1Password. Returns the value (never printed) or None on any failure."""
     try:
@@ -135,6 +218,26 @@ def op_read(ref: str, timeout: int = 15) -> str | None:
             stdin=subprocess.DEVNULL,
         )
     except (FileNotFoundError, subprocess.TimeoutExpired):
+        return None
+    if r.returncode != 0:
+        return None
+    val = (r.stdout or "").strip()
+    return val or None
+
+
+def derive_value(cmd: list[str], timeout: int = 15) -> str | None:
+    """Mint a credential from a LIVE local source (e.g. `gh auth token` → the gh keyring) rather than a
+    static op:// secret. Runs with GH_TOKEN/GITHUB_TOKEN scrubbed from the child env so a dead floor
+    token can't shadow the keyring gh would otherwise read. Returns the value (never printed) or None on
+    any failure — fail-open, so the caller falls back to the op:// ref."""
+    child_env = {k: v for k, v in os.environ.items() if k not in ("GH_TOKEN", "GITHUB_TOKEN")}
+    try:
+        r = subprocess.run(
+            cmd,
+            capture_output=True, text=True, timeout=timeout,
+            stdin=subprocess.DEVNULL, env=child_env,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
         return None
     if r.returncode != 0:
         return None
@@ -196,18 +299,128 @@ def write_tool_file(spec: dict, value: str) -> str:
     return str(path)
 
 
+# --- VALIDITY PROBE ---------------------------------------------------------------------------------
+# --check answers "is the env var present?" (cheap, offline). It does NOT answer "does the credential
+# still authenticate?" — a stale/revoked/suspended token sits in ~/.limen.env looking ✓ while every
+# lane it feeds is dead (the exact failure that masked a suspended Google project + revoked CF/GH
+# tokens behind a green --check). --verify closes that gap: it authenticates each materialized cred
+# against its own service. Values are used only for the request and never logged.
+_SECRET_RX = (
+    re.compile(r"AIza[\w\-]{4}[\w\-]+"),          # Google API keys
+    re.compile(r"gh[pousr]_[A-Za-z0-9]{4}[A-Za-z0-9]+"),  # GitHub tokens
+    re.compile(r"api_key:\S+"),                   # Google's error echoes the key inline
+)
+
+
+def _scrub(s: str) -> str:
+    """Redact anything key-shaped from a provider message before we print it."""
+    for rx in _SECRET_RX:
+        s = rx.sub("<redacted>", s)
+    return s
+
+
+def _env_value(key: str) -> str | None:
+    """Read the MATERIALIZED value of a key from ENV_FILE — used only to probe validity, never printed.
+    Mirrors _env_has (matches both `KEY=` and `export KEY=`) but returns the value."""
+    if not ENV_FILE.exists():
+        return None
+    for line in ENV_FILE.read_text().splitlines():
+        s = line.strip()
+        for pre in (f"{key}=", f"export {key}="):
+            if s.startswith(pre):
+                return s[len(pre):].strip().strip('"').strip("'") or None
+    return None
+
+
+def _probe_reason(body: bytes) -> str:
+    """Pull a short, key-free reason out of a provider error body."""
+    try:
+        d = json.loads(body.decode("utf-8", "replace"))
+    except Exception:
+        return ""
+    out = ""
+    if isinstance(d, dict):
+        err = d.get("error")
+        if isinstance(err, dict):  # google style — prefer the machine reason over the prose message
+            det = err.get("details")
+            reason = det[0].get("reason", "") if isinstance(det, list) and det and isinstance(det[0], dict) else ""
+            out = reason or err.get("status", "") or str(err.get("message", ""))
+        elif "message" in d:  # github style
+            out = str(d.get("message", ""))
+        else:  # cloudflare style
+            errs = d.get("errors")
+            if isinstance(errs, list) and errs and isinstance(errs[0], dict):
+                out = f"{errs[0].get('code', '')} {errs[0].get('message', '')}".strip()
+    return _scrub(out)[:80]
+
+
+def probe_cred(entry: dict, value: str, timeout: int = 6) -> tuple[str, str]:
+    """Authenticate a credential against its service. Returns (state, detail):
+      'valid'        — accepted (HTTP 200)
+      'invalid'      — rejected (400/401/403) — a DEAD credential
+      'unverifiable' — no probe defined, or no network / service error (fail-open)
+    The value is used only to build the request and is never logged."""
+    spec = entry.get("verify")
+    if not spec:
+        return "unverifiable", "no probe defined"
+    url, headers = spec["url"], {"User-Agent": "limen-creds-hydrate"}
+    if spec.get("auth") == "bearer":
+        headers["Authorization"] = f"Bearer {value}"
+    elif spec.get("auth") == "query":
+        sep = "&" if "?" in url else "?"
+        url = f"{url}{sep}{spec.get('param', 'key')}={value}"
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=timeout) as r:
+            return ("valid", "HTTP 200") if r.status == 200 else ("invalid", f"HTTP {r.status}")
+    except urllib.error.HTTPError as e:
+        try:
+            reason = _probe_reason(e.read())
+        except Exception:
+            reason = ""
+        if e.code in (400, 401, 403):
+            return "invalid", (f"HTTP {e.code}: {reason}".rstrip(": ") if reason else f"HTTP {e.code}")
+        return "unverifiable", f"HTTP {e.code} (service error)"
+    except Exception as e:  # URLError (no network), timeout, DNS — fail open, do not cry wolf offline
+        return "unverifiable", f"unreachable ({type(e).__name__})"
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Hydrate fleet credentials from 1Password — once minted, never re-logged-in.")
     g = ap.add_mutually_exclusive_group()
     g.add_argument("--apply", action="store_true", help="op read → materialize into ~/.limen.env + tool files")
-    g.add_argument("--check", action="store_true", help="report presence of canonical refs + env targets (names only)")
+    g.add_argument("--check", action="store_true", help="report PRESENCE of env targets (names only; offline) — not validity")
+    g.add_argument("--verify", action="store_true", help="authenticate each materialized cred against its service (VALIDITY) — exit 1 if any is dead")
     g.add_argument("--dry-run", action="store_true", help="print the op://→target plan; NO reads, NO writes (default)")
     args = ap.parse_args()
+
+    load_service_account_token()  # hydrate OP_SERVICE_ACCOUNT_TOKEN from its file if present → silent `op read`
 
     cred_map = [e for e in load_map() if e.get("enabled", True)]
     if not cred_map:
         print("creds-hydrate: map is empty (all entries disabled) — nothing to do")
         return 0
+
+    # --verify: authenticate each MATERIALIZED cred against its service. Reads the floor, not op —
+    # so it runs without a 1Password session and tests exactly what the lanes inherit. Exit 1 if any
+    # enabled cred is definitively rejected (a dead token); offline/service errors stay fail-open.
+    if args.verify:
+        print(f"creds-hydrate --verify ({ENV_FILE}) — authenticating each materialized credential:")
+        any_invalid = False
+        for e in cred_map:
+            envs = e.get("env", [])
+            val = _env_value(envs[0]) if envs else None
+            if not val:
+                print(f"  ? {e['lane']:28} {','.join(envs) or '(file only)'} — not materialized (run --apply)")
+                continue
+            state, detail = probe_cred(e, val)
+            del val
+            mark = {"valid": "✓", "invalid": "✗", "unverifiable": "?"}[state]
+            print(f"  {mark} {e['lane']:28} {state.upper()}" + (f" — {detail}" if detail else ""))
+            any_invalid = any_invalid or state == "invalid"
+        if any_invalid:
+            print("creds-hydrate: ✗ = a DEAD credential (presence ✓ is not validity). Re-mint it into its "
+                  "op:// item, then `--apply`. Re-run `--verify` to confirm green.")
+        return 1 if any_invalid else 0
 
     if not have_op():
         print("creds-hydrate: `op` (1Password CLI) not found — install it, then `op signin`. Skipping (fail-open).")
@@ -221,20 +434,47 @@ def main() -> int:
             present = all(_env_has(k) for k in envs) if envs else False
             mark = "✓" if present else "✗"
             print(f"  {mark} {e['lane']:28} {ref_display(e['ref'])} -> {','.join(envs) or '(file only)'}")
+        print("  (presence only — ✓ means the env var is SET, not that it still authenticates. "
+              "Run `--verify` to probe validity against each service.)")
         return 0
 
     apply = args.apply  # default (no flag) == dry-run
+
+    # ── NON-INTERACTIVE OP GATE — the actual fix for the recurring 1Password Touch-ID/GUI dialogs ──
+    # `op read` under the desktop-app integration raises a biometric prompt whenever the vault is
+    # locked. This organ runs from the daemon (launchd login agent + EVERY metabolize beat), so an
+    # ungated `op read` there fires that dialog on a relentless cadence — the prompt storm the user
+    # sees. The plist's "fail-open / skips silently when op is locked" promise was never honored.
+    # Honor it now: call `op read` ONLY when it can succeed WITHOUT a prompt (a service-account token)
+    # or when a human is at a terminal (the prompt is then expected). PER-ENTRY, not a blanket skip —
+    # `derive` lanes (e.g. the gh keyring via `gh auth token`) are promptless and MUST still hydrate
+    # every beat; only the op:// fallback is gated.
+    op_ok = op_can_read_silently() or running_interactively()
+    if apply and not op_ok:
+        print("creds-hydrate: op:// reads GATED — no non-interactive 1Password auth "
+              f"(OP_SERVICE_ACCOUNT_TOKEN unset) and not a TTY. Avoiding a Touch-ID/GUI prompt storm "
+              f"(fail-open). `derive` lanes still hydrate. Mint a service account → {SA_TOKEN_FILE}, "
+              "or run in a terminal, to hydrate op:// lanes.")
+
     print(f"creds-hydrate {'--apply' if apply else '--dry-run (no reads, no writes — pass --apply to hydrate)'}:")
     hydrated, skipped = 0, 0
     for e in cred_map:
         ref, envs, fspec = e["ref"], e.get("env", []), e.get("file")
+        dcmd = e.get("derive")
         targets = ", ".join(envs) + (f" + {fspec['path']}" if fspec else "")
+        source = f"`{' '.join(dcmd)}` (op:// fallback)" if dcmd else ref_display(ref)
         if not apply:
-            print(f"  plan: {e['lane']:28} {ref_display(ref)} -> {targets}")
+            print(f"  plan: {e['lane']:28} {source} -> {targets}")
             continue
-        val = op_read(ref)
+        # Prefer a live-minted value (e.g. the gh keyring) over the static op:// secret; fall back to
+        # op ONLY when op can read without a prompt (op_ok) — else the op:// fallback is skipped, no GUI.
+        val = derive_value(dcmd) if dcmd else None
+        if not val and op_ok:
+            val = op_read(ref)
         if not val:
-            print(f"  SKIP {e['lane']:28} {ref_display(ref)} — unreadable (check op signin / the field name)")
+            why = ("unreadable (check op signin / the field name)" if op_ok
+                   else "op:// read skipped — no promptless 1Password auth (fail-open, no Touch-ID)")
+            print(f"  SKIP {e['lane']:28} {source} — {why}")
             skipped += 1
             continue
         for k in envs:
