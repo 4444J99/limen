@@ -40,3 +40,6 @@ MASTER-PLAN.md
 domus-genoma/
 # build artifacts
 *.tsbuildinfo
+# inbound positioning: internal price-anchor sheets are regenerable and must never sit as a
+# standing file in a public repo (scripts/generate-positioning.py rebuilds them from seeds).
+docs/positioning/*.internal.md

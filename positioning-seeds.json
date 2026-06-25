@@ -1,0 +1,56 @@
+{
+  "_comment": "Judgment layer for scripts/generate-positioning.py — per-repo inbound positioning. The deepest ladder level is the recruiter bridge (see docs/inbound-magnet-system.md). internal_anchor values are NEVER published; they render only into the .internal artifact. PUBLIC pages carry NO prices (tool-enforced).",
+  "repos": {
+    "organvm/public-record-data-scrapper": {
+      "display_name": "50-State UCC Public-Records Intelligence Platform",
+      "what_it_is": "A production platform that collects UCC-1 filings from all 50 Secretary-of-State portals, enriches each record with SEC / OSHA / USPTO / Census and key-gated premium sources, and scores every prospect 0–100 on financing likelihood with an A–F health grade — delivered via dashboard, REST API, and CLI.",
+      "proof_signals": [
+        "3,399 passing tests",
+        "Terraform AWS (multi-AZ RDS, Redis, S3)",
+        "60+ collection agents",
+        "all 50 states",
+        "live deploy"
+      ],
+      "buyer": "MCA funders, ISOs, and brokers who buy financing leads constantly.",
+      "expensive_problem": "Commodity aged UCC lists are cheap and worthless. Exclusive, fresh, enriched, scored UCC leads are the difference between a dialer full of dead numbers and a funded deal.",
+      "cost_of_not_having_it": "A single funded deal is worth a five-figure commission. Good data here pays for itself on the first conversion — and bad data burns your closers' hours on the dead numbers everyone else already called.",
+      "ladder": [
+        {
+          "level": 1,
+          "name": "Feed me leads",
+          "kind": "Data-as-a-Service",
+          "what_they_get": "You never touch the platform. We deliver scored, enriched, exclusive UCC leads on a recurring feed — your states, your filters. Beats every commodity list you buy today.",
+          "internal_anchor": "$3k–$15k / mo by volume · states · exclusivity",
+          "cadence": "Recurring — the engine"
+        },
+        {
+          "level": 2,
+          "name": "Run it in my shop",
+          "kind": "White-label deploy",
+          "what_they_get": "The platform under your brand, on your infra (or our managed). You own the pipeline and stop renting lists forever.",
+          "internal_anchor": "$25k–$75k setup + $2k–$8k / mo managed",
+          "cadence": "Setup + recurring"
+        },
+        {
+          "level": 3,
+          "name": "Build it for my exact world",
+          "kind": "Custom",
+          "what_they_get": "Your states, scoring tuned to your underwriting, integration into your CRM / dialer (Salesforce, GHL, …), your compliance vertical.",
+          "internal_anchor": "$40k–$150k project",
+          "cadence": "Project + optional retainer"
+        },
+        {
+          "level": 4,
+          "name": "Build my whole data org",
+          "kind": "Fractional / retainer",
+          "what_they_get": "We become your data-infrastructure engine — this system, the next one, the next.",
+          "internal_anchor": "$10k–$25k / mo retainer",
+          "cadence": "Ongoing"
+        }
+      ],
+      "cta_client": "Deploy this for your shop",
+      "cta_recruiter": "Work with the team that built this",
+      "recruiter_bridge_level": 4
+    }
+  }
+}
