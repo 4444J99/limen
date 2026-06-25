@@ -37,6 +37,8 @@ def _seed(extra_price_in_public: bool = False) -> dict:
         "cta_client": "Deploy this for your shop",
         "cta_recruiter": "Work with the team that built this",
         "recruiter_bridge_level": 4,
+        "public_face": "the full system — source and the test suite. Read every line.",
+        "private_operation": "the live instance, fed and tuned — the running engine you put to work.",
     }
     if extra_price_in_public:
         # Smuggle a price into a PUBLIC-rendered field — the guard must catch it.
@@ -110,6 +112,54 @@ def test_guard_refuses_when_a_price_leaks_into_public(tmp_path: Path):
     r = _run(env, "--repo", REPO, "--apply")
     assert r.returncode != 0, "must fail when a price token reaches the public page"
     assert not (tmp_path / "out" / f"{SLUG}.md").exists(), "no public file on a guard failure"
+
+
+def test_public_page_shows_form_operation_split(tmp_path: Path):
+    # The doctrine made concrete: what's OPEN vs the ENGINE you rent must be on the page.
+    env = _env(tmp_path, _seed())
+    _run(env, "--repo", REPO, "--apply")
+    pub = (tmp_path / "out" / f"{SLUG}.md").read_text()
+    assert "What's open" in pub
+    assert "What you're buying" in pub
+    assert "the full system — source and the test suite" in pub
+    assert "the running engine you put to work" in pub
+    # The split section carries no prices either (guarded), so the page stays clean.
+    assert "$" not in pub
+
+
+def test_cta_is_plain_text_without_contact(tmp_path: Path):
+    # No contact configured → CTA is plain text, no address published, no mailto.
+    env = _env(tmp_path, _seed())
+    _run(env, "--repo", REPO, "--apply")
+    pub = (tmp_path / "out" / f"{SLUG}.md").read_text()
+    assert "mailto:" not in pub
+    assert "Deploy this for your shop →" in pub
+
+
+def test_cta_is_tagged_mailto_when_contact_set(tmp_path: Path):
+    # Capture funnel: a configured contact turns each CTA into a mailto pre-tagged with the
+    # repo + door, so a click lands already-classified in the inbox. Nothing is ever sent.
+    fd = _frontdoor()
+    fd["contact"] = "leads@example.com"
+    env = _env_fd(tmp_path, _seed(), fd)
+    r = _run(env, "--repo", REPO, "--apply")
+    assert r.returncode == 0, r.stderr
+    pub = (tmp_path / "out" / f"{SLUG}.md").read_text()
+    assert "mailto:leads@example.com?subject=" in pub
+    # Subject is tagged with the door; unreserved chars (slug, 'deploy'/'hire') stay literal.
+    assert "deploy" in pub and "hire" in pub
+    assert "inbound" in pub
+
+
+def test_frontdoor_doors_are_mailto_when_contact_set(tmp_path: Path):
+    fd = _frontdoor()
+    fd["contact"] = "leads@example.com"
+    env = _env_fd(tmp_path, _seed(), fd)
+    r = _run(env, "--frontdoor", "--apply")
+    assert r.returncode == 0, r.stderr
+    out = (tmp_path / "out" / "_frontdoor.md").read_text()
+    assert "mailto:leads@example.com?subject=" in out
+    assert "front" in out  # door tag "[front door · ...]" lands literally in the subject
 
 
 def _frontdoor() -> dict:

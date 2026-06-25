@@ -1,6 +1,8 @@
 {
   "_comment": "Judgment layer for scripts/generate-positioning.py — per-repo inbound positioning. The deepest ladder level is the recruiter bridge (see docs/inbound-magnet-system.md). internal_anchor values are NEVER published; they render only into the .internal artifact. PUBLIC pages carry NO prices (tool-enforced).",
   "frontdoor": {
+    "_contact_note": "Set `contact` to the inbound address you want on the public surface (a dedicated alias is wiser than a personal inbox — it gets indexed). When set, every CTA becomes a mailto: pre-tagged with the repo + door, so clicks land already-classified in your inbox triage. Empty = plain CTA text, nothing published. This is the one switch that turns the capture funnel live; it's your call which address.",
+    "contact": "",
     "headline": "I build production systems that solve expensive problems.",
     "subhead": "Not demos. Live platforms — tested, deployed, and running. Each repo below is a working system someone can put to work today. Two doors:",
     "door_client": {
@@ -27,6 +29,8 @@
       "buyer": "MCA funders, ISOs, and brokers who buy financing leads constantly.",
       "expensive_problem": "Commodity aged UCC lists are cheap and worthless. Exclusive, fresh, enriched, scored UCC leads are the difference between a dialer full of dead numbers and a funded deal.",
       "cost_of_not_having_it": "A single funded deal is worth a five-figure commission. Good data here pays for itself on the first conversion — and bad data burns your closers' hours on the dead numbers everyone else already called.",
+      "public_face": "the full platform — source, the 3,399 tests, the Terraform, all 60+ collection agents, the scoring method. Read every line.",
+      "private_operation": "the live, fed instance — fresh 50-state pulls, premium-keyed enrichment, scoring tuned to your underwriting, current this morning. You can read every line and still can't clone the running engine; that's the part you put to work.",
       "ladder": [
         {
           "level": 1,
@@ -76,6 +80,70 @@
         "public-records",
         "data-enrichment",
         "lead-scoring"
+      ]
+    },
+    "organvm/universal-mail--automation": {
+      "display_name": "Autonomous Inbox-Triage & Draft System",
+      "what_it_is": "A production system that sweeps Gmail and Apple Mail across accounts, classifies every thread against a protocol ladder, tracks every owed reply in an obligations ledger, and composes voice-matched draft replies — draft-only, it never sends. Deploys as a Cloudflare Worker; runs keyless (IMAP app-password / Apple Mail osascript).",
+      "proof_signals": [
+        "400+ tests",
+        "Cloudflare Worker deploy (wrangler)",
+        "Gmail + Apple Mail, keyless",
+        "draft-only by design — composes replies, never sends",
+        "obligations ledger — every owed reply tracked"
+      ],
+      "buyer": "Founders, operators, and the people who run their comms — anyone drowning in multi-account email who will not (and should not) hand an AI the send button.",
+      "expensive_problem": "Obligations fall through the cracks — the escalation you missed, the reply you owed a week ago — while triage burns the most expensive hours of the day. Every 'AI email tool' wants send authority nobody sane will give it.",
+      "cost_of_not_having_it": "Missed and late replies quietly cost deals and relationships, and the hours spent sorting an inbox by hand are the ones you can least afford to spend that way.",
+      "public_face": "the full system — source, the 400+ tests, the protocol ladder, the safety verifiers, how every piece is built. Read all of it.",
+      "private_operation": "the running instance tuned to your accounts, your protocol rules, and your voice — the live sweep, the ledger, the drafts kept current. The code is open; the engine that quietly runs your inbox (and never once sends without you) is the service.",
+      "ladder": [
+        {
+          "level": 1,
+          "name": "Run my inbox triage",
+          "kind": "Managed service",
+          "what_they_get": "We run the sweep against your accounts and hand you a triaged inbox plus ready-to-send drafts for everything you owe a reply. You press send; we do everything up to it.",
+          "internal_anchor": "$2k–$6k / mo by volume · accounts",
+          "cadence": "Recurring — the engine"
+        },
+        {
+          "level": 2,
+          "name": "Deploy it on my infra",
+          "kind": "White-label deploy",
+          "what_they_get": "The system under your brand, on your infrastructure (or our managed Worker). Your team owns the triage pipeline instead of renting another SaaS.",
+          "internal_anchor": "$15k–$40k setup + $1.5k–$5k / mo managed",
+          "cadence": "Setup + recurring"
+        },
+        {
+          "level": 3,
+          "name": "Build it for my stack",
+          "kind": "Custom",
+          "what_they_get": "Your protocol rules, your voice, integration into your CRM / helpdesk / ticketing, your compliance vertical — built to your exact workflow.",
+          "internal_anchor": "$25k–$80k project",
+          "cadence": "Project + optional retainer"
+        },
+        {
+          "level": 4,
+          "name": "Run my comms ops",
+          "kind": "Fractional / retainer",
+          "what_they_get": "We become the engine behind your communications operation — this system, the next integration, the next surface.",
+          "internal_anchor": "$8k–$20k / mo retainer",
+          "cadence": "Ongoing"
+        }
+      ],
+      "cta_client": "Run this on my inbox",
+      "cta_recruiter": "Work with the team that built this",
+      "recruiter_bridge_level": 4,
+      "seo_description": "Autonomous inbox triage for Gmail + Apple Mail — classifies threads, tracks every owed reply, drafts voice-matched responses. Draft-only, never sends.",
+      "search_topics": [
+        "email-automation",
+        "inbox-zero",
+        "gmail-automation",
+        "email-triage",
+        "productivity",
+        "workflow-automation",
+        "cloudflare-workers",
+        "email-management"
       ]
     }
   }

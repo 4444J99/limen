@@ -24,6 +24,16 @@ A production platform that collects UCC-1 filings from all 50 Secretary-of-State
 
 → **Deploy this for your shop** · see [the ways to work together](docs/positioning/public-record-data-scrapper.md)
 
+### [Autonomous Inbox-Triage & Draft System](https://github.com/organvm/universal-mail--automation)
+
+A production system that sweeps Gmail and Apple Mail across accounts, classifies every thread against a protocol ladder, tracks every owed reply in an obligations ledger, and composes voice-matched draft replies — draft-only, it never sends. Deploys as a Cloudflare Worker; runs keyless (IMAP app-password / Apple Mail osascript).
+
+`400+ tests` · `Cloudflare Worker deploy (wrangler)` · `Gmail + Apple Mail, keyless` · `draft-only by design — composes replies, never sends` · `obligations ledger — every owed reply tracked`
+
+**Solves:** Obligations fall through the cracks — the escalation you missed, the reply you owed a week ago — while triage burns the most expensive hours of the day. Every 'AI email tool' wants send authority nobody sane will give it.
+
+→ **Run this on my inbox** · see [the ways to work together](docs/positioning/universal-mail--automation.md)
+
 ---
 
 _If any of this fits, reach out. This conversation starts at serious._

@@ -23,6 +23,12 @@ Pick the depth that fits. Each level is a deeper build than the last.
 | **3 · Build it for my exact world** (Custom) | Your states, scoring tuned to your underwriting, integration into your CRM / dialer (Salesforce, GHL, …), your compliance vertical. | Project + optional retainer |
 | **4 · Build my whole data org** (Fractional / retainer) | We become your data-infrastructure engine — this system, the next one, the next. | Ongoing |
 
+## What's open — and what you're buying
+
+**Open:** the full platform — source, the 3,399 tests, the Terraform, all 60+ collection agents, the scoring method. Read every line.
+
+**What you're buying:** the live, fed instance — fresh 50-state pulls, premium-keyed enrichment, scoring tuned to your underwriting, current this morning. You can read every line and still can't clone the running engine; that's the part you put to work.
+
 ---
 
 **Deploy this for your shop →**  ·  **Work with the team that built this →**

@@ -11,8 +11,14 @@ It emits TWO sinks per repo, and the split is the point:
 
   • PUBLIC  docs/positioning/{slug}.md           — buyer · the expensive problem · cost of not
       having it · the RPG engagement ladder (names + what-they-get + cadence) · proof signals ·
-      the two-door CTA.  CONTAINS NO PRICES. A hard guard refuses to write it if a currency
-      token ever leaks in — "no dollar signs on the page" is enforced by the tool, not by care.
+      what's OPEN vs the running ENGINE you rent (the form/operation split — the code is the lure,
+      not the leak) · the two-door CTA.  CONTAINS NO PRICES. A hard guard refuses to write it if a
+      currency token ever leaks in — "no dollar signs on the page" is enforced by the tool, not care.
+
+The two-door CTA is the capture funnel: when the seeds' frontdoor block carries a `contact`, each
+CTA renders as a `mailto:` pre-tagged with the repo + door (deploy=client / hire=recruiter), so a
+click lands already-classified in the existing inbox triage. No contact set → plain CTA text (we
+never publish an address he hasn't chosen). Nothing is ever sent — capture, not outreach.
   • INTERNAL docs/positioning/{slug}.internal.md — the price anchors, clearly stamped
       NOT FOR PUBLICATION. Anchors live ONLY here, so they physically cannot reach the page.
 
@@ -40,6 +46,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from urllib.parse import quote
 
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent))
 
@@ -76,6 +83,27 @@ def _slug(repo: str) -> str:
     return repo.split("/", 1)[-1]
 
 
+# --- capture funnel -------------------------------------------------------------------------
+# The cheapest capture that actually works today: the CTA is a `mailto:` whose subject is
+# pre-tagged with the repo and the door (deploy = client, hire = recruiter). A click lands in
+# his existing inbox, already classified by which system and which audience — so the live
+# obligations triage routes it with zero new infrastructure and nothing is ever auto-sent.
+# Gated on a configured `contact` in the seeds' frontdoor block: no contact → plain CTA text
+# (so we never publish an address he hasn't chosen to expose).
+
+def _mailto(contact: str, slug: str | None, door: str) -> str:
+    tag = f"[{slug} · {door}]" if slug else f"[front door · {door}]"
+    subject = quote(f"{tag} — inbound", safe="")
+    return f"mailto:{contact}?subject={subject}"
+
+
+def _cta(label: str, contact: str | None, slug: str | None, door: str) -> str:
+    """A CTA as a tagged-mailto link when a contact is configured; plain bold text otherwise."""
+    if contact:
+        return f"**[{label}]({_mailto(contact, slug, door)}) →**"
+    return f"**{label} →**"
+
+
 # A currency / price token anywhere in the PUBLIC page is a contract violation. Catch $€£, a
 # bare "<num>k" band, and "/mo" cadence shorthand — the shapes prices take in the seed anchors.
 _PRICE_RE = re.compile(r"[$€£]|\b\d[\d,]*\s*k\b|/\s*mo\b", re.IGNORECASE)
@@ -104,7 +132,8 @@ def _fetch_signals(repo: str) -> dict:
         return {}
 
 
-def render_public(repo: str, seed: dict, signals: dict | None = None) -> str:
+def render_public(repo: str, seed: dict, signals: dict | None = None,
+                  contact: str | None = None) -> str:
     """Render the public positioning page. No prices — enforced by the caller's guard."""
     signals = signals or {}
     name = seed.get("display_name", _slug(repo))
@@ -152,11 +181,30 @@ def render_public(repo: str, seed: dict, signals: dict | None = None) -> str:
             lines.append(f"| {label} | {step.get('what_they_get', '')} | {step.get('cadence', '')} |")
         lines.append("")
 
+    # Form vs. operation — the doctrine made concrete (see publish-form-rent-operation).
+    # The code being open is the lure, not the leak: what you pay for is the running, fed
+    # engine, which no fork clones. Naming that distinction on the page is the strongest
+    # value signal there is — it tells the buyer exactly why "it's all public" and "you'll
+    # pay" are both true. No prices (the caller guards this text too).
+    public_face = seed.get("public_face")
+    private_operation = seed.get("private_operation")
+    if public_face or private_operation:
+        lines.append("## What's open — and what you're buying")
+        lines.append("")
+        if public_face:
+            lines.append(f"**Open:** {public_face}")
+            lines.append("")
+        if private_operation:
+            lines.append(f"**What you're buying:** {private_operation}")
+            lines.append("")
+
     cta_client = seed.get("cta_client", "Deploy this for your shop")
     cta_recruiter = seed.get("cta_recruiter", "Work with the team that built this")
+    slug = _slug(repo)
     lines.append("---")
     lines.append("")
-    lines.append(f"**{cta_client} →**  ·  **{cta_recruiter} →**")
+    lines.append(f"{_cta(cta_client, contact, slug, 'deploy')}  ·  "
+                 f"{_cta(cta_recruiter, contact, slug, 'hire')}")
     lines.append("")
     lines.append("_If it fits, reach out — this conversation starts at serious._")
     lines.append("")
@@ -178,15 +226,16 @@ def render_frontdoor(repos_seeds: list[tuple[str, dict]], frontdoor: dict) -> st
     if fd.get("subhead"):
         lines.append(fd["subhead"])
         lines.append("")
+    contact = fd.get("contact") or None
     client = fd.get("door_client", {})
     recruiter = fd.get("door_recruiter", {})
     if client:
-        lines.append(f"**{client.get('label', 'Deploy it for your shop')} →**")
+        lines.append(_cta(client.get("label", "Deploy it for your shop"), contact, None, "deploy"))
         if client.get("blurb"):
             lines.append(f"> {client['blurb']}")
         lines.append("")
     if recruiter:
-        lines.append(f"**{recruiter.get('label', 'Work with the builder')} →**")
+        lines.append(_cta(recruiter.get("label", "Work with the builder"), contact, None, "hire"))
         if recruiter.get("blurb"):
             lines.append(f"> {recruiter['blurb']}")
         lines.append("")
@@ -333,9 +382,10 @@ def _atomic_write(path: Path, text: str) -> None:
             os.unlink(tmp)
 
 
-def generate_for(repo: str, seed: dict, *, apply: bool, fetch: bool, out_dir: Path) -> dict:
+def generate_for(repo: str, seed: dict, *, apply: bool, fetch: bool, out_dir: Path,
+                 contact: str | None = None) -> dict:
     signals = _fetch_signals(repo) if fetch else {}
-    public = render_public(repo, seed, signals)
+    public = render_public(repo, seed, signals, contact=contact)
     _assert_no_prices(public, repo)  # hard guard before anything is written
     internal = render_internal(repo, seed)
     slug = _slug(repo)
@@ -367,6 +417,7 @@ def main(argv: list[str] | None = None) -> int:
     doc = _load_json(_seeds_path())
     seeds = doc.get("repos", {})
     out_dir = _out_dir()
+    contact = (doc.get("frontdoor", {}) or {}).get("contact") or None
 
     if args.frontdoor:
         ordered = [(r, seeds[r]) for r in _value_repos(_value_repos_path()) if r in seeds]
@@ -418,7 +469,8 @@ def main(argv: list[str] | None = None) -> int:
         if not seed:
             skipped.append(repo)
             continue
-        result = generate_for(repo, seed, apply=args.apply, fetch=args.fetch, out_dir=out_dir)
+        result = generate_for(repo, seed, apply=args.apply, fetch=args.fetch, out_dir=out_dir,
+                              contact=contact)
         rendered += 1
         verb = "WROTE" if args.apply else "would write"
         print(f"\n=== {repo} — {verb} {result['public_path']} (+ .internal) ===")

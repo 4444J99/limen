@@ -20,3 +20,17 @@ gh api -X PUT repos/organvm/public-record-data-scrapper/topics \
 # apply description:
 gh repo edit organvm/public-record-data-scrapper --description "50-state UCC public-records intelligence — fresh, enriched, scored MCA / financing leads via dashboard, REST API, and CLI."
 ```
+
+## Autonomous Inbox-Triage & Draft System — `organvm/universal-mail--automation`
+
+- **Recommended topics:** email-automation, inbox-zero, gmail-automation, email-triage, productivity, workflow-automation, cloudflare-workers, email-management
+- **Recommended description:** Autonomous inbox triage for Gmail + Apple Mail — classifies threads, tracks every owed reply, drafts voice-matched responses. Draft-only, never sends.
+
+```sh
+# apply topics (his hand — outward-facing public change):
+gh api -X PUT repos/organvm/universal-mail--automation/topics \
+  -H 'Accept: application/vnd.github+json' \
+  -f 'names[]=email-automation' -f 'names[]=inbox-zero' -f 'names[]=gmail-automation' -f 'names[]=email-triage' -f 'names[]=productivity' -f 'names[]=workflow-automation' -f 'names[]=cloudflare-workers' -f 'names[]=email-management'
+# apply description:
+gh repo edit organvm/universal-mail--automation --description "Autonomous inbox triage for Gmail + Apple Mail — classifies threads, tracks every owed reply, drafts voice-matched responses. Draft-only, never sends."
+```
