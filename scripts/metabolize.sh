@@ -69,6 +69,13 @@ fi
 echo "── 5. board ──"
 python3 -m limen doctor 2>&1 | head -12
 
+echo "── 5b. insight-cadence (proposal-only auto-reporting) ──"
+# Generates reports at 4 tiers (hourly/daily/weekly/monthly). Self-gates behind
+# elapsed wall-clock time internally, but --once forces it to run if due.
+if [ "${LIMEN_INSIGHT_CADENCE:-1}" = "1" ]; then
+  python3 "$LIMEN_ROOT/scripts/insight-cadence.py" --once || echo "  (insight-cadence skipped)"
+fi
+
 # ── 6. self-improve (LOW cadence) — the last rung of the self-* ladder ──
 # Reads the loop's own dispatch_log track record and emits a re-plan PROPOSAL to
 # logs/self-improve-proposal.json (down-weight 0%-lanes, retire chronic-fail
