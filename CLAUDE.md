@@ -17,6 +17,8 @@ A *closeout* means **ZERO open or dangling items** — never end one with a "but
 
 If gaps remain, **close them first**, then archive and hand off. Surface genuinely human-gated items in *their owner's* record with the cheapest path to resolution — do not stop the closeout for them. Run `/closeout` to execute this discipline.
 
+Point 1 has a shipped predicate — **`scripts/no-tasks-on-me.sh`** (exit `0` ⟺ nothing hangs on the ephemeral session). It proves every his-hand item lives in the git-tracked registry with a real owner (recall-only memory at `~/.claude/…` is **not** a durable home), that no preserved work is stranded on a local-only `*-staged-*` ref (each must be merged or cited by a lever), and that the registry stays PII-clean (it publishes). Run it instead of re-auditing ownership by hand each session; a chat audit you have to repeat next session *is* leaving the discipline hanging on you.
+
 ## Definition of Done
 
 When asked to define "done" or a "goal", deliver an **executable predicate** — a script or test that *verifies* the condition — never hand-maintained prose.
