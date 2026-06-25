@@ -123,6 +123,25 @@ def test_diverged_with_unique_work_fails_open(checkout, tmp_path):
     assert (clone / "mine.txt").exists()
 
 
+def test_untracked_collision_with_release_is_cleared(checkout, tmp_path):
+    """An UNTRACKED local file colliding with a path the release now TRACKS must not block the ff:
+    the released version wins, the stale local copy is backed up (never lost), and untracked runtime
+    the release does NOT track is left untouched. (The .claude/settings.json drift, 2026-06-24.)"""
+    clone, bare = checkout
+    sha = _origin_advance(bare, tmp_path, "conf.json", "RELEASE\n", "release adds conf.json")
+    # that same path exists locally UNTRACKED with stale content -> would block a naive ff
+    (clone / "conf.json").write_text("LOCAL-STALE\n")
+    # untracked runtime the release does NOT track -> must be left alone (the no-`git add -A` invariant)
+    (clone / "usage.json").write_text("{}\n")
+    r = _run_sync(clone)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert _git("rev-parse", "HEAD", cwd=clone).stdout.strip() == sha, r.stdout  # ff happened
+    assert (clone / "conf.json").read_text() == "RELEASE\n"  # released version won
+    backup = clone / "logs" / ".sync-collision" / "conf.json"
+    assert backup.exists() and backup.read_text() == "LOCAL-STALE\n", r.stdout  # backed up, not lost
+    assert (clone / "usage.json").exists()  # untracked non-release runtime untouched
+
+
 # ---------------- reclaim-worktrees.py ----------------
 
 def _wt_root_with(tmp_path):

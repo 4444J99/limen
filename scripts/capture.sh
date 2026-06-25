@@ -62,19 +62,70 @@ _unstage_runtime() {  # keep the daemon-owned live queue out of capture commits 
   done
 }
 
+# When the current branch is BEHIND its upstream, an in-place capture commit creates UN-PUSHABLE
+# divergence: the push is rejected (non-ff) and the stranded local commit then blocks sync-release's
+# fast-forward, deadlocking the live checkout (the capture↔sync deadly-embrace that stranded 22 merged
+# releases on 2026-06-24). Instead, snapshot the working tree to a pushable SIDE ref WITHOUT moving HEAD
+# or touching the working copy — plumbing only (temp index → write-tree → commit-tree → update-ref) — so
+# the work still reaches the canonical graph while the branch stays a clean ANCESTOR of origin and
+# sync-release can always ff. ([[live-checkout-is-chaotic]] preservation, minus the divergence.)
+_capture_side_branch() {
+  local name="$1" branch="$2"
+  local sideref="capture/${branch}-${STAMP//:/-}"   # git refs forbid ':' — sanitize the ISO stamp
+  local tmpidx tree commit pat
+  tmpidx="$(mktemp 2>/dev/null)" || return 1
+  if ! GIT_INDEX_FILE="$tmpidx" git read-tree HEAD 2>/dev/null; then rm -f "$tmpidx" 2>/dev/null; return 1; fi
+  GIT_INDEX_FILE="$tmpidx" git add -A 2>/dev/null || true   # stage the WORKING TREE into the throwaway index
+  for pat in "${SECRET_GLOBS[@]}";  do GIT_INDEX_FILE="$tmpidx" git reset -q -- "$pat" >/dev/null 2>&1 || true; done
+  for pat in "${RUNTIME_GLOBS[@]}"; do GIT_INDEX_FILE="$tmpidx" git reset -q -- "$pat" >/dev/null 2>&1 || true; done
+  tree="$(GIT_INDEX_FILE="$tmpidx" git write-tree 2>/dev/null)"
+  rm -f "$tmpidx" 2>/dev/null || true
+  [ -n "$tree" ] || return 1
+  if [ "$tree" = "$(git rev-parse 'HEAD^{tree}' 2>/dev/null)" ]; then
+    echo "[capture] $name: $branch behind origin, nothing left to capture after secret/runtime filter"
+    return 1
+  fi
+  commit="$(git commit-tree "$tree" -p HEAD -m "capture: off-disk sync $STAMP ($branch behind origin → side ref, HEAD untouched)" 2>/dev/null)"
+  [ -n "$commit" ] || return 1
+  git update-ref "refs/heads/$sideref" "$commit" 2>/dev/null || return 1
+  captured=$((captured+1))
+  if git push origin "refs/heads/$sideref:refs/heads/$sideref" >/dev/null 2>&1; then
+    pushed=$((pushed+1))
+    echo "[capture] $name: $branch behind origin → captured working tree to origin/$sideref (no divergence, HEAD untouched)"
+    printf '{"ts":"%s","repo":"%s","branch":"%s","side_ref":"%s","committed":1,"pushed":1}\n' \
+      "$STAMP" "$name" "$branch" "$sideref" >> "$LOG" 2>/dev/null || true
+  else
+    echo "[capture] $name: captured to local side ref $sideref but push failed (kept local)"
+    failed=$((failed+1))
+  fi
+  return 0
+}
+
 _capture_repo() {
   local dir="$1" name; name="$(basename "$dir")"
   cd "$dir" 2>/dev/null || { failed=$((failed+1)); return; }
   git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { skipped=$((skipped+1)); return; }
   git remote get-url origin >/dev/null 2>&1 || { skipped=$((skipped+1)); return; }  # no canonical home
 
-  local branch dirty=0 did_commit=0 did_push=0
+  local branch dirty=0 did_commit=0 did_push=0 behind=0
   branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || echo "")"
   [ -n "$(git status --porcelain 2>/dev/null)" ] && dirty=1
+  # behind its upstream? committing in place here would strand the checkout (see _capture_side_branch).
+  # 0 when detached, no upstream, up-to-date, or ahead — i.e. exactly the safe-to-commit-in-place cases.
+  if [ -n "$branch" ]; then behind="$(git rev-list --count "HEAD..@{u}" 2>/dev/null || echo 0)"; fi
+  [ -n "$behind" ] || behind=0
 
   if [ "$dirty" = 1 ]; then
     if [ "$DRY" = 1 ]; then
-      echo "[capture] $name: WOULD commit dirty tree (branch=${branch:-DETACHED})"
+      if [ "$behind" -gt 0 ] 2>/dev/null; then
+        echo "[capture] $name: WOULD capture dirty tree to a SIDE ref ($branch is $behind behind origin — no in-place commit)"
+      else
+        echo "[capture] $name: WOULD commit dirty tree (branch=${branch:-DETACHED})"
+      fi
+    elif [ "$behind" -gt 0 ] 2>/dev/null; then
+      # behind origin → never commit onto this branch; divert to a pushable side ref and leave HEAD clean
+      _capture_side_branch "$name" "$branch"
+      return
     else
       git add -A >/dev/null 2>&1 || true
       _unstage_secrets

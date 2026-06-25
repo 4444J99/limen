@@ -83,6 +83,29 @@ if ! git diff --quiet 2>/dev/null; then
   git stash push --quiet 2>/dev/null && stashed=1 || true
 fi
 
+# An UNTRACKED local file that collides with a path the release now TRACKS also blocks the ff (git
+# refuses to overwrite untracked files — the .claude/settings.json drift observed 2026-06-24). Those
+# paths are release-owned, so the released version must win, exactly like the tracked stash-drop above.
+# Back up ONLY the colliding paths (logs/.sync-collision — never deleted) and remove them so the ff can
+# write the tracked version. Untracked runtime the release does NOT track (logs/, usage.json, caches,
+# the governor gate) is never in this set and stays untouched — the deliberate "no git add -A" invariant.
+collided=0
+untracked="$(git ls-files --others --exclude-standard 2>/dev/null || echo)"
+if [ -n "$untracked" ]; then
+  release_tracked="$(git ls-tree -r --name-only "origin/$BRANCH" 2>/dev/null || echo)"
+  BK="$ROOT/logs/.sync-collision"
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    printf '%s\n' "$release_tracked" | grep -qxF "$f" || continue   # only paths the release tracks
+    mkdir -p "$BK/$(dirname "$f")" 2>/dev/null || true
+    cp -f "$f" "$BK/$f" 2>/dev/null || true                         # back up (never delete) before removing
+    rm -f "$f" 2>/dev/null && collided=1 || true
+  done <<EOF
+$untracked
+EOF
+  [ "$collided" = 1 ] && echo "sync-release: cleared release-owned untracked file(s) blocking ff (backup: logs/.sync-collision) — release version wins"
+fi
+
 LOOP_BEFORE="$(git rev-parse "HEAD:scripts/heartbeat-loop.sh" 2>/dev/null || echo)"
 if git merge --ff-only "origin/$BRANCH" --quiet 2>/dev/null; then
   [ -f "$TMP" ] && cp -f "$TMP" tasks.yaml 2>/dev/null || true   # live queue wins over the snapshot
