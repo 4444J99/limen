@@ -156,6 +156,34 @@ DEFAULT_MAP: list[dict] = [
         "env": ["LIMEN_CLAUDE_AUTH_TOKEN"],
         "enabled": False,
     },
+    {
+        # The Gmail app-password for the autonomous mail lane (C_MAIL keyless drafts/sweep). The secret
+        # ALREADY EXISTS in 1Password — nothing to mint. Registered here as the credential's canonical HOME
+        # so it never resurfaces as a "generate a credential" chat/lever again. enabled=False because its
+        # real CONSUMER is a CI secret, not a local subprocess: the deploy target is the GitHub Actions
+        # secret GMAIL_APP_PASSWORD on organvm/domus, landed once via `op read <ref> | gh secret set
+        # GMAIL_APP_PASSWORD -R organvm/domus` (value streams op→gh, never on screen). Flip to True only if
+        # a local lane is ever switched to read GMAIL_APP_PASSWORD from ~/.limen.env directly.
+        # See L-GMAIL-CRED / issue #261, the Wall index #320, memory: gmail-mutation-cascade-avenues.
+        "lane": "gmail (C_MAIL app-password)",
+        "ref": "op://Private/gmail-app-pw-2026-06-06/password",
+        "env": ["GMAIL_APP_PASSWORD"],
+        "enabled": False,
+    },
+    {
+        # The ianva cloud-connector bearer token (the one re-auth a local gateway physically cannot fix —
+        # claude.ai runs that OAuth from Anthropic's cloud). LOCALLY MINTED, not a 1Password secret: created
+        # once via `python3 -m ianva.cli bearer --new` and landed in ~/.limen.env via
+        # `scripts/set-credential.sh IANVA_BEARER_TOKEN` (silent prompt). NOT derived/refreshed here because
+        # `bearer --new` ROTATES it (non-idempotent) — hydrating would break the live connector. Registered
+        # so the credential INFORMATION has a canonical home (env-var name + provenance); the activation is
+        # L-IANVA-CLOUD / issue #263 (Wall index #320). The `ref` is a placeholder home should a stable
+        # op:// item ever be minted; enable only then. See memory: ianva-mcp-doorway.
+        "lane": "ianva (cloud connector bearer)",
+        "ref": "op://Personal/IANVA Bearer Token/credential",
+        "env": ["IANVA_BEARER_TOKEN"],
+        "enabled": False,
+    },
 ]
 
 
