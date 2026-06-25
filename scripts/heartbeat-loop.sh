@@ -181,6 +181,24 @@ while true; do
     echo "autonomy paused by governor — exiting"
     exit 0
   fi
+  # CONNECTIVITY GATE — leaving the house / Starlink not joined is a NORMAL idle beat, NOT an
+  # incident. The whole body (sync-release → drain → mine → route → dispatch) needs GitHub; with
+  # no network EVERY lane's gh/claude/codex call falls through to a silent-auth failure → login
+  # flap → interactive sign-in tab (the overnight tab-flood + torn-write root cause). So when the
+  # one host the cycle depends on is unreachable, skip the work voices and idle at MAX tempo —
+  # self-heals the instant the network returns, with no file, no flag, no human. The probe is the
+  # same DNS+TCP:443 reach the CLIs' own silent refresh needs; offline it caps at the short timeout
+  # (and offline beats are exactly the ones we want to short-circuit). Set LIMEN_NET_PREFLIGHT=0 to
+  # disable. Mirrors the per-lane _oauth_unreachable_lanes() gate, one scale up (whole beat).
+  if [ "${LIMEN_NET_PREFLIGHT:-1}" = "1" ] && \
+     ! python3 -c "import socket; socket.create_connection(('${LIMEN_NET_HOST:-api.github.com}', 443), timeout=${LIMEN_NET_TIMEOUT:-3}).close()" 2>/dev/null; then
+    echo "  offline — ${LIMEN_NET_HOST:-api.github.com} unreachable; idle beat (self-heals when network returns)"
+    python3 "$LIMEN_ROOT/scripts/emit-tick.py" 2>&1 | tail -1 || true
+    beat="$MAX"
+    echo "── tempo: offline → ${beat}s ──"
+    sleep "$beat"
+    continue
+  fi
   # SUBSTRATE SELF-HEAL — re-converge this checkout to the release (origin/main) before doing
   # work, so the beat always runs the latest code (push = deploy). ff-only, data-preserving,
   # fail-open; never exits/re-execs the daemon. Closes the loop: root → leaf → back to root.
