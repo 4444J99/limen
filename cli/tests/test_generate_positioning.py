@@ -112,6 +112,55 @@ def test_guard_refuses_when_a_price_leaks_into_public(tmp_path: Path):
     assert not (tmp_path / "out" / f"{SLUG}.md").exists(), "no public file on a guard failure"
 
 
+def _frontdoor() -> dict:
+    return {
+        "headline": "I build production systems that solve expensive problems.",
+        "subhead": "Live platforms. Two doors:",
+        "door_client": {"label": "Deploy it for your shop", "blurb": "Pick the depth that fits."},
+        "door_recruiter": {"label": "Work with the builder", "blurb": "This is the evidence."},
+        "closing": "Reach out. This conversation starts at serious.",
+    }
+
+
+def _env_fd(tmp_path: Path, seed: dict, frontdoor: dict) -> dict:
+    (tmp_path / "value-repos.json").write_text(json.dumps({"repos": [REPO]}))
+    (tmp_path / "seeds.json").write_text(
+        json.dumps({"frontdoor": frontdoor, "repos": {REPO: seed}}))
+    env = dict(os.environ)
+    env.update({
+        "LIMEN_ROOT": str(tmp_path),
+        "LIMEN_VALUE_REPOS": str(tmp_path / "value-repos.json"),
+        "LIMEN_POSITIONING_SEEDS": str(tmp_path / "seeds.json"),
+        "LIMEN_POSITIONING_DIR": str(tmp_path / "out"),
+    })
+    return env
+
+
+def test_frontdoor_renders_both_doors_and_systems(tmp_path: Path):
+    env = _env_fd(tmp_path, _seed(), _frontdoor())
+    r = _run(env, "--frontdoor", "--apply")
+    assert r.returncode == 0, r.stderr
+    fd = (tmp_path / "out" / "_frontdoor.md").read_text()
+    assert "Deploy it for your shop" in fd        # client door
+    assert "Work with the builder" in fd          # recruiter door
+    assert "Test Platform" in fd                  # the system card
+    assert f"github.com/{REPO}" in fd             # links to the repo
+
+
+def test_frontdoor_has_no_prices(tmp_path: Path):
+    env = _env_fd(tmp_path, _seed(), _frontdoor())
+    _run(env, "--frontdoor", "--apply")
+    fd = (tmp_path / "out" / "_frontdoor.md").read_text()
+    assert "$" not in fd and "/mo" not in fd
+
+
+def test_frontdoor_guard_refuses_price_leak(tmp_path: Path):
+    env = _env_fd(tmp_path, _seed(extra_price_in_public=True), _frontdoor())
+    r = _run(env, "--frontdoor", "--apply")
+    assert r.returncode != 0, "front door must refuse to write when a price leaks"
+    assert not (tmp_path / "out" / "_frontdoor.md").exists()
+
+
 def test_default_target_is_seeded_value_repos_only(tmp_path: Path):
     # value-repos lists two repos; only one is seeded → only that one renders.
     (tmp_path / "value-repos.json").write_text(

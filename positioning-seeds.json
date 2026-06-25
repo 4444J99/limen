@@ -1,5 +1,18 @@
 {
   "_comment": "Judgment layer for scripts/generate-positioning.py — per-repo inbound positioning. The deepest ladder level is the recruiter bridge (see docs/inbound-magnet-system.md). internal_anchor values are NEVER published; they render only into the .internal artifact. PUBLIC pages carry NO prices (tool-enforced).",
+  "frontdoor": {
+    "headline": "I build production systems that solve expensive problems.",
+    "subhead": "Not demos. Live platforms — tested, deployed, and running. Each repo below is a working system someone can put to work today. Two doors:",
+    "door_client": {
+      "label": "Have a problem one of these solves? — Deploy it for your shop",
+      "blurb": "Pick the depth that fits. We feed you the output, run it under your brand, build it for your exact world, or become your engine."
+    },
+    "door_recruiter": {
+      "label": "Hiring someone who ships at this level? — Work with the builder",
+      "blurb": "Everything here is the portfolio. If you need a senior builder who owns systems end-to-end — data, infra, AI, deploy — this is the evidence."
+    },
+    "closing": "If any of this fits, reach out. This conversation starts at serious."
+  },
   "repos": {
     "organvm/public-record-data-scrapper": {
       "display_name": "50-State UCC Public-Records Intelligence Platform",
