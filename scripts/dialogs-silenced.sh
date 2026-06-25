@@ -45,15 +45,28 @@ fi
 echo
 
 # ── 2. 1Password / Touch-ID — the fingerprint dialogs. ──
+# SILENCED when NO automated path calls `op` — then a locked vault can never pop Touch-ID unattended.
+# creds-hydrate.py is the only `op` caller; it now reads op ONLY with an explicit --op flag (opt-in),
+# so a bare TTY (every daemon beat AND every interactive session) no longer triggers it — that TTY
+# clause WAS the storm. Service accounts (the only promptless `op`) are 1Password BUSINESS-only and
+# UNAVAILABLE on a personal account, so a token is NOT required for silence and its absence is NOT a
+# gap; it would only be an optional bonus to auto-hydrate the op:// lanes. [[macos-tcc-gatekeeper-dialogs-solved]]
+CREDS="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)/scripts/creds-hydrate.py"
 SA_FILE="${LIMEN_OP_SA_TOKEN_FILE:-$HOME/.config/op/service-account-token}"
-if [ -n "${OP_SERVICE_ACCOUNT_TOKEN:-}" ] || { [ -f "$SA_FILE" ] && [ -s "$SA_FILE" ]; }; then
-  green "1Password: service-account token present → every 'op read' is promptless (no Touch-ID)"
+if [ -f "$CREDS" ] && grep -q 'op_ok = op_can_read_silently() or args\.op' "$CREDS" \
+   && ! grep -Eq 'op_ok *=.*running_interactively\(\)' "$CREDS"; then
+  green "1Password: op:// reads are OPT-IN (--op only) → no daemon beat or session can pop Touch-ID"
+  note "SSH agent routing is also opt-in (LIMEN_USE_1PASSWORD_SSH; organvm/domus-genoma#130) — git is HTTPS, so SSH never hits 1Password either."
+  if [ -n "${OP_SERVICE_ACCOUNT_TOKEN:-}" ] || { [ -f "$SA_FILE" ] && [ -s "$SA_FILE" ]; }; then
+    note "service-account token present → op:// lanes (gemini/cloudflare) also hydrate unattended (optional bonus)."
+  else
+    note "op:// lanes hydrate only via 'creds-hydrate --apply --op' at a terminal (one deliberate touch). A 1Password"
+    note "service account would auto-hydrate them, but it's BUSINESS-only — unavailable on a personal account, so NOT a gap."
+  fi
 else
-  red "1Password: no service-account token → 'op read' falls back to Touch-ID / desktop-app dialog"
-  cure "1Password.com → Developer → Service Accounts → create one, grant READ on the vaults creds-hydrate uses."
-  cure "Save its token (replace ops_…):   printf %s 'ops_…' > '$SA_FILE' && chmod 600 '$SA_FILE'"
-  cure "Wire it into the fleet env:        echo \"export OP_SERVICE_ACCOUNT_TOKEN=\\\$(cat '$SA_FILE')\" >> ~/.limen.env"
-  note "The cure creds-hydrate.py already expects — homed as L-OP-SERVICE-ACCOUNT; supersedes the 'op signin' atom in L-FLEET-CAPACITY."
+  red "1Password: creds-hydrate still auto-reads 'op' (no opt-in gate) → can pop Touch-ID unattended"
+  cure "Make 'op read' opt-in in scripts/creds-hydrate.py:  op_ok = op_can_read_silently() or args.op  (drop the running_interactively() clause; add a --op flag)."
+  note "This is a CODE fix an agent CAN land (no human needed) — not a service-account token (Business-only, impossible on a personal account)."
 fi
 echo
 

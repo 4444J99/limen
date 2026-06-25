@@ -213,3 +213,36 @@ def test_verify_cli_no_creds_materialized_exits_zero(tmp_path):
     )
     assert r.returncode == 0
     assert "not materialized" in r.stdout
+
+
+# --- OP IS OPT-IN: the root-to-leaf fix for the 1Password Touch-ID prompt storm -------------------
+def test_op_read_is_opt_in_no_prompt_by_default(tmp_path, monkeypatch):
+    """`op read` is OPT-IN. A default --apply (non-TTY, no --op, no service-account token) must NEVER
+    invoke op_read — the bare-TTY auto-trigger it replaces was the Touch-ID prompt storm (every daemon
+    beat AND every interactive session presents as a TTY). Only an explicit --op may reach 1Password."""
+    mod = _hydrate_module("creds_hydrate_optin")
+    env_file = tmp_path / ".limen.env"
+    mod.ENV_FILE = env_file
+    map_file = tmp_path / "map.json"
+    # a single op://-only lane (no `derive`) so op_read is the ONLY way it could hydrate
+    map_file.write_text('[{"lane":"x","ref":"op://V/I/credential","env":["X_KEY"]}]')
+    monkeypatch.setenv("LIMEN_CREDS_MAP", str(map_file))
+    for v in ("OP_SERVICE_ACCOUNT_TOKEN", "OP_CONNECT_HOST", "OP_CONNECT_TOKEN"):
+        monkeypatch.delenv(v, raising=False)
+    monkeypatch.setattr(mod, "have_op", lambda: True)
+    monkeypatch.setattr(mod, "SA_TOKEN_FILE", tmp_path / "absent-token")  # no silent-auth token
+
+    calls = []
+    monkeypatch.setattr(mod, "op_read", lambda ref, timeout=15: (calls.append(ref), "SECRET")[1])
+
+    # default --apply: op must NOT be touched — no prompt path at all
+    monkeypatch.setattr(sys, "argv", ["creds-hydrate", "--apply"])
+    assert mod.main() == 0
+    assert calls == [], "op_read fired without --op — the prompt-storm regression is back"
+    assert (not env_file.exists()) or ("X_KEY" not in env_file.read_text())
+
+    # explicit --op: op IS read (the deliberate, human-initiated path)
+    monkeypatch.setattr(sys, "argv", ["creds-hydrate", "--apply", "--op"])
+    assert mod.main() == 0
+    assert calls == ["op://V/I/credential"], "op_read must run when --op is passed"
+    assert "export X_KEY=SECRET" in env_file.read_text()

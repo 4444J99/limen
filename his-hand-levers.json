@@ -281,17 +281,6 @@
       "issue": 190
     },
     {
-      "id": "L-OP-SERVICE-ACCOUNT",
-      "label": "OPTIONAL — re-enable UNATTENDED credential hydration without any Touch-ID/GUI dialog. ROOT of the recurring 1Password prompts: the daemon (launchd com.limen.creds-hydrate every 30 min + login, AND every metabolize beat) ran `op read`, which under the 1Password desktop-app integration pops a biometric prompt whenever the vault is locked — a relentless storm. FIXED (mine, shipped): creds-hydrate.py now GATES op:// reads behind non-interactive auth, so the storm is GONE today with zero action from you (the gh keyring `derive` lane still hydrates every beat; only the op:// lanes — gemini, cloudflare — wait). The cost: those op:// lanes no longer auto-refresh from 1Password unattended; a deliberate `op signin` in a terminal followed by `creds-hydrate.py --apply` still works on demand. To restore fully-automatic, promptless hydration of the op:// lanes too: mint a 1Password SERVICE ACCOUNT (1password.com → Developer → Service Accounts → create; grant READ on vaults Personal, Private, GitHub-Tokens) and drop its token at ~/.config/op/service-account-token (chmod 600). creds-hydrate.py auto-loads it and hydrates unattended forever — no per-version churn, no biometric.",
-      "owner": "yours",
-      "cost": "~3 min in 1Password.com to mint a service account + one paste into ~/.config/op/service-account-token (chmod 600)",
-      "unlocks": "fully-automatic promptless credential hydration of the op:// lanes restored; daemon re-mints lapsed tokens with zero dialogs",
-      "source_task": "1Password prompt-storm fix (fix/creds-hydrate-noninteractive-guard; 2026-06-25)",
-      "gate": "minting a standing read-credential for your whole vault is a security decision — your call; NOT required (the prompts are already gone without it)",
-      "note": "A service-account token is a long-lived secret with read access to the granted vaults. It is the ONLY auth that makes `op read` non-interactive — the desktop-app integration ALWAYS prompts when locked. Sibling levers L-AGENT-BASH-PROMPT / L-LINT-HOOK / L-BACKUP-FDA cover the OTHER approval-dialog sources. See memory: macos-tcc-gatekeeper-dialogs-solved, credential-durability-organ.",
-      "issue": 288
-    },
-    {
       "id": "L-FIREWALL-PROMPT",
       "label": "Silence the 'python/node wants to accept incoming connections' dialog FOR GOOD. ROOT (found 2026-06-25): the macOS Application Firewall is ON, and the ianva gateway's mcphub backend (@samanhappy/mcphub) calls app.listen(port) with NO host arg, so node binds ALL interfaces (*:7666) instead of loopback — and mcphub exposes no HOST/BIND env to fix it. node is ad-hoc-signed, so every `brew upgrade node` rotates its path+cdhash and the firewall re-prompts. An AI cannot lower this: socketfilterfw needs root (sudo has no NOPASSWD here) — that impossibility is the guardrail. THE CURE (your hand, once): turn the app firewall off (defensible on a single-user box behind NAT, fully reversible) or allow node explicitly. `bash scripts/dialogs-silenced.sh` prints the exact paste and verifies the whole dialog estate.",
       "owner": "yours",

@@ -113,3 +113,9 @@ parameters:
     self_update: "may lower under VITALS pressure"
     owner: arms-agents
     note: "First cross-organ link: VITALS pressure should drive this ceiling down."
+  LIMEN_USE_1PASSWORD_SSH:
+    default: "0"               # OFF — never route SSH through 1Password by default
+    env: LIMEN_USE_1PASSWORD_SSH
+    self_update: none
+    owner: limen-daemon
+    note: "Opt-in (=1) to route SSH_AUTH_SOCK through the 1Password agent (domus-genoma 02-1password.zsh). OFF by default: the app's BiometricsOnly/never-cache policy turns every agent hit into a Touch-ID prompt, and git here is HTTPS with no keys in the agent — so routing buys nothing and only risks the prompt storm. See macos-tcc-gatekeeper-dialogs-solved."
