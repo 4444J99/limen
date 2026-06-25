@@ -120,6 +120,46 @@ if len(ids) != len(set(ids)):
 print(f"ok    obligations surface can union {len(levs)} levers without collision")
 PY
 
+# ---------------------------------------------------------------------------
+# 7: every lever is OWNED IN THE GRAPH, not just in this file. A lever that
+#    lives only in JSON still hangs on whoever reads the JSON. Durable
+#    invariant (always enforced): each lever carries an `issue` number — a
+#    needs-human issue is its individually-closeable home. Online deepening:
+#    confirm no stamped pointer is dangling. A CLOSED issue means the lever was
+#    pulled (not a failure). Keep in sync with: scripts/sync-hishand-issues.py --apply
+# ---------------------------------------------------------------------------
+if ! python3 - "$REGISTRY" <<'PY'; then fail=1; fi
+import json, sys
+d = json.load(open(sys.argv[1]))
+rc = 0
+for lev in d.get("levers", []):
+    if not isinstance(lev.get("issue"), int):
+        print(f"FAIL  lever {lev.get('id','<no-id>')}: no `issue` pointer — owned in the file "
+              f"but not assigned in the graph. Run scripts/sync-hishand-issues.py --apply"); rc = 1
+if rc == 0:
+    print("ok    every lever carries a needs-human issue pointer (owned + assigned in the graph)")
+sys.exit(rc)
+PY
+
+if command -v gh >/dev/null 2>&1 && [ -z "${LIMEN_OFFLINE:-}" ]; then
+  slug="$(gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null || true)"
+  if [ -n "$slug" ]; then
+    open_n=0; closed_n=0
+    while IFS= read -r num; do
+      [ -n "$num" ] || continue
+      state="$(gh api "repos/$slug/issues/$num" --jq .state 2>/dev/null || true)"
+      case "$state" in
+        open)   open_n=$((open_n + 1)) ;;
+        closed) closed_n=$((closed_n + 1)) ;;
+        *)      bad "lever issue #$num is a DANGLING pointer (no such issue on $slug)" ;;
+      esac
+    done < <(python3 -c 'import json,sys;[print(l["issue"]) for l in json.load(open(sys.argv[1])).get("levers",[]) if isinstance(l.get("issue"),int)]' "$REGISTRY")
+    ok "graph: $open_n levers owed (open), $closed_n pulled (closed), 0 dangling"
+  fi
+else
+  printf 'note  %s\n' "offline — skipped GitHub open/closed check (pointer-presence still enforced)"
+fi
+
 echo
 if [ "$fail" -ne 0 ]; then
   echo "VERDICT: tasks are hanging — see FAIL lines above. Hang each in its owner's git-tracked record, then re-run."

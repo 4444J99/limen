@@ -10,7 +10,8 @@
       "cost": "1 word",
       "unlocks": "20 clean PRs land",
       "source_task": "ASK-5",
-      "note": "Ground-truth: only 20 of 200 open PRs are clean; the 138 CI-red are fleet HEAL work, not your hand."
+      "note": "Ground-truth: only 20 of 200 open PRs are clean; the 138 CI-red are fleet HEAL work, not your hand.",
+      "issue": 252
     },
     {
       "id": "L-REVENUE-ACCT",
@@ -18,7 +19,8 @@
       "owner": "yours",
       "cost": "~10 min, no code",
       "unlocks": "first dollar (income before August)",
-      "source_task": "revenue-ladder (whose_hand: yours)"
+      "source_task": "revenue-ladder (whose_hand: yours)",
+      "issue": 253
     },
     {
       "id": "L-CLOUDFLARE-DEPLOY",
@@ -26,7 +28,8 @@
       "owner": "yours",
       "cost": "~2 min once, durable",
       "unlocks": "16 BLD2 deploys — all 6 revenue products go live",
-      "source_task": "BLD2-* (16 tasks)"
+      "source_task": "BLD2-* (16 tasks)",
+      "issue": 254
     },
     {
       "id": "L-CONTAINER-CUTOVER",
@@ -34,7 +37,8 @@
       "owner": "yours",
       "cost": "~30 min, irreversible",
       "unlocks": "durable single-body identity",
-      "source_task": "ASK-2, ASK-20"
+      "source_task": "ASK-2, ASK-20",
+      "issue": 255
     },
     {
       "id": "L-GH-LAUNCHD-077",
@@ -42,7 +46,8 @@
       "owner": "yours",
       "cost": "~2 min once",
       "unlocks": "soak-test LaunchAgent lane",
-      "source_task": "LIMEN-077"
+      "source_task": "LIMEN-077",
+      "issue": 256
     },
     {
       "id": "L-BRANCH-PROTECT-072",
@@ -56,7 +61,8 @@
         "DONE 2026-06-24: organvm/limen `main` protected — required status check `pr-gate` (always-on workflow added in #211; protection set via gh api).",
         "DONE: scripts/setup-rulesets.py's _GATE regex now detects pr-gate/python/web/worker (+ a --contexts override) — the descent tool is ready.",
         "Fleet-wide (your lever): dry-run `python3 scripts/setup-rulesets.py` to review the per-repo plan, then `--apply` to write branch protection across the other organ repos (org-admin mutation — human-pulled)."
-      ]
+      ],
+      "issue": 257
     },
     {
       "id": "L-ENC1101-GOLIVE",
@@ -73,7 +79,8 @@
         "Greenlight the §3 relabel (use the -IMPORT-aligned.csv when posting)",
         "I browser-drive: syllabus → Manage Dates → announcements → intelligent agent",
         "You click Set Offering to Active; I verify Student View"
-      ]
+      ],
+      "issue": 258
     },
     {
       "id": "L-ENC1102-GRADEBOOK",
@@ -87,7 +94,8 @@
         "Read edu-organism courses/enc1102/memory/gradebook-weights.md (one note, two worked paths to 100%)",
         "Pick Path A (per-category, majors=60%) or Path B (flat + calc note) — turns on whether Broward's master permits per-category weights",
         "Key the chosen weights into the ENC1102 D2L gradebook; I verify the column math sums to 100%"
-      ]
+      ],
+      "issue": 259
     },
     {
       "id": "L-EDU-PERTERM",
@@ -101,7 +109,8 @@
         "Export the term's LMS shell (D2L: Course Admin → Import/Export/Copy → Export as cartridge; Canvas: Settings → Export Course Content)",
         "Fill the real ref / section / start / end into courses/<course>/terms/<term>.yaml (fall-2026.yaml is pre-stubbed with loud TODOs)",
         "Run the recapitulation engine — it writes terms/<term>/generated/; I gate it green (verify.sh + pytest) and surface anything left"
-      ]
+      ],
+      "issue": 260
     },
     {
       "id": "L-GMAIL-CRED",
@@ -115,7 +124,8 @@
         "op read op://Private/gmail-app-pw-2026-06-06/password | gh secret set GMAIL_APP_PASSWORD -R organvm/domus",
         "OR add a Bash allow-rule Bash(gh secret set:*) so any session lands it autonomically",
         "OR run one `claude --dangerously-skip-permissions` session — the agent lands it"
-      ]
+      ],
+      "issue": 261
     },
     {
       "id": "L-IANVA-LOCAL",
@@ -132,7 +142,8 @@
         "REMAINING (the one flip) — keep it alive across reboot: cp ianva/deploy/com.ianva.gateway.plist ~/Library/LaunchAgents/ ; sed -i '' \"s#__IANVA_DIR__#$PWD#g\" ~/Library/LaunchAgents/com.ianva.gateway.plist ; launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.ianva.gateway.plist  (auto-starts the npm gateway + triggers a one-time macOS Login-Items approval — that is why it is yours, not mine).",
         "Until launchd lands, after any reboot/logout restart in one line: cd ianva && PYTHONPATH=$PWD/src python3 -m ianva.cli up  (binds :7666 in ~7s).",
         "Optional, later — populate upstreams (build-mcp-registry.py, or ~/.config/ianva/upstreams.json); the local face needs none, upstreams only matter for the cloud connector (see L-IANVA-CLOUD)."
-      ]
+      ],
+      "issue": 262
     },
     {
       "id": "L-IANVA-CLOUD",
@@ -149,7 +160,8 @@
         "python3 -m ianva.cli up                              # restart so the gateway ENFORCES the bearer",
         "bash ianva/scripts/ianva-tunnel.sh                   # refuses unless /mcp returns 401 unauth'd; prints the public URL",
         "Set gateway.public_url in ianva.toml to <url>/mcp, then in claude.ai add ONE custom connector at that URL with the bearer in its auth header — it replaces the per-service connectors"
-      ]
+      ],
+      "issue": 263
     },
     {
       "id": "L-MODEL-TIER",
@@ -164,7 +176,8 @@
         "Make it the DEFAULT: set the model default to sonnet in ~/.claude/settings.json (\"model\": \"claude-sonnet-4-6\") and remove the 1M-context pin, OR set it via /config — new FleetView sessions then inherit Sonnet",
         "Keep an Opus escape hatch: /model opus (and /model opus[1m] when a session genuinely needs the 1M window) for canon-synthesis work",
         "Optional structural: a session-spawn default that DEDUCES the tier from task class (the automatic capability+model selection in latency-automatic-selection) — propose to Claude to build behind a flag"
-      ]
+      ],
+      "issue": 264
     },
     {
       "id": "L-FLEET-CAPACITY",
@@ -180,7 +193,8 @@
         "gh: the master-org PAT is revoked/expired (401 Bad credentials) — mint a fresh PAT (repo + workflow scope) and update op://GitHub-Tokens/master-org-token-011726. Until then gh runs on the valid keyring auth for 4444J99.",
         "Then: `python3 scripts/creds-hydrate.py --apply && python3 scripts/creds-hydrate.py --verify` — all ✓ means every lane authenticates. metabolize.sh now runs --verify each beat, so a dead cred surfaces in the beat log automatically and self-heals the moment you re-mint into op."
       ],
-      "note": "The validity GAP is fixed in code (creds-hydrate --verify + the metabolize.sh wiring + tests): the organ can no longer report a dead token as good, and route.py's presence census is no longer the only signal. Only the re-mint is yours. Map stays a NAMED param (DEFAULT_MAP / LIMEN_CREDS_MAP). See memory: credential-durability-organ."
+      "note": "The validity GAP is fixed in code (creds-hydrate --verify + the metabolize.sh wiring + tests): the organ can no longer report a dead token as good, and route.py's presence census is no longer the only signal. Only the re-mint is yours. Map stays a NAMED param (DEFAULT_MAP / LIMEN_CREDS_MAP). See memory: credential-durability-organ.",
+      "issue": 265
     },
     {
       "id": "L-HEALTH-GOLIVE",
@@ -195,7 +209,8 @@
         "Until you pick, the content can auto-publish via the daemon's capture side-ref (condition-inferential only — no name, no chart, no PII). If that urgency matters, say so and I prioritize the privatize extraction now.",
         "The earlier reference-library question (where the reference library lives) is answered by this same publish/privatize choice.",
         "Clinical inputs the office still needs (PII-safe): open ~/Workspace/_health-private/human-atoms.md — never recorded in git or this registry. See memory: health-office-organ, health-pii-in-generator-code, life-os-mandate"
-      ]
+      ],
+      "issue": 266
     },
     {
       "id": "L-POSITIONING-ACTIVATE",
@@ -215,7 +230,8 @@
         "Seed the remaining value-repos — session-meta, portfolio, the two limen mirrors. Point me at a repo's real proof (tests/deploy/scale) or just name it; I verify and draft the seed. No fabricated weight. Seeded & live: public-record-data-scrapper, universal-mail--automation, a-i-chat--exporter.",
         "Optional: deeper lead capture — the 3-step inbound-lead protocol-class recipe is in docs/positioning/_capture.md; gives leads a first-class lane beyond today's tagged-inbox classification."
       ],
-      "note": "INVARIANT: none of this sends, deletes, or spends without you — capture drafts, it never reaches out. The system record docs/positioning/_his-hand.md is the full owner-record; this lever is its single canonical pointer on the obligations face (per this file's _doc: a his-hand task hangs HERE, not only in a satellite doc). See memory: [[repos-are-inbound-signal-surface]], [[publish-form-rent-operation]], [[his-hand-tasks-hang-in-permanent-registry]]."
+      "note": "INVARIANT: none of this sends, deletes, or spends without you — capture drafts, it never reaches out. The system record docs/positioning/_his-hand.md is the full owner-record; this lever is its single canonical pointer on the obligations face (per this file's _doc: a his-hand task hangs HERE, not only in a satellite doc). See memory: [[repos-are-inbound-signal-surface]], [[publish-form-rent-operation]], [[his-hand-tasks-hang-in-permanent-registry]].",
+      "issue": 267
     }
   ]
 }
