@@ -16,12 +16,18 @@ branch protection can be removed. `--apply` is GATED on the user.
   python3 scripts/setup-rulesets.py            # dry-run plan (read-only)
   python3 scripts/setup-rulesets.py --apply     # ⚠ GATED: configure protection + auto-merge
   python3 scripts/setup-rulesets.py --repo owner/name [...]   # limit to specific repos
+  python3 scripts/setup-rulesets.py --contexts pr-gate,python,web   # force these check names (skip detection)
 """
 import json, subprocess, sys
 from collections import OrderedDict
 
 APPLY = "--apply" in sys.argv
 EXPLICIT = [sys.argv[i + 1] for i, a in enumerate(sys.argv) if a == "--repo" and i + 1 < len(sys.argv)]
+# --contexts a,b,c overrides auto-detection entirely — the explicit fallback for any repo whose job
+# names the heuristic can't classify. Applied to every targeted repo.
+FORCED = next((sys.argv[i + 1].split(",") for i, a in enumerate(sys.argv)
+               if a == "--contexts" and i + 1 < len(sys.argv)), None)
+FORCED = [c.strip() for c in FORCED if c.strip()] if FORCED else None
 
 
 def gh(args, t=45):
@@ -49,7 +55,10 @@ def target_repos():
 import re
 # A genuine merge gate is the test/build/lint suite — NOT bots, scanners, release-drafters, or CLA.
 # Requiring the latter (strict) would permanently block merges (they never reliably "pass" per-PR).
-_GATE = re.compile(r"\b(test|build|lint|typecheck|type-check|e2e|tox|matrix|smoke|unit|compile|gates|pytest|jest|vitest|doctor)\b", re.I)
+# The token list includes this estate's own CI job names (derived from .github/workflows): the
+# always-on `pr-gate` workflow (matched by `gate`, the `-` is a word boundary) plus ci.yml's
+# `python` / `web` / `worker` jobs — without these the limen-style repos report "no checks detected".
+_GATE = re.compile(r"\b(test|build|lint|typecheck|type-check|e2e|tox|matrix|smoke|unit|compile|gate|gates|pytest|jest|vitest|doctor|python|web|worker)\b", re.I)
 _NOISE = re.compile(r"(cla|dependabot|release[_-]?draft|sourcery|coderabbit|gitguardian|semgrep|secret|codeql|analyze|advisory|scan|pr title|pr comment|^release$)", re.I)
 
 
@@ -59,6 +68,8 @@ def is_real_gate(name):
 
 def detect_checks(repo):
     """genuine CI gate names from the newest open PR's rollup (filtered: real test/build/lint only)."""
+    if FORCED:
+        return list(FORCED)
     prs = gh_json(["pr", "list", "--repo", repo, "--state", "open", "--limit", "1",
                    "--json", "number"], default=[]) or []
     if not prs:
@@ -76,7 +87,10 @@ def detect_checks(repo):
 def main():
     repos = target_repos()
     print(f"=== ruleset plan — {len(repos)} repos with open PRs "
-          f"({'APPLY' if APPLY else 'DRY-RUN'}) ===\n")
+          f"({'APPLY' if APPLY else 'DRY-RUN'}) ===")
+    if FORCED:
+        print(f"    contexts forced (detection skipped): {FORCED}")
+    print()
     no_ci = []
     for repo in repos:
         info = gh_json(["repo", "view", repo, "--json", "defaultBranchRef"], default={}) or {}
