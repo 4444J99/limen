@@ -46,23 +46,29 @@ parameters:
     owner: vitals
     note: "The kernel's own jetsam signal — correct gauge; free-pages stays ~0 even when healthy."
   VITALS_PRESSURE_WARN:
-    default: 1                  # macOS: 1=normal, 2=warn, 4=critical
+    default: 2                  # macOS gauge: 1=normal, 2=warn, 4=critical
     env: LIMEN_VITALS_WARN
     self_update: none
     owner: vitals
-    note: "At >=warn: stop opening new dispatch lanes (idle beat, mirror #224 offline gate)."
+    note: "At >=warn (2): stop opening new dispatch lanes (idle beat, mirror #224 offline gate). Seed said 1, but 1 IS normal — that would idle every beat; corrected to the kernel's warn level."
   VITALS_PRESSURE_CRITICAL:
-    default: 2
+    default: 4
     env: LIMEN_VITALS_CRIT
     self_update: none
     owner: vitals
-    note: "At >=critical: shed running discretionary load (e.g. ollama) before jetsam escalates."
+    note: "At >=critical (4): also shed running discretionary load (e.g. ollama) before jetsam escalates."
   VITALS_HEAVY_SURFACE_LIMIT:
     default: 1
     env: LIMEN_VITALS_HEAVY_LIMIT
     self_update: none
     owner: vitals
     note: "FIND-005: one heavy AI surface at a time on a 16GB host."
+  VITALS_SHED_OLLAMA:
+    default: "1"
+    env: LIMEN_VITALS_SHED_OLLAMA
+    self_update: none
+    owner: vitals
+    note: "Kill switch for the critical-pressure ollama shed. 1=shed loaded models at >=critical; 0=record only."
 
   # --- CONTINUITY: make hand-recovery automatic (build order #1) ----------------
   CONTINUITY_MIN_SUMMARY_CHARS:
@@ -79,11 +85,11 @@ parameters:
 
   # --- INTEGRITY: govern the autoupdater lever (build order #1) ------------------
   INTEGRITY_AUTOUPDATER:
-    default: "disabled"        # the documented lever (DISABLE_AUTOUPDATER=1)
-    env: DISABLE_AUTOUPDATER
+    default: "disabled"        # the institution's POLICY: keep the autoupdater off
+    env: LIMEN_INTEGRITY_AUTOUPDATER
     self_update: none
     owner: integrity
-    note: "Version-path churn is the root of the corrupt-app dialog + TCC re-prompts."
+    note: "Intended policy state ('disabled'|'enabled'). The MECHANISM is the DISABLE_AUTOUPDATER=1 env lever, checked separately as 'actual' (don't conflate the two value spaces). Version-path churn is the root of the corrupt-app dialog + TCC re-prompts."
   INTEGRITY_VERIFY_TARGETS:
     default:
       - "/Applications/Claude.app"

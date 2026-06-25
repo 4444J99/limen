@@ -201,6 +201,21 @@ while true; do
     sleep "$beat"
     continue
   fi
+  # VITALS GATE (VIGILIA build #1) — memory pressure is a NORMAL idle beat, not a crash.
+  # The autonomic CFO: under kernel memory pressure, stop opening new dispatch lanes (and shed
+  # ollama under critical), mirroring the offline gate one scale up. This is the hand that was
+  # missing at the 08:47 kernel panic. Fail-OPEN: any fault → 'ok' → the beat proceeds.
+  if [ "${LIMEN_VIGILIA:-1}" = "1" ]; then
+    _vitals="$(python3 -m limen.vigilia vitals-gate 2>/dev/null || echo ok)"
+    if [ "$_vitals" = "shed" ]; then
+      echo "  vitals: memory pressure ≥ warn — idle beat (no new dispatch; sheds ollama if critical; self-heals when pressure clears)"
+      python3 "$LIMEN_ROOT/scripts/emit-tick.py" 2>&1 | tail -1 || true
+      beat="$MAX"
+      echo "── tempo: vitals-pressure → ${beat}s ──"
+      sleep "$beat"
+      continue
+    fi
+  fi
   # SUBSTRATE SELF-HEAL — re-converge this checkout to the release (origin/main) before doing
   # work, so the beat always runs the latest code (push = deploy). ff-only, data-preserving,
   # fail-open; never exits/re-execs the daemon. Closes the loop: root → leaf → back to root.
@@ -294,6 +309,7 @@ while true; do
   python3 "$LIMEN_ROOT/scripts/emit-tick.py" 2>&1 | tail -1 || true   # tick voice — every beat
   stamp tick
   python3 "$LIMEN_ROOT/scripts/organ-health.py" 2>&1 | tail -1 || true   # PROPRIOCEPTION — EVERY beat: the health face must never lag the organs it watches. route stamps on C_BALANCE=2, feed on C_FEED=3, but C_WEB=4, so on the old web cadence the face showed stale "unknown" for rungs that were already green (and a restart-to-beat-2 froze it until beat 4). Cheapest renderer: read-only, no network, can't time out — belongs with the tick.
+  [ "${LIMEN_VIGILIA:-1}" = "1" ] && python3 -m limen.vigilia beat 2>&1 | tail -1 || true   # VIGILIA autonomic executive — record vitals/continuity/integrity to the seat (read-only, fail-open)
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" 2>&1 | tail -1 || true   # real per-vendor usage
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/money-view.py" 2>&1 | tail -1 || true   # revenue-first money view (no network, can't time out)
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/corpus-view.py" 2>&1 | tail -1 || true   # knowledge-base view: THE ONE + convergence activity (no network)

@@ -38,27 +38,27 @@ organs:
   # ----------------------------------------------------------------- AUTONOMIC (keep-self-alive)
   - name: vitals
     layer: autonomic
-    home: "SENSE: 4444J99/_diagnostics (sysdiag, memdiag, mem-pressure-snapshot) | EXECUTE: limen heartbeat (MISSING)"
-    status: missing            # the executive is missing; the sensor is built
+    home: "SENSE: 4444J99/_diagnostics (sysdiag, memdiag) | EXECUTE: limen/cli/src/limen/vigilia/vitals.py (wired into heartbeat-loop.sh as the VITALS GATE)"
+    status: built              # build #1: the executive now rides the heartbeat
     role: "mem/cpu/disk/swap → don't crash. Sheds fleet load before pressure → panic."
-    evidence: "08:47 kernel panic; FIND-005 'treat 16GB as a budget' diagnosed a month ago, never acted on."
-    residual: "BUILD the executive: read kern.memorystatus_vm_pressure_level on the heartbeat; throttle/pause dispatch under pressure (mirror the #224 offline-idle-beat gate)."
+    evidence: "08:47 kernel panic; FIND-005 'treat 16GB as a budget' diagnosed a month ago, never acted on. Hand built 2026-06-25 (the missing executive)."
+    residual: "Reads kern.memorystatus_vm_pressure_level on the beat; >=warn(2)=idle beat, >=critical(4)=shed ollama. Tune thresholds against _diagnostics; add a proprioception stamp so organ-health reads its liveness."
 
   - name: continuity
     layer: autonomic
-    home: organvm/session-meta + corpus feed (claude_projects.py)
-    status: partial
+    home: "limen/cli/src/limen/vigilia/continuity.py (heartbeat) + organvm/session-meta + corpus feed (claude_projects.py)"
+    status: built
     role: "Session thread → don't forget. Survives crash/rollover; reconstructs from transcript."
-    evidence: "~13:42 auto-compaction handed off a 200-char stub; full thread recovered by hand from the .jsonl transcript."
-    residual: "Make the by-hand recovery automatic: on a degenerate/short handoff summary, reconstruct from ~/.claude/projects/*.jsonl + last good /compact + session-meta."
+    evidence: "~13:42 auto-compaction handed off a 200-char stub; full thread recovered by hand. The by-hand recovery is now automatic (built 2026-06-25)."
+    residual: "On a degenerate handoff (<CONTINUITY_MIN_SUMMARY_CHARS) the beat reconstructs from ~/.claude/projects/*.jsonl → logs/vigilia/. The trigger is a best-effort scan; the upstream fix (Claude Code's rollover path) is out of our reach — surface, don't depend on it."
 
   - name: integrity
     layer: autonomic
-    home: "lever: DISABLE_AUTOUPDATER (see macos-tcc memory) — ungoverned"
-    status: missing
+    home: "limen/cli/src/limen/vigilia/integrity.py (heartbeat) — governs the DISABLE_AUTOUPDATER lever"
+    status: built
     role: "app/binary/signature → don't self-corrupt. Pin + verify the operating apps."
-    evidence: "'Claude app is corrupt' dialog this session; CLI symlink flipped version dir 06-24; desktop app signature valid now (transient churn)."
-    residual: "Pin/verify Claude.app + claude CLI signature on the heartbeat; govern the autoupdater lever; alert on signature/version drift instead of letting Gatekeeper interrupt."
+    evidence: "'Claude app is corrupt' dialog this session; CLI symlink flipped version dir 06-24. Signature verify + autoupdater governance built 2026-06-25."
+    residual: "codesign --verify INTEGRITY_VERIFY_TARGETS each beat + alert on drift / autoupdater not disabled. Alert-only (read-only); auto-remediation (re-pin/re-disable) is a deliberate next step, not silent."
 
   - name: identity
     layer: autonomic
