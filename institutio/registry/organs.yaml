@@ -99,7 +99,38 @@ organs:
   # ----------------------------------------------------------------- FACE
   - name: face
     layer: face
-    home: "tui / portus / web dashboard (web/app)"
-    status: partial
+    home: "limen/cli/src/limen/vigilia/face.py (python -m limen.vigilia face) | tui / portus / web/app"
+    status: built
     role: "One pane onto the seat — how the operator sees & steers."
-    residual: "Render from the-seat (organs.yaml + organ-health.json). Build order #4."
+    residual: "Renders the C-suite from this registry (officers + organs) + logs/vigilia/status.json, deriving the officer list from the seat (no hardcode). Build order #4 done 2026-06-25. Next: surface in web/app + overlay organ-health.json."
+
+# ============================ THE C-SUITE (officers) ============================
+# HIERARCHY.md rendered as data: which officer convenes which organs. Federation,
+# not fusion — organs stay themselves; this is the map the face renders from (no
+# hardcoded officer list). This is also the CISO fold (build order #2): identity ·
+# authority · integrity gathered under one office.
+officers:
+  CEO:
+    mandate: "run the beat"
+    organs: [limen-daemon]
+  CFO:
+    mandate: "don't crash — vitals & budget"
+    organs: [vitals]
+  CISO:
+    mandate: "don't break · stop asking · don't self-corrupt"
+    organs: [identity, authority, integrity]
+  CKO:
+    mandate: "don't forget — continuity & memory"
+    organs: [continuity]
+  CTO:
+    mandate: "architecture & genome — the spine"
+    organs: [parameter-panel, index-nominum, the-seat]
+  COO:
+    mandate: "get the work done — the arms"
+    organs: [arms-agents]
+  GC:
+    mandate: "tell the truth — judiciary + proprioception"
+    organs: [proprioception]
+  CCO:
+    mandate: "one pane to see & steer"
+    organs: [face]

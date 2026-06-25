@@ -37,17 +37,30 @@ def _beat() -> int:
     return 0
 
 
+def _face() -> int:
+    try:
+        from . import face
+
+        print(face.render())
+    except Exception as exc:
+        print(f"vigilia: face error — {str(exc)[:160]}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="limen.vigilia")
     sub = parser.add_subparsers(dest="cmd")
     sub.add_parser("vitals-gate", help="idle-beat decision under memory pressure")
     sub.add_parser("beat", help="run the full autonomic executive for this beat")
+    sub.add_parser("face", help="render the C-suite from the seat (read-only)")
     args = parser.parse_args(argv)
 
     if args.cmd == "vitals-gate":
         return _vitals_gate()
     if args.cmd == "beat":
         return _beat()
+    if args.cmd == "face":
+        return _face()
     parser.print_help()
     return 0
 
