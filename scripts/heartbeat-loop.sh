@@ -130,6 +130,7 @@ C_REPORT="${LIMEN_BEAT_REPORT:-12}"    # RELAY (conducting report; self-limits t
 C_INSIGHT="${LIMEN_BEAT_INSIGHT:-4}"   # INSIGHT (insight-cadence: aggregate signals → reports at wall-clock cadence)
 C_QUICKEN="${LIMEN_BEAT_QUICKEN:-4}"   # QUICKEN (give stalled FleetView sessions life to finish)
 C_HEALTH="${LIMEN_BEAT_HEALTH:-6}"     # CARE (refresh the personal health office: chart digest + visit-prep)
+C_LIFE="${LIMEN_BEAT_LIFE:-6}"         # STEWARD (refresh the digital-life office: accounts/assets/subscription purge clock)
 LOCKD="$LIMEN_ROOT/logs/.queue.lock.d"   # shared with supervisory ops (two-scale safety)
 c=0
 play() { [ $(( c % $1 )) -eq 0 ]; }   # true on this voice's beat
@@ -327,6 +328,10 @@ while true; do
   # HEALTH — the personal health office (PII stays local, off-repo; lockless, read-only). Refreshes
   # the chart digest + visit-prep + the autopoietic office-log every C_HEALTH beats. Fail-open.
   play "$C_HEALTH"  && { python3 "$LIMEN_ROOT/scripts/health-organ.py" 2>&1 | tail -1 || true; stamp health; }
+  # LIFE — the digital-life office (accounts/assets/subscriptions; PII stays local, off-repo;
+  # lockless, read-only). Refreshes the life briefing + open-actions + derives the subscription
+  # purge clock every C_LIFE beats. Fail-open.
+  play "$C_LIFE"    && { python3 "$LIMEN_ROOT/scripts/life-organ.py" 2>&1 | tail -1 || true; stamp life; }
   # CAPTURE — get every workspace repo OFF disk into the canonical universal context (commit+push,
   # additive only). Implements the old backup voice; falls back to a legacy backup.sh if present.
   if play "$C_BACKUP"; then

@@ -178,6 +178,9 @@ def _registry():
         dict(key="health", rung="HEALTH", voice="health", cadence_key="HEALTH",
              what="personal health office — chase open clinical loops + prep visits (PII local)",
              probe=lambda: _mtime(LOGS / "health-organ-state.json")),
+        dict(key="life", rung="LIFE", voice="life", cadence_key="LIFE",
+             what="digital-life office — accounts/assets + subscription purge clock (PII local)",
+             probe=lambda: _mtime(LOGS / "life-organ-state.json")),
     ]
 
 
