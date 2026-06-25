@@ -158,17 +158,17 @@
     },
     {
       "id": "L-HEALTH-GOLIVE",
-      "label": "Decide the health-office go-live. The executive health-office scaffold is built and ran green on 2026-06-25 (commit ff43850, PII-free BY DESIGN — chart data lives only in _health-private/chart.json at 700, off-repo). It is NOT on origin: a PHI-breach (hardcoded medication literals in source) was caught at the push-boundary and scrubbed (history purged), so publishing now is gated on you. The commit is preserved loss-proof on the LOCAL ref heal/health-office-staged-0625 — it was deliberately NOT pushed, because publishing health-adjacent work to the public origin is outward-facing and irreversible (cached/indexed even if later deleted). Two atoms are yours: (1) answer the open REFERENCE-LIBRARY question (where the health reference library lives / what it holds), and (2) greenlight a PR of the PII-free scaffold AFTER a residual-PHI re-audit of ff43850. Your actual clinical to-dos are intentionally NOT recorded here — they live off-repo in _health-private/ so PHI never enters git or this registry.",
+      "label": "Decide the health-office content DISPOSITION — and note this is TIME-BOUNDED, not passive. The executive health-office scaffold shipped green locally on 2026-06-25 (commit ff43850); your actual record (PII) lives only off-repo in _health-private/ at 700. The repo-committed parts (the office CHARTER + a general clinical reference library) name no patient and hold no chart data, but their topic selection reveals your conditions inferentially. CRITICAL — leaving this as-is does NOT keep it private: ff43850 sits on the live checkout's main, and the daemon's capture side-ref carries HEAD's full ancestry, so it will eventually PUBLISH that tree to the public repo ON ITS OWN, ungated by any PR. So the real choice is PUBLISH or PRIVATIZE, and there is a clock. MY RECOMMENDATION: privatize — move the CHARTER + reference library off-repo alongside the Chart (reversible; the organ reads the Chart, not these docs, so it keeps working). On one word I execute the privatize extraction (and, if you want, carefully purge the existing committed copy from history, coordinated with the daemon); I will NOT decide it or do history surgery unilaterally. The commit is preserved loss-proof on LOCAL ref heal/health-office-staged-0625. SEPARATELY: the office still needs a few CLINICAL inputs from you — held PII-safe off-repo; open ~/Workspace/_health-private/human-atoms.md to see them. They are never written here, to keep PHI out of git.",
       "owner": "yours",
-      "cost": "~5 min: one reference-library decision + a greenlight on the re-audited PR",
-      "unlocks": "the health-office scaffold goes live on origin (clinical data stays strictly off-repo)",
-      "source_task": "health-office-organ (shipped local 2026-06-25, commit ff43850)",
-      "gate": "outward-facing PHI-adjacent publish + the reference-library design question — your call, NEVER auto-pushed",
+      "cost": "~1 word to pick publish-or-privatize (I execute the extraction); + a 2-min read of human-atoms.md for the clinical inputs",
+      "unlocks": "health-office content disposition settled before the daemon settles it by default; office stays fully functional either way",
+      "source_task": "health-office-organ (local commit ff43850; 2026-06-25 verification pass)",
+      "gate": "outward-facing disposition of your own health data + the reference-library question — your call, TIME-BOUNDED by the daemon's auto-publish; NEVER auto-decided",
       "steps": [
-        "Answer the reference-library question (where the health reference library lives / what it contains)",
-        "On your word, I re-audit ff43850 for residual PHI (no medication literals or chart values in tracked source)",
-        "Then I open a PR for the PII-free scaffold from heal/health-office-staged-0625 → main (non-clinical only)",
-        "Clinical actions stay off-repo in _health-private/ — never in git, never in this registry. See memory: health-office-organ, health-pii-in-generator-code, life-os-mandate"
+        "PICK: publish, or privatize (recommended). On 'privatize' I move docs/health-office (CHARTER + reference library) off-repo into _health-private/ — reversible, organ unaffected.",
+        "Until you pick, the content can auto-publish via the daemon's capture side-ref (condition-inferential only — no name, no chart, no PII). If that urgency matters, say so and I prioritize the privatize extraction now.",
+        "The earlier reference-library question (where the reference library lives) is answered by this same publish/privatize choice.",
+        "Clinical inputs the office still needs (PII-safe): open ~/Workspace/_health-private/human-atoms.md — never recorded in git or this registry. See memory: health-office-organ, health-pii-in-generator-code, life-os-mandate"
       ]
     }
   ]
