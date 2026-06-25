@@ -170,6 +170,45 @@ def have_op() -> bool:
     return shutil.which("op") is not None
 
 
+# Where a 1Password service-account token lives if the user mints one. Kept OUTSIDE the repo
+# (chmod 600, never committed) so the secret never lands in git. Override with LIMEN_OP_SA_TOKEN_FILE.
+SA_TOKEN_FILE = Path(os.environ.get(
+    "LIMEN_OP_SA_TOKEN_FILE", str(Path.home() / ".config" / "op" / "service-account-token")))
+
+
+def load_service_account_token() -> None:
+    """If OP_SERVICE_ACCOUNT_TOKEN isn't already in the env, hydrate it from SA_TOKEN_FILE.
+    A service-account token is the ONLY way `op read` authenticates with ZERO interactive prompt —
+    the desktop-app integration always raises a Touch-ID/GUI dialog when locked, which is exactly
+    the prompt storm this organ must not trigger from the daemon (launchd + every metabolize beat)."""
+    if os.environ.get("OP_SERVICE_ACCOUNT_TOKEN"):
+        return
+    try:
+        tok = SA_TOKEN_FILE.read_text().strip()
+    except (FileNotFoundError, PermissionError, OSError):
+        return
+    if tok:
+        os.environ["OP_SERVICE_ACCOUNT_TOKEN"] = tok
+
+
+def op_can_read_silently() -> bool:
+    """True only when `op read` can succeed WITHOUT raising an interactive prompt — i.e. a
+    service-account token (or a Connect server) is configured. Under the desktop-app integration
+    this is False: a locked vault pops Touch-ID, which is the dialog we refuse to trigger unattended."""
+    return bool(
+        os.environ.get("OP_SERVICE_ACCOUNT_TOKEN")
+        or (os.environ.get("OP_CONNECT_HOST") and os.environ.get("OP_CONNECT_TOKEN"))
+    )
+
+
+def running_interactively() -> bool:
+    """A human is at a terminal — an `op` Touch-ID prompt is then expected and wanted."""
+    try:
+        return sys.stdin.isatty() and sys.stdout.isatty()
+    except (ValueError, OSError):
+        return False
+
+
 def op_read(ref: str, timeout: int = 15) -> str | None:
     """Read ONE secret from 1Password. Returns the value (never printed) or None on any failure."""
     try:
@@ -354,6 +393,8 @@ def main() -> int:
     g.add_argument("--dry-run", action="store_true", help="print the op://→target plan; NO reads, NO writes (default)")
     args = ap.parse_args()
 
+    load_service_account_token()  # hydrate OP_SERVICE_ACCOUNT_TOKEN from its file if present → silent `op read`
+
     cred_map = [e for e in load_map() if e.get("enabled", True)]
     if not cred_map:
         print("creds-hydrate: map is empty (all entries disabled) — nothing to do")
@@ -398,6 +439,23 @@ def main() -> int:
         return 0
 
     apply = args.apply  # default (no flag) == dry-run
+
+    # ── NON-INTERACTIVE OP GATE — the actual fix for the recurring 1Password Touch-ID/GUI dialogs ──
+    # `op read` under the desktop-app integration raises a biometric prompt whenever the vault is
+    # locked. This organ runs from the daemon (launchd login agent + EVERY metabolize beat), so an
+    # ungated `op read` there fires that dialog on a relentless cadence — the prompt storm the user
+    # sees. The plist's "fail-open / skips silently when op is locked" promise was never honored.
+    # Honor it now: call `op read` ONLY when it can succeed WITHOUT a prompt (a service-account token)
+    # or when a human is at a terminal (the prompt is then expected). PER-ENTRY, not a blanket skip —
+    # `derive` lanes (e.g. the gh keyring via `gh auth token`) are promptless and MUST still hydrate
+    # every beat; only the op:// fallback is gated.
+    op_ok = op_can_read_silently() or running_interactively()
+    if apply and not op_ok:
+        print("creds-hydrate: op:// reads GATED — no non-interactive 1Password auth "
+              f"(OP_SERVICE_ACCOUNT_TOKEN unset) and not a TTY. Avoiding a Touch-ID/GUI prompt storm "
+              f"(fail-open). `derive` lanes still hydrate. Mint a service account → {SA_TOKEN_FILE}, "
+              "or run in a terminal, to hydrate op:// lanes.")
+
     print(f"creds-hydrate {'--apply' if apply else '--dry-run (no reads, no writes — pass --apply to hydrate)'}:")
     hydrated, skipped = 0, 0
     for e in cred_map:
@@ -408,12 +466,15 @@ def main() -> int:
         if not apply:
             print(f"  plan: {e['lane']:28} {source} -> {targets}")
             continue
-        # Prefer a live-minted value (e.g. the gh keyring) over the static op:// secret; fall back to op.
+        # Prefer a live-minted value (e.g. the gh keyring) over the static op:// secret; fall back to
+        # op ONLY when op can read without a prompt (op_ok) — else the op:// fallback is skipped, no GUI.
         val = derive_value(dcmd) if dcmd else None
-        if not val:
+        if not val and op_ok:
             val = op_read(ref)
         if not val:
-            print(f"  SKIP {e['lane']:28} {source} — unreadable (check op signin / the field name)")
+            why = ("unreadable (check op signin / the field name)" if op_ok
+                   else "op:// read skipped — no promptless 1Password auth (fail-open, no Touch-ID)")
+            print(f"  SKIP {e['lane']:28} {source} — {why}")
             skipped += 1
             continue
         for k in envs:
