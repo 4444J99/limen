@@ -157,6 +157,37 @@ parameters:
     self_update: none
     owner: health
     note: "Minimum logged observations before the learning department surfaces a pattern (avoids inferring from noise)."
+  # --- ORGANS (VLTIMA): convert idle capacity into institutional weight (legal/financial/education/...) ---
+  LIMEN_ORGAN_BACKLOG:
+    default: 1                  # default-ON: organ-ladder -> bounded build tasks each FEED beat
+    env: LIMEN_ORGAN_BACKLOG
+    self_update: none
+    owner: vltima
+    note: "Toggle for the VLTIMA organ-backlog generator (sibling of revenue-backlog). 1=on. Reads organ-ladder.json, appends bounded `open` tasks via the limen schema; floor-gated, lockless, fail-open."
+  LIMEN_ORGAN_TIMEOUT:
+    default: 120                # seconds: cap the generator run inside the beat
+    env: LIMEN_ORGAN_TIMEOUT
+    self_update: none
+    owner: vltima
+    note: "Hard timeout (s) for the organ-backlog generator inside the FEED beat so a slow run never wedges the heartbeat."
+  LIMEN_ORGAN_LADDER:
+    default: "organ-ladder.json"   # repo-root census the generator reads (override for tests)
+    env: LIMEN_ORGAN_LADDER
+    self_update: none
+    owner: vltima
+    note: "Path to the VLTIMA institutional census (organ-ladder.json). Identity is DERIVED from this file, never pinned in code."
+  LIMEN_ORGAN_FLOOR:
+    default: 9                  # only emit organ work when the active-task floor leaves room
+    env: LIMEN_ORGAN_FLOOR
+    self_update: none
+    owner: vltima
+    note: "Floor gate: skip organ-backlog generation when active tasks already exceed this, so it fills idle capacity rather than flooding."
+  LIMEN_ORGAN_MAX:
+    default: 9                  # cap new organ tasks appended per run (bounded, no flood)
+    env: LIMEN_ORGAN_MAX
+    self_update: none
+    owner: vltima
+    note: "Max new organ-build tasks appended per run. Bounded output; id-deduped against existing tasks."
   # --- WALLS: keep the published walls (credential #320, his-hand #330) from drifting ---
   LIMEN_BEAT_WALLS:
     default: 12                 # cadence: regenerate the walls every 12 beats
