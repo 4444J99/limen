@@ -4,29 +4,41 @@ Universal agent task intake — one file to aim every AI agent across every repo
 
 Limen is a cross-agent, cross-repo, budget-capped task intake system. It lives in a single `tasks.yaml` that every agent reads, and provides a CLI + SaaS dashboard for managing the pipeline.
 
-## Quick Start
+## Usage
 
+### Install
+
+Install via the idempotent shell script (clones repo, creates symlink, installs Python CLI, and sets up PATH):
 ```bash
 curl -fsSL https://raw.githubusercontent.com/4444J99/limen/main/install.sh | bash
-# restart shell or: source ~/.zshenv
-limen init
-# add tasks by editing tasks.yaml directly, then:
-limen dispatch --agent jules          # dry-run preview
-limen dispatch --agent jules --live   # real dispatch
-limen status
+source ~/.zshenv
+```
+*Optional env vars for custom paths:* `LIMEN_SOURCE`, `LIMEN_TARGET`, `LIMEN_LINK`.
+
+Alternatively, install via Homebrew (local formula):
+```bash
+brew install ./limen.rb
 ```
 
-## CLI Commands
+### Run API & Dashboard locally
 
-| Command | Key flags | Description |
-|---------|-----------|-------------|
-| `limen init` | `--root DIR`, `--budget N` | Scaffold a tasks.yaml in LIMEN_ROOT or current directory |
-| `limen dispatch` | `--agent`, `--live`, `--task ID`, `--limit N`, `--budget N` | Read tasks.yaml and dispatch open tasks to agents (default: dry-run) |
-| `limen release-stale` | `--hours N`, `--agent`, `--apply`, `--json-output`, `--report-file` | Reopen stale dispatched/in-progress claims (default: dry-run preview) |
+Use Docker Compose to run the local FastAPI backend and Next.js dashboard:
+```bash
+docker-compose up
+```
+*This mounts `./tasks.yaml` and exposes the API on port 8000 and dashboard on port 3000.*
+
+### CLI Commands
+
+| Command | Flags | Description |
+|---------|-------|-------------|
+| `limen init` | `--root`, `--budget` | Scaffold a new `tasks.yaml` in LIMEN_ROOT or current directory |
+| `limen dispatch` | `--agent`, `--budget`, `--dry-run`/`--live`, `--task`, `--limit` | Read `tasks.yaml` and dispatch open tasks to agents (default: dry-run) |
+| `limen release-stale` | `--hours`, `--agent`, `--dry-run`/`--apply`, `--json-output`, `--report-file` | Reopen stale dispatched/in-progress claims (default: dry-run) |
 | `limen doctor` | `--agent`, `--json-output`, `--report-file` | Report local readiness for dispatch and stale-claim recovery |
-| `limen qa` | `--agent`, `--json-output`, `--report-file` | Report lifecycle gates and QA steering queues without mutating tasks |
+| `limen qa` | `--agent`, `--json-output`, `--report-file` | Report QA lifecycle gates and steering queues without mutating tasks |
 | `limen status` | `--agent`, `--status` | Show the task board with budget tracking |
-| `limen harvest` | `--agent` | Collect results from completed agent runs and update task states |
+| `limen harvest` | `--agent` | Check for completed dispatches and update task states |
 
 ## Architecture
 
