@@ -1,0 +1,82 @@
+# Aeneid — Book V — curated music arc
+work: aeneid
+book: 5
+title: "Aeneid Book V: The Funeral Games"
+length_minutes: 75
+principle: >
+  Score Book V as a suspended space of memory and ritual before the final descent.
+  The games are an attempt to impose order through repetition, but the burning of the ships
+  reveals the exhaustion of wandering, and the death of Palinurus exacts the sea's final price.
+force_arc: [memory, kingship, wrath, divine-intervention, law, sacrifice, exile]
+dominant_force: memory
+tracks:
+  - n: 1
+    scene: "Rites for Anchises"
+    force: memory
+    composer: Fauré
+    work: "Requiem — I. Introit et Kyrie"
+    decision: added
+    why: >
+      The Trojans pause their wandering to honor the dead. Fauré's serene, nostalgic chorus
+      establishes a sanctuary of memory, a moment of suspended time where the past is
+      reverently recalled.
+  - n: 2
+    scene: "The games and the boat race"
+    force: kingship
+    composer: Handel
+    work: "Water Music — Suite No. 1: III. Allegro"
+    decision: added
+    why: >
+      Aeneas presides over the games, rewarding excellence and managing conflict. Handel's
+      ceremonial and confident orchestral display maps perfectly to this exhibition of
+      sovereignty and civic order.
+  - n: 3
+    scene: "The women burn the ships"
+    force: wrath
+    composer: Prokofiev
+    work: "Romeo and Juliet — 'Dance of the Knights'"
+    decision: added
+    why: >
+      Driven by Juno and Iris, the exhausted Trojan women set fire to the fleet. The rhythmic,
+      hostile pressure of Prokofiev captures the destructive rebellion born from the
+      despair of perpetual wandering.
+  - n: 4
+    scene: "Jupiter sends a rainstorm"
+    force: divine-intervention
+    composer: Strauss
+    work: "Eine Alpensinfonie — 'Gewitter und Sturm, Abstieg'"
+    decision: added
+    why: >
+      Aeneas prays, and Jupiter quenches the flames with a sudden, massive storm. Strauss's
+      overwhelming orchestral deluge embodies the sheer physical weight of a miraculous
+      downpour saving the fleet.
+  - n: 5
+    scene: "Leaving the weary behind"
+    force: law
+    composer: Bach
+    work: "The Well-Tempered Clavier, Book I — Prelude in B minor"
+    decision: added
+    why: >
+      Nautes advises Aeneas to leave the old and exhausted in Sicily, restructuring the
+      expedition. Bach's measured, formal progression reflects the cold necessity of this
+      division, creating a leaner, harder future Rome.
+  - n: 6
+    scene: "Palinurus falls asleep at the helm"
+    force: sacrifice
+    composer: Debussy
+    work: "Nocturnes — 'Sirènes'"
+    decision: added
+    why: >
+      The god Sleep overwhelms the helmsman, demanding a life in exchange for safe passage.
+      Debussy's seductive, hypnotic choral lines draw Palinurus into the deep, masking
+      ritual murder as a lullaby.
+  - n: 7
+    scene: "Aeneas takes the helm in the dark"
+    force: exile
+    composer: Vaughan Williams
+    work: "Symphony No. 3 (Pastoral) — IV. Lento"
+    decision: added
+    why: >
+      Aeneas realizes the ship is drifting and takes the helm himself, grieving for his lost
+      friend. The lonely, wandering tonality of Vaughan Williams's finale places the fleet
+      back in the vast, isolating emptiness of exile.

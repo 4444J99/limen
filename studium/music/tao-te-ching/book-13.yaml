@@ -1,0 +1,148 @@
+# Tao Te Ching — Chapter 13 — curated music arc
+# Favor and disgrace are alarming — the self is the source of all alarm.
+# If I had no self, what trouble would I have?
+work: tao-te-ching
+book: 13
+title: "Tao Te Ching Chapter 13: Favor and Disgrace Are Alarming"
+length_minutes: 55
+principle: >
+  Chapter 13 is Laozi's most penetrating analysis of the self as a source of existential
+  trouble. 'Favor and disgrace are alarming' — not because favor is bad or disgrace is
+  good, but because both imply a self that can be evaluated, elevated, or debased.
+  'Receiving favor is alarming; losing favor is alarming. That is what is meant by
+  "favor and disgrace are alarming."' The chapter then goes deeper: 'The reason I have
+  great trouble is that I have a self. If I had no self, what trouble would I have?'
+  This is not nihilism — it is the recognition that the self is a construct maintained
+  by anxiety, and that the boundary between self and world is the place where all
+  suffering enters. The arc moves from the experience of social evaluation (favor,
+  disgrace) through the recognition of the self as the wound, to the radical possibility
+  of living without a self to protect. The music tracks this movement from public drama
+  to private dissolution to liberated presence.
+force_arc: [desire, grief, supplication, metamorphosis, grief, revelation, metamorphosis, salvation, return, revelation]
+dominant_force: revelation
+tracks:
+  - n: 1
+    scene: "Favor and disgrace are alarming — the self trembles"
+    force: desire
+    composer: Richard Wagner
+    work: "Tristan und Isolde — 'Liebestod'"
+    decision: added
+    why: >
+      Isolde's Liebestod is the music of a self that wants to dissolve, to cease being
+      a self, to merge with the beloved beyond the boundary of the ego. But the desire
+      itself keeps the self in place: longing is the self's most intense registration.
+      Wagner's endless melody, never fully resolving, is the alarming condition of
+      wanting favor and fearing disgrace as the same motion of the heart.
+  - n: 2
+    scene: "Receiving favor debases the self"
+    force: grief
+    composer: Gustav Mahler
+    work: "Symphony No. 5 — IV. Adagietto"
+    decision: added
+    why: >
+      Favor received is not pure gift — it places the receiver in debt, in the position
+      of the inferior, the one who owes. The Adagietto's intimate grief is the interior
+      cost of being obligated: the self shrinks under the weight of what it has been
+      given. Mahler's strings sing the private sorrow of a self that cannot accept
+      without losing itself.
+  - n: 3
+    scene: "Disgrace frightens the body — the self exposed"
+    force: supplication
+    composer: Samuel Barber
+    work: "Adagio for Strings"
+    decision: added
+    why: >
+      Disgrace is the collapse of the social self — the body exposed, judged, found
+      wanting. Barber's Adagio is the slow architecture of exposure: the melody rises
+      like a body standing trial, quivers at its peak, and descends into the acceptance
+      of judgment. Supplication is the force of the exposed self asking for reprieve
+      from a social world that has already condemned it.
+  - n: 4
+    scene: "The self is the source of all alarm — the wound identified"
+    force: metamorphosis
+    composer: Arvo Pärt
+    work: "Summa"
+    decision: added
+    why: >
+      Pärt's Summa sets the Credo text in a single motion — the entire statement of
+      belief unfolded as one continuous, quiet gesture. The metamorphosis here is not
+      from one emotion to another but from the scattered self (favor, disgrace, alarm)
+      to the gathered self (attention, stillness, presence). The self is seen for what
+      it is: a pattern of belief, a credo we recite to ourselves.
+  - n: 5
+    scene: "Great trouble comes from having a self"
+    force: grief
+    composer: Henryk Górecki
+    work: "Symphony No. 3 — I. Lento"
+    decision: added
+    why: >
+      Górecki's Symphony of Sorrowful Songs opens with an immense, slow canon — a
+      meditation on the weight of existence. The grief here is not personal but
+      structural: having a self is itself the trouble, not this or that misfortune.
+      The music's relentless slow descent suggests that the trouble is not something
+      that happens to the self — it is the self.
+  - n: 6
+    scene: "If I had no self, what trouble would I have?"
+    force: revelation
+    composer: Arvo Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      The most radical question in the Dao De Jing. If I had no self — not selfless as
+      virtue, but self-less as ontology — what remains? Pärt's mirror piece answers:
+      what remains is the relation itself, the between, the reflection without a
+      reflector. The revelation is that the self was never as solid as it seemed. The
+      music holds the empty space where the self used to be.
+  - n: 7
+    scene: "What is the self made of? — the investigation"
+    force: metamorphosis
+    composer: Claude Debussy
+    work: "La mer — 'De l'aube à midi sur la mer'"
+    decision: added
+    why: >
+      Debussy's sea is a self that cannot be fixed — it is continuously reforming,
+      its boundaries provisional, its identity a function of light, wind, and time.
+      The metamorphosis from a fixed self (favor/disgrace) to a fluid self (present
+      but not graspable) happens across this movement. The self is not a thing but
+      a process, like the sea at dawn, never the same from moment to moment.
+  - n: 8
+    scene: "The self dissolved — trouble ceases"
+    force: salvation
+    composer: John Tavener
+    work: "Song for Athene"
+    decision: added
+    why: >
+      Salvation in Chapter 13 is not being saved from something but being freed from
+      the self that needs saving. Tavener's Song for Athene is sung for the dead, for
+      the one who has let go of the self entirely. The voice ascends and rests in
+      intervals that do not resolve, that do not need to resolve — because without
+      a self, there is no one to resolve for.
+  - n: 9
+    scene: "Returning to the world without a self"
+    force: return
+    composer: Hildegard von Bingen
+    work: "O virtus Sapientiae"
+    decision: added
+    why: >
+      Without the self as trouble, the world is encountered directly: not through
+      the lens of favor or disgrace but as it is. Hildegard's hymn to the power of
+      wisdom celebrates a knowing that is not personal — wisdom that flows through
+      the one who has stepped aside. The return from the self to the world is not
+      a loss but a recovery of participation.
+  - n: 10
+    scene: "Coda: the selfless self — trouble and peace are the same motion"
+    force: revelation
+    composer: Olivier Messiaen
+    work: "Quartet for the End of Time — 'Louange à l'Éternité de Jésus'"
+    decision: added
+    why: >
+      Messiaen's louange (praise) is addressed to eternity from a self that has become
+      transparent. The slow cello melody over pulsing piano chords is the closest music
+      comes to the voice of no-self: present without grasping, praising without needing,
+      alive without a self to keep alive. The revelation is that the end of the self is
+      not annihilation but the beginning of praise.
+demoted:
+  - composer: Ludwig van Beethoven
+    work: "Symphony No. 3 'Eroica' — Marcia funebre"
+    status: "removed; save for chapters on the death of the small self (16, 33, 52)"
+    why: "Beethoven's funeral march for a hero is too public, too narrative. Chapter 13's dissolution of the self is interior, not heroic — its scale is the body, not the state."

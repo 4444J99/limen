@@ -1,0 +1,144 @@
+# Tao Te Ching — Chapter 11 — curated music arc
+# The utility of emptiness: the wheel, the vessel, the room — all depend on the space inside.
+# Having (you) gives benefit; not-having (wu) gives usefulness.
+work: tao-te-ching
+book: 11
+title: "Tao Te Ching Chapter 11: The Utility of Emptiness"
+length_minutes: 56
+principle: >
+  Chapter 11 is the most concrete demonstration in the Dao De Jing of the wu/you paradox.
+  Thirty spokes converge at a single hub — the cart is useful because of the empty center.
+  Clay is shaped into a vessel — the vessel is useful because of the hollow interior.
+  Doors and windows are cut to make a room — the room is useful because of the open space.
+  The pattern is relentless: you (having, substance) gives the possibility; wu (not-having,
+  emptiness) gives the actual usefulness. Laozi is not praising emptiness as absence but as
+  capacity. The emptiness inside a cup is not nothing — it is the thing that makes the cup
+  a cup. The arc moves through the three images (wheel, vessel, room), each time deepening
+  the recognition, until the listener understands that all form is a container for emptiness.
+  This is not negation — it is the discovery that presence and absence are partners in the
+  same economy.
+force_arc: [law, law, metamorphosis, revelation, metamorphosis, revelation, memory, revelation, law, metamorphosis]
+dominant_force: revelation
+tracks:
+  - n: 1
+    scene: "Thirty spokes converge at the single hub"
+    force: law
+    composer: Johann Sebastian Bach
+    work: "The Art of Fugue — Contrapunctus I"
+    decision: added
+    why: >
+      Thirty spokes converge at the single hub that makes the cart useful. Bach's
+      Contrapunctus I is the same architecture: four voices converge at a single subject,
+      all deriving from the same source, all circling the same empty center. The law force
+      is the structure of convergence itself — the formal clarity of many things united by
+      their shared void.
+  - n: 2
+    scene: "Clay is shaped into a vessel — the form emerges"
+    force: law
+    composer: Johann Sebastian Bach
+    work: "Cello Suite No. 1 in G Major — Prelude"
+    decision: added
+    why: >
+      Clay shaped into a vessel is law made visible: structure enclosing what will become
+      useful space. Bach's cello prelude traces the shape of a vessel — arpeggios that
+      circle a tonic, never departing far, creating an interior that is felt through the
+      notes that define its boundary. The wheel's spokes, the vessel's walls: both are law.
+  - n: 3
+    scene: "The emptiness inside the vessel is what makes it useful"
+    force: metamorphosis
+    composer: Arvo Pärt
+    work: "Fratres (violin and piano version)"
+    decision: added
+    why: >
+      The transformation from vessel-as-object to vessel-as-container is the metamorphosis
+      Chapter 11 demands. Pärt's Fratres builds on a repeating pattern that is the same and
+      always slightly different — the vessel's shape is constant but its utility shifts with
+      what fills it. The listener learns to attend to the space within the repeating figure,
+      not just the figure itself.
+  - n: 4
+    scene: "Doors and windows are cut — the room becomes a room"
+    force: revelation
+    composer: Morton Feldman
+    work: "For Philip Guston — opening"
+    decision: added
+    why: >
+      Cutting doors and windows is a violent act that reveals the room as a space for
+      dwelling. Feldman's sparse, isolated gestures in near-silence perform the same
+      revelation: you hear what is cut, what is absent, what the sound leaves unsaid.
+      The room becomes audible as the space between the sounds.
+  - n: 5
+    scene: "The empty space transforms the cart, vessel, and room from object into utility"
+    force: metamorphosis
+    composer: Claude Debussy
+    work: "Syrinx (for solo flute)"
+    decision: added
+    why: >
+      Debussy's Syrinx is the metamorphosis of a single flute line into a world of
+      implication — the empty space around the single instrument becomes as important
+      as the notes. The transformation from sound to silence, from object to gap, is the
+      same shift Laozi traces from having to using.
+  - n: 6
+    scene: "Having (you) gives the possibility; not-having (wu) gives the usefulness"
+    force: revelation
+    composer: John Cage
+    work: "4'33\""
+    decision: added
+    why: >
+      Cage's silent piece is the definitive musical demonstration of Chapter 11's central
+      insight: the framed emptiness is what is useful. The performer's presence, the closed
+      piano lid, the attentive audience — all are the spokes, the walls, the doors. The
+      music is the emptiness they frame. This is not a gimmick; it is the chapter's thesis
+      made audible.
+  - n: 7
+    scene: "The utility hidden in plain sight — what we ignore is what we use"
+    force: memory
+    composer: Frédéric Chopin
+    work: "Prelude in E Minor, Op. 28 No. 4"
+    decision: added
+    why: >
+      Chopin's shortest prelude carries an immense weight of implication in its sparest
+      gesture. The repeating chords that seem like accompaniment are the substance; the
+      isolated melodic notes above are the emptiness that contains the meaning. Memory
+      of what is not played haunts every bar. What we ordinarily ignore — the background,
+      the silence, the empty space — is what the piece is really about.
+  - n: 8
+    scene: "Form is a container — the container's value is what it does not contain"
+    force: revelation
+    composer: John Tavener
+    work: "The Lamb"
+    decision: added
+    why: >
+      Tavener's setting of Blake's poem uses the simplest possible means: a single
+      melody, sustained chords, almost no harmonic movement. The revelation is that the
+      container (the song) is transparent to what it carries (the text, the mystery).
+      Form and content are not separate; the container's value is its capacity to hold
+      what is beyond it.
+  - n: 9
+    scene: "The law of emptiness: structure that is not there"
+    force: law
+    composer: Johann Sebastian Bach
+    work: "Well-Tempered Clavier, Book I — Prelude in C Minor (BWV 847)"
+    decision: added
+    why: >
+      Bach returns in the minor key to restate the law from the other side: the structure
+      of emptiness is still structure. The C Minor Prelude moves through its harmonic
+      architecture with relentless logic, each chord defining the space around it as
+      surely as the walls of a room. The law of emptiness is still law — rigorous,
+      beautiful, impersonal.
+  - n: 10
+    scene: "Coda: the wheel turns, the vessel holds, the room shelters"
+    force: metamorphosis
+    composer: Arvo Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      The circle closes: wheel, vessel, room — all are the same teaching. Pärt's mirror
+      piece ends as it began, unchanged yet transformed by the journey through the
+      chapter. The mirror reflects not only what is there but the empty space in which
+      reflection happens. The metamorphosis is complete: the listener now hears the
+      silence inside the music.
+demoted:
+  - composer: Gustav Mahler
+    work: "Symphony No. 8 — finale 'Veni Creator Spiritus'"
+    status: "removed; save for later chapters on fullness and cosmic utterance"
+    why: "Mahler's fullness-of-being is the opposite register of Chapter 11. This chapter is not about what fills — it is about what is left empty, and the utility of that emptiness."

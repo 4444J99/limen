@@ -1,0 +1,734 @@
+# The Analects — film companion (the FOURTH commentary system)
+# Gold-standard per studium/film/iliad.yaml. The Analects' forces orbit
+# ritual order (li) and the rectified self (zhengming) — the self as a
+# work of continuous cultivation, not a fixed nature.
+#
+# The Analects is not a narrative epic; it is a collection of sayings and
+# dialogues spanning twenty books, held together by one question: how does
+# a person become fully human? The answer is ritual (li) — not empty form
+# but the living architecture of right conduct — practiced daily through
+# return, examination, and refinement until the self is rectified and desire
+# follows without transgression. Its forces reach across the whole spectrum:
+# law (the central force — li, zhengming, the whole architecture of conduct),
+# return (the daily practice of cultivation — "learn and practice in season"),
+# memory (ancestral rites, filial piety as the root of virtue), revelation
+# (the clarity that comes when cultivation has done its work), desire (the
+# rectification of appetite through ritual), exile (Confucius's wanderings
+# through states that would not employ him), kingship (the ruler's virtue as
+# the root of order), grief (the Master weeping for Yan Hui), comedy (the
+# gentle irony of the Master, the human comedy of flawed gentlemen), sacrifice
+# (the renunciation of private ease for the Way), ascent (the gentleman's
+# progress from learning to the joy of the Way), salvation (the Way as
+# transformation), supplication (the student's posture before the Master),
+# wrath (the Master's rare and cutting anger), plague (the decay of the
+# Zhou order, a world where ritual has failed), divine-intervention (the
+# Mandate of Heaven — tianming), metamorphosis (the "cut and file, carve
+# and polish" of self-cultivation), and fate (the limits Heaven sets).
+# Every force tag is a key of dominant-force.yaml; every object of
+# object-taxonomy.yaml.
+work: analects
+title: "The Analects — a cinema of ritual, rectification, and the work of becoming human"
+principle: >
+  Do not assemble a "movies about Confucius" list. Assemble the Analects'
+  FORCES given cinematic bodies. The Analects is not a handbook of proverbs
+  for the pious; it is the study of how a person is formed through practice,
+  sustained by tradition, and finally freed into spontaneous rightness —
+  "at seventy I could follow my heart's desire without transgressing the
+  right." Its opening is not a commandment but a question repeated three
+  times, each spiraling inward: pleasure, delight, the joy of being unknown
+  and unbothered. The fitting and NOT obvious film for it is therefore not
+  a costume drama of ancient China but Groundhog Day — the comedy of a man
+  forced to repeat the same day until the repetitions change him. The
+  companion reaches across film history: a jury room (12 Angry Men) for the
+  architecture of law as deliberation; a Taiwanese family kitchen (Eat Drink
+  Man Woman) for desire ordered by ritual and the table; a Japanese master's
+  quiet days (The Taste of Tea) for the comic texture of cultivated living;
+  Korean spring-to-winter cycles (Spring, Summer, Fall, Winter... and Spring)
+  for the seasons of the self's formation; a teacher's lament (The Garden
+  of Words) for grief as the teacher's solitude; the exile's desert (The
+  Searchers) for the wanderer who cannot rest; the Mandate in a Soviet
+  Zone (Stalker) for Heaven's strange will; the bureaucrat's rectitude
+  (A Man for All Seasons) for kingship under law; the cry for truth that
+  will not be silenced (The Emperor's Naked Army Marches On) for revelation
+  as the rectification of names; and the slow transformation of Pinocchio
+  (Guillermo del Toro's Pinocchio) for the metamorphosis from wood into
+  real boy — "cut and file, carve and polish." The direct adaptations of
+  Confucius's life (Confucius, 2010) is set aside, honestly flawed — the
+  obvious one, never promoted; the force-companion carries the weight.
+force_coverage: [law, return, memory, revelation, desire, exile, kingship, grief, comedy, sacrifice, ascent, salvation, supplication, wrath, plague, divine-intervention, metamorphosis, fate]
+films:
+  - title: "12 Angry Men"
+    director: "Sidney Lumet"
+    year: 1957
+    force: law
+    divisions: [2, 12, 13, 20]
+    objects: [gun, door]
+    letterboxd: 12-angry-men
+    scene_or_theme: "The architecture of right judgment — one man standing against the room until the facts are named correctly, the whole of the Analects' zhengming in a jury room"
+    object_lesson: >
+      Law in the Analects is not a code imposed from above; it is the
+      architecture of deliberation that produces right conduct — the
+      rectification of names (zhengming) as a social practice. The gun
+      is the object lesson: the switchblade that is the same object seen
+      differently by each juror — the thing that calls names into crisis.
+      The door is the second object: the threshold through which doubt
+      enters, the door that opens to each new round of deliberation. Juror
+      8 standing alone against the room is the man of complete virtue (the
+      junzi) who will not let a flawed naming stand; his patience through
+      the long process is ritual (li) as sustained practice. The Analects
+      teaches that if names are not rectified, nothing in the state will
+      be well-ordered; 12 Angry Men is that teaching given a body —
+      twelve men in one room, calling one boy's life by its right name.
+    why: >
+      The Analects is centrally concerned with how right order is achieved:
+      not through force but through the painstaking work of naming things
+      correctly, deliberating justly, and letting the weight of evidence
+      settle the case. Lumet's film is the most precise enactment of that
+      work in cinema — a single room, a single question, twelve men who
+      must arrive at a common name for what happened. The film's formal
+      architecture — the slow inward zoom, the sweat, the heat — is
+      ritual (li) as procedural form, exactly the register of the Analects'
+      own teaching: the gentleman does not impose order; he cultivates the
+      conditions from which order naturally grows.
+    content_note: "no violence, no strong language; the tightest script in American cinema — one room, twelve men, the whole of political philosophy in a closed space"
+  - title: "Groundhog Day"
+    director: "Harold Ramis"
+    year: 1993
+    force: return
+    divisions: [1, 4, 7, 15]
+    objects: [clock]
+    letterboxd: groundhog-day
+    scene_or_theme: "The daily return to the same moment — the repetition that finally changes you; 'Is it not a pleasure to learn and practice in season?' as a February loop"
+    object_lesson: >
+      Return is not stasis; it is the formal condition of all deep learning.
+      The clock is the object lesson: the alarm that rings at 6:00 AM every
+      day to the same song — the mechanism of repetition that Phil Connors
+      must live inside until it transforms him. Confucius opens the Analects
+      not with a doctrine but with a question about practice — xue er shi xi
+      zhi, learning and practicing in season, over and over, until the return
+      is the point. Phil's loop is exactly this: he cannot advance until the
+      repetition has done its work on his character. The Groundhog Day joke
+      is that the path to virtue runs through boredom, self-loathing, and
+      surrender — and then, very slowly, through the joy of a day well lived.
+      The clock at the end, when it finally advances past 6:01, is the sound
+      of a man who has become someone who deserves to move forward.
+    why: >
+      The Analects' most radical claim is that virtue is not a state but a
+      practice — learned in season, repeated without drama, returned to every
+      day. Phil Connors begins the film as the opposite of the junzi: glib,
+      selfish, contemptuous. The loop forces him to return to the same day
+      until he learns what the Analects teaches: that the work of becoming
+      human is done in the small, unnoticed practices — learning a language,
+      helping a stranger, being present in the moment. The film's transformation
+      works because the repetition is not the punishment but the pedagogy; the
+      clock that seemed a cage becomes the instrument of liberation. Screen
+      it for the return force: circular form, recognition motif, the terrible
+      patience of becoming oneself through the thousandth iteration.
+    content_note: "comic, no violence; the romantic subplot is the vehicle of the hero's transformation"
+  - title: "Yi Yi"
+    director: "Edward Yang"
+    year: 2000
+    force: memory
+    divisions: [3, 8, 11, 19]
+    objects: [cigarette, mirror]
+    letterboxd: yi-yi
+    scene_or_theme: "Three generations of a Taiwanese family — memory as the thread that holds the household together across the silence between grandfather, parent, and child"
+    object_lesson: >
+      Memory in the Analects is not nostalgia but moral infrastructure:
+      "careful attention at life's end and following the long-gone with
+      ancestral ceremony; the people's virtue returns to its proper
+      excellence." The cigarette is the object lesson: NJ's smoking on
+      the balcony late at night — the small act of solitary reflection
+      that is the present holding the past in suspension, the smoke
+      going nowhere, the man carrying the weight of what was. The mirror
+      is the second object: Yang-Yang's photographs of the backs of
+      people's heads — the sides of life they cannot see themselves, the
+      blind spots that memory fills. The grandmother's stroke opens the
+      film; the family gathers around her silence and speaks into it,
+      each person confessing what they could not say to the waking — and
+      this is exactly what filial piety (xiao) means in the Analects:
+      not obedience but the sustained act of keeping the dead present
+      through the living practice of remembrance.
+    why: >
+      Edward Yang's film is the Analects' vision of memory as the fabric
+      of ethical life. The grandmother in her coma is the ancestral altar —
+      present, silent, receiving what the living must say to become whole.
+      The wedding that opens the film, the funeral that closes it, the
+      middle child's piano lesson, the father's reunion with his first
+      love — all are acts of returning to what has shaped you. The Analects
+      teaches that filial piety is the root of virtue (ren); Yi Yi shows
+      that root in the daily, painful, beautiful work of staying connected
+      to those who came before and those who come after. Screen it for
+      the memory divisions — the ancestral rites of Book III, the filial
+      piety of Book VIII, the traditions that bind.
+    content_note: "no violence; three-hour runtime; one of the great films about ordinary life — no dramatic incidents, only the weight of years"
+  - title: "The Emperor's Naked Army Marches On"
+    director: "Kazuo Hara"
+    year: 1987
+    force: revelation
+    divisions: [7, 14, 18]
+    objects: [cigarette, telephone]
+    letterboxd: the-emperors-naked-army-marches-on
+    scene_or_theme: "The rectification of names as a moral crusade — a man who will not let the truth stay buried, who demands that every death be named for what it was"
+    object_lesson: >
+      Revelation in the Analects is not mystical illumination but the
+      unbearable clarity of a name finally spoken correctly. The cigarette
+      is the object lesson: Kenzo Okuzaki's constant smoking, the nervous
+      energy of a man who has been burning for thirty years — the ember
+      that will not go out, the small fire of an unquiet conscience. The
+      telephone is the second object: the calls he makes to witnesses,
+      to officials, to the families of the dead — the voice crossing
+      distance to demand the truth that distance has obscured. Okuzaki
+      is the man of complete virtue in the Analects' most uncomfortable
+      sense: he will not let a wrong naming stand. The men who died in
+      New Guinea were executed, not killed in battle; he will demonstrate
+      with his body that the name matters, that the character of the state
+      depends on the rectification of that single name. When he confronts
+      the Emperor's portrait outside the palace and fires his slingshot,
+      he is performing zhengming with his whole body.
+    why: >
+      The Analects' most radical teaching is that speaking truly is a form
+      of action — that naming correctly is the foundation of order. Hara's
+      documentary follows a man who has taken that teaching literally:
+      Okuzaki, a survivor of the Pacific war, will not stop until the
+      truth of what happened to his comrades is spoken aloud. His methods
+      are violent and relentless; he is not a comfortable hero. But his
+      insistence that names matter — that a murder is not a battle death,
+      that cowardice is not loyalty — is the doctrine of zhengming pushed
+      to its extreme. Screen it for revelation: the moment the truth breaks
+      through the surface of official silence, the clarity that changes
+      everything.
+    content_note: "confrontational, graphic; Okuzaki assaults a man on camera; the film is an endurance in moral discomfort — the truth is not polite"
+  - title: "Eat Drink Man Woman"
+    director: "Ang Lee"
+    year: 1994
+    force: desire
+    divisions: [1, 10, 17, 20]
+    objects: [egg, milk]
+    letterboxd: eat-drink-man-woman
+    scene_or_theme: "Desire ordered by ritual — the Sunday dinner as the form that contains and channels appetite, the kitchen as the site of the self's discipline"
+    object_lesson: >
+      The Analects does not condemn desire; it rectifies it. "At seventy I
+      could follow my heart's desire without transgressing the right" —
+      the endpoint of a life of cultivation is not the extinction of desire
+      but its perfect alignment. The egg is the object lesson: the raw egg
+      that the master chef Chu cracks with one hand, the yolk held intact —
+      the fragile, perfect thing that is both appetite and order, the
+      potential life that ritual keeps whole. The milk is the second object:
+      the glass of milk at the family table shared in silence — the
+      domestic substance that nourishes without excess, the simple form
+      that desire takes when it has been brought into harmony. Chu's Sunday
+      dinners are the ritual (li) that holds his three daughters' desires
+      in a common form — the table as the space where appetite is met,
+      transformed, and transcended. Each daughter's departure from the
+      ritual is her own rectification: finding the form of desire that fits
+      her.
+    why: >
+      Ang Lee's film is the Analects' vision of desire — not suppressed
+      but ordered, not denied but given form. Master Chu's kitchen is the
+      site of a daily cultivation that is also an act of love: the meal
+      prepared in silence, the knife work that is a form of meditation,
+      the taste that is knowledge of the other. The Analects teaches that
+      ritual (li) is what makes desire human rather than animal; Eat Drink
+      Man Woman shows that ritual in the culinary discipline of a father
+      who can say more with a soup than most people can in a speech.
+      Screen it for the desire force: the channelling of appetite through
+      form, the slow work of bringing the heart's longing into alignment
+      with the good.
+    content_note: "no explicit content; the cooking sequences are among cinema's greatest food scenes; family drama, mild sexuality"
+  - title: "The Searchers"
+    director: "John Ford"
+    year: 1956
+    force: exile
+    divisions: [5, 9, 14, 18]
+    objects: [gun, door]
+    letterboxd: the-searchers
+    scene_or_theme: "The man who cannot come home — Ethan Edwards wandering the desert long after the search is over; Confucius's own exile through the states as a condition of the righteous in an unrighteous world"
+    object_lesson: >
+      Exile in the Analects is not a geographical condition but a spiritual
+      one: the man of complete virtue wanders because no court will have
+      him, because the world is out of joint and he will not participate
+      in the misnaming. The gun is the object lesson: Ethan's rifle, the
+      instrument of his wandering that is also the instrument of his
+      alienation — a man who cannot lay down the weapon because he cannot
+      lay down the search, even when the search has no object. The door
+      is the second object: the door of the homestead that Ethan stands
+      outside at the film's end, the threshold he cannot cross because
+      he has become un-housed by his own quest. Ethan is Confucius in
+      reverse: the Master returned from exile to teach, to settle, to
+      complete the work; Ethan returns and finds he can only walk away
+      again into the desert. The Analect's wanderer, on the other hand,
+      walks toward civilization, not away from it — but the condition
+      of being between homes is the same.
+    why: >
+      Ford's film is the exile force given its most iconic American form:
+      the man who has been out so long that the inside no longer fits him.
+      Ethan Edwards is the Analects' wanderer without the rectification —
+      a man driven by a search that has consumed the thing it sought.
+      Confucius wandered for thirteen years through states that would not
+      employ him, but he never stopped being the man who could govern.
+      Ethan wanders because he has forgotten how to be governed. Screen
+      it for the exile divisions — the difference is the teaching: the
+      Analects' exile is always toward return; Ethan's exile has forgotten
+      that return exists.
+    content_note: "Native American violence, racial attitudes of the period; the closing door frame is one of cinema's greatest shots"
+  - title: "A Man for All Seasons"
+    director: "Fred Zinnemann"
+    year: 1966
+    force: kingship
+    divisions: [2, 6, 13, 16]
+    objects: [door]
+    letterboxd: a-man-for-all-seasons
+    scene_or_theme: "The king under law — Sir Thomas More's rectitude before the sovereign, the principle that the ruler is subject to the same order as the ruled"
+    object_lesson: >
+      Kingship in the Analects is the ruler's virtue as the root of order:
+      "The virtue of the gentleman is like wind; the virtue of the small
+      man is like grass — the grass bends when the wind blows." The door
+      is the object lesson: every door More walks through in the film is
+      a threshold of conscience — the door of the council chamber where
+      he must speak or be silent, the door of the Tower that closes behind
+      him, the door of the scaffold at the end. More is the wind: his
+      refusal to bend is what holds the architecture of law upright, even
+      when the king himself would bend it. The Analects teaches that the
+      ruler's virtue is the root of order in the state — if the root is
+      crooked, nothing will grow straight. More is the root that will not
+      rot. His execution is not defeat; it is the final demonstration of
+      the principle that the king is under Heaven, not above it.
+    why: >
+      Zinnemann's More is the Confucian ideal of the minister who serves
+      the office of kingship by holding the king to the standard of right
+      conduct. More's argument with Henry VIII is the Analects' teaching
+      on government: the ruler who rules by virtue rules without effort;
+      the ruler who rules by decree rules a people who have lost the root.
+      The film's central conflict — a man whose conscience will not let
+      him say what is false — is the practice of zhengming at the level
+      of state. Screen it for the kingship divisions: the ruler's virtue
+      is the root; a king without virtue is not a king.
+    content_note: "no violence; verbal and legal drama; the trial scene is the film's centerpiece"
+  - title: "The Garden of Words"
+    director: "Makoto Shinkai"
+    year: 2013
+    force: grief
+    divisions: [7, 11, 19]
+    objects: [cigarette, door]
+    letterboxd: the-garden-of-words
+    scene_or_theme: "The grief of the teacher who cannot fully teach, the student who cannot fully learn — Confucius's lament for Yan Hui, the solitude of the one who has outlived his best disciple"
+    object_lesson: >
+      Grief in the Analects is the grief of the teacher for the student
+      who understood: when Yan Hui died, Confucius cried out, "Heaven
+      has destroyed me! Heaven has destroyed me!" — the only moment in
+      the text where the Master's composure breaks entirely. The cigarette
+      is the object lesson: Yukari's smoking in the park after the rain
+      stops — the small act of continuation that holds the loneliness of
+      the teacher who has been wounded by the world's misunderstanding.
+      The door is the second object: the door of the school she cannot
+      return to, the door of the apartment where she drinks alone —
+      thresholds she passes through but never inhabits. Takao's weekly
+      meetings with Yukari in the Shinjuku Garden are the student's
+      attendance on the master — a form that holds both their solitudes
+      in a shared space of learning that cannot quite become a life.
+    why: >
+      Shinkai's film is grief in the minor key — a teacher and a student
+      who find each other in the rain, meet in a garden, and cannot quite
+      cross the threshold between the relationship they have and the one
+      they might want. This is the Analects' grief: the Master who loves
+      his students and must watch them leave, suffer, die — Yan Hui dying
+      young, Zilu killed in battle, the disciples scattering. The Garden
+      of Words gives that grief a contemporary body: the teacher who is
+      also a woman who has been hurt, the student who is also a boy who
+      wants to be seen. Their relationship is pure Analects — the
+      transmission of something essential across a distance that can never
+      be closed.
+    content_note: "mild; anime, 46 minutes — brief and devastating; the rain is a character"
+  - title: "The Taste of Tea"
+    director: "Katsuhito Ishii"
+    year: 2004
+    force: comedy
+    divisions: [3, 10, 15, 17]
+    objects: [mirror, cigarette]
+    letterboxd: the-taste-of-tea
+    scene_or_theme: "The human comedy of a family of gentle eccentrics — daily life as a form of cultivated pleasure, the ordinary as the site of grace; the Analects' humor as the Master's own ironic distance"
+    object_lesson: >
+      The Analects is a surprisingly funny book. The Master makes jokes
+      about his own disciples, mocks pretentious rituals, and describes
+      the gentleman's ideal state as the pleasure of learning in season.
+      The mirror is the object lesson: the little girl Sachiko's obsession
+      with her own reflection — the gentle comedy of self-awareness, the
+      child learning to see herself (and not vanishing from existence in a
+      game of mirror-tag with a giant doppelganger). The cigarette is the
+      second object: the uncle's constant smoking as the comic prop of the
+      man who has made peace with being exactly who he is — the scholar
+      who has given up the pretense of being impressive and settled for
+      the pleasure of being alive. Ishii's film is the Analects' comedy:
+      the recognition that human beings are ridiculous and that the
+      gentleman's response to this is not correction but affectionate
+      attention. The giant doppelganger who chases Sachiko if she stops
+      looking at her reflection is the Analects' own joke: self-cultivation
+      is serious, but not solemn; the junzi is the one who can laugh at
+      his own mirror.
+    why: >
+      The Analects' humor is often overlooked — the Master's ironic
+      description of himself as one who is "so full of enthusiasm that he
+      forgets to eat, so full of joy that he forgets his worries, unaware
+      that old age is coming" is pure self-deprecating comedy. The Taste
+      of Tea films that comedy: a Japanese family living their eccentric
+      daily lives with such full attention that the ordinary becomes
+      magical. The grandfather's shogi games, the mother's hypnotherapy
+      practice, the uncle's manga drawing, the boy's crush on the girl
+      at the tea ceremony — all are forms of the cultivated pleasure that
+      the Analects calls the gentleman's practice. Screen it for comedy:
+      human beings, imperfectly and joyfully, practicing the art of living.
+    content_note: "mild comic surrealism; the giant doppelganger is not scary but delightful; 2.5 hours of pure joy"
+  - title: "Silence"
+    director: "Martin Scorsese"
+    year: 2016
+    force: sacrifice
+    divisions: [4, 8, 15, 18]
+    objects: [cigarette, door]
+    letterboxd: silence-2016
+    scene_or_theme: "The renunciation of self for the Way — the sacrifice of pride, identity, and belief itself for something beyond the self; the scholar-official who serves despite the cost"
+    object_lesson: >
+      Sacrifice in the Analects is not martyrdom for a cause but the daily
+      giving up of the self's easy satisfactions for the sake of virtue:
+      "The determined scholar and the man of virtue will not seek to live
+      at the expense of injuring virtue. They will even sacrifice their
+      lives to preserve virtue complete." The cigarette is the object
+      lesson: Rodrigues smoking in the darkness of the prison house —
+      the small human comfort that persists under the pressure of
+      renunciation, the wisp of ordinary life that will not be extinguished
+      even when everything else is being surrendered. The door is the
+      second object: every door that Rodrigues passes through on his way
+      to the apostasy — the door of the missionary's hut, the door of the
+      magistrate's chamber, the door of the temple where he will finally
+      place his foot on the fumi-e. Each door is a threshold crossed in
+      the direction of surrender; the last door is the one out of which
+      he walks as a different man.
+    why: >
+      Scorsese's film is sacrifice not as triumphal witness but as the slow
+      erosion of the self's certainties — the man who comes to serve a
+      truth and ends by serving its denial. Confucius says the scholar
+      will sacrifice his life to preserve virtue; Rodrigues sacrifices
+      his faith to preserve the lives of the Japanese Christians. Which
+      is the greater renunciation? The film refuses to answer. The Analects
+      teaches the same refusal: the gentleman acts according to what is
+      right (yi), not according to what is known in advance. Rodrigues's
+      final act — the apostasy that saves the farmers — is rightness
+      practiced beyond any name the church can give it. That is the
+      sacrifice the Analects honors: the surrender of the self's own
+      story for the reality of the other's need.
+    content_note: "graphic torture; the fumi-e scene is one of cinema's most painful moments; 2h41 — requires spiritual endurance"
+  - title: "The Tree of Life"
+    director: "Terrence Malick"
+    year: 2011
+    force: ascent
+    divisions: [2, 7, 14, 20]
+    objects: [door, egg]
+    letterboxd: the-tree-of-life
+    scene_or_theme: "The ascent from nature to grace — the soul's formation through childhood, loss, and the long work of becoming; the gentleman's progress from learning through virtue to the joy of the Way"
+    object_lesson: >
+      Ascent in the Analects is the progress of the self from unreflective
+      appetite to the spontaneous rightness of complete virtue — a movement
+      that takes a lifetime and does not end in arrival but in deeper
+      practice. The door is the object lesson: the door of the family home
+      that Jack walks through as a child, the door he leaves as a young
+      man, the door at the end of the film that opens onto the cosmic
+      shore — thresholds of becoming, each one a stage of ascent. The egg
+      is the second object: the fragile, unbroken thing that is the self's
+      potential, the life that has not yet taken shape. Malick's film
+      traces the arc of a soul's formation from the first breath through
+      the trials of childhood and the losses of adulthood to the final
+      vision of transcendence — exactly the arc the Analects describes
+      from Book II ("at fifteen I set my heart on learning") to Book XX
+      (the sage-king's final ordering of the realm).
+    why: >
+      Malick's film is the ascent force given its most cosmic cinematic
+      body: the growth of a single human soul as a journey that involves
+      dinosaurs, galaxies, the whisper of grace, and the grief of a mother
+      who has lost a son. The Analects works in the opposite scale — the
+      smallest utterances, the most domestic observations — but its arc
+      is the same: from the raw material of a human being to the completed
+      vessel of virtue that can contain the Way without effort. The film's
+      whisper — "the only way to be happy is to love" — is the Analects'
+      final teaching given in a single breath: the ascent ends not in
+      accomplishment but in the capacity to receive existence as grace.
+    content_note: "non-narrative, meditative; the dinosaurs may seem incongruous — they are the point: grace precedes us"
+  - title: "Spring, Summer, Fall, Winter... and Spring"
+    director: "Kim Ki-duk"
+    year: 2003
+    force: salvation
+    divisions: [1, 7, 11, 20]
+    objects: [door, mirror]
+    letterboxd: spring-summer-fall-winter-and-spring
+    scene_or_theme: "The cycle of cultivation, transgression, punishment, return, and enlightenment — the seasons of the self's formation in the lifelong practice of becoming human"
+    object_lesson: >
+      Salvation in the Analects is not rescue from sin but the gradual
+      transformation of the self by the steady practice of virtue — the
+      work that Confucius completed at seventy, when he could follow his
+      heart's desire without transgression. The door is the object lesson:
+      the temple door on the floating monastery that opens each season to
+      reveal the boy, the young monk, the old master — the threshold that
+      marks each stage of the journey. The mirror is the second object:
+      the old monk's face reflected in the water as he performs the final
+      purification — the self that has become what it was always meant to
+      be through discipline, transgression, punishment, and return. The
+      film's cycle of seasons is the Analects' cycle of a life: spring is
+      the child's curiosity, summer the young man's passion and error,
+      autumn the punishment and the learning, winter the renunciation, and
+      spring again — the new student beginning what the old master has
+      completed. The Way is not a destination; it is a wheel that turns,
+      and the salvation is in the turning.
+    why: >
+      Kim Ki-duk's film is the Analects' vision of salvation: not a single
+      event but a cycle that must be lived through, over and over, until
+      the practice becomes the person. The old monk's discipline, the young
+      monk's transgression, the cat's tail tied with a stone, the
+      purification that follows — every act is a teaching, every season
+      a stage of the examination that the Analects calls self-cultivation.
+      The final image — a new boy climbing the same mountain to the same
+      temple — is the Analects' promise that the Way does not end with the
+      Master. The salvation is not in the arrival but in the return to the
+      beginning, ready to practice again.
+    content_note: "some violence (animals are harmed — simulated); slow, meditative; the monastery-on-a-lake is one of cinema's great settings"
+  - title: "Where Is the Friend's House?"
+    director: "Abbas Kiarostami"
+    year: 1987
+    force: supplication
+    divisions: [3, 5, 14, 19]
+    objects: [door, telephone]
+    letterboxd: where-is-the-friends-house
+    scene_or_theme: "The student's long walk to return the notebook — the simple ethical errand that becomes a pilgrimage; supplication as the posture of one who seeks the right way"
+    object_lesson: >
+      Supplication in the Analects is the fundamental posture of learning:
+      the student who comes to the Master asking for the Way, the man who
+      does not know but wants to know. The door is the object lesson: every
+      door that Ahmad knocks on in his search for the friend's house —
+      the threshold that may open, the threshold that may remain closed,
+      the domestic faces that appear and must be asked again. The telephone
+      is the second object: the calls that never quite reach the right
+      person — the technology of connection that fails in the village of
+      faces and real distances. Ahmad's question — repeated to every adult
+      he meets — is the Analects' fundamental question: where is the
+      house of the friend, the place where the one who shares my learning
+      lives? The old man who finally guides him is the Master who appears
+      at the end of the long walk: not as a teacher but as a neighbor who
+      simply knows the way.
+    why: >
+      Kiarostami's film is supplication as the Analects practices it: not
+      prayer but the humble, persistent act of asking — a child walking
+      through a village knocking on doors to return a notebook, because
+      he knows the friend will be punished if it is lost. The Analects
+      opens with the supplication of learning: "Is it not a pleasure to
+      learn and practice in season?" — the question that already contains
+      the answer, because the one who asks in the right posture has already
+      begun the work. Ahmad's walk is the same question made visible: the
+      act of seeking the good by going through the world of adults who have
+      forgotten how to ask. The film's ending — the old man who says "I'll
+      take you" — is the Master's simplest teaching: the Way appears when
+      you are ready to walk it.
+    content_note: "no violence; all ages; the slow pace of Iranian village life is the film's texture — patience is the form"
+  - title: "The Death of Mr. Lazarescu"
+    director: "Cristi Puiu"
+    year: 2005
+    force: wrath
+    divisions: [3, 12, 17]
+    objects: [cigarette, door]
+    letterboxd: the-death-of-mr-lazarescu
+    scene_or_theme: "The wrath of the system — the slow, procedural, indifferent destruction of a man by the very structures meant to care for him; the failure of ritual when it becomes empty form"
+    object_lesson: >
+      Wrath in the Analects is rare but cutting: "Fine words and insinuating
+      appearance — rarely genuine virtue." The film's wrath is not a
+      person's anger but a system's indifference — the bureaucracy of
+      healthcare as a form of slow, procedural violence. The cigarette is
+      the object lesson: Lazarescu's smoking through his final night —
+      the small act of autonomy that persists as the system strips him of
+      every other dignity, the ember that burns as the institutions refuse
+      to see the man. The door is the second object: every hospital door
+      that closes behind him, every ambulance door that opens and closes
+      without delivering him to care — the threshold that is always a
+      refusal. The film's wrath is the Analects' warning about ritual
+      without ren: the forms of care practiced without the reality of care
+      become instruments of cruelty. Lazarescu is not killed by malice but
+      by the absence of love in the procedure. The Master's anger at the
+      ritual perverters — "The man who performs ritual without reverence!
+      The man who attends to mourning without grief!" — is Lazarescu's
+      death sentence.
+    why: >
+      Puiu's film is wrath as the Analects understands it: not explosive
+      rage but the cold, procedural exclusion of the person from the forms
+      that should hold him. Confucius teaches that ritual (li) without the
+      reality of human feeling (ren) is empty — a shell that deceives and
+      abandons. Lazarescu's night through the hospitals of Bucharest is
+      that teaching made visible: every doctor performs the correct
+      procedure; no one performs the act of care. The film's accumulating
+      horror is not a villain's violence but the perfect working of the
+      system that leaves a dying man alone in a hallway. That is the
+      Analects' wrath — the anger that is not a mood but a judgment on a
+      world that has lost the root of its own forms.
+    content_note: "medical trauma, aging and death; the most realistic hospital film ever made — 2h30 of procedural exhaustion, no relief"
+  - title: "The Seventh Seal"
+    director: "Ingmar Bergman"
+    year: 1957
+    force: plague
+    divisions: [3, 12, 18]
+    objects: [clock, mirror]
+    letterboxd: the-seventh-seal
+    scene_or_theme: "A world where the social order has collapsed and ritual no longer holds — the plague as the decay of meaning, the knight's quest for an answer in a landscape of the dying"
+    object_lesson: >
+      Plague in the Analects is the decay of ritual order — a world where
+      the forms that used to hold meaning have rotted, and people go
+      through motions without understanding why. The clock is the object
+      lesson: the hourglass that Death carries — time running out not just
+      for one man but for a whole way of life, the sand slipping through
+      the narrow passage as the plague consumes Europe. The mirror is the
+      second object: the knight's face in the confessional at the film's
+      opening — the self that looks into its own emptiness and finds no
+      answer, the face of a man who has performed all the rituals of faith
+      and found them empty. Bergman's plague is the Zhou collapse: a world
+      where Heaven is silent, the church is corrupt, the old gods have
+      died, and people are left with only the forms of belief without
+      belief itself. The knight's quest to find God in the face of silence
+      is the Analects' own question: how to practice ritual when the world
+      has forgotten what it means?
+    why: >
+      Bergman's medieval plague landscape is the world the Analects was
+      written to oppose — a society whose ritual forms have detached from
+      virtue and become empty performance. Confucius lived in an age of
+      collapsing Zhou order; he taught that the only cure was to return
+      to the root — to practice ritual with such full attention that the
+      form becomes alive again. The knight's final prayer — the
+      recognition scene across the hilltop, the morning light — is that
+      return: the practice of attention to the ordinary (the bowl of
+      milk, the child's face, the game of chess) as the place where
+      meaning survives the plague. Screen it for the plague force: a
+      dying world, the agony of form without content, and the small,
+      ordinary acts that hold the possibility of renewal.
+    content_note: "medieval plague imagery, death, religious crisis; the final dance of Death is one of cinema's most iconic images"
+  - title: "Stalker"
+    director: "Andrei Tarkovsky"
+    year: 1979
+    force: divine-intervention
+    divisions: [3, 6, 11, 20]
+    objects: [mirror, door]
+    letterboxd: stalker-1979
+    scene_or_theme: "The Zone as Heaven's will made manifest — a place where desire is met with what you truly need, not what you ask for; the Mandate of Heaven as the reality beneath the surface of the ordinary"
+    object_lesson: >
+      Divine-intervention in the Analects is the Mandate of Heaven
+      (tianming) — the order that underlies the visible world and that
+      the gentleman learns to align himself with through ritual practice.
+      The mirror is the object lesson: the Stalker's face reflected in the
+      pools of the Zone — the self that must be surrendered at the
+      threshold of the Room, the face that holds the longing that cannot
+      be spoken. The door is the second object: the door of the Room where
+      the deepest wish is granted — the threshold that is also the end of
+      wanting, the entrance to the place where desire is at last aligned
+      with reality. The Zone is tianming in action: a space where the
+      ordinary laws of cause and effect do not apply, where intention
+      matters, where the path is not straight but curved because the
+      universe bends toward what is needed. The Writer's speech in the
+      Zone — "I have no gift for singing, only the need to sing" — is the
+      Analects' teaching: the gentleman does not claim achievement but
+      only the practice. Heaven's intervention is not a miracle; it is the
+      reality that practice gradually reveals.
+    why: >
+      Tarkovsky's Zone is the Analects' Heaven (tian) made visible: not a
+      personal god but the order that is more real than the surface of
+      things, accessed through surrender and patience. The Stalker's
+      warnings — "no one has ever come back from there unchanged" — is
+      the Analects' promise: the practice of virtue changes the one who
+      practices, and the change is not comfortable. The Room is the
+      Analects' endpoint: the place where the heart's desire meets the
+      good — the state Confucius describes at seventy, when the heart's
+      desire no longer transgresses because it has been rectified by a
+      lifetime of alignment with the Way. Screen it for divine-intervention:
+      the Order that is more real than the disorder we see.
+    content_note: "slow, meditative; the rust on the tracks, the water, the mechanical sounds — Tarkovsky's Zone is a state of attention, not a place"
+  - title: "Spirited Away"
+    director: "Hayao Miyazaki"
+    year: 2001
+    force: metamorphosis
+    divisions: [4, 6, 9, 15]
+    objects: [mirror, door]
+    letterboxd: spirited-away
+    scene_or_theme: "The slow transformation of a girl from a frightened child into someone who can act rightly under pressure — 'cut and file, carve and polish' as a bathhouse adventure"
+    object_lesson: >
+      Metamorphosis in the Analects is the process of cutting and filing,
+      carving and polishing — the work that Tsze-kung describes by quoting
+      the Book of Poetry, and that the Master says is exactly what he
+      means. The mirror is the object lesson: Chihiro looking at her own
+      reflection after eating the spirit-world food — the face that is
+      still hers but also different, the self that is changing through
+      the practice of being in the bathhouse. The door is the second
+      object: the tunnel entrance to the spirit world, the door of the
+      bathhouse, the door of the train she takes to see Zeniba — every
+      threshold marks a stage of the transformation, a new form of the
+      self that practice has made possible. Chihiro does not become
+      someone else; she becomes a more complete version of herself —
+      a girl who can work, who can help the stink spirit find its name,
+      who can face No-Face's emptiness, who can remember that Haku's
+      name is the Kohaku River. The metamorphosis is not magic but the
+      daily work of attention and care.
+    why: >
+      Miyazaki's film is the Analects' metamorphosis — the slow,
+      cumulative work of becoming oneself through the discipline of
+      attending to others. Chihiro enters the spirit world a sulky,
+      frightened child and leaves it a girl who has learned to work,
+      to serve, to recognize the needs of strangers and monsters. The
+      Analects says that the gentleman does not arrive at virtue; he
+      practices it until it becomes him. Chihiro's bathhouse labor is
+      that practice: scrubbing the floor, serving the guest, remembering
+      the name. The metamorphosis is not a single transformation (the
+      pig-parents, the No-Face feeding) but the accumulation of small,
+      right acts — the practice in season that changes the one who
+      practices. Screen it for metamorphosis: the becoming that is also
+      a remembering, the work that makes the self.
+    content_note: "all ages; Miyazaki's masterpiece — the bathhouse is the space of transformation, every frame a painting"
+  - title: "After Life"
+    director: "Hirokazu Kore-eda"
+    year: 1998
+    force: fate
+    divisions: [7, 11, 14, 20]
+    objects: [telephone, mirror]
+    letterboxd: after-life-1998
+    scene_or_theme: "The acceptance of what Heaven decrees — the week in which the dead choose one memory to take into eternity, a meditation on fate as the condition within which the good life is chosen"
+    object_lesson: >
+      Fate in the Analects is not destiny but the limit Heaven sets, within
+      which virtue is practiced: "Death and life have their determined
+      appointment; riches and honor depend upon Heaven." The telephone
+      is the object lesson: the calls the dead make to ask for help
+      choosing their memory — the voice crossing the threshold of death,
+      the connection to those who have gone before, the last word spoken
+      from this side of the limit. The mirror is the second object: the
+      face of the dead person as they try to select the one memory that
+      will define them — the self that is about to become only what it
+      has chosen to remember. Kore-eda's film gives death the form of a
+      bureaucratic week: the newly dead arrive at a waystation, are
+      assigned counselors, choose the single memory they will carry into
+      eternity. The Analects teaches that the gentleman knows what cannot
+      be changed and does not waste his life fighting it; the dead in
+      Kore-eda's film practice that acceptance — not resignation but the
+      attentive choosing of what matters within the limit that cannot be
+      crossed.
+    why: >
+      Kore-eda's film is fate as the Analects understands it: not a script
+      that must be followed but a limit that must be accepted so that the
+      practice of virtue can be real within it. The dead who cannot choose
+      a memory are those who have not reconciled themselves to what is
+      given; the old woman who chooses the festival of her childhood is
+      the Master at seventy — the one who has seen the whole and can say
+      yes to the single moment that contains it all. The film's quiet
+      bureaucracy is the Analects' ritual: the form that gives shape to
+      the transition, the procedure that allows the spirit to pass with
+      dignity. Screen it for fate: the determined appointment, and the
+      freedom to choose one memory within it.
+    content_note: "no violence; meditative; Kore-eda's gentlest film — death as a government office, the afterlife as a week of reflection"
+adaptations:
+  - title: "Confucius"
+    director: "Mei Hu"
+    year: 2010
+    letterboxd: confucius-2010
+    note: "the obvious screen-Confucius — a biopic covering the Master's life from his early career as a minister to his exile and return. Strongest on the historical setting and the political context of the Warring States; loses the interiority of the teaching and the book-by-book texture of the Analects. The Master's thought is presented as biography rather than as the living architecture of daily practice. Set aside; we screen the object lessons instead."
+    scenes:
+      - {division: 2, force: kingship, scene: "Confucius's teaching on government — the ruler's virtue as the root of order"}
+      - {division: 5, force: exile, scene: "Confucius leaves Lu and begins his years of wandering through the states"}
+      - {division: 14, force: wrath, scene: "Confucius's anger at Ji Huanzi's ritual impropriety — the eight rows of dancers"}
+      - {division: 20, force: law, scene: "The final vision of the sage-king — Yao's mandate, the ordering of the realm"}

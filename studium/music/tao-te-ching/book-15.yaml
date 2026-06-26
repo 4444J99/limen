@@ -1,0 +1,153 @@
+# Tao Te Ching — Chapter 15 — curated music arc
+# The ancient masters — subtle, mysterious, deep, penetrating.
+# Who can be muddy and let it settle? Who can be still and let movement arise?
+work: tao-te-ching
+book: 15
+title: "Tao Te Ching Chapter 15: The Masters of Antiquity"
+length_minutes: 58
+principle: >
+  Chapter 15 is Laozi's portrait of the realized person — not a ruler, not a sage in the
+  Confucian sense, but a being whose depth is known only by its effects. 'The ancient
+  masters were subtle, mysterious, deep, penetrating — too deep to be understood. Because
+  they could not be understood, I can only describe their appearance.' What follows is a
+  series of images: cautious as crossing a winter stream, alert as a neighbor in danger,
+  reserved as a guest in someone else's home, open as ice about to melt, simple as
+  uncarved wood, empty as a valley, turbid as muddy water. The chapter culminates in two
+  questions that outline the method: 'Who can be muddy and let it settle — gradually
+  becoming clear? Who can be still and let movement arise — gradually becoming alive?'
+  The arc is not ascent to a higher state but deepening into the qualities that look
+  like opposites — caution and openness, simplicity and depth, stillness and movement.
+  The music must hold these paradoxes without resolving them, allowing the listener to
+  occupy the space of the realized person without claiming to be one.
+force_arc: [revelation, metamorphosis, law, supplication, metamorphosis, metamorphosis, revelation, return, metamorphosis, revelation]
+dominant_force: revelation
+tracks:
+  - n: 1
+    scene: "The ancient masters — subtle, mysterious, deep, penetrating"
+    force: revelation
+    composer: Gregorian chant
+    work: "Veni Sancte Spiritus (Sequence, Mode I)"
+    decision: added
+    why: >
+      The ancient masters cannot be seen directly; they can only be approached through
+      the quality of their presence. The plainchant Veni Sancte Spiritus invokes a
+      presence that is felt before it is understood — the spirit of the ancient masters
+      descending through the oldest surviving musical tradition in the West. Mode I
+      (Dorian) is archaic, deep, and slightly unresolved — the mode of the mysterious.
+  - n: 2
+    scene: "Cautious as crossing a winter stream — the fear that preserves"
+    force: metamorphosis
+    composer: Jean Sibelius
+    work: "The Swan of Tuonela"
+    decision: added
+    why: >
+      Crossing a winter stream is to pass over cold, dark water — the boundary between
+      life and death. Sibelius' The Swan of Tuonela floats on the black waters of the
+      underworld, the English horn singing the song of the threshold. Caution here is
+      not timidity but the attention of someone who knows what is at stake. The
+      metamorphosis is from ordinary walking to the sacred step of one who crosses
+      the boundary knowingly.
+  - n: 3
+    scene: "Alert as a neighbor in danger — the vigilance of compassion"
+    force: law
+    composer: Johann Sebastian Bach
+    work: "Well-Tempered Clavier, Book II — Prelude in C-sharp Minor (BWV 873)"
+    decision: added
+    why: >
+      The alertness of a neighbor in danger is not fear for oneself but attention on
+      behalf of another. Bach's C-sharp Minor Prelude from Book II is built on a
+      rigorous, almost architectural alertness — each voice moves with the awareness
+      of the others, each note carries the weight of the whole. The law force is the
+      structure of compassionate attention: form that serves relation.
+  - n: 4
+    scene: "Reserved as a guest in someone else's home — the humility of presence"
+    force: supplication
+    composer: Arvo Pärt
+    work: "Summa"
+    decision: added
+    why: >
+      A guest does not take charge, does not rearrange the furniture, does not announce
+      their arrival. Pärt's Summa is the music of reverent presence — the Credo text
+      set with such restraint that it seems to be asking permission to exist. The
+      supplication force is the guest's posture: receiving the hospitality of existence
+      without claiming to own it.
+  - n: 5
+    scene: "Open as ice about to melt — the vulnerability of transformation"
+    force: metamorphosis
+    composer: Claude Debussy
+    work: "Suite bergamasque — 'Clair de lune'"
+    decision: added
+    why: >
+      Ice about to melt holds its shape while being on the verge of dissolving —
+      solid and flowing at once. Debussy's Clair de lune hovers at this threshold:
+      the melody is distinct but the harmony is already melting into Impressionist
+      ambiguity. The metamorphosis force marks the state between solid and liquid,
+      between fixed form and the openness of dissolution.
+  - n: 6
+    scene: "Simple as uncarved wood — the pu (樸) of original nature"
+    force: metamorphosis
+    composer: Erik Satie
+    work: "Gymnopédie No. 1"
+    decision: added
+    why: >
+      Pu (樸, uncarved wood) is Laozi's image of the original nature — simple, not
+      yet shaped by convention, full of potential because nothing has been decided.
+      Satie's Gymnopédies are almost impossibly simple: a single melodic line over
+      the most basic harmonic progression, no development, no drama. The metamorphosis
+      is from complex desire to simple presence — the wood before the carving, the
+      heart before the world shapes it.
+  - n: 7
+    scene: "Empty as a valley — the receptive hollow"
+    force: revelation
+    composer: Olivier Messiaen
+    work: "Apparition de l'Église éternelle"
+    decision: added
+    why: >
+      A valley does not produce; it receives — rain, light, shadow, sound. Messiaen's
+      Apparition of the Eternal Church is a single, massive crescendo from near-silence
+      to overwhelming organ sonority, then back to silence. It is the revelation of the
+      empty space that becomes a vessel for the eternal. The valley that receives the
+      divine is the heart that has been emptied.
+  - n: 8
+    scene: "Turbid as muddy water — the clarity that comes through stillness"
+    force: return
+    composer: John Tavener
+    work: "The Uncreated Ego"
+    decision: added
+    why: >
+      Muddy water clarifies when it is left still. Tavener's The Uncreated Ego moves
+      from dense, chromatic, searching textures to luminous, simple, held chords. The
+      return is from turbidity to clarity — not achieved by removing the mud but by
+      allowing stillness to let the mud settle. The music becomes clear not by effort
+      but by patience.
+  - n: 9
+    scene: "Who can be muddy and let it settle? Who can be still and let movement arise?"
+    force: metamorphosis
+    composer: Maurice Ravel
+    work: "Pavane pour une infante défunte"
+    decision: added
+    why: >
+      The two questions of Chapter 15 are the method of the realized person: allow
+      stillness to clarify, allow movement to arise naturally. Ravel's Pavane holds
+      both stillness and movement in a single gesture — the melody is a slow dance,
+      the harmony is complex but never hurried. The metamorphosis is from doing to
+      allowing: from the person who makes clarity happen to the person who lets it
+      come.
+  - n: 10
+    scene: "Coda: the depth that cannot be sounded"
+    force: revelation
+    composer: Arvo Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      The ancient masters are 'too deep to be understood' — not because understanding
+      is insufficient but because depth is their mode of being, not a quality they
+      possess. Pärt's mirror piece closes the arc the way it opened: the same piece,
+      the same mystery, but now the listener occupies the space of the realized person —
+      not by understanding them but by hearing the depth that cannot be sounded. The
+      mirror reflects emptiness, and emptiness is the master.
+demoted:
+  - composer: Pyotr Ilyich Tchaikovsky
+    work: "Symphony No. 6 'Pathétique' — finale"
+    status: "removed; save for chapters on waning and autumn (30, 55, 76)"
+    why: "Tchaikovsky's resigned descent is too personal, too narrative. Chapter 15's ancient masters are not tragic figures — they are deep in the way a valley is deep, not in the way a life is lost."

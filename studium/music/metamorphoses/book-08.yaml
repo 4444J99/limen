@@ -1,0 +1,88 @@
+work: metamorphoses
+book: 8
+title: 'Metamorphoses Book VIII: The Labyrinth, The Wing, The Boar'
+length_minutes: 95
+principle: "Book VIII is the book of fate — the force that catches every person in this book regardless of intention or merit. Scylla's love for Minos leads her to betray her father, who becomes a bird of prey that hunts her forever. Daedalus builds wings to escape and watches his son fall into the sea. Meleager kills the boar and is killed by his mother's vengeance. Philemon and Baucis are the exception — their piety is rewarded — but their reward is to become trees, which is still a transformation they did not choose. Erysichthon cuts down a sacred tree and is cursed to eat until he eats himself. The dominant force is fate — not as the Fates' intervention but as the structure of consequence that turns every act into its irreversible result."
+force_arc:
+- desire
+- metamorphosis
+- fate
+- ascent
+- grief
+- sacrifice
+- fate
+- revelation
+- metamorphosis
+- fate
+dominant_force: fate
+tracks:
+- n: 1
+  scene: Scylla loves Minos
+  force: desire
+  composer: Strauss
+  work: "Salome — 'Dance of the Seven Veils'"
+  decision: added
+  why: "Scylla sees Minos besieging her father's city and falls in love with him — not gradually but as a force that overrides every loyalty she has. The 'Dance of the Seven Veils' is desire as performance of vulnerability and power: the chromatic slides, the exotic orchestration, the sense of a woman who is willing to shed everything she is for the object of her longing. Scylla will shed her father, her city, and eventually her human form for Minos — but the desire itself, like Salome's, is not required to be rational."
+- n: 2
+  scene: Scylla transformed into a bird
+  force: metamorphosis
+  composer: Messiaen
+  work: "Réveil des oiseaux"
+  decision: added
+  why: "Minos rejects Scylla — he will not take her with him, will not touch the woman who betrayed her father. She throws herself at his ship and is caught midair by her father Nisus, who has become a sea-eagle. She falls, and as she falls becomes a shearer — a bird of prey herself, and the two birds Nisus and Scylla will hunt each other over the sea forever. Messiaen's Réveil des oiseaux is the dawn awakening of birds: a piano concerto in which the orchestra becomes an aviary, each bird species given its own call, each call layered into a texture of wings and light. The piece is transformation into flight — the body not becoming a different body but becoming a voice, a wing, a predator-prey relationship that will outlast both birds."
+- n: 3
+  scene: The Minotaur and the labyrinth
+  force: fate
+  composer: Dvořák
+  work: "Symphony No. 7 — I. Allegro maestoso"
+  decision: added
+  why: "Pasiphaë, wife of Minos, conceived the Minotaur with the Cretan bull. Daedalus built the labyrinth to contain it — a maze of corridors that twist back on themselves, doors that lead to more corridors, a darkness in which the Minotaur walks forever. Fate here is the structure that contains the consequence of a crime: the monster that cannot be killed because it is the king's shame embodied. Dvořák's Seventh is his most fate-driven symphony — the opening theme in the cellos is dark, brooding, descending through the harmonic series like someone walking deeper into a passage from which there is no return."
+- n: 4
+  scene: Daedalus and Icarus escape
+  force: ascent
+  composer: Messiaen
+  work: "L'Ascension — IV. Prière du Christ montant vers son Père"
+  decision: added
+  why: "Daedalus builds wings out of feathers and wax. He and Icarus climb into the air and fly — the first humans ever to leave the earth by their own craft. Ascent requires rising sequence and luminous orchestration. Messiaen's L'Ascension is the most literal musical treatment of ascent in the repertoire: the fourth movement's strings rise through increasingly high registers, the harmony resolving upward, the whole piece a prayer of things leaving the earth for a realm they were not made for. Icarus' flight is this: a boy who should be walking on the ground, lifted into a medium that does not belong to him."
+- n: 5
+  scene: Icarus falls into the sea
+  force: grief
+  composer: Schubert
+  work: "String Quintet in C, D. 956 — II. Adagio"
+  decision: added
+  why: "Icarus soars too high; the sun melts the wax; the feathers scatter like snow on water; the boy falls, calling for his father; the sea closes over him. Daedalus circles, calls his son's name, finds only feathers on the waves. The Adagio of Schubert's String Quintet is the slowest, most inward music of grief in the repertoire — two cellos playing harmonies that seem to hold the weight of a body descending through water, the violins hovering above like birds that cannot descend to help. Grief here is the father watching, the sea receiving, the song continuing because there is no other choice."
+- n: 6
+  scene: The Calydonian boar hunt
+  force: sacrifice
+  composer: Janáček
+  work: "Sinfonietta — I. Allegretto"
+  decision: added
+  why: "Diana sends a monstrous boar to ravage Calydon because King Oeneus forgot her in his harvest offerings. The boar tears fields, uproots trees, kills men. Meleager summons the heroes of Greece to hunt it — Theseus, Peleus, Telamon, Nestor, Jason. The hunt is a ritual: the beast was sent by a god, the hunting party is a sacred obligation. Janáček's Sinfonietta opens with a brass fanfare that sounds like a hunt being called — the horns of the heroes assembling, the martial energy of men about to face a beast that should not exist. Sacrifice requires ritual weight; the fanfare is the ritual of the hunt beginning."
+- n: 7
+  scene: Meleager's death — the brand
+  force: fate
+  composer: Brahms
+  work: "Symphony No. 4 — I. Allegro non troppo"
+  decision: added
+  why: "Meleager kills the boar and gives its hide to Atalanta, whom he loves. His uncles, offended that a woman received the prize, take it from her; Meleager kills them. His mother Althaea, seeing her brothers dead, takes the brand that the Fates said would measure her son's life and throws it into the fire. Meleager, far away, burns from within. Brahms's Fourth opens with falling thirds — a theme that climbs and falls, climbs and falls, as if it is trying to escape a gravity that always pulls it back. The inexorable motif is the brand that burns, the life that shortens with each phrase, the mother who closes her eyes and opens them and her son is dead."
+- n: 8
+  scene: Philemon and Baucis host the gods
+  force: revelation
+  composer: Allegri
+  work: "Miserere mei, Deus"
+  decision: added
+  why: "Jupiter and Mercury, disguised as mortals, are turned away from every door in the Phrygian hill country — until they reach the small hut of Philemon and Baucis, an old couple who share what little they have. The gods reveal themselves: the wine bowl refills, the geese cannot be caught for slaughter, the roof rises into a temple. The Miserere of Allegri is the most famous revelation in sacred music — a nine-voice plea for mercy that ascends to a high C that sounds like the heavens opening. The old couple see their guests transformed; the music is the sound of the moment when the poor recognize the divine in the stranger, the moment when the hut becomes a temple and the god becomes visible."
+- n: 9
+  scene: Philemon and Baucis transformed into trees
+  force: metamorphosis
+  composer: Debussy
+  work: "Préludes, Book I — No. 10, 'La cathédrale engloutie'"
+  decision: added
+  why: "The gods offer the old couple any wish. They ask to be priests of the temple and to die together so that neither will have to bury the other. As they stand before the temple, Philemon becomes an oak, Baucis a linden — branches twining together, one tree that was two people, joined in death as in life. Debussy's 'La cathédrale engloutie' is a submerged cathedral rising from the sea — the chords emerge from the piano's lowest register, building in harmonic weight until the full structure is visible, then receding. Metamorphosis here is the opposite of dissolution: it is the hard thing (oak, stone) emerging from the soft thing (body, water). The old couple who were poor become sacred trees before the temple they serve."
+- n: 10
+  scene: Erysichthon's hunger
+  force: fate
+  composer: Nielsen
+  work: "Symphony No. 5 — I. Tempo giusto"
+  decision: added
+  why: "Erysichthon cuts down Ceres' sacred oak with an axe. The tree bleeds; the dryads mourn; Ceres sends Famine to visit him. Famine wraps herself around him in his sleep, and he wakes hungry — hungry forever. He sells everything he owns for food, then sells his own daughter, then devours his own body to feed his appetite. Nielsen's Fifth is a battle between the orchestra and a snare drum that is trying to destroy the music from within — the orchestra plays, the drum interrupts; the orchestra rebuilds, the drum attacks again. Erysichthon's hunger is this drum: the appetite that cannot be silenced, that will attack the self that houses it until there is nothing left to consume. Fate here is the law of consequence for those who violate the sacred: you become what you have done to the world."

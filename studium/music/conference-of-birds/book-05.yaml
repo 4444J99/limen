@@ -1,0 +1,181 @@
+# Conference of the Birds — Section 5 — curated music arc
+# The Partridge's Objection: the love of precious things
+work: conference-of-birds
+book: 5
+title: "Conference of the Birds, Section 5: The Partridge's Jewels / The Heart as the True Stone"
+length_minutes: 68
+principle: >
+  Do not score this as simple greed or materialism. Score it as the partridge's genuine
+  aesthetic devotion: he loves precious stones not for their market value but for their
+  beauty — the way a ruby holds light, the way a sapphire deepens when you look into it,
+  the way an emerald seems to contain an entire forest. The partridge is an artist, a lover
+  of the beautiful, and his attachment is the most difficult for the hoopoe to answer because
+  it is the closest to the right thing. The Simurgh is also beautiful, also precious, also
+  a stone that holds all light. The difference is the difference between the stone that is
+  found and the stone that is polished into existence by the seeking itself.
+force_arc: [desire, comedy, revelation, grief, supplication, revelation, metamorphosis, ascent, desire, salvation]
+dominant_force: desire
+tracks:
+  - n: 1
+    scene: "The partridge displays his jewels — each stone, each story"
+    force: desire
+    composer: Ravel
+    work: "Piano Concerto in G Major — II. Adagio assai"
+    decision: added
+    why: >
+      The partridge's opening is not a speech about money — it is a love-song to the mineral
+      kingdom. He names stones: ruby for courage, sapphire for truth, emerald for the earth's
+      hidden gardens. Each stone is a world, a memory, a prayer. Ravel's Adagio assai from the
+      G Major Concerto is the most lapidary music ever written: the piano line moves with the
+      slowness of a stone being cut, the harmonies are jewel-toned (that famous opening chord
+      that sounds like a pearl forming), the entire movement is a meditation on the beauty of
+      the made thing. The partridge's devotion is real, and Ravel honors its reality before the
+      poem critiques it.
+  - n: 2
+    scene: "The other birds examine the jewels — wonder and unease"
+    force: comedy
+    composer: Rameau
+    work: "Platée — Overture"
+    decision: added
+    why: >
+      The other birds are fascinated and uncomfortable. They have never seen stones like these;
+      they are beautiful, and the partridge's devotion to them is both impressive and troubling.
+      Rameau's Platée Overture — the comic opera about a marsh-nymph who mistakes Jupiter's
+      mockery for love — is the sound of comedy that has not yet become cruelty. The dance
+      rhythms and bright orchestration capture the birds' mingled delight and suspicion: the
+      stones are lovely, but something about the partridge's devotion to them feels like a
+      fortress against the journey.
+  - n: 3
+    scene: "The hoopoe's first tale — the king who collected light"
+    force: revelation
+    composer: Debussy
+    work: "Images, Series II — 'Et la lune descend sur le temple qui fut'"
+    decision: added
+    why: >
+      The hoopoe tells a tale of a king who collected objects of light — diamonds, mirrors,
+      polished crystals — and filled his throne room with them until the room was so bright
+      that no one could see anything. The light, having no shadow, became darkness. Debussy's
+      'Et la lune descend sur le temple qui fut' (And the moon descends on the temple that
+      was) is music of light and ruin: the piano's chords hang like moonlight on a broken
+      arch, the melody fragments into silence, the whole piece is a meditation on beauty that
+      has outlasted its purpose. The tale is the hoopoe's gentlest critique: the partridge's
+      stones are real light, but they are not the source of light.
+  - n: 4
+    scene: "The partridge's grief — if these stones are not the goal, what is?"
+    force: grief
+    composer: Purcell
+    work: "Dido and Aeneas — 'When I am laid in earth' (Dido's Lament)"
+    decision: added
+    why: >
+      The partridge's grief is the deepest yet in the assembly. He has built his life around
+      these stones — around beauty, around the precious, around the things that last while
+      bodies decay. If the stones are not the Simurgh, then he has been faithful to the wrong
+      thing. Purcell's 'Dido's Lament' is the most distilled expression of grief in the English
+      repertoire: the descending chromatic bass (the ground) repeats without variation while
+      the voice moves above it in a single long arc of surrender. The partridge's grief is not
+      for the stones — it is for the life he built around them, the structure of meaning that
+      is now revealed as incomplete.
+  - n: 5
+    scene: "The partridge prays — let me love the right thing"
+    force: supplication
+    composer: Mozart
+    work: "Requiem — 'Lacrimosa'"
+    decision: added
+    why: >
+      The partridge's prayer shifts register: not 'let me keep my stones' but 'let me love
+      rightly.' Mozart's Lacrimosa — the movement that breaks off seven bars before Mozart's
+      death — is supplication at the edge of mortality: the descending scale of the opening
+      ('Lacrimosa dies illa'), the sudden harmonic shift at 'Huis ergo parce Deus,' the sense
+      that the prayer is addressed to a God who may not be listening. The partridge's prayer
+      reaches this depth because it is the first time in the assembly that a bird has asked not
+      for what it wants but for the right wanting. Mozart's fragment, broken off by death, is
+      the exact musical shape of a prayer that does not yet know if it will be answered.
+  - n: 6
+    scene: "The hoopoe's second tale — the dervish and the single stone"
+    force: revelation
+    composer: Messiaen
+    work: "Quartet for the End of Time — V. 'Louange à l'Éternité de Jésus'"
+    decision: added
+    why: >
+      The hoopoe's answering tale is of a dervish who found a single stone on the road, held it
+      in his hand for forty years, and one day opened his hand to find the stone had become a
+      sun. The stone was his devotion; the sun was what devotion becomes when you stop
+      examining it. Messiaen's 'Louange à l'Éternité de Jésus' — the slow fifth movement of
+      the Quartet for the End of Time, with the cello singing above the piano's sustained
+      chords — is the sound of time ceasing to be the medium of expectation. The cello line
+      is not going anywhere because it has already arrived. The dervish's stone, held long
+      enough, ceases to be an object of devotion and becomes the thing devotion reveals.
+  - n: 7
+    scene: "The partridge looks at his stones differently"
+    force: metamorphosis
+    composer: Scriabin
+    work: "Symphony No. 4 (The Poem of Ecstasy) — conclusion"
+    decision: added
+    why: >
+      The partridge looks at his jewels and sees something he had not seen before: the ruby is
+      not separate from the seeker; the emerald's green is the same green that grows in the
+      Valley of Search. Scriabin's Poem of Ecstasy conclusion — the final pages where the brass
+      chorale rises over tremolo strings and the whole orchestra converges on a single radiant
+      chord — is metamorphosis as consummation: the theme that began as desire has been
+      transformed into the thing desire was reaching for. The partridge's stones are not less
+      precious; they are precious in a new way, as icons of a journey they must now serve.
+  - n: 8
+    scene: "The hoopoe's closing word — the heart is the stone"
+    force: ascent
+    composer: Bach
+    work: "Cantata BWV 147 — 'Jesu, Joy of Man's Desiring' (chorale)"
+    decision: added
+    why: >
+      The hoopoe's final word to the partridge is the simplest and most devastating: the heart
+      is the stone the Simurgh looks at. Not the ruby, not the emerald — the heart of the
+      seeker, polished by the seeking. Bach's chorale is ascent in the key of tenderness: the
+      melody moves above a walking bass, the harmony is transparent, the affect is neither
+      triumph nor grief but the steady state of a soul that has found its orientation. The
+      partridge hears this and begins to sense that his heart, not his collection, is the
+      jewel he has been polishing all along.
+  - n: 9
+    scene: "The partridge offers his stones to the assembly"
+    force: desire
+    composer: Fauré
+    work: "Pelléas et Mélisande Suite, Op. 80 — 'Sicilienne'"
+    decision: added
+    why: >
+      The partridge, in a gesture that shifts the entire assembly, offers his stones to the
+      other birds — not as a renunciation but as a gift. Each bird receives a stone: a ruby
+      for courage, a sapphire for truth, an emerald for the hidden garden. Fauré's Sicilienne
+      is the sound of generosity that costs something: the flute and harp melody in a gentle
+      6/8, the harmony shaded with the minor that keeps the piece from becoming sentimental.
+      The partridge's gift is the first act of collective generosity in the assembly — the
+      first fruit of a love that has begun to turn outward.
+  - n: 10
+    scene: "The assembly holds the stones — each bird carries a light"
+    force: salvation
+    composer: Pärt
+    work: "Cantus in Memoriam Benjamin Britten"
+    decision: added
+    why: >
+      The section closes with the birds holding the partridge's stones. Each stone is a small
+      light in the gathering dark. Pärt's Cantus — the strings descending in canon over the
+      tolling bell — is the sound of a world that is ending and beginning at the same time.
+      The descending scale (the A minor scale, step by step, the bell striking the same pitch
+      throughout) is not grief; it is the slow descent into the self that the journey will
+      require. The stones the birds hold are their own hearts, carried in their own beaks.
+      The assembly has not moved, but it is no longer the same assembly. The lights are
+      distributed now, and each bird is responsible for its own.
+demoted:
+  - composer: Wagner
+    work: "Parsifal — 'Good Friday Spell'"
+    status: "reserved for Section 42 or 43 (the arrival at the Simurgh / the recognition)"
+    why: >
+      The Good Friday Spell is the sound of redemption arriving, of the sacred being recognized
+      in the ordinary. That register belongs to the final movement, when the birds see the
+      Simurgh and recognize themselves. The partridge is learning about value; the Good Friday
+      Spell is what value looks like when it has been fully transformed.
+  - composer: Rimsky-Korsakov
+    work: "Scheherazade — II. 'The Kalendar Prince'"
+    status: "too narrative, too Persianate in the wrong way"
+    why: >
+      Scheherazade's orientalism is beautiful but external — it tells stories about the East
+      rather than from within its spiritual logic. Attar's poem is Persian from the inside;
+      Rimsky-Korsakov's Russia looking East is the wrong register for the partridge's
+      genuinely Persian relationship to precious stones, which are not exotic but inward.

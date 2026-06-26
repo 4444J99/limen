@@ -1,0 +1,227 @@
+# Mahabharata — Drona Parva (Book 7) — curated music arc
+# Gold-standard form matching iliad/book-01.yaml.
+# Score the WAR UNDER DRONA'S COMMAND: the Chakravyuha formation, the
+# death of Abhimanyu, the breaking of Arjuna's vow, the slaying of
+# Jayadratha, and the death of Drona — the teacher who became a general
+# and could not bear what he had become. The dominant force is grief —
+# not the grief of the battlefield (that comes in Stri Parva) but the
+# specific, private grief of a father who outlives his son.
+work: mahabharata
+book: 7
+title: "Drona Parva: The Boy in the Labyrinth, the Vow, and the Teacher Who Could Not Stop"
+length_minutes: 98
+principle: >
+  Do not score Drona Parva as "the second phase of the war." Score it as
+  the book in which the Mahabharata kills its hope: Abhimanyu — sixteen
+  years old, son of Arjuna, symbol of the Pandava future — enters a battle
+  formation he knows how to enter but not how to leave. He dies surrounded
+  by six adult warriors who break every rule of war to kill him. Arjuna,
+  who was off fighting elsewhere, returns to hear that his son is dead and
+  makes a vow that will be paid in blood. Drona, the brahmin who became
+  a commander, presides over this catastrophe and is himself killed by a
+  lie. The dominant force is grief — the grief of a father for his son,
+  the grief of a teacher for his own corruption, the grief of a war that
+  has begun consuming its children.
+force_arc: [wrath, law, fate, grief, wrath, sacrifice, fate, sacrifice, supplication, grief]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "Drona takes command — the teacher's war"
+    force: wrath
+    composer: Shostakovich
+    work: "Symphony No. 5 in D minor, Op. 47 — II. Allegretto"
+    decision: added
+    why: >
+      Drona, the brahmin who taught the art of war to both the Pandavas
+      and the Kauravas, becomes the commander of the Kaurava army. He is
+      a guru fighting his own students — a teacher bound by oath to a king
+      whose cause he does not fully endorse. Shostakovich's Fifth Symphony's
+      second movement is a scherzo that is not comic: the strings in their
+      highest register, the woodwinds in grotesque dance, the whole thing
+      moving at a velocity that suggests compulsion rather than joy. Wrath
+      requires rhythmic pressure; Shostakovich's scherzo is the sound of
+      a man who has been given a command he cannot refuse and is conducting
+      violence at the tempo of a forced march.
+  - n: 2
+    scene: "The Chakravyuha — the wheel formation deployed"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue, BWV 1080 — Contrapunctus III"
+    decision: added
+    why: >
+      Drona arranges the Kaurava army in the Chakravyuha — the wheel
+      formation, a labyrinth of warriors designed to trap and kill anyone
+      who enters without knowing the exit. The formation is a work of
+      martial architecture: concentric circles of armed men, each layer
+      feeding the next, the centre containing the trap. Bach's Contrapunctus
+      III is a fugue in the key of D major whose subject moves in contrary
+      motion — the theme going up in one voice while it goes down in another,
+      a musical wheel within which resolution is perpetually deferred. Law
+      requires formal clarity and architecture; the Chakravyuha is the law
+      of the labyrinth, a form that kills not by randomness but by design.
+  - n: 3
+    scene: "Abhimanyu enters the formation — the boy who knew the door"
+    force: fate
+    composer: Tchaikovsky
+    work: "Symphony No. 6 in B minor, Op. 74 'Pathétique' — III. Allegro molto vivace"
+    decision: added
+    why: >
+      The Pandavas cannot break the Chakravyuha. Only Abhimanyu — the
+      sixteen-year-old son of Arjuna and Subhadra, Krishna's nephew —
+      knows the entrance. He penetrates the wheel, cutting through the
+      outer rings with his father's sword and bow, and the Pandava army
+      follows — but the entrance seals behind him, and the warriors who
+      were supposed to protect his rear are blocked. He is inside alone.
+      Tchaikovsky's Pathétique third movement — the only major-key movement
+      in the symphony — is a scherzo-march that is too fast for its own
+      good: the strings in perpetual motion, the brass fanfares that seem
+      to celebrate something that is actually a catastrophe, the momentum
+      of a runner who cannot stop because stopping means death. Fate requires
+      inexorable motif; the march rhythm of this movement is fate as velocity
+      — the young warrior moving at the speed of his own doom.
+  - n: 4
+    scene: "Abhimanyu's last stand — six against one"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 9 in D major — IV. Adagio (opening)"
+    decision: added
+    why: >
+      Inside the Chakravyuha, Abhimanyu fights alone. Six Kaurava warriors
+      — Drona, Karna, Ashwatthama, Kripa, Shalya, Dushasana — surround him
+      and break every rule of war: they attack a single warrior en masse,
+      they strike him from behind, they cut his bowstring, they kill his
+      horses, they strike him when he is disarmed and weaponless. He dies
+      on a pile of enemy bodies. Mahler's Ninth Adagio — the final movement
+      of the last symphony Mahler completed — is valediction at the highest
+      register: the strings unfolding in a melody that knows it is the last
+      thing it will sing, the harmony moving through resolutions that are
+      also releases into silence. Grief requires slow tempo and inward line;
+      Mahler's Adagio is the sound of a world that has lost its future, and
+      Abhimanyu's death is the moment the Mahabharata loses its innocence.
+  - n: 5
+    scene: "Arjuna's vow — the day's end"
+    force: wrath
+    composer: Holst
+    work: "The Planets, Op. 32 — 'Mars, the Bringer of War'"
+    decision: added
+    why: >
+      Arjuna returns to camp at sunset and learns that his son is dead. He
+      does not weep — not yet. He vows: before the sun sets tomorrow, he
+      will kill Jayadratha, the king of Sindhu who sealed the Chakravyuha's
+      exit and trapped Abhimanyu inside. If he fails, he will enter the
+      fire. The vow is wrath as contract: the legal form of vengeance, the
+      declaration made in the hearing of the gods. Holst's Mars — the 5/4
+      rhythm that cannot settle, the brass and percussion in full martial
+      register — returns from Sabha Parva's Shishupala beheading and Virata
+      Parva's demotion. Here it finds its true home: the wrath of a father
+      whose son has been killed by the rules of a war that his own teacher
+      designed. Wrath requires rhythmic pressure; Mars is wrath as the
+      engine of historical consequence.
+  - n: 6
+    scene: "The search for Jayadratha — the long day"
+    force: sacrifice
+    composer: Sibelius
+    work: "Symphony No. 5 in E-flat major, Op. 82 — II. Andante mosso, quasi allegretto"
+    decision: added
+    why: >
+      The next day, Arjuna fights through the Kaurava army in a single long
+      push toward Jayadratha. The day is the longest of the war — the sun
+      seems to hang at noon while Krishna's illusion holds it in place,
+      and the battle stretches beyond its natural limit. Sibelius's Fifth's
+      second movement is a set of variations that seem to circle without
+      advancing — the pizzicato strings, the woodwinds entering one by one,
+      the theme appearing in fragments that never quite coalesce into a full
+      statement. Sacrifice requires ritual weight and processional build;
+      Sibelius's variations are the procession of hours in a day that will
+      not end, the patience of a man who has vowed to kill before sunset
+      and will keep the vow even if the sun refuses to set.
+  - n: 7
+    scene: "Jayadratha's death — the sun falls"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 7 in A major, Op. 92 — III. Scherzo: Presto"
+    decision: added
+    why: >
+      Krishna causes the sun to set — an illusion of dusk — and Jayadratha,
+      believing the day is over, emerges from his defensive position. Arjuna
+      kills him with a single arrow that takes his head from his shoulders.
+      The death is instantaneous: the sun that seemed to set rises again,
+      and the war continues. Beethoven's Seventh Scherzo is the most
+      disorienting movement in the symphonic repertoire — the trio section
+      in 2/4 against the scherzo's 3/4, the whole thing moving at a velocity
+      that seems to contradict the meter. Fate here is not the inexorable
+      march of the Allegretto (Bhishma Parva, track 5) but fate as trick:
+      the sun that falls and rises, the head that leaves the shoulders,
+      the vow kept by a god's manipulation of time.
+  - n: 8
+    scene: "Drona's grief — the teacher who cannot stop the war"
+    force: sacrifice
+    composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    decision: added
+    why: >
+      Drona continues to command even as his army is destroyed around him.
+      He is a teacher presiding over the deaths of his students, a brahmin
+      who has become the instrument of kshatriya destruction. The 'Dies Irae'
+      from Verdi's Requiem is judgment at full operatic register — the brass
+      fanfares, the pounding rhythm, the bass voice declaring the day of
+      wrath. Here the judgment is not divine but internal: Drona judges
+      himself by continuing to do what he knows is wrong, and the Dies Irae
+      is the soundtrack of his own condemnation. Sacrifice requires ritual
+      weight and processional build; Verdi's apocalypse is the ritual of a
+      world that has lost the right to call itself lawful.
+  - n: 9
+    scene: "The lie that kills the teacher — Dhrishtadyumna's deception"
+    force: supplication
+    composer: Bach
+    work: "St Matthew Passion, BWV 244 — 'Können Tränen meiner Wangen'"
+    decision: added
+    why: >
+      Yudhishthira, at Krishna's direction, tells Drona that Ashwatthama
+      — Drona's son — has been killed. The lie is technically true (an
+      elephant named Ashwatthama has died), and Drona, believing his son
+      is dead, lays down his arms in grief. Dhrishtadyumna, Draupadi's
+      brother, beheads him. The death of Drona is the epic's cruelest
+      moment: a teacher killed by the grief of a lie, the man who trained
+      the archers of both armies dying because his own tradition taught him
+      to value truth above life. Bach's 'Können Tränen meiner Wangen' (Can
+      the tears of my cheeks) from the St Matthew Passion is the aria of
+      tears that cannot undo what has been done — the alto asking whether
+      weeping can satisfy the debt of guilt. Supplication requires suspended
+      cadence; the aria's weeping figure in the strings is the sound of
+      Drona's last thought: the student he loved has become the instrument
+      of his destruction.
+  - n: 10
+    scene: "The night after Drona — the war continues without the teacher"
+    force: grief
+    composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March' (opening section only)"
+    decision: added
+    why: >
+      The Parva closes in darkness. Drona is dead, Abhimanyu is dead,
+      thousands have fallen, and the war is not yet half over. The field
+      of Kurukshetra is now a machine that will continue to consume without
+      the restraint of the teacher or the hope of the son. Wagner's
+      Siegfried's Funeral March begins with the low strings and bassoons,
+      the darkness of the Rhine flowing through the orchestra, the mourning
+      of a world that has begun to understand that its heroes will not
+      survive. This is the first appearance of the terminal register in
+      the Mahabharata corpus, but only the opening — as the war has only
+      reached its midpoint. Grief requires slow tempo and inward line; the
+      funeral march is the terminal register finally earned, the sound of
+      Drona being carried from the field by the weight of his own tradition.
+demoted:
+  - composer: Mozart
+    work: "Requiem — 'Lacrimosa'"
+    status: "save for Stri Parva (Book 11); Drona Parva has the death of the son and the death of the teacher, but the collective grief of the women is still to come"
+    why: >
+      The Lacrimosa is the weeping of the mothers, wives, and daughters
+      over the bodies of their men. Drona Parva has grief but not that
+      grief; the women's lament requires the full toll of the war.
+  - composer: Mahler
+    work: "Symphony No. 2 'Resurrection' — V. 'Auferstehung'"
+    status: "save for Book 18 (Svarga Arohana Parva)"
+    why: >
+      The Resurrection finale is the apotheosis of the survivors and the
+      ascended. Drona Parva is still in the middle of the dying; the
+      resurrection of the world after the war belongs to the poem's end.

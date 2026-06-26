@@ -1,0 +1,182 @@
+# Tale of Genji — Chapter 5 (Wakamurasaki) — curated music arc
+# Score the CHAPTER, not the novel. Wakamurasaki is the hinge of the entire
+# first part of the novel. Genji, ill with malaria, retreats to the northern
+# hills, sees a ten-year-old girl who resembles his dead mother and his
+# forbidden lover Fujitsubo, and resolves to possess her. He kidnaps her,
+# raises her, educates her — and the novel's central relationship is born.
+# This is also the chapter where Genji consummates his love for his
+# stepmother Fujitsubo, producing a son who will become emperor. The
+# chapter is about the metamorphosis of absence into presence: the dead
+# mother, the forbidden lover, and the new-made woman who will contain both.
+work: tale-of-genji
+book: 5
+title: "Wakamurasaki: Young Murasaki"
+length_minutes: 84
+principle: >
+  Do not score Chapter 5 as "a love story." Score it as a chapter about
+  the metamorphic power of resemblance — the way one face can stand for
+  another, the way the dead can be resurrected through the living, the
+  way desire can be transferred from the forbidden to the permissible,
+  from the adult to the child, from the unreachable to the captive. This
+  is the most morally complex chapter in the novel's first section. It
+  is also, read from Murasaki's side, a chapter about the education of
+  a woman into her own captivity. The music must keep both perspectives
+  in suspension: the radiant tenderness and the structural violence.
+force_arc: [plague, desire, memory, metamorphosis, law, ascent, comedy, salvation]
+dominant_force: metamorphosis
+tracks:
+  - n: 1
+    scene: "Genji's malaria / retreat to the northern hills"
+    force: plague
+    composer: Berlioz
+    work: "Les Troyens — 'Chasse royale et orage' (excerpt)"
+    decision: added
+    why: >
+      Chapter 5 opens with Genji suffering from a lingering fever, a
+      physical illness that follows the psychological wound of Yūgao's
+      death. He seeks a holy man in the mountains. Berlioz's 'Chasse
+      royale et orage' gives the atmosphere of the fevered mind: the
+      storm that is both weather and interior state, the hunt that
+      is both narrative and metaphor. The music is turbulent, dark,
+      full of motion without direction — the sound of a body fighting
+      an illness and a mind preparing for a transformation.
+  - n: 2
+    scene: "The first glimpse of Murasaki / the face that recalls"
+    force: desire
+    composer: Wagner
+    work: "Tristan und Isolde — Prelude to Act I"
+    decision: added
+    why: >
+      Genji, wandering during his convalescence, glimpses a little
+      girl through a gap in a hedge. She has rich eyebrows, lovely
+      hair, a child's face — and she reminds him, piercingly, of
+      Fujitsubo, the woman he loves but cannot have. The Tristan
+      Prelude is the musical form of desire that recognizes its
+      object across time and substitution: the same reaching,
+      suspended, unresolved chord that opened the novel now returns
+      for a different object — the child who carries the image of
+      the desired woman. This is not Wagner reused carelessly; it
+      is the same engine of desire, now refracted through memory
+      and substitution.
+  - n: 3
+    scene: "The recognition / Murasaki is Fujitsubo's niece"
+    force: memory
+    composer: Elgar
+    work: "Enigma Variations — 'Nimrod' (Variation IX)"
+    decision: added
+    why: >
+      Genji learns that the girl is Murasaki, the niece of his
+      beloved Fujitsubo — the daughter of Prince Hyōbu, Fujitsubo's
+      brother. The recognition produces a complex emotional fusion:
+      the dead mother, the forbidden stepmother, the living child
+      who carries both their likenesses. Elgar's 'Nimrod' returns
+      from Chapter 1 (the emperor's mourning for Kiritsubo) and
+      Chapter 4 (the visit to the dying nurse) — but here it takes
+      a different coloration: not grief or premonition but the
+      dawning realization that loss has produced a new object, that
+      memory can become flesh again.
+  - n: 4
+    scene: "Murasaki's face as genetic inheritance / metamorphosis begun"
+    force: metamorphosis
+    composer: Debussy
+    work: "Préludes, Book I — 'La cathédrale engloutie'"
+    decision: added
+    why: >
+      The novel's central metamorphic fact now fully reveals itself:
+      Murasaki is the next link in the chain of resemblance that
+      began with Kiritsubo, passed through Fujitsubo, and now
+      descends to this child. Debussy's submerged cathedral, used
+      in Chapter 1 for Genji as the Kiritsubo Lady's legacy, here
+      finds a new application: the same luminous structure emerging
+      from a different depth — childhood instead of infancy, the
+      niece instead of the son. The prelude sounds different now:
+      where Chapter 1 used it for the birth of radiance from grief,
+      Chapter 5 uses it for the birth of a relationship that will
+      be the novel's longest thread.
+  - n: 5
+    scene: "Genji's night with Fujitsubo / the forbidden consummation"
+    force: law
+    composer: Brahms
+    work: "Symphony No. 3 in F major, Op. 90 — III. Poco allegretto"
+    decision: added
+    why: >
+      Genji arranges a secret night with Fujitsubo. She is uncertain,
+      guilty, afraid — she is his father's consort, his stepmother,
+      and the mother of his own desire. Brahms's Third Symphony
+      third movement is passion under formal pressure: a cello melody
+      that sings with extraordinary tenderness over a strict rhythmic
+      structure. It is the sound of desire that knows it is
+      transgressive and proceeds anyway, with full awareness of the
+      cost. The music never breaks its composure; the emotion is
+      all in the melodic line, held in by the orchestration like
+      a secret inside a formal room.
+  - n: 6
+    scene: "Murasaki's grandmother dies / Genji kidnaps the child"
+    force: ascent
+    composer: Mahler
+    work: "Symphony No. 1 in D major ('Titan') — III. Feierlich und gemessen, ohne zu schleppen"
+    decision: added
+    why: >
+      When Murasaki's grandmother dies, Genji acts: he rushes to the
+      house in the early morning, wakes the child, and carries her
+      off to his Nijō palace. The Mahler First's third movement is
+      a funeral march based on 'Frère Jacques' in a minor key —
+      simultaneously solemn and grotesque, a death march that becomes
+      something else. It gives the chapter's most morally ambiguous
+      scene: a kidnapping that is also a rescue, a theft that is also
+      an adoption, a funeral that is also a birth. The music refuses
+      to settle into a single emotional register, just as the scene
+      refuses to settle into a single moral category.
+  - n: 7
+    scene: "Genji's household reacts / the court finds it amusing"
+    force: comedy
+    composer: Mozart
+    work: "Così fan tutte, K. 588 — Overture"
+    decision: added
+    why: >
+      Genji's household and friends react to his sudden adoption of a
+      ten-year-old girl with a mixture of amusement, curiosity, and
+      scandalized fascination. Mozart's Così fan tutte Overture —
+      'All women do it' — is the perfect music for a court that
+      watches Genji's eccentricities with knowing smiles. It is
+      bright, witty, and fundamentally cynical: the comic register
+      that the Heian court would use to process the spectacle of
+      the Shining One raising his own bride from childhood.
+  - n: 8
+    scene: "Murasaki's education begins / the chrysalis house"
+    force: salvation
+    composer: Fauré
+    work: "Requiem, Op. 48 — 'In Paradisum'"
+    decision: added
+    why: >
+      The chapter ends with Murasaki settled in Genji's Nijō palace,
+      beginning her education. He teaches her calligraphy, poetry,
+      music — shaping her into the woman he wants her to become.
+      Fauré's 'In Paradisum' from Chapter 4 (Yūgao's release) returns
+      transformed: no longer a farewell to the dead but a welcome
+      for the new. The music is the sound of a soul being conducted
+      into a garden — and Murasaki's new life is precisely that, a
+      garden enclosed, a protected space where she is groomed for
+      her future role. The darkness of the chapter's moral
+      complexity is not resolved, but it is suspended in the
+      luminous peace of Fauré's final cadence.
+demoted:
+  - composer: Offenbach
+    work: "Orpheus in the Underworld — Overture"
+    status: "too farcical for Chapter 5's mixed register"
+    why: >
+      Offenbach's overture was considered for the court's reaction
+      scene, but the chapter's comedy is not the pure farce of
+      the Iliad's Olympus. The comedy here is knowing, worldly,
+      and shaded by the chapter's darker currents. Mozart's Così
+      is a more precise fit: comic on the surface, philosophically
+      unsettling underneath.
+  - composer: Ravel
+    work: "Daphnis et Chloé — Suite No. 2 (Lever du jour)"
+    status: "too purely beautiful; the chapter requires moral complexity"
+    why: >
+      The dawn scene when Genji steals Murasaki could be scored with
+      Ravel's sunrise music, but that would wash over the scene's
+      troubling dimensions. Mahler's grotesque funeral-march is
+      a riskier, more honest choice — it does not prettify what
+      Genji does.

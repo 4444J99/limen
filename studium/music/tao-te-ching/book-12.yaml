@@ -1,0 +1,142 @@
+# Tao Te Ching — Chapter 12 — curated music arc
+# The five colors blind the eye; the five sounds deafen the ear; the five flavors dull the palate.
+# The sage attends to the belly, not the eye — discards the excess and returns to the root.
+work: tao-te-ching
+book: 12
+title: "Tao Te Ching Chapter 12: The Five Colors Blind the Eye"
+length_minutes: 54
+principle: >
+  Chapter 12 is Laozi's critique of sensory addiction — not a blanket condemnation of
+  beauty, sound, or flavor, but a diagnosis of how excess inverts into deprivation. The
+  five colors blind the eye (not color itself, but the proliferation that overwhelms).
+  The five sounds deafen the ear. The five flavors dull the palate. Racing and hunting
+  madden the heart. Rare goods impede right conduct. Each sense, pushed to saturation,
+  collapses into its opposite. The sage's alternative is not ascetic renunciation but
+  reorientation: attend to the belly, not the eye. The belly is the seat of contentless
+  presence — what needs, receives, and rests without grasping. The chapter is about the
+  difference between receiving the world and consuming it. The music must move from the
+  over-saturated sensory field toward the simplicity of unmediated presence.
+force_arc: [desire, desire, metamorphosis, desire, desire, metamorphosis, exile, return, revelation, law]
+dominant_force: metamorphosis
+tracks:
+  - n: 1
+    scene: "The five colors blind the eye — visual excess saturates"
+    force: desire
+    composer: Richard Wagner
+    work: "Tristan und Isolde — Prelude (full version)"
+    decision: added
+    why: >
+      The Tristan chord is desire made audible — unresolved, chromatic, aching toward a
+      resolution that never comes. This is the five colors as optical overload: the eye
+      is flooded with such intensity that it can no longer distinguish form from form.
+      Wagner's orchestration is the saturation that blinds by brilliance.
+  - n: 2
+    scene: "The five sounds deafen the ear — sonic overload"
+    force: desire
+    composer: Alexander Scriabin
+    work: "Poème de l'extase, Op. 54"
+    decision: added
+    why: >
+      Scriabin's ecstatic poem pushes the orchestra to the threshold of pain and beyond —
+      the saturation of sound that deafens by its own voluptuousness. The ear cannot
+      distinguish the individual voices; they merge into a single, overwhelming pressure.
+      Scriabin's synesthesia (he heard colors with sounds) makes him the ideal composer
+      for the entanglement of sensory channels that Chapter 12 diagnoses.
+  - n: 3
+    scene: "The five flavors dull the palate — satiety that tastes like nothing"
+    force: metamorphosis
+    composer: Claude Debussy
+    work: "Prélude à l'après-midi d'un faune"
+    decision: added
+    why: >
+      Debussy's faun is the figure of satiated desire — after the dream, after the chase,
+      after the imagined consummation, the palate is dull, the pleasuring body begins to
+      fall back into a different relation to the world. The metamorphosis from sensory
+      grasping to a quieter mode of being begins here. The faun does not renounce —
+      he drifts beyond the need for the next sensation.
+  - n: 4
+    scene: "Racing and hunting madden the heart — agitation as spiritual sickness"
+    force: desire
+    composer: Igor Stravinsky
+    work: "The Rite of Spring — 'The Augurs of Spring'"
+    decision: added
+    why: >
+      Stravinsky's pounding, irregular rhythms are the racing heart of the hunt: adrenaline,
+      pursuit, capture, and the madness that accompanies the chase. The heart cannot rest;
+      it must always pursue the next quarry. This is the desire that has become systemic,
+      built into the body's rhythm.
+  - n: 5
+    scene: "Rare goods impede right conduct — possession as impediment"
+    force: desire
+    composer: Igor Stravinsky
+    work: "The Rite of Spring —'The Sacrificial Dance'"
+    decision: added
+    why: >
+      Rare goods are not evil in themselves — they impede because they focus attention
+      on holding, protecting, displaying. Stravinsky's sacrificial dance is the music of
+      possession as ritual violence: the Chosen One must be possessed, taken, held by
+      the community in the most absolute way possible. The impediment to right conduct
+      is the frenzy of grasping.
+  - n: 6
+    scene: "The belly — the seat of contentless presence"
+    force: metamorphosis
+    composer: Arvo Pärt
+    work: "Tabula Rasa — Part I (Ludus)"
+    decision: added
+    why: >
+      Tabula rasa — the erased slate — is the belly before sensation writes on it.
+      Pärt's Ludus alternates between violent, crowded passages and still, empty spaces,
+      tracing the transformation from sensory overload to the clean slate of receptive
+      presence. The belly does not pursue; it receives. The metamorphosis is from the
+      racing heart to the quiet center.
+  - n: 7
+    scene: "The eye takes; the belly receives — the reorientation begins"
+    force: exile
+    composer: Jean Sibelius
+    work: "Symphony No. 4 in A Minor — I. Tempo molto moderato"
+    decision: added
+    why: >
+      Sibelius' Fourth Symphony inhabits a cold, spare, spacious world far from sensory
+      saturation. The music seems to have exiled itself from the warm, colorful orchestral
+      tradition — it is the eye learning to stop taking, the attention withdrawing from
+      the riot of the senses. Exile as the necessary condition for reorientation.
+  - n: 8
+    scene: "Return to the root — the belly before the eye"
+    force: return
+    composer: Franz Schubert
+    work: "String Quintet in C Major — II. Adagio"
+    decision: added
+    why: >
+      Schubert's Adagio is the return of the body to itself — unhurried, spacious,
+      accepting its own mortality and its own capacity for peace. The return from the
+      five colors to the belly is not a loss of richness but a discovery of a deeper,
+      simpler richness. The music breathes with the patience of the belly, not the
+      hunger of the eye.
+  - n: 9
+    scene: "The sage attends to the belly — revelation of the simple"
+    force: revelation
+    composer: Gregorian chant
+    work: "Veni Creator Spiritus (Mode VIII)"
+    decision: added
+    why: >
+      The sage's practice — attend to the belly, not the eye — is a revelation of what
+      has always been present but was invisible through sensory noise. The chant Veni
+      Creator Spiritus invokes the spirit's arrival into the emptied vessel of the body.
+      The voice is unadorned, unaccompanied, unpreoccupied — the belly made audible.
+  - n: 10
+    scene: "Coda: discarding the former, taking the latter"
+    force: law
+    composer: Johann Sebastian Bach
+    work: "Well-Tempered Clavier, Book I — Prelude in C Major (BWV 846)"
+    decision: added
+    why: >
+      The law of simplicity: thirty-five measures of perfect harmonic clarity, no note
+      wasted, no gesture ornamental. The C Major Prelude is the eye that has become the
+      belly — seeing without grasping, receiving without taking. The circle closes: what
+      remained after the five colors, five sounds, and five flavors are released is this
+      — one voice, one harmony, one body, one breath.
+demoted:
+  - composer: Gustav Mahler
+    work: "Symphony No. 3 — 'What the Forest Tells Me'"
+    status: "removed; save for later chapters on the natural world (16, 25, 40)"
+    why: "Mahler's forest music evokes the world's fullness, not its sensory excess. Chapter 12 is about the problem of surplus, not its celebration."

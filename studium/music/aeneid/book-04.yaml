@@ -1,0 +1,88 @@
+# Aeneid — Book IV — curated music arc
+work: aeneid
+book: 4
+title: "Aeneid Book IV: Dido and Aeneas"
+length_minutes: 85
+principle: >
+  Score Book IV as the catastrophe of uncontainable desire breaking against imperial fate.
+  It is not merely a romance; it is a geopolitical tragedy where private passion is systematically
+  destroyed by cosmic law.
+force_arc: [desire, kingship, plague, divine-intervention, law, wrath, sacrifice, grief]
+dominant_force: desire
+tracks:
+  - n: 1
+    scene: "Dido's confession to Anna"
+    force: desire
+    composer: Wagner
+    work: "Tristan und Isolde — Prelude to Act I"
+    decision: added
+    why: >
+      Dido admits the return of the old flame. The Tristan Prelude provides the exact
+      chromatic longing and unresolved pressure required for a desire that will ultimately
+      consume its subject.
+  - n: 2
+    scene: "The royal hunt and the storm"
+    force: kingship
+    composer: Berlioz
+    work: "Les Troyens — Royal Hunt and Storm"
+    decision: added
+    why: >
+      The hunt is a display of sovereign power, interrupted by the storm that drives Dido
+      and Aeneas into the cave. Berlioz's pantomime captures both the regal grandeur and the
+      elemental, fateful intervention of nature.
+  - n: 3
+    scene: "Rumor (Fama) spreads through the cities"
+    force: plague
+    composer: Shostakovich
+    work: "Symphony No. 8 — II. Allegretto"
+    decision: added
+    why: >
+      Rumor is described as a monstrous, swift bird spreading infection. Shostakovich's
+      mechanical, creeping, and grotesque woodwinds embody the toxic, spreading contamination
+      of public whisper.
+  - n: 4
+    scene: "Jupiter sends Mercury"
+    force: divine-intervention
+    composer: Messiaen
+    work: "Turangalîla-Symphonie — V. Joie de sang des étoiles"
+    decision: added
+    why: >
+      Jupiter looks down and reasserts the cosmic plan. Messiaen provides the blinding,
+      almost violent brass and sudden color shift necessary for divine will shattering a
+      human illusion.
+  - n: 5
+    scene: "Aeneas resolves to leave"
+    force: law
+    composer: Bach
+    work: "Passacaglia and Fugue in C minor, BWV 582"
+    decision: added
+    why: >
+      Aeneas suppressing his heart to obey the gods. Bach's inexorable, structurally rigid
+      passacaglia captures the cold, formal architecture of duty overriding emotion.
+  - n: 6
+    scene: "Dido's confrontation"
+    force: wrath
+    composer: Tchaikovsky
+    work: "Symphony No. 4 — I. Andante sostenuto (development)"
+    decision: added
+    why: >
+      Dido's rage is explosive and desperate. Tchaikovsky's brass fanfares and frenzied
+      strings provide the required rhythmic pressure and uncontained emotional violence.
+  - n: 7
+    scene: "The curse and the pyre"
+    force: sacrifice
+    composer: Stravinsky
+    work: "The Rite of Spring — 'Sacrificial Dance'"
+    decision: added
+    why: >
+      Dido builds the pyre under the guise of magic, preparing to immolate herself. Stravinsky
+      gives the scene its terrifying, ritualistic weight and the brutal rhythmic build to immolation.
+  - n: 8
+    scene: "Death of Dido"
+    force: grief
+    composer: Purcell
+    work: "Dido and Aeneas — 'When I am laid in earth'"
+    decision: added
+    why: >
+      The ultimate inward line of grief. Purcell's descending chromatic ground bass is the
+      definitive musical realization of Dido's end, dissolving royal power into pure sorrow.

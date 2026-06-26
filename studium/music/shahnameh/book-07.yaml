@@ -1,0 +1,69 @@
+work: shahnameh
+book: 7
+title: "Shahnameh Cycle 7: The Romance of Zal and Rudabeh"
+length_minutes: 78
+principle: >
+  Score the union of Zal and Rudabeh not as a simple romance, but as a dangerous crossing of political lines.
+  Zal is the heir of Iran's greatest champion; Rudabeh is the descendant of the serpent-king Zahhak.
+  Their desire threatens to reignite the wars of the past. The music must capture the intoxicating pull
+  of forbidden love, the terrifying threat of state violence, and the ultimate diplomatic and divine
+  resolution that allows the hero Rostam to be born.
+force_arc: [revelation, desire, metamorphosis, wrath, supplication, law, fate, kingship]
+dominant_force: desire
+tracks:
+  - n: 1
+    scene: "Zal arrives in Kabul and hears of Rudabeh's beauty"
+    force: revelation
+    composer: Debussy
+    work: "Prélude à l'après-midi d'un faune"
+    decision: added
+    why: "Zal is told of Rudabeh, and the mere description of her beauty strikes him like a vision. Debussy's fluid, awakening flute solo captures the quiet, sudden opening of the mind to a new and intoxicating possibility."
+  - n: 2
+    scene: "Zal and Rudabeh meet; she lets down her hair from the tower"
+    force: desire
+    composer: Wagner
+    work: "Tristan und Isolde — Prelude"
+    decision: added
+    why: "They meet in secret at night. The chromatic longing of Wagner perfectly embodies the gravitational, dangerous pull of a love that violates the boundaries of their warring lineages."
+  - n: 3
+    scene: "The lovers pledge themselves to each other"
+    force: metamorphosis
+    composer: Schoenberg
+    work: "Verklärte Nacht"
+    decision: added
+    why: "In the dark, they bind their fates together, fundamentally altering the political landscape of the world. Schoenberg's transfigured string textures capture the intense, shifting intimacy of two people rewriting their futures."
+  - n: 4
+    scene: "Manuchehr learns of the romance and orders Kabul destroyed"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    decision: added
+    why: "The king of Iran sees the bloodline of Zahhak threatening to merge with his greatest champion. He commands Sam to burn Kabul. The hammering, asymmetrical pressure of 'Mars' is the state machine preparing to crush a personal transgression."
+  - n: 5
+    scene: "Sindokht rides out to plead with Sam"
+    force: supplication
+    composer: Bach
+    work: "St. Matthew Passion — 'Erbarme dich'"
+    decision: added
+    why: "Rudabeh's mother, Sindokht, risks her life to meet Sam and beg for her city. The suspended cadence and exposed violin line of Bach hold the agonizing, desperate plea of a mother trying to save her daughter and her people from annihilation."
+  - n: 6
+    scene: "Zal answers the riddles of the Magi"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue — Contrapunctus I"
+    decision: added
+    why: "Zal must prove his wisdom to Manuchehr's court. He is tested on the nature of time, life, and the cosmos. The architectural, formal clarity of the fugue represents the rigorous, structured testing of the hero's mind against the laws of the universe."
+  - n: 7
+    scene: "Astrologers predict the birth of the world's greatest hero"
+    force: fate
+    composer: Tchaikovsky
+    work: "Symphony No. 4 — I. Andante sostenuto"
+    decision: added
+    why: "The stars are read, and the decree is clear: this union will produce Rostam, the shield of Iran. Tchaikovsky's fate motif sounds not as a curse here, but as an inexorable, overwhelming destiny that even the king cannot oppose."
+  - n: 8
+    scene: "The wedding of Zal and Rudabeh"
+    force: kingship
+    composer: Handel
+    work: "Water Music — Suite No. 1: Hornpipe"
+    decision: added
+    why: "The cycle ends in celebration, with the blessing of both realms. The ceremonial grandeur and joyous brass of Handel's suite represent the formal, courtly acceptance of a union that secures the future of the empire."

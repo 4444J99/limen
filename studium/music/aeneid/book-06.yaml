@@ -1,0 +1,90 @@
+# Aeneid — Book VI — curated music arc
+work: aeneid
+book: 6
+title: "Aeneid Book VI: The Underworld"
+length_minutes: 88
+principle: >
+  Score Book VI not as a haunted house, but as a vast, architected state of revelation.
+  The descent is a cosmic education, moving from unburied grief to the terrifying scale
+  of Tartarus, and finally to the luminous, prophetic architecture of Roman fate.
+force_arc: [revelation, supplication, memory, wrath, salvation, kingship, fate, exile]
+dominant_force: revelation
+tracks:
+  - n: 1
+    scene: "The Sibyl and the Golden Bough"
+    force: revelation
+    composer: Pärt
+    work: "Cantus in Memoriam Benjamin Britten"
+    decision: added
+    why: >
+      Aeneas plucks the bough and descends into the earth. Pärt's descending tintinnabuli
+      bell lines create a static, luminous verticality, marking the transition from human
+      time into cosmic permanence.
+  - n: 2
+    scene: "The unburied dead (Palinurus)"
+    force: supplication
+    composer: Barber
+    work: "Adagio for Strings"
+    decision: added
+    why: >
+      The tragedy of the unburied who cannot cross over. Barber's suspended, reaching lines
+      capture the agony of waiting on the shore, pleading for passage that cannot yet be granted.
+  - n: 3
+    scene: "The Fields of Mourning (Dido)"
+    force: memory
+    composer: Mahler
+    work: "Symphony No. 9 — I. Andante comodo"
+    decision: added
+    why: >
+      Aeneas encounters Dido, but she refuses to speak, turning away in silence. Mahler's
+      fading, nostalgic, and deeply scarred lines capture the paralyzed memory of love that
+      can no longer be repaired.
+  - n: 4
+    scene: "Tartarus and its punishments"
+    force: wrath
+    composer: Verdi
+    work: "Requiem — Dies Irae"
+    decision: added
+    why: >
+      The fortress of the damned, where the greatest sins against cosmic order are punished.
+      Verdi's hammered, terrifying choral apocalypse provides the required inexorable weight
+      and rhythmic pressure of divine retribution.
+  - n: 5
+    scene: "The Elysian Fields"
+    force: salvation
+    composer: Fauré
+    work: "Requiem — In Paradisum"
+    decision: added
+    why: >
+      The luminous meadows of the blessed, where heroes and poets reside. Fauré's resolving,
+      radiant choral apotheosis captures the pure, untroubled light of the underworld's sanctuary.
+  - n: 6
+    scene: "Anchises and the Pageant of Romans"
+    force: kingship
+    composer: Walton
+    work: "Crown Imperial"
+    decision: added
+    why: >
+      Anchises reveals the souls waiting to be born—the future kings and generals of Rome.
+      Walton's ceremonial grandeur and sovereign display perfectly match this massive,
+      architectonic vision of imperial destiny.
+  - n: 7
+    scene: "The tragedy of Marcellus"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 7 — II. Allegretto"
+    decision: added
+    why: >
+      The pageant ends with the shadow of young Marcellus, destined to die early. Beethoven's
+      inexorable, repeating march motif grounds the imperial triumph in the tragic inevitability
+      of loss.
+  - n: 8
+    scene: "The Gates of Sleep"
+    force: exile
+    composer: Sibelius
+    work: "The Swan of Tuonela"
+    decision: added
+    why: >
+      Aeneas exits through the Gate of Ivory (false dreams), returning to the upper world
+      forever changed. Sibelius's wandering, dark English horn line returns the hero to the
+      loneliness of his earthly exile, armed with a truth he cannot fully comprehend.

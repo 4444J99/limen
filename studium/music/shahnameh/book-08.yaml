@@ -1,0 +1,70 @@
+work: shahnameh
+book: 8
+title: "Shahnameh Cycle 8: The Cesarean Birth and the Passing of the King"
+length_minutes: 82
+principle: >
+  Score this cycle as the violent, miraculous entry of the ultimate hero into the world,
+  shadowed by the death of the king who established the current order. Rudabeh nearly dies
+  in labor, requiring the intervention of the Simurgh to perform the first cesarean section.
+  Rostam is born massive and unstoppable. But his birth coincides with the end of Manuchehr's
+  reign, marking the transition from an era of established law to an era where Iran will
+  depend entirely on its champions.
+force_arc: [sacrifice, supplication, divine-intervention, ascent, wrath, law, grief, fate]
+dominant_force: divine-intervention
+tracks:
+  - n: 1
+    scene: "Rudabeh is dying in labor with an unnaturally large child"
+    force: sacrifice
+    composer: Gluck
+    work: "Iphigénie en Aulide — Overture to Act I"
+    decision: added
+    why: "The child is so massive that natural birth is impossible; Rudabeh is fading, and her life seems the necessary price for the hero's existence. The grave, ritual weight of Gluck holds the terror of a mother being destroyed by the future she carries."
+  - n: 2
+    scene: "Zal burns the Simurgh's feather"
+    force: supplication
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: "In desperation, Zal burns the feather given to him by his adoptive bird-mother. The exposed, suspended melody of Pärt is a fragile, desperate signal sent into the vastness of the sky, begging for a miracle."
+  - n: 3
+    scene: "The Simurgh descends to save them"
+    force: divine-intervention
+    composer: Messiaen
+    work: "Turangalîla-Symphonie — V. Joie du sang des étoiles"
+    decision: added
+    why: "The massive, mythical bird arrives, bringing supernatural medical knowledge (the cesarean section). The sudden, overwhelming brass and piano contrast captures the blinding intervention of mythic time into mortal crisis."
+  - n: 4
+    scene: "The birth of Rostam"
+    force: ascent
+    composer: Strauss
+    work: "Ein Heldenleben — 'The Hero'"
+    decision: added
+    why: "The child is cut from the womb, already the size of a year-old boy, radiating strength. The luminous, rising brass lines of Strauss's hero motif announce the arrival of the man who will carry the weight of Iran on his shoulders."
+  - n: 5
+    scene: "Rostam as a boy slays the mad elephant"
+    force: wrath
+    composer: Shostakovich
+    work: "Symphony No. 10 — II. Allegro (Scherzo)"
+    decision: added
+    why: "While still a child, Rostam wakes to find the king's white elephant rampaging. He breaks down the doors and kills it with a single blow of his mace. The frantic, rhythmic pressure of the scherzo captures the terrifying, concentrated violence of the young prodigy."
+  - n: 6
+    scene: "Manuchehr's final instructions to his heir, Nowzar"
+    force: law
+    composer: Bach
+    work: "Suite No. 3 in D major, BWV 1068 — II. Air"
+    decision: added
+    why: "Manuchehr, having ruled for 120 years, senses his death. He warns his son Nowzar of the coming wars with Turan and the necessity of justice. Bach's Air is the serene, formal clarity of an old king codifying his reign one last time before the end."
+  - n: 7
+    scene: "The death of Manuchehr"
+    force: grief
+    composer: Barber
+    work: "Adagio for Strings"
+    decision: added
+    why: "The king dies, and the era of stability dies with him. The slow, inward line of Barber's Adagio holds the mourning of a nation that intuitively understands the dark, chaotic years that are about to follow."
+  - n: 8
+    scene: "Nowzar takes the throne, but weakness shows"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro con brio"
+    decision: added
+    why: "Nowzar is crowned, but he is not the king his father was. Oppression begins, and Turan senses vulnerability. The hammered insistence of Beethoven's Fifth marks the inexorable turning of the wheel—the peace is over, and the wars are returning."

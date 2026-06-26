@@ -1,0 +1,149 @@
+# Tao Te Ching — Chapter 14 — curated music arc
+# What cannot be seen, heard, or touched — the formless form, the imageless image.
+# Hold the ancient Tao to master the present; know the beginning as the thread.
+work: tao-te-ching
+book: 14
+title: "Tao Te Ching Chapter 14: The Formless Form"
+length_minutes: 57
+principle: >
+  Chapter 14 is Laozi's most sustained attempt to describe what cannot be described: the
+  Tao as it presents itself to a consciousness that has stripped away the three doors of
+  perception. 'Look for it but you cannot see it — call it the invisible. Listen for it
+  but you cannot hear it — call it the inaudible. Reach for it but you cannot touch it —
+  call it the intangible.' These three — sight, hearing, touch — cannot be further examined;
+  they blend into one. Above, it is not bright; below, it is not dark. Endless, unnameable,
+  it returns again to nothingness. The chapter is the most rigorous apophatic theology in
+  the Dao De Jing — a via negativa conducted on the body's own senses. The arc traces the
+  progressive withdrawal of each perceptual faculty until what remains is not a thing but
+  the condition for any thing to appear: the thread (ji, 紀) of the Tao that runs from
+  antiquity to the present.
+force_arc: [revelation, revelation, metamorphosis, law, revelation, metamorphosis, memory, revelation, metamorphosis, law]
+dominant_force: revelation
+tracks:
+  - n: 1
+    scene: "Look for it but cannot see it — the invisible (yi, 夷)"
+    force: revelation
+    composer: Arvo Pärt
+    work: "Silouans Song"
+    decision: added
+    why: >
+      Silouans Song is music that seems to come from a place before vision — it is heard
+      in the dark, felt in the chest, known without being seen. Pärt's sustained string
+      chords create a space where the eye closes and the inner ear opens. The revelation
+      is that there is something to be known beyond sight, and that its invisibility is
+      not a lack but a mode of being.
+  - n: 2
+    scene: "Listen for it but cannot hear it — the inaudible (xi, 希)"
+    force: revelation
+    composer: John Cage
+    work: "4'33\""
+    decision: added
+    why: >
+      Cage's silent piece is the purest demonstration of the inaudible: what cannot be
+      heard is not absence of sound but the condition within which all sound appears.
+      The listener hears the room, the body, the breath — everything except what was
+      'composed.' The inaudible Tao is not silent; it is the silence that precedes and
+      enables every sound, not as a thing but as a condition.
+  - n: 3
+    scene: "Reach for it but cannot touch it — the intangible (wei, 微)"
+    force: metamorphosis
+    composer: Claude Debussy
+    work: "Préludes, Book I — 'Voiles' (Sails/Veils)"
+    decision: added
+    why: >
+      'Voiles' translates as both 'sails' and 'veils' — the piece is built entirely on
+      the whole-tone scale, which removes the leading-tone, the directional pull, the
+      tactile resistance of conventional harmony. The music cannot be grasped; it slips
+      through the fingers like water, like a veil that reveals by covering. The
+      metamorphosis is from the reaching hand to the acceptance of intangibility.
+  - n: 4
+    scene: "These three cannot be further examined; they blend into one"
+    force: law
+    composer: Johann Sebastian Bach
+    work: "The Art of Fugue — Contrapunctus XIV (unfinished)"
+    decision: added
+    why: >
+      Bach's final, unfinished fugue is the musical form of three becoming one: the
+      three subjects (the BACH theme, the counter-subject, and the original fugue subject)
+      are worked together until they cannot be separated. The law force is the fugal
+      architecture that shows how distinct lines are expressions of a single principle.
+      Unfinished, it demonstrates that the unity cannot be concluded — it can only be
+      entered.
+  - n: 5
+    scene: "Above it is not bright; below it is not dark — the undifferentiated"
+    force: revelation
+    composer: Morton Feldman
+    work: "Rothko Chapel"
+    decision: added
+    why: >
+      Feldman composed Rothko Chapel for the chapel Rothko designed — a space of large,
+      dark, almost monochrome canvases. The music is not bright, not dark, not crescendo,
+      not diminuendo — it exists in a continuous present that refuses the drama of
+      contrast. This is the quality of the Tao that is neither above nor below, neither
+      light nor dark, but the undifferentiated ground of both.
+  - n: 6
+    scene: "Endless, unnameable — it returns again to nothingness"
+    force: metamorphosis
+    composer: György Ligeti
+    work: "Atmosphères"
+    decision: added
+    why: >
+      Ligeti's Atmosphères is music without melody, without harmony, without rhythm in
+      any conventional sense — it is pure texture, pure becoming, pure return. The
+      orchestral clusters emerge, shift, and dissolve into themselves, returning to the
+      nothing from which they came. This is the metamorphosis of all form back into
+      the formless: not the end of sound but its continuous return to its own source.
+  - n: 7
+    scene: "Form of the formless, image of no-thing"
+    force: memory
+    composer: Frédéric Chopin
+    work: "Nocturne in D-flat Major, Op. 27 No. 2"
+    decision: added
+    why: >
+      Chopin's nocturne traces the outline of something that is not present — a memory
+      of a form that cannot be seen, an image of what has no image. The ornamental
+      figuration circles around a melody that is never quite stated directly, always
+      implied, always remembered rather than experienced. The formless form is the
+      shape of absence.
+  - n: 8
+    scene: "Hold the ancient Tao to master what is present"
+    force: revelation
+    composer: John Tavener
+    work: "Funeral Ikos"
+    decision: added
+    why: >
+      Funeral Ikos is a Byzantine chant for the dead, holding the ancient forms of
+      Orthodox liturgical music as a thread to the present moment. The revelation is
+      temporal: the Tao from antiquity is not a historical artifact but a living
+      presence that can be held now. Tavener's voice bears the ancient thread into
+      the room where the listener sits.
+  - n: 9
+    scene: "The thread of the Tao — know the beginning"
+    force: metamorphosis
+    composer: Arvo Pärt
+    work: "Cantus in Memoriam Benjamin Britten"
+    decision: added
+    why: >
+      Pärt's Cantus is built on a descending scale that seems to reach toward a
+      beginning that is also an ending. The tintinnabuli method ties all the voices
+      to a single thread, a single bell-tone that rings across the descent. The
+      metamorphosis is temporal: the listener is drawn backward along the thread
+      toward the origin, which is also the present.
+  - n: 10
+    scene: "Coda: the ancient beginning that is always present"
+    force: law
+    composer: Johann Sebastian Bach
+    work: "Cello Suite No. 2 in D Minor — Prelude"
+    decision: added
+    why: >
+      Bach's second cello suite opens in the most severe, angular register: a prelude
+      that seems to be groping for form in the dark, discovering its shape as it
+      proceeds. This is the thread of the Tao — not a teaching laid out in advance
+      but a law discovered in the act of following it. The beginning is not behind
+      us; it is the ground we stand on, always present, always ancient, always
+      unfolding, as Bach's prelude unfolds the architecture of the formless.
+demoted:
+  - composer: Richard Wagner
+    work: "Parsifal — Good Friday Spell"
+    status: "removed; save for chapters on grace and purification (15, 22, 45)"
+    why: "Wagner's redemptive register is too explicitly Christian, too narrative. Chapter 14 is apophatic and pre-confessional — it describes not salvation but the structure of formlessness itself."
