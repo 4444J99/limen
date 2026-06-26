@@ -7,6 +7,39 @@ Operating discipline for every Claude Code session in this repo. Complements (do
 
 When a rule below also lives in those files, **they are the source of truth** and this charter points to them.
 
+## Architecture & Orientation
+
+Limen is a **cross-agent, cross-repo, budget-capped task intake system**. The single source of truth is `tasks.yaml` at `$LIMEN_ROOT` (fallback `./tasks.yaml`); every AI agent reads it at session start, claims a task, executes, and writes results back via a `dispatch_log` (the contract is `AGENTS.md`). Around that core file are a CLI, a published SaaS surface, and a fleet of self-keeping "organs."
+
+**The lifecycle is the durable contract — providers are replaceable adapters.** A task moves `open → dispatched → in_progress → done → archived` (plus `failed`/`stale`). Surfaces are gated by persona (owner / client / public) via bearer tokens. Firebase hosting serves only public-safe static shells + public contracts; everything internal loads at runtime from a Cloudflare Worker (or the FastAPI adapter). Keep the lifecycle + persona-sanction semantics intact and any of Firebase/Cloud Run/Next.js/FastAPI can be swapped.
+
+**Components** (each owns its remaining work — see [Closeout Definition](#closeout-definition)):
+
+| Path | What it is | Build/run |
+|------|-----------|-----------|
+| `cli/` | The `limen` CLI (`limen.cli:main`, Click). Core verbs: `init`, `dispatch`, `release-stale`, `doctor`, `qa`, `status`, `harvest`. Logic in `dispatch.py`, `harvest.py`, `capacity.py`, `model_selection.py`, `converge.py`; data shapes in `models.py`; YAML I/O in `io.py`. The autonomic institution lives under `cli/src/limen/vigilia/`. | `pip install -e 'cli[test]'`; tests in `cli/tests/` |
+| `web/api/` | FastAPI runtime adapter (`main.py`). Same HTTP contract as the Worker. | `uvicorn main:app` / Docker; tests in `web/api/tests/` |
+| `web/worker/` | Cloudflare Worker — the **live** runtime, GitHub-Contents storage. Deploys on-demand via wrangler (not on merge). | `npm run dev` / `npm run deploy`; lint `npm run check` |
+| `web/app/` | Next.js dashboard (static export → Firebase Hosting). Surfaces `/` (owner), `/qa`, `/client`, `/public`. | `npm run dev`; `npm run build` (prebuild generates static data + validates surfaces) |
+| `mcp/` | MCP server exposing limen over the Model Context Protocol (`mcp/src/limen_mcp/server.py`). | `pip install -e mcp/` |
+| `ianva/` | MCP doorway/aggregator package. | `pip install -e ianva/` |
+| `spec/contracts/` + `spec/*.schema.json` | Portable JSON Schemas the generated surface contracts must satisfy. | `node scripts/validate-contract-schemas.mjs` |
+| `scripts/` (~120 files) | The operational fleet: `metabolize.sh`/`heartbeat-loop.sh` (the beat), `verify-whole.sh` (whole-system predicate), `merge-policy.sh` (merge decision), `organ-health.py` (liveness), `creds-hydrate.py` (credential organ), plus per-organ generators. | run directly |
+| `organs/`, `organ-ladder.json`, `pillars.yaml`, `his-hand-levers.json` | Declarative registries: the self-* organ ladder, platform pillars, and the owned human-gated lever registry. | data files |
+
+**Storage modes** (`io.py`): local file (`LIMEN_TASKS=/path`) for dev; GitHub Contents (`LIMEN_GITHUB_REPO`, `LIMEN_GITHUB_TOKEN`, optional `_BRANCH`/`_PATH`) for the hosted runtime. Persona tokens: `LIMEN_OWNER_TOKEN`/`LIMEN_API_TOKEN`, `LIMEN_CLIENT_TOKEN`; absent → local owner-scoped dev mode.
+
+**Common commands** (beyond the [CI Gate Matrix](#worktree-isolation--ci-gate-matrix)):
+
+```bash
+python -m pytest web/api/tests cli/tests -q          # full test suite
+python -m pytest cli/tests/test_dispatch.py -q       # one test file
+python -m pytest cli/tests/test_dispatch.py::test_x  # one test
+python -m ruff check cli/src cli/tests web/api mcp   # lint (py311, line-length 120)
+scripts/verify-whole.sh                              # whole-system predicate (exit 0 ⟺ green)
+limen dispatch --agent jules         # dry-run preview; add --live to dispatch for real
+```
+
 ## Closeout Definition
 
 A *closeout* means **ZERO open or dangling items** — never end one with a "but here's what's still open" caveat. Before declaring closeout:
