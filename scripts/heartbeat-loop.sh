@@ -234,6 +234,12 @@ while true; do
   # work, so the beat always runs the latest code (push = deploy). ff-only, data-preserving,
   # fail-open; never exits/re-execs the daemon. Closes the loop: root → leaf → back to root.
   play "$C_SYNC" && bash "$LIMEN_ROOT/scripts/sync-release.sh" 2>&1 | tail -2 || true
+  # BOARD-INTEGRITY self-heal — if the SSOT queue is unloadable or collapsed (a clobber that
+  # slipped past the save-time guard, or external corruption), restore it from HEAD BEFORE the
+  # body tries to load it, so a dead board self-recovers instead of idling the fleet for hours
+  # (the 2026-06-26 halt). Idempotent: a healthy board is a fast no-op, no network. See
+  # heal-board.py + the limen.io collapse-guard — "fix the handoff so it ain't broken".
+  python3 "$LIMEN_ROOT/scripts/heal-board.py" 2>&1 | tail -1 || true
   python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" 2>&1 | tail -1 || true   # refresh lane health BEFORE route/dispatch
   EFFECTIVE_LANES="$(healthy_lanes "$LANES")"
   if [ "$EFFECTIVE_LANES" != "$LANES" ]; then

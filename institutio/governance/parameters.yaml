@@ -283,3 +283,32 @@ parameters:
     self_update: "set per-cell by cells.sh conduct (cell-<slug>-) to namespace a scoped conductor's branches"
     owner: limen-daemon
     note: "Branch-name namespace a scoped conductor uses so parallel cells never collide on branch names or fight over main. Unset ⇒ the daemon's default cadence; cells.sh sets it per cell."
+
+  # --- BOARD INTEGRITY — the SSOT can never collapse, and self-heals if it somehow does ---
+  # (limen.io.save_limen_file collapse-guard + scripts/heal-board.py). Root-caused 2026-06-26:
+  # a writer atomically replaced the live 1449-task queue with one freshly-built task (missing
+  # `created`), so every beat's load threw and the whole institution idled for hours.
+  LIMEN_BOARD_GUARD:
+    default: "1"               # ON — refuse any save that catastrophically shrinks the board
+    env: LIMEN_BOARD_GUARD
+    self_update: none
+    owner: limen-daemon
+    note: "Whether save_limen_file refuses a catastrophic board shrink (a clobber). The board only ever grows/holds steady — all callers load→mutate→save — so a collapse toward zero is always a bug. Set 0 to disable; pass allow_shrink=True in code for an intentional bulk archive. See io.py BoardCollapseError."
+  LIMEN_BOARD_SHRINK_FLOOR:
+    default: 5                 # never guard tiny boards (tests, fresh bootstrap); only substantial queues
+    env: LIMEN_BOARD_SHRINK_FLOOR
+    self_update: none
+    owner: limen-daemon
+    note: "The guard fires only when the prior on-disk board has MORE than this many tasks (so small/test/bootstrap boards are never blocked), and the refusal threshold is max(floor, fraction×prior). Also the collapse floor heal-board.py treats as a dead queue."
+  LIMEN_BOARD_SHRINK_FRACTION:
+    default: 0.10              # a new board < 10% of the prior count is a collapse, not an edit
+    env: LIMEN_BOARD_SHRINK_FRACTION
+    self_update: none
+    owner: limen-daemon
+    note: "Refuse a save whose new task count is below max(LIMEN_BOARD_SHRINK_FLOOR, this×prior). 0.10 catches 1449→1 (a clobber) while passing every legitimate append/status-update and even a heavy archive that keeps the active set."
+  LIMEN_BOARD_HEAL:
+    default: "1"               # ON — auto-restore a collapsed/unloadable board from the last good snapshot
+    env: LIMEN_BOARD_HEAL
+    self_update: none
+    owner: limen-daemon
+    note: "Whether scripts/heal-board.py (heartbeat preflight) auto-restores the live board from `git show HEAD:tasks.yaml` when it is unloadable or collapsed (≤ LIMEN_BOARD_SHRINK_FLOOR tasks). Idempotent: a healthy board is a no-op. The recovery net behind the save-time guard. Set 0 to disable."
