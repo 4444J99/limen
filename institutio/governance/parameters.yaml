@@ -125,6 +125,38 @@ parameters:
     owner: evocator
     note: "Path to the knowledge-corpus repo; the corpus channel writes a collection shot here (guarded, fail-open)."
 
+  # --- HEALTH: the Executive Health Office (clinical loops + visit prep + monitoring) ---
+  LIMEN_BEAT_HEALTH:
+    default: 6                  # cadence: refresh the health office every 6 beats
+    env: LIMEN_BEAT_HEALTH
+    self_update: none
+    owner: health
+    note: "How often the health office refreshes chart digest + visit-prep + clinical-loop chase. Read-only, lockless, fail-open."
+  LIMEN_HEALTH_DIR:
+    default: "~/Workspace/_health-private"
+    env: LIMEN_HEALTH_DIR
+    self_update: none
+    owner: health
+    note: "Off-repo home of the medical chart (chart.json). Structurally uncommittable; the organ reads it and never mutates it. No PII reaches logs/, web/, or stdout."
+  LIMEN_HEALTH_OVERDUE_DAYS:
+    default: 14                 # a clinical follow-up is overdue 14 days past its due date
+    env: LIMEN_HEALTH_OVERDUE_DAYS
+    self_update: none
+    owner: health
+    note: "Grace days before a derived clinical follow-up deadline is treated as overdue. The deadline is always derived, never pinned."
+
+  LIMEN_HEALTH_LEARN_DAYS:
+    default: 21                 # window over which the learning dept aggregates observations
+    env: LIMEN_HEALTH_LEARN_DAYS
+    self_update: none
+    owner: health
+    note: "Lookback window (days) for the health office learning department to aggregate logged observations. Read-only, derived."
+  LIMEN_HEALTH_MIN_OBS:
+    default: 3                  # min observations before the learning dept infers a pattern
+    env: LIMEN_HEALTH_MIN_OBS
+    self_update: none
+    owner: health
+    note: "Minimum logged observations before the learning department surfaces a pattern (avoids inferring from noise)."
   # --- LIFE: the Executive Life Office (digital accounts/assets + subscription purge clock) ---
   LIMEN_BEAT_LIFE:
     default: 6                  # cadence: refresh the digital-life office every 6 beats
