@@ -81,6 +81,12 @@ ENV_FILE = Path(os.environ.get("LIMEN_ENV", str(Path.home() / ".limen.env")))
 #          reads GH_TOKEN/GITHUB_TOKEN).
 #   file:  optional tool-native target {"path": "~/.x/auth.json", "template": "...{value}..."} for
 #          tools that only read a file. Omit when env alone suffices.
+#   gh_secret: optional CI-SECRET sink {"repo": "owner/repo", "name": "SECRET_NAME"} — the same op://
+#          value landed as a GitHub Actions secret on the consuming repo. This closes the LAST credential
+#          sink the organ didn't reach: a "paste this gh secret" task (the GMAIL_APP_PASSWORD class) is
+#          pure plumbing, never a human's hand. A gh_secret-ONLY entry presence-guards via `gh secret
+#          list` and only reads+sets when ABSENT (so a beat never touches 1Password for an already-landed
+#          secret). Value streams op→gh via stdin, never printed. [[gmail-mutation-cascade-avenues]]
 #   derive: optional ["cmd", "arg", ...] that MINTS the value from a live local source (e.g. the gh
 #          keyring via `gh auth token`) instead of a static op:// secret. Tried BEFORE `ref`; runs with
 #          GH_TOKEN/GITHUB_TOKEN unset so a dead floor token can't shadow the keyring. Fail-open → ref.
@@ -147,6 +153,17 @@ DEFAULT_MAP: list[dict] = [
         "enabled": True,
         # validity probe: the canonical token self-verify endpoint. Invalid → 401 code 1000.
         "verify": {"url": "https://api.cloudflare.com/client/v4/user/tokens/verify", "auth": "bearer"},
+    },
+    {
+        # CI-SECRET sink — the credential the organ didn't used to reach, so it kept landing on a human as
+        # a "paste this gh secret" lever (L-GMAIL-CRED). The Gmail app-password ALREADY EXISTS in 1Password;
+        # the autonomous mail lane just needs it as a GitHub Actions secret on the consuming repo. That is
+        # pure plumbing the organ owns — NOT a his-hand task. gh_secret-only (no env/file): presence-guarded,
+        # so a beat does not touch 1Password when the secret is already set. [[gmail-mutation-cascade-avenues]]
+        "lane": "gmail (domus CI secret)",
+        "ref": "op://Private/gmail-app-pw-2026-06-06/password",
+        "gh_secret": {"repo": "organvm/domus", "name": "GMAIL_APP_PASSWORD"},
+        "enabled": True,
     },
     {
         # Parked: the Claude token is owned by the credential-race fix + Rung-0 self-heal
@@ -276,6 +293,43 @@ def derive_value(cmd: list[str], timeout: int = 15) -> str | None:
         return None
     val = (r.stdout or "").strip()
     return val or None
+
+
+def have_gh() -> bool:
+    return shutil.which("gh") is not None
+
+
+def gh_secret_present(repo: str, name: str, timeout: int = 15) -> bool | None:
+    """Is a GitHub Actions secret already SET on the repo? `gh secret list` returns NAMES only (never a
+    value). Returns True/False, or None when gh is unavailable / the call fails (fail-open: 'unknown')."""
+    if not have_gh():
+        return None
+    try:
+        r = subprocess.run(
+            ["gh", "secret", "list", "-R", repo],
+            capture_output=True, text=True, timeout=timeout, stdin=subprocess.DEVNULL,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        return None
+    if r.returncode != 0:
+        return None
+    names = {ln.split()[0] for ln in (r.stdout or "").splitlines() if ln.split()}
+    return name in names
+
+
+def gh_secret_set(repo: str, name: str, value: str, timeout: int = 30) -> bool:
+    """Set a GitHub Actions secret. The value is piped via STDIN (never in argv, never on screen) and
+    never logged. Returns True on success, False on any failure (fail-open — logged by NAME only)."""
+    if not have_gh():
+        return False
+    try:
+        r = subprocess.run(
+            ["gh", "secret", "set", name, "-R", repo],
+            input=value, capture_output=True, text=True, timeout=timeout,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        return False
+    return r.returncode == 0
 
 
 def _ensure_env_file() -> None:
@@ -446,6 +500,13 @@ def main() -> int:
         any_invalid = False
         for e in cred_map:
             envs = e.get("env", [])
+            gspec = e.get("gh_secret")
+            if not envs and gspec:
+                # A CI-secret sink isn't probeable here — the value isn't materialized on this floor and
+                # GitHub never returns a secret's value. Presence/landing is reported by --apply. Neutral,
+                # network-free, never fails the beat.
+                print(f"  · {e['lane']:28} CI-secret gh:{gspec['repo']}:{gspec['name']} — managed on --apply (value not readable back)")
+                continue
             val = _env_value(envs[0]) if envs else None
             if not val:
                 print(f"  ? {e['lane']:28} {','.join(envs) or '(file only)'} — not materialized (run --apply)")
@@ -469,6 +530,10 @@ def main() -> int:
         print(f"creds-hydrate --check ({ENV_FILE}):")
         for e in cred_map:
             envs = e.get("env", [])
+            gspec = e.get("gh_secret")
+            if not envs and gspec:
+                print(f"  · {e['lane']:28} {ref_display(e['ref'])} -> gh:{gspec['repo']}:{gspec['name']} (CI secret — checked on --apply)")
+                continue
             present = all(_env_has(k) for k in envs) if envs else False
             mark = "✓" if present else "✗"
             print(f"  {mark} {e['lane']:28} {ref_display(e['ref'])} -> {','.join(envs) or '(file only)'}")
@@ -505,10 +570,20 @@ def main() -> int:
     for e in cred_map:
         ref, envs, fspec = e["ref"], e.get("env", []), e.get("file")
         dcmd = e.get("derive")
+        gspec = e.get("gh_secret")
         targets = ", ".join(envs) + (f" + {fspec['path']}" if fspec else "")
+        if gspec:
+            targets += (" + " if targets else "") + f"gh:{gspec['repo']}:{gspec['name']}"
         source = f"`{' '.join(dcmd)}` (op:// fallback)" if dcmd else ref_display(ref)
         if not apply:
             print(f"  plan: {e['lane']:28} {source} -> {targets}")
+            continue
+        # gh_secret-ONLY entry (no env/file): if the CI secret is already set, skip — no value read, no
+        # re-push, and crucially NO 1Password touch. The organ keeps it landed without a per-beat biometric
+        # prompt; it only reads+sets when the secret is ABSENT (and op is permitted / the value derivable).
+        if gspec and not envs and not fspec and gh_secret_present(gspec["repo"], gspec["name"]) is True:
+            print(f"  ✓ {e['lane']:28} -> gh:{gspec['repo']}:{gspec['name']} (already set)")
+            hydrated += 1
             continue
         # Prefer a live-minted value (e.g. the gh keyring) over the static op:// secret; fall back to
         # op ONLY when op can read without a prompt (op_ok) — else the op:// fallback is skipped, no GUI.
@@ -524,9 +599,16 @@ def main() -> int:
         for k in envs:
             write_env(k, val)
         wrote_file = write_tool_file(fspec, val) if fspec else None
+        gh_set = gh_secret_set(gspec["repo"], gspec["name"], val) if gspec else None
         del val  # drop the secret from memory promptly
-        loc = (",".join(envs) or "") + (f" + {wrote_file}" if wrote_file else "")
-        print(f"  ✓ {e['lane']:28} -> {loc}")
+        parts = []
+        if envs:
+            parts.append(",".join(envs))
+        if wrote_file:
+            parts.append(wrote_file)
+        if gspec:
+            parts.append(f"gh:{gspec['repo']}:{gspec['name']}" + ("" if gh_set else " (set FAILED)"))
+        print(f"  ✓ {e['lane']:28} -> {' + '.join(parts)}")
         hydrated += 1
 
     if apply:

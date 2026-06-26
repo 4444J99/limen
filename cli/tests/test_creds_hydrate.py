@@ -246,3 +246,65 @@ def test_op_read_is_opt_in_no_prompt_by_default(tmp_path, monkeypatch):
     assert mod.main() == 0
     assert calls == ["op://V/I/credential"], "op_read must run when --op is passed"
     assert "export X_KEY=SECRET" in env_file.read_text()
+
+
+# --- gh_secret CI-SECRET sink: credentials land as GitHub Actions secrets, owned by the organ --------
+
+def test_gh_secret_present_parses_names_only(monkeypatch):
+    """gh_secret_present reads `gh secret list` (NAME<TAB>UPDATED rows) and matches the name — never a value."""
+    mod = _hydrate_module()
+    monkeypatch.setattr(mod, "have_gh", lambda: True)
+
+    class _R:
+        returncode = 0
+        stdout = "GMAIL_APP_PASSWORD\t2026-06-25T21:27:18Z\nIMAP_USER\t2026-06-22T20:44:00Z\n"
+
+    monkeypatch.setattr(mod.subprocess, "run", lambda *a, **k: _R())
+    assert mod.gh_secret_present("organvm/domus", "GMAIL_APP_PASSWORD") is True
+    assert mod.gh_secret_present("organvm/domus", "NOT_THERE") is False
+
+
+def test_gh_secret_present_fail_open_without_gh(monkeypatch):
+    """No gh binary → None ('unknown'), never a crash and never a false 'absent'."""
+    mod = _hydrate_module()
+    monkeypatch.setattr(mod, "have_gh", lambda: False)
+    assert mod.gh_secret_present("o/r", "X") is None
+
+
+def test_gh_secret_set_pipes_value_via_stdin_not_argv(monkeypatch):
+    """The secret VALUE is piped via stdin (input=), never placed in argv where `ps` could read it."""
+    mod = _hydrate_module()
+    monkeypatch.setattr(mod, "have_gh", lambda: True)
+    seen = {}
+
+    class _R:
+        returncode = 0
+
+    def _fake_run(cmd, *a, **k):
+        seen["cmd"] = cmd
+        seen["input"] = k.get("input")
+        return _R()
+
+    monkeypatch.setattr(mod.subprocess, "run", _fake_run)
+    ok = mod.gh_secret_set("organvm/domus", "GMAIL_APP_PASSWORD", "super-secret-value")
+    assert ok is True
+    assert seen["input"] == "super-secret-value"            # value flows through stdin
+    assert "super-secret-value" not in seen["cmd"]          # and NEVER through the argv
+    assert seen["cmd"][:3] == ["gh", "secret", "set"]
+
+
+def test_gh_secret_only_entry_verify_is_neutral_and_offline(tmp_path):
+    """A gh_secret-only map entry is reported neutrally by --verify with NO network call and exit 0."""
+    map_file = tmp_path / "map.json"
+    map_file.write_text(
+        '[{"lane":"mail (ci)","ref":"op://V/I/password",'
+        '"gh_secret":{"repo":"organvm/domus","name":"GMAIL_APP_PASSWORD"}}]'
+    )
+    env_file = tmp_path / ".limen.env"
+    r = subprocess.run(
+        [sys.executable, str(HYDRATE), "--verify"],
+        capture_output=True, text=True, timeout=30,
+        env={**os.environ, "LIMEN_ENV": str(env_file), "LIMEN_CREDS_MAP": str(map_file)},
+    )
+    assert r.returncode == 0
+    assert "CI-secret gh:organvm/domus:GMAIL_APP_PASSWORD" in r.stdout
