@@ -3,7 +3,57 @@
 **Read this file on every session start.** This file tells you where to find work,
 how to claim it, and how to report results.
 
+> How this file relates to `CLAUDE.md`, `GEMINI.md`, and the ecosystem-wide `ORGANVM:AUTO`
+> layer — and why there is no separate "agent-all" repo — is documented in
+> [`docs/agent-instruction-standard.md`](docs/agent-instruction-standard.md).
+
 ---
+
+## Startup Checklist (fast path)
+
+1. **Identify** yourself — set `LIMEN_AGENT` (`claude | gemini | jules | opencode | codex | copilot | goose`).
+2. **Read** `$LIMEN_ROOT/tasks.yaml` (fallback `./tasks.yaml`) — parse the budget and the full task list.
+3. **Claim** the highest-priority `open` task targeted at you (or `any`) that fits the remaining budget.
+4. **Update status** before (`dispatched` → `in_progress`) and after (`done` / `failed`) execution.
+5. **Verify** before reporting `done` — run the repo's predicate (here: `scripts/verify-whole.sh`).
+6. **Close out** — release stale claims back to `open`, restore budget, commit `tasks.yaml`.
+
+Each step is detailed below.
+
+## Precedence
+
+When instructions conflict, the higher rule wins:
+
+1. System / developer / runtime constraints (the harness)
+2. The human's explicit instructions for this session
+3. `tasks.yaml` — the single source of truth for task **state**
+4. This file (`AGENTS.md`) — the cross-agent dispatch **protocol**
+5. Tool-specific charters (`CLAUDE.md`, `GEMINI.md`) — per-agent behavior
+6. General repository docs (`README.md`, `docs/**`)
+
+`tasks.yaml` is authoritative for *state*; `AGENTS.md` is authoritative for *protocol*. Where a
+tool charter restates a rule from this file, this file is the source of truth.
+
+## Task States
+
+The canonical state set lives in code — `VALID_STATUSES` in `mcp/src/limen_mcp/server.py` — and
+this table is verified against it by `scripts/check-agent-docs.py` (wired into `verify-whole.sh`).
+Do not invent states.
+
+| State | Meaning |
+|-------|---------|
+| `open` | Available to claim |
+| `dispatched` | Claimed by an agent, not yet executing |
+| `in_progress` | Actively being worked |
+| `done` | Completed successfully |
+| `failed` | Attempted, did not succeed — retryable |
+| `failed_blocked` | Stopped by an external blocker (billing / auth / infra) |
+| `needs_human` | Cannot proceed without a human action |
+| `archived` | Closed and suppressed from active steering |
+
+Normal flow: `open → dispatched → in_progress → done → archived`. From `in_progress` a task may
+instead move to `failed`, `failed_blocked`, or `needs_human`. A stale `dispatched`/`in_progress`
+claim is released back to `open` (see Session End Ritual). There is **no** `completed` state — use `done`.
 
 ## Where to Find Tasks
 
@@ -63,9 +113,9 @@ Pick the highest-priority task. Update `tasks.yaml`:
 # To this:
   - id: "LIMEN-001"
     status: dispatched
-    updated: "2026-05-31T10:30:00Z"
+    updated: "<now>"  # ISO-8601 UTC, e.g. 2026-05-31T10:30:00Z
     dispatch_log:
-      - timestamp: "2026-05-31T10:30:00Z"
+      - timestamp: "<now>"  # ISO-8601 UTC, e.g. 2026-05-31T10:30:00Z
         agent: "<your_name>"
         session_id: "<current_session_id>"
         status: dispatched

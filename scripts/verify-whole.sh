@@ -16,6 +16,9 @@ bash -n scripts/preflight-cloud-run.sh scripts/probe-local-runtime.sh scripts/pr
 step "Verify the merge-policy predicate (verdict matrix regression test)"
 bash scripts/tests/merge-policy.test.sh
 
+step "Verify agent-instruction docs match the canonical task-state vocabulary"
+python3 scripts/check-agent-docs.py
+
 step "Parse GitHub workflow YAML"
 python3 - <<'PY'
 from pathlib import Path

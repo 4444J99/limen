@@ -7,11 +7,13 @@ Operating discipline for every Claude Code session in this repo. Complements (do
 
 When a rule below also lives in those files, **they are the source of truth** and this charter points to them.
 
+How the agent-instruction files (this charter, `AGENTS.md`, `GEMINI.md`, and the ecosystem-wide `ORGANVM:AUTO` layer) fit together — and why there is no separate "agent-all" repo to build — is settled once in [`docs/agent-instruction-standard.md`](docs/agent-instruction-standard.md). Read it before re-proposing how these files should be standardized.
+
 ## Architecture & Orientation
 
 Limen is a **cross-agent, cross-repo, budget-capped task intake system**. The single source of truth is `tasks.yaml` at `$LIMEN_ROOT` (fallback `./tasks.yaml`); every AI agent reads it at session start, claims a task, executes, and writes results back via a `dispatch_log` (the contract is `AGENTS.md`). Around that core file are a CLI, a published SaaS surface, and a fleet of self-keeping "organs."
 
-**The lifecycle is the durable contract — providers are replaceable adapters.** A task moves `open → dispatched → in_progress → done → archived` (plus `failed`/`stale`). Surfaces are gated by persona (owner / client / public) via bearer tokens. Firebase hosting serves only public-safe static shells + public contracts; everything internal loads at runtime from a Cloudflare Worker (or the FastAPI adapter). Keep the lifecycle + persona-sanction semantics intact and any of Firebase/Cloud Run/Next.js/FastAPI can be swapped.
+**The lifecycle is the durable contract — providers are replaceable adapters.** A task moves `open → dispatched → in_progress → done → archived`; from `in_progress` it may instead go `failed`, `failed_blocked`, or `needs_human`, and a stale claim is released back to `open`. The canonical state set, the cross-agent precedence ladder, and the startup checklist live in `AGENTS.md` (**Task States** / **Precedence** / **Startup Checklist**) and are enforced by `scripts/check-agent-docs.py`. Surfaces are gated by persona (owner / client / public) via bearer tokens. Firebase hosting serves only public-safe static shells + public contracts; everything internal loads at runtime from a Cloudflare Worker (or the FastAPI adapter). Keep the lifecycle + persona-sanction semantics intact and any of Firebase/Cloud Run/Next.js/FastAPI can be swapped.
 
 **Components** (each owns its remaining work — see [Closeout Definition](#closeout-definition)):
 

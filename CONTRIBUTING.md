@@ -1,50 +1,64 @@
-# Contributing to ORGAN-V
+# Contributing to Limen
 
-Thank you for your interest in contributing to the organvm system.
+Limen is a cross-agent, cross-repo, budget-capped task intake system. This guide is for
+**human** contributors. If you are an **AI agent**, read `AGENTS.md` (the dispatch contract)
+and, for Claude Code specifically, `CLAUDE.md` (the operating charter) instead.
 
-## Code of Conduct
+## Project layout
 
-All participants are governed by our [Code of Conduct](CODE_OF_CONDUCT.md).
+| Path | What it is |
+|------|-----------|
+| `cli/` | The `limen` CLI (Python / Click) — dispatch, harvest, status, capacity, converge |
+| `web/api/` | FastAPI runtime adapter |
+| `web/worker/` | Cloudflare Worker — the live runtime (GitHub-Contents storage) |
+| `web/app/` | Next.js dashboard (static export → Firebase Hosting) |
+| `mcp/`, `ianva/` | MCP server + doorway/aggregator |
+| `spec/contracts/` | Portable JSON Schemas the generated surfaces must satisfy |
+| `scripts/` | The operational fleet (heartbeat, verification, merge policy, organs) |
+| `tasks.yaml` | The single source of truth for the task board |
 
-## How to Contribute
+## Getting set up
 
-### Getting Started
+```bash
+pip install -e 'cli[test]'     # CLI + test extras
+pip install -e mcp/            # MCP server (optional)
+(cd web/app && npm install)    # dashboard (optional)
+```
 
-1. **Fork** the target repository
-2. **Create a branch** (`feature/your-feature` or `fix/your-fix`)
-3. **Make your changes**
-4. **Submit a PR** with clear description of changes
+## The gate matrix — run before every PR
 
-### What We Accept
+```bash
+python -m ruff check cli/src cli/tests web/api mcp     # lint (py311, line-length 120)
+python -m pytest web/api/tests cli/tests -q            # tests
+python scripts/check-agent-docs.py                     # agent-doc ↔ code state-vocab drift
+node scripts/validate-contract-schemas.mjs             # surface contracts
+scripts/verify-whole.sh                                # whole-system predicate (exit 0 ⟺ green)
+```
 
-- Bug fixes with tests
-- Documentation improvements
-- Performance optimizations
-- Security patches (see [SECURITY.md](SECURITY.md))
-- Feature proposals via Issues (discuss before implementing)
+Run one test file or case:
 
-### What Requires Discussion First
+```bash
+python -m pytest cli/tests/test_dispatch.py -q
+python -m pytest cli/tests/test_dispatch.py::test_x
+```
 
-- New essay topics, changes to publishing workflow, editorial policy updates
+## Branching & merging
 
-## Development Standards
+- Never commit to `main` directly. Branch by intent: `feat/`, `fix/`, `heal/`, `chore/`,
+  `docs/`, `refactor/`. One PR per branch → `main`, squash-merge, delete the branch.
+- A merge to `main` **auto-deploys** the live site/API when the diff touches a deploy-trigger
+  path (`web/app/**`, `web/api/**`, `cli/**`, `tasks.yaml`, the deploy workflows). Those PRs
+  need green CI before merge. See `CLAUDE.md` → **Merge & Branch Protocol** and
+  `scripts/merge-policy.sh` (the predicate that decides each case).
 
-- Follow the existing code style in each repository
-- Write tests for new functionality
-- Use clear, descriptive commit messages
-- Keep changes focused and minimal
+## What we accept
 
-## Getting Help
+- Bug fixes and regressions (with a test that fails before, passes after)
+- Documentation and developer-experience improvements
+- Performance and reliability work on the CLI, adapters, and organs
+- New capability proposals — open an Issue to discuss before large changes
 
-- Open an Issue for questions
-- Check existing documentation in the repository
+## Getting help
 
-## Review Service Targets
-
-- Initial maintainer response: within 3 business days
-- Review response after updates: within 3 business days
-- Merge decision after approval: within 2 business days
-
----
-
-*Part of the organvm system*
+- Open an Issue for questions or to propose a change.
+- Start with `README.md` (overview), `SCHEMA.md` (the task schema), and `AGENTS.md` (protocol).

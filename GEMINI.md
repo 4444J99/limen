@@ -10,7 +10,7 @@ The MCP server exposes the following tools for the conductor swarm:
 - `list_tasks`: Retrieves the current list of tasks from the pipeline.
 - `get_task`: Fetches details of a specific task by its ID (e.g., LIMEN-001).
 - `add_task`: Adds a new task to the pipeline.
-- `update_task_status`: Updates the status of an existing task (e.g., to `dispatched`, `in_progress`, `completed`).
+- `update_task_status`: Updates the status of an existing task (e.g., to `dispatched`, `in_progress`, `done`). The canonical state set is defined in `AGENTS.md` → **Task States** and enforced by the MCP server (`VALID_STATUSES`); there is no `completed` state.
 - `get_budget_status`: Checks the current daily budget and usage to prevent over-burn.
 
 ### Workflow & Best Practices
