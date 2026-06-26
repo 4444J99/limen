@@ -235,6 +235,9 @@ def _registry():
              gate="LIMEN_POSITIONING", gate_default="0",
              what="refresh inbound-magnet surfaces (form/operation pages + front door + discoverability)",
              probe=lambda: _mtime(ROOT / "docs" / "positioning" / "_frontdoor.md")),
+        dict(key="life", rung="LIFE", voice="life", cadence_key="LIFE",
+             what="digital-life office — accounts/assets + subscription purge clock (PII local)",
+             probe=lambda: _mtime(LOGS / "life-organ-state.json")),
     ]
 
 

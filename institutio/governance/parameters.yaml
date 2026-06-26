@@ -124,6 +124,26 @@ parameters:
     self_update: none
     owner: evocator
     note: "Path to the knowledge-corpus repo; the corpus channel writes a collection shot here (guarded, fail-open)."
+
+  # --- LIFE: the Executive Life Office (digital accounts/assets + subscription purge clock) ---
+  LIMEN_BEAT_LIFE:
+    default: 6                  # cadence: refresh the digital-life office every 6 beats
+    env: LIMEN_BEAT_LIFE
+    self_update: none
+    owner: life
+    note: "How often the life office refreshes the briefing/open-actions + derives the purge clock. Read-only, lockless, fail-open → safe to run often."
+  LIMEN_LIFE_DIR:
+    default: "~/Workspace/_life-private"
+    env: LIMEN_LIFE_DIR
+    self_update: none
+    owner: life
+    note: "Off-repo home of the Life Chart (digital-accounts.json). Structurally uncommittable; the organ reads it and never mutates it. No account ID reaches logs/, web/, or stdout."
+  LIMEN_LIFE_OVERDUE_DAYS:
+    default: 0                  # a purge deadline is overdue the moment it passes
+    env: LIMEN_LIFE_OVERDUE_DAYS
+    self_update: none
+    owner: life
+    note: "Grace days before a derived subscription-purge deadline is treated as overdue. The deadline itself is always derived (lapse + purge rule), never pinned."
   LIMEN_MEMORY_DIR:
     default: "~/.claude/projects/<workspace-slug>/memory"   # derived from LIMEN_WORKDIR; override here
     env: LIMEN_MEMORY_DIR

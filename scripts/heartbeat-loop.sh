@@ -140,6 +140,7 @@ C_QUICKEN="${LIMEN_BEAT_QUICKEN:-4}"   # QUICKEN (give stalled FleetView session
 C_POSITIONING="${LIMEN_BEAT_POSITIONING:-12}"  # POSITIONING (refresh inbound-magnet surfaces; gated OFF)
 C_AVTOPOIESIS="${LIMEN_BEAT_AVTOPOIESIS:-12}"  # AVTOPOIESIS (is each door alive? past/present/future — distance-from-ideal; gated OFF)
 C_EVOCATOR="${LIMEN_BEAT_EVOCATOR:-6}"   # EVOCATOR (the summoner — keep canonical truths present in every channel: FLAME/beat, corpus, memory)
+C_LIFE="${LIMEN_BEAT_LIFE:-6}"           # STEWARD (refresh the digital-life office: accounts/assets/subscription purge clock; PII off-repo)
 LOCKD="$LIMEN_ROOT/logs/.queue.lock.d"   # shared with supervisory ops (two-scale safety)
 c=0
 play() { [ $(( c % $1 )) -eq 0 ]; }   # true on this voice's beat
@@ -337,6 +338,10 @@ while true; do
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/censor-view.py" 2>&1 | tail -1 || true   # the Censor's face (no network, can't time out)
   play "$C_WEB"     && [ "${LIMEN_STUDIUM:-0}" = "1" ] && python3 "$LIMEN_ROOT/scripts/studium.py" --daily 2>&1 | tail -1 || true   # daily transmission-curriculum face (gated; advances once/day, no network, can't time out)
   play "$C_INSIGHT_CADENCE" && python3 "$LIMEN_ROOT/scripts/insight-cadence.py" --once 2>&1 | tail -1 || true  # INSIGHT-CADENCE: draft insight reports at four wall-clock cadences
+  # LIFE — the digital-life office (accounts/assets/subscriptions; PII stays local, off-repo;
+  # lockless, read-only). Refreshes the life briefing + open-actions + derives the subscription
+  # purge clock every C_LIFE beats. Fail-open.
+  play "$C_LIFE"    && { python3 "$LIMEN_ROOT/scripts/life-organ.py" 2>&1 | tail -1 || true; stamp life; }
   play "$C_REPORT"  && python3 "$LIMEN_ROOT/scripts/conducting-report.py" 2>&1 | tail -1 || true   # RELAY: did the fleet burn its full force? (once/day push — so you never have to ask)
   play "$C_WEB"     && bash "$LIMEN_ROOT/scripts/refresh-web.sh" >>"$LIMEN_ROOT/logs/refresh-web.log" 2>&1 || true  # NO pipe: refresh-web backgrounds the http.server, which can inherit a pipe's write-end and block `tail` on EOF forever → wedged the whole daemon before the first beat (2026-06-23). Redirect to a log instead.   # web auto-refresh (best-effort; money.html is primary)
   # QUICKEN — a session has a lifecycle that ends in COMPLETION; a sitting (no-movement) FleetView
