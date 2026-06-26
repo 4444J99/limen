@@ -1,0 +1,97 @@
+# Bhagavad Gita — Chapter 3 — curated music arc
+# Karma Yoga: The Yoga of Action
+work: bhagavad-gita
+book: 3
+title: "Bhagavad Gita Chapter 3: The Wheel of Action"
+length_minutes: 80
+principle: >
+  Chapter 3 focuses on Karma Yoga, defining the inescapable necessity of action and
+  the mechanics of sacrifice (Yajna). The universe is a wheel of interdependent action
+  set in motion by the Creator. The music must shift from the abstract structural logic
+  of Chapter 2 into something rhythmic, cyclical, processional, and deeply rooted in
+  ritual weight. This is the grammar of participation.
+force_arc: [sacrifice, sacrifice, return, sacrifice, law, divine-intervention, wrath]
+dominant_force: sacrifice
+tracks:
+  - n: 1
+    scene: "Arjuna's confusion: 'If knowledge is superior to action, why drive me to this terrible deed?'"
+    force: sacrifice
+    composer: Stravinsky
+    work: "The Rite of Spring — 'Introduction' (Part 1)"
+    decision: added
+    why: >
+      Arjuna is bewildered by what seems to be a contradiction in Krishna's teaching.
+      He wants to withdraw, but Krishna is binding him back to the terrible necessity
+      of the world. Stravinsky's Introduction begins with a reawakening of primal
+      forces, a complicated web of overlapping woodwinds that suggests the inescapable,
+      swarming complexity of life and action that one cannot simply opt out of.
+  - n: 2
+    scene: "The necessity of action: 'No one can remain even for a moment without acting'"
+    force: sacrifice
+    composer: Glass
+    work: "Koyaanisqatsi — 'Vessels'"
+    decision: added
+    why: >
+      Krishna establishes that inaction is impossible; even maintaining the body requires
+      action. Philip Glass's 'Vessels', with its relentless, cyclical, overlapping choral
+      rhythms, captures this perpetual motion machine of existence. It is not agitated;
+      it is simply continuous, driving, an engine that cannot be turned off.
+  - n: 3
+    scene: "The cycle of Yajna (Sacrifice): 'From food come creatures; from rain comes food'"
+    force: return
+    composer: Wagner
+    work: "Parsifal — Prelude to Act I"
+    decision: added
+    why: >
+      Krishna describes the cosmic cycle: humans offer sacrifice, the gods send rain,
+      rain grows food, food sustains creatures. It is a wheel of mutual nourishment.
+      The Parsifal Prelude is the ultimate music of sacrament and slow, processional
+      return. Its brass chorales and shimmering strings evoke the profound holiness
+      of this interdependent cycle.
+  - n: 4
+    scene: "The leader sets the standard: 'Whatever a great man does, that very thing other men do'"
+    force: sacrifice
+    composer: Elgar
+    work: "Enigma Variations — 'Nimrod'"
+    decision: added
+    why: >
+      Krishna tells Arjuna he must act for the sake of world-maintenance (Lokasangraha),
+      because the masses will follow his example. Elgar's 'Nimrod' provides the exact
+      gravitas for this burden of leadership. It is noble, weighty, and deeply serious,
+      moving with a processional dignity that reflects the immense social responsibility
+      resting on Arjuna's shoulders.
+  - n: 5
+    scene: "The Gunas act, not the self: 'All actions are performed by the qualities of nature'"
+    force: law
+    composer: Beethoven
+    work: "Symphony No. 7 — II. Allegretto"
+    decision: added
+    why: >
+      The unawakened man thinks "I am the doer," while the wise man knows that nature
+      (the Gunas) acts upon nature. Beethoven's Allegretto is the perfect expression of
+      inexorable, structural momentum. The underlying ostinato rhythm drives forward
+      regardless of the melodic variations above it, just as the Gunas propel the world
+      irrespective of human ego.
+  - n: 6
+    scene: "Surrendering all actions: 'Dedicating all actions to Me, with mind fixed on the Supreme'"
+    force: divine-intervention
+    composer: Mahler
+    work: "Symphony No. 2 ('Resurrection') — V. Finale (Chorale: 'Aufersteh'n')"
+    decision: added
+    why: >
+      Krishna demands that Arjuna surrender the fruits of all actions to Him, becoming
+      free from the fever of ego. Mahler's Resurrection chorale begins quietly, a
+      profound, hushed arrival of grace that lifts the burden of the self. It is a shift
+      from the grinding wheel of karma into the luminous space of surrender.
+  - n: 7
+    scene: "The true enemy is desire: 'It is desire, it is wrath, born of the quality of Rajas'"
+    force: wrath
+    composer: Shostakovich
+    work: "String Quartet No. 8 — II. Allegro molto"
+    decision: added
+    why: >
+      Krishna identifies the real enemy, the constant destroyer of knowledge and realization:
+      Kama (desire) and Krodha (wrath), described as an insatiable fire. Shostakovich's
+      furious, slashing Allegro molto captures this destructive, all-consuming energy.
+      It is relentless, dark, and violent—the internal force that compels a person to commit
+      sin "even against his will."

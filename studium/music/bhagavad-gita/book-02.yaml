@@ -1,0 +1,93 @@
+# Bhagavad Gita — Chapter 2 — curated music arc
+# Sankhya Yoga: The Yoga of Knowledge
+work: bhagavad-gita
+book: 2
+title: "Bhagavad Gita Chapter 2: The Immortal Soul and the Grammar of Action"
+length_minutes: 85
+principle: >
+  Chapter 2 is the pivot of the entire epic. Arjuna has collapsed; Krishna begins to speak.
+  Krishna's answer is not immediate consolation but a radical reorientation of what it means
+  to be alive. He introduces the eternal, indestructible soul (Atman) and the concept of detached
+  action (Karma Yoga). The music here should shift from the heavy, physical grief of Chapter 1
+  to something vast, clear, vertical, and architectonically precise. This is revelation as
+  ontology.
+force_arc: [revelation, law, revelation, metamorphosis, ascent, law, revelation]
+dominant_force: revelation
+tracks:
+  - n: 1
+    scene: "Krishna's first words: 'Whence comes this dejection?'"
+    force: revelation
+    composer: Pärt
+    work: "Fratres (for strings and percussion)"
+    decision: added
+    why: >
+      Krishna's opening rebuke is calm, structural, and immense. He does not yell; he
+      speaks from a completely different ontological register than Arjuna's grief. Pärt's
+      Fratres, with its strict mathematical permutations and vast stillness punctuated by
+      percussion, captures the entry of a voice that speaks from outside human panic.
+  - n: 2
+    scene: "The eternal soul: 'Never was there a time when I did not exist, nor you'"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue, BWV 1080 — Contrapunctus I"
+    decision: added
+    why: >
+      Krishna introduces the unmanifest, indestructible nature of the soul. It is a proposition
+      of pure logic and eternal structure. Bach's fugue is the musical equivalent of this:
+      a subject introduced and woven through the voices in a structure that feels as if it
+      has always existed and will never cease, independent of the instruments playing it.
+  - n: 3
+    scene: "The body as discarded clothes: 'As a person puts on new garments, giving up old ones'"
+    force: revelation
+    composer: Messiaen
+    work: "Quartet for the End of Time — 'Louange à l'Éternité de Jésus'"
+    decision: added
+    why: >
+      The imagery of discarding the body is profound but not tragic. It is an elevation
+      into eternity. Messiaen's 'Louange' is music that attempts to step outside time altogether;
+      its extremely slow tempo and ecstatic, sustained cello line represent the soul
+      untouched by weapons, fire, water, or wind.
+  - n: 4
+    scene: "The call to duty: 'Looking at your own duty, you should not tremble'"
+    force: metamorphosis
+    composer: Ravel
+    work: "Daphnis et Chloé — Suite No. 2: 'Lever du jour' (Daybreak)"
+    decision: added
+    why: >
+      Krishna pulls Arjuna back to his Kshatriya duty. The perspective shifts from the absolute
+      to the manifest world, but with new vision. Ravel's 'Daybreak' is the sound of light
+      flooding a landscape, a metamorphosis of perception that demands awakening and action.
+      It is the transition from metaphysical stillness back into the necessity of motion.
+  - n: 5
+    scene: "Karma Yoga: 'Your right is to work only, but never to its fruits'"
+    force: ascent
+    composer: Bruckner
+    work: "Symphony No. 8 — III. Adagio (opening section)"
+    decision: added
+    why: >
+      This is the core ethical teaching of the Gita: act without attachment. It is a massive,
+      daunting, and luminous proposition. Bruckner's Adagio unfolds with immense, steady,
+      unhurried power, building a cathedral of sound. It is not agitated by its own progression;
+      it simply ascends, embodying action that is complete in itself, detached from anxiety over the result.
+  - n: 6
+    scene: "The mind stabilized: 'He whose mind is untroubled in the midst of sorrows'"
+    force: law
+    composer: Mozart
+    work: "Clarinet Concerto in A major, K. 622 — II. Adagio"
+    decision: added
+    why: >
+      Krishna describes the sage of steady wisdom (Sthitaprajna) — perfectly balanced, free
+      from desire, fear, and anger. Mozart's Adagio is the sound of perfect formal balance
+      and unclouded clarity. The clarinet line moves with complete freedom but total structural
+      inevitability, exactly mirroring the mind that acts in the world but is not disturbed by it.
+  - n: 7
+    scene: "The state of Brahman: 'This is the Brahmic state; attaining this, one is not bewildered'"
+    force: revelation
+    composer: Tavener
+    work: "The Protecting Veil"
+    decision: added
+    why: >
+      The chapter concludes with the attainment of supreme peace, the state of merging with
+      the absolute. Tavener's music, grounded in Orthodox chant, provides a radiant,
+      unwavering verticality. The solo cello floating above the strings is the soul resting
+      in Brahman, a final stillness that completes the movement begun by Krishna's first words.
