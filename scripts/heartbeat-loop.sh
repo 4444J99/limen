@@ -40,6 +40,15 @@ else
        "prompt may recur. Recreate the pinned interpreter: python3 -m venv --copies $LIMEN_ROOT/.venv" \
        >> "$LIMEN_ROOT/logs/heartbeat.out.log" 2>/dev/null || true
 fi
+# NON-BYPASSABLE Claude model chokepoint. Capture the REAL `claude` (resolved via the PATH set
+# above) BEFORE prepending the shim dir, then put the shim FIRST so every fleet-spawned `claude`
+# — dispatch lanes, quicken, converge, subagent fan-out — routes through it. The shim injects the
+# earned floor when a spawn carries no --model, so nothing silently inherits the account-default
+# Opus 4.8 (+auto-1M) that drove the 6/25 usage bleed; spawns that earned more pass --model and
+# ride through untouched. Interactive shells never run this script, so the human's Opus is
+# untouched. The shim is fail-open (any error → real claude, original argv). ([[fleet-model-floor-bleed]])
+export LIMEN_REAL_CLAUDE="${LIMEN_REAL_CLAUDE:-$(command -v claude 2>/dev/null || echo "$HOME/.local/bin/claude")}"
+export PATH="$LIMEN_ROOT/scripts/shims:$PATH"; hash -r 2>/dev/null || true
 export LIMEN_TASKS="${LIMEN_TASKS:-$LIMEN_ROOT/tasks.yaml}"
 export LIMEN_WORKDIR="${LIMEN_WORKDIR:-$HOME/Workspace}"
 export LIMEN_ISOLATION="${LIMEN_ISOLATION:-worktree}"

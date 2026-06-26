@@ -21,6 +21,11 @@ from limen.capacity import (
 from limen.io import load_limen_file, save_limen_file, queue_lock as _queue_lock
 from limen.models import BudgetTrack, DispatchLogEntry, LimenFile, Task
 from limen.doctor import stale_tasks
+from limen.model_selection import (  # the shared model vocabulary — also used by the non-bypassable `claude` shim
+    _CLAUDE_TIER_ORDER,
+    _claude_opus_classes,
+    _resolve_claude_model,
+)
 
 
 def _load_limen_env() -> int:
@@ -1338,19 +1343,11 @@ def _codex_model() -> str | None:
 # chronic escalation as the escalate rung — only UNDETECTABLE-failure classes get a higher
 # tier up front. No new escalation machinery. Mirrors _codex_model/_opencode_model: env pin
 # wins, derive at call-time, fail-open. ([[model-tiering-policy]], [[value-is-discovered-never-assumed]])
-_CLAUDE_TIER_ORDER = ("haiku", "sonnet", "opus")
-
-# Reserved-Opus classes: the doctrine's small principled set whose failure is BOTH undetectable
-# AND high-stakes (final/canon synthesis, irreversible go-live reasoning, kernel abstraction). A
-# stated principle, env-overridable (comma-separated LIMEN_CLAUDE_OPUS_CLASSES) — not inherited config.
-_CLAUDE_OPUS_CLASSES_DEFAULT = ("canon", "synthesis", "kernel", "go-live", "irreversible")
-
-
-def _claude_opus_classes() -> set[str]:
-    raw = os.environ.get("LIMEN_CLAUDE_OPUS_CLASSES")
-    if raw is not None:
-        return {c.strip() for c in raw.split(",") if c.strip()}
-    return set(_CLAUDE_OPUS_CLASSES_DEFAULT)
+#
+# The shared VOCABULARY this ladder sorts with — _CLAUDE_TIER_ORDER, _CLAUDE_OPUS_CLASSES_DEFAULT,
+# _claude_opus_classes(), _resolve_claude_model() — lives in model_selection.py (imported at the top)
+# so the NON-BYPASSABLE `claude` shim sorts with the EXACT same vocabulary. One source of truth:
+# this file owns the per-TASK sort; the shim owns the per-SPAWN floor. ([[fleet-model-floor-bleed]])
 
 
 def _claude_tier_overrides() -> dict:
@@ -1398,13 +1395,6 @@ def _bump_tier(tier: str, task: Task | None) -> str:
         return tier
     i = _CLAUDE_TIER_ORDER.index(tier)
     return _CLAUDE_TIER_ORDER[min(i + 1, len(_CLAUDE_TIER_ORDER) - 1)]
-
-
-def _resolve_claude_model(tier: str) -> str:
-    """tier → the `claude -m` value. Env pin wins (LIMEN_CLAUDE_<TIER>_MODEL); else the bare CLI
-    tier alias, which the `claude` CLI resolves to the current dated model itself (nothing pinned,
-    survives renames). ([[derive-never-pin-hardcodes]])"""
-    return os.environ.get(f"LIMEN_CLAUDE_{tier.upper()}_MODEL") or tier
 
 
 def _claude_model(task: Task | None = None) -> str | None:

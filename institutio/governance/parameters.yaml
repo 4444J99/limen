@@ -145,6 +145,19 @@ parameters:
     self_update: "may lower under VITALS pressure"
     owner: arms-agents
     note: "First cross-organ link: VITALS pressure should drive this ceiling down."
+  # --- the non-bypassable Claude model chokepoint (scripts/shims/claude) ----------
+  LIMEN_CLAUDE_SHIM_FLOOR:
+    default: "haiku"           # the cheapest rung — the SAME tier the per-task ladder assigns to unclassed work
+    env: LIMEN_CLAUDE_SHIM_FLOOR
+    self_update: none
+    owner: arms-agents
+    note: "Floor the non-bypassable `claude` shim injects when a fleet spawn carries no --model. Spawns that earned more declare --model and pass through untouched; subagents inherit it. NOT a blanket downgrade — it is the ladder's own default for unsignaled work. See fleet-model-floor-bleed."
+  LIMEN_REAL_CLAUDE:
+    default: null              # DERIVED: heartbeat-loop.sh captures `command -v claude` BEFORE prepending the shim dir
+    env: LIMEN_REAL_CLAUDE
+    self_update: "derived each beat by heartbeat-loop.sh"
+    owner: arms-agents
+    note: "Absolute path to the REAL claude binary so scripts/shims/claude can exec it without recursing into itself. Never pinned — captured at fleet start; shim also falls back to a PATH scan that skips its own dir."
   LIMEN_USE_1PASSWORD_SSH:
     default: "0"               # OFF — never route SSH through 1Password by default
     env: LIMEN_USE_1PASSWORD_SSH
