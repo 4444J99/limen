@@ -99,16 +99,23 @@ def _fleet_health(data) -> dict[str, bool]:
     return health
 
 
+def _read_usage_vendors() -> dict:
+    """Read the LIVE usage meter (logs/usage.json) vendors dict — shared by the runway and
+    cliff-urgency readers below so the file path + error handling live in one place. Returns {}
+    on any read/parse error (fail-open), never raises. Derived from the live signal, never pinned."""
+    f = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen"))) / "logs" / "usage.json"
+    try:
+        return (json.loads(f.read_text()) or {}).get("vendors", {})
+    except (OSError, ValueError):
+        return {}
+
+
 def _vendor_runway() -> dict[str, float]:
     """Per-vendor hours-of-runway from the LIVE usage meter (logs/usage.json, written by
     usage-telemetry.py). This is the refresh-vs-remaining input to the split decision: how long
     until each lane's rolling window is exhausted at the current burn. Missing/None runway (an idle
     lane, burn≈0) reads as +inf — maximally fresh. Derived from the live signal, never pinned."""
-    f = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen"))) / "logs" / "usage.json"
-    try:
-        vendors = (json.loads(f.read_text()) or {}).get("vendors", {})
-    except (OSError, ValueError):
-        return {}
+    vendors = _read_usage_vendors()
     out: dict[str, float] = {}
     for name, info in vendors.items():
         if not isinstance(info, dict):
@@ -124,11 +131,7 @@ def _vendor_cliff_urgency() -> dict[str, float]:
     HIGH when a lane has lots of unspent budget AND little time left in its window → drain it FIRST so
     it ships value before the reset wipes the headroom. ~0 early in a window (runway breaks the tie as
     before). Derived from the live signal, never pinned; missing meter → {} → no effect (today's routing)."""
-    f = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen"))) / "logs" / "usage.json"
-    try:
-        vendors = (json.loads(f.read_text()) or {}).get("vendors", {})
-    except (OSError, ValueError):
-        return {}
+    vendors = _read_usage_vendors()
     out: dict[str, float] = {}
     for name, info in vendors.items():
         if not isinstance(info, dict):

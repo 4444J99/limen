@@ -127,8 +127,11 @@ def _binary_status(binary: str) -> tuple[bool, str]:
 def _gemini_auth_configured() -> bool:
     if os.environ.get("GEMINI_API_KEY"):
         return True
-    settings = Path.home() / ".gemini" / "settings.json"
-    return settings.exists() and "auth" in settings.read_text(errors="ignore")
+    try:
+        settings = Path.home() / ".gemini" / "settings.json"
+        return settings.exists() and "auth" in settings.read_text(errors="ignore")
+    except (PermissionError, OSError):
+        return False
 
 
 def ollama_model() -> str | None:
