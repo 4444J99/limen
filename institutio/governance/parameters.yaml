@@ -150,4 +150,12 @@ parameters:
     env: LIMEN_USE_1PASSWORD_SSH
     self_update: none
     owner: limen-daemon
+
+  # --- credential Wall (scripts/credential-wall.py): the pinned secret/credential index ---
+  LIMEN_CRED_WALL_ISSUE:
+    default: 320               # the pinned GitHub issue regenerated as the canonical secret index
+    env: LIMEN_CRED_WALL_ISSUE
+    self_update: none
+    owner: limen-daemon
+    note: "Which pinned issue scripts/credential-wall.py --sync rewrites as the secret/credential Wall. Identity, not a knob — override only if the Wall issue is ever renumbered."
     note: "Opt-in (=1) to route SSH_AUTH_SOCK through the 1Password agent (domus-genoma 02-1password.zsh). OFF by default: the app's BiometricsOnly/never-cache policy turns every agent hit into a Touch-ID prompt, and git here is HTTPS with no keys in the agent — so routing buys nothing and only risks the prompt storm. See macos-tcc-gatekeeper-dialogs-solved."

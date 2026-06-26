@@ -37,6 +37,12 @@ REGISTRY = Path(__import__("os").environ.get("LIMEN_HIS_HAND_LEVERS", ROOT / "hi
 LABEL = "needs-human"
 MARKER_RE = re.compile(r"<!--\s*lever:(L-[A-Z0-9-]+)\s*-->")
 
+# The aggregate his-hand Wall — one pinned, machine-maintained index of EVERY lever, mirroring the
+# credential Wall (#320, scripts/credential-wall.py) for the rest of the human-gated estate. Identity
+# is its own marker so the per-lever sync never mistakes it for a lever.
+WALL_MARKER = "<!-- wall:hishand -->"
+WALL_TITLE = "🧱 The Wall — everything that hangs on you (his-hand levers)"
+
 
 def sh(args: list[str], check: bool = True, input_text: str | None = None) -> str:
     r = subprocess.run(args, capture_output=True, text=True, input=input_text)
@@ -137,17 +143,102 @@ def update_issue(num: int, lever: dict) -> None:
     sh(["gh", "issue", "edit", str(num), "--title", title_for(lever), "--body-file", path])
 
 
+def _head(text: str, cap: int = 90) -> str:
+    """First clause of a lever label, collapsed + capped — for the Wall table."""
+    label = " ".join(str(text).split())
+    head = re.split(r"[:.]\s", label, maxsplit=1)[0]
+    return head[: cap - 1].rstrip() + "…" if len(head) > cap else head
+
+
+def wall_body(levers: list[dict]) -> str:
+    """The aggregate his-hand Wall body — every lever, machine-generated from the registry."""
+    out = [
+        "**This is the single pinned index of everything that hangs on Anthony.** Every row is a "
+        "lever only he can pull; each links its own individually-closeable issue. Close an issue to "
+        "pull that lever — nothing here is ever auto-pulled or nagged. The credential/secret/login/"
+        "env subset has its own machine-generated Wall (#320); this Wall covers the rest.",
+        "",
+        "_Source of truth: [`his-hand-levers.json`](https://github.com/organvm/limen/blob/main/his-hand-levers.json). "
+        "Regenerate: `python3 scripts/sync-hishand-issues.py --wall --apply`. If this table and the "
+        "registry disagree, the registry wins. Live filter: "
+        "<https://github.com/organvm/limen/labels/needs-human>._",
+        "",
+        "| Lever | What it unlocks | Cost | Issue |",
+        "|---|---|---|---|",
+    ]
+    for lev in levers:
+        lid = lev.get("id", "—")
+        unlocks = _head(lev.get("unlocks", "—"), 70) or "—"
+        cost = _head(lev.get("cost", "—"), 60) or "—"
+        num = lev.get("issue")
+        link = f"#{num}" if isinstance(num, int) else "—"
+        out.append(f"| `{lid}` — {_head(lev.get('label', ''), 70)} | {unlocks} | {cost} | {link} |")
+    out += [
+        "",
+        f"_{len(levers)} levers. Pinned alongside the credential Wall (#320). "
+        "Surfaced once, here — never recited in a chat._",
+        "",
+        WALL_MARKER,
+    ]
+    return "\n".join(out)
+
+
+def find_marked(marker: str) -> int | None:
+    """Issue number whose body carries `marker`, or None. Scans needs-human issues via REST."""
+    raw = sh(["gh", "api", "--paginate",
+              f"repos/{repo_slug()}/issues?labels={LABEL}&state=all&per_page=100"])
+    issues: list = []
+    for chunk in re.findall(r"\[.*?\]\s*(?=\[|\Z)", raw, re.S) or [raw]:
+        try:
+            issues.extend(json.loads(chunk))
+        except json.JSONDecodeError:
+            pass
+    for it in issues:
+        if "pull_request" in it:
+            continue
+        if marker in (it.get("body") or ""):
+            return it["number"]
+    return None
+
+
+def sync_wall(levers: list[dict], apply: bool) -> int:
+    body = wall_body(levers)
+    num = find_marked(WALL_MARKER)
+    if not apply:
+        where = f"existing #{num}" if num else "a NEW pinned issue"
+        print(f"== his-hand Wall (DRY-RUN) ==\nwould write {len(levers)} levers into {where}\n")
+        print(body)
+        return 0
+    with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False) as f:
+        f.write(body)
+        path = f.name
+    if num:
+        sh(["gh", "issue", "edit", str(num), "--title", WALL_TITLE, "--body-file", path])
+    else:
+        url = sh(["gh", "issue", "create", "--label", LABEL, "--title", WALL_TITLE, "--body-file", path])
+        num = int(url.rstrip("/").split("/")[-1])
+    # Keep it pinned; pinning an already-pinned issue errors harmlessly → tolerate.
+    subprocess.run(["gh", "issue", "pin", str(num)], capture_output=True, text=True)
+    print(f"✓ his-hand Wall synced + pinned → issue #{num} ({len(levers)} levers)")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--apply", action="store_true", help="mutate GitHub + the JSON (default: dry-run)")
     ap.add_argument("--update-bodies", action="store_true",
                     help="also rewrite the body/title of existing open issues to match the lever")
+    ap.add_argument("--wall", action="store_true",
+                    help="generate/refresh the single pinned aggregate his-hand Wall issue")
     args = ap.parse_args()
 
     data = json.loads(REGISTRY.read_text())
     levers = data.get("levers", [])
     if not levers:
         raise SystemExit("registry has no levers")
+
+    if args.wall:
+        return sync_wall(levers, args.apply)
 
     by_marker = existing_issues()
     by_number = {v["number"]: v for v in by_marker.values()}
