@@ -48,6 +48,17 @@ layers. The job is to **converge on them, not rebuild** them.
 **The two layers are orthogonal.** ORGANVM owns *ecosystem context*; limen owns *task
 lifecycle*. Neither absorbs the other, and there is no third generator to write.
 
+> **Scope boundary — the layers do not share task vocabulary (verified 2026-06-26).**
+> organvm-engine has its **own** plan-tracking vocabulary via its IRF format (*Index Rerum
+> Faciendarum*): canonical statuses `open · completed · blocked · archived`. Its
+> `plans/atomizer.py` and `prompts/audit.py` emit/accept **`completed`** *by design* — it
+> maps `## Completed` IRF sections and `[x]` checkboxes, writes only an internal
+> `atomized-tasks.jsonl`, has **zero** imports of or plumbing to limen, and ~250 tests depend
+> on it. So when auditing Layer 1 for "the same `completed` drift": **that is not drift — do
+> not align it to limen's `done`.** Aligning would break organvm-engine's own governance and
+> tests. Task-state vocabulary is **per-layer**: limen's `done` is canonical only for limen's
+> dispatch lifecycle; IRF's `completed` is canonical only for organvm-engine's plan tracking.
+
 ---
 
 ## Precedence (when instructions conflict)
