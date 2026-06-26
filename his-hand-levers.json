@@ -41,21 +41,6 @@
       "issue": 256
     },
     {
-      "id": "L-BRANCH-PROTECT-072",
-      "label": "Branch-protection across the organ repos. RESOLVED for organvm/limen `main` 2026-06-24 (applied under granted admin): protected with an always-on required `pr-gate` check after #192 then 25ce902 each landed red and twice wedged the daemon \u2014 healed in #203/#212/#213, Censor #198 unblocked. REMAINING: fleet-wide rollout to the other organ repos.",
-      "owner": "yours",
-      "cost": "fleet-wide rollout only (limen done) \u2014 ~5 min admin per repo, or one descent run",
-      "unlocks": "branch protection fleet-wide (limen main already gated \u2192 no more CI-poison jams there)",
-      "source_task": "LIMEN-072",
-      "note": "limen/main DONE: required check = the always-on `pr-gate` workflow (ruff \u00b7 py_compile \u00b7 tasks.yaml parses+loads \u00b7 nomenclator \u00b7 pytest web/api+cli). Couldn't just require ci.yml's python/web/worker \u2014 they're path-filtered on pull_request and never report on content-only PRs (#79/#80), which would brick them forever; pr-gate has no path filter. enforce_admins=false, no required reviews, allow_auto_merge=true. Daemon verified PR-only (capture.sh\u2192feature branches, merge organ merges, sync-release FF-pulls) so no App-actor exemption was needed. DESCENT TOOL READY (code precursor done): scripts/setup-rulesets.py's _GATE regex now detects the limen-style job names (pr-gate/python/web/worker) and accepts a --contexts override to force check names where detection is imperfect \u2014 so the fleet-wide run no longer mis-reports 'no checks detected'. REMAINING (your lever): the gated `--apply` run across the other organ repos \u2014 it writes branch-protection to repos you own (org-admin mutation), so it stays human-pulled.",
-      "steps": [
-        "DONE 2026-06-24: organvm/limen `main` protected \u2014 required status check `pr-gate` (always-on workflow added in #211; protection set via gh api).",
-        "DONE: scripts/setup-rulesets.py's _GATE regex now detects pr-gate/python/web/worker (+ a --contexts override) \u2014 the descent tool is ready.",
-        "Fleet-wide (your lever): dry-run `python3 scripts/setup-rulesets.py` to review the per-repo plan, then `--apply` to write branch protection across the other organ repos (org-admin mutation \u2014 human-pulled)."
-      ],
-      "issue": 257
-    },
-    {
       "id": "L-ENC1101-GOLIVE",
       "label": "Take ENC1101 Summer 2026 (771624) live in D2L \u2014 content is 100% staged; only your cadence call + a label greenlight + the Set Active click remain. Read edu-organism/classes/enc1101-summer-2026/prep/GO-LIVE-BRIEF.md (one page). (1) Confirm the 6-week cadence in prep/schedule-summer2026.md ('cadence is good' or name dates to move); (2) greenlight the \u00a73 fix \u2014 the staged announcement drip mislabeled the back half a 'Research Essay' but shell Unit 4 = Problem/Solution Essay (250-pt capstone); the corrected import is staged at prep/instructor-layer-ready/announcements-summer2026-IMPORT-aligned.csv (dates unchanged, original untouched). Then I browser-drive dates + announcements + intelligent agent; you click Set Offering to Active; I verify Student View.",
       "owner": "yours",
