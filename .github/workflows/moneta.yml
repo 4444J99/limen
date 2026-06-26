@@ -1,0 +1,37 @@
+name: MONETA
+
+permissions:
+  contents: read
+
+# The sovereign cash organ lives in this monorepo as a self-contained JS package
+# (zero runtime deps). Its tests are NOT swept by ci.yml (path-filtered to
+# cli/web/scripts/spec) nor pr-gate (python-only), so gate them here — an organ
+# whose tests never run in CI is the masked-gate rot we refuse to ship.
+on:
+  push:
+    paths:
+      - 'moneta/**'
+      - '.github/workflows/moneta.yml'
+  pull_request:
+    paths:
+      - 'moneta/**'
+      - '.github/workflows/moneta.yml'
+
+jobs:
+  moneta:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: moneta
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js v20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: npm ci
+
+      - name: Test + typecheck (vitest + tsc)
+        run: npm test

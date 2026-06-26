@@ -20,3 +20,4 @@ names:
   - {display: QVICKEN,   domain: qvicken,   register: classical, note: "the session-lifecycle organ"}
   - {display: DOMVS,     domain: domvs,     register: classical, note: "domus · the life-domain monolith"}
   - {display: STYX,      domain: styx,      register: greek,     note: "Greek root — Y kept by canon"}
+  - {display: MONETA,    domain: moneta,    register: classical, note: "Juno Moneta · the mint — the sovereign cash organ (intake), sibling to quaestor (find)"}
