@@ -24,8 +24,9 @@ The MCP server exposes the following tools for the conductor swarm:
 
 ### 1. Worktree Isolation
 Instead of cloning or checking out branches in the main repository checkout, the Conductor Swarm MUST spawn tasks in isolated git worktrees.
-- **Command Pattern:** `git worktree add ../<task-id> -b <task-id>`
+- **Command Pattern:** `git fetch origin && git worktree add ../<task-id> -b <task-id> origin/main`
 - **Rationale:** Ensures parallel tasks managed by the swarm do not conflict in the shared working directory.
+- **CRITICAL — always branch from `origin/main`, never from local HEAD.** Omitting the base ref (`git worktree add ../<id> -b <id>`) branches from whatever the live checkout currently points at. If the live checkout has drifted onto a stale topic branch, every new worktree inherits that stale base — and because the CAPTURE organ auto-commits the working tree to whatever branch is checked out, while squash-merges land work on `main` under new hashes, those forks silently accrete commits and *look* "ahead" of `main` while actually being far behind it. That is exactly how a thicket of stale-base forks accumulated (incident 2026-06-26: ~20 worktrees, the live daemon itself stranded on a stale fork). Always `git fetch origin` first and pass `origin/main` as the explicit base.
 
 ### 2. PR Babysitting Loop (End-to-End Lifecycle)
 The agent responsible for a task will NOT just push its code and exit. It is explicitly required to babysit the pull request through the entire review lifecycle:
