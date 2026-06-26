@@ -1,21 +1,20 @@
-import re
+import sys
+with open('/tmp/atlas_worktree/scripts/heartbeat-loop.sh', 'r') as f:
+    lines = f.readlines()
 
-with open("/tmp/worktrees/feat-integrity/scripts/heartbeat-loop.sh", "r") as f:
-    content = f.read()
+new_lines = []
+for line in lines:
+    if '# EVOCATOR — the SVMMONER' in line:
+        new_lines.extend([
+            "  # ATLAS — the COMPLETE map of all repos across organvm and 4444J99.\n",
+            "  # Renders the full universe to institutio/registry/atlas.json so the operator has\n",
+            "  # a complete live registry. This NEVER replaces value-repos.json (which is the fail-closed\n",
+            "  # token-spending tier). Idempotent (no diff if nothing changed). Bounded + fail-open.\n",
+            "  play \"$C_ATLAS\" && python3 \"$LIMEN_ROOT/scripts/generate-atlas.py\" 2>&1 | tail -2 || true\n",
+            "\n"
+        ])
+    new_lines.append(line)
 
-# I want to insert it AFTER `play "$C_WEB"     && bash "$LIMEN_ROOT/scripts/refresh-web.sh" >>"$LIMEN_ROOT/logs/refresh-web.log" 2>&1 || true`
-# and BEFORE `# QUICKEN`
+with open('/tmp/atlas_worktree/scripts/heartbeat-loop.sh', 'w') as f:
+    f.writelines(new_lines)
 
-integrity_block = """
-  # INTEGRITY — govern the autoupdater + verify signatures (CISO)
-  python3 "$LIMEN_ROOT/cli/src/limen/__main__.py" integrity >> "$LIMEN_ROOT/logs/integrity.log" 2>&1 || true
-"""
-
-insert_idx = content.find('  # QUICKEN — a session has a lifecycle')
-if insert_idx != -1:
-    content = content[:insert_idx] + integrity_block + "\n" + content[insert_idx:]
-    with open("/tmp/worktrees/feat-integrity/scripts/heartbeat-loop.sh", "w") as f:
-        f.write(content)
-    print("Patched heartbeat-loop.sh")
-else:
-    print("Could not find insert location")
