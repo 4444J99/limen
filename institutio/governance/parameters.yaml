@@ -157,6 +157,14 @@ parameters:
     self_update: none
     owner: health
     note: "Minimum logged observations before the learning department surfaces a pattern (avoids inferring from noise)."
+  # --- WALLS: keep the published walls (credential #320, his-hand #330) from drifting ---
+  LIMEN_BEAT_WALLS:
+    default: 12                 # cadence: regenerate the walls every 12 beats
+    env: LIMEN_BEAT_WALLS
+    self_update: none
+    owner: walls
+    note: "How often the credential Wall (#320) + his-hand aggregate Wall (#330) are regenerated so they never drift from reality. Idempotent, fail-open."
+
   # --- LIFE: the Executive Life Office (digital accounts/assets + subscription purge clock) ---
   LIMEN_BEAT_LIFE:
     default: 6                  # cadence: refresh the digital-life office every 6 beats
