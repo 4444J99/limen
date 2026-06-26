@@ -1,24 +1,32 @@
 #!/usr/bin/env python3
 """reclaim-worktrees.py — the SPRAWL-RECLAIM organ.
 
-The fleet dispatch creates ephemeral per-task worktrees under .limen-worktrees/ and never
-reaps them; left alone they accumulate (observed: 91 dirs / 3.4 GB). This organ reaps the
-ones that are *provably dead* — and ONLY those:
+The fleet creates ephemeral worktrees in TWO places and reaps neither; left alone they
+accumulate (the dispatch root hit 91 dirs / 3.4 GB; the interactive root leaked ~50 GB /
+21 worktrees on 2026-06-26). This organ reaps the ones that are *provably dead* — and ONLY
+those:
 
   • clean working tree (no uncommitted or untracked changes), AND
   • HEAD is reachable from some remote ref (nothing unpushed would be lost), AND
-  • idle for >= LIMEN_RECLAIM_MIN_AGE_H hours (so a fleet task mid-run is never touched).
+  • idle for >= the root's min-age (so a task/session mid-run is never touched).
+
+It scans BOTH creation sites (the historical blind spot — see worktree-lifecycle-blind-spot):
+  • LIMEN_WORKTREE_ROOT (~/Workspace/.limen-worktrees) — dispatch throwaway, min-age 6h.
+  • LIMEN_ROOT/.claude/worktrees — EnterWorktree / bg-job / interactive cells, min-age 24h
+    (longer: an interactive session can sit idle-but-alive; 24h clean+pushed ⇒ provably dead).
+Set LIMEN_RECLAIM_CLAUDE_WT=0 to disable the interactive sweep.
 
 It is LOSS-FREE by construction (those three gates) and FAILS OPEN: any error on one dir is
-logged and skipped, never aborting the rest ("never a silent no"). It removes registered
+logged and skipped, never aborting the rest ("never a silent no"). It NEVER reaps the live
+checkout (LIMEN_ROOT) nor the worktree it is itself running from. It removes registered
 worktrees via `git worktree remove` (never rm) and standalone clones via rmtree. Bounded per
 run (LIMEN_RECLAIM_MAX); if it hits the cap it LOGS the remainder rather than silently dropping.
 
 Dry-run by default; pass --apply to execute. Self-throttles to once per
 LIMEN_RECLAIM_EVERY_MIN minutes so it is cheap to call every beat.
 
-Env: LIMEN_WORKTREE_ROOT, LIMEN_RECLAIM_MIN_AGE_H (6), LIMEN_RECLAIM_MAX (50),
-     LIMEN_RECLAIM_EVERY_MIN (30).
+Env: LIMEN_WORKTREE_ROOT, LIMEN_RECLAIM_MIN_AGE_H (6), LIMEN_RECLAIM_CLAUDE_WT (1),
+     LIMEN_RECLAIM_CLAUDE_AGE_H (24), LIMEN_RECLAIM_MAX (50), LIMEN_RECLAIM_EVERY_MIN (30).
 """
 from __future__ import annotations
 import json, os, shutil, subprocess, sys, time
@@ -30,10 +38,24 @@ MIN_AGE_H = float(os.environ.get("LIMEN_RECLAIM_MIN_AGE_H", "6"))
 MAX_REMOVE = int(os.environ.get("LIMEN_RECLAIM_MAX", "50"))
 EVERY_MIN = float(os.environ.get("LIMEN_RECLAIM_EVERY_MIN", "30"))
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", f"{HOME}/Workspace/limen"))
+CLAUDE_WT_ON = os.environ.get("LIMEN_RECLAIM_CLAUDE_WT", "1") == "1"
+CLAUDE_WT_ROOT = LIMEN_ROOT / ".claude" / "worktrees"
+CLAUDE_WT_AGE_H = float(os.environ.get("LIMEN_RECLAIM_CLAUDE_AGE_H", "24"))
 LOG = LIMEN_ROOT / "logs" / "reclaim-worktrees.jsonl"
 MARKER = LIMEN_ROOT / "logs" / ".reclaim-last"
 APPLY = "--apply" in sys.argv
 FORCE = "--force" in sys.argv  # ignore the throttle
+
+# Never reap the live checkout nor the worktree this process is running from (else we yank
+# the rug from under an active session). Resolved once; classify() honors it as a HARD skip.
+try:
+    _SELF_GUARD = {LIMEN_ROOT.resolve()}
+    _cwd = Path.cwd().resolve()
+    for _p in (_cwd, *_cwd.parents):
+        if (_p / ".git").exists():
+            _SELF_GUARD.add(_p); break
+except Exception:
+    _SELF_GUARD = {LIMEN_ROOT}
 
 
 def git(args, cwd, timeout=30):
@@ -62,13 +84,18 @@ def superproject(cwd) -> str | None:
     return None
 
 
-def classify(d: Path, now: float):
+def classify(d: Path, now: float, min_age_h: float):
     """Return (action, reason). action in {remove-worktree, remove-clone, skip}."""
+    try:
+        if d.resolve() in _SELF_GUARD:
+            return "skip", "self/live-checkout"
+    except Exception:
+        return "skip", "unresolved"
     if git(["rev-parse", "--is-inside-work-tree"], d).returncode != 0:
         return "skip", "not-a-git-dir"
     age_h = (now - d.stat().st_mtime) / 3600.0
-    if age_h < MIN_AGE_H:
-        return "skip", f"active(<{MIN_AGE_H}h, age={age_h:.1f}h)"
+    if age_h < min_age_h:
+        return "skip", f"active(<{min_age_h:g}h, age={age_h:.1f}h)"
     if git(["status", "--porcelain"], d).stdout.strip():
         return "skip", "dirty"
     head = git(["rev-parse", "HEAD"], d).stdout.strip()
@@ -79,8 +106,14 @@ def classify(d: Path, now: float):
 
 
 def main():
-    if not ROOT.is_dir():
-        print(f"reclaim: no worktree root ({ROOT}) — nothing to do")
+    # The two creation sites, each with its own idle gate (the historical blind spot was
+    # scanning only the first). A root that doesn't exist is simply skipped.
+    roots = [(ROOT, MIN_AGE_H)]
+    if CLAUDE_WT_ON:
+        roots.append((CLAUDE_WT_ROOT, CLAUDE_WT_AGE_H))
+    roots = [(r, a) for r, a in roots if r.is_dir()]
+    if not roots:
+        print("reclaim: no worktree roots present — nothing to do")
         return 0
     # self-throttle (skip silently if run recently, unless --force or dry-run inspection)
     if APPLY and not FORCE and MARKER.exists():
@@ -88,10 +121,10 @@ def main():
             print(f"reclaim: ran < {EVERY_MIN}min ago — skip (set --force to override)")
             return 0
     now = time.time()
-    dirs = sorted(p for p in ROOT.iterdir() if p.is_dir())
+    dirs = [(p, age) for r, age in roots for p in sorted(r.iterdir()) if p.is_dir()]
     removed, skipped, failed, deferred = [], [], [], []
-    for d in dirs:
-        action, reason = classify(d, now)
+    for d, min_age_h in dirs:
+        action, reason = classify(d, now, min_age_h)
         if action == "skip":
             skipped.append((d.name, reason)); continue
         if len(removed) >= MAX_REMOVE:

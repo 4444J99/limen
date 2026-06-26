@@ -254,6 +254,7 @@ parameters:
     env: LIMEN_USE_1PASSWORD_SSH
     self_update: none
     owner: limen-daemon
+    note: "Opt-in (=1) to route SSH_AUTH_SOCK through the 1Password agent (domus-genoma 02-1password.zsh). OFF by default: the app's BiometricsOnly/never-cache policy turns every agent hit into a Touch-ID prompt, and git here is HTTPS with no keys in the agent — so routing buys nothing and only risks the prompt storm. See macos-tcc-gatekeeper-dialogs-solved."
 
   # --- credential Wall (scripts/credential-wall.py): the pinned secret/credential index ---
   LIMEN_CRED_WALL_ISSUE:
@@ -262,4 +263,23 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Which pinned issue scripts/credential-wall.py --sync rewrites as the secret/credential Wall. Identity, not a knob — override only if the Wall issue is ever renumbered."
-    note: "Opt-in (=1) to route SSH_AUTH_SOCK through the 1Password agent (domus-genoma 02-1password.zsh). OFF by default: the app's BiometricsOnly/never-cache policy turns every agent hit into a Touch-ID prompt, and git here is HTTPS with no keys in the agent — so routing buys nothing and only risks the prompt storm. See macos-tcc-gatekeeper-dialogs-solved."
+
+  # --- WORKTREE LIFECYCLE / parallel CELLS (scripts/cells.sh + scripts/reclaim-worktrees.py) ---
+  LIMEN_RECLAIM_CLAUDE_WT:
+    default: "1"               # ON — sweep .claude/worktrees too (the historical ~50GB blind spot)
+    env: LIMEN_RECLAIM_CLAUDE_WT
+    self_update: none
+    owner: limen-daemon
+    note: "Whether reclaim-worktrees.py ALSO sweeps LIMEN_ROOT/.claude/worktrees (EnterWorktree/bg/interactive cells), not just the dispatch root. Set 0 to disable. Same loss-free gates (clean+pushed+idle) + a longer idle age + a self/live-checkout guard. See worktree-lifecycle-blind-spot."
+  LIMEN_RECLAIM_CLAUDE_AGE_H:
+    default: 24                # interactive sessions can sit idle-but-alive; 24h clean+pushed ⇒ provably dead
+    env: LIMEN_RECLAIM_CLAUDE_AGE_H
+    self_update: none
+    owner: limen-daemon
+    note: "Min idle hours before a .claude/worktrees cell is eligible for reclaim. Longer than the dispatch root's 6h because an interactive/bg session can legitimately sit idle between beats."
+  LIMEN_BRANCH_PREFIX:
+    default: null              # DERIVED per scope — cells.sh sets cell-<slug>- for a cell's own conductor
+    env: LIMEN_BRANCH_PREFIX
+    self_update: "set per-cell by cells.sh conduct (cell-<slug>-) to namespace a scoped conductor's branches"
+    owner: limen-daemon
+    note: "Branch-name namespace a scoped conductor uses so parallel cells never collide on branch names or fight over main. Unset ⇒ the daemon's default cadence; cells.sh sets it per cell."
