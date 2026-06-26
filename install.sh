@@ -45,14 +45,22 @@ else
   echo "  WARNING: python3 not found — skipping CLI install"
 fi
 
-# 4. Env var setup
+# 4. Env var + PATH setup
+LIMEN_BIN="${LIMEN_CLI}/.venv/bin"
 LIMEN_ENV_LINE='export LIMEN_ROOT="$HOME/limen"'
+LIMEN_PATH_LINE="export PATH=\"${LIMEN_BIN}:\$PATH\""
 ZSHRC="${ZDOTDIR:-$HOME}/.zshenv"
 if grep -q 'LIMEN_ROOT' "$ZSHRC" 2>/dev/null; then
   echo "  LIMEN_ROOT already set in $ZSHRC"
 else
   echo "$LIMEN_ENV_LINE" >>"$ZSHRC"
-  echo "  added LIMEN_ROOT to $ZSHRC (restart shell or 'source $ZSHRC')"
+  echo "  added LIMEN_ROOT to $ZSHRC"
+fi
+if grep -qF "$LIMEN_BIN" "$ZSHRC" 2>/dev/null; then
+  echo "  limen PATH already set in $ZSHRC"
+else
+  echo "$LIMEN_PATH_LINE" >>"$ZSHRC"
+  echo "  added limen to PATH in $ZSHRC (restart shell or 'source $ZSHRC')"
 fi
 
 echo "==> done"

@@ -5,20 +5,12 @@ Universal agent task intake — one file to aim every AI agent across every repo
 ## Installation
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/4444J99/limen/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/4444J99/limen/main/install.sh | bash
+# restart shell or: source ~/.zshenv
 ```
 
-Or via pip (coming soon):
-
-```bash
-pip install limen
-```
-
-Or via Homebrew (coming soon):
-
-```bash
-brew install limen
-```
+Clones the repo to `~/Workspace/limen`, creates a `~/limen` symlink, installs the CLI
+into a local venv, and adds both `LIMEN_ROOT` and the venv bin to `~/.zshenv`.
 
 ## Setup
 
