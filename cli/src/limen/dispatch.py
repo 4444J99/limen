@@ -3,6 +3,7 @@ import os
 import re
 import secrets
 import shlex
+import shutil
 import subprocess
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -761,13 +762,38 @@ def _pr_body(task: Task) -> str:
     return "\n".join(lines)
 
 
+def _porcelain_paths(z: str) -> list[str]:
+    """Repo-relative paths from `git status --porcelain -z` output. Each record is ``XY <path>``
+    NUL-terminated; rename/copy records (``R``/``C``) are followed by an extra NUL token holding the
+    OLD path, which we skip. Returns the paths the working tree actually changed."""
+    toks = z.split("\x00")
+    paths: list[str] = []
+    i = 0
+    while i < len(toks):
+        entry = toks[i]
+        if len(entry) < 4:
+            i += 1
+            continue
+        xy, path = entry[:2], entry[3:]
+        paths.append(path)
+        i += 2 if ("R" in xy or "C" in xy) else 1  # rename/copy: consume the trailing old-path token
+    return paths
+
+
 def _bridge_agy_scratch(task: Task, wt: Path) -> None:
     """agy/antigravity do real work but write it to ~/.gemini/antigravity-cli/scratch/<name>/
-    (a git copy of the repo) instead of the cwd worktree — there is no headless flag to make
-    them target a cwd. So CARRY THE WORK HOME: find the scratch copy for THIS repo (match by
-    its git remote == task.repo, newest wins under concurrency) and rsync its content into the
-    worktree, so the normal add→commit→PR flow picks it up. Turns agy from no-op into a
-    productive lane (use every part of the buffalo). Best-effort: never raises."""
+    (a long-lived, REUSED git copy of the repo) instead of the cwd worktree — there is no headless
+    flag to make them target a cwd. So CARRY agy's per-run DELTA home: find the scratch copy for
+    THIS repo (match by remote == task.repo, newest wins) and copy ONLY the files agy changed THIS
+    run — its uncommitted working-tree delta (`git status --porcelain`) — into the worktree, so the
+    normal add→commit→PR flow picks it up.
+
+    Why delta-only, not the old whole-tree `rsync -a`: the scratch is a long-lived clone that drifts
+    OFF-TRUNK (observed sitting a day stale at an orphan "Revert #111"). A whole-tree overlay copied
+    that stale base onto fresh origin/main, overwriting grown files with their shorter stale contents
+    → thousands of spurious deletions per PR (the destructive "deepen" PRs that got closed). The
+    delta is agy's actual work and is BASE-INDEPENDENT, so a stale/divergent scratch base can no
+    longer leak in. Best-effort: never raises."""
     if not task.repo:
         return
     scratch = Path.home() / ".gemini" / "antigravity-cli" / "scratch"
@@ -790,9 +816,25 @@ def _bridge_agy_scratch(task: Task, wt: Path) -> None:
             best = max(cands, key=lambda p: p.stat().st_mtime, default=None)
         if best is None:
             return
-        subprocess.run(["rsync", "-a", "--exclude", ".git", "--exclude", ".claude",
-                        f"{best}/", f"{wt}/"], capture_output=True, text=True, timeout=180)
-        print(f"  agy-bridge {task.id}: carried scratch '{best.name}' → worktree")
+        # agy's per-run delta = its uncommitted working-tree changes (NOT the committed, possibly
+        # stale, base tree). Copy just those paths; mirror deletions agy made.
+        st = subprocess.run(["git", "-C", str(best), "status", "--porcelain", "-z"],
+                            capture_output=True, text=True, timeout=30)
+        paths = _porcelain_paths(st.stdout) if st.returncode == 0 else []
+        if not paths:
+            print(f"  agy-bridge {task.id}: scratch '{best.name}' has no per-run delta — nothing carried")
+            return
+        carried = 0
+        for rel in paths:
+            src, dst = best / rel, wt / rel
+            if src.is_file():
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dst)
+                carried += 1
+            elif not src.exists() and dst.is_file():  # agy deleted it → mirror the deletion
+                dst.unlink()
+                carried += 1
+        print(f"  agy-bridge {task.id}: carried {carried} changed path(s) from scratch '{best.name}' → worktree")
     except Exception as e:
         print(f"  agy-bridge {task.id}: skipped ({str(e)[:80]})")
 
