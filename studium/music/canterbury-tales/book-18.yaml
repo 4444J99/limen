@@ -1,0 +1,106 @@
+# Canterbury Tales — Tale XVIII: Second Nun's Tale — curated music arc
+# THE TALE OF SAINT CECILIA: hagiographic miracle, devotional reverence, martyrdom.
+work: canterbury-tales
+book: 18
+title: "Canterbury Tales — Tale XVIII: Second Nun's Tale"
+length_minutes: 87
+principle: >
+  Score the Second Nun's Tale as luminous hagiography: the life and martyrdom of Saint
+  Cecilia, the patron saint of music. The tale follows Cecilia from her marriage through
+  her conversion of her husband and his brother to her martyrdom for the faith. She is
+  tortured, beheaded, but her body remains incorruptible and her faith never wavers. The
+  tale is devotional without irony: it celebrates faith, virtue, and the willingness to die
+  for belief. The dominant motion is ascent: from earthly marriage to spiritual transformation
+  to sainthood. The music must be genuinely beautiful and reverential, capturing the Second
+  Nun's absolute belief in the truth of the tale she tells.
+force_arc: [divine-intervention, revelation, supplication, sacrifice, divine-intervention, salvation, revelation]
+dominant_force: salvation
+tracks:
+  - n: 1
+    scene: "Cecilia's purity — virtuous maiden married against her will"
+    force: divine-intervention
+    composer: Messiaen
+    work: "Quartet for the End of Time — 'Regards de l'Esprit Saint'"
+    decision: added
+    why: >
+      Cecilia is a virtuous Christian maiden forced into marriage with a pagan. But her virtue
+      is protected by divine grace: an angel watches over her, invisible to all but her. The
+      moment of divine presence is luminous and vertical. Messiaen's chord is the moment where
+      heaven acknowledges a soul: the music is still, clear, utterly removed from earthly
+      complications.
+  - n: 2
+    scene: "Cecilia converts her husband — through faith made visible"
+    force: revelation
+    composer: Bach
+    work: "St. John Passion — 'O Lamm Gottes' (revelation of truth)"
+    decision: added
+    why: >
+      Cecilia tells her husband that an angel watches over her, and that his refusal to
+      consummate the marriage is a covenant with that angel. Her husband believes and requests
+      baptism. The revelation is one of spiritual truth becoming visible and compelling. Bach's
+      chorale carries the revelation: what is true is made clear through divine knowledge.
+  - n: 3
+    scene: "The brother's conversion — cascading faith through witness"
+    force: supplication
+    composer: Barber
+    work: "Agnus Dei"
+    decision: added
+    why: >
+      The husband's brother witnesses the conversion and asks to be baptized. Cecilia's faith
+      has the power to transform: her steadfastness becomes the ground of others' belief.
+      Barber's Agnus Dei is supplication before truth: the brother's request is the admission
+      of spiritual hunger, the desire to be part of what Cecilia has found.
+  - n: 4
+    scene: "The persecution begins — arrest and torture ordered"
+    force: sacrifice
+    composer: Stravinsky
+    work: "The Rite of Spring — Sacrificial Dance"
+    decision: added
+    why: >
+      The prefect orders Cecilia's arrest and torture. She is placed in a furnace; she does
+      not burn. She is ordered beheaded; it takes three strokes. She remains conscious and
+      preaches the faith for three days before expiring. Stravinsky's ritual weight marks her
+      offering: her body is the sacrifice offered to God, and the sacrifice is accepted.
+  - n: 5
+    scene: "The angel's presence — divine protection through torment"
+    force: divine-intervention
+    composer: Messiaen
+    work: "L'Ascension — IV. 'Prière du Christ montant vers son Père'"
+    decision: added
+    why: >
+      Throughout her torture, the angel remains present and invisible to all but the faithful.
+      Divine presence sustains Cecilia through the worst physical pain. Messiaen's brass and
+      strings contrast mark the moment where the human body is transcended by divine power:
+      the prayer rises even as the body is broken.
+  - n: 6
+    scene: "The three conversions from her witness — her death as harvest"
+    force: salvation
+    composer: Bach
+    work: "Cantata 'Wir danken dir, Gott, wir danken dir' (We Thank Thee, God)"
+    decision: added
+    why: >
+      From Cecilia's martyrdom, three souls are won for faith: her husband, his brother, and a
+      third convert. Her suffering becomes the seed of salvation for others. Bach's chorale
+      apotheosis celebrates the transfiguration of suffering into meaning: her death is not
+      loss but the foundation of eternal life for those she has touched.
+  - n: 7
+    scene: "Canonization — the virgin martyr becomes saint and intercessor"
+    force: revelation
+    composer: Tavener
+    work: "The Lamb"
+    decision: added
+    why: >
+      Cecilia's body remains incorruptible; she becomes the patron saint of music and virgins.
+      She is prayed to for protection and grace. The revelation is of a life transfigured into
+      eternal power: her death becomes the foundation of her continued presence in the faithful.
+      Tavener's setting of Blake is luminous and clear: innocence transformed into eternal
+      intercession.
+
+demoted:
+  - composer: Puccini
+    work: "Tosca — 'Vissi d'arte' (passionate lament)"
+    status: "demoted; too operatically tragic"
+    why: >
+      The Second Nun's Tale celebrates martyrdom as the path to sainthood, not as loss. The
+      music should be reverential and beautiful, not tragic. Puccini's passion is inappropriate
+      to the Second Nun's devotional certainty.

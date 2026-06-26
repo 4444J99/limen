@@ -1,0 +1,146 @@
+# Tanakh — Deuteronomy 1 (Devarim) — curated music arc
+# Score this as covenant reinterpreted through love and renewed through choice.
+# Deuteronomy is not a law-code but Moses' *hortatory* address to the people on the eve
+# of entering the land. The law that was issued at Sinai is now *repreached* in a new register:
+# not "obey because God commands" but "obey because you love God." The dominant force is
+# persuasion toward decision, urgency toward choice.
+work: tanakh
+book: 5
+title: "Deuteronomy: Devarim — Law Reinterpreted Through Love"
+length_minutes: 98
+principle: >
+  Do not score Deuteronomy as legislation. Moses does not legislate here; he *pleads*. The
+  entire book is a speech (chapters 1–28), followed by covenant renewal (29–30) and final
+  blessing (32–34). The register is hortatory—urgent, intimate, pressuring the listener toward
+  decision. The fundamental reinterpretation is stated in Deuteronomy 6:5—the Shema: "You shall
+  love the LORD your God with all your heart, and with all your soul, and with all your might."
+  Suddenly, covenant is not obligation imposed but *relationship chosen through love*. The law
+  given at Sinai (commandments, statutes, ordinances) is now repreached with love as the
+  hermeneutical key. Every law is restated through the logic of love: "If you love God, this is
+  how you will act toward the stranger, the widow, the orphan, the poor." The emotional register
+  is neither cool legislation nor warm sentimentality, but *urgent persuasion*—Moses knows his
+  time is ending; the people must choose; the choice must be made *now*.
+force_arc: [memory, revelation, law, desire, law, supplication, salvation, ascent]
+dominant_force: supplication
+tracks:
+  - n: 1
+    scene: "Wilderness recapitulation: remembering the journey"
+    force: memory
+    composer: Elgar
+    work: "Salut d'Amour (remembrance rendered intimate)"
+    decision: added
+    why: >
+      Deuteronomy opens with Moses recounting the wilderness journey. "These are the words which
+      Moses spoke to all Israel beyond the Jordan" (1:1). What follows is a systematic
+      recollection of the past forty years. But this is not mere history; it is *testimony*—
+      Moses is reminding the people of who they are and what they have been through. Elgar's
+      nostalgic intimacy captures exactly this: looking back with love, integrating memory into
+      identity.
+  - n: 2
+    scene: "The law recalled: statutes, ordinances, decrees"
+    force: revelation
+    composer: Gabrieli
+    work: "Canzona Noni Toni (the voice of law, but now in dialogue, not monologue)"
+    decision: added
+    why: >
+      The law is recited again—not as new revelation (that occurred at Sinai) but as *recalled*
+      revelation. Deuteronomy 4:44–45 introduces: "This is the law which Moses set before the
+      children of Israel." The tone is different from the original Exodus legislation. It is
+      more intimate, more explanatory, more persuasive. Gabrieli's polyphonic dialogue captures
+      this: the law is no longer a single voice from on high, but multiple voices in conversation
+      with each other.
+  - n: 3
+    scene: "The Shema: centrality of love as hermeneutical key"
+    force: law
+    composer: Pärt
+    work: "Magnificat (the word becoming song)"
+    decision: added
+    why: >
+      Deuteronomy 6:4–5 contains the Shema: "Hear, O Israel! The LORD our God, the LORD is One!
+      And you shall love the LORD your God with all your heart, and with all your soul, and with
+      all your might." This is the moment where covenant is reinterpreted. Love is not added to
+      law; love is revealed as the *ground* of law. Pärt's Magnificat opens with the text as
+      simple song—the reorienting principle made luminous and singable.
+  - n: 4
+    scene: "Covenant love and loyalty: hesed reimagined"
+    force: desire
+    composer: Szymanowski
+    work: "Metopes (Op. 29), III — Sirens (desire as an oscillating force, never settling)"
+    decision: added
+    why: >
+      Chapters 7–11 elaborate what covenant love means. God has loved Israel with *hesed*
+      (steadfast love); now Israel must respond with love. But this is not simple reciprocity.
+      The love being demanded is strange, demanding, unsettling. "The LORD your God is with you,
+      a mighty God and terrible" (7:21). Even in love, God remains *other*. Szymanowski's
+      shimmering, chromatic Sirens captures this: desire that draws you forward but cannot reach
+      full satisfaction, love that remains ultimately mysterious and demanding.
+  - n: 5
+    scene: "Law reinterpreted through love: social justice as covenant practice"
+    force: law
+    composer: Ravel
+    work: "Daphnis et Chloé — Lever du jour (light revealing order)"
+    decision: added
+    why: >
+      Deuteronomy 15–25 retranslates the law with love as the hermeneutical lens. Slavery law:
+      "Remember that you were a slave in the land of Egypt, and the LORD your God redeemed you"
+      (15:15). Lending law: "You shall not harden your heart...against your poor brother" (15:7).
+      Justice law: "The poor shall never cease out of the land; therefore I command you, 'You
+      shall open wide your hand to your brother, to the needy and to the poor'" (15:11). Every
+      law is reframed as enactment of love. Ravel's luminous prelude reveals the architecture
+      that was always there, now made visible through love.
+  - n: 6
+    scene: "Moses pleading with the people: urgency and supplication"
+    force: supplication
+    composer: Duruflé
+    work: "Requiem — Kyrie (the ultimate pleading)"
+    decision: added
+    why: >
+      By chapter 27–28, Moses has moved from legislation to *pleading*. "I set before you this
+      day a choice between blessing and curse. A blessing, if you obey...a curse, if you do not
+      obey" (28:1, 15). The register becomes urgent and intimate. Moses is old, about to die. The
+      people must choose. This is not cool instruction but desperate prayer. Duruflé's Kyrie
+      catches the emotional tenor: suspended, asking, waiting for the answer that will determine
+      everything.
+  - n: 7
+    scene: "The choice set before the people: 'I set before you life and death'"
+    force: salvation
+    composer: Bruckner
+    work: "Symphony No. 4 in E-flat Major 'Romantic' — Finale (the ascent toward ultimate choice)"
+    decision: added
+    why: >
+      Deuteronomy 30:15–19 contains perhaps the most directly addressed moment in the Torah:
+      "See, I have set before you this day life and good, death and evil. If you obey the
+      commandments of the LORD your God...then you shall live and multiply. But if your heart
+      turns away...I declare to you this day that you shall surely perish...I call heaven and
+      earth to witness against you this day, that I have set before you life and death, blessing
+      and curse; therefore choose life, that you and your offspring may live." The music here must
+      capture the absoluteness of the choice. Bruckner's Finale ascends toward a moment of total
+      decision—no ambiguity, no middle ground, only the command to choose.
+  - n: 8
+    scene: "Moses' final blessing and departure: 'the Lord has shown me the land'"
+    force: ascent
+    composer: Mahler
+    work: "Symphony No. 8 'Symphony of a Thousand' — Part II finale (the ultimate ascent)"
+    decision: added
+    why: >
+      At 120 years old, Moses goes up Mount Nebo and sees the promised land from a distance. He
+      will not enter; Joshua will lead Israel in. But Moses sees. The fulfillment of the promise
+      is visible, if only from afar. Mahler's vast choral finale ascends toward revelation—not
+      arrival, but the glimpse of transcendence. Moses blesses the tribes (33:1–29) with dignity,
+      love, and the full knowledge that his life's work is complete. Then he dies (34:5–7) and
+      passes leadership to Joshua. The register is ascension toward completion.
+demoted:
+  - composer: Mendelssohn
+    work: "Elijah — Opening"
+    status: "demoted — too oratorio, too retrospective"
+    why: >
+      Deuteronomy is not retrospective narrative (that is Numbers). It is forward-looking choice.
+      The people must decide *now*. Mendelssohn's grand oratorio opening belongs to a moment of
+      prophetic reflection, not to the present urgency of decision.
+  - composer: Berlioz
+    work: "Symphonie fantastique"
+    status: "demoted — too subjective, too psychologized"
+    why: >
+      Deuteronomy is not the subjective experience of an individual (Berlioz's program), but the
+      covenantal choice of a people. The register is public, binding, communal—not private
+      psychological drama.

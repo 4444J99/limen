@@ -1,0 +1,120 @@
+# Canterbury Tales — Tale XI: Pardoner's Tale — curated music arc
+# THE TALE OF THREE RIOTERS: greed destroys itself, sermon delivered by a fraud.
+work: canterbury-tales
+book: 11
+title: "Canterbury Tales — Tale XI: Pardoner's Tale"
+length_minutes: 82
+principle: >
+  Do not score the Pardoner's Tale as moral instruction. Score it as the chilling
+  self-exposure of a man who is aware that he is a complete fraud and performs that
+  awareness as his persona. The Pardoner is a man who sells fake holy relics and false
+  pardons to dying peasants, extracting money from guilt and fear. He then tells a tale
+  about three young rioters who seek Death to kill him. They meet an old man who directs
+  them to Death beneath a tree — where they find gold instead. They murder each other over
+  the gold. The irony is perfect: in seeking Death they find greed, and greed becomes
+  indistinguishable from Death. The Pardoner's tale is moral instruction about greed
+  delivered by a man whose entire life is greed. The music must capture this double
+  consciousness: the sermon is true even though the preacher is lying.
+force_arc: [wrath, desire, covenant, fate, wrath, comedy, revelation]
+dominant_force: fate
+tracks:
+  - n: 1
+    scene: "The three rioters in tavern — seeking Death, filled with wrath"
+    force: wrath
+    composer: Wagner
+    work: "Tristan und Isolde — opening prelude"
+    decision: added
+    why: >
+      The tale opens with three young men drinking in a tavern, filled with drunken rage at
+      Death (who has killed their companions). They swear an oath: they will find Death and
+      kill him. Their wrath is bravado covering fear; their defiance is the bluster of those
+      who believe themselves invincible. Wagner's Tristan prelude carries rhythmic pressure
+      and unresolved harmony: the wrath is restless, chromatic, never settling into any stable
+      state. These men are drunk on their own rage.
+  - n: 2
+    scene: "The old man and the road — Death's messenger, indistinguishable from Death"
+    force: desire
+    composer: Szymanowski
+    work: "Symphony No. 3 (The Song of the Night) — opening"
+    decision: added
+    why: >
+      The three meet an ancient man on the road. His identity is ambiguous: is he Death
+      himself, Death's servant, or simply an old man who knows where Death lives? He directs
+      them to a crooked tree where they will find Death beneath it. His speech is desire
+      without resolution: the rioters desire Death but do not understand what they are
+      seeking. Szymanowski's opening is chromatic longing that never resolves: the old man
+      carries the weight of centuries, and his directions point toward something the rioters
+      cannot comprehend.
+  - n: 3
+    scene: "The oath renewed — they swear brotherhood and venture to the tree"
+    force: covenant
+    composer: Bach
+    work: "Ricercar a 6 (Art of Fugue, section XIV)"
+    decision: added
+    why: >
+      The three rioters swear an oath: whatever they find, they will divide it equally as
+      brothers. This covenant of brotherhood is made before they reach the tree. The moment
+      is formal and architectural — a structure that will immediately be violated. Bach's
+      Ricercar is formal clarity and architectural repetition: the covenant is stated, repeated,
+      woven through different voices. It is beautiful precisely because it is about to be broken.
+  - n: 4
+    scene: "The gold beneath the tree — Death as greed, not murder"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro (fate's insistence)"
+    decision: added
+    why: >
+      The rioters reach the tree and find not Death but gold — heaps of it. In seeking Death
+      they have found greed. The moment is the revelation of fate: the joke is that Death
+      and Greed are the same force, and they have walked directly into it. Beethoven's
+      fate-knocking hammers home the inevitability: this outcome was always where they were
+      heading. The greed they feel is not a choice but the mathematical result of
+      encountering that much wealth.
+  - n: 5
+    scene: "The poisoning — the youngest is sent for food, the other two plot his death"
+    force: wrath
+    composer: Mahler
+    work: "Symphony No. 3 — Scherzo section (grotesque)"
+    decision: added
+    why: >
+      Two of the rioters decide they do not need to split the gold three ways. They will kill
+      the third and take his share. The youngest, meanwhile, purchases poison to kill his two
+      companions. The wrath is now turned inward: the brotherhood is murdered by the gold
+      itself. Mahler's grotesque scherzo captures this: the music lurches, syncopated, the
+      rhythm jerking toward disaster. The wrath that was directed outward (at Death) is now
+      directed inward (at themselves).
+  - n: 6
+    scene: "The deaths — each dies as he planned, greed devouring them"
+    force: comedy
+    composer: Ravel
+    work: "Gaspard de la nuit — III. 'Scarbo' (grotesque, darkly amused)"
+    decision: added
+    why: >
+      The youngest returns with poisoned food; the two others poison his wine before he
+      arrives; they all die — the two from poison, the youngest from both poison and murder.
+      The scene is a dark comedy: the setup is obvious, the punchline is unavoidable, and no
+      one escapes. The Pardoner presents it not as tragedy but as cosmic joke. Ravel's Scarbo
+      is grotesque and darkly gleeful: the music skitters, darts, ornamental and mocking. Death
+      and Greed have claimed all three, exactly as the old man promised.
+  - n: 7
+    scene: "The moral — the Pardoner's sermon on Greed, delivered by a fraud"
+    force: revelation
+    composer: Satie
+    work: "Gnossienne No. 1"
+    decision: added
+    why: >
+      The Pardoner closes with a moral: beware Greed, the root of all vice. He is a man who
+      has just finished selling fake relics to sick pilgrims and extracting money from their
+      guilt. His sermon is absolutely true and absolutely fraudulent at once. Satie's Gnossienne
+      is enigmatic, slightly askew, tonally ambiguous. The revelation is not of hidden truth
+      but of the Pardoner's self-awareness: he knows he is a hypocrite, and he performs that
+      knowledge as his deepest authenticity. The music is cold, watchful, standing outside
+      judgment.
+
+demoted:
+  - composer: Verdi
+    work: "Rigoletto — 'La donna è mobile' (curse aria)"
+    status: "demoted; too operatic for the tale's cold realism"
+    why: >
+      The Pardoner's tale is not operatic spectacle but the anatomy of a fraud. The tone must
+      remain detached, cold, aware of its own duplicity without apologizing for it.

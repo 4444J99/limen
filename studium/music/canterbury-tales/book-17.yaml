@@ -1,0 +1,105 @@
+# Canterbury Tales — Tale XVII: Nun's Priest's Tale — curated music arc
+# THE TALE OF CHAUNTECLEER: mock-heroic animal fable, elevated style applied to barnyard absurdity.
+work: canterbury-tales
+book: 17
+title: "Canterbury Tales — Tale XVII: Nun's Priest's Tale"
+length_minutes: 79
+principle: >
+  Do not score the Nun's Priest's Tale as a simple animal fable. Score it as mock-heroic
+  excess: the style of epic romance applied to the absolutely trivial. A rooster Chauntecleer
+  is enamored of a hen Pertelote. He dreams a terrible dream of a fox and tries to interpret it;
+  she tells him to ignore it and eat. The fox appears, tricks Chauntecleer through flattery,
+  captures him. Chauntecleer tricks the fox into opening his mouth (to boast), escapes, and
+  is chased through a pastoral landscape. The entire narrative is conducted in the language
+  of high romance, with classical allusions, philosophical debate, learned jokes. A barnyard
+  courtship becomes a profound meditation on flattery, nature, and predestination. The music
+  must match the exaggeration: elevated orchestration applied to the absolutely ordinary.
+force_arc: [desire, revelation, wrath, comedy, divine-intervention, comedy, revelation]
+dominant_force: comedy
+tracks:
+  - n: 1
+    scene: "Chauntecleer and Pertelote — courtly love in a barnyard"
+    force: desire
+    composer: Wagner
+    work: "Tristan und Isolde — the love duet opening"
+    decision: added
+    why: >
+      The Nun's Priest describes a rooster and hen in terms reserved for courtly lovers: they
+      dwell in a barnyard but speak as if in a castle. Their love is presented with mock-epic
+      grandeur. Wagner's passionate love duet is both sincere and ridiculous when applied to
+      barnyard fowl. The chromatic longing is genuine, but the context makes it absurd.
+  - n: 2
+    scene: "Chauntecleer's dream — apocalyptic vision of a fox"
+    force: revelation
+    composer: Berlioz
+    work: "Symphonie fantastique — IV. 'March to the Scaffold'"
+    decision: added
+    why: >
+      Chauntecleer dreams of a reddish beast (the fox) pursuing him with intent to kill. He
+      wakes terrified. The revelation is one of genuine danger, presented with epic gravity.
+      Berlioz's processional march toward doom is perfect: the dream is terrible, and the music
+      takes the terror seriously, which only increases the absurdity of the context.
+  - n: 3
+    scene: "Pertelote's philosophy — she dismisses the dream with practical wisdom"
+    force: wrath
+    composer: Stravinsky
+    work: "The Rite of Spring — Evocation of Ancestors (female voice, defiant)"
+    decision: added
+    why: >
+      Pertelote tells Chauntecleer the dream is meaningless, that he should eat and not worry.
+      Her pragmatism is both wise and contemptuous: she treats his philosophical angst with
+      barnyard common sense. Stravinsky's primitive rhythm carries her defiance: she will not
+      be moved by masculine anxiety. The wrath is low-level but absolute.
+  - n: 4
+    scene: "The fox's approach — courtly flattery of a beast predator"
+    force: comedy
+    composer: Rossini
+    work: "The Barber of Seville — 'Largo al factotum' (predatory seduction)"
+    decision: added
+    why: >
+      The fox appears and addresses Chauntecleer with elaborate courtly compliments: he has come
+      only to hear the rooster sing. The flattery is courtly in register but predatory in intent.
+      Rossini's energy captures the fox's brilliant manipulation: the crescendo of compliment,
+      the overwhelming force of praise. Comedy and danger are fused perfectly.
+  - n: 5
+    scene: "The capture — Chauntecleer, flattered, is seized"
+    force: divine-intervention
+    composer: Messiaen
+    work: "Modes de valeurs et d'intensités (the moment of capture)"
+    decision: added
+    why: >
+      The fox seizes Chauntecleer. The capture is presented with epic gravity: this is the
+      moment of catastrophe. But the catastrophe is a rooster captured by a fox — the most
+      ordinary event in nature, presented as cosmic disaster. Messiaen's sudden shift in
+      register marks the moment where the game becomes real.
+  - n: 6
+    scene: "The pursuit — the hens cry out, the whole barnyard runs"
+    force: comedy
+    composer: Offenbach
+    work: "Orpheus in the Underworld — 'Galop infernal' (chaos and motion)"
+    decision: added
+    why: >
+      Chauntecleer is carried off; the hens scream; the widow and her daughters run; the geese
+      and cattle cry out. The entire barnyard becomes a battlefield. Offenbach's Galop is
+      chaos made musical: energy accumulating toward absurdity, the impossible motion of a world
+      turned upside down, everyone chasing everyone else through the pastoral landscape.
+  - n: 7
+    scene: "Chauntecleer's escape — he tricks the fox through flattery reversed"
+    force: revelation
+    composer: Mozart
+    work: "Le nozze di Figaro — 'Se vuol ballare' (clever reversal)"
+    decision: added
+    why: >
+      Chauntecleer tells the fox: 'You should tell them you've got me, that you won't be
+      caught!' The fox, delighted by the suggestion, opens his mouth to boast — and Chauntecleer
+      flies to safety. The trick is revelation: the method of his capture (flattery) is reversed
+      and used to secure his escape. Mozart's moment of clever reversal captures exactly this:
+      the intelligence of the clever mind triumphing through wit.
+
+demoted:
+  - composer: Strauss
+    work: "Thus Spoke Zarathustra (opening)"
+    status: "demoted; too monumental for barnyard comedy"
+    why: >
+      The epic scale is inappropriate to the trivial subject matter. The music should exaggerate
+      the form while maintaining the absurdity of the context.

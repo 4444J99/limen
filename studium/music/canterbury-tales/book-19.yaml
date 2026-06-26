@@ -1,0 +1,107 @@
+# Canterbury Tales — Tale XIX: Canon's Yeoman's Tale — curated music arc
+# THE TALE OF ALCHEMY: fraud masquerading as science, the transmutation of gold and souls.
+work: canterbury-tales
+book: 19
+title: "Canterbury Tales — Tale XIX: Canon's Yeoman's Tale"
+length_minutes: 92
+principle: >
+  Do not score the Canon's Yeoman's Tale as a simple exposure of alchemical fraud. Score it
+  as the anatomy of a system of deception that operates on hope and the desire to believe.
+  The Canon's Yeoman describes his master's failed alchemical experiments: the attempt to
+  transmute base metal into gold. Each experiment fails; each time, the master devises a new
+  explanation; each time, he dupes another client into funding the next attempt. The yeoman
+  eventually recognizes the fraud and escapes. His tale is not moral instruction but the
+  confession of having been complicit in a system of deception. The dominant motion is the
+  slow accumulation of lies that become indistinguishable from truth.
+force_arc: [wrath, desire, comedy, revelation, wrath, revelation, fate]
+dominant_force: fate
+tracks:
+  - n: 1
+    scene: "The Canon and his impossible experiments — deception as method"
+    force: wrath
+    composer: Wagner
+    work: "Das Rheingold — Alberich's curse"
+    decision: added
+    why: >
+      The Canon pursues alchemical gold with obsessive intensity. His experiments fail
+      repeatedly, yet he continues, driven by the promise of the next breakthrough. His wrath
+      is self-directed: he is angry at the mysteries of nature for not yielding. Wagner's curse
+      carries the weight of a desire that consumes itself: the pursuit of something impossible
+      driving a man toward destruction.
+  - n: 2
+    scene: "The clients' hope — merchants drawn to the promise of gold"
+    force: desire
+    composer: Scriabin
+    work: "Piano Sonata No. 2 — chromatic longing without satisfaction"
+    decision: added
+    why: >
+      The Canon attracts merchants and nobles by promising to teach them the alchemical secret.
+      Each client is drawn by desire: the desire for gold, for transformation, for the breaking
+      of nature's laws. Scriabin's chromatic longing captures this perfectly: a desire that can
+      never be satisfied because it is based on a promise that cannot be fulfilled.
+  - n: 3
+    scene: "The deceptions multiply — each failure explained away, each mistake reframed"
+    force: comedy
+    composer: Ravel
+    work: "Gaspard de la nuit — III. 'Scarbo' (grotesque manipulation)"
+    decision: added
+    why: >
+      Each failed experiment is explained by the Canon: the heat was wrong, the materials were
+      impure, the timing was off. With each explanation, a new opportunity for investment is
+      created. The deceptions accumulate and become almost elegant in their sophistication.
+      Ravel's Scarbo captures this grotesque artistry: the music is too brilliant, too cunning,
+      too gleefully aware of its own manipulation.
+  - n: 4
+    scene: "The yeoman's recognition — the fraud becomes undeniable"
+    force: revelation
+    composer: Satie
+    work: "Gnossienne No. 1"
+    decision: added
+    why: >
+      The yeoman finally recognizes what is happening: the Canon is a fraud, and he has been
+      complicit in perpetuating that fraud. The revelation is not of hidden truth but of what
+      was always visible but deliberately ignored. Satie's enigmatic, detached music carries the
+      coldness of recognition: what was believed in is revealed as false, and the believer must
+      accept his own complicity.
+  - n: 5
+    scene: "The yeoman's escape — he leaves the Canon and confesses his involvement"
+    force: wrath
+    composer: Bartók
+    work: "Miraculous Mandarin — pursuit section"
+    decision: added
+    why: >
+      The yeoman leaves the Canon and tells his story to the Canterbury pilgrims, confessing
+      his involvement in the fraud. His wrath is self-directed: he is angry at himself for having
+      believed, for having helped perpetuate the lie. Bartók's jerking, syncopated rhythms
+      capture this self-directed wrath: the anger at one's own credibility destroyed.
+  - n: 6
+    scene: "The moral — warning against alchemy as spiritual as well as material fraud"
+    force: revelation
+    composer: Messiaen
+    work: "Les corps glorieux — III. 'L'Ange aux parfums' (false revelation exposed)"
+    decision: added
+    why: >
+      The yeoman's moral extends beyond the material: alchemy promises transmutation but
+      delivers only deception. The revelation is one of false promises and wasted lives spent
+      chasing an impossible dream. Messiaen's ornamental but slightly off-key music captures
+      the falseness of the promise: the beauty is real, but it leads nowhere.
+  - n: 7
+    scene: "The yeoman's reflection — trapped in a system until he escaped"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro (fate inexorable until the break)"
+    decision: added
+    why: >
+      The yeoman acknowledges that he was trapped in the system: each failure led to a new
+      justification, each justification led to renewed investment. The only escape was to leave
+      entirely. Beethoven's fate-knocking hammers home that the system is designed to perpetuate
+      itself. The yeoman's survival is not redemption but the recognition that the system will
+      continue without him.
+
+demoted:
+  - composer: Paganini
+    work: "Mephistopheles (any section)"
+    status: "demoted; too supernatural for the tale's material fraud"
+    why: >
+      Alchemy in the Canon's hands is not supernatural but simply fraud. The music should reflect
+      the material deception, not the diabolic crossing of natural boundaries.

@@ -1,0 +1,115 @@
+# Canterbury Tales — Tale XIII: Prioress's Tale — curated music arc
+# THE TALE OF THE CHRISTIAN CHILD: hagiographic miracle, anti-Semitic violence.
+work: canterbury-tales
+book: 13
+title: "Canterbury Tales — Tale XIII: Prioress's Tale"
+length_minutes: 74
+principle: >
+  Score the Prioress's Tale as miraculous revelation and pious devotion, understanding
+  that the miracle is built on anti-Semitic violence. The tale tells of a Christian child
+  who is murdered by Jews (in the tale's internal logic) because he sings a Marian hymn
+  through a Jewish neighborhood. His mother searches for him; his miraculous voice continues
+  singing even after his throat is cut, and by this miracle the Jews are exposed. The child
+  becomes a saint. The music must be beautiful, devotional, luminous — because the Prioress
+  believes absolutely in her piety, and the miracle is absolutely real in the theology of
+  the tale. But the music must also acknowledge that this piety is built on the elimination
+  of the Other. The dominant force is revelation and salvation, but it is a salvation that
+  requires a murder and justifies persecution.
+force_arc: [revelation, supplication, divine-intervention, sacrifice, divine-intervention, revelation, salvation]
+dominant_force: salvation
+tracks:
+  - n: 1
+    scene: "The child singing — innocence entering a hostile world"
+    force: revelation
+    composer: Messiaen
+    work: "Quartet for the End of Time — opening"
+    decision: added
+    why: >
+      A young Christian boy, barely a child, is filled with pious love of the Virgin Mary.
+      He learns an Alma Redemptoris hymn and sings it everywhere, filled with devotion and
+      innocence. The revelation here is the appearance of pure faith in a world that will be
+      hostile to it. Messiaen's opening is stillness and chant-like verticality: the child's
+      voice is isolated, clear, utterly exposed. The music is beautiful but fragile.
+  - n: 2
+    scene: "The child walks through the Jewish quarter — courage or naiveté"
+    force: supplication
+    composer: Barber
+    work: "Knoxville: Summer of 1915"
+    decision: added
+    why: >
+      The child walks through a Jewish neighborhood, singing the hymn. His mother has given him
+      permission, though it is dangerous — the implications of the tale suggest she knew the
+      risk. The child's singing is supplication: he is singing his devotion in a place where it
+      will not be received but where it must be sung because the faith compels it. Barber's
+      exposed melodic line carries the child's vulnerability: he is singing not for protection
+      but because he cannot do otherwise.
+  - n: 3
+    scene: "The Jews' anger — the child becomes a target"
+    force: divine-intervention
+    composer: Berlioz
+    work: "Les Troyens — the moment of invasion"
+    decision: added
+    why: >
+      The Jews (in the tale's narration) are enraged at the child's singing and plot to murder
+      him. Divine-intervention here marks the moment where a supernatural force (the Prioress's
+      God) makes its presence felt as a force that will vindicate the child through martyrdom.
+      Berlioz's sudden shift in register marks the appearance of a cosmic power: the sudden
+      color shift from human anger to divine presence.
+  - n: 4
+    scene: "The murder — the child's throat is cut"
+    force: sacrifice
+    composer: Stravinsky
+    work: "The Rite of Spring — Sacrificial Dance"
+    decision: added
+    why: >
+      The child is murdered, his throat cut. This is sacrifice in the most literal form: the
+      innocent offered as victim. Stravinsky's ritual percussion and hammering insistence mark
+      the moment of immolation: the body offered as a bridge between worlds. The music does not
+      soften what is happening. The sacrifice is presented as absolute.
+  - n: 5
+    scene: "The miraculous voice — the child sings even after death"
+    force: divine-intervention
+    composer: Messiaen
+    work: "L'Ascension — IV. 'Prière du Christ montant vers son Père'"
+    decision: added
+    why: >
+      The miraculous moment: the child's body is found in a ditch, and his voice continues singing
+      the Alma Redemptoris, even though his throat is cut. This is divine power overcoming death
+      itself. Messiaen's brass and strings contrast mark the moment where the human voice becomes
+      a vehicle for something beyond human: the child becomes a saint, a voice that cannot be
+      silenced by death. The miracle is absolute.
+  - n: 6
+    scene: "The Jews are exposed and punished — the miracle serves justice"
+    force: revelation
+    composer: Bach
+    work: "St. Matthew Passion — a moment of realization"
+    decision: added
+    why: >
+      The singing child leads the people to the murderers. The Jews are exposed and punished (the
+      tale's graphic language suggests torture and execution). The revelation is one of justice:
+      the miracle exposes evil and vindicates the innocent. Bach's moment carries the weight of
+      divine judgment being enacted: the music knows what is true, and truth becomes the instrument
+      of justice.
+  - n: 7
+    scene: "Canonization and eternal memory — the child becomes a saint"
+    force: salvation
+    composer: Tavener
+    work: "The Lamb (musical setting of William Blake's poem)"
+    decision: added
+    why: >
+      The child's death is transformed into sainthood. His body is entombed, and he becomes the
+      object of pilgrimage and devotion. The Prioress's final prayer is to the child-saint, asking
+      for his intercession. Tavener's setting of Blake's 'The Lamb' is the apotheosis of innocence
+      becoming eternal: the child's body becomes a relic, his voice becomes a perpetual hymn,
+      his death becomes the foundation of salvation for those who believe. The music is luminous,
+      clear, beautiful — and it is built on the grave of a murdered child and the banishment of
+      a people.
+
+demoted:
+  - composer: Faure
+    work: "Requiem — 'In Paradisum'"
+    status: "demoted; too gentle for the violence underlying the miracle"
+    why: >
+      Fauré's Requiem is too merciful, too accepting of suffering without question. The Prioress's
+      Tale uses suffering (the child's death) to justify violence (the persecution of Jews). The
+      music must be beautiful but must also carry the weight of that terrible bargain.

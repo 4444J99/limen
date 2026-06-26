@@ -1,0 +1,108 @@
+# Canterbury Tales — Tale XX: Manciple's Tale — curated music arc
+# THE TALE OF THE CROW: silence as virtue, speech as betrayal.
+work: canterbury-tales
+book: 20
+title: "Canterbury Tales — Tale XX: Manciple's Tale"
+length_minutes: 68
+principle: >
+  Score the Manciple's Tale as a didactic fable on the control of speech. The tale is a
+  classical Ovidian transformation: Phoebus owns a white crow that can speak and sing.
+  The crow reveals to Phoebus that his lover has been unfaithful. Phoebus, enraged, kills
+  his lover and then the crow. But as punishment, he curses the crow: lose your white
+  feathers, lose your voice, become black. The moral is stark: the crow's faithfulness in
+  reporting truth is punished because truth, spoken when it should remain silent, becomes
+  a betrayal. The tale is a warning against gossip and tattling: the guard your tongue,
+  or truth will destroy you. The dominant motion is transformation: from white to black,
+  from singing to silence, from trusted advisor to cursed outcast.
+force_arc: [divine-intervention, desire, revelation, wrath, transformation, memory, fate]
+dominant_force: fate
+tracks:
+  - n: 1
+    scene: "Phoebus in glory — a god in the full abundance of his power"
+    force: divine-intervention
+    composer: Messiaen
+    work: "Modes de valeurs et d'intensités (opening — divine presence)"
+    decision: added
+    why: >
+      Phoebus is Apollo: god, musician, warrior, lover. He is in the full abundance of divine
+      power and beauty. The opening marks his divine perfection. Messiaen's sudden chromatic
+      shift and complex rhythms suggest a being operating at a scale beyond the human: divine
+      presence manifested as overwhelming power and beauty. The force is at its height before
+      the fall begins.
+  - n: 2
+    scene: "The lover's infidelity — betrayal hidden beneath surface trust"
+    force: desire
+    composer: Scriabin
+    work: "Piano Sonata No. 2 — chromatic desire meeting its opposite"
+    decision: added
+    why: >
+      Phoebus's lover is unfaithful. The infidelity is presented not as rebellion but as desire
+      following its nature: she desires someone else and acts on that desire. Scriabin's chromatic
+      harmony carries the weight of competing desires: Phoebus's trust and her unfaithfulness
+      are both absolute and final. The music is trapped between them, unable to resolve.
+  - n: 3
+    scene: "The crow reports the truth — faithfulness transformed into betrayal"
+    force: revelation
+    composer: Satie
+    work: "Gnossienne No. 1"
+    decision: added
+    why: >
+      The crow, faithful and devoted, reports the truth to Phoebus: your lover is unfaithful.
+      The revelation is accurate, but the speaking of it becomes the act of betrayal. The crow
+      is trying to be faithful to his master by reporting the truth, but in doing so he destroys
+      what his master loves. Satie's enigmatic music carries the impossibility of the moment:
+      truth and loyalty have become incompatible.
+  - n: 4
+    scene: "Phoebus's wrath — he kills the lover and curses the crow"
+    force: wrath
+    composer: Wagner
+    work: "Tristan und Isolde — 'Mild und leise' (wrath becoming grief)"
+    decision: added
+    why: >
+      Phoebus is destroyed by the knowledge. He kills his lover and then, enraged at the crow
+      for bringing the truth, he curses the crow. His wrath turns toward the messenger: the
+      crow is punished for being faithful. Wagner's chromatic harmony is wrath becoming grief:
+      the emotion is so overwhelming that it collapses into its opposite.
+  - n: 5
+    scene: "The transformation — the crow loses its whiteness and voice"
+    force: metamorphosis
+    composer: Ravel
+    work: "Ondine (from Gaspard de la nuit) — the dissolution section"
+    decision: added
+    why: >
+      The crow is transformed: its white feathers become black, its singing voice is silenced.
+      The transformation is punishment: what made the crow beautiful and valuable (its voice, its
+      whiteness) is stripped away. Ravel's changing orchestral color and fluid harmony capture the
+      dissolution: the identity of the crow is unmade, reformed as something diminished and dark.
+  - n: 6
+    scene: "The crow's loss of memory — the past is irretrievable"
+    force: memory
+    composer: Elgar
+    work: "Enigma Variations — VI. 'G.R.S.' (faded recapitulation)"
+    decision: added
+    why: >
+      The crow, now black and voiceless, remembers what it was: white, singing, trusted by a
+      god. The memory of former glory is now only torture: the past is visible but
+      irretrievable. Elgar's faded variation carries the theme but muted, indirect, as if heard
+      from very far away. The memory is more painful than forgetting would be.
+  - n: 7
+    scene: "The moral — guard your tongue, or be destroyed by truth"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro (fate's inescapable pattern)"
+    decision: added
+    why: >
+      The Manciple's moral is harsh: the crow's punishment was deserved because it spoke when
+      it should have remained silent. Truth is not always a virtue; sometimes silence is wisdom.
+      The tongue is a weapon that destroys its wielder as easily as its victim. Beethoven's
+      fate-knocking is inexorable: this is the law that governs speech and silence. The pattern
+      is inescapable: those who speak unwisely are destroyed by the truth they reveal.
+
+demoted:
+  - composer: Ovid's context
+    work: "Classical transformation narrative (generic)"
+    status: "demoted; the tale is not mythologically grand but didactically specific"
+    why: >
+      The transformation is not celebrated as magical transmutation but presented as punishment
+      and loss. The music should reflect diminishment and curse, not the grandeur of classical
+      transformation.

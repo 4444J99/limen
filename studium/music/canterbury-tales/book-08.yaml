@@ -1,0 +1,119 @@
+# Canterbury Tales — Tale VIII: Squire's Tale — curated music arc
+# THE TALE OF CAMBYUSKAN: magic, transformation, desire unfinished.
+work: canterbury-tales
+book: 8
+title: "Canterbury Tales — Tale VIII: Squire's Tale"
+length_minutes: 103
+principle: >
+  Do not score the Squire's Tale as narrative romance. Score it as pure ornament and
+  opening — the sound of possibilities branching endlessly without conclusion. The
+  Squire's Tale is not in the General Prologue's world of social type; it is in the
+  world of marvelous romance: King Cambyuskan receives magical gifts — a bronze horse
+  that flies, a mirror that shows the future, a ring that lets the wearer understand
+  animals. Three separate love stories branch from these gifts, none of them resolves.
+  The tale is unfinished, and that unfinishedness is not a failure but its essence. The
+  dominant motion is wonder and metamorphosis: the world is not as it seems, reality
+  opens into layers of possibility, magic intrudes on the rational world and refuses to
+  follow its rules.
+force_arc: [divine-intervention, metamorphosis, desire, ascent, revelation, desire, metamorphosis]
+dominant_force: metamorphosis
+tracks:
+  - n: 1
+    scene: "The magical gifts arrive — the bronze horse, the mirror, the ring"
+    force: divine-intervention
+    composer: Messiaen
+    work: "Regard de l'Esprit Saint (Look of the Holy Ghost)"
+    decision: added
+    why: >
+      On Cambyuskan's birthday, three gifts arrive, brought by knights from distant lands.
+      Each gift is magical, operating on principles that transcend normal causation. The
+      arrival is sudden, from beyond the known world, the moment where divine or magical
+      force intrudes on the rational. Messiaen's look of the Holy Ghost is vertical, still,
+      utterly clear: the moment where something from beyond enters the world as revelation
+      and gift. The brass and string contrast is the boundary between worlds.
+  - n: 2
+    scene: "The horse is demonstrated — it flies when the rider thinks of destination"
+    force: metamorphosis
+    composer: Debussy
+    work: "Ondine (from Gaspard de la nuit) — the water spirit becoming and dissolving"
+    decision: added
+    why: >
+      The bronze horse is tested: the rider mounts, thinks a destination, and the horse rises
+      and flies. The laws of physics are suspended; the world becomes fluid and responsive to
+      will. Debussy's Ondine is metamorphosis as changing orchestral color and fluid harmony:
+      the music flows, dissolves, becomes something else, the identity of the sound constantly
+      shifting. The water spirit is never the same twice; the horse is never merely a horse.
+  - n: 3
+    scene: "The knights' love — three entangled tales of desire and transformation"
+    force: desire
+    composer: Wagner
+    work: "Tristan und Isolde — 'Mild und leise' (the love-death motif)"
+    decision: added
+    why: >
+      Three separate love stories unfold: a knight loves Canacee (the king's daughter) and is
+      transformed by her refusal; Cambyuskan's son loves a distant princess; Canacee falls in
+      love with a falcon who is also a transformed woman. Desire in all these stories is
+      transformative, magical, transgressive — desire that crosses boundaries between human and
+      animal, across impossible distances, defying normal social order. Wagner's love-death is
+      chromatic longing and deferred resolution: desire that can never simply be fulfilled
+      because the world's boundaries are in the way.
+  - n: 4
+    scene: "Ascent toward the magical destination — the horse flies across impossible landscapes"
+    force: ascent
+    composer: Mahler
+    work: "Symphony No. 8 (Symphony of the Thousand) — II. Veni Creator Spiritus (brief section)"
+    decision: added
+    why: >
+      One of the knights rides the flying horse toward an impossible destination: a distant land
+      where his beloved waits. The journey is ascent both literally (the horse flies) and
+      spiritually (rising toward an unreachable beloved). Mahler's ascending sequence and luminous
+      orchestration capture the motion toward something beyond the ordinary world. The music
+      rises, the brass brightens, the horizon expands.
+  - n: 5
+    scene: "The ring reveals truth — understanding animals, seeing through deceptions"
+    force: revelation
+    composer: Messiaen
+    work: "L'Ascension — III. 'Alléluias sérénement contemplatifs'"
+    decision: added
+    why: >
+      The ring Canacee receives allows the wearer to understand the speech of any creature and
+      to know the truth of any situation. With it, she learns that a falcon she has found is
+      actually a transformed woman — betrayed by her lover and magically cursed to bird form.
+      The ring is revelation: it strips away deception and shows what is true beneath surface
+      appearance. Messiaen's movement is stillness and chant-like verticality: the moment where
+      the world's hidden order becomes visible, the spiritual truth revealed.
+  - n: 6
+    scene: "Canacee's compassion — the falcon's story, desire and betrayal expressed"
+    force: desire
+    composer: Szymanowski
+    work: "Symphony No. 4 (Symphonie concertante) — Adagio"
+    decision: added
+    why: >
+      The falcon tells her story: she loved a knight, gave him everything, and was betrayed when
+      he chose another woman. She was transformed as punishment for her faithfulness. Canacee's
+      response is pure compassion — she listens to the falcon's desire and grief without judgment.
+      Szymanowski's chromatic longing captures the falcon's impossible situation: desire that
+      cannot be fulfilled because the beloved has abandoned her, transformation that cannot be
+      undone. The melody reaches toward resolution that never arrives.
+  - n: 7
+    scene: "The tale remains unfinished — the Squire is interrupted"
+    force: metamorphosis
+    composer: Ravel
+    work: "Ondine — final section (the spirit dissolves back into water)"
+    decision: added
+    why: >
+      The Host interrupts the Squire before the tale's conclusion. The stories remain unresolved:
+      the knights' journeys incomplete, the falcon's curse unlifted, Cambyuskan's gifts still
+      branching into unexplored possibilities. The tale ends mid-metamorphosis, the world still
+      opening rather than closing. Ravel's Ondine dissolves back into water: the spirit returns
+      to its element, the story returns to the potential from which it came. This is not a failure
+      but an opening: the world remains magical, unresolved, full of possibility.
+
+demoted:
+  - composer: Liszt
+    work: "Les Préludes"
+    status: "demoted; too programmatic for the tale's ornamental openness"
+    why: >
+      Liszt's symphonic poem is too goal-directed, too rhetorical. The Squire's tale is
+      ornament without argument, opening without conclusion. The magic should remain fluid,
+      unresolved, endlessly branching.

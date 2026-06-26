@@ -1,0 +1,113 @@
+# Canterbury Tales — Tale XII: Shipman's Tale — curated music arc
+# THE TALE OF THE MERCHANT'S WIFE: commercial sexuality, marriage as commodity.
+work: canterbury-tales
+book: 12
+title: "Canterbury Tales — Tale XII: Shipman's Tale"
+length_minutes: 68
+principle: >
+  Do not score the Shipman's Tale as romance or morality play. Score it as pure commerce:
+  sex, money, and marriage are all the same transaction viewed from different angles.
+  A merchant's wife is bored in her marriage and is pursued by a monk who claims to love
+  her. She agrees to the affair — for a price: he must lend her 100 gold coins so she can
+  buy clothes and attract her husband's attention (a cynical irony: she will use the monk's
+  money to make herself attractive to her husband). The monk borrows the money from the
+  merchant himself, promising to repay it. He gives it to the wife, consummates the affair,
+  and disappears. Later, the monk tells the merchant (falsely) that he repaid the debt. The
+  wife then tells her husband (falsely) that she repaid the monk for the 'loan,' implying
+  she paid with sexual favor. Everyone lies, everyone profits, and marriage is revealed as
+  a system of beautifully coordinated fraud where everyone gets what they want.
+force_arc: [comedy, desire, wrath, comedy, covenant, revelation, comedy]
+dominant_force: comedy
+tracks:
+  - n: 1
+    scene: "The merchant's wife — bored, neglected, ripe for seduction"
+    force: comedy
+    composer: Rameau
+    work: "Platée — Suite: Les Vents"
+    decision: added
+    why: >
+      The tale opens with the merchant's wife complaining to the monk that her husband is a
+      poor lover — he is always worried about money, never about her. The comedy is immediate:
+      she is performing a familiar role (the neglected wife) and the monk recognizes his
+      opening. Rameau's comic ballet music is light, burlesque, exaggerated: the woman's
+      complaint is performance, the seduction is theater, and everyone knows it.
+  - n: 2
+    scene: "The monk's proposal — desire as commercial negotiation"
+    force: desire
+    composer: Scriabin
+    work: "Piano Sonata No. 2 — darkened desire section"
+    decision: added
+    why: >
+      The monk proposes: he will be her lover, but she must name her price. He is crude and
+      open about the transaction: this is sex for money, and he is willing to negotiate.
+      Scriabin's chromatic desire is here stripped of romance: the music is dark, chromatic
+      longing that is entirely transactional. Desire has become identical to commerce.
+  - n: 3
+    scene: "The wife's anger — she feigns offense, then names her price"
+    force: wrath
+    composer: Bartók
+    work: "Miraculous Mandarin — initial pursuit section"
+    decision: added
+    why: >
+      The wife pretends to be offended, then reveals her real concern: she needs 100 gold coins
+      for clothes and adornment. Her anger is performance; her real demand is financial. Bartók's
+      jerking, syncopated rhythms capture the woman's calculation: the wrath is the mask, the
+      commerce is the reality beneath it.
+  - n: 4
+    scene: "The monk's solution — he will borrow from the merchant to give to the wife"
+    force: comedy
+    composer: Rossini
+    work: "The Barber of Seville — Overture (crescendo toward perfect fraud)"
+    decision: added
+    why: >
+      The monk's solution is perfect: he will go to the merchant, borrow 100 gold coins
+      (claiming he needs to pay for a purchase), and give them to the wife. The wife will
+      then have the money and the merchant will have loaned his own money to the monk, who
+      will pass it to his wife, who will then imply she has paid the debt sexually. The layers
+      of fraud are exquisite. Rossini's crescendo captures the energy of a system accumulating
+      toward perfect absurdity.
+  - n: 5
+    scene: "The bargain struck — the transaction is agreed to"
+    force: covenant
+    composer: Bach
+    work: "Well-Tempered Clavier II, Prelude No. 1 in C Major"
+    decision: added
+    why: >
+      The covenant is made: the monk will borrow the money and give it to the wife; she will
+      grant him sexual favors; later she will claim she repaid him with the merchant's money.
+      Bach's formal clarity and architectural repetition serve here as ironic: the covenant is
+      perfectly structured, perfectly logical, and perfectly fraudulent. The architecture is
+      law turned into pure commerce.
+  - n: 6
+    scene: "The monk deceives the merchant — claiming he repaid the wife out of his own purse"
+    force: revelation
+    composer: Mozart
+    work: "Le nozze di Figaro — 'Se vuol ballare, signor Contino' (Figaro's revenge aria)"
+    decision: added
+    why: >
+      The monk later tells the merchant (falsely) that he has already repaid the debt — that
+      he gave the wife the 100 gold coins out of his own pocket, not from the merchant's loan.
+      The revelation is the monk's lie, presented with perfect courtesy. Mozart's Figaro aria
+      captures the moment of deception being revealed and accepted as truth: the music knows
+      what is happening, even if the merchant is about to be fooled.
+  - n: 7
+    scene: "The wife's clever lie — payment made in sexual favor"
+    force: comedy
+    composer: Offenbach
+    work: "Orpheus in the Underworld — Overture"
+    decision: added
+    why: >
+      The wife tells her husband that she repaid the monk for his 'kindness' — implying
+      through her words that she paid with sexual favor (which she did, unknowingly to the
+      merchant). The lie is so perfect that it is barely a lie: it is simply the statement of
+      a truth that the merchant chooses not to understand. Offenbach's overture is gleeful
+      energy accumulating toward moral inversion: the whole system has been turned upside down
+      and no one is bothering to right it.
+
+demoted:
+  - composer: Puccini
+    work: "La Bohème — any section"
+    status: "demoted; too romantic for the tale's cynicism"
+    why: >
+      The Shipman's tale is commercial cynicism, not romantic tragedy. The music must reflect
+      the coldness of a system where all human relations are transactions.

@@ -1,0 +1,119 @@
+# Canterbury Tales — Tale X: Physician's Tale — curated music arc
+# THE TALE OF VIRGINIA: virtue destroyed, sacrifice as tragedy.
+work: canterbury-tales
+book: 10
+title: "Canterbury Tales — Tale X: Physician's Tale"
+length_minutes: 76
+principle: >
+  Do not score the Physician's Tale as moral exemplum. Score it as a tragedy where virtue
+  is not rewarded but destroyed by power and corruption. Virginia is a maiden of perfect
+  virtue and perfect beauty. A corrupt judge, Apius, falls in love with her and devises a
+  scheme: he will declare her a slave, child of his servant. Her father Virginia, faced
+  with a choice between her dishonor and her death, kills her — choosing death as the
+  lesser evil. Virginia dies innocent, and Apius is exposed and punished by the people.
+  But Virginia's death is not redeemed; she is not saved. The tale is not about the
+  triumph of virtue but about the price virtue pays when it encounters power without
+  restraint. The dominant motion is tragic: the inexorable path from innocence to
+  destruction, virtue offering no defense against corruption.
+force_arc: [revelation, desire, wrath, sacrifice, grief, fate, salvation]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "Virginia's beauty and virtue described — the idealized maiden"
+    force: revelation
+    composer: Messiaen
+    work: "O Sacrum Convivium (O Holy Banquet)"
+    decision: added
+    why: >
+      The tale opens with a revelation of Virginia: she is the embodiment of perfect virtue
+      and beauty. Her description is not realistic but iconic: she represents an ideal of
+      maiden virtue that exists almost outside human life. The music is vertical and still,
+      the harmony pure, as if describing not a person but an ideal made flesh. But this
+      revelation is ominous: the perfect is visible, which means it will be desired, which
+      means it will be threatened.
+  - n: 2
+    scene: "Judge Apius's desire — the corruption of power by lust"
+    force: desire
+    composer: Scriabin
+    work: "Piano Sonata No. 2 — opening (dark chromatic desire)"
+    decision: added
+    why: >
+      Judge Apius sees Virginia and is consumed by desire. But his desire is not romantic;
+      it is the desire of power: he wants to possess, to own, to take what does not belong
+      to him. His position as judge means he can reshape the law to serve his lust. Scriabin's
+      chromatic longing, dark and unresolved, captures desire as the corruption of authority:
+      the power to judge becoming the power to destroy innocence for sexual gratification.
+  - n: 3
+    scene: "The plot against Virginia — Apius constructs a false legal claim"
+    force: wrath
+    composer: Wagner
+    work: "Das Rheingold — Alberich curses the ring (wrath and conspiracy)"
+    decision: added
+    why: >
+      Apius devises a scheme: he suborns his servant Claudian to falsely claim that Virginia
+      is actually Claudian's runaway slave, his own daughter. The court will then award
+      Virginia to Claudian, who will sell her to Apius. The scheme is wrath as conspiracy:
+      power using its tools to destroy what it cannot possess legitimately. Wagner's brass
+      and dark harmony capture the moment where corruption becomes system: the law itself
+      becomes the weapon of abuse.
+  - n: 4
+    scene: "Virginia in court — the judgment is given, Virginia condemned to slavery"
+    force: sacrifice
+    composer: Stravinsky
+    work: "The Rite of Spring — Sacrificial Dance"
+    decision: added
+    why: >
+      Virginia appears before the court, not knowing what is about to happen. Apius pronounces
+      judgment: she is declared a slave. She is to be handed over. The music here is sacrifice
+      in its most terrible form: an innocent person offered as victim to corruption and power.
+      The ritual hammer-blows of Stravinsky's Sacrificial Dance mark the moment where the law
+      becomes the instrument of injustice. The rhythm is inexorable; there is no escape.
+  - n: 5
+    scene: "Virginia's father chooses death — he kills his daughter to save her from dishonor"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 5 — Adagietto (inward, devastating grief)"
+    decision: added
+    why: >
+      Virginia's father, faced with the choice between her dishonor and her death, kills her
+      with her permission and consent. She chooses death as the lesser evil. The music is grief
+      at its most profound: not sorrow for loss but the devastation of having to choose between
+      two forms of destruction. Mahler's slow, inward line carries the weight of a parent
+      destroying his own child to save her from something worse. There is no consolation; there
+      is only grief that cannot be articulated or transcended.
+  - n: 6
+    scene: "Apius's punishment — the people rise and he is executed"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro (fate's hammering)"
+    decision: added
+    why: >
+      Apius is exposed and condemned to death by the people. The corrupt judge receives his
+      punishment. But this does not redeem Virginia's death; it does not make her sacrifice
+      meaningful. Beethoven's fate-knocking is inexorable: Apius's destruction follows his
+      corruption with the same inevitability that followed Virginia's innocence. There is
+      poetic justice, but it does not restore what was lost. Fate is simply the hammer that
+      strikes down the corrupt and the innocent alike.
+  - n: 7
+    scene: "Virginia's death as legend — virtue as cautionary tale"
+    force: salvation
+    composer: Bach
+    work: "St. John Passion — 'Nimm, mein, dich an' (Take pity, remember me)"
+    decision: added
+    why: >
+      The Physician's Tale closes with Virginia's death becoming legendary — she is remembered
+      as the model of maidens who chose death rather than dishonor. Her suffering is
+      transfigured into a story that others learn from. Bach's moment is not joyful resolution
+      but the acceptance of loss: the chorale acknowledges that what was taken was precious,
+      and that the only salvation available is in memory. Virginia is saved not from death but
+      by being remembered as the exemplar of virtue. This is the bitterest form of salvation:
+      the transformation of tragedy into moral instruction.
+
+demoted:
+  - composer: Verdi
+    work: "La forza del destino (The Force of Destiny)"
+    status: "demoted; too operatic, too grand for the tale's quiet tragedy"
+    why: >
+      Verdi's register is the operatic stage where tragedy becomes sublime. The Physician's
+      tale is more intimate: a violation of one person by the power structure. The music
+      should be inward, not theatrical.

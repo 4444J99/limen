@@ -1,0 +1,127 @@
+# Canterbury Tales — Tale IX: Franklin's Tale — curated music arc
+# THE TALE OF DORIGEN AND AURELIUS: gentilesse, sovereignty, desire resolved through virtue.
+work: canterbury-tales
+book: 9
+title: "Canterbury Tales — Tale IX: Franklin's Tale"
+length_minutes: 89
+principle: >
+  Do not score the Franklin's Tale as a romantic problem solved by deus ex machina. Score
+  it as a tale where every character makes a choice to honor a principle higher than their
+  own desire or advantage. Dorigen loves her absent husband but is pursued by the knight
+  Aurelius. To get rid of him, she promises marriage if he can remove the black rocks from
+  the coast — an impossible task. A clerk magically removes the rocks. But rather than
+  claim his prize, Aurelius realizes that winning Dorigen by this means would violate
+  'gentilesse' (the code of honor and nobility that supersedes mere desire). He releases
+  her from her oath. The Franklin's point is not that love conquers all but that virtue
+  conquers desire. The dominant motion is the resolution of impossible conflict through
+  the assertion of a principle that all three characters (Dorigen, Aurelius, the clerk)
+  come to share.
+force_arc: [desire, supplication, divine-intervention, metamorphosis, revelation, covenant, return]
+dominant_force: return
+tracks:
+  - n: 1
+    scene: "Dorigen's anguish — her husband absent, she waits and is pursued"
+    force: desire
+    composer: Wagner
+    work: "Tristan und Isolde — opening (chromatic longing)"
+    decision: added
+    why: >
+      Dorigen's husband Arviragus has gone to fight in Brittany. She waits, consumed by longing
+      for his return, but is also vulnerable to courtly pursuit. The knight Aurelius loves her
+      and presses his suit with courtly speeches. Dorigen is caught between her loyalty and her
+      exposure to another's desire. Wagner's chromatic longing and deferred resolution captures
+      this perfectly: desire that cannot find resolution because it is caught between competing
+      obligations.
+  - n: 2
+    scene: "Dorigen's prayer to the rocks — supplication before an impossibility"
+    force: supplication
+    composer: Barber
+    work: "Knoxville: Summer of 1915"
+    decision: added
+    why: >
+      To escape Aurelius, Dorigen makes an impossible promise: she will be his if he removes
+      the black rocks from the coast. She believes this is impossible and thus safe. But in
+      desperation, she prays aloud that the rocks be moved. Her prayer is supplication before
+      a force (nature, fate, the gods) that she believes will not listen. Barber's exposed
+      melodic line and suspended cadence carry her vulnerability: the human voice laid bare
+      before an impossible request, the harmony never resolving because resolution seems
+      impossible.
+  - n: 3
+    scene: "The clerk uses magic — the rocks disappear, the impossible is made possible"
+    force: divine-intervention
+    composer: Messiaen
+    work: "Modes de valeurs et d'intensités (breakthrough moment)"
+    decision: added
+    why: >
+      A clerk with knowledge of astronomical magic uses his learning to remove the rocks by
+      manipulating the tides. What seemed impossible becomes possible through knowledge beyond
+      the ordinary world. The suddenly shifted register marks divine-intervention: the
+      appearance of a power from beyond that changes the terms of the problem. Messiaen's
+      sudden color shift and complex rhythm acknowledge that the world's rules have changed.
+  - n: 4
+    scene: "Aurelius's temptation — he could claim Dorigen now"
+    force: metamorphosis
+    composer: Ravel
+    work: "Scarbo — the moment of temptation, transformation hanging in balance"
+    decision: added
+    why: >
+      With the rocks removed, Aurelius could now claim Dorigen. She would be bound by her oath.
+      But the music here is metamorphosis in its most delicate form: the world is balanced at
+      the point where it could transform into tragedy or redemption. Ravel's shifting colors
+      capture this suspension: the music could go either way, transformation is possible in
+      either direction. The harmony itself seems uncertain which path it will take.
+  - n: 5
+    scene: "Aurelius's choice — he releases Dorigen from her oath"
+    force: revelation
+    composer: Messiaen
+    work: "L'Ascension — 'Alléluias contemplatifs'"
+    decision: added
+    why: >
+      Aurelius realizes that winning Dorigen by forcing her oath would not truly be winning her.
+      It would be a betrayal of 'gentilesse' — the principle that honor and love of virtue
+      supersede the gratification of desire. He releases her from her oath. This is revelation:
+      the moment where a character discovers that what he thought he wanted (Dorigen's body)
+      is not as valuable as what he learns (Dorigen's respect, won through his own virtue).
+      Messiaen's stillness and chant-like clarity mark the spiritual revelation: what is true
+      is now visible.
+  - n: 6
+    scene: "The clerk's choice — he too releases Aurelius from payment"
+    force: covenant
+    composer: Bach
+    work: "Art of Fugue — Contrapunctus XIV (unfinished, resolution through acceptance)"
+    decision: added
+    why: >
+      Aurelius, moved by his own act of virtue, tells the clerk he cannot afford to pay him for
+      the magical service. The clerk, inspired by Aurelius's choice, releases him from the debt.
+      A covenant of virtue passes from one man to another: each chooses to honor the principle
+      of gentilesse above the gratification of self-interest. Bach's fugue (unfinished by design)
+      captures this: the resolution comes not from completion but from acceptance. The formal
+      clarity and architectural repetition of law are here, but they resolve into covenant rather
+      than command: a choice made freely, repeated by each character in turn.
+  - n: 7
+    scene: "Return and redemption — Dorigen and Arviragus reunited in honor"
+    force: return
+    composer: Beethoven
+    work: "Symphony No. 7 — II. Allegretto (circular, recognition motif)"
+    decision: added
+    why: >
+      Dorigen and Arviragus are reunited. The moment of return is not just the restoration of
+      the marriage but the confirmation that virtue and honor have preserved something precious
+      that could easily have been destroyed. Beethoven's Allegretto movement carries circular
+      form and recognition motif: the melody seems to ask 'do you remember?' and the answer is
+      both yes (the marriage is restored) and yes (both spouses have learned what their love is
+      worth). The return is not to what was but to what might be.
+
+demoted:
+  - composer: Puccini
+    work: "La Bohème — Act I (romantic love solving all problems)"
+    status: "demoted; too sentimental for the Franklin's moral argument"
+    why: >
+      Puccini's register is romantic passion overcoming obstacles. The Franklin's tale is about
+      virtue overcoming desire. Love is not enough; honor is what matters.
+  - composer: Offenbach
+    work: "The Tales of Hoffmann — Giulietta scene"
+    status: "demoted; too magical spectacle for the tale's quiet revelation"
+    why: >
+      The Franklin's miracle (the rocks moved) is not spectacular but philosophical. The music
+      should reflect the quiet discovery of principle, not the dazzling display of magic.

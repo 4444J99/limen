@@ -1,0 +1,114 @@
+# Canterbury Tales — Tale XIV: Sir Thopas — curated music arc
+# THE TALE OF SIR THOPAS: Chaucer's self-parody, romance destroyed by ridicule.
+work: canterbury-tales
+book: 14
+title: "Canterbury Tales — Tale XIV: Sir Thopas"
+length_minutes: 62
+principle: >
+  Do not score Sir Thopas as a simple parody of romantic conventions. Score it as Chaucer's
+  deliberate self-destruction: the moment where the poet attempts to tell a chivalric romance
+  and the form collapses under its own absurdity. Chaucer (the narrator) tells a tale of
+  the ridiculous knight Sir Thopas, who rides on a low horse (a 'rouncy'), is enamored of
+  a fairy queen he has never seen, and pursues increasingly absurd adventures in formulaic
+  verse. The tale is written in short rhythmic lines that accumulate toward banality;
+  every romantic convention is exaggerated until it becomes grotesque. The Host, growing
+  bored and disgusted, finally interrupts Chaucer mid-tale, telling him his verse is
+  'rym dogerel' (doggerel rhyme) and that he should stop. The interruption is merciful:
+  the tale destroys itself by being exactly what it parodies.
+force_arc: [comedy, desire, wrath, metamorphosis, wrath, revelation, comedy]
+dominant_force: comedy
+tracks:
+  - n: 1
+    scene: "The introduction of Sir Thopas — a ridiculous knight in ridiculous verse"
+    force: comedy
+    composer: Rossini
+    work: "The Barber of Seville — 'Largo al factotum' (burlesque entrance)"
+    decision: added
+    why: >
+      Sir Thopas is introduced: a knight of noble birth and perfect virtue, fair-haired,
+      accomplished, and utterly ridiculous. He rides a horse so low it is barely a horse, and
+      he speaks in verse so formulaic it is almost unintentional parody. Rossini's overture
+      captures the energy of burlesque: exaggeration accumulating toward the ridiculous, the
+      form collapsing under its own excess. The music knows it is ridiculous and performs that
+      knowledge as entertainment.
+  - n: 2
+    scene: "The fairy queen's appearance — desire for the impossible"
+    force: desire
+    composer: Scriabin
+    work: "Piano Sonata No. 2 — chromatic desire without satisfaction"
+    decision: added
+    why: >
+      Sir Thopas is enamored of the fairy queen, whom he has never seen, whom he has only heard
+      rumors of. His desire is entirely abstract: she exists only in fantasy and hearsay. Scriabin's
+      chromatic longing that never resolves captures this perfectly: desire for something that
+      cannot exist in the rational world, sustained only by the romance tradition itself. The
+      music is the sound of a man in love with an idea of a woman.
+  - n: 3
+    scene: "The approach of the giant — an obstacle presented as grave"
+    force: wrath
+    composer: Holst
+    work: "The Planets — 'Uranus, the Magician' (grotesque wrath)"
+    decision: added
+    why: >
+      A giant approaches, apparently a threat to Sir Thopas's quest. Holst's 'Uranus' is
+      grotesque wrath: massive, lurching, rhythmically irregular, brutally loud then collapsing.
+      The wrath is presented as genuine threat — the music sounds dangerous — but the context
+      makes clear that this is parody of the romantic obstacle. The giant's appearance is treated
+      with mock-epic gravity.
+  - n: 4
+    scene: "Sir Thopas's inadequate preparations — riding to meet his fate"
+    force: metamorphosis
+    composer: Ravel
+    work: "Ondine — the water spirit becoming and dissolving"
+    decision: added
+    why: >
+      Sir Thopas prepares to meet the giant: he dons his armor (leather, not mail), his sword
+      (blunted for tournaments), his shield (painted with floral designs). He rides toward battle
+      completely unprepared. Ravel's Ondine captures the transformation of reality into fantasy:
+      the music flows and shifts, the identity of the sound constantly changing, as Sir Thopas
+      lives entirely in a romantic fantasy divorced from actual reality.
+  - n: 5
+    scene: "The giant's counterattack — romance conventions collapsing"
+    force: wrath
+    composer: Bartók
+    work: "Miraculous Mandarin — pursuit into absurdity"
+    decision: added
+    why: >
+      The giant throws a stone at Sir Thopas and breaks his arm. The romantic encounter
+      immediately becomes ridiculous: the knight is injured, defeated, and escapes. The wrath
+      here is presented as grotesque: Bartók's jerking rhythms capture the moment where romance
+      conventions collide with actual violence and lose. The music lurches, unbalanced, as the
+      form of the romance breaks.
+  - n: 6
+    scene: "Chaucer continues despite absurdity — the form persists beyond sense"
+    force: revelation
+    composer: Satie
+    work: "Gymnopédie No. 1"
+    decision: added
+    why: >
+      Chaucer continues telling the tale, despite the obvious collapse of its conventions. The
+      revelation is that the form persists: Sir Thopas will ride to his adventure, he will face
+      new obstacles, the romance will continue generating episodes by sheer force of habit. Satie's
+      Gymnopédie is enigmatic, slightly askew: the music continues, but it has lost conviction.
+      The form is still moving, but it no longer believes in itself.
+  - n: 7
+    scene: "The Host interrupts — rejecting the tale as unendurable"
+    force: comedy
+    composer: Offenbach
+    work: "Orpheus in the Underworld — Can-Can finale"
+    decision: added
+    why: >
+      The Host stops Chaucer mid-tale: 'No more of this, for Goddes dignitee! Thy drasty
+      rymyng is nat worth a toord.' He tells Chaucer his verse is worthless, his tale is
+      unbearable, and he should stop immediately. The comedy is absolute: the form has
+      destroyed itself through exaggeration, and the Host delivers the merciful interruption
+      that ends the performance. Offenbach's Can-Can is gleeful energy at its most anarchic:
+      the form has been destroyed, and everyone is laughing.
+
+demoted:
+  - composer: Wagner
+    work: "Lohengrin — Act I finale"
+    status: "demoted; too grand for the tale's deliberate degradation"
+    why: >
+      Wagner's register is the apotheosis of romance. Sir Thopas is romance deliberately degraded
+      and destroyed. The music must capture that destruction, not celebrate the form being parodied.

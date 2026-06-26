@@ -1,0 +1,111 @@
+# Canterbury Tales — Tale XXI: Parson's Tale — curated music arc
+# THE TALE OF PENITENCE: scholastic meditation on sin, confession, and redemption.
+work: canterbury-tales
+book: 21
+title: "Canterbury Tales — Tale XXI: Parson's Tale"
+length_minutes: 124
+principle: >
+  Do not score the Parson's Tale as narrative but as philosophical meditation on the
+  nature of sin, penance, and the path to redemption. The Parson refuses to tell a tale
+  in verse: instead he offers a long prose sermon on penitence. The sermon defines sin,
+  divides it into categories, explains the necessity of penance (confession and satisfaction),
+  and guides the listener toward the path of spiritual redemption. The form is scholastic:
+  logical, systematic, architecturally clear. The content is the closing of the Canterbury
+  Tales: not another story but the moment where all stories must end in the acknowledgment
+  of human sinfulness and the necessity of return to God. The dominant motion is not
+  narrative but ascent: from the acknowledgment of sin through confession to the achievement
+  of grace.
+force_arc: [revelation, supplication, covenant, sacrifice, revelation, law, salvation]
+dominant_force: salvation
+tracks:
+  - n: 1
+    scene: "The Parson's refusal of verse — he speaks truth in plain language"
+    force: revelation
+    composer: Messiaen
+    work: "L'Ascension — opening (vertical clarity)"
+    decision: added
+    why: >
+      The Parson refuses to tell a tale in verse. He will not compete with the others in the
+      game of storytelling. Instead he offers truth in its clearest form: prose sermon on
+      penitence. The revelation is of a different register: not story but teaching, not
+      entertainment but salvation. Messiaen's vertical clarity marks the moment where the
+      divine order is made plain: this is the language of truth, not the language of art.
+  - n: 2
+    scene: "The definition of penitence — the acknowledgment of human sinfulness"
+    force: supplication
+    composer: Barber
+    work: "Knoxville: Summer of 1915 (admission of vulnerability)"
+    decision: added
+    why: >
+      The Parson begins by acknowledging the human condition: all are sinners. Penitence begins
+      with this admission. The movement is supplication: the human voice laying bare its own
+      corruption and asking for divine mercy. Barber's exposed melodic line carries the
+      vulnerability of confession: the self made bare before divine judgment.
+  - n: 3
+    scene: "The catalogue of sins — the architecture of human transgression"
+    force: covenant
+    composer: Bach
+    work: "Art of Fugue — multiple voices building architecture"
+    decision: added
+    why: >
+      The Parson systematically divides and defines the categories of sin: pride, envy, wrath,
+      sloth, avarice, gluttony, lechery. Each is broken into subcategories; each is analyzed.
+      The architecture is law: the covenant is between the human and the system of order that
+      governs sin and redemption. Bach's fugue carries the formal clarity and architectural
+      repetition that law requires: the system is logical, comprehensive, undeniable.
+  - n: 4
+    scene: "Confession and satisfaction — the price of redemption"
+    force: sacrifice
+    composer: Stravinsky
+    work: "The Rite of Spring — Sacrificial Dance (ritual offering)"
+    decision: added
+    why: >
+      The path to redemption requires confession (the admission of sin) and satisfaction (the
+      performance of penance). Both are forms of sacrifice: the offering of oneself in
+      acknowledgment of transgression. Stravinsky's ritual weight marks these moments as sacred
+      offerings: the body and spirit offered in recompense for sin. The rhythm is inexorable:
+      this is the only path forward.
+  - n: 5
+    scene: "The virtues that oppose sin — the alternative to transgression"
+    force: revelation
+    composer: Messiaen
+    work: "O Sacrum Convivium (O Holy Banquet — the reception of grace)"
+    decision: added
+    why: >
+      Against each sin, the Parson poses a virtue: against pride, humility; against wrath,
+      patience; against avarice, generosity. The revelation is one of alternative: the path
+      forward is available, if the human will accept it. Messiaen's stillness and verticality
+      mark these moments: the virtues are not achievements but gifts offered by divine grace.
+      The music is the sound of grace made present.
+  - n: 6
+    scene: "The law of redemption — the systematic path from sin to salvation"
+    force: law
+    composer: Handel
+    work: "Messiah — 'And the Glory of the Lord' (the order restored)"
+    decision: added
+    why: >
+      The Parson's sermon reveals that redemption is not a matter of luck or arbitrary grace but
+      a systematic path: confession, penitence, amendment of life, return to God. The law is
+      clear, architectural, available to all. Handel's choral writing carries formal clarity and
+      architectural repetition: many voices falling into one form, the order of the universe
+      restored through the submission of individual will to divine law.
+  - n: 7
+    scene: "Final redemption — the soul's return to God"
+    force: salvation
+    composer: Bach
+    work: "Cantata 'Wir danken dir, Gott' (We Thank Thee, God — final apotheosis)"
+    decision: added
+    why: >
+      The Parson's sermon closes with the promise of final redemption: those who follow the path
+      of penitence will return to God. The souls are received into grace. The voices rise in
+      chorale apotheosis: the resolving radiance is absolute. This is salvation: not escape from
+      death but the transformation of death into a gateway to eternal life. The music is
+      benediction and homecoming.
+
+demoted:
+  - composer: Solesmes chant
+    work: "Gregorian chant (generic)"
+    status: "demoted; too directly liturgical for the Parson's scholastic voice"
+    why: >
+      The Parson is not a liturgist but a teacher. The music should carry scholastic clarity
+      alongside spiritual conviction. The sermon is teaching first, prayer second.

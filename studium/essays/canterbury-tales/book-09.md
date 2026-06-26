@@ -1,0 +1,11 @@
+# Canterbury Tales — Tale IX: Franklin's Tale — Music Arc
+
+The Franklin's Tale is not a problem solved by magical intervention or deus ex machina. It is a tale where every character makes a choice to honor a principle higher than their own desire or advantage. Dorigen loves her absent husband and is pursued by the knight Aurelius. To get rid of him, she promises marriage if he can remove the black rocks from the coast — an impossible task. A clerk magically removes the rocks, but rather than claim his prize, Aurelius realizes that winning Dorigen by this means would violate 'gentilesse' (the code of honor and nobility that supersedes mere desire). He releases her from her oath. The Franklin's point is not that love conquers all but that virtue conquers desire. The dominant motion is the resolution of impossible conflict through the assertion of a principle that all three characters come to share.
+
+The dominant force is **return** — understood not as the restoration of what was, but as the recognition of what should be. Dorigen and Arviragus are reunited, but not because the problem was solved by magic or law; they are reunited because three men (Arviragus, Aurelius, and the clerk) chose to honor something higher than immediate self-interest. The return is to a world where virtue is possible, where honor is possible, and where the old bonds of marriage are renewed because they are freely chosen, not coerced.
+
+---
+
+## The Dominant Arc
+
+The Franklin's Tale moves from Dorigen's anguish through the impossible promise to the magical removal of obstacles to the moment where each character chooses to honor gentilesse rather than claim their reward. The dominant force is **return** — understood as the restoration of what is rightfully true. The tale celebrates not the removal of obstacles but the recognition that the highest principle is not the fulfillment of desire but the honor of keeping one's word and respecting another's sovereignty. By the tale's end, every character has learned that what matters is not getting what you want but becoming the kind of person worthy of what you want. Dorigen returns to her husband, not because the problem was solved, but because all three men learned to value honor above possession.

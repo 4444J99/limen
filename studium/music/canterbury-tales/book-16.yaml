@@ -1,0 +1,126 @@
+# Canterbury Tales — Tale XVI: Monk's Tale — curated music arc
+# THE TALE OF FORTUNE'S FALLS: exempla of the mighty destroyed.
+work: canterbury-tales
+book: 16
+title: "Canterbury Tales — Tale XVI: Monk's Tale"
+length_minutes: 91
+principle: >
+  Do not score the Monk's Tale as narrative tragedy. Score it as a litany of exemplary
+  falls — a recitation of great people brought low by Fortune. The Monk presents a series
+  of tragic exempla: Adam, Hercules, Samson, Nebuchadnezzar, Belshazzar, Hadrian,
+  Alexander, Antiochus, and others. Each falls from greatness; each dies in misery; each
+  illustrates the theme: worldly power and glory are illusions, and Fortune is the force
+  that brings all things to dust. The form is repetitive — the same pattern of rise and
+  fall is enacted over and over — and the music must capture this repetition as incantation.
+  The dominant motion is not narrative but thematic: each exemplum is a variation on a
+  single truth that cannot be escaped.
+force_arc: [kingship, fate, wrath, sacrifice, fate, grief, fate, fate, salvation]
+dominant_force: fate
+tracks:
+  - n: 1
+    scene: "The Prologue — the Monk's theme of Fortune's mutability"
+    force: kingship
+    composer: Handel
+    work: "Messiah — 'Since by man came death'"
+    decision: added
+    why: >
+      The Monk announces his theme: he will tell of those who have fallen from high estate
+      into wretchedness. The opening acknowledges power and grandeur before its inevitable
+      destruction. Handel's chorus carries kingship's ceremonial grandeur and sovereign display,
+      but the words speak only of mortality. The music is noble and the message is doom.
+  - n: 2
+    scene: "Adam — the first and most famous fall"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 — I. Allegro (fate's hammer)"
+    decision: added
+    why: >
+      Adam begins in paradise and falls through disobedience. His fall is the template for
+      all subsequent falls: greatness built on a single moment of weakness. Beethoven's fate-knocking
+      is inexorable: the destiny was written before the action. The motif of the fall is
+      hammered home, unchangeable and eternal.
+  - n: 3
+    scene: "The progression of exempla — each illustrating the same truth"
+    force: wrath
+    composer: Mahler
+    work: "Symphony No. 3 — Scherzo (grotesque repetition)"
+    decision: added
+    why: >
+      Exemplum after exemplum arrives: Hercules strangled by serpents, Samson destroyed by
+      his own strength, great kings made servants. The repetition becomes almost grotesque —
+      the same structure returning again and again. Mahler's scherzo captures this grotesque
+      insistence: the rhythm returns, jerking and syncopated, the pattern inescapable.
+  - n: 4
+    scene: "The moment of hubris — the mighty moment before the fall"
+    force: sacrifice
+    composer: Stravinsky
+    work: "The Rite of Spring — Sacrificial Dance"
+    decision: added
+    why: >
+      Each exemplum includes the moment of greatest power: the king at the height of his reign,
+      the warrior at the peak of his fame. But each moment is presented as a sacrificial instant —
+      the moment before the offering that will be made to time and death. Stravinsky's ritual
+      percussion marks these moments as inevitable offerings.
+  - n: 5
+    scene: "The falls accumulate — history becomes a record of destruction"
+    force: fate
+    composer: Verdi
+    work: "La forza del destino — Overture (fate hammering)"
+    decision: added
+    why: >
+      The exempla continue: each fall is inexorable, each is fated from the beginning. The
+      accumulation becomes overwhelming — history itself becomes a demonstration of fate's power.
+      Verdi's overture carries inexorable motif and hammered insistence: the force that drives
+      all these falls is beyond any individual's control or resistance.
+  - n: 6
+    scene: "The pattern revealed — all falls follow the same arc"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 5 — Adagietto (inward, devastating sorrow)"
+    decision: added
+    why: >
+      By the middle of the Monk's recitation, the pattern is unmistakable: rise, power, hubris,
+      fall, death. The repetition itself becomes the message. Mahler's slow movement carries
+      grief at recognizing an inescapable pattern: the music is inward, reflecting on a truth
+      that cannot be denied or escaped.
+  - n: 7
+    scene: "The climactic exempla — the greatest falls drive home the deepest truth"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 — III. Scherzo (fate recurring)"
+    decision: added
+    why: >
+      The tale reaches its climax with exempla of the greatest men: Alexander, Antiochus.
+      The falls are presented with maximum gravity: the greatest power makes the greatest fall.
+      Beethoven's recurring fate-motif becomes almost unbearable in its insistence: this is
+      the law of existence, and no amount of power can escape it.
+  - n: 8
+    scene: "The moral revealed — Fortune is the true ruler of all estates"
+    force: fate
+    composer: Bach
+    work: "Art of Fugue — Contrapunctus XIV (revelation through architecture)"
+    decision: added
+    why: >
+      The Monk makes clear his final point: Fortune, not God, seems to rule the world. The
+      great are destroyed not by divine judgment but by blind chance and the turning of Fortune's
+      wheel. Bach's fugue, unfinished as it is, carries the revelation through pure architecture:
+      the structure itself is the revelation. Fate is not moral but mechanical.
+  - n: 9
+    scene: "The Host's interruption — the litany becomes unbearable"
+    force: salvation
+    composer: Satie
+    work: "Gnossienne No. 1"
+    decision: added
+    why: >
+      The Host finally interrupts the Monk: he cannot bear to hear any more tales of loss and
+      destruction. The interruption is merciful: it stops the accumulation of exempla. Satie's
+      enigmatic, detached music carries salvation as the mere cessation of unbearable knowledge.
+      To stop hearing about the falls of the mighty is, in this moment, a form of salvation.
+
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — any section"
+    status: "demoted; too mythologically specific"
+    why: >
+      The Monk's exempla are historical and biblical, not mythological. The music should reflect
+      the universality of the pattern, not the specificity of any single tradition.

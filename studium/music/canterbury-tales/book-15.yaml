@@ -1,0 +1,112 @@
+# Canterbury Tales — Tale XV: Melibee — curated music arc
+# THE TALE OF MELIBEE: wisdom literature, philosophy of peace and reconciliation.
+work: canterbury-tales
+book: 15
+title: "Canterbury Tales — Tale XV: Melibee"
+length_minutes: 98
+principle: >
+  Do not score the Tale of Melibee as narrative drama. Score it as philosophical dialogue:
+  an extended meditation on the nature of counsel, revenge, and peace. Melibee is robbed
+  and his wife Prudence is wounded. Melibee's first impulse is war: revenge, violent
+  retaliation, the gathering of allies for battle. But his wife Prudence counsels differently:
+  she calls in a council of advisors (wise men, physicians, lawyers, old men of counsel),
+  and through sustained dialogue, she leads Melibee to the conclusion that peace and
+  reconciliation are preferable to war. The tale is not a plot but a philosophical argument
+  unfolding through measured debate. The dominant motion is from wrath (the impulse to
+  revenge) through deliberation to law (the principle of reasoned peace). The music must
+  reflect the slow, deliberate unfolding of wisdom through conversation.
+force_arc: [wrath, supplication, law, covenant, revelation, law, salvation]
+dominant_force: law
+tracks:
+  - n: 1
+    scene: "The robbery and wound — Melibee's initial wrath"
+    force: wrath
+    composer: Wagner
+    work: "Das Rheingold — the theft of the ring"
+    decision: added
+    why: >
+      Melibee and his wife are attacked. Prudence is wounded; Melibee is robbed. His response is
+      immediate wrath: he will gather an army and destroy his enemies. The music is Wagner's
+      sudden shift from order to chaos: the brass and dark harmony mark the moment where
+      civilization is violated and revenge becomes the only logical response. The wrath is not
+      moral failure but the natural human reaction to violation.
+  - n: 2
+    scene: "Prudence's supplication — she appeals to her husband to listen"
+    force: supplication
+    composer: Barber
+    work: "Agnus Dei"
+    decision: added
+    why: >
+      Prudence does not resist her husband's wrath directly; instead, she appeals to him with
+      gentle supplication. She asks him to listen, to counsel with wise men, to deliberate
+      before acting. Her appeal is not a command but an invitation to reason. Barber's Agnus Dei
+      is supplication at its most pure: exposed melodic line, the human voice asking mercy and
+      reasoned patience. She is not asking him to forgive; she is asking him to think.
+  - n: 3
+    scene: "The council assembles — wise men of different disciplines gather"
+    force: law
+    composer: Bach
+    work: "Art of Fugue — multiple voices building in harmony"
+    decision: added
+    why: >
+      Prudence gathers a council: physicians, lawyers, old men of counsel, masters of logic.
+      Each brings a perspective; each speaks. The music is Bach's formal clarity and repetition:
+      the law is not a single voice but many voices building toward a unified structure. Each
+      speaker brings a different dimension of wisdom, but the whole is greater than the parts.
+      The architecture is law itself made audible.
+  - n: 4
+    scene: "The deliberation unfolds — each advisor counsels against hasty war"
+    force: covenant
+    composer: Beethoven
+    work: "Symphony No. 7 — II. Allegretto (circular, binding melody)"
+    decision: added
+    why: >
+      Each advisor counsels Melibee: war is uncertain, revenge is costly, enemies once destroyed
+      cannot be reconciled. The advisors covenant with Melibee through their counsel: they bind
+      him to the principle of wisdom through the force of their collective testimony. Beethoven's
+      Allegretto carries the circular form of covenant: the melody repeats, building commitment
+      through repetition and recognition. The bond is not imposed but freely accepted.
+  - n: 5
+    scene: "Prudence's final counsel — reconciliation as the highest wisdom"
+    force: revelation
+    composer: Messiaen
+    work: "L'Ascension — III. 'Alléluias sérénement contemplatifs'"
+    decision: added
+    why: >
+      Prudence makes her strongest case: peace is preferable to war because it is durable. An
+      enemy killed cannot be reconciled; an enemy reconciled becomes a friend. The revelation
+      is one of moral philosophy: wisdom is not in the victory of force but in the achievement
+      of lasting peace. Messiaen's stillness and chant-like clarity mark the moment where what
+      is true becomes visible. The music is quiet, authoritative, undeniable.
+  - n: 6
+    scene: "Melibee's choice — he chooses peace and reconciliation"
+    force: law
+    composer: Handel
+    work: "Messiah — 'Since By Man Came Death' (chorus of acceptance)"
+    decision: added
+    why: >
+      Melibee accepts Prudence's counsel. He will sue for peace, will reconcile with his
+      enemies, will accept payment for his losses and the healing of his wife's wounds in place
+      of revenge. The moment is law: the principle of order and reason has prevailed over the
+      impulse to wrath. Handel's chorus carries formal clarity and architectural repetition: many
+      voices singing the same truth, the law made into music that is both beautiful and absolute.
+  - n: 7
+    scene: "Resolution and peace — the enemies reconcile, healing is complete"
+    force: salvation
+    composer: Bach
+    work: "Cantata 'Wir danken dir, Gott' (We Thank Thee, God)"
+    decision: added
+    why: >
+      The tale closes with Melibee and his enemies reconciled, Prudence healed, and peace
+      restored. The salvation here is not cosmic but civic: the community is healed through the
+      application of reason and wisdom. Bach's chorale apotheosis is gratitude made cosmic: the
+      voices rise, the harmony resolves, the clarity is absolute. This is salvation as the
+      triumph of wisdom over violence, of peace over vengeance. The music is benediction.
+
+demoted:
+  - composer: Verdi
+    work: "Il Trovatore — 'D'amor sull'ali rosee' (passionate aria)"
+    status: "demoted; too romantic for the tale's philosophical temperament"
+    why: >
+      Melibee is not about passion but about reason. The music must reflect the slow deliberation
+      of philosophical dialogue, not the immediate force of emotional conviction.
