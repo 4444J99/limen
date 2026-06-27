@@ -1,6 +1,6 @@
 # Prompt Lifecycle Ledger
 
-Generated: `2026-06-27T15:38:01+00:00`
+Generated: `2026-06-27T16:36:00+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -12,13 +12,13 @@ Horizon: `all local history`
 
 ## Redacted Prompt Coverage
 
-Indexed `9477` app/session files, `2.0 GiB`, with `92599` prompt-like user events hashed into the private index.
+Indexed `9477` app/session files, `2.0 GiB`, with `92621` prompt-like user events hashed into the private index.
 
 | Source | Files | Prompt Events | Event Records | Size | Newest |
 |---|---:|---:|---:|---:|---|
 | `claude-projects` | 4845 | 87792 | 313106 | 1.4 GiB | `2026-06-27T15:12:53+00:00` |
-| `codex-sessions` | 887 | 4285 | 226125 | 544.6 MiB | `2026-06-27T15:36:34+00:00` |
-| `codex-history` | 1 | 389 | 389 | 177.4 KiB | `2026-06-27T15:00:57+00:00` |
+| `codex-sessions` | 887 | 4300 | 226851 | 574.7 MiB | `2026-06-27T16:34:39+00:00` |
+| `codex-history` | 1 | 396 | 396 | 178.5 KiB | `2026-06-27T16:16:51+00:00` |
 | `claude-tasks` | 188 | 133 | 133 | 57.7 KiB | `2026-06-26T00:08:52+00:00` |
 | `claude-file-history` | 3519 | 0 | 0 | 42.2 MiB | `2026-06-27T00:26:28+00:00` |
 | `claude-plans` | 34 | 0 | 0 | 289.3 KiB | `2026-06-25T03:22:45+00:00` |
@@ -26,7 +26,7 @@ Indexed `9477` app/session files, `2.0 GiB`, with `92599` prompt-like user event
 
 ## Prompt To Worktree Crosswalk
 
-- Current `.limen-worktrees` roots scanned: `19`; debt roots: `12`.
+- Current `.limen-worktrees` roots scanned: `19`; debt roots: `11`.
 - Current worktree roots with at least one local session/prompt receipt: `18`.
 - Current worktree roots without a local session receipt in this index: `1`.
 
@@ -39,7 +39,7 @@ Indexed `9477` app/session files, `2.0 GiB`, with `92599` prompt-like user event
 | `bld-promptscope-next-rev-3fde` | 1 | 4 | `dirty` |
 | `bld-universal-mail--automation-readme-9031` | 1 | 5 | `active(<6h)` |
 | `bld2-a-i-chat--exporter-integration-tests-a00b` | 1 | 5 | `active(<6h)` |
-| `cifix-organvm-i-theoria-conversation-corpus-engine-f02e` | 3 | 79 | `dirty` |
+| `cifix-organvm-i-theoria-conversation-corpus-engine-f02e` | 3 | 79 | `active(<6h)` |
 | `cifix-organvm-i-theoria-hierarchia-mundi-3145` | 1 | 71 | `dirty` |
 | `discover-organvm-kerygma-profiles-6c74` | 1 | 24 | `active(<6h)` |
 | `exporter-mp` | 0 | 0 | `active(<6h)` |
@@ -68,9 +68,9 @@ Indexed `9477` app/session files, `2.0 GiB`, with `92599` prompt-like user event
 ## Remote Receipts
 
 - GitHub worktree repos seen: `14`.
-- Git worktree roots with remote branch present: `8`; missing: `8`.
-- Branch-linked PR states: `OPEN` 8, `MERGED` 2, `CLOSED` 0.
-- Task-board GitHub PR refs seen: `657`; checked: `657`; states: `CLOSED` 31, `ERROR` 3, `MERGED` 447, `OPEN` 176.
+- Git worktree roots with remote branch present: `9`; missing: `7`.
+- Branch-linked PR states: `OPEN` 9, `MERGED` 2, `CLOSED` 0.
+- Task-board GitHub PR refs seen: `657`; checked: `657`; states: `CLOSED` 31, `ERROR` 6, `MERGED` 445, `OPEN` 175.
 
 ## Cloud Receipts
 

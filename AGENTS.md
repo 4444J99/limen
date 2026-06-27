@@ -27,7 +27,7 @@ system / developer / runtime constraint.
 
 For dispatch-mode sessions:
 
-1. **Identify** yourself — set `LIMEN_AGENT` (`claude | gemini | jules | opencode | codex | copilot | goose`).
+1. **Identify** yourself — set `LIMEN_AGENT` (`agy | claude | codex | copilot | gemini | github_actions | jules | opencode | oz | warp`).
 2. **Read** `$LIMEN_ROOT/tasks.yaml` (fallback `./tasks.yaml`) — parse the budget and the full task list.
 3. **Claim** the highest-priority `open` task targeted at you (or `any`) that fits the remaining budget.
 4. **Update status** before (`dispatched` → `in_progress`) and after (`done` / `failed`) execution.
@@ -101,7 +101,7 @@ For dispatch-mode sessions, execute in order:
 ```bash
 # Limen needs to know which agent you are. Set if not already:
 export LIMEN_AGENT="${LIMEN_AGENT:-$(basename $0)}"
-# Expected values: claude | gemini | jules | opencode | codex | copilot | goose
+# Expected values: agy | claude | codex | copilot | gemini | github_actions | jules | opencode | oz | warp
 ```
 
 ### 2. Read the Task File
@@ -282,6 +282,13 @@ checks.
 - Support `--task <id>` flag for targeted dispatch to a single task.
 - Write results back to tasks.yaml on completion.
 
+### Agy
+- You are Agy / Antigravity CLI. Read `$LIMEN_ROOT/tasks.yaml` at session start.
+- Run only bounded, lane-safe work packets with a specific repo/worktree scope and verification
+  command.
+- If work lands in Antigravity scratch space, preserve the per-run delta and return a receipt so
+  Limen can bridge it into the task worktree.
+
 ### Codex
 - You are Codex in an interactive coding harness. In direct-session mode, follow the human's
   request first and do not claim unrelated queue work.
@@ -292,9 +299,28 @@ checks.
 - If you cannot update `tasks.yaml` directly, report task state and evidence in the PR or commit
   output so a writable agent can sync the board.
 
+### GitHub Actions
+- You are a GitHub Actions dispatch lane. Work from the exact workflow input/task payload supplied
+  by Limen.
+- Report durable evidence through the workflow run, issue, PR, branch, or artifact named by the
+  task; do not rely on chat-only state.
+
+### Oz
+- You are Oz / Warp-backed dispatch. Accept only work packets with a named repo/issue/PR receipt
+  target and a verification command.
+- If service credentials or workflow dispatch are unavailable, report `failed_blocked` with the
+  missing external gate.
+
+### Warp
+- You are a Warp-backed paid-service lane. Accept only work packets with a named repo/issue/PR
+  receipt target and a verification command.
+- If service credentials or workflow dispatch are unavailable, report `failed_blocked` with the
+  missing external gate.
+
 ### Goose
-- You are Goose. Follow the same dispatch ritual as other agents.
-- Prefer the Limen CLI or MCP task tools over manual `tasks.yaml` edits when available.
+- Goose is not currently in Limen's canonical `target_agent` set. Do not assign tasks to Goose
+  until `VALID_AGENTS`, capacity detection, dispatch routing, and this protocol are updated
+  together.
 
 ---
 

@@ -27,6 +27,19 @@ results → **reserve + launch** detached workers up to a global cap, then **ret
 
 ## Cross-cutting keystones (apply to both engines)
 
+- **Conductor-first packetization:** a broad human prompt is not itself a dispatchable task. The
+  conductor first preserves the prompt/session in the private corpus, derives bounded work packets,
+  and records each packet's owner, repo/worktree scope, receipt target, and verification command.
+  Only then should a lane receive work. Jules is appropriate for independent remote GitHub tasks
+  with branch/PR/check receipts; local lanes such as OpenCode and Agy are appropriate for a
+  specific checkout plus predicate; Gemini is review/synthesis or narrow code work only when auth
+  is configured. A near-exhausted lane such as Claude should be treated as a data source or last
+  resort, not as the default absorber for macro cleanup.
+- **Auth/secret gates are parked, never solved inline:** login failures, missing keys, expired
+  tokens, password prompts, and credential hydration issues are recorded as redacted
+  `failed_blocked` / `needs_human` work in the owning board or credential ledger, then excluded from
+  the current convergence stream. No dispatch packet should ask a lane to print, paste, mint,
+  recover, or infer secrets; the current stream continues on non-secret work.
 - **Timeout group-kill** (`dispatch._run_capture`): agents run via `start_new_session=True`; on
   timeout the WHOLE process group is `SIGKILL`ed. Plain `subprocess.run(timeout=)` only kills the
   direct child — if an agent CLI spawns grandchildren holding the stdout pipe, `communicate()`

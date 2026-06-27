@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from datetime import datetime, timezone, date
 from pathlib import Path
@@ -278,6 +279,26 @@ def test_readiness_report_all_pass(tmp_path: Path, monkeypatch) -> None:
     limen = _limen(tasks=[_task(status="open")])
     report = readiness_report(limen, p, agent="jules")
     assert report["status"] in ("ready", "degraded")
+
+
+def test_readiness_report_uses_lane_catalog_for_local_agents(
+    tmp_path: Path, monkeypatch
+) -> None:
+    for binary in ("opencode", "agy", "gemini"):
+        path = tmp_path / binary
+        path.write_text("#!/bin/sh\nexit 0\n")
+        path.chmod(0o755)
+    monkeypatch.setenv("PATH", f"{tmp_path}:{os.environ.get('PATH', '')}")
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+
+    p = tmp_path / "tasks.yaml"
+    p.write_text("version: '1.0'\n")
+    for agent in ("opencode", "agy", "gemini"):
+        limen = _limen(tasks=[_task(target_agent=agent, status="open")])
+        report = readiness_report(limen, p, agent=agent)
+        check = next(c for c in report["checks"] if c["id"] == "agent_cli")
+        assert check["status"] == "pass"
+        assert "agent-dispatch" not in check["detail"]
 
 
 def test_readiness_report_tasks_file_missing(tmp_path: Path) -> None:

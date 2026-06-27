@@ -17,18 +17,18 @@ No directory was deleted or removed during this ledger pass.
 
 Evidence commands:
 
-- `python3 scripts/worktree-debt.py --json`: 19 roots, 12 debt-bearing roots after the
-  domus-genoma CI PR preservation and transient dispatcher roots were reclaimed.
+- `python3 scripts/worktree-debt.py --json`: 19 roots, 11 debt-bearing roots after the
+  conversation-corpus-engine CI fix was preserved as a draft PR.
 - per-root `git status --porcelain`, `git log --oneline -5`, `git cherry <default> HEAD`.
 - non-Git residue inspection with `find` and direct reads of cache metadata files.
 
 Current classes:
 
-- 8 dirty working trees counted as debt.
+- 7 dirty working trees counted as debt.
 - 0 unique local-only unpushed roots among the completed drain roots; newly spawned
   dispatcher roots are inside the active grace window.
 - 2 non-Git residue roots.
-- 7 active roots, including freshly pushed draft-PR roots still inside the idle
+- 8 active roots, including freshly pushed draft-PR roots still inside the idle
   grace window.
 - 2 clean roots not merged to default, both with draft PR receipts.
 - 0 content-preserved roots remain on disk; two were reclaimed by the background
@@ -50,7 +50,7 @@ That is not enough for a fully automatic lifecycle.
 | `bld-promptscope-next-rev-3fde` | `organvm/promptscope` | dirty | branch `limen/bld-promptscope-next-rev-3fde`; likely next-revenue task; no exact task slug in board | HEAD `4fa725b`; modified `public/app.js`, `public/index.html`, `src/index.ts`; ahead 0 | lifecycle debt | Review product delta, run build/tests, then commit/push/PR. |
 | `bld-universal-mail--automation-readme-9031` | `organvm/universal-mail--automation` | draft PR open | branch `limen/bld-universal-mail--automation-readme-9031`; likely README task; no exact task slug in board | clean; PR [#108](https://github.com/organvm/universal-mail--automation/pull/108); commit `29f6b4b`; README marker check passed; `python3 cli.py -h` passed; `python3 -m py_compile cli.py api/app.py api/plans.py mcp_server/server.py` passed; `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -q tests/test_config.py tests/test_models.py tests/test_rules.py tests/test_web.py` passed 158 tests | preserved outside local disk, still lifecycle debt until merged or explicitly superseded | Review README modernization and merge, or supersede by a named successor that preserves this content. |
 | `bld2-a-i-chat--exporter-integration-tests-a00b` | `organvm/a-i-chat--exporter` | draft PR open | branch `limen/bld2-a-i-chat--exporter-integration-tests-a00b`; likely integration-tests task; no exact task slug in board | clean; PR [#96](https://github.com/organvm/a-i-chat--exporter/pull/96); commits `6d73e1a`, `d0d633c`; `pnpm test` passed; `pnpm lint` passed with warnings; branch was 32 behind `origin/master` at preservation time | preserved outside local disk, still lifecycle debt until merged or explicitly superseded | Review freshness/CI, then merge or name a successor PR that absorbed both commits. |
-| `cifix-organvm-i-theoria-conversation-corpus-engine-f02e` | `organvm/conversation-corpus-engine` | dirty | branch `limen/cifix-organvm-i-theoria-conversation-corpus-engine-f02e`; likely CI-fix task; no exact task slug in board | HEAD `be4b920`; modified `pyproject.toml`; ahead 0 | lifecycle debt | Review dependency/CI fix, run tests, then commit/push/PR. |
+| `cifix-organvm-i-theoria-conversation-corpus-engine-f02e` | `organvm/conversation-corpus-engine` | draft PR open | branch `limen/cifix-organvm-i-theoria-conversation-corpus-engine-f02e`; likely CI-fix task; no exact task slug in board | clean; PR [#60](https://github.com/organvm/conversation-corpus-engine/pull/60); commit `0f96c88`; rebased onto `origin/main` `bebe0d4`; local checks passed: `python3 -m pip install -e ".[dev]"`, `python3 -m pytest tests/ -v --tb=short` (351 passed), `python3 -m ruff check src/ tests/`, `python3 -m ruff format --check src/ tests/`, schema import command; GitHub CI and CodeQL passed; merge state `CLEAN` | preserved outside local disk, active grace; lifecycle remains open until merged or explicitly superseded | Review and merge PR #60, or supersede by named branch/PR. |
 | `cifix-organvm-i-theoria-hierarchia-mundi-3145` | `organvm/hierarchia-mundi` | dirty | branch `limen/cifix-organvm-i-theoria-hierarchia-mundi-3145`; likely CI/test task; no exact task slug in board | HEAD `677df2b`; modified package files plus untracked `tests/`; ahead 0 | lifecycle debt | Review implementation and tests together, run suite, then commit/push/PR. |
 | `discover-organvm-kerygma-profiles-6c74` | `organvm/kerygma-profiles` | draft PR open | branch `limen/discover-organvm-kerygma-profiles-6c74`; discovery task; no exact task slug in board | clean; PR [#8](https://github.com/organvm/kerygma-profiles/pull/8); commits `a8a029f`, `d7fd19e`; generated files remain on disk but are ignored; `python3 -m pytest` passed 24 tests; `python3 -m ruff check .` passed | preserved outside local disk, still lifecycle debt until merged or explicitly superseded | Review and merge the generated-artifact hygiene PR, or supersede by a named successor. |
 | `exporter-mp` | `organvm/a-i-chat--exporter` | draft PR open | branch `limen/exporter-multiprovider`; explicit multiprovider branch; no exact task slug in board | clean; PR [#95](https://github.com/organvm/a-i-chat--exporter/pull/95); commits `5c3298b`, `6c88427`, `dd73cce`; `pnpm test` passed; `pnpm lint` passed with warnings after lint-setup compatibility fix | preserved outside local disk, still lifecycle debt until merged or explicitly superseded | Review provider behavior and CI, then merge or supersede by named branch/PR. |
@@ -105,6 +105,6 @@ That is not enough for a fully automatic lifecycle.
    [universal-mail--automation#108](https://github.com/organvm/universal-mail--automation/pull/108),
    plus [media-ark#50](https://github.com/organvm/media-ark/pull/50).
 3. Work the dirty roots from lowest risk to highest risk: generated-only caches,
-   single-file deltas, multi-file implementation deltas, then the broad deletion root.
+   remaining single-file deltas, multi-file implementation deltas, then the broad deletion root.
 4. Reclaim the two content-preserved roots only after the ledger/acceptance receipt is
    committed and the operator agrees.

@@ -98,6 +98,15 @@ def canonical_statuses() -> set[str]:
     return set(re.findall(r'"([a-z_]+)"', match.group(1)))
 
 
+def canonical_agents() -> set[str]:
+    """Parse the ``VALID_AGENTS = {...}`` literal out of the MCP server."""
+    text = SERVER.read_text(encoding="utf-8")
+    match = re.search(r"VALID_AGENTS\s*=\s*\{([^}]*)\}", text)
+    if not match:
+        raise SystemExit(f"FAIL: could not find VALID_AGENTS in {SERVER.relative_to(ROOT)}")
+    return set(re.findall(r'"([a-z_]+)"', match.group(1)))
+
+
 def documented_states(agents_md: str) -> set[str]:
     """Extract the state tokens from the ``## Task States`` table in AGENTS.md.
 
@@ -135,16 +144,20 @@ def has_heading(text: str, heading: str) -> bool:
 
 def expected_agents(agents_md: str) -> set[str]:
     """Parse the expected LIMEN_AGENT values documented in AGENTS.md."""
-    match = re.search(r"Expected values:\s*([a-z |]+)", agents_md)
+    match = re.search(r"Expected values:\s*([a-z_ |]+)", agents_md)
     if not match:
         raise SystemExit("FAIL: AGENTS.md does not document expected LIMEN_AGENT values")
     return {part.strip() for part in match.group(1).split("|") if part.strip()}
 
 
+def normalize_agent_label(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "", value.lower())
+
+
 def documented_agent_notes(agents_md: str) -> set[str]:
     """Parse the ### headings under Agent-Specific Notes."""
     notes = section(agents_md, "Agent-Specific Notes")
-    return {heading.lower().replace(" ", "") for heading in re.findall(r"^###\s+(.+)$", notes, re.M)}
+    return {normalize_agent_label(heading) for heading in re.findall(r"^###\s+(.+)$", notes, re.M)}
 
 
 def referenced_paths(text: str) -> set[str]:
@@ -177,6 +190,7 @@ def presented_status_tokens(text: str) -> set[str]:
 def main() -> int:
     errors: list[str] = []
     valid = canonical_statuses()
+    valid_agents = canonical_agents()
 
     agents_path = ROOT / "AGENTS.md"
     agents_text = agents_path.read_text(encoding="utf-8")
@@ -220,7 +234,19 @@ def main() -> int:
     except ValueError as exc:
         errors.append(str(exc))
 
-    missing_notes = expected_agents(agents_text) - documented_agent_notes(agents_text)
+    expected = expected_agents(agents_text)
+    expected_canonical = valid_agents - {"any"}
+    if expected != expected_canonical:
+        errors.append(
+            "AGENTS.md Expected values drift from VALID_AGENTS "
+            f"(missing={sorted(expected_canonical - expected)}, extra={sorted(expected - expected_canonical)})"
+        )
+
+    missing_notes = {
+        agent
+        for agent in expected
+        if normalize_agent_label(agent) not in documented_agent_notes(agents_text)
+    }
     if missing_notes:
         errors.append(f"AGENTS.md is missing Agent-Specific Notes for: {sorted(missing_notes)}")
 

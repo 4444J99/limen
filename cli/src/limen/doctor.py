@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import TypedDict, cast
 
+from limen.capacity import agent_status
 from limen.models import LimenFile, Task
 
 
@@ -147,12 +147,8 @@ def readiness_report(
     spent = budget.track.per_agent.get(agent, 0)
     limit = budget.per_agent.get(agent, budget.daily)
     remaining = max(0, min(budget.daily - budget.track.spent, limit - spent))
-    agent_bin = (
-        os.environ.get("LIMEN_JULES_BIN", "jules")
-        if agent == "jules"
-        else os.environ.get("LIMEN_DISPATCH_CMD", "agent-dispatch")
-    )
-    agent_path = shutil.which(agent_bin)
+    status_row = agent_status(agent)
+    agent_reachable = bool(status_row["reachable"])
     checks: list[Check] = cast(list[Check], [
         {
             "id": "tasks_file",
@@ -181,8 +177,8 @@ def readiness_report(
         },
         {
             "id": "agent_cli",
-            "status": "pass" if agent_path else "fail",
-            "detail": agent_path or f"{agent_bin} not found",
+            "status": "pass" if agent_reachable else "fail",
+            "detail": status_row["detail"],
         },
         {
             "id": "api_runtime",
@@ -216,7 +212,7 @@ def readiness_report(
         },
         "checks": checks,
         "next_actions": next_actions(
-            stale, open_tasks, remaining, bool(agent_path), agent
+            stale, open_tasks, remaining, agent_reachable, agent
         ),
     }
 
