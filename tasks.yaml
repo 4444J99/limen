@@ -45417,10 +45417,10 @@ tasks:
   title: Discover the latent value of organvm/visual-substrate-inquiry
   repo: organvm/visual-substrate-inquiry
   type: research
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - discover
   - value-discovery
@@ -45439,7 +45439,7 @@ tasks:
     \ the thesis. [auto-discovery 2026-06-22; no repo stays dark]"
   depends_on: []
   created: '2026-06-22'
-  updated: '2026-06-27T00:50:23.253355Z'
+  updated: '2026-06-27T02:02:20.159089Z'
   dispatch_log:
   - timestamp: '2026-06-24T02:29:59.487830Z'
     agent: opencode
@@ -45578,6 +45578,11 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: DISCOVER-organvm-a-i-council--coliseum
   title: Discover the latent value of organvm/a-i-council--coliseum
   repo: organvm/a-i-council--coliseum
@@ -46161,7 +46166,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels: []
   urls:
   - https://github.com/organvm/organvm-corpvs-testamentvm/issues/489
@@ -46173,7 +46178,7 @@ tasks:
     \ Each comment reports **only the delta** since the previous comm"
   depends_on: []
   created: '2026-06-22'
-  updated: '2026-06-27T00:14:44.620267Z'
+  updated: '2026-06-27T02:02:20.159089Z'
   dispatch_log:
   - timestamp: '2026-06-22T18:44:42.714436Z'
     agent: gemini
@@ -46197,6 +46202,11 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: DISCOVER-organvm-scale-threshold-emergence
   title: Discover the latent value of organvm/scale-threshold-emergence
   repo: organvm/scale-threshold-emergence
@@ -47707,7 +47717,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - studium
   - content
@@ -47727,7 +47737,7 @@ tasks:
     \ green PR."
   depends_on: []
   created: '2026-06-23'
-  updated: '2026-06-27T00:14:44.620267Z'
+  updated: '2026-06-27T02:02:20.159089Z'
   dispatch_log:
   - timestamp: '2026-06-24T04:59:14.502431Z'
     agent: codex
@@ -47754,6 +47764,11 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: studium-deepen-bhagavad-gita
   title: "Bhagavad Gita \u2014 chapters 2..18 (17 arcs)"
   repo: organvm/limen
@@ -51723,7 +51738,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - simplify
   - generated
@@ -51734,7 +51749,7 @@ tasks:
     not grow without cause. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-27T00:50:23.253355Z'
+  updated: '2026-06-27T02:02:20.159089Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:08:09.813170Z'
     agent: jules
@@ -51750,6 +51765,11 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-limen-simplify-0624
   title: Reduce complexity in organvm/limen
   repo: organvm/limen
@@ -51757,7 +51777,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - simplify
   - generated
@@ -51768,7 +51788,7 @@ tasks:
     not grow without cause. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-27T00:50:23.253355Z'
+  updated: '2026-06-27T02:02:20.159089Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:08:09.813170Z'
     agent: jules
@@ -51784,6 +51804,11 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-domus-genoma-typing-0624
   title: Tighten types in organvm/domus-genoma
   repo: organvm/domus-genoma
@@ -51791,7 +51816,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - typing
   - generated
@@ -51802,7 +51827,7 @@ tasks:
     and tests green. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-27T00:50:23.253355Z'
+  updated: '2026-06-27T02:02:20.159089Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:08:09.813170Z'
     agent: jules
@@ -51818,6 +51843,11 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-portfolio-typing-0624
   title: Tighten types in organvm/portfolio
   repo: organvm/portfolio
@@ -51944,10 +51974,10 @@ tasks:
   title: Tighten types in organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - typing
   - generated
@@ -51958,7 +51988,7 @@ tasks:
     the build and tests green. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-27T00:50:23.253355Z'
+  updated: '2026-06-27T02:02:20.159089Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:22:13.734586Z'
     agent: agy
@@ -51969,6 +51999,11 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-a-i-chat--exporter-typing-0624
   title: Tighten types in organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
@@ -52081,7 +52116,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - typing
   - generated
@@ -52092,7 +52127,7 @@ tasks:
     green. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-27T00:50:23.253355Z'
+  updated: '2026-06-27T02:02:20.159089Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:22:13.734586Z'
     agent: jules
@@ -52103,6 +52138,11 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: ASK-quicken-login
   title: 'one login/identity step (your hand: browser/OAuth/portal)'
   type: ops
@@ -52186,7 +52226,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue
   - close-the-cliff
@@ -52201,7 +52241,7 @@ tasks:
     \ billing) with its cheapest path. Bounded: stop at first reviewable PR per repo."
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T01:19:14.038132Z'
+  updated: '2026-06-27T02:02:20.159089Z'
   dispatch_log:
   - timestamp: '2026-06-26T23:58:21.192297Z'
     agent: codex
@@ -52226,6 +52266,11 @@ tasks:
     agent: agy
     session_id: cli
     status: failed->claude
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: ORGAN-revive-stale-fleet
   title: Diagnose & revive stale organs (merge, heal, vigilia, evocator, health, life,
     hygiene)
@@ -52266,7 +52311,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: done
   labels: []
   urls:
   - https://github.com/organvm/limen/issues/352
@@ -52278,13 +52323,28 @@ tasks:
     \ deliberately. ## What was on the fork (commit"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T01:13:47.318340Z'
+  updated: '2026-06-27T02:08:00Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:06:00Z'
+    agent: opencode
+    session_id: current
+    status: in_progress
+    output: 'Started re-deriving typing-modernization from insight-cadence-core fork onto current main'
+  - timestamp: '2026-06-27T02:08:00Z'
+    agent: opencode
+    session_id: current
+    status: done
+    output: 'PR #364 already merged (commit 77d0f7a). All 4 files (doctor.py, capacity.py, models.py, status.py) already have TypedDicts and PEP-604 syntax. mypy passes on all 4. No additional work needed.'
 - id: GH-organvm-limen-334
   title: 'needs-human (L-FLEET-CAPACITY): Light the dark async lanes'
   repo: organvm/limen
@@ -52292,7 +52352,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - needs-human
   urls:
@@ -52305,13 +52365,18 @@ tasks:
     \ the credentials ALREADY EXIST in 1Password and `op` is"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T01:13:47.318340Z'
+  updated: '2026-06-27T02:02:20.159089Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GH-organvm-limen-333
   title: 'needs-human (L-GMAIL-CRED): Revive the autonomous mail lane with ONE paste'
   repo: organvm/limen
@@ -52319,7 +52384,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - needs-human
   urls:
@@ -52332,13 +52397,18 @@ tasks:
     \ nothing needs generating. This super"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T01:13:47.318340Z'
+  updated: '2026-06-27T02:02:20.159089Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GH-organvm-limen-332
   title: 'needs-human (L-GH-LAUNCHD-077): Give gh a token under launchd'
   repo: organvm/limen
@@ -52346,7 +52416,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - needs-human
   urls:
@@ -52359,13 +52429,18 @@ tasks:
     \ works (organvm/organvm-engine). ### What it unlocks"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T01:13:47.318340Z'
+  updated: '2026-06-27T02:02:20.159089Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GH-organvm-limen-331
   title: 'needs-human (L-CLOUDFLARE-DEPLOY): Cloudflare deploy auth'
   repo: organvm/limen
@@ -52373,7 +52448,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - needs-human
   urls:
@@ -52386,7 +52461,13 @@ tasks:
     \ then re-dispatch. Every BLD2-*-deploy fails because w"
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:02:20.159089Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GH-organvm-limen-330
   title: "\U0001F9F1 The Wall \u2014 everything that hangs on you (his-hand levers)"
   repo: organvm/limen
@@ -52394,7 +52475,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - needs-human
   urls:
@@ -52407,7 +52488,13 @@ tasks:
     \ this Wall covers the rest. *So"
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:02:20.159089Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GH-organvm-limen-320
   title: "\U0001F9F1 The Wall \u2014 credential / login / API / env atoms: registered\
     \ home + tracking issue"
@@ -52416,7 +52503,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - credential
   urls:
@@ -52428,7 +52515,13 @@ tasks:
     \ validity probe \u2014 lives in code: [`scripts/creds-hydrate.py`](https://github.com/organvm/limen/blob/main/scripts/creds-hydrate.py"
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:02:20.159089Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GH-organvm-limen-289
   title: "needs-human (L-FIREWALL-PROMPT): Silence the 'python/node wants to accept\
     \ incoming connections' dialog\u2026"
@@ -52437,7 +52530,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - needs-human
   urls:
@@ -52450,7 +52543,13 @@ tasks:
     \ the macOS Application Firewall is ON, and the i"
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:02:20.159089Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GH-organvm-limen-269
   title: 'fleet: drain the PR + branch backlog (73 open PRs / 157 unmerged branches)
     to a predicate-backed floor'
@@ -52459,7 +52558,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - lane:fleet
   urls:
@@ -52472,7 +52571,13 @@ tasks:
     \ rule (no human memory \u2014 the predic"
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:02:20.159089Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GH-organvm-limen-267
   title: 'needs-human (L-POSITIONING-ACTIVATE): Switch the inbound-magnet system from
     built-and-inert to live'
@@ -52481,7 +52586,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - needs-human
   urls:
@@ -52494,7 +52599,13 @@ tasks:
     \ + seeds + price guard), the form/operati"
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:02:20.159089Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GH-organvm-limen-266
   title: "needs-human (L-HEALTH-GOLIVE): Decide the health-office content DISPOSITION\
     \ \u2014 and note this is TIME-\u2026"
@@ -52503,7 +52614,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - needs-human
   urls:
@@ -52516,7 +52627,13 @@ tasks:
     \ health-office scaffold shipped green locally on 2"
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:02:20.159089Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GH-organvm-limen-265
   title: "needs-human (L-FLEET-CAPACITY): Re-mint the 3 fleet credentials \u2014 they\
     \ are MATERIALIZED but DEAD"
@@ -52525,7 +52642,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - needs-human
   - credential
@@ -52539,7 +52656,13 @@ tasks:
     \ correctly carries 1Password -> ~/.limen.env -> every lane"
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:02:20.159089Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GH-organvm-limen-264
   title: 'needs-human (L-MODEL-TIER): Stop the interactive Claude burn at the source'
   repo: organvm/limen
@@ -52547,7 +52670,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - needs-human
   urls:
@@ -52560,7 +52683,13 @@ tasks:
     \ Opus 4.8 + the 1M-context beta \u2014 the single most expensive c"
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:02:20.159089Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GH-organvm-limen-263
   title: "needs-human (L-IANVA-CLOUD): Stop the claude.ai connector 'needs authentication'\
     \ prompts \u2014 ONE bearer'd connector for the whole class"
@@ -52569,7 +52698,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - needs-human
   - credential
@@ -52583,7 +52712,13 @@ tasks:
     \ class, not just Sentry.** This is the ONE re-auth di"
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:02:20.159089Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GH-organvm-limen-262
   title: "needs-human (L-IANVA-LOCAL): Kill the per-agent MCP re-auth for every non-claude.ai\
     \ agent in ONE m\u2026"
@@ -53843,7 +53978,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue-ship
   - revenue
@@ -53859,7 +53994,7 @@ tasks:
     \ rank 4, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T01:19:14.038132Z'
+  updated: '2026-06-27T02:02:20.159089Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
@@ -53870,6 +54005,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: REV-organvm-mirror-mirror-revenue-ship-0626
   title: Drive Mirror Mirror to deploy-ready
   repo: organvm/mirror-mirror
@@ -54235,3 +54375,89 @@ tasks:
     agent: claude
     session_id: https://github.com/organvm/a-i-chat--exporter/pull/92
     status: dispatched
+- id: GEN-organvm-limen-ci-green-0626
+  title: Make organvm/limen CI green
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - ci-green
+  - generated
+  - build-out
+  urls: []
+  context: Inspect the latest FAILING checks on organvm/limen's default branch, fix
+    the root cause (lint / types / failing test / config), and confirm the checks
+    pass. If CI is already green, add the single most valuable missing check (e.g.
+    typecheck or test-matrix) instead. [auto-generated 2026-06-26 to keep the stream
+    endless]
+  depends_on: []
+  created: '2026-06-26'
+  updated: '2026-06-27T02:02:20.159089Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+- id: GEN-organvm-public-record-data-scrapper-docs-0626
+  title: Real usage docs for organvm/public-record-data-scrapper
+  repo: organvm/public-record-data-scrapper
+  type: code
+  target_agent: any
+  priority: low
+  budget_cost: 1
+  status: open
+  labels:
+  - docs
+  - generated
+  - build-out
+  urls: []
+  context: "Derive an accurate Usage section in organvm/public-record-data-scrapper's\
+    \ README from the ACTUAL entrypoints/exports (install, run, key commands + flags).\
+    \ No invented features, no TODOs \u2014 only what the code actually does. [auto-generated\
+    \ 2026-06-26 to keep the stream endless]"
+  depends_on: []
+  created: '2026-06-26'
+  dispatch_log: []
+- id: GEN-organvm-a-i-chat--exporter-docs-0626
+  title: Real usage docs for organvm/a-i-chat--exporter
+  repo: organvm/a-i-chat--exporter
+  type: code
+  target_agent: any
+  priority: low
+  budget_cost: 1
+  status: open
+  labels:
+  - docs
+  - generated
+  - build-out
+  urls: []
+  context: "Derive an accurate Usage section in organvm/a-i-chat--exporter's README\
+    \ from the ACTUAL entrypoints/exports (install, run, key commands + flags). No\
+    \ invented features, no TODOs \u2014 only what the code actually does. [auto-generated\
+    \ 2026-06-26 to keep the stream endless]"
+  depends_on: []
+  created: '2026-06-26'
+  dispatch_log: []
+- id: GEN-organvm-a-i-chat--exporter-typing-0626
+  title: Tighten types in organvm/a-i-chat--exporter
+  repo: organvm/a-i-chat--exporter
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - typing
+  - generated
+  - build-out
+  urls: []
+  context: Eliminate the worst untyped hotspots in organvm/a-i-chat--exporter's most-imported
+    module (remove `any` / add type hints / fix loose signatures). Keep the build
+    and tests green. [auto-generated 2026-06-26 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-26'
+  dispatch_log: []
