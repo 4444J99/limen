@@ -17,8 +17,8 @@ No directory was deleted or removed during this ledger pass.
 
 Evidence commands:
 
-- `python3 scripts/worktree-debt.py --json`: 20 roots, 12 debt-bearing roots after the
-  domus-genoma CI PR preservation and a new dispatcher reservation root.
+- `python3 scripts/worktree-debt.py --json`: 19 roots, 12 debt-bearing roots after the
+  domus-genoma CI PR preservation and transient dispatcher roots were reclaimed.
 - per-root `git status --porcelain`, `git log --oneline -5`, `git cherry <default> HEAD`.
 - non-Git residue inspection with `find` and direct reads of cache metadata files.
 
@@ -28,13 +28,13 @@ Current classes:
 - 0 unique local-only unpushed roots among the completed drain roots; newly spawned
   dispatcher roots are inside the active grace window.
 - 2 non-Git residue roots.
-- 8 active roots, including freshly pushed draft-PR roots and one new dispatcher root
-  still inside the idle grace window.
+- 7 active roots, including freshly pushed draft-PR roots still inside the idle
+  grace window.
 - 2 clean roots not merged to default, both with draft PR receipts.
 - 0 content-preserved roots remain on disk; two were reclaimed by the background
   reaper after their content-preserved classification was visible.
 
-System pothole found during this pass: none of the 20 root slugs appear directly
+System pothole found during this pass: none of the 19 root slugs appear directly
 in `tasks.yaml`. The strongest origin receipt for most roots is therefore the
 root/branch slug plus repo and recent commit/PR context, not a task-board entry.
 That is not enough for a fully automatic lifecycle.
@@ -55,7 +55,6 @@ That is not enough for a fully automatic lifecycle.
 | `discover-organvm-kerygma-profiles-6c74` | `organvm/kerygma-profiles` | draft PR open | branch `limen/discover-organvm-kerygma-profiles-6c74`; discovery task; no exact task slug in board | clean; PR [#8](https://github.com/organvm/kerygma-profiles/pull/8); commits `a8a029f`, `d7fd19e`; generated files remain on disk but are ignored; `python3 -m pytest` passed 24 tests; `python3 -m ruff check .` passed | preserved outside local disk, still lifecycle debt until merged or explicitly superseded | Review and merge the generated-artifact hygiene PR, or supersede by a named successor. |
 | `exporter-mp` | `organvm/a-i-chat--exporter` | draft PR open | branch `limen/exporter-multiprovider`; explicit multiprovider branch; no exact task slug in board | clean; PR [#95](https://github.com/organvm/a-i-chat--exporter/pull/95); commits `5c3298b`, `6c88427`, `dd73cce`; `pnpm test` passed; `pnpm lint` passed with warnings after lint-setup compatibility fix | preserved outside local disk, still lifecycle debt until merged or explicitly superseded | Review provider behavior and CI, then merge or supersede by named branch/PR. |
 | `gen-organvm-i-theoria-sovereign--ground-ci-green-0620-0f38` | `organvm/sovereign--ground` | dirty generated results | branch `limen/gen-organvm-i-theoria-sovereign--ground-ci-green-0620-0f38`; generated CI-green task; no exact task slug in board | HEAD `80e7617`; modified `structure-tests/results/ex01` through `ex11`; ahead 0 | lifecycle debt | Classify result drift; commit only if these are intended refreshed fixtures. |
-| `gen-organvm-limen-typing-0627-ccac` | `organvm/limen` | active dirty | branch `limen/gen-organvm-limen-typing-0627-ccac`; generated typing task reserved during this cleanup | HEAD `b2c6398` at `origin/main`; modified `cli/src/limen/capacity.py`, `cli/src/limen/converge.py`, `cli/src/limen/vigilia/params.py`; inside active grace window | active grace, not counted as debt yet | Let the dispatched session finish; if it stalls, preserve the diff with tests and a PR or record a blocker. |
 | `gen-organvm-mirror-mirror-security-0622-c552` | `organvm/mirror-mirror` | reclaimed, content-preserved | branch `limen/gen-organvm-mirror-mirror-security-0622-c552`; generated security task; no exact task slug in board | prior evidence: clean HEAD `afed90a`; `git cherry origin/main HEAD` patch-equivalent (`- afed90a...`); background reaper log `2026-06-27T13:05:49Z` removed this root | lifecycle closed; no unique source was local-only | No action unless a later audit finds missing value on default branch. |
 | `gen-organvm-the-invisible-ledger-ci-green-0625-e3c2` | unknown | non-Git residue | root slug says generated CI-green for `the-invisible-ledger`; no git metadata or exact board slug | contains only empty `dist/` directory; no files | documented non-source residue | No unique artifact to preserve. Reclaimable only after operator acceptance; no deletion in this pass. |
 | `gen-organvm-the-invisible-ledger-security-0622-d8f8` | `organvm/the-invisible-ledger` | reclaimed, content-preserved | branch `limen/sec-audit-0622`; generated security task; merged as PR #30 per prior audit | prior evidence: clean HEAD `b208078`; `git cherry origin/main HEAD` patch-equivalent (`- b208078...`); background reaper log `2026-06-27T13:05:49Z` removed this root | lifecycle closed; no unique source was local-only | No action unless a later audit finds missing value beyond merged PR #30. |
@@ -69,7 +68,7 @@ That is not enough for a fully automatic lifecycle.
 ## Roadblocks And Potholes
 
 - Worktree roots are not task-board addressable. The board has repo/task context, but the exact
-  root slug is absent for all 20 current roots.
+  root slug is absent for all 19 current roots.
 - Non-Git residue bypasses git lifecycle checks. The two `the-invisible-ledger`
   residue roots needed direct filesystem inspection to classify.
 - Patch-equivalent work looked unpushed until the debt scanner learned `git cherry`
