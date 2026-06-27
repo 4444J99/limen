@@ -31068,7 +31068,7 @@ tasks:
     status: needs_human
     output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
       \ stop re-looping"
-- id: LIMEN-083
+- id: LIMEN-083-memory-index-audit
   title: "GH-4444j99-domus-genoma-96: Memory index audit \u2014 daily rolling audit"
   repo: organvm/domus-genoma
   type: audit
@@ -31152,7 +31152,7 @@ tasks:
     session_id: heal
     status: done
     output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
-- id: BLD-my--father-mother-tests
+- id: BLD-my--father-mother-tests-expanded-suite
   title: "Tests \u2014 Add/expand automated test suite covering core code paths"
   repo: organvm/my--father-mother
   type: code
@@ -51910,7 +51910,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - simplify
   - generated
@@ -51921,7 +51921,7 @@ tasks:
     not grow without cause. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-27T02:02:20.159089Z'
+  updated: '2026-06-27T02:23:30Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:08:09.813170Z'
     agent: jules
@@ -51942,6 +51942,12 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:23:30Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: 'board-heal: completed by GEN-organvm-limen-simplify-0624-refactor-dispatch;
+      do not re-dispatch duplicate generated work'
 - id: GEN-organvm-domus-genoma-typing-0624
   title: Tighten types in organvm/domus-genoma
   repo: organvm/domus-genoma
@@ -52310,14 +52316,14 @@ tasks:
   created: '2026-06-24'
   updated: '2026-06-24T14:05:49.861712Z'
   dispatch_log: []
-- id: GEN-organvm-limen-simplify-0624
+- id: GEN-organvm-limen-simplify-0624-refactor-dispatch
   title: "Reduce complexity in organvm/limen \u2014 refactor dispatch.py"
   repo: organvm/limen
   type: code
   target_agent: opencode
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: done
   labels:
   - refactor
   - complexity
@@ -52330,7 +52336,7 @@ tasks:
     \ tests green."
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-27T02:20:15.165138Z'
+  updated: '2026-06-27T02:23:30Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:40:00Z'
     agent: opencode
@@ -52348,6 +52354,12 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:23:30Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: 'board-heal: restore terminal done after accidental reserve; reopening
+      completed work requires a new task'
 - id: EDU-summer-live-date-handoff
   title: Assemble the summer-2026 live-D2L date paste-list + drafted student replies
     into one handoff
@@ -54928,7 +54940,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: in_progress
+  status: done
   labels:
   - ci-green
   - generated
@@ -54941,7 +54953,7 @@ tasks:
     endless]
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T02:28:00Z'
+  updated: '2026-06-27T02:30:00Z'
   dispatch_log:
   - timestamp: '2026-06-27T02:02:20.159089Z'
     agent: codex
@@ -54962,6 +54974,11 @@ tasks:
     session_id: current
     status: in_progress
     output: 'Inspecting CI, found all green; adding shellcheck on all shell scripts'
+  - timestamp: '2026-06-27T02:30:00Z'
+    agent: opencode
+    session_id: current
+    status: done
+    output: 'CI already green. Added shellcheck -S error on all 77 shell scripts (previously only bash -n on 1 script); extended bash -n to all shell scripts. Changed files: .github/workflows/ci.yml, tasks.yaml. Commit 5528533 pushed.'
 - id: GEN-organvm-public-record-data-scrapper-docs-0626
   title: Real usage docs for organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
