@@ -5,9 +5,93 @@ import os
 import shutil
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any
+from typing import TypedDict, cast
 
 from limen.models import LimenFile, Task
+
+
+class Check(TypedDict):
+    id: str
+    status: str
+    detail: str
+
+
+class Counts(TypedDict):
+    total: int
+    open: int
+    active: int
+    stale: int
+
+
+class BudgetInfo(TypedDict):
+    daily: int
+    agent_limit: int
+    agent_spent: int
+    remaining: int
+
+
+class ReadinessReport(TypedDict):
+    status: str
+    agent: str
+    generated_at: str
+    tasks_path: str
+    counts: Counts
+    budget: BudgetInfo
+    checks: list[Check]
+    next_actions: list[str]
+
+
+class TaskLifecycle(TypedDict):
+    id: str
+    title: str
+    repo: str
+    status: str
+    priority: str
+    assignee: str
+    phase: str
+    next_gate: str
+    stale: bool
+    has_issue: bool
+    has_pr: bool
+    latest_event_at: str | None
+
+
+class Steering(TypedDict):
+    principle: str
+    next_batch: list[TaskLifecycle]
+    qa_queue: list[TaskLifecycle]
+    recovery_queue: list[TaskLifecycle]
+    assignment_queue: list[TaskLifecycle]
+    archive_queue: list[TaskLifecycle]
+
+
+class LifecycleCounts(TypedDict):
+    total: int
+    assign: int
+    verify: int
+    recover: int
+    archive_ready: int
+    archived: int
+
+
+class Mechanism(TypedDict):
+    id: str
+    label: str
+    agent: str
+    command: str
+    mode: str
+    count: int
+
+
+class QaReport(TypedDict):
+    status: str
+    surface: str
+    agent: str
+    generated_at: str
+    tasks_path: str
+    lifecycle: LifecycleCounts
+    steering: Steering
+    mechanisms: list[Mechanism]
 
 
 def _runtime_api_url() -> str:
@@ -49,7 +133,7 @@ def stale_tasks(
 
 def readiness_report(
     limen: LimenFile, tasks_path: Path, agent: str = "jules"
-) -> dict[str, Any]:
+) -> ReadinessReport:
     stale = stale_tasks(limen, agent=agent)
     open_tasks = [
         task
@@ -69,7 +153,7 @@ def readiness_report(
         else os.environ.get("LIMEN_DISPATCH_CMD", "agent-dispatch")
     )
     agent_path = shutil.which(agent_bin)
-    checks = [
+    checks: list[Check] = cast(list[Check], [
         {
             "id": "tasks_file",
             "status": "pass" if tasks_path.exists() else "fail",
@@ -106,7 +190,7 @@ def readiness_report(
             "detail": _runtime_api_url()
             or "backend runtime not attached to Firebase static hosting",
         },
-    ]
+    ])
     if any(check["status"] == "fail" for check in checks):
         status = "blocked"
     elif any(check["status"] == "warn" for check in checks):
@@ -137,7 +221,7 @@ def readiness_report(
     }
 
 
-def _iso(value: Any) -> str | None:
+def _iso(value: date | datetime | str | None) -> str | None:
     if value is None:
         return None
     if isinstance(value, (datetime, date)):
@@ -145,7 +229,7 @@ def _iso(value: Any) -> str | None:
     return str(value)
 
 
-def _task_lifecycle(task: Task, stale_ids: set[str]) -> dict[str, Any]:
+def _task_lifecycle(task: Task, stale_ids: set[str]) -> TaskLifecycle:
     events = sorted(
         [_ensure_aware(entry.timestamp) for entry in task.dispatch_log if entry.timestamp],
         reverse=True,
@@ -191,7 +275,7 @@ def _task_lifecycle(task: Task, stale_ids: set[str]) -> dict[str, Any]:
 
 def qa_report(
     limen: LimenFile, tasks_path: Path, agent: str = "jules"
-) -> dict[str, Any]:
+) -> QaReport:
     stale_ids = {task.id for task in stale_tasks(limen)}
     items = [_task_lifecycle(task, stale_ids) for task in limen.tasks]
     phase_order = {"recover": 0, "verify": 1, "assign": 2, "archive": 3, "archived": 4}
@@ -291,7 +375,7 @@ def next_actions(
     return actions
 
 
-def print_readiness(report: dict[str, Any]) -> None:
+def print_readiness(report: ReadinessReport) -> None:
     print(f"── limen doctor — status={report['status']} agent={report['agent']}")
     for check in report["checks"]:
         print(f"  {check['status'].upper():5} {check['id']}: {check['detail']}")
@@ -300,7 +384,7 @@ def print_readiness(report: dict[str, Any]) -> None:
         print(f"  {action}")
 
 
-def print_qa_report(report: dict[str, Any]) -> None:
+def print_qa_report(report: QaReport) -> None:
     lifecycle = report["lifecycle"]
     print(
         "── limen qa"
@@ -320,7 +404,7 @@ def print_qa_report(report: dict[str, Any]) -> None:
         print(f"  {mechanism['count']:3} {mechanism['id']}: {mechanism['command']}")
 
 
-def write_report(report: dict[str, Any], path: Path | None) -> None:
+def write_report(report: ReadinessReport | QaReport, path: Path | None) -> None:
     if path is None:
         return
     path.parent.mkdir(parents=True, exist_ok=True)

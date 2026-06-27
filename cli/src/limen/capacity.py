@@ -6,7 +6,23 @@ import shlex
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
+
+from limen.models import Task
+
+
+class AgentStatus(TypedDict):
+    agent: str
+    kind: str
+    reachable: bool
+    detail: str
+    command: list[str] | None
+
+
+class CapacityRow(AgentStatus):
+    limit: int
+    spent: int
+    remaining: int | None
 
 
 PAID_AGENT_ORDER: tuple[str, ...] = (
@@ -73,13 +89,13 @@ def canonical_agent(agent: str | None) -> str:
     return AGENT_ALIASES.get(value, value)
 
 
-def task_value(task: Any, key: str, default: Any = None) -> Any:
+def task_value(task: Task | dict[str, object], key: str, default: Any = None) -> Any:
     if isinstance(task, dict):
         return task.get(key, default)
     return getattr(task, key, default)
 
 
-def github_issue_ref(task: Any) -> tuple[str, str] | None:
+def github_issue_ref(task: Task | dict[str, object]) -> tuple[str, str] | None:
     """Return (repo, issue_number) when a task already points at a GitHub issue."""
     fields: list[str] = []
     urls = task_value(task, "urls", []) or []
@@ -95,7 +111,7 @@ def github_issue_ref(task: Any) -> tuple[str, str] | None:
     return None
 
 
-def task_has_github_issue(task: Any) -> bool:
+def task_has_github_issue(task: Task | dict[str, object]) -> bool:
     return github_issue_ref(task) is not None
 
 
@@ -197,7 +213,7 @@ def _copilot_assignable(binary: str, repo: str, actor: str) -> bool:
     return False
 
 
-def agent_status(agent: str) -> dict[str, Any]:
+def agent_status(agent: str) -> AgentStatus:
     agent = canonical_agent(agent)
     if agent not in PAID_AGENT_ORDER:
         return {
@@ -309,7 +325,7 @@ def _int(value: Any, default: int = 0) -> int:
         return default
 
 
-def capacity_census(board: Any = None, budget_limit: int | None = None) -> list[dict[str, Any]]:
+def capacity_census(board: Any = None, budget_limit: int | None = None) -> list[CapacityRow]:
     budget = _budget_from_board(board)
     daily = _int(budget_limit if budget_limit is not None else _get(budget, "daily", 0))
     track = _get(budget, "track", {})
@@ -318,7 +334,7 @@ def capacity_census(board: Any = None, budget_limit: int | None = None) -> list[
     per_agent_spent = _get(track, "per_agent", {}) or {}
     daily_remaining = max(0, daily - total_spent) if daily else None
 
-    rows: list[dict[str, Any]] = []
+    rows: list[CapacityRow] = []
     for agent in PAID_AGENT_ORDER:
         status = agent_status(agent)
         cap = _int(per_agent_caps.get(agent), daily)
@@ -340,7 +356,7 @@ def capacity_census(board: Any = None, budget_limit: int | None = None) -> list[
     return rows
 
 
-def format_capacity_census(rows: list[dict[str, Any]]) -> str:
+def format_capacity_census(rows: list[CapacityRow]) -> str:
     lines = ["-- capacity census"]
     for row in rows:
         state = "up" if row["reachable"] else "down"
