@@ -10,7 +10,7 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from limen.capacity import PAID_AGENT_ORDER, capacity_census, format_capacity_census
-from limen.dispatch import dispatch_tasks, release_stale_tasks
+from limen.dispatch import dispatch_parallel, dispatch_tasks, release_stale_tasks
 from limen.doctor import qa_report, readiness_report, stale_tasks
 from limen.io import load_limen_file
 from limen.status import print_status
@@ -160,6 +160,71 @@ def test_dispatch_dry_run_prints_capacity_census_and_copilot_command(
     assert "-- capacity census" in output
     assert "copilot" in output
     assert "would: gh api graphql (fetch node IDs + replaceActorsForAssignable for copilot-swe-agent on organvm/limen#12)" in output
+
+
+def test_dispatch_skips_needs_human_label(tmp_path: Path, capsys) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "HUMAN-GATE",
+                "title": "Needs human",
+                "repo": "organvm/limen",
+                "target_agent": "external",
+                "priority": "critical",
+                "budget_cost": 1,
+                "status": "open",
+                "labels": ["needs-human"],
+                "created": "2026-06-20",
+                "dispatch_log": [],
+            }
+        ],
+    )
+
+    dispatch_tasks(load_limen_file(tasks_path), tasks_path, agent="external", dry_run=True)
+
+    output = capsys.readouterr().out
+    assert "No open tasks for agent 'external'" in output
+    assert "HUMAN-GATE" not in output
+
+
+def test_dispatch_parallel_skips_needs_human_label(tmp_path: Path, capsys) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "HUMAN-GATE",
+                "title": "Needs human",
+                "repo": "organvm/limen",
+                "target_agent": "any",
+                "priority": "critical",
+                "budget_cost": 1,
+                "status": "open",
+                "labels": ["needs-human"],
+                "created": "2026-06-20",
+                "dispatch_log": [],
+            },
+            {
+                "id": "MACHINE-WORK",
+                "title": "Machine work",
+                "repo": "organvm/limen",
+                "target_agent": "any",
+                "priority": "critical",
+                "budget_cost": 1,
+                "status": "open",
+                "created": "2026-06-20",
+                "dispatch_log": [],
+            },
+        ],
+    )
+
+    dispatch_parallel(load_limen_file(tasks_path), tasks_path, agents=["codex"], dry_run=True)
+
+    output = capsys.readouterr().out
+    assert "MACHINE-WORK" in output
+    assert "HUMAN-GATE" not in output
 
 
 def test_release_stale_dry_run_does_not_mutate(tmp_path: Path) -> None:

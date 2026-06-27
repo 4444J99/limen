@@ -27,6 +27,7 @@ web/app/public/
 
 # Local conductor/report artifacts
 .limen-reports/
+obligations-ledger.json
 
 # Next.js route source — protect from machine-global 'public/' ignore rules
 !web/app/app/public/
