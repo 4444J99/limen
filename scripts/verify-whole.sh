@@ -36,6 +36,7 @@ step "Generate static and private surface contracts"
 (
   cd "$ROOT/web/app"
   npm run generate:data
+  node scripts/fetch-pr-status.mjs
 )
 
 step "Validate lifecycle adapter parity"
