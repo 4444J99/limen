@@ -42,6 +42,17 @@ python -m pytest cli/tests/test_dispatch.py -q
 python -m pytest cli/tests/test_dispatch.py::test_x
 ```
 
+## Coding style
+
+- Python targets 3.11. Use Ruff (`line-length = 120`) and keep CLI behavior in small, testable
+  modules under `cli/src/limen/`.
+- Tests use pytest. Put CLI tests under `cli/tests/` and API tests under `web/api/tests/`; name
+  files `test_*.py` and cases `test_<behavior>`.
+- TypeScript/JavaScript checks are owned by each web package. Use `npm run check` in `web/worker`
+  and `npm run build` in `web/app` for affected changes.
+- Shell scripts should be idempotent, explicit about side effects, and safe to re-run. Prefer
+  `set -euo pipefail` for new Bash scripts.
+
 ## Branching & merging
 
 - Never commit to `main` directly. Branch by intent: `feat/`, `fix/`, `heal/`, `chore/`,
@@ -50,6 +61,21 @@ python -m pytest cli/tests/test_dispatch.py::test_x
   path (`web/app/**`, `web/api/**`, `cli/**`, `tasks.yaml`, the deploy workflows). Those PRs
   need green CI before merge. See `CLAUDE.md` → **Merge & Branch Protocol** and
   `scripts/merge-policy.sh` (the predicate that decides each case).
+
+## Pull request checklist
+
+- Describe the user-visible change and the affected components.
+- Link the issue, task, or PR that motivated the change when one exists.
+- Paste the commands you ran and their outcomes; say explicitly if a gate was not run.
+- Include screenshots or contract diffs for dashboard/API surface changes.
+- Keep secrets, tokens, private customer data, and local machine paths out of PR text.
+
+## Maintaining agent instructions
+
+When changing `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, or generated instruction templates, keep
+the root protocol authoritative and run `python scripts/check-agent-docs.py`. Status vocabulary,
+precedence, agent names, and referenced scripts should stay machine-checked rather than manually
+remembered.
 
 ## What we accept
 
@@ -61,4 +87,5 @@ python -m pytest cli/tests/test_dispatch.py::test_x
 ## Getting help
 
 - Open an Issue for questions or to propose a change.
-- Start with `README.md` (overview), `SCHEMA.md` (the task schema), and `AGENTS.md` (protocol).
+- Start with `README.md` (overview), `SCHEMA.md` (the task schema), `AGENTS.md` (protocol), and
+  `docs/deployment.md` (deployment).

@@ -9,13 +9,30 @@ how to claim it, and how to report results.
 
 ---
 
+## Operating Modes
+
+Use this protocol in the right mode:
+
+- **Direct-session mode:** if the human gives an explicit request in the current session, satisfy
+  that request first. Do not claim unrelated queue work, reserve budget, or mutate `tasks.yaml`
+  unless the request is to work from the Limen queue or the requested work itself requires a task
+  state update.
+- **Dispatch mode:** if launched by the scheduler, `limen dispatch`, MCP task tooling, or an
+  explicit "take the next task" request, follow the startup checklist and session rituals below.
+
+Do not let the dispatch startup ritual override a direct human request or a higher-priority
+system / developer / runtime constraint.
+
 ## Startup Checklist (fast path)
+
+For dispatch-mode sessions:
 
 1. **Identify** yourself — set `LIMEN_AGENT` (`claude | gemini | jules | opencode | codex | copilot | goose`).
 2. **Read** `$LIMEN_ROOT/tasks.yaml` (fallback `./tasks.yaml`) — parse the budget and the full task list.
 3. **Claim** the highest-priority `open` task targeted at you (or `any`) that fits the remaining budget.
 4. **Update status** before (`dispatched` → `in_progress`) and after (`done` / `failed`) execution.
-5. **Verify** before reporting `done` — run the repo's predicate (here: `scripts/verify-whole.sh`).
+5. **Verify** before reporting `done` — run the task predicate, or the repo predicate
+   (`scripts/verify-whole.sh`) when no narrower predicate is defined.
 6. **Close out** — release stale claims back to `open`, restore budget, commit `tasks.yaml`.
 
 Each step is detailed below.
@@ -27,7 +44,7 @@ When instructions conflict, the higher rule wins:
 1. System / developer / runtime constraints (the harness)
 2. The human's explicit instructions for this session
 3. `tasks.yaml` — the single source of truth for task **state**
-4. This file (`AGENTS.md`) — the cross-agent dispatch **protocol**
+4. `AGENTS.md` — the cross-agent dispatch **protocol**
 5. Tool-specific charters (`CLAUDE.md`, `GEMINI.md`) — per-agent behavior
 6. General repository docs (`README.md`, `docs/**`)
 
@@ -55,6 +72,16 @@ Normal flow: `open → dispatched → in_progress → done → archived`. From `
 instead move to `failed`, `failed_blocked`, or `needs_human`. A stale `dispatched`/`in_progress`
 claim is released back to `open` (see Session End Ritual). There is **no** `completed` state — use `done`.
 
+### Transition Rules
+
+- Append a `dispatch_log` entry for every state transition; do not rewrite prior entries except to
+  correct your own unpushed typo.
+- `open` may move to `dispatched` when budget is reserved for a specific agent/session.
+- `dispatched` may move to `in_progress` when execution starts.
+- `dispatched` may move back to `open` only if no execution occurred; restore the reserved budget.
+- `in_progress` may move to `done`, `failed`, `failed_blocked`, or `needs_human`.
+- `done` may move to `archived`. Reopening completed work requires a new task or explicit human instruction.
+
 ## Where to Find Tasks
 
 ```bash
@@ -67,7 +94,7 @@ $LIMEN_ROOT/tasks.yaml
 
 ## Session Start Ritual
 
-Execute in order:
+For dispatch-mode sessions, execute in order:
 
 ### 1. Identify Yourself
 
@@ -103,7 +130,12 @@ Then run: `limen status` to show the full board (if CLI installed), or just exit
 
 ### 5. Claim a Task
 
-Pick the highest-priority task. Update `tasks.yaml`:
+Pick the highest-priority task. Prefer the Limen CLI/MCP claim path when available (for example,
+`limen dispatch --agent <your_name> --live` or the MCP task tools). If editing `tasks.yaml`
+directly, re-read it immediately before writing and abort if the task status, budget, or
+`dispatch_log` changed.
+
+Update `tasks.yaml` and append to `dispatch_log`:
 
 ```yaml
 # Change this:
@@ -113,15 +145,15 @@ Pick the highest-priority task. Update `tasks.yaml`:
 # To this:
   - id: "LIMEN-001"
     status: dispatched
-    updated: "<now>"  # ISO-8601 UTC, e.g. 2026-05-31T10:30:00Z
+    updated: "<now>"  # ISO-8601 UTC from: date -u +"%Y-%m-%dT%H:%M:%SZ"
     dispatch_log:
-      - timestamp: "<now>"  # ISO-8601 UTC, e.g. 2026-05-31T10:30:00Z
+      - timestamp: "<now>"  # same timestamp format
         agent: "<your_name>"
         session_id: "<current_session_id>"
         status: dispatched
 ```
 
-Also decrement the daily budget:
+Also reserve budget by incrementing `spent` counters:
 ```yaml
 portal:
   budget:
@@ -134,7 +166,7 @@ portal:
 ### 6. Execute
 
 Begin work on the task. When you start actual execution (not just planning), update
-status to `in_progress`.
+status to `in_progress` and append a `dispatch_log` entry.
 
 ### 7. Report Results
 
@@ -164,20 +196,36 @@ On failure:
         output: "<what went wrong, why it failed>"
 ```
 
+Choose the terminal state precisely:
+
+- `failed` — the attempt ran and did not succeed, but another attempt may fix it.
+- `failed_blocked` — an external system blocked progress (billing, auth, unavailable service,
+  broken dependency outside the repo).
+- `needs_human` — the next required action is a real human decision or manual step.
+
+For `done`, include the evidence: predicate command, result, changed paths, PR/commit if any, and
+any scoped caveats. If a higher-priority runtime constraint prevents verification, do not claim a
+verified `done`; record the blocker instead.
+
 ---
 
 ## Session End Ritual
 
 ### 1. Release Stale Claims
 
-For any tasks you have in `dispatched` status (claimed but not completed):
+For any tasks you have in `dispatched` status where no execution occurred:
 ```yaml
   - id: "LIMEN-001"
     status: open
     updated: "<now>"
 ```
 
-Also restore the budget those tasks consumed.
+Also restore budget for claims released before execution. Do not refund budget for work that
+actually ran unless the task owner explicitly records that policy in `tasks.yaml`.
+
+For tasks already in `in_progress`, do not silently reopen after partial work. Move them to
+`failed`, `failed_blocked`, or `needs_human` with evidence, unless an explicit scheduler policy says
+to release stale partial work.
 
 ### 2. Commit and Push
 
@@ -188,32 +236,25 @@ git -C "$LIMEN_ROOT" commit -m "limen: update task states"
 git -C "$LIMEN_ROOT" push
 ```
 
-## SaaS Deployment (Production)
+Stage only `tasks.yaml` for board updates. Do not force-push, rewrite unrelated history, or include
+unrelated work in the task-state commit. If the runtime or human instruction forbids git writes,
+report the exact uncommitted board change instead.
 
-When deploying the SaaS stack, set these env vars on the web API:
+## Safety & Evidence
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `LIMEN_API_TOKEN` | Yes | Bearer token for API auth |
-| `LIMEN_ROOT` | Yes | Path to limen root on disk |
-| `LIMEN_TASKS` | No | Alternative path to tasks.yaml |
+- Never place plaintext secrets, tokens, credentials, personal contact data, or private customer
+  data in `tasks.yaml`, `dispatch_log`, commits, PR bodies, or chat transcripts.
+- Prefer durable links and paths over pasted logs. Summarize long outputs.
+- Every `done` report should be reproducible from the repo: predicate command, result, changed
+  files, and commit/PR reference where applicable.
+- If a tool charter asks for behavior that conflicts with this protocol, follow the precedence
+  ladder above and update the lower-priority doc later.
 
-For the Next.js dashboard, set `NEXT_PUBLIC_API_URL` to the API endpoint (defaults to `http://localhost:8000`).
+## Deployment Pointer
 
-### Railway (API)
-
-```bash
-railway login
-railway init
-railway up
-```
-
-### Vercel (Dashboard)
-
-```bash
-vercel login
-vercel --prod
-```
+Production deployment is operational guidance, not dispatch protocol. Use
+[`docs/deployment.md`](docs/deployment.md) for SaaS deployment variables, commands, and safety
+checks.
 
 ---
 
@@ -241,6 +282,20 @@ vercel --prod
 - Support `--task <id>` flag for targeted dispatch to a single task.
 - Write results back to tasks.yaml on completion.
 
+### Codex
+- You are Codex in an interactive coding harness. In direct-session mode, follow the human's
+  request first and do not claim unrelated queue work.
+- System / developer / runtime constraints outrank this protocol.
+
+### Copilot
+- You are GitHub Copilot. Treat this file as repository guidance.
+- If you cannot update `tasks.yaml` directly, report task state and evidence in the PR or commit
+  output so a writable agent can sync the board.
+
+### Goose
+- You are Goose. Follow the same dispatch ritual as other agents.
+- Prefer the Limen CLI or MCP task tools over manual `tasks.yaml` edits when available.
+
 ---
 
 ## Quick Reference
@@ -248,8 +303,9 @@ vercel --prod
 | Action | Command |
 |---|---|
 | Read tasks | `cat $LIMEN_ROOT/tasks.yaml` |
-| Claim a task | Edit `status: open` → `status: dispatched` in tasks.yaml |
-| Report done | Edit `status: dispatched` → `status: done` + add output |
+| Claim a task | Use CLI/MCP, or final re-read then edit `status: open` → `status: dispatched` |
+| Start execution | Edit `status: dispatched` → `status: in_progress` |
+| Report done | Edit `status: in_progress` → `status: done` + add output |
 | Show board | `limen status` (if CLI installed) |
 | Dispatch | `limen dispatch --agent <name> --live` |
 | Harvest | `limen harvest --agent <name>` |

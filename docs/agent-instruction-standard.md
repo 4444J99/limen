@@ -1,12 +1,10 @@
 # The Agent-Instruction Standard ("agent-all")
 
-> **Portal note.** This file is the durable home for a question that keeps recurring in
-> chat: *"how should our agent-instruction files (`AGENTS.md` / `CLAUDE.md` / `GEMINI.md` /
-> `copilot-instructions`) be standardized, and where is the canonical **agent-all**?"* You
-> have raised it many times — *"we have built this many times in different ways"*
-> (2026-06-23). This is the committed answer, so it is **summoned into every session instead
-> of re-derived and lost**. If you find yourself re-litigating the agent-instruction files,
-> read this first; if it is wrong, fix it here.
+> **Portal note.** This file is the durable answer to a recurring design question:
+> *"how should our agent-instruction files (`AGENTS.md` / `CLAUDE.md` / `GEMINI.md` /
+> `copilot-instructions`) be standardized, and where is the canonical **agent-all**?"*
+> This is the committed answer, so it is summoned into sessions instead of re-derived and
+> lost. If the standard is wrong, fix it here.
 
 ---
 
@@ -14,6 +12,44 @@
 
 There is **no missing "agent-all" repo to build**. The capability exists as two orthogonal
 layers. The job is to **converge on them, not rebuild** them.
+
+## File roles and boundaries
+
+| Surface | Owns | Must not own |
+|---------|------|--------------|
+| `AGENTS.md` | Cross-agent protocol: operating modes, task states, budget/claim rules, safety, `dispatch_log` | Tool-specific personality or merge cadence |
+| `CLAUDE.md` | Claude Code execution discipline, closeout, credential handling, merge policy, output style | Canonical status vocabulary or task-state schema |
+| `GEMINI.md` | Conductor/Gemini MCP workflow, worktree spawning, PR babysitting mechanics | Independent task lifecycle rules |
+| `CONTRIBUTING.md` | Human setup, style, gates, branch/PR requirements | Agent dispatch protocol |
+| `docs/deployment.md` | Production deployment variables, commands, and safety checks | Agent task claiming or lifecycle state |
+| Generated templates | Starter guidance for other tools/editors | Repo-specific truth copied out of date |
+
+Any new instruction surface must declare which file it defers to and which behavior it uniquely
+owns. If it repeats task states, precedence, agent names, or safety rules, add a drift check or link
+back to `AGENTS.md` instead.
+
+## Change procedure
+
+1. Update the owning source file, not every surface by hand.
+2. If the change touches states, precedence, agent names, referenced scripts, or examples, update
+   `scripts/check-agent-docs.py`.
+3. Keep examples machine-checkable where practical.
+4. Keep direct-session behavior distinct from dispatch-mode behavior.
+5. Prefer bounded loops, explicit evidence, and append-only history over prose promises.
+
+## Home-scope generated surfaces
+
+`domus-genoma` also renders home/global instruction files such as `~/AGENTS.md`,
+`~/.claude/CLAUDE.md`, Copilot instructions, Cursor rules, and Codex shims. Those are fallback
+surfaces, not repo-local truth. Their manifest is:
+
+```text
+domus-genoma/dot_config/ai-context/agent-instruction-surfaces.json.tmpl
+```
+
+The invariant is simple: home-scope instructions may provide defaults, but inside a repository the
+nearest project `AGENTS.md` owns project-specific protocol. Tool-specific generated files must
+defer to that project contract and must not redefine Limen task states or dispatch semantics.
 
 ### Layer 1 — ecosystem-context (the real "agent-all" generator)
 
@@ -67,10 +103,10 @@ Mirror of `AGENTS.md → Precedence`, repeated here so the portal is self-contai
 
 1. System / developer / runtime constraints (the harness)
 2. The human's explicit instructions for this session
-3. `tasks.yaml` — single source of truth for task **state**
+3. `tasks.yaml` — the single source of truth for task **state**
 4. `AGENTS.md` — the cross-agent dispatch **protocol**
-5. Tool charters (`CLAUDE.md`, `GEMINI.md`) — per-agent behavior
-6. General repo docs (`README.md`, `docs/**`)
+5. Tool-specific charters (`CLAUDE.md`, `GEMINI.md`) — per-agent behavior
+6. General repository docs (`README.md`, `docs/**`)
 
 ---
 
@@ -105,11 +141,11 @@ the instruction files can no longer silently drift from the code.
 
 ---
 
-## Codex's 2026-06-26 critique — adjudicated
+## Decision record: 2026-06-26 instruction critique
 
-Recorded so the same generic advice is not re-run from scratch next time. Verdicts are
-against this repo's own philosophy (the charter is a single file deliberately loaded every
-session; "Definition of Done = an executable predicate, not prose").
+Recorded so the same instruction-design questions are not re-run from scratch next time.
+Verdicts are against this repo's own philosophy: the charter is a single file deliberately
+loaded every session, and "Definition of Done = an executable predicate, not prose."
 
 | # | Codex point | Verdict | Why |
 |---|-------------|---------|-----|
@@ -126,10 +162,10 @@ session; "Definition of Done = an executable predicate, not prose").
 
 ---
 
-## The recurring asks (portal index)
+## Historical context (portal index)
 
-Every prior prompt/session that dealt with the agent-instruction standard, so the intent is
-captured durably. Sourced from a sweep of ~2,300 session transcripts (`~/.claude/projects`).
+Selected prior prompts/sessions that dealt with the agent-instruction standard, so the intent is
+captured durably. Sourced from a sweep of session transcripts (`~/.claude/projects`).
 
 | Date | Session (under `~/.claude/projects/`) | The ask | Outcome |
 |------|----------------------------------------|---------|---------|
