@@ -1,6 +1,6 @@
 # Prompt Lifecycle Ledger
 
-Generated: `2026-06-27T19:30:52+00:00`
+Generated: `2026-06-27T19:57:01+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -17,7 +17,7 @@ Indexed `9481` app/session files, `2.1 GiB`, with `92664` prompt-like user event
 | Source | Files | Prompt Events | Event Records | Size | Newest |
 |---|---:|---:|---:|---:|---|
 | `claude-projects` | 4848 | 87805 | 313140 | 1.4 GiB | `2026-06-27T17:49:30+00:00` |
-| `codex-sessions` | 887 | 4322 | 228625 | 679.3 MiB | `2026-06-27T19:29:33+00:00` |
+| `codex-sessions` | 887 | 4322 | 228993 | 679.9 MiB | `2026-06-27T19:55:43+00:00` |
 | `codex-history` | 1 | 404 | 404 | 180.0 KiB | `2026-06-27T19:18:01+00:00` |
 | `claude-tasks` | 188 | 133 | 133 | 57.7 KiB | `2026-06-26T00:08:52+00:00` |
 | `claude-file-history` | 3519 | 0 | 0 | 42.2 MiB | `2026-06-27T00:26:28+00:00` |
@@ -26,13 +26,13 @@ Indexed `9481` app/session files, `2.1 GiB`, with `92664` prompt-like user event
 
 ## Prompt To Worktree Crosswalk
 
-- Current `.limen-worktrees` roots scanned: `19`; debt roots: `15`.
+- Current `.limen-worktrees` roots scanned: `19`; debt roots: `16`.
 - Current worktree roots with at least one local session/prompt receipt: `18`.
 - Current worktree roots without a local session receipt in this index: `1`.
 
 | Worktree Root | Session Files | Prompt Events | Debt Reason |
 |---|---:|---:|---|
-| `bld-domus-genoma-ci-23a9` | 1 | 4 | `active(<6h)` |
+| `bld-domus-genoma-ci-23a9` | 1 | 4 | `unpushed-commits` |
 | `bld-media-ark-tests-2698` | 1 | 4 | `unpushed-commits` |
 | `bld-mirror-mirror-harden-350f` | 1 | 5 | `active(<6h)` |
 | `bld-my--father-mother-harden-44b2` | 1 | 5 | `dirty` |
@@ -70,7 +70,7 @@ Indexed `9481` app/session files, `2.1 GiB`, with `92664` prompt-like user event
 - GitHub worktree repos seen: `14`.
 - Git worktree roots with remote branch present: `10`; missing: `6`.
 - Branch-linked PR states: `OPEN` 10, `MERGED` 2, `CLOSED` 0.
-- Task-board GitHub PR refs seen: `657`; checked: `657`; states: `CLOSED` 31, `ERROR` 11, `MERGED` 443, `OPEN` 172.
+- Task-board GitHub PR refs seen: `657`; checked: `657`; states: `CLOSED` 31, `ERROR` 10, `MERGED` 444, `OPEN` 172.
 
 ## Cloud Receipts
 
@@ -87,7 +87,7 @@ Indexed `9481` app/session files, `2.1 GiB`, with `92664` prompt-like user event
 - Dispatch receipt classification must distinguish async Jules work from stranded local no-PR work; otherwise the conductor burns attention on healthy async reservations.
 - Prompt/session coverage is now hashed, but lifecycle judgment still needs owner actions: dirty roots need PRs or blocker records, and open PR receipts need merge or named supersession.
 - Codex now has prompt-event coverage through `history.jsonl` and session JSONL, but it still lacks a quicken-style resume/classification organ equivalent to Claude's lifecycle journal.
-- Remote task-board PR receipt scan has `11` GitHub/API errors; rerun before using those refs as closure proof.
+- Remote task-board PR receipt scan has `10` GitHub/API errors; rerun before using those refs as closure proof.
 
 ## Drain Queue
 

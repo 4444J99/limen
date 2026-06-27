@@ -31,11 +31,11 @@ specific item is claimed or dispatched.
 ## Run Notes
 
 - 2026-06-27: `session-meta` owner state was preserved on branch
-  `codex/preserve-session-meta-owner-state-20260627`, commit `27ab53a`, with draft PR
-  [organvm/session-meta#130](https://github.com/organvm/session-meta/pull/130). The owner-state
-  bundle was cleanly pushed on that branch. GitHub marks the PR `CONFLICTING` against current
-  `main`, so merge/split/rebase is downstream lifecycle work; the preservation objective is
-  satisfied and no unique local state should be discarded.
+  `codex/preserve-session-meta-owner-state-20260627`, now rebased through commit `db2285a`, with
+  draft PR [organvm/session-meta#130](https://github.com/organvm/session-meta/pull/130). GitHub
+  marks the PR `MERGEABLE`, and the CI matrix for Python 3.10, 3.11, and 3.12 is green. The
+  pre-rebase chain, including live manifest receipt `d9d9611`, is preserved on remote branch
+  `backup/session-meta-pr130-before-rebase-20260627T194123Z`.
 - 2026-06-27: `knowledge-corpus` owner state was preserved on branch
   `codex/preserve-knowledge-corpus-owner-state-20260627`, commit `e66199e`, with draft PR
   [organvm/knowledge-corpus#1](https://github.com/organvm/knowledge-corpus/pull/1). The local
@@ -45,9 +45,6 @@ specific item is claimed or dispatched.
   with a `[Full document as in source material ...]` placeholder; the PR preserves it for
   lifecycle continuity, but it should be reviewed before merge as a likely convergence-output
   regression.
-- 2026-06-27: after refreshing Limen ledgers, `session-meta` shows one new live-session
-  `ingest/manifest.jsonl` update for the current Codex transcript. This is not a separate
-  owner-state bundle; fold it into the next session-meta refresh after this live session ends.
 
 ## Dirty And Missing-Remote Worktrees
 
