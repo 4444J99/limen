@@ -50162,7 +50162,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - test-coverage
   - generated
@@ -50174,7 +50174,7 @@ tasks:
     keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-27T01:19:14.038132Z'
+  updated: '2026-06-27T02:06:36.250353Z'
   dispatch_log:
   - timestamp: '2026-06-24T13:05:57.998424Z'
     agent: jules
@@ -50204,6 +50204,11 @@ tasks:
     agent: claude
     session_id: https://github.com/organvm/portfolio/pull/154
     status: dispatched
+  - timestamp: '2026-06-27T02:06:36.250353Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR merged \u2192 done"
 - id: GEN-organvm-session-meta-test-coverage-0624
   title: Raise test coverage in organvm/session-meta
   repo: organvm/session-meta
@@ -52339,12 +52344,15 @@ tasks:
     agent: opencode
     session_id: current
     status: in_progress
-    output: 'Started re-deriving typing-modernization from insight-cadence-core fork onto current main'
+    output: Started re-deriving typing-modernization from insight-cadence-core fork
+      onto current main
   - timestamp: '2026-06-27T02:08:00Z'
     agent: opencode
     session_id: current
     status: done
-    output: 'PR #364 already merged (commit 77d0f7a). All 4 files (doctor.py, capacity.py, models.py, status.py) already have TypedDicts and PEP-604 syntax. mypy passes on all 4. No additional work needed.'
+    output: 'PR #364 already merged (commit 77d0f7a). All 4 files (doctor.py, capacity.py,
+      models.py, status.py) already have TypedDicts and PEP-604 syntax. mypy passes
+      on all 4. No additional work needed.'
 - id: GH-organvm-limen-334
   title: 'needs-human (L-FLEET-CAPACITY): Light the dark async lanes'
   repo: organvm/limen
@@ -52357,12 +52365,12 @@ tasks:
   - needs-human
   urls:
   - https://github.com/organvm/limen/issues/334
-  context: "GitHub issue organvm/limen#334. **Owner:** Anthony (human-gated lever\
-    \ `L-FLEET-CAPACITY`). Surfaced once, never nagged, never auto-pulled. The hydration\
-    \ organ works (PR #217 merged, launchd armed, gh auto-healed). Issue body updated\
-    \ 2026-06-27: gemini 403 CONSUMER_SUSPENDED + cloudflare 401 Invalid API Token.\
-    \ Remaining = 2 re-mints into 1Password + `op` unlocked. Verifiable by `python3\
-    \ scripts/creds-hydrate.py --verify` (exit 0)."
+  context: 'GitHub issue organvm/limen#334. **Owner:** Anthony (human-gated lever
+    `L-FLEET-CAPACITY`). Surfaced once, never nagged, never auto-pulled. The hydration
+    organ works (PR #217 merged, launchd armed, gh auto-healed). Issue body updated
+    2026-06-27: gemini 403 CONSUMER_SUSPENDED + cloudflare 401 Invalid API Token.
+    Remaining = 2 re-mints into 1Password + `op` unlocked. Verifiable by `python3
+    scripts/creds-hydrate.py --verify` (exit 0).'
   depends_on: []
   created: '2026-06-26'
   updated: '2026-06-27T02:02:20.159089Z'
@@ -52381,10 +52389,11 @@ tasks:
     agent: opencode
     session_id: current
     status: needs_human
-    output: 'Verified ground truth: creds-hydrate --verify shows gemini 403 CONSUMER_SUSPENDED,
-      cloudflare 401 Invalid API Token. Issue #334 body updated to match. L-FLEET-CAPACITY
-      registered in his-hand-levers.json. Remaining atoms (gemini, cloudflare, op
-      unlock) are human-gated — exit 0 from creds-hydrate --verify is the close predicate.'
+    output: "Verified ground truth: creds-hydrate --verify shows gemini 403 CONSUMER_SUSPENDED,\
+      \ cloudflare 401 Invalid API Token. Issue #334 body updated to match. L-FLEET-CAPACITY\
+      \ registered in his-hand-levers.json. Remaining atoms (gemini, cloudflare, op\
+      \ unlock) are human-gated \u2014 exit 0 from creds-hydrate --verify is the close\
+      \ predicate."
 - id: GH-organvm-limen-333
   title: 'needs-human (L-GMAIL-CRED): Revive the autonomous mail lane with ONE paste'
   repo: organvm/limen
@@ -52471,11 +52480,12 @@ tasks:
   created: '2026-06-26'
   updated: '2026-06-27T02:02:20.159089Z'
   dispatch_log:
-  - timestamp: '2026-06-26T22:04:00.000000Z'
+  - timestamp: '2026-06-26T22:04:00Z'
     agent: agy
     session_id: cli
     status: done
-    output: 'Verified wrangler whoami succeeds (CLOUDFLARE_API_TOKEN is valid). Cloudflare deploy auth complete.'
+    output: Verified wrangler whoami succeeds (CLOUDFLARE_API_TOKEN is valid). Cloudflare
+      deploy auth complete.
   - timestamp: '2026-06-27T02:02:20.159089Z'
     agent: agy
     session_id: reserve
@@ -53587,7 +53597,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - security
   - generated
@@ -53599,7 +53609,7 @@ tasks:
     green. [auto-generated 2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T01:19:14.038132Z'
+  updated: '2026-06-27T02:06:36.250353Z'
   dispatch_log:
   - timestamp: '2026-06-27T00:17:34.556008Z'
     agent: jules
@@ -53620,6 +53630,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/universal-mail--automation/pull/95
     status: dispatched
+  - timestamp: '2026-06-27T02:06:36.250353Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GEN-organvm-public-record-data-scrapper-security-0626
   title: Security hardening pass on organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
@@ -53952,7 +53967,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: done
   labels:
   - revenue-ship
   - revenue
@@ -53967,7 +53982,7 @@ tasks:
     \ rank 3, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T01:19:14.038132Z'
+  updated: '2026-06-27T02:06:36.250353Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
@@ -53984,6 +53999,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/universal-mail--automation/pull/96
     status: dispatched
+  - timestamp: '2026-06-27T02:06:36.250353Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: REV-organvm-the-invisible-ledger-revenue-ship-0626
   title: Drive The Invisible Ledger to deploy-ready
   repo: organvm/the-invisible-ledger
@@ -54149,7 +54169,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: done
   labels:
   - revenue-readiness
   - revenue
@@ -54164,7 +54184,7 @@ tasks:
     \ 3, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T01:19:14.038132Z'
+  updated: '2026-06-27T02:06:36.250353Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
@@ -54181,6 +54201,11 @@ tasks:
     agent: agy
     session_id: https://github.com/organvm/universal-mail--automation/pull/94
     status: dispatched
+  - timestamp: '2026-06-27T02:06:36.250353Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: REV-organvm-the-invisible-ledger-revenue-readiness-0626
   title: First-paying-customer readiness pass on The Invisible Ledger
   repo: organvm/the-invisible-ledger
@@ -54356,7 +54381,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: done
   labels:
   - revenue-launch-post
   - revenue
@@ -54371,7 +54396,7 @@ tasks:
     \ spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T01:19:14.038132Z'
+  updated: '2026-06-27T02:06:36.250353Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
@@ -54388,6 +54413,11 @@ tasks:
     agent: claude
     session_id: https://github.com/organvm/a-i-chat--exporter/pull/92
     status: dispatched
+  - timestamp: '2026-06-27T02:06:36.250353Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GEN-organvm-limen-ci-green-0626
   title: Make organvm/limen CI green
   repo: organvm/limen
