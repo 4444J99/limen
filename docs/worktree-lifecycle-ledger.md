@@ -17,17 +17,17 @@ No directory was deleted or removed during this ledger pass.
 
 Evidence commands:
 
-- `python3 scripts/worktree-debt.py --json`: 19 roots, 15 debt-bearing roots after the
-  first PR-preservation drain and background reclaim of two content-preserved roots.
+- `python3 scripts/worktree-debt.py --json`: 19 roots, 14 debt-bearing roots after the
+  README-root PR preservation and background reclaim of two content-preserved roots.
 - per-root `git status --porcelain`, `git log --oneline -5`, `git cherry <default> HEAD`.
 - non-Git residue inspection with `find` and direct reads of cache metadata files.
 
 Current classes:
 
-- 11 dirty working trees.
+- 10 dirty working trees.
 - 0 unique local-only unpushed roots among the four roots targeted by this pass.
 - 2 non-Git residue roots.
-- 4 active clean roots, including freshly pushed draft-PR roots still inside the
+- 5 active clean roots, including freshly pushed draft-PR roots still inside the
   idle grace window.
 - 2 clean roots not merged to default, both with draft PR receipts.
 - 0 content-preserved roots remain on disk; two were reclaimed by the background
@@ -47,7 +47,7 @@ That is not enough for a fully automatic lifecycle.
 | `bld-mirror-mirror-harden-350f` | `organvm/mirror-mirror` | dirty | branch `limen/bld-mirror-mirror-harden-350f`; likely hardening task; no exact task slug in board | HEAD `9afe14d`; default `origin/main`; modified `api/webhooks/stripe.ts`; ahead 0 | lifecycle debt | Review Stripe hardening, run tests, then commit/push/PR. |
 | `bld-my--father-mother-harden-44b2` | `organvm/my--father-mother` | dirty | branch `limen/bld-my--father-mother-harden-44b2`; likely hardening task; no exact task slug in board | HEAD `18730a2`; default `origin/main`; modified `main.py`; ahead 0 | lifecycle debt | Review hardening diff, run tests, then commit/push/PR. |
 | `bld-promptscope-next-rev-3fde` | `organvm/promptscope` | dirty | branch `limen/bld-promptscope-next-rev-3fde`; likely next-revenue task; no exact task slug in board | HEAD `4fa725b`; modified `public/app.js`, `public/index.html`, `src/index.ts`; ahead 0 | lifecycle debt | Review product delta, run build/tests, then commit/push/PR. |
-| `bld-universal-mail--automation-readme-9031` | `organvm/universal-mail--automation` | dirty | branch `limen/bld-universal-mail--automation-readme-9031`; likely README task; no exact task slug in board | HEAD `079018c`; modified `README.md`; ahead 0 | lifecycle debt | Review README delta, then commit/push/PR if still useful. |
+| `bld-universal-mail--automation-readme-9031` | `organvm/universal-mail--automation` | draft PR open | branch `limen/bld-universal-mail--automation-readme-9031`; likely README task; no exact task slug in board | clean; PR [#108](https://github.com/organvm/universal-mail--automation/pull/108); commit `29f6b4b`; README marker check passed; `python3 cli.py -h` passed; `python3 -m py_compile cli.py api/app.py api/plans.py mcp_server/server.py` passed; `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -q tests/test_config.py tests/test_models.py tests/test_rules.py tests/test_web.py` passed 158 tests | preserved outside local disk, still lifecycle debt until merged or explicitly superseded | Review README modernization and merge, or supersede by a named successor that preserves this content. |
 | `bld2-a-i-chat--exporter-integration-tests-a00b` | `organvm/a-i-chat--exporter` | draft PR open | branch `limen/bld2-a-i-chat--exporter-integration-tests-a00b`; likely integration-tests task; no exact task slug in board | clean; PR [#96](https://github.com/organvm/a-i-chat--exporter/pull/96); commits `6d73e1a`, `d0d633c`; `pnpm test` passed; `pnpm lint` passed with warnings; branch was 32 behind `origin/master` at preservation time | preserved outside local disk, still lifecycle debt until merged or explicitly superseded | Review freshness/CI, then merge or name a successor PR that absorbed both commits. |
 | `cifix-organvm-i-theoria-conversation-corpus-engine-f02e` | `organvm/conversation-corpus-engine` | dirty | branch `limen/cifix-organvm-i-theoria-conversation-corpus-engine-f02e`; likely CI-fix task; no exact task slug in board | HEAD `be4b920`; modified `pyproject.toml`; ahead 0 | lifecycle debt | Review dependency/CI fix, run tests, then commit/push/PR. |
 | `cifix-organvm-i-theoria-hierarchia-mundi-3145` | `organvm/hierarchia-mundi` | dirty | branch `limen/cifix-organvm-i-theoria-hierarchia-mundi-3145`; likely CI/test task; no exact task slug in board | HEAD `677df2b`; modified package files plus untracked `tests/`; ahead 0 | lifecycle debt | Review implementation and tests together, run suite, then commit/push/PR. |
@@ -82,20 +82,19 @@ That is not enough for a fully automatic lifecycle.
 - The Universal Mail Automation test-coverage root is a dangerous deletion shape:
   broad deletes with no ahead commits. It should be handled before routine generated
   build-out resumes.
-- Main currently has an unrelated dirty `tasks.yaml` with heal-dispatch state
-  changes. Preserve and validate it separately before committing this ledger work.
 
 ## Drain Order
 
 1. Close the two non-Git residue roots by keeping this classification visible; remove
    only after explicit operator acceptance or a scripted reclaim gate that records the
    classification.
-2. Drive the five draft PR receipts to merge or named supersession:
+2. Drive the six draft PR receipts to merge or named supersession:
    [a-i-chat--exporter#96](https://github.com/organvm/a-i-chat--exporter/pull/96),
    [a-i-chat--exporter#95](https://github.com/organvm/a-i-chat--exporter/pull/95),
-   [object-lessons#22](https://github.com/organvm/object-lessons/pull/22), and
+   [object-lessons#22](https://github.com/organvm/object-lessons/pull/22),
    [public-record-data-scrapper#328](https://github.com/organvm/public-record-data-scrapper/pull/328),
-   plus [kerygma-profiles#8](https://github.com/organvm/kerygma-profiles/pull/8).
+   [kerygma-profiles#8](https://github.com/organvm/kerygma-profiles/pull/8), and
+   [universal-mail--automation#108](https://github.com/organvm/universal-mail--automation/pull/108).
 3. Work the dirty roots from lowest risk to highest risk: generated-only caches,
    single-file deltas, multi-file implementation deltas, then the broad deletion root.
 4. Reclaim the two content-preserved roots only after the ledger/acceptance receipt is

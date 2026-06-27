@@ -14,6 +14,12 @@ Post-audit update: the background reaper later reclaimed the two content-preserv
 Both had already been classified as patch-equivalent to default, so no unique source was lost.
 Future automated drain runs are preview-only unless `LIMEN_RECLAIM_APPLY=1` is set.
 
+Post-audit update: `bld-universal-mail--automation-readme-9031` was rebased to
+current `origin/main`, committed as `29f6b4b`, pushed, and preserved as draft PR
+[#108](https://github.com/organvm/universal-mail--automation/pull/108). It is no
+longer dirty local-only work, though it remains lifecycle debt until merged or
+explicitly superseded.
+
 Reclaim policy after this audit: a root is reapable only when it is clean, idle, and its
 content is preserved on the remote default branch. Preservation can be exact SHA reachability
 or `git cherry <default> HEAD` patch equivalence after squash/rebase. Dirty work,
@@ -38,7 +44,7 @@ unique-unpushed commits, open/unmerged branches, active roots, and non-Git resid
 | `bld-mirror-mirror-harden-350f` | `organvm/mirror-mirror` | `limen/bld-mirror-mirror-harden-350f` / `9afe14d` | dirty: `api/webhooks/stripe.ts` | Review Stripe hardening, run tests, commit and PR. |
 | `bld-my--father-mother-harden-44b2` | `organvm/my--father-mother` | `limen/bld-my--father-mother-harden-44b2` / `18730a2` | dirty: `main.py` | Review hardening diff, run tests, commit and PR. |
 | `bld-promptscope-next-rev-3fde` | `organvm/promptscope` | `limen/bld-promptscope-next-rev-3fde` / `4fa725b` | dirty: `public/app.js`, `public/index.html`, `src/index.ts` | Review product diff, run build/tests, commit and PR. |
-| `bld-universal-mail--automation-readme-9031` | `organvm/universal-mail--automation` | `limen/bld-universal-mail--automation-readme-9031` / `079018c` | dirty: `README.md` | Review README delta, commit and PR. |
+| `bld-universal-mail--automation-readme-9031` | `organvm/universal-mail--automation` | `limen/bld-universal-mail--automation-readme-9031` / `29f6b4b` | preserved as draft PR #108 | Review and merge, or name a successor that preserves the README modernization. |
 | `bld2-a-i-chat--exporter-integration-tests-a00b` | `organvm/a-i-chat--exporter` | `limen/bld2-a-i-chat--exporter-integration-tests-a00b` / `d0d633c` | unpushed: 2 commits | Push branch, open/update PR, or absorb into successor PR. |
 | `cifix-organvm-i-theoria-conversation-corpus-engine-f02e` | `organvm/conversation-corpus-engine` | `limen/cifix-organvm-i-theoria-conversation-corpus-engine-f02e` / `be4b920` | dirty: `pyproject.toml` | Review CI fix, run tests, commit and PR. |
 | `cifix-organvm-i-theoria-hierarchia-mundi-3145` | `organvm/hierarchia-mundi` | `limen/cifix-organvm-i-theoria-hierarchia-mundi-3145` / `677df2b` | dirty: package files and `tests/` | Review CI/test diff, run suite, commit and PR. |
