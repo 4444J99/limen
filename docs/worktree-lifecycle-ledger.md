@@ -17,23 +17,24 @@ No directory was deleted or removed during this ledger pass.
 
 Evidence commands:
 
-- `python3 scripts/worktree-debt.py --json`: 19 roots, 13 debt-bearing roots after the
-  media-ark test/platform PR preservation and background reclaim of two content-preserved roots.
+- `python3 scripts/worktree-debt.py --json`: 20 roots, 12 debt-bearing roots after the
+  domus-genoma CI PR preservation and a new dispatcher reservation root.
 - per-root `git status --porcelain`, `git log --oneline -5`, `git cherry <default> HEAD`.
 - non-Git residue inspection with `find` and direct reads of cache metadata files.
 
 Current classes:
 
-- 9 dirty working trees.
-- 0 unique local-only unpushed roots among the four roots targeted by this pass.
+- 8 dirty working trees counted as debt.
+- 0 unique local-only unpushed roots among the completed drain roots; newly spawned
+  dispatcher roots are inside the active grace window.
 - 2 non-Git residue roots.
-- 6 active clean roots, including freshly pushed draft-PR roots still inside the
-  idle grace window.
+- 8 active roots, including freshly pushed draft-PR roots and one new dispatcher root
+  still inside the idle grace window.
 - 2 clean roots not merged to default, both with draft PR receipts.
 - 0 content-preserved roots remain on disk; two were reclaimed by the background
   reaper after their content-preserved classification was visible.
 
-System pothole found during this pass: none of the 21 root slugs appear directly
+System pothole found during this pass: none of the 20 root slugs appear directly
 in `tasks.yaml`. The strongest origin receipt for most roots is therefore the
 root/branch slug plus repo and recent commit/PR context, not a task-board entry.
 That is not enough for a fully automatic lifecycle.
@@ -42,7 +43,7 @@ That is not enough for a fully automatic lifecycle.
 
 | Root | Repo | State | Origin Receipt | Evidence | Disposition | Next Action |
 |---|---|---|---|---|---|---|
-| `bld-domus-genoma-ci-23a9` | `organvm/domus-genoma` | dirty | branch `limen/bld-domus-genoma-ci-23a9`; likely build/CI task; no exact task slug in board | HEAD `c22646f`; default `origin/master`; untracked `.github/workflows/ci.yml`; ahead 0 | lifecycle debt | Review workflow, run focused CI validation, then commit/push/PR or record blocker. |
+| `bld-domus-genoma-ci-23a9` | `organvm/domus-genoma` | draft PR open | branch `limen/bld-domus-genoma-ci-23a9`; likely build/CI task; no exact task slug in board | clean; PR [#144](https://github.com/organvm/domus-genoma/pull/144); commit `c53a571`; untracked CI draft was rebased onto current `origin/master`; YAML parse passed; `git diff --check origin/master..HEAD` passed; `just --dry-run check-all` now shows `shfmt -d` and no `shfmt -w`; `just fmt-check` passed; full local `just check-all` exposed pre-existing BATS failures | preserved outside local disk, active grace; lifecycle remains open until merged or explicitly superseded | Review PR CI and the known pre-existing BATS blockers, then merge or supersede by named branch/PR. |
 | `bld-media-ark-tests-2698` | `organvm/media-ark` | draft PR open | branch `limen/bld-media-ark-tests-2698`; likely tests task; no exact task slug in board | clean; PR [#50](https://github.com/organvm/media-ark/pull/50); commit `b7509dc`; stale untracked test draft was ported into `tests/test_process_captures_core.py`; `npm test` passed 98 tests; `npm run release:verify` passed | preserved outside local disk, still lifecycle debt until merged or explicitly superseded | Review and merge the capture/platform test-contract PR, or supersede by a named successor that preserves this coverage. |
 | `bld-mirror-mirror-harden-350f` | `organvm/mirror-mirror` | dirty | branch `limen/bld-mirror-mirror-harden-350f`; likely hardening task; no exact task slug in board | HEAD `9afe14d`; default `origin/main`; modified `api/webhooks/stripe.ts`; ahead 0 | lifecycle debt | Review Stripe hardening, run tests, then commit/push/PR. |
 | `bld-my--father-mother-harden-44b2` | `organvm/my--father-mother` | dirty | branch `limen/bld-my--father-mother-harden-44b2`; likely hardening task; no exact task slug in board | HEAD `18730a2`; default `origin/main`; modified `main.py`; ahead 0 | lifecycle debt | Review hardening diff, run tests, then commit/push/PR. |
@@ -54,6 +55,7 @@ That is not enough for a fully automatic lifecycle.
 | `discover-organvm-kerygma-profiles-6c74` | `organvm/kerygma-profiles` | draft PR open | branch `limen/discover-organvm-kerygma-profiles-6c74`; discovery task; no exact task slug in board | clean; PR [#8](https://github.com/organvm/kerygma-profiles/pull/8); commits `a8a029f`, `d7fd19e`; generated files remain on disk but are ignored; `python3 -m pytest` passed 24 tests; `python3 -m ruff check .` passed | preserved outside local disk, still lifecycle debt until merged or explicitly superseded | Review and merge the generated-artifact hygiene PR, or supersede by a named successor. |
 | `exporter-mp` | `organvm/a-i-chat--exporter` | draft PR open | branch `limen/exporter-multiprovider`; explicit multiprovider branch; no exact task slug in board | clean; PR [#95](https://github.com/organvm/a-i-chat--exporter/pull/95); commits `5c3298b`, `6c88427`, `dd73cce`; `pnpm test` passed; `pnpm lint` passed with warnings after lint-setup compatibility fix | preserved outside local disk, still lifecycle debt until merged or explicitly superseded | Review provider behavior and CI, then merge or supersede by named branch/PR. |
 | `gen-organvm-i-theoria-sovereign--ground-ci-green-0620-0f38` | `organvm/sovereign--ground` | dirty generated results | branch `limen/gen-organvm-i-theoria-sovereign--ground-ci-green-0620-0f38`; generated CI-green task; no exact task slug in board | HEAD `80e7617`; modified `structure-tests/results/ex01` through `ex11`; ahead 0 | lifecycle debt | Classify result drift; commit only if these are intended refreshed fixtures. |
+| `gen-organvm-limen-typing-0627-ccac` | `organvm/limen` | active dirty | branch `limen/gen-organvm-limen-typing-0627-ccac`; generated typing task reserved during this cleanup | HEAD `b2c6398` at `origin/main`; modified `cli/src/limen/capacity.py`, `cli/src/limen/converge.py`, `cli/src/limen/vigilia/params.py`; inside active grace window | active grace, not counted as debt yet | Let the dispatched session finish; if it stalls, preserve the diff with tests and a PR or record a blocker. |
 | `gen-organvm-mirror-mirror-security-0622-c552` | `organvm/mirror-mirror` | reclaimed, content-preserved | branch `limen/gen-organvm-mirror-mirror-security-0622-c552`; generated security task; no exact task slug in board | prior evidence: clean HEAD `afed90a`; `git cherry origin/main HEAD` patch-equivalent (`- afed90a...`); background reaper log `2026-06-27T13:05:49Z` removed this root | lifecycle closed; no unique source was local-only | No action unless a later audit finds missing value on default branch. |
 | `gen-organvm-the-invisible-ledger-ci-green-0625-e3c2` | unknown | non-Git residue | root slug says generated CI-green for `the-invisible-ledger`; no git metadata or exact board slug | contains only empty `dist/` directory; no files | documented non-source residue | No unique artifact to preserve. Reclaimable only after operator acceptance; no deletion in this pass. |
 | `gen-organvm-the-invisible-ledger-security-0622-d8f8` | `organvm/the-invisible-ledger` | reclaimed, content-preserved | branch `limen/sec-audit-0622`; generated security task; merged as PR #30 per prior audit | prior evidence: clean HEAD `b208078`; `git cherry origin/main HEAD` patch-equivalent (`- b208078...`); background reaper log `2026-06-27T13:05:49Z` removed this root | lifecycle closed; no unique source was local-only | No action unless a later audit finds missing value beyond merged PR #30. |
@@ -67,7 +69,7 @@ That is not enough for a fully automatic lifecycle.
 ## Roadblocks And Potholes
 
 - Worktree roots are not task-board addressable. The board has repo/task context, but the exact
-  root slug is absent for all 21 current roots.
+  root slug is absent for all 20 current roots.
 - Non-Git residue bypasses git lifecycle checks. The two `the-invisible-ledger`
   residue roots needed direct filesystem inspection to classify.
 - Patch-equivalent work looked unpushed until the debt scanner learned `git cherry`
@@ -79,6 +81,12 @@ That is not enough for a fully automatic lifecycle.
   posture; `scripts/drain.sh` now requires `LIMEN_RECLAIM_APPLY=1` for future removals.
 - Dirty roots at default HEAD carry invisible work as uncommitted filesystem
   deltas. They need receipts before the system can reclaim or dispatch around them.
+- `dispatch-parallel` can create and retire active roots while cleanup is reducing
+  old lifecycle debt. That keeps the stream alive, but it can mask whether the
+  system is actually draining net debt unless the final scan is authoritative.
+- `domus-genoma` CI hardening surfaced pre-existing local `just check-all`
+  failures: Brewfile manifest drift for `block-goose-cli`, a `#!/bin/bash`
+  shebang in `lint_test.sh`, and multiple desktop-router BATS route failures.
 - The Universal Mail Automation test-coverage root is a dangerous deletion shape:
   broad deletes with no ahead commits. It should be handled before routine generated
   build-out resumes.
@@ -88,7 +96,8 @@ That is not enough for a fully automatic lifecycle.
 1. Close the two non-Git residue roots by keeping this classification visible; remove
    only after explicit operator acceptance or a scripted reclaim gate that records the
    classification.
-2. Drive the seven draft PR receipts to merge or named supersession:
+2. Drive the eight draft PR receipts to merge or named supersession:
+   [domus-genoma#144](https://github.com/organvm/domus-genoma/pull/144),
    [a-i-chat--exporter#96](https://github.com/organvm/a-i-chat--exporter/pull/96),
    [a-i-chat--exporter#95](https://github.com/organvm/a-i-chat--exporter/pull/95),
    [object-lessons#22](https://github.com/organvm/object-lessons/pull/22),
