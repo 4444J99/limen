@@ -1,0 +1,837 @@
+#!/usr/bin/env python3
+"""Build a redacted lifecycle crosswalk from prompts to sessions, worktrees, and tasks.
+
+The tracked markdown is intentionally counts-only and receipt-oriented. The ignored
+private index keeps source paths, stable hashes, and prompt-event hashes so the raw
+material can be found in the private cartridge without committing prompt text.
+"""
+from __future__ import annotations
+
+import argparse
+import concurrent.futures
+import datetime as dt
+import hashlib
+import json
+import os
+import re
+import subprocess
+import sys
+import urllib.error
+import urllib.request
+from collections import Counter, defaultdict
+from pathlib import Path
+from typing import Any
+
+import yaml
+
+ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
+HOME = Path.home()
+DOC_PATH = ROOT / "docs" / "prompt-lifecycle-ledger.md"
+PRIVATE_ROOT = Path(
+    os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus")
+)
+PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+TASKS_PATH = ROOT / "tasks.yaml"
+WORKTREE_ROOT = ROOT.parent / ".limen-worktrees"
+GITHUB_PR_RE = re.compile(r"github\.com/([^/]+)/([^/]+)/pull/(\d+)")
+
+LOCAL_SOURCES = [
+    ("codex-sessions", HOME / ".codex" / "sessions", ("*",)),
+    ("codex-history", HOME / ".codex", ("history.jsonl",)),
+    ("codex-attachments", HOME / ".codex" / "attachments", ("*",)),
+    ("claude-projects", HOME / ".claude" / "projects", ("*",)),
+    ("claude-tasks", HOME / ".claude" / "tasks", ("*",)),
+    ("claude-plans", HOME / ".claude" / "plans", ("*",)),
+    ("claude-file-history", HOME / ".claude" / "file-history", ("*",)),
+]
+
+VALID_STATUSES = {
+    "open",
+    "dispatched",
+    "in_progress",
+    "done",
+    "failed",
+    "failed_blocked",
+    "needs_human",
+    "archived",
+}
+
+
+def iso_from_ts(ts: float | None) -> str | None:
+    if not ts:
+        return None
+    return dt.datetime.fromtimestamp(ts, tz=dt.timezone.utc).isoformat(timespec="seconds")
+
+
+def fmt_bytes(n: int) -> str:
+    units = ["B", "KiB", "MiB", "GiB", "TiB"]
+    val = float(n)
+    for unit in units:
+        if val < 1024 or unit == units[-1]:
+            if unit == "B":
+                return f"{int(val)} {unit}"
+            return f"{val:.1f} {unit}"
+        val /= 1024
+    return f"{n} B"
+
+
+def stable_hash(text: str, length: int = 16) -> str:
+    return hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest()[:length]
+
+
+def relpath(path: Path) -> str:
+    try:
+        return "~/" + str(path.expanduser().resolve().relative_to(HOME))
+    except (OSError, ValueError):
+        return str(path)
+
+
+def iter_source_files(days: int | None) -> list[dict[str, Any]]:
+    cutoff = None if days is None else dt.datetime.now(dt.timezone.utc).timestamp() - days * 86400
+    rows: list[dict[str, Any]] = []
+    for source, root, patterns in LOCAL_SOURCES:
+        if not root.exists():
+            continue
+        seen: set[Path] = set()
+        candidates = [root] if root.is_file() else [
+            path
+            for pattern in patterns
+            for path in root.rglob(pattern)
+        ]
+        for path in candidates:
+            if path in seen or not path.is_file():
+                continue
+            seen.add(path)
+            try:
+                st = path.stat()
+            except OSError:
+                continue
+            if cutoff is not None and st.st_mtime < cutoff:
+                continue
+            rows.append(
+                {
+                    "source": source,
+                    "path": path,
+                    "display_path": relpath(path),
+                    "size": st.st_size,
+                    "mtime": iso_from_ts(st.st_mtime),
+                }
+            )
+    rows.sort(key=lambda r: (r["mtime"] or "", r["source"], str(r["path"])), reverse=True)
+    return rows
+
+
+def text_from_content(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value] if value.strip() else []
+    if isinstance(value, list):
+        out: list[str] = []
+        for item in value:
+            out.extend(text_from_content(item))
+        return out
+    if isinstance(value, dict):
+        out: list[str] = []
+        for key in ("text", "content", "message", "input"):
+            if key in value:
+                out.extend(text_from_content(value[key]))
+        return out
+    return []
+
+
+def prompt_texts(source: str, obj: dict[str, Any]) -> list[str]:
+    if source == "codex-history":
+        return text_from_content(obj.get("text"))
+
+    payload = obj.get("payload")
+    if isinstance(payload, dict):
+        if payload.get("type") == "user_message":
+            return text_from_content(payload.get("message")) + text_from_content(payload.get("text_elements"))
+        if payload.get("type") == "message" and payload.get("role") == "user":
+            return text_from_content(payload.get("content"))
+
+    typ = obj.get("type")
+    if source.startswith("claude"):
+        if typ == "user":
+            msg = obj.get("message")
+            if isinstance(msg, dict) and msg.get("role") not in (None, "user"):
+                return []
+            return text_from_content(msg)
+        if typ == "last-prompt":
+            return text_from_content(obj.get("lastPrompt"))
+        if typ == "queue-operation" and obj.get("operation") == "enqueue":
+            return text_from_content(obj.get("content"))
+
+    if source == "claude-tasks":
+        return (
+            text_from_content(obj.get("prompt"))
+            + text_from_content(obj.get("content"))
+            + text_from_content(obj.get("description"))
+        )
+    return []
+
+
+def read_json_records(path: Path) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    if path.suffix == ".jsonl" or path.name.endswith(".jsonl") or path.name == "history.jsonl":
+        try:
+            with path.open(encoding="utf-8", errors="replace") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        obj = json.loads(line)
+                    except ValueError:
+                        continue
+                    if isinstance(obj, dict):
+                        records.append(obj)
+        except OSError:
+            pass
+        return records
+    if path.suffix == ".json":
+        try:
+            obj = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+        except (OSError, ValueError):
+            return []
+        if isinstance(obj, dict):
+            return [obj]
+        if isinstance(obj, list):
+            return [x for x in obj if isinstance(x, dict)]
+    return []
+
+
+def session_meta_from_records(source: str, row: dict[str, Any], records: list[dict[str, Any]]) -> dict[str, Any]:
+    session_id: str | None = None
+    cwd: str | None = None
+    event_times: list[str] = []
+    prompt_hashes: list[str] = []
+    prompt_bytes = 0
+
+    for obj in records:
+        timestamp = obj.get("timestamp") or obj.get("ts")
+        if timestamp is not None:
+            event_times.append(str(timestamp))
+        if source == "codex-history" and obj.get("session_id"):
+            session_id = str(obj.get("session_id"))
+        if obj.get("sessionId"):
+            session_id = str(obj.get("sessionId"))
+        payload = obj.get("payload")
+        if isinstance(payload, dict):
+            if payload.get("session_id"):
+                session_id = str(payload.get("session_id"))
+            if payload.get("cwd"):
+                cwd = str(payload.get("cwd"))
+        if obj.get("cwd"):
+            cwd = str(obj.get("cwd"))
+        for text in prompt_texts(source, obj):
+            prompt_bytes += len(text.encode("utf-8", errors="replace"))
+            prompt_hashes.append(hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest())
+
+    if session_id is None:
+        session_id = row["path"].stem
+    session_key = stable_hash(f"{source}:{session_id}:{row['display_path']}", 20)
+    return {
+        "session_key": session_key,
+        "session_id_hash": stable_hash(session_id, 20),
+        "source": source,
+        "path": str(row["path"]),
+        "display_path": row["display_path"],
+        "size": row["size"],
+        "mtime": row["mtime"],
+        "event_count": len(records),
+        "first_event": min(event_times) if event_times else None,
+        "last_event": max(event_times) if event_times else None,
+        "cwd": cwd,
+        "cwd_hash": stable_hash(cwd, 20) if cwd else None,
+        "prompt_event_count": len(prompt_hashes),
+        "prompt_bytes": prompt_bytes,
+        "first_prompt_hash": prompt_hashes[0] if prompt_hashes else None,
+        "last_prompt_hash": prompt_hashes[-1] if prompt_hashes else None,
+        "prompt_hashes": prompt_hashes,
+    }
+
+
+def current_worktree_report() -> dict[str, Any]:
+    proc = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "worktree-debt.py"), "--json"],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    if proc.returncode != 0:
+        return {"total": 0, "debt": 0, "by_reason": {}, "items": [], "error": proc.stderr.strip()}
+    return json.loads(proc.stdout)
+
+
+def run_cmd(argv: list[str], *, cwd: Path | None = None, timeout: int = 20) -> subprocess.CompletedProcess[str]:
+    try:
+        return subprocess.run(
+            argv,
+            cwd=cwd or ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return subprocess.CompletedProcess(argv, 1, "", str(exc))
+
+
+def repo_from_remote(remote: str) -> str | None:
+    remote = remote.strip()
+    patterns = [
+        r"github\.com[:/]([^/\s]+/[^/\s.]+?)(?:\.git)?$",
+        r"https://github\.com/([^/\s]+/[^/\s.]+?)(?:\.git)?$",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, remote)
+        if match:
+            return match.group(1)
+    return None
+
+
+def gh_pr_view(owner: str, repo: str, number: str) -> dict[str, Any]:
+    proc = run_cmd(
+        [
+            "gh",
+            "pr",
+            "view",
+            number,
+            "--repo",
+            f"{owner}/{repo}",
+            "--json",
+            "number,title,state,isDraft,mergedAt,url,headRefName,baseRefName,updatedAt",
+        ],
+        timeout=30,
+    )
+    if proc.returncode != 0:
+        return {"ok": False, "repo": f"{owner}/{repo}", "number": int(number), "error": proc.stderr.strip()}
+    try:
+        data = json.loads(proc.stdout)
+    except ValueError as exc:
+        return {"ok": False, "repo": f"{owner}/{repo}", "number": int(number), "error": str(exc)}
+    return {
+        "ok": True,
+        "repo": f"{owner}/{repo}",
+        "number": data.get("number"),
+        "state": "MERGED" if data.get("mergedAt") else data.get("state"),
+        "isDraft": data.get("isDraft"),
+        "url": data.get("url"),
+        "headRefName": data.get("headRefName"),
+        "baseRefName": data.get("baseRefName"),
+        "updatedAt": data.get("updatedAt"),
+        "title_hash": stable_hash(data.get("title") or "", 20),
+    }
+
+
+def gh_prs_for_branch(repo: str, branch: str) -> list[dict[str, Any]]:
+    proc = run_cmd(
+        [
+            "gh",
+            "pr",
+            "list",
+            "--repo",
+            repo,
+            "--head",
+            branch,
+            "--state",
+            "all",
+            "--limit",
+            "10",
+            "--json",
+            "number,title,state,isDraft,mergedAt,url,headRefName,baseRefName,updatedAt",
+        ],
+        timeout=30,
+    )
+    if proc.returncode != 0:
+        return [{"ok": False, "repo": repo, "branch": branch, "error": proc.stderr.strip()}]
+    try:
+        rows = json.loads(proc.stdout or "[]")
+    except ValueError as exc:
+        return [{"ok": False, "repo": repo, "branch": branch, "error": str(exc)}]
+    return [
+        {
+            "ok": True,
+            "repo": repo,
+            "number": row.get("number"),
+            "state": "MERGED" if row.get("mergedAt") else row.get("state"),
+            "isDraft": row.get("isDraft"),
+            "url": row.get("url"),
+            "headRefName": row.get("headRefName"),
+            "baseRefName": row.get("baseRefName"),
+            "updatedAt": row.get("updatedAt"),
+            "title_hash": stable_hash(row.get("title") or "", 20),
+        }
+        for row in rows
+    ]
+
+
+def worktree_remote_receipts(worktrees: list[dict[str, Any]]) -> dict[str, Any]:
+    receipts: list[dict[str, Any]] = []
+    for item in worktrees:
+        path = Path(item.get("path", ""))
+        receipt: dict[str, Any] = {
+            "name": item.get("name"),
+            "path": str(path),
+            "debt": bool(item.get("debt")),
+            "debt_reason": item.get("reason"),
+            "git": False,
+            "repo": None,
+            "branch": None,
+            "head": None,
+            "remote_branch": "unknown",
+            "prs": [],
+        }
+        if not path.exists() or not ((path / ".git").exists() or (path / ".git").is_file()):
+            receipt["remote_branch"] = "not-a-git-dir"
+            receipts.append(receipt)
+            continue
+        receipt["git"] = True
+        branch = run_cmd(["git", "-C", str(path), "branch", "--show-current"], timeout=10).stdout.strip()
+        head = run_cmd(["git", "-C", str(path), "rev-parse", "--short=12", "HEAD"], timeout=10).stdout.strip()
+        remote = run_cmd(["git", "-C", str(path), "remote", "get-url", "origin"], timeout=10).stdout.strip()
+        repo = repo_from_remote(remote)
+        receipt.update({"branch": branch or None, "head": head or None, "repo": repo})
+        if repo and branch:
+            ls = run_cmd(["git", "-C", str(path), "ls-remote", "--heads", "origin", branch], timeout=30)
+            receipt["remote_branch"] = "present" if ls.returncode == 0 and ls.stdout.strip() else "missing"
+            receipt["prs"] = gh_prs_for_branch(repo, branch)
+        receipts.append(receipt)
+    ok_prs = [
+        pr
+        for receipt in receipts
+        for pr in receipt.get("prs", [])
+        if pr.get("ok")
+    ]
+    return {
+        "receipts": receipts,
+        "git_roots": sum(1 for r in receipts if r["git"]),
+        "repos": sorted({r["repo"] for r in receipts if r.get("repo")}),
+        "remote_branches_present": sum(1 for r in receipts if r.get("remote_branch") == "present"),
+        "remote_branches_missing": sum(1 for r in receipts if r.get("remote_branch") == "missing"),
+        "open_prs": sum(1 for pr in ok_prs if pr.get("state") == "OPEN"),
+        "merged_prs": sum(1 for pr in ok_prs if pr.get("state") == "MERGED"),
+        "closed_prs": sum(1 for pr in ok_prs if pr.get("state") == "CLOSED"),
+    }
+
+
+def task_remote_pr_receipts(tasks_text: str, limit: int = 1000, workers: int = 8) -> dict[str, Any]:
+    refs = sorted({match.groups() for match in GITHUB_PR_RE.finditer(tasks_text)})
+    selected_refs = refs if limit <= 0 else refs[:limit]
+    receipts: list[dict[str, Any]] = []
+    if selected_refs:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, workers)) as executor:
+            future_map = {
+                executor.submit(gh_pr_view, owner, repo, number): (owner, repo, number)
+                for owner, repo, number in selected_refs
+            }
+            for future in concurrent.futures.as_completed(future_map):
+                owner, repo, number = future_map[future]
+                try:
+                    receipts.append(future.result())
+                except Exception as exc:
+                    receipts.append(
+                        {
+                            "ok": False,
+                            "repo": f"{owner}/{repo}",
+                            "number": int(number),
+                            "error": str(exc),
+                        }
+                    )
+    receipts.sort(key=lambda r: (str(r.get("repo", "")), int(r.get("number") or 0)))
+    counts = Counter(r.get("state", "ERROR") if r.get("ok") else "ERROR" for r in receipts)
+    return {
+        "seen_pr_refs": len(refs),
+        "checked_pr_refs": len(receipts),
+        "limit": limit,
+        "counts": dict(sorted(counts.items())),
+        "receipts": receipts,
+        "truncated": len(refs) > limit,
+    }
+
+
+def probe_url(url: str, *, expect_json: bool = False, timeout: int = 10) -> dict[str, Any]:
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as resp:
+            body = resp.read(1024 * 256)
+            out: dict[str, Any] = {
+                "url": url,
+                "ok": 200 <= resp.status < 400,
+                "status": resp.status,
+                "bytes_sampled": len(body),
+            }
+            if expect_json:
+                try:
+                    out["json_keys"] = sorted(json.loads(body.decode("utf-8", errors="replace")).keys())
+                except ValueError as exc:
+                    out["json_error"] = str(exc)
+            return out
+    except (OSError, urllib.error.URLError) as exc:
+        return {"url": url, "ok": False, "error": str(exc)}
+
+
+def cloud_receipts() -> dict[str, Any]:
+    firebase_base = os.environ.get("LIMEN_PUBLIC_SITE_URL", "https://device-streaming-067d747a.web.app").rstrip("/")
+    public_surfaces = [
+        f"{firebase_base}/surface-manifest.json",
+        f"{firebase_base}/public-surface-manifest.json",
+        f"{firebase_base}/qa",
+        f"{firebase_base}/client",
+    ]
+    runtime_url = os.environ.get("LIMEN_WORKER_URL") or os.environ.get("NEXT_PUBLIC_API_URL")
+    env_flags = {
+        name: bool(os.environ.get(name))
+        for name in (
+            "LIMEN_WORKER_URL",
+            "NEXT_PUBLIC_API_URL",
+            "LIMEN_API_TOKEN",
+            "LIMEN_CLIENT_TOKEN",
+            "CLOUDFLARE_API_TOKEN",
+            "GOOGLE_APPLICATION_CREDENTIALS",
+            "VERCEL_TOKEN",
+            "NETLIFY_AUTH_TOKEN",
+        )
+    }
+    runtime_probe = None
+    if runtime_url:
+        runtime_probe = probe_url(runtime_url.rstrip("/") + "/health", expect_json=True)
+    return {
+        "public_site_url": firebase_base,
+        "public_surface_probes": [
+            probe_url(url, expect_json=url.endswith(".json"))
+            for url in public_surfaces
+        ],
+        "runtime_url_configured": bool(runtime_url),
+        "runtime_health_probe": runtime_probe,
+        "env_flags": env_flags,
+        "cloudflare_deploy_auth_present": env_flags["CLOUDFLARE_API_TOKEN"],
+    }
+
+
+def attach_worktree_slugs(sessions: list[dict[str, Any]], worktrees: list[dict[str, Any]]) -> None:
+    slugs = [item["name"] for item in worktrees]
+    for session in sessions:
+        haystack = " ".join(
+            str(x)
+            for x in (session.get("display_path"), session.get("path"), session.get("cwd"))
+            if x
+        )
+        matched = next((slug for slug in slugs if slug in haystack), None)
+        if matched is None:
+            match = re.search(r"(?:limen-worktrees|--limen-worktrees-)[/-]?([A-Za-z0-9._-]+)", haystack)
+            matched = match.group(1) if match else None
+        session["worktree_slug"] = matched
+
+
+def load_task_snapshot(worktree_slugs: list[str]) -> dict[str, Any]:
+    if not TASKS_PATH.is_file():
+        return {"present": False}
+    text = TASKS_PATH.read_text(encoding="utf-8", errors="replace")
+    data = yaml.safe_load(text) or {}
+    tasks = data.get("tasks") or []
+    status_counts = Counter(str(task.get("status", "missing")) for task in tasks if isinstance(task, dict))
+    invalid = sorted(status for status in status_counts if status not in VALID_STATUSES)
+    exact_slug_refs = [slug for slug in worktree_slugs if slug in text]
+    chronic_reopen = 0
+    dispatched_without_pr = 0
+    done_with_pr_receipt = 0
+    for task in tasks:
+        if not isinstance(task, dict):
+            continue
+        log = task.get("dispatch_log") or []
+        reopen_hits = sum(
+            1
+            for entry in log
+            if isinstance(entry, dict)
+            and (
+                "reopened" in str(entry.get("output", "")).lower()
+                or str(entry.get("status", "")).lower() == "open"
+            )
+        )
+        failure_hits = sum(
+            1
+            for entry in log
+            if isinstance(entry, dict) and "failed" in str(entry.get("status", "")).lower()
+        )
+        if reopen_hits >= 2 and failure_hits >= 2:
+            chronic_reopen += 1
+        urls = task.get("urls") or []
+        has_pr = any("pull/" in str(url) for url in urls) or any(
+            "pull/" in str((entry or {}).get("session_id", ""))
+            for entry in log
+            if isinstance(entry, dict)
+        )
+        if task.get("status") == "dispatched" and not has_pr:
+            dispatched_without_pr += 1
+        if task.get("status") == "done" and has_pr:
+            done_with_pr_receipt += 1
+    return {
+        "present": True,
+        "text": text,
+        "task_count": len(tasks),
+        "status_counts": dict(sorted(status_counts.items())),
+        "invalid_statuses": invalid,
+        "exact_slug_refs": exact_slug_refs,
+        "chronic_reopen_candidates": chronic_reopen,
+        "dispatched_without_pr_receipt": dispatched_without_pr,
+        "done_with_pr_receipt": done_with_pr_receipt,
+    }
+
+
+def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
+    rows = iter_source_files(args.days)
+    sessions: list[dict[str, Any]] = []
+    for row in rows:
+        records = read_json_records(row["path"])
+        sessions.append(session_meta_from_records(row["source"], row, records))
+
+    wt_report = current_worktree_report()
+    worktrees = wt_report.get("items") or []
+    attach_worktree_slugs(sessions, worktrees)
+    task_snapshot = load_task_snapshot([item["name"] for item in worktrees if isinstance(item, dict)])
+    remote = {"enabled": not args.no_remote}
+    if not args.no_remote:
+        remote["worktrees"] = worktree_remote_receipts(worktrees)
+        remote["task_prs"] = task_remote_pr_receipts(
+            task_snapshot.get("text", ""),
+            args.remote_pr_limit,
+            args.remote_workers,
+        )
+    cloud = {"enabled": not args.no_cloud}
+    if not args.no_cloud:
+        cloud.update(cloud_receipts())
+    task_snapshot_private = {k: v for k, v in task_snapshot.items() if k != "text"}
+
+    by_source: dict[str, dict[str, Any]] = {}
+    for session in sessions:
+        item = by_source.setdefault(
+            session["source"],
+            {
+                "source": session["source"],
+                "files": 0,
+                "bytes": 0,
+                "prompt_events": 0,
+                "event_records": 0,
+                "newest": None,
+            },
+        )
+        item["files"] += 1
+        item["bytes"] += int(session["size"])
+        item["prompt_events"] += int(session["prompt_event_count"])
+        item["event_records"] += int(session["event_count"])
+        if item["newest"] is None or (session["mtime"] or "") > item["newest"]:
+            item["newest"] = session["mtime"]
+
+    sessions_by_worktree = Counter(s["worktree_slug"] for s in sessions if s.get("worktree_slug"))
+    prompt_by_worktree = defaultdict(int)
+    for session in sessions:
+        if session.get("worktree_slug"):
+            prompt_by_worktree[session["worktree_slug"]] += int(session["prompt_event_count"])
+
+    return {
+        "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+        "horizon_days": args.days,
+        "sources": sorted(by_source.values(), key=lambda x: (-x["prompt_events"], x["source"])),
+        "sessions": sessions,
+        "worktree_report": wt_report,
+        "task_snapshot": task_snapshot_private,
+        "remote": remote,
+        "cloud": cloud,
+        "sessions_by_worktree": dict(sessions_by_worktree.most_common()),
+        "prompt_events_by_worktree": dict(sorted(prompt_by_worktree.items())),
+        "private_index": str(PRIVATE_INDEX),
+    }
+
+
+def render_markdown(snapshot: dict[str, Any]) -> str:
+    horizon = "all local history" if snapshot["horizon_days"] is None else f"last {snapshot['horizon_days']} days"
+    sources = snapshot["sources"]
+    total_files = sum(int(s["files"]) for s in sources)
+    total_bytes = sum(int(s["bytes"]) for s in sources)
+    total_prompts = sum(int(s["prompt_events"]) for s in sources)
+    wt = snapshot["worktree_report"]
+    tasks = snapshot["task_snapshot"]
+    remote = snapshot.get("remote", {})
+    cloud = snapshot.get("cloud", {})
+    current_worktrees = {item["name"] for item in wt.get("items", [])}
+    linked_worktrees = set(snapshot["sessions_by_worktree"]) & current_worktrees
+    unlinked_worktrees = sorted(current_worktrees - linked_worktrees)
+
+    lines = [
+        "# Prompt Lifecycle Ledger",
+        "",
+        f"Generated: `{snapshot['generated_at']}`",
+        f"Horizon: `{horizon}`",
+        "",
+        "## Canonical Decision",
+        "",
+        "- A human prompt/session is a lifecycle seed. Work that starts from it must end in a named outcome: merged, pushed PR, preserved branch, owner-recorded blocker, named supersession, archived task, or documented non-source residue.",
+        "- Raw personal/session material belongs in `.limen-private/session-corpus/`; tracked ledgers must stay redacted and receipt-oriented.",
+        "- Screenshots are coverage hints. The canonical absorptive layer is the local app/session filesystem plus private cartridge materialization.",
+        "- Worktree cleanup is subordinate to prompt lifecycle: no unique work is removed just because a directory is inconvenient.",
+        "",
+        "## Redacted Prompt Coverage",
+        "",
+        f"Indexed `{total_files}` app/session files, `{fmt_bytes(total_bytes)}`, with `{total_prompts}` prompt-like user events hashed into the private index.",
+        "",
+        "| Source | Files | Prompt Events | Event Records | Size | Newest |",
+        "|---|---:|---:|---:|---:|---|",
+    ]
+    for source in sources:
+        lines.append(
+            f"| `{source['source']}` | {source['files']} | {source['prompt_events']} | "
+            f"{source['event_records']} | {fmt_bytes(int(source['bytes']))} | "
+            f"`{source['newest'] or 'n/a'}` |"
+        )
+    if not sources:
+        lines.append("| none | 0 | 0 | 0 | 0 B | n/a |")
+
+    lines += [
+        "",
+        "## Prompt To Worktree Crosswalk",
+        "",
+        f"- Current `.limen-worktrees` roots scanned: `{wt.get('total', 0)}`; debt roots: `{wt.get('debt', 0)}`.",
+        f"- Current worktree roots with at least one local session/prompt receipt: `{len(linked_worktrees)}`.",
+        f"- Current worktree roots without a local session receipt in this index: `{len(unlinked_worktrees)}`.",
+        "",
+        "| Worktree Root | Session Files | Prompt Events | Debt Reason |",
+        "|---|---:|---:|---|",
+    ]
+    reason_by_root = {item["name"]: item.get("reason", "") for item in wt.get("items", [])}
+    for root in sorted(current_worktrees):
+        lines.append(
+            f"| `{root}` | {snapshot['sessions_by_worktree'].get(root, 0)} | "
+            f"{snapshot['prompt_events_by_worktree'].get(root, 0)} | "
+            f"`{reason_by_root.get(root, 'n/a')}` |"
+        )
+    if not current_worktrees:
+        lines.append("| none | 0 | 0 | n/a |")
+
+    lines += [
+        "",
+        "## Task Board Crosswalk",
+        "",
+    ]
+    if tasks.get("present"):
+        status_bits = ", ".join(f"`{k}` {v}" for k, v in tasks["status_counts"].items())
+        lines += [
+            f"- Task records: `{tasks['task_count']}`.",
+            f"- Status distribution: {status_bits}.",
+            f"- Invalid statuses outside canonical set: `{len(tasks['invalid_statuses'])}`.",
+            f"- Current worktree root slugs mentioned exactly in `tasks.yaml`: `{len(tasks['exact_slug_refs'])}` / `{wt.get('total', 0)}`.",
+            f"- Chronic reopen-loop candidates: `{tasks['chronic_reopen_candidates']}`.",
+            f"- Dispatched tasks without PR receipt: `{tasks['dispatched_without_pr_receipt']}`.",
+            f"- Done tasks with PR receipt still visible in dispatch log/URLs: `{tasks['done_with_pr_receipt']}`.",
+        ]
+    else:
+        lines.append("- `tasks.yaml` was not found.")
+
+    lines += [
+        "",
+        "## Remote Receipts",
+        "",
+    ]
+    if remote.get("enabled") and remote.get("worktrees"):
+        wr = remote["worktrees"]
+        tprs = remote.get("task_prs", {})
+        pr_counts = ", ".join(f"`{k}` {v}" for k, v in (tprs.get("counts") or {}).items()) or "none"
+        lines += [
+            f"- GitHub worktree repos seen: `{len(wr.get('repos', []))}`.",
+            f"- Git worktree roots with remote branch present: `{wr.get('remote_branches_present', 0)}`; missing: `{wr.get('remote_branches_missing', 0)}`.",
+            f"- Branch-linked PR states: `OPEN` {wr.get('open_prs', 0)}, `MERGED` {wr.get('merged_prs', 0)}, `CLOSED` {wr.get('closed_prs', 0)}.",
+            f"- Task-board GitHub PR refs seen: `{tprs.get('seen_pr_refs', 0)}`; checked: `{tprs.get('checked_pr_refs', 0)}`; states: {pr_counts}.",
+        ]
+        if tprs.get("truncated"):
+            lines.append(f"- Task PR receipt scan truncated at `{tprs.get('limit')}` refs.")
+    elif remote.get("enabled"):
+        lines.append("- Remote receipt collection ran but produced no GitHub worktree data.")
+    else:
+        lines.append("- Remote receipt collection disabled for this run.")
+
+    lines += [
+        "",
+        "## Cloud Receipts",
+        "",
+    ]
+    if cloud.get("enabled"):
+        public_ok = sum(1 for p in cloud.get("public_surface_probes", []) if p.get("ok"))
+        public_total = len(cloud.get("public_surface_probes", []))
+        env_flags = cloud.get("env_flags", {})
+        env_bits = ", ".join(f"`{k}`={'present' if v else 'absent'}" for k, v in sorted(env_flags.items()))
+        lines += [
+            f"- Public site probed: `{cloud.get('public_site_url')}`; `{public_ok}` / `{public_total}` probes passed.",
+            f"- Runtime URL configured: `{cloud.get('runtime_url_configured')}`; runtime health probe ok: `{bool((cloud.get('runtime_health_probe') or {}).get('ok'))}`.",
+            f"- Cloudflare deploy auth present: `{cloud.get('cloudflare_deploy_auth_present')}`.",
+            f"- Cloud env flags: {env_bits}.",
+        ]
+    else:
+        lines.append("- Cloud receipt collection disabled for this run.")
+
+    lines += [
+        "",
+        "## Roadblocks And Potholes",
+        "",
+        "- The app screenshots are partially covered by local Codex history and Claude project/task stores, but screenshots alone are not durable enough to be the corpus. The durable object is now filesystem source + private object copy + redacted hash ledger.",
+        "- Remote/cloud receipts are part of the lifecycle proof, but they are not substitutes for preserving local raw prompt/session material.",
+        "- Worktree roots still do not have first-class task-board receipt fields; exact slug references are the bridge to add before automatic drain can be trusted.",
+        "- Prompt/session coverage is now hashed, but lifecycle judgment still needs owner actions: dirty roots need PRs or blocker records, and open PR receipts need merge or named supersession.",
+        "- Codex now has prompt-event coverage through `history.jsonl` and session JSONL, but it still lacks a quicken-style resume/classification organ equivalent to Claude's lifecycle journal.",
+        "",
+        "## Private Outputs",
+        "",
+        f"- Prompt lifecycle private index: `{relpath(PRIVATE_INDEX)}`.",
+        f"- Raw object cartridge: `{relpath(PRIVATE_ROOT / 'objects')}`.",
+        "- The private index contains source paths, session hashes, prompt hashes, CWD hashes, and worktree links; it contains no prompt text.",
+        "",
+        "## Commands",
+        "",
+        "- Refresh this ledger with remote/cloud receipts: `python3 scripts/prompt-lifecycle-ledger.py --write --all`",
+        "- Refresh local-only when offline: `python3 scripts/prompt-lifecycle-ledger.py --write --all --no-remote --no-cloud`",
+        "- Refresh and absorb raw session/app files: `python3 scripts/session-corpus-ledger.py --write --all --materialize`",
+        "- Inspect lifecycle debt: `python3 scripts/worktree-debt.py --json`",
+        "",
+    ]
+    return "\n".join(lines)
+
+
+def write_outputs(snapshot: dict[str, Any], markdown: str) -> None:
+    DOC_PATH.write_text(markdown)
+    PRIVATE_INDEX.parent.mkdir(parents=True, exist_ok=True)
+    PRIVATE_INDEX.write_text(json.dumps(snapshot, indent=2, sort_keys=True))
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Refresh the redacted prompt/session lifecycle ledger.")
+    parser.add_argument("--days", type=int, default=None, help="local app-store horizon to index")
+    parser.add_argument("--all", action="store_true", help="index all local app-store history")
+    parser.add_argument("--write", action="store_true", help="write docs and ignored private index")
+    parser.add_argument("--no-remote", action="store_true", help="skip GitHub remote receipt checks")
+    parser.add_argument("--no-cloud", action="store_true", help="skip public cloud/runtime probes")
+    parser.add_argument("--remote-pr-limit", type=int, default=1000, help="maximum task PR refs to verify; 0 means all")
+    parser.add_argument("--remote-workers", type=int, default=8, help="parallel GitHub PR receipt workers")
+    args = parser.parse_args()
+    if args.all:
+        args.days = None
+    if args.days is not None and args.days <= 0:
+        args.days = None
+
+    snapshot = build_snapshot(args)
+    markdown = render_markdown(snapshot)
+    if args.write:
+        write_outputs(snapshot, markdown)
+    else:
+        print(markdown)
+    total_files = sum(int(s["files"]) for s in snapshot["sources"])
+    total_prompts = sum(int(s["prompt_events"]) for s in snapshot["sources"])
+    horizon = "all history" if args.days is None else f"{args.days}d"
+    msg = f"prompt-lifecycle-ledger: {total_files} files, {total_prompts} prompt events over {horizon}"
+    if args.write:
+        msg += f"; wrote {DOC_PATH}"
+    print(msg)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

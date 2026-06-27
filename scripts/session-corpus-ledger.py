@@ -37,10 +37,17 @@ PRIVATE_INVENTORY = PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
 
 LOCAL_SOURCES = [
     ("codex-sessions", HOME / ".codex" / "sessions", ("*",)),
+    ("codex-history", HOME / ".codex", ("history.jsonl",)),
+    ("codex-attachments", HOME / ".codex" / "attachments", ("*",)),
+    ("codex-goals-state", HOME / ".codex", ("goals_*.sqlite*", "state_*.sqlite*")),
+    ("codex-app-sqlite", HOME / ".codex" / "sqlite", ("*.db", "*.sqlite", "*.db-*", "*.sqlite-*")),
+    ("codex-shell-snapshots", HOME / ".codex" / "shell_snapshots", ("*",)),
     ("claude-projects", HOME / ".claude" / "projects", ("*",)),
     ("claude-usage-session-meta", HOME / ".claude" / "usage-data" / "session-meta", ("*",)),
     ("claude-usage-facets", HOME / ".claude" / "usage-data" / "facets", ("*",)),
     ("claude-tasks", HOME / ".claude" / "tasks", ("*",)),
+    ("claude-plans", HOME / ".claude" / "plans", ("*",)),
+    ("claude-file-history", HOME / ".claude" / "file-history", ("*",)),
 ]
 
 ORGANS = [
@@ -94,26 +101,30 @@ def iter_local_files(days: int | None) -> list[dict[str, Any]]:
         if not root.exists():
             continue
         seen: set[Path] = set()
-        for pattern in patterns:
-            for path in root.rglob(pattern):
-                if path in seen or not path.is_file():
-                    continue
-                seen.add(path)
-                try:
-                    st = path.stat()
-                except OSError:
-                    continue
-                if cutoff is not None and st.st_mtime < cutoff:
-                    continue
-                rows.append(
-                    {
-                        "source": source,
-                        "path": str(path),
-                        "display_path": relpath(path),
-                        "size": st.st_size,
-                        "mtime": iso_from_ts(st.st_mtime),
-                    }
-                )
+        candidates = [root] if root.is_file() else [
+            path
+            for pattern in patterns
+            for path in root.rglob(pattern)
+        ]
+        for path in candidates:
+            if path in seen or not path.is_file():
+                continue
+            seen.add(path)
+            try:
+                st = path.stat()
+            except OSError:
+                continue
+            if cutoff is not None and st.st_mtime < cutoff:
+                continue
+            rows.append(
+                {
+                    "source": source,
+                    "path": str(path),
+                    "display_path": relpath(path),
+                    "size": st.st_size,
+                    "mtime": iso_from_ts(st.st_mtime),
+                }
+            )
     rows.sort(key=lambda r: (r["mtime"] or "", r["source"], r["path"]), reverse=True)
     return rows
 
@@ -310,6 +321,15 @@ def infer_roadblocks(snapshot: dict[str, Any], rows: list[dict[str, Any]]) -> li
             "session-meta is not clean/in-sync; do not mutate it from Limen until its existing "
             "dirty and divergent work is preserved or merged."
         )
+    for name, organ in organs.items():
+        if name == "session-meta":
+            continue
+        git = organ.get("git", {})
+        if git.get("dirty"):
+            roadblocks.append(
+                f"{name} has {git.get('dirty_entries', 0)} dirty entries; record or preserve that "
+                "owner-state before treating the corpus substrate as fully clean."
+            )
     if rows:
         roadblocks.append(
             "Local Claude/Codex app stores are live private data; screenshots are only UI evidence. "
@@ -357,6 +377,8 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
         "- Limen is the control plane and visible ledger for session/corpus lifecycle.",
         "- `session-meta` remains the producer for redacted, deduped, multi-provider atoms.",
         "- `knowledge-corpus` remains the distillation target consumed by `corpus-converge.py`.",
+        "- `prompt-lifecycle-ledger.py` is the redacted crosswalk from local prompts/sessions to "
+        "worktrees, tasks, GitHub receipts, and cloud probes.",
         "- Raw personal/session data is private local material. It belongs under "
         "`./.limen-private/session-corpus/` when materialized, never in public Git history.",
         "- The app screenshots are coverage hints, not canonical input. Canonical input is the local "
@@ -471,6 +493,8 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
         "- Refresh a bounded ledger: `python3 scripts/session-corpus-ledger.py --write --days 7`",
         "- Absorb raw local objects into the ignored cartridge: "
         "`python3 scripts/session-corpus-ledger.py --write --all --materialize`",
+        "- Refresh local/remote/cloud prompt lifecycle: "
+        "`python3 scripts/prompt-lifecycle-ledger.py --write --all`",
         "- Rebuild session-meta atoms after preserving its dirty work: "
         "`cd ~/Workspace/session-meta && ./ingest/refresh-atoms.sh`",
         "- Refresh Limen coverage view: `python3 scripts/ingest-coverage.py`",
