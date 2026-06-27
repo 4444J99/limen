@@ -1,6 +1,6 @@
 # Prompt Lifecycle Ledger
 
-Generated: `2026-06-27T16:36:00+00:00`
+Generated: `2026-06-27T17:53:51+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -12,13 +12,13 @@ Horizon: `all local history`
 
 ## Redacted Prompt Coverage
 
-Indexed `9477` app/session files, `2.0 GiB`, with `92621` prompt-like user events hashed into the private index.
+Indexed `9480` app/session files, `2.0 GiB`, with `92647` prompt-like user events hashed into the private index.
 
 | Source | Files | Prompt Events | Event Records | Size | Newest |
 |---|---:|---:|---:|---:|---|
-| `claude-projects` | 4845 | 87792 | 313106 | 1.4 GiB | `2026-06-27T15:12:53+00:00` |
-| `codex-sessions` | 887 | 4300 | 226851 | 574.7 MiB | `2026-06-27T16:34:39+00:00` |
-| `codex-history` | 1 | 396 | 396 | 178.5 KiB | `2026-06-27T16:16:51+00:00` |
+| `claude-projects` | 4848 | 87805 | 313140 | 1.4 GiB | `2026-06-27T17:49:30+00:00` |
+| `codex-sessions` | 887 | 4309 | 227538 | 619.4 MiB | `2026-06-27T17:52:26+00:00` |
+| `codex-history` | 1 | 400 | 400 | 179.1 KiB | `2026-06-27T17:41:30+00:00` |
 | `claude-tasks` | 188 | 133 | 133 | 57.7 KiB | `2026-06-26T00:08:52+00:00` |
 | `claude-file-history` | 3519 | 0 | 0 | 42.2 MiB | `2026-06-27T00:26:28+00:00` |
 | `claude-plans` | 34 | 0 | 0 | 289.3 KiB | `2026-06-25T03:22:45+00:00` |
@@ -26,7 +26,7 @@ Indexed `9477` app/session files, `2.0 GiB`, with `92621` prompt-like user event
 
 ## Prompt To Worktree Crosswalk
 
-- Current `.limen-worktrees` roots scanned: `19`; debt roots: `11`.
+- Current `.limen-worktrees` roots scanned: `19`; debt roots: `10`.
 - Current worktree roots with at least one local session/prompt receipt: `18`.
 - Current worktree roots without a local session receipt in this index: `1`.
 
@@ -34,7 +34,7 @@ Indexed `9477` app/session files, `2.0 GiB`, with `92621` prompt-like user event
 |---|---:|---:|---|
 | `bld-domus-genoma-ci-23a9` | 1 | 4 | `active(<6h)` |
 | `bld-media-ark-tests-2698` | 1 | 4 | `active(<6h)` |
-| `bld-mirror-mirror-harden-350f` | 1 | 5 | `dirty` |
+| `bld-mirror-mirror-harden-350f` | 1 | 5 | `active(<6h)` |
 | `bld-my--father-mother-harden-44b2` | 1 | 5 | `dirty` |
 | `bld-promptscope-next-rev-3fde` | 1 | 4 | `dirty` |
 | `bld-universal-mail--automation-readme-9031` | 1 | 5 | `active(<6h)` |
@@ -68,9 +68,9 @@ Indexed `9477` app/session files, `2.0 GiB`, with `92621` prompt-like user event
 ## Remote Receipts
 
 - GitHub worktree repos seen: `14`.
-- Git worktree roots with remote branch present: `9`; missing: `7`.
-- Branch-linked PR states: `OPEN` 9, `MERGED` 2, `CLOSED` 0.
-- Task-board GitHub PR refs seen: `657`; checked: `657`; states: `CLOSED` 31, `ERROR` 6, `MERGED` 445, `OPEN` 175.
+- Git worktree roots with remote branch present: `10`; missing: `6`.
+- Branch-linked PR states: `OPEN` 10, `MERGED` 2, `CLOSED` 0.
+- Task-board GitHub PR refs seen: `657`; checked: `657`; states: `CLOSED` 31, `ERROR` 2, `MERGED` 445, `OPEN` 179.
 
 ## Cloud Receipts
 

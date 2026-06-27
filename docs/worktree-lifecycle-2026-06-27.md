@@ -25,6 +25,14 @@ Post-audit update: `bld-media-ark-tests-2698` was rebased to current
 module, platform test-contract gaps were fixed, and the result was preserved as
 draft PR [#50](https://github.com/organvm/media-ark/pull/50) at `b7509dc`.
 
+Post-audit update: `bld-mirror-mirror-harden-350f` was rebased to current
+`origin/main`, the stale draft PR branch was replaced with an explicit
+force-with-lease from `3d822c6` to `f44da8e`, and the resolved webhook
+hardening was preserved as draft PR
+[#67](https://github.com/organvm/mirror-mirror/pull/67). The PR is clean and
+GitHub CI passed; the local root is no longer dirty local-only work, though it
+remains lifecycle debt until merged or explicitly superseded.
+
 Reclaim policy after this audit: a root is reapable only when it is clean, idle, and its
 content is preserved on the remote default branch. Preservation can be exact SHA reachability
 or `git cherry <default> HEAD` patch equivalence after squash/rebase. Dirty work,
@@ -46,7 +54,7 @@ unique-unpushed commits, open/unmerged branches, active roots, and non-Git resid
 |---|---|---|---|---|
 | `bld-domus-genoma-ci-23a9` | `organvm/domus-genoma` | `limen/bld-domus-genoma-ci-23a9` / `c22646f` | dirty: `.github/workflows/ci.yml` | Review CI workflow, commit if valid, open/update PR. |
 | `bld-media-ark-tests-2698` | `organvm/media-ark` | `limen/bld-media-ark-tests-2698` / `b7509dc` | preserved as draft PR #50 | Review and merge, or name a successor that preserves the capture/platform test coverage. |
-| `bld-mirror-mirror-harden-350f` | `organvm/mirror-mirror` | `limen/bld-mirror-mirror-harden-350f` / `9afe14d` | dirty: `api/webhooks/stripe.ts` | Review Stripe hardening, run tests, commit and PR. |
+| `bld-mirror-mirror-harden-350f` | `organvm/mirror-mirror` | `limen/bld-mirror-mirror-harden-350f` / `f44da8e` | preserved as draft PR #67 | Review and merge, or name a successor that preserves the Stripe webhook hardening. |
 | `bld-my--father-mother-harden-44b2` | `organvm/my--father-mother` | `limen/bld-my--father-mother-harden-44b2` / `18730a2` | dirty: `main.py` | Review hardening diff, run tests, commit and PR. |
 | `bld-promptscope-next-rev-3fde` | `organvm/promptscope` | `limen/bld-promptscope-next-rev-3fde` / `4fa725b` | dirty: `public/app.js`, `public/index.html`, `src/index.ts` | Review product diff, run build/tests, commit and PR. |
 | `bld-universal-mail--automation-readme-9031` | `organvm/universal-mail--automation` | `limen/bld-universal-mail--automation-readme-9031` / `29f6b4b` | preserved as draft PR #108 | Review and merge, or name a successor that preserves the README modernization. |

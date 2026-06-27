@@ -17,18 +17,18 @@ No directory was deleted or removed during this ledger pass.
 
 Evidence commands:
 
-- `python3 scripts/worktree-debt.py --json`: 19 roots, 11 debt-bearing roots after the
-  conversation-corpus-engine CI fix was preserved as a draft PR.
+- `python3 scripts/worktree-debt.py --json`: 19 roots, 10 debt-bearing roots after the
+  Mirror Mirror webhook hardening root was preserved as a draft PR.
 - per-root `git status --porcelain`, `git log --oneline -5`, `git cherry <default> HEAD`.
 - non-Git residue inspection with `find` and direct reads of cache metadata files.
 
 Current classes:
 
-- 7 dirty working trees counted as debt.
+- 6 dirty working trees counted as debt.
 - 0 unique local-only unpushed roots among the completed drain roots; newly spawned
   dispatcher roots are inside the active grace window.
 - 2 non-Git residue roots.
-- 8 active roots, including freshly pushed draft-PR roots still inside the idle
+- 9 active roots, including freshly pushed draft-PR roots still inside the idle
   grace window.
 - 2 clean roots not merged to default, both with draft PR receipts.
 - 0 content-preserved roots remain on disk; two were reclaimed by the background
@@ -45,7 +45,7 @@ That is not enough for a fully automatic lifecycle.
 |---|---|---|---|---|---|---|
 | `bld-domus-genoma-ci-23a9` | `organvm/domus-genoma` | draft PR open | branch `limen/bld-domus-genoma-ci-23a9`; likely build/CI task; no exact task slug in board | clean; PR [#144](https://github.com/organvm/domus-genoma/pull/144); commit `c53a571`; untracked CI draft was rebased onto current `origin/master`; YAML parse passed; `git diff --check origin/master..HEAD` passed; `just --dry-run check-all` now shows `shfmt -d` and no `shfmt -w`; `just fmt-check` passed; full local `just check-all` exposed pre-existing BATS failures | preserved outside local disk, active grace; lifecycle remains open until merged or explicitly superseded | Review PR CI and the known pre-existing BATS blockers, then merge or supersede by named branch/PR. |
 | `bld-media-ark-tests-2698` | `organvm/media-ark` | draft PR open | branch `limen/bld-media-ark-tests-2698`; likely tests task; no exact task slug in board | clean; PR [#50](https://github.com/organvm/media-ark/pull/50); commit `b7509dc`; stale untracked test draft was ported into `tests/test_process_captures_core.py`; `npm test` passed 98 tests; `npm run release:verify` passed | preserved outside local disk, still lifecycle debt until merged or explicitly superseded | Review and merge the capture/platform test-contract PR, or supersede by a named successor that preserves this coverage. |
-| `bld-mirror-mirror-harden-350f` | `organvm/mirror-mirror` | dirty | branch `limen/bld-mirror-mirror-harden-350f`; likely hardening task; no exact task slug in board | HEAD `9afe14d`; default `origin/main`; modified `api/webhooks/stripe.ts`; ahead 0 | lifecycle debt | Review Stripe hardening, run tests, then commit/push/PR. |
+| `bld-mirror-mirror-harden-350f` | `organvm/mirror-mirror` | draft PR open | branch `limen/bld-mirror-mirror-harden-350f`; likely hardening task; no exact task slug in board | clean; PR [#67](https://github.com/organvm/mirror-mirror/pull/67); commit `f44da8e`; branch was rebased onto `origin/main` `af0f15b`; remote branch was updated with an explicit force-with-lease from stale head `3d822c6`; local checks passed: focused ESLint on `api/webhooks/stripe.ts`, `api/lib/webhook.ts`, and `src/__tests__/stripeWebhook.test.ts`; targeted Stripe webhook tests passed 4 tests; scoped TypeScript check passed; `npm test` passed 203 tests; `npm run build` passed with existing CSS/chunk/deprecation warnings; GitHub CI `Lint, build & test` passed; PR merge state `CLEAN` | preserved outside local disk, active grace; lifecycle remains open until merged or explicitly superseded | Review and merge PR #67, or supersede by named branch/PR that preserves this webhook hardening. |
 | `bld-my--father-mother-harden-44b2` | `organvm/my--father-mother` | dirty | branch `limen/bld-my--father-mother-harden-44b2`; likely hardening task; no exact task slug in board | HEAD `18730a2`; default `origin/main`; modified `main.py`; ahead 0 | lifecycle debt | Review hardening diff, run tests, then commit/push/PR. |
 | `bld-promptscope-next-rev-3fde` | `organvm/promptscope` | dirty | branch `limen/bld-promptscope-next-rev-3fde`; likely next-revenue task; no exact task slug in board | HEAD `4fa725b`; modified `public/app.js`, `public/index.html`, `src/index.ts`; ahead 0 | lifecycle debt | Review product delta, run build/tests, then commit/push/PR. |
 | `bld-universal-mail--automation-readme-9031` | `organvm/universal-mail--automation` | draft PR open | branch `limen/bld-universal-mail--automation-readme-9031`; likely README task; no exact task slug in board | clean; PR [#108](https://github.com/organvm/universal-mail--automation/pull/108); commit `29f6b4b`; README marker check passed; `python3 cli.py -h` passed; `python3 -m py_compile cli.py api/app.py api/plans.py mcp_server/server.py` passed; `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -q tests/test_config.py tests/test_models.py tests/test_rules.py tests/test_web.py` passed 158 tests | preserved outside local disk, still lifecycle debt until merged or explicitly superseded | Review README modernization and merge, or supersede by a named successor that preserves this content. |
@@ -73,8 +73,9 @@ That is not enough for a fully automatic lifecycle.
   residue roots needed direct filesystem inspection to classify.
 - Patch-equivalent work looked unpushed until the debt scanner learned `git cherry`
   equivalence. That created false debt pressure around merged/squashed work.
-- The first four unique local-only roots are now remote-preserved as draft PRs, but
-  the scanner correctly keeps them in lifecycle debt until merge or named supersession.
+- The latest single-file dirty root is now remote-preserved as draft PR
+  [mirror-mirror#67](https://github.com/organvm/mirror-mirror/pull/67), and the
+  scanner now classifies it as active instead of dirty debt.
 - The automated beat reclaimed two content-preserved roots immediately after classification.
   That did not lose unique source, but it was too eager for the current operator-acceptance
   posture; `scripts/drain.sh` now requires `LIMEN_RECLAIM_APPLY=1` for future removals.
@@ -95,8 +96,9 @@ That is not enough for a fully automatic lifecycle.
 1. Close the two non-Git residue roots by keeping this classification visible; remove
    only after explicit operator acceptance or a scripted reclaim gate that records the
    classification.
-2. Drive the eight draft PR receipts to merge or named supersession:
+2. Drive the nine draft PR receipts to merge or named supersession:
    [domus-genoma#144](https://github.com/organvm/domus-genoma/pull/144),
+   [mirror-mirror#67](https://github.com/organvm/mirror-mirror/pull/67),
    [a-i-chat--exporter#96](https://github.com/organvm/a-i-chat--exporter/pull/96),
    [a-i-chat--exporter#95](https://github.com/organvm/a-i-chat--exporter/pull/95),
    [object-lessons#22](https://github.com/organvm/object-lessons/pull/22),

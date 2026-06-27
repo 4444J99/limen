@@ -1,6 +1,6 @@
 # Session Corpus Ledger
 
-Generated: `2026-06-27T16:34:40+00:00`
+Generated: `2026-06-27T17:52:28+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -14,17 +14,17 @@ Horizon: `all local history`
 
 ## Local Session Sources
 
-Total seen: `9715` files, `2.0 GiB`.
+Total seen: `9718` files, `2.0 GiB`.
 
 | Source | Root | Files | Size | Newest |
 |---|---:|---:|---:|---|
-| `claude-projects` | `~/.claude/projects` | 4845 | 1.4 GiB | `2026-06-27T15:12:53+00:00` |
-| `codex-sessions` | `~/.codex/sessions` | 887 | 574.7 MiB | `2026-06-27T16:34:39+00:00` |
+| `claude-projects` | `~/.claude/projects` | 4848 | 1.4 GiB | `2026-06-27T17:49:30+00:00` |
+| `codex-sessions` | `~/.codex/sessions` | 887 | 619.4 MiB | `2026-06-27T17:52:26+00:00` |
 | `claude-file-history` | `~/.claude/file-history` | 3519 | 42.2 MiB | `2026-06-27T00:26:28+00:00` |
-| `codex-goals-state` | `~/.codex` | 6 | 10.8 MiB | `2026-06-27T16:34:39+00:00` |
+| `codex-goals-state` | `~/.codex` | 6 | 10.8 MiB | `2026-06-27T17:52:26+00:00` |
 | `claude-plans` | `~/.claude/plans` | 34 | 289.3 KiB | `2026-06-25T03:22:45+00:00` |
 | `claude-usage-session-meta` | `~/.claude/usage-data/session-meta` | 197 | 221.4 KiB | `2026-06-23T19:06:40+00:00` |
-| `codex-history` | `~/.codex` | 1 | 178.5 KiB | `2026-06-27T16:16:51+00:00` |
+| `codex-history` | `~/.codex` | 1 | 179.1 KiB | `2026-06-27T17:41:30+00:00` |
 | `codex-app-sqlite` | `~/.codex/sqlite` | 1 | 68.0 KiB | `2026-06-27T13:58:29+00:00` |
 | `claude-tasks` | `~/.claude/tasks` | 188 | 57.7 KiB | `2026-06-26T00:08:52+00:00` |
 | `claude-usage-facets` | `~/.claude/usage-data/facets` | 32 | 29.1 KiB | `2026-06-23T19:06:55+00:00` |
@@ -41,15 +41,15 @@ Total seen: `9715` files, `2.0 GiB`.
 
 ## Substrate Counts
 
-- `session-meta/ingest/manifest.jsonl`: 23,538 records, mtime `2026-06-27T15:58:03+00:00`.
-- `session-meta/ingest/atoms.jsonl`: 103,733 atoms, mtime `2026-06-27T16:01:20+00:00`.
+- `session-meta/ingest/manifest.jsonl`: 23,538 records, mtime `2026-06-27T17:43:10+00:00`.
+- `session-meta/ingest/atoms.jsonl`: 104,113 atoms, mtime `2026-06-27T17:45:48+00:00`.
 - `knowledge-corpus`: `13` reduced faces; `00-THE-ONE.md` present: `True`.
 - Top manifest sources: `gemini` 4,592, `claude` 3,961, `chatgpt` 2,709, `claude-projects` 2,452, `cowork-sessions` 2,047, `antigravity` 1,893, `downloads` 1,717, `intake` 1,569.
 
 ## Session Lifecycle
 
-- Last `quicken.py` journal: `2026-06-27T16:29:10+00:00`.
-- Claude FleetView sessions classified: `33` total; `5` stalled, `28` closed, `0` alive, `0` done.
+- Last `quicken.py` journal: `2026-06-27T17:41:54+00:00`.
+- Claude FleetView sessions classified: `29` total; `2` stalled, `27` closed, `0` alive, `0` done.
 - Reaped worktrees in that pass: `0`.
 
 ## Private Cartridge
