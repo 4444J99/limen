@@ -520,6 +520,35 @@ def cloud_receipts() -> dict[str, Any]:
     }
 
 
+def codex_quicken_receipt() -> dict[str, Any]:
+    path = ROOT / "logs" / "codex-session-lifecycle.jsonl"
+    if not path.is_file():
+        return {"present": False, "path": str(path)}
+    last: dict[str, Any] | None = None
+    try:
+        with path.open(encoding="utf-8", errors="replace") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    last = json.loads(line)
+                except ValueError:
+                    continue
+    except OSError as exc:
+        return {"present": False, "path": str(path), "error": str(exc)}
+    if not last:
+        return {"present": False, "path": str(path)}
+    return {
+        "present": True,
+        "path": str(path),
+        "generated_at": last.get("generated_at"),
+        "session_count": last.get("session_count", 0),
+        "by_state": last.get("by_state") or {},
+        "by_family": last.get("by_family") or {},
+    }
+
+
 def attach_worktree_slugs(sessions: list[dict[str, Any]], worktrees: list[dict[str, Any]]) -> None:
     slugs = [item["name"] for item in worktrees]
     for session in sessions:
@@ -689,6 +718,7 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
         "task_snapshot": task_snapshot_private,
         "remote": remote,
         "cloud": cloud,
+        "codex_quicken": codex_quicken_receipt(),
         "sessions_by_worktree": dict(sessions_by_worktree.most_common()),
         "prompt_events_by_worktree": dict(sorted(prompt_by_worktree.items())),
         "private_index": str(PRIVATE_INDEX),
@@ -705,6 +735,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
     tasks = snapshot["task_snapshot"]
     remote = snapshot.get("remote", {})
     cloud = snapshot.get("cloud", {})
+    codex_quicken = snapshot.get("codex_quicken", {})
     current_worktrees = {item["name"] for item in wt.get("items", [])}
     linked_worktrees = set(snapshot["sessions_by_worktree"]) & current_worktrees
     unlinked_worktrees = sorted(current_worktrees - linked_worktrees)
@@ -831,8 +862,21 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "- Worktree roots still do not have first-class task-board receipt fields; exact slug references are the bridge to add before automatic drain can be trusted.",
         "- Dispatch receipt classification must distinguish async Jules work from stranded local no-PR work; otherwise the conductor burns attention on healthy async reservations.",
         "- Prompt/session coverage is now hashed, but lifecycle judgment still needs owner actions: dirty roots need PRs or blocker records, and open PR receipts need merge or named supersession.",
-        "- Codex now has prompt-event coverage through `history.jsonl` and session JSONL, but it still lacks a quicken-style resume/classification organ equivalent to Claude's lifecycle journal.",
     ]
+    if codex_quicken.get("present"):
+        states = ", ".join(
+            f"`{state}` {count}" for state, count in sorted((codex_quicken.get("by_state") or {}).items())
+        )
+        lines.append(
+            "- Codex now has prompt-event coverage plus `codex-quicken.py` lifecycle classification: "
+            f"`{codex_quicken.get('session_count', 0)}` sessions"
+            f"{'; ' + states if states else ''}."
+        )
+    else:
+        lines.append(
+            "- Codex has prompt-event coverage through `history.jsonl` and session JSONL, but no "
+            "`codex-quicken.py` lifecycle journal was found yet."
+        )
     task_pr_errors = int(((remote.get("task_prs") or {}).get("counts") or {}).get("ERROR", 0)) if remote.get("enabled") else 0
     if task_pr_errors:
         lines.append(

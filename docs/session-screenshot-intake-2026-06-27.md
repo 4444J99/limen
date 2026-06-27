@@ -36,7 +36,7 @@ worktrees, PRs, tasks, and ledgers.
 | 1 | Claude Code | `deee6a7f53d0` | needs-input sessions, PR queue, technical debt, handoff, revenue check | Absorbed into prompt lifecycle; triage via drain queue, not deletion |
 | 2 | Claude Code | `e4063cebbf24` | technical debt, GitHub issue review, TypeScript checks, remote sandbox | Classify as repeated engineering loop; route to repo/PR owner |
 | 3 | Claude Code | `a585b86de36c` | GitHub issue review, local worktree slugs, metadata audit, pulse restore | Map local session slugs to `.limen-worktrees` before action |
-| 4 | Claude Code | `a1bb607c1b72` | worktree containerization, open-code parsing, Codex doctor, past-week scan | Feed into Codex quicken-style classifier work |
+| 4 | Claude Code | `a1bb607c1b72` | worktree containerization, open-code parsing, Codex doctor, past-week scan | Feed into `codex-quicken.py` lifecycle routing |
 | 5 | Claude Code | `e2b15bc5ce19` | code review, knowledge graph, Cloudflare/Terraform migrations | Route by owning repo; park auth/provider issues |
 | 6 | Claude Code | `f7dfd4ac9b25` | review suggestions, inquiry artifact, Gemini review, relay persistence | Preserve artifacts first; dispatch only bounded non-auth packets |
 | 7 | Claude Code | `7ac5dd960bde` | inventory closeout, archive closeout, open priorities, old session digest | Treat as lifecycle/control-plane work, not source cleanup |

@@ -130,6 +130,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Ignored local raw/private session cartridge. Stores manifests and optional content-addressed object copies; never committed."
+  LIMEN_CODEX_QUICKEN_STALE_MIN:
+    default: 20
+    env: LIMEN_CODEX_QUICKEN_STALE_MIN
+    self_update: none
+    owner: continuity
+    note: "Idle minutes before codex-quicken treats a Codex session as no longer alive. Classifier-only; it never resumes or mutates sessions."
   LIMEN_PUBLIC_SITE_URL:
     default: "https://device-streaming-067d747a.web.app"
     env: LIMEN_PUBLIC_SITE_URL

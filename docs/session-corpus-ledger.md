@@ -1,6 +1,6 @@
 # Session Corpus Ledger
 
-Generated: `2026-06-27T19:55:44+00:00`
+Generated: `2026-06-27T20:30:04+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -14,14 +14,14 @@ Horizon: `all local history`
 
 ## Local Session Sources
 
-Total seen: `9719` files, `2.1 GiB`.
+Total seen: `9722` files, `2.1 GiB`.
 
 | Source | Root | Files | Size | Newest |
 |---|---:|---:|---:|---|
-| `claude-projects` | `~/.claude/projects` | 4848 | 1.4 GiB | `2026-06-27T17:49:30+00:00` |
-| `codex-sessions` | `~/.codex/sessions` | 887 | 679.9 MiB | `2026-06-27T19:55:43+00:00` |
+| `claude-projects` | `~/.claude/projects` | 4851 | 1.4 GiB | `2026-06-27T20:23:23+00:00` |
+| `codex-sessions` | `~/.codex/sessions` | 887 | 695.1 MiB | `2026-06-27T20:30:02+00:00` |
 | `claude-file-history` | `~/.claude/file-history` | 3519 | 42.2 MiB | `2026-06-27T00:26:28+00:00` |
-| `codex-goals-state` | `~/.codex` | 6 | 11.8 MiB | `2026-06-27T19:55:43+00:00` |
+| `codex-goals-state` | `~/.codex` | 6 | 12.1 MiB | `2026-06-27T20:30:02+00:00` |
 | `claude-plans` | `~/.claude/plans` | 34 | 289.3 KiB | `2026-06-25T03:22:45+00:00` |
 | `claude-usage-session-meta` | `~/.claude/usage-data/session-meta` | 197 | 221.4 KiB | `2026-06-23T19:06:40+00:00` |
 | `codex-history` | `~/.codex` | 1 | 180.0 KiB | `2026-06-27T19:18:01+00:00` |
@@ -35,22 +35,25 @@ Total seen: `9719` files, `2.1 GiB`.
 
 | Organ | Role | Path | Git state |
 |---|---|---|---|
-| `session-meta` | producer: redacted, deduped multi-provider atoms | `~/Workspace/session-meta` | `## codex/preserve-session-meta-owner-state-20260627` |
+| `session-meta` | producer: redacted, deduped multi-provider atoms | `~/Workspace/session-meta` | `## codex/preserve-session-meta-owner-state-20260627; 1 dirty entries` |
 | `knowledge-corpus` | distillation target: collection, reduced faces, THE ONE | `~/Workspace/knowledge-corpus` | `## codex/preserve-knowledge-corpus-owner-state-20260627...origin/codex/preserve-knowledge-corpus-owner-state-20260627` |
 | `conversation-corpus-engine` | product/research engine: provider import and corpus promotion | `~/Workspace/conversation-corpus-engine` | `## discover-latent-value-corpus-engine...origin/discover-latent-value-corpus-engine` |
 
 ## Substrate Counts
 
-- `session-meta/ingest/manifest.jsonl`: 23,541 records, mtime `2026-06-27T19:48:39+00:00`.
-- `session-meta/ingest/atoms.jsonl`: 104,522 atoms, mtime `2026-06-27T19:26:36+00:00`.
+- `session-meta/ingest/manifest.jsonl`: 23,541 records, mtime `2026-06-27T20:15:50+00:00`.
+- `session-meta/ingest/atoms.jsonl`: 104,756 atoms, mtime `2026-06-27T20:18:39+00:00`.
 - `knowledge-corpus`: `13` reduced faces; `00-THE-ONE.md` present: `True`.
 - Top manifest sources: `gemini` 4,592, `claude` 3,961, `chatgpt` 2,709, `claude-projects` 2,455, `cowork-sessions` 2,047, `antigravity` 1,893, `downloads` 1,717, `intake` 1,569.
 
 ## Session Lifecycle
 
-- Last `quicken.py` journal: `2026-06-27T19:48:39+00:00`.
+- Last `quicken.py` journal: `2026-06-27T20:15:38+00:00`.
 - Claude FleetView sessions classified: `29` total; `0` stalled, `29` closed, `0` alive, `0` done.
 - Reaped worktrees in that pass: `0`.
+- Last `codex-quicken.py` journal: `2026-06-27T20:24:22+00:00`.
+- Codex sessions classified: `887` total; `ALIVE` 1, `CLOSED` 783, `PARKED` 40, `STALLED` 63.
+- Top Codex lifecycle families: `auth_credentials` 405, `session_lifecycle` 159, `github_review` 158, `worktree_lifecycle` 77, `agent_coordination` 40, `technical_debt_ci` 36.
 
 ## Private Cartridge
 
@@ -68,8 +71,8 @@ Total seen: `9719` files, `2.1 GiB`.
 
 ## Roadblocks And Potholes
 
+- session-meta is not clean/in-sync; do not mutate it from Limen until its existing dirty and divergent work is preserved or merged.
 - Local Claude/Codex app stores are live private data; screenshots are only UI evidence. Canonical ingestion must come from the filesystem stores, not from the screenshots.
-- Claude lifecycle has a quicken journal, but Codex still has ingestion coverage without an equivalent quicken-style resume/classification organ.
 
 ## Commands
 
@@ -79,3 +82,4 @@ Total seen: `9719` files, `2.1 GiB`.
 - Refresh local/remote/cloud prompt lifecycle: `python3 scripts/prompt-lifecycle-ledger.py --write --all`
 - Rebuild session-meta atoms after preserving its dirty work: `cd ~/Workspace/session-meta && ./ingest/refresh-atoms.sh`
 - Refresh Limen coverage view: `python3 scripts/ingest-coverage.py`
+- Classify Codex app/session lifecycle: `python3 scripts/codex-quicken.py --all --apply`

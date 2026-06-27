@@ -268,10 +268,12 @@ def substrate_snapshot() -> dict[str, Any]:
         },
         "limen": {
             "quicken": str(ROOT / "scripts" / "quicken.py"),
+            "codex_quicken": str(ROOT / "scripts" / "codex-quicken.py"),
             "corpus_converge": str(ROOT / "scripts" / "corpus-converge.py"),
             "ingest_coverage": str(ROOT / "scripts" / "ingest-coverage.py"),
         },
         "quicken": quicken_snapshot(),
+        "codex_quicken": codex_quicken_snapshot(),
     }
 
 
@@ -309,6 +311,35 @@ def quicken_snapshot() -> dict[str, Any]:
         "done": done,
         "closed": closed,
         "reaped": len(last.get("reaped") or []),
+    }
+
+
+def codex_quicken_snapshot() -> dict[str, Any]:
+    path = ROOT / "logs" / "codex-session-lifecycle.jsonl"
+    if not path.is_file():
+        return {"present": False, "path": str(path)}
+    last: dict[str, Any] | None = None
+    try:
+        with path.open(encoding="utf-8", errors="replace") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    last = json.loads(line)
+                except ValueError:
+                    continue
+    except OSError:
+        return {"present": False, "path": str(path)}
+    if not last:
+        return {"present": False, "path": str(path)}
+    return {
+        "present": True,
+        "path": str(path),
+        "ts": iso_from_ts(float(last.get("ts") or 0)),
+        "sessions": int(last.get("session_count", 0) or 0),
+        "by_state": last.get("by_state") or {},
+        "by_family": last.get("by_family") or {},
     }
 
 
@@ -379,15 +410,15 @@ def infer_roadblocks(snapshot: dict[str, Any], rows: list[dict[str, Any]]) -> li
                 roadblocks.append("session-meta manifest is stale by more than two days.")
         except (TypeError, ValueError):
             pass
-    if snapshot.get("quicken", {}).get("present"):
-        roadblocks.append(
-            "Claude lifecycle has a quicken journal, but Codex still has ingestion coverage without "
-            "an equivalent quicken-style resume/classification organ."
-        )
-    else:
+    if not snapshot.get("quicken", {}).get("present"):
         roadblocks.append(
             "Claude has a lifecycle organ (`scripts/quicken.py`), but no recent journal was found; "
-            "Codex has ingestion coverage but no equivalent quicken-style resume/classification organ yet."
+            "refresh it before treating Claude FleetView lifecycle as current."
+        )
+    if not snapshot.get("codex_quicken", {}).get("present"):
+        roadblocks.append(
+            "Codex has a lifecycle classifier (`scripts/codex-quicken.py`), but no journal was found; "
+            "run it before relying on Codex app history as typed lifecycle coverage."
         )
     return roadblocks
 
@@ -486,6 +517,23 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
         ]
     else:
         lines.append("- No `quicken.py` journal found yet.")
+    cq = snapshot.get("codex_quicken", {})
+    if cq.get("present"):
+        states = ", ".join(
+            f"`{state}` {count}" for state, count in sorted((cq.get("by_state") or {}).items())
+        )
+        families = ", ".join(
+            f"`{family}` {count}"
+            for family, count in sorted((cq.get("by_family") or {}).items(), key=lambda kv: (-kv[1], kv[0]))[:6]
+        )
+        lines += [
+            f"- Last `codex-quicken.py` journal: `{cq.get('ts')}`.",
+            f"- Codex sessions classified: `{cq.get('sessions', 0)}` total"
+            f"{'; ' + states if states else ''}.",
+            f"- Top Codex lifecycle families: {families or 'none'}.",
+        ]
+    else:
+        lines.append("- No `codex-quicken.py` journal found yet.")
 
     lines += [
         "",
@@ -556,6 +604,7 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
         "- Rebuild session-meta atoms after preserving its dirty work: "
         "`cd ~/Workspace/session-meta && ./ingest/refresh-atoms.sh`",
         "- Refresh Limen coverage view: `python3 scripts/ingest-coverage.py`",
+        "- Classify Codex app/session lifecycle: `python3 scripts/codex-quicken.py --all --apply`",
         "",
     ]
     return "\n".join(lines)

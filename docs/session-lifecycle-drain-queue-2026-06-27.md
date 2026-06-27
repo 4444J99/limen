@@ -21,7 +21,7 @@ specific item is claimed or dispatched.
 | 0 | Finish this intake patch | Updated session and prompt ledgers, screenshot batch, generator bug fix | Verify, commit, push scoped Limen docs/scripts only | Codex | `verify-whole.sh` passes; `tasks.yaml` remains unstaged |
 | 1 | Preserve session-meta owner state | `session-meta` is ahead 1, behind 1, with 39 dirty entries | Inspect owner repo, preserve branch/PR or blocker, then refresh atoms | Codex or OpenCode | Owner repo is clean or has a durable PR/blocker receipt |
 | 2 | Preserve knowledge-corpus owner state | `knowledge-corpus` has 3 dirty entries | Inspect owner repo and preserve the corpus changes before relying on it | Codex or OpenCode | Owner repo is clean or has a durable PR/blocker receipt |
-| 3 | Create Codex quicken-style classifier | Codex sessions are indexed, but no resume/classification organ exists | Build a classifier equivalent to Claude quicken for Codex sessions | OpenCode or Agy | Re-run produces classified Codex sessions and no raw commit |
+| 3 | Use Codex lifecycle classifier | `codex-quicken.py` classified 887 Codex sessions with no raw prompt commit | Packetize stalled families into owner-scoped receipts; do not resume blindly | Codex/OpenCode | Each stalled family has owner route, blocker, or next packet |
 | 4 | Drain dirty/missing-remote worktrees | 6 dirty roots, 6 missing/unknown remote branches | Push branch or create draft PR per root; never clean before preserving | OpenCode or Agy | Each root has PR, owner blocker, or documented non-source residue |
 | 5 | Resolve non-Git residue roots | 2 `.limen-worktrees` roots are not Git dirs | Inspect for unique artifacts; record owner receipt; do not delete blindly | Codex | Each residue has a reversible archive or owner receipt |
 | 6 | Merge or supersede open PR receipts | 10 branch-linked PRs are open, 2 branch receipts already merged | Verify checks, merge when green/authorized, or record blocker | Jules/OpenCode after packetization | PR merged, preserved, or superseded by name |
@@ -37,14 +37,19 @@ specific item is claimed or dispatched.
   pre-rebase chain, including live manifest receipt `d9d9611`, is preserved on remote branch
   `backup/session-meta-pr130-before-rebase-20260627T194123Z`.
 - 2026-06-27: `knowledge-corpus` owner state was preserved on branch
-  `codex/preserve-knowledge-corpus-owner-state-20260627`, commit `e66199e`, with draft PR
-  [organvm/knowledge-corpus#1](https://github.com/organvm/knowledge-corpus/pull/1). The local
-  owner checkout is clean on the pushed branch. GitHub marks the PR `MERGEABLE`. Validation:
-  `git diff --cached --check`, redaction scan `redactions: 0 {}`. Review caveat:
+  `codex/preserve-knowledge-corpus-owner-state-20260627`, now through commit `3356a5a`, with
+  draft PR [organvm/knowledge-corpus#1](https://github.com/organvm/knowledge-corpus/pull/1). The
+  local owner checkout is clean on the pushed branch. Validation: `git diff --check`, redaction
+  scan `redactions: 0 {}`. Review caveat:
   `reduced/model-whole-stack-of-reality.md` currently contains a JSON-ish convergence wrapper
   with a `[Full document as in source material ...]` placeholder; the PR preserves it for
   lifecycle continuity, but it should be reviewed before merge as a likely convergence-output
   regression.
+- 2026-06-27: `scripts/codex-quicken.py` was added as the Codex-side lifecycle classifier. It
+  classified 887 local Codex session files across all history: 783 `CLOSED`, 63 `STALLED`, 40
+  `PARKED`, and 1 `ALIVE`. Tracked output is counts-only in
+  `docs/CODEX-SESSION-LIFECYCLE.md`; the per-session redacted index is ignored under
+  `.limen-private/session-corpus/lifecycle/codex-session-lifecycle.json`.
 
 ## Dirty And Missing-Remote Worktrees
 
@@ -85,7 +90,7 @@ specific item is claimed or dispatched.
 |---|---|---|---|
 | `technical debt` | Claude UI screenshots plus local app stores | Repeated ritual and stalled loop | Convert into owner-scoped debt packets with receipts |
 | `open GitHub issues review` | Claude UI screenshots | Repeated review loop | Require issue-to-PR/blocker mapping before more review |
-| `convergence organ` | Codex screenshots and local Claude/Codex stores | Core convergence work, not noise | Build classifier/distiller so repeats collapse into one canon |
+| `convergence organ` | Codex screenshots and local Claude/Codex stores | Core convergence work, not noise | Use `codex-quicken.py` plus corpus organs so repeats collapse into one canon |
 | `session handoff / closeout` | Claude UI screenshots and Limen logs | Lifecycle control-plane work | Keep closeout receipts in owner ledgers, not chat memory |
 | `auth / provider setup` | Cloud env flags absent and credential wall | Parked blocker | Keep in credential workstream; do not solve inline |
 
