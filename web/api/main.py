@@ -22,6 +22,40 @@ from pydantic import BaseModel, Field, field_validator
 VALID_STATUSES = {"open", "dispatched", "in_progress", "done", "failed", "failed_blocked", "needs_human", "archived"}
 VALID_PRIORITIES = {"critical", "high", "medium", "low", "backlog"}
 VALID_AGENTS = {"jules", "claude", "gemini", "opencode", "codex", "copilot", "agy", "warp", "oz", "github_actions", "any"}
+VALID_DISPATCH_AGENTS = VALID_AGENTS - {"any"}
+TASK_ID_PATTERN = r"^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+TASK_ID_RE = re.compile(TASK_ID_PATTERN)
+LABEL_PATTERN = r"^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+LABEL_RE = re.compile(LABEL_PATTERN)
+REPO_PATTERN = r"^[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)?$"
+REPO_RE = re.compile(REPO_PATTERN)
+
+
+def reject_control_chars(value: str, field_name: str) -> str:
+    if any((ord(ch) < 32 and ch not in "\t\n\r") or ord(ch) == 127 for ch in value):
+        raise ValueError(f"{field_name} must not contain control characters")
+    return value
+
+
+def validate_repo_value(value: str) -> str:
+    if not value:
+        return value
+    if not REPO_RE.match(value):
+        raise ValueError("repo must be a repository name or owner/repo slug")
+    return value
+
+
+def validate_label_list(value: list[str] | None) -> list[str] | None:
+    if value is None:
+        return None
+    if not isinstance(value, list):
+        raise ValueError("labels must be a list")
+    for label in value:
+        if not isinstance(label, str):
+            raise ValueError("each label must be a string")
+        if len(label) > 64 or not LABEL_RE.match(label):
+            raise ValueError("labels must be 1-64 characters and contain only letters, numbers, '.', '_', '-', or '/'")
+    return value
 
 def get_cors_origins() -> list[str]:
     cors_env = os.environ.get("LIMEN_CORS_ORIGINS", "")
@@ -67,10 +101,10 @@ def is_valid_url(url: str) -> bool:
 
 
 class TaskCreate(BaseModel):
-    id: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
+    id: str = Field(min_length=1, max_length=128, pattern=TASK_ID_PATTERN)
     title: str = Field(min_length=1, max_length=512)
     repo: str = Field(default="", max_length=256)
-    type: str = "code"
+    type: str = Field(default="code", max_length=64, pattern=LABEL_PATTERN)
     target_agent: str = Field(default="jules", pattern=r"^[a-z][a-z_]*$")
     priority: str = "medium"
     budget_cost: int = Field(default=1, ge=1, le=100)
@@ -100,6 +134,21 @@ class TaskCreate(BaseModel):
             raise ValueError(f"target_agent must be one of {', '.join(sorted(VALID_AGENTS))}")
         return v
 
+    @field_validator("title", "context")
+    @classmethod
+    def validate_text(cls, v: str) -> str:
+        return reject_control_chars(v, "text")
+
+    @field_validator("repo")
+    @classmethod
+    def validate_repo(cls, v: str) -> str:
+        return validate_repo_value(v)
+
+    @field_validator("labels", mode="before")
+    @classmethod
+    def validate_labels(cls, v: list[str]) -> list[str]:
+        return validate_label_list(v) or []
+
     @field_validator("urls", mode="before")
     @classmethod
     def validate_urls(cls, v: list[str]) -> list[str]:
@@ -115,9 +164,9 @@ class TaskCreate(BaseModel):
 
 class TaskUpdate(BaseModel):
     status: str | None = None
-    output: str | None = None
-    agent: str | None = None
-    session_id: str | None = None
+    output: str | None = Field(default=None, max_length=10000)
+    agent: str | None = Field(default=None, max_length=128)
+    session_id: str | None = Field(default=None, max_length=128)
     context: str | None = Field(default=None, max_length=10000)
     urls: list[str] | None = None
     labels: list[str] | None = None
@@ -128,6 +177,18 @@ class TaskUpdate(BaseModel):
         if v is not None and v not in VALID_STATUSES:
             raise ValueError(f"status must be one of {', '.join(sorted(VALID_STATUSES))}")
         return v
+
+    @field_validator("output", "agent", "session_id", "context")
+    @classmethod
+    def validate_text(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        return reject_control_chars(v, "text")
+
+    @field_validator("labels", mode="before")
+    @classmethod
+    def validate_labels(cls, v: list[str] | None) -> list[str] | None:
+        return validate_label_list(v)
 
     @field_validator("urls", mode="before")
     @classmethod
@@ -173,24 +234,51 @@ class AssignmentRequest(BaseModel):
             raise ValueError(f"target_agent must be one of {', '.join(sorted(VALID_AGENTS))}")
         return v
 
+    @field_validator("note", "session_id")
+    @classmethod
+    def validate_text(cls, v: str) -> str:
+        return reject_control_chars(v, "text")
+
 
 class ArchiveRequest(BaseModel):
-    note: str = ""
-    session_id: str = "archive"
+    note: str = Field(default="", max_length=2000)
+    session_id: str = Field(default="archive", max_length=128)
+
+    @field_validator("note", "session_id")
+    @classmethod
+    def validate_text(cls, v: str) -> str:
+        return reject_control_chars(v, "text")
 
 
 class VerifyRequest(BaseModel):
     status: str = Field(default="done", pattern="^(done|needs_human|failed|failed_blocked)$")
-    note: str = ""
-    session_id: str = "qa-verify"
+    note: str = Field(default="", max_length=2000)
+    session_id: str = Field(default="qa-verify", max_length=128)
+
+    @field_validator("note", "session_id")
+    @classmethod
+    def validate_text(cls, v: str) -> str:
+        return reject_control_chars(v, "text")
 
 
 class DispatchRequest(BaseModel):
     agent: str = "jules"
-    limit: int = 1
+    limit: int = Field(default=1, ge=1, le=100)
     live: bool = False
-    task_id: str | None = None
-    session_id: str = "api"
+    task_id: str | None = Field(default=None, max_length=128, pattern=TASK_ID_PATTERN)
+    session_id: str = Field(default="api", max_length=128)
+
+    @field_validator("agent")
+    @classmethod
+    def validate_agent(cls, v: str) -> str:
+        if v not in VALID_DISPATCH_AGENTS:
+            raise ValueError(f"agent must be one of {', '.join(sorted(VALID_DISPATCH_AGENTS))}")
+        return v
+
+    @field_validator("session_id")
+    @classmethod
+    def validate_text(cls, v: str) -> str:
+        return reject_control_chars(v, "session_id")
 
 
 @dataclass
@@ -830,7 +918,7 @@ def readiness(data: dict[str, Any], agent: str = "jules") -> dict[str, Any]:
 def validate_task_id(task_id: str) -> None:
     if not isinstance(task_id, str) or len(task_id) < 1 or len(task_id) > 128:
         raise HTTPException(status_code=400, detail="invalid task_id format")
-    if not re.match(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$", task_id):
+    if not TASK_ID_RE.match(task_id):
         raise HTTPException(status_code=400, detail="invalid task_id format")
 
 
@@ -984,17 +1072,20 @@ def get_readiness(authorization: str | None = Header(None), agent: str = Query("
 @app.get("/api/tasks")
 def list_tasks(
     authorization: str | None = Header(None),
-    status: str | None = Query(None),
-    agent: str | None = Query(None),
-    repo: str | None = Query(None),
+    status: str | None = Query(None, max_length=64),
+    agent: str | None = Query(None, max_length=64),
+    repo: str | None = Query(None, max_length=256),
 ) -> dict[str, Any]:
     require_persona(authorization, {"owner"})
     if status is not None and status not in VALID_STATUSES:
         raise HTTPException(status_code=400, detail=f"status must be one of {', '.join(sorted(VALID_STATUSES))}")
     if agent is not None and agent not in VALID_AGENTS:
         raise HTTPException(status_code=400, detail=f"agent must be one of {', '.join(sorted(VALID_AGENTS))}")
-    if repo is not None and not isinstance(repo, str):
-        raise HTTPException(status_code=400, detail="repo must be a string")
+    if repo is not None:
+        try:
+            validate_repo_value(repo)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
     tasks = load_board().get("tasks", [])
     if status:
         tasks = [task for task in tasks if task.get("status") == status]
@@ -1190,7 +1281,7 @@ def dispatch(req: DispatchRequest, authorization: str | None = Header(None)) -> 
 @app.post("/api/release-stale")
 def release_stale(
     authorization: str | None = Header(None),
-    hours: int = 24,
+    hours: int = Query(24, ge=0, le=8760),
     dry_run: bool = True,
 ) -> dict[str, Any]:
     require_persona(authorization, {"owner"})

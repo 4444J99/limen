@@ -831,3 +831,82 @@ def test_readiness_reports_operator_next_actions(client: TestClient, tmp_path: P
     assert payload["counts"]["open"] == 1
     assert any("release-stale" in action for action in payload["next_actions"])
     assert "dispatch_log" not in str(payload)
+
+
+def test_create_task_rejects_malformed_untrusted_fields(client: TestClient, tmp_path: Path) -> None:
+    write_board(tmp_path / "tasks.yaml", [])
+
+    bad_id = client.post(
+        "/api/tasks",
+        json={
+            "id": "../escape",
+            "title": "Bad task",
+            "repo": "4444J99/limen",
+            "target_agent": "jules",
+        },
+    )
+    assert bad_id.status_code == 422
+
+    bad_repo = client.post(
+        "/api/tasks",
+        json={
+            "id": "LIMEN-SEC-001",
+            "title": "Bad repo",
+            "repo": "https://example.com/repo.git",
+            "target_agent": "jules",
+        },
+    )
+    assert bad_repo.status_code == 422
+
+    bad_label = client.post(
+        "/api/tasks",
+        json={
+            "id": "LIMEN-SEC-002",
+            "title": "Bad label",
+            "repo": "4444J99/limen",
+            "target_agent": "jules",
+            "labels": ["ok", "bad label"],
+        },
+    )
+    assert bad_label.status_code == 422
+
+
+def test_dispatch_rejects_invalid_agent_limit_and_task_id(client: TestClient, tmp_path: Path) -> None:
+    write_board(tmp_path / "tasks.yaml", [])
+
+    assert client.post("/api/dispatch", json={"agent": "any"}).status_code == 422
+    assert client.post("/api/dispatch", json={"agent": "codex", "limit": 101}).status_code == 422
+    assert client.post("/api/dispatch", json={"agent": "codex", "task_id": "../escape"}).status_code == 422
+
+
+def test_release_stale_rejects_out_of_range_hours(client: TestClient, tmp_path: Path) -> None:
+    write_board(tmp_path / "tasks.yaml", [])
+
+    assert client.post("/api/release-stale?hours=-1").status_code == 422
+    assert client.post("/api/release-stale?hours=8761").status_code == 422
+
+
+def test_task_update_rejects_oversized_log_fields(client: TestClient, tmp_path: Path) -> None:
+    write_board(
+        tmp_path / "tasks.yaml",
+        [
+            {
+                "id": "LIMEN-SEC-003",
+                "title": "Valid task",
+                "repo": "4444J99/limen",
+                "target_agent": "jules",
+                "priority": "high",
+                "budget_cost": 1,
+                "status": "open",
+                "created": "2026-06-03",
+                "dispatch_log": [],
+            }
+        ],
+    )
+
+    response = client.patch(
+        "/api/tasks/LIMEN-SEC-003",
+        json={"status": "done", "session_id": "x" * 129},
+    )
+
+    assert response.status_code == 422

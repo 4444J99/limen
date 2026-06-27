@@ -16,6 +16,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from limen import dispatch as D  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+def disable_oauth_preflight(monkeypatch):
+    monkeypatch.setenv("LIMEN_OAUTH_PREFLIGHT", "0")
+
+
 def test_run_capture_fast_path():
     r = D._run_capture(["echo", "ok"], timeout=5)
     assert r.returncode == 0 and "ok" in r.stdout

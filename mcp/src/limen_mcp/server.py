@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 from datetime import date, datetime
 from pathlib import Path
@@ -12,6 +13,31 @@ from pydantic import BaseModel, Field, field_validator
 VALID_STATUSES = {"open", "dispatched", "in_progress", "done", "failed", "failed_blocked", "needs_human", "archived"}
 VALID_PRIORITIES = {"critical", "high", "medium", "low", "backlog"}
 VALID_AGENTS = {"jules", "claude", "gemini", "opencode", "codex", "copilot", "agy", "warp", "oz", "github_actions", "any"}
+TASK_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
+
+
+def _reject_control_chars(value: str, field_name: str) -> str:
+    if any((ord(ch) < 32 and ch not in "\t\n\r") or ord(ch) == 127 for ch in value):
+        raise ValueError(f"{field_name} must not contain control characters")
+    return value
+
+
+def _validate_task_id(task_id: str) -> str:
+    if not isinstance(task_id, str) or len(task_id) < 1 or len(task_id) > 128 or not TASK_ID_RE.match(task_id):
+        raise ValueError("task_id must be 1-128 characters and contain only letters, numbers, '.', '_', '-', or '/'")
+    return task_id
+
+
+def _validate_text(value: str, field_name: str, max_len: int) -> str:
+    if not isinstance(value, str) or len(value) > max_len:
+        raise ValueError(f"{field_name} must be a string up to {max_len} characters")
+    return _reject_control_chars(value, field_name)
+
+
+def _validate_optional_enum(value: Optional[str], allowed: set[str], field_name: str) -> Optional[str]:
+    if value is not None and value not in allowed:
+        raise ValueError(f"{field_name} must be one of {', '.join(sorted(allowed))}")
+    return value
 
 # ── Models ─────────────────────────────────────────────────────────────────
 
@@ -32,12 +58,12 @@ class Task(BaseModel):
     priority: str = "medium"
     budget_cost: int = Field(default=1, ge=1)
     status: str = "open"
-    labels: List[str] = []
-    urls: List[str] = []
+    labels: List[str] = Field(default_factory=list)
+    urls: List[str] = Field(default_factory=list)
     context: Optional[str] = None
     created: date
     updated: Optional[datetime] = None
-    dispatch_log: List[DispatchLogEntry] = []
+    dispatch_log: List[DispatchLogEntry] = Field(default_factory=list)
 
     @field_validator("priority")
     @classmethod
@@ -63,12 +89,12 @@ class Task(BaseModel):
 class BudgetTrack(BaseModel):
     date: str
     spent: int = 0
-    per_agent: Dict[str, int] = {}
+    per_agent: Dict[str, int] = Field(default_factory=dict)
 
 class Budget(BaseModel):
     daily: int = 100
     unit: str = "runs"
-    per_agent: Dict[str, int] = {}
+    per_agent: Dict[str, int] = Field(default_factory=dict)
     track: BudgetTrack = Field(default_factory=lambda: BudgetTrack(date=""))
 
 class Portal(BaseModel):
@@ -79,7 +105,7 @@ class Portal(BaseModel):
 class LimenFile(BaseModel):
     version: str = "1.0"
     portal: Portal = Field(default_factory=Portal)
-    tasks: List[Task] = []
+    tasks: List[Task] = Field(default_factory=list)
 
 # ── Server State ───────────────────────────────────────────────────────────
 
@@ -176,10 +202,8 @@ def reset_circuit_breaker() -> str:
 @mcp.tool()
 def list_tasks(status: Optional[str] = None, agent: Optional[str] = None) -> List[dict]:
     """List tasks in the pipeline, optionally filtered by status or agent."""
-    if status and len(status) > 64:
-        raise ValueError("status must not exceed 64 characters")
-    if agent and len(agent) > 128:
-        raise ValueError("agent must not exceed 128 characters")
+    status = _validate_optional_enum(status, VALID_STATUSES, "status")
+    agent = _validate_optional_enum(agent, VALID_AGENTS, "agent")
     _check_circuit_breaker()
     data = _load_data()
     tasks = [t.model_dump() for t in data.tasks]
@@ -192,8 +216,7 @@ def list_tasks(status: Optional[str] = None, agent: Optional[str] = None) -> Lis
 @mcp.tool()
 def get_task(task_id: str) -> dict:
     """Get details for a specific task by ID."""
-    if len(task_id) > 128:
-        raise ValueError("task_id must not exceed 128 characters")
+    task_id = _validate_task_id(task_id)
     _check_circuit_breaker()
     
     # Layer 3: Hard Loop Limits
@@ -211,12 +234,12 @@ def get_task(task_id: str) -> dict:
 @mcp.tool()
 def add_task(title: str, repo: str, agent: str = "jules", priority: str = "medium", budget_cost: int = 1) -> str:
     """Add a new task to the pipeline."""
-    if len(title) > 512:
-        raise ValueError("title must not exceed 512 characters")
-    if len(repo) > 256:
-        raise ValueError("repo must not exceed 256 characters")
-    if len(agent) > 128:
-        raise ValueError("agent must not exceed 128 characters")
+    title = _validate_text(title, "title", 512)
+    repo = _validate_text(repo, "repo", 256)
+    agent = _validate_optional_enum(agent, VALID_AGENTS, "agent") or "jules"
+    priority = _validate_optional_enum(priority, VALID_PRIORITIES, "priority") or "medium"
+    if type(budget_cost) is not int or budget_cost < 1 or budget_cost > 100:
+        raise ValueError("budget_cost must be an integer between 1 and 100")
     _check_circuit_breaker()
     data = _load_data()
     
@@ -248,12 +271,10 @@ def add_task(title: str, repo: str, agent: str = "jules", priority: str = "mediu
 @mcp.tool()
 def update_task_status(task_id: str, status: str, context: Optional[str] = None) -> str:
     """Update the status and context of a task. Allows 'failed_blocked' to evict dependencies."""
-    if len(task_id) > 128:
-        raise ValueError("task_id must not exceed 128 characters")
-    if len(status) > 64:
-        raise ValueError("status must not exceed 64 characters")
-    if context and len(context) > 10000:
-        raise ValueError("context must not exceed 10000 characters")
+    task_id = _validate_task_id(task_id)
+    status = _validate_optional_enum(status, VALID_STATUSES, "status") or status
+    if context is not None:
+        context = _validate_text(context, "context", 10000)
     _check_circuit_breaker()
     data = _load_data()
     
