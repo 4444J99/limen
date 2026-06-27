@@ -8,35 +8,53 @@ Limen is a cross-agent, cross-repo, budget-capped task intake system. It lives i
 
 ### Install
 
-Install via the idempotent shell script (clones repo, creates symlink, installs Python CLI, and sets up PATH):
 ```bash
+# One-liner (clones repo, installs CLI to venv, sets up PATH)
 curl -fsSL https://raw.githubusercontent.com/4444J99/limen/main/install.sh | bash
 source ~/.zshenv
 ```
-*Optional env vars for custom paths:* `LIMEN_SOURCE`, `LIMEN_TARGET`, `LIMEN_LINK`.
 
-Alternatively, install via Homebrew (local formula):
+Custom install paths via `LIMEN_SOURCE`, `LIMEN_TARGET`, `LIMEN_LINK`.
+
+Or install via Homebrew from a local checkout:
 ```bash
 brew install ./limen.rb
 ```
 
+### Quick start
+
+```bash
+# Initialize a task board
+limen init
+
+# Add tasks by editing tasks.yaml directly, then dispatch
+limen dispatch --agent jules --live
+
+# Check the board and budget
+limen status
+
+# Harvest results from completed dispatches
+limen harvest
+```
+
 ### Run API & Dashboard locally
 
-Use Docker Compose to run the local FastAPI backend and Next.js dashboard:
 ```bash
-docker-compose up
+# FastAPI backend (port 8000) + Next.js dashboard (port 3000)
+docker compose up
 ```
-*This mounts `./tasks.yaml` and exposes the API on port 8000 and dashboard on port 3000.*
 
-### CLI Commands
+Mounts `./tasks.yaml` into the API container.
+
+### CLI reference
 
 | Command | Flags | Description |
 |---------|-------|-------------|
-| `limen init` | `--root`, `--budget` | Scaffold a new `tasks.yaml` in LIMEN_ROOT or current directory |
-| `limen dispatch` | `--agent`, `--budget`, `--dry-run`/`--live`, `--task`, `--limit` | Read `tasks.yaml` and dispatch open tasks to agents (default: dry-run) |
-| `limen release-stale` | `--hours`, `--agent`, `--dry-run`/`--apply`, `--json-output`, `--report-file` | Reopen stale dispatched/in-progress claims (default: dry-run) |
-| `limen doctor` | `--agent`, `--json-output`, `--report-file` | Report local readiness for dispatch and stale-claim recovery |
-| `limen qa` | `--agent`, `--json-output`, `--report-file` | Report QA lifecycle gates and steering queues without mutating tasks |
+| `limen init` | `--root`, `--budget` (default 100) | Scaffold a new `tasks.yaml` |
+| `limen dispatch` | `--agent`, `--budget`, `--dry-run/--live`, `--task`, `--limit` | Dispatch open tasks to agents (default: dry-run) |
+| `limen release-stale` | `--hours` (default 24), `--agent`, `--dry-run/--apply`, `--json-output`, `--report-file` | Reopen stale dispatched/in-progress tasks (default: dry-run) |
+| `limen doctor` | `--agent` (default jules), `--json-output`, `--report-file` | Report local readiness for dispatch and stale-claim recovery |
+| `limen qa` | `--agent` (default jules), `--json-output`, `--report-file` | Report QA lifecycle gates and steering queues (read-only) |
 | `limen status` | `--agent`, `--status` | Show the task board with budget tracking |
 | `limen harvest` | `--agent` | Check for completed dispatches and update task states |
 
