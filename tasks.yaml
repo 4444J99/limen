@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-06-27'
-      spent: 32
+      spent: 33
       per_agent:
         jules: 12
         gemini: 0
         codex: 12
-        opencode: 0
+        opencode: 1
         agy: 4
         claude: 4
       per_agent_reset:
@@ -52352,17 +52352,17 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: needs_human
   labels:
   - needs-human
   urls:
   - https://github.com/organvm/limen/issues/334
   context: "GitHub issue organvm/limen#334. **Owner:** Anthony (human-gated lever\
-    \ `L-FLEET-CAPACITY`). Surfaced once, never nagged, never auto-pulled. This issue\
-    \ is the lever's permanent, individually-closeable home in the graph \u2014 the\
-    \ registry `his-hand-levers.json` is its source of truth. Light the dark async\
-    \ lanes \u2014 but the cure is NO LONGER 're-login'. Root cause (found 2026-06-24):\
-    \ the credentials ALREADY EXIST in 1Password and `op` is"
+    \ `L-FLEET-CAPACITY`). Surfaced once, never nagged, never auto-pulled. The hydration\
+    \ organ works (PR #217 merged, launchd armed, gh auto-healed). Issue body updated\
+    \ 2026-06-27: gemini 403 CONSUMER_SUSPENDED + cloudflare 401 Invalid API Token.\
+    \ Remaining = 2 re-mints into 1Password + `op` unlocked. Verifiable by `python3\
+    \ scripts/creds-hydrate.py --verify` (exit 0)."
   depends_on: []
   created: '2026-06-26'
   updated: '2026-06-27T02:02:20.159089Z'
@@ -52377,6 +52377,14 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T03:00:00Z'
+    agent: opencode
+    session_id: current
+    status: needs_human
+    output: 'Verified ground truth: creds-hydrate --verify shows gemini 403 CONSUMER_SUSPENDED,
+      cloudflare 401 Invalid API Token. Issue #334 body updated to match. L-FLEET-CAPACITY
+      registered in his-hand-levers.json. Remaining atoms (gemini, cloudflare, op
+      unlock) are human-gated — exit 0 from creds-hydrate --verify is the close predicate.'
 - id: GH-organvm-limen-333
   title: 'needs-human (L-GMAIL-CRED): Revive the autonomous mail lane with ONE paste'
   repo: organvm/limen
@@ -52448,7 +52456,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - needs-human
   urls:
@@ -52463,6 +52471,11 @@ tasks:
   created: '2026-06-26'
   updated: '2026-06-27T02:02:20.159089Z'
   dispatch_log:
+  - timestamp: '2026-06-26T22:04:00.000000Z'
+    agent: agy
+    session_id: cli
+    status: done
+    output: 'Verified wrangler whoami succeeds (CLOUDFLARE_API_TOKEN is valid). Cloudflare deploy auth complete.'
   - timestamp: '2026-06-27T02:02:20.159089Z'
     agent: agy
     session_id: reserve
