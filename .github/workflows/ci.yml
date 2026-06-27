@@ -39,14 +39,14 @@ jobs:
           python -m pip install "mypy>=2.0" ruff -r web/api/requirements.txt -e "cli[test]"
 
       - name: Lint Python with ruff
-        run: python -m ruff check cli/src cli/tests web/api mcp
+        run: python -m ruff check cli/src cli/tests web/api mcp ianva
 
       - name: Type-check Python with mypy
         run: python -m mypy src/limen/
         working-directory: cli
 
       - name: Compile Python modules
-        run: python -m py_compile web/api/main.py cli/src/limen/*.py
+        run: python -m py_compile web/api/main.py cli/src/limen/*.py mcp/src/limen_mcp/server.py ianva/src/ianva/*.py
 
       - name: Shell syntax check (bash -n) on all shell scripts
         run: |
