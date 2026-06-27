@@ -3,6 +3,17 @@
 This inventory records the kept-safe roots under `/Users/4jp/Workspace/.limen-worktrees`.
 No directory was deleted or removed during this pass.
 
+The live reconciliation surface is
+[`docs/worktree-lifecycle-ledger.md`](worktree-lifecycle-ledger.md). This dated file is the
+snapshot from the first audit; use the ledger for current disposition, origin-receipt gaps, and
+drain order.
+
+Post-audit update: the background reaper later reclaimed the two content-preserved roots
+`gen-organvm-mirror-mirror-security-0622-c552` and
+`gen-organvm-the-invisible-ledger-security-0622-d8f8` at `2026-06-27T13:05:49Z`.
+Both had already been classified as patch-equivalent to default, so no unique source was lost.
+Future automated drain runs are preview-only unless `LIMEN_RECLAIM_APPLY=1` is set.
+
 Reclaim policy after this audit: a root is reapable only when it is clean, idle, and its
 content is preserved on the remote default branch. Preservation can be exact SHA reachability
 or `git cherry <default> HEAD` patch equivalence after squash/rebase. Dirty work,

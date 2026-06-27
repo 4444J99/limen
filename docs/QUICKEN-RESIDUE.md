@@ -7,3 +7,5 @@
 > daemon-owned and fires each beat; it is not hanging.
 
 - **land the credential/secret (your account/identity)**  ·  owner: **you**  ·  hung: `ASK-quicken-credential` (needs_human)  ·  unblocks: password prompt consolidation macos
+- **one login/identity step (your hand: browser/OAuth/portal)**  ·  owner: **you**  ·  hung: `ASK-quicken-login` (needs_human)  ·  unblocks: login-successful
+- **the D2L go-live click + cadence confirm (your login + judgment)**  ·  owner: **you**  ·  hung: `ASK-quicken-d2l` (needs_human)  ·  unblocks: Continue previous coding session

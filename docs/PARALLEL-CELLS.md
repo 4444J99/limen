@@ -38,7 +38,7 @@ cell conduct <slug> [--loop] # start this cell's scoped conductor (bg). --loop =
 cell stop  <slug>            # stop this cell's conductor
 cell merge <slug>            # push + hand off to the standing merge grant (merge-policy.sh)
 cell reap  <slug> [--force]  # stop + LOSS-FREE remove (refuses if dirty or unpushed)
-cell reap-dead               # reclaim every provably-dead cell (clean+content-preserved+idle)
+cell reap-dead               # preview every provably-dead cell (clean+content-preserved+idle)
 cell help
 ```
 
@@ -120,7 +120,7 @@ content-preserved on the remote default branch + idle ≥24h**, never the live c
 
 ```sh
 cell reap-dead              # dry-run (shows what would go, why each survivor is kept)
-cell reap-dead --apply      # actually reclaim
+cell reap-dead --apply      # actually reclaim after operator acceptance
 ```
 
 ## Guarantees (why this is safe to use freely)
@@ -140,6 +140,7 @@ cell reap-dead --apply      # actually reclaim
 |---|---|---|
 | `LIMEN_RECLAIM_CLAUDE_WT` | `1` | also sweep `.claude/worktrees/` (set `0` to disable) |
 | `LIMEN_RECLAIM_CLAUDE_AGE_H` | `24` | min idle hours before a cell is reclaim-eligible |
+| `LIMEN_RECLAIM_APPLY` | `0` | automated drain preview-only by default; set `1` to remove eligible roots |
 | `LIMEN_BRANCH_PREFIX` | (derived) | scoped conductor's branch namespace (`cell-<slug>-`) |
 
 ## TL;DR

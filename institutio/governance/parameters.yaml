@@ -277,6 +277,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Min idle hours before a .claude/worktrees cell is eligible for reclaim. Longer than the dispatch root's 6h because an interactive/bg session can legitimately sit idle between beats."
+  LIMEN_RECLAIM_APPLY:
+    default: "0"               # OFF — default beat reports reclaim candidates, explicit operator acceptance removes them
+    env: LIMEN_RECLAIM_APPLY
+    self_update: none
+    owner: limen-daemon
+    note: "When 1, scripts/drain.sh passes --apply to reclaim-worktrees.py. Default 0 keeps automated beats preview-only so clean+content-preserved roots do not disappear until their ledger/PR/blocker receipt has operator acceptance."
   LIMEN_WORKTREE_DEBT_GATE:
     default: "1"               # ON — debt suppresses routine generated build-out, not recovery work
     env: LIMEN_WORKTREE_DEBT_GATE

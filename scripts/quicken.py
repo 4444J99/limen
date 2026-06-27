@@ -323,6 +323,38 @@ def _atom_key(atom: str) -> str:
     return next((k for k, _rx, a in PROTOCOL if a == atom), "misc")
 
 
+def _queue_residue_atoms() -> dict[str, list[str]]:
+    """Residue already hung in tasks.yaml must stay visible in the digest."""
+    atoms: dict[str, list[str]] = {}
+    try:
+        sys.path.insert(0, str(ROOT / "cli" / "src"))
+        from limen.io import load_limen_file
+    except Exception:
+        return atoms
+    if not LEDGER.exists():
+        return atoms
+    try:
+        lf = load_limen_file(LEDGER)
+    except Exception:
+        return atoms
+    for task in lf.tasks:
+        labels = set(task.labels or [])
+        if task.status != "needs_human":
+            continue
+        if not (task.id.startswith("ASK-quicken-") or "quicken-residue" in labels):
+            continue
+        atom = (task.title or task.id).strip()
+        if not atom:
+            continue
+        unblocks = "permanent queue"
+        if task.context:
+            match = re.search(r"Unblocks: ([^.]+)", task.context)
+            if match:
+                unblocks = match.group(1).strip()
+        atoms.setdefault(atom, []).append(unblocks[:48])
+    return atoms
+
+
 def hang_residue(rows: list[dict]) -> dict:
     """Hang each irreducible human atom in the PERMANENT needs_human queue — the running system of
     record (obligations-view / organ-health / reclassify all read it), capture-pushed off-disk — so
@@ -389,6 +421,8 @@ def write_residue(rows: list[dict]) -> str:
     for r in rows:
         if r["state"] == "STALLED" and r["decision"]["residue"]:
             atoms.setdefault(r["decision"]["residue"], []).append(r["title"][:48])
+    for atom, titles in _queue_residue_atoms().items():
+        atoms.setdefault(atom, []).extend(titles)
     lines = ["# QUICKEN residue — the irreducible human atoms (deduped)", "",
              "> A VIEW, not the home. Each atom is hung in the PERMANENT `needs_human` queue as",
              "> `ASK-quicken-<key>` (surfaced by obligations-view / organ-health / reclassify,",
