@@ -57232,7 +57232,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: done
   labels:
   - revenue-ship
   - revenue
@@ -57247,7 +57247,7 @@ tasks:
     \ rank 3, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T11:54:42.169130Z'
+  updated: '2026-06-27T12:48:43.632402Z'
   dispatch_log:
   - timestamp: '2026-06-27T04:59:55.262792Z'
     agent: jules
@@ -57282,6 +57282,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/universal-mail--automation/pull/104
     status: dispatched
+  - timestamp: '2026-06-27T12:48:43.632402Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: REV-organvm-the-invisible-ledger-revenue-ship-0627
   title: Drive The Invisible Ledger to deploy-ready
   repo: organvm/the-invisible-ledger
@@ -57327,7 +57332,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: done
   labels:
   - revenue-ship
   - revenue
@@ -57342,7 +57347,7 @@ tasks:
     \ stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T11:54:42.169130Z'
+  updated: '2026-06-27T12:48:43.632402Z'
   dispatch_log:
   - timestamp: '2026-06-27T04:59:55.262792Z'
     agent: jules
@@ -57377,6 +57382,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/mirror-mirror/pull/64
     status: dispatched
+  - timestamp: '2026-06-27T12:48:43.632402Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: REV-organvm-public-record-data-scrapper-revenue-ship-0627
   title: Drive Public Record Data Scraper to deploy-ready
   repo: organvm/public-record-data-scrapper
@@ -57743,7 +57753,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - test-coverage
   - generated
@@ -57755,7 +57765,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T12:16:14.621714Z'
+  updated: '2026-06-27T12:48:43.632402Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: codex
@@ -57766,6 +57776,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/the-invisible-ledger/pull/63
     status: dispatched
+  - timestamp: '2026-06-27T12:48:43.632402Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GEN-organvm-universal-mail--automation-test-coverage-0627
   title: Raise test coverage in organvm/universal-mail--automation
   repo: organvm/universal-mail--automation
@@ -57773,7 +57788,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - test-coverage
   - generated
@@ -57785,7 +57800,7 @@ tasks:
     2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T12:16:14.621714Z'
+  updated: '2026-06-27T12:48:43.632402Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: codex
@@ -57796,6 +57811,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/universal-mail--automation/pull/106
     status: dispatched
+  - timestamp: '2026-06-27T12:48:43.632402Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GEN-organvm-mirror-mirror-docs-0627
   title: Real usage docs for organvm/mirror-mirror
   repo: organvm/mirror-mirror
@@ -57803,7 +57823,7 @@ tasks:
   target_agent: any
   priority: low
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - docs
   - generated
@@ -57815,7 +57835,7 @@ tasks:
     \ 2026-06-27 to keep the stream endless]"
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T12:16:14.621714Z'
+  updated: '2026-06-27T12:48:43.632402Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: agy
@@ -57826,14 +57846,19 @@ tasks:
     agent: agy
     session_id: https://github.com/organvm/mirror-mirror/pull/65
     status: dispatched
+  - timestamp: '2026-06-27T12:48:43.632402Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GEN-organvm-the-invisible-ledger-docs-0627
   title: Real usage docs for organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: any
+  target_agent: codex
   priority: low
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - docs
   - generated
@@ -57846,7 +57871,7 @@ tasks:
     \ 2026-06-27 to keep the stream endless]"
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T12:16:14.621714Z'
+  updated: '2026-06-27T12:43:19.558405Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: agy
@@ -57858,14 +57883,19 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T12:43:19.558405Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GEN-organvm-portfolio-docs-0627
   title: Real usage docs for organvm/portfolio
   repo: organvm/portfolio
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: low
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - docs
   - generated
@@ -57878,7 +57908,7 @@ tasks:
     \ 2026-06-27 to keep the stream endless]"
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T12:16:14.621714Z'
+  updated: '2026-06-27T12:43:19.558405Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: claude
@@ -57890,6 +57920,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T12:43:19.558405Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GEN-organvm-universal-mail--automation-docs-0627
   title: Real usage docs for organvm/universal-mail--automation
   repo: organvm/universal-mail--automation
@@ -57897,7 +57932,7 @@ tasks:
   target_agent: any
   priority: low
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - docs
   - generated
@@ -57909,7 +57944,7 @@ tasks:
     \ 2026-06-27 to keep the stream endless]"
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T12:16:14.621714Z'
+  updated: '2026-06-27T12:48:43.632402Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: claude
@@ -57920,14 +57955,19 @@ tasks:
     agent: claude
     session_id: https://github.com/organvm/universal-mail--automation/pull/107
     status: dispatched
+  - timestamp: '2026-06-27T12:48:43.632402Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GEN-organvm-public-record-data-scrapper-docs-0627
   title: Real usage docs for organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
   type: code
-  target_agent: any
+  target_agent: agy
   priority: low
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - docs
   - generated
@@ -57940,7 +57980,7 @@ tasks:
     \ 2026-06-27 to keep the stream endless]"
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T12:16:14.621714Z'
+  updated: '2026-06-27T12:43:19.558405Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: claude
@@ -57952,6 +57992,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T12:43:19.558405Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GEN-organvm-mirror-mirror-simplify-0627
   title: Reduce complexity in organvm/mirror-mirror
   repo: organvm/mirror-mirror
@@ -57959,7 +58004,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - simplify
   - generated
@@ -57970,7 +58015,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T12:16:14.621714Z'
+  updated: '2026-06-27T12:48:43.632402Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: codex
@@ -57981,14 +58026,19 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/mirror-mirror/pull/66
     status: dispatched
+  - timestamp: '2026-06-27T12:48:43.632402Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GEN-organvm-session-meta-simplify-0627
   title: Reduce complexity in organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: any
+  target_agent: claude
   priority: medium
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - simplify
   - generated
@@ -58000,7 +58050,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T12:16:14.621714Z'
+  updated: '2026-06-27T12:43:19.558405Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: opencode
@@ -58012,14 +58062,19 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T12:43:19.558405Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GEN-organvm-domus-genoma-typing-0627
   title: Tighten types in organvm/domus-genoma
   repo: organvm/domus-genoma
   type: code
-  target_agent: any
+  target_agent: gemini
   priority: medium
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - typing
   - generated
@@ -58031,7 +58086,7 @@ tasks:
     and tests green. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T12:16:14.621714Z'
+  updated: '2026-06-27T12:43:19.558405Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: opencode
@@ -58043,14 +58098,19 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T12:43:19.558405Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GEN-organvm-mirror-mirror-typing-0627
   title: Tighten types in organvm/mirror-mirror
   repo: organvm/mirror-mirror
   type: code
-  target_agent: any
+  target_agent: codex
   priority: medium
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - typing
   - generated
@@ -58062,7 +58122,7 @@ tasks:
     and tests green. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T12:16:14.621714Z'
+  updated: '2026-06-27T12:43:19.558405Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: opencode
@@ -58074,14 +58134,19 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T12:43:19.558405Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GEN-organvm-the-invisible-ledger-typing-0627
   title: Tighten types in organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - typing
   - generated
@@ -58093,7 +58158,7 @@ tasks:
     the build and tests green. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T12:16:14.621714Z'
+  updated: '2026-06-27T12:43:19.558405Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: agy
@@ -58105,14 +58170,19 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T12:43:19.558405Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GEN-organvm-session-meta-typing-0627
   title: Tighten types in organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: any
+  target_agent: agy
   priority: medium
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - typing
   - generated
@@ -58124,7 +58194,7 @@ tasks:
     and tests green. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T12:16:14.621714Z'
+  updated: '2026-06-27T12:43:19.558405Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: agy
@@ -58136,6 +58206,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T12:43:19.558405Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GEN-organvm-universal-mail--automation-typing-0627
   title: Tighten types in organvm/universal-mail--automation
   repo: organvm/universal-mail--automation
@@ -58143,7 +58218,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - typing
   - generated
@@ -58154,7 +58229,7 @@ tasks:
     the build and tests green. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T12:16:14.621714Z'
+  updated: '2026-06-27T12:48:43.632402Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: agy
@@ -58165,14 +58240,19 @@ tasks:
     agent: agy
     session_id: https://github.com/organvm/universal-mail--automation/pull/105
     status: dispatched
+  - timestamp: '2026-06-27T12:48:43.632402Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GEN-organvm-limen-typing-0627
   title: Tighten types in organvm/limen
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: claude
   priority: medium
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - typing
   - generated
@@ -58184,7 +58264,7 @@ tasks:
     green. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T12:16:14.621714Z'
+  updated: '2026-06-27T12:43:19.558405Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: agy
@@ -58196,3 +58276,8 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T12:43:19.558405Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
