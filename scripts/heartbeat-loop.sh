@@ -326,6 +326,7 @@ while true; do
                       python3 "$LIMEN_ROOT/scripts/ledger.py" 2>&1 | tail -1 || true; }
   play "$C_HEAL"    && stamp heal
   play "$C_HYGIENE" && bash "$LIMEN_ROOT/scripts/clone-maintenance.sh" 2>&1 | tail -3 || true
+  play "$C_HYGIENE" && bash "$LIMEN_ROOT/scripts/heal-claude-update-marker.sh" 2>&1 | tail -1 || true
   play "$C_HYGIENE" && stamp hygiene
   python3 "$LIMEN_ROOT/scripts/emit-tick.py" 2>&1 | tail -1 || true   # tick voice — every beat
   stamp tick
