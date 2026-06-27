@@ -11,14 +11,14 @@ from __future__ import annotations
 import os
 import subprocess
 from pathlib import Path
-from typing import Any
+
 
 from . import params
 
 _TRUE = ("1", "true", "yes", "on")
 
 
-def _as_list(value: Any) -> list[str]:
+def _as_list(value: object) -> list[str]:
     if value is None:
         return []
     if isinstance(value, (list, tuple)):

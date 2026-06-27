@@ -16,7 +16,7 @@ from limen.capacity import PAID_AGENT_ORDER, capacity_census, format_capacity_ce
 from limen.dispatch import dispatch_parallel, dispatch_tasks, release_stale_tasks
 from limen.doctor import qa_report, readiness_report, stale_tasks
 from limen.io import load_limen_file
-from limen.models import Task
+from limen.models import BudgetTrack, Task
 from limen.status import print_status
 
 
@@ -271,6 +271,27 @@ def test_run_isolated_agent_retries_transient_claude_auth_blip(tmp_path: Path, m
 
     assert D._run_isolated_agent("claude", task, tmp_path, ["claude"], 3) is True
     assert len(calls) == 2
+
+
+def test_noop_result_stays_recoverable_not_cancelled() -> None:
+    import datetime
+
+    task = Task(
+        id="NOOP",
+        title="no-op attempt",
+        target_agent="codex",
+        status="open",
+        created=date(2026, 6, 27),
+        labels=[],
+    )
+    now = datetime.datetime.now(datetime.timezone.utc)
+
+    D._apply_result(task, "codex", D._NOOP, now, BudgetTrack(date="2026-06-27"))
+
+    assert task.status == "failed"
+    assert "noop" in task.labels
+    assert "cancelled" not in task.labels
+    assert task.dispatch_log[-1].status == "failed"
 
 
 def test_release_stale_dry_run_does_not_mutate(tmp_path: Path) -> None:

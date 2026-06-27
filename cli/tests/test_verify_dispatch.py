@@ -36,6 +36,20 @@ def test_chronic_tasks_flags_reopened_without_pr(tmp_path, monkeypatch):
     assert [c[0] for c in m.chronic_tasks(tasks)] == ["CH"]
 
 
+def test_chronic_tasks_excludes_inflight_dispatched_unless_no_pr_eligible(tmp_path, monkeypatch):
+    m = _load(tmp_path, monkeypatch)
+    task = {
+        "id": "ASYNC",
+        "status": "dispatched",
+        "target_agent": "jules",
+        "repo": "x/y",
+        "dispatch_log": [{"status": "open"}, {"status": "open"}, {"status": "open"}],
+    }
+
+    assert m.chronic_tasks([task]) == []
+    assert [c[0] for c in m.chronic_tasks([task], eligible_dispatched_ids={"ASYNC"})] == ["ASYNC"]
+
+
 def test_classification_includes_async_running_marker(tmp_path, monkeypatch):
     m = _load(tmp_path, monkeypatch)
     now = datetime.datetime.now(datetime.timezone.utc)

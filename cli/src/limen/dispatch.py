@@ -9,7 +9,7 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from typing import Any
+from typing import TypedDict
 
 from limen.capacity import (
     canonical_agent,
@@ -609,12 +609,13 @@ def _agent_argv(agent: str, task: Task | None = None) -> list[str]:
 # Per-task lane failover cascade (best-efficiency-first → cloud last). On a genuine
 # lane FAILURE (down/error/timeout) a task re-routes to the next lane and stays open;
 # the heartbeat dispatches lanes in THIS SAME ORDER, so a failed task walks down the
-# spectrum within one tick. A no-op (empty diff) is task-intrinsic and never cascades.
+# spectrum within one tick. A no-op (empty diff) is a recoverable failed attempt,
+# not a terminal archive; chronic no-output loops escalate through heal-dispatch.
 # Exhausting the list marks the task failed. Keep this order == heartbeat.sh LANES order.
 # agy/antigravity KEPT and HEALED: it writes to a scratch dir, so _bridge_agy_scratch carries
 # that work into the worktree after the run (see _isolated_local_run) — productive lane again.
 _LANE_CASCADE = ["codex", "opencode", "agy", "claude", "gemini", "jules", "ollama"]
-_NOOP = "__noop__"  # agent ran but produced no diff — do NOT cascade lanes
+_NOOP = "__noop__"  # agent ran but produced no diff
 
 
 def _next_lane(current: str) -> str | None:
@@ -1207,14 +1208,12 @@ def dispatch_tasks(
 
 def _apply_result(task: Task, agent: str, result: bool | str, now: datetime, track: BudgetTrack) -> None:
     """Apply one dispatch result to a task (same semantics as the serial path):
-    success → dispatched + spend; no-op → archived; rate-limit/fail → cascade."""
+    success → dispatched + spend; no-op/fail → recoverable failed; rate-limit → cascade."""
     entry = DispatchLogEntry(timestamp=now, agent=agent, session_id=session_id(), status="dispatched")
     if result == _NOOP:
-        entry.status = "archived"
-        entry.output = "No-op result; archived without requeueing."
-        task.status = "archived"
-        if "cancelled" not in task.labels:
-            task.labels.append("cancelled")
+        entry.status = "failed"
+        entry.output = "No-op result; failed for recovery instead of archived."
+        task.status = "failed"
         if "noop" not in task.labels:
             task.labels.append("noop")
     elif result == _RATELIMIT:
@@ -1568,13 +1567,31 @@ def dispatch_parallel(
           f"{' (lanes cooled: '+','.join(sorted(cooled))+')' if cooled else ''}")
 
 
+class ReleaseStaleCandidate(TypedDict):
+    id: str
+    title: str
+    repo: str | None
+    target_agent: str
+    status: str
+
+
+class ReleaseStaleReport(TypedDict):
+    status: str
+    agent: str | None
+    hours: int
+    tasks_path: str
+    count: int
+    released: list[str]
+    candidates: list[ReleaseStaleCandidate]
+
+
 def release_stale_tasks(
     limen: LimenFile,
     tasks_path: Path,
     hours: int = 24,
     dry_run: bool = True,
     agent: str | None = None,
-) -> dict[str, Any]:
+) -> ReleaseStaleReport:
     now = datetime.now(timezone.utc)
     candidates = stale_tasks(limen, hours=hours, agent=agent)
 

@@ -4,7 +4,7 @@
 For every task in status=dispatched, verify its claimed outcome actually exists on
 GitHub instead of trusting the dispatch_log. Catches the silent-failure classes:
   - DISPATCHED_NO_PR : local lane recorded dispatched but produced no PR URL (the
-                       "no-op that looked like success" — should have been _NOOP/cancelled)
+                       "no-op that looked like success" — should have been failed/noop)
   - PR_MISSING       : recorded a PR URL but the PR no longer exists (deleted/wrong)
   - PR_MERGED        : PR is merged but task still 'dispatched' → harvest should close it
   - PR_CLOSED        : PR closed unmerged → recover should reopen the task
@@ -45,14 +45,19 @@ def _parse_ts(v):
         return None
 
 
-def chronic_tasks(all_tasks, min_reopens=3):
+def chronic_tasks(all_tasks, min_reopens=3, eligible_dispatched_ids=None):
     """Tasks reopened by heal/recover >= min_reopens times that have NEVER produced a PR.
     These churn across lanes (fail/orphan → reopen → fail again) burning capacity with zero
     output. Per 'stale = opportunity, not delete': SURFACE them for escalation (route to the
     one capable lane / human eyes), don't silently re-loop and don't cancel real work."""
+    eligible_dispatched_ids = set(eligible_dispatched_ids or [])
     out = []
     for t in all_tasks:
-        if t.get("status", "open") not in {"open", "dispatched", "in_progress", "failed"}:
+        status = t.get("status", "open")
+        tid = t.get("id")
+        if status not in {"open", "failed"} and not (
+            status == "dispatched" and tid in eligible_dispatched_ids
+        ):
             continue
         log = t.get("dispatch_log") or []
         # every reopen mechanism (release-stale / recover / heal-dispatch) appends a
@@ -60,7 +65,7 @@ def chronic_tasks(all_tasks, min_reopens=3):
         reopens = sum(1 for e in log if str(e.get("status")) == "open")
         ever_pr = any(PR_RE.search(str(e.get("session_id", ""))) for e in log)
         if reopens >= min_reopens and not ever_pr:
-            out.append((t.get("id"), t.get("target_agent"), reopens, t.get("repo")))
+            out.append((tid, t.get("target_agent"), reopens, t.get("repo")))
     return out
 
 
@@ -133,7 +138,8 @@ def main():
 
     report = {k: [{"id": a, "ref": b} for a, b in v] for k, v in cats.items()}
     counts = {k: len(v) for k, v in cats.items()}
-    chronic = chronic_tasks(d.get("tasks", []))
+    no_pr_ids = {tid for tid, _ in cats["DISPATCHED_NO_PR"]}
+    chronic = chronic_tasks(d.get("tasks", []), eligible_dispatched_ids=no_pr_ids)
     counts["CHRONIC"] = len(chronic)
     (ROOT / "logs").mkdir(exist_ok=True)
     (ROOT / "logs" / "dispatch-verify.json").write_text(

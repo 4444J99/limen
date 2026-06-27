@@ -15,21 +15,21 @@ portal:
       claude: 100
     track:
       date: '2026-06-27'
-      spent: 67
+      spent: 63
       per_agent:
-        jules: 47
+        jules: 50
         gemini: 0
-        codex: 6
+        codex: 0
         opencode: 3
         agy: 10
-        claude: 1
+        claude: 0
       per_agent_reset:
         jules: '2026-06-26T23:07:41.223636+00:00'
         gemini: '2026-06-26T23:07:41.223636+00:00'
-        codex: '2026-06-27T04:46:03.783074+00:00'
+        codex: '2026-06-27T11:49:34.664870+00:00'
         opencode: '2026-06-26T23:07:41.223636+00:00'
         agy: '2026-06-26T23:07:41.223636+00:00'
-        claude: '2026-06-27T04:46:03.783074+00:00'
+        claude: '2026-06-27T11:49:34.664870+00:00'
 tasks:
 - id: FORCE-route-all-services
   title: Router fans across ALL paid services, not just the 6 vendors
@@ -45505,7 +45505,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: needs_human
   labels:
   - discover
   - value-discovery
@@ -45524,7 +45524,7 @@ tasks:
     \ the thesis. [auto-discovery 2026-06-22; no repo stays dark]"
   depends_on: []
   created: '2026-06-22'
-  updated: '2026-06-27T07:04:20.967385Z'
+  updated: '2026-06-27T11:52:18.113963Z'
   dispatch_log:
   - timestamp: '2026-06-24T02:29:59.487830Z'
     agent: opencode
@@ -45723,6 +45723,17 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T11:51:47.031879Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T11:52:18.113963Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: DISCOVER-organvm-a-i-council--coliseum
   title: Discover the latent value of organvm/a-i-council--coliseum
   repo: organvm/a-i-council--coliseum
@@ -51155,7 +51166,7 @@ tasks:
   target_agent: jules
   priority: low
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - docs
   - generated
@@ -51168,7 +51179,7 @@ tasks:
     \ 2026-06-24 to keep the stream endless]"
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-27T03:18:45.759543Z'
+  updated: '2026-06-27T11:49:34.664870Z'
   dispatch_log:
   - timestamp: '2026-06-27T00:50:23.253355Z'
     agent: limen
@@ -51207,6 +51218,15 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-06-27T11:49:34.664870Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T11:49:34.664870Z'
+    agent: jules
+    session_id: '14882797869551864266'
+    status: dispatched
 - id: GEN-organvm-session-meta-docs-0624
   title: Real usage docs for organvm/session-meta
   repo: organvm/session-meta
@@ -51452,7 +51472,7 @@ tasks:
   target_agent: jules
   priority: low
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - docs
   - generated
@@ -51468,7 +51488,7 @@ tasks:
     \ to keep the stream endless]"
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-27T03:18:45.759543Z'
+  updated: '2026-06-27T11:49:34.664870Z'
   dispatch_log:
   - timestamp: '2026-06-26T23:07:41.223636Z'
     agent: opencode
@@ -51496,6 +51516,15 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-27T11:49:34.664870Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T11:49:34.664870Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GEN-organvm-limen-docs-0624
   title: Real usage docs for organvm/limen
   repo: organvm/limen
@@ -52173,7 +52202,7 @@ tasks:
   target_agent: gemini
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: needs_human
   labels:
   - simplify
   - generated
@@ -52184,7 +52213,7 @@ tasks:
     not grow without cause. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-27T07:04:20.967385Z'
+  updated: '2026-06-27T11:51:47.031879Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:08:09.813170Z'
     agent: jules
@@ -52251,6 +52280,12 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T11:51:47.031879Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: dispatched with no PR and chronic (reopened \u22653\xD7\
+      ) \u2192 escalated, stop re-looping"
 - id: GEN-organvm-limen-simplify-0624
   title: Reduce complexity in organvm/limen
   repo: organvm/limen
@@ -54356,7 +54391,7 @@ tasks:
   target_agent: jules
   priority: low
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - docs
   - generated
@@ -54369,7 +54404,7 @@ tasks:
     \ 2026-06-26 to keep the stream endless]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T03:54:13.598575Z'
+  updated: '2026-06-27T11:54:42.169130Z'
   dispatch_log:
   - timestamp: '2026-06-27T02:56:59.013314Z'
     agent: codex
@@ -54389,6 +54424,11 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-27T11:54:42.169130Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-limen-docs-0626
   title: Real usage docs for organvm/limen
   repo: organvm/limen
@@ -56067,7 +56107,7 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
-   - timestamp: '2026-06-27T07:04:20.967385Z'
+  - timestamp: '2026-06-27T07:04:20.967385Z'
     agent: opencode
     session_id: reserve
     status: dispatched
@@ -56076,7 +56116,10 @@ tasks:
     agent: opencode
     session_id: cli
     status: done
-    output: 'Tightened types: added TypedDict return type to release_stale_tasks in dispatch.py (replaced dict[str, Any]), replaced Any with object in vigilia/integrity.py _as_list(). io.py (most-imported module) was already fully typed — zero Any, passes mypy --strict. All 115 relevant tests pass; ruff + mypy clean.'
+    output: "Tightened types: added TypedDict return type to release_stale_tasks in\
+      \ dispatch.py (replaced dict[str, Any]), replaced Any with object in vigilia/integrity.py\
+      \ _as_list(). io.py (most-imported module) was already fully typed \u2014 zero\
+      \ Any, passes mypy --strict. All 115 relevant tests pass; ruff + mypy clean."
 - id: DISCOVER-organvm-organvm-corpvs-testamentvm
   title: Discover the latent value of organvm/organvm-corpvs-testamentvm
   repo: organvm/organvm-corpvs-testamentvm
@@ -57021,7 +57064,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - simplify
   - generated
@@ -57033,7 +57076,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T05:21:04.898340Z'
+  updated: '2026-06-27T11:49:34.664870Z'
   dispatch_log:
   - timestamp: '2026-06-27T05:21:04.898340Z'
     agent: gemini
@@ -57044,6 +57087,15 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-27T11:49:34.664870Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T11:49:34.664870Z'
+    agent: jules
+    session_id: '5271992324525907402'
+    status: dispatched
 - id: GEN-organvm-limen-simplify-0627
   title: Reduce complexity in organvm/limen
   repo: organvm/limen
@@ -57181,7 +57233,7 @@ tasks:
     \ rank 3, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T07:04:20.967385Z'
+  updated: '2026-06-27T11:54:42.169130Z'
   dispatch_log:
   - timestamp: '2026-06-27T04:59:55.262792Z'
     agent: jules
@@ -57198,6 +57250,16 @@ tasks:
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
   - timestamp: '2026-06-27T07:04:20.967385Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T11:51:47.031879Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T11:54:42.169130Z'
     agent: codex
     session_id: reserve
     status: dispatched
@@ -57262,7 +57324,7 @@ tasks:
     \ stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T07:04:20.967385Z'
+  updated: '2026-06-27T11:54:42.169130Z'
   dispatch_log:
   - timestamp: '2026-06-27T04:59:55.262792Z'
     agent: jules
@@ -57279,6 +57341,16 @@ tasks:
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
   - timestamp: '2026-06-27T07:04:20.967385Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T11:51:47.031879Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T11:54:42.169130Z'
     agent: codex
     session_id: reserve
     status: dispatched

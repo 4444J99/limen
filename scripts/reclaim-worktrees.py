@@ -8,12 +8,13 @@ those:
 
   • clean working tree (no uncommitted or untracked changes), AND
   • HEAD is reachable from some remote ref (nothing unpushed would be lost), AND
+  • HEAD is already merged into the remote default branch (the work finished its PR/base lifecycle), AND
   • idle for >= the root's min-age (so a task/session mid-run is never touched).
 
 It scans BOTH creation sites (the historical blind spot — see worktree-lifecycle-blind-spot):
   • LIMEN_WORKTREE_ROOT (~/Workspace/.limen-worktrees) — dispatch throwaway, min-age 6h.
   • LIMEN_ROOT/.claude/worktrees — EnterWorktree / bg-job / interactive cells, min-age 24h
-    (longer: an interactive session can sit idle-but-alive; 24h clean+pushed ⇒ provably dead).
+    (longer: an interactive session can sit idle-but-alive; 24h clean+merged ⇒ provably dead).
 Set LIMEN_RECLAIM_CLAUDE_WT=0 to disable the interactive sweep.
 
 It is LOSS-FREE by construction (those three gates) and FAILS OPEN: any error on one dir is
@@ -77,6 +78,23 @@ def reachable_from_remote(cwd, head) -> bool:
     return False
 
 
+def remote_default_ref(cwd) -> str | None:
+    r = git(["symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"], cwd)
+    if r.returncode == 0 and r.stdout.strip():
+        return r.stdout.strip()
+    for ref in ("origin/main", "origin/master"):
+        if git(["show-ref", "--verify", "--quiet", f"refs/remotes/{ref}"], cwd).returncode == 0:
+            return ref
+    return None
+
+
+def merged_into_default(cwd, head) -> bool:
+    ref = remote_default_ref(cwd)
+    if not ref:
+        return False
+    return git(["merge-base", "--is-ancestor", head, ref], cwd).returncode == 0
+
+
 def superproject(cwd) -> str | None:
     wl = git(["worktree", "list", "--porcelain"], cwd).stdout.splitlines()
     if wl and wl[0].startswith("worktree "):
@@ -101,8 +119,10 @@ def classify(d: Path, now: float, min_age_h: float):
     head = git(["rev-parse", "HEAD"], d).stdout.strip()
     if not head or not reachable_from_remote(d, head):
         return "skip", "unpushed-commits"
+    if not merged_into_default(d, head):
+        return "skip", "not-merged-to-default"
     is_wt = (d / ".git").is_file()  # gitdir-pointer ⇒ registered worktree
-    return ("remove-worktree" if is_wt else "remove-clone"), "clean+pushed+idle"
+    return ("remove-worktree" if is_wt else "remove-clone"), "clean+merged+idle"
 
 
 def main():

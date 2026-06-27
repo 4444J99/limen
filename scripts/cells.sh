@@ -20,7 +20,7 @@
 #   cell stop  <slug>            # stop this cell's conductor
 #   cell merge <slug>            # push + open/merge its PR via merge-policy (the standing grant)
 #   cell reap  <slug>            # stop + LOSS-FREE remove (refuses if dirty or unpushed)
-#   cell reap-dead               # reclaim every provably-dead cell (clean+pushed+idle)
+#   cell reap-dead               # reclaim every provably-dead cell (clean+pushed+merged+idle)
 #   cell help
 #
 # Safe by construction: `new` always fetches and branches from origin/main; `reap` refuses to
@@ -139,7 +139,7 @@ cmd_reap() {
 }
 
 cmd_reap_dead() {
-  echo "cell: delegating to the SPRAWL-RECLAIM organ (loss-free: clean+pushed+idle only)…"
+  echo "cell: delegating to the SPRAWL-RECLAIM organ (loss-free: clean+pushed+merged+idle only)…"
   echo "      (dry-run by default — pass --apply to actually reclaim)"
   python3 "$LIMEN_ROOT/scripts/reclaim-worktrees.py" "$@"
 }

@@ -5,8 +5,8 @@
     "session redid work that already landed" drift) is re-converged loss-free; genuinely-unique
     divergence still stays fail-open (never force-moved).
 
-  scripts/reclaim-worktrees.py — reap provably-dead fleet worktrees (clean + pushed + idle),
-    while keeping dirty / unpushed / recently-active ones.
+  scripts/reclaim-worktrees.py — reap provably-dead fleet worktrees (clean + pushed +
+    merged-to-default + idle), while keeping dirty / unpushed / unmerged / recently-active ones.
 
 Both run as real subprocesses against throwaway git repos, so the actual shell/Python ships.
 """
@@ -211,6 +211,23 @@ def test_reclaim_keeps_dirty_unpushed_and_active(tmp_path):
     assert r.returncode == 0, r.stderr
     assert dirty.exists() and unpushed.exists() and active.exists(), r.stdout
     assert "dirty" in r.stdout and "unpushed-commits" in r.stdout and "active" in r.stdout
+
+
+def test_reclaim_keeps_clean_pushed_unmerged_branch(tmp_path):
+    main, bare, wtroot = _wt_root_with(tmp_path)
+    (main / "logs").mkdir(exist_ok=True)
+
+    branch = _add_wt(main, wtroot, "pushed-unmerged")
+    _git("checkout", "-q", "-b", "feature", cwd=branch)
+    _commit(branch, "feature.txt", "unique work\n", "feature")
+    _git("push", "-q", "origin", "HEAD:feature", cwd=branch)
+    _age(branch, 5)
+
+    r = _run_reclaim(wtroot, main, apply=True)
+
+    assert r.returncode == 0, r.stderr
+    assert branch.exists(), r.stdout
+    assert "not-merged-to-default" in r.stdout
 
 
 def test_reclaim_dry_run_removes_nothing(tmp_path):

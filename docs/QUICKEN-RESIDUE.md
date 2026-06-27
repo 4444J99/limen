@@ -6,5 +6,4 @@
 > atom: you (identity / login / send / physical / gate). Everything else is
 > daemon-owned and fires each beat; it is not hanging.
 
-- **land the credential/secret (your account/identity)**  ·  owner: **you**  ·  hung: `ASK-quicken-credential` (needs_human)  ·  unblocks: Optimize token usage across AI models, password prompt consolidation macos
-- **the D2L go-live click + cadence confirm (your login + judgment)**  ·  owner: **you**  ·  hung: `ASK-quicken-d2l` (needs_human)  ·  unblocks: Continue previous coding session
+- **land the credential/secret (your account/identity)**  ·  owner: **you**  ·  hung: `ASK-quicken-credential` (needs_human)  ·  unblocks: password prompt consolidation macos
