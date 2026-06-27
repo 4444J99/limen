@@ -28,6 +28,15 @@ specific item is claimed or dispatched.
 | 7 | Harvest async Jules reservations | 41 dispatched Jules tasks have no PR yet | Treat as async reservations until harvest proves otherwise | Jules harvester | Completed sessions landed as PRs or reopened with evidence |
 | 8 | Park remote/cloud credential gaps | Cloud env flags absent; Gemini/auth wall remains credential-gated | Keep in credential issue/workstream, not inline in intake | Human/Codex prep | Credential blocker has owner issue and no leaked secret |
 
+## Run Notes
+
+- 2026-06-27: `session-meta` owner state was preserved on branch
+  `codex/preserve-session-meta-owner-state-20260627`, commit `27ab53a`, with draft PR
+  [organvm/session-meta#130](https://github.com/organvm/session-meta/pull/130). The local owner
+  checkout is clean on the pushed branch. GitHub marks the PR `CONFLICTING` against current `main`,
+  so merge/split/rebase is downstream lifecycle work; the preservation objective is satisfied and
+  no unique local state should be discarded.
+
 ## Dirty And Missing-Remote Worktrees
 
 | Root | Repo | Head | Remote Branch | PR Receipt | Reason | Next Action |

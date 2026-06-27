@@ -1,6 +1,6 @@
 # Prompt Lifecycle Ledger
 
-Generated: `2026-06-27T18:38:09+00:00`
+Generated: `2026-06-27T19:09:12+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -12,13 +12,13 @@ Horizon: `all local history`
 
 ## Redacted Prompt Coverage
 
-Indexed `9481` app/session files, `2.1 GiB`, with `92656` prompt-like user events hashed into the private index.
+Indexed `9481` app/session files, `2.1 GiB`, with `92660` prompt-like user events hashed into the private index.
 
 | Source | Files | Prompt Events | Event Records | Size | Newest |
 |---|---:|---:|---:|---:|---|
 | `claude-projects` | 4848 | 87805 | 313140 | 1.4 GiB | `2026-06-27T17:49:30+00:00` |
-| `codex-sessions` | 887 | 4316 | 227944 | 649.1 MiB | `2026-06-27T18:36:48+00:00` |
-| `codex-history` | 1 | 402 | 402 | 179.6 KiB | `2026-06-27T18:15:46+00:00` |
+| `codex-sessions` | 887 | 4319 | 228349 | 664.4 MiB | `2026-06-27T19:07:53+00:00` |
+| `codex-history` | 1 | 403 | 403 | 179.7 KiB | `2026-06-27T18:52:01+00:00` |
 | `claude-tasks` | 188 | 133 | 133 | 57.7 KiB | `2026-06-26T00:08:52+00:00` |
 | `claude-file-history` | 3519 | 0 | 0 | 42.2 MiB | `2026-06-27T00:26:28+00:00` |
 | `claude-plans` | 34 | 0 | 0 | 289.3 KiB | `2026-06-25T03:22:45+00:00` |
@@ -26,7 +26,7 @@ Indexed `9481` app/session files, `2.1 GiB`, with `92656` prompt-like user event
 
 ## Prompt To Worktree Crosswalk
 
-- Current `.limen-worktrees` roots scanned: `19`; debt roots: `10`.
+- Current `.limen-worktrees` roots scanned: `19`; debt roots: `13`.
 - Current worktree roots with at least one local session/prompt receipt: `18`.
 - Current worktree roots without a local session receipt in this index: `1`.
 
@@ -38,11 +38,11 @@ Indexed `9481` app/session files, `2.1 GiB`, with `92656` prompt-like user event
 | `bld-my--father-mother-harden-44b2` | 1 | 5 | `dirty` |
 | `bld-promptscope-next-rev-3fde` | 1 | 4 | `dirty` |
 | `bld-universal-mail--automation-readme-9031` | 1 | 5 | `active(<6h)` |
-| `bld2-a-i-chat--exporter-integration-tests-a00b` | 1 | 5 | `active(<6h)` |
+| `bld2-a-i-chat--exporter-integration-tests-a00b` | 1 | 5 | `unpushed-commits` |
 | `cifix-organvm-i-theoria-conversation-corpus-engine-f02e` | 3 | 79 | `active(<6h)` |
 | `cifix-organvm-i-theoria-hierarchia-mundi-3145` | 1 | 71 | `dirty` |
-| `discover-organvm-kerygma-profiles-6c74` | 1 | 24 | `active(<6h)` |
-| `exporter-mp` | 0 | 0 | `active(<6h)` |
+| `discover-organvm-kerygma-profiles-6c74` | 1 | 24 | `not-merged-to-default` |
+| `exporter-mp` | 0 | 0 | `unpushed-commits` |
 | `gen-organvm-i-theoria-sovereign--ground-ci-green-0620-0f38` | 1 | 3 | `dirty` |
 | `gen-organvm-the-invisible-ledger-ci-green-0625-e3c2` | 1 | 4 | `not-a-git-dir` |
 | `gen-organvm-universal-mail--automation-test-coverage-0625-151e` | 3 | 100 | `dirty` |
@@ -70,7 +70,7 @@ Indexed `9481` app/session files, `2.1 GiB`, with `92656` prompt-like user event
 - GitHub worktree repos seen: `14`.
 - Git worktree roots with remote branch present: `10`; missing: `6`.
 - Branch-linked PR states: `OPEN` 10, `MERGED` 2, `CLOSED` 0.
-- Task-board GitHub PR refs seen: `657`; checked: `657`; states: `CLOSED` 31, `ERROR` 8, `MERGED` 445, `OPEN` 173.
+- Task-board GitHub PR refs seen: `657`; checked: `657`; states: `CLOSED` 31, `ERROR` 10, `MERGED` 445, `OPEN` 171.
 
 ## Cloud Receipts
 
@@ -87,7 +87,7 @@ Indexed `9481` app/session files, `2.1 GiB`, with `92656` prompt-like user event
 - Dispatch receipt classification must distinguish async Jules work from stranded local no-PR work; otherwise the conductor burns attention on healthy async reservations.
 - Prompt/session coverage is now hashed, but lifecycle judgment still needs owner actions: dirty roots need PRs or blocker records, and open PR receipts need merge or named supersession.
 - Codex now has prompt-event coverage through `history.jsonl` and session JSONL, but it still lacks a quicken-style resume/classification organ equivalent to Claude's lifecycle journal.
-- Remote task-board PR receipt scan has `8` GitHub/API errors; rerun before using those refs as closure proof.
+- Remote task-board PR receipt scan has `10` GitHub/API errors; rerun before using those refs as closure proof.
 
 ## Drain Queue
 
