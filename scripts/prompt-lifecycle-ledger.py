@@ -34,6 +34,7 @@ PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
 TASKS_PATH = ROOT / "tasks.yaml"
 WORKTREE_ROOT = ROOT.parent / ".limen-worktrees"
 GITHUB_PR_RE = re.compile(r"github\.com/([^/]+)/([^/]+)/pull/(\d+)")
+DISPATCH_GRACE_SECONDS = int(os.environ.get("LIMEN_LANE_TIMEOUT", "900")) + 600
 
 LOCAL_SOURCES = [
     ("codex-sessions", HOME / ".codex" / "sessions", ("*",)),
@@ -84,6 +85,15 @@ def relpath(path: Path) -> str:
         return "~/" + str(path.expanduser().resolve().relative_to(HOME))
     except (OSError, ValueError):
         return str(path)
+
+
+def parse_ts(value: Any) -> dt.datetime | None:
+    if isinstance(value, dt.datetime):
+        return value if value.tzinfo else value.replace(tzinfo=dt.timezone.utc)
+    try:
+        return dt.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
 
 
 def iter_source_files(days: int | None) -> list[dict[str, Any]]:
@@ -534,9 +544,14 @@ def load_task_snapshot(worktree_slugs: list[str]) -> dict[str, Any]:
     status_counts = Counter(str(task.get("status", "missing")) for task in tasks if isinstance(task, dict))
     invalid = sorted(status for status in status_counts if status not in VALID_STATUSES)
     exact_slug_refs = [slug for slug in worktree_slugs if slug in text]
+    now = dt.datetime.now(dt.timezone.utc)
     chronic_reopen = 0
     dispatched_without_pr = 0
+    dispatched_with_pr = 0
+    dispatched_jules_async = 0
+    dispatched_running = 0
     done_with_pr_receipt = 0
+    stranded_ids: set[str] = set()
     for task in tasks:
         if not isinstance(task, dict):
             continue
@@ -563,10 +578,42 @@ def load_task_snapshot(worktree_slugs: list[str]) -> dict[str, Any]:
             for entry in log
             if isinstance(entry, dict)
         )
-        if task.get("status") == "dispatched" and not has_pr:
-            dispatched_without_pr += 1
+        if task.get("status") == "dispatched":
+            if has_pr:
+                dispatched_with_pr += 1
+            elif task.get("target_agent") == "jules":
+                dispatched_jules_async += 1
+            else:
+                updated = parse_ts(task.get("updated"))
+                task_id = str(task.get("id", ""))
+                async_running = (ROOT / "logs" / "async-runs").exists() and any(
+                    (ROOT / "logs" / "async-runs").glob(f"{task_id}__*.running")
+                )
+                if async_running or (updated and (now - updated).total_seconds() < DISPATCH_GRACE_SECONDS):
+                    dispatched_running += 1
+                else:
+                    dispatched_without_pr += 1
+                    stranded_ids.add(task_id)
         if task.get("status") == "done" and has_pr:
             done_with_pr_receipt += 1
+
+    chronic_reopen = 0
+    for task in tasks:
+        if not isinstance(task, dict):
+            continue
+        task_id = str(task.get("id", ""))
+        status = task.get("status")
+        if status not in {"open", "failed"} and not (status == "dispatched" and task_id in stranded_ids):
+            continue
+        log = task.get("dispatch_log") or []
+        reopens = sum(1 for entry in log if isinstance(entry, dict) and str(entry.get("status")) == "open")
+        ever_pr = any(
+            "pull/" in str((entry or {}).get("session_id", ""))
+            for entry in log
+            if isinstance(entry, dict)
+        )
+        if reopens >= 3 and not ever_pr:
+            chronic_reopen += 1
     return {
         "present": True,
         "text": text,
@@ -576,6 +623,9 @@ def load_task_snapshot(worktree_slugs: list[str]) -> dict[str, Any]:
         "exact_slug_refs": exact_slug_refs,
         "chronic_reopen_candidates": chronic_reopen,
         "dispatched_without_pr_receipt": dispatched_without_pr,
+        "dispatched_with_pr_receipt": dispatched_with_pr,
+        "dispatched_jules_async": dispatched_jules_async,
+        "dispatched_running": dispatched_running,
         "done_with_pr_receipt": done_with_pr_receipt,
     }
 
@@ -722,7 +772,10 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
             f"- Invalid statuses outside canonical set: `{len(tasks['invalid_statuses'])}`.",
             f"- Current worktree root slugs mentioned exactly in `tasks.yaml`: `{len(tasks['exact_slug_refs'])}` / `{wt.get('total', 0)}`.",
             f"- Chronic reopen-loop candidates: `{tasks['chronic_reopen_candidates']}`.",
-            f"- Dispatched tasks without PR receipt: `{tasks['dispatched_without_pr_receipt']}`.",
+            f"- Dispatched tasks with PR receipt: `{tasks['dispatched_with_pr_receipt']}`.",
+            f"- Dispatched Jules async tasks without PR yet: `{tasks['dispatched_jules_async']}`.",
+            f"- Dispatched local tasks still inside running grace/no-op guard: `{tasks['dispatched_running']}`.",
+            f"- Dispatched local tasks stranded without PR receipt: `{tasks['dispatched_without_pr_receipt']}`.",
             f"- Done tasks with PR receipt still visible in dispatch log/URLs: `{tasks['done_with_pr_receipt']}`.",
         ]
     else:
@@ -776,6 +829,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "- The app screenshots are partially covered by local Codex history and Claude project/task stores, but screenshots alone are not durable enough to be the corpus. The durable object is now filesystem source + private object copy + redacted hash ledger.",
         "- Remote/cloud receipts are part of the lifecycle proof, but they are not substitutes for preserving local raw prompt/session material.",
         "- Worktree roots still do not have first-class task-board receipt fields; exact slug references are the bridge to add before automatic drain can be trusted.",
+        "- Dispatch receipt classification must distinguish async Jules work from stranded local no-PR work; otherwise the conductor burns attention on healthy async reservations.",
         "- Prompt/session coverage is now hashed, but lifecycle judgment still needs owner actions: dirty roots need PRs or blocker records, and open PR receipts need merge or named supersession.",
         "- Codex now has prompt-event coverage through `history.jsonl` and session JSONL, but it still lacks a quicken-style resume/classification organ equivalent to Claude's lifecycle journal.",
         "",

@@ -1,6 +1,6 @@
 # Prompt Lifecycle Ledger
 
-Generated: `2026-06-27T15:17:41+00:00`
+Generated: `2026-06-27T15:38:01+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -12,12 +12,12 @@ Horizon: `all local history`
 
 ## Redacted Prompt Coverage
 
-Indexed `9477` app/session files, `2.0 GiB`, with `92598` prompt-like user events hashed into the private index.
+Indexed `9477` app/session files, `2.0 GiB`, with `92599` prompt-like user events hashed into the private index.
 
 | Source | Files | Prompt Events | Event Records | Size | Newest |
 |---|---:|---:|---:|---:|---|
 | `claude-projects` | 4845 | 87792 | 313106 | 1.4 GiB | `2026-06-27T15:12:53+00:00` |
-| `codex-sessions` | 887 | 4284 | 225866 | 544.3 MiB | `2026-06-27T15:16:20+00:00` |
+| `codex-sessions` | 887 | 4285 | 226125 | 544.6 MiB | `2026-06-27T15:36:34+00:00` |
 | `codex-history` | 1 | 389 | 389 | 177.4 KiB | `2026-06-27T15:00:57+00:00` |
 | `claude-tasks` | 188 | 133 | 133 | 57.7 KiB | `2026-06-26T00:08:52+00:00` |
 | `claude-file-history` | 3519 | 0 | 0 | 42.2 MiB | `2026-06-27T00:26:28+00:00` |
@@ -58,8 +58,11 @@ Indexed `9477` app/session files, `2.0 GiB`, with `92598` prompt-like user event
 - Status distribution: `archived` 438, `dispatched` 41, `done` 807, `in_progress` 1, `needs_human` 61, `open` 79.
 - Invalid statuses outside canonical set: `0`.
 - Current worktree root slugs mentioned exactly in `tasks.yaml`: `0` / `19`.
-- Chronic reopen-loop candidates: `17`.
-- Dispatched tasks without PR receipt: `41`.
+- Chronic reopen-loop candidates: `0`.
+- Dispatched tasks with PR receipt: `0`.
+- Dispatched Jules async tasks without PR yet: `41`.
+- Dispatched local tasks still inside running grace/no-op guard: `0`.
+- Dispatched local tasks stranded without PR receipt: `0`.
 - Done tasks with PR receipt still visible in dispatch log/URLs: `636`.
 
 ## Remote Receipts
@@ -67,7 +70,7 @@ Indexed `9477` app/session files, `2.0 GiB`, with `92598` prompt-like user event
 - GitHub worktree repos seen: `14`.
 - Git worktree roots with remote branch present: `8`; missing: `8`.
 - Branch-linked PR states: `OPEN` 8, `MERGED` 2, `CLOSED` 0.
-- Task-board GitHub PR refs seen: `657`; checked: `657`; states: `CLOSED` 31, `ERROR` 4, `MERGED` 445, `OPEN` 177.
+- Task-board GitHub PR refs seen: `657`; checked: `657`; states: `CLOSED` 31, `ERROR` 3, `MERGED` 447, `OPEN` 176.
 
 ## Cloud Receipts
 
@@ -81,6 +84,7 @@ Indexed `9477` app/session files, `2.0 GiB`, with `92598` prompt-like user event
 - The app screenshots are partially covered by local Codex history and Claude project/task stores, but screenshots alone are not durable enough to be the corpus. The durable object is now filesystem source + private object copy + redacted hash ledger.
 - Remote/cloud receipts are part of the lifecycle proof, but they are not substitutes for preserving local raw prompt/session material.
 - Worktree roots still do not have first-class task-board receipt fields; exact slug references are the bridge to add before automatic drain can be trusted.
+- Dispatch receipt classification must distinguish async Jules work from stranded local no-PR work; otherwise the conductor burns attention on healthy async reservations.
 - Prompt/session coverage is now hashed, but lifecycle judgment still needs owner actions: dirty roots need PRs or blocker records, and open PR receipts need merge or named supersession.
 - Codex now has prompt-event coverage through `history.jsonl` and session JSONL, but it still lacks a quicken-style resume/classification organ equivalent to Claude's lifecycle journal.
 
