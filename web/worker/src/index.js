@@ -107,7 +107,7 @@ function deriveThroughput(data, events, now = new Date()) {
   const byEventDate = countBy(events, (event) => new Date(event.timestamp_ms).toISOString().slice(0, 10));
   const done = (byStatus.done || 0) + (byStatus.archived || 0);
   const recordedStarts = (byEventStatus.dispatched || 0) + (byEventStatus.in_progress || 0);
-  const recordedFinishes = (byEventStatus.done || 0) + (byEventStatus.completed || 0) + (byEventStatus.failed || 0) + (byEventStatus.failed_blocked || 0);
+  const recordedFinishes = (byEventStatus.done || 0) + (byEventStatus.failed || 0) + (byEventStatus.failed_blocked || 0) + (byEventStatus.archived || 0);
   const expectedCapacityRuns = dailyCapacity * ageDays;
   return {
     first_created: firstCreated,
@@ -239,7 +239,7 @@ function taskLifecycle(task, staleIds) {
   const has_issue = urls.some((url) => url.includes("/issues/"));
   const status = task.status || "unknown";
   let phase = "assign";
-  if (["archived", "cancelled"].includes(status)) phase = "archived";
+  if (status === "archived") phase = "archived";
   else if (status === "done") phase = "archive";
   else if (stale || ["failed", "failed_blocked", "needs_human"].includes(status)) phase = "recover";
   else if (has_pr || ["dispatched", "in_progress"].includes(status)) phase = "verify";

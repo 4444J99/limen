@@ -467,7 +467,7 @@ def throughput(data: dict[str, Any]) -> dict[str, Any]:
     expected_capacity_runs = daily_capacity * age_days
     recorded_events = sum(by_event_status.values())
     recorded_starts = sum(by_event_status.get(status, 0) for status in ("dispatched", "in_progress"))
-    recorded_finishes = sum(by_event_status.get(status, 0) for status in ("done", "completed", "failed", "failed_blocked"))
+    recorded_finishes = sum(by_event_status.get(status, 0) for status in ("done", "failed", "failed_blocked", "archived"))
     unrecorded_capacity_runs = max(0, expected_capacity_runs - recorded_starts)
     return {
         "first_created": first_created.isoformat(),
@@ -559,7 +559,7 @@ def task_lifecycle(task: dict[str, Any], stale_ids: set[str]) -> dict[str, Any]:
     has_pr = any("/pull/" in url for url in urls)
     has_issue = any("/issues/" in url for url in urls)
     status = task.get("status", "unknown")
-    if status in ("archived", "cancelled"):
+    if status == "archived":
         phase = "archived"
     elif status == "done":
         phase = "archive"

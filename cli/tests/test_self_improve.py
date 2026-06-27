@@ -42,7 +42,7 @@ def write_board(path: Path, tasks: list[dict]) -> None:
 def _fixture_tasks() -> list[dict]:
     """A small board with three deliberate signals:
 
-    - DEAD lane: gemini is the responsible lane on 6 GH tasks that ALL end cancelled
+    - DEAD lane: gemini is the responsible lane on 6 GH tasks that ALL end archived/no-op
       (per-task attribution -> 0% over 6 >= min_samples) -> down-weight.
     - GOOD lane: jules lands all 6 of its done tries -> keep (and it's the top lane).
     - CHRONIC pattern: GH tasks re-thrown 5x with cancellations -> flagged.
@@ -50,16 +50,17 @@ def _fixture_tasks() -> list[dict]:
     - The `limen` meta-agent ledger rows must be IGNORED, not counted as a lane.
     """
     tasks: list[dict] = []
-    # GH pattern: 6 tasks, chronic re-dispatch on gemini, all cancelled (dead-end).
+    # GH pattern: 6 tasks, chronic re-dispatch on gemini, all archived/no-op (dead-end).
     # Per-task attribution credits each task's terminal verdict to gemini (the last
-    # real lane), so 6 cancelled => 6 fail / 0 done => 0% over 6 decided tries.
+    # real lane), so 6 archived/no-op => 6 fail / 0 done => 0% over 6 decided tries.
     for i in range(6):
         log = [_entry("gemini", "failed") for _ in range(5)]
-        log += [_entry("limen", "cancelled")]  # ledger noise that must be skipped
+        log += [_entry("limen", "archived")]  # ledger noise that must be skipped
         tasks.append({
             "id": f"GH-repo-{i}",
             "title": f"gh {i}",
-            "status": "cancelled",
+            "status": "archived",
+            "labels": ["cancelled", "noop"],
             "dispatch_log": log,
         })
     # REV pattern: 6 tasks all shipped by jules (>= min_samples so it earns a verdict)
@@ -102,7 +103,7 @@ def test_chronic_pattern_flagged_and_shipping_pattern_boosted(tmp_path: Path) ->
     assert gh["chronic_count"] >= 1
     assert gh["max_redispatch"] == 5  # 5 real-lane tries; limen row excluded
     assert any("chronic" in e for e in gh["evidence"])
-    # GH mostly cancelled -> retire (almost never ships)
+    # GH mostly archived/no-op -> retire (almost never ships)
     assert gh["action"] == "retire"
 
     rerank = {r["pattern"]: r for r in proposal["rerank"]}

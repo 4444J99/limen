@@ -5,9 +5,42 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TMP_DIR="${TMPDIR:-/tmp}/limen-worker-probe"
 ENV_FILE="$TMP_DIR/.dev.vars"
 BOARD_FILE="$TMP_DIR/tasks.yaml"
-PORT="${LIMEN_WORKER_PROBE_PORT:-8787}"
 OWNER_TOKEN="${LIMEN_PROBE_OWNER_TOKEN:-owner-probe-token}"
 CLIENT_TOKEN="${LIMEN_PROBE_CLIENT_TOKEN:-client-probe-token}"
+
+port_available() {
+  python3 - "$1" <<'PY'
+import socket
+import sys
+
+port = int(sys.argv[1])
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+    try:
+        sock.bind(("127.0.0.1", port))
+    except OSError:
+        raise SystemExit(1)
+PY
+}
+
+choose_port() {
+  python3 - <<'PY'
+import socket
+
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+    sock.bind(("127.0.0.1", 0))
+    print(sock.getsockname()[1])
+PY
+}
+
+if [[ -n "${LIMEN_WORKER_PROBE_PORT:-}" ]]; then
+  PORT="$LIMEN_WORKER_PROBE_PORT"
+  if ! port_available "$PORT"; then
+    printf 'LIMEN_WORKER_PROBE_PORT=%s is already in use; refusing to probe an unrelated process\n' "$PORT" >&2
+    exit 1
+  fi
+else
+  PORT="$(choose_port)"
+fi
 
 mkdir -p "$TMP_DIR"
 cat > "$BOARD_FILE" <<'YAML'
@@ -101,6 +134,11 @@ fi
 SERVER_PID="$!"
 
 for _ in {1..80}; do
+  if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+    cat /tmp/limen-worker-probe-wrangler.log >&2 || true
+    printf 'wrangler dev exited before the worker probe became ready\n' >&2
+    exit 1
+  fi
   if "$ROOT/scripts/probe-runtime-adapter.py" \
     --api-url "http://127.0.0.1:$PORT" \
     --owner-token "$OWNER_TOKEN" \

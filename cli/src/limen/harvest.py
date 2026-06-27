@@ -96,17 +96,20 @@ def check_jules_harvest(limen: LimenFile, harvest_dir: Path) -> list[str]:
                 result = diff_file.read_text().strip()
                 if not _diff_is_real(result):
                     # jules finished but produced nothing usable (empty/garbage
-                    # diff). Do NOT mark done — that was the false-done lie. Mark
-                    # cancelled (matches the local-lane no-op semantics) so the
-                    # conductor can absorb it instead of trusting a phantom 'done'.
-                    task.status = "cancelled"
+                    # diff). Do NOT mark done — that was the false-done lie. Archive
+                    # with reason labels so the conductor can absorb it without
+                    # inventing a non-canonical lifecycle state.
+                    task.status = "archived"
+                    for label in ("cancelled", "noop"):
+                        if label not in task.labels:
+                            task.labels.append(label)
                     task.updated = now
                     task.dispatch_log.append(
                         DispatchLogEntry(
                             timestamp=now,
                             agent="jules",
                             session_id=session_id,
-                            status="rejected-empty",
+                            status="archived",
                             output=result[:500],
                         )
                     )

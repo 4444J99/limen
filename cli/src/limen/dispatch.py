@@ -1180,11 +1180,14 @@ def dispatch_tasks(
 
 def _apply_result(task: Task, agent: str, result: bool | str, now: datetime, track: BudgetTrack) -> None:
     """Apply one dispatch result to a task (same semantics as the serial path):
-    success → dispatched + spend; no-op → cancelled; rate-limit/fail → cascade."""
+    success → dispatched + spend; no-op → archived; rate-limit/fail → cascade."""
     entry = DispatchLogEntry(timestamp=now, agent=agent, session_id=session_id(), status="dispatched")
     if result == _NOOP:
-        entry.status = "noop"
-        task.status = "cancelled"
+        entry.status = "archived"
+        entry.output = "No-op result; archived without requeueing."
+        task.status = "archived"
+        if "cancelled" not in task.labels:
+            task.labels.append("cancelled")
         if "noop" not in task.labels:
             task.labels.append("noop")
     elif result == _RATELIMIT:

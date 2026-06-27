@@ -8,9 +8,9 @@ every RESOLVED task gets `worth_it` / `marginal` / `wasted`, carrying its `budge
 score newly-resolved tasks; `--backfill` scores the whole board once (the first honest verdict).
 
 Grading is from LOCAL dispatch_log signals by default (no network, so the heal beat stays fast):
-  worth_it : status=done AND a PR ref landed in dispatch_log         → work shipped
-  marginal : status=done with no PR artifact, OR superseded          → done, nothing shippable / folded in
-  wasted   : status=cancelled, OR chronic (reopened >=3x, never a PR) → effort, zero output
+  worth_it : status=done AND a PR ref landed in dispatch_log               → work shipped
+  marginal : status=done with no PR artifact, OR archived+superseded label → done, nothing shippable / folded in
+  wasted   : archived+cancelled/noop label, OR chronic reopened w/o PR     → effort, zero output
 
 Debit accounting: a dispatch is a debit of `budget_cost`. `attempts` = recorded dispatches; `spent` =
 budget_cost x attempts. For `wasted` that whole spend is SUNK. ([[value-is-discovered-never-assumed]]
@@ -35,7 +35,7 @@ LEDGER = ROOT / "logs" / "ledger.jsonl"
 PR_RE = re.compile(r"github\.com/([^/]+)/([^/]+)/pull/(\d+)")
 
 # A task is RESOLVED (its return can be weighed) once it reaches a terminal state.
-_RESOLVED = {"done", "cancelled", "superseded"}
+_RESOLVED = {"done", "archived"}
 
 
 def _pr_ref(t: dict) -> str | None:
@@ -58,6 +58,19 @@ def _is_chronic(t: dict, min_reopens: int = 3) -> bool:
     return reopens >= min_reopens and not ever_pr
 
 
+def _labels(t: dict) -> set[str]:
+    return {str(label) for label in (t.get("labels") or [])}
+
+
+def _archived_reason(t: dict) -> str:
+    labels = _labels(t)
+    if "superseded" in labels:
+        return "superseded"
+    if "cancelled" in labels or "noop" in labels:
+        return "cancelled"
+    return "closed"
+
+
 def grade(t: dict) -> dict | None:
     """Weigh one task's return. None ⇒ not yet resolvable (still in flight / pending human)."""
     status = t.get("status")
@@ -73,14 +86,16 @@ def grade(t: dict) -> dict | None:
         g, note = "worth_it", "shipped — PR landed"
     elif status == "done":
         g, note = "marginal", "done, no shippable PR artifact"
-    elif status == "superseded":
+    elif status == "archived" and _archived_reason(t) == "superseded":
         g, note = "marginal", "folded into other work"
-    elif status == "cancelled":
-        g, note = "wasted", "cancelled — effort produced nothing"
+    elif status == "archived" and _archived_reason(t) == "cancelled":
+        g, note = "wasted", "cancelled/no-op — effort produced nothing"
+    elif status == "archived":
+        g, note = "marginal", "archived without a shippable PR artifact"
     else:  # chronic needs_human
         g, note = "wasted", "chronic — reopened, never a PR (escalated)"
 
-    spent = cost * (attempts if status == "cancelled" else max(1, attempts))
+    spent = cost * (attempts if _archived_reason(t) == "cancelled" else max(1, attempts))
     return {
         "ts": datetime.now(timezone.utc).isoformat(),
         "task_id": t.get("id"),

@@ -133,12 +133,12 @@ def render(d, ticks, usage=None):
 
     p("")
     p(f"{C['bold']}FUNNEL{C['x']}")
-    funnel = [("done", "g"), ("dispatched", "y"), ("in_progress", "c"),
-              ("failed", "r"), ("cancelled", "gray"), ("open", "b")]
+    funnel = [("done", "g"), ("archived", "gray"), ("dispatched", "y"), ("in_progress", "c"),
+              ("failed", "r"), ("needs_human", "m"), ("open", "b")]
     tot = len(tasks) or 1
     for k, col in funnel:
         n = by_status.get(k, 0)
-        if not n and k in ("in_progress", "cancelled"):
+        if not n and k in ("in_progress", "archived", "needs_human"):
             continue
         w = int(n / tot * 30)
         p(f"  {k:11} {C[col]}{'■'*w}{C['x']} {n}")

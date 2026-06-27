@@ -113,6 +113,15 @@ def main():
                 # NO_PR: only reopen if STILL no PR url (daemon may have re-dispatched)
                 if t.id in nopr_ids and PR_RE.search(last_session(t)):
                     continue
+                if t.id in chronic_ids:
+                    t.status = "needs_human"
+                    t.updated = now
+                    t.dispatch_log.append(DispatchLogEntry(
+                        timestamp=now, agent="limen", session_id="heal",
+                        status="needs_human",
+                        output="heal-dispatch: dispatched with no PR and chronic (reopened ≥3×) → escalated, stop re-looping"))
+                    escalated.append(t.id)
+                    continue
                 t.status = "open"
                 t.target_agent = t.target_agent or CASCADE_TOP
                 t.labels = [x for x in t.labels if not x.startswith("tried:")]

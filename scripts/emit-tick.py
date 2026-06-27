@@ -28,7 +28,7 @@ rec = {
     "dispatched": n("dispatched"),
     "done": n("done"),
     "failed": n("failed"),
-    "cancelled": n("cancelled"),
+    "archived": n("archived"),
     "daily_spent": track.get("spent", 0),
     "daily_cap": budget.get("daily", 300),
     "per_agent_spent": {a: tp.get(a, 0) for a in caps},

@@ -52,6 +52,8 @@ def chronic_tasks(all_tasks, min_reopens=3):
     one capable lane / human eyes), don't silently re-loop and don't cancel real work."""
     out = []
     for t in all_tasks:
+        if t.get("status", "open") not in {"open", "dispatched", "in_progress", "failed"}:
+            continue
         log = t.get("dispatch_log") or []
         # every reopen mechanism (release-stale / recover / heal-dispatch) appends a
         # status=="open" entry — count those, robust across all three.

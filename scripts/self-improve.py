@@ -91,7 +91,7 @@ CHRONIC_REDISP = _env_int("LIMEN_SI_CHRONIC_REDISP", 5)
 MIN_PATTERN = _env_int("LIMEN_SI_MIN_PATTERN", 3)
 
 # `limen` appears as an "agent" in dispatch_log but it is the conductor's own
-# status-ledger voice (it records open/done/cancelled transitions), NOT a vendor
+# status-ledger voice (it records open/done/archived transitions), NOT a vendor
 # lane that does work. The real lanes are exactly PAID_AGENT_ORDER. Deriving the
 # real-lane set this way means a new vendor added to capacity.py is learned about
 # automatically — names are outputs.
@@ -128,6 +128,23 @@ def load_board(path: Path) -> dict:
 # ---------------------------------------------------------------------------
 # 1. LANE PRODUCTIVITY
 # ---------------------------------------------------------------------------
+def _labels(t: dict) -> set[str]:
+    return {str(label) for label in (t.get("labels") or [])}
+
+
+def _is_cancel_archived(t: dict) -> bool:
+    labels = _labels(t)
+    return t.get("status") == "archived" and ("cancelled" in labels or "noop" in labels)
+
+
+def _is_success_status(t: dict) -> bool:
+    return t.get("status") == "done" or (t.get("status") == "archived" and not _is_cancel_archived(t))
+
+
+def _is_failure_status(t: dict) -> bool:
+    return t.get("status") in {"failed", "failed_blocked"} or _is_cancel_archived(t)
+
+
 def lane_stats(tasks: list[dict]) -> dict[str, Counter]:
     """Per real-lane Counter of done/inflight/fail, attributed PER TASK to the lane
     that actually last worked it.
@@ -151,10 +168,9 @@ def lane_stats(tasks: list[dict]) -> dict[str, Counter]:
         if not real_entries:
             continue  # no real lane ever took it (limen-only ledger / never dispatched)
         lane = canonical_agent(real_entries[-1].get("agent"))
-        status = (t.get("status") or "").strip().lower()
-        if status == "done":
+        if _is_success_status(t):
             verdict = "done"
-        elif status in {"failed", "cancelled"}:
+        elif _is_failure_status(t):
             verdict = "fail"
         else:
             verdict = "inflight"  # open / dispatched / in_progress / needs_human / ...
@@ -223,7 +239,9 @@ def pattern_stats(tasks: list[dict]) -> dict[str, dict]:
     """Per task-ID-prefix: outcome tally + chronic-redispatch evidence."""
     by: dict[str, dict] = defaultdict(lambda: {
         "total": 0,
-        "status": Counter(),       # current task.status (done/cancelled/open/...)
+        "status": Counter(),       # current task.status (done/archived/open/...)
+        "success_status": 0,
+        "failure_status": 0,
         "dispatch": Counter(),     # done/fail/inflight summed over dispatch_log
         "chronic": [],             # task ids re-thrown >= CHRONIC_REDISP times
         "max_redispatch": 0,
@@ -233,6 +251,10 @@ def pattern_stats(tasks: list[dict]) -> dict[str, dict]:
         b = by[p]
         b["total"] += 1
         b["status"][t.get("status", "?")] += 1
+        if _is_success_status(t):
+            b["success_status"] += 1
+        elif _is_failure_status(t):
+            b["failure_status"] += 1
         log = t.get("dispatch_log") or []
         # count only real-lane attempts toward "chronic" (ignore limen ledger rows)
         real_tries = [e for e in log if canonical_agent(e.get("agent")) in _REAL_LANES]
@@ -255,17 +277,17 @@ def retire_patterns(by: dict[str, dict]) -> list[dict]:
         decided = d["done"] + d["fail"]
         dispatch_fail_rate = (d["fail"] / decided) if decided else None
         st = b["status"]
-        # current-status ship rate: done vs (done+cancelled+needs_human) — the
+        # current-status ship rate: shipped vs terminal/parked outcomes — the
         # patterns that never reach done are the dead-ends.
-        terminal = st["done"] + st["cancelled"] + st["needs_human"] + st["superseded"]
-        ship_rate = (st["done"] / terminal) if terminal else None
+        terminal = b["success_status"] + b["failure_status"] + st["needs_human"]
+        ship_rate = (b["success_status"] / terminal) if terminal else None
         chronic_n = len(b["chronic"])
 
         flags = []
         if dispatch_fail_rate is not None and decided >= MIN_SAMPLES and dispatch_fail_rate >= FAIL_RATE:
             flags.append(f"dispatch fail {dispatch_fail_rate:.0%} over {decided} tries")
         if ship_rate is not None and terminal >= MIN_PATTERN and ship_rate < (1 - FAIL_RATE):
-            flags.append(f"ship rate {ship_rate:.0%} (mostly cancelled/needs_human)")
+            flags.append(f"ship rate {ship_rate:.0%} (mostly archived-noop/needs_human)")
         if chronic_n:
             flags.append(f"{chronic_n} chronic tasks re-thrown >= {CHRONIC_REDISP}x "
                          f"(max {b['max_redispatch']}x)")
@@ -305,12 +327,12 @@ def rerank(by: dict[str, dict]) -> list[dict]:
         if b["total"] < MIN_PATTERN:
             continue
         st = b["status"]
-        terminal = st["done"] + st["cancelled"] + st["needs_human"] + st["superseded"]
-        ship_rate = (st["done"] / terminal) if terminal else None
+        terminal = b["success_status"] + b["failure_status"] + st["needs_human"]
+        ship_rate = (b["success_status"] / terminal) if terminal else None
         open_n = st.get("open", 0) + st.get("dispatched", 0)
         if ship_rate is None:
             continue
-        if ship_rate >= 0.75 and st["done"] >= MIN_PATTERN:
+        if ship_rate >= 0.75 and b["success_status"] >= MIN_PATTERN:
             move, delta = "boost", "+1"
         elif ship_rate < (1 - FAIL_RATE):
             move, delta = "deprioritise", "-1"
@@ -321,9 +343,9 @@ def rerank(by: dict[str, dict]) -> list[dict]:
             "move": move,
             "priority_delta": delta,
             "ship_rate": round(ship_rate, 3),
-            "done": st["done"],
+            "done": b["success_status"],
             "open_remaining": open_n,
-            "reason": f"ship rate {ship_rate:.0%} ({st['done']} done / {terminal} terminal); "
+            "reason": f"ship rate {ship_rate:.0%} ({b['success_status']} shipped / {terminal} terminal); "
                       f"{open_n} still open",
         })
     # most-shipping first; ties broken by volume shipped
@@ -359,7 +381,7 @@ def build_proposal(board: dict, tasks_path: Path) -> dict:
             "wired": True,
             "note": "--apply now closes the loop: lane weights are consumed by route.py "
                     "(_learned_weights, gated LIMEN_SI_APPLY=1); rerank boost/deprioritise "
-                    "set OPEN tasks' priority (idempotent targets); retire→superseded is gated "
+                    "set OPEN tasks' priority (idempotent targets); retire→archived/superseded is gated "
                     "behind LIMEN_SI_RETIRE=1 (destructive, default OFF). All under the canonical "
                     "queue lock, reversible.",
         },
@@ -375,7 +397,7 @@ def apply_proposal(proposal: dict, tasks_path: Path) -> int:
       • rerank boost        -> raise the pattern's OPEN tasks to 'high'  (idempotent TARGET, never a
                                runaway +1-every-beat delta; 'critical' stays reserved for humans)
       • rerank deprioritise -> lower the pattern's OPEN tasks to 'low'
-      • retire (supersede)  -> mark OPEN tasks 'superseded' ONLY if LIMEN_SI_RETIRE=1 (destructive,
+      • retire (supersede)  -> mark OPEN tasks 'archived' with a superseded label ONLY if LIMEN_SI_RETIRE=1 (destructive,
                                default OFF — never silently cancels real work [[no-never-happens-again]])
     Lane weights + 're-route' are consumed by route.py's weighting (NOT rewritten here — clearing
     target_agent would just thrash the router every beat)."""
@@ -405,12 +427,15 @@ def apply_proposal(proposal: dict, tasks_path: Path) -> int:
                 t.priority = "high"; ch["boost"] += 1
             elif p in deprio and t.priority not in ("low", "backlog"):
                 t.priority = "low"; ch["deprio"] += 1
-            if p in retire and allow_retire and t.status != "superseded":
-                t.status = "superseded"; ch["retire"] += 1
+            if p in retire and allow_retire and t.status != "archived":
+                t.status = "archived"
+                if "superseded" not in t.labels:
+                    t.labels.append("superseded")
+                ch["retire"] += 1
         save_limen_file(tasks_path, lf)
     held = "" if allow_retire else f" ({len(retire)} retire patterns HELD — set LIMEN_SI_RETIRE=1)"
     print(f"[self-improve] applied: {ch['boost']} boosted→high, {ch['deprio']} →low, "
-          f"{ch['retire']} retired→superseded{held}")
+          f"{ch['retire']} retired→archived/superseded{held}")
     return 0
 
 
@@ -425,7 +450,7 @@ def main() -> int:
                     help="print the proposal to stdout; write nothing")
     ap.add_argument("--apply", action="store_true",
                     help="write the proposal AND apply task-level re-plan (rerank priorities; "
-                         "retire→superseded gated by LIMEN_SI_RETIRE=1). Lane weights via route.py.")
+                         "retire→archived/superseded gated by LIMEN_SI_RETIRE=1). Lane weights via route.py.")
     args = ap.parse_args()
 
     tasks_path = Path(args.tasks)

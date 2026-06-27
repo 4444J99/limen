@@ -1,7 +1,7 @@
 """Tests for the value-ledger CREDIT side (score-dispatch.py).
 
 Every resolved task is weighed: worth_it (shipped) / marginal (done, nothing shippable) / wasted
-(cancelled or chronic). Unresolved tasks (open/dispatched) are NOT yet weighable. The spent debit on a
+archived/no-op or chronic). Unresolved tasks (open/dispatched) are NOT yet weighable. The spent debit on a
 wasted task is logged as sunk cost. These properties are what make the ledger an honest verdict.
 """
 from __future__ import annotations
@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "score-dispatch.py"
 
 
-def _task(tid, status, *, pr=None, cost=1, attempts=1, reopens=0, agent="codex", repo="o/r"):
+def _task(tid, status, *, pr=None, cost=1, attempts=1, reopens=0, agent="codex", repo="o/r", labels=None):
     log = []
     for _ in range(attempts):
         log.append({"status": "dispatched", "session_id": "x"})
@@ -27,7 +27,8 @@ def _task(tid, status, *, pr=None, cost=1, attempts=1, reopens=0, agent="codex",
     for _ in range(reopens):
         log.append({"status": "open", "session_id": "reopened"})
     return {"id": tid, "title": tid, "repo": repo, "target_agent": agent, "priority": "medium",
-            "budget_cost": cost, "status": status, "created": "2026-06-01", "dispatch_log": log}
+            "budget_cost": cost, "status": status, "labels": labels or [],
+            "created": "2026-06-01", "dispatch_log": log}
 
 
 def _run(tmp: Path, tasks: list[dict], *args: str) -> str:
@@ -48,8 +49,8 @@ def test_grades_each_resolved_class(tmp_path: Path):
     tasks = [
         _task("D-ship", "done", pr="o/r/pull/1"),          # worth_it
         _task("D-bare", "done"),                            # marginal (no PR)
-        _task("D-sup", "superseded"),                       # marginal (folded)
-        _task("D-cancel", "cancelled", attempts=2, cost=2),  # wasted, sunk=4
+        _task("D-sup", "archived", labels=["superseded"]),                       # marginal (folded)
+        _task("D-cancel", "archived", attempts=2, cost=2, labels=["cancelled"]),  # wasted, sunk=4
         _task("D-open", "open"),                            # NOT weighed
         _task("D-disp", "dispatched"),                      # NOT weighed
     ]
@@ -70,7 +71,7 @@ def test_chronic_needs_human_is_wasted(tmp_path: Path):
 
 
 def test_idempotent_append(tmp_path: Path):
-    tasks = [_task("D1", "done", pr="o/r/pull/9"), _task("D2", "cancelled")]
+    tasks = [_task("D1", "done", pr="o/r/pull/9"), _task("D2", "archived", labels=["cancelled"])]
     _run(tmp_path, tasks)                       # first pass appends 2
     out2 = _run(tmp_path, tasks)                # second pass: already scored → 0 new
     assert "0 newly-weighed" in out2

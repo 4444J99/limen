@@ -257,12 +257,12 @@ def test_status_summary_reports_creation_age_and_run_ledger(client: TestClient, 
                         "session_id": "test",
                         "status": "dispatched",
                     },
-                    {
-                        "timestamp": "2026-05-31T01:00:00+00:00",
-                        "agent": "jules",
-                        "session_id": "test",
-                        "status": "completed",
-                    },
+                        {
+                            "timestamp": "2026-05-31T01:00:00+00:00",
+                            "agent": "jules",
+                            "session_id": "test",
+                            "status": "done",
+                        },
                 ],
             },
             {

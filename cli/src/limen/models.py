@@ -1,6 +1,18 @@
 from datetime import date, datetime
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+
+VALID_STATUSES = {
+    "open",
+    "dispatched",
+    "in_progress",
+    "done",
+    "failed",
+    "failed_blocked",
+    "needs_human",
+    "archived",
+}
 
 
 class DispatchLogEntry(BaseModel):
@@ -35,6 +47,13 @@ class Task(BaseModel):
     created: date
     updated: Optional[datetime] = None
     dispatch_log: list[DispatchLogEntry] = Field(default_factory=list)
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, value: str) -> str:
+        if value not in VALID_STATUSES:
+            raise ValueError(f"status must be one of {', '.join(sorted(VALID_STATUSES))}")
+        return value
 
 
 class BudgetTrack(BaseModel):

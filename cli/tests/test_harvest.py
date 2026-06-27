@@ -99,5 +99,6 @@ def test_harvest_rejects_empty_diff_instead_of_false_done(tmp_path):
     updated = check_jules_harvest(limen, harvest_dir)
 
     assert updated == []  # NOT counted as a completion
-    assert task.status == "cancelled"  # honestly marked, not 'done'
-    assert task.dispatch_log[-1].status == "rejected-empty"
+    assert task.status == "archived"  # honestly suppressed, not 'done'
+    assert "cancelled" in task.labels
+    assert task.dispatch_log[-1].status == "archived"
