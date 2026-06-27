@@ -89,21 +89,6 @@
       "issue": 260
     },
     {
-      "id": "L-GMAIL-CRED",
-      "label": "Revive the autonomous mail lane with ONE paste \u2014 the app-password ALREADY EXISTS (op://Private/gmail-app-pw-2026-06-06); nothing needs generating. This supersedes the generic L-IMAP-APP-PW/L-OAUTH framing (which implies you must create a credential \u2014 you don't). The single endpoint is the GitHub secret GMAIL_APP_PASSWORD on organvm/domus (currently unset). Once set, the C_MAIL voice's keyless drafts/sweep path has its credential and inbox-clean is no longer gated on you. Value streams op\u2192gh, never on screen.",
-      "owner": "yours",
-      "cost": "~30s once, durable",
-      "unlocks": "headless C_MAIL drafts/sweep \u2014 inbox-clean no longer gated on you",
-      "source_task": "gmail-mutation-cascade (app-pw EXISTS, one paste)",
-      "gate": "credential-write classifier (the secret itself already exists)",
-      "steps": [
-        "op read op://Private/gmail-app-pw-2026-06-06/password | gh secret set GMAIL_APP_PASSWORD -R organvm/domus",
-        "OR add a Bash allow-rule Bash(gh secret set:*) so any session lands it autonomically",
-        "OR run one `claude --dangerously-skip-permissions` session \u2014 the agent lands it"
-      ],
-      "issue": 261
-    },
-    {
       "id": "L-IANVA-LOCAL",
       "label": "Kill the per-agent MCP re-auth for every non-claude.ai agent in ONE move \u2014 this is most of the 'why do I keep authorizing MCP servers over and over' rage. ianva fronts every upstream behind ONE gateway that holds each refresh token and auto-renews it silently, so each agent gets ONE config entry and you consent once per upstream, never again. SHIPPED + PROVEN: this is the core of your original ask, 'all agent config files point at our own server' \u2014 done.",
       "cost": "config-wiring DONE; ~2 min remaining = one launchctl bootstrap so the gateway survives reboot",
