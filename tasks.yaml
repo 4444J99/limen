@@ -52113,13 +52113,11 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: open
   labels:
   - revenue
   - close-the-cliff
   - exporter
-  - tried:codex
-  - tried:opencode
   urls: []
   context: "North-star Aug-1 $10k/wk: help EARN the last 10%. Per revenue-ship-order,\
     \ the fastest first-$ is monetizing the already-live ChatGPT Exporter via GitHub\
@@ -52129,7 +52127,7 @@ tasks:
     \ billing) with its cheapest path. Bounded: stop at first reviewable PR per repo."
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T00:45:06.029054Z'
+  updated: '2026-06-27T01:13:47.318340Z'
   dispatch_log:
   - timestamp: '2026-06-26T23:58:21.192297Z'
     agent: codex
@@ -52139,6 +52137,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: failed->agy
+  - timestamp: '2026-06-27T01:13:47.318340Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: ORGAN-revive-stale-fleet
   title: Diagnose & revive stale organs (merge, heal, vigilia, evocator, health, life,
     hygiene)
@@ -52179,7 +52182,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels: []
   urls:
   - https://github.com/organvm/limen/issues/352
@@ -52191,8 +52194,13 @@ tasks:
     \ deliberately. ## What was on the fork (commit"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T00:45:06.029054Z'
-  dispatch_log: []
+  updated: '2026-06-27T01:13:47.318340Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T01:13:47.318340Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: GH-organvm-limen-334
   title: 'needs-human (L-FLEET-CAPACITY): Light the dark async lanes'
   repo: organvm/limen
@@ -52200,7 +52208,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - needs-human
   urls:
@@ -52213,8 +52221,13 @@ tasks:
     \ the credentials ALREADY EXIST in 1Password and `op` is"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T00:45:06.029054Z'
-  dispatch_log: []
+  updated: '2026-06-27T01:13:47.318340Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T01:13:47.318340Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: GH-organvm-limen-333
   title: 'needs-human (L-GMAIL-CRED): Revive the autonomous mail lane with ONE paste'
   repo: organvm/limen
@@ -52222,7 +52235,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - needs-human
   urls:
@@ -52235,8 +52248,13 @@ tasks:
     \ nothing needs generating. This super"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T00:45:06.029054Z'
-  dispatch_log: []
+  updated: '2026-06-27T01:13:47.318340Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T01:13:47.318340Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: GH-organvm-limen-332
   title: 'needs-human (L-GH-LAUNCHD-077): Give gh a token under launchd'
   repo: organvm/limen
@@ -52244,7 +52262,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - needs-human
   urls:
@@ -52257,8 +52275,13 @@ tasks:
     \ works (organvm/organvm-engine). ### What it unlocks"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T00:45:06.029054Z'
-  dispatch_log: []
+  updated: '2026-06-27T01:13:47.318340Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T01:13:47.318340Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: GH-organvm-limen-331
   title: 'needs-human (L-CLOUDFLARE-DEPLOY): Cloudflare deploy auth'
   repo: organvm/limen
@@ -53331,7 +53354,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - security
   - generated
@@ -53343,8 +53366,13 @@ tasks:
     green. [auto-generated 2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T00:45:06.029054Z'
-  dispatch_log: []
+  updated: '2026-06-27T01:13:47.318340Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T01:13:47.318340Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: GEN-organvm-limen-security-0626
   title: Security hardening pass on organvm/limen
   repo: organvm/limen
@@ -53352,7 +53380,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - security
   - generated
@@ -53364,8 +53392,13 @@ tasks:
     2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T00:45:06.029054Z'
-  dispatch_log: []
+  updated: '2026-06-27T01:13:47.318340Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T01:13:47.318340Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: GEN-organvm-the-invisible-ledger-simplify-0626
   title: Reduce complexity in organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
@@ -53620,7 +53653,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: open
   labels:
   - revenue-ship
   - revenue
@@ -53635,8 +53668,13 @@ tasks:
     \ rank 3, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T00:45:06.029054Z'
-  dispatch_log: []
+  updated: '2026-06-27T01:13:47.318340Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T01:13:47.318340Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: REV-organvm-the-invisible-ledger-revenue-ship-0626
   title: Drive The Invisible Ledger to deploy-ready
   repo: organvm/the-invisible-ledger
@@ -53644,7 +53682,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: open
   labels:
   - revenue-ship
   - revenue
@@ -53659,8 +53697,13 @@ tasks:
     \ rank 4, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T00:45:06.029054Z'
-  dispatch_log: []
+  updated: '2026-06-27T01:13:47.318340Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T01:13:47.318340Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: REV-organvm-mirror-mirror-revenue-ship-0626
   title: Drive Mirror Mirror to deploy-ready
   repo: organvm/mirror-mirror
@@ -53668,7 +53711,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: open
   labels:
   - revenue-ship
   - revenue
@@ -53683,8 +53726,13 @@ tasks:
     \ stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T00:45:06.029054Z'
-  dispatch_log: []
+  updated: '2026-06-27T01:13:47.318340Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T01:13:47.318340Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: REV-organvm-public-record-data-scrapper-revenue-ship-0626
   title: Drive Public Record Data Scraper to deploy-ready
   repo: organvm/public-record-data-scrapper
@@ -53692,7 +53740,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: open
   labels:
   - revenue-ship
   - revenue
@@ -53707,8 +53755,13 @@ tasks:
     \ rank 2, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T00:45:06.029054Z'
-  dispatch_log: []
+  updated: '2026-06-27T01:13:47.318340Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T01:13:47.318340Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: REV-organvm-a-i-chat--exporter-revenue-pro-tier-0626
   title: Make the Pro-tier checkout merge-ready for ChatGPT Exporter
   repo: organvm/a-i-chat--exporter
@@ -53751,7 +53804,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: open
   labels:
   - revenue-readiness
   - revenue
@@ -53766,8 +53819,13 @@ tasks:
     \ 3, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T00:45:06.029054Z'
-  dispatch_log: []
+  updated: '2026-06-27T01:13:47.318340Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T01:13:47.318340Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: REV-organvm-the-invisible-ledger-revenue-readiness-0626
   title: First-paying-customer readiness pass on The Invisible Ledger
   repo: organvm/the-invisible-ledger
@@ -53775,7 +53833,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: open
   labels:
   - revenue-readiness
   - revenue
@@ -53790,8 +53848,13 @@ tasks:
     \ spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T00:45:06.029054Z'
-  dispatch_log: []
+  updated: '2026-06-27T01:13:47.318340Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T01:13:47.318340Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: REV-organvm-mirror-mirror-revenue-readiness-0626
   title: First-paying-customer readiness pass on Mirror Mirror
   repo: organvm/mirror-mirror
@@ -53799,7 +53862,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: open
   labels:
   - revenue-readiness
   - revenue
@@ -53814,8 +53877,13 @@ tasks:
     \ tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T00:45:06.029054Z'
-  dispatch_log: []
+  updated: '2026-06-27T01:13:47.318340Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T01:13:47.318340Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: REV-organvm-public-record-data-scrapper-revenue-readiness-0626
   title: First-paying-customer readiness pass on Public Record Data Scraper
   repo: organvm/public-record-data-scrapper
@@ -53823,7 +53891,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: open
   labels:
   - revenue-readiness
   - revenue
@@ -53838,8 +53906,13 @@ tasks:
     \ rank 2, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T00:45:06.029054Z'
-  dispatch_log: []
+  updated: '2026-06-27T01:13:47.318340Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T01:13:47.318340Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: REV-organvm-a-i-chat--exporter-revenue-landing-0626
   title: Ship a landing page for ChatGPT Exporter
   repo: organvm/a-i-chat--exporter
@@ -53847,7 +53920,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: open
   labels:
   - revenue-landing
   - revenue
@@ -53862,8 +53935,13 @@ tasks:
     \ 1, stage deploy-ready \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T00:45:06.029054Z'
-  dispatch_log: []
+  updated: '2026-06-27T01:13:47.318340Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T01:13:47.318340Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: REV-organvm-a-i-chat--exporter-revenue-launch-post-0626
   title: Draft the build-in-public launch post for ChatGPT Exporter
   repo: organvm/a-i-chat--exporter
@@ -53871,7 +53949,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: open
   labels:
   - revenue-launch-post
   - revenue
@@ -53886,5 +53964,10 @@ tasks:
     \ spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T00:45:06.029054Z'
-  dispatch_log: []
+  updated: '2026-06-27T01:13:47.318340Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T01:13:47.318340Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
