@@ -1,6 +1,6 @@
 # Prompt Lifecycle Ledger
 
-Generated: `2026-06-27T17:53:51+00:00`
+Generated: `2026-06-27T18:38:09+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -12,17 +12,17 @@ Horizon: `all local history`
 
 ## Redacted Prompt Coverage
 
-Indexed `9480` app/session files, `2.0 GiB`, with `92647` prompt-like user events hashed into the private index.
+Indexed `9481` app/session files, `2.1 GiB`, with `92656` prompt-like user events hashed into the private index.
 
 | Source | Files | Prompt Events | Event Records | Size | Newest |
 |---|---:|---:|---:|---:|---|
 | `claude-projects` | 4848 | 87805 | 313140 | 1.4 GiB | `2026-06-27T17:49:30+00:00` |
-| `codex-sessions` | 887 | 4309 | 227538 | 619.4 MiB | `2026-06-27T17:52:26+00:00` |
-| `codex-history` | 1 | 400 | 400 | 179.1 KiB | `2026-06-27T17:41:30+00:00` |
+| `codex-sessions` | 887 | 4316 | 227944 | 649.1 MiB | `2026-06-27T18:36:48+00:00` |
+| `codex-history` | 1 | 402 | 402 | 179.6 KiB | `2026-06-27T18:15:46+00:00` |
 | `claude-tasks` | 188 | 133 | 133 | 57.7 KiB | `2026-06-26T00:08:52+00:00` |
 | `claude-file-history` | 3519 | 0 | 0 | 42.2 MiB | `2026-06-27T00:26:28+00:00` |
 | `claude-plans` | 34 | 0 | 0 | 289.3 KiB | `2026-06-25T03:22:45+00:00` |
-| `codex-attachments` | 3 | 0 | 0 | 4.1 KiB | `2026-06-27T12:52:17+00:00` |
+| `codex-attachments` | 4 | 0 | 0 | 6.2 KiB | `2026-06-27T18:15:45+00:00` |
 
 ## Prompt To Worktree Crosswalk
 
@@ -47,7 +47,7 @@ Indexed `9480` app/session files, `2.0 GiB`, with `92647` prompt-like user event
 | `gen-organvm-the-invisible-ledger-ci-green-0625-e3c2` | 1 | 4 | `not-a-git-dir` |
 | `gen-organvm-universal-mail--automation-test-coverage-0625-151e` | 3 | 100 | `dirty` |
 | `gh-organvm-object-lessons-19-605a` | 1 | 73 | `not-merged-to-default` |
-| `resolve-a-organvm-the-invisible-ledger-4-f657` | 1 | 5 | `active(<6h)` |
+| `resolve-a-organvm-the-invisible-ledger-4-f657` | 1 | 5 | `clean+merged+idle` |
 | `resolve-organvm-i-theoria-.github-459-1ade` | 1 | 5 | `dirty` |
 | `rev-organvm-public-record-data-scrapper-revenue-readiness-0623-023f` | 1 | 79 | `not-merged-to-default` |
 | `rev-organvm-the-invisible-ledger-revenue-readiness-0623-bd8b` | 1 | 94 | `not-a-git-dir` |
@@ -70,7 +70,7 @@ Indexed `9480` app/session files, `2.0 GiB`, with `92647` prompt-like user event
 - GitHub worktree repos seen: `14`.
 - Git worktree roots with remote branch present: `10`; missing: `6`.
 - Branch-linked PR states: `OPEN` 10, `MERGED` 2, `CLOSED` 0.
-- Task-board GitHub PR refs seen: `657`; checked: `657`; states: `CLOSED` 31, `ERROR` 2, `MERGED` 445, `OPEN` 179.
+- Task-board GitHub PR refs seen: `657`; checked: `657`; states: `CLOSED` 31, `ERROR` 8, `MERGED` 445, `OPEN` 173.
 
 ## Cloud Receipts
 
@@ -87,6 +87,11 @@ Indexed `9480` app/session files, `2.0 GiB`, with `92647` prompt-like user event
 - Dispatch receipt classification must distinguish async Jules work from stranded local no-PR work; otherwise the conductor burns attention on healthy async reservations.
 - Prompt/session coverage is now hashed, but lifecycle judgment still needs owner actions: dirty roots need PRs or blocker records, and open PR receipts need merge or named supersession.
 - Codex now has prompt-event coverage through `history.jsonl` and session JSONL, but it still lacks a quicken-style resume/classification organ equivalent to Claude's lifecycle journal.
+- Remote task-board PR receipt scan has `8` GitHub/API errors; rerun before using those refs as closure proof.
+
+## Drain Queue
+
+- Session lifecycle drain queue: `docs/session-lifecycle-drain-queue-2026-06-27.md`.
 
 ## Private Outputs
 

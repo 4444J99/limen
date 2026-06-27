@@ -312,6 +312,38 @@ def quicken_snapshot() -> dict[str, Any]:
     }
 
 
+def screenshot_snapshot() -> dict[str, Any]:
+    root = PRIVATE_ROOT / "screenshots"
+    if not root.is_dir():
+        return {"present": False, "root": str(root), "files": 0, "bytes": 0}
+    files = sorted(path for path in root.rglob("*.png") if path.is_file())
+    total = 0
+    newest = None
+    batches: dict[str, int] = {}
+    for path in files:
+        try:
+            st = path.stat()
+        except OSError:
+            continue
+        total += st.st_size
+        mtime = iso_from_ts(st.st_mtime)
+        if newest is None or (mtime or "") > newest:
+            newest = mtime
+        try:
+            batch = str(path.parent.relative_to(root))
+        except ValueError:
+            batch = "."
+        batches[batch] = batches.get(batch, 0) + 1
+    return {
+        "present": True,
+        "root": str(root),
+        "files": len(files),
+        "bytes": total,
+        "newest": newest,
+        "batches": dict(sorted(batches.items())),
+    }
+
+
 def infer_roadblocks(snapshot: dict[str, Any], rows: list[dict[str, Any]]) -> list[str]:
     roadblocks: list[str] = []
     organs = {o["name"]: o for o in snapshot["organs"]}
@@ -477,6 +509,32 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
     else:
         lines.append("- Raw object materialization was not requested on this run.")
 
+    screenshots = snapshot.get("private_screenshots", {})
+    if screenshots.get("files"):
+        batch_bits = ", ".join(
+            f"`{batch}` {count}" for batch, count in screenshots.get("batches", {}).items()
+        )
+        lines += [
+            f"- Private screenshot evidence: `{screenshots['files']}` PNG artifacts, "
+            f"`{fmt_bytes(int(screenshots.get('bytes', 0)))}`, newest `{screenshots.get('newest')}`.",
+            f"- Screenshot batches: {batch_bits or 'none'}.",
+        ]
+    else:
+        lines.append("- Private screenshot evidence: none recorded yet.")
+
+    screenshot_receipts = sorted((ROOT / "docs").glob("session-screenshot-intake-*.md"))
+    drain_queues = sorted((ROOT / "docs").glob("session-lifecycle-drain-queue-*.md"))
+    if screenshot_receipts or drain_queues:
+        lines += [
+            "",
+            "## Tracked Intake Receipts",
+            "",
+        ]
+        for path in screenshot_receipts:
+            lines.append(f"- Screenshot intake: `{path.relative_to(ROOT)}`.")
+        for path in drain_queues:
+            lines.append(f"- Session lifecycle drain queue: `{path.relative_to(ROOT)}`.")
+
     lines += [
         "",
         "## Roadblocks And Potholes",
@@ -512,6 +570,7 @@ def build_snapshot(args: argparse.Namespace) -> tuple[dict[str, Any], list[dict[
     snapshot["local_summary"] = summarize_local(rows)
     snapshot["private_root"] = str(PRIVATE_ROOT)
     snapshot["materialization"] = mat
+    snapshot["private_screenshots"] = screenshot_snapshot()
     return snapshot, rows, mat
 
 

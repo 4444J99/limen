@@ -458,7 +458,7 @@ def task_remote_pr_receipts(tasks_text: str, limit: int = 1000, workers: int = 8
         "limit": limit,
         "counts": dict(sorted(counts.items())),
         "receipts": receipts,
-        "truncated": len(refs) > limit,
+        "truncated": limit > 0 and len(refs) > limit,
     }
 
 
@@ -832,6 +832,26 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "- Dispatch receipt classification must distinguish async Jules work from stranded local no-PR work; otherwise the conductor burns attention on healthy async reservations.",
         "- Prompt/session coverage is now hashed, but lifecycle judgment still needs owner actions: dirty roots need PRs or blocker records, and open PR receipts need merge or named supersession.",
         "- Codex now has prompt-event coverage through `history.jsonl` and session JSONL, but it still lacks a quicken-style resume/classification organ equivalent to Claude's lifecycle journal.",
+    ]
+    task_pr_errors = int(((remote.get("task_prs") or {}).get("counts") or {}).get("ERROR", 0)) if remote.get("enabled") else 0
+    if task_pr_errors:
+        lines.append(
+            f"- Remote task-board PR receipt scan has `{task_pr_errors}` GitHub/API errors; rerun before using those refs as closure proof."
+        )
+
+    lines += [
+        "",
+        "## Drain Queue",
+        "",
+    ]
+    drain_queues = sorted((ROOT / "docs").glob("session-lifecycle-drain-queue-*.md"))
+    if drain_queues:
+        for path in drain_queues:
+            lines.append(f"- Session lifecycle drain queue: `{path.relative_to(ROOT)}`.")
+    else:
+        lines.append("- No tracked session lifecycle drain queue yet.")
+
+    lines += [
         "",
         "## Private Outputs",
         "",
