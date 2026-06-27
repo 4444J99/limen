@@ -17,17 +17,17 @@ No directory was deleted or removed during this ledger pass.
 
 Evidence commands:
 
-- `python3 scripts/worktree-debt.py --json`: 19 roots, 14 debt-bearing roots after the
-  README-root PR preservation and background reclaim of two content-preserved roots.
+- `python3 scripts/worktree-debt.py --json`: 19 roots, 13 debt-bearing roots after the
+  media-ark test/platform PR preservation and background reclaim of two content-preserved roots.
 - per-root `git status --porcelain`, `git log --oneline -5`, `git cherry <default> HEAD`.
 - non-Git residue inspection with `find` and direct reads of cache metadata files.
 
 Current classes:
 
-- 10 dirty working trees.
+- 9 dirty working trees.
 - 0 unique local-only unpushed roots among the four roots targeted by this pass.
 - 2 non-Git residue roots.
-- 5 active clean roots, including freshly pushed draft-PR roots still inside the
+- 6 active clean roots, including freshly pushed draft-PR roots still inside the
   idle grace window.
 - 2 clean roots not merged to default, both with draft PR receipts.
 - 0 content-preserved roots remain on disk; two were reclaimed by the background
@@ -43,7 +43,7 @@ That is not enough for a fully automatic lifecycle.
 | Root | Repo | State | Origin Receipt | Evidence | Disposition | Next Action |
 |---|---|---|---|---|---|---|
 | `bld-domus-genoma-ci-23a9` | `organvm/domus-genoma` | dirty | branch `limen/bld-domus-genoma-ci-23a9`; likely build/CI task; no exact task slug in board | HEAD `c22646f`; default `origin/master`; untracked `.github/workflows/ci.yml`; ahead 0 | lifecycle debt | Review workflow, run focused CI validation, then commit/push/PR or record blocker. |
-| `bld-media-ark-tests-2698` | `organvm/media-ark` | dirty | branch `limen/bld-media-ark-tests-2698`; likely tests task; no exact task slug in board | HEAD `2cb3f4d`; default `origin/main`; untracked `tests/test_media_ark_process_captures.py`; ahead 0 | lifecycle debt | Review test intent, run suite, then commit/push/PR or record blocker. |
+| `bld-media-ark-tests-2698` | `organvm/media-ark` | draft PR open | branch `limen/bld-media-ark-tests-2698`; likely tests task; no exact task slug in board | clean; PR [#50](https://github.com/organvm/media-ark/pull/50); commit `b7509dc`; stale untracked test draft was ported into `tests/test_process_captures_core.py`; `npm test` passed 98 tests; `npm run release:verify` passed | preserved outside local disk, still lifecycle debt until merged or explicitly superseded | Review and merge the capture/platform test-contract PR, or supersede by a named successor that preserves this coverage. |
 | `bld-mirror-mirror-harden-350f` | `organvm/mirror-mirror` | dirty | branch `limen/bld-mirror-mirror-harden-350f`; likely hardening task; no exact task slug in board | HEAD `9afe14d`; default `origin/main`; modified `api/webhooks/stripe.ts`; ahead 0 | lifecycle debt | Review Stripe hardening, run tests, then commit/push/PR. |
 | `bld-my--father-mother-harden-44b2` | `organvm/my--father-mother` | dirty | branch `limen/bld-my--father-mother-harden-44b2`; likely hardening task; no exact task slug in board | HEAD `18730a2`; default `origin/main`; modified `main.py`; ahead 0 | lifecycle debt | Review hardening diff, run tests, then commit/push/PR. |
 | `bld-promptscope-next-rev-3fde` | `organvm/promptscope` | dirty | branch `limen/bld-promptscope-next-rev-3fde`; likely next-revenue task; no exact task slug in board | HEAD `4fa725b`; modified `public/app.js`, `public/index.html`, `src/index.ts`; ahead 0 | lifecycle debt | Review product delta, run build/tests, then commit/push/PR. |
@@ -88,13 +88,14 @@ That is not enough for a fully automatic lifecycle.
 1. Close the two non-Git residue roots by keeping this classification visible; remove
    only after explicit operator acceptance or a scripted reclaim gate that records the
    classification.
-2. Drive the six draft PR receipts to merge or named supersession:
+2. Drive the seven draft PR receipts to merge or named supersession:
    [a-i-chat--exporter#96](https://github.com/organvm/a-i-chat--exporter/pull/96),
    [a-i-chat--exporter#95](https://github.com/organvm/a-i-chat--exporter/pull/95),
    [object-lessons#22](https://github.com/organvm/object-lessons/pull/22),
    [public-record-data-scrapper#328](https://github.com/organvm/public-record-data-scrapper/pull/328),
    [kerygma-profiles#8](https://github.com/organvm/kerygma-profiles/pull/8), and
-   [universal-mail--automation#108](https://github.com/organvm/universal-mail--automation/pull/108).
+   [universal-mail--automation#108](https://github.com/organvm/universal-mail--automation/pull/108),
+   plus [media-ark#50](https://github.com/organvm/media-ark/pull/50).
 3. Work the dirty roots from lowest risk to highest risk: generated-only caches,
    single-file deltas, multi-file implementation deltas, then the broad deletion root.
 4. Reclaim the two content-preserved roots only after the ledger/acceptance receipt is

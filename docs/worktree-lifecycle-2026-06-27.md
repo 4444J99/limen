@@ -20,6 +20,11 @@ current `origin/main`, committed as `29f6b4b`, pushed, and preserved as draft PR
 longer dirty local-only work, though it remains lifecycle debt until merged or
 explicitly superseded.
 
+Post-audit update: `bld-media-ark-tests-2698` was rebased to current
+`origin/main`, the useful dirty test draft was ported into the current test
+module, platform test-contract gaps were fixed, and the result was preserved as
+draft PR [#50](https://github.com/organvm/media-ark/pull/50) at `b7509dc`.
+
 Reclaim policy after this audit: a root is reapable only when it is clean, idle, and its
 content is preserved on the remote default branch. Preservation can be exact SHA reachability
 or `git cherry <default> HEAD` patch equivalence after squash/rebase. Dirty work,
@@ -40,7 +45,7 @@ unique-unpushed commits, open/unmerged branches, active roots, and non-Git resid
 | Root | Repo | Branch / Head | Reason Kept | Next Lifecycle Action |
 |---|---|---|---|---|
 | `bld-domus-genoma-ci-23a9` | `organvm/domus-genoma` | `limen/bld-domus-genoma-ci-23a9` / `c22646f` | dirty: `.github/workflows/ci.yml` | Review CI workflow, commit if valid, open/update PR. |
-| `bld-media-ark-tests-2698` | `organvm/media-ark` | `limen/bld-media-ark-tests-2698` / `2cb3f4d` | dirty: `tests/test_media_ark_process_captures.py` | Review test, run suite, commit and PR. |
+| `bld-media-ark-tests-2698` | `organvm/media-ark` | `limen/bld-media-ark-tests-2698` / `b7509dc` | preserved as draft PR #50 | Review and merge, or name a successor that preserves the capture/platform test coverage. |
 | `bld-mirror-mirror-harden-350f` | `organvm/mirror-mirror` | `limen/bld-mirror-mirror-harden-350f` / `9afe14d` | dirty: `api/webhooks/stripe.ts` | Review Stripe hardening, run tests, commit and PR. |
 | `bld-my--father-mother-harden-44b2` | `organvm/my--father-mother` | `limen/bld-my--father-mother-harden-44b2` / `18730a2` | dirty: `main.py` | Review hardening diff, run tests, commit and PR. |
 | `bld-promptscope-next-rev-3fde` | `organvm/promptscope` | `limen/bld-promptscope-next-rev-3fde` / `4fa725b` | dirty: `public/app.js`, `public/index.html`, `src/index.ts` | Review product diff, run build/tests, commit and PR. |
