@@ -11,30 +11,34 @@ visible lifecycle receipt:
 - explicit blocker/task record naming the retained work;
 - documented non-source residue classification.
 
-No directory was deleted or removed during this ledger pass.
+Five duplicate local checkout directories were removed during the follow-up pass
+only after their local `HEAD` matched the fetched remote PR head exactly:
+`bld-domus-genoma-ci-23a9`, `bld-media-ark-tests-2698`,
+`bld-universal-mail--automation-readme-9031`,
+`bld2-a-i-chat--exporter-integration-tests-a00b`, and `exporter-mp`.
+The unique work remains preserved on the remote branches and open draft PRs.
 
 ## Current Scan
 
 Evidence commands:
 
-- `python3 scripts/worktree-debt.py --json`: 19 roots, 10 debt-bearing roots after the
-  Mirror Mirror webhook hardening root was preserved as a draft PR.
+- `python3 scripts/worktree-debt.py --json`: 14 roots, 11 debt-bearing roots after five
+  duplicate PR-preserved local worktrees were removed from `.limen-worktrees`.
 - per-root `git status --porcelain`, `git log --oneline -5`, `git cherry <default> HEAD`.
 - non-Git residue inspection with `find` and direct reads of cache metadata files.
 
 Current classes:
 
 - 6 dirty working trees counted as debt.
-- 0 unique local-only unpushed roots among the completed drain roots; newly spawned
-  dispatcher roots are inside the active grace window.
+- 0 unique local-only unpushed roots.
 - 2 non-Git residue roots.
-- 9 active roots, including freshly pushed draft-PR roots still inside the idle
-  grace window.
-- 2 clean roots not merged to default, both with draft PR receipts.
-- 0 content-preserved roots remain on disk; two were reclaimed by the background
-  reaper after their content-preserved classification was visible.
+- 2 active roots inside the idle grace window.
+- 3 clean roots not merged to default, with draft PR receipts.
+- 1 clean, merged, idle root.
+- 5 remote-preserved draft-PR checkouts removed from local scan after exact
+  local/remote commit equality was verified.
 
-System pothole found during this pass: none of the 19 root slugs appear directly
+System pothole found during this pass: none of the 14 current root slugs appear directly
 in `tasks.yaml`. The strongest origin receipt for most roots is therefore the
 root/branch slug plus repo and recent commit/PR context, not a task-board entry.
 That is not enough for a fully automatic lifecycle.
@@ -43,17 +47,17 @@ That is not enough for a fully automatic lifecycle.
 
 | Root | Repo | State | Origin Receipt | Evidence | Disposition | Next Action |
 |---|---|---|---|---|---|---|
-| `bld-domus-genoma-ci-23a9` | `organvm/domus-genoma` | draft PR open | branch `limen/bld-domus-genoma-ci-23a9`; likely build/CI task; no exact task slug in board | clean; PR [#144](https://github.com/organvm/domus-genoma/pull/144); commit `c53a571`; untracked CI draft was rebased onto current `origin/master`; YAML parse passed; `git diff --check origin/master..HEAD` passed; `just --dry-run check-all` now shows `shfmt -d` and no `shfmt -w`; `just fmt-check` passed; full local `just check-all` exposed pre-existing BATS failures | preserved outside local disk, active grace; lifecycle remains open until merged or explicitly superseded | Review PR CI and the known pre-existing BATS blockers, then merge or supersede by named branch/PR. |
-| `bld-media-ark-tests-2698` | `organvm/media-ark` | draft PR open | branch `limen/bld-media-ark-tests-2698`; likely tests task; no exact task slug in board | clean; PR [#50](https://github.com/organvm/media-ark/pull/50); commit `b7509dc`; stale untracked test draft was ported into `tests/test_process_captures_core.py`; `npm test` passed 98 tests; `npm run release:verify` passed | preserved outside local disk, still lifecycle debt until merged or explicitly superseded | Review and merge the capture/platform test-contract PR, or supersede by a named successor that preserves this coverage. |
+| `bld-domus-genoma-ci-23a9` | `organvm/domus-genoma` | local checkout removed; draft PR open | branch `limen/bld-domus-genoma-ci-23a9`; likely build/CI task; no exact task slug in board | clean before removal; local `HEAD` matched fetched PR head `c53a571`; PR [#144](https://github.com/organvm/domus-genoma/pull/144); untracked CI draft was rebased onto current `origin/master`; YAML parse passed; `git diff --check origin/master..HEAD` passed; `just --dry-run check-all` now shows `shfmt -d` and no `shfmt -w`; `just fmt-check` passed; full local `just check-all` exposed pre-existing BATS failures | remote PR preserved; no local debt root remains | Review PR CI and the known pre-existing BATS blockers, then merge or supersede by named branch/PR. Recreate a local worktree from the branch only if needed. |
+| `bld-media-ark-tests-2698` | `organvm/media-ark` | local checkout removed; draft PR open | branch `limen/bld-media-ark-tests-2698`; likely tests task; no exact task slug in board | clean before removal; local `HEAD` matched fetched PR head `b7509dc`; PR [#50](https://github.com/organvm/media-ark/pull/50); stale untracked test draft was ported into `tests/test_process_captures_core.py`; `npm test` passed 98 tests; `npm run release:verify` passed | remote PR preserved; no local debt root remains | Review and merge the capture/platform test-contract PR, or supersede by a named successor that preserves this coverage. Recreate a local worktree from the branch only if needed. |
 | `bld-mirror-mirror-harden-350f` | `organvm/mirror-mirror` | draft PR open | branch `limen/bld-mirror-mirror-harden-350f`; likely hardening task; no exact task slug in board | clean; PR [#67](https://github.com/organvm/mirror-mirror/pull/67); commit `f44da8e`; branch was rebased onto `origin/main` `af0f15b`; remote branch was updated with an explicit force-with-lease from stale head `3d822c6`; local checks passed: focused ESLint on `api/webhooks/stripe.ts`, `api/lib/webhook.ts`, and `src/__tests__/stripeWebhook.test.ts`; targeted Stripe webhook tests passed 4 tests; scoped TypeScript check passed; `npm test` passed 203 tests; `npm run build` passed with existing CSS/chunk/deprecation warnings; GitHub CI `Lint, build & test` passed; PR merge state `CLEAN` | preserved outside local disk, active grace; lifecycle remains open until merged or explicitly superseded | Review and merge PR #67, or supersede by named branch/PR that preserves this webhook hardening. |
 | `bld-my--father-mother-harden-44b2` | `organvm/my--father-mother` | dirty | branch `limen/bld-my--father-mother-harden-44b2`; likely hardening task; no exact task slug in board | HEAD `18730a2`; default `origin/main`; modified `main.py`; ahead 0 | lifecycle debt | Review hardening diff, run tests, then commit/push/PR. |
 | `bld-promptscope-next-rev-3fde` | `organvm/promptscope` | dirty | branch `limen/bld-promptscope-next-rev-3fde`; likely next-revenue task; no exact task slug in board | HEAD `4fa725b`; modified `public/app.js`, `public/index.html`, `src/index.ts`; ahead 0 | lifecycle debt | Review product delta, run build/tests, then commit/push/PR. |
-| `bld-universal-mail--automation-readme-9031` | `organvm/universal-mail--automation` | draft PR open | branch `limen/bld-universal-mail--automation-readme-9031`; likely README task; no exact task slug in board | clean; PR [#108](https://github.com/organvm/universal-mail--automation/pull/108); commit `29f6b4b`; README marker check passed; `python3 cli.py -h` passed; `python3 -m py_compile cli.py api/app.py api/plans.py mcp_server/server.py` passed; `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -q tests/test_config.py tests/test_models.py tests/test_rules.py tests/test_web.py` passed 158 tests | preserved outside local disk, still lifecycle debt until merged or explicitly superseded | Review README modernization and merge, or supersede by a named successor that preserves this content. |
-| `bld2-a-i-chat--exporter-integration-tests-a00b` | `organvm/a-i-chat--exporter` | draft PR open | branch `limen/bld2-a-i-chat--exporter-integration-tests-a00b`; likely integration-tests task; no exact task slug in board | clean; PR [#96](https://github.com/organvm/a-i-chat--exporter/pull/96); commits `6d73e1a`, `d0d633c`; `pnpm test` passed; `pnpm lint` passed with warnings; branch was 32 behind `origin/master` at preservation time | preserved outside local disk, still lifecycle debt until merged or explicitly superseded | Review freshness/CI, then merge or name a successor PR that absorbed both commits. |
+| `bld-universal-mail--automation-readme-9031` | `organvm/universal-mail--automation` | local checkout removed; draft PR open | branch `limen/bld-universal-mail--automation-readme-9031`; likely README task; no exact task slug in board | clean before removal; local `HEAD` matched fetched PR head `29f6b4b`; PR [#108](https://github.com/organvm/universal-mail--automation/pull/108); README marker check passed; `python3 cli.py -h` passed; `python3 -m py_compile cli.py api/app.py api/plans.py mcp_server/server.py` passed; `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -q tests/test_config.py tests/test_models.py tests/test_rules.py tests/test_web.py` passed 158 tests | remote PR preserved; no local debt root remains | Review README modernization and merge, or supersede by a named successor that preserves this content. Recreate a local worktree from the branch only if needed. |
+| `bld2-a-i-chat--exporter-integration-tests-a00b` | `organvm/a-i-chat--exporter` | local checkout removed; draft PR open | branch `limen/bld2-a-i-chat--exporter-integration-tests-a00b`; likely integration-tests task; no exact task slug in board | clean before removal; local `HEAD` matched fetched PR head `d0d633c`; PR [#96](https://github.com/organvm/a-i-chat--exporter/pull/96); commits `6d73e1a`, `d0d633c`; `pnpm test` passed; `pnpm lint` passed with warnings; branch was 32 behind `origin/master` at preservation time | remote PR preserved; no local debt root remains | Review freshness/CI, then merge or name a successor PR that absorbed both commits. Recreate a local worktree from the branch only if needed. |
 | `cifix-organvm-i-theoria-conversation-corpus-engine-f02e` | `organvm/conversation-corpus-engine` | draft PR open | branch `limen/cifix-organvm-i-theoria-conversation-corpus-engine-f02e`; likely CI-fix task; no exact task slug in board | clean; PR [#60](https://github.com/organvm/conversation-corpus-engine/pull/60); commit `0f96c88`; rebased onto `origin/main` `bebe0d4`; local checks passed: `python3 -m pip install -e ".[dev]"`, `python3 -m pytest tests/ -v --tb=short` (351 passed), `python3 -m ruff check src/ tests/`, `python3 -m ruff format --check src/ tests/`, schema import command; GitHub CI and CodeQL passed; merge state `CLEAN` | preserved outside local disk, active grace; lifecycle remains open until merged or explicitly superseded | Review and merge PR #60, or supersede by named branch/PR. |
 | `cifix-organvm-i-theoria-hierarchia-mundi-3145` | `organvm/hierarchia-mundi` | dirty | branch `limen/cifix-organvm-i-theoria-hierarchia-mundi-3145`; likely CI/test task; no exact task slug in board | HEAD `677df2b`; modified package files plus untracked `tests/`; ahead 0 | lifecycle debt | Review implementation and tests together, run suite, then commit/push/PR. |
 | `discover-organvm-kerygma-profiles-6c74` | `organvm/kerygma-profiles` | draft PR open | branch `limen/discover-organvm-kerygma-profiles-6c74`; discovery task; no exact task slug in board | clean; PR [#8](https://github.com/organvm/kerygma-profiles/pull/8); commits `a8a029f`, `d7fd19e`; generated files remain on disk but are ignored; `python3 -m pytest` passed 24 tests; `python3 -m ruff check .` passed | preserved outside local disk, still lifecycle debt until merged or explicitly superseded | Review and merge the generated-artifact hygiene PR, or supersede by a named successor. |
-| `exporter-mp` | `organvm/a-i-chat--exporter` | draft PR open | branch `limen/exporter-multiprovider`; explicit multiprovider branch; no exact task slug in board | clean; PR [#95](https://github.com/organvm/a-i-chat--exporter/pull/95); commits `5c3298b`, `6c88427`, `dd73cce`; `pnpm test` passed; `pnpm lint` passed with warnings after lint-setup compatibility fix | preserved outside local disk, still lifecycle debt until merged or explicitly superseded | Review provider behavior and CI, then merge or supersede by named branch/PR. |
+| `exporter-mp` | `organvm/a-i-chat--exporter` | local checkout removed; draft PR open | branch `limen/exporter-multiprovider`; explicit multiprovider branch; no exact task slug in board | clean before removal; local `HEAD` matched fetched PR head `dd73cce`; PR [#95](https://github.com/organvm/a-i-chat--exporter/pull/95); commits `5c3298b`, `6c88427`, `dd73cce`; `pnpm test` passed; `pnpm lint` passed with warnings after lint-setup compatibility fix | remote PR preserved; no local debt root remains | Review provider behavior and CI, then merge or supersede by named branch/PR. Recreate a local worktree from the branch only if needed. |
 | `gen-organvm-i-theoria-sovereign--ground-ci-green-0620-0f38` | `organvm/sovereign--ground` | dirty generated results | branch `limen/gen-organvm-i-theoria-sovereign--ground-ci-green-0620-0f38`; generated CI-green task; no exact task slug in board | HEAD `80e7617`; modified `structure-tests/results/ex01` through `ex11`; ahead 0 | lifecycle debt | Classify result drift; commit only if these are intended refreshed fixtures. |
 | `gen-organvm-mirror-mirror-security-0622-c552` | `organvm/mirror-mirror` | reclaimed, content-preserved | branch `limen/gen-organvm-mirror-mirror-security-0622-c552`; generated security task; no exact task slug in board | prior evidence: clean HEAD `afed90a`; `git cherry origin/main HEAD` patch-equivalent (`- afed90a...`); background reaper log `2026-06-27T13:05:49Z` removed this root | lifecycle closed; no unique source was local-only | No action unless a later audit finds missing value on default branch. |
 | `gen-organvm-the-invisible-ledger-ci-green-0625-e3c2` | unknown | non-Git residue | root slug says generated CI-green for `the-invisible-ledger`; no git metadata or exact board slug | contains only empty `dist/` directory; no files | documented non-source residue | No unique artifact to preserve. Reclaimable only after operator acceptance; no deletion in this pass. |
@@ -68,7 +72,7 @@ That is not enough for a fully automatic lifecycle.
 ## Roadblocks And Potholes
 
 - Worktree roots are not task-board addressable. The board has repo/task context, but the exact
-  root slug is absent for all 19 current roots.
+  root slug is absent for all 14 current scanned roots.
 - Non-Git residue bypasses git lifecycle checks. The two `the-invisible-ledger`
   residue roots needed direct filesystem inspection to classify.
 - Patch-equivalent work looked unpushed until the debt scanner learned `git cherry`
@@ -76,6 +80,9 @@ That is not enough for a fully automatic lifecycle.
 - The latest single-file dirty root is now remote-preserved as draft PR
   [mirror-mirror#67](https://github.com/organvm/mirror-mirror/pull/67), and the
   scanner now classifies it as active instead of dirty debt.
+- Five clean, duplicate local checkouts had open draft PRs with exact local/remote
+  commit equality. Removing those local checkout copies dropped the scanner from
+  19 roots / 16 debt to 14 roots / 11 debt without deleting unique work.
 - The automated beat reclaimed two content-preserved roots immediately after classification.
   That did not lose unique source, but it was too eager for the current operator-acceptance
   posture; `scripts/drain.sh` now requires `LIMEN_RECLAIM_APPLY=1` for future removals.
@@ -96,9 +103,10 @@ That is not enough for a fully automatic lifecycle.
 1. Close the two non-Git residue roots by keeping this classification visible; remove
    only after explicit operator acceptance or a scripted reclaim gate that records the
    classification.
-2. Drive the nine draft PR receipts to merge or named supersession:
+2. Drive the ten draft PR receipts to merge or named supersession:
    [domus-genoma#144](https://github.com/organvm/domus-genoma/pull/144),
    [mirror-mirror#67](https://github.com/organvm/mirror-mirror/pull/67),
+   [conversation-corpus-engine#60](https://github.com/organvm/conversation-corpus-engine/pull/60),
    [a-i-chat--exporter#96](https://github.com/organvm/a-i-chat--exporter/pull/96),
    [a-i-chat--exporter#95](https://github.com/organvm/a-i-chat--exporter/pull/95),
    [object-lessons#22](https://github.com/organvm/object-lessons/pull/22),
@@ -108,5 +116,6 @@ That is not enough for a fully automatic lifecycle.
    plus [media-ark#50](https://github.com/organvm/media-ark/pull/50).
 3. Work the dirty roots from lowest risk to highest risk: generated-only caches,
    remaining single-file deltas, multi-file implementation deltas, then the broad deletion root.
-4. Reclaim the two content-preserved roots only after the ledger/acceptance receipt is
-   committed and the operator agrees.
+4. Keep the historical content-preserved reclaims visible as receipts; do not
+   perform further local removals unless the target has exact remote/default
+   preservation or explicit operator acceptance.

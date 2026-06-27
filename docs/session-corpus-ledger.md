@@ -1,6 +1,6 @@
 # Session Corpus Ledger
 
-Generated: `2026-06-27T20:30:04+00:00`
+Generated: `2026-06-27T20:58:33+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -19,12 +19,12 @@ Total seen: `9722` files, `2.1 GiB`.
 | Source | Root | Files | Size | Newest |
 |---|---:|---:|---:|---|
 | `claude-projects` | `~/.claude/projects` | 4851 | 1.4 GiB | `2026-06-27T20:23:23+00:00` |
-| `codex-sessions` | `~/.codex/sessions` | 887 | 695.1 MiB | `2026-06-27T20:30:02+00:00` |
+| `codex-sessions` | `~/.codex/sessions` | 887 | 710.1 MiB | `2026-06-27T20:58:32+00:00` |
 | `claude-file-history` | `~/.claude/file-history` | 3519 | 42.2 MiB | `2026-06-27T00:26:28+00:00` |
-| `codex-goals-state` | `~/.codex` | 6 | 12.1 MiB | `2026-06-27T20:30:02+00:00` |
+| `codex-goals-state` | `~/.codex` | 6 | 12.3 MiB | `2026-06-27T20:58:32+00:00` |
 | `claude-plans` | `~/.claude/plans` | 34 | 289.3 KiB | `2026-06-25T03:22:45+00:00` |
 | `claude-usage-session-meta` | `~/.claude/usage-data/session-meta` | 197 | 221.4 KiB | `2026-06-23T19:06:40+00:00` |
-| `codex-history` | `~/.codex` | 1 | 180.0 KiB | `2026-06-27T19:18:01+00:00` |
+| `codex-history` | `~/.codex` | 1 | 180.5 KiB | `2026-06-27T20:49:57+00:00` |
 | `codex-app-sqlite` | `~/.codex/sqlite` | 1 | 68.0 KiB | `2026-06-27T13:58:29+00:00` |
 | `claude-tasks` | `~/.claude/tasks` | 188 | 57.7 KiB | `2026-06-26T00:08:52+00:00` |
 | `claude-usage-facets` | `~/.claude/usage-data/facets` | 32 | 29.1 KiB | `2026-06-23T19:06:55+00:00` |
@@ -48,7 +48,7 @@ Total seen: `9722` files, `2.1 GiB`.
 
 ## Session Lifecycle
 
-- Last `quicken.py` journal: `2026-06-27T20:15:38+00:00`.
+- Last `quicken.py` journal: `2026-06-27T20:43:02+00:00`.
 - Claude FleetView sessions classified: `29` total; `0` stalled, `29` closed, `0` alive, `0` done.
 - Reaped worktrees in that pass: `0`.
 - Last `codex-quicken.py` journal: `2026-06-27T20:24:22+00:00`.
