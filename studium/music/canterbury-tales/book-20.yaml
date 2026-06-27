@@ -14,7 +14,7 @@ principle: >
   a betrayal. The tale is a warning against gossip and tattling: the guard your tongue,
   or truth will destroy you. The dominant motion is transformation: from white to black,
   from singing to silence, from trusted advisor to cursed outcast.
-force_arc: [divine-intervention, desire, revelation, wrath, transformation, memory, fate]
+force_arc: [divine-intervention, desire, revelation, wrath, metamorphosis, memory, fate]
 dominant_force: fate
 tracks:
   - n: 1

@@ -47,6 +47,16 @@ forces:
     color: "#7f8c8d"
     composer_hints: ["Bach (fugue / Art of Fugue)", "Handel (Royal Fireworks)", "Stravinsky (neoclassical)"]
     film_hints: ["12 Angry Men (Lumet)", "A Man for All Seasons (Zinnemann)", "Judgment at Nuremberg (Kramer)"]
+  covenant:
+    requirement: "binding obligation, solemn reciprocity, freely assumed form"
+    color: "#1f618d"
+    composer_hints: ["Bach (Art of Fugue)", "Bruckner", "Pärt"]
+    film_hints: ["Dekalog (Kieślowski)", "The Mission (Joffé)", "A Man for All Seasons (Zinnemann)"]
+  judgment:
+    requirement: "verdict weight, procedural clarity, irreversible sentence"
+    color: "#7b241c"
+    composer_hints: ["Shostakovich", "Verdi (Dies irae)", "Britten (War Requiem)"]
+    film_hints: ["Judgment at Nuremberg (Kramer)", "A Separation (Farhadi)", "The Trial (Welles)"]
   comedy:
     requirement: "dance rhythm, courtly exaggeration"
     color: "#e67e22"
