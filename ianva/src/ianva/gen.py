@@ -67,7 +67,7 @@ def _stdio_payload(ep: Endpoint) -> dict:
 
 
 def _http_payload_mcpservers(ep: Endpoint) -> dict:
-    p = {"httpUrl": ep.url()}            # Gemini-family streamable-HTTP key
+    p: dict = {"httpUrl": ep.url()}      # Gemini-family streamable-HTTP key
     if ep.bearer:
         p["headers"] = ep.headers()
     return p

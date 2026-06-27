@@ -45,6 +45,9 @@ jobs:
         run: python -m mypy src/limen/
         working-directory: cli
 
+      - name: Type-check mcp and ianva with mypy
+        run: python -m mypy --ignore-missing-imports mcp/src/limen_mcp/ ianva/src/ianva/
+
       - name: Compile Python modules
         run: python -m py_compile web/api/main.py cli/src/limen/*.py mcp/src/limen_mcp/server.py ianva/src/ianva/*.py
 
