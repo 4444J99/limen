@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-06-27'
-      spent: 21
+      spent: 32
       per_agent:
-        jules: 9
+        jules: 12
         gemini: 0
-        codex: 9
+        codex: 12
         opencode: 0
-        agy: 2
-        claude: 1
+        agy: 4
+        claude: 4
       per_agent_reset:
         jules: '2026-06-26T23:07:41.223636+00:00'
         gemini: '2026-06-26T23:07:41.223636+00:00'
@@ -37312,6 +37312,10 @@ tasks:
     status: dispatched
     output: Backfilled missing dispatch reservation log after reserve-path audit;
       original lane may predate durable reserve logging.
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: jules
+    session_id: '9111347269420971550'
+    status: dispatched
 - id: GH-4444j99-hokage-chess-48
   title: "[V-B] Phase 3 \u2014 substrate-doc canonical-home promotion + seed.yaml\
     \ normalization"
@@ -37859,6 +37863,10 @@ tasks:
     status: dispatched
     output: Backfilled missing dispatch reservation log after reserve-path audit;
       original lane may predate durable reserve logging.
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: jules
+    session_id: '1666709050404698946'
+    status: dispatched
 - id: GH-4444j99-hokage-chess-14
   title: '[AF-3] Deepen Stratum 2 timeslices (real research, not seed prose)'
   repo: 4444J99/hokage-chess
@@ -44998,6 +45006,10 @@ tasks:
     status: dispatched
     output: Backfilled missing dispatch reservation log after reserve-path audit;
       original lane may predate durable reserve logging.
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: DISCOVER-organvm-search-local--happy-hour
   title: Discover the latent value of organvm/search-local--happy-hour
   repo: organvm/search-local--happy-hour
@@ -50173,18 +50185,23 @@ tasks:
     status: dispatched
     output: Backfilled missing dispatch reservation log after reserve-path audit;
       original lane may predate durable reserve logging.
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: claude
+    session_id: https://github.com/organvm/portfolio/pull/154
+    status: dispatched
 - id: GEN-organvm-session-meta-test-coverage-0624
   title: Raise test coverage in organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: any
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - test-coverage
   - generated
   - build-out
+  - tried:gemini
   urls: []
   context: Find the largest source module in organvm/session-meta with little or no
     test coverage and add a focused, PASSING test suite for it. Run the repo's own
@@ -50218,6 +50235,10 @@ tasks:
     status: dispatched
     output: Backfilled missing dispatch reservation log after reserve-path audit;
       original lane may predate durable reserve logging.
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: GEN-organvm-mirror-mirror-test-coverage-0624
   title: Raise test coverage in organvm/mirror-mirror
   repo: organvm/mirror-mirror
@@ -51541,14 +51562,15 @@ tasks:
   title: Reduce complexity in organvm/universal-mail--automation
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: any
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - simplify
   - generated
   - build-out
+  - tried:gemini
   urls: []
   context: Identify the most complex or most-duplicated module in organvm/universal-mail--automation
     and refactor it for clarity, with tests proving behavior is unchanged. Net lines
@@ -51581,18 +51603,23 @@ tasks:
     status: dispatched
     output: Backfilled missing dispatch reservation log after reserve-path audit;
       original lane may predate durable reserve logging.
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: GEN-organvm-public-record-data-scrapper-simplify-0624
   title: Reduce complexity in organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
   type: code
-  target_agent: any
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - simplify
   - generated
   - build-out
+  - tried:gemini
   urls: []
   context: Identify the most complex or most-duplicated module in organvm/public-record-data-scrapper
     and refactor it for clarity, with tests proving behavior is unchanged. Net lines
@@ -51621,6 +51648,10 @@ tasks:
     status: dispatched
     output: Backfilled missing dispatch reservation log after reserve-path audit;
       original lane may predate durable reserve logging.
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: GEN-organvm-a-i-chat--exporter-simplify-0624
   title: Reduce complexity in organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
@@ -52152,14 +52183,15 @@ tasks:
 - id: REVENUE-exporter-first-dollar
   title: Drive live ChatGPT Exporter to first-$ rail (Sponsors + Pro tier)
   type: ops
-  target_agent: agy
+  target_agent: claude
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: open
   labels:
   - revenue
   - close-the-cliff
   - exporter
+  - tried:agy
   urls: []
   context: "North-star Aug-1 $10k/wk: help EARN the last 10%. Per revenue-ship-order,\
     \ the fastest first-$ is monetizing the already-live ChatGPT Exporter via GitHub\
@@ -52190,6 +52222,10 @@ tasks:
     status: dispatched
     output: Backfilled missing dispatch reservation log after reserve-path audit;
       original lane may predate durable reserve logging.
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: agy
+    session_id: cli
+    status: failed->claude
 - id: ORGAN-revive-stale-fleet
   title: Diagnose & revive stale organs (merge, heal, vigilia, evocator, health, life,
     hygiene)
@@ -53231,11 +53267,13 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: archived
   labels:
   - security
   - generated
   - build-out
+  - cancelled
+  - noop
   urls: []
   context: Run the ecosystem audit for organvm/domus-genoma (npm audit / pip-audit
     / equivalent), upgrade or pin high-severity advisories, and add input validation
@@ -53260,6 +53298,11 @@ tasks:
     status: dispatched
     output: Backfilled missing dispatch reservation log after reserve-path audit;
       original lane may predate durable reserve logging.
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: codex
+    session_id: cli
+    status: archived
+    output: No-op result; archived without requeueing.
 - id: GEN-organvm-mirror-mirror-security-0626
   title: Security hardening pass on organvm/mirror-mirror
   repo: organvm/mirror-mirror
@@ -53425,6 +53468,10 @@ tasks:
     status: dispatched
     output: Backfilled missing dispatch reservation log after reserve-path audit;
       original lane may predate durable reserve logging.
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: codex
+    session_id: https://github.com/organvm/universal-mail--automation/pull/95
+    status: dispatched
 - id: GEN-organvm-public-record-data-scrapper-security-0626
   title: Security hardening pass on organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
@@ -53432,11 +53479,13 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: archived
   labels:
   - security
   - generated
   - build-out
+  - cancelled
+  - noop
   urls: []
   context: Run the ecosystem audit for organvm/public-record-data-scrapper (npm audit
     / pip-audit / equivalent), upgrade or pin high-severity advisories, and add input
@@ -53457,6 +53506,11 @@ tasks:
     status: dispatched
     output: Backfilled missing dispatch reservation log after reserve-path audit;
       original lane may predate durable reserve logging.
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: codex
+    session_id: cli
+    status: archived
+    output: No-op result; archived without requeueing.
 - id: GEN-organvm-limen-security-0626
   title: Security hardening pass on organvm/limen
   repo: organvm/limen
@@ -53464,11 +53518,13 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: archived
   labels:
   - security
   - generated
   - build-out
+  - cancelled
+  - noop
   urls: []
   context: Run the ecosystem audit for organvm/limen (npm audit / pip-audit / equivalent),
     upgrade or pin high-severity advisories, and add input validation at the main
@@ -53489,6 +53545,11 @@ tasks:
     status: dispatched
     output: Backfilled missing dispatch reservation log after reserve-path audit;
       original lane may predate durable reserve logging.
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: codex
+    session_id: cli
+    status: archived
+    output: No-op result; archived without requeueing.
 - id: GEN-organvm-the-invisible-ledger-simplify-0626
   title: Reduce complexity in organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
@@ -53771,20 +53832,25 @@ tasks:
     status: dispatched
     output: Backfilled missing dispatch reservation log after reserve-path audit;
       original lane may predate durable reserve logging.
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: codex
+    session_id: https://github.com/organvm/universal-mail--automation/pull/96
+    status: dispatched
 - id: REV-organvm-the-invisible-ledger-revenue-ship-0626
   title: Drive The Invisible Ledger to deploy-ready
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: any
+  target_agent: jules
   priority: high
   budget_cost: 2
-  status: in_progress
+  status: open
   labels:
   - revenue-ship
   - revenue
   - product
   - ship-order
   - generated
+  - slow
   urls: []
   context: "In organvm/the-invisible-ledger, clear the concrete blockers between the\
     \ current state and a DEPLOYABLE product: get open PRs green + merged, fix the\
@@ -53800,6 +53866,10 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: REV-organvm-mirror-mirror-revenue-ship-0626
   title: Drive Mirror Mirror to deploy-ready
   repo: organvm/mirror-mirror
@@ -53807,13 +53877,15 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: archived
   labels:
   - revenue-ship
   - revenue
   - product
   - ship-order
   - generated
+  - cancelled
+  - noop
   urls: []
   context: "In organvm/mirror-mirror, clear the concrete blockers between the current\
     \ state and a DEPLOYABLE product: get open PRs green + merged, fix the critical\
@@ -53835,6 +53907,11 @@ tasks:
     status: dispatched
     output: Backfilled missing dispatch reservation log after reserve-path audit;
       original lane may predate durable reserve logging.
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: opencode
+    session_id: cli
+    status: archived
+    output: No-op result; archived without requeueing.
 - id: REV-organvm-public-record-data-scrapper-revenue-ship-0626
   title: Drive Public Record Data Scraper to deploy-ready
   repo: organvm/public-record-data-scrapper
@@ -53842,13 +53919,15 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: in_progress
+  status: archived
   labels:
   - revenue-ship
   - revenue
   - product
   - ship-order
   - generated
+  - cancelled
+  - noop
   urls: []
   context: "In organvm/public-record-data-scrapper, clear the concrete blockers between\
     \ the current state and a DEPLOYABLE product: get open PRs green + merged, fix\
@@ -53870,6 +53949,11 @@ tasks:
     status: in_progress
     output: 'Claimed task: Drive Public Record Data Scraper to deploy-ready. Starting
       exploration.'
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: opencode
+    session_id: cli
+    status: archived
+    output: No-op result; archived without requeueing.
 - id: REV-organvm-a-i-chat--exporter-revenue-pro-tier-0626
   title: Make the Pro-tier checkout merge-ready for ChatGPT Exporter
   repo: organvm/a-i-chat--exporter
@@ -53940,6 +54024,10 @@ tasks:
     status: dispatched
     output: Backfilled missing dispatch reservation log after reserve-path audit;
       original lane may predate durable reserve logging.
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: agy
+    session_id: https://github.com/organvm/universal-mail--automation/pull/94
+    status: dispatched
 - id: REV-organvm-the-invisible-ledger-revenue-readiness-0626
   title: First-paying-customer readiness pass on The Invisible Ledger
   repo: organvm/the-invisible-ledger
@@ -53947,13 +54035,15 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: archived
   labels:
   - revenue-readiness
   - revenue
   - product
   - ship-order
   - generated
+  - cancelled
+  - noop
   urls: []
   context: "In organvm/the-invisible-ledger, find the single highest-leverage gap\
     \ between the current product and something a stranger would pay for (first-dollar\
@@ -53975,6 +54065,11 @@ tasks:
     status: dispatched
     output: Backfilled missing dispatch reservation log after reserve-path audit;
       original lane may predate durable reserve logging.
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: agy
+    session_id: cli
+    status: archived
+    output: No-op result; archived without requeueing.
 - id: REV-organvm-mirror-mirror-revenue-readiness-0626
   title: First-paying-customer readiness pass on Mirror Mirror
   repo: organvm/mirror-mirror
@@ -53982,13 +54077,15 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: archived
   labels:
   - revenue-readiness
   - revenue
   - product
   - ship-order
   - generated
+  - cancelled
+  - noop
   urls: []
   context: "In organvm/mirror-mirror, find the single highest-leverage gap between\
     \ the current product and something a stranger would pay for (first-dollar path:\
@@ -54010,6 +54107,11 @@ tasks:
     status: dispatched
     output: Backfilled missing dispatch reservation log after reserve-path audit;
       original lane may predate durable reserve logging.
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: claude
+    session_id: cli
+    status: archived
+    output: No-op result; archived without requeueing.
 - id: REV-organvm-public-record-data-scrapper-revenue-readiness-0626
   title: First-paying-customer readiness pass on Public Record Data Scraper
   repo: organvm/public-record-data-scrapper
@@ -54017,13 +54119,15 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: archived
   labels:
   - revenue-readiness
   - revenue
   - product
   - ship-order
   - generated
+  - cancelled
+  - noop
   urls: []
   context: "In organvm/public-record-data-scrapper, find the single highest-leverage\
     \ gap between the current product and something a stranger would pay for (first-dollar\
@@ -54045,6 +54149,11 @@ tasks:
     status: dispatched
     output: Backfilled missing dispatch reservation log after reserve-path audit;
       original lane may predate durable reserve logging.
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: claude
+    session_id: cli
+    status: archived
+    output: No-op result; archived without requeueing.
 - id: REV-organvm-a-i-chat--exporter-revenue-landing-0626
   title: Ship a landing page for ChatGPT Exporter
   repo: organvm/a-i-chat--exporter
@@ -54052,13 +54161,15 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: archived
   labels:
   - revenue-landing
   - revenue
   - product
   - ship-order
   - generated
+  - cancelled
+  - noop
   urls: []
   context: "Create a single deploy-ready product page for ChatGPT Exporter in organvm/a-i-chat--exporter\
     \ (docs/ or a gh-pages-ready index) explaining the real value and linking install\
@@ -54080,6 +54191,11 @@ tasks:
     status: dispatched
     output: Backfilled missing dispatch reservation log after reserve-path audit;
       original lane may predate durable reserve logging.
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: claude
+    session_id: cli
+    status: archived
+    output: No-op result; archived without requeueing.
 - id: REV-organvm-a-i-chat--exporter-revenue-launch-post-0626
   title: Draft the build-in-public launch post for ChatGPT Exporter
   repo: organvm/a-i-chat--exporter
@@ -54115,3 +54231,7 @@ tasks:
     status: dispatched
     output: Backfilled missing dispatch reservation log after reserve-path audit;
       original lane may predate durable reserve logging.
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: claude
+    session_id: https://github.com/organvm/a-i-chat--exporter/pull/92
+    status: dispatched
