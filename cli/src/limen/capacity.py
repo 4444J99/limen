@@ -6,7 +6,9 @@ import shlex
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import TypedDict, TypeVar
+
+T = TypeVar('T')
 
 from limen.models import Task
 
@@ -89,7 +91,7 @@ def canonical_agent(agent: str | None) -> str:
     return AGENT_ALIASES.get(value, value)
 
 
-def task_value(task: Task | dict[str, object], key: str, default: Any = None) -> Any:
+def task_value(task: Task | dict[str, object], key: str, default: T | None = None) -> T | object | None:
     if isinstance(task, dict):
         return task.get(key, default)
     return getattr(task, key, default)
@@ -98,7 +100,8 @@ def task_value(task: Task | dict[str, object], key: str, default: Any = None) ->
 def github_issue_ref(task: Task | dict[str, object]) -> tuple[str, str] | None:
     """Return (repo, issue_number) when a task already points at a GitHub issue."""
     fields: list[str] = []
-    urls = task_value(task, "urls", []) or []
+    urls_val = task_value(task, "urls", []) or []
+    urls = urls_val if isinstance(urls_val, list) else []
     fields.extend(str(url) for url in urls)
     for key in ("context", "description", "title"):
         value = task_value(task, key)
@@ -305,33 +308,37 @@ def agent_status(agent: str) -> AgentStatus:
     }
 
 
-def _get(value: Any, key: str, default: Any = None) -> Any:
+def _get(value: object, key: str, default: object = None) -> object:
     if isinstance(value, dict):
         return value.get(key, default)
     return getattr(value, key, default)
 
 
-def _budget_from_board(board: Any) -> Any:
+def _budget_from_board(board: object) -> object:
     if board is None:
         return {}
     portal = _get(board, "portal", {})
     return _get(portal, "budget", {})
 
 
-def _int(value: Any, default: int = 0) -> int:
+def _int(value: object, default: int = 0) -> int:
     try:
-        return int(value)
+        return int(str(value))
     except (TypeError, ValueError):
         return default
 
 
-def capacity_census(board: Any = None, budget_limit: int | None = None) -> list[CapacityRow]:
+def capacity_census(board: object = None, budget_limit: int | None = None) -> list[CapacityRow]:
     budget = _budget_from_board(board)
     daily = _int(budget_limit if budget_limit is not None else _get(budget, "daily", 0))
     track = _get(budget, "track", {})
     total_spent = _int(_get(track, "spent", 0))
     per_agent_caps = _get(budget, "per_agent", {}) or {}
     per_agent_spent = _get(track, "per_agent", {}) or {}
+    if not isinstance(per_agent_caps, dict):
+        per_agent_caps = {}
+    if not isinstance(per_agent_spent, dict):
+        per_agent_spent = {}
     daily_remaining = max(0, daily - total_spent) if daily else None
 
     rows: list[CapacityRow] = []

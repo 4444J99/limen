@@ -29,6 +29,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.models import Task  # noqa: E402
+from limen.worktree_debt import worktree_debt_exceeded  # noqa: E402
 
 # Useful, repo-agnostic but ACTIONABLE levers. The agent resolves the specifics in-repo.
 # (key, priority, title, context-template). {repo} is filled per product.
@@ -152,6 +153,17 @@ def main() -> int:
     path = Path(args.tasks)
     lf = load_limen_file(path)
     tasks = lf.tasks
+
+    if os.environ.get("LIMEN_WORKTREE_DEBT_GATE", "1") == "1":
+        debt_exceeded, report, limit = worktree_debt_exceeded()
+        if debt_exceeded:
+            print(
+                "lifecycle debt gate: "
+                f"{report['debt']} preserved worktree roots exceed cap {limit}; "
+                "generate no routine build-out until dirty/unpushed roots are landed, "
+                "reassigned, or preserved into explicit recovery tasks."
+            )
+            return 0
 
     # Floor on ROUTABLE-BY-THE-FLEET open work, not total open. Two ways a "full" queue can be a lie:
     #   1. tasks stuck on a dead lane (e.g. jules exhausted → unroutable RIGHT NOW), and

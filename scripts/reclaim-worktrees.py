@@ -7,8 +7,8 @@ accumulate (the dispatch root hit 91 dirs / 3.4 GB; the interactive root leaked 
 those:
 
   • clean working tree (no uncommitted or untracked changes), AND
-  • HEAD is reachable from some remote ref (nothing unpushed would be lost), AND
-  • HEAD is already merged into the remote default branch (the work finished its PR/base lifecycle), AND
+  • HEAD is reachable from some remote ref, or every local patch is equivalent to default, AND
+  • HEAD/content is already merged into the remote default branch (the work finished its PR/base lifecycle), AND
   • idle for >= the root's min-age (so a task/session mid-run is never touched).
 
 It scans BOTH creation sites (the historical blind spot — see worktree-lifecycle-blind-spot):
@@ -95,6 +95,17 @@ def merged_into_default(cwd, head) -> bool:
     return git(["merge-base", "--is-ancestor", head, ref], cwd).returncode == 0
 
 
+def patch_equivalent_to_default(cwd) -> bool:
+    ref = remote_default_ref(cwd)
+    if not ref:
+        return False
+    r = git(["cherry", ref, "HEAD"], cwd)
+    if r.returncode != 0:
+        return False
+    lines = [line.strip() for line in r.stdout.splitlines() if line.strip()]
+    return bool(lines) and all(line.startswith("-") for line in lines)
+
+
 def superproject(cwd) -> str | None:
     wl = git(["worktree", "list", "--porcelain"], cwd).stdout.splitlines()
     if wl and wl[0].startswith("worktree "):
@@ -117,9 +128,10 @@ def classify(d: Path, now: float, min_age_h: float):
     if git(["status", "--porcelain"], d).stdout.strip():
         return "skip", "dirty"
     head = git(["rev-parse", "HEAD"], d).stdout.strip()
-    if not head or not reachable_from_remote(d, head):
+    patch_equivalent = patch_equivalent_to_default(d)
+    if not head or (not reachable_from_remote(d, head) and not patch_equivalent):
         return "skip", "unpushed-commits"
-    if not merged_into_default(d, head):
+    if not (merged_into_default(d, head) or patch_equivalent):
         return "skip", "not-merged-to-default"
     is_wt = (d / ".git").is_file()  # gitdir-pointer ⇒ registered worktree
     return ("remove-worktree" if is_wt else "remove-clone"), "clean+merged+idle"

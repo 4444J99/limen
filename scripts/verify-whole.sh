@@ -12,7 +12,7 @@ step() {
 
 step "Compile Python modules and validate shell syntax"
 cd "$ROOT"
-python3 -m py_compile web/api/main.py cli/src/limen/*.py scripts/probe-runtime-adapter.py scripts/validate-lifecycle-adapters.py scripts/validate-task-board.py
+python3 -m py_compile web/api/main.py cli/src/limen/*.py scripts/probe-runtime-adapter.py scripts/validate-lifecycle-adapters.py scripts/validate-task-board.py scripts/worktree-debt.py
 bash -n scripts/preflight-cloud-run.sh scripts/probe-local-runtime.sh scripts/probe-local-worker.sh scripts/verify-whole.sh scripts/merge-policy.sh scripts/tests/merge-policy.test.sh
 
 step "Verify the merge-policy predicate (verdict matrix regression test)"
@@ -23,6 +23,9 @@ python3 scripts/check-agent-docs.py
 
 step "Validate task-board statuses match the canonical vocabulary"
 python3 scripts/validate-task-board.py
+
+step "Report preserved worktree lifecycle debt"
+python3 scripts/worktree-debt.py
 
 step "Parse GitHub workflow YAML"
 python3 - <<'PY'

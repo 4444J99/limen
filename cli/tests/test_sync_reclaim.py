@@ -5,8 +5,9 @@
     "session redid work that already landed" drift) is re-converged loss-free; genuinely-unique
     divergence still stays fail-open (never force-moved).
 
-  scripts/reclaim-worktrees.py — reap provably-dead fleet worktrees (clean + pushed +
-    merged-to-default + idle), while keeping dirty / unpushed / unmerged / recently-active ones.
+  scripts/reclaim-worktrees.py — reap provably-dead fleet worktrees (clean +
+    content-preserved-on-default + idle), while keeping dirty / unique-unpushed /
+    unmerged / recently-active ones.
 
 Both run as real subprocesses against throwaway git repos, so the actual shell/Python ships.
 """
@@ -228,6 +229,31 @@ def test_reclaim_keeps_clean_pushed_unmerged_branch(tmp_path):
     assert r.returncode == 0, r.stderr
     assert branch.exists(), r.stdout
     assert "not-merged-to-default" in r.stdout
+
+
+def test_reclaim_removes_patch_equivalent_local_replay(tmp_path):
+    main, bare, wtroot = _wt_root_with(tmp_path)
+    (main / "logs").mkdir(exist_ok=True)
+
+    replay = _add_wt(main, wtroot, "patch-equivalent")
+    _git("checkout", "-q", "-b", "replay", cwd=replay)
+
+    upstream = tmp_path / "upstream-replay"
+    _git("clone", "-q", str(bare), str(upstream), cwd=tmp_path)
+    _git("config", "user.email", "t@t", cwd=upstream)
+    _git("config", "user.name", "t", cwd=upstream)
+    _commit(upstream, "same.txt", "same change\n", "land same patch")
+    _git("push", "-q", "origin", "main", cwd=upstream)
+
+    _commit(replay, "same.txt", "same change\n", "local replay of same patch")
+    _git("fetch", "-q", "origin", cwd=replay)
+    _age(replay, 5)
+
+    r = _run_reclaim(wtroot, main, apply=True)
+
+    assert r.returncode == 0, r.stderr
+    assert not replay.exists(), r.stdout
+    assert "reclaimed" in r.stdout
 
 
 def test_reclaim_dry_run_removes_nothing(tmp_path):

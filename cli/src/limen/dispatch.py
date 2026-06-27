@@ -26,6 +26,7 @@ from limen.model_selection import (  # the shared model vocabulary — also used
     _claude_opus_classes,
     _resolve_claude_model,
 )
+from limen.worktree_debt import worktree_debt_exceeded
 
 
 def _load_limen_env() -> int:
@@ -199,6 +200,27 @@ def _dispatchable(task: Task) -> bool:
     if task.status != "open":
         return False
     return "needs-human" not in (task.labels or [])
+
+
+def _routine_generated_buildout(task: Task) -> bool:
+    labels = set(task.labels or [])
+    return "generated" in labels and "build-out" in labels
+
+
+def _worktree_debt_gate() -> tuple[bool, str]:
+    if os.environ.get("LIMEN_WORKTREE_DEBT_GATE", "1") != "1":
+        return False, ""
+    try:
+        exceeded, report, limit = worktree_debt_exceeded()
+    except Exception:
+        return False, ""
+    if not exceeded:
+        return False, ""
+    return (
+        True,
+        f"{report['debt']} preserved worktree roots exceed cap {limit}; "
+        "skipping routine generated build-out this dispatch",
+    )
 
 
 _PRIORITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3, "backlog": 4}
@@ -1158,6 +1180,10 @@ def dispatch_tasks(
         if not tasks:
             print(f"Task {task_id} not found")
             return
+        debt_blocked = False
+        debt_message = ""
+    else:
+        debt_blocked, debt_message = _worktree_debt_gate()
 
     candidates = [
         t
@@ -1165,6 +1191,7 @@ def dispatch_tasks(
         if _dispatchable(t)
         and (t.target_agent == agent_filter or t.target_agent == "any")
         and t.budget_cost <= remaining
+        and not (debt_blocked and _routine_generated_buildout(t))
     ]
     priority_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "backlog": 4}
     candidates.sort(key=lambda t: priority_order.get(t.priority, 99))
@@ -1173,10 +1200,14 @@ def dispatch_tasks(
         candidates = candidates[: max(0, limit)]
 
     if not candidates:
+        if debt_message:
+            print(f"Lifecycle debt gate: {debt_message}")
         print(
             f"No open tasks for agent '{agent_filter}' within remaining budget ({remaining})"
         )
         return
+    if debt_message:
+        print(f"Lifecycle debt gate: {debt_message}")
 
     mode = "DRY-RUN" if dry_run else "LIVE"
     print(
@@ -1263,7 +1294,7 @@ def _apply_result(task: Task, agent: str, result: bool | str, now: datetime, tra
 _ASYNC_LANES = {"jules", "github_actions", "copilot", "warp", "oz"}  # remote dispatch — non-blocking
 
 
-def _ledger_lanes() -> dict:
+def _ledger_lanes() -> dict[str, dict[str, list[str]]]:
     """logs/ledger.json lanes map (waste_classes/win_classes per lane) — fail-open to {}."""
     try:
         root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
@@ -1277,7 +1308,7 @@ def _task_classes(task: Task) -> set[str]:
     return {c for c in ([getattr(task, "type", None)] + list(getattr(task, "labels", []) or [])) if c}
 
 
-def _accel_allows(agent: str, task: Task, lanes: dict) -> bool:
+def _accel_allows(agent: str, task: Task, lanes: dict[str, dict[str, list[str]]]) -> bool:
     """May this task ride the acceleration TAIL for this lane? Acceleration needs POSITIVE ledger
     evidence so we never pour expiring budget into junk: a CLEAN earner (no waste_classes) accelerates
     on anything; a MIXED lane accelerates only its win_classes; a lane with NO record / a pure pit does
@@ -1379,7 +1410,7 @@ def _codex_model() -> str | None:
 # this file owns the per-TASK sort; the shim owns the per-SPAWN floor. ([[fleet-model-floor-bleed]])
 
 
-def _claude_tier_overrides() -> dict:
+def _claude_tier_overrides() -> dict[str, list[str]]:
     """Optional operator OVERRIDE map logs/model-tiers.json → the claude lane's {tier: [classes]}.
     Fail-open to {} (→ the ledger-DISCOVERED default). Demoted to an override: the default
     pre-assign set is discovered from the ledger, not pinned. Same read pattern as _ledger_lanes()."""
@@ -1400,14 +1431,15 @@ def _claude_tier_for(task: Task | None) -> str:
     Fail-open → haiku, never block."""
     if task is None:
         return "haiku"
-    pin = getattr(task, "claude_tier", None)
+    pin = task.claude_tier
     if pin in _CLAUDE_TIER_ORDER:
-        return pin
+        return str(pin)
     classes = _task_classes(task)
     override = _claude_tier_overrides()
     if classes & (_claude_opus_classes() | set(override.get("opus") or [])):
         return "opus"
-    waste = set((_ledger_lanes().get("claude") or {}).get("waste_classes") or [])
+    lane_data = _ledger_lanes().get("claude") or {}
+    waste = set(lane_data.get("waste_classes") or [])
     if classes & (waste | set(override.get("sonnet") or [])):
         return "sonnet"
     return "haiku"
@@ -1466,6 +1498,9 @@ def dispatch_parallel(
     spent_daily = track.spent
     id2 = {t.id: t for t in limen.tasks}  # for dependency resolution
     ledger_lanes = _ledger_lanes()  # waste/win classes — gates the acceleration tail (read once)
+    debt_blocked, debt_message = _worktree_debt_gate()
+    if debt_message:
+        print(f"Lifecycle debt gate: {debt_message}")
     for agent in agents:
         cap = limen.portal.budget.per_agent.get(agent)
         agent_spent = track.per_agent.get(agent, 0)
@@ -1474,7 +1509,8 @@ def dispatch_parallel(
             continue
         cands = [t for t in limen.tasks
                  if _dispatchable(t) and (t.target_agent == agent or t.target_agent == "any")
-                 and t.budget_cost <= rem and _deps_met(t, id2)]
+                 and t.budget_cost <= rem and _deps_met(t, id2)
+                 and not (debt_blocked and _routine_generated_buildout(t))]
         cands.sort(key=lambda t: _PRIORITY_ORDER.get(t.priority, 99))
         # FRONT-LOAD: base picks by priority, then an ACCELERATION TAIL (only when the lane is
         # under-spending toward its reset cliff) drawn ONLY from work-classes the ledger says this
@@ -1484,7 +1520,7 @@ def dispatch_parallel(
         ordered = list(cands[:per_agent_limit])
         if eff > per_agent_limit:
             ordered += [t for t in cands[per_agent_limit:] if _accel_allows(agent, t, ledger_lanes)]
-        chosen: list = []
+        chosen: list[Task] = []
         spent_here = 0
         for t in ordered[:eff]:
             if spent_here + t.budget_cost > rem:

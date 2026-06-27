@@ -72,7 +72,7 @@ if [ "${LIMEN_CONVERGE:-0}" = "1" ]; then
       --limit "${LIMEN_CONVERGE_LIMIT:-2}" 2>&1 | tail -3 || true
 fi
 
-# RECLAIM — reap provably-dead fleet worktrees (clean + pushed + merged-to-default + idle >=6h) under .limen-worktrees,
+# RECLAIM — reap provably-dead fleet worktrees (clean + content-preserved-on-default + idle >=6h) under .limen-worktrees,
 # so dispatch's ephemeral per-task worktrees can't silently accumulate (observed: 91 dirs / 3.4 GB).
 # Loss-free by construction (three gates) + age-gated (never touches an active task) + bounded +
 # self-throttled (runs at most every LIMEN_RECLAIM_EVERY_MIN min, so calling it every beat is cheap).

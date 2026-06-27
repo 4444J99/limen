@@ -270,13 +270,25 @@ parameters:
     env: LIMEN_RECLAIM_CLAUDE_WT
     self_update: none
     owner: limen-daemon
-    note: "Whether reclaim-worktrees.py ALSO sweeps LIMEN_ROOT/.claude/worktrees (EnterWorktree/bg/interactive cells), not just the dispatch root. Set 0 to disable. Same loss-free gates (clean+pushed+idle) + a longer idle age + a self/live-checkout guard. See worktree-lifecycle-blind-spot."
+    note: "Whether reclaim-worktrees.py ALSO sweeps LIMEN_ROOT/.claude/worktrees (EnterWorktree/bg/interactive cells), not just the dispatch root. Set 0 to disable. Same loss-free gates (clean+content-preserved+idle) + a longer idle age + a self/live-checkout guard. See worktree-lifecycle-blind-spot."
   LIMEN_RECLAIM_CLAUDE_AGE_H:
-    default: 24                # interactive sessions can sit idle-but-alive; 24h clean+pushed ⇒ provably dead
+    default: 24                # interactive sessions can sit idle-but-alive; 24h clean+content-preserved ⇒ provably dead
     env: LIMEN_RECLAIM_CLAUDE_AGE_H
     self_update: none
     owner: limen-daemon
     note: "Min idle hours before a .claude/worktrees cell is eligible for reclaim. Longer than the dispatch root's 6h because an interactive/bg session can legitimately sit idle between beats."
+  LIMEN_WORKTREE_DEBT_GATE:
+    default: "1"               # ON — debt suppresses routine generated build-out, not recovery work
+    env: LIMEN_WORKTREE_DEBT_GATE
+    self_update: none
+    owner: limen-daemon
+    note: "When enabled, generate-backlog.py and dispatch selection suppress routine generated build-out if preserved worktree debt exceeds LIMEN_WORKTREE_DEBT_MAX. Explicit targeted/recovery work still runs."
+  LIMEN_WORKTREE_DEBT_MAX:
+    default: 12                # above this, the fleet must metabolize existing work before making more
+    env: LIMEN_WORKTREE_DEBT_MAX
+    self_update: none
+    owner: limen-daemon
+    note: "Maximum preserved dirty/unique-unpushed/not-Git worktree roots tolerated before routine generated build-out pauses. Keeps prompt-started work visible and prevents the conductor from outrunning its own closeout lifecycle."
   LIMEN_BRANCH_PREFIX:
     default: null              # DERIVED per scope — cells.sh sets cell-<slug>- for a cell's own conductor
     env: LIMEN_BRANCH_PREFIX

@@ -38,7 +38,7 @@ cell conduct <slug> [--loop] # start this cell's scoped conductor (bg). --loop =
 cell stop  <slug>            # stop this cell's conductor
 cell merge <slug>            # push + hand off to the standing merge grant (merge-policy.sh)
 cell reap  <slug> [--force]  # stop + LOSS-FREE remove (refuses if dirty or unpushed)
-cell reap-dead               # reclaim every provably-dead cell (clean+pushed+merged+idle)
+cell reap-dead               # reclaim every provably-dead cell (clean+content-preserved+idle)
 cell help
 ```
 
@@ -116,7 +116,7 @@ intention, not garbage. See [[empty-branch-is-a-todo-not-a-delete]].
 You don't have to remember to reap. The **SPRAWL-RECLAIM organ**
 (`scripts/reclaim-worktrees.py`, wired into the beat) now sweeps **both** creation sites —
 the dispatch root *and* `.claude/worktrees/` — reaping only cells that are **clean +
-pushed + merged into the remote default branch + idle ≥24h**, never the live checkout or a running session. Force a manual pass:
+content-preserved on the remote default branch + idle ≥24h**, never the live checkout or a running session. Force a manual pass:
 
 ```sh
 cell reap-dead              # dry-run (shows what would go, why each survivor is kept)

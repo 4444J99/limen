@@ -51,7 +51,7 @@ def queue_lock(tasks_path: Path, timeout: int = 90) -> Iterator[bool]:
                 pass
 
 
-def _sanitize_dispatch_logs(raw: object) -> int:
+def _sanitize_dispatch_logs(raw: dict[str, object]) -> int:
     """NEVER-"NO" data-layer guard: tolerate torn writes. The shared tasks.yaml is written by many
     uncoordinated processes; a recurring corruption lands a whole Task object inside some task's
     dispatch_log (an entry missing timestamp/agent/session_id), which made strict validation reject
@@ -61,7 +61,10 @@ def _sanitize_dispatch_logs(raw: object) -> int:
     if not isinstance(raw, dict):
         return 0
     dropped = 0
-    for t in raw.get("tasks") or []:
+    tasks = raw.get("tasks")
+    if not isinstance(tasks, list):
+        return 0
+    for t in tasks:
         if not isinstance(t, dict):
             continue
         dl = t.get("dispatch_log")
@@ -73,7 +76,7 @@ def _sanitize_dispatch_logs(raw: object) -> int:
     return dropped
 
 
-def _backfill_required_task_fields(raw: object) -> int:
+def _backfill_required_task_fields(raw: dict[str, object]) -> int:
     """NEVER-"NO" data-layer guard, second face: tolerate a task missing a required scalar
     (notably `created`). On 2026-06-26 a writer wrote a freshly-built task that lacked `created`;
     because `Task.created` is required, `model_validate` raised on the WHOLE board, so every
@@ -85,7 +88,10 @@ def _backfill_required_task_fields(raw: object) -> int:
         return 0
     today = date.today().isoformat()
     fixed = 0
-    for t in raw.get("tasks") or []:
+    tasks = raw.get("tasks")
+    if not isinstance(tasks, list):
+        return 0
+    for t in tasks:
         if not isinstance(t, dict):
             continue
         if not t.get("created"):
