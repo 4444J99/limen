@@ -124,6 +124,12 @@ parameters:
     self_update: none
     owner: evocator
     note: "Path to the knowledge-corpus repo; the corpus channel writes a collection shot here (guarded, fail-open)."
+  LIMEN_PRIVATE_SESSION_CORPUS:
+    default: "$LIMEN_ROOT/.limen-private/session-corpus"
+    env: LIMEN_PRIVATE_SESSION_CORPUS
+    self_update: none
+    owner: continuity
+    note: "Ignored local raw/private session cartridge. Stores manifests and optional content-addressed object copies; never committed."
 
   # --- HEALTH: the Executive Health Office (clinical loops + visit prep + monitoring) ---
   LIMEN_BEAT_HEALTH:

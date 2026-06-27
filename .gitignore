@@ -37,6 +37,7 @@ container/backup/
 container/state/
 *.premigrate
 .limen.env
+.limen-private/
 MASTER-PLAN.md
 # git worktree dirs (isolation checkouts — never tracked)
 .worktrees/
