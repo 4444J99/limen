@@ -117,6 +117,11 @@ tasks:
       \ user action: create API key at https://app.warp.dev, set as GH Actions secret\
       \ WARP_API_KEY on organvm/limen, and add to ~/.limen.env for local capacity\
       \ census."
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: 'board-heal: append current status to reconcile latest transition log'
 - id: FORCE-copilot-lane
   title: Add GitHub Copilot coding agent as a Limen dispatch lane
   repo: organvm/limen
@@ -362,6 +367,11 @@ tasks:
     session_id: '16036269367358331275'
     status: failed
     output: Issue already closed
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: 'board-heal: append current status to reconcile latest transition log'
 - id: LIMEN-006
   title: "Scaffold limen CLI \u2014 init/dispatch/harvest/status subcommands"
   repo: ''
@@ -441,6 +451,11 @@ tasks:
     session_id: '36549371605837195'
     status: failed
     output: Already covered by PR
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: 'board-heal: append current status to reconcile latest transition log'
 - id: LIMEN-010
   title: Fix TypeScript build errors in test files (30+ errors)
   repo: organvm/my-knowledge-base
@@ -466,6 +481,11 @@ tasks:
     session_id: '2721304265616159805'
     status: failed
     output: Already covered by human PR
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: 'board-heal: append current status to reconcile latest transition log'
 - id: LIMEN-011
   title: Fix YAML duplicate key issues in application-pipeline files
   repo: organvm/organvm-corpvs-testamentvm
@@ -3051,6 +3071,11 @@ tasks:
     session_id: '4931863898552119297'
     status: dispatched
     output: 'Jules session created via CLI. URL: https://jules.google.com/session/4931863898552119297'
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: 'board-heal: append current status to reconcile latest transition log'
 - id: LIMEN-053
   title: 'IRF-CCE-031: CCE lacks inquiry-log.yaml for research activities'
   repo: organvm/conversation-corpus-engine
@@ -3074,6 +3099,11 @@ tasks:
     session_id: '5359449811305763961'
     status: dispatched
     output: 'Jules session created via CLI. URL: https://jules.google.com/session/5359449811305763961'
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: 'board-heal: append current status to reconcile latest transition log'
 - id: LIMEN-054
   title: "IRF-CCE-038: Cross-repo commercial awareness gap (CCE \u2194 pipeline)"
   repo: organvm/conversation-corpus-engine
@@ -3184,6 +3214,11 @@ tasks:
     session_id: '7697148783094249715'
     status: dispatched
     output: 'Jules session created via CLI. URL: https://jules.google.com/session/7697148783094249715'
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: 'board-heal: append current status to reconcile latest transition log'
 - id: LIMEN-056
   title: "IRF-CCE-035: Omega evidence map \u2014 note commercial spec for criteria\
     \ #9/#10"
@@ -3295,6 +3330,11 @@ tasks:
     session_id: '9093480277388573227'
     status: dispatched
     output: 'Jules session created via CLI. URL: https://jules.google.com/session/9093480277388573227'
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: 'board-heal: append current status to reconcile latest transition log'
 - id: LIMEN-058
   title: 'feat: build corpus persona-extract subcommand'
   repo: organvm/conversation-corpus-engine
@@ -3401,6 +3441,11 @@ tasks:
     session_id: '17839491071518389914'
     status: dispatched
     output: 'Jules session created via CLI. URL: https://jules.google.com/session/17839491071518389914'
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: 'board-heal: append current status to reconcile latest transition log'
 - id: LIMEN-060
   title: 'feat: implement MCP tool wrappers for all 5 organvm CLIs'
   repo: organvm/organvm-engine
@@ -3504,6 +3549,11 @@ tasks:
     session_id: '2265102270527534194'
     status: dispatched
     output: 'Jules session created via CLI. URL: https://jules.google.com/session/2265102270527534194'
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: 'board-heal: append current status to reconcile latest transition log'
 - id: LIMEN-062
   title: Add --format json flag to organvm registry list command
   repo: organvm/organvm-engine
@@ -11321,6 +11371,11 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: 'board-heal: append current status to reconcile latest transition log'
 - id: GH-organvm-i-theoria-organvm-iv-taxis-github-io-2
   title: 'ACTIVATION AUDIT: park'
   repo: organvm/organvm-iv-taxis.github.io
@@ -26182,6 +26237,11 @@ tasks:
     agent: claude
     session_id: https://github.com/a-organvm/a-i-chat--exporter/pull/41
     status: dispatched
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'board-heal: append current status to reconcile latest transition log'
 - id: BLD2-a-i-chat--exporter-integration-tests
   title: 'a-i-chat--exporter: integration-tests'
   repo: organvm/a-i-chat--exporter
@@ -26407,6 +26467,11 @@ tasks:
     agent: claude
     session_id: https://github.com/a-organvm/public-record-data-scrapper/pull/282
     status: dispatched
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'board-heal: append current status to reconcile latest transition log'
 - id: BLD2-public-record-data-scrapper-integration-tests
   title: 'public-record-data-scrapper: integration-tests'
   repo: organvm/public-record-data-scrapper
@@ -26658,6 +26723,11 @@ tasks:
     agent: claude
     session_id: https://github.com/a-organvm/mirror-mirror/pull/13
     status: dispatched
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'board-heal: append current status to reconcile latest transition log'
 - id: BLD2-mirror-mirror-integration-tests
   title: 'mirror-mirror: integration-tests'
   repo: organvm/mirror-mirror
@@ -26860,6 +26930,11 @@ tasks:
     agent: claude
     session_id: https://github.com/a-organvm/universal-mail--automation/pull/57
     status: dispatched
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'board-heal: append current status to reconcile latest transition log'
 - id: BLD2-universal-mail--automation-integration-tests
   title: 'universal-mail--automation: integration-tests'
   repo: organvm/universal-mail--automation
@@ -27071,6 +27146,11 @@ tasks:
     agent: claude
     session_id: https://github.com/a-organvm/peer-audited--behavioral-blockchain/pull/718
     status: dispatched
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'board-heal: append current status to reconcile latest transition log'
 - id: BLD2-peer-audited--behavioral-blockchain-integration-tests
   title: 'peer-audited--behavioral-blockchain: integration-tests'
   repo: organvm/peer-audited--behavioral-blockchain
@@ -27285,6 +27365,11 @@ tasks:
     agent: claude
     session_id: https://github.com/a-organvm/the-invisible-ledger/pull/15
     status: dispatched
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'board-heal: append current status to reconcile latest transition log'
 - id: BLD2-the-invisible-ledger-integration-tests
   title: 'the-invisible-ledger: integration-tests'
   repo: organvm/the-invisible-ledger
@@ -52401,7 +52486,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - needs-human
   urls:
@@ -52414,7 +52499,7 @@ tasks:
     \ nothing needs generating. This super"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T02:02:20.159089Z'
+  updated: '2026-06-27T02:13:26.818189Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
@@ -52426,6 +52511,11 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: 'board-heal: lever already closed in main; remove from dispatch surface'
 - id: GH-organvm-limen-332
   title: 'needs-human (L-GH-LAUNCHD-077): Give gh a token under launchd'
   repo: organvm/limen
@@ -52433,7 +52523,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - needs-human
   urls:
@@ -52446,7 +52536,7 @@ tasks:
     \ works (organvm/organvm-engine). ### What it unlocks"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T02:02:20.159089Z'
+  updated: '2026-06-27T02:13:26.818189Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
@@ -52458,6 +52548,11 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: 'board-heal: lever already closed in main; remove from dispatch surface'
 - id: GH-organvm-limen-331
   title: 'needs-human (L-CLOUDFLARE-DEPLOY): Cloudflare deploy auth'
   repo: organvm/limen
@@ -52491,6 +52586,11 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: 'board-heal: append current status to reconcile latest transition log'
 - id: GH-organvm-limen-330
   title: "\U0001F9F1 The Wall \u2014 everything that hangs on you (his-hand levers)"
   repo: organvm/limen
@@ -52498,7 +52598,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: needs_human
   labels:
   - needs-human
   urls:
@@ -52511,13 +52611,19 @@ tasks:
     \ this Wall covers the rest. *So"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T02:02:20.159089Z'
+  updated: '2026-06-27T02:13:26.818189Z'
   dispatch_log:
   - timestamp: '2026-06-27T02:02:20.159089Z'
     agent: claude
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'board-heal: needs-human label is non-dispatchable; surface to human,
+      do not reserve'
 - id: GH-organvm-limen-320
   title: "\U0001F9F1 The Wall \u2014 credential / login / API / env atoms: registered\
     \ home + tracking issue"
@@ -52553,7 +52659,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: needs_human
   labels:
   - needs-human
   urls:
@@ -52566,13 +52672,19 @@ tasks:
     \ the macOS Application Firewall is ON, and the i"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T02:02:20.159089Z'
+  updated: '2026-06-27T02:13:26.818189Z'
   dispatch_log:
   - timestamp: '2026-06-27T02:02:20.159089Z'
     agent: claude
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'board-heal: needs-human label is non-dispatchable; surface to human,
+      do not reserve'
 - id: GH-organvm-limen-269
   title: 'fleet: drain the PR + branch backlog (73 open PRs / 157 unmerged branches)
     to a predicate-backed floor'
@@ -52609,7 +52721,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: needs_human
   labels:
   - needs-human
   urls:
@@ -52622,13 +52734,19 @@ tasks:
     \ + seeds + price guard), the form/operati"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T02:02:20.159089Z'
+  updated: '2026-06-27T02:13:26.818189Z'
   dispatch_log:
   - timestamp: '2026-06-27T02:02:20.159089Z'
     agent: claude
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'board-heal: needs-human label is non-dispatchable; surface to human,
+      do not reserve'
 - id: GH-organvm-limen-266
   title: "needs-human (L-HEALTH-GOLIVE): Decide the health-office content DISPOSITION\
     \ \u2014 and note this is TIME-\u2026"
@@ -52637,7 +52755,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: needs_human
   labels:
   - needs-human
   urls:
@@ -52650,13 +52768,19 @@ tasks:
     \ health-office scaffold shipped green locally on 2"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T02:02:20.159089Z'
+  updated: '2026-06-27T02:13:26.818189Z'
   dispatch_log:
   - timestamp: '2026-06-27T02:02:20.159089Z'
     agent: claude
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'board-heal: needs-human label is non-dispatchable; surface to human,
+      do not reserve'
 - id: GH-organvm-limen-265
   title: "needs-human (L-FLEET-CAPACITY): Re-mint the 3 fleet credentials \u2014 they\
     \ are MATERIALIZED but DEAD"
@@ -52665,7 +52789,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: needs_human
   labels:
   - needs-human
   - credential
@@ -52679,13 +52803,19 @@ tasks:
     \ correctly carries 1Password -> ~/.limen.env -> every lane"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T02:02:20.159089Z'
+  updated: '2026-06-27T02:13:26.818189Z'
   dispatch_log:
   - timestamp: '2026-06-27T02:02:20.159089Z'
     agent: gemini
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'board-heal: needs-human label is non-dispatchable; surface to human,
+      do not reserve'
 - id: GH-organvm-limen-264
   title: 'needs-human (L-MODEL-TIER): Stop the interactive Claude burn at the source'
   repo: organvm/limen
@@ -52693,7 +52823,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: needs_human
   labels:
   - needs-human
   urls:
@@ -52706,13 +52836,19 @@ tasks:
     \ Opus 4.8 + the 1M-context beta \u2014 the single most expensive c"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T02:02:20.159089Z'
+  updated: '2026-06-27T02:13:26.818189Z'
   dispatch_log:
   - timestamp: '2026-06-27T02:02:20.159089Z'
     agent: gemini
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'board-heal: needs-human label is non-dispatchable; surface to human,
+      do not reserve'
 - id: GH-organvm-limen-263
   title: "needs-human (L-IANVA-CLOUD): Stop the claude.ai connector 'needs authentication'\
     \ prompts \u2014 ONE bearer'd connector for the whole class"
@@ -52721,7 +52857,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: needs_human
   labels:
   - needs-human
   - credential
@@ -52735,13 +52871,19 @@ tasks:
     \ class, not just Sentry.** This is the ONE re-auth di"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T02:02:20.159089Z'
+  updated: '2026-06-27T02:13:26.818189Z'
   dispatch_log:
   - timestamp: '2026-06-27T02:02:20.159089Z'
     agent: gemini
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'board-heal: needs-human label is non-dispatchable; surface to human,
+      do not reserve'
 - id: GH-organvm-limen-262
   title: "needs-human (L-IANVA-LOCAL): Kill the per-agent MCP re-auth for every non-claude.ai\
     \ agent in ONE m\u2026"
@@ -52750,7 +52892,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - needs-human
   - credential
@@ -52764,7 +52906,14 @@ tasks:
     \ 'why do I keep authorizing MCP servers over and over' rage. i"
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:13:26.818189Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'board-heal: needs-human label is non-dispatchable; surface to human,
+      do not reserve'
 - id: GH-organvm-limen-260
   title: "needs-human (L-EDU-PERTERM): The per-term recapitulation ritual is autonomic\
     \ EXCEPT two irreducibl\u2026"
@@ -52773,7 +52922,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - needs-human
   urls:
@@ -52786,7 +52935,14 @@ tasks:
     \ term: (1) export the LMS course shell (D2L cartrid"
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:13:26.818189Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'board-heal: needs-human label is non-dispatchable; surface to human,
+      do not reserve'
 - id: GH-organvm-limen-259
   title: "needs-human (L-ENC1102-GRADEBOOK): Resolve the ENC1102 D2L gradebook weighting\
     \ \u2014 a one-decision-then-tra\u2026"
@@ -52795,7 +52951,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - needs-human
   urls:
@@ -52808,7 +52964,14 @@ tasks:
     \ today has 6 support categories at 10% each (=60%), leavin"
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:13:26.818189Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'board-heal: needs-human label is non-dispatchable; surface to human,
+      do not reserve'
 - id: GH-organvm-limen-258
   title: "needs-human (L-ENC1101-GOLIVE): Take ENC1101 Summer 2026 (771624) live in\
     \ D2L \u2014 content is 100% stage\u2026"
@@ -52817,7 +52980,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - needs-human
   urls:
@@ -52830,7 +52993,14 @@ tasks:
     \ + a label greenlight + the Set Active click remain. Read e"
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:13:26.818189Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'board-heal: needs-human label is non-dispatchable; surface to human,
+      do not reserve'
 - id: GH-organvm-limen-257
   title: 'needs-human (L-BRANCH-PROTECT-072): Branch-protection across the organ repos'
   repo: organvm/limen
@@ -52838,7 +53008,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - needs-human
   urls:
@@ -52851,7 +53021,14 @@ tasks:
     \ under granted admin): protected with an always-on req"
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:13:26.818189Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'board-heal: needs-human label is non-dispatchable; surface to human,
+      do not reserve'
 - id: GH-organvm-limen-256
   title: "needs-human (L-GH-LAUNCHD-077): Give gh a token under launchd (GH_TOKEN\
     \ in the plist/keychain) so the\u2026"
@@ -52860,7 +53037,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - needs-human
   - credential
@@ -52874,7 +53051,13 @@ tasks:
     \ works (organvm/organvm-engine). ### What it unlocks"
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:13:26.818189Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: 'board-heal: lever already closed in main; remove from dispatch surface'
 - id: GH-organvm-limen-255
   title: 'needs-human (L-CONTAINER-CUTOVER): One-container cutover'
   repo: organvm/limen
@@ -52882,7 +53065,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - needs-human
   urls:
@@ -52895,7 +53078,14 @@ tasks:
     \ + the COMPLETE marker. ASK-20 extends container/man"
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:13:26.818189Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'board-heal: needs-human label is non-dispatchable; surface to human,
+      do not reserve'
 - id: GH-organvm-limen-254
   title: 'needs-human (L-CLOUDFLARE-DEPLOY): Cloudflare deploy auth'
   repo: organvm/limen
@@ -52903,7 +53093,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - needs-human
   - credential
@@ -52917,7 +53107,14 @@ tasks:
     \ then re-dispatch. Every BLD2-*-deploy fails because w"
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:13:26.818189Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'board-heal: needs-human label is non-dispatchable; surface to human,
+      do not reserve'
 - id: GH-organvm-limen-253
   title: 'needs-human (L-REVENUE-ACCT): Revenue first-dollar accounts'
   repo: organvm/limen
@@ -52925,7 +53122,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - needs-human
   urls:
@@ -52938,7 +53135,14 @@ tasks:
     \ product and paste LEMONSQUEEZY_STORE_ID into CI. FUNDI"
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:13:26.818189Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:13:26.818189Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'board-heal: needs-human label is non-dispatchable; surface to human,
+      do not reserve'
 - id: GEN-organvm-the-invisible-ledger-test-coverage-0626
   title: Raise test coverage in organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger

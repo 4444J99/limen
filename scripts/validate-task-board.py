@@ -35,10 +35,24 @@ def main() -> int:
     valid = load_valid_statuses()
     data = yaml.safe_load(args.tasks.read_text()) or {}
     invalid: list[tuple[str, str]] = []
+    log_mismatches: list[tuple[str, str, str]] = []
+    dispatchable_human: list[tuple[str, str]] = []
     for task in data.get("tasks") or []:
+        task_id = str(task.get("id", "<missing-id>"))
         status = str(task.get("status", ""))
         if status not in valid:
-            invalid.append((str(task.get("id", "<missing-id>")), status))
+            invalid.append((task_id, status))
+            continue
+
+        log = task.get("dispatch_log") or []
+        if log:
+            last_status = str((log[-1] or {}).get("status", ""))
+            if last_status in valid and last_status != status:
+                log_mismatches.append((task_id, status, last_status))
+
+        labels = {str(label) for label in (task.get("labels") or [])}
+        if "needs-human" in labels and status in {"open", "dispatched", "in_progress"}:
+            dispatchable_human.append((task_id, status))
 
     if invalid:
         print(
@@ -50,6 +64,30 @@ def main() -> int:
             print(f"  {task_id}: {status}", file=sys.stderr)
         if len(invalid) > 50:
             print(f"  ... {len(invalid) - 50} more", file=sys.stderr)
+        return 1
+
+    if log_mismatches:
+        print(
+            f"{args.tasks} has {len(log_mismatches)} task(s) whose latest canonical "
+            "dispatch_log status disagrees with task.status",
+            file=sys.stderr,
+        )
+        for task_id, status, last_status in log_mismatches[:50]:
+            print(f"  {task_id}: task.status={status}, latest_log.status={last_status}", file=sys.stderr)
+        if len(log_mismatches) > 50:
+            print(f"  ... {len(log_mismatches) - 50} more", file=sys.stderr)
+        return 1
+
+    if dispatchable_human:
+        print(
+            f"{args.tasks} has {len(dispatchable_human)} needs-human task(s) still "
+            "available to dispatch",
+            file=sys.stderr,
+        )
+        for task_id, status in dispatchable_human[:50]:
+            print(f"  {task_id}: {status}", file=sys.stderr)
+        if len(dispatchable_human) > 50:
+            print(f"  ... {len(dispatchable_human) - 50} more", file=sys.stderr)
         return 1
 
     print(f"Task board statuses valid ({len(data.get('tasks') or [])} tasks)")
