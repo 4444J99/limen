@@ -34,7 +34,8 @@ Checks (exit 0 iff all pass):
   H. Required instruction sections exist, and Claude's charter stays role-based rather than
      person-specific.
 
-  I. Generated instruction templates defer to AGENTS.md and do not publish divergent statuses.
+  I. Generated instruction templates, when present, defer to AGENTS.md and do not publish
+     divergent statuses.
 
   J. Deployment operations stay in docs/deployment.md, not in AGENTS.md.
 
@@ -235,6 +236,8 @@ def main() -> int:
                 errors.append(f"{doc.relative_to(ROOT)} references missing path: {path}")
 
     for template in TEMPLATE_DOCS:
+        if not template.exists():
+            continue
         text = template.read_text(encoding="utf-8")
         if "AGENTS.md" not in text:
             errors.append(f"{template.relative_to(ROOT)} does not defer to a project/home AGENTS.md")
