@@ -9,11 +9,12 @@ open/unmerged branches, active roots, and non-Git residue stay visible.
 
 ## Summary
 
-- 21 roots inspected.
+- 23 roots inspected.
 - 0 roots reclaimed.
 - 12 dirty roots: local file changes need review, commit, PR, or explicit discard-after-preserve.
 - 7 unpushed roots: local commits need push/PR or absorption into an existing branch.
 - 2 non-Git roots: filesystem residue needs classification before any cleanup.
+- 2 active roots: freshly opened revenue-ship worktrees are inside the idle grace window.
 
 ## Kept Roots
 
@@ -38,8 +39,10 @@ open/unmerged branches, active roots, and non-Git residue stay visible.
 | `gh-organvm-object-lessons-19-605a` | `organvm/object-lessons` | `limen/gh-organvm-object-lessons-19-605a` / `cf89af6` | unpushed: 2 commits | Push branch and open/update PR for Letterboxd ingestion work. |
 | `resolve-a-organvm-the-invisible-ledger-4-f657` | `organvm/the-invisible-ledger` | `limen/resolve-a-organvm-the-invisible-ledger-4-f657` / `1741370` | unpushed: 1 commit | Push branch and open/update PR for PostgreSQL adapter work. |
 | `resolve-organvm-i-theoria-.github-459-1ade` | `organvm/.github` | `limen/resolve-organvm-i-theoria-.github-459-1ade` / `efff71c` | dirty: workflows, dashboard types, `tsconfig.json` | Review org workflow changes, run validation, commit and PR. |
+| `rev-organvm-mirror-mirror-revenue-ship-0627-ad5e` | `organvm/mirror-mirror` | `limen/rev-organvm-mirror-mirror-revenue-ship-0627-ad5e` / `1668f71` | active: clean worktree inside 6h idle grace | Let the active dispatch run; harvest/verify before any cleanup. |
 | `rev-organvm-public-record-data-scrapper-revenue-readiness-0623-023f` | `organvm/public-record-data-scrapper` | `limen/rev-organvm-public-record-data-scrapper-revenue-readiness-0623-023f` / `6556758` | unpushed: 1 commit | Push branch and open/update PR for UCC endpoint docs. |
 | `rev-organvm-the-invisible-ledger-revenue-readiness-0623-bd8b` | unknown | n/a | not a Git worktree; Vite cache sample | Classify residue before cleanup. |
+| `rev-organvm-universal-mail--automation-revenue-ship-0627-da5e` | `organvm/universal-mail--automation` | `limen/rev-organvm-universal-mail--automation-revenue-ship-0627-da5e` / `c319a96` | active: clean worktree inside 6h idle grace | Let the active dispatch run; harvest/verify before any cleanup. |
 
 ## Invariant
 
