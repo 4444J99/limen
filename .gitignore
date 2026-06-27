@@ -25,6 +25,9 @@ web/app/.generated/
 # Hosted public JSONs are generated at build time
 web/app/public/
 
+# Local conductor/report artifacts
+.limen-reports/
+
 # Next.js route source — protect from machine-global 'public/' ignore rules
 !web/app/app/public/
 env/

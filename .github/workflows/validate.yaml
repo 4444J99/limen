@@ -2,16 +2,35 @@ name: validate
 on:
   push:
     branches: [main]
-    paths: ["tasks.yaml", "SCHEMA.md", ".github/workflows/validate.yaml"]
+    paths:
+      - "tasks.yaml"
+      - "SCHEMA.md"
+      - "mcp/src/limen_mcp/server.py"
+      - "scripts/validate-task-board.py"
+      - ".github/workflows/validate.yaml"
   pull_request:
-    paths: ["tasks.yaml", "SCHEMA.md", ".github/workflows/validate.yaml"]
+    paths:
+      - "tasks.yaml"
+      - "SCHEMA.md"
+      - "mcp/src/limen_mcp/server.py"
+      - "scripts/validate-task-board.py"
+      - ".github/workflows/validate.yaml"
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Validate tasks.yaml schema, budget, and task fields
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install validation dependencies
+        run: python -m pip install pyyaml
+
+      - name: Validate tasks.yaml schema, budget, and required fields
         run: |
           python3 - <<'PY'
           import yaml
@@ -32,13 +51,13 @@ jobs:
               raise SystemExit("Per-agent sum exceeds 2x daily budget")
 
           required = ("id", "title", "status", "target_agent", "priority")
-          valid_statuses = {"open", "dispatched", "in_progress", "done", "failed", "cancelled", "needs_human", "failed_blocked", "archived", "superseded"}
           tasks = data.get("tasks", [])
           for task in tasks:
               missing = [field for field in required if task.get(field) is None]
               if missing:
                   raise SystemExit(f"Task {task.get('id', '<no id>')} missing required fields: {missing}")
-              if task["status"] not in valid_statuses:
-                  raise SystemExit(f"Invalid status: {task['status']} ({task['id']})")
-          print(f"All {len(tasks)} tasks have required fields and valid statuses")
+          print(f"All {len(tasks)} tasks have required fields")
           PY
+
+      - name: Validate canonical task statuses
+        run: python3 scripts/validate-task-board.py
