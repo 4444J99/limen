@@ -152,6 +152,22 @@ play() { [ $(( c % $1 )) -eq 0 ]; }   # true on this voice's beat
 # a stamp failure never touches the beat. ([[no-never-happens-again]])
 VOICED="$LIMEN_ROOT/logs/.voice"; mkdir -p "$VOICED" 2>/dev/null || true
 stamp() { printf '%s\n' "$(date -u +%FT%TZ)" > "$VOICED/$1" 2>/dev/null || true; }
+due_voice() {
+  # True on the modulo cadence OR when the last observed fire is already older than
+  # its worst-case cadence. This closes the restart/reset hole: a daemon repeatedly
+  # kicked before beat 6/8 must not starve HEAL/EVOCATOR/HEALTH/LIFE/HYGIENE forever.
+  local voice="${1:?voice}" cadence="${2:-1}" stamp_path now last expected
+  case "$cadence" in ''|*[!0-9]*) cadence=1 ;; esac
+  play "$cadence" && return 0
+  stamp_path="$VOICED/$voice"
+  [ -e "$stamp_path" ] || return 0
+  now="$(date +%s)"
+  last="$(stat -f %m "$stamp_path" 2>/dev/null || echo "")"
+  case "$last" in ''|*[!0-9]*) last="$(stat -c %Y "$stamp_path" 2>/dev/null || echo "")" ;; esac
+  [ -n "$last" ] || return 0
+  expected=$(( cadence * MAX ))
+  [ $(( now - last )) -ge "$expected" ]
+}
 healthy_lanes() {
   python3 - "$1" <<'PY'
 import sys
@@ -191,6 +207,7 @@ while true; do
   fi
   c=$(( c + 1 ))
   worked=0
+  VITALS_PRESSURE=0
   echo "──── beat $c $(date '+%F %T') ────"
   MODE="$(python3 "$LIMEN_ROOT/scripts/autonomy-governor.py" mode 2>/dev/null || echo paused)"
   if [ "$MODE" = "paused" ]; then
@@ -222,112 +239,116 @@ while true; do
   if [ "${LIMEN_VIGILIA:-1}" = "1" ]; then
     _vitals="$(python3 -m limen.vigilia vitals-gate 2>/dev/null || echo ok)"
     if [ "$_vitals" = "shed" ]; then
-      echo "  vitals: memory pressure ≥ warn — idle beat (no new dispatch; sheds ollama if critical; self-heals when pressure clears)"
+      echo "  vitals: memory pressure ≥ warn — skip dispatch-heavy work; light organs still fire"
+      VITALS_PRESSURE=1
+    fi
+  fi
+  EFFECTIVE_LANES="$LANES"
+  if [ "$VITALS_PRESSURE" = "1" ]; then
+    echo "── vitals-pressure: dispatch will be skipped after maintenance ──"
+  fi
+    # SUBSTRATE SELF-HEAL — re-converge this checkout to the release (origin/main) before doing
+    # work, so the beat always runs the latest code (push = deploy). ff-only, data-preserving,
+    # fail-open; never exits/re-execs the daemon. Closes the loop: root → leaf → back to root.
+    play "$C_SYNC" && bash "$LIMEN_ROOT/scripts/sync-release.sh" 2>&1 | tail -2 || true
+    # BOARD-INTEGRITY self-heal — if the SSOT queue is unloadable or collapsed (a clobber that
+    # slipped past the save-time guard, or external corruption), restore it from HEAD BEFORE the
+    # body tries to load it, so a dead board self-recovers instead of idling the fleet for hours
+    # (the 2026-06-26 halt). Idempotent: a healthy board is a fast no-op, no network. See
+    # heal-board.py + the limen.io collapse-guard — "fix the handoff so it ain't broken".
+    python3 "$LIMEN_ROOT/scripts/heal-board.py" 2>&1 | tail -1 || true
+    python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" 2>&1 | tail -1 || true   # refresh lane health BEFORE route/dispatch
+    EFFECTIVE_LANES="$(healthy_lanes "$LANES")"
+    if [ "$EFFECTIVE_LANES" != "$LANES" ]; then
+      echo "  lanes: ${EFFECTIVE_LANES:-none} active from requested [$LANES]"
+    fi
+
+    if [ "$MODE" != "dispatch" ]; then
+      echo "autonomy mode=$MODE — telemetry/status only; queue mutation and dispatch skipped"
       python3 "$LIMEN_ROOT/scripts/emit-tick.py" 2>&1 | tail -1 || true
+      play "$C_WEB" && bash "$LIMEN_ROOT/scripts/refresh-web.sh" >>"$LIMEN_ROOT/logs/refresh-web.log" 2>&1 || true  # NO pipe: refresh-web backgrounds the http.server, which can inherit a pipe's write-end and block `tail` on EOF forever → wedged the whole daemon before the first beat (2026-06-23). Redirect to a log instead.
       beat="$MAX"
-      echo "── tempo: vitals-pressure → ${beat}s ──"
+      echo "── tempo: observe → ${beat}s ──"
       sleep "$beat"
       continue
     fi
-  fi
-  # SUBSTRATE SELF-HEAL — re-converge this checkout to the release (origin/main) before doing
-  # work, so the beat always runs the latest code (push = deploy). ff-only, data-preserving,
-  # fail-open; never exits/re-execs the daemon. Closes the loop: root → leaf → back to root.
-  play "$C_SYNC" && bash "$LIMEN_ROOT/scripts/sync-release.sh" 2>&1 | tail -2 || true
-  # BOARD-INTEGRITY self-heal — if the SSOT queue is unloadable or collapsed (a clobber that
-  # slipped past the save-time guard, or external corruption), restore it from HEAD BEFORE the
-  # body tries to load it, so a dead board self-recovers instead of idling the fleet for hours
-  # (the 2026-06-26 halt). Idempotent: a healthy board is a fast no-op, no network. See
-  # heal-board.py + the limen.io collapse-guard — "fix the handoff so it ain't broken".
-  python3 "$LIMEN_ROOT/scripts/heal-board.py" 2>&1 | tail -1 || true
-  python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" 2>&1 | tail -1 || true   # refresh lane health BEFORE route/dispatch
-  EFFECTIVE_LANES="$(healthy_lanes "$LANES")"
-  if [ "$EFFECTIVE_LANES" != "$LANES" ]; then
-    echo "  lanes: ${EFFECTIVE_LANES:-none} active from requested [$LANES]"
-  fi
 
-  if [ "$MODE" != "dispatch" ]; then
-    echo "autonomy mode=$MODE — telemetry/status only; queue mutation and dispatch skipped"
-    python3 "$LIMEN_ROOT/scripts/emit-tick.py" 2>&1 | tail -1 || true
-    play "$C_WEB" && bash "$LIMEN_ROOT/scripts/refresh-web.sh" >>"$LIMEN_ROOT/logs/refresh-web.log" 2>&1 || true  # NO pipe: refresh-web backgrounds the http.server, which can inherit a pipe's write-end and block `tail` on EOF forever → wedged the whole daemon before the first beat (2026-06-23). Redirect to a log instead.
-    beat="$MAX"
-    echo "── tempo: observe → ${beat}s ──"
-    sleep "$beat"
-    continue
-  fi
+    # acquire the shared queue lock so the BODY never races a SUPERVISOR write to
+    # tasks.yaml (two-scale safety). If a supervisor holds it, skip queue-mutation this
+    # beat (still emit tick/web below). Wait up to ~20s.
+    locked=0
+    for _ in $(seq 1 20); do mkdir "$LOCKD" 2>/dev/null && { locked=1; break; }; sleep 1; done
 
-  # acquire the shared queue lock so the BODY never races a SUPERVISOR write to
-  # tasks.yaml (two-scale safety). If a supervisor holds it, skip queue-mutation this
-  # beat (still emit tick/web below). Wait up to ~20s.
-  locked=0
-  for _ in $(seq 1 20); do mkdir "$LOCKD" 2>/dev/null && { locked=1; break; }; sleep 1; done
+    if [ "$locked" = 1 ]; then
+      due_voice drain "$C_DRAIN"   && { bash "$LIMEN_ROOT/scripts/drain.sh" 2>&1 | tail -2 || true        # VERIFY
+                                       python3 -m limen release-stale --agent jules --hours 24 --apply 2>&1 | tail -1 || true; }
+      due_voice heal "$C_HEAL"     && python3 "$LIMEN_ROOT/scripts/recover.py" --apply 2>&1 | tail -1 || true   # HEAL
+      play "$C_FEED"               && { python3 "$LIMEN_ROOT/scripts/mine-backlog.py" --limit "${LIMEN_MINE_LIMIT:-25}" --apply 2>&1 | tail -1 || true  # EXPLORE
+                                       [ "${LIMEN_REVENUE_BACKLOG:-1}" = "1" ] && timeout "${LIMEN_REVENUE_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/generate-revenue-backlog.py" --apply 2>&1 | tail -1 || true  # REVENUE FIRST: ladder→tasks so win-class capacity builds products, not busywork (default-ON; floor-gated)
+                                       [ "${LIMEN_ORGAN_BACKLOG:-1}" = "1" ] && timeout "${LIMEN_ORGAN_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/generate-organ-backlog.py" --apply 2>&1 | tail -1 || true  # ORGANS (VLTIMA): organ-ladder->tasks so idle capacity builds the institutional pillars (legal/financial/education/...), not busywork (default-ON; floor-gated; lockless)
+                                       python3 "$LIMEN_ROOT/scripts/generate-backlog.py" --apply 2>&1 | tail -1 || true  # SELF-FEED: build-out levers on the ranked tier
+                                       [ "${LIMEN_STUDIUM:-0}" = "1" ] && timeout "${LIMEN_STUDIUM_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/ingest-backlog.py" --apply 2>&1 | tail -1 || true  # STUDIUM: re-emit the staged canon-breadth content tasks each beat so they SURVIVE the prune (a one-shot hand-apply gets clobbered; idempotent, gated, lockless)
+                                       python3 "$LIMEN_ROOT/scripts/discover-value.py" --apply 2>&1 | tail -1 || true; }  # DISCOVER: no repo stays dark — surface latent value, burn the tank
+      play "$C_BALANCE"            && { python3 "$LIMEN_ROOT/scripts/route.py" --apply 2>&1 | tail -1 || true   # PLAN
+                                       if [ -n "$EFFECTIVE_LANES" ]; then
+                                         python3 "$LIMEN_ROOT/scripts/rebalance.py" --lanes "$EFFECTIVE_LANES" --apply 2>&1 | tail -1 || true
+                                       else
+                                         echo "no live local lanes available for rebalance"
+                                       fi; }
+      # proprioception stamps — record that these voices played this beat (route rides the balance voice)
+      due_voice drain "$C_DRAIN"   && stamp drain
+      play "$C_FEED"               && stamp feed
+      play "$C_BALANCE"            && stamp balance
 
-  if [ "$locked" = 1 ]; then
-    play "$C_DRAIN"   && { bash "$LIMEN_ROOT/scripts/drain.sh" 2>&1 | tail -2 || true        # VERIFY
-                           python3 -m limen release-stale --agent jules --hours 24 --apply 2>&1 | tail -1 || true; }
-    play "$C_HEAL"    && python3 "$LIMEN_ROOT/scripts/recover.py" --apply 2>&1 | tail -1 || true   # HEAL
-    play "$C_FEED"    && { python3 "$LIMEN_ROOT/scripts/mine-backlog.py" --limit "${LIMEN_MINE_LIMIT:-25}" --apply 2>&1 | tail -1 || true  # EXPLORE
-                           [ "${LIMEN_REVENUE_BACKLOG:-1}" = "1" ] && timeout "${LIMEN_REVENUE_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/generate-revenue-backlog.py" --apply 2>&1 | tail -1 || true  # REVENUE FIRST: ladder→tasks so win-class capacity builds products, not busywork (default-ON; floor-gated)
-                           [ "${LIMEN_ORGAN_BACKLOG:-1}" = "1" ] && timeout "${LIMEN_ORGAN_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/generate-organ-backlog.py" --apply 2>&1 | tail -1 || true  # ORGANS (VLTIMA): organ-ladder->tasks so idle capacity builds the institutional pillars (legal/financial/education/...), not busywork (default-ON; floor-gated; lockless)
-                           python3 "$LIMEN_ROOT/scripts/generate-backlog.py" --apply 2>&1 | tail -1 || true  # SELF-FEED: build-out levers on the ranked tier
-                           [ "${LIMEN_STUDIUM:-0}" = "1" ] && timeout "${LIMEN_STUDIUM_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/ingest-backlog.py" --apply 2>&1 | tail -1 || true  # STUDIUM: re-emit the staged canon-breadth content tasks each beat so they SURVIVE the prune (a one-shot hand-apply gets clobbered; idempotent, gated, lockless)
-                           python3 "$LIMEN_ROOT/scripts/discover-value.py" --apply 2>&1 | tail -1 || true; }  # DISCOVER: no repo stays dark — surface latent value, burn the tank
-    play "$C_BALANCE" && { python3 "$LIMEN_ROOT/scripts/route.py" --apply 2>&1 | tail -1 || true   # PLAN
-                           if [ -n "$EFFECTIVE_LANES" ]; then
-                             python3 "$LIMEN_ROOT/scripts/rebalance.py" --lanes "$EFFECTIVE_LANES" --apply 2>&1 | tail -1 || true
-                           else
-                             echo "no live local lanes available for rebalance"
-                           fi; }
-    # proprioception stamps — record that these voices played this beat (route rides the balance voice)
-    play "$C_DRAIN"   && stamp drain
-    play "$C_FEED"    && stamp feed
-    play "$C_BALANCE" && stamp balance
+      # #11: RELEASE the queue-lock BEFORE the slow dispatch so supervisors (seed / heal / verify)
+      # aren't starved through the multi-minute run. dispatch-parallel.py now self-acquires the
+      # SAME lockdir around its reserve AND reloads-fresh+commits under it — so nothing races
+      # tasks.yaml, and a seed written mid-run survives instead of being clobbered.
+      rmdir "$LOCKD" 2>/dev/null || true
 
-    # #11: RELEASE the queue-lock BEFORE the slow dispatch so supervisors (seed / heal / verify)
-    # aren't starved through the multi-minute run. dispatch-parallel.py now self-acquires the
-    # SAME lockdir around its reserve AND reloads-fresh+commits under it — so nothing races
-    # tasks.yaml, and a seed written mid-run survives instead of being clobbered.
-    rmdir "$LOCKD" 2>/dev/null || true
-
-    # BUILD — dispatch every beat. Default = SYNC parallel (reserve→run→commit, beat waits for the
-    # slowest agent). Opt in to ASYNC (LIMEN_DISPATCH_ASYNC=1): fire detached workers + harvest
-    # finished runs → fast beats, a slow agent never gates the beat (the throughput 10x). Async is
-    # OFF by default; flip the env + restart between beats to enable. See dispatch-async.py.
-    _dt0=$SECONDS
-    if [ "${LIMEN_DISPATCH_ASYNC:-0}" = "1" ]; then
-      out="$(dispatch_bounded python3 "$LIMEN_ROOT/scripts/dispatch-async.py" --lanes "$EFFECTIVE_LANES,jules" \
-              --per-lane "$LOCAL_LIMIT" --max "${LIMEN_ASYNC_MAX:-12}" 2>&1)"; _drc=$?
+      # BUILD — dispatch every beat. Default = SYNC parallel (reserve→run→commit, beat waits for the
+      # slowest agent). Opt in to ASYNC (LIMEN_DISPATCH_ASYNC=1): fire detached workers + harvest
+      # finished runs → fast beats, a slow agent never gates the beat (the throughput 10x). Async is
+      # OFF by default; flip the env + restart between beats to enable. See dispatch-async.py.
+      if [ "$VITALS_PRESSURE" = "1" ]; then
+        echo "── vitals-pressure: dispatch skipped; merge/heal/status organs already ran ──"
+      else
+        _dt0=$SECONDS
+        if [ "${LIMEN_DISPATCH_ASYNC:-0}" = "1" ]; then
+          out="$(dispatch_bounded python3 "$LIMEN_ROOT/scripts/dispatch-async.py" --lanes "$EFFECTIVE_LANES,jules" \
+                  --per-lane "$LOCAL_LIMIT" --max "${LIMEN_ASYNC_MAX:-12}" 2>&1)"; _drc=$?
+        else
+          out="$(dispatch_bounded python3 "$LIMEN_ROOT/scripts/dispatch-parallel.py" --lanes "$EFFECTIVE_LANES,jules" \
+                  --per-lane "$LOCAL_LIMIT" --workers "${LIMEN_WORKERS:-8}" 2>&1)"; _drc=$?
+        fi
+        # timeout(1) exits 124 (TERM) or 128+9=137 (our -s KILL) when the ceiling fires → a lane run
+        # blew past its per-lane bound and dispatch.py's Python timeout failed to kill it. SURFACE it
+        # loudly so the regression is visible in the beat log (and to the watchdog) instead of a silent
+        # ~90min dark window; the beat is already UNBLOCKED (dispatch was SIGKILLed). ([[no-never-happens-again]])
+        if [ "$_drc" = 137 ] || [ "$_drc" = 124 ]; then
+          echo "── ⚠ DISPATCH CEILING HIT after ${LIMEN_DISPATCH_CEILING}s (beat dispatch took $((SECONDS-_dt0))s) — a lane run exceeded its bound and was SIGKILLed; beat unblocked. Per-lane timeout failed to fire → investigate dispatch.py _run_capture. ──"
+        fi
+        echo "$out" | tail -8
+        echo "$out" | grep -qE "→ PR|dispatched/PR|  dispatched:|launched|harvested" && worked=1
+        stamp dispatch
+      fi
     else
-      out="$(dispatch_bounded python3 "$LIMEN_ROOT/scripts/dispatch-parallel.py" --lanes "$EFFECTIVE_LANES,jules" \
-              --per-lane "$LOCAL_LIMIT" --workers "${LIMEN_WORKERS:-8}" 2>&1)"; _drc=$?
+      echo "── queue lock held by a supervisor — skipping mutation this beat ──"
     fi
-    # timeout(1) exits 124 (TERM) or 128+9=137 (our -s KILL) when the ceiling fires → a lane run
-    # blew past its per-lane bound and dispatch.py's Python timeout failed to kill it. SURFACE it
-    # loudly so the regression is visible in the beat log (and to the watchdog) instead of a silent
-    # ~90min dark window; the beat is already UNBLOCKED (dispatch was SIGKILLed). ([[no-never-happens-again]])
-    if [ "$_drc" = 137 ] || [ "$_drc" = 124 ]; then
-      echo "── ⚠ DISPATCH CEILING HIT after ${LIMEN_DISPATCH_CEILING}s (beat dispatch took $((SECONDS-_dt0))s) — a lane run exceeded its bound and was SIGKILLed; beat unblocked. Per-lane timeout failed to fire → investigate dispatch.py _run_capture. ──"
-    fi
-    echo "$out" | tail -8
-    echo "$out" | grep -qE "→ PR|dispatched/PR|  dispatched:|launched|harvested" && worked=1
-    stamp dispatch
-  else
-    echo "── queue lock held by a supervisor — skipping mutation this beat ──"
-  fi
 
   # RECONCILE — outside the queue-lock (heal-dispatch self-acquires it, so it must NOT run
   # under the daemon's lock or it would deadlock). Verify claimed dispatches vs real PR state,
   # then flip phantom → done/open so the funnel self-clears and the open pool refills each cycle.
-  play "$C_HEAL" && { python3 "$LIMEN_ROOT/scripts/verify-dispatch.py" 2>&1 | tail -1 || true
+  due_voice heal "$C_HEAL" && { python3 "$LIMEN_ROOT/scripts/verify-dispatch.py" 2>&1 | tail -1 || true
                       python3 "$LIMEN_ROOT/scripts/heal-dispatch.py" --apply 2>&1 | tail -1 || true
                       # LEDGER — weigh the RETURN on every newly-resolved task (the credit side), then
                       # roll up the value verdict (which lane earns its keep / what was sunk money).
                       python3 "$LIMEN_ROOT/scripts/score-dispatch.py" 2>&1 | tail -1 || true
                       python3 "$LIMEN_ROOT/scripts/ledger.py" 2>&1 | tail -1 || true; }
-  play "$C_HEAL"    && stamp heal
-  play "$C_HYGIENE" && bash "$LIMEN_ROOT/scripts/clone-maintenance.sh" 2>&1 | tail -3 || true
-  play "$C_HYGIENE" && bash "$LIMEN_ROOT/scripts/heal-claude-update-marker.sh" 2>&1 | tail -1 || true
-  play "$C_HYGIENE" && stamp hygiene
+  due_voice heal "$C_HEAL"    && stamp heal
+  due_voice hygiene "$C_HYGIENE" && bash "$LIMEN_ROOT/scripts/clone-maintenance.sh" 2>&1 | tail -3 || true
+  due_voice hygiene "$C_HYGIENE" && bash "$LIMEN_ROOT/scripts/heal-claude-update-marker.sh" 2>&1 | tail -1 || true
+  due_voice hygiene "$C_HYGIENE" && stamp hygiene
   python3 "$LIMEN_ROOT/scripts/emit-tick.py" 2>&1 | tail -1 || true   # tick voice — every beat
   stamp tick
   python3 "$LIMEN_ROOT/scripts/organ-health.py" 2>&1 | tail -1 || true   # PROPRIOCEPTION — EVERY beat: the health face must never lag the organs it watches. route stamps on C_BALANCE=2, feed on C_FEED=3, but C_WEB=4, so on the old web cadence the face showed stale "unknown" for rungs that were already green (and a restart-to-beat-2 froze it until beat 4). Cheapest renderer: read-only, no network, can't time out — belongs with the tick.
@@ -350,11 +371,11 @@ while true; do
   play "$C_INSIGHT_CADENCE" && python3 "$LIMEN_ROOT/scripts/insight-cadence.py" --once 2>&1 | tail -1 || true  # INSIGHT-CADENCE: draft insight reports at four wall-clock cadences
   # HEALTH — the personal health office (chart digest + visit-prep + clinical-loop chase; PII stays
   # local, off-repo; lockless, read-only). Refreshes the office every C_HEALTH beats. Fail-open.
-  play "$C_HEALTH"  && { python3 "$LIMEN_ROOT/scripts/health-organ.py" 2>&1 | tail -1 || true; stamp health; }
+  due_voice health "$C_HEALTH"  && { python3 "$LIMEN_ROOT/scripts/health-organ.py" 2>&1 | tail -1 || true; stamp health; }
   # LIFE — the digital-life office (accounts/assets/subscriptions; PII stays local, off-repo;
   # lockless, read-only). Refreshes the life briefing + open-actions + derives the subscription
   # purge clock every C_LIFE beats. Fail-open.
-  play "$C_LIFE"    && { python3 "$LIMEN_ROOT/scripts/life-organ.py" 2>&1 | tail -1 || true; stamp life; }
+  due_voice life "$C_LIFE"    && { python3 "$LIMEN_ROOT/scripts/life-organ.py" 2>&1 | tail -1 || true; stamp life; }
   # WALLS — regenerate the credential Wall (#320) + his-hand aggregate Wall (#330) every C_WALLS beats
   # so the published walls never drift from reality. Idempotent (writes only on change), fail-open.
   play "$C_WALLS"   && { python3 "$LIMEN_ROOT/scripts/credential-wall.py" --sync 2>&1 | tail -1 || true
@@ -450,7 +471,7 @@ while true; do
   # register one truth, it lands everywhere, forever. Idempotent (writes only on change → NO git churn),
   # no network, no tokens, can't time out. Default-ON (LIMEN_EVOCATOR=1; set 0 to roll back) — a portal
   # that doesn't run isn't a portal. Bounded + fail-open — never gates the beat.
-  if play "$C_EVOCATOR" && [ "${LIMEN_EVOCATOR:-1}" = "1" ]; then
+  if due_voice evocator "$C_EVOCATOR" && [ "${LIMEN_EVOCATOR:-1}" = "1" ]; then
     python3 "$LIMEN_ROOT/scripts/evocator.py" --apply 2>&1 | tail -2 || true
     stamp evocator
   fi

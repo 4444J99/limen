@@ -16,6 +16,10 @@ PY="$LIMEN_ROOT/cli/src"
 # re-reads this script fresh each beat, so sourcing ~/.limen.env HERE lets an organ be switched
 # on/off live without restarting the heartbeat. Existence-guarded; set -a exports the vars.
 [ -f "$HOME/.limen.env" ] && { set -a; . "$HOME/.limen.env"; set +a; }
+stamp_voice() {
+  mkdir -p "$LIMEN_ROOT/logs/.voice" 2>/dev/null || true
+  printf '%s\n' "$(date -u +%FT%TZ)" > "$LIMEN_ROOT/logs/.voice/$1" 2>/dev/null || true
+}
 
 echo "[drain] pulling completed Jules sessions…"
 python3 "$LIMEN_ROOT/scripts/harvest-pull-completed.py" 2>&1 | tail -4 || true
@@ -41,6 +45,7 @@ if [ "${LIMEN_MERGE_DRAIN:-1}" = "1" ]; then
   echo "[drain] merging READY PRs (scan ${LIMEN_MERGE_SCAN:-30}, limit ${LIMEN_MERGE_LIMIT:-10})…"
   PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/merge-drain.py" \
       --scan "${LIMEN_MERGE_SCAN:-30}" --limit "${LIMEN_MERGE_LIMIT:-10}" 2>&1 | tail -3 || true
+  stamp_voice merge
 fi
 
 # SELF-HEAL — emit targeted heal tasks for the PRs merge-drain just REFUSED (CI-RED / CONFLICT)
