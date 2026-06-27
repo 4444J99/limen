@@ -150,6 +150,8 @@ def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch):
     disp = [t.id for t in lf.tasks if t.status == "dispatched"]
     assert len(disp) > 3, "accelerator dispatched more than the base 3 toward the cliff"
     assert all(i.startswith("REV") for i in disp), f"tail must be win-class only, got {disp}"
+    assert all(t.dispatch_log[-1].status == "dispatched" for t in lf.tasks if t.status == "dispatched")
+    assert all(t.dispatch_log[-1].session_id == "reserve" for t in lf.tasks if t.status == "dispatched")
     _ = picked
 
 

@@ -27,6 +27,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
+from limen.models import DispatchLogEntry  # noqa: E402
 from limen.dispatch import _queue_lock, _apply_result, _down_lanes, _PRIORITY_ORDER, _deps_met  # noqa: E402
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
@@ -139,6 +140,13 @@ def reserve_and_launch(agents, per_agent, cap, dry):
                 if not dry:
                     t.status = "dispatched"
                     t.updated = now
+                    t.dispatch_log.append(DispatchLogEntry(
+                        timestamp=now,
+                        agent=agent,
+                        session_id="async-reserve",
+                        status="dispatched",
+                        output="dispatch-async: reserved before detached worker launch",
+                    ))
                 slots -= 1
                 taken += 1
         if not dry and picked:

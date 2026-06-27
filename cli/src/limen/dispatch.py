@@ -1471,6 +1471,15 @@ def dispatch_parallel(
                 continue
             t.status = "dispatched"  # reserve so nothing else grabs it
             t.updated = now
+            t.dispatch_log.append(
+                DispatchLogEntry(
+                    timestamp=now,
+                    agent=agent,
+                    session_id="reserve",
+                    status="dispatched",
+                    output="dispatch-parallel: reserved before agent execution",
+                )
+            )
             picked.append((agent, t.id))
 
     if dry_run:

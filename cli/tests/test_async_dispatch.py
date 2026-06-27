@@ -76,6 +76,8 @@ def test_reserve_and_launch_marks_and_spawns(tmp_path, monkeypatch):
     assert len(picked) == 2 and len(calls) == 2
     dispatched = [t for t in load_limen_file(tmp_path / "tasks.yaml").tasks if t.status == "dispatched"]
     assert len(dispatched) == 2
+    assert all(t.dispatch_log[-1].status == "dispatched" for t in dispatched)
+    assert all(t.dispatch_log[-1].session_id == "async-reserve" for t in dispatched)
     assert len(list(da.RUNS.glob("*__codex.running"))) == 2
 
 

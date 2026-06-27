@@ -37268,7 +37268,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - agent-fix
   - P2
@@ -37282,7 +37282,7 @@ tasks:
     Reject session-start calls that do'
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-27T00:14:44.620267Z'
+  updated: '2026-06-27T01:19:14.038132Z'
   dispatch_log:
   - timestamp: '2026-06-22T03:01:00.689305Z'
     agent: gemini
@@ -37306,6 +37306,12 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: jules
+    session_id: reserve-backfill
+    status: dispatched
+    output: Backfilled missing dispatch reservation log after reserve-path audit;
+      original lane may predate durable reserve logging.
 - id: GH-4444j99-hokage-chess-48
   title: "[V-B] Phase 3 \u2014 substrate-doc canonical-home promotion + seed.yaml\
     \ normalization"
@@ -37810,7 +37816,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - agent-fix
   - P2
@@ -37823,7 +37829,7 @@ tasks:
     \ (verified: SKILL.md + assets + scripts). ## Fix"
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-27T00:14:44.620267Z'
+  updated: '2026-06-27T01:19:14.038132Z'
   dispatch_log:
   - timestamp: '2026-06-22T03:35:38.489610Z'
     agent: gemini
@@ -37847,6 +37853,12 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: jules
+    session_id: reserve-backfill
+    status: dispatched
+    output: Backfilled missing dispatch reservation log after reserve-path audit;
+      original lane may predate durable reserve logging.
 - id: GH-4444j99-hokage-chess-14
   title: '[AF-3] Deepen Stratum 2 timeslices (real research, not seed prose)'
   repo: 4444J99/hokage-chess
@@ -44937,7 +44949,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - discover
   - value-discovery
@@ -44956,7 +44968,7 @@ tasks:
     \ the thesis. [auto-discovery 2026-06-22; no repo stays dark]"
   depends_on: []
   created: '2026-06-22'
-  updated: '2026-06-27T00:14:44.620267Z'
+  updated: '2026-06-27T01:19:14.038132Z'
   dispatch_log:
   - timestamp: '2026-06-22T17:21:07.408453Z'
     agent: gemini
@@ -44980,6 +44992,12 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: jules
+    session_id: reserve-backfill
+    status: dispatched
+    output: Backfilled missing dispatch reservation log after reserve-path audit;
+      original lane may predate durable reserve logging.
 - id: DISCOVER-organvm-search-local--happy-hour
   title: Discover the latent value of organvm/search-local--happy-hour
   repo: organvm/search-local--happy-hour
@@ -50117,7 +50135,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -50129,7 +50147,7 @@ tasks:
     keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-27T00:50:23.253355Z'
+  updated: '2026-06-27T01:19:14.038132Z'
   dispatch_log:
   - timestamp: '2026-06-24T13:05:57.998424Z'
     agent: jules
@@ -50149,6 +50167,12 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: limen
+    session_id: reserve-backfill
+    status: dispatched
+    output: Backfilled missing dispatch reservation log after reserve-path audit;
+      original lane may predate durable reserve logging.
 - id: GEN-organvm-session-meta-test-coverage-0624
   title: Raise test coverage in organvm/session-meta
   repo: organvm/session-meta
@@ -50156,7 +50180,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -50168,7 +50192,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-27T00:50:23.253355Z'
+  updated: '2026-06-27T01:19:14.038132Z'
   dispatch_log:
   - timestamp: '2026-06-24T13:05:57.998424Z'
     agent: jules
@@ -50188,6 +50212,12 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: limen
+    session_id: reserve-backfill
+    status: dispatched
+    output: Backfilled missing dispatch reservation log after reserve-path audit;
+      original lane may predate durable reserve logging.
 - id: GEN-organvm-mirror-mirror-test-coverage-0624
   title: Raise test coverage in organvm/mirror-mirror
   repo: organvm/mirror-mirror
@@ -51514,7 +51544,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - simplify
   - generated
@@ -51525,7 +51555,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-27T00:50:23.253355Z'
+  updated: '2026-06-27T01:19:14.038132Z'
   dispatch_log:
   - timestamp: '2026-06-24T13:50:16.953010Z'
     agent: jules
@@ -51545,6 +51575,12 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: limen
+    session_id: reserve-backfill
+    status: dispatched
+    output: Backfilled missing dispatch reservation log after reserve-path audit;
+      original lane may predate durable reserve logging.
 - id: GEN-organvm-public-record-data-scrapper-simplify-0624
   title: Reduce complexity in organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
@@ -51552,7 +51588,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - simplify
   - generated
@@ -51563,7 +51599,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-27T00:50:23.253355Z'
+  updated: '2026-06-27T01:19:14.038132Z'
   dispatch_log:
   - timestamp: '2026-06-24T13:50:16.953010Z'
     agent: jules
@@ -51579,6 +51615,12 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: limen
+    session_id: reserve-backfill
+    status: dispatched
+    output: Backfilled missing dispatch reservation log after reserve-path audit;
+      original lane may predate durable reserve logging.
 - id: GEN-organvm-a-i-chat--exporter-simplify-0624
   title: Reduce complexity in organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
@@ -52113,7 +52155,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue
   - close-the-cliff
@@ -52127,7 +52169,7 @@ tasks:
     \ billing) with its cheapest path. Bounded: stop at first reviewable PR per repo."
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T01:13:47.318340Z'
+  updated: '2026-06-27T01:19:14.038132Z'
   dispatch_log:
   - timestamp: '2026-06-26T23:58:21.192297Z'
     agent: codex
@@ -52142,6 +52184,12 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: agy
+    session_id: reserve-backfill
+    status: dispatched
+    output: Backfilled missing dispatch reservation log after reserve-path audit;
+      original lane may predate durable reserve logging.
 - id: ORGAN-revive-stale-fleet
   title: Diagnose & revive stale organs (merge, heal, vigilia, evocator, health, life,
     hygiene)
@@ -53183,7 +53231,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - security
   - generated
@@ -53195,7 +53243,7 @@ tasks:
     2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T00:50:23.253355Z'
+  updated: '2026-06-27T01:19:14.038132Z'
   dispatch_log:
   - timestamp: '2026-06-27T00:17:34.556008Z'
     agent: claude
@@ -53206,6 +53254,12 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: limen
+    session_id: reserve-backfill
+    status: dispatched
+    output: Backfilled missing dispatch reservation log after reserve-path audit;
+      original lane may predate durable reserve logging.
 - id: GEN-organvm-mirror-mirror-security-0626
   title: Security hardening pass on organvm/mirror-mirror
   repo: organvm/mirror-mirror
@@ -53265,6 +53319,12 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-27T00:45:06.029054Z'
+    agent: jules
+    session_id: reserve-backfill
+    status: dispatched
+    output: Backfilled missing dispatch reservation log after reserve-path audit;
+      original lane may predate durable reserve logging.
 - id: GEN-organvm-session-meta-security-0626
   title: Security hardening pass on organvm/session-meta
   repo: organvm/session-meta
@@ -53291,6 +53351,12 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-27T00:45:06.029054Z'
+    agent: jules
+    session_id: reserve-backfill
+    status: dispatched
+    output: Backfilled missing dispatch reservation log after reserve-path audit;
+      original lane may predate durable reserve logging.
 - id: GEN-organvm-a-i-chat--exporter-security-0626
   title: Security hardening pass on organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
@@ -53317,6 +53383,12 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-27T00:45:06.029054Z'
+    agent: jules
+    session_id: reserve-backfill
+    status: dispatched
+    output: Backfilled missing dispatch reservation log after reserve-path audit;
+      original lane may predate durable reserve logging.
 - id: GEN-organvm-universal-mail--automation-security-0626
   title: Security hardening pass on organvm/universal-mail--automation
   repo: organvm/universal-mail--automation
@@ -53324,7 +53396,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - security
   - generated
@@ -53336,7 +53408,7 @@ tasks:
     green. [auto-generated 2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T00:50:23.253355Z'
+  updated: '2026-06-27T01:19:14.038132Z'
   dispatch_log:
   - timestamp: '2026-06-27T00:17:34.556008Z'
     agent: jules
@@ -53347,6 +53419,12 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: limen
+    session_id: reserve-backfill
+    status: dispatched
+    output: Backfilled missing dispatch reservation log after reserve-path audit;
+      original lane may predate durable reserve logging.
 - id: GEN-organvm-public-record-data-scrapper-security-0626
   title: Security hardening pass on organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
@@ -53354,7 +53432,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - security
   - generated
@@ -53366,13 +53444,19 @@ tasks:
     green. [auto-generated 2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T01:13:47.318340Z'
+  updated: '2026-06-27T01:19:14.038132Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: limen
+    session_id: reserve-backfill
+    status: dispatched
+    output: Backfilled missing dispatch reservation log after reserve-path audit;
+      original lane may predate durable reserve logging.
 - id: GEN-organvm-limen-security-0626
   title: Security hardening pass on organvm/limen
   repo: organvm/limen
@@ -53380,7 +53464,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - security
   - generated
@@ -53392,13 +53476,19 @@ tasks:
     2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T01:13:47.318340Z'
+  updated: '2026-06-27T01:19:14.038132Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: limen
+    session_id: reserve-backfill
+    status: dispatched
+    output: Backfilled missing dispatch reservation log after reserve-path audit;
+      original lane may predate durable reserve logging.
 - id: GEN-organvm-the-invisible-ledger-simplify-0626
   title: Reduce complexity in organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
@@ -53653,7 +53743,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue-ship
   - revenue
@@ -53668,13 +53758,19 @@ tasks:
     \ rank 3, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T01:13:47.318340Z'
+  updated: '2026-06-27T01:19:14.038132Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: limen
+    session_id: reserve-backfill
+    status: dispatched
+    output: Backfilled missing dispatch reservation log after reserve-path audit;
+      original lane may predate durable reserve logging.
 - id: REV-organvm-the-invisible-ledger-revenue-ship-0626
   title: Drive The Invisible Ledger to deploy-ready
   repo: organvm/the-invisible-ledger
@@ -53682,7 +53778,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: open
+  status: in_progress
   labels:
   - revenue-ship
   - revenue
@@ -53697,7 +53793,7 @@ tasks:
     \ rank 4, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T01:13:47.318340Z'
+  updated: '2026-06-27T01:19:14.038132Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
@@ -53711,7 +53807,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue-ship
   - revenue
@@ -53726,13 +53822,19 @@ tasks:
     \ stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T01:13:47.318340Z'
+  updated: '2026-06-27T01:19:14.038132Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: limen
+    session_id: reserve-backfill
+    status: dispatched
+    output: Backfilled missing dispatch reservation log after reserve-path audit;
+      original lane may predate durable reserve logging.
 - id: REV-organvm-public-record-data-scrapper-revenue-ship-0626
   title: Drive Public Record Data Scraper to deploy-ready
   repo: organvm/public-record-data-scrapper
@@ -53740,7 +53842,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: open
+  status: in_progress
   labels:
   - revenue-ship
   - revenue
@@ -53755,13 +53857,19 @@ tasks:
     \ rank 2, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T01:13:47.318340Z'
+  updated: '2026-06-27T01:19:14.038132Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T00:00:00Z'
+    agent: opencode
+    session_id: current
+    status: in_progress
+    output: 'Claimed task: Drive Public Record Data Scraper to deploy-ready. Starting
+      exploration.'
 - id: REV-organvm-a-i-chat--exporter-revenue-pro-tier-0626
   title: Make the Pro-tier checkout merge-ready for ChatGPT Exporter
   repo: organvm/a-i-chat--exporter
@@ -53804,7 +53912,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue-readiness
   - revenue
@@ -53819,13 +53927,19 @@ tasks:
     \ 3, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T01:13:47.318340Z'
+  updated: '2026-06-27T01:19:14.038132Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: limen
+    session_id: reserve-backfill
+    status: dispatched
+    output: Backfilled missing dispatch reservation log after reserve-path audit;
+      original lane may predate durable reserve logging.
 - id: REV-organvm-the-invisible-ledger-revenue-readiness-0626
   title: First-paying-customer readiness pass on The Invisible Ledger
   repo: organvm/the-invisible-ledger
@@ -53833,7 +53947,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue-readiness
   - revenue
@@ -53848,13 +53962,19 @@ tasks:
     \ spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T01:13:47.318340Z'
+  updated: '2026-06-27T01:19:14.038132Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: limen
+    session_id: reserve-backfill
+    status: dispatched
+    output: Backfilled missing dispatch reservation log after reserve-path audit;
+      original lane may predate durable reserve logging.
 - id: REV-organvm-mirror-mirror-revenue-readiness-0626
   title: First-paying-customer readiness pass on Mirror Mirror
   repo: organvm/mirror-mirror
@@ -53862,7 +53982,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue-readiness
   - revenue
@@ -53877,13 +53997,19 @@ tasks:
     \ tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T01:13:47.318340Z'
+  updated: '2026-06-27T01:19:14.038132Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: limen
+    session_id: reserve-backfill
+    status: dispatched
+    output: Backfilled missing dispatch reservation log after reserve-path audit;
+      original lane may predate durable reserve logging.
 - id: REV-organvm-public-record-data-scrapper-revenue-readiness-0626
   title: First-paying-customer readiness pass on Public Record Data Scraper
   repo: organvm/public-record-data-scrapper
@@ -53891,7 +54017,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue-readiness
   - revenue
@@ -53906,13 +54032,19 @@ tasks:
     \ rank 2, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T01:13:47.318340Z'
+  updated: '2026-06-27T01:19:14.038132Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: limen
+    session_id: reserve-backfill
+    status: dispatched
+    output: Backfilled missing dispatch reservation log after reserve-path audit;
+      original lane may predate durable reserve logging.
 - id: REV-organvm-a-i-chat--exporter-revenue-landing-0626
   title: Ship a landing page for ChatGPT Exporter
   repo: organvm/a-i-chat--exporter
@@ -53920,7 +54052,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue-landing
   - revenue
@@ -53935,13 +54067,19 @@ tasks:
     \ 1, stage deploy-ready \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T01:13:47.318340Z'
+  updated: '2026-06-27T01:19:14.038132Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: limen
+    session_id: reserve-backfill
+    status: dispatched
+    output: Backfilled missing dispatch reservation log after reserve-path audit;
+      original lane may predate durable reserve logging.
 - id: REV-organvm-a-i-chat--exporter-revenue-launch-post-0626
   title: Draft the build-in-public launch post for ChatGPT Exporter
   repo: organvm/a-i-chat--exporter
@@ -53949,7 +54087,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue-launch-post
   - revenue
@@ -53964,10 +54102,16 @@ tasks:
     \ spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T01:13:47.318340Z'
+  updated: '2026-06-27T01:19:14.038132Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: limen
+    session_id: reserve-backfill
+    status: dispatched
+    output: Backfilled missing dispatch reservation log after reserve-path audit;
+      original lane may predate durable reserve logging.
