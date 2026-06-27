@@ -48,8 +48,22 @@ jobs:
       - name: Compile Python modules
         run: python -m py_compile web/api/main.py cli/src/limen/*.py
 
-      - name: Check shell scripts
-        run: bash -n scripts/preflight-cloud-run.sh
+      - name: Shell syntax check (bash -n) on all shell scripts
+        run: |
+          find . -name "*.sh" \
+            -not -path "*/node_modules/*" \
+            -not -path "*/.venv/*" \
+            -not -path "*/.git/*" \
+            -exec bash -n {} +
+
+      - name: ShellCheck static analysis
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+          shellcheck -S error \
+            $(find . -name "*.sh" \
+              -not -path "*/node_modules/*" \
+              -not -path "*/.venv/*" \
+              -not -path "*/.git/*")
 
       - name: Validate naming canon (NOMENCLATOR · INDEX·NOMINVM)
         run: python scripts/nomenclator.py

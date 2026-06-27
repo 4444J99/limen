@@ -15,9 +15,9 @@ portal:
       claude: 100
     track:
       date: '2026-06-27'
-      spent: 33
+      spent: 37
       per_agent:
-        jules: 12
+        jules: 16
         gemini: 0
         codex: 12
         opencode: 1
@@ -3631,7 +3631,7 @@ tasks:
     session_id: heal
     status: done
     output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
-- id: LIMEN-063
+- id: LIMEN-063-corpus-knowledge-graph
   title: 'feat: corpus knowledge graph module (organvm corpus)'
   repo: organvm/organvm-engine
   type: code
@@ -45502,13 +45502,14 @@ tasks:
   title: Discover the latent value of organvm/visual-substrate-inquiry
   repo: organvm/visual-substrate-inquiry
   type: research
-  target_agent: codex
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: dispatched
   labels:
   - discover
   - value-discovery
+  - tried:codex
   urls: []
   context: "DISCOVER the latent value of organvm/visual-substrate-inquiry. This repo\
     \ currently has NO ranked value \u2014 your job is to find it (value is discovered,\
@@ -45524,7 +45525,7 @@ tasks:
     \ the thesis. [auto-discovery 2026-06-22; no repo stays dark]"
   depends_on: []
   created: '2026-06-22'
-  updated: '2026-06-27T02:02:20.159089Z'
+  updated: '2026-06-27T02:20:15.165138Z'
   dispatch_log:
   - timestamp: '2026-06-24T02:29:59.487830Z'
     agent: opencode
@@ -45665,6 +45666,15 @@ tasks:
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
   - timestamp: '2026-06-27T02:02:20.159089Z'
     agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: opencode
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
@@ -46292,6 +46302,10 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: jules
+    session_id: '7867358713778458431'
+    status: dispatched
 - id: DISCOVER-organvm-scale-threshold-emergence
   title: Discover the latent value of organvm/scale-threshold-emergence
   repo: organvm/scale-threshold-emergence
@@ -46689,7 +46703,7 @@ tasks:
       \ (revelation, law, exile, divine-intervention, sacrifice, kingship, plague,\
       \ return) + adaptations overlay. File studium/film/tanakh.yaml landed via PR\
       \ #116 (merged by Anthony). scripts/studium-validate.py passes (no tanakh violations)."
-- id: LIMEN-033
+- id: studium-deepen-bhagavad-gita-02-04
   title: 'studium-deepen-bhagavad-gita: Bhagavad Gita chapters 2-4 arcs and essays'
   repo: organvm/limen
   type: studium
@@ -47854,6 +47868,10 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: jules
+    session_id: '61536204880199114'
+    status: dispatched
 - id: studium-deepen-bhagavad-gita
   title: "Bhagavad Gita \u2014 chapters 2..18 (17 arcs)"
   repo: organvm/limen
@@ -48153,7 +48171,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - studium
   - content
@@ -48168,7 +48186,7 @@ tasks:
     \ track forces; no intra-arc duplicate pieces). One green PR."
   depends_on: []
   created: '2026-06-23'
-  updated: '2026-06-27T00:14:44.620267Z'
+  updated: '2026-06-27T02:20:15.165138Z'
   dispatch_log:
   - timestamp: '2026-06-24T04:59:14.502431Z'
     agent: claude
@@ -48191,6 +48209,11 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: studium-corpus-tier2
   title: Fetch Tier-2 originals where public-domain (Upanishads/Shijing/Kojiki/Rumi-Hafez/Honglou-meng)
     from their source rails
@@ -48199,7 +48222,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - studium
   - content
@@ -48214,7 +48237,7 @@ tasks:
     no intra-arc duplicate pieces). One green PR.'
   depends_on: []
   created: '2026-06-23'
-  updated: '2026-06-27T00:14:44.620267Z'
+  updated: '2026-06-27T02:20:15.165138Z'
   dispatch_log:
   - timestamp: '2026-06-24T04:59:14.502431Z'
     agent: claude
@@ -48233,6 +48256,11 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: studium-film-odyssey
   title: Odyssey film companion (return/exile/recognition)
   repo: organvm/limen
@@ -48240,7 +48268,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - studium
   - content
@@ -48256,7 +48284,7 @@ tasks:
     green PR.'
   depends_on: []
   created: '2026-06-23'
-  updated: '2026-06-27T00:14:44.620267Z'
+  updated: '2026-06-27T02:20:15.165138Z'
   dispatch_log:
   - timestamp: '2026-06-24T04:59:14.502431Z'
     agent: claude
@@ -48299,6 +48327,11 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: studium-film-aeneid
   title: Aeneid film companion (empire/fate/sacrifice)
   repo: organvm/limen
@@ -50928,7 +50961,7 @@ tasks:
   target_agent: any
   priority: low
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - docs
   - generated
@@ -50940,13 +50973,18 @@ tasks:
     \ 2026-06-24 to keep the stream endless]"
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-27T00:50:23.253355Z'
+  updated: '2026-06-27T02:20:15.165138Z'
   dispatch_log:
   - timestamp: '2026-06-27T00:50:23.253355Z'
     agent: limen
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-portfolio-docs-0624
   title: Real usage docs for organvm/portfolio
   repo: organvm/portfolio
@@ -51825,14 +51863,15 @@ tasks:
   title: Reduce complexity in organvm/styx
   repo: organvm/styx
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - simplify
   - generated
   - build-out
+  - tried:codex
   urls: []
   context: Identify the most complex or most-duplicated module in organvm/styx and
     refactor it for clarity, with tests proving behavior is unchanged. Net lines should
@@ -51860,6 +51899,10 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
 - id: GEN-organvm-limen-simplify-0624
   title: Reduce complexity in organvm/limen
   repo: organvm/limen
@@ -51903,10 +51946,10 @@ tasks:
   title: Tighten types in organvm/domus-genoma
   repo: organvm/domus-genoma
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - typing
   - generated
@@ -51938,6 +51981,10 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
 - id: GEN-organvm-portfolio-typing-0624
   title: Tighten types in organvm/portfolio
   repo: organvm/portfolio
@@ -52067,11 +52114,13 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: archived
   labels:
   - typing
   - generated
   - build-out
+  - cancelled
+  - noop
   urls: []
   context: Eliminate the worst untyped hotspots in organvm/public-record-data-scrapper's
     most-imported module (remove `any` / add type hints / fix loose signatures). Keep
@@ -52094,6 +52143,11 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: opencode
+    session_id: cli
+    status: archived
+    output: No-op result; archived without requeueing.
 - id: GEN-organvm-a-i-chat--exporter-typing-0624
   title: Tighten types in organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
@@ -52203,10 +52257,10 @@ tasks:
   title: Tighten types in organvm/limen
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - typing
   - generated
@@ -52233,6 +52287,10 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
 - id: ASK-quicken-login
   title: 'one login/identity step (your hand: browser/OAuth/portal)'
   type: ops
@@ -52259,7 +52317,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 2
-  status: done
+  status: dispatched
   labels:
   - refactor
   - complexity
@@ -52272,7 +52330,7 @@ tasks:
     \ tests green."
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-24T14:40:00Z'
+  updated: '2026-06-27T02:20:15.165138Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:40:00Z'
     agent: opencode
@@ -52281,6 +52339,15 @@ tasks:
     output: "dispatch.py: 1166\u21921081 lines (\u22127.3%). Removed _queue_lock duplicate,\
       \ inner import clutter, and inline result-handling duplicate (unified via _apply_result).\
       \ 22 dispatch tests + 16 dependent tests all green."
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: EDU-summer-live-date-handoff
   title: Assemble the summer-2026 live-D2L date paste-list + drafted student replies
     into one handoff
@@ -52313,7 +52380,7 @@ tasks:
 - id: REVENUE-exporter-first-dollar
   title: Drive live ChatGPT Exporter to first-$ rail (Sponsors + Pro tier)
   type: ops
-  target_agent: claude
+  target_agent: gemini
   priority: high
   budget_cost: 2
   status: dispatched
@@ -52322,6 +52389,7 @@ tasks:
   - close-the-cliff
   - exporter
   - tried:agy
+  - tried:claude
   urls: []
   context: "North-star Aug-1 $10k/wk: help EARN the last 10%. Per revenue-ship-order,\
     \ the fastest first-$ is monetizing the already-live ChatGPT Exporter via GitHub\
@@ -52331,7 +52399,7 @@ tasks:
     \ billing) with its cheapest path. Bounded: stop at first reviewable PR per repo."
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T02:02:20.159089Z'
+  updated: '2026-06-27T02:20:15.165138Z'
   dispatch_log:
   - timestamp: '2026-06-26T23:58:21.192297Z'
     agent: codex
@@ -52358,6 +52426,15 @@ tasks:
     status: failed->claude
   - timestamp: '2026-06-27T02:02:20.159089Z'
     agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: gemini
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
@@ -52401,8 +52478,10 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: done
-  labels: []
+  status: archived
+  labels:
+  - cancelled
+  - noop
   urls:
   - https://github.com/organvm/limen/issues/352
   context: "GitHub issue organvm/limen#352. ## Context During the 2026-06-26 stale-fork\
@@ -52413,7 +52492,7 @@ tasks:
     \ deliberately. ## What was on the fork (commit"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T02:08:00Z'
+  updated: '2026-06-27T02:02:20.159089Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
@@ -52438,6 +52517,11 @@ tasks:
     output: 'PR #364 already merged (commit 77d0f7a). All 4 files (doctor.py, capacity.py,
       models.py, status.py) already have TypedDicts and PEP-604 syntax. mypy passes
       on all 4. No additional work needed.'
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: opencode
+    session_id: cli
+    status: archived
+    output: No-op result; archived without requeueing.
 - id: GH-organvm-limen-334
   title: 'needs-human (L-FLEET-CAPACITY): Light the dark async lanes'
   repo: organvm/limen
@@ -52445,9 +52529,11 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: needs_human
+  status: archived
   labels:
   - needs-human
+  - cancelled
+  - noop
   urls:
   - https://github.com/organvm/limen/issues/334
   context: 'GitHub issue organvm/limen#334. **Owner:** Anthony (human-gated lever
@@ -52479,6 +52565,11 @@ tasks:
       \ registered in his-hand-levers.json. Remaining atoms (gemini, cloudflare, op\
       \ unlock) are human-gated \u2014 exit 0 from creds-hydrate --verify is the close\
       \ predicate."
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: opencode
+    session_id: cli
+    status: archived
+    output: No-op result; archived without requeueing.
 - id: GH-organvm-limen-333
   title: 'needs-human (L-GMAIL-CRED): Revive the autonomous mail lane with ONE paste'
   repo: organvm/limen
@@ -52486,9 +52577,11 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: done
+  status: archived
   labels:
   - needs-human
+  - cancelled
+  - noop
   urls:
   - https://github.com/organvm/limen/issues/333
   context: "GitHub issue organvm/limen#333. **Owner:** Anthony (human-gated lever\
@@ -52499,7 +52592,7 @@ tasks:
     \ nothing needs generating. This super"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T02:13:26.818189Z'
+  updated: '2026-06-27T02:02:20.159089Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
@@ -52516,6 +52609,11 @@ tasks:
     session_id: heal
     status: done
     output: 'board-heal: lever already closed in main; remove from dispatch surface'
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: agy
+    session_id: cli
+    status: archived
+    output: No-op result; archived without requeueing.
 - id: GH-organvm-limen-332
   title: 'needs-human (L-GH-LAUNCHD-077): Give gh a token under launchd'
   repo: organvm/limen
@@ -52523,9 +52621,11 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: done
+  status: archived
   labels:
   - needs-human
+  - cancelled
+  - noop
   urls:
   - https://github.com/organvm/limen/issues/332
   context: "GitHub issue organvm/limen#332. **Owner:** Anthony (human-gated lever\
@@ -52536,7 +52636,7 @@ tasks:
     \ works (organvm/organvm-engine). ### What it unlocks"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T02:13:26.818189Z'
+  updated: '2026-06-27T02:02:20.159089Z'
   dispatch_log:
   - timestamp: '2026-06-27T01:13:47.318340Z'
     agent: limen
@@ -52553,6 +52653,11 @@ tasks:
     session_id: heal
     status: done
     output: 'board-heal: lever already closed in main; remove from dispatch surface'
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: agy
+    session_id: cli
+    status: archived
+    output: No-op result; archived without requeueing.
 - id: GH-organvm-limen-331
   title: 'needs-human (L-CLOUDFLARE-DEPLOY): Cloudflare deploy auth'
   repo: organvm/limen
@@ -52560,9 +52665,11 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: done
+  status: archived
   labels:
   - needs-human
+  - cancelled
+  - noop
   urls:
   - https://github.com/organvm/limen/issues/331
   context: "GitHub issue organvm/limen#331. **Owner:** Anthony (human-gated lever\
@@ -52591,6 +52698,11 @@ tasks:
     session_id: heal
     status: done
     output: 'board-heal: append current status to reconcile latest transition log'
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: agy
+    session_id: cli
+    status: archived
+    output: No-op result; archived without requeueing.
 - id: GH-organvm-limen-330
   title: "\U0001F9F1 The Wall \u2014 everything that hangs on you (his-hand levers)"
   repo: organvm/limen
@@ -52598,9 +52710,11 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: needs_human
+  status: archived
   labels:
   - needs-human
+  - cancelled
+  - noop
   urls:
   - https://github.com/organvm/limen/issues/330
   context: "GitHub issue organvm/limen#330. **This is the single pinned index of everything\
@@ -52611,7 +52725,7 @@ tasks:
     \ this Wall covers the rest. *So"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T02:13:26.818189Z'
+  updated: '2026-06-27T02:02:20.159089Z'
   dispatch_log:
   - timestamp: '2026-06-27T02:02:20.159089Z'
     agent: claude
@@ -52624,6 +52738,11 @@ tasks:
     status: needs_human
     output: 'board-heal: needs-human label is non-dispatchable; surface to human,
       do not reserve'
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: claude
+    session_id: cli
+    status: archived
+    output: No-op result; archived without requeueing.
 - id: GH-organvm-limen-320
   title: "\U0001F9F1 The Wall \u2014 credential / login / API / env atoms: registered\
     \ home + tracking issue"
@@ -52632,9 +52751,11 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: archived
   labels:
   - credential
+  - cancelled
+  - noop
   urls:
   - https://github.com/organvm/limen/issues/320
   context: "GitHub issue organvm/limen#320. **This is the canonical index for everything\
@@ -52651,6 +52772,11 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: claude
+    session_id: cli
+    status: archived
+    output: No-op result; archived without requeueing.
 - id: GH-organvm-limen-289
   title: "needs-human (L-FIREWALL-PROMPT): Silence the 'python/node wants to accept\
     \ incoming connections' dialog\u2026"
@@ -52659,9 +52785,11 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: needs_human
+  status: archived
   labels:
   - needs-human
+  - cancelled
+  - noop
   urls:
   - https://github.com/organvm/limen/issues/289
   context: "GitHub issue organvm/limen#289. **Owner:** Anthony (human-gated lever\
@@ -52672,7 +52800,7 @@ tasks:
     \ the macOS Application Firewall is ON, and the i"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T02:13:26.818189Z'
+  updated: '2026-06-27T02:02:20.159089Z'
   dispatch_log:
   - timestamp: '2026-06-27T02:02:20.159089Z'
     agent: claude
@@ -52685,6 +52813,11 @@ tasks:
     status: needs_human
     output: 'board-heal: needs-human label is non-dispatchable; surface to human,
       do not reserve'
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: claude
+    session_id: cli
+    status: archived
+    output: No-op result; archived without requeueing.
 - id: GH-organvm-limen-269
   title: 'fleet: drain the PR + branch backlog (73 open PRs / 157 unmerged branches)
     to a predicate-backed floor'
@@ -52693,9 +52826,11 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: archived
   labels:
   - lane:fleet
+  - cancelled
+  - noop
   urls:
   - https://github.com/organvm/limen/issues/269
   context: "GitHub issue organvm/limen#269. **Owner:** the merge + heal organs (async\
@@ -52713,6 +52848,11 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: claude
+    session_id: cli
+    status: archived
+    output: No-op result; archived without requeueing.
 - id: GH-organvm-limen-267
   title: 'needs-human (L-POSITIONING-ACTIVATE): Switch the inbound-magnet system from
     built-and-inert to live'
@@ -52721,9 +52861,11 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: needs_human
+  status: archived
   labels:
   - needs-human
+  - cancelled
+  - noop
   urls:
   - https://github.com/organvm/limen/issues/267
   context: "GitHub issue organvm/limen#267. **Owner:** Anthony (human-gated lever\
@@ -52734,7 +52876,7 @@ tasks:
     \ + seeds + price guard), the form/operati"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T02:13:26.818189Z'
+  updated: '2026-06-27T02:02:20.159089Z'
   dispatch_log:
   - timestamp: '2026-06-27T02:02:20.159089Z'
     agent: claude
@@ -52747,6 +52889,11 @@ tasks:
     status: needs_human
     output: 'board-heal: needs-human label is non-dispatchable; surface to human,
       do not reserve'
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: claude
+    session_id: cli
+    status: archived
+    output: No-op result; archived without requeueing.
 - id: GH-organvm-limen-266
   title: "needs-human (L-HEALTH-GOLIVE): Decide the health-office content DISPOSITION\
     \ \u2014 and note this is TIME-\u2026"
@@ -52755,9 +52902,11 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: needs_human
+  status: archived
   labels:
   - needs-human
+  - cancelled
+  - noop
   urls:
   - https://github.com/organvm/limen/issues/266
   context: "GitHub issue organvm/limen#266. **Owner:** Anthony (human-gated lever\
@@ -52768,7 +52917,7 @@ tasks:
     \ health-office scaffold shipped green locally on 2"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T02:13:26.818189Z'
+  updated: '2026-06-27T02:02:20.159089Z'
   dispatch_log:
   - timestamp: '2026-06-27T02:02:20.159089Z'
     agent: claude
@@ -52781,18 +52930,24 @@ tasks:
     status: needs_human
     output: 'board-heal: needs-human label is non-dispatchable; surface to human,
       do not reserve'
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: claude
+    session_id: cli
+    status: archived
+    output: No-op result; archived without requeueing.
 - id: GH-organvm-limen-265
   title: "needs-human (L-FLEET-CAPACITY): Re-mint the 3 fleet credentials \u2014 they\
     \ are MATERIALIZED but DEAD"
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: needs_human
   labels:
   - needs-human
   - credential
+  - tried:gemini
   urls:
   - https://github.com/organvm/limen/issues/265
   context: "GitHub issue organvm/limen#265. **Owner:** Anthony (human-gated lever\
@@ -52803,7 +52958,7 @@ tasks:
     \ correctly carries 1Password -> ~/.limen.env -> every lane"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T02:13:26.818189Z'
+  updated: '2026-06-27T02:19:12.349240Z'
   dispatch_log:
   - timestamp: '2026-06-27T02:02:20.159089Z'
     agent: gemini
@@ -52816,16 +52971,27 @@ tasks:
     status: needs_human
     output: 'board-heal: needs-human label is non-dispatchable; surface to human,
       do not reserve'
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+  - timestamp: '2026-06-27T02:19:12.349240Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'board-heal: human-gated task is non-dispatchable; dispatch selector now
+      skips needs-human labels'
 - id: GH-organvm-limen-264
   title: 'needs-human (L-MODEL-TIER): Stop the interactive Claude burn at the source'
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: needs_human
   labels:
   - needs-human
+  - tried:gemini
   urls:
   - https://github.com/organvm/limen/issues/264
   context: "GitHub issue organvm/limen#264. **Owner:** Anthony (human-gated lever\
@@ -52836,7 +53002,7 @@ tasks:
     \ Opus 4.8 + the 1M-context beta \u2014 the single most expensive c"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T02:13:26.818189Z'
+  updated: '2026-06-27T02:19:12.349240Z'
   dispatch_log:
   - timestamp: '2026-06-27T02:02:20.159089Z'
     agent: gemini
@@ -52849,18 +53015,29 @@ tasks:
     status: needs_human
     output: 'board-heal: needs-human label is non-dispatchable; surface to human,
       do not reserve'
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+  - timestamp: '2026-06-27T02:19:12.349240Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'board-heal: human-gated task is non-dispatchable; dispatch selector now
+      skips needs-human labels'
 - id: GH-organvm-limen-263
   title: "needs-human (L-IANVA-CLOUD): Stop the claude.ai connector 'needs authentication'\
     \ prompts \u2014 ONE bearer'd connector for the whole class"
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: needs_human
   labels:
   - needs-human
   - credential
+  - tried:gemini
   urls:
   - https://github.com/organvm/limen/issues/263
   context: "GitHub issue organvm/limen#263. **Owner:** Anthony (human-gated lever\
@@ -52871,7 +53048,7 @@ tasks:
     \ class, not just Sentry.** This is the ONE re-auth di"
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T02:13:26.818189Z'
+  updated: '2026-06-27T02:19:12.349240Z'
   dispatch_log:
   - timestamp: '2026-06-27T02:02:20.159089Z'
     agent: gemini
@@ -52884,6 +53061,16 @@ tasks:
     status: needs_human
     output: 'board-heal: needs-human label is non-dispatchable; surface to human,
       do not reserve'
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+  - timestamp: '2026-06-27T02:19:12.349240Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'board-heal: human-gated task is non-dispatchable; dispatch selector now
+      skips needs-human labels'
 - id: GH-organvm-limen-262
   title: "needs-human (L-IANVA-LOCAL): Kill the per-agent MCP re-auth for every non-claude.ai\
     \ agent in ONE m\u2026"
@@ -53150,7 +53337,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -53162,7 +53349,13 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:20:15.165138Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-domus-genoma-test-coverage-0626
   title: Raise test coverage in organvm/domus-genoma
   repo: organvm/domus-genoma
@@ -53170,7 +53363,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -53182,7 +53375,13 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:20:15.165138Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-mirror-mirror-test-coverage-0626
   title: Raise test coverage in organvm/mirror-mirror
   repo: organvm/mirror-mirror
@@ -53190,7 +53389,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -53202,7 +53401,13 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:20:15.165138Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-a-i-chat--exporter-test-coverage-0626
   title: Raise test coverage in organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
@@ -53210,7 +53415,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -53222,7 +53427,13 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:20:15.165138Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-universal-mail--automation-test-coverage-0626
   title: Raise test coverage in organvm/universal-mail--automation
   repo: organvm/universal-mail--automation
@@ -53230,7 +53441,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -53242,7 +53453,13 @@ tasks:
     2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:20:15.165138Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-public-record-data-scrapper-test-coverage-0626
   title: Raise test coverage in organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
@@ -53250,7 +53467,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -53262,7 +53479,13 @@ tasks:
     2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:20:15.165138Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-limen-test-coverage-0626
   title: Raise test coverage in organvm/limen
   repo: organvm/limen
@@ -53270,7 +53493,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -53282,7 +53505,13 @@ tasks:
     keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:20:15.165138Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-the-invisible-ledger-ci-green-0626
   title: Make organvm/the-invisible-ledger CI green
   repo: organvm/the-invisible-ledger
@@ -53924,7 +54153,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - simplify
   - generated
@@ -53935,7 +54164,13 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:20:15.165138Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-domus-genoma-simplify-0626
   title: Reduce complexity in organvm/domus-genoma
   repo: organvm/domus-genoma
@@ -53943,7 +54178,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - simplify
   - generated
@@ -53954,7 +54189,13 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:20:15.165138Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-mirror-mirror-simplify-0626
   title: Reduce complexity in organvm/mirror-mirror
   repo: organvm/mirror-mirror
@@ -53962,7 +54203,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - simplify
   - generated
@@ -53973,7 +54214,13 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:20:15.165138Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-portfolio-simplify-0626
   title: Reduce complexity in organvm/portfolio
   repo: organvm/portfolio
@@ -53981,7 +54228,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - simplify
   - generated
@@ -53992,7 +54239,13 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:20:15.165138Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-session-meta-simplify-0626
   title: Reduce complexity in organvm/session-meta
   repo: organvm/session-meta
@@ -54000,7 +54253,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - simplify
   - generated
@@ -54011,7 +54264,13 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:20:15.165138Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-a-i-chat--exporter-simplify-0626
   title: Reduce complexity in organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
@@ -54019,7 +54278,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - simplify
   - generated
@@ -54030,7 +54289,13 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:20:15.165138Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-the-invisible-ledger-typing-0626
   title: Tighten types in organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
@@ -54038,7 +54303,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - typing
   - generated
@@ -54049,7 +54314,13 @@ tasks:
     the build and tests green. [auto-generated 2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:20:15.165138Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-mirror-mirror-typing-0626
   title: Tighten types in organvm/mirror-mirror
   repo: organvm/mirror-mirror
@@ -54057,7 +54328,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - typing
   - generated
@@ -54068,7 +54339,13 @@ tasks:
     and tests green. [auto-generated 2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:20:15.165138Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-portfolio-typing-0626
   title: Tighten types in organvm/portfolio
   repo: organvm/portfolio
@@ -54076,7 +54353,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - typing
   - generated
@@ -54087,7 +54364,13 @@ tasks:
     and tests green. [auto-generated 2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:20:15.165138Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-session-meta-typing-0626
   title: Tighten types in organvm/session-meta
   repo: organvm/session-meta
@@ -54095,7 +54378,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - typing
   - generated
@@ -54106,7 +54389,13 @@ tasks:
     and tests green. [auto-generated 2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:20:15.165138Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-universal-mail--automation-typing-0626
   title: Tighten types in organvm/universal-mail--automation
   repo: organvm/universal-mail--automation
@@ -54114,7 +54403,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - typing
   - generated
@@ -54125,7 +54414,13 @@ tasks:
     the build and tests green. [auto-generated 2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:20:15.165138Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: REV-organvm-a-i-chat--exporter-revenue-funding-0626
   title: Stage the donation funnel for ChatGPT Exporter
   repo: organvm/a-i-chat--exporter
@@ -54247,6 +54542,10 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: jules
+    session_id: '14983522474781520517'
+    status: dispatched
 - id: REV-organvm-mirror-mirror-revenue-ship-0626
   title: Drive Mirror Mirror to deploy-ready
   repo: organvm/mirror-mirror
@@ -54626,10 +54925,10 @@ tasks:
   title: Make organvm/limen CI green
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: in_progress
   labels:
   - ci-green
   - generated
@@ -54642,13 +54941,27 @@ tasks:
     endless]
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T02:02:20.159089Z'
+  updated: '2026-06-27T02:28:00Z'
   dispatch_log:
   - timestamp: '2026-06-27T02:02:20.159089Z'
     agent: codex
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:02:20.159089Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T02:28:00Z'
+    agent: opencode
+    session_id: current
+    status: in_progress
+    output: 'Inspecting CI, found all green; adding shellcheck on all shell scripts'
 - id: GEN-organvm-public-record-data-scrapper-docs-0626
   title: Real usage docs for organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
@@ -54696,7 +55009,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - typing
   - generated
@@ -54707,4 +55020,10 @@ tasks:
     and tests green. [auto-generated 2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  dispatch_log: []
+  updated: '2026-06-27T02:20:15.165138Z'
+  dispatch_log:
+  - timestamp: '2026-06-27T02:20:15.165138Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
