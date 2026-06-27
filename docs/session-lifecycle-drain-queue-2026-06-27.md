@@ -36,6 +36,18 @@ specific item is claimed or dispatched.
   checkout is clean on the pushed branch. GitHub marks the PR `CONFLICTING` against current `main`,
   so merge/split/rebase is downstream lifecycle work; the preservation objective is satisfied and
   no unique local state should be discarded.
+- 2026-06-27: `knowledge-corpus` owner state was preserved on branch
+  `codex/preserve-knowledge-corpus-owner-state-20260627`, commit `e66199e`, with draft PR
+  [organvm/knowledge-corpus#1](https://github.com/organvm/knowledge-corpus/pull/1). The local
+  owner checkout is clean on the pushed branch. GitHub marks the PR `MERGEABLE`. Validation:
+  `git diff --cached --check`, redaction scan `redactions: 0 {}`. Review caveat:
+  `reduced/model-whole-stack-of-reality.md` currently contains a JSON-ish convergence wrapper
+  with a `[Full document as in source material ...]` placeholder; the PR preserves it for
+  lifecycle continuity, but it should be reviewed before merge as a likely convergence-output
+  regression.
+- 2026-06-27: after refreshing Limen ledgers, `session-meta` shows one new live-session
+  `ingest/manifest.jsonl` update for the current Codex transcript. This is not a separate
+  owner-state bundle; fold it into the next session-meta refresh after this live session ends.
 
 ## Dirty And Missing-Remote Worktrees
 
