@@ -32,10 +32,10 @@ specific item is claimed or dispatched.
 
 - 2026-06-27: `session-meta` owner state was preserved on branch
   `codex/preserve-session-meta-owner-state-20260627`, commit `27ab53a`, with draft PR
-  [organvm/session-meta#130](https://github.com/organvm/session-meta/pull/130). The local owner
-  checkout is clean on the pushed branch. GitHub marks the PR `CONFLICTING` against current `main`,
-  so merge/split/rebase is downstream lifecycle work; the preservation objective is satisfied and
-  no unique local state should be discarded.
+  [organvm/session-meta#130](https://github.com/organvm/session-meta/pull/130). The owner-state
+  bundle was cleanly pushed on that branch. GitHub marks the PR `CONFLICTING` against current
+  `main`, so merge/split/rebase is downstream lifecycle work; the preservation objective is
+  satisfied and no unique local state should be discarded.
 - 2026-06-27: `knowledge-corpus` owner state was preserved on branch
   `codex/preserve-knowledge-corpus-owner-state-20260627`, commit `e66199e`, with draft PR
   [organvm/knowledge-corpus#1](https://github.com/organvm/knowledge-corpus/pull/1). The local
