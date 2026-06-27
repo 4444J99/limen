@@ -120,7 +120,10 @@ def test_heal_dispatch_funnel_transitions(tmp_path):
     script = Path(__file__).resolve().parents[2] / "scripts" / "heal-dispatch.py"
     env = {**os.environ, "LIMEN_ROOT": str(tmp_path), "LIMEN_TASKS": str(tmp_path / "tasks.yaml"),
            "PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src")}
-    subprocess.run([sys.executable, str(script), "--apply"], env=env, capture_output=True, text=True, timeout=40)
+    result = subprocess.run([sys.executable, str(script), "--apply"], env=env,
+                            capture_output=True, text=True, timeout=40)
+    assert result.returncode == 0, result.stderr
+    assert "1 merged→done, 1 open-pr→done, 2 stuck→open" in result.stdout
     st = {t.id: t.status for t in load_limen_file(tmp_path / "tasks.yaml").tasks}
     assert st["M"] == "done" and st["O"] == "done", st     # merged / open-PR → done
     assert st["C"] == "open" and st["N"] == "open", st      # closed / no-PR → reopened

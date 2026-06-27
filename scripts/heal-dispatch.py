@@ -76,7 +76,7 @@ def main():
         path = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
         lf = load_limen_file(path)
         now = datetime.datetime.now(datetime.timezone.utc)
-        done, reopened, escalated = [], [], []
+        merged_done, open_pr_done, reopened, escalated = [], [], [], []
 
         for t in lf.tasks:
             # CHRONIC escalation runs on the churning (open/failed) chronic tasks, NOT the dispatched
@@ -98,7 +98,7 @@ def main():
                 t.dispatch_log.append(DispatchLogEntry(
                     timestamp=now, agent="limen", session_id="heal",
                     status="done", output="heal-dispatch: PR merged → done"))
-                done.append(t.id)
+                merged_done.append(t.id)
             elif t.id in open_pr_ids:
                 # work produced an OPEN PR (awaiting merge) — mark done at the dispatch level
                 # so it leaves the loop and is NOT recycled into a DUPLICATE PR. The merge
@@ -108,7 +108,7 @@ def main():
                 t.dispatch_log.append(DispatchLogEntry(
                     timestamp=now, agent="limen", session_id="heal",
                     status="done", output="heal-dispatch: PR open (awaiting merge) → done"))
-                done.append(t.id)
+                open_pr_done.append(t.id)
             elif t.id in closed_ids or t.id in nopr_ids:
                 # NO_PR: only reopen if STILL no PR url (daemon may have re-dispatched)
                 if t.id in nopr_ids and PR_RE.search(last_session(t)):
@@ -132,10 +132,13 @@ def main():
                     status="open", output=f"heal-dispatch: {why} → reopened"))
                 reopened.append(t.id)
 
-        print(f"heal-dispatch: {len(done)} merged→done, {len(reopened)} stuck→open, "
+        print(f"heal-dispatch: {len(merged_done)} merged→done, "
+              f"{len(open_pr_done)} open-pr→done, {len(reopened)} stuck→open, "
               f"{len(escalated)} chronic→needs_human")
-        for i in done:
-            print(f"    done:   {i}")
+        for i in merged_done:
+            print(f"    merged: {i}")
+        for i in open_pr_done:
+            print(f"    open:   {i}")
         for i in reopened:
             print(f"    reopen: {i}")
         for i in escalated:
