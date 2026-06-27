@@ -138,7 +138,12 @@ def _down_lanes() -> set[str]:
     return manual | _usage_dead_lanes() | _oauth_unreachable_lanes()
 
 
-def _run_capture(cmd: list[str], cwd: str | None = None, timeout: int = 600, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
+def _run_capture(
+    cmd: list[str],
+    cwd: str | None = None,
+    timeout: int = 600,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
     """Like subprocess.run(capture_output, text, timeout) but launches the process in its OWN
     session/group and, on timeout, SIGKILLs the WHOLE group. Plain subprocess.run only kills the
     direct child — if an agent CLI (codex/claude/…) spawns grandchildren that inherit the stdout
@@ -851,6 +856,126 @@ def _bridge_agy_scratch(task: Task, wt: Path) -> None:
         print(f"  agy-bridge {task.id}: skipped ({str(e)[:80]})")
 
 
+def _lane_run_env(agent: str) -> dict[str, str]:
+    run_env = os.environ.copy()
+    # gemini: API-key mode throttles hard under agentic use. If the user has done the
+    # one-time Google sign-in, drop API keys for gemini only so it uses OAuth / Code-Assist.
+    if agent == "gemini" and os.environ.get("LIMEN_GEMINI_OAUTH") == "1":
+        for k in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENERATIVE_AI_API_KEY"):
+            run_env.pop(k, None)
+    # agy/antigravity defense-in-depth: if auth falls through to browser opening mid-run,
+    # make the opener a no-op inside the lane subprocess only.
+    if agent in ("agy", "antigravity"):
+        shim = str(Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
+                   / "scripts" / "agy-noop-shim")
+        run_env["PATH"] = shim + os.pathsep + run_env.get("PATH", "")
+        run_env["BROWSER"] = "true"
+    # claude fleet auth must not share or mutate the interactive session's macOS Keychain token.
+    if agent == "claude":
+        fleet_token = os.environ.get("LIMEN_CLAUDE_AUTH_TOKEN")
+        fleet_key = os.environ.get("LIMEN_CLAUDE_API_KEY")
+        if fleet_token:
+            run_env["ANTHROPIC_AUTH_TOKEN"] = fleet_token
+            run_env.pop("ANTHROPIC_API_KEY", None)
+        elif fleet_key:
+            run_env["ANTHROPIC_API_KEY"] = fleet_key
+        run_env.pop("CLAUDE_CODE_OAUTH_TOKEN", None)
+    return run_env
+
+
+def _failed_agent_result(agent: str, task: Task, run: subprocess.CompletedProcess[str]) -> bool | str:
+    blob = (run.stderr or "") + (run.stdout or "")
+    if _is_rate_limited(blob):
+        print(f"  RATE-LIMIT {agent} on {task.id}: real limit hit (token/rate) — cooling lane, cascading")
+        return _RATELIMIT
+    print(f"  FAILED agent {task.id} ({run.returncode}): {run.stderr.strip()[:300]}")
+    return False
+
+
+def _run_isolated_agent(
+    agent: str,
+    task: Task,
+    wt: Path,
+    agent_cmd: list[str],
+    lane_timeout: int,
+) -> bool | str:
+    run_env = _lane_run_env(agent)
+    try:
+        run = _run_capture(agent_cmd, cwd=str(wt), timeout=lane_timeout, env=run_env)
+        # SELF-HEAL the credential-refresh race (#48786): if claude lost the token rotation,
+        # a fresh process re-reads the now-rotated token. ONE retry only.
+        if (
+            agent == "claude"
+            and run.returncode != 0
+            and _is_auth_blip((run.stderr or "") + (run.stdout or ""))
+        ):
+            print(f"  AUTH-BLIP {task.id}: claude credential-refresh race — re-reading token, one retry")
+            run = _run_capture(agent_cmd, cwd=str(wt), timeout=lane_timeout, env=run_env)
+    except subprocess.TimeoutExpired:
+        print(f"  TIMEOUT {task.id} after {lane_timeout}s — too big for sync local → routing to jules (async)")
+        return _TIMEOUT
+
+    if run.returncode != 0:
+        return _failed_agent_result(agent, task, run)
+    if agent in ("agy", "antigravity"):
+        _bridge_agy_scratch(task, wt)
+    return True
+
+
+def _commit_isolated_changes(task: Task, wt: Path) -> bool | str:
+    _git(["add", "-A"], wt)
+    if _git(["diff", "--cached", "--quiet"], wt).returncode == 0:
+        print(f"  no-op {task.id}: agent made no changes — no PR opened")
+        return _NOOP
+
+    msg = f"{task.title}\n\nlimen task {task.id}"
+    c = _git(
+        ["-c", f"user.name={os.environ.get('LIMEN_COMMIT_NAME', '4444J99')}",
+         "-c", f"user.email={os.environ.get('LIMEN_COMMIT_EMAIL', '4444J99@users.noreply.github.com')}",
+         "commit", "-m", msg], wt
+    )
+    if c.returncode != 0:
+        print(f"  FAILED commit {task.id}: {c.stderr.strip()[:200]}")
+        return False
+    return True
+
+
+def _push_isolated_branch(task: Task, wt: Path, branch: str) -> bool:
+    p = _git(["push", "-u", "origin", branch], wt, timeout=300)
+    if p.returncode != 0:
+        print(f"  FAILED push {task.id}: {p.stderr.strip()[:300]}")
+        return False
+    return True
+
+
+def _create_isolated_pr(task: Task, wt: Path, base: str, branch: str) -> str:
+    pr = subprocess.run(
+        ["gh", "pr", "create", "--base", base, "--head", branch,
+         "--title", f"[limen {task.id}] {task.title}"[:250],
+         "--body", _pr_body(task)],
+        cwd=str(wt), capture_output=True, text=True, timeout=120,
+        stdin=subprocess.DEVNULL,
+    )
+    if pr.returncode != 0:
+        print(f"  pushed {branch} but PR-create failed {task.id}: {pr.stderr.strip()[:200]}")
+        return branch  # branch is live; record it (manual PR possible)
+    url = pr.stdout.strip().splitlines()[-1] if pr.stdout.strip() else branch
+    print(f"  dispatched: {task.id} → PR {url}")
+    _arm_auto_merge(task, wt, url)
+    return url
+
+
+def _arm_auto_merge(task: Task, wt: Path, url: str) -> None:
+    # Best-effort: repos without branch protection / auto-merge disabled reject this harmlessly.
+    am = subprocess.run(
+        ["gh", "pr", "merge", url, "--auto", "--squash"],
+        cwd=str(wt), capture_output=True, text=True, timeout=60,
+        stdin=subprocess.DEVNULL,
+    )
+    print(f"    auto-merge {'armed' if am.returncode == 0 else 'n/a'}: {task.id}"
+          + ("" if am.returncode == 0 else f" ({am.stderr.strip()[:100]})"))
+
+
 def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
     binary = os.environ.get(f"LIMEN_{agent.upper()}_BIN", _LOCAL_BIN.get(agent, agent))
     repo_dir = _resolve_repo_dir(task)
@@ -870,7 +995,8 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
     suffix = secrets.token_hex(2)
     branch = f"limen/{slug}-{suffix}"
     wt = _ISOLATION_ROOT / (re.sub(r"[^a-zA-Z0-9._-]+", "-", task.id.lower()) + "-" + suffix)
-    agent_cmd = [binary, *_agent_argv(agent, task), _build_prompt(task)]
+    agent_args = _agent_argv(agent, task)
+    agent_cmd = [binary, *agent_args, _build_prompt(task)]
     # 1800s (was 900): local lanes have ABUNDANT budget headroom (codex/claude/opencode ~60-92 left
     # per window) while jules is scarce (≈100/day). At 900s, big tasks — incl. the revenue/deploy
     # tasks (BLD2-*-deploy, REV-*) — timed out locally then bled to jules, exhausting the scarce lane
@@ -881,7 +1007,7 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
     if dry_run:
         print(
             f"  would isolate {task.id}: worktree {wt} off origin/{base} "
-            f"→ branch {branch} → {binary} {' '.join(_agent_argv(agent, task))} "
+            f"→ branch {branch} → {binary} {' '.join(agent_args)} "
             f"→ commit → push → PR  (live checkout untouched)"
         )
         return True
@@ -904,124 +1030,18 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
 
     pushed = False
     try:
-        # 2) run the agent inside the isolated tree
-        run_env = os.environ.copy()
-        # gemini: API-key mode throttles hard under agentic use. If the user has done the
-        # one-time Google sign-in (oauth_creds.json exists), DROP the API keys for gemini's
-        # subprocess ONLY so it uses the higher-limit OAuth / Code-Assist tier — opencode
-        # still needs the key, so this is gemini-scoped. Auto-heals the lane on login.
-        # Gate on an ENV flag (set LIMEN_GEMINI_OAUTH=1 after the one-time Google sign-in)
-        # rather than reading ~/.gemini from Python — that read trips the macOS TCC prompt.
-        if agent == "gemini" and os.environ.get("LIMEN_GEMINI_OAUTH") == "1":
-            for k in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENERATIVE_AI_API_KEY"):
-                run_env.pop(k, None)
-        # agy/antigravity FAIL-CLOSED browser neuter (defense-in-depth behind the _oauth_unreachable_lanes
-        # gate): if the network drops MID-run, the antigravity-cli would still fall to interactive OAuth and
-        # try to open a Google sign-in tab. On macOS every browser-opener lib ultimately runs `open <url>`
-        # resolved via PATH, so we prepend a no-op `open` shim to THIS subprocess's PATH only — the cli can
-        # then "open" the tab into a script that just logs + exits 0. The lane fails the beat instead of
-        # littering the desktop. Scoped to the agy subprocess; interactive `agy` you run by hand is untouched.
-        if agent in ("agy", "antigravity"):
-            shim = str(Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
-                       / "scripts" / "agy-noop-shim")
-            run_env["PATH"] = shim + os.pathsep + run_env.get("PATH", "")
-            run_env["BROWSER"] = "true"  # belt-and-suspenders for libs that honor $BROWSER (no-op command)
-        # claude: keep the FLEET's auth OFF the interactive session's shared macOS Keychain, so the
-        # daemon's concurrent `claude -p` never rotate the OAuth token out from under a live session
-        # (anthropics/claude-code#48786). Precedence — all fleet-scoped (set in ~/.limen.env, which
-        # ONLY the daemon sources) and fail-open (neither set → unchanged: shares the Keychain, but
-        # the auth-blip retry below makes that race self-healing):
-        #   LIMEN_CLAUDE_AUTH_TOKEN → ANTHROPIC_AUTH_TOKEN  (a `claude setup-token`: subscription-
-        #       billed + stable = the FREE isolation; VERIFY with scripts/claude-fleet-auth-probe.sh
-        #       that it bills to the sub and leaves the Keychain intact before trusting it)
-        #   LIMEN_CLAUDE_API_KEY    → ANTHROPIC_API_KEY     (documented-safe, API-credit-billed fallback)
-        # NEVER export CLAUDE_CODE_OAUTH_TOKEN here: on macOS it DELETES the global Keychain item on
-        # exit (anthropics/claude-code#37512, closed not-planned), which would knock out the live session.
-        if agent == "claude":
-            _ftok = os.environ.get("LIMEN_CLAUDE_AUTH_TOKEN")
-            _fkey = os.environ.get("LIMEN_CLAUDE_API_KEY")
-            if _ftok:
-                run_env["ANTHROPIC_AUTH_TOKEN"] = _ftok
-                run_env.pop("ANTHROPIC_API_KEY", None)
-            elif _fkey:
-                run_env["ANTHROPIC_API_KEY"] = _fkey
-            run_env.pop("CLAUDE_CODE_OAUTH_TOKEN", None)  # belt-and-suspenders: never wipe the Keychain
-        try:
-            run = _run_capture(
-                agent_cmd, cwd=str(wt), timeout=lane_timeout, env=run_env,
-            )  # own process group → timeout SIGKILLs grandchildren too (no beat-stall hang)
-            # SELF-HEAL the credential-refresh race (#48786): if claude lost the token rotation,
-            # a fresh process re-reads the now-rotated token. ONE retry only — a persistent failure
-            # still falls through to the rate-limit/cascade handling below. claude-lane only.
-            if (
-                agent == "claude"
-                and run.returncode != 0
-                and _is_auth_blip((run.stderr or "") + (run.stdout or ""))
-            ):
-                print(f"  AUTH-BLIP {task.id}: claude credential-refresh race — re-reading token, one retry")
-                run = _run_capture(
-                    agent_cmd, cwd=str(wt), timeout=lane_timeout, env=run_env,
-                )
-        except subprocess.TimeoutExpired:
-            print(f"  TIMEOUT {task.id} after {lane_timeout}s — too big for sync local → routing to jules (async)")
-            return _TIMEOUT  # finally drops the worktree; task re-routes to the async lane
-        if run.returncode != 0:
-            blob = (run.stderr or "") + (run.stdout or "")
-            if _is_rate_limited(blob):
-                print(f"  RATE-LIMIT {agent} on {task.id}: real limit hit (token/rate) — cooling lane, cascading")
-                return _RATELIMIT
-            print(f"  FAILED agent {task.id} ({run.returncode}): {run.stderr.strip()[:300]}")
-            return False
+        run_result = _run_isolated_agent(agent, task, wt, agent_cmd, lane_timeout)
+        if run_result is not True:
+            return run_result
 
-        # 2b) agy/antigravity write to their scratch dir, not the worktree — carry it home
-        if agent in ("agy", "antigravity"):
-            _bridge_agy_scratch(task, wt)
+        commit_result = _commit_isolated_changes(task, wt)
+        if commit_result is not True:
+            return commit_result
 
-        # 3) did the agent change anything?
-        _git(["add", "-A"], wt)
-        if _git(["diff", "--cached", "--quiet"], wt).returncode == 0:
-            print(f"  no-op {task.id}: agent made no changes — no PR opened")
-            return _NOOP  # task-intrinsic (nothing to change) — do NOT cascade lanes
-
-        # 4) commit → push → PR
-        msg = f"{task.title}\n\nlimen task {task.id}"
-        c = _git(
-            ["-c", f"user.name={os.environ.get('LIMEN_COMMIT_NAME', '4444J99')}",
-             "-c", f"user.email={os.environ.get('LIMEN_COMMIT_EMAIL', '4444J99@users.noreply.github.com')}",
-             "commit", "-m", msg], wt
-        )
-        if c.returncode != 0:
-            print(f"  FAILED commit {task.id}: {c.stderr.strip()[:200]}")
-            return False
-        p = _git(["push", "-u", "origin", branch], wt, timeout=300)
-        if p.returncode != 0:
-            print(f"  FAILED push {task.id}: {p.stderr.strip()[:300]}")
+        if not _push_isolated_branch(task, wt, branch):
             return False
         pushed = True
-        pr = subprocess.run(
-            ["gh", "pr", "create", "--base", base, "--head", branch,
-             "--title", f"[limen {task.id}] {task.title}"[:250],
-             "--body", _pr_body(task)],
-            cwd=str(wt), capture_output=True, text=True, timeout=120,
-            stdin=subprocess.DEVNULL,
-        )
-        if pr.returncode != 0:
-            print(f"  pushed {branch} but PR-create failed {task.id}: {pr.stderr.strip()[:200]}")
-            return branch  # branch is live; record it (manual PR possible)
-        url = pr.stdout.strip().splitlines()[-1] if pr.stdout.strip() else branch
-        print(f"  dispatched: {task.id} → PR {url}")
-        # Arm auto-merge so the PR self-merges the moment CI goes green — making the merge gate
-        # self-draining (CI is the gate, configured by setup-rulesets.py). Best-effort: repos
-        # without branch protection / auto-merge disabled reject this harmlessly and the PR just
-        # waits. This is the "no human needed to merge" half of autonomy.
-        am = subprocess.run(
-            ["gh", "pr", "merge", url, "--auto", "--squash"],
-            cwd=str(wt), capture_output=True, text=True, timeout=60,
-            stdin=subprocess.DEVNULL,
-        )
-        print(f"    auto-merge {'armed' if am.returncode == 0 else 'n/a'}: {task.id}"
-              + ("" if am.returncode == 0 else f" ({am.stderr.strip()[:100]})"))
-        return url
+        return _create_isolated_pr(task, wt, base, branch)
     finally:
         # leave the user's checkout pristine: drop the worktree, and the local
         # branch too once its commits are safely on the remote. Guard the parent-repo

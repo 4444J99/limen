@@ -2,7 +2,9 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PYTHONPATH_VALUE="${PYTHONPATH:-}"
+AMBIENT_PYTHONPATH="${PYTHONPATH:-}"
+PYTHONPATH_VALUE="$ROOT/cli/src${AMBIENT_PYTHONPATH:+:$AMBIENT_PYTHONPATH}"
+export PYTHONPATH="$PYTHONPATH_VALUE"
 
 step() {
   printf '\n==> %s\n' "$*"

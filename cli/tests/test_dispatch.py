@@ -1,18 +1,22 @@
 from __future__ import annotations
 
 import importlib.util
-import sys
 import os
+import subprocess
+import sys
+from datetime import date
 from pathlib import Path
 
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+import limen.dispatch as D
 from limen.capacity import PAID_AGENT_ORDER, capacity_census, format_capacity_census
 from limen.dispatch import dispatch_parallel, dispatch_tasks, release_stale_tasks
 from limen.doctor import qa_report, readiness_report, stale_tasks
 from limen.io import load_limen_file
+from limen.models import Task
 from limen.status import print_status
 
 
@@ -159,7 +163,10 @@ def test_dispatch_dry_run_prints_capacity_census_and_copilot_command(
     output = capsys.readouterr().out
     assert "-- capacity census" in output
     assert "copilot" in output
-    assert "would: gh api graphql (fetch node IDs + replaceActorsForAssignable for copilot-swe-agent on organvm/limen#12)" in output
+    assert (
+        "would: gh api graphql "
+        "(fetch node IDs + replaceActorsForAssignable for copilot-swe-agent on organvm/limen#12)"
+    ) in output
 
 
 def test_dispatch_skips_needs_human_label(tmp_path: Path, capsys) -> None:
@@ -225,6 +232,45 @@ def test_dispatch_parallel_skips_needs_human_label(tmp_path: Path, capsys) -> No
     output = capsys.readouterr().out
     assert "MACHINE-WORK" in output
     assert "HUMAN-GATE" not in output
+
+
+def test_lane_run_env_keeps_lane_specific_isolation(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("PATH", "/usr/bin")
+    monkeypatch.setenv("LIMEN_GEMINI_OAUTH", "1")
+    for key in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENERATIVE_AI_API_KEY"):
+        monkeypatch.setenv(key, "api-secret")
+
+    gemini_env = D._lane_run_env("gemini")
+    assert not any(key in gemini_env for key in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENERATIVE_AI_API_KEY"))
+
+    agy_env = D._lane_run_env("agy")
+    assert agy_env["PATH"].startswith(str(tmp_path / "scripts" / "agy-noop-shim") + os.pathsep)
+    assert agy_env["BROWSER"] == "true"
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "interactive-key")
+    monkeypatch.setenv("CLAUDE_CODE_OAUTH_TOKEN", "keychain-token")
+    monkeypatch.setenv("LIMEN_CLAUDE_AUTH_TOKEN", "fleet-token")
+    claude_env = D._lane_run_env("claude")
+    assert claude_env["ANTHROPIC_AUTH_TOKEN"] == "fleet-token"
+    assert "ANTHROPIC_API_KEY" not in claude_env
+    assert "CLAUDE_CODE_OAUTH_TOKEN" not in claude_env
+
+
+def test_run_isolated_agent_retries_transient_claude_auth_blip(tmp_path: Path, monkeypatch) -> None:
+    calls: list[dict] = []
+
+    def fake_run_capture(cmd, cwd=None, timeout=600, env=None):
+        calls.append({"cmd": cmd, "cwd": cwd, "timeout": timeout, "env": env})
+        if len(calls) == 1:
+            return subprocess.CompletedProcess(cmd, 1, "", "Not logged in")
+        return subprocess.CompletedProcess(cmd, 0, "", "")
+
+    monkeypatch.setattr(D, "_run_capture", fake_run_capture)
+    task = Task(id="AUTH-BLIP", title="retry", target_agent="claude", created=date(2026, 6, 27))
+
+    assert D._run_isolated_agent("claude", task, tmp_path, ["claude"], 3) is True
+    assert len(calls) == 2
 
 
 def test_release_stale_dry_run_does_not_mutate(tmp_path: Path) -> None:
