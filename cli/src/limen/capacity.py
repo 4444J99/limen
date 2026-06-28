@@ -8,9 +8,9 @@ import subprocess
 from pathlib import Path
 from typing import TypedDict, TypeVar
 
-T = TypeVar('T')
-
 from limen.models import Task
+
+T = TypeVar('T')
 
 
 class AgentStatus(TypedDict):
