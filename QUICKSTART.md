@@ -143,17 +143,22 @@ enable APIs, create secrets, or deploy anything.
 Backend endpoints:
 
 ```
-GET  /health                Health check
-GET  /api/status            Task board + budget
-GET  /api/qa-status         QA lifecycle and steering contract
-GET  /api/readiness         Runtime readiness and next actions
-GET  /api/surface-manifest  Surface/contract manifest
-POST /api/dispatch          Preview or dispatch open tasks
-GET  /api/tasks/:id         Get task details
-POST /api/tasks/:id/verify  Record QA evidence decision and route next lifecycle gate
-POST /api/tasks/:id/assign  Assign or reassign task owner, priority, cost, and open status
-POST /api/tasks/:id/archive Archive a done task out of active steering
-POST /api/release-stale     Preview or reopen stale active tasks
+GET   /health                   Health check (public)
+GET   /api/status               Task board + budget (owner)
+GET   /api/client-status        Redacted delivery status for client persona (owner, client)
+GET   /api/public-status        Aggregate public status (public)
+GET   /api/qa-status            QA lifecycle and steering contract (owner)
+GET   /api/readiness            Runtime readiness and next actions (owner)
+GET   /api/surface-manifest     Surface/contract manifest (persona-filtered)
+GET   /api/tasks                List tasks; filter via ?status=, ?agent=, ?repo= (owner)
+GET   /api/tasks/:id            Get task details (owner)
+POST  /api/tasks                Create a new task (owner)
+PATCH /api/tasks/:id            Update task fields (owner)
+POST  /api/tasks/:id/verify     Record QA evidence decision and route next lifecycle gate (owner)
+POST  /api/tasks/:id/assign     Assign or reassign task owner, priority, cost, and open status (owner)
+POST  /api/tasks/:id/archive    Archive a done task out of active steering (owner)
+POST  /api/dispatch             Preview or dispatch open tasks (owner)
+POST  /api/release-stale        Preview or reopen stale active tasks (owner)
 ```
 
 The frontend/backend choices are adapters. Keep or replace them based on the

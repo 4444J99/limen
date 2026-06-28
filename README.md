@@ -27,8 +27,17 @@ brew install ./limen.rb
 # Initialize a task board
 limen init
 
-# Add tasks by editing tasks.yaml directly, then dispatch
-limen dispatch --agent jules --live
+# Add tasks by editing tasks.yaml directly
+# (see tasks.yaml for the schema)
+
+# Check readiness and stale claims before dispatching
+limen doctor --agent jules
+limen release-stale --agent jules --hours 24
+limen release-stale --agent jules --hours 24 --apply
+
+# Dispatch open tasks (default: dry-run preview; add --live to run for real)
+limen dispatch --agent jules --limit 100
+limen dispatch --agent jules --limit 100 --live
 
 # Check the board and budget
 limen status
