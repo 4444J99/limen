@@ -1,6 +1,6 @@
 # Prompt Packet Ledger
 
-Generated: `2026-06-28T03:20:15+00:00`
+Generated: `2026-06-28T03:25:55+00:00`
 
 ## Canonical Decision
 
@@ -14,14 +14,14 @@ Generated: `2026-06-28T03:20:15+00:00`
 - Source review batches: `153`.
 - Batches needing packetization: `3`.
 - Packets emitted: `8`.
-- Recorded packets: `4`.
-- Open packets: `4`.
+- Recorded packets: `5`.
+- Open packets: `3`.
 - Session receipts packetized: `58`.
 - Prompt events packetized: `252`.
 - Unique prompt hash refs in packets: `158`.
-- Packet resolution receipts: `4`.
-- Packet status mix: `owner-recorded` 4, `packetized` 4.
-- Dispatchability mix: `recorded-owner-receipt` 4, `codex-owner-packet` 2, `needs-owner-repo` 2.
+- Packet resolution receipts: `5`.
+- Packet status mix: `owner-recorded` 5, `packetized` 3.
+- Dispatchability mix: `recorded-owner-receipt` 5, `needs-owner-repo` 2, `codex-owner-packet` 1.
 - Family mix: `session_lifecycle` 3, `worktree_lifecycle` 1, `github_review` 1, `agent_coordination` 1, `technical_debt_ci` 1, `uncategorized` 1.
 
 ## Recorded Packets
@@ -32,21 +32,20 @@ Generated: `2026-06-28T03:20:15+00:00`
 | 2 | `packet-prompt-batch-critical-stalled-review-001-session_lifecycle` | `owner-recorded` | `session_lifecycle` | 11 | 48 | `session_ledger_recorded_absent_root` 11 | No live local session/worktree cleanup remains for this packet. Continue with the next open packet; rehydrate any owner repo only if a later packet names a current branch, PR, predicate, and expected receipt. |
 | 3 | `packet-prompt-batch-critical-stalled-review-002-session_lifecycle` | `owner-recorded` | `session_lifecycle` | 5 | 19 | `session_ledger_recorded_absent_root` 5 | No live local session/worktree cleanup remains for this packet. Continue with the next open packet; rehydrate any owner repo only if a later packet names a current branch, PR, predicate, and expected receipt. |
 | 4 | `packet-prompt-batch-critical-stalled-review-002-github_review` | `owner-recorded` | `github_review` | 12 | 58 | `owner_repo_routed_absent_branch` 11, `remote_pr_preserved` 1 | Only bld2-a-i-chat--exporter-integration-tests-a00b has a current PR receipt. For all other roots, do not delegate until an owner packet recreates or names a live branch/PR and a narrow predicate. |
+| 5 | `packet-prompt-batch-high-stalled-review-001-agent_coordination` | `owner-recorded` | `agent_coordination` | 9 | 35 | `agent_router_recorded_absent_root` 9 | No broad agent-coordination dispatch remains for this packet. Rehydrate or delegate only if a later owner packet names a live repo, branch or PR, narrow predicate, and expected receipt. |
 
 ## Packet Queue
 
 | Rank | Packet | Source Batch | Family | Dispatch Gate | Sessions | Events | Worktrees | Agent Fit | Predicate |
 |---:|---|---|---|---|---:|---:|---|---|---|
-| 1 | `packet-prompt-batch-high-stalled-review-001-agent_coordination` | `prompt-batch-high-stalled-review-001` | `agent_coordination` | `codex-owner-packet` | 9 | 35 | `bld2-my--father-mother-billing-1c41`, `rev-avditor-premium-tier-0af4`, `bld-edgarflash-harden-c3c1`, `rev-mediaark-readme-pro-a6c1`, `limen-004` | codex | `python3 scripts/prompt-batch-review-ledger.py --write && python3 scripts/prompt-packet-ledger.py --write` |
-| 2 | `packet-prompt-batch-high-stalled-review-001-session_lifecycle` | `prompt-batch-high-stalled-review-001` | `session_lifecycle` | `codex-owner-packet` | 2 | 9 | none | codex | `python3 scripts/prompt-priority-map.py --write && python3 scripts/prompt-batch-review-ledger.py --write && python3 scripts/prompt-packet-ledger.py --write` |
-| 3 | `packet-prompt-batch-high-stalled-review-001-technical_debt_ci` | `prompt-batch-high-stalled-review-001` | `technical_debt_ci` | `needs-owner-repo` | 3 | 13 | `bld-essay-pipeline-readme-94ce`, `bld-media-ark-tests-2698`, `bld-media-ark-tests-795d` | codex packetization, then opencode/jules after repo and predicate are explicit | `python3 scripts/prompt-packet-ledger.py --write` |
-| 4 | `packet-prompt-batch-high-stalled-review-001-uncategorized` | `prompt-batch-high-stalled-review-001` | `uncategorized` | `needs-owner-repo` | 2 | 10 | none | codex | `python3 scripts/prompt-priority-map.py --write && python3 scripts/prompt-batch-review-ledger.py --write && python3 scripts/prompt-packet-ledger.py --write` |
+| 1 | `packet-prompt-batch-high-stalled-review-001-session_lifecycle` | `prompt-batch-high-stalled-review-001` | `session_lifecycle` | `codex-owner-packet` | 2 | 9 | none | codex | `python3 scripts/prompt-priority-map.py --write && python3 scripts/prompt-batch-review-ledger.py --write && python3 scripts/prompt-packet-ledger.py --write` |
+| 2 | `packet-prompt-batch-high-stalled-review-001-technical_debt_ci` | `prompt-batch-high-stalled-review-001` | `technical_debt_ci` | `needs-owner-repo` | 3 | 13 | `bld-essay-pipeline-readme-94ce`, `bld-media-ark-tests-2698`, `bld-media-ark-tests-795d` | codex packetization, then opencode/jules after repo and predicate are explicit | `python3 scripts/prompt-packet-ledger.py --write` |
+| 3 | `packet-prompt-batch-high-stalled-review-001-uncategorized` | `prompt-batch-high-stalled-review-001` | `uncategorized` | `needs-owner-repo` | 2 | 10 | none | codex | `python3 scripts/prompt-priority-map.py --write && python3 scripts/prompt-batch-review-ledger.py --write && python3 scripts/prompt-packet-ledger.py --write` |
 
 ## Packet Routes
 
 | Packet | Owner | Route |
 |---|---|---|
-| `packet-prompt-batch-high-stalled-review-001-agent_coordination` | agent coordination | Convert broad coordination residue into bounded packets; do not dispatch broad sprawl prompts. |
 | `packet-prompt-batch-high-stalled-review-001-session_lifecycle` | session lifecycle | Collapse stalled session receipts into owner records, supersession notes, or blocker receipts before delegation. |
 | `packet-prompt-batch-high-stalled-review-001-technical_debt_ci` | technical debt / CI | Route CI/debt receipts to an owner repo and narrow predicate before any dispatch. |
 | `packet-prompt-batch-high-stalled-review-001-uncategorized` | unassigned corpus review | Privately classify the receipt, then re-run priority and batch ledgers with an owner route. |

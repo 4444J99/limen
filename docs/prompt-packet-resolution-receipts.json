@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-28T03:19:14Z",
+  "generated_at": "2026-06-28T03:25:09Z",
   "receipts": [
     {
       "packet": "packet-prompt-batch-critical-stalled-review-001-worktree_lifecycle",
@@ -395,6 +395,80 @@
           "predicate": "freemium predicate after branch rehydration",
           "evidence": "Owner repo resolves; no matching remote branch or PR found for limen/rev-tabbookmark-freemium-755e.",
           "next_action": "Rehydrate only if an owner packet identifies the missing freemium delta or superseding PR."
+        }
+      ]
+    },
+    {
+      "packet": "packet-prompt-batch-high-stalled-review-001-agent_coordination",
+      "source_batch": "prompt-batch-high-stalled-review-001",
+      "family": "agent_coordination",
+      "status": "owner-recorded",
+      "classification": "agent-router coordination residue recorded as absent local roots",
+      "evidence": [
+        "python3 scripts/prompt-priority-map.py --write",
+        "python3 scripts/prompt-batch-review-ledger.py --write",
+        "python3 scripts/prompt-packet-ledger.py --write",
+        "all 9 packet roots were absent from /Users/4jp/Workspace/.limen-worktrees on 2026-06-28T03:25:09Z",
+        "the packet session handles are represented in .limen-private/session-corpus/lifecycle/prompt-priority-map.json with owner agent router",
+        "the current Codex lifecycle index has matching redacted cwd-hint rows for every packet root",
+        "no packet root had a current remote-worktree receipt in the prompt lifecycle index",
+        "git for-each-ref in the limen repo found no local or remote branch refs named by these worktree slugs"
+      ],
+      "next_action": "No broad agent-coordination dispatch remains for this packet. Rehydrate or delegate only if a later owner packet names a live repo, branch or PR, narrow predicate, and expected receipt.",
+      "roots": [
+        {
+          "root": "bld-bountyscope-harden-215c",
+          "status": "agent_router_recorded_absent_root",
+          "evidence": "Redacted agent-router lifecycle row exists; local worktree root is absent from current scan.",
+          "next_action": "Do not dispatch this broad coordination remnant; route only through a later owner-repo packet with an explicit live receipt."
+        },
+        {
+          "root": "bld-edgarflash-harden-c3c1",
+          "status": "agent_router_recorded_absent_root",
+          "evidence": "Redacted agent-router lifecycle row exists; local worktree root is absent from current scan.",
+          "next_action": "Do not dispatch this broad coordination remnant; route only through a later owner-repo packet with an explicit live receipt."
+        },
+        {
+          "root": "bld-specvla-ergon--avditor-mvndi-readme-0acb",
+          "status": "agent_router_recorded_absent_root",
+          "evidence": "Redacted agent-router lifecycle row exists; local worktree root is absent from current scan.",
+          "next_action": "Do not dispatch this broad coordination remnant; route only through a later owner-repo packet with an explicit live receipt."
+        },
+        {
+          "root": "bld2-domus-genoma-billing-e821",
+          "status": "agent_router_recorded_absent_root",
+          "evidence": "Redacted agent-router lifecycle row exists; local worktree root is absent from current scan.",
+          "next_action": "Do not dispatch this broad coordination remnant; route only through a later owner-repo packet with an explicit live receipt."
+        },
+        {
+          "root": "bld2-media-ark-dashboard-9571",
+          "status": "agent_router_recorded_absent_root",
+          "evidence": "Redacted agent-router lifecycle row exists; local worktree root is absent from current scan.",
+          "next_action": "Do not dispatch this broad coordination remnant; route only through a later owner-repo packet with an explicit live receipt."
+        },
+        {
+          "root": "bld2-my--father-mother-billing-1c41",
+          "status": "agent_router_recorded_absent_root",
+          "evidence": "Redacted agent-router lifecycle row exists; local worktree root is absent from current scan.",
+          "next_action": "Do not dispatch this broad coordination remnant; route only through a later owner-repo packet with an explicit live receipt."
+        },
+        {
+          "root": "limen-004",
+          "status": "agent_router_recorded_absent_root",
+          "evidence": "Redacted agent-router lifecycle row exists; local worktree root is absent from current scan.",
+          "next_action": "Do not dispatch this broad coordination remnant; route only through a later owner-repo packet with an explicit live receipt."
+        },
+        {
+          "root": "rev-avditor-premium-tier-0af4",
+          "status": "agent_router_recorded_absent_root",
+          "evidence": "Redacted agent-router lifecycle row exists; local worktree root is absent from current scan.",
+          "next_action": "Do not dispatch this broad coordination remnant; route only through a later owner-repo packet with an explicit live receipt."
+        },
+        {
+          "root": "rev-mediaark-readme-pro-a6c1",
+          "status": "agent_router_recorded_absent_root",
+          "evidence": "Redacted agent-router lifecycle row exists; local worktree root is absent from current scan.",
+          "next_action": "Do not dispatch this broad coordination remnant; route only through a later owner-repo packet with an explicit live receipt."
         }
       ]
     }
