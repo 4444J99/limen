@@ -6,6 +6,7 @@
 These guard against silently reintroducing the freeze / lane-waste / write-race.
 """
 
+import os
 import subprocess
 import sys
 import time
@@ -31,13 +32,39 @@ def test_run_capture_kills_grandchild_holding_pipe_on_timeout():
     # The exact freeze shape: the direct child exits immediately but backgrounds a grandchild that
     # inherits the stdout pipe. Plain subprocess.run(timeout) would block ~30s on communicate();
     # _run_capture must SIGKILL the whole group and raise promptly.
+    token = f"limen-run-capture-grandchild-{os.getpid()}-{time.time_ns()}"
+    grandchild = "import time; time.sleep(30)"
+    launcher = (
+        "import subprocess, sys; "
+        f"subprocess.Popen([sys.executable, '-c', {grandchild!r}, {token!r}]); "
+        "print('started')"
+    )
     t0 = time.time()
     with pytest.raises(subprocess.TimeoutExpired):
-        D._run_capture(["sh", "-c", "sleep 30 & echo started"], timeout=2)
+        D._run_capture([sys.executable, "-c", launcher], timeout=2)
     assert time.time() - t0 < 15, "group-kill did not fire — grandchild hung the call"
     # and no orphaned sleep survived
-    leftover = subprocess.run(["pgrep", "-f", "sleep 30"], capture_output=True, text=True).stdout.strip()
-    assert not leftover, f"orphan sleep survived the group-kill: {leftover}"
+    leftover = _matching_live_pids(token)
+    try:
+        assert not leftover, f"orphan grandchild survived the group-kill: {leftover}"
+    finally:
+        for pid in leftover:
+            subprocess.run(["kill", "-9", pid], check=False)
+
+
+def _matching_live_pids(token: str) -> list[str]:
+    ps = subprocess.run(["ps", "-axo", "pid=,stat=,command="], capture_output=True, text=True, check=False)
+    matches: list[str] = []
+    for line in ps.stdout.splitlines():
+        if token not in line:
+            continue
+        parts = line.strip().split(None, 2)
+        if len(parts) < 3:
+            continue
+        pid, stat, _command = parts
+        if pid != str(os.getpid()) and not stat.startswith("Z"):
+            matches.append(pid)
+    return matches
 
 
 def test_down_lanes_reads_file(tmp_path, monkeypatch):

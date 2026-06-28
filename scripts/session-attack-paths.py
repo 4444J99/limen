@@ -379,6 +379,7 @@ def build_blocker_paths(blockers: dict[str, Any]) -> list[dict[str, Any]]:
             "github_consolidation": 78,
             "local_lean": 74,
             "local_network_substrate": 66,
+            "dispatch_lifecycle": 64,
             "worktree_lifecycle": 70,
             "owner_state": 42,
             "remote_receipt": 62,
@@ -416,6 +417,9 @@ def build_blocker_paths(blockers: dict[str, Any]) -> list[dict[str, Any]]:
         elif category == "local_network_substrate":
             lane = "blocker"
             agent = "codex"
+        elif category == "dispatch_lifecycle":
+            lane = "human-gate" if status == "needs_human_gate" else "blocker"
+            agent = "human/codex-prep" if lane == "human-gate" else "codex"
         elif category == "capability_substrate":
             lane = "blocker"
             agent = "codex"

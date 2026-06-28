@@ -14,6 +14,7 @@ TRANCHE_SCRIPT = ROOT / "scripts" / "conductor-tranche.py"
 ORIENT_SCRIPT = ROOT / "scripts" / "session-orient.py"
 CONSOLIDATION_GATES_SCRIPT = ROOT / "scripts" / "consolidation-gates.py"
 NETWORK_HEALTH_SCRIPT = ROOT / "scripts" / "network-health.py"
+DISPATCH_HEALTH_SCRIPT = ROOT / "scripts" / "dispatch-health.py"
 
 
 def _load(path: Path, name: str):
@@ -392,6 +393,87 @@ t "tick switching can be explicitly opted in" "_st_tick_switch_optin"
     assert network.PRIVATE_INDEX.exists()
 
 
+def test_dispatch_health_records_live_root_and_async_drift(tmp_path: Path):
+    dispatch = _load(DISPATCH_HEALTH_SCRIPT, "dispatch_health")
+    dispatch.ROOT = tmp_path
+    dispatch.HOME = tmp_path
+    dispatch.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    dispatch.PRIVATE_INDEX = dispatch.PRIVATE_ROOT / "lifecycle" / "dispatch-health.json"
+    dispatch.DOC_PATH = tmp_path / "docs" / "dispatch-health.md"
+    dispatch.LIVE_ROOT = tmp_path / "live-limen"
+    dispatch.HEARTBEAT_PLIST = tmp_path / "Library" / "LaunchAgents" / "com.limen.heartbeat.plist"
+
+    dispatch.read_plist = lambda path: {
+        "present": True,
+        "path": str(path),
+        "keep_alive": True,
+        "run_at_load": True,
+        "env": {"LIMEN_ROOT": str(dispatch.LIVE_ROOT), "LIMEN_DISPATCH_ASYNC": "0"},
+    }
+    dispatch.launchd_snapshot = lambda: {
+        "present": True,
+        "running": True,
+        "state": "running",
+        "pid": "123",
+        "env": {"LIMEN_ROOT": str(dispatch.LIVE_ROOT)},
+    }
+
+    def fake_git_snapshot(path: Path):
+        if path == dispatch.LIVE_ROOT:
+            return {
+                "path": str(path),
+                "present": True,
+                "is_git": True,
+                "branch": "feature/live",
+                "head": "abc",
+                "origin_main": "def",
+                "matches_origin_main": False,
+                "ahead_origin_main": 1,
+                "behind_origin_main": 7,
+                "status_summary": "## feature/live...origin/main [ahead 1, behind 7]",
+                "dirty_entries": 2,
+                "dirty_paths": ["scripts/netmode.sh", "tasks.yaml"],
+                "dirty_truncated": False,
+            }
+        return {
+            "path": str(path),
+            "present": True,
+            "is_git": True,
+            "branch": "codex/conductor",
+            "head": "def",
+            "origin_main": "def",
+            "matches_origin_main": True,
+            "ahead_origin_main": 0,
+            "behind_origin_main": 0,
+            "status_summary": "## codex/conductor",
+            "dirty_entries": 0,
+            "dirty_paths": [],
+            "dirty_truncated": False,
+        }
+
+    dispatch.git_snapshot = fake_git_snapshot
+    dispatch.watchdog_snapshot = lambda: {"healthy": True, "first_line": "[watchdog] HEALTHY"}
+    dispatch.async_probe_snapshot = lambda enabled: {
+        "requested": enabled,
+        "ok": True,
+        "timed_out": False,
+        "last_line": "would launch 0",
+    }
+
+    snapshot = dispatch.build_snapshot(type("Args", (), {"probe_async": True})())
+    markdown = dispatch.render_markdown(snapshot)
+    dispatch.write_outputs(snapshot, markdown)
+
+    blocker_ids = {item["id"] for item in snapshot["blockers"]}
+    assert snapshot["status"] == "blocked"
+    assert "live-root-not-at-origin-main" in blocker_ids
+    assert "live-root-dirty" in blocker_ids
+    assert "heartbeat-loaded-env-drift" in blocker_ids
+    assert "Dispatch/heartbeat health is not proven by tests in a detached worktree alone." in markdown
+    assert dispatch.DOC_PATH.exists()
+    assert dispatch.PRIVATE_INDEX.exists()
+
+
 def test_session_blockers_records_hooks_disk_and_credentials_without_values(tmp_path: Path):
     blockers = _load(BLOCKERS_SCRIPT, "session_blockers_ledger")
     blockers.ROOT = tmp_path
@@ -666,6 +748,85 @@ def test_session_blockers_promotes_unhealthy_network_receipt(tmp_path: Path):
     assert "local-network-substrate-unhealthy" in ids
     assert snapshot["coverage"]["local_network_substrate"]["status"] == "needs_attention"
     assert "Local network substrate: status `needs_attention`, mode `observe`, route `en0` via `192.168.1.1`." in markdown
+
+
+def test_session_blockers_promotes_unhealthy_dispatch_receipt(tmp_path: Path):
+    blockers = _load(BLOCKERS_SCRIPT, "session_blockers_dispatch_health")
+    blockers.ROOT = tmp_path
+    blockers.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    blockers.PRIVATE_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "session-lifecycle-blockers.json"
+    blockers.CAPABILITY_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "capability-substrate-index.json"
+    blockers.NETWORK_HEALTH_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "network-health.json"
+    blockers.DISPATCH_HEALTH_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "dispatch-health.json"
+    blockers.CONSOLIDATION_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "consolidation-gates.json"
+    blockers.PROMPT_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+    blockers.CODEX_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
+    blockers.CORPUS_INVENTORY = blockers.PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
+    blockers.PRESSURE_INDEX = tmp_path / "logs" / "session-lifecycle-pressure.json"
+    blockers.PROJECT_SETTINGS = tmp_path / ".claude" / "settings.json"
+    blockers.DOC_PATH = tmp_path / "docs" / "session-lifecycle-blockers.md"
+    blockers.DEFAULT_CAPABILITY_ROOTS = ()
+
+    blockers.PROMPT_INDEX.parent.mkdir(parents=True)
+    blockers.PROMPT_INDEX.write_text(
+        json.dumps(
+            {
+                "sources": [],
+                "worktree_report": {"debt": 0, "total": 0},
+                "remote": {"enabled": True, "worktrees": {}, "task_prs": {"counts": {}}},
+                "cloud": {"enabled": True, "runtime_url_configured": True, "env_flags": {}},
+            }
+        ),
+        encoding="utf-8",
+    )
+    blockers.CODEX_INDEX.write_text(json.dumps({"session_count": 0, "families": []}), encoding="utf-8")
+    blockers.CORPUS_INVENTORY.parent.mkdir(parents=True)
+    blockers.CORPUS_INVENTORY.write_text(json.dumps({"organs": [], "materialization": {"copied": 0}}), encoding="utf-8")
+    blockers.PRESSURE_INDEX.parent.mkdir(parents=True)
+    blockers.PRESSURE_INDEX.write_text(json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8")
+    blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
+    blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
+    blockers.NETWORK_HEALTH_INDEX.parent.mkdir(parents=True, exist_ok=True)
+    blockers.NETWORK_HEALTH_INDEX.write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-06-28T12:00:00+00:00",
+                "status": "healthy",
+                "blockers": [],
+                "mode": {"mode": "observe"},
+                "route": {"interface": "en0", "gateway": "192.168.1.1"},
+            }
+        ),
+        encoding="utf-8",
+    )
+    blockers.DISPATCH_HEALTH_INDEX.write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-06-28T12:00:00+00:00",
+                "status": "blocked",
+                "blockers": [
+                    {"id": "live-root-not-at-origin-main", "evidence": "live root diverged"},
+                    {"id": "live-root-dirty", "evidence": "live root has dirty files"},
+                ],
+                "launchd": {"state": "running", "pid": "123"},
+                "live_root_git": {
+                    "branch": "feature/live",
+                    "matches_origin_main": False,
+                    "dirty_entries": 2,
+                },
+                "async_probe": {"requested": True, "ok": True},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = blockers.build_snapshot()
+    markdown = blockers.render_markdown(snapshot)
+
+    ids = {item["id"] for item in snapshot["blockers"]}
+    assert "dispatch-heartbeat-substrate-unhealthy" in ids
+    assert snapshot["coverage"]["dispatch_substrate"]["status"] == "blocked"
+    assert "Dispatch substrate: status `blocked`, launchd `running`, live root `feature/live`" in markdown
 
 
 def test_session_blockers_records_github_consolidation_and_app_gates(tmp_path: Path):

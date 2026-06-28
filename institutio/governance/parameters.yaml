@@ -278,6 +278,24 @@ parameters:
     env: LIMEN_ROOT
     self_update: none
     owner: limen-daemon
+  LIMEN_LIVE_ROOT:
+    default: "~/Workspace/limen"
+    env: LIMEN_LIVE_ROOT
+    self_update: none
+    owner: limen-daemon
+    note: "Live checkout that launchd is expected to run. dispatch-health.py compares this root to the verified conductor worktree before async/heartbeat receipts are trusted."
+  LIMEN_HEARTBEAT_PLIST:
+    default: "~/Library/LaunchAgents/com.limen.heartbeat.plist"
+    env: LIMEN_HEARTBEAT_PLIST
+    self_update: none
+    owner: limen-daemon
+    note: "LaunchAgent plist inspected by dispatch-health.py. Probe-only; changing it does not reload launchd or mutate the daemon."
+  LIMEN_HEARTBEAT_LABEL:
+    default: "com.limen.heartbeat"
+    env: LIMEN_HEARTBEAT_LABEL
+    self_update: none
+    owner: limen-daemon
+    note: "launchctl service label used by dispatch-health.py to compare loaded heartbeat env with the plist. Probe-only, never a launchd write."
   LIMEN_DISPATCH_CEILING:
     default: null              # currently in heartbeat-loop.sh
     env: LIMEN_DISPATCH_CEILING
