@@ -15,9 +15,9 @@ portal:
       claude: 100
     track:
       date: '2026-06-28'
-      spent: 88
+      spent: 89
       per_agent:
-        jules: 68
+        jules: 69
         gemini: 0
         codex: 0
         opencode: 8
@@ -26,10 +26,10 @@ portal:
       per_agent_reset:
         jules: '2026-06-28T00:39:05.671668+00:00'
         gemini: '2026-06-28T00:39:05.671668+00:00'
-        codex: '2026-06-28T10:59:14.270023+00:00'
+        codex: '2026-06-28T16:19:33.856007+00:00'
         opencode: '2026-06-28T00:39:05.671668+00:00'
         agy: '2026-06-28T00:39:05.671668+00:00'
-        claude: '2026-06-28T10:59:14.270023+00:00'
+        claude: '2026-06-28T16:19:33.856007+00:00'
 tasks:
 - id: FORCE-route-all-services
   title: Router fans across ALL paid services, not just the 6 vendors
@@ -62187,7 +62187,7 @@ tasks:
   title: Reduce complexity in organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: dispatched
@@ -62196,13 +62196,14 @@ tasks:
   - generated
   - build-out
   - noop
+  - slow
   urls: []
   context: Identify the most complex or most-duplicated module in organvm/session-meta
     and refactor it for clarity, with tests proving behavior is unchanged. Net lines
     should not grow without cause. [auto-generated 2026-06-28 to keep the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T15:46:03.432510Z'
+  updated: '2026-06-28T16:19:33.856007Z'
   dispatch_log:
   - timestamp: '2026-06-28T15:24:13.775957Z'
     agent: codex
@@ -62233,3 +62234,16 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T15:46:03.432510Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
+  - timestamp: '2026-06-28T16:19:33.856007Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T16:19:33.856007Z'
+    agent: jules
+    session_id: '1559557622914424071'
+    status: dispatched
