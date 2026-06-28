@@ -59443,10 +59443,10 @@ tasks:
   title: Raise test coverage in organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
-  status: failed
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -59459,7 +59459,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T08:56:32.923717Z'
+  updated: '2026-06-28T10:10:15.862556Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:40:29.389041Z'
     agent: codex
@@ -59515,6 +59515,16 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T10:04:46.627813Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T10:10:15.862556Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-mirror-mirror-ci-green-0628
   title: Make organvm/mirror-mirror CI green
   repo: organvm/mirror-mirror
@@ -61942,10 +61952,10 @@ tasks:
   title: Real usage docs for organvm/domus-genoma
   repo: organvm/domus-genoma
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: low
   budget_cost: 1
-  status: failed
+  status: dispatched
   labels:
   - docs
   - generated
@@ -61958,7 +61968,7 @@ tasks:
     \ 2026-06-28 to keep the stream endless]"
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T08:56:32.923717Z'
+  updated: '2026-06-28T10:10:15.862556Z'
   dispatch_log:
   - timestamp: '2026-06-28T08:56:32.923717Z'
     agent: agy
@@ -61970,14 +61980,24 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T10:04:46.627813Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T10:10:15.862556Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-public-record-data-scrapper-simplify-0628
   title: Reduce complexity in organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
   type: code
-  target_agent: any
+  target_agent: agy
   priority: medium
   budget_cost: 1
-  status: failed
+  status: dispatched
   labels:
   - simplify
   - generated
@@ -61989,7 +62009,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-28 to keep the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T08:56:32.923717Z'
+  updated: '2026-06-28T10:10:15.862556Z'
   dispatch_log:
   - timestamp: '2026-06-28T08:56:32.923717Z'
     agent: opencode
@@ -62001,3 +62021,13 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T10:04:46.627813Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T10:10:15.862556Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
