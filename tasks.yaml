@@ -59443,10 +59443,10 @@ tasks:
   title: Raise test coverage in organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: needs_human
   labels:
   - test-coverage
   - generated
@@ -59459,7 +59459,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T10:10:15.862556Z'
+  updated: '2026-06-28T10:14:53.692896Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:40:29.389041Z'
     agent: codex
@@ -59525,6 +59525,16 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T10:10:15.862556Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T10:14:53.692896Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: GEN-organvm-mirror-mirror-ci-green-0628
   title: Make organvm/mirror-mirror CI green
   repo: organvm/mirror-mirror
@@ -61955,7 +61965,7 @@ tasks:
   target_agent: opencode
   priority: low
   budget_cost: 1
-  status: in_progress
+  status: failed
   labels:
   - docs
   - generated
@@ -61968,7 +61978,7 @@ tasks:
     \ 2026-06-28 to keep the stream endless]"
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28'
+  updated: '2026-06-28T10:10:15.862556Z'
   dispatch_log:
   - timestamp: '2026-06-28T08:56:32.923717Z'
     agent: agy
@@ -61990,11 +62000,16 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
-  - timestamp: '2026-06-28'
+  - timestamp: '2026-06-28T00:00:00'
     agent: opencode
     session_id: current
     status: in_progress
-    output: "Claimed task: deriving README Usage from actual entrypoints"
+    output: 'Claimed task: deriving README Usage from actual entrypoints'
+  - timestamp: '2026-06-28T10:10:15.862556Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: GEN-organvm-public-record-data-scrapper-simplify-0628
   title: Reduce complexity in organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
@@ -62002,7 +62017,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - simplify
   - generated
@@ -62036,3 +62051,8 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T10:10:15.862556Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
