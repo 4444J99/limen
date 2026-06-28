@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-06-28'
-      spent: 61
+      spent: 66
       per_agent:
         jules: 48
         gemini: 0
         codex: 0
-        opencode: 3
+        opencode: 8
         agy: 9
         claude: 1
       per_agent_reset:
@@ -3019,6 +3019,34 @@ tasks:
     session_id: https://github.com/organvm-i-theoria/conversation-corpus-engine/pull/48
     status: done
     output: 'jules-land: landed session 7984657099863192027 as PR'
+- id: GEN-organvm-domus-genoma-security-0628
+  title: Security hardening pass on organvm/domus-genoma
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: opencode
+  priority: high
+  budget_cost: 5
+  status: done
+  labels:
+  - security
+  - hardening
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/149
+  context: 'npm audit, input validation, CSP headers. PR #149 opened.'
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T07:53:57Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T07:53:57Z'
+    agent: opencode
+    session_id: cli
+    status: done
+    output: 'Security hardening: pinned postcss to ^8.5.10 (GHSA-qx2v-qp2m-jg93),
+      added MAX_EMAIL_LENGTH/MAX_TIER_LENGTH/MAX_BODY_BYTES guards to install-script.ts,
+      MAX_TOKEN_LENGTH/MAX_REQUIRE_LENGTH to verify-license.ts,
+      MAX_WEBHOOK_BODY_BYTES/MAX_EVENT_TYPE_LENGTH to stripe.ts,
+      CSP/X-Content-Type-Options/X-Frame-Options/Referrer-Policy headers in next.config.mjs.
+      PR: https://github.com/organvm/domus-genoma/pull/149'
 - id: LIMEN-063
   title: "CI: Lint & Validate runners die at provisioning (~4s runs) \u2014 GH-87"
   repo: organvm/domus-genoma
@@ -61416,3 +61444,25 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+
+- id: REV-organvm-public-record-data-scrapper-revenue-readiness-0628
+  title: First-paying-customer readiness pass on Public Record Data Scraper
+  repo: organvm/public-record-data-scrapper
+  type: code
+  target_agent: vltima
+  priority: high
+  budget_cost: 1
+  status: done
+  labels:
+  - revenue
+  urls: []
+  context: "Closed gap where on-demand scrape endpoints (POST /api/scrape/ucc and POST /api/scrape/jobs) were available on the free tier. This ensures the first-dollar path for data-as-a-service requires a paid subscription. Tests added. PR opened: feat/revenue-readiness-tier-gate-scrape"
+  depends_on: []
+  created: "2026-06-28"
+  updated: "2026-06-28T07:52:59.352754+00:00"
+  dispatch_log:
+  - timestamp: "2026-06-28T07:52:59.352754+00:00"
+    agent: vltima
+    session_id: current
+    status: done
+    output: "PR pushed to feat/revenue-readiness-tier-gate-scrape"
