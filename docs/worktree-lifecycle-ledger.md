@@ -1,6 +1,6 @@
 # Canonical Worktree Lifecycle Ledger
 
-Last audited: 2026-06-27 from `/Users/4jp/Workspace/limen`.
+Last audited: 2026-06-28 from `/Users/4jp/Workspace/limen`.
 
 This is the canonical working ledger for roots under
 `/Users/4jp/Workspace/.limen-worktrees`. A root exits this ledger only through a
@@ -19,6 +19,41 @@ only after their local `HEAD` matched the fetched remote PR head exactly:
 The unique work remains preserved on the remote branches and open draft PRs.
 
 ## Current Scan
+
+2026-06-28 follow-up scan:
+
+- `python3 scripts/worktree-debt.py --json`: 14 roots, 12 debt-bearing roots, cap 12.
+- Current class mix: 3 dirty, 5 unpushed or remote-mismatched commits, 2 non-Git residues,
+  2 not merged to default, and 2 clean+merged idle roots.
+- No local reclaim, deletion, merge, force-push, or owner-repo source mutation was performed in
+  this follow-up. This receipt only updates the owner ledger so the active conductor tranche
+  starts from live pressure instead of the older 8-debt summary.
+- The active conductor packet is `docs/conductor-tranche.md`:
+  `tranche-local-lifecycle-disk-pressure`. Its stop condition forbids reclaim/deletion,
+  broad generated build-out, GitHub merge/close, and owner repo mutation without a fresh owner
+  receipt.
+
+Current live roots by scanner reason:
+
+| Root | Scanner reason | Debt |
+|---|---|---|
+| `bld-mirror-mirror-harden-350f` | `unpushed-commits` | yes |
+| `bld-my--father-mother-harden-44b2` | `unpushed-commits` | yes |
+| `bld-promptscope-next-rev-3fde` | `unpushed-commits` | yes |
+| `cifix-organvm-i-theoria-conversation-corpus-engine-f02e` | `unpushed-commits` | yes |
+| `cifix-organvm-i-theoria-hierarchia-mundi-3145` | `dirty` | yes |
+| `discover-organvm-kerygma-profiles-6c74` | `not-merged-to-default` | yes |
+| `gen-organvm-i-theoria-sovereign--ground-ci-green-0620-0f38` | `dirty` | yes |
+| `gen-organvm-the-invisible-ledger-ci-green-0625-e3c2` | `not-a-git-dir` | yes |
+| `gen-organvm-universal-mail--automation-test-coverage-0625-151e` | `dirty` | yes |
+| `gh-organvm-object-lessons-19-605a` | `clean+merged+idle` | no |
+| `resolve-a-organvm-the-invisible-ledger-4-f657` | `clean+merged+idle` | no |
+| `resolve-organvm-i-theoria-.github-459-1ade` | `unpushed-commits` | yes |
+| `rev-organvm-public-record-data-scrapper-revenue-readiness-0623-023f` | `not-merged-to-default` | yes |
+| `rev-organvm-the-invisible-ledger-revenue-readiness-0623-bd8b` | `not-a-git-dir` | yes |
+
+The older scan notes below are retained as lineage for how these roots were classified and
+preserved during the 2026-06-27 cleanup pass.
 
 Evidence commands:
 
