@@ -593,12 +593,14 @@ def consolidation_gate_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any
     owner_rewrite = gate.get("owner_rewrite") or {}
     app = gate.get("app_identity") or {}
     gates = gate.get("gates") or {}
+    collision_packet = gate.get("collision_packet") or {}
     source_repos = int(consolidation.get("source_repos") or 0)
     collisions = int(consolidation.get("collision_groups") or 0)
     task_refs = int(owner_rewrite.get("task_repo_refs_to_rewrite") or 0)
     remotes = int(owner_rewrite.get("local_remotes_to_rewrite") or 0)
 
     if source_repos or collisions:
+        packet_complete = bool(collision_packet.get("complete"))
         add_blocker(
             blockers,
             blocker_id="github-consolidation-collisions",
@@ -610,9 +612,15 @@ def consolidation_gate_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any
             ),
             owner="GitHub consolidation",
             route=(
-                "Resolve `docs/consolidation/COLLISION-RENAMES.md`, then require "
-                "`PYTHONPATH=cli/src python3 scripts/consolidate-github.py` to report 0 collisions "
-                "before any transfer."
+                "Collision packet is complete; await an explicit human GitHub mutation gate to run "
+                "`docs/consolidation/COLLISION-RENAMES.md`, then re-run the consolidation dry-run and "
+                "require 0 collisions before transfer."
+                if packet_complete
+                else (
+                    "Resolve `docs/consolidation/COLLISION-RENAMES.md`, then require "
+                    "`PYTHONPATH=cli/src python3 scripts/consolidate-github.py` to report 0 collisions "
+                    "before any transfer."
+                )
             ),
             source="consolidation-gates",
             details={
@@ -620,6 +628,13 @@ def consolidation_gate_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any
                 "collision_groups": collisions,
                 "task_repo_refs_to_rewrite_post_transfer": task_refs,
                 "local_remotes_to_rewrite_post_transfer": remotes,
+                "collision_packet_complete": bool(collision_packet.get("complete")),
+                "collision_packet_missing_keepers": len(collision_packet.get("missing_keepers") or []),
+                "collision_packet_missing_rename_commands": len(
+                    collision_packet.get("missing_rename_commands") or []
+                ),
+                "collision_packet_target_conflicts": len(collision_packet.get("target_conflicts") or []),
+                "collision_packet_target_unknown": len(collision_packet.get("target_unknown") or []),
                 "blocking": gates.get("blocking") or [],
             },
         )
@@ -656,6 +671,11 @@ def consolidation_gate_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any
         "collision_groups": collisions,
         "task_repo_refs_to_rewrite_post_transfer": task_refs,
         "local_remotes_to_rewrite_post_transfer": remotes,
+        "collision_packet_complete": bool(collision_packet.get("complete")),
+        "collision_packet_missing_keepers": len(collision_packet.get("missing_keepers") or []),
+        "collision_packet_missing_rename_commands": len(collision_packet.get("missing_rename_commands") or []),
+        "collision_packet_target_conflicts": len(collision_packet.get("target_conflicts") or []),
+        "collision_packet_target_unknown": len(collision_packet.get("target_unknown") or []),
         "app_token_wired": bool(app.get("app_token_wired")),
         "limen_app_installed": bool(app.get("limen_app_installed")),
         "blocking": gates.get("blocking") or [],
@@ -757,6 +777,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
             "- GitHub consolidation gate: "
             f"`{(coverage.get('github_consolidation') or {}).get('source_repos', 0)}` source repos, "
             f"`{(coverage.get('github_consolidation') or {}).get('collision_groups', 0)}` collision groups, "
+            f"collision packet complete `{(coverage.get('github_consolidation') or {}).get('collision_packet_complete', False)}`, "
             f"App token wired `{(coverage.get('github_consolidation') or {}).get('app_token_wired', False)}`."
         ),
         "",

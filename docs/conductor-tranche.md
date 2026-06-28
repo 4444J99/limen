@@ -1,8 +1,8 @@
 # Conductor Tranche
 
-Generated: `2026-06-28T15:51:09+00:00`
+Generated: `2026-06-28T16:03:58+00:00`
 
-Summary: `tranche-github-consolidation-collisions` -> `github-consolidation-collisions` (`consolidation-gate`); stop before: Stop before `gh repo rename`, `consolidate-github.py --apply`, `rewrite-owners.py --apply`, GitHub App install, or credential writes unless a human explicitly opens that gate in-session.
+Summary: `tranche-local-lifecycle-disk-pressure` -> `local-lifecycle-disk-pressure` (`drain`); stop before: Stop before local reclaim/deletion, broad generated build-out, GitHub merge/close, or any owner repo mutation not covered by a fresh owner receipt.
 
 ## Cadence Contract
 
@@ -15,40 +15,32 @@ Summary: `tranche-github-consolidation-collisions` -> `github-consolidation-coll
 
 | Field | Value |
 |---|---|
-| Packet | `tranche-github-consolidation-collisions` |
-| Selected path | `github-consolidation-collisions` |
+| Packet | `tranche-local-lifecycle-disk-pressure` |
+| Selected path | `local-lifecycle-disk-pressure` |
 | Kind | `blocker` |
-| Lane | `consolidation-gate` |
-| Score | `78` |
-| Agent fit | `codex/human-gate` |
-| Attack index generated | `2026-06-28T15:50:54+00:00` |
+| Lane | `drain` |
+| Score | `74` |
+| Agent fit | `codex` |
+| Attack index generated | `2026-06-28T16:03:36+00:00` |
 | Ranked paths read | `33` |
 | Skipped parked/observe/auth paths | `gen-organvm-session-meta-simplify-0628-e73d`, `cloud-credential-handles-unconfigured`, `credential-codex-auth-sessions`, `auth_credentials` |
 
 ## Work Packet
 
-Purpose: Advance the GitHub/org consolidation enforcement path by refreshing dry-run gates, surfacing collisions, and packetizing the exact human-gated rename/transfer/rewrite sequence.
+Purpose: Drive local lifecycle pressure down by converting the highest-risk roots into owner receipts, preservation proof, or explicit human-gated reclaim packets.
 
-Repo/worktree: `organvm/limen` conductor checkout only; GitHub/org state is read-only.
+Repo/worktree: `organvm/limen` conductor checkout plus read-only inspection of `~/Workspace/.limen-worktrees`.
 
 Allowed files:
 
-- `scripts/consolidation-gates.py`
-- `scripts/consolidate-github.py`
-- `scripts/rewrite-owners.py`
-- `scripts/session-blockers-ledger.py`
-- `scripts/session-attack-paths.py`
-- `scripts/conductor-tranche.py`
-- `docs/consolidation/RUNBOOK.md`
-- `docs/consolidation/COLLISION-RENAMES.md`
-- `docs/consolidation/GATES.md`
+- `scripts/*lifecycle*.py`
+- `scripts/worktree-debt.py`
+- `docs/worktree-lifecycle-ledger.md`
+- `docs/worktree-preservation-receipts.json`
 - `docs/session-lifecycle-blockers.md`
 - `docs/session-attack-paths.md`
 - `docs/conductor-tranche.md`
-- `.limen-private/session-corpus/lifecycle/consolidation-gates.json`
-- `.limen-private/session-corpus/lifecycle/session-lifecycle-blockers.json`
-- `.limen-private/session-corpus/lifecycle/session-attack-paths.json`
-- `.limen-private/session-corpus/lifecycle/conductor-tranche.json`
+- `.limen-private/session-corpus/lifecycle/**`
 
 Forbidden:
 
@@ -58,23 +50,21 @@ Forbidden:
 - `irreversible GitHub transfer/rename/App install/credential actions`
 - `task-board mutation unless the direct request explicitly requires it`
 
-Stop condition: Stop before `gh repo rename`, `consolidate-github.py --apply`, `rewrite-owners.py --apply`, GitHub App install, or credential writes unless a human explicitly opens that gate in-session.
+Stop condition: Stop before local reclaim/deletion, broad generated build-out, GitHub merge/close, or any owner repo mutation not covered by a fresh owner receipt.
 
-Receipt: docs/consolidation/GATES.md plus docs/conductor-tranche.md; private parsed gate receipt under .limen-private/session-corpus/lifecycle/.
+Receipt: docs/worktree-lifecycle-ledger.md or docs/worktree-preservation-receipts.json for owner state; docs/conductor-tranche.md for the current packet.
 
 Verification:
 
-- `python3 scripts/consolidation-gates.py --write`
+- `python3 scripts/worktree-debt.py --json`
+- `python3 scripts/session-lifecycle-pressure.py --write`
 - `python3 scripts/session-blockers-ledger.py --write`
 - `python3 scripts/session-attack-paths.py --write`
 - `python3 scripts/conductor-tranche.py --write`
-- `PYTHONPATH=cli/src python3 scripts/consolidate-github.py`
-- `PYTHONPATH=cli/src python3 scripts/rewrite-owners.py`
-- `bash scripts/gh-app-token.sh --which`
 
 ## Source Next Action
 
-Resolve `docs/consolidation/COLLISION-RENAMES.md`, then require `PYTHONPATH=cli/src python3 scripts/consolidate-github.py` to report 0 collisions before any transfer.
+Drain only after remote/default preservation proof or non-source residue receipt; keep pressure visible in SessionStart.
 
 ## Refresh
 

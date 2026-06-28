@@ -632,6 +632,56 @@ def test_session_attack_paths_prioritize_github_consolidation_over_generic_local
     assert "github-consolidation-collisions" in markdown
 
 
+def test_session_attack_paths_demote_completed_github_consolidation_packet_to_human_gate(tmp_path: Path):
+    attack = _load(ATTACK_PATHS_SCRIPT, "session_attack_paths_completed_github_consolidation")
+    attack.ROOT = tmp_path
+    attack.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    attack.PROMPT_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+    attack.CODEX_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
+    attack.BLOCKER_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "session-lifecycle-blockers.json"
+    attack.PRESSURE_INDEX = tmp_path / "logs" / "session-lifecycle-pressure.json"
+    attack.DOC_PATH = tmp_path / "docs" / "session-attack-paths.md"
+    attack.PRIVATE_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
+    attack.PRESERVATION_RECEIPTS = tmp_path / "docs" / "worktree-preservation-receipts.json"
+    attack.worktree_debt_report = lambda root: {"total": 0, "debt": 0, "items": []}
+
+    attack.PROMPT_INDEX.parent.mkdir(parents=True)
+    attack.PROMPT_INDEX.write_text(json.dumps({"sources": [], "worktree_report": {"debt": 0, "items": []}}), encoding="utf-8")
+    attack.CODEX_INDEX.write_text(json.dumps({"session_count": 0, "families": []}), encoding="utf-8")
+    attack.BLOCKER_INDEX.write_text(
+        json.dumps(
+            {
+                "blockers": [
+                    {
+                        "id": "local-lifecycle-disk-pressure",
+                        "category": "local_lean",
+                        "status": "parked",
+                        "route": "Drain after preservation proof.",
+                    },
+                    {
+                        "id": "github-consolidation-collisions",
+                        "category": "github_consolidation",
+                        "status": "needs_human_gate",
+                        "route": "Await human mutation gate.",
+                        "details": {"collision_packet_complete": True},
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    attack.PRESSURE_INDEX.parent.mkdir(parents=True)
+    attack.PRESSURE_INDEX.write_text(json.dumps({"local_total_bytes": 0}), encoding="utf-8")
+
+    snapshot = attack.build_snapshot()
+    paths = {item["id"]: item for item in snapshot["ranked_paths"]}
+    ids_by_rank = [item["id"] for item in snapshot["ranked_paths"]]
+
+    assert ids_by_rank.index("local-lifecycle-disk-pressure") < ids_by_rank.index("github-consolidation-collisions")
+    assert paths["github-consolidation-collisions"]["lane"] == "human-gate"
+    assert paths["github-consolidation-collisions"]["score"] == 52
+
+
 def test_session_attack_paths_treat_preserved_dirty_root_as_owner_blocker(tmp_path: Path):
     attack = _load(ATTACK_PATHS_SCRIPT, "session_attack_paths_receipts")
     attack.ROOT = tmp_path

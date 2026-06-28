@@ -1,6 +1,6 @@
 # Session Lifecycle Blockers
 
-Generated: `2026-06-28T15:50:46+00:00`
+Generated: `2026-06-28T16:03:26+00:00`
 
 ## Canonical Handling
 
@@ -22,7 +22,7 @@ Generated: `2026-06-28T15:50:46+00:00`
 - Local lifecycle footprint: `5.6 GiB`.
 - Capability substrate detected: `11` roots, `1317` skill files, `45` plugin/MCP manifests.
 - Capability resurfacing receipt present/current: `True`/`True`; activation candidates `30`.
-- GitHub consolidation gate: `34` source repos, `13` collision groups, App token wired `False`.
+- GitHub consolidation gate: `34` source repos, `13` collision groups, collision packet complete `True`, App token wired `False`.
 
 ## Parked / Hung Workstreams
 
@@ -39,7 +39,7 @@ Generated: `2026-06-28T15:50:46+00:00`
 | `owner-state-dirty-session-meta` | `owner_state` | `parked` | session-meta has 1 dirty entries. | session-meta | Preserve in that owner repo before treating corpus substrate as clean. |
 | `owner-state-dirty-knowledge-corpus` | `owner_state` | `parked` | knowledge-corpus has 3 dirty entries. | knowledge-corpus | Preserve in that owner repo before treating corpus substrate as clean. |
 | `local-lifecycle-disk-pressure` | `local_lean` | `parked` | Local lifecycle stores use 5.6 GiB (2.4 GiB worktrees, 3.2 GiB private corpus). | local lifecycle | Drain only after remote/default preservation proof or non-source residue receipt; keep pressure visible in SessionStart. |
-| `github-consolidation-collisions` | `github_consolidation` | `needs_human_gate` | 34 source repos remain outside `organvm`; 13 name-collision groups block the transfer apply gate. | GitHub consolidation | Resolve `docs/consolidation/COLLISION-RENAMES.md`, then require `PYTHONPATH=cli/src python3 scripts/consolidate-github.py` to report 0 collisions before any transfer. |
+| `github-consolidation-collisions` | `github_consolidation` | `needs_human_gate` | 34 source repos remain outside `organvm`; 13 name-collision groups block the transfer apply gate. | GitHub consolidation | Collision packet is complete; await an explicit human GitHub mutation gate to run `docs/consolidation/COLLISION-RENAMES.md`, then re-run the consolidation dry-run and require 0 collisions before transfer. |
 | `github-app-limen-bot-not-wired` | `github_app_identity` | `needs_human_gate` | `gh-app-token --which` resolves to `pat (GITHUB_TOKEN fallback)`; 4 org Apps are installed, and `limen[bot]` is not wired. | limen[bot] App identity | Create/install the org GitHub App and hydrate credentials via `scripts/set-credential.sh`; verify `bash scripts/gh-app-token.sh --which` reports the App path. |
 
 ## Private Output

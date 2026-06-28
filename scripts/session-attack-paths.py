@@ -322,6 +322,7 @@ def build_blocker_paths(blockers: dict[str, Any]) -> list[dict[str, Any]]:
             continue
         category = str(blocker.get("category") or "unknown")
         status = str(blocker.get("status") or "parked")
+        details = blocker.get("details") or {}
         base = {
             "capability_substrate": 38,
             "github_app_identity": 58,
@@ -339,8 +340,13 @@ def build_blocker_paths(blockers: dict[str, Any]) -> list[dict[str, Any]]:
             lane = "parked"
             agent = "human/codex-prep"
         elif category == "github_consolidation":
-            lane = "consolidation-gate"
-            agent = "codex/human-gate"
+            if details.get("collision_packet_complete"):
+                base = 52
+                lane = "human-gate"
+                agent = "human/codex-prep"
+            else:
+                lane = "consolidation-gate"
+                agent = "codex/human-gate"
         elif category == "github_app_identity":
             lane = "human-gate"
             agent = "human/codex-prep"
