@@ -15,9 +15,9 @@ portal:
       claude: 100
     track:
       date: '2026-06-28'
-      spent: 85
+      spent: 86
       per_agent:
-        jules: 65
+        jules: 66
         gemini: 0
         codex: 0
         opencode: 8
@@ -58860,7 +58860,7 @@ tasks:
     and tests green. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T13:57:55.847642Z'
+  updated: '2026-06-28T14:14:17.262122Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: opencode
@@ -58894,6 +58894,20 @@ tasks:
   - timestamp: '2026-06-27T13:57:55.847642Z'
     agent: jules
     session_id: '16345173702541085138'
+    status: dispatched
+  - timestamp: '2026-06-28T14:09:32.760420Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T14:14:17.262122Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T14:14:17.262122Z'
+    agent: jules
+    session_id: '127396022977747404'
     status: dispatched
 - id: GEN-organvm-mirror-mirror-typing-0627
   title: Tighten types in organvm/mirror-mirror
