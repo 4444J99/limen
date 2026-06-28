@@ -126,6 +126,45 @@ def test_remote_merged_receipt_is_visible_but_not_debt(tmp_path: Path, monkeypat
     assert report["debt"] == 0
 
 
+def test_remote_pr_open_receipt_is_visible_but_not_debt(tmp_path: Path, monkeypatch):
+    worktrees = tmp_path / ".limen-worktrees"
+    root = worktrees / "open-pr-root"
+    root.mkdir(parents=True)
+    subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+    subprocess.run(["git", "config", "user.email", "test@example.invalid"], cwd=root, check=True)
+    subprocess.run(["git", "config", "user.name", "Test User"], cwd=root, check=True)
+    (root / "README.md").write_text("open pr work\n", encoding="utf-8")
+    subprocess.run(["git", "add", "README.md"], cwd=root, check=True)
+    subprocess.run(["git", "commit", "-qm", "open pr work"], cwd=root, check=True)
+    receipts = tmp_path / "docs" / "worktree-preservation-receipts.json"
+    receipts.parent.mkdir()
+    receipts.write_text(
+        json.dumps(
+            {
+                "receipts": [
+                    {
+                        "root": "open-pr-root",
+                        "lane": "remote-pr-open",
+                        "status": "open_pr_preserved",
+                        "pr_state": "OPEN",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(worktrees))
+    monkeypatch.setenv("LIMEN_RECLAIM_CLAUDE_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_MIN_AGE_H", "0")
+
+    report = worktree_debt_report(tmp_path)
+
+    assert report["items"][0]["name"] == "open-pr-root"
+    assert report["items"][0]["reason"] == "remote-pr-open"
+    assert report["items"][0]["debt"] is False
+    assert report["debt"] == 0
+
+
 def test_clean_git_root_still_classifies_without_receipt(tmp_path: Path, monkeypatch):
     worktrees = tmp_path / ".limen-worktrees"
     root = worktrees / "git-root"

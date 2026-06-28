@@ -1,6 +1,6 @@
 # Session Lifecycle Blockers
 
-Generated: `2026-06-28T16:03:26+00:00`
+Generated: `2026-06-28T16:10:44+00:00`
 
 ## Canonical Handling
 
@@ -16,7 +16,7 @@ Generated: `2026-06-28T16:03:26+00:00`
 - GitHub consolidation gates present: `True` at `~/Workspace/limen/.limen-private/session-corpus/lifecycle/consolidation-gates.json`.
 - Redacted local prompt coverage: `9489` files, `92795` prompt-like events.
 - Codex classified sessions: `887`.
-- Worktree debt roots: `6`.
+- Worktree debt roots: `2`.
 - Remote receipts enabled: `True`; cloud receipts enabled: `True`.
 - Session pressure hook wired: `True`; last pressure snapshot present: `True`.
 - Local lifecycle footprint: `5.6 GiB`.
@@ -35,7 +35,7 @@ Generated: `2026-06-28T16:03:26+00:00`
 | `cloud-credential-handles-unconfigured` | `auth_credentials` | `parked` | 6 credential/deploy handles absent; 0 present. No values inspected. | credential workstream | Do not repair inline; open a bounded credential/setup workstream only when a cloud action requires it. |
 | `cloud-runtime-endpoint-unconfigured` | `cloud_runtime` | `parked` | No runtime URL was configured for the last cloud receipt probe. | limen deployment workstream | Keep separate from session intake; configure/probe runtime only in a deploy/runtime task. |
 | `worktree-remote-branches-missing` | `worktree_lifecycle` | `parked` | 4 git worktree roots did not have the same branch present on origin. | worktree lifecycle | Preserve each root by branch, PR, owner blocker, or documented non-source residue before cleanup. |
-| `worktree-lifecycle-debt` | `worktree_lifecycle` | `parked` | 6 `.limen-worktrees` roots still carry lifecycle debt. | worktree lifecycle | Preserve or owner-record each root; no deletion of unique work. |
+| `worktree-lifecycle-debt` | `worktree_lifecycle` | `parked` | 2 `.limen-worktrees` roots still carry lifecycle debt. | worktree lifecycle | Preserve or owner-record each root; no deletion of unique work. |
 | `owner-state-dirty-session-meta` | `owner_state` | `parked` | session-meta has 1 dirty entries. | session-meta | Preserve in that owner repo before treating corpus substrate as clean. |
 | `owner-state-dirty-knowledge-corpus` | `owner_state` | `parked` | knowledge-corpus has 3 dirty entries. | knowledge-corpus | Preserve in that owner repo before treating corpus substrate as clean. |
 | `local-lifecycle-disk-pressure` | `local_lean` | `parked` | Local lifecycle stores use 5.6 GiB (2.4 GiB worktrees, 3.2 GiB private corpus). | local lifecycle | Drain only after remote/default preservation proof or non-source residue receipt; keep pressure visible in SessionStart. |

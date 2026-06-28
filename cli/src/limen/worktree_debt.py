@@ -26,6 +26,8 @@ REMOTE_SUPERSEDED_LANES = {"remote-superseded"}
 REMOTE_SUPERSEDED_STATUSES = {"superseded_on_origin_main"}
 REMOTE_MERGED_LANES = {"remote-merged"}
 REMOTE_MERGED_STATUSES = {"merged_pr_preserved"}
+REMOTE_PR_OPEN_LANES = {"remote-pr-open"}
+REMOTE_PR_OPEN_STATUSES = {"open_pr_preserved"}
 
 
 class WorktreeDebtItem(TypedDict):
@@ -136,6 +138,15 @@ def _is_remote_merged(path: Path, preservation_receipts: dict[str, dict[str, Any
     return lane in REMOTE_MERGED_LANES or status in REMOTE_MERGED_STATUSES
 
 
+def _is_remote_pr_open(path: Path, preservation_receipts: dict[str, dict[str, Any]]) -> bool:
+    receipt = preservation_receipts.get(path.name)
+    if not receipt:
+        return False
+    lane = str(receipt.get("lane") or "")
+    status = str(receipt.get("status") or "")
+    return lane in REMOTE_PR_OPEN_LANES or status in REMOTE_PR_OPEN_STATUSES
+
+
 def _classify(
     path: Path,
     now: float,
@@ -155,6 +166,8 @@ def _classify(
         return "remote-superseded"
     if _is_remote_merged(path, preservation_receipts):
         return "remote-merged"
+    if _is_remote_pr_open(path, preservation_receipts):
+        return "remote-pr-open"
     if _git(["rev-parse", "--is-inside-work-tree"], path).returncode != 0:
         return "not-a-git-dir"
     age_h = (now - path.stat().st_mtime) / 3600.0
