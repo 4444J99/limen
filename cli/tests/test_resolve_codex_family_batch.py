@@ -164,19 +164,13 @@ def test_repo_candidates_cover_redirected_family_roots():
         "discover-organvm-persona-fleet-4c28": ["organvm/persona-fleet"],
         "discover-organvm-cvrsvs-honorvm-fb46": ["organvm/cvrsvs-honorvm"],
         "discover-organvm-quick-fire--all-command-1053": ["organvm/quick-fire--all-command"],
-        "gh-organvm-i-theoria-vigiles-aeternae-corpus-mythicum-4-5472": [
-            "organvm/vigiles-aeternae--corpus-mythicum"
-        ],
-        "gh-organvm-iii-ergon-sovereign-systems-elevate-align-20-3879": [
-            "organvm/sovereign-systems--elevate-align"
-        ],
+        "gh-organvm-i-theoria-vigiles-aeternae-corpus-mythicum-4-5472": ["organvm/vigiles-aeternae--corpus-mythicum"],
+        "gh-organvm-iii-ergon-sovereign-systems-elevate-align-20-3879": ["organvm/sovereign-systems--elevate-align"],
         "gh-organvm-iv-taxis-github-6-1f99": [
             "organvm-iv-taxis/.github",
             "organvm/dot-github--taxis",
         ],
-        "discover-organvm-specvla-ergon--avditor-mvndi-2071": [
-            "organvm/specvla-ergon--avditor-mvndi"
-        ],
+        "discover-organvm-specvla-ergon--avditor-mvndi-2071": ["organvm/specvla-ergon--avditor-mvndi"],
         "gh-4444j99-relationship-pipeline-1-ae4d": [
             "organvm/relationship-pipeline",
             "4444J99/relationship-pipeline",
@@ -199,19 +193,11 @@ def test_repo_candidates_cover_redirected_family_roots():
             "a-organvm/the-invisible-ledger",
         ],
         "bld2-card-trade-social-billing-e47a": ["organvm/card-trade-social"],
-        "gen-organvm-gamified-coach-interface-test-coverage-0620-6c74": [
-            "organvm/gamified-coach-interface"
-        ],
-        "gen-organvm-search-local--happy-hour-test-coverage-0620-d4d6": [
-            "organvm/search-local--happy-hour"
-        ],
-        "gen-organvm-select-or-left-or-right-or-test-coverage-0620-7740": [
-            "organvm/select-or-left-or-right-or"
-        ],
+        "gen-organvm-gamified-coach-interface-test-coverage-0620-6c74": ["organvm/gamified-coach-interface"],
+        "gen-organvm-search-local--happy-hour-test-coverage-0620-d4d6": ["organvm/search-local--happy-hour"],
+        "gen-organvm-select-or-left-or-right-or-test-coverage-0620-7740": ["organvm/select-or-left-or-right-or"],
         "gen-organvm-anon-hookup-now-test-coverage-0620-e77f": ["organvm/anon-hookup-now"],
-        "gen-organvm-virgil-training-overlay-test-coverage-0620-8f15": [
-            "organvm/virgil-training-overlay"
-        ],
+        "gen-organvm-virgil-training-overlay-test-coverage-0620-8f15": ["organvm/virgil-training-overlay"],
         "rev-tabbookmark-freemium-e464": ["organvm/tab-bookmark-manager"],
         "gh-meta-organvm-github-10-7ca0": ["organvm/.github"],
         "gh-organvm-i-theoria-github-452-2e86": [
@@ -237,9 +223,7 @@ def test_repo_candidates_cover_redirected_family_roots():
         ],
         "rev-domus-onboarding-041b": ["organvm/domus-genoma"],
         "rev-domus-billing-9bad": ["organvm/domus-genoma"],
-        "gh-organvm-i-theoria-carrier-wave-zeitgeist-thesis-2-d6a2": [
-            "organvm/carrier-wave--zeitgeist-thesis"
-        ],
+        "gh-organvm-i-theoria-carrier-wave-zeitgeist-thesis-2-d6a2": ["organvm/carrier-wave--zeitgeist-thesis"],
         "bld-essay-pipeline-ci-1e41": ["organvm/essay-pipeline"],
         "discover-organvm-claude-runtime-state-8ac1": ["organvm/claude-runtime-state"],
         "rev-mirror-landing-0c22": ["organvm/mirror-mirror"],

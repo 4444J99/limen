@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
-from limen.worktree_debt import worktree_debt_report
+from limen.worktree_debt import worktree_debt_report  # noqa: E402
 
 
 def test_documented_non_source_residue_is_visible_but_not_debt(tmp_path: Path, monkeypatch):

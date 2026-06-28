@@ -64,8 +64,20 @@ DRY-RUN - nothing written.
                 "timed_out": False,
             }
         if "gh-app-token.sh" in text:
-            return {"args": args, "returncode": 0, "stdout": "pat (GITHUB_TOKEN fallback)\n", "stderr": "", "timed_out": False}
-        return {"args": args, "returncode": 0, "stdout": "claude\ngoogle-labs-jules\n", "stderr": "", "timed_out": False}
+            return {
+                "args": args,
+                "returncode": 0,
+                "stdout": "pat (GITHUB_TOKEN fallback)\n",
+                "stderr": "",
+                "timed_out": False,
+            }
+        return {
+            "args": args,
+            "returncode": 0,
+            "stdout": "claude\ngoogle-labs-jules\n",
+            "stderr": "",
+            "timed_out": False,
+        }
 
     gates.run_command = fake_run_command
 
@@ -508,9 +520,7 @@ def test_live_root_gate_records_operator_stop_conditions(tmp_path: Path):
         "dirty_entries": 3 if root == gate.LIVE_ROOT else 0,
         "tracked_dirty": ["scripts/netmode.sh", "tasks.yaml"] if root == gate.LIVE_ROOT else [],
         "untracked": ["organs/media/KERNEL.md"] if root == gate.LIVE_ROOT else [],
-        "dirty_paths": ["scripts/netmode.sh", "tasks.yaml", "organs/media/KERNEL.md"]
-        if root == gate.LIVE_ROOT
-        else [],
+        "dirty_paths": ["scripts/netmode.sh", "tasks.yaml", "organs/media/KERNEL.md"] if root == gate.LIVE_ROOT else [],
     }
     gate.read_plist = lambda path: {
         "present": True,
@@ -676,7 +686,9 @@ def test_session_blockers_filter_remote_missing_branches_with_live_scanner_recei
     blockers.CORPUS_INVENTORY.parent.mkdir(parents=True)
     blockers.CORPUS_INVENTORY.write_text(json.dumps({"organs": [], "materialization": {"copied": 0}}), encoding="utf-8")
     blockers.PRESSURE_INDEX.parent.mkdir(parents=True)
-    blockers.PRESSURE_INDEX.write_text(json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8")
+    blockers.PRESSURE_INDEX.write_text(
+        json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8"
+    )
     blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
     blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
 
@@ -790,7 +802,9 @@ def test_session_blockers_promotes_unhealthy_network_receipt(tmp_path: Path):
     blockers.CORPUS_INVENTORY.parent.mkdir(parents=True)
     blockers.CORPUS_INVENTORY.write_text(json.dumps({"organs": [], "materialization": {"copied": 0}}), encoding="utf-8")
     blockers.PRESSURE_INDEX.parent.mkdir(parents=True)
-    blockers.PRESSURE_INDEX.write_text(json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8")
+    blockers.PRESSURE_INDEX.write_text(
+        json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8"
+    )
     blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
     blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
     blockers.NETWORK_HEALTH_INDEX.parent.mkdir(parents=True, exist_ok=True)
@@ -813,7 +827,9 @@ def test_session_blockers_promotes_unhealthy_network_receipt(tmp_path: Path):
     ids = {item["id"] for item in snapshot["blockers"]}
     assert "local-network-substrate-unhealthy" in ids
     assert snapshot["coverage"]["local_network_substrate"]["status"] == "needs_attention"
-    assert "Local network substrate: status `needs_attention`, mode `observe`, route `en0` via `192.168.1.1`." in markdown
+    assert (
+        "Local network substrate: status `needs_attention`, mode `observe`, route `en0` via `192.168.1.1`." in markdown
+    )
 
 
 def test_session_blockers_promotes_unhealthy_dispatch_receipt(tmp_path: Path):
@@ -850,7 +866,9 @@ def test_session_blockers_promotes_unhealthy_dispatch_receipt(tmp_path: Path):
     blockers.CORPUS_INVENTORY.parent.mkdir(parents=True)
     blockers.CORPUS_INVENTORY.write_text(json.dumps({"organs": [], "materialization": {"copied": 0}}), encoding="utf-8")
     blockers.PRESSURE_INDEX.parent.mkdir(parents=True)
-    blockers.PRESSURE_INDEX.write_text(json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8")
+    blockers.PRESSURE_INDEX.write_text(
+        json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8"
+    )
     blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
     blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
     blockers.NETWORK_HEALTH_INDEX.parent.mkdir(parents=True, exist_ok=True)
@@ -948,7 +966,9 @@ def test_session_blockers_records_github_consolidation_and_app_gates(tmp_path: P
     blockers.CORPUS_INVENTORY.parent.mkdir(parents=True)
     blockers.CORPUS_INVENTORY.write_text(json.dumps({"organs": [], "materialization": {"copied": 0}}), encoding="utf-8")
     blockers.PRESSURE_INDEX.parent.mkdir(parents=True)
-    blockers.PRESSURE_INDEX.write_text(json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8")
+    blockers.PRESSURE_INDEX.write_text(
+        json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8"
+    )
     blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
     blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
     blockers.CONSOLIDATION_INDEX.parent.mkdir(parents=True, exist_ok=True)
@@ -1087,7 +1107,9 @@ def test_session_attack_paths_prioritize_github_consolidation_over_generic_local
     attack.worktree_debt_report = lambda root: {"total": 0, "debt": 0, "items": []}
 
     attack.PROMPT_INDEX.parent.mkdir(parents=True)
-    attack.PROMPT_INDEX.write_text(json.dumps({"sources": [], "worktree_report": {"debt": 0, "items": []}}), encoding="utf-8")
+    attack.PROMPT_INDEX.write_text(
+        json.dumps({"sources": [], "worktree_report": {"debt": 0, "items": []}}), encoding="utf-8"
+    )
     attack.CODEX_INDEX.write_text(json.dumps({"session_count": 0, "families": []}), encoding="utf-8")
     attack.BLOCKER_INDEX.write_text(
         json.dumps(
@@ -1144,7 +1166,9 @@ def test_session_attack_paths_demote_completed_github_consolidation_packet_to_hu
     attack.worktree_debt_report = lambda root: {"total": 0, "debt": 0, "items": []}
 
     attack.PROMPT_INDEX.parent.mkdir(parents=True)
-    attack.PROMPT_INDEX.write_text(json.dumps({"sources": [], "worktree_report": {"debt": 0, "items": []}}), encoding="utf-8")
+    attack.PROMPT_INDEX.write_text(
+        json.dumps({"sources": [], "worktree_report": {"debt": 0, "items": []}}), encoding="utf-8"
+    )
     attack.CODEX_INDEX.write_text(json.dumps({"session_count": 0, "families": []}), encoding="utf-8")
     attack.BLOCKER_INDEX.write_text(
         json.dumps(
@@ -1194,7 +1218,9 @@ def test_session_attack_paths_parks_cloud_runtime_until_deploy_task(tmp_path: Pa
     attack.worktree_debt_report = lambda root: {"total": 0, "debt": 0, "items": []}
 
     attack.PROMPT_INDEX.parent.mkdir(parents=True)
-    attack.PROMPT_INDEX.write_text(json.dumps({"sources": [], "worktree_report": {"debt": 0, "items": []}}), encoding="utf-8")
+    attack.PROMPT_INDEX.write_text(
+        json.dumps({"sources": [], "worktree_report": {"debt": 0, "items": []}}), encoding="utf-8"
+    )
     attack.CODEX_INDEX.write_text(json.dumps({"session_count": 0, "families": []}), encoding="utf-8")
     attack.BLOCKER_INDEX.write_text(
         json.dumps(
@@ -1241,7 +1267,9 @@ def test_session_attack_paths_parks_local_pressure_when_worktree_debt_under_cap(
     attack.worktree_debt_report = lambda root: {"total": 4, "debt": 2, "items": []}
 
     attack.PROMPT_INDEX.parent.mkdir(parents=True)
-    attack.PROMPT_INDEX.write_text(json.dumps({"sources": [], "worktree_report": {"debt": 2, "items": []}}), encoding="utf-8")
+    attack.PROMPT_INDEX.write_text(
+        json.dumps({"sources": [], "worktree_report": {"debt": 2, "items": []}}), encoding="utf-8"
+    )
     attack.CODEX_INDEX.write_text(json.dumps({"session_count": 0, "families": []}), encoding="utf-8")
     attack.BLOCKER_INDEX.write_text(
         json.dumps(
@@ -1291,7 +1319,9 @@ def test_session_attack_paths_keep_local_pressure_actionable_when_worktree_debt_
     attack.worktree_debt_report = lambda root: {"total": 20, "debt": 13, "items": []}
 
     attack.PROMPT_INDEX.parent.mkdir(parents=True)
-    attack.PROMPT_INDEX.write_text(json.dumps({"sources": [], "worktree_report": {"debt": 13, "items": []}}), encoding="utf-8")
+    attack.PROMPT_INDEX.write_text(
+        json.dumps({"sources": [], "worktree_report": {"debt": 13, "items": []}}), encoding="utf-8"
+    )
     attack.CODEX_INDEX.write_text(json.dumps({"session_count": 0, "families": []}), encoding="utf-8")
     attack.BLOCKER_INDEX.write_text(
         json.dumps(

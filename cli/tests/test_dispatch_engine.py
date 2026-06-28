@@ -35,9 +35,7 @@ def test_run_capture_kills_grandchild_holding_pipe_on_timeout():
     token = f"limen-run-capture-grandchild-{os.getpid()}-{time.time_ns()}"
     grandchild = "import time; time.sleep(30)"
     launcher = (
-        "import subprocess, sys; "
-        f"subprocess.Popen([sys.executable, '-c', {grandchild!r}, {token!r}]); "
-        "print('started')"
+        f"import subprocess, sys; subprocess.Popen([sys.executable, '-c', {grandchild!r}, {token!r}]); print('started')"
     )
     t0 = time.time()
     with pytest.raises(subprocess.TimeoutExpired):
