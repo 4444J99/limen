@@ -156,6 +156,10 @@ def test_repo_candidates_cover_redirected_family_roots():
         "rev-mediaark-stripe-client-b01e": ["organvm/media-ark"],
         "rev-scrapper-tier-gate-3a82": ["organvm/public-record-data-scrapper"],
         "bld-tab-bookmark-manager-readme-a53a": ["organvm/tab-bookmark-manager"],
+        "gh-organvm-i-theoria-growth-auditor-3-07bb": [
+            "organvm/growth-auditor",
+            "organvm-i-theoria/growth-auditor",
+        ],
         "gh-4444j99-hokage-chess-21-61c1": ["4444J99/hokage-chess"],
         "discover-organvm-persona-fleet-4c28": ["organvm/persona-fleet"],
         "discover-organvm-cvrsvs-honorvm-fb46": ["organvm/cvrsvs-honorvm"],
@@ -204,7 +208,12 @@ def test_repo_candidates_cover_redirected_family_roots():
         "gen-organvm-select-or-left-or-right-or-test-coverage-0620-7740": [
             "organvm/select-or-left-or-right-or"
         ],
+        "gen-organvm-anon-hookup-now-test-coverage-0620-e77f": ["organvm/anon-hookup-now"],
+        "gen-organvm-virgil-training-overlay-test-coverage-0620-8f15": [
+            "organvm/virgil-training-overlay"
+        ],
         "rev-tabbookmark-freemium-e464": ["organvm/tab-bookmark-manager"],
+        "gh-meta-organvm-github-10-7ca0": ["organvm/.github"],
         "gh-organvm-i-theoria-github-452-2e86": [
             "organvm-i-theoria/.github",
             "organvm/dot-github--theoria",
@@ -213,6 +222,10 @@ def test_repo_candidates_cover_redirected_family_roots():
         "gh-organvm-ii-poiesis-github-6-98b7": [
             "organvm-ii-poiesis/.github",
             "organvm/dot-github--poiesis",
+        ],
+        "gh-organvm-vii-kerygma-github-7-1c2f": [
+            "organvm-vii-kerygma/.github",
+            "organvm/dot-github--kerygma",
         ],
         "gh-organvm-iv-taxis-org-dotgithub-2-1e9d": [
             "organvm-iv-taxis/.github",

@@ -135,6 +135,8 @@ def repo_candidates(root: str) -> list[str]:
         return ["organvm/mirror-mirror"]
     if "portfolio" in root:
         return ["organvm/portfolio"]
+    if "growth-auditor" in root:
+        return ["organvm/growth-auditor", "organvm-i-theoria/growth-auditor"]
     if "persona-fleet" in root:
         return ["organvm/persona-fleet"]
     if "cvrsvs-honorvm" in root:
@@ -161,8 +163,14 @@ def repo_candidates(root: str) -> list[str]:
         return ["organvm/search-local--happy-hour"]
     if "select-or-left-or-right-or" in root:
         return ["organvm/select-or-left-or-right-or"]
+    if "anon-hookup-now" in root:
+        return ["organvm/anon-hookup-now"]
+    if "virgil-training-overlay" in root:
+        return ["organvm/virgil-training-overlay"]
     if "tabbookmark" in root:
         return ["organvm/tab-bookmark-manager"]
+    if "meta-organvm-github" in root:
+        return ["organvm/.github"]
     if "i-theoria-github" in root:
         return ["organvm-i-theoria/.github", "organvm/dot-github--theoria", "organvm/.github"]
     if "ii-poiesis-github" in root:
@@ -171,6 +179,8 @@ def repo_candidates(root: str) -> list[str]:
         return ["organvm-iii-ergon/.github", "organvm/dot-github--ergon"]
     if "vi-koinonia-github" in root:
         return ["organvm-vi-koinonia/.github", "organvm/dot-github--koinonia"]
+    if "vii-kerygma-github" in root:
+        return ["organvm-vii-kerygma/.github", "organvm/dot-github--kerygma"]
     if "v-logos-github" in root:
         return ["organvm-v-logos/.github", "organvm/dot-github--logos"]
     if "iv-taxis-github" in root or "iv-taxis-org-dotgithub" in root:
