@@ -1,6 +1,6 @@
 # Conductor Tranche
 
-Generated: `2026-06-28T16:29:39+00:00`
+Generated: `2026-06-28T16:39:35+00:00`
 
 Summary: `tranche-github-app-limen-bot-not-wired` -> `github-app-limen-bot-not-wired` (`human-gate`); stop before: Stop before creating/installing the GitHub App, calling `scripts/set-credential.sh`, writing any PEM/key material, or changing GitHub secrets without explicit human approval.
 
@@ -21,7 +21,7 @@ Summary: `tranche-github-app-limen-bot-not-wired` -> `github-app-limen-bot-not-w
 | Lane | `human-gate` |
 | Score | `58` |
 | Agent fit | `human/codex-prep` |
-| Attack index generated | `2026-06-28T16:29:29+00:00` |
+| Attack index generated | `2026-06-28T16:39:28+00:00` |
 | Ranked paths read | `30` |
 | Skipped family/parked/observe/auth paths | `session_lifecycle`, `worktree_lifecycle`, `github_review`, `agent_coordination`, `technical_debt_ci`, `local-lifecycle-disk-pressure`, `convergence_corpus`, `uncategorized`, `cloud-credential-handles-unconfigured`, `credential-codex-auth-sessions`, `auth_credentials` |
 

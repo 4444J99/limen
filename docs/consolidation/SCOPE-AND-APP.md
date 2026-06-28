@@ -158,10 +158,11 @@ gh api /orgs/organvm/installations --jq '.installations[] | {id, app_slug}'
 Local (for the body/daemon) and the `limen` repo Actions secrets:
 
 ```bash
-# Actions secrets on the conductor repo (after limen is transferred, retarget to organvm/limen):
-gh secret set LIMEN_APP_ID        --repo 4444J99/limen --body "<APP_ID>"
-gh secret set LIMEN_APP_INSTALL_ID --repo 4444J99/limen --body "<INSTALLATION_ID>"
-gh secret set LIMEN_APP_PRIVATE_KEY --repo 4444J99/limen < /path/to/limen-bot.private-key.pem
+# Actions secrets on the conductor repo (after limen is transferred, retarget to organvm/limen).
+# These names intentionally match scripts/gh-app-token.sh:
+gh secret set GITHUB_APP_ID              --repo 4444J99/limen --body "<APP_ID>"
+gh secret set GITHUB_APP_INSTALLATION_ID --repo 4444J99/limen --body "<INSTALLATION_ID>"
+gh secret set GITHUB_APP_PRIVATE_KEY     --repo 4444J99/limen < /path/to/limen-bot.private-key.pem
 
 # local (body): keep the pem outside any git tree, e.g. ~/.config/limen/limen-bot.pem (chmod 600)
 mkdir -p ~/.config/limen && mv /path/to/limen-bot.private-key.pem ~/.config/limen/limen-bot.pem
@@ -182,8 +183,8 @@ CI (recommended — `actions/create-github-app-token` is GitHub-maintained):
   id: app
   uses: actions/create-github-app-token@v1
   with:
-    app-id: ${{ secrets.LIMEN_APP_ID }}
-    private-key: ${{ secrets.LIMEN_APP_PRIVATE_KEY }}
+    app-id: ${{ secrets.GITHUB_APP_ID }}
+    private-key: ${{ secrets.GITHUB_APP_PRIVATE_KEY }}
     owner: organvm            # installation-wide token across the org's repos
 # then use it:
 - run: gh repo list organvm
@@ -191,7 +192,17 @@ CI (recommended — `actions/create-github-app-token` is GitHub-maintained):
     GH_TOKEN: ${{ steps.app.outputs.token }}
 ```
 
-Local (body / consolidation script) — exchange via `gh`'s JWT support, no extra deps:
+Local (body / consolidation script) — the canonical executable path is already in this repo:
+
+```bash
+bash scripts/set-credential.sh GITHUB_APP_ID
+bash scripts/set-credential.sh GITHUB_APP_PRIVATE_KEY
+# GITHUB_APP_INSTALLATION_ID is optional; scripts/gh-app-token.sh derives it when omitted.
+bash scripts/gh-app-token.sh --which
+```
+
+It must report `app (limen[bot] installation token)` before any App-path mutation is run.
+The lower-level exchange is:
 
 ```bash
 # build the App JWT from the pem, then exchange for an installation token:
@@ -217,10 +228,10 @@ with `curl -H "Authorization: Bearer $JWT"`; the JWT line is identical.)
 
 - `deploy-api.yml` / any workflow: replace personal-token usage with the
   `actions/create-github-app-token@v1` step above; set `GH_TOKEN` from its output.
-- Local daemon (`metabolize.sh` / dispatch): add a `LIMEN_GH_TOKEN` resolution that
-  prefers the minted installation token, falling back to the personal `gh` token only
-  if the App isn't configured (cascade-fallback principle — never hard-fail while a
-  path remains).
+- Local daemon (`metabolize.sh` / dispatch): resolve GitHub authority through
+  `bash scripts/gh-app-token.sh`, which prefers `GITHUB_APP_ID` +
+  `GITHUB_APP_PRIVATE_KEY`, then falls back to `GITHUB_TOKEN` or `gh auth token`
+  while the App is not configured.
 - After `limen` itself is transferred to `organvm` (move it **LAST**, per the dossier),
   retarget the secrets to `organvm/limen` and drop the `4444J99/limen` literal in
   `deploy-api.yml:53` (`LIMEN_GITHUB_REPO`).

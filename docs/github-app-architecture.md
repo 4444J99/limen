@@ -26,7 +26,7 @@ The root cause of fleet CI going dark was **account-level billing**, not archite
 | Question | Answer |
 |---|---|
 | Need GitHub **Enterprise**? | **No.** SAML/SCIM/audit/EMU/pooled-billing — none used. Let the `organvm-i..vii` + `meta-organvm` Enterprise **trial** (seats:0, created 2025-10-22) **lapse**. |
-| Need all those **orgs**? | **No.** Orgs are optional namespaces, not infrastructure. `dispatch.py` / `route.py` / `resolve-identities.py` derive identity from the git remote `owner/repo`, never from org plans/secrets. Moving a repo = change one string + the remote. **Note (verified 2026-06-20):** `organvm` is NO LONGER empty — it is now the **consolidation target holding 182 repos** (the old workhorse `a-organvm` is down to 3). Do **not** delete it; it's the primary owner. |
+| Need all those **orgs**? | **No.** Orgs are optional namespaces, not infrastructure. `dispatch.py` / `route.py` / `resolve-identities.py` derive identity from the git remote `owner/repo`, never from org plans/secrets. Moving a repo = change one string + the remote. **Note (verified 2026-06-28):** `organvm` is NO LONGER empty — it is now the **consolidation target holding 264 repos**. Do **not** delete it; it's the primary owner. |
 | "Something beyond the user profile"? | **A GitHub App: `limen[bot]`, using installation tokens.** |
 
 ### Why a GitHub App, not a PAT
@@ -68,10 +68,9 @@ Everything below is the irreducible manual step a script cannot do (it generates
    - Name `limen[bot]`; permissions least-privilege (Contents: RW, Pull requests: RW,
      Actions: R, Metadata: R); no webhook needed for token minting.
    - Generate a **private key** (downloads a `.pem`). Note the numeric **App ID**.
-2. **Install** the App on the load-bearing owners, **led by `organvm` (182 repos)** —
-   then `organvm-i-theoria` (7), `4444J99` (3), `a-organvm` (3), `organvm-iii-ergon` (2).
-   Live repo counts verified 2026-06-20; derive the install list from where repos actually
-   live, not a pinned list ("names are outputs").
+2. **Install** the App on the load-bearing owners, **led by `organvm` (264 repos as of
+   2026-06-28)**. Derive any additional install list from where repos actually live at cutover
+   time, not a pinned list ("names are outputs").
 3. **Hand the conductor the creds** (silent, never echoed):
    ```sh
    bash scripts/set-credential.sh GITHUB_APP_ID
@@ -80,6 +79,6 @@ Everything below is the irreducible manual step a script cannot do (it generates
    ```
 4. Verify: `bash scripts/gh-app-token.sh --which` → `app (limen[bot] installation token)`.
 5. **Let the Enterprise trial lapse.** No migration, no payment. (Do NOT delete `organvm` — it
-   now holds 182 repos; the earlier "delete the empty organvm" note is stale as of 2026-06-20.)
+   now holds 264 repos; the earlier "delete the empty organvm" note is stale.)
 
 Until step 1–3 are done, the fleet keeps running on the PAT fallback — zero behavior change.
