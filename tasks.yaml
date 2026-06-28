@@ -15,21 +15,21 @@ portal:
       claude: 100
     track:
       date: '2026-06-28'
-      spent: 84
+      spent: 83
       per_agent:
         jules: 63
         gemini: 0
         codex: 0
         opencode: 8
         agy: 12
-        claude: 1
+        claude: 0
       per_agent_reset:
         jules: '2026-06-28T00:39:05.671668+00:00'
         gemini: '2026-06-28T00:39:05.671668+00:00'
-        codex: '2026-06-28T05:39:28.818830+00:00'
+        codex: '2026-06-28T10:59:14.270023+00:00'
         opencode: '2026-06-28T00:39:05.671668+00:00'
         agy: '2026-06-28T00:39:05.671668+00:00'
-        claude: '2026-06-28T05:39:28.818830+00:00'
+        claude: '2026-06-28T10:59:14.270023+00:00'
 tasks:
 - id: FORCE-route-all-services
   title: Router fans across ALL paid services, not just the 6 vendors
@@ -61965,7 +61965,7 @@ tasks:
   target_agent: opencode
   priority: low
   budget_cost: 1
-  status: open
+  status: failed
   labels:
   - docs
   - generated
@@ -61978,7 +61978,7 @@ tasks:
     \ 2026-06-28 to keep the stream endless]"
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T10:48:05.873031Z'
+  updated: '2026-06-28T10:59:14.270023Z'
   dispatch_log:
   - timestamp: '2026-06-28T08:56:32.923717Z'
     agent: agy
@@ -62015,6 +62015,16 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T10:59:14.270023Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T10:59:14.270023Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: GEN-organvm-public-record-data-scrapper-simplify-0628
   title: Reduce complexity in organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
@@ -62022,7 +62032,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: open
+  status: failed
   labels:
   - simplify
   - generated
@@ -62034,7 +62044,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-28 to keep the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T10:48:05.873031Z'
+  updated: '2026-06-28T10:59:14.270023Z'
   dispatch_log:
   - timestamp: '2026-06-28T08:56:32.923717Z'
     agent: opencode
@@ -62066,3 +62076,13 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T10:59:14.270023Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T10:59:14.270023Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
