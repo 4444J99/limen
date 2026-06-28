@@ -17,9 +17,14 @@ import argparse
 import datetime as dt
 import json
 import os
+import sys
 from collections import Counter
 from pathlib import Path
 from typing import Any
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
+
+from limen.worktree_debt import worktree_debt_report
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 HOME = Path.home()
@@ -33,6 +38,7 @@ CODEX_INDEX = PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
 CORPUS_INVENTORY = PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
 PRESSURE_INDEX = ROOT / "logs" / "session-lifecycle-pressure.json"
 CAPABILITY_INDEX = PRIVATE_ROOT / "lifecycle" / "capability-substrate-index.json"
+CONSOLIDATION_INDEX = PRIVATE_ROOT / "lifecycle" / "consolidation-gates.json"
 PROJECT_SETTINGS = ROOT / ".claude" / "settings.json"
 
 CLOUD_CREDENTIAL_FLAGS = (
@@ -69,6 +75,24 @@ def load_json(path: Path) -> dict[str, Any]:
     except (OSError, ValueError):
         return {}
     return obj if isinstance(obj, dict) else {}
+
+
+def current_worktree_report(prompt: dict[str, Any]) -> dict[str, Any]:
+    prompt_report = prompt.get("worktree_report") or {}
+    try:
+        live_report = worktree_debt_report(ROOT)
+    except Exception:
+        return prompt_report if isinstance(prompt_report, dict) else {}
+    prompt_items = [item for item in (prompt_report.get("items") if isinstance(prompt_report, dict) else []) or []]
+    live_items = [item for item in live_report.get("items") or [] if isinstance(item, dict)]
+    if live_items and prompt_items:
+        prompt_names = {str(item.get("name") or "") for item in prompt_items if isinstance(item, dict)}
+        live_names = {str(item.get("name") or "") for item in live_items}
+        if prompt_names and live_names.isdisjoint(prompt_names):
+            return prompt_report if isinstance(prompt_report, dict) else {}
+    if live_items:
+        return live_report
+    return prompt_report if isinstance(prompt_report, dict) else {}
 
 
 def dir_size(path: Path) -> int:
@@ -371,7 +395,11 @@ def remote_blockers(prompt: dict[str, Any], blockers: list[dict[str, Any]]) -> N
         )
 
 
-def task_and_worktree_blockers(prompt: dict[str, Any], blockers: list[dict[str, Any]]) -> None:
+def task_and_worktree_blockers(
+    prompt: dict[str, Any],
+    worktree_report: dict[str, Any],
+    blockers: list[dict[str, Any]],
+) -> None:
     tasks = prompt.get("task_snapshot") or {}
     invalid = tasks.get("invalid_statuses") or []
     if invalid:
@@ -400,7 +428,7 @@ def task_and_worktree_blockers(prompt: dict[str, Any], blockers: list[dict[str, 
             details={"dispatched_without_pr_receipt": stranded},
         )
 
-    debt = int((prompt.get("worktree_report") or {}).get("debt") or 0)
+    debt = int(worktree_report.get("debt") or 0)
     if debt:
         add_blocker(
             blockers,
@@ -410,7 +438,7 @@ def task_and_worktree_blockers(prompt: dict[str, Any], blockers: list[dict[str, 
             owner="worktree lifecycle",
             route="Preserve or owner-record each root; no deletion of unique work.",
             source="prompt-lifecycle-index",
-            details={"debt": debt, "total": (prompt.get("worktree_report") or {}).get("total")},
+            details={"debt": debt, "total": worktree_report.get("total")},
         )
 
 
@@ -446,7 +474,11 @@ def corpus_owner_blockers(corpus: dict[str, Any], blockers: list[dict[str, Any]]
         )
 
 
-def hook_and_pressure_blockers(prompt: dict[str, Any], blockers: list[dict[str, Any]]) -> dict[str, Any]:
+def hook_and_pressure_blockers(
+    prompt: dict[str, Any],
+    worktree_report: dict[str, Any],
+    blockers: list[dict[str, Any]],
+) -> dict[str, Any]:
     pressure = load_json(PRESSURE_INDEX)
     settings_text = ""
     try:
@@ -472,7 +504,7 @@ def hook_and_pressure_blockers(prompt: dict[str, Any], blockers: list[dict[str, 
     remote = prompt.get("remote") or {}
     worktree_remote = remote.get("worktrees") or {}
     missing_remote = int(worktree_remote.get("remote_branches_missing") or 0)
-    debt = int((prompt.get("worktree_report") or {}).get("debt") or 0)
+    debt = int(worktree_report.get("debt") or 0)
 
     if total_bytes:
         add_blocker(
@@ -541,19 +573,110 @@ def capability_substrate_blockers(blockers: list[dict[str, Any]]) -> dict[str, A
     return capability
 
 
+def consolidation_gate_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any]:
+    gate = load_json(CONSOLIDATION_INDEX)
+    if not gate:
+        add_blocker(
+            blockers,
+            blocker_id="github-consolidation-gates-not-refreshed",
+            category="github_consolidation",
+            status="needs_refresh",
+            evidence="No current GitHub consolidation gate receipt is available.",
+            owner="GitHub consolidation",
+            route="Run `python3 scripts/consolidation-gates.py --write` before choosing transfer, rename, owner rewrite, or App identity work.",
+            source="consolidation-gates",
+            details={"path": str(CONSOLIDATION_INDEX)},
+        )
+        return {"present": False, "path": str(CONSOLIDATION_INDEX)}
+
+    consolidation = gate.get("consolidation") or {}
+    owner_rewrite = gate.get("owner_rewrite") or {}
+    app = gate.get("app_identity") or {}
+    gates = gate.get("gates") or {}
+    source_repos = int(consolidation.get("source_repos") or 0)
+    collisions = int(consolidation.get("collision_groups") or 0)
+    task_refs = int(owner_rewrite.get("task_repo_refs_to_rewrite") or 0)
+    remotes = int(owner_rewrite.get("local_remotes_to_rewrite") or 0)
+
+    if source_repos or collisions:
+        add_blocker(
+            blockers,
+            blocker_id="github-consolidation-collisions",
+            category="github_consolidation",
+            status="needs_human_gate",
+            evidence=(
+                f"{source_repos} source repos remain outside `organvm`; "
+                f"{collisions} name-collision groups block the transfer apply gate."
+            ),
+            owner="GitHub consolidation",
+            route=(
+                "Resolve `docs/consolidation/COLLISION-RENAMES.md`, then require "
+                "`PYTHONPATH=cli/src python3 scripts/consolidate-github.py` to report 0 collisions "
+                "before any transfer."
+            ),
+            source="consolidation-gates",
+            details={
+                "source_repos": source_repos,
+                "collision_groups": collisions,
+                "task_repo_refs_to_rewrite_post_transfer": task_refs,
+                "local_remotes_to_rewrite_post_transfer": remotes,
+                "blocking": gates.get("blocking") or [],
+            },
+        )
+
+    if not app.get("app_token_wired"):
+        installed = app.get("installed_app_slugs") or []
+        add_blocker(
+            blockers,
+            blocker_id="github-app-limen-bot-not-wired",
+            category="github_app_identity",
+            status="needs_human_gate",
+            evidence=(
+                f"`gh-app-token --which` resolves to `{app.get('gh_app_token_which') or 'unavailable'}`; "
+                f"{len(installed)} org Apps are installed, and `limen[bot]` is not wired."
+            ),
+            owner="limen[bot] App identity",
+            route=(
+                "Create/install the org GitHub App and hydrate credentials via `scripts/set-credential.sh`; "
+                "verify `bash scripts/gh-app-token.sh --which` reports the App path."
+            ),
+            source="consolidation-gates",
+            details={
+                "installed_app_slugs": installed,
+                "limen_app_installed": bool(app.get("limen_app_installed")),
+                "app_token_wired": bool(app.get("app_token_wired")),
+            },
+        )
+
+    return {
+        "present": True,
+        "path": str(CONSOLIDATION_INDEX),
+        "generated_at": gate.get("generated_at"),
+        "source_repos": source_repos,
+        "collision_groups": collisions,
+        "task_repo_refs_to_rewrite_post_transfer": task_refs,
+        "local_remotes_to_rewrite_post_transfer": remotes,
+        "app_token_wired": bool(app.get("app_token_wired")),
+        "limen_app_installed": bool(app.get("limen_app_installed")),
+        "blocking": gates.get("blocking") or [],
+    }
+
+
 def build_snapshot() -> dict[str, Any]:
     prompt = load_json(PROMPT_INDEX)
     codex = load_json(CODEX_INDEX)
     corpus = load_json(CORPUS_INVENTORY)
+    worktree_report = current_worktree_report(prompt)
     blockers: list[dict[str, Any]] = []
 
     codex_auth_blocker(codex, blockers)
     cloud_blockers(prompt, blockers)
     remote_blockers(prompt, blockers)
-    task_and_worktree_blockers(prompt, blockers)
+    task_and_worktree_blockers(prompt, worktree_report, blockers)
     corpus_owner_blockers(corpus, blockers)
-    hook_pressure = hook_and_pressure_blockers(prompt, blockers)
+    hook_pressure = hook_and_pressure_blockers(prompt, worktree_report, blockers)
     capability = capability_substrate_blockers(blockers)
+    consolidation = consolidation_gate_blockers(blockers)
 
     by_category = Counter(blocker["category"] for blocker in blockers)
     by_status = Counter(blocker["status"] for blocker in blockers)
@@ -563,17 +686,19 @@ def build_snapshot() -> dict[str, Any]:
             "prompt_lifecycle_index": {"path": str(PROMPT_INDEX), "present": bool(prompt)},
             "codex_session_lifecycle": {"path": str(CODEX_INDEX), "present": bool(codex)},
             "session_corpus_inventory": {"path": str(CORPUS_INVENTORY), "present": bool(corpus)},
+            "consolidation_gates": {"path": str(CONSOLIDATION_INDEX), "present": bool(consolidation.get("present"))},
         },
         "coverage": {
             "prompt_sources": prompt.get("sources") or [],
             "codex_sessions": codex.get("session_count", 0),
-            "worktree_debt": (prompt.get("worktree_report") or {}).get("debt", 0),
+            "worktree_debt": worktree_report.get("debt", 0),
             "remote_enabled": bool((prompt.get("remote") or {}).get("enabled")),
             "cloud_enabled": bool((prompt.get("cloud") or {}).get("enabled")),
             "session_pressure_hook_wired": hook_pressure["hook_wired"],
             "session_pressure_present": hook_pressure["pressure_present"],
             "local_lifecycle_bytes": hook_pressure["total_bytes"],
             "capability_substrate": capability,
+            "github_consolidation": consolidation,
         },
         "blockers": blockers,
         "by_category": dict(sorted(by_category.items())),
@@ -608,6 +733,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         f"- Prompt lifecycle index present: `{inputs['prompt_lifecycle_index']['present']}` at `{relpath(Path(inputs['prompt_lifecycle_index']['path']))}`.",
         f"- Codex lifecycle index present: `{inputs['codex_session_lifecycle']['present']}` at `{relpath(Path(inputs['codex_session_lifecycle']['path']))}`.",
         f"- Session corpus inventory present: `{inputs['session_corpus_inventory']['present']}` at `{relpath(Path(inputs['session_corpus_inventory']['path']))}`.",
+        f"- GitHub consolidation gates present: `{inputs['consolidation_gates']['present']}` at `{relpath(Path(inputs['consolidation_gates']['path']))}`.",
         f"- Redacted local prompt coverage: `{total_prompt_files}` files, `{total_prompt_events}` prompt-like events.",
         f"- Codex classified sessions: `{coverage.get('codex_sessions', 0)}`.",
         f"- Worktree debt roots: `{coverage.get('worktree_debt', 0)}`.",
@@ -626,6 +752,12 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
             f"`{((coverage.get('capability_substrate') or {}).get('receipt') or {}).get('current', False)}`; "
             f"activation candidates "
             f"`{((coverage.get('capability_substrate') or {}).get('receipt') or {}).get('activation_candidates', 0)}`."
+        ),
+        (
+            "- GitHub consolidation gate: "
+            f"`{(coverage.get('github_consolidation') or {}).get('source_repos', 0)}` source repos, "
+            f"`{(coverage.get('github_consolidation') or {}).get('collision_groups', 0)}` collision groups, "
+            f"App token wired `{(coverage.get('github_consolidation') or {}).get('app_token_wired', False)}`."
         ),
         "",
         "## Parked / Hung Workstreams",
@@ -656,6 +788,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "- Refresh source receipts first: `python3 scripts/prompt-lifecycle-ledger.py --write --all`",
         "- Refresh private absorption receipt: `python3 scripts/session-corpus-ledger.py --write --all --materialize`",
         "- Refresh capability resurfacing: `python3 scripts/capability-substrate-ledger.py --write`",
+        "- Refresh GitHub consolidation gates: `python3 scripts/consolidation-gates.py --write`",
         "- Refresh this blocker ledger: `python3 scripts/session-blockers-ledger.py --write`",
         "",
     ]

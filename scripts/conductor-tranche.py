@@ -179,6 +179,85 @@ def dispatch_packet(path: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def consolidation_packet(path: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "purpose": (
+            "Advance the GitHub/org consolidation enforcement path by refreshing dry-run gates, "
+            "surfacing collisions, and packetizing the exact human-gated rename/transfer/rewrite sequence."
+        ),
+        "repo_worktree": "`organvm/limen` conductor checkout only; GitHub/org state is read-only.",
+        "allowed_files": [
+            "scripts/consolidation-gates.py",
+            "scripts/consolidate-github.py",
+            "scripts/rewrite-owners.py",
+            "scripts/session-blockers-ledger.py",
+            "scripts/session-attack-paths.py",
+            "scripts/conductor-tranche.py",
+            "docs/consolidation/RUNBOOK.md",
+            "docs/consolidation/COLLISION-RENAMES.md",
+            "docs/consolidation/GATES.md",
+            "docs/session-lifecycle-blockers.md",
+            "docs/session-attack-paths.md",
+            "docs/conductor-tranche.md",
+            ".limen-private/session-corpus/lifecycle/consolidation-gates.json",
+            ".limen-private/session-corpus/lifecycle/session-lifecycle-blockers.json",
+            ".limen-private/session-corpus/lifecycle/session-attack-paths.json",
+            ".limen-private/session-corpus/lifecycle/conductor-tranche.json",
+        ],
+        "stop_condition": (
+            "Stop before `gh repo rename`, `consolidate-github.py --apply`, "
+            "`rewrite-owners.py --apply`, GitHub App install, or credential writes unless a human "
+            "explicitly opens that gate in-session."
+        ),
+        "verification": [
+            "python3 scripts/consolidation-gates.py --write",
+            "python3 scripts/session-blockers-ledger.py --write",
+            "python3 scripts/session-attack-paths.py --write",
+            "python3 scripts/conductor-tranche.py --write",
+            "PYTHONPATH=cli/src python3 scripts/consolidate-github.py",
+            "PYTHONPATH=cli/src python3 scripts/rewrite-owners.py",
+            "bash scripts/gh-app-token.sh --which",
+        ],
+        "receipt": (
+            "docs/consolidation/GATES.md plus docs/conductor-tranche.md; private parsed gate receipt "
+            "under .limen-private/session-corpus/lifecycle/."
+        ),
+    }
+
+
+def github_app_identity_packet(path: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "purpose": (
+            "Clearly block limen[bot] until the GitHub App exists, is installed on `organvm`, "
+            "and local/CI credentials are hydrated without exposing secret values."
+        ),
+        "repo_worktree": "`organvm/limen` conductor checkout only; GitHub App state is read-only.",
+        "allowed_files": [
+            "scripts/consolidation-gates.py",
+            "scripts/gh-app-token.sh",
+            "docs/github-app-architecture.md",
+            "docs/consolidation/SCOPE-AND-APP.md",
+            "docs/consolidation/GATES.md",
+            "docs/session-lifecycle-blockers.md",
+            "docs/session-attack-paths.md",
+            "docs/conductor-tranche.md",
+            ".limen-private/session-corpus/lifecycle/consolidation-gates.json",
+        ],
+        "stop_condition": (
+            "Stop before creating/installing the GitHub App, calling `scripts/set-credential.sh`, "
+            "writing any PEM/key material, or changing GitHub secrets without explicit human approval."
+        ),
+        "verification": [
+            "python3 scripts/consolidation-gates.py --write",
+            "bash scripts/gh-app-token.sh --which",
+            "python3 scripts/session-blockers-ledger.py --write",
+            "python3 scripts/session-attack-paths.py --write",
+            "python3 scripts/conductor-tranche.py --write",
+        ],
+        "receipt": "docs/consolidation/GATES.md and docs/session-lifecycle-blockers.md record the blocked App identity.",
+    }
+
+
 def default_packet(path: dict[str, Any]) -> dict[str, Any]:
     path_id = str(path.get("id") or "selected-path")
     return {
@@ -230,6 +309,10 @@ def packet_for_path(path: dict[str, Any] | None) -> dict[str, Any]:
         return local_lean_packet(path)
     if kind == "worktree" or category == "worktree_lifecycle":
         return worktree_packet(path)
+    if category == "github_consolidation":
+        return consolidation_packet(path)
+    if category == "github_app_identity":
+        return github_app_identity_packet(path)
     if category in {"remote_receipt", "dispatch_lifecycle", "task_board"} or lane == "remote-close":
         return dispatch_packet(path)
     return default_packet(path)
@@ -347,6 +430,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "",
         "## Refresh",
         "",
+        "- `python3 scripts/consolidation-gates.py --write`",
         "- `python3 scripts/session-lifecycle-pressure.py --write`",
         "- `python3 scripts/session-blockers-ledger.py --write`",
         "- `python3 scripts/session-attack-paths.py --write`",

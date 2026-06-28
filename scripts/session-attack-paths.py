@@ -324,6 +324,8 @@ def build_blocker_paths(blockers: dict[str, Any]) -> list[dict[str, Any]]:
         status = str(blocker.get("status") or "parked")
         base = {
             "capability_substrate": 38,
+            "github_app_identity": 58,
+            "github_consolidation": 78,
             "local_lean": 74,
             "worktree_lifecycle": 70,
             "owner_state": 42,
@@ -335,6 +337,12 @@ def build_blocker_paths(blockers: dict[str, Any]) -> list[dict[str, Any]]:
             base += 10
         if category == "auth_credentials":
             lane = "parked"
+            agent = "human/codex-prep"
+        elif category == "github_consolidation":
+            lane = "consolidation-gate"
+            agent = "codex/human-gate"
+        elif category == "github_app_identity":
+            lane = "human-gate"
             agent = "human/codex-prep"
         elif category == "local_lean":
             lane = "drain"

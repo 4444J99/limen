@@ -160,6 +160,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Retry count for transient GitHub CLI/API failures while collecting prompt lifecycle PR receipts. Keeps network blips out of durable blocker ledgers."
+  LIMEN_CONSOLIDATION_GATE_TIMEOUT:
+    default: 180
+    env: LIMEN_CONSOLIDATION_GATE_TIMEOUT
+    self_update: none
+    owner: continuity
+    note: "Seconds allowed for read-only GitHub consolidation gate probes. It bounds dry-run receipt refreshes only; irreversible rename/transfer/App/credential actions remain human-gated."
 
   # --- HEALTH: the Executive Health Office (clinical loops + visit prep + monitoring) ---
   LIMEN_BEAT_HEALTH:

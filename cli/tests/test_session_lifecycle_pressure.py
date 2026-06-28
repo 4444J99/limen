@@ -12,6 +12,7 @@ BLOCKERS_SCRIPT = ROOT / "scripts" / "session-blockers-ledger.py"
 ATTACK_PATHS_SCRIPT = ROOT / "scripts" / "session-attack-paths.py"
 TRANCHE_SCRIPT = ROOT / "scripts" / "conductor-tranche.py"
 ORIENT_SCRIPT = ROOT / "scripts" / "session-orient.py"
+CONSOLIDATION_GATES_SCRIPT = ROOT / "scripts" / "consolidation-gates.py"
 
 
 def _load(path: Path, name: str):
@@ -19,6 +20,66 @@ def _load(path: Path, name: str):
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
+
+
+def test_consolidation_gates_parse_read_only_probes(tmp_path: Path):
+    gates = _load(CONSOLIDATION_GATES_SCRIPT, "consolidation_gates")
+    gates.ROOT = tmp_path
+    gates.DOC_PATH = tmp_path / "docs" / "consolidation" / "GATES.md"
+    gates.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    gates.PRIVATE_INDEX = gates.PRIVATE_ROOT / "lifecycle" / "consolidation-gates.json"
+    gates.RUNBOOK = tmp_path / "docs" / "consolidation" / "RUNBOOK.md"
+    gates.COLLISION_RENAMES = tmp_path / "docs" / "consolidation" / "COLLISION-RENAMES.md"
+    gates.SCOPE_AND_APP = tmp_path / "docs" / "consolidation" / "SCOPE-AND-APP.md"
+
+    def fake_run_command(args, *, env=None, timeout=180):
+        text = " ".join(args)
+        if "consolidate-github.py" in text:
+            return {
+                "args": args,
+                "returncode": 0,
+                "stdout": """=== consolidation plan -> organvm ===
+  34 repos across 10 owners
+  name collisions (must rename before transfer): 13
+    ! '.github': organvm-i-theoria/.github, organvm-ii-poiesis/.github
+
+DRY-RUN - nothing executed. Collisions above must be resolved first.
+""",
+                "stderr": "",
+                "timed_out": False,
+            }
+        if "rewrite-owners.py" in text:
+            return {
+                "args": args,
+                "returncode": 0,
+                "stdout": """[1] tasks.yaml repo: refs to rewrite = 49
+[2] deploy-api.yml LIMEN_GITHUB_REPO literal: none (already organvm or absent)
+[3] git checkouts under /tmp with origin on an OLD owner = 8 (emit-only, never run)
+DRY-RUN - nothing written.
+""",
+                "stderr": "",
+                "timed_out": False,
+            }
+        if "gh-app-token.sh" in text:
+            return {"args": args, "returncode": 0, "stdout": "pat (GITHUB_TOKEN fallback)\n", "stderr": "", "timed_out": False}
+        return {"args": args, "returncode": 0, "stdout": "claude\ngoogle-labs-jules\n", "stderr": "", "timed_out": False}
+
+    gates.run_command = fake_run_command
+
+    snapshot = gates.build_snapshot()
+    markdown = gates.render_markdown(snapshot)
+    gates.write_outputs(snapshot, markdown)
+
+    assert snapshot["consolidation"]["source_repos"] == 34
+    assert snapshot["consolidation"]["collision_groups"] == 13
+    assert snapshot["owner_rewrite"]["task_repo_refs_to_rewrite"] == 49
+    assert snapshot["owner_rewrite"]["local_remotes_to_rewrite"] == 8
+    assert snapshot["app_identity"]["app_token_wired"] is False
+    assert "name-collisions" in snapshot["gates"]["blocking"]
+    assert "limen-bot-token-not-wired" in snapshot["gates"]["blocking"]
+    assert "Human approval is still required" in markdown
+    assert gates.DOC_PATH.exists()
+    assert gates.PRIVATE_INDEX.exists()
 
 
 def test_session_lifecycle_pressure_summarizes_local_remote_without_raw_text(tmp_path: Path):
@@ -275,6 +336,70 @@ def test_session_blockers_clears_capability_blocker_with_current_receipt(tmp_pat
     assert "Capability resurfacing receipt present/current: `True`/`True`" in markdown
 
 
+def test_session_blockers_records_github_consolidation_and_app_gates(tmp_path: Path):
+    blockers = _load(BLOCKERS_SCRIPT, "session_blockers_consolidation_gates")
+    blockers.ROOT = tmp_path
+    blockers.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    blockers.PRIVATE_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "session-lifecycle-blockers.json"
+    blockers.CAPABILITY_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "capability-substrate-index.json"
+    blockers.CONSOLIDATION_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "consolidation-gates.json"
+    blockers.PROMPT_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+    blockers.CODEX_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
+    blockers.CORPUS_INVENTORY = blockers.PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
+    blockers.PRESSURE_INDEX = tmp_path / "logs" / "session-lifecycle-pressure.json"
+    blockers.PROJECT_SETTINGS = tmp_path / ".claude" / "settings.json"
+    blockers.DOC_PATH = tmp_path / "docs" / "session-lifecycle-blockers.md"
+    blockers.DEFAULT_CAPABILITY_ROOTS = (tmp_path / "missing-capabilities",)
+
+    blockers.PROMPT_INDEX.parent.mkdir(parents=True)
+    blockers.PROMPT_INDEX.write_text(
+        json.dumps(
+            {
+                "sources": [],
+                "worktree_report": {"debt": 0, "total": 0},
+                "remote": {"enabled": True, "worktrees": {}, "task_prs": {"counts": {}}},
+                "cloud": {"enabled": True, "runtime_url_configured": True, "env_flags": {}},
+            }
+        ),
+        encoding="utf-8",
+    )
+    blockers.CODEX_INDEX.write_text(json.dumps({"session_count": 0, "families": []}), encoding="utf-8")
+    blockers.CORPUS_INVENTORY.parent.mkdir(parents=True)
+    blockers.CORPUS_INVENTORY.write_text(json.dumps({"organs": [], "materialization": {"copied": 0}}), encoding="utf-8")
+    blockers.PRESSURE_INDEX.parent.mkdir(parents=True)
+    blockers.PRESSURE_INDEX.write_text(json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8")
+    blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
+    blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
+    blockers.CONSOLIDATION_INDEX.parent.mkdir(parents=True, exist_ok=True)
+    blockers.CONSOLIDATION_INDEX.write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-06-28T12:00:00+00:00",
+                "consolidation": {"source_repos": 34, "collision_groups": 13},
+                "owner_rewrite": {"task_repo_refs_to_rewrite": 49, "local_remotes_to_rewrite": 8},
+                "app_identity": {
+                    "gh_app_token_which": "pat (GITHUB_TOKEN fallback)",
+                    "app_token_wired": False,
+                    "limen_app_installed": False,
+                    "installed_app_slugs": ["claude", "google-labs-jules"],
+                },
+                "gates": {"blocking": ["name-collisions", "limen-bot-token-not-wired"]},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = blockers.build_snapshot()
+    markdown = blockers.render_markdown(snapshot)
+
+    ids = {item["id"] for item in snapshot["blockers"]}
+    assert "github-consolidation-collisions" in ids
+    assert "github-app-limen-bot-not-wired" in ids
+    assert snapshot["coverage"]["github_consolidation"]["collision_groups"] == 13
+    assert snapshot["coverage"]["github_consolidation"]["app_token_wired"] is False
+    assert "GitHub consolidation gate: `34` source repos, `13` collision groups" in markdown
+
+
 def test_session_attack_paths_prioritize_system_clogs_before_delegation(tmp_path: Path):
     attack = _load(ATTACK_PATHS_SCRIPT, "session_attack_paths")
     attack.ROOT = tmp_path
@@ -365,6 +490,63 @@ def test_session_attack_paths_prioritize_system_clogs_before_delegation(tmp_path
     assert "Do not assign Jules" in markdown
     assert attack.DOC_PATH.exists()
     assert attack.PRIVATE_INDEX.exists()
+
+
+def test_session_attack_paths_prioritize_github_consolidation_over_generic_local_pressure(tmp_path: Path):
+    attack = _load(ATTACK_PATHS_SCRIPT, "session_attack_paths_github_consolidation")
+    attack.ROOT = tmp_path
+    attack.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    attack.PROMPT_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+    attack.CODEX_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
+    attack.BLOCKER_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "session-lifecycle-blockers.json"
+    attack.PRESSURE_INDEX = tmp_path / "logs" / "session-lifecycle-pressure.json"
+    attack.DOC_PATH = tmp_path / "docs" / "session-attack-paths.md"
+    attack.PRIVATE_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
+    attack.PRESERVATION_RECEIPTS = tmp_path / "docs" / "worktree-preservation-receipts.json"
+    attack.worktree_debt_report = lambda root: {"total": 0, "debt": 0, "items": []}
+
+    attack.PROMPT_INDEX.parent.mkdir(parents=True)
+    attack.PROMPT_INDEX.write_text(json.dumps({"sources": [], "worktree_report": {"debt": 0, "items": []}}), encoding="utf-8")
+    attack.CODEX_INDEX.write_text(json.dumps({"session_count": 0, "families": []}), encoding="utf-8")
+    attack.BLOCKER_INDEX.write_text(
+        json.dumps(
+            {
+                "blockers": [
+                    {
+                        "id": "local-lifecycle-disk-pressure",
+                        "category": "local_lean",
+                        "status": "parked",
+                        "route": "Drain after preservation proof.",
+                    },
+                    {
+                        "id": "github-consolidation-collisions",
+                        "category": "github_consolidation",
+                        "status": "needs_human_gate",
+                        "route": "Resolve collisions before transfer.",
+                    },
+                    {
+                        "id": "github-app-limen-bot-not-wired",
+                        "category": "github_app_identity",
+                        "status": "needs_human_gate",
+                        "route": "Wire limen bot after App setup.",
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    attack.PRESSURE_INDEX.parent.mkdir(parents=True)
+    attack.PRESSURE_INDEX.write_text(json.dumps({"local_total_bytes": 0}), encoding="utf-8")
+
+    snapshot = attack.build_snapshot()
+    markdown = attack.render_markdown(snapshot, limit=10)
+
+    ids_by_rank = [item["id"] for item in snapshot["ranked_paths"]]
+    assert ids_by_rank.index("github-consolidation-collisions") < ids_by_rank.index("local-lifecycle-disk-pressure")
+    paths = {item["id"]: item for item in snapshot["ranked_paths"]}
+    assert paths["github-consolidation-collisions"]["lane"] == "consolidation-gate"
+    assert paths["github-app-limen-bot-not-wired"]["lane"] == "human-gate"
+    assert "github-consolidation-collisions" in markdown
 
 
 def test_session_attack_paths_treat_preserved_dirty_root_as_owner_blocker(tmp_path: Path):
@@ -545,6 +727,58 @@ def test_conductor_tranche_selects_actionable_packet_with_receipts(tmp_path: Pat
     assert "Drain only after remote/default preservation proof." in markdown
     assert tranche.DOC_PATH.exists()
     assert tranche.PRIVATE_INDEX.exists()
+
+
+def test_conductor_tranche_emits_github_consolidation_packet(tmp_path: Path):
+    tranche = _load(TRANCHE_SCRIPT, "conductor_tranche_github_consolidation")
+    tranche.ROOT = tmp_path
+    tranche.HOME = tmp_path
+    tranche.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    tranche.ATTACK_INDEX = tranche.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
+    tranche.DOC_PATH = tmp_path / "docs" / "conductor-tranche.md"
+    tranche.PRIVATE_INDEX = tranche.PRIVATE_ROOT / "lifecycle" / "conductor-tranche.json"
+    tranche.PORTVS_PATH = tmp_path / "Workspace" / "4444J99" / "portvs"
+
+    tranche.ATTACK_INDEX.parent.mkdir(parents=True)
+    tranche.ATTACK_INDEX.write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-06-28T12:00:00+00:00",
+                "ranked_paths": [
+                    {
+                        "id": "github-consolidation-collisions",
+                        "kind": "blocker",
+                        "lane": "consolidation-gate",
+                        "category": "github_consolidation",
+                        "score": 78,
+                        "agent_fit": "codex/human-gate",
+                        "next_action": "Resolve collisions before transfer.",
+                    },
+                    {
+                        "id": "local-lifecycle-disk-pressure",
+                        "kind": "blocker",
+                        "lane": "drain",
+                        "category": "local_lean",
+                        "score": 74,
+                        "agent_fit": "codex",
+                        "next_action": "Drain after preservation proof.",
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = tranche.build_snapshot()
+    markdown = tranche.render_markdown(snapshot)
+
+    packet = snapshot["packet"]
+    assert packet["id"] == "tranche-github-consolidation-collisions"
+    assert packet["selected_path_id"] == "github-consolidation-collisions"
+    assert "scripts/consolidation-gates.py" in packet["allowed_files"]
+    assert "python3 scripts/consolidation-gates.py --write" in packet["verification"]
+    assert "Stop before `gh repo rename`" in packet["stop_condition"]
+    assert "GitHub/org consolidation enforcement path" in markdown
 
 
 def test_session_orientation_board_counts_tasks_not_dispatch_logs(tmp_path: Path):
