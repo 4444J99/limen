@@ -15,21 +15,21 @@ portal:
       claude: 100
     track:
       date: '2026-06-28'
-      spent: 14
+      spent: 61
       per_agent:
-        jules: 14
+        jules: 48
         gemini: 0
         codex: 0
-        opencode: 0
-        agy: 0
-        claude: 0
+        opencode: 3
+        agy: 9
+        claude: 1
       per_agent_reset:
         jules: '2026-06-28T00:39:05.671668+00:00'
         gemini: '2026-06-28T00:39:05.671668+00:00'
-        codex: '2026-06-28T00:39:05.671668+00:00'
+        codex: '2026-06-28T05:39:28.818830+00:00'
         opencode: '2026-06-28T00:39:05.671668+00:00'
         agy: '2026-06-28T00:39:05.671668+00:00'
-        claude: '2026-06-28T00:39:05.671668+00:00'
+        claude: '2026-06-28T05:39:28.818830+00:00'
 tasks:
 - id: FORCE-route-all-services
   title: Router fans across ALL paid services, not just the 6 vendors
@@ -47967,7 +47967,7 @@ tasks:
     \ green PR."
   depends_on: []
   created: '2026-06-23'
-  updated: '2026-06-27T02:02:20.159089Z'
+  updated: '2026-06-28T02:13:43.184091Z'
   dispatch_log:
   - timestamp: '2026-06-24T04:59:14.502431Z'
     agent: codex
@@ -48002,6 +48002,20 @@ tasks:
   - timestamp: '2026-06-27T02:02:20.159089Z'
     agent: jules
     session_id: '61536204880199114'
+    status: dispatched
+  - timestamp: '2026-06-28T02:10:30.310672Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T02:13:43.184091Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T02:13:43.184091Z'
+    agent: jules
+    session_id: '14349467586330199136'
     status: dispatched
 - id: studium-deepen-bhagavad-gita
   title: "Bhagavad Gita \u2014 chapters 2..18 (17 arcs)"
@@ -48317,7 +48331,7 @@ tasks:
     \ track forces; no intra-arc duplicate pieces). One green PR."
   depends_on: []
   created: '2026-06-23'
-  updated: '2026-06-27T02:20:15.165138Z'
+  updated: '2026-06-28T02:35:43.852948Z'
   dispatch_log:
   - timestamp: '2026-06-24T04:59:14.502431Z'
     agent: claude
@@ -48349,6 +48363,20 @@ tasks:
     agent: jules
     session_id: '12720866066688585594'
     status: dispatched
+  - timestamp: '2026-06-28T02:26:14.685314Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T02:35:43.852948Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T02:35:43.852948Z'
+    agent: jules
+    session_id: '5456139258369684445'
+    status: dispatched
 - id: studium-corpus-tier2
   title: Fetch Tier-2 originals where public-domain (Upanishads/Shijing/Kojiki/Rumi-Hafez/Honglou-meng)
     from their source rails
@@ -48372,7 +48400,7 @@ tasks:
     no intra-arc duplicate pieces). One green PR.'
   depends_on: []
   created: '2026-06-23'
-  updated: '2026-06-27T02:20:15.165138Z'
+  updated: '2026-06-28T02:35:43.852948Z'
   dispatch_log:
   - timestamp: '2026-06-24T04:59:14.502431Z'
     agent: claude
@@ -48399,6 +48427,20 @@ tasks:
   - timestamp: '2026-06-27T02:20:15.165138Z'
     agent: jules
     session_id: '15704353588043608621'
+    status: dispatched
+  - timestamp: '2026-06-28T02:26:14.685314Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T02:35:43.852948Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T02:35:43.852948Z'
+    agent: jules
+    session_id: '7193612127689348756'
     status: dispatched
 - id: studium-film-odyssey
   title: Odyssey film companion (return/exile/recognition)
@@ -48487,7 +48529,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - studium
   - content
@@ -48500,7 +48542,7 @@ tasks:
     track forces; no intra-arc duplicate pieces). One green PR.'
   depends_on: []
   created: '2026-06-23'
-  updated: '2026-06-27T02:56:59.013314Z'
+  updated: '2026-06-28T03:38:13.139900Z'
   dispatch_log:
   - timestamp: '2026-06-24T04:59:14.502431Z'
     agent: jules
@@ -48533,6 +48575,25 @@ tasks:
     agent: jules
     session_id: '8815867622354631833'
     status: dispatched
+  - timestamp: '2026-06-28T03:07:01.772353Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T03:12:12.356979Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T03:12:12.356979Z'
+    agent: jules
+    session_id: '8140701817662520968'
+    status: dispatched
+  - timestamp: '2026-06-28T03:38:13.139900Z'
+    agent: jules
+    session_id: https://github.com/organvm/limen/pull/376
+    status: done
+    output: 'jules-land: landed session 8140701817662520968 as PR'
 - id: studium-film-metamorphoses
   title: Metamorphoses film companion (metamorphosis)
   repo: organvm/limen
@@ -48750,7 +48811,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - studium
   - content
@@ -48763,7 +48824,7 @@ tasks:
     track forces; no intra-arc duplicate pieces). One green PR.'
   depends_on: []
   created: '2026-06-23'
-  updated: '2026-06-27T02:56:59.013314Z'
+  updated: '2026-06-28T03:38:13.139900Z'
   dispatch_log:
   - timestamp: '2026-06-24T07:14:26.386441Z'
     agent: opencode
@@ -48787,6 +48848,25 @@ tasks:
     agent: jules
     session_id: '18316346870552451841'
     status: dispatched
+  - timestamp: '2026-06-28T03:07:01.772353Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T03:12:12.356979Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T03:12:12.356979Z'
+    agent: jules
+    session_id: '3184046976911052661'
+    status: dispatched
+  - timestamp: '2026-06-28T03:38:13.139900Z'
+    agent: jules
+    session_id: https://github.com/organvm/limen/pull/375
+    status: done
+    output: 'jules-land: landed session 3184046976911052661 as PR'
 - id: studium-film-canterbury-tales
   title: Canterbury Tales film companion (the human comedy)
   repo: organvm/limen
@@ -49191,7 +49271,7 @@ tasks:
     track forces; no intra-arc duplicate pieces). One green PR.'
   depends_on: []
   created: '2026-06-23'
-  updated: '2026-06-27T03:18:45.759543Z'
+  updated: '2026-06-28T03:27:57.954982Z'
   dispatch_log:
   - timestamp: '2026-06-24T08:21:42.581233Z'
     agent: agy
@@ -49222,6 +49302,20 @@ tasks:
   - timestamp: '2026-06-27T03:18:45.759543Z'
     agent: jules
     session_id: '3118116586377260772'
+    status: dispatched
+  - timestamp: '2026-06-28T03:25:11.729963Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T03:27:57.954982Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T03:27:57.954982Z'
+    agent: jules
+    session_id: '226501989457775835'
     status: dispatched
 - id: studium-film-conference-of-birds
   title: "Conference of the Birds film companion (the seven valleys/fan\u0101)"
@@ -50132,7 +50226,7 @@ tasks:
     \ stays dark]"
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-27T03:54:13.598575Z'
+  updated: '2026-06-28T04:10:51.965981Z'
   dispatch_log:
   - timestamp: '2026-06-24T10:57:06.855735Z'
     agent: gemini
@@ -50153,6 +50247,20 @@ tasks:
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
   - timestamp: '2026-06-27T03:54:13.598575Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-28T04:07:36.137818Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -50559,7 +50667,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-27T03:54:13.598575Z'
+  updated: '2026-06-28T04:10:51.965981Z'
   dispatch_log:
   - timestamp: '2026-06-24T13:05:57.998424Z'
     agent: jules
@@ -50597,6 +50705,20 @@ tasks:
   - timestamp: '2026-06-27T03:54:13.598575Z'
     agent: jules
     session_id: '632902449342348230'
+    status: dispatched
+  - timestamp: '2026-06-28T04:07:36.137818Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: jules
+    session_id: '489625447734000090'
     status: dispatched
 - id: GEN-organvm-mirror-mirror-test-coverage-0624
   title: Raise test coverage in organvm/mirror-mirror
@@ -50785,7 +50907,7 @@ tasks:
     stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-27T03:54:13.598575Z'
+  updated: '2026-06-28T04:10:51.965981Z'
   dispatch_log:
   - timestamp: '2026-06-24T13:50:16.953010Z'
     agent: agy
@@ -50805,6 +50927,20 @@ tasks:
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
   - timestamp: '2026-06-27T03:54:13.598575Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-28T04:07:36.137818Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -51205,7 +51341,7 @@ tasks:
   target_agent: jules
   priority: low
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - docs
   - generated
@@ -51218,7 +51354,7 @@ tasks:
     \ 2026-06-24 to keep the stream endless]"
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-27T04:51:06.848782Z'
+  updated: '2026-06-28T04:55:38.440468Z'
   dispatch_log:
   - timestamp: '2026-06-27T00:50:23.253355Z'
     agent: limen
@@ -51243,6 +51379,11 @@ tasks:
     agent: jules
     session_id: '3399940522823254654'
     status: dispatched
+  - timestamp: '2026-06-28T04:55:38.440468Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: GEN-organvm-portfolio-docs-0624
   title: Real usage docs for organvm/portfolio
   repo: organvm/portfolio
@@ -52135,7 +52276,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-27T04:03:34.586517Z'
+  updated: '2026-06-28T04:40:29.389041Z'
   dispatch_log:
   - timestamp: '2026-06-24T13:50:16.953010Z'
     agent: jules
@@ -52170,6 +52311,20 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:07:36.137818Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GEN-organvm-public-record-data-scrapper-simplify-0624
   title: Reduce complexity in organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
@@ -52754,7 +52909,7 @@ tasks:
     green. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-27T04:03:34.586517Z'
+  updated: '2026-06-28T04:40:29.389041Z'
   dispatch_log:
   - timestamp: '2026-06-24T14:22:13.734586Z'
     agent: claude
@@ -52769,6 +52924,20 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:07:36.137818Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GEN-organvm-limen-typing-0624
   title: Tighten types in organvm/limen
   repo: organvm/limen
@@ -52948,7 +53117,7 @@ tasks:
     \ billing) with its cheapest path. Bounded: stop at first reviewable PR per repo."
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T02:56:59.013314Z'
+  updated: '2026-06-28T03:12:12.356979Z'
   dispatch_log:
   - timestamp: '2026-06-26T23:58:21.192297Z'
     agent: codex
@@ -52999,6 +53168,20 @@ tasks:
   - timestamp: '2026-06-27T02:56:59.013314Z'
     agent: jules
     session_id: '7213188479060846498'
+    status: dispatched
+  - timestamp: '2026-06-28T03:07:01.772353Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T03:12:12.356979Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T03:12:12.356979Z'
+    agent: jules
+    session_id: '1197282845573121665'
     status: dispatched
 - id: ORGAN-revive-stale-fleet
   title: Diagnose & revive stale organs (merge, heal, vigilia, evocator, health, life,
@@ -54148,7 +54331,7 @@ tasks:
     2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T04:46:03.783074Z'
+  updated: '2026-06-28T05:00:55.000565Z'
   dispatch_log:
   - timestamp: '2026-06-27T02:20:15.165138Z'
     agent: codex
@@ -54186,6 +54369,20 @@ tasks:
     agent: jules
     session_id: '13749424700362211465'
     status: dispatched
+  - timestamp: '2026-06-28T04:55:38.440468Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: jules
+    session_id: '10382041404764635891'
+    status: dispatched
 - id: GEN-organvm-limen-test-coverage-0626
   title: Raise test coverage in organvm/limen
   repo: organvm/limen
@@ -54193,7 +54390,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - test-coverage
   - generated
@@ -54206,7 +54403,7 @@ tasks:
     keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T04:46:03.783074Z'
+  updated: '2026-06-28T06:13:26.786930Z'
   dispatch_log:
   - timestamp: '2026-06-27T02:20:15.165138Z'
     agent: codex
@@ -54235,6 +54432,25 @@ tasks:
     agent: jules
     session_id: '16608437783625276752'
     status: dispatched
+  - timestamp: '2026-06-28T04:55:38.440468Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: jules
+    session_id: '3137294397322141407'
+    status: dispatched
+  - timestamp: '2026-06-28T06:13:26.786930Z'
+    agent: jules
+    session_id: https://github.com/organvm/limen/pull/379
+    status: done
+    output: 'jules-land: landed session 3137294397322141407 as PR'
 - id: GEN-organvm-the-invisible-ledger-ci-green-0626
   title: Make organvm/the-invisible-ledger CI green
   repo: organvm/the-invisible-ledger
@@ -55995,7 +56211,7 @@ tasks:
     and tests green. [auto-generated 2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T04:51:06.848782Z'
+  updated: '2026-06-28T06:25:20.362164Z'
   dispatch_log:
   - timestamp: '2026-06-27T02:20:15.165138Z'
     agent: gemini
@@ -56012,6 +56228,20 @@ tasks:
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
   - timestamp: '2026-06-27T04:51:06.848782Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-28T04:55:38.440468Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T06:25:20.362164Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:25:20.362164Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -56198,7 +56428,7 @@ tasks:
     the build and tests green. [auto-generated 2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T04:51:06.848782Z'
+  updated: '2026-06-28T06:25:20.362164Z'
   dispatch_log:
   - timestamp: '2026-06-27T03:18:45.759543Z'
     agent: codex
@@ -56226,6 +56456,20 @@ tasks:
   - timestamp: '2026-06-27T04:51:06.848782Z'
     agent: jules
     session_id: '8325494997405849062'
+    status: dispatched
+  - timestamp: '2026-06-28T04:55:38.440468Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T06:25:20.362164Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:25:20.362164Z'
+    agent: jules
+    session_id: '10534849689247592481'
     status: dispatched
 - id: GEN-organvm-limen-typing-0626
   title: Tighten types in organvm/limen
@@ -57020,7 +57264,7 @@ tasks:
     green. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T05:21:04.898340Z'
+  updated: '2026-06-28T06:18:55.153664Z'
   dispatch_log:
   - timestamp: '2026-06-27T04:59:55.262792Z'
     agent: gemini
@@ -57037,6 +57281,20 @@ tasks:
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
   - timestamp: '2026-06-27T05:21:04.898340Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-28T06:15:33.480418Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T06:18:55.153664Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:18:55.153664Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -57060,7 +57318,7 @@ tasks:
     green. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T05:21:04.898340Z'
+  updated: '2026-06-28T06:18:55.153664Z'
   dispatch_log:
   - timestamp: '2026-06-27T04:59:55.262792Z'
     agent: gemini
@@ -57079,6 +57337,20 @@ tasks:
   - timestamp: '2026-06-27T05:21:04.898340Z'
     agent: jules
     session_id: '13460394465364917201'
+    status: dispatched
+  - timestamp: '2026-06-28T06:15:33.480418Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T06:18:55.153664Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:18:55.153664Z'
+    agent: jules
+    session_id: '7879655720259787004'
     status: dispatched
 - id: GEN-organvm-limen-security-0627
   title: Security hardening pass on organvm/limen
@@ -58808,3 +59080,2334 @@ tasks:
     agent: jules
     session_id: '16030549186520895768'
     status: dispatched
+- id: GEN-organvm-mirror-mirror-test-coverage-0628
+  title: Raise test coverage in organvm/mirror-mirror
+  repo: organvm/mirror-mirror
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  - tried:gemini
+  urls: []
+  context: Find the largest source module in organvm/mirror-mirror with little or
+    no test coverage and add a focused, PASSING test suite for it. Run the repo's
+    own test command and confirm green. No placeholder tests. [auto-generated 2026-06-28
+    to keep the stream endless]
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T06:47:45.490918Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: jules
+    session_id: '3354309738524881201'
+    status: dispatched
+- id: GEN-organvm-domus-genoma-test-coverage-0628
+  title: Raise test coverage in organvm/domus-genoma
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  - tried:gemini
+  urls: []
+  context: Find the largest source module in organvm/domus-genoma with little or no
+    test coverage and add a focused, PASSING test suite for it. Run the repo's own
+    test command and confirm green. No placeholder tests. [auto-generated 2026-06-28
+    to keep the stream endless]
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T06:47:45.490918Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: jules
+    session_id: '9874054527612085912'
+    status: dispatched
+- id: GEN-organvm-universal-mail--automation-test-coverage-0628
+  title: Raise test coverage in organvm/universal-mail--automation
+  repo: organvm/universal-mail--automation
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  - tried:gemini
+  urls: []
+  context: Find the largest source module in organvm/universal-mail--automation with
+    little or no test coverage and add a focused, PASSING test suite for it. Run the
+    repo's own test command and confirm green. No placeholder tests. [auto-generated
+    2026-06-28 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T06:47:45.490918Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+- id: GEN-organvm-a-i-chat--exporter-test-coverage-0628
+  title: Raise test coverage in organvm/a-i-chat--exporter
+  repo: organvm/a-i-chat--exporter
+  type: code
+  target_agent: opencode
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  - noop
+  urls: []
+  context: Find the largest source module in organvm/a-i-chat--exporter with little
+    or no test coverage and add a focused, PASSING test suite for it. Run the repo's
+    own test command and confirm green. No placeholder tests. [auto-generated 2026-06-28
+    to keep the stream endless]
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T07:02:00.080956Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T06:18:55.153664Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:18:55.153664Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T06:38:05.227060Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T07:02:00.080956Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+- id: GEN-organvm-the-invisible-ledger-test-coverage-0628
+  title: Raise test coverage in organvm/the-invisible-ledger
+  repo: organvm/the-invisible-ledger
+  type: code
+  target_agent: agy
+  priority: medium
+  budget_cost: 1
+  status: failed
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  - noop
+  urls: []
+  context: Find the largest source module in organvm/the-invisible-ledger with little
+    or no test coverage and add a focused, PASSING test suite for it. Run the repo's
+    own test command and confirm green. No placeholder tests. [auto-generated 2026-06-28
+    to keep the stream endless]
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T06:47:45.490918Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T06:38:05.227060Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+- id: GEN-organvm-mirror-mirror-ci-green-0628
+  title: Make organvm/mirror-mirror CI green
+  repo: organvm/mirror-mirror
+  type: code
+  target_agent: agy
+  priority: high
+  budget_cost: 1
+  status: done
+  labels:
+  - ci-green
+  - generated
+  - build-out
+  urls: []
+  context: Inspect the latest FAILING checks on organvm/mirror-mirror's default branch,
+    fix the root cause (lint / types / failing test / config), and confirm the checks
+    pass. If CI is already green, add the single most valuable missing check (e.g.
+    typecheck or test-matrix) instead. [auto-generated 2026-06-28 to keep the stream
+    endless]
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T05:31:40.315935Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: agy
+    session_id: https://github.com/organvm/mirror-mirror/pull/71
+    status: dispatched
+  - timestamp: '2026-06-28T05:31:40.315935Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
+- id: GEN-organvm-domus-genoma-ci-green-0628
+  title: Make organvm/domus-genoma CI green
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: claude
+  priority: high
+  budget_cost: 1
+  status: failed
+  labels:
+  - ci-green
+  - generated
+  - build-out
+  - noop
+  urls: []
+  context: Inspect the latest FAILING checks on organvm/domus-genoma's default branch,
+    fix the root cause (lint / types / failing test / config), and confirm the checks
+    pass. If CI is already green, add the single most valuable missing check (e.g.
+    typecheck or test-matrix) instead. [auto-generated 2026-06-28 to keep the stream
+    endless]
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T06:47:45.490918Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T04:55:49.903363Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T06:38:05.227060Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+- id: GEN-organvm-universal-mail--automation-ci-green-0628
+  title: Make organvm/universal-mail--automation CI green
+  repo: organvm/universal-mail--automation
+  type: code
+  target_agent: agy
+  priority: high
+  budget_cost: 1
+  status: done
+  labels:
+  - ci-green
+  - generated
+  - build-out
+  urls: []
+  context: Inspect the latest FAILING checks on organvm/universal-mail--automation's
+    default branch, fix the root cause (lint / types / failing test / config), and
+    confirm the checks pass. If CI is already green, add the single most valuable
+    missing check (e.g. typecheck or test-matrix) instead. [auto-generated 2026-06-28
+    to keep the stream endless]
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T05:31:40.315935Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: agy
+    session_id: https://github.com/organvm/universal-mail--automation/pull/111
+    status: dispatched
+  - timestamp: '2026-06-28T05:31:40.315935Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
+- id: GEN-organvm-session-meta-ci-green-0628
+  title: Make organvm/session-meta CI green
+  repo: organvm/session-meta
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - ci-green
+  - generated
+  - build-out
+  - noop
+  - tried:gemini
+  urls: []
+  context: Inspect the latest FAILING checks on organvm/session-meta's default branch,
+    fix the root cause (lint / types / failing test / config), and confirm the checks
+    pass. If CI is already green, add the single most valuable missing check (e.g.
+    typecheck or test-matrix) instead. [auto-generated 2026-06-28 to keep the stream
+    endless]
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T05:39:28.818830Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T04:55:49.903363Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: jules
+    session_id: '15552391040448703458'
+    status: dispatched
+- id: GEN-organvm-a-i-chat--exporter-ci-green-0628
+  title: Make organvm/a-i-chat--exporter CI green
+  repo: organvm/a-i-chat--exporter
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - ci-green
+  - generated
+  - build-out
+  - tried:gemini
+  urls: []
+  context: Inspect the latest FAILING checks on organvm/a-i-chat--exporter's default
+    branch, fix the root cause (lint / types / failing test / config), and confirm
+    the checks pass. If CI is already green, add the single most valuable missing
+    check (e.g. typecheck or test-matrix) instead. [auto-generated 2026-06-28 to keep
+    the stream endless]
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T05:00:55.000565Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+- id: GEN-organvm-the-invisible-ledger-ci-green-0628
+  title: Make organvm/the-invisible-ledger CI green
+  repo: organvm/the-invisible-ledger
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - ci-green
+  - generated
+  - build-out
+  - noop
+  - tried:gemini
+  urls: []
+  context: Inspect the latest FAILING checks on organvm/the-invisible-ledger's default
+    branch, fix the root cause (lint / types / failing test / config), and confirm
+    the checks pass. If CI is already green, add the single most valuable missing
+    check (e.g. typecheck or test-matrix) instead. [auto-generated 2026-06-28 to keep
+    the stream endless]
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T07:02:00.080956Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T06:38:05.227060Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+  - timestamp: '2026-06-28T07:02:00.080956Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+- id: GEN-organvm-portfolio-ci-green-0628
+  title: Make organvm/portfolio CI green
+  repo: organvm/portfolio
+  type: code
+  target_agent: opencode
+  priority: high
+  budget_cost: 1
+  status: failed
+  labels:
+  - ci-green
+  - generated
+  - build-out
+  - noop
+  urls: []
+  context: Inspect the latest FAILING checks on organvm/portfolio's default branch,
+    fix the root cause (lint / types / failing test / config), and confirm the checks
+    pass. If CI is already green, add the single most valuable missing check (e.g.
+    typecheck or test-matrix) instead. [auto-generated 2026-06-28 to keep the stream
+    endless]
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T06:47:45.490918Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T12:00:00Z'
+    agent: opencode
+    session_id: opencode-exec
+    status: in_progress
+    output: Claimed task. Investigating organvm/portfolio CI.
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T04:55:49.903363Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T06:38:05.227060Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+- id: GEN-organvm-public-record-data-scrapper-ci-green-0628
+  title: Make organvm/public-record-data-scrapper CI green
+  repo: organvm/public-record-data-scrapper
+  type: code
+  target_agent: agy
+  priority: high
+  budget_cost: 1
+  status: failed
+  labels:
+  - ci-green
+  - generated
+  - build-out
+  - noop
+  urls: []
+  context: Inspect the latest FAILING checks on organvm/public-record-data-scrapper's
+    default branch, fix the root cause (lint / types / failing test / config), and
+    confirm the checks pass. If CI is already green, add the single most valuable
+    missing check (e.g. typecheck or test-matrix) instead. [auto-generated 2026-06-28
+    to keep the stream endless]
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T06:47:45.490918Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T11:39:00Z'
+    agent: opencode
+    session_id: current-session
+    status: in_progress
+    output: Started work on CI fix
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T04:55:49.903363Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T06:38:05.227060Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+- id: GEN-organvm-limen-ci-green-0628
+  title: Make organvm/limen CI green
+  repo: organvm/limen
+  type: code
+  target_agent: claude
+  priority: high
+  budget_cost: 1
+  status: failed
+  labels:
+  - ci-green
+  - generated
+  - build-out
+  - noop
+  urls: []
+  context: Inspect the latest FAILING checks on organvm/limen's default branch, fix
+    the root cause (lint / types / failing test / config), and confirm the checks
+    pass. If CI is already green, add the single most valuable missing check (e.g.
+    typecheck or test-matrix) instead. [auto-generated 2026-06-28 to keep the stream
+    endless]
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T06:47:45.490918Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T04:55:49.903363Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T06:38:05.227060Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+- id: GEN-organvm-mirror-mirror-docs-0628
+  title: Real usage docs for organvm/mirror-mirror
+  repo: organvm/mirror-mirror
+  type: code
+  target_agent: any
+  priority: low
+  budget_cost: 1
+  status: done
+  labels:
+  - docs
+  - generated
+  - build-out
+  urls: []
+  context: "Derive an accurate Usage section in organvm/mirror-mirror's README from\
+    \ the ACTUAL entrypoints/exports (install, run, key commands + flags). No invented\
+    \ features, no TODOs \u2014 only what the code actually does. [auto-generated\
+    \ 2026-06-28 to keep the stream endless]"
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T05:31:40.315935Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: agy
+    session_id: https://github.com/organvm/mirror-mirror/pull/70
+    status: dispatched
+  - timestamp: '2026-06-28T05:31:40.315935Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
+- id: GEN-organvm-universal-mail--automation-docs-0628
+  title: Real usage docs for organvm/universal-mail--automation
+  repo: organvm/universal-mail--automation
+  type: code
+  target_agent: claude
+  priority: low
+  budget_cost: 1
+  status: done
+  labels:
+  - docs
+  - generated
+  - build-out
+  - noop
+  urls: []
+  context: "Derive an accurate Usage section in organvm/universal-mail--automation's\
+    \ README from the ACTUAL entrypoints/exports (install, run, key commands + flags).\
+    \ No invented features, no TODOs \u2014 only what the code actually does. [auto-generated\
+    \ 2026-06-28 to keep the stream endless]"
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T06:43:30.520185Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T04:55:49.903363Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: claude
+    session_id: https://github.com/organvm/universal-mail--automation/pull/112
+    status: dispatched
+  - timestamp: '2026-06-28T06:43:30.520185Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
+- id: GEN-organvm-session-meta-docs-0628
+  title: Real usage docs for organvm/session-meta
+  repo: organvm/session-meta
+  type: code
+  target_agent: jules
+  priority: low
+  budget_cost: 1
+  status: open
+  labels:
+  - docs
+  - generated
+  - build-out
+  - noop
+  - tried:gemini
+  urls: []
+  context: "Derive an accurate Usage section in organvm/session-meta's README from\
+    \ the ACTUAL entrypoints/exports (install, run, key commands + flags). No invented\
+    \ features, no TODOs \u2014 only what the code actually does. [auto-generated\
+    \ 2026-06-28 to keep the stream endless]"
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T05:39:28.818830Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T04:55:49.903363Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+- id: GEN-organvm-a-i-chat--exporter-docs-0628
+  title: Real usage docs for organvm/a-i-chat--exporter
+  repo: organvm/a-i-chat--exporter
+  type: code
+  target_agent: any
+  priority: low
+  budget_cost: 1
+  status: done
+  labels:
+  - docs
+  - generated
+  - build-out
+  urls: []
+  context: "Derive an accurate Usage section in organvm/a-i-chat--exporter's README\
+    \ from the ACTUAL entrypoints/exports (install, run, key commands + flags). No\
+    \ invented features, no TODOs \u2014 only what the code actually does. [auto-generated\
+    \ 2026-06-28 to keep the stream endless]"
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T05:31:40.315935Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: claude
+    session_id: https://github.com/organvm/a-i-chat--exporter/pull/98
+    status: dispatched
+  - timestamp: '2026-06-28T05:31:40.315935Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
+- id: GEN-organvm-limen-docs-0628
+  title: Real usage docs for organvm/limen
+  repo: organvm/limen
+  type: code
+  target_agent: agy
+  priority: low
+  budget_cost: 1
+  status: done
+  labels:
+  - docs
+  - generated
+  - build-out
+  - noop
+  urls: []
+  context: "Derive an accurate Usage section in organvm/limen's README from the ACTUAL\
+    \ entrypoints/exports (install, run, key commands + flags). No invented features,\
+    \ no TODOs \u2014 only what the code actually does. [auto-generated 2026-06-28\
+    \ to keep the stream endless]"
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T07:02:11Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T04:55:49.903363Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T06:18:55.153664Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:18:55.153664Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T06:25:20.362164Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:25:20.362164Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T06:38:05.227060Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T07:02:00.080956Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T07:02:11Z'
+    agent: agy
+    session_id: cli
+    status: done
+    output: "Verified README Usage section against cli.py and install.sh. It is perfectly accurate. No changes needed."
+- id: GEN-organvm-mirror-mirror-security-0628
+  title: Security hardening pass on organvm/mirror-mirror
+  repo: organvm/mirror-mirror
+  type: code
+  target_agent: opencode
+  priority: high
+  budget_cost: 1
+  status: failed
+  labels:
+  - security
+  - generated
+  - build-out
+  - noop
+  urls: []
+  context: Run the ecosystem audit for organvm/mirror-mirror (npm audit / pip-audit
+    / equivalent), upgrade or pin high-severity advisories, and add input validation
+    at the main untrusted-input entrypoints. Open a PR; keep the build green. [auto-generated
+    2026-06-28 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T06:47:45.490918Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: agy
+    session_id: https://github.com/organvm/mirror-mirror/pull/68
+    status: dispatched
+  - timestamp: '2026-06-28T05:31:40.315935Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: PR closed unmerged \u2192 reopened"
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T06:18:55.153664Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:18:55.153664Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T06:38:05.227060Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+- id: GEN-organvm-domus-genoma-security-0628
+  title: Security hardening pass on organvm/domus-genoma
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: agy
+  priority: high
+  budget_cost: 1
+  status: failed
+  labels:
+  - security
+  - generated
+  - build-out
+  - noop
+  urls: []
+  context: Run the ecosystem audit for organvm/domus-genoma (npm audit / pip-audit
+    / equivalent), upgrade or pin high-severity advisories, and add input validation
+    at the main untrusted-input entrypoints. Open a PR; keep the build green. [auto-generated
+    2026-06-28 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T06:47:45.490918Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T04:55:49.903363Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T06:38:05.227060Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+- id: GEN-organvm-the-invisible-ledger-security-0628
+  title: Security hardening pass on organvm/the-invisible-ledger
+  repo: organvm/the-invisible-ledger
+  type: code
+  target_agent: claude
+  priority: high
+  budget_cost: 1
+  status: failed
+  labels:
+  - security
+  - generated
+  - build-out
+  - noop
+  urls: []
+  context: Run the ecosystem audit for organvm/the-invisible-ledger (npm audit / pip-audit
+    / equivalent), upgrade or pin high-severity advisories, and add input validation
+    at the main untrusted-input entrypoints. Open a PR; keep the build green. [auto-generated
+    2026-06-28 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T06:47:45.490918Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T04:55:49.903363Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T06:38:05.227060Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+- id: GEN-organvm-mirror-mirror-simplify-0628
+  title: Reduce complexity in organvm/mirror-mirror
+  repo: organvm/mirror-mirror
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - simplify
+  - generated
+  - build-out
+  - tried:gemini
+  urls: []
+  context: Identify the most complex or most-duplicated module in organvm/mirror-mirror
+    and refactor it for clarity, with tests proving behavior is unchanged. Net lines
+    should not grow without cause. [auto-generated 2026-06-28 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T05:00:55.000565Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+- id: GEN-organvm-limen-simplify-0628
+  title: Reduce complexity in organvm/limen
+  repo: organvm/limen
+  type: code
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - simplify
+  - generated
+  - build-out
+  - noop
+  - tried:gemini
+  urls: []
+  context: Identify the most complex or most-duplicated module in organvm/limen and
+    refactor it for clarity, with tests proving behavior is unchanged. Net lines should
+    not grow without cause. [auto-generated 2026-06-28 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T06:47:45.490918Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T06:38:05.227060Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+- id: GEN-organvm-universal-mail--automation-typing-0628
+  title: Tighten types in organvm/universal-mail--automation
+  repo: organvm/universal-mail--automation
+  type: code
+  target_agent: agy
+  priority: medium
+  budget_cost: 1
+  status: done
+  labels:
+  - typing
+  - generated
+  - build-out
+  urls: []
+  context: Eliminate the worst untyped hotspots in organvm/universal-mail--automation's
+    most-imported module (remove `any` / add type hints / fix loose signatures). Keep
+    the build and tests green. [auto-generated 2026-06-28 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T06:43:30.520185Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: agy
+    session_id: https://github.com/organvm/universal-mail--automation/pull/113
+    status: dispatched
+  - timestamp: '2026-06-28T06:43:30.520185Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
+- id: GEN-organvm-session-meta-typing-0628
+  title: Tighten types in organvm/session-meta
+  repo: organvm/session-meta
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - typing
+  - generated
+  - build-out
+  - noop
+  urls: []
+  context: Eliminate the worst untyped hotspots in organvm/session-meta's most-imported
+    module (remove `any` / add type hints / fix loose signatures). Keep the build
+    and tests green. [auto-generated 2026-06-28 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T07:02:00.080956Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T06:38:05.227060Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T07:02:00.080956Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+- id: GEN-organvm-portfolio-typing-0628
+  title: Tighten types in organvm/portfolio
+  repo: organvm/portfolio
+  type: code
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - typing
+  - generated
+  - build-out
+  - noop
+  urls: []
+  context: Eliminate the worst untyped hotspots in organvm/portfolio's most-imported
+    module (remove `any` / add type hints / fix loose signatures). Keep the build
+    and tests green. [auto-generated 2026-06-28 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T07:02:00.080956Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T04:55:49.903363Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T06:38:05.227060Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T07:02:00.080956Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+- id: REV-organvm-a-i-chat--exporter-revenue-funding-0628
+  title: Stage the donation funnel for ChatGPT Exporter
+  repo: organvm/a-i-chat--exporter
+  type: code
+  target_agent: jules
+  priority: critical
+  budget_cost: 2
+  status: dispatched
+  labels:
+  - revenue-funding
+  - revenue
+  - product
+  - ship-order
+  - generated
+  - noop
+  - tried:gemini
+  urls: []
+  context: "In organvm/a-i-chat--exporter, add .github/FUNDING.yml (ko_fi + github\
+    \ sponsors entries \u2014 use the owner handle; if the exact Ko-fi slug isn't\
+    \ known yet, leave a single clearly-marked TODO) AND a concise 'Support / Sponsor'\
+    \ section in the README linking both. Goal: the moment the accounts exist the\
+    \ donate path is ALREADY live. Tasteful, no nagware. Open a PR, keep the build\
+    \ green. [revenue-backlog 2026-06-28: rank 1, stage deploy-ready \u2014 spend\
+    \ tokens on income, not busywork]"
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T05:39:28.818830Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T12:00:00Z'
+    agent: opencode
+    session_id: cli
+    status: in_progress
+    output: "Started work \u2014 adding FUNDING.yml + Support section to README"
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T04:55:49.903363Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+- id: REV-organvm-universal-mail--automation-revenue-ship-0628
+  title: Drive Universal Mail Automation to deploy-ready
+  repo: organvm/universal-mail--automation
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 2
+  status: done
+  labels:
+  - revenue-ship
+  - revenue
+  - product
+  - ship-order
+  - generated
+  urls: []
+  context: "In organvm/universal-mail--automation, clear the concrete blockers between\
+    \ the current state and a DEPLOYABLE product: get open PRs green + merged, fix\
+    \ the critical path, confirm the app runs end-to-end. Output: a deploy-ready build\
+    \ + a short DEPLOY.md listing exactly what remains. [revenue-backlog 2026-06-28:\
+    \ rank 3, stage building \u2014 spend tokens on income, not busywork]"
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T05:31:40.315935Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: agy
+    session_id: https://github.com/organvm/universal-mail--automation/pull/109
+    status: dispatched
+  - timestamp: '2026-06-28T05:31:40.315935Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
+- id: REV-organvm-the-invisible-ledger-revenue-ship-0628
+  title: Drive The Invisible Ledger to deploy-ready
+  repo: organvm/the-invisible-ledger
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 2
+  status: done
+  labels:
+  - revenue-ship
+  - revenue
+  - product
+  - ship-order
+  - generated
+  - noop
+  - tried:gemini
+  urls: []
+  context: "In organvm/the-invisible-ledger, clear the concrete blockers between the\
+    \ current state and a DEPLOYABLE product: get open PRs green + merged, fix the\
+    \ critical path, confirm the app runs end-to-end. Output: a deploy-ready build\
+    \ + a short DEPLOY.md listing exactly what remains. [revenue-backlog 2026-06-28:\
+    \ rank 4, stage building \u2014 spend tokens on income, not busywork]"
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T06:36:12.722453Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T04:55:49.903363Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+  - timestamp: '2026-06-28T06:18:55.153664Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:18:55.153664Z'
+    agent: jules
+    session_id: '750951696610400243'
+    status: dispatched
+  - timestamp: '2026-06-28T06:36:12.722453Z'
+    agent: jules
+    session_id: https://github.com/organvm/the-invisible-ledger/pull/68
+    status: done
+    output: 'jules-land: landed session 750951696610400243 as PR'
+- id: REV-organvm-mirror-mirror-revenue-ship-0628
+  title: Drive Mirror Mirror to deploy-ready
+  repo: organvm/mirror-mirror
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 2
+  status: done
+  labels:
+  - revenue-ship
+  - revenue
+  - product
+  - ship-order
+  - generated
+  - noop
+  - slow
+  urls: []
+  context: "In organvm/mirror-mirror, clear the concrete blockers between the current\
+    \ state and a DEPLOYABLE product: get open PRs green + merged, fix the critical\
+    \ path, confirm the app runs end-to-end. Output: a deploy-ready build + a short\
+    \ DEPLOY.md listing exactly what remains. [revenue-backlog 2026-06-28: rank 5,\
+    \ stage building \u2014 spend tokens on income, not busywork]"
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T06:13:26.786930Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T04:55:49.903363Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: jules
+    session_id: '9930625693556519230'
+    status: dispatched
+  - timestamp: '2026-06-28T06:13:26.786930Z'
+    agent: jules
+    session_id: https://github.com/organvm/mirror-mirror/pull/72
+    status: done
+    output: 'jules-land: landed session 9930625693556519230 as PR'
+- id: REV-organvm-public-record-data-scrapper-revenue-ship-0628
+  title: Drive Public Record Data Scraper to deploy-ready
+  repo: organvm/public-record-data-scrapper
+  type: code
+  target_agent: claude
+  priority: high
+  budget_cost: 2
+  status: failed
+  labels:
+  - revenue-ship
+  - revenue
+  - product
+  - ship-order
+  - generated
+  - noop
+  urls: []
+  context: "In organvm/public-record-data-scrapper, clear the concrete blockers between\
+    \ the current state and a DEPLOYABLE product: get open PRs green + merged, fix\
+    \ the critical path, confirm the app runs end-to-end. Output: a deploy-ready build\
+    \ + a short DEPLOY.md listing exactly what remains. [revenue-backlog 2026-06-28:\
+    \ rank 2, stage building \u2014 spend tokens on income, not busywork]"
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T06:47:45.490918Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T04:55:49.903363Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T06:18:55.153664Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:18:55.153664Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T06:38:05.227060Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+- id: REV-organvm-a-i-chat--exporter-revenue-pro-tier-0628
+  title: Make the Pro-tier checkout merge-ready for ChatGPT Exporter
+  repo: organvm/a-i-chat--exporter
+  type: code
+  target_agent: jules
+  priority: critical
+  budget_cost: 2
+  status: dispatched
+  labels:
+  - revenue-pro-tier
+  - revenue
+  - product
+  - ship-order
+  - generated
+  - noop
+  - tried:gemini
+  urls: []
+  context: "In organvm/a-i-chat--exporter, rebase the stacked Pro-tier / LemonSqueezy\
+    \ checkout PRs onto the default branch, resolve conflicts, and get every check\
+    \ green so the ONLY remaining step is pasting LEMONSQUEEZY_STORE_ID. Don't invent\
+    \ product scope \u2014 just unblock what's already built (live page + Pro tier\
+    \ via Lemon Squeezy (already integrated) or Ko-fi donations now \u2014 individual\
+    \ rail, NOT the dead-LLC Stripe). [revenue-backlog 2026-06-28: rank 1, stage deploy-ready\
+    \ \u2014 spend tokens on income, not busywork]"
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T07:02:00.080956Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T04:55:49.903363Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T06:38:05.227060Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+  - timestamp: '2026-06-28T07:02:00.080956Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+- id: REV-organvm-universal-mail--automation-revenue-readiness-0628
+  title: First-paying-customer readiness pass on Universal Mail Automation
+  repo: organvm/universal-mail--automation
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 2
+  status: dispatched
+  labels:
+  - revenue-readiness
+  - revenue
+  - product
+  - ship-order
+  - generated
+  - noop
+  - tried:gemini
+  urls: []
+  context: "In organvm/universal-mail--automation, find the single highest-leverage\
+    \ gap between the current product and something a stranger would pay for (first-dollar\
+    \ path: subscription on the automation tier once live) and close it with a real,\
+    \ tested change. One focused PR; keep CI green. [revenue-backlog 2026-06-28: rank\
+    \ 3, stage building \u2014 spend tokens on income, not busywork]"
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T06:25:20.362164Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T04:55:49.903363Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+  - timestamp: '2026-06-28T06:25:20.362164Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:25:20.362164Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+- id: REV-organvm-the-invisible-ledger-revenue-readiness-0628
+  title: First-paying-customer readiness pass on The Invisible Ledger
+  repo: organvm/the-invisible-ledger
+  type: code
+  target_agent: opencode
+  priority: high
+  budget_cost: 2
+  status: failed
+  labels:
+  - revenue-readiness
+  - revenue
+  - product
+  - ship-order
+  - generated
+  - noop
+  urls: []
+  context: "In organvm/the-invisible-ledger, find the single highest-leverage gap\
+    \ between the current product and something a stranger would pay for (first-dollar\
+    \ path: paid tier once live) and close it with a real, tested change. One focused\
+    \ PR; keep CI green. [revenue-backlog 2026-06-28: rank 4, stage building \u2014\
+    \ spend tokens on income, not busywork]"
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T06:47:45.490918Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T04:55:49.903363Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T06:38:05.227060Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+- id: REV-organvm-mirror-mirror-revenue-readiness-0628
+  title: First-paying-customer readiness pass on Mirror Mirror
+  repo: organvm/mirror-mirror
+  type: code
+  target_agent: agy
+  priority: high
+  budget_cost: 2
+  status: dispatched
+  labels:
+  - revenue-readiness
+  - revenue
+  - product
+  - ship-order
+  - generated
+  - noop
+  urls: []
+  context: "In organvm/mirror-mirror, find the single highest-leverage gap between\
+    \ the current product and something a stranger would pay for (first-dollar path:\
+    \ paid tier once live) and close it with a real, tested change. One focused PR;\
+    \ keep CI green. [revenue-backlog 2026-06-28: rank 5, stage building \u2014 spend\
+    \ tokens on income, not busywork]"
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T06:47:45.490918Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T04:55:49.903363Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T06:38:05.227060Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: agy
+    session_id: https://github.com/organvm/mirror-mirror/pull/73
+    status: dispatched
+- id: REV-organvm-public-record-data-scrapper-revenue-readiness-0628
+  title: First-paying-customer readiness pass on Public Record Data Scraper
+  repo: organvm/public-record-data-scrapper
+  type: code
+  target_agent: opencode
+  priority: high
+  budget_cost: 2
+  status: in_progress
+  labels:
+  - revenue-readiness
+  - revenue
+  - product
+  - ship-order
+  - generated
+  - noop
+  urls: []
+  context: "In organvm/public-record-data-scrapper, find the single highest-leverage\
+    \ gap between the current product and something a stranger would pay for (first-dollar\
+    \ path: data-as-a-service / one-off scrape gigs once deployed) and close it with\
+    \ a real, tested change. One focused PR; keep CI green. [revenue-backlog 2026-06-28:\
+    \ rank 2, stage building \u2014 spend tokens on income, not busywork]"
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T07:02:00.080956Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T04:55:49.903363Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:39:28.818830Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T06:38:05.227060Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T07:02:00.080956Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+- id: REV-organvm-a-i-chat--exporter-revenue-landing-0628
+  title: Ship a landing page for ChatGPT Exporter
+  repo: organvm/a-i-chat--exporter
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 2
+  status: dispatched
+  labels:
+  - revenue-landing
+  - revenue
+  - product
+  - ship-order
+  - generated
+  - noop
+  - tried:gemini
+  urls: []
+  context: "Create a single deploy-ready product page for ChatGPT Exporter in organvm/a-i-chat--exporter\
+    \ (docs/ or a gh-pages-ready index) explaining the real value and linking install\
+    \ + the donation/Pro options. Real copy derived from what the product ACTUALLY\
+    \ does \u2014 no lorem, no invented features. [revenue-backlog 2026-06-28: rank\
+    \ 1, stage deploy-ready \u2014 spend tokens on income, not busywork]"
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T07:02:00.080956Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T04:55:49.903363Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T05:00:55.000565Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T06:38:05.227060Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:47:45.490918Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+  - timestamp: '2026-06-28T07:02:00.080956Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+- id: REV-organvm-a-i-chat--exporter-revenue-launch-post-0628
+  title: Draft the build-in-public launch post for ChatGPT Exporter
+  repo: organvm/a-i-chat--exporter
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 2
+  status: dispatched
+  labels:
+  - revenue-launch-post
+  - revenue
+  - product
+  - ship-order
+  - generated
+  - tried:gemini
+  urls: []
+  context: "Write a ready-to-post launch announcement for ChatGPT Exporter (Show HN\
+    \ + Reddit + X variants), grounded in what it ACTUALLY does and its real users.\
+    \ Save as marketing/launch-post.md in organvm/a-i-chat--exporter. No hype, no\
+    \ invented metrics. [revenue-backlog 2026-06-28: rank 1, stage deploy-ready \u2014\
+    \ spend tokens on income, not busywork]"
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T04:40:29.389041Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:10:51.965981Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T04:40:29.389041Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+- id: GEN-organvm-limen-test-coverage-0628
+  title: Raise test coverage in organvm/limen
+  repo: organvm/limen
+  type: code
+  target_agent: agy
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  - noop
+  urls: []
+  context: Find the largest source module in organvm/limen with little or no test
+    coverage and add a focused, PASSING test suite for it. Run the repo's own test
+    command and confirm green. No placeholder tests. [auto-generated 2026-06-28 to
+    keep the stream endless]
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T07:02:00.080956Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T06:18:55.153664Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:18:55.153664Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-28T06:25:20.362164Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T06:25:20.362164Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T06:38:05.227060Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T07:02:00.080956Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
