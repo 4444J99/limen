@@ -51750,7 +51750,7 @@ tasks:
   target_agent: jules
   priority: low
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - docs
   - generated
@@ -51766,7 +51766,7 @@ tasks:
     \ to keep the stream endless]"
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-27T11:49:34.664870Z'
+  updated: '2026-06-28T11:52:40.068870Z'
   dispatch_log:
   - timestamp: '2026-06-26T23:07:41.223636Z'
     agent: opencode
@@ -51803,6 +51803,11 @@ tasks:
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-06-28T11:52:40.068870Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: GEN-organvm-limen-docs-0624
   title: Real usage docs for organvm/limen
   repo: organvm/limen
@@ -57633,7 +57638,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - simplify
   - generated
@@ -57645,7 +57650,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T11:49:34.664870Z'
+  updated: '2026-06-28T11:52:40.068870Z'
   dispatch_log:
   - timestamp: '2026-06-27T05:21:04.898340Z'
     agent: gemini
@@ -57665,6 +57670,11 @@ tasks:
     agent: jules
     session_id: '5271992324525907402'
     status: dispatched
+  - timestamp: '2026-06-28T11:52:40.068870Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: GEN-organvm-limen-simplify-0627
   title: Reduce complexity in organvm/limen
   repo: organvm/limen
