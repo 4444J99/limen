@@ -1,7 +1,7 @@
 # Session Value Review
 
-Generated: `2026-06-28T13:37:59+00:00`
-Window: `2026-06-28T01:37:57+00:00` to `2026-06-28T13:37:57+00:00` (12.0h)
+Generated: `2026-06-28T13:39:44+00:00`
+Window: `2026-06-28T01:39:43+00:00` to `2026-06-28T13:39:43+00:00` (12.0h)
 
 ## Verdict
 
@@ -11,33 +11,33 @@ Window: `2026-06-28T01:37:57+00:00` to `2026-06-28T13:37:57+00:00` (12.0h)
 
 - Action: `continue_prompt_sweep` (exit `0`).
 - Reason: Prompt-batch receipt movement is still producing durable lifecycle evidence.
-- Follow-up pressure: `77` follow-up roots vs `662` merged/routed roots; consecutive pressure reports `0`.
-- Open review batches: `64`; no durable progress: `false`.
-- Next commands: `python3 scripts/resolve-codex-family-batch.py prompt-batch-medium-historical-worktree-review-023 --write`.
+- Follow-up pressure: `77` follow-up roots vs `680` merged/routed roots; consecutive pressure reports `0`.
+- Open review batches: `63`; no durable progress: `false`.
+- Next commands: `python3 scripts/resolve-legacy-session-batch.py prompt-batch-medium-legacy-session-review-013 --write`.
 
 ## Measured Output
 
-- Commits landed: `106`; files touched: `375`; insertions/deletions: `35805` / `4486`.
-- Prompt batch receipts: `42`; batches/hour: `3.5`.
-- Sessions recorded: `1048`; prompt events recorded: `19661`; prompt events/hour: `1638.42`.
-- Merged-root evidence: `282`; follow-up roots: `77`; absent owner routes: `380`.
-- Commit mix: `prompt_corpus` 70, `task_board` 20, `other` 11, `direct_engineering` 4, `capture` 1.
-- Receipt lane mix: `historical-worktree-review` 18, `family` 13, `legacy-session-review` 11.
-- Current corpus queue: `71` recorded, `64` open, `17` parked secret.
-- Current queue status mix: `needs-owner-route` 2, `needs-private-review` 59, `needs-remote-proof` 3, `non-source-recorded` 1, `owner-recorded` 70, `parked-secret` 17.
+- Commits landed: `107`; files touched: `378`; insertions/deletions: `36294` / `4543`.
+- Prompt batch receipts: `43`; batches/hour: `3.58`.
+- Sessions recorded: `1071`; prompt events recorded: `19788`; prompt events/hour: `1649.0`.
+- Merged-root evidence: `283`; follow-up roots: `77`; absent owner routes: `397`.
+- Commit mix: `prompt_corpus` 71, `task_board` 20, `other` 11, `direct_engineering` 4, `capture` 1.
+- Receipt lane mix: `historical-worktree-review` 19, `family` 13, `legacy-session-review` 11.
+- Current corpus queue: `72` recorded, `63` open, `17` parked secret.
+- Current queue status mix: `needs-owner-route` 2, `needs-private-review` 58, `needs-remote-proof` 3, `non-source-recorded` 1, `owner-recorded` 71, `parked-secret` 17.
 
 ## Value
 
-- Resolved 42 prompt-corpus batches covering 1048 sessions and 19661 prompt events into durable metadata receipts.
-- Linked 282 roots to already-merged PR evidence instead of leaving them as ambiguous session residue.
-- Left the current redacted queue measurable: 71 recorded batches and 64 open review batches.
-- Landed 106 commits with 375 file touches and 35805 insertions.
+- Resolved 43 prompt-corpus batches covering 1071 sessions and 19788 prompt events into durable metadata receipts.
+- Linked 283 roots to already-merged PR evidence instead of leaving them as ambiguous session residue.
+- Left the current redacted queue measurable: 72 recorded batches and 63 open review batches.
+- Landed 107 commits with 378 file touches and 36294 insertions.
 
 ## Critique
 
 - Most commits were prompt-corpus accounting, so the session was valuable as inventory reduction but weak as direct product/revenue delivery.
 - 77 roots still require follow-up review of an open/closed/live branch, so recording was not the same thing as finishing the downstream work.
-- 380 roots were routed to owner repos with no exact branch or PR; that is useful closure only if later runs do not rehydrate them without new evidence.
+- 397 roots were routed to owner repos with no exact branch or PR; that is useful closure only if later runs do not rehydrate them without new evidence.
 
 ## Next-Run Controls
 
@@ -49,7 +49,6 @@ Window: `2026-06-28T01:37:57+00:00` to `2026-06-28T13:37:57+00:00` (12.0h)
 
 | Time | Commit | Kind | Subject |
 |---|---|---|---|
-| `2026-06-28T11:06:07+00:00` | `ad7a4f7` | `prompt_corpus` | limen: resolve sixteenth medium historical prompt batch |
 | `2026-06-28T11:10:14+00:00` | `4dbb882` | `prompt_corpus` | limen: resolve eighth medium legacy prompt batch |
 | `2026-06-28T11:14:50+00:00` | `7184b88` | `prompt_corpus` | limen: resolve ninth medium legacy prompt batch |
 | `2026-06-28T11:21:14+00:00` | `8c8fdef` | `prompt_corpus` | limen: resolve seventeenth medium historical prompt batch |
@@ -69,12 +68,12 @@ Window: `2026-06-28T01:37:57+00:00` to `2026-06-28T13:37:57+00:00` (12.0h)
 | `2026-06-28T13:10:27+00:00` | `2e8714f` | `prompt_corpus` | limen: resolve twelfth medium legacy prompt batch |
 | `2026-06-28T13:11:54+00:00` | `7170322` | `prompt_corpus` | limen: resolve twentieth medium historical prompt batch |
 | `2026-06-28T13:13:27+00:00` | `6ecdf01` | `prompt_corpus` | limen: resolve twenty-first medium historical prompt batch |
+| `2026-06-28T13:38:35+00:00` | `d3347b0` | `prompt_corpus` | limen: resolve twenty-second medium historical prompt batch |
 
 ## Batch Receipts
 
 | Time | Batch | Lane | Sessions | Events | Root Statuses |
 |---|---|---|---:|---:|---|
-| `2026-06-28T10:18:05+00:00` | `prompt-batch-medium-family-009` | `family` | 25 | 97 | `owner_repo_routed_absent_branch` 19, `remote_pr_merged` 5, `remote_pr_preserved` 1 |
 | `2026-06-28T10:27:25+00:00` | `prompt-batch-medium-family-010` | `family` | 25 | 91 | `owner_repo_routed_absent_branch` 16, `remote_pr_merged` 5, `remote_pr_preserved` 4 |
 | `2026-06-28T10:36:49+00:00` | `prompt-batch-medium-family-011` | `family` | 25 | 95 | `remote_pr_merged` 14, `owner_repo_routed_absent_branch` 6, `remote_pr_preserved` 4, `closed_pr_recorded_with_branch` 1 |
 | `2026-06-28T10:44:23+00:00` | `prompt-batch-medium-historical-worktree-review-015` | `historical-worktree-review` | 25 | 436 | `owner_repo_routed_absent_branch` 17, `remote_pr_merged` 8 |
@@ -94,16 +93,17 @@ Window: `2026-06-28T01:37:57+00:00` to `2026-06-28T13:37:57+00:00` (12.0h)
 | `2026-06-28T13:11:24+00:00` | `prompt-batch-medium-historical-worktree-review-020` | `historical-worktree-review` | 25 | 92 | `owner_repo_routed_absent_branch` 14, `needs_owner_route` 5, `closed_pr_recorded_no_branch` 4, `remote_pr_merged` 2 |
 | `2026-06-28T13:12:59+00:00` | `prompt-batch-medium-historical-worktree-review-021` | `historical-worktree-review` | 25 | 108 | `owner_repo_routed_absent_branch` 20, `needs_owner_route` 3, `closed_pr_recorded_no_branch` 1, `remote_pr_merged` 1 |
 | `2026-06-28T13:37:50+00:00` | `prompt-batch-medium-historical-worktree-review-022` | `historical-worktree-review` | 25 | 102 | `owner_repo_routed_absent_branch` 14, `needs_owner_route` 5, `remote_pr_merged` 4, `closed_pr_recorded_no_branch` 2 |
+| `2026-06-28T13:39:36+00:00` | `prompt-batch-medium-historical-worktree-review-023` | `historical-worktree-review` | 23 | 127 | `owner_repo_routed_absent_branch` 17, `needs_owner_route` 3, `closed_pr_recorded_no_branch` 2, `remote_pr_merged` 1 |
 
 ## Next Queue Slice
 
 | Batch | Status | Lane | Sessions | Events |
 |---|---|---|---:|---:|
-| `prompt-batch-medium-historical-worktree-review-023` | `needs-private-review` | `historical-worktree-review` | 23 | 127 |
 | `prompt-batch-medium-legacy-session-review-013` | `needs-private-review` | `legacy-session-review` | 25 | 597 |
 | `prompt-batch-medium-legacy-session-review-014` | `needs-private-review` | `legacy-session-review` | 25 | 605 |
 | `prompt-batch-medium-legacy-session-review-015` | `needs-private-review` | `legacy-session-review` | 25 | 452 |
 | `prompt-batch-low-historical-worktree-review-001` | `needs-private-review` | `historical-worktree-review` | 25 | 174 |
+| `prompt-batch-low-legacy-session-review-001` | `needs-private-review` | `legacy-session-review` | 25 | 453 |
 
 ## Commands
 
