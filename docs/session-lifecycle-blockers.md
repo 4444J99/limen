@@ -1,6 +1,6 @@
 # Session Lifecycle Blockers
 
-Generated: `2026-06-28T15:10:48+00:00`
+Generated: `2026-06-28T15:23:57+00:00`
 
 ## Canonical Handling
 

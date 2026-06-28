@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-06-28T00:50:20Z",
+  "generated_utc": "2026-06-28T15:19:32Z",
   "receipts": [
     {
       "branch": "limen/gen-organvm-universal-mail--automation-test-coverage-0625-151e",
@@ -60,25 +60,27 @@
     {
       "branch": "limen/gen-organvm-i-theoria-sovereign--ground-ci-green-0620-0f38",
       "changed_file_count": 11,
-      "classification": "generated structure-test result drift",
+      "classification": "documented non-source generated-results residue",
+      "evidence_updated_utc": "2026-06-28T15:19:32Z",
       "head": "80e7617d11223b15acf173dd73e2a026019abeeb",
-      "lane": "owner-blocker",
-      "next_action": "Classify whether these generated structure-test results should be refreshed from the current corpus before cleanup, PR creation, or delegation.",
+      "lane": "documented-residue",
+      "next_action": "Do not PR or delegate this generated-results patch. The checkout is at origin/main, the only local deltas are 11 tracked structure-tests/results/*.json snapshots, the repo README classifies the project as a parked docs-only shell with no runnable release path, and the exact patch is privately preserved. Reclaim only after operator acceptance; regenerate current structure-test snapshots from a fresh owner packet if this repo becomes active again.",
       "private_patch_bytes": 222615,
       "private_patch_sha256": "92dc514490c7bbf3c6a14eb3889656563d070a23af55af3d64f2a16999d63bc9",
       "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/2026-06-28T011035Z-gen-organvm-i-theoria-sovereign--ground-ci-green-0620-0f38/receipt.json",
       "repo": "organvm/sovereign--ground",
       "root": "gen-organvm-i-theoria-sovereign--ground-ci-green-0620-0f38",
       "score_discount": 35,
-      "status": "generated_results_patch_preserved"
+      "status": "documented_non_source_residue"
     },
     {
       "branch": "limen/resolve-organvm-i-theoria-.github-459-1ade",
       "changed_file_count": 7,
-      "classification": "remote default history mismatch; local commit preserved as patch",
+      "classification": "stale divergent automation patch; private patch preserved",
+      "evidence_updated_utc": "2026-06-28T15:19:32Z",
       "head": "0035dff5b80c85b1a6174c8792e862ea29909aba",
       "lane": "owner-blocker",
-      "next_action": "Classify against the current organvm/.github default branch before cleanup or delegation; direct PR is blocked because the touched workflow files are absent on the force-updated default history.",
+      "next_action": "Do not open a direct PR from this branch. The branch is ahead 10 and behind 43 against origin/main, has no open/closed PR, and its HEAD patch targets .github/workflows/gemini-review.yml, .github/workflows/version-control-standards.yml, dashboard TS shim files, and tsconfig.json, while current origin/main only has ci-minimal, dependabot-auto-merge, dispatch-receiver, and stale workflows. Preserve as private patch evidence; if needed, create a new narrow owner packet to cherry-pick only the Limen automation branch-policy idea into the current organvm/.github default tree.",
       "origin_main": "e334fb0592541a378e6e0aea99fe3d50d0d662ee",
       "private_patch_bytes": 6758,
       "private_patch_sha256": "020b4c9e8227d560caa10714aac24376e56dea272de3563af7211b4d3b0f4a25",

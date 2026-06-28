@@ -16,9 +16,14 @@ import argparse
 import datetime as dt
 import json
 import os
+import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
+
+from limen.worktree_debt import worktree_debt_report
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 HOME = Path.home()
@@ -146,8 +151,27 @@ def latest_by_worktree(prompt: dict[str, Any]) -> dict[str, str]:
     return latest
 
 
+def current_worktree_report(prompt: dict[str, Any]) -> dict[str, Any]:
+    prompt_report = prompt.get("worktree_report") or {}
+    try:
+        live_report = worktree_debt_report(ROOT)
+    except Exception:
+        return prompt_report if isinstance(prompt_report, dict) else {}
+    prompt_items = [item for item in (prompt_report.get("items") if isinstance(prompt_report, dict) else []) or []]
+    live_items = [item for item in live_report.get("items") or [] if isinstance(item, dict)]
+    if live_items and prompt_items:
+        prompt_names = {str(item.get("name") or "") for item in prompt_items if isinstance(item, dict)}
+        live_names = {str(item.get("name") or "") for item in live_items}
+        if prompt_names and live_names.isdisjoint(prompt_names):
+            return prompt_report if isinstance(prompt_report, dict) else {}
+    if live_items:
+        return live_report
+    return prompt_report if isinstance(prompt_report, dict) else {}
+
+
 def build_worktree_paths(
     prompt: dict[str, Any],
+    worktree_report: dict[str, Any],
     pressure: dict[str, Any],
     now: dt.datetime,
     preservation_receipts: dict[str, dict[str, Any]],
@@ -158,7 +182,7 @@ def build_worktree_paths(
     remote_by_root = remote_receipts_by_root(prompt)
     paths: list[dict[str, Any]] = []
     local_pressure_bonus = 10 if int((pressure.get("worktrees") or {}).get("bytes") or 0) > 1024**3 else 0
-    for item in (prompt.get("worktree_report") or {}).get("items") or []:
+    for item in worktree_report.get("items") or []:
         if not isinstance(item, dict):
             continue
         root = str(item.get("name") or "")
@@ -342,9 +366,10 @@ def build_snapshot() -> dict[str, Any]:
     blockers = load_json(BLOCKER_INDEX)
     pressure = load_json(PRESSURE_INDEX)
     preservation_receipts = preservation_receipts_by_root(load_json(PRESERVATION_RECEIPTS))
+    worktree_report = current_worktree_report(prompt)
     now = dt.datetime.now(dt.timezone.utc)
     candidates = (
-        build_worktree_paths(prompt, pressure, now, preservation_receipts)
+        build_worktree_paths(prompt, worktree_report, pressure, now, preservation_receipts)
         + build_family_paths(codex, blockers, now)
         + build_blocker_paths(blockers)
     )
@@ -361,11 +386,16 @@ def build_snapshot() -> dict[str, Any]:
                 "path": str(PRESERVATION_RECEIPTS),
                 "present": bool(preservation_receipts),
             },
+            "live_worktree_report": {
+                "present": bool(worktree_report.get("items")),
+                "total": worktree_report.get("total", 0),
+                "debt": worktree_report.get("debt", 0),
+            },
         },
         "coverage": {
             "prompt_files": sum(int(s.get("files", 0)) for s in prompt.get("sources", []) if isinstance(s, dict)),
             "prompt_events": sum(int(s.get("prompt_events", 0)) for s in prompt.get("sources", []) if isinstance(s, dict)),
-            "worktree_debt": (prompt.get("worktree_report") or {}).get("debt", 0),
+            "worktree_debt": worktree_report.get("debt", 0),
             "local_pressure_bytes": pressure.get("local_total_bytes", 0),
             "codex_sessions": codex.get("session_count", 0),
             "blockers": len(blockers.get("blockers") or []),

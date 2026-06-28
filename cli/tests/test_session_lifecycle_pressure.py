@@ -437,6 +437,61 @@ def test_session_attack_paths_treat_preserved_dirty_root_as_owner_blocker(tmp_pa
     assert "receipt `private_patch_preserved`" in markdown
 
 
+def test_session_attack_paths_prefers_live_worktree_report_over_stale_prompt_snapshot(tmp_path: Path):
+    attack = _load(ATTACK_PATHS_SCRIPT, "session_attack_paths_live_worktrees")
+    attack.ROOT = tmp_path
+    attack.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    attack.PROMPT_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+    attack.CODEX_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
+    attack.BLOCKER_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "session-lifecycle-blockers.json"
+    attack.PRESSURE_INDEX = tmp_path / "logs" / "session-lifecycle-pressure.json"
+    attack.DOC_PATH = tmp_path / "docs" / "session-attack-paths.md"
+    attack.PRIVATE_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
+    attack.PRESERVATION_RECEIPTS = tmp_path / "docs" / "worktree-preservation-receipts.json"
+    attack.worktree_debt_report = lambda root: {
+        "total": 1,
+        "debt": 1,
+        "by_reason": {"dirty": 1},
+        "items": [{"name": "live-root", "reason": "dirty", "debt": True, "path": str(tmp_path / "live-root")}],
+    }
+
+    attack.PROMPT_INDEX.parent.mkdir(parents=True)
+    attack.PROMPT_INDEX.write_text(
+        json.dumps(
+            {
+                "sources": [{"source": "codex-sessions", "files": 1, "prompt_events": 10}],
+                "worktree_report": {
+                    "debt": 8,
+                    "items": [
+                        {"name": "live-root", "reason": "not-a-git-dir", "debt": True},
+                        {"name": "stale-root", "reason": "not-a-git-dir", "debt": True},
+                    ],
+                },
+                "sessions_by_worktree": {"live-root": 1, "stale-root": 99},
+                "prompt_events_by_worktree": {"live-root": 20, "stale-root": 999},
+                "remote": {
+                    "enabled": True,
+                    "worktrees": {"receipts": [{"name": "live-root", "remote_branch": "missing", "prs": []}]},
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    attack.CODEX_INDEX.write_text(json.dumps({"session_count": 0, "families": []}), encoding="utf-8")
+    attack.BLOCKER_INDEX.write_text(json.dumps({"blockers": []}), encoding="utf-8")
+    attack.PRESSURE_INDEX.parent.mkdir(parents=True)
+    attack.PRESSURE_INDEX.write_text(json.dumps({"worktrees": {"bytes": 2 * 1024**3}}), encoding="utf-8")
+
+    snapshot = attack.build_snapshot()
+    markdown = attack.render_markdown(snapshot, limit=10)
+
+    ids = [item["id"] for item in snapshot["ranked_paths"]]
+    assert snapshot["coverage"]["worktree_debt"] == 1
+    assert ids == ["live-root"]
+    assert "stale-root" not in markdown
+    assert "Worktree debt roots: `1`" in markdown
+
+
 def test_conductor_tranche_selects_actionable_packet_with_receipts(tmp_path: Path):
     tranche = _load(TRANCHE_SCRIPT, "conductor_tranche")
     tranche.ROOT = tmp_path
