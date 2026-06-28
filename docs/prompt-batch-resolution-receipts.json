@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-28T05:24:12Z",
+  "generated_at": "2026-06-28T05:29:35Z",
   "receipts": [
     {
       "batch": "prompt-batch-critical-historical-worktree-review-001",
@@ -3414,6 +3414,75 @@
           "predicate": "Studium ledger predicate after branch rehydration",
           "evidence": "Owner repo resolves; no matching local root, remote branch, or exact-head PR was found.",
           "next_action": "Do not rehydrate unless a later Studium packet identifies the missing delta."
+        }
+      ]
+    },
+    {
+      "batch": "prompt-batch-high-historical-worktree-review-008",
+      "band": "high",
+      "lane": "historical-worktree-review",
+      "status": "owner-recorded",
+      "classification": "historical worktree sessions mapped to owner repos, merged PR receipts, one open remote PR, or absent-branch gates",
+      "session_count": 5,
+      "prompt_events": 282,
+      "unique_prompt_hashes": 197,
+      "evidence": [
+        "private redacted batch metadata listed 5 historical worktree sessions across 5 unique roots at review time",
+        "all 5 source JSONL files existed under ~/.claude/projects at review time",
+        "no exact root directory existed in /Users/4jp/Workspace/.limen-worktrees at review time",
+        "review used only metadata fields: worktree slug, session key, cwd/worktree slug, owner repo inference, and GitHub PR state",
+        "gh repo view resolved owner repositories for every inferred root owner",
+        "git ls-remote --heads checked limen/<root> branch presence for every inferred owner repo and found one live exact-root branch",
+        "gh pr list --head limen/<root> --state all found 2 merged PR receipts, 1 open PR receipt, and no exact-head PRs for the remaining 2 roots",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "Review the preserved open peer-audited blockchain PR for freshness before merge or supersession. Rely on merged PR history for landed roots, and do not rehydrate absent roots unless a later owner packet names a missing delta, live branch or PR, and narrow predicate.",
+      "roots": [
+        {
+          "root": "bld-edgarflash-ci-9c31",
+          "status": "remote_pr_merged",
+          "repo": "organvm/edgarflash",
+          "branch": "limen/bld-edgarflash-ci-9c31",
+          "pr": "https://github.com/organvm/edgarflash/pull/5",
+          "evidence": "No live branch remains; matching PR #5 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "bld2-peer-audited--behavioral-blockchain-deploy-f1f4",
+          "status": "remote_pr_preserved",
+          "repo": "organvm/peer-audited--behavioral-blockchain",
+          "branch": "limen/bld2-peer-audited--behavioral-blockchain-deploy-f1f4",
+          "branch_sha": "bdff0ec",
+          "pr": "https://github.com/organvm/peer-audited--behavioral-blockchain/pull/718",
+          "evidence": "Remote branch exists at bdff0ec; GitHub PR #718 is OPEN with merge state BEHIND.",
+          "next_action": "Review PR #718 freshness/base drift, then merge or supersede by a named PR."
+        },
+        {
+          "root": "cifix-a-organvm-public-record-data-scrapper-d4e6",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/public-record-data-scrapper",
+          "branch": "limen/cifix-a-organvm-public-record-data-scrapper-d4e6",
+          "predicate": "repo CI predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, or exact-head PR was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing CI delta."
+        },
+        {
+          "root": "gh-organvm-i-theoria-hierarchia-mundi-1-0856",
+          "status": "remote_pr_merged",
+          "repo": "organvm/hierarchia-mundi",
+          "branch": "limen/gh-organvm-i-theoria-hierarchia-mundi-1-0856",
+          "pr": "https://github.com/organvm/hierarchia-mundi/pull/7",
+          "evidence": "No live branch remains; matching PR #7 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "limen-028-9af3",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/limen",
+          "branch": "limen/limen-028-9af3",
+          "predicate": "bash scripts/verify-whole.sh after branch rehydration",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, or exact-head PR was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing Limen delta."
         }
       ]
     }
