@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-28T04:22:55Z",
+  "generated_at": "2026-06-28T04:28:41Z",
   "receipts": [
     {
       "batch": "prompt-batch-critical-historical-worktree-review-001",
@@ -1298,6 +1298,304 @@
           "predicate": "revenue-ship predicate after branch rehydration",
           "evidence": "Owner repo resolves; no matching local root, remote branch, or PR was found.",
           "next_action": "Do not rehydrate unless a later owner packet identifies the missing revenue-ship delta."
+        }
+      ]
+    },
+    {
+      "batch": "prompt-batch-high-legacy-session-review-001",
+      "band": "high",
+      "lane": "legacy-session-review",
+      "status": "owner-recorded",
+      "classification": "legacy Claude project sessions routed from metadata to owner repos, PR receipts, archive estate lanes, local owner lanes, or sensitive operator context",
+      "evidence": [
+        "private redacted batch metadata listed 25 legacy Claude project sessions at review time",
+        "all 25 source JSONL files existed under ~/.claude/projects at review time",
+        "review used only metadata fields: session key, cwd, gitBranch, ai-title counts, pr-link, and queue-operation",
+        "gh pr view checked linked PR receipts where metadata exposed PR links",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "No broad legacy-session cleanup remains for this batch. Continue with prompt-batch-high-historical-worktree-review-002; rehydrate an old session only if a later owner packet names a repo or project lane, current branch or PR evidence, and a narrow predicate.",
+      "roots": [
+        {
+          "root": "legacy-session-0de0488c9dfce66e030d",
+          "session_key": "0de0488c9dfce66e030d",
+          "status": "legacy_session_pr_routed",
+          "owner_lane": "public-record-data-scrapper-remediation",
+          "repo": "organvm/public-record-data-scrapper",
+          "prs": [
+            "https://github.com/organvm/public-record-data-scrapper/pull/295"
+          ],
+          "evidence": "Metadata contained a public-record-data-scrapper PR link; gh pr view shows PR #295 is MERGED.",
+          "next_action": "Use merged PR #295 and current repo state; do not replay the legacy session."
+        },
+        {
+          "root": "legacy-session-1957d14915661955fb6d",
+          "session_key": "1957d14915661955fb6d",
+          "status": "legacy_session_pr_routed",
+          "owner_lane": "token-budget-conductor",
+          "repo": "organvm/limen",
+          "prs": [
+            "https://github.com/organvm/limen/pull/18"
+          ],
+          "evidence": "Metadata contained a Limen usage-pacing PR link; gh pr view shows PR #18 is MERGED.",
+          "next_action": "Use current Limen conductor state and PR #18 history for follow-up."
+        },
+        {
+          "root": "legacy-session-28892c008d3645b1e277",
+          "session_key": "28892c008d3645b1e277",
+          "status": "legacy_session_estate_routed",
+          "owner_lane": "archive-knowledge-base-consolidation",
+          "repo": "organvm/limen",
+          "prs": [
+            "https://github.com/organvm/limen/pull/35"
+          ],
+          "evidence": "Metadata contained archive-volume cwd anchors and a Limen PR link; gh pr view shows PR #35 is CLOSED and unmerged.",
+          "next_action": "Treat as archive estate context; do not rehydrate without an explicit current consolidation packet."
+        },
+        {
+          "root": "legacy-session-2dd484540f4ed0986f64",
+          "session_key": "2dd484540f4ed0986f64",
+          "status": "legacy_session_estate_routed",
+          "owner_lane": "filesystem-and-repo-estate-consolidation",
+          "repo": "organvm/limen",
+          "related_repos": [
+            "organvm/a-i-chat--exporter",
+            "organvm/limen"
+          ],
+          "prs": [
+            "https://github.com/organvm/limen/pull/18",
+            "https://github.com/organvm/a-i-chat--exporter/pull/27"
+          ],
+          "evidence": "Metadata contained archive-volume cwd anchors plus Limen/a-i-chat exporter PR links; gh pr view shows both linked PRs are MERGED.",
+          "next_action": "Route any follow-up through an explicit estate-consolidation packet with private path review."
+        },
+        {
+          "root": "legacy-session-2ee45c92a484c0bf096e",
+          "session_key": "2ee45c92a484c0bf096e",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "studium-and-session-closeout",
+          "repo": "organvm/limen",
+          "evidence": "Metadata contained Studium and session-closeout branch anchors; no PR receipt was present.",
+          "next_action": "Use the current Studium/session-closeout ledgers before follow-up."
+        },
+        {
+          "root": "legacy-session-4320915df2cb0c7cbdda",
+          "session_key": "4320915df2cb0c7cbdda",
+          "status": "legacy_session_pr_routed",
+          "owner_lane": "edu-organism-course-material",
+          "repo": "organvm/edu-organism",
+          "prs": [
+            "https://github.com/organvm/edu-organism/pull/48"
+          ],
+          "evidence": "Metadata contained an edu-organism PR link; gh pr view shows PR #48 is MERGED.",
+          "next_action": "Use current edu-organism state and PR #48 history for follow-up."
+        },
+        {
+          "root": "legacy-session-67f2241d792c23af0a4e",
+          "session_key": "67f2241d792c23af0a4e",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "the-invisible-ledger-trial-signup",
+          "repo": "organvm/the-invisible-ledger",
+          "evidence": "Metadata contained trial-signup branch and old the-invisible-ledger worktree anchors; no PR receipt was present.",
+          "next_action": "Use current the-invisible-ledger product state before any follow-up."
+        },
+        {
+          "root": "legacy-session-7f5a2fcacd31dfbbcba2",
+          "session_key": "7f5a2fcacd31dfbbcba2",
+          "status": "legacy_session_closed_pr_recorded",
+          "owner_lane": "limen-auto-updater-and-tcc",
+          "repo": "organvm/limen",
+          "prs": [
+            "https://github.com/organvm/limen/pull/186"
+          ],
+          "evidence": "Metadata contained a Limen auto-updater/TCC PR link; gh pr view shows PR #186 is CLOSED and unmerged.",
+          "next_action": "Do not rely on PR #186 as landed; require a current branch/issue before follow-up."
+        },
+        {
+          "root": "legacy-session-b97b871798e49fc78acc",
+          "session_key": "b97b871798e49fc78acc",
+          "status": "legacy_session_pr_routed",
+          "owner_lane": "usage-spike-and-model-chokepoint",
+          "repo": "organvm/limen",
+          "prs": [
+            "https://github.com/organvm/limen/pull/328"
+          ],
+          "evidence": "Metadata contained a Limen usage/model-chokepoint PR link; gh pr view shows PR #328 is MERGED.",
+          "next_action": "Use current usage/cost ledgers and PR #328 history for follow-up."
+        },
+        {
+          "root": "legacy-session-bf457621c0a7e4a8c519",
+          "session_key": "bf457621c0a7e4a8c519",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "universal-mail-automation-state-verification",
+          "repo": "organvm/universal-mail--automation",
+          "evidence": "Metadata contained UMA state-verification cwd and branch anchors; no PR receipt was present.",
+          "next_action": "Use current UMA invariant/state ledgers before follow-up."
+        },
+        {
+          "root": "legacy-session-ea0a187d14bab94e29c6",
+          "session_key": "ea0a187d14bab94e29c6",
+          "status": "legacy_session_sensitive_context_recorded",
+          "owner_lane": "private-oauth-and-auth-context",
+          "repo": "organvm/limen",
+          "prs": [
+            "https://github.com/organvm/limen/pull/169",
+            "https://github.com/organvm/limen/pull/176",
+            "https://github.com/organvm/limen/pull/178",
+            "https://github.com/organvm/limen/pull/181",
+            "https://github.com/organvm/limen/pull/187"
+          ],
+          "evidence": "Metadata contained OAuth/auth context and Limen PR links; gh pr view showed PRs #176, #178, and #187 MERGED, while #169 and #181 are CLOSED.",
+          "next_action": "Keep as credential-sensitive context; use current auth receipts only."
+        },
+        {
+          "root": "legacy-session-f1e59afffb652d95a467",
+          "session_key": "f1e59afffb652d95a467",
+          "status": "legacy_session_pr_routed",
+          "owner_lane": "agent-instruction-closeout-policy",
+          "repo": "organvm/limen",
+          "prs": [
+            "https://github.com/organvm/limen/pull/180"
+          ],
+          "evidence": "Metadata contained a Limen closeout-policy PR link; gh pr view shows PR #180 is MERGED.",
+          "next_action": "Use current agent-instruction docs and PR #180 history."
+        },
+        {
+          "root": "legacy-session-050150b2e6a230027408",
+          "session_key": "050150b2e6a230027408",
+          "status": "legacy_session_estate_routed",
+          "owner_lane": "archive-status-endpoint-docs",
+          "repo": "organvm/limen",
+          "evidence": "Metadata contained archive-volume cwd anchors and status endpoint documentation title; no PR receipt was present.",
+          "next_action": "Do not rehydrate without an explicit owner repo/path and predicate."
+        },
+        {
+          "root": "legacy-session-08099dcf91de769ecb23",
+          "session_key": "08099dcf91de769ecb23",
+          "status": "legacy_session_pr_routed",
+          "owner_lane": "claude-settings-permission-rules",
+          "repo": "organvm/limen",
+          "prs": [
+            "https://github.com/organvm/limen/pull/322"
+          ],
+          "evidence": "Metadata contained a Limen settings PR link; gh pr view shows PR #322 is MERGED.",
+          "next_action": "Use current settings policy and PR #322 history."
+        },
+        {
+          "root": "legacy-session-81e1dc548a22ecaf4a83",
+          "session_key": "81e1dc548a22ecaf4a83",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "macos-dialog-and-security-prompts",
+          "repo": "organvm/limen",
+          "evidence": "Metadata contained macOS dialog/security branch anchors; no PR receipt was present.",
+          "next_action": "Use current macOS dialog gate receipts before follow-up."
+        },
+        {
+          "root": "legacy-session-e378cfb33aa479083d71",
+          "session_key": "e378cfb33aa479083d71",
+          "status": "legacy_session_pr_routed",
+          "owner_lane": "merge-policy-and-task-write-recovery",
+          "repo": "organvm/limen",
+          "prs": [
+            "https://github.com/organvm/limen/pull/202",
+            "https://github.com/organvm/limen/pull/204",
+            "https://github.com/organvm/limen/pull/207",
+            "https://github.com/organvm/limen/pull/210",
+            "https://github.com/organvm/limen/pull/214"
+          ],
+          "evidence": "Metadata contained Limen merge-policy/task-write PR links; gh pr view shows all listed PRs are MERGED.",
+          "next_action": "Use current merge-policy and task-write ledgers before follow-up."
+        },
+        {
+          "root": "legacy-session-86c9fbcaef495b67524b",
+          "session_key": "86c9fbcaef495b67524b",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "org-migration-plumbing",
+          "repo": "organvm/limen",
+          "evidence": "Metadata contained org-migration branch/worktree anchors; no PR receipt was present.",
+          "next_action": "Require current migration branch/issue evidence before delegation."
+        },
+        {
+          "root": "legacy-session-d454b6c96b09c8055d97",
+          "session_key": "d454b6c96b09c8055d97",
+          "status": "legacy_session_pr_routed",
+          "owner_lane": "micro-tato-game-launch",
+          "repo": "4444J99/micro-tato",
+          "prs": [
+            "https://github.com/4444J99/micro-tato/pull/16",
+            "https://github.com/4444J99/micro-tato/pull/24"
+          ],
+          "evidence": "Metadata contained micro-tato PR links; gh pr view shows PRs #16 and #24 are MERGED.",
+          "next_action": "Use current micro-tato repo state and merged PR history before follow-up."
+        },
+        {
+          "root": "legacy-session-d846d970f177528ed6fd",
+          "session_key": "d846d970f177528ed6fd",
+          "status": "legacy_session_estate_routed",
+          "owner_lane": "archive-api-response-latency",
+          "repo": "organvm/limen",
+          "evidence": "Metadata contained archive-volume cwd anchors and API latency title; no PR receipt was present.",
+          "next_action": "Do not rehydrate without an explicit current owner repo/path and predicate."
+        },
+        {
+          "root": "legacy-session-ef35a991b9949ad4b360",
+          "session_key": "ef35a991b9949ad4b360",
+          "status": "legacy_session_sensitive_context_recorded",
+          "owner_lane": "private-billing-and-github-app-token-context",
+          "repo": "organvm/limen",
+          "prs": [
+            "https://github.com/organvm/limen/pull/18"
+          ],
+          "evidence": "Metadata contained billing/token context and a Limen PR link; gh pr view shows PR #18 is MERGED.",
+          "next_action": "Keep as private operator context; use current credential/billing receipts only."
+        },
+        {
+          "root": "legacy-session-b02076eb34fd8b290d1e",
+          "session_key": "b02076eb34fd8b290d1e",
+          "status": "legacy_session_sensitive_context_recorded",
+          "owner_lane": "private-network-and-credential-diagnostics",
+          "repo": "organvm/limen",
+          "prs": [
+            "https://github.com/organvm/limen/pull/283"
+          ],
+          "evidence": "Metadata contained network/credential diagnostic context and a Limen PR link; gh pr view shows PR #283 is MERGED.",
+          "next_action": "Keep as private operator context; use current netmode/credential receipts only."
+        },
+        {
+          "root": "legacy-session-d319353ebe8ec7ea97b1",
+          "session_key": "d319353ebe8ec7ea97b1",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "status-check-background-tasks",
+          "repo": "organvm/limen",
+          "evidence": "Metadata contained home job cwd anchors and status-check background task title; no PR receipt was present.",
+          "next_action": "Require current owner repo/path and predicate before delegation."
+        },
+        {
+          "root": "legacy-session-e51186fcac29dd2fbf01",
+          "session_key": "e51186fcac29dd2fbf01",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "limen-subagent-glimmering-mapping-whistle",
+          "repo": "organvm/limen",
+          "evidence": "Metadata contained subagent/worktree anchors only; no title or PR receipt was present.",
+          "next_action": "Do not rehydrate unless a later packet identifies the subagent delta and owner predicate."
+        },
+        {
+          "root": "legacy-session-0322dc10f4ecc5afdd0c",
+          "session_key": "0322dc10f4ecc5afdd0c",
+          "status": "legacy_session_sensitive_context_recorded",
+          "owner_lane": "private-macos-storage-recovery-context",
+          "repo": "organvm/limen",
+          "evidence": "Metadata contained local Mac storage recovery context and home job anchors; no PR receipt was present.",
+          "next_action": "Keep as private operator/system context; do not surface without a new explicit scoped request."
+        },
+        {
+          "root": "legacy-session-191cd85377dce40803df",
+          "session_key": "191cd85377dce40803df",
+          "status": "legacy_session_sensitive_context_recorded",
+          "owner_lane": "private-operator-subagent-context",
+          "repo": "organvm/limen",
+          "evidence": "Metadata contained subagent/worktree anchors only for a previously sensitive operator lane; no title or PR receipt was present.",
+          "next_action": "Keep as private operator context; do not surface or delegate without a new explicit scoped request."
         }
       ]
     }
