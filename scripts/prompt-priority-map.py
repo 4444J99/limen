@@ -430,7 +430,7 @@ def build_review_batches(session_items: list[dict[str, Any]], *, batch_size: int
                     "avg_score": round(sum(scores) / len(scores), 1),
                     "sources": compact_counts(source_counts),
                     "families": compact_counts(family_counts),
-                    "worktrees": compact_counts(worktree_counts),
+                    "worktrees": dict(worktree_counts.most_common()),
                     "top_session_key": top["session_key"],
                     "next_action": top["next_action"],
                     "session_keys": [item["session_key"] for item in chunk],

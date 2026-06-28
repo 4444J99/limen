@@ -24,6 +24,7 @@ PRIORITY_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-priority-map.json"
 ATTACK_INDEX = PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
 PRESERVATION_RECEIPTS = ROOT / "docs" / "worktree-preservation-receipts.json"
 PACKET_RESOLUTION_RECEIPTS = ROOT / "docs" / "prompt-packet-resolution-receipts.json"
+BATCH_RESOLUTION_RECEIPTS = ROOT / "docs" / "prompt-batch-resolution-receipts.json"
 DOC_PATH = ROOT / "docs" / "prompt-batch-review-ledger.md"
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-batch-review-ledger.json"
 
@@ -88,6 +89,17 @@ def packet_receipts_by_source_batch(data: dict[str, Any]) -> dict[str, list[dict
     return receipts
 
 
+def batch_resolution_lookup(data: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    receipts: dict[str, dict[str, Any]] = {}
+    for receipt in data.get("receipts") or []:
+        if not isinstance(receipt, dict):
+            continue
+        batch_id = receipt.get("batch") or receipt.get("batch_id") or receipt.get("id")
+        if batch_id:
+            receipts[str(batch_id)] = receipt
+    return receipts
+
+
 def attack_by_id(data: dict[str, Any]) -> dict[str, dict[str, Any]]:
     rows: dict[str, dict[str, Any]] = {}
     for item in data.get("ranked_paths") or []:
@@ -112,11 +124,14 @@ def status_for_batch(
     batch: dict[str, Any],
     receipts: list[dict[str, Any]],
     packet_receipts: list[dict[str, Any]],
+    batch_resolution: dict[str, Any] | None,
 ) -> str:
     lane = str(batch.get("lane") or "")
     worktrees = batch.get("worktrees") or {}
     if lane == "parked-secret":
         return "parked-secret"
+    if batch_resolution and str(batch_resolution.get("status") or "") in RECORDED_STATUSES:
+        return str(batch_resolution.get("status"))
     if packet_receipts_cover_batch(batch, packet_receipts):
         packet_statuses = {str(receipt.get("status") or "") for receipt in packet_receipts}
         if packet_statuses == {"non-source-recorded"}:
@@ -148,11 +163,17 @@ def evidence_summary(
     batch: dict[str, Any],
     receipts: list[dict[str, Any]],
     packet_receipts: list[dict[str, Any]],
+    batch_resolution: dict[str, Any] | None,
     attacks: list[dict[str, Any]],
 ) -> dict[str, Any]:
     repos = sorted({str(receipt.get("repo")) for receipt in receipts if receipt.get("repo")})
     receipt_statuses = Counter(str(receipt.get("status") or "unknown") for receipt in receipts)
     packet_statuses = Counter(str(receipt.get("status") or "unknown") for receipt in packet_receipts)
+    batch_roots = [
+        root for root in (batch_resolution or {}).get("roots") or [] if isinstance(root, dict)
+    ]
+    batch_root_statuses = Counter(str(root.get("status") or "unknown") for root in batch_roots)
+    batch_repos = sorted({str(root.get("repo")) for root in batch_roots if root.get("repo")})
     attack_scores = [int(item.get("score") or 0) for item in attacks]
     private_receipts = sorted(
         str(receipt.get("private_receipt"))
@@ -164,6 +185,9 @@ def evidence_summary(
         "receipt_statuses": dict(receipt_statuses.most_common()),
         "packet_receipt_statuses": dict(packet_statuses.most_common()),
         "packet_receipts": sorted(str(receipt.get("packet") or "") for receipt in packet_receipts if receipt.get("packet")),
+        "batch_resolution_status": str((batch_resolution or {}).get("status") or ""),
+        "batch_root_statuses": dict(batch_root_statuses.most_common()),
+        "batch_root_repos": batch_repos,
         "preservation_receipts": private_receipts,
         "attack_score_max": max(attack_scores) if attack_scores else None,
         "attack_path_ids": [str(item.get("id")) for item in attacks if item.get("id")],
@@ -193,6 +217,7 @@ def build_snapshot(limit: int) -> dict[str, Any]:
     priority = load_json(PRIORITY_INDEX)
     receipt_map = receipt_by_root(load_json(PRESERVATION_RECEIPTS))
     packet_receipts = packet_receipts_by_source_batch(load_json(PACKET_RESOLUTION_RECEIPTS))
+    batch_resolutions = batch_resolution_lookup(load_json(BATCH_RESOLUTION_RECEIPTS))
     attacks = attack_by_id(load_json(ATTACK_INDEX))
     batches = []
     for batch in priority.get("review_batches") or []:
@@ -201,9 +226,10 @@ def build_snapshot(limit: int) -> dict[str, Any]:
         worktree_names = sorted((batch.get("worktrees") or {}).keys())
         receipts = [receipt_map[root] for root in worktree_names if root in receipt_map]
         batch_packet_receipts = packet_receipts.get(str(batch.get("id") or ""), [])
+        batch_resolution = batch_resolutions.get(str(batch.get("id") or ""))
         attack_rows = [attacks[root] for root in worktree_names if root in attacks]
-        status = status_for_batch(batch, receipts, batch_packet_receipts)
-        evidence = evidence_summary(batch, receipts, batch_packet_receipts, attack_rows)
+        status = status_for_batch(batch, receipts, batch_packet_receipts, batch_resolution)
+        evidence = evidence_summary(batch, receipts, batch_packet_receipts, batch_resolution, attack_rows)
         batches.append(
             {
                 "id": batch.get("id"),
@@ -251,6 +277,10 @@ def build_snapshot(limit: int) -> dict[str, Any]:
                 "path": str(PACKET_RESOLUTION_RECEIPTS),
                 "present": bool(packet_receipts),
             },
+            "batch_resolution_receipts": {
+                "path": str(BATCH_RESOLUTION_RECEIPTS),
+                "present": bool(batch_resolutions),
+            },
         },
         "coverage": {
             "priority_batches": len(priority.get("review_batches") or []),
@@ -262,6 +292,7 @@ def build_snapshot(limit: int) -> dict[str, Any]:
             "unique_prompt_hash_refs": sum(int(item["unique_prompt_hashes"]) for item in batches),
             "preservation_receipts": len(receipt_map),
             "packet_resolution_receipts": sum(len(rows) for rows in packet_receipts.values()),
+            "batch_resolution_receipts": len(batch_resolutions),
         },
         "counts": {
             "statuses": dict(status_counts.most_common()),
@@ -308,6 +339,7 @@ def render_markdown(snapshot: dict[str, Any], *, limit: int) -> str:
         f"- Prompt events represented: `{coverage.get('prompt_events', 0)}`.",
         f"- Preservation receipts available: `{coverage.get('preservation_receipts', 0)}`.",
         f"- Packet resolution receipts available: `{coverage.get('packet_resolution_receipts', 0)}`.",
+        f"- Batch resolution receipts available: `{coverage.get('batch_resolution_receipts', 0)}`.",
         f"- Status mix: {render_counts(snapshot['counts']['statuses'])}.",
         f"- Lane mix: {render_counts(snapshot['counts']['lanes'])}.",
         "",
@@ -318,15 +350,16 @@ def render_markdown(snapshot: dict[str, Any], *, limit: int) -> str:
     ]
     for rank, batch in enumerate(recorded, start=1):
         evidence = batch["evidence"]
-        packet_bits = render_counts(evidence.get("packet_receipt_statuses") or {})
-        receipt_bits = (
-            f"packets {packet_bits}"
-            if evidence.get("packet_receipt_statuses")
-            else render_counts(evidence.get("receipt_statuses") or {})
-        )
+        if evidence.get("batch_root_statuses"):
+            receipt_bits = f"batch roots {render_counts(evidence.get('batch_root_statuses') or {})}"
+        elif evidence.get("packet_receipt_statuses"):
+            receipt_bits = f"packets {render_counts(evidence.get('packet_receipt_statuses') or {})}"
+        else:
+            receipt_bits = render_counts(evidence.get("receipt_statuses") or {})
+        owner_repos = evidence.get("batch_root_repos") or evidence.get("owner_repos") or []
         lines.append(
             f"| {rank} | `{batch['id']}` | `{batch['status']}` | `{batch['band']}` | `{batch['lane']}` | "
-            f"{batch['prompt_events']} | {render_owner_repos(evidence.get('owner_repos') or [])} | "
+            f"{batch['prompt_events']} | {render_owner_repos(owner_repos)} | "
             f"{receipt_bits} | {batch['gate']} |"
         )
     if not recorded:

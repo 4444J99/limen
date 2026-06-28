@@ -1,0 +1,254 @@
+{
+  "version": 1,
+  "generated_at": "2026-06-28T03:50:03Z",
+  "receipts": [
+    {
+      "batch": "prompt-batch-critical-historical-worktree-review-001",
+      "band": "critical",
+      "lane": "historical-worktree-review",
+      "status": "owner-recorded",
+      "classification": "historical worktree roots mapped to owner repos, remote PR receipts, or absent-branch gates",
+      "evidence": [
+        "private redacted batch metadata listed 25 historical worktree roots on 2026-06-28T03:50:03Z",
+        "all 25 roots were absent from /Users/4jp/Workspace/.limen-worktrees",
+        "gh repo view resolved owner repositories for every inferred root owner",
+        "git ls-remote --heads checked limen/<root> branch presence for every root",
+        "gh pr list --state all --head limen/<root> checked PR receipts for every root",
+        "no raw prompt/session text was copied into this tracked receipt"
+      ],
+      "next_action": "No local historical worktree cleanup remains for this batch. Review open PR receipts where present; do not rehydrate absent roots unless a later owner packet names a missing delta, live branch or PR, and narrow predicate.",
+      "roots": [
+        {
+          "root": "gen-a-organvm-a-i-chat--exporter-ci-green-0620-ebbe",
+          "status": "remote_pr_merged",
+          "repo": "a-organvm/a-i-chat--exporter",
+          "branch": "limen/gen-a-organvm-a-i-chat--exporter-ci-green-0620-ebbe",
+          "pr": "https://github.com/organvm/a-i-chat--exporter/pull/55",
+          "evidence": "No live branch remains; matching PR #55 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "gen-organvm-a-i-chat--exporter-security-0624-c140",
+          "status": "remote_pr_merged",
+          "repo": "organvm/a-i-chat--exporter",
+          "branch": "limen/gen-organvm-a-i-chat--exporter-security-0624-c140",
+          "pr": "https://github.com/organvm/a-i-chat--exporter/pull/73",
+          "evidence": "No live branch remains; matching PR #73 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "gen-organvm-a-i-chat--exporter-security-0625-f059",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/a-i-chat--exporter",
+          "branch": "limen/gen-organvm-a-i-chat--exporter-security-0625-f059",
+          "predicate": "pnpm test; pnpm lint",
+          "evidence": "Owner repo resolves; no matching remote branch or PR was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing security delta."
+        },
+        {
+          "root": "gen-organvm-a-i-chat--exporter-typing-0624-5bd9",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/a-i-chat--exporter",
+          "branch": "limen/gen-organvm-a-i-chat--exporter-typing-0624-5bd9",
+          "predicate": "pnpm test; pnpm lint",
+          "evidence": "Owner repo resolves; no matching remote branch or PR was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing typing delta."
+        },
+        {
+          "root": "gen-organvm-domus-genoma-security-0625-ce3e",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/domus-genoma",
+          "branch": "limen/gen-organvm-domus-genoma-security-0625-ce3e",
+          "predicate": "repo security predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching remote branch or PR was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing security delta."
+        },
+        {
+          "root": "gen-organvm-domus-genoma-security-0626-5961",
+          "status": "remote_pr_preserved",
+          "repo": "organvm/domus-genoma",
+          "branch": "limen/gen-organvm-domus-genoma-security-0626-5961",
+          "branch_sha": "b994d3a",
+          "pr": "https://github.com/organvm/domus-genoma/pull/138",
+          "evidence": "Remote branch exists at b994d3a; GitHub PR #138 is OPEN with merge state UNSTABLE.",
+          "next_action": "Review PR #138 freshness/checks, then merge or supersede by a named PR."
+        },
+        {
+          "root": "gen-organvm-domus-genoma-security-0627-b9ed",
+          "status": "remote_pr_preserved",
+          "repo": "organvm/domus-genoma",
+          "branch": "limen/gen-organvm-domus-genoma-security-0627-b9ed",
+          "branch_sha": "aec7883",
+          "pr": "https://github.com/organvm/domus-genoma/pull/141",
+          "evidence": "Remote branch exists at aec7883; GitHub PR #141 is OPEN with merge state UNSTABLE.",
+          "next_action": "Review PR #141 freshness/checks, then merge or supersede by a named PR."
+        },
+        {
+          "root": "gen-organvm-limen-security-0625-3f93",
+          "status": "remote_pr_merged",
+          "repo": "organvm/limen",
+          "branch": "limen/gen-organvm-limen-security-0625-3f93",
+          "pr": "https://github.com/organvm/limen/pull/231",
+          "evidence": "No live branch remains; matching PR #231 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "gen-organvm-portfolio-test-coverage-0627-2931",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/portfolio",
+          "branch": "limen/gen-organvm-portfolio-test-coverage-0627-2931",
+          "predicate": "repo test predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching remote branch or PR was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing test-coverage delta."
+        },
+        {
+          "root": "gen-organvm-public-record-data-scrapper-ci-green-0625-ec9e",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/public-record-data-scrapper",
+          "branch": "limen/gen-organvm-public-record-data-scrapper-ci-green-0625-ec9e",
+          "predicate": "repo CI predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching remote branch or PR was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing CI delta."
+        },
+        {
+          "root": "gen-organvm-public-record-data-scrapper-security-0625-ce5f",
+          "status": "remote_pr_preserved",
+          "repo": "organvm/public-record-data-scrapper",
+          "branch": "limen/gen-organvm-public-record-data-scrapper-security-0625-ce5f",
+          "branch_sha": "c4ace04",
+          "pr": "https://github.com/organvm/public-record-data-scrapper/pull/314",
+          "evidence": "Remote branch exists at c4ace04; GitHub PR #314 is OPEN with merge state DIRTY.",
+          "next_action": "Review PR #314 freshness/checks, then merge or supersede by a named PR."
+        },
+        {
+          "root": "gen-organvm-public-record-data-scrapper-security-0626-6c09",
+          "status": "remote_pr_preserved",
+          "repo": "organvm/public-record-data-scrapper",
+          "branch": "limen/gen-organvm-public-record-data-scrapper-security-0626-6c09",
+          "branch_sha": "ca2800f",
+          "pr": "https://github.com/organvm/public-record-data-scrapper/pull/319",
+          "evidence": "Remote branch exists at ca2800f; GitHub PR #319 is OPEN with merge state DIRTY.",
+          "next_action": "Review PR #319 freshness/checks, then merge or supersede by a named PR."
+        },
+        {
+          "root": "gen-organvm-public-record-data-scrapper-typing-0624-8693",
+          "status": "remote_pr_merged",
+          "repo": "organvm/public-record-data-scrapper",
+          "branch": "limen/gen-organvm-public-record-data-scrapper-typing-0624-8693",
+          "pr": "https://github.com/organvm/public-record-data-scrapper/pull/313",
+          "evidence": "No live branch remains; matching PR #313 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "gen-organvm-the-invisible-ledger-ci-green-0625-77ea",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/the-invisible-ledger",
+          "branch": "limen/gen-organvm-the-invisible-ledger-ci-green-0625-77ea",
+          "predicate": "repo CI predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching remote branch or PR was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing CI delta."
+        },
+        {
+          "root": "gen-organvm-the-invisible-ledger-security-0624-3d97",
+          "status": "remote_pr_merged",
+          "repo": "organvm/the-invisible-ledger",
+          "branch": "limen/gen-organvm-the-invisible-ledger-security-0624-3d97",
+          "pr": "https://github.com/organvm/the-invisible-ledger/pull/45",
+          "evidence": "No live branch remains; matching PR #45 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "gen-organvm-the-invisible-ledger-typing-0626-fb12",
+          "status": "remote_pr_preserved",
+          "repo": "organvm/the-invisible-ledger",
+          "branch": "limen/gen-organvm-the-invisible-ledger-typing-0626-fb12",
+          "branch_sha": "dbd3c0c",
+          "pr": "https://github.com/organvm/the-invisible-ledger/pull/57",
+          "evidence": "Remote branch exists at dbd3c0c; GitHub PR #57 is OPEN with merge state DIRTY.",
+          "next_action": "Review PR #57 freshness/checks, then merge or supersede by a named PR."
+        },
+        {
+          "root": "gh-organvm-limen-352-b4c3",
+          "status": "closed_pr_recorded_no_branch",
+          "repo": "organvm/limen",
+          "branch": "limen/gh-organvm-limen-352-b4c3",
+          "pr": "https://github.com/organvm/limen/pull/363",
+          "evidence": "No live branch remains; matching PR #363 is CLOSED and unmerged.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing GitHub-review delta."
+        },
+        {
+          "root": "gh-organvm-organvm-corpvs-testamentvm-493-db1e",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/organvm-corpvs-testamentvm",
+          "branch": "limen/gh-organvm-organvm-corpvs-testamentvm-493-db1e",
+          "predicate": "owner repo predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching remote branch or PR was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing GitHub-review delta."
+        },
+        {
+          "root": "heal-192-regression",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/limen",
+          "branch": "limen/heal-192-regression",
+          "predicate": "bash scripts/verify-whole.sh after branch rehydration",
+          "evidence": "Owner repo resolves; no matching remote branch or PR was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing regression delta."
+        },
+        {
+          "root": "rev-organvm-mirror-mirror-revenue-readiness-0623-b8e6",
+          "status": "remote_pr_merged",
+          "repo": "organvm/mirror-mirror",
+          "branch": "limen/rev-organvm-mirror-mirror-revenue-readiness-0623-b8e6",
+          "pr": "https://github.com/organvm/mirror-mirror/pull/34",
+          "evidence": "No live branch remains; matching PR #34 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "rev-organvm-public-record-data-scrapper-revenue-readiness-0623-5c6f",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/public-record-data-scrapper",
+          "branch": "limen/rev-organvm-public-record-data-scrapper-revenue-readiness-0623-5c6f",
+          "predicate": "revenue-readiness predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching remote branch or PR was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing revenue-readiness delta."
+        },
+        {
+          "root": "rev-organvm-public-record-data-scrapper-revenue-readiness-0623-bee1",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/public-record-data-scrapper",
+          "branch": "limen/rev-organvm-public-record-data-scrapper-revenue-readiness-0623-bee1",
+          "predicate": "revenue-readiness predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching remote branch or PR was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing revenue-readiness delta."
+        },
+        {
+          "root": "rev-organvm-public-record-data-scrapper-revenue-readiness-0623-cf52",
+          "status": "remote_pr_merged",
+          "repo": "organvm/public-record-data-scrapper",
+          "branch": "limen/rev-organvm-public-record-data-scrapper-revenue-readiness-0623-cf52",
+          "pr": "https://github.com/organvm/public-record-data-scrapper/pull/307",
+          "evidence": "No live branch remains; matching PR #307 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "rev-organvm-public-record-data-scrapper-revenue-readiness-0626-6d93",
+          "status": "remote_pr_merged",
+          "repo": "organvm/public-record-data-scrapper",
+          "branch": "limen/rev-organvm-public-record-data-scrapper-revenue-readiness-0626-6d93",
+          "pr": "https://github.com/organvm/public-record-data-scrapper/pull/318",
+          "evidence": "No live branch remains; matching PR #318 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "rev-organvm-universal-mail--automation-revenue-ship-0625-56e9",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/universal-mail--automation",
+          "branch": "limen/rev-organvm-universal-mail--automation-revenue-ship-0625-56e9",
+          "predicate": "revenue-ship predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching remote branch or PR was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing revenue-ship delta."
+        }
+      ]
+    }
+  ]
+}

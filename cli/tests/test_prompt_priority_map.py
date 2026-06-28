@@ -136,3 +136,27 @@ def test_prompt_priority_map_builds_redacted_batches_without_raw_text(tmp_path: 
     assert "Every prompt-like event is represented by a hash" in markdown
     assert ppm.DOC_PATH.exists()
     assert ppm.PRIVATE_INDEX.exists()
+
+
+def test_prompt_priority_map_keeps_all_batch_worktree_roots():
+    ppm = _load()
+    session_items = [
+        {
+            "session_key": f"session-{idx}",
+            "band": "critical",
+            "lane": "historical-worktree-review",
+            "score": 100 - idx,
+            "prompt_events": 1,
+            "prompt_hashes": [f"hash-{idx}"],
+            "source": "claude-projects",
+            "family": "uncategorized",
+            "worktree_slug": f"root-{idx}",
+            "next_action": "Privately inspect the historical worktree session.",
+        }
+        for idx in range(7)
+    ]
+
+    batches = ppm.build_review_batches(session_items, batch_size=10)
+
+    assert len(batches) == 1
+    assert set(batches[0]["worktrees"]) == {f"root-{idx}" for idx in range(7)}
