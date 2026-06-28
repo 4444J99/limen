@@ -1,6 +1,6 @@
 # Prompt Packet Ledger
 
-Generated: `2026-06-28T03:34:09+00:00`
+Generated: `2026-06-28T03:37:35+00:00`
 
 ## Canonical Decision
 
@@ -14,14 +14,14 @@ Generated: `2026-06-28T03:34:09+00:00`
 - Source review batches: `153`.
 - Batches needing packetization: `3`.
 - Packets emitted: `8`.
-- Recorded packets: `7`.
-- Open packets: `1`.
+- Recorded packets: `8`.
+- Open packets: `0`.
 - Session receipts packetized: `58`.
 - Prompt events packetized: `252`.
 - Unique prompt hash refs in packets: `158`.
-- Packet resolution receipts: `7`.
-- Packet status mix: `owner-recorded` 7, `packetized` 1.
-- Dispatchability mix: `recorded-owner-receipt` 7, `needs-owner-repo` 1.
+- Packet resolution receipts: `8`.
+- Packet status mix: `owner-recorded` 7, `non-source-recorded` 1.
+- Dispatchability mix: `recorded-owner-receipt` 8.
 - Family mix: `session_lifecycle` 3, `worktree_lifecycle` 1, `github_review` 1, `agent_coordination` 1, `technical_debt_ci` 1, `uncategorized` 1.
 
 ## Recorded Packets
@@ -35,18 +35,19 @@ Generated: `2026-06-28T03:34:09+00:00`
 | 5 | `packet-prompt-batch-high-stalled-review-001-agent_coordination` | `owner-recorded` | `agent_coordination` | 9 | 35 | `agent_router_recorded_absent_root` 9 | No broad agent-coordination dispatch remains for this packet. Rehydrate or delegate only if a later owner packet names a live repo, branch or PR, narrow predicate, and expected receipt. |
 | 6 | `packet-prompt-batch-high-stalled-review-001-session_lifecycle` | `owner-recorded` | `session_lifecycle` | 2 | 9 | `session_ledger_recorded_no_root` 2 | No live local session/worktree cleanup remains for this packet. Continue with the next open packet; rehydrate only if a later owner packet names a current repo, branch or PR, narrow predicate, and expected receipt. |
 | 7 | `packet-prompt-batch-high-stalled-review-001-technical_debt_ci` | `owner-recorded` | `technical_debt_ci` | 3 | 13 | `superseded_by_owner_pr` 1, `remote_pr_preserved` 1, `owner_repo_routed_absent_branch` 1 | Only bld-media-ark-tests-2698 has a current same-root PR receipt. bld-essay-pipeline-readme-94ce is superseded by the active essay README PR, and bld-media-ark-tests-795d should not be delegated unless a later packet proves a delta not covered by the preserved media-ark tests PR. |
+| 8 | `packet-prompt-batch-high-stalled-review-001-uncategorized` | `non-source-recorded` | `uncategorized` | 2 | 10 | `local_recovery_context_recorded` 2 | No repo dispatch remains for this packet. Retain as operational continuity context; create a new explicit infrastructure task only if machine restarts recur and need a fresh diagnostic packet. |
 
 ## Packet Queue
 
 | Rank | Packet | Source Batch | Family | Dispatch Gate | Sessions | Events | Worktrees | Agent Fit | Predicate |
 |---:|---|---|---|---|---:|---:|---|---|---|
-| 1 | `packet-prompt-batch-high-stalled-review-001-uncategorized` | `prompt-batch-high-stalled-review-001` | `uncategorized` | `needs-owner-repo` | 2 | 10 | none | codex | `python3 scripts/prompt-priority-map.py --write && python3 scripts/prompt-batch-review-ledger.py --write && python3 scripts/prompt-packet-ledger.py --write` |
+| 0 | none | n/a | n/a | n/a | 0 | 0 | none | n/a | n/a |
 
 ## Packet Routes
 
 | Packet | Owner | Route |
 |---|---|---|
-| `packet-prompt-batch-high-stalled-review-001-uncategorized` | unassigned corpus review | Privately classify the receipt, then re-run priority and batch ledgers with an owner route. |
+| none | n/a | n/a |
 
 ## Private Output
 
