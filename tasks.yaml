@@ -58777,7 +58777,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - simplify
   - generated
@@ -58790,7 +58790,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-28T14:47:22.340167Z'
+  updated: '2026-06-28T15:19:51.460024Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: opencode
@@ -58854,6 +58854,11 @@ tasks:
     agent: jules
     session_id: '3583067612331601751'
     status: dispatched
+  - timestamp: '2026-06-28T15:19:51.460024Z'
+    agent: jules
+    session_id: https://github.com/organvm/session-meta/pull/136
+    status: done
+    output: 'jules-land: landed session 3583067612331601751 as PR'
 - id: GEN-organvm-domus-genoma-typing-0627
   title: Tighten types in organvm/domus-genoma
   repo: organvm/domus-genoma
@@ -62178,3 +62183,32 @@ tasks:
     status: needs_human
     output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
       \ stop re-looping"
+- id: GEN-organvm-session-meta-simplify-0628
+  title: Reduce complexity in organvm/session-meta
+  repo: organvm/session-meta
+  type: code
+  target_agent: opencode
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - simplify
+  - generated
+  - build-out
+  urls: []
+  context: Identify the most complex or most-duplicated module in organvm/session-meta
+    and refactor it for clarity, with tests proving behavior is unchanged. Net lines
+    should not grow without cause. [auto-generated 2026-06-28 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-28'
+  updated: '2026-06-28T15:24:13.775957Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T15:24:13.775957Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T15:24:13.775957Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
