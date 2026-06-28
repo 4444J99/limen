@@ -61955,7 +61955,7 @@ tasks:
   target_agent: opencode
   priority: low
   budget_cost: 1
-  status: dispatched
+  status: in_progress
   labels:
   - docs
   - generated
@@ -61968,7 +61968,7 @@ tasks:
     \ 2026-06-28 to keep the stream endless]"
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T10:10:15.862556Z'
+  updated: '2026-06-28'
   dispatch_log:
   - timestamp: '2026-06-28T08:56:32.923717Z'
     agent: agy
@@ -61990,6 +61990,11 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28'
+    agent: opencode
+    session_id: current
+    status: in_progress
+    output: "Claimed task: deriving README Usage from actual entrypoints"
 - id: GEN-organvm-public-record-data-scrapper-simplify-0628
   title: Reduce complexity in organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
