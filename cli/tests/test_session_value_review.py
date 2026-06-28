@@ -33,6 +33,7 @@ def test_session_value_review_summarizes_long_run_without_raw_text(tmp_path: Pat
     review.BATCH_REVIEW_INDEX = review.PRIVATE_ROOT / "lifecycle" / "prompt-batch-review-ledger.json"
     review.DOC_PATH = tmp_path / "docs" / "session-value-review.md"
     review.PRIVATE_INDEX = review.PRIVATE_ROOT / "lifecycle" / "session-value-review.json"
+    review.GATE_HISTORY = review.PRIVATE_ROOT / "lifecycle" / "session-value-gate-history.jsonl"
 
     _git(tmp_path, "init")
     _git(tmp_path, "config", "user.email", "test@example.com")
@@ -126,9 +127,15 @@ def test_session_value_review_summarizes_long_run_without_raw_text(tmp_path: Pat
     assert snapshot["metrics"]["owner_absent_roots"] == 1
     assert snapshot["findings"]["commit_kinds"] == {"prompt_corpus": 1}
     assert "valuable" in snapshot["findings"]["verdict"]
+    assert snapshot["gate"]["action"] == "continue_prompt_sweep"
+    assert snapshot["gate"]["exit_code"] == 0
+    assert snapshot["gate"]["next_commands"] == [
+        "python3 scripts/resolve-legacy-session-batch.py prompt-batch-medium-legacy-session-review-test --write"
+    ]
     assert "RAW_PROMPT_TEXT_SHOULD_NOT_APPEAR" not in json.dumps(snapshot)
     assert "RAW_PROMPT_TEXT_SHOULD_NOT_APPEAR" not in markdown
     assert "Session Value Review" in markdown
+    assert "Operating Gate" in markdown
     assert "prompt-batch-medium-family-test" in markdown
     assert review.DOC_PATH.exists()
     assert review.PRIVATE_INDEX.exists()
@@ -141,3 +148,76 @@ def test_commit_kind_classifies_operating_work():
     assert review.commit_kind("limen: update task board states") == "task_board"
     assert review.commit_kind("docs: derive accurate usage section") == "direct_engineering"
     assert review.commit_kind("capture: autonomic off-disk sync") == "capture"
+
+
+def test_session_value_gate_switches_after_repeated_followup_pressure():
+    review = _load()
+    snapshot = {
+        "window": {"hours": 1.5},
+        "inputs": {
+            "batch_resolution_receipts": {"present": True},
+            "batch_review_index": {"present": True},
+        },
+        "metrics": {
+            "commits": 1,
+            "batch_receipts": 1,
+            "prompt_events_recorded": 12,
+            "followup_roots": 5,
+            "merged_roots": 1,
+            "owner_absent_roots": 1,
+        },
+        "current_queue": {
+            "coverage": {"open_review_batches": 3},
+            "next": [
+                {
+                    "id": "prompt-batch-medium-family-015",
+                    "lane": "family",
+                }
+            ],
+        },
+    }
+    history = [
+        {
+            "gate": {
+                "pressures": {
+                    "followup_over_done_or_routed": True,
+                }
+            }
+        }
+    ]
+
+    gate = review.decide_gate(snapshot, history=history)
+
+    assert gate["action"] == "switch_to_packetization"
+    assert gate["exit_code"] == 10
+    assert gate["pressures"]["consecutive_followup_pressure_reports"] == 2
+    assert gate["next_commands"][0] == "python3 scripts/prompt-packet-ledger.py --write"
+
+
+def test_session_value_gate_stops_without_durable_progress():
+    review = _load()
+    snapshot = {
+        "window": {"hours": 1.5},
+        "inputs": {
+            "batch_resolution_receipts": {"present": True},
+            "batch_review_index": {"present": True},
+        },
+        "metrics": {
+            "commits": 0,
+            "batch_receipts": 0,
+            "prompt_events_recorded": 0,
+            "followup_roots": 0,
+            "merged_roots": 0,
+            "owner_absent_roots": 0,
+        },
+        "current_queue": {
+            "coverage": {"open_review_batches": 3},
+            "next": [],
+        },
+    }
+
+    gate = review.decide_gate(snapshot, history=[])
+
+    assert gate["action"] == "stop_no_durable_progress"
+    assert gate["exit_code"] == 20
+    assert gate["pressures"]["no_durable_progress"] is True

@@ -1,19 +1,27 @@
 # Session Value Review
 
-Generated: `2026-06-28T12:31:46+00:00`
-Window: `2026-06-28T00:31:44+00:00` to `2026-06-28T12:31:44+00:00` (12.0h)
+Generated: `2026-06-28T13:04:49+00:00`
+Window: `2026-06-28T01:04:47+00:00` to `2026-06-28T13:04:47+00:00` (12.0h)
 
 ## Verdict
 
 - `valuable, but mostly as lifecycle debt reduction rather than immediate shipping`.
 
+## Operating Gate
+
+- Action: `continue_prompt_sweep` (exit `0`).
+- Reason: Prompt-batch receipt movement is still producing durable lifecycle evidence.
+- Follow-up pressure: `77` follow-up roots vs `590` merged/routed roots; consecutive pressure reports `0`.
+- Open review batches: `70`; no durable progress: `false`.
+- Next commands: `python3 scripts/resolve-codex-family-batch.py prompt-batch-medium-historical-worktree-review-019 --write`.
+
 ## Measured Output
 
-- Commits landed: `102`; files touched: `382`; insertions/deletions: `35027` / `4359`.
+- Commits landed: `101`; files touched: `364`; insertions/deletions: `33338` / `4271`.
 - Prompt batch receipts: `36`; batches/hour: `3.0`.
 - Sessions recorded: `898`; prompt events recorded: `17910`; prompt events/hour: `1492.5`.
 - Merged-root evidence: `269`; follow-up roots: `77`; absent owner routes: `321`.
-- Commit mix: `prompt_corpus` 65, `task_board` 20, `other` 11, `direct_engineering` 4, `capture` 2.
+- Commit mix: `prompt_corpus` 65, `task_board` 20, `other` 11, `direct_engineering` 4, `capture` 1.
 - Receipt lane mix: `historical-worktree-review` 14, `family` 13, `legacy-session-review` 9.
 - Current corpus queue: `65` recorded, `70` open, `17` parked secret.
 - Current queue status mix: `needs-owner-route` 2, `needs-private-review` 65, `needs-remote-proof` 3, `non-source-recorded` 1, `owner-recorded` 64, `parked-secret` 17.
@@ -23,7 +31,7 @@ Window: `2026-06-28T00:31:44+00:00` to `2026-06-28T12:31:44+00:00` (12.0h)
 - Resolved 36 prompt-corpus batches covering 898 sessions and 17910 prompt events into durable metadata receipts.
 - Linked 269 roots to already-merged PR evidence instead of leaving them as ambiguous session residue.
 - Left the current redacted queue measurable: 65 recorded batches and 70 open review batches.
-- Landed 102 commits with 382 file touches and 35027 insertions.
+- Landed 101 commits with 364 file touches and 33338 insertions.
 
 ## Critique
 
@@ -33,15 +41,14 @@ Window: `2026-06-28T00:31:44+00:00` to `2026-06-28T12:31:44+00:00` (12.0h)
 
 ## Next-Run Controls
 
-- At session start and every 90 minutes, run `python3 scripts/session-value-review.py --hours 1.5` and continue only if it shows landed commits, receipt movement, or a named blocker.
-- Stop batch sweeping when follow-up roots outnumber merged/routed roots for two consecutive reports; switch to PR review, owner routing, or direct product work.
+- At session start and every 90 minutes, run `python3 scripts/session-value-review.py --gate --hours 1.5`; continue only on exit 0.
+- Treat gate exit 10 as a lane switch: stop batch sweeping and run packetization, PR review, owner routing, or direct product work.
 - Close every long run with this report plus `python3 scripts/validate-task-board.py`; commit the report only when it changes public operating guidance.
 
 ## Recent Commits
 
 | Time | Commit | Kind | Subject |
 |---|---|---|---|
-| `2026-06-28T10:23:45+00:00` | `02e339f` | `prompt_corpus` | limen: resolve ninth medium family prompt batch |
 | `2026-06-28T10:30:19+00:00` | `ea06bef` | `prompt_corpus` | limen: resolve tenth medium family prompt batch |
 | `2026-06-28T10:39:51+00:00` | `d1ec350` | `prompt_corpus` | limen: resolve eleventh medium family prompt batch |
 | `2026-06-28T10:47:17+00:00` | `2aa518e` | `prompt_corpus` | limen: resolve fifteenth medium historical prompt batch |
@@ -61,6 +68,7 @@ Window: `2026-06-28T00:31:44+00:00` to `2026-06-28T12:31:44+00:00` (12.0h)
 | `2026-06-28T11:55:16+00:00` | `774b7ae` | `task_board` | limen: release stale task claims |
 | `2026-06-28T11:56:59+00:00` | `2b5c412` | `task_board` | limen: reserve jules task dispatches |
 | `2026-06-28T12:04:00+00:00` | `9c82ebb` | `prompt_corpus` | limen: resolve fourteenth medium family prompt batch |
+| `2026-06-28T12:35:09+00:00` | `5a63ee7` | `other` | limen: add session value review |
 
 ## Batch Receipts
 
@@ -100,7 +108,7 @@ Window: `2026-06-28T00:31:44+00:00` to `2026-06-28T12:31:44+00:00` (12.0h)
 ## Commands
 
 - Refresh this review: `python3 scripts/session-value-review.py --write --hours 12`
-- Short cadence check: `python3 scripts/session-value-review.py --hours 1.5`
+- Short cadence gate: `python3 scripts/session-value-review.py --gate --hours 1.5`
 - Verify the task board: `python3 scripts/validate-task-board.py`
 
 ## Privacy

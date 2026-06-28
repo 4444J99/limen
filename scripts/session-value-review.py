@@ -25,6 +25,7 @@ BATCH_RESOLUTION_RECEIPTS = ROOT / "docs" / "prompt-batch-resolution-receipts.js
 BATCH_REVIEW_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-batch-review-ledger.json"
 DOC_PATH = ROOT / "docs" / "session-value-review.md"
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "session-value-review.json"
+GATE_HISTORY = PRIVATE_ROOT / "lifecycle" / "session-value-gate-history.jsonl"
 
 RECORDED_STATUSES = {"owner-recorded", "non-source-recorded", "superseded-recorded"}
 FOLLOWUP_ROOT_STATUSES = {
@@ -33,6 +34,15 @@ FOLLOWUP_ROOT_STATUSES = {
     "remote_branch_preserved_no_pr",
     "closed_pr_live_branch_preserved",
     "closed_pr_recorded_with_branch",
+}
+GATE_EXIT_CODES = {
+    "continue_prompt_sweep": 0,
+    "continue_prompt_sweep_watch_followups": 0,
+    "continue_current_work": 0,
+    "switch_to_packetization": 10,
+    "switch_to_direct_product_work": 10,
+    "stop_missing_inputs": 20,
+    "stop_no_durable_progress": 20,
 }
 
 
@@ -56,6 +66,24 @@ def load_json(path: Path) -> dict[str, Any]:
     except (OSError, ValueError):
         return {}
     return data if isinstance(data, dict) else {}
+
+
+def load_jsonl(path: Path) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    try:
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return rows
+    for line in lines:
+        if not line.strip():
+            continue
+        try:
+            obj = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(obj, dict):
+            rows.append(obj)
+    return rows
 
 
 def relpath(path: Path) -> str:
@@ -211,6 +239,123 @@ def sum_field(items: list[dict[str, Any]], field: str) -> int:
     return sum(int(item.get(field) or 0) for item in items)
 
 
+def command_for_batch(batch: dict[str, Any]) -> str:
+    batch_id = str(batch.get("id") or "")
+    lane = str(batch.get("lane") or "")
+    if not batch_id:
+        return "python3 scripts/prompt-batch-review-ledger.py --write"
+    if lane in {"family", "historical-worktree-review"}:
+        return f"python3 scripts/resolve-codex-family-batch.py {batch_id} --write"
+    if lane == "legacy-session-review":
+        return f"python3 scripts/resolve-legacy-session-batch.py {batch_id} --write"
+    if lane == "stalled-review":
+        return "python3 scripts/prompt-packet-ledger.py --write"
+    return "python3 scripts/prompt-batch-review-ledger.py --write"
+
+
+def gate_history() -> list[dict[str, Any]]:
+    return load_jsonl(GATE_HISTORY)
+
+
+def consecutive_followup_pressure(current_pressure: bool, history: list[dict[str, Any]]) -> int:
+    count = 1 if current_pressure else 0
+    if not current_pressure:
+        return count
+    for row in reversed(history):
+        gate = row.get("gate") if isinstance(row.get("gate"), dict) else {}
+        pressures = gate.get("pressures") if isinstance(gate.get("pressures"), dict) else {}
+        if pressures.get("followup_over_done_or_routed"):
+            count += 1
+            continue
+        break
+    return count
+
+
+def decide_gate(snapshot: dict[str, Any], history: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+    metrics = snapshot["metrics"]
+    queue = snapshot.get("current_queue") or {}
+    coverage = queue.get("coverage") if isinstance(queue.get("coverage"), dict) else {}
+    inputs = snapshot.get("inputs") or {}
+    missing_inputs = sorted(
+        name
+        for name, item in inputs.items()
+        if isinstance(item, dict) and item.get("present") is False and name != "git"
+    )
+    done_or_routed = int(metrics.get("merged_roots") or 0) + int(metrics.get("owner_absent_roots") or 0)
+    followups = int(metrics.get("followup_roots") or 0)
+    followup_pressure = followups > done_or_routed and followups > 0
+    history_rows = history if history is not None else gate_history()
+    pressure_run = consecutive_followup_pressure(followup_pressure, history_rows)
+    commits = int(metrics.get("commits") or 0)
+    receipts = int(metrics.get("batch_receipts") or 0)
+    open_batches = int(coverage.get("open_review_batches") or 0)
+    has_durable_progress = commits > 0 or receipts > 0
+    queue_next = [item for item in queue.get("next") or [] if isinstance(item, dict)]
+    next_batch = queue_next[0] if queue_next else {}
+    next_sweep_command = command_for_batch(next_batch)
+
+    if missing_inputs:
+        action = "stop_missing_inputs"
+        reason = "Required metadata inputs are missing: " + ", ".join(missing_inputs) + "."
+        next_commands = [
+            "python3 scripts/prompt-priority-map.py --write",
+            "python3 scripts/prompt-batch-review-ledger.py --write",
+        ]
+    elif not has_durable_progress:
+        action = "stop_no_durable_progress"
+        reason = "No landed commits or prompt-batch receipts were detected in this cadence window."
+        next_commands = [
+            "python3 scripts/session-value-review.py --write --hours 12",
+            "python3 scripts/validate-task-board.py",
+        ]
+    elif open_batches <= 0:
+        action = "switch_to_packetization"
+        reason = "No open prompt-review batches remain; the next useful lifecycle move is packetization or direct product work."
+        next_commands = ["python3 scripts/prompt-packet-ledger.py --write"]
+    elif pressure_run >= 2:
+        action = "switch_to_packetization"
+        reason = "Follow-up roots outnumbered merged/routed roots for two consecutive cadence reports."
+        next_commands = [
+            "python3 scripts/prompt-packet-ledger.py --write",
+            "python3 scripts/validate-task-board.py",
+        ]
+    elif followup_pressure:
+        action = "continue_prompt_sweep_watch_followups"
+        reason = "Durable progress exists, but follow-up roots outnumber merged/routed roots in this cadence window."
+        next_commands = [next_sweep_command, "python3 scripts/session-value-review.py --gate --hours 1.5"]
+    elif receipts > 0:
+        action = "continue_prompt_sweep"
+        reason = "Prompt-batch receipt movement is still producing durable lifecycle evidence."
+        next_commands = [next_sweep_command]
+    else:
+        action = "continue_current_work"
+        reason = "Commits landed, but no prompt-batch receipt moved; keep the current non-sweep work bounded by this gate."
+        next_commands = ["python3 scripts/session-value-review.py --gate --hours 1.5"]
+
+    return {
+        "policy": "session-value-gate-v1",
+        "action": action,
+        "exit_code": GATE_EXIT_CODES[action],
+        "reason": reason,
+        "pressures": {
+            "followup_over_done_or_routed": followup_pressure,
+            "consecutive_followup_pressure_reports": pressure_run,
+            "followup_roots": followups,
+            "done_or_routed_roots": done_or_routed,
+            "no_durable_progress": not has_durable_progress,
+            "open_review_batches": open_batches,
+        },
+        "evidence": {
+            "commits": commits,
+            "batch_receipts": receipts,
+            "prompt_events_recorded": int(metrics.get("prompt_events_recorded") or 0),
+            "next_batch": next_batch.get("id"),
+            "next_lane": next_batch.get("lane"),
+        },
+        "next_commands": next_commands,
+    }
+
+
 def build_findings(
     commits: list[dict[str, Any]],
     receipts: list[dict[str, Any]],
@@ -271,10 +416,10 @@ def build_findings(
         critique_points.append("No commits landed in the window; this would be poor value unless the work was deliberately exploratory.")
 
     controls.append(
-        "At session start and every 90 minutes, run `python3 scripts/session-value-review.py --hours 1.5` and continue only if it shows landed commits, receipt movement, or a named blocker."
+        "At session start and every 90 minutes, run `python3 scripts/session-value-review.py --gate --hours 1.5`; continue only on exit 0."
     )
     controls.append(
-        "Stop batch sweeping when follow-up roots outnumber merged/routed roots for two consecutive reports; switch to PR review, owner routing, or direct product work."
+        "Treat gate exit 10 as a lane switch: stop batch sweeping and run packetization, PR review, owner routing, or direct product work."
     )
     controls.append(
         "Close every long run with this report plus `python3 scripts/validate-task-board.py`; commit the report only when it changes public operating guidance."
@@ -304,7 +449,7 @@ def build_snapshot(since: dt.datetime, until: dt.datetime) -> dict[str, Any]:
     queue = current_queue()
     hours = max((until - since).total_seconds() / 3600, 0.01)
     findings = build_findings(commits, receipts, queue, hours)
-    return {
+    snapshot = {
         "generated_at": utc_now().isoformat(timespec="seconds"),
         "window": {
             "since": since.isoformat(timespec="seconds"),
@@ -339,6 +484,8 @@ def build_snapshot(since: dt.datetime, until: dt.datetime) -> dict[str, Any]:
         "batch_receipts": receipts,
         "current_queue": queue,
     }
+    snapshot["gate"] = decide_gate(snapshot)
+    return snapshot
 
 
 def render_counts(counts: dict[str, int]) -> str:
@@ -348,6 +495,8 @@ def render_counts(counts: dict[str, int]) -> str:
 def render_markdown(snapshot: dict[str, Any], *, limit: int) -> str:
     metrics = snapshot["metrics"]
     findings = snapshot["findings"]
+    gate = snapshot.get("gate") or {}
+    pressures = gate.get("pressures") if isinstance(gate.get("pressures"), dict) else {}
     queue_coverage = (snapshot.get("current_queue") or {}).get("coverage") or {}
     queue_counts = ((snapshot.get("current_queue") or {}).get("counts") or {}).get("statuses") or {}
     lines = [
@@ -359,6 +508,14 @@ def render_markdown(snapshot: dict[str, Any], *, limit: int) -> str:
         "## Verdict",
         "",
         f"- `{findings['verdict']}`.",
+        "",
+        "## Operating Gate",
+        "",
+        f"- Action: `{gate.get('action', 'unknown')}` (exit `{gate.get('exit_code', 'n/a')}`).",
+        f"- Reason: {gate.get('reason', 'No gate decision available.')}",
+        f"- Follow-up pressure: `{pressures.get('followup_roots', 0)}` follow-up roots vs `{pressures.get('done_or_routed_roots', 0)}` merged/routed roots; consecutive pressure reports `{pressures.get('consecutive_followup_pressure_reports', 0)}`.",
+        f"- Open review batches: `{pressures.get('open_review_batches', 0)}`; no durable progress: `{str(pressures.get('no_durable_progress', False)).lower()}`.",
+        f"- Next commands: {'; '.join(f'`{command}`' for command in gate.get('next_commands') or ['none'])}.",
         "",
         "## Measured Output",
         "",
@@ -439,7 +596,7 @@ def render_markdown(snapshot: dict[str, Any], *, limit: int) -> str:
         "## Commands",
         "",
         "- Refresh this review: `python3 scripts/session-value-review.py --write --hours 12`",
-        "- Short cadence check: `python3 scripts/session-value-review.py --hours 1.5`",
+        "- Short cadence gate: `python3 scripts/session-value-review.py --gate --hours 1.5`",
         "- Verify the task board: `python3 scripts/validate-task-board.py`",
         "",
         "## Privacy",
@@ -459,6 +616,25 @@ def write_outputs(snapshot: dict[str, Any], markdown: str) -> None:
     PRIVATE_INDEX.write_text(json.dumps(snapshot, indent=2, sort_keys=True), encoding="utf-8")
 
 
+def append_gate_history(snapshot: dict[str, Any]) -> None:
+    gate = snapshot.get("gate") if isinstance(snapshot.get("gate"), dict) else {}
+    record = {
+        "recorded_at": utc_now().isoformat(timespec="seconds"),
+        "window": snapshot.get("window") or {},
+        "gate": {
+            "policy": gate.get("policy"),
+            "action": gate.get("action"),
+            "exit_code": gate.get("exit_code"),
+            "reason": gate.get("reason"),
+            "pressures": gate.get("pressures") or {},
+            "evidence": gate.get("evidence") or {},
+        },
+    }
+    GATE_HISTORY.parent.mkdir(parents=True, exist_ok=True)
+    with GATE_HISTORY.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record, sort_keys=True) + "\n")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build a metadata-only long-session value review.")
     parser.add_argument("--hours", type=float, default=12.0, help="lookback window ending at --until")
@@ -466,6 +642,8 @@ def main() -> int:
     parser.add_argument("--until", help="ISO-8601 UTC timestamp for the review end")
     parser.add_argument("--limit", type=int, default=20, help="recent commits/receipts to show")
     parser.add_argument("--write", action="store_true", help="write docs and ignored private JSON")
+    parser.add_argument("--gate", action="store_true", help="print and enforce the operating gate decision")
+    parser.add_argument("--no-record-gate", action="store_true", help="do not append --gate to ignored gate history")
     args = parser.parse_args()
 
     until = parse_timestamp(args.until) if args.until else utc_now()
@@ -474,6 +652,11 @@ def main() -> int:
     markdown = render_markdown(snapshot, limit=max(1, args.limit))
     if args.write:
         write_outputs(snapshot, markdown)
+    if args.gate and not args.no_record_gate:
+        append_gate_history(snapshot)
+    if args.gate:
+        print(json.dumps(snapshot["gate"], indent=2, sort_keys=True))
+        return int(snapshot["gate"]["exit_code"])
     else:
         print(markdown)
     msg = (
