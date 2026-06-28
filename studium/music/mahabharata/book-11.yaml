@@ -1,0 +1,109 @@
+# Mahabharata — Stri Parva (Book 11) — curated music arc
+# Gold-standard form matching iliad/book-01.yaml.
+# Score the aftermath: the women walk the battlefield, Gandhari's vision
+# of the dead, her curse upon Krishna, and the lighting of the pyres.
+work: mahabharata
+book: 11
+title: "Stri Parva: The Book of the Women"
+length_minutes: 88
+principle: >
+  Do not score Stri Parva as a victory. Score it as the absolute reckoning.
+  The battle is over, and the women inherit the field. It is a sustained
+  wail of grief that culminates in a mortal woman cursing a god, and the god
+  accepting it. The war ends in ash, not triumph.
+force_arc: [grief, grief, memory, judgment, revelation, sacrifice, covenant]
+dominant_force: grief
+tracks:
+  - n: 1
+    scene: "The women arrive at Kurukshetra"
+    force: grief
+    composer: Mozart
+    work: "Requiem, K. 626 — 'Lacrimosa'"
+    decision: added
+    why: >
+      The blind king Dhritarashtra and the women of the court arrive at the
+      battlefield. For the first time, the scale of the slaughter is seen
+      not as tactics, but as thousands of dead husbands, sons, and brothers.
+      Mozart's 'Lacrimosa' (that day of tears) is the precise register for
+      the collective weeping of a civilization confronting its own corpse.
+  - n: 2
+    scene: "Gandhari's vision — walking among the dead"
+    force: grief
+    composer: Barber
+    work: "Adagio for Strings, Op. 11"
+    decision: added
+    why: >
+      Granted divine sight by Vyasa for one day, the blind queen Gandhari
+      walks the field. She describes the bodies to Krishna: Bhishma, Drona,
+      Abhimanyu, Karna, and finally her hundred sons. Barber's Adagio holds
+      the sustained, unbroken tension of a mother moving from body to body,
+      a slow descent into an abyss of loss.
+  - n: 3
+    scene: "Gandhari finds Duryodhana's body"
+    force: memory
+    composer: Fauré
+    work: "Requiem, Op. 48 — 'Pie Jesu'"
+    decision: added
+    why: >
+      She finds her eldest son, Duryodhana, in the dust. She remembers his
+      pride, his strength, the way he walked through the halls of the palace,
+      now reduced to food for jackals. Fauré's 'Pie Jesu', with its soprano
+      solo of pure, fragile clarity, provides the intimate, nostalgic recall
+      of a mother remembering the boy before he became the monster.
+  - n: 4
+    scene: "Gandhari curses Krishna"
+    force: judgment
+    composer: Verdi
+    work: "Requiem — 'Dies irae'"
+    decision: added
+    why: >
+      Gandhari turns to Krishna. She knows he could have stopped the war,
+      but instead he steered it. In her absolute grief, she curses God:
+      thirty-six years from today, Krishna's own clan will slaughter each
+      other in a drunken brawl, and he will die alone in a forest like a
+      common beast. Verdi's terrifying 'Dies irae' is the only sound large
+      enough for a mortal woman handing down a death sentence to the Divine.
+  - n: 5
+    scene: "Krishna accepts the curse with a smile"
+    force: revelation
+    composer: Pärt
+    work: "Spiegel im Spiegel"
+    decision: added
+    why: >
+      Krishna smiles and says, 'You have only spoken what is already
+      destined. I accept.' The curse does not anger him; it completes his
+      own design for the end of his time on earth. Pärt's still, reflective,
+      glassy piano and strings perfectly capture the chilling serenity of
+      the Divine accepting the mechanism of its own eventual exit.
+  - n: 6
+    scene: "Kunti reveals the secret to Yudhishthira"
+    force: sacrifice
+    composer: Bach
+    work: "St Matthew Passion, BWV 244 — 'Erbarme dich, mein Gott'"
+    decision: added
+    why: >
+      As the funerals are prepared, Kunti finally tells Yudhishthira the
+      truth: Karna was his eldest brother. Yudhishthira breaks down,
+      realizing his entire victory is built on fratricide. Bach's great aria
+      of remorse and weeping is the sound of a man discovering that the sin
+      he has been trying to avoid his whole life was committed in ignorance.
+  - n: 7
+    scene: "The lighting of the pyres"
+    force: covenant
+    composer: Brahms
+    work: "Ein deutsches Requiem, Op. 45 — I. 'Selig sind, die da Leid tragen'"
+    decision: added
+    why: >
+      Yudhishthira orders the funeral rites for everyone — friend and foe
+      alike. Thousands of pyres are lit on the banks of the Ganges. The
+      war is formally closed in fire and water. Brahms's German Requiem
+      opens not with terror for the dead, but with comfort for the living.
+      The covenant here is the final obligation of the survivors to the dead,
+      a solemn reciprocity of ash and memory.
+demoted:
+  - composer: Mahler
+    work: "Symphony No. 2 'Resurrection'"
+    status: "save for Svarga Arohana"
+    why: >
+      Stri Parva is the book of ashes, not resurrection. The pyres burn,
+      but the ascension to heaven belongs at the very end of the epic.

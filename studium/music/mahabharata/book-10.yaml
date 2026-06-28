@@ -1,0 +1,110 @@
+# Mahabharata — Sauptika Parva (Book 10) — curated music arc
+# Gold-standard form matching iliad/book-01.yaml.
+# Score the night raid: Ashwatthama's vengeance, the slaughter of the 
+# sleeping camp, the apocalyptic weapon, and the immortal curse.
+work: mahabharata
+book: 10
+title: "Sauptika Parva: The Night Raid and the Jewel"
+length_minutes: 85
+principle: >
+  Do not score Sauptika Parva as a heroic battle. Score it as a nightmare.
+  It is the most horrific book of the epic, where the last bounds of decency
+  are crossed in the dark, children are murdered in their sleep, and the
+  world is brought to the edge of annihilation by grief and rage.
+force_arc: [grief, wrath, sacrifice, grief, fate, revelation, judgment]
+dominant_force: judgment
+tracks:
+  - n: 1
+    scene: "Ashwatthama under the banyan tree"
+    force: grief
+    composer: Mahler
+    work: "Symphony No. 9 in D major — IV. Adagio (opening)"
+    decision: added
+    why: >
+      Ashwatthama, Kripa, and Kritavarma rest under a banyan tree. Ashwatthama
+      cannot sleep. He thinks of his father Drona, killed by a lie, and
+      Duryodhana lying with broken thighs. The grief is toxic and unresolved.
+      Mahler's Ninth Adagio provides the inward line of a man whose world
+      has already ended, leaving him alone with the ghosts of his lineage.
+  - n: 2
+    scene: "The owl and the crows — the idea forms"
+    force: wrath
+    composer: Bartók
+    work: "Music for Strings, Percussion and Celesta — III. Adagio"
+    decision: added
+    why: >
+      Ashwatthama watches an owl silently drop into the tree and murder the
+      sleeping crows. He realizes what he must do: attack the Pandava camp
+      while they sleep. Bartók's eerie, creeping, nocturnal music with its
+      slithering xylophone and timpani glissandi is the perfect sound of
+      stealthy, creeping dread and a plan forming in the dark.
+  - n: 3
+    scene: "The slaughter of the sleeping camp"
+    force: sacrifice
+    composer: Penderecki
+    work: "Threnody to the Victims of Hiroshima"
+    decision: added
+    why: >
+      Ashwatthama enters the camp. He stomps Dhrishtadyumna to death, kills
+      the sleeping warriors, and slaughters the five children of Draupadi in
+      their beds. Kripa and Kritavarma set the tents on fire. It is not combat;
+      it is a massacre. Penderecki's screaming, dissonant string clusters are
+      the only music capable of holding the sheer, unmitigated horror of
+      mass murder in the dark.
+  - n: 4
+    scene: "Reporting to the dying king"
+    force: grief
+    composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    decision: added
+    why: >
+      The three survivors return to Duryodhana, who is barely alive. Ashwatthama
+      tells him the Pandava camp is destroyed and the sons are dead. Duryodhana
+      smiles, says they have done what Bhishma and Karna could not, and finally
+      dies. Wagner's Funeral March is deployed here for the final exhalation of
+      the Kaurava cause — the king dies, taking his grievance into the dark.
+  - n: 5
+    scene: "The pursuit and the Brahmashirsha astra"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 in C minor, Op. 67 — I. Allegro con brio"
+    decision: added
+    why: >
+      The Pandavas pursue Ashwatthama. Cornered, he invokes the ultimate weapon,
+      the Brahmashirsha astra, firing it into a blade of grass to destroy the
+      world. Arjuna fires his own to counter it. The two missiles hang in the
+      sky, threatening global annihilation. The hammered insistence of Beethoven's
+      opening motif represents the unstoppable chain reaction of mutually assured
+      destruction set in motion.
+  - n: 6
+    scene: "The weapon redirected into the womb"
+    force: revelation
+    composer: Messiaen
+    work: "Quatuor pour la fin du temps — VI. Danse de la fureur, pour les sept trompettes"
+    decision: added
+    why: >
+      The sages intervene and demand the weapons be withdrawn. Arjuna can,
+      but Ashwatthama cannot. In pure spite, he directs the weapon into the
+      wombs of the Pandava women, specifically targeting Uttara's unborn child
+      (Parikshit) to end their lineage. Messiaen's unison rhythmic fury is the
+      sound of apocalyptic spite — hard, jagged, and terrifying in its focus.
+  - n: 7
+    scene: "Krishna's curse — immortality as punishment"
+    force: judgment
+    composer: Britten
+    work: "War Requiem, Op. 66 — 'Dies irae'"
+    decision: added
+    why: >
+      Krishna revives the unborn child and pronounces a terrifying curse on
+      Ashwatthama: his jewel is cut from his forehead, and he is condemned to
+      wander the earth for three thousand years, oozing blood and pus, begging
+      for death that will never come. Britten's 'Dies irae' with its limping,
+      broken 7/4 meter and terrifying brass is the ultimate judgment music: a
+      sentence worse than death, irreversible and eternal.
+demoted:
+  - composer: Holst
+    work: "The Planets — 'Mars, the Bringer of War'"
+    status: "too martial for a massacre"
+    why: >
+      Mars is the music of armies clashing. Sauptika Parva is an assassination
+      in the dark. Penderecki holds the horror better than Holst.

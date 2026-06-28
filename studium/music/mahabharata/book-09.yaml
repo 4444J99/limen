@@ -1,0 +1,117 @@
+# Mahabharata — Shalya Parva (Book 9) — curated music arc
+# Gold-standard form matching iliad/book-01.yaml.
+# Score the last day of the war: Shalya's brief command, Duryodhana's 
+# hiding in the lake, the mace duel, and the breaking of the rules.
+work: mahabharata
+book: 9
+title: "Shalya Parva: The Last Commander, the Lake, and the Broken Thighs"
+length_minutes: 98
+principle: >
+  Do not score Shalya Parva as just another battle. Score it as exhaustion
+  and desperation, the collapse of Kaurava command, the flight of the king, 
+  and a terminal duel where the final victory requires breaking the most 
+  sacred rule of mace-fighting.
+force_arc: [wrath, fate, exile, wrath, law, sacrifice, revelation, judgment]
+dominant_force: judgment
+tracks:
+  - n: 1
+    scene: "Shalya takes command of the remnants"
+    force: wrath
+    composer: Shostakovich
+    work: "Symphony No. 10 in E minor, Op. 93 — II. Allegro"
+    decision: added
+    why: >
+      Shalya takes command of an army that is already defeated. The battle
+      is no longer grand; it is frantic, violent, and brief. Shostakovich's
+      scherzo is furious, concentrated, and breathless — a mechanism of
+      violence running on its last reserves before collapse.
+  - n: 2
+    scene: "Yudhishthira kills Shalya — the righteous king strikes"
+    force: fate
+    composer: Beethoven
+    work: "Symphony No. 5 in C minor, Op. 67 — I. Allegro con brio"
+    decision: added
+    why: >
+      Yudhishthira, the king of dharma who has barely fought, kills the
+      final Kaurava commander. It is an execution demanded by fate. The
+      inexorable hammered motif of Beethoven's Fifth returns here for the
+      consummation of the Kaurava army's destruction.
+  - n: 3
+    scene: "Duryodhana flees and hides in the Dvaipayana lake"
+    force: exile
+    composer: Sibelius
+    work: "The Swan of Tuonela, Op. 22, No. 2"
+    decision: added
+    why: >
+      His army destroyed, Duryodhana uses his magic to solidify the water
+      and hides at the bottom of the lake. The emperor of the earth is
+      reduced to solitary confinement in freezing water. Sibelius's
+      cor anglais solo over suspended strings gives the dark, still, 
+      isolated quality of a man waiting in the dark water for his end.
+  - n: 4
+    scene: "The Pandavas mock Duryodhana out of the water"
+    force: wrath
+    composer: Prokofiev
+    work: "Romeo and Juliet — 'Dance of the Knights'"
+    decision: added
+    why: >
+      The Pandavas find the lake and hurl insults at the king until his
+      pride forces him to emerge. It is a calculated provocation. Prokofiev's
+      heavy, arrogant, sneering brass and strings perfectly capture the
+      swagger of the victors baiting the defeated cornered beast.
+  - n: 5
+    scene: "The rules of the duel — Bhima vs. Duryodhana"
+    force: law
+    composer: Bach
+    work: "The Art of Fugue, BWV 1080 — Contrapunctus I"
+    decision: added
+    why: >
+      Before the fight, the rules of mace-combat are established: no hitting
+      below the navel. Duryodhana, even now, insists on proper form, and
+      Yudhishthira grants him his choice of weapon and opponent. Bach's
+      strict contrapuntal architecture scores the rigid framework of rules
+      that is about to be shattered.
+  - n: 6
+    scene: "The mace duel — equal titans"
+    force: sacrifice
+    composer: Stravinsky
+    work: "The Rite of Spring — 'Sacrificial Dance (The Chosen One)'"
+    decision: added
+    why: >
+      The fight between Bhima and Duryodhana is brutal, exhausting, and
+      evenly matched. Duryodhana is the better technician; Bhima is stronger.
+      Stravinsky's irregular, hammering, exhausting rhythmic pressure
+      embodies the sheer physical toll of two heavy weapons colliding again
+      and again.
+  - n: 7
+    scene: "Krishna's signal and the foul blow"
+    force: revelation
+    composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Death' (the blow)"
+    decision: added
+    why: >
+      Krishna reminds Arjuna of Bhima's old vow (to break Duryodhana's
+      thighs for insulting Draupadi). Arjuna slaps his thigh. Bhima sees,
+      understands, and swings low, shattering Duryodhana's legs. The rule is
+      broken; the war is won by a foul. Wagner's sudden brass disruption 
+      marks the exact moment an era's honor code is permanently broken.
+  - n: 8
+    scene: "Duryodhana's dying indictment of Krishna"
+    force: judgment
+    composer: Verdi
+    work: "Requiem — 'Dies Irae'"
+    decision: added
+    why: >
+      Duryodhana, broken on the ground, does not repent. He points at
+      Krishna and indicts him for every foul play: Shikhandi, Drona's lie,
+      Karna's chariot wheel, and his own thighs. He claims he dies a king
+      and goes to heaven, while they will live in ashes. Verdi's terrifying
+      judgment music gives weight to the fallen king's curse — he is right,
+      and his judgment hangs over the Pandavas' hollow victory.
+demoted:
+  - composer: Wagner
+    work: "Götterdämmerung — 'Siegfried's Funeral March'"
+    status: "save for Stri Parva or after the night raid"
+    why: >
+      Duryodhana does not die in this book. He is left on the field with
+      broken thighs to await the night. The funeral register is premature.
