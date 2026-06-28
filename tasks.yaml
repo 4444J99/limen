@@ -61962,10 +61962,10 @@ tasks:
   title: Real usage docs for organvm/domus-genoma
   repo: organvm/domus-genoma
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: low
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - docs
   - generated
@@ -61978,7 +61978,7 @@ tasks:
     \ 2026-06-28 to keep the stream endless]"
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T11:32:47.896701Z'
+  updated: '2026-06-28T11:38:20.762992Z'
   dispatch_log:
   - timestamp: '2026-06-28T08:56:32.923717Z'
     agent: agy
@@ -62030,14 +62030,20 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T11:38:20.762992Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: GEN-organvm-public-record-data-scrapper-simplify-0628
   title: Reduce complexity in organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - simplify
   - generated
@@ -62049,7 +62055,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-28 to keep the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T11:32:47.896701Z'
+  updated: '2026-06-28T11:38:20.762992Z'
   dispatch_log:
   - timestamp: '2026-06-28T08:56:32.923717Z'
     agent: opencode
@@ -62096,3 +62102,9 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T11:38:20.762992Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
