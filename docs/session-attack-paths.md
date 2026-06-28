@@ -1,6 +1,6 @@
 # Session Attack Paths
 
-Generated: `2026-06-28T02:44:20+00:00`
+Generated: `2026-06-28T02:52:38+00:00`
 
 ## Canonical Decision
 
@@ -11,7 +11,7 @@ Generated: `2026-06-28T02:44:20+00:00`
 
 ## Coverage
 
-- Redacted prompt corpus: `9489` files, `92794` prompt-like events.
+- Redacted prompt corpus: `9489` files, `92795` prompt-like events.
 - Codex classified sessions: `887`.
 - Worktree debt roots: `8`.
 - Worktree preservation receipts: `6`.
@@ -75,3 +75,4 @@ Generated: `2026-06-28T02:44:20+00:00`
 - Refresh attack paths: `python3 scripts/session-attack-paths.py --write`
 - Refresh prompt priority/task map: `python3 scripts/prompt-priority-map.py --write`
 - Refresh prompt batch review ledger: `python3 scripts/prompt-batch-review-ledger.py --write`
+- Refresh prompt packet ledger: `python3 scripts/prompt-packet-ledger.py --write`

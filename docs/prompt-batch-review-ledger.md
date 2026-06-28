@@ -1,6 +1,6 @@
 # Prompt Batch Review Ledger
 
-Generated: `2026-06-28T02:44:21+00:00`
+Generated: `2026-06-28T02:52:39+00:00`
 
 ## Canonical Decision
 
@@ -16,7 +16,7 @@ Generated: `2026-06-28T02:44:21+00:00`
 - Batches with durable owner/non-source/supersession evidence: `3`.
 - Open review batches: `133`.
 - Parked secret batches: `17`.
-- Prompt events represented: `92794`.
+- Prompt events represented: `92795`.
 - Preservation receipts available: `6`.
 - Status mix: `needs-private-review` 125, `parked-secret` 17, `needs-packetization` 3, `needs-remote-proof` 3, `owner-recorded` 2, `needs-owner-route` 2, `non-source-recorded` 1.
 - Lane mix: `legacy-session-review` 71, `historical-worktree-review` 35, `family` 17, `parked-secret` 17, `stalled-review` 3, `owner-blocker` 2, `hash-review` 2, `remote-close` 2, `observe` 2, `documented-residue` 1, `remote-proof` 1.
@@ -52,7 +52,7 @@ Generated: `2026-06-28T02:44:21+00:00`
 | 17 | `prompt-batch-high-historical-worktree-review-007` | `needs-private-review` | `high` | `historical-worktree-review` | 25 | 1255 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
 | 18 | `prompt-batch-high-historical-worktree-review-008` | `needs-private-review` | `high` | `historical-worktree-review` | 7 | 385 | sources claude-projects 7; families uncategorized 7 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
 | 19 | `prompt-batch-high-legacy-session-review-003` | `needs-private-review` | `high` | `legacy-session-review` | 2 | 157 | sources claude-projects 2; families uncategorized 2 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 20 | `prompt-batch-medium-hash-review-001` | `needs-private-review` | `medium` | `hash-review` | 2 | 45 | sources codex-sessions 2; families uncategorized 2 | Review the redacted `codex-sessions` receipt privately and assign an owner route before delegation. |
+| 20 | `prompt-batch-medium-hash-review-001` | `needs-private-review` | `medium` | `hash-review` | 2 | 46 | sources codex-sessions 2; families uncategorized 2 | Review the redacted `codex-sessions` receipt privately and assign an owner route before delegation. |
 | 21 | `prompt-batch-medium-historical-worktree-review-001` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 1184 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
 | 22 | `prompt-batch-medium-legacy-session-review-001` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 1532 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
 | 23 | `prompt-batch-medium-historical-worktree-review-002` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 1051 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
@@ -83,4 +83,5 @@ Generated: `2026-06-28T02:44:21+00:00`
 
 - Refresh prerequisites: `python3 scripts/prompt-priority-map.py --write && python3 scripts/session-attack-paths.py --write`
 - Refresh this review ledger: `python3 scripts/prompt-batch-review-ledger.py --write`
+- Refresh prompt packet ledger: `python3 scripts/prompt-packet-ledger.py --write`
 - Show a wider tracked slice: `python3 scripts/prompt-batch-review-ledger.py --write --limit 60`

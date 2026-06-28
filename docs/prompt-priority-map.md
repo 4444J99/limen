@@ -1,6 +1,6 @@
 # Prompt Priority Map
 
-Generated: `2026-06-28T02:44:20+00:00`
+Generated: `2026-06-28T02:52:38+00:00`
 
 ## Canonical Decision
 
@@ -12,10 +12,10 @@ Generated: `2026-06-28T02:44:20+00:00`
 ## Coverage
 
 - Prompt lifecycle source files: `9489`.
-- Prompt-like events from source ledger: `92794`.
+- Prompt-like events from source ledger: `92795`.
 - Prioritized session receipts: `3423`.
-- Prioritized prompt events: `92794`.
-- Unique prompt hashes: `55780`.
+- Prioritized prompt events: `92795`.
+- Unique prompt hashes: `55781`.
 - Review batches: `153`.
 - Codex classified sessions: `887`.
 - Attack paths / blockers / capability items: `30` / `8` / `30`.
@@ -61,7 +61,7 @@ Generated: `2026-06-28T02:44:20+00:00`
 | 25 | `prompt-batch-high-legacy-session-review-003` | `high` | `legacy-session-review` | 2 | 157 | 145 | sources claude-projects 2; families uncategorized 2 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
 | 26 | `prompt-batch-medium-legacy-session-review-001` | `medium` | `legacy-session-review` | 25 | 1532 | 1327 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
 | 27 | `prompt-batch-medium-historical-worktree-review-001` | `medium` | `historical-worktree-review` | 25 | 1184 | 747 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 28 | `prompt-batch-medium-hash-review-001` | `medium` | `hash-review` | 2 | 45 | 14 | sources codex-sessions 2; families uncategorized 2 | Review the redacted `codex-sessions` receipt privately and assign an owner route before delegation. |
+| 28 | `prompt-batch-medium-hash-review-001` | `medium` | `hash-review` | 2 | 46 | 15 | sources codex-sessions 2; families uncategorized 2 | Review the redacted `codex-sessions` receipt privately and assign an owner route before delegation. |
 | 29 | `prompt-batch-medium-historical-worktree-review-002` | `medium` | `historical-worktree-review` | 25 | 1051 | 731 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
 | 30 | `prompt-batch-medium-historical-worktree-review-003` | `medium` | `historical-worktree-review` | 25 | 987 | 673 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
 | 31 | `prompt-batch-medium-family-001` | `medium` | `family` | 25 | 135 | 77 | sources codex-sessions 25; families worktree_lifecycle 23, session_lifecycle 2 | Keep corpus/session ledgers current, collapse repeats into owner receipts. |
@@ -82,15 +82,15 @@ Generated: `2026-06-28T02:44:20+00:00`
 | 1 | `9f6b8896a69bbb27c009` | `critical` | `owner-blocker` | 119 | `claude-projects` | `uncategorized` / `unclassified` | `gen-organvm-universal-mail--automation-test-coverage-0625-151e` | 73 | Classify whether this is an intentional migration, incomplete checkout, or generated deletion bug before cleanup, PR creation, or delegation. |
 | 2 | `5bceb564a24c59faf63c` | `critical` | `stalled-review` | 106 | `codex-sessions` | `worktree_lifecycle` / `STALLED` | `gen-a-organvm-a-i-chat--exporter-ci-green-0620-492b` | 5 | Preserve dirty or missing-remote roots, then reclaim duplicate local state. |
 | 3 | `975fcc5c2f1e78cb30c5` | `critical` | `stalled-review` | 106 | `codex-sessions` | `worktree_lifecycle` / `STALLED` | `gen-organvm-mirror-mirror-ci-green-0622-98c1` | 5 | Preserve dirty or missing-remote roots, then reclaim duplicate local state. |
-| 4 | `9491f01ba49706d8bca5` | `critical` | `historical-worktree-review` | 105 | `claude-projects` | `uncategorized` / `unclassified` | `gen-organvm-the-invisible-ledger-typing-0626-fb12` | 301 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 5 | `cad7d3bad2068e8d3d75` | `critical` | `historical-worktree-review` | 105 | `claude-projects` | `uncategorized` / `unclassified` | `heal-192-regression` | 782 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 6 | `6319eb873eb2ed878896` | `critical` | `stalled-review` | 105 | `codex-sessions` | `worktree_lifecycle` / `STALLED` | `gen-organvm-a-i-chat--exporter-ci-green-0622-4a4f` | 4 | Preserve dirty or missing-remote roots, then reclaim duplicate local state. |
-| 7 | `8ef2af43c35455b96d8e` | `critical` | `remote-proof` | 104 | `claude-projects` | `uncategorized` / `unclassified` | `gh-organvm-object-lessons-19-605a` | 73 | Verify remote/default preservation; reclaim local checkout only after exact proof. |
-| 8 | `5afdcea913650fa453d2` | `critical` | `historical-worktree-review` | 102 | `claude-projects` | `uncategorized` / `unclassified` | `gen-organvm-portfolio-test-coverage-0627-2931` | 113 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 9 | `8f2a4458a19128c966fe` | `critical` | `historical-worktree-review` | 101 | `claude-projects` | `uncategorized` / `unclassified` | `gen-organvm-domus-genoma-security-0627-b9ed` | 107 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 10 | `2d87d3d6120e585dcf99` | `critical` | `stalled-review` | 100 | `codex-sessions` | `worktree_lifecycle` / `STALLED` | `cifix-organvm-iii-ergon--github-6819` | 5 | Preserve dirty or missing-remote roots, then reclaim duplicate local state. |
-| 11 | `97936cf112edd566fab1` | `critical` | `stalled-review` | 100 | `codex-sessions` | `worktree_lifecycle` / `STALLED` | `cifix-organvm-v-logos--github-3b0e` | 5 | Preserve dirty or missing-remote roots, then reclaim duplicate local state. |
-| 12 | `efefc12afc137f75455b` | `critical` | `stalled-review` | 100 | `codex-sessions` | `worktree_lifecycle` / `STALLED` | `rev-mirror-deploy-3927` | 5 | Preserve dirty or missing-remote roots, then reclaim duplicate local state. |
+| 4 | `cad7d3bad2068e8d3d75` | `critical` | `historical-worktree-review` | 105 | `claude-projects` | `uncategorized` / `unclassified` | `heal-192-regression` | 782 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 5 | `6319eb873eb2ed878896` | `critical` | `stalled-review` | 105 | `codex-sessions` | `worktree_lifecycle` / `STALLED` | `gen-organvm-a-i-chat--exporter-ci-green-0622-4a4f` | 4 | Preserve dirty or missing-remote roots, then reclaim duplicate local state. |
+| 6 | `8ef2af43c35455b96d8e` | `critical` | `remote-proof` | 104 | `claude-projects` | `uncategorized` / `unclassified` | `gh-organvm-object-lessons-19-605a` | 73 | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 7 | `5afdcea913650fa453d2` | `critical` | `historical-worktree-review` | 102 | `claude-projects` | `uncategorized` / `unclassified` | `gen-organvm-portfolio-test-coverage-0627-2931` | 113 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 8 | `8f2a4458a19128c966fe` | `critical` | `historical-worktree-review` | 101 | `claude-projects` | `uncategorized` / `unclassified` | `gen-organvm-domus-genoma-security-0627-b9ed` | 107 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 9 | `2d87d3d6120e585dcf99` | `critical` | `stalled-review` | 100 | `codex-sessions` | `worktree_lifecycle` / `STALLED` | `cifix-organvm-iii-ergon--github-6819` | 5 | Preserve dirty or missing-remote roots, then reclaim duplicate local state. |
+| 10 | `97936cf112edd566fab1` | `critical` | `stalled-review` | 100 | `codex-sessions` | `worktree_lifecycle` / `STALLED` | `cifix-organvm-v-logos--github-3b0e` | 5 | Preserve dirty or missing-remote roots, then reclaim duplicate local state. |
+| 11 | `efefc12afc137f75455b` | `critical` | `stalled-review` | 100 | `codex-sessions` | `worktree_lifecycle` / `STALLED` | `rev-mirror-deploy-3927` | 5 | Preserve dirty or missing-remote roots, then reclaim duplicate local state. |
+| 12 | `9491f01ba49706d8bca5` | `critical` | `historical-worktree-review` | 99 | `claude-projects` | `uncategorized` / `unclassified` | `gen-organvm-the-invisible-ledger-typing-0626-fb12` | 301 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
 | 13 | `051401e0b765e77fbb04` | `critical` | `stalled-review` | 99 | `codex-sessions` | `worktree_lifecycle` / `STALLED` | `bld-writelens-ci-9c3b` | 4 | Preserve dirty or missing-remote roots, then reclaim duplicate local state. |
 | 14 | `0f80a8b2fff6c2b0990d` | `critical` | `stalled-review` | 99 | `codex-sessions` | `worktree_lifecycle` / `STALLED` | `cifix-a-organvm-public-record-data-scrapper-a5c1` | 4 | Preserve dirty or missing-remote roots, then reclaim duplicate local state. |
 | 15 | `25db5ecad5a24d2052ef` | `critical` | `stalled-review` | 99 | `codex-sessions` | `session_lifecycle` / `STALLED` | `bld2-peer-audited--behavioral-blockchain-integration-tests-c82f` | 5 | Keep corpus/session ledgers current, collapse repeats into owner receipts. |
@@ -132,7 +132,7 @@ Generated: `2026-06-28T02:44:20+00:00`
 | `remote-close` | `high` | 4 | 108 | 2 | `claude-projects` | `uncategorized` | Review PR state/checks, then merge or name supersession before local reclaim. |
 | `observe` | `high` | 3 | 155 | 2 | `claude-projects` | `uncategorized` | Keep active work visible; do not interrupt unless it becomes stale. |
 | `documented-residue` | `high` | 1 | 94 | 1 | `claude-projects` | `uncategorized` | No unique source to preserve; directory contains only Vite dependency-cache metadata. Reclaim only after normal operator acceptance. |
-| `hash-review` | `high` | 3 | 485 | 2 | `codex-sessions` | `uncategorized` | Review the redacted `codex-history` receipt privately and assign an owner route before delegation. |
+| `hash-review` | `high` | 3 | 486 | 2 | `codex-sessions` | `uncategorized` | Review the redacted `codex-history` receipt privately and assign an owner route before delegation. |
 | `family` | `medium` | 419 | 1573 | 17 | `codex-sessions` | `github_review` | Keep corpus/session ledgers current, collapse repeats into owner receipts. |
 | `parked-secret` | `parked` | 405 | 2500 | 17 | `codex-sessions` | `auth_credentials` | Keep parked unless a scoped account/setup task directly requires non-secret prep. |
 
@@ -146,4 +146,5 @@ Generated: `2026-06-28T02:44:20+00:00`
 - Refresh prerequisites: `python3 scripts/prompt-lifecycle-ledger.py --write --all && python3 scripts/session-attack-paths.py --write`
 - Refresh this priority map: `python3 scripts/prompt-priority-map.py --write`
 - Refresh prompt batch review ledger: `python3 scripts/prompt-batch-review-ledger.py --write`
+- Refresh prompt packet ledger: `python3 scripts/prompt-packet-ledger.py --write`
 - Show a wider tracked slice: `python3 scripts/prompt-priority-map.py --write --limit 60`

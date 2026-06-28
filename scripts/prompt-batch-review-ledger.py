@@ -310,6 +310,7 @@ def render_markdown(snapshot: dict[str, Any], *, limit: int) -> str:
         "",
         "- Refresh prerequisites: `python3 scripts/prompt-priority-map.py --write && python3 scripts/session-attack-paths.py --write`",
         "- Refresh this review ledger: `python3 scripts/prompt-batch-review-ledger.py --write`",
+        "- Refresh prompt packet ledger: `python3 scripts/prompt-packet-ledger.py --write`",
         "- Show a wider tracked slice: `python3 scripts/prompt-batch-review-ledger.py --write --limit 60`",
         "",
     ]

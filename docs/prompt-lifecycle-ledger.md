@@ -1,6 +1,6 @@
 # Prompt Lifecycle Ledger
 
-Generated: `2026-06-28T02:44:13+00:00`
+Generated: `2026-06-28T02:52:30+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -12,12 +12,12 @@ Horizon: `all local history`
 
 ## Redacted Prompt Coverage
 
-Indexed `9489` app/session files, `2.1 GiB`, with `92794` prompt-like user events hashed into the private index.
+Indexed `9489` app/session files, `2.1 GiB`, with `92795` prompt-like user events hashed into the private index.
 
 | Source | Files | Prompt Events | Event Records | Size | Newest |
 |---|---:|---:|---:|---:|---|
 | `claude-projects` | 4854 | 87828 | 313210 | 1.4 GiB | `2026-06-28T01:17:54+00:00` |
-| `codex-sessions` | 889 | 4393 | 233945 | 731.5 MiB | `2026-06-28T02:42:54+00:00` |
+| `codex-sessions` | 889 | 4394 | 234164 | 731.8 MiB | `2026-06-28T02:51:14+00:00` |
 | `codex-history` | 1 | 440 | 440 | 192.7 KiB | `2026-06-28T02:24:32+00:00` |
 | `claude-tasks` | 188 | 133 | 133 | 57.7 KiB | `2026-06-26T00:08:52+00:00` |
 | `claude-file-history` | 3519 | 0 | 0 | 42.2 MiB | `2026-06-27T00:26:28+00:00` |
@@ -100,4 +100,5 @@ Indexed `9489` app/session files, `2.1 GiB`, with `92794` prompt-like user event
 - Refresh and absorb raw session/app files: `python3 scripts/session-corpus-ledger.py --write --all --materialize`
 - Refresh prompt priority/task map: `python3 scripts/prompt-priority-map.py --write`
 - Refresh prompt batch review ledger: `python3 scripts/prompt-batch-review-ledger.py --write`
+- Refresh prompt packet ledger: `python3 scripts/prompt-packet-ledger.py --write`
 - Inspect lifecycle debt: `python3 scripts/worktree-debt.py --json`

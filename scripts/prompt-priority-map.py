@@ -624,6 +624,7 @@ def render_markdown(snapshot: dict[str, Any], *, limit: int) -> str:
         "- Refresh prerequisites: `python3 scripts/prompt-lifecycle-ledger.py --write --all && python3 scripts/session-attack-paths.py --write`",
         "- Refresh this priority map: `python3 scripts/prompt-priority-map.py --write`",
         "- Refresh prompt batch review ledger: `python3 scripts/prompt-batch-review-ledger.py --write`",
+        "- Refresh prompt packet ledger: `python3 scripts/prompt-packet-ledger.py --write`",
         "- Show a wider tracked slice: `python3 scripts/prompt-priority-map.py --write --limit 60`",
         "",
     ]
