@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import os
+import json
 import subprocess
 import time
 from pathlib import Path
-from typing import TypedDict
+from typing import Any, TypedDict
 
 
 DEBT_REASONS = {
@@ -13,6 +14,13 @@ DEBT_REASONS = {
     "not-merged-to-default",
     "unpushed-commits",
     "unresolved",
+}
+
+DOCUMENTED_RESIDUE_LANES = {"documented-residue"}
+DOCUMENTED_RESIDUE_STATUSES = {
+    "cache_only_residue",
+    "documented_non_source_residue",
+    "empty_generated_residue",
 }
 
 
@@ -76,13 +84,51 @@ def _patch_equivalent_to_default(cwd: Path) -> bool:
     return bool(lines) and all(line.startswith("-") for line in lines)
 
 
-def _classify(path: Path, now: float, min_age_h: float, self_guard: set[Path]) -> str:
+def _load_preservation_receipts(limen_root: Path) -> dict[str, dict[str, Any]]:
+    path = limen_root / "docs" / "worktree-preservation-receipts.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+    except (OSError, ValueError):
+        return {}
+    receipts: dict[str, dict[str, Any]] = {}
+    for receipt in data.get("receipts") or []:
+        if not isinstance(receipt, dict):
+            continue
+        root = receipt.get("root")
+        if root:
+            receipts[str(root)] = receipt
+    return receipts
+
+
+def _is_documented_residue(path: Path, preservation_receipts: dict[str, dict[str, Any]]) -> bool:
+    receipt = preservation_receipts.get(path.name)
+    if not receipt:
+        return False
+    lane = str(receipt.get("lane") or "")
+    status = str(receipt.get("status") or "")
+    classification = str(receipt.get("classification") or "")
+    return (
+        lane in DOCUMENTED_RESIDUE_LANES
+        or status in DOCUMENTED_RESIDUE_STATUSES
+        or classification == "documented non-source residue"
+    )
+
+
+def _classify(
+    path: Path,
+    now: float,
+    min_age_h: float,
+    self_guard: set[Path],
+    preservation_receipts: dict[str, dict[str, Any]],
+) -> str:
     try:
         resolved = path.resolve()
     except OSError:
         return "unresolved"
     if resolved in self_guard:
         return "self/live-checkout"
+    if _is_documented_residue(path, preservation_receipts):
+        return "documented-residue"
     if _git(["rev-parse", "--is-inside-work-tree"], path).returncode != 0:
         return "not-a-git-dir"
     age_h = (now - path.stat().st_mtime) / 3600.0
@@ -123,11 +169,12 @@ def worktree_debt_report(limen_root: Path | None = None) -> WorktreeDebtReport:
             pass
 
     now = time.time()
+    preservation_receipts = _load_preservation_receipts(root)
     items: list[WorktreeDebtItem] = []
     by_reason: dict[str, int] = {}
     for scan_root, min_age_h in _scan_roots(root):
         for path in sorted(p for p in scan_root.iterdir() if p.is_dir()):
-            reason = _classify(path, now, min_age_h, self_guard)
+            reason = _classify(path, now, min_age_h, self_guard, preservation_receipts)
             debt = reason in DEBT_REASONS
             by_reason[reason] = by_reason.get(reason, 0) + 1
             items.append({"name": path.name, "path": str(path), "reason": reason, "debt": debt})
