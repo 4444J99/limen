@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Resolve Codex session-lifecycle family batches into public-safe receipts.
+"""Resolve metadata-only prompt batches into public-safe receipts.
 
 The resolver reads only redacted/private metadata indexes and public GitHub
 state. It does not open source session JSONL files or write raw prompt,
@@ -31,6 +31,8 @@ LOCAL_WORKTREE_BASES = [
     ROOT / ".worktrees",
     ROOT / ".claude" / "worktrees",
 ]
+
+SUPPORTED_LANES = {"family", "historical-worktree-review"}
 
 
 def utc_now() -> str:
@@ -85,11 +87,24 @@ def render_counts(counts: dict[str, Any]) -> str:
     return ", ".join(f"{key} {value}" for key, value in counts.items()) or "none"
 
 
+def source_location_text(source_counts: dict[str, Any]) -> str:
+    sources = set(source_counts)
+    if sources == {"codex-sessions"}:
+        return "~/.codex/sessions"
+    if sources == {"claude-projects"}:
+        return "~/.claude/projects"
+    return "indexed private session roots"
+
+
 def repo_candidates(root: str) -> list[str]:
     if root.startswith("limen-"):
         return ["organvm/limen"]
+    if root.startswith("studium-") or "organvm-limen" in root:
+        return ["organvm/limen"]
     if "session-meta" in root:
         return ["organvm/session-meta", "4444J99/session-meta"]
+    if "hokage-chess" in root:
+        return ["4444J99/hokage-chess"]
     if "domus-genoma" in root:
         return ["organvm/domus-genoma", "4444J99/domus-genoma"]
     if "mediaark" in root or "media-ark" in root:
@@ -102,6 +117,18 @@ def repo_candidates(root: str) -> list[str]:
         return ["organvm/organvm-corpvs-testamentvm", "a-organvm/organvm-corpvs-testamentvm"]
     if "organvm-engine" in root:
         return ["organvm/organvm-engine"]
+    if "mirror-mirror" in root:
+        return ["organvm/mirror-mirror"]
+    if "portfolio" in root:
+        return ["organvm/portfolio"]
+    if "persona-fleet" in root:
+        return ["organvm/persona-fleet"]
+    if "cvrsvs-honorvm" in root:
+        return ["organvm/cvrsvs-honorvm"]
+    if "quick-fire--all-command" in root:
+        return ["organvm/quick-fire--all-command"]
+    if "universal-mail--automation" in root:
+        return ["organvm/universal-mail--automation"]
     if "the-invisible-ledger" in root:
         return ["organvm/the-invisible-ledger", "a-organvm/the-invisible-ledger"]
     if "scale-threshold-emergence" in root:
@@ -116,8 +143,14 @@ def repo_candidates(root: str) -> list[str]:
         return ["organvm-vi-koinonia/.github", "organvm/dot-github--koinonia"]
     if "v-logos-github" in root:
         return ["organvm-v-logos/.github", "organvm/dot-github--logos"]
+    if "iv-taxis-github" in root:
+        return ["organvm-iv-taxis/.github", "organvm/dot-github--taxis"]
     if ".github" in root or "--github" in root or "dot-github" in root:
         return ["organvm-i-theoria/.github", "organvm/dot-github--theoria", "organvm/.github"]
+    if "vigiles-aeternae-corpus-mythicum" in root:
+        return ["organvm/vigiles-aeternae--corpus-mythicum"]
+    if "sovereign-systems-elevate-align" in root:
+        return ["organvm/sovereign-systems--elevate-align"]
     if "hierarchia-mundi" in root:
         return ["organvm-i-theoria/hierarchia-mundi", "organvm/hierarchia-mundi"]
     if "rules-system-bound" in root:
@@ -326,8 +359,10 @@ def build_receipt(batch_id: str) -> dict[str, Any]:
     priority_items = priority_items_by_key(priority)
     sessions = sessions_by_key(load_json(SESSION_INDEX))
     batch = batch_by_id(priority, batch_id)
-    if batch.get("lane") != "family":
-        raise SystemExit(f"{batch_id} is lane {batch.get('lane')!r}, not family")
+    lane = str(batch.get("lane") or "")
+    if lane not in SUPPORTED_LANES:
+        supported = ", ".join(sorted(SUPPORTED_LANES))
+        raise SystemExit(f"{batch_id} is lane {batch.get('lane')!r}; supported lanes: {supported}")
 
     family_counts = batch.get("families") or {}
     family = next(iter(family_counts.keys()), "session_lifecycle")
@@ -343,6 +378,9 @@ def build_receipt(batch_id: str) -> dict[str, Any]:
     status_counts = Counter(str(row.get("status") or "unknown") for row in roots)
     source_exists = sum(1 for row in roots if row.get("source_exists"))
     unique_roots = {str(row.get("root")) for row in roots}
+    duplicate_roots = {
+        root: count for root, count in Counter(str(row.get("root")) for row in roots).items() if count > 1
+    }
     local_hit_count = sum(1 for row in roots if row.get("local_worktree_hits"))
     repo_count = sum(1 for row in roots if row.get("repo"))
     open_prs = [
@@ -361,12 +399,26 @@ def build_receipt(batch_id: str) -> dict[str, Any]:
         if row.get("non_exact_broad_pr_hits")
     ]
 
+    source_counts = batch.get("sources") or {}
+    if lane == "historical-worktree-review":
+        item_label = "historical Claude-project worktree sessions"
+        classification = (
+            "historical worktree sessions mapped to owner repos, merged PR receipts, preserved open PRs, "
+            "closed PR receipts, live branch receipts, or absent-branch gates"
+        )
+    else:
+        item_label = "Codex-session family items"
+        classification = (
+            "Codex session-lifecycle family batch mapped to merged PR receipts, preserved open PRs, "
+            "live branch receipts, closed PR receipts, and absent owner routes"
+        )
+
     evidence = [
         (
-            f"private redacted batch metadata listed {len(roots)} Codex-session family items "
+            f"private redacted batch metadata listed {len(roots)} {item_label} "
             f"across {len(unique_roots)} unique roots with family mix {render_counts(family_counts)}"
         ),
-        f"{source_exists} of {len(roots)} private source JSONL files existed under ~/.codex/sessions at review time",
+        f"{source_exists} of {len(roots)} private source JSONL files existed under {source_location_text(source_counts)} at review time",
         (
             "review used only metadata fields: root slug, session key, source existence, owner repo inference, "
             "prompt-event counts, hash counts, family label, and public GitHub branch/PR state"
@@ -396,6 +448,11 @@ def build_receipt(batch_id: str) -> dict[str, Any]:
         evidence.append("closed PRs recorded as historical: " + ", ".join(closed_prs))
     if non_exact:
         evidence.append("non-exact broad PR hits were recorded but not treated as exact receipts for: " + ", ".join(non_exact))
+    if duplicate_roots:
+        evidence.append(
+            "duplicate roots recorded once per source session: "
+            + ", ".join(f"{root} appears in {count} source sessions" for root, count in sorted(duplicate_roots.items()))
+        )
     evidence.append(
         "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
     )
@@ -404,12 +461,9 @@ def build_receipt(batch_id: str) -> dict[str, Any]:
         "generated_at": utc_now(),
         "batch": batch_id,
         "band": batch.get("band"),
-        "lane": batch.get("lane"),
+        "lane": lane,
         "status": "owner-recorded",
-        "classification": (
-            "Codex session-lifecycle family batch mapped to merged PR receipts, preserved open PRs, "
-            "live branch receipts, closed PR receipts, and absent owner routes"
-        ),
+        "classification": classification,
         "session_count": int(batch.get("session_count") or len(roots)),
         "prompt_events": int(batch.get("prompt_events") or 0),
         "unique_prompt_hashes": int(batch.get("unique_prompt_hashes") or 0),
@@ -447,7 +501,7 @@ def receipt_exists(batch_id: str) -> bool:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Resolve a Codex family prompt batch into a public-safe receipt.")
+    parser = argparse.ArgumentParser(description="Resolve a metadata prompt batch into a public-safe receipt.")
     parser.add_argument("batch_id")
     parser.add_argument("--write", action="store_true", help="append the receipt to docs/prompt-batch-resolution-receipts.json")
     parser.add_argument("--replace", action="store_true", help="replace an existing receipt for the same batch")

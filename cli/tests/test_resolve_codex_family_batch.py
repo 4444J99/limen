@@ -156,6 +156,20 @@ def test_repo_candidates_cover_redirected_family_roots():
         "rev-mediaark-stripe-client-b01e": ["organvm/media-ark"],
         "rev-scrapper-tier-gate-3a82": ["organvm/public-record-data-scrapper"],
         "bld-tab-bookmark-manager-readme-a53a": ["organvm/tab-bookmark-manager"],
+        "gh-4444j99-hokage-chess-21-61c1": ["4444J99/hokage-chess"],
+        "discover-organvm-persona-fleet-4c28": ["organvm/persona-fleet"],
+        "discover-organvm-cvrsvs-honorvm-fb46": ["organvm/cvrsvs-honorvm"],
+        "discover-organvm-quick-fire--all-command-1053": ["organvm/quick-fire--all-command"],
+        "gh-organvm-i-theoria-vigiles-aeternae-corpus-mythicum-4-5472": [
+            "organvm/vigiles-aeternae--corpus-mythicum"
+        ],
+        "gh-organvm-iii-ergon-sovereign-systems-elevate-align-20-3879": [
+            "organvm/sovereign-systems--elevate-align"
+        ],
+        "gh-organvm-iv-taxis-github-6-1f99": [
+            "organvm-iv-taxis/.github",
+            "organvm/dot-github--taxis",
+        ],
     }
     for root, expected in cases.items():
         assert resolver.repo_candidates(root) == expected
@@ -230,6 +244,74 @@ def test_resolve_codex_family_batch_preserves_per_session_family(tmp_path: Path,
     assert by_root["limen-github"]["family"] == "github_review"
     assert by_root["limen-session"]["prompt_event_count"] == 4
     assert "family mix session_lifecycle 1, github_review 1" in receipt["evidence"][0]
+    assert "RAW_PROMPT_TEXT_SHOULD_NOT_APPEAR" not in json.dumps(receipt)
+
+
+def test_resolve_historical_worktree_batch_uses_historical_evidence(tmp_path: Path, monkeypatch):
+    resolver = _load()
+    resolver.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    resolver.PRIORITY_INDEX = resolver.PRIVATE_ROOT / "lifecycle" / "prompt-priority-map.json"
+    resolver.SESSION_INDEX = resolver.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+    resolver.LOCAL_WORKTREE_BASES = [tmp_path / ".limen-worktrees"]
+
+    raw_source = tmp_path / "raw-claude-session.jsonl"
+    raw_source.write_text("RAW_PROMPT_TEXT_SHOULD_NOT_APPEAR", encoding="utf-8")
+    resolver.PRIORITY_INDEX.parent.mkdir(parents=True)
+    resolver.PRIORITY_INDEX.write_text(
+        json.dumps(
+            {
+                "review_batches": [
+                    {
+                        "id": "prompt-batch-medium-historical-worktree-review-test",
+                        "band": "medium",
+                        "lane": "historical-worktree-review",
+                        "session_count": 1,
+                        "prompt_events": 2,
+                        "unique_prompt_hashes": 2,
+                        "families": {"uncategorized": 1},
+                        "sources": {"claude-projects": 1},
+                        "session_keys": ["session-a"],
+                    }
+                ],
+                "session_items": [
+                    {
+                        "session_key": "session-a",
+                        "family": "uncategorized",
+                        "worktree_slug": "gh-4444j99-hokage-chess-21-61c1",
+                        "prompt_events": 2,
+                        "prompt_hashes": ["hash-a", "hash-b"],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    resolver.SESSION_INDEX.write_text(
+        json.dumps(
+            {
+                "sessions": [
+                    {
+                        "session_key": "session-a",
+                        "path": str(raw_source),
+                        "worktree_slug": "gh-4444j99-hokage-chess-21-61c1",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(resolver, "resolve_repo", lambda _root: ("4444J99/hokage-chess", ["4444J99/hokage-chess"]))
+    monkeypatch.setattr(resolver, "branch_state", lambda _repo, _branch: None)
+    monkeypatch.setattr(resolver, "exact_prs", lambda _repo, _branch: [])
+    monkeypatch.setattr(resolver, "broad_pr_hit_count", lambda _repo, _root: 0)
+
+    receipt = resolver.build_receipt("prompt-batch-medium-historical-worktree-review-test")
+    assert receipt["lane"] == "historical-worktree-review"
+    assert "historical Claude-project worktree sessions" in receipt["evidence"][0]
+    assert "under ~/.claude/projects" in receipt["evidence"][1]
+    assert receipt["roots"][0]["repo"] == "4444J99/hokage-chess"
+    assert receipt["roots"][0]["family"] == "uncategorized"
     assert "RAW_PROMPT_TEXT_SHOULD_NOT_APPEAR" not in json.dumps(receipt)
 
 
