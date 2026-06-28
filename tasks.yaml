@@ -62190,18 +62190,19 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: failed
   labels:
   - simplify
   - generated
   - build-out
+  - noop
   urls: []
   context: Identify the most complex or most-duplicated module in organvm/session-meta
     and refactor it for clarity, with tests proving behavior is unchanged. Net lines
     should not grow without cause. [auto-generated 2026-06-28 to keep the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T15:24:13.775957Z'
+  updated: '2026-06-28T15:29:03.012113Z'
   dispatch_log:
   - timestamp: '2026-06-28T15:24:13.775957Z'
     agent: codex
@@ -62212,3 +62213,13 @@ tasks:
     agent: codex
     session_id: cli
     status: ratelimited->opencode
+  - timestamp: '2026-06-28T15:29:03.012113Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T15:29:03.012113Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
