@@ -97,6 +97,27 @@ jobs:
       - name: Probe local runtime adapter
         run: scripts/probe-local-runtime.sh
 
+  python-311:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r web/api/requirements.txt -e "cli[test]"
+
+      - name: Compile Python modules on 3.11
+        run: python -m py_compile web/api/main.py cli/src/limen/*.py mcp/src/limen_mcp/server.py ianva/src/ianva/*.py
+
+      - name: Run API and CLI tests on 3.11
+        run: python -m pytest web/api/tests cli/tests -q
+
   worker:
     runs-on: ubuntu-latest
     steps:

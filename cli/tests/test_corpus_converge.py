@@ -121,7 +121,9 @@ def test_main_offline_preview_writes_nothing(tmp_path, monkeypatch):
     env = dict(os.environ, LIMEN_ROOT=str(REPO), LIMEN_CORPUS_ROOT=str(corpus),
                LIMEN_SESSION_META=str(sm), LIMEN_TASKS=str(tasks),
                LIMEN_CORPUS_STATE=str(tmp_path / "state.json"),
-               LIMEN_CORPUS_LOG=str(tmp_path / "log.jsonl"))
+               LIMEN_CORPUS_LOG=str(tmp_path / "log.jsonl"),
+               LIMEN_CORPUS_CONVERGE_LIVE="0",  # neutralize daemon live flag leaking from host env
+               LIMEN_CORPUS_GRAPH="0")           # neutralize graph flag — no gh API calls in tests
     # offline, no --apply: pure preview
     r = subprocess.run([sys.executable, str(SCRIPT)], env=env, capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
@@ -146,7 +148,9 @@ def test_main_offline_apply_emits_gaps_but_never_writes_faces(tmp_path, monkeypa
     env = dict(os.environ, LIMEN_ROOT=str(REPO), LIMEN_CORPUS_ROOT=str(corpus),
                LIMEN_SESSION_META=str(sm), LIMEN_TASKS=str(tasks),
                LIMEN_CORPUS_STATE=str(tmp_path / "state.json"),
-               LIMEN_CORPUS_LOG=str(tmp_path / "log.jsonl"))
+               LIMEN_CORPUS_LOG=str(tmp_path / "log.jsonl"),
+               LIMEN_CORPUS_CONVERGE_LIVE="0",  # neutralize daemon live flag leaking from host env
+               LIMEN_CORPUS_GRAPH="0")           # neutralize graph flag — no gh API calls in tests
     before = (corpus / "reduced" / "prompts.md").read_text()
     r = subprocess.run([sys.executable, str(SCRIPT), "--apply"], env=env, capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
