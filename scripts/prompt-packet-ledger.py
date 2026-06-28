@@ -165,6 +165,23 @@ def summarize_resolution(receipt: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def packet_source_batches(resolutions: dict[str, dict[str, Any]]) -> set[str]:
+    batches: set[str] = set()
+    for packet_id, receipt in resolutions.items():
+        source_batch = receipt.get("source_batch")
+        if source_batch:
+            batches.add(str(source_batch))
+            continue
+        if packet_id.startswith("packet-"):
+            # Backward-compatible fallback for older receipts without source_batch.
+            for family in PACKET_ROUTES:
+                suffix = f"-{family}"
+                if packet_id.endswith(suffix):
+                    batches.add(packet_id.removeprefix("packet-").removesuffix(suffix))
+                    break
+    return batches
+
+
 def build_packets(
     review: dict[str, Any],
     priority: dict[str, Any],
@@ -173,10 +190,19 @@ def build_packets(
 ) -> list[dict[str, Any]]:
     sessions_by_key = session_lookup(priority)
     attacks_by_id = attack_lookup(attack)
+    resolved_source_batches = packet_source_batches(resolutions)
     grouped: dict[tuple[str, str], dict[str, Any]] = {}
+    candidate_batches: dict[str, dict[str, Any]] = {}
+    for batch in review.get("batches") or []:
+        if isinstance(batch, dict) and batch.get("id"):
+            candidate_batches[str(batch["id"])] = batch
     for batch in review.get("review_queue") or []:
+        if isinstance(batch, dict) and batch.get("id"):
+            candidate_batches[str(batch["id"])] = batch
+    for batch in candidate_batches.values():
         if not isinstance(batch, dict) or batch.get("status") != "needs-packetization":
-            continue
+            if str(batch.get("lane") or "") != "stalled-review" or str(batch.get("id") or "") not in resolved_source_batches:
+                continue
         for session_key in batch.get("session_keys") or []:
             session = sessions_by_key.get(str(session_key))
             if not session:

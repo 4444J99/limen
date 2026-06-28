@@ -23,6 +23,7 @@ def test_prompt_batch_review_ledger_promotes_preserved_batch_without_raw_text(tm
     ledger.PRIORITY_INDEX = ledger.PRIVATE_ROOT / "lifecycle" / "prompt-priority-map.json"
     ledger.ATTACK_INDEX = ledger.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
     ledger.PRESERVATION_RECEIPTS = tmp_path / "docs" / "worktree-preservation-receipts.json"
+    ledger.PACKET_RESOLUTION_RECEIPTS = tmp_path / "docs" / "prompt-packet-resolution-receipts.json"
     ledger.DOC_PATH = tmp_path / "docs" / "prompt-batch-review-ledger.md"
     ledger.PRIVATE_INDEX = ledger.PRIVATE_ROOT / "lifecycle" / "prompt-batch-review-ledger.json"
 
@@ -134,3 +135,77 @@ def test_prompt_batch_review_ledger_promotes_preserved_batch_without_raw_text(tm
     assert "owner-recorded" in markdown
     assert ledger.DOC_PATH.exists()
     assert ledger.PRIVATE_INDEX.exists()
+
+
+def test_prompt_batch_review_ledger_promotes_completed_packetized_batch(tmp_path: Path):
+    ledger = _load()
+    ledger.ROOT = tmp_path
+    ledger.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    ledger.PRIORITY_INDEX = ledger.PRIVATE_ROOT / "lifecycle" / "prompt-priority-map.json"
+    ledger.ATTACK_INDEX = ledger.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
+    ledger.PRESERVATION_RECEIPTS = tmp_path / "docs" / "worktree-preservation-receipts.json"
+    ledger.PACKET_RESOLUTION_RECEIPTS = tmp_path / "docs" / "prompt-packet-resolution-receipts.json"
+    ledger.DOC_PATH = tmp_path / "docs" / "prompt-batch-review-ledger.md"
+    ledger.PRIVATE_INDEX = ledger.PRIVATE_ROOT / "lifecycle" / "prompt-batch-review-ledger.json"
+
+    ledger.PRIORITY_INDEX.parent.mkdir(parents=True)
+    ledger.PRIORITY_INDEX.write_text(
+        json.dumps(
+            {
+                "review_batches": [
+                    {
+                        "id": "prompt-batch-critical-stalled-review-001",
+                        "band": "critical",
+                        "lane": "stalled-review",
+                        "session_count": 2,
+                        "prompt_events": 7,
+                        "unique_prompt_hashes": 2,
+                        "max_score": 100,
+                        "next_action": "Packetize before delegation.",
+                        "sources": {"codex-sessions": 2},
+                        "families": {"worktree_lifecycle": 1, "session_lifecycle": 1},
+                        "worktrees": {"root-a": 1},
+                        "session_keys": ["session-a", "session-b"],
+                        "prompt_hashes": ["hash-a", "hash-b"],
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    ledger.ATTACK_INDEX.write_text(json.dumps({"ranked_paths": []}), encoding="utf-8")
+    ledger.PRESERVATION_RECEIPTS.parent.mkdir(parents=True)
+    ledger.PRESERVATION_RECEIPTS.write_text(json.dumps({"receipts": []}), encoding="utf-8")
+    ledger.PACKET_RESOLUTION_RECEIPTS.write_text(
+        json.dumps(
+            {
+                "receipts": [
+                    {
+                        "packet": "packet-prompt-batch-critical-stalled-review-001-worktree_lifecycle",
+                        "source_batch": "prompt-batch-critical-stalled-review-001",
+                        "family": "worktree_lifecycle",
+                        "status": "owner-recorded",
+                    },
+                    {
+                        "packet": "packet-prompt-batch-critical-stalled-review-001-session_lifecycle",
+                        "source_batch": "prompt-batch-critical-stalled-review-001",
+                        "family": "session_lifecycle",
+                        "status": "owner-recorded",
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = ledger.build_snapshot(limit=10)
+    markdown = ledger.render_markdown(snapshot, limit=10)
+
+    batch = snapshot["batches"][0]
+    assert batch["status"] == "owner-recorded"
+    assert snapshot["coverage"]["recorded_batches"] == 1
+    assert snapshot["coverage"]["open_review_batches"] == 0
+    assert snapshot["coverage"]["packet_resolution_receipts"] == 2
+    assert batch["evidence"]["packet_receipt_statuses"] == {"owner-recorded": 2}
+    assert "Packet resolution receipts available: `2`" in markdown
+    assert "packets `owner-recorded` 2" in markdown

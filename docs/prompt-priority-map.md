@@ -1,6 +1,6 @@
 # Prompt Priority Map
 
-Generated: `2026-06-28T02:52:38+00:00`
+Generated: `2026-06-28T03:44:14+00:00`
 
 ## Canonical Decision
 
@@ -16,11 +16,11 @@ Generated: `2026-06-28T02:52:38+00:00`
 - Prioritized session receipts: `3423`.
 - Prioritized prompt events: `92795`.
 - Unique prompt hashes: `55781`.
-- Review batches: `153`.
+- Review batches: `152`.
 - Codex classified sessions: `887`.
 - Attack paths / blockers / capability items: `30` / `8` / `30`.
 - Source mix: `claude-projects` 2400, `codex-sessions` 889, `claude-tasks` 133.
-- Band mix: `low` 1335, `medium` 1299, `parked` 405, `high` 258, `critical` 126.
+- Band mix: `low` 1336, `medium` 1299, `parked` 405, `high` 257, `critical` 126.
 - Lane mix: `legacy-session-review` 1705, `historical-worktree-review` 819, `family` 419, `parked-secret` 405, `stalled-review` 58, `owner-blocker` 4.
 
 ## Priority Model
@@ -52,12 +52,12 @@ Generated: `2026-06-28T02:52:38+00:00`
 | 16 | `prompt-batch-high-observe-001` | `high` | `observe` | 2 | 150 | 101 | sources claude-projects 2; families uncategorized 2 | Keep active work visible; do not interrupt unless it becomes stale. |
 | 17 | `prompt-batch-high-documented-residue-001` | `high` | `documented-residue` | 1 | 94 | 64 | sources claude-projects 1; families uncategorized 1 | No unique source to preserve; directory contains only Vite dependency-cache metadata. Reclaim only after normal operator acceptance. |
 | 18 | `prompt-batch-high-owner-blocker-001` | `high` | `owner-blocker` | 1 | 5 | 4 | sources codex-sessions 1; families session_lifecycle 1 | Classify against the current organvm/.github default branch before cleanup or delegation; direct PR is blocked because the touched workflow files are absent on the force-updated default history. |
-| 19 | `prompt-batch-high-historical-worktree-review-004` | `high` | `historical-worktree-review` | 25 | 1518 | 927 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 20 | `prompt-batch-high-historical-worktree-review-005` | `high` | `historical-worktree-review` | 25 | 1359 | 866 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 21 | `prompt-batch-high-historical-worktree-review-006` | `high` | `historical-worktree-review` | 25 | 1348 | 876 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 22 | `prompt-batch-high-historical-worktree-review-007` | `high` | `historical-worktree-review` | 25 | 1255 | 810 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 23 | `prompt-batch-high-hash-review-001` | `high` | `hash-review` | 1 | 440 | 327 | sources codex-history 1; families uncategorized 1 | Review the redacted `codex-history` receipt privately and assign an owner route before delegation. |
-| 24 | `prompt-batch-high-historical-worktree-review-008` | `high` | `historical-worktree-review` | 7 | 385 | 264 | sources claude-projects 7; families uncategorized 7 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 19 | `prompt-batch-high-historical-worktree-review-004` | `high` | `historical-worktree-review` | 25 | 1529 | 931 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 20 | `prompt-batch-high-historical-worktree-review-005` | `high` | `historical-worktree-review` | 25 | 1369 | 873 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 21 | `prompt-batch-high-historical-worktree-review-006` | `high` | `historical-worktree-review` | 25 | 1349 | 883 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 22 | `prompt-batch-high-hash-review-001` | `high` | `hash-review` | 1 | 440 | 327 | sources codex-history 1; families uncategorized 1 | Review the redacted `codex-history` receipt privately and assign an owner route before delegation. |
+| 23 | `prompt-batch-high-historical-worktree-review-007` | `high` | `historical-worktree-review` | 25 | 1254 | 800 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 24 | `prompt-batch-high-historical-worktree-review-008` | `high` | `historical-worktree-review` | 6 | 330 | 234 | sources claude-projects 6; families uncategorized 6 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
 | 25 | `prompt-batch-high-legacy-session-review-003` | `high` | `legacy-session-review` | 2 | 157 | 145 | sources claude-projects 2; families uncategorized 2 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
 | 26 | `prompt-batch-medium-legacy-session-review-001` | `medium` | `legacy-session-review` | 25 | 1532 | 1327 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
 | 27 | `prompt-batch-medium-historical-worktree-review-001` | `medium` | `historical-worktree-review` | 25 | 1184 | 747 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
@@ -65,10 +65,10 @@ Generated: `2026-06-28T02:52:38+00:00`
 | 29 | `prompt-batch-medium-historical-worktree-review-002` | `medium` | `historical-worktree-review` | 25 | 1051 | 731 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
 | 30 | `prompt-batch-medium-historical-worktree-review-003` | `medium` | `historical-worktree-review` | 25 | 987 | 673 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
 | 31 | `prompt-batch-medium-family-001` | `medium` | `family` | 25 | 135 | 77 | sources codex-sessions 25; families worktree_lifecycle 23, session_lifecycle 2 | Keep corpus/session ledgers current, collapse repeats into owner receipts. |
-| 32 | `prompt-batch-medium-historical-worktree-review-004` | `medium` | `historical-worktree-review` | 25 | 1012 | 707 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 33 | `prompt-batch-medium-historical-worktree-review-005` | `medium` | `historical-worktree-review` | 25 | 883 | 653 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 32 | `prompt-batch-medium-historical-worktree-review-004` | `medium` | `historical-worktree-review` | 25 | 1000 | 699 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 33 | `prompt-batch-medium-historical-worktree-review-005` | `medium` | `historical-worktree-review` | 25 | 897 | 661 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
 | 34 | `prompt-batch-medium-legacy-session-review-002` | `medium` | `legacy-session-review` | 25 | 1326 | 1164 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 35 | `prompt-batch-medium-historical-worktree-review-006` | `medium` | `historical-worktree-review` | 25 | 796 | 613 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 35 | `prompt-batch-medium-historical-worktree-review-006` | `medium` | `historical-worktree-review` | 25 | 809 | 623 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
 | 36 | `prompt-batch-medium-remote-close-001` | `medium` | `remote-close` | 1 | 20 | 11 | sources claude-projects 1; families uncategorized 1 | Review PR state/checks, then merge or name supersession before local reclaim. |
 | 37 | `prompt-batch-medium-historical-worktree-review-007` | `medium` | `historical-worktree-review` | 25 | 908 | 568 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
 | 38 | `prompt-batch-medium-historical-worktree-review-008` | `medium` | `historical-worktree-review` | 25 | 801 | 596 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
@@ -128,7 +128,7 @@ Generated: `2026-06-28T02:52:38+00:00`
 | `stalled-review` | `critical` | 58 | 252 | 3 | `codex-sessions` | `session_lifecycle` | Preserve dirty or missing-remote roots, then reclaim duplicate local state. |
 | `historical-worktree-review` | `critical` | 819 | 29499 | 35 | `claude-projects` | `uncategorized` | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
 | `remote-proof` | `critical` | 2 | 78 | 1 | `claude-projects` | `uncategorized` | Verify remote/default preservation; reclaim local checkout only after exact proof. |
-| `legacy-session-review` | `critical` | 1705 | 57942 | 71 | `claude-projects` | `uncategorized` | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| `legacy-session-review` | `critical` | 1705 | 57942 | 70 | `claude-projects` | `uncategorized` | Sample the private source file, extract durable atoms, then route to an owner ledger. |
 | `remote-close` | `high` | 4 | 108 | 2 | `claude-projects` | `uncategorized` | Review PR state/checks, then merge or name supersession before local reclaim. |
 | `observe` | `high` | 3 | 155 | 2 | `claude-projects` | `uncategorized` | Keep active work visible; do not interrupt unless it becomes stale. |
 | `documented-residue` | `high` | 1 | 94 | 1 | `claude-projects` | `uncategorized` | No unique source to preserve; directory contains only Vite dependency-cache metadata. Reclaim only after normal operator acceptance. |
