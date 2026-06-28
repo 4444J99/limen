@@ -1,5 +1,12 @@
 # GitHub: billing + identity architecture (the durable fix)
 
+Update verified 2026-06-28:
+
+- `organvm` now holds 264 repos.
+- The current `gh` login has `admin:org` and `workflow`; the temporary personal-token bridge can perform gated transfers.
+- `limen[bot]` is still blocked on App creation/install plus secret hydration. The installed `organvm` Apps are `claude`, `google-labs-jules`, `oz-by-warp`, and `chatgpt-codex-connector`.
+- `scripts/gh-app-token.sh --which` currently resolves to `pat (GITHUB_TOKEN fallback)`, not the App path.
+
 Status as of 2026-06-20. This is the **settled** conclusion — not new research. It answers, once,
 "we don't need enterprise, do we? we don't even need all these orgs? we need the user profile…
 and something beyond it."

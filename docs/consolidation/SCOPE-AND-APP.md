@@ -1,5 +1,12 @@
 # Consolidation Scope Unblock + limen[bot] GitHub App Path
 
+## 2026-06-28 live status
+
+- `gh auth status` now shows `admin:org` and `workflow`; the personal-token scope blocker in this document is resolved for the current `4444J99` `gh` login.
+- The durable App identity is still not wired. `bash scripts/gh-app-token.sh --which` reports `pat (GITHUB_TOKEN fallback)`.
+- `gh api /orgs/organvm/installations` lists `claude`, `google-labs-jules`, `oz-by-warp`, and `chatgpt-codex-connector`; no `limen-bot`/`limen[bot]` App installation is present.
+- Current consolidation dry-run: 34 source repos remain outside `organvm`, with 13 collision groups. Use `docs/consolidation/RUNBOOK.md` and `docs/consolidation/COLLISION-RENAMES.md` for the current gate packet.
+
 > Subject: the consolidation `--apply` (org→org repo transfers into `organvm`) and the
 > live fleet's CI both fail for the **same root cause** — the active token is a
 > *personal* token (`4444J99`) that (a) lacks `admin:org` so transfers are forbidden and

@@ -17,7 +17,7 @@ SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "dispatch-async.py"
 sys.path.insert(0, str(CLI_SRC))
 
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
-from limen.models import Budget, BudgetTrack, LimenFile, Portal, Task  # noqa: E402
+from limen.models import Budget, BudgetTrack, DispatchLogEntry, LimenFile, Portal, Task  # noqa: E402
 
 
 def _load(tmp_path, n_open=6, agent="codex"):
@@ -61,6 +61,7 @@ def test_inflight_markers_consume_slots(tmp_path):
 
 def test_harvest_applies_pr_result_and_cleans(tmp_path):
     da = _load(tmp_path, n_open=2)
+    (da.RUNS / "T0__codex.running").write_text(datetime.datetime.now(datetime.timezone.utc).isoformat())
     (da.RUNS / "T0.result.json").write_text(
         json.dumps(
             {"task_id": "T0", "agent": "codex", "result": "https://github.com/x/y/pull/9", "ts": "n", "err": None}
@@ -70,6 +71,7 @@ def test_harvest_applies_pr_result_and_cleans(tmp_path):
     t0 = _board(tmp_path)["T0"]
     assert any("pull/9" in str(e.session_id) for e in t0.dispatch_log)
     assert not (da.RUNS / "T0.result.json").exists()
+    assert not (da.RUNS / "T0__codex.running").exists()
 
 
 def test_reserve_and_launch_marks_and_spawns(tmp_path, monkeypatch):
@@ -90,8 +92,25 @@ def test_reaper_frees_dead_workers_not_live(tmp_path):
     # two dispatched tasks, one with a stale marker (dead), one fresh (live)
     lf = load_limen_file(tmp_path / "tasks.yaml")
     today = datetime.date.today()
+    reserved_at = datetime.datetime.now(datetime.timezone.utc)
     lf.tasks += [
-        Task(id="DEAD", title="t", repo="x/y", target_agent="codex", status="dispatched", created=today),
+        Task(
+            id="DEAD",
+            title="t",
+            repo="x/y",
+            target_agent="codex",
+            status="dispatched",
+            created=today,
+            dispatch_log=[
+                DispatchLogEntry(
+                    timestamp=reserved_at,
+                    agent="codex",
+                    session_id="async-reserve",
+                    status="dispatched",
+                    output="dispatch-async: reserved before detached worker launch",
+                )
+            ],
+        ),
         Task(id="LIVE", title="t", repo="x/y", target_agent="codex", status="dispatched", created=today),
     ]
     save_limen_file(tmp_path / "tasks.yaml", lf)
@@ -104,6 +123,7 @@ def test_reaper_frees_dead_workers_not_live(tmp_path):
     assert (da.RUNS / "LIVE__codex.running").exists()
     board = _board(tmp_path)
     assert board["DEAD"].status == "open" and board["LIVE"].status == "dispatched"
+    assert board["DEAD"].dispatch_log[-1].session_id == "async-reap-stale"
 
 
 def test_async_reserve_counts_inflight_against_budget(tmp_path):

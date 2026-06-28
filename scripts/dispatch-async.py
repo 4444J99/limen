@@ -40,6 +40,13 @@ def _now():
     return datetime.datetime.now(datetime.timezone.utc)
 
 
+def _clear_running_markers(task_id: str) -> None:
+    prefix = f"{task_id}__"
+    for marker in RUNS.glob("*.running"):
+        if marker.name.startswith(prefix):
+            marker.unlink(missing_ok=True)
+
+
 def harvest() -> int:
     """Apply finished background runs to tasks.yaml under the lock. Returns count applied."""
     RUNS.mkdir(parents=True, exist_ok=True)
@@ -62,6 +69,8 @@ def harvest() -> int:
             if t is not None and data.get("result") != "__notask__":
                 _apply_result(t, data.get("agent"), data.get("result"), now, track)
                 applied += 1
+            if data.get("task_id"):
+                _clear_running_markers(str(data.get("task_id")))
             rf.unlink(missing_ok=True)
         if applied:
             save_limen_file(TASKS, lf)
@@ -82,22 +91,29 @@ def reap_stale(max_age_s: int):
         except Exception:
             age = max_age_s + 1  # unreadable/empty marker → treat as stale
         if age > max_age_s:
-            tid = m.name[:-len(".running")].rsplit("__", 1)[0]
+            tid, agent = m.name[:-len(".running")].rsplit("__", 1)
             # if the worker DID finish (result file present), let harvest handle it; don't reap
             if not (RUNS / f"{tid}.result.json").exists():
-                reaped.append(tid)
+                reaped.append((tid, agent))
                 m.unlink(missing_ok=True)
     if reaped:
         with _queue_lock(TASKS):
             lf = load_limen_file(TASKS)
             byid = {t.id: t for t in lf.tasks}
-            for tid in reaped:
+            for tid, agent in reaped:
                 t = byid.get(tid)
-                if t is not None and t.status == "dispatched" and not t.dispatch_log:
+                if t is not None and t.status == "dispatched":
                     t.status = "open"  # dead worker left no result → retry on a later beat
                     t.updated = now
+                    t.dispatch_log.append(DispatchLogEntry(
+                        timestamp=now,
+                        agent=agent,
+                        session_id="async-reap-stale",
+                        status="open",
+                        output=f"dispatch-async: stale worker marker older than {max_age_s}s reaped; task reopened",
+                    ))
             save_limen_file(TASKS, lf)
-    return reaped
+    return [tid for tid, _agent in reaped]
 
 
 def _running_total() -> int:

@@ -41,12 +41,18 @@ PY="${LIMEN_PYTHON:-$(command -v python3 || true)}"
 PY="$(resolve "$PY")"
 PYDIR="$(dirname "$PY")"
 PATH_VAL="$PYDIR:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+LANES="${LIMEN_LANES:-codex,opencode,agy,claude,gemini}"
+LOCAL_LIMIT="${LIMEN_LOCAL_LIMIT:-3}"
+DISPATCH_ASYNC="${LIMEN_DISPATCH_ASYNC:-0}"
 
 render() {
   sed -e "s|@@HOME@@|$HOME_DIR|g" \
       -e "s|@@LIMEN_ROOT@@|$ROOT|g" \
       -e "s|@@LIMEN_WORKDIR@@|$WORKDIR|g" \
       -e "s|@@LIMEN_PYTHON@@|$PY|g" \
+      -e "s|@@LIMEN_LANES@@|$LANES|g" \
+      -e "s|@@LIMEN_LOCAL_LIMIT@@|$LOCAL_LIMIT|g" \
+      -e "s|@@LIMEN_DISPATCH_ASYNC@@|$DISPATCH_ASYNC|g" \
       -e "s|@@PATH@@|$PATH_VAL|g" \
       "$TMPL"
 }

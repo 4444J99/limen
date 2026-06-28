@@ -6,11 +6,13 @@ Per the deduced structure decision: identity is from the remote, the "sphere" is
 org `organvm` (already yours, empty), tagged with its source-sphere as a topic.
 
 SAFE BY DEFAULT: dry-run prints the exact transfer table + flags name collisions. It executes
-NOTHING without --apply, and --apply is gated on the user. GitHub repo transfer preserves
-issues/PRs/stars and redirects old URLs (reversible: transfer back). Never deletes.
+NOTHING without --apply, and --apply is gated on the user. If collisions remain, --apply aborts
+before transferring anything unless --allow-partial is also present. GitHub repo transfer
+preserves issues/PRs/stars and redirects old URLs (reversible: transfer back). Never deletes.
 
   python3 scripts/consolidate-github.py            # dry-run plan (read-only)
   python3 scripts/consolidate-github.py --apply     # ⚠ GATED: actually transfer + topic
+  python3 scripts/consolidate-github.py --apply --allow-partial  # ⚠ extra-gated partial move
 """
 import json, subprocess, sys
 from collections import defaultdict
@@ -22,6 +24,7 @@ OWNERS = ["4444J99", "a-organvm", "meta-organvm",
           "organvm-iv-taxis", "organvm-v-logos", "organvm-vi-koinonia",
           "organvm-vii-kerygma"]
 APPLY = "--apply" in sys.argv
+ALLOW_PARTIAL = "--allow-partial" in sys.argv
 
 
 def gh_json(args, t=60):
@@ -64,8 +67,14 @@ def main():
 
     if not APPLY:
         print(f"\nDRY-RUN — nothing executed. Collisions above must be resolved first.")
-        print(f"Re-run with --apply (GATED) to transfer non-colliding repos + set topics.")
-        return
+        print("After collisions are 0, re-run with --apply (GATED) to transfer repos + set topics.")
+        return 0
+
+    if collisions and not ALLOW_PARTIAL:
+        print("\nABORT — collisions remain, so --apply would be a partial consolidation.")
+        print("Resolve/rename the collision losers first, then re-run the dry-run and expect 0 collisions.")
+        print("If a deliberately partial wave is required, pass --allow-partial as a second explicit gate.")
+        return 2
 
     print(f"\n⚠ --apply: transferring NON-colliding repos into {TARGET} …")
     moved = skipped = 0
@@ -84,7 +93,8 @@ def main():
         else:
             print(f"  ✗ {owner}/{name}: {tr.stderr.strip()[:70]}")
     print(f"\ndone: moved {moved}, skipped {skipped} (collisions). Old URLs auto-redirect.")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
