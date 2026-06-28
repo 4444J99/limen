@@ -528,8 +528,10 @@ def packet_for_path(path: dict[str, Any] | None) -> dict[str, Any]:
             ),
             "repo_worktree": "`organvm/limen` conductor checkout.",
             "allowed_files": [
+                "scripts/live-root-gate.py",
                 "docs/session-attack-paths.md",
                 "docs/session-lifecycle-blockers.md",
+                "docs/live-root-gate.md",
                 "docs/conductor-tranche.md",
                 ".limen-private/session-corpus/lifecycle/**",
             ],
@@ -538,11 +540,12 @@ def packet_for_path(path: dict[str, Any] | None) -> dict[str, Any]:
                 "repo edits; resume only when a human opens a gate or a fresh actionable packet appears."
             ),
             "verification": [
+                "python3 scripts/live-root-gate.py --write",
                 "python3 scripts/session-blockers-ledger.py --write",
                 "python3 scripts/session-attack-paths.py --write",
                 "python3 scripts/conductor-tranche.py --write",
             ],
-            "receipt": "docs/conductor-tranche.md records the no-autonomous-action state and skipped paths.",
+            "receipt": "docs/live-root-gate.md and docs/conductor-tranche.md record the human-gated stop state.",
         }
     category = str(path.get("category") or "")
     kind = str(path.get("kind") or "")
@@ -686,6 +689,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "",
         "- `python3 scripts/consolidation-gates.py --write`",
         "- `python3 scripts/session-lifecycle-pressure.py --write`",
+        "- `python3 scripts/live-root-gate.py --write`",
         "- `python3 scripts/session-blockers-ledger.py --write`",
         "- `python3 scripts/session-attack-paths.py --write`",
         "- `python3 scripts/conductor-tranche.py --write`",

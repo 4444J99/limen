@@ -15,6 +15,7 @@ ORIENT_SCRIPT = ROOT / "scripts" / "session-orient.py"
 CONSOLIDATION_GATES_SCRIPT = ROOT / "scripts" / "consolidation-gates.py"
 NETWORK_HEALTH_SCRIPT = ROOT / "scripts" / "network-health.py"
 DISPATCH_HEALTH_SCRIPT = ROOT / "scripts" / "dispatch-health.py"
+LIVE_ROOT_GATE_SCRIPT = ROOT / "scripts" / "live-root-gate.py"
 
 
 def _load(path: Path, name: str):
@@ -474,6 +475,71 @@ def test_dispatch_health_records_live_root_and_async_drift(tmp_path: Path):
     assert dispatch.PRIVATE_INDEX.exists()
 
 
+def test_live_root_gate_records_operator_stop_conditions(tmp_path: Path):
+    gate = _load(LIVE_ROOT_GATE_SCRIPT, "live_root_gate")
+    gate.ROOT = tmp_path
+    gate.HOME = tmp_path
+    gate.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    gate.PRIVATE_INDEX = gate.PRIVATE_ROOT / "lifecycle" / "live-root-gate.json"
+    gate.DOC_PATH = tmp_path / "docs" / "live-root-gate.md"
+    gate.LIVE_ROOT = tmp_path / "live-limen"
+    gate.RELEASE_BRANCH = "main"
+    gate.HEARTBEAT_PLIST = tmp_path / "Library" / "LaunchAgents" / "com.limen.heartbeat.plist"
+    gate.LAUNCHD_LABEL = "com.limen.heartbeat"
+
+    gate.git_snapshot = lambda root, release_branch="main": {
+        "path": str(root),
+        "present": True,
+        "is_git": True,
+        "branch": "feature/live" if root == gate.LIVE_ROOT else "codex/conductor",
+        "release_branch": release_branch,
+        "release_ref": f"origin/{release_branch}",
+        "head": "abc" if root == gate.LIVE_ROOT else "def",
+        "release_head": "def",
+        "matches_release": root != gate.LIVE_ROOT,
+        "ahead_release": 1 if root == gate.LIVE_ROOT else 0,
+        "behind_release": 8 if root == gate.LIVE_ROOT else 0,
+        "status_summary": "## feature/live...origin/main",
+        "unique_commit_count": 1 if root == gate.LIVE_ROOT else 0,
+        "patch_equivalent_commit_count": 0,
+        "unique_commits": ["abc"],
+        "patch_equivalent_commits": [],
+        "local_log": ["abc live root draft"],
+        "dirty_entries": 3 if root == gate.LIVE_ROOT else 0,
+        "tracked_dirty": ["scripts/netmode.sh", "tasks.yaml"] if root == gate.LIVE_ROOT else [],
+        "untracked": ["organs/media/KERNEL.md"] if root == gate.LIVE_ROOT else [],
+        "dirty_paths": ["scripts/netmode.sh", "tasks.yaml", "organs/media/KERNEL.md"]
+        if root == gate.LIVE_ROOT
+        else [],
+    }
+    gate.read_plist = lambda path: {
+        "present": True,
+        "path": str(path),
+        "env": {"LIMEN_ROOT": str(gate.LIVE_ROOT), "LIMEN_DISPATCH_ASYNC": "0"},
+    }
+    gate.launchd_snapshot = lambda: {
+        "running": True,
+        "state": "running",
+        "pid": "123",
+        "env": {"LIMEN_ROOT": str(gate.LIVE_ROOT)},
+    }
+
+    snapshot = gate.build_snapshot(type("Args", (), {"fetch": False})())
+    markdown = gate.render_markdown(snapshot)
+    gate.write_outputs(snapshot, markdown)
+
+    ids = {item["id"] for item in snapshot["blockers"]}
+    assert snapshot["status"] == "blocked"
+    assert "live-root-not-release-branch" in ids
+    assert "live-root-unique-commits" in ids
+    assert "live-root-task-board-dirty" in ids
+    assert "heartbeat-loaded-env-drift" in ids
+    assert "Stop before `git reset`, branch switch" in markdown
+    assert "Human-Gated Command Packet" in markdown
+    assert gate.DOC_PATH.exists()
+    assert gate.PRIVATE_INDEX.exists()
+
+
 def test_session_blockers_records_hooks_disk_and_credentials_without_values(tmp_path: Path):
     blockers = _load(BLOCKERS_SCRIPT, "session_blockers_ledger")
     blockers.ROOT = tmp_path
@@ -758,6 +824,7 @@ def test_session_blockers_promotes_unhealthy_dispatch_receipt(tmp_path: Path):
     blockers.CAPABILITY_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "capability-substrate-index.json"
     blockers.NETWORK_HEALTH_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "network-health.json"
     blockers.DISPATCH_HEALTH_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "dispatch-health.json"
+    blockers.LIVE_ROOT_GATE_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "live-root-gate.json"
     blockers.CONSOLIDATION_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "consolidation-gates.json"
     blockers.PROMPT_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
     blockers.CODEX_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
@@ -819,6 +886,25 @@ def test_session_blockers_promotes_unhealthy_dispatch_receipt(tmp_path: Path):
         ),
         encoding="utf-8",
     )
+    blockers.LIVE_ROOT_GATE_INDEX.write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-06-28T12:00:00+00:00",
+                "status": "blocked",
+                "operator_gate_required": True,
+                "blockers": [{"id": "live-root-unique-commits"}],
+                "live_root_git": {
+                    "branch": "feature/live",
+                    "release_branch": "main",
+                    "unique_commit_count": 1,
+                    "dirty_entries": 2,
+                },
+                "launchd": {"state": "running"},
+                "launchd_env_drift": [{"key": "LIMEN_DISPATCH_ASYNC"}],
+            }
+        ),
+        encoding="utf-8",
+    )
 
     snapshot = blockers.build_snapshot()
     markdown = blockers.render_markdown(snapshot)
@@ -826,7 +912,9 @@ def test_session_blockers_promotes_unhealthy_dispatch_receipt(tmp_path: Path):
     ids = {item["id"] for item in snapshot["blockers"]}
     assert "dispatch-heartbeat-substrate-unhealthy" in ids
     assert snapshot["coverage"]["dispatch_substrate"]["status"] == "blocked"
+    assert snapshot["coverage"]["live_root_gate"]["status"] == "blocked"
     assert "Dispatch substrate: status `blocked`, launchd `running`, live root `feature/live`" in markdown
+    assert "Live root gate: status `blocked`, branch `feature/live`, unique commits `1`" in markdown
 
 
 def test_session_blockers_records_github_consolidation_and_app_gates(tmp_path: Path):

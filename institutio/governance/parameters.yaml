@@ -296,6 +296,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "launchctl service label used by dispatch-health.py to compare loaded heartbeat env with the plist. Probe-only, never a launchd write."
+  LIMEN_RELEASE_BRANCH:
+    default: "main"
+    env: LIMEN_RELEASE_BRANCH
+    self_update: none
+    owner: limen-daemon
+    note: "Release branch that sync-release.sh and live-root-gate.py compare the live daemon checkout against. Changing it changes convergence evidence only; branch switches remain human-gated."
   LIMEN_DISPATCH_CEILING:
     default: null              # currently in heartbeat-loop.sh
     env: LIMEN_DISPATCH_CEILING

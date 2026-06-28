@@ -41,6 +41,7 @@ CAPABILITY_INDEX = PRIVATE_ROOT / "lifecycle" / "capability-substrate-index.json
 CONSOLIDATION_INDEX = PRIVATE_ROOT / "lifecycle" / "consolidation-gates.json"
 NETWORK_HEALTH_INDEX = PRIVATE_ROOT / "lifecycle" / "network-health.json"
 DISPATCH_HEALTH_INDEX = PRIVATE_ROOT / "lifecycle" / "dispatch-health.json"
+LIVE_ROOT_GATE_INDEX = PRIVATE_ROOT / "lifecycle" / "live-root-gate.json"
 CAPABILITY_REPO_ROOT = Path(os.environ.get("LIMEN_CAPABILITY_REPO_ROOT", ROOT))
 REMOTE_MISSING_CLOSED_REASONS = {
     "clean+merged+idle",
@@ -686,6 +687,7 @@ def network_health_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any]:
 
 def dispatch_health_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any]:
     dispatch = load_json(DISPATCH_HEALTH_INDEX)
+    live_gate = load_json(LIVE_ROOT_GATE_INDEX)
     if not dispatch:
         add_blocker(
             blockers,
@@ -696,6 +698,7 @@ def dispatch_health_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any]:
             owner="dispatch heartbeat substrate",
             route=(
                 "Run `python3 scripts/dispatch-health.py --write --probe-async`; "
+                "then run `python3 scripts/live-root-gate.py --write`; "
                 "do not enable async or reload launchd from stale dispatch evidence."
             ),
             source="dispatch-health",
@@ -724,13 +727,20 @@ def dispatch_health_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any]:
             ),
             owner="dispatch heartbeat substrate",
             route=(
-                "Preserve/reconcile the live Limen root and reload launchd only under an explicit "
-                "operator gate; stop before reset, branch switch, task-board edits, or async enablement."
+                "Use `docs/live-root-gate.md` to preserve/reconcile the live Limen root and reload "
+                "launchd only under an explicit operator gate; stop before reset, branch switch, "
+                "task-board edits, or async enablement."
                 if needs_human
                 else "Refresh dispatch-health and repair heartbeat/async probes before trusting dispatch receipts."
             ),
             source="dispatch-health",
-            details={"status": status, "blocker_ids": blocker_ids, "path": str(DISPATCH_HEALTH_INDEX)},
+            details={
+                "status": status,
+                "blocker_ids": blocker_ids,
+                "path": str(DISPATCH_HEALTH_INDEX),
+                "live_root_gate_path": str(LIVE_ROOT_GATE_INDEX),
+                "live_root_gate_present": bool(live_gate),
+            },
         )
 
     heartbeat = dispatch.get("launchd") or {}
@@ -750,6 +760,28 @@ def dispatch_health_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any]:
         "live_root_dirty_entries": live_root.get("dirty_entries"),
         "async_probe_requested": async_probe.get("requested"),
         "async_probe_ok": async_probe.get("ok"),
+    }
+
+
+def live_root_gate_summary() -> dict[str, Any]:
+    gate = load_json(LIVE_ROOT_GATE_INDEX)
+    if not gate:
+        return {"present": False, "path": str(LIVE_ROOT_GATE_INDEX), "status": "missing"}
+    live = gate.get("live_root_git") or {}
+    launchd = gate.get("launchd") or {}
+    return {
+        "present": True,
+        "path": str(LIVE_ROOT_GATE_INDEX),
+        "generated_at": gate.get("generated_at"),
+        "status": gate.get("status"),
+        "blockers": len(gate.get("blockers") or []),
+        "operator_gate_required": gate.get("operator_gate_required"),
+        "live_root_branch": live.get("branch"),
+        "live_root_release_branch": live.get("release_branch"),
+        "live_root_unique_commits": live.get("unique_commit_count"),
+        "live_root_dirty_entries": live.get("dirty_entries"),
+        "launchd_state": launchd.get("state"),
+        "launchd_env_drift": len(gate.get("launchd_env_drift") or []),
     }
 
 
@@ -878,6 +910,7 @@ def build_snapshot() -> dict[str, Any]:
     capability = capability_substrate_blockers(blockers)
     network = network_health_blockers(blockers)
     dispatch = dispatch_health_blockers(blockers)
+    live_root_gate = live_root_gate_summary()
     consolidation = consolidation_gate_blockers(blockers)
 
     by_category = Counter(blocker["category"] for blocker in blockers)
@@ -891,6 +924,7 @@ def build_snapshot() -> dict[str, Any]:
             "consolidation_gates": {"path": str(CONSOLIDATION_INDEX), "present": bool(consolidation.get("present"))},
             "network_health": {"path": str(NETWORK_HEALTH_INDEX), "present": bool(network.get("present"))},
             "dispatch_health": {"path": str(DISPATCH_HEALTH_INDEX), "present": bool(dispatch.get("present"))},
+            "live_root_gate": {"path": str(LIVE_ROOT_GATE_INDEX), "present": bool(live_root_gate.get("present"))},
         },
         "coverage": {
             "prompt_sources": prompt.get("sources") or [],
@@ -904,6 +938,7 @@ def build_snapshot() -> dict[str, Any]:
             "capability_substrate": capability,
             "local_network_substrate": network,
             "dispatch_substrate": dispatch,
+            "live_root_gate": live_root_gate,
             "github_consolidation": consolidation,
         },
         "blockers": blockers,
@@ -942,6 +977,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         f"- GitHub consolidation gates present: `{inputs['consolidation_gates']['present']}` at `{relpath(Path(inputs['consolidation_gates']['path']))}`.",
         f"- Network health receipt present: `{inputs['network_health']['present']}` at `{relpath(Path(inputs['network_health']['path']))}`.",
         f"- Dispatch health receipt present: `{inputs['dispatch_health']['present']}` at `{relpath(Path(inputs['dispatch_health']['path']))}`.",
+        f"- Live root gate receipt present: `{inputs['live_root_gate']['present']}` at `{relpath(Path(inputs['live_root_gate']['path']))}`.",
         f"- Redacted local prompt coverage: `{total_prompt_files}` files, `{total_prompt_events}` prompt-like events.",
         f"- Codex classified sessions: `{coverage.get('codex_sessions', 0)}`.",
         f"- Worktree debt roots: `{coverage.get('worktree_debt', 0)}`.",
@@ -975,6 +1011,14 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
             f"live root `{(coverage.get('dispatch_substrate') or {}).get('live_root_branch') or 'unknown'}`, "
             f"dirty entries `{(coverage.get('dispatch_substrate') or {}).get('live_root_dirty_entries', 0)}`, "
             f"async dry-run ok `{(coverage.get('dispatch_substrate') or {}).get('async_probe_ok')}`."
+        ),
+        (
+            "- Live root gate: "
+            f"status `{(coverage.get('live_root_gate') or {}).get('status', 'unknown')}`, "
+            f"branch `{(coverage.get('live_root_gate') or {}).get('live_root_branch') or 'unknown'}`, "
+            f"unique commits `{(coverage.get('live_root_gate') or {}).get('live_root_unique_commits', 0)}`, "
+            f"dirty entries `{(coverage.get('live_root_gate') or {}).get('live_root_dirty_entries', 0)}`, "
+            f"launchd env drift `{(coverage.get('live_root_gate') or {}).get('launchd_env_drift', 0)}`."
         ),
         (
             "- GitHub consolidation gate: "
@@ -1014,6 +1058,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "- Refresh capability resurfacing: `python3 scripts/capability-substrate-ledger.py --write`",
         "- Refresh local network health: `python3 scripts/network-health.py --write`",
         "- Refresh dispatch health: `python3 scripts/dispatch-health.py --write --probe-async`",
+        "- Refresh live root gate: `python3 scripts/live-root-gate.py --write`",
         "- Refresh GitHub consolidation gates: `python3 scripts/consolidation-gates.py --write`",
         "- Refresh this blocker ledger: `python3 scripts/session-blockers-ledger.py --write`",
         "",

@@ -1,6 +1,6 @@
 # Conductor Tranche
 
-Generated: `2026-06-28T19:52:13+00:00`
+Generated: `2026-06-28T20:08:17+00:00`
 
 Summary: `tranche-no-autonomous-actionable-path` -> `no-autonomous-actionable-path` (`n/a`); stop before: Stop before broad delegation, cleanup, GitHub mutation, credential work, or owner repo edits; resume only when a human opens a gate or a fresh actionable packet appears.
 
@@ -22,9 +22,9 @@ Summary: `tranche-no-autonomous-actionable-path` -> `no-autonomous-actionable-pa
 | Lane | `n/a` |
 | Score | `n/a` |
 | Agent fit | `n/a` |
-| Attack index generated | `2026-06-28T19:52:04+00:00` |
-| Ranked paths read | `30` |
-| Skipped family/human-gate/parked/observe/auth paths | `session_lifecycle`, `dispatch-heartbeat-substrate-unhealthy`, `worktree_lifecycle`, `github_review`, `github-app-limen-bot-not-wired`, `github-consolidation-collisions`, `agent_coordination`, `technical_debt_ci`, `local-lifecycle-disk-pressure`, `convergence_corpus`, `gen-organvm-universal-mail--automation-test-coverage-0625-151e`, `rev-organvm-the-invisible-ledger-revenue-readiness-0623-bd8b`, `org-governance-organ-deepen-0628-0e39`, `cloud-runtime-endpoint-unconfigured`, `uncategorized`, `cifix-organvm-i-theoria-hierarchia-mundi-3145`, `gen-organvm-the-invisible-ledger-ci-green-0625-e3c2`, `gh-organvm-object-lessons-19-605a`, `resolve-a-organvm-the-invisible-ledger-4-f657`, `gen-organvm-i-theoria-sovereign--ground-ci-green-0620-0f38`, `cloud-credential-handles-unconfigured`, `credential-codex-auth-sessions`, `auth_credentials`, `resolve-organvm-i-theoria-.github-459-1ade`, `rev-organvm-public-record-data-scrapper-revenue-readiness-0623-023f`, `discover-organvm-kerygma-profiles-6c74`, `cifix-organvm-i-theoria-conversation-corpus-engine-f02e`, `bld-mirror-mirror-harden-350f`, `bld-my--father-mother-harden-44b2`, `bld-promptscope-next-rev-3fde` |
+| Attack index generated | `2026-06-28T20:07:16+00:00` |
+| Ranked paths read | `29` |
+| Skipped family/human-gate/parked/observe/auth paths | `session_lifecycle`, `dispatch-heartbeat-substrate-unhealthy`, `worktree_lifecycle`, `github_review`, `github-app-limen-bot-not-wired`, `github-consolidation-collisions`, `agent_coordination`, `technical_debt_ci`, `local-lifecycle-disk-pressure`, `convergence_corpus`, `gen-organvm-universal-mail--automation-test-coverage-0625-151e`, `rev-organvm-the-invisible-ledger-revenue-readiness-0623-bd8b`, `cloud-runtime-endpoint-unconfigured`, `uncategorized`, `cifix-organvm-i-theoria-hierarchia-mundi-3145`, `gen-organvm-the-invisible-ledger-ci-green-0625-e3c2`, `gh-organvm-object-lessons-19-605a`, `resolve-a-organvm-the-invisible-ledger-4-f657`, `gen-organvm-i-theoria-sovereign--ground-ci-green-0620-0f38`, `cloud-credential-handles-unconfigured`, `credential-codex-auth-sessions`, `auth_credentials`, `resolve-organvm-i-theoria-.github-459-1ade`, `rev-organvm-public-record-data-scrapper-revenue-readiness-0623-023f`, `discover-organvm-kerygma-profiles-6c74`, `cifix-organvm-i-theoria-conversation-corpus-engine-f02e`, `bld-mirror-mirror-harden-350f`, `bld-my--father-mother-harden-44b2`, `bld-promptscope-next-rev-3fde` |
 
 ## Work Packet
 
@@ -34,8 +34,10 @@ Repo/worktree: `organvm/limen` conductor checkout.
 
 Allowed files:
 
+- `scripts/live-root-gate.py`
 - `docs/session-attack-paths.md`
 - `docs/session-lifecycle-blockers.md`
+- `docs/live-root-gate.md`
 - `docs/conductor-tranche.md`
 - `.limen-private/session-corpus/lifecycle/**`
 
@@ -49,10 +51,11 @@ Forbidden:
 
 Stop condition: Stop before broad delegation, cleanup, GitHub mutation, credential work, or owner repo edits; resume only when a human opens a gate or a fresh actionable packet appears.
 
-Receipt: docs/conductor-tranche.md records the no-autonomous-action state and skipped paths.
+Receipt: docs/live-root-gate.md and docs/conductor-tranche.md record the human-gated stop state.
 
 Verification:
 
+- `python3 scripts/live-root-gate.py --write`
 - `python3 scripts/session-blockers-ledger.py --write`
 - `python3 scripts/session-attack-paths.py --write`
 - `python3 scripts/conductor-tranche.py --write`
@@ -65,6 +68,7 @@ Record that no ranked path is autonomously actionable after skipping parked, fam
 
 - `python3 scripts/consolidation-gates.py --write`
 - `python3 scripts/session-lifecycle-pressure.py --write`
+- `python3 scripts/live-root-gate.py --write`
 - `python3 scripts/session-blockers-ledger.py --write`
 - `python3 scripts/session-attack-paths.py --write`
 - `python3 scripts/conductor-tranche.py --write`
