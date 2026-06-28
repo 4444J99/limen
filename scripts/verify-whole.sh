@@ -12,7 +12,7 @@ step() {
 
 step "Compile Python modules and validate shell syntax"
 cd "$ROOT"
-python3 -m py_compile web/api/main.py cli/src/limen/*.py scripts/probe-runtime-adapter.py scripts/validate-lifecycle-adapters.py scripts/validate-task-board.py scripts/worktree-debt.py scripts/session-corpus-ledger.py scripts/prompt-lifecycle-ledger.py scripts/prompt-priority-map.py scripts/capability-substrate-ledger.py scripts/session-blockers-ledger.py scripts/session-lifecycle-pressure.py scripts/session-attack-paths.py
+python3 -m py_compile web/api/main.py cli/src/limen/*.py scripts/probe-runtime-adapter.py scripts/validate-lifecycle-adapters.py scripts/validate-task-board.py scripts/worktree-debt.py scripts/session-corpus-ledger.py scripts/prompt-lifecycle-ledger.py scripts/prompt-priority-map.py scripts/prompt-batch-review-ledger.py scripts/capability-substrate-ledger.py scripts/session-blockers-ledger.py scripts/session-lifecycle-pressure.py scripts/session-attack-paths.py
 bash -n scripts/preflight-cloud-run.sh scripts/probe-local-runtime.sh scripts/probe-local-worker.sh scripts/verify-whole.sh scripts/merge-policy.sh scripts/tests/merge-policy.test.sh scripts/hooks/session-lifecycle-pressure.sh
 
 step "Verify the merge-policy predicate (verdict matrix regression test)"

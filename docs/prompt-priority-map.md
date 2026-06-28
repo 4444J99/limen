@@ -1,6 +1,6 @@
 # Prompt Priority Map
 
-Generated: `2026-06-28T02:34:15+00:00`
+Generated: `2026-06-28T02:44:20+00:00`
 
 ## Canonical Decision
 
@@ -12,10 +12,10 @@ Generated: `2026-06-28T02:34:15+00:00`
 ## Coverage
 
 - Prompt lifecycle source files: `9489`.
-- Prompt-like events from source ledger: `92793`.
+- Prompt-like events from source ledger: `92794`.
 - Prioritized session receipts: `3423`.
-- Prioritized prompt events: `92793`.
-- Unique prompt hashes: `55779`.
+- Prioritized prompt events: `92794`.
+- Unique prompt hashes: `55780`.
 - Review batches: `153`.
 - Codex classified sessions: `887`.
 - Attack paths / blockers / capability items: `30` / `8` / `30`.
@@ -61,7 +61,7 @@ Generated: `2026-06-28T02:34:15+00:00`
 | 25 | `prompt-batch-high-legacy-session-review-003` | `high` | `legacy-session-review` | 2 | 157 | 145 | sources claude-projects 2; families uncategorized 2 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
 | 26 | `prompt-batch-medium-legacy-session-review-001` | `medium` | `legacy-session-review` | 25 | 1532 | 1327 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
 | 27 | `prompt-batch-medium-historical-worktree-review-001` | `medium` | `historical-worktree-review` | 25 | 1184 | 747 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 28 | `prompt-batch-medium-hash-review-001` | `medium` | `hash-review` | 2 | 44 | 13 | sources codex-sessions 2; families uncategorized 2 | Review the redacted `codex-sessions` receipt privately and assign an owner route before delegation. |
+| 28 | `prompt-batch-medium-hash-review-001` | `medium` | `hash-review` | 2 | 45 | 14 | sources codex-sessions 2; families uncategorized 2 | Review the redacted `codex-sessions` receipt privately and assign an owner route before delegation. |
 | 29 | `prompt-batch-medium-historical-worktree-review-002` | `medium` | `historical-worktree-review` | 25 | 1051 | 731 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
 | 30 | `prompt-batch-medium-historical-worktree-review-003` | `medium` | `historical-worktree-review` | 25 | 987 | 673 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
 | 31 | `prompt-batch-medium-family-001` | `medium` | `family` | 25 | 135 | 77 | sources codex-sessions 25; families worktree_lifecycle 23, session_lifecycle 2 | Keep corpus/session ledgers current, collapse repeats into owner receipts. |
@@ -132,7 +132,7 @@ Generated: `2026-06-28T02:34:15+00:00`
 | `remote-close` | `high` | 4 | 108 | 2 | `claude-projects` | `uncategorized` | Review PR state/checks, then merge or name supersession before local reclaim. |
 | `observe` | `high` | 3 | 155 | 2 | `claude-projects` | `uncategorized` | Keep active work visible; do not interrupt unless it becomes stale. |
 | `documented-residue` | `high` | 1 | 94 | 1 | `claude-projects` | `uncategorized` | No unique source to preserve; directory contains only Vite dependency-cache metadata. Reclaim only after normal operator acceptance. |
-| `hash-review` | `high` | 3 | 484 | 2 | `codex-sessions` | `uncategorized` | Review the redacted `codex-history` receipt privately and assign an owner route before delegation. |
+| `hash-review` | `high` | 3 | 485 | 2 | `codex-sessions` | `uncategorized` | Review the redacted `codex-history` receipt privately and assign an owner route before delegation. |
 | `family` | `medium` | 419 | 1573 | 17 | `codex-sessions` | `github_review` | Keep corpus/session ledgers current, collapse repeats into owner receipts. |
 | `parked-secret` | `parked` | 405 | 2500 | 17 | `codex-sessions` | `auth_credentials` | Keep parked unless a scoped account/setup task directly requires non-secret prep. |
 
@@ -145,4 +145,5 @@ Generated: `2026-06-28T02:34:15+00:00`
 
 - Refresh prerequisites: `python3 scripts/prompt-lifecycle-ledger.py --write --all && python3 scripts/session-attack-paths.py --write`
 - Refresh this priority map: `python3 scripts/prompt-priority-map.py --write`
+- Refresh prompt batch review ledger: `python3 scripts/prompt-batch-review-ledger.py --write`
 - Show a wider tracked slice: `python3 scripts/prompt-priority-map.py --write --limit 60`

@@ -1,6 +1,6 @@
 # Session Attack Paths
 
-Generated: `2026-06-28T02:34:09+00:00`
+Generated: `2026-06-28T02:44:20+00:00`
 
 ## Canonical Decision
 
@@ -11,12 +11,12 @@ Generated: `2026-06-28T02:34:09+00:00`
 
 ## Coverage
 
-- Redacted prompt corpus: `9489` files, `92793` prompt-like events.
+- Redacted prompt corpus: `9489` files, `92794` prompt-like events.
 - Codex classified sessions: `887`.
 - Worktree debt roots: `8`.
 - Worktree preservation receipts: `6`.
 - Parked blockers: `8`.
-- Local lifecycle footprint: `5.2 GiB`.
+- Local lifecycle footprint: `5.3 GiB`.
 - Candidate lanes: `blocker` 5, `documented-residue` 2, `drain` 1, `family` 7, `observe` 4, `owner-blocker` 3, `parked` 3, `remote-close` 3, `remote-proof` 2.
 
 ## Ordering Model
@@ -74,3 +74,4 @@ Generated: `2026-06-28T02:34:09+00:00`
 - Refresh prerequisites: `python3 scripts/prompt-lifecycle-ledger.py --write --all && python3 scripts/session-blockers-ledger.py --write`
 - Refresh attack paths: `python3 scripts/session-attack-paths.py --write`
 - Refresh prompt priority/task map: `python3 scripts/prompt-priority-map.py --write`
+- Refresh prompt batch review ledger: `python3 scripts/prompt-batch-review-ledger.py --write`

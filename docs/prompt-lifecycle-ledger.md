@@ -1,6 +1,6 @@
 # Prompt Lifecycle Ledger
 
-Generated: `2026-06-28T02:33:58+00:00`
+Generated: `2026-06-28T02:44:13+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -12,12 +12,12 @@ Horizon: `all local history`
 
 ## Redacted Prompt Coverage
 
-Indexed `9489` app/session files, `2.1 GiB`, with `92793` prompt-like user events hashed into the private index.
+Indexed `9489` app/session files, `2.1 GiB`, with `92794` prompt-like user events hashed into the private index.
 
 | Source | Files | Prompt Events | Event Records | Size | Newest |
 |---|---:|---:|---:|---:|---|
 | `claude-projects` | 4854 | 87828 | 313210 | 1.4 GiB | `2026-06-28T01:17:54+00:00` |
-| `codex-sessions` | 889 | 4392 | 233672 | 731.1 MiB | `2026-06-28T02:32:43+00:00` |
+| `codex-sessions` | 889 | 4393 | 233945 | 731.5 MiB | `2026-06-28T02:42:54+00:00` |
 | `codex-history` | 1 | 440 | 440 | 192.7 KiB | `2026-06-28T02:24:32+00:00` |
 | `claude-tasks` | 188 | 133 | 133 | 57.7 KiB | `2026-06-26T00:08:52+00:00` |
 | `claude-file-history` | 3519 | 0 | 0 | 42.2 MiB | `2026-06-27T00:26:28+00:00` |
@@ -50,12 +50,12 @@ Indexed `9489` app/session files, `2.1 GiB`, with `92793` prompt-like user event
 ## Task Board Crosswalk
 
 - Task records: `1427`.
-- Status distribution: `archived` 438, `dispatched` 39, `done` 807, `in_progress` 1, `needs_human` 61, `open` 81.
+- Status distribution: `archived` 438, `dispatched` 41, `done` 807, `in_progress` 1, `needs_human` 61, `open` 79.
 - Invalid statuses outside canonical set: `0`.
 - Current worktree root slugs mentioned exactly in `tasks.yaml`: `0` / `14`.
 - Chronic reopen-loop candidates: `0`.
 - Dispatched tasks with PR receipt: `0`.
-- Dispatched Jules async tasks without PR yet: `39`.
+- Dispatched Jules async tasks without PR yet: `41`.
 - Dispatched local tasks still inside running grace/no-op guard: `0`.
 - Dispatched local tasks stranded without PR receipt: `0`.
 - Done tasks with PR receipt still visible in dispatch log/URLs: `636`.
@@ -99,4 +99,5 @@ Indexed `9489` app/session files, `2.1 GiB`, with `92793` prompt-like user event
 - Refresh local-only when offline: `python3 scripts/prompt-lifecycle-ledger.py --write --all --no-remote --no-cloud`
 - Refresh and absorb raw session/app files: `python3 scripts/session-corpus-ledger.py --write --all --materialize`
 - Refresh prompt priority/task map: `python3 scripts/prompt-priority-map.py --write`
+- Refresh prompt batch review ledger: `python3 scripts/prompt-batch-review-ledger.py --write`
 - Inspect lifecycle debt: `python3 scripts/worktree-debt.py --json`

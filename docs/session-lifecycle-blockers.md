@@ -1,6 +1,6 @@
 # Session Lifecycle Blockers
 
-Generated: `2026-06-28T02:34:05+00:00`
+Generated: `2026-06-28T02:44:20+00:00`
 
 ## Canonical Handling
 
@@ -13,12 +13,12 @@ Generated: `2026-06-28T02:34:05+00:00`
 - Prompt lifecycle index present: `True` at `~/Workspace/limen/.limen-private/session-corpus/lifecycle/prompt-lifecycle-index.json`.
 - Codex lifecycle index present: `True` at `~/Workspace/limen/.limen-private/session-corpus/lifecycle/codex-session-lifecycle.json`.
 - Session corpus inventory present: `True` at `~/Workspace/limen/.limen-private/session-corpus/inventory/session-corpus-ledger.json`.
-- Redacted local prompt coverage: `9489` files, `92793` prompt-like events.
+- Redacted local prompt coverage: `9489` files, `92794` prompt-like events.
 - Codex classified sessions: `887`.
 - Worktree debt roots: `8`.
 - Remote receipts enabled: `True`; cloud receipts enabled: `True`.
 - Session pressure hook wired: `True`; last pressure snapshot present: `True`.
-- Local lifecycle footprint: `5.2 GiB`.
+- Local lifecycle footprint: `5.3 GiB`.
 - Capability substrate detected: `11` roots, `1324` skill files, `45` plugin/MCP manifests.
 - Capability resurfacing receipt present/current: `True`/`True`; activation candidates `30`.
 
@@ -36,7 +36,7 @@ Generated: `2026-06-28T02:34:05+00:00`
 | `worktree-lifecycle-debt` | `worktree_lifecycle` | `parked` | 8 `.limen-worktrees` roots still carry lifecycle debt. | worktree lifecycle | Preserve or owner-record each root; no deletion of unique work. |
 | `owner-state-dirty-session-meta` | `owner_state` | `parked` | session-meta has 1 dirty entries. | session-meta | Preserve in that owner repo before treating corpus substrate as clean. |
 | `owner-state-dirty-knowledge-corpus` | `owner_state` | `parked` | knowledge-corpus has 3 dirty entries. | knowledge-corpus | Preserve in that owner repo before treating corpus substrate as clean. |
-| `local-lifecycle-disk-pressure` | `local_lean` | `parked` | Local lifecycle stores use 5.2 GiB (2.1 GiB worktrees, 3.1 GiB private corpus). | local lifecycle | Drain only after remote/default preservation proof or non-source residue receipt; keep pressure visible in SessionStart. |
+| `local-lifecycle-disk-pressure` | `local_lean` | `parked` | Local lifecycle stores use 5.3 GiB (2.1 GiB worktrees, 3.2 GiB private corpus). | local lifecycle | Drain only after remote/default preservation proof or non-source residue receipt; keep pressure visible in SessionStart. |
 
 ## Private Output
 

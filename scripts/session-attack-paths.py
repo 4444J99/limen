@@ -455,6 +455,7 @@ def render_markdown(snapshot: dict[str, Any], *, limit: int) -> str:
         "- Refresh prerequisites: `python3 scripts/prompt-lifecycle-ledger.py --write --all && python3 scripts/session-blockers-ledger.py --write`",
         "- Refresh attack paths: `python3 scripts/session-attack-paths.py --write`",
         "- Refresh prompt priority/task map: `python3 scripts/prompt-priority-map.py --write`",
+        "- Refresh prompt batch review ledger: `python3 scripts/prompt-batch-review-ledger.py --write`",
         "",
     ]
     return "\n".join(lines)
