@@ -15,9 +15,9 @@ portal:
       claude: 100
     track:
       date: '2026-06-28'
-      spent: 83
+      spent: 85
       per_agent:
-        jules: 63
+        jules: 65
         gemini: 0
         codex: 0
         opencode: 8
@@ -51750,7 +51750,7 @@ tasks:
   target_agent: jules
   priority: low
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - docs
   - generated
@@ -51766,7 +51766,7 @@ tasks:
     \ to keep the stream endless]"
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-28T11:52:40.068870Z'
+  updated: '2026-06-28T11:55:56.156931Z'
   dispatch_log:
   - timestamp: '2026-06-26T23:07:41.223636Z'
     agent: opencode
@@ -51808,6 +51808,15 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-28T11:55:56.156931Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T11:55:56.156931Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GEN-organvm-limen-docs-0624
   title: Real usage docs for organvm/limen
   repo: organvm/limen
@@ -57638,7 +57647,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - simplify
   - generated
@@ -57650,7 +57659,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-28T11:52:40.068870Z'
+  updated: '2026-06-28T11:55:56.156931Z'
   dispatch_log:
   - timestamp: '2026-06-27T05:21:04.898340Z'
     agent: gemini
@@ -57675,6 +57684,15 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-28T11:55:56.156931Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T11:55:56.156931Z'
+    agent: jules
+    session_id: '15122352804256894501'
+    status: dispatched
 - id: GEN-organvm-limen-simplify-0627
   title: Reduce complexity in organvm/limen
   repo: organvm/limen
