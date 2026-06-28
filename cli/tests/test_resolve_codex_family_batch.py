@@ -130,3 +130,15 @@ def test_resolve_codex_family_batch_records_public_proof_without_raw_text(tmp_pa
     written = json.loads(resolver.BATCH_RESOLUTION_RECEIPTS.read_text(encoding="utf-8"))
     assert written["receipts"][0]["batch"] == "prompt-batch-medium-family-test"
     assert resolver.receipt_exists("prompt-batch-medium-family-test")
+
+
+def test_repo_candidates_cover_redirected_family_roots():
+    resolver = _load()
+
+    assert resolver.repo_candidates("gen-organvm-i-theoria-scale-threshold-emergence-test-coverage-0620-86cd") == [
+        "organvm/scale-threshold-emergence"
+    ]
+    assert resolver.repo_candidates("gh-organvm-vi-koinonia-github-1-9bdf") == [
+        "organvm-vi-koinonia/.github",
+        "organvm/dot-github--koinonia",
+    ]

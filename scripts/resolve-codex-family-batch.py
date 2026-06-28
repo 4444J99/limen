@@ -86,8 +86,12 @@ def repo_candidates(root: str) -> list[str]:
         return ["organvm/organvm-engine"]
     if "the-invisible-ledger" in root:
         return ["organvm/the-invisible-ledger", "a-organvm/the-invisible-ledger"]
+    if "scale-threshold-emergence" in root:
+        return ["organvm/scale-threshold-emergence"]
     if "peer-audited--behavioral-blockchain" in root:
         return ["organvm/peer-audited--behavioral-blockchain", "a-organvm/peer-audited--behavioral-blockchain"]
+    if "vi-koinonia-github" in root:
+        return ["organvm-vi-koinonia/.github", "organvm/dot-github--koinonia"]
     if ".github" in root or "--github" in root or "dot-github" in root:
         return ["organvm-i-theoria/.github", "organvm/dot-github--theoria", "organvm/.github"]
     if "rules-system-bound" in root:
