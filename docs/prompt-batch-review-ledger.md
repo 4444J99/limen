@@ -1,6 +1,6 @@
 # Prompt Batch Review Ledger
 
-Generated: `2026-06-28T10:51:27+00:00`
+Generated: `2026-06-28T11:02:50+00:00`
 
 ## Canonical Decision
 
@@ -13,14 +13,14 @@ Generated: `2026-06-28T10:51:27+00:00`
 
 - Priority batches read: `152`.
 - Review batches recorded: `152`.
-- Batches with durable owner/non-source/supersession evidence: `56`.
-- Open review batches: `79`.
+- Batches with durable owner/non-source/supersession evidence: `57`.
+- Open review batches: `78`.
 - Parked secret batches: `17`.
 - Prompt events represented: `92795`.
 - Preservation receipts available: `6`.
 - Packet resolution receipts available: `8`.
-- Batch resolution receipts available: `50`.
-- Status mix: `needs-private-review` 74, `owner-recorded` 55, `parked-secret` 17, `needs-remote-proof` 3, `needs-owner-route` 2, `non-source-recorded` 1.
+- Batch resolution receipts available: `51`.
+- Status mix: `needs-private-review` 73, `owner-recorded` 56, `parked-secret` 17, `needs-remote-proof` 3, `needs-owner-route` 2, `non-source-recorded` 1.
 - Lane mix: `legacy-session-review` 70, `historical-worktree-review` 35, `family` 17, `parked-secret` 17, `stalled-review` 3, `owner-blocker` 2, `hash-review` 2, `remote-close` 2, `observe` 2, `documented-residue` 1, `remote-proof` 1.
 
 ## Recorded Batches
@@ -62,36 +62,36 @@ Generated: `2026-06-28T10:51:27+00:00`
 
 | Rank | Batch | Status | Band | Lane | Sessions | Events | Dominant Mix | Next Action |
 |---:|---|---|---|---|---:|---:|---|---|
-| 1 | `prompt-batch-medium-historical-worktree-review-016` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 392 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 2 | `prompt-batch-medium-legacy-session-review-008` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 774 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 3 | `prompt-batch-medium-legacy-session-review-009` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 789 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 4 | `prompt-batch-medium-historical-worktree-review-017` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 312 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 5 | `prompt-batch-medium-legacy-session-review-010` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 688 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 6 | `prompt-batch-medium-historical-worktree-review-018` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 248 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 7 | `prompt-batch-medium-family-012` | `needs-private-review` | `medium` | `family` | 25 | 98 | sources codex-sessions 25; families github_review 25 | Review PR/issue receipts only after owner repo, predicate, and blocker are explicit. |
-| 8 | `prompt-batch-medium-family-013` | `needs-private-review` | `medium` | `family` | 25 | 97 | sources codex-sessions 25; families github_review 25 | Review PR/issue receipts only after owner repo, predicate, and blocker are explicit. |
-| 9 | `prompt-batch-medium-family-014` | `needs-private-review` | `medium` | `family` | 23 | 90 | sources codex-sessions 23; families github_review 20, technical_debt_ci 3 | Review PR/issue receipts only after owner repo, predicate, and blocker are explicit. |
-| 10 | `prompt-batch-medium-historical-worktree-review-019` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 94 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 11 | `prompt-batch-medium-legacy-session-review-011` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 652 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 12 | `prompt-batch-medium-legacy-session-review-012` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 703 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 13 | `prompt-batch-medium-historical-worktree-review-020` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 92 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 14 | `prompt-batch-medium-historical-worktree-review-021` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 108 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 15 | `prompt-batch-medium-historical-worktree-review-022` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 102 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 16 | `prompt-batch-medium-historical-worktree-review-023` | `needs-private-review` | `medium` | `historical-worktree-review` | 23 | 127 | sources claude-projects 23; families uncategorized 23 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 17 | `prompt-batch-medium-legacy-session-review-013` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 597 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 18 | `prompt-batch-medium-legacy-session-review-014` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 605 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 19 | `prompt-batch-medium-legacy-session-review-015` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 452 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 20 | `prompt-batch-low-historical-worktree-review-001` | `needs-private-review` | `low` | `historical-worktree-review` | 25 | 174 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 21 | `prompt-batch-low-legacy-session-review-001` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 453 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 22 | `prompt-batch-low-legacy-session-review-002` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 531 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 23 | `prompt-batch-low-family-001` | `needs-private-review` | `low` | `family` | 25 | 81 | sources codex-sessions 25; families agent_coordination 23, convergence_corpus 1, session_lifecycle 1 | Keep corpus/session ledgers current, collapse repeats into owner receipts. |
-| 24 | `prompt-batch-low-legacy-session-review-003` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 426 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 25 | `prompt-batch-low-legacy-session-review-004` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 367 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 26 | `prompt-batch-low-legacy-session-review-005` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 448 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 27 | `prompt-batch-low-legacy-session-review-006` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 446 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 28 | `prompt-batch-low-legacy-session-review-007` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 420 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 29 | `prompt-batch-low-legacy-session-review-008` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 421 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 30 | `prompt-batch-low-family-002` | `needs-private-review` | `low` | `family` | 25 | 85 | sources codex-sessions 25; families agent_coordination 3, technical_debt_ci 22 | Packetize bounded work; do not dispatch broad sprawl prompts. |
+| 1 | `prompt-batch-medium-legacy-session-review-008` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 774 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 2 | `prompt-batch-medium-legacy-session-review-009` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 789 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 3 | `prompt-batch-medium-historical-worktree-review-017` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 312 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 4 | `prompt-batch-medium-legacy-session-review-010` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 688 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 5 | `prompt-batch-medium-historical-worktree-review-018` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 248 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 6 | `prompt-batch-medium-family-012` | `needs-private-review` | `medium` | `family` | 25 | 98 | sources codex-sessions 25; families github_review 25 | Review PR/issue receipts only after owner repo, predicate, and blocker are explicit. |
+| 7 | `prompt-batch-medium-family-013` | `needs-private-review` | `medium` | `family` | 25 | 97 | sources codex-sessions 25; families github_review 25 | Review PR/issue receipts only after owner repo, predicate, and blocker are explicit. |
+| 8 | `prompt-batch-medium-family-014` | `needs-private-review` | `medium` | `family` | 23 | 90 | sources codex-sessions 23; families github_review 20, technical_debt_ci 3 | Review PR/issue receipts only after owner repo, predicate, and blocker are explicit. |
+| 9 | `prompt-batch-medium-historical-worktree-review-019` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 94 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 10 | `prompt-batch-medium-legacy-session-review-011` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 652 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 11 | `prompt-batch-medium-legacy-session-review-012` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 703 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 12 | `prompt-batch-medium-historical-worktree-review-020` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 92 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 13 | `prompt-batch-medium-historical-worktree-review-021` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 108 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 14 | `prompt-batch-medium-historical-worktree-review-022` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 102 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 15 | `prompt-batch-medium-historical-worktree-review-023` | `needs-private-review` | `medium` | `historical-worktree-review` | 23 | 127 | sources claude-projects 23; families uncategorized 23 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 16 | `prompt-batch-medium-legacy-session-review-013` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 597 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 17 | `prompt-batch-medium-legacy-session-review-014` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 605 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 18 | `prompt-batch-medium-legacy-session-review-015` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 452 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 19 | `prompt-batch-low-historical-worktree-review-001` | `needs-private-review` | `low` | `historical-worktree-review` | 25 | 174 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 20 | `prompt-batch-low-legacy-session-review-001` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 453 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 21 | `prompt-batch-low-legacy-session-review-002` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 531 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 22 | `prompt-batch-low-family-001` | `needs-private-review` | `low` | `family` | 25 | 81 | sources codex-sessions 25; families agent_coordination 23, convergence_corpus 1, session_lifecycle 1 | Keep corpus/session ledgers current, collapse repeats into owner receipts. |
+| 23 | `prompt-batch-low-legacy-session-review-003` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 426 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 24 | `prompt-batch-low-legacy-session-review-004` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 367 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 25 | `prompt-batch-low-legacy-session-review-005` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 448 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 26 | `prompt-batch-low-legacy-session-review-006` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 446 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 27 | `prompt-batch-low-legacy-session-review-007` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 420 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 28 | `prompt-batch-low-legacy-session-review-008` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 421 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 29 | `prompt-batch-low-family-002` | `needs-private-review` | `low` | `family` | 25 | 85 | sources codex-sessions 25; families agent_coordination 3, technical_debt_ci 22 | Packetize bounded work; do not dispatch broad sprawl prompts. |
+| 30 | `prompt-batch-low-legacy-session-review-009` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 341 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
 
 ## Private Output
 

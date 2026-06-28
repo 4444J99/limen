@@ -107,6 +107,8 @@ def repo_candidates(root: str) -> list[str]:
         return ["4444J99/hokage-chess"]
     if "domus-genoma" in root:
         return ["organvm/domus-genoma", "4444J99/domus-genoma"]
+    if "domus-onboarding" in root:
+        return ["organvm/domus-genoma"]
     if "mediaark" in root or "media-ark" in root:
         return ["organvm/media-ark"]
     if "public-record-data-scrapper" in root or "scrapper" in root:
@@ -117,6 +119,12 @@ def repo_candidates(root: str) -> list[str]:
         return ["organvm/organvm-corpvs-testamentvm", "a-organvm/organvm-corpvs-testamentvm"]
     if "organvm-engine" in root:
         return ["organvm/organvm-engine"]
+    if "specvla-ergon--avditor-mvndi" in root:
+        return ["organvm/specvla-ergon--avditor-mvndi"]
+    if "relationship-pipeline" in root:
+        return ["organvm/relationship-pipeline", "4444J99/relationship-pipeline"]
+    if "conversation-corpus-engine" in root:
+        return ["organvm/conversation-corpus-engine", "organvm-i-theoria/conversation-corpus-engine"]
     if "mirror-mirror" in root:
         return ["organvm/mirror-mirror"]
     if "portfolio" in root:
@@ -131,6 +139,8 @@ def repo_candidates(root: str) -> list[str]:
         return ["organvm/universal-mail--automation"]
     if "the-invisible-ledger" in root:
         return ["organvm/the-invisible-ledger", "a-organvm/the-invisible-ledger"]
+    if "ledger-webhook" in root:
+        return ["organvm/the-invisible-ledger"]
     if "scale-threshold-emergence" in root:
         return ["organvm/scale-threshold-emergence"]
     if "peer-audited--behavioral-blockchain" in root:

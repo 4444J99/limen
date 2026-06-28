@@ -170,6 +170,19 @@ def test_repo_candidates_cover_redirected_family_roots():
             "organvm-iv-taxis/.github",
             "organvm/dot-github--taxis",
         ],
+        "discover-organvm-specvla-ergon--avditor-mvndi-2071": [
+            "organvm/specvla-ergon--avditor-mvndi"
+        ],
+        "gh-4444j99-relationship-pipeline-1-ae4d": [
+            "organvm/relationship-pipeline",
+            "4444J99/relationship-pipeline",
+        ],
+        "discover-organvm-conversation-corpus-engine-a600": [
+            "organvm/conversation-corpus-engine",
+            "organvm-i-theoria/conversation-corpus-engine",
+        ],
+        "rev-ledger-webhook-ratelimit-75f8": ["organvm/the-invisible-ledger"],
+        "rev-domus-onboarding-041b": ["organvm/domus-genoma"],
     }
     for root, expected in cases.items():
         assert resolver.repo_candidates(root) == expected
