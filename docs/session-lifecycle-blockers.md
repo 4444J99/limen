@@ -1,6 +1,6 @@
 # Session Lifecycle Blockers
 
-Generated: `2026-06-28T00:40:48+00:00`
+Generated: `2026-06-28T01:13:10+00:00`
 
 ## Canonical Handling
 
@@ -13,9 +13,9 @@ Generated: `2026-06-28T00:40:48+00:00`
 - Prompt lifecycle index present: `True` at `~/Workspace/limen/.limen-private/session-corpus/lifecycle/prompt-lifecycle-index.json`.
 - Codex lifecycle index present: `True` at `~/Workspace/limen/.limen-private/session-corpus/lifecycle/codex-session-lifecycle.json`.
 - Session corpus inventory present: `True` at `~/Workspace/limen/.limen-private/session-corpus/inventory/session-corpus-ledger.json`.
-- Redacted local prompt coverage: `9484` files, `92698` prompt-like events.
+- Redacted local prompt coverage: `9486` files, `92753` prompt-like events.
 - Codex classified sessions: `887`.
-- Worktree debt roots: `11`.
+- Worktree debt roots: `10`.
 - Remote receipts enabled: `True`; cloud receipts enabled: `True`.
 - Session pressure hook wired: `True`; last pressure snapshot present: `True`.
 - Local lifecycle footprint: `4.9 GiB`.
@@ -31,9 +31,9 @@ Generated: `2026-06-28T00:40:48+00:00`
 | `credential-codex-auth-sessions` | `auth_credentials` | `parked` | 405 Codex sessions classified as auth/credential work; states: ALIVE 1, CLOSED 364, PARKED 40 | credential workstream | Keep parked unless a future scoped task explicitly requires the account action. |
 | `cloud-credential-handles-unconfigured` | `auth_credentials` | `parked` | 6 credential/deploy handles absent; 0 present. No values inspected. | credential workstream | Do not repair inline; open a bounded credential/setup workstream only when a cloud action requires it. |
 | `cloud-runtime-endpoint-unconfigured` | `cloud_runtime` | `parked` | No runtime URL was configured for the last cloud receipt probe. | limen deployment workstream | Keep separate from session intake; configure/probe runtime only in a deploy/runtime task. |
-| `remote-task-pr-receipt-errors` | `remote_receipt` | `needs_refresh` | 14 task-board GitHub PR receipts returned API/lookup errors. | limen/GitHub receipt workstream | Rerun or repair access separately before treating those PR refs as closure evidence. |
-| `worktree-remote-branches-missing` | `worktree_lifecycle` | `parked` | 6 git worktree roots did not have the same branch present on origin. | worktree lifecycle | Preserve each root by branch, PR, owner blocker, or documented non-source residue before cleanup. |
-| `worktree-lifecycle-debt` | `worktree_lifecycle` | `parked` | 11 `.limen-worktrees` roots still carry lifecycle debt. | worktree lifecycle | Preserve or owner-record each root; no deletion of unique work. |
+| `remote-task-pr-receipt-errors` | `remote_receipt` | `needs_refresh` | 10 task-board GitHub PR receipts returned API/lookup errors. | limen/GitHub receipt workstream | Rerun or repair access separately before treating those PR refs as closure evidence. |
+| `worktree-remote-branches-missing` | `worktree_lifecycle` | `parked` | 4 git worktree roots did not have the same branch present on origin. | worktree lifecycle | Preserve each root by branch, PR, owner blocker, or documented non-source residue before cleanup. |
+| `worktree-lifecycle-debt` | `worktree_lifecycle` | `parked` | 10 `.limen-worktrees` roots still carry lifecycle debt. | worktree lifecycle | Preserve or owner-record each root; no deletion of unique work. |
 | `owner-state-dirty-session-meta` | `owner_state` | `parked` | session-meta has 1 dirty entries. | session-meta | Preserve in that owner repo before treating corpus substrate as clean. |
 | `private-raw-materialization-not-receipted` | `private_absorption` | `needs_refresh` | The latest session corpus inventory did not include a materialization receipt. | limen private cartridge | Run `session-corpus-ledger.py --write --all --materialize` when absorbing raw local files. |
 | `local-lifecycle-disk-pressure` | `local_lean` | `parked` | Local lifecycle stores use 4.9 GiB (2.1 GiB worktrees, 2.8 GiB private corpus). | local lifecycle | Drain only after remote/default preservation proof or non-source residue receipt; keep pressure visible in SessionStart. |

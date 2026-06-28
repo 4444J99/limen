@@ -20,6 +20,67 @@
         "api": 12,
         "mcp_server": 2
       }
+    },
+    {
+      "branch": "limen/cifix-organvm-i-theoria-hierarchia-mundi-3145",
+      "classification": "superseded by origin/main",
+      "head": "677df2b8088aecd593a3eaf889b7ce29cbf5e9ff",
+      "lane": "remote-superseded",
+      "next_action": "No PR needed; local dirty smoke-test/root-fix draft is superseded by origin/main, including tests/test_smoke.py plus broader loader and CLI coverage. Reclaim only after normal operator acceptance.",
+      "remote_default_head": "9f26d55",
+      "repo": "organvm/hierarchia-mundi",
+      "root": "cifix-organvm-i-theoria-hierarchia-mundi-3145",
+      "score_discount": 35,
+      "status": "superseded_on_origin_main"
+    },
+    {
+      "classification": "documented non-source residue",
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory contains only Vite dependency-cache metadata. Reclaim only after normal operator acceptance.",
+      "repo": "organvm/the-invisible-ledger",
+      "root": "rev-organvm-the-invisible-ledger-revenue-readiness-0623-bd8b",
+      "score_discount": 35,
+      "status": "cache_only_residue"
+    },
+    {
+      "classification": "documented non-source residue",
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory contains only an empty dist/ directory. Reclaim only after normal operator acceptance.",
+      "repo": "organvm/the-invisible-ledger",
+      "root": "gen-organvm-the-invisible-ledger-ci-green-0625-e3c2",
+      "score_discount": 35,
+      "status": "empty_generated_residue"
+    },
+    {
+      "branch": "limen/gen-organvm-i-theoria-sovereign--ground-ci-green-0620-0f38",
+      "changed_file_count": 11,
+      "classification": "generated structure-test result drift",
+      "head": "80e7617d11223b15acf173dd73e2a026019abeeb",
+      "lane": "owner-blocker",
+      "next_action": "Classify whether these generated structure-test results should be refreshed from the current corpus before cleanup, PR creation, or delegation.",
+      "private_patch_bytes": 222615,
+      "private_patch_sha256": "92dc514490c7bbf3c6a14eb3889656563d070a23af55af3d64f2a16999d63bc9",
+      "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/2026-06-28T011035Z-gen-organvm-i-theoria-sovereign--ground-ci-green-0620-0f38/receipt.json",
+      "repo": "organvm/sovereign--ground",
+      "root": "gen-organvm-i-theoria-sovereign--ground-ci-green-0620-0f38",
+      "score_discount": 35,
+      "status": "generated_results_patch_preserved"
+    },
+    {
+      "branch": "limen/resolve-organvm-i-theoria-.github-459-1ade",
+      "changed_file_count": 7,
+      "classification": "remote default history mismatch; local commit preserved as patch",
+      "head": "0035dff5b80c85b1a6174c8792e862ea29909aba",
+      "lane": "owner-blocker",
+      "next_action": "Classify against the current organvm/.github default branch before cleanup or delegation; direct PR is blocked because the touched workflow files are absent on the force-updated default history.",
+      "origin_main": "e334fb0592541a378e6e0aea99fe3d50d0d662ee",
+      "private_patch_bytes": 6758,
+      "private_patch_sha256": "020b4c9e8227d560caa10714aac24376e56dea272de3563af7211b4d3b0f4a25",
+      "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/2026-06-28T011245Z-resolve-organvm-i-theoria-.github-459-1ade/receipt.json",
+      "repo": "organvm/.github",
+      "root": "resolve-organvm-i-theoria-.github-459-1ade",
+      "score_discount": 35,
+      "status": "history_mismatch_patch_preserved"
     }
   ],
   "schema": 1

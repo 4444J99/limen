@@ -184,16 +184,16 @@ def build_worktree_paths(
         if reason == "active(<6h)":
             lane = "observe"
             action = "Keep active work visible; do not interrupt unless it becomes stale."
-        elif not_git:
-            lane = "residue"
-            action = "Inspect for unique files; if only cache/generated residue, record owner receipt before reclaiming."
         elif preservation:
-            lane = "owner-blocker"
+            lane = str(preservation.get("lane") or "owner-blocker")
             action = str(
                 preservation.get("next_action")
                 or "Private preservation receipt exists; classify owner intent before cleanup or delegation."
             )
-            score -= 30
+            score -= int(preservation.get("score_discount") or 30)
+        elif not_git:
+            lane = "residue"
+            action = "Inspect for unique files; if only cache/generated residue, record owner receipt before reclaiming."
         elif reason == "dirty":
             lane = "preserve"
             action = "Inspect diff, run owner predicate, push branch/open draft PR or record blocker."

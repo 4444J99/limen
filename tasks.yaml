@@ -54670,7 +54670,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - security
   - generated
@@ -54683,7 +54683,7 @@ tasks:
     2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T00:45:06.029054Z'
+  updated: '2026-06-28T00:47:04.638000Z'
   dispatch_log:
   - timestamp: '2026-06-27T00:17:34.556008Z'
     agent: gemini
@@ -54695,6 +54695,11 @@ tasks:
     status: dispatched
     output: Backfilled missing dispatch reservation log after reserve-path audit;
       original lane may predate durable reserve logging.
+  - timestamp: '2026-06-28T00:47:04.638000Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: GEN-organvm-session-meta-security-0626
   title: Security hardening pass on organvm/session-meta
   repo: organvm/session-meta
@@ -54702,7 +54707,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - security
   - generated
@@ -54715,7 +54720,7 @@ tasks:
     2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T00:45:06.029054Z'
+  updated: '2026-06-28T00:47:04.638000Z'
   dispatch_log:
   - timestamp: '2026-06-27T00:17:34.556008Z'
     agent: gemini
@@ -54727,6 +54732,11 @@ tasks:
     status: dispatched
     output: Backfilled missing dispatch reservation log after reserve-path audit;
       original lane may predate durable reserve logging.
+  - timestamp: '2026-06-28T00:47:04.638000Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: GEN-organvm-a-i-chat--exporter-security-0626
   title: Security hardening pass on organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
@@ -54734,7 +54744,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - security
   - generated
@@ -54747,7 +54757,7 @@ tasks:
     2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-27T00:45:06.029054Z'
+  updated: '2026-06-28T00:47:04.638000Z'
   dispatch_log:
   - timestamp: '2026-06-27T00:17:34.556008Z'
     agent: gemini
@@ -54759,6 +54769,11 @@ tasks:
     status: dispatched
     output: Backfilled missing dispatch reservation log after reserve-path audit;
       original lane may predate durable reserve logging.
+  - timestamp: '2026-06-28T00:47:04.638000Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: GEN-organvm-universal-mail--automation-security-0626
   title: Security hardening pass on organvm/universal-mail--automation
   repo: organvm/universal-mail--automation
