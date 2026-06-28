@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-06-28T19:51:53+00:00`
+Generated: `2026-06-28T19:58:30+00:00`
 
 Status: `blocked`
 
@@ -19,21 +19,21 @@ Status: `blocked`
 - Loaded launchd state: `running` pid `24368`.
 - Loaded LIMEN_ROOT: `/Users/4jp/Workspace/limen`.
 - Loaded LIMEN_DISPATCH_ASYNC: `None`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-06-28T19:51:53.225450+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-06-28T19:58:30.643383+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ? harvested 0 ? 0 still running ? would launch 0 (cap 12) -> []`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 0 still running ; would launch 0 (cap 12) -> []`.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
 - Branch: `feature/ORG-artist-organ-face-0628`; status `## feature/ORG-artist-organ-face-0628...origin/feature/ORG-artist-organ-face-0628`.
 - HEAD: `84a3288eaaf91de93428aa8eae9dafbead39ba42`.
-- origin/main: `1f4c1b72bf3bb610b9714f98cdf8f037be601c2f`.
-- Matches origin/main: `False`; ahead `1` behind `7`.
+- origin/main: `feec34abe26d9816931a58f11730bda03ba5f2a7`.
+- Matches origin/main: `False`; ahead `1` behind `8`.
 - Dirty entries: `5`.
   - `container/launchd/com.user.netmeter.plist`
   - `scripts/netmode.sh`
@@ -49,7 +49,7 @@ Status: `blocked`
 
 ## Blockers
 
-- `live-root-not-at-origin-main`: live root branch feature/ORG-artist-organ-face-0628 head 84a3288eaaf9 differs from origin/main 1f4c1b72bf3b.
+- `live-root-not-at-origin-main`: live root branch feature/ORG-artist-organ-face-0628 head 84a3288eaaf9 differs from origin/main feec34abe26d.
 - `live-root-dirty`: live root has 5 dirty entries.
 - `heartbeat-loaded-env-drift`: plist LIMEN_DISPATCH_ASYNC='0', loaded=None.
 

@@ -96,6 +96,7 @@ def receipt_line(line: str) -> str:
         "\u2192": "->",
         "\u2013": "-",
         "\u2014": "-",
+        "\u00b7": ";",
     }
     for src, dst in replacements.items():
         line = line.replace(src, dst)
