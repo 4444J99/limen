@@ -115,9 +115,13 @@ def _ensure_aware(dt: datetime) -> datetime:
 
 
 def stale_tasks(
-    limen: LimenFile, hours: int = 24, agent: str | None = None
+    limen: LimenFile,
+    hours: int = 24,
+    agent: str | None = None,
+    now: datetime | None = None,
 ) -> list[Task]:
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+    reference = _ensure_aware(now) if now else datetime.now(timezone.utc)
+    cutoff = reference - timedelta(hours=hours)
     candidates: list[Task] = []
     for task in limen.tasks:
         if task.status not in ("dispatched", "in_progress"):
@@ -270,9 +274,13 @@ def _task_lifecycle(task: Task, stale_ids: set[str]) -> TaskLifecycle:
 
 
 def qa_report(
-    limen: LimenFile, tasks_path: Path, agent: str = "jules"
+    limen: LimenFile,
+    tasks_path: Path,
+    agent: str = "jules",
+    now: datetime | None = None,
 ) -> QaReport:
-    stale_ids = {task.id for task in stale_tasks(limen)}
+    reference = _ensure_aware(now) if now else datetime.now(timezone.utc)
+    stale_ids = {task.id for task in stale_tasks(limen, now=reference)}
     items = [_task_lifecycle(task, stale_ids) for task in limen.tasks]
     phase_order = {"recover": 0, "verify": 1, "assign": 2, "archive": 3, "archived": 4}
     priority_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "backlog": 4}
@@ -293,7 +301,7 @@ def qa_report(
         "status": "degraded" if recover_items else "ok",
         "surface": "qa",
         "agent": agent,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": reference.isoformat(),
         "tasks_path": str(tasks_path),
         "lifecycle": {
             "total": len(items),

@@ -405,6 +405,34 @@ def test_qa_report_all_phases(tmp_path: Path) -> None:
     assert report["lifecycle"]["archived"] == 1
 
 
+def test_qa_report_uses_supplied_now_for_stale_boundary(tmp_path: Path) -> None:
+    p = tmp_path / "tasks.yaml"
+    p.write_text("")
+    dispatched_at = datetime(2026, 6, 27, 4, 3, 34, 586517, tzinfo=timezone.utc)
+    task = _task(
+        id="BOUNDARY",
+        status="dispatched",
+        dispatch_log=[
+            DispatchLogEntry(
+                timestamp=dispatched_at,
+                agent="jules",
+                session_id="s1",
+                status="dispatched",
+            )
+        ],
+    )
+    before_cutoff = datetime(2026, 6, 28, 4, 3, 33, 908000, tzinfo=timezone.utc)
+    after_cutoff = datetime(2026, 6, 28, 4, 3, 35, 0, tzinfo=timezone.utc)
+
+    static_time_report = qa_report(_limen(tasks=[task]), p, agent="jules", now=before_cutoff)
+    later_report = qa_report(_limen(tasks=[task]), p, agent="jules", now=after_cutoff)
+
+    assert static_time_report["lifecycle"]["verify"] == 1
+    assert static_time_report["lifecycle"]["recover"] == 0
+    assert later_report["lifecycle"]["verify"] == 0
+    assert later_report["lifecycle"]["recover"] == 1
+
+
 # ── print_readiness ──────────────────────────────────────────────────────────
 
 

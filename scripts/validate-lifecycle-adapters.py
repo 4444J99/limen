@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -31,10 +32,28 @@ def mechanism_map(report: dict) -> dict:
     return {mechanism["id"]: mechanism for mechanism in report.get("mechanisms", [])}
 
 
+def parse_generated_at(value: object) -> datetime | None:
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed
+
+
 def main() -> None:
     tasks_path = ROOT / "tasks.yaml"
     static_qa = read_json(ROOT / "web" / "app" / ".generated" / "surfaces" / "qa-status.json")
-    cli_qa = qa_report(load_limen_file(tasks_path), tasks_path, agent="jules")
+    static_generated_at = parse_generated_at(static_qa.get("generated_at"))
+    cli_qa = qa_report(
+        load_limen_file(tasks_path),
+        tasks_path,
+        agent="jules",
+        now=static_generated_at,
+    )
 
     if static_qa.get("surface") != "qa":
         fail("static qa-status surface is not qa")
