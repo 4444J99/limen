@@ -1093,6 +1093,70 @@ def test_session_attack_paths_treat_preserved_dirty_root_as_owner_blocker(tmp_pa
     assert "receipt `private_patch_preserved`" in markdown
 
 
+def test_session_attack_paths_human_gates_operator_acceptance_receipts(tmp_path: Path):
+    attack = _load(ATTACK_PATHS_SCRIPT, "session_attack_paths_operator_acceptance")
+    attack.ROOT = tmp_path
+    attack.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    attack.PROMPT_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+    attack.CODEX_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
+    attack.BLOCKER_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "session-lifecycle-blockers.json"
+    attack.PRESSURE_INDEX = tmp_path / "logs" / "session-lifecycle-pressure.json"
+    attack.DOC_PATH = tmp_path / "docs" / "session-attack-paths.md"
+    attack.PRIVATE_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
+    attack.PRESERVATION_RECEIPTS = tmp_path / "docs" / "worktree-preservation-receipts.json"
+
+    attack.PROMPT_INDEX.parent.mkdir(parents=True)
+    attack.PROMPT_INDEX.write_text(
+        json.dumps(
+            {
+                "sources": [{"source": "codex-sessions", "files": 1, "prompt_events": 20}],
+                "worktree_report": {
+                    "debt": 1,
+                    "items": [{"name": "operator-gated-root", "reason": "dirty", "debt": False}],
+                },
+                "sessions_by_worktree": {"operator-gated-root": 1},
+                "prompt_events_by_worktree": {"operator-gated-root": 100},
+                "remote": {
+                    "enabled": True,
+                    "worktrees": {
+                        "receipts": [
+                            {"name": "operator-gated-root", "remote_branch": "missing", "prs": []},
+                        ],
+                    },
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    attack.CODEX_INDEX.write_text(json.dumps({"session_count": 0, "families": []}), encoding="utf-8")
+    attack.BLOCKER_INDEX.write_text(json.dumps({"blockers": []}), encoding="utf-8")
+    attack.PRESSURE_INDEX.parent.mkdir(parents=True)
+    attack.PRESSURE_INDEX.write_text(json.dumps({"worktrees": {"bytes": 2 * 1024**3}}), encoding="utf-8")
+    attack.PRESERVATION_RECEIPTS.parent.mkdir(parents=True)
+    attack.PRESERVATION_RECEIPTS.write_text(
+        json.dumps(
+            {
+                "receipts": [
+                    {
+                        "root": "operator-gated-root",
+                        "status": "private_patch_preserved",
+                        "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/demo/receipt.json",
+                        "next_action": "Reclaim only after normal operator acceptance.",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = attack.build_snapshot()
+    paths = {item["id"]: item for item in snapshot["ranked_paths"]}
+
+    assert paths["operator-gated-root"]["lane"] == "human-gate"
+    assert paths["operator-gated-root"]["agent_fit"] == "human/codex-prep"
+    assert paths["operator-gated-root"]["operator_acceptance_required"] is True
+
+
 def test_session_attack_paths_prefers_live_worktree_report_over_stale_prompt_snapshot(tmp_path: Path):
     attack = _load(ATTACK_PATHS_SCRIPT, "session_attack_paths_live_worktrees")
     attack.ROOT = tmp_path
@@ -1297,6 +1361,52 @@ def test_conductor_tranche_skips_human_gate_for_autonomous_work_packet(tmp_path:
     assert snapshot["packet"]["selected_path_id"] == "gh-organvm-object-lessons-19-605a"
     assert "github-app-limen-bot-not-wired" in snapshot["skipped_unactionable_path_ids"]
     assert snapshot["packet"]["repo_worktree"].startswith("Owner worktree")
+
+
+def test_conductor_tranche_skips_operator_gated_worktree(tmp_path: Path):
+    tranche = _load(TRANCHE_SCRIPT, "conductor_tranche_operator_gated_worktree")
+    tranche.ROOT = tmp_path
+    tranche.HOME = tmp_path
+    tranche.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    tranche.ATTACK_INDEX = tranche.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
+    tranche.DOC_PATH = tmp_path / "docs" / "conductor-tranche.md"
+    tranche.PRIVATE_INDEX = tranche.PRIVATE_ROOT / "lifecycle" / "conductor-tranche.json"
+    tranche.PORTVS_PATH = tmp_path / "Workspace" / "4444J99" / "portvs"
+
+    tranche.ATTACK_INDEX.parent.mkdir(parents=True)
+    tranche.ATTACK_INDEX.write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-06-28T12:00:00+00:00",
+                "ranked_paths": [
+                    {
+                        "id": "operator-gated-root",
+                        "kind": "worktree",
+                        "lane": "human-gate",
+                        "score": 88,
+                        "agent_fit": "human/codex-prep",
+                        "operator_acceptance_required": True,
+                        "next_action": "Reclaim only after normal operator acceptance.",
+                    },
+                    {
+                        "id": "private-raw-materialization-not-receipted",
+                        "kind": "blocker",
+                        "lane": "blocker",
+                        "category": "private_absorption",
+                        "score": 30,
+                        "agent_fit": "codex",
+                        "next_action": "Run the bounded materialization receipt.",
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = tranche.build_snapshot()
+
+    assert snapshot["packet"]["selected_path_id"] == "private-raw-materialization-not-receipted"
+    assert "operator-gated-root" in snapshot["skipped_unactionable_path_ids"]
 
 
 def test_conductor_tranche_emits_github_consolidation_packet(tmp_path: Path):

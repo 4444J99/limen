@@ -59,6 +59,12 @@ REASON_WEIGHTS = {
     "active(<6h)": 10,
 }
 
+OPERATOR_ACCEPTANCE_MARKERS = (
+    "operator acceptance",
+    "normal operator acceptance",
+    "explicit operator acceptance",
+)
+
 
 def load_json(path: Path) -> dict[str, Any]:
     try:
@@ -85,6 +91,11 @@ def fmt_bytes(n: int) -> str:
             return f"{value:.1f} {unit}"
         value /= 1024
     return f"{n} B"
+
+
+def requires_operator_acceptance(value: str) -> bool:
+    normalized = value.casefold()
+    return any(marker in normalized for marker in OPERATOR_ACCEPTANCE_MARKERS)
 
 
 def parse_ts(value: Any) -> dt.datetime | None:
@@ -217,25 +228,31 @@ def build_worktree_paths(
         if reason == "active(<6h)":
             lane = "observe"
             action = "Keep active work visible; do not interrupt unless it becomes stale."
+            operator_acceptance_required = False
         elif preservation:
-            lane = str(preservation.get("lane") or "owner-blocker")
             action = str(
                 preservation.get("next_action")
                 or "Private preservation receipt exists; classify owner intent before cleanup or delegation."
             )
+            operator_acceptance_required = requires_operator_acceptance(action)
+            lane = "human-gate" if operator_acceptance_required else str(preservation.get("lane") or "owner-blocker")
             score -= int(preservation.get("score_discount") or 30)
         elif not_git:
             lane = "residue"
             action = "Inspect for unique files; if only cache/generated residue, record owner receipt before reclaiming."
+            operator_acceptance_required = False
         elif reason == "dirty":
             lane = "preserve"
             action = "Inspect diff, run owner predicate, push branch/open draft PR or record blocker."
+            operator_acceptance_required = False
         elif open_prs:
             lane = "remote-close"
             action = "Review PR state/checks, then merge or name supersession before local reclaim."
+            operator_acceptance_required = False
         else:
             lane = "remote-proof"
             action = "Verify remote/default preservation; reclaim local checkout only after exact proof."
+            operator_acceptance_required = False
         paths.append(
             {
                 "kind": "worktree",
@@ -252,7 +269,12 @@ def build_worktree_paths(
                 "merged_prs": len(merged_prs),
                 "preservation_status": (preservation or {}).get("status"),
                 "preservation_receipt": (preservation or {}).get("private_receipt"),
-                "agent_fit": "codex first; opencode/jules after packetization",
+                "operator_acceptance_required": operator_acceptance_required,
+                "agent_fit": (
+                    "human/codex-prep"
+                    if operator_acceptance_required
+                    else "codex first; opencode/jules after packetization"
+                ),
                 "next_action": action,
             }
         )
@@ -472,6 +494,7 @@ def render_markdown(snapshot: dict[str, Any], *, limit: int) -> str:
         "- Highest priority: system clogs that prevent the lifecycle machine from draining: broken hooks, invalid states, missing preservation receipts, stale remote proof, or owner ledgers that make downstream cleanup unsafe.",
         "- Network/environment substrate failures outrank ordinary repo cleanup because they can make every agent misclassify auth, dispatch, and GitHub symptoms.",
         "- Next: dirty or non-Git local roots with prompt evidence and missing remote preservation, because they consume disk and risk unique work.",
+        "- Worktree receipts that require operator acceptance before reclaim are human-gated, not autonomous lane work.",
         "- Then: open remote-proof lanes where local copies can become lean after PR/default evidence is checked.",
         "- Then: repeated lifecycle/family loops that need owner packets before delegation.",
         "- Credential/auth lanes stay parked unless they are the direct clog blocking the selected path; then prepare only the bounded non-secret setup or human handoff.",
