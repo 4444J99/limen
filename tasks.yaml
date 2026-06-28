@@ -56647,7 +56647,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -56660,7 +56660,7 @@ tasks:
     keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-28T08:35:41.519227Z'
+  updated: '2026-06-28T08:56:32.923717Z'
   dispatch_log:
   - timestamp: '2026-06-27T05:21:04.898340Z'
     agent: claude
@@ -56685,6 +56685,11 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-28T08:56:32.923717Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-a-i-chat--exporter-test-coverage-0627
   title: Raise test coverage in organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
@@ -57423,7 +57428,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - security
   - generated
@@ -57436,7 +57441,7 @@ tasks:
     2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-28T08:35:41.519227Z'
+  updated: '2026-06-28T08:56:32.923717Z'
   dispatch_log:
   - timestamp: '2026-06-27T04:59:55.262792Z'
     agent: gemini
@@ -57461,6 +57466,11 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-28T08:56:32.923717Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-portfolio-simplify-0627
   title: Reduce complexity in organvm/portfolio
   repo: organvm/portfolio
@@ -57468,7 +57478,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - simplify
   - generated
@@ -57480,7 +57490,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-28T08:35:41.519227Z'
+  updated: '2026-06-28T08:56:32.923717Z'
   dispatch_log:
   - timestamp: '2026-06-27T05:21:04.898340Z'
     agent: gemini
@@ -57501,6 +57511,11 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-28T08:56:32.923717Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-a-i-chat--exporter-simplify-0627
   title: Reduce complexity in organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
@@ -59293,10 +59308,10 @@ tasks:
   title: Raise test coverage in organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -59309,7 +59324,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T08:51:11.701125Z'
+  updated: '2026-06-28T08:56:32.923717Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:40:29.389041Z'
     agent: codex
@@ -59378,14 +59393,19 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T08:56:32.923717Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-the-invisible-ledger-test-coverage-0628
   title: Raise test coverage in organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -59398,7 +59418,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T08:51:11.701125Z'
+  updated: '2026-06-28T08:56:32.923717Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:40:29.389041Z'
     agent: codex
@@ -59444,6 +59464,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T08:56:32.923717Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-mirror-mirror-ci-green-0628
   title: Make organvm/mirror-mirror CI green
   repo: organvm/mirror-mirror
@@ -59502,10 +59527,10 @@ tasks:
   title: Make organvm/domus-genoma CI green
   repo: organvm/domus-genoma
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - ci-green
   - generated
@@ -59519,7 +59544,7 @@ tasks:
     endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T08:51:11.701125Z'
+  updated: '2026-06-28T08:56:32.923717Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:10:51.965981Z'
     agent: codex
@@ -59580,6 +59605,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T08:56:32.923717Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-universal-mail--automation-ci-green-0628
   title: Make organvm/universal-mail--automation CI green
   repo: organvm/universal-mail--automation
@@ -59923,10 +59953,10 @@ tasks:
   title: Make organvm/public-record-data-scrapper CI green
   repo: organvm/public-record-data-scrapper
   type: code
-  target_agent: codex
+  target_agent: gemini
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - ci-green
   - generated
@@ -59940,7 +59970,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T08:51:11.701125Z'
+  updated: '2026-06-28T08:56:32.923717Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:10:51.965981Z'
     agent: opencode
@@ -59997,6 +60027,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T08:56:32.923717Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-limen-ci-green-0628
   title: Make organvm/limen CI green
   repo: organvm/limen
@@ -60505,10 +60540,10 @@ tasks:
   title: Security hardening pass on organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - security
   - generated
@@ -60521,7 +60556,7 @@ tasks:
     2026-06-28 to keep the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T08:51:11.701125Z'
+  updated: '2026-06-28T08:56:32.923717Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:10:51.965981Z'
     agent: agy
@@ -60573,6 +60608,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T08:56:32.923717Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-mirror-mirror-simplify-0628
   title: Reduce complexity in organvm/mirror-mirror
   repo: organvm/mirror-mirror
@@ -60741,10 +60781,10 @@ tasks:
   title: Tighten types in organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - typing
   - generated
@@ -60756,7 +60796,7 @@ tasks:
     and tests green. [auto-generated 2026-06-28 to keep the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T08:51:11.701125Z'
+  updated: '2026-06-28T08:56:32.923717Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:40:29.389041Z'
     agent: codex
@@ -60797,6 +60837,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T08:56:32.923717Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-portfolio-typing-0628
   title: Tighten types in organvm/portfolio
   repo: organvm/portfolio
@@ -61350,10 +61395,10 @@ tasks:
   title: First-paying-customer readiness pass on The Invisible Ledger
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue-readiness
   - revenue
@@ -61369,7 +61414,7 @@ tasks:
     \ spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T08:51:11.701125Z'
+  updated: '2026-06-28T08:56:32.923717Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:10:51.965981Z'
     agent: claude
@@ -61430,6 +61475,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T08:56:32.923717Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: REV-organvm-mirror-mirror-revenue-readiness-0628
   title: First-paying-customer readiness pass on Mirror Mirror
   repo: organvm/mirror-mirror
@@ -61702,10 +61752,10 @@ tasks:
   title: Raise test coverage in organvm/limen
   repo: organvm/limen
   type: code
-  target_agent: codex
+  target_agent: gemini
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -61718,7 +61768,7 @@ tasks:
     keep the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T08:51:11.701125Z'
+  updated: '2026-06-28T08:56:32.923717Z'
   dispatch_log:
   - timestamp: '2026-06-28T06:18:55.153664Z'
     agent: codex
@@ -61759,6 +61809,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T08:56:32.923717Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-domus-genoma-docs-0628
   title: Real usage docs for organvm/domus-genoma
   repo: organvm/domus-genoma
@@ -61766,7 +61821,7 @@ tasks:
   target_agent: any
   priority: low
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - docs
   - generated
@@ -61778,7 +61833,13 @@ tasks:
     \ 2026-06-28 to keep the stream endless]"
   depends_on: []
   created: '2026-06-28'
-  dispatch_log: []
+  updated: '2026-06-28T08:56:32.923717Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T08:56:32.923717Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
 - id: GEN-organvm-public-record-data-scrapper-simplify-0628
   title: Reduce complexity in organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
@@ -61786,7 +61847,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - simplify
   - generated
@@ -61797,4 +61858,10 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-28 to keep the stream endless]
   depends_on: []
   created: '2026-06-28'
-  dispatch_log: []
+  updated: '2026-06-28T08:56:32.923717Z'
+  dispatch_log:
+  - timestamp: '2026-06-28T08:56:32.923717Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
