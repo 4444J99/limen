@@ -60,7 +60,7 @@ DEFAULT_CAPABILITY_ROOTS = (
     ROOT / ".claude" / "skills",
     ROOT / "mcp",
 )
-CAPABILITY_SKIP_DIRS = {"node_modules", ".git", ".venv", "venv", "__pycache__", ".next", "dist", "build"}
+CAPABILITY_SKIP_DIRS = {"node_modules", ".git", ".venv", "venv", "__pycache__", ".next", "dist", "build", "portvs"}
 
 
 def load_json(path: Path) -> dict[str, Any]:

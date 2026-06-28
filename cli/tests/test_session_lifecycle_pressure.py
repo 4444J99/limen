@@ -10,6 +10,8 @@ PRESSURE_SCRIPT = ROOT / "scripts" / "session-lifecycle-pressure.py"
 CAPABILITY_SCRIPT = ROOT / "scripts" / "capability-substrate-ledger.py"
 BLOCKERS_SCRIPT = ROOT / "scripts" / "session-blockers-ledger.py"
 ATTACK_PATHS_SCRIPT = ROOT / "scripts" / "session-attack-paths.py"
+TRANCHE_SCRIPT = ROOT / "scripts" / "conductor-tranche.py"
+ORIENT_SCRIPT = ROOT / "scripts" / "session-orient.py"
 
 
 def _load(path: Path, name: str):
@@ -433,3 +435,87 @@ def test_session_attack_paths_treat_preserved_dirty_root_as_owner_blocker(tmp_pa
     assert paths["preserved-root"]["preservation_status"] == "private_patch_preserved"
     assert paths["preserved-root"]["score"] < paths["unpreserved-root"]["score"]
     assert "receipt `private_patch_preserved`" in markdown
+
+
+def test_conductor_tranche_selects_actionable_packet_with_receipts(tmp_path: Path):
+    tranche = _load(TRANCHE_SCRIPT, "conductor_tranche")
+    tranche.ROOT = tmp_path
+    tranche.HOME = tmp_path
+    tranche.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    tranche.ATTACK_INDEX = tranche.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
+    tranche.DOC_PATH = tmp_path / "docs" / "conductor-tranche.md"
+    tranche.PRIVATE_INDEX = tranche.PRIVATE_ROOT / "lifecycle" / "conductor-tranche.json"
+    tranche.PORTVS_PATH = tmp_path / "Workspace" / "4444J99" / "portvs"
+
+    tranche.ATTACK_INDEX.parent.mkdir(parents=True)
+    tranche.ATTACK_INDEX.write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-06-28T12:00:00+00:00",
+                "ranked_paths": [
+                    {
+                        "id": "credential-codex-auth-sessions",
+                        "kind": "blocker",
+                        "lane": "parked",
+                        "category": "auth_credentials",
+                        "score": 99,
+                        "next_action": "Keep parked.",
+                    },
+                    {
+                        "id": "local-lifecycle-disk-pressure",
+                        "kind": "blocker",
+                        "lane": "drain",
+                        "category": "local_lean",
+                        "score": 74,
+                        "agent_fit": "codex",
+                        "next_action": "Drain only after remote/default preservation proof.",
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = tranche.build_snapshot()
+    markdown = tranche.render_markdown(snapshot)
+    tranche.write_outputs(snapshot, markdown)
+
+    packet = snapshot["packet"]
+    assert packet["id"] == "tranche-local-lifecycle-disk-pressure"
+    assert packet["selected_path_id"] == "local-lifecycle-disk-pressure"
+    assert "docs/worktree-lifecycle-ledger.md" in packet["allowed_files"]
+    assert str(tranche.PORTVS_PATH) in packet["forbidden"]
+    assert "credential-codex-auth-sessions" in snapshot["skipped_unactionable_path_ids"]
+    assert "one-to-two-hour direct-session tranche" in markdown
+    assert "Drain only after remote/default preservation proof." in markdown
+    assert tranche.DOC_PATH.exists()
+    assert tranche.PRIVATE_INDEX.exists()
+
+
+def test_session_orientation_board_counts_tasks_not_dispatch_logs(tmp_path: Path):
+    orient = _load(ORIENT_SCRIPT, "session_orient_board")
+    orient.ROOT = tmp_path
+    (tmp_path / "tasks.yaml").write_text(
+        """
+portal:
+  budget: {}
+tasks:
+  - id: A
+    status: open
+    dispatch_log:
+      - status: dispatched
+      - status: in_progress
+  - id: B
+    status: done
+    dispatch_log:
+      - status: open
+      - status: done
+  - id: C
+    status: in_progress
+""",
+        encoding="utf-8",
+    )
+
+    board = orient.section_board()
+
+    assert board == "**Board** — 1 open · 1 in_progress · 1 done"

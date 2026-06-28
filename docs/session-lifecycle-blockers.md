@@ -1,6 +1,6 @@
 # Session Lifecycle Blockers
 
-Generated: `2026-06-28T02:52:38+00:00`
+Generated: `2026-06-28T15:04:52+00:00`
 
 ## Canonical Handling
 
@@ -19,7 +19,7 @@ Generated: `2026-06-28T02:52:38+00:00`
 - Remote receipts enabled: `True`; cloud receipts enabled: `True`.
 - Session pressure hook wired: `True`; last pressure snapshot present: `True`.
 - Local lifecycle footprint: `5.3 GiB`.
-- Capability substrate detected: `11` roots, `1324` skill files, `45` plugin/MCP manifests.
+- Capability substrate detected: `11` roots, `1317` skill files, `45` plugin/MCP manifests.
 - Capability resurfacing receipt present/current: `True`/`True`; activation candidates `30`.
 
 ## Parked / Hung Workstreams

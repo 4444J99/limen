@@ -62,6 +62,7 @@ CAPABILITY_SKIP_DIRS = {
     "dist",
     "env",
     "node_modules",
+    "portvs",
     "venv",
 }
 SKILL_FILENAMES = {"SKILL.md", "skill.md"}

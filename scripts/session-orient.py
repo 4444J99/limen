@@ -23,6 +23,11 @@ import re
 import subprocess
 from pathlib import Path
 
+try:
+    import yaml
+except Exception:  # pragma: no cover - dependency absence is a fail-open hook path.
+    yaml = None
+
 ROOT = Path(os.environ.get("LIMEN_ROOT") or Path(__file__).resolve().parents[1])
 # The auto-memory index lives outside the repo (per-user projects dir); resolve it from
 # this repo's identity so the lookup is derived, never pinned to a machine path.
@@ -129,20 +134,25 @@ def section_health():
 
 
 def section_board():
-    """tasks.yaml status mix — streamed line-count, no full YAML parse (the file is large)."""
+    """tasks.yaml status mix, counting only task records, not dispatch_log transitions."""
+    if yaml is None:
+        return ""
     counts = {}
     try:
-        with (ROOT / "tasks.yaml").open("r", encoding="utf-8", errors="replace") as fh:
-            for line in fh:
-                m = re.match(r"\s*status:\s*(\S+)", line)
-                if m:
-                    counts[m.group(1)] = counts.get(m.group(1), 0) + 1
+        data = yaml.safe_load((ROOT / "tasks.yaml").read_text(encoding="utf-8", errors="replace"))
     except Exception:
         return ""
+    tasks = data.get("tasks") if isinstance(data, dict) else []
+    for task in tasks if isinstance(tasks, list) else []:
+        if not isinstance(task, dict):
+            continue
+        status = task.get("status")
+        if status:
+            counts[str(status)] = counts.get(str(status), 0) + 1
     if not counts:
         return ""
     parts = []
-    for k in ("open", "dispatched", "done", "needs_human"):
+    for k in ("open", "dispatched", "in_progress", "done", "needs_human"):
         if counts.get(k):
             parts.append(f"{counts[k]} {k}")
     return "**Board** — " + " · ".join(parts) if parts else ""
@@ -194,6 +204,16 @@ def section_lifecycle_pressure():
     return _trunc(proc.stdout.strip(), 260)
 
 
+def section_tranche():
+    """Current bounded conductor tranche, if one has been selected."""
+    txt = _read_text(ROOT / "docs" / "conductor-tranche.md", limit_bytes=4096)
+    summary = next((ln.strip() for ln in txt.splitlines() if ln.startswith("Summary:")), "")
+    if not summary:
+        return ""
+    summary = summary.removeprefix("Summary:").strip()
+    return f"**Current tranche** — {_trunc(summary, 260)}"
+
+
 def section_pointers():
     """A fixed 'read these first' footer — the things he asks me to read every session."""
     return (
@@ -214,6 +234,7 @@ def main():
         section_board,
         section_git,
         section_lifecycle_pressure,
+        section_tranche,
         section_pointers,
     )
     parts = []
