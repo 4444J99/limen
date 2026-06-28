@@ -59293,10 +59293,10 @@ tasks:
   title: Raise test coverage in organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - test-coverage
   - generated
@@ -59309,7 +59309,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T08:21:59.051367Z'
+  updated: '2026-06-28T08:51:11.701125Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:40:29.389041Z'
     agent: codex
@@ -59373,14 +59373,19 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T08:51:11.701125Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GEN-organvm-the-invisible-ledger-test-coverage-0628
   title: Raise test coverage in organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - test-coverage
   - generated
@@ -59393,7 +59398,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T08:25:07Z'
+  updated: '2026-06-28T08:51:11.701125Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:40:29.389041Z'
     agent: codex
@@ -59434,6 +59439,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T08:51:11.701125Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GEN-organvm-mirror-mirror-ci-green-0628
   title: Make organvm/mirror-mirror CI green
   repo: organvm/mirror-mirror
@@ -59492,10 +59502,10 @@ tasks:
   title: Make organvm/domus-genoma CI green
   repo: organvm/domus-genoma
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - ci-green
   - generated
@@ -59509,7 +59519,7 @@ tasks:
     endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T07:48:00.922760Z'
+  updated: '2026-06-28T08:51:11.701125Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:10:51.965981Z'
     agent: codex
@@ -59565,6 +59575,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T08:51:11.701125Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GEN-organvm-universal-mail--automation-ci-green-0628
   title: Make organvm/universal-mail--automation CI green
   repo: organvm/universal-mail--automation
@@ -59824,7 +59839,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - ci-green
   - generated
@@ -59839,7 +59854,7 @@ tasks:
     endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T08:21:59.051367Z'
+  updated: '2026-06-28T08:49:00.239206Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:10:51.965981Z'
     agent: opencode
@@ -59899,14 +59914,19 @@ tasks:
     agent: jules
     session_id: '1724883059730009603'
     status: dispatched
+  - timestamp: '2026-06-28T08:49:00.239206Z'
+    agent: jules
+    session_id: https://github.com/organvm/portfolio/pull/159
+    status: done
+    output: 'jules-land: landed session 1724883059730009603 as PR'
 - id: GEN-organvm-public-record-data-scrapper-ci-green-0628
   title: Make organvm/public-record-data-scrapper CI green
   repo: organvm/public-record-data-scrapper
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - ci-green
   - generated
@@ -59920,7 +59940,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T07:48:00.922760Z'
+  updated: '2026-06-28T08:51:11.701125Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:10:51.965981Z'
     agent: opencode
@@ -59972,6 +59992,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T08:51:11.701125Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GEN-organvm-limen-ci-green-0628
   title: Make organvm/limen CI green
   repo: organvm/limen
@@ -59979,7 +60004,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - ci-green
   - generated
@@ -59994,7 +60019,7 @@ tasks:
     endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T08:21:59.051367Z'
+  updated: '2026-06-28T08:49:00.239206Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:10:51.965981Z'
     agent: opencode
@@ -60049,6 +60074,11 @@ tasks:
     agent: jules
     session_id: '6887777035133754509'
     status: dispatched
+  - timestamp: '2026-06-28T08:49:00.239206Z'
+    agent: jules
+    session_id: https://github.com/organvm/limen/pull/383
+    status: done
+    output: 'jules-land: landed session 6887777035133754509 as PR'
 - id: GEN-organvm-mirror-mirror-docs-0628
   title: Real usage docs for organvm/mirror-mirror
   repo: organvm/mirror-mirror
@@ -60475,10 +60505,10 @@ tasks:
   title: Security hardening pass on organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - security
   - generated
@@ -60491,7 +60521,7 @@ tasks:
     2026-06-28 to keep the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T07:48:00.922760Z'
+  updated: '2026-06-28T08:51:11.701125Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:10:51.965981Z'
     agent: agy
@@ -60538,6 +60568,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T08:51:11.701125Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GEN-organvm-mirror-mirror-simplify-0628
   title: Reduce complexity in organvm/mirror-mirror
   repo: organvm/mirror-mirror
@@ -60706,10 +60741,10 @@ tasks:
   title: Tighten types in organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - typing
   - generated
@@ -60721,7 +60756,7 @@ tasks:
     and tests green. [auto-generated 2026-06-28 to keep the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T07:48:00.922760Z'
+  updated: '2026-06-28T08:51:11.701125Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:40:29.389041Z'
     agent: codex
@@ -60757,6 +60792,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T08:51:11.701125Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GEN-organvm-portfolio-typing-0628
   title: Tighten types in organvm/portfolio
   repo: organvm/portfolio
@@ -61310,10 +61350,10 @@ tasks:
   title: First-paying-customer readiness pass on The Invisible Ledger
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 2
-  status: failed
+  status: open
   labels:
   - revenue-readiness
   - revenue
@@ -61329,7 +61369,7 @@ tasks:
     \ spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T07:48:00.922760Z'
+  updated: '2026-06-28T08:51:11.701125Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:10:51.965981Z'
     agent: claude
@@ -61385,6 +61425,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T08:51:11.701125Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: REV-organvm-mirror-mirror-revenue-readiness-0628
   title: First-paying-customer readiness pass on Mirror Mirror
   repo: organvm/mirror-mirror
@@ -61657,10 +61702,10 @@ tasks:
   title: Raise test coverage in organvm/limen
   repo: organvm/limen
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - test-coverage
   - generated
@@ -61673,7 +61718,7 @@ tasks:
     keep the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T07:48:00.922760Z'
+  updated: '2026-06-28T08:51:11.701125Z'
   dispatch_log:
   - timestamp: '2026-06-28T06:18:55.153664Z'
     agent: codex
@@ -61709,6 +61754,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T08:51:11.701125Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GEN-organvm-domus-genoma-docs-0628
   title: Real usage docs for organvm/domus-genoma
   repo: organvm/domus-genoma
