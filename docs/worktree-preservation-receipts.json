@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-06-28T15:19:32Z",
+  "generated_utc": "2026-06-28T15:37:39Z",
   "receipts": [
     {
       "branch": "limen/gen-organvm-universal-mail--automation-test-coverage-0625-151e",
@@ -26,6 +26,36 @@
         "api": 12,
         "mcp_server": 2
       }
+    },
+    {
+      "branch": "limen/bld-mirror-mirror-harden-350f",
+      "classification": "merged PR preserves local worktree head",
+      "evidence_updated_utc": "2026-06-28T15:37:39Z",
+      "head": "f44da8e936d6d77fe9869c433372a697408f8491",
+      "lane": "remote-merged",
+      "next_action": "No local PR or branch preservation action remains. GitHub PR #67 is MERGED and its head OID equals the local worktree HEAD. Reclaim the local checkout only after normal operator acceptance.",
+      "pr_number": 67,
+      "pr_state": "MERGED",
+      "pr_url": "https://github.com/organvm/mirror-mirror/pull/67",
+      "repo": "organvm/mirror-mirror",
+      "root": "bld-mirror-mirror-harden-350f",
+      "score_discount": 35,
+      "status": "merged_pr_preserved"
+    },
+    {
+      "branch": "limen/rev-organvm-public-record-data-scrapper-revenue-readiness-0623-023f",
+      "classification": "merged PR preserves local worktree head",
+      "evidence_updated_utc": "2026-06-28T15:37:39Z",
+      "head": "3af406915ec3a3c67f0843f963cb6a3658bcc9d9",
+      "lane": "remote-merged",
+      "next_action": "No local PR or branch preservation action remains. GitHub PR #328 is MERGED and its head OID equals the local worktree HEAD. Reclaim the local checkout only after normal operator acceptance.",
+      "pr_number": 328,
+      "pr_state": "MERGED",
+      "pr_url": "https://github.com/organvm/public-record-data-scrapper/pull/328",
+      "repo": "organvm/public-record-data-scrapper",
+      "root": "rev-organvm-public-record-data-scrapper-revenue-readiness-0623-023f",
+      "score_discount": 35,
+      "status": "merged_pr_preserved"
     },
     {
       "branch": "limen/cifix-organvm-i-theoria-hierarchia-mundi-3145",

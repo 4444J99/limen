@@ -1,6 +1,6 @@
 # Conductor Tranche
 
-Generated: `2026-06-28T15:34:57+00:00`
+Generated: `2026-06-28T15:39:19+00:00`
 
 Summary: `tranche-local-lifecycle-disk-pressure` -> `local-lifecycle-disk-pressure` (`drain`); stop before: Stop before local reclaim/deletion, broad generated build-out, GitHub merge/close, or any owner repo mutation not covered by a fresh owner receipt.
 
@@ -21,7 +21,7 @@ Summary: `tranche-local-lifecycle-disk-pressure` -> `local-lifecycle-disk-pressu
 | Lane | `drain` |
 | Score | `74` |
 | Agent fit | `codex` |
-| Attack index generated | `2026-06-28T15:34:57+00:00` |
+| Attack index generated | `2026-06-28T15:39:19+00:00` |
 | Ranked paths read | `30` |
 | Skipped parked/observe/auth paths | `cloud-credential-handles-unconfigured`, `credential-codex-auth-sessions`, `auth_credentials` |
 
