@@ -1,8 +1,8 @@
 # Conductor Tranche
 
-Generated: `2026-06-28T16:44:20+00:00`
+Generated: `2026-06-28T16:48:05+00:00`
 
-Summary: `tranche-gh-organvm-object-lessons-19-605a` -> `gh-organvm-object-lessons-19-605a` (`remote-proof`); stop before: Stop before deletion, force-push, merge, or owner-repo source edits unless a narrower owner packet names the repo, branch, predicate, and receipt.
+Summary: `tranche-resolve-a-organvm-the-invisible-ledger-4-f657` -> `resolve-a-organvm-the-invisible-ledger-4-f657` (`remote-proof`); stop before: Stop before deletion, force-push, merge, or owner-repo source edits unless a narrower owner packet names the repo, branch, predicate, and receipt.
 
 ## Cadence Contract
 
@@ -15,21 +15,21 @@ Summary: `tranche-gh-organvm-object-lessons-19-605a` -> `gh-organvm-object-lesso
 
 | Field | Value |
 |---|---|
-| Packet | `tranche-gh-organvm-object-lessons-19-605a` |
-| Selected path | `gh-organvm-object-lessons-19-605a` |
+| Packet | `tranche-resolve-a-organvm-the-invisible-ledger-4-f657` |
+| Selected path | `resolve-a-organvm-the-invisible-ledger-4-f657` |
 | Kind | `worktree` |
 | Lane | `remote-proof` |
-| Score | `49` |
+| Score | `48` |
 | Agent fit | `codex first; opencode/jules after packetization` |
-| Attack index generated | `2026-06-28T16:44:08+00:00` |
+| Attack index generated | `2026-06-28T16:47:52+00:00` |
 | Ranked paths read | `30` |
 | Skipped family/human-gate/parked/observe/auth paths | `session_lifecycle`, `worktree_lifecycle`, `github_review`, `github-app-limen-bot-not-wired`, `github-consolidation-collisions`, `agent_coordination`, `technical_debt_ci`, `local-lifecycle-disk-pressure`, `convergence_corpus`, `uncategorized`, `cloud-credential-handles-unconfigured`, `credential-codex-auth-sessions`, `auth_credentials` |
 
 ## Work Packet
 
-Purpose: Resolve `gh-organvm-object-lessons-19-605a` to a preservation proof, owner blocker, remote/default proof, or documented non-source residue without deleting unique work.
+Purpose: Resolve `resolve-a-organvm-the-invisible-ledger-4-f657` to a preservation proof, owner blocker, remote/default proof, or documented non-source residue without deleting unique work.
 
-Repo/worktree: Owner worktree `gh-organvm-object-lessons-19-605a` under `~/Workspace/.limen-worktrees` plus Limen receipts.
+Repo/worktree: Owner worktree `resolve-a-organvm-the-invisible-ledger-4-f657` under `~/Workspace/.limen-worktrees` plus Limen receipts.
 
 Allowed files:
 

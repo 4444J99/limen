@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-06-28T16:09:44Z",
+  "generated_utc": "2026-06-28T16:46:54Z",
   "receipts": [
     {
       "branch": "limen/gen-organvm-universal-mail--automation-test-coverage-0625-151e",
@@ -41,6 +41,21 @@
       "root": "bld-mirror-mirror-harden-350f",
       "score_discount": 35,
       "status": "merged_pr_preserved"
+    },
+    {
+      "branch": "limen/gh-organvm-object-lessons-19-605a",
+      "classification": "default branch preserves local worktree head",
+      "evidence_updated_utc": "2026-06-28T16:46:54Z",
+      "head": "745a1baa57874b4e819a0eba4b983246f72e5539",
+      "lane": "remote-default-proof",
+      "next_action": "No local source preservation action remains. Local HEAD, origin/main, and closed PR #22 head/base OIDs all equal 745a1baa57874b4e819a0eba4b983246f72e5539; git cherry origin/main HEAD and git diff --check origin/main..HEAD are empty. Reclaim the local checkout only after normal operator acceptance.",
+      "pr_number": 22,
+      "pr_state": "CLOSED",
+      "pr_url": "https://github.com/organvm/object-lessons/pull/22",
+      "repo": "organvm/object-lessons",
+      "root": "gh-organvm-object-lessons-19-605a",
+      "score_discount": 35,
+      "status": "default_branch_preserved"
     },
     {
       "branch": "limen/rev-organvm-public-record-data-scrapper-revenue-readiness-0623-023f",
