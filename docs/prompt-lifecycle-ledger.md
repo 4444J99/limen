@@ -1,6 +1,6 @@
 # Prompt Lifecycle Ledger
 
-Generated: `2026-06-27T20:59:51+00:00`
+Generated: `2026-06-27T21:44:45+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -12,13 +12,13 @@ Horizon: `all local history`
 
 ## Redacted Prompt Coverage
 
-Indexed `9484` app/session files, `2.1 GiB`, with `92685` prompt-like user events hashed into the private index.
+Indexed `9484` app/session files, `2.1 GiB`, with `92698` prompt-like user events hashed into the private index.
 
 | Source | Files | Prompt Events | Event Records | Size | Newest |
 |---|---:|---:|---:|---:|---|
 | `claude-projects` | 4851 | 87814 | 313175 | 1.4 GiB | `2026-06-27T20:23:23+00:00` |
-| `codex-sessions` | 887 | 4330 | 229776 | 710.1 MiB | `2026-06-27T20:58:32+00:00` |
-| `codex-history` | 1 | 408 | 408 | 180.5 KiB | `2026-06-27T20:49:57+00:00` |
+| `codex-sessions` | 887 | 4339 | 230133 | 725.3 MiB | `2026-06-27T21:43:30+00:00` |
+| `codex-history` | 1 | 412 | 412 | 181.3 KiB | `2026-06-27T21:33:36+00:00` |
 | `claude-tasks` | 188 | 133 | 133 | 57.7 KiB | `2026-06-26T00:08:52+00:00` |
 | `claude-file-history` | 3519 | 0 | 0 | 42.2 MiB | `2026-06-27T00:26:28+00:00` |
 | `claude-plans` | 34 | 0 | 0 | 289.3 KiB | `2026-06-25T03:22:45+00:00` |
@@ -65,7 +65,7 @@ Indexed `9484` app/session files, `2.1 GiB`, with `92685` prompt-like user event
 - GitHub worktree repos seen: `11`.
 - Git worktree roots with remote branch present: `5`; missing: `6`.
 - Branch-linked PR states: `OPEN` 5, `MERGED` 1, `CLOSED` 0.
-- Task-board GitHub PR refs seen: `657`; checked: `657`; states: `CLOSED` 31, `ERROR` 7, `MERGED` 444, `OPEN` 175.
+- Task-board GitHub PR refs seen: `657`; checked: `657`; states: `CLOSED` 31, `ERROR` 14, `MERGED` 442, `OPEN` 170.
 
 ## Cloud Receipts
 
@@ -82,7 +82,7 @@ Indexed `9484` app/session files, `2.1 GiB`, with `92685` prompt-like user event
 - Dispatch receipt classification must distinguish async Jules work from stranded local no-PR work; otherwise the conductor burns attention on healthy async reservations.
 - Prompt/session coverage is now hashed, but lifecycle judgment still needs owner actions: dirty roots need PRs or blocker records, and open PR receipts need merge or named supersession.
 - Codex now has prompt-event coverage plus `codex-quicken.py` lifecycle classification: `887` sessions; `ALIVE` 1, `CLOSED` 783, `PARKED` 40, `STALLED` 63.
-- Remote task-board PR receipt scan has `7` GitHub/API errors; rerun before using those refs as closure proof.
+- Remote task-board PR receipt scan has `14` GitHub/API errors; rerun before using those refs as closure proof.
 
 ## Drain Queue
 

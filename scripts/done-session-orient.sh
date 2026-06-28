@@ -13,6 +13,8 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT" || exit 1
 GEN="scripts/session-orient.py"
 HOOK="scripts/hooks/session-orient.sh"
+PRESSURE_GEN="scripts/session-lifecycle-pressure.py"
+PRESSURE_HOOK="scripts/hooks/session-lifecycle-pressure.sh"
 DIGEST="logs/session-orientation.md"
 fail() { echo "✗ $*"; exit 1; }
 ok()   { echo "✓ $*"; }
@@ -21,19 +23,30 @@ ok()   { echo "✓ $*"; }
 [ -f "$GEN" ]  || fail "missing generator $GEN"
 [ -f "$HOOK" ] || fail "missing hook $HOOK"
 [ -x "$HOOK" ] || fail "hook not executable $HOOK"
+[ -f "$PRESSURE_GEN" ] || fail "missing lifecycle pressure generator $PRESSURE_GEN"
+[ -f "$PRESSURE_HOOK" ] || fail "missing lifecycle pressure hook $PRESSURE_HOOK"
+[ -x "$PRESSURE_GEN" ] || fail "lifecycle pressure generator not executable $PRESSURE_GEN"
+[ -x "$PRESSURE_HOOK" ] || fail "lifecycle pressure hook not executable $PRESSURE_HOOK"
 ok "artifacts present and executable"
 
-# 2. generator runs, prints a digest, writes the cached fallback, exits 0
+# 2. generators run, print digests, write cached fallbacks, exit 0
+pressure="$(python3 "$PRESSURE_GEN" --write)" || fail "lifecycle pressure generator exited non-zero"
+printf '%s' "$pressure" | grep -q "Lifecycle pressure" || fail "pressure generator printed no lifecycle pressure line"
+[ -f "logs/session-lifecycle-pressure.json" ] || fail "pressure generator did not write logs/session-lifecycle-pressure.json"
+[ -f "logs/session-lifecycle-pressure.md" ] || fail "pressure generator did not write logs/session-lifecycle-pressure.md"
 out="$(python3 "$GEN")" || fail "generator exited non-zero"
 printf '%s' "$out" | grep -q "Session orientation" || fail "generator printed no digest header"
+printf '%s' "$out" | grep -q "Lifecycle pressure" || fail "generator omitted lifecycle pressure section"
 [ -f "$DIGEST" ] || fail "generator did not write $DIGEST"
-ok "generator runs, prints digest, writes $DIGEST"
+ok "generators run, print digests, write cached logs"
 
 # 3. PII firewall — counts-only. NO clinical literal may appear in the generator
 #    SOURCE or the generated DIGEST (the firewall guards the generator, not just output).
 DENY='seroquel|quetiapine|nocturia|apnea|urinat|antipsychotic|insomnia|diagnos|prescrib|dosage|[0-9]+ *mg'
 if grep -Eiq "$DENY" "$GEN"; then fail "PII deny-list hit in generator source $GEN"; fi
 if grep -Eiq "$DENY" "$DIGEST"; then fail "PII deny-list hit in generated digest $DIGEST"; fi
+if grep -Eiq "$DENY" "$PRESSURE_GEN"; then fail "PII deny-list hit in pressure source $PRESSURE_GEN"; fi
+if grep -Eiq "$DENY" "logs/session-lifecycle-pressure.md"; then fail "PII deny-list hit in pressure digest"; fi
 ok "PII-free: no clinical literal in generator source or digest"
 
 # 4. idempotent — two consecutive runs are byte-identical (counts are stable within a tick)
@@ -58,14 +71,17 @@ if command -v ruff >/dev/null 2>&1 || python3 -m ruff --version >/dev/null 2>&1;
   ok "ruff clean: $GEN"
 fi
 bash -n "$HOOK" || fail "bash syntax error in $HOOK"
-ok "bash syntax ok: $HOOK"
+bash -n "$PRESSURE_HOOK" || fail "bash syntax error in $PRESSURE_HOOK"
+ok "bash syntax ok: hooks"
 
-# 8. activation status — reported, never required (harness-gated his-hand act)
+# 8. activation status
 SET=".claude/settings.json"
 if grep -q "session-orient.sh" "$SET" 2>/dev/null; then
   echo "● ACTIVATION: WIRED in $SET"
 else
   echo "● ACTIVATION: PENDING — paste the SessionStart block into $SET (harness-gated; his hand)"
 fi
+grep -q "session-lifecycle-pressure.sh" "$SET" 2>/dev/null || fail "SessionEnd pressure hook is not wired in $SET"
+ok "SessionEnd lifecycle pressure hook is wired"
 
 echo "session-orientation organ: DONE (built, PII-free, idempotent, fail-open)"

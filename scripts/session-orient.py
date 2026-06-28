@@ -171,6 +171,29 @@ def section_git():
     return f"**Git** — {branch}{pos} · {dirty}"
 
 
+def section_lifecycle_pressure():
+    """Local/remote lifecycle pressure from the last SessionEnd refresh."""
+    txt = _read_text(ROOT / "logs" / "session-lifecycle-pressure.md", limit_bytes=1024)
+    line = next((ln.strip() for ln in txt.splitlines() if ln.strip()), "")
+    if line:
+        return _trunc(line, 260)
+    gen = ROOT / "scripts" / "session-lifecycle-pressure.py"
+    if not gen.is_file():
+        return ""
+    try:
+        proc = subprocess.run(
+            ["python3", str(gen)],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except Exception:
+        return ""
+    if proc.returncode != 0:
+        return ""
+    return _trunc(proc.stdout.strip(), 260)
+
+
 def section_pointers():
     """A fixed 'read these first' footer — the things he asks me to read every session."""
     return (
@@ -190,6 +213,7 @@ def main():
         section_health,
         section_board,
         section_git,
+        section_lifecycle_pressure,
         section_pointers,
     )
     parts = []

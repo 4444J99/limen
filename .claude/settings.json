@@ -30,7 +30,8 @@
     "SessionEnd": [
       {
         "hooks": [
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/scripts/hooks/session-closeout.sh" }
+          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/scripts/hooks/session-closeout.sh" },
+          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/scripts/hooks/session-lifecycle-pressure.sh" }
         ]
       }
     ]

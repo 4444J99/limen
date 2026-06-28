@@ -130,6 +130,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Ignored local raw/private session cartridge. Stores manifests and optional content-addressed object copies; never committed."
+  LIMEN_CAPABILITY_ROOTS:
+    default: ""
+    env: LIMEN_CAPABILITY_ROOTS
+    self_update: none
+    owner: continuity
+    note: "Optional colon-separated override for counts-only capability-substrate discovery (skills/plugins/MCP/ACP). Empty means use the local default roots; never read or activate private skill bodies in lifecycle closeout."
   LIMEN_CODEX_QUICKEN_STALE_MIN:
     default: 20
     env: LIMEN_CODEX_QUICKEN_STALE_MIN

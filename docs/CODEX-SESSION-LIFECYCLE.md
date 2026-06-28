@@ -1,6 +1,6 @@
 # Codex Session Lifecycle
 
-Generated: `2026-06-27T20:24:22+00:00`
+Generated: `2026-06-27T21:42:32+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -13,14 +13,14 @@ Horizon: `all local history`
 ## State Summary
 
 - Codex session files classified: `887`.
-- Codex prompt history events indexed: `404` across `20` session ids.
+- Codex prompt history events indexed: `412` across `20` session ids.
 - States: `ALIVE` 1, `CLOSED` 783, `PARKED` 40, `STALLED` 63.
 
 ## Family Routes
 
 | Family | Sessions | States | Prompt Events | Owner | Route |
 |---|---:|---|---:|---|---|
-| `auth_credentials` | 405 | `ALIVE` 1, `CLOSED` 364, `PARKED` 40 | 2474 | credential workstream | park unless a scoped task explicitly requires the account action |
+| `auth_credentials` | 405 | `ALIVE` 1, `CLOSED` 364, `PARKED` 40 | 2491 | credential workstream | park unless a scoped task explicitly requires the account action |
 | `session_lifecycle` | 159 | `CLOSED` 139, `STALLED` 20 | 636 | limen control plane | fold into session and prompt lifecycle ledgers |
 | `github_review` | 158 | `CLOSED` 145, `STALLED` 13 | 615 | repo owner | map issue or PR to owner receipt before further review |
 | `worktree_lifecycle` | 77 | `CLOSED` 62, `STALLED` 15 | 289 | worktree lifecycle | preserve branch or owner receipt before cleanup |

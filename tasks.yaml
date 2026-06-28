@@ -14,22 +14,22 @@ portal:
       agy: 100
       claude: 100
     track:
-      date: '2026-06-27'
-      spent: 74
+      date: '2026-06-28'
+      spent: 6
       per_agent:
-        jules: 51
+        jules: 6
         gemini: 0
-        codex: 7
-        opencode: 3
-        agy: 12
-        claude: 1
+        codex: 0
+        opencode: 0
+        agy: 0
+        claude: 0
       per_agent_reset:
-        jules: '2026-06-26T23:07:41.223636+00:00'
-        gemini: '2026-06-26T23:07:41.223636+00:00'
-        codex: '2026-06-27T11:49:34.664870+00:00'
-        opencode: '2026-06-26T23:07:41.223636+00:00'
-        agy: '2026-06-26T23:07:41.223636+00:00'
-        claude: '2026-06-27T11:49:34.664870+00:00'
+        jules: '2026-06-28T00:39:05.671668+00:00'
+        gemini: '2026-06-28T00:39:05.671668+00:00'
+        codex: '2026-06-28T00:39:05.671668+00:00'
+        opencode: '2026-06-28T00:39:05.671668+00:00'
+        agy: '2026-06-28T00:39:05.671668+00:00'
+        claude: '2026-06-28T00:39:05.671668+00:00'
 tasks:
 - id: FORCE-route-all-services
   title: Router fans across ALL paid services, not just the 6 vendors
@@ -46895,7 +46895,7 @@ tasks:
     \ \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-23'
-  updated: '2026-06-27T00:17:34.556008Z'
+  updated: '2026-06-28T00:39:05.671668Z'
   dispatch_log:
   - timestamp: '2026-06-24T02:54:49.353919Z'
     agent: codex
@@ -46927,6 +46927,20 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-27T00:17:34.556008Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-28T00:36:56.617979Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T00:39:05.671668Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T00:39:05.671668Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -47170,7 +47184,7 @@ tasks:
     \ on income, not busywork]"
   depends_on: []
   created: '2026-06-23'
-  updated: '2026-06-27T00:17:34.556008Z'
+  updated: '2026-06-28T00:39:05.671668Z'
   dispatch_log:
   - timestamp: '2026-06-24T02:54:49.353919Z'
     agent: agy
@@ -47194,6 +47208,20 @@ tasks:
     status: open
     output: Released stale claim after 24h
   - timestamp: '2026-06-27T00:17:34.556008Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-28T00:36:56.617979Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T00:39:05.671668Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T00:39:05.671668Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -51033,7 +51061,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - ci-green
   - generated
@@ -51050,7 +51078,7 @@ tasks:
     endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-26T23:58:21.192297Z'
+  updated: '2026-06-28T00:36:56.617979Z'
   dispatch_log:
   - timestamp: '2026-06-24T13:05:57.998424Z'
     agent: opencode
@@ -51072,6 +51100,11 @@ tasks:
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-06-28T00:36:56.617979Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: GEN-organvm-limen-ci-green-0624
   title: Make organvm/limen CI green
   repo: organvm/limen
@@ -51835,7 +51868,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - security
   - generated
@@ -51849,7 +51882,7 @@ tasks:
     2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-26T23:58:21.192297Z'
+  updated: '2026-06-28T00:36:56.617979Z'
   dispatch_log:
   - timestamp: '2026-06-24T13:05:57.998424Z'
     agent: claude
@@ -51863,6 +51896,11 @@ tasks:
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-06-28T00:36:56.617979Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: GEN-organvm-limen-security-0624
   title: Security hardening pass on organvm/limen
   repo: organvm/limen
@@ -52807,11 +52845,25 @@ tasks:
     on FERPA data; no PII in outputs.
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-26T23:58:21.192297Z'
+  updated: '2026-06-28T00:39:05.671668Z'
   dispatch_log:
   - timestamp: '2026-06-26T23:58:21.192297Z'
     agent: jules
     session_id: '12179324158757487425'
+    status: dispatched
+  - timestamp: '2026-06-28T00:36:56.617979Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T00:39:05.671668Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T00:39:05.671668Z'
+    agent: jules
+    session_id: '3781814650813719532'
     status: dispatched
 - id: REVENUE-exporter-first-dollar
   title: Drive live ChatGPT Exporter to first-$ rail (Sponsors + Pro tier)
@@ -57855,10 +57907,10 @@ tasks:
   title: Real usage docs for organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: low
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - docs
   - generated
@@ -57871,7 +57923,7 @@ tasks:
     \ 2026-06-27 to keep the stream endless]"
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T12:43:19.558405Z'
+  updated: '2026-06-27T14:59:29.215636Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: agy
@@ -57888,14 +57940,78 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-27T13:41:34.726434Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T13:41:34.726434Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-27T13:57:55.847642Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T13:57:55.847642Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-27T14:05:44.547652Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T14:05:44.547652Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T14:10:54.175014Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-27T14:15:37.182344Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T14:15:37.182344Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T14:51:41.192463Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-27T14:56:36.535452Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T14:56:36.535452Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T14:59:29.215636Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: GEN-organvm-portfolio-docs-0627
   title: Real usage docs for organvm/portfolio
   repo: organvm/portfolio
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: low
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - docs
   - generated
@@ -57908,7 +58024,7 @@ tasks:
     \ 2026-06-27 to keep the stream endless]"
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T12:43:19.558405Z'
+  updated: '2026-06-27T14:59:29.215636Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: claude
@@ -57925,6 +58041,52 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-27T13:41:34.726434Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T13:41:34.726434Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T14:10:54.175014Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-27T14:15:37.182344Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T14:15:37.182344Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T14:51:41.192463Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-27T14:56:36.535452Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T14:56:36.535452Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T14:59:29.215636Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: GEN-organvm-universal-mail--automation-docs-0627
   title: Real usage docs for organvm/universal-mail--automation
   repo: organvm/universal-mail--automation
@@ -57964,10 +58126,10 @@ tasks:
   title: Real usage docs for organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: low
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - docs
   - generated
@@ -57980,7 +58142,7 @@ tasks:
     \ 2026-06-27 to keep the stream endless]"
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T12:43:19.558405Z'
+  updated: '2026-06-27T14:59:29.215636Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: claude
@@ -57997,6 +58159,52 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-27T13:41:34.726434Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T13:41:34.726434Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T14:10:54.175014Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-27T14:15:37.182344Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T14:15:37.182344Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T14:51:41.192463Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-27T14:56:36.535452Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T14:56:36.535452Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T14:59:29.215636Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: GEN-organvm-mirror-mirror-simplify-0627
   title: Reduce complexity in organvm/mirror-mirror
   repo: organvm/mirror-mirror
@@ -58035,22 +58243,23 @@ tasks:
   title: Reduce complexity in organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: claude
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - simplify
   - generated
   - build-out
   - noop
+  - tried:gemini
   urls: []
   context: Identify the most complex or most-duplicated module in organvm/session-meta
     and refactor it for clarity, with tests proving behavior is unchanged. Net lines
     should not grow without cause. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T12:43:19.558405Z'
+  updated: '2026-06-27T14:39:19.949884Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: opencode
@@ -58067,26 +58276,60 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-27T13:41:34.726434Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T13:41:34.726434Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T14:10:54.175014Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-27T14:15:37.182344Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T14:15:37.182344Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+  - timestamp: '2026-06-27T14:39:19.949884Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T14:39:19.949884Z'
+    agent: jules
+    session_id: '5567441786094041408'
+    status: dispatched
 - id: GEN-organvm-domus-genoma-typing-0627
   title: Tighten types in organvm/domus-genoma
   repo: organvm/domus-genoma
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - typing
   - generated
   - build-out
   - noop
+  - tried:gemini
   urls: []
   context: Eliminate the worst untyped hotspots in organvm/domus-genoma's most-imported
     module (remove `any` / add type hints / fix loose signatures). Keep the build
     and tests green. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T12:43:19.558405Z'
+  updated: '2026-06-27T13:57:55.847642Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: opencode
@@ -58103,26 +58346,45 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-27T13:41:34.726434Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T13:41:34.726434Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+  - timestamp: '2026-06-27T13:57:55.847642Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T13:57:55.847642Z'
+    agent: jules
+    session_id: '16345173702541085138'
+    status: dispatched
 - id: GEN-organvm-mirror-mirror-typing-0627
   title: Tighten types in organvm/mirror-mirror
   repo: organvm/mirror-mirror
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - typing
   - generated
   - build-out
   - noop
+  - tried:gemini
   urls: []
   context: Eliminate the worst untyped hotspots in organvm/mirror-mirror's most-imported
     module (remove `any` / add type hints / fix loose signatures). Keep the build
     and tests green. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T12:43:19.558405Z'
+  updated: '2026-06-27T14:59:29.215636Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: opencode
@@ -58139,6 +58401,60 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-27T13:41:34.726434Z'
+    agent: codex
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T13:41:34.726434Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-27T13:57:55.847642Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T13:57:55.847642Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T14:10:54.175014Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-27T14:15:37.182344Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T14:15:37.182344Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T14:51:41.192463Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-27T14:56:36.535452Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T14:56:36.535452Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+  - timestamp: '2026-06-27T14:59:29.215636Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: GEN-organvm-the-invisible-ledger-typing-0627
   title: Tighten types in organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
@@ -58146,7 +58462,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - typing
   - generated
@@ -58158,7 +58474,7 @@ tasks:
     the build and tests green. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T12:43:19.558405Z'
+  updated: '2026-06-27T14:59:29.215636Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: agy
@@ -58175,14 +58491,60 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-27T13:41:34.726434Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T13:41:34.726434Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T14:10:54.175014Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-27T14:15:37.182344Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T14:15:37.182344Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T14:51:41.192463Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-27T14:56:36.535452Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T14:56:36.535452Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T14:59:29.215636Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: GEN-organvm-session-meta-typing-0627
   title: Tighten types in organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: medium
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - typing
   - generated
@@ -58194,7 +58556,7 @@ tasks:
     and tests green. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T12:43:19.558405Z'
+  updated: '2026-06-27T14:22:14.435053Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: agy
@@ -58211,6 +58573,35 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-27T13:41:34.726434Z'
+    agent: agy
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T13:41:34.726434Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T14:10:54.175014Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-27T14:15:37.182344Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T14:15:37.182344Z'
+    agent: claude
+    session_id: https://github.com/organvm/session-meta/pull/129
+    status: dispatched
+  - timestamp: '2026-06-27T14:22:14.435053Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GEN-organvm-universal-mail--automation-typing-0627
   title: Tighten types in organvm/universal-mail--automation
   repo: organvm/universal-mail--automation
@@ -58249,22 +58640,23 @@ tasks:
   title: Tighten types in organvm/limen
   repo: organvm/limen
   type: code
-  target_agent: claude
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - typing
   - generated
   - build-out
   - noop
+  - tried:gemini
   urls: []
   context: Eliminate the worst untyped hotspots in organvm/limen's most-imported module
     (remove `any` / add type hints / fix loose signatures). Keep the build and tests
     green. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T12:43:19.558405Z'
+  updated: '2026-06-27T14:39:19.949884Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: agy
@@ -58281,3 +58673,36 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-27T13:41:34.726434Z'
+    agent: claude
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T13:41:34.726434Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-27T14:10:54.175014Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-27T14:15:37.182344Z'
+    agent: gemini
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T14:15:37.182344Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+  - timestamp: '2026-06-27T14:39:19.949884Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-27T14:39:19.949884Z'
+    agent: jules
+    session_id: '16030549186520895768'
+    status: dispatched

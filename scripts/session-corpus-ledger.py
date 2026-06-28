@@ -197,6 +197,29 @@ def materialize(rows: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def object_store_snapshot() -> dict[str, Any]:
+    objects = PRIVATE_ROOT / "objects"
+    files = [path for path in objects.rglob("*") if path.is_file()] if objects.is_dir() else []
+    total = 0
+    newest = None
+    for path in files:
+        try:
+            st = path.stat()
+        except OSError:
+            continue
+        total += st.st_size
+        mtime = iso_from_ts(st.st_mtime)
+        if newest is None or (mtime or "") > newest:
+            newest = mtime
+    return {
+        "present": objects.is_dir(),
+        "root": str(objects),
+        "object_count": len(files),
+        "object_bytes": total,
+        "newest": newest,
+    }
+
+
 def git_status(path: Path) -> dict[str, Any]:
     if not (path / ".git").exists() and not (path / ".git").is_file():
         return {"present": path.exists(), "git": False, "summary": "not a git repo"}
@@ -556,6 +579,12 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
             lines.append(f"- Materialization failures: `{len(mat['failed'])}`.")
     else:
         lines.append("- Raw object materialization was not requested on this run.")
+        object_store = snapshot.get("object_store", {})
+        if object_store.get("object_count"):
+            lines.append(
+                f"- Private object store currently holds `{object_store.get('object_count', 0)}` "
+                f"unique objects, `{fmt_bytes(int(object_store.get('object_bytes', 0)))}`."
+            )
 
     screenshots = snapshot.get("private_screenshots", {})
     if screenshots.get("files"):
@@ -572,7 +601,9 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
 
     screenshot_receipts = sorted((ROOT / "docs").glob("session-screenshot-intake-*.md"))
     drain_queues = sorted((ROOT / "docs").glob("session-lifecycle-drain-queue-*.md"))
-    if screenshot_receipts or drain_queues:
+    blocker_receipts = sorted((ROOT / "docs").glob("session-lifecycle-blockers.md"))
+    attack_paths = sorted((ROOT / "docs").glob("session-attack-paths.md"))
+    if screenshot_receipts or drain_queues or blocker_receipts or attack_paths:
         lines += [
             "",
             "## Tracked Intake Receipts",
@@ -582,6 +613,10 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
             lines.append(f"- Screenshot intake: `{path.relative_to(ROOT)}`.")
         for path in drain_queues:
             lines.append(f"- Session lifecycle drain queue: `{path.relative_to(ROOT)}`.")
+        for path in blocker_receipts:
+            lines.append(f"- Session lifecycle blockers: `{path.relative_to(ROOT)}`.")
+        for path in attack_paths:
+            lines.append(f"- Session attack paths: `{path.relative_to(ROOT)}`.")
 
     lines += [
         "",
@@ -601,6 +636,8 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
         "`python3 scripts/session-corpus-ledger.py --write --all --materialize`",
         "- Refresh local/remote/cloud prompt lifecycle: "
         "`python3 scripts/prompt-lifecycle-ledger.py --write --all`",
+        "- Refresh parked blockers: `python3 scripts/session-blockers-ledger.py --write`",
+        "- Refresh ranked attack paths: `python3 scripts/session-attack-paths.py --write`",
         "- Rebuild session-meta atoms after preserving its dirty work: "
         "`cd ~/Workspace/session-meta && ./ingest/refresh-atoms.sh`",
         "- Refresh Limen coverage view: `python3 scripts/ingest-coverage.py`",
@@ -619,6 +656,7 @@ def build_snapshot(args: argparse.Namespace) -> tuple[dict[str, Any], list[dict[
     snapshot["local_summary"] = summarize_local(rows)
     snapshot["private_root"] = str(PRIVATE_ROOT)
     snapshot["materialization"] = mat
+    snapshot["object_store"] = object_store_snapshot()
     snapshot["private_screenshots"] = screenshot_snapshot()
     return snapshot, rows, mat
 
