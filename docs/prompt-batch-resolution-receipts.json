@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-28T04:00:07Z",
+  "generated_at": "2026-06-28T04:10:20Z",
   "receipts": [
     {
       "batch": "prompt-batch-critical-historical-worktree-review-001",
@@ -649,6 +649,269 @@
           ],
           "evidence": "Metadata contains education deploy-gate PR and workspace anchors.",
           "next_action": "Pair with legacy-session-2c1ffc8f4646be7c88e2 for education deploy-gate follow-up."
+        }
+      ]
+    },
+    {
+      "batch": "prompt-batch-critical-legacy-session-review-002",
+      "band": "critical",
+      "lane": "legacy-session-review",
+      "status": "owner-recorded",
+      "classification": "second critical legacy Claude project session batch routed from metadata to owner lanes; raw prompt/session text intentionally excluded",
+      "evidence": [
+        "private redacted batch metadata listed 16 legacy Claude project sessions at review time",
+        "all 16 source JSONL files existed under ~/.claude/projects at review time",
+        "review used only metadata fields: session key, cwd, gitBranch, ai-title counts, pr-link, and queue-operation",
+        "no raw user, assistant, last-prompt, credential, financial, account, or secret text was copied into this tracked receipt",
+        "sessions were routed to repo-backed PR histories, Limen infrastructure lanes, and sensitive operator context"
+      ],
+      "next_action": "No broad legacy-session cleanup remains for this batch. Continue with prompt-batch-critical-historical-worktree-review-002; rehydrate an old session only if a later owner packet names a repo or project lane, current branch or PR evidence, and a narrow predicate.",
+      "roots": [
+        {
+          "root": "legacy-session-2deaf8812e19c5f46b68",
+          "session_key": "2deaf8812e19c5f46b68",
+          "status": "legacy_session_sensitive_context_recorded",
+          "owner_lane": "private-account-and-credential-context",
+          "repo": "organvm/limen",
+          "prs": [
+            "https://github.com/organvm/limen/pull/304"
+          ],
+          "evidence": "Metadata contains Limen credential/account-context branch and PR anchors; tracked receipt intentionally omits account details.",
+          "next_action": "Use current credential/account gate receipts only; do not surface or replay the legacy session."
+        },
+        {
+          "root": "legacy-session-723f16a433b279a98135",
+          "session_key": "723f16a433b279a98135",
+          "status": "legacy_session_pr_routed",
+          "owner_lane": "limen-runtime-deps-and-health-levers",
+          "repo": "organvm/limen",
+          "related_repos": [
+            "organvm/limen",
+            "organvm/mirror-mirror",
+            "organvm/the-invisible-ledger"
+          ],
+          "prs": [
+            "https://github.com/organvm/limen/pull/208",
+            "https://github.com/organvm/limen/pull/244",
+            "https://github.com/organvm/limen/pull/245",
+            "https://github.com/organvm/limen/pull/250",
+            "https://github.com/organvm/mirror-mirror/pull/42",
+            "https://github.com/organvm/the-invisible-ledger/pull/45"
+          ],
+          "evidence": "Metadata contains runtime/dependency/health-lever PR links and Limen worktree anchors.",
+          "next_action": "Use linked PR receipts and current repo state before any follow-up."
+        },
+        {
+          "root": "legacy-session-af8a367c1fd7bcdf0d73",
+          "session_key": "af8a367c1fd7bcdf0d73",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "autonomous-system-and-merge-gates",
+          "repo": "organvm/limen",
+          "branch": "harden/merge-gate-stale-base",
+          "evidence": "Metadata contains autonomous-system, CI backlog, and merge-gate cwd/branch anchors; no PR receipt was present.",
+          "next_action": "Route follow-up through current Limen merge-gate state with a fresh branch or issue."
+        },
+        {
+          "root": "legacy-session-ca04c93f547d870fe065",
+          "session_key": "ca04c93f547d870fe065",
+          "status": "legacy_session_pr_routed",
+          "owner_lane": "model-cost-and-credential-durability",
+          "repo": "organvm/limen",
+          "prs": [
+            "https://github.com/organvm/limen/pull/216",
+            "https://github.com/organvm/limen/pull/217",
+            "https://github.com/organvm/limen/pull/218",
+            "https://github.com/organvm/limen/pull/221",
+            "https://github.com/organvm/limen/pull/233",
+            "https://github.com/organvm/limen/pull/235",
+            "https://github.com/organvm/limen/pull/236",
+            "https://github.com/organvm/limen/pull/238"
+          ],
+          "evidence": "Metadata contains model-cost, lever retirement, and credential durability PR links; no credential text was copied.",
+          "next_action": "Use current cost-control and credential wall receipts for follow-up."
+        },
+        {
+          "root": "legacy-session-05cc1b97ccfcf5dc238c",
+          "session_key": "05cc1b97ccfcf5dc238c",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "session-cleanup-and-worktree-divergence",
+          "repo": "organvm/limen",
+          "evidence": "Metadata contains session cleanup, bounded lanes, and worktree divergence anchors; no PR receipt was present.",
+          "next_action": "Route follow-up through the current session/worktree lifecycle ledgers."
+        },
+        {
+          "root": "legacy-session-4a8e693a1e3b57e53266",
+          "session_key": "4a8e693a1e3b57e53266",
+          "status": "legacy_session_pr_routed",
+          "owner_lane": "daemon-loop-and-his-hand-levers",
+          "repo": "organvm/limen",
+          "prs": [
+            "https://github.com/organvm/limen/pull/64",
+            "https://github.com/organvm/limen/pull/65",
+            "https://github.com/organvm/limen/pull/67",
+            "https://github.com/organvm/limen/pull/71",
+            "https://github.com/organvm/limen/pull/76",
+            "https://github.com/organvm/limen/pull/78",
+            "https://github.com/organvm/limen/pull/179",
+            "https://github.com/organvm/limen/pull/188"
+          ],
+          "evidence": "Metadata contains daemon loop, CI, and his-hand lever PR links plus Limen worktree anchors.",
+          "next_action": "Use linked PR receipts and current daemon/lever ledgers before follow-up."
+        },
+        {
+          "root": "legacy-session-788e1730adccf5cb0e64",
+          "session_key": "788e1730adccf5cb0e64",
+          "status": "legacy_session_pr_routed",
+          "owner_lane": "revenue-vltima-and-first-dollar",
+          "repo": "organvm/limen",
+          "prs": [
+            "https://github.com/organvm/limen/pull/66",
+            "https://github.com/organvm/limen/pull/69",
+            "https://github.com/organvm/limen/pull/73",
+            "https://github.com/organvm/limen/pull/77"
+          ],
+          "evidence": "Metadata contains revenue, first-dollar, and VLTIMA PR/worktree anchors.",
+          "next_action": "Use current revenue/first-dollar ledgers and linked PR receipts for follow-up."
+        },
+        {
+          "root": "legacy-session-a2af753e3057e3992f39",
+          "session_key": "a2af753e3057e3992f39",
+          "status": "legacy_session_pr_routed",
+          "owner_lane": "august-goals-inbound-and-revenue",
+          "repo": "organvm/limen",
+          "related_repos": [
+            "organvm/a-i-chat--exporter",
+            "organvm/domus-genoma",
+            "organvm/limen",
+            "organvm/peer-audited--behavioral-blockchain",
+            "organvm/the-invisible-ledger",
+            "organvm/universal-mail--automation"
+          ],
+          "prs": [
+            "https://github.com/organvm/a-i-chat--exporter/pull/82",
+            "https://github.com/organvm/domus-genoma/pull/131",
+            "https://github.com/organvm/limen/pull/242",
+            "https://github.com/organvm/limen/pull/271",
+            "https://github.com/organvm/peer-audited--behavioral-blockchain/pull/746",
+            "https://github.com/organvm/the-invisible-ledger/pull/48",
+            "https://github.com/organvm/universal-mail--automation/pull/89"
+          ],
+          "evidence": "Metadata contains multi-repo inbound/revenue PR links and Limen positioning anchors.",
+          "next_action": "Use the inbound/revenue owner ledgers and linked PR receipts; do not replay the legacy planning stream."
+        },
+        {
+          "root": "legacy-session-ad80f2c3835d6a6c5b4f",
+          "session_key": "ad80f2c3835d6a6c5b4f",
+          "status": "legacy_session_pr_routed",
+          "owner_lane": "vlta-and-credential-rail",
+          "repo": "organvm/limen",
+          "related_repos": [
+            "organvm/a-i-chat--exporter",
+            "organvm/limen"
+          ],
+          "prs": [
+            "https://github.com/organvm/a-i-chat--exporter/pull/80",
+            "https://github.com/organvm/a-i-chat--exporter/pull/81",
+            "https://github.com/organvm/a-i-chat--exporter/pull/86",
+            "https://github.com/organvm/limen/pull/279",
+            "https://github.com/organvm/limen/pull/303",
+            "https://github.com/organvm/limen/pull/309",
+            "https://github.com/organvm/limen/pull/325"
+          ],
+          "evidence": "Metadata contains VLTA/credential-rail PR links; no credential text was copied.",
+          "next_action": "Use linked PR receipts and the current credential wall before follow-up."
+        },
+        {
+          "root": "legacy-session-ae387bfe056d9d3f8f41",
+          "session_key": "ae387bfe056d9d3f8f41",
+          "status": "legacy_session_pr_routed",
+          "owner_lane": "vigilia-host-stability",
+          "repo": "organvm/limen",
+          "prs": [
+            "https://github.com/organvm/limen/pull/315"
+          ],
+          "evidence": "Metadata contains host-stability/Vigilia branch and PR anchors.",
+          "next_action": "Use current Vigilia host-stability state and the linked PR before follow-up."
+        },
+        {
+          "root": "legacy-session-eb81141b7dd644fcb700",
+          "session_key": "eb81141b7dd644fcb700",
+          "status": "legacy_session_pr_routed",
+          "owner_lane": "vigilia-autonomic-executive",
+          "repo": "organvm/limen",
+          "prs": [
+            "https://github.com/organvm/limen/pull/232",
+            "https://github.com/organvm/limen/pull/234",
+            "https://github.com/organvm/limen/pull/273",
+            "https://github.com/organvm/limen/pull/277",
+            "https://github.com/organvm/limen/pull/281",
+            "https://github.com/organvm/limen/pull/285",
+            "https://github.com/organvm/limen/pull/304"
+          ],
+          "evidence": "Metadata contains Vigilia/autonomic-executive PR links and worktree anchors.",
+          "next_action": "Use current Vigilia ledgers and linked PRs before follow-up."
+        },
+        {
+          "root": "legacy-session-ec3f5500be4d2233dad0",
+          "session_key": "ec3f5500be4d2233dad0",
+          "status": "legacy_session_pr_routed",
+          "owner_lane": "studium-release-live",
+          "repo": "organvm/limen",
+          "branch": "feat/studium-transmission-curriculum",
+          "prs": [
+            "https://github.com/organvm/limen/pull/75"
+          ],
+          "evidence": "Metadata contains Studium release branch and PR anchors.",
+          "next_action": "Use the current Studium release lane and linked PR receipt."
+        },
+        {
+          "root": "legacy-session-f35cab62d07bba70bcf8",
+          "session_key": "f35cab62d07bba70bcf8",
+          "status": "legacy_session_pr_routed",
+          "owner_lane": "session-lifecycle-and-effort-config",
+          "repo": "organvm/limen",
+          "prs": [
+            "https://github.com/organvm/limen/pull/185",
+            "https://github.com/organvm/limen/pull/189"
+          ],
+          "evidence": "Metadata contains session-lifecycle and effort-config PR/worktree anchors.",
+          "next_action": "Use current session lifecycle ledgers and linked PR receipts."
+        },
+        {
+          "root": "legacy-session-543c028c19060bf2004f",
+          "session_key": "543c028c19060bf2004f",
+          "status": "legacy_session_pr_routed",
+          "owner_lane": "agent-instruction-standard",
+          "repo": "organvm/limen",
+          "prs": [
+            "https://github.com/organvm/limen/pull/357",
+            "https://github.com/organvm/limen/pull/358",
+            "https://github.com/organvm/limen/pull/361"
+          ],
+          "evidence": "Metadata contains agent-standard/docs PR links and worktree anchors.",
+          "next_action": "Use current agent-instruction standard docs and linked PR receipts for follow-up."
+        },
+        {
+          "root": "legacy-session-0a1e6af7f0f514d05490",
+          "session_key": "0a1e6af7f0f514d05490",
+          "status": "legacy_session_sensitive_context_recorded",
+          "owner_lane": "private-login-and-studium-context",
+          "repo": "organvm/limen",
+          "evidence": "Metadata contains login/auth and Studium branch anchors; tracked receipt intentionally omits account/login details.",
+          "next_action": "Do not surface or delegate without a new explicit scoped request and current non-secret evidence."
+        },
+        {
+          "root": "legacy-session-66c577596ddfe54fd317",
+          "session_key": "66c577596ddfe54fd317",
+          "status": "legacy_session_sensitive_context_recorded",
+          "owner_lane": "private-financial-recovery-context",
+          "repo": "organvm/limen",
+          "prs": [
+            "https://github.com/organvm/limen/pull/272",
+            "https://github.com/organvm/limen/pull/278"
+          ],
+          "evidence": "Metadata contains private financial-recovery context plus Limen PR anchors; tracked receipt intentionally omits personal details.",
+          "next_action": "Keep as private operator context; do not surface or delegate without a new explicit scoped request."
         }
       ]
     }
