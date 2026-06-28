@@ -1,6 +1,6 @@
 # Session Attack Paths
 
-Generated: `2026-06-28T19:29:31+00:00`
+Generated: `2026-06-28T19:34:39+00:00`
 
 ## Canonical Decision
 
@@ -17,8 +17,8 @@ Generated: `2026-06-28T19:29:31+00:00`
 - Worktree debt roots: `0`.
 - Worktree preservation receipts: `14`.
 - Parked blockers: `6`.
-- Local lifecycle footprint: `5.3 GiB`.
-- Candidate lanes: `family` 7, `human-gate` 15, `owner-blocker` 1, `parked` 5.
+- Local lifecycle footprint: `5.4 GiB`.
+- Candidate lanes: `family` 7, `human-gate` 16, `parked` 5.
 
 ## Ordering Model
 
@@ -55,7 +55,7 @@ Generated: `2026-06-28T19:29:31+00:00`
 | 19 | `cloud-credential-handles-unconfigured` | `blocker` | `parked` | 6 | category `auth_credentials`; status `parked` | human/codex-prep | Do not repair inline; open a bounded credential/setup workstream only when a cloud action requires it. |
 | 20 | `credential-codex-auth-sessions` | `blocker` | `parked` | 6 | category `auth_credentials`; status `parked` | human/codex-prep | Keep parked unless a future scoped task explicitly requires the account action. |
 | 21 | `auth_credentials` | `family` | `parked` | -1 | sessions 405; states ALIVE 1, CLOSED 364, PARKED 40; prompts 2491 | human/codex-prep | Keep hung as credential workstream; prepare only non-secret prerequisites. |
-| 22 | `resolve-organvm-i-theoria-.github-459-1ade` | `worktree` | `owner-blocker` | -1 | reason `owner-blocker`; prompts 5; remote `unknown`; open PRs 0; receipt `history_mismatch_patch_preserved` | codex first; opencode/jules after packetization | Do not open a direct PR from this branch. The branch is ahead 10 and behind 43 against origin/main, has no open/closed PR, and its HEAD patch targets .github/workflows/gemini-review.yml, .github/workflows/version-control-standards.yml, dashboard TS shim files, and tsconfig.json, while current origin/main only has ci-minimal, dependabot-auto-merge, dispatch-receiver, and stale workflows. Preserve as private patch evidence; if needed, create a new narrow owner packet to cherry-pick only the Limen automation branch-policy idea into the current organvm/.github default tree. |
+| 22 | `resolve-organvm-i-theoria-.github-459-1ade` | `worktree` | `human-gate` | -1 | reason `owner-blocker`; prompts 5; remote `unknown`; open PRs 0; receipt `history_mismatch_patch_preserved` | human/codex-prep | Do not open a direct PR from this branch. The branch is ahead 10 and behind 43 against origin/main, has no open/closed PR, and its HEAD patch targets .github/workflows/gemini-review.yml, .github/workflows/version-control-standards.yml, dashboard TS shim files, and tsconfig.json, while current origin/main only has ci-minimal, dependabot-auto-merge, dispatch-receiver, and stale workflows. Preserve as private patch evidence; if needed, create a new narrow owner packet to cherry-pick only the Limen automation branch-policy idea into the current organvm/.github default tree. |
 | 23 | `rev-organvm-public-record-data-scrapper-revenue-readiness-0623-023f` | `worktree` | `human-gate` | -6 | reason `remote-merged`; prompts 79; remote `present`; open PRs 1; receipt `merged_pr_preserved` | human/codex-prep | No local PR or branch preservation action remains. GitHub PR #328 is MERGED and its head OID equals the local worktree HEAD. Reclaim the local checkout only after normal operator acceptance. |
 | 24 | `discover-organvm-kerygma-profiles-6c74` | `worktree` | `human-gate` | -11 | reason `remote-pr-open`; prompts 24; remote `present`; open PRs 1; receipt `open_pr_preserved` | human/codex-prep | No local-only source preservation remains. GitHub PR #8 is OPEN/DRAFT, its test check passed, and its head OID equals the local worktree HEAD. Review and merge or supersede the PR; reclaim the local checkout only after normal operator acceptance. |
 | 25 | `cifix-organvm-i-theoria-conversation-corpus-engine-f02e` | `worktree` | `human-gate` | -12 | reason `remote-pr-open`; prompts 79; remote `present`; open PRs 1; receipt `open_pr_preserved` | human/codex-prep | No local-only source preservation remains. GitHub PR #60 is OPEN/DRAFT, all reported checks passed, and its head OID equals the local worktree HEAD. Review and merge or supersede the PR; reclaim the local checkout only after normal operator acceptance. |

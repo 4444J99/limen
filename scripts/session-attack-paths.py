@@ -65,6 +65,12 @@ OPERATOR_ACCEPTANCE_MARKERS = (
     "explicit operator acceptance",
 )
 
+OWNER_PACKET_GATE_MARKERS = (
+    "new narrow owner packet",
+    "later owner packet",
+    "do not open a direct pr",
+)
+
 
 def load_json(path: Path) -> dict[str, Any]:
     try:
@@ -96,6 +102,11 @@ def fmt_bytes(n: int) -> str:
 def requires_operator_acceptance(value: str) -> bool:
     normalized = value.casefold()
     return any(marker in normalized for marker in OPERATOR_ACCEPTANCE_MARKERS)
+
+
+def requires_owner_packet_gate(value: str) -> bool:
+    normalized = value.casefold()
+    return any(marker in normalized for marker in OWNER_PACKET_GATE_MARKERS)
 
 
 def parse_ts(value: Any) -> dt.datetime | None:
@@ -229,30 +240,37 @@ def build_worktree_paths(
             lane = "observe"
             action = "Keep active work visible; do not interrupt unless it becomes stale."
             operator_acceptance_required = False
+            owner_packet_required = False
         elif preservation:
             action = str(
                 preservation.get("next_action")
                 or "Private preservation receipt exists; classify owner intent before cleanup or delegation."
             )
             operator_acceptance_required = requires_operator_acceptance(action)
-            lane = "human-gate" if operator_acceptance_required else str(preservation.get("lane") or "owner-blocker")
+            owner_packet_required = requires_owner_packet_gate(action)
+            human_gate_required = operator_acceptance_required or owner_packet_required
+            lane = "human-gate" if human_gate_required else str(preservation.get("lane") or "owner-blocker")
             score -= int(preservation.get("score_discount") or 30)
         elif not_git:
             lane = "residue"
             action = "Inspect for unique files; if only cache/generated residue, record owner receipt before reclaiming."
             operator_acceptance_required = False
+            owner_packet_required = False
         elif reason == "dirty":
             lane = "preserve"
             action = "Inspect diff, run owner predicate, push branch/open draft PR or record blocker."
             operator_acceptance_required = False
+            owner_packet_required = False
         elif open_prs:
             lane = "remote-close"
             action = "Review PR state/checks, then merge or name supersession before local reclaim."
             operator_acceptance_required = False
+            owner_packet_required = False
         else:
             lane = "remote-proof"
             action = "Verify remote/default preservation; reclaim local checkout only after exact proof."
             operator_acceptance_required = False
+            owner_packet_required = False
         paths.append(
             {
                 "kind": "worktree",
@@ -270,9 +288,10 @@ def build_worktree_paths(
                 "preservation_status": (preservation or {}).get("status"),
                 "preservation_receipt": (preservation or {}).get("private_receipt"),
                 "operator_acceptance_required": operator_acceptance_required,
+                "owner_packet_required": owner_packet_required,
                 "agent_fit": (
                     "human/codex-prep"
-                    if operator_acceptance_required
+                    if operator_acceptance_required or owner_packet_required
                     else "codex first; opencode/jules after packetization"
                 ),
                 "next_action": action,

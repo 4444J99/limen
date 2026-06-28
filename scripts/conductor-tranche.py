@@ -88,7 +88,7 @@ def select_path(paths: list[dict[str, Any]]) -> dict[str, Any] | None:
     for path in paths:
         if is_actionable(path):
             return path
-    return paths[0] if paths else None
+    return None
 
 
 def worktree_packet(path: dict[str, Any]) -> dict[str, Any]:
@@ -522,7 +522,10 @@ def default_packet(path: dict[str, Any]) -> dict[str, Any]:
 def packet_for_path(path: dict[str, Any] | None) -> dict[str, Any]:
     if path is None:
         return {
-            "purpose": "Refresh the conductor indexes until a ranked path exists.",
+            "purpose": (
+                "Record that no ranked path is autonomously actionable after skipping parked, "
+                "family, human-gated, observe, and auth-only lanes."
+            ),
             "repo_worktree": "`organvm/limen` conductor checkout.",
             "allowed_files": [
                 "docs/session-attack-paths.md",
@@ -530,13 +533,16 @@ def packet_for_path(path: dict[str, Any] | None) -> dict[str, Any]:
                 "docs/conductor-tranche.md",
                 ".limen-private/session-corpus/lifecycle/**",
             ],
-            "stop_condition": "Stop if prerequisite indexes are absent or unreadable after refresh.",
+            "stop_condition": (
+                "Stop before broad delegation, cleanup, GitHub mutation, credential work, or owner "
+                "repo edits; resume only when a human opens a gate or a fresh actionable packet appears."
+            ),
             "verification": [
                 "python3 scripts/session-blockers-ledger.py --write",
                 "python3 scripts/session-attack-paths.py --write",
                 "python3 scripts/conductor-tranche.py --write",
             ],
-            "receipt": "docs/conductor-tranche.md records the missing-input state.",
+            "receipt": "docs/conductor-tranche.md records the no-autonomous-action state and skipped paths.",
         }
     category = str(path.get("category") or "")
     kind = str(path.get("kind") or "")
@@ -567,7 +573,10 @@ def build_snapshot() -> dict[str, Any]:
     ranked = as_list(attack.get("ranked_paths"))
     selected = select_path(ranked)
     packet = packet_for_path(selected)
-    selected_id = str((selected or {}).get("id") or "missing-ranked-path")
+    selected_id = str(
+        (selected or {}).get("id")
+        or ("no-autonomous-actionable-path" if ranked else "missing-ranked-path")
+    )
     skipped = [path.get("id") for path in ranked if path is not selected and not is_actionable(path)]
     return {
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),

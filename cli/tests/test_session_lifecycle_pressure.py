@@ -1204,6 +1204,70 @@ def test_session_attack_paths_human_gates_operator_acceptance_receipts(tmp_path:
     assert paths["operator-gated-root"]["operator_acceptance_required"] is True
 
 
+def test_session_attack_paths_human_gates_receipts_requiring_owner_packet(tmp_path: Path):
+    attack = _load(ATTACK_PATHS_SCRIPT, "session_attack_paths_owner_packet_gate")
+    attack.ROOT = tmp_path
+    attack.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    attack.PROMPT_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+    attack.CODEX_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
+    attack.BLOCKER_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "session-lifecycle-blockers.json"
+    attack.PRESSURE_INDEX = tmp_path / "logs" / "session-lifecycle-pressure.json"
+    attack.DOC_PATH = tmp_path / "docs" / "session-attack-paths.md"
+    attack.PRIVATE_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
+    attack.PRESERVATION_RECEIPTS = tmp_path / "docs" / "worktree-preservation-receipts.json"
+
+    attack.PROMPT_INDEX.parent.mkdir(parents=True)
+    attack.PROMPT_INDEX.write_text(
+        json.dumps(
+            {
+                "sources": [{"source": "codex-sessions", "files": 1, "prompt_events": 20}],
+                "worktree_report": {
+                    "debt": 1,
+                    "items": [{"name": "owner-packet-root", "reason": "owner-blocker", "debt": False}],
+                },
+                "sessions_by_worktree": {"owner-packet-root": 1},
+                "prompt_events_by_worktree": {"owner-packet-root": 20},
+                "remote": {
+                    "enabled": True,
+                    "worktrees": {
+                        "receipts": [
+                            {"name": "owner-packet-root", "remote_branch": "missing", "prs": []},
+                        ],
+                    },
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    attack.CODEX_INDEX.write_text(json.dumps({"session_count": 0, "families": []}), encoding="utf-8")
+    attack.BLOCKER_INDEX.write_text(json.dumps({"blockers": []}), encoding="utf-8")
+    attack.PRESSURE_INDEX.parent.mkdir(parents=True)
+    attack.PRESSURE_INDEX.write_text(json.dumps({"worktrees": {"bytes": 2 * 1024**3}}), encoding="utf-8")
+    attack.PRESERVATION_RECEIPTS.parent.mkdir(parents=True)
+    attack.PRESERVATION_RECEIPTS.write_text(
+        json.dumps(
+            {
+                "receipts": [
+                    {
+                        "root": "owner-packet-root",
+                        "status": "history_mismatch_patch_preserved",
+                        "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/demo/receipt.json",
+                        "next_action": "Do not open a direct PR from this branch. If needed, create a new narrow owner packet.",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = attack.build_snapshot()
+    paths = {item["id"]: item for item in snapshot["ranked_paths"]}
+
+    assert paths["owner-packet-root"]["lane"] == "human-gate"
+    assert paths["owner-packet-root"]["agent_fit"] == "human/codex-prep"
+    assert paths["owner-packet-root"]["owner_packet_required"] is True
+
+
 def test_session_attack_paths_prefers_live_worktree_report_over_stale_prompt_snapshot(tmp_path: Path):
     attack = _load(ATTACK_PATHS_SCRIPT, "session_attack_paths_live_worktrees")
     attack.ROOT = tmp_path
@@ -1454,6 +1518,65 @@ def test_conductor_tranche_skips_operator_gated_worktree(tmp_path: Path):
 
     assert snapshot["packet"]["selected_path_id"] == "private-raw-materialization-not-receipted"
     assert "operator-gated-root" in snapshot["skipped_unactionable_path_ids"]
+
+
+def test_conductor_tranche_records_no_autonomous_path_when_all_ranked_paths_skipped(tmp_path: Path):
+    tranche = _load(TRANCHE_SCRIPT, "conductor_tranche_no_autonomous_path")
+    tranche.ROOT = tmp_path
+    tranche.HOME = tmp_path
+    tranche.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    tranche.ATTACK_INDEX = tranche.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
+    tranche.DOC_PATH = tmp_path / "docs" / "conductor-tranche.md"
+    tranche.PRIVATE_INDEX = tranche.PRIVATE_ROOT / "lifecycle" / "conductor-tranche.json"
+    tranche.PORTVS_PATH = tmp_path / "Workspace" / "4444J99" / "portvs"
+
+    tranche.ATTACK_INDEX.parent.mkdir(parents=True)
+    tranche.ATTACK_INDEX.write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-06-28T12:00:00+00:00",
+                "ranked_paths": [
+                    {
+                        "id": "session_lifecycle",
+                        "kind": "family",
+                        "lane": "family",
+                        "score": 99,
+                        "agent_fit": "codex",
+                        "next_action": "Keep corpus/session ledgers current.",
+                    },
+                    {
+                        "id": "operator-gated-root",
+                        "kind": "worktree",
+                        "lane": "human-gate",
+                        "score": 80,
+                        "agent_fit": "human/codex-prep",
+                        "next_action": "Reclaim only after normal operator acceptance.",
+                    },
+                    {
+                        "id": "credential-codex-auth-sessions",
+                        "kind": "blocker",
+                        "lane": "parked",
+                        "category": "auth_credentials",
+                        "score": 6,
+                        "next_action": "Keep parked.",
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = tranche.build_snapshot()
+    markdown = tranche.render_markdown(snapshot)
+
+    assert snapshot["packet"]["selected_path_id"] == "no-autonomous-actionable-path"
+    assert snapshot["packet"]["id"] == "tranche-no-autonomous-actionable-path"
+    assert set(snapshot["skipped_unactionable_path_ids"]) == {
+        "session_lifecycle",
+        "operator-gated-root",
+        "credential-codex-auth-sessions",
+    }
+    assert "no ranked path is autonomously actionable" in markdown
 
 
 def test_conductor_tranche_emits_github_consolidation_packet(tmp_path: Path):
