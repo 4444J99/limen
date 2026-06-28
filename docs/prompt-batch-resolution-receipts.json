@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-28T10:06:41Z",
+  "generated_at": "2026-06-28T10:18:05Z",
   "receipts": [
     {
       "batch": "prompt-batch-critical-historical-worktree-review-001",
@@ -11632,6 +11632,478 @@
           "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
         }
       ]
+    },
+    {
+      "band": "medium",
+      "batch": "prompt-batch-medium-family-009",
+      "classification": "Codex session-lifecycle family batch mapped to merged PR receipts, preserved open PRs, live branch receipts, closed PR receipts, and absent owner routes",
+      "evidence": [
+        "private redacted batch metadata listed 25 Codex-session family items across 25 unique roots, all classified as session_lifecycle",
+        "25 of 25 private source JSONL files existed under ~/.codex/sessions at review time",
+        "review used only metadata fields: root slug, session key, source existence, owner repo inference, prompt-event counts, hash counts, family label, and public GitHub branch/PR state",
+        "no exact local root directory existed for any root under /Users/4jp/Workspace/.limen-worktrees, /Users/4jp/Workspace/limen/.worktrees, or /Users/4jp/Workspace/limen/.claude/worktrees at review time",
+        "gh repo view resolved owner repositories for 25 of 25 inferred roots after repository redirects",
+        "gh api branch lookup, gh pr list --head limen/<root> --state all, and bounded gh search prs checks found 5 exact merged PR receipts, 1 exact open PR receipts with live branches, 0 closed-unmerged PR receipt(s), 0 live branch receipt(s) without exact PRs, and 19 source-session row(s) without exact branch/PR",
+        "open PRs preserved for owner review: organvm/dot-github--theoria#461 7e764d6",
+        "non-exact broad PR hits were recorded but not treated as exact receipts for: gh-4444j99-session-meta-47 (1 non-exact broad hit(s))",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "generated_at": "2026-06-28T10:18:05Z",
+      "lane": "family",
+      "next_action": "Review preserved open PRs or live branches before merge, supersession, or deletion. Rely on merged PR history for landed roots and treat closed PRs as historical. Treat absent roots as lifecycle-closed owner routes; do not rehydrate unless a later packet names the missing delta, live branch or PR, owner repo, and narrow predicate.",
+      "prompt_events": 97,
+      "roots": [
+        {
+          "branch": "limen/rev-styx-stripe-subscription-a96a",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "family": "session_lifecycle",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing delta, live branch or PR, and narrow predicate.",
+          "predicate": "GitHub issue/PR review predicate after branch rehydration",
+          "prompt_event_count": 4,
+          "repo": "organvm/styx-behavioral-economics-theory",
+          "repo_candidates": [
+            "organvm/styx-behavioral-economics-theory",
+            "organvm-i-theoria/styx-behavioral-economics-theory"
+          ],
+          "root": "rev-styx-stripe-subscription-a96a",
+          "session_key": "5c7b7149db34eb517cb9",
+          "source_exists": true,
+          "status": "owner_repo_routed_absent_branch",
+          "unique_prompt_hashes": 3
+        },
+        {
+          "branch": "limen/limen-056-0ed8",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "family": "session_lifecycle",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing delta, live branch or PR, and narrow predicate.",
+          "predicate": "bash scripts/verify-whole.sh after branch rehydration",
+          "prompt_event_count": 4,
+          "repo": "organvm/limen",
+          "repo_candidates": [
+            "organvm/limen"
+          ],
+          "root": "limen-056-0ed8",
+          "session_key": "611f689332d7dcc41f1b",
+          "source_exists": true,
+          "status": "owner_repo_routed_absent_branch",
+          "unique_prompt_hashes": 3
+        },
+        {
+          "branch": "limen/rev-styx-tier-guard-6343",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "family": "session_lifecycle",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing delta, live branch or PR, and narrow predicate.",
+          "predicate": "GitHub issue/PR review predicate after branch rehydration",
+          "prompt_event_count": 4,
+          "repo": "organvm/styx-behavioral-economics-theory",
+          "repo_candidates": [
+            "organvm/styx-behavioral-economics-theory",
+            "organvm-i-theoria/styx-behavioral-economics-theory"
+          ],
+          "root": "rev-styx-tier-guard-6343",
+          "session_key": "6150111a074afc0cab56",
+          "source_exists": true,
+          "status": "owner_repo_routed_absent_branch",
+          "unique_prompt_hashes": 3
+        },
+        {
+          "branch": "limen/resolve-a-organvm-the-invisible-ledger-8-4807",
+          "branch_sha": "cb26dd4",
+          "evidence": "No live branch remains; matching PR #14 is MERGED.",
+          "family": "session_lifecycle",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value.",
+          "pr": "https://github.com/organvm/the-invisible-ledger/pull/14",
+          "prompt_event_count": 4,
+          "repo": "organvm/the-invisible-ledger",
+          "repo_candidates": [
+            "organvm/the-invisible-ledger",
+            "a-organvm/the-invisible-ledger"
+          ],
+          "root": "resolve-a-organvm-the-invisible-ledger-8-4807",
+          "session_key": "61ba985e3bf05dc295e3",
+          "source_exists": true,
+          "status": "remote_pr_merged",
+          "unique_prompt_hashes": 3
+        },
+        {
+          "branch": "limen/limen-070-e537",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "family": "session_lifecycle",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing delta, live branch or PR, and narrow predicate.",
+          "predicate": "bash scripts/verify-whole.sh after branch rehydration",
+          "prompt_event_count": 4,
+          "repo": "organvm/limen",
+          "repo_candidates": [
+            "organvm/limen"
+          ],
+          "root": "limen-070-e537",
+          "session_key": "64cb52fa82f2de4172cb",
+          "source_exists": true,
+          "status": "owner_repo_routed_absent_branch",
+          "unique_prompt_hashes": 3
+        },
+        {
+          "branch": "limen/gh-4444j99-session-meta-47",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, or exact-head PR was found. Broader same-repo PR search returned 1 non-exact hit(s), not an exact receipt.",
+          "family": "session_lifecycle",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing delta, live branch or PR, and narrow predicate.",
+          "non_exact_broad_pr_hits": 1,
+          "predicate": "session-meta issue/PR review predicate after branch rehydration",
+          "prompt_event_count": 3,
+          "repo": "organvm/session-meta",
+          "repo_candidates": [
+            "organvm/session-meta",
+            "4444J99/session-meta"
+          ],
+          "root": "gh-4444j99-session-meta-47",
+          "session_key": "6538173edab50444acad",
+          "source_exists": true,
+          "status": "owner_repo_routed_absent_branch",
+          "unique_prompt_hashes": 2
+        },
+        {
+          "branch": "limen/gh-a-organvm-organvm-corpvs-testamentvm-489-8484",
+          "branch_sha": "420254e",
+          "evidence": "No live branch remains; matching PR #500 is MERGED.",
+          "family": "session_lifecycle",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value.",
+          "pr": "https://github.com/organvm/organvm-corpvs-testamentvm/pull/500",
+          "prompt_event_count": 4,
+          "repo": "organvm/organvm-corpvs-testamentvm",
+          "repo_candidates": [
+            "organvm/organvm-corpvs-testamentvm",
+            "a-organvm/organvm-corpvs-testamentvm"
+          ],
+          "root": "gh-a-organvm-organvm-corpvs-testamentvm-489-8484",
+          "session_key": "67b4c8a2d482e35d0d17",
+          "source_exists": true,
+          "status": "remote_pr_merged",
+          "unique_prompt_hashes": 3
+        },
+        {
+          "branch": "limen/gh-4444j99-session-meta-22-20c5",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "family": "session_lifecycle",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing delta, live branch or PR, and narrow predicate.",
+          "predicate": "session-meta issue/PR review predicate after branch rehydration",
+          "prompt_event_count": 3,
+          "repo": "organvm/session-meta",
+          "repo_candidates": [
+            "organvm/session-meta",
+            "4444J99/session-meta"
+          ],
+          "root": "gh-4444j99-session-meta-22-20c5",
+          "session_key": "6901eab1d9662d3688b2",
+          "source_exists": true,
+          "status": "owner_repo_routed_absent_branch",
+          "unique_prompt_hashes": 2
+        },
+        {
+          "branch": "limen/limen-062-c2f6",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "family": "session_lifecycle",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing delta, live branch or PR, and narrow predicate.",
+          "predicate": "bash scripts/verify-whole.sh after branch rehydration",
+          "prompt_event_count": 4,
+          "repo": "organvm/limen",
+          "repo_candidates": [
+            "organvm/limen"
+          ],
+          "root": "limen-062-c2f6",
+          "session_key": "78b52f65e9f396842f73",
+          "source_exists": true,
+          "status": "owner_repo_routed_absent_branch",
+          "unique_prompt_hashes": 3
+        },
+        {
+          "branch": "limen/resolve-organvm-i-theoria-rules-system-bound-6-4a13",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "family": "session_lifecycle",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing delta, live branch or PR, and narrow predicate.",
+          "predicate": "GitHub issue/PR review predicate after branch rehydration",
+          "prompt_event_count": 4,
+          "repo": "organvm/rules-system-bound",
+          "repo_candidates": [
+            "organvm-i-theoria/rules-system-bound",
+            "organvm/rules-system-bound"
+          ],
+          "root": "resolve-organvm-i-theoria-rules-system-bound-6-4a13",
+          "session_key": "79509cbb18021fc6b20e",
+          "source_exists": true,
+          "status": "owner_repo_routed_absent_branch",
+          "unique_prompt_hashes": 3
+        },
+        {
+          "branch": "limen/resolve-organvm-i-theoria-.github-456-f672",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "family": "session_lifecycle",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing delta, live branch or PR, and narrow predicate.",
+          "predicate": "GitHub issue/PR review predicate after branch rehydration",
+          "prompt_event_count": 4,
+          "repo": "organvm/dot-github--theoria",
+          "repo_candidates": [
+            "organvm-i-theoria/.github",
+            "organvm/dot-github--theoria",
+            "organvm/.github"
+          ],
+          "root": "resolve-organvm-i-theoria-.github-456-f672",
+          "session_key": "79ac24fad955e380d610",
+          "source_exists": true,
+          "status": "owner_repo_routed_absent_branch",
+          "unique_prompt_hashes": 3
+        },
+        {
+          "branch": "limen/gh-4444j99-domus-genoma-96-d6e0",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "family": "session_lifecycle",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing delta, live branch or PR, and narrow predicate.",
+          "predicate": "GitHub issue/PR review predicate after branch rehydration",
+          "prompt_event_count": 3,
+          "repo": "organvm/domus-genoma",
+          "repo_candidates": [
+            "organvm/domus-genoma",
+            "4444J99/domus-genoma"
+          ],
+          "root": "gh-4444j99-domus-genoma-96-d6e0",
+          "session_key": "7b55c0a10ae8c5921431",
+          "source_exists": true,
+          "status": "owner_repo_routed_absent_branch",
+          "unique_prompt_hashes": 2
+        },
+        {
+          "branch": "limen/limen-071-3197",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "family": "session_lifecycle",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing delta, live branch or PR, and narrow predicate.",
+          "predicate": "bash scripts/verify-whole.sh after branch rehydration",
+          "prompt_event_count": 4,
+          "repo": "organvm/limen",
+          "repo_candidates": [
+            "organvm/limen"
+          ],
+          "root": "limen-071-3197",
+          "session_key": "7b95f1ccd20e52b70a96",
+          "source_exists": true,
+          "status": "owner_repo_routed_absent_branch",
+          "unique_prompt_hashes": 3
+        },
+        {
+          "branch": "limen/limen-064-fd07",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "family": "session_lifecycle",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing delta, live branch or PR, and narrow predicate.",
+          "predicate": "bash scripts/verify-whole.sh after branch rehydration",
+          "prompt_event_count": 4,
+          "repo": "organvm/limen",
+          "repo_candidates": [
+            "organvm/limen"
+          ],
+          "root": "limen-064-fd07",
+          "session_key": "7bba07c6c6276fdb2499",
+          "source_exists": true,
+          "status": "owner_repo_routed_absent_branch",
+          "unique_prompt_hashes": 3
+        },
+        {
+          "branch": "limen/resolve-a-organvm-organvm-engine-113-6bfc",
+          "branch_sha": "f60c4aa",
+          "evidence": "No live branch remains; matching PR #142 is MERGED.",
+          "family": "session_lifecycle",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value.",
+          "pr": "https://github.com/organvm/organvm-engine/pull/142",
+          "prompt_event_count": 4,
+          "repo": "organvm/organvm-engine",
+          "repo_candidates": [
+            "organvm/organvm-engine"
+          ],
+          "root": "resolve-a-organvm-organvm-engine-113-6bfc",
+          "session_key": "803c1f227aeaa174c184",
+          "source_exists": true,
+          "status": "remote_pr_merged",
+          "unique_prompt_hashes": 3
+        },
+        {
+          "branch": "limen/limen-045-b156",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "family": "session_lifecycle",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing delta, live branch or PR, and narrow predicate.",
+          "predicate": "bash scripts/verify-whole.sh after branch rehydration",
+          "prompt_event_count": 4,
+          "repo": "organvm/limen",
+          "repo_candidates": [
+            "organvm/limen"
+          ],
+          "root": "limen-045-b156",
+          "session_key": "942f7a793a10d87eb94b",
+          "source_exists": true,
+          "status": "owner_repo_routed_absent_branch",
+          "unique_prompt_hashes": 3
+        },
+        {
+          "branch": "limen/resolve-organvm-i-theoria-.github-455-d983",
+          "branch_sha": "7e764d6",
+          "evidence": "Remote branch exists at 7e764d6; GitHub PR #461 is OPEN with merge state DIRTY.",
+          "family": "session_lifecycle",
+          "next_action": "Review PR #461 freshness/checks/conflicts, then merge or supersede by a named PR.",
+          "pr": "https://github.com/organvm/dot-github--theoria/pull/461",
+          "prompt_event_count": 4,
+          "repo": "organvm/dot-github--theoria",
+          "repo_candidates": [
+            "organvm-i-theoria/.github",
+            "organvm/dot-github--theoria",
+            "organvm/.github"
+          ],
+          "root": "resolve-organvm-i-theoria-.github-455-d983",
+          "session_key": "969f9eb813d398a3cf28",
+          "source_exists": true,
+          "status": "remote_pr_preserved",
+          "unique_prompt_hashes": 3
+        },
+        {
+          "branch": "limen/limen-073-b6e6",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "family": "session_lifecycle",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing delta, live branch or PR, and narrow predicate.",
+          "predicate": "bash scripts/verify-whole.sh after branch rehydration",
+          "prompt_event_count": 4,
+          "repo": "organvm/limen",
+          "repo_candidates": [
+            "organvm/limen"
+          ],
+          "root": "limen-073-b6e6",
+          "session_key": "9a06852ec85dbdaf7e48",
+          "source_exists": true,
+          "status": "owner_repo_routed_absent_branch",
+          "unique_prompt_hashes": 3
+        },
+        {
+          "branch": "limen/limen-025-58ae",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "family": "session_lifecycle",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing delta, live branch or PR, and narrow predicate.",
+          "predicate": "bash scripts/verify-whole.sh after branch rehydration",
+          "prompt_event_count": 4,
+          "repo": "organvm/limen",
+          "repo_candidates": [
+            "organvm/limen"
+          ],
+          "root": "limen-025-58ae",
+          "session_key": "9b50e1611711c7d9b4a1",
+          "source_exists": true,
+          "status": "owner_repo_routed_absent_branch",
+          "unique_prompt_hashes": 3
+        },
+        {
+          "branch": "limen/limen-064-dbf7",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "family": "session_lifecycle",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing delta, live branch or PR, and narrow predicate.",
+          "predicate": "bash scripts/verify-whole.sh after branch rehydration",
+          "prompt_event_count": 4,
+          "repo": "organvm/limen",
+          "repo_candidates": [
+            "organvm/limen"
+          ],
+          "root": "limen-064-dbf7",
+          "session_key": "a01edfdeff1632e0cdb1",
+          "source_exists": true,
+          "status": "owner_repo_routed_absent_branch",
+          "unique_prompt_hashes": 3
+        },
+        {
+          "branch": "limen/bld-peer-audited--behavioral-blockchain-tests-0ebf",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "family": "session_lifecycle",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing delta, live branch or PR, and narrow predicate.",
+          "predicate": "GitHub issue/PR review predicate after branch rehydration",
+          "prompt_event_count": 4,
+          "repo": "organvm/peer-audited--behavioral-blockchain",
+          "repo_candidates": [
+            "organvm/peer-audited--behavioral-blockchain",
+            "a-organvm/peer-audited--behavioral-blockchain"
+          ],
+          "root": "bld-peer-audited--behavioral-blockchain-tests-0ebf",
+          "session_key": "a23a7315296d612d4ec2",
+          "source_exists": true,
+          "status": "owner_repo_routed_absent_branch",
+          "unique_prompt_hashes": 3
+        },
+        {
+          "branch": "limen/cifix-a-organvm-organvm-corpvs-testamentvm-e7f2",
+          "branch_sha": "ff9b082",
+          "evidence": "No live branch remains; matching PR #506 is MERGED.",
+          "family": "session_lifecycle",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value.",
+          "pr": "https://github.com/organvm/organvm-corpvs-testamentvm/pull/506",
+          "prompt_event_count": 4,
+          "repo": "organvm/organvm-corpvs-testamentvm",
+          "repo_candidates": [
+            "organvm/organvm-corpvs-testamentvm",
+            "a-organvm/organvm-corpvs-testamentvm"
+          ],
+          "root": "cifix-a-organvm-organvm-corpvs-testamentvm-e7f2",
+          "session_key": "a563ecc4d308b3566c45",
+          "source_exists": true,
+          "status": "remote_pr_merged",
+          "unique_prompt_hashes": 3
+        },
+        {
+          "branch": "limen/limen-045-bd44",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "family": "session_lifecycle",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing delta, live branch or PR, and narrow predicate.",
+          "predicate": "bash scripts/verify-whole.sh after branch rehydration",
+          "prompt_event_count": 4,
+          "repo": "organvm/limen",
+          "repo_candidates": [
+            "organvm/limen"
+          ],
+          "root": "limen-045-bd44",
+          "session_key": "a9bed4639a58472c8933",
+          "source_exists": true,
+          "status": "owner_repo_routed_absent_branch",
+          "unique_prompt_hashes": 3
+        },
+        {
+          "branch": "limen/limen-099-127c",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "family": "session_lifecycle",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing delta, live branch or PR, and narrow predicate.",
+          "predicate": "bash scripts/verify-whole.sh after branch rehydration",
+          "prompt_event_count": 4,
+          "repo": "organvm/limen",
+          "repo_candidates": [
+            "organvm/limen"
+          ],
+          "root": "limen-099-127c",
+          "session_key": "ab1b14d285f8b40e38c3",
+          "source_exists": true,
+          "status": "owner_repo_routed_absent_branch",
+          "unique_prompt_hashes": 3
+        },
+        {
+          "branch": "limen/gh-a-organvm-organvm-corpvs-testamentvm-493-1a8c",
+          "branch_sha": "a912b61",
+          "evidence": "No live branch remains; matching PR #503 is MERGED.",
+          "family": "session_lifecycle",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value.",
+          "pr": "https://github.com/organvm/organvm-corpvs-testamentvm/pull/503",
+          "prompt_event_count": 4,
+          "repo": "organvm/organvm-corpvs-testamentvm",
+          "repo_candidates": [
+            "organvm/organvm-corpvs-testamentvm",
+            "a-organvm/organvm-corpvs-testamentvm"
+          ],
+          "root": "gh-a-organvm-organvm-corpvs-testamentvm-493-1a8c",
+          "session_key": "abcf36b3c4923b91d5d6",
+          "source_exists": true,
+          "status": "remote_pr_merged",
+          "unique_prompt_hashes": 3
+        }
+      ],
+      "session_count": 25,
+      "status": "owner-recorded",
+      "unique_prompt_hashes": 70
     }
   ]
 }
