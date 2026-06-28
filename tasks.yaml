@@ -62190,7 +62190,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: failed
+  status: dispatched
   labels:
   - simplify
   - generated
@@ -62202,7 +62202,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-28 to keep the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T15:29:03.012113Z'
+  updated: '2026-06-28T15:46:03.432510Z'
   dispatch_log:
   - timestamp: '2026-06-28T15:24:13.775957Z'
     agent: codex
@@ -62223,3 +62223,13 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-28T15:41:24.364658Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-28T15:46:03.432510Z'
+    agent: opencode
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
