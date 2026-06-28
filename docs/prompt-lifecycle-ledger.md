@@ -1,6 +1,6 @@
 # Prompt Lifecycle Ledger
 
-Generated: `2026-06-28T02:00:14+00:00`
+Generated: `2026-06-28T02:15:40+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -12,13 +12,13 @@ Horizon: `all local history`
 
 ## Redacted Prompt Coverage
 
-Indexed `9489` app/session files, `2.1 GiB`, with `92781` prompt-like user events hashed into the private index.
+Indexed `9489` app/session files, `2.1 GiB`, with `92787` prompt-like user events hashed into the private index.
 
 | Source | Files | Prompt Events | Event Records | Size | Newest |
 |---|---:|---:|---:|---:|---|
 | `claude-projects` | 4854 | 87828 | 313210 | 1.4 GiB | `2026-06-28T01:17:54+00:00` |
-| `codex-sessions` | 889 | 4384 | 232816 | 729.5 MiB | `2026-06-28T01:58:56+00:00` |
-| `codex-history` | 1 | 436 | 436 | 191.7 KiB | `2026-06-28T01:57:57+00:00` |
+| `codex-sessions` | 889 | 4388 | 233219 | 730.3 MiB | `2026-06-28T02:14:15+00:00` |
+| `codex-history` | 1 | 438 | 438 | 192.1 KiB | `2026-06-28T02:06:12+00:00` |
 | `claude-tasks` | 188 | 133 | 133 | 57.7 KiB | `2026-06-26T00:08:52+00:00` |
 | `claude-file-history` | 3519 | 0 | 0 | 42.2 MiB | `2026-06-27T00:26:28+00:00` |
 | `claude-plans` | 34 | 0 | 0 | 289.3 KiB | `2026-06-25T03:22:45+00:00` |

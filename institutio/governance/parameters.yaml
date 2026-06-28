@@ -136,6 +136,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Optional colon-separated override for counts-only capability-substrate discovery (skills/plugins/MCP/ACP). Empty means use the local default roots; never read or activate private skill bodies in lifecycle closeout."
+  LIMEN_CAPABILITY_SCAN_LIMIT:
+    default: 50000
+    env: LIMEN_CAPABILITY_SCAN_LIMIT
+    self_update: none
+    owner: continuity
+    note: "Per-root file scan cap for counts-only capability-substrate discovery. A safety bound only; raising it still must not read skill bodies or plugin manifest contents."
   LIMEN_CODEX_QUICKEN_STALE_MIN:
     default: 20
     env: LIMEN_CODEX_QUICKEN_STALE_MIN

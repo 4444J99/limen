@@ -603,7 +603,8 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
     drain_queues = sorted((ROOT / "docs").glob("session-lifecycle-drain-queue-*.md"))
     blocker_receipts = sorted((ROOT / "docs").glob("session-lifecycle-blockers.md"))
     attack_paths = sorted((ROOT / "docs").glob("session-attack-paths.md"))
-    if screenshot_receipts or drain_queues or blocker_receipts or attack_paths:
+    capability_receipts = sorted((ROOT / "docs").glob("capability-substrate-ledger.md"))
+    if screenshot_receipts or drain_queues or blocker_receipts or attack_paths or capability_receipts:
         lines += [
             "",
             "## Tracked Intake Receipts",
@@ -617,6 +618,8 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
             lines.append(f"- Session lifecycle blockers: `{path.relative_to(ROOT)}`.")
         for path in attack_paths:
             lines.append(f"- Session attack paths: `{path.relative_to(ROOT)}`.")
+        for path in capability_receipts:
+            lines.append(f"- Capability substrate ledger: `{path.relative_to(ROOT)}`.")
 
     lines += [
         "",
@@ -636,6 +639,7 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
         "`python3 scripts/session-corpus-ledger.py --write --all --materialize`",
         "- Refresh local/remote/cloud prompt lifecycle: "
         "`python3 scripts/prompt-lifecycle-ledger.py --write --all`",
+        "- Refresh capability resurfacing: `python3 scripts/capability-substrate-ledger.py --write`",
         "- Refresh parked blockers: `python3 scripts/session-blockers-ledger.py --write`",
         "- Refresh ranked attack paths: `python3 scripts/session-attack-paths.py --write`",
         "- Rebuild session-meta atoms after preserving its dirty work: "

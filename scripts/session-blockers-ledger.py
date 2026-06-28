@@ -32,6 +32,7 @@ PROMPT_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
 CODEX_INDEX = PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
 CORPUS_INVENTORY = PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
 PRESSURE_INDEX = ROOT / "logs" / "session-lifecycle-pressure.json"
+CAPABILITY_INDEX = PRIVATE_ROOT / "lifecycle" / "capability-substrate-index.json"
 PROJECT_SETTINGS = ROOT / ".claude" / "settings.json"
 
 CLOUD_CREDENTIAL_FLAGS = (
@@ -103,7 +104,7 @@ def capability_roots() -> list[Path]:
     return list(DEFAULT_CAPABILITY_ROOTS)
 
 
-def _walk_capability_files(root: Path, *, limit: int = 5000) -> list[Path]:
+def _walk_capability_files(root: Path, *, limit: int = 50000) -> list[Path]:
     if not root.exists():
         return []
     out: list[Path] = []
@@ -138,7 +139,7 @@ def capability_substrate_snapshot() -> dict[str, Any]:
     for root in roots:
         files = _walk_capability_files(root)
         scanned_files += len(files)
-        if len(files) >= 5000:
+        if len(files) >= 50000:
             truncated_roots += 1
         root_skill_files = 0
         root_plugin_manifests = 0
@@ -146,10 +147,14 @@ def capability_substrate_snapshot() -> dict[str, Any]:
         for path in files:
             name = path.name.lower()
             parent_names = {part.lower() for part in path.parts[-4:]}
-            if path.name in {"SKILL.md", "skill.md"}:
+            if path.name in {"SKILL.md", "skill.md"} or path.suffix == ".skill":
                 skill_files += 1
                 root_skill_files += 1
-            if path.name in {"plugin.json", ".mcp.json", "mcp.json"} or ".claude-plugin" in parent_names:
+            if (
+                path.name in {"plugin.json", ".mcp.json", "mcp.json"}
+                or ".claude-plugin" in parent_names
+                or ".codex-plugin" in parent_names
+            ):
                 plugin_manifests += 1
                 root_plugin_manifests += 1
             if "mcp" in name or "acp" in name or "mcp" in parent_names or "acp" in parent_names:
@@ -173,6 +178,26 @@ def capability_substrate_snapshot() -> dict[str, Any]:
         "mcp_acp_markers": mcp_acp_markers,
         "scanned_files": scanned_files,
         "truncated_roots": truncated_roots,
+    }
+
+
+def capability_receipt_status(capability: dict[str, Any]) -> dict[str, Any]:
+    receipt = load_json(CAPABILITY_INDEX)
+    coverage = receipt.get("coverage") or {}
+    count_keys = ("roots_seen", "skill_files", "plugin_manifests", "mcp_acp_markers")
+    current_counts = {key: int(capability.get(key) or 0) for key in count_keys}
+    receipt_counts = {key: int(coverage.get(key) or 0) for key in count_keys}
+    present = bool(receipt)
+    current = present and current_counts == receipt_counts
+    return {
+        "path": str(CAPABILITY_INDEX),
+        "present": present,
+        "current": current,
+        "generated_at": receipt.get("generated_at"),
+        "current_counts": current_counts,
+        "receipt_counts": receipt_counts,
+        "activation_candidates": len(receipt.get("activation_queue") or []),
+        "activation_groups": len(receipt.get("activation_groups") or {}),
     }
 
 
@@ -482,25 +507,36 @@ def hook_and_pressure_blockers(prompt: dict[str, Any], blockers: list[dict[str, 
 
 def capability_substrate_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any]:
     capability = capability_substrate_snapshot()
+    receipt = capability_receipt_status(capability)
+    capability["receipt"] = receipt
+    capability["resurfaced"] = bool(receipt["current"])
     roots_seen = int(capability.get("roots_seen") or 0)
-    if roots_seen:
+    if roots_seen and not receipt["current"]:
+        if receipt["present"]:
+            status = "needs_refresh"
+            evidence_prefix = "Capability resurfacing receipt is stale"
+        else:
+            status = "parked"
+            evidence_prefix = "Capability substrate has not been resurfaced"
         add_blocker(
             blockers,
             blocker_id="capability-substrate-not-resurfaced",
             category="capability_substrate",
+            status=status,
             evidence=(
-                f"{roots_seen} local capability roots detected; "
+                f"{evidence_prefix}; {roots_seen} local capability roots detected; "
                 f"{capability.get('skill_files', 0)} skill files, "
                 f"{capability.get('plugin_manifests', 0)} plugin/MCP manifests, "
                 f"{capability.get('mcp_acp_markers', 0)} MCP/ACP markers counted."
             ),
             owner="agent capability substrate",
             route=(
-                "Index names/counts and choose activation order in a dedicated capability-resurfacing lane; "
+                "Run `python3 scripts/capability-substrate-ledger.py --write` to index names/counts "
+                "and choose activation order; "
                 "do not read private skill bodies, install plugins, or repair MCP/ACP auth inside session lifecycle closeout."
             ),
             source="local-capability-substrate",
-            details=capability,
+            details={"capability": capability, "receipt": receipt},
         )
     return capability
 
@@ -584,6 +620,13 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
             f"`{(coverage.get('capability_substrate') or {}).get('skill_files', 0)}` skill files, "
             f"`{(coverage.get('capability_substrate') or {}).get('plugin_manifests', 0)}` plugin/MCP manifests."
         ),
+        (
+            "- Capability resurfacing receipt present/current: "
+            f"`{((coverage.get('capability_substrate') or {}).get('receipt') or {}).get('present', False)}`/"
+            f"`{((coverage.get('capability_substrate') or {}).get('receipt') or {}).get('current', False)}`; "
+            f"activation candidates "
+            f"`{((coverage.get('capability_substrate') or {}).get('receipt') or {}).get('activation_candidates', 0)}`."
+        ),
         "",
         "## Parked / Hung Workstreams",
         "",
@@ -612,6 +655,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "",
         "- Refresh source receipts first: `python3 scripts/prompt-lifecycle-ledger.py --write --all`",
         "- Refresh private absorption receipt: `python3 scripts/session-corpus-ledger.py --write --all --materialize`",
+        "- Refresh capability resurfacing: `python3 scripts/capability-substrate-ledger.py --write`",
         "- Refresh this blocker ledger: `python3 scripts/session-blockers-ledger.py --write`",
         "",
     ]

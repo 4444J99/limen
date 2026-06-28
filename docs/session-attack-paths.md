@@ -1,6 +1,6 @@
 # Session Attack Paths
 
-Generated: `2026-06-28T02:01:07+00:00`
+Generated: `2026-06-28T02:16:25+00:00`
 
 ## Canonical Decision
 
@@ -11,13 +11,13 @@ Generated: `2026-06-28T02:01:07+00:00`
 
 ## Coverage
 
-- Redacted prompt corpus: `9489` files, `92781` prompt-like events.
+- Redacted prompt corpus: `9489` files, `92787` prompt-like events.
 - Codex classified sessions: `887`.
 - Worktree debt roots: `8`.
 - Worktree preservation receipts: `6`.
-- Parked blockers: `9`.
+- Parked blockers: `8`.
 - Local lifecycle footprint: `5.2 GiB`.
-- Candidate lanes: `blocker` 6, `documented-residue` 2, `drain` 1, `family` 7, `observe` 4, `owner-blocker` 3, `parked` 3, `remote-close` 3, `remote-proof` 2.
+- Candidate lanes: `blocker` 5, `documented-residue` 2, `drain` 1, `family` 7, `observe` 4, `owner-blocker` 3, `parked` 3, `remote-close` 3, `remote-proof` 2.
 
 ## Ordering Model
 
@@ -49,13 +49,13 @@ Generated: `2026-06-28T02:01:07+00:00`
 | 16 | `discover-organvm-kerygma-profiles-6c74` | `worktree` | `remote-close` | 42 | reason `not-merged-to-default`; prompts 24; remote `present`; open PRs 1 | codex first; opencode/jules after packetization | Review PR state/checks, then merge or name supersession before local reclaim. |
 | 17 | `technical_debt_ci` | `family` | `family` | 40 | sessions 36; states CLOSED 33, STALLED 3; prompts 128 | opencode/jules | Run narrow predicates and preserve failures in owner repos. |
 | 18 | `gen-organvm-the-invisible-ledger-ci-green-0625-e3c2` | `worktree` | `documented-residue` | 39 | reason `not-a-git-dir`; prompts 4; remote `not-a-git-dir`; open PRs 0; receipt `empty_generated_residue` | codex first; opencode/jules after packetization | No unique source to preserve; directory contains only an empty dist/ directory. Reclaim only after normal operator acceptance. |
-| 19 | `capability-substrate-not-resurfaced` | `blocker` | `blocker` | 38 | category `capability_substrate`; status `parked` | codex | Index names/counts and choose activation order in a dedicated capability-resurfacing lane; do not read private skill bodies, install plugins, or repair MCP/ACP auth inside session lifecycle closeout. |
-| 20 | `convergence_corpus` | `family` | `family` | 32 | sessions 10; states CLOSED 10; prompts 37 | codex | Promote durable atoms through session-meta and knowledge-corpus. |
-| 21 | `cifix-organvm-i-theoria-conversation-corpus-engine-f02e` | `worktree` | `remote-close` | 23 | reason `unpushed-commits`; prompts 79; remote `present`; open PRs 1 | codex first; opencode/jules after packetization | Review PR state/checks, then merge or name supersession before local reclaim. |
-| 22 | `rev-organvm-public-record-data-scrapper-revenue-readiness-0623-023f` | `worktree` | `observe` | 21 | reason `active(<6h)`; prompts 79; remote `present`; open PRs 1 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
-| 23 | `cloud-runtime-endpoint-unconfigured` | `blocker` | `blocker` | 18 | category `cloud_runtime`; status `parked` | codex | Keep separate from session intake; configure/probe runtime only in a deploy/runtime task. |
-| 24 | `uncategorized` | `family` | `family` | 18 | sessions 2; states STALLED 2; prompts 10 | codex | Inspect privately and add classifier/owner route. |
-| 25 | `bld-mirror-mirror-harden-350f` | `worktree` | `remote-close` | 16 | reason `unpushed-commits`; prompts 5; remote `present`; open PRs 1 | codex first; opencode/jules after packetization | Review PR state/checks, then merge or name supersession before local reclaim. |
+| 19 | `convergence_corpus` | `family` | `family` | 32 | sessions 10; states CLOSED 10; prompts 37 | codex | Promote durable atoms through session-meta and knowledge-corpus. |
+| 20 | `cifix-organvm-i-theoria-conversation-corpus-engine-f02e` | `worktree` | `remote-close` | 23 | reason `unpushed-commits`; prompts 79; remote `present`; open PRs 1 | codex first; opencode/jules after packetization | Review PR state/checks, then merge or name supersession before local reclaim. |
+| 21 | `rev-organvm-public-record-data-scrapper-revenue-readiness-0623-023f` | `worktree` | `observe` | 21 | reason `active(<6h)`; prompts 79; remote `present`; open PRs 1 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
+| 22 | `cloud-runtime-endpoint-unconfigured` | `blocker` | `blocker` | 18 | category `cloud_runtime`; status `parked` | codex | Keep separate from session intake; configure/probe runtime only in a deploy/runtime task. |
+| 23 | `uncategorized` | `family` | `family` | 18 | sessions 2; states STALLED 2; prompts 10 | codex | Inspect privately and add classifier/owner route. |
+| 24 | `bld-mirror-mirror-harden-350f` | `worktree` | `remote-close` | 16 | reason `unpushed-commits`; prompts 5; remote `present`; open PRs 1 | codex first; opencode/jules after packetization | Review PR state/checks, then merge or name supersession before local reclaim. |
+| 25 | `bld-my--father-mother-harden-44b2` | `worktree` | `observe` | 8 | reason `active(<6h)`; prompts 5; remote `present`; open PRs 1 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
 
 ## Delegation Gate
 

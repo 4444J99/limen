@@ -7,6 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 PRESSURE_SCRIPT = ROOT / "scripts" / "session-lifecycle-pressure.py"
+CAPABILITY_SCRIPT = ROOT / "scripts" / "capability-substrate-ledger.py"
 BLOCKERS_SCRIPT = ROOT / "scripts" / "session-blockers-ledger.py"
 ATTACK_PATHS_SCRIPT = ROOT / "scripts" / "session-attack-paths.py"
 
@@ -66,11 +67,68 @@ def test_session_lifecycle_pressure_summarizes_local_remote_without_raw_text(tmp
     assert pressure.OUT_MD.exists()
 
 
+def test_capability_substrate_ledger_indexes_names_without_skill_bodies(tmp_path: Path):
+    capability = _load(CAPABILITY_SCRIPT, "capability_substrate_ledger")
+    capability.ROOT = tmp_path
+    capability.HOME = tmp_path
+    capability.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    capability.PRIVATE_INDEX = capability.PRIVATE_ROOT / "lifecycle" / "capability-substrate-index.json"
+    capability.DOC_PATH = tmp_path / "docs" / "capability-substrate-ledger.md"
+    capability.DEFAULT_CAPABILITY_ROOTS = (
+        tmp_path / ".codex" / "skills",
+        tmp_path / "Workspace" / "organvm" / "a-i--skills",
+        tmp_path / "Workspace" / "organvm" / "claude-runtime-state",
+    )
+
+    local_skill = tmp_path / ".codex" / "skills" / "uma-ops-semantic-layer" / "SKILL.md"
+    custom_skill = (
+        tmp_path
+        / "Workspace"
+        / "organvm"
+        / "a-i--skills"
+        / "skills"
+        / "tools"
+        / "artifact-resurfacing"
+        / "SKILL.md"
+    )
+    scheduled_skill = (
+        tmp_path
+        / "Workspace"
+        / "organvm"
+        / "claude-runtime-state"
+        / "scheduled-tasks"
+        / "daily-repo-hygiene"
+        / "SKILL.md"
+    )
+    for path in (local_skill, custom_skill, scheduled_skill):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("SECRET_BODY_TOKEN should never be indexed\n", encoding="utf-8")
+    plugin = tmp_path / "Workspace" / "organvm" / "a-i--skills" / ".claude-plugin" / "plugin.json"
+    plugin.parent.mkdir(parents=True)
+    plugin.write_text('{"token":"SECRET_PLUGIN_TOKEN"}', encoding="utf-8")
+
+    snapshot = capability.build_snapshot(limit=10)
+    markdown = capability.render_markdown(snapshot, limit=10)
+    capability.write_outputs(snapshot, markdown)
+
+    assert snapshot["coverage"]["skill_files"] == 3
+    assert snapshot["coverage"]["plugin_manifests"] == 1
+    assert any(item["name"] == "artifact-resurfacing" for item in snapshot["activation_queue"])
+    serialized = json.dumps(snapshot)
+    assert "SECRET_BODY_TOKEN" not in serialized
+    assert "SECRET_PLUGIN_TOKEN" not in serialized
+    assert "SECRET_BODY_TOKEN" not in markdown
+    assert "does not read or print `SKILL.md` bodies" in markdown
+    assert capability.DOC_PATH.exists()
+    assert capability.PRIVATE_INDEX.exists()
+
+
 def test_session_blockers_records_hooks_disk_and_credentials_without_values(tmp_path: Path):
     blockers = _load(BLOCKERS_SCRIPT, "session_blockers_ledger")
     blockers.ROOT = tmp_path
     blockers.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
     blockers.PRIVATE_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "session-lifecycle-blockers.json"
+    blockers.CAPABILITY_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "capability-substrate-index.json"
     blockers.PROMPT_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
     blockers.CODEX_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
     blockers.CORPUS_INVENTORY = blockers.PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
@@ -146,10 +204,80 @@ def test_session_blockers_records_hooks_disk_and_credentials_without_values(tmp_
     assert "session-pressure-hook-not-wired" not in ids
     assert snapshot["coverage"]["session_pressure_hook_wired"] is True
     assert snapshot["coverage"]["capability_substrate"]["skill_files"] == 1
+    assert snapshot["coverage"]["capability_substrate"]["receipt"]["present"] is False
     assert "Session pressure hook wired: `True`" in markdown
     assert "secret-value" not in markdown
     assert blockers.DOC_PATH.exists()
     assert blockers.PRIVATE_INDEX.exists()
+
+
+def test_session_blockers_clears_capability_blocker_with_current_receipt(tmp_path: Path):
+    blockers = _load(BLOCKERS_SCRIPT, "session_blockers_capability_receipt")
+    blockers.ROOT = tmp_path
+    blockers.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    blockers.PRIVATE_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "session-lifecycle-blockers.json"
+    blockers.CAPABILITY_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "capability-substrate-index.json"
+    blockers.PROMPT_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+    blockers.CODEX_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
+    blockers.CORPUS_INVENTORY = blockers.PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
+    blockers.PRESSURE_INDEX = tmp_path / "logs" / "session-lifecycle-pressure.json"
+    blockers.PROJECT_SETTINGS = tmp_path / ".claude" / "settings.json"
+    blockers.DOC_PATH = tmp_path / "docs" / "session-lifecycle-blockers.md"
+    capability_root = tmp_path / "capabilities"
+    blockers.DEFAULT_CAPABILITY_ROOTS = (capability_root,)
+
+    blockers.PROMPT_INDEX.parent.mkdir(parents=True)
+    blockers.PROMPT_INDEX.write_text(
+        json.dumps(
+            {
+                "sources": [],
+                "worktree_report": {"debt": 0, "total": 0},
+                "remote": {"enabled": True, "worktrees": {}, "task_prs": {"counts": {}}},
+                "cloud": {"enabled": True, "runtime_url_configured": True, "env_flags": {}},
+            }
+        ),
+        encoding="utf-8",
+    )
+    blockers.CODEX_INDEX.write_text(json.dumps({"session_count": 0, "families": []}), encoding="utf-8")
+    blockers.CORPUS_INVENTORY.parent.mkdir(parents=True)
+    blockers.CORPUS_INVENTORY.write_text(json.dumps({"organs": [], "materialization": {"copied": 0}}), encoding="utf-8")
+    blockers.PRESSURE_INDEX.parent.mkdir(parents=True)
+    blockers.PRESSURE_INDEX.write_text(json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8")
+    blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
+    blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
+    (capability_root / "skills" / "artifact-resurfacing").mkdir(parents=True)
+    (capability_root / "skills" / "artifact-resurfacing" / "SKILL.md").write_text(
+        "# Body not read\n", encoding="utf-8"
+    )
+    (capability_root / ".claude-plugin").mkdir()
+    (capability_root / ".claude-plugin" / "plugin.json").write_text("{}", encoding="utf-8")
+
+    capability = blockers.capability_substrate_snapshot()
+    blockers.CAPABILITY_INDEX.parent.mkdir(parents=True, exist_ok=True)
+    blockers.CAPABILITY_INDEX.write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-06-28T00:00:00+00:00",
+                "coverage": {
+                    "roots_seen": capability["roots_seen"],
+                    "skill_files": capability["skill_files"],
+                    "plugin_manifests": capability["plugin_manifests"],
+                    "mcp_acp_markers": capability["mcp_acp_markers"],
+                },
+                "activation_queue": [{"name": "artifact-resurfacing"}],
+                "activation_groups": {"session_corpus": ["artifact-resurfacing"]},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = blockers.build_snapshot()
+    markdown = blockers.render_markdown(snapshot)
+
+    ids = {item["id"] for item in snapshot["blockers"]}
+    assert "capability-substrate-not-resurfaced" not in ids
+    assert snapshot["coverage"]["capability_substrate"]["receipt"]["current"] is True
+    assert "Capability resurfacing receipt present/current: `True`/`True`" in markdown
 
 
 def test_session_attack_paths_prioritize_system_clogs_before_delegation(tmp_path: Path):
