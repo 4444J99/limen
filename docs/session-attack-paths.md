@@ -1,6 +1,6 @@
 # Session Attack Paths
 
-Generated: `2026-06-28T19:27:26+00:00`
+Generated: `2026-06-28T19:29:31+00:00`
 
 ## Canonical Decision
 
@@ -18,7 +18,7 @@ Generated: `2026-06-28T19:27:26+00:00`
 - Worktree preservation receipts: `14`.
 - Parked blockers: `6`.
 - Local lifecycle footprint: `5.3 GiB`.
-- Candidate lanes: `blocker` 1, `family` 7, `human-gate` 15, `owner-blocker` 1, `parked` 4.
+- Candidate lanes: `family` 7, `human-gate` 15, `owner-blocker` 1, `parked` 5.
 
 ## Ordering Model
 
@@ -45,7 +45,7 @@ Generated: `2026-06-28T19:27:26+00:00`
 | 9 | `convergence_corpus` | `family` | `family` | 32 | sessions 10; states CLOSED 10; prompts 37 | codex | Promote durable atoms through session-meta and knowledge-corpus. |
 | 10 | `gen-organvm-universal-mail--automation-test-coverage-0625-151e` | `worktree` | `human-gate` | 32 | reason `owner-blocker`; prompts 100; remote `missing`; open PRs 0; receipt `private_patch_preserved` | human/codex-prep | Do not PR or delegate this deletion patch. The branch has no unique commits, no remote branch, no PR, no sparse-checkout configuration, and 167 tracked files deleted from disk while HEAD is an ancestor of origin/main. Treat as stale broken checkout/deletion artifact; reclaim only after operator acceptance, and recreate from origin/main if owner work is needed. |
 | 11 | `rev-organvm-the-invisible-ledger-revenue-readiness-0623-bd8b` | `worktree` | `human-gate` | 24 | reason `documented-residue`; prompts 94; remote `not-a-git-dir`; open PRs 0; receipt `cache_only_residue` | human/codex-prep | No unique source to preserve; directory contains only Vite dependency-cache metadata. Reclaim only after normal operator acceptance. |
-| 12 | `cloud-runtime-endpoint-unconfigured` | `blocker` | `blocker` | 18 | category `cloud_runtime`; status `parked` | codex | Keep separate from session intake; configure/probe runtime only in a deploy/runtime task. |
+| 12 | `cloud-runtime-endpoint-unconfigured` | `blocker` | `parked` | 18 | category `cloud_runtime`; status `parked` | codex | Keep separate from session intake; configure/probe runtime only in a deploy/runtime task. |
 | 13 | `uncategorized` | `family` | `family` | 18 | sessions 2; states STALLED 2; prompts 10 | codex | Inspect privately and add classifier/owner route. |
 | 14 | `cifix-organvm-i-theoria-hierarchia-mundi-3145` | `worktree` | `human-gate` | 18 | reason `remote-superseded`; prompts 71; remote `missing`; open PRs 0; receipt `superseded_on_origin_main` | human/codex-prep | No PR needed; local dirty smoke-test/root-fix draft is superseded by origin/main, including tests/test_smoke.py plus broader loader and CLI coverage. Reclaim only after normal operator acceptance. |
 | 15 | `gen-organvm-the-invisible-ledger-ci-green-0625-e3c2` | `worktree` | `human-gate` | 15 | reason `documented-residue`; prompts 4; remote `not-a-git-dir`; open PRs 0; receipt `empty_generated_residue` | human/codex-prep | No unique source to preserve; directory contains only an empty dist/ directory. Reclaim only after normal operator acceptance. |

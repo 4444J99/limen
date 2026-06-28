@@ -391,6 +391,9 @@ def build_blocker_paths(blockers: dict[str, Any]) -> list[dict[str, Any]]:
             else:
                 lane = "drain"
             agent = "codex"
+        elif category == "cloud_runtime" and status == "parked":
+            lane = "parked"
+            agent = "codex"
         elif category == "local_network_substrate":
             lane = "blocker"
             agent = "codex"

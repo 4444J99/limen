@@ -931,6 +931,53 @@ def test_session_attack_paths_demote_completed_github_consolidation_packet_to_hu
     assert paths["github-consolidation-collisions"]["score"] == 52
 
 
+def test_session_attack_paths_parks_cloud_runtime_until_deploy_task(tmp_path: Path):
+    attack = _load(ATTACK_PATHS_SCRIPT, "session_attack_paths_cloud_runtime_parked")
+    attack.ROOT = tmp_path
+    attack.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    attack.PROMPT_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+    attack.CODEX_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
+    attack.BLOCKER_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "session-lifecycle-blockers.json"
+    attack.PRESSURE_INDEX = tmp_path / "logs" / "session-lifecycle-pressure.json"
+    attack.DOC_PATH = tmp_path / "docs" / "session-attack-paths.md"
+    attack.PRIVATE_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
+    attack.PRESERVATION_RECEIPTS = tmp_path / "docs" / "worktree-preservation-receipts.json"
+    attack.worktree_debt_report = lambda root: {"total": 0, "debt": 0, "items": []}
+
+    attack.PROMPT_INDEX.parent.mkdir(parents=True)
+    attack.PROMPT_INDEX.write_text(json.dumps({"sources": [], "worktree_report": {"debt": 0, "items": []}}), encoding="utf-8")
+    attack.CODEX_INDEX.write_text(json.dumps({"session_count": 0, "families": []}), encoding="utf-8")
+    attack.BLOCKER_INDEX.write_text(
+        json.dumps(
+            {
+                "blockers": [
+                    {
+                        "id": "cloud-runtime-endpoint-unconfigured",
+                        "category": "cloud_runtime",
+                        "status": "parked",
+                        "route": "Keep separate from session intake.",
+                    },
+                    {
+                        "id": "remote-task-pr-receipt-errors",
+                        "category": "remote_receipt",
+                        "status": "needs_refresh",
+                        "route": "Refresh remote proof before closure.",
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    attack.PRESSURE_INDEX.parent.mkdir(parents=True)
+    attack.PRESSURE_INDEX.write_text(json.dumps({"local_total_bytes": 0}), encoding="utf-8")
+
+    snapshot = attack.build_snapshot()
+    paths = {item["id"]: item for item in snapshot["ranked_paths"]}
+
+    assert paths["cloud-runtime-endpoint-unconfigured"]["lane"] == "parked"
+    assert paths["remote-task-pr-receipt-errors"]["lane"] == "blocker"
+
+
 def test_session_attack_paths_parks_local_pressure_when_worktree_debt_under_cap(tmp_path: Path):
     attack = _load(ATTACK_PATHS_SCRIPT, "session_attack_paths_local_lean_under_cap")
     attack.ROOT = tmp_path
