@@ -15,9 +15,9 @@ portal:
       claude: 100
     track:
       date: '2026-06-28'
-      spent: 6
+      spent: 14
       per_agent:
-        jules: 6
+        jules: 14
         gemini: 0
         codex: 0
         opencode: 0
@@ -37367,7 +37367,7 @@ tasks:
     Reject session-start calls that do'
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-27T01:19:14.038132Z'
+  updated: '2026-06-28T01:33:56.613698Z'
   dispatch_log:
   - timestamp: '2026-06-22T03:01:00.689305Z'
     agent: gemini
@@ -37400,6 +37400,20 @@ tasks:
   - timestamp: '2026-06-27T01:19:14.038132Z'
     agent: jules
     session_id: '9111347269420971550'
+    status: dispatched
+  - timestamp: '2026-06-28T01:30:55.969183Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T01:33:56.613698Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T01:33:56.613698Z'
+    agent: jules
+    session_id: '14019987598642121994'
     status: dispatched
 - id: GH-4444j99-hokage-chess-48
   title: "[V-B] Phase 3 \u2014 substrate-doc canonical-home promotion + seed.yaml\
@@ -37918,7 +37932,7 @@ tasks:
     \ (verified: SKILL.md + assets + scripts). ## Fix"
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-27T01:19:14.038132Z'
+  updated: '2026-06-28T01:33:56.613698Z'
   dispatch_log:
   - timestamp: '2026-06-22T03:35:38.489610Z'
     agent: gemini
@@ -37951,6 +37965,20 @@ tasks:
   - timestamp: '2026-06-27T01:19:14.038132Z'
     agent: jules
     session_id: '1666709050404698946'
+    status: dispatched
+  - timestamp: '2026-06-28T01:30:55.969183Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T01:33:56.613698Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T01:33:56.613698Z'
+    agent: jules
+    session_id: '15753378934704197286'
     status: dispatched
 - id: GH-4444j99-hokage-chess-14
   title: '[AF-3] Deepen Stratum 2 timeslices (real research, not seed prose)'
@@ -45061,7 +45089,7 @@ tasks:
     \ the thesis. [auto-discovery 2026-06-22; no repo stays dark]"
   depends_on: []
   created: '2026-06-22'
-  updated: '2026-06-27T01:19:14.038132Z'
+  updated: '2026-06-28T01:33:56.613698Z'
   dispatch_log:
   - timestamp: '2026-06-22T17:21:07.408453Z'
     agent: gemini
@@ -45092,6 +45120,20 @@ tasks:
     output: Backfilled missing dispatch reservation log after reserve-path audit;
       original lane may predate durable reserve logging.
   - timestamp: '2026-06-27T01:19:14.038132Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
+  - timestamp: '2026-06-28T01:30:55.969183Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T01:33:56.613698Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T01:33:56.613698Z'
     agent: jules
     session_id: cli
     status: dispatched
@@ -51061,7 +51103,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - ci-green
   - generated
@@ -51078,7 +51120,7 @@ tasks:
     endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-28T00:36:56.617979Z'
+  updated: '2026-06-28T01:20:30.790296Z'
   dispatch_log:
   - timestamp: '2026-06-24T13:05:57.998424Z'
     agent: opencode
@@ -51105,6 +51147,15 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-28T01:20:30.790296Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T01:20:30.790296Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GEN-organvm-limen-ci-green-0624
   title: Make organvm/limen CI green
   repo: organvm/limen
@@ -51868,7 +51919,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - security
   - generated
@@ -51882,7 +51933,7 @@ tasks:
     2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-28T00:36:56.617979Z'
+  updated: '2026-06-28T01:20:30.790296Z'
   dispatch_log:
   - timestamp: '2026-06-24T13:05:57.998424Z'
     agent: claude
@@ -51901,6 +51952,15 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-28T01:20:30.790296Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T01:20:30.790296Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GEN-organvm-limen-security-0624
   title: Security hardening pass on organvm/limen
   repo: organvm/limen
@@ -54670,7 +54730,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - security
   - generated
@@ -54683,7 +54743,7 @@ tasks:
     2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-28T00:47:04.638000Z'
+  updated: '2026-06-28T01:20:30.790296Z'
   dispatch_log:
   - timestamp: '2026-06-27T00:17:34.556008Z'
     agent: gemini
@@ -54700,6 +54760,15 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-28T01:20:30.790296Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T01:20:30.790296Z'
+    agent: jules
+    session_id: '7288458074531565087'
+    status: dispatched
 - id: GEN-organvm-session-meta-security-0626
   title: Security hardening pass on organvm/session-meta
   repo: organvm/session-meta
@@ -54707,7 +54776,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - security
   - generated
@@ -54720,7 +54789,7 @@ tasks:
     2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-28T00:47:04.638000Z'
+  updated: '2026-06-28T01:25:39.676806Z'
   dispatch_log:
   - timestamp: '2026-06-27T00:17:34.556008Z'
     agent: gemini
@@ -54737,6 +54806,15 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-28T01:25:39.676806Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T01:25:39.676806Z'
+    agent: jules
+    session_id: '3999239539925038159'
+    status: dispatched
 - id: GEN-organvm-a-i-chat--exporter-security-0626
   title: Security hardening pass on organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
@@ -54744,7 +54822,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - security
   - generated
@@ -54757,7 +54835,7 @@ tasks:
     2026-06-26 to keep the stream endless]
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-06-28T00:47:04.638000Z'
+  updated: '2026-06-28T01:25:39.676806Z'
   dispatch_log:
   - timestamp: '2026-06-27T00:17:34.556008Z'
     agent: gemini
@@ -54774,6 +54852,15 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-28T01:25:39.676806Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T01:25:39.676806Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GEN-organvm-universal-mail--automation-security-0626
   title: Security hardening pass on organvm/universal-mail--automation
   repo: organvm/universal-mail--automation

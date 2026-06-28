@@ -16,6 +16,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 from collections import Counter, defaultdict
@@ -35,6 +36,18 @@ TASKS_PATH = ROOT / "tasks.yaml"
 WORKTREE_ROOT = ROOT.parent / ".limen-worktrees"
 GITHUB_PR_RE = re.compile(r"github\.com/([^/]+)/([^/]+)/pull/(\d+)")
 DISPATCH_GRACE_SECONDS = int(os.environ.get("LIMEN_LANE_TIMEOUT", "900")) + 600
+GH_RETRIES = max(1, int(os.environ.get("LIMEN_GH_RECEIPT_RETRIES", "3")))
+TRANSIENT_GH_ERROR_BITS = (
+    "connect: network is unreachable",
+    "connection reset",
+    "connection refused",
+    "i/o timeout",
+    "tls handshake timeout",
+    "temporary failure",
+    "502 bad gateway",
+    "503 service unavailable",
+    "504 gateway timeout",
+)
 
 LOCAL_SOURCES = [
     ("codex-sessions", HOME / ".codex" / "sessions", ("*",)),
@@ -289,6 +302,21 @@ def run_cmd(argv: list[str], *, cwd: Path | None = None, timeout: int = 20) -> s
         return subprocess.CompletedProcess(argv, 1, "", str(exc))
 
 
+def is_transient_gh_error(proc: subprocess.CompletedProcess[str]) -> bool:
+    text = f"{proc.stderr}\n{proc.stdout}".lower()
+    return any(bit in text for bit in TRANSIENT_GH_ERROR_BITS)
+
+
+def run_gh_cmd(argv: list[str], *, timeout: int = 30) -> subprocess.CompletedProcess[str]:
+    last = subprocess.CompletedProcess(argv, 1, "", "not run")
+    for attempt in range(GH_RETRIES):
+        last = run_cmd(argv, timeout=timeout)
+        if last.returncode == 0 or not is_transient_gh_error(last) or attempt == GH_RETRIES - 1:
+            return last
+        time.sleep(min(4.0, 0.75 * (attempt + 1)))
+    return last
+
+
 def repo_from_remote(remote: str) -> str | None:
     remote = remote.strip()
     patterns = [
@@ -303,28 +331,54 @@ def repo_from_remote(remote: str) -> str | None:
 
 
 def gh_pr_view(owner: str, repo: str, number: str) -> dict[str, Any]:
-    proc = run_cmd(
+    full_repo = f"{owner}/{repo}"
+    proc = run_gh_cmd(
         [
             "gh",
             "pr",
             "view",
             number,
             "--repo",
-            f"{owner}/{repo}",
+            full_repo,
             "--json",
             "number,title,state,isDraft,mergedAt,url,headRefName,baseRefName,updatedAt",
         ],
         timeout=30,
     )
-    if proc.returncode != 0:
-        return {"ok": False, "repo": f"{owner}/{repo}", "number": int(number), "error": proc.stderr.strip()}
-    try:
-        data = json.loads(proc.stdout)
-    except ValueError as exc:
-        return {"ok": False, "repo": f"{owner}/{repo}", "number": int(number), "error": str(exc)}
+    data: dict[str, Any]
+    if proc.returncode == 0:
+        try:
+            data = json.loads(proc.stdout)
+        except ValueError as exc:
+            return {"ok": False, "repo": full_repo, "number": int(number), "error": str(exc)}
+    else:
+        rest = run_gh_cmd(["gh", "api", f"repos/{full_repo}/pulls/{number}"], timeout=30)
+        if rest.returncode != 0:
+            error = proc.stderr.strip() or proc.stdout.strip()
+            rest_error = rest.stderr.strip() or rest.stdout.strip()
+            if rest_error and rest_error != error:
+                error = f"{error}; REST fallback: {rest_error}" if error else rest_error
+            return {"ok": False, "repo": full_repo, "number": int(number), "error": error}
+        try:
+            row = json.loads(rest.stdout)
+        except ValueError as exc:
+            return {"ok": False, "repo": full_repo, "number": int(number), "error": str(exc)}
+        if not isinstance(row, dict):
+            return {"ok": False, "repo": full_repo, "number": int(number), "error": "unexpected REST payload"}
+        data = {
+            "number": row.get("number"),
+            "title": row.get("title"),
+            "state": str(row.get("state") or "").upper(),
+            "isDraft": row.get("draft"),
+            "mergedAt": row.get("merged_at"),
+            "url": row.get("html_url"),
+            "headRefName": (row.get("head") or {}).get("ref") if isinstance(row.get("head"), dict) else None,
+            "baseRefName": (row.get("base") or {}).get("ref") if isinstance(row.get("base"), dict) else None,
+            "updatedAt": row.get("updated_at"),
+        }
     return {
         "ok": True,
-        "repo": f"{owner}/{repo}",
+        "repo": full_repo,
         "number": data.get("number"),
         "state": "MERGED" if data.get("mergedAt") else data.get("state"),
         "isDraft": data.get("isDraft"),
@@ -337,7 +391,7 @@ def gh_pr_view(owner: str, repo: str, number: str) -> dict[str, Any]:
 
 
 def gh_prs_for_branch(repo: str, branch: str) -> list[dict[str, Any]]:
-    proc = run_cmd(
+    proc = run_gh_cmd(
         [
             "gh",
             "pr",
@@ -355,12 +409,56 @@ def gh_prs_for_branch(repo: str, branch: str) -> list[dict[str, Any]]:
         ],
         timeout=30,
     )
-    if proc.returncode != 0:
-        return [{"ok": False, "repo": repo, "branch": branch, "error": proc.stderr.strip()}]
-    try:
-        rows = json.loads(proc.stdout or "[]")
-    except ValueError as exc:
-        return [{"ok": False, "repo": repo, "branch": branch, "error": str(exc)}]
+    if proc.returncode == 0:
+        try:
+            rows = json.loads(proc.stdout or "[]")
+        except ValueError as exc:
+            return [{"ok": False, "repo": repo, "branch": branch, "error": str(exc)}]
+    else:
+        owner = repo.split("/", 1)[0]
+        rest = run_gh_cmd(
+            [
+                "gh",
+                "api",
+                "--method",
+                "GET",
+                f"repos/{repo}/pulls",
+                "-f",
+                f"head={owner}:{branch}",
+                "-f",
+                "state=all",
+                "-f",
+                "per_page=10",
+            ],
+            timeout=30,
+        )
+        if rest.returncode != 0:
+            error = proc.stderr.strip() or proc.stdout.strip()
+            rest_error = rest.stderr.strip() or rest.stdout.strip()
+            if rest_error and rest_error != error:
+                error = f"{error}; REST fallback: {rest_error}" if error else rest_error
+            return [{"ok": False, "repo": repo, "branch": branch, "error": error}]
+        try:
+            rest_rows = json.loads(rest.stdout or "[]")
+        except ValueError as exc:
+            return [{"ok": False, "repo": repo, "branch": branch, "error": str(exc)}]
+        if not isinstance(rest_rows, list):
+            return [{"ok": False, "repo": repo, "branch": branch, "error": "unexpected REST payload"}]
+        rows = [
+            {
+                "number": row.get("number"),
+                "title": row.get("title"),
+                "state": str(row.get("state") or "").upper(),
+                "isDraft": row.get("draft"),
+                "mergedAt": row.get("merged_at"),
+                "url": row.get("html_url"),
+                "headRefName": (row.get("head") or {}).get("ref") if isinstance(row.get("head"), dict) else None,
+                "baseRefName": (row.get("base") or {}).get("ref") if isinstance(row.get("base"), dict) else None,
+                "updatedAt": row.get("updated_at"),
+            }
+            for row in rest_rows
+            if isinstance(row, dict)
+        ]
     return [
         {
             "ok": True,
