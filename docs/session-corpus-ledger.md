@@ -1,6 +1,6 @@
 # Session Corpus Ledger
 
-Generated: `2026-06-28T02:52:41+00:00`
+Generated: `2026-06-28T03:04:47+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -19,9 +19,9 @@ Total seen: `9728` files, `2.1 GiB`.
 | Source | Root | Files | Size | Newest |
 |---|---:|---:|---:|---|
 | `claude-projects` | `~/.claude/projects` | 4854 | 1.4 GiB | `2026-06-28T01:17:54+00:00` |
-| `codex-sessions` | `~/.codex/sessions` | 889 | 731.8 MiB | `2026-06-28T02:52:37+00:00` |
+| `codex-sessions` | `~/.codex/sessions` | 889 | 732.4 MiB | `2026-06-28T03:04:43+00:00` |
 | `claude-file-history` | `~/.claude/file-history` | 3519 | 42.2 MiB | `2026-06-27T00:26:28+00:00` |
-| `codex-goals-state` | `~/.codex` | 6 | 11.2 MiB | `2026-06-28T02:52:37+00:00` |
+| `codex-goals-state` | `~/.codex` | 6 | 10.9 MiB | `2026-06-28T03:04:43+00:00` |
 | `claude-plans` | `~/.claude/plans` | 34 | 289.3 KiB | `2026-06-25T03:22:45+00:00` |
 | `claude-usage-session-meta` | `~/.claude/usage-data/session-meta` | 197 | 221.4 KiB | `2026-06-23T19:06:40+00:00` |
 | `codex-history` | `~/.codex` | 1 | 192.7 KiB | `2026-06-28T02:24:32+00:00` |
@@ -41,14 +41,14 @@ Total seen: `9728` files, `2.1 GiB`.
 
 ## Substrate Counts
 
-- `session-meta/ingest/manifest.jsonl`: 23,549 records, mtime `2026-06-28T02:02:47+00:00`.
-- `session-meta/ingest/atoms.jsonl`: 106,071 atoms, mtime `2026-06-28T02:06:14+00:00`.
+- `session-meta/ingest/manifest.jsonl`: 23,549 records, mtime `2026-06-28T02:56:32+00:00`.
+- `session-meta/ingest/atoms.jsonl`: 106,539 atoms, mtime `2026-06-28T03:00:03+00:00`.
 - `knowledge-corpus`: `13` reduced faces; `00-THE-ONE.md` present: `True`.
 - Top manifest sources: `gemini` 4,592, `claude` 3,961, `chatgpt` 2,709, `claude-projects` 2,461, `cowork-sessions` 2,047, `antigravity` 1,893, `downloads` 1,717, `intake` 1,569.
 
 ## Session Lifecycle
 
-- Last `quicken.py` journal: `2026-06-28T02:33:01+00:00`.
+- Last `quicken.py` journal: `2026-06-28T02:56:16+00:00`.
 - Claude FleetView sessions classified: `29` total; `0` stalled, `29` closed, `0` alive, `0` done.
 - Reaped worktrees in that pass: `0`.
 - Last `codex-quicken.py` journal: `2026-06-27T21:42:32+00:00`.
@@ -60,8 +60,8 @@ Total seen: `9728` files, `2.1 GiB`.
 - Private root: `~/Workspace/limen/.limen-private/session-corpus`.
 - Private inventory: `~/Workspace/limen/.limen-private/session-corpus/inventory/session-corpus-ledger.json`.
 - `.limen-private/` is ignored by Git; it is the local raw/private landing zone.
-- Materialized objects this run: copied `6`, already present `9722`, bytes copied `17.0 MiB`.
-- Private object store now holds `7403` unique objects, `3.1 GiB`.
+- Materialized objects this run: copied `7`, already present `9721`, bytes copied `17.3 MiB`.
+- Private object store now holds `7410` unique objects, `3.1 GiB`.
 - Private screenshot evidence: `14` PNG artifacts, `22.9 MiB`, newest `2026-06-27T13:41:25+00:00`.
 - Screenshot batches: `2026-06-27` 14.
 
@@ -74,6 +74,7 @@ Total seen: `9728` files, `2.1 GiB`.
 - Prompt priority map: `docs/prompt-priority-map.md`.
 - Prompt batch review ledger: `docs/prompt-batch-review-ledger.md`.
 - Prompt packet ledger: `docs/prompt-packet-ledger.md`.
+- Prompt packet resolution receipts: `docs/prompt-packet-resolution-receipts.json`.
 - Capability substrate ledger: `docs/capability-substrate-ledger.md`.
 
 ## Roadblocks And Potholes

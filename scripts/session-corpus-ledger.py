@@ -606,6 +606,7 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
     priority_maps = sorted((ROOT / "docs").glob("prompt-priority-map.md"))
     batch_review_ledgers = sorted((ROOT / "docs").glob("prompt-batch-review-ledger.md"))
     packet_ledgers = sorted((ROOT / "docs").glob("prompt-packet-ledger.md"))
+    packet_resolution_receipts = sorted((ROOT / "docs").glob("prompt-packet-resolution-receipts.json"))
     capability_receipts = sorted((ROOT / "docs").glob("capability-substrate-ledger.md"))
     if (
         screenshot_receipts
@@ -615,6 +616,7 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
         or priority_maps
         or batch_review_ledgers
         or packet_ledgers
+        or packet_resolution_receipts
         or capability_receipts
     ):
         lines += [
@@ -636,6 +638,8 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
             lines.append(f"- Prompt batch review ledger: `{path.relative_to(ROOT)}`.")
         for path in packet_ledgers:
             lines.append(f"- Prompt packet ledger: `{path.relative_to(ROOT)}`.")
+        for path in packet_resolution_receipts:
+            lines.append(f"- Prompt packet resolution receipts: `{path.relative_to(ROOT)}`.")
         for path in capability_receipts:
             lines.append(f"- Capability substrate ledger: `{path.relative_to(ROOT)}`.")
 

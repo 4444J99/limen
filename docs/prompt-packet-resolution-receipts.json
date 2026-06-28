@@ -1,0 +1,124 @@
+{
+  "version": 1,
+  "generated_at": "2026-06-28T03:02:01Z",
+  "receipts": [
+    {
+      "packet": "packet-prompt-batch-critical-stalled-review-001-worktree_lifecycle",
+      "source_batch": "prompt-batch-critical-stalled-review-001",
+      "family": "worktree_lifecycle",
+      "status": "owner-recorded",
+      "classification": "current worktree state recorded for every root in the packet",
+      "evidence": [
+        "python3 scripts/worktree-debt.py --json",
+        "all 14 packet roots were absent from /Users/4jp/Workspace/.limen-worktrees on 2026-06-28T03:02:01Z",
+        "no packet root appeared in the current worktree debt report",
+        "no packet root had a current remote-worktree receipt in the prompt lifecycle index",
+        "git for-each-ref in the limen repo found no local or remote branch refs named by these worktree slugs",
+        "docs/worktree-lifecycle-ledger.md records the remote PR receipt for bld-domus-genoma-ci-23a9"
+      ],
+      "next_action": "No broad worktree cleanup or delegation remains for this packet. Rehydrate a root only if a later owner-repo review explicitly names the repo, branch, predicate, and expected receipt.",
+      "roots": [
+        {
+          "root": "bld-domus-genoma-ci-23a9",
+          "status": "remote_pr_preserved",
+          "repo": "organvm/domus-genoma",
+          "branch": "limen/bld-domus-genoma-ci-23a9",
+          "pr": "https://github.com/organvm/domus-genoma/pull/144",
+          "evidence": "docs/worktree-lifecycle-ledger.md records exact local/fetched PR head equality before local checkout removal.",
+          "next_action": "Review PR CI and known BATS blockers, then merge or supersede by named branch/PR."
+        },
+        {
+          "root": "bld-domus-genoma-ci-ec4f",
+          "status": "historical_absent_reference",
+          "repo_hint": "domus-genoma",
+          "evidence": "Absent from current .limen-worktrees scan; retained only as a redacted historical Codex cwd/session reference.",
+          "next_action": "No local root to preserve; do not delegate unless owner-repo review names a live branch or PR."
+        },
+        {
+          "root": "bld-writelens-ci-9c3b",
+          "status": "historical_absent_reference",
+          "repo_hint": "writelens",
+          "evidence": "Absent from current .limen-worktrees scan; retained only as a redacted historical Codex cwd/session reference.",
+          "next_action": "No local root to preserve; do not delegate unless owner-repo review names a live branch or PR."
+        },
+        {
+          "root": "cifix-4444j99-domus-genoma-07e2",
+          "status": "historical_absent_reference",
+          "repo_hint": "4444j99/domus-genoma",
+          "evidence": "Absent from current .limen-worktrees scan; retained only as a redacted historical Codex cwd/session reference.",
+          "next_action": "No local root to preserve; do not delegate unless owner-repo review names a live branch or PR."
+        },
+        {
+          "root": "cifix-a-organvm-mirror-mirror-4473",
+          "status": "historical_absent_reference",
+          "repo_hint": "a-organvm/mirror-mirror",
+          "evidence": "Absent from current .limen-worktrees scan; retained only as a redacted historical Codex cwd/session reference.",
+          "next_action": "No local root to preserve; do not delegate unless owner-repo review names a live branch or PR."
+        },
+        {
+          "root": "cifix-a-organvm-public-record-data-scrapper-a5c1",
+          "status": "historical_absent_reference",
+          "repo_hint": "a-organvm/public-record-data-scrapper",
+          "evidence": "Absent from current .limen-worktrees scan; retained only as a redacted historical Codex cwd/session reference.",
+          "next_action": "No local root to preserve; do not delegate unless owner-repo review names a live branch or PR."
+        },
+        {
+          "root": "cifix-organvm-i-theoria-sovereign--ground-34de",
+          "status": "historical_absent_reference",
+          "repo_hint": "organvm-i-theoria/sovereign--ground",
+          "evidence": "Absent from current .limen-worktrees scan; retained only as a redacted historical Codex cwd/session reference.",
+          "next_action": "No local root to preserve; do not delegate unless owner-repo review names a live branch or PR."
+        },
+        {
+          "root": "cifix-organvm-iii-ergon--github-6819",
+          "status": "historical_absent_reference",
+          "repo_hint": "organvm-iii/ergon--github",
+          "evidence": "Absent from current .limen-worktrees scan; retained only as a redacted historical Codex cwd/session reference.",
+          "next_action": "No local root to preserve; do not delegate unless owner-repo review names a live branch or PR."
+        },
+        {
+          "root": "cifix-organvm-v-logos--github-3b0e",
+          "status": "historical_absent_reference",
+          "repo_hint": "organvm-v/logos--github",
+          "evidence": "Absent from current .limen-worktrees scan; retained only as a redacted historical Codex cwd/session reference.",
+          "next_action": "No local root to preserve; do not delegate unless owner-repo review names a live branch or PR."
+        },
+        {
+          "root": "gen-4444j99-media-ark-ci-green-0620-0bc1",
+          "status": "historical_absent_reference",
+          "repo_hint": "4444j99/media-ark",
+          "evidence": "Absent from current .limen-worktrees scan; retained only as a redacted historical Codex cwd/session reference.",
+          "next_action": "No local root to preserve; do not delegate unless owner-repo review names a live branch or PR."
+        },
+        {
+          "root": "gen-a-organvm-a-i-chat--exporter-ci-green-0620-492b",
+          "status": "historical_absent_reference",
+          "repo_hint": "a-organvm/a-i-chat--exporter",
+          "evidence": "Absent from current .limen-worktrees scan; retained only as a redacted historical Codex cwd/session reference.",
+          "next_action": "No local root to preserve; do not delegate unless owner-repo review names a live branch or PR."
+        },
+        {
+          "root": "gen-organvm-a-i-chat--exporter-ci-green-0622-4a4f",
+          "status": "historical_absent_reference",
+          "repo_hint": "organvm/a-i-chat--exporter",
+          "evidence": "Absent from current .limen-worktrees scan; retained only as a redacted historical Codex cwd/session reference.",
+          "next_action": "No local root to preserve; do not delegate unless owner-repo review names a live branch or PR."
+        },
+        {
+          "root": "gen-organvm-mirror-mirror-ci-green-0622-98c1",
+          "status": "historical_absent_reference",
+          "repo_hint": "organvm/mirror-mirror",
+          "evidence": "Absent from current .limen-worktrees scan; retained only as a redacted historical Codex cwd/session reference.",
+          "next_action": "No local root to preserve; do not delegate unless owner-repo review names a live branch or PR."
+        },
+        {
+          "root": "rev-mirror-deploy-3927",
+          "status": "historical_absent_reference",
+          "repo_hint": "mirror deploy",
+          "evidence": "Absent from current .limen-worktrees scan; retained only as a redacted historical Codex cwd/session reference.",
+          "next_action": "No local root to preserve; do not delegate unless owner-repo review names a live branch or PR."
+        }
+      ]
+    }
+  ]
+}

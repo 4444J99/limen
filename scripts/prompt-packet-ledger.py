@@ -28,6 +28,14 @@ PRIORITY_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-priority-map.json"
 ATTACK_INDEX = PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
 DOC_PATH = ROOT / "docs" / "prompt-packet-ledger.md"
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-packet-ledger.json"
+RESOLUTION_RECEIPTS = ROOT / "docs" / "prompt-packet-resolution-receipts.json"
+
+RECORDED_PACKET_STATUSES = {
+    "owner-recorded",
+    "current-state-recorded",
+    "non-source-recorded",
+    "superseded-recorded",
+}
 
 PACKET_ROUTES = {
     "worktree_lifecycle": {
@@ -110,11 +118,24 @@ def attack_lookup(attack: dict[str, Any]) -> dict[str, dict[str, Any]]:
     }
 
 
+def resolution_lookup(receipts: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    rows: dict[str, dict[str, Any]] = {}
+    for receipt in receipts.get("receipts") or []:
+        if not isinstance(receipt, dict):
+            continue
+        packet_id = receipt.get("packet") or receipt.get("packet_id") or receipt.get("id")
+        if packet_id:
+            rows[str(packet_id)] = receipt
+    return rows
+
+
 def packet_route(family: str) -> dict[str, str]:
     return PACKET_ROUTES.get(family, PACKET_ROUTES["uncategorized"])
 
 
 def dispatchability_for_packet(packet: dict[str, Any]) -> str:
+    if str(packet.get("status") or "") in RECORDED_PACKET_STATUSES:
+        return "recorded-owner-receipt"
     family = str(packet.get("family") or "")
     owner_repos = packet.get("owner_repos") or []
     if family in {"worktree_lifecycle", "session_lifecycle", "agent_coordination"}:
@@ -129,7 +150,27 @@ def build_packet_key(batch: dict[str, Any], session: dict[str, Any]) -> tuple[st
     return str(batch.get("id") or "unknown-batch"), family
 
 
-def build_packets(review: dict[str, Any], priority: dict[str, Any], attack: dict[str, Any]) -> list[dict[str, Any]]:
+def summarize_resolution(receipt: dict[str, Any]) -> dict[str, Any]:
+    roots = [root for root in receipt.get("roots") or [] if isinstance(root, dict)]
+    root_statuses = Counter(str(root.get("status") or "unknown") for root in roots)
+    root_repos = sorted({str(root.get("repo")) for root in roots if root.get("repo")})
+    return {
+        "status": str(receipt.get("status") or "owner-recorded"),
+        "classification": str(receipt.get("classification") or ""),
+        "root_count": len(roots),
+        "root_statuses": dict(root_statuses.most_common()),
+        "root_repos": root_repos,
+        "evidence": receipt.get("evidence") or [],
+        "next_action": str(receipt.get("next_action") or ""),
+    }
+
+
+def build_packets(
+    review: dict[str, Any],
+    priority: dict[str, Any],
+    attack: dict[str, Any],
+    resolutions: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
     sessions_by_key = session_lookup(priority)
     attacks_by_id = attack_lookup(attack)
     grouped: dict[tuple[str, str], dict[str, Any]] = {}
@@ -201,6 +242,12 @@ def build_packets(review: dict[str, Any], priority: dict[str, Any], attack: dict
         packet["states"] = dict(packet["states"].most_common())
         packet["owners"] = dict(packet["owners"].most_common())
         packet["owner_repos"] = sorted(packet["owner_repos"])
+        resolution = resolutions.get(str(packet["id"]))
+        if resolution:
+            packet["resolution"] = summarize_resolution(resolution)
+            packet["status"] = packet["resolution"]["status"]
+        else:
+            packet["resolution"] = {}
         packet["dispatchability"] = dispatchability_for_packet(packet)
         packets.append(packet)
     return sorted(
@@ -219,8 +266,17 @@ def build_snapshot(limit: int) -> dict[str, Any]:
     review = load_json(BATCH_REVIEW_INDEX)
     priority = load_json(PRIORITY_INDEX)
     attack = load_json(ATTACK_INDEX)
-    packets = build_packets(review, priority, attack)
+    resolution_receipts = load_json(RESOLUTION_RECEIPTS)
+    resolutions = resolution_lookup(resolution_receipts)
+    packets = build_packets(review, priority, attack, resolutions)
+    recorded_packets = [
+        packet for packet in packets if str(packet.get("status") or "") in RECORDED_PACKET_STATUSES
+    ]
+    open_packets = [
+        packet for packet in packets if str(packet.get("status") or "") not in RECORDED_PACKET_STATUSES
+    ]
     status_counts = Counter(str(packet["dispatchability"]) for packet in packets)
+    packet_status_counts = Counter(str(packet["status"]) for packet in packets)
     family_counts = Counter(str(packet["family"]) for packet in packets)
     source_batches = Counter(str(packet["source_batch"]) for packet in packets)
     now = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
@@ -230,20 +286,30 @@ def build_snapshot(limit: int) -> dict[str, Any]:
             "prompt_batch_review_ledger": {"path": str(BATCH_REVIEW_INDEX), "present": bool(review)},
             "prompt_priority_map": {"path": str(PRIORITY_INDEX), "present": bool(priority)},
             "session_attack_paths": {"path": str(ATTACK_INDEX), "present": bool(attack)},
+            "packet_resolution_receipts": {
+                "path": str(RESOLUTION_RECEIPTS),
+                "present": bool(resolutions),
+            },
         },
         "coverage": {
             "source_review_batches": len(review.get("batches") or []),
             "needs_packetization_batches": int((review.get("counts") or {}).get("statuses", {}).get("needs-packetization", 0)),
             "packets": len(packets),
+            "recorded_packets": len(recorded_packets),
+            "open_packets": len(open_packets),
             "session_receipts": sum(len(packet["session_keys"]) for packet in packets),
             "prompt_events": sum(int(packet["prompt_events"]) for packet in packets),
             "unique_prompt_hash_refs": sum(int(packet["unique_prompt_hashes"]) for packet in packets),
+            "packet_resolution_receipts": len(resolutions),
         },
         "counts": {
             "dispatchability": dict(status_counts.most_common()),
+            "packet_statuses": dict(packet_status_counts.most_common()),
             "families": dict(family_counts.most_common()),
             "source_batches": dict(source_batches.most_common()),
         },
+        "recorded_packets": recorded_packets,
+        "open_packets": open_packets,
         "packets": packets,
         "private_index": str(PRIVATE_INDEX),
     }
@@ -255,7 +321,8 @@ def render_counts(counts: dict[str, int]) -> str:
 
 def render_markdown(snapshot: dict[str, Any], *, limit: int) -> str:
     coverage = snapshot["coverage"]
-    packets = snapshot["packets"][:limit]
+    recorded_packets = snapshot["recorded_packets"][:limit]
+    packets = snapshot["open_packets"][:limit]
     lines = [
         "# Prompt Packet Ledger",
         "",
@@ -273,11 +340,33 @@ def render_markdown(snapshot: dict[str, Any], *, limit: int) -> str:
         f"- Source review batches: `{coverage.get('source_review_batches', 0)}`.",
         f"- Batches needing packetization: `{coverage.get('needs_packetization_batches', 0)}`.",
         f"- Packets emitted: `{coverage.get('packets', 0)}`.",
+        f"- Recorded packets: `{coverage.get('recorded_packets', 0)}`.",
+        f"- Open packets: `{coverage.get('open_packets', 0)}`.",
         f"- Session receipts packetized: `{coverage.get('session_receipts', 0)}`.",
         f"- Prompt events packetized: `{coverage.get('prompt_events', 0)}`.",
         f"- Unique prompt hash refs in packets: `{coverage.get('unique_prompt_hash_refs', 0)}`.",
+        f"- Packet resolution receipts: `{coverage.get('packet_resolution_receipts', 0)}`.",
+        f"- Packet status mix: {render_counts(snapshot['counts']['packet_statuses'])}.",
         f"- Dispatchability mix: {render_counts(snapshot['counts']['dispatchability'])}.",
         f"- Family mix: {render_counts(snapshot['counts']['families'])}.",
+        "",
+        "## Recorded Packets",
+        "",
+        "| Rank | Packet | Status | Family | Sessions | Events | Root Evidence | Gate |",
+        "|---:|---|---|---|---:|---:|---|---|",
+    ]
+    for rank, packet in enumerate(recorded_packets, start=1):
+        resolution = packet.get("resolution") or {}
+        root_bits = render_counts(resolution.get("root_statuses") or {})
+        gate = resolution.get("next_action") or "Recorded; no broad delegation from this packet."
+        lines.append(
+            f"| {rank} | `{packet['id']}` | `{packet['status']}` | `{packet['family']}` | "
+            f"{len(packet['session_keys'])} | {packet['prompt_events']} | {root_bits} | {gate} |"
+        )
+    if not recorded_packets:
+        lines.append("| 0 | none | n/a | n/a | 0 | 0 | none | n/a |")
+
+    lines += [
         "",
         "## Packet Queue",
         "",
@@ -312,6 +401,7 @@ def render_markdown(snapshot: dict[str, Any], *, limit: int) -> str:
         "",
         f"- Prompt packet private index: `{relpath(PRIVATE_INDEX)}`.",
         "- The private index keeps packet membership, prompt hashes, session keys, worktree slugs, and attack-path evidence; it contains no prompt text.",
+        f"- Public packet resolution receipts: `{RESOLUTION_RECEIPTS.relative_to(ROOT)}`.",
         "",
         "## Commands",
         "",

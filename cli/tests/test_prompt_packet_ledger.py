@@ -25,6 +25,7 @@ def test_prompt_packet_ledger_groups_stalled_batches_without_raw_text(tmp_path: 
     packets.ATTACK_INDEX = packets.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
     packets.DOC_PATH = tmp_path / "docs" / "prompt-packet-ledger.md"
     packets.PRIVATE_INDEX = packets.PRIVATE_ROOT / "lifecycle" / "prompt-packet-ledger.json"
+    packets.RESOLUTION_RECEIPTS = tmp_path / "docs" / "prompt-packet-resolution-receipts.json"
 
     raw_source = tmp_path / "raw-session.jsonl"
     raw_source.write_text("RAW_PROMPT_TEXT_SHOULD_NOT_APPEAR", encoding="utf-8")
@@ -118,9 +119,102 @@ def test_prompt_packet_ledger_groups_stalled_batches_without_raw_text(tmp_path: 
     assert by_family["worktree_lifecycle"]["unique_prompt_hashes"] == 3
     assert by_family["session_lifecycle"]["dispatchability"] == "codex-owner-packet"
     assert snapshot["coverage"]["packets"] == 2
+    assert snapshot["coverage"]["recorded_packets"] == 0
+    assert snapshot["coverage"]["open_packets"] == 2
     assert snapshot["coverage"]["prompt_events"] == 9
     assert "RAW_PROMPT_TEXT_SHOULD_NOT_APPEAR" not in json.dumps(snapshot)
     assert "RAW_PROMPT_TEXT_SHOULD_NOT_APPEAR" not in markdown
     assert "Prompt Packet Ledger" in markdown
     assert packets.DOC_PATH.exists()
     assert packets.PRIVATE_INDEX.exists()
+
+
+def test_prompt_packet_ledger_records_packet_resolution_receipts(tmp_path: Path):
+    packets = _load()
+    packets.ROOT = tmp_path
+    packets.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    packets.BATCH_REVIEW_INDEX = packets.PRIVATE_ROOT / "lifecycle" / "prompt-batch-review-ledger.json"
+    packets.PRIORITY_INDEX = packets.PRIVATE_ROOT / "lifecycle" / "prompt-priority-map.json"
+    packets.ATTACK_INDEX = packets.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
+    packets.DOC_PATH = tmp_path / "docs" / "prompt-packet-ledger.md"
+    packets.PRIVATE_INDEX = packets.PRIVATE_ROOT / "lifecycle" / "prompt-packet-ledger.json"
+    packets.RESOLUTION_RECEIPTS = tmp_path / "docs" / "prompt-packet-resolution-receipts.json"
+
+    packets.BATCH_REVIEW_INDEX.parent.mkdir(parents=True)
+    packets.BATCH_REVIEW_INDEX.write_text(
+        json.dumps(
+            {
+                "counts": {"statuses": {"needs-packetization": 1}},
+                "batches": [{"id": "prompt-batch-critical-stalled-review-001"}],
+                "review_queue": [
+                    {
+                        "id": "prompt-batch-critical-stalled-review-001",
+                        "status": "needs-packetization",
+                        "band": "critical",
+                        "lane": "stalled-review",
+                        "session_keys": ["session-a", "session-b"],
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    packets.PRIORITY_INDEX.write_text(
+        json.dumps(
+            {
+                "session_items": [
+                    {
+                        "session_key": "session-a",
+                        "family": "worktree_lifecycle",
+                        "state": "STALLED",
+                        "source": "codex-sessions",
+                        "worktree_slug": "root-a",
+                        "score": 100,
+                        "prompt_events": 4,
+                        "prompt_hashes": ["hash-a"],
+                    },
+                    {
+                        "session_key": "session-b",
+                        "family": "session_lifecycle",
+                        "state": "STALLED",
+                        "source": "codex-sessions",
+                        "score": 90,
+                        "prompt_events": 3,
+                        "prompt_hashes": ["hash-b"],
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    packets.ATTACK_INDEX.write_text(json.dumps({"ranked_paths": []}), encoding="utf-8")
+    packets.RESOLUTION_RECEIPTS.parent.mkdir(parents=True)
+    packets.RESOLUTION_RECEIPTS.write_text(
+        json.dumps(
+            {
+                "receipts": [
+                    {
+                        "packet": "packet-prompt-batch-critical-stalled-review-001-worktree_lifecycle",
+                        "status": "owner-recorded",
+                        "classification": "root state recorded",
+                        "roots": [{"root": "root-a", "status": "historical_absent_reference"}],
+                        "next_action": "No local cleanup remains for this root.",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = packets.build_snapshot(limit=10)
+    markdown = packets.render_markdown(snapshot, limit=10)
+
+    by_family = {packet["family"]: packet for packet in snapshot["packets"]}
+    assert by_family["worktree_lifecycle"]["status"] == "owner-recorded"
+    assert by_family["worktree_lifecycle"]["dispatchability"] == "recorded-owner-receipt"
+    assert by_family["session_lifecycle"]["status"] == "packetized"
+    assert snapshot["coverage"]["recorded_packets"] == 1
+    assert snapshot["coverage"]["open_packets"] == 1
+    assert snapshot["coverage"]["packet_resolution_receipts"] == 1
+    assert "Recorded Packets" in markdown
+    assert "historical_absent_reference" in markdown
