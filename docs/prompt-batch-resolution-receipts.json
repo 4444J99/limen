@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-28T05:33:18Z",
+  "generated_at": "2026-06-28T05:38:14Z",
   "receipts": [
     {
       "batch": "prompt-batch-critical-historical-worktree-review-001",
@@ -3555,6 +3555,69 @@
           "pr": "https://github.com/organvm/specvla-ergon--avditor-mvndi/pull/34",
           "evidence": "Remote branch exists at 739cf04; GitHub PR #34 is OPEN with merge state DIRTY.",
           "next_action": "Review PR #34 freshness/conflicts, then merge or supersede by a named PR."
+        }
+      ]
+    },
+    {
+      "batch": "prompt-batch-medium-hash-review-001",
+      "band": "medium",
+      "lane": "hash-review",
+      "status": "owner-recorded",
+      "classification": "private Codex session hash aggregate routed to the Limen prompt-corpus index; raw session text remains private and is not delegated",
+      "session_keys": [
+        "5a452fd9965f36c91b80",
+        "9938079e59fdfa0e4854"
+      ],
+      "source": "codex-sessions",
+      "prompt_events": 46,
+      "unique_prompt_hashes": 15,
+      "duplicate_prompt_events": 29,
+      "metadata_counts": {
+        "source_records": 8718,
+        "session_meta_records": 2,
+        "turn_context_records": 34,
+        "github_issue_or_pr_url_matches": 1184,
+        "repo_like_mentions": 59997,
+        "branch_mentions": 3398
+      },
+      "evidence": [
+        "private source files existed at review time under ~/.codex/sessions and contained Codex session_meta plus turn_context records",
+        "session metadata routed both sessions to cwd /Users/4jp/Workspace/limen on branch main with repository URL https://github.com/organvm/limen.git",
+        "priority metadata had no worktree slug, branch, or explicit owner route for either session key",
+        "metadata-only scan found many GitHub links, repo-like strings, branch mentions, and sensitive/setup keyword hits; these were counted only and not surfaced as raw session text",
+        "no raw user, assistant, prompt, credential, account, billing, financial, health, secret, or token text was copied into this tracked receipt"
+      ],
+      "next_action": "Keep as private aggregate Limen Codex-session context. Do not delegate, rehydrate, or paste raw session text unless a later owner packet names a repo, path, predicate, and privacy-safe extraction boundary.",
+      "roots": [
+        {
+          "root": "codex-session-5a452fd9965f36c91b80",
+          "session_key": "5a452fd9965f36c91b80",
+          "status": "codex_session_sensitive_context_recorded",
+          "owner_lane": "private-codex-session-limen-corpus-index",
+          "repo": "organvm/limen",
+          "source": "codex-sessions",
+          "prompt_events": 38,
+          "unique_prompt_hashes": 12,
+          "duplicate_prompt_events": 26,
+          "first_prompt_hash": "4c72667b4d9a1d74b666b8e594d1e2e06c92da48db1b00c67b8145f0fbe81a81",
+          "last_prompt_hash": "487d98331cbe395a987f5c262d18b7e1706d6f4b86cbd59e250f70737e87c69b",
+          "evidence": "Metadata-only review recorded aggregate counts and Limen cwd/repo context but no prompt body or private transcript content.",
+          "next_action": "Retain in the corpus ledger as private Limen session context only; require a new explicit owner packet before any repo task is created from this history."
+        },
+        {
+          "root": "codex-session-9938079e59fdfa0e4854",
+          "session_key": "9938079e59fdfa0e4854",
+          "status": "codex_session_sensitive_context_recorded",
+          "owner_lane": "private-codex-session-limen-corpus-index",
+          "repo": "organvm/limen",
+          "source": "codex-sessions",
+          "prompt_events": 8,
+          "unique_prompt_hashes": 5,
+          "duplicate_prompt_events": 3,
+          "first_prompt_hash": "4c72667b4d9a1d74b666b8e594d1e2e06c92da48db1b00c67b8145f0fbe81a81",
+          "last_prompt_hash": "4a49287bf11ac2fe3cf458ae895969547698fb18e0b78173895d6b094e835df8",
+          "evidence": "Metadata-only review recorded aggregate counts and Limen cwd/repo context but no prompt body or private transcript content.",
+          "next_action": "Retain in the corpus ledger as private Limen session context only; require a new explicit owner packet before any repo task is created from this history."
         }
       ]
     }
