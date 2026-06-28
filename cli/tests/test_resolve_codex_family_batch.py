@@ -135,10 +135,130 @@ def test_resolve_codex_family_batch_records_public_proof_without_raw_text(tmp_pa
 def test_repo_candidates_cover_redirected_family_roots():
     resolver = _load()
 
-    assert resolver.repo_candidates("gen-organvm-i-theoria-scale-threshold-emergence-test-coverage-0620-86cd") == [
-        "organvm/scale-threshold-emergence"
-    ]
-    assert resolver.repo_candidates("gh-organvm-vi-koinonia-github-1-9bdf") == [
-        "organvm-vi-koinonia/.github",
-        "organvm/dot-github--koinonia",
-    ]
+    cases = {
+        "gen-organvm-i-theoria-scale-threshold-emergence-test-coverage-0620-86cd": [
+            "organvm/scale-threshold-emergence"
+        ],
+        "gh-organvm-vi-koinonia-github-1-9bdf": [
+            "organvm-vi-koinonia/.github",
+            "organvm/dot-github--koinonia",
+        ],
+        "gh-organvm-iii-ergon-github-6-60b4": [
+            "organvm-iii-ergon/.github",
+            "organvm/dot-github--ergon",
+        ],
+        "gh-organvm-v-logos-github-6-bb3f": [
+            "organvm-v-logos/.github",
+            "organvm/dot-github--logos",
+        ],
+        "rev-hydra-stripe-sub-0a5d": ["organvm/card-trade-social"],
+        "rev-exporter-gemini-adapter-67a2": ["organvm/a-i-chat--exporter"],
+        "rev-mediaark-stripe-client-b01e": ["organvm/media-ark"],
+        "rev-scrapper-tier-gate-3a82": ["organvm/public-record-data-scrapper"],
+        "bld-tab-bookmark-manager-readme-a53a": ["organvm/tab-bookmark-manager"],
+    }
+    for root, expected in cases.items():
+        assert resolver.repo_candidates(root) == expected
+
+
+def test_resolve_codex_family_batch_preserves_per_session_family(tmp_path: Path, monkeypatch):
+    resolver = _load()
+    resolver.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    resolver.PRIORITY_INDEX = resolver.PRIVATE_ROOT / "lifecycle" / "prompt-priority-map.json"
+    resolver.SESSION_INDEX = resolver.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+    resolver.LOCAL_WORKTREE_BASES = [tmp_path / ".limen-worktrees"]
+
+    raw_source = tmp_path / "raw-session.jsonl"
+    raw_source.write_text("RAW_PROMPT_TEXT_SHOULD_NOT_APPEAR", encoding="utf-8")
+    resolver.PRIORITY_INDEX.parent.mkdir(parents=True)
+    resolver.PRIORITY_INDEX.write_text(
+        json.dumps(
+            {
+                "review_batches": [
+                    {
+                        "id": "prompt-batch-medium-family-mixed",
+                        "band": "medium",
+                        "lane": "family",
+                        "session_count": 2,
+                        "prompt_events": 8,
+                        "unique_prompt_hashes": 4,
+                        "families": {"session_lifecycle": 1, "github_review": 1},
+                        "sources": {"codex-sessions": 2},
+                        "session_keys": ["session-a", "session-b"],
+                    }
+                ],
+                "session_items": [
+                    {
+                        "session_key": "session-a",
+                        "family": "session_lifecycle",
+                        "worktree_slug": "limen-session",
+                        "prompt_events": 4,
+                        "prompt_hashes": ["hash-a", "hash-b"],
+                    },
+                    {
+                        "session_key": "session-b",
+                        "family": "github_review",
+                        "worktree_slug": "limen-github",
+                        "prompt_events": 4,
+                        "prompt_hashes": ["hash-c", "hash-d"],
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    resolver.SESSION_INDEX.write_text(
+        json.dumps(
+            {
+                "sessions": [
+                    {"session_key": "session-a", "path": str(raw_source), "worktree_slug": "wrong-a"},
+                    {"session_key": "session-b", "path": str(raw_source), "worktree_slug": "wrong-b"},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(resolver, "resolve_repo", lambda root: ("organvm/limen", ["organvm/limen"]))
+    monkeypatch.setattr(resolver, "branch_state", lambda _repo, _branch: None)
+    monkeypatch.setattr(resolver, "exact_prs", lambda _repo, _branch: [])
+    monkeypatch.setattr(resolver, "broad_pr_hit_count", lambda _repo, _root: 0)
+
+    receipt = resolver.build_receipt("prompt-batch-medium-family-mixed")
+    by_root = {root["root"]: root for root in receipt["roots"]}
+    assert by_root["limen-session"]["family"] == "session_lifecycle"
+    assert by_root["limen-github"]["family"] == "github_review"
+    assert by_root["limen-session"]["prompt_event_count"] == 4
+    assert "family mix session_lifecycle 1, github_review 1" in receipt["evidence"][0]
+    assert "RAW_PROMPT_TEXT_SHOULD_NOT_APPEAR" not in json.dumps(receipt)
+
+
+def test_closed_pr_with_live_branch_requires_branch_review(tmp_path: Path, monkeypatch):
+    resolver = _load()
+    raw_source = tmp_path / "raw-session.jsonl"
+    raw_source.write_text("RAW_PROMPT_TEXT_SHOULD_NOT_APPEAR", encoding="utf-8")
+
+    monkeypatch.setattr(resolver, "resolve_repo", lambda _root: ("organvm/limen", ["organvm/limen"]))
+    monkeypatch.setattr(resolver, "branch_state", lambda _repo, branch: {"name": branch, "sha": "abcdef123456"})
+    monkeypatch.setattr(
+        resolver,
+        "exact_prs",
+        lambda _repo, _branch: [
+            {
+                "number": 12,
+                "state": "CLOSED",
+                "url": "https://github.com/organvm/limen/pull/12",
+                "headRefOid": "abcdef123456",
+            }
+        ],
+    )
+
+    row = resolver.classify_root(
+        "limen-closed",
+        "session-a",
+        "github_review",
+        {"path": str(raw_source), "prompt_event_count": 1, "prompt_hashes": ["hash-a"]},
+    )
+    assert row["status"] == "closed_pr_recorded_with_branch"
+    assert "Review the live branch" in row["next_action"]
+    assert "RAW_PROMPT_TEXT_SHOULD_NOT_APPEAR" not in json.dumps(row)

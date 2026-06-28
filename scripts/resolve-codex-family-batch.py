@@ -73,6 +73,18 @@ def sessions_by_key(index: dict[str, Any]) -> dict[str, dict[str, Any]]:
     }
 
 
+def priority_items_by_key(priority: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    return {
+        str(row.get("session_key")): row
+        for row in priority.get("session_items") or []
+        if isinstance(row, dict) and row.get("session_key")
+    }
+
+
+def render_counts(counts: dict[str, Any]) -> str:
+    return ", ".join(f"{key} {value}" for key, value in counts.items()) or "none"
+
+
 def repo_candidates(root: str) -> list[str]:
     if root.startswith("limen-"):
         return ["organvm/limen"]
@@ -80,6 +92,12 @@ def repo_candidates(root: str) -> list[str]:
         return ["organvm/session-meta", "4444J99/session-meta"]
     if "domus-genoma" in root:
         return ["organvm/domus-genoma", "4444J99/domus-genoma"]
+    if "mediaark" in root or "media-ark" in root:
+        return ["organvm/media-ark"]
+    if "public-record-data-scrapper" in root or "scrapper" in root:
+        return ["organvm/public-record-data-scrapper"]
+    if "a-i-chat--exporter" in root or "exporter" in root:
+        return ["organvm/a-i-chat--exporter"]
     if "organvm-corpvs-testamentvm" in root:
         return ["organvm/organvm-corpvs-testamentvm", "a-organvm/organvm-corpvs-testamentvm"]
     if "organvm-engine" in root:
@@ -90,14 +108,28 @@ def repo_candidates(root: str) -> list[str]:
         return ["organvm/scale-threshold-emergence"]
     if "peer-audited--behavioral-blockchain" in root:
         return ["organvm/peer-audited--behavioral-blockchain", "a-organvm/peer-audited--behavioral-blockchain"]
+    if "hydra" in root:
+        return ["organvm/card-trade-social"]
+    if "iii-ergon-github" in root:
+        return ["organvm-iii-ergon/.github", "organvm/dot-github--ergon"]
     if "vi-koinonia-github" in root:
         return ["organvm-vi-koinonia/.github", "organvm/dot-github--koinonia"]
+    if "v-logos-github" in root:
+        return ["organvm-v-logos/.github", "organvm/dot-github--logos"]
     if ".github" in root or "--github" in root or "dot-github" in root:
         return ["organvm-i-theoria/.github", "organvm/dot-github--theoria", "organvm/.github"]
+    if "hierarchia-mundi" in root:
+        return ["organvm-i-theoria/hierarchia-mundi", "organvm/hierarchia-mundi"]
     if "rules-system-bound" in root:
         return ["organvm-i-theoria/rules-system-bound", "organvm/rules-system-bound"]
     if root.startswith("rev-styx-") or "styx-" in root:
         return ["organvm/styx-behavioral-economics-theory", "organvm-i-theoria/styx-behavioral-economics-theory"]
+    if "narratological-algorithmic-lenses" in root:
+        return ["organvm/narratological-algorithmic-lenses"]
+    if "cognitive-archaelogy-tribunal" in root:
+        return ["organvm/cognitive-archaelogy-tribunal"]
+    if "tab-bookmark-manager" in root:
+        return ["organvm/tab-bookmark-manager"]
     if "_agent" in root:
         return ["organvm/_agent"]
     return []
@@ -187,16 +219,23 @@ def predicate_for(repo: str | None) -> str:
     return "GitHub issue/PR review predicate after branch rehydration"
 
 
-def classify_root(root: str, session_key: str, family: str, session: dict[str, Any] | None) -> dict[str, Any]:
+def classify_root(
+    root: str,
+    session_key: str,
+    family: str,
+    session: dict[str, Any] | None,
+    priority_item: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     branch = f"limen/{root}"
     source_exists = bool(session and Path(str(session.get("path") or "")).exists())
+    prompt_hashes = (priority_item or {}).get("prompt_hashes") or (session or {}).get("prompt_hashes") or []
     row: dict[str, Any] = {
         "root": root,
         "session_key": session_key,
         "family": family,
         "source_exists": source_exists,
-        "prompt_event_count": int((session or {}).get("prompt_event_count") or 0),
-        "unique_prompt_hashes": len(set((session or {}).get("prompt_hashes") or [])),
+        "prompt_event_count": int((priority_item or {}).get("prompt_events") or (session or {}).get("prompt_event_count") or 0),
+        "unique_prompt_hashes": len(set(prompt_hashes)),
         "branch": branch,
     }
 
@@ -249,7 +288,12 @@ def classify_root(root: str, session_key: str, family: str, session: dict[str, A
             row["status"] = "closed_pr_recorded_no_branch" if not branch_info else "closed_pr_recorded_with_branch"
             branch_text = "No live branch remains" if not branch_info else "A live branch still exists"
             row["evidence"] = f"{branch_text}; matching PR #{pr.get('number')} is CLOSED and unmerged."
-            row["next_action"] = "Treat the closed PR as historical unless a later owner packet identifies missing value."
+            if branch_info:
+                row["next_action"] = (
+                    "Review the live branch, then open a new PR, supersede it by a named receipt, or delete it with owner approval."
+                )
+            else:
+                row["next_action"] = "Treat the closed PR as historical unless a later owner packet identifies missing value."
         return row
 
     if branch_info:
@@ -279,6 +323,7 @@ def classify_root(root: str, session_key: str, family: str, session: dict[str, A
 
 def build_receipt(batch_id: str) -> dict[str, Any]:
     priority = load_json(PRIORITY_INDEX)
+    priority_items = priority_items_by_key(priority)
     sessions = sessions_by_key(load_json(SESSION_INDEX))
     batch = batch_by_id(priority, batch_id)
     if batch.get("lane") != "family":
@@ -290,8 +335,10 @@ def build_receipt(batch_id: str) -> dict[str, Any]:
     for session_key in batch.get("session_keys") or []:
         key = str(session_key)
         session = sessions.get(key)
-        root = str((session or {}).get("worktree_slug") or f"session-{key}")
-        roots.append(classify_root(root, key, str(family), session))
+        priority_item = priority_items.get(key)
+        root = str((priority_item or {}).get("worktree_slug") or (session or {}).get("worktree_slug") or f"session-{key}")
+        root_family = str((priority_item or {}).get("family") or family)
+        roots.append(classify_root(root, key, root_family, session, priority_item))
 
     status_counts = Counter(str(row.get("status") or "unknown") for row in roots)
     source_exists = sum(1 for row in roots if row.get("source_exists"))
@@ -317,7 +364,7 @@ def build_receipt(batch_id: str) -> dict[str, Any]:
     evidence = [
         (
             f"private redacted batch metadata listed {len(roots)} Codex-session family items "
-            f"across {len(unique_roots)} unique roots, all classified as {family}"
+            f"across {len(unique_roots)} unique roots with family mix {render_counts(family_counts)}"
         ),
         f"{source_exists} of {len(roots)} private source JSONL files existed under ~/.codex/sessions at review time",
         (
