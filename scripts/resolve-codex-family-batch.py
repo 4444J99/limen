@@ -147,7 +147,7 @@ def repo_candidates(root: str) -> list[str]:
         return ["organvm/the-invisible-ledger", "a-organvm/the-invisible-ledger"]
     if "ledger-webhook" in root:
         return ["organvm/the-invisible-ledger"]
-    if "ledger-postgres" in root:
+    if "ledger-postgres" in root or "ledger-usage" in root or "ledger-stripe" in root:
         return ["organvm/the-invisible-ledger", "a-organvm/the-invisible-ledger"]
     if "scale-threshold-emergence" in root:
         return ["organvm/scale-threshold-emergence"]
@@ -159,15 +159,21 @@ def repo_candidates(root: str) -> list[str]:
         return ["organvm/gamified-coach-interface"]
     if "search-local--happy-hour" in root:
         return ["organvm/search-local--happy-hour"]
+    if "select-or-left-or-right-or" in root:
+        return ["organvm/select-or-left-or-right-or"]
+    if "tabbookmark" in root:
+        return ["organvm/tab-bookmark-manager"]
     if "i-theoria-github" in root:
         return ["organvm-i-theoria/.github", "organvm/dot-github--theoria", "organvm/.github"]
+    if "ii-poiesis-github" in root:
+        return ["organvm-ii-poiesis/.github", "organvm/dot-github--poiesis"]
     if "iii-ergon-github" in root:
         return ["organvm-iii-ergon/.github", "organvm/dot-github--ergon"]
     if "vi-koinonia-github" in root:
         return ["organvm-vi-koinonia/.github", "organvm/dot-github--koinonia"]
     if "v-logos-github" in root:
         return ["organvm-v-logos/.github", "organvm/dot-github--logos"]
-    if "iv-taxis-github" in root:
+    if "iv-taxis-github" in root or "iv-taxis-org-dotgithub" in root:
         return ["organvm-iv-taxis/.github", "organvm/dot-github--taxis"]
     if ".github" in root or "--github" in root or "dot-github" in root:
         return ["organvm-i-theoria/.github", "organvm/dot-github--theoria", "organvm/.github"]
@@ -175,6 +181,8 @@ def repo_candidates(root: str) -> list[str]:
         return ["organvm/vigiles-aeternae--corpus-mythicum"]
     if "sovereign-systems-elevate-align" in root:
         return ["organvm/sovereign-systems--elevate-align"]
+    if "sovereign-ground" in root or "sovereign--ground" in root:
+        return ["organvm-i-theoria/sovereign--ground", "organvm/sovereign--ground"]
     if "hierarchia-mundi" in root:
         return ["organvm-i-theoria/hierarchia-mundi", "organvm/hierarchia-mundi"]
     if "rules-system-bound" in root:

@@ -186,6 +186,14 @@ def test_repo_candidates_cover_redirected_family_roots():
             "organvm/the-invisible-ledger",
             "a-organvm/the-invisible-ledger",
         ],
+        "rev-ledger-usage-tracker-f2b8": [
+            "organvm/the-invisible-ledger",
+            "a-organvm/the-invisible-ledger",
+        ],
+        "rev-ledger-stripe-org-setup-1af5": [
+            "organvm/the-invisible-ledger",
+            "a-organvm/the-invisible-ledger",
+        ],
         "bld2-card-trade-social-billing-e47a": ["organvm/card-trade-social"],
         "gen-organvm-gamified-coach-interface-test-coverage-0620-6c74": [
             "organvm/gamified-coach-interface"
@@ -193,10 +201,26 @@ def test_repo_candidates_cover_redirected_family_roots():
         "gen-organvm-search-local--happy-hour-test-coverage-0620-d4d6": [
             "organvm/search-local--happy-hour"
         ],
+        "gen-organvm-select-or-left-or-right-or-test-coverage-0620-7740": [
+            "organvm/select-or-left-or-right-or"
+        ],
+        "rev-tabbookmark-freemium-e464": ["organvm/tab-bookmark-manager"],
         "gh-organvm-i-theoria-github-452-2e86": [
             "organvm-i-theoria/.github",
             "organvm/dot-github--theoria",
             "organvm/.github",
+        ],
+        "gh-organvm-ii-poiesis-github-6-98b7": [
+            "organvm-ii-poiesis/.github",
+            "organvm/dot-github--poiesis",
+        ],
+        "gh-organvm-iv-taxis-org-dotgithub-2-1e9d": [
+            "organvm-iv-taxis/.github",
+            "organvm/dot-github--taxis",
+        ],
+        "gh-organvm-i-theoria-sovereign-ground-2-6dac": [
+            "organvm-i-theoria/sovereign--ground",
+            "organvm/sovereign--ground",
         ],
         "rev-domus-onboarding-041b": ["organvm/domus-genoma"],
         "rev-domus-billing-9bad": ["organvm/domus-genoma"],
