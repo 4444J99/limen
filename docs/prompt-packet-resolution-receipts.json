@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-28T03:29:49Z",
+  "generated_at": "2026-06-28T03:33:15Z",
   "receipts": [
     {
       "packet": "packet-prompt-batch-critical-stalled-review-001-worktree_lifecycle",
@@ -500,6 +500,52 @@
           "status": "session_ledger_recorded_no_root",
           "evidence": "Redacted prompt lifecycle row exists; no worktree_slug or cwd_repo_hint is present; private Codex session source record exists.",
           "next_action": "No local root to preserve; route only through a later owner-repo packet with an explicit live receipt."
+        }
+      ]
+    },
+    {
+      "packet": "packet-prompt-batch-high-stalled-review-001-technical_debt_ci",
+      "source_batch": "prompt-batch-high-stalled-review-001",
+      "family": "technical_debt_ci",
+      "status": "owner-recorded",
+      "classification": "technical-debt and CI roots mapped to owner repos, predicates, and current PR/branch receipts",
+      "evidence": [
+        "gh repo view resolved owner repositories on 2026-06-28T03:33:15Z",
+        "git ls-remote --heads checked limen/<root> branch presence for each root",
+        "gh pr list --state all --head limen/<root> checked PR receipts for each root",
+        "all 3 packet roots were absent from /Users/4jp/Workspace/.limen-worktrees",
+        "docs/worktree-lifecycle-ledger.md already records the durable draft PR receipt for bld-media-ark-tests-2698"
+      ],
+      "next_action": "Only bld-media-ark-tests-2698 has a current same-root PR receipt. bld-essay-pipeline-readme-94ce is superseded by the active essay README PR, and bld-media-ark-tests-795d should not be delegated unless a later packet proves a delta not covered by the preserved media-ark tests PR.",
+      "roots": [
+        {
+          "root": "bld-essay-pipeline-readme-94ce",
+          "status": "superseded_by_owner_pr",
+          "repo": "organvm/essay-pipeline",
+          "branch": "limen/bld-essay-pipeline-readme-65d6",
+          "pr": "https://github.com/organvm/essay-pipeline/pull/17",
+          "predicate": "python3 -m pytest; ruff check .",
+          "evidence": "No branch or PR exists for limen/bld-essay-pipeline-readme-94ce; owner README work is preserved by PR #17 on limen/bld-essay-pipeline-readme-65d6 at b3d73ee.",
+          "next_action": "Review or supersede PR #17; do not rehydrate the 94ce root unless a later owner packet identifies a missing README delta."
+        },
+        {
+          "root": "bld-media-ark-tests-2698",
+          "status": "remote_pr_preserved",
+          "repo": "organvm/media-ark",
+          "branch": "limen/bld-media-ark-tests-2698",
+          "pr": "https://github.com/organvm/media-ark/pull/50",
+          "predicate": "npm test; npm run release:verify",
+          "evidence": "Remote branch exists at b7509dc; GitHub PR #50 is OPEN draft with merge state UNSTABLE, and the lifecycle ledger records prior passing predicates.",
+          "next_action": "Review PR #50 freshness/CI, then merge or supersede by named PR that preserves the capture/platform test coverage."
+        },
+        {
+          "root": "bld-media-ark-tests-795d",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/media-ark",
+          "branch": "limen/bld-media-ark-tests-795d",
+          "predicate": "npm test; npm run release:verify",
+          "evidence": "Owner repo resolves; no matching remote branch or PR found for limen/bld-media-ark-tests-795d. The same packet has current media-ark tests preservation through PR #50.",
+          "next_action": "Rehydrate only if a later owner packet identifies a missing media-ark tests delta not covered by PR #50."
         }
       ]
     }
