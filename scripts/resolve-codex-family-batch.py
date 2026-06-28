@@ -147,12 +147,20 @@ def repo_candidates(root: str) -> list[str]:
         return ["organvm/the-invisible-ledger", "a-organvm/the-invisible-ledger"]
     if "ledger-webhook" in root:
         return ["organvm/the-invisible-ledger"]
+    if "ledger-postgres" in root:
+        return ["organvm/the-invisible-ledger", "a-organvm/the-invisible-ledger"]
     if "scale-threshold-emergence" in root:
         return ["organvm/scale-threshold-emergence"]
     if "peer-audited--behavioral-blockchain" in root:
         return ["organvm/peer-audited--behavioral-blockchain", "a-organvm/peer-audited--behavioral-blockchain"]
-    if "hydra" in root:
+    if "hydra" in root or "card-trade-social" in root:
         return ["organvm/card-trade-social"]
+    if "gamified-coach-interface" in root:
+        return ["organvm/gamified-coach-interface"]
+    if "search-local--happy-hour" in root:
+        return ["organvm/search-local--happy-hour"]
+    if "i-theoria-github" in root:
+        return ["organvm-i-theoria/.github", "organvm/dot-github--theoria", "organvm/.github"]
     if "iii-ergon-github" in root:
         return ["organvm-iii-ergon/.github", "organvm/dot-github--ergon"]
     if "vi-koinonia-github" in root:

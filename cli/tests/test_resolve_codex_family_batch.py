@@ -182,6 +182,22 @@ def test_repo_candidates_cover_redirected_family_roots():
             "organvm-i-theoria/conversation-corpus-engine",
         ],
         "rev-ledger-webhook-ratelimit-75f8": ["organvm/the-invisible-ledger"],
+        "rev-ledger-postgres-adapter-ef35": [
+            "organvm/the-invisible-ledger",
+            "a-organvm/the-invisible-ledger",
+        ],
+        "bld2-card-trade-social-billing-e47a": ["organvm/card-trade-social"],
+        "gen-organvm-gamified-coach-interface-test-coverage-0620-6c74": [
+            "organvm/gamified-coach-interface"
+        ],
+        "gen-organvm-search-local--happy-hour-test-coverage-0620-d4d6": [
+            "organvm/search-local--happy-hour"
+        ],
+        "gh-organvm-i-theoria-github-452-2e86": [
+            "organvm-i-theoria/.github",
+            "organvm/dot-github--theoria",
+            "organvm/.github",
+        ],
         "rev-domus-onboarding-041b": ["organvm/domus-genoma"],
         "rev-domus-billing-9bad": ["organvm/domus-genoma"],
         "gh-organvm-i-theoria-carrier-wave-zeitgeist-thesis-2-d6a2": [
