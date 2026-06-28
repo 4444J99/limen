@@ -15,9 +15,9 @@ portal:
       claude: 100
     track:
       date: '2026-06-28'
-      spent: 86
+      spent: 88
       per_agent:
-        jules: 66
+        jules: 68
         gemini: 0
         codex: 0
         opencode: 8
@@ -58790,7 +58790,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T14:39:19.949884Z'
+  updated: '2026-06-28T14:47:22.340167Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: opencode
@@ -58839,6 +58839,20 @@ tasks:
   - timestamp: '2026-06-27T14:39:19.949884Z'
     agent: jules
     session_id: '5567441786094041408'
+    status: dispatched
+  - timestamp: '2026-06-28T14:42:42.009640Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T14:47:22.340167Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T14:47:22.340167Z'
+    agent: jules
+    session_id: '3583067612331601751'
     status: dispatched
 - id: GEN-organvm-domus-genoma-typing-0627
   title: Tighten types in organvm/domus-genoma
@@ -59201,7 +59215,7 @@ tasks:
     green. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T14:39:19.949884Z'
+  updated: '2026-06-28T14:47:22.340167Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: agy
@@ -59250,6 +59264,20 @@ tasks:
   - timestamp: '2026-06-27T14:39:19.949884Z'
     agent: jules
     session_id: '16030549186520895768'
+    status: dispatched
+  - timestamp: '2026-06-28T14:42:42.009640Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-28T14:47:22.340167Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T14:47:22.340167Z'
+    agent: jules
+    session_id: '17536387430827877231'
     status: dispatched
 - id: GEN-organvm-mirror-mirror-test-coverage-0628
   title: Raise test coverage in organvm/mirror-mirror
