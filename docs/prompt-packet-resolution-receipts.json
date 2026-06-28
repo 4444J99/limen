@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-28T03:13:32Z",
+  "generated_at": "2026-06-28T03:19:14Z",
   "receipts": [
     {
       "packet": "packet-prompt-batch-critical-stalled-review-001-worktree_lifecycle",
@@ -269,6 +269,132 @@
           "repo_hint": "limen",
           "evidence": "Redacted session lifecycle row exists; local worktree root is absent from current scan.",
           "next_action": "No local root to preserve; route only through a later owner-repo packet with an explicit live receipt."
+        }
+      ]
+    },
+    {
+      "packet": "packet-prompt-batch-critical-stalled-review-002-github_review",
+      "source_batch": "prompt-batch-critical-stalled-review-002",
+      "family": "github_review",
+      "status": "owner-recorded",
+      "classification": "github review roots mapped to owner repos, predicates, and current PR/branch receipts",
+      "evidence": [
+        "gh repo view resolved owner repositories on 2026-06-28T03:19:14Z",
+        "git ls-remote --heads checked limen/<root> branch presence for each root",
+        "gh pr list --state all --head limen/<root> checked PR receipts for each root",
+        "all 12 packet roots were absent from /Users/4jp/Workspace/.limen-worktrees",
+        "docs/worktree-lifecycle-ledger.md already records the durable draft PR receipt for bld2-a-i-chat--exporter-integration-tests-a00b"
+      ],
+      "next_action": "Only bld2-a-i-chat--exporter-integration-tests-a00b has a current PR receipt. For all other roots, do not delegate until an owner packet recreates or names a live branch/PR and a narrow predicate.",
+      "roots": [
+        {
+          "root": "bld-a-i-chat--exporter-tests-7d1b",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/a-i-chat--exporter",
+          "branch": "limen/bld-a-i-chat--exporter-tests-7d1b",
+          "predicate": "pnpm test; pnpm lint",
+          "evidence": "Owner repo resolves; no matching remote branch or PR found for limen/bld-a-i-chat--exporter-tests-7d1b.",
+          "next_action": "Rehydrate only if an owner packet identifies the missing test delta or superseding PR."
+        },
+        {
+          "root": "bld-card-trade-social-harden-b07b",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/card-trade-social",
+          "branch": "limen/bld-card-trade-social-harden-b07b",
+          "predicate": "owner repo tests/build after branch rehydration",
+          "evidence": "Owner repo resolves; no matching remote branch or PR found for limen/bld-card-trade-social-harden-b07b.",
+          "next_action": "Rehydrate only if an owner packet identifies the missing hardening delta or superseding PR."
+        },
+        {
+          "root": "bld-narratological-algorithmic-lenses-harden-6b26",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/narratological-algorithmic-lenses",
+          "branch": "limen/bld-narratological-algorithmic-lenses-harden-6b26",
+          "predicate": "owner repo tests/build after branch rehydration",
+          "evidence": "Owner repo resolves; no matching remote branch or PR found for limen/bld-narratological-algorithmic-lenses-harden-6b26.",
+          "next_action": "Rehydrate only if an owner packet identifies the missing hardening delta or superseding PR."
+        },
+        {
+          "root": "bld-public-record-data-scrapper-readme-345a",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/public-record-data-scrapper",
+          "branch": "limen/bld-public-record-data-scrapper-readme-345a",
+          "predicate": "README marker plus repo test predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching remote branch or PR found for limen/bld-public-record-data-scrapper-readme-345a.",
+          "next_action": "Rehydrate only if an owner packet identifies the missing README delta or superseding PR."
+        },
+        {
+          "root": "bld-tab-bookmark-manager-readme-4524",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/tab-bookmark-manager",
+          "branch": "limen/bld-tab-bookmark-manager-readme-4524",
+          "predicate": "README marker plus repo test predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching remote branch or PR found for limen/bld-tab-bookmark-manager-readme-4524.",
+          "next_action": "Rehydrate only if an owner packet identifies the missing README delta or superseding PR."
+        },
+        {
+          "root": "bld-vulnpulse-harden-54c3",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/vulnpulse",
+          "branch": "limen/bld-vulnpulse-harden-54c3",
+          "predicate": "owner repo tests/build after branch rehydration",
+          "evidence": "Owner repo resolves; no matching remote branch or PR found for limen/bld-vulnpulse-harden-54c3.",
+          "next_action": "Rehydrate only if an owner packet identifies the missing hardening delta or superseding PR."
+        },
+        {
+          "root": "bld2-a-i-chat--exporter-integration-tests-a00b",
+          "status": "remote_pr_preserved",
+          "repo": "organvm/a-i-chat--exporter",
+          "branch": "limen/bld2-a-i-chat--exporter-integration-tests-a00b",
+          "pr": "https://github.com/organvm/a-i-chat--exporter/pull/96",
+          "predicate": "pnpm test; pnpm lint",
+          "evidence": "Remote branch exists at d0d633c; GitHub PR #96 is OPEN draft with merge state DIRTY.",
+          "next_action": "Review freshness/CI, then merge or supersede by named PR that preserves the integration-test work."
+        },
+        {
+          "root": "bld2-mirror-mirror-dashboard-0ba3",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/mirror-mirror",
+          "branch": "limen/bld2-mirror-mirror-dashboard-0ba3",
+          "predicate": "npm test; npm run build",
+          "evidence": "Owner repo resolves; no matching remote branch or PR found for limen/bld2-mirror-mirror-dashboard-0ba3.",
+          "next_action": "Rehydrate only if an owner packet identifies the missing dashboard delta or superseding PR."
+        },
+        {
+          "root": "bld2-public-record-data-scrapper-dashboard-90d1",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/public-record-data-scrapper",
+          "branch": "limen/bld2-public-record-data-scrapper-dashboard-90d1",
+          "predicate": "repo dashboard predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching remote branch or PR found for limen/bld2-public-record-data-scrapper-dashboard-90d1.",
+          "next_action": "Rehydrate only if an owner packet identifies the missing dashboard delta or superseding PR."
+        },
+        {
+          "root": "bld2-the-invisible-ledger-integration-tests-015e",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/the-invisible-ledger",
+          "branch": "limen/bld2-the-invisible-ledger-integration-tests-015e",
+          "predicate": "repo integration test predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching remote branch or PR found for limen/bld2-the-invisible-ledger-integration-tests-015e.",
+          "next_action": "Rehydrate only if an owner packet identifies the missing integration-test delta or superseding PR."
+        },
+        {
+          "root": "rev-exporter-sponsors-5068",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/a-i-chat--exporter",
+          "branch": "limen/rev-exporter-sponsors-5068",
+          "predicate": "revenue/sponsors predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching remote branch or PR found for limen/rev-exporter-sponsors-5068.",
+          "next_action": "Rehydrate only if an owner packet identifies the missing sponsors/revenue delta or superseding PR."
+        },
+        {
+          "root": "rev-tabbookmark-freemium-755e",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/tab-bookmark-manager",
+          "branch": "limen/rev-tabbookmark-freemium-755e",
+          "predicate": "freemium predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching remote branch or PR found for limen/rev-tabbookmark-freemium-755e.",
+          "next_action": "Rehydrate only if an owner packet identifies the missing freemium delta or superseding PR."
         }
       ]
     }
