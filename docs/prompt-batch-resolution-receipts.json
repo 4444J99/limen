@@ -8257,6 +8257,209 @@
           "next_action": "Do not rehydrate unless a later owner packet identifies the missing a-i-chat exporter GitHub-review delta."
         }
       ]
+    },
+    {
+      "generated_at": "2026-06-28T08:12:14Z",
+      "batch": "prompt-batch-medium-legacy-session-review-004",
+      "band": "medium",
+      "lane": "legacy-session-review",
+      "status": "owner-recorded",
+      "classification": "medium legacy Claude subagent sessions routed from private structured metadata to Limen owner lanes, public PR receipts, issue queues, sensitive operator context, and Archive4T estate context",
+      "session_count": 25,
+      "prompt_events": 1018,
+      "unique_prompt_hashes": 811,
+      "evidence": [
+        "private redacted batch metadata listed 25 legacy Claude-project session slots with no worktree slug in the priority map",
+        "the batch contained 22 unique session keys and 25 private subagent source rows; all 25 source JSONL files existed under ~/.claude/projects at review time",
+        "private structured scan emitted only session keys, source existence, project/worktree cluster names, git branch names, public GitHub URLs, repo anchors, prompt-event counts, hash counts, duplicate counts, top-level event type names, and sensitive-keyword counts; no prompt body was copied",
+        "no exact local worktree directory existed for the named Limen subagent clusters under /Users/4jp/Workspace/.limen-worktrees, /Users/4jp/Workspace/limen/.worktrees, or /Users/4jp/Workspace/limen/.claude/worktrees at review time",
+        "git ls-remote and gh pr list found merged Limen PR receipts for docs/cred-durability-lever (#218 and #221), feat/aug1-revenue-gate (#242), feat/inbound-seed-portfolio (#243), and worktree-ianva-doorway (#199)",
+        "gh pr view verified public PR anchors: hokage-chess #113 and #115 are MERGED, #114 is OPEN/DIRTY; gamified-coach-interface #150 and kerygma-profiles #5 are MERGED; Limen #48, #195, and #280 are CLOSED",
+        "gh issue view verified public issue anchors in organvm-engine and sovereign-systems--elevate-align were OPEN at review time",
+        "sensitive keyword indicators were counted only as routing metadata; no credential, account, billing, health, medical, financial, secret, user, assistant, or last-prompt text was copied into this tracked receipt"
+      ],
+      "next_action": "Use merged/open/closed public PRs and issue queues as durable receipts. Keep branch-only, sensitive, Archive4T, and subagent-only sessions as private owner-lane context; do not replay legacy transcripts unless a later packet names the missing delta, owner repo, live branch or issue, and narrow predicate.",
+      "roots": [
+        {
+          "session_key": "ce0dead7989cc3b4059b",
+          "status": "legacy_session_pr_routed",
+          "repo": "organvm/limen",
+          "branch": "main",
+          "evidence": "Metadata came from the Limen root project on main and contained public PR anchors; hokage-chess #113 and #115 are MERGED, #114 is OPEN/DIRTY, gamified-coach-interface #150 is MERGED, and Limen #48 is CLOSED.",
+          "next_action": "Use the public PR receipts and current owner repos; do not replay the legacy transcript."
+        },
+        {
+          "session_key": "cfbbc813329536c46332",
+          "status": "legacy_session_owner_lane_routed",
+          "repo": "organvm/limen",
+          "branch": "worktree-dazzling-knitting-donut",
+          "evidence": "Metadata contained dazzling-knitting-donut worktree anchors; no live local worktree, remote branch, or public PR receipt was present.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        },
+        {
+          "session_key": "edaf14b52b0d26565a9b",
+          "status": "legacy_session_estate_routed",
+          "repo": "organvm/limen",
+          "branch": "HEAD",
+          "evidence": "Metadata came from the Archive4T project cluster and branch HEAD with public-record-data-scrapper repo anchors and sensitive indicators, but no public PR or issue receipt.",
+          "next_action": "Treat as archive estate context; require a current owner repo/path and predicate before follow-up."
+        },
+        {
+          "session_key": "01d82ecb1da8acc70d49",
+          "status": "legacy_session_closed_pr_recorded",
+          "repo": "organvm/limen",
+          "branch": "worktree-fizzy-dazzling-naur",
+          "repeat_slots": 2,
+          "evidence": "Metadata contained fizzy-dazzling-naur worktree anchors and a Limen #48 public PR anchor; no live local worktree or remote branch remains, and PR #48 is CLOSED.",
+          "next_action": "Use current Limen state; treat PR #48 as historical only."
+        },
+        {
+          "session_key": "065d67d3ad6b110d3182",
+          "status": "legacy_session_owner_lane_routed",
+          "repo": "organvm/limen",
+          "branch": "worktree-nested-humming-mochi",
+          "evidence": "Metadata contained nested-humming-mochi worktree anchors plus broad repo references; no live local worktree, exact remote branch, public PR, or issue receipt was present.",
+          "next_action": "Do not rehydrate unless a later packet identifies a current owner repo, missing delta, and predicate."
+        },
+        {
+          "session_key": "1ac563c0b164963a5ad9",
+          "status": "legacy_session_issue_routed",
+          "repo": "organvm/limen",
+          "branch": "worktree-fluttering-wandering-wilkes",
+          "evidence": "Metadata contained fluttering-wandering-wilkes anchors plus a sovereign-systems issue queue; gh issue view verified the listed issue anchors were OPEN at review time.",
+          "next_action": "Use the current sovereign-systems issue queue for follow-up; do not replay the legacy transcript."
+        },
+        {
+          "session_key": "270ffef474d8db6fd42e",
+          "status": "legacy_session_sensitive_context_recorded",
+          "repo": "organvm/limen",
+          "branch": "worktree-temporal-percolating-token",
+          "repeat_slots": 2,
+          "evidence": "Metadata contained temporal-percolating-token, health-office, credential, and Limen #195 anchors; no live exact branch remains, and PR #195 is CLOSED. Subject text was intentionally omitted.",
+          "next_action": "Keep as private operator/health context; use current health-office and credential receipts only."
+        },
+        {
+          "session_key": "2a54e5002a24d7e861df",
+          "status": "legacy_session_owner_lane_routed",
+          "repo": "organvm/limen",
+          "branch": "HEAD",
+          "evidence": "Metadata contained HEAD plus visual-home and broad repo anchors; no live local worktree, exact remote branch, public PR, or issue receipt was present.",
+          "next_action": "Treat as private owner-lane context; require a current owner repo/path and predicate before follow-up."
+        },
+        {
+          "session_key": "360897b1fd85169d3b2d",
+          "status": "legacy_session_sensitive_context_recorded",
+          "repo": "organvm/limen",
+          "branch": "docs/cred-durability-lever",
+          "evidence": "Metadata contained credential-durability branch anchors; no live exact branch remains, and matching Limen PRs #218 and #221 are MERGED. Account detail text was intentionally omitted.",
+          "next_action": "Use the current credential Wall and merged PR history only; do not surface or replay the legacy transcript."
+        },
+        {
+          "session_key": "3b4ced77a9fada3a7c29",
+          "status": "legacy_session_owner_lane_routed",
+          "repo": "organvm/limen",
+          "branch": "worktree-peaceful-plotting-fern",
+          "evidence": "Metadata contained peaceful-plotting-fern worktree anchors and education/personal repo references; no live local worktree, exact remote branch, public PR, or issue receipt was present.",
+          "next_action": "Keep as private owner-lane context unless a later owner packet names a current repo/path and predicate."
+        },
+        {
+          "session_key": "455e7d2b0059aa63e45c",
+          "status": "legacy_session_closed_pr_recorded",
+          "repo": "organvm/limen",
+          "branch": "worktree-jolly-knitting-lovelace",
+          "evidence": "Metadata contained jolly-knitting-lovelace worktree anchors; no live exact branch remains, and matching Limen PR #280 is CLOSED.",
+          "next_action": "Use current Limen state; treat PR #280 as historical only."
+        },
+        {
+          "session_key": "87b4b249c597df0e6bd9",
+          "status": "legacy_session_owner_lane_routed",
+          "repo": "organvm/limen",
+          "branch": "worktree-fizzy-dazzling-naur",
+          "repeat_slots": 2,
+          "evidence": "Metadata contained fizzy-dazzling-naur worktree anchors only; no live local worktree, exact remote branch, public PR, or issue receipt was present.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        },
+        {
+          "session_key": "98083d8f42338886c5a5",
+          "status": "legacy_session_pr_routed",
+          "repo": "organvm/limen",
+          "branch": "feat/inbound-seed-portfolio / feat/aug1-revenue-gate",
+          "evidence": "Metadata contained inbound-seed-portfolio and aug1-revenue-gate branch anchors; no live exact branches remain, and matching Limen PRs #243 and #242 are MERGED.",
+          "next_action": "Use merged PR history and current inbound/revenue state; do not replay the legacy transcript."
+        },
+        {
+          "session_key": "9fce66f9c1392e51f577",
+          "status": "legacy_session_sensitive_context_recorded",
+          "repo": "organvm/limen",
+          "branch": "integration/self-star-organs",
+          "evidence": "Metadata contained integration/self-star-organs anchors and credential/model-provider indicators; no live exact remote branch or public PR receipt was present.",
+          "next_action": "Keep as private operator context; use current model/account receipts before any follow-up."
+        },
+        {
+          "session_key": "a7c9b93d5fbeb8d4fb55",
+          "status": "legacy_session_sensitive_context_recorded",
+          "repo": "organvm/limen",
+          "branch": "worktree-piped-booping-kettle",
+          "evidence": "Metadata contained piped-booping-kettle anchors and credential/model-provider indicators; no live local worktree, exact remote branch, public PR, or issue receipt was present.",
+          "next_action": "Keep as private operator context; do not surface or delegate without a new explicit scoped request."
+        },
+        {
+          "session_key": "affed07f26d8cd5b2069",
+          "status": "legacy_session_issue_routed",
+          "repo": "organvm/limen",
+          "branch": "worktree-jolly-knitting-lovelace",
+          "evidence": "Metadata contained jolly-knitting-lovelace anchors plus sovereign-systems issue #30; gh issue view verified issue #30 is OPEN at review time.",
+          "next_action": "Use the current sovereign-systems issue state for follow-up; do not replay the legacy transcript."
+        },
+        {
+          "session_key": "b842e617b6619189c071",
+          "status": "legacy_session_owner_lane_routed",
+          "repo": "organvm/limen",
+          "branch": "worktree-peaceful-plotting-fern",
+          "evidence": "Metadata contained peaceful-plotting-fern worktree anchors only; no live local worktree, exact remote branch, public PR, or issue receipt was present.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        },
+        {
+          "session_key": "bbb6a3a1f9247a716e84",
+          "status": "legacy_session_issue_routed",
+          "repo": "organvm/limen",
+          "branch": "integration/self-star-organs",
+          "evidence": "Metadata contained integration/self-star-organs anchors plus organvm-engine issue #66; gh issue view verified issue #66 is OPEN at review time.",
+          "next_action": "Use the current organvm-engine issue state for follow-up; do not replay the legacy transcript."
+        },
+        {
+          "session_key": "ccac7f000e7e72104e6f",
+          "status": "legacy_session_closed_pr_recorded",
+          "repo": "organvm/limen",
+          "branch": "worktree-woolly-forging-sedgewick",
+          "evidence": "Metadata contained woolly-forging-sedgewick worktree anchors and a Limen #48 public PR anchor; no live exact branch remains, and PR #48 is CLOSED.",
+          "next_action": "Use current Limen state; treat PR #48 as historical only."
+        },
+        {
+          "session_key": "cde1450c36b024a9400f",
+          "status": "legacy_session_sensitive_context_recorded",
+          "repo": "organvm/limen",
+          "branch": "feat/earned-tier-ladder",
+          "evidence": "Metadata contained earned-tier-ladder, credential/revenue indicators, and kerygma-profiles PR #5; no live exact Limen branch remains, and PR #5 is MERGED.",
+          "next_action": "Keep as private revenue/credential context; use merged PR history and current credential/revenue receipts only."
+        },
+        {
+          "session_key": "d8220d2ef0cc8d45700e",
+          "status": "legacy_session_owner_lane_routed",
+          "repo": "organvm/limen",
+          "branch": "main",
+          "evidence": "Metadata came from the Limen root project on main with broad repo references and no public PR or issue receipt.",
+          "next_action": "Use current Limen main state; require a named delta and predicate before follow-up."
+        },
+        {
+          "session_key": "e03b8ca9e23656e8c317",
+          "status": "legacy_session_owner_lane_routed",
+          "repo": "organvm/limen",
+          "branch": "worktree-indexed-baking-breeze",
+          "evidence": "Metadata contained indexed-baking-breeze worktree anchors plus session-meta/conversation-corpus references; no live local worktree, exact remote branch, public PR, or issue receipt was present.",
+          "next_action": "Keep as private corpus owner-lane context unless a later packet names a current owner repo/path and predicate."
+        }
+      ]
     }
   ]
 }

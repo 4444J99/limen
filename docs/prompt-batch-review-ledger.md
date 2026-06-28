@@ -1,6 +1,6 @@
 # Prompt Batch Review Ledger
 
-Generated: `2026-06-28T07:57:09+00:00`
+Generated: `2026-06-28T08:13:51+00:00`
 
 ## Canonical Decision
 
@@ -13,14 +13,14 @@ Generated: `2026-06-28T07:57:09+00:00`
 
 - Priority batches read: `152`.
 - Review batches recorded: `152`.
-- Batches with durable owner/non-source/supersession evidence: `39`.
-- Open review batches: `96`.
+- Batches with durable owner/non-source/supersession evidence: `40`.
+- Open review batches: `95`.
 - Parked secret batches: `17`.
 - Prompt events represented: `92795`.
 - Preservation receipts available: `6`.
 - Packet resolution receipts available: `8`.
-- Batch resolution receipts available: `33`.
-- Status mix: `needs-private-review` 91, `owner-recorded` 38, `parked-secret` 17, `needs-remote-proof` 3, `needs-owner-route` 2, `non-source-recorded` 1.
+- Batch resolution receipts available: `34`.
+- Status mix: `needs-private-review` 90, `owner-recorded` 39, `parked-secret` 17, `needs-remote-proof` 3, `needs-owner-route` 2, `non-source-recorded` 1.
 - Lane mix: `legacy-session-review` 70, `historical-worktree-review` 35, `family` 17, `parked-secret` 17, `stalled-review` 3, `owner-blocker` 2, `hash-review` 2, `remote-close` 2, `observe` 2, `documented-residue` 1, `remote-proof` 1.
 
 ## Recorded Batches
@@ -62,36 +62,36 @@ Generated: `2026-06-28T07:57:09+00:00`
 
 | Rank | Batch | Status | Band | Lane | Sessions | Events | Dominant Mix | Next Action |
 |---:|---|---|---|---|---:|---:|---|---|
-| 1 | `prompt-batch-medium-legacy-session-review-004` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 1018 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 2 | `prompt-batch-medium-legacy-session-review-005` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 1017 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 3 | `prompt-batch-medium-family-003` | `needs-private-review` | `medium` | `family` | 25 | 94 | sources codex-sessions 25; families github_review 25 | Review PR/issue receipts only after owner repo, predicate, and blocker are explicit. |
-| 4 | `prompt-batch-medium-family-004` | `needs-private-review` | `medium` | `family` | 25 | 91 | sources codex-sessions 25; families github_review 25 | Review PR/issue receipts only after owner repo, predicate, and blocker are explicit. |
-| 5 | `prompt-batch-medium-family-005` | `needs-private-review` | `medium` | `family` | 25 | 90 | sources codex-sessions 25; families github_review 3, worktree_lifecycle 22 | Review PR/issue receipts only after owner repo, predicate, and blocker are explicit. |
-| 6 | `prompt-batch-medium-historical-worktree-review-012` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 465 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 7 | `prompt-batch-medium-historical-worktree-review-013` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 462 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 8 | `prompt-batch-medium-family-006` | `needs-private-review` | `medium` | `family` | 25 | 89 | sources codex-sessions 25; families session_lifecycle 8, worktree_lifecycle 17 | Preserve dirty or missing-remote roots, then reclaim duplicate local state. |
-| 9 | `prompt-batch-medium-historical-worktree-review-014` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 427 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 10 | `prompt-batch-medium-legacy-session-review-006` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 904 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 11 | `prompt-batch-medium-family-007` | `needs-private-review` | `medium` | `family` | 25 | 89 | sources codex-sessions 25; families session_lifecycle 25 | Keep corpus/session ledgers current, collapse repeats into owner receipts. |
-| 12 | `prompt-batch-medium-family-008` | `needs-private-review` | `medium` | `family` | 25 | 87 | sources codex-sessions 25; families session_lifecycle 25 | Keep corpus/session ledgers current, collapse repeats into owner receipts. |
-| 13 | `prompt-batch-medium-family-009` | `needs-private-review` | `medium` | `family` | 25 | 97 | sources codex-sessions 25; families session_lifecycle 25 | Keep corpus/session ledgers current, collapse repeats into owner receipts. |
-| 14 | `prompt-batch-medium-family-010` | `needs-private-review` | `medium` | `family` | 25 | 91 | sources codex-sessions 25; families session_lifecycle 25 | Keep corpus/session ledgers current, collapse repeats into owner receipts. |
-| 15 | `prompt-batch-medium-family-011` | `needs-private-review` | `medium` | `family` | 25 | 95 | sources codex-sessions 25; families github_review 13, session_lifecycle 12 | Keep corpus/session ledgers current, collapse repeats into owner receipts. |
-| 16 | `prompt-batch-medium-historical-worktree-review-015` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 436 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 17 | `prompt-batch-medium-legacy-session-review-007` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 859 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 18 | `prompt-batch-medium-historical-worktree-review-016` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 392 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 19 | `prompt-batch-medium-legacy-session-review-008` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 774 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 20 | `prompt-batch-medium-legacy-session-review-009` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 789 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 21 | `prompt-batch-medium-historical-worktree-review-017` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 312 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 22 | `prompt-batch-medium-legacy-session-review-010` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 688 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 23 | `prompt-batch-medium-historical-worktree-review-018` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 248 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 24 | `prompt-batch-medium-family-012` | `needs-private-review` | `medium` | `family` | 25 | 98 | sources codex-sessions 25; families github_review 25 | Review PR/issue receipts only after owner repo, predicate, and blocker are explicit. |
-| 25 | `prompt-batch-medium-family-013` | `needs-private-review` | `medium` | `family` | 25 | 97 | sources codex-sessions 25; families github_review 25 | Review PR/issue receipts only after owner repo, predicate, and blocker are explicit. |
-| 26 | `prompt-batch-medium-family-014` | `needs-private-review` | `medium` | `family` | 23 | 90 | sources codex-sessions 23; families github_review 20, technical_debt_ci 3 | Review PR/issue receipts only after owner repo, predicate, and blocker are explicit. |
-| 27 | `prompt-batch-medium-historical-worktree-review-019` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 94 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
-| 28 | `prompt-batch-medium-legacy-session-review-011` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 652 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 29 | `prompt-batch-medium-legacy-session-review-012` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 703 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 30 | `prompt-batch-medium-historical-worktree-review-020` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 92 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 1 | `prompt-batch-medium-legacy-session-review-005` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 1017 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 2 | `prompt-batch-medium-family-003` | `needs-private-review` | `medium` | `family` | 25 | 94 | sources codex-sessions 25; families github_review 25 | Review PR/issue receipts only after owner repo, predicate, and blocker are explicit. |
+| 3 | `prompt-batch-medium-family-004` | `needs-private-review` | `medium` | `family` | 25 | 91 | sources codex-sessions 25; families github_review 25 | Review PR/issue receipts only after owner repo, predicate, and blocker are explicit. |
+| 4 | `prompt-batch-medium-family-005` | `needs-private-review` | `medium` | `family` | 25 | 90 | sources codex-sessions 25; families github_review 3, worktree_lifecycle 22 | Review PR/issue receipts only after owner repo, predicate, and blocker are explicit. |
+| 5 | `prompt-batch-medium-historical-worktree-review-012` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 465 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 6 | `prompt-batch-medium-historical-worktree-review-013` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 462 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 7 | `prompt-batch-medium-family-006` | `needs-private-review` | `medium` | `family` | 25 | 89 | sources codex-sessions 25; families session_lifecycle 8, worktree_lifecycle 17 | Preserve dirty or missing-remote roots, then reclaim duplicate local state. |
+| 8 | `prompt-batch-medium-historical-worktree-review-014` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 427 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 9 | `prompt-batch-medium-legacy-session-review-006` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 904 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 10 | `prompt-batch-medium-family-007` | `needs-private-review` | `medium` | `family` | 25 | 89 | sources codex-sessions 25; families session_lifecycle 25 | Keep corpus/session ledgers current, collapse repeats into owner receipts. |
+| 11 | `prompt-batch-medium-family-008` | `needs-private-review` | `medium` | `family` | 25 | 87 | sources codex-sessions 25; families session_lifecycle 25 | Keep corpus/session ledgers current, collapse repeats into owner receipts. |
+| 12 | `prompt-batch-medium-family-009` | `needs-private-review` | `medium` | `family` | 25 | 97 | sources codex-sessions 25; families session_lifecycle 25 | Keep corpus/session ledgers current, collapse repeats into owner receipts. |
+| 13 | `prompt-batch-medium-family-010` | `needs-private-review` | `medium` | `family` | 25 | 91 | sources codex-sessions 25; families session_lifecycle 25 | Keep corpus/session ledgers current, collapse repeats into owner receipts. |
+| 14 | `prompt-batch-medium-family-011` | `needs-private-review` | `medium` | `family` | 25 | 95 | sources codex-sessions 25; families github_review 13, session_lifecycle 12 | Keep corpus/session ledgers current, collapse repeats into owner receipts. |
+| 15 | `prompt-batch-medium-historical-worktree-review-015` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 436 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 16 | `prompt-batch-medium-legacy-session-review-007` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 859 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 17 | `prompt-batch-medium-historical-worktree-review-016` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 392 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 18 | `prompt-batch-medium-legacy-session-review-008` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 774 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 19 | `prompt-batch-medium-legacy-session-review-009` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 789 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 20 | `prompt-batch-medium-historical-worktree-review-017` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 312 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 21 | `prompt-batch-medium-legacy-session-review-010` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 688 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 22 | `prompt-batch-medium-historical-worktree-review-018` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 248 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 23 | `prompt-batch-medium-family-012` | `needs-private-review` | `medium` | `family` | 25 | 98 | sources codex-sessions 25; families github_review 25 | Review PR/issue receipts only after owner repo, predicate, and blocker are explicit. |
+| 24 | `prompt-batch-medium-family-013` | `needs-private-review` | `medium` | `family` | 25 | 97 | sources codex-sessions 25; families github_review 25 | Review PR/issue receipts only after owner repo, predicate, and blocker are explicit. |
+| 25 | `prompt-batch-medium-family-014` | `needs-private-review` | `medium` | `family` | 23 | 90 | sources codex-sessions 23; families github_review 20, technical_debt_ci 3 | Review PR/issue receipts only after owner repo, predicate, and blocker are explicit. |
+| 26 | `prompt-batch-medium-historical-worktree-review-019` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 94 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 27 | `prompt-batch-medium-legacy-session-review-011` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 652 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 28 | `prompt-batch-medium-legacy-session-review-012` | `needs-private-review` | `medium` | `legacy-session-review` | 25 | 703 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 29 | `prompt-batch-medium-historical-worktree-review-020` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 92 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
+| 30 | `prompt-batch-medium-historical-worktree-review-021` | `needs-private-review` | `medium` | `historical-worktree-review` | 25 | 108 | sources claude-projects 25; families uncategorized 25 | Privately inspect the historical worktree session, then route it to preservation, supersession, or archive proof. |
 
 ## Private Output
 
