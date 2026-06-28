@@ -1,6 +1,6 @@
 # Session Corpus Ledger
 
-Generated: `2026-06-28T19:19:16+00:00`
+Generated: `2026-06-28T19:21:01+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -19,9 +19,9 @@ Total seen: `9833` files, `2.2 GiB`.
 | Source | Root | Files | Size | Newest |
 |---|---:|---:|---:|---|
 | `claude-projects` | `~/.claude/projects` | 4925 | 1.4 GiB | `2026-06-28T17:13:04+00:00` |
-| `codex-sessions` | `~/.codex/sessions` | 923 | 773.4 MiB | `2026-06-28T19:19:10+00:00` |
+| `codex-sessions` | `~/.codex/sessions` | 923 | 773.5 MiB | `2026-06-28T19:20:54+00:00` |
 | `claude-file-history` | `~/.claude/file-history` | 3519 | 42.2 MiB | `2026-06-27T00:26:28+00:00` |
-| `codex-goals-state` | `~/.codex` | 6 | 11.9 MiB | `2026-06-28T19:19:10+00:00` |
+| `codex-goals-state` | `~/.codex` | 6 | 11.9 MiB | `2026-06-28T19:20:54+00:00` |
 | `claude-plans` | `~/.claude/plans` | 34 | 289.3 KiB | `2026-06-25T03:22:45+00:00` |
 | `codex-history` | `~/.codex` | 1 | 231.9 KiB | `2026-06-28T18:55:55+00:00` |
 | `claude-usage-session-meta` | `~/.claude/usage-data/session-meta` | 197 | 221.4 KiB | `2026-06-23T19:06:40+00:00` |
@@ -35,7 +35,7 @@ Total seen: `9833` files, `2.2 GiB`.
 
 | Organ | Role | Path | Git state |
 |---|---|---|---|
-| `session-meta` | producer: redacted, deduped multi-provider atoms | `~/Workspace/session-meta` | `## codex/preserve-session-meta-owner-state-20260627; 3 dirty entries` |
+| `session-meta` | producer: redacted, deduped multi-provider atoms | `~/Workspace/session-meta` | `## codex/preserve-session-meta-owner-state-20260627` |
 | `knowledge-corpus` | distillation target: collection, reduced faces, THE ONE | `~/Workspace/knowledge-corpus` | `## codex/preserve-knowledge-corpus-owner-state-20260627...origin/codex/preserve-knowledge-corpus-owner-state-20260627 [ahead 1]` |
 | `conversation-corpus-engine` | product/research engine: provider import and corpus promotion | `~/Workspace/conversation-corpus-engine` | `## discover-latent-value-corpus-engine...origin/discover-latent-value-corpus-engine` |
 
@@ -75,7 +75,6 @@ Total seen: `9833` files, `2.2 GiB`.
 
 ## Roadblocks And Potholes
 
-- session-meta is not clean/in-sync; do not mutate it from Limen until its existing dirty and divergent work is preserved or merged.
 - Local Claude/Codex app stores are live private data; screenshots are only UI evidence. Canonical ingestion must come from the filesystem stores, not from the screenshots.
 - Claude has a lifecycle organ (`scripts/quicken.py`), but no recent journal was found; refresh it before treating Claude FleetView lifecycle as current.
 - Codex has a lifecycle classifier (`scripts/codex-quicken.py`), but no journal was found; run it before relying on Codex app history as typed lifecycle coverage.
