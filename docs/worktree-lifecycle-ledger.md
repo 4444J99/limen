@@ -22,27 +22,30 @@ The unique work remains preserved on the remote branches and open draft PRs.
 
 2026-06-28 follow-up scan:
 
-- `python3 scripts/worktree-debt.py --json`: 15 roots, 2 debt-bearing roots, cap 12.
-- Current class mix: 1 dirty root, 1 unpushed commit root, 4 open-PR remote-preserved
-  roots, 3 documented residues, 2 remote-merged roots, 1 remote-superseded root,
-  1 active root, and 2 clean+merged idle roots.
+- `python3 scripts/worktree-debt.py --json`: 14 roots, 0 debt-bearing roots, cap 12.
+- Current class mix: 2 owner-blocker roots, 4 open-PR remote-preserved roots,
+  3 documented residues, 2 remote-merged roots, 1 remote-superseded root, and
+  2 clean+merged idle roots.
 - No local reclaim, deletion, merge, force-push, or owner-repo source mutation was performed in
   this follow-up. This receipt only updates the owner ledger so the active conductor tranche
   starts from live pressure instead of the older 8-debt summary. Four open draft PR roots now
   report as `remote-pr-open` after confirming their local HEADs exactly match their GitHub PR
   `headRefOid`s; this preserves the source remotely without claiming those PRs are merged or
-  ready. The Sovereign generated-results
-  root was reclassified as documented non-source residue after confirming the checkout is at
-  `origin/main`, the only local deltas are 11 tracked `structure-tests/results/*.json`
-  snapshots, and the repo README describes the project as a parked docs-only shell. The
+  ready. Two previously debt-bearing roots now report as `owner-blocker` only because their
+  preservation receipts include private patch receipts and SHA-256 evidence; this records
+  owner intent and prevents duplicate dispatch, but still requires operator acceptance before
+  local reclaim. The Sovereign generated-results root was reclassified as documented non-source
+  residue after confirming the checkout is at `origin/main`, the only local deltas are 11
+  tracked `structure-tests/results/*.json` snapshots, and the repo README describes the
+  project as a parked docs-only shell. The
   Hierarchia root now reports as `remote-superseded` because its dirty import-order draft
   and untracked smoke test are covered by current `origin/main` tests and cleanup. Mirror
   Mirror PR #67 and Public Record Data Scraper PR #328 are now live GitHub `MERGED`
   receipts whose head OIDs match their local worktree heads.
 - The active conductor packet is `docs/conductor-tranche.md`:
-  `tranche-local-lifecycle-disk-pressure`. Its stop condition forbids reclaim/deletion,
-  broad generated build-out, GitHub merge/close, and owner repo mutation without a fresh owner
-  receipt.
+  `tranche-worktree-remote-branches-missing`. Its stop condition forbids deletion,
+  force-push, merge, or owner-repo source edits unless a narrower owner packet names the repo,
+  branch, predicate, and receipt.
 
 Current live roots by scanner reason:
 
@@ -55,12 +58,11 @@ Current live roots by scanner reason:
 | `cifix-organvm-i-theoria-hierarchia-mundi-3145` | `remote-superseded` | no |
 | `discover-organvm-kerygma-profiles-6c74` | `remote-pr-open` | no |
 | `gen-organvm-i-theoria-sovereign--ground-ci-green-0620-0f38` | `documented-residue` | no |
-| `gen-organvm-session-meta-simplify-0628-e73d` | `active(<6h)` | no |
 | `gen-organvm-the-invisible-ledger-ci-green-0625-e3c2` | `documented-residue` | no |
-| `gen-organvm-universal-mail--automation-test-coverage-0625-151e` | `dirty` | yes |
+| `gen-organvm-universal-mail--automation-test-coverage-0625-151e` | `owner-blocker` | no |
 | `gh-organvm-object-lessons-19-605a` | `clean+merged+idle` | no |
 | `resolve-a-organvm-the-invisible-ledger-4-f657` | `clean+merged+idle` | no |
-| `resolve-organvm-i-theoria-.github-459-1ade` | `unpushed-commits` | yes |
+| `resolve-organvm-i-theoria-.github-459-1ade` | `owner-blocker` | no |
 | `rev-organvm-public-record-data-scrapper-revenue-readiness-0623-023f` | `remote-merged` | no |
 | `rev-organvm-the-invisible-ledger-revenue-readiness-0623-bd8b` | `documented-residue` | no |
 

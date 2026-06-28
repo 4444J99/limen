@@ -116,7 +116,7 @@ def worktree_packet(path: dict[str, Any]) -> dict[str, Any]:
 def worktree_lifecycle_packet(path: dict[str, Any]) -> dict[str, Any]:
     return {
         "purpose": (
-            "Resolve the remaining worktree lifecycle blocker by converting debt roots into "
+            "Resolve the remaining worktree lifecycle blocker by converting affected roots into "
             "preservation proof, owner blockers, remote/default proof, or documented non-source residue."
         ),
         "repo_worktree": (

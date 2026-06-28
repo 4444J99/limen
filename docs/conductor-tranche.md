@@ -1,8 +1,8 @@
 # Conductor Tranche
 
-Generated: `2026-06-28T16:19:24+00:00`
+Generated: `2026-06-28T16:24:07+00:00`
 
-Summary: `tranche-worktree-lifecycle-debt` -> `worktree-lifecycle-debt` (`blocker`); stop before: Stop before deletion, force-push, merge, or owner-repo source edits unless a narrower owner packet names the repo, branch, predicate, and receipt.
+Summary: `tranche-worktree-remote-branches-missing` -> `worktree-remote-branches-missing` (`blocker`); stop before: Stop before deletion, force-push, merge, or owner-repo source edits unless a narrower owner packet names the repo, branch, predicate, and receipt.
 
 ## Cadence Contract
 
@@ -15,19 +15,19 @@ Summary: `tranche-worktree-lifecycle-debt` -> `worktree-lifecycle-debt` (`blocke
 
 | Field | Value |
 |---|---|
-| Packet | `tranche-worktree-lifecycle-debt` |
-| Selected path | `worktree-lifecycle-debt` |
+| Packet | `tranche-worktree-remote-branches-missing` |
+| Selected path | `worktree-remote-branches-missing` |
 | Kind | `blocker` |
 | Lane | `blocker` |
 | Score | `70` |
 | Agent fit | `codex` |
-| Attack index generated | `2026-06-28T16:18:51+00:00` |
-| Ranked paths read | `32` |
+| Attack index generated | `2026-06-28T16:23:10+00:00` |
+| Ranked paths read | `31` |
 | Skipped family/parked/observe/auth paths | `worktree_lifecycle`, `session_lifecycle`, `github_review`, `agent_coordination`, `technical_debt_ci`, `local-lifecycle-disk-pressure`, `convergence_corpus`, `uncategorized`, `cloud-credential-handles-unconfigured`, `credential-codex-auth-sessions`, `auth_credentials` |
 
 ## Work Packet
 
-Purpose: Resolve the remaining worktree lifecycle blocker by converting debt roots into preservation proof, owner blockers, remote/default proof, or documented non-source residue.
+Purpose: Resolve the remaining worktree lifecycle blocker by converting affected roots into preservation proof, owner blockers, remote/default proof, or documented non-source residue.
 
 Repo/worktree: `organvm/limen` conductor checkout plus read-only inspection of `~/Workspace/.limen-worktrees`.
 
@@ -66,7 +66,7 @@ Verification:
 
 ## Source Next Action
 
-Preserve or owner-record each root; no deletion of unique work.
+Preserve each root by branch, PR, owner blocker, or documented non-source residue before cleanup.
 
 ## Refresh
 
