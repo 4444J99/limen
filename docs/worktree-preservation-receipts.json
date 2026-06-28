@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-06-28T16:46:54Z",
+  "generated_utc": "2026-06-28T16:50:46Z",
   "receipts": [
     {
       "branch": "limen/gen-organvm-universal-mail--automation-test-coverage-0625-151e",
@@ -54,6 +54,20 @@
       "pr_url": "https://github.com/organvm/object-lessons/pull/22",
       "repo": "organvm/object-lessons",
       "root": "gh-organvm-object-lessons-19-605a",
+      "score_discount": 35,
+      "status": "default_branch_preserved"
+    },
+    {
+      "branch": "limen/resolve-a-organvm-the-invisible-ledger-4-f657",
+      "classification": "default branch preserves local worktree head",
+      "evidence_updated_utc": "2026-06-28T16:50:46Z",
+      "head": "2e785e4ad2976ea8018c27af3e6108fe09a79a95",
+      "lane": "remote-default-proof",
+      "next_action": "No local source preservation action remains for the task branch. Local HEAD and origin/main both equal 2e785e4ad2976ea8018c27af3e6108fe09a79a95; git cherry origin/main HEAD and git diff --check origin/main..HEAD are empty; no GitHub PR or remote head exists for limen/resolve-a-organvm-the-invisible-ledger-4-f657. The old local PostgreSQL adapter tip remains preserved as preserve/resolve-a-organvm-the-invisible-ledger-4-f657-1741370 at 1741370e59110aa3f667b9d0f48ede43277eb6a5. Reclaim the local checkout only after normal operator acceptance.",
+      "preserved_ref": "preserve/resolve-a-organvm-the-invisible-ledger-4-f657-1741370",
+      "preserved_ref_head": "1741370e59110aa3f667b9d0f48ede43277eb6a5",
+      "repo": "organvm/the-invisible-ledger",
+      "root": "resolve-a-organvm-the-invisible-ledger-4-f657",
       "score_discount": 35,
       "status": "default_branch_preserved"
     },
