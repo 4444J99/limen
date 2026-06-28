@@ -1,6 +1,6 @@
 # GitHub Consolidation Gates
 
-Generated: `2026-06-28T15:50:39+00:00`
+Generated: `2026-06-28T16:00:06+00:00`
 
 ## Rule
 
@@ -15,6 +15,10 @@ Generated: `2026-06-28T15:50:39+00:00`
 | Source repos outside `organvm` | `34` |
 | Source owners scanned | `10` |
 | Name collision groups | `13` |
+| Collision packet complete | `True` |
+| Collision packet keeper rows | `13` |
+| Collision packet rename commands | `13` / required `13` |
+| Rename target conflicts/unknown | `0` / `0` |
 | Transfer apply gate open | `False` |
 | `tasks.yaml` repo refs to rewrite post-transfer | `49` |
 | Local remotes to rewrite post-transfer | `8` |
@@ -40,6 +44,17 @@ Generated: `2026-06-28T15:50:39+00:00`
 - `organvm-vii-kerygma.github.io`: `organvm-i-theoria/organvm-vii-kerygma.github.io`, `organvm-vii-kerygma/organvm-vii-kerygma.github.io`
 - `sovereign--ground`: `4444J99/sovereign--ground`, `organvm-i-theoria/sovereign--ground`
 - `studium-generale`: `4444J99/studium-generale`, `organvm-i-theoria/studium-generale`
+
+## Collision Packet Check
+
+- Packet path: `~/Workspace/limen/docs/consolidation/COLLISION-RENAMES.md`.
+- Live collision groups parsed: `13` / `13`.
+- Missing keeper rows: `0`.
+- Invalid keeper rows: `0`.
+- Missing rename commands: `0`.
+- Extra rename commands: `0`.
+- Rename target conflicts: `0`.
+- Rename target probes unknown: `0`.
 
 ## Exact Gates
 

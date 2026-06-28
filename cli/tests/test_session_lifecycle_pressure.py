@@ -82,6 +82,89 @@ DRY-RUN - nothing written.
     assert gates.PRIVATE_INDEX.exists()
 
 
+def test_consolidation_gates_validate_complete_collision_packet(tmp_path: Path):
+    gates = _load(CONSOLIDATION_GATES_SCRIPT, "consolidation_gates_collision_packet")
+    gates.ROOT = tmp_path
+    gates.DOC_PATH = tmp_path / "docs" / "consolidation" / "GATES.md"
+    gates.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    gates.PRIVATE_INDEX = gates.PRIVATE_ROOT / "lifecycle" / "consolidation-gates.json"
+    gates.RUNBOOK = tmp_path / "docs" / "consolidation" / "RUNBOOK.md"
+    gates.COLLISION_RENAMES = tmp_path / "docs" / "consolidation" / "COLLISION-RENAMES.md"
+    gates.SCOPE_AND_APP = tmp_path / "docs" / "consolidation" / "SCOPE-AND-APP.md"
+    gates.COLLISION_RENAMES.parent.mkdir(parents=True)
+    gates.COLLISION_RENAMES.write_text(
+        """# Collision Rename Packet
+
+| Collision | Keeper |
+|---|---|
+| `demo-repo` | `keeper-org/demo-repo` |
+
+```bash
+gh repo rename demo-repo--source-org-legacy --repo source-org/demo-repo
+```
+""",
+        encoding="utf-8",
+    )
+
+    def fake_run_command(args, *, env=None, timeout=180):
+        text = " ".join(args)
+        if args[:3] == ["gh", "repo", "view"]:
+            return {
+                "args": args,
+                "returncode": 1,
+                "stdout": "",
+                "stderr": "GraphQL: Could not resolve to a Repository with the name 'source-org/demo-repo--source-org-legacy'. (repository)",
+                "timed_out": False,
+            }
+        if "consolidate-github.py" in text:
+            return {
+                "args": args,
+                "returncode": 0,
+                "stdout": """=== consolidation plan -> organvm ===
+  2 repos across 2 owners
+  name collisions (must rename before transfer): 1
+    ! 'demo-repo': source-org/demo-repo, keeper-org/demo-repo
+
+DRY-RUN - nothing executed. Collisions above must be resolved first.
+""",
+                "stderr": "",
+                "timed_out": False,
+            }
+        if "rewrite-owners.py" in text:
+            return {
+                "args": args,
+                "returncode": 0,
+                "stdout": """[1] tasks.yaml repo: refs to rewrite = 0
+[2] deploy-api.yml LIMEN_GITHUB_REPO literal: none (already organvm or absent)
+[3] git checkouts under /tmp with origin on an OLD owner = 0 (emit-only, never run)
+DRY-RUN - nothing written.
+""",
+                "stderr": "",
+                "timed_out": False,
+            }
+        if "gh-app-token.sh" in text:
+            return {
+                "args": args,
+                "returncode": 0,
+                "stdout": "app (limen[bot] installation token)\n",
+                "stderr": "",
+                "timed_out": False,
+            }
+        return {"args": args, "returncode": 0, "stdout": "limen-bot\n", "stderr": "", "timed_out": False}
+
+    gates.run_command = fake_run_command
+
+    snapshot = gates.build_snapshot()
+    markdown = gates.render_markdown(snapshot)
+
+    assert snapshot["collision_packet"]["complete"] is True
+    assert snapshot["collision_packet"]["rename_commands"] == 1
+    assert snapshot["collision_packet"]["required_rename_commands"] == 1
+    assert snapshot["collision_packet"]["target_conflicts"] == []
+    assert snapshot["gates"]["blocking"] == ["name-collisions"]
+    assert "Collision packet complete | `True`" in markdown
+
+
 def test_session_lifecycle_pressure_summarizes_local_remote_without_raw_text(tmp_path: Path):
     pressure = _load(PRESSURE_SCRIPT, "session_lifecycle_pressure")
     pressure.ROOT = tmp_path

@@ -158,6 +158,129 @@ def parse_app_identity(which_command: dict[str, Any], installations_command: dic
     }
 
 
+def parse_collision_packet(path: Path | None = None) -> dict[str, Any]:
+    path = path or COLLISION_RENAMES
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return {"path": str(path), "present": False, "keepers": {}, "rename_commands": []}
+
+    keepers: dict[str, str] = {}
+    rename_commands: list[dict[str, str]] = []
+    for line in text.splitlines():
+        keeper = re.match(r"^\|\s*`([^`]+)`\s*\|\s*`([^`]+)`\s*\|", line)
+        if keeper:
+            keepers[keeper.group(1)] = keeper.group(2)
+            continue
+        rename = re.search(r"\bgh\s+repo\s+rename\s+(\S+)\s+--repo\s+(\S+)", line)
+        if rename:
+            source_repo = rename.group(2)
+            owner = source_repo.split("/", 1)[0] if "/" in source_repo else ""
+            rename_commands.append(
+                {
+                    "source_repo": source_repo,
+                    "target_name": rename.group(1),
+                    "target_repo": f"{owner}/{rename.group(1)}" if owner else rename.group(1),
+                }
+            )
+    return {
+        "path": str(path),
+        "present": True,
+        "keepers": keepers,
+        "rename_commands": rename_commands,
+    }
+
+
+def target_is_free(command: dict[str, Any]) -> bool | None:
+    if command.get("returncode") == 0:
+        return False
+    text = f"{command.get('stdout') or ''}\n{command.get('stderr') or ''}".lower()
+    if "could not resolve to a repository" in text or "not found" in text:
+        return True
+    return None
+
+
+def validate_collision_packet(
+    consolidation: dict[str, Any],
+    packet: dict[str, Any],
+) -> dict[str, Any]:
+    collisions = [item for item in consolidation.get("collision_examples") or [] if isinstance(item, dict)]
+    keepers = packet.get("keepers") or {}
+    commands = packet.get("rename_commands") or []
+    command_by_repo = {str(command.get("source_repo")): command for command in commands if command.get("source_repo")}
+    missing_keepers: list[str] = []
+    invalid_keepers: list[dict[str, Any]] = []
+    missing_rename_commands: list[dict[str, str]] = []
+    required_source_repos: set[str] = set()
+
+    for collision in collisions:
+        name = str(collision.get("name") or "")
+        repos = [str(repo) for repo in collision.get("repos") or []]
+        keeper = keepers.get(name)
+        if not keeper:
+            missing_keepers.append(name)
+            continue
+        if keeper not in repos:
+            invalid_keepers.append({"collision": name, "keeper": keeper, "live_repos": repos})
+        for repo in repos:
+            if repo == keeper:
+                continue
+            required_source_repos.add(repo)
+            if repo not in command_by_repo:
+                missing_rename_commands.append({"collision": name, "source_repo": repo})
+
+    extra_rename_commands = [
+        command
+        for command in commands
+        if command.get("source_repo") and command.get("source_repo") not in required_source_repos
+    ]
+    target_checks = []
+    for command in commands:
+        target_repo = str(command.get("target_repo") or "")
+        if not target_repo:
+            continue
+        probe = run_command(["gh", "repo", "view", target_repo, "--json", "nameWithOwner"], timeout=30)
+        target_checks.append(
+            {
+                "source_repo": command.get("source_repo"),
+                "target_repo": target_repo,
+                "returncode": probe.get("returncode"),
+                "timed_out": bool(probe.get("timed_out")),
+                "free": target_is_free(probe),
+            }
+        )
+
+    target_conflicts = [item for item in target_checks if item.get("free") is False]
+    target_unknown = [item for item in target_checks if item.get("free") is None]
+    complete = (
+        packet.get("present")
+        and not missing_keepers
+        and not invalid_keepers
+        and not missing_rename_commands
+        and not extra_rename_commands
+        and not target_conflicts
+        and not target_unknown
+        and len(collisions) == int(consolidation.get("collision_groups") or 0)
+    )
+    return {
+        "path": packet.get("path"),
+        "present": bool(packet.get("present")),
+        "live_collision_groups": int(consolidation.get("collision_groups") or 0),
+        "live_collision_groups_parsed": len(collisions),
+        "keeper_rows": len(keepers),
+        "rename_commands": len(commands),
+        "required_rename_commands": len(required_source_repos),
+        "missing_keepers": missing_keepers,
+        "invalid_keepers": invalid_keepers,
+        "missing_rename_commands": missing_rename_commands,
+        "extra_rename_commands": extra_rename_commands,
+        "target_checks": target_checks,
+        "target_conflicts": target_conflicts,
+        "target_unknown": target_unknown,
+        "complete": bool(complete),
+    }
+
+
 def build_snapshot() -> dict[str, Any]:
     py_env = {"PYTHONPATH": str(ROOT / "cli" / "src")}
     consolidation_command = run_command([sys.executable, "scripts/consolidate-github.py"], env=py_env)
@@ -171,12 +294,15 @@ def build_snapshot() -> dict[str, Any]:
     consolidation = parse_consolidation(consolidation_command)
     owner_rewrite = parse_owner_rewrite(rewrite_command)
     app_identity = parse_app_identity(app_which_command, installations_command)
+    collision_packet = validate_collision_packet(consolidation, parse_collision_packet())
 
     blocking_gates = []
     if consolidation["command"]["returncode"] != 0 or not consolidation["dry_run_output_present"]:
         blocking_gates.append("consolidation-dry-run-unavailable")
     if consolidation["collision_groups"] > 0:
         blocking_gates.append("name-collisions")
+    if not collision_packet["complete"]:
+        blocking_gates.append("collision-packet-incomplete")
     if not app_identity["app_token_wired"]:
         blocking_gates.append("limen-bot-token-not-wired")
     if not app_identity["limen_app_installed"]:
@@ -193,6 +319,7 @@ def build_snapshot() -> dict[str, Any]:
             "org_installations": command_text(installations_command),
         },
         "consolidation": consolidation,
+        "collision_packet": collision_packet,
         "owner_rewrite": owner_rewrite,
         "app_identity": app_identity,
         "gates": {
@@ -215,6 +342,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
     consolidation = snapshot["consolidation"]
     rewrite = snapshot["owner_rewrite"]
     app = snapshot["app_identity"]
+    packet = snapshot["collision_packet"]
     blocking = snapshot["gates"]["blocking"]
     collisions = consolidation.get("collision_examples") or []
     collision_lines = [
@@ -243,6 +371,10 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         f"| Source repos outside `organvm` | `{consolidation.get('source_repos', 0)}` |",
         f"| Source owners scanned | `{consolidation.get('source_owners', 0)}` |",
         f"| Name collision groups | `{consolidation.get('collision_groups', 0)}` |",
+        f"| Collision packet complete | `{packet.get('complete')}` |",
+        f"| Collision packet keeper rows | `{packet.get('keeper_rows', 0)}` |",
+        f"| Collision packet rename commands | `{packet.get('rename_commands', 0)}` / required `{packet.get('required_rename_commands', 0)}` |",
+        f"| Rename target conflicts/unknown | `{len(packet.get('target_conflicts') or [])}` / `{len(packet.get('target_unknown') or [])}` |",
         f"| Transfer apply gate open | `{consolidation.get('apply_gate_open')}` |",
         f"| `tasks.yaml` repo refs to rewrite post-transfer | `{rewrite.get('task_repo_refs_to_rewrite', 0)}` |",
         f"| Local remotes to rewrite post-transfer | `{rewrite.get('local_remotes_to_rewrite', 0)}` |",
@@ -256,6 +388,17 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "## Collision Examples",
         "",
         *collision_lines,
+        "",
+        "## Collision Packet Check",
+        "",
+        f"- Packet path: `{relpath(Path(packet.get('path') or COLLISION_RENAMES))}`.",
+        f"- Live collision groups parsed: `{packet.get('live_collision_groups_parsed', 0)}` / `{packet.get('live_collision_groups', 0)}`.",
+        f"- Missing keeper rows: `{len(packet.get('missing_keepers') or [])}`.",
+        f"- Invalid keeper rows: `{len(packet.get('invalid_keepers') or [])}`.",
+        f"- Missing rename commands: `{len(packet.get('missing_rename_commands') or [])}`.",
+        f"- Extra rename commands: `{len(packet.get('extra_rename_commands') or [])}`.",
+        f"- Rename target conflicts: `{len(packet.get('target_conflicts') or [])}`.",
+        f"- Rename target probes unknown: `{len(packet.get('target_unknown') or [])}`.",
         "",
         "## Exact Gates",
         "",
