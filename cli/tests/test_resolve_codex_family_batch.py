@@ -183,6 +183,9 @@ def test_repo_candidates_cover_redirected_family_roots():
         ],
         "rev-ledger-webhook-ratelimit-75f8": ["organvm/the-invisible-ledger"],
         "rev-domus-onboarding-041b": ["organvm/domus-genoma"],
+        "discover-organvm-claude-runtime-state-8ac1": ["organvm/claude-runtime-state"],
+        "rev-mirror-landing-0c22": ["organvm/mirror-mirror"],
+        "rev-mirror-sharefile-oauth-706c": ["organvm/mirror-mirror"],
     }
     for root, expected in cases.items():
         assert resolver.repo_candidates(root) == expected

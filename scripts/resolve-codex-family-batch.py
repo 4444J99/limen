@@ -119,13 +119,15 @@ def repo_candidates(root: str) -> list[str]:
         return ["organvm/organvm-corpvs-testamentvm", "a-organvm/organvm-corpvs-testamentvm"]
     if "organvm-engine" in root:
         return ["organvm/organvm-engine"]
+    if "claude-runtime-state" in root:
+        return ["organvm/claude-runtime-state"]
     if "specvla-ergon--avditor-mvndi" in root:
         return ["organvm/specvla-ergon--avditor-mvndi"]
     if "relationship-pipeline" in root:
         return ["organvm/relationship-pipeline", "4444J99/relationship-pipeline"]
     if "conversation-corpus-engine" in root:
         return ["organvm/conversation-corpus-engine", "organvm-i-theoria/conversation-corpus-engine"]
-    if "mirror-mirror" in root:
+    if "mirror-mirror" in root or root.startswith("rev-mirror-") or root.startswith("bld-mirror-"):
         return ["organvm/mirror-mirror"]
     if "portfolio" in root:
         return ["organvm/portfolio"]
