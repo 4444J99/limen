@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-28T05:29:35Z",
+  "generated_at": "2026-06-28T05:33:18Z",
   "receipts": [
     {
       "batch": "prompt-batch-critical-historical-worktree-review-001",
@@ -3483,6 +3483,78 @@
           "predicate": "bash scripts/verify-whole.sh after branch rehydration",
           "evidence": "Owner repo resolves; no matching local root, remote branch, or exact-head PR was found.",
           "next_action": "Do not rehydrate unless a later owner packet identifies the missing Limen delta."
+        }
+      ]
+    },
+    {
+      "batch": "prompt-batch-high-legacy-session-review-003",
+      "band": "high",
+      "lane": "legacy-session-review",
+      "status": "owner-recorded",
+      "classification": "legacy sessions routed to a private Limen subagent owner lane plus Avditor merged/open PR receipts",
+      "session_count": 2,
+      "prompt_events": 157,
+      "unique_prompt_hashes": 145,
+      "evidence": [
+        "private redacted batch metadata listed 2 legacy Claude-project sessions with no worktree slug in the priority map",
+        "both source JSONL files existed under ~/.claude/projects at review time",
+        "private structured scan emitted only key shapes, branch mentions, tool counts, repo mentions, and keyword counts; no prompt body was copied",
+        "one session carried nested-humming-mochi Limen subagent anchors and no live local root, remote branch, or PR receipt",
+        "one session carried Avditor branch mentions; gh repo view resolved the canonical owner repo as organvm/specvla-ergon--avditor-mvndi",
+        "git ls-remote and gh pr list found 3 merged Avditor PR receipts and 1 open Avditor PR receipt with a live exact branch",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "Review the preserved open Avditor PR #34 for freshness before merge or supersession. Keep nested-humming-mochi as private Limen subagent context unless a later packet names the missing delta and predicate.",
+      "roots": [
+        {
+          "root": "legacy-session-6393210205eca127c595",
+          "session_key": "6393210205eca127c595",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "limen-subagent-nested-humming-mochi",
+          "repo": "organvm/limen",
+          "evidence": "Metadata contained nested-humming-mochi worktree anchors; no live local worktree, remote branch, or PR receipt was present.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        },
+        {
+          "root": "bld-specvla-ergon--avditor-mvndi-readme-d5cf",
+          "session_key": "81ca6ce8584b30a016df",
+          "status": "remote_pr_merged",
+          "repo": "organvm/specvla-ergon--avditor-mvndi",
+          "branch": "limen/bld-specvla-ergon--avditor-mvndi-readme-d5cf",
+          "pr": "https://github.com/organvm/specvla-ergon--avditor-mvndi/pull/30",
+          "evidence": "No live branch remains; matching PR #30 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "bld-specvla-ergon--avditor-mvndi-tests-0c64",
+          "session_key": "81ca6ce8584b30a016df",
+          "status": "remote_pr_merged",
+          "repo": "organvm/specvla-ergon--avditor-mvndi",
+          "branch": "limen/bld-specvla-ergon--avditor-mvndi-tests-0c64",
+          "pr": "https://github.com/organvm/specvla-ergon--avditor-mvndi/pull/32",
+          "evidence": "No live branch remains; matching PR #32 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "rev-avditor-premium-tier-49dd",
+          "session_key": "81ca6ce8584b30a016df",
+          "status": "remote_pr_merged",
+          "repo": "organvm/specvla-ergon--avditor-mvndi",
+          "branch": "limen/rev-avditor-premium-tier-49dd",
+          "pr": "https://github.com/organvm/specvla-ergon--avditor-mvndi/pull/33",
+          "evidence": "No live branch remains; matching PR #33 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "rev-avditor-premium-tier-5ffc",
+          "session_key": "81ca6ce8584b30a016df",
+          "status": "remote_pr_preserved",
+          "repo": "organvm/specvla-ergon--avditor-mvndi",
+          "branch": "limen/rev-avditor-premium-tier-5ffc",
+          "branch_sha": "739cf04",
+          "pr": "https://github.com/organvm/specvla-ergon--avditor-mvndi/pull/34",
+          "evidence": "Remote branch exists at 739cf04; GitHub PR #34 is OPEN with merge state DIRTY.",
+          "next_action": "Review PR #34 freshness/conflicts, then merge or supersede by a named PR."
         }
       ]
     }
