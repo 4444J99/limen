@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-28T05:09:41Z",
+  "generated_at": "2026-06-28T05:17:30Z",
   "receipts": [
     {
       "batch": "prompt-batch-critical-historical-worktree-review-001",
@@ -3122,6 +3122,50 @@
           "pr": "https://github.com/organvm/limen/pull/88",
           "evidence": "No live branch remains; matching PR #88 is MERGED.",
           "next_action": "Use current Studium ledger state and merged PR history for follow-up."
+        }
+      ]
+    },
+    {
+      "batch": "prompt-batch-high-hash-review-001",
+      "band": "high",
+      "lane": "hash-review",
+      "status": "owner-recorded",
+      "classification": "private Codex history hash aggregate routed to the Limen prompt-corpus index; raw history text remains private and is not delegated",
+      "session_keys": [
+        "12855478758ee2a71b18"
+      ],
+      "source": "codex-history",
+      "private_display_path": "~/.codex/history.jsonl",
+      "prompt_events": 440,
+      "unique_prompt_hashes": 327,
+      "duplicate_prompt_events": 113,
+      "first_prompt_hash": "0d8f8b8bb352020643a8166ba89737a0ba391a47c46124d7839af2231c171ae0",
+      "last_prompt_hash": "bbd810696c48fe0c8ba1590e134ad6527a669512c52aeadbc3721bfdc28521d9",
+      "metadata_counts": {
+        "source_records": 440,
+        "field_shape_count": 3,
+        "github_issue_or_pr_url_matches": 0,
+        "repo_like_mentions": 10
+      },
+      "evidence": [
+        "private source existed at review time and contained 440 JSONL records with fields session_id, text, and ts",
+        "priority metadata had no cwd hash, worktree slug, branch, or owner route for this session key",
+        "metadata-only scan found no exact GitHub issue or PR URLs to route as a delegated repo task",
+        "repo-like strings and sensitive-keyword hits were counted only; no raw prompt text, credential text, secret text, account text, billing text, health text, or private transcript material was copied into this tracked receipt"
+      ],
+      "next_action": "Keep as private aggregate Codex-history context. Do not delegate, rehydrate, or paste raw history text unless a later owner packet names a repo, path, predicate, and privacy-safe extraction boundary.",
+      "roots": [
+        {
+          "root": "codex-history-12855478758ee2a71b18",
+          "status": "hash_receipt_sensitive_context_recorded",
+          "owner_lane": "private-codex-history-corpus-index",
+          "repo": "organvm/limen",
+          "source": "codex-history",
+          "prompt_events": 440,
+          "unique_prompt_hashes": 327,
+          "duplicate_prompt_events": 113,
+          "evidence": "Metadata-only review recorded aggregate counts and prompt hashes but no prompt body or private transcript content.",
+          "next_action": "Retain in the corpus ledger as private context only; require a new explicit owner packet before any repo task is created from this history."
         }
       ]
     }
