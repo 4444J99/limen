@@ -1,6 +1,6 @@
 # Session Corpus Ledger
 
-Generated: `2026-06-28T02:14:20+00:00`
+Generated: `2026-06-28T02:34:36+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -19,12 +19,12 @@ Total seen: `9728` files, `2.1 GiB`.
 | Source | Root | Files | Size | Newest |
 |---|---:|---:|---:|---|
 | `claude-projects` | `~/.claude/projects` | 4854 | 1.4 GiB | `2026-06-28T01:17:54+00:00` |
-| `codex-sessions` | `~/.codex/sessions` | 889 | 730.3 MiB | `2026-06-28T02:14:15+00:00` |
+| `codex-sessions` | `~/.codex/sessions` | 889 | 731.1 MiB | `2026-06-28T02:34:32+00:00` |
 | `claude-file-history` | `~/.claude/file-history` | 3519 | 42.2 MiB | `2026-06-27T00:26:28+00:00` |
-| `codex-goals-state` | `~/.codex` | 6 | 11.1 MiB | `2026-06-28T02:14:15+00:00` |
+| `codex-goals-state` | `~/.codex` | 6 | 10.9 MiB | `2026-06-28T02:34:32+00:00` |
 | `claude-plans` | `~/.claude/plans` | 34 | 289.3 KiB | `2026-06-25T03:22:45+00:00` |
 | `claude-usage-session-meta` | `~/.claude/usage-data/session-meta` | 197 | 221.4 KiB | `2026-06-23T19:06:40+00:00` |
-| `codex-history` | `~/.codex` | 1 | 192.1 KiB | `2026-06-28T02:06:12+00:00` |
+| `codex-history` | `~/.codex` | 1 | 192.7 KiB | `2026-06-28T02:24:32+00:00` |
 | `codex-app-sqlite` | `~/.codex/sqlite` | 1 | 68.0 KiB | `2026-06-27T13:58:29+00:00` |
 | `claude-tasks` | `~/.claude/tasks` | 188 | 57.7 KiB | `2026-06-26T00:08:52+00:00` |
 | `claude-usage-facets` | `~/.claude/usage-data/facets` | 32 | 29.1 KiB | `2026-06-23T19:06:55+00:00` |
@@ -48,7 +48,7 @@ Total seen: `9728` files, `2.1 GiB`.
 
 ## Session Lifecycle
 
-- Last `quicken.py` journal: `2026-06-28T02:02:29+00:00`.
+- Last `quicken.py` journal: `2026-06-28T02:33:01+00:00`.
 - Claude FleetView sessions classified: `29` total; `0` stalled, `29` closed, `0` alive, `0` done.
 - Reaped worktrees in that pass: `0`.
 - Last `codex-quicken.py` journal: `2026-06-27T21:42:32+00:00`.
@@ -60,8 +60,8 @@ Total seen: `9728` files, `2.1 GiB`.
 - Private root: `~/Workspace/limen/.limen-private/session-corpus`.
 - Private inventory: `~/Workspace/limen/.limen-private/session-corpus/inventory/session-corpus-ledger.json`.
 - `.limen-private/` is ignored by Git; it is the local raw/private landing zone.
-- Materialized objects this run: copied `7`, already present `9721`, bytes copied `15.5 MiB`.
-- Private object store now holds `7383` unique objects, `3.1 GiB`.
+- Materialized objects this run: copied `8`, already present `9720`, bytes copied `16.2 MiB`.
+- Private object store now holds `7391` unique objects, `3.1 GiB`.
 - Private screenshot evidence: `14` PNG artifacts, `22.9 MiB`, newest `2026-06-27T13:41:25+00:00`.
 - Screenshot batches: `2026-06-27` 14.
 
@@ -71,6 +71,7 @@ Total seen: `9728` files, `2.1 GiB`.
 - Session lifecycle drain queue: `docs/session-lifecycle-drain-queue-2026-06-27.md`.
 - Session lifecycle blockers: `docs/session-lifecycle-blockers.md`.
 - Session attack paths: `docs/session-attack-paths.md`.
+- Prompt priority map: `docs/prompt-priority-map.md`.
 - Capability substrate ledger: `docs/capability-substrate-ledger.md`.
 
 ## Roadblocks And Potholes
@@ -88,6 +89,7 @@ Total seen: `9728` files, `2.1 GiB`.
 - Refresh capability resurfacing: `python3 scripts/capability-substrate-ledger.py --write`
 - Refresh parked blockers: `python3 scripts/session-blockers-ledger.py --write`
 - Refresh ranked attack paths: `python3 scripts/session-attack-paths.py --write`
+- Refresh prompt priority/task map: `python3 scripts/prompt-priority-map.py --write`
 - Rebuild session-meta atoms after preserving its dirty work: `cd ~/Workspace/session-meta && ./ingest/refresh-atoms.sh`
 - Refresh Limen coverage view: `python3 scripts/ingest-coverage.py`
 - Classify Codex app/session lifecycle: `python3 scripts/codex-quicken.py --all --apply`

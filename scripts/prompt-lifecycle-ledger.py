@@ -1006,6 +1006,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "- Refresh this ledger with remote/cloud receipts: `python3 scripts/prompt-lifecycle-ledger.py --write --all`",
         "- Refresh local-only when offline: `python3 scripts/prompt-lifecycle-ledger.py --write --all --no-remote --no-cloud`",
         "- Refresh and absorb raw session/app files: `python3 scripts/session-corpus-ledger.py --write --all --materialize`",
+        "- Refresh prompt priority/task map: `python3 scripts/prompt-priority-map.py --write`",
         "- Inspect lifecycle debt: `python3 scripts/worktree-debt.py --json`",
         "",
     ]

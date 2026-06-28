@@ -603,8 +603,9 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
     drain_queues = sorted((ROOT / "docs").glob("session-lifecycle-drain-queue-*.md"))
     blocker_receipts = sorted((ROOT / "docs").glob("session-lifecycle-blockers.md"))
     attack_paths = sorted((ROOT / "docs").glob("session-attack-paths.md"))
+    priority_maps = sorted((ROOT / "docs").glob("prompt-priority-map.md"))
     capability_receipts = sorted((ROOT / "docs").glob("capability-substrate-ledger.md"))
-    if screenshot_receipts or drain_queues or blocker_receipts or attack_paths or capability_receipts:
+    if screenshot_receipts or drain_queues or blocker_receipts or attack_paths or priority_maps or capability_receipts:
         lines += [
             "",
             "## Tracked Intake Receipts",
@@ -618,6 +619,8 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
             lines.append(f"- Session lifecycle blockers: `{path.relative_to(ROOT)}`.")
         for path in attack_paths:
             lines.append(f"- Session attack paths: `{path.relative_to(ROOT)}`.")
+        for path in priority_maps:
+            lines.append(f"- Prompt priority map: `{path.relative_to(ROOT)}`.")
         for path in capability_receipts:
             lines.append(f"- Capability substrate ledger: `{path.relative_to(ROOT)}`.")
 
@@ -642,6 +645,7 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
         "- Refresh capability resurfacing: `python3 scripts/capability-substrate-ledger.py --write`",
         "- Refresh parked blockers: `python3 scripts/session-blockers-ledger.py --write`",
         "- Refresh ranked attack paths: `python3 scripts/session-attack-paths.py --write`",
+        "- Refresh prompt priority/task map: `python3 scripts/prompt-priority-map.py --write`",
         "- Rebuild session-meta atoms after preserving its dirty work: "
         "`cd ~/Workspace/session-meta && ./ingest/refresh-atoms.sh`",
         "- Refresh Limen coverage view: `python3 scripts/ingest-coverage.py`",

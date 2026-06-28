@@ -1,6 +1,6 @@
 # Session Lifecycle Blockers
 
-Generated: `2026-06-28T02:16:25+00:00`
+Generated: `2026-06-28T02:34:05+00:00`
 
 ## Canonical Handling
 
@@ -13,7 +13,7 @@ Generated: `2026-06-28T02:16:25+00:00`
 - Prompt lifecycle index present: `True` at `~/Workspace/limen/.limen-private/session-corpus/lifecycle/prompt-lifecycle-index.json`.
 - Codex lifecycle index present: `True` at `~/Workspace/limen/.limen-private/session-corpus/lifecycle/codex-session-lifecycle.json`.
 - Session corpus inventory present: `True` at `~/Workspace/limen/.limen-private/session-corpus/inventory/session-corpus-ledger.json`.
-- Redacted local prompt coverage: `9489` files, `92787` prompt-like events.
+- Redacted local prompt coverage: `9489` files, `92793` prompt-like events.
 - Codex classified sessions: `887`.
 - Worktree debt roots: `8`.
 - Remote receipts enabled: `True`; cloud receipts enabled: `True`.
