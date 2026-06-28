@@ -1,6 +1,6 @@
 # Session Lifecycle Blockers
 
-Generated: `2026-06-28T16:22:59+00:00`
+Generated: `2026-06-28T16:29:17+00:00`
 
 ## Canonical Handling
 
@@ -26,15 +26,14 @@ Generated: `2026-06-28T16:22:59+00:00`
 
 ## Parked / Hung Workstreams
 
-- By category: `auth_credentials` 2, `cloud_runtime` 1, `github_app_identity` 1, `github_consolidation` 1, `local_lean` 1, `owner_state` 2, `worktree_lifecycle` 1.
-- By status: `needs_human_gate` 2, `parked` 7.
+- By category: `auth_credentials` 2, `cloud_runtime` 1, `github_app_identity` 1, `github_consolidation` 1, `local_lean` 1, `owner_state` 2.
+- By status: `needs_human_gate` 2, `parked` 6.
 
 | ID | Category | Status | Evidence | Owner | Route |
 |---|---|---|---|---|---|
 | `credential-codex-auth-sessions` | `auth_credentials` | `parked` | 405 Codex sessions classified as auth/credential work; states: ALIVE 1, CLOSED 364, PARKED 40 | credential workstream | Keep parked unless a future scoped task explicitly requires the account action. |
 | `cloud-credential-handles-unconfigured` | `auth_credentials` | `parked` | 6 credential/deploy handles absent; 0 present. No values inspected. | credential workstream | Do not repair inline; open a bounded credential/setup workstream only when a cloud action requires it. |
 | `cloud-runtime-endpoint-unconfigured` | `cloud_runtime` | `parked` | No runtime URL was configured for the last cloud receipt probe. | limen deployment workstream | Keep separate from session intake; configure/probe runtime only in a deploy/runtime task. |
-| `worktree-remote-branches-missing` | `worktree_lifecycle` | `parked` | 4 git worktree roots did not have the same branch present on origin. | worktree lifecycle | Preserve each root by branch, PR, owner blocker, or documented non-source residue before cleanup. |
 | `owner-state-dirty-session-meta` | `owner_state` | `parked` | session-meta has 1 dirty entries. | session-meta | Preserve in that owner repo before treating corpus substrate as clean. |
 | `owner-state-dirty-knowledge-corpus` | `owner_state` | `parked` | knowledge-corpus has 3 dirty entries. | knowledge-corpus | Preserve in that owner repo before treating corpus substrate as clean. |
 | `local-lifecycle-disk-pressure` | `local_lean` | `parked` | Local lifecycle stores use 5.3 GiB (2.1 GiB worktrees, 3.2 GiB private corpus). | local lifecycle | Drain only after remote/default preservation proof or non-source residue receipt; keep pressure visible in SessionStart. |

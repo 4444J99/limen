@@ -26,6 +26,9 @@ The unique work remains preserved on the remote branches and open draft PRs.
 - Current class mix: 2 owner-blocker roots, 4 open-PR remote-preserved roots,
   3 documented residues, 2 remote-merged roots, 1 remote-superseded root, and
   2 clean+merged idle roots.
+- The raw remote branch receipt still reports 7 present / 4 missing branch names, but the live
+  scanner now closes all 4 missing names through owner-blocker, documented-residue,
+  remote-superseded, or clean+merged-idle proof; unresolved missing branch gaps are 0.
 - No local reclaim, deletion, merge, force-push, or owner-repo source mutation was performed in
   this follow-up. This receipt only updates the owner ledger so the active conductor tranche
   starts from live pressure instead of the older 8-debt summary. Four open draft PR roots now
@@ -43,9 +46,9 @@ The unique work remains preserved on the remote branches and open draft PRs.
   Mirror PR #67 and Public Record Data Scraper PR #328 are now live GitHub `MERGED`
   receipts whose head OIDs match their local worktree heads.
 - The active conductor packet is `docs/conductor-tranche.md`:
-  `tranche-worktree-remote-branches-missing`. Its stop condition forbids deletion,
-  force-push, merge, or owner-repo source edits unless a narrower owner packet names the repo,
-  branch, predicate, and receipt.
+  `tranche-github-app-limen-bot-not-wired`. Its stop condition forbids creating/installing the
+  GitHub App, calling `scripts/set-credential.sh`, writing PEM/key material, or changing GitHub
+  secrets without explicit human approval.
 
 Current live roots by scanner reason:
 

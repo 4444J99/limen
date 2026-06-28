@@ -213,6 +213,54 @@ def test_session_lifecycle_pressure_summarizes_local_remote_without_raw_text(tmp
     assert pressure.OUT_MD.exists()
 
 
+def test_session_lifecycle_pressure_closes_raw_remote_missing_with_live_scanner_receipt(tmp_path: Path):
+    pressure = _load(PRESSURE_SCRIPT, "session_lifecycle_pressure_remote_closed")
+    pressure.ROOT = tmp_path
+    pressure.WORKTREE_ROOT = tmp_path / ".limen-worktrees"
+    pressure.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    pressure.PROMPT_INDEX = pressure.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+    pressure.CORPUS_INVENTORY = pressure.PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
+    pressure.OUT_JSON = tmp_path / "logs" / "session-lifecycle-pressure.json"
+    pressure.OUT_MD = tmp_path / "logs" / "session-lifecycle-pressure.md"
+    pressure.run_worktree_debt = lambda: {
+        "total": 1,
+        "debt": 0,
+        "limit": 12,
+        "by_reason": {"owner-blocker": 1},
+        "items": [{"name": "owner-blocked-root", "reason": "owner-blocker", "debt": False}],
+    }
+
+    pressure.WORKTREE_ROOT.mkdir(parents=True)
+    pressure.PROMPT_INDEX.parent.mkdir(parents=True)
+    pressure.PROMPT_INDEX.write_text(
+        json.dumps(
+            {
+                "remote": {
+                    "enabled": True,
+                    "worktrees": {
+                        "remote_branches_present": 0,
+                        "remote_branches_missing": 1,
+                        "receipts": [{"name": "owner-blocked-root", "remote_branch": "missing"}],
+                    },
+                    "task_prs": {"counts": {}},
+                },
+                "cloud": {"enabled": True, "runtime_url_configured": True},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = pressure.build_snapshot()
+    rendered = pressure.render(snapshot)
+
+    assert snapshot["remote"]["remote_branches_missing"] == 1
+    assert snapshot["remote"]["remote_branches_unresolved_missing"] == 0
+    assert snapshot["remote"]["remote_branches_closed_by_live_scanner"] == 1
+    assert "remote branch gaps" not in snapshot["pressure"]
+    assert "remote branches present/missing 0/1 (unresolved 0)" in rendered
+    assert rendered.endswith("state: within guardrails")
+
+
 def test_capability_substrate_ledger_indexes_names_without_skill_bodies(tmp_path: Path):
     capability = _load(CAPABILITY_SCRIPT, "capability_substrate_ledger")
     capability.ROOT = tmp_path
@@ -348,6 +396,68 @@ def test_session_blockers_records_hooks_disk_and_credentials_without_values(tmp_
     assert "secret-value" not in markdown
     assert blockers.DOC_PATH.exists()
     assert blockers.PRIVATE_INDEX.exists()
+
+
+def test_session_blockers_filter_remote_missing_branches_with_live_scanner_receipts(tmp_path: Path):
+    blockers = _load(BLOCKERS_SCRIPT, "session_blockers_remote_missing_filter")
+    blockers.ROOT = tmp_path
+    blockers.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    blockers.PRIVATE_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "session-lifecycle-blockers.json"
+    blockers.CAPABILITY_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "capability-substrate-index.json"
+    blockers.PROMPT_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+    blockers.CODEX_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
+    blockers.CORPUS_INVENTORY = blockers.PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
+    blockers.PRESSURE_INDEX = tmp_path / "logs" / "session-lifecycle-pressure.json"
+    blockers.PROJECT_SETTINGS = tmp_path / ".claude" / "settings.json"
+    blockers.DOC_PATH = tmp_path / "docs" / "session-lifecycle-blockers.md"
+    blockers.DEFAULT_CAPABILITY_ROOTS = ()
+    blockers.worktree_debt_report = lambda root: {
+        "total": 2,
+        "debt": 1,
+        "items": [
+            {"name": "owner-blocked-root", "reason": "owner-blocker", "debt": False},
+            {"name": "dirty-root", "reason": "dirty", "debt": True},
+        ],
+    }
+
+    blockers.PROMPT_INDEX.parent.mkdir(parents=True)
+    blockers.PROMPT_INDEX.write_text(
+        json.dumps(
+            {
+                "sources": [],
+                "worktree_report": {"debt": 2, "total": 2},
+                "remote": {
+                    "enabled": True,
+                    "worktrees": {
+                        "remote_branches_missing": 2,
+                        "receipts": [
+                            {"name": "owner-blocked-root", "remote_branch": "missing"},
+                            {"name": "dirty-root", "remote_branch": "missing"},
+                        ],
+                    },
+                    "task_prs": {"counts": {}},
+                },
+                "cloud": {"enabled": True, "runtime_url_configured": True, "env_flags": {}},
+            }
+        ),
+        encoding="utf-8",
+    )
+    blockers.CODEX_INDEX.write_text(json.dumps({"session_count": 0, "families": []}), encoding="utf-8")
+    blockers.CORPUS_INVENTORY.parent.mkdir(parents=True)
+    blockers.CORPUS_INVENTORY.write_text(json.dumps({"organs": [], "materialization": {"copied": 0}}), encoding="utf-8")
+    blockers.PRESSURE_INDEX.parent.mkdir(parents=True)
+    blockers.PRESSURE_INDEX.write_text(json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8")
+    blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
+    blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
+
+    snapshot = blockers.build_snapshot()
+    paths = {item["id"]: item for item in snapshot["blockers"]}
+    blocker = paths["worktree-remote-branches-missing"]
+
+    assert blocker["details"]["remote_branches_missing"] == 1
+    assert blocker["details"]["raw_remote_branches_missing"] == 2
+    assert blocker["details"]["closed_by_live_scanner"] == ["owner-blocked-root"]
+    assert blocker["details"]["unresolved_roots"] == ["dirty-root"]
 
 
 def test_session_blockers_clears_capability_blocker_with_current_receipt(tmp_path: Path):

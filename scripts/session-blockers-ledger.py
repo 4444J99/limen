@@ -39,6 +39,14 @@ CORPUS_INVENTORY = PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
 PRESSURE_INDEX = ROOT / "logs" / "session-lifecycle-pressure.json"
 CAPABILITY_INDEX = PRIVATE_ROOT / "lifecycle" / "capability-substrate-index.json"
 CONSOLIDATION_INDEX = PRIVATE_ROOT / "lifecycle" / "consolidation-gates.json"
+REMOTE_MISSING_CLOSED_REASONS = {
+    "clean+merged+idle",
+    "documented-residue",
+    "owner-blocker",
+    "remote-merged",
+    "remote-pr-open",
+    "remote-superseded",
+}
 PROJECT_SETTINGS = ROOT / ".claude" / "settings.json"
 
 CLOUD_CREDENTIAL_FLAGS = (
@@ -349,7 +357,38 @@ def cloud_blockers(prompt: dict[str, Any], blockers: list[dict[str, Any]]) -> No
         )
 
 
-def remote_blockers(prompt: dict[str, Any], blockers: list[dict[str, Any]]) -> None:
+def unresolved_missing_remote_roots(prompt: dict[str, Any], worktree_report: dict[str, Any]) -> tuple[list[str], list[str]]:
+    worktrees = (prompt.get("remote") or {}).get("worktrees") or {}
+    raw_missing = [
+        str(receipt.get("name"))
+        for receipt in worktrees.get("receipts") or []
+        if isinstance(receipt, dict) and receipt.get("remote_branch") == "missing" and receipt.get("name")
+    ]
+    if not raw_missing:
+        count = int(worktrees.get("remote_branches_missing") or 0)
+        return ([f"unknown-{idx + 1}" for idx in range(count)], [])
+
+    by_name = {
+        str(item.get("name")): item
+        for item in worktree_report.get("items") or []
+        if isinstance(item, dict) and item.get("name")
+    }
+    if not by_name:
+        return raw_missing, []
+
+    unresolved: list[str] = []
+    closed: list[str] = []
+    for root in raw_missing:
+        item = by_name.get(root)
+        reason = str((item or {}).get("reason") or "")
+        if item and not item.get("debt") and reason in REMOTE_MISSING_CLOSED_REASONS:
+            closed.append(root)
+        else:
+            unresolved.append(root)
+    return unresolved, closed
+
+
+def remote_blockers(prompt: dict[str, Any], worktree_report: dict[str, Any], blockers: list[dict[str, Any]]) -> None:
     remote = prompt.get("remote") or {}
     if not remote.get("enabled"):
         add_blocker(
@@ -381,17 +420,26 @@ def remote_blockers(prompt: dict[str, Any], blockers: list[dict[str, Any]]) -> N
         )
 
     worktrees = remote.get("worktrees") or {}
-    missing = int(worktrees.get("remote_branches_missing") or 0)
-    if missing:
+    raw_missing = int(worktrees.get("remote_branches_missing") or 0)
+    unresolved_missing, closed_missing = unresolved_missing_remote_roots(prompt, worktree_report)
+    if unresolved_missing:
         add_blocker(
             blockers,
             blocker_id="worktree-remote-branches-missing",
             category="worktree_lifecycle",
-            evidence=f"{missing} git worktree roots did not have the same branch present on origin.",
+            evidence=(
+                f"{len(unresolved_missing)} git worktree roots still lack remote-branch preservation proof "
+                f"({raw_missing} raw missing; {len(closed_missing)} closed by live scanner receipts)."
+            ),
             owner="worktree lifecycle",
             route="Preserve each root by branch, PR, owner blocker, or documented non-source residue before cleanup.",
             source="prompt-lifecycle-index",
-            details={"remote_branches_missing": missing},
+            details={
+                "remote_branches_missing": len(unresolved_missing),
+                "raw_remote_branches_missing": raw_missing,
+                "closed_by_live_scanner": closed_missing,
+                "unresolved_roots": unresolved_missing,
+            },
         )
 
 
@@ -693,7 +741,7 @@ def build_snapshot() -> dict[str, Any]:
 
     codex_auth_blocker(codex, blockers)
     cloud_blockers(prompt, blockers)
-    remote_blockers(prompt, blockers)
+    remote_blockers(prompt, worktree_report, blockers)
     task_and_worktree_blockers(prompt, worktree_report, blockers)
     corpus_owner_blockers(corpus, blockers)
     hook_pressure = hook_and_pressure_blockers(prompt, worktree_report, blockers)

@@ -1,8 +1,8 @@
 # Conductor Tranche
 
-Generated: `2026-06-28T16:24:07+00:00`
+Generated: `2026-06-28T16:29:39+00:00`
 
-Summary: `tranche-worktree-remote-branches-missing` -> `worktree-remote-branches-missing` (`blocker`); stop before: Stop before deletion, force-push, merge, or owner-repo source edits unless a narrower owner packet names the repo, branch, predicate, and receipt.
+Summary: `tranche-github-app-limen-bot-not-wired` -> `github-app-limen-bot-not-wired` (`human-gate`); stop before: Stop before creating/installing the GitHub App, calling `scripts/set-credential.sh`, writing any PEM/key material, or changing GitHub secrets without explicit human approval.
 
 ## Cadence Contract
 
@@ -15,34 +15,33 @@ Summary: `tranche-worktree-remote-branches-missing` -> `worktree-remote-branches
 
 | Field | Value |
 |---|---|
-| Packet | `tranche-worktree-remote-branches-missing` |
-| Selected path | `worktree-remote-branches-missing` |
+| Packet | `tranche-github-app-limen-bot-not-wired` |
+| Selected path | `github-app-limen-bot-not-wired` |
 | Kind | `blocker` |
-| Lane | `blocker` |
-| Score | `70` |
-| Agent fit | `codex` |
-| Attack index generated | `2026-06-28T16:23:10+00:00` |
-| Ranked paths read | `31` |
-| Skipped family/parked/observe/auth paths | `worktree_lifecycle`, `session_lifecycle`, `github_review`, `agent_coordination`, `technical_debt_ci`, `local-lifecycle-disk-pressure`, `convergence_corpus`, `uncategorized`, `cloud-credential-handles-unconfigured`, `credential-codex-auth-sessions`, `auth_credentials` |
+| Lane | `human-gate` |
+| Score | `58` |
+| Agent fit | `human/codex-prep` |
+| Attack index generated | `2026-06-28T16:29:29+00:00` |
+| Ranked paths read | `30` |
+| Skipped family/parked/observe/auth paths | `session_lifecycle`, `worktree_lifecycle`, `github_review`, `agent_coordination`, `technical_debt_ci`, `local-lifecycle-disk-pressure`, `convergence_corpus`, `uncategorized`, `cloud-credential-handles-unconfigured`, `credential-codex-auth-sessions`, `auth_credentials` |
 
 ## Work Packet
 
-Purpose: Resolve the remaining worktree lifecycle blocker by converting affected roots into preservation proof, owner blockers, remote/default proof, or documented non-source residue.
+Purpose: Clearly block limen[bot] until the GitHub App exists, is installed on `organvm`, and local/CI credentials are hydrated without exposing secret values.
 
-Repo/worktree: `organvm/limen` conductor checkout plus read-only inspection of `~/Workspace/.limen-worktrees`.
+Repo/worktree: `organvm/limen` conductor checkout only; GitHub App state is read-only.
 
 Allowed files:
 
-- `cli/src/limen/worktree_debt.py`
-- `cli/tests/test_worktree_debt.py`
-- `scripts/worktree-debt.py`
-- `scripts/*lifecycle*.py`
-- `docs/worktree-lifecycle-ledger.md`
-- `docs/worktree-preservation-receipts.json`
+- `scripts/consolidation-gates.py`
+- `scripts/gh-app-token.sh`
+- `docs/github-app-architecture.md`
+- `docs/consolidation/SCOPE-AND-APP.md`
+- `docs/consolidation/GATES.md`
 - `docs/session-lifecycle-blockers.md`
 - `docs/session-attack-paths.md`
 - `docs/conductor-tranche.md`
-- `.limen-private/session-corpus/lifecycle/**`
+- `.limen-private/session-corpus/lifecycle/consolidation-gates.json`
 
 Forbidden:
 
@@ -52,21 +51,21 @@ Forbidden:
 - `irreversible GitHub transfer/rename/App install/credential actions`
 - `task-board mutation unless the direct request explicitly requires it`
 
-Stop condition: Stop before deletion, force-push, merge, or owner-repo source edits unless a narrower owner packet names the repo, branch, predicate, and receipt.
+Stop condition: Stop before creating/installing the GitHub App, calling `scripts/set-credential.sh`, writing any PEM/key material, or changing GitHub secrets without explicit human approval.
 
-Receipt: docs/worktree-lifecycle-ledger.md and docs/worktree-preservation-receipts.json.
+Receipt: docs/consolidation/GATES.md and docs/session-lifecycle-blockers.md record the blocked App identity.
 
 Verification:
 
-- `python3 scripts/worktree-debt.py --json`
-- `python3 scripts/session-lifecycle-pressure.py --write`
+- `python3 scripts/consolidation-gates.py --write`
+- `bash scripts/gh-app-token.sh --which`
 - `python3 scripts/session-blockers-ledger.py --write`
 - `python3 scripts/session-attack-paths.py --write`
 - `python3 scripts/conductor-tranche.py --write`
 
 ## Source Next Action
 
-Preserve each root by branch, PR, owner blocker, or documented non-source residue before cleanup.
+Create/install the org GitHub App and hydrate credentials via `scripts/set-credential.sh`; verify `bash scripts/gh-app-token.sh --which` reports the App path.
 
 ## Refresh
 
