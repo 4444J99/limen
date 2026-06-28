@@ -1,6 +1,6 @@
 # Session Attack Paths
 
-Generated: `2026-06-28T15:24:48+00:00`
+Generated: `2026-06-28T15:34:57+00:00`
 
 ## Canonical Decision
 
@@ -13,7 +13,7 @@ Generated: `2026-06-28T15:24:48+00:00`
 
 - Redacted prompt corpus: `9489` files, `92795` prompt-like events.
 - Codex classified sessions: `887`.
-- Worktree debt roots: `9`.
+- Worktree debt roots: `8`.
 - Worktree preservation receipts: `6`.
 - Parked blockers: `8`.
 - Local lifecycle footprint: `5.3 GiB`.
@@ -38,20 +38,20 @@ Generated: `2026-06-28T15:24:48+00:00`
 | 5 | `worktree-remote-branches-missing` | `blocker` | `blocker` | 70 | category `worktree_lifecycle`; status `parked` | codex | Preserve each root by branch, PR, owner blocker, or documented non-source residue before cleanup. |
 | 6 | `gen-organvm-universal-mail--automation-test-coverage-0625-151e` | `worktree` | `owner-blocker` | 64 | reason `dirty`; prompts 100; remote `missing`; open PRs 0; receipt `private_patch_preserved` | codex first; opencode/jules after packetization | Do not PR or delegate this deletion patch. The branch has no unique commits, no remote branch, no PR, no sparse-checkout configuration, and 167 tracked files deleted from disk while HEAD is an ancestor of origin/main. Treat as stale broken checkout/deletion artifact; reclaim only after operator acceptance, and recreate from origin/main if owner work is needed. |
 | 7 | `github_review` | `family` | `family` | 61 | sessions 158; states CLOSED 145, STALLED 13; prompts 615 | opencode/jules | Review PR/issue receipts only after owner repo, predicate, and blocker are explicit. |
-| 8 | `cifix-organvm-i-theoria-hierarchia-mundi-3145` | `worktree` | `remote-superseded` | 50 | reason `dirty`; prompts 71; remote `missing`; open PRs 0; receipt `superseded_on_origin_main` | codex first; opencode/jules after packetization | No PR needed; local dirty smoke-test/root-fix draft is superseded by origin/main, including tests/test_smoke.py plus broader loader and CLI coverage. Reclaim only after normal operator acceptance. |
-| 9 | `gh-organvm-object-lessons-19-605a` | `worktree` | `remote-proof` | 49 | reason `clean+merged+idle`; prompts 73; remote `present`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
-| 10 | `resolve-a-organvm-the-invisible-ledger-4-f657` | `worktree` | `remote-proof` | 48 | reason `clean+merged+idle`; prompts 5; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
-| 11 | `rev-organvm-public-record-data-scrapper-revenue-readiness-0623-023f` | `worktree` | `remote-close` | 47 | reason `not-merged-to-default`; prompts 79; remote `present`; open PRs 1 | codex first; opencode/jules after packetization | Review PR state/checks, then merge or name supersession before local reclaim. |
-| 12 | `agent_coordination` | `family` | `family` | 46 | sessions 40; states CLOSED 30, STALLED 10; prompts 133 | codex | Packetize bounded work; do not dispatch broad sprawl prompts. |
-| 13 | `owner-state-dirty-knowledge-corpus` | `blocker` | `blocker` | 42 | category `owner_state`; status `parked` | codex | Preserve in that owner repo before treating corpus substrate as clean. |
-| 14 | `owner-state-dirty-session-meta` | `blocker` | `blocker` | 42 | category `owner_state`; status `parked` | codex | Preserve in that owner repo before treating corpus substrate as clean. |
-| 15 | `discover-organvm-kerygma-profiles-6c74` | `worktree` | `remote-close` | 42 | reason `not-merged-to-default`; prompts 24; remote `present`; open PRs 1 | codex first; opencode/jules after packetization | Review PR state/checks, then merge or name supersession before local reclaim. |
-| 16 | `technical_debt_ci` | `family` | `family` | 40 | sessions 36; states CLOSED 33, STALLED 3; prompts 128 | opencode/jules | Run narrow predicates and preserve failures in owner repos. |
-| 17 | `convergence_corpus` | `family` | `family` | 32 | sessions 10; states CLOSED 10; prompts 37 | codex | Promote durable atoms through session-meta and knowledge-corpus. |
-| 18 | `rev-organvm-the-invisible-ledger-revenue-readiness-0623-bd8b` | `worktree` | `documented-residue` | 24 | reason `documented-residue`; prompts 94; remote `not-a-git-dir`; open PRs 0; receipt `cache_only_residue` | codex first; opencode/jules after packetization | No unique source to preserve; directory contains only Vite dependency-cache metadata. Reclaim only after normal operator acceptance. |
-| 19 | `cifix-organvm-i-theoria-conversation-corpus-engine-f02e` | `worktree` | `remote-close` | 23 | reason `unpushed-commits`; prompts 79; remote `present`; open PRs 1 | codex first; opencode/jules after packetization | Review PR state/checks, then merge or name supersession before local reclaim. |
-| 20 | `cloud-runtime-endpoint-unconfigured` | `blocker` | `blocker` | 18 | category `cloud_runtime`; status `parked` | codex | Keep separate from session intake; configure/probe runtime only in a deploy/runtime task. |
-| 21 | `uncategorized` | `family` | `family` | 18 | sessions 2; states STALLED 2; prompts 10 | codex | Inspect privately and add classifier/owner route. |
+| 8 | `gh-organvm-object-lessons-19-605a` | `worktree` | `remote-proof` | 49 | reason `clean+merged+idle`; prompts 73; remote `present`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 9 | `resolve-a-organvm-the-invisible-ledger-4-f657` | `worktree` | `remote-proof` | 48 | reason `clean+merged+idle`; prompts 5; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 10 | `rev-organvm-public-record-data-scrapper-revenue-readiness-0623-023f` | `worktree` | `remote-close` | 47 | reason `not-merged-to-default`; prompts 79; remote `present`; open PRs 1 | codex first; opencode/jules after packetization | Review PR state/checks, then merge or name supersession before local reclaim. |
+| 11 | `agent_coordination` | `family` | `family` | 46 | sessions 40; states CLOSED 30, STALLED 10; prompts 133 | codex | Packetize bounded work; do not dispatch broad sprawl prompts. |
+| 12 | `owner-state-dirty-knowledge-corpus` | `blocker` | `blocker` | 42 | category `owner_state`; status `parked` | codex | Preserve in that owner repo before treating corpus substrate as clean. |
+| 13 | `owner-state-dirty-session-meta` | `blocker` | `blocker` | 42 | category `owner_state`; status `parked` | codex | Preserve in that owner repo before treating corpus substrate as clean. |
+| 14 | `discover-organvm-kerygma-profiles-6c74` | `worktree` | `remote-close` | 42 | reason `not-merged-to-default`; prompts 24; remote `present`; open PRs 1 | codex first; opencode/jules after packetization | Review PR state/checks, then merge or name supersession before local reclaim. |
+| 15 | `technical_debt_ci` | `family` | `family` | 40 | sessions 36; states CLOSED 33, STALLED 3; prompts 128 | opencode/jules | Run narrow predicates and preserve failures in owner repos. |
+| 16 | `convergence_corpus` | `family` | `family` | 32 | sessions 10; states CLOSED 10; prompts 37 | codex | Promote durable atoms through session-meta and knowledge-corpus. |
+| 17 | `rev-organvm-the-invisible-ledger-revenue-readiness-0623-bd8b` | `worktree` | `documented-residue` | 24 | reason `documented-residue`; prompts 94; remote `not-a-git-dir`; open PRs 0; receipt `cache_only_residue` | codex first; opencode/jules after packetization | No unique source to preserve; directory contains only Vite dependency-cache metadata. Reclaim only after normal operator acceptance. |
+| 18 | `cifix-organvm-i-theoria-conversation-corpus-engine-f02e` | `worktree` | `remote-close` | 23 | reason `unpushed-commits`; prompts 79; remote `present`; open PRs 1 | codex first; opencode/jules after packetization | Review PR state/checks, then merge or name supersession before local reclaim. |
+| 19 | `cloud-runtime-endpoint-unconfigured` | `blocker` | `blocker` | 18 | category `cloud_runtime`; status `parked` | codex | Keep separate from session intake; configure/probe runtime only in a deploy/runtime task. |
+| 20 | `uncategorized` | `family` | `family` | 18 | sessions 2; states STALLED 2; prompts 10 | codex | Inspect privately and add classifier/owner route. |
+| 21 | `cifix-organvm-i-theoria-hierarchia-mundi-3145` | `worktree` | `remote-superseded` | 18 | reason `remote-superseded`; prompts 71; remote `missing`; open PRs 0; receipt `superseded_on_origin_main` | codex first; opencode/jules after packetization | No PR needed; local dirty smoke-test/root-fix draft is superseded by origin/main, including tests/test_smoke.py plus broader loader and CLI coverage. Reclaim only after normal operator acceptance. |
 | 22 | `bld-mirror-mirror-harden-350f` | `worktree` | `remote-close` | 16 | reason `unpushed-commits`; prompts 5; remote `present`; open PRs 1 | codex first; opencode/jules after packetization | Review PR state/checks, then merge or name supersession before local reclaim. |
 | 23 | `bld-my--father-mother-harden-44b2` | `worktree` | `remote-close` | 16 | reason `unpushed-commits`; prompts 5; remote `present`; open PRs 1 | codex first; opencode/jules after packetization | Review PR state/checks, then merge or name supersession before local reclaim. |
 | 24 | `bld-promptscope-next-rev-3fde` | `worktree` | `remote-close` | 16 | reason `unpushed-commits`; prompts 4; remote `present`; open PRs 1 | codex first; opencode/jules after packetization | Review PR state/checks, then merge or name supersession before local reclaim. |

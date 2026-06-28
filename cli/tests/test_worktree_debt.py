@@ -49,6 +49,44 @@ def test_documented_non_source_residue_is_visible_but_not_debt(tmp_path: Path, m
     assert report["debt"] == 1
 
 
+def test_remote_superseded_receipt_is_visible_but_not_debt(tmp_path: Path, monkeypatch):
+    worktrees = tmp_path / ".limen-worktrees"
+    root = worktrees / "superseded-root"
+    root.mkdir(parents=True)
+    subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+    subprocess.run(["git", "config", "user.email", "test@example.invalid"], cwd=root, check=True)
+    subprocess.run(["git", "config", "user.name", "Test User"], cwd=root, check=True)
+    (root / "README.md").write_text("before\n", encoding="utf-8")
+    subprocess.run(["git", "add", "README.md"], cwd=root, check=True)
+    subprocess.run(["git", "commit", "-qm", "init"], cwd=root, check=True)
+    (root / "README.md").write_text("dirty but superseded upstream\n", encoding="utf-8")
+    receipts = tmp_path / "docs" / "worktree-preservation-receipts.json"
+    receipts.parent.mkdir()
+    receipts.write_text(
+        json.dumps(
+            {
+                "receipts": [
+                    {
+                        "root": "superseded-root",
+                        "lane": "remote-superseded",
+                        "status": "superseded_on_origin_main",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(worktrees))
+    monkeypatch.setenv("LIMEN_RECLAIM_CLAUDE_WT", "0")
+
+    report = worktree_debt_report(tmp_path)
+
+    assert report["items"][0]["name"] == "superseded-root"
+    assert report["items"][0]["reason"] == "remote-superseded"
+    assert report["items"][0]["debt"] is False
+    assert report["debt"] == 0
+
+
 def test_clean_git_root_still_classifies_without_receipt(tmp_path: Path, monkeypatch):
     worktrees = tmp_path / ".limen-worktrees"
     root = worktrees / "git-root"

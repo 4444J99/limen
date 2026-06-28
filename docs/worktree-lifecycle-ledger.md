@@ -22,15 +22,18 @@ The unique work remains preserved on the remote branches and open draft PRs.
 
 2026-06-28 follow-up scan:
 
-- `python3 scripts/worktree-debt.py --json`: 14 roots, 9 debt-bearing roots, cap 12.
-- Current class mix: 2 dirty, 5 unpushed or remote-mismatched commits, 3 documented residues,
-  2 not merged to default, and 2 clean+merged idle roots.
+- `python3 scripts/worktree-debt.py --json`: 14 roots, 8 debt-bearing roots, cap 12.
+- Current class mix: 1 dirty root, 5 unpushed or remote-mismatched commits,
+  3 documented residues, 1 remote-superseded root, 2 not merged to default,
+  and 2 clean+merged idle roots.
 - No local reclaim, deletion, merge, force-push, or owner-repo source mutation was performed in
   this follow-up. This receipt only updates the owner ledger so the active conductor tranche
   starts from live pressure instead of the older 8-debt summary. The Sovereign generated-results
   root was reclassified as documented non-source residue after confirming the checkout is at
   `origin/main`, the only local deltas are 11 tracked `structure-tests/results/*.json`
-  snapshots, and the repo README describes the project as a parked docs-only shell.
+  snapshots, and the repo README describes the project as a parked docs-only shell. The
+  Hierarchia root now reports as `remote-superseded` because its dirty import-order draft
+  and untracked smoke test are covered by current `origin/main` tests and cleanup.
 - The active conductor packet is `docs/conductor-tranche.md`:
   `tranche-local-lifecycle-disk-pressure`. Its stop condition forbids reclaim/deletion,
   broad generated build-out, GitHub merge/close, and owner repo mutation without a fresh owner
@@ -44,7 +47,7 @@ Current live roots by scanner reason:
 | `bld-my--father-mother-harden-44b2` | `unpushed-commits` | yes |
 | `bld-promptscope-next-rev-3fde` | `unpushed-commits` | yes |
 | `cifix-organvm-i-theoria-conversation-corpus-engine-f02e` | `unpushed-commits` | yes |
-| `cifix-organvm-i-theoria-hierarchia-mundi-3145` | `dirty` | yes |
+| `cifix-organvm-i-theoria-hierarchia-mundi-3145` | `remote-superseded` | no |
 | `discover-organvm-kerygma-profiles-6c74` | `not-merged-to-default` | yes |
 | `gen-organvm-i-theoria-sovereign--ground-ci-green-0620-0f38` | `documented-residue` | no |
 | `gen-organvm-the-invisible-ledger-ci-green-0625-e3c2` | `documented-residue` | no |
@@ -65,7 +68,7 @@ Evidence commands:
 - per-root `git status --porcelain`, `git log --oneline -5`, `git cherry <default> HEAD`.
 - non-Git residue inspection with `find` and direct reads of cache metadata files.
 
-Current classes:
+Older cleanup-pass classes retained for lineage:
 
 - 2 dirty working trees counted as debt.
 - 3 local unpushed or remote-mismatched commit roots.
@@ -93,7 +96,7 @@ That is not enough for a fully automatic lifecycle.
 | `bld-universal-mail--automation-readme-9031` | `organvm/universal-mail--automation` | local checkout removed; draft PR open | branch `limen/bld-universal-mail--automation-readme-9031`; likely README task; no exact task slug in board | clean before removal; local `HEAD` matched fetched PR head `29f6b4b`; PR [#108](https://github.com/organvm/universal-mail--automation/pull/108); README marker check passed; `python3 cli.py -h` passed; `python3 -m py_compile cli.py api/app.py api/plans.py mcp_server/server.py` passed; `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -q tests/test_config.py tests/test_models.py tests/test_rules.py tests/test_web.py` passed 158 tests | remote PR preserved; no local debt root remains | Review README modernization and merge, or supersede by a named successor that preserves this content. Recreate a local worktree from the branch only if needed. |
 | `bld2-a-i-chat--exporter-integration-tests-a00b` | `organvm/a-i-chat--exporter` | local checkout removed; draft PR open | branch `limen/bld2-a-i-chat--exporter-integration-tests-a00b`; likely integration-tests task; no exact task slug in board | clean before removal; local `HEAD` matched fetched PR head `d0d633c`; PR [#96](https://github.com/organvm/a-i-chat--exporter/pull/96); commits `6d73e1a`, `d0d633c`; `pnpm test` passed; `pnpm lint` passed with warnings; branch was 32 behind `origin/master` at preservation time | remote PR preserved; no local debt root remains | Review freshness/CI, then merge or name a successor PR that absorbed both commits. Recreate a local worktree from the branch only if needed. |
 | `cifix-organvm-i-theoria-conversation-corpus-engine-f02e` | `organvm/conversation-corpus-engine` | draft PR open | branch `limen/cifix-organvm-i-theoria-conversation-corpus-engine-f02e`; likely CI-fix task; no exact task slug in board | clean; PR [#60](https://github.com/organvm/conversation-corpus-engine/pull/60); commit `0f96c88`; rebased onto `origin/main` `bebe0d4`; local checks passed: `python3 -m pip install -e ".[dev]"`, `python3 -m pytest tests/ -v --tb=short` (351 passed), `python3 -m ruff check src/ tests/`, `python3 -m ruff format --check src/ tests/`, schema import command; 2026-06-28 live receipt shows GitHub CI and CodeQL all passed with merge state `CLEAN` | merge-ready draft PR preserved; lifecycle remains open until merged or explicitly superseded | Review and merge PR #60, or supersede by named branch/PR. |
-| `cifix-organvm-i-theoria-hierarchia-mundi-3145` | `organvm/hierarchia-mundi` | dirty local checkout; superseded upstream | branch `limen/cifix-organvm-i-theoria-hierarchia-mundi-3145`; likely CI/test task; no exact task slug in board | HEAD `677df2b`; dirty smoke-test/root-fix draft; `origin/main` at `9f26d55` already contains `tests/test_smoke.py` plus broader `tests/test_loader.py` and `tests/test_cli.py`; upstream files also include the Ruff import/unused-import cleanup this root was carrying | remote/default supersession receipt in `docs/worktree-preservation-receipts.json`; no PR needed | Reclaim only after normal operator acceptance; do not dispatch this stale root as unique work. |
+| `cifix-organvm-i-theoria-hierarchia-mundi-3145` | `organvm/hierarchia-mundi` | remote-superseded dirty local checkout | branch `limen/cifix-organvm-i-theoria-hierarchia-mundi-3145`; likely CI/test task; no exact task slug in board | HEAD `677df2b`; local draft is behind `origin/main` by 6; dirty tracked files only reorder imports or remove unused imports; untracked `tests/test_smoke.py` is covered by current `origin/main`, which also includes broader `tests/test_loader.py` and `tests/test_cli.py`; scanner reason is now `remote-superseded` via `docs/worktree-preservation-receipts.json` | remote/default supersession receipt; no PR needed; not lifecycle debt | Reclaim only after normal operator acceptance; do not dispatch this stale root as unique work. |
 | `discover-organvm-kerygma-profiles-6c74` | `organvm/kerygma-profiles` | draft PR open | branch `limen/discover-organvm-kerygma-profiles-6c74`; discovery task; no exact task slug in board | clean; PR [#8](https://github.com/organvm/kerygma-profiles/pull/8); commits `a8a029f`, `d7fd19e`; generated files remain on disk but are ignored; `python3 -m pytest` passed 24 tests; `python3 -m ruff check .` passed; 2026-06-28 live CI `test` check passed and merge state is `CLEAN` | merge-ready draft PR preserved; lifecycle remains open until merged or explicitly superseded | Review and merge the generated-artifact hygiene PR, or supersede by a named successor. |
 | `exporter-mp` | `organvm/a-i-chat--exporter` | local checkout removed; draft PR open | branch `limen/exporter-multiprovider`; explicit multiprovider branch; no exact task slug in board | clean before removal; local `HEAD` matched fetched PR head `dd73cce`; PR [#95](https://github.com/organvm/a-i-chat--exporter/pull/95); commits `5c3298b`, `6c88427`, `dd73cce`; `pnpm test` passed; `pnpm lint` passed with warnings after lint-setup compatibility fix | remote PR preserved; no local debt root remains | Review provider behavior and CI, then merge or supersede by named branch/PR. Recreate a local worktree from the branch only if needed. |
 | `gen-organvm-i-theoria-sovereign--ground-ci-green-0620-0f38` | `organvm/sovereign--ground` | documented generated-results residue; private patch preserved | branch `limen/gen-organvm-i-theoria-sovereign--ground-ci-green-0620-0f38`; generated CI-green task; no exact task slug in board | HEAD `80e7617`; checkout is at `origin/main`; only local deltas are 11 tracked `structure-tests/results/ex01` through `ex11` JSON snapshots; exact generated-results patch preserved in `docs/worktree-preservation-receipts.json` with SHA-256 `92dc514490c7bbf3c6a14eb3889656563d070a23af55af3d64f2a16999d63bc9`; repo README says no live URL, installable package, runnable release, or documented execution path | documented non-source residue; do not PR or delegate this patch | Reclaim only after operator acceptance. If Sovereign becomes active again, regenerate current structure-test snapshots from a fresh owner packet rather than using this stale generated-results patch. |

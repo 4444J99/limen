@@ -22,6 +22,8 @@ DOCUMENTED_RESIDUE_STATUSES = {
     "documented_non_source_residue",
     "empty_generated_residue",
 }
+REMOTE_SUPERSEDED_LANES = {"remote-superseded"}
+REMOTE_SUPERSEDED_STATUSES = {"superseded_on_origin_main"}
 
 
 class WorktreeDebtItem(TypedDict):
@@ -114,6 +116,15 @@ def _is_documented_residue(path: Path, preservation_receipts: dict[str, dict[str
     )
 
 
+def _is_remote_superseded(path: Path, preservation_receipts: dict[str, dict[str, Any]]) -> bool:
+    receipt = preservation_receipts.get(path.name)
+    if not receipt:
+        return False
+    lane = str(receipt.get("lane") or "")
+    status = str(receipt.get("status") or "")
+    return lane in REMOTE_SUPERSEDED_LANES or status in REMOTE_SUPERSEDED_STATUSES
+
+
 def _classify(
     path: Path,
     now: float,
@@ -129,6 +140,8 @@ def _classify(
         return "self/live-checkout"
     if _is_documented_residue(path, preservation_receipts):
         return "documented-residue"
+    if _is_remote_superseded(path, preservation_receipts):
+        return "remote-superseded"
     if _git(["rev-parse", "--is-inside-work-tree"], path).returncode != 0:
         return "not-a-git-dir"
     age_h = (now - path.stat().st_mtime) / 3600.0
