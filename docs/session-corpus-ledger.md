@@ -1,6 +1,6 @@
 # Session Corpus Ledger
 
-Generated: `2026-06-28T19:21:01+00:00`
+Generated: `2026-06-28T19:27:25+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -19,9 +19,9 @@ Total seen: `9833` files, `2.2 GiB`.
 | Source | Root | Files | Size | Newest |
 |---|---:|---:|---:|---|
 | `claude-projects` | `~/.claude/projects` | 4925 | 1.4 GiB | `2026-06-28T17:13:04+00:00` |
-| `codex-sessions` | `~/.codex/sessions` | 923 | 773.5 MiB | `2026-06-28T19:20:54+00:00` |
+| `codex-sessions` | `~/.codex/sessions` | 923 | 773.9 MiB | `2026-06-28T19:27:21+00:00` |
 | `claude-file-history` | `~/.claude/file-history` | 3519 | 42.2 MiB | `2026-06-27T00:26:28+00:00` |
-| `codex-goals-state` | `~/.codex` | 6 | 11.9 MiB | `2026-06-28T19:20:54+00:00` |
+| `codex-goals-state` | `~/.codex` | 6 | 12.1 MiB | `2026-06-28T19:27:21+00:00` |
 | `claude-plans` | `~/.claude/plans` | 34 | 289.3 KiB | `2026-06-25T03:22:45+00:00` |
 | `codex-history` | `~/.codex` | 1 | 231.9 KiB | `2026-06-28T18:55:55+00:00` |
 | `claude-usage-session-meta` | `~/.claude/usage-data/session-meta` | 197 | 221.4 KiB | `2026-06-23T19:06:40+00:00` |
@@ -56,8 +56,8 @@ Total seen: `9833` files, `2.2 GiB`.
 - Private root: `~/Workspace/limen/.limen-private/session-corpus`.
 - Private inventory: `~/Workspace/limen/.limen-private/session-corpus/inventory/session-corpus-ledger.json`.
 - `.limen-private/` is ignored by Git; it is the local raw/private landing zone.
-- Raw object materialization was not requested on this run.
-- Private object store currently holds `7410` unique objects, `3.1 GiB`.
+- Materialized objects this run: copied `117`, already present `9716`, bytes copied `79.4 MiB`.
+- Private object store now holds `7527` unique objects, `3.2 GiB`.
 - Private screenshot evidence: `14` PNG artifacts, `22.9 MiB`, newest `2026-06-27T13:41:25+00:00`.
 - Screenshot batches: `2026-06-27` 14.
 
