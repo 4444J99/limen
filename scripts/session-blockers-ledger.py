@@ -505,6 +505,7 @@ def hook_and_pressure_blockers(
     worktree_remote = remote.get("worktrees") or {}
     missing_remote = int(worktree_remote.get("remote_branches_missing") or 0)
     debt = int(worktree_report.get("debt") or 0)
+    debt_cap = int(os.environ.get("LIMEN_WORKTREE_DEBT_MAX", "12"))
 
     if total_bytes:
         add_blocker(
@@ -523,6 +524,7 @@ def hook_and_pressure_blockers(
                 "worktree_bytes": worktree_bytes,
                 "private_corpus_bytes": private_bytes,
                 "worktree_debt": debt,
+                "worktree_debt_cap": debt_cap,
                 "remote_branches_missing": missing_remote,
                 "hook_wired": hook_wired,
             },

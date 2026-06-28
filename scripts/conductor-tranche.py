@@ -3,7 +3,7 @@
 
 This is the small bridge between "ranked attack paths" and an actual
 one-to-two-hour direct-session work packet. It reads redacted ranked path
-evidence, skips parked/auth-only lanes, and writes a public-safe packet with:
+evidence, skips parked/family/auth-only lanes, and writes a public-safe packet with:
 
 * purpose;
 * repo/worktree scope;
@@ -35,7 +35,7 @@ DOC_PATH = ROOT / "docs" / "conductor-tranche.md"
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "conductor-tranche.json"
 PORTVS_PATH = HOME / "Workspace" / "4444J99" / "portvs"
 
-SKIP_LANES = {"parked", "observe"}
+SKIP_LANES = {"family", "observe", "parked"}
 SKIP_CATEGORIES = {"auth_credentials"}
 
 
@@ -110,6 +110,43 @@ def worktree_packet(path: dict[str, Any]) -> dict[str, Any]:
             "python3 scripts/conductor-tranche.py --write",
         ],
         "receipt": "Update the owning worktree lifecycle receipt and regenerate docs/conductor-tranche.md.",
+    }
+
+
+def worktree_lifecycle_packet(path: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "purpose": (
+            "Resolve the remaining worktree lifecycle blocker by converting debt roots into "
+            "preservation proof, owner blockers, remote/default proof, or documented non-source residue."
+        ),
+        "repo_worktree": (
+            "`organvm/limen` conductor checkout plus read-only inspection of "
+            "`~/Workspace/.limen-worktrees`."
+        ),
+        "allowed_files": [
+            "cli/src/limen/worktree_debt.py",
+            "cli/tests/test_worktree_debt.py",
+            "scripts/worktree-debt.py",
+            "scripts/*lifecycle*.py",
+            "docs/worktree-lifecycle-ledger.md",
+            "docs/worktree-preservation-receipts.json",
+            "docs/session-lifecycle-blockers.md",
+            "docs/session-attack-paths.md",
+            "docs/conductor-tranche.md",
+            ".limen-private/session-corpus/lifecycle/**",
+        ],
+        "stop_condition": (
+            "Stop before deletion, force-push, merge, or owner-repo source edits unless a narrower "
+            "owner packet names the repo, branch, predicate, and receipt."
+        ),
+        "verification": [
+            "python3 scripts/worktree-debt.py --json",
+            "python3 scripts/session-lifecycle-pressure.py --write",
+            "python3 scripts/session-blockers-ledger.py --write",
+            "python3 scripts/session-attack-paths.py --write",
+            "python3 scripts/conductor-tranche.py --write",
+        ],
+        "receipt": "docs/worktree-lifecycle-ledger.md and docs/worktree-preservation-receipts.json.",
     }
 
 
@@ -307,7 +344,9 @@ def packet_for_path(path: dict[str, Any] | None) -> dict[str, Any]:
     lane = str(path.get("lane") or "")
     if category == "local_lean" or str(path.get("id")) == "local-lifecycle-disk-pressure":
         return local_lean_packet(path)
-    if kind == "worktree" or category == "worktree_lifecycle":
+    if category == "worktree_lifecycle":
+        return worktree_lifecycle_packet(path)
+    if kind == "worktree":
         return worktree_packet(path)
     if category == "github_consolidation":
         return consolidation_packet(path)
@@ -400,7 +439,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         f"| Agent fit | `{selected.get('agent_fit', 'n/a')}` |",
         f"| Attack index generated | `{inputs.get('generated_at') or 'unknown'}` |",
         f"| Ranked paths read | `{inputs.get('ranked_paths', 0)}` |",
-        f"| Skipped parked/observe/auth paths | {skipped} |",
+        f"| Skipped family/parked/observe/auth paths | {skipped} |",
         "",
         "## Work Packet",
         "",

@@ -1,8 +1,8 @@
 # Conductor Tranche
 
-Generated: `2026-06-28T16:10:59+00:00`
+Generated: `2026-06-28T16:19:24+00:00`
 
-Summary: `tranche-local-lifecycle-disk-pressure` -> `local-lifecycle-disk-pressure` (`drain`); stop before: Stop before local reclaim/deletion, broad generated build-out, GitHub merge/close, or any owner repo mutation not covered by a fresh owner receipt.
+Summary: `tranche-worktree-lifecycle-debt` -> `worktree-lifecycle-debt` (`blocker`); stop before: Stop before deletion, force-push, merge, or owner-repo source edits unless a narrower owner packet names the repo, branch, predicate, and receipt.
 
 ## Cadence Contract
 
@@ -15,26 +15,28 @@ Summary: `tranche-local-lifecycle-disk-pressure` -> `local-lifecycle-disk-pressu
 
 | Field | Value |
 |---|---|
-| Packet | `tranche-local-lifecycle-disk-pressure` |
-| Selected path | `local-lifecycle-disk-pressure` |
+| Packet | `tranche-worktree-lifecycle-debt` |
+| Selected path | `worktree-lifecycle-debt` |
 | Kind | `blocker` |
-| Lane | `drain` |
-| Score | `74` |
+| Lane | `blocker` |
+| Score | `70` |
 | Agent fit | `codex` |
-| Attack index generated | `2026-06-28T16:10:52+00:00` |
-| Ranked paths read | `33` |
-| Skipped parked/observe/auth paths | `gen-organvm-session-meta-simplify-0628-e73d`, `cloud-credential-handles-unconfigured`, `credential-codex-auth-sessions`, `auth_credentials` |
+| Attack index generated | `2026-06-28T16:18:51+00:00` |
+| Ranked paths read | `32` |
+| Skipped family/parked/observe/auth paths | `worktree_lifecycle`, `session_lifecycle`, `github_review`, `agent_coordination`, `technical_debt_ci`, `local-lifecycle-disk-pressure`, `convergence_corpus`, `uncategorized`, `cloud-credential-handles-unconfigured`, `credential-codex-auth-sessions`, `auth_credentials` |
 
 ## Work Packet
 
-Purpose: Drive local lifecycle pressure down by converting the highest-risk roots into owner receipts, preservation proof, or explicit human-gated reclaim packets.
+Purpose: Resolve the remaining worktree lifecycle blocker by converting debt roots into preservation proof, owner blockers, remote/default proof, or documented non-source residue.
 
 Repo/worktree: `organvm/limen` conductor checkout plus read-only inspection of `~/Workspace/.limen-worktrees`.
 
 Allowed files:
 
-- `scripts/*lifecycle*.py`
+- `cli/src/limen/worktree_debt.py`
+- `cli/tests/test_worktree_debt.py`
 - `scripts/worktree-debt.py`
+- `scripts/*lifecycle*.py`
 - `docs/worktree-lifecycle-ledger.md`
 - `docs/worktree-preservation-receipts.json`
 - `docs/session-lifecycle-blockers.md`
@@ -50,9 +52,9 @@ Forbidden:
 - `irreversible GitHub transfer/rename/App install/credential actions`
 - `task-board mutation unless the direct request explicitly requires it`
 
-Stop condition: Stop before local reclaim/deletion, broad generated build-out, GitHub merge/close, or any owner repo mutation not covered by a fresh owner receipt.
+Stop condition: Stop before deletion, force-push, merge, or owner-repo source edits unless a narrower owner packet names the repo, branch, predicate, and receipt.
 
-Receipt: docs/worktree-lifecycle-ledger.md or docs/worktree-preservation-receipts.json for owner state; docs/conductor-tranche.md for the current packet.
+Receipt: docs/worktree-lifecycle-ledger.md and docs/worktree-preservation-receipts.json.
 
 Verification:
 
@@ -64,7 +66,7 @@ Verification:
 
 ## Source Next Action
 
-Drain only after remote/default preservation proof or non-source residue receipt; keep pressure visible in SessionStart.
+Preserve or owner-record each root; no deletion of unique work.
 
 ## Refresh
 

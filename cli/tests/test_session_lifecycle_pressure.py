@@ -682,6 +682,98 @@ def test_session_attack_paths_demote_completed_github_consolidation_packet_to_hu
     assert paths["github-consolidation-collisions"]["score"] == 52
 
 
+def test_session_attack_paths_parks_local_pressure_when_worktree_debt_under_cap(tmp_path: Path):
+    attack = _load(ATTACK_PATHS_SCRIPT, "session_attack_paths_local_lean_under_cap")
+    attack.ROOT = tmp_path
+    attack.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    attack.PROMPT_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+    attack.CODEX_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
+    attack.BLOCKER_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "session-lifecycle-blockers.json"
+    attack.PRESSURE_INDEX = tmp_path / "logs" / "session-lifecycle-pressure.json"
+    attack.DOC_PATH = tmp_path / "docs" / "session-attack-paths.md"
+    attack.PRIVATE_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
+    attack.PRESERVATION_RECEIPTS = tmp_path / "docs" / "worktree-preservation-receipts.json"
+    attack.worktree_debt_report = lambda root: {"total": 4, "debt": 2, "items": []}
+
+    attack.PROMPT_INDEX.parent.mkdir(parents=True)
+    attack.PROMPT_INDEX.write_text(json.dumps({"sources": [], "worktree_report": {"debt": 2, "items": []}}), encoding="utf-8")
+    attack.CODEX_INDEX.write_text(json.dumps({"session_count": 0, "families": []}), encoding="utf-8")
+    attack.BLOCKER_INDEX.write_text(
+        json.dumps(
+            {
+                "blockers": [
+                    {
+                        "id": "local-lifecycle-disk-pressure",
+                        "category": "local_lean",
+                        "status": "parked",
+                        "route": "Keep visible, but drain only after preservation proof.",
+                        "details": {"worktree_debt": 2, "worktree_debt_cap": 12},
+                    },
+                    {
+                        "id": "worktree-lifecycle-debt",
+                        "category": "worktree_lifecycle",
+                        "status": "parked",
+                        "route": "Preserve or owner-record each root.",
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    attack.PRESSURE_INDEX.parent.mkdir(parents=True)
+    attack.PRESSURE_INDEX.write_text(json.dumps({"local_total_bytes": 6 * 1024**3}), encoding="utf-8")
+
+    snapshot = attack.build_snapshot()
+    paths = {item["id"]: item for item in snapshot["ranked_paths"]}
+    ids_by_rank = [item["id"] for item in snapshot["ranked_paths"]]
+
+    assert paths["local-lifecycle-disk-pressure"]["lane"] == "parked"
+    assert paths["local-lifecycle-disk-pressure"]["score"] == 34
+    assert ids_by_rank.index("worktree-lifecycle-debt") < ids_by_rank.index("local-lifecycle-disk-pressure")
+
+
+def test_session_attack_paths_keep_local_pressure_actionable_when_worktree_debt_over_cap(tmp_path: Path):
+    attack = _load(ATTACK_PATHS_SCRIPT, "session_attack_paths_local_lean_over_cap")
+    attack.ROOT = tmp_path
+    attack.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    attack.PROMPT_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+    attack.CODEX_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
+    attack.BLOCKER_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "session-lifecycle-blockers.json"
+    attack.PRESSURE_INDEX = tmp_path / "logs" / "session-lifecycle-pressure.json"
+    attack.DOC_PATH = tmp_path / "docs" / "session-attack-paths.md"
+    attack.PRIVATE_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
+    attack.PRESERVATION_RECEIPTS = tmp_path / "docs" / "worktree-preservation-receipts.json"
+    attack.worktree_debt_report = lambda root: {"total": 20, "debt": 13, "items": []}
+
+    attack.PROMPT_INDEX.parent.mkdir(parents=True)
+    attack.PROMPT_INDEX.write_text(json.dumps({"sources": [], "worktree_report": {"debt": 13, "items": []}}), encoding="utf-8")
+    attack.CODEX_INDEX.write_text(json.dumps({"session_count": 0, "families": []}), encoding="utf-8")
+    attack.BLOCKER_INDEX.write_text(
+        json.dumps(
+            {
+                "blockers": [
+                    {
+                        "id": "local-lifecycle-disk-pressure",
+                        "category": "local_lean",
+                        "status": "parked",
+                        "route": "Drain after preservation proof.",
+                        "details": {"worktree_debt": 13, "worktree_debt_cap": 12},
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    attack.PRESSURE_INDEX.parent.mkdir(parents=True)
+    attack.PRESSURE_INDEX.write_text(json.dumps({"local_total_bytes": 6 * 1024**3}), encoding="utf-8")
+
+    snapshot = attack.build_snapshot()
+    paths = {item["id"]: item for item in snapshot["ranked_paths"]}
+
+    assert paths["local-lifecycle-disk-pressure"]["lane"] == "drain"
+    assert paths["local-lifecycle-disk-pressure"]["score"] == 74
+
+
 def test_session_attack_paths_treat_preserved_dirty_root_as_owner_blocker(tmp_path: Path):
     attack = _load(ATTACK_PATHS_SCRIPT, "session_attack_paths_receipts")
     attack.ROOT = tmp_path
@@ -860,6 +952,56 @@ def test_conductor_tranche_selects_actionable_packet_with_receipts(tmp_path: Pat
     assert "Drain only after remote/default preservation proof." in markdown
     assert tranche.DOC_PATH.exists()
     assert tranche.PRIVATE_INDEX.exists()
+
+
+def test_conductor_tranche_skips_family_for_concrete_worktree_lifecycle_packet(tmp_path: Path):
+    tranche = _load(TRANCHE_SCRIPT, "conductor_tranche_skips_family")
+    tranche.ROOT = tmp_path
+    tranche.HOME = tmp_path
+    tranche.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    tranche.ATTACK_INDEX = tranche.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
+    tranche.DOC_PATH = tmp_path / "docs" / "conductor-tranche.md"
+    tranche.PRIVATE_INDEX = tranche.PRIVATE_ROOT / "lifecycle" / "conductor-tranche.json"
+    tranche.PORTVS_PATH = tmp_path / "Workspace" / "4444J99" / "portvs"
+
+    tranche.ATTACK_INDEX.parent.mkdir(parents=True)
+    tranche.ATTACK_INDEX.write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-06-28T12:00:00+00:00",
+                "ranked_paths": [
+                    {
+                        "id": "session_lifecycle",
+                        "kind": "family",
+                        "lane": "family",
+                        "score": 99,
+                        "agent_fit": "codex",
+                        "next_action": "Keep corpus/session ledgers current.",
+                    },
+                    {
+                        "id": "worktree-lifecycle-debt",
+                        "kind": "blocker",
+                        "lane": "blocker",
+                        "category": "worktree_lifecycle",
+                        "score": 70,
+                        "agent_fit": "codex",
+                        "next_action": "Preserve or owner-record each root.",
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = tranche.build_snapshot()
+    markdown = tranche.render_markdown(snapshot)
+
+    packet = snapshot["packet"]
+    assert packet["id"] == "tranche-worktree-lifecycle-debt"
+    assert packet["selected_path_id"] == "worktree-lifecycle-debt"
+    assert "session_lifecycle" in snapshot["skipped_unactionable_path_ids"]
+    assert "scripts/worktree-debt.py" in packet["allowed_files"]
+    assert "remaining worktree lifecycle blocker" in markdown
 
 
 def test_conductor_tranche_emits_github_consolidation_packet(tmp_path: Path):

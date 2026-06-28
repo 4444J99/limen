@@ -136,6 +136,15 @@ def preservation_receipts_by_root(data: dict[str, Any]) -> dict[str, dict[str, A
     return receipts
 
 
+def maybe_int(value: Any) -> int | None:
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def latest_by_worktree(prompt: dict[str, Any]) -> dict[str, str]:
     latest: dict[str, str] = {}
     for session in prompt.get("sessions") or []:
@@ -351,7 +360,13 @@ def build_blocker_paths(blockers: dict[str, Any]) -> list[dict[str, Any]]:
             lane = "human-gate"
             agent = "human/codex-prep"
         elif category == "local_lean":
-            lane = "drain"
+            debt = maybe_int(details.get("worktree_debt"))
+            debt_cap = maybe_int(details.get("worktree_debt_cap"))
+            if debt is not None and debt_cap is not None and debt <= debt_cap:
+                base = 34
+                lane = "parked"
+            else:
+                lane = "drain"
             agent = "codex"
         elif category == "capability_substrate":
             lane = "blocker"
