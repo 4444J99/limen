@@ -3,7 +3,7 @@
 
 This is the small bridge between "ranked attack paths" and an actual
 one-to-two-hour direct-session work packet. It reads redacted ranked path
-evidence, skips parked/family/auth-only lanes, and writes a public-safe packet with:
+evidence, skips parked/family/human-gate/auth-only lanes, and writes a public-safe packet with:
 
 * purpose;
 * repo/worktree scope;
@@ -35,7 +35,7 @@ DOC_PATH = ROOT / "docs" / "conductor-tranche.md"
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "conductor-tranche.json"
 PORTVS_PATH = HOME / "Workspace" / "4444J99" / "portvs"
 
-SKIP_LANES = {"family", "observe", "parked"}
+SKIP_LANES = {"family", "human-gate", "observe", "parked"}
 SKIP_CATEGORIES = {"auth_credentials"}
 
 
@@ -439,7 +439,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         f"| Agent fit | `{selected.get('agent_fit', 'n/a')}` |",
         f"| Attack index generated | `{inputs.get('generated_at') or 'unknown'}` |",
         f"| Ranked paths read | `{inputs.get('ranked_paths', 0)}` |",
-        f"| Skipped family/parked/observe/auth paths | {skipped} |",
+        f"| Skipped family/human-gate/parked/observe/auth paths | {skipped} |",
         "",
         "## Work Packet",
         "",

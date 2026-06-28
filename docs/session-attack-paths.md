@@ -1,6 +1,6 @@
 # Session Attack Paths
 
-Generated: `2026-06-28T16:39:28+00:00`
+Generated: `2026-06-28T16:44:08+00:00`
 
 ## Canonical Decision
 

@@ -1114,6 +1114,52 @@ def test_conductor_tranche_skips_family_for_concrete_worktree_lifecycle_packet(t
     assert "remaining worktree lifecycle blocker" in markdown
 
 
+def test_conductor_tranche_skips_human_gate_for_autonomous_work_packet(tmp_path: Path):
+    tranche = _load(TRANCHE_SCRIPT, "conductor_tranche_skips_human_gate")
+    tranche.ROOT = tmp_path
+    tranche.HOME = tmp_path
+    tranche.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    tranche.ATTACK_INDEX = tranche.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
+    tranche.DOC_PATH = tmp_path / "docs" / "conductor-tranche.md"
+    tranche.PRIVATE_INDEX = tranche.PRIVATE_ROOT / "lifecycle" / "conductor-tranche.json"
+    tranche.PORTVS_PATH = tmp_path / "Workspace" / "4444J99" / "portvs"
+
+    tranche.ATTACK_INDEX.parent.mkdir(parents=True)
+    tranche.ATTACK_INDEX.write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-06-28T12:00:00+00:00",
+                "ranked_paths": [
+                    {
+                        "id": "github-app-limen-bot-not-wired",
+                        "kind": "blocker",
+                        "lane": "human-gate",
+                        "category": "github_app_identity",
+                        "score": 58,
+                        "agent_fit": "human/codex-prep",
+                        "next_action": "Create/install the App.",
+                    },
+                    {
+                        "id": "gh-organvm-object-lessons-19-605a",
+                        "kind": "worktree",
+                        "lane": "remote-proof",
+                        "score": 49,
+                        "agent_fit": "codex first",
+                        "next_action": "Verify remote/default preservation.",
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = tranche.build_snapshot()
+
+    assert snapshot["packet"]["selected_path_id"] == "gh-organvm-object-lessons-19-605a"
+    assert "github-app-limen-bot-not-wired" in snapshot["skipped_unactionable_path_ids"]
+    assert snapshot["packet"]["repo_worktree"].startswith("Owner worktree")
+
+
 def test_conductor_tranche_emits_github_consolidation_packet(tmp_path: Path):
     tranche = _load(TRANCHE_SCRIPT, "conductor_tranche_github_consolidation")
     tranche.ROOT = tmp_path
