@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-28T03:02:01Z",
+  "generated_at": "2026-06-28T03:08:16Z",
   "receipts": [
     {
       "packet": "packet-prompt-batch-critical-stalled-review-001-worktree_lifecycle",
@@ -117,6 +117,102 @@
           "repo_hint": "mirror deploy",
           "evidence": "Absent from current .limen-worktrees scan; retained only as a redacted historical Codex cwd/session reference.",
           "next_action": "No local root to preserve; do not delegate unless owner-repo review names a live branch or PR."
+        }
+      ]
+    },
+    {
+      "packet": "packet-prompt-batch-critical-stalled-review-001-session_lifecycle",
+      "source_batch": "prompt-batch-critical-stalled-review-001",
+      "family": "session_lifecycle",
+      "status": "owner-recorded",
+      "classification": "stalled session receipts folded into redacted lifecycle ledgers",
+      "evidence": [
+        "python3 scripts/prompt-priority-map.py --write",
+        "python3 scripts/prompt-batch-review-ledger.py --write",
+        "python3 scripts/prompt-packet-ledger.py --write",
+        "all 11 packet roots were absent from /Users/4jp/Workspace/.limen-worktrees on 2026-06-28T03:08:16Z",
+        "the packet session handles are represented in .limen-private/session-corpus/lifecycle/prompt-priority-map.json with owner limen control plane",
+        "the current Codex lifecycle index has matching redacted cwd-hint rows for every packet root",
+        "no packet root had a current remote-worktree receipt in the prompt lifecycle index"
+      ],
+      "next_action": "No live local session/worktree cleanup remains for this packet. Continue with the next open packet; rehydrate any owner repo only if a later packet names a current branch, PR, predicate, and expected receipt.",
+      "roots": [
+        {
+          "root": "bld-peer-audited--behavioral-blockchain-ci-706e",
+          "status": "session_ledger_recorded_absent_root",
+          "repo_hint": "peer-audited--behavioral-blockchain",
+          "evidence": "Redacted session lifecycle row exists; local worktree root is absent from current scan.",
+          "next_action": "No local root to preserve; route only through a later owner-repo packet with an explicit live receipt."
+        },
+        {
+          "root": "bld2-peer-audited--behavioral-blockchain-integration-tests-c82f",
+          "status": "session_ledger_recorded_absent_root",
+          "repo_hint": "peer-audited--behavioral-blockchain",
+          "evidence": "Redacted session lifecycle row exists; local worktree root is absent from current scan.",
+          "next_action": "No local root to preserve; route only through a later owner-repo packet with an explicit live receipt."
+        },
+        {
+          "root": "cifix-a-organvm-peer-audited--behavioral-blockchain-3887",
+          "status": "session_ledger_recorded_absent_root",
+          "repo_hint": "a-organvm/peer-audited--behavioral-blockchain",
+          "evidence": "Redacted session lifecycle row exists; local worktree root is absent from current scan.",
+          "next_action": "No local root to preserve; route only through a later owner-repo packet with an explicit live receipt."
+        },
+        {
+          "root": "cifix-organvm-i-theoria-conversation-corpus-engine-2e73",
+          "status": "session_ledger_recorded_absent_root",
+          "repo_hint": "organvm-i-theoria/conversation-corpus-engine",
+          "evidence": "Redacted session lifecycle row exists; local worktree root is absent from current scan.",
+          "next_action": "No local root to preserve; route only through a later owner-repo packet with an explicit live receipt."
+        },
+        {
+          "root": "cifix-organvm-i-theoria-conversation-corpus-engine-ee1d",
+          "status": "session_ledger_recorded_absent_root",
+          "repo_hint": "organvm-i-theoria/conversation-corpus-engine",
+          "evidence": "Redacted session lifecycle row exists; local worktree root is absent from current scan.",
+          "next_action": "No local root to preserve; route only through a later owner-repo packet with an explicit live receipt."
+        },
+        {
+          "root": "limen-099",
+          "status": "session_ledger_recorded_absent_root",
+          "repo_hint": "limen",
+          "evidence": "Redacted session lifecycle row exists; local worktree root is absent from current scan.",
+          "next_action": "No local root to preserve; route only through a later owner-repo packet with an explicit live receipt."
+        },
+        {
+          "root": "resolve-a-organvm-peer-audited--behavioral-blockchain-714-6648",
+          "status": "session_ledger_recorded_absent_root",
+          "repo_hint": "a-organvm/peer-audited--behavioral-blockchain",
+          "evidence": "Redacted session lifecycle row exists; local worktree root is absent from current scan.",
+          "next_action": "No local root to preserve; route only through a later owner-repo packet with an explicit live receipt."
+        },
+        {
+          "root": "resolve-a-organvm-the-invisible-ledger-4-68a9",
+          "status": "session_ledger_recorded_absent_root",
+          "repo_hint": "a-organvm/the-invisible-ledger",
+          "evidence": "Redacted session lifecycle row exists; local worktree root is absent from current scan.",
+          "next_action": "No local root to preserve; route only through a later owner-repo packet with an explicit live receipt."
+        },
+        {
+          "root": "resolve-a-organvm-the-invisible-ledger-6-b8dd",
+          "status": "session_ledger_recorded_absent_root",
+          "repo_hint": "a-organvm/the-invisible-ledger",
+          "evidence": "Redacted session lifecycle row exists; local worktree root is absent from current scan.",
+          "next_action": "No local root to preserve; route only through a later owner-repo packet with an explicit live receipt."
+        },
+        {
+          "root": "resolve-organvm-i-theoria-.github-459-cd2f",
+          "status": "session_ledger_recorded_absent_root",
+          "repo_hint": "organvm-i-theoria/.github",
+          "evidence": "Redacted session lifecycle row exists; local worktree root is absent from current scan.",
+          "next_action": "No local root to preserve; route only through a later owner-repo packet with an explicit live receipt."
+        },
+        {
+          "root": "rev-styx-stripe-subscription-719b",
+          "status": "session_ledger_recorded_absent_root",
+          "repo_hint": "styx/stripe-subscription",
+          "evidence": "Redacted session lifecycle row exists; local worktree root is absent from current scan.",
+          "next_action": "No local root to preserve; route only through a later owner-repo packet with an explicit live receipt."
         }
       ]
     }
