@@ -1,6 +1,6 @@
 # Live Root Gate
 
-Generated: `2026-06-28T20:07:01+00:00`
+Generated: `2026-06-28T20:12:30+00:00`
 
 Status: `blocked`
 
@@ -22,10 +22,10 @@ Status: `blocked`
 - Path: `~/Workspace/limen`.
 - Branch: `feature/ORG-artist-organ-face-0628`; release branch `main`.
 - HEAD: `84a3288eaaf91de93428aa8eae9dafbead39ba42`.
-- Release head: `219f210ffed2878130e8f95d63c840ed0cc74e0b`.
-- Matches release: `False`; ahead `1` behind `9`.
+- Release head: `e3bc1927c0a419f968cb78d5b8267e7214c2cac1`.
+- Matches release: `False`; ahead `1` behind `10`.
 - Unique local commits: `1`; patch-equivalent commits: `0`.
-- Dirty entries: `5`.
+- Dirty entries: `6`.
 
 ### Local Commits
 
@@ -34,6 +34,7 @@ Status: `blocked`
 ### Dirty Paths
 
 - `container/launchd/com.user.netmeter.plist`
+- `organs/artist/KERNEL.md`
 - `scripts/netmode.sh`
 - `tasks.yaml`
 - `organs/health/`

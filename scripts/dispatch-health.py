@@ -378,6 +378,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "## Commands",
         "",
         "- Refresh this receipt: `python3 scripts/dispatch-health.py --write --probe-async`",
+        "- Refresh the operator gate: `python3 scripts/live-root-gate.py --write`",
         "- Verify async dispatch tests: `pytest -q cli/tests/test_async_dispatch.py`",
         "- Probe heartbeat: `python3 scripts/watchdog.py --dry-run`",
         "- Probe async dry-run: `PYTHONPATH=cli/src python3 scripts/dispatch-async.py --lanes codex,opencode,agy,claude,gemini,jules --per-lane 3 --max 12 --dry-run`",

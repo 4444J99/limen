@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-06-28T19:58:30+00:00`
+Generated: `2026-06-28T20:12:19+00:00`
 
 Status: `blocked`
 
@@ -19,7 +19,7 @@ Status: `blocked`
 - Loaded launchd state: `running` pid `24368`.
 - Loaded LIMEN_ROOT: `/Users/4jp/Workspace/limen`.
 - Loaded LIMEN_DISPATCH_ASYNC: `None`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-06-28T19:58:30.643383+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-06-28T20:12:19.451146+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
@@ -32,8 +32,8 @@ Status: `blocked`
 - Live root: `~/Workspace/limen`.
 - Branch: `feature/ORG-artist-organ-face-0628`; status `## feature/ORG-artist-organ-face-0628...origin/feature/ORG-artist-organ-face-0628`.
 - HEAD: `84a3288eaaf91de93428aa8eae9dafbead39ba42`.
-- origin/main: `feec34abe26d9816931a58f11730bda03ba5f2a7`.
-- Matches origin/main: `False`; ahead `1` behind `8`.
+- origin/main: `e3bc1927c0a419f968cb78d5b8267e7214c2cac1`.
+- Matches origin/main: `False`; ahead `1` behind `10`.
 - Dirty entries: `5`.
   - `container/launchd/com.user.netmeter.plist`
   - `scripts/netmode.sh`
@@ -49,13 +49,14 @@ Status: `blocked`
 
 ## Blockers
 
-- `live-root-not-at-origin-main`: live root branch feature/ORG-artist-organ-face-0628 head 84a3288eaaf9 differs from origin/main feec34abe26d.
+- `live-root-not-at-origin-main`: live root branch feature/ORG-artist-organ-face-0628 head 84a3288eaaf9 differs from origin/main e3bc1927c0a4.
 - `live-root-dirty`: live root has 5 dirty entries.
 - `heartbeat-loaded-env-drift`: plist LIMEN_DISPATCH_ASYNC='0', loaded=None.
 
 ## Commands
 
 - Refresh this receipt: `python3 scripts/dispatch-health.py --write --probe-async`
+- Refresh the operator gate: `python3 scripts/live-root-gate.py --write`
 - Verify async dispatch tests: `pytest -q cli/tests/test_async_dispatch.py`
 - Probe heartbeat: `python3 scripts/watchdog.py --dry-run`
 - Probe async dry-run: `PYTHONPATH=cli/src python3 scripts/dispatch-async.py --lanes codex,opencode,agy,claude,gemini,jules --per-lane 3 --max 12 --dry-run`
