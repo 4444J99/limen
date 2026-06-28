@@ -51380,7 +51380,7 @@ tasks:
   target_agent: jules
   priority: low
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - docs
   - generated
@@ -51393,7 +51393,7 @@ tasks:
     \ 2026-06-24 to keep the stream endless]"
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-28T07:48:00.922760Z'
+  updated: '2026-06-28T08:33:30.613741Z'
   dispatch_log:
   - timestamp: '2026-06-27T00:50:23.253355Z'
     agent: limen
@@ -51427,6 +51427,11 @@ tasks:
     agent: jules
     session_id: '723486993079590970'
     status: dispatched
+  - timestamp: '2026-06-28T08:33:30.613741Z'
+    agent: jules
+    session_id: https://github.com/organvm/domus-genoma/pull/151
+    status: done
+    output: 'jules-land: landed session 723486993079590970 as PR'
 - id: GEN-organvm-portfolio-docs-0624
   title: Real usage docs for organvm/portfolio
   repo: organvm/portfolio
@@ -52375,7 +52380,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - simplify
   - generated
@@ -52387,7 +52392,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-24 to keep the stream endless]
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-27T06:40:38.923308Z'
+  updated: '2026-06-28T08:34:41.435917Z'
   dispatch_log:
   - timestamp: '2026-06-24T13:50:16.953010Z'
     agent: jules
@@ -52432,6 +52437,17 @@ tasks:
     agent: jules
     session_id: '11534869103814422701'
     status: dispatched
+  - timestamp: '2026-06-28T08:34:41.435917Z'
+    agent: jules
+    session_id: '11534869103814422701'
+    status: done
+    output: "diff --git a/scripts/scrapers/pagination-handler.ts b/scripts/scrapers/pagination-handler.ts\n\
+      index cd48ec7..d5ce89e 100644\n--- a/scripts/scrapers/pagination-handler.ts\n\
+      +++ b/scripts/scrapers/pagination-handler.ts\n@@ -45,6 +45,27 @@ export class\
+      \ PaginationHandler {\n   async detectPagination(page: Page): Promise<PaginationResult>\
+      \ {\n     try {\n       const result = await page.evaluate(() => {\n+      \
+      \  const findButton = (selector: string, labels: string[]) => {\n+         \
+      \ const directButton = docum"
 - id: GEN-organvm-a-i-chat--exporter-simplify-0624
   title: Reduce complexity in organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
@@ -56631,7 +56647,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - test-coverage
   - generated
@@ -56644,7 +56660,7 @@ tasks:
     keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T06:40:38.923308Z'
+  updated: '2026-06-28T08:35:41.519227Z'
   dispatch_log:
   - timestamp: '2026-06-27T05:21:04.898340Z'
     agent: claude
@@ -56664,6 +56680,11 @@ tasks:
     agent: jules
     session_id: '2780411154146285224'
     status: dispatched
+  - timestamp: '2026-06-28T08:35:41.519227Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: GEN-organvm-a-i-chat--exporter-test-coverage-0627
   title: Raise test coverage in organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
@@ -57402,7 +57423,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - security
   - generated
@@ -57415,7 +57436,7 @@ tasks:
     2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T06:40:38.923308Z'
+  updated: '2026-06-28T08:35:41.519227Z'
   dispatch_log:
   - timestamp: '2026-06-27T04:59:55.262792Z'
     agent: gemini
@@ -57435,6 +57456,11 @@ tasks:
     agent: jules
     session_id: '6858551353168416136'
     status: dispatched
+  - timestamp: '2026-06-28T08:35:41.519227Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: GEN-organvm-portfolio-simplify-0627
   title: Reduce complexity in organvm/portfolio
   repo: organvm/portfolio
@@ -57442,7 +57468,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - simplify
   - generated
@@ -57454,7 +57480,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T07:04:20.967385Z'
+  updated: '2026-06-28T08:35:41.519227Z'
   dispatch_log:
   - timestamp: '2026-06-27T05:21:04.898340Z'
     agent: gemini
@@ -57470,6 +57496,11 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T08:35:41.519227Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: GEN-organvm-a-i-chat--exporter-simplify-0627
   title: Reduce complexity in organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
@@ -57477,7 +57508,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - simplify
   - generated
@@ -57489,7 +57520,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T07:04:20.967385Z'
+  updated: '2026-06-28T08:35:41.519227Z'
   dispatch_log:
   - timestamp: '2026-06-27T05:21:04.898340Z'
     agent: gemini
@@ -57505,6 +57536,11 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T08:35:41.519227Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: GEN-organvm-domus-genoma-simplify-0627
   title: Reduce complexity in organvm/domus-genoma
   repo: organvm/domus-genoma
@@ -57512,7 +57548,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - simplify
   - generated
@@ -57524,7 +57560,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-27T07:04:20.967385Z'
+  updated: '2026-06-28T08:35:41.519227Z'
   dispatch_log:
   - timestamp: '2026-06-27T05:21:04.898340Z'
     agent: gemini
@@ -57540,6 +57576,11 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T08:35:41.519227Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: GEN-organvm-the-invisible-ledger-simplify-0627
   title: Reduce complexity in organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
@@ -59170,7 +59211,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - test-coverage
   - generated
@@ -59183,7 +59224,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T06:47:45.490918Z'
+  updated: '2026-06-28T08:33:30.613741Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:10:51.965981Z'
     agent: gemini
@@ -59203,6 +59244,11 @@ tasks:
     agent: jules
     session_id: '9874054527612085912'
     status: dispatched
+  - timestamp: '2026-06-28T08:33:30.613741Z'
+    agent: jules
+    session_id: https://github.com/organvm/domus-genoma/pull/152
+    status: done
+    output: 'jules-land: landed session 9874054527612085912 as PR'
 - id: GEN-organvm-universal-mail--automation-test-coverage-0628
   title: Raise test coverage in organvm/universal-mail--automation
   repo: organvm/universal-mail--automation
@@ -59687,7 +59733,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - ci-green
   - generated
@@ -59702,7 +59748,7 @@ tasks:
     the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T07:02:00.080956Z'
+  updated: '2026-06-28T08:34:41.439672Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:10:51.965981Z'
     agent: codex
@@ -59760,6 +59806,17 @@ tasks:
     session_id: reserve
     status: dispatched
     output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T08:34:41.439672Z'
+    agent: jules
+    session_id: reserve
+    status: done
+    output: "diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml\nindex\
+      \ d236c37..93a293b 100644\n--- a/.github/workflows/ci.yml\n+++ b/.github/workflows/ci.yml\n\
+      @@ -37,6 +37,9 @@ jobs:\n       - name: Lint\n         run: npm run lint\n \n\
+      +      - name: Typecheck\n+        run: npm run typecheck\n+\n       - name:\
+      \ Test\n         run: npm test\n \ndiff --git a/package.json b/package.json\n\
+      index 8949384..e68e700 100644\n--- a/package.json\n+++ b/package.json\n@@ -11,6\
+      \ +11,7 @@\n     \"optimize\": \"vite optimize\",\n     "
 - id: GEN-organvm-portfolio-ci-green-0628
   title: Make organvm/portfolio CI green
   repo: organvm/portfolio
@@ -60085,7 +60142,7 @@ tasks:
   target_agent: jules
   priority: low
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - docs
   - generated
@@ -60099,7 +60156,7 @@ tasks:
     \ 2026-06-28 to keep the stream endless]"
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T07:48:00.922760Z'
+  updated: '2026-06-28T08:33:30.613741Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:40:29.389041Z'
     agent: claude
@@ -60138,6 +60195,11 @@ tasks:
     agent: jules
     session_id: '13441411731330882042'
     status: dispatched
+  - timestamp: '2026-06-28T08:33:30.613741Z'
+    agent: jules
+    session_id: https://github.com/organvm/session-meta/pull/134
+    status: done
+    output: 'jules-land: landed session 13441411731330882042 as PR'
 - id: GEN-organvm-a-i-chat--exporter-docs-0628
   title: Real usage docs for organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
@@ -61647,3 +61709,42 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+- id: GEN-organvm-domus-genoma-docs-0628
+  title: Real usage docs for organvm/domus-genoma
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: low
+  budget_cost: 1
+  status: open
+  labels:
+  - docs
+  - generated
+  - build-out
+  urls: []
+  context: "Derive an accurate Usage section in organvm/domus-genoma's README from\
+    \ the ACTUAL entrypoints/exports (install, run, key commands + flags). No invented\
+    \ features, no TODOs \u2014 only what the code actually does. [auto-generated\
+    \ 2026-06-28 to keep the stream endless]"
+  depends_on: []
+  created: '2026-06-28'
+  dispatch_log: []
+- id: GEN-organvm-public-record-data-scrapper-simplify-0628
+  title: Reduce complexity in organvm/public-record-data-scrapper
+  repo: organvm/public-record-data-scrapper
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - simplify
+  - generated
+  - build-out
+  urls: []
+  context: Identify the most complex or most-duplicated module in organvm/public-record-data-scrapper
+    and refactor it for clarity, with tests proving behavior is unchanged. Net lines
+    should not grow without cause. [auto-generated 2026-06-28 to keep the stream endless]
+  depends_on: []
+  created: '2026-06-28'
+  dispatch_log: []
