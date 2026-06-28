@@ -107,7 +107,7 @@ def repo_candidates(root: str) -> list[str]:
         return ["4444J99/hokage-chess"]
     if "domus-genoma" in root:
         return ["organvm/domus-genoma", "4444J99/domus-genoma"]
-    if "domus-onboarding" in root:
+    if "domus-onboarding" in root or "domus-billing" in root:
         return ["organvm/domus-genoma"]
     if "mediaark" in root or "media-ark" in root:
         return ["organvm/media-ark"]
@@ -125,6 +125,10 @@ def repo_candidates(root: str) -> list[str]:
         return ["organvm/specvla-ergon--avditor-mvndi"]
     if "relationship-pipeline" in root:
         return ["organvm/relationship-pipeline", "4444J99/relationship-pipeline"]
+    if "carrier-wave-zeitgeist-thesis" in root or "carrier-wave--zeitgeist-thesis" in root:
+        return ["organvm/carrier-wave--zeitgeist-thesis"]
+    if "essay-pipeline" in root:
+        return ["organvm/essay-pipeline"]
     if "conversation-corpus-engine" in root:
         return ["organvm/conversation-corpus-engine", "organvm-i-theoria/conversation-corpus-engine"]
     if "mirror-mirror" in root or root.startswith("rev-mirror-") or root.startswith("bld-mirror-"):

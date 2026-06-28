@@ -183,6 +183,11 @@ def test_repo_candidates_cover_redirected_family_roots():
         ],
         "rev-ledger-webhook-ratelimit-75f8": ["organvm/the-invisible-ledger"],
         "rev-domus-onboarding-041b": ["organvm/domus-genoma"],
+        "rev-domus-billing-9bad": ["organvm/domus-genoma"],
+        "gh-organvm-i-theoria-carrier-wave-zeitgeist-thesis-2-d6a2": [
+            "organvm/carrier-wave--zeitgeist-thesis"
+        ],
+        "bld-essay-pipeline-ci-1e41": ["organvm/essay-pipeline"],
         "discover-organvm-claude-runtime-state-8ac1": ["organvm/claude-runtime-state"],
         "rev-mirror-landing-0c22": ["organvm/mirror-mirror"],
         "rev-mirror-sharefile-oauth-706c": ["organvm/mirror-mirror"],
