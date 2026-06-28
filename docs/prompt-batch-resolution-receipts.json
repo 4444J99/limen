@@ -8687,6 +8687,306 @@
           "next_action": "Use merged PR #75 and current Studium state for follow-up."
         }
       ]
+    },
+    {
+      "generated_at": "2026-06-28T08:34:55Z",
+      "batch": "prompt-batch-medium-family-003",
+      "band": "medium",
+      "lane": "family",
+      "status": "owner-recorded",
+      "classification": "Codex github-review family batch collapsed into owner repo routes, merged PR receipts, and absent-branch gates",
+      "session_count": 25,
+      "prompt_events": 94,
+      "unique_prompt_hashes": 69,
+      "evidence": [
+        "private redacted batch metadata listed 25 Codex-session github_review family items across 25 unique worktree roots",
+        "all 25 private source JSONL files existed under ~/.codex/sessions at review time",
+        "review used only metadata fields: worktree slug, session key, source existence, owner repo inference, prompt-event counts, hash counts, and public GitHub branch/PR state",
+        "no exact local root directory existed for any of the 25 worktree slugs under /Users/4jp/Workspace/.limen-worktrees, /Users/4jp/Workspace/limen/.worktrees, or /Users/4jp/Workspace/limen/.claude/worktrees at review time",
+        "gh repo view resolved owner repositories for all 25 inferred roots, including organvm/4444J99 and the dot-github owner repos",
+        "git ls-remote --heads and gh pr list --head limen/<root> --state all found 12 exact merged PR receipts and 13 roots with no live exact branch, exact-head PR, or bounded same-repo broad PR-search hit",
+        "one merged PR branch remains live: organvm/vigiles-aeternae--agon-cosmogonicum branch limen/discover-organvm-vigiles-aeternae--agon-cosmogonicum-cab9 at 67f47cc with PR #8 MERGED",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "Use the linked merged PRs for any follow-up. Treat absent roots as lifecycle-closed owner routes; do not rehydrate unless a later packet names the missing delta, live branch or PR, owner repo, and narrow predicate.",
+      "roots": [
+        {
+          "root": "discover-organvm-cvrsvs-honorvm-630f",
+          "session_key": "39524f5d21af65146475",
+          "family": "github_review",
+          "status": "remote_pr_merged",
+          "repo": "organvm/cvrsvs-honorvm",
+          "branch": "limen/discover-organvm-cvrsvs-honorvm-630f",
+          "pr": "https://github.com/organvm/cvrsvs-honorvm/pull/3",
+          "evidence": "No live branch remains; matching PR #3 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "discover-organvm-dot-github--taxis-0ce7",
+          "session_key": "3b034607a9daca270abb",
+          "family": "github_review",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/dot-github--taxis",
+          "branch": "limen/discover-organvm-dot-github--taxis-0ce7",
+          "predicate": "GitHub issue/PR review predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing dot-github--taxis review delta."
+        },
+        {
+          "root": "gen-organvm-a-i-chat--exporter-docs-0622-6043",
+          "session_key": "4362fe1939848c09e702",
+          "family": "github_review",
+          "status": "remote_pr_merged",
+          "repo": "organvm/a-i-chat--exporter",
+          "branch": "limen/gen-organvm-a-i-chat--exporter-docs-0622-6043",
+          "pr": "https://github.com/organvm/a-i-chat--exporter/pull/59",
+          "evidence": "No live branch remains; matching PR #59 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "rev-organvm-public-record-data-scrapper-revenue-readiness-0624-7ed2",
+          "session_key": "4470078b4d3db69cade0",
+          "family": "github_review",
+          "status": "remote_pr_merged",
+          "repo": "organvm/public-record-data-scrapper",
+          "branch": "limen/rev-organvm-public-record-data-scrapper-revenue-readiness-0624-7ed2",
+          "pr": "https://github.com/organvm/public-record-data-scrapper/pull/309",
+          "evidence": "No live branch remains; matching PR #309 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "discover-organvm-vigiles-aeternae--agon-cosmogonicum-cab9",
+          "session_key": "47044f1cd2a977957c63",
+          "family": "github_review",
+          "status": "remote_pr_merged",
+          "repo": "organvm/vigiles-aeternae--agon-cosmogonicum",
+          "branch": "limen/discover-organvm-vigiles-aeternae--agon-cosmogonicum-cab9",
+          "branch_sha": "67f47cc",
+          "pr": "https://github.com/organvm/vigiles-aeternae--agon-cosmogonicum/pull/8",
+          "evidence": "Remote branch still exists at 67f47cc; matching PR #8 is MERGED.",
+          "next_action": "Rely on merged PR history; branch cleanup is optional owner housekeeping."
+        },
+        {
+          "root": "discover-organvm-kerygma-pipeline-f9dd",
+          "session_key": "4a68a4732352d0b13336",
+          "family": "github_review",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/kerygma-pipeline",
+          "branch": "limen/discover-organvm-kerygma-pipeline-f9dd",
+          "predicate": "GitHub issue/PR review predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing kerygma-pipeline review delta."
+        },
+        {
+          "root": "discover-organvm-analytics-engine-ce12",
+          "session_key": "52567825fdd5a3ee6187",
+          "family": "github_review",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/analytics-engine",
+          "branch": "limen/discover-organvm-analytics-engine-ce12",
+          "predicate": "GitHub issue/PR review predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing analytics-engine review delta."
+        },
+        {
+          "root": "discover-organvm-4444j99-d5c7",
+          "session_key": "52fb3dc7d4e9ff504b86",
+          "family": "github_review",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/4444J99",
+          "branch": "limen/discover-organvm-4444j99-d5c7",
+          "predicate": "GitHub issue/PR review predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing 4444J99 review delta."
+        },
+        {
+          "root": "discover-organvm-speculum-opencode-e44a",
+          "session_key": "5771e1531e5b357d4751",
+          "family": "github_review",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/speculum-opencode",
+          "branch": "limen/discover-organvm-speculum-opencode-e44a",
+          "predicate": "GitHub issue/PR review predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing speculum-opencode review delta."
+        },
+        {
+          "root": "discover-organvm-multi-camera--livestream--framework-4cac",
+          "session_key": "58ae814e9cfa2899ca9a",
+          "family": "github_review",
+          "status": "remote_pr_merged",
+          "repo": "organvm/multi-camera--livestream--framework",
+          "branch": "limen/discover-organvm-multi-camera--livestream--framework-4cac",
+          "pr": "https://github.com/organvm/multi-camera--livestream--framework/pull/5",
+          "evidence": "No live branch remains; matching PR #5 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "discover-organvm-process-environment-enactment-20260609173021-fa1d",
+          "session_key": "58cc102ec62917af978b",
+          "family": "github_review",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/process-environment-enactment-20260609173021",
+          "branch": "limen/discover-organvm-process-environment-enactment-20260609173021-fa1d",
+          "predicate": "GitHub issue/PR review predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing process-environment review delta."
+        },
+        {
+          "root": "discover-organvm-quick-fire--all-command-eb6a",
+          "session_key": "5ea1aebf933d9ff7eb73",
+          "family": "github_review",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/quick-fire--all-command",
+          "branch": "limen/discover-organvm-quick-fire--all-command-eb6a",
+          "predicate": "GitHub issue/PR review predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing quick-fire review delta."
+        },
+        {
+          "root": "discover-organvm-reading-group-curriculum-e749",
+          "session_key": "60443c13bfb203bb6c21",
+          "family": "github_review",
+          "status": "remote_pr_merged",
+          "repo": "organvm/reading-group-curriculum",
+          "branch": "limen/discover-organvm-reading-group-curriculum-e749",
+          "pr": "https://github.com/organvm/reading-group-curriculum/pull/10",
+          "evidence": "No live branch remains; matching PR #10 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "gen-organvm-a-i-chat--exporter-typing-0624-de25",
+          "session_key": "625796eb3b1f3fc62d9c",
+          "family": "github_review",
+          "status": "remote_pr_merged",
+          "repo": "organvm/a-i-chat--exporter",
+          "branch": "limen/gen-organvm-a-i-chat--exporter-typing-0624-de25",
+          "pr": "https://github.com/organvm/a-i-chat--exporter/pull/75",
+          "evidence": "No live branch remains; matching PR #75 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "rev-organvm-a-i-chat--exporter-revenue-launch-post-0623-f0ba",
+          "session_key": "65c6864c325d2cd961a2",
+          "family": "github_review",
+          "status": "remote_pr_merged",
+          "repo": "organvm/a-i-chat--exporter",
+          "branch": "limen/rev-organvm-a-i-chat--exporter-revenue-launch-post-0623-f0ba",
+          "pr": "https://github.com/organvm/a-i-chat--exporter/pull/63",
+          "evidence": "No live branch remains; matching PR #63 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "discover-organvm-dot-github--4444j99-0ade",
+          "session_key": "6ccb4ceccb0ed06067ac",
+          "family": "github_review",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/dot-github--4444j99",
+          "branch": "limen/discover-organvm-dot-github--4444j99-0ade",
+          "predicate": "GitHub issue/PR review predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing dot-github--4444j99 review delta."
+        },
+        {
+          "root": "discover-organvm-organvm-mcp-server-d8cc",
+          "session_key": "6d86a139a6f13905e068",
+          "family": "github_review",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/organvm-mcp-server",
+          "branch": "limen/discover-organvm-organvm-mcp-server-d8cc",
+          "predicate": "GitHub issue/PR review predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing organvm-mcp-server review delta."
+        },
+        {
+          "root": "discover-organvm-system-governance-framework-bb5d",
+          "session_key": "727362ae9af000a9a109",
+          "family": "github_review",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/system-governance-framework",
+          "branch": "limen/discover-organvm-system-governance-framework-bb5d",
+          "predicate": "GitHub issue/PR review predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing system-governance-framework review delta."
+        },
+        {
+          "root": "gen-organvm-a-i-chat--exporter-test-coverage-0622-8af5",
+          "session_key": "737ffaafb652f993f8a9",
+          "family": "github_review",
+          "status": "remote_pr_merged",
+          "repo": "organvm/a-i-chat--exporter",
+          "branch": "limen/gen-organvm-a-i-chat--exporter-test-coverage-0622-8af5",
+          "pr": "https://github.com/organvm/a-i-chat--exporter/pull/57",
+          "evidence": "No live branch remains; matching PR #57 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "gen-organvm-public-record-data-scrapper-test-coverage-0622-4589",
+          "session_key": "756540dca96da544d7d6",
+          "family": "github_review",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/public-record-data-scrapper",
+          "branch": "limen/gen-organvm-public-record-data-scrapper-test-coverage-0622-4589",
+          "predicate": "GitHub issue/PR review predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing public-record-data-scrapper test-coverage delta."
+        },
+        {
+          "root": "gen-organvm-public-record-data-scrapper-simplify-0624-dd41",
+          "session_key": "7be01652145d4ac1f748",
+          "family": "github_review",
+          "status": "remote_pr_merged",
+          "repo": "organvm/public-record-data-scrapper",
+          "branch": "limen/gen-organvm-public-record-data-scrapper-simplify-0624-dd41",
+          "pr": "https://github.com/organvm/public-record-data-scrapper/pull/311",
+          "evidence": "No live branch remains; matching PR #311 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "discover-organvm-koinonia-db-f97c",
+          "session_key": "8350c3ddb071459a476a",
+          "family": "github_review",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/koinonia-db",
+          "branch": "limen/discover-organvm-koinonia-db-f97c",
+          "predicate": "GitHub issue/PR review predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing koinonia-db review delta."
+        },
+        {
+          "root": "discover-organvm-system-system--system--monad-b38a",
+          "session_key": "83dba8f3fab47f745a71",
+          "family": "github_review",
+          "status": "owner_repo_routed_absent_branch",
+          "repo": "organvm/system-system--system--monad",
+          "branch": "limen/discover-organvm-system-system--system--monad-b38a",
+          "predicate": "GitHub issue/PR review predicate after branch rehydration",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing system-system--system--monad review delta."
+        },
+        {
+          "root": "discover-organvm-my-block-warfare-0ec3",
+          "session_key": "8660cdc64685876f0556",
+          "family": "github_review",
+          "status": "remote_pr_merged",
+          "repo": "organvm/my-block-warfare",
+          "branch": "limen/discover-organvm-my-block-warfare-0ec3",
+          "pr": "https://github.com/organvm/my-block-warfare/pull/36",
+          "evidence": "No live branch remains; matching PR #36 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "gen-organvm-public-record-data-scrapper-docs-0624-e89f",
+          "session_key": "88b9309a6b87aaee5cb5",
+          "family": "github_review",
+          "status": "remote_pr_merged",
+          "repo": "organvm/public-record-data-scrapper",
+          "branch": "limen/gen-organvm-public-record-data-scrapper-docs-0624-e89f",
+          "pr": "https://github.com/organvm/public-record-data-scrapper/pull/312",
+          "evidence": "No live branch remains; matching PR #312 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        }
+      ]
     }
   ]
 }
