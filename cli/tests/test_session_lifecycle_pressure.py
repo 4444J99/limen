@@ -162,6 +162,7 @@ def test_session_attack_paths_prioritize_system_clogs_before_delegation(tmp_path
     attack.PRESSURE_INDEX = tmp_path / "logs" / "session-lifecycle-pressure.json"
     attack.DOC_PATH = tmp_path / "docs" / "session-attack-paths.md"
     attack.PRIVATE_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
+    attack.PRESERVATION_RECEIPTS = tmp_path / "docs" / "worktree-preservation-receipts.json"
 
     attack.PROMPT_INDEX.parent.mkdir(parents=True)
     attack.PROMPT_INDEX.write_text(
@@ -241,3 +242,73 @@ def test_session_attack_paths_prioritize_system_clogs_before_delegation(tmp_path
     assert "Do not assign Jules" in markdown
     assert attack.DOC_PATH.exists()
     assert attack.PRIVATE_INDEX.exists()
+
+
+def test_session_attack_paths_treat_preserved_dirty_root_as_owner_blocker(tmp_path: Path):
+    attack = _load(ATTACK_PATHS_SCRIPT, "session_attack_paths_receipts")
+    attack.ROOT = tmp_path
+    attack.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    attack.PROMPT_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+    attack.CODEX_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
+    attack.BLOCKER_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "session-lifecycle-blockers.json"
+    attack.PRESSURE_INDEX = tmp_path / "logs" / "session-lifecycle-pressure.json"
+    attack.DOC_PATH = tmp_path / "docs" / "session-attack-paths.md"
+    attack.PRIVATE_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
+    attack.PRESERVATION_RECEIPTS = tmp_path / "docs" / "worktree-preservation-receipts.json"
+
+    attack.PROMPT_INDEX.parent.mkdir(parents=True)
+    attack.PROMPT_INDEX.write_text(
+        json.dumps(
+            {
+                "sources": [{"source": "codex-sessions", "files": 1, "prompt_events": 20}],
+                "worktree_report": {
+                    "debt": 2,
+                    "items": [
+                        {"name": "preserved-root", "reason": "dirty", "debt": True},
+                        {"name": "unpreserved-root", "reason": "dirty", "debt": True},
+                    ],
+                },
+                "sessions_by_worktree": {"preserved-root": 1, "unpreserved-root": 1},
+                "prompt_events_by_worktree": {"preserved-root": 100, "unpreserved-root": 20},
+                "remote": {
+                    "enabled": True,
+                    "worktrees": {
+                        "receipts": [
+                            {"name": "preserved-root", "remote_branch": "missing", "prs": []},
+                            {"name": "unpreserved-root", "remote_branch": "missing", "prs": []},
+                        ],
+                    },
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    attack.CODEX_INDEX.write_text(json.dumps({"session_count": 0, "families": []}), encoding="utf-8")
+    attack.BLOCKER_INDEX.write_text(json.dumps({"blockers": []}), encoding="utf-8")
+    attack.PRESSURE_INDEX.parent.mkdir(parents=True)
+    attack.PRESSURE_INDEX.write_text(json.dumps({"worktrees": {"bytes": 2 * 1024**3}}), encoding="utf-8")
+    attack.PRESERVATION_RECEIPTS.parent.mkdir(parents=True)
+    attack.PRESERVATION_RECEIPTS.write_text(
+        json.dumps(
+            {
+                "receipts": [
+                    {
+                        "root": "preserved-root",
+                        "status": "private_patch_preserved",
+                        "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/demo/receipt.json",
+                        "next_action": "Classify owner intent before cleanup.",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = attack.build_snapshot()
+    markdown = attack.render_markdown(snapshot, limit=10)
+
+    paths = {item["id"]: item for item in snapshot["ranked_paths"]}
+    assert paths["preserved-root"]["lane"] == "owner-blocker"
+    assert paths["preserved-root"]["preservation_status"] == "private_patch_preserved"
+    assert paths["preserved-root"]["score"] < paths["unpreserved-root"]["score"]
+    assert "receipt `private_patch_preserved`" in markdown

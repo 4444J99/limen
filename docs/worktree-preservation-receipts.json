@@ -1,0 +1,26 @@
+{
+  "generated_utc": "2026-06-28T00:50:20Z",
+  "receipts": [
+    {
+      "branch": "limen/gen-organvm-universal-mail--automation-test-coverage-0625-151e",
+      "classification": "dangerous broad tracked deletion root",
+      "head": "bff9ae1177cbb23c8498526ed1945c597d8a42a1",
+      "next_action": "Classify whether this is an intentional migration, incomplete checkout, or generated deletion bug before cleanup, PR creation, or delegation.",
+      "private_patch_bytes": 4508186,
+      "private_patch_sha256": "01f1705aaa210e3c42944f228e371e6d81547fd8ab93becd6ce701ce9a126760",
+      "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/2026-06-28T005020Z-gen-organvm-universal-mail--automation-test-coverage-0625-151e/receipt.json",
+      "repo": "organvm/universal-mail--automation",
+      "root": "gen-organvm-universal-mail--automation-test-coverage-0625-151e",
+      "status": "private_patch_preserved",
+      "tracked_deleted_count": 167,
+      "untracked_generated_count": 751,
+      "untracked_generated_roots": {
+        ".venv": 732,
+        "acp": 5,
+        "api": 12,
+        "mcp_server": 2
+      }
+    }
+  ],
+  "schema": 1
+}

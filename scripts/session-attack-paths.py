@@ -31,6 +31,7 @@ BLOCKER_INDEX = PRIVATE_ROOT / "lifecycle" / "session-lifecycle-blockers.json"
 PRESSURE_INDEX = ROOT / "logs" / "session-lifecycle-pressure.json"
 DOC_PATH = ROOT / "docs" / "session-attack-paths.md"
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
+PRESERVATION_RECEIPTS = ROOT / "docs" / "worktree-preservation-receipts.json"
 
 
 FAMILY_WEIGHTS = {
@@ -119,6 +120,17 @@ def remote_receipts_by_root(prompt: dict[str, Any]) -> dict[str, dict[str, Any]]
     return receipts
 
 
+def preservation_receipts_by_root(data: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    receipts: dict[str, dict[str, Any]] = {}
+    for receipt in data.get("receipts") or []:
+        if not isinstance(receipt, dict):
+            continue
+        root = receipt.get("root") or receipt.get("id")
+        if root:
+            receipts[str(root)] = receipt
+    return receipts
+
+
 def latest_by_worktree(prompt: dict[str, Any]) -> dict[str, str]:
     latest: dict[str, str] = {}
     for session in prompt.get("sessions") or []:
@@ -134,7 +146,12 @@ def latest_by_worktree(prompt: dict[str, Any]) -> dict[str, str]:
     return latest
 
 
-def build_worktree_paths(prompt: dict[str, Any], pressure: dict[str, Any], now: dt.datetime) -> list[dict[str, Any]]:
+def build_worktree_paths(
+    prompt: dict[str, Any],
+    pressure: dict[str, Any],
+    now: dt.datetime,
+    preservation_receipts: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
     sessions_by_worktree = Counter(prompt.get("sessions_by_worktree") or {})
     prompts_by_worktree = Counter(prompt.get("prompt_events_by_worktree") or {})
     latest_by_root = latest_by_worktree(prompt)
@@ -151,6 +168,7 @@ def build_worktree_paths(prompt: dict[str, Any], pressure: dict[str, Any], now: 
         not_git = receipt.get("remote_branch") == "not-a-git-dir" or reason == "not-a-git-dir"
         open_prs = [pr for pr in receipt.get("prs", []) if isinstance(pr, dict) and pr.get("state") == "OPEN"]
         merged_prs = [pr for pr in receipt.get("prs", []) if isinstance(pr, dict) and pr.get("state") == "MERGED"]
+        preservation = preservation_receipts.get(root)
         prompt_events = int(prompts_by_worktree.get(root, 0))
         recency_score, recency_label = recency_weight(latest_by_root.get(root), now)
         score = (
@@ -169,6 +187,13 @@ def build_worktree_paths(prompt: dict[str, Any], pressure: dict[str, Any], now: 
         elif not_git:
             lane = "residue"
             action = "Inspect for unique files; if only cache/generated residue, record owner receipt before reclaiming."
+        elif preservation:
+            lane = "owner-blocker"
+            action = str(
+                preservation.get("next_action")
+                or "Private preservation receipt exists; classify owner intent before cleanup or delegation."
+            )
+            score -= 30
         elif reason == "dirty":
             lane = "preserve"
             action = "Inspect diff, run owner predicate, push branch/open draft PR or record blocker."
@@ -192,6 +217,8 @@ def build_worktree_paths(prompt: dict[str, Any], pressure: dict[str, Any], now: 
                 "remote_branch": receipt.get("remote_branch", "unknown"),
                 "open_prs": len(open_prs),
                 "merged_prs": len(merged_prs),
+                "preservation_status": (preservation or {}).get("status"),
+                "preservation_receipt": (preservation or {}).get("private_receipt"),
                 "agent_fit": "codex first; opencode/jules after packetization",
                 "next_action": action,
             }
@@ -314,9 +341,10 @@ def build_snapshot() -> dict[str, Any]:
     codex = load_json(CODEX_INDEX)
     blockers = load_json(BLOCKER_INDEX)
     pressure = load_json(PRESSURE_INDEX)
+    preservation_receipts = preservation_receipts_by_root(load_json(PRESERVATION_RECEIPTS))
     now = dt.datetime.now(dt.timezone.utc)
     candidates = (
-        build_worktree_paths(prompt, pressure, now)
+        build_worktree_paths(prompt, pressure, now, preservation_receipts)
         + build_family_paths(codex, blockers, now)
         + build_blocker_paths(blockers)
     )
@@ -329,6 +357,10 @@ def build_snapshot() -> dict[str, Any]:
             "codex_session_lifecycle": {"path": str(CODEX_INDEX), "present": bool(codex)},
             "session_lifecycle_blockers": {"path": str(BLOCKER_INDEX), "present": bool(blockers)},
             "session_lifecycle_pressure": {"path": str(PRESSURE_INDEX), "present": bool(pressure)},
+            "worktree_preservation_receipts": {
+                "path": str(PRESERVATION_RECEIPTS),
+                "present": bool(preservation_receipts),
+            },
         },
         "coverage": {
             "prompt_files": sum(int(s.get("files", 0)) for s in prompt.get("sources", []) if isinstance(s, dict)),
@@ -337,6 +369,7 @@ def build_snapshot() -> dict[str, Any]:
             "local_pressure_bytes": pressure.get("local_total_bytes", 0),
             "codex_sessions": codex.get("session_count", 0),
             "blockers": len(blockers.get("blockers") or []),
+            "preservation_receipts": len(preservation_receipts),
         },
         "lane_counts": dict(sorted(lane_counts.items())),
         "ranked_paths": ranked,
@@ -365,6 +398,7 @@ def render_markdown(snapshot: dict[str, Any], *, limit: int) -> str:
         f"- Redacted prompt corpus: `{coverage.get('prompt_files', 0)}` files, `{coverage.get('prompt_events', 0)}` prompt-like events.",
         f"- Codex classified sessions: `{coverage.get('codex_sessions', 0)}`.",
         f"- Worktree debt roots: `{coverage.get('worktree_debt', 0)}`.",
+        f"- Worktree preservation receipts: `{coverage.get('preservation_receipts', 0)}`.",
         f"- Parked blockers: `{coverage.get('blockers', 0)}`.",
         f"- Local lifecycle footprint: `{fmt_bytes(int(coverage.get('local_pressure_bytes') or 0))}`.",
         f"- Candidate lanes: {lane_bits}.",
@@ -388,6 +422,8 @@ def render_markdown(snapshot: dict[str, Any], *, limit: int) -> str:
                 f"reason `{path.get('reason')}`; prompts {path.get('prompt_events', 0)}; "
                 f"remote `{path.get('remote_branch')}`; open PRs {path.get('open_prs', 0)}"
             )
+            if path.get("preservation_status"):
+                evidence += f"; receipt `{path.get('preservation_status')}`"
         elif path["kind"] == "family":
             states = ", ".join(f"{k} {v}" for k, v in sorted((path.get("states") or {}).items())) or "none"
             evidence = f"sessions {path.get('sessions', 0)}; states {states}; prompts {path.get('prompt_events', 0)}"
