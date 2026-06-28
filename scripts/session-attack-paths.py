@@ -337,6 +337,7 @@ def build_blocker_paths(blockers: dict[str, Any]) -> list[dict[str, Any]]:
             "github_app_identity": 58,
             "github_consolidation": 78,
             "local_lean": 74,
+            "local_network_substrate": 66,
             "worktree_lifecycle": 70,
             "owner_state": 42,
             "remote_receipt": 62,
@@ -367,6 +368,9 @@ def build_blocker_paths(blockers: dict[str, Any]) -> list[dict[str, Any]]:
                 lane = "parked"
             else:
                 lane = "drain"
+            agent = "codex"
+        elif category == "local_network_substrate":
+            lane = "blocker"
             agent = "codex"
         elif category == "capability_substrate":
             lane = "blocker"
@@ -450,6 +454,7 @@ def render_markdown(snapshot: dict[str, Any], *, limit: int) -> str:
         "- Do not assign Jules, Gemini, Agy, OpenCode, or Claude broad sprawl prompts.",
         "- Attack order comes from corpus evidence: prompt recurrence, local disk pressure, preservation risk, remote proof, blocker status, and agent fit.",
         "- Auth/secrets/login/key/password/provider-access work stays parked unless directly required by a scoped path.",
+        "- Local substrate incidents such as network/LaunchAgent failures are not lane-local noise: patch once, record a reusable receipt, then make the blocker visible to every lane.",
         "- Local cleanup comes after preservation proof: pushed branch, open/merged PR, default-branch equivalence, owner blocker, or documented non-source residue.",
         "",
         "## Coverage",
@@ -465,6 +470,7 @@ def render_markdown(snapshot: dict[str, Any], *, limit: int) -> str:
         "## Ordering Model",
         "",
         "- Highest priority: system clogs that prevent the lifecycle machine from draining: broken hooks, invalid states, missing preservation receipts, stale remote proof, or owner ledgers that make downstream cleanup unsafe.",
+        "- Network/environment substrate failures outrank ordinary repo cleanup because they can make every agent misclassify auth, dispatch, and GitHub symptoms.",
         "- Next: dirty or non-Git local roots with prompt evidence and missing remote preservation, because they consume disk and risk unique work.",
         "- Then: open remote-proof lanes where local copies can become lean after PR/default evidence is checked.",
         "- Then: repeated lifecycle/family loops that need owner packets before delegation.",

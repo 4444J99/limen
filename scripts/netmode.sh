@@ -8,6 +8,7 @@
 # carrier/Starlink figure is ground truth: `netmode setusage <phone|starlink> <GB>` anchors it.
 #
 # Modes:
+#   observe   meter/report only; background timers never switch networks [default]
 #   auto      burn the phone first, auto-fall to Starlink at the cap   [smart]
 #   failover  cable=phone, unplug=Starlink (instant)
 #   anchor    Starlink first even when plugged (save the phone)
@@ -28,6 +29,7 @@
 #   netmode selftest        assert decision logic & invariants (no network changes)
 #   netmode ui              open the dashboard
 #   netmode tick            internal: run every 5 min by launchd
+#   netmode stop            disable every netmode/netmeter launch agent (no network changes)
 #
 # Schedules: schedule.tsv lines "HHMM HHMM mode" (wrap-around ok). Empty = no rules.
 #   Edited via the dashboard; on a window edge the schedule takes over, restoring
@@ -74,6 +76,7 @@ SENSE="$DIR/sense_cache"         # tick-written cache "location<TAB>presence<TAB
 PHONE_CAP_GB=300;  PHONE_RESET_DAY=13
 STARLINK_CAP_GB=1000; STARLINK_RESET_DAY=28
 RESET_DAY=1; AUTO_SWITCH=1                  # RESET_DAY kept for the 'free' bucket / back-compat
+BACKGROUND_SWITCHING=0                      # launchd ticks observe by default; explicit CLI commands switch
 WARN_PCT=80; CRIT_PCT=95; AUTO_RECOVER=1
 RECYCLE_CLIENTS=1                            # on a gateway change, recycle long-lived clients (drop stale sockets)
 RECYCLE_LABELS="com.limen.heartbeat"        # space-sep launchd labels to kickstart on net switch
@@ -225,19 +228,27 @@ _anchor_announce_once() {  # first time the overnight window grabs Starlink, say
 }
 
 save_mode() { printf '%s\n' "$1" > "$MODEFILE"; }
-# seamless is the default. One-time migration flips the old 'auto' default to 'seamless' (set the
-# marker so a later *deliberate* choice of auto is respected). No file = fresh install = seamless.
+# observe is the default. Background timers must not move a live machine between networks unless the
+# operator explicitly opts in with BACKGROUND_SWITCHING=1 in $CONFIG.
+do_observe() { save_mode observe; log_event "mode → observe"; }
+
+# Older installs migrated the default to "seamless", which was too aggressive for live sessions:
+# it could remove Starlink from preferred networks and force the iPhone at home. Migrate old
+# default-like modes to observe once; leave explicitly directional modes alone.
+OBSERVE_MIGRATED="$DIR/.observe_default_migrated"
 migrate_default() {
-  if [ ! -f "$MIGRATED" ]; then
-    : > "$MIGRATED"
-    { [ ! -f "$MODEFILE" ] || [ "$(cat "$MODEFILE" 2>/dev/null)" = auto ]; } && printf 'seamless\n' > "$MODEFILE"
+  if [ ! -f "$OBSERVE_MIGRATED" ]; then
+    : > "$OBSERVE_MIGRATED"
+    case "$(cat "$MODEFILE" 2>/dev/null)" in
+      ""|auto|seamless) printf 'observe\n' > "$MODEFILE" ;;
+    esac
   fi
   # seed the user's stated overnight exception once (Backblaze/Time Machine ride Starlink, not the phone
   # cap). Own one-time marker so EXISTING installs (already past the mode migration) still get it. `overnight
   # off` leaves an empty file, so this never re-enables behind the user's back.
   if [ ! -f "$ANCHORSEED" ]; then : > "$ANCHORSEED"; [ -f "$ANCHORWIN" ] || printf '0100 0700\n' > "$ANCHORWIN"; fi
 }
-get_mode()  { [ -f "$MODEFILE" ] && cat "$MODEFILE" || echo "seamless"; }
+get_mode()  { [ -f "$MODEFILE" ] && cat "$MODEFILE" || echo "observe"; }
 
 do_failover(){ cfg_failover; save_mode failover; log_event "mode → failover"; }
 do_anchor()  { cfg_anchor;   save_mode anchor;   log_event "mode → anchor"; }
@@ -251,6 +262,7 @@ do_phone()   { cfg_phone_first force; log_event "manual: grab iPhone now"; }   #
 # apply_one runs a mode's network config WITHOUT the lock (used by the worker & scheduler).
 apply_one() {
   case "$1" in
+    observe)  do_observe ;;
     seamless) do_seamless ;;
     auto)     do_auto ;;
     failover) do_failover ;;
@@ -271,7 +283,7 @@ converge() {        # drain $DESIRED through $APPLYFN until it stops changing (a
   done
 }
 apply_mode() {  # $1=mode. Serialize via an atomic mkdir lock; always converge to the LATEST intent.
-  case "$1" in seamless|auto|failover|anchor|solo|ladder|phone) ;; *) return 1;; esac
+  case "$1" in observe|seamless|auto|failover|anchor|solo|ladder|phone) ;; *) return 1;; esac
   printf '%s\n' "$1" > "$DESIRED"
   local g=0; [ -f "$GENFILE" ] && g=$(cat "$GENFILE" 2>/dev/null); case "$g" in ''|*[!0-9]*) g=0;; esac
   echo $((g+1)) > "$GENFILE"
@@ -603,6 +615,7 @@ notify_check() {  # throttled cap-threshold notifications, per metered link (sta
 over_cap_calc()  { awk -v b="$1" -v c="${2:-$PHONE_CAP_GB}" 'BEGIN{exit !((b/1073741824)>=c)}'; }   # pure: bytes cap_gb
 over_cap_phone() { over_cap_calc "$(usage_get phone)" "$PHONE_CAP_GB"; }
 auto_want()      { if [ "$AUTO_SWITCH" = 1 ] && over_cap_phone; then echo starlink; else echo phone; fi; }
+background_switching_enabled() { [ "${BACKGROUND_SWITCHING:-0}" = 1 ]; }
 
 auto_apply() {  # $1=force (kept for call-site compat; cascade now self-heals every tick regardless)
   local want cur=""; want=$(auto_want)
@@ -755,16 +768,18 @@ tick() {
   recycle_clients                      # net switched? drop stale sockets before anything else measures
   sample
   health_record
-  schedule_tick
   sense_refresh                        # refresh location/presence cache for the dashboard + the policy below
-  case "$(get_mode)" in
-    seamless) cfg_seamless ;;          # location-aware: phone-only at home, full cascade away
-    auto) auto_apply ;;
-    failover|anchor) on_starlink || ensure_starlink_standby >/dev/null 2>&1 ;;
-    ladder) enforce ;;
-    solo) on_starlink && wifi_off ;;   # never Starlink: if Wi-Fi drifted onto it, cut it (phone-Wi-Fi is left alone)
-  esac
-  auto_recover
+  if background_switching_enabled; then
+    schedule_tick
+    case "$(get_mode)" in
+      seamless) cfg_seamless ;;          # location-aware: phone-only at home, full cascade away
+      auto) auto_apply ;;
+      failover|anchor) on_starlink || ensure_starlink_standby >/dev/null 2>&1 ;;
+      ladder) enforce ;;
+      solo) on_starlink && wifi_off ;;   # never Starlink: if Wi-Fi drifted onto it, cut it (phone-Wi-Fi is left alone)
+    esac
+    auto_recover
+  fi
   notify_check
   history_snapshot
 }
@@ -806,6 +821,9 @@ plan_line() {
   cycle_dates
   local m using; m=$(get_mode); using=$(live_path)
   case "$m" in
+    observe)
+      echo "Observe-only — metering and status update, but background automation will not switch networks. Use an explicit mode command to move links."
+      return;;
     seamless)
       local loc pres; loc=$(location_cached); pres=$(presence_cached)
       case "$loc" in
@@ -860,6 +878,7 @@ status() {
   local m; m=$(get_mode)
   echo "┌─ netmode ─────────────────────────────────"
   echo "│ mode  : $m$( [ "$m" = auto ] && echo " (effective: $(cat "$AUTOSTATE" 2>/dev/null||echo phone))" )"
+  echo "│ bg    : $(background_switching_enabled && echo switching || echo observe-only)"
   echo "│ using : $(live_path)"
   echo "│ phone : $(phone_state_str)   wifi: $(wifi_state_str)"
   echo "└───────────────────────────────────────────"
@@ -1146,7 +1165,7 @@ if loc: print(f"location: {loc}{' (pinned)' if s.get('location_pinned') else ''}
 print(f"📱 iPhone {s.get('phone_gb','?')}/{s.get('phone_cap','?')}GB ({pct}%) · score {s.get('phone_score','?')}")
 print(f"🛰 Starlink {s.get('starlink_gb','?')}/{s.get('starlink_cap','?')}GB · score {s.get('wifi_score','?')}")
 print("---")
-for label,mode in [("✨ Seamless","seamless"),("⚡ Auto","auto"),("Failover","failover"),("Anchor","anchor"),("Solo","solo"),("Ladder","ladder"),("📱 Grab iPhone now","phone")]:
+for label,mode in [("Observe only","observe"),("✨ Seamless","seamless"),("⚡ Auto","auto"),("Failover","failover"),("Anchor","anchor"),("Solo","solo"),("Ladder","ladder"),("📱 Grab iPhone now","phone")]:
     mark="✓ " if s.get("mode")==mode else "  "
     print(f"{mark}{label} | bash=/bin/bash param1={nm} param2=apply param3={mode} terminal=false refresh=true")
 print("---")
@@ -1222,6 +1241,22 @@ PLIST
     echo "⚠ wrote $TRIGPLIST but launchctl load failed — load it from a Terminal:"
     echo "   launchctl bootstrap gui/$(id -u) \"$TRIGPLIST\""
   fi
+}
+
+stop_agents() {
+  local uid label plist
+  uid=$(id -u)
+  for label in com.user.netmeter com.user.netmode.netwatch com.user.netmode.keepalive com.user.netmode.recycle; do
+    plist="$HOME/Library/LaunchAgents/$label.plist"
+    launchctl bootout "gui/$uid" "$plist" >/dev/null 2>&1 || true
+    launchctl bootout "gui/$uid/$label" >/dev/null 2>&1 || true
+    launchctl disable "gui/$uid/$label" >/dev/null 2>&1 || true
+  done
+  pgrep -f "$DIR/netmode.sh" 2>/dev/null | while read -r pid; do
+    [ "$pid" = "$$" ] && continue
+    kill "$pid" >/dev/null 2>&1 || true
+  done
+  echo "✅ netmode launch agents stopped/disabled (network state left untouched)"
 }
 
 # ---- hotspot keep-alive: stop iOS Personal Hotspot idle-disconnect ----------
@@ -1504,6 +1539,42 @@ _st_converge() {  # converge() drains to the LATEST intent even if it changes mi
   [ "$last" = anchor ]
 }
 
+_st_tick_observe_safe() {  # launchd tick must not switch links unless BACKGROUND_SWITCHING=1
+  local mk; mk=$(mktemp); rm -f "$mk"
+  (
+    BACKGROUND_SWITCHING=0
+    recycle_clients(){ :; }; sample(){ :; }; health_record(){ :; }; sense_refresh(){ :; }
+    notify_check(){ :; }; history_snapshot(){ :; }; get_mode(){ echo seamless; }
+    schedule_tick(){ echo schedule >> "$mk"; }
+    cfg_seamless(){ echo seamless >> "$mk"; }
+    auto_apply(){ echo auto >> "$mk"; }
+    ensure_starlink_standby(){ echo standby >> "$mk"; }
+    enforce(){ echo enforce >> "$mk"; }
+    wifi_off(){ echo wifi_off >> "$mk"; }
+    auto_recover(){ echo recover >> "$mk"; }
+    tick
+  )
+  local ok=1
+  [ ! -s "$mk" ] || ok=0
+  rm -f "$mk"
+  [ "$ok" = 1 ]
+}
+
+_st_tick_switch_optin() {  # explicit opt-in preserves old managed behavior
+  local mk; mk=$(mktemp); rm -f "$mk"
+  (
+    BACKGROUND_SWITCHING=1
+    recycle_clients(){ :; }; sample(){ :; }; health_record(){ :; }; sense_refresh(){ :; }
+    notify_check(){ :; }; history_snapshot(){ :; }; get_mode(){ echo seamless; }
+    schedule_tick(){ echo schedule >> "$mk"; }
+    cfg_seamless(){ echo seamless >> "$mk"; }
+    auto_recover(){ echo recover >> "$mk"; }
+    tick
+  )
+  local out; out=$(cat "$mk" 2>/dev/null); rm -f "$mk"
+  echo "$out" | grep -q schedule && echo "$out" | grep -q seamless && echo "$out" | grep -q recover
+}
+
 _st_live_path() {  # live_path delegates to classify_link: foreign gw -> free (not bogus 'starlink'); no iface -> offline
   local _LP_IF=en0 _LP_GW _LP_SSID a b c d
   route()        { printf 'gateway: %s\ninterface: %s\n' "$_LP_GW" "$_LP_IF"; }   # stub the only IO live_path does
@@ -1534,7 +1605,9 @@ selftest() {
   t "policy: AUTO_SWITCH=0 always wants phone"  '[ "$(AUTO_SWITCH=0 auto_want)" = phone ]'
   t "json is valid JSON"                        'json | python3 -c "import sys,json;json.load(sys.stdin)"'
   t "json carries a non-empty next-move"        'json | python3 -c "import sys,json;assert json.load(sys.stdin)[\"next\"]"'
-  t "Starlink is LAST: Wi-Fi is last service"   'networksetup -listnetworkserviceorder | grep -E "Hardware Port: (Wi-Fi|iPhone USB)" | tail -1 | grep -q "Wi-Fi"'
+  t "background switching defaults off"         '! background_switching_enabled'
+  t "tick observe-only does not call switch actuators" '_st_tick_observe_safe'
+  t "tick switching can be explicitly opted in" '_st_tick_switch_optin'
   t "phone gateway is the iPhone subnet"        'case "$PHONE_GW" in 172.20.10.*) true;; *) false;; esac'
   t "config file present"                       '[ -f "$CONFIG" ]'
   t "plan_line emits a sentence"               '[ -n "$(plan_line)" ]'
@@ -1582,8 +1655,8 @@ selftest() {
   t "dish_parse: fields + missing->? + garbage-safe" '_st_dish_parse'
   t "dish_fetch: no-grpcurl/unreachable degrade, no cache, no link touch" '_st_dish_guard'
   t "json: dish cache-only (null w/o cache, valid JSON)" '_st_dish_json'
-  t "apply_mode accepts seamless"                'APPLYFN=true; _t=$(mktemp); DESIRED=$_t; printf seamless>"$_t"; converge; rm -f "$_t"'
-  t "seamless is dispatchable in apply_one"      'type do_seamless >/dev/null 2>&1 && case "seamless" in seamless|auto|failover|anchor|solo|ladder|phone) true;; *) false;; esac'
+  t "apply_mode accepts observe"                 'APPLYFN=true; _t=$(mktemp); DESIRED=$_t; printf observe>"$_t"; converge; rm -f "$_t"'
+  t "seamless is dispatchable in apply_one"      'type do_seamless >/dev/null 2>&1 && case "seamless" in observe|seamless|auto|failover|anchor|solo|ladder|phone) true;; *) false;; esac'
   t "json carries location + phone_presence"     'json | python3 -c "import sys,json;d=json.load(sys.stdin);assert d[\"location\"] and d[\"phone_presence\"]"'
   t "json carries net_trigger flag"              'json | python3 -c "import sys,json;assert \"net_trigger\" in json.load(sys.stdin)"'
   t "keepalive: heartbeat only on phone + user present" '_st_keepalive'
@@ -1594,8 +1667,9 @@ selftest() {
   [ "$fail" -eq 0 ]
 }
 
-[ "${1:-}" = selftest ] || migrate_default   # flip the old 'auto' default to 'seamless' once (skips selftest)
+[ "${1:-}" = selftest ] || migrate_default   # migrate old default-like modes to observe once (skips selftest)
 case "${1:-status}" in
+  observe|pause) do_observe; echo "✅ observe-only"; status ;;
   seamless) do_seamless; echo "✅ seamless"; status ;;
   auto)     do_auto;     echo "✅ auto";     status ;;
   here)     loc_set home ;;
@@ -1603,6 +1677,7 @@ case "${1:-status}" in
   unpin)    loc_clear ;;
   trigger)  trigger "$2" ;;
   keepalive) keepalive "$2" ;;            # hotspot heartbeat: on|off|status|tick (stops iOS idle-disconnect)
+  stop|panic) stop_agents ;;
   phone)    do_phone;    echo "✅ grabbing iPhone"; status ;;
   failover) do_failover; echo "✅ failover"; status ;;
   anchor)   do_anchor;   echo "✅ anchor";   status ;;
@@ -1629,5 +1704,5 @@ case "${1:-status}" in
   config)   set_config "$2" "$3" ;;
   ui)       "$DIR/netui" ;;
   status|"") status ;;
-  *) echo "usage: netmode seamless|auto|phone|failover|anchor|solo|ladder | here|out|unpin | overnight HHMM HHMM|off | dish [--raw|--json] | trigger install|uninstall | keepalive on|off|status | watch|why|report|doctor|export|setusage|menubar|selftest|json|ui|version"; status ;;
+  *) echo "usage: netmode observe|seamless|auto|phone|failover|anchor|solo|ladder | stop | here|out|unpin | overnight HHMM HHMM|off | dish [--raw|--json] | trigger install|uninstall | keepalive on|off|status | watch|why|report|doctor|export|setusage|menubar|selftest|json|ui|version"; status ;;
 esac

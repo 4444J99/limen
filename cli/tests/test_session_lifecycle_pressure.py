@@ -13,6 +13,7 @@ ATTACK_PATHS_SCRIPT = ROOT / "scripts" / "session-attack-paths.py"
 TRANCHE_SCRIPT = ROOT / "scripts" / "conductor-tranche.py"
 ORIENT_SCRIPT = ROOT / "scripts" / "session-orient.py"
 CONSOLIDATION_GATES_SCRIPT = ROOT / "scripts" / "consolidation-gates.py"
+NETWORK_HEALTH_SCRIPT = ROOT / "scripts" / "network-health.py"
 
 
 def _load(path: Path, name: str):
@@ -310,6 +311,87 @@ def test_capability_substrate_ledger_indexes_names_without_skill_bodies(tmp_path
     assert capability.PRIVATE_INDEX.exists()
 
 
+def test_network_health_records_static_and_live_netmode_safety(tmp_path: Path):
+    network = _load(NETWORK_HEALTH_SCRIPT, "network_health")
+    network.ROOT = tmp_path
+    network.HOME = tmp_path
+    network.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    network.PRIVATE_INDEX = network.PRIVATE_ROOT / "lifecycle" / "network-health.json"
+    network.DOC_PATH = tmp_path / "docs" / "network-health.md"
+    network.NETMODE_SCRIPT = tmp_path / "scripts" / "netmode.sh"
+    network.NETMETER_PLIST = tmp_path / "container" / "launchd" / "com.user.netmeter.plist"
+    network.LIVE_NETMODE_SCRIPT = tmp_path / "Library" / "Application Support" / "netmeter" / "netmode.sh"
+    network.LIVE_MODE_FILE = tmp_path / "Library" / "Application Support" / "netmeter" / "mode"
+
+    netmode_text = """
+BACKGROUND_SWITCHING=0
+background_switching_enabled() { [ "${BACKGROUND_SWITCHING:-0}" = 1 ]; }
+get_mode() { [ -f "$MODEFILE" ] && cat "$MODEFILE" || echo "observe"; }
+tick() { if background_switching_enabled; then schedule_tick; fi; }
+case "${1:-status}" in stop|panic) stop_agents ;; esac
+t "tick observe-only does not call switch actuators" "_st_tick_observe_safe"
+t "tick switching can be explicitly opted in" "_st_tick_switch_optin"
+"""
+    network.NETMODE_SCRIPT.parent.mkdir(parents=True)
+    network.NETMODE_SCRIPT.write_text(netmode_text, encoding="utf-8")
+    network.LIVE_NETMODE_SCRIPT.parent.mkdir(parents=True)
+    network.LIVE_NETMODE_SCRIPT.write_text(netmode_text, encoding="utf-8")
+    network.LIVE_MODE_FILE.write_text("observe\n", encoding="utf-8")
+    network.NETMETER_PLIST.parent.mkdir(parents=True)
+    network.NETMETER_PLIST.write_text(
+        """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>Label</key><string>com.user.netmeter</string>
+<key>ProgramArguments</key><array><string>/bin/bash</string><string>netmode.sh</string><string>tick</string></array>
+<key>StartInterval</key><integer>300</integer>
+<key>RunAtLoad</key><false/>
+<key>Disabled</key><true/>
+</dict></plist>
+""",
+        encoding="utf-8",
+    )
+
+    def fake_run(args, *, timeout=10):
+        text = " ".join(args)
+        if "print-disabled" in text:
+            return {
+                "args": args,
+                "returncode": 0,
+                "stdout": '"com.user.netmeter" => disabled\n"com.user.netmode.netwatch" => disabled\n',
+                "stderr": "",
+                "timed_out": False,
+            }
+        if args[:2] == ["launchctl", "list"]:
+            return {"args": args, "returncode": 0, "stdout": "", "stderr": "", "timed_out": False}
+        if args[:3] == ["route", "-n", "get"]:
+            return {
+                "args": args,
+                "returncode": 0,
+                "stdout": "gateway: 192.168.1.1\ninterface: en0\n",
+                "stderr": "",
+                "timed_out": False,
+            }
+        return {"args": args, "returncode": 0, "stdout": "", "stderr": "", "timed_out": False}
+
+    network.run_command = fake_run
+
+    snapshot = network.build_snapshot()
+    markdown = network.render_markdown(snapshot)
+    network.write_outputs(snapshot, markdown)
+
+    assert snapshot["status"] == "healthy"
+    assert snapshot["blockers"] == []
+    assert snapshot["tracked_netmode"]["ok"] is True
+    assert snapshot["live_netmode"]["ok"] is True
+    assert snapshot["netmeter_plist"]["ok"] is True
+    assert snapshot["launchd"]["labels"]["com.user.netmeter"]["disabled"] is True
+    assert "single-lane failure mode" in markdown
+    assert "Default route: `en0` via `192.168.1.1`" in markdown
+    assert network.DOC_PATH.exists()
+    assert network.PRIVATE_INDEX.exists()
+
+
 def test_session_blockers_records_hooks_disk_and_credentials_without_values(tmp_path: Path):
     blockers = _load(BLOCKERS_SCRIPT, "session_blockers_ledger")
     blockers.ROOT = tmp_path
@@ -527,6 +609,63 @@ def test_session_blockers_clears_capability_blocker_with_current_receipt(tmp_pat
     assert "capability-substrate-not-resurfaced" not in ids
     assert snapshot["coverage"]["capability_substrate"]["receipt"]["current"] is True
     assert "Capability resurfacing receipt present/current: `True`/`True`" in markdown
+
+
+def test_session_blockers_promotes_unhealthy_network_receipt(tmp_path: Path):
+    blockers = _load(BLOCKERS_SCRIPT, "session_blockers_network_health")
+    blockers.ROOT = tmp_path
+    blockers.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    blockers.PRIVATE_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "session-lifecycle-blockers.json"
+    blockers.CAPABILITY_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "capability-substrate-index.json"
+    blockers.NETWORK_HEALTH_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "network-health.json"
+    blockers.PROMPT_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+    blockers.CODEX_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
+    blockers.CORPUS_INVENTORY = blockers.PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
+    blockers.PRESSURE_INDEX = tmp_path / "logs" / "session-lifecycle-pressure.json"
+    blockers.PROJECT_SETTINGS = tmp_path / ".claude" / "settings.json"
+    blockers.DOC_PATH = tmp_path / "docs" / "session-lifecycle-blockers.md"
+    blockers.DEFAULT_CAPABILITY_ROOTS = ()
+
+    blockers.PROMPT_INDEX.parent.mkdir(parents=True)
+    blockers.PROMPT_INDEX.write_text(
+        json.dumps(
+            {
+                "sources": [],
+                "worktree_report": {"debt": 0, "total": 0},
+                "remote": {"enabled": True, "worktrees": {}, "task_prs": {"counts": {}}},
+                "cloud": {"enabled": True, "runtime_url_configured": True, "env_flags": {}},
+            }
+        ),
+        encoding="utf-8",
+    )
+    blockers.CODEX_INDEX.write_text(json.dumps({"session_count": 0, "families": []}), encoding="utf-8")
+    blockers.CORPUS_INVENTORY.parent.mkdir(parents=True)
+    blockers.CORPUS_INVENTORY.write_text(json.dumps({"organs": [], "materialization": {"copied": 0}}), encoding="utf-8")
+    blockers.PRESSURE_INDEX.parent.mkdir(parents=True)
+    blockers.PRESSURE_INDEX.write_text(json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8")
+    blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
+    blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
+    blockers.NETWORK_HEALTH_INDEX.parent.mkdir(parents=True, exist_ok=True)
+    blockers.NETWORK_HEALTH_INDEX.write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-06-28T12:00:00+00:00",
+                "status": "needs_attention",
+                "blockers": [{"id": "network-legacy-netmeter-agent-active"}],
+                "mode": {"mode": "observe"},
+                "route": {"interface": "en0", "gateway": "192.168.1.1"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = blockers.build_snapshot()
+    markdown = blockers.render_markdown(snapshot)
+
+    ids = {item["id"] for item in snapshot["blockers"]}
+    assert "local-network-substrate-unhealthy" in ids
+    assert snapshot["coverage"]["local_network_substrate"]["status"] == "needs_attention"
+    assert "Local network substrate: status `needs_attention`, mode `observe`, route `en0` via `192.168.1.1`." in markdown
 
 
 def test_session_blockers_records_github_consolidation_and_app_gates(tmp_path: Path):
@@ -1210,6 +1349,89 @@ def test_conductor_tranche_emits_github_consolidation_packet(tmp_path: Path):
     assert "python3 scripts/consolidation-gates.py --write" in packet["verification"]
     assert "Stop before `gh repo rename`" in packet["stop_condition"]
     assert "GitHub/org consolidation enforcement path" in markdown
+
+
+def test_conductor_tranche_emits_local_network_packet(tmp_path: Path):
+    tranche = _load(TRANCHE_SCRIPT, "conductor_tranche_local_network")
+    tranche.ROOT = tmp_path
+    tranche.HOME = tmp_path
+    tranche.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    tranche.ATTACK_INDEX = tranche.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
+    tranche.DOC_PATH = tmp_path / "docs" / "conductor-tranche.md"
+    tranche.PRIVATE_INDEX = tranche.PRIVATE_ROOT / "lifecycle" / "conductor-tranche.json"
+    tranche.PORTVS_PATH = tmp_path / "Workspace" / "4444J99" / "portvs"
+
+    tranche.ATTACK_INDEX.parent.mkdir(parents=True)
+    tranche.ATTACK_INDEX.write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-06-28T12:00:00+00:00",
+                "ranked_paths": [
+                    {
+                        "id": "local-network-substrate-unhealthy",
+                        "kind": "blocker",
+                        "lane": "blocker",
+                        "category": "local_network_substrate",
+                        "score": 76,
+                        "agent_fit": "codex",
+                        "next_action": "Repair through the netmode owner path.",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = tranche.build_snapshot()
+    markdown = tranche.render_markdown(snapshot)
+
+    packet = snapshot["packet"]
+    assert packet["id"] == "tranche-local-network-substrate-unhealthy"
+    assert packet["selected_path_id"] == "local-network-substrate-unhealthy"
+    assert "scripts/network-health.py" in packet["allowed_files"]
+    assert "bash scripts/netmode.sh selftest" in packet["verification"]
+    assert "Stop before changing routes" in packet["stop_condition"]
+    assert "one-lane symptom patches" in markdown
+
+
+def test_conductor_tranche_emits_capability_substrate_packet(tmp_path: Path):
+    tranche = _load(TRANCHE_SCRIPT, "conductor_tranche_capability_substrate")
+    tranche.ROOT = tmp_path
+    tranche.HOME = tmp_path
+    tranche.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    tranche.ATTACK_INDEX = tranche.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
+    tranche.DOC_PATH = tmp_path / "docs" / "conductor-tranche.md"
+    tranche.PRIVATE_INDEX = tranche.PRIVATE_ROOT / "lifecycle" / "conductor-tranche.json"
+    tranche.PORTVS_PATH = tmp_path / "Workspace" / "4444J99" / "portvs"
+
+    tranche.ATTACK_INDEX.parent.mkdir(parents=True)
+    tranche.ATTACK_INDEX.write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-06-28T12:00:00+00:00",
+                "ranked_paths": [
+                    {
+                        "id": "capability-substrate-not-resurfaced",
+                        "kind": "blocker",
+                        "lane": "blocker",
+                        "category": "capability_substrate",
+                        "score": 48,
+                        "agent_fit": "codex",
+                        "next_action": "Run capability-substrate-ledger.",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = tranche.build_snapshot()
+
+    packet = snapshot["packet"]
+    assert packet["selected_path_id"] == "capability-substrate-not-resurfaced"
+    assert "scripts/capability-substrate-ledger.py" in packet["allowed_files"]
+    assert "python3 scripts/capability-substrate-ledger.py --write" in packet["verification"]
+    assert "Stop before reading private skill bodies" in packet["stop_condition"]
 
 
 def test_session_orientation_board_counts_tasks_not_dispatch_logs(tmp_path: Path):

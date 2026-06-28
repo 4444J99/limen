@@ -1,6 +1,6 @@
 # Session Corpus Ledger
 
-Generated: `2026-06-28T03:04:47+00:00`
+Generated: `2026-06-28T19:02:42+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -14,54 +14,50 @@ Horizon: `all local history`
 
 ## Local Session Sources
 
-Total seen: `9728` files, `2.1 GiB`.
+Total seen: `9833` files, `2.2 GiB`.
 
 | Source | Root | Files | Size | Newest |
 |---|---:|---:|---:|---|
-| `claude-projects` | `~/.claude/projects` | 4854 | 1.4 GiB | `2026-06-28T01:17:54+00:00` |
-| `codex-sessions` | `~/.codex/sessions` | 889 | 732.4 MiB | `2026-06-28T03:04:43+00:00` |
+| `claude-projects` | `~/.claude/projects` | 4925 | 1.4 GiB | `2026-06-28T17:13:04+00:00` |
+| `codex-sessions` | `~/.codex/sessions` | 923 | 772.8 MiB | `2026-06-28T19:02:41+00:00` |
 | `claude-file-history` | `~/.claude/file-history` | 3519 | 42.2 MiB | `2026-06-27T00:26:28+00:00` |
-| `codex-goals-state` | `~/.codex` | 6 | 10.9 MiB | `2026-06-28T03:04:43+00:00` |
+| `codex-goals-state` | `~/.codex` | 6 | 11.6 MiB | `2026-06-28T19:02:41+00:00` |
 | `claude-plans` | `~/.claude/plans` | 34 | 289.3 KiB | `2026-06-25T03:22:45+00:00` |
+| `codex-history` | `~/.codex` | 1 | 231.9 KiB | `2026-06-28T18:55:55+00:00` |
 | `claude-usage-session-meta` | `~/.claude/usage-data/session-meta` | 197 | 221.4 KiB | `2026-06-23T19:06:40+00:00` |
-| `codex-history` | `~/.codex` | 1 | 192.7 KiB | `2026-06-28T02:24:32+00:00` |
 | `codex-app-sqlite` | `~/.codex/sqlite` | 1 | 68.0 KiB | `2026-06-27T13:58:29+00:00` |
 | `claude-tasks` | `~/.claude/tasks` | 188 | 57.7 KiB | `2026-06-26T00:08:52+00:00` |
 | `claude-usage-facets` | `~/.claude/usage-data/facets` | 32 | 29.1 KiB | `2026-06-23T19:06:55+00:00` |
 | `codex-attachments` | `~/.codex/attachments` | 4 | 6.2 KiB | `2026-06-27T18:15:45+00:00` |
-| `codex-shell-snapshots` | `~/.codex/shell_snapshots` | 3 | 3.8 KiB | `2026-06-28T00:46:05+00:00` |
+| `codex-shell-snapshots` | `~/.codex/shell_snapshots` | 3 | 4.2 KiB | `2026-06-28T18:52:24+00:00` |
 
 ## Existing Organs
 
 | Organ | Role | Path | Git state |
 |---|---|---|---|
-| `session-meta` | producer: redacted, deduped multi-provider atoms | `~/Workspace/session-meta` | `## codex/preserve-session-meta-owner-state-20260627; 1 dirty entries` |
+| `session-meta` | producer: redacted, deduped multi-provider atoms | `~/Workspace/session-meta` | `## codex/preserve-session-meta-owner-state-20260627; 3 dirty entries` |
 | `knowledge-corpus` | distillation target: collection, reduced faces, THE ONE | `~/Workspace/knowledge-corpus` | `## codex/preserve-knowledge-corpus-owner-state-20260627...origin/codex/preserve-knowledge-corpus-owner-state-20260627; 3 dirty entries` |
 | `conversation-corpus-engine` | product/research engine: provider import and corpus promotion | `~/Workspace/conversation-corpus-engine` | `## discover-latent-value-corpus-engine...origin/discover-latent-value-corpus-engine` |
 
 ## Substrate Counts
 
-- `session-meta/ingest/manifest.jsonl`: 23,549 records, mtime `2026-06-28T02:56:32+00:00`.
-- `session-meta/ingest/atoms.jsonl`: 106,539 atoms, mtime `2026-06-28T03:00:03+00:00`.
+- `session-meta/ingest/manifest.jsonl`: 23,646 records, mtime `2026-06-28T16:26:19+00:00`.
+- `session-meta/ingest/atoms.jsonl`: 114,526 atoms, mtime `2026-06-28T16:29:14+00:00`.
 - `knowledge-corpus`: `13` reduced faces; `00-THE-ONE.md` present: `True`.
-- Top manifest sources: `gemini` 4,592, `claude` 3,961, `chatgpt` 2,709, `claude-projects` 2,461, `cowork-sessions` 2,047, `antigravity` 1,893, `downloads` 1,717, `intake` 1,569.
+- Top manifest sources: `gemini` 4,592, `claude` 3,961, `chatgpt` 2,709, `claude-projects` 2,525, `cowork-sessions` 2,047, `antigravity` 1,893, `downloads` 1,717, `intake` 1,569.
 
 ## Session Lifecycle
 
-- Last `quicken.py` journal: `2026-06-28T02:56:16+00:00`.
-- Claude FleetView sessions classified: `29` total; `0` stalled, `29` closed, `0` alive, `0` done.
-- Reaped worktrees in that pass: `0`.
-- Last `codex-quicken.py` journal: `2026-06-27T21:42:32+00:00`.
-- Codex sessions classified: `887` total; `ALIVE` 1, `CLOSED` 783, `PARKED` 40, `STALLED` 63.
-- Top Codex lifecycle families: `auth_credentials` 405, `session_lifecycle` 159, `github_review` 158, `worktree_lifecycle` 77, `agent_coordination` 40, `technical_debt_ci` 36.
+- No `quicken.py` journal found yet.
+- No `codex-quicken.py` journal found yet.
 
 ## Private Cartridge
 
 - Private root: `~/Workspace/limen/.limen-private/session-corpus`.
 - Private inventory: `~/Workspace/limen/.limen-private/session-corpus/inventory/session-corpus-ledger.json`.
 - `.limen-private/` is ignored by Git; it is the local raw/private landing zone.
-- Materialized objects this run: copied `7`, already present `9721`, bytes copied `17.3 MiB`.
-- Private object store now holds `7410` unique objects, `3.1 GiB`.
+- Raw object materialization was not requested on this run.
+- Private object store currently holds `7410` unique objects, `3.1 GiB`.
 - Private screenshot evidence: `14` PNG artifacts, `22.9 MiB`, newest `2026-06-27T13:41:25+00:00`.
 - Screenshot batches: `2026-06-27` 14.
 
@@ -82,6 +78,8 @@ Total seen: `9728` files, `2.1 GiB`.
 - session-meta is not clean/in-sync; do not mutate it from Limen until its existing dirty and divergent work is preserved or merged.
 - knowledge-corpus has 3 dirty entries; record or preserve that owner-state before treating the corpus substrate as fully clean.
 - Local Claude/Codex app stores are live private data; screenshots are only UI evidence. Canonical ingestion must come from the filesystem stores, not from the screenshots.
+- Claude has a lifecycle organ (`scripts/quicken.py`), but no recent journal was found; refresh it before treating Claude FleetView lifecycle as current.
+- Codex has a lifecycle classifier (`scripts/codex-quicken.py`), but no journal was found; run it before relying on Codex app history as typed lifecycle coverage.
 
 ## Commands
 

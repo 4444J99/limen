@@ -31,6 +31,7 @@ PRIVATE_ROOT = Path(
 )
 DOC_PATH = ROOT / "docs" / "capability-substrate-ledger.md"
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "capability-substrate-index.json"
+REPO_CAPABILITY_ROOT = Path(os.environ.get("LIMEN_CAPABILITY_REPO_ROOT", ROOT))
 
 CAPABILITY_ROOTS_ENV = "LIMEN_CAPABILITY_ROOTS"
 CAPABILITY_SCAN_LIMIT_ENV = "LIMEN_CAPABILITY_SCAN_LIMIT"
@@ -45,9 +46,9 @@ DEFAULT_CAPABILITY_ROOTS = (
     HOME / "Workspace" / "a-i--skills",
     HOME / "Workspace" / "domus-genoma",
     HOME / "Workspace" / "4444J99",
-    ROOT / ".agents",
-    ROOT / ".claude" / "skills",
-    ROOT / "mcp",
+    REPO_CAPABILITY_ROOT / ".agents",
+    REPO_CAPABILITY_ROOT / ".claude" / "skills",
+    REPO_CAPABILITY_ROOT / "mcp",
 )
 
 CAPABILITY_SKIP_DIRS = {
@@ -256,14 +257,16 @@ def root_lane(root: Path) -> dict[str, str]:
             "state": "mirror-candidate",
             "route": "Use only after checking the source owner; count it so duplicate capability copies are visible.",
         }
-    if is_relative_to(root, ROOT / ".agents") or is_relative_to(root, ROOT / ".claude" / "skills"):
+    if is_relative_to(root, REPO_CAPABILITY_ROOT / ".agents") or is_relative_to(
+        root, REPO_CAPABILITY_ROOT / ".claude" / "skills"
+    ):
         return {
             "lane": "limen-local-skills",
             "owner": "limen",
             "state": "repo-local-active",
             "route": "Keep mirrored local skills minimal and tested by Limen verification.",
         }
-    if is_relative_to(root, ROOT / "mcp"):
+    if is_relative_to(root, REPO_CAPABILITY_ROOT / "mcp"):
         return {
             "lane": "limen-mcp",
             "owner": "limen/mcp",

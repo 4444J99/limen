@@ -39,6 +39,8 @@ CORPUS_INVENTORY = PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
 PRESSURE_INDEX = ROOT / "logs" / "session-lifecycle-pressure.json"
 CAPABILITY_INDEX = PRIVATE_ROOT / "lifecycle" / "capability-substrate-index.json"
 CONSOLIDATION_INDEX = PRIVATE_ROOT / "lifecycle" / "consolidation-gates.json"
+NETWORK_HEALTH_INDEX = PRIVATE_ROOT / "lifecycle" / "network-health.json"
+CAPABILITY_REPO_ROOT = Path(os.environ.get("LIMEN_CAPABILITY_REPO_ROOT", ROOT))
 REMOTE_MISSING_CLOSED_REASONS = {
     "clean+merged+idle",
     "documented-residue",
@@ -70,9 +72,9 @@ DEFAULT_CAPABILITY_ROOTS = (
     HOME / "Workspace" / "a-i--skills",
     HOME / "Workspace" / "domus-genoma",
     HOME / "Workspace" / "4444J99",
-    ROOT / ".agents",
-    ROOT / ".claude" / "skills",
-    ROOT / "mcp",
+    CAPABILITY_REPO_ROOT / ".agents",
+    CAPABILITY_REPO_ROOT / ".claude" / "skills",
+    CAPABILITY_REPO_ROOT / "mcp",
 )
 CAPABILITY_SKIP_DIRS = {"node_modules", ".git", ".venv", "venv", "__pycache__", ".next", "dist", "build", "portvs"}
 
@@ -623,6 +625,64 @@ def capability_substrate_blockers(blockers: list[dict[str, Any]]) -> dict[str, A
     return capability
 
 
+def network_health_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any]:
+    network = load_json(NETWORK_HEALTH_INDEX)
+    if not network:
+        add_blocker(
+            blockers,
+            blocker_id="local-network-health-not-refreshed",
+            category="local_network_substrate",
+            status="needs_refresh",
+            evidence="No current netmode/netmeter network-health receipt is available.",
+            owner="local network substrate",
+            route=(
+                "Run `python3 scripts/network-health.py --write` before treating network failures as "
+                "incidental lane flakiness or dispatching broad work."
+            ),
+            source="network-health",
+            details={"path": str(NETWORK_HEALTH_INDEX)},
+        )
+        return {"present": False, "path": str(NETWORK_HEALTH_INDEX), "status": "missing"}
+
+    status = str(network.get("status") or "unknown")
+    network_blockers = [item for item in network.get("blockers") or [] if isinstance(item, dict)]
+    if status != "healthy" or network_blockers:
+        add_blocker(
+            blockers,
+            blocker_id="local-network-substrate-unhealthy",
+            category="local_network_substrate",
+            status="needs_repair",
+            evidence=(
+                f"Network-health receipt is `{status}` with {len(network_blockers)} blocker(s); "
+                "do not treat route drops as one-off lane failures."
+            ),
+            owner="local network substrate",
+            route=(
+                "Repair through the netmode owner path, then refresh `python3 scripts/network-health.py --write`; "
+                "do not run broad dispatch until the substrate receipt is healthy or explicitly waived."
+            ),
+            source="network-health",
+            details={
+                "status": status,
+                "blocker_ids": [str(item.get("id") or "unknown") for item in network_blockers],
+                "path": str(NETWORK_HEALTH_INDEX),
+            },
+        )
+
+    route = network.get("route") or {}
+    mode = network.get("mode") or {}
+    return {
+        "present": True,
+        "path": str(NETWORK_HEALTH_INDEX),
+        "generated_at": network.get("generated_at"),
+        "status": status,
+        "blockers": len(network_blockers),
+        "mode": mode.get("mode"),
+        "route_interface": route.get("interface"),
+        "route_gateway": route.get("gateway"),
+    }
+
+
 def consolidation_gate_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any]:
     gate = load_json(CONSOLIDATION_INDEX)
     if not gate:
@@ -746,6 +806,7 @@ def build_snapshot() -> dict[str, Any]:
     corpus_owner_blockers(corpus, blockers)
     hook_pressure = hook_and_pressure_blockers(prompt, worktree_report, blockers)
     capability = capability_substrate_blockers(blockers)
+    network = network_health_blockers(blockers)
     consolidation = consolidation_gate_blockers(blockers)
 
     by_category = Counter(blocker["category"] for blocker in blockers)
@@ -757,6 +818,7 @@ def build_snapshot() -> dict[str, Any]:
             "codex_session_lifecycle": {"path": str(CODEX_INDEX), "present": bool(codex)},
             "session_corpus_inventory": {"path": str(CORPUS_INVENTORY), "present": bool(corpus)},
             "consolidation_gates": {"path": str(CONSOLIDATION_INDEX), "present": bool(consolidation.get("present"))},
+            "network_health": {"path": str(NETWORK_HEALTH_INDEX), "present": bool(network.get("present"))},
         },
         "coverage": {
             "prompt_sources": prompt.get("sources") or [],
@@ -768,6 +830,7 @@ def build_snapshot() -> dict[str, Any]:
             "session_pressure_present": hook_pressure["pressure_present"],
             "local_lifecycle_bytes": hook_pressure["total_bytes"],
             "capability_substrate": capability,
+            "local_network_substrate": network,
             "github_consolidation": consolidation,
         },
         "blockers": blockers,
@@ -804,6 +867,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         f"- Codex lifecycle index present: `{inputs['codex_session_lifecycle']['present']}` at `{relpath(Path(inputs['codex_session_lifecycle']['path']))}`.",
         f"- Session corpus inventory present: `{inputs['session_corpus_inventory']['present']}` at `{relpath(Path(inputs['session_corpus_inventory']['path']))}`.",
         f"- GitHub consolidation gates present: `{inputs['consolidation_gates']['present']}` at `{relpath(Path(inputs['consolidation_gates']['path']))}`.",
+        f"- Network health receipt present: `{inputs['network_health']['present']}` at `{relpath(Path(inputs['network_health']['path']))}`.",
         f"- Redacted local prompt coverage: `{total_prompt_files}` files, `{total_prompt_events}` prompt-like events.",
         f"- Codex classified sessions: `{coverage.get('codex_sessions', 0)}`.",
         f"- Worktree debt roots: `{coverage.get('worktree_debt', 0)}`.",
@@ -822,6 +886,13 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
             f"`{((coverage.get('capability_substrate') or {}).get('receipt') or {}).get('current', False)}`; "
             f"activation candidates "
             f"`{((coverage.get('capability_substrate') or {}).get('receipt') or {}).get('activation_candidates', 0)}`."
+        ),
+        (
+            "- Local network substrate: "
+            f"status `{(coverage.get('local_network_substrate') or {}).get('status', 'unknown')}`, "
+            f"mode `{(coverage.get('local_network_substrate') or {}).get('mode') or 'unknown'}`, "
+            f"route `{(coverage.get('local_network_substrate') or {}).get('route_interface') or 'unknown'}` "
+            f"via `{(coverage.get('local_network_substrate') or {}).get('route_gateway') or 'unknown'}`."
         ),
         (
             "- GitHub consolidation gate: "
@@ -859,6 +930,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "- Refresh source receipts first: `python3 scripts/prompt-lifecycle-ledger.py --write --all`",
         "- Refresh private absorption receipt: `python3 scripts/session-corpus-ledger.py --write --all --materialize`",
         "- Refresh capability resurfacing: `python3 scripts/capability-substrate-ledger.py --write`",
+        "- Refresh local network health: `python3 scripts/network-health.py --write`",
         "- Refresh GitHub consolidation gates: `python3 scripts/consolidation-gates.py --write`",
         "- Refresh this blocker ledger: `python3 scripts/session-blockers-ledger.py --write`",
         "",

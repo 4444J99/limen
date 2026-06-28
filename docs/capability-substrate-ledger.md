@@ -1,6 +1,6 @@
 # Capability Substrate Ledger
 
-Generated: `2026-06-28T15:04:52+00:00`
+Generated: `2026-06-28T19:07:58+00:00`
 
 ## Canonical Decision
 
@@ -12,7 +12,7 @@ Generated: `2026-06-28T15:04:52+00:00`
 ## Coverage
 
 - Roots seen: `11`.
-- Scanned files: `20264`; truncated roots: `0`.
+- Scanned files: `20263`; truncated roots: `0`.
 - Skill files: `1317`; unique skill names: `374`.
 - Plugin/MCP manifests: `45`; MCP/ACP markers: `150`.
 - Capability bytes counted by metadata only: `739.6 MiB`.
@@ -25,7 +25,7 @@ Generated: `2026-06-28T15:04:52+00:00`
 |---|---|---|---:|---:|---:|---:|---:|---|
 | `~/.codex/skills` | `codex-user-skills` | `available` | 6 | 6 | 0 | 0 | 53 | Already visible to Codex when the skill registry loads; keep as the active baseline. |
 | `~/.codex/plugins` | `codex-plugin-cache` | `available-vendor-cache` | 179 | 166 | 36 | 11 | 2559 | Already surfaced by installed Codex plugins; do not port cache internals by hand. |
-| `~/.claude/plugins` | `claude-plugin-cache` | `legacy-plugin-cache` | 0 | 0 | 3 | 0 | 42 | Treat as Claude-side plugin state; inspect only through its plugin owner. |
+| `~/.claude/plugins` | `claude-plugin-cache` | `legacy-plugin-cache` | 0 | 0 | 3 | 0 | 41 | Treat as Claude-side plugin state; inspect only through its plugin owner. |
 | `~/Workspace/organvm/_agent` | `organvm-agent-archive` | `custom-agent-archive` | 163 | 163 | 0 | 11 | 908 | Converge legacy global skills and MCP registry pieces into the current capability layer. |
 | `~/Workspace/organvm/claude-runtime-state` | `organvm-runtime-tasks` | `scheduled-runtime-archive` | 17 | 17 | 0 | 17 | 3908 | Convert scheduled-task skills into Limen packets or LaunchAgent receipts, not chat-only memory. |
 | `~/Workspace/organvm/a-i--skills` | `organvm-ai-skills` | `custom-skill-archive` | 907 | 183 | 4 | 32 | 5469 | Port selected high-signal skills into the current Codex skill registry after body review. |

@@ -22,6 +22,7 @@ import datetime as dt
 import json
 import os
 import re
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -63,6 +64,14 @@ def slugify(value: str) -> str:
 
 def as_list(value: Any) -> list[dict[str, Any]]:
     return [item for item in value or [] if isinstance(item, dict)]
+
+
+def blocker_index_path() -> Path:
+    return PRIVATE_ROOT / "lifecycle" / "session-lifecycle-blockers.json"
+
+
+def corpus_inventory_path() -> Path:
+    return PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
 
 
 def is_actionable(path: dict[str, Any]) -> bool:
@@ -216,6 +225,196 @@ def dispatch_packet(path: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def local_network_packet(path: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "purpose": (
+            "Turn local network/netmode substrate drift into a durable cross-lane receipt so future "
+            "agents do not treat route drops, legacy LaunchAgents, or auth-looking network failures "
+            "as single-lane flakiness."
+        ),
+        "repo_worktree": "`organvm/limen` conductor checkout plus read-only probes of the live netmode install.",
+        "allowed_files": [
+            "scripts/network-health.py",
+            "scripts/netmode.sh",
+            "container/launchd/com.user.netmeter.plist",
+            "container/launchd/com.user.netmode.*.plist",
+            "scripts/session-blockers-ledger.py",
+            "scripts/session-attack-paths.py",
+            "scripts/conductor-tranche.py",
+            "docs/network-health.md",
+            "docs/session-lifecycle-blockers.md",
+            "docs/session-attack-paths.md",
+            "docs/conductor-tranche.md",
+            ".limen-private/session-corpus/lifecycle/network-health.json",
+            ".limen-private/session-corpus/lifecycle/session-lifecycle-blockers.json",
+            ".limen-private/session-corpus/lifecycle/session-attack-paths.json",
+            ".limen-private/session-corpus/lifecycle/conductor-tranche.json",
+        ],
+        "stop_condition": (
+            "Stop before changing routes, running `netmode stop`, loading/unloading LaunchAgents, "
+            "editing untracked SSID/provider config, or treating a failed network probe as a credential "
+            "failure unless a human explicitly opens that gate."
+        ),
+        "verification": [
+            "bash -n scripts/netmode.sh",
+            "bash scripts/netmode.sh selftest",
+            "plutil -lint container/launchd/com.user.netmeter.plist",
+            "python3 scripts/network-health.py --write",
+            "python3 scripts/session-blockers-ledger.py --write",
+            "python3 scripts/session-attack-paths.py --write",
+            "python3 scripts/conductor-tranche.py --write",
+        ],
+        "receipt": (
+            "docs/network-health.md plus the local-network-substrate row in docs/session-lifecycle-blockers.md "
+            "if the substrate is missing or unhealthy."
+        ),
+    }
+
+
+def capability_substrate_packet(path: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "purpose": (
+            "Refresh the local agent capability substrate as a public-safe receipt so skill/plugin/MCP "
+            "surface area is counted and routed before any lane tries to install, port, or activate tools."
+        ),
+        "repo_worktree": "`organvm/limen` conductor checkout plus read-only path scans of configured capability roots.",
+        "allowed_files": [
+            "scripts/capability-substrate-ledger.py",
+            "scripts/session-blockers-ledger.py",
+            "scripts/session-attack-paths.py",
+            "scripts/conductor-tranche.py",
+            "docs/capability-substrate-ledger.md",
+            "docs/session-lifecycle-blockers.md",
+            "docs/session-attack-paths.md",
+            "docs/conductor-tranche.md",
+            ".limen-private/session-corpus/lifecycle/capability-substrate-index.json",
+            ".limen-private/session-corpus/lifecycle/session-lifecycle-blockers.json",
+            ".limen-private/session-corpus/lifecycle/session-attack-paths.json",
+            ".limen-private/session-corpus/lifecycle/conductor-tranche.json",
+        ],
+        "stop_condition": (
+            "Stop before reading private skill bodies, installing plugins/connectors, editing MCP auth, "
+            "moving capability roots, or dispatching broad capability work without a scoped activation packet."
+        ),
+        "verification": [
+            "python3 scripts/capability-substrate-ledger.py --write",
+            "python3 scripts/session-blockers-ledger.py --write",
+            "python3 scripts/session-attack-paths.py --write",
+            "python3 scripts/conductor-tranche.py --write",
+        ],
+        "receipt": (
+            "docs/capability-substrate-ledger.md plus refreshed blocker/attack/tranche receipts; "
+            "private counts under .limen-private/session-corpus/lifecycle/."
+        ),
+    }
+
+
+def owner_slug_from_path(path: dict[str, Any]) -> str:
+    path_id = str(path.get("id") or "")
+    prefix = "owner-state-dirty-"
+    if path_id.startswith(prefix):
+        return path_id[len(prefix) :]
+    return path_id or "unknown-owner"
+
+
+def find_blocker(path_id: str) -> dict[str, Any]:
+    blockers = as_list(load_json(blocker_index_path()).get("blockers"))
+    for blocker in blockers:
+        if str(blocker.get("id") or "") == path_id:
+            return blocker
+    return {}
+
+
+def find_corpus_organ(owner_name: str) -> dict[str, Any]:
+    organs = as_list(load_json(corpus_inventory_path()).get("organs"))
+    for organ in organs:
+        if str(organ.get("name") or "") == owner_name:
+            return organ
+    return {}
+
+
+def git_dirty_paths(owner_path: Path) -> list[str]:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(owner_path), "status", "--porcelain=v1"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return []
+    if result.returncode != 0:
+        return []
+    dirty: list[str] = []
+    for line in result.stdout.splitlines():
+        if len(line) < 4:
+            continue
+        path = line[3:].strip()
+        if " -> " in path:
+            path = path.split(" -> ", 1)[1].strip()
+        if path:
+            dirty.append(path)
+    return sorted(dict.fromkeys(dirty))
+
+
+def owner_state_packet(path: dict[str, Any]) -> dict[str, Any]:
+    path_id = str(path.get("id") or "owner-state-dirty-unknown")
+    blocker = find_blocker(path_id)
+    owner_name = str(blocker.get("owner") or owner_slug_from_path(path))
+    organ = find_corpus_organ(owner_name)
+    owner_path_raw = str(organ.get("path") or "")
+    owner_path = Path(owner_path_raw).expanduser() if owner_path_raw else HOME / "Workspace" / owner_name
+    owner_scope = relpath(owner_path)
+    dirty_paths = git_dirty_paths(owner_path)
+    owner_allowed = [f"{owner_scope}/{dirty}" for dirty in dirty_paths] or [f"{owner_scope}/<dirty owner files>"]
+    dirty_count = int((blocker.get("details") or {}).get("dirty_entries") or len(dirty_paths) or 0)
+
+    return {
+        "purpose": (
+            f"Preserve `{path_id}` as a scoped owner-state packet for `{owner_name}` "
+            "without rewriting corpus content or broadening into creative placement work."
+        ),
+        "repo_worktree": f"`{owner_name}` owner repo at `{owner_scope}` plus `organvm/limen` conductor receipts.",
+        "allowed_files": [
+            *owner_allowed,
+            "docs/session-corpus-ledger.md",
+            "docs/session-lifecycle-blockers.md",
+            "docs/session-attack-paths.md",
+            "docs/conductor-tranche.md",
+            ".limen-private/session-corpus/inventory/session-corpus-ledger.json",
+            ".limen-private/session-corpus/lifecycle/session-lifecycle-blockers.json",
+            ".limen-private/session-corpus/lifecycle/session-attack-paths.json",
+            ".limen-private/session-corpus/lifecycle/conductor-tranche.json",
+        ],
+        "stop_condition": (
+            "Stop before content rewriting, synthesis, deletion/revert of owner changes, broad corpus "
+            "convergence, owner repo push/PR, or edits outside the listed dirty owner paths unless a "
+            "new explicit owner packet opens that scope."
+        ),
+        "verification": [
+            f"git -C {owner_scope} status --branch --short",
+            f"git -C {owner_scope} diff --name-status",
+            f"git -C {owner_scope} diff --check",
+            "python3 scripts/session-corpus-ledger.py --write --all",
+            "python3 scripts/session-blockers-ledger.py --write",
+            "python3 scripts/session-attack-paths.py --write",
+            "python3 scripts/conductor-tranche.py --write",
+        ],
+        "receipt": (
+            f"`{owner_name}` owner branch/commit or patch receipt, plus refreshed "
+            "docs/session-corpus-ledger.md, docs/session-lifecycle-blockers.md, and docs/conductor-tranche.md."
+        ),
+        "owner_state": {
+            "owner": owner_name,
+            "owner_path": str(owner_path),
+            "dirty_entries": dirty_count,
+            "dirty_paths": dirty_paths,
+            "blocker_source": blocker.get("source"),
+        },
+    }
+
+
 def consolidation_packet(path: dict[str, Any]) -> dict[str, Any]:
     return {
         "purpose": (
@@ -352,6 +551,12 @@ def packet_for_path(path: dict[str, Any] | None) -> dict[str, Any]:
         return consolidation_packet(path)
     if category == "github_app_identity":
         return github_app_identity_packet(path)
+    if category == "local_network_substrate":
+        return local_network_packet(path)
+    if category == "capability_substrate":
+        return capability_substrate_packet(path)
+    if category == "owner_state":
+        return owner_state_packet(path)
     if category in {"remote_receipt", "dispatch_lifecycle", "task_board"} or lane == "remote-close":
         return dispatch_packet(path)
     return default_packet(path)
@@ -425,6 +630,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "- Work in one-to-two-hour direct-session tranches.",
         "- Start from current receipts, not memory.",
         "- Implement reversible local fixes first.",
+        "- Close incident classes with reusable receipts and gates, not one-lane symptom patches.",
         "- Leave owner receipts and exact verification commands before stopping.",
         "",
         "## Selected Trench",
