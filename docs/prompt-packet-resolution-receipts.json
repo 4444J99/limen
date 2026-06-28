@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-28T03:08:16Z",
+  "generated_at": "2026-06-28T03:13:32Z",
   "receipts": [
     {
       "packet": "packet-prompt-batch-critical-stalled-review-001-worktree_lifecycle",
@@ -211,6 +211,62 @@
           "root": "rev-styx-stripe-subscription-719b",
           "status": "session_ledger_recorded_absent_root",
           "repo_hint": "styx/stripe-subscription",
+          "evidence": "Redacted session lifecycle row exists; local worktree root is absent from current scan.",
+          "next_action": "No local root to preserve; route only through a later owner-repo packet with an explicit live receipt."
+        }
+      ]
+    },
+    {
+      "packet": "packet-prompt-batch-critical-stalled-review-002-session_lifecycle",
+      "source_batch": "prompt-batch-critical-stalled-review-002",
+      "family": "session_lifecycle",
+      "status": "owner-recorded",
+      "classification": "stalled session receipts folded into redacted lifecycle ledgers",
+      "evidence": [
+        "python3 scripts/worktree-debt.py --json",
+        "python3 scripts/prompt-priority-map.py --write",
+        "python3 scripts/prompt-batch-review-ledger.py --write",
+        "python3 scripts/prompt-packet-ledger.py --write",
+        "all 5 packet roots were absent from /Users/4jp/Workspace/.limen-worktrees on 2026-06-28T03:13:32Z",
+        "the packet session handles are represented in .limen-private/session-corpus/lifecycle/prompt-priority-map.json with owner limen control plane",
+        "the current Codex lifecycle index has matching redacted cwd-hint rows for every packet root; limen-054 also has related closed history",
+        "no packet root had a current remote-worktree receipt in the prompt lifecycle index",
+        "git for-each-ref in the limen repo found no local or remote branch refs named by these worktree slugs"
+      ],
+      "next_action": "No live local session/worktree cleanup remains for this packet. Continue with the next open packet; rehydrate any owner repo only if a later packet names a current branch, PR, predicate, and expected receipt.",
+      "roots": [
+        {
+          "root": "cifix-a-organvm-peer-audited--behavioral-blockchain-6f84",
+          "status": "session_ledger_recorded_absent_root",
+          "repo_hint": "a-organvm/peer-audited--behavioral-blockchain",
+          "evidence": "Redacted session lifecycle row exists; local worktree root is absent from current scan.",
+          "next_action": "No local root to preserve; route only through a later owner-repo packet with an explicit live receipt."
+        },
+        {
+          "root": "gh-4444j99-domus-genoma-86-8188",
+          "status": "session_ledger_recorded_absent_root",
+          "repo_hint": "4444j99/domus-genoma",
+          "evidence": "Redacted session lifecycle row exists; local worktree root is absent from current scan.",
+          "next_action": "No local root to preserve; route only through a later owner-repo packet with an explicit live receipt."
+        },
+        {
+          "root": "gh-a-organvm-organvm-corpvs-testamentvm-494-0388",
+          "status": "session_ledger_recorded_absent_root",
+          "repo_hint": "a-organvm/organvm-corpvs-testamentvm",
+          "evidence": "Redacted session lifecycle row exists; local worktree root is absent from current scan.",
+          "next_action": "No local root to preserve; route only through a later owner-repo packet with an explicit live receipt."
+        },
+        {
+          "root": "limen-054",
+          "status": "session_ledger_recorded_absent_root",
+          "repo_hint": "limen",
+          "evidence": "Redacted session lifecycle rows exist, including related closed history; local worktree root is absent from current scan.",
+          "next_action": "No local root to preserve; route only through a later owner-repo packet with an explicit live receipt."
+        },
+        {
+          "root": "limen-084-8712",
+          "status": "session_ledger_recorded_absent_root",
+          "repo_hint": "limen",
           "evidence": "Redacted session lifecycle row exists; local worktree root is absent from current scan.",
           "next_action": "No local root to preserve; route only through a later owner-repo packet with an explicit live receipt."
         }
