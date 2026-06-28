@@ -15,9 +15,9 @@ portal:
       claude: 100
     track:
       date: '2026-06-28'
-      spent: 81
+      spent: 84
       per_agent:
-        jules: 60
+        jules: 63
         gemini: 0
         codex: 0
         opencode: 8
@@ -57535,7 +57535,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - simplify
   - generated
@@ -57547,7 +57547,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-28T08:35:41.519227Z'
+  updated: '2026-06-28T09:37:07.968149Z'
   dispatch_log:
   - timestamp: '2026-06-27T05:21:04.898340Z'
     agent: gemini
@@ -57568,6 +57568,15 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-28T09:37:07.968149Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T09:37:07.968149Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GEN-organvm-domus-genoma-simplify-0627
   title: Reduce complexity in organvm/domus-genoma
   repo: organvm/domus-genoma
@@ -57575,7 +57584,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - simplify
   - generated
@@ -57587,7 +57596,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-28T08:35:41.519227Z'
+  updated: '2026-06-28T09:37:07.968149Z'
   dispatch_log:
   - timestamp: '2026-06-27T05:21:04.898340Z'
     agent: gemini
@@ -57608,6 +57617,15 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-28T09:37:07.968149Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T09:37:07.968149Z'
+    agent: jules
+    session_id: '14896550754532702343'
+    status: dispatched
 - id: GEN-organvm-the-invisible-ledger-simplify-0627
   title: Reduce complexity in organvm/the-invisible-ledger
   repo: organvm/the-invisible-ledger
@@ -61842,7 +61860,7 @@ tasks:
   target_agent: jules
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -61856,7 +61874,7 @@ tasks:
     keep the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T08:56:32.923717Z'
+  updated: '2026-06-28T09:37:07.968149Z'
   dispatch_log:
   - timestamp: '2026-06-28T06:18:55.153664Z'
     agent: codex
@@ -61906,6 +61924,15 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-28T09:37:07.968149Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-28T09:37:07.968149Z'
+    agent: jules
+    session_id: '14474922247742113962'
+    status: dispatched
 - id: GEN-organvm-domus-genoma-docs-0628
   title: Real usage docs for organvm/domus-genoma
   repo: organvm/domus-genoma
