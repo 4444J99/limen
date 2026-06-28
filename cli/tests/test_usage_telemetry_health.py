@@ -5,6 +5,7 @@ text regex) and gemini (a one-time 'RATE-LIMIT gemini' marker in the heartbeat l
 These tests pin the fix: a lane is gated ONLY by a real, RECENT rate-limit — a lane with full
 headroom and no fresh signal is never benched.
 """
+
 import json
 import os
 import subprocess
@@ -21,9 +22,13 @@ def _run(tmp_path, heartbeat_lines):
     (root / "logs").mkdir(parents=True)
     (home / ".claude" / "projects").mkdir(parents=True)
     (home / ".codex" / "sessions").mkdir(parents=True)
-    (root / "logs" / "usage-limits.json").write_text(json.dumps({
-        "gemini": {"limit": 200, "unit": "runs", "window": "24h"},
-    }))
+    (root / "logs" / "usage-limits.json").write_text(
+        json.dumps(
+            {
+                "gemini": {"limit": 200, "unit": "runs", "window": "24h"},
+            }
+        )
+    )
     (root / "logs" / "heartbeat.out.log").write_text("\n".join(heartbeat_lines))
     (root / "tasks.yaml").write_text("tasks: []\nportal: {}\n")
     env = dict(os.environ, LIMEN_ROOT=str(root), HOME=str(home))

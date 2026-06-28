@@ -3,6 +3,7 @@ agent subprocess env — so a SET key never reads as 'auth not configured' again
 is never repeated. Covers dispatch._load_limen_env() (the propagation fix) and the creds-hydrate
 organ's --dry-run/--check (no `op`, no secret reads, no writes) and --verify (VALIDITY, not just
 presence — the predicate that catches a dead token sitting behind a green --check)."""
+
 import importlib.util
 import io
 import os
@@ -60,7 +61,9 @@ def test_hydrate_dry_run_reads_nothing_writes_nothing(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_ENV", str(env_file))
     r = subprocess.run(
         [sys.executable, str(HYDRATE), "--dry-run"],
-        capture_output=True, text=True, timeout=30,
+        capture_output=True,
+        text=True,
+        timeout=30,
         env={**os.environ, "LIMEN_ENV": str(env_file)},
     )
     assert r.returncode == 0
@@ -104,6 +107,7 @@ def test_hydrate_write_env_idempotent(tmp_path, monkeypatch):
 
 # --- VALIDITY PROBE (--verify): presence is not validity -------------------------------------------
 
+
 def test_scrub_redacts_key_shapes():
     """A provider error must never carry a live key into our logs."""
     mod = _hydrate_module()
@@ -117,7 +121,7 @@ def test_env_value_reads_both_forms_and_strips_quotes(tmp_path):
     f = tmp_path / ".limen.env"
     f.write_text('export GH_TOKEN=ghp_plain\nCLOUDFLARE_API_TOKEN="cf_quoted"\n')
     mod.ENV_FILE = f
-    assert mod._env_value("GH_TOKEN") == "ghp_plain"          # export form
+    assert mod._env_value("GH_TOKEN") == "ghp_plain"  # export form
     assert mod._env_value("CLOUDFLARE_API_TOKEN") == "cf_quoted"  # bare form, quotes stripped
     assert mod._env_value("ABSENT") is None
 
@@ -130,7 +134,9 @@ def test_probe_reason_extracts_clean_reason_per_provider():
     # github
     assert mod._probe_reason(b'{"message":"Bad credentials"}') == "Bad credentials"
     # cloudflare
-    assert "Invalid API Token" in mod._probe_reason(b'{"success":false,"errors":[{"code":1000,"message":"Invalid API Token"}]}')
+    assert "Invalid API Token" in mod._probe_reason(
+        b'{"success":false,"errors":[{"code":1000,"message":"Invalid API Token"}]}'
+    )
 
 
 def test_probe_cred_unverifiable_without_spec():
@@ -144,26 +150,34 @@ def test_probe_cred_classifies_valid_invalid_unverifiable(monkeypatch):
 
     class _OK:
         status = 200
-        def __enter__(self): return self
-        def __exit__(self, *a): return False
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
 
     monkeypatch.setattr(mod.urllib.request, "urlopen", lambda *a, **k: _OK())
     assert mod.probe_cred(entry, "tok") == ("valid", "HTTP 200")
 
     def _raise_401(*a, **k):
-        raise urllib.error.HTTPError(entry["verify"]["url"], 401, "Unauthorized", {},
-                                     io.BytesIO(b'{"message":"Bad credentials"}'))
+        raise urllib.error.HTTPError(
+            entry["verify"]["url"], 401, "Unauthorized", {}, io.BytesIO(b'{"message":"Bad credentials"}')
+        )
+
     monkeypatch.setattr(mod.urllib.request, "urlopen", _raise_401)
     state, detail = mod.probe_cred(entry, "tok")
     assert state == "invalid" and "Bad credentials" in detail
 
     def _raise_neterr(*a, **k):
         raise urllib.error.URLError("name resolution failed")
+
     monkeypatch.setattr(mod.urllib.request, "urlopen", _raise_neterr)
     assert mod.probe_cred(entry, "tok")[0] == "unverifiable"  # offline never cries wolf
 
 
 # --- DERIVE (live-minted source, e.g. gh keyring) --------------------------------------------------
+
 
 def test_derive_value_runs_with_dead_floor_token_scrubbed(monkeypatch):
     """The gh keyring must be read with GH_TOKEN/GITHUB_TOKEN unset — else a dead floor token shadows it."""
@@ -182,7 +196,7 @@ def test_derive_value_runs_with_dead_floor_token_scrubbed(monkeypatch):
         return _R()
 
     monkeypatch.setattr(mod.subprocess, "run", _run)
-    assert mod.derive_value(["gh", "auth", "token"]) == "keyring_tok"   # stripped
+    assert mod.derive_value(["gh", "auth", "token"]) == "keyring_tok"  # stripped
     assert seen["cmd"] == ["gh", "auth", "token"]
     assert "GH_TOKEN" not in seen["env"] and "GITHUB_TOKEN" not in seen["env"]  # dead token can't shadow
 
@@ -193,12 +207,14 @@ def test_derive_value_failopen(monkeypatch):
 
     def _missing(*a, **k):
         raise FileNotFoundError("gh")
+
     monkeypatch.setattr(mod.subprocess, "run", _missing)
     assert mod.derive_value(["gh", "auth", "token"]) is None
 
     class _Fail:
         returncode = 1
         stdout = ""
+
     monkeypatch.setattr(mod.subprocess, "run", lambda *a, **k: _Fail())
     assert mod.derive_value(["gh", "auth", "token"]) is None
 
@@ -208,7 +224,9 @@ def test_verify_cli_no_creds_materialized_exits_zero(tmp_path):
     env_file = tmp_path / ".limen.env"  # does not exist
     r = subprocess.run(
         [sys.executable, str(HYDRATE), "--verify"],
-        capture_output=True, text=True, timeout=30,
+        capture_output=True,
+        text=True,
+        timeout=30,
         env={**os.environ, "LIMEN_ENV": str(env_file)},
     )
     assert r.returncode == 0
@@ -250,6 +268,7 @@ def test_op_read_is_opt_in_no_prompt_by_default(tmp_path, monkeypatch):
 
 # --- gh_secret CI-SECRET sink: credentials land as GitHub Actions secrets, owned by the organ --------
 
+
 def test_gh_secret_present_parses_names_only(monkeypatch):
     """gh_secret_present reads `gh secret list` (NAME<TAB>UPDATED rows) and matches the name — never a value."""
     mod = _hydrate_module()
@@ -288,8 +307,8 @@ def test_gh_secret_set_pipes_value_via_stdin_not_argv(monkeypatch):
     monkeypatch.setattr(mod.subprocess, "run", _fake_run)
     ok = mod.gh_secret_set("organvm/domus", "GMAIL_APP_PASSWORD", "super-secret-value")
     assert ok is True
-    assert seen["input"] == "super-secret-value"            # value flows through stdin
-    assert "super-secret-value" not in seen["cmd"]          # and NEVER through the argv
+    assert seen["input"] == "super-secret-value"  # value flows through stdin
+    assert "super-secret-value" not in seen["cmd"]  # and NEVER through the argv
     assert seen["cmd"][:3] == ["gh", "secret", "set"]
 
 
@@ -303,7 +322,9 @@ def test_gh_secret_only_entry_verify_is_neutral_and_offline(tmp_path):
     env_file = tmp_path / ".limen.env"
     r = subprocess.run(
         [sys.executable, str(HYDRATE), "--verify"],
-        capture_output=True, text=True, timeout=30,
+        capture_output=True,
+        text=True,
+        timeout=30,
         env={**os.environ, "LIMEN_ENV": str(env_file), "LIMEN_CREDS_MAP": str(map_file)},
     )
     assert r.returncode == 0

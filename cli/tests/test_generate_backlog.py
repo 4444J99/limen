@@ -5,6 +5,7 @@ generate-backlog.py runs autonomously in the heartbeat, so its safety properties
 (2) it must respect the max-new anti-flood cap,
 (3) when it does generate, it spreads across DISTINCT repos (no repo gets dumped on).
 """
+
 from __future__ import annotations
 
 import os
@@ -24,18 +25,30 @@ def _board(path: Path, repos: list[str], n_open_per_repo: int = 1) -> None:
     for r in repos:
         for _ in range(n_open_per_repo):
             i += 1
-            tasks.append({
-                "id": f"SEED-{i}", "title": f"seed {i}", "repo": r,
-                "target_agent": "codex", "priority": "medium", "budget_cost": 1,
-                "status": "open", "created": "2026-06-01", "dispatch_log": [],
-            })
+            tasks.append(
+                {
+                    "id": f"SEED-{i}",
+                    "title": f"seed {i}",
+                    "repo": r,
+                    "target_agent": "codex",
+                    "priority": "medium",
+                    "budget_cost": 1,
+                    "status": "open",
+                    "created": "2026-06-01",
+                    "dispatch_log": [],
+                }
+            )
     doc = {
         "version": "1.0",
-        "portal": {"name": "t", "budget": {
-            "daily": 600, "unit": "runs",
-            "per_agent": {"codex": 100, "claude": 100, "agy": 100},
-            "track": {"date": "", "spent": 0, "per_agent": {}},
-        }},
+        "portal": {
+            "name": "t",
+            "budget": {
+                "daily": 600,
+                "unit": "runs",
+                "per_agent": {"codex": 100, "claude": 100, "agy": 100},
+                "track": {"date": "", "spent": 0, "per_agent": {}},
+            },
+        },
         "tasks": tasks,
     }
     path.write_text(yaml.safe_dump(doc, sort_keys=False))
@@ -57,14 +70,20 @@ def _run(
         value_repos = ",".join(sorted({t["repo"] for t in doc.get("tasks", []) if t.get("repo")}))
     p = subprocess.run(
         [sys.executable, str(SCRIPT), "--tasks", str(path), *args],
-        capture_output=True, text=True, timeout=60,
+        capture_output=True,
+        text=True,
+        timeout=60,
         # LIMEN_ORGS="" → no live-org source; LIMEN_ROOT=tmp → _down_lanes finds no usage.json,
         # so the routable-open floor count == total open (deterministic, no real lane-health bleed).
-        env={**os.environ, "LIMEN_ORGS": "", "LIMEN_ROOT": str(path.parent),
-             "LIMEN_VALUE_REPOS": value_repos,
-             "LIMEN_VALUE_REPOS_FILE": str(path.parent / "no-such-tier.json"),
-             "LIMEN_WORKTREE_ROOT": str(worktree_root or path.parent / "empty-worktrees"),
-             "LIMEN_WORKTREE_DEBT_MAX": debt_cap},
+        env={
+            **os.environ,
+            "LIMEN_ORGS": "",
+            "LIMEN_ROOT": str(path.parent),
+            "LIMEN_VALUE_REPOS": value_repos,
+            "LIMEN_VALUE_REPOS_FILE": str(path.parent / "no-such-tier.json"),
+            "LIMEN_WORKTREE_ROOT": str(worktree_root or path.parent / "empty-worktrees"),
+            "LIMEN_WORKTREE_DEBT_MAX": debt_cap,
+        },
     )
     assert p.returncode == 0, p.stderr
     return p.stdout

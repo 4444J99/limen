@@ -1,15 +1,16 @@
 """`ianva` — the doorway's command line.
 
-  ianva up                 materialize settings + start the gateway backend
-  ianva down               stop the backend
-  ianva status             backend + endpoint + upstream summary
-  ianva doctor             verify every dependency, path, and the endpoint (no secrets shown)
-  ianva gen-configs        write the per-agent "point at ianva" entries to ./generated (review-only)
-  ianva install-configs    apply those entries to real agent configs  (prints plan; needs --apply)
-  ianva add-upstream ...    add/override an upstream in ~/.config/ianva/upstreams.json
-  ianva probe              reachability preflight of remote upstreams
-  ianva version
+ianva up                 materialize settings + start the gateway backend
+ianva down               stop the backend
+ianva status             backend + endpoint + upstream summary
+ianva doctor             verify every dependency, path, and the endpoint (no secrets shown)
+ianva gen-configs        write the per-agent "point at ianva" entries to ./generated (review-only)
+ianva install-configs    apply those entries to real agent configs  (prints plan; needs --apply)
+ianva add-upstream ...    add/override an upstream in ~/.config/ianva/upstreams.json
+ianva probe              reachability preflight of remote upstreams
+ianva version
 """
+
 from __future__ import annotations
 
 import argparse
@@ -70,8 +71,10 @@ def cmd_status(args) -> int:
     st = backend_status(cfg)
     ups = _ups(cfg)
     print(json.dumps(st, indent=2))
-    print(f"upstreams: {len(ups)} configured; {sum(u.oauth for u in ups)} OAuth-held; "
-          f"{sum(u.is_remote() for u in ups)} remote")
+    print(
+        f"upstreams: {len(ups)} configured; {sum(u.oauth for u in ups)} OAuth-held; "
+        f"{sum(u.is_remote() for u in ups)} remote"
+    )
     return 0
 
 
@@ -96,16 +99,17 @@ def cmd_doctor(args) -> int:
 
     print("\nmcp-proxy (stdio bridge for non-HTTP agents):")
     try:
-        r = subprocess.run([cfg.proxy_bin, *cfg.proxy_args, "--help"],
-                           capture_output=True, text=True, timeout=60)
+        r = subprocess.run([cfg.proxy_bin, *cfg.proxy_args, "--help"], capture_output=True, text=True, timeout=60)
         print(f"  `{cfg.proxy_bin} {' '.join(cfg.proxy_args)} --help` exit={r.returncode}")
     except Exception as e:  # noqa: BLE001
         print(f"  could not run mcp-proxy: {e}")
 
     print("\npaths:")
     print(f"  IANVA_HOME    {paths.IANVA_HOME}  ({'ok' if paths.IANVA_HOME.exists() else 'will be created'})")
-    print(f"  registry      {cfg.registry or paths.DEFAULT_REGISTRY}  "
-          f"({'found' if (Path(cfg.registry).expanduser() if cfg.registry else paths.DEFAULT_REGISTRY).exists() else 'missing'})")
+    print(
+        f"  registry      {cfg.registry or paths.DEFAULT_REGISTRY}  "
+        f"({'found' if (Path(cfg.registry).expanduser() if cfg.registry else paths.DEFAULT_REGISTRY).exists() else 'missing'})"
+    )
     print(f"  limen.env     {paths.LIMEN_ENV}  ({'found' if paths.LIMEN_ENV.exists() else 'missing'})")
 
     print("\nsecrets present (names only):")
@@ -120,7 +124,9 @@ def cmd_doctor(args) -> int:
 
     st = backend_status(cfg)
     print(f"\nendpoint {ep.url()} — backend running={st['running']} reachable={st['endpoint_reachable']}")
-    print(f"  auth: {'bearer enforced (exposable)' if creds.bearer_token() else 'UNAUTHENTICATED — loopback only, do not tunnel'}")
+    print(
+        f"  auth: {'bearer enforced (exposable)' if creds.bearer_token() else 'UNAUTHENTICATED — loopback only, do not tunnel'}"
+    )
     return 0
 
 
@@ -183,8 +189,10 @@ def cmd_bearer(args) -> int:
         tok = creds.new_bearer()
         print("New gateway bearer (store it, then restart ianva before exposing the endpoint):\n")
         print(f"  {tok}\n")
-        print(f"  bash ~/Workspace/limen/scripts/set-credential.sh {creds.BEARER_ENV}"
-              "   # paste the value above at the silent prompt")
+        print(
+            f"  bash ~/Workspace/limen/scripts/set-credential.sh {creds.BEARER_ENV}"
+            "   # paste the value above at the silent prompt"
+        )
         return 0
     print(f"{creds.BEARER_ENV}: {'SET — endpoint can be exposed' if creds.bearer_token() else 'unset — loopback only'}")
     return 0

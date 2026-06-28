@@ -10,6 +10,7 @@ These tests pin both fixes in `limen.io`:
   • save_limen_file refuses a catastrophic shrink (preserving the rejected payload), and
   • load_limen_file backfills a missing `created` instead of rejecting the board.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -38,6 +39,7 @@ def _save_raw(path: Path, n: int) -> None:
 
 
 # ---- collapse-guard on save -------------------------------------------------------------
+
 
 def test_guard_refuses_catastrophic_shrink(tmp_path: Path) -> None:
     board = tmp_path / "tasks.yaml"
@@ -99,14 +101,23 @@ def test_first_write_is_never_guarded(tmp_path: Path) -> None:
 
 # ---- loader tolerance: one partial task must never reject the whole board ----------------
 
+
 def test_load_backfills_missing_created(tmp_path: Path) -> None:
     board = tmp_path / "tasks.yaml"
-    raw = {"version": "1.0", "tasks": [
-        _task(0),                                    # valid
-        _task(1, created=None),                      # missing `created` — the incident's killer
-        {"id": "T-2", "title": "t2", "target_agent": "claude",
-         "status": "dispatched", "updated": "2026-06-20T10:00:00Z"},  # missing created, has updated
-    ]}
+    raw = {
+        "version": "1.0",
+        "tasks": [
+            _task(0),  # valid
+            _task(1, created=None),  # missing `created` — the incident's killer
+            {
+                "id": "T-2",
+                "title": "t2",
+                "target_agent": "claude",
+                "status": "dispatched",
+                "updated": "2026-06-20T10:00:00Z",
+            },  # missing created, has updated
+        ],
+    }
     board.write_text(yaml.dump(raw, sort_keys=False))
     lf = load_limen_file(board)  # must NOT raise
     assert len(lf.tasks) == 3

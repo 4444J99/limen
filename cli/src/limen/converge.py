@@ -343,9 +343,7 @@ class MeshRanker:
         import json
         import subprocess
 
-        proc = subprocess.run(
-            ["mesh", "influence", "--json"], capture_output=True, text=True, check=True
-        )
+        proc = subprocess.run(["mesh", "influence", "--json"], capture_output=True, text=True, check=True)
         scores = json.loads(proc.stdout or "{}")
         return sorted(shots, key=lambda s: scores.get(self._node_hash(s), 0.0), reverse=True)
 
@@ -383,9 +381,7 @@ class MeshGapFinder:
                     "Install it, or construct MeshGapFinder(..., use_cli=True) to shell "
                     "out to the 'mesh dead-zones --structural' CLI."
                 ) from exc
-            self._engine = StructuralDeadZoneEngine(
-                self._registry_path, entity_glob=entity_glob, threshold=threshold
-            )
+            self._engine = StructuralDeadZoneEngine(self._registry_path, entity_glob=entity_glob, threshold=threshold)
 
     def gaps(self, idea: str, shots: list[Shot]) -> list[str]:  # pragma: no cover - requires mesh
         if self._use_cli:
@@ -504,10 +500,7 @@ class AnthropicSynthesizer:
     def synthesize(self, idea: str, ranked: list[Shot]) -> Synthesis:  # pragma: no cover - requires network
         import json
 
-        user = (
-            f"{self._PROMPT}\n\nIDEA:\n{idea}\n\n"
-            f"SHOTS (best-first):\n{self._render_shots(ranked)}"
-        )
+        user = f"{self._PROMPT}\n\nIDEA:\n{idea}\n\nSHOTS (best-first):\n{self._render_shots(ranked)}"
         # Sonnet 4.6: adaptive thinking only, no budget_tokens. Plain create() call.
         message = self._client.messages.create(
             model=self.model,
@@ -578,19 +571,14 @@ class ClaudeCliSynthesizer:
         import json
         import subprocess
 
-        user = (
-            f"{self._PROMPT}\n\nIDEA:\n{idea}\n\n"
-            f"SHOTS (best-first):\n{self._render_shots(ranked)}"
-        )
-        argv = [self._binary, "-p", *( ["--model", self.model] if self.model else [] ), user]
+        user = f"{self._PROMPT}\n\nIDEA:\n{idea}\n\nSHOTS (best-first):\n{self._render_shots(ranked)}"
+        argv = [self._binary, "-p", *(["--model", self.model] if self.model else []), user]
         proc = subprocess.run(argv, capture_output=True, text=True, timeout=self.timeout, check=False)
         text = (proc.stdout or "").strip()
         if proc.returncode != 0 or not text:
             # Fail LOUD so the kit cascade / per-face guard can fall through to the next
             # rung — never a silent offline no-op masquerading as a converged write.
-            raise RuntimeError(
-                f"claude CLI synth failed (rc={proc.returncode}): {(proc.stderr or '')[:200]}"
-            )
+            raise RuntimeError(f"claude CLI synth failed (rc={proc.returncode}): {(proc.stderr or '')[:200]}")
         # The CLI may wrap the JSON in a ```json fence; strip a single leading/trailing fence.
         if text.startswith("```"):
             text = text.split("\n", 1)[-1]
@@ -723,9 +711,7 @@ class CCEPromoter:
         self._cc.review_corpus_candidate(
             self._project_root, self._candidate_id, decision="approve", note="converge auto-approve"
         )
-        self._cc.promote_corpus_candidate(
-            self._project_root, self._candidate_id, note=f"converge: {idea}"
-        )
+        self._cc.promote_corpus_candidate(self._project_root, self._candidate_id, note=f"converge: {idea}")
 
     def rollback(self) -> None:  # pragma: no cover - requires CCE
         # Reversible: undo the most recent promotion. Safe to call even if nothing
@@ -855,17 +841,20 @@ def _build_live_kit(args, *, anthropic_client=None) -> dict:
     if anthropic_client is not None:
         synthesizer: Synthesizer = (
             LadderSynthesizer(tier_factory=_api_tier_factory(anthropic_client), scorer=scorer, threshold=threshold)
-            if ladder_on else AnthropicSynthesizer(client=anthropic_client, **model_kwarg)
+            if ladder_on
+            else AnthropicSynthesizer(client=anthropic_client, **model_kwarg)
         )
     elif os.environ.get("ANTHROPIC_API_KEY"):
         synthesizer = (
             LadderSynthesizer(tier_factory=_api_tier_factory(), scorer=scorer, threshold=threshold)
-            if ladder_on else AnthropicSynthesizer(**model_kwarg)
+            if ladder_on
+            else AnthropicSynthesizer(**model_kwarg)
         )
     else:
         synthesizer = (
             LadderSynthesizer(tier_factory=_cli_tier_factory(), scorer=scorer, threshold=threshold)
-            if ladder_on else ClaudeCliSynthesizer(**model_kwarg)
+            if ladder_on
+            else ClaudeCliSynthesizer(**model_kwarg)
         )
 
     # Promotion: reversible CCE promoter ONLY when explicitly requested; else no-op.
@@ -896,9 +885,7 @@ def main(argv: list[str] | None = None) -> int:
         metavar="PATH_OR_TEXT",
         help="A divergent shot: a file path (contents read) or literal text. Repeatable.",
     )
-    parser.add_argument(
-        "--threshold", type=float, default=0.7, help="Promotion gate (default 0.7)."
-    )
+    parser.add_argument("--threshold", type=float, default=0.7, help="Promotion gate (default 0.7).")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument(
         "--dry-run",
@@ -919,8 +906,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--mesh",
         action="store_true",
-        help="Rank/gaps via the mesh CLI instead of lexical fallbacks (needs mesh's .venv). "
-        "--live only.",
+        help="Rank/gaps via the mesh CLI instead of lexical fallbacks (needs mesh's .venv). --live only.",
     )
     parser.add_argument(
         "--mesh-registry",

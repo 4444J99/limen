@@ -26,18 +26,10 @@ def _throughput(limen: LimenFile) -> dict[str, int | str | None]:
     daily_capacity = int(limen.portal.budget.daily or 0)
     done = len([task for task in tasks if task.status in ("done", "archived")])
     not_done = len(tasks) - done
-    event_statuses = [
-        entry.status for task in tasks for entry in task.dispatch_log if entry.status
-    ]
-    recorded_starts = len(
-        [status for status in event_statuses if status in ("dispatched", "in_progress")]
-    )
+    event_statuses = [entry.status for task in tasks for entry in task.dispatch_log if entry.status]
+    recorded_starts = len([status for status in event_statuses if status in ("dispatched", "in_progress")])
     recorded_finishes = len(
-        [
-            status
-            for status in event_statuses
-            if status in ("done", "failed", "failed_blocked", "archived")
-        ]
+        [status for status in event_statuses if status in ("done", "failed", "failed_blocked", "archived")]
     )
     return {
         "first_created": first_created.isoformat(),
@@ -86,18 +78,13 @@ def print_status(
 
     tasks = limen.tasks
     if agent_filter:
-        tasks = [
-            t
-            for t in tasks
-            if t.target_agent == agent_filter or t.target_agent == "any"
-        ]
+        tasks = [t for t in tasks if t.target_agent == agent_filter or t.target_agent == "any"]
     if status_filter:
         tasks = [t for t in tasks if t.status == status_filter]
 
     if not tasks:
         print("No tasks match the current filters")
         return
-
 
     header = f"{'ID':<12} {'Title':<50} {'Agent':<10} {'Status':<14} {'Priority':<10} {'Budget':<6}"
     sep = "-" * len(header)
@@ -106,13 +93,10 @@ def print_status(
 
     for t in tasks:
         title = (t.title[:47] + "...") if len(t.title) > 50 else t.title
-        print(
-            f"{t.id:<12} {title:<50} {t.target_agent:<10} {t.status:<14} {t.priority:<10} {t.budget_cost:<6}"
-        )
+        print(f"{t.id:<12} {title:<50} {t.target_agent:<10} {t.status:<14} {t.priority:<10} {t.budget_cost:<6}")
 
     counts = {
-        s: len([t for t in tasks if t.status == s])
-        for s in ("open", "dispatched", "in_progress", "done", "failed")
+        s: len([t for t in tasks if t.status == s]) for s in ("open", "dispatched", "in_progress", "done", "failed")
     }
     active = [f"{k}={v}" for k, v in counts.items() if v > 0]
     print(f"\n{len(tasks)} tasks ({', '.join(active)})")

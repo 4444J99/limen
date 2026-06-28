@@ -5,6 +5,7 @@ real repo (so `import limen.*` resolves) and every store/source/state redirected
 Covers the safety contract — dry-run writes nothing, --apply is idempotent, missing source
 fails open — plus the engine reuse (offline converge) and corpus-converge absorption.
 """
+
 import importlib.util
 import json
 import os
@@ -34,6 +35,7 @@ def _docs(root: Path, files: dict[str, str]) -> Path:
 
 # ─── unit: chunk + atomize ───────────────────────────────────────────
 
+
 def test_chunk_splits_on_markdown_headings(monkeypatch):
     m = _load(monkeypatch, SCRIPT, "media_uut_chunk")
     text = "# Title\n\nintro para that is reasonably long " * 6 + "\n\n## Section Two\n\n" + "body " * 60
@@ -60,6 +62,7 @@ def test_atomize_doc_builds_addressed_atoms(tmp_path, monkeypatch):
 
 # ─── subprocess: the safety contract ─────────────────────────────────
 
+
 def _env(tmp_path, src: Path) -> dict:
     return dict(
         os.environ,
@@ -74,8 +77,7 @@ def _env(tmp_path, src: Path) -> dict:
 
 def test_preview_writes_nothing(tmp_path):
     src = _docs(tmp_path / "src", {"a.md": "# A\n\n" + "word " * 80})
-    r = subprocess.run([sys.executable, str(SCRIPT)], env=_env(tmp_path, src),
-                       capture_output=True, text=True)
+    r = subprocess.run([sys.executable, str(SCRIPT)], env=_env(tmp_path, src), capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
     assert not (tmp_path / "atoms").exists()
     assert not (tmp_path / "state.json").exists()
@@ -84,10 +86,13 @@ def test_preview_writes_nothing(tmp_path):
 
 
 def test_apply_stores_atoms_then_idempotent(tmp_path):
-    src = _docs(tmp_path / "src", {
-        "a.md": "# A\n\n" + ("alpha " * 80) + "\n\n## A2\n\n" + ("beta " * 80),
-        "b.txt": "gamma " * 120,
-    })
+    src = _docs(
+        tmp_path / "src",
+        {
+            "a.md": "# A\n\n" + ("alpha " * 80) + "\n\n## A2\n\n" + ("beta " * 80),
+            "b.txt": "gamma " * 120,
+        },
+    )
     env = _env(tmp_path, src)
     r1 = subprocess.run([sys.executable, str(SCRIPT), "--apply"], env=env, capture_output=True, text=True)
     assert r1.returncode == 0, r1.stderr
@@ -118,27 +123,36 @@ def test_changed_source_reatomizes(tmp_path):
 
 
 def test_missing_source_fails_open(tmp_path):
-    r = subprocess.run([sys.executable, str(SCRIPT), "--apply"], env=_env(tmp_path, tmp_path / "nope"),
-                       capture_output=True, text=True)
+    r = subprocess.run(
+        [sys.executable, str(SCRIPT), "--apply"], env=_env(tmp_path, tmp_path / "nope"), capture_output=True, text=True
+    )
     assert r.returncode == 0, r.stderr
     assert "not present" in r.stdout
     assert not (tmp_path / "atoms").exists()
 
 
 def test_converge_proof_offline(tmp_path):
-    src = _docs(tmp_path / "src", {
-        "a.md": "# Trip\n\nwe drove to the mountains and hiked all day " * 8,
-        "b.md": "# Trip notes\n\nthe mountains were cold and the hike was long " * 8,
-    })
+    src = _docs(
+        tmp_path / "src",
+        {
+            "a.md": "# Trip\n\nwe drove to the mountains and hiked all day " * 8,
+            "b.md": "# Trip notes\n\nthe mountains were cold and the hike was long " * 8,
+        },
+    )
     env = _env(tmp_path, src)
-    r = subprocess.run([sys.executable, str(SCRIPT), "--apply", "--converge", "the mountain trip"],
-                       env=env, capture_output=True, text=True)
+    r = subprocess.run(
+        [sys.executable, str(SCRIPT), "--apply", "--converge", "the mountain trip"],
+        env=env,
+        capture_output=True,
+        text=True,
+    )
     assert r.returncode == 0, r.stderr
     assert "media converge (offline proof)" in r.stdout
     assert "score:" in r.stdout
 
 
 # ─── integration: corpus-converge absorbs the media atoms ────────────
+
 
 def test_corpus_converge_absorbs_media_atoms(tmp_path, monkeypatch):
     # atomize a doc into a shared media-atoms store...

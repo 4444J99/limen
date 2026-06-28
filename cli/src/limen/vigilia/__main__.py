@@ -8,6 +8,7 @@ Subcommands (both fail-open; they always exit 0 so an organ bug never wedges the
   beat          Run the full executive (vitals+continuity+integrity), write the
                 seat status file, print a one-line summary.
 """
+
 from __future__ import annotations
 
 import argparse

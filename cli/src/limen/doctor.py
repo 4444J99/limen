@@ -135,62 +135,56 @@ def stale_tasks(
     return candidates
 
 
-def readiness_report(
-    limen: LimenFile, tasks_path: Path, agent: str = "jules"
-) -> ReadinessReport:
+def readiness_report(limen: LimenFile, tasks_path: Path, agent: str = "jules") -> ReadinessReport:
     stale = stale_tasks(limen, agent=agent)
-    open_tasks = [
-        task
-        for task in limen.tasks
-        if task.status == "open" and task.target_agent in (agent, "any")
-    ]
-    active_tasks = [
-        task for task in limen.tasks if task.status in ("dispatched", "in_progress")
-    ]
+    open_tasks = [task for task in limen.tasks if task.status == "open" and task.target_agent in (agent, "any")]
+    active_tasks = [task for task in limen.tasks if task.status in ("dispatched", "in_progress")]
     budget = limen.portal.budget
     spent = budget.track.per_agent.get(agent, 0)
     limit = budget.per_agent.get(agent, budget.daily)
     remaining = max(0, min(budget.daily - budget.track.spent, limit - spent))
     status_row = agent_status(agent)
     agent_reachable = bool(status_row["reachable"])
-    checks: list[Check] = cast(list[Check], [
-        {
-            "id": "tasks_file",
-            "status": "pass" if tasks_path.exists() else "fail",
-            "detail": str(tasks_path),
-        },
-        {
-            "id": "task_count",
-            "status": "pass" if limen.tasks else "warn",
-            "detail": f"{len(limen.tasks)} tasks",
-        },
-        {
-            "id": "stale_claims",
-            "status": "warn" if stale else "pass",
-            "detail": f"{len(stale)} stale {agent} active tasks",
-        },
-        {
-            "id": "open_queue",
-            "status": "pass" if open_tasks else "warn",
-            "detail": f"{len(open_tasks)} open {agent} tasks",
-        },
-        {
-            "id": "budget",
-            "status": "pass" if remaining > 0 else "fail",
-            "detail": f"{remaining}/{limit} {agent} runs remaining",
-        },
-        {
-            "id": "agent_cli",
-            "status": "pass" if agent_reachable else "fail",
-            "detail": status_row["detail"],
-        },
-        {
-            "id": "api_runtime",
-            "status": "pass" if _runtime_api_url() else "warn",
-            "detail": _runtime_api_url()
-            or "backend runtime not attached to Firebase static hosting",
-        },
-    ])
+    checks: list[Check] = cast(
+        list[Check],
+        [
+            {
+                "id": "tasks_file",
+                "status": "pass" if tasks_path.exists() else "fail",
+                "detail": str(tasks_path),
+            },
+            {
+                "id": "task_count",
+                "status": "pass" if limen.tasks else "warn",
+                "detail": f"{len(limen.tasks)} tasks",
+            },
+            {
+                "id": "stale_claims",
+                "status": "warn" if stale else "pass",
+                "detail": f"{len(stale)} stale {agent} active tasks",
+            },
+            {
+                "id": "open_queue",
+                "status": "pass" if open_tasks else "warn",
+                "detail": f"{len(open_tasks)} open {agent} tasks",
+            },
+            {
+                "id": "budget",
+                "status": "pass" if remaining > 0 else "fail",
+                "detail": f"{remaining}/{limit} {agent} runs remaining",
+            },
+            {
+                "id": "agent_cli",
+                "status": "pass" if agent_reachable else "fail",
+                "detail": status_row["detail"],
+            },
+            {
+                "id": "api_runtime",
+                "status": "pass" if _runtime_api_url() else "warn",
+                "detail": _runtime_api_url() or "backend runtime not attached to Firebase static hosting",
+            },
+        ],
+    )
     if any(check["status"] == "fail" for check in checks):
         status = "blocked"
     elif any(check["status"] == "warn" for check in checks):
@@ -215,9 +209,7 @@ def readiness_report(
             "remaining": remaining,
         },
         "checks": checks,
-        "next_actions": next_actions(
-            stale, open_tasks, remaining, agent_reachable, agent
-        ),
+        "next_actions": next_actions(stale, open_tasks, remaining, agent_reachable, agent),
     }
 
 
@@ -367,9 +359,7 @@ def next_actions(
     if stale:
         actions.append(f"limen release-stale --agent {agent} --hours 24 --apply")
     if open_tasks and remaining > 0 and has_agent_cli:
-        actions.append(
-            f"limen dispatch --agent {agent} --limit {min(remaining, len(open_tasks))} --live"
-        )
+        actions.append(f"limen dispatch --agent {agent} --limit {min(remaining, len(open_tasks))} --live")
     if not has_agent_cli:
         actions.append(f"Install or configure {agent} dispatch CLI")
     if remaining <= 0:
@@ -400,9 +390,7 @@ def print_qa_report(report: QaReport) -> None:
     )
     print("── next steering batch")
     for item in report["steering"]["next_batch"]:
-        print(
-            f"  {item['phase'].upper():7} {item['id']} {item['assignee']} — {item['title']}"
-        )
+        print(f"  {item['phase'].upper():7} {item['id']} {item['assignee']} — {item['title']}")
     print("── mechanisms")
     for mechanism in report["mechanisms"]:
         print(f"  {mechanism['count']:3} {mechanism['id']}: {mechanism['command']}")

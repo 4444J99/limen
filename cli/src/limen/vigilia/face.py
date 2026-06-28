@@ -5,6 +5,7 @@ Renders the C-suite from ``institutio/registry/organs.yaml`` (the ``officers`` m
 The officer list is DERIVED from the seat — nothing here hardcodes who the officers
 are, so the pane stays correct as the institution grows. Read-only; fail-open.
 """
+
 from __future__ import annotations
 
 import json

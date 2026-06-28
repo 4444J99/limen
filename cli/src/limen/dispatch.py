@@ -48,7 +48,7 @@ def _load_limen_env() -> int:
             if not line or line.startswith("#"):
                 continue
             if line.startswith("export "):
-                line = line[len("export "):]
+                line = line[len("export ") :]
             if "=" not in line:
                 continue
             key, val = line.split("=", 1)
@@ -74,8 +74,11 @@ def _usage_dead_lanes() -> set[str]:
         vendors = (json.loads(f.read_text()) or {}).get("vendors", {})
     except (OSError, ValueError):
         return set()
-    return {name for name, info in vendors.items()
-            if isinstance(info, dict) and info.get("health") in ("exhausted", "rate-limited", "low")}
+    return {
+        name
+        for name, info in vendors.items()
+        if isinstance(info, dict) and info.get("health") in ("exhausted", "rate-limited", "low")
+    }
 
 
 # Lanes whose CLI authenticates ONLY via an interactive browser OAuth flow — no headless / device-code
@@ -103,6 +106,7 @@ def _oauth_unreachable_lanes() -> set[str]:
     if os.environ.get("LIMEN_OAUTH_PREFLIGHT", "1") != "1":
         return set()
     import socket
+
     timeout = float(os.environ.get("LIMEN_OAUTH_PREFLIGHT_TIMEOUT", "3"))
     reachable: dict[str, bool] = {}
     down: set[str] = set()
@@ -152,9 +156,15 @@ def _run_capture(
     synchronous beat (observed: a 23-min hang despite timeout=600). Killing the group closes the
     pipes so the timeout actually fires. Still raises TimeoutExpired so callers' handlers run."""
     import signal
+
     proc = subprocess.Popen(
-        cmd, cwd=cwd, env=env, text=True,
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.DEVNULL,
+        cmd,
+        cwd=cwd,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=subprocess.DEVNULL,
         start_new_session=True,
     )
     try:
@@ -183,8 +193,10 @@ def _dep_merged(dep_task: Task | None) -> bool:
         return False
     # match "merged" specifically — NOT the bare stem "merg", which also matches the heal marker
     # "PR open (awaiting merge) → done" and would unlock dependents on PR-OPEN instead of PR-MERGED.
-    return any("merged" in str(e.output or "").lower() or "merged" in str(e.status or "").lower()
-               for e in (dep_task.dispatch_log or []))
+    return any(
+        "merged" in str(e.output or "").lower() or "merged" in str(e.status or "").lower()
+        for e in (dep_task.dispatch_log or [])
+    )
 
 
 def _deps_met(task: Task, by_id: dict[str, Task]) -> bool:
@@ -235,9 +247,7 @@ def resolve_agent() -> str:
 
 
 def session_id() -> str:
-    return os.environ.get(
-        "CLAUDE_SESSION_ID", os.environ.get("GEMINI_SESSION_ID", "cli")
-    )
+    return os.environ.get("CLAUDE_SESSION_ID", os.environ.get("GEMINI_SESSION_ID", "cli"))
 
 
 def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool | str:
@@ -327,7 +337,8 @@ def _run_cmd(cmd: list[str], task: Task, dry_run: bool, cwd: str | None = None) 
         return True
     try:
         result = _run_capture(
-            cmd, cwd=cwd,
+            cmd,
+            cwd=cwd,
             timeout=int(os.environ.get("LIMEN_DISPATCH_TIMEOUT", "600")),
         )  # own process group → timeout SIGKILLs grandchildren too (no beat-stall hang)
         if result.returncode == 0:
@@ -415,12 +426,19 @@ def _call_copilot(task: Task, dry_run: bool) -> bool | str:
     }
     """
     q_cmd = [
-        gh, "api", "graphql",
-        "-f", f"query={query}",
-        "-F", f"owner={owner}",
-        "-F", f"name={name}",
-        "-F", f"number={issue}",
-        "-F", f"actor={actor}",
+        gh,
+        "api",
+        "graphql",
+        "-f",
+        f"query={query}",
+        "-F",
+        f"owner={owner}",
+        "-F",
+        f"name={name}",
+        "-F",
+        f"number={issue}",
+        "-F",
+        f"actor={actor}",
     ]
     r = subprocess.run(q_cmd, capture_output=True, text=True, timeout=30)
     if r.returncode != 0:
@@ -443,11 +461,17 @@ def _call_copilot(task: Task, dry_run: bool) -> bool | str:
     }
     """
     cmd = [
-        gh, "api", "graphql",
-        "-H", "GraphQL-Features: issues_copilot_assignment_api_support",
-        "-f", f"query={mut}",
-        "-f", f"issue={issue_id}",
-        "-f", f"actor={actor_id}",
+        gh,
+        "api",
+        "graphql",
+        "-H",
+        "GraphQL-Features: issues_copilot_assignment_api_support",
+        "-f",
+        f"query={mut}",
+        "-f",
+        f"issue={issue_id}",
+        "-f",
+        f"actor={actor_id}",
     ]
     result = _run_cmd(cmd, task, dry_run)
     if result is True and not dry_run:
@@ -628,6 +652,7 @@ def _agent_argv(agent: str, task: Task | None = None) -> list[str]:
             flags += [model]
     return flags
 
+
 # Per-task lane failover cascade (best-efficiency-first → cloud last). On a genuine
 # lane FAILURE (down/error/timeout) a task re-routes to the next lane and stays open;
 # the heartbeat dispatches lanes in THIS SAME ORDER, so a failed task walks down the
@@ -702,16 +727,16 @@ def _resolve_repo_dir(task: Task) -> Path | None:
     for cand in (ws / task.repo, ws / org / name, ws / name, cart / org / name, cart / name):
         if (cand / ".git").exists():
             return cand
-    matches = [
-        p for root in (ws, cart) for p in root.glob(f"*/{name}") if (p / ".git").exists()
-    ]
+    matches = [p for root in (ws, cart) for p in root.glob(f"*/{name}") if (p / ".git").exists()]
     if len(matches) == 1:
         return matches[0]
     for p in matches:  # disambiguate by remote when name collides across orgs
         try:
             r = subprocess.run(
                 ["git", "-C", str(p), "remote", "get-url", "origin"],
-                capture_output=True, text=True, timeout=10,
+                capture_output=True,
+                text=True,
+                timeout=10,
             )
             if r.returncode == 0 and task.repo.lower() in r.stdout.lower():
                 return p
@@ -748,7 +773,8 @@ def _clone_repo(task: Task) -> Path | None:
             # wedges past the lane timeout and the daemon stalls (observed: ~30-min hang). The
             # group-kill reaps the grandchildren so the clone is genuinely bounded → cascades clean.
             r = _run_capture(
-                ["gh", "repo", "clone", task.repo, str(dest)], timeout=600,
+                ["gh", "repo", "clone", task.repo, str(dest)],
+                timeout=600,
             )
         except Exception as e:
             print(f"  clone {task.repo} errored: {e}")
@@ -767,15 +793,17 @@ def _clone_repo(task: Task) -> Path | None:
 # local branch are removed; the only surviving artifacts are the remote branch +
 # PR. This is the universal default for ALL local lanes (codex/opencode/agy/
 # claude/gemini) — set LIMEN_ISOLATION=off only for a deliberate in-place run.
-_ISOLATION_ROOT = Path(
-    os.environ.get("LIMEN_WORKTREES", Path.home() / "Workspace" / ".limen-worktrees")
-)
+_ISOLATION_ROOT = Path(os.environ.get("LIMEN_WORKTREES", Path.home() / "Workspace" / ".limen-worktrees"))
 
 
 def _git(args: list[str], cwd: Path, timeout: int = 120) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        ["git", *args], cwd=str(cwd), capture_output=True, text=True,
-        timeout=timeout, stdin=subprocess.DEVNULL,
+        ["git", *args],
+        cwd=str(cwd),
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        stdin=subprocess.DEVNULL,
     )
 
 
@@ -785,9 +813,7 @@ def _default_branch(repo_dir: Path) -> str:
     if r.returncode == 0 and r.stdout.strip():
         return r.stdout.strip().rsplit("/", 1)[-1]
     for cand in ("main", "master"):
-        if _git(
-            ["show-ref", "--verify", "--quiet", f"refs/remotes/origin/{cand}"], repo_dir
-        ).returncode == 0:
+        if _git(["show-ref", "--verify", "--quiet", f"refs/remotes/origin/{cand}"], repo_dir).returncode == 0:
             return cand
     return "main"
 
@@ -844,22 +870,27 @@ def _bridge_agy_scratch(task: Task, wt: Path) -> None:
         for d in scratch.iterdir():
             if not d.is_dir() or not (d / ".git").exists():
                 continue
-            r = subprocess.run(["git", "-C", str(d), "remote", "get-url", "origin"],
-                               capture_output=True, text=True, timeout=10)
+            r = subprocess.run(
+                ["git", "-C", str(d), "remote", "get-url", "origin"], capture_output=True, text=True, timeout=10
+            )
             if r.returncode == 0 and task.repo.lower() in r.stdout.lower():
                 if best is None or d.stat().st_mtime > best.stat().st_mtime:
                     best = d
         if best is None:  # fallback: newest scratch dir whose name resembles the repo
             name = task.repo.split("/")[-1].lower()
-            cands = [d for d in scratch.iterdir()
-                     if d.is_dir() and name.replace("--", "-") in d.name.lower().replace("--", "-")]
+            cands = [
+                d
+                for d in scratch.iterdir()
+                if d.is_dir() and name.replace("--", "-") in d.name.lower().replace("--", "-")
+            ]
             best = max(cands, key=lambda p: p.stat().st_mtime, default=None)
         if best is None:
             return
         # agy's per-run delta = its uncommitted working-tree changes (NOT the committed, possibly
         # stale, base tree). Copy just those paths; mirror deletions agy made.
-        st = subprocess.run(["git", "-C", str(best), "status", "--porcelain", "-z"],
-                            capture_output=True, text=True, timeout=30)
+        st = subprocess.run(
+            ["git", "-C", str(best), "status", "--porcelain", "-z"], capture_output=True, text=True, timeout=30
+        )
         paths = _porcelain_paths(st.stdout) if st.returncode == 0 else []
         if not paths:
             print(f"  agy-bridge {task.id}: scratch '{best.name}' has no per-run delta — nothing carried")
@@ -889,8 +920,9 @@ def _lane_run_env(agent: str) -> dict[str, str]:
     # agy/antigravity defense-in-depth: if auth falls through to browser opening mid-run,
     # make the opener a no-op inside the lane subprocess only.
     if agent in ("agy", "antigravity"):
-        shim = str(Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
-                   / "scripts" / "agy-noop-shim")
+        shim = str(
+            Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen"))) / "scripts" / "agy-noop-shim"
+        )
         run_env["PATH"] = shim + os.pathsep + run_env.get("PATH", "")
         run_env["BROWSER"] = "true"
     # claude fleet auth must not share or mutate the interactive session's macOS Keychain token.
@@ -927,11 +959,7 @@ def _run_isolated_agent(
         run = _run_capture(agent_cmd, cwd=str(wt), timeout=lane_timeout, env=run_env)
         # SELF-HEAL the credential-refresh race (#48786): if claude lost the token rotation,
         # a fresh process re-reads the now-rotated token. ONE retry only.
-        if (
-            agent == "claude"
-            and run.returncode != 0
-            and _is_auth_blip((run.stderr or "") + (run.stdout or ""))
-        ):
+        if agent == "claude" and run.returncode != 0 and _is_auth_blip((run.stderr or "") + (run.stdout or "")):
             print(f"  AUTH-BLIP {task.id}: claude credential-refresh race — re-reading token, one retry")
             run = _run_capture(agent_cmd, cwd=str(wt), timeout=lane_timeout, env=run_env)
     except subprocess.TimeoutExpired:
@@ -953,9 +981,16 @@ def _commit_isolated_changes(task: Task, wt: Path) -> bool | str:
 
     msg = f"{task.title}\n\nlimen task {task.id}"
     c = _git(
-        ["-c", f"user.name={os.environ.get('LIMEN_COMMIT_NAME', '4444J99')}",
-         "-c", f"user.email={os.environ.get('LIMEN_COMMIT_EMAIL', '4444J99@users.noreply.github.com')}",
-         "commit", "-m", msg], wt
+        [
+            "-c",
+            f"user.name={os.environ.get('LIMEN_COMMIT_NAME', '4444J99')}",
+            "-c",
+            f"user.email={os.environ.get('LIMEN_COMMIT_EMAIL', '4444J99@users.noreply.github.com')}",
+            "commit",
+            "-m",
+            msg,
+        ],
+        wt,
     )
     if c.returncode != 0:
         print(f"  FAILED commit {task.id}: {c.stderr.strip()[:200]}")
@@ -973,10 +1008,23 @@ def _push_isolated_branch(task: Task, wt: Path, branch: str) -> bool:
 
 def _create_isolated_pr(task: Task, wt: Path, base: str, branch: str) -> str:
     pr = subprocess.run(
-        ["gh", "pr", "create", "--base", base, "--head", branch,
-         "--title", f"[limen {task.id}] {task.title}"[:250],
-         "--body", _pr_body(task)],
-        cwd=str(wt), capture_output=True, text=True, timeout=120,
+        [
+            "gh",
+            "pr",
+            "create",
+            "--base",
+            base,
+            "--head",
+            branch,
+            "--title",
+            f"[limen {task.id}] {task.title}"[:250],
+            "--body",
+            _pr_body(task),
+        ],
+        cwd=str(wt),
+        capture_output=True,
+        text=True,
+        timeout=120,
         stdin=subprocess.DEVNULL,
     )
     if pr.returncode != 0:
@@ -992,11 +1040,16 @@ def _arm_auto_merge(task: Task, wt: Path, url: str) -> None:
     # Best-effort: repos without branch protection / auto-merge disabled reject this harmlessly.
     am = subprocess.run(
         ["gh", "pr", "merge", url, "--auto", "--squash"],
-        cwd=str(wt), capture_output=True, text=True, timeout=60,
+        cwd=str(wt),
+        capture_output=True,
+        text=True,
+        timeout=60,
         stdin=subprocess.DEVNULL,
     )
-    print(f"    auto-merge {'armed' if am.returncode == 0 else 'n/a'}: {task.id}"
-          + ("" if am.returncode == 0 else f" ({am.stderr.strip()[:100]})"))
+    print(
+        f"    auto-merge {'armed' if am.returncode == 0 else 'n/a'}: {task.id}"
+        + ("" if am.returncode == 0 else f" ({am.stderr.strip()[:100]})")
+    )
 
 
 def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
@@ -1044,9 +1097,7 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
         if wt.exists():  # leftover from a prior run
             _git(["worktree", "remove", "--force", str(wt)], repo_dir)
         _git(["branch", "-D", branch], repo_dir)  # clear stale same-named branch
-        add = _git(
-            ["worktree", "add", "-b", branch, str(wt), f"origin/{base}"], repo_dir, timeout=120
-        )
+        add = _git(["worktree", "add", "-b", branch, str(wt), f"origin/{base}"], repo_dir, timeout=120)
     if add.returncode != 0:
         print(f"  FAILED worktree add {task.id}: {add.stderr.strip()[:300]}")
         return False
@@ -1168,9 +1219,7 @@ def dispatch_tasks(
     remaining = _remaining_budget(limen, agent_filter, budget)
     print(format_capacity_census(capacity_census(limen, budget_limit=budget)))
     if remaining <= 0:
-        print(
-            f"Budget exhausted for {agent_filter} ({track.spent}/{budget} total spent)"
-        )
+        print(f"Budget exhausted for {agent_filter} ({track.spent}/{budget} total spent)")
         return
 
     tasks = limen.tasks
@@ -1202,17 +1251,13 @@ def dispatch_tasks(
     if not candidates:
         if debt_message:
             print(f"Lifecycle debt gate: {debt_message}")
-        print(
-            f"No open tasks for agent '{agent_filter}' within remaining budget ({remaining})"
-        )
+        print(f"No open tasks for agent '{agent_filter}' within remaining budget ({remaining})")
         return
     if debt_message:
         print(f"Lifecycle debt gate: {debt_message}")
 
     mode = "DRY-RUN" if dry_run else "LIVE"
-    print(
-        f"── limen dispatch ({mode}) — agent={agent_filter} budget_remaining={remaining}"
-    )
+    print(f"── limen dispatch ({mode}) — agent={agent_filter} budget_remaining={remaining}")
 
     dispatched = 0
     for task in candidates:
@@ -1365,9 +1410,11 @@ def _accel_limit(limen: LimenFile, agent: str, base_limit: int, now: datetime) -
         if urgency <= 1.0:
             return base_limit
         non_blocking = agent in _ASYNC_LANES or os.environ.get("LIMEN_DISPATCH_ASYNC") == "1"
-        ceiling = int(os.environ.get(
-            "LIMEN_ACCEL_ASYNC_CEIL" if non_blocking else "LIMEN_ACCEL_LOCAL_CEIL",
-            "25" if non_blocking else "8"))
+        ceiling = int(
+            os.environ.get(
+                "LIMEN_ACCEL_ASYNC_CEIL" if non_blocking else "LIMEN_ACCEL_LOCAL_CEIL", "25" if non_blocking else "8"
+            )
+        )
         eff = int(round(base_limit * urgency))
         return max(base_limit, min(eff, ceiling))
     except Exception:
@@ -1416,7 +1463,7 @@ def _claude_tier_overrides() -> dict[str, list[str]]:
     pre-assign set is discovered from the ledger, not pinned. Same read pattern as _ledger_lanes()."""
     try:
         root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
-        return (json.loads((root / "logs" / "model-tiers.json").read_text()).get("claude") or {})
+        return json.loads((root / "logs" / "model-tiers.json").read_text()).get("claude") or {}
     except Exception:
         return {}
 
@@ -1507,10 +1554,15 @@ def dispatch_parallel(
         rem = daily - spent_daily if cap is None else max(0, min(daily - spent_daily, cap - agent_spent))
         if rem <= 0:
             continue
-        cands = [t for t in limen.tasks
-                 if _dispatchable(t) and (t.target_agent == agent or t.target_agent == "any")
-                 and t.budget_cost <= rem and _deps_met(t, id2)
-                 and not (debt_blocked and _routine_generated_buildout(t))]
+        cands = [
+            t
+            for t in limen.tasks
+            if _dispatchable(t)
+            and (t.target_agent == agent or t.target_agent == "any")
+            and t.budget_cost <= rem
+            and _deps_met(t, id2)
+            and not (debt_blocked and _routine_generated_buildout(t))
+        ]
         cands.sort(key=lambda t: _PRIORITY_ORDER.get(t.priority, 99))
         # FRONT-LOAD: base picks by priority, then an ACCELERATION TAIL (only when the lane is
         # under-spending toward its reset cliff) drawn ONLY from work-classes the ledger says this
@@ -1598,9 +1650,11 @@ def dispatch_parallel(
             else:
                 n_fail += 1
         save_limen_file(tasks_path, fresh)
-    print(f"── PARALLEL done: {len(results)} ran · {n_pr} dispatched/PR · {n_noop} no-op · "
-          f"{n_fail} failed→cascade · {n_rl} rate-limited · {n_to} timeout→jules"
-          f"{' (lanes cooled: '+','.join(sorted(cooled))+')' if cooled else ''}")
+    print(
+        f"── PARALLEL done: {len(results)} ran · {n_pr} dispatched/PR · {n_noop} no-op · "
+        f"{n_fail} failed→cascade · {n_rl} rate-limited · {n_to} timeout→jules"
+        f"{' (lanes cooled: ' + ','.join(sorted(cooled)) + ')' if cooled else ''}"
+    )
 
 
 class ReleaseStaleCandidate(TypedDict):
@@ -1632,9 +1686,7 @@ def release_stale_tasks(
     candidates = stale_tasks(limen, hours=hours, agent=agent)
 
     mode = "DRY-RUN" if dry_run else "APPLY"
-    print(
-        f"── limen release-stale ({mode}) — hours={hours} candidates={len(candidates)}"
-    )
+    print(f"── limen release-stale ({mode}) — hours={hours} candidates={len(candidates)}")
     for task in candidates:
         print(f"  {task.id} {task.status} {task.target_agent} — {task.title}")
         if not dry_run:

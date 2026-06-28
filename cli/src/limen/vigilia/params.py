@@ -6,6 +6,7 @@ This module is the single accessor the organs share, so nothing hardcodes a
 threshold. Fail-open: if the panel can't be read, callers still get their own
 in-code default (the organ degrades, it never crashes the beat).
 """
+
 from __future__ import annotations
 
 import os

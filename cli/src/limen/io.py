@@ -109,14 +109,19 @@ def load_limen_file(path: Path) -> LimenFile:
         raise ValueError(f"{path} is empty or invalid YAML — refusing to load (restore from git HEAD)")
     dropped = _sanitize_dispatch_logs(raw)
     if dropped:
-        print(f"[limen.io] tolerated {dropped} malformed dispatch_log "
-              f"entr{'y' if dropped == 1 else 'ies'} in {Path(path).name} (torn-write recovery)",
-              file=sys.stderr)
+        print(
+            f"[limen.io] tolerated {dropped} malformed dispatch_log "
+            f"entr{'y' if dropped == 1 else 'ies'} in {Path(path).name} (torn-write recovery)",
+            file=sys.stderr,
+        )
     backfilled = _backfill_required_task_fields(raw)
     if backfilled:
-        print(f"[limen.io] backfilled missing `created` on {backfilled} "
-              f"task{'' if backfilled == 1 else 's'} in {Path(path).name} (one partial task must "
-              f"never reject the whole board)", file=sys.stderr)
+        print(
+            f"[limen.io] backfilled missing `created` on {backfilled} "
+            f"task{'' if backfilled == 1 else 's'} in {Path(path).name} (one partial task must "
+            f"never reject the whole board)",
+            file=sys.stderr,
+        )
     return LimenFile.model_validate(raw)
 
 

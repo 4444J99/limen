@@ -273,7 +273,9 @@ def test_next_actions_no_action() -> None:
 
 def test_readiness_report_all_pass(tmp_path: Path, monkeypatch) -> None:
     p = tmp_path / "tasks.yaml"
-    p.write_text("version: '1.0'\nportal:\n  budget:\n    daily: 100\n    track:\n      date: '2026-06-20'\n      spent: 0\n      per_agent:\n        jules: 0\n  name: Test\n")
+    p.write_text(
+        "version: '1.0'\nportal:\n  budget:\n    daily: 100\n    track:\n      date: '2026-06-20'\n      spent: 0\n      per_agent:\n        jules: 0\n  name: Test\n"
+    )
     monkeypatch.setenv("NEXT_PUBLIC_API_URL", "http://localhost:8000")
     monkeypatch.setenv("LIMEN_JULES_BIN", "python3")
     limen = _limen(tasks=[_task(status="open")])
@@ -281,9 +283,7 @@ def test_readiness_report_all_pass(tmp_path: Path, monkeypatch) -> None:
     assert report["status"] in ("ready", "degraded")
 
 
-def test_readiness_report_uses_lane_catalog_for_local_agents(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_readiness_report_uses_lane_catalog_for_local_agents(tmp_path: Path, monkeypatch) -> None:
     for binary in ("opencode", "agy", "gemini"):
         path = tmp_path / binary
         path.write_text("#!/bin/sh\nexit 0\n")
@@ -310,7 +310,9 @@ def test_readiness_report_tasks_file_missing(tmp_path: Path) -> None:
 
 def test_readiness_report_no_tasks_warns(tmp_path: Path) -> None:
     p = tmp_path / "tasks.yaml"
-    p.write_text("version: '1.0'\nportal:\n  budget:\n    daily: 100\n    track:\n      date: '2026-06-20'\n      spent: 0\n  name: Test\n")
+    p.write_text(
+        "version: '1.0'\nportal:\n  budget:\n    daily: 100\n    track:\n      date: '2026-06-20'\n      spent: 0\n  name: Test\n"
+    )
     limen = _limen()
     report = readiness_report(limen, p, agent="jules")
     assert any(c["id"] == "task_count" and c["status"] == "warn" for c in report["checks"])
@@ -318,7 +320,9 @@ def test_readiness_report_no_tasks_warns(tmp_path: Path) -> None:
 
 def test_readiness_report_stale_generates_warn(tmp_path: Path) -> None:
     p = tmp_path / "tasks.yaml"
-    p.write_text("version: '1.0'\nportal:\n  budget:\n    daily: 100\n    track:\n      date: '2026-06-20'\n      spent: 0\n  name: Test\n")
+    p.write_text(
+        "version: '1.0'\nportal:\n  budget:\n    daily: 100\n    track:\n      date: '2026-06-20'\n      spent: 0\n  name: Test\n"
+    )
     limen = _limen(tasks=[_task(status="dispatched")])
     report = readiness_report(limen, p, agent="jules")
     assert any(c["id"] == "stale_claims" and c["status"] == "warn" for c in report["checks"])
@@ -347,7 +351,9 @@ def test_readiness_report_budget_exhausted(tmp_path: Path) -> None:
 
 def test_readiness_report_open_queue_count(tmp_path: Path) -> None:
     p = tmp_path / "tasks.yaml"
-    p.write_text("version: '1.0'\nportal:\n  budget:\n    daily: 100\n    track:\n      date: '2026-06-20'\n      spent: 0\n  name: Test\n")
+    p.write_text(
+        "version: '1.0'\nportal:\n  budget:\n    daily: 100\n    track:\n      date: '2026-06-20'\n      spent: 0\n  name: Test\n"
+    )
     limen = _limen(tasks=[_task(id="O1", status="open"), _task(id="O2", status="open")])
     report = readiness_report(limen, p, agent="jules")
     assert report["counts"]["open"] == 2
@@ -355,10 +361,12 @@ def test_readiness_report_open_queue_count(tmp_path: Path) -> None:
 
 
 def test_readiness_report_counts_active() -> None:
-    limen = _limen(tasks=[
-        _task(id="D1", status="dispatched"),
-        _task(id="D2", status="in_progress"),
-    ])
+    limen = _limen(
+        tasks=[
+            _task(id="D1", status="dispatched"),
+            _task(id="D2", status="in_progress"),
+        ]
+    )
     p = Path("/nonexistent/tasks.yaml")
     report = readiness_report(limen, p, agent="jules")
     assert report["counts"]["active"] == 2
@@ -387,17 +395,26 @@ def test_qa_report_all_phases(tmp_path: Path) -> None:
     p = tmp_path / "tasks.yaml"
     p.write_text("")
     now = datetime.now(timezone.utc)
-    limen = _limen(tasks=[
-        _task(id="A", status="open", priority="high"),
-        _task(id="B", status="dispatched",
-              urls=["https://github.com/org/repo/pull/1"],
-              dispatch_log=[DispatchLogEntry(
-                  timestamp=now, agent="jules",
-                  session_id="s1", status="dispatched",
-              )]),
-        _task(id="C", status="done"),
-        _task(id="D", status="archived"),
-    ])
+    limen = _limen(
+        tasks=[
+            _task(id="A", status="open", priority="high"),
+            _task(
+                id="B",
+                status="dispatched",
+                urls=["https://github.com/org/repo/pull/1"],
+                dispatch_log=[
+                    DispatchLogEntry(
+                        timestamp=now,
+                        agent="jules",
+                        session_id="s1",
+                        status="dispatched",
+                    )
+                ],
+            ),
+            _task(id="C", status="done"),
+            _task(id="D", status="archived"),
+        ]
+    )
     report = qa_report(limen, p, agent="jules")
     assert report["lifecycle"]["assign"] == 1
     assert report["lifecycle"]["verify"] == 1

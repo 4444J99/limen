@@ -12,7 +12,19 @@ from pydantic import BaseModel, Field, field_validator
 
 VALID_STATUSES = {"open", "dispatched", "in_progress", "done", "failed", "failed_blocked", "needs_human", "archived"}
 VALID_PRIORITIES = {"critical", "high", "medium", "low", "backlog"}
-VALID_AGENTS = {"jules", "claude", "gemini", "opencode", "codex", "copilot", "agy", "warp", "oz", "github_actions", "any"}
+VALID_AGENTS = {
+    "jules",
+    "claude",
+    "gemini",
+    "opencode",
+    "codex",
+    "copilot",
+    "agy",
+    "warp",
+    "oz",
+    "github_actions",
+    "any",
+}
 TASK_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
 
 
@@ -39,7 +51,9 @@ def _validate_optional_enum(value: Optional[str], allowed: set[str], field_name:
         raise ValueError(f"{field_name} must be one of {', '.join(sorted(allowed))}")
     return value
 
+
 # ── Models ─────────────────────────────────────────────────────────────────
+
 
 class DispatchLogEntry(BaseModel):
     timestamp: datetime
@@ -47,6 +61,7 @@ class DispatchLogEntry(BaseModel):
     session_id: str
     status: str
     output: Optional[str] = None
+
 
 class Task(BaseModel):
     id: str
@@ -86,10 +101,12 @@ class Task(BaseModel):
             raise ValueError(f"target_agent must be one of {', '.join(sorted(VALID_AGENTS))}")
         return v
 
+
 class BudgetTrack(BaseModel):
     date: str
     spent: int = 0
     per_agent: Dict[str, int] = Field(default_factory=dict)
+
 
 class Budget(BaseModel):
     daily: int = 100
@@ -97,15 +114,18 @@ class Budget(BaseModel):
     per_agent: Dict[str, int] = Field(default_factory=dict)
     track: BudgetTrack = Field(default_factory=lambda: BudgetTrack(date=""))
 
+
 class Portal(BaseModel):
     name: str = "Universal Task Intake"
     description: str = ""
     budget: Budget = Field(default_factory=Budget)
 
+
 class LimenFile(BaseModel):
     version: str = "1.0"
     portal: Portal = Field(default_factory=Portal)
     tasks: List[Task] = Field(default_factory=list)
+
 
 # ── Server State ───────────────────────────────────────────────────────────
 
@@ -114,6 +134,7 @@ mcp = FastMCP("Limen")
 CIRCUIT_BREAKER_TRIPPED = False
 TASK_LOOP_TRACKER: Dict[str, int] = {}
 STATE_FILE = Path.home() / "Workspace" / "limen" / ".mcp_state.json"
+
 
 def _load_state():
     global CIRCUIT_BREAKER_TRIPPED, TASK_LOOP_TRACKER
@@ -126,6 +147,7 @@ def _load_state():
         except Exception:
             pass
 
+
 def _save_state():
     try:
         with open(STATE_FILE, "w") as f:
@@ -133,11 +155,16 @@ def _save_state():
     except Exception:
         pass
 
+
 _load_state()
+
 
 def _check_circuit_breaker():
     if CIRCUIT_BREAKER_TRIPPED:
-        raise RuntimeError("SYSTEM OFFLINE - GO TO SLEEP. Circuit breaker is tripped due to API rate limits or severance.")
+        raise RuntimeError(
+            "SYSTEM OFFLINE - GO TO SLEEP. Circuit breaker is tripped due to API rate limits or severance."
+        )
+
 
 def _get_tasks_path() -> Path:
     p = os.environ.get("LIMEN_TASKS")
@@ -148,6 +175,7 @@ def _get_tasks_path() -> Path:
         return default_path
     return Path("tasks.yaml")
 
+
 def _load_data() -> LimenFile:
     path = _get_tasks_path()
     if not path.exists():
@@ -156,14 +184,15 @@ def _load_data() -> LimenFile:
         data = yaml.safe_load(f)
     return LimenFile(**data)
 
+
 def _save_data(data: LimenFile, commit_msg: str = "chore: mcp task update"):
     path = _get_tasks_path()
     repo_dir = path.parent
-    
+
     # Write file locally first
     with open(path, "w") as f:
         yaml.dump(data.model_dump(mode="json"), f, default_flow_style=False, sort_keys=False)
-        
+
     # Layer 1: Concurrency Sync (Git Pull --Rebase wrapper)
     if (repo_dir / ".git").exists():
         try:
@@ -171,17 +200,18 @@ def _save_data(data: LimenFile, commit_msg: str = "chore: mcp task update"):
             subprocess.run(["git", "stash"], cwd=repo_dir, capture_output=True)
             # 2. Pull rebase to resolve remote conflicts
             subprocess.run(["git", "pull", "--rebase"], cwd=repo_dir, capture_output=True)
-            
+
             # 3. RE-WRITE the file from memory to resolve any conflicts in tasks.yaml automatically
             with open(path, "w") as f:
                 yaml.dump(data.model_dump(mode="json"), f, default_flow_style=False, sort_keys=False)
-                
+
             # 4. Commit and Push
             subprocess.run(["git", "add", path.name], cwd=repo_dir, capture_output=True)
             subprocess.run(["git", "commit", "-m", commit_msg], cwd=repo_dir, capture_output=True)
             subprocess.run(["git", "push"], cwd=repo_dir, capture_output=True)
         except Exception as e:
             print(f"Git sync failed: {e}")
+
 
 @mcp.tool()
 def trip_circuit_breaker() -> str:
@@ -191,6 +221,7 @@ def trip_circuit_breaker() -> str:
     _save_state()
     return "Circuit breaker TRIPPED. System offline."
 
+
 @mcp.tool()
 def reset_circuit_breaker() -> str:
     """Reset the circuit breaker to bring the swarm back online."""
@@ -198,6 +229,7 @@ def reset_circuit_breaker() -> str:
     CIRCUIT_BREAKER_TRIPPED = False
     _save_state()
     return "Circuit breaker RESET. System online."
+
 
 @mcp.tool()
 def list_tasks(status: Optional[str] = None, agent: Optional[str] = None) -> List[dict]:
@@ -213,23 +245,27 @@ def list_tasks(status: Optional[str] = None, agent: Optional[str] = None) -> Lis
         tasks = [t for t in tasks if t["target_agent"] == agent]
     return tasks
 
+
 @mcp.tool()
 def get_task(task_id: str) -> dict:
     """Get details for a specific task by ID."""
     task_id = _validate_task_id(task_id)
     _check_circuit_breaker()
-    
+
     # Layer 3: Hard Loop Limits
     TASK_LOOP_TRACKER[task_id] = TASK_LOOP_TRACKER.get(task_id, 0) + 1
     _save_state()
     if TASK_LOOP_TRACKER[task_id] > 3:
-        raise ValueError(f"HARD LOOP LIMIT REACHED: Task {task_id} requested >3 times today. Moving to 'needs_human'. Abandon task immediately.")
-        
+        raise ValueError(
+            f"HARD LOOP LIMIT REACHED: Task {task_id} requested >3 times today. Moving to 'needs_human'. Abandon task immediately."
+        )
+
     data = _load_data()
     for t in data.tasks:
         if t.id == task_id:
             return t.model_dump()
     raise ValueError(f"Task {task_id} not found")
+
 
 @mcp.tool()
 def add_task(title: str, repo: str, agent: str = "jules", priority: str = "medium", budget_cost: int = 1) -> str:
@@ -242,7 +278,7 @@ def add_task(title: str, repo: str, agent: str = "jules", priority: str = "mediu
         raise ValueError("budget_cost must be an integer between 1 and 100")
     _check_circuit_breaker()
     data = _load_data()
-    
+
     last_num = 0
     for t in data.tasks:
         if t.id.startswith("LIMEN-"):
@@ -253,7 +289,7 @@ def add_task(title: str, repo: str, agent: str = "jules", priority: str = "mediu
             except ValueError:
                 pass
     new_id = f"LIMEN-{last_num + 1:03d}"
-    
+
     new_task = Task(
         id=new_id,
         title=title,
@@ -268,6 +304,7 @@ def add_task(title: str, repo: str, agent: str = "jules", priority: str = "mediu
     _save_data(data, commit_msg=f"feat: add task {new_id}")
     return f"Created task {new_id}"
 
+
 @mcp.tool()
 def update_task_status(task_id: str, status: str, context: Optional[str] = None) -> str:
     """Update the status and context of a task. Allows 'failed_blocked' to evict dependencies."""
@@ -277,22 +314,23 @@ def update_task_status(task_id: str, status: str, context: Optional[str] = None)
         context = _validate_text(context, "context", 10000)
     _check_circuit_breaker()
     data = _load_data()
-    
+
     for t in data.tasks:
         if t.id == task_id:
             # Layer 1: Dynamic Costing - Double budget cost on failure
             if status in ["failed", "failed_blocked", "needs_human"] and t.status == "in_progress":
                 t.budget_cost = min(t.budget_cost * 2, 8)
-                
+
             t.status = status
             if context:
                 t.context = context
             t.updated = datetime.now()
-            
+
             _save_data(data, commit_msg=f"chore: update {task_id} to {status}")
             return f"Updated {task_id} to {status}. New budget cost: {t.budget_cost}"
-            
+
     raise ValueError(f"Task {task_id} not found")
+
 
 @mcp.tool()
 def get_budget_status() -> dict:
@@ -300,6 +338,7 @@ def get_budget_status() -> dict:
     _check_circuit_breaker()
     data = _load_data()
     return data.portal.budget.model_dump()
+
 
 if __name__ == "__main__":
     mcp.run()

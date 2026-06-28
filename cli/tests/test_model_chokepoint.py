@@ -12,6 +12,7 @@ Two layers, both proven here:
 Together these are the proof that nothing the fleet spawns can silently inherit the account-default
 Opus: a spawn either declares its tier (passed through) or gets floored (injected). ([[fleet-model-floor-bleed]])
 """
+
 from __future__ import annotations
 
 import os
@@ -27,8 +28,12 @@ REPO = Path(__file__).resolve().parents[2]
 SHIM = REPO / "scripts" / "shims" / "claude"
 
 _TIER_ENV = (
-    "LIMEN_CLAUDE_MODEL", "LIMEN_CLAUDE_TIER_SELECT", "LIMEN_CLAUDE_SHIM_FLOOR",
-    "LIMEN_CLAUDE_HAIKU_MODEL", "LIMEN_CLAUDE_SONNET_MODEL", "LIMEN_CLAUDE_OPUS_MODEL",
+    "LIMEN_CLAUDE_MODEL",
+    "LIMEN_CLAUDE_TIER_SELECT",
+    "LIMEN_CLAUDE_SHIM_FLOOR",
+    "LIMEN_CLAUDE_HAIKU_MODEL",
+    "LIMEN_CLAUDE_SONNET_MODEL",
+    "LIMEN_CLAUDE_OPUS_MODEL",
 )
 
 
@@ -39,12 +44,15 @@ def _clear(monkeypatch):
 
 # ── Layer 1: the sorter ──────────────────────────────────────────────────────────────────
 
+
 def test_bare_print_spawn_floors_to_haiku(monkeypatch):
     """A `-p` spawn with no --model gets the ladder's own default-for-unclassed: haiku."""
     _clear(monkeypatch)
     assert model_for_argv(["-p", "hello"]) == "haiku"
     assert model_for_argv(["--print", "hello"]) == "haiku"
-    assert model_for_argv(["--resume", "S1", "-p", "breathe"]) == "haiku"  # resume still floors (claude ignores it, harmless)
+    assert (
+        model_for_argv(["--resume", "S1", "-p", "breathe"]) == "haiku"
+    )  # resume still floors (claude ignores it, harmless)
 
 
 def test_declared_model_is_left_alone(monkeypatch):
@@ -94,6 +102,7 @@ def test_tier_alias_resolves_via_env_pin(monkeypatch):
 
 # ── Layer 2: the shim (end-to-end, against a stub "real claude") ───────────────────────────
 
+
 @pytest.fixture()
 def stub_claude(tmp_path):
     """A fake `claude` that just prints its argv, one per line — so a test can see EXACTLY what the
@@ -110,7 +119,10 @@ def _run_shim(stub, args, **env_overrides):
     env.update(env_overrides)
     proc = subprocess.run(
         [sys.executable, str(SHIM), *args],
-        env=env, capture_output=True, text=True, timeout=30,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=30,
     )
     assert proc.returncode == 0, proc.stderr
     return proc.stdout.splitlines()

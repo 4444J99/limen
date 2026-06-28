@@ -112,7 +112,9 @@ def test_prompt_priority_map_builds_redacted_batches_without_raw_text(tmp_path: 
         encoding="utf-8",
     )
     ppm.BLOCKER_INDEX.write_text(json.dumps({"blockers": [{"id": "local-lifecycle-disk-pressure"}]}), encoding="utf-8")
-    ppm.CAPABILITY_INDEX.write_text(json.dumps({"activation_queue": [{"name": "artifact-resurfacing"}]}), encoding="utf-8")
+    ppm.CAPABILITY_INDEX.write_text(
+        json.dumps({"activation_queue": [{"name": "artifact-resurfacing"}]}), encoding="utf-8"
+    )
 
     snapshot = ppm.build_snapshot(batch_size=2)
     markdown = ppm.render_markdown(snapshot, limit=10)

@@ -4,6 +4,7 @@ A his-hand lever carrying a `deadline` must auto-flag on the surface (overdue / 
 due-soon) so it can never silently rot past its date. This pins that the badge is PURE and
 DERIVED (no hand-maintained status field) and FAILS OPEN on a missing/malformed date.
 """
+
 import importlib.util
 from datetime import date
 from pathlib import Path
@@ -13,8 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def _mod():
     # obligations-view.py is hyphenated (a script, not a package) — load it by path.
-    spec = importlib.util.spec_from_file_location(
-        "obligations_view", ROOT / "scripts" / "obligations-view.py")
+    spec = importlib.util.spec_from_file_location("obligations_view", ROOT / "scripts" / "obligations-view.py")
     m = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(m)
     return m

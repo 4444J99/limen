@@ -3,6 +3,7 @@
 Hermetic: no network, no gh. Seeds and value-repos are written into tmp_path and pointed at
 via env vars; the script is run as a subprocess (matching test_generate_backlog.py's style).
 """
+
 from __future__ import annotations
 
 import json
@@ -27,12 +28,22 @@ def _seed(extra_price_in_public: bool = False) -> dict:
         "expensive_problem": "Commodity data is worthless; exclusive scored data wins deals.",
         "cost_of_not_having_it": "Real money per conversion.",
         "ladder": [
-            {"level": 1, "name": "Feed me leads", "kind": "DaaS",
-             "what_they_get": "Recurring exclusive feed.",
-             "internal_anchor": "$3k–$15k / mo", "cadence": "Recurring"},
-            {"level": 4, "name": "Build my whole data org", "kind": "Retainer",
-             "what_they_get": "We become your data engine.",
-             "internal_anchor": "$10k–$25k / mo retainer", "cadence": "Ongoing"},
+            {
+                "level": 1,
+                "name": "Feed me leads",
+                "kind": "DaaS",
+                "what_they_get": "Recurring exclusive feed.",
+                "internal_anchor": "$3k–$15k / mo",
+                "cadence": "Recurring",
+            },
+            {
+                "level": 4,
+                "name": "Build my whole data org",
+                "kind": "Retainer",
+                "what_they_get": "We become your data engine.",
+                "internal_anchor": "$10k–$25k / mo retainer",
+                "cadence": "Ongoing",
+            },
         ],
         "cta_client": "Deploy this for your shop",
         "cta_recruiter": "Work with the team that built this",
@@ -50,19 +61,23 @@ def _env(tmp_path: Path, seed: dict) -> dict:
     (tmp_path / "value-repos.json").write_text(json.dumps({"repos": [REPO]}))
     (tmp_path / "seeds.json").write_text(json.dumps({"repos": {REPO: seed}}))
     env = dict(os.environ)
-    env.update({
-        "LIMEN_ROOT": str(tmp_path),
-        "LIMEN_VALUE_REPOS": str(tmp_path / "value-repos.json"),
-        "LIMEN_POSITIONING_SEEDS": str(tmp_path / "seeds.json"),
-        "LIMEN_POSITIONING_DIR": str(tmp_path / "out"),
-    })
+    env.update(
+        {
+            "LIMEN_ROOT": str(tmp_path),
+            "LIMEN_VALUE_REPOS": str(tmp_path / "value-repos.json"),
+            "LIMEN_POSITIONING_SEEDS": str(tmp_path / "seeds.json"),
+            "LIMEN_POSITIONING_DIR": str(tmp_path / "out"),
+        }
+    )
     return env
 
 
 def _run(env: dict, *args: str) -> subprocess.CompletedProcess:
     return subprocess.run(
         [sys.executable, str(SCRIPT), *args],
-        capture_output=True, text=True, env=env,
+        capture_output=True,
+        text=True,
+        env=env,
     )
 
 
@@ -174,15 +189,16 @@ def _frontdoor() -> dict:
 
 def _env_fd(tmp_path: Path, seed: dict, frontdoor: dict) -> dict:
     (tmp_path / "value-repos.json").write_text(json.dumps({"repos": [REPO]}))
-    (tmp_path / "seeds.json").write_text(
-        json.dumps({"frontdoor": frontdoor, "repos": {REPO: seed}}))
+    (tmp_path / "seeds.json").write_text(json.dumps({"frontdoor": frontdoor, "repos": {REPO: seed}}))
     env = dict(os.environ)
-    env.update({
-        "LIMEN_ROOT": str(tmp_path),
-        "LIMEN_VALUE_REPOS": str(tmp_path / "value-repos.json"),
-        "LIMEN_POSITIONING_SEEDS": str(tmp_path / "seeds.json"),
-        "LIMEN_POSITIONING_DIR": str(tmp_path / "out"),
-    })
+    env.update(
+        {
+            "LIMEN_ROOT": str(tmp_path),
+            "LIMEN_VALUE_REPOS": str(tmp_path / "value-repos.json"),
+            "LIMEN_POSITIONING_SEEDS": str(tmp_path / "seeds.json"),
+            "LIMEN_POSITIONING_DIR": str(tmp_path / "out"),
+        }
+    )
     return env
 
 
@@ -191,10 +207,10 @@ def test_frontdoor_renders_both_doors_and_systems(tmp_path: Path):
     r = _run(env, "--frontdoor", "--apply")
     assert r.returncode == 0, r.stderr
     fd = (tmp_path / "out" / "_frontdoor.md").read_text()
-    assert "Deploy it for your shop" in fd        # client door
-    assert "Work with the builder" in fd          # recruiter door
-    assert "Test Platform" in fd                  # the system card
-    assert f"github.com/{REPO}" in fd             # links to the repo
+    assert "Deploy it for your shop" in fd  # client door
+    assert "Work with the builder" in fd  # recruiter door
+    assert "Test Platform" in fd  # the system card
+    assert f"github.com/{REPO}" in fd  # links to the repo
 
 
 def test_frontdoor_has_no_prices(tmp_path: Path):
@@ -245,22 +261,27 @@ PRIVATE_SLUG = "not-public-yet"
 
 def _two_repo_env(tmp_path: Path) -> dict:
     """One public-and-seeded repo + one seeded-but-awaiting_publish repo, both in value-repos."""
-    (tmp_path / "value-repos.json").write_text(
-        json.dumps({"repos": [REPO, PRIVATE_REPO]}))
+    (tmp_path / "value-repos.json").write_text(json.dumps({"repos": [REPO, PRIVATE_REPO]}))
     held = _seed()
     held["awaiting_publish"] = True
     held["display_name"] = "Held Private Platform"
-    (tmp_path / "seeds.json").write_text(json.dumps({
-        "frontdoor": _frontdoor(),
-        "repos": {REPO: _seed(), PRIVATE_REPO: held},
-    }))
+    (tmp_path / "seeds.json").write_text(
+        json.dumps(
+            {
+                "frontdoor": _frontdoor(),
+                "repos": {REPO: _seed(), PRIVATE_REPO: held},
+            }
+        )
+    )
     env = dict(os.environ)
-    env.update({
-        "LIMEN_ROOT": str(tmp_path),
-        "LIMEN_VALUE_REPOS": str(tmp_path / "value-repos.json"),
-        "LIMEN_POSITIONING_SEEDS": str(tmp_path / "seeds.json"),
-        "LIMEN_POSITIONING_DIR": str(tmp_path / "out"),
-    })
+    env.update(
+        {
+            "LIMEN_ROOT": str(tmp_path),
+            "LIMEN_VALUE_REPOS": str(tmp_path / "value-repos.json"),
+            "LIMEN_POSITIONING_SEEDS": str(tmp_path / "seeds.json"),
+            "LIMEN_POSITIONING_DIR": str(tmp_path / "out"),
+        }
+    )
     return env
 
 
@@ -290,8 +311,8 @@ def test_awaiting_publish_excluded_from_frontdoor(tmp_path: Path):
     r = _run(env, "--frontdoor", "--apply")
     assert r.returncode == 0, r.stderr
     fd = (tmp_path / "out" / "_frontdoor.md").read_text()
-    assert "Test Platform" in fd                  # the public system is shown
-    assert "Held Private Platform" not in fd      # the private one is not
+    assert "Test Platform" in fd  # the public system is shown
+    assert "Held Private Platform" not in fd  # the private one is not
     assert f"github.com/{PRIVATE_REPO}" not in fd  # and its 404 link never ships
 
 
@@ -306,16 +327,17 @@ def test_awaiting_publish_excluded_from_discoverability(tmp_path: Path):
 
 def test_default_target_is_seeded_value_repos_only(tmp_path: Path):
     # value-repos lists two repos; only one is seeded → only that one renders.
-    (tmp_path / "value-repos.json").write_text(
-        json.dumps({"repos": [REPO, "organvm/unseeded-repo"]}))
+    (tmp_path / "value-repos.json").write_text(json.dumps({"repos": [REPO, "organvm/unseeded-repo"]}))
     (tmp_path / "seeds.json").write_text(json.dumps({"repos": {REPO: _seed()}}))
     env = dict(os.environ)
-    env.update({
-        "LIMEN_ROOT": str(tmp_path),
-        "LIMEN_VALUE_REPOS": str(tmp_path / "value-repos.json"),
-        "LIMEN_POSITIONING_SEEDS": str(tmp_path / "seeds.json"),
-        "LIMEN_POSITIONING_DIR": str(tmp_path / "out"),
-    })
+    env.update(
+        {
+            "LIMEN_ROOT": str(tmp_path),
+            "LIMEN_VALUE_REPOS": str(tmp_path / "value-repos.json"),
+            "LIMEN_POSITIONING_SEEDS": str(tmp_path / "seeds.json"),
+            "LIMEN_POSITIONING_DIR": str(tmp_path / "out"),
+        }
+    )
     r = _run(env, "--apply")
     assert r.returncode == 0, r.stderr
     assert (tmp_path / "out" / f"{SLUG}.md").exists()

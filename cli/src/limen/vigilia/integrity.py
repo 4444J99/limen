@@ -6,6 +6,7 @@ prompts. The lever (``DISABLE_AUTOUPDATER=1``) existed but was ungoverned. This
 organ governs it: verify the operating binaries' signatures each beat and alert on
 drift instead of letting Gatekeeper interrupt. Read-only + fail-open.
 """
+
 from __future__ import annotations
 
 import os

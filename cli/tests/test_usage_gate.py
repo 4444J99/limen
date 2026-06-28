@@ -3,6 +3,7 @@
 Regression guard for the 2026-06-19 bug where codex burned its 5h token budget (usage.json
 health="exhausted") yet the dispatcher kept assigning to it because _down_lanes() only read a
 static hand-maintained file. The fix derives the down-set from logs/usage.json (self-healing)."""
+
 import json
 
 import pytest
@@ -24,13 +25,16 @@ def _write_usage(root, vendors):
 
 def test_usage_dead_lanes_flags_exhausted_ratelimited_and_reserve(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
-    _write_usage(tmp_path, {
-        "codex": {"health": "exhausted"},
-        "gemini": {"health": "rate-limited"},
-        "jules": {"health": "low"},        # at/below reserve -> STOP before 0 (paced-out)
-        "opencode": {"health": "throttle"},  # still has runway -> stays UP (steer signal only)
-        "claude": {"health": "ok"},
-    })
+    _write_usage(
+        tmp_path,
+        {
+            "codex": {"health": "exhausted"},
+            "gemini": {"health": "rate-limited"},
+            "jules": {"health": "low"},  # at/below reserve -> STOP before 0 (paced-out)
+            "opencode": {"health": "throttle"},  # still has runway -> stays UP (steer signal only)
+            "claude": {"health": "ok"},
+        },
+    )
     assert _usage_dead_lanes() == {"codex", "gemini", "jules"}
 
 

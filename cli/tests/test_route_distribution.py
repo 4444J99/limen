@@ -6,6 +6,7 @@ the first healthy lane (codex), starving claude/agy/jules and violating the use-
 mandate. The fix distributes by per-agent budget headroom. This test pins that every healthy
 local lane gets work and none monopolizes.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -51,9 +52,7 @@ def test_budget_weights_distribution():
 def test_deploy_work_still_goes_to_opencode():
     health = {"codex": True, "claude": True, "agy": True, "opencode": True}
     budget = {"codex": 100, "claude": 100, "agy": 100}
-    v = route._pick_local(
-        {"title": "deploy cloudflare worker", "type": "infra"}, health, {}, budget
-    )
+    v = route._pick_local({"title": "deploy cloudflare worker", "type": "infra"}, health, {}, budget)
     assert v == "opencode", v
 
 

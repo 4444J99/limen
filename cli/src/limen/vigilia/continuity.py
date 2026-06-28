@@ -9,6 +9,7 @@ thread from the transcript and writes it where the next session can find it.
 
 All parsing is pure + tested; the per-beat scan is best-effort and fail-open.
 """
+
 from __future__ import annotations
 
 import glob as _glob

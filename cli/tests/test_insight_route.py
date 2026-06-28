@@ -13,6 +13,7 @@ from limen.io import load_limen_file  # noqa: E402
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import importlib.util  # noqa: E402
+
 spec = importlib.util.spec_from_file_location("insight_route", str(ROOT / "scripts" / "insight-route.py"))
 insight_route = importlib.util.module_from_spec(spec)
 # Add to sys.modules so patch can find it
@@ -51,13 +52,7 @@ tasks: []
     his_hand_file = tmp_path / "his-hand-levers.json"
     his_hand_file.write_text('{"levers": []}')
 
-    return {
-        "logs": logs_dir,
-        "cadence": cadence_dir,
-        "tasks": tasks_yaml,
-        "his_hand": his_hand_file,
-        "root": tmp_path
-    }
+    return {"logs": logs_dir, "cadence": cadence_dir, "tasks": tasks_yaml, "his_hand": his_hand_file, "root": tmp_path}
 
 
 def test_insight_routing_repo(test_env):
@@ -69,23 +64,24 @@ def test_insight_routing_repo(test_env):
         "owner": "test-org/test-repo",
         "source": "test",
         "suggested_action": "Fix it",
-        "healable": True
+        "healable": True,
     }
 
     report = {
         "tier": "hourly",
         "generated_at": "2024-01-01T00:00:00Z",
         "window_start": "2024-01-01T00:00:00Z",
-        "insights": [insight]
+        "insights": [insight],
     }
 
     report_file = test_env["cadence"] / "hourly-test.json"
     report_file.write_text(json.dumps(report))
 
-    with patch("insight_route.TASKS_YAML", test_env["tasks"]), \
-         patch("insight_route.HIS_HAND_FILE", test_env["his_hand"]), \
-         patch("insight_route.LOGS_DIR", test_env["logs"]):
-
+    with (
+        patch("insight_route.TASKS_YAML", test_env["tasks"]),
+        patch("insight_route.HIS_HAND_FILE", test_env["his_hand"]),
+        patch("insight_route.LOGS_DIR", test_env["logs"]),
+    ):
         insight_route.process_report(report_file, apply=True)
 
         limen_file = load_limen_file(test_env["tasks"])
@@ -98,7 +94,7 @@ def test_insight_routing_repo(test_env):
         # Test idempotency
         insight_route.process_report(report_file, apply=True)
         limen_file = load_limen_file(test_env["tasks"])
-        assert len(limen_file.tasks) == 1 # Still 1
+        assert len(limen_file.tasks) == 1  # Still 1
 
 
 def test_insight_routing_organ(test_env):
@@ -109,20 +105,19 @@ def test_insight_routing_organ(test_env):
         "detail": "Detail",
         "owner": "test-organ",
         "source": "test",
-        "suggested_action": "Action"
+        "suggested_action": "Action",
     }
 
-    report = {
-        "insights": [insight]
-    }
+    report = {"insights": [insight]}
 
     report_file = test_env["cadence"] / "daily-test.json"
     report_file.write_text(json.dumps(report))
 
-    with patch("insight_route.TASKS_YAML", test_env["tasks"]), \
-         patch("insight_route.HIS_HAND_FILE", test_env["his_hand"]), \
-         patch("insight_route.LOGS_DIR", test_env["logs"]):
-
+    with (
+        patch("insight_route.TASKS_YAML", test_env["tasks"]),
+        patch("insight_route.HIS_HAND_FILE", test_env["his_hand"]),
+        patch("insight_route.LOGS_DIR", test_env["logs"]),
+    ):
         insight_route.process_report(report_file, apply=True)
 
         residual_file = test_env["logs"] / "test-organ-residual.json"
@@ -147,20 +142,19 @@ def test_insight_routing_anthony(mock_run, test_env):
         "detail": "Requires human",
         "owner": "anthony",
         "source": "test",
-        "suggested_action": "Do something"
+        "suggested_action": "Do something",
     }
 
-    report = {
-        "insights": [insight]
-    }
+    report = {"insights": [insight]}
 
     report_file = test_env["cadence"] / "weekly-test.json"
     report_file.write_text(json.dumps(report))
 
-    with patch("insight_route.TASKS_YAML", test_env["tasks"]), \
-         patch("insight_route.HIS_HAND_FILE", test_env["his_hand"]), \
-         patch("insight_route.LOGS_DIR", test_env["logs"]):
-
+    with (
+        patch("insight_route.TASKS_YAML", test_env["tasks"]),
+        patch("insight_route.HIS_HAND_FILE", test_env["his_hand"]),
+        patch("insight_route.LOGS_DIR", test_env["logs"]),
+    ):
         insight_route.process_report(report_file, apply=True)
 
         data = json.loads(test_env["his_hand"].read_text())
@@ -177,6 +171,7 @@ def test_insight_routing_anthony(mock_run, test_env):
         assert len(data["levers"]) == 1
         assert not mock_run.called
 
+
 def test_dry_run(test_env):
     insight = {
         "id": "INS-DRY-1",
@@ -185,20 +180,19 @@ def test_dry_run(test_env):
         "detail": "Detail",
         "owner": "test-organ",
         "source": "test",
-        "suggested_action": "Action"
+        "suggested_action": "Action",
     }
 
-    report = {
-        "insights": [insight]
-    }
+    report = {"insights": [insight]}
 
     report_file = test_env["cadence"] / "daily-test.json"
     report_file.write_text(json.dumps(report))
 
-    with patch("insight_route.TASKS_YAML", test_env["tasks"]), \
-         patch("insight_route.HIS_HAND_FILE", test_env["his_hand"]), \
-         patch("insight_route.LOGS_DIR", test_env["logs"]):
-
+    with (
+        patch("insight_route.TASKS_YAML", test_env["tasks"]),
+        patch("insight_route.HIS_HAND_FILE", test_env["his_hand"]),
+        patch("insight_route.LOGS_DIR", test_env["logs"]),
+    ):
         insight_route.process_report(report_file, apply=False)
 
         residual_file = test_env["logs"] / "test-organ-residual.json"

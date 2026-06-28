@@ -16,9 +16,7 @@ def load_self_improve() -> ModuleType:
     # Match the repo's existing script-loading convention (see test_auto_scale.py):
     # load the hyphenated script file by path so the organ is exercised exactly as
     # the heartbeat runs it.
-    spec = importlib.util.spec_from_file_location(
-        "limen_self_improve", ROOT / "scripts" / "self-improve.py"
-    )
+    spec = importlib.util.spec_from_file_location("limen_self_improve", ROOT / "scripts" / "self-improve.py")
     assert spec is not None
     assert spec.loader is not None
     module = importlib.util.module_from_spec(spec)
@@ -56,21 +54,25 @@ def _fixture_tasks() -> list[dict]:
     for i in range(6):
         log = [_entry("gemini", "failed") for _ in range(5)]
         log += [_entry("limen", "archived")]  # ledger noise that must be skipped
-        tasks.append({
-            "id": f"GH-repo-{i}",
-            "title": f"gh {i}",
-            "status": "archived",
-            "labels": ["cancelled", "noop"],
-            "dispatch_log": log,
-        })
+        tasks.append(
+            {
+                "id": f"GH-repo-{i}",
+                "title": f"gh {i}",
+                "status": "archived",
+                "labels": ["cancelled", "noop"],
+                "dispatch_log": log,
+            }
+        )
     # REV pattern: 6 tasks all shipped by jules (>= min_samples so it earns a verdict)
     for i in range(6):
-        tasks.append({
-            "id": f"REV-prod-{i}",
-            "title": f"rev {i}",
-            "status": "done",
-            "dispatch_log": [_entry("jules", "dispatched"), _entry("jules", "done")],
-        })
+        tasks.append(
+            {
+                "id": f"REV-prod-{i}",
+                "title": f"rev {i}",
+                "status": "done",
+                "dispatch_log": [_entry("jules", "dispatched"), _entry("jules", "done")],
+            }
+        )
     return tasks
 
 
@@ -117,8 +119,7 @@ def test_default_writes_proposal_json(tmp_path: Path, monkeypatch: pytest.Monkey
     out_path = tmp_path / "proposal.json"
     write_board(tasks_path, _fixture_tasks())
 
-    monkeypatch.setattr("sys.argv", [
-        "self-improve.py", "--tasks", str(tasks_path), "--out", str(out_path)])
+    monkeypatch.setattr("sys.argv", ["self-improve.py", "--tasks", str(tasks_path), "--out", str(out_path)])
     assert si.main() == 0
     assert out_path.exists()
 
@@ -137,8 +138,7 @@ def test_apply_writes_proposal_and_applies(tmp_path: Path, monkeypatch: pytest.M
     out_path = tmp_path / "proposal.json"
     write_board(tasks_path, _fixture_tasks())
 
-    monkeypatch.setattr("sys.argv", [
-        "self-improve.py", "--tasks", str(tasks_path), "--out", str(out_path), "--apply"])
+    monkeypatch.setattr("sys.argv", ["self-improve.py", "--tasks", str(tasks_path), "--out", str(out_path), "--apply"])
     # --apply now writes the proposal AND runs the re-plan writer; it is fail-open (never crashes
     # the heartbeat) so a board the strict loader can't parse just skips apply — both return 0.
     assert si.main() == 0
@@ -147,6 +147,5 @@ def test_apply_writes_proposal_and_applies(tmp_path: Path, monkeypatch: pytest.M
 
 def test_missing_tasks_file_does_not_crash(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     si = load_self_improve()
-    monkeypatch.setattr("sys.argv", [
-        "self-improve.py", "--tasks", str(tmp_path / "nope.yaml")])
+    monkeypatch.setattr("sys.argv", ["self-improve.py", "--tasks", str(tmp_path / "nope.yaml")])
     assert si.main() == 1  # clean non-zero, no traceback

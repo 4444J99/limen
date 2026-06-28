@@ -3,6 +3,7 @@
 Mirrors the repo's organ-test pattern: load the script as a module with LIMEN_ROOT pointed at a
 tmp dir, build minimal curriculum fixtures, exercise the cursor + rendering, assert fail-open.
 """
+
 import importlib.util
 import json
 from pathlib import Path
@@ -114,9 +115,9 @@ def test_render_is_self_contained(tmp_path, monkeypatch):
     view, _ = m.build_view(m.load_state())
     html = m.render_html(view)
     assert "<!doctype html>" in html
-    assert 'http-equiv="refresh"' in html          # daily auto-refresh
+    assert 'http-equiv="refresh"' in html  # daily auto-refresh
     assert "<link" not in html and "<script" not in html  # no external assets, cannot time out
-    assert "μῆνιν" in html or "Holst" in html       # real content rendered
+    assert "μῆνιν" in html or "Holst" in html  # real content rendered
 
 
 def test_fail_open_without_curriculum(tmp_path, monkeypatch):

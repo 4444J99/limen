@@ -7,6 +7,7 @@ matter because it runs autonomously in the heartbeat:
 (4) it is IDEMPOTENT — a second run emits no duplicate for a PR that already has a heal task,
 (5) it respects the per-run --limit cap.
 """
+
 import importlib.util
 import json
 import sys
@@ -28,8 +29,7 @@ def _load(tmp_path, monkeypatch):
 
 
 def _board(path):
-    path.write_text(yaml.safe_dump(
-        {"version": "1.0", "portal": {"name": "t"}, "tasks": []}, sort_keys=False))
+    path.write_text(yaml.safe_dump({"version": "1.0", "portal": {"name": "t"}, "tasks": []}, sort_keys=False))
 
 
 # canned PR universe: one CI-RED, one CONFLICT, one READY, one CI-PENDING.
@@ -40,14 +40,30 @@ _PRS = [
     {"number": 7, "repository": {"nameWithOwner": "organvm/pending"}, "url": "u/7"},
 ]
 _VIEW = {
-    54: {"state": "OPEN", "isDraft": False, "mergeable": "MERGEABLE",
-         "statusCheckRollup": [{"conclusion": "FAILURE"}]},                 # CI-RED
-    6: {"state": "OPEN", "isDraft": False, "mergeable": "CONFLICTING",
-        "statusCheckRollup": [{"conclusion": "SUCCESS"}]},                  # CONFLICT
-    9: {"state": "OPEN", "isDraft": False, "mergeable": "MERGEABLE",
-        "statusCheckRollup": [{"conclusion": "SUCCESS"}]},                  # READY
-    7: {"state": "OPEN", "isDraft": False, "mergeable": "MERGEABLE",
-        "statusCheckRollup": [{"conclusion": None, "state": "PENDING"}]},   # CI-PENDING
+    54: {
+        "state": "OPEN",
+        "isDraft": False,
+        "mergeable": "MERGEABLE",
+        "statusCheckRollup": [{"conclusion": "FAILURE"}],
+    },  # CI-RED
+    6: {
+        "state": "OPEN",
+        "isDraft": False,
+        "mergeable": "CONFLICTING",
+        "statusCheckRollup": [{"conclusion": "SUCCESS"}],
+    },  # CONFLICT
+    9: {
+        "state": "OPEN",
+        "isDraft": False,
+        "mergeable": "MERGEABLE",
+        "statusCheckRollup": [{"conclusion": "SUCCESS"}],
+    },  # READY
+    7: {
+        "state": "OPEN",
+        "isDraft": False,
+        "mergeable": "MERGEABLE",
+        "statusCheckRollup": [{"conclusion": None, "state": "PENDING"}],
+    },  # CI-PENDING
 }
 
 
@@ -135,10 +151,15 @@ _STALE_PRS = [
     {"number": 11, "repository": {"nameWithOwner": "organvm/limen"}, "url": "u/11"},
 ]
 _STALE_VIEW = {
-    11: {"state": "OPEN", "isDraft": False, "mergeable": "MERGEABLE",
-         "statusCheckRollup": [{"conclusion": "SUCCESS"}],            # green + mergeable …
-         "files": [{"path": "cli/src/limen/dispatch.py", "additions": 1, "deletions": 375}],
-         "baseRefName": "main", "headRefOid": "deadbeef"},            # … but touches the body
+    11: {
+        "state": "OPEN",
+        "isDraft": False,
+        "mergeable": "MERGEABLE",
+        "statusCheckRollup": [{"conclusion": "SUCCESS"}],  # green + mergeable …
+        "files": [{"path": "cli/src/limen/dispatch.py", "additions": 1, "deletions": 375}],
+        "baseRefName": "main",
+        "headRefOid": "deadbeef",
+    },  # … but touches the body
 }
 
 
@@ -147,7 +168,7 @@ def _fake_gh_stale(args, timeout=60):
         return _R(json.dumps(_STALE_PRS))
     if args[:2] == ["pr", "view"]:
         return _R(json.dumps(_STALE_VIEW[int(args[2])]))
-    if args and args[0] == "api":          # gh api …compare… --jq .behind_by  → 5 commits behind
+    if args and args[0] == "api":  # gh api …compare… --jq .behind_by  → 5 commits behind
         return _R("5")
     return _R("[]")
 

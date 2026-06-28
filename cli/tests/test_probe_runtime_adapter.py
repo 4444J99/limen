@@ -258,7 +258,13 @@ class FakeRuntime:
         self.tasks = {
             "TASK-DENIED": {"id": "TASK-DENIED", "status": "in_progress"},
             "TASK-VERIFY": {"id": "TASK-VERIFY", "status": "in_progress"},
-            "TASK-ASSIGN": {"id": "TASK-ASSIGN", "status": "needs_human", "target_agent": "codex", "priority": "low", "budget_cost": 1},
+            "TASK-ASSIGN": {
+                "id": "TASK-ASSIGN",
+                "status": "needs_human",
+                "target_agent": "codex",
+                "priority": "low",
+                "budget_cost": 1,
+            },
             "TASK-ARCHIVE": {"id": "TASK-ARCHIVE", "status": "done"},
         }
 
@@ -297,7 +303,9 @@ class FakeRuntime:
             assign_ids = ["TASK-ASSIGN"] if self.tasks["TASK-ASSIGN"]["status"] == "open" else []
             archive_ready = sum(1 for task in self.tasks.values() if task.get("status") == "done")
             archived = sum(1 for task in self.tasks.values() if task.get("status") == "archived")
-            return self.owner_response(token, qa_payload(assign_ids=assign_ids, archive_ready=archive_ready, archived=archived))
+            return self.owner_response(
+                token, qa_payload(assign_ids=assign_ids, archive_ready=archive_ready, archived=archived)
+            )
         if route == "/api/readiness":
             return self.owner_response(token, readiness_payload())
         if route == "/api/release-stale":
@@ -340,7 +348,10 @@ class FakeRuntime:
                     "status": body["status"],
                 }
             )
-            return self.response(200, {"status": "assigned", "task": task, "changed": ["target_agent", "priority", "budget_cost", "status"]})
+            return self.response(
+                200,
+                {"status": "assigned", "task": task, "changed": ["target_agent", "priority", "budget_cost", "status"]},
+            )
         if action == "archive":
             task["status"] = "archived"
             return self.response(200, {"status": "archived", "task": task})
@@ -369,8 +380,14 @@ def test_main_probes_persona_surfaces_and_dry_run_controls(
 
     assert "Runtime adapter probe passed" in capsys.readouterr().out
     assert any(call["path"] == "/api/surface-manifest" and call["token"] is None for call in fake.calls)
-    assert any(call["path"] == "/api/dispatch" and call["method"] == "POST" and call["body"]["live"] is False for call in fake.calls)
-    assert any(call["path"] == "/api/release-stale?hours=24&dry_run=true" and call["token"] == OWNER_TOKEN for call in fake.calls)
+    assert any(
+        call["path"] == "/api/dispatch" and call["method"] == "POST" and call["body"]["live"] is False
+        for call in fake.calls
+    )
+    assert any(
+        call["path"] == "/api/release-stale?hours=24&dry_run=true" and call["token"] == OWNER_TOKEN
+        for call in fake.calls
+    )
 
 
 def test_main_verifies_optional_owner_mutations(

@@ -9,6 +9,7 @@ ianva owns the settings file (materialized from the normalized upstream set) and
 the process. The backend command itself is a config knob (config.backend_cmd) because the
 exact flags are version-specific and must be verified, not assumed.
 """
+
 from __future__ import annotations
 
 import json
@@ -26,8 +27,7 @@ PIDFILE = paths.RUN_DIR / "backend.pid"
 LOGFILE = paths.LOG_DIR / "backend.log"
 
 
-def materialize_settings(upstreams: list[Upstream], path: Path | None = None,
-                         bearer: str | None = None) -> Path:
+def materialize_settings(upstreams: list[Upstream], path: Path | None = None, bearer: str | None = None) -> Path:
     """Write the aggregator settings (MCPHub mcp_settings shape) from ianva's upstream set.
 
     Bearer policy is ALWAYS written explicitly, because MCPHub defaults
@@ -54,8 +54,7 @@ def materialize_settings(upstreams: list[Upstream], path: Path | None = None,
             entry["group"] = u.group
         servers[u.name] = entry
     settings: dict = {"mcpServers": servers}
-    routing = ({"enableBearerAuth": True, "bearerKeys": [bearer]} if bearer
-               else {"enableBearerAuth": False})
+    routing = {"enableBearerAuth": True, "bearerKeys": [bearer]} if bearer else {"enableBearerAuth": False}
     settings["systemConfig"] = {"routing": routing}
     path.write_text(json.dumps(settings, indent=2) + "\n")
     return path
@@ -94,8 +93,13 @@ def start(cfg: GatewayConfig, settings_path: Path) -> tuple[bool, str]:
         log = subprocess.DEVNULL  # type: ignore
     try:
         proc = subprocess.Popen(
-            argv, env=env, stdout=log, stderr=log, stdin=subprocess.DEVNULL,
-            cwd=str(paths.IANVA_HOME), start_new_session=True,  # MCPHub finds mcp_settings.json here
+            argv,
+            env=env,
+            stdout=log,
+            stderr=log,
+            stdin=subprocess.DEVNULL,
+            cwd=str(paths.IANVA_HOME),
+            start_new_session=True,  # MCPHub finds mcp_settings.json here
         )
     except FileNotFoundError:
         return False, f"backend binary not found: {argv[0]!r} (set core.backend_cmd in ianva.toml)"

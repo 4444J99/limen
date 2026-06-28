@@ -27,16 +27,12 @@ def test_missing_policy_defaults_to_observe(tmp_path):
 def test_dispatch_ok_requires_dispatch_mode_and_flag(tmp_path):
     logs = tmp_path / "logs"
     logs.mkdir()
-    (logs / "autonomy-policy.json").write_text(
-        json.dumps({"mode": "observe", "dispatch_enabled": False})
-    )
+    (logs / "autonomy-policy.json").write_text(json.dumps({"mode": "observe", "dispatch_enabled": False}))
     proc = run_governor(tmp_path, "dispatch-ok")
     assert proc.returncode == 2
     assert "autonomy mode is observe" in proc.stdout
 
-    (logs / "autonomy-policy.json").write_text(
-        json.dumps({"mode": "dispatch", "dispatch_enabled": False})
-    )
+    (logs / "autonomy-policy.json").write_text(json.dumps({"mode": "dispatch", "dispatch_enabled": False}))
     proc = run_governor(tmp_path, "dispatch-ok")
     assert proc.returncode == 2
     assert "dispatch_enabled is false" in proc.stdout
@@ -45,9 +41,7 @@ def test_dispatch_ok_requires_dispatch_mode_and_flag(tmp_path):
 def test_dispatch_ok_blocks_when_primary_paid_lanes_are_dead(tmp_path):
     logs = tmp_path / "logs"
     logs.mkdir()
-    (logs / "autonomy-policy.json").write_text(
-        json.dumps({"mode": "dispatch", "dispatch_enabled": True})
-    )
+    (logs / "autonomy-policy.json").write_text(json.dumps({"mode": "dispatch", "dispatch_enabled": True}))
     (logs / "usage.json").write_text(
         json.dumps(
             {
@@ -68,12 +62,8 @@ def test_dispatch_ok_blocks_when_primary_paid_lanes_are_dead(tmp_path):
 def test_dispatch_ok_allows_dispatch_mode_with_headroom(tmp_path):
     logs = tmp_path / "logs"
     logs.mkdir()
-    (logs / "autonomy-policy.json").write_text(
-        json.dumps({"mode": "dispatch", "dispatch_enabled": True})
-    )
-    (logs / "usage.json").write_text(
-        json.dumps({"vendors": {"codex": {"health": "ok"}, "claude": {"health": "ok"}}})
-    )
+    (logs / "autonomy-policy.json").write_text(json.dumps({"mode": "dispatch", "dispatch_enabled": True}))
+    (logs / "usage.json").write_text(json.dumps({"vendors": {"codex": {"health": "ok"}, "claude": {"health": "ok"}}}))
     proc = run_governor(tmp_path, "dispatch-ok")
     assert proc.returncode == 0
     assert "dispatch allowed" in proc.stdout

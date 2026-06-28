@@ -3,6 +3,7 @@
 Hermetic: the real sysctl / codesign / ollama / transcript scans are monkeypatched
 so the organs are exercised by logic, not by the host machine's current state.
 """
+
 from __future__ import annotations
 
 import json
@@ -78,10 +79,15 @@ def test_continuity_parse_rows_skips_garbage(tmp_path):
 
 
 def test_continuity_row_text_from_blocks():
-    row = {"message": {"role": "assistant", "content": [
-        {"type": "text", "text": "hello"},
-        {"type": "tool_use", "name": "Bash"},
-    ]}}
+    row = {
+        "message": {
+            "role": "assistant",
+            "content": [
+                {"type": "text", "text": "hello"},
+                {"type": "tool_use", "name": "Bash"},
+            ],
+        }
+    }
     role, text = continuity._row_text(row)
     assert role == "assistant"
     assert "hello" in text and "Bash" in text
@@ -144,10 +150,14 @@ def test_integrity_assess_flags_signature_drift():
 
 
 def test_integrity_check_no_drift_when_signed_and_lever_set(monkeypatch):
-    monkeypatch.setattr(params, "_load_panel", lambda: {
-        "INTEGRITY_VERIFY_TARGETS": {"default": ["/Applications/Claude.app"]},
-        "INTEGRITY_AUTOUPDATER": {"default": "disabled", "env": "LIMEN_INTEGRITY_AUTOUPDATER"},
-    })
+    monkeypatch.setattr(
+        params,
+        "_load_panel",
+        lambda: {
+            "INTEGRITY_VERIFY_TARGETS": {"default": ["/Applications/Claude.app"]},
+            "INTEGRITY_AUTOUPDATER": {"default": "disabled", "env": "LIMEN_INTEGRITY_AUTOUPDATER"},
+        },
+    )
     monkeypatch.setattr(integrity, "verify_target", lambda t: {"target": t, "exists": True, "valid": True})
     monkeypatch.setenv("DISABLE_AUTOUPDATER", "1")
     monkeypatch.delenv("LIMEN_INTEGRITY_AUTOUPDATER", raising=False)

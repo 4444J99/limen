@@ -3,6 +3,7 @@ path (fire detached workers + harvest, so a slow agent never gates the beat). Co
 orchestration: concurrency cap, in-flight marker accounting, harvest-applies-results, and the
 dead-worker reaper. Agent spawning (subprocess.Popen) is monkeypatched so no real agents run.
 """
+
 import datetime
 import importlib.util
 import json
@@ -26,10 +27,11 @@ def _load(tmp_path, n_open=6, agent="codex"):
     os.environ["LIMEN_TASKS"] = str(tmp_path / "tasks.yaml")
     today = datetime.date.today()
     lf = LimenFile(
-        portal=Portal(budget=Budget(daily=300, per_agent={agent: 50},
-                                    track=BudgetTrack(date=today.isoformat()))),
-        tasks=[Task(id=f"T{i}", title="t", repo="x/y", target_agent=agent,
-                    status="open", created=today) for i in range(n_open)],
+        portal=Portal(budget=Budget(daily=300, per_agent={agent: 50}, track=BudgetTrack(date=today.isoformat()))),
+        tasks=[
+            Task(id=f"T{i}", title="t", repo="x/y", target_agent=agent, status="open", created=today)
+            for i in range(n_open)
+        ],
     )
     save_limen_file(tmp_path / "tasks.yaml", lf)
     spec = importlib.util.spec_from_file_location("dispatch_async_under_test", SCRIPT)
@@ -59,8 +61,11 @@ def test_inflight_markers_consume_slots(tmp_path):
 
 def test_harvest_applies_pr_result_and_cleans(tmp_path):
     da = _load(tmp_path, n_open=2)
-    (da.RUNS / "T0.result.json").write_text(json.dumps(
-        {"task_id": "T0", "agent": "codex", "result": "https://github.com/x/y/pull/9", "ts": "n", "err": None}))
+    (da.RUNS / "T0.result.json").write_text(
+        json.dumps(
+            {"task_id": "T0", "agent": "codex", "result": "https://github.com/x/y/pull/9", "ts": "n", "err": None}
+        )
+    )
     assert da.harvest() == 1
     t0 = _board(tmp_path)["T0"]
     assert any("pull/9" in str(e.session_id) for e in t0.dispatch_log)
@@ -70,8 +75,7 @@ def test_harvest_applies_pr_result_and_cleans(tmp_path):
 def test_reserve_and_launch_marks_and_spawns(tmp_path, monkeypatch):
     da = _load(tmp_path, n_open=6)
     calls = []
-    monkeypatch.setattr(da.subprocess, "Popen",
-                        lambda *a, **k: calls.append(a) or type("P", (), {"pid": 1})())
+    monkeypatch.setattr(da.subprocess, "Popen", lambda *a, **k: calls.append(a) or type("P", (), {"pid": 1})())
     picked = da.reserve_and_launch(["codex"], per_agent=2, cap=8, dry=False)
     assert len(picked) == 2 and len(calls) == 2
     dispatched = [t for t in load_limen_file(tmp_path / "tasks.yaml").tasks if t.status == "dispatched"]
@@ -86,8 +90,10 @@ def test_reaper_frees_dead_workers_not_live(tmp_path):
     # two dispatched tasks, one with a stale marker (dead), one fresh (live)
     lf = load_limen_file(tmp_path / "tasks.yaml")
     today = datetime.date.today()
-    lf.tasks += [Task(id="DEAD", title="t", repo="x/y", target_agent="codex", status="dispatched", created=today),
-                 Task(id="LIVE", title="t", repo="x/y", target_agent="codex", status="dispatched", created=today)]
+    lf.tasks += [
+        Task(id="DEAD", title="t", repo="x/y", target_agent="codex", status="dispatched", created=today),
+        Task(id="LIVE", title="t", repo="x/y", target_agent="codex", status="dispatched", created=today),
+    ]
     save_limen_file(tmp_path / "tasks.yaml", lf)
     now = datetime.datetime.now(datetime.timezone.utc)
     (da.RUNS / "DEAD__codex.running").write_text((now - datetime.timedelta(seconds=3000)).isoformat())
@@ -104,6 +110,7 @@ def test_async_reserve_counts_inflight_against_budget(tmp_path):
     """In-flight .running markers count toward a lane's per-agent budget, so a lane already at its
     cap via in-flight runs reserves nothing more (prevents over-dispatch between reserve & harvest)."""
     import datetime
+
     da = _load(tmp_path, n_open=6, agent="codex")
     # set codex per-agent cap = 2
     lf = load_limen_file(tmp_path / "tasks.yaml")

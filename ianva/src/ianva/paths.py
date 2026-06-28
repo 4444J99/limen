@@ -3,6 +3,7 @@
 All paths are derived (never pinned) and overridable by env so ianva is relocatable and
 testable. Defaults follow XDG and the fleet's existing conventions.
 """
+
 from __future__ import annotations
 
 import os
@@ -57,7 +58,7 @@ def load_limen_env(path: Path | None = None) -> dict[str, str]:
         if not line or line.startswith("#"):
             continue
         if line.startswith("export "):
-            line = line[len("export "):]
+            line = line[len("export ") :]
         if "=" not in line:
             continue
         k, _, v = line.partition("=")

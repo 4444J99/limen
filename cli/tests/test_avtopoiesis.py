@@ -4,6 +4,7 @@ It proves the gate discovers its door-list from the living heartbeat (never a ha
 includes ITSELF as a door (operational closure), scores three bounded tenses, regenerates an
 identical verdict each run (idempotent), and that strict-mode's exit code tracks the audit.
 """
+
 import json
 import os
 import subprocess
@@ -17,8 +18,7 @@ GATE = ROOT / "scripts" / "avtopoiesis.py"
 def _run(*args):
     # pin LIMEN_ROOT to this repo so the gate is deterministic regardless of suite-wide env pollution
     env = {**os.environ, "LIMEN_ROOT": str(ROOT)}
-    return subprocess.run([sys.executable, str(GATE), *args],
-                          capture_output=True, text=True, env=env)
+    return subprocess.run([sys.executable, str(GATE), *args], capture_output=True, text=True, env=env)
 
 
 def _audit():

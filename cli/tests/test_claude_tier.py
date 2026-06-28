@@ -18,8 +18,15 @@ from limen.models import Task
 
 
 def _task(type_="code", labels=None, claude_tier=None):
-    return Task(id="T1", title="t", target_agent="claude", type=type_,
-                labels=labels or [], claude_tier=claude_tier, created=date(2026, 6, 22))
+    return Task(
+        id="T1",
+        title="t",
+        target_agent="claude",
+        type=type_,
+        labels=labels or [],
+        claude_tier=claude_tier,
+        created=date(2026, 6, 22),
+    )
 
 
 def _write_ledger(root: Path, claude_classes: dict):
@@ -33,9 +40,15 @@ def _write_tiers(root: Path, mapping: dict):
 
 
 def _clear(monkeypatch):
-    for k in ("LIMEN_CLAUDE_MODEL", "LIMEN_CLAUDE_TIER_SELECT", "LIMEN_CLAUDE_RETRY_BUMP",
-              "LIMEN_CLAUDE_OPUS_CLASSES", "LIMEN_CLAUDE_HAIKU_MODEL",
-              "LIMEN_CLAUDE_SONNET_MODEL", "LIMEN_CLAUDE_OPUS_MODEL"):
+    for k in (
+        "LIMEN_CLAUDE_MODEL",
+        "LIMEN_CLAUDE_TIER_SELECT",
+        "LIMEN_CLAUDE_RETRY_BUMP",
+        "LIMEN_CLAUDE_OPUS_CLASSES",
+        "LIMEN_CLAUDE_HAIKU_MODEL",
+        "LIMEN_CLAUDE_SONNET_MODEL",
+        "LIMEN_CLAUDE_OPUS_MODEL",
+    ):
         monkeypatch.delenv(k, raising=False)
 
 
@@ -114,11 +127,11 @@ def test_retry_bump_on_tried_claude(tmp_path, monkeypatch):
     _clear(monkeypatch)
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     _write_ledger(tmp_path, {"waste_classes": ["research"]})
-    assert D._claude_model(_task(type_="code", labels=["tried:claude"])) == "sonnet"   # haiku→sonnet
+    assert D._claude_model(_task(type_="code", labels=["tried:claude"])) == "sonnet"  # haiku→sonnet
     assert D._claude_model(_task(type_="research", labels=["tried:claude"])) == "opus"  # sonnet→opus
     assert D._claude_model(_task(type_="code", labels=["canon", "tried:claude"])) == "opus"  # caps
     monkeypatch.setenv("LIMEN_CLAUDE_RETRY_BUMP", "0")
-    assert D._claude_model(_task(type_="code", labels=["tried:claude"])) == "haiku"   # gated off
+    assert D._claude_model(_task(type_="code", labels=["tried:claude"])) == "haiku"  # gated off
 
 
 def test_per_task_pin_and_tier_aliases_resolve(tmp_path, monkeypatch):

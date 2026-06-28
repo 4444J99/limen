@@ -6,6 +6,7 @@ re-encoded that garbage every beat — spamming a pydantic "Field required" trac
 corruption alive. route.py now reads through the resilient loader (sanitizes) and writes through the
 validated save under the queue lock, so the trace stops AND the file is healed on write.
 """
+
 from __future__ import annotations
 
 import os
@@ -22,12 +23,16 @@ SCRIPT = ROOT / "scripts" / "route.py"
 def _board_with_torn_write(path: Path) -> None:
     tasks = [
         {
-            "id": "SEED-1", "title": "seed", "repo": "o/r1",
-            "target_agent": "codex", "priority": "medium", "budget_cost": 1,
-            "status": "open", "created": "2026-06-01",
+            "id": "SEED-1",
+            "title": "seed",
+            "repo": "o/r1",
+            "target_agent": "codex",
+            "priority": "medium",
+            "budget_cost": 1,
+            "status": "open",
+            "created": "2026-06-01",
             "dispatch_log": [
-                {"timestamp": "2026-06-01T00:00:00", "agent": "codex",
-                 "session_id": "s1", "status": "dispatched"},
+                {"timestamp": "2026-06-01T00:00:00", "agent": "codex", "session_id": "s1", "status": "dispatched"},
                 # the torn write: a whole Task dict landed INSIDE the dispatch_log
                 {"id": "GEN-x", "title": "garbage", "repo": "o/r1", "status": "open"},
             ],
@@ -35,11 +40,15 @@ def _board_with_torn_write(path: Path) -> None:
     ]
     doc = {
         "version": "1.0",
-        "portal": {"name": "t", "budget": {
-            "daily": 600, "unit": "runs",
-            "per_agent": {"codex": 100, "claude": 100, "agy": 100},
-            "track": {"date": "", "spent": 0, "per_agent": {}},
-        }},
+        "portal": {
+            "name": "t",
+            "budget": {
+                "daily": 600,
+                "unit": "runs",
+                "per_agent": {"codex": 100, "claude": 100, "agy": 100},
+                "track": {"date": "", "spent": 0, "per_agent": {}},
+            },
+        },
         "tasks": tasks,
     }
     path.write_text(yaml.safe_dump(doc, sort_keys=False))
@@ -49,7 +58,9 @@ def _run(path: Path, *args: str) -> subprocess.CompletedProcess:
     # LIMEN_ROOT=tmp → no real usage.json/lanes bleed; LIMEN_LANES=codex keeps probing bounded.
     return subprocess.run(
         [sys.executable, str(SCRIPT), "--tasks", str(path), *args],
-        capture_output=True, text=True, timeout=120,
+        capture_output=True,
+        text=True,
+        timeout=120,
         env={**os.environ, "LIMEN_ORGS": "", "LIMEN_ROOT": str(path.parent), "LIMEN_LANES": "codex"},
     )
 

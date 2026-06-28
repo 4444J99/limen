@@ -314,9 +314,7 @@ def _live_args(**overrides):
 
 def test_live_kit_wires_real_synthesizer_and_noop_promoter():
     """--live builds the REAL AnthropicSynthesizer; default promoter is the no-op."""
-    client = FakeAnthropicClient(
-        '{"better_version": "the distilled one", "kept_ids": ["a"], "dropped_ids": ["b"]}'
-    )
+    client = FakeAnthropicClient('{"better_version": "the distilled one", "kept_ids": ["a"], "dropped_ids": ["b"]}')
     kit = _build_live_kit(_live_args(), anthropic_client=client)
 
     # The ladder (default on) wraps the REAL AnthropicSynthesizer mechanism via the
@@ -326,8 +324,10 @@ def test_live_kit_wires_real_synthesizer_and_noop_promoter():
     assert isinstance(kit["promoter"], NoopPromoter)  # promotion gated OFF by default
     assert isinstance(kit["ranker"], LexicalRanker)  # mesh off -> lexical fallback
 
-    shots = [Shot(id="a", text="first shot at the goal", source="laneA"),
-             Shot(id="b", text="weaker second shot", source="laneB")]
+    shots = [
+        Shot(id="a", text="first shot at the goal", source="laneA"),
+        Shot(id="b", text="weaker second shot", source="laneB"),
+    ]
     result = converge("the goal", shots, threshold=0.0, **kit)
 
     # The real synth path ran through the injected client and returned its distillate.
@@ -355,8 +355,7 @@ class _FakeProc:
 
 
 def _shots():
-    return [Shot(id="a", text="first draft", source="laneA"),
-            Shot(id="b", text="weaker second", source="laneB")]
+    return [Shot(id="a", text="first draft", source="laneA"), Shot(id="b", text="weaker second", source="laneB")]
 
 
 def test_claude_cli_synthesizer_parses_json(monkeypatch):
@@ -551,10 +550,14 @@ def test_ladder_fail_open_returns_best_so_far():
     assert ladder.synthesize("idea", _shots()).better_version == "S"  # 0.4 is the best
     promoter = NoopPromoter()
     result = converge(
-        "idea", _shots(), threshold=0.7,
-        ranker=LexicalRanker(), synthesizer=ladder,
+        "idea",
+        _shots(),
+        threshold=0.7,
+        ranker=LexicalRanker(),
+        synthesizer=ladder,
         scorer=_ScriptedScorer({"S": 0.0}),  # converge's gate rejects the best-so-far
-        promoter=promoter, gap_finder=LexicalGapFinder(),
+        promoter=promoter,
+        gap_finder=LexicalGapFinder(),
     )
     assert result.promoted is False
     assert promoter.rolled_back is True
@@ -568,9 +571,7 @@ def test_ladder_fail_open_empty_synthesis_when_all_rungs_raise():
         def synthesize(self, idea, ranked):
             raise RuntimeError("rung down")
 
-    ladder = LadderSynthesizer(
-        tier_factory=lambda tier: _Boom(), scorer=_ScriptedScorer({}), threshold=0.7
-    )
+    ladder = LadderSynthesizer(tier_factory=lambda tier: _Boom(), scorer=_ScriptedScorer({}), threshold=0.7)
     out = ladder.synthesize("idea", _shots())
     assert out.better_version == ""
     assert out.dropped_ids == ["a", "b"]  # all shots cited, nothing kept
@@ -602,9 +603,7 @@ def test_ladder_over_cli_climbs_aliases_in_order(monkeypatch):
     monkeypatch.setattr("subprocess.run", fake_run)
     from limen.converge import _cli_tier_factory
 
-    ladder = LadderSynthesizer(
-        tier_factory=_cli_tier_factory(), scorer=_ScriptedScorer({"weak": 0.1}), threshold=0.7
-    )
+    ladder = LadderSynthesizer(tier_factory=_cli_tier_factory(), scorer=_ScriptedScorer({"weak": 0.1}), threshold=0.7)
     ladder.synthesize("idea", _shots())
     assert used_models == ["haiku", "sonnet", "opus"]
 

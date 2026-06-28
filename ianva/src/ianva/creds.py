@@ -14,6 +14,7 @@ Rules encoded here:
   * An auth blip in child output triggers exactly ONE self-healing retry (a fresh process
     re-reads the rotated token), distinct from a genuine rate-limit.
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -93,4 +94,5 @@ def bearer_token() -> str | None:
 def new_bearer() -> str:
     """A fresh high-entropy bearer to store (via set-credential) before exposing the gateway."""
     import secrets
+
     return secrets.token_urlsafe(32)

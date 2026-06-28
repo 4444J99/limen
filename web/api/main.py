@@ -21,7 +21,19 @@ from pydantic import BaseModel, Field, field_validator
 
 VALID_STATUSES = {"open", "dispatched", "in_progress", "done", "failed", "failed_blocked", "needs_human", "archived"}
 VALID_PRIORITIES = {"critical", "high", "medium", "low", "backlog"}
-VALID_AGENTS = {"jules", "claude", "gemini", "opencode", "codex", "copilot", "agy", "warp", "oz", "github_actions", "any"}
+VALID_AGENTS = {
+    "jules",
+    "claude",
+    "gemini",
+    "opencode",
+    "codex",
+    "copilot",
+    "agy",
+    "warp",
+    "oz",
+    "github_actions",
+    "any",
+}
 VALID_DISPATCH_AGENTS = VALID_AGENTS - {"any"}
 TASK_ID_PATTERN = r"^[A-Za-z0-9][A-Za-z0-9._/-]*$"
 TASK_ID_RE = re.compile(TASK_ID_PATTERN)
@@ -57,11 +69,13 @@ def validate_label_list(value: list[str] | None) -> list[str] | None:
             raise ValueError("labels must be 1-64 characters and contain only letters, numbers, '.', '_', '-', or '/'")
     return value
 
+
 def get_cors_origins() -> list[str]:
     cors_env = os.environ.get("LIMEN_CORS_ORIGINS", "")
     if not cors_env or cors_env == "*":
         return ["http://localhost:*", "http://localhost:3000", "http://localhost:8000"]
     return [origin.strip() for origin in cors_env.split(",") if origin.strip()]
+
 
 app = FastAPI(
     title="Limen API",
@@ -88,14 +102,14 @@ GITHUB_TOKEN = os.environ.get("LIMEN_GITHUB_TOKEN", "")
 
 def is_valid_url(url: str) -> bool:
     url_pattern = re.compile(
-        r'^https?://'
-        r'(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?|'
-        r'localhost|'
-        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|'
-        r'\[(?:[0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}\])'
-        r'(?::\d+)?'
-        r'(?:/[a-zA-Z0-9._~:/?#[\]@!$&\'()*+,;=-]*)?$',
-        re.UNICODE
+        r"^https?://"
+        r"(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?|"
+        r"localhost|"
+        r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|"
+        r"\[(?:[0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}\])"
+        r"(?::\d+)?"
+        r"(?:/[a-zA-Z0-9._~:/?#[\]@!$&\'()*+,;=-]*)?$",
+        re.UNICODE,
     )
     return bool(url_pattern.match(url)) and len(url) <= 2048
 
@@ -364,7 +378,9 @@ def github_request(method: str, url: str, payload: dict[str, Any] | None = None)
             return json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")
-        raise HTTPException(status_code=502, detail=f"GitHub storage request failed ({exc.code}): {detail[:500]}") from exc
+        raise HTTPException(
+            status_code=502, detail=f"GitHub storage request failed ({exc.code}): {detail[:500]}"
+        ) from exc
     except urllib.error.URLError as exc:
         raise HTTPException(status_code=502, detail=f"GitHub storage request failed: {exc.reason}") from exc
 
@@ -386,7 +402,9 @@ def save_github_board(data: dict[str, Any], sha: str | None = None) -> None:
     message = os.environ.get("LIMEN_GITHUB_COMMIT_MESSAGE", "Update Limen task board")
     payload: dict[str, Any] = {
         "message": message,
-        "content": base64.b64encode(yaml.safe_dump(data, sort_keys=False, allow_unicode=True).encode("utf-8")).decode("ascii"),
+        "content": base64.b64encode(yaml.safe_dump(data, sort_keys=False, allow_unicode=True).encode("utf-8")).decode(
+            "ascii"
+        ),
         "branch": GITHUB_BRANCH,
     }
     if sha:
@@ -555,7 +573,9 @@ def throughput(data: dict[str, Any]) -> dict[str, Any]:
     expected_capacity_runs = daily_capacity * age_days
     recorded_events = sum(by_event_status.values())
     recorded_starts = sum(by_event_status.get(status, 0) for status in ("dispatched", "in_progress"))
-    recorded_finishes = sum(by_event_status.get(status, 0) for status in ("done", "failed", "failed_blocked", "archived"))
+    recorded_finishes = sum(
+        by_event_status.get(status, 0) for status in ("done", "failed", "failed_blocked", "archived")
+    )
     unrecorded_capacity_runs = max(0, expected_capacity_runs - recorded_starts)
     return {
         "first_created": first_created.isoformat(),
@@ -611,17 +631,19 @@ def client_summary(data: dict[str, Any]) -> dict[str, Any]:
         if task.get("status") not in ("dispatched", "in_progress") and task.get("id") not in stale_ids:
             continue
         lifecycle = task_lifecycle(task, stale_ids)
-        active_tasks.append({
-            "id": task.get("id"),
-            "title": task.get("title"),
-            "repo": task.get("repo") or "",
-            "target_agent": task.get("target_agent") or "unknown",
-            "status": task.get("status") or "unknown",
-            "priority": task.get("priority") or "medium",
-            "stale": task.get("id") in stale_ids,
-            "phase": lifecycle["phase"],
-            "next_gate": lifecycle["next_gate"],
-        })
+        active_tasks.append(
+            {
+                "id": task.get("id"),
+                "title": task.get("title"),
+                "repo": task.get("repo") or "",
+                "target_agent": task.get("target_agent") or "unknown",
+                "status": task.get("status") or "unknown",
+                "priority": task.get("priority") or "medium",
+                "stale": task.get("id") in stale_ids,
+                "phase": lifecycle["phase"],
+                "next_gate": lifecycle["next_gate"],
+            }
+        )
     raw["active_tasks"] = active_tasks[:25]
     return raw
 
@@ -844,9 +866,7 @@ def surface_manifest(data: dict[str, Any], persona: str = "owner") -> dict[str, 
         },
     }
     manifest["surfaces"] = [
-        surface
-        for surface in manifest["surfaces"]
-        if persona in surface.get("sanctioned_personas", [])
+        surface for surface in manifest["surfaces"] if persona in surface.get("sanctioned_personas", [])
     ]
     sanctioned_ids = {surface["id"] for surface in manifest["surfaces"]}
     manifest["contracts"] = {
@@ -861,22 +881,47 @@ def readiness(data: dict[str, Any], agent: str = "jules") -> dict[str, Any]:
     raw = summary(data)
     stale = release_stale_candidates(data, 24)
     open_tasks = [
-        task for task in data.get("tasks", [])
+        task
+        for task in data.get("tasks", [])
         if task.get("status") == "open" and task.get("target_agent", "any") in (agent, "any")
     ]
     raw_budget = budget(data)
     agent_limit = int(raw_budget.get("per_agent", {}).get(agent, raw_budget.get("daily", 100)))
     agent_spent = int(raw_budget.get("track", {}).get("per_agent", {}).get(agent, 0))
     remaining = remaining_budget(data, agent)
-    agent_bin = os.environ.get("LIMEN_JULES_BIN", "jules") if agent == "jules" else os.environ.get("LIMEN_DISPATCH_CMD", "agent-dispatch")
+    agent_bin = (
+        os.environ.get("LIMEN_JULES_BIN", "jules")
+        if agent == "jules"
+        else os.environ.get("LIMEN_DISPATCH_CMD", "agent-dispatch")
+    )
     agent_path = shutil.which(agent_bin)
     checks = [
-        {"id": "storage", "status": "pass" if storage_status().get("configured") else "fail", "detail": storage_status().get("mode", "unknown")},
+        {
+            "id": "storage",
+            "status": "pass" if storage_status().get("configured") else "fail",
+            "detail": storage_status().get("mode", "unknown"),
+        },
         {"id": "task_count", "status": "pass" if raw["total"] else "warn", "detail": f"{raw['total']} tasks"},
-        {"id": "stale_claims", "status": "warn" if stale else "pass", "detail": f"{len(stale)} stale {agent} active tasks"},
-        {"id": "open_queue", "status": "pass" if open_tasks else "warn", "detail": f"{len(open_tasks)} open {agent} tasks"},
-        {"id": "budget", "status": "pass" if remaining > 0 else "fail", "detail": f"{remaining}/{agent_limit} {agent} runs remaining"},
-        {"id": "agent_cli", "status": "pass" if agent_path else "fail", "detail": agent_path or f"{agent_bin} not found"},
+        {
+            "id": "stale_claims",
+            "status": "warn" if stale else "pass",
+            "detail": f"{len(stale)} stale {agent} active tasks",
+        },
+        {
+            "id": "open_queue",
+            "status": "pass" if open_tasks else "warn",
+            "detail": f"{len(open_tasks)} open {agent} tasks",
+        },
+        {
+            "id": "budget",
+            "status": "pass" if remaining > 0 else "fail",
+            "detail": f"{remaining}/{agent_limit} {agent} runs remaining",
+        },
+        {
+            "id": "agent_cli",
+            "status": "pass" if agent_path else "fail",
+            "detail": agent_path or f"{agent_bin} not found",
+        },
         {"id": "api_runtime", "status": "pass", "detail": "connected"},
     ]
     if any(check["status"] == "fail" for check in checks):
@@ -1032,7 +1077,13 @@ def health() -> dict[str, Any]:
 def get_status(authorization: str | None = Header(None)) -> dict[str, Any]:
     require_persona(authorization, {"owner"})
     data = load_board()
-    return {"status": "ok", "surface": "internal", "portal": data.get("portal", {}), "summary": summary(data), "storage": storage_status()}
+    return {
+        "status": "ok",
+        "surface": "internal",
+        "portal": data.get("portal", {}),
+        "summary": summary(data),
+        "storage": storage_status(),
+    }
 
 
 @app.get("/api/client-status")

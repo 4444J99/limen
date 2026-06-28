@@ -57,4 +57,3 @@ tasks:
     assert result.returncode == 1
     assert "reopened after a done transition" in result.stderr
     assert "REOPENED: dispatched" in result.stderr
-

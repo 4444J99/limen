@@ -8,6 +8,7 @@ We parse defensively because the registry shape is not strictly versioned: it ma
 a {"servers": [...]} envelope, or a {name: def} map, and individual keys vary by tool
 (command/args/env, url/serverUrl/httpUrl, type/transport, disabled/enabled).
 """
+
 from __future__ import annotations
 
 import json
@@ -20,13 +21,13 @@ from . import paths
 @dataclass
 class Upstream:
     name: str
-    transport: str = "stdio"          # "stdio" | "http" | "sse"
+    transport: str = "stdio"  # "stdio" | "http" | "sse"
     command: str | None = None
     args: list[str] = field(default_factory=list)
     env: dict[str, str] = field(default_factory=dict)
     url: str | None = None
     headers: dict[str, str] = field(default_factory=dict)
-    oauth: bool = False               # upstream requires OAuth → MCPHub holds + refreshes it
+    oauth: bool = False  # upstream requires OAuth → MCPHub holds + refreshes it
     enabled: bool = True
     group: str = "default"
 
@@ -100,8 +101,9 @@ def _read(path: Path) -> dict[str, dict]:
         return {}
 
 
-def load_upstreams(registry: Path | None = None, extra: Path | None = None,
-                   include_disabled: bool = False) -> list[Upstream]:
+def load_upstreams(
+    registry: Path | None = None, extra: Path | None = None, include_disabled: bool = False
+) -> list[Upstream]:
     """Merge registry + extra (extra overrides by name), normalize, return enabled upstreams."""
     merged: dict[str, dict] = {}
     merged.update(_read(registry or paths.DEFAULT_REGISTRY))

@@ -10,7 +10,7 @@ from typing import TypedDict, TypeVar
 
 from limen.models import Task
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class AgentStatus(TypedDict):
@@ -182,6 +182,7 @@ def _truthy(value: str | None) -> bool:
 def _copilot_assignable(binary: str, repo: str, actor: str) -> bool:
     try:
         import json
+
         owner, name = repo.split("/", 1)
         query = """
         query($owner: String!, $name: String!, $actor: String!) {
@@ -194,11 +195,18 @@ def _copilot_assignable(binary: str, repo: str, actor: str) -> bool:
         """
         result = subprocess.run(
             [
-                binary, "api", "graphql", "--silent",
-                "-f", f"query={query}",
-                "-F", f"owner={owner}",
-                "-F", f"name={name}",
-                "-F", f"actor={actor}",
+                binary,
+                "api",
+                "graphql",
+                "--silent",
+                "-f",
+                f"query={query}",
+                "-F",
+                f"owner={owner}",
+                "-F",
+                f"name={name}",
+                "-F",
+                f"actor={actor}",
             ],
             capture_output=True,
             text=True,
@@ -370,7 +378,6 @@ def format_capacity_census(rows: list[CapacityRow]) -> str:
         remaining = "unlimited" if row["remaining"] is None else str(row["remaining"])
         limit = "unlimited" if row["limit"] is None else str(row["limit"])
         lines.append(
-            f"  {state:4} {row['agent']:<14} {row['kind']:<14} "
-            f"remaining={remaining}/{limit} - {row['detail']}"
+            f"  {state:4} {row['agent']:<14} {row['kind']:<14} remaining={remaining}/{limit} - {row['detail']}"
         )
     return "\n".join(lines)

@@ -2,6 +2,7 @@
 (daemon-up / beating / not-wedged), the ONE-alert + dedupe + resolve state machine,
 and the double-gated heal. launchctl/ps are mocked so no system state is touched and
 LIMEN_ROOT points at a tmp dir so no live log is read or written."""
+
 import datetime
 import importlib
 import importlib.util
@@ -26,8 +27,7 @@ def _fresh_module(tmp_path, monkeypatch, **env):
 
 
 def _now_iso(delta_sec=0):
-    return (datetime.datetime.now(datetime.timezone.utc)
-            - datetime.timedelta(seconds=delta_sec)).isoformat()
+    return (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=delta_sec)).isoformat()
 
 
 def _write_logs(m, *, pid=4242, tick_age=10, pr_beats=(6, 6, 6)):
@@ -35,8 +35,10 @@ def _write_logs(m, *, pid=4242, tick_age=10, pr_beats=(6, 6, 6)):
     m.PIDFILE.write_text(str(pid))
     lines = []
     for n in pr_beats:
-        lines.append(f"── PARALLEL done: 9 ran · {n} dispatched/PR · 3 no-op · "
-                     f"{9 - n} failed→cascade · 0 rate-limited · 0 timeout→jules")
+        lines.append(
+            f"── PARALLEL done: 9 ran · {n} dispatched/PR · 3 no-op · "
+            f"{9 - n} failed→cascade · 0 rate-limited · 0 timeout→jules"
+        )
     lines.append(f"tick emitted: {_now_iso(tick_age)} total=900 open=100 spent=2/600")
     m.BEATLOG.write_text("\n".join(lines) + "\n")
 
@@ -48,11 +50,12 @@ def _mock_system(m, monkeypatch, *, pid_alive=True, launchd_running=True, pid=42
             rc = 0 if pid_alive else 1
             return _CP(args, rc)
         if cmd == "launchctl" and args[1] == "list":
-            row = (f"{pid if launchd_running else '-'}\t0\t{m.LABEL}")
+            row = f"{pid if launchd_running else '-'}\t0\t{m.LABEL}"
             return _CP(args, 0, stdout=row + "\n")
         if cmd == "launchctl" and args[1] == "kickstart":
             return _CP(args, 0, stdout="kickstarted")
         return _CP(args, 1)
+
     monkeypatch.setattr(m, "_run", fake_run)
 
 

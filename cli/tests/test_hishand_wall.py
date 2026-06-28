@@ -3,6 +3,7 @@
 Pins that the Wall lists every lever with its issue link and carries its own marker (so the
 per-lever sync never mistakes the Wall for a lever), purely and offline.
 """
+
 import importlib.util
 from pathlib import Path
 
@@ -17,8 +18,13 @@ def _mod():
 
 
 _LEVERS = [
-    {"id": "L-FOO", "label": "Do the foo thing: a long clause that should be truncated for the table",
-     "unlocks": "the foo capability", "cost": "~2 min once", "issue": 111},
+    {
+        "id": "L-FOO",
+        "label": "Do the foo thing: a long clause that should be truncated for the table",
+        "unlocks": "the foo capability",
+        "cost": "~2 min once",
+        "issue": 111,
+    },
     {"id": "L-BAR", "label": "Bar lever", "unlocks": "bar", "cost": "one paste", "issue": 222},
     {"id": "L-NOISSUE", "label": "Unstamped lever", "unlocks": "x", "cost": "y"},
 ]

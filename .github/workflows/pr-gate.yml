@@ -42,6 +42,9 @@ jobs:
       - name: Lint Python with ruff
         run: python -m ruff check cli/src cli/tests web/api mcp ianva
 
+      - name: Format check Python with ruff
+        run: python -m ruff format --check cli/src cli/tests web/api mcp ianva
+
       - name: Compile Python modules
         run: python -m py_compile web/api/main.py cli/src/limen/*.py mcp/src/limen_mcp/server.py ianva/src/ianva/*.py
 

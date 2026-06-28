@@ -6,6 +6,7 @@ on LEDGER-WON work-classes (never pour expiring budget into junk), lane-AWARE (a
 local lanes stay pool-bounded), with the reserve decaying to a floor near the cliff, codex failing over
 to the fresh Spark weekly pool, and routing draining the cliff-edge lane first. All fail-open + floored.
 """
+
 from __future__ import annotations
 
 import datetime
@@ -22,6 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 
 def _spec_load(name: str, filename: str):
     import importlib.util
+
     path = Path(__file__).resolve().parents[2] / "scripts" / filename
     spec = importlib.util.spec_from_file_location(name, path)
     mod = importlib.util.module_from_spec(spec)
@@ -30,8 +32,9 @@ def _spec_load(name: str, filename: str):
 
 
 def _lf(per_agent: dict, spent: dict, resets: dict) -> LimenFile:
-    track = BudgetTrack(date="2026-06-22", spent=sum(spent.values()),
-                        per_agent=dict(spent), per_agent_reset=dict(resets))
+    track = BudgetTrack(
+        date="2026-06-22", spent=sum(spent.values()), per_agent=dict(spent), per_agent_reset=dict(resets)
+    )
     return LimenFile(portal=Portal(budget=Budget(daily=600, per_agent=per_agent, track=track)))
 
 
@@ -45,7 +48,7 @@ def test_accel_window_detects_under_spend(monkeypatch):
     now = datetime.datetime.now(datetime.timezone.utc)
     lf = _lf({"jules": 100}, {"jules": 10}, {"jules": _iso(now, 22)})  # 22h into a 24h window, 90% left
     rem, tleft = D._accel_window(lf, "jules", now)
-    assert rem > 0.85 and tleft < 0.12          # lots of budget, almost no time → will under-spend
+    assert rem > 0.85 and tleft < 0.12  # lots of budget, almost no time → will under-spend
 
 
 def test_accel_scales_async_lane_toward_cliff(monkeypatch):
@@ -107,19 +110,19 @@ def test_accel_never_decelerates_below_base(monkeypatch):
 # ── the ledger gate on the acceleration tail ────────────────────────────────────────────────────
 def test_accel_allows_is_ledger_gated():
     lanes = {
-        "clean": {"waste_classes": [], "win_classes": ["code"]},      # earns across the board
+        "clean": {"waste_classes": [], "win_classes": ["code"]},  # earns across the board
         "mixed": {"waste_classes": ["coverage"], "win_classes": ["revenue"]},
-        "pit": {"waste_classes": ["code"], "win_classes": []},        # only wastes
+        "pit": {"waste_classes": ["code"], "win_classes": []},  # only wastes
     }
-    rev = Task(id="R", title="t", repo="x/y", target_agent="any", type="code",
-               labels=["revenue"], created="2026-06-22")
-    cov = Task(id="C", title="t", repo="x/y", target_agent="any", type="code",
-               labels=["coverage"], created="2026-06-22")
-    assert D._accel_allows("clean", cov, lanes) is True               # clean earner accelerates anything
-    assert D._accel_allows("mixed", rev, lanes) is True               # win class rides the tail
-    assert D._accel_allows("mixed", cov, lanes) is False              # its waste class does NOT
-    assert D._accel_allows("pit", rev, lanes) is False                # pure pit never accelerates
-    assert D._accel_allows("unknown", rev, lanes) is False            # no ledger record ⇒ base only
+    rev = Task(id="R", title="t", repo="x/y", target_agent="any", type="code", labels=["revenue"], created="2026-06-22")
+    cov = Task(
+        id="C", title="t", repo="x/y", target_agent="any", type="code", labels=["coverage"], created="2026-06-22"
+    )
+    assert D._accel_allows("clean", cov, lanes) is True  # clean earner accelerates anything
+    assert D._accel_allows("mixed", rev, lanes) is True  # win class rides the tail
+    assert D._accel_allows("mixed", cov, lanes) is False  # its waste class does NOT
+    assert D._accel_allows("pit", rev, lanes) is False  # pure pit never accelerates
+    assert D._accel_allows("unknown", rev, lanes) is False  # no ledger record ⇒ base only
 
 
 # ── dispatch_parallel integration: the tail is win-class only ───────────────────────────────────
@@ -128,15 +131,37 @@ def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch):
     monkeypatch.delenv("LIMEN_ACCEL", raising=False)
     # jules near its cliff with budget to burn; ledger: jules WINS revenue, WASTES coverage.
     (tmp_path / "logs").mkdir()
-    (tmp_path / "logs" / "ledger.json").write_text(json.dumps(
-        {"lanes": {"jules": {"waste_classes": ["coverage"], "win_classes": ["revenue"]}}}))
+    (tmp_path / "logs" / "ledger.json").write_text(
+        json.dumps({"lanes": {"jules": {"waste_classes": ["coverage"], "win_classes": ["revenue"]}}})
+    )
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     now = datetime.datetime.now(datetime.timezone.utc)
     reset = {"jules": _iso(now, 23)}
-    tasks = ([Task(id=f"REV{i}", title="t", repo="x/y", target_agent="jules", type="code",
-                   labels=["revenue"], status="open", created="2026-06-22") for i in range(10)]
-             + [Task(id=f"COV{i}", title="t", repo="x/y", target_agent="jules", type="code",
-                     labels=["coverage"], status="open", created="2026-06-22") for i in range(10)])
+    tasks = [
+        Task(
+            id=f"REV{i}",
+            title="t",
+            repo="x/y",
+            target_agent="jules",
+            type="code",
+            labels=["revenue"],
+            status="open",
+            created="2026-06-22",
+        )
+        for i in range(10)
+    ] + [
+        Task(
+            id=f"COV{i}",
+            title="t",
+            repo="x/y",
+            target_agent="jules",
+            type="code",
+            labels=["coverage"],
+            status="open",
+            created="2026-06-22",
+        )
+        for i in range(10)
+    ]
     lf = _lf({"jules": 100}, {"jules": 5}, reset)
     lf.tasks = tasks
     tp = tmp_path / "tasks.yaml"
@@ -206,14 +231,24 @@ def test_routing_drains_cliff_edge_lane_first(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     (tmp_path / "logs").mkdir()
     # codex is near its reset with budget unspent (high headroom, low time-left); claude is fresh.
-    (tmp_path / "logs" / "usage.json").write_text(json.dumps({"vendors": {
-        "codex": {"headroom_pct": 80, "time_left_frac": 0.05, "runway_h": 50},
-        "claude": {"headroom_pct": 80, "time_left_frac": 0.9, "runway_h": 50},
-    }}))
+    (tmp_path / "logs" / "usage.json").write_text(
+        json.dumps(
+            {
+                "vendors": {
+                    "codex": {"headroom_pct": 80, "time_left_frac": 0.05, "runway_h": 50},
+                    "claude": {"headroom_pct": 80, "time_left_frac": 0.9, "runway_h": 50},
+                }
+            }
+        )
+    )
     health = {"codex": True, "claude": True}
-    pick = route._pick_local({"title": "build", "type": "code"}, health,
-                             assigned={}, budget={"codex": 100, "claude": 100},
-                             runway={"codex": 50.0, "claude": 50.0})
+    pick = route._pick_local(
+        {"title": "build", "type": "code"},
+        health,
+        assigned={},
+        budget={"codex": 100, "claude": 100},
+        runway={"codex": 50.0, "claude": 50.0},
+    )
     assert pick == "codex", "the lane about to lose unspent budget at reset drains first"
 
 
@@ -222,9 +257,13 @@ def test_routing_no_cliff_data_is_today_behaviour(tmp_path, monkeypatch):
     monkeypatch.setattr(route, "ROOT", tmp_path)  # no usage.json → cliff urgency {} → runway breaks tie
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))  # isolate ledger/self-improve reads from LIVE logs/ too
     health = {"codex": True, "claude": True}
-    pick = route._pick_local({"title": "build", "type": "code"}, health,
-                             assigned={}, budget={"codex": 100, "claude": 100},
-                             runway={"codex": 10.0, "claude": 99.0})
+    pick = route._pick_local(
+        {"title": "build", "type": "code"},
+        health,
+        assigned={},
+        budget={"codex": 100, "claude": 100},
+        runway={"codex": 10.0, "claude": 99.0},
+    )
     assert pick == "claude", "with no cliff signal, freshest-runway wins as before"
 
 

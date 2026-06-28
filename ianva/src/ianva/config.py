@@ -5,6 +5,7 @@ documentation and the dataclass defaults (plus an optional ~/.config/ianva/ianva
 override) drive the code. Backend commands are config knobs, never pinned literals — the
 exact MCPHub / mcp-proxy invocation is a value to verify (`ianva doctor`), not to assume.
 """
+
 from __future__ import annotations
 
 import json
@@ -27,7 +28,7 @@ class GatewayConfig:
     path: str = "/mcp"
     public_url: str = ""
 
-    backend: str = "mcphub"                       # "mcphub" | "docker"
+    backend: str = "mcphub"  # "mcphub" | "docker"
     # MCPHub (verified npm pkg @samanhappy/mcphub) reads mcp_settings.json from its CWD;
     # ianva runs it in IANVA_HOME (where it materializes that file) and passes PORT via env.
     # {port}/{settings} remain available for a custom backend command. Verify with `ianva doctor`.
@@ -37,8 +38,8 @@ class GatewayConfig:
     # mcp-proxy client mode: --transport streamablehttp connects to ianva's streamable-HTTP endpoint.
     proxy_args: list[str] = field(default_factory=lambda: ["mcp-proxy", "--transport", "streamablehttp"])
 
-    registry: str = ""    # defaults to paths.DEFAULT_REGISTRY when empty
-    extra: str = ""       # defaults to paths.UPSTREAMS_JSON when empty
+    registry: str = ""  # defaults to paths.DEFAULT_REGISTRY when empty
+    extra: str = ""  # defaults to paths.UPSTREAMS_JSON when empty
 
     def backend_argv(self, settings_path: Path) -> list[str]:
         # Token-wise substitution (NOT str.format) so literal { } in a custom backend_cmd —
@@ -53,8 +54,11 @@ class GatewayConfig:
 
     def endpoint_kwargs(self) -> dict:
         return {
-            "host": self.host, "port": self.port, "path": self.path,
-            "public_url": self.public_url, "proxy_bin": self.proxy_bin,
+            "host": self.host,
+            "port": self.port,
+            "path": self.path,
+            "public_url": self.public_url,
+            "proxy_bin": self.proxy_bin,
             "proxy_args": list(self.proxy_args),
         }
 

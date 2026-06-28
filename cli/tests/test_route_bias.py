@@ -4,6 +4,7 @@ opencode noops on code/build-out → shed it there (keep its deploy specialty). 
 busywork but LANDS revenue/product async → shed only the busywork, never the winners, never stranded.
 Derived from logs/ledger.json (waste_classes/win_classes) — no lane names pinned. Fails open + floored.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -23,10 +24,13 @@ def _ledger(tmp: Path, lanes: dict):
 
 def test_ledger_bias_sheds_waste_class_but_exempts_winners(tmp_path, monkeypatch):
     monkeypatch.setattr(route, "ROOT", tmp_path)
-    _ledger(tmp_path, {
-        "opencode": {"waste_classes": ["code", "build-out"], "win_classes": []},
-        "jules": {"waste_classes": ["coverage", "code"], "win_classes": ["revenue", "product"]},
-    })
+    _ledger(
+        tmp_path,
+        {
+            "opencode": {"waste_classes": ["code", "build-out"], "win_classes": []},
+            "jules": {"waste_classes": ["coverage", "code"], "win_classes": ["revenue", "product"]},
+        },
+    )
     # a pure coverage task → jules is shed (it wastes coverage and wins nothing here)
     b = route._ledger_bias({"type": "code", "labels": ["coverage"]})
     assert b.get("jules") == 0.2 and "opencode" in b
@@ -50,19 +54,21 @@ def test_bias_off_when_disabled(tmp_path, monkeypatch):
 
 def test_opencode_shed_from_its_waste_class(tmp_path, monkeypatch):
     monkeypatch.setattr(route, "ROOT", tmp_path)
-    _ledger(tmp_path, {
-        "opencode": {"waste_classes": ["code", "build-out"], "win_classes": []},
-        "codex": {"waste_classes": [], "win_classes": ["code", "build-out"]},
-        "claude": {"waste_classes": [], "win_classes": ["code", "build-out"]},
-        "agy": {"waste_classes": [], "win_classes": ["code", "build-out"]},
-    })
+    _ledger(
+        tmp_path,
+        {
+            "opencode": {"waste_classes": ["code", "build-out"], "win_classes": []},
+            "codex": {"waste_classes": [], "win_classes": ["code", "build-out"]},
+            "claude": {"waste_classes": [], "win_classes": ["code", "build-out"]},
+            "agy": {"waste_classes": [], "win_classes": ["code", "build-out"]},
+        },
+    )
     health = {"codex": True, "claude": True, "agy": True, "opencode": True}
     budget = {"codex": 100, "claude": 100, "agy": 100, "opencode": 100}
     assigned: dict[str, int] = {}
     picks = []
     for _ in range(28):
-        v = route._pick_local({"title": "build it", "type": "code", "labels": ["build-out"]},
-                              health, assigned, budget)
+        v = route._pick_local({"title": "build it", "type": "code", "labels": ["build-out"]}, health, assigned, budget)
         picks.append(v)
         assigned[v] = assigned.get(v, 0) + 1
     c = Counter(picks)

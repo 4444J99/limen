@@ -7,6 +7,7 @@ Asserts the properties that make it safe to run every beat unattended:
 (4) a corrupt/absent cursor fails open to start-at-0,
 (5) scaled_limit lifts the cap with headroom and is a no-op when usage is unreadable.
 """
+
 import importlib.util
 import json
 from pathlib import Path
@@ -63,7 +64,7 @@ def test_rotating_window_advances_wraps_and_covers_all(tmp_path):
     for w in windows:
         seen.update(w)
     assert windows[0] == [0, 1] and windows[1] == [2, 3]
-    assert windows[2] == [4, 0]              # wraps past the end
+    assert windows[2] == [4, 0]  # wraps past the end
     assert seen == set(items), "one full rotation must assess every PR at least once"
 
 
@@ -101,6 +102,7 @@ def test_scaled_limit_headroom(tmp_path):
 
 # ── STALE-BASE GATE (the #111 guard) ────────────────────────────────────────────────────────────
 
+
 def _defaults(monkeypatch):
     # exercise the DERIVED defaults, immune to whatever the live shell exports.
     for k in ("LIMEN_PROTECTED_PATHS", "LIMEN_CONDUCTOR_REPOS", "LIMEN_STALE_BASE_MAX"):
@@ -109,10 +111,12 @@ def _defaults(monkeypatch):
 
 def _gh_behind(n, rc=0):
     """fake gh: `gh api …compare…` → behind_by = n (rc!=0 ⇒ unverifiable)."""
+
     def f(args, timeout=60):
         if args and args[0] == "api":
             return _R(str(n), rc=rc)
         return _R("", rc=1)
+
     return f
 
 

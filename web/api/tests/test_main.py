@@ -257,12 +257,12 @@ def test_status_summary_reports_creation_age_and_run_ledger(client: TestClient, 
                         "session_id": "test",
                         "status": "dispatched",
                     },
-                        {
-                            "timestamp": "2026-05-31T01:00:00+00:00",
-                            "agent": "jules",
-                            "session_id": "test",
-                            "status": "done",
-                        },
+                    {
+                        "timestamp": "2026-05-31T01:00:00+00:00",
+                        "agent": "jules",
+                        "session_id": "test",
+                        "status": "done",
+                    },
                 ],
             },
             {
@@ -367,8 +367,13 @@ def test_client_persona_is_sanctioned_only_for_client_and_public(
     assert client.get("/api/status", headers=client_headers).status_code == 403
     assert client.get("/api/qa-status", headers=client_headers).status_code == 403
     assert client.get("/api/readiness", headers=client_headers).status_code == 403
-    assert client.post("/api/tasks/LIMEN-006C/verify", headers=client_headers, json={"status": "done"}).status_code == 403
-    assert client.post("/api/tasks/LIMEN-006C/assign", headers=client_headers, json={"target_agent": "jules"}).status_code == 403
+    assert (
+        client.post("/api/tasks/LIMEN-006C/verify", headers=client_headers, json={"status": "done"}).status_code == 403
+    )
+    assert (
+        client.post("/api/tasks/LIMEN-006C/assign", headers=client_headers, json={"target_agent": "jules"}).status_code
+        == 403
+    )
     assert client.post("/api/tasks/LIMEN-006C/archive", headers=client_headers, json={}).status_code == 403
 
 
@@ -789,7 +794,9 @@ def test_surface_manifest_describes_surface_contracts(client: TestClient, tmp_pa
     assert payload["contracts"]["qa"]["includes_task_context"] is False
 
 
-def test_readiness_reports_operator_next_actions(client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_readiness_reports_operator_next_actions(
+    client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     dispatch_bin = tmp_path / "jules"
     dispatch_bin.write_text("#!/bin/sh\nexit 0\n")
     dispatch_bin.chmod(0o755)

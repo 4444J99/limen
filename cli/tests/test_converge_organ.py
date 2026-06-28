@@ -1,6 +1,7 @@
 """converge-organ: the autonomic layer over the converge engine. The ORACLE finds multiverses
 (one idea with ≥2 divergent PRs), and --apply emits the gap-finder's next_shots as bounded new
 tasks. Offline (dry-run kit) — no network."""
+
 import importlib.util
 import os
 import subprocess
@@ -23,11 +24,19 @@ def _load(monkeypatch, root):
 def test_oracle_finds_only_multiverses(tmp_path, monkeypatch):
     m = _load(monkeypatch, tmp_path)
     tasks = [
-        {"id": "MULTI", "title": "build the thing", "dispatch_log": [
-            {"agent": "codex", "session_id": "https://github.com/o/r/pull/1", "output": "approach A"},
-            {"agent": "claude", "session_id": "https://github.com/o/r/pull/2", "output": "approach B"}]},
-        {"id": "SINGLE", "title": "one shot", "dispatch_log": [
-            {"agent": "codex", "session_id": "https://github.com/o/r/pull/3", "output": "only one"}]},
+        {
+            "id": "MULTI",
+            "title": "build the thing",
+            "dispatch_log": [
+                {"agent": "codex", "session_id": "https://github.com/o/r/pull/1", "output": "approach A"},
+                {"agent": "claude", "session_id": "https://github.com/o/r/pull/2", "output": "approach B"},
+            ],
+        },
+        {
+            "id": "SINGLE",
+            "title": "one shot",
+            "dispatch_log": [{"agent": "codex", "session_id": "https://github.com/o/r/pull/3", "output": "only one"}],
+        },
         {"id": "NONE", "title": "no pr", "dispatch_log": [{"agent": "codex", "session_id": "running"}]},
     ]
     mvs = m.find_multiverses(tasks)
@@ -38,20 +47,37 @@ def test_oracle_finds_only_multiverses(tmp_path, monkeypatch):
 def test_apply_emits_gap_tasks(tmp_path, monkeypatch):
     (tmp_path / "logs").mkdir()
     created = "2026-06-20"
-    board = {"tasks": [{
-        "id": "MULTI", "title": "cats are fluffy pets", "created": created, "status": "done",
-        "target_agent": "codex", "repo": "o/r",
-        "dispatch_log": [
-            {"timestamp": "2026-06-21T00:00:00+00:00", "agent": "codex",
-             "session_id": "https://github.com/o/r/pull/1", "status": "dispatched",
-             "output": "cats are great fluffy pets that purr"},
-            {"timestamp": "2026-06-21T00:01:00+00:00", "agent": "claude",
-             "session_id": "https://github.com/o/r/pull/2", "status": "dispatched",
-             "output": "completely unrelated text about quarterly taxes"}]}]}
+    board = {
+        "tasks": [
+            {
+                "id": "MULTI",
+                "title": "cats are fluffy pets",
+                "created": created,
+                "status": "done",
+                "target_agent": "codex",
+                "repo": "o/r",
+                "dispatch_log": [
+                    {
+                        "timestamp": "2026-06-21T00:00:00+00:00",
+                        "agent": "codex",
+                        "session_id": "https://github.com/o/r/pull/1",
+                        "status": "dispatched",
+                        "output": "cats are great fluffy pets that purr",
+                    },
+                    {
+                        "timestamp": "2026-06-21T00:01:00+00:00",
+                        "agent": "claude",
+                        "session_id": "https://github.com/o/r/pull/2",
+                        "status": "dispatched",
+                        "output": "completely unrelated text about quarterly taxes",
+                    },
+                ],
+            }
+        ]
+    }
     (tmp_path / "tasks.yaml").write_text(yaml.safe_dump(board))
     env = dict(os.environ, LIMEN_ROOT=str(tmp_path), LIMEN_TASKS=str(tmp_path / "tasks.yaml"))
-    r = subprocess.run([sys.executable, str(SCRIPT), "--apply"], env=env,
-                       capture_output=True, text=True)
+    r = subprocess.run([sys.executable, str(SCRIPT), "--apply"], env=env, capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
     # the full pipeline ran (oracle → distill → audit-write): a record for MULTI is logged
     log = tmp_path / "logs" / "converge-log.jsonl"

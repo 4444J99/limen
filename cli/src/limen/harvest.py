@@ -79,10 +79,7 @@ def check_jules_harvest(limen: LimenFile, harvest_dir: Path) -> list[str]:
     session_mapping = _get_jules_sessions(harvest_dir)
 
     for task in limen.tasks:
-        if (
-            task.status not in ("dispatched", "in_progress")
-            or task.target_agent != "jules"
-        ):
+        if task.status not in ("dispatched", "in_progress") or task.target_agent != "jules":
             continue
 
         session_id = session_mapping.get(task.id)
@@ -140,9 +137,7 @@ def check_jules_harvest(limen: LimenFile, harvest_dir: Path) -> list[str]:
                 DispatchLogEntry(
                     timestamp=now,
                     agent="jules",
-                    session_id=task.dispatch_log[-1].session_id
-                    if task.dispatch_log
-                    else "harvest",
+                    session_id=task.dispatch_log[-1].session_id if task.dispatch_log else "harvest",
                     status="done",
                     output=result[:500],
                 )

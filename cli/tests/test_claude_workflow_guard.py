@@ -19,9 +19,7 @@ def run_guard(*args, input_text=None):
 
 
 def test_normalize_candidates_accepts_nested_json_string():
-    payload = json.dumps(json.dumps([
-        {"repo": "a-organvm/a-i-chat--exporter", "number": 44, "title": "ship"}
-    ]))
+    payload = json.dumps(json.dumps([{"repo": "a-organvm/a-i-chat--exporter", "number": 44, "title": "ship"}]))
     proc = run_guard("normalize-candidates", input_text=payload)
     assert proc.returncode == 0, proc.stderr
     assert json.loads(proc.stdout)[0]["repo"] == "a-organvm/a-i-chat--exporter"

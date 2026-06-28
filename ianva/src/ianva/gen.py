@@ -13,6 +13,7 @@ Per-agent quirks confirmed by adversarial verification against each agent's real
   * agy/Cline: stdio `{command,args}` validates.
 When a bearer is set (cloud face), the matching Authorization header / token-env is injected.
 """
+
 from __future__ import annotations
 
 import json
@@ -30,8 +31,8 @@ class Endpoint:
     host: str = "127.0.0.1"
     port: int = 7666
     path: str = "/mcp"
-    public_url: str = ""          # set once tunneled (cloud face); preferred for remote agents
-    bearer: str = ""              # when set, the gateway enforces it and entries carry the header
+    public_url: str = ""  # set once tunneled (cloud face); preferred for remote agents
+    bearer: str = ""  # when set, the gateway enforces it and entries carry the header
     proxy_bin: str = "uvx"
     proxy_args: list[str] = field(default_factory=lambda: ["mcp-proxy", "--transport", "streamablehttp"])
 
@@ -51,10 +52,10 @@ class Entry:
     path: str
     fmt: str
     transport: str
-    rendered: str         # the snippet to place in the file (or the command to run)
-    install: str          # human/script instruction for applying it
+    rendered: str  # the snippet to place in the file (or the command to run)
+    install: str  # human/script instruction for applying it
     payload: dict | None  # structured form (for JSON merge installers)
-    filename: str         # golden output filename
+    filename: str  # golden output filename
 
 
 def _stdio_payload(ep: Endpoint) -> dict:
@@ -67,7 +68,7 @@ def _stdio_payload(ep: Endpoint) -> dict:
 
 
 def _http_payload_mcpservers(ep: Endpoint) -> dict:
-    p: dict = {"httpUrl": ep.url()}      # Gemini-family streamable-HTTP key
+    p: dict = {"httpUrl": ep.url()}  # Gemini-family streamable-HTTP key
     if ep.bearer:
         p["headers"] = ep.headers()
     return p
@@ -79,10 +80,15 @@ def _render_codex(ep: Endpoint) -> Entry:
         body += f'bearer_token_env_var = "{BEARER_ENV}"\n'
     body += "# startup_timeout_sec = 30\n"
     return Entry(
-        key="codex", label="Codex (OpenAI)", path=str((Path.home() / ".codex" / "config.toml")),
-        fmt="toml_codex", transport="http", rendered=body,
+        key="codex",
+        label="Codex (OpenAI)",
+        path=str((Path.home() / ".codex" / "config.toml")),
+        fmt="toml_codex",
+        transport="http",
+        rendered=body,
         install="Append this [mcp_servers.ianva] table to ~/.codex/config.toml.",
-        payload=None, filename="codex.config.toml.snippet",
+        payload=None,
+        filename="codex.config.toml.snippet",
     )
 
 
@@ -94,11 +100,16 @@ def _render_json_mcpservers(a: AgentTarget, ep: Endpoint) -> Entry:
         payload = {**payload, "type": "local", "tools": ["*"]}
     blob = {"mcpServers": {SERVER_NAME: payload}}
     return Entry(
-        key=a.key, label=a.label, path=str(a.path), fmt=a.fmt, transport=a.transport,
+        key=a.key,
+        label=a.label,
+        path=str(a.path),
+        fmt=a.fmt,
+        transport=a.transport,
         rendered=json.dumps(blob, indent=2),
-        install=f"Merge the \"{SERVER_NAME}\" key under \"mcpServers\" in {a.path} "
-                f"(create the file with this content if absent).",
-        payload=blob, filename=f"{a.key}.mcp.json",
+        install=f'Merge the "{SERVER_NAME}" key under "mcpServers" in {a.path} '
+        f"(create the file with this content if absent).",
+        payload=blob,
+        filename=f"{a.key}.mcp.json",
     )
 
 
@@ -108,10 +119,15 @@ def _render_opencode(a: AgentTarget, ep: Endpoint) -> Entry:
         server["headers"] = ep.headers()
     blob = {"mcp": {SERVER_NAME: server}}
     return Entry(
-        key=a.key, label=a.label, path=str(a.path), fmt=a.fmt, transport="http",
+        key=a.key,
+        label=a.label,
+        path=str(a.path),
+        fmt=a.fmt,
+        transport="http",
         rendered=json.dumps(blob, indent=2),
-        install=f"Merge the \"{SERVER_NAME}\" key under the top-level \"mcp\" object in {a.path}.",
-        payload=blob, filename="opencode.mcp.json",
+        install=f'Merge the "{SERVER_NAME}" key under the top-level "mcp" object in {a.path}.',
+        payload=blob,
+        filename="opencode.mcp.json",
     )
 
 
@@ -120,10 +136,15 @@ def _render_claude(ep: Endpoint) -> Entry:
     if ep.bearer:
         cmd += f' --header "Authorization: Bearer {ep.bearer}"'
     return Entry(
-        key="claude", label="Claude Code", path=str((Path.home() / ".claude.json")),
-        fmt="claude_cli", transport="http", rendered=cmd,
+        key="claude",
+        label="Claude Code",
+        path=str((Path.home() / ".claude.json")),
+        fmt="claude_cli",
+        transport="http",
+        rendered=cmd,
         install="Run this command (writes the user-scope mcpServers entry into ~/.claude.json).",
-        payload=None, filename="claude.add.sh",
+        payload=None,
+        filename="claude.add.sh",
     )
 
 

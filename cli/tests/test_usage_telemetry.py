@@ -17,26 +17,31 @@ def test_claude_rate_limit_in_recent_transcript_marks_lane_down(tmp_path):
     (limen_root / "logs").mkdir(parents=True)
     (home / ".claude" / "projects" / "proj").mkdir(parents=True)
     (limen_root / "tasks.yaml").write_text(
-        yaml.safe_dump({
-            "version": "1.0",
-            "portal": {
-                "budget": {
-                    "track": {"date": "2026-06-19", "spent": 0, "per_agent": {"jules": 0}},
-                    "per_agent": {"jules": 100},
-                }
-            },
-            "tasks": [],
-        })
+        yaml.safe_dump(
+            {
+                "version": "1.0",
+                "portal": {
+                    "budget": {
+                        "track": {"date": "2026-06-19", "spent": 0, "per_agent": {"jules": 0}},
+                        "per_agent": {"jules": 100},
+                    }
+                },
+                "tasks": [],
+            }
+        )
     )
     (home / ".claude" / "projects" / "proj" / "session.jsonl").write_text(
-        json.dumps({
-            "type": "assistant",
-            "error": "rate_limit",
-            "message": {
-                "usage": {"input_tokens": 0, "output_tokens": 0, "cache_creation_input_tokens": 0},
-                "content": [{"type": "text", "text": "You've hit your monthly spend limit"}],
-            },
-        }) + "\n"
+        json.dumps(
+            {
+                "type": "assistant",
+                "error": "rate_limit",
+                "message": {
+                    "usage": {"input_tokens": 0, "output_tokens": 0, "cache_creation_input_tokens": 0},
+                    "content": [{"type": "text", "text": "You've hit your monthly spend limit"}],
+                },
+            }
+        )
+        + "\n"
     )
 
     env = os.environ.copy()
@@ -65,14 +70,18 @@ def _run_telemetry(tmp_path, jules_consumed, extra_env=None):
     (home / ".claude" / "projects").mkdir(parents=True)
     (home / ".codex" / "sessions").mkdir(parents=True)
     (limen_root / "tasks.yaml").write_text(
-        yaml.safe_dump({
-            "version": "1.0",
-            "portal": {"budget": {
-                "track": {"date": "2026-06-19", "spent": 0, "per_agent": {"jules": jules_consumed}},
-                "per_agent": {"jules": 100},
-            }},
-            "tasks": [],
-        })
+        yaml.safe_dump(
+            {
+                "version": "1.0",
+                "portal": {
+                    "budget": {
+                        "track": {"date": "2026-06-19", "spent": 0, "per_agent": {"jules": jules_consumed}},
+                        "per_agent": {"jules": 100},
+                    }
+                },
+                "tasks": [],
+            }
+        )
     )
     env = os.environ.copy()
     env["HOME"] = str(home)
@@ -85,8 +94,7 @@ def _run_telemetry(tmp_path, jules_consumed, extra_env=None):
     env["PYTHONPATH"] = os.pathsep.join(filter(None, [yaml_dir, env.get("PYTHONPATH", "")]))
     if extra_env:
         env.update(extra_env)
-    proc = subprocess.run([sys.executable, str(USAGE)], cwd=ROOT, env=env,
-                          capture_output=True, text=True)
+    proc = subprocess.run([sys.executable, str(USAGE)], cwd=ROOT, env=env, capture_output=True, text=True)
     assert proc.returncode == 0, proc.stderr
     return json.loads((limen_root / "logs" / "usage.json").read_text())["vendors"]
 
@@ -95,7 +103,7 @@ def test_pacing_fields_are_emitted(tmp_path):
     v = _run_telemetry(tmp_path, jules_consumed=50)["jules"]
     assert v["window_hours"] == 24
     assert v["reserve_pct"] == 15.0
-    assert v["burn_rate_per_h"] == round(50 / 24)   # consumed / window
+    assert v["burn_rate_per_h"] == round(50 / 24)  # consumed / window
     assert v["safe_rate_per_h"] == round(100 / 24)  # cap / window = steady-state ceiling
     assert v["runway_h"] == round(50 / round(50 / 24), 1)
     assert v["health"] == "ok"  # 50% headroom, burn <= safe

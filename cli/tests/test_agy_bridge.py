@@ -7,6 +7,7 @@ day-stale base onto fresh origin/main and overwrote grown files with shorter sta
 thousands of spurious deletions per PR (the destructive "deepen" PRs that got closed). These tests
 pin the delta-only behavior so that regression can never return.
 """
+
 from __future__ import annotations
 
 import subprocess
@@ -60,8 +61,8 @@ def test_bridge_carries_only_delta(tmp_path, monkeypatch):
     t = Task(id="AGY1", title="x", repo=repo, target_agent="agy", created=date(2026, 6, 25))
     D._bridge_agy_scratch(t, wt)
 
-    assert (wt / "agy_new.py").read_text() == "agy made this\n"            # agy's new file landed
-    assert (wt / "base.py").read_text().endswith("AGY-EDIT\n")             # agy's edit landed
+    assert (wt / "agy_new.py").read_text() == "agy made this\n"  # agy's new file landed
+    assert (wt / "base.py").read_text().endswith("AGY-EDIT\n")  # agy's edit landed
     assert (wt / "untouched.py").read_text() == "a fresh-main file agy never touched\n"  # NOT clobbered
 
 
@@ -84,5 +85,5 @@ def test_bridge_no_delta_carries_nothing(tmp_path, monkeypatch, capsys):
     t = Task(id="AGY2", title="x", repo=repo, target_agent="agy", created=date(2026, 6, 25))
     D._bridge_agy_scratch(t, wt)
 
-    assert not (wt / "committed.py").exists()         # the committed base file was NOT carried
+    assert not (wt / "committed.py").exists()  # the committed base file was NOT carried
     assert "no per-run delta" in capsys.readouterr().out

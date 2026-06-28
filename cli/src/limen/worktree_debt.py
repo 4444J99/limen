@@ -57,10 +57,7 @@ def _reachable_from_remote(cwd: Path, head: str) -> bool:
     refs = _git(["for-each-ref", "--format=%(refname)", "refs/remotes"], cwd)
     if refs.returncode != 0:
         return False
-    return any(
-        _git(["merge-base", "--is-ancestor", head, ref], cwd).returncode == 0
-        for ref in refs.stdout.split()
-    )
+    return any(_git(["merge-base", "--is-ancestor", head, ref], cwd).returncode == 0 for ref in refs.stdout.split())
 
 
 def _merged_into_default(cwd: Path, head: str) -> bool:
@@ -107,10 +104,12 @@ def _scan_roots(limen_root: Path) -> list[tuple[Path, float]]:
     root = Path(os.environ.get("LIMEN_WORKTREE_ROOT", f"{home}/Workspace/.limen-worktrees"))
     roots = [(root, float(os.environ.get("LIMEN_RECLAIM_MIN_AGE_H", "6")))]
     if os.environ.get("LIMEN_RECLAIM_CLAUDE_WT", "1") == "1":
-        roots.append((
-            limen_root / ".claude" / "worktrees",
-            float(os.environ.get("LIMEN_RECLAIM_CLAUDE_AGE_H", "24")),
-        ))
+        roots.append(
+            (
+                limen_root / ".claude" / "worktrees",
+                float(os.environ.get("LIMEN_RECLAIM_CLAUDE_AGE_H", "24")),
+            )
+        )
     return [(path, age) for path, age in roots if path.is_dir()]
 
 

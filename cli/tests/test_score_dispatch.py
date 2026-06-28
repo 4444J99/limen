@@ -4,6 +4,7 @@ Every resolved task is weighed: worth_it (shipped) / marginal (done, nothing shi
 archived/no-op or chronic). Unresolved tasks (open/dispatched) are NOT yet weighable. The spent debit on a
 wasted task is logged as sunk cost. These properties are what make the ledger an honest verdict.
 """
+
 from __future__ import annotations
 
 import json
@@ -26,17 +27,27 @@ def _task(tid, status, *, pr=None, cost=1, attempts=1, reopens=0, agent="codex",
         log.append({"status": "done", "session_id": f"https://github.com/{pr}"})
     for _ in range(reopens):
         log.append({"status": "open", "session_id": "reopened"})
-    return {"id": tid, "title": tid, "repo": repo, "target_agent": agent, "priority": "medium",
-            "budget_cost": cost, "status": status, "labels": labels or [],
-            "created": "2026-06-01", "dispatch_log": log}
+    return {
+        "id": tid,
+        "title": tid,
+        "repo": repo,
+        "target_agent": agent,
+        "priority": "medium",
+        "budget_cost": cost,
+        "status": status,
+        "labels": labels or [],
+        "created": "2026-06-01",
+        "dispatch_log": log,
+    }
 
 
 def _run(tmp: Path, tasks: list[dict], *args: str) -> str:
     p = tmp / "tasks.yaml"
     p.write_text(yaml.safe_dump({"version": "1.0", "portal": {"name": "t"}, "tasks": tasks}))
     env = {**os.environ, "LIMEN_ROOT": str(tmp), "LIMEN_TASKS": str(p)}
-    r = subprocess.run([sys.executable, str(SCRIPT), "--tasks", str(p), *args],
-                       capture_output=True, text=True, timeout=60, env=env)
+    r = subprocess.run(
+        [sys.executable, str(SCRIPT), "--tasks", str(p), *args], capture_output=True, text=True, timeout=60, env=env
+    )
     assert r.returncode == 0, r.stderr
     return r.stdout
 
@@ -47,12 +58,12 @@ def _records(out: str) -> list[dict]:
 
 def test_grades_each_resolved_class(tmp_path: Path):
     tasks = [
-        _task("D-ship", "done", pr="o/r/pull/1"),          # worth_it
-        _task("D-bare", "done"),                            # marginal (no PR)
-        _task("D-sup", "archived", labels=["superseded"]),                       # marginal (folded)
+        _task("D-ship", "done", pr="o/r/pull/1"),  # worth_it
+        _task("D-bare", "done"),  # marginal (no PR)
+        _task("D-sup", "archived", labels=["superseded"]),  # marginal (folded)
         _task("D-cancel", "archived", attempts=2, cost=2, labels=["cancelled"]),  # wasted, sunk=4
-        _task("D-open", "open"),                            # NOT weighed
-        _task("D-disp", "dispatched"),                      # NOT weighed
+        _task("D-open", "open"),  # NOT weighed
+        _task("D-disp", "dispatched"),  # NOT weighed
     ]
     recs = {r["task_id"]: r for r in _records(_run(tmp_path, tasks, "--backfill", "--print"))}
     assert recs["D-ship"]["grade"] == "worth_it"
@@ -72,8 +83,8 @@ def test_chronic_needs_human_is_wasted(tmp_path: Path):
 
 def test_idempotent_append(tmp_path: Path):
     tasks = [_task("D1", "done", pr="o/r/pull/9"), _task("D2", "archived", labels=["cancelled"])]
-    _run(tmp_path, tasks)                       # first pass appends 2
-    out2 = _run(tmp_path, tasks)                # second pass: already scored → 0 new
+    _run(tmp_path, tasks)  # first pass appends 2
+    out2 = _run(tmp_path, tasks)  # second pass: already scored → 0 new
     assert "0 newly-weighed" in out2
     lines = (tmp_path / "logs" / "ledger.jsonl").read_text().splitlines()
     assert len(lines) == 2, "no duplicate records on re-run"

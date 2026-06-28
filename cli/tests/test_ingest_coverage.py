@@ -3,6 +3,7 @@
 Answers "are we at 100% context?" on screen: how many items, from how many sources, how fresh, and
 which known prompt-sources still have no adapter. Read-only over the manifest; fails open if absent.
 """
+
 from __future__ import annotations
 
 import json

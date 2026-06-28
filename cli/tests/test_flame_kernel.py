@@ -19,8 +19,7 @@ from limen.models import Task
 
 
 def _task():
-    return Task(id="T1", title="do a thing", repo="org/repo",
-                target_agent="ollama", created=date(2026, 6, 23))
+    return Task(id="T1", title="do a thing", repo="org/repo", target_agent="ollama", created=date(2026, 6, 23))
 
 
 def _write_kernel(root, text="# FLAME\nYou are VLTIMA.\n"):
@@ -33,9 +32,9 @@ def test_kernel_rides_every_prompt(tmp_path, monkeypatch):
     _write_kernel(tmp_path)
     D._FLAME_CACHE.clear()
     p = D._build_prompt(_task())
-    assert "You are VLTIMA." in p            # the self rides along
-    assert "YOUR TASK THIS BEAT" in p        # divider separates identity from work
-    assert "do a thing" in p                 # the concrete task is still there
+    assert "You are VLTIMA." in p  # the self rides along
+    assert "YOUR TASK THIS BEAT" in p  # divider separates identity from work
+    assert "do a thing" in p  # the concrete task is still there
 
 
 def test_kernel_disabled_is_bare_prompt(tmp_path, monkeypatch):
@@ -67,9 +66,9 @@ def test_jules_prompt_leads_with_directive(tmp_path, monkeypatch):
     _write_kernel(tmp_path)
     D._FLAME_CACHE.clear()
     p = D._build_jules_prompt(_task())
-    assert p.startswith("Implement this directly")       # anti-stall lead dominates
+    assert p.startswith("Implement this directly")  # anti-stall lead dominates
     assert "Do NOT ask for feedback" in p
-    assert "do a thing" in p                              # the concrete task is present
+    assert "do a thing" in p  # the concrete task is present
     assert p.index("do a thing") < p.index("You are VLTIMA.")  # task before kernel
 
 
@@ -81,7 +80,7 @@ def test_jules_directive_disabled_is_task_first(tmp_path, monkeypatch):
     D._FLAME_CACHE.clear()
     p = D._build_jules_prompt(_task())
     assert not p.startswith("Implement this directly")
-    assert p.startswith("Complete task T1")              # bare task-first prompt
+    assert p.startswith("Complete task T1")  # bare task-first prompt
 
 
 def test_call_jules_uses_remote_new(tmp_path, monkeypatch):
@@ -97,14 +96,13 @@ def test_call_jules_uses_remote_new(tmp_path, monkeypatch):
         return "5450674856461095192"
 
     monkeypatch.setattr(D, "_run_cmd", fake_run_cmd)
-    t = Task(id="T1", title="do a thing", repo="org/repo",
-             target_agent="jules", created=date(2026, 6, 23))
+    t = Task(id="T1", title="do a thing", repo="org/repo", target_agent="jules", created=date(2026, 6, 23))
     sid = D._call_jules(t, dry_run=False)
     cmd = captured["cmd"]
     assert cmd[:5] == ["jules", "remote", "new", "--repo", "org/repo"]
     assert cmd[5] == "--session"
     assert cmd[6].startswith("Implement this directly")  # directive-led prompt as the task
-    assert sid == "5450674856461095192"                  # session id flows back for dispatch_log
+    assert sid == "5450674856461095192"  # session id flows back for dispatch_log
 
 
 def test_run_cmd_captures_jules_session_id(monkeypatch):
@@ -112,28 +110,28 @@ def test_run_cmd_captures_jules_session_id(monkeypatch):
     # and harvest matches by id, never the truncated/directive-led session title.
     class _R:
         returncode = 0
-        stdout = ("Session is created.\nID: 5450674856461095192\n"
-                  "URL: https://jules.google.com/session/5450674856461095192\n")
+        stdout = (
+            "Session is created.\nID: 5450674856461095192\nURL: https://jules.google.com/session/5450674856461095192\n"
+        )
         stderr = ""
 
     monkeypatch.setattr(D, "_run_capture", lambda *a, **k: _R())
     t = Task(id="T1", title="x", repo="org/repo", target_agent="jules", created=date(2026, 6, 23))
-    out = D._run_cmd(["jules", "remote", "new", "--repo", "org/repo", "--session", "p"],
-                     t, dry_run=False)
+    out = D._run_cmd(["jules", "remote", "new", "--repo", "org/repo", "--session", "p"], t, dry_run=False)
     assert out == "5450674856461095192"
 
 
 def test_ollama_is_cascade_floor():
     assert "ollama" in C.PAID_AGENT_ORDER
     assert "ollama" in C.LOCAL_CHECKOUT_AGENTS
-    assert D._LANE_CASCADE[-1] == "ollama"          # the very last resort
-    assert D._next_lane("jules") == "ollama"        # reached only after cloud-async too
-    assert D._next_lane("ollama") is None           # nothing below the floor
+    assert D._LANE_CASCADE[-1] == "ollama"  # the very last resort
+    assert D._next_lane("jules") == "ollama"  # reached only after cloud-async too
+    assert D._next_lane("ollama") is None  # nothing below the floor
 
 
 def test_ollama_model_derived_and_argv(monkeypatch):
     monkeypatch.setenv("LIMEN_OLLAMA_MODEL", "qwen2.5-coder:7b")
-    assert C.ollama_model() == "qwen2.5-coder:7b"   # explicit pin wins
+    assert C.ollama_model() == "qwen2.5-coder:7b"  # explicit pin wins
     assert D._agent_argv("ollama") == ["run", "qwen2.5-coder:7b"]
 
 

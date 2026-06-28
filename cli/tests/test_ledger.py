@@ -4,6 +4,7 @@ The rollup turns weighed records into the verdict: per-lane earns-its-keep ranki
 revenue attribution, and a net WORTH IT / WASTE call. These are the numbers that justify (or indict)
 the spend.
 """
+
 from __future__ import annotations
 
 import json
@@ -17,9 +18,20 @@ SCRIPT = ROOT / "scripts" / "ledger.py"
 
 
 def _rec(task_id, lane, grade, repo, spent, sunk=0):
-    return {"ts": "2026-06-22T00:00:00Z", "task_id": task_id, "repo": repo, "lane": lane,
-            "status": "done", "grade": grade, "budget_cost": 1, "attempts": 1,
-            "spent": spent, "sunk": sunk, "pr": None, "note": ""}
+    return {
+        "ts": "2026-06-22T00:00:00Z",
+        "task_id": task_id,
+        "repo": repo,
+        "lane": lane,
+        "status": "done",
+        "grade": grade,
+        "budget_cost": 1,
+        "attempts": 1,
+        "spent": spent,
+        "sunk": sunk,
+        "pr": None,
+        "note": "",
+    }
 
 
 def _run(tmp: Path, records: list[dict], ladder: dict | None = None) -> dict:
@@ -37,10 +49,12 @@ def _run(tmp: Path, records: list[dict], ladder: dict | None = None) -> dict:
 def test_lane_rank_puts_best_earner_first(tmp_path: Path):
     records = [
         # good lane: 3 shipped, 0 sunk
-        _rec("a", "codex", "worth_it", "o/x", 1), _rec("b", "codex", "worth_it", "o/x", 1),
+        _rec("a", "codex", "worth_it", "o/x", 1),
+        _rec("b", "codex", "worth_it", "o/x", 1),
         _rec("c", "codex", "worth_it", "o/x", 1),
         # bad lane: 1 shipped, lots wasted+sunk
-        _rec("d", "jules", "worth_it", "o/y", 1), _rec("e", "jules", "wasted", "o/y", 5, sunk=5),
+        _rec("d", "jules", "worth_it", "o/y", 1),
+        _rec("e", "jules", "wasted", "o/y", 5, sunk=5),
         _rec("f", "jules", "wasted", "o/y", 5, sunk=5),
     ]
     rep = _run(tmp_path, records)

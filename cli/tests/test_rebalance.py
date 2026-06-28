@@ -1,6 +1,7 @@
 """Test rebalance.py honors the lane-down filter (this session's change): open local-lane tasks
 are fanned across the PRODUCTIVE lanes only — a down lane (logs/lanes-down.txt) never receives work
 and its tasks are redistributed. _resolve_repo_dir is monkeypatched so the test needs no clones."""
+
 import importlib.util
 import sys
 from collections import Counter
@@ -15,12 +16,17 @@ from limen.models import Budget, BudgetTrack, LimenFile, Portal, Task  # noqa: E
 
 def test_rebalance_skips_down_lanes(tmp_path, monkeypatch):
     import datetime
+
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     monkeypatch.setenv("LIMEN_TASKS", str(tmp_path / "tasks.yaml"))
     today = datetime.date.today()
-    lf = LimenFile(portal=Portal(budget=Budget(daily=300, per_agent={}, track=BudgetTrack(date=str(today)))),
-                   tasks=[Task(id=f"T{i}", title="t", repo="x/y", target_agent="codex", status="open", created=today)
-                          for i in range(6)])
+    lf = LimenFile(
+        portal=Portal(budget=Budget(daily=300, per_agent={}, track=BudgetTrack(date=str(today)))),
+        tasks=[
+            Task(id=f"T{i}", title="t", repo="x/y", target_agent="codex", status="open", created=today)
+            for i in range(6)
+        ],
+    )
     save_limen_file(tmp_path / "tasks.yaml", lf)
     (tmp_path / "logs").mkdir()
     (tmp_path / "logs" / "lanes-down.txt").write_text("gemini\nagy\n")

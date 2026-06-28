@@ -1,4 +1,5 @@
 """Tests for the no-hardcode gate (scripts/check-params.py, VIGILIA build #3)."""
+
 from __future__ import annotations
 
 import importlib.util

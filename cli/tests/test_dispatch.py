@@ -96,8 +96,11 @@ def test_route_distributes_local_work_and_reaches_extended_fleet(tmp_path: Path)
     picks = []
     for i in range(8):
         task = {
-            "id": f"LIMEN-{i:03}", "title": f"Task {i}", "repo": "organvm/limen",
-            "status": "open", "budget_cost": 1,
+            "id": f"LIMEN-{i:03}",
+            "title": f"Task {i}",
+            "repo": "organvm/limen",
+            "status": "open",
+            "budget_cost": 1,
             "urls": [f"https://github.com/organvm/limen/issues/{i}"],
         }
         vendor, _ = route.route_task(task, health, workdir, assigned=tally, budget=budget)
@@ -108,8 +111,11 @@ def test_route_distributes_local_work_and_reaches_extended_fleet(tmp_path: Path)
 
     # A repo with NO local checkout but a GitHub issue reaches the extended fleet, not 'unroutable'.
     remote = {
-        "id": "REMOTE-1", "title": "Remote-only repo", "repo": "someorg/no-local-here",
-        "status": "open", "budget_cost": 1,
+        "id": "REMOTE-1",
+        "title": "Remote-only repo",
+        "repo": "someorg/no-local-here",
+        "status": "open",
+        "budget_cost": 1,
         "urls": ["https://github.com/someorg/no-local-here/issues/9"],
     }
     vendor, reason = route.route_task(remote, health, workdir, assigned={}, budget=budget)
@@ -136,9 +142,7 @@ def test_self_improve_weight_nudge_steers_local_split(monkeypatch) -> None:
     assert route._pick_local(task, health, assigned, budget) == "claude"
 
 
-def test_dispatch_dry_run_prints_capacity_census_and_copilot_command(
-    tmp_path: Path, capsys
-) -> None:
+def test_dispatch_dry_run_prints_capacity_census_and_copilot_command(tmp_path: Path, capsys) -> None:
     tasks_path = tmp_path / "tasks.yaml"
     write_board(
         tasks_path,
@@ -164,8 +168,7 @@ def test_dispatch_dry_run_prints_capacity_census_and_copilot_command(
     assert "-- capacity census" in output
     assert "copilot" in output
     assert (
-        "would: gh api graphql "
-        "(fetch node IDs + replaceActorsForAssignable for copilot-swe-agent on organvm/limen#12)"
+        "would: gh api graphql (fetch node IDs + replaceActorsForAssignable for copilot-swe-agent on organvm/limen#12)"
     ) in output
 
 
@@ -234,9 +237,7 @@ def test_dispatch_parallel_skips_needs_human_label(tmp_path: Path, capsys) -> No
     assert "HUMAN-GATE" not in output
 
 
-def test_dispatch_parallel_debt_gate_skips_routine_generated_buildout(
-    tmp_path: Path, capsys, monkeypatch
-) -> None:
+def test_dispatch_parallel_debt_gate_skips_routine_generated_buildout(tmp_path: Path, capsys, monkeypatch) -> None:
     monkeypatch.setattr(
         D,
         "worktree_debt_exceeded",
@@ -463,9 +464,7 @@ def test_dispatch_skips_lane_marked_down_by_usage_meter(tmp_path: Path, monkeypa
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     monkeypatch.setenv("LIMEN_DISPATCH_CMD", str(dispatch_bin))
     (tmp_path / "logs").mkdir()
-    (tmp_path / "logs" / "usage.json").write_text(
-        '{"vendors":{"claude":{"health":"rate-limited"}}}'
-    )
+    (tmp_path / "logs" / "usage.json").write_text('{"vendors":{"claude":{"health":"rate-limited"}}}')
     write_board(
         tasks_path,
         [

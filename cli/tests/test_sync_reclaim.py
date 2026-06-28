@@ -11,6 +11,7 @@
 
 Both run as real subprocesses against throwaway git repos, so the actual shell/Python ships.
 """
+
 import os
 import subprocess
 import time
@@ -60,8 +61,7 @@ def checkout(tmp_path):
 
 
 def _run_sync(clone: Path):
-    env = {**os.environ, "LIMEN_ROOT": str(clone), "LIMEN_RELEASE_BRANCH": "main",
-           "HOME": str(clone.parent)}
+    env = {**os.environ, "LIMEN_ROOT": str(clone), "LIMEN_RELEASE_BRANCH": "main", "HOME": str(clone.parent)}
     return subprocess.run(["bash", str(SYNC)], capture_output=True, text=True, env=env)
 
 
@@ -145,6 +145,7 @@ def test_untracked_collision_with_release_is_cleared(checkout, tmp_path):
 
 # ---------------- reclaim-worktrees.py ----------------
 
+
 def _wt_root_with(tmp_path):
     """Build a parent repo (pushed to a bare origin) and a worktree root holding several worktrees."""
     origin = _init_repo(tmp_path / "proj")
@@ -167,8 +168,13 @@ def _add_wt(main: Path, wtroot: Path, name: str, branch_from="origin/main"):
 
 
 def _run_reclaim(wtroot: Path, limen_root: Path, apply=True):
-    env = {**os.environ, "LIMEN_WORKTREE_ROOT": str(wtroot), "LIMEN_ROOT": str(limen_root),
-           "LIMEN_RECLAIM_MIN_AGE_H": "1", "LIMEN_RECLAIM_EVERY_MIN": "0"}
+    env = {
+        **os.environ,
+        "LIMEN_WORKTREE_ROOT": str(wtroot),
+        "LIMEN_ROOT": str(limen_root),
+        "LIMEN_RECLAIM_MIN_AGE_H": "1",
+        "LIMEN_RECLAIM_EVERY_MIN": "0",
+    }
     args = ["python3", str(RECLAIM)]
     if apply:
         args += ["--apply", "--force"]

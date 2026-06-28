@@ -6,6 +6,7 @@ hosts instead of treating them as auth failures. ianva fronts many remote upstre
 inherits the same guard: a remote upstream that fails a cheap reachability check is marked
 DOWN for this beat (and surfaced), never re-auth'd.
 """
+
 from __future__ import annotations
 
 import socket

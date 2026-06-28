@@ -4,6 +4,7 @@ The Wall claims to be machine-generated from `DEFAULT_MAP`; these pin that the g
 exists, indexes EVERY secret atom (hydration lanes + CI/runtime secrets), leaks no values, and
 that `--check` is a real predicate — exit 0 ⟺ every credential in use has a registered home.
 """
+
 import importlib.util
 from pathlib import Path
 
@@ -36,8 +37,7 @@ def test_body_indexes_every_ci_secret():
     for s in m.CI_SECRETS:
         assert s["name"] in body, f"{s['name']} missing from the credential Wall"
     # the four that were previously absent are the whole point of this generator
-    for name in ("LIMEN_API_TOKEN", "LIMEN_CLIENT_TOKEN", "GCP_SA_KEY", "WARP_API_KEY",
-                 "OP_SERVICE_ACCOUNT_TOKEN"):
+    for name in ("LIMEN_API_TOKEN", "LIMEN_CLIENT_TOKEN", "GCP_SA_KEY", "WARP_API_KEY", "OP_SERVICE_ACCOUNT_TOKEN"):
         assert name in body
 
 
@@ -55,5 +55,7 @@ def test_check_passes_when_everything_homed():
 
 def test_check_flags_a_homeless_ci_secret(monkeypatch):
     m = _wall()
-    monkeypatch.setattr(m, "CI_SECRETS", m.CI_SECRETS + [{"name": "ORPHAN", "home": "", "used": "", "hand": "", "issue": "—"}])
+    monkeypatch.setattr(
+        m, "CI_SECRETS", m.CI_SECRETS + [{"name": "ORPHAN", "home": "", "used": "", "hand": "", "issue": "—"}]
+    )
     assert m.check() == 1

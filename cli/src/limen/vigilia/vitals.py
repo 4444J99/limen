@@ -11,6 +11,7 @@ macOS ``kern.memorystatus_vm_pressure_level``: 1 = normal, 2 = warn, 4 = critica
 
 Fail-OPEN everywhere: a sensor fault reads as 'normal' and never blocks the beat.
 """
+
 from __future__ import annotations
 
 import subprocess

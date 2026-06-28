@@ -82,14 +82,7 @@ def test_capability_substrate_ledger_indexes_names_without_skill_bodies(tmp_path
 
     local_skill = tmp_path / ".codex" / "skills" / "uma-ops-semantic-layer" / "SKILL.md"
     custom_skill = (
-        tmp_path
-        / "Workspace"
-        / "organvm"
-        / "a-i--skills"
-        / "skills"
-        / "tools"
-        / "artifact-resurfacing"
-        / "SKILL.md"
+        tmp_path / "Workspace" / "organvm" / "a-i--skills" / "skills" / "tools" / "artifact-resurfacing" / "SKILL.md"
     )
     scheduled_skill = (
         tmp_path
@@ -242,13 +235,13 @@ def test_session_blockers_clears_capability_blocker_with_current_receipt(tmp_pat
     blockers.CORPUS_INVENTORY.parent.mkdir(parents=True)
     blockers.CORPUS_INVENTORY.write_text(json.dumps({"organs": [], "materialization": {"copied": 0}}), encoding="utf-8")
     blockers.PRESSURE_INDEX.parent.mkdir(parents=True)
-    blockers.PRESSURE_INDEX.write_text(json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8")
+    blockers.PRESSURE_INDEX.write_text(
+        json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8"
+    )
     blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
     blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
     (capability_root / "skills" / "artifact-resurfacing").mkdir(parents=True)
-    (capability_root / "skills" / "artifact-resurfacing" / "SKILL.md").write_text(
-        "# Body not read\n", encoding="utf-8"
-    )
+    (capability_root / "skills" / "artifact-resurfacing" / "SKILL.md").write_text("# Body not read\n", encoding="utf-8")
     (capability_root / ".claude-plugin").mkdir()
     (capability_root / ".claude-plugin" / "plugin.json").write_text("{}", encoding="utf-8")
 
