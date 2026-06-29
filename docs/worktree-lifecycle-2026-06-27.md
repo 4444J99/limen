@@ -12,7 +12,8 @@ Post-audit update: the background reaper later reclaimed the two content-preserv
 `gen-organvm-mirror-mirror-security-0622-c552` and
 `gen-organvm-the-invisible-ledger-security-0622-d8f8` at `2026-06-27T13:05:49Z`.
 Both had already been classified as patch-equivalent to default, so no unique source was lost.
-Future automated drain runs are preview-only unless `LIMEN_RECLAIM_APPLY=1` is set.
+Policy update 2026-06-29: future automated drain runs apply safe reclaims by default
+(`LIMEN_RECLAIM_APPLY=1`). Set `LIMEN_RECLAIM_APPLY=0` for preview-only operation.
 
 Post-audit update: `bld-universal-mail--automation-readme-9031` was rebased to
 current `origin/main`, committed as `29f6b4b`, pushed, and preserved as draft PR

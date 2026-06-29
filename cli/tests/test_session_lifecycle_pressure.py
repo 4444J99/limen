@@ -276,6 +276,105 @@ def test_session_lifecycle_pressure_closes_raw_remote_missing_with_live_scanner_
     assert rendered.endswith("state: within guardrails")
 
 
+def test_session_lifecycle_pressure_counts_scanned_worktree_targets(tmp_path: Path):
+    pressure = _load(PRESSURE_SCRIPT, "session_lifecycle_pressure_target_bytes")
+    pressure.ROOT = tmp_path
+    pressure.WORKTREE_ROOT = tmp_path / ".limen-worktrees"
+    pressure.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    pressure.PROMPT_INDEX = pressure.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+    pressure.CORPUS_INVENTORY = pressure.PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
+    pressure.OUT_JSON = tmp_path / "logs" / "session-lifecycle-pressure.json"
+    pressure.OUT_MD = tmp_path / "logs" / "session-lifecycle-pressure.md"
+    old_root = pressure.WORKTREE_ROOT / "old-root"
+    repo_local = tmp_path / "Workspace" / "portvs" / ".worktrees" / "triptych-story"
+    sibling = tmp_path / "Workspace" / "limen-main-trench-20260628"
+    old_root.mkdir(parents=True)
+    repo_local.mkdir(parents=True)
+    sibling.mkdir(parents=True)
+    (old_root / "old.bin").write_bytes(b"a" * 3)
+    (repo_local / "clip.bin").write_bytes(b"b" * 5)
+    (sibling / "state.bin").write_bytes(b"c" * 7)
+    pressure.run_worktree_debt = lambda: {
+        "total": 3,
+        "debt": 0,
+        "limit": 12,
+        "by_reason": {"clean+merged+idle": 3},
+        "items": [
+            {"name": "old-root", "path": str(old_root), "reason": "clean+merged+idle", "debt": False},
+            {"name": "triptych-story", "path": str(repo_local), "reason": "clean+merged+idle", "debt": False},
+            {
+                "name": "limen-main-trench-20260628",
+                "path": str(sibling),
+                "reason": "clean+merged+idle",
+                "debt": False,
+            },
+        ],
+    }
+
+    snapshot = pressure.build_snapshot()
+
+    assert snapshot["worktrees"]["roots"] == 3
+    assert snapshot["worktrees"]["bytes"] == 15
+
+
+def test_session_lifecycle_pressure_closes_reclaimed_remote_missing_from_receipt(tmp_path: Path):
+    pressure = _load(PRESSURE_SCRIPT, "session_lifecycle_pressure_reclaimed_receipt")
+    pressure.ROOT = tmp_path
+    pressure.WORKTREE_ROOT = tmp_path / ".limen-worktrees"
+    pressure.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    pressure.PROMPT_INDEX = pressure.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+    pressure.CORPUS_INVENTORY = pressure.PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
+    pressure.PRESERVATION_RECEIPTS = tmp_path / "docs" / "worktree-preservation-receipts.json"
+    pressure.OUT_JSON = tmp_path / "logs" / "session-lifecycle-pressure.json"
+    pressure.OUT_MD = tmp_path / "logs" / "session-lifecycle-pressure.md"
+    pressure.run_worktree_debt = lambda: {
+        "total": 0,
+        "debt": 0,
+        "limit": 12,
+        "by_reason": {},
+        "items": [],
+    }
+    pressure.PROMPT_INDEX.parent.mkdir(parents=True)
+    pressure.PROMPT_INDEX.write_text(
+        json.dumps(
+            {
+                "remote": {
+                    "enabled": True,
+                    "worktrees": {
+                        "remote_branches_present": 0,
+                        "remote_branches_missing": 1,
+                        "receipts": [{"name": "reclaimed-root", "remote_branch": "missing"}],
+                    },
+                    "task_prs": {"counts": {}},
+                },
+                "cloud": {"enabled": True, "runtime_url_configured": True},
+            }
+        ),
+        encoding="utf-8",
+    )
+    pressure.PRESERVATION_RECEIPTS.parent.mkdir(parents=True)
+    pressure.PRESERVATION_RECEIPTS.write_text(
+        json.dumps(
+            {
+                "receipts": [
+                    {
+                        "root": "reclaimed-root",
+                        "lane": "remote-default-proof",
+                        "status": "default_branch_preserved",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = pressure.build_snapshot()
+
+    assert snapshot["remote"]["remote_branches_missing"] == 1
+    assert snapshot["remote"]["remote_branches_unresolved_missing"] == 0
+    assert snapshot["remote"]["remote_branches_closed_roots"] == ["reclaimed-root"]
+
+
 def test_capability_substrate_ledger_indexes_names_without_skill_bodies(tmp_path: Path):
     capability = _load(CAPABILITY_SCRIPT, "capability_substrate_ledger")
     capability.ROOT = tmp_path

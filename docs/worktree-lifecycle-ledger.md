@@ -136,8 +136,9 @@ That is not enough for a fully automatic lifecycle.
   commit equality. Removing those local checkout copies dropped the scanner from
   19 roots / 16 debt to 14 roots / 11 debt without deleting unique work.
 - The automated beat reclaimed two content-preserved roots immediately after classification.
-  That did not lose unique source, but it was too eager for the current operator-acceptance
-  posture; `scripts/drain.sh` now requires `LIMEN_RECLAIM_APPLY=1` for future removals.
+  That did not lose unique source. On 2026-06-29 the operator policy was tightened in the
+  other direction: `scripts/drain.sh` now defaults `LIMEN_RECLAIM_APPLY=1`, but the reaper
+  still refuses dirty, unique-unpushed, unmerged, active, or live/self roots.
 - Dirty roots at default HEAD carry invisible work as uncommitted filesystem
   deltas. They need receipts before the system can reclaim or dispatch around them.
 - `dispatch-parallel` can create and retire active roots while cleanup is reducing
@@ -158,8 +159,8 @@ That is not enough for a fully automatic lifecycle.
 ## Drain Order
 
 1. Close the two non-Git residue roots by keeping this classification visible; remove
-   only after explicit operator acceptance or a scripted reclaim gate that records the
-   classification.
+   only after a scripted reclaim gate records the classification or the operator explicitly
+   accepts that residue cleanup.
 2. Drive the remaining open draft PR receipts to merge or named supersession:
    [domus-genoma#144](https://github.com/organvm/domus-genoma/pull/144),
    [mirror-mirror#67](https://github.com/organvm/mirror-mirror/pull/67),

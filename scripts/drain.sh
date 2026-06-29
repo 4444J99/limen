@@ -72,14 +72,13 @@ if [ "${LIMEN_CONVERGE:-0}" = "1" ]; then
       --limit "${LIMEN_CONVERGE_LIMIT:-2}" 2>&1 | tail -3 || true
 fi
 
-# RECLAIM — report provably-dead fleet worktrees (clean + content-preserved-on-default + idle >=6h)
-# under .limen-worktrees, so dispatch's ephemeral per-task worktrees can't silently accumulate.
-# Visibility is ON by default. Removal is OFF by default: set LIMEN_RECLAIM_APPLY=1 only after the
-# ledger/PR/blocker receipt is acceptable to the operator. ([[known-owned-pervasive-then-idgaf]],
-# [[storage-autonomic-solve]])
+# RECLAIM — remove provably-dead fleet worktrees (clean + content-preserved-on-default + idle)
+# from every known worktree root, so session clones cannot silently accumulate.
+# Visibility is ON by default. Safe removal is ON by default; set LIMEN_RECLAIM_APPLY=0 for
+# preview-only operation. ([[known-owned-pervasive-then-idgaf]], [[storage-autonomic-solve]])
 if [ "${LIMEN_RECLAIM:-1}" = "1" ]; then
   reclaim_args=()
-  [ "${LIMEN_RECLAIM_APPLY:-0}" = "1" ] && reclaim_args+=(--apply)
+  [ "${LIMEN_RECLAIM_APPLY:-1}" = "1" ] && reclaim_args+=(--apply)
   PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/reclaim-worktrees.py" "${reclaim_args[@]}" 2>&1 | tail -4 || true
 fi
 

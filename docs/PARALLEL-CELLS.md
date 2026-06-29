@@ -114,9 +114,10 @@ intention, not garbage. See [[empty-branch-is-a-todo-not-a-delete]].
 ### 5 — Sweep the dead automatically
 
 You don't have to remember to reap. The **SPRAWL-RECLAIM organ**
-(`scripts/reclaim-worktrees.py`, wired into the beat) now sweeps **both** creation sites —
-the dispatch root *and* `.claude/worktrees/` — reaping only cells that are **clean +
-content-preserved on the remote default branch + idle ≥24h**, never the live checkout or a running session. Force a manual pass:
+(`scripts/reclaim-worktrees.py`, wired into the beat) now sweeps every known creation site:
+the dispatch root, `.claude/worktrees/`, repo-local `.worktrees/`, and registered sibling
+worktrees from the main repos. It reaps only cells that are **clean + content-preserved on the
+remote default branch + idle past that root's age gate**, never the live checkout or a running session. Force a manual pass:
 
 ```sh
 cell reap-dead              # dry-run (shows what would go, why each survivor is kept)
@@ -131,7 +132,7 @@ cell reap-dead --apply      # actually reclaim after operator acceptance
 | Conductors racing `main` | scoped conductor: own branch namespace, fleet merges OFF |
 | Conductors racing each other | own `LIMEN_ROOT` + tasks file + pidfile + lock per cell |
 | Losing uncommitted work | `reap` refuses dirty/unpushed; `--force` is explicit |
-| Disk leak | both worktree roots swept; loss-free gates; live-session guard |
+| Disk leak | known worktree roots swept; loss-free gates; live-session guard |
 | Hardcoded knobs | every `LIMEN_*` toggle declared in `institutio/governance/parameters.yaml` |
 
 ## Knobs (all declared in `parameters.yaml`)
@@ -140,7 +141,9 @@ cell reap-dead --apply      # actually reclaim after operator acceptance
 |---|---|---|
 | `LIMEN_RECLAIM_CLAUDE_WT` | `1` | also sweep `.claude/worktrees/` (set `0` to disable) |
 | `LIMEN_RECLAIM_CLAUDE_AGE_H` | `24` | min idle hours before a cell is reclaim-eligible |
-| `LIMEN_RECLAIM_APPLY` | `0` | automated drain preview-only by default; set `1` to remove eligible roots |
+| `LIMEN_RECLAIM_REPO_LOCAL_WT` | auto | also sweep repo-local `.worktrees/` roots under `LIMEN_RECLAIM_WORKSPACE_ROOTS` |
+| `LIMEN_RECLAIM_REGISTERED_WT` | auto | also sweep registered sibling worktrees from `LIMEN_RECLAIM_MAIN_REPOS` |
+| `LIMEN_RECLAIM_APPLY` | `1` | automated drain removes eligible roots by default; set `0` for preview-only |
 | `LIMEN_BRANCH_PREFIX` | (derived) | scoped conductor's branch namespace (`cell-<slug>-`) |
 
 ## TL;DR

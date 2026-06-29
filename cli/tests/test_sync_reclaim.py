@@ -173,6 +173,8 @@ def _run_reclaim(wtroot: Path, limen_root: Path, apply=True):
         "LIMEN_WORKTREE_ROOT": str(wtroot),
         "LIMEN_ROOT": str(limen_root),
         "LIMEN_RECLAIM_MIN_AGE_H": "1",
+        "LIMEN_RECLAIM_REPO_LOCAL_WT": "0",
+        "LIMEN_RECLAIM_REGISTERED_WT": "0",
         "LIMEN_RECLAIM_EVERY_MIN": "0",
     }
     args = ["python3", str(RECLAIM)]

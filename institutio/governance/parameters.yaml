@@ -349,12 +349,60 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Min idle hours before a .claude/worktrees cell is eligible for reclaim. Longer than the dispatch root's 6h because an interactive/bg session can legitimately sit idle between beats."
+  LIMEN_RECLAIM_REPO_LOCAL_WT:
+    default: "auto"
+    env: LIMEN_RECLAIM_REPO_LOCAL_WT
+    self_update: none
+    owner: limen-daemon
+    note: "Whether reclaim/debt discovery includes repo-local .worktrees roots, such as Portvs triptych worktrees. Auto means enabled in live sessions and disabled when a test/probe supplies an explicit LIMEN_WORKTREE_ROOT."
+  LIMEN_RECLAIM_REPO_LOCAL_AGE_H:
+    default: 24
+    env: LIMEN_RECLAIM_REPO_LOCAL_AGE_H
+    self_update: none
+    owner: limen-daemon
+    note: "Min idle hours before a repo-local .worktrees child can be reclaimed. Same loss-free gates as other worktrees."
+  LIMEN_RECLAIM_REPO_LOCAL_ROOTS:
+    default: ""
+    env: LIMEN_RECLAIM_REPO_LOCAL_ROOTS
+    self_update: none
+    owner: limen-daemon
+    note: "Optional colon-separated direct list of repo-local .worktrees roots. Empty means discover under LIMEN_RECLAIM_WORKSPACE_ROOTS."
+  LIMEN_RECLAIM_REGISTERED_WT:
+    default: "auto"
+    env: LIMEN_RECLAIM_REGISTERED_WT
+    self_update: none
+    owner: limen-daemon
+    note: "Whether reclaim/debt discovery includes registered sibling git worktrees from LIMEN_RECLAIM_MAIN_REPOS. Auto means enabled in live sessions and disabled when a test/probe supplies an explicit LIMEN_WORKTREE_ROOT."
+  LIMEN_RECLAIM_REGISTERED_AGE_H:
+    default: 24
+    env: LIMEN_RECLAIM_REGISTERED_AGE_H
+    self_update: none
+    owner: limen-daemon
+    note: "Min idle hours before a registered sibling worktree can be reclaimed. Covers sibling Limen branches such as limen-main-trench-* that are not inside the central worktree roots."
+  LIMEN_RECLAIM_MAIN_REPOS:
+    default: "$LIMEN_ROOT:$HOME/Workspace/4444J99/portvs"
+    env: LIMEN_RECLAIM_MAIN_REPOS
+    self_update: none
+    owner: limen-daemon
+    note: "Colon-separated main repos whose git worktree lists define registered sibling worktrees for lifecycle pressure and reclaim discovery."
+  LIMEN_RECLAIM_WORKSPACE_ROOTS:
+    default: "$HOME/Workspace"
+    env: LIMEN_RECLAIM_WORKSPACE_ROOTS
+    self_update: none
+    owner: limen-daemon
+    note: "Colon-separated workspace roots searched for repo-local .worktrees directories, with cache/vendor folders pruned."
+  LIMEN_RECLAIM_WORKSPACE_MAX_DEPTH:
+    default: 5
+    env: LIMEN_RECLAIM_WORKSPACE_MAX_DEPTH
+    self_update: none
+    owner: limen-daemon
+    note: "Maximum directory depth for repo-local .worktrees discovery under LIMEN_RECLAIM_WORKSPACE_ROOTS."
   LIMEN_RECLAIM_APPLY:
-    default: "0"               # OFF — default beat reports reclaim candidates, explicit operator acceptance removes them
+    default: "1"               # ON — default beat removes only clean+content-preserved+idle roots
     env: LIMEN_RECLAIM_APPLY
     self_update: none
     owner: limen-daemon
-    note: "When 1, scripts/drain.sh passes --apply to reclaim-worktrees.py. Default 0 keeps automated beats preview-only so clean+content-preserved roots do not disappear until their ledger/PR/blocker receipt has operator acceptance."
+    note: "When 1, scripts/drain.sh passes --apply to reclaim-worktrees.py. The reaper still refuses dirty, unique-unpushed, unmerged, active, or live/self roots. Set 0 for preview-only operation."
   LIMEN_WORKTREE_DEBT_GATE:
     default: "1"               # ON — debt suppresses routine generated build-out, not recovery work
     env: LIMEN_WORKTREE_DEBT_GATE

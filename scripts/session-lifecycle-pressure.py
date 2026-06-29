@@ -26,13 +26,26 @@ PROMPT_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
 CORPUS_INVENTORY = PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
 OUT_JSON = ROOT / "logs" / "session-lifecycle-pressure.json"
 OUT_MD = ROOT / "logs" / "session-lifecycle-pressure.md"
+PRESERVATION_RECEIPTS = ROOT / "docs" / "worktree-preservation-receipts.json"
 REMOTE_MISSING_CLOSED_REASONS = {
     "clean+merged+idle",
     "documented-residue",
     "owner-blocker",
+    "remote-default-proof",
     "remote-merged",
     "remote-pr-open",
     "remote-superseded",
+}
+REMOTE_MISSING_CLOSED_STATUSES = {
+    "cache_only_residue",
+    "default_branch_preserved",
+    "documented_non_source_residue",
+    "empty_generated_residue",
+    "history_mismatch_patch_preserved",
+    "merged_pr_preserved",
+    "open_pr_preserved",
+    "private_patch_preserved",
+    "superseded_on_origin_main",
 }
 
 
@@ -105,6 +118,37 @@ def run_worktree_debt() -> dict[str, Any]:
         return {"total": 0, "debt": 0, "limit": 0, "by_reason": {}, "error": "invalid worktree-debt JSON"}
 
 
+def worktree_target_paths(wt_report: dict[str, Any]) -> list[Path]:
+    paths: list[Path] = []
+    for item in wt_report.get("items") or []:
+        if not isinstance(item, dict):
+            continue
+        raw = item.get("path")
+        if raw:
+            paths.append(Path(str(raw)))
+    return paths
+
+
+def preservation_receipts_by_root() -> dict[str, dict[str, Any]]:
+    data = load_json(PRESERVATION_RECEIPTS)
+    out: dict[str, dict[str, Any]] = {}
+    for receipt in data.get("receipts") or []:
+        if not isinstance(receipt, dict):
+            continue
+        root = receipt.get("root")
+        if root:
+            out[str(root)] = receipt
+    return out
+
+
+def receipt_closes_remote_missing(receipt: dict[str, Any] | None) -> bool:
+    if not receipt:
+        return False
+    lane = str(receipt.get("lane") or "")
+    status = str(receipt.get("status") or "")
+    return lane in REMOTE_MISSING_CLOSED_REASONS or status in REMOTE_MISSING_CLOSED_STATUSES
+
+
 def remote_missing_counts(worktree_remote: dict[str, Any], wt_report: dict[str, Any]) -> dict[str, Any]:
     raw_missing = int(worktree_remote.get("remote_branches_missing") or 0)
     missing_roots = [
@@ -117,13 +161,16 @@ def remote_missing_counts(worktree_remote: dict[str, Any], wt_report: dict[str, 
         for item in wt_report.get("items") or []
         if isinstance(item, dict) and item.get("name")
     }
+    receipts_by_root = preservation_receipts_by_root()
     if not missing_roots or not by_name:
+        closed_roots = [root for root in missing_roots if receipt_closes_remote_missing(receipts_by_root.get(root))]
+        unresolved_roots = [root for root in missing_roots if root not in set(closed_roots)]
         return {
             "raw": raw_missing,
-            "unresolved": raw_missing,
-            "closed": 0,
-            "closed_roots": [],
-            "unresolved_roots": missing_roots,
+            "unresolved": len(unresolved_roots),
+            "closed": len(closed_roots),
+            "closed_roots": closed_roots,
+            "unresolved_roots": unresolved_roots,
         }
 
     closed_roots: list[str] = []
@@ -131,7 +178,10 @@ def remote_missing_counts(worktree_remote: dict[str, Any], wt_report: dict[str, 
     for root in missing_roots:
         item = by_name.get(root)
         reason = str((item or {}).get("reason") or "")
-        if item and not item.get("debt") and reason in REMOTE_MISSING_CLOSED_REASONS:
+        if (
+            (item and not item.get("debt") and reason in REMOTE_MISSING_CLOSED_REASONS)
+            or receipt_closes_remote_missing(receipts_by_root.get(root))
+        ):
             closed_roots.append(root)
         else:
             unresolved_roots.append(root)
@@ -160,7 +210,9 @@ def build_snapshot() -> dict[str, Any]:
         }
 
     wt_report = run_worktree_debt()
-    worktree_bytes = dir_size(WORKTREE_ROOT)
+    worktree_paths = worktree_target_paths(wt_report)
+    worktree_bytes = sum(dir_size(path) for path in worktree_paths) if worktree_paths else dir_size(WORKTREE_ROOT)
+    worktree_roots = len(worktree_paths) if worktree_paths else count_dirs(WORKTREE_ROOT)
     private_bytes = dir_size(PRIVATE_ROOT)
     total_local_bytes = worktree_bytes + private_bytes
     debt = int(wt_report.get("debt") or 0)
@@ -184,7 +236,7 @@ def build_snapshot() -> dict[str, Any]:
     return {
         "worktrees": {
             "root": str(WORKTREE_ROOT),
-            "roots": count_dirs(WORKTREE_ROOT),
+            "roots": worktree_roots,
             "bytes": worktree_bytes,
             "debt": debt,
             "limit": limit,

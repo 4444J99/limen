@@ -11,10 +11,11 @@ those:
   • HEAD/content is already merged into the remote default branch (the work finished its PR/base lifecycle), AND
   • idle for >= the root's min-age (so a task/session mid-run is never touched).
 
-It scans BOTH creation sites (the historical blind spot — see worktree-lifecycle-blind-spot):
+It scans every known creation site (the historical blind spot — see worktree-lifecycle-blind-spot):
   • LIMEN_WORKTREE_ROOT (~/Workspace/.limen-worktrees) — dispatch throwaway, min-age 6h.
-  • LIMEN_ROOT/.claude/worktrees — EnterWorktree / bg-job / interactive cells, min-age 24h
-    (longer: an interactive session can sit idle-but-alive; 24h clean+merged ⇒ provably dead).
+  • LIMEN_ROOT/.claude/worktrees — EnterWorktree / bg-job / interactive cells, min-age 24h.
+  • repo-local .worktrees roots discovered under LIMEN_RECLAIM_WORKSPACE_ROOTS.
+  • registered git worktrees from LIMEN_RECLAIM_MAIN_REPOS (default: Limen and Portvs).
 Set LIMEN_RECLAIM_CLAUDE_WT=0 to disable the interactive sweep.
 
 It is LOSS-FREE by construction (those three gates) and FAILS OPEN: any error on one dir is
@@ -27,21 +28,23 @@ Dry-run by default; pass --apply to execute. Self-throttles to once per
 LIMEN_RECLAIM_EVERY_MIN minutes so it is cheap to call every beat.
 
 Env: LIMEN_WORKTREE_ROOT, LIMEN_RECLAIM_MIN_AGE_H (6), LIMEN_RECLAIM_CLAUDE_WT (1),
-     LIMEN_RECLAIM_CLAUDE_AGE_H (24), LIMEN_RECLAIM_MAX (50), LIMEN_RECLAIM_EVERY_MIN (30).
+     LIMEN_RECLAIM_CLAUDE_AGE_H (24), LIMEN_RECLAIM_REPO_LOCAL_WT, LIMEN_RECLAIM_REPO_LOCAL_AGE_H,
+     LIMEN_RECLAIM_REGISTERED_WT, LIMEN_RECLAIM_REGISTERED_AGE_H, LIMEN_RECLAIM_MAIN_REPOS,
+     LIMEN_RECLAIM_WORKSPACE_ROOTS, LIMEN_RECLAIM_MAX (50), LIMEN_RECLAIM_EVERY_MIN (30).
 """
 from __future__ import annotations
 import json, os, shutil, subprocess, sys, time
 from pathlib import Path
 
+SCRIPT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(SCRIPT_ROOT / "cli" / "src"))
+
+from limen.worktree_roots import iter_worktree_targets  # noqa: E402
+
 HOME = os.environ.get("HOME", "/Users/4jp")
-ROOT = Path(os.environ.get("LIMEN_WORKTREE_ROOT", f"{HOME}/Workspace/.limen-worktrees"))
-MIN_AGE_H = float(os.environ.get("LIMEN_RECLAIM_MIN_AGE_H", "6"))
 MAX_REMOVE = int(os.environ.get("LIMEN_RECLAIM_MAX", "50"))
 EVERY_MIN = float(os.environ.get("LIMEN_RECLAIM_EVERY_MIN", "30"))
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", f"{HOME}/Workspace/limen"))
-CLAUDE_WT_ON = os.environ.get("LIMEN_RECLAIM_CLAUDE_WT", "1") == "1"
-CLAUDE_WT_ROOT = LIMEN_ROOT / ".claude" / "worktrees"
-CLAUDE_WT_AGE_H = float(os.environ.get("LIMEN_RECLAIM_CLAUDE_AGE_H", "24"))
 LOG = LIMEN_ROOT / "logs" / "reclaim-worktrees.jsonl"
 MARKER = LIMEN_ROOT / "logs" / ".reclaim-last"
 APPLY = "--apply" in sys.argv
@@ -138,13 +141,10 @@ def classify(d: Path, now: float, min_age_h: float):
 
 
 def main():
-    # The two creation sites, each with its own idle gate (the historical blind spot was
-    # scanning only the first). A root that doesn't exist is simply skipped.
-    roots = [(ROOT, MIN_AGE_H)]
-    if CLAUDE_WT_ON:
-        roots.append((CLAUDE_WT_ROOT, CLAUDE_WT_AGE_H))
-    roots = [(r, a) for r, a in roots if r.is_dir()]
-    if not roots:
+    # Every known creation site, each with its own idle gate. Missing roots simply disappear
+    # from the target list; discovery must never block the heartbeat.
+    targets = iter_worktree_targets(LIMEN_ROOT)
+    if not targets:
         print("reclaim: no worktree roots present — nothing to do")
         return 0
     # self-throttle (skip silently if run recently, unless --force or dry-run inspection)
@@ -153,7 +153,7 @@ def main():
             print(f"reclaim: ran < {EVERY_MIN}min ago — skip (set --force to override)")
             return 0
     now = time.time()
-    dirs = [(p, age) for r, age in roots for p in sorted(r.iterdir()) if p.is_dir()]
+    dirs = [(target.path, target.min_age_h) for target in targets]
     removed, skipped, failed, deferred = [], [], [], []
     for d, min_age_h in dirs:
         action, reason = classify(d, now, min_age_h)

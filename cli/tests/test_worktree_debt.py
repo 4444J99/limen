@@ -225,3 +225,51 @@ def test_clean_git_root_still_classifies_without_receipt(tmp_path: Path, monkeyp
     assert report["items"][0]["name"] == "git-root"
     assert report["items"][0]["reason"] == "unpushed-commits"
     assert report["items"][0]["debt"] is True
+
+
+def test_repo_local_worktrees_are_scanned_when_enabled(tmp_path: Path, monkeypatch):
+    workspace = tmp_path / "Workspace"
+    repo_local = workspace / "4444J99" / "portvs" / ".worktrees" / "triptych-story"
+    repo_local.mkdir(parents=True)
+    central = tmp_path / ".limen-worktrees"
+    central.mkdir()
+    monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(central))
+    monkeypatch.setenv("LIMEN_RECLAIM_CLAUDE_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REPO_LOCAL_WT", "1")
+    monkeypatch.setenv("LIMEN_RECLAIM_REGISTERED_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_WORKSPACE_ROOTS", str(workspace))
+
+    report = worktree_debt_report(tmp_path)
+    by_name = {item["name"]: item for item in report["items"]}
+
+    assert by_name["triptych-story"]["path"] == str(repo_local)
+    assert by_name["triptych-story"]["reason"] == "not-a-git-dir"
+    assert by_name["triptych-story"]["debt"] is True
+
+
+def test_registered_sibling_worktrees_are_scanned_when_enabled(tmp_path: Path, monkeypatch):
+    main = tmp_path / "limen-main"
+    sibling = tmp_path / "limen-main-trench-20260628"
+    main.mkdir()
+    subprocess.run(["git", "init", "-q", "-b", "main"], cwd=main, check=True)
+    subprocess.run(["git", "config", "user.email", "test@example.invalid"], cwd=main, check=True)
+    subprocess.run(["git", "config", "user.name", "Test User"], cwd=main, check=True)
+    (main / "README.md").write_text("base\n", encoding="utf-8")
+    subprocess.run(["git", "add", "README.md"], cwd=main, check=True)
+    subprocess.run(["git", "commit", "-qm", "base"], cwd=main, check=True)
+    subprocess.run(["git", "worktree", "add", "-q", str(sibling), "-b", "work/main-trench"], cwd=main, check=True)
+    central = tmp_path / ".limen-worktrees"
+    central.mkdir()
+    monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(central))
+    monkeypatch.setenv("LIMEN_RECLAIM_CLAUDE_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REPO_LOCAL_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REGISTERED_WT", "1")
+    monkeypatch.setenv("LIMEN_RECLAIM_MAIN_REPOS", str(main))
+    monkeypatch.setenv("LIMEN_RECLAIM_REGISTERED_AGE_H", "0")
+
+    report = worktree_debt_report(tmp_path)
+    by_name = {item["name"]: item for item in report["items"]}
+
+    assert by_name["limen-main-trench-20260628"]["path"] == str(sibling)
+    assert by_name["limen-main-trench-20260628"]["reason"] == "unpushed-commits"
+    assert by_name["limen-main-trench-20260628"]["debt"] is True

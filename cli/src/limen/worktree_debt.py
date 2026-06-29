@@ -7,6 +7,8 @@ import time
 from pathlib import Path
 from typing import Any, TypedDict
 
+from limen.worktree_roots import iter_worktree_targets
+
 
 DEBT_REASONS = {
     "dirty",
@@ -198,20 +200,6 @@ def _classify(
     return "clean+merged+idle"
 
 
-def _scan_roots(limen_root: Path) -> list[tuple[Path, float]]:
-    home = os.environ.get("HOME", "/Users/4jp")
-    root = Path(os.environ.get("LIMEN_WORKTREE_ROOT", f"{home}/Workspace/.limen-worktrees"))
-    roots = [(root, float(os.environ.get("LIMEN_RECLAIM_MIN_AGE_H", "6")))]
-    if os.environ.get("LIMEN_RECLAIM_CLAUDE_WT", "1") == "1":
-        roots.append(
-            (
-                limen_root / ".claude" / "worktrees",
-                float(os.environ.get("LIMEN_RECLAIM_CLAUDE_AGE_H", "24")),
-            )
-        )
-    return [(path, age) for path, age in roots if path.is_dir()]
-
-
 def worktree_debt_report(limen_root: Path | None = None) -> WorktreeDebtReport:
     root = limen_root or Path(os.environ.get("LIMEN_ROOT", f"{os.environ.get('HOME', '/Users/4jp')}/Workspace/limen"))
     self_guard: set[Path] = set()
@@ -225,12 +213,12 @@ def worktree_debt_report(limen_root: Path | None = None) -> WorktreeDebtReport:
     preservation_receipts = _load_preservation_receipts(root)
     items: list[WorktreeDebtItem] = []
     by_reason: dict[str, int] = {}
-    for scan_root, min_age_h in _scan_roots(root):
-        for path in sorted(p for p in scan_root.iterdir() if p.is_dir()):
-            reason = _classify(path, now, min_age_h, self_guard, preservation_receipts)
-            debt = reason in DEBT_REASONS
-            by_reason[reason] = by_reason.get(reason, 0) + 1
-            items.append({"name": path.name, "path": str(path), "reason": reason, "debt": debt})
+    for target in iter_worktree_targets(root):
+        path = target.path
+        reason = _classify(path, now, target.min_age_h, self_guard, preservation_receipts)
+        debt = reason in DEBT_REASONS
+        by_reason[reason] = by_reason.get(reason, 0) + 1
+        items.append({"name": path.name, "path": str(path), "reason": reason, "debt": debt})
 
     debt_count = sum(1 for item in items if item["debt"])
     return {"total": len(items), "debt": debt_count, "by_reason": by_reason, "items": items}
