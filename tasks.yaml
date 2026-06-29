@@ -51953,7 +51953,7 @@ tasks:
   target_agent: jules
   priority: low
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - docs
   - generated
@@ -51969,7 +51969,7 @@ tasks:
     \ to keep the stream endless]"
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-28T11:55:56.156931Z'
+  updated: '2026-06-29T12:03:40.223061Z'
   dispatch_log:
   - timestamp: '2026-06-26T23:07:41.223636Z'
     agent: opencode
@@ -52020,6 +52020,11 @@ tasks:
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-06-29T12:03:40.223061Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: GEN-organvm-limen-docs-0624
   title: Real usage docs for organvm/limen
   repo: organvm/limen
@@ -61692,7 +61697,7 @@ tasks:
   target_agent: jules
   priority: critical
   budget_cost: 2
-  status: dispatched
+  status: open
   labels:
   - revenue-funding
   - revenue
@@ -61711,7 +61716,7 @@ tasks:
     \ tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-28T05:39:28.818830Z'
+  updated: '2026-06-29T12:03:40.223061Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:10:51.965981Z'
     agent: codex
@@ -61760,6 +61765,11 @@ tasks:
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-06-29T12:03:40.223061Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: REV-organvm-universal-mail--automation-revenue-ship-0628
   title: Drive Universal Mail Automation to deploy-ready
   repo: organvm/universal-mail--automation
