@@ -7,6 +7,12 @@ resumable surface instead of holding everything in the chat.
 /Users/4jp/Workspace/limen/scripts/start-worktree-session.sh --shell --prompt "short objective and constraints" limen my-workstream
 ```
 
+After `install.sh`, the shortcut is:
+
+```bash
+workstream --prompt "short objective and constraints" limen my-workstream
+```
+
 The command works from Terminal, Kitty, Ghostty, Warp, or any normal shell. It creates or reuses
 `<repo>/.worktrees/<slug>` on `work/<slug>`, then writes a private kickoff README at:
 

@@ -68,6 +68,12 @@ Mounts `./tasks.yaml` into the API container.
 | `limen harvest` | `--agent` | Check for completed dispatches and update task states. |
 | `limen workstream` | `--from`, `--prompt`, `--prompt-file`, `--codex`, `--shell` | Create/reuse a repo worktree plus a private `.limen-workstream/README.md` and `kickstart.sh`. |
 
+The installer also creates a terminal-neutral shortcut in `~/.local/bin`:
+
+```bash
+workstream --prompt "objective and constraints" limen my-workstream
+```
+
 ## Architecture
 
 ```

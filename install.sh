@@ -47,9 +47,23 @@ fi
 
 # 4. Env var + PATH setup
 LIMEN_BIN="${LIMEN_CLI}/.venv/bin"
+USER_BIN="${HOME}/.local/bin"
 LIMEN_ENV_LINE='export LIMEN_ROOT="$HOME/limen"'
-LIMEN_PATH_LINE="export PATH=\"${LIMEN_BIN}:\$PATH\""
+LIMEN_PATH_LINE="export PATH=\"${USER_BIN}:${LIMEN_BIN}:\$PATH\""
 ZSHRC="${ZDOTDIR:-$HOME}/.zshenv"
+mkdir -p "$USER_BIN"
+cat >"${USER_BIN}/limen" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+exec "${LIMEN_BIN}/limen" "\$@"
+EOF
+cat >"${USER_BIN}/workstream" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+exec "${LIMEN_BIN}/limen" workstream "\$@"
+EOF
+chmod +x "${USER_BIN}/limen" "${USER_BIN}/workstream"
+echo "  installed wrappers at ${USER_BIN}/limen and ${USER_BIN}/workstream"
 if grep -q 'LIMEN_ROOT' "$ZSHRC" 2>/dev/null; then
   echo "  LIMEN_ROOT already set in $ZSHRC"
 else
@@ -65,3 +79,4 @@ fi
 
 echo "==> done"
 echo "  Run: source ${ZSHRC} && limen status"
+echo "  Start a workstream: workstream --prompt 'objective and constraints' limen my-workstream"
