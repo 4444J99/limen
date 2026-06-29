@@ -15,9 +15,9 @@ portal:
       claude: 100
     track:
       date: '2026-06-29'
-      spent: 52
+      spent: 53
       per_agent:
-        jules: 45
+        jules: 46
         gemini: 0
         codex: 1
         opencode: 1
@@ -59354,7 +59354,7 @@ tasks:
     and tests green. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-28T14:14:17.262122Z'
+  updated: '2026-06-29T11:29:29.780493Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: opencode
@@ -59402,6 +59402,20 @@ tasks:
   - timestamp: '2026-06-28T14:14:17.262122Z'
     agent: jules
     session_id: '127396022977747404'
+    status: dispatched
+  - timestamp: '2026-06-29T11:24:39.415912Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: orphaned (session 127396022977747404 gone) \u2192 reopened"
+  - timestamp: '2026-06-29T11:29:29.780493Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-29T11:29:29.780493Z'
+    agent: jules
+    session_id: '13313938481970172557'
     status: dispatched
 - id: GEN-organvm-mirror-mirror-typing-0627
   title: Tighten types in organvm/mirror-mirror
@@ -63437,7 +63451,9 @@ tasks:
     agent: codex
     session_id: direct-session
     status: done
-    output: 'board-repair: restored terminal done after invalid reopened-after-done dispatch; prior opencode done entry is the completion evidence, and any further docs work requires a new task.'
+    output: 'board-repair: restored terminal done after invalid reopened-after-done
+      dispatch; prior opencode done entry is the completion evidence, and any further
+      docs work requires a new task.'
 - id: GEN-organvm-limen-docs-0629
   title: Real usage docs for organvm/limen
   repo: organvm/limen
@@ -64100,7 +64116,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - test-coverage
   - generated
@@ -64112,7 +64128,7 @@ tasks:
     keep the stream endless]
   depends_on: []
   created: '2026-06-29'
-  updated: '2026-06-29T11:05:16.865822Z'
+  updated: '2026-06-29T11:29:48.488178Z'
   dispatch_log:
   - timestamp: '2026-06-29T11:05:16.865822Z'
     agent: codex
@@ -64123,3 +64139,8 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/limen/pull/402
     status: dispatched
+  - timestamp: '2026-06-29T11:29:48.488178Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
