@@ -383,8 +383,8 @@ works:
     tradition: sanskrit
     original_language: san
     script: devanagari
-    corpus_path: null
-    original_file: null
+    corpus_path: sanskrit/upanishads
+    original_file: sanskrit_original.txt
     translation_files: []
     source_rails: ["https://www.sacred-texts.com/hin/upan/", "https://gretil.sub.uni-goettingen.de/gretil.html#Upan"]
     main_question: "What is the self (ātman) that is also the ground of all being (brahman)?"
@@ -392,7 +392,6 @@ works:
     language: sanskrit
     tier: 2
     staged: true
-    missing_from_corpus: true
     order_indices: {chronological: 4.5, western_eastern: "M2", interleaved_phase: "II. Sacred & Allegory"}
 
   book-of-songs:
@@ -403,8 +402,8 @@ works:
     tradition: chinese
     original_language: lzh
     script: hanzi
-    corpus_path: null
-    original_file: null
+    corpus_path: chinese-classical/book-of-songs
+    original_file: chinese_original.txt
     translation_files: []
     source_rails: ["https://ctext.org/book-of-poetry"]
     main_question: "What is ritual lyric — song before 'literature' becomes private expression?"
@@ -412,7 +411,6 @@ works:
     language: chinese
     tier: 2
     staged: true
-    missing_from_corpus: true
     order_indices: {chronological: 4.2, western_eastern: "M2", interleaved_phase: "I. Epic & Oral"}
 
   kojiki:
@@ -423,8 +421,8 @@ works:
     tradition: japanese
     original_language: jpn
     script: kana-kanji
-    corpus_path: null
-    original_file: null
+    corpus_path: japanese/kojiki
+    original_file: japanese_original.txt
     translation_files: []
     source_rails: ["https://www.sacred-texts.com/shi/kj/"]
     main_question: "What is mythic origin — how a people narrates its own beginning?"
@@ -432,7 +430,6 @@ works:
     language: japanese
     tier: 2
     staged: true
-    missing_from_corpus: true
     order_indices: {chronological: 14.5, western_eastern: "M2", interleaved_phase: "I. Epic & Oral"}
 
   rumi-hafez:
@@ -443,8 +440,8 @@ works:
     tradition: persian
     original_language: fas
     script: persian
-    corpus_path: null
-    original_file: null
+    corpus_path: arabic-persian/rumi-hafez
+    original_file: persian_original.txt
     translation_files: []
     source_rails: ["https://ganjoor.net/moulavi/", "https://ganjoor.net/hafez/"]
     main_question: "What is mystical eros — annihilation (fanā) and divine longing?"
@@ -452,7 +449,6 @@ works:
     language: persian
     tier: 2
     staged: true
-    missing_from_corpus: true
     order_indices: {chronological: 16.5, western_eastern: "M2", interleaved_phase: "II. Sacred & Allegory"}
 
   dream-of-red-chamber:
@@ -463,8 +459,8 @@ works:
     tradition: chinese
     original_language: zho
     script: hanzi
-    corpus_path: null
-    original_file: null
+    corpus_path: chinese-classical/dream-of-red-chamber
+    original_file: chinese_original.txt
     translation_files: []
     source_rails: ["https://ctext.org/hongloumeng"]
     main_question: "What is desire, illusion, and the totality of a world in decline?"
@@ -472,5 +468,4 @@ works:
     language: chinese
     tier: 2
     staged: true
-    missing_from_corpus: true
     order_indices: {chronological: 18.5, western_eastern: "M2", interleaved_phase: "III. Renaissance"}

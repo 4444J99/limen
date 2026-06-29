@@ -143,9 +143,9 @@ corpus_gaps:
     - id: studium-corpus-shahnameh
       title: "Fetch Shahnameh original (ganjoor.net) → corpus arabic-persian/shahnameh; clear canon missing_from_corpus"
       class: content
-    - id: studium-corpus-tier2
-      title: "Fetch Tier-2 originals where public-domain (Upanishads/Shijing/Kojiki/Rumi-Hafez/Honglou-meng) from their source rails"
-      class: content
+    # - id: studium-corpus-tier2 # DONE
+      # title: "Fetch Tier-2 originals where public-domain (Upanishads/Shijing/Kojiki/Rumi-Hafez/Honglou-meng) from their source rails"
+      # class: content
 
 # ── Pillar D — community / build-in-public (propose-only; SENDS NOTHING until his gate) ──
 community:
