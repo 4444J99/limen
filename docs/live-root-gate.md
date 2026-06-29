@@ -1,6 +1,6 @@
 # Live Root Gate
 
-Generated: `2026-06-28T20:12:30+00:00`
+Generated: `2026-06-29T15:16:32+00:00`
 
 Status: `blocked`
 
@@ -15,45 +15,38 @@ Status: `blocked`
 - Operator gate required: `True`.
 - Release reconcile allowed without human: `False`.
 - Launchd reload allowed without human: `False`.
-- Blocking gates: `live-root-not-release-branch`, `live-root-not-at-release`, `live-root-unique-commits`, `live-root-dirty`, `live-root-task-board-dirty`, `heartbeat-loaded-env-drift`.
+- Blocking gates: `live-root-not-at-release`, `live-root-unique-commits`, `live-root-dirty`.
 
 ## Live Root
 
 - Path: `~/Workspace/limen`.
-- Branch: `feature/ORG-artist-organ-face-0628`; release branch `main`.
-- HEAD: `84a3288eaaf91de93428aa8eae9dafbead39ba42`.
-- Release head: `e3bc1927c0a419f968cb78d5b8267e7214c2cac1`.
-- Matches release: `False`; ahead `1` behind `10`.
+- Branch: `main`; release branch `main`.
+- HEAD: `d6757d3d21fc02f7d849f1f680d5c4e74c68cf70`.
+- Release head: `9f7af24dcb7514acec86c377965fa8efa56932ce`.
+- Matches release: `False`; ahead `1` behind `0`.
 - Unique local commits: `1`; patch-equivalent commits: `0`.
-- Dirty entries: `6`.
+- Dirty entries: `2`.
 
 ### Local Commits
 
-- `84a3288 feat(artist): author KERNEL and CHARTER for A-MAVS-OLEVM`
+- `d6757d3 limen: preserve live task board state`
 
 ### Dirty Paths
 
-- `container/launchd/com.user.netmeter.plist`
-- `organs/artist/KERNEL.md`
-- `scripts/netmode.sh`
-- `tasks.yaml`
-- `organs/health/`
-- `organs/media/`
+- `docs/dispatch-health.md`
+- `docs/live-root-gate.md`
 
 ## Heartbeat
 
 - Plist: `~/Library/LaunchAgents/com.limen.heartbeat.plist` present `True`.
-- Loaded launchd state: `running` pid `24368`.
-
-### Loaded Env Drift
-
-- `LIMEN_DISPATCH_ASYNC`: plist `0`; loaded `None`.
+- Loaded launchd state: `running` pid `1656`.
+- Loaded env matches plist for tracked LIMEN_* keys.
 
 ## Verified Worktree
 
-- Path: `~/Workspace/limen-conductor-owner-state-20260628`.
-- Branch: `codex/conductor-owner-state-20260628`.
-- Matches release: `True`.
+- Path: `~/Workspace/limen`.
+- Branch: `main`.
+- Matches release: `False`.
 
 ## Stop Conditions
 

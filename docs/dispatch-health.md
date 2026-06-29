@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-06-28T20:12:19+00:00`
+Generated: `2026-06-29T15:16:32+00:00`
 
 Status: `blocked`
 
@@ -16,10 +16,10 @@ Status: `blocked`
 - Plist KeepAlive: `True`; RunAtLoad: `True`.
 - Plist LIMEN_ROOT: `/Users/4jp/Workspace/limen`.
 - Plist LIMEN_DISPATCH_ASYNC: `0`.
-- Loaded launchd state: `running` pid `24368`.
+- Loaded launchd state: `running` pid `1656`.
 - Loaded LIMEN_ROOT: `/Users/4jp/Workspace/limen`.
-- Loaded LIMEN_DISPATCH_ASYNC: `None`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-06-28T20:12:19.451146+00:00 HEALTHY sig=healthy`.
+- Loaded LIMEN_DISPATCH_ASYNC: `0`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-06-29T15:16:33.126703+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
@@ -30,28 +30,24 @@ Status: `blocked`
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
-- Branch: `feature/ORG-artist-organ-face-0628`; status `## feature/ORG-artist-organ-face-0628...origin/feature/ORG-artist-organ-face-0628`.
-- HEAD: `84a3288eaaf91de93428aa8eae9dafbead39ba42`.
-- origin/main: `e3bc1927c0a419f968cb78d5b8267e7214c2cac1`.
-- Matches origin/main: `False`; ahead `1` behind `10`.
-- Dirty entries: `5`.
-  - `container/launchd/com.user.netmeter.plist`
-  - `scripts/netmode.sh`
-  - `tasks.yaml`
-  - `organs/health/`
-  - `organs/media/`
+- Branch: `main`; status `## main...origin/main [ahead 1]`.
+- HEAD: `d6757d3d21fc02f7d849f1f680d5c4e74c68cf70`.
+- origin/main: `9f7af24dcb7514acec86c377965fa8efa56932ce`.
+- Matches origin/main: `False`; ahead `1` behind `0`.
+- Dirty entries: `2`.
+  - `docs/dispatch-health.md`
+  - `docs/live-root-gate.md`
 
 ## Verified Worktree
 
-- Verified worktree: `~/Workspace/limen-conductor-owner-state-20260628`.
-- Branch: `codex/conductor-owner-state-20260628`; status `## codex/conductor-owner-state-20260628...origin/codex/conductor-owner-state-20260628`.
-- HEAD matches origin/main: `True`.
+- Verified worktree: `~/Workspace/limen`.
+- Branch: `main`; status `## main...origin/main [ahead 1]`.
+- HEAD matches origin/main: `False`.
 
 ## Blockers
 
-- `live-root-not-at-origin-main`: live root branch feature/ORG-artist-organ-face-0628 head 84a3288eaaf9 differs from origin/main e3bc1927c0a4.
-- `live-root-dirty`: live root has 5 dirty entries.
-- `heartbeat-loaded-env-drift`: plist LIMEN_DISPATCH_ASYNC='0', loaded=None.
+- `live-root-not-at-origin-main`: live root branch main head d6757d3d21fc differs from origin/main 9f7af24dcb75.
+- `live-root-dirty`: live root has 2 dirty entries.
 
 ## Commands
 
