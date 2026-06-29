@@ -1,5 +1,6 @@
 import os
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -34,6 +35,20 @@ def resolve_tasks_path(root: Path) -> Path:
     if env_path:
         return Path(env_path).expanduser().resolve()
     return root / "tasks.yaml"
+
+
+def resolve_limen_repo_root() -> Path:
+    env_root = os.environ.get("LIMEN_ROOT")
+    candidates = []
+    if env_root:
+        candidates.append(Path(env_root).expanduser().resolve())
+    candidates.append(Path(__file__).resolve().parents[3])
+    candidates.append(Path.cwd())
+    for candidate in candidates:
+        if (candidate / "scripts" / "start-worktree-session.sh").exists():
+            return candidate
+    click.echo("Could not find scripts/start-worktree-session.sh; set LIMEN_ROOT", err=True)
+    sys.exit(2)
 
 
 @click.group()
@@ -174,6 +189,44 @@ def harvest(agent):
     tasks_path = resolve_tasks_path(root)
     limen = load_limen_file(tasks_path)
     harvest_results(limen, tasks_path, agent=agent)
+
+
+@main.command("workstream")
+@click.option("--codex", "launch_codex", is_flag=True, help="Open Codex in the worktree after creating the packet.")
+@click.option("--shell", "launch_shell", is_flag=True, help="Open a login shell in the worktree after creating the packet.")
+@click.option("--from", "from_ref", default=None, help="Branch or ref to create the worktree branch from.")
+@click.option("--prompt", "prompt_text", default=None, help="Inline prompt packet for .limen-workstream/README.md.")
+@click.option("--prompt-file", default=None, type=click.Path(exists=True), help="Prompt packet file to embed in README.md.")
+@click.option("--no-readme", is_flag=True, help="Create/reuse the worktree without writing the private kickoff packet.")
+@click.argument("repo")
+@click.argument("slug")
+def workstream(launch_codex, launch_shell, from_ref, prompt_text, prompt_file, no_readme, repo, slug):
+    """Create/reuse a repo worktree plus a private kickoff README and kickstart command."""
+    root = resolve_limen_repo_root()
+    script = root / "scripts" / "start-worktree-session.sh"
+    args = ["bash", str(script)]
+    if launch_codex:
+        args.append("--codex")
+    if launch_shell:
+        args.append("--shell")
+    if from_ref:
+        args.extend(["--from", from_ref])
+    if prompt_text:
+        args.extend(["--prompt", prompt_text])
+    if prompt_file:
+        args.extend(["--prompt-file", prompt_file])
+    if no_readme:
+        args.append("--no-readme")
+    args.extend([repo, slug])
+    if launch_codex or launch_shell:
+        result = subprocess.run(args)
+    else:
+        result = subprocess.run(args, text=True, capture_output=True)
+        if result.stdout:
+            click.echo(result.stdout, nl=False)
+        if result.stderr:
+            click.echo(result.stderr, err=True, nl=False)
+    raise SystemExit(result.returncode)
 
 
 if __name__ == "__main__":

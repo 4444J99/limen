@@ -66,6 +66,7 @@ Mounts `./tasks.yaml` into the API container.
 | `limen qa` | `--agent` (default jules), `--json-output`, `--report-file` | Report QA lifecycle gates and steering queues without mutating tasks. |
 | `limen status` | `--agent`, `--status` | Show the task board. |
 | `limen harvest` | `--agent` | Check for completed dispatches and update task states. |
+| `limen workstream` | `--from`, `--prompt`, `--prompt-file`, `--codex`, `--shell` | Create/reuse a repo worktree plus a private `.limen-workstream/README.md` and `kickstart.sh`. |
 
 ## Architecture
 
