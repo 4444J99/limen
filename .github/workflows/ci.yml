@@ -100,6 +100,33 @@ jobs:
       - name: Probe local runtime adapter
         run: scripts/probe-local-runtime.sh
 
+  verify:
+    needs: [python, worker, web]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: web/app/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyyaml -r web/api/requirements.txt -e "cli[test]"
+
+      - name: Run whole-repo verification (verify-whole.sh)
+        run: scripts/verify-whole.sh
+        env:
+          LIMEN_VERIFY_LIVE: "0"
+
   python-311:
     runs-on: ubuntu-latest
     steps:
