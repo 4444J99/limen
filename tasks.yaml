@@ -15,9 +15,9 @@ portal:
       claude: 100
     track:
       date: '2026-06-29'
-      spent: 53
+      spent: 56
       per_agent:
-        jules: 46
+        jules: 49
         gemini: 0
         codex: 1
         opencode: 1
@@ -51953,7 +51953,7 @@ tasks:
   target_agent: jules
   priority: low
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - docs
   - generated
@@ -51969,7 +51969,7 @@ tasks:
     \ to keep the stream endless]"
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-06-29T12:03:40.223061Z'
+  updated: '2026-06-29T12:08:45.400787Z'
   dispatch_log:
   - timestamp: '2026-06-26T23:07:41.223636Z'
     agent: opencode
@@ -52025,6 +52025,15 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-29T12:08:45.400787Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-29T12:08:45.400787Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GEN-organvm-limen-docs-0624
   title: Real usage docs for organvm/limen
   repo: organvm/limen
@@ -61697,7 +61706,7 @@ tasks:
   target_agent: jules
   priority: critical
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue-funding
   - revenue
@@ -61716,7 +61725,7 @@ tasks:
     \ tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-29T12:03:40.223061Z'
+  updated: '2026-06-29T12:08:45.400787Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:10:51.965981Z'
     agent: codex
@@ -61770,6 +61779,15 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-29T12:08:45.400787Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-29T12:08:45.400787Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: REV-organvm-universal-mail--automation-revenue-ship-0628
   title: Drive Universal Mail Automation to deploy-ready
   repo: organvm/universal-mail--automation
