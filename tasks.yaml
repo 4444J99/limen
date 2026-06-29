@@ -15,9 +15,9 @@ portal:
       claude: 100
     track:
       date: '2026-06-29'
-      spent: 56
+      spent: 57
       per_agent:
-        jules: 49
+        jules: 50
         gemini: 0
         codex: 1
         opencode: 1
@@ -59723,7 +59723,7 @@ tasks:
     green. [auto-generated 2026-06-27 to keep the stream endless]
   depends_on: []
   created: '2026-06-27'
-  updated: '2026-06-28T14:47:22.340167Z'
+  updated: '2026-06-29T14:56:33.239181Z'
   dispatch_log:
   - timestamp: '2026-06-27T12:16:14.621714Z'
     agent: agy
@@ -59786,6 +59786,20 @@ tasks:
   - timestamp: '2026-06-28T14:47:22.340167Z'
     agent: jules
     session_id: '17536387430827877231'
+    status: dispatched
+  - timestamp: '2026-06-29T14:53:35.994600Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-06-29T14:56:33.239181Z'
+    agent: jules
+    session_id: reserve
+    status: dispatched
+    output: 'dispatch-parallel: reserved before agent execution'
+  - timestamp: '2026-06-29T14:56:33.239181Z'
+    agent: jules
+    session_id: '9178946619465049274'
     status: dispatched
 - id: GEN-organvm-mirror-mirror-test-coverage-0628
   title: Raise test coverage in organvm/mirror-mirror
