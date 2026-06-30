@@ -8,3 +8,6 @@ extend-exclude = [
     ".limen",
     ".git",
 ]
+
+[lint]
+ignore = ["E701", "E702", "E741", "E402"]

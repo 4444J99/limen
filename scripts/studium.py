@@ -165,7 +165,6 @@ def advance_cursor(state, today):
     w = today["work"]
     divs = w.get("divisions", {}) or {}
     kind = today["division_kind"]
-    per_day = (today.get("pace_divs") or {}).get(kind)
     # Simple, honest model: each division takes ~ (typical lines / lines_per_day) days; we don't parse
     # every corpus file each run, so advance one division per day at intensive, else track day_in_division.
     day = pos.get("day_in_division", 1)

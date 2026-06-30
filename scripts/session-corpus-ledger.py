@@ -273,7 +273,6 @@ def count_jsonl(path: Path, *, source_counts: bool = False) -> dict[str, Any]:
 def substrate_snapshot() -> dict[str, Any]:
     sm = WORKSPACE / "session-meta"
     kc = WORKSPACE / "knowledge-corpus"
-    cce = WORKSPACE / "conversation-corpus-engine"
     one = kc / "00-THE-ONE.md"
     reduced = kc / "reduced"
     return {

@@ -278,7 +278,7 @@ def main() -> int:
     print(f"\n⚠ --apply: writing tasks.yaml ({n_tasks} refs) + deploy-api.yml …")
     if n_tasks:
         apply_tasks(lf)
-        print(f"  ✓ tasks.yaml rewritten via atomic save_limen_file")
+    print("  ✓ tasks.yaml rewritten via atomic save_limen_file")
     if need_fix and apply_deploy():
         print(f"  ✓ deploy-api.yml LIMEN_GITHUB_REPO → {TARGET}/limen")
     print("  (git remotes NOT touched — run the emitted commands manually post-transfer.)")

@@ -18,7 +18,9 @@ branch protection can be removed. `--apply` is GATED on the user.
   python3 scripts/setup-rulesets.py --repo owner/name [...]   # limit to specific repos
   python3 scripts/setup-rulesets.py --contexts pr-gate,python,web   # force these check names (skip detection)
 """
-import json, subprocess, sys
+import json
+import subprocess
+import sys
 from collections import OrderedDict
 
 APPLY = "--apply" in sys.argv
@@ -126,7 +128,7 @@ def main():
             ok = r.returncode == 0
             print(f"      {'✓ protected + auto-merge on' if ok else '✗ ' + r.stderr.strip()[:70]}")
         else:
-            print(f"      ✓ allow_auto_merge set (no protection — no CI to gate on)")
+            print("      ✓ allow_auto_merge set (no protection — no CI to gate on)")
 
     print(f"\n{len(repos)-len(no_ci)} repos gateable via CI; {len(no_ci)} have no CI "
           f"(auto-merge moot — they merge on creation).")

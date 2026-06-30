@@ -75,7 +75,7 @@ _VOICES = [
 def read_pulse():
     """current beat #, tempo, and recent events from the daemon log."""
     log = ROOT / "logs" / "heartbeat.out.log"
-    beat, tempo, events, alive = 0, "?", [], False
+    beat, tempo, events, _alive = 0, "?", [], False
     try:
         lines = log.read_text(errors="ignore").splitlines()[-400:]
         for ln in lines:
@@ -203,7 +203,7 @@ def render(d, ticks, usage=None):
                 cells += C["c"] + "●" + C["x"]
             else:
                 cells += C["gray"] + "·" + C["x"]
-        nextin = sub - (beat % sub) if (beat % sub) else 0
+        sub - (beat % sub) if (beat % sub) else 0
         p(f"  {name:8} {cells} {C['gray']}/{sub} {phase}{C['x']}")
     if events:
         p("")

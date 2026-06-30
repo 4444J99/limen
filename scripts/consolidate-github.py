@@ -14,7 +14,9 @@ preserves issues/PRs/stars and redirects old URLs (reversible: transfer back). N
   python3 scripts/consolidate-github.py --apply     # ⚠ GATED: actually transfer + topic
   python3 scripts/consolidate-github.py --apply --allow-partial  # ⚠ extra-gated partial move
 """
-import json, subprocess, sys
+import json
+import subprocess
+import sys
 from collections import defaultdict
 
 TARGET = "organvm"
@@ -58,7 +60,7 @@ def main():
     print(f"  name collisions (must rename before transfer): {len(collisions)}")
     for n, v in sorted(collisions.items()):
         print(f"    ⚠ '{n}': {', '.join(v)}")
-    print(f"\n  sample transfers (first 20):")
+    print("\n  sample transfers (first 20):")
     for owner, name, topic, arch in plan[:20]:
         flag = " [archived]" if arch else ""
         print(f"    {owner}/{name}{flag}  →  {TARGET}/{name}   +topic:{topic}")
@@ -66,7 +68,7 @@ def main():
         print(f"    … +{len(plan)-20} more")
 
     if not APPLY:
-        print(f"\nDRY-RUN — nothing executed. Collisions above must be resolved first.")
+        print("\nDRY-RUN — nothing executed. Collisions above must be resolved first.")
         print("After collisions are 0, re-run with --apply (GATED) to transfer repos + set topics.")
         return 0
 

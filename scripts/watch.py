@@ -9,7 +9,11 @@ served page) consumes the exact same feed — one source of truth, inside and ou
   python3 scripts/watch.py --once     # one frame (for piping / cron)
   python3 scripts/watch.py -n 5       # custom interval
 """
-import json, os, subprocess, sys, time
+import json
+import os
+import subprocess
+import sys
+import time
 from collections import Counter, defaultdict
 from pathlib import Path
 

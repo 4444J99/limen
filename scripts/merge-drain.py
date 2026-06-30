@@ -18,7 +18,13 @@ task instead of letting them clobber the body. ([[pr111-daemon-regression-healed
   --limit N     max PRs to merge this run   (default 10)
   --dry-run     assess + report only (cursor untouched)
 """
-import argparse, json, os, subprocess, sys, datetime, concurrent.futures as cf
+import argparse
+import concurrent.futures as cf
+import datetime
+import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _pr_scan

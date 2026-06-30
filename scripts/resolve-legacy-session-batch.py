@@ -173,7 +173,6 @@ def build_receipt(batch_id: str) -> dict[str, Any]:
     status_counts = Counter(str(row.get("status") or "unknown") for row in roots)
     unique_keys = {str(row.get("session_key")) for row in roots}
     source_exists = sum(1 for row in scan.get("sessions") or [] if row.get("source_exists"))
-    owner_lanes = scan.get("batch_summary", {}).get("owner_lanes") or {}
     anchor_kinds = scan.get("batch_summary", {}).get("anchor_kinds") or {}
     repo_refs = scan.get("batch_summary", {}).get("repo_refs") or {}
     sensitive_rows = [row for row in scan.get("sessions") or [] if sensitive_total(row)]

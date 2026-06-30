@@ -3,9 +3,9 @@
 
 from __future__ import annotations
 
-import subprocess, sys, yaml, json
+import sys
+import yaml
 from pathlib import Path
-from datetime import datetime, timezone
 
 # route every tasks.yaml write through the ONE atomic primitive (see limen/io.py) so a
 # concurrent heartbeat read can never observe a truncated/empty queue.

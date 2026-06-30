@@ -88,7 +88,7 @@ def _workflow_violations(path: Path, wf: dict[str, Any], *, max_opus_agents: int
     violations: list[str] = []
     name = wf.get("workflowName") or wf.get("summary") or path.name
     progress = wf.get("workflowProgress") or []
-    agent_count = int(wf.get("agentCount") or len(progress) or 0)
+    int(wf.get("agentCount") or len(progress) or 0)
     models = [str(p.get("model", "")) for p in progress if isinstance(p, dict)]
     opus_agents = sum(1 for m in models if "opus" in m.lower())
 
