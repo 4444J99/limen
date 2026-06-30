@@ -1,13 +1,13 @@
 # Product Ledger
 
-Generated: `2026-06-30T13:31:46+00:00`
+Generated: `2026-06-30T14:21:03+00:00`
 Products: `1534`
 Blocked local: `78`
 Global status: `active`
 
 ## Counts
 
-- states: `build` 140, `omega` 517, `ship` 12, `verify` 865
+- states: `blocked_local` 78, `build` 140, `omega` 439, `ship` 12, `verify` 865
 - dispositions: `build` 116, `human-gated` 78, `publish-stage` 24, `retire` 439, `sell-ready` 12, `verify` 865
 - source_kinds: `contrib` 24, `repo` 12, `task` 1498
 - outward_paths: `contrib-mirror` 24, `not_applicable` 1130, `publish-stage` 3, `revenue-path` 368, `seo-proof` 9
@@ -45,5 +45,6 @@ Global status: `active`
 ## Contract
 
 - A blocked product is local state, not a global stop condition.
+- Product-local blockers use `blocked_local` state and stay out of next-unblocked rows.
 - Raw prompt bodies stay private; this tracked summary contains only product receipts and counts.
 - Every active product should eventually carry a build, proof, inward-money, or contribution mirror path.

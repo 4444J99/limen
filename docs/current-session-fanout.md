@@ -13,7 +13,7 @@ This receipt is public-safe. It uses hashes, file paths, counts, and derived rou
 - Full session read: `1452` JSONL records, `18` turn contexts, `23` user-role response items, `301` tool calls, `45` patch applications.
 - Source fanout summary captured in the session reported `33` user messages, `64173` prompt bytes, `12` planner themes, and executor packets for active non-Codex lanes.
 - The product-ledger summary captured in the session reported `11505` product records, `111` blocked-local records, and global status `active`.
-- Current checkout state: this branch starts from `origin/main` and does not contain the source-session generated `scripts/current-session-fanout.py`, `scripts/product-ledger.py`, `scripts/repo-surface-ledger.py`, `scripts/substrate-ledger.py`, or `cli/tests/test_substrate_repo_product_fanout.py`; this packet therefore emits the owner plan and predicates rather than claiming those scripts already exist here.
+- Executor checkout state: this branch contains `scripts/current-session-fanout.py`, `scripts/product-ledger.py`, `scripts/repo-surface-ledger.py`, `scripts/substrate-ledger.py`, and `cli/tests/test_substrate_repo_product_fanout.py`; this executor packet therefore runs the product-ledger predicate rather than leaving the alpha-omega ledger as planner-only work.
 - Local boot-state gap: `logs/organ-health.json` and `logs/usage.json` are absent in this worktree. That is a local planning blocker for runtime lane health, not a global product-selection blocker.
 
 Source plan hash prefixes supplied by the dispatcher:
@@ -103,8 +103,13 @@ These are recorded local blockers for this packet. They do not stop global produ
 | Blocker | Owner | Evidence | Next Action |
 |---|---|---|---|
 | Missing runtime health receipts | `organvm/limen` | `logs/organ-health.json` and `logs/usage.json` are absent in this checkout. | Recreate via the owning health/usage scripts when executor lane health is needed; meanwhile plan from source session and active repo state. |
-| Missing generated fanout/product scripts in this clean branch | `organvm/limen` | Source session patched `scripts/current-session-fanout.py`, `scripts/product-ledger.py`, `scripts/repo-surface-ledger.py`, `scripts/substrate-ledger.py`, and `cli/tests/test_substrate_repo_product_fanout.py`; they are absent here. | Implement or restore these in the executor branch before running the emitted predicates. |
 | Domus shell/preflight work lives outside this worktree | `organvm/domus-genoma` | Source session edited absolute Domus/live shell paths and noted unrelated dirty owner-worktree state. | Delegate to `PLAN-09-domus-preflight-noise`; do not block product ledger selection. |
+
+## Executor Receipt
+
+- Packet `EXEC-opencode-ff680cea` completed bounded local product-ledger work in this branch.
+- Predicate run: `python3 scripts/product-ledger.py --refresh --private --redacted-summary`.
+- Receipt: `docs/product-ledger.md` reports global status `active` with `blocked_local` rows recorded separately from next-unblocked products.
 
 ## Close Predicate For This Packet
 

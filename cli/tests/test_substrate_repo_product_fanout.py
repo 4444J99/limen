@@ -161,9 +161,11 @@ def test_product_ledger_keeps_global_work_active_when_one_product_blocks(tmp_pat
 
     mod = _load("product-ledger.py", "product_ledger_under_test")
     snap = mod.build_snapshot()
+    blocked_rows = [row for row in snap["products"] if row["blocked"]]
 
     assert snap["blocked_count"] == 1
     assert snap["global_status"] == "active"
+    assert {row["state"] for row in blocked_rows} == {"blocked_local"}
     assert any(row["outward_path"] in {"revenue-path", "seo-proof"} for row in snap["next_unblocked"])
     assert any(row["source_kind"] == "salvage-yard" for row in snap["products"])
     assert all(not row["blocked"] for row in snap["next_unblocked"])

@@ -33,7 +33,7 @@ VALUE_REPOS_PATH = Path(os.environ.get("LIMEN_VALUE_REPOS", ROOT / "value-repos.
 POSITIONING_SEEDS_PATH = Path(os.environ.get("LIMEN_POSITIONING_SEEDS", ROOT / "positioning-seeds.json"))
 CONTRIB_LEDGER_PATH = Path(os.environ.get("LIMEN_CONTRIB_LEDGER", HOME / "Workspace" / "organvm" / "contrib" / "LEDGER.yaml"))
 
-PRODUCT_STATES = ("idea", "alpha", "build", "verify", "ship", "omega")
+PRODUCT_STATES = ("idea", "alpha", "build", "verify", "ship", "omega", "blocked_local")
 ACTIVE_STATES = {"idea", "alpha", "build", "verify", "ship"}
 
 
@@ -118,9 +118,9 @@ def task_state(status: str) -> tuple[str, str, bool, str]:
     if status == "archived":
         return "omega", "retire", False, ""
     if status == "failed_blocked":
-        return "omega", "human-gated", True, "external blocker"
+        return "blocked_local", "blocked_local", True, "external blocker"
     if status == "needs_human":
-        return "omega", "human-gated", True, "human decision required"
+        return "blocked_local", "human-gated", True, "human decision required"
     return "idea", "build", False, ""
 
 
@@ -245,7 +245,7 @@ def records_from_repo_surface(path: Path = REPO_SURFACE_INDEX) -> list[dict[str,
 
 def salvage_state(disposition: str) -> tuple[str, bool, str, int]:
     if disposition == "blocked-human":
-        return "omega", True, "human-gated consolidation blocker", 90
+        return "blocked_local", True, "human-gated consolidation blocker", 90
     if disposition == "retire":
         return "omega", False, "", 95
     if disposition == "publish-stage":
@@ -301,13 +301,19 @@ def records_from_contrib(path: Path = CONTRIB_LEDGER_PATH) -> list[dict[str, Any
         key = str(item.get("id") or item.get("url") or item.get("repo") or idx)
         status = str(item.get("status") or item.get("state") or "open").lower()
         blocked = status in {"blocked", "needs_human"}
+        if blocked:
+            state = "blocked_local"
+        elif status in {"merged", "closed"}:
+            state = "ship"
+        else:
+            state = "build"
         rows.append(
             record(
                 kind="contrib",
                 source_key=key,
                 title=str(item.get("title") or item.get("repo") or key),
-                state="ship" if status in {"merged", "closed"} else "build",
-                disposition="publish-stage",
+                state=state,
+                disposition="human-gated" if blocked else "publish-stage",
                 outward_path="contrib-mirror",
                 owner=str(item.get("repo") or item.get("owner") or "contrib"),
                 blocked=blocked,
@@ -395,6 +401,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "## Contract",
         "",
         "- A blocked product is local state, not a global stop condition.",
+        "- Product-local blockers use `blocked_local` state and stay out of next-unblocked rows.",
         "- Raw prompt bodies stay private; this tracked summary contains only product receipts and counts.",
         "- Every active product should eventually carry a build, proof, inward-money, or contribution mirror path.",
     ]
