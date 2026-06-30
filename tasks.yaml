@@ -34445,11 +34445,12 @@ tasks:
   target_agent: github_actions
   priority: high
   budget_cost: 1
-  status: open
+  status: failed
   labels:
   - ci-green
   - generated
   - build-out
+  - tried:github_actions
   urls: []
   context: Inspect the latest FAILING checks on a-organvm/my-knowledge-base's default
     branch, fix the root cause (lint / types / failing test / config), and confirm
@@ -34458,7 +34459,7 @@ tasks:
     the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-20T17:06:38.365727Z'
+  updated: '2026-06-30T20:38:30.248819Z'
   dispatch_log:
   - timestamp: '2026-06-20T09:45:24.209649Z'
     agent: limen
@@ -34474,6 +34475,15 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 3h
+  - timestamp: '2026-06-30T20:35:36.157877Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T20:38:30.248819Z'
+    agent: github_actions
+    session_id: cli
+    status: failed
 - id: GEN-a-organvm-organvm-corpvs-testamentvm-ci-green-0620
   title: Make a-organvm/organvm-corpvs-testamentvm CI green
   repo: organvm/organvm-corpvs-testamentvm
@@ -35530,11 +35540,12 @@ tasks:
   target_agent: github_actions
   priority: high
   budget_cost: 1
-  status: open
+  status: failed
   labels:
   - ci-green
   - generated
   - build-out
+  - tried:github_actions
   urls: []
   context: Inspect the latest FAILING checks on a-organvm/the-actual-news's default
     branch, fix the root cause (lint / types / failing test / config), and confirm
@@ -35543,13 +35554,22 @@ tasks:
     the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-20T11:19:28.640967Z'
+  updated: '2026-06-30T20:38:30.248819Z'
   dispatch_log:
   - timestamp: '2026-06-20T11:19:28.640967Z'
     agent: limen
     session_id: cli
     status: open
     output: Released stale claim after 3h
+  - timestamp: '2026-06-30T20:35:36.157877Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T20:38:30.248819Z'
+    agent: github_actions
+    session_id: cli
+    status: failed
 - id: GEN-a-organvm-a-i-council--coliseum-ci-green-0620
   title: Make a-organvm/a-i-council--coliseum CI green
   repo: organvm/a-i-council--coliseum
@@ -35584,11 +35604,12 @@ tasks:
   target_agent: github_actions
   priority: high
   budget_cost: 1
-  status: open
+  status: failed
   labels:
   - ci-green
   - generated
   - build-out
+  - tried:github_actions
   urls: []
   context: Inspect the latest FAILING checks on a-organvm/organon-noumenon--ontogenetic-morphe's
     default branch, fix the root cause (lint / types / failing test / config), and
@@ -35597,7 +35618,17 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-06-30T20:38:30.248819Z'
+  dispatch_log:
+  - timestamp: '2026-06-30T20:35:36.157877Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T20:38:30.248819Z'
+    agent: github_actions
+    session_id: cli
+    status: failed
 - id: GEN-a-organvm-example-theatre-dialogue-ci-green-0620
   title: Make a-organvm/example-theatre-dialogue CI green
   repo: organvm/example-theatre-dialogue
