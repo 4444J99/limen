@@ -15,9 +15,9 @@ portal:
       claude: 100
     track:
       date: '2026-06-30'
-      spent: 65
+      spent: 72
       per_agent:
-        jules: 50
+        jules: 57
         gemini: 0
         codex: 4
         opencode: 3
@@ -60694,7 +60694,7 @@ tasks:
     the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-30T16:01:43.038008Z'
+  updated: '2026-06-30T16:03:59.219679Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:10:51.965981Z'
     agent: codex
@@ -60747,6 +60747,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:03:59.219679Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GEN-organvm-the-invisible-ledger-ci-green-0628
   title: Make organvm/the-invisible-ledger CI green
   repo: organvm/the-invisible-ledger
@@ -62910,7 +62914,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue-launch-post
   - revenue
@@ -62926,7 +62930,7 @@ tasks:
     \ spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-30T15:37:00.457250Z'
+  updated: '2026-06-30T16:26:03.561086Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:10:51.965981Z'
     agent: gemini
@@ -62955,6 +62959,15 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-30T16:07:01.496110Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:26:03.561086Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GEN-organvm-limen-test-coverage-0628
   title: Raise test coverage in organvm/limen
   repo: organvm/limen
@@ -64331,7 +64344,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue-readiness
   - revenue
@@ -64347,7 +64360,7 @@ tasks:
     \ rank 2, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-29'
-  updated: '2026-06-30T15:37:00.457250Z'
+  updated: '2026-06-30T16:26:03.561086Z'
   dispatch_log:
   - timestamp: '2026-06-29T05:54:07.312618Z'
     agent: gemini
@@ -64372,6 +64385,20 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-30T16:07:01.496110Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:16:39.605408Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: orphaned (session 14052660912054932435 gone) \u2192 reopened"
+  - timestamp: '2026-06-30T16:26:03.561086Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: GEN-organvm-public-record-data-scrapper-security-0629
   title: Security hardening pass on organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
@@ -64575,10 +64602,10 @@ tasks:
   title: Raise test coverage in organvm/portfolio
   repo: organvm/portfolio
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - test-coverage
   - generated
@@ -64591,7 +64618,7 @@ tasks:
     keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:00:53.229534Z'
+  updated: '2026-06-30T16:16:39.605408Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:49:41.321950Z'
     agent: codex
@@ -64612,6 +64639,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-30T16:16:39.605408Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GEN-organvm-limen-test-coverage-0630
   title: Raise test coverage in organvm/limen
   repo: organvm/limen
@@ -64619,7 +64651,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - test-coverage
   - generated
@@ -64632,7 +64664,7 @@ tasks:
     keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:01:20.546243Z'
+  updated: '2026-06-30T16:16:39.605408Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:49:41.321950Z'
     agent: codex
@@ -64653,6 +64685,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-30T16:16:39.605408Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GEN-organvm-mirror-mirror-ci-green-0630
   title: Make organvm/mirror-mirror CI green
   repo: organvm/mirror-mirror
@@ -64660,7 +64697,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - ci-green
   - generated
@@ -64673,7 +64710,7 @@ tasks:
     endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:00:53.229534Z'
+  updated: '2026-06-30T16:22:42.129684Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:47:16.260739Z'
     agent: codex
@@ -64684,6 +64721,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/mirror-mirror/pull/93
     status: dispatched
+  - timestamp: '2026-06-30T16:22:42.129684Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GEN-organvm-portfolio-ci-green-0630
   title: Make organvm/portfolio CI green
   repo: organvm/portfolio
@@ -64691,7 +64733,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - ci-green
   - generated
@@ -64704,7 +64746,7 @@ tasks:
     endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:00:53.229534Z'
+  updated: '2026-06-30T16:22:42.129684Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:47:16.260739Z'
     agent: codex
@@ -64715,6 +64757,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/portfolio/pull/165
     status: dispatched
+  - timestamp: '2026-06-30T16:22:42.129684Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR merged \u2192 done"
 - id: GEN-organvm-universal-mail--automation-ci-green-0630
   title: Make organvm/universal-mail--automation CI green
   repo: organvm/universal-mail--automation
@@ -64722,7 +64769,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - ci-green
   - generated
@@ -64735,7 +64782,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:00:53.229534Z'
+  updated: '2026-06-30T16:22:42.129684Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:47:16.260739Z'
     agent: codex
@@ -64746,14 +64793,19 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/universal-mail--automation/pull/132
     status: dispatched
+  - timestamp: '2026-06-30T16:22:42.129684Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GEN-organvm-the-invisible-ledger-ci-green-0630
   title: Make organvm/the-invisible-ledger CI green
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: any
+  target_agent: agy
   priority: high
   budget_cost: 1
-  status: failed
+  status: dispatched
   labels:
   - ci-green
   - generated
@@ -64767,7 +64819,7 @@ tasks:
     the stream endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T15:49:39.449826Z'
+  updated: '2026-06-30T16:26:16.254766Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:47:16.260739Z'
     agent: opencode
@@ -64779,6 +64831,16 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-30T16:16:39.605408Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-30T16:26:16.254766Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-organvm-limen-ci-green-0630
   title: Make organvm/limen CI green
   repo: organvm/limen
@@ -64817,7 +64879,7 @@ tasks:
   title: Real usage docs for organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: gemini
+  target_agent: agy
   priority: low
   budget_cost: 1
   status: open
@@ -64833,7 +64895,7 @@ tasks:
     \ 2026-06-30 to keep the stream endless]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:00:53.229534Z'
+  updated: '2026-06-30T16:26:03.561086Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:52:21.550880Z'
     agent: claude
@@ -64844,18 +64906,28 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
+  - timestamp: '2026-06-30T16:07:01.496110Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:26:03.561086Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
 - id: GEN-organvm-mirror-mirror-docs-0630
   title: Real usage docs for organvm/mirror-mirror
   repo: organvm/mirror-mirror
   type: code
-  target_agent: opencode
+  target_agent: gemini
   priority: low
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - docs
   - generated
   - build-out
+  - noop
   urls: []
   context: "Derive an accurate Usage section in organvm/mirror-mirror's README from\
     \ the ACTUAL entrypoints/exports (install, run, key commands + flags). No invented\
@@ -64863,7 +64935,7 @@ tasks:
     \ 2026-06-30 to keep the stream endless]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:01:43.038008Z'
+  updated: '2026-06-30T16:16:39.605408Z'
   dispatch_log:
   - timestamp: '2026-06-30T16:01:22.835296Z'
     agent: codex
@@ -64879,6 +64951,16 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:03:59.219679Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-30T16:16:39.605408Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GEN-organvm-a-i-chat--exporter-docs-0630
   title: Real usage docs for organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
@@ -64886,7 +64968,7 @@ tasks:
   target_agent: opencode
   priority: low
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - docs
   - generated
@@ -64898,7 +64980,7 @@ tasks:
     \ 2026-06-30 to keep the stream endless]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:01:36.749678Z'
+  updated: '2026-06-30T16:07:01.496110Z'
   dispatch_log:
   - timestamp: '2026-06-30T16:01:22.835296Z'
     agent: codex
@@ -64909,19 +64991,25 @@ tasks:
     agent: codex
     session_id: cli
     status: ratelimited->opencode
+  - timestamp: '2026-06-30T16:07:01.496110Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-organvm-limen-docs-0630
   title: Real usage docs for organvm/limen
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: low
   budget_cost: 1
-  status: open
+  status: failed
   labels:
   - docs
   - generated
   - build-out
   - tried:codex
+  - noop
   urls: []
   context: "Derive an accurate Usage section in organvm/limen's README from the ACTUAL\
     \ entrypoints/exports (install, run, key commands + flags). No invented features,\
@@ -64929,7 +65017,7 @@ tasks:
     \ to keep the stream endless]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:01:36.749678Z'
+  updated: '2026-06-30T16:26:03.561086Z'
   dispatch_log:
   - timestamp: '2026-06-30T16:01:22.835296Z'
     agent: codex
@@ -64940,14 +65028,24 @@ tasks:
     agent: codex
     session_id: cli
     status: failed->opencode
+  - timestamp: '2026-06-30T16:07:01.496110Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:26:03.561086Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: GEN-organvm-session-meta-security-0630
   title: Security hardening pass on organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: any
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: dispatched
   labels:
   - security
   - generated
@@ -64960,7 +65058,7 @@ tasks:
     2026-06-30 to keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T15:49:39.449826Z'
+  updated: '2026-06-30T16:26:16.254766Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:47:16.260739Z'
     agent: opencode
@@ -64972,6 +65070,16 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-30T16:16:39.605408Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-30T16:26:16.254766Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-organvm-mirror-mirror-security-0630
   title: Security hardening pass on organvm/mirror-mirror
   repo: organvm/mirror-mirror
@@ -64979,7 +65087,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - security
   - generated
@@ -64991,7 +65099,7 @@ tasks:
     2026-06-30 to keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T15:52:13.295171Z'
+  updated: '2026-06-30T16:22:42.129684Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:47:16.260739Z'
     agent: agy
@@ -65002,14 +65110,19 @@ tasks:
     agent: agy
     session_id: https://github.com/organvm/mirror-mirror/pull/92
     status: dispatched
+  - timestamp: '2026-06-30T16:22:42.129684Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GEN-organvm-domus-genoma-security-0630
   title: Security hardening pass on organvm/domus-genoma
   repo: organvm/domus-genoma
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 1
-  status: failed
+  status: dispatched
   labels:
   - security
   - generated
@@ -65022,7 +65135,7 @@ tasks:
     2026-06-30 to keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T15:52:13.295171Z'
+  updated: '2026-06-30T16:26:16.254766Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:47:16.260739Z'
     agent: agy
@@ -65034,6 +65147,16 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-30T16:16:39.605408Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-30T16:26:16.254766Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-organvm-public-record-data-scrapper-security-0630
   title: Security hardening pass on organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
@@ -65041,7 +65164,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - security
   - generated
@@ -65053,7 +65176,7 @@ tasks:
     green. [auto-generated 2026-06-30 to keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T15:52:13.295171Z'
+  updated: '2026-06-30T16:22:42.129684Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:47:16.260739Z'
     agent: agy
@@ -65064,14 +65187,19 @@ tasks:
     agent: agy
     session_id: https://github.com/organvm/public-record-data-scrapper/pull/338
     status: dispatched
+  - timestamp: '2026-06-30T16:22:42.129684Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GEN-organvm-session-meta-simplify-0630
   title: Reduce complexity in organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - simplify
   - generated
@@ -65083,7 +65211,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-30 to keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:01:36.749678Z'
+  updated: '2026-06-30T16:16:39.605408Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:49:41.321950Z'
     agent: codex
@@ -65104,26 +65232,32 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-30T16:16:39.605408Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GEN-organvm-mirror-mirror-simplify-0630
   title: Reduce complexity in organvm/mirror-mirror
   repo: organvm/mirror-mirror
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - simplify
   - generated
   - build-out
   - tried:claude
+  - tried:gemini
   urls: []
   context: Identify the most complex or most-duplicated module in organvm/mirror-mirror
     and refactor it for clarity, with tests proving behavior is unchanged. Net lines
     should not grow without cause. [auto-generated 2026-06-30 to keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:01:43.038008Z'
+  updated: '2026-06-30T16:26:03.561086Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:49:41.321950Z'
     agent: claude
@@ -65139,6 +65273,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:26:03.561086Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: GEN-organvm-domus-genoma-simplify-0630
   title: Reduce complexity in organvm/domus-genoma
   repo: organvm/domus-genoma
@@ -65146,18 +65284,19 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - simplify
   - generated
   - build-out
+  - noop
   urls: []
   context: Identify the most complex or most-duplicated module in organvm/domus-genoma
     and refactor it for clarity, with tests proving behavior is unchanged. Net lines
     should not grow without cause. [auto-generated 2026-06-30 to keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:01:43.038008Z'
+  updated: '2026-06-30T16:16:39.605408Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:52:21.550880Z'
     agent: codex
@@ -65173,25 +65312,36 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:03:59.219679Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-30T16:16:39.605408Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GEN-organvm-session-meta-typing-0630
   title: Tighten types in organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - typing
   - generated
   - build-out
+  - noop
   urls: []
   context: Eliminate the worst untyped hotspots in organvm/session-meta's most-imported
     module (remove `any` / add type hints / fix loose signatures). Keep the build
     and tests green. [auto-generated 2026-06-30 to keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:01:43.038008Z'
+  updated: '2026-06-30T16:16:39.605408Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:52:21.550880Z'
     agent: codex
@@ -65207,6 +65357,16 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:03:59.219679Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-30T16:16:39.605408Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GEN-organvm-universal-mail--automation-typing-0630
   title: Tighten types in organvm/universal-mail--automation
   repo: organvm/universal-mail--automation
@@ -65214,7 +65374,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - typing
   - generated
@@ -65225,7 +65385,7 @@ tasks:
     the build and tests green. [auto-generated 2026-06-30 to keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:00:53.229534Z'
+  updated: '2026-06-30T16:22:42.129684Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:52:21.550880Z'
     agent: agy
@@ -65236,14 +65396,19 @@ tasks:
     agent: agy
     session_id: https://github.com/organvm/universal-mail--automation/pull/131
     status: dispatched
+  - timestamp: '2026-06-30T16:22:42.129684Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GEN-organvm-limen-typing-0630
   title: Tighten types in organvm/limen
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: gemini
   priority: medium
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - typing
   - generated
@@ -65255,7 +65420,7 @@ tasks:
     green. [auto-generated 2026-06-30 to keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:00:53.229534Z'
+  updated: '2026-06-30T16:16:39.605408Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:52:21.550880Z'
     agent: agy
@@ -65267,21 +65432,25 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-30T16:16:39.605408Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: REV-organvm-mirror-mirror-revenue-ship-0630
   title: Drive Mirror Mirror to deploy-ready
   repo: organvm/mirror-mirror
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: high
   budget_cost: 2
-  status: failed
+  status: dispatched
   labels:
   - revenue-ship
   - revenue
   - product
   - ship-order
   - generated
-  - tried:claude
   - noop
   urls: []
   context: "In organvm/mirror-mirror, clear the concrete blockers between the current\
@@ -65291,7 +65460,7 @@ tasks:
     \ stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:01:36.749678Z'
+  updated: '2026-06-30T16:26:16.254766Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:47:16.260739Z'
     agent: claude
@@ -65321,21 +65490,30 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-30T16:16:39.605408Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-30T16:26:16.254766Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: REV-organvm-universal-mail--automation-revenue-ship-0630
   title: Drive Universal Mail Automation to deploy-ready
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: opencode
+  target_agent: gemini
   priority: high
   budget_cost: 2
-  status: failed
+  status: dispatched
   labels:
   - revenue-ship
   - revenue
   - product
   - ship-order
   - generated
-  - tried:claude
   - noop
   urls: []
   context: "In organvm/universal-mail--automation, clear the concrete blockers between\
@@ -65345,7 +65523,7 @@ tasks:
     \ rank 3, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:00:53.229534Z'
+  updated: '2026-06-30T16:26:16.254766Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:47:16.260739Z'
     agent: claude
@@ -65366,21 +65544,30 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-30T16:16:39.605408Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-30T16:26:16.254766Z'
+    agent: gemini
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: REV-organvm-the-invisible-ledger-revenue-ship-0630
   title: Drive The Invisible Ledger to deploy-ready
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 2
-  status: failed
+  status: dispatched
   labels:
   - revenue-ship
   - revenue
   - product
   - ship-order
   - generated
-  - tried:claude
   - noop
   urls: []
   context: "In organvm/the-invisible-ledger, clear the concrete blockers between the\
@@ -65390,7 +65577,7 @@ tasks:
     \ rank 4, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:00:53.229534Z'
+  updated: '2026-06-30T16:26:16.254766Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:47:16.260739Z'
     agent: claude
@@ -65411,6 +65598,16 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-30T16:16:39.605408Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-30T16:26:16.254766Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: REV-organvm-mirror-mirror-revenue-readiness-0630
   title: First-paying-customer readiness pass on Mirror Mirror
   repo: organvm/mirror-mirror
@@ -65418,7 +65615,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 2
-  status: failed
+  status: dispatched
   labels:
   - revenue-readiness
   - revenue
@@ -65434,7 +65631,7 @@ tasks:
     \ tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:00:53.229534Z'
+  updated: '2026-06-30T16:26:16.254766Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:49:41.321950Z'
     agent: codex
@@ -65455,6 +65652,16 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-30T16:16:39.605408Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-30T16:26:16.254766Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: ORG-legal-organ-kernel-0630
   title: Map the VLTIMA 5-primitive kernel to the legal organ
   repo: organvm/limen
@@ -65488,16 +65695,6 @@ tasks:
   created: '2026-06-30'
   updated: '2026-06-30T19:36:00Z'
   dispatch_log:
-  - timestamp: '2026-06-30T19:36:00Z'
-    agent: opencode
-    session_id: current
-    status: done
-    output: 'PR #488 merged. Created organs/legal/KERNEL.md with 5-primitive kernel
-      map (Member=client/party, Mandate=claim/matter, Standing=case posture, Standard=statute/precedent/rubric,
-      Governance=firm process+ethics wall), institutional prosthesis framing, MACRO/MICRO
-      fractal deployment, Cochran flagship naming, and hard UPL guardrails.'
-  updated: '2026-06-30T16:01:22.835296Z'
-  dispatch_log:
   - timestamp: '2026-06-30T16:00:55.195999Z'
     agent: codex
     session_id: async-reserve
@@ -65512,6 +65709,14 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T19:36:00Z'
+    agent: opencode
+    session_id: current
+    status: done
+    output: 'PR #488 merged. Created organs/legal/KERNEL.md with 5-primitive kernel
+      map (Member=client/party, Mandate=claim/matter, Standing=case posture, Standard=statute/precedent/rubric,
+      Governance=firm process+ethics wall), institutional prosthesis framing, MACRO/MICRO
+      fractal deployment, Cochran flagship naming, and hard UPL guardrails.'
 - id: ORG-financial-organ-deepen-0630
   title: Deepen the financial organ toward a usable institution
   repo: organvm/limen
@@ -65538,7 +65743,7 @@ tasks:
     \ weight (VLTIMA).]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:01:22.835296Z'
+  updated: '2026-06-30T16:26:16.254766Z'
   dispatch_log:
   - timestamp: '2026-06-30T16:00:55.195999Z'
     agent: codex
@@ -65554,6 +65759,16 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:25:51.073032Z'
+    agent: opencode
+    session_id: async-reap-stale
+    status: open
+    output: 'dispatch-async: stale worker marker older than 1200s reaped; task reopened'
+  - timestamp: '2026-06-30T16:26:16.254766Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: ORG-education-organ-face-0630
   title: Make the education organ's macro + micro face excellent
   repo: organvm/limen
@@ -65561,7 +65776,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - organ-face
   - pillar:education
@@ -65582,7 +65797,7 @@ tasks:
     \ (VLTIMA).]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:01:36.749678Z'
+  updated: '2026-06-30T16:26:03.561086Z'
   dispatch_log:
   - timestamp: '2026-06-30T16:00:55.195999Z'
     agent: claude
@@ -65602,6 +65817,15 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->jules
+  - timestamp: '2026-06-30T16:07:01.496110Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:26:03.561086Z'
+    agent: jules
+    session_id: cli
+    status: dispatched
 - id: ORG-media-organ-deepen-0630
   title: Deepen the media organ toward a usable institution
   repo: organvm/limen
@@ -65654,10 +65878,10 @@ tasks:
   title: Deepen the governance organ toward a usable institution
   repo: organvm/limen
   type: content
-  target_agent: gemini
+  target_agent: jules
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: open
   labels:
   - organ-deepen
   - pillar:governance
@@ -65666,6 +65890,7 @@ tasks:
   - vltima
   - generated
   - tried:claude
+  - tried:gemini
   urls: []
   context: "In organvm/limen organs/governance/ (and reference its product repo where\
     \ relevant), close the single highest-leverage gap between the current scaffold\
@@ -65677,7 +65902,7 @@ tasks:
     \ (VLTIMA).]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:01:43.038008Z'
+  updated: '2026-06-30T16:06:51.345899Z'
   dispatch_log:
   - timestamp: '2026-06-30T16:00:55.195999Z'
     agent: claude
@@ -65693,14 +65918,18 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:06:51.345899Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: ORG-consulting-organ-face-0630
   title: Make the consulting organ's macro + micro face excellent
   repo: organvm/limen
   type: content
-  target_agent: gemini
+  target_agent: jules
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: open
   labels:
   - organ-face
   - pillar:consulting
@@ -65709,6 +65938,7 @@ tasks:
   - vltima
   - generated
   - tried:claude
+  - tried:gemini
   urls: []
   context: "In organvm/limen organs/consulting/, author the polished MACRO face (ORGANVM-as-a-service:\
     \ the institutional toolkit offered to clients \u2014 the platform anyone can\
@@ -65719,7 +65949,7 @@ tasks:
     \ convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:01:43.038008Z'
+  updated: '2026-06-30T16:06:51.345899Z'
   dispatch_log:
   - timestamp: '2026-06-30T16:00:55.195999Z'
     agent: claude
@@ -65735,6 +65965,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:06:51.345899Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
 - id: ORG-artist-organ-face-0630
   title: Make the artist organ's macro + micro face excellent
   repo: organvm/limen
@@ -65760,10 +65994,20 @@ tasks:
     \ maturing \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:00:55.195999Z'
+  updated: '2026-06-30T16:26:16.254766Z'
   dispatch_log:
   - timestamp: '2026-06-30T16:00:55.195999Z'
     agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:25:51.073032Z'
+    agent: opencode
+    session_id: async-reap-stale
+    status: open
+    output: 'dispatch-async: stale worker marker older than 1200s reaped; task reopened'
+  - timestamp: '2026-06-30T16:26:16.254766Z'
+    agent: codex
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
@@ -65771,7 +66015,7 @@ tasks:
   title: Map the VLTIMA 5-primitive kernel to the social organ
   repo: organvm/limen
   type: content
-  target_agent: opencode
+  target_agent: agy
   priority: critical
   budget_cost: 2
   status: dispatched
@@ -65782,6 +66026,7 @@ tasks:
   - institution
   - vltima
   - generated
+  - noop
   urls: []
   context: "In organvm/limen, author organs/social/KERNEL.md: map the domain-neutral\
     \ kernel (Member - Mandate - Standing - Standard - Governance) onto the social\
@@ -65795,7 +66040,7 @@ tasks:
     \ into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:01:22.835296Z'
+  updated: '2026-06-30T16:26:16.254766Z'
   dispatch_log:
   - timestamp: '2026-06-30T16:00:55.195999Z'
     agent: codex
@@ -65811,14 +66056,29 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:03:59.219679Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-30T16:16:39.605408Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-30T16:26:16.254766Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: ORG-health-organ-kernel-0630
   title: Map the VLTIMA 5-primitive kernel to the health organ
   repo: organvm/limen
   type: content
-  target_agent: opencode
+  target_agent: gemini
   priority: critical
   budget_cost: 2
-  status: in_progress
+  status: dispatched
   labels:
   - organ-kernel
   - pillar:health
@@ -65826,6 +66086,7 @@ tasks:
   - institution
   - vltima
   - generated
+  - noop
   urls: []
   context: "In organvm/limen, author organs/health/KERNEL.md: map the domain-neutral\
     \ kernel (Member - Mandate - Standing - Standard - Governance) onto the health\
@@ -65840,7 +66101,7 @@ tasks:
     \ into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T16:10:00Z'
+  updated: '2026-06-30T16:26:16.254766Z'
   dispatch_log:
   - timestamp: '2026-06-30T16:00:55.195999Z'
     agent: codex
@@ -65860,4 +66121,19 @@ tasks:
     agent: opencode
     session_id: current
     status: in_progress
-    output: 'Rewriting KERNEL.md to match mature organ convention'
+    output: Rewriting KERNEL.md to match mature organ convention
+  - timestamp: '2026-06-30T16:03:59.219679Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-30T16:16:39.605408Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-30T16:26:16.254766Z'
+    agent: gemini
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
