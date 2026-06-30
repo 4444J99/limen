@@ -33,6 +33,20 @@ RAW_PROMPT_SENTINELS = (
 )
 
 THEME_KEYWORDS = {
+    "private_sauce_boundary": (
+        "private",
+        "secret",
+        "sauce",
+        "hide",
+        "redact",
+        "redaction",
+        "raw prompt",
+        "prompt body",
+        "plan body",
+        ".limen-private",
+        "public-safe",
+        "outbound",
+    ),
     "quota_reset_guard": (
         "quota",
         "reset",
@@ -80,6 +94,11 @@ THEME_KEYWORDS = {
 }
 
 KNOWN_SCOPE_FILES = (
+    "scripts/session-corpus-ledger.py",
+    "scripts/prompt-lifecycle-ledger.py",
+    "scripts/prompt-packet-ledger.py",
+    "scripts/prompt-batch-review-ledger.py",
+    "scripts/prompt-priority-map.py",
     "scripts/usage-telemetry.py",
     "cli/src/limen/capacity.py",
     "cli/src/limen/dispatch.py",
@@ -90,6 +109,10 @@ KNOWN_SCOPE_FILES = (
     "scripts/current-session-fanout-plan.py",
     "scripts/discover-value.py",
     "scripts/score-dispatch.py",
+    "docs/session-corpus-ledger.md",
+    "docs/prompt-lifecycle-ledger.md",
+    "docs/prompt-packet-ledger.md",
+    "docs/current-session-fanout.md",
     "docs/NEEDS-HUMAN-DIGEST.md",
 )
 
@@ -346,6 +369,166 @@ def scope_files(session_summary: dict[str, Any], wanted: tuple[str, ...]) -> lis
     return scoped
 
 
+def local_blocker_facts() -> list[dict[str, str]]:
+    blockers: list[dict[str, str]] = []
+    if not (ROOT / "logs" / "organ-health.json").exists():
+        blockers.append(
+            {
+                "item": "logs/organ-health.json missing",
+                "impact": "live organ health must be regenerated before executor lane health is claimed",
+            }
+        )
+    if not (ROOT / "logs" / "usage.json").exists():
+        blockers.append(
+            {
+                "item": "logs/usage.json missing",
+                "impact": "live usage runway must be regenerated before paid-lane availability is claimed",
+            }
+        )
+    if (ROOT / "docs" / "NEEDS-HUMAN-DIGEST.md").exists():
+        blockers.append(
+            {
+                "item": "docs/NEEDS-HUMAN-DIGEST.md contains human-gated actions",
+                "impact": "outbound/deploy/credential gates stay staged while local redacted packets continue",
+            }
+        )
+    return blockers
+
+
+def private_sauce_owner_packets(
+    packet_id: str,
+    theme: str,
+    session_summary: dict[str, Any],
+    source: dict[str, Any],
+) -> list[dict[str, Any]]:
+    private_scope = scope_files(
+        session_summary,
+        (
+            "scripts/current-session-fanout-plan.py",
+            "scripts/current-session-fanout.py",
+            "scripts/session-corpus-ledger.py",
+            "scripts/prompt-lifecycle-ledger.py",
+            "scripts/prompt-packet-ledger.py",
+            "docs/session-corpus-ledger.md",
+            "docs/prompt-lifecycle-ledger.md",
+            "docs/prompt-packet-ledger.md",
+            "docs/current-session-fanout.md",
+            "docs/NEEDS-HUMAN-DIGEST.md",
+        ),
+    )
+    evidence = evidence_turns(session_summary, "private_sauce_boundary")
+    return [
+        {
+            "id": f"{packet_id}-private-material-boundary",
+            "theme": theme,
+            "owner": "session corpus and prompt lifecycle ledgers",
+            "repo": "organvm/limen",
+            "target_agent": "codex",
+            "status": "ready-for-executor",
+            "dispatch_gate": "raw session material stays in the ignored private corpus; tracked receipts carry hashes, counts, and public-safe summaries",
+            "scope_files": private_scope,
+            "source": source,
+            "evidence_turns": evidence,
+            "executor_criteria": [
+                "Derive boundary decisions from the full source session and all detected plan sources, not only the latest turn.",
+                "Treat raw prompt, raw plan, transcript, attachment, credential, and private local path material as private corpus input.",
+                "Tracked docs may record packet ids, counts, owner repos, public-safe summaries, source plan hash prefixes, and prompt hash refs; they must not contain raw prompt or plan bodies.",
+                "If raw material must be materialized, write it only under `.limen-private/session-corpus/` or another ignored private owner path.",
+                "Private indexes may keep linkage hashes and source metadata, but executor receipts must remain usable without exposing the raw bodies.",
+            ],
+            "verification_predicates": [
+                "python3 scripts/current-session-fanout-plan.py --session <source-session> --packet-id <packet-id> --theme private-sauce-boundary --write",
+                "python3 scripts/session-corpus-ledger.py --write --all",
+                "python3 scripts/prompt-lifecycle-ledger.py --write --all --no-remote --no-cloud",
+                "python3 scripts/prompt-packet-ledger.py --write",
+                "PYTHONPATH=cli/src python3 -m pytest cli/tests/test_current_session_fanout_plan.py cli/tests/test_prompt_lifecycle_ledger.py cli/tests/test_prompt_packet_ledger.py -q",
+            ],
+        },
+        {
+            "id": f"{packet_id}-public-redaction-contract",
+            "theme": theme,
+            "owner": "public acceptance, task logs, commits, PRs, and outbound receipts",
+            "repo": "organvm/limen",
+            "target_agent": "codex",
+            "status": "ready-for-executor",
+            "dispatch_gate": "public or identity-bearing surfaces must be generated from redacted packet facts only",
+            "scope_files": private_scope,
+            "source": source,
+            "evidence_turns": evidence,
+            "executor_criteria": [
+                "Before a packet writes a tracked doc, task log, commit message, PR body, issue, email, or public surface, classify the field as public fact, hash provenance, private local linkage, credential, or raw body.",
+                "Public facts include packet id, owner, status, predicate, changed path, blocker class, and bounded summary.",
+                "Hash provenance includes supplied source plan hashes, prompt hash refs, session file digest, and derived counts; do not expand those into raw bodies.",
+                "Private local linkage and raw bodies stay in ignored private indexes and are summarized by counts or refs in tracked files.",
+                "Fail the packet if a tracked receipt contains raw prompt markers, copied transcript bodies, credentials, or private customer/contact data.",
+            ],
+            "verification_predicates": [
+                "PYTHONPATH=cli/src python3 -m pytest cli/tests/test_current_session_fanout_plan.py -q",
+                "python3 -m py_compile scripts/current-session-fanout-plan.py",
+                "python3 - <<'PY'\nfrom pathlib import Path\np = Path('docs/current-session-fanout/plan-10-b131e64c.md')\ntext = p.read_text(encoding='utf-8')\nrequired = ['PLAN-10-b131e64c', 'private-sauce-boundary', 'Privacy Contract', 'Owner Packets', 'Verification predicates']\nmissing = [item for item in required if item not in text]\nforbidden = ['RAW_' + 'PRIVATE', 'SECRET_' + 'PROMPT_TEXT', 'PRIVATE_' + 'PROMPT_BODY', '<' + 'proposed_plan>']\nleaks = [item for item in forbidden if item in text]\nif missing or leaks:\n    raise SystemExit({'missing': missing, 'leaks': leaks})\nprint('plan-10 private boundary receipt ok')\nPY",
+            ],
+        },
+        {
+            "id": f"{packet_id}-outward-stage-gate",
+            "theme": theme,
+            "owner": "contrib, positioning, and public proof surfaces",
+            "repo": "organvm/limen",
+            "target_agent": "codex",
+            "status": "human-gated-for-outbound",
+            "dispatch_gate": "stage outward proof locally; do not publish, send, deploy, comment, flip visibility, or mutate identity surfaces without a fresh human gate",
+            "scope_files": private_scope,
+            "source": source,
+            "evidence_turns": evidence,
+            "executor_criteria": [
+                "Public contribution, SEO, positioning, and proof surfaces consume redacted acceptance records, never raw prompt/session archaeology.",
+                "Outbound identity-bearing actions must be staged as commands or diffs with a receipt target and rollback path.",
+                "Contributor mirrors may expose public upstream facts and outcomes, but private notes, local paths, and source prompt bodies stay private.",
+                "If an executor reaches a deploy, email, GitHub comment, PR creation, issue creation, repo visibility, or credential step, record the blocker and continue with another unblocked product packet.",
+            ],
+            "verification_predicates": [
+                "python3 scripts/generate-positioning.py --discoverability",
+                "python3 scripts/generate-positioning.py --frontdoor",
+                "test -f docs/NEEDS-HUMAN-DIGEST.md",
+                "python3 scripts/score-dispatch.py --print --limit 1",
+            ],
+        },
+        {
+            "id": f"{packet_id}-blocked-local-continuity",
+            "theme": "global-product-selection",
+            "owner": "local substrate, his-hand registry, and product selector",
+            "repo": "organvm/limen",
+            "target_agent": "codex",
+            "status": "blocked-local-recorded",
+            "dispatch_gate": "record local/private/outbound blockers once, then keep global product selection active",
+            "scope_files": scope_files(
+                session_summary,
+                (
+                    "docs/NEEDS-HUMAN-DIGEST.md",
+                    "scripts/discover-value.py",
+                    "scripts/score-dispatch.py",
+                    "scripts/current-session-fanout-plan.py",
+                ),
+            ),
+            "source": source,
+            "evidence_turns": evidence_turns(session_summary, "blocked_local_work"),
+            "global_stop": False,
+            "depends_on_blocked_local_work": False,
+            "blocked_local_work": local_blocker_facts(),
+            "executor_criteria": [
+                "Missing local health receipts, credentials, mounted volumes, private corpus availability, or outbound approval block only the affected packet.",
+                "Record the cheapest durable human path in `docs/NEEDS-HUMAN-DIGEST.md` or the owning private receipt when a human action is irreducible.",
+                "Keep selecting unblocked product, positioning, contribution, and verification packets from the same current-session fanout.",
+                "Never use private-boundary uncertainty as a reason to stop global product selection when a redacted local packet can still move.",
+            ],
+            "verification_predicates": [
+                "test -f docs/NEEDS-HUMAN-DIGEST.md",
+                "LIMEN_DISCOVER_REPOS=organvm/limen python3 scripts/discover-value.py --tasks tasks.yaml --floor 1 --max-new 1",
+                "python3 scripts/score-dispatch.py --print --limit 1",
+            ],
+        },
+    ]
+
+
 def owner_packets(
     packet_id: str,
     theme: str,
@@ -362,6 +545,8 @@ def owner_packets(
         "turns_scanned": session_summary["turns_scanned"],
         "records_scanned": session_summary["records"],
     }
+    if theme == "private-sauce-boundary":
+        return private_sauce_owner_packets(packet_id, theme, session_summary, source)
 
     quota_files = scope_files(
         session_summary,
@@ -532,17 +717,34 @@ def render_list(items: list[str]) -> str:
     return ", ".join(f"`{item}`" for item in items) if items else "none"
 
 
+def render_hash_refs(label: str, hashes: list[str], *, boundary_mode: bool) -> str:
+    if not hashes:
+        return f"- {label}: none."
+    if boundary_mode:
+        return f"- {label}: `{len(hashes)}` refs; sample {render_list(hashes[:6])}."
+    return f"- {label}: {render_list(hashes[:24])}."
+
+
+def render_evidence_refs(items: list[str], *, boundary_mode: bool) -> str:
+    if not items:
+        return "none"
+    if boundary_mode:
+        return f"`{len(items)}` redacted turn refs"
+    return render_list(items)
+
+
 def render_markdown(snapshot: dict[str, Any]) -> str:
     coverage = snapshot["coverage"]
     evidence = snapshot["session_evidence"]
     source = snapshot["source_session"]
     packet_source = (snapshot["owner_packets"][0].get("source") if snapshot["owner_packets"] else {}) or {}
+    boundary_mode = snapshot["theme"] == "private-sauce-boundary"
     lines = [
         f"# Current Session Fanout Plan: {snapshot['packet_id']}",
         "",
         f"Generated: `{snapshot['generated_at']}`",
         f"Theme: `{snapshot['theme']}`",
-        f"Source session: `{source['basename']}`",
+        f"Source session: `{'redacted-local-session' if boundary_mode else source['basename']}`",
         f"Source session SHA-256: `{source['sha256']}`",
         "",
         "## Privacy Contract",
@@ -570,13 +772,13 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         f"- Tool counts: {render_counts(evidence.get('tool_counts') or {})}.",
         f"- Keyword families: {render_counts(evidence.get('keyword_counts') or {})}.",
         f"- File refs: {render_counts(evidence.get('file_refs') or {}, limit=12)}.",
-        f"- Prompt hashes: {render_list(evidence.get('prompt_hashes', [])[:24])}.",
-        f"- Plan hashes: {render_list(evidence.get('derived_plan_hashes', [])[:24])}.",
+        render_hash_refs("Prompt hash refs", evidence.get("prompt_hashes", []), boundary_mode=boundary_mode),
+        render_hash_refs("Plan hash refs", evidence.get("derived_plan_hashes", []), boundary_mode=boundary_mode),
         "",
         "## Source Provenance",
         "",
-        f"- Source plan hashes: {render_list((packet_source.get('plan_hashes') or [])[:24])}.",
-        f"- Source prompt hashes: {render_list((packet_source.get('prompt_hashes') or [])[:24])}.",
+        render_hash_refs("Source plan hashes", packet_source.get("plan_hashes") or [], boundary_mode=boundary_mode),
+        render_hash_refs("Source prompt hash refs", packet_source.get("prompt_hashes") or [], boundary_mode=boundary_mode),
         "",
         "## Owner Packets",
         "",
@@ -586,9 +788,37 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
     for packet in snapshot["owner_packets"]:
         lines.append(
             f"| `{packet['id']}` | `{packet['status']}` | {packet['owner']} | "
-            f"{packet['dispatch_gate']} | {render_list(packet.get('evidence_turns') or [])} | "
+            f"{packet['dispatch_gate']} | "
+            f"{render_evidence_refs(packet.get('evidence_turns') or [], boundary_mode=boundary_mode)} | "
             f"{len(packet.get('verification_predicates') or [])} |"
         )
+    blocked_packets = [
+        packet for packet in snapshot["owner_packets"] if packet.get("status") == "blocked-local-recorded"
+    ]
+    if blocked_packets:
+        lines.extend(
+            [
+                "",
+                "## Blocked Local Work",
+                "",
+                f"Global product selection unblocked: `{coverage['global_product_selection_unblocked']}`.",
+                "",
+                "| Packet | Item | Impact | Global Stop |",
+                "|---|---|---|---|",
+            ]
+        )
+        for packet in blocked_packets:
+            facts = packet.get("blocked_local_work") or [
+                {
+                    "item": packet.get("dispatch_gate") or "blocked local packet recorded",
+                    "impact": "continue unrelated product selection",
+                }
+            ]
+            for fact in facts:
+                lines.append(
+                    f"| `{packet['id']}` | {fact.get('item')} | {fact.get('impact')} | "
+                    f"`{bool(packet.get('global_stop'))}` |"
+                )
     for packet in snapshot["owner_packets"]:
         lines.extend(
             [

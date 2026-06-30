@@ -138,3 +138,65 @@ def test_plan_emits_criteria_predicates_and_redacts_text(tmp_path: Path) -> None
     assert "RAW_PRIVATE" not in private_path.read_text()
     assert doc_path.exists()
     assert private_path.exists()
+
+
+def test_private_sauce_boundary_emits_theme_specific_packets(tmp_path: Path) -> None:
+    mod = _load()
+    session = tmp_path / "session.jsonl"
+    rows = [
+        {
+            "timestamp": "2026-06-30T11:00:00Z",
+            "type": "turn_context",
+            "payload": {"turn_id": "turn-private", "cwd": "/work/limen"},
+        },
+        {
+            "timestamp": "2026-06-30T11:00:01Z",
+            "type": "response_item",
+            "payload": {
+                "type": "message",
+                "role": "user",
+                "content": [
+                    {
+                        "type": "input_text",
+                        "text": (
+                            "RAW_PRIVATE private sauce must stay hidden while public-safe "
+                            "fanout uses hashes and redaction."
+                        ),
+                    }
+                ],
+            },
+        },
+        {
+            "timestamp": "2026-06-30T11:01:00Z",
+            "type": "turn_context",
+            "payload": {"turn_id": "turn-blocker", "cwd": "/work/limen"},
+        },
+        {
+            "timestamp": "2026-06-30T11:01:01Z",
+            "type": "event_msg",
+            "payload": {"message": "Local credential blocker recorded; product selection stays active."},
+        },
+    ]
+    session.write_text("\n".join(json.dumps(row) for row in rows) + "\n", encoding="utf-8")
+
+    snapshot = mod.build_snapshot(
+        session,
+        "PLAN-10-test",
+        "private-sauce-boundary",
+        source_plan_hashes=["planhash1234"],
+        source_prompt_hashes=["prompthash1234567890"],
+    )
+    packet_ids = {packet["id"] for packet in snapshot["owner_packets"]}
+    markdown = mod.render_markdown(snapshot)
+
+    assert snapshot["coverage"]["owner_packets"] == 4
+    assert snapshot["coverage"]["packets_with_executor_criteria"] == 4
+    assert snapshot["coverage"]["packets_with_verification_predicates"] == 4
+    assert snapshot["coverage"]["blocked_local_packets"] == 1
+    assert snapshot["coverage"]["global_product_selection_unblocked"] is True
+    assert "PLAN-10-test-private-material-boundary" in packet_ids
+    assert "PLAN-10-test-public-redaction-contract" in packet_ids
+    assert "PLAN-10-test-outward-stage-gate" in packet_ids
+    assert "RAW_PRIVATE" not in markdown
+    assert "private-sauce-boundary" in markdown
+    assert "raw session material stays in the ignored private corpus" in markdown
