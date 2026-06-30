@@ -1,0 +1,152 @@
+{
+  "task_id": "CSF-CAEB31D8-PLAN-04-1C17C8A3",
+  "packet_id": "PLAN-04-1c17c8a3",
+  "theme": "repo-salvage-consolidation",
+  "repo": "organvm/limen",
+  "target_agent": "codex",
+  "primary_executor_packet": "EXEC-GITHUB-ACTIONS-1C17C8A3",
+  "status": "ready-for-executor-packets",
+  "source_session": "~/.codex/sessions/2026/06/30/rollout-2026-06-30T06-17-55-019f1809-13b4-7780-9b1f-d4584f872333.jsonl",
+  "privacy": {
+    "raw_prompt_bodies_included": false,
+    "raw_plan_bodies_included": false,
+    "public_provenance_mode": "hash-only"
+  },
+  "plan_source_proof": {
+    "derivation_scope": "full-session",
+    "plan_event_count": 11,
+    "unique_plan_count": 10,
+    "duplicate_plan_count": 1,
+    "unconsolidated_plan_hashes": [],
+    "source_plan_hashes": [
+      "7eb608baa99c",
+      "c93bc2c89ad8",
+      "dbf49126308e",
+      "3cc93e1d8fbd",
+      "0cb1773e8fef",
+      "1a3fd7bbca9d",
+      "569ac3d1deea",
+      "b0f5c26d40a3",
+      "f15665fb9ad3",
+      "21e790435885"
+    ]
+  },
+  "owner_packets": [
+    {
+      "id": "RS-01-repo-surface-inventory",
+      "owner_surface": "scripts/repo-surface-ledger.py",
+      "criteria": [
+        "discover configured repo roots dynamically",
+        "record nested repos and duplicate remotes",
+        "record dirty, upstream, test, deploy, doc, SEO, and visibility surfaces",
+        "emit public-safe summary and private structured index"
+      ],
+      "verification": [
+        "PYTHONPATH=cli/src python3 -m pytest cli/tests/test_substrate_repo_product_fanout.py -q",
+        "python3 scripts/repo-surface-ledger.py --refresh --dry-run"
+      ]
+    },
+    {
+      "id": "RS-02-salvage-consolidation-graph",
+      "owner_surface": "scripts/salvage-yard-map.py",
+      "criteria": [
+        "cluster repos, worktrees, prompts, product surfaces, duplicate apps, stale forks, and cache-only roots",
+        "assign one canonical owner record per cluster",
+        "assign one disposition per record"
+      ],
+      "verification": [
+        "fixture duplicate repos collapse to one canonical owner",
+        "tracked outputs contain no raw prompt text"
+      ]
+    },
+    {
+      "id": "RS-03-product-selection-bridge",
+      "owner_surface": "scripts/product-ledger.py",
+      "criteria": [
+        "feed repo/product candidates into the global product ledger",
+        "mark blocked local work at item scope",
+        "continue selecting the next highest-value unblocked product"
+      ],
+      "verification": [
+        "blocked product fixture keeps global status active",
+        "next selections exclude blocked items"
+      ]
+    },
+    {
+      "id": "RS-04-plan-source-proof",
+      "owner_surface": "scripts/current-session-fanout.py",
+      "criteria": [
+        "parse plan-bearing user and assistant messages from the full source session",
+        "dedupe repeated plan bodies",
+        "attach all unique source_plan_hashes to every planner and executor packet"
+      ],
+      "verification": [
+        "synthetic session test asserts event count, unique count, duplicate count, ordering, and packet source_plan_hashes"
+      ]
+    },
+    {
+      "id": "RS-05-github-consolidation-gates",
+      "owner_surface": "scripts/consolidation-gates.py",
+      "criteria": [
+        "record name-collision, transfer, App-token, and owner-rewrite gates",
+        "avoid irreversible GitHub/org/App/credential mutation without human gate"
+      ],
+      "verification": [
+        "PYTHONPATH=cli/src python3 scripts/consolidation-gates.py --write"
+      ]
+    },
+    {
+      "id": "RS-06-outward-proof-staging",
+      "owner_surface": "docs/positioning",
+      "criteria": [
+        "stage public-safe proof mirrors or explicit not_applicable",
+        "avoid outbound identity-bearing writes"
+      ],
+      "verification": [
+        "receipt proves no outbound write command ran"
+      ]
+    }
+  ],
+  "blocked_local_work": [
+    {
+      "blocker": "newer fanout and ledger implementation is absent from this planner branch",
+      "scope": "local branch",
+      "continue_global_product_selection": true
+    },
+    {
+      "blocker": "logs/organ-health.json and logs/usage.json are absent in this worktree snapshot",
+      "scope": "local visibility",
+      "continue_global_product_selection": true
+    },
+    {
+      "blocker": "GitHub consolidation mutations require human gate",
+      "scope": "external irreversible",
+      "continue_global_product_selection": true
+    },
+    {
+      "blocker": "Cloudflare and credential gates remain human actions",
+      "scope": "external credential",
+      "continue_global_product_selection": true
+    },
+    {
+      "blocker": "Codex reset, credit, top-up, or paid overage is owner-controlled",
+      "scope": "spend gate",
+      "continue_global_product_selection": true
+    }
+  ],
+  "executor_stop_conditions": [
+    "repo rename",
+    "repo transfer",
+    "owner rewrite apply",
+    "GitHub App install",
+    "credential write",
+    "deploy",
+    "outbound send or post",
+    "repo visibility flip",
+    "paid reset or top-up",
+    "delete or wipe",
+    "mass merge",
+    "live-root force-push",
+    "raw prompt or plan body publication"
+  ]
+}
