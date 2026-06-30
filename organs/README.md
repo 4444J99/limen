@@ -21,7 +21,7 @@ AI roles + workflows + what real institution it rivals), then the organ's workin
 | education/ | Education Organism — an academy + the alt-ed thesis | seeded (edu-organism is 60–80%) |
 | media/ | Carrier-Wave Media — a cross-platform empire | seeded |
 | governance/ | Aerarium / Cvrsvs Honorvm — governance-as-code | seeded |
-| consulting/ | Sovereign Systems — agency-as-a-service | seeded |
+| [consulting/](consulting/) | Sovereign Systems — agency-as-a-service | seeded |
 | [artist/](artist/) | A-MAVS-OLEVM — a living museum/studio (Pantheon standard) | maturing — KERNEL + CHARTER + micro deck live |
 | social/ | Koinonia — civic + relationship support | seeded |
 | health/ | Health / Body — concierge recovery + ADA access | seeded |
