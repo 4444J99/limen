@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""Discover repo/product surfaces across configured roots.
+"""Build a redacted ledger of local repo/product surfaces.
 
-This is intentionally conservative: it records local repo facts and avoids
-network calls. Dry-run prints a redacted summary; --write records private JSON
-plus tracked markdown.
+The private index keeps exact local paths, remotes, and product names. Public
+markdown only exposes path labels, hashes, counts, and state summaries.
 """
 from __future__ import annotations
 
 import argparse
 import datetime as dt
+import hashlib
 import json
 import os
+import re
 import subprocess
-from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -23,17 +23,24 @@ PRIVATE_ROOT = Path(
 )
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "repo-surface-ledger.json"
 DOC_PATH = ROOT / "docs" / "repo-surface-ledger.md"
+
+SCAN_ENV_VARS = ("LIMEN_REPO_ROOTS", "LIMEN_WORKSPACE_ROOT", "LIMEN_WORKTREE_ROOT")
 SKIP_DIRS = {
-    ".git",
-    ".venv",
-    "__pycache__",
-    "node_modules",
     ".cache",
     ".firebase",
+    ".git",
+    ".limen-private",
+    ".mypy_cache",
     ".next",
-    "dist",
-    "build",
+    ".pytest_cache",
+    ".venv",
     ".wrangler",
+    "__pycache__",
+    "build",
+    "dist",
+    "env",
+    "node_modules",
+    "out",
 }
 
 
@@ -41,190 +48,326 @@ def now_iso() -> str:
     return dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
 
 
-def split_paths(value: str | None) -> list[Path]:
-    if not value:
-        return []
+def stable_hash(value: str, length: int = 16) -> str:
+    return hashlib.sha256(value.encode("utf-8", errors="replace")).hexdigest()[:length]
+
+
+def relpath(path: Path) -> str:
+    try:
+        return "~/" + str(path.expanduser().resolve().relative_to(HOME))
+    except (OSError, ValueError):
+        try:
+            return str(path.resolve().relative_to(ROOT))
+        except (OSError, ValueError):
+            return str(path)
+
+
+def split_paths(value: str) -> list[Path]:
     out: list[Path] = []
-    for chunk in value.split(os.pathsep):
-        out.extend(Path(item.strip()).expanduser() for item in chunk.split(",") if item.strip())
+    for chunk in re.split(r"[:,]", value):
+        chunk = chunk.strip()
+        if chunk:
+            out.append(Path(chunk).expanduser())
     return out
 
 
-def default_roots() -> list[Path]:
-    return [HOME / "Workspace", ROOT.parent]
+def configured_scan_roots(extra_roots: list[Path] | None = None) -> list[Path]:
+    roots: list[Path] = []
+    for env_name in SCAN_ENV_VARS:
+        raw = os.environ.get(env_name, "")
+        if raw:
+            roots.extend(split_paths(raw))
+    roots.extend(extra_roots or [])
+    if not roots:
+        roots.append(ROOT)
 
-
-def scan_roots() -> list[Path]:
-    env_roots = split_paths(os.environ.get("LIMEN_REPO_ROOTS"))
-    roots = env_roots if env_roots else default_roots()
+    deduped: list[Path] = []
     seen: set[str] = set()
-    out: list[Path] = []
     for root in roots:
-        key = str(root.expanduser())
-        if key not in seen:
-            seen.add(key)
-            out.append(root)
-    return out
+        try:
+            resolved = root.resolve()
+        except OSError:
+            continue
+        key = str(resolved)
+        if key in seen or not resolved.exists() or not resolved.is_dir():
+            continue
+        seen.add(key)
+        deduped.append(resolved)
+    return deduped or [ROOT]
 
 
-def display_path(path: Path) -> str:
-    try:
-        resolved = path.expanduser().resolve()
-    except OSError:
-        resolved = path.expanduser().absolute()
-    try:
-        return "~/" + str(resolved.relative_to(HOME))
-    except ValueError:
-        return str(resolved)
-
-
-def run_git(repo: Path, *args: str, timeout: int = 6) -> str:
+def run_git(repo: Path, args: list[str], timeout: int = 10) -> str:
     try:
         result = subprocess.run(
-            ["git", "-C", str(repo), *args],
-            text=True,
+            ["git", *args],
+            cwd=repo,
             capture_output=True,
+            text=True,
             timeout=timeout,
-            check=False,
         )
     except (OSError, subprocess.TimeoutExpired):
         return ""
-    return result.stdout.strip() if result.returncode == 0 else ""
+    if result.returncode != 0:
+        return ""
+    return result.stdout.strip()
 
 
-def iter_repos(root: Path, *, max_depth: int) -> list[Path]:
-    root = root.expanduser()
-    if not root.exists():
-        return []
+def repo_roots_under(scan_roots: list[Path], *, max_depth: int = 6, limit: int = 300) -> list[Path]:
     repos: list[Path] = []
-    stack: list[tuple[Path, int]] = [(root, 0)]
-    seen: set[Path] = set()
-    while stack:
-        path, depth = stack.pop()
-        try:
-            resolved = path.resolve()
-        except OSError:
-            continue
-        if resolved in seen:
-            continue
-        seen.add(resolved)
-        if (path / ".git").exists():
-            repos.append(path)
-        if depth >= max_depth:
-            continue
-        try:
-            children = sorted([child for child in path.iterdir() if child.is_dir()], reverse=True)
-        except OSError:
-            continue
-        for child in children:
-            if child.name in SKIP_DIRS:
-                continue
-            stack.append((child, depth + 1))
-    return repos
+    seen: set[str] = set()
+    for scan_root in scan_roots:
+        base_depth = len(scan_root.parts)
+        for dirpath, dirnames, _filenames in os.walk(scan_root):
+            current = Path(dirpath)
+            depth = len(current.parts) - base_depth
+            dirnames[:] = [
+                name
+                for name in dirnames
+                if name not in SKIP_DIRS and not name.endswith(".app") and depth < max_depth
+            ]
+            if (current / ".git").exists():
+                key = str(current.resolve())
+                if key not in seen:
+                    seen.add(key)
+                    repos.append(current)
+                    if len(repos) >= limit:
+                        return sorted(repos)
+    return sorted(repos)
 
 
-def package_surfaces(repo: Path) -> list[str]:
-    surfaces: list[str] = []
-    for name in ("package.json", "pyproject.toml", "Cargo.toml", "go.mod", "Dockerfile", "firebase.json"):
-        if (repo / name).exists():
-            surfaces.append(name)
-    if (repo / ".github" / "workflows").exists():
-        surfaces.append("github-actions")
-    if (repo / "vercel.json").exists() or (repo / "netlify.toml").exists():
-        surfaces.append("deploy-config")
-    return surfaces
+def sanitize_remote(url: str) -> str:
+    value = url.strip()
+    value = re.sub(r"^(https?://)([^/@]+@)", r"\1", value)
+    value = re.sub(r"^git@([^:]+):", r"\1/", value)
+    value = re.sub(r"^ssh://git@([^/]+)/", r"\1/", value)
+    value = re.sub(r"^https?://", "", value)
+    value = value.removesuffix(".git")
+    return value.lower()
 
 
-def repo_row(repo: Path, roots: list[Path]) -> dict[str, Any]:
-    remote = run_git(repo, "remote", "get-url", "origin")
-    branch = run_git(repo, "branch", "--show-current")
-    dirty = [line for line in run_git(repo, "status", "--porcelain=v1").splitlines() if line.strip()]
-    git_dir = run_git(repo, "rev-parse", "--git-dir")
-    common_dir = run_git(repo, "rev-parse", "--git-common-dir")
-    parent_repo = ""
-    for other in roots:
-        try:
-            if repo.resolve() != other.resolve() and repo.resolve().is_relative_to(other.resolve()):
-                parent_repo = display_path(other)
-                break
-        except (OSError, AttributeError):
+def package_json_surfaces(repo: Path) -> tuple[list[dict[str, str]], list[str]]:
+    path = repo / "package.json"
+    if not path.exists():
+        return [], []
+    try:
+        data = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+    except ValueError:
+        return [], ["package.json"]
+    surfaces: list[dict[str, str]] = []
+    scripts: list[str] = []
+    name = str(data.get("name") or "").strip()
+    if name:
+        surfaces.append(product_surface("package_json:name", name))
+    script_map = data.get("scripts")
+    if isinstance(script_map, dict):
+        for script in ("test", "build", "lint", "typecheck"):
+            if script in script_map:
+                scripts.append(f"package:{script}")
+    return surfaces, scripts
+
+
+def pyproject_surfaces(repo: Path) -> tuple[list[dict[str, str]], list[str]]:
+    path = repo / "pyproject.toml"
+    if not path.exists():
+        return [], []
+    surfaces: list[dict[str, str]] = []
+    scripts = ["python:pyproject"]
+    try:
+        import tomllib
+
+        data = tomllib.loads(path.read_text(encoding="utf-8", errors="replace"))
+        name = str((data.get("project") or {}).get("name") or "").strip()
+        if name:
+            surfaces.append(product_surface("pyproject:name", name))
+    except Exception:
+        text = path.read_text(encoding="utf-8", errors="replace")
+        match = re.search(r"(?m)^name\s*=\s*[\"']([^\"']+)[\"']", text)
+        if match:
+            surfaces.append(product_surface("pyproject:name", match.group(1)))
+    return surfaces, scripts
+
+
+def readme_surfaces(repo: Path) -> list[dict[str, str]]:
+    for name in ("README.md", "readme.md"):
+        path = repo / name
+        if not path.exists():
             continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        match = re.search(r"(?m)^#\s+(.+?)\s*$", text)
+        if match:
+            return [product_surface("readme:h1", match.group(1).strip())]
+    return []
+
+
+def product_surface(kind: str, value: str) -> dict[str, str]:
+    normalized = re.sub(r"\s+", " ", value.strip().lower())
     return {
-        "path": str(repo.expanduser()),
-        "display_path": display_path(repo),
-        "remote": remote,
-        "branch": branch,
-        "dirty_entries": len(dirty),
-        "dirty_sample": dirty[:12],
-        "surfaces": package_surfaces(repo),
-        "is_worktree": bool(git_dir and common_dir and git_dir != common_dir),
-        "nested_under": parent_repo,
+        "kind": kind,
+        "value": value.strip(),
+        "hash": stable_hash(f"{kind}:{normalized}"),
     }
 
 
-def build_snapshot(*, max_depth: int = 4) -> dict[str, Any]:
-    roots = [root for root in scan_roots() if root.exists()]
-    repos: list[Path] = []
-    for root in roots:
-        repos.extend(iter_repos(root, max_depth=max_depth))
-    deduped: dict[str, Path] = {}
+def detect_surfaces(repo: Path) -> tuple[list[dict[str, str]], list[str], list[str]]:
+    products: list[dict[str, str]] = []
+    tests: list[str] = []
+    products.extend(readme_surfaces(repo))
+    package_surfaces, package_tests = package_json_surfaces(repo)
+    pyproject_values, pyproject_tests = pyproject_surfaces(repo)
+    products.extend(package_surfaces)
+    products.extend(pyproject_values)
+    tests.extend(package_tests)
+    tests.extend(pyproject_tests)
+    for rel in ("pytest.ini", "tox.ini", "Makefile", "scripts/verify-whole.sh"):
+        if (repo / rel).exists():
+            tests.append(rel)
+
+    deploys: list[str] = []
+    for rel in ("wrangler.toml", "vercel.json", "netlify.toml", "firebase.json"):
+        if (repo / rel).exists():
+            deploys.append(rel)
+    if (repo / ".github" / "workflows").exists():
+        deploys.append(".github/workflows")
+    if (repo / "docs" / "positioning").exists():
+        deploys.append("docs/positioning")
+    return products, sorted(set(tests)), sorted(set(deploys))
+
+
+def repo_record(repo: Path) -> dict[str, Any]:
+    remote_url = run_git(repo, ["config", "--get", "remote.origin.url"])
+    normalized_remote = sanitize_remote(remote_url) if remote_url else ""
+    status_lines = run_git(repo, ["status", "--porcelain"]).splitlines()
+    branch = run_git(repo, ["rev-parse", "--abbrev-ref", "HEAD"]) or "unknown"
+    upstream = run_git(repo, ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"])
+    default_branch = run_git(repo, ["symbolic-ref", "refs/remotes/origin/HEAD", "--short"]).removeprefix(
+        "origin/"
+    )
+    if not default_branch:
+        remote_show = run_git(repo, ["remote", "show", "-n", "origin"])
+        match = re.search(r"HEAD branch:\s*(\S+)", remote_show)
+        default_branch = match.group(1) if match else ""
+    products, tests, deploys = detect_surfaces(repo)
+    return {
+        "path": str(repo),
+        "path_label": relpath(repo),
+        "name": repo.name,
+        "branch": branch,
+        "upstream": upstream,
+        "default_branch": default_branch or None,
+        "remote_url": remote_url,
+        "normalized_remote": normalized_remote,
+        "remote_hash": stable_hash(normalized_remote) if normalized_remote else None,
+        "dirty": bool(status_lines),
+        "dirty_count": len(status_lines),
+        "product_surfaces": products,
+        "test_surfaces": tests,
+        "deploy_surfaces": deploys,
+        "visibility_state": "remote-present" if normalized_remote else "local-only",
+    }
+
+
+def duplicate_remote_groups(repos: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    groups: dict[str, list[dict[str, Any]]] = {}
     for repo in repos:
-        try:
-            key = str(repo.resolve())
-        except OSError:
-            key = str(repo.absolute())
-        deduped[key] = repo
-    repo_paths = sorted(deduped.values(), key=lambda item: display_path(item))
-    rows = [repo_row(repo, repo_paths) for repo in repo_paths]
-    remotes = Counter(row["remote"] or "(none)" for row in rows)
-    duplicate_remotes = {remote: count for remote, count in remotes.items() if remote != "(none)" and count > 1}
+        remote_hash = repo.get("remote_hash")
+        if remote_hash:
+            groups.setdefault(str(remote_hash), []).append(repo)
+    return [
+        {
+            "remote_hash": remote_hash,
+            "repo_count": len(items),
+            "repos": [item["path_label"] for item in sorted(items, key=lambda row: row["path_label"])],
+        }
+        for remote_hash, items in sorted(groups.items())
+        if len(items) > 1
+    ]
+
+
+def build_snapshot(
+    scan_roots: list[Path] | None = None,
+    *,
+    max_depth: int | None = None,
+    limit: int = 300,
+) -> dict[str, Any]:
+    roots = configured_scan_roots(scan_roots)
+    depth = max_depth if max_depth is not None else int(os.environ.get("LIMEN_REPO_SCAN_DEPTH", "6"))
+    repos = [repo_record(path) for path in repo_roots_under(roots, max_depth=depth, limit=limit)]
     return {
         "generated_at": now_iso(),
-        "scan_roots": [display_path(root) for root in roots],
-        "repo_count": len(rows),
-        "dirty_count": sum(1 for row in rows if row["dirty_entries"]),
-        "worktree_count": sum(1 for row in rows if row["is_worktree"]),
-        "duplicate_remotes": duplicate_remotes,
-        "repos": rows,
+        "scan_roots": [relpath(path) for path in roots],
+        "repo_count": len(repos),
+        "repos": repos,
+        "duplicate_remotes": duplicate_remote_groups(repos),
+        "privacy": {
+            "public_remote_mode": "hash-only",
+            "public_product_surface_mode": "hash-only",
+            "private_index": relpath(PRIVATE_INDEX),
+        },
     }
+
+
+def public_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
+    def cleanse(value: Any) -> Any:
+        if isinstance(value, dict):
+            out: dict[str, Any] = {}
+            for key, inner in value.items():
+                if key in {"path", "remote_url", "normalized_remote", "value"}:
+                    continue
+                out[key] = cleanse(inner)
+            return out
+        if isinstance(value, list):
+            return [cleanse(item) for item in value]
+        return value
+
+    return cleanse(snapshot)
 
 
 def render_markdown(snapshot: dict[str, Any]) -> str:
+    public = public_snapshot(snapshot)
     lines = [
         "# Repo Surface Ledger",
         "",
-        f"Generated: `{snapshot['generated_at']}`",
-        f"Repos discovered: `{snapshot['repo_count']}`",
-        f"Dirty repos: `{snapshot['dirty_count']}`",
-        f"Worktrees: `{snapshot['worktree_count']}`",
+        f"Generated: `{public['generated_at']}`",
+        f"Repos scanned: `{public['repo_count']}`",
         "",
         "## Scan Roots",
         "",
     ]
-    for root in snapshot["scan_roots"]:
-        lines.append(f"- `{root}`")
-    lines += ["", "## Duplicate Remotes", ""]
-    if snapshot["duplicate_remotes"]:
-        for remote, count in sorted(snapshot["duplicate_remotes"].items()):
-            lines.append(f"- `{remote}`: {count}")
-    else:
-        lines.append("- none")
+    lines.extend(f"- `{root}`" for root in public["scan_roots"])
     lines += [
         "",
-        "## Repos",
+        "## Duplicate Remote Groups",
         "",
-        "| Repo | Remote | Branch | Dirty | Surfaces |",
-        "|---|---|---:|---:|---|",
+        "| Remote hash | Repos |",
+        "|---|---:|",
     ]
-    for row in snapshot["repos"][:200]:
-        remote = row["remote"] or "(none)"
-        surfaces = ", ".join(f"`{item}`" for item in row["surfaces"]) or "none"
+    for group in public["duplicate_remotes"]:
+        lines.append(f"| `{group['remote_hash']}` | {group['repo_count']} |")
+    if not public["duplicate_remotes"]:
+        lines.append("| none | 0 |")
+    lines += [
+        "",
+        "## Repo Surfaces",
+        "",
+        "| Repo | Branch | Dirty | Remote | Products | Tests | Deploys | Visibility |",
+        "|---|---|---:|---|---:|---:|---:|---|",
+    ]
+    for repo in public["repos"]:
+        products = repo.get("product_surfaces") or []
         lines.append(
-            f"| `{row['display_path']}` | `{remote}` | `{row['branch'] or '(detached)'}` | "
-            f"{row['dirty_entries']} | {surfaces} |"
+            f"| `{repo['path_label']}` | `{repo['branch']}` | {repo['dirty_count']} | "
+            f"`{repo.get('remote_hash') or 'none'}` | {len(products)} | "
+            f"{len(repo.get('test_surfaces') or [])} | {len(repo.get('deploy_surfaces') or [])} | "
+            f"`{repo['visibility_state']}` |"
         )
-    if len(snapshot["repos"]) > 200:
-        lines.append(f"| ... | ... | ... | ... | {len(snapshot['repos']) - 200} additional repos in private index |")
+    lines += [
+        "",
+        "## Contract",
+        "",
+        "- Public receipts use hashes for remotes and product surfaces.",
+        "- Exact local paths, remote URLs, and product names stay in the ignored private index.",
+        "- Discovery roots are derived from `LIMEN_REPO_ROOTS`, `LIMEN_WORKSPACE_ROOT`, `LIMEN_WORKTREE_ROOT`, or the current Limen root.",
+    ]
     return "\n".join(lines) + "\n"
 
 
@@ -236,19 +379,27 @@ def write_outputs(snapshot: dict[str, Any], markdown: str) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Refresh the repo surface ledger.")
-    parser.add_argument("--refresh", action="store_true", help="accepted for operator symmetry")
-    parser.add_argument("--write", action="store_true", help="write tracked summary and private index")
-    parser.add_argument("--max-depth", type=int, default=int(os.environ.get("LIMEN_REPO_SCAN_DEPTH", "4")))
+    parser = argparse.ArgumentParser(description="Refresh the redacted repo surface ledger.")
+    parser.add_argument("--scan-root", action="append", default=[], help="additional root to scan")
+    parser.add_argument("--refresh", action="store_true", help="build a fresh snapshot")
+    parser.add_argument("--write", action="store_true", help="write public docs and private index")
+    parser.add_argument("--dry-run", action="store_true", help="print only; never write")
+    parser.add_argument("--json", action="store_true", help="print public JSON instead of markdown")
+    parser.add_argument("--max-depth", type=int, default=int(os.environ.get("LIMEN_REPO_SCAN_DEPTH", "6")))
     args = parser.parse_args()
-    snapshot = build_snapshot(max_depth=args.max_depth)
+
+    roots = [Path(value).expanduser() for value in args.scan_root]
+    snapshot = build_snapshot(roots, max_depth=args.max_depth)
     markdown = render_markdown(snapshot)
-    if args.write:
+    if args.write and not args.dry_run:
         write_outputs(snapshot, markdown)
-        print(f"repo-surface-ledger: repos={snapshot['repo_count']}; wrote {DOC_PATH} and {PRIVATE_INDEX}")
+        print(f"repo-surface-ledger: wrote {DOC_PATH} and {PRIVATE_INDEX}")
+        return 0
+    if args.json:
+        print(json.dumps(public_snapshot(snapshot), indent=2, sort_keys=True))
     else:
         print(markdown, end="")
-        print(f"repo-surface-ledger: repos={snapshot['repo_count']}; dry-run")
+        print("repo-surface-ledger: dry-run")
     return 0
 
 

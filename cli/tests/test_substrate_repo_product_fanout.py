@@ -62,8 +62,48 @@ def test_repo_surface_ledger_discovers_nested_repos_and_duplicate_remotes(tmp_pa
     snap = mod.build_snapshot(max_depth=5)
 
     assert snap["repo_count"] == 2
-    assert snap["duplicate_remotes"] == {"git@example.invalid:owner/shared.git": 2}
-    assert all("package.json" in row["surfaces"] for row in snap["repos"])
+    assert any(group["repo_count"] == 2 for group in snap["duplicate_remotes"])
+    assert all("package:test" in row["test_surfaces"] for row in snap["repos"])
+
+    public = json.dumps(mod.public_snapshot(snap), sort_keys=True)
+    assert "git@example.invalid" not in public
+    assert "owner/shared.git" not in public
+
+
+def test_salvage_map_clusters_duplicate_remote_and_product_surfaces(tmp_path: Path, monkeypatch) -> None:
+    root = tmp_path / "workspace"
+    repo_a = root / "product-a"
+    repo_b = root / "product-a-copy"
+    for repo, remote in (
+        (repo_a, "git@github.com:organvm/product-a.git"),
+        (repo_b, "https://github.com/organvm/product-a.git"),
+    ):
+        repo.mkdir(parents=True)
+        _git("init", "-q", cwd=repo)
+        _git("remote", "add", "origin", remote, cwd=repo)
+        (repo / "README.md").write_text("# Shared Product\n", encoding="utf-8")
+        (repo / "package.json").write_text(
+            json.dumps({"name": "shared-product", "scripts": {"test": "node --test"}}),
+            encoding="utf-8",
+        )
+
+    monkeypatch.setenv("LIMEN_REPO_ROOTS", str(root))
+    repo_mod = _load("repo-surface-ledger.py", "repo_surface_ledger_salvage_test")
+    salvage_mod = _load("salvage-yard-map.py", "salvage_yard_map_under_test")
+
+    repo_snapshot = repo_mod.build_snapshot(max_depth=4)
+    salvage = salvage_mod.build_salvage_map(
+        repo_snapshot,
+        {"plan_source_proof": {"source_plan_hashes": ["abc123"]}},
+    )
+
+    duplicate_clusters = [cluster for cluster in salvage["clusters"] if cluster["repo_count"] == 2]
+    assert len(duplicate_clusters) == 1
+    assert duplicate_clusters[0]["disposition"] == "consolidate"
+    assert set(salvage["source_plan_hashes"]) == {"abc123"}
+    public = json.dumps(salvage_mod.public_salvage_map(salvage), sort_keys=True)
+    assert "git@github.com" not in public
+    assert "RAW_PRIVATE_PLAN_BODY" not in public
 
 
 def test_product_ledger_keeps_global_work_active_when_one_product_blocks(tmp_path: Path, monkeypatch) -> None:
@@ -102,6 +142,22 @@ def test_product_ledger_keeps_global_work_active_when_one_product_blocks(tmp_pat
         json.dumps({"sessions": [{"session_key": "session-a", "source": "codex-sessions"}]}),
         encoding="utf-8",
     )
+    (private / "salvage-yard-map.json").write_text(
+        json.dumps(
+            {
+                "clusters": [
+                    {
+                        "id": "SY-open",
+                        "canonical_repo": "owner/open",
+                        "repo_count": 2,
+                        "disposition": "consolidate",
+                        "children": [{"repo": "owner/open-copy"}],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
 
     mod = _load("product-ledger.py", "product_ledger_under_test")
     snap = mod.build_snapshot()
@@ -109,6 +165,7 @@ def test_product_ledger_keeps_global_work_active_when_one_product_blocks(tmp_pat
     assert snap["blocked_count"] == 1
     assert snap["global_status"] == "active"
     assert any(row["outward_path"] in {"revenue-path", "seo-proof"} for row in snap["next_unblocked"])
+    assert any(row["source_kind"] == "salvage-yard" for row in snap["products"])
     assert all(not row["blocked"] for row in snap["next_unblocked"])
 
 

@@ -160,6 +160,18 @@ parameters:
     self_update: none
     owner: continuity
     note: "Comma-separated local roots scanned for git repository surfaces by repo-surface ledger. Read-only discovery only."
+  LIMEN_WORKSPACE_ROOT:
+    default: "$HOME/Workspace"
+    env: LIMEN_WORKSPACE_ROOT
+    self_update: none
+    owner: continuity
+    note: "Optional local workspace root scanned for repo/product surfaces by repo-surface ledger. Read-only discovery only."
+  LIMEN_WORKTREE_ROOT:
+    default: ""
+    env: LIMEN_WORKTREE_ROOT
+    self_update: none
+    owner: continuity
+    note: "Optional local worktree root scanned for repo/product surfaces by repo-surface ledger. Empty means no extra worktree root."
   LIMEN_REPO_SCAN_DEPTH:
     default: 4
     env: LIMEN_REPO_SCAN_DEPTH

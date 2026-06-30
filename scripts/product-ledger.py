@@ -27,6 +27,7 @@ DOC_PATH = ROOT / "docs" / "product-ledger.md"
 LIFECYCLE_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
 ACCEPTANCE_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-acceptance-ledger.json"
 REPO_SURFACE_INDEX = PRIVATE_ROOT / "lifecycle" / "repo-surface-ledger.json"
+SALVAGE_INDEX = PRIVATE_ROOT / "lifecycle" / "salvage-yard-map.json"
 TASKS_PATH = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
 VALUE_REPOS_PATH = Path(os.environ.get("LIMEN_VALUE_REPOS", ROOT / "value-repos.json"))
 POSITIONING_SEEDS_PATH = Path(os.environ.get("LIMEN_POSITIONING_SEEDS", ROOT / "positioning-seeds.json"))
@@ -211,22 +212,76 @@ def records_from_repo_surface(path: Path = REPO_SURFACE_INDEX) -> list[dict[str,
     for repo in repos:
         if not isinstance(repo, dict):
             continue
-        key = str(repo.get("remote") or repo.get("path") or "")
+        key = str(
+            repo.get("remote")
+            or repo.get("normalized_remote")
+            or repo.get("remote_hash")
+            or repo.get("path")
+            or repo.get("path_label")
+            or ""
+        )
         if not key:
             continue
-        dirty = int(repo.get("dirty_entries") or 0)
+        dirty = int(repo.get("dirty_entries") or repo.get("dirty_count") or 0)
+        product_surfaces = repo.get("product_surfaces") or []
+        remote_present = bool(repo.get("remote") or repo.get("normalized_remote") or repo.get("remote_hash"))
+        owner = str(repo.get("remote") or repo.get("remote_hash") or repo.get("display_path") or repo.get("path_label") or "local repo")
         rows.append(
             record(
                 kind="repo-surface",
                 source_key=key,
-                title=str(repo.get("display_path") or key),
+                title=str(repo.get("display_path") or repo.get("path_label") or repo.get("name") or key),
                 state="alpha",
                 disposition="consolidate" if dirty else "build",
-                outward_path="seo-proof" if repo.get("remote") else "not_applicable",
-                owner=str(repo.get("remote") or repo.get("display_path") or "local repo"),
+                outward_path="seo-proof" if remote_present else "not_applicable",
+                owner=owner,
                 blocked=False,
                 priority=45 if dirty else 65,
-                evidence=f"dirty_entries={dirty}",
+                evidence=f"dirty_entries={dirty}; product_surfaces={len(product_surfaces)}",
+            )
+        )
+    return rows
+
+
+def salvage_state(disposition: str) -> tuple[str, bool, str, int]:
+    if disposition == "blocked-human":
+        return "omega", True, "human-gated consolidation blocker", 90
+    if disposition == "retire":
+        return "omega", False, "", 95
+    if disposition == "publish-stage":
+        return "ship", False, "", 30
+    if disposition in {"consolidate", "verify"}:
+        return "verify", False, "", 35
+    return "alpha", False, "", 55
+
+
+def records_from_salvage_yard(path: Path = SALVAGE_INDEX) -> list[dict[str, Any]]:
+    obj = load_json(path, {"clusters": []})
+    clusters = obj.get("clusters", []) if isinstance(obj, dict) else []
+    rows: list[dict[str, Any]] = []
+    for cluster in clusters:
+        if not isinstance(cluster, dict):
+            continue
+        key = str(cluster.get("id") or cluster.get("canonical_repo") or "")
+        if not key:
+            continue
+        disposition = str(cluster.get("disposition") or "verify")
+        state, blocked, gate, priority = salvage_state(disposition)
+        repo_count = int(cluster.get("repo_count") or 0)
+        child_count = len(cluster.get("children") or [])
+        rows.append(
+            record(
+                kind="salvage-yard",
+                source_key=key,
+                title=str(cluster.get("canonical_repo") or key),
+                state=state,
+                disposition=disposition,
+                outward_path="repo-salvage",
+                owner=str(cluster.get("canonical_repo") or "repo-salvage"),
+                blocked=blocked,
+                gate=gate,
+                priority=priority,
+                evidence=f"repo_count={repo_count}; children={child_count}",
             )
         )
     return rows
@@ -287,6 +342,7 @@ def build_snapshot() -> dict[str, Any]:
         + records_from_tasks()
         + records_from_prompt_lifecycle()
         + records_from_repo_surface()
+        + records_from_salvage_yard()
         + records_from_contrib()
     )
     counts = {

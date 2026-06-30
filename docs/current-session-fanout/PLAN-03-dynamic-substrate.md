@@ -102,4 +102,3 @@ Source session hash: `caeb31d884ab514a4cb1d2a2`
 
 - Refresh this receipt: `python3 scripts/current-session-fanout.py --session "$LIMEN_CURRENT_SESSION_JSONL" --packet-id "$PACKET_ID" --theme "$PACKET_THEME" --write`
 - Test this planner: `PYTHONPATH=cli/src python3 -m pytest cli/tests/test_current_session_fanout.py -q`
-
