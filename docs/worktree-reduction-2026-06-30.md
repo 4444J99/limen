@@ -52,7 +52,7 @@ Run after removal:
 
 Observed after-state:
 
-- Worktree debt: `7` debt-bearing roots / `35` total roots, cap `12`.
+- Worktree debt: `8` debt-bearing roots / `35` total roots, cap `12`.
 - `/Users/4jp/Workspace/.limen-worktrees`: `1.1G`.
-- Remaining debt classes: `not-merged-to-default=7`.
+- Remaining debt classes: `not-merged-to-default=8`.
 - Active roots created or updated by the live fleet during this pass were kept for harvest.
