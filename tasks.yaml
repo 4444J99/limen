@@ -14,14 +14,14 @@ portal:
       agy: 100
       claude: 100
     track:
-      date: '2026-06-29'
-      spent: 57
+      date: '2026-06-30'
+      spent: 65
       per_agent:
         jules: 50
         gemini: 0
-        codex: 1
-        opencode: 1
-        agy: 5
+        codex: 4
+        opencode: 3
+        agy: 8
         claude: 0
       per_agent_reset:
         jules: '2026-06-29T05:54:07.312618+00:00'
@@ -60680,7 +60680,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - ci-green
   - generated
@@ -60694,7 +60694,7 @@ tasks:
     the stream endless]
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-06-30T15:37:00.457250Z'
+  updated: '2026-06-30T16:01:43.038008Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:10:51.965981Z'
     agent: codex
@@ -60742,6 +60742,11 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-06-30T16:01:43.038008Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-organvm-the-invisible-ledger-ci-green-0628
   title: Make organvm/the-invisible-ledger CI green
   repo: organvm/the-invisible-ledger
@@ -64570,14 +64575,15 @@ tasks:
   title: Raise test coverage in organvm/portfolio
   repo: organvm/portfolio
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - test-coverage
   - generated
   - build-out
+  - noop
   urls: []
   context: Find the largest source module in organvm/portfolio with little or no test
     coverage and add a focused, PASSING test suite for it. Run the repo's own test
@@ -64585,25 +64591,40 @@ tasks:
     keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T15:49:41.321950Z'
+  updated: '2026-06-30T16:00:53.229534Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:49:41.321950Z'
     agent: codex
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T15:52:13.295171Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-30T15:52:21.550880Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:00:53.229534Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: GEN-organvm-limen-test-coverage-0630
   title: Raise test coverage in organvm/limen
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - test-coverage
   - generated
   - build-out
+  - noop
   urls: []
   context: Find the largest source module in organvm/limen with little or no test
     coverage and add a focused, PASSING test suite for it. Run the repo's own test
@@ -64611,13 +64632,27 @@ tasks:
     keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T15:49:41.321950Z'
+  updated: '2026-06-30T16:01:20.546243Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:49:41.321950Z'
     agent: codex
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T15:52:13.295171Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-30T16:00:55.195999Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:01:20.546243Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: GEN-organvm-mirror-mirror-ci-green-0630
   title: Make organvm/mirror-mirror CI green
   repo: organvm/mirror-mirror
@@ -64638,13 +64673,17 @@ tasks:
     endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T15:47:16.260739Z'
+  updated: '2026-06-30T16:00:53.229534Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:47:16.260739Z'
     agent: codex
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:00:53.229534Z'
+    agent: codex
+    session_id: https://github.com/organvm/mirror-mirror/pull/93
+    status: dispatched
 - id: GEN-organvm-portfolio-ci-green-0630
   title: Make organvm/portfolio CI green
   repo: organvm/portfolio
@@ -64665,13 +64704,17 @@ tasks:
     endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T15:47:16.260739Z'
+  updated: '2026-06-30T16:00:53.229534Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:47:16.260739Z'
     agent: codex
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:00:53.229534Z'
+    agent: codex
+    session_id: https://github.com/organvm/portfolio/pull/165
+    status: dispatched
 - id: GEN-organvm-universal-mail--automation-ci-green-0630
   title: Make organvm/universal-mail--automation CI green
   repo: organvm/universal-mail--automation
@@ -64692,13 +64735,17 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T15:47:16.260739Z'
+  updated: '2026-06-30T16:00:53.229534Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:47:16.260739Z'
     agent: codex
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:00:53.229534Z'
+    agent: codex
+    session_id: https://github.com/organvm/universal-mail--automation/pull/132
+    status: dispatched
 - id: GEN-organvm-the-invisible-ledger-ci-green-0630
   title: Make organvm/the-invisible-ledger CI green
   repo: organvm/the-invisible-ledger
@@ -64763,15 +64810,14 @@ tasks:
     agent: opencode
     session_id: cli
     status: done
-    output: 'CI was already green (latest run on main succeeded at 15:25 UTC after
-      d8d2b5c fix). Added npm audit --audit-level=high to web and worker jobs in
-      .github/workflows/ci.yml as the single most valuable missing check (dependency
-      vulnerability scanning).'
+    output: CI was already green (latest run on main succeeded at 15:25 UTC after
+      d8d2b5c fix). Added npm audit --audit-level=high to web and worker jobs in .github/workflows/ci.yml
+      as the single most valuable missing check (dependency vulnerability scanning).
 - id: GEN-organvm-session-meta-docs-0630
   title: Real usage docs for organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: any
+  target_agent: gemini
   priority: low
   budget_cost: 1
   status: open
@@ -64779,6 +64825,7 @@ tasks:
   - docs
   - generated
   - build-out
+  - tried:claude
   urls: []
   context: "Derive an accurate Usage section in organvm/session-meta's README from\
     \ the ACTUAL entrypoints/exports (install, run, key commands + flags). No invented\
@@ -64786,15 +64833,25 @@ tasks:
     \ 2026-06-30 to keep the stream endless]"
   depends_on: []
   created: '2026-06-30'
-  dispatch_log: []
+  updated: '2026-06-30T16:00:53.229534Z'
+  dispatch_log:
+  - timestamp: '2026-06-30T15:52:21.550880Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:00:53.229534Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
 - id: GEN-organvm-mirror-mirror-docs-0630
   title: Real usage docs for organvm/mirror-mirror
   repo: organvm/mirror-mirror
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: low
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - docs
   - generated
@@ -64806,12 +64863,27 @@ tasks:
     \ 2026-06-30 to keep the stream endless]"
   depends_on: []
   created: '2026-06-30'
-  dispatch_log: []
+  updated: '2026-06-30T16:01:43.038008Z'
+  dispatch_log:
+  - timestamp: '2026-06-30T16:01:22.835296Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:01:36.749678Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-30T16:01:43.038008Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-organvm-a-i-chat--exporter-docs-0630
   title: Real usage docs for organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: low
   budget_cost: 1
   status: open
@@ -64826,12 +64898,22 @@ tasks:
     \ 2026-06-30 to keep the stream endless]"
   depends_on: []
   created: '2026-06-30'
-  dispatch_log: []
+  updated: '2026-06-30T16:01:36.749678Z'
+  dispatch_log:
+  - timestamp: '2026-06-30T16:01:22.835296Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:01:36.749678Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
 - id: GEN-organvm-limen-docs-0630
   title: Real usage docs for organvm/limen
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: low
   budget_cost: 1
   status: open
@@ -64839,6 +64921,7 @@ tasks:
   - docs
   - generated
   - build-out
+  - tried:codex
   urls: []
   context: "Derive an accurate Usage section in organvm/limen's README from the ACTUAL\
     \ entrypoints/exports (install, run, key commands + flags). No invented features,\
@@ -64846,7 +64929,17 @@ tasks:
     \ to keep the stream endless]"
   depends_on: []
   created: '2026-06-30'
-  dispatch_log: []
+  updated: '2026-06-30T16:01:36.749678Z'
+  dispatch_log:
+  - timestamp: '2026-06-30T16:01:22.835296Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:01:36.749678Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
 - id: GEN-organvm-session-meta-security-0630
   title: Security hardening pass on organvm/session-meta
   repo: organvm/session-meta
@@ -64898,13 +64991,17 @@ tasks:
     2026-06-30 to keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T15:47:16.260739Z'
+  updated: '2026-06-30T15:52:13.295171Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:47:16.260739Z'
     agent: agy
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T15:52:13.295171Z'
+    agent: agy
+    session_id: https://github.com/organvm/mirror-mirror/pull/92
+    status: dispatched
 - id: GEN-organvm-domus-genoma-security-0630
   title: Security hardening pass on organvm/domus-genoma
   repo: organvm/domus-genoma
@@ -64912,11 +65009,12 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - security
   - generated
   - build-out
+  - noop
   urls: []
   context: Run the ecosystem audit for organvm/domus-genoma (npm audit / pip-audit
     / equivalent), upgrade or pin high-severity advisories, and add input validation
@@ -64924,13 +65022,18 @@ tasks:
     2026-06-30 to keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T15:47:16.260739Z'
+  updated: '2026-06-30T15:52:13.295171Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:47:16.260739Z'
     agent: agy
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T15:52:13.295171Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: GEN-organvm-public-record-data-scrapper-security-0630
   title: Security hardening pass on organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
@@ -64950,43 +65053,62 @@ tasks:
     green. [auto-generated 2026-06-30 to keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T15:47:16.260739Z'
+  updated: '2026-06-30T15:52:13.295171Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:47:16.260739Z'
     agent: agy
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T15:52:13.295171Z'
+    agent: agy
+    session_id: https://github.com/organvm/public-record-data-scrapper/pull/338
+    status: dispatched
 - id: GEN-organvm-session-meta-simplify-0630
   title: Reduce complexity in organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - simplify
   - generated
   - build-out
+  - noop
   urls: []
   context: Identify the most complex or most-duplicated module in organvm/session-meta
     and refactor it for clarity, with tests proving behavior is unchanged. Net lines
     should not grow without cause. [auto-generated 2026-06-30 to keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T15:49:41.321950Z'
+  updated: '2026-06-30T16:01:36.749678Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:49:41.321950Z'
     agent: codex
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T15:52:13.295171Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-30T16:00:55.195999Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:01:36.749678Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: GEN-organvm-mirror-mirror-simplify-0630
   title: Reduce complexity in organvm/mirror-mirror
   repo: organvm/mirror-mirror
   type: code
-  target_agent: any
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: dispatched
@@ -64994,16 +65116,26 @@ tasks:
   - simplify
   - generated
   - build-out
+  - tried:claude
   urls: []
   context: Identify the most complex or most-duplicated module in organvm/mirror-mirror
     and refactor it for clarity, with tests proving behavior is unchanged. Net lines
     should not grow without cause. [auto-generated 2026-06-30 to keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T15:49:41.321950Z'
+  updated: '2026-06-30T16:01:43.038008Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:49:41.321950Z'
     agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T15:52:13.295171Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
+  - timestamp: '2026-06-30T16:01:43.038008Z'
+    agent: gemini
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
@@ -65011,10 +65143,10 @@ tasks:
   title: Reduce complexity in organvm/domus-genoma
   repo: organvm/domus-genoma
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - simplify
   - generated
@@ -65025,15 +65157,30 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-30 to keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  dispatch_log: []
+  updated: '2026-06-30T16:01:43.038008Z'
+  dispatch_log:
+  - timestamp: '2026-06-30T15:52:21.550880Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:00:53.229534Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-30T16:01:43.038008Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-organvm-session-meta-typing-0630
   title: Tighten types in organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - typing
   - generated
@@ -65044,7 +65191,22 @@ tasks:
     and tests green. [auto-generated 2026-06-30 to keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  dispatch_log: []
+  updated: '2026-06-30T16:01:43.038008Z'
+  dispatch_log:
+  - timestamp: '2026-06-30T15:52:21.550880Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:00:53.229534Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-30T16:01:43.038008Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-organvm-universal-mail--automation-typing-0630
   title: Tighten types in organvm/universal-mail--automation
   repo: organvm/universal-mail--automation
@@ -65052,7 +65214,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - typing
   - generated
@@ -65063,7 +65225,17 @@ tasks:
     the build and tests green. [auto-generated 2026-06-30 to keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  dispatch_log: []
+  updated: '2026-06-30T16:00:53.229534Z'
+  dispatch_log:
+  - timestamp: '2026-06-30T15:52:21.550880Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:00:53.229534Z'
+    agent: agy
+    session_id: https://github.com/organvm/universal-mail--automation/pull/131
+    status: dispatched
 - id: GEN-organvm-limen-typing-0630
   title: Tighten types in organvm/limen
   repo: organvm/limen
@@ -65071,26 +65243,38 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: failed
   labels:
   - typing
   - generated
   - build-out
+  - noop
   urls: []
   context: Eliminate the worst untyped hotspots in organvm/limen's most-imported module
     (remove `any` / add type hints / fix loose signatures). Keep the build and tests
     green. [auto-generated 2026-06-30 to keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  dispatch_log: []
+  updated: '2026-06-30T16:00:53.229534Z'
+  dispatch_log:
+  - timestamp: '2026-06-30T15:52:21.550880Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:00:53.229534Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: REV-organvm-mirror-mirror-revenue-ship-0630
   title: Drive Mirror Mirror to deploy-ready
   repo: organvm/mirror-mirror
   type: code
-  target_agent: gemini
+  target_agent: opencode
   priority: high
   budget_cost: 2
-  status: open
+  status: failed
   labels:
   - revenue-ship
   - revenue
@@ -65098,6 +65282,7 @@ tasks:
   - ship-order
   - generated
   - tried:claude
+  - noop
   urls: []
   context: "In organvm/mirror-mirror, clear the concrete blockers between the current\
     \ state and a DEPLOYABLE product: get open PRs green + merged, fix the critical\
@@ -65106,7 +65291,7 @@ tasks:
     \ stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T15:49:39.449826Z'
+  updated: '2026-06-30T16:01:36.749678Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:47:16.260739Z'
     agent: claude
@@ -65117,14 +65302,33 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
+  - timestamp: '2026-06-30T15:52:21.550880Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:00:53.229534Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-30T16:00:55.195999Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:01:36.749678Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: REV-organvm-universal-mail--automation-revenue-ship-0630
   title: Drive Universal Mail Automation to deploy-ready
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: gemini
+  target_agent: opencode
   priority: high
   budget_cost: 2
-  status: open
+  status: failed
   labels:
   - revenue-ship
   - revenue
@@ -65132,6 +65336,7 @@ tasks:
   - ship-order
   - generated
   - tried:claude
+  - noop
   urls: []
   context: "In organvm/universal-mail--automation, clear the concrete blockers between\
     \ the current state and a DEPLOYABLE product: get open PRs green + merged, fix\
@@ -65140,7 +65345,7 @@ tasks:
     \ rank 3, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T15:49:39.449826Z'
+  updated: '2026-06-30T16:00:53.229534Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:47:16.260739Z'
     agent: claude
@@ -65151,14 +65356,24 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
+  - timestamp: '2026-06-30T15:52:21.550880Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:00:53.229534Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: REV-organvm-the-invisible-ledger-revenue-ship-0630
   title: Drive The Invisible Ledger to deploy-ready
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: gemini
+  target_agent: agy
   priority: high
   budget_cost: 2
-  status: open
+  status: failed
   labels:
   - revenue-ship
   - revenue
@@ -65166,6 +65381,7 @@ tasks:
   - ship-order
   - generated
   - tried:claude
+  - noop
   urls: []
   context: "In organvm/the-invisible-ledger, clear the concrete blockers between the\
     \ current state and a DEPLOYABLE product: get open PRs green + merged, fix the\
@@ -65174,7 +65390,7 @@ tasks:
     \ rank 4, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T15:49:39.449826Z'
+  updated: '2026-06-30T16:00:53.229534Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:47:16.260739Z'
     agent: claude
@@ -65185,20 +65401,31 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
+  - timestamp: '2026-06-30T15:52:21.550880Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:00:53.229534Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: REV-organvm-mirror-mirror-revenue-readiness-0630
   title: First-paying-customer readiness pass on Mirror Mirror
   repo: organvm/mirror-mirror
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: failed
   labels:
   - revenue-readiness
   - revenue
   - product
   - ship-order
   - generated
+  - noop
   urls: []
   context: "In organvm/mirror-mirror, find the single highest-leverage gap between\
     \ the current product and something a stranger would pay for (first-dollar path:\
@@ -65207,10 +65434,430 @@ tasks:
     \ tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-06-30T15:49:41.321950Z'
+  updated: '2026-06-30T16:00:53.229534Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:49:41.321950Z'
     agent: codex
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T15:52:13.295171Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-30T15:52:21.550880Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:00:53.229534Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+- id: ORG-legal-organ-kernel-0630
+  title: Map the VLTIMA 5-primitive kernel to the legal organ
+  repo: organvm/limen
+  type: content
+  target_agent: opencode
+  priority: critical
+  budget_cost: 2
+  status: done
+  labels:
+  - organ-kernel
+  - pillar:legal
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls:
+  - https://github.com/organvm/limen/pull/488
+  context: "In organvm/limen, author organs/legal/KERNEL.md: map the domain-neutral\
+    \ kernel (Member - Mandate - Standing - Standard - Governance) onto the legal\
+    \ domain (Member=client/party; Mandate=claim/matter; Standing=case posture; Standard=statute/precedent/rubric;\
+    \ Governance=the firm's process + ethics wall). State the organ's purpose as an\
+    \ institutional prosthesis, its MACRO deployment (a legal-institution platform\
+    \ any pro-se or under-resourced person can hold) and its MICRO deployment (Anthony's\
+    \ active ADA employment matter run with a top-firm's institutional weight, AUGMENTING\
+    \ attorney Counsel Longo (never replacing counsel, never practicing law)). Generic\
+    \ + nameless underneath, his instance on top. One PR, no lorem. CONSTRAINT: THE\
+    \ FLAGSHIP he named. Augments real counsel; does NOT give legal advice or practice\
+    \ law.. [organ-backlog 2026-06-30: rank 1, maturity 20% stage scaffold \u2014\
+    \ convert idle fleet capacity into institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-06-30'
+  updated: '2026-06-30T19:36:00Z'
+  dispatch_log:
+  - timestamp: '2026-06-30T19:36:00Z'
+    agent: opencode
+    session_id: current
+    status: done
+    output: 'PR #488 merged. Created organs/legal/KERNEL.md with 5-primitive kernel
+      map (Member=client/party, Mandate=claim/matter, Standing=case posture, Standard=statute/precedent/rubric,
+      Governance=firm process+ethics wall), institutional prosthesis framing, MACRO/MICRO
+      fractal deployment, Cochran flagship naming, and hard UPL guardrails.'
+  updated: '2026-06-30T16:01:22.835296Z'
+  dispatch_log:
+  - timestamp: '2026-06-30T16:00:55.195999Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:01:20.546243Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-30T16:01:22.835296Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+- id: ORG-financial-organ-deepen-0630
+  title: Deepen the financial organ toward a usable institution
+  repo: organvm/limen
+  type: content
+  target_agent: opencode
+  priority: high
+  budget_cost: 2
+  status: dispatched
+  labels:
+  - organ-deepen
+  - pillar:financial
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "In organvm/limen organs/financial/ (and reference its product repo where\
+    \ relevant), close the single highest-leverage gap between the current scaffold\
+    \ and something a real person could RELY ON for financial. Ship a personal balance-sheet\
+    \ + cashflow + payrail disbursement map run on his real numbers if not yet done,\
+    \ else the next gap. One focused PR. CONSTRAINT: scale the-invisible-ledger from\
+    \ a B2B CPA tool into a personal family office. [organ-backlog 2026-06-30: rank\
+    \ 2, maturity 30% stage building \u2014 convert idle fleet capacity into institutional\
+    \ weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-06-30'
+  updated: '2026-06-30T16:01:22.835296Z'
+  dispatch_log:
+  - timestamp: '2026-06-30T16:00:55.195999Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:01:20.546243Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-30T16:01:22.835296Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+- id: ORG-education-organ-face-0630
+  title: Make the education organ's macro + micro face excellent
+  repo: organvm/limen
+  type: content
+  target_agent: jules
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-face
+  - pillar:education
+  - organ
+  - institution
+  - vltima
+  - generated
+  - tried:claude
+  - tried:gemini
+  urls: []
+  context: "In organvm/limen organs/education/, author the polished MACRO face (the\
+    \ alt-education platform (the quarantine-from-the-system thesis) \u2014 the platform\
+    \ anyone can hold) AND the MICRO instance (ENC1101 + Derek's narrative workshop\
+    \ + the homeschool engine \u2014 his own), grounded in what the organ actually\
+    \ does. Real copy, ready to show. One PR. CONSTRAINT: already 60-80% in edu-organism;\
+    \ drive to 90 and fire the alt-ed thesis. [organ-backlog 2026-06-30: rank 3, maturity\
+    \ 70% stage maturing \u2014 convert idle fleet capacity into institutional weight\
+    \ (VLTIMA).]"
+  depends_on: []
+  created: '2026-06-30'
+  updated: '2026-06-30T16:01:36.749678Z'
+  dispatch_log:
+  - timestamp: '2026-06-30T16:00:55.195999Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:01:20.546243Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
+  - timestamp: '2026-06-30T16:01:22.835296Z'
+    agent: gemini
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:01:36.749678Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+- id: ORG-media-organ-deepen-0630
+  title: Deepen the media organ toward a usable institution
+  repo: organvm/limen
+  type: content
+  target_agent: jules
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-deepen
+  - pillar:media
+  - organ
+  - institution
+  - vltima
+  - generated
+  - tried:claude
+  - tried:gemini
+  urls: []
+  context: "In organvm/limen organs/media/ (and reference its product repo where relevant),\
+    \ close the single highest-leverage gap between the current scaffold and something\
+    \ a real person could RELY ON for media. Ship fire the essay -> kerygma pipeline\
+    \ on ONE real event, end to end (drafts only; his hand on publish) if not yet\
+    \ done, else the next gap. One focused PR. CONSTRAINT: thesis complete, distribution\
+    \ pipeline built but NEVER fired. [organ-backlog 2026-06-30: rank 4, maturity\
+    \ 40% stage building \u2014 convert idle fleet capacity into institutional weight\
+    \ (VLTIMA).]"
+  depends_on: []
+  created: '2026-06-30'
+  updated: '2026-06-30T16:01:36.749678Z'
+  dispatch_log:
+  - timestamp: '2026-06-30T16:00:55.195999Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:01:20.546243Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
+  - timestamp: '2026-06-30T16:01:22.835296Z'
+    agent: gemini
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:01:36.749678Z'
+    agent: gemini
+    session_id: cli
+    status: failed->jules
+- id: ORG-governance-organ-deepen-0630
+  title: Deepen the governance organ toward a usable institution
+  repo: organvm/limen
+  type: content
+  target_agent: gemini
+  priority: high
+  budget_cost: 2
+  status: dispatched
+  labels:
+  - organ-deepen
+  - pillar:governance
+  - organ
+  - institution
+  - vltima
+  - generated
+  - tried:claude
+  urls: []
+  context: "In organvm/limen organs/governance/ (and reference its product repo where\
+    \ relevant), close the single highest-leverage gap between the current scaffold\
+    \ and something a real person could RELY ON for governance. Ship operationalize\
+    \ ONE cvrsvs-honorvm rule as an executable validator if not yet done, else the\
+    \ next gap. One focused PR. CONSTRAINT: infrastructure partial (aerarium--res-publica);\
+    \ rules conceptual, not operationalized. [organ-backlog 2026-06-30: rank 5, maturity\
+    \ 50% stage building \u2014 convert idle fleet capacity into institutional weight\
+    \ (VLTIMA).]"
+  depends_on: []
+  created: '2026-06-30'
+  updated: '2026-06-30T16:01:43.038008Z'
+  dispatch_log:
+  - timestamp: '2026-06-30T16:00:55.195999Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:01:20.546243Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
+  - timestamp: '2026-06-30T16:01:43.038008Z'
+    agent: gemini
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+- id: ORG-consulting-organ-face-0630
+  title: Make the consulting organ's macro + micro face excellent
+  repo: organvm/limen
+  type: content
+  target_agent: gemini
+  priority: high
+  budget_cost: 2
+  status: dispatched
+  labels:
+  - organ-face
+  - pillar:consulting
+  - organ
+  - institution
+  - vltima
+  - generated
+  - tried:claude
+  urls: []
+  context: "In organvm/limen organs/consulting/, author the polished MACRO face (ORGANVM-as-a-service:\
+    \ the institutional toolkit offered to clients \u2014 the platform anyone can\
+    \ hold) AND the MICRO instance (the Maddie / Rob / Derek client deployments \u2014\
+    \ his own), grounded in what the organ actually does. Real copy, ready to show.\
+    \ One PR. CONSTRAINT: working manual prototypes; not yet autonomic or scaled back\
+    \ to self. [organ-backlog 2026-06-30: rank 6, maturity 60% stage maturing \u2014\
+    \ convert idle fleet capacity into institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-06-30'
+  updated: '2026-06-30T16:01:43.038008Z'
+  dispatch_log:
+  - timestamp: '2026-06-30T16:00:55.195999Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:01:20.546243Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
+  - timestamp: '2026-06-30T16:01:43.038008Z'
+    agent: gemini
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+- id: ORG-artist-organ-face-0630
+  title: Make the artist organ's macro + micro face excellent
+  repo: organvm/limen
+  type: content
+  target_agent: any
+  priority: high
+  budget_cost: 2
+  status: dispatched
+  labels:
+  - organ-face
+  - pillar:artist
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "In organvm/limen organs/artist/, author the polished MACRO face (a studio/temple\
+    \ platform any artist can hold \u2014 the platform anyone can hold) AND the MICRO\
+    \ instance (Anthony's a-mavs-olevm chambers (444-file photo archive, ET4L, LOCREANCE)\
+    \ \u2014 his own), grounded in what the organ actually does. Real copy, ready\
+    \ to show. One PR. CONSTRAINT: temple built (70%) but chambers under-filled; currently\
+    \ subordinate to education. [organ-backlog 2026-06-30: rank 7, maturity 70% stage\
+    \ maturing \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-06-30'
+  updated: '2026-06-30T16:00:55.195999Z'
+  dispatch_log:
+  - timestamp: '2026-06-30T16:00:55.195999Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+- id: ORG-social-organ-kernel-0630
+  title: Map the VLTIMA 5-primitive kernel to the social organ
+  repo: organvm/limen
+  type: content
+  target_agent: opencode
+  priority: critical
+  budget_cost: 2
+  status: dispatched
+  labels:
+  - organ-kernel
+  - pillar:social
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "In organvm/limen, author organs/social/KERNEL.md: map the domain-neutral\
+    \ kernel (Member - Mandate - Standing - Standard - Governance) onto the social\
+    \ domain (Member=person/contact; Mandate=relationship; Standing=tie strength;\
+    \ Standard=reciprocity norm; Governance=community rules). State the organ's purpose\
+    \ as an institutional prosthesis, its MACRO deployment (community + relationship\
+    \ infrastructure anyone can hold) and its MICRO deployment (Anthony's network,\
+    \ correspondence, and relationship support). Generic + nameless underneath, his\
+    \ instance on top. One PR, no lorem. CONSTRAINT: named by him, unscoped. [organ-backlog\
+    \ 2026-06-30: rank 8, maturity 5% stage scaffold \u2014 convert idle fleet capacity\
+    \ into institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-06-30'
+  updated: '2026-06-30T16:01:22.835296Z'
+  dispatch_log:
+  - timestamp: '2026-06-30T16:00:55.195999Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:01:20.546243Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-30T16:01:22.835296Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+- id: ORG-health-organ-kernel-0630
+  title: Map the VLTIMA 5-primitive kernel to the health organ
+  repo: organvm/limen
+  type: content
+  target_agent: opencode
+  priority: critical
+  budget_cost: 2
+  status: in_progress
+  labels:
+  - organ-kernel
+  - pillar:health
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "In organvm/limen, author organs/health/KERNEL.md: map the domain-neutral\
+    \ kernel (Member - Mandate - Standing - Standard - Governance) onto the health\
+    \ domain (Member=body/patient; Mandate=protocol; Standing=health state; Standard=clinical\
+    \ guideline; Governance=care plan). State the organ's purpose as an institutional\
+    \ prosthesis, its MACRO deployment (a health/recovery + disability-access institution\
+    \ anyone can hold) and its MICRO deployment (Anthony's post-injury recovery +\
+    \ disability access (ties directly to the legal ADA matter)). Generic + nameless\
+    \ underneath, his instance on top. One PR, no lorem. CONSTRAINT: unnamed; post-injury\
+    \ (4th-story fall ~2024); ties to the legal ADA accommodation matter. [organ-backlog\
+    \ 2026-06-30: rank 9, maturity 5% stage scaffold \u2014 convert idle fleet capacity\
+    \ into institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-06-30'
+  updated: '2026-06-30T16:10:00Z'
+  dispatch_log:
+  - timestamp: '2026-06-30T16:00:55.195999Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:01:20.546243Z'
+    agent: codex
+    session_id: cli
+    status: ratelimited->opencode
+  - timestamp: '2026-06-30T16:01:22.835296Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T16:10:00Z'
+    agent: opencode
+    session_id: current
+    status: in_progress
+    output: 'Rewriting KERNEL.md to match mature organ convention'
