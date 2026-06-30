@@ -7,6 +7,11 @@
 > the relationship. The organ remembers, organizes, drafts, prompts, and routes so one person can
 > hold a community's worth of relational weight without pretending the machine is the friend.
 
+## Purpose
+
+This is an **institutional prosthesis** for social life: a reusable social subsystem that makes
+relationship stewardship durable without pretending to own the relationship itself.
+
 ## Why this organ exists
 
 People do not flourish through isolated productivity. They survive and grow through durable ties:
@@ -16,14 +21,13 @@ assistants, chiefs of staff, clubs, churches, alumni offices, social calendars, 
 operators standing behind them. Everyone else is expected to remember every birthday, debt, promise,
 boundary, introduction, conflict, and opportunity from an exhausted private mind.
 
-This organ is the institutional prosthesis for social life. It gives one person, and then anyone, the
-infrastructure of a civic/community institution plus relationship support: a living memory of people,
-ties, obligations, norms, and rules, with the human still deciding what care, contact, repair, or
-distance is right.
+This organ gives one person, and then anyone, the infrastructure of a civic/community institution
+plus relationship support: a living memory of people, ties, obligations, norms, and rules, with the
+human still deciding what care, contact, repair, or distance is right.
 
 This organ was named by Anthony as **Koinonia**. It is intentionally unscoped at the substrate: not a
 CRM, not a dating tool, not a social-media scheduler, and not a single community app.
-Generic + nameless underneath; his instance on top.
+Generic + nameless foundation underneath; his instance on top.
 
 ## The 5-primitive kernel, mapped to the social domain
 
@@ -44,7 +48,7 @@ That is the fractal: one structure, every pillar.
   registry, relationship-mandate records, correspondence support, care reminders, boundary tracking,
   conflict/repair workflows, community rulebooks, and privacy-preserving memory. It is the social
   infrastructure a neighborhood, school, mutual-aid group, founder network, church, creative circle,
-  or family system can adopt without turning people into sales leads.
+  or family system can adopt.
 
 - **MICRO** — Anthony's network, correspondence, and relationship support: a private instance that
   helps him remember who matters, what each tie needs, which messages need replies, where care is
