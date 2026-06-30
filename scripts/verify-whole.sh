@@ -16,6 +16,12 @@ python3 -m py_compile web/api/main.py cli/src/limen/*.py scripts/probe-runtime-a
 bash -n scripts/preflight-cloud-run.sh scripts/probe-local-runtime.sh scripts/probe-local-worker.sh scripts/verify-whole.sh scripts/merge-policy.sh scripts/tests/merge-policy.test.sh scripts/hooks/session-lifecycle-pressure.sh scripts/netmode.sh
 plutil -lint container/launchd/com.user.netmeter.plist
 
+step "Validate Cvrsvs Honorvm seed contracts"
+CVRSV_SEED="${LIMEN_WORKSPACE_ROOT:-$HOME/Workspace}/organvm/cvrsvs-honorvm/seed.yaml"
+if [[ -f "$CVRSV_SEED" ]]; then
+  python3 organs/governance/validate-seed.py "$CVRSV_SEED" --strict-graph --quiet
+fi
+
 step "Verify the merge-policy predicate (verdict matrix regression test)"
 bash scripts/tests/merge-policy.test.sh
 

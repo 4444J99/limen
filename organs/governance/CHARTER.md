@@ -43,16 +43,20 @@ is auditable at any moment. This organ supplies that system.
 
 ## First proof: the seed validator
 
-The first executable rule — `validate-seed.py` — operationalizes the **Cursus Honorum Rule #1:
-Valid Office**. A seed contract must declare its `promotion_status` as one of the recognized offices
-in the sequence (INCUBATOR → ALPHA → BETA → STABLE → MATURE), and `implementation_status` must match.
-Skipping is a hard failure.
+The first two executable rules are `validate-seed.py`:
+
+- **Rule #1: Valid Office** — a seed contract must declare `promotion_status` as one of the
+  recognized offices in the sequence (INCUBATOR → ALPHA → BETA → STABLE → MATURE), and
+  `implementation_status` must match. Skipping is a hard failure.
+- **Rule #2: Structured edges** — `produces` and `consumes` blocks must be list-structured and
+  explicit in partner targeting (`consumers` / `source`) when represented as mappings.
 
 Run it:
 
 ```bash
 python organs/governance/validate-seed.py path/to/seed.yaml
 python organs/governance/validate-seed.py --fleet   # validate all seed.yaml files in the working tree
+python organs/governance/validate-seed.py /path/to/seed.yaml --strict-graph
 ```
 
 This is the micro instance: every repo in the ORGANVM estate is validated against the cursus on every

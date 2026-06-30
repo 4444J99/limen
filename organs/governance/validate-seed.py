@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Cvrsvs Honorvm Rule #1 — Valid Office (the sequential promotion invariant).
+Cvrsvs Honorvm Rule #2 — Structured signal exchange edges (produces / consumes).
 
 A seed.yaml must declare its promotion_status as one of the recognized offices in the
 cursus sequence. Stages may not be skipped. implementation_status must match.
@@ -35,7 +36,7 @@ REQUIRED_META: list[str] = ["implementation_status", "promotion_status"]
 # Rule predicates                                                              #
 # --------------------------------------------------------------------------- #
 
-def _validate_one(path: Path) -> list[str]:
+def _validate_one(path: Path, *, strict_graph: bool) -> list[str]:
     """Return a list of violation strings for one seed.yaml (empty = pass)."""
     try:
         raw = path.read_text(encoding="utf-8")
@@ -100,6 +101,9 @@ def _validate_one(path: Path) -> list[str]:
     # Rule 1f — cursus reporting: current office and what comes next
     # (not a violation; emitted as advisory by the caller)
 
+    if strict_graph:
+        _validate_cvrsvs_edges(doc, violations)
+
     return violations
 
 
@@ -117,13 +121,68 @@ def _posture(meta: dict) -> str:
     return f"  cursus: {held}  |  next: {next_office}"
 
 
+def _validate_cvrsvs_edges(doc: dict[str, Any], violations: list[str]) -> None:
+    """Rule #2: require deterministic produces/consumes shape for governance edges."""
+    if not isinstance(doc.get("schema_version"), str):
+        # The richer edge policy applies to cvrsvs-honorvm contracts first.
+        return
+
+    for field, required in (("produces", "consumers"), ("consumes", "source")):
+        items = doc.get(field, [])
+        if not isinstance(items, list):
+            if items != []:
+                violations.append(f"{field!r} must be a list (or omitted)")
+            continue
+        for idx, item in enumerate(items):
+            if isinstance(item, str):
+                if not item.strip():
+                    violations.append(f"{field}[{idx}] is an empty string")
+                continue
+            if not isinstance(item, dict):
+                violations.append(
+                    f"{field}[{idx}] must be a string or mapping with at least "
+                    "'type' and partner keys"
+                )
+                continue
+
+            item_type = item.get("type")
+            if not isinstance(item_type, str) or not item_type.strip():
+                violations.append(f"{field}[{idx}] is missing required key: 'type'")
+
+            if required == "consumers":
+                consumers = item.get("consumers")
+                if not isinstance(consumers, list):
+                    violations.append(
+                        f"{field}[{idx}] requires 'consumers' list (or explicit "
+                        "partner declarations)"
+                    )
+                    continue
+                if not consumers:
+                    violations.append(
+                        f"{field}[{idx}] requires at least one declared consumer"
+                    )
+                    continue
+                for cidx, consumer in enumerate(consumers):
+                    if not isinstance(consumer, str) or not consumer.strip():
+                        violations.append(
+                            f"{field}[{idx}].consumers[{cidx}] must be a non-empty string"
+                        )
+            else:
+                source = item.get("source")
+                if not isinstance(source, str) or not source.strip():
+                    violations.append(f"{field}[{idx}] requires 'source' string")
+
+
 # --------------------------------------------------------------------------- #
 # CLI                                                                          #
 # --------------------------------------------------------------------------- #
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Validate seed.yaml files against Cvrsvs Honorvm Rule #1."
+        description=(
+            "Validate seed.yaml files against Cvrsvs Honorvm rules. "
+            "Rule #1 is always active; Rule #2 is optional and explicit."
+        )
     )
     parser.add_argument(
         "paths",
@@ -140,6 +199,11 @@ def main() -> int:
         "--quiet",
         action="store_true",
         help="suppress per-file output; exit code only",
+    )
+    parser.add_argument(
+        "--strict-graph",
+        action="store_true",
+        help="validate produces/consumes blocks as structured edge contracts",
     )
     args = parser.parse_args()
 
@@ -166,7 +230,7 @@ def main() -> int:
     failed = 0
 
     for path in targets:
-        violations = _validate_one(path)
+        violations = _validate_one(path, strict_graph=args.strict_graph)
         if not violations:
             passed += 1
             if not args.quiet:
@@ -189,7 +253,10 @@ def main() -> int:
         print(f"\n{'─' * 60}")
         print(f"  {passed}/{total} passed  |  {failed} violation(s)")
         if failed == 0:
-            print("  Cvrsvs Honorvm Rule #1: all offices valid. Concordia.")
+            if args.strict_graph:
+                print("  Cvrsvs Honorvm Rules #1 & #2: all checks passed. Concordia.")
+            else:
+                print("  Cvrsvs Honorvm Rule #1: all offices valid. Concordia.")
         else:
             print("  Cvrsvs Honorvm Rule #1: violations found. Cursus not satisfied.")
 
