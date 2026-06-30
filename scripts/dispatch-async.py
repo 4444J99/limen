@@ -26,6 +26,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+from limen.capacity import PAID_AGENT_ORDER, canonical_agent, capacity_census  # noqa: E402
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.models import DispatchLogEntry  # noqa: E402
 from limen.dispatch import _queue_lock, _apply_result, _down_lanes, _PRIORITY_ORDER, _deps_met  # noqa: E402
@@ -181,15 +182,39 @@ def reserve_and_launch(agents, per_agent, cap, dry):
     return picked
 
 
+def resolve_lanes(selector: str, down: set[str]) -> list[str]:
+    raw = (selector or "auto").strip()
+    if raw == "all":
+        return [agent for agent in PAID_AGENT_ORDER if agent not in down]
+    if raw == "auto":
+        try:
+            board = load_limen_file(TASKS)
+            rows = capacity_census(board)
+        except Exception:
+            rows = []
+        lanes = [
+            str(row.get("agent"))
+            for row in rows
+            if row.get("reachable") and str(row.get("agent")) not in down
+        ]
+        return lanes or [agent for agent in ("codex",) if agent not in down]
+    lanes: list[str] = []
+    for item in raw.split(","):
+        agent = canonical_agent(item.strip())
+        if agent and agent in PAID_AGENT_ORDER and agent not in down and agent not in lanes:
+            lanes.append(agent)
+    return lanes
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--lanes", default="codex,opencode,agy,claude,gemini,jules")
+    ap.add_argument("--lanes", default="auto")
     ap.add_argument("--per-lane", type=int, default=int(os.environ.get("LIMEN_LOCAL_LIMIT", "8")))
     ap.add_argument("--max", type=int, default=int(os.environ.get("LIMEN_ASYNC_MAX", "12")))
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
     down = _down_lanes()
-    lanes = [x.strip() for x in a.lanes.split(",") if x.strip() and x.strip() not in down]
+    lanes = resolve_lanes(a.lanes, down)
     if down:
         print(f"── skipping down lanes: {sorted(down)}")
     reaped = reap_stale(int(os.environ.get("LIMEN_ASYNC_MAX_AGE", "1200")))

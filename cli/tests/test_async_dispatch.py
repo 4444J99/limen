@@ -141,3 +141,21 @@ def test_async_reserve_counts_inflight_against_budget(tmp_path):
         (da.RUNS / f"INF{i}__codex.running").write_text(datetime.datetime.now(datetime.timezone.utc).isoformat())
     picked = da.reserve_and_launch(["codex"], per_agent=8, cap=20, dry=True)
     assert picked == [], f"over-dispatched past in-flight budget: {picked}"
+
+
+def test_resolve_lanes_auto_and_all_use_capacity_registry(tmp_path, monkeypatch):
+    da = _load(tmp_path, n_open=0)
+    monkeypatch.setattr(
+        da,
+        "capacity_census",
+        lambda board: [
+            {"agent": "codex", "reachable": True},
+            {"agent": "claude", "reachable": True},
+            {"agent": "warp", "reachable": False},
+            {"agent": "github_actions", "reachable": True},
+        ],
+    )
+
+    assert da.resolve_lanes("auto", down={"claude"}) == ["codex", "github_actions"]
+    assert "warp" not in da.resolve_lanes("all", down={"warp"})
+    assert da.resolve_lanes("github-actions,antigravity,unknown", down=set()) == ["github_actions", "agy"]

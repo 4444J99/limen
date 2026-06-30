@@ -130,6 +130,24 @@ parameters:
     self_update: none
     owner: continuity
     note: "Ignored local raw/private session cartridge. Stores manifests and optional content-addressed object copies; never committed."
+  LIMEN_CURRENT_SESSION_JSONL:
+    default: ""
+    env: LIMEN_CURRENT_SESSION_JSONL
+    self_update: none
+    owner: continuity
+    note: "Optional explicit Codex session JSONL for current-session fanout. Blank means derive the latest local Codex transcript."
+  LIMEN_MIN_CODEX_PLANNERS:
+    default: 10
+    env: LIMEN_MIN_CODEX_PLANNERS
+    self_update: none
+    owner: continuity
+    note: "Minimum Codex planner packets emitted by current-session fanout before executor waterfalling."
+  LIMEN_CURRENT_SESSION_FANOUT_REPO:
+    default: "organvm/limen"
+    env: LIMEN_CURRENT_SESSION_FANOUT_REPO
+    self_update: none
+    owner: continuity
+    note: "Owner/repo used when current-session fanout seeds queue tasks; normally derived from the checkout remote."
   LIMEN_CAPABILITY_ROOTS:
     default: ""
     env: LIMEN_CAPABILITY_ROOTS
