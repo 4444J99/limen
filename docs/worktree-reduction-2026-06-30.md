@@ -63,6 +63,20 @@ when needed.
 or non-candidate roots, pushes a missing remote head under `--apply`, opens a draft PR, and records
 per-root errors without stopping the rest of the loop.
 
+## Continuation Pass
+
+After the reduction loop reached zero debt, the active lanes continued instead of stopping:
+
+- Photos Universe duplicate proof advanced to `80` processed groups with `79` hash-proven
+  duplicate groups and `1` hash-rejected candidate group. Public receipt:
+  `docs/photos-universe-duplicate-proof-2026-06-29.json` on
+  `work/photos-universe-20260629-182431` at `d45b030`.
+- Portvs triptych ingested that aggregate receipt through a generated proxy only:
+  `incubator/triptych-video-canon/PHOTOS_UNIVERSE_PROXY.md` and
+  `photos_universe_proxy.py` on `work/triptych-story` at `7325b8b`.
+- The Portvs PR receipt stayed open at `https://github.com/organvm/portvs/pull/1`; Limen's
+  preservation receipt was refreshed to the updated PR head.
+
 ## Post-Reduction Gates
 
 Run after removal:
@@ -73,7 +87,8 @@ Run after removal:
 
 Observed after-state:
 
-- Worktree debt: `0` debt-bearing roots / `39` total roots, cap `12`.
-- `/Users/4jp/Workspace/.limen-worktrees`: `1.1G`.
-- Remaining receipt classes: `remote-pr-open=11`, `owner-blocker=2`, `clean+merged+idle=1`.
+- Worktree debt: `0` debt-bearing roots / `34` total roots, cap `12`.
+- `/Users/4jp/Workspace/.limen-worktrees`: `865M`.
+- Remaining receipt classes: `remote-pr-open=11`, `owner-blocker=2`, `active(<24h)=10`,
+  `active(<6h)=11`.
 - Active roots created or updated by the live fleet during this pass were kept for harvest.
