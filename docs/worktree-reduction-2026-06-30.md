@@ -40,7 +40,28 @@ remote-superseded, or documented disposable residue:
 - Portvs `triptych-story` was kept as the active creative surface after absorbing
   `triptych-media-offload-20260629`.
 - `photos-universe-20260629-182431` was kept as the active photos lane.
-- Owner-blocker, open-PR, not-merged, and unpushed roots outside the explicit removals were kept.
+- Owner-blocker and active roots outside the explicit removals were kept.
+
+## PR Receipts Opened
+
+Clean pushed branches that were not merged to default were converted into draft PR receipts instead
+of staying as invisible local worktree debt. Missing remote heads were pushed before PR creation
+when needed.
+
+| Root | PR |
+|---|---|
+| `triptych-story` | `https://github.com/organvm/portvs/pull/1` |
+| `maddie-boundary-20260629` | `https://github.com/organvm/relationship-pipeline/pull/11` |
+| `universal-entry-20260629` | `https://github.com/organvm/domus-genoma/pull/161` |
+| `mirror-mirror` | `https://github.com/organvm/mirror-mirror/pull/96` |
+| `the-invisible-ledger` | `https://github.com/organvm/the-invisible-ledger/pull/79` |
+| `warp-agent-routing-20260629` | `https://github.com/organvm/limen/pull/495` |
+| `limen-main-trench-20260628` | `https://github.com/organvm/limen/pull/493` |
+| `limen-network-substrate-20260628` | `https://github.com/organvm/limen/pull/494` |
+
+`scripts/worktree-pr-receipts.py` now makes this loop repeatable: it scans debt roots, skips dirty
+or non-candidate roots, pushes a missing remote head under `--apply`, opens a draft PR, and records
+per-root errors without stopping the rest of the loop.
 
 ## Post-Reduction Gates
 
@@ -52,7 +73,7 @@ Run after removal:
 
 Observed after-state:
 
-- Worktree debt: `8` debt-bearing roots / `35` total roots, cap `12`.
+- Worktree debt: `0` debt-bearing roots / `39` total roots, cap `12`.
 - `/Users/4jp/Workspace/.limen-worktrees`: `1.1G`.
-- Remaining debt classes: `not-merged-to-default=8`.
+- Remaining receipt classes: `remote-pr-open=11`, `owner-blocker=2`, `clean+merged+idle=1`.
 - Active roots created or updated by the live fleet during this pass were kept for harvest.
