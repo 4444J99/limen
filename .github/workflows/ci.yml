@@ -167,6 +167,10 @@ jobs:
         run: npm ci
         working-directory: web/worker
 
+      - name: Audit npm dependencies
+        run: npm audit --audit-level=high
+        working-directory: web/worker
+
       - name: Check Worker syntax
         run: npm run check
         working-directory: web/worker
@@ -187,6 +191,10 @@ jobs:
 
       - name: Install dashboard dependencies
         run: npm ci
+        working-directory: web/app
+
+      - name: Audit npm dependencies
+        run: npm audit --audit-level=high
         working-directory: web/app
 
       - name: TypeScript type-check
