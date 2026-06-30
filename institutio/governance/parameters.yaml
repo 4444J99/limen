@@ -148,6 +148,60 @@ parameters:
     self_update: none
     owner: continuity
     note: "Owner/repo used when current-session fanout seeds queue tasks; normally derived from the checkout remote."
+  LIMEN_STORAGE_ROOTS:
+    default: "$LIMEN_ROOT"
+    env: LIMEN_STORAGE_ROOTS
+    self_update: none
+    owner: continuity
+    note: "Comma-separated roots for bounded substrate storage discovery. Missing roots are recorded as blockers; no root is mounted or mutated."
+  LIMEN_REPO_ROOTS:
+    default: "$LIMEN_ROOT"
+    env: LIMEN_REPO_ROOTS
+    self_update: none
+    owner: continuity
+    note: "Comma-separated local roots scanned for git repository surfaces by repo-surface ledger. Read-only discovery only."
+  LIMEN_REPO_SCAN_DEPTH:
+    default: 4
+    env: LIMEN_REPO_SCAN_DEPTH
+    self_update: none
+    owner: continuity
+    note: "Maximum directory depth for repo-surface ledger discovery."
+  LIMEN_PROMPT_SOURCES:
+    default: ""
+    env: LIMEN_PROMPT_SOURCES
+    self_update: none
+    owner: continuity
+    note: "Optional prompt source roots for product-ledger lifecycle counting. Empty means use bounded local defaults."
+  LIMEN_ARCHIVE_TARGETS:
+    default: ""
+    env: LIMEN_ARCHIVE_TARGETS
+    self_update: none
+    owner: continuity
+    note: "Optional archive target list for substrate/product ledger classification. Read-only; no archive mutation."
+  LIMEN_STORAGE_FREE_FLOOR_GIB:
+    default: 5
+    env: LIMEN_STORAGE_FREE_FLOOR_GIB
+    self_update: none
+    owner: continuity
+    note: "Minimum free-space floor used by substrate-ledger status classification."
+  LIMEN_STORAGE_USAGE_CEILING_PCT:
+    default: 95
+    env: LIMEN_STORAGE_USAGE_CEILING_PCT
+    self_update: none
+    owner: continuity
+    note: "Maximum storage usage percentage before substrate-ledger marks a root constrained."
+  LIMEN_SUBSTRATE_CONFIG:
+    default: "$LIMEN_ROOT/config/substrate.json"
+    env: LIMEN_SUBSTRATE_CONFIG
+    self_update: none
+    owner: continuity
+    note: "Optional substrate-ledger configuration path. Missing config is non-fatal and recorded."
+  LIMEN_CONTRIB_LEDGER:
+    default: "$LIMEN_ROOT/docs/contrib-ledger.md"
+    env: LIMEN_CONTRIB_LEDGER
+    self_update: none
+    owner: continuity
+    note: "Tracked contrib/product mirror ledger path used for read-only product accounting."
   LIMEN_CAPABILITY_ROOTS:
     default: ""
     env: LIMEN_CAPABILITY_ROOTS

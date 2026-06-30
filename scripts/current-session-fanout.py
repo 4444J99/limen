@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Build redacted planner and executor packets from a Codex session JSONL.
+"""Turn the whole current Codex session into planner and executor packets.
 
-The public receipt contains titles, hashes, line numbers, criteria, predicates,
-and blocker summaries. Raw prompt and plan bodies stay in the ignored private
-JSON snapshot only.
+This does not launch paid agents. It writes receipts/packet specs when asked,
+and defaults to dry-run so banked resets or credits cannot be consumed.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -13,42 +13,39 @@ import hashlib
 import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
+CODE_ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(os.environ.get("LIMEN_ROOT", CODE_ROOT))
 HOME = Path.home()
-PRIVATE_ROOT = Path(
-    os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus")
-)
+PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus"))
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "current-session-fanout.json"
 DOC_PATH = ROOT / "docs" / "current-session-fanout.md"
-
-sys.path.insert(0, str(ROOT / "cli" / "src"))
+sys.path.insert(0, str(CODE_ROOT / "cli" / "src"))
 
 try:
-    from limen.capacity import PAID_AGENT_ORDER, capacity_census, canonical_agent
-except Exception:  # pragma: no cover - hermetic fallback
-    PAID_AGENT_ORDER = ("codex",)
+    from limen.io import load_limen_file, queue_lock, save_limen_file  # noqa: E402
+    from limen.models import Task  # noqa: E402
+except Exception:  # pragma: no cover - import fallback for hermetic tests
+    load_limen_file = None
+    queue_lock = None
+    save_limen_file = None
+    Task = None
 
-    def capacity_census(board: object = None) -> list[dict[str, Any]]:
-        return [
-            {
-                "agent": "codex",
-                "kind": "local-cli",
-                "reachable": True,
-                "detail": "fallback",
-                "remaining": None,
-                "limit": None,
-                "spent": 0,
-            }
-        ]
+try:
+    from limen.capacity import PAID_AGENT_ORDER, canonical_agent, capacity_census, resolve_lane_selector  # noqa: E402
+    from limen.dispatch import _down_lanes  # noqa: E402
+except Exception:  # pragma: no cover - lane-selection fallback
+    PAID_AGENT_ORDER = ("codex", "opencode", "agy", "gemini", "github_actions")
+    capacity_census = None
+    canonical_agent = lambda value: str(value).strip().replace("-", "_")  # noqa: E731
+    resolve_lane_selector = None
+    _down_lanes = None
 
-    def canonical_agent(agent: str | None) -> str:
-        return str(agent or "")
-
-THEMES: list[tuple[str, tuple[str, ...]]] = [
+THEMES = [
     ("alpha-omega-product-ledger", ("1000", "alpha", "omega", "product", "shipped")),
     ("full-fleet-overnight", ("fleet", "overnight", "all night", "lane", "jules")),
     ("dynamic-substrate", ("drive", "mounted", "hard-coded", "archive", "substrate")),
@@ -63,7 +60,18 @@ THEMES: list[tuple[str, tuple[str, ...]]] = [
     ("autopoietic-conductor", ("autopoetic", "autopoietic", "forever", "tokens")),
 ]
 
-PROPOSED_PLAN_RE = re.compile(r"<proposed_plan>\s*(.*?)(?:\s*</proposed_plan>|$)", re.I | re.S)
+FALLBACK_LANE_ALIASES = {
+    "actions": "github_actions",
+    "gha": "github_actions",
+    "github-actions": "github_actions",
+    "antigravity": "agy",
+}
+FALLBACK_ALL_LANES = ["codex", "opencode", "agy", "gemini", "github_actions"]
+
+PROPOSED_PLAN_RE = re.compile(
+    r"<proposed_plan>\s*(.*?)(?:\s*</proposed_plan>|$)",
+    re.IGNORECASE | re.DOTALL,
+)
 MARKDOWN_H1_RE = re.compile(r"(?m)^#\s+(.+?)\s*$")
 PRIOR_PLAN_MARKERS = (
     "a previous agent produced the plan below",
@@ -96,36 +104,45 @@ def text_from_content(value: Any) -> list[str]:
     return []
 
 
-def role_texts_from_obj(obj: dict[str, Any]) -> list[tuple[str, str]]:
+def user_texts_from_obj(obj: dict[str, Any]) -> list[str]:
+    if obj.get("role") == "user":
+        return text_from_content(obj.get("content") or obj.get("text"))
     payload = obj.get("payload")
     if isinstance(payload, dict):
+        if payload.get("type") == "user_message":
+            return text_from_content(payload.get("message")) + text_from_content(payload.get("text_elements"))
+        if payload.get("type") == "message" and payload.get("role") == "user":
+            return text_from_content(payload.get("content"))
+    if obj.get("type") == "message" and obj.get("role") == "user":
+        return text_from_content(obj.get("content"))
+    return []
+
+
+def role_texts_from_obj(obj: dict[str, Any]) -> list[tuple[str, str]]:
+    payload = obj.get("payload")
+    if obj.get("role") in {"user", "assistant"}:
+        role = str(obj["role"])
+        return [(role, text) for text in text_from_content(obj.get("content") or obj.get("text"))]
+    if isinstance(payload, dict):
         if payload.get("type") == "message" and payload.get("role") in {"user", "assistant"}:
-            return [
-                (str(payload["role"]), text)
-                for text in text_from_content(payload.get("content"))
-            ]
+            role = str(payload["role"])
+            return [(role, text) for text in text_from_content(payload.get("content"))]
         if payload.get("type") == "user_message":
             return [("user", text) for text in text_from_content(payload.get("message"))]
         if payload.get("type") == "agent_message":
             return [("assistant", text) for text in text_from_content(payload.get("message"))]
-    if obj.get("role") in {"user", "assistant"}:
-        return [
-            (str(obj["role"]), text)
-            for text in text_from_content(obj.get("content") or obj.get("text"))
-        ]
+    if obj.get("type") == "message" and obj.get("role") in {"user", "assistant"}:
+        role = str(obj["role"])
+        return [(role, text) for text in text_from_content(obj.get("content"))]
     return []
 
 
-def user_texts_from_obj(obj: dict[str, Any]) -> list[str]:
-    return [text for role, text in role_texts_from_obj(obj) if role == "user"]
-
-
-def read_jsonl(path: Path) -> list[tuple[int, dict[str, Any]]]:
+def read_session_messages(path: Path) -> list[dict[str, Any]]:
+    messages: list[dict[str, Any]] = []
     try:
         lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
     except OSError:
-        return []
-    records: list[tuple[int, dict[str, Any]]] = []
+        return messages
     for idx, line in enumerate(lines, start=1):
         if not line.strip():
             continue
@@ -133,19 +150,11 @@ def read_jsonl(path: Path) -> list[tuple[int, dict[str, Any]]]:
             obj = json.loads(line)
         except ValueError:
             continue
-        if isinstance(obj, dict):
-            records.append((idx, obj))
-    return records
-
-
-def read_session_messages(path: Path) -> list[dict[str, Any]]:
-    messages: list[dict[str, Any]] = []
-    for line, obj in read_jsonl(path):
         timestamp = obj.get("timestamp")
         for text in user_texts_from_obj(obj):
             messages.append(
                 {
-                    "line": line,
+                    "line": idx,
                     "timestamp": timestamp,
                     "hash": stable_hash(text, 24),
                     "bytes": len(text.encode("utf-8", errors="replace")),
@@ -162,14 +171,17 @@ def plan_title(text: str) -> str:
 
 def user_prior_plan_block(text: str) -> str | None:
     lower_text = text.lower()
-    marker_index = min(
-        (idx for marker in PRIOR_PLAN_MARKERS if (idx := lower_text.find(marker)) != -1),
-        default=-1,
-    )
+    marker_index = -1
+    for marker in PRIOR_PLAN_MARKERS:
+        marker_index = lower_text.find(marker)
+        if marker_index != -1:
+            break
     if marker_index == -1:
         return None
     match = MARKDOWN_H1_RE.search(text, marker_index)
-    return text[match.start() :] if match else None
+    if not match:
+        return None
+    return text[match.start() :]
 
 
 def plan_event(
@@ -201,12 +213,22 @@ def plan_event(
 def read_session_plan_events(path: Path) -> list[dict[str, Any]]:
     events: list[dict[str, Any]] = []
     seen_messages: set[tuple[str, str, str | None]] = set()
-    for line, obj in read_jsonl(path):
+    try:
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return events
+    for idx, line in enumerate(lines, start=1):
+        if not line.strip():
+            continue
+        try:
+            obj = json.loads(line)
+        except ValueError:
+            continue
         timestamp = obj.get("timestamp")
         for role, text in role_texts_from_obj(obj):
             if not text.strip():
                 continue
-            message_key = (role, text, str(timestamp) if timestamp is not None else None)
+            message_key = (role, text, timestamp)
             if message_key in seen_messages:
                 continue
             seen_messages.add(message_key)
@@ -216,7 +238,7 @@ def read_session_plan_events(path: Path) -> list[dict[str, Any]]:
                 if block:
                     events.append(
                         plan_event(
-                            line=line,
+                            line=idx,
                             timestamp=timestamp,
                             role=role,
                             source_type="user_supplied_prior_plan",
@@ -232,7 +254,7 @@ def read_session_plan_events(path: Path) -> list[dict[str, Any]]:
                         continue
                     events.append(
                         plan_event(
-                            line=line,
+                            line=idx,
                             timestamp=timestamp,
                             role=role,
                             source_type="assistant_proposed_plan",
@@ -245,7 +267,11 @@ def read_session_plan_events(path: Path) -> list[dict[str, Any]]:
 
 
 def mark_plan_duplicates(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    newest_first = sorted(events, key=lambda event: (int(event["line"]), str(event["timestamp"] or "")), reverse=True)
+    newest_first = sorted(
+        events,
+        key=lambda event: (int(event["line"]), str(event["timestamp"] or "")),
+        reverse=True,
+    )
     seen: dict[str, str] = {}
     for event in newest_first:
         plan_hash = str(event["hash"])
@@ -277,44 +303,49 @@ def latest_codex_session() -> Path | None:
 
 
 def find_session(path_arg: str | None) -> Path:
-    path = Path(path_arg).expanduser() if path_arg else latest_codex_session()
+    if path_arg:
+        path = Path(path_arg).expanduser()
+    else:
+        path = latest_codex_session()
     if path is None or not path.exists():
         raise FileNotFoundError("no Codex session JSONL found; set LIMEN_CURRENT_SESSION_JSONL or pass --session")
     return path
 
 
-def matched_themes(messages: list[dict[str, Any]], plan_events: list[dict[str, Any]]) -> list[str]:
-    body = "\n".join(
-        [str(msg["text"]).lower() for msg in messages]
-        + [str(event.get("text") or "").lower() for event in plan_events]
-    )
+def matched_themes(messages: list[dict[str, Any]], plan_events: list[dict[str, Any]] | None = None) -> list[str]:
+    body = "\n".join(str(msg["text"]).lower() for msg in messages)
+    if plan_events:
+        body += "\n" + "\n".join(str(event.get("title", "")).lower() for event in plan_events)
     found = [name for name, needles in THEMES if any(needle in body for needle in needles)]
     return found or ["current-session-intake"]
 
 
-def lane_rows() -> list[dict[str, Any]]:
-    try:
-        rows = list(capacity_census(None))
-    except Exception:
-        rows = []
+def _row_value(row: Any, key: str, default: Any = None) -> Any:
+    if isinstance(row, dict):
+        return row.get(key, default)
+    return getattr(row, key, default)
+
+
+def _normalize_lane_rows(rows: list[Any]) -> list[dict[str, Any]]:
     normalized: list[dict[str, Any]] = []
     for row in rows:
-        remaining = row.get("remaining")
-        detail = str(row.get("detail") or "")
-        if row.get("reachable"):
+        remaining = _row_value(row, "remaining")
+        detail = str(_row_value(row, "detail", "") or "")
+        reachable = bool(_row_value(row, "reachable", False))
+        if reachable:
             status = "active"
         elif remaining == 0:
             status = "depleted"
         elif any(needle in detail.lower() for needle in ("not set", "auth", "assignable", "no model pulled")):
             status = "human-gated"
         else:
-            status = "down"
+            status = str(_row_value(row, "status", "") or "down")
         normalized.append(
             {
-                "agent": str(row.get("agent") or ""),
-                "kind": str(row.get("kind") or ""),
+                "agent": str(_row_value(row, "agent", "") or ""),
+                "kind": str(_row_value(row, "kind", "") or ""),
                 "status": status,
-                "reachable": bool(row.get("reachable")),
+                "reachable": reachable,
                 "remaining": remaining,
                 "detail": detail,
             }
@@ -333,24 +364,79 @@ def lane_rows() -> list[dict[str, Any]]:
     return normalized
 
 
-def lane_selection(selector: str, rows: list[dict[str, Any]]) -> list[str]:
-    value = (selector or "auto").strip()
-    by_agent = {row["agent"]: row for row in rows}
-    if value == "all":
-        return [str(agent) for agent in PAID_AGENT_ORDER]
-    if value == "auto":
+def lane_rows() -> list[dict[str, Any]]:
+    if capacity_census is None or load_limen_file is None:
+        return _normalize_lane_rows(
+            [
+                {
+                    "agent": agent,
+                    "kind": "fallback",
+                    "status": "active",
+                    "reachable": True,
+                    "remaining": None,
+                    "detail": "fallback",
+                }
+                for agent in FALLBACK_ALL_LANES
+            ]
+        )
+    try:
+        board = load_limen_file(ROOT / "tasks.yaml")
+        return _normalize_lane_rows(list(capacity_census(board)))
+    except Exception:
+        return _normalize_lane_rows([])
+
+
+def lane_selection(selector: str, rows: list[dict[str, Any]] | None = None) -> list[str]:
+    if selector and selector not in {"auto", "all"}:
+        lanes = [
+            FALLBACK_LANE_ALIASES.get(item.strip(), item.strip())
+            for item in re.split(r"[,:\s]+", selector)
+            if item.strip()
+        ]
+        if lanes:
+            return list(dict.fromkeys(lanes))
+    if rows is not None:
+        by_agent = {row["agent"]: row for row in rows}
+        if selector == "all":
+            return [str(agent) for agent in PAID_AGENT_ORDER]
         active = [str(agent) for agent in PAID_AGENT_ORDER if by_agent.get(str(agent), {}).get("status") == "active"]
         return active or ["codex"]
-    selected: list[str] = []
-    for raw in value.split(","):
-        agent = canonical_agent(raw.strip())
-        if agent and agent in PAID_AGENT_ORDER and agent not in selected:
-            selected.append(agent)
-    return selected or ["codex"]
+    if resolve_lane_selector is None or load_limen_file is None or _down_lanes is None:
+        if selector == "all":
+            return list(FALLBACK_ALL_LANES)
+        return ["codex"]
+    try:
+        board = load_limen_file(ROOT / "tasks.yaml")
+        return list(resolve_lane_selector(selector, board=board, down_lanes=_down_lanes()))
+    except Exception:
+        return ["codex"]
 
 
 def packet_slug(value: str) -> str:
-    return re.sub(r"[^a-z0-9._-]+", "-", value.lower()).strip("-") or "packet"
+    slug = re.sub(r"[^a-z0-9._-]+", "-", value.lower()).strip("-")
+    return slug or "packet"
+
+
+def origin_repo_slug() -> str:
+    explicit = os.environ.get("LIMEN_CURRENT_SESSION_FANOUT_REPO")
+    if explicit:
+        return explicit
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(ROOT), "remote", "get-url", "origin"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return "organvm/limen"
+    if result.returncode != 0:
+        return "organvm/limen"
+    remote = result.stdout.strip()
+    match = re.search(r"github\.com[:/]([^/\s]+)/([^/\s]+?)(?:\.git)?$", remote)
+    if not match:
+        return "organvm/limen"
+    return f"{match.group(1)}/{match.group(2)}"
 
 
 def owner_packet_for_theme(theme: str) -> dict[str, Any]:
@@ -393,7 +479,7 @@ def planner_packets(
     messages: list[dict[str, Any]],
     min_codex: int,
     no_reset_spend: bool,
-    source_plan_hashes: list[str],
+    source_plan_hashes: list[str] | None = None,
 ) -> list[dict[str, Any]]:
     seed_themes = list(themes)
     idx = 1
@@ -401,6 +487,7 @@ def planner_packets(
         seed_themes.append(f"product-factory-{idx:02d}")
         idx += 1
     prompt_hashes = [msg["hash"] for msg in messages]
+    plan_hashes = list(source_plan_hashes or [])
     packets: list[dict[str, Any]] = []
     for idx, theme in enumerate(seed_themes, start=1):
         owner = owner_packet_for_theme(theme)
@@ -413,25 +500,26 @@ def planner_packets(
                 "worktree_slug": packet_slug(f"planner-{idx:02d}-{theme}")[:80],
                 "spend_guard": "no-reset-spend" if no_reset_spend else "operator-allowed-reset-spend",
                 "source_prompt_hashes": prompt_hashes,
-                "source_plan_hashes": list(source_plan_hashes),
+                "source_plan_hashes": list(plan_hashes),
                 "owner_packet": owner,
                 "acceptance": [
                     "derive owner packets from the full session, not just the latest turn",
                     "emit executor criteria and verification predicates",
                     "record blocked local work without stopping global product selection",
                 ],
+                "executor_criteria": [
+                    "name the owner repo or owner ledger, allowed files, stop condition, receipt target, and target lane before dispatch",
+                    "use source_prompt_hashes and source_plan_hashes as provenance instead of pasting raw prompt or plan text",
+                    "split local blockers into owner-recorded work while keeping other unblocked product rows eligible",
+                ],
+                "verification_predicates": [
+                    "python3 scripts/current-session-fanout.py --session <source-session-jsonl> --min-codex-planners 12 --executor-lanes auto --include-contrib --no-reset-spend --dry-run",
+                    "python3 scripts/product-ledger.py --refresh --redacted-summary",
+                    "PYTHONPATH=cli/src python3 -m pytest cli/tests/test_substrate_repo_product_fanout.py -q",
+                ],
             }
         )
     return packets
-
-
-def executor_packet_predicates(theme: str) -> list[str]:
-    if theme == "full-fleet-overnight":
-        return owner_packet_for_theme(theme)["verification_predicates"]
-    return [
-        "PYTHONPATH=cli/src python3 -m pytest cli/tests/test_current_session_fanout.py -q",
-        "python3 -m py_compile scripts/current-session-fanout.py",
-    ]
 
 
 def executor_packets(
@@ -439,10 +527,11 @@ def executor_packets(
     lanes: list[str],
     include_contrib: bool,
     no_reset_spend: bool,
-    source_plan_hashes: list[str],
+    source_plan_hashes: list[str] | None = None,
 ) -> list[dict[str, Any]]:
     packets: list[dict[str, Any]] = []
     work_themes = list(themes)
+    plan_hashes = list(source_plan_hashes or [])
     if include_contrib and "contrib-mirror" not in work_themes:
         work_themes.append("contrib-mirror")
     for lane in lanes:
@@ -456,17 +545,190 @@ def executor_packets(
                 "target_agent": lane,
                 "theme": theme,
                 "spend_guard": "no-reset-spend" if no_reset_spend and lane == "codex" else "lane-policy",
-                "source_plan_hashes": list(source_plan_hashes),
-                "executor_criteria": [
+                "source_plan_hashes": list(plan_hashes),
+                "acceptance": [
                     "bounded reversible work only",
-                    "return changed paths, predicate result, PR/deploy/receipt, and blocker if any",
-                    "do not perform outbound sends, credential minting, purchases, deletes, or mass merges",
-                    "if this lane is blocked, record the blocker and continue global product selection",
+                    "return changed paths, predicate, PR/deploy/receipt, and blocker if any",
+                    "do not perform outbound sends or credential/credit mutations",
                 ],
-                "verification_predicates": executor_packet_predicates(theme),
+                "executor_criteria": [
+                    "execute only after a planner packet has named owner scope and a narrow predicate",
+                    "write changed paths, predicate result, and receipt or blocker into the owner surface",
+                    "treat failed local prerequisites as lane/blocker records, not as a stop for global product selection",
+                ],
+                "verification_predicates": [
+                    "run the owner predicate named by the planner packet",
+                    "python3 scripts/product-ledger.py --refresh --redacted-summary",
+                ],
             }
         )
     return packets
+
+
+def task_seed_id(session_hash: str, packet_id: str) -> str:
+    stem = re.sub(r"[^A-Z0-9-]+", "-", packet_id.upper()).strip("-")
+    return f"CSF-{session_hash[:8].upper()}-{stem}"[:120]
+
+
+def task_seed_context(
+    *,
+    snapshot: dict[str, Any],
+    packet: dict[str, Any],
+    phase: str,
+) -> str:
+    acceptance = "\n".join(f"- {item}" for item in packet.get("acceptance", []))
+    executor_criteria = "\n".join(f"- {item}" for item in packet.get("executor_criteria", []))
+    verification_predicates = "\n".join(f"- {item}" for item in packet.get("verification_predicates", []))
+    plan_hashes = ", ".join(str(value) for value in snapshot.get("source_plan_hashes", []))
+    prompt_hashes = ", ".join(str(value) for value in snapshot.get("prompt_hashes", [])[:12])
+    if len(snapshot.get("prompt_hashes", [])) > 12:
+        prompt_hashes += ", ..."
+    return (
+        f"Current-session fanout {phase} packet.\n"
+        f"Packet id: {packet['id']}\n"
+        f"Theme: {packet.get('theme', 'current-session-intake')}\n"
+        f"Source session: {snapshot['session_path']}\n"
+        f"Source plan hashes: {plan_hashes or 'none'}\n"
+        f"Source prompt hashes: {prompt_hashes or 'none'}\n"
+        "Do not paste raw private prompt or plan bodies into public files, commits, PRs, "
+        "task logs, or outbound systems. Use the hashes above as provenance.\n"
+        "Acceptance:\n"
+        f"{acceptance}\n"
+        "Executor criteria:\n"
+        f"{executor_criteria}\n"
+        "Verification predicates:\n"
+        f"{verification_predicates}"
+    )
+
+
+def task_seed_specs(snapshot: dict[str, Any], repo: str | None = None) -> list[dict[str, Any]]:
+    repo = repo or origin_repo_slug()
+    created = dt.date.today().isoformat()
+    session_hash = str(snapshot["session_hash"])
+    seed: list[dict[str, Any]] = []
+    planner_task_ids: dict[str, str] = {}
+
+    for packet in snapshot.get("planner_packets", []):
+        task_id = task_seed_id(session_hash, str(packet["id"]))
+        planner_task_ids.setdefault(str(packet.get("theme")), task_id)
+        seed.append(
+            {
+                "id": task_id,
+                "title": f"Plan current-session fanout stream: {packet.get('theme')}",
+                "description": "Derive a bounded owner packet and verification predicate from the proofed session fanout.",
+                "repo": repo,
+                "type": "code",
+                "target_agent": packet["target_agent"],
+                "priority": "high",
+                "budget_cost": 1,
+                "status": "open",
+                "labels": [
+                    "current-session-fanout",
+                    "planner",
+                    "generated",
+                    "product",
+                    "ship-order",
+                    "no-reset-spend",
+                ],
+                "urls": [],
+                "context": task_seed_context(snapshot=snapshot, packet=packet, phase="planner"),
+                "depends_on": [],
+                "created": created,
+                "dispatch_log": [],
+                "packet_id": packet["id"],
+                "packet_type": packet["packet_type"],
+                "theme": packet.get("theme"),
+                "source_plan_hashes": list(packet.get("source_plan_hashes", [])),
+                "executor_criteria": list(packet.get("executor_criteria", [])),
+                "verification_predicates": list(packet.get("verification_predicates", [])),
+            }
+        )
+
+    fallback_planner = seed[0]["id"] if seed else None
+    for packet in snapshot.get("executor_packets", []):
+        depends_on = [planner_task_ids.get(str(packet.get("theme")), fallback_planner)]
+        depends_on = [task_id for task_id in depends_on if task_id]
+        seed.append(
+            {
+                "id": task_seed_id(session_hash, str(packet["id"])),
+                "title": f"Execute current-session fanout stream: {packet.get('theme')}",
+                "description": "Run the bounded executor lane after the matching planner packet lands.",
+                "repo": repo,
+                "type": "code",
+                "target_agent": packet["target_agent"],
+                "priority": "high",
+                "budget_cost": 1,
+                "status": "open",
+                "labels": [
+                    "current-session-fanout",
+                    "executor",
+                    "generated",
+                    "product",
+                    "ship-order",
+                ],
+                "urls": [],
+                "context": task_seed_context(snapshot=snapshot, packet=packet, phase="executor"),
+                "depends_on": depends_on,
+                "created": created,
+                "dispatch_log": [],
+                "packet_id": packet["id"],
+                "packet_type": packet["packet_type"],
+                "theme": packet.get("theme"),
+                "source_plan_hashes": list(packet.get("source_plan_hashes", [])),
+                "executor_criteria": list(packet.get("executor_criteria", [])),
+                "verification_predicates": list(packet.get("verification_predicates", [])),
+            }
+        )
+    return seed
+
+
+def task_model_payload(spec: dict[str, Any]) -> dict[str, Any]:
+    return {
+        key: spec[key]
+        for key in (
+            "id",
+            "title",
+            "description",
+            "repo",
+            "type",
+            "target_agent",
+            "priority",
+            "budget_cost",
+            "status",
+            "labels",
+            "urls",
+            "context",
+            "depends_on",
+            "created",
+            "dispatch_log",
+        )
+        if key in spec
+    }
+
+
+def apply_task_seed(snapshot: dict[str, Any], tasks_path: Path) -> dict[str, Any]:
+    if load_limen_file is None or save_limen_file is None or queue_lock is None or Task is None:
+        return {"status": "blocked", "reason": "limen task model unavailable", "appended": 0, "skipped": 0}
+    seed = list(snapshot.get("task_seed", []))
+    if not seed:
+        return {"status": "ready", "reason": "no task seed requested", "appended": 0, "skipped": 0}
+    appended = 0
+    skipped = 0
+    with queue_lock(tasks_path) as got:
+        if not got:
+            return {"status": "blocked", "reason": "queue lock unavailable", "appended": 0, "skipped": 0}
+        fresh = load_limen_file(tasks_path)
+        existing = {task.id for task in fresh.tasks}
+        for spec in seed:
+            if spec["id"] in existing:
+                skipped += 1
+                continue
+            fresh.tasks.append(Task(**task_model_payload(spec)))
+            existing.add(spec["id"])
+            appended += 1
+        if appended:
+            save_limen_file(tasks_path, fresh)
+    return {"status": "ready", "appended": appended, "skipped": skipped, "tasks_path": str(tasks_path)}
 
 
 def digest_blockers() -> list[dict[str, str]]:
@@ -478,10 +740,22 @@ def digest_blockers() -> list[dict[str, str]]:
         line = line.strip()
         match = re.match(r"##\s+\d+\.\s+(.+?)(?:\s+—\s+(.+))?$", line)
         if match:
-            blockers.append({"source": "docs/NEEDS-HUMAN-DIGEST.md", "item": match.group(1), "impact": match.group(2) or ""})
+            blockers.append(
+                {
+                    "source": "docs/NEEDS-HUMAN-DIGEST.md",
+                    "item": match.group(1),
+                    "impact": match.group(2) or "",
+                }
+            )
         elif line.startswith("- ASK-"):
             parts = line.removeprefix("- ").split("—", 1)
-            blockers.append({"source": "docs/NEEDS-HUMAN-DIGEST.md", "item": parts[0].strip(), "impact": parts[1].strip() if len(parts) > 1 else ""})
+            blockers.append(
+                {
+                    "source": "docs/NEEDS-HUMAN-DIGEST.md",
+                    "item": parts[0].strip(),
+                    "impact": parts[1].strip() if len(parts) > 1 else "",
+                }
+            )
     return blockers
 
 
@@ -509,6 +783,54 @@ def packet_plan_hash_intersection(packets: list[dict[str, Any]]) -> set[str]:
     return covered
 
 
+def fanout_verification_command(
+    *,
+    session: Path,
+    min_codex_planners: int,
+    executor_lanes: str,
+    include_contrib: bool,
+    no_reset_spend: bool,
+) -> str:
+    args = [
+        "python3",
+        "scripts/current-session-fanout.py",
+        "--session",
+        str(session),
+        "--min-codex-planners",
+        str(min_codex_planners),
+        "--executor-lanes",
+        executor_lanes,
+    ]
+    if include_contrib:
+        args.append("--include-contrib")
+    args.append("--no-reset-spend" if no_reset_spend else "--allow-reset-spend")
+    args.append("--dry-run")
+    return " ".join(args)
+
+
+def set_run_verification_predicate(
+    packets: list[dict[str, Any]],
+    *,
+    session: Path,
+    args: argparse.Namespace,
+    no_reset_spend: bool,
+) -> None:
+    command = fanout_verification_command(
+        session=session,
+        min_codex_planners=args.min_codex_planners,
+        executor_lanes=args.executor_lanes,
+        include_contrib=args.include_contrib,
+        no_reset_spend=no_reset_spend,
+    )
+    for packet in packets:
+        predicates = list(packet.get("verification_predicates") or [])
+        if predicates:
+            predicates[0] = command
+        else:
+            predicates = [command]
+        packet["verification_predicates"] = predicates
+
+
 def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
     session = find_session(args.session)
     messages = read_session_messages(session)
@@ -517,16 +839,31 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
     source_plan_hashes = [str(event["hash"]) for event in unique_sources]
     themes = matched_themes(messages, plan_events)
     rows = lane_rows()
-    lanes = lane_selection(args.executor_lanes, rows)
+    try:
+        lanes = lane_selection(args.executor_lanes, rows)
+    except TypeError:
+        lanes = lane_selection(args.executor_lanes)
     no_reset_spend = not args.allow_reset_spend
-    planners = planner_packets(themes, messages, args.min_codex_planners, no_reset_spend, source_plan_hashes)
-    executors = executor_packets(themes, lanes, args.include_contrib, no_reset_spend, source_plan_hashes)
-    all_packets = planners + executors
-    packet_plan_hashes = packet_plan_hash_intersection(all_packets)
-    unconsolidated_plan_hashes = [
-        plan_hash for plan_hash in source_plan_hashes if plan_hash not in packet_plan_hashes
-    ]
+    planners = planner_packets(
+        themes,
+        messages,
+        args.min_codex_planners,
+        no_reset_spend,
+        source_plan_hashes,
+    )
+    executors = executor_packets(
+        themes,
+        lanes,
+        args.include_contrib,
+        no_reset_spend,
+        source_plan_hashes,
+    )
+    set_run_verification_predicate(planners, session=session, args=args, no_reset_spend=no_reset_spend)
+    packet_plan_hashes = packet_plan_hash_intersection(planners + executors)
+    unconsolidated_plan_hashes = [plan_hash for plan_hash in source_plan_hashes if plan_hash not in packet_plan_hashes]
     for event in plan_events:
+        event["included"] = str(event["hash"]) in packet_plan_hashes
+    for event in unique_sources:
         event["included"] = str(event["hash"]) in packet_plan_hashes
     blockers = blocked_local_work(rows)
     global_status = "active" if planners else "blocked"
@@ -543,9 +880,9 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
         "unique_plan_count": len(unique_sources),
         "duplicate_plan_count": len(plan_events) - len(unique_sources),
         "source_plan_hashes": source_plan_hashes,
+        "plan_hashes": source_plan_hashes,
         "unconsolidated_plan_hashes": unconsolidated_plan_hashes,
         "themes": themes,
-        "lane_classification": rows,
         "executor_lanes": lanes,
         "no_reset_spend": no_reset_spend,
         "planner_packets": planners,
@@ -553,25 +890,20 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
         "blocked_local_work": blockers,
         "global_product_selection": {
             "status": global_status,
-            "reason": "local blockers are recorded per owner/lane; unblocked planner packets remain selectable",
+            "reason": "planner packets remain eligible while local blockers are owner-recorded",
         },
         "status": "ready" if messages and planners and not unconsolidated_plan_hashes else "blocked",
     }
+    if getattr(args, "seed_tasks", False) or getattr(args, "apply_task_seed", False):
+        seed = task_seed_specs(snapshot)
+        snapshot["task_seed"] = seed
+        snapshot["task_seed_count"] = len(seed)
+        snapshot["task_seed_repo"] = seed[0]["repo"] if seed else origin_repo_slug()
+    else:
+        snapshot["task_seed"] = []
+        snapshot["task_seed_count"] = 0
+        snapshot["task_seed_repo"] = None
     return snapshot
-
-
-def public_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
-    """Drop raw private text fields before rendering/public tests inspect output."""
-    text_fields = {"text"}
-
-    def cleanse(value: Any) -> Any:
-        if isinstance(value, dict):
-            return {k: cleanse(v) for k, v in value.items() if k not in text_fields}
-        if isinstance(value, list):
-            return [cleanse(item) for item in value]
-        return value
-
-    return cleanse(snapshot)
 
 
 def markdown_cell(value: Any) -> str:
@@ -580,35 +912,33 @@ def markdown_cell(value: Any) -> str:
 
 
 def render_markdown(snapshot: dict[str, Any]) -> str:
-    public = public_snapshot(snapshot)
     lines = [
         "# Current Session Fanout",
         "",
-        f"Generated: `{public['generated_at']}`",
-        f"Status: `{public['status']}`",
-        f"User messages: `{public['user_messages']}`",
-        f"Prompt bytes: `{public['prompt_bytes']}`",
-        f"No reset spend: `{public['no_reset_spend']}`",
-        f"Global product selection: `{public['global_product_selection']['status']}`",
+        f"Generated: `{snapshot['generated_at']}`",
+        f"Status: `{snapshot['status']}`",
+        f"User messages: `{snapshot['user_messages']}`",
+        f"Prompt bytes: `{snapshot['prompt_bytes']}`",
+        f"No reset spend: `{snapshot['no_reset_spend']}`",
         "",
         "## Themes",
         "",
     ]
-    for theme in public["themes"]:
+    for theme in snapshot["themes"]:
         lines.append(f"- `{theme}`")
     lines += [
         "",
         "## Plan Source Proof",
         "",
-        f"Plan events: {public.get('plan_event_count', 0)}",
-        f"Unique plan sources: {public.get('unique_plan_count', 0)}",
-        f"Duplicate plan events: {public.get('duplicate_plan_count', 0)}",
-        f"Unconsolidated plan events: {len(public.get('unconsolidated_plan_hashes', []))}",
+        f"Plan events: {snapshot.get('plan_event_count', 0)}",
+        f"Unique plan sources: {snapshot.get('unique_plan_count', 0)}",
+        f"Duplicate plan events: {snapshot.get('duplicate_plan_count', 0)}",
+        f"Unconsolidated plan events: {len(snapshot.get('unconsolidated_plan_hashes', []))}",
         "",
         "| Title | Timestamp | Transcript line | Hash | Duplicate | Included |",
         "|---|---|---:|---|---|---|",
     ]
-    for event in public.get("plan_events", []):
+    for event in snapshot.get("plan_events", []):
         duplicate_status = "duplicate" if event.get("duplicate") else "unique"
         included_status = "included" if event.get("included") else "missing"
         lines.append(
@@ -624,77 +954,96 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "",
         "## Planner Packets",
         "",
-        "| Packet | Agent | Worktree | Theme | Criteria |",
-        "|---|---|---|---|---|",
+        "| Packet | Agent | Worktree | Theme |",
+        "|---|---|---|---|",
     ]
-    for packet in public["planner_packets"]:
-        criteria = "; ".join(packet["owner_packet"].get("criteria", [])[:2])
+    for packet in snapshot["planner_packets"]:
         lines.append(
-            f"| `{packet['id']}` | `{packet['target_agent']}` | `{packet['worktree_slug']}` | "
-            f"`{packet['theme']}` | {markdown_cell(criteria)} |"
+            f"| `{packet['id']}` | `{packet['target_agent']}` | `{packet['worktree_slug']}` | `{packet['theme']}` |"
         )
     lines += [
         "",
         "## Executor Packets",
         "",
-        "| Packet | Agent | Theme | Criteria | Predicate |",
-        "|---|---|---|---|---|",
+        "| Packet | Agent | Theme |",
+        "|---|---|---|",
     ]
-    for packet in public["executor_packets"]:
-        criteria = "; ".join(packet.get("executor_criteria", [])[:2])
-        predicate = (packet.get("verification_predicates") or [""])[0]
-        lines.append(
-            f"| `{packet['id']}` | `{packet['target_agent']}` | `{packet['theme']}` | "
-            f"{markdown_cell(criteria)} | `{markdown_cell(predicate)}` |"
+    for packet in snapshot["executor_packets"]:
+        lines.append(f"| `{packet['id']}` | `{packet['target_agent']}` | `{packet['theme']}` |")
+    lines += [
+        "",
+        "## Executor Criteria",
+        "",
+        "| Packet | Criteria | Verification predicates |",
+        "|---|---|---|",
+    ]
+    for packet in snapshot["planner_packets"] + snapshot["executor_packets"]:
+        criteria = "<br>".join(markdown_cell(item) for item in packet.get("executor_criteria", [])) or "none"
+        predicates = (
+            "<br>".join(f"`{markdown_cell(item)}`" for item in packet.get("verification_predicates", [])) or "none"
         )
-    focused = [packet for packet in public["planner_packets"] if packet["theme"] == "full-fleet-overnight"]
-    if focused:
-        packet = focused[0]
+        lines.append(f"| `{packet['id']}` | {criteria} | {predicates} |")
+    full_fleet = next(
+        (packet for packet in snapshot["planner_packets"] if packet.get("theme") == "full-fleet-overnight"),
+        None,
+    )
+    if full_fleet:
+        owner = full_fleet.get("owner_packet", {})
         lines += [
             "",
             "## Full-Fleet Overnight Owner Packet",
             "",
-            f"Packet: `{packet['id']}`",
-            f"Owner repo: `{packet['owner_packet']['owner_repo']}`",
-            f"Owner ledger: `{packet['owner_packet']['owner_ledger']}`",
+            f"Owner repo: `{owner.get('owner_repo', 'unknown')}`",
+            f"Owner ledger: `{owner.get('owner_ledger', 'unknown')}`",
             "",
             "Executor criteria:",
-            "",
         ]
-        lines.extend(f"- {item}" for item in packet["owner_packet"]["criteria"])
-        lines += ["", "Verification predicates:", ""]
-        lines.extend(f"- `{item}`" for item in packet["owner_packet"]["verification_predicates"])
+        lines.extend(f"- {item}" for item in owner.get("criteria", []))
+        lines += ["", "Verification predicates:"]
+        lines.extend(f"- `{item}`" for item in owner.get("verification_predicates", []))
     lines += [
         "",
-        "## Lane Classification",
+        "## Global Product Selection",
         "",
-        "| Agent | Kind | Status | Detail |",
-        "|---|---|---|---|",
+        f"Global product selection remains `{snapshot['global_product_selection']['status']}`.",
     ]
-    for row in public["lane_classification"]:
-        lines.append(
-            f"| `{row['agent']}` | `{row['kind']}` | `{row['status']}` | {markdown_cell(row['detail'])} |"
-        )
-    lines += [
-        "",
-        "## Blocked Local Work",
-        "",
-        f"Global product selection remains `{public['global_product_selection']['status']}`.",
-        "",
-        "| Source | Item | Impact |",
-        "|---|---|---|",
-    ]
-    for blocker in public["blocked_local_work"]:
-        lines.append(
-            f"| `{markdown_cell(blocker.get('source'))}` | {markdown_cell(blocker.get('item'))} | "
-            f"{markdown_cell(blocker.get('impact'))} |"
-        )
+    if snapshot.get("blocked_local_work"):
+        lines += ["", "Blocked local work:"]
+        for blocker in snapshot["blocked_local_work"]:
+            impact = blocker.get("impact") or "recorded"
+            lines.append(f"- {markdown_cell(blocker.get('item'))}: {markdown_cell(impact)}")
+    if snapshot.get("task_seed"):
+        lines += [
+            "",
+            "## Task Seed",
+            "",
+            f"Seed tasks: {snapshot.get('task_seed_count', 0)}",
+            f"Seed repo: `{snapshot.get('task_seed_repo')}`",
+        ]
+        if snapshot.get("task_seed_apply"):
+            apply_result = snapshot["task_seed_apply"]
+            lines.append(
+                "Apply result: "
+                f"`{apply_result.get('status')}` "
+                f"(appended {apply_result.get('appended', 0)}, skipped {apply_result.get('skipped', 0)})"
+            )
+        lines += [
+            "",
+            "| Task | Type | Agent | Depends on | Theme |",
+            "|---|---|---|---|---|",
+        ]
+        for spec in snapshot["task_seed"]:
+            depends_on = ", ".join(f"`{task_id}`" for task_id in spec.get("depends_on", [])) or "none"
+            lines.append(
+                f"| `{spec['id']}` | `{spec['packet_type']}` | `{spec['target_agent']}` | "
+                f"{depends_on} | `{spec.get('theme')}` |"
+            )
     lines += [
         "",
         "## Contract",
         "",
         "- Planner packets are Codex conductor work; executor packets go to active fleet lanes.",
-        "- Down, depleted, or human-gated lanes are receipts, not a global stop condition.",
+        "- Task seeding appends only `open` queue items; `dispatch-async.py` or `limen dispatch` launches them.",
         "- This command never applies Codex resets, credits, top-ups, or paid overages.",
         "- Outbound identity-bearing actions remain human-gated.",
     ]
@@ -716,11 +1065,15 @@ def main() -> int:
     parser.add_argument("--include-contrib", action="store_true")
     parser.add_argument("--no-reset-spend", dest="allow_reset_spend", action="store_false", default=False)
     parser.add_argument("--allow-reset-spend", action="store_true", default=False)
+    parser.add_argument("--seed-tasks", action="store_true", help="derive deterministic open task specs from packets")
+    parser.add_argument("--apply-task-seed", action="store_true", help="append derived open tasks to tasks.yaml")
+    parser.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS", str(ROOT / "tasks.yaml")))
     parser.add_argument("--dry-run", action="store_true", help="print only; never write")
     parser.add_argument("--write", action="store_true", help="write packet receipts")
     args = parser.parse_args()
-
     snapshot = build_snapshot(args)
+    if args.apply_task_seed and not args.dry_run:
+        snapshot["task_seed_apply"] = apply_task_seed(snapshot, Path(args.tasks))
     markdown = render_markdown(snapshot)
     if args.write and not args.dry_run:
         write_outputs(snapshot, markdown)
