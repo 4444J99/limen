@@ -193,10 +193,14 @@ def harvest(agent):
 
 @main.command("workstream")
 @click.option("--codex", "launch_codex", is_flag=True, help="Open Codex in the worktree after creating the packet.")
-@click.option("--shell", "launch_shell", is_flag=True, help="Open a login shell in the worktree after creating the packet.")
+@click.option(
+    "--shell", "launch_shell", is_flag=True, help="Open a login shell in the worktree after creating the packet."
+)
 @click.option("--from", "from_ref", default=None, help="Branch or ref to create the worktree branch from.")
 @click.option("--prompt", "prompt_text", default=None, help="Inline prompt packet for .limen-workstream/README.md.")
-@click.option("--prompt-file", default=None, type=click.Path(exists=True), help="Prompt packet file to embed in README.md.")
+@click.option(
+    "--prompt-file", default=None, type=click.Path(exists=True), help="Prompt packet file to embed in README.md."
+)
 @click.option("--no-readme", is_flag=True, help="Create/reuse the worktree without writing the private kickoff packet.")
 @click.argument("repo")
 @click.argument("slug")
