@@ -35,6 +35,7 @@ VALID_AGENTS = {
     "any",
 }
 VALID_DISPATCH_AGENTS = VALID_AGENTS - {"any"}
+MAX_TASK_LIST_LENGTH = 20
 TASK_ID_PATTERN = r"^[A-Za-z0-9][A-Za-z0-9._/-]*$"
 TASK_ID_RE = re.compile(TASK_ID_PATTERN)
 LABEL_PATTERN = r"^[A-Za-z0-9][A-Za-z0-9._/-]*$"
@@ -62,11 +63,28 @@ def validate_label_list(value: list[str] | None) -> list[str] | None:
         return None
     if not isinstance(value, list):
         raise ValueError("labels must be a list")
+    if len(value) > MAX_TASK_LIST_LENGTH:
+        raise ValueError(f"labels must have at most {MAX_TASK_LIST_LENGTH} items")
     for label in value:
         if not isinstance(label, str):
             raise ValueError("each label must be a string")
         if len(label) > 64 or not LABEL_RE.match(label):
             raise ValueError("labels must be 1-64 characters and contain only letters, numbers, '.', '_', '-', or '/'")
+    return value
+
+
+def validate_url_list(value: list[str] | None) -> list[str] | None:
+    if value is None:
+        return None
+    if not isinstance(value, list):
+        raise ValueError("urls must be a list")
+    if len(value) > MAX_TASK_LIST_LENGTH:
+        raise ValueError(f"urls must have at most {MAX_TASK_LIST_LENGTH} items")
+    for url in value:
+        if not isinstance(url, str):
+            raise ValueError("each url must be a string")
+        if not is_valid_url(url):
+            raise ValueError(f"invalid URL format: {url}")
     return value
 
 
@@ -123,8 +141,8 @@ class TaskCreate(BaseModel):
     priority: str = "medium"
     budget_cost: int = Field(default=1, ge=1, le=100)
     status: str = "open"
-    labels: list[str] = Field(default_factory=list, max_length=20)
-    urls: list[str] = Field(default_factory=list, max_length=20)
+    labels: list[str] = Field(default_factory=list, max_length=MAX_TASK_LIST_LENGTH)
+    urls: list[str] = Field(default_factory=list, max_length=MAX_TASK_LIST_LENGTH)
     context: str = Field(default="", max_length=10000)
 
     @field_validator("priority")
@@ -166,14 +184,7 @@ class TaskCreate(BaseModel):
     @field_validator("urls", mode="before")
     @classmethod
     def validate_urls(cls, v: list[str]) -> list[str]:
-        if not isinstance(v, list):
-            raise ValueError("urls must be a list")
-        for url in v:
-            if not isinstance(url, str):
-                raise ValueError("each url must be a string")
-            if not is_valid_url(url):
-                raise ValueError(f"invalid URL format: {url}")
-        return v
+        return validate_url_list(v)
 
 
 class TaskUpdate(BaseModel):
@@ -182,8 +193,8 @@ class TaskUpdate(BaseModel):
     agent: str | None = Field(default=None, max_length=128)
     session_id: str | None = Field(default=None, max_length=128)
     context: str | None = Field(default=None, max_length=10000)
-    urls: list[str] | None = None
-    labels: list[str] | None = None
+    urls: list[str] | None = Field(default=None, max_length=MAX_TASK_LIST_LENGTH)
+    labels: list[str] | None = Field(default=None, max_length=MAX_TASK_LIST_LENGTH)
 
     @field_validator("status")
     @classmethod
@@ -207,16 +218,7 @@ class TaskUpdate(BaseModel):
     @field_validator("urls", mode="before")
     @classmethod
     def validate_urls(cls, v: list[str] | None) -> list[str] | None:
-        if v is None:
-            return None
-        if not isinstance(v, list):
-            raise ValueError("urls must be a list")
-        for url in v:
-            if not isinstance(url, str):
-                raise ValueError("each url must be a string")
-            if not is_valid_url(url):
-                raise ValueError(f"invalid URL format: {url}")
-        return v
+        return validate_url_list(v)
 
 
 class AssignmentRequest(BaseModel):

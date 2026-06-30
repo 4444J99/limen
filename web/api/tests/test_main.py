@@ -917,3 +917,30 @@ def test_task_update_rejects_oversized_log_fields(client: TestClient, tmp_path: 
     )
 
     assert response.status_code == 422
+
+
+def test_task_update_rejects_oversized_label_and_url_lists(client: TestClient, tmp_path: Path) -> None:
+    write_board(
+        tmp_path / "tasks.yaml",
+        [
+            {
+                "id": "LIMEN-SEC-004",
+                "title": "Valid task",
+                "repo": "4444J99/limen",
+                "target_agent": "jules",
+                "priority": "high",
+                "budget_cost": 1,
+                "status": "open",
+                "created": "2026-06-03",
+                "dispatch_log": [],
+            }
+        ],
+    )
+
+    too_many_labels = {"labels": [f"label-{i}" for i in range(21)]}
+    assert client.patch("/api/tasks/LIMEN-SEC-004", json=too_many_labels).status_code == 422
+
+    too_many_urls = {
+        "urls": ["https://github.com/4444J99/limen/issues/1" for _ in range(21)],
+    }
+    assert client.patch("/api/tasks/LIMEN-SEC-004", json=too_many_urls).status_code == 422

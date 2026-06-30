@@ -64186,3 +64186,28 @@ tasks:
     session_id: heal
     status: done
     output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
+- id: RECOVER-GEN-organvm-limen-security-0622
+  title: "Recover closed PR task: Security hardening pass on organvm/limen"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: done
+  labels:
+  - security
+  - generated
+  - recovery
+  urls: []
+  context: Re-run recovery for GEN-organvm-limen-security-0622 after PR closure. PR closed
+    before merge, so security hardening was completed as fresh local recovery work on existing
+    API input validation boundaries and list-size caps.
+  depends_on: []
+  created: '2026-06-30'
+  updated: '2026-06-30T15:19:33Z'
+  dispatch_log:
+  - timestamp: '2026-06-30T15:19:33Z'
+    agent: limen
+    session_id: recover
+    status: done
+    output: "Recovered by creating fresh recovery artifact and hardening limen API input boundary limits"
