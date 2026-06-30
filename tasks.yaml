@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-06-30'
-      spent: 119
+      spent: 120
       per_agent:
         jules: 100
         gemini: 0
-        codex: 4
+        codex: 5
         opencode: 3
         agy: 12
         claude: 0
@@ -34442,15 +34442,14 @@ tasks:
   title: Make a-organvm/my-knowledge-base CI green
   repo: organvm/my-knowledge-base
   type: code
-  target_agent: github_actions
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: needs_human
   labels:
   - ci-green
   - generated
   - build-out
-  - tried:github_actions
   urls: []
   context: Inspect the latest FAILING checks on a-organvm/my-knowledge-base's default
     branch, fix the root cause (lint / types / failing test / config), and confirm
@@ -34459,7 +34458,7 @@ tasks:
     the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-30T20:38:30.248819Z'
+  updated: '2026-06-30T21:16:09.428368Z'
   dispatch_log:
   - timestamp: '2026-06-20T09:45:24.209649Z'
     agent: limen
@@ -34484,6 +34483,17 @@ tasks:
     agent: github_actions
     session_id: cli
     status: failed
+  - timestamp: '2026-06-30T21:10:34.092432Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-30T21:16:09.428368Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: GEN-a-organvm-organvm-corpvs-testamentvm-ci-green-0620
   title: Make a-organvm/organvm-corpvs-testamentvm CI green
   repo: organvm/organvm-corpvs-testamentvm
@@ -35537,15 +35547,15 @@ tasks:
   title: Make a-organvm/the-actual-news CI green
   repo: organvm/the-actual-news
   type: code
-  target_agent: github_actions
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: failed
+  status: needs_human
   labels:
   - ci-green
   - generated
   - build-out
-  - tried:github_actions
+  - slow
   urls: []
   context: Inspect the latest FAILING checks on a-organvm/the-actual-news's default
     branch, fix the root cause (lint / types / failing test / config), and confirm
@@ -35554,7 +35564,7 @@ tasks:
     the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-30T20:38:30.248819Z'
+  updated: '2026-06-30T22:57:48.853407Z'
   dispatch_log:
   - timestamp: '2026-06-20T11:19:28.640967Z'
     agent: limen
@@ -35570,6 +35580,46 @@ tasks:
     agent: github_actions
     session_id: cli
     status: failed
+  - timestamp: '2026-06-30T21:10:34.092432Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-30T21:38:07.112487Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T22:02:52.122238Z'
+    agent: opencode
+    session_id: async-reap-stale
+    status: open
+    output: 'dispatch-async: stale worker marker older than 1200s reaped; task reopened'
+  - timestamp: '2026-06-30T22:02:57.115952Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T22:14:07.583003Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
+  - timestamp: '2026-06-30T22:14:53.421454Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
+  - timestamp: '2026-06-30T22:45:24.718429Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
+  - timestamp: '2026-06-30T22:57:48.853407Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: GEN-a-organvm-a-i-council--coliseum-ci-green-0620
   title: Make a-organvm/a-i-council--coliseum CI green
   repo: organvm/a-i-council--coliseum
@@ -35601,15 +35651,15 @@ tasks:
   title: Make a-organvm/organon-noumenon--ontogenetic-morphe CI green
   repo: organvm/organon-noumenon--ontogenetic-morphe
   type: code
-  target_agent: github_actions
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: done
   labels:
   - ci-green
   - generated
   - build-out
-  - tried:github_actions
+  - tried:agy
   urls: []
   context: Inspect the latest FAILING checks on a-organvm/organon-noumenon--ontogenetic-morphe's
     default branch, fix the root cause (lint / types / failing test / config), and
@@ -35618,7 +35668,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-30T20:38:30.248819Z'
+  updated: '2026-06-30T22:14:53.421454Z'
   dispatch_log:
   - timestamp: '2026-06-30T20:35:36.157877Z'
     agent: github_actions
@@ -35629,6 +35679,34 @@ tasks:
     agent: github_actions
     session_id: cli
     status: failed
+  - timestamp: '2026-06-30T21:10:34.092432Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-30T21:38:07.112487Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T21:52:32.050322Z'
+    agent: agy
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-06-30T21:57:58.205606Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T22:14:07.583003Z'
+    agent: codex
+    session_id: https://github.com/organvm/organon-noumenon--ontogenetic-morphe/pull/8
+    status: dispatched
+  - timestamp: '2026-06-30T22:14:53.421454Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GEN-a-organvm-example-theatre-dialogue-ci-green-0620
   title: Make a-organvm/example-theatre-dialogue CI green
   repo: organvm/example-theatre-dialogue
@@ -66964,3 +67042,149 @@ tasks:
       \ Ledger\n+# Current Session Fanout\n \n-Generated: `2026-06-30T13:01:28Z`\n\
       -Task: `CSF-CAEB31D8-PLAN-01-FF680CEA`\n-Packet: `PLAN-01-ff680cea`\n-Theme:\
       \ `alpha-omega-product-ledger`\n-Source session: `/Users/4jp/.codex/sessions/2026/06/30/rollout-2026-0"
+- id: DISCOVER-organvm-my-knowledge-base
+  title: Discover the latent value of organvm/my-knowledge-base
+  repo: organvm/my-knowledge-base
+  type: research
+  target_agent: codex
+  priority: medium
+  budget_cost: 1
+  status: failed
+  labels:
+  - discover
+  - value-discovery
+  - noop
+  urls: []
+  context: "DISCOVER the latent value of organvm/my-knowledge-base. This repo currently\
+    \ has NO ranked value \u2014 your job is to find it (value is discovered, never\
+    \ assumed absent). Steps: (1) Read the repo \u2014 what it is, its real entrypoints/exports,\
+    \ what it already does. (2) Identify its highest latent value: a concrete product,\
+    \ revenue path, reusable asset, or capability the rest of the estate could use\
+    \ \u2014 be specific and honest. (3) DECIDE: if there is real value, write a one-paragraph\
+    \ value thesis to DISCOVERY.md AND open a PR that ALSO appends \"organvm/my-knowledge-base\"\
+    \ to value-repos.json (promote it into the ranked tier so build-out can follow)\
+    \ AND name the single best concrete first task; if it is genuinely archival, write\
+    \ the thesis saying so (so it is never re-discovered) \u2014 do NOT promote it.\
+    \ Keep any build green. Output the thesis. [auto-discovery 2026-06-30; no repo\
+    \ stays dark]"
+  depends_on: []
+  created: '2026-06-30'
+  updated: '2026-06-30T23:07:17.138765Z'
+  dispatch_log:
+  - timestamp: '2026-06-30T21:01:23.108545Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T21:37:53.193199Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-30T22:08:32.703691Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-30T22:14:21.243585Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T22:45:24.718429Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-06-30T22:53:07.300716Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-06-30T22:57:33.069200Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T23:07:17.138765Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+- id: DISCOVER-organvm-organon-noumenon--ontogenetic-morphe
+  title: Discover the latent value of organvm/organon-noumenon--ontogenetic-morphe
+  repo: organvm/organon-noumenon--ontogenetic-morphe
+  type: research
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-discovery
+  - slow
+  urls: []
+  context: "DISCOVER the latent value of organvm/organon-noumenon--ontogenetic-morphe.\
+    \ This repo currently has NO ranked value \u2014 your job is to find it (value\
+    \ is discovered, never assumed absent). Steps: (1) Read the repo \u2014 what it\
+    \ is, its real entrypoints/exports, what it already does. (2) Identify its highest\
+    \ latent value: a concrete product, revenue path, reusable asset, or capability\
+    \ the rest of the estate could use \u2014 be specific and honest. (3) DECIDE:\
+    \ if there is real value, write a one-paragraph value thesis to DISCOVERY.md AND\
+    \ open a PR that ALSO appends \"organvm/organon-noumenon--ontogenetic-morphe\"\
+    \ to value-repos.json (promote it into the ranked tier so build-out can follow)\
+    \ AND name the single best concrete first task; if it is genuinely archival, write\
+    \ the thesis saying so (so it is never re-discovered) \u2014 do NOT promote it.\
+    \ Keep any build green. Output the thesis. [auto-discovery 2026-06-30; no repo\
+    \ stays dark]"
+  depends_on: []
+  created: '2026-06-30'
+  updated: '2026-06-30T21:37:53.193199Z'
+  dispatch_log:
+  - timestamp: '2026-06-30T21:01:23.108545Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T21:37:53.193199Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
+- id: DISCOVER-organvm-the-actual-news
+  title: Discover the latent value of organvm/the-actual-news
+  repo: organvm/the-actual-news
+  type: research
+  target_agent: jules
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-discovery
+  - slow
+  urls: []
+  context: "DISCOVER the latent value of organvm/the-actual-news. This repo currently\
+    \ has NO ranked value \u2014 your job is to find it (value is discovered, never\
+    \ assumed absent). Steps: (1) Read the repo \u2014 what it is, its real entrypoints/exports,\
+    \ what it already does. (2) Identify its highest latent value: a concrete product,\
+    \ revenue path, reusable asset, or capability the rest of the estate could use\
+    \ \u2014 be specific and honest. (3) DECIDE: if there is real value, write a one-paragraph\
+    \ value thesis to DISCOVERY.md AND open a PR that ALSO appends \"organvm/the-actual-news\"\
+    \ to value-repos.json (promote it into the ranked tier so build-out can follow)\
+    \ AND name the single best concrete first task; if it is genuinely archival, write\
+    \ the thesis saying so (so it is never re-discovered) \u2014 do NOT promote it.\
+    \ Keep any build green. Output the thesis. [auto-discovery 2026-06-30; no repo\
+    \ stays dark]"
+  depends_on: []
+  created: '2026-06-30'
+  updated: '2026-06-30T21:37:53.193199Z'
+  dispatch_log:
+  - timestamp: '2026-06-30T21:01:23.108545Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T21:37:53.193199Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
