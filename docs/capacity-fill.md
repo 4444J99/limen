@@ -1,6 +1,6 @@
 # Capacity Fill
 
-Generated: `2026-06-30T14:25:28+00:00`
+Generated: `2026-06-30T14:46:36+00:00`
 Status: `blocked`
 
 ## Capacity Census
@@ -11,7 +11,7 @@ Status: `blocked`
 | `claude` | local-cli | `up` | 100 | 100 | /Users/4jp/.local/bin/claude |
 | `opencode` | local-cli | `up` | 99 | 100 | /opt/homebrew/bin/opencode |
 | `agy` | local-cli | `up` | 95 | 100 | /opt/homebrew/bin/agy |
-| `gemini` | local-cli | `down` | 10 | 10 | gemini auth not configured |
+| `gemini` | local-cli | `up` | 10 | 10 | /opt/homebrew/bin/gemini |
 | `ollama` | local-cli | `down` | 543 | 600 | /usr/local/bin/ollama; no model pulled — run `ollama pull qwen2.5-coder:7b` to light the floor lane |
 | `jules` | cloud-cli | `up` | 50 | 100 | /opt/homebrew/bin/jules |
 | `copilot` | github-issue | `down` | 543 | 600 | /opt/homebrew/bin/gh; copilot-swe-agent not confirmed assignable (set LIMEN_COPILOT_ENABLED=1 after enabling Copilot coding agent) |
@@ -21,7 +21,6 @@ Status: `blocked`
 
 ## Blockers
 
-- `gemini`: gemini auth not configured
 - `ollama`: /usr/local/bin/ollama; no model pulled — run `ollama pull qwen2.5-coder:7b` to light the floor lane
 - `copilot`: /opt/homebrew/bin/gh; copilot-swe-agent not confirmed assignable (set LIMEN_COPILOT_ENABLED=1 after enabling Copilot coding agent)
 - `warp`: WARP_API_KEY not set (set env var + add as org/repo Actions secret)
