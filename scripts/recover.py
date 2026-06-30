@@ -20,6 +20,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.models import DispatchLogEntry  # noqa: E402
+from limen.dispatch import _has_done_transition, _restore_done_status  # noqa: E402
 
 CASCADE_TOP = "codex"
 
@@ -50,6 +51,14 @@ def main() -> int:
     for t in lf.tasks:
         if len(reopened_failed) + len(reopened_orphan) >= args.limit:
             break
+        if _has_done_transition(t):
+            _restore_done_status(
+                t,
+                now,
+                session_id="heal",
+                output="recover: prior done transition wins; restored terminal status",
+            )
+            continue
         if t.status == "failed":
             t.status = "open"
             t.target_agent = CASCADE_TOP

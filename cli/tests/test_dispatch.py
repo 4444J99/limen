@@ -199,6 +199,39 @@ def test_dispatch_skips_needs_human_label(tmp_path: Path, capsys) -> None:
     assert "HUMAN-GATE" not in output
 
 
+def test_dispatch_skips_open_task_with_prior_done_log(tmp_path: Path, capsys) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "REOPENED-DONE",
+                "title": "Already completed",
+                "repo": "organvm/limen",
+                "target_agent": "codex",
+                "priority": "critical",
+                "budget_cost": 1,
+                "status": "open",
+                "created": "2026-06-30",
+                "dispatch_log": [
+                    {
+                        "timestamp": "2026-06-30T00:00:00+00:00",
+                        "agent": "codex",
+                        "session_id": "prior",
+                        "status": "done",
+                    }
+                ],
+            }
+        ],
+    )
+
+    dispatch_tasks(load_limen_file(tasks_path), tasks_path, agent="codex", dry_run=True)
+
+    output = capsys.readouterr().out
+    assert "No open tasks for agent 'codex'" in output
+    assert "REOPENED-DONE" not in output
+
+
 def test_dispatch_parallel_skips_needs_human_label(tmp_path: Path, capsys) -> None:
     tasks_path = tmp_path / "tasks.yaml"
     write_board(
@@ -401,6 +434,42 @@ def test_release_stale_apply_reopens_task(tmp_path: Path) -> None:
     assert report["status"] == "applied"
     assert report["count"] == 1
     assert report["released"] == ["LIMEN-002"]
+    assert report["restored_done"] == []
+
+
+def test_release_stale_restores_prior_done_instead_of_reopening(tmp_path: Path) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "DONE-REOPENED",
+                "title": "Already done but active",
+                "repo": "4444J99/limen",
+                "target_agent": "jules",
+                "priority": "high",
+                "budget_cost": 1,
+                "status": "in_progress",
+                "created": "2026-06-01",
+                "dispatch_log": [
+                    {
+                        "timestamp": "2026-06-01T00:00:00+00:00",
+                        "agent": "jules",
+                        "session_id": "prior",
+                        "status": "done",
+                    }
+                ],
+            }
+        ],
+    )
+
+    report = release_stale_tasks(load_limen_file(tasks_path), tasks_path, hours=24, dry_run=False)
+
+    task = read_board(tasks_path)["tasks"][0]
+    assert task["status"] == "done"
+    assert task["dispatch_log"][-1]["status"] == "done"
+    assert report["released"] == []
+    assert report["restored_done"] == ["DONE-REOPENED"]
 
 
 def test_dispatch_limit_and_per_agent_budget(tmp_path: Path, monkeypatch) -> None:

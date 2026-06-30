@@ -126,6 +126,48 @@ def test_reaper_frees_dead_workers_not_live(tmp_path):
     assert board["DEAD"].dispatch_log[-1].session_id == "async-reap-stale"
 
 
+def test_reaper_restores_prior_done_instead_of_reopening(tmp_path):
+    da = _load(tmp_path, n_open=0)
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    today = datetime.date.today()
+    reserved_at = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=3000)
+    lf.tasks.append(
+        Task(
+            id="DONE-DEAD",
+            title="t",
+            repo="x/y",
+            target_agent="codex",
+            status="dispatched",
+            created=today,
+            dispatch_log=[
+                DispatchLogEntry(
+                    timestamp=reserved_at,
+                    agent="codex",
+                    session_id="prior",
+                    status="done",
+                    output="prior success",
+                ),
+                DispatchLogEntry(
+                    timestamp=reserved_at,
+                    agent="codex",
+                    session_id="async-reserve",
+                    status="dispatched",
+                ),
+            ],
+        )
+    )
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+    (da.RUNS / "DONE-DEAD__codex.running").write_text(reserved_at.isoformat())
+
+    reaped = da.reap_stale(1200)
+
+    assert reaped == ["DONE-DEAD"]
+    task = _board(tmp_path)["DONE-DEAD"]
+    assert task.status == "done"
+    assert task.dispatch_log[-1].status == "done"
+    assert task.dispatch_log[-1].session_id == "async-reap-stale"
+
+
 def test_async_reserve_counts_inflight_against_budget(tmp_path):
     """In-flight .running markers count toward a lane's per-agent budget, so a lane already at its
     cap via in-flight runs reserves nothing more (prevents over-dispatch between reserve & harvest)."""
@@ -141,6 +183,35 @@ def test_async_reserve_counts_inflight_against_budget(tmp_path):
         (da.RUNS / f"INF{i}__codex.running").write_text(datetime.datetime.now(datetime.timezone.utc).isoformat())
     picked = da.reserve_and_launch(["codex"], per_agent=8, cap=20, dry=True)
     assert picked == [], f"over-dispatched past in-flight budget: {picked}"
+
+
+def test_async_reserve_skips_open_task_with_prior_done(tmp_path):
+    da = _load(tmp_path, n_open=0)
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    today = datetime.date.today()
+    lf.tasks.append(
+        Task(
+            id="DONE-OPEN",
+            title="t",
+            repo="x/y",
+            target_agent="codex",
+            status="open",
+            created=today,
+            dispatch_log=[
+                DispatchLogEntry(
+                    timestamp=datetime.datetime.now(datetime.timezone.utc),
+                    agent="codex",
+                    session_id="prior",
+                    status="done",
+                )
+            ],
+        )
+    )
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    picked = da.reserve_and_launch(["codex"], per_agent=8, cap=20, dry=True)
+
+    assert picked == []
 
 
 def test_resolve_lanes_auto_and_all_use_capacity_registry(tmp_path, monkeypatch):

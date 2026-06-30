@@ -238,6 +238,114 @@ parameters:
     self_update: none
     owner: continuity
     note: "Idle minutes before codex-quicken treats a Codex session as no longer alive. Classifier-only; it never resumes or mutates sessions."
+  LIMEN_BEAT_CONTINUATION:
+    default: 6
+    env: LIMEN_BEAT_CONTINUATION
+    self_update: none
+    owner: continuity
+    note: "Heartbeat cadence for the bounded autonomous continuation voice."
+  LIMEN_CONTINUATION:
+    default: "1"
+    env: LIMEN_CONTINUATION
+    self_update: none
+    owner: continuity
+    note: "Master gate for the daemon-driven continuation beat. 1=enabled; 0=skip."
+  LIMEN_CONTINUATION_TIMEOUT:
+    default: 600
+    env: LIMEN_CONTINUATION_TIMEOUT
+    self_update: none
+    owner: continuity
+    note: "Wall-clock ceiling in seconds for one continuation beat when timeout(1) is available."
+  LIMEN_CONTINUATION_TOKEN_GATE:
+    default: "1"
+    env: LIMEN_CONTINUATION_TOKEN_GATE
+    self_update: none
+    owner: continuity
+    note: "Gate continuation on the Codex token accounting budget report. 1=stop continuation on over-budget sessions."
+  LIMEN_PHOTOS_UNIVERSE_ROOT:
+    default: "/Users/4jp/Workspace/photos-universe-20260629-182431"
+    env: LIMEN_PHOTOS_UNIVERSE_ROOT
+    self_update: none
+    owner: continuity
+    note: "Photos Universe recovery checkout used by the receipt-only continuation beat."
+  LIMEN_PORTVS_TRIPTYCH_ROOT:
+    default: "/Users/4jp/Workspace/4444J99/portvs/.worktrees/triptych-story"
+    env: LIMEN_PORTVS_TRIPTYCH_ROOT
+    self_update: none
+    owner: continuity
+    note: "Portvs triptych worktree used by the continuation beat's proxy refresh."
+  LIMEN_CONTINUE_PHOTOS_GROUPS:
+    default: 25
+    env: LIMEN_CONTINUE_PHOTOS_GROUPS
+    self_update: none
+    owner: continuity
+    note: "Maximum duplicate-proof groups advanced by one continuation beat."
+  LIMEN_CONTINUE_PHOTOS_ATOMS:
+    default: 25
+    env: LIMEN_CONTINUE_PHOTOS_ATOMS
+    self_update: none
+    owner: continuity
+    note: "Maximum Photos metadata atoms emitted after a successful applied duplicate-proof batch."
+  LIMEN_CODEX_TOKEN_REPORT:
+    default: "$LIMEN_ROOT/logs/codex-token-report.json"
+    env: LIMEN_CODEX_TOKEN_REPORT
+    self_update: none
+    owner: continuity
+    note: "JSON report path for structured Codex token_count accounting."
+  LIMEN_CODEX_TOKEN_REPORT_HOURS:
+    default: 6
+    env: LIMEN_CODEX_TOKEN_REPORT_HOURS
+    self_update: none
+    owner: continuity
+    note: "Recent-session window, in hours, used by the heartbeat Codex token report."
+  LIMEN_CODEX_TOKEN_REPORT_LIMIT:
+    default: 25
+    env: LIMEN_CODEX_TOKEN_REPORT_LIMIT
+    self_update: none
+    owner: continuity
+    note: "Maximum recent Codex session JSONL files summarized by the heartbeat report."
+  LIMEN_CODEX_TOKEN_REPORT_PHASES:
+    default: 50
+    env: LIMEN_CODEX_TOKEN_REPORT_PHASES
+    self_update: none
+    owner: continuity
+    note: "Maximum per-session token_count phase deltas retained in the JSON report."
+  LIMEN_CODEX_TOKEN_GATE_HOURS:
+    default: 6
+    env: LIMEN_CODEX_TOKEN_GATE_HOURS
+    self_update: none
+    owner: continuity
+    note: "Recent-session window, in hours, used by the continuation hard spend gate."
+  LIMEN_CODEX_TOKEN_GATE_LIMIT:
+    default: 10
+    env: LIMEN_CODEX_TOKEN_GATE_LIMIT
+    self_update: none
+    owner: continuity
+    note: "Maximum recent Codex session files considered by the continuation hard spend gate."
+  LIMEN_CODEX_WARN_UNCACHED_INPUT_TOKENS:
+    default: 300000
+    env: LIMEN_CODEX_WARN_UNCACHED_INPUT_TOKENS
+    self_update: none
+    owner: continuity
+    note: "Warn threshold for high uncached Codex input in one session."
+  LIMEN_CODEX_MAX_UNCACHED_INPUT_TOKENS:
+    default: 600000
+    env: LIMEN_CODEX_MAX_UNCACHED_INPUT_TOKENS
+    self_update: none
+    owner: continuity
+    note: "Hard stop threshold for uncached Codex input in one session."
+  LIMEN_CODEX_MAX_BUDGET_TOKENS:
+    default: 800000
+    env: LIMEN_CODEX_MAX_BUDGET_TOKENS
+    self_update: none
+    owner: continuity
+    note: "Hard stop threshold for uncached-input plus output and reasoning tokens in one Codex session."
+  LIMEN_CODEX_MAX_ELAPSED_SECONDS:
+    default: 14400
+    env: LIMEN_CODEX_MAX_ELAPSED_SECONDS
+    self_update: none
+    owner: continuity
+    note: "Hard stop elapsed-time ceiling for one recent Codex session."
   LIMEN_PUBLIC_SITE_URL:
     default: "https://device-streaming-067d747a.web.app"
     env: LIMEN_PUBLIC_SITE_URL

@@ -207,9 +207,50 @@ def _deps_met(task: Task, by_id: dict[str, Task]) -> bool:
     return all(_dep_merged(by_id.get(d)) for d in deps)
 
 
+def _has_done_transition(task: Task) -> bool:
+    """True once a task has ever recorded terminal success.
+
+    The board is append-only history. If a later stale worker, timeout fallback, or
+    recovery pass flips the current status back to an active state, the prior
+    `done` log still wins: that task is terminal and must not be dispatched again.
+    """
+    return any(str(entry.status or "") == "done" for entry in (task.dispatch_log or []))
+
+
+def _restore_done_status(
+    task: Task,
+    now: datetime,
+    *,
+    agent: str = "limen",
+    session_id: str = "lifecycle-guard",
+    output: str = "lifecycle guard: restored terminal done status after stale reopen",
+) -> bool:
+    """Restore a reopened completed task to `done`.
+
+    Returns True when it changed the current task status. The repair appends its
+    own evidence row so the next validator sees status and latest log aligned.
+    """
+    if not _has_done_transition(task) or task.status in {"done", "archived"}:
+        return False
+    task.status = "done"
+    task.updated = now
+    task.dispatch_log.append(
+        DispatchLogEntry(
+            timestamp=now,
+            agent=agent,
+            session_id=session_id,
+            status="done",
+            output=output,
+        )
+    )
+    return True
+
+
 def _dispatchable(task: Task) -> bool:
-    """Open machine-work only. Human-gated levers stay surfaced as needs_human, never reserved."""
+    """Open machine-work only. Human-gated or already-done work is never reserved."""
     if task.status != "open":
+        return False
+    if _has_done_transition(task):
         return False
     return "needs-human" not in (task.labels or [])
 
@@ -1285,6 +1326,15 @@ def dispatch_tasks(
 def _apply_result(task: Task, agent: str, result: bool | str, now: datetime, track: BudgetTrack) -> None:
     """Apply one dispatch result to a task (same semantics as the serial path):
     success → dispatched + spend; no-op/fail → recoverable failed; rate-limit → cascade."""
+    if _restore_done_status(
+        task,
+        now,
+        agent=agent,
+        session_id="result-lifecycle-guard",
+        output="dispatch result ignored because this task already recorded done",
+    ):
+        return
+
     entry = DispatchLogEntry(timestamp=now, agent=agent, session_id=session_id(), status="dispatched")
     if result == _NOOP:
         entry.status = "failed"
@@ -1672,6 +1722,7 @@ class ReleaseStaleReport(TypedDict):
     tasks_path: str
     count: int
     released: list[str]
+    restored_done: list[str]
     candidates: list[ReleaseStaleCandidate]
 
 
@@ -1687,9 +1738,20 @@ def release_stale_tasks(
 
     mode = "DRY-RUN" if dry_run else "APPLY"
     print(f"── limen release-stale ({mode}) — hours={hours} candidates={len(candidates)}")
+    released: list[str] = []
+    restored_done: list[str] = []
     for task in candidates:
         print(f"  {task.id} {task.status} {task.target_agent} — {task.title}")
         if not dry_run:
+            if _restore_done_status(
+                task,
+                now,
+                agent="limen",
+                session_id="release-stale",
+                output="release-stale: prior done transition wins; restored terminal status",
+            ):
+                restored_done.append(task.id)
+                continue
             task.status = "open"
             task.updated = now
             task.dispatch_log.append(
@@ -1701,6 +1763,7 @@ def release_stale_tasks(
                     output=f"Released stale claim after {hours}h",
                 )
             )
+            released.append(task.id)
 
     if not dry_run:
         save_limen_file(tasks_path, limen)
@@ -1710,14 +1773,15 @@ def release_stale_tasks(
         "hours": hours,
         "tasks_path": str(tasks_path),
         "count": len(candidates),
-        "released": [task.id for task in candidates],
+        "released": [task.id for task in candidates] if dry_run else released,
+        "restored_done": [] if dry_run else restored_done,
         "candidates": [
             {
                 "id": task.id,
                 "title": task.title,
                 "repo": task.repo,
                 "target_agent": task.target_agent,
-                "status": task.status if dry_run else "open",
+                "status": task.status if dry_run else task.status,
             }
             for task in candidates
         ],

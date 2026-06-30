@@ -29,7 +29,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.capacity import PAID_AGENT_ORDER, canonical_agent, capacity_census  # noqa: E402
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.models import DispatchLogEntry  # noqa: E402
-from limen.dispatch import _queue_lock, _apply_result, _down_lanes, _PRIORITY_ORDER, _deps_met  # noqa: E402
+from limen.dispatch import (  # noqa: E402
+    _PRIORITY_ORDER,
+    _apply_result,
+    _deps_met,
+    _dispatchable,
+    _down_lanes,
+    _has_done_transition,
+    _queue_lock,
+    _restore_done_status,
+)
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 TASKS = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
@@ -104,15 +113,27 @@ def reap_stale(max_age_s: int):
             for tid, agent in reaped:
                 t = byid.get(tid)
                 if t is not None and t.status == "dispatched":
-                    t.status = "open"  # dead worker left no result → retry on a later beat
-                    t.updated = now
-                    t.dispatch_log.append(DispatchLogEntry(
-                        timestamp=now,
-                        agent=agent,
-                        session_id="async-reap-stale",
-                        status="open",
-                        output=f"dispatch-async: stale worker marker older than {max_age_s}s reaped; task reopened",
-                    ))
+                    if _has_done_transition(t):
+                        _restore_done_status(
+                            t,
+                            now,
+                            agent=agent,
+                            session_id="async-reap-stale",
+                            output=(
+                                "dispatch-async: stale worker marker reaped after prior done; "
+                                "restored terminal status"
+                            ),
+                        )
+                    else:
+                        t.status = "open"  # dead worker left no result → retry on a later beat
+                        t.updated = now
+                        t.dispatch_log.append(DispatchLogEntry(
+                            timestamp=now,
+                            agent=agent,
+                            session_id="async-reap-stale",
+                            status="open",
+                            output=f"dispatch-async: stale worker marker older than {max_age_s}s reaped; task reopened",
+                        ))
             save_limen_file(TASKS, lf)
     return [tid for tid, _agent in reaped]
 
@@ -146,7 +167,7 @@ def reserve_and_launch(agents, per_agent, cap, dry):
             if rem <= 0:
                 continue
             cands = [t for t in lf.tasks
-                     if t.status == "open" and (t.target_agent == agent or t.target_agent == "any")
+                     if _dispatchable(t) and (t.target_agent == agent or t.target_agent == "any")
                      and t.budget_cost <= rem and _deps_met(t, id2)]
             cands.sort(key=lambda t: _PRIORITY_ORDER.get(t.priority, 99))
             taken = 0

@@ -26,7 +26,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
-from limen.io import atomic_write_text, load_limen_file  # noqa: E402
+from limen.dispatch import _restore_done_status  # noqa: E402
+from limen.io import atomic_write_text, load_limen_file, queue_lock, save_limen_file  # noqa: E402
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 BOARD = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
@@ -73,6 +74,82 @@ def git_head_board() -> str | None:
     return out.stdout if out.returncode == 0 and out.stdout.strip() else None
 
 
+def _clear_async_markers(task_id: str) -> int:
+    runs = ROOT / "logs" / "async-runs"
+    cleared = 0
+    for marker in runs.glob(f"{task_id}__*.running"):
+        marker.unlink(missing_ok=True)
+        cleared += 1
+    for result in runs.glob(f"{task_id}.result.*"):
+        result.unlink(missing_ok=True)
+        cleared += 1
+    return cleared
+
+
+def repair_reopened_done(*, check: bool, dry_run: bool) -> int:
+    """Restore any task that was reopened after a terminal done log.
+
+    Returns a process exit code. This is a lifecycle repair, not a collapse
+    restore, so it runs on every healthy-board beat.
+    """
+    try:
+        lf = load_limen_file(BOARD)
+    except Exception as exc:
+        print(f"heal-board: lifecycle check skipped; board did not load: {exc}")
+        return 1
+
+    now = datetime.now(timezone.utc)
+    repaired_ids: list[str] = []
+    for task in lf.tasks:
+        if _restore_done_status(
+            task,
+            now,
+            session_id="heal-board",
+            output="heal-board: restored terminal done status after stale reopen",
+        ):
+            repaired_ids.append(task.id)
+
+    if not repaired_ids:
+        print(f"heal-board: OK — {BOARD.name} healthy (total={len(lf.tasks)} active={sum(1 for t in lf.tasks if t.status in ACTIVE)})")
+        return 0
+
+    if check:
+        print(
+            f"heal-board: {len(repaired_ids)} reopened completed task(s) need repair: "
+            + ", ".join(repaired_ids[:10])
+        )
+        return 1
+    if dry_run:
+        print(
+            f"heal-board: WOULD restore {len(repaired_ids)} reopened completed task(s): "
+            + ", ".join(repaired_ids[:10])
+        )
+        return 0
+
+    with queue_lock(BOARD, timeout=20) as locked:
+        if not locked:
+            print("heal-board: queue lock held; lifecycle repair deferred")
+            return 1
+        fresh = load_limen_file(BOARD)
+        repaired_ids = []
+        for task in fresh.tasks:
+            if _restore_done_status(
+                task,
+                now,
+                session_id="heal-board",
+                output="heal-board: restored terminal done status after stale reopen",
+            ):
+                repaired_ids.append(task.id)
+        if repaired_ids:
+            save_limen_file(BOARD, fresh)
+    cleared = sum(_clear_async_markers(task_id) for task_id in repaired_ids)
+    print(
+        f"heal-board: restored {len(repaired_ids)} reopened completed task(s)"
+        + (f"; cleared {cleared} async marker/result file(s)" if cleared else "")
+    )
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="auto-restore a collapsed/unloadable tasks.yaml")
     ap.add_argument("--check", action="store_true", help="report only; exit 1 if collapsed, no writes")
@@ -83,8 +160,7 @@ def main(argv: list[str] | None = None) -> int:
     collapsed = (not loadable) or (total <= FLOOR)
 
     if not collapsed:
-        print(f"heal-board: OK — {BOARD.name} healthy (total={total} active={active})")
-        return 0
+        return repair_reopened_done(check=args.check, dry_run=args.dry_run)
 
     state = "unloadable" if not loadable else f"collapsed (total={total} ≤ floor {FLOOR})"
     print(f"heal-board: ⚠ {BOARD.name} is {state}")
