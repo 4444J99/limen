@@ -160,21 +160,19 @@ DEFAULT_MAP: list[dict] = [
         "verify": {"url": "https://api.cloudflare.com/client/v4/accounts", "auth": "bearer"},
     },
     {
-        # PARKED (enabled=False) — a DISABLED placeholder, not a live credential. Same idiom as the
-        # openai/openrouter/ianva/claude entries above: a documented home reserved for IF a credential is
-        # ever minted, never asserting one exists. media-ark going hosted-live is a HUMAN HOST DECISION, not
-        # a routable credential (verified + reconciled with organs/media/NEXT.md #525 and the memory
-        # [[media-suite-convergence]]): GCP_SA_KEY exists NOWHERE, no op:// GCP item is registered, and I must
-        # NOT invent a live one. Minting the SA is a human-only chain (SA key + Secret Manager entries + a
-        # GitHub PAT), the host itself (GCP vs a container host like Fly/Render) is undecided, and it's
-        # pre-revenue — below the LIVE Exporter first-dollar path. The decision + provisioning live as lever
-        # L-GCP-DEPLOY-SA (#535) in his-hand-levers.json, never a chat ask.
-        # HOW TO ACTIVATE — ONLY once the host decision resolves to GCP AND the SA JSON is minted into
-        # op://Personal/GCP Deploy SA: flip enabled=True. The gh_secret LIST then fans that ONE value out to
-        # every deploy repo's GCP_SA_KEY (the multi-sink form this entry documents), presence-guarded so a beat
-        # never touches 1Password once set. Until then it stays parked so no beat SKIP-noises a phantom ref.
+        # SUPERSEDED + PARKED (enabled=False) — kept ONLY as the worked example of the gh_secret multi-sink
+        # form (one op:// value fanned to many repos' CI secrets), NOT as a live or pending credential.
+        # media-ark's deploy host was DERIVED to Cloudflare Containers (logic-over-inherited-config): the GCP
+        # path was a prior session cloning limen's OWN deploy-api.yml, which is itself a no-op (limen's live
+        # API is the CF Worker limen-runtime), dragging in a dead GCP_SA_KEY for a credential that exists
+        # NOWHERE. The deploy credential is instead one already OWNED — CLOUDFLARE_API_TOKEN (the cloudflare
+        # lane above), proven headless this session. So this GCP lane is not "waiting to be minted"; it is the
+        # road-not-taken. The remaining atom is NOT a GCP SA — it is a ~$5/mo Workers Paid toggle on the owned
+        # CF account, recorded as lever L-MEDIA-ARK-HOST (#535), sequenced behind revenue. Do NOT flip this
+        # entry True unless the host decision is ever explicitly REVERSED back to GCP (unlikely). Parked so no
+        # beat SKIP-noises a phantom ref. [[media-suite-convergence]] [[logic-over-inherited-config]]
         # [[credential-durability-organ]] [[his-hand-tasks-hang-in-permanent-registry]]
-        "lane": "gcp (cloud run deploy SA)",
+        "lane": "gcp (cloud run deploy SA) — SUPERSEDED by cloudflare, retained as multi-sink example",
         "ref": "op://Personal/GCP Deploy SA/credential",
         "gh_secret": [
             {"repo": "organvm/media-ark", "name": "GCP_SA_KEY"},
