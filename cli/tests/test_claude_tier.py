@@ -159,7 +159,8 @@ def test_model_tiers_override_layers_on_ledger(tmp_path, monkeypatch):
     assert D._claude_model(_task(type_="docs")) == "sonnet"
 
 
-def test_failed_claude_escalates_via_existing_cascade():
+def test_failed_claude_escalates_via_existing_cascade(monkeypatch):
     """Escalate-on-failure also rides the EXISTING lane cascade unchanged: a failed claude
     attempt re-routes to the next lane. Documents the cross-lane escalate rung (no new code)."""
+    monkeypatch.delenv("LIMEN_DISPATCH_LANES", raising=False)
     assert D._next_lane("claude") == "gemini"

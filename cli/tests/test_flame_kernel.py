@@ -121,7 +121,8 @@ def test_run_cmd_captures_jules_session_id(monkeypatch):
     assert out == "5450674856461095192"
 
 
-def test_ollama_is_cascade_floor():
+def test_ollama_is_cascade_floor(monkeypatch):
+    monkeypatch.delenv("LIMEN_DISPATCH_LANES", raising=False)
     assert "ollama" in C.PAID_AGENT_ORDER
     assert "ollama" in C.LOCAL_CHECKOUT_AGENTS
     assert D._LANE_CASCADE[-1] == "ollama"  # the very last resort

@@ -1397,10 +1397,10 @@ def _apply_result(task: Task, agent: str, result: bool | str, now: datetime, tra
         tried = f"tried:{agent}"
         if tried not in task.labels:
             task.labels.append(tried)
-        nxt = _next_lane(agent)
-        if nxt:
-            entry.status = f"failed->{nxt}"
-            task.target_agent = nxt
+        next_lane = _next_lane(agent)
+        if next_lane:
+            entry.status = f"failed->{next_lane}"
+            task.target_agent = next_lane
             task.status = "open"
         elif agent in _REMOTE_SERVICE_LANES:
             fallback = _fallback_dispatch_lane() or "any"

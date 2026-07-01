@@ -391,11 +391,7 @@ def select_lanes(
         return [agent for agent in PAID_AGENT_ORDER if agent not in down]
     if key == "auto":
         rows = capacity_census(board)
-        return [
-            str(row["agent"])
-            for row in rows
-            if row.get("reachable") and str(row["agent"]) not in down
-        ]
+        return [str(row["agent"]) for row in rows if row.get("reachable") and str(row["agent"]) not in down]
 
     lanes: list[str] = []
     for item in raw.split(","):

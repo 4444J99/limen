@@ -78,9 +78,7 @@ def test_capacity_census_lists_every_paid_lane(tmp_path: Path, monkeypatch) -> N
     assert "github_actions" in text
 
 
-def test_auto_lane_selector_includes_github_actions_and_blocks_oz_without_warp_key(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_auto_lane_selector_includes_github_actions_and_blocks_oz_without_warp_key(tmp_path: Path, monkeypatch) -> None:
     gh = tmp_path / "gh"
     gh.write_text("#!/bin/sh\nexit 0\n")
     gh.chmod(0o755)
