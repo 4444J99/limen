@@ -45,6 +45,8 @@ LANES="${LIMEN_LANES:-codex,opencode,agy,claude,gemini}"
 DISPATCH_LANES="${LIMEN_DISPATCH_LANES:-auto}"
 LOCAL_LIMIT="${LIMEN_LOCAL_LIMIT:-3}"
 DISPATCH_ASYNC="${LIMEN_DISPATCH_ASYNC:-0}"
+ASYNC_MAX="${LIMEN_ASYNC_MAX:-12}"
+VIGILIA="${LIMEN_VIGILIA:-1}"
 
 render() {
   sed -e "s|@@HOME@@|$HOME_DIR|g" \
@@ -55,6 +57,8 @@ render() {
       -e "s|@@LIMEN_DISPATCH_LANES@@|$DISPATCH_LANES|g" \
       -e "s|@@LIMEN_LOCAL_LIMIT@@|$LOCAL_LIMIT|g" \
       -e "s|@@LIMEN_DISPATCH_ASYNC@@|$DISPATCH_ASYNC|g" \
+      -e "s|@@LIMEN_ASYNC_MAX@@|$ASYNC_MAX|g" \
+      -e "s|@@LIMEN_VIGILIA@@|$VIGILIA|g" \
       -e "s|@@PATH@@|$PATH_VAL|g" \
       "$TMPL"
 }

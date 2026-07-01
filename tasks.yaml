@@ -31017,11 +31017,12 @@ tasks:
   title: "EV Activation Audit: ship-now \u2014 ORGAN-I landing page live (HTTP 200)"
   repo: organvm/organvm-i-theoria.github.io
   type: code
-  target_agent: github_actions
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
-  labels: []
+  labels:
+  - tried:github_actions
   urls:
   - https://github.com/organvm-i-theoria/organvm-i-theoria.github.io/issues/1
   context: "GitHub issue organvm-i-theoria/organvm-i-theoria.github.io#1. ## ESCAPE\
@@ -31033,7 +31034,7 @@ tasks:
     \ issue #1). \u2014 ESC"
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-20T12:32:22.520757Z'
+  updated: '2026-07-01T01:33:29.303629Z'
   dispatch_log:
   - timestamp: '2026-06-20T09:14:24.968499Z'
     agent: limen
@@ -31049,6 +31050,15 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 3h
+  - timestamp: '2026-07-01T01:32:07.937472Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-01T01:33:29.303629Z'
+    agent: github_actions
+    session_id: cli
+    status: failed->codex
 - id: GH-organvm-i-theoria-atomic-substrata-1
   title: "EV Activation Audit: ship-soon \u2014 UAKS pipeline operational but unreleased"
   repo: organvm/atomic-substrata
@@ -32554,7 +32564,7 @@ tasks:
   title: Raise test coverage in meta-organvm/glyph-cascade-tapes
   repo: organvm/glyph-cascade-tapes
   type: code
-  target_agent: github_actions
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -32574,7 +32584,7 @@ tasks:
   title: Raise test coverage in meta-organvm/visual-substrate-inquiry
   repo: organvm/visual-substrate-inquiry
   type: code
-  target_agent: oz
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -32594,7 +32604,7 @@ tasks:
   title: Raise test coverage in meta-organvm/meta-organvm.github.io
   repo: organvm/meta-organvm.github.io
   type: code
-  target_agent: github_actions
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -32602,6 +32612,7 @@ tasks:
   - test-coverage
   - generated
   - build-out
+  - tried:opencode
   urls: []
   context: Find the largest source module in meta-organvm/meta-organvm.github.io with
     little or no test coverage and add a focused, PASSING test suite for it. Run the
@@ -32609,12 +32620,22 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-07-01T01:35:09.645612Z'
+  dispatch_log:
+  - timestamp: '2026-07-01T01:33:31.331859Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-01T01:35:09.645612Z'
+    agent: opencode
+    session_id: cli
+    status: failed->agy
 - id: GEN-meta-organvm-digital-income-organism-inquiry-test-coverage-0620
   title: Raise test coverage in meta-organvm/digital-income-organism-inquiry
   repo: organvm/digital-income-organism-inquiry
   type: code
-  target_agent: oz
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -32672,7 +32693,7 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/organvm-iv-taxis.github.io
   repo: organvm/organvm-iv-taxis.github.io
   type: code
-  target_agent: github_actions
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -32692,7 +32713,7 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/organvm-v-logos.github.io
   repo: organvm/organvm-v-logos.github.io
   type: code
-  target_agent: oz
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -32712,7 +32733,7 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/organvm-vi-koinonia.github.io
   repo: organvm/organvm-vi-koinonia.github.io
   type: code
-  target_agent: github_actions
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -32732,7 +32753,7 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/organvm-vii-kerygma.github.io
   repo: organvm/organvm-vii-kerygma.github.io
   type: code
-  target_agent: oz
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -32752,7 +32773,7 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/meta-organvm.github.io
   repo: organvm/meta-organvm.github.io
   type: code
-  target_agent: github_actions
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -32772,7 +32793,7 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/4444J99.github.io
   repo: organvm/4444J99.github.io
   type: code
-  target_agent: oz
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -32792,7 +32813,7 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/organvm-i-theoria--superproject
   repo: organvm/organvm-i-theoria--superproject
   type: code
-  target_agent: github_actions
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -32975,7 +32996,7 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/organvm-ii-poiesis.github.io
   repo: organvm/organvm-ii-poiesis.github.io
   type: code
-  target_agent: oz
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -33058,7 +33079,7 @@ tasks:
   title: Raise test coverage in organvm-ii-poiesis/organvm-ii-poiesis.github.io
   repo: organvm/organvm-ii-poiesis.github.io
   type: code
-  target_agent: github_actions
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -33088,7 +33109,7 @@ tasks:
   title: Raise test coverage in organvm-ii-poiesis/vigiles-aeternae--theatrum-mundi
   repo: organvm/vigiles-aeternae--theatrum-mundi
   type: code
-  target_agent: oz
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -33108,7 +33129,7 @@ tasks:
   title: Raise test coverage in organvm-ii-poiesis/styx-behavioral-art
   repo: organvm/styx-behavioral-art
   type: code
-  target_agent: github_actions
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -33138,7 +33159,7 @@ tasks:
   title: Raise test coverage in organvm-iii-ergon/content-engine--asset-amplifier
   repo: organvm/content-engine--asset-amplifier
   type: code
-  target_agent: oz
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -33158,7 +33179,7 @@ tasks:
   title: Raise test coverage in organvm-iii-ergon/sovereign-systems--layer-above-hokage
   repo: organvm/sovereign-systems--layer-above-hokage
   type: code
-  target_agent: github_actions
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -33178,7 +33199,7 @@ tasks:
   title: Raise test coverage in a-organvm/public-process
   repo: organvm/public-process
   type: code
-  target_agent: oz
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -33198,7 +33219,7 @@ tasks:
   title: Raise test coverage in a-organvm/alchemia-ingestvm
   repo: organvm/alchemia-ingestvm
   type: code
-  target_agent: github_actions
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -33218,10 +33239,10 @@ tasks:
   title: Raise test coverage in a-organvm/call-function--ontological
   repo: organvm/call-function--ontological
   type: code
-  target_agent: oz
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -33233,12 +33254,18 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-07-01T01:35:20.884417Z'
+  dispatch_log:
+  - timestamp: '2026-07-01T01:35:20.884417Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-a-organvm-metasystem-master-test-coverage-0620
   title: Raise test coverage in a-organvm/metasystem-master
   repo: organvm/metasystem-master
   type: code
-  target_agent: github_actions
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -33258,7 +33285,7 @@ tasks:
   title: Raise test coverage in a-organvm/organvm-ontologia
   repo: organvm/organvm-ontologia
   type: code
-  target_agent: oz
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -33311,7 +33338,7 @@ tasks:
   title: Raise test coverage in a-organvm/schema-definitions
   repo: organvm/schema-definitions
   type: code
-  target_agent: github_actions
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -33331,7 +33358,7 @@ tasks:
   title: Raise test coverage in a-organvm/4-ivi374-F0Rivi4
   repo: organvm/4-ivi374-F0Rivi4
   type: code
-  target_agent: oz
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -33589,7 +33616,7 @@ tasks:
   title: Raise test coverage in meta-organvm/meta-organvm--superproject
   repo: organvm/meta-organvm--superproject
   type: code
-  target_agent: github_actions
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -33609,7 +33636,7 @@ tasks:
   title: Raise test coverage in organvm-ii-poiesis/organvm-ii-poiesis--superproject
   repo: organvm/organvm-ii-poiesis--superproject
   type: code
-  target_agent: oz
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -33629,7 +33656,7 @@ tasks:
   title: Raise test coverage in organvm-iii-ergon/organvm-iii-ergon--superproject
   repo: organvm/organvm-iii-ergon--superproject
   type: code
-  target_agent: github_actions
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -33649,7 +33676,7 @@ tasks:
   title: Raise test coverage in organvm-iii-ergon/sign-signal--voice-synth
   repo: organvm/sign-signal--voice-synth
   type: code
-  target_agent: oz
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -33710,7 +33737,7 @@ tasks:
   title: Raise test coverage in organvm-iv-taxis/organvm-iv-taxis.github.io
   repo: organvm/organvm-iv-taxis.github.io
   type: code
-  target_agent: github_actions
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -33730,7 +33757,7 @@ tasks:
   title: Raise test coverage in organvm-v-logos/organvm-v-logos--superproject
   repo: organvm/organvm-v-logos--superproject
   type: code
-  target_agent: oz
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -33750,7 +33777,7 @@ tasks:
   title: Raise test coverage in organvm-v-logos/organvm-v-logos.github.io
   repo: organvm/organvm-v-logos.github.io
   type: code
-  target_agent: github_actions
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -33776,7 +33803,7 @@ tasks:
   title: Raise test coverage in organvm-vi-koinonia/organvm-vi-koinonia--superproject
   repo: organvm/organvm-vi-koinonia--superproject
   type: code
-  target_agent: oz
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -33802,7 +33829,7 @@ tasks:
   title: Raise test coverage in organvm-vi-koinonia/organvm-vi-koinonia.github.io
   repo: organvm/organvm-vi-koinonia.github.io
   type: code
-  target_agent: github_actions
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -33828,7 +33855,7 @@ tasks:
   title: Raise test coverage in organvm-vii-kerygma/organvm-vii-kerygma.github.io
   repo: organvm/organvm-vii-kerygma.github.io
   type: code
-  target_agent: oz
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -34210,7 +34237,7 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/organvm-i-theoria.github.io
   repo: organvm/organvm-i-theoria.github.io
   type: code
-  target_agent: github_actions
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -34230,7 +34257,7 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/atomic-substrata
   repo: organvm/atomic-substrata
   type: code
-  target_agent: oz
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -34372,7 +34399,7 @@ tasks:
   title: Raise test coverage in organvm-iv-taxis/organvm-iv-taxis--superproject
   repo: organvm/organvm-iv-taxis--superproject
   type: code
-  target_agent: github_actions
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -34392,7 +34419,7 @@ tasks:
   title: Raise test coverage in organvm-vii-kerygma/organvm-vii-kerygma--superproject
   repo: organvm/organvm-vii-kerygma--superproject
   type: code
-  target_agent: oz
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -34674,7 +34701,7 @@ tasks:
   title: Make a-organvm/petasum-super-petasum CI green
   repo: organvm/petasum-super-petasum
   type: code
-  target_agent: oz
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -35624,14 +35651,15 @@ tasks:
   title: Make a-organvm/a-i-council--coliseum CI green
   repo: organvm/a-i-council--coliseum
   type: code
-  target_agent: oz
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - ci-green
   - generated
   - build-out
+  - tried:claude
   urls: []
   context: Inspect the latest FAILING checks on a-organvm/a-i-council--coliseum's
     default branch, fix the root cause (lint / types / failing test / config), and
@@ -35640,13 +35668,27 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-20T11:19:28.640967Z'
+  updated: '2026-07-01T01:35:20.884417Z'
   dispatch_log:
   - timestamp: '2026-06-20T11:19:28.640967Z'
     agent: limen
     session_id: cli
     status: open
     output: Released stale claim after 3h
+  - timestamp: '2026-07-01T01:33:31.331859Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-01T01:35:09.645612Z'
+    agent: claude
+    session_id: cli
+    status: failed->codex
+  - timestamp: '2026-07-01T01:35:20.884417Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-a-organvm-organon-noumenon--ontogenetic-morphe-ci-green-0620
   title: Make a-organvm/organon-noumenon--ontogenetic-morphe CI green
   repo: organvm/organon-noumenon--ontogenetic-morphe
@@ -35711,10 +35753,10 @@ tasks:
   title: Make a-organvm/example-theatre-dialogue CI green
   repo: organvm/example-theatre-dialogue
   type: code
-  target_agent: oz
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - ci-green
   - generated
@@ -35727,12 +35769,18 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-07-01T01:33:31.331859Z'
+  dispatch_log:
+  - timestamp: '2026-07-01T01:33:31.331859Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-a-organvm-example-ai-collaboration-ci-green-0620
   title: Make a-organvm/example-ai-collaboration CI green
   repo: organvm/example-ai-collaboration
   type: code
-  target_agent: github_actions
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -35740,6 +35788,7 @@ tasks:
   - ci-green
   - generated
   - build-out
+  - tried:github_actions
   urls: []
   context: Inspect the latest FAILING checks on a-organvm/example-ai-collaboration's
     default branch, fix the root cause (lint / types / failing test / config), and
@@ -35748,12 +35797,22 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-07-01T01:33:29.303629Z'
+  dispatch_log:
+  - timestamp: '2026-07-01T01:32:07.937472Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-01T01:33:29.303629Z'
+    agent: github_actions
+    session_id: cli
+    status: failed->codex
 - id: GEN-a-organvm-your-fit-tailored-ci-green-0620
   title: Make a-organvm/your-fit-tailored CI green
   repo: organvm/your-fit-tailored
   type: code
-  target_agent: oz
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -35774,7 +35833,7 @@ tasks:
   title: Make meta-organvm/_agent-health CI green
   repo: organvm/_agent-health
   type: code
-  target_agent: github_actions
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -35782,6 +35841,7 @@ tasks:
   - ci-green
   - generated
   - build-out
+  - tried:github_actions
   urls: []
   context: Inspect the latest FAILING checks on meta-organvm/_agent-health's default
     branch, fix the root cause (lint / types / failing test / config), and confirm
@@ -35790,7 +35850,17 @@ tasks:
     the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-07-01T01:33:29.303629Z'
+  dispatch_log:
+  - timestamp: '2026-07-01T01:32:07.937472Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-01T01:33:29.303629Z'
+    agent: github_actions
+    session_id: cli
+    status: failed->codex
 - id: GEN-organvm-i-theoria-growth-auditor-ci-green-0620
   title: Make organvm-i-theoria/growth-auditor CI green
   repo: organvm/growth-auditor
@@ -36798,7 +36868,7 @@ tasks:
   title: Raise test coverage in organvm/a-mavs-olevm
   repo: organvm/a-mavs-olevm
   type: code
-  target_agent: oz
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -36818,7 +36888,7 @@ tasks:
   title: Raise test coverage in organvm/radix-recursiva-solve-coagula-redi
   repo: organvm/radix-recursiva-solve-coagula-redi
   type: code
-  target_agent: github_actions
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -36838,7 +36908,7 @@ tasks:
   title: Raise test coverage in organvm/universal-node-network
   repo: organvm/universal-node-network
   type: code
-  target_agent: oz
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -36858,7 +36928,7 @@ tasks:
   title: Raise test coverage in organvm/collective-persona-operations
   repo: organvm/collective-persona-operations
   type: code
-  target_agent: github_actions
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -36878,7 +36948,7 @@ tasks:
   title: Raise test coverage in organvm/system-governance-framework
   repo: organvm/system-governance-framework
   type: code
-  target_agent: oz
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -36898,7 +36968,7 @@ tasks:
   title: Raise test coverage in organvm/render-second-amendment
   repo: organvm/render-second-amendment
   type: code
-  target_agent: github_actions
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -36918,7 +36988,7 @@ tasks:
   title: Raise test coverage in organvm/reverse-engine-recursive-run
   repo: organvm/reverse-engine-recursive-run
   type: code
-  target_agent: oz
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -36938,7 +37008,7 @@ tasks:
   title: Raise test coverage in organvm/a-recursive-root
   repo: organvm/a-recursive-root
   type: code
-  target_agent: github_actions
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -36958,7 +37028,7 @@ tasks:
   title: Raise test coverage in organvm/fetch-familiar-friends
   repo: organvm/fetch-familiar-friends
   type: code
-  target_agent: oz
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -36978,7 +37048,7 @@ tasks:
   title: Raise test coverage in organvm/auto-revision-epistemic-engine
   repo: organvm/auto-revision-epistemic-engine
   type: code
-  target_agent: github_actions
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -37330,7 +37400,7 @@ tasks:
   title: Raise test coverage in organvm/classroom-rpg-aetheria
   repo: organvm/classroom-rpg-aetheria
   type: code
-  target_agent: oz
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -37350,7 +37420,7 @@ tasks:
   title: Raise test coverage in organvm/dot-github--poiesis
   repo: organvm/dot-github--poiesis
   type: code
-  target_agent: github_actions
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -37370,7 +37440,7 @@ tasks:
   title: Raise test coverage in organvm/client-sdk
   repo: organvm/client-sdk
   type: code
-  target_agent: oz
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -37390,7 +37460,7 @@ tasks:
   title: Raise test coverage in organvm/audio-synthesis-bridge
   repo: organvm/audio-synthesis-bridge
   type: code
-  target_agent: github_actions
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -37410,7 +37480,7 @@ tasks:
   title: Raise test coverage in organvm/sovereign-ecosystem--real-estate-luxury
   repo: organvm/sovereign-ecosystem--real-estate-luxury
   type: code
-  target_agent: oz
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -37463,7 +37533,7 @@ tasks:
   title: Raise test coverage in organvm/enterprise-plugin
   repo: organvm/enterprise-plugin
   type: code
-  target_agent: github_actions
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -38413,7 +38483,7 @@ tasks:
   title: '[STRANGER-TEST] Session 10: Security Researcher'
   repo: organvm/public-process
   type: code
-  target_agent: oz
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -38433,7 +38503,7 @@ tasks:
   title: '[STRANGER-TEST] Session 9: DevRel Manager'
   repo: organvm/public-process
   type: code
-  target_agent: github_actions
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -38453,7 +38523,7 @@ tasks:
   title: '[STRANGER-TEST] Session 8: Data Scientist'
   repo: organvm/public-process
   type: code
-  target_agent: oz
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -38473,7 +38543,7 @@ tasks:
   title: '[STRANGER-TEST] Session 7: UX Designer'
   repo: organvm/public-process
   type: code
-  target_agent: github_actions
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -38493,7 +38563,7 @@ tasks:
   title: '[STRANGER-TEST] Session 6: Student'
   repo: organvm/public-process
   type: code
-  target_agent: oz
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -38513,7 +38583,7 @@ tasks:
   title: '[STRANGER-TEST] Session 5: Product Manager'
   repo: organvm/public-process
   type: code
-  target_agent: github_actions
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -38533,7 +38603,7 @@ tasks:
   title: '[STRANGER-TEST] Session 4: Open Source Contributor'
   repo: organvm/public-process
   type: code
-  target_agent: oz
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -38553,7 +38623,7 @@ tasks:
   title: '[STRANGER-TEST] Session 3: Senior Backend Engineer'
   repo: organvm/public-process
   type: code
-  target_agent: github_actions
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -38573,7 +38643,7 @@ tasks:
   title: '[STRANGER-TEST] Session 2: Technical Writer'
   repo: organvm/public-process
   type: code
-  target_agent: oz
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -38593,7 +38663,7 @@ tasks:
   title: '[STRANGER-TEST] Session 1: Junior Developer'
   repo: organvm/public-process
   type: code
-  target_agent: github_actions
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -38613,7 +38683,7 @@ tasks:
   title: Enable GitHub Discussions for community interaction
   repo: organvm/dot-github--logos
   type: code
-  target_agent: oz
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -38630,7 +38700,7 @@ tasks:
   title: Create a 'Quick Start' guide
   repo: organvm/dot-github--logos
   type: code
-  target_agent: github_actions
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -38647,7 +38717,7 @@ tasks:
   title: Add an architecture overview map in the profile
   repo: organvm/dot-github--logos
   type: code
-  target_agent: oz
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -38664,7 +38734,7 @@ tasks:
   title: Simplify `CONTRIBUTING.md` to standard PR workflows
   repo: organvm/dot-github--logos
   type: code
-  target_agent: github_actions
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -38681,7 +38751,7 @@ tasks:
   title: Add 'Plain English' TL;DR to org profile README
   repo: organvm/dot-github--logos
   type: code
-  target_agent: oz
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -63439,7 +63509,7 @@ tasks:
   title: Raise test coverage in organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -63498,7 +63568,7 @@ tasks:
   title: Raise test coverage in organvm/domus-genoma
   repo: organvm/domus-genoma
   type: code
-  target_agent: jules
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -64812,7 +64882,7 @@ tasks:
   title: Raise test coverage in organvm/portfolio
   repo: organvm/portfolio
   type: code
-  target_agent: jules
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -64900,7 +64970,7 @@ tasks:
   title: Raise test coverage in organvm/limen
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -65399,7 +65469,7 @@ tasks:
   title: Real usage docs for organvm/limen
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: agy
   priority: low
   budget_cost: 1
   status: open
@@ -65738,7 +65808,7 @@ tasks:
   title: Reduce complexity in organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: jules
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -67126,7 +67196,7 @@ tasks:
   title: Discover the latent value of organvm/organon-noumenon--ontogenetic-morphe
   repo: organvm/organon-noumenon--ontogenetic-morphe
   type: research
-  target_agent: jules
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -67165,7 +67235,7 @@ tasks:
   title: Discover the latent value of organvm/the-actual-news
   repo: organvm/the-actual-news
   type: research
-  target_agent: jules
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
