@@ -628,6 +628,20 @@ parameters:
     owner: limen-daemon
     note: "Opt-in (=1) to route SSH_AUTH_SOCK through the 1Password agent (domus-genoma 02-1password.zsh). OFF by default: the app's BiometricsOnly/never-cache policy turns every agent hit into a Touch-ID prompt, and git here is HTTPS with no keys in the agent — so routing buys nothing and only risks the prompt storm. See macos-tcc-gatekeeper-dialogs-solved."
 
+  # --- FULL-SWEEP credential catch-all (scripts/creds-hydrate.py --sweep-all) ---
+  CREDS_SWEEP_VAULTS:
+    default: ""                # empty ⇒ derive from the vaults DEFAULT_MAP already draws from
+    env: LIMEN_CREDS_SWEEP_VAULTS
+    self_update: none
+    owner: limen-daemon
+    note: "Comma-separated 1Password vaults --sweep-all enumerates for the catch-all credential materialization. Empty (default) DERIVES the list from the op:// vaults the curated DEFAULT_MAP already uses (never a hardcoded vault). Promptless-only — the sweep refuses to run unless a service-account token makes op silent. See wrangler-login-and-op-ping-disease."
+  CREDS_SWEEP_LOGINS:
+    default: "0"               # OFF — LOGIN items are personal web logins, not fleet automation creds
+    env: LIMEN_CREDS_SWEEP_LOGINS
+    self_update: none
+    owner: limen-daemon
+    note: "Whether --sweep-all includes 1Password LOGIN-category items. OFF by default: those are personal web logins and a plaintext ~/.limen.env is the wrong home for them; the sweep targets API-credential/password/secret items. Set =1 only to deliberately include logins."
+
   # --- credential Wall (scripts/credential-wall.py): the pinned secret/credential index ---
   LIMEN_CRED_WALL_ISSUE:
     default: 320               # the pinned GitHub issue regenerated as the canonical secret index

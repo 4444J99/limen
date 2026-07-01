@@ -483,6 +483,155 @@ def probe_cred(entry: dict, value: str, timeout: int = 6) -> tuple[str, str]:
         return "unverifiable", f"unreachable ({type(e).__name__})"
 
 
+# --- FULL SWEEP -------------------------------------------------------------------------------------
+# DEFAULT_MAP is the CURATED spine: the lanes the fleet dispatches, each with the right env-var name and
+# a validity probe. --sweep-all is the CATCH-ALL that complements it: enumerate the automation vaults and
+# materialize EVERY remaining credential field into ~/.limen.env, so "one spot" holds all secrets/tokens/
+# api-keys — not just the hand-listed six. It runs ONLY when `op` is promptless (a service-account token),
+# so it can NEVER pop a Touch-ID storm; without the token it is a no-op that points at the one install step.
+# Curated items are left to their lane (correct name + probe); the sweep fills the gap so nothing is missed.
+
+# Field labels/ids that name a credential-shaped value (case-insensitive substring match on label OR id).
+_CRED_FIELD_HINTS = ("credential", "token", "api key", "api_key", "apikey", "secret", "password", "key")
+# Item categories worth sweeping. LOGIN is EXCLUDED by default — those are personal web logins, not fleet
+# automation creds, and a plaintext env is the wrong home for them (set LIMEN_CREDS_SWEEP_LOGINS=1 to include).
+_SWEEP_CATEGORIES = {"API_CREDENTIAL", "PASSWORD", "SECURE_NOTE", "DATABASE", "SERVER", "SSH_KEY"}
+
+
+def _sweep_vaults() -> list[str]:
+    """Vaults to sweep: LIMEN_CREDS_SWEEP_VAULTS (comma-sep) overrides; else the distinct vaults the
+    curated DEFAULT_MAP already draws from (op://<vault>/...) — the fleet's known automation vaults."""
+    override = os.environ.get("LIMEN_CREDS_SWEEP_VAULTS")
+    if override:
+        return [v.strip() for v in override.split(",") if v.strip()]
+    vaults: list[str] = []
+    for e in DEFAULT_MAP:
+        ref = e.get("ref", "")
+        if ref.startswith("op://"):
+            v = ref[len("op://"):].split("/", 1)[0]
+            if v and v not in vaults:
+                vaults.append(v)
+    return vaults
+
+
+def _mapped_titles() -> set[tuple[str, str]]:
+    """(vault, item-title) pairs already curated in DEFAULT_MAP — the sweep skips these so it never
+    fights the lane's correct env-var name / probe. Parsed from each op://vault/item/field ref."""
+    out: set[tuple[str, str]] = set()
+    for e in DEFAULT_MAP:
+        ref = e.get("ref", "")
+        if ref.startswith("op://"):
+            parts = ref[len("op://"):].split("/")
+            if len(parts) >= 2:
+                out.add((parts[0], parts[1]))
+    return out
+
+
+def _mapped_env_names() -> set[str]:
+    """Every env-var name the curated map owns — the sweep never clobbers these (curated wins)."""
+    out: set[str] = set()
+    for e in DEFAULT_MAP:
+        out.update(e.get("env", []))
+    return out
+
+
+def _sanitize_env_name(s: str) -> str:
+    """An item/field title -> a legal UPPER_SNAKE env var name."""
+    return re.sub(r"[^A-Za-z0-9]+", "_", s).strip("_").upper()
+
+
+def _op_json(cmd: list[str], timeout: int = 20):
+    """Run an `op` subcommand that emits JSON; return the parsed object or None on any failure."""
+    try:
+        r = subprocess.run(["op", *cmd, "--format=json"], capture_output=True, text=True,
+                           timeout=timeout, stdin=subprocess.DEVNULL)
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return None
+    if r.returncode != 0 or not r.stdout.strip():
+        return None
+    try:
+        return json.loads(r.stdout)
+    except json.JSONDecodeError:
+        return None
+
+
+def _selected_fields(item: dict) -> list[tuple[str, str]]:
+    """(env-suffix-label, value) for each credential-shaped field of an item. Values never printed."""
+    picks: list[tuple[str, str]] = []
+    for f in item.get("fields", []) or []:
+        val = f.get("value")
+        if not val:
+            continue
+        ftype = (f.get("type") or "").upper()
+        if ftype not in ("CONCEALED", "STRING", "SSHKEY", ""):
+            continue
+        label = (f.get("label") or f.get("id") or "").lower()
+        purpose = (f.get("purpose") or "").upper()
+        if purpose == "PASSWORD" or any(h in label for h in _CRED_FIELD_HINTS):
+            picks.append((f.get("label") or f.get("id") or "credential", val))
+    return picks
+
+
+def sweep_all(apply: bool) -> int:
+    """Enumerate the automation vaults and materialize every credential field NOT already curated in
+    DEFAULT_MAP. Promptless-only: a no-op (with the one install hint) when op can't read silently."""
+    if not have_op():
+        print("creds-hydrate --sweep-all: `op` not found — install the 1Password CLI first. (fail-open)")
+        return 0
+    if not op_can_read_silently():
+        print("creds-hydrate --sweep-all: op is NOT promptless — refusing to run (a sweep here would pop a "
+              "Touch-ID storm). Install the service-account token ONCE, then the sweep is silent forever:")
+        print(f"  scripts/op-service-account.sh install   # writes {SA_TOKEN_FILE}, chmod 600, value never shown")
+        return 0
+
+    vaults = _sweep_vaults()
+    include_logins = os.environ.get("LIMEN_CREDS_SWEEP_LOGINS") == "1"
+    mapped_titles, mapped_envs = _mapped_titles(), _mapped_env_names()
+    print(f"creds-hydrate --sweep-all {'--apply' if apply else '(dry-run — pass --apply to write)'} "
+          f"over vault(s): {', '.join(vaults) or '(none)'}")
+    swept, skipped_curated, skipped_login, skipped_collide = 0, 0, 0, 0
+    written_names: set[str] = set()
+    for vault in vaults:
+        items = _op_json(["item", "list", "--vault", vault])
+        if not items:
+            print(f"  · {vault:20} (no items readable / empty)")
+            continue
+        for meta in items:
+            title, cat = meta.get("title", ""), (meta.get("category") or "").upper()
+            if (vault, title) in mapped_titles:
+                skipped_curated += 1
+                continue
+            if cat == "LOGIN" and not include_logins:
+                skipped_login += 1
+                continue
+            if cat not in _SWEEP_CATEGORIES and cat != "LOGIN":
+                continue
+            full = _op_json(["item", "get", meta.get("id", title), "--vault", vault])
+            if not full:
+                continue
+            fields = _selected_fields(full)
+            if not fields:
+                continue
+            base = _sanitize_env_name(title)
+            for label, val in fields:
+                name = base if len(fields) == 1 else f"{base}_{_sanitize_env_name(label)}"
+                if name in mapped_envs:  # curated map owns this name — never clobber it
+                    skipped_collide += 1
+                    del val
+                    continue
+                if apply:
+                    write_env(name, val)
+                del val
+                written_names.add(name)
+                swept += 1
+                print(f"  {'✓' if apply else 'plan:'} {vault}/{title} -> {name}")
+    print(f"creds-hydrate --sweep-all: {swept} field(s){' materialized' if apply else ' planned'}, "
+          f"{skipped_curated} curated-skip, {skipped_login} login-skip, {skipped_collide} name-collision-skip.")
+    if skipped_login:
+        print(f"  ({skipped_login} LOGIN item(s) skipped — personal web logins; set LIMEN_CREDS_SWEEP_LOGINS=1 to include.)")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Hydrate fleet credentials from 1Password — once minted, never re-logged-in.")
     g = ap.add_mutually_exclusive_group()
@@ -490,6 +639,10 @@ def main() -> int:
     g.add_argument("--check", action="store_true", help="report PRESENCE of env targets (names only; offline) — not validity")
     g.add_argument("--verify", action="store_true", help="authenticate each materialized cred against its service (VALIDITY) — exit 1 if any is dead")
     g.add_argument("--dry-run", action="store_true", help="print the op://→target plan; NO reads, NO writes (default)")
+    ap.add_argument("--sweep-all", action="store_true", dest="sweep_all",
+                    help="CATCH-ALL: materialize EVERY credential field in the automation vaults (beyond the curated "
+                         "map) into ~/.limen.env. Promptless-only (needs the service-account token) — never prompts. "
+                         "Combine with --apply to write; alone it dry-runs the plan.")
     ap.add_argument("--op", action="store_true",
                     help="ALSO read op:// lanes — may raise a 1Password Touch-ID/GUI prompt. OFF by default: "
                          "without it, only promptless lanes (derive, e.g. the gh keyring) hydrate, so NO dialog "
@@ -498,6 +651,10 @@ def main() -> int:
     args = ap.parse_args()
 
     load_service_account_token()  # hydrate OP_SERVICE_ACCOUNT_TOKEN from its file if present → silent `op read`
+
+    # --sweep-all is the catch-all pass; it complements the curated map rather than iterating it.
+    if getattr(args, "sweep_all", False):
+        return sweep_all(apply=args.apply)
 
     cred_map = [e for e in load_map() if e.get("enabled", True)]
     if not cred_map:
@@ -559,8 +716,9 @@ def main() -> int:
     # ROOT CAUSE (confirmed from 1Password's own daemon logs): the app's unlock policy is
     # `BiometricsOnly` with "Ask Again After: -1" (never cache) — so EVERY `op read` re-locks
     # immediately and demands a fresh Touch-ID. Nothing is cached, so each access is its own prompt.
-    # On personal accounts a service-account token (the only promptless `op`) is NOT available
-    # (Business-only), so there is no token path to make `op read` silent here.
+    # The PERMANENT cure is a service-account token (the only promptless `op`): install it once at
+    # SA_TOKEN_FILE (scripts/op-service-account.sh) and op_can_read_silently() flips True, so this whole
+    # opt-in gate falls away — the beat and --sweep-all read op with ZERO Touch-ID, forever.
     # The earlier gate still let `op read` fire whenever stdin/stdout was a TTY — but the daemon's
     # metabolize beat and ~10 concurrent interactive sessions ALL present as TTYs, so that clause WAS
     # the storm (20+ biometric prompts in rapid succession). The cure: `op` is now strictly OPT-IN.

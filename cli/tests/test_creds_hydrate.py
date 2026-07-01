@@ -312,6 +312,63 @@ def test_gh_secret_set_pipes_value_via_stdin_not_argv(monkeypatch):
     assert seen["cmd"][:3] == ["gh", "secret", "set"]
 
 
+def test_sweep_all_refuses_without_promptless_op(tmp_path, monkeypatch):
+    """--sweep-all NEVER touches `op` unless it can read silently — else it would pop a Touch-ID storm.
+    With no service-account token it must refuse, call `op` zero times, and exit 0 (fail-open)."""
+    mod = _hydrate_module("creds_hydrate_sweep_refuse")
+    env_file = tmp_path / ".limen.env"
+    mod.ENV_FILE = env_file
+    monkeypatch.setattr(mod, "have_op", lambda: True)
+    monkeypatch.setattr(mod, "op_can_read_silently", lambda: False)
+    called = {"op": 0}
+    monkeypatch.setattr(mod, "_op_json", lambda *a, **k: called.__setitem__("op", called["op"] + 1))
+    rc = mod.sweep_all(apply=True)
+    assert rc == 0
+    assert called["op"] == 0  # refused before any op call
+    assert not env_file.exists()  # wrote nothing
+
+
+def test_sweep_all_materializes_uncurated_and_skips_logins(tmp_path, monkeypatch):
+    """The catch-all sweep writes every credential field EXCEPT: curated-map items, LOGIN items (personal
+    web logins), and names the curated map already owns. Values reach the env file, never the log."""
+    mod = _hydrate_module("creds_hydrate_sweep")
+    env_file = tmp_path / ".limen.env"
+    mod.ENV_FILE = env_file
+    monkeypatch.setenv("LIMEN_CREDS_SWEEP_VAULTS", "TestVault")
+    monkeypatch.delenv("LIMEN_CREDS_SWEEP_LOGINS", raising=False)
+    monkeypatch.setattr(mod, "have_op", lambda: True)
+    monkeypatch.setattr(mod, "op_can_read_silently", lambda: True)
+
+    listing = [
+        {"id": "1", "title": "Stripe Live Key", "category": "API_CREDENTIAL"},
+        {"id": "2", "title": "Personal Bank", "category": "LOGIN"},  # skipped (login)
+        {"id": "3", "title": "DB Prod", "category": "DATABASE"},
+        {"id": "4", "title": "Random Note", "category": "SECURE_NOTE"},  # no cred field → nothing
+    ]
+    items = {
+        "1": {"fields": [{"label": "credential", "type": "CONCEALED", "value": "sk_live_ABC"}]},
+        "3": {"fields": [{"label": "password", "purpose": "PASSWORD", "type": "CONCEALED", "value": "dbpw123"}]},
+        "4": {"fields": [{"label": "notesPlain", "type": "STRING", "value": "just a note"}]},
+    }
+
+    def fake_op_json(cmd, *a, **k):
+        if cmd[:2] == ["item", "list"]:
+            return listing
+        if cmd[:2] == ["item", "get"]:
+            return items.get(cmd[2])
+        return None
+
+    monkeypatch.setattr(mod, "_op_json", fake_op_json)
+    rc = mod.sweep_all(apply=True)
+    assert rc == 0
+
+    written = env_file.read_text()
+    assert "export STRIPE_LIVE_KEY=sk_live_ABC" in written  # API credential swept
+    assert "export DB_PROD=dbpw123" in written  # database password swept
+    assert "PERSONAL_BANK" not in written  # LOGIN item skipped
+    assert "RANDOM_NOTE" not in written  # no credential-shaped field → skipped
+
+
 def test_gh_secret_only_entry_verify_is_neutral_and_offline(tmp_path):
     """A gh_secret-only map entry is reported neutrally by --verify with NO network call and exit 0."""
     map_file = tmp_path / "map.json"

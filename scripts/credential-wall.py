@@ -100,8 +100,8 @@ CI_SECRETS: list[dict] = [
     {
         "name": "OP_SERVICE_ACCOUNT_TOKEN",
         "home": "file `~/.config/op/service-account-token` (1Password service account)",
-        "used": "`creds-hydrate.py` headless `op read` (no Touch-ID)",
-        "hand": "optional — #288 (closed); set ⇒ unattended hydration without a fingerprint",
+        "used": "`creds-hydrate.py` headless `op read` + `--sweep-all` (no Touch-ID)",
+        "hand": "THE control point — install once: `scripts/op-service-account.sh install` ⇒ op promptless forever",
         "issue": "#288",
     },
 ]

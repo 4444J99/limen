@@ -48,9 +48,10 @@ echo
 # SILENCED when NO automated path calls `op` — then a locked vault can never pop Touch-ID unattended.
 # creds-hydrate.py is the only `op` caller; it now reads op ONLY with an explicit --op flag (opt-in),
 # so a bare TTY (every daemon beat AND every interactive session) no longer triggers it — that TTY
-# clause WAS the storm. Service accounts (the only promptless `op`) are 1Password BUSINESS-only and
-# UNAVAILABLE on a personal account, so a token is NOT required for silence and its absence is NOT a
-# gap; it would only be an optional bonus to auto-hydrate the op:// lanes. [[macos-tcc-gatekeeper-dialogs-solved]]
+# clause WAS the storm. A service-account token (the only promptless `op`) is the PERMANENT cure: install
+# it ONCE at $SA_FILE and every op:// read goes silent forever — the daemon beat, the op:// lanes, and the
+# --sweep-all catch-all all hydrate with ZERO Touch-ID. Absent the token, op stays strictly opt-in (--op),
+# so nothing pops unattended either way. Install via scripts/op-service-account.sh. [[macos-tcc-gatekeeper-dialogs-solved]]
 CREDS="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)/scripts/creds-hydrate.py"
 SA_FILE="${LIMEN_OP_SA_TOKEN_FILE:-$HOME/.config/op/service-account-token}"
 if [ -f "$CREDS" ] && grep -q 'op_ok = op_can_read_silently() or args\.op' "$CREDS" \
@@ -58,15 +59,15 @@ if [ -f "$CREDS" ] && grep -q 'op_ok = op_can_read_silently() or args\.op' "$CRE
   green "1Password: op:// reads are OPT-IN (--op only) → no daemon beat or session can pop Touch-ID"
   note "SSH agent routing is also opt-in (LIMEN_USE_1PASSWORD_SSH; organvm/domus-genoma#130) — git is HTTPS, so SSH never hits 1Password either."
   if [ -n "${OP_SERVICE_ACCOUNT_TOKEN:-}" ] || { [ -f "$SA_FILE" ] && [ -s "$SA_FILE" ]; }; then
-    note "service-account token present → op:// lanes (gemini/cloudflare) also hydrate unattended (optional bonus)."
+    green "service-account token present → op:// lanes AND --sweep-all hydrate unattended, promptless, forever."
   else
-    note "op:// lanes hydrate only via 'creds-hydrate --apply --op' at a terminal (one deliberate touch). A 1Password"
-    note "service account would auto-hydrate them, but it's BUSINESS-only — unavailable on a personal account, so NOT a gap."
+    note "op:// lanes hydrate via 'creds-hydrate --apply --op' at a terminal (one deliberate touch), OR — to go"
+    note "promptless FOREVER (no touch, ever) — install the service-account token once:  scripts/op-service-account.sh install"
   fi
 else
   red "1Password: creds-hydrate still auto-reads 'op' (no opt-in gate) → can pop Touch-ID unattended"
   cure "Make 'op read' opt-in in scripts/creds-hydrate.py:  op_ok = op_can_read_silently() or args.op  (drop the running_interactively() clause; add a --op flag)."
-  note "This is a CODE fix an agent CAN land (no human needed) — not a service-account token (Business-only, impossible on a personal account)."
+  note "This is a CODE fix an agent CAN land (no human needed). To also make op:// promptless forever, install a service-account token: scripts/op-service-account.sh install."
 fi
 echo
 
