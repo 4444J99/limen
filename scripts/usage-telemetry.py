@@ -53,13 +53,23 @@ def _parse_ts(value) -> "datetime.datetime | None":
 # tunable per-vendor LIMITS (the "amount possible") — defaults are honest estimates;
 # calibrate to your real plan (codex/claude: see each CLI's /status). Override via
 # logs/usage-limits.json or env LIMEN_<VENDOR>_LIMIT.
+#
+# `trust` is MACHINE-READABLE so a controller can read an untrusted cap PESSIMISTICALLY
+# instead of optimistically (an estimate cap the size of 100M tokens otherwise looks like
+# infinite headroom → a lane never sheds early → the pre-condition of a usage-window
+# blowout). measured = a real known cap; estimate = a placeholder to tune to the plan;
+# unmodeled = we don't have the number yet. `pool` links lanes that draw on ONE
+# subscription window (the claude-cli lane, the Claude app, and interactive Claude Code all
+# spend the SAME Claude plan; codex-cli + the ChatGPT app spend the SAME OpenAI plan) — a
+# pool's real cap belongs on `pool_cap` once discovered. Extra keys here are ignored by the
+# existing consumers (all use .get()); scripts/verify-budget-gauge.py audits them.
 _DEFAULT_LIMITS = {
-    "jules":    {"limit": 100,        "unit": "runs",   "window": "24h",        "source": "known hard cap"},
-    "codex":    {"limit": 100_000_000, "unit": "tokens", "window": "5h rolling", "source": "ESTIMATE — tune to plan (/status)"},
-    "claude":   {"limit": 100_000_000, "unit": "tokens", "window": "5h rolling", "source": "ESTIMATE — tune to plan (/status)"},
-    "gemini":   {"limit": 1000,       "unit": "runs",   "window": "24h",        "source": "ESTIMATE — free-tier RPD"},
-    "opencode": {"limit": 200,        "unit": "runs",   "window": "today",      "source": "ESTIMATE — set $/run budget"},
-    "agy":      {"limit": 200,        "unit": "runs",   "window": "today",      "source": "ESTIMATE — credit budget"},
+    "jules":    {"limit": 100,        "unit": "runs",   "window": "24h",        "source": "known hard cap",                 "trust": "measured"},
+    "codex":    {"limit": 100_000_000, "unit": "tokens", "window": "5h rolling", "source": "ESTIMATE — tune to plan (/status)", "trust": "estimate", "pool": "openai-plan"},
+    "claude":   {"limit": 100_000_000, "unit": "tokens", "window": "5h rolling", "source": "ESTIMATE — tune to plan (/status)", "trust": "estimate", "pool": "claude-plan"},
+    "gemini":   {"limit": 1000,       "unit": "runs",   "window": "24h",        "source": "ESTIMATE — free-tier RPD",       "trust": "estimate"},
+    "opencode": {"limit": 200,        "unit": "runs",   "window": "today",      "source": "ESTIMATE — set $/run budget",    "trust": "estimate"},
+    "agy":      {"limit": 200,        "unit": "runs",   "window": "today",      "source": "ESTIMATE — credit budget",       "trust": "estimate"},
 }
 
 
