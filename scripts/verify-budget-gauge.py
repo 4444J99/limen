@@ -156,6 +156,24 @@ def build_gauge() -> dict:
         if secondary:
             c["weekly_used_percent"] = secondary.get("used_percent")
             c["weekly_window"] = f"{int(secondary.get('window_minutes', 0)) // 60}h"
+
+    # claude: resolve from the cascade (scripts/claude-usage.py). Always surface the % + which
+    # avenue answered; only UPGRADE the row (clear the fictional-cap findings) when an avenue gives
+    # a TRUSTED reading — an `estimate` reading vs the fleet's own fictional cap must leave the debt
+    # standing so the audit stays honest.
+    try:
+        spec = importlib.util.spec_from_file_location("claude_usage", str(ROOT / "scripts" / "claude-usage.py"))
+        cu = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cu)
+        cr = cu.resolve()
+        if cr.get("used_percent") is not None:
+            cl = gauge.setdefault("claude", {})
+            cl["gauge_avenue"], cl["used_percent"] = cr.get("avenue"), cr.get("used_percent")
+            if cr.get("trust") in ("measured", "proxy"):
+                cl["trust"], cl["unit"], cl["pool_cap"] = cr["trust"], "percent", 100
+                cl["source"] = f"cascade avenue={cr.get('avenue')}"
+    except Exception:
+        pass
     return gauge
 
 

@@ -352,6 +352,24 @@ parameters:
     self_update: none
     owner: continuity
     note: "Hard stop elapsed-time ceiling for one recent Codex session."
+  LIMEN_CLAUDE_POLL:
+    default: "0"
+    env: LIMEN_CLAUDE_POLL
+    self_update: none
+    owner: continuity
+    note: "Gate for the claude-usage active-poll avenue. 1=allow one authed usage call when a SANCTIONED env token is present; 0 (default) leaves it off so it can never read the Keychain or worsen the login-flap credential race."
+  LIMEN_CLAUDE_WEEKLY_TOKENS:
+    default: ""
+    env: LIMEN_CLAUDE_WEEKLY_TOKENS
+    self_update: none
+    owner: continuity
+    note: "Optional human-set weekly Claude token cap. When set, the claude-usage counts avenue divides the real transcript token sum by it and marks trust=proxy; unset falls back to the fleet's own estimated cap (trust=estimate) — never a fabricated number."
+  LIMEN_CLAUDE_GAUGE_FRESH_S:
+    default: 1800
+    env: LIMEN_CLAUDE_GAUGE_FRESH_S
+    self_update: none
+    owner: continuity
+    note: "Freshness ceiling in seconds for a claude-usage avenue reading. An avenue older than this is visibly SKIPPED (the anti-forgettable-hole guard) rather than silently trusted."
   LIMEN_OVERNIGHT_WATCH_STATE:
     default: "$LIMEN_ROOT/logs/overnight-watch-state.json"
     env: LIMEN_OVERNIGHT_WATCH_STATE

@@ -282,6 +282,7 @@ while true; do
       --since-hours "${LIMEN_CODEX_TOKEN_REPORT_HOURS:-6}" \
       --limit-sessions "${LIMEN_CODEX_TOKEN_REPORT_LIMIT:-25}" \
       --output "$LIMEN_ROOT/logs/codex-token-report.json" 2>&1 | tail -1 || true   # visible session spend report
+    python3 "$LIMEN_ROOT/scripts/claude-usage.py" 2>&1 | tail -1 || true   # claude usage: multi-avenue cascade → logs/claude-usage.json
     EFFECTIVE_LANES="$(healthy_lanes "$LANES")"
     if [ "$EFFECTIVE_LANES" != "$LANES" ]; then
       echo "  lanes: ${EFFECTIVE_LANES:-none} active from requested [$LANES]"
@@ -381,6 +382,7 @@ while true; do
   [ "${LIMEN_VIGILIA:-1}" = "1" ] && { python3 -m limen.vigilia beat 2>&1 | tail -1 || true; stamp vigilia; }   # VIGILIA autonomic executive — record vitals/continuity/integrity to the seat (read-only, fail-open)
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" 2>&1 | tail -1 || true   # real per-vendor usage
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/codex-token-accounting.py" --since-hours "${LIMEN_CODEX_TOKEN_REPORT_HOURS:-6}" --limit-sessions "${LIMEN_CODEX_TOKEN_REPORT_LIMIT:-25}" --output "$LIMEN_ROOT/logs/codex-token-report.json" 2>&1 | tail -1 || true   # per-session Codex spend report
+  play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/claude-usage.py" 2>&1 | tail -1 || true   # claude usage: multi-avenue cascade gauge
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/money-view.py" 2>&1 | tail -1 || true   # revenue-first money view (no network, can't time out)
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/corpus-view.py" 2>&1 | tail -1 || true   # knowledge-base view: THE ONE + convergence activity (no network)
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/ingest-coverage.py" 2>&1 | tail -1 || true   # diagnostic: are we at 100% context? sources + freshness + adapter gaps (read-only over the manifest)
