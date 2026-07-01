@@ -386,3 +386,39 @@ def test_gh_secret_only_entry_verify_is_neutral_and_offline(tmp_path):
     )
     assert r.returncode == 0
     assert "CI-secret gh:organvm/domus:GMAIL_APP_PASSWORD" in r.stdout
+
+
+def test_gh_sinks_normalizes_dict_list_and_none():
+    """_gh_sinks accepts a single dict (legacy), a LIST of sinks (new multi-repo fan-out), or nothing —
+    always returning a list, so every consumption site iterates uniformly and old single-sink entries
+    behave identically (one-element list)."""
+    mod = _hydrate_module()
+    assert mod._gh_sinks({}) == []
+    assert mod._gh_sinks({"gh_secret": None}) == []
+    one = {"repo": "o/r", "name": "X"}
+    assert mod._gh_sinks({"gh_secret": one}) == [one]
+    two = [{"repo": "o/a", "name": "K"}, {"repo": "o/b", "name": "K"}]
+    assert mod._gh_sinks({"gh_secret": two}) == two
+
+
+def test_gh_secret_list_fans_out_to_every_repo_in_verify(tmp_path):
+    """A gh_secret LIST (one op:// value → many repos' CI secrets, e.g. the shared GCP deploy SA) is
+    reported as ALL its sinks by --verify, network-free, exit 0 — the multi-repo fan-out the media-ark
+    Cloud Run deploy relies on."""
+    map_file = tmp_path / "map.json"
+    map_file.write_text(
+        '[{"lane":"gcp (ci)","ref":"op://V/I/credential","gh_secret":['
+        '{"repo":"organvm/media-ark","name":"GCP_SA_KEY"},'
+        '{"repo":"organvm/limen","name":"GCP_SA_KEY"}]}]'
+    )
+    env_file = tmp_path / ".limen.env"
+    r = subprocess.run(
+        [sys.executable, str(HYDRATE), "--verify"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        env={**os.environ, "LIMEN_ENV": str(env_file), "LIMEN_CREDS_MAP": str(map_file)},
+    )
+    assert r.returncode == 0
+    assert "gh:organvm/media-ark:GCP_SA_KEY" in r.stdout
+    assert "gh:organvm/limen:GCP_SA_KEY" in r.stdout

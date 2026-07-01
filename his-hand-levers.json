@@ -299,6 +299,23 @@
       "gate": "shared-org-repo visibility flips are harness-gated + outward-facing — yours to run",
       "note": "The itemized per-repo ledger is delivered OUT-OF-BAND (this session + the private knowledge-corpus), never committed here: this registry PUBLISHES and must stay PII-clean per no-tasks-on-me.sh — it must not become a public map to the leak. See memory: [[credential-atoms-not-a-chat-burden]], [[known-owned-pervasive-then-idgaf]], [[health-pii-in-generator-code]].",
       "issue": null
+    },
+    {
+      "id": "L-GCP-DEPLOY-SA",
+      "label": "Mint the GCP service-account key that takes media-ark LIVE. media-ark's revenue product is CODE-COMPLETE — the BTC->MONETA->signed-licence->verify->pro->quota chain (organvm/media-ark #51-#53) and a Cloud Run deploy workflow (#54) are all landed and green. Its deploy is gated on ONE thing: the GitHub Actions secret GCP_SA_KEY (read by google-github-actions/auth); the workflow no-ops green while it's absent. The credential organ is ALREADY WIRED to land it (creds-hydrate.py DEFAULT_MAP lane 'gcp (cloud run deploy SA)', gh_secret fan-out to organvm/media-ark + organvm/limen). The ONLY irreducible atom is that a GCP service-account JSON key must be MINTED in the vendor console (the organ physically cannot create one) and dropped into 1Password at op://Personal/GCP Deploy SA/credential. The moment that item exists, a beat lands both CI secrets and the next push auto-deploys a complete product (API + dashboard + /api/license). This is NEVER a chat ask — it lives here.",
+      "cost": "~5 min: GCP console create+download a JSON key for the Cloud Run deploy SA, then paste it into one 1Password field. One-time; the organ handles every hydration after.",
+      "owner": "yours",
+      "unlocks": "media-ark auto-deploys to Cloud Run -> the code-complete Bitcoin-native Pro archive product goes LIVE (a revenue surface toward the Aug-1 $10k/wk gate). Also arms limen's own dormant Cloud Run deploy (its live runtime stays the CF Worker).",
+      "source_task": "media organ NEXT.md Spine A -> Phase 3 (session d7044841) — 'one credential from live'",
+      "gate": "MINT — a vendor-console action the organ cannot perform (creating a GCP SA key). Not a token to re-recite: once the JSON is at op://Personal/GCP Deploy SA/credential, creds-hydrate lands GCP_SA_KEY on both repos and self-heals every beat.",
+      "note": "Persistence + MONETA-keygen are SEPARATE, later atoms (they gate Pro BILLING, not the free deploy): Cloud Run /tmp is ephemeral so quota/tier reset per instance, and /api/license returns 503 until MONETA's pubkey is set. The free archive product deploys and works the moment this key lands. See organs/media/NEXT.md Spine A -> Phase 3 for those follow-ons. [[credential-atoms-not-a-chat-burden]] [[media-suite-convergence]] [[credential-durability-organ]]",
+      "steps": [
+        "GCP console -> the Cloud Run project (limen's deploy project) -> IAM & Admin -> Service Accounts -> the deploy SA -> Keys -> Add key -> Create new key -> JSON -> download",
+        "op item edit 'GCP Deploy SA' (Personal vault) — add a CONCEALED field 'credential' whose value is the FULL downloaded JSON (or create the item first); the ref must be op://Personal/GCP Deploy SA/credential",
+        "python3 scripts/creds-hydrate.py --apply --op   # lands GCP_SA_KEY on organvm/media-ark + organvm/limen (value streams op->gh, never printed)",
+        "push any commit to organvm/media-ark main — deploy-api.yml now sees the secret and deploys the product to Cloud Run"
+      ],
+      "issue": null
     }
   ]
 }

@@ -160,6 +160,30 @@ DEFAULT_MAP: list[dict] = [
         "verify": {"url": "https://api.cloudflare.com/client/v4/accounts", "auth": "bearer"},
     },
     {
+        # The GCP service-account key that lets a repo deploy to Cloud Run. `google-github-actions/auth`
+        # reads it as `secrets.GCP_SA_KEY`; each deploy-api.yml no-ops GREEN when it's absent (verified
+        # on both organvm/media-ark #54 and organvm/limen). ONE op:// value fans out to EVERY repo that
+        # deploys to the shared GCP project — hence the LIST of gh_secret sinks (the new multi-sink form).
+        # WHY THIS UNBLOCKS REVENUE: media-ark is "one credential from live" — its BTC→MONETA→licence→pro
+        # →quota chain is code-complete (#51–#53) and its Cloud Run deploy is gated ONLY on this secret;
+        # the moment it lands, the next push auto-deploys a complete product (API + dashboard + /api/license).
+        # limen's own deploy-api.yml mirrors the same gate (its LIVE runtime is the CF Worker, so Cloud Run
+        # is a dormant-but-ready sibling — landing the secret arms it without changing the live surface).
+        # gh_secret-only (no env/file): presence-guarded, so a beat never touches 1Password once EVERY sink
+        # is set. The ONLY irreducible human bit is MINTING the SA JSON into 1Password at this ref if it
+        # isn't there yet — a vendor mint recorded as lever L-GCP-DEPLOY-SA in his-hand-levers.json, NEVER a
+        # chat ask. Once the item exists, `--apply --op` (or a beat with the SA token) lands both secrets and
+        # self-heals. See organs/media/NEXT.md Spine A → Phase 3. [[credential-durability-organ]]
+        # [[media-suite-convergence]] [[his-hand-tasks-hang-in-permanent-registry]]
+        "lane": "gcp (cloud run deploy SA)",
+        "ref": "op://Personal/GCP Deploy SA/credential",
+        "gh_secret": [
+            {"repo": "organvm/media-ark", "name": "GCP_SA_KEY"},
+            {"repo": "organvm/limen", "name": "GCP_SA_KEY"},
+        ],
+        "enabled": True,
+    },
+    {
         # CI-SECRET sink — the credential the organ didn't used to reach, so it kept landing on a human as
         # a "paste this gh secret" lever (L-GMAIL-CRED). The Gmail app-password ALREADY EXISTS in 1Password;
         # the autonomous mail lane just needs it as a GitHub Actions secret on the consuming repo. That is
@@ -226,6 +250,17 @@ def load_map() -> list[dict]:
         except Exception as e:  # noqa: BLE001 — fail-open onto the default
             print(f"  warn: could not read LIMEN_CREDS_MAP={override} ({e}); using built-in map", file=sys.stderr)
     return DEFAULT_MAP
+
+
+def _gh_sinks(entry: dict) -> list[dict]:
+    """gh_secret may be a single {repo,name} dict OR a LIST of them — one op:// value fanned out to
+    every repo's CI secret (e.g. the shared GCP deploy SA landed on each repo that deploys to that
+    project). Normalize to a list; empty when the entry has no CI-secret sink. Backward-compatible: a
+    lone dict becomes a one-element list, so every existing single-sink entry behaves identically."""
+    g = entry.get("gh_secret")
+    if not g:
+        return []
+    return list(g) if isinstance(g, list) else [g]
 
 
 def have_op() -> bool:
@@ -669,12 +704,13 @@ def main() -> int:
         any_invalid = False
         for e in cred_map:
             envs = e.get("env", [])
-            gspec = e.get("gh_secret")
-            if not envs and gspec:
+            sinks = _gh_sinks(e)
+            if not envs and sinks:
                 # A CI-secret sink isn't probeable here — the value isn't materialized on this floor and
                 # GitHub never returns a secret's value. Presence/landing is reported by --apply. Neutral,
                 # network-free, never fails the beat.
-                print(f"  · {e['lane']:28} CI-secret gh:{gspec['repo']}:{gspec['name']} — managed on --apply (value not readable back)")
+                label = ", ".join(f"gh:{s['repo']}:{s['name']}" for s in sinks)
+                print(f"  · {e['lane']:28} CI-secret {label} — managed on --apply (value not readable back)")
                 continue
             val = _env_value(envs[0]) if envs else None
             if not val:
@@ -699,9 +735,10 @@ def main() -> int:
         print(f"creds-hydrate --check ({ENV_FILE}):")
         for e in cred_map:
             envs = e.get("env", [])
-            gspec = e.get("gh_secret")
-            if not envs and gspec:
-                print(f"  · {e['lane']:28} {ref_display(e['ref'])} -> gh:{gspec['repo']}:{gspec['name']} (CI secret — checked on --apply)")
+            sinks = _gh_sinks(e)
+            if not envs and sinks:
+                label = ", ".join(f"gh:{s['repo']}:{s['name']}" for s in sinks)
+                print(f"  · {e['lane']:28} {ref_display(e['ref'])} -> {label} (CI secret — checked on --apply)")
                 continue
             present = all(_env_has(k) for k in envs) if envs else False
             mark = "✓" if present else "✗"
@@ -740,10 +777,10 @@ def main() -> int:
     for e in cred_map:
         ref, envs, fspec = e["ref"], e.get("env", []), e.get("file")
         dcmd = e.get("derive")
-        gspec = e.get("gh_secret")
+        sinks = _gh_sinks(e)
         targets = ", ".join(envs) + (f" + {fspec['path']}" if fspec else "")
-        if gspec:
-            targets += (" + " if targets else "") + f"gh:{gspec['repo']}:{gspec['name']}"
+        for s in sinks:
+            targets += (" + " if targets else "") + f"gh:{s['repo']}:{s['name']}"
         source = f"`{' '.join(dcmd)}` (op:// fallback)" if dcmd else ref_display(ref)
         if not apply:
             print(f"  plan: {e['lane']:28} {source} -> {targets}")
@@ -751,8 +788,10 @@ def main() -> int:
         # gh_secret-ONLY entry (no env/file): if the CI secret is already set, skip — no value read, no
         # re-push, and crucially NO 1Password touch. The organ keeps it landed without a per-beat biometric
         # prompt; it only reads+sets when the secret is ABSENT (and op is permitted / the value derivable).
-        if gspec and not envs and not fspec and gh_secret_present(gspec["repo"], gspec["name"]) is True:
-            print(f"  ✓ {e['lane']:28} -> gh:{gspec['repo']}:{gspec['name']} (already set)")
+        if sinks and not envs and not fspec and all(
+                gh_secret_present(s["repo"], s["name"]) is True for s in sinks):
+            label = ", ".join(f"gh:{s['repo']}:{s['name']}" for s in sinks)
+            print(f"  ✓ {e['lane']:28} -> {label} (already set)")
             hydrated += 1
             continue
         # Prefer a live-minted value (e.g. the gh keyring) over the static op:// secret; fall back to
@@ -769,15 +808,15 @@ def main() -> int:
         for k in envs:
             write_env(k, val)
         wrote_file = write_tool_file(fspec, val) if fspec else None
-        gh_set = gh_secret_set(gspec["repo"], gspec["name"], val) if gspec else None
+        gh_results = [(s, gh_secret_set(s["repo"], s["name"], val)) for s in sinks]
         del val  # drop the secret from memory promptly
         parts = []
         if envs:
             parts.append(",".join(envs))
         if wrote_file:
             parts.append(wrote_file)
-        if gspec:
-            parts.append(f"gh:{gspec['repo']}:{gspec['name']}" + ("" if gh_set else " (set FAILED)"))
+        for s, ok in gh_results:
+            parts.append(f"gh:{s['repo']}:{s['name']}" + ("" if ok else " (set FAILED)"))
         print(f"  ✓ {e['lane']:28} -> {' + '.join(parts)}")
         hydrated += 1
 
