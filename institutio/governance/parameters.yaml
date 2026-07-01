@@ -268,6 +268,18 @@ parameters:
     self_update: none
     owner: continuity
     note: "Gate continuation on the Codex token accounting budget report. 1=stop continuation on over-budget sessions."
+  LIMEN_PHOTOS_LIBRARY:
+    default: "$HOME/Pictures/Photos Library.photoslibrary"
+    env: LIMEN_PHOTOS_LIBRARY
+    self_update: none
+    owner: continuity
+    note: "Apple Photos.app library bundle. media-atomize --photos-metadata reads it READ-ONLY (sqlite ZASSET) to emit metadata Shot atoms; the library is never mutated."
+  LIMEN_PHOTOS_DB:
+    default: "$HOME/Pictures/Photos Library.photoslibrary/database/Photos.sqlite"
+    env: LIMEN_PHOTOS_DB
+    self_update: none
+    owner: continuity
+    note: "Path to the Photos library sqlite DB (derived from LIMEN_PHOTOS_LIBRARY). Opened read-only for photos-metadata atomization; fail-open when the schema differs."
   LIMEN_PHOTOS_UNIVERSE_ROOT:
     default: "/Users/4jp/Workspace/photos-universe-20260629-182431"
     env: LIMEN_PHOTOS_UNIVERSE_ROOT

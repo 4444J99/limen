@@ -9,6 +9,7 @@ fails open — plus the engine reuse (offline converge) and corpus-converge abso
 import importlib.util
 import json
 import os
+import sqlite3
 import subprocess
 import sys
 from pathlib import Path
@@ -75,6 +76,55 @@ def _env(tmp_path, src: Path) -> dict:
     )
 
 
+def _photos_env(tmp_path, db: Path) -> dict:
+    env = _env(tmp_path, tmp_path / "unused-doc-src")
+    env["LIMEN_PHOTOS_DB"] = str(db)
+    return env
+
+
+def _photos_db(path: Path) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(path)
+    conn.executescript(
+        """
+        CREATE TABLE ZASSET (
+          Z_PK INTEGER PRIMARY KEY,
+          ZUUID VARCHAR,
+          ZFILENAME VARCHAR,
+          ZDATECREATED TIMESTAMP,
+          ZADDEDDATE TIMESTAMP,
+          ZKIND INTEGER,
+          ZUNIFORMTYPEIDENTIFIER VARCHAR,
+          ZWIDTH INTEGER,
+          ZHEIGHT INTEGER,
+          ZDURATION FLOAT,
+          ZLATITUDE FLOAT,
+          ZLONGITUDE FLOAT,
+          ZISDETECTEDSCREENSHOT INTEGER,
+          ZFAVORITE INTEGER,
+          ZHIDDEN INTEGER
+        );
+        CREATE TABLE ZINTERNALRESOURCE (
+          Z_PK INTEGER PRIMARY KEY,
+          ZASSET INTEGER,
+          ZDATALENGTH INTEGER
+        );
+        INSERT INTO ZASSET VALUES
+          (1, 'photo-1', 'IMG_0001.HEIC', 804000001, 804000002, 0, 'public.heic',
+           4032, 3024, 0, 40.7, -73.9, 0, 1, 0),
+          (2, 'shot-1', 'Screenshot 2026-06-29 at 9.00.00 PM.png', 804000101, 804000102, 0,
+           'public.png', 1440, 900, 0, -180, -180, 1, 0, 0);
+        INSERT INTO ZINTERNALRESOURCE VALUES
+          (10, 1, 100),
+          (11, 1, 150),
+          (12, 2, 200);
+        """
+    )
+    conn.commit()
+    conn.close()
+    return path
+
+
 def test_preview_writes_nothing(tmp_path):
     src = _docs(tmp_path / "src", {"a.md": "# A\n\n" + "word " * 80})
     r = subprocess.run([sys.executable, str(SCRIPT)], env=_env(tmp_path, src), capture_output=True, text=True)
@@ -128,6 +178,86 @@ def test_missing_source_fails_open(tmp_path):
     )
     assert r.returncode == 0, r.stderr
     assert "not present" in r.stdout
+    assert not (tmp_path / "atoms").exists()
+
+
+def test_photos_metadata_preview_writes_nothing(tmp_path):
+    db = _photos_db(tmp_path / "Photos Library.photoslibrary" / "database" / "Photos.sqlite")
+    r = subprocess.run(
+        [sys.executable, str(SCRIPT), "--photos-metadata", "--limit", "2"],
+        env=_photos_env(tmp_path, db),
+        capture_output=True,
+        text=True,
+    )
+    assert r.returncode == 0, r.stderr
+    assert "Photos assets" in r.stdout
+    assert "preview" in r.stdout
+    assert not (tmp_path / "atoms").exists()
+    assert not (tmp_path / "state.json").exists()
+    assert not (tmp_path / "log.jsonl").exists()
+
+
+def test_photos_metadata_apply_is_idempotent_and_extracts_flags(tmp_path):
+    db = _photos_db(tmp_path / "Photos Library.photoslibrary" / "database" / "Photos.sqlite")
+    env = _photos_env(tmp_path, db)
+    r1 = subprocess.run(
+        [sys.executable, str(SCRIPT), "--photos-metadata", "--apply", "--limit", "5"],
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert r1.returncode == 0, r1.stderr
+    atoms = sorted((tmp_path / "atoms").glob("*.json"))
+    assert len(atoms) == 2
+    rows = [json.loads(p.read_text()) for p in atoms]
+    screenshot = next(a for a in rows if a["photos_uuid"] == "shot-1")
+    photo = next(a for a in rows if a["photos_uuid"] == "photo-1")
+    assert screenshot["kind"] == "photo_metadata"
+    assert screenshot["is_screenshot"] is True
+    assert "screenshot: yes" in screenshot["text"]
+    assert screenshot["local_resource_count"] == 1
+    assert photo["local_resource_count"] == 2
+    assert photo["local_resource_bytes"] == 250
+    assert photo["has_location"] is True
+    assert (tmp_path / "state.json").exists()
+
+    r2 = subprocess.run(
+        [sys.executable, str(SCRIPT), "--photos-metadata", "--apply", "--limit", "5"],
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert r2.returncode == 0, r2.stderr
+    assert "0 new atoms" in r2.stdout
+    assert len(list((tmp_path / "atoms").glob("*.json"))) == len(atoms)
+
+
+def test_photos_metadata_missing_db_fails_open(tmp_path):
+    r = subprocess.run(
+        [sys.executable, str(SCRIPT), "--photos-metadata", "--apply"],
+        env=_photos_env(tmp_path, tmp_path / "missing.sqlite"),
+        capture_output=True,
+        text=True,
+    )
+    assert r.returncode == 0, r.stderr
+    assert "not present" in r.stdout
+    assert not (tmp_path / "atoms").exists()
+
+
+def test_photos_metadata_partial_db_fails_open(tmp_path):
+    db = tmp_path / "partial.sqlite"
+    conn = sqlite3.connect(db)
+    conn.execute("CREATE TABLE ZASSET (Z_PK INTEGER PRIMARY KEY, ZFILENAME VARCHAR)")
+    conn.commit()
+    conn.close()
+    r = subprocess.run(
+        [sys.executable, str(SCRIPT), "--photos-metadata", "--apply"],
+        env=_photos_env(tmp_path, db),
+        capture_output=True,
+        text=True,
+    )
+    assert r.returncode == 0, r.stderr
+    assert "missing ZASSET identity columns" in r.stdout
     assert not (tmp_path / "atoms").exists()
 
 
