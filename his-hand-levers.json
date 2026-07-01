@@ -24,7 +24,7 @@
     },
     {
       "id": "L-CONTAINER-CUTOVER",
-      "label": "One-container cutover: mount an external backup, run container/migrate.sh S4-S13, confirm symlinks + the COMPLETE marker. ASK-20 extends container/manifest.tsv to relocate ~/.claude, ~/.codex, ~/.gemini. Irreversible and backup-gated — the durability the whole organism stands on.",
+      "label": "One-container cutover: mount an external backup, run container/migrate.sh S4-S13, confirm symlinks + the COMPLETE marker. ASK-20 extends container/manifest.tsv to relocate ~/.claude, ~/.codex, ~/.gemini. Irreversible and backup-gated \u2014 the durability the whole organism stands on.",
       "owner": "yours",
       "cost": "~30 min, irreversible",
       "unlocks": "durable single-body identity",
@@ -248,6 +248,56 @@
       "source_task": "dialogs-silenced predicate (fix/silence-permission-dialogs; 2026-06-25)",
       "note": "Sibling levers cover the OTHER dialog classes: L-OP-SERVICE-ACCOUNT (1Password/Touch-ID), L-AGENT-BASH-PROMPT #183 (Claude bash prompts), L-BACKUP-FDA #184 (file-access FDA). scripts/dialogs-silenced.sh is the single executable predicate over all of them. See memory: macos-tcc-gatekeeper-dialogs-solved.",
       "issue": 289
+    },
+    {
+      "id": "L-TCC-RECORDER",
+      "label": "Grant Screen Recording + Microphone permission to the media-recorder binary (organs/media/tools/recorder) on first capture \u2014 the one human step for native system-audio recording.",
+      "owner": "yours",
+      "cost": "~1 min once, durable",
+      "gate": "macOS TCC (GUI approval)",
+      "unlocks": "native screen + SYSTEM-AUDIO recording (no BlackHole needed)",
+      "source_task": "media organ \u00b7 recorder",
+      "note": "System Settings -> Privacy & Security -> Screen Recording (and Microphone) -> enable media-recorder. Route via the macOS-TCC auto-updater lever if the binary path churns."
+    },
+    {
+      "id": "L-AUDIO-BLACKHOLE",
+      "label": "FALLBACK ONLY: install the BlackHole virtual audio driver for apps whose audio ScreenCaptureKit cannot tap. Prefer the native recorder; this is the gap-filler.",
+      "owner": "yours",
+      "cost": "~10 min once, durable",
+      "gate": "privileged driver install (sudo + security approval + likely reboot)",
+      "unlocks": "system-audio capture for the rare SCK-untappable source",
+      "source_task": "media organ \u00b7 recorder (fallback)",
+      "note": "brew install --cask blackhole-2ch ; then Audio MIDI Setup -> create a Multi-Output Device (Speakers + BlackHole 2ch); record via ffmpeg -f avfoundation -i ':BlackHole 2ch'."
+    },
+    {
+      "id": "L-TCC-PHOTOS-AUTOMATION",
+      "label": "Grant Automation permission to control Photos.app for the screen-capture importer \u2014 fixes its on-record exit-1 (AppleScript error -4960).",
+      "owner": "yours",
+      "cost": "~1 min once, durable",
+      "gate": "macOS TCC Automation (GUI approval)",
+      "unlocks": "auto-import of screengrabs/recordings into Photos.app",
+      "source_task": "media organ \u00b7 screen-capture-importer",
+      "note": "System Settings -> Privacy & Security -> Automation -> allow the importer (or its parent) to control Photos. Or run the importer once from Terminal to trigger the prompt, then reload the LaunchAgent."
+    },
+    {
+      "id": "L-SOCIAL-OAUTH",
+      "label": "Create the developer apps + mint first access tokens for the outbound scheduler's platforms: Instagram (Meta Graph), TikTok (Content Posting API), X (v2). Vendor app-creation is the only irreducible human atom.",
+      "owner": "yours",
+      "cost": "per-platform dev-account + app review",
+      "gate": "vendor app creation + first token mint (per platform)",
+      "unlocks": "publishing screengrabs/recordings as reels/stories/feed/tiktok/tweets",
+      "source_task": "media organ \u00b7 social_scheduler",
+      "note": "TOKENS ARE CREDENTIALS, not chat/this-file prose: once minted, route each (IG_GRAPH_ACCESS_TOKEN+IG_BUSINESS_ACCOUNT_ID, TIKTOK_ACCESS_TOKEN, X_ACCESS_TOKEN/SECRET) through creds-hydrate.py DEFAULT_MAP (op:// -> env). This lever is only the human vendor-app/mint action; creds-hydrate --verify then surfaces validity in the beat log."
+    },
+    {
+      "id": "L-SOCIAL-SEND",
+      "label": "Pull the actual PUBLISH: the scheduler drafts + queues assets but never posts on its own. Approving/executing a scheduled send is human-gated (anything that 'sends' stays yours).",
+      "owner": "yours",
+      "cost": "per-publish decision",
+      "gate": "outward-facing publish (irreversible)",
+      "unlocks": "assets go live on the chosen platform",
+      "source_task": "media organ \u00b7 social_scheduler",
+      "note": "social_scheduler.py send --id <qid> refuses without both the platform token AND this human pull. Drafts stay 'draft' until you approve."
     }
   ]
 }
