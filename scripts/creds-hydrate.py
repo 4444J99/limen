@@ -162,18 +162,18 @@ DEFAULT_MAP: list[dict] = [
     {
         # The GCP service-account key that lets a repo deploy to Cloud Run. `google-github-actions/auth`
         # reads it as `secrets.GCP_SA_KEY`; each deploy-api.yml no-ops GREEN when it's absent (verified
-        # on both organvm/media-ark #54 and organvm/limen). ONE op:// value fans out to EVERY repo that
-        # deploys to the shared GCP project — hence the LIST of gh_secret sinks (the new multi-sink form).
-        # WHY THIS UNBLOCKS REVENUE: media-ark is "one credential from live" — its BTC→MONETA→licence→pro
-        # →quota chain is code-complete (#51–#53) and its Cloud Run deploy is gated ONLY on this secret;
-        # the moment it lands, the next push auto-deploys a complete product (API + dashboard + /api/license).
-        # limen's own deploy-api.yml mirrors the same gate (its LIVE runtime is the CF Worker, so Cloud Run
-        # is a dormant-but-ready sibling — landing the secret arms it without changing the live surface).
-        # gh_secret-only (no env/file): presence-guarded, so a beat never touches 1Password once EVERY sink
-        # is set. The ONLY irreducible human bit is MINTING the SA JSON into 1Password at this ref if it
-        # isn't there yet — a vendor mint recorded as lever L-GCP-DEPLOY-SA in his-hand-levers.json, NEVER a
-        # chat ask. Once the item exists, `--apply --op` (or a beat with the SA token) lands both secrets and
-        # self-heals. See organs/media/NEXT.md Spine A → Phase 3. [[credential-durability-organ]]
+        # on both organvm/media-ark #54 and organvm/limen — neither has ever had it). ONE op:// value fans
+        # out to EVERY repo that deploys to the shared GCP project — hence the LIST of gh_secret sinks (the
+        # new multi-sink form). This entry is the PLUMBING for the SA-key piece; it is inert (presence-guarded,
+        # and with no op:// item it simply SKIPs) until that item is minted.
+        # SCOPE — NOT the whole atom (reconciled with organs/media/NEXT.md #525): media-ark going hosted-live
+        # is a HUMAN HOST DECISION, not a single routable credential. Minting the GCP SA is a human-only chain
+        # (SA key + Secret Manager entries + a GitHub PAT), and the host itself (GCP vs a container host like
+        # Fly/Render) is undecided and pre-revenue — below the LIVE Exporter first-dollar path. This lane only
+        # lands the SA-KEY component IF the decision resolves to GCP; the decision + provisioning live as lever
+        # L-GCP-DEPLOY-SA in his-hand-levers.json (never a chat ask). Once the op:// item exists, `--apply --op`
+        # (or a beat with the SA token) lands the secret on both repos and self-heals — one piece, not the whole
+        # go-live. See organs/media/NEXT.md Spine A → Phase 3. [[credential-durability-organ]]
         # [[media-suite-convergence]] [[his-hand-tasks-hang-in-permanent-registry]]
         "lane": "gcp (cloud run deploy SA)",
         "ref": "op://Personal/GCP Deploy SA/credential",
