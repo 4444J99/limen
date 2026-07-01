@@ -20,6 +20,29 @@ export HOME="${HOME:-/Users/4jp}"
 ROOT="${LIMEN_ROOT:-$HOME/Workspace/limen}"
 BRANCH="${LIMEN_RELEASE_BRANCH:-main}"
 
+# Regenerable daemon bookkeeping — receipt files the beat REWRITES every cycle. A commit touching ONLY
+# these is "unique" by patch-id yet carries NO genuine work: it is loss-free to re-converge past. This
+# is the exact commit that otherwise strands the live checkout — a receipt committed while in sync, then
+# left diverged when origin advanced (a merged PR) before its push landed → ff-only fails open forever,
+# pinning the daemon to stale code. Distinct from the patch-id valve ("already upstream"): this is
+# "regenerable, so losing it costs nothing". Override the globs via LIMEN_SYNC_RECEIPT_GLOBS.
+RECEIPT_GLOBS="${LIMEN_SYNC_RECEIPT_GLOBS:-docs/worktree-preservation-receipts.json docs/pr-receipts.json docs/*-receipts.json docs/*-receipt.json}"
+_only_receipts() {  # exit 0 ⟺ stdin has ≥1 path AND every path matches a receipt glob
+  local f p matched any=0
+  local -a globs
+  read -r -a globs <<<"$RECEIPT_GLOBS"   # split on whitespace WITHOUT pathname-expanding the globs
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    any=1; matched=0
+    for p in "${globs[@]}"; do
+      # shellcheck disable=SC2254  # $p is an intentional case glob-pattern, not a literal to quote
+      case "$f" in $p) matched=1; break ;; esac
+    done
+    [ "$matched" = 1 ] || return 1
+  done
+  [ "$any" = 1 ]
+}
+
 cd "$ROOT" 2>/dev/null || { echo "sync-release: no LIMEN_ROOT ($ROOT) — fail open"; exit 0; }
 git rev-parse --git-dir >/dev/null 2>&1 || { echo "sync-release: not a git repo — fail open"; exit 0; }
 
@@ -51,16 +74,26 @@ if ! git merge-base --is-ancestor "$LOCAL" "$REMOTE" 2>/dev/null; then
 $(git log --no-merges --format=%H "$BASE..$LOCAL" 2>/dev/null)
 EOF
   fi
+  reconcile_reason="all local commits already upstream (patch-id)"
+  # Second loss-free valve: the unique local commits touch ONLY regenerable receipts (the beat rewrites
+  # them next cycle). Guarded by --is-ancestor so we NEVER discard a commit origin doesn't already have
+  # as a descendant — i.e. only when the release is strictly AHEAD of BASE, never on a rewound remote.
+  if [ "$unique" = 1 ] && [ -n "$BASE" ] \
+     && git merge-base --is-ancestor "$BASE" "$REMOTE" 2>/dev/null \
+     && git diff --name-only "$BASE..$LOCAL" 2>/dev/null | _only_receipts; then
+    unique=0
+    reconcile_reason="local commit(s) touch ONLY regenerable receipts"
+  fi
   CUR="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo)"
   if [ "$unique" = 0 ] && [ "$CUR" = "$BRANCH" ]; then
     TMP="$(mktemp 2>/dev/null || echo "$ROOT/logs/.tasks.sync.$$")"
     [ -f tasks.yaml ] && cp -f tasks.yaml "$TMP" 2>/dev/null || true
-    # reset --hard leaves UNTRACKED runtime (logs/, usage.json) untouched; patch-id proved no unique
-    # committed work is lost; tasks.yaml (daemon-owned) is restored after.
+    # reset --hard leaves UNTRACKED runtime (logs/, usage.json) untouched; the valve above proved no
+    # genuine committed work is lost; tasks.yaml (daemon-owned) is restored after.
     if git reset --hard "origin/$BRANCH" --quiet 2>/dev/null; then
       [ -f "$TMP" ] && cp -f "$TMP" tasks.yaml 2>/dev/null || true
       rm -f "$TMP" 2>/dev/null || true
-      echo "sync-release: diverged but all local commits already upstream (patch-id) — re-converged ${LOCAL:0:7} → ${REMOTE:0:7} ✓ (no unique work lost)"
+      echo "sync-release: diverged but ${reconcile_reason} — re-converged ${LOCAL:0:7} → ${REMOTE:0:7} ✓ (no unique work lost)"
       exit 0
     fi
     rm -f "$TMP" 2>/dev/null || true

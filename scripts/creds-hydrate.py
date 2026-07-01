@@ -168,6 +168,13 @@ DEFAULT_MAP: list[dict] = [
     {
         # Parked: the Claude token is owned by the credential-race fix + Rung-0 self-heal
         # ([[claude-login-flap-credential-race]] / L-CLAUDE-AUTH). Enable only if that handler is retired.
+        # SECOND CONSUMER (2026-07-01): this same LIMEN_CLAUDE_AUTH_TOKEN is the sanctioned env token the
+        # budget gauge's `poll` avenue reads (scripts/claude-usage.py av_poll, gated by LIMEN_CLAUDE_POLL=1)
+        # to fetch Claude's EXACT server-side weekly usage from rate-limit headers — the trust=measured tier
+        # that auto-supersedes the calibrated on-disk bridge. So retiring the login-flap handler and enabling
+        # this entry ALSO upgrades the gauge calibrated→measured; NO separate credential to mint (the
+        # "one human atom" is this same op:// item, already homed here — never re-recite it in chat).
+        # See memory: fleet-budget-gauge-truth.
         "lane": "claude",
         "ref": "op://Personal/Claude/password",
         "env": ["LIMEN_CLAUDE_AUTH_TOKEN"],

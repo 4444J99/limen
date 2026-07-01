@@ -572,6 +572,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Release branch that sync-release.sh and live-root-gate.py compare the live daemon checkout against. Changing it changes convergence evidence only; branch switches remain human-gated."
+  LIMEN_SYNC_RECEIPT_GLOBS:
+    default: "docs/worktree-preservation-receipts.json docs/pr-receipts.json docs/*-receipts.json docs/*-receipt.json"
+    env: LIMEN_SYNC_RECEIPT_GLOBS
+    self_update: none
+    owner: limen-daemon
+    note: "Space-separated globs of REGENERABLE daemon receipt files. sync-release.sh re-converges a diverged live checkout when its unique local commits touch ONLY these (loss-free — the beat rewrites them), instead of failing open forever and pinning the daemon to stale code. Genuinely-unique history still fails open to hand-reconcile."
   LIMEN_DISPATCH_CEILING:
     default: null              # currently in heartbeat-loop.sh
     env: LIMEN_DISPATCH_CEILING
