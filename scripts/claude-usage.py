@@ -16,9 +16,11 @@ Claude PESSIMISTICALLY (shed early), never optimistically.
 Avenues, best → worst:
   1. proxy      logs/anthropic-ratelimit.json — anthropic-ratelimit-* headers captured from the
                 claude calls the fleet ALREADY makes (a fail-open logging proxy). Truest, zero new auth.
-  2. ondisk     any Claude-native rate_limits on disk (parity with codex's rate_limits; not present today).
-  3. poll       one authed usage call — ONLY when a sanctioned ENV token is present and LIMEN_CLAUDE_POLL=1
+  2. poll       one authed usage call — ONLY when a sanctioned ENV token is present and LIMEN_CLAUDE_POLL=1
                 (daemon-set). Never reads the Keychain; off by default so it can't worsen the login-flap race.
+  3. ondisk     CALIBRATED windowed cost — weighted token sum from the transcripts the fleet already
+                writes (~/.claude/projects), over the real 5h/7d windows, ÷ a cap DERIVED from a one-time
+                /status calibration. Zero auth, live numerator; dark until calibrated, expires if stale.
   4. counts     the transcript token sum usage-telemetry already maintains (logs/usage.json) vs a weekly
                 cap (env LIMEN_CLAUDE_WEEKLY_TOKENS, else plan-tier default). Zero auth, always available.
   5. reactive   a recent real 429 in logs/usage.json health → treat as exhausted (100%). Last-resort hard stop.
@@ -38,6 +40,95 @@ NOW = time.time()
 
 # Freshness ceiling: an avenue older than this is SKIPPED (the anti-"forgettable-hole" guard).
 FRESH_CEIL_S = float(os.environ.get("LIMEN_CLAUDE_GAUGE_FRESH_S", "1800"))  # 30 min
+
+# ── on-disk calibrated gauge (avenue 2) ───────────────────────────────────────
+# Window sizes for the two Claude rate limits (parity with codex primary/secondary).
+_SESSION_WIN_S = 5 * 3600
+_WEEKLY_WIN_S = 7 * 86400
+# Weighted token cost. NOT the exact vendor meter (unknowable) — only needs to be MONOTONE with real
+# usage so a one-time /status calibration can absorb the constant factor. Cache reads are cheap, output
+# dear; these mirror the published price ratios closely enough to preserve ordering as the mix shifts.
+_W_INPUT, _W_OUTPUT, _W_CACHE_READ, _W_CACHE_CREATION = 1.0, 5.0, 0.1, 1.25
+# Calibration ageing: a cap derived from a /status reading is trusted while fresh, then decays, then
+# EXPIRES — so a stale denominator can never silently read "all clear" (the whole point of the rebuild).
+CAL_FRESH_DAYS = 7.0
+CAL_STALE_DAYS = 30.0
+
+
+def _transcripts_dir() -> Path:
+    return Path(os.environ.get("LIMEN_CLAUDE_TRANSCRIPTS_DIR", str(Path.home() / ".claude" / "projects")))
+
+
+def _cal_path() -> Path:
+    return ROOT / "logs" / "claude-usage-calibration.json"
+
+
+def _iso_ts(s: str) -> float | None:
+    try:
+        from datetime import datetime
+
+        return datetime.fromisoformat(s.replace("Z", "+00:00")).timestamp()
+    except Exception:
+        return None
+
+
+def _weighted_cost_windows() -> dict | None:
+    """Sum weighted token cost from the Claude Code transcripts the fleet already writes, into the
+    5h (session) and 7d (weekly) windows. Bounded by file mtime so the per-beat scan stays cheap.
+    Fail-open: returns {'session','weekly','files'} or None on any error."""
+    import glob
+
+    root = _transcripts_dir()
+    if not root.exists():
+        return None
+    session = weekly = 0.0
+    files = 0
+    try:
+        for f in glob.glob(str(root / "**" / "*.jsonl"), recursive=True):
+            try:
+                if NOW - os.path.getmtime(f) > _WEEKLY_WIN_S:
+                    continue
+            except OSError:
+                continue
+            files += 1
+            for line in open(f, errors="ignore"):
+                if '"usage"' not in line:
+                    continue
+                try:
+                    o = json.loads(line)
+                except Exception:
+                    continue
+                ts = _iso_ts(o.get("timestamp", "")) if o.get("timestamp") else None
+                if ts is None:
+                    continue
+                age = NOW - ts
+                if age > _WEEKLY_WIN_S:
+                    continue
+                u = (o.get("message") or {}).get("usage") or o.get("usage")
+                if not isinstance(u, dict):
+                    continue
+                w = (
+                    _W_INPUT * (u.get("input_tokens", 0) or 0)
+                    + _W_OUTPUT * (u.get("output_tokens", 0) or 0)
+                    + _W_CACHE_READ * (u.get("cache_read_input_tokens", 0) or 0)
+                    + _W_CACHE_CREATION * (u.get("cache_creation_input_tokens", 0) or 0)
+                )
+                weekly += w
+                if age <= _SESSION_WIN_S:
+                    session += w
+        return {"session": session, "weekly": weekly, "files": files}
+    except Exception:
+        return None
+
+
+def _read_calibration() -> dict | None:
+    p = _cal_path()
+    if not p.exists():
+        return None
+    try:
+        return json.loads(p.read_text())
+    except Exception:
+        return None
 
 
 def _fresh(ts: float | None) -> float | None:
@@ -73,9 +164,41 @@ def av_proxy() -> dict:
     return _reading("proxy", float(wk), "weekly", "measured", fresh, "vendor headers")
 
 
-# ── avenue 2: on-disk rate_limits (codex parity; not present for claude today) ─
+# ── avenue 2: calibrated on-disk windowed cost (zero auth, live numerator) ─────
 def av_ondisk() -> dict:
-    return _reading("ondisk", None, None, None, None, "claude writes no rate_limits to disk")
+    """Claude writes no rate_limits to disk, but it DOES write per-call token counts to every
+    transcript. Sum a weighted cost over the real 5h/7d windows and divide by a cap DERIVED from a
+    one-time /status calibration (cap = cost_at_obs / pct_at_obs). The numerator is recomputed live
+    each beat; only the cap ages. Dark until calibrated — never a fabricated denominator."""
+    cal = _read_calibration()
+    if not cal:
+        return _reading("ondisk", None, None, None, None, "no calibration yet (seed via --calibrate from /status)")
+    obs = cal.get("observed_at")
+    cal_age = _fresh(obs) if obs else None
+    cal_age_days = (cal_age / 86400) if cal_age is not None else None
+    if cal_age_days is not None and cal_age_days > CAL_STALE_DAYS:
+        return _reading("ondisk", None, None, None, cal_age, f"calibration {cal_age_days:.0f}d old — EXPIRED, re-observe /status")
+    win = _weighted_cost_windows()
+    if not win:
+        return _reading("ondisk", None, None, None, None, "no transcripts to measure")
+    binding_pct = None
+    binding_win = None
+    detail = []
+    for key, label in (("session", "session"), ("weekly", "weekly")):
+        c = cal.get(key) or {}
+        cost0, pct0 = c.get("cost"), c.get("pct")
+        if not (isinstance(cost0, (int, float)) and isinstance(pct0, (int, float)) and pct0 > 0 and cost0 > 0):
+            continue
+        cap = cost0 / (pct0 / 100.0)
+        pct = round(100 * win.get(key, 0.0) / cap, 1)
+        detail.append(f"{label} {pct:g}%")
+        if binding_pct is None or pct > binding_pct:  # the tighter window is the one that bites
+            binding_pct, binding_win = pct, label
+    if binding_pct is None:
+        return _reading("ondisk", None, None, None, cal_age, "calibration present but no usable window")
+    trust = "calibrated" if (cal_age_days is None or cal_age_days <= CAL_FRESH_DAYS) else "estimate"
+    age_note = f" (cal {cal_age_days:.1f}d old)" if cal_age_days is not None else ""
+    return _reading("ondisk", binding_pct, binding_win, trust, cal_age, ", ".join(detail) + age_note)
 
 
 # ── avenue 3: active poll (guarded; never Keychain, off by default) ───────────
@@ -172,7 +295,27 @@ def av_reactive() -> dict:
     return _reading("reactive", None, None, None, None, f"health={health or 'unknown'} (no 429)")
 
 
-AVENUES = [av_proxy, av_ondisk, av_poll, av_counts, av_reactive]
+AVENUES = [av_proxy, av_poll, av_ondisk, av_counts, av_reactive]
+
+
+def calibrate(session_pct: float, weekly_pct: float) -> dict:
+    """Anchor the on-disk gauge to a real /status reading: measure the current windowed cost NOW and
+    store it beside the observed percent. The daemon then recomputes the numerator each beat and
+    divides by cap = cost/pct — so this ONE observation frees the human from ever pasting again until
+    it ages out. Zero-credential, opportunistic: any fresh /status (his, or a future authed poll) re-seeds."""
+    win = _weighted_cost_windows()
+    if not win:
+        raise SystemExit("cannot calibrate: no transcripts found to measure current cost")
+    cal = {
+        "observed_at": NOW,
+        "session": {"cost": win["session"], "pct": float(session_pct)},
+        "weekly": {"cost": win["weekly"], "pct": float(weekly_pct)},
+        "note": "cap = cost / (pct/100); numerator recomputed live each beat from transcripts",
+    }
+    p = _cal_path()
+    p.parent.mkdir(exist_ok=True)
+    p.write_text(json.dumps(cal, indent=2))
+    return cal
 
 
 def resolve() -> dict:
@@ -199,7 +342,14 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Resolve Claude's usage gauge from a cascade of avenues.")
     ap.add_argument("--json", action="store_true", help="print the machine record")
     ap.add_argument("--no-write", action="store_true", help="don't write logs/claude-usage.json")
+    ap.add_argument("--calibrate", nargs=2, metavar=("SESSION_PCT", "WEEKLY_PCT"), type=float,
+                    help="anchor the on-disk gauge to a /status reading (the two percentages), then exit")
     args = ap.parse_args()
+    if args.calibrate:
+        cal = calibrate(args.calibrate[0], args.calibrate[1])
+        print(f"calibrated: session {cal['session']['pct']:g}% ↔ {cal['session']['cost']:,.0f} cost, "
+              f"weekly {cal['weekly']['pct']:g}% ↔ {cal['weekly']['cost']:,.0f} cost → {_cal_path()}")
+        return 0
     report = resolve()
     if not args.no_write:
         try:

@@ -370,6 +370,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Freshness ceiling in seconds for a claude-usage avenue reading. An avenue older than this is visibly SKIPPED (the anti-forgettable-hole guard) rather than silently trusted."
+  LIMEN_CLAUDE_TRANSCRIPTS_DIR:
+    default: "~/.claude/projects"
+    env: LIMEN_CLAUDE_TRANSCRIPTS_DIR
+    self_update: none
+    owner: continuity
+    note: "Root of the Claude Code session transcripts the on-disk (calibrated) claude-usage avenue scans for per-window token cost. Overridable for testing/portability; never hardcode the home path."
   LIMEN_OVERNIGHT_WATCH_STATE:
     default: "$LIMEN_ROOT/logs/overnight-watch-state.json"
     env: LIMEN_OVERNIGHT_WATCH_STATE

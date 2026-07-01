@@ -79,3 +79,58 @@ def test_counts_precedes_reactive_when_both_available(tmp_path: Path) -> None:
     _write_usage(tmp_path, {"consumed": 10_000_000, "possible": 100_000_000, "health": "rate-limited"})
     report = _run(tmp_path)
     assert report["avenue"] == "counts"
+
+
+def _synth_transcript(dir_: Path, output_tokens: int) -> None:
+    """One recent transcript record carrying a usage block — the on-disk avenue's raw material."""
+    import datetime
+
+    dir_.mkdir(parents=True, exist_ok=True)
+    now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    rec = {
+        "timestamp": now_iso,
+        "message": {
+            "usage": {
+                "input_tokens": 0,
+                "output_tokens": output_tokens,
+                "cache_read_input_tokens": 0,
+                "cache_creation_input_tokens": 0,
+            }
+        },
+    }
+    (dir_ / "s.jsonl").write_text(json.dumps(rec) + "\n")
+
+
+def _calibrate(root: Path, tdir: Path, session_pct: float, weekly_pct: float) -> None:
+    import os
+
+    env = {**os.environ, "LIMEN_ROOT": str(root), "LIMEN_CLAUDE_TRANSCRIPTS_DIR": str(tdir)}
+    subprocess.run(
+        [sys.executable, str(SCRIPT), "--calibrate", str(session_pct), str(weekly_pct)],
+        text=True,
+        capture_output=True,
+        check=True,
+        env=env,
+    )
+
+
+def test_ondisk_calibrated_gauge_from_transcripts(tmp_path: Path) -> None:
+    """The forever bridge: one /status calibration turns the transcripts the fleet ALREADY writes into
+    a live gauge — recomputed each beat, no paste, no auth. cost/pct at calibration = the derived cap."""
+    tdir = tmp_path / "transcripts" / "proj"
+    _synth_transcript(tdir, output_tokens=1000)  # weighted cost = 5*1000 = 5000
+    _calibrate(tmp_path, tdir, 20.0, 5.0)  # anchor: current session cost <-> 20%
+    report = _run(tmp_path, {"LIMEN_CLAUDE_TRANSCRIPTS_DIR": str(tdir)})
+    assert report["avenue"] == "ondisk"  # calibrated on-disk beats the raw counts estimate
+    assert report["trust"] == "calibrated"
+    assert report["used_percent"] == 20.0  # numerator unchanged since calibration -> reads 20%
+
+
+def test_ondisk_dark_without_calibration(tmp_path: Path) -> None:
+    """No calibration file -> the on-disk avenue stays dark (never a fabricated cap); cascade falls through."""
+    tdir = tmp_path / "transcripts" / "proj"
+    _synth_transcript(tdir, output_tokens=1000)
+    report = _run(tmp_path, {"LIMEN_CLAUDE_TRANSCRIPTS_DIR": str(tdir)})
+    ondisk = next(a for a in report["avenues"] if a["avenue"] == "ondisk")
+    assert ondisk["used_percent"] is None
+    assert "no calibration" in ondisk["note"]

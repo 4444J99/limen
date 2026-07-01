@@ -27,8 +27,9 @@ and app-plane modeled). --json emits the machine record.
 
 The reduction that makes the whole thing comparable: every allotment — tokens, runs,
 app-runs — normalizes to ONE quantity, fraction_of_window_remaining ∈ [0,1], carrying a
-trust ∈ {measured, proxy, estimate, unmodeled}. That single number is what a controller
-should steer on; trust decides how conservatively to read it.
+trust ∈ {measured, proxy, calibrated, estimate, unmodeled, unknown}. That single number is
+what a controller should steer on; trust decides how conservatively to read it. (`calibrated`
+= a real windowed numerator over a cap anchored to a one-time /status observation.)
 """
 from __future__ import annotations
 
@@ -169,7 +170,9 @@ def build_gauge() -> dict:
         if cr.get("used_percent") is not None:
             cl = gauge.setdefault("claude", {})
             cl["gauge_avenue"], cl["used_percent"] = cr.get("avenue"), cr.get("used_percent")
-            if cr.get("trust") in ("measured", "proxy"):
+            # `calibrated` = real windowed numerator over a cap anchored to a /status observation —
+            # no longer the fictional cap, so it clears the debt alongside measured/proxy.
+            if cr.get("trust") in ("measured", "proxy", "calibrated"):
                 cl["trust"], cl["unit"], cl["pool_cap"] = cr["trust"], "percent", 100
                 cl["source"] = f"cascade avenue={cr.get('avenue')}"
     except Exception:
