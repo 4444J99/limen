@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-06-30'
-      spent: 120
+      spent: 127
       per_agent:
         jules: 100
         gemini: 0
-        codex: 5
-        opencode: 3
+        codex: 11
+        opencode: 4
         agy: 12
         claude: 0
       per_agent_reset:
@@ -31020,7 +31020,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - tried:github_actions
   urls:
@@ -31034,7 +31034,7 @@ tasks:
     \ issue #1). \u2014 ESC"
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-07-01T01:33:29.303629Z'
+  updated: '2026-07-01T02:11:34.742709Z'
   dispatch_log:
   - timestamp: '2026-06-20T09:14:24.968499Z'
     agent: limen
@@ -31059,6 +31059,20 @@ tasks:
     agent: github_actions
     session_id: cli
     status: failed->codex
+  - timestamp: '2026-07-01T01:55:32.787628Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-01T02:10:56.041680Z'
+    agent: codex
+    session_id: https://github.com/organvm/organvm-i-theoria.github.io/pull/2
+    status: dispatched
+  - timestamp: '2026-07-01T02:11:34.742709Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GH-organvm-i-theoria-atomic-substrata-1
   title: "EV Activation Audit: ship-soon \u2014 UAKS pipeline operational but unreleased"
   repo: organvm/atomic-substrata
@@ -32567,11 +32581,12 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - test-coverage
   - generated
   - build-out
+  - noop
   urls: []
   context: Find the largest source module in meta-organvm/glyph-cascade-tapes with
     little or no test coverage and add a focused, PASSING test suite for it. Run the
@@ -32579,7 +32594,30 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-07-01T02:03:10.123549Z'
+  dispatch_log:
+  - timestamp: '2026-07-01T01:55:32.787628Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-06-30T21:58:30Z'
+    agent: agy
+    session_id: current
+    status: done
+    output: Installed vitest suite. Exported string manipulation utilities from CyberpoetryIterationCinema.jsx
+      and added 4 robust tests in CyberpoetryIterationCinema.test.jsx (leetify, mythmathify,
+      applySubstitution, asciify). All tests passing.
+  - timestamp: '2026-07-01T02:00:28.691437Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-01T02:03:10.123549Z'
+    agent: limen
+    session_id: heal-board
+    status: done
+    output: 'heal-board: restored terminal done status after stale reopen'
 - id: GEN-meta-organvm-visual-substrate-inquiry-test-coverage-0620
   title: Raise test coverage in meta-organvm/visual-substrate-inquiry
   repo: organvm/visual-substrate-inquiry
@@ -32587,11 +32625,13 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
   - build-out
+  - tried:codex
+  - tried:opencode
   urls: []
   context: Find the largest source module in meta-organvm/visual-substrate-inquiry
     with little or no test coverage and add a focused, PASSING test suite for it.
@@ -32599,7 +32639,40 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-07-01T02:37:53.707333Z'
+  dispatch_log:
+  - timestamp: '2026-07-01T02:00:38.750210Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-01T02:10:56.041680Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-01T02:11:05.939837Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-01T02:14:48.028489Z'
+    agent: opencode
+    session_id: cli
+    status: failed->agy
+  - timestamp: '2026-07-01T02:20:12.475968Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-01T02:37:39.432333Z'
+    agent: codex
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-07-01T02:37:53.707333Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-meta-organvm-meta-organvm.github.io-test-coverage-0620
   title: Raise test coverage in meta-organvm/meta-organvm.github.io
   repo: organvm/meta-organvm.github.io
@@ -32635,14 +32708,15 @@ tasks:
   title: Raise test coverage in meta-organvm/digital-income-organism-inquiry
   repo: organvm/digital-income-organism-inquiry
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
   - build-out
+  - noop
   urls: []
   context: Find the largest source module in meta-organvm/digital-income-organism-inquiry
     with little or no test coverage and add a focused, PASSING test suite for it.
@@ -32650,7 +32724,32 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-07-01T02:37:39.432333Z'
+  dispatch_log:
+  - timestamp: '2026-07-01T01:55:32.787628Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-01T02:00:28.691437Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-01T02:06:10.563131Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-01T02:14:58.967820Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-01T02:37:39.432333Z'
+    agent: codex
+    session_id: https://github.com/organvm/digital-income-organism-inquiry/pull/6
+    status: dispatched
 - id: GEN-organvm-i-theoria-organvm-iii-ergon.github.io-test-coverage-0620
   title: Raise test coverage in organvm-i-theoria/organvm-iii-ergon.github.io
   repo: organvm/organvm-iii-ergon.github.io
@@ -32696,7 +32795,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -32708,7 +32807,13 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-07-01T02:37:53.707333Z'
+  dispatch_log:
+  - timestamp: '2026-07-01T02:37:53.707333Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-organvm-i-theoria-organvm-v-logos.github.io-test-coverage-0620
   title: Raise test coverage in organvm-i-theoria/organvm-v-logos.github.io
   repo: organvm/organvm-v-logos.github.io
@@ -32733,7 +32838,7 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/organvm-vi-koinonia.github.io
   repo: organvm/organvm-vi-koinonia.github.io
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -32741,6 +32846,7 @@ tasks:
   - test-coverage
   - generated
   - build-out
+  - tried:claude
   urls: []
   context: Find the largest source module in organvm-i-theoria/organvm-vi-koinonia.github.io
     with little or no test coverage and add a focused, PASSING test suite for it.
@@ -32748,7 +32854,17 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-07-01T02:37:39.432333Z'
+  dispatch_log:
+  - timestamp: '2026-07-01T02:20:12.475968Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-01T02:37:39.432333Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
 - id: GEN-organvm-i-theoria-organvm-vii-kerygma.github.io-test-coverage-0620
   title: Raise test coverage in organvm-i-theoria/organvm-vii-kerygma.github.io
   repo: organvm/organvm-vii-kerygma.github.io
@@ -32793,7 +32909,7 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/4444J99.github.io
   repo: organvm/4444J99.github.io
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -33109,7 +33225,7 @@ tasks:
   title: Raise test coverage in organvm-ii-poiesis/vigiles-aeternae--theatrum-mundi
   repo: organvm/vigiles-aeternae--theatrum-mundi
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -33239,14 +33355,15 @@ tasks:
   title: Raise test coverage in a-organvm/call-function--ontological
   repo: organvm/call-function--ontological
   type: code
-  target_agent: opencode
+  target_agent: claude
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - test-coverage
   - generated
   - build-out
+  - noop
   urls: []
   context: Find the largest source module in a-organvm/call-function--ontological
     with little or no test coverage and add a focused, PASSING test suite for it.
@@ -33254,13 +33371,23 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-01T01:35:20.884417Z'
+  updated: '2026-07-01T02:06:10.563131Z'
   dispatch_log:
   - timestamp: '2026-07-01T01:35:20.884417Z'
     agent: opencode
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-01T01:40:44.724194Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-01T02:06:10.563131Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GEN-a-organvm-metasystem-master-test-coverage-0620
   title: Raise test coverage in a-organvm/metasystem-master
   repo: organvm/metasystem-master
@@ -33285,7 +33412,7 @@ tasks:
   title: Raise test coverage in a-organvm/organvm-ontologia
   repo: organvm/organvm-ontologia
   type: code
-  target_agent: agy
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -34237,7 +34364,7 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/organvm-i-theoria.github.io
   repo: organvm/organvm-i-theoria.github.io
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -34260,11 +34387,12 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: failed
   labels:
   - test-coverage
   - generated
   - build-out
+  - noop
   urls: []
   context: Find the largest source module in organvm-i-theoria/atomic-substrata with
     little or no test coverage and add a focused, PASSING test suite for it. Run the
@@ -34272,7 +34400,18 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-07-01T02:10:56.041680Z'
+  dispatch_log:
+  - timestamp: '2026-07-01T02:00:38.750210Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-01T02:10:56.041680Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: GEN-a-organvm-public-record-data-scrapper-test-coverage-0620
   title: Raise test coverage in a-organvm/public-record-data-scrapper
   repo: organvm/public-record-data-scrapper
@@ -34701,7 +34840,7 @@ tasks:
   title: Make a-organvm/petasum-super-petasum CI green
   repo: organvm/petasum-super-petasum
   type: code
-  target_agent: agy
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -34709,7 +34848,8 @@ tasks:
   - ci-green
   - generated
   - build-out
-  - tried:codex
+  - noop
+  - tried:agy
   urls: []
   context: Inspect the latest FAILING checks on a-organvm/petasum-super-petasum's
     default branch, fix the root cause (lint / types / failing test / config), and
@@ -34718,7 +34858,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-06-20T17:06:38.365727Z'
+  updated: '2026-07-01T02:20:01.548600Z'
   dispatch_log:
   - timestamp: '2026-06-20T10:29:37.294033Z'
     agent: limen
@@ -34734,6 +34874,30 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 3h
+  - timestamp: '2026-07-01T01:50:16.792336Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-01T01:55:21.361401Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-01T02:06:10.563131Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-01T02:11:05.939837Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-01T02:20:01.548600Z'
+    agent: agy
+    session_id: cli
+    status: failed->gemini
 - id: GEN-a-organvm-orchestration-start-here-ci-green-0620
   title: Make a-organvm/orchestration-start-here CI green
   repo: organvm/orchestration-start-here
@@ -35654,7 +35818,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - ci-green
   - generated
@@ -35668,7 +35832,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-01T01:35:20.884417Z'
+  updated: '2026-07-01T02:11:34.742709Z'
   dispatch_log:
   - timestamp: '2026-06-20T11:19:28.640967Z'
     agent: limen
@@ -35689,6 +35853,15 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-01T01:50:05.907794Z'
+    agent: codex
+    session_id: https://github.com/organvm/a-i-council--coliseum/pull/177
+    status: dispatched
+  - timestamp: '2026-07-01T02:11:34.742709Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GEN-a-organvm-organon-noumenon--ontogenetic-morphe-ci-green-0620
   title: Make a-organvm/organon-noumenon--ontogenetic-morphe CI green
   repo: organvm/organon-noumenon--ontogenetic-morphe
@@ -35756,7 +35929,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - ci-green
   - generated
@@ -35769,13 +35942,22 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-01T01:33:31.331859Z'
+  updated: '2026-07-01T02:11:34.742709Z'
   dispatch_log:
   - timestamp: '2026-07-01T01:33:31.331859Z'
     agent: codex
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-01T01:50:05.907794Z'
+    agent: codex
+    session_id: https://github.com/organvm/example-theatre-dialogue/pull/10
+    status: dispatched
+  - timestamp: '2026-07-01T02:11:34.742709Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR merged \u2192 done"
 - id: GEN-a-organvm-example-ai-collaboration-ci-green-0620
   title: Make a-organvm/example-ai-collaboration CI green
   repo: organvm/example-ai-collaboration
@@ -35783,7 +35965,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - ci-green
   - generated
@@ -35797,7 +35979,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-01T01:33:29.303629Z'
+  updated: '2026-07-01T02:11:34.742709Z'
   dispatch_log:
   - timestamp: '2026-07-01T01:32:07.937472Z'
     agent: github_actions
@@ -35808,19 +35990,35 @@ tasks:
     agent: github_actions
     session_id: cli
     status: failed->codex
+  - timestamp: '2026-07-01T01:40:58.645598Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-01T01:50:05.907794Z'
+    agent: codex
+    session_id: https://github.com/organvm/example-ai-collaboration/pull/7
+    status: dispatched
+  - timestamp: '2026-07-01T02:11:34.742709Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR merged \u2192 done"
 - id: GEN-a-organvm-your-fit-tailored-ci-green-0620
   title: Make a-organvm/your-fit-tailored CI green
   repo: organvm/your-fit-tailored
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - ci-green
   - generated
   - build-out
-  urls: []
+  - noop
+  urls:
+  - https://github.com/organvm/your-fit-tailored/pull/17
   context: Inspect the latest FAILING checks on a-organvm/your-fit-tailored's default
     branch, fix the root cause (lint / types / failing test / config), and confirm
     the checks pass. If CI is already green, add the single most valuable missing
@@ -35828,7 +36026,33 @@ tasks:
     the stream endless]
   depends_on: []
   created: '2026-06-20'
-  dispatch_log: []
+  updated: '2026-07-01T02:42:25Z'
+  dispatch_log:
+  - timestamp: '2026-07-01T01:50:16.792336Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-01T01:55:21.361401Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-01T02:06:10.563131Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-01T02:37:53.707333Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-01T02:42:25Z'
+    agent: opencode
+    session_id: current-session
+    status: done
+    output: "CI was already green. Added ESLint with TypeScript rules as the most valuable missing check. Changes: eslint.config.mjs, updated package.json scripts, updated CI workflow. PR #17. All checks pass."
 - id: GEN-meta-organvm-_agent-health-ci-green-0620
   title: Make meta-organvm/_agent-health CI green
   repo: organvm/_agent-health
@@ -35836,12 +36060,12 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - ci-green
   - generated
   - build-out
-  - tried:github_actions
+  - noop
   urls: []
   context: Inspect the latest FAILING checks on meta-organvm/_agent-health's default
     branch, fix the root cause (lint / types / failing test / config), and confirm
@@ -35850,7 +36074,7 @@ tasks:
     the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-01T01:33:29.303629Z'
+  updated: '2026-07-01T02:20:01.548600Z'
   dispatch_log:
   - timestamp: '2026-07-01T01:32:07.937472Z'
     agent: github_actions
@@ -35861,6 +36085,30 @@ tasks:
     agent: github_actions
     session_id: cli
     status: failed->codex
+  - timestamp: '2026-07-01T01:50:16.792336Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-01T01:55:21.361401Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-01T02:06:10.563131Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-01T02:11:05.939837Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-01T02:20:01.548600Z'
+    agent: codex
+    session_id: https://github.com/organvm/_agent-health/pull/3
+    status: dispatched
 - id: GEN-organvm-i-theoria-growth-auditor-ci-green-0620
   title: Make organvm-i-theoria/growth-auditor CI green
   repo: organvm/growth-auditor
@@ -36868,7 +37116,7 @@ tasks:
   title: Raise test coverage in organvm/a-mavs-olevm
   repo: organvm/a-mavs-olevm
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -36908,7 +37156,7 @@ tasks:
   title: Raise test coverage in organvm/universal-node-network
   repo: organvm/universal-node-network
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -36948,7 +37196,7 @@ tasks:
   title: Raise test coverage in organvm/system-governance-framework
   repo: organvm/system-governance-framework
   type: code
-  target_agent: codex
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -36988,7 +37236,7 @@ tasks:
   title: Raise test coverage in organvm/reverse-engine-recursive-run
   repo: organvm/reverse-engine-recursive-run
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -37480,7 +37728,7 @@ tasks:
   title: Raise test coverage in organvm/sovereign-ecosystem--real-estate-luxury
   repo: organvm/sovereign-ecosystem--real-estate-luxury
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -63509,7 +63757,7 @@ tasks:
   title: Raise test coverage in organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: codex
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -63568,7 +63816,7 @@ tasks:
   title: Raise test coverage in organvm/domus-genoma
   repo: organvm/domus-genoma
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -64882,7 +65130,7 @@ tasks:
   title: Raise test coverage in organvm/portfolio
   repo: organvm/portfolio
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -64970,7 +65218,7 @@ tasks:
   title: Raise test coverage in organvm/limen
   repo: organvm/limen
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -65469,7 +65717,7 @@ tasks:
   title: Real usage docs for organvm/limen
   repo: organvm/limen
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: low
   budget_cost: 1
   status: open
@@ -65808,7 +66056,7 @@ tasks:
   title: Reduce complexity in organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: claude
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -67235,7 +67483,7 @@ tasks:
   title: Discover the latent value of organvm/the-actual-news
   repo: organvm/the-actual-news
   type: research
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -67269,3 +67517,30 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+- id: DISCOVER-organvm-glyph-cascade-tapes
+  title: Discover the latent value of organvm/glyph-cascade-tapes
+  repo: organvm/glyph-cascade-tapes
+  type: research
+  target_agent: agy
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-discovery
+  urls: []
+  context: "DISCOVER the latent value of organvm/glyph-cascade-tapes. This repo currently\
+    \ has NO ranked value \u2014 your job is to find it (value is discovered, never\
+    \ assumed absent). Steps: (1) Read the repo \u2014 what it is, its real entrypoints/exports,\
+    \ what it already does. (2) Identify its highest latent value: a concrete product,\
+    \ revenue path, reusable asset, or capability the rest of the estate could use\
+    \ \u2014 be specific and honest. (3) DECIDE: if there is real value, write a one-paragraph\
+    \ value thesis to DISCOVERY.md AND open a PR that ALSO appends \"organvm/glyph-cascade-tapes\"\
+    \ to value-repos.json (promote it into the ranked tier so build-out can follow)\
+    \ AND name the single best concrete first task; if it is genuinely archival, write\
+    \ the thesis saying so (so it is never re-discovered) \u2014 do NOT promote it.\
+    \ Keep any build green. Output the thesis. [auto-discovery 2026-06-30; no repo\
+    \ stays dark]"
+  depends_on: []
+  created: '2026-06-30'
+  dispatch_log: []
