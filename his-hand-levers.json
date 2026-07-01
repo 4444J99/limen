@@ -321,6 +321,21 @@
         "push to organvm/media-ark main — deploy-api.yml then deploys the product to the chosen host"
       ],
       "issue": 535
+    },
+    {
+      "id": "L-STUDIO-GOLIVE",
+      "label": "Take Object Lessons Studio public — the identity-portfolio public face is BUILT and LIVE (hub object-lessons-studio.pages.dev -> 200; Script Doctor try-it script-doctor.ivixivi.workers.dev -> 200 with /health 200; WriteLens writelens.ivixivi.workers.dev /v1/score -> 200). What remains is purely your hand: it publishes to your voice/network, and points a branded domain you own. Nothing here blocks the studio — it sits live on pages.dev until you pull a lever.",
+      "owner": "yours",
+      "cost": "one paste per thread; one optional registrar nameserver change",
+      "gate": "publishing to your public identity (your accounts) + registrar account access",
+      "unlocks": "warm organic inbound toward the Aug-1 revenue gate; the studio announced in your voice; objectlessons.film resolving to the live hub",
+      "source_task": "studio public-face pass; owner-record ~/Workspace/studio/LAUNCH.md carries the thread copy + og/*.png assets. memory: studio-public-face-poiesis",
+      "steps": [
+        "Post the 3 announcement threads (flagship first), attaching og/*.png — copy + assets are drafted in LAUNCH.md. Publishes in your voice, to your network; I never send on your behalf. If you post before DNS resolves, swap studio.objectlessons.film -> object-lessons-studio.pages.dev in the copy.",
+        "Optional — point the branded domain: objectlessons.film has no nameservers today. Delegate its NS to Cloudflare at your registrar; the Pages custom domain studio.objectlessons.film is already attached (status initializing) and goes live the moment DNS points at it. Until then the studio is fully live on object-lessons-studio.pages.dev."
+      ],
+      "note": "INVARIANT: the studio already functions live and needs nothing to run — this lever only makes it LOUD (your voice) and BRANDED (your domain); neither step sends/deletes/spends without you. The sibling-collision is already fixed (studio owns project object-lessons-studio, pinned in deploy.sh — NOT the cinema object-lessons). See memory [[studio-public-face-poiesis]], [[his-hand-tasks-hang-in-permanent-registry]], [[close-is-the-cliff]].",
+      "issue": 538
     }
   ]
 }
