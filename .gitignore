@@ -51,3 +51,6 @@ domus-genoma/
 # inbound positioning: internal price-anchor sheets are regenerable and must never sit as a
 # standing file in a public repo (scripts/generate-positioning.py rebuilds them from seeds).
 docs/positioning/*.internal.md
+# studium convergence logs are GENERATED and captured local worktree home paths (PII);
+# never track them in this public repo (studium re-derives them locally each run).
+studium/_converged/converge-log.jsonl

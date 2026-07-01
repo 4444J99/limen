@@ -298,6 +298,17 @@
       "unlocks": "assets go live on the chosen platform",
       "source_task": "media organ \u00b7 social_scheduler",
       "note": "social_scheduler.py send --id <qid> refuses without both the platform token AND this human pull. Drafts stay 'draft' until you approve."
+    },
+    {
+      "id": "L-PII-SWEEP-CONTAIN",
+      "label": "Contain the org-wide personal-data exposure. A read-only sweep of all 182 public org repos (2026-07-01) confirmed 15 carrying personal data — raw session / prompt / chat-export dumps leaking local home paths, name, email, screenshot filenames, and in one case sensitive personal topics — plus 4 suspects needing a look. This is a live, systemic PII exposure, not a single repo. Containment splits by repo type: pure-dump / corpus repos flip visibility to private (or delete the dump dir); product / live repos remove the offending FILE only, never flip the repo dark (that would take a live product down). limen's own low-severity item (a generated converge log) is already scrubbed in-repo.",
+      "owner": "yours",
+      "cost": "pure-dump repos: one batched `gh repo edit --visibility private` block (one paste). product repos: a small file-removal PR each (I author on request). suspects: a look.",
+      "unlocks": "closes the systemic back-door exposure of your personal data across the public org; makes publishing the front-door inbound surfaces safe",
+      "source_task": "org-wide read-only PII leak sweep (2026-07-01)",
+      "gate": "shared-org-repo visibility flips are harness-gated + outward-facing — yours to run",
+      "note": "The itemized per-repo ledger is delivered OUT-OF-BAND (this session + the private knowledge-corpus), never committed here: this registry PUBLISHES and must stay PII-clean per no-tasks-on-me.sh — it must not become a public map to the leak. See memory: [[credential-atoms-not-a-chat-burden]], [[known-owned-pervasive-then-idgaf]], [[health-pii-in-generator-code]].",
+      "issue": null
     }
   ]
 }
