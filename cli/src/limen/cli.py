@@ -233,5 +233,61 @@ def workstream(launch_codex, launch_shell, from_ref, prompt_text, prompt_file, n
     raise SystemExit(result.returncode)
 
 
+@main.command()
+@click.option("--verify", is_flag=True, help="Prove the fold reproduces the board byte-for-byte (exit 1 if not).")
+@click.option(
+    "--emit-events",
+    "emit_events",
+    default=None,
+    help="Write the board's seed event stream (fold input) to this JSONL path.",
+)
+def materialize(verify, emit_events):
+    """Derive the board from its event stream — step 1 of the event-sourced board.
+
+    The board (tasks.yaml) is a *materialized view*: board = fold(events). --verify seeds events
+    from the current board, folds them, re-serializes through the canonical writer, and asserts the
+    bytes are identical — the executable proof that the projection reproduces reality exactly. This
+    commits nothing (it does not write tasks.yaml); it only proves the ideal form is faithful.
+    """
+    import yaml
+
+    from limen.materialize import fold, seed_events_from_board
+
+    root = resolve_root()
+    tasks_path = resolve_tasks_path(root)
+    if not tasks_path.exists():
+        click.echo("tasks.yaml not found", err=True)
+        sys.exit(1)
+
+    board = load_limen_file(tasks_path)
+    events = seed_events_from_board(board)
+
+    if emit_events:
+        out = Path(emit_events).expanduser()
+        out.write_text("".join(json.dumps(e, ensure_ascii=False, sort_keys=True) + "\n" for e in events))
+        click.echo(f"wrote {len(events)} events to {out}")
+
+    if verify or not emit_events:
+        rebuilt = fold(events)
+        # canonical serialization = exactly what save_limen_file writes (mode=json, exclude_none,
+        # sort_keys=False). Compare against the on-disk bytes.
+        rebuilt_bytes = yaml.dump(
+            rebuilt.model_dump(mode="json", exclude_none=True), sort_keys=False, default_flow_style=False
+        )
+        on_disk = tasks_path.read_text()
+        identical = rebuilt_bytes == on_disk
+        click.echo(
+            f"materialize: {len(board.tasks)} tasks, {len(events)} events; "
+            f"fold(events) == tasks.yaml bytes: {identical}"
+        )
+        if not identical:
+            click.echo(
+                "  NON-IDENTICAL — the board on disk is not canonical, or the fold lost a field. "
+                "Re-run `limen doctor`; do not migrate writers until this exits 0.",
+                err=True,
+            )
+            sys.exit(1)
+
+
 if __name__ == "__main__":
     main()
