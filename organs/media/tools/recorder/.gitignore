@@ -1,0 +1,4 @@
+# compiled binary — build locally with ./build.sh
+media-recorder
+*.o
+*.dSYM/
