@@ -10,10 +10,14 @@ spines (see KERNEL.md): **A = media-ark** (archive product, standalone repo) and
 - Capture front-ends → main (#506): native **SCK recorder** (`tools/recorder`, builds; system audio w/o BlackHole) + rescued **screen-capture importer** (`tools/screen-capture-importer`, provenance fixed).
 - Outbound **scheduler** (`scheduler/social_scheduler.py`, drafts-only) + 5 levers (#508).
 - Stale draft PR #497 closed; 7 empty dud branches pruned.
+- **media-ark CI turned GREEN** (`organvm/media-ark` PR **#51**, merged `c28bf83`, 2026-07-01) — first ever. Corrected issue #5's stale "runner-pickup" theory: the hosted runner picks up fine; the red was a **half-landed #43 auth refactor**. Fixes: readiness probes → public `/`; wired the `GET /api/export/{fmt}` route (export.py existed, unwired); added the `SyncConfig`/`load_sync_config`/`pro_enabled` config layer (sync.py imported symbols that existed nowhere); migrated `verify_release.py` to the authed/sandboxed model; guarded `src/platform/__init__.py` against shadowing the stdlib `platform` module (py3.11 `uuid` collision); fixed the tox invocation (`-e` not `-m`). Full suite 94 passed; CLI smoke + tox(py311,py314) + actionlint green.
 
 ## Spine A — media-ark (repo `organvm/media-ark`) — separate, larger effort
-- **CI is RED** (issue #5, hosted-runner-pickup heartbeat). Root-cause once, then **close the 5 duplicate "CI-green" PRs** (#44/#45/#46/#48/#49, keep one).
-- **Rebase the 3 conflicting substantive PRs** onto current main: **#29** (quota/paywall — the missing revenue primitive), **#34** (dashboard-pro), **#42** (api-docs).
+- ~~CI is RED~~ **DONE** — CI green on main (PR #51). See "Landed" above.
+- **Close 5 superseded dud PRs** #44/#45/#46/#48/#49 (the old "Make CI green" attempts; #51 supersedes them). **Human atom** — closing PRs the session didn't open is classifier-gated (External System Writes). One-liner: `for p in 44 45 46 48 49; do gh pr close $p -R organvm/media-ark --comment "Superseded by #51 (CI now green)."; done`.
+- **Update + close issue #5** with the accurate root-cause (half-landed #43 auth refactor, fixed by #51 — not the runner-pickup theory). **Human atom** — issue comment/close is classifier-gated. One-liner: `gh issue close 5 -R organvm/media-ark --comment "Resolved by #51 — root cause was the #43 auth refactor, not runner pickup. CLI smoke + tox(py311,py314) + actionlint green on main."`.
+- **Rebase the 3 substantive PRs** onto current main — all now **CONFLICTING/DIRTY** and each likely carries its own #43-style wiring gaps (separate per-PR effort): **#29** (quota/paywall, +778 — the missing revenue primitive), **#34** (dashboard-pro, +535), **#42** (api-docs, +651).
+- **Rename the `src/platform` package** — the permanent fix for the stdlib-`platform` shadow (currently guarded in `__init__.py`). Touches all `from src.platform…` sites + `python -m src.platform.*` invocations + tests.
 - **Undeployed + $0**: `media-ark.org` CNAME set but nothing served; Stripe not connected; `sync.py` crypto is a placeholder XOR (not real AEAD) — wire before any Pro launch.
 - **Reconcile local checkout** `~/Workspace/4444J99/media-ark` (24 behind origin, dirty, ~35 stale fleet branches).
 - **Free-tier quota mismatch**: docs say 5GB, `billing.py` says 1000 items — pick one before launch.
