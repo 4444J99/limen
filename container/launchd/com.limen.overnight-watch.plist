@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Cheap overnight progress monitor. This is intentionally separate from
+  interactive agents: launchd runs scripts/overnight-watch.py as a one-shot
+  receipt writer every five minutes, and agents only need to inspect
+  logs/overnight-watch-alert.json when a WATCH_ALERT is active.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.limen.overnight-watch</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin"; PY="$LIMEN_ROOT/.venv/bin/python3"; [ -x "$PY" ] || PY="$(command -v python3 || echo python3)"; exec "$PY" "$LIMEN_ROOT/scripts/overnight-watch.py"</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key><string>/Users/4jp</string>
+        <key>LIMEN_ROOT</key><string>/Users/4jp/Workspace/limen</string>
+        <key>PYTHONPATH</key><string>/Users/4jp/Workspace/limen/cli/src</string>
+        <key>LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_ASYNC</key><string>1</string>
+        <key>LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_LANES</key><string>auto</string>
+    </dict>
+    <key>StartInterval</key><integer>300</integer>
+    <key>RunAtLoad</key><true/>
+    <key>ProcessType</key><string>Background</string>
+    <key>StandardOutPath</key><string>/Users/4jp/Workspace/limen/logs/overnight-watch.out.log</string>
+    <key>StandardErrorPath</key><string>/Users/4jp/Workspace/limen/logs/overnight-watch.err.log</string>
+</dict>
+</plist>

@@ -346,6 +346,54 @@ parameters:
     self_update: none
     owner: continuity
     note: "Hard stop elapsed-time ceiling for one recent Codex session."
+  LIMEN_OVERNIGHT_WATCH_STATE:
+    default: "$LIMEN_ROOT/logs/overnight-watch-state.json"
+    env: LIMEN_OVERNIGHT_WATCH_STATE
+    self_update: "updated by scripts/overnight-watch.py"
+    owner: continuity
+    note: "State file used by the cheap overnight monitor to count repeated heartbeat ticks across one-shot launchd invocations."
+  LIMEN_OVERNIGHT_WATCH_RECEIPT:
+    default: "$LIMEN_ROOT/logs/overnight-watch.jsonl"
+    env: LIMEN_OVERNIGHT_WATCH_RECEIPT
+    self_update: "appended by scripts/overnight-watch.py"
+    owner: continuity
+    note: "Append-only JSONL receipt path for agent-free overnight heartbeat progress monitoring."
+  LIMEN_OVERNIGHT_WATCH_ALERT:
+    default: "$LIMEN_ROOT/logs/overnight-watch-alert.json"
+    env: LIMEN_OVERNIGHT_WATCH_ALERT
+    self_update: "updated by scripts/overnight-watch.py"
+    owner: continuity
+    note: "Deduped active alert path for overnight monitor failures; replaces long interactive-agent polling loops with WATCH_ALERT receipts."
+  LIMEN_OVERNIGHT_WATCH_MAX_LOG_AGE_SEC:
+    default: 1200
+    env: LIMEN_OVERNIGHT_WATCH_MAX_LOG_AGE_SEC
+    self_update: none
+    owner: continuity
+    note: "Maximum heartbeat log age before the overnight monitor emits WATCH_ALERT heartbeat-log-stale."
+  LIMEN_OVERNIGHT_WATCH_MAX_STALE_TICKS:
+    default: 6
+    env: LIMEN_OVERNIGHT_WATCH_MAX_STALE_TICKS
+    self_update: none
+    owner: continuity
+    note: "Maximum consecutive one-shot monitor samples with the same latest tick and no active workers before WATCH_ALERT heartbeat-progress-stale."
+  LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_ASYNC:
+    default: ""
+    env: LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_ASYNC
+    self_update: none
+    owner: continuity
+    note: "Optional expected LIMEN_DISPATCH_ASYNC value for overnight monitor env-drift alerts."
+  LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_LANES:
+    default: ""
+    env: LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_LANES
+    self_update: none
+    owner: continuity
+    note: "Optional expected LIMEN_DISPATCH_LANES value for overnight monitor env-drift alerts."
+  LIMEN_OVERNIGHT_WATCH_INTERVAL_SEC:
+    default: 300
+    env: LIMEN_OVERNIGHT_WATCH_INTERVAL_SEC
+    self_update: none
+    owner: continuity
+    note: "Attached --watch loop interval; launchd should normally run one-shot invocations instead."
   LIMEN_PUBLIC_SITE_URL:
     default: "https://device-streaming-067d747a.web.app"
     env: LIMEN_PUBLIC_SITE_URL
