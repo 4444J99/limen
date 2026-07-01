@@ -44,6 +44,26 @@ A production system that sweeps Gmail and Apple Mail across accounts, classifies
 
 → **Run this on my inbox** · see [the ways to work together](docs/positioning/universal-mail--automation.md)
 
+### [Universal Agent Task Intake & Dispatch System](https://github.com/organvm/limen)
+
+A cross-agent, cross-repo task intake system. One YAML file (`tasks.yaml`) lives in every repo; every agent reads it, applies filters, and processes work. Includes a CLI for local task management, a REST API, a SaaS dashboard, and a CLI-driven task broker. Scales from single-agent to fleet-wide orchestration.
+
+`1,058 files across the system` · `35,811 lines of Python · 4,319 lines of TypeScript/JavaScript` · `54 pytest test files · 5 jest test files (59 total, 335+ passing)` · `2 deploy workflows (Firebase + Cloud Run)` · `CLI + REST API + SaaS dashboard` · `Multi-repo, multi-agent orchestration`
+
+**Solves:** Managing task routing across agents and repos is ad hoc — each agent has its own intake, routing is hardcoded, scaling to 5+ agents becomes coordination hell, and visibility into what's being worked is absent.
+
+→ **Orchestrate your agents** · see [the ways to work together](docs/positioning/limen.md)
+
+### [Portfolio & Case Studies — 16 Production Systems](https://github.com/organvm/portfolio)
+
+A public portfolio site showcasing 16 completed production systems — each with a case study, real architecture diagrams (p5.js interactive), live demos where applicable, and the decision trees behind the build. Built with Astro, deployed on Netlify, fully indexed and discoverable.
+
+`609 files · Astro + TypeScript · p5.js interactive visualizations` · `69 test files across the portfolio + content` · `16 case studies with architecture, decisions, and outcomes` · `Live demos & interactive diagrams` · `Netlify deployment + CI/CD` · `SEO-optimized content sites`
+
+**Solves:** A portfolio of demos and one-liners doesn't prove judgment. Seeing the tradeoffs, the decisions, the outcomes, and the architecture is the difference between 'built something' and 'ships production systems'.
+
+→ **Explore the case studies** · see [the ways to work together](docs/positioning/portfolio.md)
+
 ---
 
 _If any of this fits, reach out. This conversation starts at serious._
