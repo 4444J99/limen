@@ -101,7 +101,7 @@ CI_SECRETS: list[dict] = [
         "name": "OP_SERVICE_ACCOUNT_TOKEN",
         "home": "file `~/.config/op/service-account-token` (1Password service account) + `~/.zshenv` export",
         "used": "`creds-hydrate.py` headless `op read` + `--sweep-all` (fleet); `~/.zshenv` exports it so every shell's `op` is promptless too (no Touch-ID anywhere)",
-        "hand": "THE control point — install once: `scripts/op-service-account.sh install` ⇒ op promptless forever (fleet + login shell)",
+        "hand": "INSTALLED ✓ — op is promptless forever (fleet + every shell), verified via `op whoami`. Scope residual: the saved SA token carries zero vault grants, so op *re-reads* return nothing — the fleet runs off the already-valid `~/.limen.env` (see `creds-hydrate.py --verify`). For op itself to re-read/rotate secrets (true full sweep), grant the SA read access to the vault(s) holding them in the 1Password console (service accounts read shared vaults; personal-vault items may need moving into one). Non-blocking.",
         "issue": "#288",
     },
 ]

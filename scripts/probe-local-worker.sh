@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Headless guard: this probe runs unattended (CI, git hooks, the metabolize beat), and it shells out
+# to `npm install` + `npx wrangler dev` below. CI=1 makes wrangler ERROR instead of opening an
+# interactive OAuth login if a token is ever missing — the exact guard scripts/cf-wrangler.sh applies.
+# A wrangler login *prompt* is a distribution gap, never a dead token (the #518 wrangler-login disease).
+# `wrangler dev --local` needs no remote auth, so this is belt-and-suspenders that makes the invariant
+# "no wrangler call in this repo can ever drop to an interactive login" structurally true, not merely
+# probable — the last straggler outside cf-wrangler.sh.
+export CI=1
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TMP_DIR="${TMPDIR:-/tmp}/limen-worker-probe"
 ENV_FILE="$TMP_DIR/.dev.vars"
