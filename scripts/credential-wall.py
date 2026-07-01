@@ -99,9 +99,9 @@ CI_SECRETS: list[dict] = [
     },
     {
         "name": "OP_SERVICE_ACCOUNT_TOKEN",
-        "home": "file `~/.config/op/service-account-token` (1Password service account)",
-        "used": "`creds-hydrate.py` headless `op read` + `--sweep-all` (no Touch-ID)",
-        "hand": "THE control point — install once: `scripts/op-service-account.sh install` ⇒ op promptless forever",
+        "home": "file `~/.config/op/service-account-token` (1Password service account) + `~/.zshenv` export",
+        "used": "`creds-hydrate.py` headless `op read` + `--sweep-all` (fleet); `~/.zshenv` exports it so every shell's `op` is promptless too (no Touch-ID anywhere)",
+        "hand": "THE control point — install once: `scripts/op-service-account.sh install` ⇒ op promptless forever (fleet + login shell)",
         "issue": "#288",
     },
 ]
