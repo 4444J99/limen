@@ -322,6 +322,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Maximum recent Codex session files considered by the continuation hard spend gate."
+  LIMEN_CODEX_TOKEN_GATE_ACTIVE_SECONDS:
+    default: 900
+    env: LIMEN_CODEX_TOKEN_GATE_ACTIVE_SECONDS
+    self_update: none
+    owner: continuity
+    note: "Session JSONL mtime freshness window for the continuation hard spend gate. Older over-budget sessions remain report failures but do not block receipt-safe continuation."
   LIMEN_CODEX_WARN_UNCACHED_INPUT_TOKENS:
     default: 300000
     env: LIMEN_CODEX_WARN_UNCACHED_INPUT_TOKENS

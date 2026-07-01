@@ -223,7 +223,7 @@ def token_budget_gate() -> dict[str, Any]:
             os.environ.get("LIMEN_CODEX_TOKEN_GATE_LIMIT", "10"),
             "--output",
             str(TOKEN_REPORT),
-            "--fail-on-budget",
+            "--fail-on-active-budget",
         ],
         ROOT,
         timeout=90,
@@ -236,10 +236,14 @@ def token_budget_gate() -> dict[str, Any]:
         "report": {
             "path": str(TOKEN_REPORT),
             "status": report.get("status"),
+            "active_status": report.get("active_status"),
             "session_count": report.get("session_count"),
             "aggregate_totals": report.get("aggregate_totals"),
             "warnings": (report.get("warnings") or [])[:5],
             "failures": (report.get("failures") or [])[:5],
+            "active_session_seconds": report.get("active_session_seconds"),
+            "active_failures": (report.get("active_failures") or [])[:5],
+            "historical_failures": (report.get("historical_failures") or [])[:5],
         },
     }
 

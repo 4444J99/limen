@@ -11,6 +11,32 @@ The budget metric intentionally ignores cached input:
 
 Cached replay can dominate raw totals without indicating fresh spend; uncached
 input plus generated/reasoning output is the operator-facing waste signal.
+
+Active vs. historical failures
+------------------------------
+A session's over-budget-ness is a permanent, append-only fact: once a JSONL
+records a runaway session it stays over budget forever. A gate that blocks on
+*any* recent over-budget session therefore lets one finished burn poison every
+unrelated receipt-safe continuation until the file ages out of the report
+window -- cross-session contamination. So failures are split by liveness:
+
+    active_failures     -- fresh session still over budget => something is
+                           burning right now; a circuit breaker should trip.
+    historical_failures -- a finished session that went over budget; keep it
+                           visible (report ``status`` stays ``fail``) but do NOT
+                           block on it.
+
+``--fail-on-budget`` exits non-zero on any failure (strict; CI / manual audit).
+``--fail-on-active-budget`` exits non-zero only on ``active_failures`` -- the
+right signal for the continuation beat's backpressure breaker.
+
+Liveness is keyed on the session file's mtime (``--active-session-seconds``),
+not on the in-band ``last_token_at``. For a JSONL the harness is actively
+appending, mtime tracks real activity precisely, and its only failure mode -- a
+stray touch making a finished file look fresh -- is fail-safe: it can only
+*over*-block the breaker briefly (self-heals once the window elapses), never let
+a genuine runaway through. Do not "fix" this to ``last_token_at`` without also
+reworking the fixtures, which deliberately drive staleness via ``os.utime``.
 """
 
 from __future__ import annotations
@@ -254,18 +280,52 @@ def evaluate_session(session: dict[str, Any], thresholds: dict[str, int]) -> tup
     return warnings, failures
 
 
+def session_age_seconds(session: dict[str, Any], now: dt.datetime) -> int | None:
+    mtime = parse_ts(session.get("mtime"))
+    if mtime is None:
+        return None
+    return int(max(0, (now - mtime).total_seconds()))
+
+
+def is_active_session(session: dict[str, Any], now: dt.datetime, active_seconds: int) -> bool:
+    if active_seconds <= 0:
+        return True
+    age = session_age_seconds(session, now)
+    # Fail-open on unknown liveness: a session whose mtime we cannot read is
+    # treated as NOT active (routed to historical / non-blocking). This breaker
+    # exists to stop piling work on a live runaway; when liveness is unknowable
+    # we prefer not to stall receipt-safe continuation -- the exact bug this
+    # split fixes. The case is near-impossible: the file was just read to build
+    # the summary. See test_active_helpers_* for the pinned contract.
+    return age is not None and age <= active_seconds
+
+
 def build_report(args: argparse.Namespace) -> dict[str, Any]:
     sessions_root = args.sessions_root
     files = filter_recent(expand_paths([Path(p) for p in args.paths], sessions_root), args.since_hours, args.limit_sessions)
     sessions = [summarize_session(path, max_phases=args.max_phases) for path in files]
     thresholds = thresholds_from_args(args)
+    now = dt.datetime.now(dt.timezone.utc)
+    active_seconds = max(0, int(args.active_session_seconds))
 
     warnings: list[str] = []
     failures: list[str] = []
+    active_warnings: list[str] = []
+    active_failures: list[str] = []
+    historical_failures: list[str] = []
     for session in sessions:
+        age = session_age_seconds(session, now)
+        active = is_active_session(session, now, active_seconds)
+        session["mtime_age_seconds"] = age
+        session["active"] = active
         sw, sf = evaluate_session(session, thresholds)
         warnings.extend(sw)
         failures.extend(sf)
+        if active:
+            active_warnings.extend(sw)
+            active_failures.extend(sf)
+        else:
+            historical_failures.extend(sf)
 
     aggregate = normalize_usage({})
     for session in sessions:
@@ -274,16 +334,26 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
             aggregate[key] += int(totals.get(key) or 0)
 
     status = "fail" if failures else "warn" if warnings else "ok"
+    # active_status is the "is anything wrong RIGHT NOW" signal: it ignores
+    # historical over-budget sessions so a finished burn does not read as an
+    # ongoing incident. status stays "fail" for visibility; active_status is
+    # what a live-health consumer should watch.
+    active_status = "fail" if active_failures else "warn" if active_warnings else "ok"
     return {
         "generated_at": utc_now(),
         "sessions_root": str(sessions_root),
         "since_hours": args.since_hours,
         "session_count": len(sessions),
         "thresholds": thresholds,
+        "active_session_seconds": active_seconds,
         "status": status,
+        "active_status": active_status,
         "aggregate_totals": aggregate,
         "warnings": warnings,
         "failures": failures,
+        "active_warnings": active_warnings,
+        "active_failures": active_failures,
+        "historical_failures": historical_failures,
         "sessions": sessions,
     }
 
@@ -326,6 +396,17 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--no-write", action="store_true")
     parser.add_argument("--json", action="store_true", help="print the full JSON report to stdout")
     parser.add_argument("--fail-on-budget", action="store_true", help="exit non-zero on threshold failures")
+    parser.add_argument(
+        "--fail-on-active-budget",
+        action="store_true",
+        help="exit non-zero only when a still-fresh session exceeds configured budgets",
+    )
+    parser.add_argument(
+        "--active-session-seconds",
+        type=int,
+        default=int(os.environ.get("LIMEN_CODEX_TOKEN_GATE_ACTIVE_SECONDS", "900")),
+        help="mtime freshness window for --fail-on-active-budget; 0 treats every reported session as active",
+    )
     args = parser.parse_args(argv)
 
     report = build_report(args)
@@ -341,7 +422,9 @@ def main(argv: list[str] | None = None) -> int:
             f"{report['status']} sessions={report['session_count']} "
             f"budget={totals['budget_tokens']} uncached={totals['uncached_input_tokens']} "
             f"cached={totals['cached_input_tokens']} output={totals['output_tokens']} "
-            f"reasoning={totals['reasoning_output_tokens']}"
+            f"reasoning={totals['reasoning_output_tokens']} "
+            f"active_status={report['active_status']} "
+            f"active_failures={len(report['active_failures'])} historical_failures={len(report['historical_failures'])}"
         )
         if report["failures"]:
             print("  failures: " + "; ".join(report["failures"][:3]))
@@ -349,6 +432,8 @@ def main(argv: list[str] | None = None) -> int:
             print("  warnings: " + "; ".join(report["warnings"][:3]))
 
     if args.fail_on_budget and report["failures"]:
+        return 2
+    if args.fail_on_active_budget and report["active_failures"]:
         return 2
     return 0
 
