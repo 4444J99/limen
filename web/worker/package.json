@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
+    "dev": "bash ../../scripts/cf-wrangler.sh dev",
+    "deploy": "bash ../../scripts/cf-wrangler.sh deploy",
     "check": "node --check src/index.js"
   },
   "dependencies": {

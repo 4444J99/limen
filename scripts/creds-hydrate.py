@@ -151,8 +151,13 @@ DEFAULT_MAP: list[dict] = [
         "ref": "op://Personal/Cloudflare API Token/credential",
         "env": ["CLOUDFLARE_API_TOKEN"],
         "enabled": True,
-        # validity probe: the canonical token self-verify endpoint. Invalid → 401 code 1000.
-        "verify": {"url": "https://api.cloudflare.com/client/v4/user/tokens/verify", "auth": "bearer"},
+        # validity probe: GET /accounts. This works for BOTH token kinds — the earlier
+        # /user/tokens/verify endpoint is USER-token-only and returns code 1000 "Invalid API
+        # Token" for an ACCOUNT-scoped token (e.g. "Edit Cloudflare Workers"), a FALSE NEGATIVE
+        # that wrongly flagged our valid deploy token dead and spawned a phantom re-mint lever
+        # (L-CLOUDFLARE-DEPLOY). /accounts returns 200 for any live token, 401/403 for a revoked
+        # one — the correct validity semantics for the generic probe. Fixed 2026-07-01.
+        "verify": {"url": "https://api.cloudflare.com/client/v4/accounts", "auth": "bearer"},
     },
     {
         # CI-SECRET sink — the credential the organ didn't used to reach, so it kept landing on a human as
