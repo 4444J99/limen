@@ -121,6 +121,7 @@ def read_plist(path: Path) -> dict[str, Any]:
             "LIMEN_ROOT": env.get("LIMEN_ROOT"),
             "LIMEN_DISPATCH_ASYNC": env.get("LIMEN_DISPATCH_ASYNC"),
             "LIMEN_LANES": env.get("LIMEN_LANES"),
+            "LIMEN_DISPATCH_LANES": env.get("LIMEN_DISPATCH_LANES"),
             "LIMEN_LOCAL_LIMIT": env.get("LIMEN_LOCAL_LIMIT"),
         },
     }
@@ -213,7 +214,7 @@ def async_probe_snapshot(enabled: bool) -> dict[str, Any]:
             "python3",
             "scripts/dispatch-async.py",
             "--lanes",
-            "codex,opencode,agy,claude,gemini,jules",
+            "auto",
             "--per-lane",
             "3",
             "--max",
@@ -277,6 +278,19 @@ def derive_blockers(snapshot: dict[str, Any]) -> list[dict[str, str]]:
             }
         )
 
+    plist_dispatch_lanes = (plist.get("env") or {}).get("LIMEN_DISPATCH_LANES")
+    loaded_dispatch_lanes = (loaded.get("env") or {}).get("LIMEN_DISPATCH_LANES")
+    if plist_dispatch_lanes != loaded_dispatch_lanes:
+        blockers.append(
+            {
+                "id": "heartbeat-dispatch-lanes-env-drift",
+                "evidence": (
+                    f"plist LIMEN_DISPATCH_LANES={plist_dispatch_lanes!r}, "
+                    f"loaded={loaded_dispatch_lanes!r}."
+                ),
+            }
+        )
+
     if async_probe.get("requested") and not async_probe.get("ok"):
         blockers.append(
             {
@@ -331,9 +345,13 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         f"- Plist KeepAlive: `{plist.get('keep_alive')}`; RunAtLoad: `{plist.get('run_at_load')}`.",
         f"- Plist LIMEN_ROOT: `{(plist.get('env') or {}).get('LIMEN_ROOT')}`.",
         f"- Plist LIMEN_DISPATCH_ASYNC: `{(plist.get('env') or {}).get('LIMEN_DISPATCH_ASYNC')}`.",
+        f"- Plist LIMEN_DISPATCH_LANES: `{(plist.get('env') or {}).get('LIMEN_DISPATCH_LANES')}`.",
+        f"- Plist LIMEN_LANES: `{(plist.get('env') or {}).get('LIMEN_LANES')}`.",
         f"- Loaded launchd state: `{loaded.get('state')}` pid `{loaded.get('pid')}`.",
         f"- Loaded LIMEN_ROOT: `{(loaded.get('env') or {}).get('LIMEN_ROOT')}`.",
         f"- Loaded LIMEN_DISPATCH_ASYNC: `{(loaded.get('env') or {}).get('LIMEN_DISPATCH_ASYNC')}`.",
+        f"- Loaded LIMEN_DISPATCH_LANES: `{(loaded.get('env') or {}).get('LIMEN_DISPATCH_LANES')}`.",
+        f"- Loaded LIMEN_LANES: `{(loaded.get('env') or {}).get('LIMEN_LANES')}`.",
         f"- Watchdog dry-run healthy: `{watchdog.get('healthy')}`; `{watchdog.get('first_line')}`.",
         "",
         "## Async Dispatch",
@@ -381,7 +399,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "- Refresh the operator gate: `python3 scripts/live-root-gate.py --write`",
         "- Verify async dispatch tests: `pytest -q cli/tests/test_async_dispatch.py`",
         "- Probe heartbeat: `python3 scripts/watchdog.py --dry-run`",
-        "- Probe async dry-run: `PYTHONPATH=cli/src python3 scripts/dispatch-async.py --lanes codex,opencode,agy,claude,gemini,jules --per-lane 3 --max 12 --dry-run`",
+        "- Probe async dry-run: `PYTHONPATH=cli/src python3 scripts/dispatch-async.py --lanes auto --per-lane 3 --max 12 --dry-run`",
         "",
     ]
     return "\n".join(lines)

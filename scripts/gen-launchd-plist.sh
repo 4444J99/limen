@@ -42,6 +42,7 @@ PY="$(resolve "$PY")"
 PYDIR="$(dirname "$PY")"
 PATH_VAL="$PYDIR:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 LANES="${LIMEN_LANES:-codex,opencode,agy,claude,gemini}"
+DISPATCH_LANES="${LIMEN_DISPATCH_LANES:-auto}"
 LOCAL_LIMIT="${LIMEN_LOCAL_LIMIT:-3}"
 DISPATCH_ASYNC="${LIMEN_DISPATCH_ASYNC:-0}"
 
@@ -51,6 +52,7 @@ render() {
       -e "s|@@LIMEN_WORKDIR@@|$WORKDIR|g" \
       -e "s|@@LIMEN_PYTHON@@|$PY|g" \
       -e "s|@@LIMEN_LANES@@|$LANES|g" \
+      -e "s|@@LIMEN_DISPATCH_LANES@@|$DISPATCH_LANES|g" \
       -e "s|@@LIMEN_LOCAL_LIMIT@@|$LOCAL_LIMIT|g" \
       -e "s|@@LIMEN_DISPATCH_ASYNC@@|$DISPATCH_ASYNC|g" \
       -e "s|@@PATH@@|$PATH_VAL|g" \

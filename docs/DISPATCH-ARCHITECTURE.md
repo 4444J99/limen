@@ -5,7 +5,7 @@ Update verified 2026-06-28:
 - Live launchd heartbeat is running and `python3 scripts/watchdog.py --dry-run` reports healthy.
 - Live heartbeat is still using SYNC dispatch. The installed plist now records `LIMEN_DISPATCH_ASYNC=0`; the currently loaded launchd job has not been reloaded since that file repair.
 - Async orchestration is implemented and tested. `pytest -q cli/tests/test_async_dispatch.py` passes after fixing stale-worker reaping so async-reserved tasks reopen when their detached worker dies.
-- `PYTHONPATH=cli/src python3 scripts/dispatch-async.py --lanes codex,opencode,agy,claude,gemini,jules --per-lane 3 --max 12 --dry-run` reports no current async workers and no launchable async tasks.
+- `PYTHONPATH=cli/src python3 scripts/dispatch-async.py --lanes auto --per-lane 3 --max 12 --dry-run` reports no current async workers and no launchable async tasks.
 
 The heartbeat (`scripts/heartbeat-loop.sh`, launchd `com.limen.heartbeat`) runs one polyrhythmic
 beat repeatedly: drain → heal → feed (mine) → route/rebalance → **dispatch** → reconcile → web.

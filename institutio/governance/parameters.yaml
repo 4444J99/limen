@@ -500,6 +500,12 @@ parameters:
     self_update: "may lower under VITALS pressure"
     owner: arms-agents
     note: "First cross-organ link: VITALS pressure should drive this ceiling down."
+  LIMEN_DISPATCH_LANES:
+    default: "auto"
+    env: LIMEN_DISPATCH_LANES
+    self_update: none
+    owner: arms-agents
+    note: "Fleet dispatch boundary selector. `auto` derives reachable registered lanes from the capacity registry; explicit comma lists are normalized and filtered for down lanes."
   # --- the non-bypassable Claude model chokepoint (scripts/shims/claude) ----------
   LIMEN_CLAUDE_SHIM_FLOOR:
     default: "haiku"           # the cheapest rung — the SAME tier the per-task ladder assigns to unclassed work

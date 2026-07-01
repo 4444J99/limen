@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  GENERATED SAMPLE — machine-specific values are rendered by scripts/gen-launchd-plist.sh.
+  Edit container/launchd/com.limen.heartbeat.plist.tmpl for the placeholder source.
+-->
 <plist version="1.0">
 <dict>
     <key>Label</key>
@@ -14,10 +18,14 @@
         <key>HOME</key><string>/Users/4jp</string>
         <key>LIMEN_ROOT</key><string>/Users/4jp/Workspace/limen</string>
         <key>LIMEN_WORKDIR</key><string>/Users/4jp/Workspace</string>
+        <key>LIMEN_PYTHON</key><string>/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/bin/python3.14</string>
         <key>LIMEN_LANES</key><string>codex,opencode,agy,claude,gemini</string>
+        <key>LIMEN_DISPATCH_LANES</key><string>auto</string>
         <key>LIMEN_LOCAL_LIMIT</key><string>3</string>
+        <key>LIMEN_DISPATCH_ASYNC</key><string>0</string>
+        <key>PATH</key><string>/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
     </dict>
-    <key>KeepAlive</key><false/>
+    <key>KeepAlive</key><true/>
     <key>RunAtLoad</key><true/>
     <key>ThrottleInterval</key><integer>60</integer>
     <key>ProcessType</key><string>Background</string>

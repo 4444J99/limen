@@ -52,4 +52,4 @@ Status: `healthy`
 - Refresh the operator gate: `python3 scripts/live-root-gate.py --write`
 - Verify async dispatch tests: `pytest -q cli/tests/test_async_dispatch.py`
 - Probe heartbeat: `python3 scripts/watchdog.py --dry-run`
-- Probe async dry-run: `PYTHONPATH=cli/src python3 scripts/dispatch-async.py --lanes codex,opencode,agy,claude,gemini,jules --per-lane 3 --max 12 --dry-run`
+- Probe async dry-run: `PYTHONPATH=cli/src python3 scripts/dispatch-async.py --lanes auto --per-lane 3 --max 12 --dry-run`

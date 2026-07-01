@@ -79,6 +79,7 @@ def _run(
             **os.environ,
             "LIMEN_ORGS": "",
             "LIMEN_ROOT": str(path.parent),
+            "LIMEN_DISPATCH_LANES": "codex,claude,agy",
             "LIMEN_VALUE_REPOS": value_repos,
             "LIMEN_VALUE_REPOS_FILE": str(path.parent / "no-such-tier.json"),
             "LIMEN_WORKTREE_ROOT": str(worktree_root or path.parent / "empty-worktrees"),

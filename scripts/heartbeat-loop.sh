@@ -106,9 +106,8 @@ fi
 echo $$ > "$DAEMON_LOCK"
 echo $$ > "$LIMEN_ROOT/logs/heartbeat-loop.pid"
 
-LANES="${LIMEN_LANES:-codex,opencode,agy,claude}"
-[ -n "${GEMINI_API_KEY:-}" ] && LANES="$LANES,gemini"
-[ -n "${WARP_API_KEY:-}" ] && LANES="$LANES,warp,oz"
+LANES="${LIMEN_LANES:-codex,opencode,agy,claude,gemini}"   # local-lane preference/display; not the fleet boundary
+DISPATCH_LANES="${LIMEN_DISPATCH_LANES:-auto}"
 # per-lane tasks PER BEAT kept low so no single lane hogs a beat — lanes rotate fast
 # (the safe throughput fix; real braking is the rate-limit detector in dispatch.py).
 LOCAL_LIMIT="${LIMEN_LOCAL_LIMIT:-3}"; JULES_LIMIT="${LIMEN_JULES_LIMIT:-100}"
@@ -184,6 +183,24 @@ for lane in sys.argv[1].split(","):
 print(",".join(seen))
 PY
 }
+dispatch_lanes() {
+  python3 - "$1" <<'PY'
+import os
+import sys
+from pathlib import Path
+from limen.capacity import select_lanes
+from limen.dispatch import _down_lanes
+from limen.io import load_limen_file
+
+root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
+tasks = Path(os.environ.get("LIMEN_TASKS", str(root / "tasks.yaml")))
+try:
+    board = load_limen_file(tasks)
+except Exception:
+    board = None
+print(",".join(select_lanes(sys.argv[1], board, down_lanes=_down_lanes())))
+PY
+}
 cleanup() {
   rmdir "$LOCKD" 2>/dev/null || true
   if [ "$(cat "$DAEMON_LOCK" 2>/dev/null)" = "$$" ]; then
@@ -193,7 +210,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "═══ heartbeat-loop start $(date '+%F %T') tempo=${MIN}-${MAX}s lanes=$LANES ═══"
+echo "═══ heartbeat-loop start $(date '+%F %T') tempo=${MIN}-${MAX}s lanes=$LANES dispatch_lanes=$DISPATCH_LANES ═══"
 # This freshly-started loop IS running the current body, so any prior "loop body changed —
 # kickstart pending" marker is now satisfied. sync-release only ever SETS this flag (on a
 # loop-body ff) and nothing else clears it, so without this it stays set forever and the
@@ -246,6 +263,7 @@ while true; do
     fi
   fi
   EFFECTIVE_LANES="$LANES"
+  EFFECTIVE_DISPATCH_LANES="$DISPATCH_LANES"
   if [ "$VITALS_PRESSURE" = "1" ]; then
     echo "── vitals-pressure: dispatch will be skipped after maintenance ──"
   fi
@@ -268,6 +286,8 @@ while true; do
     if [ "$EFFECTIVE_LANES" != "$LANES" ]; then
       echo "  lanes: ${EFFECTIVE_LANES:-none} active from requested [$LANES]"
     fi
+    EFFECTIVE_DISPATCH_LANES="$(dispatch_lanes "$DISPATCH_LANES")"
+    echo "  dispatch lanes: ${EFFECTIVE_DISPATCH_LANES:-none} from selector [$DISPATCH_LANES]"
 
     if [ "$MODE" != "dispatch" ]; then
       echo "autonomy mode=$MODE — telemetry/status only; queue mutation and dispatch skipped"
@@ -321,10 +341,10 @@ while true; do
       else
         _dt0=$SECONDS
         if [ "${LIMEN_DISPATCH_ASYNC:-0}" = "1" ]; then
-          out="$(dispatch_bounded python3 "$LIMEN_ROOT/scripts/dispatch-async.py" --lanes "$EFFECTIVE_LANES,jules" \
+          out="$(dispatch_bounded python3 "$LIMEN_ROOT/scripts/dispatch-async.py" --lanes "$DISPATCH_LANES" \
                   --per-lane "$LOCAL_LIMIT" --max "${LIMEN_ASYNC_MAX:-12}" 2>&1)"; _drc=$?
         else
-          out="$(dispatch_bounded python3 "$LIMEN_ROOT/scripts/dispatch-parallel.py" --lanes "$EFFECTIVE_LANES,jules" \
+          out="$(dispatch_bounded python3 "$LIMEN_ROOT/scripts/dispatch-parallel.py" --lanes "$DISPATCH_LANES" \
                   --per-lane "$LOCAL_LIMIT" --workers "${LIMEN_WORKERS:-8}" 2>&1)"; _drc=$?
         fi
         # timeout(1) exits 124 (TERM) or 128+9=137 (our -s KILL) when the ceiling fires → a lane run

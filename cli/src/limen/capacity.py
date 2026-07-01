@@ -6,6 +6,7 @@ import shlex
 import shutil
 import subprocess
 from pathlib import Path
+from collections.abc import Iterable
 from typing import TypedDict, TypeVar
 
 from limen.models import Task
@@ -369,6 +370,39 @@ def capacity_census(board: object = None, budget_limit: int | None = None) -> li
             }
         )
     return rows
+
+
+def select_lanes(
+    selector: str | None = "auto",
+    board: object = None,
+    *,
+    down_lanes: Iterable[str] | None = None,
+) -> list[str]:
+    """Resolve a lane selector through the canonical capacity registry.
+
+    ``auto`` means lanes that are reachable and have remaining board capacity.
+    ``all`` means every registered lane except live-down lanes. Explicit comma
+    lists normalize aliases and ignore unknown/down lanes.
+    """
+    raw = (selector or "auto").strip() or "auto"
+    down = {canonical_agent(agent.strip()) for agent in (down_lanes or []) if str(agent).strip()}
+    key = raw.lower()
+    if key == "all":
+        return [agent for agent in PAID_AGENT_ORDER if agent not in down]
+    if key == "auto":
+        rows = capacity_census(board)
+        return [
+            str(row["agent"])
+            for row in rows
+            if row.get("reachable") and str(row["agent"]) not in down
+        ]
+
+    lanes: list[str] = []
+    for item in raw.split(","):
+        agent = canonical_agent(item.strip())
+        if agent and agent in PAID_AGENT_ORDER and agent not in down and agent not in lanes:
+            lanes.append(agent)
+    return lanes
 
 
 def format_capacity_census(rows: list[CapacityRow]) -> str:

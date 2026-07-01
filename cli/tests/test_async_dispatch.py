@@ -218,15 +218,45 @@ def test_resolve_lanes_auto_and_all_use_capacity_registry(tmp_path, monkeypatch)
     da = _load(tmp_path, n_open=0)
     monkeypatch.setattr(
         da,
-        "capacity_census",
-        lambda board: [
-            {"agent": "codex", "reachable": True},
-            {"agent": "claude", "reachable": True},
-            {"agent": "warp", "reachable": False},
-            {"agent": "github_actions", "reachable": True},
-        ],
+        "select_lanes",
+        lambda selector, board, down_lanes=None: {
+            "auto": ["codex", "github_actions"],
+            "all": ["codex", "claude", "github_actions"],
+        }.get(selector, ["github_actions", "agy"]),
     )
 
     assert da.resolve_lanes("auto", down={"claude"}) == ["codex", "github_actions"]
     assert "warp" not in da.resolve_lanes("all", down={"warp"})
     assert da.resolve_lanes("github-actions,antigravity,unknown", down=set()) == ["github_actions", "agy"]
+
+
+def test_async_dry_run_does_not_reap_harvest_or_reserve_mutations(tmp_path, monkeypatch):
+    da = _load(tmp_path, n_open=1)
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.tasks.append(
+        Task(
+            id="STALE",
+            title="stale",
+            repo="x/y",
+            target_agent="codex",
+            status="dispatched",
+            created=datetime.date.today(),
+        )
+    )
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+    stale = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=3000)
+    marker = da.RUNS / "STALE__codex.running"
+    result = da.RUNS / "STALE.result.json"
+    marker.write_text(stale.isoformat())
+    result.write_text(json.dumps({"task_id": "STALE", "agent": "codex", "result": True}))
+    before_board = (tmp_path / "tasks.yaml").read_text()
+    before_marker = marker.read_text()
+    before_result = result.read_text()
+
+    monkeypatch.setattr(sys, "argv", ["dispatch-async.py", "--lanes", "codex", "--max", "4", "--dry-run"])
+
+    assert da.main() == 0
+
+    assert (tmp_path / "tasks.yaml").read_text() == before_board
+    assert marker.read_text() == before_marker
+    assert result.read_text() == before_result

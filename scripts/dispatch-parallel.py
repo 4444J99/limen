@@ -3,7 +3,7 @@
 Replaces the heartbeat's serial per-lane for-loop. Safe: tasks.yaml written twice under this
 single process; slow agent runs happen in a thread pool; git plumbing is lock-guarded.
 
-  python3 scripts/dispatch-parallel.py --lanes codex,opencode,agy,claude,gemini,jules \
+  python3 scripts/dispatch-parallel.py --lanes auto \
       --per-lane 3 --workers 8 [--dry-run]
 """
 import argparse
@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+from limen.capacity import select_lanes  # noqa: E402
 from limen.io import load_limen_file  # noqa: E402
 from limen.dispatch import dispatch_parallel, _down_lanes  # noqa: E402
 
@@ -20,7 +21,7 @@ from limen.dispatch import dispatch_parallel, _down_lanes  # noqa: E402
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS"))
-    ap.add_argument("--lanes", default="codex,opencode,agy,claude,gemini,jules")
+    ap.add_argument("--lanes", default="auto")
     ap.add_argument("--per-lane", type=int, default=int(os.environ.get("LIMEN_LOCAL_LIMIT", "3")))
     ap.add_argument("--workers", type=int, default=int(os.environ.get("LIMEN_WORKERS", "8")))
     ap.add_argument("--dry-run", action="store_true")
@@ -38,12 +39,12 @@ def main() -> int:
                 f"({policy_path})"
             )
             return 0
-    down = _down_lanes()   # skip lanes that can't produce (e.g. gemini ratelimited) — no wasted slots
-    lanes = [x.strip() for x in args.lanes.split(",") if x.strip() and x.strip() not in down]
-    if down:
-        print(f"── skipping down lanes: {sorted(down)}")
     path = Path(args.tasks)
     lf = load_limen_file(path)
+    down = _down_lanes()   # skip lanes that can't produce (e.g. gemini ratelimited) — no wasted slots
+    lanes = select_lanes(args.lanes, lf, down_lanes=down)
+    if down:
+        print(f"── skipping down lanes: {sorted(down)}")
     dispatch_parallel(lf, path, lanes, per_agent_limit=args.per_lane,
                       max_workers=args.workers, dry_run=args.dry_run)
     return 0

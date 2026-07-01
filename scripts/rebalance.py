@@ -17,10 +17,11 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+from limen.capacity import LOCAL_CHECKOUT_AGENTS, canonical_agent  # noqa: E402
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.dispatch import _resolve_repo_dir, _down_lanes  # noqa: E402
 
-LOCAL = {"codex", "opencode", "agy", "antigravity", "claude", "gemini"}
+LOCAL = set(LOCAL_CHECKOUT_AGENTS)
 
 
 def main() -> int:
@@ -31,7 +32,11 @@ def main() -> int:
     args = ap.parse_args()
 
     down = _down_lanes()
-    lanes = [x.strip() for x in args.lanes.split(",") if x.strip() and x.strip() not in down]
+    lanes = [
+        canonical_agent(x.strip())
+        for x in args.lanes.split(",")
+        if x.strip() and canonical_agent(x.strip()) not in down
+    ]
     if not lanes:
         print(f"no productive lanes (given lanes all down: {sorted(down)})")
         return 2
@@ -42,7 +47,7 @@ def main() -> int:
 
     cands = [
         t for t in lf.tasks
-        if t.status == "open" and t.target_agent in LOCAL and _resolve_repo_dir(t) is not None
+        if t.status == "open" and canonical_agent(t.target_agent) in LOCAL and _resolve_repo_dir(t) is not None
     ]
     counts = {x: 0 for x in lanes}
     for i, t in enumerate(cands):

@@ -17,6 +17,7 @@ from limen.capacity import (
     format_capacity_census,
     github_issue_ref,
     ollama_model,
+    select_lanes,
 )
 from limen.io import load_limen_file, save_limen_file, queue_lock as _queue_lock
 from limen.models import BudgetTrack, DispatchLogEntry, LimenFile, Task
@@ -696,23 +697,55 @@ def _agent_argv(agent: str, task: Task | None = None) -> list[str]:
 
 # Per-task lane failover cascade (best-efficiency-first → cloud last). On a genuine
 # lane FAILURE (down/error/timeout) a task re-routes to the next lane and stays open;
-# the heartbeat dispatches lanes in THIS SAME ORDER, so a failed task walks down the
-# spectrum within one tick. A no-op (empty diff) is a recoverable failed attempt,
+# the heartbeat dispatches the same selector, so a failed task walks down the
+# currently productive spectrum. A no-op (empty diff) is a recoverable failed attempt,
 # not a terminal archive; chronic no-output loops escalate through heal-dispatch.
-# Exhausting the list marks the task failed. Keep this order == heartbeat.sh LANES order.
 # agy/antigravity KEPT and HEALED: it writes to a scratch dir, so _bridge_agy_scratch carries
 # that work into the worktree after the run (see _isolated_local_run) — productive lane again.
 _LANE_CASCADE = ["codex", "opencode", "agy", "claude", "gemini", "jules", "ollama"]
 _NOOP = "__noop__"  # agent ran but produced no diff
 
 
+def _lane_cascade() -> list[str]:
+    selector = os.environ.get("LIMEN_DISPATCH_LANES")
+    try:
+        down = _down_lanes()
+    except Exception:
+        down = set()
+    if not selector:
+        return list(_LANE_CASCADE)
+    try:
+        lanes = select_lanes(selector, down_lanes=down)
+    except Exception:
+        lanes = []
+    if lanes:
+        return lanes
+    return [agent for agent in _LANE_CASCADE if agent not in down]
+
+
 def _next_lane(current: str) -> str | None:
     """Next lane down the efficiency spectrum after `current`, or None if exhausted."""
+    cascade = _lane_cascade()
     try:
-        i = _LANE_CASCADE.index(current)
+        i = cascade.index(current)
     except ValueError:
-        return None
-    return _LANE_CASCADE[i + 1] if i + 1 < len(_LANE_CASCADE) else None
+        return cascade[0] if cascade else None
+    return cascade[i + 1] if i + 1 < len(cascade) else None
+
+
+def _fallback_dispatch_lane() -> str | None:
+    cascade = _lane_cascade()
+    for agent in cascade:
+        if agent in _LOCAL_AGENTS:
+            return agent
+    return cascade[0] if cascade else "any"
+
+
+_REMOTE_SERVICE_LANES = {"jules", "copilot", "github_actions", "warp", "oz"}
+
+
+def _cascade_or_requeue(agent: str) -> str:
+    return _next_lane(agent) or _fallback_dispatch_lane() or "any"
 
 
 # A lane's REAL limit is usually token-usage / rate, NOT the fixed per-day count. Every
@@ -1343,9 +1376,9 @@ def _apply_result(task: Task, agent: str, result: bool | str, now: datetime, tra
         if "noop" not in task.labels:
             task.labels.append("noop")
     elif result == _RATELIMIT:
-        nxt = _next_lane(agent)
+        nxt = _cascade_or_requeue(agent)
         entry.status = f"ratelimited->{nxt or 'requeue'}"
-        task.target_agent = nxt or agent
+        task.target_agent = nxt
         task.status = "open"
     elif result == _TIMEOUT:
         # too big for a sync local lane → hand to jules (async, no wall-clock cap)
@@ -1368,6 +1401,12 @@ def _apply_result(task: Task, agent: str, result: bool | str, now: datetime, tra
         if nxt:
             entry.status = f"failed->{nxt}"
             task.target_agent = nxt
+            task.status = "open"
+        elif agent in _REMOTE_SERVICE_LANES:
+            fallback = _fallback_dispatch_lane() or "any"
+            entry.status = f"failed->{fallback}"
+            entry.output = "remote/service lane failed; reopened to healthy fleet cascade"
+            task.target_agent = fallback
             task.status = "open"
         else:
             entry.status = "failed"

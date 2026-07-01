@@ -55,13 +55,13 @@ def _board_with_torn_write(path: Path) -> None:
 
 
 def _run(path: Path, *args: str) -> subprocess.CompletedProcess:
-    # LIMEN_ROOT=tmp → no real usage.json/lanes bleed; LIMEN_LANES=codex keeps probing bounded.
+    # LIMEN_ROOT=tmp -> no real usage.json/lanes bleed; LIMEN_DISPATCH_LANES=codex keeps probing bounded.
     return subprocess.run(
         [sys.executable, str(SCRIPT), "--tasks", str(path), *args],
         capture_output=True,
         text=True,
         timeout=120,
-        env={**os.environ, "LIMEN_ORGS": "", "LIMEN_ROOT": str(path.parent), "LIMEN_LANES": "codex"},
+        env={**os.environ, "LIMEN_ORGS": "", "LIMEN_ROOT": str(path.parent), "LIMEN_DISPATCH_LANES": "codex"},
     )
 
 

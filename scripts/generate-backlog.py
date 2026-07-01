@@ -29,6 +29,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.models import Task  # noqa: E402
+from limen.capacity import select_lanes  # noqa: E402
 from limen.worktree_debt import worktree_debt_exceeded  # noqa: E402
 
 # Useful, repo-agnostic but ACTIONABLE levers. The agent resolves the specifics in-repo.
@@ -64,12 +65,6 @@ TEMPLATES = [
 
 # statuses that count as "this (repo,lever) is already being worked" — don't duplicate those.
 _ACTIVE = {"open", "dispatched", "in_progress", "needs_human"}
-
-# The lanes the FLEET dispatcher can actually serve. github_actions/warp/oz are CI/service triggers,
-# NOT fleet-dispatchable — a queue full of those is NOT a full fleet queue (the overnight idle bug:
-# 79 github_actions/oz tasks made the floor look met while the dispatcher saw nothing to run). "any"
-# is routable (the router picks a live lane). Keep this in sync with the heartbeat LANES.
-_DISPATCH_LANES = {"codex", "opencode", "agy", "claude", "gemini", "jules", "any"}
 
 
 def _org_repos() -> list[str]:
@@ -140,6 +135,11 @@ def _avg_headroom_pct() -> float | None:
         return None
 
 
+def _dispatch_lanes(board: object, dead: set[str]) -> set[str]:
+    selector = os.environ.get("LIMEN_DISPATCH_LANES", "auto")
+    return set(select_lanes(selector, board, down_lanes=dead)) | {"any"}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS", "tasks.yaml"))
@@ -165,20 +165,18 @@ def main() -> int:
             )
             return 0
 
-    # Floor on ROUTABLE-BY-THE-FLEET open work, not total open. Two ways a "full" queue can be a lie:
-    #   1. tasks stuck on a dead lane (e.g. jules exhausted → unroutable RIGHT NOW), and
-    #   2. tasks bound to a non-fleet lane (github_actions/warp/oz) the dispatcher never serves.
-    # Either masks an empty fleet queue → the generator never fires and the tank sits full while dark
-    # repos stay uncovered (the overnight idle bug). Count only open tasks on a LIVE DISPATCH lane.
+    # Floor on ROUTABLE-BY-THE-FLEET open work, not total open. The dispatchable set is the same
+    # selector heartbeat passes to dispatch; "any" is routable because route.py picks a live lane.
     try:
         from limen.dispatch import _down_lanes
         _dead = _down_lanes()
     except Exception:
         _dead = set()
+    dispatch_lanes = _dispatch_lanes(lf, _dead)
     open_now = sum(
         1 for t in tasks
         if t.status == "open"
-        and (t.target_agent or "any") in _DISPATCH_LANES
+        and (t.target_agent or "any") in dispatch_lanes
         and (t.target_agent or "any") not in _dead
     )
     # Headroom accelerator (symmetric with discover-value.py): a full tank lifts the floor up to 3x so

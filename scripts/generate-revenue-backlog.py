@@ -32,6 +32,7 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+from limen.capacity import select_lanes  # noqa: E402
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.models import Task  # noqa: E402
 
@@ -45,10 +46,6 @@ _REVENUE_LABELS = {"revenue", "product", "ship-order"}
 
 # statuses that mean a (repo,lever) is already being worked — never duplicate those.
 _ACTIVE = {"open", "dispatched", "in_progress", "needs_human"}
-
-# routable-by-the-fleet lanes (mirror generate-backlog._DISPATCH_LANES) — only these count toward the
-# floor; github_actions/warp/oz are CI/service triggers the dispatcher never serves.
-_DISPATCH_LANES = {"codex", "opencode", "agy", "claude", "gemini", "jules", "any"}
 
 # Per-stage revenue levers. (key, priority, title, context-template). {product}/{repo}/{path} filled
 # per product. key = labels[0] (the per-(repo,lever) dedup handle); the win-class labels are appended.
@@ -130,17 +127,18 @@ def _levers_for(stage: str):
     return _DEPLOY_READY_LEVERS if stage == "deploy-ready" else _BUILDING_LEVERS
 
 
-def _plan(tasks: list[Task], floor_base: int, max_new: int) -> tuple[list[Task], dict]:
+def _plan(tasks: list[Task], floor_base: int, max_new: int, board: object | None = None) -> tuple[list[Task], dict]:
     """Compute the revenue tasks to add. Pure (no I/O side effects). Returns (new_tasks, info)."""
     try:
         from limen.dispatch import _down_lanes
         dead = _down_lanes()
     except Exception:
         dead = set()
+    dispatch_lanes = set(select_lanes(os.environ.get("LIMEN_DISPATCH_LANES", "auto"), board, down_lanes=dead)) | {"any"}
 
     def routable(t: Task) -> bool:
         lane = t.target_agent or "any"
-        return lane in _DISPATCH_LANES and lane not in dead
+        return lane in dispatch_lanes and lane not in dead
 
     open_rev = sum(
         1 for t in tasks
@@ -224,7 +222,7 @@ def main() -> int:
 
     path = Path(args.tasks)
     lf = load_limen_file(path)
-    new, info = _plan(lf.tasks, args.floor, args.max_new)
+    new, info = _plan(lf.tasks, args.floor, args.max_new, lf)
 
     hr = info.get("avg_hr")
     print(f"# generate-revenue-backlog: open-revenue={info['open_rev']} floor={info['floor']} "

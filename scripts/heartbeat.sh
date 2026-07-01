@@ -29,9 +29,8 @@ fi
 # load local secrets (gemini key, etc.) from the single un-committed secrets file
 [ -f "$HOME/.limen.env" ] && { set -a; . "$HOME/.limen.env"; set +a; }
 
-LANES="${LIMEN_LANES:-codex,opencode,agy,claude}"   # gemini auto-joins below iff its key is present
-[ -n "${GEMINI_API_KEY:-}" ] && LANES="$LANES,gemini"
-[ -n "${WARP_API_KEY:-}" ] && LANES="$LANES,warp,oz"
+LANES="${LIMEN_LANES:-codex,opencode,agy,claude,gemini}"   # local-lane preference/display
+DISPATCH_LANES="${LIMEN_DISPATCH_LANES:-auto}"
 LOCAL_LIMIT="${LIMEN_LOCAL_LIMIT:-50}"
 JULES_LIMIT="${LIMEN_JULES_LIMIT:-100}"
 MINE_LIMIT="${LIMEN_MINE_LIMIT:-25}"
@@ -46,7 +45,26 @@ else
   trap 'rmdir "$LOCK.d" 2>/dev/null' EXIT
 fi
 
-echo "═══ heartbeat $(date '+%F %T') lanes=$LANES ═══"
+resolve_dispatch_lanes() {
+  python3 - "$1" <<'PY'
+import os
+import sys
+from pathlib import Path
+from limen.capacity import select_lanes
+from limen.dispatch import _down_lanes
+from limen.io import load_limen_file
+
+root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
+tasks = Path(os.environ.get("LIMEN_TASKS", str(root / "tasks.yaml")))
+try:
+    board = load_limen_file(tasks)
+except Exception:
+    board = None
+print(",".join(select_lanes(sys.argv[1], board, down_lanes=_down_lanes())))
+PY
+}
+
+echo "═══ heartbeat $(date '+%F %T') lanes=$LANES dispatch_lanes=$DISPATCH_LANES ═══"
 python3 "$LIMEN_ROOT/scripts/usage-telemetry.py"                    2>&1 | tail -2 || true
 if [ "$MODE" != "dispatch" ]; then
   echo "autonomy mode=$MODE — telemetry/status only; queue mutation and dispatch skipped"
@@ -61,11 +79,16 @@ python3 "$LIMEN_ROOT/scripts/mine-backlog.py" --limit "$MINE_LIMIT" --apply 2>&1
 python3 "$LIMEN_ROOT/scripts/route.py" --apply                    2>&1 | tail -3 || true
 python3 "$LIMEN_ROOT/scripts/rebalance.py" --lanes "$LANES" --apply 2>&1 | tail -2 || true
 python3 -m limen release-stale --agent jules --hours 24 --apply   2>&1 | tail -2 || true
-python3 -m limen dispatch --agent jules --live --limit "$JULES_LIMIT" 2>&1 | tail -4 || true
-IFS=',' read -ra A <<< "$LANES"
+EFFECTIVE_DISPATCH_LANES="$(resolve_dispatch_lanes "$DISPATCH_LANES")"
+echo "── dispatch selector $DISPATCH_LANES -> ${EFFECTIVE_DISPATCH_LANES:-none} ──"
+IFS=',' read -ra A <<< "$EFFECTIVE_DISPATCH_LANES"
 for v in "${A[@]}"; do
   echo "── lane $v ──"
-  python3 -m limen dispatch --agent "$v" --live --limit "$LOCAL_LIMIT" 2>&1 | tail -4 || true
+  if [ "$v" = "jules" ]; then
+    python3 -m limen dispatch --agent "$v" --live --limit "$JULES_LIMIT" 2>&1 | tail -4 || true
+  else
+    python3 -m limen dispatch --agent "$v" --live --limit "$LOCAL_LIMIT" 2>&1 | tail -4 || true
+  fi
 done
 echo "── clone lifecycle hygiene (worktree prune + gc --auto + reap-report) ──"
 bash "$LIMEN_ROOT/scripts/clone-maintenance.sh" 2>&1 | tail -6 || true

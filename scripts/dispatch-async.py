@@ -15,7 +15,7 @@ LIMEN_DISPATCH_ASYNC=1. The synchronous dispatch-parallel.py is left completely 
 Concurrency: at most LIMEN_ASYNC_MAX (default 12) background runs at once; per-agent in-flight count
 is tracked via <task-id>__<agent>.running markers so budgets aren't blown between reserve & harvest.
 
-Usage: dispatch-async.py --lanes codex,claude,opencode,jules --per-lane 8 --max 12 [--dry-run]
+Usage: dispatch-async.py --lanes auto --per-lane 8 --max 12 [--dry-run]
 """
 import argparse
 import datetime
@@ -26,7 +26,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
-from limen.capacity import PAID_AGENT_ORDER, canonical_agent, capacity_census  # noqa: E402
+from limen.capacity import select_lanes  # noqa: E402
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.models import DispatchLogEntry  # noqa: E402
 from limen.dispatch import (  # noqa: E402
@@ -87,6 +87,12 @@ def harvest() -> int:
     return applied
 
 
+def inspect_harvest() -> int:
+    """Count result files without applying or deleting them."""
+    RUNS.mkdir(parents=True, exist_ok=True)
+    return len(list(RUNS.glob("*.result.json")))
+
+
 def reap_stale(max_age_s: int):
     """Free slots from DEAD workers. A .running marker older than max_age with no result file means
     the detached worker crashed/was-killed before finishing (OOM, host sleep, SIGKILL). Remove the
@@ -136,6 +142,23 @@ def reap_stale(max_age_s: int):
                         ))
             save_limen_file(TASKS, lf)
     return [tid for tid, _agent in reaped]
+
+
+def inspect_stale(max_age_s: int) -> list[str]:
+    """Return stale marker task ids without deleting markers or reopening tasks."""
+    RUNS.mkdir(parents=True, exist_ok=True)
+    now = _now()
+    stale = []
+    for m in RUNS.glob("*__*.running"):
+        try:
+            age = (now - datetime.datetime.fromisoformat(m.read_text().strip())).total_seconds()
+        except Exception:
+            age = max_age_s + 1
+        if age > max_age_s:
+            tid, _agent = m.name[:-len(".running")].rsplit("__", 1)
+            if not (RUNS / f"{tid}.result.json").exists():
+                stale.append(tid)
+    return stale
 
 
 def _running_total() -> int:
@@ -204,27 +227,12 @@ def reserve_and_launch(agents, per_agent, cap, dry):
 
 
 def resolve_lanes(selector: str, down: set[str]) -> list[str]:
-    raw = (selector or "auto").strip()
-    if raw == "all":
-        return [agent for agent in PAID_AGENT_ORDER if agent not in down]
-    if raw == "auto":
-        try:
-            board = load_limen_file(TASKS)
-            rows = capacity_census(board)
-        except Exception:
-            rows = []
-        lanes = [
-            str(row.get("agent"))
-            for row in rows
-            if row.get("reachable") and str(row.get("agent")) not in down
-        ]
-        return lanes or [agent for agent in ("codex",) if agent not in down]
-    lanes: list[str] = []
-    for item in raw.split(","):
-        agent = canonical_agent(item.strip())
-        if agent and agent in PAID_AGENT_ORDER and agent not in down and agent not in lanes:
-            lanes.append(agent)
-    return lanes
+    try:
+        board = load_limen_file(TASKS)
+    except Exception:
+        board = None
+    lanes = select_lanes(selector, board, down_lanes=down)
+    return lanes or [agent for agent in ("codex",) if agent not in down]
 
 
 def main() -> int:
@@ -238,8 +246,13 @@ def main() -> int:
     lanes = resolve_lanes(a.lanes, down)
     if down:
         print(f"── skipping down lanes: {sorted(down)}")
-    reaped = reap_stale(int(os.environ.get("LIMEN_ASYNC_MAX_AGE", "1200")))
-    applied = harvest()
+    max_age = int(os.environ.get("LIMEN_ASYNC_MAX_AGE", "1200"))
+    if a.dry_run:
+        reaped = inspect_stale(max_age)
+        applied = inspect_harvest()
+    else:
+        reaped = reap_stale(max_age)
+        applied = harvest()
     running = _running_total()
     launched = reserve_and_launch(lanes, a.per_lane, a.max, a.dry_run)
     verb = "would launch" if a.dry_run else "launched"

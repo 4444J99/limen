@@ -12,7 +12,7 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import limen.dispatch as D
-from limen.capacity import PAID_AGENT_ORDER, capacity_census, format_capacity_census
+from limen.capacity import PAID_AGENT_ORDER, capacity_census, format_capacity_census, select_lanes
 from limen.dispatch import dispatch_parallel, dispatch_tasks, release_stale_tasks
 from limen.doctor import qa_report, readiness_report, stale_tasks
 from limen.io import load_limen_file
@@ -78,6 +78,25 @@ def test_capacity_census_lists_every_paid_lane(tmp_path: Path, monkeypatch) -> N
     assert "github_actions" in text
 
 
+def test_auto_lane_selector_includes_github_actions_and_blocks_oz_without_warp_key(
+    tmp_path: Path, monkeypatch
+) -> None:
+    gh = tmp_path / "gh"
+    gh.write_text("#!/bin/sh\nexit 0\n")
+    gh.chmod(0o755)
+    monkeypatch.setenv("PATH", str(tmp_path))
+    monkeypatch.delenv("WARP_API_KEY", raising=False)
+
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(tasks_path, [])
+    board = load_limen_file(tasks_path)
+
+    lanes = select_lanes("auto", board)
+
+    assert "github_actions" in lanes
+    assert "oz" not in lanes
+
+
 def test_route_distributes_local_work_and_reaches_extended_fleet(tmp_path: Path) -> None:
     """Ideal-form router (origin's local-first split + the extended-fleet graft): local-checkout
     work spreads across LOCAL lanes by budget+refresh-runway (no single-lane serialization), and a
@@ -106,10 +125,11 @@ def test_route_distributes_local_work_and_reaches_extended_fleet(tmp_path: Path)
         vendor, _ = route.route_task(task, health, workdir, assigned=tally, budget=budget)
         tally[vendor] = tally.get(vendor, 0) + 1
         picks.append(vendor)
-    assert set(picks) <= {"codex", "claude", "agy", "opencode"}, f"local work leaked to {set(picks)}"
+    local_lanes = {"codex", "claude", "agy", "opencode", "gemini", "ollama"}
+    assert set(picks) <= local_lanes, f"local work leaked to {set(picks)}"
     assert len(set(picks)) >= 2, f"work serialized onto {set(picks)}"
 
-    # A repo with NO local checkout but a GitHub issue reaches the extended fleet, not 'unroutable'.
+    # A repo with NO local checkout still reaches a local lane because dispatch.py clones on demand.
     remote = {
         "id": "REMOTE-1",
         "title": "Remote-only repo",
@@ -119,7 +139,8 @@ def test_route_distributes_local_work_and_reaches_extended_fleet(tmp_path: Path)
         "urls": ["https://github.com/someorg/no-local-here/issues/9"],
     }
     vendor, reason = route.route_task(remote, health, workdir, assigned={}, budget=budget)
-    assert vendor in ("copilot", "github_actions", "jules"), (vendor, reason)
+    assert vendor in local_lanes, (vendor, reason)
+    assert "clone-on-demand" in reason
 
 
 def test_self_improve_weight_nudge_steers_local_split(monkeypatch) -> None:

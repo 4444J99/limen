@@ -158,6 +158,7 @@ def read_plist(path: Path) -> dict[str, Any]:
             "LIMEN_ROOT": env.get("LIMEN_ROOT"),
             "LIMEN_DISPATCH_ASYNC": env.get("LIMEN_DISPATCH_ASYNC"),
             "LIMEN_LANES": env.get("LIMEN_LANES"),
+            "LIMEN_DISPATCH_LANES": env.get("LIMEN_DISPATCH_LANES"),
             "LIMEN_LOCAL_LIMIT": env.get("LIMEN_LOCAL_LIMIT"),
         },
     }
@@ -200,7 +201,7 @@ def env_drift(plist: dict[str, Any], loaded: dict[str, Any]) -> list[dict[str, A
     drift: list[dict[str, Any]] = []
     plist_env = plist.get("env") or {}
     loaded_env = loaded.get("env") or {}
-    for key in ("LIMEN_ROOT", "LIMEN_DISPATCH_ASYNC", "LIMEN_LANES", "LIMEN_LOCAL_LIMIT"):
+    for key in ("LIMEN_ROOT", "LIMEN_DISPATCH_ASYNC", "LIMEN_LANES", "LIMEN_DISPATCH_LANES", "LIMEN_LOCAL_LIMIT"):
         if plist_env.get(key) != loaded_env.get(key):
             drift.append({"key": key, "plist": plist_env.get(key), "loaded": loaded_env.get(key)})
     return drift
