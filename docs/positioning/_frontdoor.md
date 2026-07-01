@@ -48,7 +48,7 @@ A production system that sweeps Gmail and Apple Mail across accounts, classifies
 
 A cross-agent, cross-repo task intake system. One YAML file (`tasks.yaml`) lives in every repo; every agent reads it, applies filters, and processes work. Includes a CLI for local task management, a REST API, a SaaS dashboard, and a CLI-driven task broker. Scales from single-agent to fleet-wide orchestration.
 
-`1,058 files across the system` · `35,811 lines of Python · 4,319 lines of TypeScript/JavaScript` · `54 pytest test files · 5 jest test files (59 total, 335+ passing)` · `2 deploy workflows (Firebase + Cloud Run)` · `CLI + REST API + SaaS dashboard` · `Multi-repo, multi-agent orchestration`
+`1,058 files across the system` · `35,811 lines of Python · 4,319 lines of TypeScript/JavaScript` · `54 pytest test files · 5 jest test files (59 total, 335+ passing)` · `2 deploy workflows (Firebase + Cloud Run)` · `CLI + REST API + SaaS dashboard` · `Multi-repo, multi-agent orchestration` · `MCP-accessible — exposes the task system over the Model Context Protocol (server + ianva doorway/aggregator)` · `Self-* organ ladder — self-sustaining, self-routing, self-feeding, self-healing, all live`
 
 **Solves:** Managing task routing across agents and repos is ad hoc — each agent has its own intake, routing is hardcoded, scaling to 5+ agents becomes coordination hell, and visibility into what's being worked is absent.
 

@@ -48,3 +48,32 @@ gh api -X PUT repos/organvm/universal-mail--automation/topics \
 # apply description:
 gh repo edit organvm/universal-mail--automation --description "Autonomous inbox triage for Gmail + Apple Mail — classifies threads, tracks every owed reply, drafts voice-matched responses. Draft-only, never sends."
 ```
+
+## Universal Agent Task Intake & Dispatch System — `organvm/limen`
+
+- **Recommended topics:** task-orchestration, agent-dispatch, multi-agent, mcp, model-context-protocol, agent-tools, self-healing, autonomic, workflow, task-queue, distributed-systems, api, saas, python, typescript, firebase, cloud-run
+- **Recommended description:** MCP-accessible multi-agent task orchestration: cross-repo task intake, universal dispatch schema, self-healing fleet-scale coordination over the Model Context Protocol.
+
+```sh
+# apply topics (his hand — outward-facing public change):
+gh api -X PUT repos/organvm/limen/topics \
+  -H 'Accept: application/vnd.github+json' \
+  -f 'names[]=task-orchestration' -f 'names[]=agent-dispatch' -f 'names[]=multi-agent' -f 'names[]=mcp' -f 'names[]=model-context-protocol' -f 'names[]=agent-tools' -f 'names[]=self-healing' -f 'names[]=autonomic' -f 'names[]=workflow' -f 'names[]=task-queue' -f 'names[]=distributed-systems' -f 'names[]=api' -f 'names[]=saas' -f 'names[]=python' -f 'names[]=typescript' -f 'names[]=firebase' -f 'names[]=cloud-run'
+# apply description:
+gh repo edit organvm/limen --description "MCP-accessible multi-agent task orchestration: cross-repo task intake, universal dispatch schema, self-healing fleet-scale coordination over the Model Context Protocol."
+```
+
+## Portfolio & Case Studies — 16 Production Systems — `organvm/portfolio`
+
+- **Recommended topics:** portfolio, case-studies, system-design, architecture, production, astro, interactive-design, web-development, systems-thinking, engineering-decisions, technical-writing
+- ⚠ **Invalid topics (fix in seed):** p5.js
+- **Recommended description:** Production portfolio: 16 systems, real architecture decisions, interactive visualizations, case studies on building software at scale.
+
+```sh
+# apply topics (his hand — outward-facing public change):
+gh api -X PUT repos/organvm/portfolio/topics \
+  -H 'Accept: application/vnd.github+json' \
+  -f 'names[]=portfolio' -f 'names[]=case-studies' -f 'names[]=system-design' -f 'names[]=architecture' -f 'names[]=production' -f 'names[]=astro' -f 'names[]=interactive-design' -f 'names[]=web-development' -f 'names[]=systems-thinking' -f 'names[]=engineering-decisions' -f 'names[]=technical-writing'
+# apply description:
+gh repo edit organvm/portfolio --description "Production portfolio: 16 systems, real architecture decisions, interactive visualizations, case studies on building software at scale."
+```

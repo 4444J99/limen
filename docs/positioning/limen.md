@@ -4,7 +4,7 @@
 
 A cross-agent, cross-repo task intake system. One YAML file (`tasks.yaml`) lives in every repo; every agent reads it, applies filters, and processes work. Includes a CLI for local task management, a REST API, a SaaS dashboard, and a CLI-driven task broker. Scales from single-agent to fleet-wide orchestration.
 
-**Built to production weight:** 1,058 files across the system · 35,811 lines of Python · 4,319 lines of TypeScript/JavaScript · 54 pytest test files · 5 jest test files (59 total, 335+ passing) · 2 deploy workflows (Firebase + Cloud Run) · CLI + REST API + SaaS dashboard · Multi-repo, multi-agent orchestration.
+**Built to production weight:** 1,058 files across the system · 35,811 lines of Python · 4,319 lines of TypeScript/JavaScript · 54 pytest test files · 5 jest test files (59 total, 335+ passing) · 2 deploy workflows (Firebase + Cloud Run) · CLI + REST API + SaaS dashboard · Multi-repo, multi-agent orchestration · MCP-accessible — exposes the task system over the Model Context Protocol (server + ianva doorway/aggregator) · Self-* organ ladder — self-sustaining, self-routing, self-feeding, self-healing, all live.
 
 **Who this is for:** AI engineering teams running multiple agents across multiple repos; organizations scaling from single-agent to fleet orchestration.
 

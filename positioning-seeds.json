@@ -506,7 +506,9 @@
         "54 pytest test files \u00b7 5 jest test files (59 total, 335+ passing)",
         "2 deploy workflows (Firebase + Cloud Run)",
         "CLI + REST API + SaaS dashboard",
-        "Multi-repo, multi-agent orchestration"
+        "Multi-repo, multi-agent orchestration",
+        "MCP-accessible — exposes the task system over the Model Context Protocol (server + ianva doorway/aggregator)",
+        "Self-* organ ladder — self-sustaining, self-routing, self-feeding, self-healing, all live"
       ],
       "buyer": "AI engineering teams running multiple agents across multiple repos; organizations scaling from single-agent to fleet orchestration.",
       "expensive_problem": "Managing task routing across agents and repos is ad hoc \u2014 each agent has its own intake, routing is hardcoded, scaling to 5+ agents becomes coordination hell, and visibility into what's being worked is absent.",
@@ -549,11 +551,16 @@
       "cta_client": "Orchestrate your agents",
       "cta_recruiter": "Study the fleet architecture",
       "recruiter_bridge_level": 4,
-      "seo_description": "Multi-agent task orchestration system: cross-repo task intake, universal dispatch schema, fleet-scale coordination.",
+      "seo_description": "MCP-accessible multi-agent task orchestration: cross-repo task intake, universal dispatch schema, self-healing fleet-scale coordination over the Model Context Protocol.",
       "search_topics": [
         "task-orchestration",
         "agent-dispatch",
         "multi-agent",
+        "mcp",
+        "model-context-protocol",
+        "agent-tools",
+        "self-healing",
+        "autonomic",
         "workflow",
         "task-queue",
         "distributed-systems",
