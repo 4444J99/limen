@@ -29,6 +29,42 @@ BAD_TARGET_RE = re.compile(r"\bundefined#undefined\b|repo[=:]\\?\"?undefined|num
 FAILED_LOG_RE = re.compile(r"\bfailed:|agent died|monthly spend limit|rate[_ -]?limit", re.IGNORECASE)
 
 
+def _model_selection() -> Any:
+    """Load the shared tier vocabulary BY FILE PATH — the same self-contained importlib load
+    ``scripts/shims/claude`` uses — so this guard never re-encodes the model ladder and never
+    drags in the ``limen`` package ``__init__``. Fail-open to None so the guard still runs
+    standalone if the module is missing. ([[fleet-model-floor-bleed]] [[derive-never-pin-hardcodes]])"""
+    try:
+        import importlib.util
+
+        root = os.environ.get("LIMEN_ROOT") or str(Path(__file__).resolve().parents[1])
+        path = Path(root) / "cli" / "src" / "limen" / "model_selection.py"
+        spec = importlib.util.spec_from_file_location("_limen_model_selection_guard", path)
+        if spec is None or spec.loader is None:
+            return None
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+    except Exception:
+        return None
+
+
+def _expensive_tier() -> str:
+    """The costliest ladder rung's alias — the tier the guard watches for over-fanout. Derived from
+    ``model_selection._CLAUDE_TIER_ORDER[-1]``; falls open to ``"opus"`` (the current top rung)."""
+    mod = _model_selection()
+    try:
+        if mod is not None:
+            return str(mod._CLAUDE_TIER_ORDER[-1])
+    except Exception:
+        pass
+    return "opus"
+
+
+# The expensive rung, resolved once per process from the one brain (not a hardcoded literal).
+_EXPENSIVE = _expensive_tier()
+
+
 def _read_text(path: str | None) -> str:
     if path and path != "-":
         return Path(path).read_text()
@@ -90,7 +126,7 @@ def _workflow_violations(path: Path, wf: dict[str, Any], *, max_opus_agents: int
     progress = wf.get("workflowProgress") or []
     int(wf.get("agentCount") or len(progress) or 0)
     models = [str(p.get("model", "")) for p in progress if isinstance(p, dict)]
-    opus_agents = sum(1 for m in models if "opus" in m.lower())
+    opus_agents = sum(1 for m in models if _EXPENSIVE in m.lower())
 
     if opus_agents > max_opus_agents and os.environ.get("LIMEN_ALLOW_OPUS_FANOUT") != "1":
         violations.append(
@@ -220,6 +256,7 @@ def audit_transcript(
     max_billable_tokens: int,
     max_opus_billable_tokens: int,
     max_agent_calls: int,
+    max_opus_agents: int,
 ) -> dict[str, Any]:
     """Audit a Claude transcript for unbounded, expensive session shape.
 
@@ -241,6 +278,11 @@ def audit_transcript(
     opus_billable = 0
     user_unbounded: list[dict[str, Any]] = []
     models: dict[str, int] = {}
+    # A fan-out of subagents each riding the expensive tier is the exact shape of the
+    # verify-studio-launch incident (6 trivial verifiers on Opus). Count subagent transcripts
+    # (files[1:], never the main session) that ran ANY assistant turn on the costliest rung.
+    subagent_paths = {str(p) for p in files[1:]}
+    expensive_subagent_files: set[str] = set()
 
     unbounded_re = re.compile(
         r"\b(no stopping|indefinite|indefinitely|until ideal form|keep going until ideal form)\b",
@@ -257,6 +299,8 @@ def audit_transcript(
             if row.get("type") != "assistant":
                 continue
             model = str(msg.get("model") or "unknown")
+            if str(path) in subagent_paths and _EXPENSIVE in model.lower():
+                expensive_subagent_files.add(str(path))
             content = msg.get("content") or []
             if isinstance(content, list):
                 agent_calls += sum(
@@ -275,7 +319,7 @@ def audit_transcript(
             cache_read_tokens += int(usage.get("cache_read_input_tokens", 0))
             output_tokens += int(usage.get("output_tokens", 0))
             models[model] = models.get(model, 0) + billable
-            if "opus" in model.lower():
+            if _EXPENSIVE in model.lower():
                 opus_billable += billable
 
     violations: list[str] = []
@@ -292,6 +336,12 @@ def audit_transcript(
         )
     if agent_calls > max_agent_calls and os.environ.get("LIMEN_ALLOW_AGENT_FANOUT") != "1":
         violations.append(f"agent/workflow fanout exceeded ({agent_calls} > {max_agent_calls})")
+    expensive_subagents = len(expensive_subagent_files)
+    if expensive_subagents > max_opus_agents and os.environ.get("LIMEN_ALLOW_OPUS_FANOUT") != "1":
+        violations.append(
+            f"{_EXPENSIVE} subagent fanout ({expensive_subagents} subagents on {_EXPENSIVE}; "
+            f"max {max_opus_agents}) — tier each fan-out agent by job, don't inherit the session model"
+        )
     if user_unbounded and os.environ.get("LIMEN_ALLOW_UNBOUNDED_GOAL") != "1":
         violations.append(f"unbounded goal phrase detected ({len(user_unbounded)} occurrence(s))")
 
@@ -305,6 +355,8 @@ def audit_transcript(
         "outputTokens": output_tokens,
         "opusBillableTokens": opus_billable,
         "agentCalls": agent_calls,
+        "expensiveSubagents": expensive_subagents,
+        "expensiveTier": _EXPENSIVE,
         "modelsBillable": models,
         "unboundedGoalEvidence": user_unbounded[:10],
         "violations": violations,
@@ -370,6 +422,7 @@ def main(argv: list[str] | None = None) -> int:
     at.add_argument("--max-billable-tokens", type=int, default=int(os.environ.get("LIMEN_MAX_CLAUDE_SESSION_TOKENS", "2000000")))
     at.add_argument("--max-opus-billable-tokens", type=int, default=int(os.environ.get("LIMEN_MAX_OPUS_SESSION_TOKENS", "750000")))
     at.add_argument("--max-agent-calls", type=int, default=int(os.environ.get("LIMEN_MAX_AGENT_CALLS", "8")))
+    at.add_argument("--max-opus-agents", type=int, default=1)
     at.add_argument("--out")
 
     args = ap.parse_args(argv)
@@ -407,6 +460,7 @@ def main(argv: list[str] | None = None) -> int:
                 max_billable_tokens=args.max_billable_tokens,
                 max_opus_billable_tokens=args.max_opus_billable_tokens,
                 max_agent_calls=args.max_agent_calls,
+                max_opus_agents=args.max_opus_agents,
             )
             _emit(report, args.out)
             return 0 if report["ok"] else 2

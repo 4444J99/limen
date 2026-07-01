@@ -33,4 +33,24 @@ TS="$(date +%s 2>/dev/null || echo 0)"
 # append-only breadcrumb; quicken.py:_ended_sids() reads it and marks the session CLOSED next beat.
 printf '{"ts":%s,"sid":"%s","cwd":"%s","branch":"%s"}\n' \
   "$TS" "$SID" "$CWD" "$BRANCH" >>"$LOG" 2>/dev/null || true
+
+# Warn-only model-tier audit. Arms the (previously dead-lettered) claude-workflow-guard so an
+# untiered expensive-tier subagent fan-out — the verify-studio-launch incident: trivial verifiers
+# riding the session's Opus by inheritance — surfaces every session with ZERO new settings.json
+# entry. Budgets are set generous so ONLY the fan-out signal fires here (session-budget is a separate
+# organ). WARN never DENY: never blocks session end (fail-open, exit 0). Silence via
+# LIMEN_ALLOW_OPUS_FANOUT=1. ([[fleet-model-floor-bleed]])
+GUARD="$ROOT/scripts/claude-workflow-guard.py"
+if [ -f "$GUARD" ] && [ "$SID" != "unknown" ]; then
+  if command -v timeout >/dev/null 2>&1; then TO="timeout 30"; else TO=""; fi
+  REPORT="$(cd "$ROOT" && $TO python3 "$GUARD" audit-transcript "$SID" \
+    --max-billable-tokens 999999999 --max-opus-billable-tokens 999999999 \
+    --max-agent-calls 999999 --max-opus-agents 1 2>/dev/null || true)"
+  case "$REPORT" in
+    *"subagent fanout"*)
+      printf '%s\n' "$REPORT" >>"$ROOT/logs/model-tier-audit.jsonl" 2>/dev/null || true
+      echo "⚠ model-tier: expensive-tier subagent fan-out this session — tier fan-out agents by job (logs/model-tier-audit.jsonl)" >&2
+      ;;
+  esac
+fi
 exit 0

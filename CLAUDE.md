@@ -121,6 +121,7 @@ For any search or recon whose scope spans multiple domains, **fan out parallel r
 - Give each worker a **strict read-only scope** and require a **structured packet**: `{ found: [...], not_found: [...], confidence }`.
 - **Wait for ALL workers**, then **merge into one ground-truth report that flags conflicts** between packets.
 - **Never park the search early, and never guess a timeframe** — verify every location and timeframe explicitly before reporting. Default to ~3 parallel explorers for non-trivial recon.
+- **Tier every fan-out agent by job — never let it inherit.** In-harness subagents (the Task tool *and* Workflow `agent()`) default to **the session model**, so a fan-out of trivial workers silently rides the session's Opus (the `verify-studio-launch` incident: six broken-link/typo checks on Opus 4.8). Pick each agent's tier by its job: choose an `agentType` from `.claude/agents/` (`verify`/`scan` → haiku, `synth` → opus) or pass an explicit `model` + `effort`. The frontmatter pin is a **floor, not a cap** — a per-call `model` still escalates a genuinely hard job upward. The class→tier authority is `cli/src/limen/model_selection.py` plus `dispatch._claude_tier_for` (do **not** restate the ladder here); an untiered expensive-tier fan-out is surfaced every session by the `scripts/claude-workflow-guard.py` audit wired into `SessionEnd`.
 
 ## Worktree Isolation & CI Gate Matrix
 

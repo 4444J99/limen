@@ -10,10 +10,12 @@ a 'tried:claude' retry bumps the tier one rung, and a failed lane cascades onwar
 from __future__ import annotations
 
 import json
+import re
 from datetime import date
 from pathlib import Path
 
 import limen.dispatch as D
+from limen.model_selection import _CLAUDE_TIER_ORDER
 from limen.models import Task
 
 
@@ -164,3 +166,61 @@ def test_failed_claude_escalates_via_existing_cascade(monkeypatch):
     attempt re-routes to the next lane. Documents the cross-lane escalate rung (no new code)."""
     monkeypatch.delenv("LIMEN_DISPATCH_LANES", raising=False)
     assert D._next_lane("claude") == "gemini"
+
+
+# ── The .claude/agents/ tier floor is a PROJECTION of the same brain, bound by parity ──────────
+# In-harness subagents (Task tool + Workflow agent()) default to inheriting the session model, so a
+# fan-out of trivial workers silently rides the session's Opus. The .claude/agents/ type files carry
+# a `model:` FLOOR (a per-call model still escalates). These tests bind those pins to the earned-tier
+# ladder so the two projections cannot drift. ([[fleet-model-floor-bleed]] [[derive-never-pin-hardcodes]])
+
+# Each agent TYPE → the brain job class it serves. Its pinned model MUST equal the tier the ladder
+# derives for that class (verify/scan are default-cheap; synth's "synthesis" is reserved-Opus).
+_AGENT_TYPE_JOB_CLASS = {"verify": "verify", "scan": "scan", "synth": "synthesis"}
+
+
+def _agents_dir() -> Path:
+    return Path(__file__).resolve().parents[2] / ".claude" / "agents"
+
+
+def _frontmatter_model(md: Path) -> str | None:
+    text = md.read_text()
+    block = re.search(r"^---\s*$(.*?)^---\s*$", text, re.MULTILINE | re.DOTALL)
+    scope = block.group(1) if block else text
+    hit = re.search(r"^model:\s*(\S+)\s*$", scope, re.MULTILINE)
+    return hit.group(1) if hit else None
+
+
+def test_agent_type_pins_match_the_earned_tier_ladder(tmp_path, monkeypatch):
+    """A pinned agent-type model MUST equal the tier the earned-tier ladder derives for the job
+    class it serves — so dropping "synthesis" from the reserved set (or changing the default rung)
+    breaks THIS test, not production. This is the anti-drift binding, mapping-aware not set-only."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_ledger(tmp_path, {"waste_classes": []})  # empty ledger → only reserved classes lift to opus
+    agents = _agents_dir()
+    for type_name, job_class in _AGENT_TYPE_JOB_CLASS.items():
+        md = agents / f"{type_name}.md"
+        assert md.exists(), f"missing agent type file: {md}"
+        pinned = _frontmatter_model(md)
+        expected = D._claude_model(_task(type_=job_class))
+        assert pinned == expected, (
+            f"{type_name}.md pins model={pinned!r} but the earned-tier ladder maps job class "
+            f"{job_class!r} → {expected!r}; the agent-type floor drifted from the brain"
+        )
+
+
+def test_all_agent_type_models_are_valid_tier_aliases():
+    """Every .claude/agents/ pin is a bare tier alias (or `inherit`) drawn from the one vocabulary —
+    never a dated model id (derive-never-pin). The membership assert on a known rung kills a vacuous
+    import that silently empties the tier set."""
+    valid = set(_CLAUDE_TIER_ORDER) | {"inherit"}
+    assert "haiku" in valid and "opus" in valid, "tier vocabulary failed to load"
+    files = sorted(_agents_dir().glob("*.md"))
+    assert files, "no .claude/agents/*.md type files found"
+    for md in files:
+        pinned = _frontmatter_model(md)
+        assert pinned in valid, (
+            f"{md.name} pins model={pinned!r} ∉ {sorted(valid)} — use a bare tier alias so "
+            f"_resolve_claude_model resolves it to today's model (derive-never-pin)"
+        )

@@ -125,6 +125,58 @@ def test_audit_transcript_blocks_unbounded_expensive_opus_fanout(tmp_path):
     assert "unbounded goal phrase detected" in violations
 
 
+def test_audit_transcript_flags_opus_subagent_fanout(tmp_path):
+    """The verify-studio-launch shape: a cheap orchestrator that fans out expensive-tier
+    subagents. The guard reads each subagent's REAL model field and flags the fan-out."""
+    main = tmp_path / "session.jsonl"
+    main.write_text(
+        json.dumps(
+            {
+                "type": "assistant",
+                "message": {
+                    "model": "claude-sonnet-4-6",
+                    "content": [{"type": "text", "text": "orchestrating"}],
+                    "usage": {"input_tokens": 5, "output_tokens": 5},
+                },
+            }
+        )
+        + "\n"
+    )
+    subdir = tmp_path / "session" / "subagents"
+    subdir.mkdir(parents=True)
+    for name in ("verify-a", "verify-b"):
+        (subdir / f"{name}.jsonl").write_text(
+            json.dumps(
+                {
+                    "type": "assistant",
+                    "message": {
+                        "model": "claude-opus-4-8[1m]",
+                        "content": [{"type": "text", "text": "trivial verify"}],
+                        "usage": {"input_tokens": 5, "output_tokens": 5},
+                    },
+                }
+            )
+            + "\n"
+        )
+    proc = run_guard(
+        "audit-transcript",
+        str(main),
+        "--max-billable-tokens",
+        "1000000",
+        "--max-opus-billable-tokens",
+        "1000000",
+        "--max-agent-calls",
+        "100",
+        "--max-opus-agents",
+        "1",
+    )
+    assert proc.returncode == 2, proc.stdout + proc.stderr
+    report = json.loads(proc.stdout)
+    assert report["expensiveSubagents"] == 2
+    assert report["expensiveTier"] == "opus"
+    assert "subagent fanout" in "\n".join(report["violations"])
+
+
 def test_audit_transcript_allows_small_bounded_sonnet_session(tmp_path):
     transcript = tmp_path / "session.jsonl"
     transcript.write_text(
