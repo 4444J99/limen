@@ -124,6 +124,12 @@ parameters:
     self_update: none
     owner: evocator
     note: "Path to the knowledge-corpus repo; the corpus channel writes a collection shot here (guarded, fail-open)."
+  LIMEN_PRIVATE_ROOT:
+    default: "$LIMEN_ROOT/.limen-private"
+    env: LIMEN_PRIVATE_ROOT
+    self_update: none
+    owner: continuity
+    note: "Ignored local private cartridge root (parent of session-corpus, photos-universe, etc.). Full media-dedup paths/hashes live here and are never committed; public receipts carry aggregates only."
   LIMEN_PRIVATE_SESSION_CORPUS:
     default: "$LIMEN_ROOT/.limen-private/session-corpus"
     env: LIMEN_PRIVATE_SESSION_CORPUS

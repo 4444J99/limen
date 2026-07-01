@@ -1,0 +1,27 @@
+{
+  "available_path_classes": {
+    "home:.mov": 5,
+    "home:.png": 75,
+    "volume:Archive4T:.jpg": 2,
+    "volume:Macintosh HD:.jpg": 14,
+    "volume:Macintosh HD:.mov": 10,
+    "volume:Macintosh HD:.png": 150,
+    "volume:T7Recovery:.jpg": 2
+  },
+  "bytes_proven_duplicate": 663972891,
+  "candidates_total": 19308,
+  "generated_at": "2026-06-30T17:31:39.055490+00:00",
+  "hashed_duplicate_groups": 79,
+  "processed_this_run": 50,
+  "processed_total": 80,
+  "safety": {
+    "deleted_or_moved_files": false,
+    "full_paths_or_hashes_in_public_receipt": false,
+    "read_only": true
+  },
+  "source": "redacted photos-universe duplicate-candidates.json",
+  "status_counts": {
+    "all_available_match": 79,
+    "hash_mismatch": 1
+  }
+}
