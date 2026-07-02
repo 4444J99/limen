@@ -60653,7 +60653,7 @@ tasks:
     \ by QUICKEN (finish-not-park); refreshes each beat until you act."
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-07-02T12:24:36.368717Z'
+  updated: '2026-07-02T13:33:56.758247Z'
   dispatch_log: []
 - id: ASK-quicken-d2l
   title: the D2L go-live click + cadence confirm (your login + judgment)
@@ -74226,12 +74226,11 @@ tasks:
   - needs-human
   urls: []
   context: "Cheapest path \u2192 approve the irreversible delete/clear (archived reversibly;\
-    \ purge is yours). Unblocks: Audit Codex handoff and validate token-accountin,\
-    \ cleanup stale worktrees. Auto-hung by QUICKEN (finish-not-park); refreshes each\
-    \ beat until you act."
+    \ purge is yours). Unblocks: cleanup stale worktrees. Auto-hung by QUICKEN (finish-not-park);\
+    \ refreshes each beat until you act."
   depends_on: []
   created: '2026-07-01'
-  updated: '2026-07-02T12:24:36.368717Z'
+  updated: '2026-07-02T13:33:56.758247Z'
   dispatch_log: []
 - id: GEN-organvm-session-meta-test-coverage-0702
   title: Raise test coverage in organvm/session-meta
