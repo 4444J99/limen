@@ -1,8 +1,8 @@
 # Conductor Tranche
 
-Generated: `2026-07-02T20:58:29+00:00`
+Generated: `2026-07-02T22:07:27+00:00`
 
-Summary: `tranche-worktree-lifecycle-debt` -> `worktree-lifecycle-debt` (`blocker`); stop before: Stop before deletion, force-push, merge, or owner-repo source edits unless a narrower owner packet names the repo, branch, predicate, and receipt.
+Summary: `tranche-the-invisible-ledger` -> `the-invisible-ledger` (`remote-pr-open`); stop before: Stop before deletion, force-push, merge, or owner-repo source edits unless a narrower owner packet names the repo, branch, predicate, and receipt.
 
 ## Cadence Contract
 
@@ -16,32 +16,28 @@ Summary: `tranche-worktree-lifecycle-debt` -> `worktree-lifecycle-debt` (`blocke
 
 | Field | Value |
 |---|---|
-| Packet | `tranche-worktree-lifecycle-debt` |
-| Selected path | `worktree-lifecycle-debt` |
-| Kind | `blocker` |
-| Lane | `blocker` |
-| Score | `70` |
-| Agent fit | `codex` |
-| Attack index generated | `2026-07-02T20:58:10+00:00` |
-| Ranked paths read | `52` |
-| Skipped family/human-gate/parked/observe/auth paths | `worktree_lifecycle`, `session_lifecycle`, `github-app-limen-bot-not-wired`, `github_review`, `github-consolidation-collisions`, `agent_coordination`, `local-lifecycle-disk-pressure`, `technical_debt_ci`, `convergence_corpus`, `gen-organvm-universal-mail--automation-test-coverage-0625-151e`, `cloud-runtime-endpoint-unconfigured`, `uncategorized`, `cloud-credential-handles-unconfigured`, `credential-codex-auth-sessions`, `resolve-organvm-i-theoria-.github-459-1ade`, `auth_credentials`, `cifix-organvm-i-theoria-conversation-corpus-engine-f02e`, `discover-organvm-kerygma-profiles-6c74`, `bld-my--father-mother-harden-44b2`, `bld-promptscope-next-rev-3fde` |
+| Packet | `tranche-the-invisible-ledger` |
+| Selected path | `the-invisible-ledger` |
+| Kind | `worktree` |
+| Lane | `remote-pr-open` |
+| Score | `29` |
+| Agent fit | `codex first; opencode/jules after packetization` |
+| Attack index generated | `2026-07-02T22:07:27+00:00` |
+| Ranked paths read | `51` |
+| Skipped family/human-gate/parked/observe/auth paths | `session_lifecycle`, `github-app-limen-bot-not-wired`, `worktree_lifecycle`, `github_review`, `github-consolidation-collisions`, `agent_coordination`, `local-lifecycle-disk-pressure`, `technical_debt_ci`, `convergence_corpus`, `gen-organvm-universal-mail--automation-test-coverage-0625-151e`, `cloud-runtime-endpoint-unconfigured`, `uncategorized`, `cloud-credential-handles-unconfigured`, `credential-codex-auth-sessions`, `resolve-organvm-i-theoria-.github-459-1ade`, `auth_credentials`, `pr-463`, `pr-466`, `pr-467`, `pr-468`, `pr-471`, `pr-475`, `cifix-organvm-i-theoria-conversation-corpus-engine-f02e`, `discover-organvm-kerygma-profiles-6c74`, `bld-my--father-mother-harden-44b2`, `bld-promptscope-next-rev-3fde` |
 
 ## Work Packet
 
-Purpose: Resolve the remaining worktree lifecycle blocker by converting affected roots into preservation proof, owner blockers, remote/default proof, or documented non-source residue.
+Purpose: Resolve `the-invisible-ledger` to a preservation proof, owner blocker, remote/default proof, or documented non-source residue without deleting unique work.
 
-Repo/worktree: `organvm/limen` conductor checkout plus read-only inspection of `~/Workspace/.limen-worktrees`.
+Repo/worktree: Owner worktree `the-invisible-ledger` under `~/Workspace/.limen-worktrees` plus Limen receipts.
 
 Allowed files:
 
-- `cli/src/limen/worktree_debt.py`
-- `cli/tests/test_worktree_debt.py`
-- `scripts/worktree-debt.py`
-- `scripts/*lifecycle*.py`
 - `docs/worktree-lifecycle-ledger.md`
 - `docs/worktree-preservation-receipts.json`
-- `docs/session-lifecycle-blockers.md`
 - `docs/session-attack-paths.md`
+- `docs/session-lifecycle-blockers.md`
 - `docs/conductor-tranche.md`
 - `.limen-private/session-corpus/lifecycle/**`
 
@@ -55,7 +51,7 @@ Forbidden:
 
 Stop condition: Stop before deletion, force-push, merge, or owner-repo source edits unless a narrower owner packet names the repo, branch, predicate, and receipt.
 
-Receipt: docs/worktree-lifecycle-ledger.md and docs/worktree-preservation-receipts.json.
+Receipt: Update the owning worktree lifecycle receipt and regenerate docs/conductor-tranche.md.
 
 Verification:
 
@@ -67,7 +63,7 @@ Verification:
 
 ## Source Next Action
 
-Preserve or owner-record each root; no deletion of unique work.
+Review draft PR #79, then merge, supersede, or archive the Invisible Ledger trial followups branch. Local checkout is no longer the only review surface.
 
 ## Refresh
 

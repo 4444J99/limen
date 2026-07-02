@@ -1,6 +1,6 @@
 # Session Attack Paths
 
-Generated: `2026-07-02T20:58:10+00:00`
+Generated: `2026-07-02T22:07:27+00:00`
 
 ## Canonical Decision
 
@@ -14,11 +14,11 @@ Generated: `2026-07-02T20:58:10+00:00`
 
 - Redacted prompt corpus: `9711` files, `98045` prompt-like events.
 - Codex classified sessions: `887`.
-- Worktree debt roots: `7`.
-- Worktree preservation receipts: `24`.
-- Parked blockers: `8`.
-- Local lifecycle footprint: `21.5 GiB`.
-- Candidate lanes: `blocker` 2, `family` 7, `human-gate` 8, `parked` 5, `remote-pr-open` 10, `remote-proof` 19, `residue` 1.
+- Worktree debt roots: `0`.
+- Worktree preservation receipts: `32`.
+- Parked blockers: `6`.
+- Local lifecycle footprint: `21.6 GiB`.
+- Candidate lanes: `family` 7, `human-gate` 14, `owner-blocker` 1, `parked` 5, `remote-pr-open` 10, `remote-proof` 14.
 
 ## Ordering Model
 
@@ -34,31 +34,31 @@ Generated: `2026-07-02T20:58:10+00:00`
 
 | Rank | Path | Kind | Lane | Score | Evidence | Agent Fit | Next Action |
 |---:|---|---|---|---:|---|---|---|
-| 1 | `worktree-lifecycle-debt` | `blocker` | `blocker` | 70 | category `worktree_lifecycle`; status `parked` | codex | Preserve or owner-record each root; no deletion of unique work. |
-| 2 | `worktree-remote-branches-missing` | `blocker` | `blocker` | 70 | category `worktree_lifecycle`; status `parked` | codex | Preserve each root by branch, PR, owner blocker, or documented non-source residue before cleanup. |
-| 3 | `worktree_lifecycle` | `family` | `family` | 67 | sessions 77; states CLOSED 62, STALLED 15; prompts 289 | codex/openCode | Preserve dirty or missing-remote roots, then reclaim duplicate local state. |
-| 4 | `session_lifecycle` | `family` | `family` | 66 | sessions 159; states CLOSED 139, STALLED 20; prompts 636 | codex | Keep corpus/session ledgers current, collapse repeats into owner receipts. |
-| 5 | `gen-a-organvm-a-i-council--coliseum-ci-green-0620-29ec` | `worktree` | `residue` | 62 | reason `not-a-git-dir`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Inspect for unique files; if only cache/generated residue, record owner receipt before reclaiming. |
-| 6 | `github-app-limen-bot-not-wired` | `blocker` | `human-gate` | 58 | category `github_app_identity`; status `needs_human_gate` | human/codex-prep | Create/install the org GitHub App and hydrate credentials via `scripts/set-credential.sh`; verify `bash scripts/gh-app-token.sh --which` reports the App path. |
-| 7 | `github_review` | `family` | `family` | 55 | sessions 158; states CLOSED 145, STALLED 13; prompts 615 | opencode/jules | Review PR/issue receipts only after owner repo, predicate, and blocker are explicit. |
-| 8 | `github-consolidation-collisions` | `blocker` | `human-gate` | 52 | category `github_consolidation`; status `needs_human_gate` | human/codex-prep | Collision packet is complete; await an explicit human GitHub mutation gate to run `docs/consolidation/COLLISION-RENAMES.md`, then re-run the consolidation dry-run and require 0 collisions before transfer. |
-| 9 | `agent_coordination` | `family` | `family` | 40 | sessions 40; states CLOSED 30, STALLED 10; prompts 133 | codex | Packetize bounded work; do not dispatch broad sprawl prompts. |
-| 10 | `local-lifecycle-disk-pressure` | `blocker` | `parked` | 34 | category `local_lean`; status `parked` | codex | Drain only after remote/default preservation proof or non-source residue receipt; keep pressure visible in SessionStart. |
-| 11 | `technical_debt_ci` | `family` | `family` | 34 | sessions 36; states CLOSED 33, STALLED 3; prompts 128 | opencode/jules | Run narrow predicates and preserve failures in owner repos. |
-| 12 | `the-invisible-ledger` | `worktree` | `remote-pr-open` | 29 | reason `remote-pr-open`; prompts 2919; remote `missing`; open PRs 0; receipt `open_pr_preserved` | codex first; opencode/jules after packetization | Review draft PR #79, then merge, supersede, or archive the Invisible Ledger trial followups branch. Local checkout is no longer the only review surface. |
-| 13 | `GEN-organvm-limen-ci-green-0702` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
-| 14 | `feat+cvstos-vvltvs-organs` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
-| 15 | `feat-clone-lifecycle-reap` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
-| 16 | `feat-codex-skill-slim` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
-| 17 | `feat-gcp-sa-organ` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
-| 18 | `feat-materialize-fold` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
-| 19 | `feat-tabularius-record-keeper` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
-| 20 | `fix-wrangler-cred-one-spot` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
-| 21 | `linear-conjuring-bear` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
-| 22 | `parsed-finding-fern` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
-| 23 | `pr-463` | `worktree` | `remote-proof` | 28 | reason `unpushed-commits`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
-| 24 | `pr-466` | `worktree` | `remote-proof` | 28 | reason `unpushed-commits`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
-| 25 | `pr-467` | `worktree` | `remote-proof` | 28 | reason `unpushed-commits`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 1 | `session_lifecycle` | `family` | `family` | 66 | sessions 159; states CLOSED 139, STALLED 20; prompts 636 | codex | Keep corpus/session ledgers current, collapse repeats into owner receipts. |
+| 2 | `github-app-limen-bot-not-wired` | `blocker` | `human-gate` | 58 | category `github_app_identity`; status `needs_human_gate` | human/codex-prep | Create/install the org GitHub App and hydrate credentials via `scripts/set-credential.sh`; verify `bash scripts/gh-app-token.sh --which` reports the App path. |
+| 3 | `worktree_lifecycle` | `family` | `family` | 57 | sessions 77; states CLOSED 62, STALLED 15; prompts 289 | codex/openCode | Preserve dirty or missing-remote roots, then reclaim duplicate local state. |
+| 4 | `github_review` | `family` | `family` | 55 | sessions 158; states CLOSED 145, STALLED 13; prompts 615 | opencode/jules | Review PR/issue receipts only after owner repo, predicate, and blocker are explicit. |
+| 5 | `github-consolidation-collisions` | `blocker` | `human-gate` | 52 | category `github_consolidation`; status `needs_human_gate` | human/codex-prep | Collision packet is complete; await an explicit human GitHub mutation gate to run `docs/consolidation/COLLISION-RENAMES.md`, then re-run the consolidation dry-run and require 0 collisions before transfer. |
+| 6 | `agent_coordination` | `family` | `family` | 40 | sessions 40; states CLOSED 30, STALLED 10; prompts 133 | codex | Packetize bounded work; do not dispatch broad sprawl prompts. |
+| 7 | `local-lifecycle-disk-pressure` | `blocker` | `parked` | 34 | category `local_lean`; status `parked` | codex | Drain only after remote/default preservation proof or non-source residue receipt; keep pressure visible in SessionStart. |
+| 8 | `technical_debt_ci` | `family` | `family` | 34 | sessions 36; states CLOSED 33, STALLED 3; prompts 128 | opencode/jules | Run narrow predicates and preserve failures in owner repos. |
+| 9 | `the-invisible-ledger` | `worktree` | `remote-pr-open` | 29 | reason `remote-pr-open`; prompts 2919; remote `missing`; open PRs 0; receipt `open_pr_preserved` | codex first; opencode/jules after packetization | Review draft PR #79, then merge, supersede, or archive the Invisible Ledger trial followups branch. Local checkout is no longer the only review surface. |
+| 10 | `GEN-organvm-limen-ci-green-0702` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 11 | `feat+cvstos-vvltvs-organs` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 12 | `feat+workstream-channels` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 13 | `feat-clone-lifecycle-reap` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 14 | `feat-codex-skill-slim` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 15 | `feat-gcp-sa-organ` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 16 | `feat-materialize-fold` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 17 | `feat-tabularius-record-keeper` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 18 | `fix-wrangler-cred-one-spot` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 19 | `linear-conjuring-bear` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 20 | `parsed-finding-fern` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 21 | `quiet-bubbling-hejlsberg` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 22 | `reflective-marinating-dijkstra` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 23 | `ticklish-bubbling-robin` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 24 | `convergence_corpus` | `family` | `family` | 26 | sessions 10; states CLOSED 10; prompts 37 | codex | Promote durable atoms through session-meta and knowledge-corpus. |
+| 25 | `gen-organvm-universal-mail--automation-test-coverage-0625-151e` | `worktree` | `human-gate` | 26 | reason `owner-blocker`; prompts 100; remote `missing`; open PRs 0; receipt `private_patch_preserved` | human/codex-prep | Do not PR or delegate this deletion patch. The branch has no unique commits, no remote branch, no PR, no sparse-checkout configuration, and 167 tracked files deleted from disk while HEAD is an ancestor of origin/main. Treat as stale broken checkout/deletion artifact; reclaim only after operator acceptance, and recreate from origin/main if owner work is needed. |
 
 ## Delegation Gate
 

@@ -801,6 +801,76 @@ def test_session_blockers_filter_remote_missing_branches_with_live_scanner_recei
     assert blocker["details"]["unresolved_roots"] == ["dirty-root"]
 
 
+def test_session_blockers_filter_remote_missing_branches_with_preservation_receipts(tmp_path: Path):
+    blockers = _load(BLOCKERS_SCRIPT, "session_blockers_remote_missing_preservation_receipt")
+    blockers.ROOT = tmp_path
+    blockers.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    blockers.PRIVATE_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "session-lifecycle-blockers.json"
+    blockers.CAPABILITY_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "capability-substrate-index.json"
+    blockers.PROMPT_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+    blockers.CODEX_INDEX = blockers.PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
+    blockers.CORPUS_INVENTORY = blockers.PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
+    blockers.PRESERVATION_RECEIPTS = tmp_path / "docs" / "worktree-preservation-receipts.json"
+    blockers.PRESSURE_INDEX = tmp_path / "logs" / "session-lifecycle-pressure.json"
+    blockers.PROJECT_SETTINGS = tmp_path / ".claude" / "settings.json"
+    blockers.DOC_PATH = tmp_path / "docs" / "session-lifecycle-blockers.md"
+    blockers.DEFAULT_CAPABILITY_ROOTS = ()
+    blockers.worktree_debt_report = lambda root: {
+        "total": 0,
+        "debt": 0,
+        "items": [],
+    }
+
+    blockers.PROMPT_INDEX.parent.mkdir(parents=True)
+    blockers.PROMPT_INDEX.write_text(
+        json.dumps(
+            {
+                "sources": [],
+                "worktree_report": {"debt": 0, "total": 0},
+                "remote": {
+                    "enabled": True,
+                    "worktrees": {
+                        "remote_branches_missing": 1,
+                        "receipts": [{"name": "reclaimed-root", "remote_branch": "missing"}],
+                    },
+                    "task_prs": {"counts": {}},
+                },
+                "cloud": {"enabled": True, "runtime_url_configured": True, "env_flags": {}},
+            }
+        ),
+        encoding="utf-8",
+    )
+    blockers.PRESERVATION_RECEIPTS.parent.mkdir(parents=True)
+    blockers.PRESERVATION_RECEIPTS.write_text(
+        json.dumps(
+            {
+                "receipts": [
+                    {
+                        "root": "reclaimed-root",
+                        "lane": "remote-default-proof",
+                        "status": "default_branch_preserved",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    blockers.CODEX_INDEX.write_text(json.dumps({"session_count": 0, "families": []}), encoding="utf-8")
+    blockers.CORPUS_INVENTORY.parent.mkdir(parents=True)
+    blockers.CORPUS_INVENTORY.write_text(json.dumps({"organs": [], "materialization": {"copied": 0}}), encoding="utf-8")
+    blockers.PRESSURE_INDEX.parent.mkdir(parents=True)
+    blockers.PRESSURE_INDEX.write_text(
+        json.dumps({"worktrees": {"bytes": 0}, "private_corpus": {"bytes": 0}}), encoding="utf-8"
+    )
+    blockers.PROJECT_SETTINGS.parent.mkdir(parents=True)
+    blockers.PROJECT_SETTINGS.write_text("session-lifecycle-pressure.sh", encoding="utf-8")
+
+    snapshot = blockers.build_snapshot()
+    ids = {item["id"] for item in snapshot["blockers"]}
+
+    assert "worktree-remote-branches-missing" not in ids
+
+
 def test_session_blockers_clears_capability_blocker_with_current_receipt(tmp_path: Path):
     blockers = _load(BLOCKERS_SCRIPT, "session_blockers_capability_receipt")
     blockers.ROOT = tmp_path

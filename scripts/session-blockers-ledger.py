@@ -36,6 +36,7 @@ PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "session-lifecycle-blockers.json"
 PROMPT_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
 CODEX_INDEX = PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
 CORPUS_INVENTORY = PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
+PRESERVATION_RECEIPTS = ROOT / "docs" / "worktree-preservation-receipts.json"
 PRESSURE_INDEX = ROOT / "logs" / "session-lifecycle-pressure.json"
 CAPABILITY_INDEX = PRIVATE_ROOT / "lifecycle" / "capability-substrate-index.json"
 CONSOLIDATION_INDEX = PRIVATE_ROOT / "lifecycle" / "consolidation-gates.json"
@@ -47,9 +48,21 @@ REMOTE_MISSING_CLOSED_REASONS = {
     "clean+merged+idle",
     "documented-residue",
     "owner-blocker",
+    "remote-default-proof",
     "remote-merged",
     "remote-pr-open",
     "remote-superseded",
+}
+REMOTE_MISSING_CLOSED_STATUSES = {
+    "cache_only_residue",
+    "default_branch_preserved",
+    "documented_non_source_residue",
+    "empty_generated_residue",
+    "history_mismatch_patch_preserved",
+    "merged_pr_preserved",
+    "open_pr_preserved",
+    "private_patch_preserved",
+    "superseded_on_origin_main",
 }
 PROJECT_SETTINGS = ROOT / ".claude" / "settings.json"
 
@@ -87,6 +100,26 @@ def load_json(path: Path) -> dict[str, Any]:
     except (OSError, ValueError):
         return {}
     return obj if isinstance(obj, dict) else {}
+
+
+def preservation_receipts_by_root() -> dict[str, dict[str, Any]]:
+    data = load_json(PRESERVATION_RECEIPTS)
+    receipts: dict[str, dict[str, Any]] = {}
+    for receipt in data.get("receipts") or []:
+        if not isinstance(receipt, dict):
+            continue
+        root = receipt.get("root")
+        if root:
+            receipts[str(root)] = receipt
+    return receipts
+
+
+def receipt_closes_remote_missing(receipt: dict[str, Any] | None) -> bool:
+    if not receipt:
+        return False
+    lane = str(receipt.get("lane") or "")
+    status = str(receipt.get("status") or "")
+    return lane in REMOTE_MISSING_CLOSED_REASONS or status in REMOTE_MISSING_CLOSED_STATUSES
 
 
 def current_worktree_report(prompt: dict[str, Any]) -> dict[str, Any]:
@@ -372,20 +405,26 @@ def unresolved_missing_remote_roots(prompt: dict[str, Any], worktree_report: dic
         count = int(worktrees.get("remote_branches_missing") or 0)
         return ([f"unknown-{idx + 1}" for idx in range(count)], [])
 
+    receipts_by_root = preservation_receipts_by_root()
     by_name = {
         str(item.get("name")): item
         for item in worktree_report.get("items") or []
         if isinstance(item, dict) and item.get("name")
     }
     if not by_name:
-        return raw_missing, []
+        closed = [root for root in raw_missing if receipt_closes_remote_missing(receipts_by_root.get(root))]
+        unresolved = [root for root in raw_missing if root not in set(closed)]
+        return unresolved, closed
 
     unresolved: list[str] = []
     closed: list[str] = []
     for root in raw_missing:
         item = by_name.get(root)
         reason = str((item or {}).get("reason") or "")
-        if item and not item.get("debt") and reason in REMOTE_MISSING_CLOSED_REASONS:
+        if (
+            (item and not item.get("debt") and reason in REMOTE_MISSING_CLOSED_REASONS)
+            or receipt_closes_remote_missing(receipts_by_root.get(root))
+        ):
             closed.append(root)
         else:
             unresolved.append(root)

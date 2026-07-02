@@ -1,6 +1,6 @@
 # Canonical Worktree Lifecycle Ledger
 
-Last audited: 2026-06-28 from `/Users/4jp/Workspace/limen`.
+Last audited: 2026-07-02 from `/Users/4jp/Workspace/limen`.
 
 This is the canonical working ledger for roots under
 `/Users/4jp/Workspace/.limen-worktrees`. A root exits this ledger only through a
@@ -19,6 +19,34 @@ only after their local `HEAD` matched the fetched remote PR head exactly:
 The unique work remains preserved on the remote branches and open draft PRs.
 
 ## Current Scan
+
+2026-07-02 live-root reconciliation scan:
+
+- `python3 scripts/worktree-debt.py --json`: 37 roots, 0 debt-bearing roots, cap 12.
+- Current class mix: 14 active roots under the grace window, 14 open-PR remote-preserved
+  roots, 6 merged-PR repair roots, and 3 owner-blocker roots.
+- The seven roots that were debt-bearing at the start of this pass now have owner receipts in
+  `docs/worktree-preservation-receipts.json`: six `.limen-repair/pr-*` roots are closed by
+  merged Limen PR receipts whose live GitHub `headRefOid` equals local `HEAD`; the
+  `gen-a-organvm-a-i-council--coliseum-ci-green-0620-29ec` root is kept visible as an
+  owner-blocker because its `.git` file points at missing parent worktree metadata while PR
+  #177 remains the owner review surface. A stale prompt-lifecycle remote-branch gap for
+  absent root `mirror-mirror` is also closed by the merged PR #87 receipt.
+- No local reclaim, deletion, force-push, merge, task-board mutation, or owner-repo source edit
+  was performed in this pass.
+
+Newly classified roots:
+
+| Root | Repo | State | Evidence | Disposition | Next Action |
+|---|---|---|---|---|---|
+| `gen-a-organvm-a-i-council--coliseum-ci-green-0620-29ec` | `organvm/a-i-council--coliseum` | broken Git worktree; owner blocker | `.git` points to missing `/Users/4jp/Workspace/organvm/a-i-council--coliseum/.git/worktrees/gen-a-organvm-a-i-council--coliseum-ci-green-0620-29ec`; task `GEN-a-organvm-a-i-council--coliseum-ci-green-0620` is `done` via PR [#177](https://github.com/organvm/a-i-council--coliseum/pull/177); private non-cache file inventory receipt recorded under `.limen-private/session-corpus/lifecycle/worktree-preserve/2026-07-02T220101Z-gen-a-organvm-a-i-council--coliseum-ci-green-0620-29ec/receipt.json` | owner-blocker receipt; not cache-only residue | Reclaim only after operator acceptance or after a fresh owner packet verifies PR/default-branch preservation from a valid checkout. |
+| `pr-463` | `organvm/limen` | merged PR repair checkout | GitHub PR [#463](https://github.com/organvm/limen/pull/463) is `MERGED`; PR `headRefOid` `adb0911c13a77c9b492ffec1843398f6694b8376` equals local `HEAD` | remote-merged receipt; no local source debt remains | Reclaim local repair checkout only after normal operator acceptance. |
+| `pr-466` | `organvm/limen` | merged PR repair checkout | GitHub PR [#466](https://github.com/organvm/limen/pull/466) is `MERGED`; PR `headRefOid` `3f25b5eee2d1964e3ffa68dd2ee42cae6e7ba53c` equals local `HEAD` | remote-merged receipt; no local source debt remains | Reclaim local repair checkout only after normal operator acceptance. |
+| `pr-467` | `organvm/limen` | merged PR repair checkout | GitHub PR [#467](https://github.com/organvm/limen/pull/467) is `MERGED`; PR `headRefOid` `ae0568d214a470664dfdca07358e9c7239d84dc8` equals local `HEAD` | remote-merged receipt; no local source debt remains | Reclaim local repair checkout only after normal operator acceptance. |
+| `pr-468` | `organvm/limen` | merged PR repair checkout | GitHub PR [#468](https://github.com/organvm/limen/pull/468) is `MERGED`; PR `headRefOid` `117b49213b4fbd77f4ded58e5ee6e09cc0982e54` equals local `HEAD` | remote-merged receipt; no local source debt remains | Reclaim local repair checkout only after normal operator acceptance. |
+| `pr-471` | `organvm/limen` | merged PR repair checkout | GitHub PR [#471](https://github.com/organvm/limen/pull/471) is `MERGED`; PR `headRefOid` `73be2bf4b341c5f3d6b2ad3f5bc75c4e955e7074` equals local `HEAD` | remote-merged receipt; no local source debt remains | Reclaim local repair checkout only after normal operator acceptance. |
+| `pr-475` | `organvm/limen` | merged PR repair checkout | GitHub PR [#475](https://github.com/organvm/limen/pull/475) is `MERGED`; PR `headRefOid` `63fa4486cb465f63beb0f431e6200a9dfab8d7e6` equals local `HEAD` | remote-merged receipt; no local source debt remains | Reclaim local repair checkout only after normal operator acceptance. |
+| `mirror-mirror` | `organvm/mirror-mirror` | absent stale repo-local root; merged PR preserved | prompt-lifecycle index retained `/Users/4jp/Workspace/limen/.worktrees/mirror-mirror`; path is absent from live filesystem and `git worktree list`; GitHub PR [#87](https://github.com/organvm/mirror-mirror/pull/87) is `MERGED` with head `99fdd8d8b49e8a57022e6eec52b706655e973403` | remote-merged receipt; stale remote-branch gap closed | No local source preservation action remains; keep receipt so stale remote scans close. |
 
 2026-06-28 follow-up scan:
 
