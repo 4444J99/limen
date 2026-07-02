@@ -61317,12 +61317,12 @@ tasks:
   - needs-human
   urls: []
   context: "Cheapest path \u2192 land the credential/secret (your account/identity).\
-    \ Unblocks: Audit Codex handoff and validate token-accountin, status endpoint\
-    \ documentation, wrangler credential persistence. Auto-hung by QUICKEN (finish-not-park);\
-    \ refreshes each beat until you act."
+    \ Unblocks: Audit Codex handoff and validate token-accountin, wrangler credential\
+    \ persistence. Auto-hung by QUICKEN (finish-not-park); refreshes each beat until\
+    \ you act."
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-07-02T18:32:11.998453Z'
+  updated: '2026-07-02T19:30:08.155060Z'
   dispatch_log: []
 - id: ASK-quicken-d2l
   title: the D2L go-live click + cadence confirm (your login + judgment)
@@ -74899,7 +74899,7 @@ tasks:
     \ refreshes each beat until you act."
   depends_on: []
   created: '2026-07-01'
-  updated: '2026-07-02T18:32:11.998453Z'
+  updated: '2026-07-02T19:30:08.155060Z'
   dispatch_log: []
 - id: GEN-organvm-session-meta-test-coverage-0702
   title: Raise test coverage in organvm/session-meta
