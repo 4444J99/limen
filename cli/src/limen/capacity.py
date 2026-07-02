@@ -9,6 +9,7 @@ from pathlib import Path
 from collections.abc import Iterable
 from typing import TypedDict, TypeVar
 
+from limen import census
 from limen.models import Task
 
 T = TypeVar("T")
@@ -28,61 +29,23 @@ class CapacityRow(AgentStatus):
     remaining: int | None
 
 
-PAID_AGENT_ORDER: tuple[str, ...] = (
-    "codex",
-    "claude",
-    "opencode",
-    "agy",
-    "gemini",
-    # ollama: the LOCAL, UNMETERED floor of the cascade — the pilot light. It has no token
-    # budget and no rate-limit window, so when every metered/cloud vendor is spent (the exact
-    # "we didn't pace tokens perfectly between refreshes" case), the beat still has a lane that
-    # can produce. Self-activating: reachable only once a model is pulled (see agent_status).
-    "ollama",
-    "jules",
-    "copilot",
-    "warp",
-    "oz",
-    "github_actions",
-)
+# These six were once hand-maintained literals here; they are now DERIVED VIEWS of the single
+# vendor register in `census.py` (one record per vendor owns every fact). Editing a vendor — or
+# recording that one went dark (see census: gemini) — is a one-record edit there, not six here.
+# test_census locks each of these against its historical value so the derivation can never drift.
+# (ollama is the LOCAL, UNMETERED floor of the cascade — the pilot light: no budget, no window, so
+# when every metered/cloud vendor is spent the beat still has a lane that can produce. Reachable
+# only once a model is pulled — see agent_status / census ollama record.)
+PAID_AGENT_ORDER: tuple[str, ...] = census.paid_agent_order()
 
-AGENT_ALIASES: dict[str, str] = {
-    "actions": "github_actions",
-    "gha": "github_actions",
-    "github-actions": "github_actions",
-    "antigravity": "agy",
-}
+AGENT_ALIASES: dict[str, str] = census.agent_aliases()
 
-LOCAL_CHECKOUT_AGENTS = frozenset({"codex", "claude", "opencode", "agy", "gemini", "ollama"})
-ISSUE_ASSIGNMENT_AGENTS = frozenset({"copilot"})
+LOCAL_CHECKOUT_AGENTS = census.local_checkout_agents()
+ISSUE_ASSIGNMENT_AGENTS = census.issue_assignment_agents()
 
-_DEFAULT_BINARIES: dict[str, str] = {
-    "codex": "codex",
-    "claude": "claude",
-    "opencode": "opencode",
-    "agy": "agy",
-    "gemini": "gemini",
-    "ollama": "ollama",
-    "jules": "jules",
-    "copilot": "gh",
-    "warp": "warp",
-    "oz": "oz",
-    "github_actions": "gh",
-}
+_DEFAULT_BINARIES: dict[str, str] = census.default_binaries()
 
-_KINDS: dict[str, str] = {
-    "codex": "local-cli",
-    "claude": "local-cli",
-    "opencode": "local-cli",
-    "agy": "local-cli",
-    "gemini": "local-cli",
-    "ollama": "local-cli",
-    "jules": "cloud-cli",
-    "copilot": "github-issue",
-    "warp": "paid-service",
-    "oz": "paid-service",
-    "github_actions": "github-actions",
-}
+_KINDS: dict[str, str] = census.kinds()
 
 _ISSUE_RE = re.compile(r"github\.com/([^/\s]+/[^/\s]+)/issues/(\d+)")
 

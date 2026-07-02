@@ -1,0 +1,140 @@
+"""census is the single vendor register; the historical lists are derived views of it.
+
+These tests do two jobs:
+  1. REGRESSION-LOCK the derived `capacity` structures to their frozen historical values, so the
+     convergence provably changed no behavior (and can never silently drift from the census).
+  2. DRIFT-GUARD the copies that census does not yet own outright (`dispatch._LANE_CASCADE`) against
+     the census projection, so the two cannot diverge again while the rewire is incremental.
+"""
+
+from __future__ import annotations
+
+from limen import capacity, census
+
+# ── Frozen historical values (what these structures were BEFORE census owned them). ────────────
+_PAID_AGENT_ORDER = (
+    "codex",
+    "claude",
+    "opencode",
+    "agy",
+    "gemini",
+    "ollama",
+    "jules",
+    "copilot",
+    "warp",
+    "oz",
+    "github_actions",
+)
+_AGENT_ALIASES = {
+    "actions": "github_actions",
+    "gha": "github_actions",
+    "github-actions": "github_actions",
+    "antigravity": "agy",
+}
+_LOCAL_CHECKOUT_AGENTS = frozenset({"codex", "claude", "opencode", "agy", "gemini", "ollama"})
+_ISSUE_ASSIGNMENT_AGENTS = frozenset({"copilot"})
+_DEFAULT_BINARIES = {
+    "codex": "codex",
+    "claude": "claude",
+    "opencode": "opencode",
+    "agy": "agy",
+    "gemini": "gemini",
+    "ollama": "ollama",
+    "jules": "jules",
+    "copilot": "gh",
+    "warp": "warp",
+    "oz": "oz",
+    "github_actions": "gh",
+}
+_KINDS = {
+    "codex": "local-cli",
+    "claude": "local-cli",
+    "opencode": "local-cli",
+    "agy": "local-cli",
+    "gemini": "local-cli",
+    "ollama": "local-cli",
+    "jules": "cloud-cli",
+    "copilot": "github-issue",
+    "warp": "paid-service",
+    "oz": "paid-service",
+    "github_actions": "github-actions",
+}
+
+
+def test_capacity_structures_derive_from_census_unchanged():
+    """The convergence preserved every value AND type of the six derived structures."""
+    assert capacity.PAID_AGENT_ORDER == _PAID_AGENT_ORDER
+    assert isinstance(capacity.PAID_AGENT_ORDER, tuple)
+    assert capacity.AGENT_ALIASES == _AGENT_ALIASES
+    assert capacity.LOCAL_CHECKOUT_AGENTS == _LOCAL_CHECKOUT_AGENTS
+    assert isinstance(capacity.LOCAL_CHECKOUT_AGENTS, frozenset)
+    assert capacity.ISSUE_ASSIGNMENT_AGENTS == _ISSUE_ASSIGNMENT_AGENTS
+    assert capacity._DEFAULT_BINARIES == _DEFAULT_BINARIES
+    assert capacity._KINDS == _KINDS
+
+
+def test_census_projections_match_the_historical_values():
+    """The census accessors are the single source; assert each projection directly too."""
+    assert census.paid_agent_order() == _PAID_AGENT_ORDER
+    assert census.agent_aliases() == _AGENT_ALIASES
+    assert census.local_checkout_agents() == _LOCAL_CHECKOUT_AGENTS
+    assert census.issue_assignment_agents() == _ISSUE_ASSIGNMENT_AGENTS
+    assert census.default_binaries() == _DEFAULT_BINARIES
+    assert census.kinds() == _KINDS
+
+
+def test_capacity_canonical_agent_still_resolves_aliases():
+    """capacity.canonical_agent reads AGENT_ALIASES; the derivation must keep it working."""
+    assert capacity.canonical_agent("antigravity") == "agy"
+    assert capacity.canonical_agent("gha") == "github_actions"
+    assert capacity.canonical_agent("codex") == "codex"
+    assert capacity.canonical_agent("") == ""
+    assert census.canonical("antigravity") == "agy"
+
+
+def test_lane_cascade_drift_guard_against_dispatch():
+    """census.lane_cascade() must equal dispatch._LANE_CASCADE so they can't diverge again."""
+    from limen import dispatch
+
+    assert census.lane_cascade() == list(dispatch._LANE_CASCADE)
+    # Every lane in the cascade is a known, canonical vendor.
+    known = set(census.paid_agent_order())
+    assert set(census.lane_cascade()) <= known
+
+
+def test_every_vendor_record_is_well_formed():
+    """Structural invariants over the register itself."""
+    names = [v.name for v in census.VENDORS]
+    assert len(names) == len(set(names)), "duplicate vendor names"
+    assert tuple(names) == _PAID_AGENT_ORDER, "register order is load-bearing"
+    for v in census.VENDORS:
+        assert census.by_name(v.name) is v
+        # aliases resolve back to this vendor
+        for alias in v.aliases:
+            assert census.canonical(alias) == v.name
+        # budget/status are always present (never a bare None record)
+        assert v.budget is not None and v.status is not None
+
+
+def test_gemini_status_is_homed_in_the_register():
+    """The umbrella's whole point: Gemini's two breakages are DATA, not tribal knowledge."""
+    gem = census.by_name("gemini")
+    assert gem is not None
+    assert gem.status.available is False
+    # (1) the sunset free OAuth client is recorded as a dead path — nothing may route into it.
+    assert "oauth_code_assist" in gem.status.deprecated_paths
+    assert "gemini" in census.deprecated_paths()
+    # (2) the suspended API-key project is recorded, with the lever that owns the human atom.
+    assert "CONSUMER_SUSPENDED" in gem.status.note
+    assert gem.status.lever == "L-FLEET-CAPACITY"
+    # live auth is the API key (not the dead OAuth path), and creds-hydrate's op:// source is homed.
+    assert gem.auth_mode == "api_key"
+    assert gem.cred_ref == "op://Personal/Gemini API Key/credential"
+    # gemini surfaces in the unavailable roll-up.
+    assert "gemini" in census.unavailable()
+
+
+def test_healthy_fleet_has_no_other_dead_paths():
+    """Only gemini is currently dark; guard against an accidental deprecation slipping in."""
+    assert set(census.deprecated_paths()) == {"gemini"}
+    assert set(census.unavailable()) == {"gemini"}
