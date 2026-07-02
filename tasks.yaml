@@ -75424,7 +75424,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: in_progress
+  status: done
   labels:
   - ci-green
   - generated
@@ -75438,7 +75438,7 @@ tasks:
     endless]
   depends_on: []
   created: '2026-07-02'
-  updated: '2026-07-02T19:09:53Z'
+  updated: '2026-07-02T20:58:50Z'
   dispatch_log:
   - timestamp: '2026-07-02T04:45:12.845659Z'
     agent: codex
@@ -75459,6 +75459,14 @@ tasks:
     session_id: 2fe3adee-4947-443b-8ad8-6bda2a22fb90
     status: in_progress
     output: Started fixing CI
+  - timestamp: '2026-07-02T20:58:50Z'
+    agent: agy
+    session_id: 2fe3adee-4947-443b-8ad8-6bda2a22fb90
+    status: done
+    output: "verify-whole.sh passed (776/776 tests). Fixes: (1) session-orientation organ\
+      \ via done-session-orient.sh, (2) web/app npm deps, (3) web/api FastAPI deps,\
+      \ (4) declared LIMEN_SESSION_ID + LIMEN_OPENCODE_CLOCK + LIMEN_TASK_ID in parameters.yaml.\
+      \ PR #574 opened, pr-gate CI passed, squash-merged to main at 0322195308c4323fca56a44517c824d248278ca5."
 - id: GEN-organvm-session-meta-docs-0702
   title: Real usage docs for organvm/session-meta
   repo: organvm/session-meta
