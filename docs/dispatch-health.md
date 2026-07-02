@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-02T13:38:30+00:00`
+Generated: `2026-07-02T15:11:27+00:00`
 
 Status: `healthy`
 
@@ -23,7 +23,7 @@ Status: `healthy`
 - Loaded LIMEN_DISPATCH_ASYNC: `1`.
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-02T13:38:30.844089+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-02T15:11:27.510299+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
@@ -35,8 +35,8 @@ Status: `healthy`
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `db6b5f5c0da15c8586458da499863681fabbbdfc`.
-- origin/main: `db6b5f5c0da15c8586458da499863681fabbbdfc`.
+- HEAD: `268ea17ff89fdbfd5a499eda3e3700dc831eb9c4`.
+- origin/main: `268ea17ff89fdbfd5a499eda3e3700dc831eb9c4`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
 - Dirty entries: `0`.
 
