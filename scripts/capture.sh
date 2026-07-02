@@ -166,11 +166,18 @@ _capture_repo() {
 }
 
 echo "[capture] scanning $WORKSPACE (dry-run=$DRY) …"
-# The glob expands once up-front, so cwd drift across iterations is harmless. No subshell — counters
-# must accumulate in this shell; per-repo isolation comes from set +e + guarded git calls, not a fork.
-for d in "$WORKSPACE"/*/; do
-  [ -e "${d%/}/.git" ] || continue   # plain repo (dir) or linked worktree (.git file)
-  _capture_repo "${d%/}"
-done
+# RECURSE (maxdepth 3), not just depth-1: the fleet clones repos NESTED under org dirs
+# (~/Workspace/organvm/*, a-organvm/*, 4444J99/*), and a depth-1 loop never pushed them — so their
+# work piled up unpushable-and-unreapable and the disk crept to full. Every .git (clone dir OR linked
+# worktree file) under the workspace now reaches its canonical origin. Paths are absolute, so the cd
+# inside _capture_repo drifting cwd is harmless; no subshell — counters must accumulate in this shell.
+# Throwaway / co-tenant / interactive roots are somebody else's lifecycle → skipped here.
+while IFS= read -r g; do
+  d="$(dirname "$g")"
+  case "$d" in
+    *.claude/worktrees*|*.limen-worktrees*|*.home-cartridge*|*/node_modules/*) continue;;
+  esac
+  _capture_repo "$d"
+done < <(find "$WORKSPACE" -maxdepth 3 -name .git 2>/dev/null)
 
 echo "[capture] done — committed=$captured pushed=$pushed skipped=$skipped failed=$failed (dry-run=$DRY)"

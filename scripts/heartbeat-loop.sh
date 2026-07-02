@@ -373,9 +373,18 @@ while true; do
                       python3 "$LIMEN_ROOT/scripts/score-dispatch.py" 2>&1 | tail -1 || true
                       python3 "$LIMEN_ROOT/scripts/ledger.py" 2>&1 | tail -1 || true; }
   due_voice heal "$C_HEAL"    && stamp heal
-  due_voice hygiene "$C_HYGIENE" && bash "$LIMEN_ROOT/scripts/clone-maintenance.sh" 2>&1 | tail -3 || true
-  due_voice hygiene "$C_HYGIENE" && bash "$LIMEN_ROOT/scripts/heal-claude-update-marker.sh" 2>&1 | tail -1 || true
-  due_voice hygiene "$C_HYGIENE" && stamp hygiene
+  # DISK PRESSURE — when the data volume is past high-water, run hygiene (clone-maintenance:
+  # capture→reap→node_modules) EVERY beat, not just every C_HYGIENE, until it drains back under
+  # target. Reclaim intensity tracks real fullness instead of a fixed clock (the "creeps back to
+  # full" fix). Cheap df probe; off with LIMEN_DISK_PRESSURE_ESCALATE=0.
+  HYG_CAD="$C_HYGIENE"
+  if [ "${LIMEN_DISK_PRESSURE_ESCALATE:-1}" = "1" ]; then
+    _dpct="$(df -P "${LIMEN_WORKDIR:-$HOME/Workspace}" 2>/dev/null | awk 'NR==2 {gsub("%","",$5); print $5+0}')"
+    [ -n "$_dpct" ] && [ "$_dpct" -ge "${LIMEN_DISK_HIGH_WATER:-85}" ] 2>/dev/null && HYG_CAD=1
+  fi
+  due_voice hygiene "$HYG_CAD" && bash "$LIMEN_ROOT/scripts/clone-maintenance.sh" 2>&1 | tail -3 || true
+  due_voice hygiene "$HYG_CAD" && bash "$LIMEN_ROOT/scripts/heal-claude-update-marker.sh" 2>&1 | tail -1 || true
+  due_voice hygiene "$HYG_CAD" && stamp hygiene
   python3 "$LIMEN_ROOT/scripts/emit-tick.py" 2>&1 | tail -1 || true   # tick voice — every beat
   stamp tick
   python3 "$LIMEN_ROOT/scripts/organ-health.py" 2>&1 | tail -1 || true   # PROPRIOCEPTION — EVERY beat: the health face must never lag the organs it watches. route stamps on C_BALANCE=2, feed on C_FEED=3, but C_WEB=4, so on the old web cadence the face showed stale "unknown" for rungs that were already green (and a restart-to-beat-2 froze it until beat 4). Cheapest renderer: read-only, no network, can't time out — belongs with the tick.

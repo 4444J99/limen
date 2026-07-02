@@ -731,6 +731,54 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Maximum directory depth for repo-local .worktrees discovery under LIMEN_RECLAIM_WORKSPACE_ROOTS."
+  LIMEN_DISK_HIGH_WATER:
+    default: 85
+    env: LIMEN_DISK_HIGH_WATER
+    self_update: none
+    owner: limen-daemon
+    note: "Percent-used high-water mark for the workspace data volume. At/over it, disk pressure is ON: clone-maintenance waives the node_modules idle window and captures-then-reaps, and the beat runs hygiene every tick until it drains. Reclaim intensity tracks real fullness, not a fixed clock (the 'creeps back to full' fix)."
+  LIMEN_DISK_PRESSURE_ESCALATE:
+    default: "1"
+    env: LIMEN_DISK_PRESSURE_ESCALATE
+    self_update: none
+    owner: limen-daemon
+    note: "ON — when disk usage is past LIMEN_DISK_HIGH_WATER the heartbeat drops the hygiene cadence to every beat until it drains. Set 0 to keep hygiene on its fixed LIMEN_BEAT_HYGIENE cadence regardless of fullness."
+  LIMEN_CLONE_REAP_APPLY:
+    default: "1"
+    env: LIMEN_CLONE_REAP_APPLY
+    self_update: none
+    owner: limen-daemon
+    note: "ON — clone-maintenance reaps pure pushed-mirror clones for real (the last step of clone→work→push→DELETE). Loss-free by construction (re-cloneable from origin; unpushed/untracked/dirty/active/core all skipped), so it is reversible and ungated. Set 0 for dry-run (report reapable clones without removing)."
+  LIMEN_REAP_IDLE_DAYS:
+    default: 2
+    env: LIMEN_REAP_IDLE_DAYS
+    self_update: none
+    owner: limen-daemon
+    note: "Min idle days before a pure pushed-mirror clone is reaped by reap-clones.py — WAIVED under disk pressure (a pushed mirror is loss-free at any age; when full we reclaim now)."
+  LIMEN_REAP_MAX:
+    default: 50
+    env: LIMEN_REAP_MAX
+    self_update: none
+    owner: limen-daemon
+    note: "Max clones reap-clones.py removes per run; the remainder is logged (never silently dropped) and reaped on the next beat."
+  LIMEN_REAP_MAXDEPTH:
+    default: 3
+    env: LIMEN_REAP_MAXDEPTH
+    self_update: none
+    owner: limen-daemon
+    note: "find -maxdepth for reap-clones.py clone discovery under LIMEN_WORKSPACE (repos nest one level under org dirs like organvm/*)."
+  LIMEN_REAP_CORE:
+    default: "limen session-meta sovereign-systems--elevate-align portfolio portvs universal-mail--automation"
+    env: LIMEN_REAP_CORE
+    self_update: none
+    owner: limen-daemon
+    note: "Space-separated CORE repos reap-clones.py never removes even when they are a clean pushed mirror (the operator lives in them / the conductor needs them local)."
+  LIMEN_REAP_VERIFY_REMOTE:
+    default: "1"
+    env: LIMEN_REAP_VERIFY_REMOTE
+    self_update: none
+    owner: limen-daemon
+    note: "ON — before deleting a reap candidate, git ls-remote confirms origin STILL holds HEAD (guards the deleted/renamed-origin case where the local clone is the only copy). Fail-safe: unreachable/offline → skip, never reap. Set 0 to trust local remote-tracking refs without the network round-trip."
   LIMEN_RECLAIM_APPLY:
     default: "1"               # ON — default beat removes only clean+content-preserved+idle roots
     env: LIMEN_RECLAIM_APPLY

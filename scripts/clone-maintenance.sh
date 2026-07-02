@@ -14,6 +14,15 @@ ROOT="${LIMEN_ROOT:-$HOME/Workspace/limen}"
 export PYTHONPATH="$ROOT/cli/src"
 CORE="limen session-meta sovereign-systems--elevate-align portfolio portvs universal-mail--automation"
 
+# ── DISK PRESSURE — the reclaim intensity tracks how full the disk actually is, not a fixed clock.
+# A developer cleans hard when the disk fills, lightly when it doesn't. High-water default 85%.
+# Under pressure we (a) waive the node_modules idle window and (b) capture-then-reap in this same run.
+disk_pct() { df -P "$1" 2>/dev/null | awk 'NR==2 {gsub("%","",$5); print $5+0}'; }
+HIGH="${LIMEN_DISK_HIGH_WATER:-85}"
+PCT="$(disk_pct "$WS")"; [ -n "$PCT" ] || PCT=0
+PRESSURE=0; [ "$PCT" -ge "$HIGH" ] 2>/dev/null && PRESSURE=1
+echo "── clone-maintenance: disk ${PCT}% used (high-water ${HIGH}%) → pressure=$([ "$PRESSURE" = 1 ] && echo ON || echo off) ──"
+
 echo "── clone hygiene: worktree prune + gc --auto (data-safe) ──"
 n=0
 while IFS= read -r g; do
@@ -33,8 +42,11 @@ echo "  hygiene pass over $n repo(s)."
 # never one touched within LIMEN_NM_IDLE_DAYS — EXCEPT a throwaway .limen-worktrees/gen-* whose
 # work is already a PR (age-exempt, but still clean + no-active-task gated). LIMEN_RECLAIM_DRYRUN=1
 # reports without removing. Every reclaim is logged (no silent truncation).
-echo "── node_modules reclaim (regenerable; core/live/dirty/active/fresh all skipped) ──"
-python3 - "$ROOT/tasks.yaml" "$WS" "$CORE" "$ROOT" "${LIMEN_NM_IDLE_DAYS:-2}" "${LIMEN_RECLAIM_DRYRUN:-0}" <<'PY'
+# Under disk pressure the idle window is WAIVED (idle_days=0): node_modules is always regenerable
+# from a lockfile, so when the disk is full we reclaim every non-active/non-dirty one immediately.
+NM_IDLE="${LIMEN_NM_IDLE_DAYS:-2}"; [ "$PRESSURE" = 1 ] && NM_IDLE=0
+echo "── node_modules reclaim (regenerable; core/live/dirty/active/fresh skipped; idle=${NM_IDLE}d) ──"
+python3 - "$ROOT/tasks.yaml" "$WS" "$CORE" "$ROOT" "$NM_IDLE" "${LIMEN_RECLAIM_DRYRUN:-0}" <<'PY'
 import glob, os, shutil, subprocess, sys, time
 import yaml
 tasks_path, ws, core, live_root, idle_days, dry = sys.argv[1:7]
@@ -97,36 +109,16 @@ print(f"  {'(dry-run) ' if dry else ''}node_modules: {n} dir(s) "
       f"{'would free' if dry else 'freed'} {freed/1e9:.2f} GB; {kept} kept (core/live/dirty/active/fresh).")
 PY
 
-echo "── reapable clones (0 active limen tasks; DRY-RUN — removal gated) ──"
-python3 - "$ROOT/tasks.yaml" "$WS" "$CORE" <<'PY'
-import yaml, os, sys, subprocess, glob
-tasks_path, ws, core = sys.argv[1], sys.argv[2], set(sys.argv[3].split())
-d = yaml.safe_load(open(tasks_path))
-active = {t["repo"] for t in d.get("tasks", [])
-          if t.get("status") in ("open", "dispatched", "in_progress") and t.get("repo")}
-cands = []
-for g in glob.glob(os.path.join(ws, "**", ".git"), recursive=True):
-    repo = os.path.dirname(g)
-    if ".limen-worktrees" in repo or ".home-cartridge" in repo:
-        continue
-    name = os.path.basename(repo)
-    if name in core:
-        continue
-    try:
-        url = subprocess.run(["git", "-C", repo, "remote", "get-url", "origin"],
-                             capture_output=True, text=True).stdout.strip()
-    except Exception:
-        url = ""
-    slug = url.rstrip("/")
-    if slug.endswith(".git"):
-        slug = slug[:-4]
-    slug = "/".join(slug.replace(":", "/").split("/")[-2:]) if slug else name
-    if slug not in active:
-        cands.append((slug, repo))
-if cands:
-    for slug, p in cands:
-        print(f"    reapable: {slug}")
-    print(f"  {len(cands)} clone(s) have no active task — re-cloneable; remove only with user OK.")
-else:
-    print("  none — every working-set clone still has active tasks.")
-PY
+# ── clone reap — the LAST step of the developer lifecycle (clone→work→push→DELETE the clone).
+# A pure pushed mirror is a disposable cache of GitHub; reaping it loses nothing (re-cloneable), so
+# this is REVERSIBLE and runs autonomically — no longer "removal gated on user OK" (the leak that let
+# ~/Workspace creep back to full). reap-clones.py enforces the loss-free gate + df-driven pressure and
+# is unit-proven by cli/tests/test_reap_clones.py. Escape hatch: LIMEN_CLONE_REAP_APPLY=0 → dry-run.
+# Under pressure, CAPTURE first (push every repo's work to origin, recursively) so the dirty/unpushed
+# clones become pure mirrors this cycle instead of waiting for the every-48 backup beat.
+if [ "$PRESSURE" = 1 ] && [ -x "$ROOT/scripts/capture.sh" ]; then
+  echo "── pressure: capture (push work off disk) before reap ──"
+  bash "$ROOT/scripts/capture.sh" 2>&1 | tail -2 || true
+fi
+reap_args=(); [ "${LIMEN_CLONE_REAP_APPLY:-1}" = "1" ] && reap_args+=(--apply)
+python3 "$ROOT/scripts/reap-clones.py" "${reap_args[@]}" 2>&1 | tail -6 || true
