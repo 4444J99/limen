@@ -1,0 +1,104 @@
+{
+  "_doc": "THE DATA-OWNERSHIP CONSTITUTION. One declared owner per answer-category; one declared pipe per register; one declared binding per face. VVLTVS (scripts/vvltvs-organ.py) reads and ENFORCES this file. WHY IT EXISTS: the public numbers drifted because ownership was implicit and the projection PIPES silently severed — organvm-corpvs-testamentvm/.github/workflows/metrics-refresh.yml stopped writing system-vars.json after 2026-05-22, so the profile bio (which projects from that register) froze at 148 repos while the live system grew to 171. A value-checker cannot catch that until the value has already drifted; declaring the register->pipe topology lets VVLTVS catch the SEVERED PIPE upstream, before any face lies. This is the lifecycle-terminal-stage principle one level deeper: projection is not one step but a PIPELINE, and every severed segment must self-surface. CONVERGE, DO NOT REBUILD: the homes already exist (organvm-corpvs-testamentvm is the register-of-record). This file NAMES what already owns each answer and wires the verifier — it does not add a new stamper (that is the four-stampers disease). Paths are relative to LIMEN_WORKSPACE_ROOT (~/Workspace).",
+  "version": 1,
+
+  "ssot": {
+    "_doc": "The live compute — the ONE enumeration everything else projects from. Its repo count derives from `gh api` at generate-time (repo_count_basis: live-public-gh-api). VVLTVS reads it, never recomputes it.",
+    "home": "organvm-corpvs-testamentvm/system-metrics.json",
+    "block": "computed",
+    "basis_key": "repo_count_basis"
+  },
+
+  "named_variables": {
+    "_doc": "Three different TRUE counts, not one drifting number. The 149-vs-171 split is a real, intentional distinction — curated-registry vs live-public-gh-api. A face showing 149 and a face showing 171 are NOT in conflict IF each binds the right variable. The corpus SSOT already carries all three; faces must stop arbitrarily picking one.",
+    "total_repos":      { "ssot_key": "total_repos",      "basis": "live-public-gh-api", "means": "all public repos (live gh api)" },
+    "curated_repos":    { "ssot_key": "curated_repos",    "basis": "curated-registry",   "means": "curated inventory (repo-registry.json)" },
+    "public_repos_all": { "ssot_key": "public_repos_all", "basis": "live-public-gh-api", "means": "public repos incl. forks" }
+  },
+
+  "registers": [
+    {
+      "key": "system-vars",
+      "home": "organvm-corpvs-testamentvm/system-vars.json",
+      "owns": "the flattened variable register the profile bio projects from (via sync-readme.py markers)",
+      "fed_by": {
+        "writer": "organvm-engine metrics/vars.py :: build_vars(metrics, registry)",
+        "wired_in": "organvm-corpvs-testamentvm/.github/workflows/metrics-refresh.yml",
+        "writer_marker": "build_vars",
+        "_note": "This step ran through 2026-05-22, then was dropped from the daily pipeline. Its absence is the direct cause of the frozen bio. REMEDIATION: re-add the build_vars()->system-vars.json step to metrics-refresh.yml — the bio auto-unfreezes, no prose re-authoring."
+      },
+      "tracks": [
+        { "key": "total_repos", "locator": "total_repos", "ssot_key": "total_repos" }
+      ]
+    },
+    {
+      "key": "code-substance",
+      "home": "organvm-corpvs-testamentvm/code-substance-report.json",
+      "owns": "the REAL audited code_files / test_files / ci_passing counts (the numbers the bio & resumes froze from)",
+      "fed_by": {
+        "writer": "organvm-corpvs-testamentvm/scripts/manifestatio-code-audit.py",
+        "wired_in": "organvm-corpvs-testamentvm/.github/workflows/metrics-refresh.yml",
+        "writer_marker": "manifestatio-code-audit",
+        "_note": "The audit script exists and re-runs headless (gh CLI) but is called by NO workflow, so code_files/test_files have no live source — they are `repos x 20` fabrications downstream. REMEDIATION: add manifestatio-code-audit.py as a (weekly) step feeding code_files/test_files into the SSOT, then derive downstream faces from it."
+      },
+      "freshness": {
+        "date_locator": "audit_date",
+        "max_lag_days": 30,
+        "coverage_locator": "total_audited",
+        "coverage_of": "total_repos",
+        "min_coverage": 0.8
+      }
+    }
+  ],
+
+  "faces": [
+    {
+      "key": "profile-bio",
+      "path": "organvm/4444J99/data/ecosystem.yml",
+      "format": "yaml",
+      "binds": "system-vars",
+      "checks": [
+        { "metric": "repos",  "locator": "total_repos",       "source": "ssot", "ssot_key": "total_repos",        "kind": "metric" },
+        { "metric": "organs", "locator": "total_organs",      "source": "ssot", "ssot_key": "total_organs",       "kind": "metric" },
+        { "metric": "words",  "locator": "total_words_short", "source": "ssot", "ssot_key": "total_words_numeric", "kind": "wordshort" }
+      ],
+      "stamper": "hand-edited wire: ecosystem.yml -> README via scripts/sync-readme.py. The DURABLE fix is to revive the build_vars->system-vars pipe (see registers.system-vars) so this auto-unfreezes rather than being hand-re-stamped."
+    },
+    {
+      "key": "portfolio-ssot-copy",
+      "path": "organvm/portfolio/src/data/system-metrics.json",
+      "format": "json",
+      "binds": "ssot",
+      "checks": [
+        { "metric": "repos",        "locator": "computed.total_repos",  "source": "ssot", "ssot_key": "total_repos",  "kind": "metric" },
+        { "metric": "ci_workflows", "locator": "computed.ci_workflows", "source": "ssot", "ssot_key": "ci_workflows", "kind": "metric" },
+        { "metric": "organs",       "locator": "computed.total_organs", "source": "ssot", "ssot_key": "total_organs", "kind": "metric" }
+      ],
+      "stamper": "retire this fork: have organvm/portfolio read/copy the corpus SSOT (propagate-metrics.py or a CI-published artifact) instead of maintaining a stale Jun-19 duplicate with a divergent schema. Kills the 116-vs-171 confusion."
+    },
+    {
+      "key": "portfolio-vitals",
+      "path": "organvm/portfolio/src/data/vitals.json",
+      "format": "json",
+      "binds": "code-substance",
+      "checks": [
+        { "metric": "code_files", "locator": "substance.code_files", "source": "code-substance", "source_key": "summary.total_code_files", "kind": "metric" },
+        { "metric": "test_files", "locator": "substance.test_files", "source": "code-substance", "source_key": "summary.total_test_files", "kind": "metric" }
+      ],
+      "stamper": "wire manifestatio-code-audit.py into metrics-refresh.yml so code-substance-report.json refreshes, then have sync-trust-metrics.mjs derive vitals FROM it (not repos x 20). Until the source register's pipe is live, this face's drift is advisory (cannot hold a face to a stale target)."
+    }
+  ],
+
+  "links_home": {
+    "_doc": "The one genuinely MISSING owner (the user's explicit ask: 'the links in one home'). No canonical links home exists — deployment URLs, social handles and custom domains are scattered across four partial homes with no sync. VVLTVS surfaces this absence until it is built. CONVERGE, do not invent a new inventory: fold the existing partial homes into one register, then generate the profile links-in-bio + portfolio link surfaces FROM it.",
+    "status": "missing",
+    "target": "organvm-corpvs-testamentvm/links-registry.json",
+    "converges": [
+      { "home": "organvm-corpvs-testamentvm/repo-registry.json", "holds": "deployment_url (21) across Netlify/Cloudflare/GH-Pages/Render" },
+      { "home": "per-repo ecosystem.yaml (30+)", "holds": "per-repo delivery config" },
+      { "home": "organvm/portfolio/src/data/github-pages.json", "holds": "21 GH-Pages HTTP probes + CNAME + sync status" },
+      { "home": "organvm/portfolio/.github/FUNDING.yml", "holds": "payment/support link (payrail + GitHub sponsor)" },
+      { "home": "(unowned)", "holds": "social handles + custom domains (etceter4.com, padavano.vercel) — no owner today" }
+    ]
+  }
+}
