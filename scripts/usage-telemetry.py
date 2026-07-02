@@ -328,6 +328,17 @@ def last_ratelimit():
     return out
 
 
+def _read_opencode_clock() -> dict | None:
+    """Read opencode's internal clock state if available."""
+    path = HOME / ".local/share/opencode/clock.json"
+    if path.exists():
+        try:
+            return json.loads(path.read_text())
+        except Exception:
+            return None
+    return None
+
+
 def main():
     data = load_tasks_data()
     tasks = data.get("tasks", [])
@@ -344,10 +355,29 @@ def main():
         "jules": {"signal": "count", "window": "rolling 24h", "consumed": track.get("jules", 0),
                   "unit": "runs", "note": "count vs cap — the one true proxy"},
     }
-    for v in ("gemini", "opencode", "agy"):
+    for v in ("gemini", "agy"):
         vendors[v] = {"signal": "dispatch-count", "window": "today",
                       "consumed": dc.get(v, 0), "unit": "runs",
                       "note": "no readable meter — dispatch count + rate-limit watch"}
+
+    # opencode: prefer its internal DB meter (clock.json) over dispatch counting.
+    # The SQLite DB tracks real token consumption per session, giving us a live
+    # token-level clock instead of a blind run count.
+    oc_clock = _read_opencode_clock()
+    if oc_clock is not None:
+        consumed = oc_clock.get("heavy_used", 0) + oc_clock.get("cache_read_used", 0)
+        cap = oc_clock.get("cap_tokens", 1)
+        note = "real token usage from opencode internal clock (SQLite DB)"
+        vendors["opencode"] = {
+            "signal": "db-meter", "window": "today", "consumed": consumed,
+            "unit": "tokens", "possible": cap, "note": note,
+            "health": oc_clock.get("health", "ok"),
+            "clock_used_pct": oc_clock.get("used_pct", 0),
+        }
+    else:
+        vendors["opencode"] = {"signal": "dispatch-count", "window": "today",
+                               "consumed": dc.get("opencode", 0), "unit": "runs",
+                               "note": "no readable meter — dispatch count + rate-limit watch"}
 
     # attach the "amount POSSIBLE" → headroom + the refresh-window PACING math for every vendor.
     # The split decision: never run a live lane to 0. Burning faster than safe_rate_per_h

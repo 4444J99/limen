@@ -648,7 +648,12 @@ _LOCAL_AGENTS: dict[str, list[str]] = {
     # lazily in _agent_argv() and DERIVED from `ollama list` — never pinned (see ollama_model).
     "ollama": ["run"],
 }
-_LOCAL_BIN: dict[str, str] = {}
+_LOCAL_BIN: dict[str, str] = {
+    # opencode-clock wraps the real opencode binary with an internal usage clock
+    # (token tracking from SQLite DB) and presence beacon. Falls through to plain
+    # opencode if the wrapper is not installed (see _agent_binary).
+    "opencode": "opencode-clock",
+}
 _CONFIGURED_SERVICE_AGENTS = {"warp", "oz"}
 
 
@@ -1024,6 +1029,22 @@ def _failed_agent_result(agent: str, task: Task, run: subprocess.CompletedProces
     return False
 
 
+def _show_opencode_clock_after_run(task: Task) -> None:
+    """Read opencode's clock.json after a run and display token consumption."""
+    clock_path = Path.home() / ".local/share/opencode/clock.json"
+    if not clock_path.exists():
+        return
+    try:
+        clock = json.loads(clock_path.read_text())
+        used = clock.get("used_pct", 0)
+        heavy = clock.get("heavy_used", 0)
+        cache = clock.get("cache_read_used", 0)
+        health = clock.get("health", "ok")
+        print(f"  opencode-clock {task.id}: {used}% used ({heavy:,} heavy + {cache:,} cache tokens) health={health}")
+    except Exception:
+        pass
+
+
 def _run_isolated_agent(
     agent: str,
     task: Task,
@@ -1032,6 +1053,9 @@ def _run_isolated_agent(
     lane_timeout: int,
 ) -> bool | str:
     run_env = _lane_run_env(agent)
+    if agent == "opencode":
+        run_env["LIMEN_OPENCODE_CLOCK"] = "1"
+        run_env["LIMEN_TASK_ID"] = task.id
     try:
         run = _run_capture(agent_cmd, cwd=str(wt), timeout=lane_timeout, env=run_env)
         # SELF-HEAL the credential-refresh race (#48786): if claude lost the token rotation,
@@ -1043,6 +1067,8 @@ def _run_isolated_agent(
         print(f"  TIMEOUT {task.id} after {lane_timeout}s — too big for sync local → routing to jules (async)")
         return _TIMEOUT
 
+    if agent == "opencode":
+        _show_opencode_clock_after_run(task)
     if run.returncode != 0:
         return _failed_agent_result(agent, task, run)
     if agent in ("agy", "antigravity"):
@@ -1129,8 +1155,21 @@ def _arm_auto_merge(task: Task, wt: Path, url: str) -> None:
     )
 
 
-def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
+def _resolve_agent_binary(agent: str) -> str:
+    """Resolve the binary for an agent lane. Falls back through:
+    1. LIMEN_<AGENT>_BIN env override
+    2. _LOCAL_BIN lookup (wrapper like opencode-clock)
+    3. shutil.which (check the wrapper actually exists on PATH)
+    4. plain agent name as last resort"""
     binary = os.environ.get(f"LIMEN_{agent.upper()}_BIN", _LOCAL_BIN.get(agent, agent))
+    if binary != agent and shutil.which(binary) is None:
+        fallback = agent
+        return fallback
+    return binary
+
+
+def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
+    binary = _resolve_agent_binary(agent)
     repo_dir = _resolve_repo_dir(task)
     if repo_dir is None and not dry_run:
         repo_dir = _clone_repo(task)  # post-move: clone on demand so local lanes can work it
@@ -1207,7 +1246,7 @@ def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str:
     if os.environ.get("LIMEN_ISOLATION", "worktree").lower() != "off":
         return _isolated_local_run(agent, task, dry_run)
     # ── legacy in-place path (escape hatch; edits the live checkout directly)
-    binary = os.environ.get(f"LIMEN_{agent.upper()}_BIN", _LOCAL_BIN.get(agent, agent))
+    binary = _resolve_agent_binary(agent)
     cmd = [binary, *_agent_argv(agent, task), _build_prompt(task)]
     cwd = _resolve_repo_dir(task)
     if cwd is None:
