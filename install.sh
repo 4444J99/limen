@@ -5,8 +5,40 @@
 #   curl -fsSL https://raw.githubusercontent.com/4444J99/limen/main/install.sh | bash
 #
 # Clones the limen repo, creates ~/limen symlink, installs Python CLI,
-# and prompts for env var setup.
+# and optionally installs legacy host PATH/wrapper conveniences.
 set -euo pipefail
+
+HOST_MUTATION="${LIMEN_INSTALL_HOST_MUTATION:-0}"
+
+usage() {
+  cat <<'EOF'
+Usage: install.sh [--host-mutation]
+
+Default install clones Limen and installs the Python CLI without editing shell
+startup files or adding ~/.local/bin wrappers.
+
+Options:
+  --host-mutation   Opt in to legacy ~/.zshenv PATH edits and ~/.local/bin wrappers.
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --host-mutation | --legacy-host-mutation)
+      HOST_MUTATION=1
+      shift
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "unknown option: $1" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
 
 LIMEN_SOURCE="${LIMEN_SOURCE:-https://github.com/4444J99/limen.git}"
 LIMEN_TARGET="${LIMEN_TARGET:-$HOME/Workspace/limen}"
@@ -45,38 +77,43 @@ else
   echo "  WARNING: python3 not found — skipping CLI install"
 fi
 
-# 4. Env var + PATH setup
+# 4. Optional legacy host mutation
 LIMEN_BIN="${LIMEN_CLI}/.venv/bin"
 USER_BIN="${HOME}/.local/bin"
 LIMEN_ENV_LINE='export LIMEN_ROOT="$HOME/limen"'
 LIMEN_PATH_LINE="export PATH=\"${USER_BIN}:${LIMEN_BIN}:\$PATH\""
 ZSHRC="${ZDOTDIR:-$HOME}/.zshenv"
-mkdir -p "$USER_BIN"
-cat >"${USER_BIN}/limen" <<EOF
+
+if [[ "$HOST_MUTATION" == "1" || "$HOST_MUTATION" == "true" ]]; then
+  mkdir -p "$USER_BIN"
+  cat >"${USER_BIN}/limen" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
 exec "${LIMEN_BIN}/limen" "\$@"
 EOF
-cat >"${USER_BIN}/workstream" <<EOF
+  cat >"${USER_BIN}/workstream" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
 exec "${LIMEN_BIN}/limen" workstream "\$@"
 EOF
-chmod +x "${USER_BIN}/limen" "${USER_BIN}/workstream"
-echo "  installed wrappers at ${USER_BIN}/limen and ${USER_BIN}/workstream"
-if grep -q 'LIMEN_ROOT' "$ZSHRC" 2>/dev/null; then
-  echo "  LIMEN_ROOT already set in $ZSHRC"
+  chmod +x "${USER_BIN}/limen" "${USER_BIN}/workstream"
+  echo "  installed wrappers at ${USER_BIN}/limen and ${USER_BIN}/workstream"
+  if grep -q 'LIMEN_ROOT' "$ZSHRC" 2>/dev/null; then
+    echo "  LIMEN_ROOT already set in $ZSHRC"
+  else
+    echo "$LIMEN_ENV_LINE" >>"$ZSHRC"
+    echo "  added LIMEN_ROOT to $ZSHRC"
+  fi
+  if grep -qF "$LIMEN_BIN" "$ZSHRC" 2>/dev/null; then
+    echo "  limen PATH already set in $ZSHRC"
+  else
+    echo "$LIMEN_PATH_LINE" >>"$ZSHRC"
+    echo "  added limen to PATH in $ZSHRC (restart shell or 'source $ZSHRC')"
+  fi
 else
-  echo "$LIMEN_ENV_LINE" >>"$ZSHRC"
-  echo "  added LIMEN_ROOT to $ZSHRC"
-fi
-if grep -qF "$LIMEN_BIN" "$ZSHRC" 2>/dev/null; then
-  echo "  limen PATH already set in $ZSHRC"
-else
-  echo "$LIMEN_PATH_LINE" >>"$ZSHRC"
-  echo "  added limen to PATH in $ZSHRC (restart shell or 'source $ZSHRC')"
+  echo "  skipped host PATH/wrapper mutation (use --host-mutation to opt in)"
 fi
 
 echo "==> done"
-echo "  Run: source ${ZSHRC} && limen status"
-echo "  Start a workstream: workstream --prompt 'objective and constraints' limen my-workstream"
+echo "  Run: ${LIMEN_BIN}/limen status"
+echo "  Start a workstream: ${LIMEN_BIN}/limen workstream --prompt 'objective and constraints' limen my-workstream"

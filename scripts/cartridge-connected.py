@@ -109,9 +109,10 @@ def main() -> int:
     print(f"  cartridge-connected: FAIL — chezmoi source is '{shown}', expected '{expected}'.")
     print(f"    source dir: {source}")
     print("    The cartridge is UNPLUGGED: chezmoi is managing a scratch/wrong source, so")
-    print("    chezmoi verify/status/health are all meaninglessly green. Re-point after the")
-    print("    cartridge is brought current:  chezmoi init " + expected + "  (needs identity")
-    print("    data in ~/.config/chezmoi/chezmoi.toml [data]); then chezmoi apply.")
+    print("    chezmoi verify/status/health are all meaninglessly green. Re-point without")
+    print("    broad apply after the cartridge is current:")
+    print("      chezmoi init --source ~/Workspace/domus-genoma --data --promptDefaults")
+    print("    Then run a targeted diff before any apply.")
     return 1
 
 
