@@ -30,6 +30,12 @@ portal:
         opencode: '2026-06-29T05:54:07.312618+00:00'
         agy: '2026-06-29T05:54:07.312618+00:00'
         claude: '2026-06-29T11:05:16.865822+00:00'
+  agents:
+    opencode:
+      status: idle
+      accepting_tasks: true
+      token_usage_pct: 0.0
+      clock_health: ok
 tasks:
 - id: FORCE-route-all-services
   title: Router fans across ALL paid services, not just the 6 vendors
