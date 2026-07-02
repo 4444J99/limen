@@ -15,13 +15,13 @@ portal:
       claude: 100
     track:
       date: '2026-07-02'
-      spent: 206
+      spent: 207
       per_agent:
         jules: 100
         gemini: 0
         codex: 76
         opencode: 17
-        agy: 13
+        agy: 14
         claude: 0
       per_agent_reset:
         jules: '2026-06-29T05:54:07.312618+00:00'
@@ -75194,10 +75194,10 @@ tasks:
   title: Make organvm/limen CI green
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - ci-green
   - generated
@@ -75211,7 +75211,7 @@ tasks:
     endless]
   depends_on: []
   created: '2026-07-02'
-  updated: '2026-07-02T05:22:07.541960Z'
+  updated: '2026-07-02T18:58:40Z'
   dispatch_log:
   - timestamp: '2026-07-02T04:45:12.845659Z'
     agent: codex
@@ -75222,6 +75222,11 @@ tasks:
     agent: codex
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-02T18:58:40Z'
+    agent: agy
+    session_id: 2fe3adee-4947-443b-8ad8-6bda2a22fb90
+    status: dispatched
+    output: Claimed by agy to make presence known and assist swarm.
 - id: GEN-organvm-session-meta-docs-0702
   title: Real usage docs for organvm/session-meta
   repo: organvm/session-meta
