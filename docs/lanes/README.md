@@ -1,18 +1,65 @@
-# Limen Workstream Lanes
+# Limen Workstream Channels
 
-These lanes are project/product workstreams, not Limen `target_agent` values.
-They let future sessions route work by domain while still using the existing agent
-fleet (`codex`, `claude`, `opencode`, `agy`, `gemini`, `jules`, `copilot`,
-`warp`, `oz`, or `any`).
+A **workstream** is the *purpose* partition of the board — the durable, single-purpose lane a
+worker session draws from, the axis **above** the vendor `target_agent` lane. It is Anthony's
+"channel" (the word `channel` is already taken in code by `evocator.py` and `launch-organ.py`, so
+the converged term is `workstream`).
 
-When a task belongs to one of these lanes:
+**Why it exists.** Without a purpose axis the backlog was one undifferentiated grab-bag: a session
+reserved whatever was in front of it, so a mail task and a code task shared one context and one PR
+stream — the 10–20-mixed-PRs sprawl. The cure is one field plus one invariant.
+
+## The field (real, not a label)
+
+`Task.workstream` (`cli/src/limen/models.py`) is a first-class field, normalized to a kebab handle.
+It flows through TABVLARIVS (the single writer) untouched, because every ticket is validated via
+`Task.model_validate`. This **promotes** the old label-only convention into enforced machinery.
 
 - keep `repo` pointed at the real project repo;
-- keep `target_agent` in the canonical agent set;
-- add the lane handle as a task label;
-- name the allowed files, stop condition, and verification command in the task;
-- leave a receipt in the lane doc or the project repo before handing off.
+- keep `target_agent` in the canonical agent set (the *vendor* lane — orthogonal to the channel);
+- set `workstream: <handle>` on the task (a pre-field task with a matching **label** still resolves,
+  for back-compat);
+- name the allowed files, stop condition, and verification command in the task.
 
-Current lane receipts:
+## The roster is derived, not hand-kept
 
-- [`rob-game`](rob-game.md) - Micro Tato, the newer personal game with Rob and John F.
+`limen.workstream.derived_channels()` builds the canonical roster at read time:
+
+- **Domain channels** = one per institutional organ in `organ-ladder.json` — add an organ, get a
+  channel, with **no code edit** (legal, financial, education, media, governance, consulting,
+  artist, social, health, …). Aliases fold Anthony's vocabulary onto the pillar handle
+  (`revenue` / `money` → `financial`).
+- **Operational channels** = the cross-cutting process lanes (the only hand-listed set, because they
+  are not organs): `conductor` (idea intake + Q&A), `contributions` (code/PRs), `correspondence`
+  (mail), `prompt-parity` (proves every prompt reached its intended parity).
+
+## The invariant (the actual cure)
+
+**One worker session draws OPEN tasks from ONE workstream only.** Enforced structurally by the scoped
+cell conductor:
+
+```bash
+cell new contrib-run
+cell conduct contrib-run --workstream contributions   # sees ONLY the contributions board
+```
+
+`cell conduct --workstream <handle>` runs `limen channels --scope <handle> --emit tasks.cell.yaml`,
+so the scoped conductor cannot reach another channel's work. The human-facing scaffolder stamps the
+channel into its kickoff packet:
+
+```bash
+limen workstream --workstream contributions --prompt 'drain the code lane' limen contrib-run
+```
+
+## The projection (the scoreboard)
+
+```bash
+limen channels                       # board grouped by channel, counts per status
+limen channels --scope financial     # one channel + its tasks (accepts aliases: --scope revenue)
+limen channels --json-output         # machine-readable roster + counts
+```
+
+## Receipts
+
+- [`rob-game`](rob-game.md) — Micro Tato, the personal game with Rob and John F. (predates the field;
+  resolves by label until its tasks carry `workstream: rob-game`).

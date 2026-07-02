@@ -16,7 +16,9 @@
 #   cell new   <slug>            # create a cell (worktree off origin/main) → prints its path
 #   cell ls                      # list cells: branch · ahead/behind · dirty · conductor · size
 #   cell cd    <slug>            # print the cell path (use: cd "$(cell cd foo)")
-#   cell conduct <slug> [--loop] # start this cell's scoped conductor (bg). --loop = continuous
+#   cell conduct <slug> [--loop] [--workstream <handle>]  # start this cell's scoped conductor (bg).
+#                                # --loop = continuous. --workstream pins the cell to ONE channel:
+#                                # the conductor sees only that channel's board (one-worker-one-lane).
 #   cell stop  <slug>            # stop this cell's conductor
 #   cell merge <slug>            # push + open/merge its PR via merge-policy (the standing grant)
 #   cell reap  <slug>            # stop + LOSS-FREE remove (refuses if dirty or unpushed)
@@ -75,22 +77,40 @@ cmd_ls() {
 }
 
 cmd_conduct() {
-  local slug="${1:-}"; shift || true; [ -n "$slug" ] || die "usage: cell conduct <slug> [--loop]"
+  local slug="${1:-}"; shift || true; [ -n "$slug" ] || die "usage: cell conduct <slug> [--loop] [--workstream <handle>]"
   local p b; p="$(cell_path "$slug")"; b="$(cell_branch "$slug")"
   [ -d "$p" ] || die "no cell '$slug' (run: cell new $slug)"
   conductor_running "$slug" && die "conductor for '$slug' already running (PID $(cat "$(pidfile "$slug")"))"
-  local loop=0; [ "${1:-}" = "--loop" ] && loop=1
+  local loop=0 workstream=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --loop) loop=1; shift ;;
+      --workstream|--ws) workstream="${2:-}"; [ -n "$workstream" ] || die "--workstream needs a handle"; shift 2 ;;
+      *) die "cell conduct: unknown option '$1' (want: --loop, --workstream <handle>)" ;;
+    esac
+  done
   local log="$CELL_LOGS/$slug.conduct.log"
+  local cell_board="$p/tasks.cell.yaml"
   # Scoped + isolated: own LIMEN_ROOT (the cell), own tasks file, own branch namespace.
   # Fleet-wide merge/dispatch beats are OFF by default so parallel conductors never race main
   # or each other; the cell conductor builds/verifies within its own branch.
   (
     cd "$p" || exit 1
     export LIMEN_ROOT="$p"
-    export LIMEN_TASKS="$p/tasks.cell.yaml"
     export LIMEN_BRANCH_PREFIX="cell-$slug-"
     export LIMEN_MERGE_DRAIN=0 LIMEN_JULES_LAND=0   # no fleet-wide GitHub merges from a cell
-    [ -f "$p/tasks.cell.yaml" ] || cp "$LIMEN_ROOT/tasks.yaml" "$p/tasks.cell.yaml" 2>/dev/null || : > "$p/tasks.cell.yaml"
+    if [ -n "$workstream" ]; then
+      # ONE-WORKER-ONE-WORKSTREAM invariant: feed the conductor ONLY this channel's tasks, so it
+      # structurally cannot mix purposes (the cure for 10-20 mixed PRs per session). Read the full
+      # board ($p/tasks.yaml) and emit the filtered subset to the cell board.
+      export LIMEN_WORKSTREAM="$workstream"
+      if ! LIMEN_TASKS="$p/tasks.yaml" limen channels --scope "$workstream" --emit "$cell_board" >/dev/null 2>&1; then
+        cp "$p/tasks.yaml" "$cell_board" 2>/dev/null || : > "$cell_board"   # fallback: full board
+      fi
+    else
+      [ -f "$cell_board" ] || cp "$p/tasks.yaml" "$cell_board" 2>/dev/null || : > "$cell_board"
+    fi
+    export LIMEN_TASKS="$cell_board"
     if [ "$loop" = "1" ]; then
       exec bash "$p/scripts/heartbeat-loop.sh"          # continuous (while-true) conductor
     else
@@ -99,7 +119,7 @@ cmd_conduct() {
   ) >"$log" 2>&1 &
   local cpid=$!
   echo "$cpid" > "$(pidfile "$slug")"
-  echo "cell '$slug' conductor started (PID $cpid, $([ "$loop" = 1 ] && echo loop || echo single-beat)) → $log"
+  echo "cell '$slug' conductor started (PID $cpid, $([ "$loop" = 1 ] && echo loop || echo single-beat)$([ -n "$workstream" ] && echo ", workstream=$workstream")) → $log"
 }
 
 cmd_stop() {

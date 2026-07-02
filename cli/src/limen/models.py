@@ -1,3 +1,4 @@
+import re
 from datetime import date, datetime
 from typing import Any
 
@@ -35,6 +36,12 @@ class Task(BaseModel):
     repo: str | None = None
     type: str = "code"
     target_agent: str
+    # PURPOSE partition — the durable, single-purpose channel this task belongs to ("contributions",
+    # "correspondence", "financial", …): the axis ABOVE the vendor `target_agent` lane. The derived
+    # roster + alias resolution live in limen.workstream (a new organ in organ-ladder.json IS a new
+    # channel, no code edit). A worker session draws OPEN tasks from ONE workstream only — the cure
+    # for mixed-purpose PR pileup. None → unassigned. See docs/lanes/.
+    workstream: str | None = None
     priority: str = "medium"
     budget_cost: int = 1
     status: str = "open"
@@ -60,6 +67,17 @@ class Task(BaseModel):
         if value not in VALID_STATUSES:
             raise ValueError(f"status must be one of {', '.join(sorted(VALID_STATUSES))}")
         return value
+
+    @field_validator("workstream")
+    @classmethod
+    def normalize_workstream(cls, value: str | None) -> str | None:
+        """Surface-normalize to a kebab handle (lowercase, runs of non-alphanumerics → '-'). Alias→
+        canonical resolution (e.g. 'revenue' → 'financial') is a read-time concern in limen.workstream
+        so the model stays pure — no file I/O in a validator. Empty/whitespace → None (unassigned)."""
+        if value is None:
+            return None
+        handle = re.sub(r"[^a-z0-9]+", "-", str(value).strip().lower()).strip("-")
+        return handle or None
 
 
 class BudgetTrack(BaseModel):
