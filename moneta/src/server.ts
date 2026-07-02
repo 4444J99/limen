@@ -1,5 +1,6 @@
 /**
  * Thin `node:http` transport over {@link MintService}. Routes:
+ *   GET  / , /buy       the self-contained buyer-facing checkout page (HTML)
  *   GET  /health        liveness + whether the mint is configured to sell
  *   GET  /pubkey        the ECDSA public JWK to embed in the product build
  *   POST /checkout      { email? } -> order with a BIP21 pay URI
@@ -7,6 +8,7 @@
  */
 
 import { createServer, type IncomingMessage, type ServerResponse, type Server } from 'node:http'
+import { renderCheckoutPage } from './checkout-page'
 import type { HttpResult, MintService } from './service'
 
 export interface ServerOptions {
@@ -32,6 +34,12 @@ function send(res: ServerResponse, result: HttpResult): void {
     res.end(JSON.stringify(result.body))
 }
 
+function sendHtml(res: ServerResponse, html: string): void {
+    res.statusCode = 200
+    res.setHeader('content-type', 'text/html; charset=utf-8')
+    res.end(html)
+}
+
 export function createRequestListener(opts: ServerOptions) {
     return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
         res.setHeader('content-type', 'application/json')
@@ -48,6 +56,10 @@ export function createRequestListener(opts: ServerOptions) {
         try {
             const url = new URL(req.url ?? '/', 'http://localhost')
 
+            if ((url.pathname === '/' || url.pathname === '/buy') && req.method === 'GET') {
+                sendHtml(res, renderCheckoutPage())
+                return
+            }
             if (url.pathname === '/health' && req.method === 'GET') {
                 send(res, opts.service.health())
                 return

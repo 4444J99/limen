@@ -49,6 +49,26 @@ describe('mint HTTP server', () => {
         expect((await res.json()).status).toBe('reserved')
     })
 
+    it('GET / serves the self-contained checkout page (no third-party checkout)', async () => {
+        const res = await fetch(`${base}/`)
+        expect(res.status).toBe(200)
+        expect(res.headers.get('content-type')).toMatch(/text\/html/)
+        const html = await res.text()
+        expect(html).toContain('<!DOCTYPE html>')
+        expect(html).toContain('Unlock Pro')
+        expect(html).toContain('/checkout')       // drives the flow against the same-origin API
+        expect(html).toContain('MONETA')          // sovereign attribution
+        // No rented processor leaks into the storefront.
+        expect(html.toLowerCase()).not.toContain('lemonsqueezy')
+        expect(html.toLowerCase()).not.toContain('stripe')
+    })
+
+    it('GET /buy is an alias for the checkout page', async () => {
+        const res = await fetch(`${base}/buy`)
+        expect(res.status).toBe(200)
+        expect(res.headers.get('content-type')).toMatch(/text\/html/)
+    })
+
     it('unknown routes 404', async () => {
         const res = await fetch(`${base}/nope`)
         expect(res.status).toBe(404)

@@ -79,6 +79,7 @@ docker run -p 8787:8787 --env-file .env -v "$PWD/.data:/app/.data" moneta
 
 | Method | Path          | Purpose |
 |--------|---------------|---------|
+| GET    | `/` , `/buy`  | The self-contained buyer-facing checkout page (HTML): shows the BTC address + amount + a BIP21 `bitcoin:` link, polls to confirmation, and returns the buyer to the product with `?ce_license_key=…`. No third-party checkout in the path. |
 | GET    | `/health`     | Liveness + `configured` flag + `waiting` (buyers pooled behind an unset address). |
 | GET    | `/pubkey`     | The ECDSA **public** JWK to embed in a product build. |
 | POST   | `/checkout`   | `{ email? }` → `201` with a unique sat amount + BIP21 `payUri` when configured; `202` `reserved` (demand pooled) when no address is set yet. |
