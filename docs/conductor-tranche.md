@@ -1,6 +1,6 @@
 # Conductor Tranche
 
-Generated: `2026-07-02T18:48:45+00:00`
+Generated: `2026-07-02T19:28:46+00:00`
 
 Summary: `tranche-worktree-lifecycle-debt` -> `worktree-lifecycle-debt` (`blocker`); stop before: Stop before deletion, force-push, merge, or owner-repo source edits unless a narrower owner packet names the repo, branch, predicate, and receipt.
 
@@ -22,8 +22,8 @@ Summary: `tranche-worktree-lifecycle-debt` -> `worktree-lifecycle-debt` (`blocke
 | Lane | `blocker` |
 | Score | `70` |
 | Agent fit | `codex` |
-| Attack index generated | `2026-07-02T18:48:41+00:00` |
-| Ranked paths read | `50` |
+| Attack index generated | `2026-07-02T19:28:41+00:00` |
+| Ranked paths read | `52` |
 | Skipped family/human-gate/parked/observe/auth paths | `worktree_lifecycle`, `session_lifecycle`, `github-app-limen-bot-not-wired`, `github_review`, `github-consolidation-collisions`, `agent_coordination`, `local-lifecycle-disk-pressure`, `technical_debt_ci`, `convergence_corpus`, `gen-organvm-universal-mail--automation-test-coverage-0625-151e`, `cloud-runtime-endpoint-unconfigured`, `uncategorized`, `cloud-credential-handles-unconfigured`, `credential-codex-auth-sessions`, `resolve-organvm-i-theoria-.github-459-1ade`, `auth_credentials`, `cifix-organvm-i-theoria-conversation-corpus-engine-f02e`, `discover-organvm-kerygma-profiles-6c74`, `bld-my--father-mother-harden-44b2`, `bld-promptscope-next-rev-3fde` |
 
 ## Work Packet

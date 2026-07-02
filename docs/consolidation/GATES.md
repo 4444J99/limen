@@ -1,6 +1,6 @@
 # GitHub Consolidation Gates
 
-Generated: `2026-07-02T18:44:31+00:00`
+Generated: `2026-07-02T19:27:37+00:00`
 
 ## Rule
 
@@ -21,7 +21,7 @@ Generated: `2026-07-02T18:44:31+00:00`
 | Rename target conflicts/unknown | `0` / `0` |
 | Transfer apply gate open | `False` |
 | `tasks.yaml` repo refs to rewrite post-transfer | `49` |
-| Local remotes to rewrite post-transfer | `15` |
+| Local remotes to rewrite post-transfer | `17` |
 | Deploy literal to fix post-transfer | `False` |
 | `gh-app-token --which` | `pat (GITHUB_TOKEN fallback)` |
 | `limen[bot]` App installed | `False` |

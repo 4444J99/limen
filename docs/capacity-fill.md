@@ -1,6 +1,6 @@
 # Capacity Fill
 
-Generated: `2026-07-02T18:42:11+00:00`
+Generated: `2026-07-02T19:27:13+00:00`
 Status: `blocked`
 
 ## Capacity Census
@@ -10,18 +10,17 @@ Status: `blocked`
 | `codex` | local-cli | `up` | 24 | 100 | /opt/homebrew/bin/codex |
 | `claude` | local-cli | `up` | 100 | 100 | /opt/homebrew/bin/claude |
 | `opencode` | local-cli | `up` | 83 | 100 | /opt/homebrew/bin/opencode |
-| `agy` | local-cli | `up` | 87 | 100 | /opt/homebrew/bin/agy |
-| `gemini` | local-cli | `down` | 10 | 10 | gemini auth not configured |
-| `ollama` | local-cli | `down` | 394 | 600 | /opt/homebrew/bin/ollama; no model pulled — run `ollama pull qwen2.5-coder:7b` to light the floor lane |
+| `agy` | local-cli | `up` | 86 | 100 | /opt/homebrew/bin/agy |
+| `gemini` | local-cli | `up` | 10 | 10 | /opt/homebrew/bin/gemini |
+| `ollama` | local-cli | `down` | 393 | 600 | /opt/homebrew/bin/ollama; no model pulled — run `ollama pull qwen2.5-coder:7b` to light the floor lane |
 | `jules` | cloud-cli | `down` | 0 | 100 | /opt/homebrew/bin/jules |
-| `copilot` | github-issue | `down` | 394 | 600 | /opt/homebrew/bin/gh; copilot-swe-agent not confirmed assignable (set LIMEN_COPILOT_ENABLED=1 after enabling Copilot coding agent) |
-| `warp` | paid-service | `down` | 394 | 600 | WARP_API_KEY not set (set env var + add as org/repo Actions secret) |
-| `oz` | paid-service | `down` | 394 | 600 | WARP_API_KEY not set (set env var + add as org/repo Actions secret) |
-| `github_actions` | github-actions | `up` | 394 | 600 | /opt/homebrew/bin/gh; workflow=limen-agent.yml |
+| `copilot` | github-issue | `down` | 393 | 600 | /opt/homebrew/bin/gh; copilot-swe-agent not confirmed assignable (set LIMEN_COPILOT_ENABLED=1 after enabling Copilot coding agent) |
+| `warp` | paid-service | `down` | 393 | 600 | WARP_API_KEY not set (set env var + add as org/repo Actions secret) |
+| `oz` | paid-service | `down` | 393 | 600 | WARP_API_KEY not set (set env var + add as org/repo Actions secret) |
+| `github_actions` | github-actions | `up` | 393 | 600 | /opt/homebrew/bin/gh; workflow=limen-agent.yml |
 
 ## Blockers
 
-- `gemini`: gemini auth not configured
 - `ollama`: /opt/homebrew/bin/ollama; no model pulled — run `ollama pull qwen2.5-coder:7b` to light the floor lane
 - `jules`: /opt/homebrew/bin/jules
 - `copilot`: /opt/homebrew/bin/gh; copilot-swe-agent not confirmed assignable (set LIMEN_COPILOT_ENABLED=1 after enabling Copilot coding agent)
