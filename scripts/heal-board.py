@@ -9,6 +9,16 @@ a future regression), restore it from the last committed-good snapshot (`git sho
 instead of leaving the daemon idling on a dead queue. This is the "fix the handoff so it ain't
 broken" self-heal: the institution recovers ITSELF instead of waiting for a human hand-restore.
 
+On a HEALTHY board it also runs two idempotent lifecycle repairs so the board never drifts out
+of the canonical vocabulary the validator (`validate-task-board.py`) enforces:
+  - reopened-done: a task reopened after a terminal `done` log is restored to `done`.
+  - needs-human reconcile: a task LABELED `needs-human` that is sitting in a *dispatchable*
+    status (open/dispatched/in_progress) is transitioned to the `needs_human` STATUS. Without
+    this the fleet re-picks a human-gated lever forever AND the validator fails the whole build
+    (needs-human-in-open) — exactly the drift that turned `main` red after mining filed the
+    L-* levers as `open`. Root cause is fixed at the source in `mine-backlog.py`; this heals any
+    already-mined ones and any future guard-bypassed path.
+
 Wired into the heartbeat as a per-beat preflight, so a collapsed board self-restores at the
 start of every beat — but IDEMPOTENT: a healthy board is a no-op (exit 0, no writes).
 
@@ -28,11 +38,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.dispatch import _restore_done_status  # noqa: E402
 from limen.io import atomic_write_text, load_limen_file, queue_lock, save_limen_file  # noqa: E402
+from limen.models import DispatchLogEntry, Task  # noqa: E402
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 BOARD = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
 HEAL_ON = os.environ.get("LIMEN_BOARD_HEAL", "1") != "0"
 ACTIVE = {"open", "dispatched", "in_progress", "needs_human"}
+NEEDS_HUMAN_LABEL = "needs-human"
+DISPATCHABLE = {"open", "dispatched", "in_progress"}
 
 try:
     FLOOR = int(os.environ.get("LIMEN_BOARD_SHRINK_FLOOR", "5"))
@@ -86,11 +99,56 @@ def _clear_async_markers(task_id: str) -> int:
     return cleared
 
 
-def repair_reopened_done(*, check: bool, dry_run: bool) -> int:
-    """Restore any task that was reopened after a terminal done log.
+def _reconcile_needs_human(task: Task, now: datetime) -> bool:
+    """Transition a `needs-human`-LABELED task out of a dispatchable STATUS.
 
-    Returns a process exit code. This is a lifecycle repair, not a collapse
-    restore, so it runs on every healthy-board beat.
+    A human-gated lever mined as `open` (see mine-backlog.py) contradicts its own
+    label: the fleet re-picks it forever and the board validator fails the build.
+    Move it to the `needs_human` status and append aligned evidence so the
+    latest-log-vs-status check also passes. Returns True iff it changed anything.
+    """
+    labels = {str(label) for label in (task.labels or [])}
+    if NEEDS_HUMAN_LABEL not in labels or task.status not in DISPATCHABLE:
+        return False
+    task.status = "needs_human"
+    task.updated = now
+    task.dispatch_log.append(
+        DispatchLogEntry(
+            timestamp=now,
+            agent="heal-board",
+            session_id="heal-board",
+            status="needs_human",
+            output="heal-board: reconciled needs-human label to needs_human status",
+        )
+    )
+    return True
+
+
+def _apply_lifecycle_repairs(tasks: list[Task], now: datetime) -> tuple[list[str], list[str]]:
+    """Run both idempotent lifecycle repairs over the tasks in place.
+
+    Returns (reopened_done_ids, reconciled_needs_human_ids).
+    """
+    reopened: list[str] = []
+    reconciled: list[str] = []
+    for task in tasks:
+        if _restore_done_status(
+            task,
+            now,
+            session_id="heal-board",
+            output="heal-board: restored terminal done status after stale reopen",
+        ):
+            reopened.append(task.id)
+        if _reconcile_needs_human(task, now):
+            reconciled.append(task.id)
+    return reopened, reconciled
+
+
+def repair_lifecycle(*, check: bool, dry_run: bool) -> int:
+    """Run the healthy-board lifecycle repairs (reopened-done + needs-human reconcile).
+
+    Returns a process exit code. These are lifecycle repairs, not a collapse
+    restore, so they run on every healthy-board beat and are idempotent.
     """
     try:
         lf = load_limen_file(BOARD)
@@ -99,31 +157,27 @@ def repair_reopened_done(*, check: bool, dry_run: bool) -> int:
         return 1
 
     now = datetime.now(timezone.utc)
-    repaired_ids: list[str] = []
-    for task in lf.tasks:
-        if _restore_done_status(
-            task,
-            now,
-            session_id="heal-board",
-            output="heal-board: restored terminal done status after stale reopen",
-        ):
-            repaired_ids.append(task.id)
+    reopened, reconciled = _apply_lifecycle_repairs(lf.tasks, now)
 
-    if not repaired_ids:
+    if not reopened and not reconciled:
         print(f"heal-board: OK — {BOARD.name} healthy (total={len(lf.tasks)} active={sum(1 for t in lf.tasks if t.status in ACTIVE)})")
         return 0
 
     if check:
-        print(
-            f"heal-board: {len(repaired_ids)} reopened completed task(s) need repair: "
-            + ", ".join(repaired_ids[:10])
-        )
+        parts: list[str] = []
+        if reopened:
+            parts.append(f"{len(reopened)} reopened completed task(s) need repair: " + ", ".join(reopened[:10]))
+        if reconciled:
+            parts.append(f"{len(reconciled)} needs-human task(s) need reconcile to needs_human: " + ", ".join(reconciled[:10]))
+        print("heal-board: " + "; ".join(parts))
         return 1
     if dry_run:
-        print(
-            f"heal-board: WOULD restore {len(repaired_ids)} reopened completed task(s): "
-            + ", ".join(repaired_ids[:10])
-        )
+        parts = []
+        if reopened:
+            parts.append(f"WOULD restore {len(reopened)} reopened completed task(s): " + ", ".join(reopened[:10]))
+        if reconciled:
+            parts.append(f"WOULD reconcile {len(reconciled)} needs-human task(s) to needs_human: " + ", ".join(reconciled[:10]))
+        print("heal-board: " + "; ".join(parts))
         return 0
 
     with queue_lock(BOARD, timeout=20) as locked:
@@ -131,22 +185,19 @@ def repair_reopened_done(*, check: bool, dry_run: bool) -> int:
             print("heal-board: queue lock held; lifecycle repair deferred")
             return 1
         fresh = load_limen_file(BOARD)
-        repaired_ids = []
-        for task in fresh.tasks:
-            if _restore_done_status(
-                task,
-                now,
-                session_id="heal-board",
-                output="heal-board: restored terminal done status after stale reopen",
-            ):
-                repaired_ids.append(task.id)
-        if repaired_ids:
+        reopened, reconciled = _apply_lifecycle_repairs(fresh.tasks, now)
+        if reopened or reconciled:
             save_limen_file(BOARD, fresh)
-    cleared = sum(_clear_async_markers(task_id) for task_id in repaired_ids)
-    print(
-        f"heal-board: restored {len(repaired_ids)} reopened completed task(s)"
-        + (f"; cleared {cleared} async marker/result file(s)" if cleared else "")
-    )
+    cleared = sum(_clear_async_markers(task_id) for task_id in reopened)
+    parts = []
+    if reopened:
+        parts.append(
+            f"restored {len(reopened)} reopened completed task(s)"
+            + (f"; cleared {cleared} async marker/result file(s)" if cleared else "")
+        )
+    if reconciled:
+        parts.append(f"reconciled {len(reconciled)} needs-human task(s) to needs_human")
+    print("heal-board: " + "; ".join(parts))
     return 0
 
 
@@ -160,7 +211,7 @@ def main(argv: list[str] | None = None) -> int:
     collapsed = (not loadable) or (total <= FLOOR)
 
     if not collapsed:
-        return repair_reopened_done(check=args.check, dry_run=args.dry_run)
+        return repair_lifecycle(check=args.check, dry_run=args.dry_run)
 
     state = "unloadable" if not loadable else f"collapsed (total={total} ≤ floor {FLOOR})"
     print(f"heal-board: ⚠ {BOARD.name} is {state}")

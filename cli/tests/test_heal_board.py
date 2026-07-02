@@ -71,3 +71,53 @@ def test_heal_board_repairs_reopened_done_task(tmp_path: Path) -> None:
     assert task["status"] == "done"
     assert task["dispatch_log"][-1]["status"] == "done"
     assert task["dispatch_log"][-1]["session_id"] == "heal-board"
+
+
+def test_heal_board_reconciles_needs_human_label(tmp_path: Path) -> None:
+    tasks = tmp_path / "tasks.yaml"
+    tasks.write_text(
+        yaml.safe_dump(
+            {
+                "version": "1.0",
+                "tasks": [
+                    {
+                        "id": "GH-organvm-limen-999",
+                        "title": "needs-human (L-EXAMPLE): a human-gated lever",
+                        "target_agent": "any",
+                        "status": "open",
+                        "labels": ["needs-human"],
+                        "created": "2026-07-01",
+                    },
+                    {
+                        "id": "NORMAL-OPEN",
+                        "title": "ordinary dispatchable work",
+                        "target_agent": "codex",
+                        "status": "open",
+                        "labels": ["enhancement"],
+                        "created": "2026-07-01",
+                    },
+                ],
+            },
+            sort_keys=False,
+        )
+    )
+
+    check = run_heal_board(tmp_path, "--check")
+    assert check.returncode == 1
+    assert "needs-human" in check.stdout and "reconcile" in check.stdout
+
+    applied = run_heal_board(tmp_path)
+    assert applied.returncode == 0
+    assert "reconciled 1 needs-human" in applied.stdout
+
+    data = yaml.safe_load(tasks.read_text())
+    by_id = {t["id"]: t for t in data["tasks"]}
+    assert by_id["GH-organvm-limen-999"]["status"] == "needs_human"
+    assert by_id["GH-organvm-limen-999"]["dispatch_log"][-1]["status"] == "needs_human"
+    # an ordinary open task is untouched
+    assert by_id["NORMAL-OPEN"]["status"] == "open"
+
+    # idempotent: a second pass is a clean no-op
+    again = run_heal_board(tmp_path)
+    assert again.returncode == 0
+    assert "OK" in again.stdout

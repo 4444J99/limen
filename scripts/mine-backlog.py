@@ -110,7 +110,10 @@ def _to_task(issue: dict) -> dict:
         "target_agent": "any",
         "priority": _priority(labels),
         "budget_cost": 1,
-        "status": "open",
+        # A needs-human-labeled issue is a human-gated lever, not fleet-dispatchable work:
+        # mine it straight into the needs_human STATUS so label and status never contradict
+        # (an `open` needs-human task fails the board validator + gets re-picked forever).
+        "status": "needs_human" if "needs-human" in labels else "open",
         "labels": labels,
         "urls": [issue["url"]],
         "context": f"GitHub issue {nwo}#{num}. {excerpt}".strip(),
