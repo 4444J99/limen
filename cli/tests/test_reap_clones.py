@@ -161,6 +161,47 @@ def test_confirm_recloneable_true_when_origin_holds_head(tmp_path):
     assert reap.confirm_recloneable(clone) is True
 
 
+def _advance_origin(tmp_path: Path, name: str, msg: str) -> None:
+    """Push a new commit to origin/main via the seed working copy, leaving the clone BEHIND."""
+    seed = tmp_path / f"{name}-seed"
+    (seed / "more.txt").write_text(msg + "\n")
+    _git(seed, "add", "-A")
+    _git(seed, "commit", "-qm", msg)
+    _git(seed, "push", "-q", "origin", "main")
+
+
+def test_confirm_recloneable_true_when_behind_origin(tmp_path):
+    """A pure mirror merely BEHIND origin (the fleet advanced the branch) is STILL re-cloneable — the
+    belt must not require HEAD to be a current tip. This is the remote-unreachable=80 regression: exact-
+    tip matching stranded several GB of behind-origin mirrors that re-clone would trivially restore."""
+    clone = _init_origin_and_clone(tmp_path, "behind")
+    _advance_origin(tmp_path, "behind", "origin advances past the clone")
+    # clone HEAD is now an ANCESTOR of origin/main, not a tip — must still be re-cloneable
+    assert reap.confirm_recloneable(clone) is True
+
+
+def test_behind_origin_mirror_is_reaped_end_to_end(tmp_path):
+    """classify() + belt together: a clean clone behind origin/main reaps as a pushed mirror."""
+    clone = _init_origin_and_clone(tmp_path, "behindfull")
+    _advance_origin(tmp_path, "behindfull", "fleet moved main forward")
+    v = _verdict(clone, age_days=10)
+    assert v.reap is True and v.reason == "pushed-mirror"
+    assert reap.confirm_recloneable(clone) is True
+
+
+def test_confirm_recloneable_false_when_our_branch_deleted_on_origin(tmp_path):
+    """Repo alive but OUR branch was deleted on origin (possible unmerged local-only work) → keep."""
+    clone = _init_origin_and_clone(tmp_path, "branchgone")
+    _git(clone, "checkout", "-q", "-b", "sidework")
+    (clone / "wip.txt").write_text("local branch work\n")
+    _git(clone, "add", "-A")
+    _git(clone, "commit", "-qm", "wip on a branch")
+    _git(clone, "push", "-q", "-u", "origin", "sidework")  # pushed → not "unpushed"
+    _git(clone, "push", "-q", "origin", "--delete", "sidework")  # then deleted on origin
+    # HEAD is on local 'sidework' which origin no longer advertises → not re-confirmable → keep
+    assert reap.confirm_recloneable(clone) is False
+
+
 def test_confirm_recloneable_false_when_origin_deleted(tmp_path):
     """Origin gone from GitHub → local clone is the only copy → NEVER reap (fail-safe)."""
     clone = _init_origin_and_clone(tmp_path, "goneorigin")

@@ -139,13 +139,22 @@ def classify(repo: Path, active_slugs: set[str], now: float, idle_days: float, p
 
 
 def confirm_recloneable(repo: Path) -> bool:
-    """Network belt to the local push gate: the origin must ACTUALLY still hold HEAD.
+    """Network belt to the local push gate: the origin must ACTUALLY still exist and hold our line.
 
     classify() proves 're-cloneable' from LOCAL remote-tracking refs, which survive even if the origin
     was deleted or renamed on GitHub — in which case the local clone is the ONLY copy and must never be
     reaped. `git ls-remote` asks the real remote. FAIL-SAFE: any failure (origin gone OR merely offline)
     returns False, so we skip rather than risk loss; a later online beat reaps it. Disable (trust local
     refs) with LIMEN_REAP_VERIFY_REMOTE=0.
+
+    We deliberately do NOT require HEAD to be a current remote TIP. A pure mirror that is merely BEHIND
+    its origin (the self-pushing fleet advanced the branch after the clone was made) is the SAFEST reap —
+    re-cloning yields origin's newer state and classify() already proved zero unpushed local commits.
+    Requiring an exact-tip match wrongly quarantined every behind-origin mirror (the remote-unreachable=80
+    regression, several GB stranded). Re-cloneable ⟺ origin is reachable AND either HEAD is an advertised
+    tip (exact mirror) OR origin still advertises the branch HEAD sits on (append-only history ⇒ our
+    already-pushed HEAD is an ancestor of the advanced tip). A deleted repo, a wiped-empty repo, or a
+    branch abandoned+deleted on origin (possible unmerged local-only work) all fail this ⇒ kept.
     """
     if os.environ.get("LIMEN_REAP_VERIFY_REMOTE", "1").strip().lower() in {"0", "false", "no", "off"}:
         return True
@@ -159,8 +168,17 @@ def confirm_recloneable(repo: Path) -> bool:
     except Exception:
         return False
     if res.returncode != 0 or not res.stdout.strip():
-        return False
-    return head in res.stdout  # HEAD's sha is present on the remote → truly re-cloneable
+        return False  # origin gone / renamed-away / offline → local clone may be the only copy → keep
+    tips = {}
+    for line in res.stdout.splitlines():
+        if "\t" in line:
+            sha, ref = line.split("\t", 1)
+            tips[ref] = sha
+    if head in tips.values():
+        return True  # HEAD is a current remote tip → exact mirror
+    branch = _run(["git", "-C", str(repo), "rev-parse", "--abbrev-ref", "HEAD"])
+    # behind-origin mirror: origin still advertises our branch → our pushed HEAD is its ancestor
+    return bool(branch) and branch != "HEAD" and f"refs/heads/{branch}" in tips
 
 
 def active_task_slugs(tasks_path: Path) -> set[str]:
