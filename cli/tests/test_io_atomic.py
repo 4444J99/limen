@@ -14,6 +14,7 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
+import yaml
 
 from limen.io import atomic_write_text, load_limen_file, load_limen_text, save_limen_file
 from limen.models import LimenFile
@@ -76,6 +77,32 @@ def test_save_then_load_roundtrips(tmp_path: Path) -> None:
     save_limen_file(target, model)
     loaded = load_limen_file(target)
     assert isinstance(loaded, LimenFile)
+
+
+def test_save_then_load_preserves_board_extensions(tmp_path: Path) -> None:
+    target = tmp_path / "tasks.yaml"
+    model = LimenFile.model_validate(
+        _board(
+            tasks=[
+                {
+                    "id": "T-1",
+                    "title": "t",
+                    "target_agent": "jules",
+                    "created": "2026-07-01",
+                    "custom_extension": {"keep": True},
+                }
+            ]
+        )
+    )
+    model.portal.agents["opencode"] = {"status": "idle", "clock_health": "ok"}
+    save_limen_file(target, model)
+    raw = yaml.safe_load(target.read_text())
+    loaded = load_limen_file(target)
+
+    assert raw["portal"]["agents"]["opencode"] == {"status": "idle", "clock_health": "ok"}
+    assert raw["tasks"][0]["custom_extension"] == {"keep": True}
+    assert loaded.portal.agents["opencode"]["status"] == "idle"
+    assert loaded.tasks[0].model_extra["custom_extension"] == {"keep": True}
 
 
 def test_load_refuses_empty_file(tmp_path: Path) -> None:

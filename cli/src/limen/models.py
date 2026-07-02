@@ -1,5 +1,7 @@
 from datetime import date, datetime
-from pydantic import BaseModel, Field, field_validator
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 VALID_STATUSES = {
@@ -15,6 +17,8 @@ VALID_STATUSES = {
 
 
 class DispatchLogEntry(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     timestamp: datetime
     agent: str
     session_id: str
@@ -23,6 +27,8 @@ class DispatchLogEntry(BaseModel):
 
 
 class Task(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     id: str
     title: str
     description: str | None = None
@@ -57,6 +63,8 @@ class Task(BaseModel):
 
 
 class BudgetTrack(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     date: str
     spent: int = 0
     per_agent: dict[str, int] = Field(default_factory=dict)
@@ -66,6 +74,8 @@ class BudgetTrack(BaseModel):
 
 
 class Budget(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     daily: int = 100
     unit: str = "runs"
     per_agent: dict[str, int] = Field(default_factory=dict)
@@ -73,12 +83,17 @@ class Budget(BaseModel):
 
 
 class Portal(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     name: str = "Universal Task Intake"
     description: str = ""
     budget: Budget = Field(default_factory=Budget)
+    agents: dict[str, dict[str, Any]] = Field(default_factory=dict)
 
 
 class LimenFile(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     version: str = "1.0"
     portal: Portal = Field(default_factory=Portal)
     tasks: list[Task] = Field(default_factory=list)
