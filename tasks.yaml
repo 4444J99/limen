@@ -75899,3 +75899,24 @@ tasks:
   depends_on: []
   created: '2026-07-02'
   dispatch_log: []
+- id: GH-organvm-limen-578
+  title: 'fleet: direct-to-main pushes bypass ruff + check-params, so trunk goes red
+    and blocks the PR queue'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/578
+  context: "GitHub issue organvm/limen#578. ## Finding The autonomic fleet's state-commits\
+    \ (e.g. `limen: preserve fleet cascade board tick`) push **directly to `main`**.\
+    \ Those pushes never run the `ruff` + `check-params` fast-gates \u2014 those gates\
+    \ only execute on **PR** CI. So lint/param debt lands on the trunk unchecked.\
+    \ ## Why it blocks the whole queue (not just the offending commit) GitHub's PR\
+    \ checks test the branch **merged with current"
+  depends_on: []
+  created: '2026-07-02'
+  dispatch_log: []
