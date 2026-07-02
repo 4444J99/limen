@@ -1,8 +1,8 @@
 # Conductor Tranche
 
-Generated: `2026-07-02T15:44:16+00:00`
+Generated: `2026-07-02T16:11:53+00:00`
 
-Summary: `tranche-worktree-lifecycle-debt` -> `worktree-lifecycle-debt` (`blocker`); stop before: Stop before deletion, force-push, merge, or owner-repo source edits unless a narrower owner packet names the repo, branch, predicate, and receipt.
+Summary: `tranche-github-consolidation-collisions` -> `github-consolidation-collisions` (`consolidation-gate`); stop before: Stop before `gh repo rename`, `consolidate-github.py --apply`, `rewrite-owners.py --apply`, GitHub App install, or credential writes unless a human explicitly opens that gate in-session.
 
 ## Cadence Contract
 
@@ -16,34 +16,40 @@ Summary: `tranche-worktree-lifecycle-debt` -> `worktree-lifecycle-debt` (`blocke
 
 | Field | Value |
 |---|---|
-| Packet | `tranche-worktree-lifecycle-debt` |
-| Selected path | `worktree-lifecycle-debt` |
+| Packet | `tranche-github-consolidation-collisions` |
+| Selected path | `github-consolidation-collisions` |
 | Kind | `blocker` |
-| Lane | `blocker` |
-| Score | `70` |
-| Agent fit | `codex` |
-| Attack index generated | `2026-07-02T15:44:16+00:00` |
-| Ranked paths read | `50` |
-| Skipped family/human-gate/parked/observe/auth paths | `worktree_lifecycle`, `session_lifecycle`, `dispatch-heartbeat-substrate-unhealthy`, `github-app-limen-bot-not-wired`, `github_review`, `github-consolidation-collisions`, `agent_coordination`, `local-lifecycle-disk-pressure`, `technical_debt_ci`, `convergence_corpus`, `gen-organvm-universal-mail--automation-test-coverage-0625-151e`, `cloud-runtime-endpoint-unconfigured`, `uncategorized`, `cloud-credential-handles-unconfigured`, `credential-codex-auth-sessions`, `resolve-organvm-i-theoria-.github-459-1ade`, `auth_credentials`, `cifix-organvm-i-theoria-conversation-corpus-engine-f02e`, `discover-organvm-kerygma-profiles-6c74`, `bld-my--father-mother-harden-44b2`, `bld-promptscope-next-rev-3fde` |
+| Lane | `consolidation-gate` |
+| Score | `78` |
+| Agent fit | `codex/human-gate` |
+| Attack index generated | `2026-07-02T16:11:35+00:00` |
+| Ranked paths read | `49` |
+| Skipped family/human-gate/parked/observe/auth paths | `worktree_lifecycle`, `session_lifecycle`, `github-app-limen-bot-not-wired`, `github_review`, `agent_coordination`, `local-lifecycle-disk-pressure`, `technical_debt_ci`, `convergence_corpus`, `gen-organvm-universal-mail--automation-test-coverage-0625-151e`, `cloud-runtime-endpoint-unconfigured`, `uncategorized`, `cloud-credential-handles-unconfigured`, `credential-codex-auth-sessions`, `resolve-organvm-i-theoria-.github-459-1ade`, `auth_credentials`, `cifix-organvm-i-theoria-conversation-corpus-engine-f02e`, `discover-organvm-kerygma-profiles-6c74`, `bld-my--father-mother-harden-44b2`, `bld-promptscope-next-rev-3fde` |
 
 ## Work Packet
 
-Purpose: Resolve the remaining worktree lifecycle blocker by converting affected roots into preservation proof, owner blockers, remote/default proof, or documented non-source residue.
+Purpose: Advance the GitHub/org consolidation enforcement path by refreshing dry-run gates, surfacing collisions, and packetizing the exact human-gated rename/transfer/rewrite sequence.
 
-Repo/worktree: `organvm/limen` conductor checkout plus read-only inspection of `~/Workspace/.limen-worktrees`.
+Repo/worktree: `organvm/limen` conductor checkout only; GitHub/org state is read-only.
 
 Allowed files:
 
-- `cli/src/limen/worktree_debt.py`
-- `cli/tests/test_worktree_debt.py`
-- `scripts/worktree-debt.py`
-- `scripts/*lifecycle*.py`
-- `docs/worktree-lifecycle-ledger.md`
-- `docs/worktree-preservation-receipts.json`
+- `scripts/consolidation-gates.py`
+- `scripts/consolidate-github.py`
+- `scripts/rewrite-owners.py`
+- `scripts/session-blockers-ledger.py`
+- `scripts/session-attack-paths.py`
+- `scripts/conductor-tranche.py`
+- `docs/consolidation/RUNBOOK.md`
+- `docs/consolidation/COLLISION-RENAMES.md`
+- `docs/consolidation/GATES.md`
 - `docs/session-lifecycle-blockers.md`
 - `docs/session-attack-paths.md`
 - `docs/conductor-tranche.md`
-- `.limen-private/session-corpus/lifecycle/**`
+- `.limen-private/session-corpus/lifecycle/consolidation-gates.json`
+- `.limen-private/session-corpus/lifecycle/session-lifecycle-blockers.json`
+- `.limen-private/session-corpus/lifecycle/session-attack-paths.json`
+- `.limen-private/session-corpus/lifecycle/conductor-tranche.json`
 
 Forbidden:
 
@@ -53,21 +59,23 @@ Forbidden:
 - `irreversible GitHub transfer/rename/App install/credential actions`
 - `task-board mutation unless the direct request explicitly requires it`
 
-Stop condition: Stop before deletion, force-push, merge, or owner-repo source edits unless a narrower owner packet names the repo, branch, predicate, and receipt.
+Stop condition: Stop before `gh repo rename`, `consolidate-github.py --apply`, `rewrite-owners.py --apply`, GitHub App install, or credential writes unless a human explicitly opens that gate in-session.
 
-Receipt: docs/worktree-lifecycle-ledger.md and docs/worktree-preservation-receipts.json.
+Receipt: docs/consolidation/GATES.md plus docs/conductor-tranche.md; private parsed gate receipt under .limen-private/session-corpus/lifecycle/.
 
 Verification:
 
-- `python3 scripts/worktree-debt.py --json`
-- `python3 scripts/session-lifecycle-pressure.py --write`
+- `python3 scripts/consolidation-gates.py --write`
 - `python3 scripts/session-blockers-ledger.py --write`
 - `python3 scripts/session-attack-paths.py --write`
 - `python3 scripts/conductor-tranche.py --write`
+- `PYTHONPATH=cli/src python3 scripts/consolidate-github.py`
+- `PYTHONPATH=cli/src python3 scripts/rewrite-owners.py`
+- `bash scripts/gh-app-token.sh --which`
 
 ## Source Next Action
 
-Preserve or owner-record each root; no deletion of unique work.
+Resolve `docs/consolidation/COLLISION-RENAMES.md`, then require `PYTHONPATH=cli/src python3 scripts/consolidate-github.py` to report 0 collisions before any transfer.
 
 ## Refresh
 
