@@ -15,7 +15,7 @@ from unittest import mock
 
 import pytest
 
-from limen.io import atomic_write_text, load_limen_file, save_limen_file
+from limen.io import atomic_write_text, load_limen_file, load_limen_text, save_limen_file
 from limen.models import LimenFile
 
 
@@ -86,3 +86,47 @@ def test_load_refuses_empty_file(tmp_path: Path) -> None:
     target.write_text("   \n")
     with pytest.raises(ValueError):
         load_limen_file(target)
+
+
+def test_load_text_matches_load_file(tmp_path: Path) -> None:
+    """load_limen_text(bytes) must parse identically to load_limen_file(path) for the same
+    content — the refactor that lets a caller read the board exactly once is behavior-preserving."""
+    target = tmp_path / "tasks.yaml"
+    model = LimenFile.model_validate(
+        _board(tasks=[{"id": "T-1", "title": "t", "target_agent": "jules", "created": "2026-07-01"}])
+    )
+    save_limen_file(target, model)
+    text = target.read_text()
+    from_file = load_limen_file(target)
+    from_text = load_limen_text(text)
+    assert from_text.model_dump(mode="json") == from_file.model_dump(mode="json")
+
+
+def test_load_text_refuses_empty() -> None:
+    """The empty/corruption guard holds on the string entry point too."""
+    with pytest.raises(ValueError):
+        load_limen_text("   \n", name="tasks.yaml")
+
+
+def test_load_text_reads_a_frozen_snapshot(tmp_path: Path) -> None:
+    """The whole point of the single-read path: parsing a captured buffer is immune to a concurrent
+    rewrite of the file. Load from a snapshot string, then mutate the file on disk — the parsed board
+    still reflects the snapshot, never the later write (the TOCTOU false-negative --verify hit on the
+    live daemon-churned board)."""
+    target = tmp_path / "tasks.yaml"
+    save_limen_file(
+        target,
+        LimenFile.model_validate(
+            _board(tasks=[{"id": "A", "title": "a", "target_agent": "jules", "created": "2026-07-01"}])
+        ),
+    )
+    snapshot = target.read_text()
+    # a "concurrent writer" replaces the file after we captured the snapshot
+    save_limen_file(
+        target,
+        LimenFile.model_validate(
+            _board(tasks=[{"id": "B", "title": "b", "target_agent": "jules", "created": "2026-07-01"}])
+        ),
+    )
+    board = load_limen_text(snapshot, name=target.name)
+    assert [t.id for t in board.tasks] == ["A"]

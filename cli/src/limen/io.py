@@ -101,28 +101,39 @@ def _backfill_required_task_fields(raw: dict[str, object]) -> int:
     return fixed
 
 
-def load_limen_file(path: Path) -> LimenFile:
-    raw = yaml.safe_load(path.read_text())
+def load_limen_text(text: str, name: str = "tasks.yaml") -> LimenFile:
+    """Parse a board from an in-memory string — the single-read entry point.
+
+    Callers that must reason about the *exact bytes* they loaded (e.g. the materialize --verify
+    byte-identity check, or history-replay loading a git revision) read the file once and pass the
+    buffer here, instead of reading it a second time — a live board the fleet rewrites every beat
+    can change between two reads (a TOCTOU false-negative). `load_limen_file` is this plus the read.
+    """
+    raw = yaml.safe_load(text)
     if raw is None:
         # an empty/whitespace file is corruption, not an empty queue — refuse to load it as
         # None (which would crash downstream); the caller should restore from git/backup.
-        raise ValueError(f"{path} is empty or invalid YAML — refusing to load (restore from git HEAD)")
+        raise ValueError(f"{name} is empty or invalid YAML — refusing to load (restore from git HEAD)")
     dropped = _sanitize_dispatch_logs(raw)
     if dropped:
         print(
             f"[limen.io] tolerated {dropped} malformed dispatch_log "
-            f"entr{'y' if dropped == 1 else 'ies'} in {Path(path).name} (torn-write recovery)",
+            f"entr{'y' if dropped == 1 else 'ies'} in {name} (torn-write recovery)",
             file=sys.stderr,
         )
     backfilled = _backfill_required_task_fields(raw)
     if backfilled:
         print(
             f"[limen.io] backfilled missing `created` on {backfilled} "
-            f"task{'' if backfilled == 1 else 's'} in {Path(path).name} (one partial task must "
+            f"task{'' if backfilled == 1 else 's'} in {name} (one partial task must "
             f"never reject the whole board)",
             file=sys.stderr,
         )
     return LimenFile.model_validate(raw)
+
+
+def load_limen_file(path: Path) -> LimenFile:
+    return load_limen_text(path.read_text(), name=Path(path).name)
 
 
 def atomic_write_text(path: Path, text: str) -> None:

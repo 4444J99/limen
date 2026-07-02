@@ -15,7 +15,7 @@ from limen.doctor import (
 )
 from limen.dispatch import dispatch_tasks, release_stale_tasks
 from limen.harvest import harvest_results
-from limen.io import load_limen_file
+from limen.io import load_limen_file, load_limen_text
 from limen.status import print_status
 
 
@@ -259,7 +259,11 @@ def materialize(verify, emit_events):
         click.echo("tasks.yaml not found", err=True)
         sys.exit(1)
 
-    board = load_limen_file(tasks_path)
+    # Read the board bytes exactly ONCE: seed events from, and compare against, the same buffer.
+    # The live board is rewritten every beat, so a second read_text() could observe a different file
+    # than the one we folded — a TOCTOU false-negative. load_limen_text parses that single snapshot.
+    on_disk = tasks_path.read_text()
+    board = load_limen_text(on_disk, name=tasks_path.name)
     events = seed_events_from_board(board)
 
     if emit_events:
@@ -270,11 +274,10 @@ def materialize(verify, emit_events):
     if verify or not emit_events:
         rebuilt = fold(events)
         # canonical serialization = exactly what save_limen_file writes (mode=json, exclude_none,
-        # sort_keys=False). Compare against the on-disk bytes.
+        # sort_keys=False). Compare against the snapshot we loaded from — not a fresh read.
         rebuilt_bytes = yaml.dump(
             rebuilt.model_dump(mode="json", exclude_none=True), sort_keys=False, default_flow_style=False
         )
-        on_disk = tasks_path.read_text()
         identical = rebuilt_bytes == on_disk
         click.echo(
             f"materialize: {len(board.tasks)} tasks, {len(events)} events; "
