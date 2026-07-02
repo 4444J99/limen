@@ -48,6 +48,21 @@
         "coverage_of": "total_repos",
         "min_coverage": 0.8
       }
+    },
+    {
+      "key": "links",
+      "home": "organvm-corpvs-testamentvm/links-registry.json",
+      "owns": "the canonical LINKS HOME — every outward URL (deployments, GitHub-Pages, funding, custom domains/social), folded from the partial homes into one register",
+      "fed_by": {
+        "writer": "organvm-corpvs-testamentvm/scripts/build-links-registry.py",
+        "wired_in": "organvm-corpvs-testamentvm/.github/workflows/metrics-refresh.yml",
+        "writer_marker": "build-links-registry",
+        "_note": "Fed by build-links-registry.py (local-first, gh-api fallback for the portfolio-owned sources), wired into the daily metrics-refresh pipeline. If this step is ever dropped — the exact disease that froze the bio at 148 — VENA flags the conduit stale UPSTREAM of any links surface."
+      },
+      "freshness": {
+        "date_locator": "generated",
+        "max_lag_days": 14
+      }
     }
   ],
 
@@ -90,15 +105,15 @@
   ],
 
   "links_home": {
-    "_doc": "The one genuinely MISSING owner (the user's explicit ask: 'the links in one home'). No canonical links home exists — deployment URLs, social handles and custom domains are scattered across four partial homes with no sync. VVLTVS surfaces this absence until it is built. CONVERGE, do not invent a new inventory: fold the existing partial homes into one register, then generate the profile links-in-bio + portfolio link surfaces FROM it.",
-    "status": "missing",
+    "_doc": "RESOLVED — was the one genuinely MISSING owner (the user's explicit ask: 'the links in one home'). Now a canonical register fed by scripts/build-links-registry.py (see registers.links), which CONVERGES the authoritative partial homes below into one register rather than inventing a new inventory. The profile links-in-bio + portfolio link surfaces should PROJECT from this register, not maintain their own copies. VENA watches its conduit; if the feeder is dropped from CI, the home surfaces as stale.",
+    "status": "present",
     "target": "organvm-corpvs-testamentvm/links-registry.json",
     "converges": [
-      { "home": "organvm-corpvs-testamentvm/repo-registry.json", "holds": "deployment_url (21) across Netlify/Cloudflare/GH-Pages/Render" },
-      { "home": "per-repo ecosystem.yaml (30+)", "holds": "per-repo delivery config" },
-      { "home": "organvm/portfolio/src/data/github-pages.json", "holds": "21 GH-Pages HTTP probes + CNAME + sync status" },
-      { "home": "organvm/portfolio/.github/FUNDING.yml", "holds": "payment/support link (payrail + GitHub sponsor)" },
-      { "home": "(unowned)", "holds": "social handles + custom domains (etceter4.com, padavano.vercel) — no owner today" }
+      { "home": "organvm-corpvs-testamentvm/repo-registry.json", "holds": "deployment_url + platform across Netlify/Cloudflare/Render/GH-Pages (folded, kind=deployment)" },
+      { "home": "organvm/portfolio/src/data/github-pages.json", "holds": "GH-Pages page URLs + CNAME + build status (folded via gh-api fallback, kind=page)" },
+      { "home": "organvm/portfolio/.github/FUNDING.yml", "holds": "GitHub Sponsors + custom payrail link (folded via gh-api fallback, kind=funding)" },
+      { "home": "(unowned)", "holds": "custom domains + social handles with no home yet (etceter4.com, padavano.vercel) — folded as status:unowned so they are visible until adopted" },
+      { "home": "per-repo ecosystem.yaml (26)", "holds": "prose delivery notes — their deployment URLs are redundant with repo-registry, so NOT separately folded (keeps the fold byte-reproducible in CI, where those repos are absent)" }
     ]
   }
 }
