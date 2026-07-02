@@ -255,6 +255,10 @@ def _registry():
              gate="LIMEN_CVSTOS", gate_default="1",
              what="keeper of the host — chat-app/local debt census + factory invariant (nothing truly on PATH/local) + reaper proprioception",
              probe=lambda: _mtime(LOGS / "cvstos-organ-state.json")),
+        dict(key="vvltvs", rung="VVLTVS", voice="vvltvs", cadence_key="VVLTVS",
+             gate="LIMEN_VVLTVS", gate_default="1",
+             what="the countenance — verify the public face reflects the live SSOT (profile/portfolio drift) + the contribution-mix radar (the review-% tell)",
+             probe=lambda: _mtime(LOGS / "vvltvs-organ-state.json")),
     ]
 
 

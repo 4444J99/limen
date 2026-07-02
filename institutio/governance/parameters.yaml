@@ -524,6 +524,37 @@ parameters:
     self_update: none
     owner: cvstos
     note: "Max directory entries the debt-sizing walk visits before returning an approximate total. Bounds the beat's cost; never blocks."
+  # --- VVLTVS: the countenance — verify the public face reflects the live SSOT (sibling of CVSTOS) ---
+  LIMEN_BEAT_VVLTVS:
+    default: 24                 # cadence: verify the public face every 24 beats (offline file reads ⇒ cheap)
+    env: LIMEN_BEAT_VVLTVS
+    self_update: none
+    owner: vvltvs
+    note: "How often VVLTVS verifies the public face reflects the live SSOT (profile/portfolio drift) + surfaces the contribution-mix radar. Offline on the beat (reads the SSOT + face files + cached mix), read-only, fail-open."
+  LIMEN_VVLTVS:
+    default: 1                  # default-ON: the surface pass rides the beat (read-only, offline)
+    env: LIMEN_VVLTVS
+    self_update: none
+    owner: vvltvs
+    note: "Master gate for the VVLTVS beat. ON by default (surface-only, never writes his public face). Set 0 to silence the rung. The --apply remediation plan is never run by the beat."
+  LIMEN_VVLTVS_REVIEW_FLOOR:
+    default: 10                 # review-contribution % below this ⇒ flagged FDE-lane liability
+    env: LIMEN_VVLTVS_REVIEW_FLOOR
+    self_update: none
+    owner: vvltvs
+    note: "Code-review contribution percent below which the activity shape is flagged a liability (a low review share reads as a high-volume solo operator). A derived threshold, not a pinned truth."
+  LIMEN_VVLTVS_REFRESH:
+    default: 0                  # default-OFF: the beat never hits `gh api` — reads the cached mix only
+    env: LIMEN_VVLTVS_REFRESH
+    self_update: none
+    owner: vvltvs
+    note: "When 1, the beat MAY recompute the contribution mix via one `gh api graphql` call if the cache is stale. Default 0 keeps the beat fully offline; `--refresh` always forces a recompute regardless."
+  LIMEN_VVLTVS_MIX_STALE_DAYS:
+    default: 7                  # cached contribution mix older than this ⇒ marked stale (advisory)
+    env: LIMEN_VVLTVS_MIX_STALE_DAYS
+    self_update: none
+    owner: vvltvs
+    note: "Age (days) after which the cached contribution mix is treated as stale. Only surfaced as an advisory (and triggers a refresh when LIMEN_VVLTVS_REFRESH=1); never fails the predicate."
   # --- ORGANS (VLTIMA): convert idle capacity into institutional weight (legal/financial/education/...) ---
   LIMEN_ORGAN_BACKLOG:
     default: 1                  # default-ON: organ-ladder -> bounded build tasks each FEED beat
