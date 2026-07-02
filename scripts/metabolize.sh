@@ -37,6 +37,15 @@ fi
 # Source the cred cache so THIS shell + every child (route.py, the agent CLIs) inherit the keys.
 if [ -f "$HOME/.limen.env" ]; then set -a; . "$HOME/.limen.env"; set +a; fi
 
+echo "── 0b. verify MCP connector consent (Lane B — surface lapsed claude.ai connectors in the log, never in chat) ──"
+# The op:// lane (0a) has a validity probe; this is the missing one for the OTHER credential lane —
+# the claude.ai hosted MCP connectors whose OAuth lives SERVER-SIDE (no local token to refresh). A
+# lapsed connector surfaces HERE in the beat log with its one-lever cure (L-IANVA-CLOUD), not as a
+# recurring /mcp chat nag. Non-fatal + fail-open offline (exit 0 unless a REQUIRED connector lapses).
+if [ "${LIMEN_MCP_VERIFY:-1}" = "1" ]; then
+  python3 "$LIMEN_ROOT/scripts/mcp-auth-verify.py" || echo "  ↑ REQUIRED MCP connector(s) unauthenticated — pull L-IANVA-CLOUD (#263) to end the class"
+fi
+
 echo "── 0. refresh usage telemetry / lane health ──"
 python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" || echo "  (usage telemetry skipped)"
 

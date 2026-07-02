@@ -160,6 +160,27 @@ else
   printf 'note  %s\n' "offline — skipped GitHub open/closed check (pointer-presence still enforced)"
 fi
 
+# ---------------------------------------------------------------------------
+# 8: no DANGLING PROSE lever reference. A lever id named in the registry's prose
+#    (_doc/wall/spine, a label, a note, steps) but never DEFINED as an object here
+#    is a pointer to nothing durable — the exact gap §7's issue-check cannot catch
+#    (it validates objects, not references). Every `L-*` id the file mentions must
+#    resolve to a lever object in THIS git-tracked registry; external-organ atoms
+#    must be referenced descriptively, not by a bare id that reads as 'defined here.'
+# ---------------------------------------------------------------------------
+if ! python3 - "$REGISTRY" <<'PY'; then fail=1; fi
+import json, re, sys
+d = json.load(open(sys.argv[1]))
+obj_ids = {l.get("id") for l in d.get("levers", [])}
+referenced = set(re.findall(r"\bL-[A-Z0-9]+(?:-[A-Z0-9]+)*\b", json.dumps(d)))
+dangling = sorted(referenced - obj_ids)
+if dangling:
+    print(f"FAIL  registry prose names {len(dangling)} lever id(s) with no object here: {dangling} — "
+          "define each as a lever object, or reference the external atom descriptively (not by bare id).")
+    sys.exit(1)
+print(f"ok    every lever id named in prose resolves to a defined object ({len(obj_ids)} levers)")
+PY
+
 echo
 if [ "$fail" -ne 0 ]; then
   echo "VERDICT: tasks are hanging — see FAIL lines above. Hang each in its owner's git-tracked record, then re-run."

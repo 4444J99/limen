@@ -650,6 +650,26 @@ parameters:
     owner: limen-daemon
     note: "Which pinned issue scripts/credential-wall.py --sync rewrites as the secret/credential Wall. Identity, not a knob — override only if the Wall issue is ever renumbered."
 
+  # --- MCP-CONNECTOR CONSENT — Lane B (scripts/mcp-auth-verify.py): the claude.ai OAuth connectors ---
+  LIMEN_MCP_VERIFY:
+    default: "1"               # ON — surface lapsed connectors in the beat log, never in chat
+    env: LIMEN_MCP_VERIFY
+    self_update: none
+    owner: limen-daemon
+    note: "Gate for the metabolize 0b step that probes claude.ai MCP-connector consent (the Lane-B sibling of creds-hydrate --verify). =0 skips it. Non-fatal + fail-open offline; a lapsed connector surfaces with its cure L-IANVA-CLOUD. See ianva-mcp-doorway."
+  LIMEN_MCP_REQUIRED:
+    default: ""                # empty ⇒ no connector is hard-required; every lapse is informational
+    env: LIMEN_MCP_REQUIRED
+    self_update: none
+    owner: limen-daemon
+    note: "Comma list of MCP connectors (substring match) that MUST be authenticated; mcp-auth-verify exits 1 if any lapses, else 0. Empty (default) DERIVES nothing as required — the hosted connectors are optional conveniences, so a lapse is logged, not fatal."
+  LIMEN_MCP_NEEDS_AUTH_CACHE:
+    default: "~/.claude/mcp-needs-auth-cache.json"
+    env: LIMEN_MCP_NEEDS_AUTH_CACHE
+    self_update: none
+    owner: limen-daemon
+    note: "Path to the daemon's needs-auth marker cache that mcp-auth-verify reads offline (connector names + internal ids only — no token material). Identity, not a knob — override only if Claude Code relocates the cache."
+
   # --- WORKTREE LIFECYCLE / parallel CELLS (scripts/cells.sh + scripts/reclaim-worktrees.py) ---
   LIMEN_RECLAIM_CLAUDE_WT:
     default: "1"               # ON — sweep .claude/worktrees too (the historical ~50GB blind spot)
