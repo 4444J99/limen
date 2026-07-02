@@ -532,20 +532,6 @@ parameters:
     owner: walls
     note: "How often the credential Wall (#320) + his-hand aggregate Wall (#330) are regenerated so they never drift from reality. Idempotent, fail-open."
 
-  # --- GOVERNANCE: cursus honorum seed validator + standing report ------------
-  LIMEN_GOVERNANCE:
-    default: "1"
-    env: LIMEN_GOVERNANCE
-    self_update: none
-    owner: governance
-    note: "Gate for the governance organ. 1=run the cursus honorum seed validator + governance standing report on its beat; 0=skip without disabling the rest of heartbeat."
-  LIMEN_BEAT_GOVERNANCE:
-    default: 8
-    env: LIMEN_BEAT_GOVERNANCE
-    self_update: none
-    owner: governance
-    note: "How often the governance organ runs inside heartbeat-loop. It is lockless, idempotent, and fail-open."
-
   # --- LIFE: the Executive Life Office (digital accounts/assets + subscription purge clock) ---
   LIMEN_BEAT_LIFE:
     default: 6                  # cadence: refresh the digital-life office every 6 beats
