@@ -20,13 +20,24 @@ from __future__ import annotations
 
 import os
 
-# The ladder rungs, cheapest-first. Shared with dispatch's earned-tier ladder.
-_CLAUDE_TIER_ORDER = ("haiku", "sonnet", "opus")
+# The ladder rungs, cheapest-first. Shared with dispatch's earned-tier ladder. Fable is a
+# reserved top tier above Opus, not a new default escalation target.
+_CLAUDE_TIER_ORDER = ("haiku", "sonnet", "opus", "fable")
 
 # Reserved-Opus classes: the doctrine's small principled set whose failure is BOTH undetectable
 # AND high-stakes (final/canon synthesis, irreversible go-live reasoning, kernel abstraction). A
 # stated principle, env-overridable (comma-separated LIMEN_CLAUDE_OPUS_CLASSES) — not inherited config.
 _CLAUDE_OPUS_CLASSES_DEFAULT = ("canon", "synthesis", "kernel", "go-live", "irreversible")
+
+# Fable classes are narrower than reserved-Opus classes and still require an explicit acceptance
+# receipt before model selection is allowed to return the Fable rung.
+_CLAUDE_FABLE_CLASSES_DEFAULT = (
+    "fable",
+    "long-horizon",
+    "huge-context",
+    "ambiguous-root-cause",
+    "final-canonical-decision",
+)
 
 
 def _claude_opus_classes() -> set[str]:
@@ -36,6 +47,34 @@ def _claude_opus_classes() -> set[str]:
     if raw is not None:
         return {c.strip() for c in raw.split(",") if c.strip()}
     return set(_CLAUDE_OPUS_CLASSES_DEFAULT)
+
+
+def _claude_fable_classes() -> set[str]:
+    """The reserved-Fable class set — env override (LIMEN_CLAUDE_FABLE_CLASSES,
+    comma-separated) wins, else the stated default. A class match alone is not enough;
+    :func:`_claude_fable_acceptance_present` must also pass."""
+    raw = os.environ.get("LIMEN_CLAUDE_FABLE_CLASSES")
+    if raw is not None:
+        return {c.strip() for c in raw.split(",") if c.strip()}
+    return set(_CLAUDE_FABLE_CLASSES_DEFAULT)
+
+
+def _claude_fable_acceptance_present() -> bool:
+    """True only when the operator has provided a written Fable acceptance artifact.
+
+    The expected value is a path to a receipt produced by ``scripts/fable-allotment.py accept``.
+    ``1`` is also accepted for tests or short-lived manual shells, but the durable path is the
+    receipt file so the run has a written acceptance command before it starts.
+    """
+    raw = os.environ.get("LIMEN_FABLE_ACCEPTANCE", "").strip()
+    if not raw:
+        return False
+    if raw == "1":
+        return True
+    try:
+        return os.path.exists(os.path.expanduser(raw))
+    except Exception:
+        return False
 
 
 def _resolve_claude_model(tier: str) -> str:
@@ -67,6 +106,8 @@ def _shim_floor_tier() -> str:
     """The floor tier for an unclassed fleet spawn. LIMEN_CLAUDE_SHIM_FLOOR tunes it; defaults to
     "haiku" to match dispatch._claude_tier_for(None). Guarded to a real rung."""
     tier = os.environ.get("LIMEN_CLAUDE_SHIM_FLOOR", "haiku")
+    if tier == "fable" and not _claude_fable_acceptance_present():
+        return "haiku"
     return tier if tier in _CLAUDE_TIER_ORDER else "haiku"
 
 

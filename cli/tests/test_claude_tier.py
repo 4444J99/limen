@@ -47,9 +47,13 @@ def _clear(monkeypatch):
         "LIMEN_CLAUDE_TIER_SELECT",
         "LIMEN_CLAUDE_RETRY_BUMP",
         "LIMEN_CLAUDE_OPUS_CLASSES",
+        "LIMEN_CLAUDE_FABLE_CLASSES",
         "LIMEN_CLAUDE_HAIKU_MODEL",
         "LIMEN_CLAUDE_SONNET_MODEL",
         "LIMEN_CLAUDE_OPUS_MODEL",
+        "LIMEN_CLAUDE_FABLE_MODEL",
+        "LIMEN_CLAUDE_RETRY_BUMP_TO_FABLE",
+        "LIMEN_FABLE_ACCEPTANCE",
     ):
         monkeypatch.delenv(k, raising=False)
 
@@ -80,6 +84,26 @@ def test_opus_for_reserved_class(tmp_path, monkeypatch):
     assert D._claude_model(_task(type_="code", labels=["canon"])) == "opus"
     # opus wins even when the task ALSO matches a sonnet (waste) class.
     assert D._claude_model(_task(type_="research", labels=["synthesis"])) == "opus"
+
+
+def test_fable_is_reserved_above_opus_and_requires_acceptance(tmp_path, monkeypatch):
+    """Fable is a top rung, but it is not reached unless the run carries written acceptance."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_ledger(tmp_path, {"waste_classes": []})
+    assert _CLAUDE_TIER_ORDER[-1] == "fable"
+
+    _write_tiers(tmp_path, {"fable": ["final-canonical-decision"]})
+    task = _task(type_="final-canonical-decision")
+    assert D._claude_model(task) == "opus"
+
+    acceptance = tmp_path / "fable-acceptance.json"
+    acceptance.write_text("{}")
+    monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", str(acceptance))
+    assert D._claude_model(task) == "fable"
+
+    monkeypatch.setenv("LIMEN_CLAUDE_FABLE_MODEL", "claude-fable-5")
+    assert D._resolve_claude_model("fable") == "claude-fable-5"
 
 
 def test_env_override_wins(tmp_path, monkeypatch):
@@ -132,6 +156,12 @@ def test_retry_bump_on_tried_claude(tmp_path, monkeypatch):
     assert D._claude_model(_task(type_="code", labels=["tried:claude"])) == "sonnet"  # haiku→sonnet
     assert D._claude_model(_task(type_="research", labels=["tried:claude"])) == "opus"  # sonnet→opus
     assert D._claude_model(_task(type_="code", labels=["canon", "tried:claude"])) == "opus"  # caps
+    acceptance = tmp_path / "fable-acceptance.json"
+    acceptance.write_text("{}")
+    monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", str(acceptance))
+    assert D._claude_model(_task(type_="code", labels=["canon", "tried:claude"])) == "opus"
+    monkeypatch.setenv("LIMEN_CLAUDE_RETRY_BUMP_TO_FABLE", "1")
+    assert D._claude_model(_task(type_="code", labels=["canon", "tried:claude"])) == "fable"
     monkeypatch.setenv("LIMEN_CLAUDE_RETRY_BUMP", "0")
     assert D._claude_model(_task(type_="code", labels=["tried:claude"])) == "haiku"  # gated off
 
@@ -215,7 +245,7 @@ def test_all_agent_type_models_are_valid_tier_aliases():
     never a dated model id (derive-never-pin). The membership assert on a known rung kills a vacuous
     import that silently empties the tier set."""
     valid = set(_CLAUDE_TIER_ORDER) | {"inherit"}
-    assert "haiku" in valid and "opus" in valid, "tier vocabulary failed to load"
+    assert "haiku" in valid and "opus" in valid and "fable" in valid, "tier vocabulary failed to load"
     files = sorted(_agents_dir().glob("*.md"))
     assert files, "no .claude/agents/*.md type files found"
     for md in files:

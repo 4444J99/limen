@@ -34,6 +34,8 @@ _TIER_ENV = (
     "LIMEN_CLAUDE_HAIKU_MODEL",
     "LIMEN_CLAUDE_SONNET_MODEL",
     "LIMEN_CLAUDE_OPUS_MODEL",
+    "LIMEN_CLAUDE_FABLE_MODEL",
+    "LIMEN_FABLE_ACCEPTANCE",
 )
 
 
@@ -85,10 +87,14 @@ def test_tiering_gated_off_yields_no_injection(monkeypatch):
 
 
 def test_floor_is_tunable_and_guarded(monkeypatch):
-    """LIMEN_CLAUDE_SHIM_FLOOR tunes the floor; a bogus value is guarded back to haiku."""
+    """LIMEN_CLAUDE_SHIM_FLOOR tunes the floor; bogus or unaccepted Fable values guard back."""
     _clear(monkeypatch)
     monkeypatch.setenv("LIMEN_CLAUDE_SHIM_FLOOR", "sonnet")
     assert model_for_argv(["-p", "hi"]) == "sonnet"
+    monkeypatch.setenv("LIMEN_CLAUDE_SHIM_FLOOR", "fable")
+    assert model_for_argv(["-p", "hi"]) == "haiku"
+    monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", "1")
+    assert model_for_argv(["-p", "hi"]) == "fable"
     monkeypatch.setenv("LIMEN_CLAUDE_SHIM_FLOOR", "nonsense")
     assert model_for_argv(["-p", "hi"]) == "haiku"
 

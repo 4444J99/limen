@@ -35,9 +35,10 @@ class Task(BaseModel):
     labels: list[str] = Field(default_factory=list)
     urls: list[str] = Field(default_factory=list)
     context: str | None = None
-    # Optional per-task Claude tier pin ("haiku"|"sonnet"|"opus") — an escape hatch that
+    # Optional per-task Claude tier pin ("haiku"|"sonnet"|"opus"|"fable") — an escape hatch that
     # overrides the earned-tier ladder's class-based derivation for THIS task (the env
-    # LIMEN_CLAUDE_MODEL still wins above it). None → derive the tier. See dispatch._claude_model.
+    # LIMEN_CLAUDE_MODEL still wins above it). Fable still requires LIMEN_FABLE_ACCEPTANCE.
+    # None → derive the tier. See dispatch._claude_model.
     claude_tier: str | None = None
     # task ids that must have a MERGED PR before this task is eligible to dispatch. Lets a
     # dependent increment be seeded NOW and auto-build only once its predecessor lands in the

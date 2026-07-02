@@ -24,6 +24,8 @@ from limen.models import BudgetTrack, DispatchLogEntry, LimenFile, Task
 from limen.doctor import stale_tasks
 from limen.model_selection import (  # the shared model vocabulary — also used by the non-bypassable `claude` shim
     _CLAUDE_TIER_ORDER,
+    _claude_fable_acceptance_present,
+    _claude_fable_classes,
     _claude_opus_classes,
     _resolve_claude_model,
 )
@@ -1540,10 +1542,11 @@ def _codex_model() -> str | None:
 # tier up front. No new escalation machinery. Mirrors _codex_model/_opencode_model: env pin
 # wins, derive at call-time, fail-open. ([[model-tiering-policy]], [[value-is-discovered-never-assumed]])
 #
-# The shared VOCABULARY this ladder sorts with — _CLAUDE_TIER_ORDER, _CLAUDE_OPUS_CLASSES_DEFAULT,
-# _claude_opus_classes(), _resolve_claude_model() — lives in model_selection.py (imported at the top)
-# so the NON-BYPASSABLE `claude` shim sorts with the EXACT same vocabulary. One source of truth:
-# this file owns the per-TASK sort; the shim owns the per-SPAWN floor. ([[fleet-model-floor-bleed]])
+# The shared VOCABULARY this ladder sorts with — _CLAUDE_TIER_ORDER, reserved class sets,
+# acceptance gates, and _resolve_claude_model() — lives in model_selection.py (imported at the
+# top) so the NON-BYPASSABLE `claude` shim sorts with the EXACT same vocabulary. One source of
+# truth: this file owns the per-TASK sort; the shim owns the per-SPAWN floor.
+# ([[fleet-model-floor-bleed]])
 
 
 def _claude_tier_overrides() -> dict[str, list[str]]:
@@ -1560,6 +1563,7 @@ def _claude_tier_overrides() -> dict[str, list[str]]:
 def _claude_tier_for(task: Task | None) -> str:
     """DERIVE the Claude tier for a task. Default = haiku (verifiable → escalate via the existing
     cascade). Pre-assign a higher tier ONLY where failure is undetectable:
+      • fable — the narrow reserved top tier plus a written acceptance receipt/command;
       • opus  — the reserved principled set (_claude_opus_classes) or an explicit override;
       • sonnet— classes the ledger has DISCOVERED this lane wastes on (waste_classes): work that
                 shipped low-value yet passed whatever gate exists ⇒ failure not caught cheaply here.
@@ -1569,9 +1573,13 @@ def _claude_tier_for(task: Task | None) -> str:
         return "haiku"
     pin = task.claude_tier
     if pin in _CLAUDE_TIER_ORDER:
+        if pin == "fable" and not _claude_fable_acceptance_present():
+            return "opus"
         return str(pin)
     classes = _task_classes(task)
     override = _claude_tier_overrides()
+    if classes & (_claude_fable_classes() | set(override.get("fable") or [])):
+        return "fable" if _claude_fable_acceptance_present() else "opus"
     if classes & (_claude_opus_classes() | set(override.get("opus") or [])):
         return "opus"
     lane_data = _ledger_lanes().get("claude") or {}
@@ -1584,14 +1592,21 @@ def _claude_tier_for(task: Task | None) -> str:
 def _bump_tier(tier: str, task: Task | None) -> str:
     """Escalate-on-failed-cheap-check, in-tier: if THIS task already failed on the claude lane
     (carries the cascade's own 'tried:claude' breadcrumb), the cheap verify failed once here, so
-    step up one rung (capped at opus). State lives in the EXISTING label — no new retry counter,
-    no schema change. Env-gated LIMEN_CLAUDE_RETRY_BUMP (default on)."""
+    step up one rung (capped at opus unless LIMEN_CLAUDE_RETRY_BUMP_TO_FABLE=1 and a Fable
+    acceptance is present). State lives in the EXISTING label — no new retry counter, no schema
+    change. Env-gated LIMEN_CLAUDE_RETRY_BUMP (default on)."""
     if task is None or os.environ.get("LIMEN_CLAUDE_RETRY_BUMP", "1") != "1":
         return tier
     if "tried:claude" not in (getattr(task, "labels", None) or []):
         return tier
     i = _CLAUDE_TIER_ORDER.index(tier)
-    return _CLAUDE_TIER_ORDER[min(i + 1, len(_CLAUDE_TIER_ORDER) - 1)]
+    bumped = _CLAUDE_TIER_ORDER[min(i + 1, len(_CLAUDE_TIER_ORDER) - 1)]
+    if bumped == "fable" and not (
+        os.environ.get("LIMEN_CLAUDE_RETRY_BUMP_TO_FABLE") == "1"
+        and _claude_fable_acceptance_present()
+    ):
+        return "opus"
+    return bumped
 
 
 def _claude_model(task: Task | None = None) -> str | None:
