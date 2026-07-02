@@ -1,8 +1,8 @@
 # Live Root Gate
 
-Generated: `2026-07-02T19:10:54+00:00`
+Generated: `2026-07-02T19:26:56+00:00`
 
-Status: `blocked`
+Status: `ready`
 
 ## Rule
 
@@ -12,24 +12,20 @@ Status: `blocked`
 
 ## Gate State
 
-- Operator gate required: `True`.
+- Operator gate required: `False`.
 - Release reconcile allowed without human: `False`.
 - Launchd reload allowed without human: `False`.
-- Blocking gates: `live-root-dirty`.
+- Blocking gates: none.
 
 ## Live Root
 
 - Path: `~/Workspace/limen`.
 - Branch: `main`; release branch `main`.
-- HEAD: `376012724bcc4d65f32986908e14f030bb0d42f2`.
-- Release head: `376012724bcc4d65f32986908e14f030bb0d42f2`.
+- HEAD: `506d7ecd78e431ee56a6b7fe62b7aa4d621cae21`.
+- Release head: `506d7ecd78e431ee56a6b7fe62b7aa4d621cae21`.
 - Matches release: `True`; ahead `0` behind `0`.
 - Unique local commits: `0`; patch-equivalent commits: `0`.
-- Dirty entries: `1`.
-
-### Dirty Paths
-
-- `scripts/usage-telemetry.py`
+- Dirty entries: `0`.
 
 ## Heartbeat
 
