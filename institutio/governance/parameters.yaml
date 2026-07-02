@@ -712,6 +712,20 @@ parameters:
     owner: limen-daemon
     note: "Path to the daemon's needs-auth marker cache that mcp-auth-verify reads offline (connector names + internal ids only — no token material). Identity, not a knob — override only if Claude Code relocates the cache."
 
+  # --- HOST-IS-FACTORY / CARTRIDGE INTEGRITY (scripts/cartridge-connected.py): is chezmoi plugged into the real cartridge ---
+  LIMEN_CARTRIDGE_CHECK:
+    default: "1"               # ON — surface an unplugged cartridge in the beat log (0c), never in chat
+    env: LIMEN_CARTRIDGE_CHECK
+    self_update: none
+    owner: limen-daemon
+    note: "Gate for the metabolize 0c step that asserts chezmoi's source IS the real cartridge (organvm/domus-genoma), not a scratch/dummy source. =0 skips it. Non-fatal + fail-open when chezmoi is absent; nothing else checks source IDENTITY (chezmoi verify/status/health only validate whatever source is wired), so a disconnected cartridge would otherwise return a meaningless green. See host-is-factory-system-is-cartridge."
+  LIMEN_CARTRIDGE_REPO:
+    default: "organvm/domus-genoma"
+    env: LIMEN_CARTRIDGE_REPO
+    self_update: none
+    owner: limen-daemon
+    note: "The expected cartridge repo (owner/repo) whose remote chezmoi's source must match for cartridge-connected to pass. DERIVED default, not pinned per host — another person's prosthesis overrides this to their own fork; a same-repo-name fork under a different owner still validates. See derive-never-pin-hardcodes."
+
   # --- WORKTREE LIFECYCLE / parallel CELLS (scripts/cells.sh + scripts/reclaim-worktrees.py) ---
   LIMEN_RECLAIM_CLAUDE_WT:
     default: "1"               # ON — sweep .claude/worktrees too (the historical ~50GB blind spot)

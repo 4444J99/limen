@@ -267,9 +267,7 @@ def test_audit_transcript_policy_mentions_do_not_accept_fable(tmp_path):
                 json.dumps(
                     {
                         "type": "user",
-                        "message": {
-                            "content": "docs mention LIMEN_FABLE_ACCEPTANCE and fable-allotment.py accept"
-                        },
+                        "message": {"content": "docs mention LIMEN_FABLE_ACCEPTANCE and fable-allotment.py accept"},
                     }
                 ),
                 json.dumps(
@@ -288,9 +286,7 @@ def test_audit_transcript_policy_mentions_do_not_accept_fable(tmp_path):
     )
     proc = run_guard("audit-transcript", str(transcript), "--max-billable-tokens", "1000000")
     assert proc.returncode == 2
-    assert "Fable run lacks written acceptance command" in "\n".join(
-        json.loads(proc.stdout)["violations"]
-    )
+    assert "Fable run lacks written acceptance command" in "\n".join(json.loads(proc.stdout)["violations"])
 
 
 def test_audit_transcript_allows_current_receipt_env(tmp_path):

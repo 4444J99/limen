@@ -79,10 +79,7 @@ def _claude_fable_acceptance_present() -> bool:
             receipt = json.load(fh)
         now = dt.datetime.now(dt.timezone.utc)
         monday = (now - dt.timedelta(days=now.weekday())).date().isoformat()
-        return (
-            receipt.get("schema") == "limen.fable_acceptance.v1"
-            and receipt.get("week") == monday
-        )
+        return receipt.get("schema") == "limen.fable_acceptance.v1" and receipt.get("week") == monday
     except Exception:
         return False
 

@@ -1603,8 +1603,7 @@ def _bump_tier(tier: str, task: Task | None) -> str:
     i = _CLAUDE_TIER_ORDER.index(tier)
     bumped = _CLAUDE_TIER_ORDER[min(i + 1, len(_CLAUDE_TIER_ORDER) - 1)]
     if bumped == "fable" and not (
-        os.environ.get("LIMEN_CLAUDE_RETRY_BUMP_TO_FABLE") == "1"
-        and _claude_fable_acceptance_present()
+        os.environ.get("LIMEN_CLAUDE_RETRY_BUMP_TO_FABLE") == "1" and _claude_fable_acceptance_present()
     ):
         return "opus"
     return bumped

@@ -46,6 +46,17 @@ if [ "${LIMEN_MCP_VERIFY:-1}" = "1" ]; then
   python3 "$LIMEN_ROOT/scripts/mcp-auth-verify.py" || echo "  ↑ REQUIRED MCP connector(s) unauthenticated — pull L-IANVA-CLOUD (#263) to end the class"
 fi
 
+echo "── 0c. verify the cartridge is plugged into the real source (host-is-factory invariant) ──"
+# The factory/cartridge law (memory: host-is-factory-system-is-cartridge) needs one check
+# nothing else performs: is chezmoi pointed at the REAL cartridge (organvm/domus-genoma), or at
+# a scratch/dummy source? chezmoi verify/status/health only validate WHATEVER source is wired, so
+# a disconnected cartridge returns a meaningless green. This runs regardless of chezmoi's state and
+# surfaces an unplugged cartridge HERE in the beat log — not months later by accident. Fail-open:
+# exit 0 when connected OR chezmoi absent; non-zero only on a genuine disconnection.
+if [ "${LIMEN_CARTRIDGE_CHECK:-1}" = "1" ]; then
+  python3 "$LIMEN_ROOT/scripts/cartridge-connected.py" || echo "  ↑ cartridge UNPLUGGED (above) — bring domus-genoma current, then re-point chezmoi at it"
+fi
+
 echo "── 0. refresh usage telemetry / lane health ──"
 python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" || echo "  (usage telemetry skipped)"
 
