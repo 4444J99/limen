@@ -27,6 +27,11 @@ def _git(cwd: Path, *args: str) -> None:
     subprocess.run(["git", "-C", str(cwd), *args], check=True, capture_output=True, text=True)
 
 
+def _out(repo: Path, *args: str) -> str:
+    """Run a git command via the module's own runner and return trimmed stdout (for guard assertions)."""
+    return reap._run(["git", "-C", str(repo), *args])
+
+
 def _init_origin_and_clone(tmp: Path, name: str) -> Path:
     """A bare origin with one pushed commit, cloned into tmp/name — a PURE PUSHED MIRROR."""
     origin = tmp / f"{name}.git"
@@ -226,3 +231,202 @@ def test_excluded_worktree_root_is_kept(tmp_path, monkeypatch):
     v = _verdict(clone, age_days=99, pressure=True)
     assert v.reap is False
     assert v.reason == "excluded-root"
+
+
+# ----------------------------------------------------- LOSS-FREE HARDENING (2026-07-01 adversarial audit)
+# A 14-path red-team reproduced un-mirrored data that the original denylist-shaped gate would rmtree.
+# Each test below rebuilds one path as a real git repo and asserts the hardened gate now KEEPS it
+# (classify) or refuses it at the network belt (confirm_recloneable). These are the regression locks.
+
+
+# --- Category A: local-only refs outside refs/heads (invisible to --branches) -------------------------
+def test_stash_wip_is_never_reaped(tmp_path):
+    """`git stash` stores WIP as commits under refs/stash — invisible to --branches AND to porcelain."""
+    clone = _init_origin_and_clone(tmp_path, "stashwip")
+    (clone / "README.md").write_text("hello\nwip: top_secret_algorithm()\n")  # edit a tracked file
+    _git(clone, "stash")  # working tree reverts to HEAD (porcelain clean); WIP hides in refs/stash
+    assert _out(clone, "status", "--porcelain") == ""  # sanity: the guard the old gate trusted is empty
+    v = _verdict(clone, age_days=99, pressure=True)
+    assert v.reap is False
+    assert v.reason == "unpushed-objects"
+
+
+def test_reflog_orphan_commit_is_never_reaped(tmp_path):
+    """A hard-reset leaves the abandoned commit reachable only via the reflog — still un-mirrored work."""
+    clone = _init_origin_and_clone(tmp_path, "reflogorphan")
+    (clone / "secret.py").write_text("private_key = 'supersecret'\n")
+    _git(clone, "add", "-A")
+    _git(clone, "commit", "-qm", "WIP secrets")
+    _git(clone, "reset", "--hard", "HEAD~1")  # HEAD back on the pushed base; commit orphaned in reflog
+    assert _out(clone, "log", "--branches", "--not", "--remotes", "--oneline") == ""  # old guard: blind
+    v = _verdict(clone, age_days=99, pressure=True)
+    assert v.reap is False
+    assert v.reason == "unpushed-objects"
+
+
+def test_local_only_tag_is_never_reaped(tmp_path):
+    """A local tag on an orphaned commit is real work on no remote — refs/tags is outside --branches."""
+    clone = _init_origin_and_clone(tmp_path, "localtag")
+    (clone / "release.bin").write_text("release artifact v1.0\n")
+    _git(clone, "add", "-A")
+    _git(clone, "commit", "-qm", "release v1.0")
+    _git(clone, "tag", "v1.0-local")  # local only, never pushed
+    _git(clone, "reset", "--hard", "HEAD~1")  # orphan the tagged commit off refs/heads
+    v = _verdict(clone, age_days=99, pressure=True)
+    assert v.reap is False
+    assert v.reason == "unpushed-objects"
+
+
+def test_git_notes_are_never_reaped(tmp_path):
+    """refs/notes/* holds annotations that live on no remote — must not be silently destroyed."""
+    clone = _init_origin_and_clone(tmp_path, "gitnotes")
+    _git(clone, "notes", "add", "-m", "Security review: signed off", "HEAD")
+    v = _verdict(clone, age_days=99, pressure=True)
+    assert v.reap is False
+    assert v.reason == "unpushed-objects"
+
+
+# --- Category B: working-tree data invisible to `git status --porcelain` ------------------------------
+def test_gitignored_data_is_never_reaped(tmp_path):
+    """A gitignored `.env` / local `*.db` lives on no remote; porcelain hides it → must KEEP."""
+    clone = _init_origin_and_clone(tmp_path, "ignoreddata")
+    (clone / ".gitignore").write_text(".env\n*.db\ndata/\n")
+    _git(clone, "add", ".gitignore")
+    _git(clone, "commit", "-qm", "add gitignore")
+    _git(clone, "push", "-q", "origin", "main")
+    (clone / ".env").write_text("AWS_SECRET_ACCESS_KEY=xyz\n")
+    (clone / "local.db").write_text("sqlite session records\n")
+    assert _out(clone, "status", "--porcelain") == ""  # ignored files are invisible to the old guard
+    v = _verdict(clone, age_days=99, pressure=True)
+    assert v.reap is False
+    assert v.reason == "ignored-data"
+
+
+def test_regenerable_ignored_files_still_reap(tmp_path):
+    """The organ must NOT over-suppress: node_modules/__pycache__ are provably regenerable → still reap."""
+    clone = _init_origin_and_clone(tmp_path, "regenignored")
+    (clone / ".gitignore").write_text("node_modules/\n__pycache__/\n")
+    _git(clone, "add", ".gitignore")
+    _git(clone, "commit", "-qm", "add gitignore")
+    _git(clone, "push", "-q", "origin", "main")
+    (clone / "node_modules").mkdir()
+    (clone / "node_modules" / "dep.js").write_text("module.exports = {}\n")
+    (clone / "__pycache__").mkdir()
+    (clone / "__pycache__" / "m.pyc").write_text("bytecode\n")
+    v = _verdict(clone, age_days=10)
+    assert v.reap is True
+    assert v.reason == "pushed-mirror"
+
+
+def test_skip_worktree_hidden_edit_is_never_reaped(tmp_path):
+    """A skip-worktree bit hides a local edit to a tracked file from porcelain → the override is data."""
+    clone = _init_origin_and_clone(tmp_path, "skipwt")
+    (clone / "config.yml").write_text("debug: false\n")
+    _git(clone, "add", "-A")
+    _git(clone, "commit", "-qm", "add config")
+    _git(clone, "push", "-q", "origin", "main")
+    _git(clone, "update-index", "--skip-worktree", "config.yml")
+    (clone / "config.yml").write_text("debug: true\nlocal_secret: hunter2\n")
+    assert _out(clone, "status", "--porcelain") == ""  # skip-worktree hides it
+    v = _verdict(clone, age_days=99, pressure=True)
+    assert v.reap is False
+    assert v.reason == "hidden-modifications"
+
+
+# --- Category E: nested git contexts outside the parent's ref graph -----------------------------------
+def test_submodule_parent_is_never_reaped(tmp_path):
+    """A submodule's object store (.git/modules/*) can hold unpushed commits no parent guard can see."""
+    parent = _init_origin_and_clone(tmp_path, "subparent")
+    _init_origin_and_clone(tmp_path, "submodsrc")  # a seeded bare origin to use as the submodule source
+    _git(parent, "-c", "protocol.file.allow=always", "submodule", "add", str(tmp_path / "submodsrc.git"), "vendor")
+    assert (parent / ".git" / "modules").is_dir()
+    v = _verdict(parent, age_days=99, pressure=True)
+    assert v.reap is False
+    assert v.reason == "has-submodule"
+
+
+def test_lfs_object_store_is_never_reaped(tmp_path):
+    """git-LFS blobs live in .git/lfs/objects and may not be on the LFS remote → never reap the clone."""
+    clone = _init_origin_and_clone(tmp_path, "lfsrepo")
+    shard = clone / ".git" / "lfs" / "objects" / "87" / "96"
+    shard.mkdir(parents=True)
+    (shard / "8796e18b0682e0b400976a09523f295066d36e36cbd28422c0b916af878b212a").write_bytes(b"\x00" * 4096)
+    v = _verdict(clone, age_days=99, pressure=True)
+    assert v.reap is False
+    assert v.reason == "has-lfs-objects"
+
+
+def test_linked_worktree_parent_is_never_reaped(tmp_path):
+    """A linked worktree's unpushed detached-HEAD commit lives in THIS clone's .git/objects — keep it."""
+    clone = _init_origin_and_clone(tmp_path, "wtparent2")
+    wt = tmp_path / "linked-wt"
+    _git(clone, "worktree", "add", "--detach", str(wt), "HEAD")
+    (wt / "findings.txt").write_text("detached-HEAD work, never pushed\n")
+    _git(wt, "add", "-A")
+    _git(wt, "commit", "-qm", "detached wip")
+    v = _verdict(clone, age_days=99, pressure=True)
+    assert v.reap is False
+    assert v.reason == "has-linked-worktrees"
+
+
+# --- Category C: stale / directional remote check (the belt's fetch --prune closes these) -------------
+def test_belt_refuses_force_pushed_orphan(tmp_path):
+    """Origin force-rewound past our HEAD to a disjoint commit; a stale tracking ref hid it from classify.
+    The belt fetches the live remote and sees HEAD is not reachable from it → refuse."""
+    clone = _init_origin_and_clone(tmp_path, "forcepush")
+    (clone / "work.txt").write_text("important user work\n")
+    _git(clone, "add", "-A")
+    _git(clone, "commit", "-qm", "B: user work")
+    _git(clone, "push", "-q", "origin", "main")  # origin main = B; clone tracking ref = B
+    attacker = tmp_path / "attacker"
+    subprocess.run(
+        ["git", "clone", "-q", str(tmp_path / "forcepush.git"), str(attacker)], check=True, capture_output=True
+    )
+    _git(attacker, "config", "user.email", "a@a.a")
+    _git(attacker, "config", "user.name", "a")
+    _git(attacker, "checkout", "-q", "--orphan", "rogue")
+    (attacker / "rogue.txt").write_text("disjoint history\n")
+    _git(attacker, "add", "-A")
+    _git(attacker, "commit", "-qm", "C: orphan")
+    _git(attacker, "push", "-q", "--force", str(tmp_path / "forcepush.git"), "rogue:main")
+    # victim never fetched → refs/remotes/origin/main is stale (= B); only the live belt catches it
+    assert reap.confirm_recloneable(clone) is False
+
+
+def test_belt_refuses_ahead_of_origin(tmp_path):
+    """Clone AHEAD of origin (a commit made after classify sampled clean — the TOCTOU-commit race).
+    The belt's post-fetch reachability proof refuses it even if classify were bypassed."""
+    clone = _init_origin_and_clone(tmp_path, "ahead")
+    (clone / "precious.txt").write_text("precious unpushed data\n")
+    _git(clone, "add", "-A")
+    _git(clone, "commit", "-qm", "WIP: never pushed")
+    assert reap.confirm_recloneable(clone) is False
+
+
+def test_belt_refuses_deleted_branch_with_stale_tracking_ref(tmp_path):
+    """Our branch was deleted on origin by someone else; our tracking ref is stale so classify passes.
+    fetch --prune expires the stale ref and the belt sees the branch's commits are un-mirrored → refuse."""
+    clone = _init_origin_and_clone(tmp_path, "delbranch")
+    _git(clone, "checkout", "-q", "-b", "feature")
+    (clone / "feat.txt").write_text("unmerged feature work\n")
+    _git(clone, "add", "-A")
+    _git(clone, "commit", "-qm", "D: feature")
+    _git(clone, "push", "-q", "-u", "origin", "feature")
+    _git(clone, "checkout", "-q", "main")
+    # delete feature directly on the bare origin so THIS clone's tracking ref stays stale (not pruned)
+    subprocess.run(
+        ["git", "-C", str(tmp_path / "delbranch.git"), "branch", "-D", "feature"], check=True, capture_output=True
+    )
+    # classify is stale-permissive here (the tracking ref still advertises D) — the belt is what saves it
+    assert _verdict(clone, age_days=99, pressure=True).reap is True
+    assert reap.confirm_recloneable(clone) is False
+
+
+# --- Category D: TOCTOU — work landing between the check and the delete -------------------------------
+def test_pristine_recheck_detects_raced_write(tmp_path):
+    """The last-instant belt re-samples porcelain + stash immediately before rmtree fires."""
+    clone = _init_origin_and_clone(tmp_path, "raced")
+    assert reap._pristine_now(clone) is True
+    (clone / "src").mkdir()
+    (clone / "src" / "creds-2026-07-01.json").write_text('{"api_key": "sk-irreplaceable"}\n')
+    assert reap._pristine_now(clone) is False

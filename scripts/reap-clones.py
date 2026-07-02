@@ -8,20 +8,29 @@ with organvm/ at 14G plus a DUPLICATE a-organvm/ at 3.2G, dormant full clones, a
 clone-maintenance.sh reaped node_modules but only *printed* reapable clones ("remove only with user
 OK"): the last step of the lifecycle was gated on the operator's hand, so the disk crept back every time.
 
-This organ reaps a clone ONLY when it is a PURE PUSHED MIRROR with no live work — the loss-free gate,
-identical in spirit to reclaim-worktrees.py:
+This organ reaps a clone ONLY when it is a PURE PUSHED MIRROR with no live work — the loss-free gate.
+It is an ALLOWLIST, not a denylist: it deletes only when it can positively prove every local byte is
+already on the live remote (a 2026-07-01 adversarial audit reproduced 14 data-loss paths against an
+earlier denylist-shaped gate — stash, reflog orphans, local tags, git-notes, gitignored .env/db,
+force-push/ahead-of-origin, submodules, LFS, linked worktrees, TOCTOU — all now guarded below):
 
   • clean working tree AND no untracked files (`git status --porcelain` is EMPTY), AND
-  • zero unpushed commits on ANY local branch (`git log --branches --not --remotes` is EMPTY), AND
-  • HEAD is reachable from an origin ref, AND
-  • no active limen task for the repo's origin slug, AND
-  • not a CORE repo, not the live LIMEN_ROOT, not inside a worktree/cartridge root, AND
-  • idle >= min-age — UNLESS disk pressure >= high-water, which WAIVES the age gate (still loss-free).
+  • no un-mirrored gitignored data — every ignored entry is a provably-regenerable dep/build/cache dir
+    (a `.env`, local `*.db`, or data/ dir → KEEP), AND
+  • NO local-only objects: nothing reachable from any local ref (heads/tags/notes/stash) OR the reflog
+    is missing from a remote (catches stash WIP, local tags, notes, hard-reset reflog orphans), AND
+  • no skip-worktree / assume-unchanged bit hiding a tracked-file edit, AND
+  • not a submodule / LFS / linked-worktree parent (nested contexts outside the parent ref graph), AND
+  • HEAD reachable from an origin ref, no active limen task, not CORE / live-root / worktree-root, AND
+  • idle >= min-age — UNLESS disk pressure >= high-water, which WAIVES the age gate (still loss-free), AND
+  • the NETWORK BELT confirms against a fresh `git fetch --prune` that no local object is un-mirrored
+    (catches stale/force-rewound remotes that make refs/heads commits merely LOOK pushed), re-checked
+    a final time (porcelain + stash) at the instant before rmtree to close the TOCTOU window.
 
 Every gate is loss-free (re-cloneable from GitHub; nothing local unpushed or untracked), so removal
 is REVERSIBLE and therefore NOT a human-gated action — it runs autonomically. It NEVER deletes DATA:
 a clone with untracked files (possible hand-dropped inputs — the "7 genesis screenshots" rule) or with
-unpushed commits is SKIPPED and reported as needs-capture, never removed. capture.sh pushes that work
+unpushed work is SKIPPED and reported as needs-capture, never removed. capture.sh pushes that work
 first; a later beat then finds a pure mirror and reaps it. It only ever touches STANDALONE clones
 (`.git` is a directory); registered worktrees (`.git` is a file) are reclaim-worktrees.py's job.
 
@@ -57,6 +66,22 @@ CORE = set(os.environ.get("LIMEN_REAP_CORE", DEFAULT_CORE).split())
 # Paths that are somebody else's lifecycle (worktree reaper, cartridge co-tenant, throwaway roots).
 EXCLUDE_MARKERS = (".claude/worktrees", ".limen-worktrees", ".home-cartridge", ".worktrees", "/node_modules/")
 
+# Gitignored files are normally regenerable (deps, build output, caches) — losing them is loss-free.
+# But a gitignored file can also be IRREPLACEABLE local state (a .env secret, a local *.db, a data/
+# dir) that lives on NO remote. `git status --porcelain` hides all ignored files, so we enumerate them
+# with --ignored and reap only when EVERY ignored entry's top path component is a known-regenerable dir
+# (or a regenerable-suffixed top-level file). Anything else → KEEP (the ignored-file data-loss class).
+REGENERABLE_DIRS = set(
+    "node_modules .venv venv .venv-demucs __pycache__ .pytest_cache .mypy_cache .ruff_cache "
+    ".tox dist build .next .nuxt .svelte-kit .astro .turbo .parcel-cache .vercel .wrangler "
+    ".gradle coverage .nyc_output .eggs .ipynb_checkpoints".split()
+)
+REGENERABLE_SUFFIXES = (".pyc", ".pyo")
+REGENERABLE_FILES = {".DS_Store"}
+
+# Non-interactive git: fail (→ fail-safe KEEP) rather than block on a credential/GUI prompt.
+_GIT_ENV = {**os.environ, "GIT_TERMINAL_PROMPT": "0"}
+
 
 def _run(args: list[str], cwd: Path | None = None) -> str:
     try:
@@ -65,6 +90,78 @@ def _run(args: list[str], cwd: Path | None = None) -> str:
         ).stdout.strip()
     except Exception:
         return ""
+
+
+def _ignored_is_all_regenerable(repo: Path) -> bool:
+    """True iff every gitignored working-tree entry is provably regenerable (safe to lose on re-clone).
+
+    `git status --porcelain --ignored` collapses an ignored directory to a single `!! dir/` line, so we
+    test the TOP path component against the regenerable allowlist. An unknown ignored file (e.g. `.env`,
+    `local.db`, `data/`) is treated as irreplaceable → not-all-regenerable → the caller KEEPS the clone.
+    A quoted/exotic path never matches the allowlist, so it also fails safe (KEEP).
+    """
+    out = _run(["git", "-C", str(repo), "status", "--porcelain", "--ignored"])
+    for line in out.splitlines():
+        if not line.startswith("!! "):
+            continue
+        path = line[3:].strip().strip('"').rstrip("/")
+        if not path:
+            return False
+        top = path.split("/", 1)[0]
+        base = path.rsplit("/", 1)[-1]
+        if top in REGENERABLE_DIRS:
+            continue
+        if "/" not in path and (base in REGENERABLE_FILES or base.endswith(REGENERABLE_SUFFIXES)):
+            continue
+        return False  # an ignored entry we cannot prove regenerable → not loss-free
+    return True
+
+
+def _nested_context_reason(repo: Path) -> str | None:
+    """Reason to KEEP if the clone backs a nested git context whose data lives OUTSIDE its ref graph.
+
+    A submodule (.git/modules/*), git-LFS object store (.git/lfs/objects), or linked worktree
+    (.git/worktrees/*) can hold committed-but-unpushed work that NO guard on the parent's refs can see,
+    and rmtree of the parent destroys those object stores. We never reap such a clone (conservative).
+    """
+    gitdir = repo / ".git"
+    try:
+        wt = gitdir / "worktrees"
+        if wt.is_dir() and any(wt.iterdir()):
+            return "has-linked-worktrees"
+        mod = gitdir / "modules"
+        if mod.is_dir() and any(mod.iterdir()):
+            return "has-submodule"
+        lfs = gitdir / "lfs" / "objects"
+        if lfs.is_dir() and any(lfs.iterdir()):
+            return "has-lfs-objects"
+    except OSError:
+        return "nested-context-unreadable"
+    return None
+
+
+def _has_local_only_objects(repo: Path) -> bool:
+    """True iff any commit reachable from a LOCAL ref, the reflog, or the stash is NOT on a remote.
+
+    This is the comprehensive replacement for `git log --branches`: it enumerates every local ref
+    namespace (refs/heads, refs/tags, refs/notes, refs/stash) plus --reflog, and subtracts --remotes.
+    refs/stash, refs/notes, refs/tags and reflog-only (hard-reset) commits live on NO remote, so this
+    surfaces them even when remote-tracking refs are stale. (Category C — stale/force-rewound remotes
+    that make refs/heads commits *look* pushed — is caught by the belt's post-`fetch --prune` re-run.)
+    """
+    ns = ["refs/heads", "refs/tags", "refs/notes", "refs/stash"]
+    refs = _run(["git", "-C", str(repo), "for-each-ref", "--format=%(refname)", *ns]).split()
+    cmd = ["git", "-C", str(repo), "rev-list", "--max-count=1", "--reflog", *refs, "--not", "--remotes"]
+    return bool(_run(cmd))
+
+
+def _pristine_now(repo: Path) -> bool:
+    """Last-millisecond TOCTOU belt: re-sample the cheapest data guards immediately before rmtree."""
+    if _run(["git", "-C", str(repo), "status", "--porcelain"]):
+        return False
+    if _run(["git", "-C", str(repo), "stash", "list"]):
+        return False
+    return True
 
 
 def origin_slug(repo: Path) -> str:
@@ -103,17 +200,32 @@ def classify(repo: Path, active_slugs: set[str], now: float, idle_days: float, p
     if repo.name in CORE or origin_slug(repo).split("/")[-1] in CORE:
         return Verdict(False, "core")
 
+    # NESTED-CONTEXT GUARD: a submodule, LFS store, or linked worktree holds work outside the parent's
+    # ref graph that no other guard can see — never reap it (conservative).
+    nested = _nested_context_reason(repo)
+    if nested:
+        return Verdict(False, nested)
+
     # DATA GUARD (the "7 genesis screenshots" rule): any dirty OR untracked file → never touch it.
-    # `git status --porcelain` already omits gitignored files, so a non-empty result means real,
-    # unsaved work (tracked edits or hand-dropped untracked inputs). Keep and let capture handle it.
+    # `git status --porcelain` omits gitignored files, so a non-empty result means real, unsaved work
+    # (tracked edits or hand-dropped untracked inputs). Keep and let capture handle it.
     if _run(["git", "-C", str(repo), "status", "--porcelain"]):
         return Verdict(False, "dirty-or-untracked")
+    # IGNORED-DATA GUARD: porcelain hid the ignored files above — a `.env`, a local `*.db`, or a data/
+    # dir lives on no remote and re-clone cannot restore it. Reap only if every ignored entry is a
+    # provably-regenerable dep/build/cache directory; otherwise KEEP.
+    if not _ignored_is_all_regenerable(repo):
+        return Verdict(False, "ignored-data")
 
     # PUSH GUARD: commits on any local branch not present on any remote-tracking ref = unpushed work.
-    # Loss-free removal requires EVERY local commit already live on origin. (No fetch — stale remote
-    # refs only make us more conservative, never less.)
+    # (No fetch here — stale remote refs only make classify() more conservative; the belt re-verifies
+    # against a fresh fetch --prune.)
     if _run(["git", "-C", str(repo), "log", "--branches", "--not", "--remotes", "--oneline"]):
         return Verdict(False, "unpushed-commits")
+    # COMPREHENSIVE OBJECT GUARD: stash, local-only tags, git-notes, and reflog-only (hard-reset)
+    # commits live outside refs/heads and are invisible to --branches — but they are un-mirrored work.
+    if _has_local_only_objects(repo):
+        return Verdict(False, "unpushed-objects")
     # HEAD itself must be reachable from a remote ref (covers detached-HEAD-off-a-remote edge cases).
     if not _run(["git", "-C", str(repo), "branch", "-r", "--contains", "HEAD"]):
         return Verdict(False, "head-not-on-remote")
@@ -124,6 +236,14 @@ def classify(repo: Path, active_slugs: set[str], now: float, idle_days: float, p
 
     if origin_slug(repo) in active_slugs or repo.name in {s.split("/")[-1] for s in active_slugs}:
         return Verdict(False, "active-task")
+
+    # HIDDEN-MODIFICATION GUARD (run late — only for a would-be reap): a skip-worktree or assume-unchanged
+    # bit hides a LOCAL edit to a tracked file from porcelain. `git ls-files -v` tags those with a
+    # lowercase letter (assume-unchanged) or `S` (skip-worktree); any such entry → the porcelain guard
+    # may have lied → KEEP.
+    for line in _run(["git", "-C", str(repo), "ls-files", "-v"]).splitlines():
+        if line[:1].islower() or line.startswith("S "):
+            return Verdict(False, "hidden-modifications")
 
     # Idle gate — waived under disk pressure (a pushed mirror is loss-free at any age; when the disk
     # is full we reclaim NOW rather than wait out the idle window).
@@ -139,22 +259,21 @@ def classify(repo: Path, active_slugs: set[str], now: float, idle_days: float, p
 
 
 def confirm_recloneable(repo: Path) -> bool:
-    """Network belt to the local push gate: the origin must ACTUALLY still exist and hold our line.
+    """Network belt: prove against the LIVE remote that every local object is already on origin.
 
-    classify() proves 're-cloneable' from LOCAL remote-tracking refs, which survive even if the origin
-    was deleted or renamed on GitHub — in which case the local clone is the ONLY copy and must never be
-    reaped. `git ls-remote` asks the real remote. FAIL-SAFE: any failure (origin gone OR merely offline)
-    returns False, so we skip rather than risk loss; a later online beat reaps it. Disable (trust local
-    refs) with LIMEN_REAP_VERIFY_REMOTE=0.
+    classify() proves re-cloneability from LOCAL refs, but local remote-tracking refs can be STALE —
+    origin may have force-rewound past our HEAD, deleted our branch, or advanced while we moved ahead —
+    and a stale tracking ref can make un-mirrored local commits *look* pushed (the Category-C data-loss
+    class). So the belt FETCHES the live remote (with --prune, so a branch deleted on origin drops its
+    tracking ref) and then re-runs the comprehensive reachability proof against the now-fresh
+    refs/remotes/*: if ANY object reachable from a local ref, the reflog, or the stash is NOT reachable
+    from a remote-tracking ref, the clone holds work origin does not have → return False (KEEP).
 
-    We deliberately do NOT require HEAD to be a current remote TIP. A pure mirror that is merely BEHIND
-    its origin (the self-pushing fleet advanced the branch after the clone was made) is the SAFEST reap —
-    re-cloning yields origin's newer state and classify() already proved zero unpushed local commits.
-    Requiring an exact-tip match wrongly quarantined every behind-origin mirror (the remote-unreachable=80
-    regression, several GB stranded). Re-cloneable ⟺ origin is reachable AND either HEAD is an advertised
-    tip (exact mirror) OR origin still advertises the branch HEAD sits on (append-only history ⇒ our
-    already-pushed HEAD is an ancestor of the advanced tip). A deleted repo, a wiped-empty repo, or a
-    branch abandoned+deleted on origin (possible unmerged local-only work) all fail this ⇒ kept.
+    FAIL-SAFE: any failure (origin gone/renamed → local clone is the only copy, offline, or auth-less)
+    returns False, so we skip rather than risk loss; a later online beat reaps it. A pure mirror that is
+    merely BEHIND origin still passes — after the fetch its HEAD is an ancestor of the advanced tip, so
+    nothing is local-only (this preserves the remote-unreachable=80 behind-origin fix). Disable the
+    network belt (trust local refs) with LIMEN_REAP_VERIFY_REMOTE=0.
     """
     if os.environ.get("LIMEN_REAP_VERIFY_REMOTE", "1").strip().lower() in {"0", "false", "no", "off"}:
         return True
@@ -163,22 +282,33 @@ def confirm_recloneable(repo: Path) -> bool:
         return False
     try:
         res = subprocess.run(
-            ["git", "-C", str(repo), "ls-remote", "origin"], capture_output=True, text=True, timeout=30
+            ["git", "-C", str(repo), "ls-remote", "origin"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            env=_GIT_ENV,
         )
     except Exception:
         return False
     if res.returncode != 0 or not res.stdout.strip():
         return False  # origin gone / renamed-away / offline → local clone may be the only copy → keep
-    tips = {}
-    for line in res.stdout.splitlines():
-        if "\t" in line:
-            sha, ref = line.split("\t", 1)
-            tips[ref] = sha
-    if head in tips.values():
-        return True  # HEAD is a current remote tip → exact mirror
-    branch = _run(["git", "-C", str(repo), "rev-parse", "--abbrev-ref", "HEAD"])
-    # behind-origin mirror: origin still advertises our branch → our pushed HEAD is its ancestor
-    return bool(branch) and branch != "HEAD" and f"refs/heads/{branch}" in tips
+    # Refresh remote-tracking refs against the live remote so the reachability proof is trustworthy.
+    # --prune expires tracking refs for branches deleted on origin; --no-tags avoids minting local tags.
+    try:
+        fetch = subprocess.run(
+            ["git", "-C", str(repo), "fetch", "--prune", "--no-tags", "--quiet", "origin"],
+            capture_output=True,
+            text=True,
+            timeout=90,
+            env=_GIT_ENV,
+        )
+    except Exception:
+        return False
+    if fetch.returncode != 0:
+        return False  # could not verify against the live remote → fail-safe keep
+    # Authoritative proof: after the refresh, nothing reachable from any local ref/reflog/stash is
+    # missing from the remote. Catches force-push orphans, ahead-of-origin HEADs, and deleted branches.
+    return not _has_local_only_objects(repo)
 
 
 def active_task_slugs(tasks_path: Path) -> set[str]:
@@ -275,6 +405,12 @@ def main() -> int:
             except Exception:
                 sz = 0
             slug = origin_slug(repo)
+            # TOCTOU belt: work may have landed between classify() and now — re-verify pristine at the
+            # last instant before an irreversible delete.
+            if args.apply and not _pristine_now(repo):
+                kept += 1
+                kept_reasons["raced-dirty"] = kept_reasons.get("raced-dirty", 0) + 1
+                continue
             print(f"  {'REAP' if args.apply else 'WOULD reap'}: {repo}  ({slug}, {sz / 1e9:.2f} GB, {v.reason})")
             if args.apply:
                 shutil.rmtree(repo, ignore_errors=True)
