@@ -32622,7 +32622,7 @@ tasks:
   title: Raise test coverage in meta-organvm/visual-substrate-inquiry
   repo: organvm/visual-substrate-inquiry
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: dispatched
@@ -32643,7 +32643,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-02T18:23:37.170396Z'
+  updated: '2026-07-02T18:40:59.680137Z'
   dispatch_log:
   - timestamp: '2026-07-01T02:00:38.750210Z'
     agent: codex
@@ -33748,11 +33748,20 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T18:40:50.725462Z'
+    agent: opencode
+    session_id: cli
+    status: failed->agy
+  - timestamp: '2026-07-02T18:40:59.680137Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-meta-organvm-meta-organvm.github.io-test-coverage-0620
   title: Raise test coverage in meta-organvm/meta-organvm.github.io
   repo: organvm/meta-organvm.github.io
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: dispatched
@@ -33773,7 +33782,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-02T18:23:37.170396Z'
+  updated: '2026-07-02T18:40:59.680137Z'
   dispatch_log:
   - timestamp: '2026-07-01T01:33:31.331859Z'
     agent: opencode
@@ -34212,6 +34221,15 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T18:40:50.725462Z'
+    agent: codex
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-07-02T18:40:59.680137Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-meta-organvm-digital-income-organism-inquiry-test-coverage-0620
   title: Raise test coverage in meta-organvm/digital-income-organism-inquiry
   repo: organvm/digital-income-organism-inquiry
@@ -34305,7 +34323,7 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/organvm-iv-taxis.github.io
   repo: organvm/organvm-iv-taxis.github.io
   type: code
-  target_agent: agy
+  target_agent: github_actions
   priority: medium
   budget_cost: 1
   status: dispatched
@@ -34326,7 +34344,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-02T18:23:37.170396Z'
+  updated: '2026-07-02T18:40:59.680137Z'
   dispatch_log:
   - timestamp: '2026-07-01T02:37:53.707333Z'
     agent: codex
@@ -34641,6 +34659,15 @@ tasks:
     status: failed->agy
   - timestamp: '2026-07-02T18:23:37.170396Z'
     agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T18:40:50.725462Z'
+    agent: agy
+    session_id: cli
+    status: failed->github_actions
+  - timestamp: '2026-07-02T18:40:59.680137Z'
+    agent: github_actions
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
