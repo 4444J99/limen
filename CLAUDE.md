@@ -129,8 +129,10 @@ Isolate work in a **git worktree so the live fleet is untouched** (see `GEMINI.m
 
 | Gate | Command |
 |------|---------|
-| Lint | `python -m ruff check cli/src cli/tests web/api mcp` |
-| Compile | `python -m py_compile web/api/main.py cli/src/limen/*.py` |
+| Lint | `python -m ruff check cli/src cli/tests web/api mcp ianva` |
+| Format | `python -m ruff format --check cli/src cli/tests web/api mcp ianva` |
+| Type-check | `python -m mypy src/limen/` (from `cli/`) and `python -m mypy --ignore-missing-imports mcp/src/limen_mcp/ ianva/src/ianva/` |
+| Compile | `python -m py_compile web/api/main.py cli/src/limen/*.py mcp/src/limen_mcp/server.py ianva/src/ianva/*.py` |
 | Tests | `python -m pytest web/api/tests cli/tests -q` |
 | Contracts / surfaces | `node scripts/validate-contract-schemas.mjs` |
 | Worker | `npm run check` (in `web/worker`) |
