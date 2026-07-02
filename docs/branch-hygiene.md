@@ -9,7 +9,7 @@ merge. They are *unfulfilled intentions* (memory: empty-branch-is-a-todo), so th
 **kept, never auto-deleted** — this is their git-tracked location instead of hanging invisibly.
 Resolve each: open a PR and land it, or delete the branch by hand if the intention is abandoned.
 
-## Merged-but-advanced (7) — has commits ADDED after the PR merged
+## Merged-but-advanced (8) — has commits ADDED after the PR merged
 
 These heads had a MERGED PR but the local branch has newer commits not on `main`.
 Push them as a follow-up PR, or delete if the extra commits are throwaway.
@@ -21,6 +21,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `fix/ianva-secret-redaction` — c67b988 fix(ianva): write enableBearerAuth explicitly — loopback /mcp was 401ing every agent
 - `heal/conductor-restart-2026-06-16` — d012d75 limen: close the torn-write race + make the fleet visible (money view)
 - `worktree-ianva-doorway` — f4c0c07 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
+- `worktree-linear-conjuring-bear` — 92c21f2 chore(gitignore): ignore .wrangler/ cache at any depth, not just web/worker
 
 ## Live-work branches (97) — decide each
 
