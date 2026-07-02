@@ -250,6 +250,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Heartbeat cadence for the bounded autonomous continuation voice."
+  LIMEN_SESSION_ID:
+    default: "manual-claim"
+    env: LIMEN_SESSION_ID
+    self_update: none
+    owner: continuity
+    note: "The opaque session ID recorded in the dispatch log during task claims."
   LIMEN_CONTINUATION:
     default: "1"
     env: LIMEN_CONTINUATION
@@ -670,6 +676,18 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "Fleet dispatch boundary selector. `auto` derives reachable registered lanes from the capacity registry; explicit comma lists are normalized and filtered for down lanes."
+  LIMEN_OPENCODE_CLOCK:
+    default: ""
+    env: LIMEN_OPENCODE_CLOCK
+    self_update: none
+    owner: arms-agents
+    note: "When set to '1', instructs the OpenCode lane to activate its usage-clock telemetry so the fleet can track its consumption. Injected into the opencode run environment by dispatch.py."
+  LIMEN_TASK_ID:
+    default: ""
+    env: LIMEN_TASK_ID
+    self_update: none
+    owner: arms-agents
+    note: "The Limen task ID injected into the opencode lane run environment so the agent knows which task it is executing. Set by dispatch.py at dispatch time."
   # --- the non-bypassable Claude model chokepoint (scripts/shims/claude) ----------
   LIMEN_CLAUDE_SHIM_FLOOR:
     default: "haiku"           # the cheapest rung — the SAME tier the per-task ladder assigns to unclassed work
