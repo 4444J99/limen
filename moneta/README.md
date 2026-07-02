@@ -75,6 +75,23 @@ docker build -t moneta .
 docker run -p 8787:8787 --env-file .env -v "$PWD/.data:/app/.data" moneta
 ```
 
+### Surviving a restart (ephemeral / $0 hosts)
+
+The mint keeps two pieces of state that **must** outlive a process recycle:
+
+- **The signing key.** If it rotates, every previously-issued Pro licence stops
+  verifying and the product's embedded public JWK goes stale. Either mount
+  `.data` on a persistent volume (the auto-generated keyfile lives there) **or**
+  set a stable `MINT_PRIVATE_JWK` as a deploy secret (organ-owned — never pasted
+  in chat). The public half is what you embed in the product build.
+- **The order book** (`MINT_ORDERS_FILE`, default `.data/orders.json`). It holds
+  the pooled `reserved` demand and issued licences; the same mounted `.data`
+  volume persists it, so a cold start or redeploy never drops a buyer in line.
+
+On a host that gives you no volume (some free tiers recycle the whole FS), set a
+stable `MINT_PRIVATE_JWK` at minimum so keys never rotate; the order book then
+resets on restart, but no *issued* licence is ever invalidated.
+
 ## Endpoints
 
 | Method | Path          | Purpose |

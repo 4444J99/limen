@@ -18,6 +18,7 @@ export interface MintConfig {
     returnUrlBase: string | null
     privateJwk: JsonWebKey | null
     keyFile: string | null
+    ordersFile: string
 }
 
 type Env = Record<string, string | undefined>
@@ -52,6 +53,7 @@ export function loadConfigFromEnv(env: Env = process.env): MintConfig {
         returnUrlBase: env.MINT_RETURN_URL_BASE?.trim() || null,
         privateJwk,
         keyFile: privateJwk ? null : (env.MINT_KEY_FILE?.trim() || '.data/mint.key.json'),
+        ordersFile: env.MINT_ORDERS_FILE?.trim() || '.data/orders.json',
     }
 }
 

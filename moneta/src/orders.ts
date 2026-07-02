@@ -5,8 +5,11 @@
  * hot wallet) required for v1.
  *
  * `now`/`id` are injected so the lifecycle is deterministic under test. The store
- * is intentionally process-local; persistence can be layered later without
- * changing this contract.
+ * is process-local by default, but an optional {@link OrderPersistence} sink can
+ * be injected to make the book survive a restart — essential on the $0/ephemeral
+ * hosts the mint is built for, where the pooled `reserved` demand behind an unset
+ * receive address would otherwise evaporate on every cold start. Tests construct
+ * the store with no sink and stay purely in-memory; the contract is unchanged.
  */
 
 export type OrderStatus = 'reserved' | 'pending' | 'paid' | 'expired'
@@ -37,8 +40,32 @@ export interface CreateOrderInput {
     ttlMs: number
 }
 
+/**
+ * A durable sink for the order book. Kept transport-free (no `fs` here) so
+ * `orders.ts` stays pure; the file-backed implementation lives in
+ * `orders-file.ts`, mirroring how `keys.ts` isolates key I/O.
+ */
+export interface OrderPersistence {
+    /** Return the orders saved by a prior process (empty if none/corrupt). */
+    load(): Order[]
+    /** Durably record the whole book after a mutation. */
+    save(orders: Order[]): void
+}
+
 export class OrderStore {
     private readonly orders = new Map<string, Order>()
+
+    /** With a persistence sink, reload the book so a restart never drops the pool. */
+    constructor(private readonly persistence?: OrderPersistence) {
+        if (persistence) {
+            for (const order of persistence.load()) this.orders.set(order.id, order)
+        }
+    }
+
+    /** Flush the whole book to the sink after any mutation (no-op when in-memory). */
+    private persist(): void {
+        this.persistence?.save([...this.orders.values()])
+    }
 
     create(input: CreateOrderInput): Order {
         const sats = this.uniqueSats(input.address, input.baseSats, input.now)
@@ -52,6 +79,7 @@ export class OrderStore {
             status: 'pending',
         }
         this.orders.set(order.id, order)
+        this.persist()
         return order
     }
 
@@ -71,6 +99,7 @@ export class OrderStore {
             status: 'reserved',
         }
         this.orders.set(order.id, order)
+        this.persist()
         return order
     }
 
@@ -83,6 +112,7 @@ export class OrderStore {
         order.createdAt = input.now
         order.expiresAt = input.now + input.ttlMs
         order.status = 'pending'
+        this.persist()
         return order
     }
 
@@ -98,6 +128,7 @@ export class OrderStore {
         if (!order) return undefined
         if (order.status === 'pending' && typeof now === 'number' && now >= order.expiresAt) {
             order.status = 'expired'
+            this.persist()
         }
         return order
     }
@@ -108,6 +139,7 @@ export class OrderStore {
         order.status = 'paid'
         order.license = info.license
         if (info.txid) order.txid = info.txid
+        this.persist()
         return order
     }
 
