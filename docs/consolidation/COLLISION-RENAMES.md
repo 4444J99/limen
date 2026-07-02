@@ -1,12 +1,13 @@
 # Collision Rename Packet - remaining source repos
 
-Live status verified 2026-06-28 with:
+Live status verified 2026-07-02 with:
 
 ```bash
+python3 scripts/consolidation-gates.py --write
 PYTHONPATH=cli/src python3 scripts/consolidate-github.py
 ```
 
-Current result: 34 repos remain outside `organvm`, with 13 name-collision groups. All rename targets below were checked against the live source owners plus `organvm` and were free at verification time.
+Current result: 34 repos remain outside `organvm`, with 13 name-collision groups. The gate receipt reports 13 keeper rows, 13 required rename commands, and 0 rename-target conflicts or unknowns.
 
 Mode: packet only. Do not run these commands without an explicit human GitHub mutation gate.
 

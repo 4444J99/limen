@@ -1,6 +1,6 @@
 # GitHub Consolidation Gates
 
-Generated: `2026-07-02T15:55:03+00:00`
+Generated: `2026-07-02T18:44:31+00:00`
 
 ## Rule
 
@@ -15,10 +15,10 @@ Generated: `2026-07-02T15:55:03+00:00`
 | Source repos outside `organvm` | `34` |
 | Source owners scanned | `10` |
 | Name collision groups | `13` |
-| Collision packet complete | `False` |
+| Collision packet complete | `True` |
 | Collision packet keeper rows | `13` |
 | Collision packet rename commands | `13` / required `13` |
-| Rename target conflicts/unknown | `0` / `1` |
+| Rename target conflicts/unknown | `0` / `0` |
 | Transfer apply gate open | `False` |
 | `tasks.yaml` repo refs to rewrite post-transfer | `49` |
 | Local remotes to rewrite post-transfer | `15` |
@@ -27,7 +27,7 @@ Generated: `2026-07-02T15:55:03+00:00`
 | `limen[bot]` App installed | `False` |
 | App token wired | `False` |
 | Installed org Apps | `claude`, `google-labs-jules`, `oz-by-warp`, `chatgpt-codex-connector` |
-| Blocking gates | `name-collisions`, `collision-packet-incomplete`, `limen-bot-token-not-wired`, `limen-bot-app-not-installed`, `post-transfer-owner-rewrite-pending` |
+| Blocking gates | `name-collisions`, `limen-bot-token-not-wired`, `limen-bot-app-not-installed`, `post-transfer-owner-rewrite-pending` |
 
 ## Collision Examples
 
@@ -54,7 +54,7 @@ Generated: `2026-07-02T15:55:03+00:00`
 - Missing rename commands: `0`.
 - Extra rename commands: `0`.
 - Rename target conflicts: `0`.
-- Rename target probes unknown: `1`.
+- Rename target probes unknown: `0`.
 
 ## Exact Gates
 
