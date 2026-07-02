@@ -75,6 +75,17 @@ if [ "${LIMEN_LINK_HEALTH:-1}" = "1" ]; then
   fi
 fi
 
+# CODEX SKILL BUDGET HYGIENE (memory: distillation-not-reduction). Codex shortens skill
+# descriptions past its ~2% skills budget every session; the session-noise-containment doctrine
+# (Rule 1) BANS the disable-to-silence "fix" (that reduces capability). Instead distill every
+# plugin/skill description to a thin, meaning-preserving lead — keeping EVERY skill. The
+# marketplace cache reverts on refresh, so re-running each beat self-heals it. Idempotent +
+# reversible (--restore); silent when already thin, logs the re-heal when a refresh grew it
+# back — surfaced HERE, never hidden. Set LIMEN_CODEX_SLIM=0 to disable.
+if [ "${LIMEN_CODEX_SLIM:-1}" = "1" ]; then
+  python3 "$LIMEN_ROOT/scripts/codex-skill-slim.py" --apply --quiet || echo "  (codex-skill-slim skipped — no codex config/cache)"
+fi
+
 echo "── 1. drain (close completed Jules) ──"
 bash "$LIMEN_ROOT/scripts/drain.sh" || echo "  (drain skipped/failed — continuing)"
 

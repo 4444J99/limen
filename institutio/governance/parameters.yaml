@@ -1033,3 +1033,15 @@ parameters:
     self_update: none
     owner: pubpolicy
     note: "Optional JSON override of the OWNER identity the publication-policy redactor is scoped to (handles/email_domains/names/username/phone). Fractal: the macro form works for anyone; unset uses the default instance. NEVER add a category-wide (@domain / any-phone) rule — redaction is owner-scoped only."
+  LIMEN_CODEX_SLIM:
+    default: "1"               # ON — distill Codex skill/plugin descriptions each due beat
+    env: LIMEN_CODEX_SLIM
+    self_update: none
+    owner: limen-daemon
+    note: "Beat gate for the Codex skill-description slimmer (scripts/codex-skill-slim.py --apply): distill every plugin/skill description to a thin, meaning-preserving lead so Codex's ~2% skills budget is not exceeded — keeping EVERY skill (distillation, not reduction; the session-noise-containment doctrine's Rule 1 bans disable-to-silence). 1=re-slim each beat (self-heals a marketplace-cache revert); 0=off. Idempotent, reversible (--restore), fail-open."
+  LIMEN_CODEX_SLIM_CAP:
+    default: "240"             # max chars per distilled description
+    env: LIMEN_CODEX_SLIM_CAP
+    self_update: none
+    owner: limen-daemon
+    note: "Per-description character cap the Codex slimmer distills to. Lower it if Codex still warns that descriptions were shortened; raise it to preserve more of each description. The knob, not a hardcode."
