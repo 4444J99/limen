@@ -974,6 +974,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Whether scripts/heal-board.py (heartbeat preflight) auto-restores the live board from `git show HEAD:tasks.yaml` when it is unloadable or collapsed (≤ LIMEN_BOARD_SHRINK_FLOOR tasks). Idempotent: a healthy board is a no-op. The recovery net behind the save-time guard. Set 0 to disable."
+  LIMEN_TABVLARIVS:
+    default: "1"               # ON — the record-keeper drains the ticket inbox onto the board each beat
+    env: LIMEN_TABVLARIVS
+    self_update: none
+    owner: tabularius
+    note: "Master gate for TABVLARIVS (scripts/tabularius-organ.py), the single-writer record-keeper. Each beat it drains logs/tickets/inbox, folds each worker's ticket onto the healed board under the queue lock, and seals via the collapse-guarded atomic write. Idempotent: an empty inbox is an instant no-op, so it is safe every beat while no producers exist. Set 0 to silence the rung. The single-writer principle that dissolves the ~32-writer torn-write class — sibling of LIMEN_BOARD_HEAL."
 
   # --- DEMAND-SURFACE ORGANS: keep the front door reachable + launch posts homed ---
   # (scripts/link-health.py + scripts/launch-organ.py). A 404 on a public identity surface is silent

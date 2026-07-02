@@ -2,10 +2,16 @@ import importlib.util
 import sys
 from pathlib import Path
 
+import pytest
 import yaml
 
 
 def _load_server():
+    # The mcp server imports the `mcp` runtime package (mcp.server.fastmcp). Core CI installs only
+    # cli[test], not the mcp/ package (it lints/compiles/type-checks the mcp source with
+    # --ignore-missing-imports but never installs its runtime), so skip rather than fail the whole
+    # suite when the runtime is absent — this test only means something where mcp is installed.
+    pytest.importorskip("mcp.server.fastmcp")
     path = Path(__file__).resolve().parents[2] / "mcp" / "src" / "limen_mcp" / "server.py"
     spec = importlib.util.spec_from_file_location("limen_mcp_server_under_test", path)
     assert spec is not None

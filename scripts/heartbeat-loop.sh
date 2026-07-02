@@ -281,6 +281,12 @@ while true; do
     # (the 2026-06-26 halt). Idempotent: a healthy board is a fast no-op, no network. See
     # heal-board.py + the limen.io collapse-guard — "fix the handoff so it ain't broken".
     python3 "$LIMEN_ROOT/scripts/heal-board.py" 2>&1 | tail -1 || true
+    # RECORD-KEEPER (TABVLARIVS) — the single writer of the board. Drain the lock-free ticket inbox
+    # (logs/tickets/inbox), fold each worker's ticket onto the just-healed board under the queue
+    # lock, and seal via the collapse-guarded atomic write. Runs AFTER heal-board (fold onto a
+    # healthy board) and BEFORE the body's own queue mutation. Idempotent: an empty inbox is an
+    # instant no-op (no lock, no board I/O), so it is safe every beat while no producers exist yet.
+    [ "${LIMEN_TABVLARIVS:-1}" = "1" ] && python3 "$LIMEN_ROOT/scripts/tabularius-organ.py" 2>&1 | tail -1 || true
     python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" 2>&1 | tail -1 || true   # refresh lane health BEFORE route/dispatch
     python3 "$LIMEN_ROOT/scripts/codex-token-accounting.py" \
       --since-hours "${LIMEN_CODEX_TOKEN_REPORT_HOURS:-6}" \

@@ -259,6 +259,13 @@ def _registry():
              gate="LIMEN_VVLTVS", gate_default="1",
              what="the countenance — verify the public face reflects the live SSOT (profile/portfolio drift) + the contribution-mix radar (the review-% tell)",
              probe=lambda: _mtime(LOGS / "vvltvs-organ-state.json")),
+        # no cadence_key: an always-on pre-lock preflight (like heal-board), not a due_voice beat —
+        # so it claims no cadence and never trips the absent-from-heartbeat drift check; green when
+        # its per-beat state stamp is fresh.
+        dict(key="tabularius", rung="TABVLARIVS", voice="tabularius",
+             gate="LIMEN_TABVLARIVS", gate_default="1",
+             what="the record-keeper — sole writer of the board: drain the lock-free ticket inbox → fold onto tasks.yaml → seal (single-writer principle over the SSOT)",
+             probe=lambda: _mtime(LOGS / "tabularius-organ-state.json")),
     ]
 
 
