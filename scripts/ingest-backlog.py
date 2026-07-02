@@ -48,6 +48,7 @@ HERE = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(HERE / "cli" / "src"))
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.models import Task  # noqa: E402
+from limen.tabularius import submit_task_upsert  # noqa: E402
 
 SRC_DEFAULT = HERE / "studium" / "expansion-backlog.yaml"
 # the Studium lives in this repo; the fleet authors arcs into studium/ and opens a PR here.
@@ -154,12 +155,28 @@ def main() -> int:
     # concurrent dispatch save ever clobbers, the next C_FEED beat simply re-adds (self-healing — the
     # "never a silent no" invariant; a one-shot lock-guarded apply was the bug, a re-emitting voice is
     # the cure).
-    fresh = load_limen_file(path)  # fresh re-read right before the write
+    fresh = load_limen_file(path)  # fresh re-read right before the write (dedup only; read never clobbers)
     existing = {t.id for t in fresh.tasks}
     new = [t for t in candidates if t.id not in existing]
     if not new:
         print("nothing new — every staged content task already in the queue (idempotent no-op).")
         return 0
+
+    # TABVLARIVS producer path (Step 2.1). When LIMEN_TICKETS_PRODUCE=1 this voice stops writing
+    # tasks.yaml directly and instead hands each NEW task to the record-keeper as an upsert ticket;
+    # the keeper folds them onto the board next beat (single-writer — no interleave to clobber). The
+    # read above still dedups, so we only ever emit brand-new ids (an upsert MERGES, never blind-adds).
+    # Default OFF keeps the legacy direct write until the deliberate cutover flip.
+    if os.environ.get("LIMEN_TICKETS_PRODUCE") == "1":
+        session_id = os.environ.get("LIMEN_SESSION_ID", "ingest-backlog")
+        for t in new:
+            submit_task_upsert(path, t, agent="ingest-backlog", session_id=session_id)
+        print(f"submitted {len(new)} Studium content upsert tickets to the keeper's inbox "
+              f"(TABVLARIVS folds them onto {path} next beat; never dispatched here).")
+        for t in new:
+            print(f"  + {t.id}")
+        return 0
+
     fresh.tasks.extend(new)
     save_limen_file(path, fresh)  # atomic temp -> os.replace
     print(f"applied: appended {len(new)} Studium content tasks -> {path} "

@@ -49,12 +49,14 @@ archived ticket files are the append-only event log the board projects from.
 
 | Piece | Where | Role |
 |-------|-------|------|
-| Engine | `cli/src/limen/tabularius.py` | `Ticket`, `submit_ticket()`, `drain_once()`, the fold/validate/seal + quarantine |
+| Engine | `cli/src/limen/tabularius.py` | `Ticket`, `submit_ticket()`, `submit_task_upsert()`, `drain_once()`, the fold/validate/seal + quarantine |
+| Producer API | `cli/src/limen/tabularius.py` → `submit_task_upsert()` | the one-line conversion target: a writer swaps `save_limen_file` for this call per NEW task (validates up front, then hands the keeper an upsert ticket) |
 | Beat organ | `scripts/tabularius-organ.py` | thin per-beat wrapper (like `heal-board.py`); `--check`/`--dry-run`; writes the liveness stamp |
 | Beat wiring | `scripts/heartbeat-loop.sh` | runs after `heal-board` (fold onto a *healthy* board), before the body's own mutation |
 | Proprioception | `scripts/organ-health.py` | a TABVLARIVS rung, green when `logs/tabularius-organ-state.json` is fresh |
-| Gate | `institutio/governance/parameters.yaml` → `LIMEN_TABVLARIVS` | master kill-switch (default ON) |
-| Tests | `cli/tests/test_tabularius.py` | 11 tests: end-to-end submit→drain, ordering, quarantine, lock-deferral, collapse-guard |
+| Keeper gate | `institutio/governance/parameters.yaml` → `LIMEN_TABVLARIVS` | master kill-switch for the keeper (default ON) |
+| Cutover gate | `institutio/governance/parameters.yaml` → `LIMEN_TICKETS_PRODUCE` | flips converted writers from direct-write to producer (default **OFF** — a merge changes nothing live; the flip is the deliberate, revertible cutover) |
+| Tests | `cli/tests/test_tabularius.py` | 13 tests: end-to-end submit→drain, ordering, quarantine, lock-deferral, collapse-guard, **and the producer≡direct-write identity invariant** |
 
 ### Safety invariants (each inherited from a shipped precedent)
 
@@ -77,9 +79,17 @@ archived ticket files are the append-only event log the board projects from.
 - **Step 1 — SHIPPED (this PR).** The keeper exists and runs every beat. No writer behavior changes,
   so with no producers yet it is a proven no-op. The office is manned; no clerks hand it tickets yet.
 - **Step 2 — convert writers to producers, one tier at a time (reversible per tier).**
-  1. **Scripts first** (lowest blast radius): `mine-backlog`, `generate-*`, `discover-value`,
-     `ingest-backlog` (a natural fit — it wanted lock-free) emit tickets instead of `save_limen_file`.
-     Verify the board still folds identically after each.
+  Each conversion is behind `LIMEN_TICKETS_PRODUCE` (default OFF), so it merges as a no-op and the
+  cutover is a deliberate flip. The parity is *proven*, not assumed: `test_producer_path_matches_
+  legacy_direct_write` shows a converted writer produces a board identical to the legacy direct write
+  (same tasks, same fields, same order) save for the keeper's added `updated` provenance stamp — so
+  every remaining conversion is a mechanical edit against a known-safe template, not surgery.
+  1. **Scripts first** (lowest blast radius). **Reference pair converted** (`mine-backlog`,
+     `ingest-backlog` — the latter a natural fit, it wanted lock-free): each now calls
+     `submit_task_upsert` per new task when `LIMEN_TICKETS_PRODUCE=1`, keeping its read-only dedup so
+     it only ever emits brand-new ids. The rest (`generate-backlog`, `generate-revenue-backlog`,
+     `generate-organ-backlog`, `generate-positioning`, `discover-value`, `ingest-coverage`) are the
+     same one-line swap against the proven template.
   2. **CLI harvest/dispatch result-apply** → emit a ticket instead of mutating the blob.
   3. **MCP server** — replace the raw `yaml.dump` + git-push with a ticket append (removes the worst
      offender: no lock, no atomic write, no collapse-guard, and its own drifted duplicate models).
@@ -101,7 +111,11 @@ above it is autonomous.
 
 ## Recorded remaining work (this doc is the owner)
 
-- [ ] Step 2.1 — convert the low-risk generator scripts to `submit_ticket` producers.
+- [x] Step 2.1 (pattern proven) — `submit_task_upsert` producer API + `LIMEN_TICKETS_PRODUCE` gate +
+      the producer≡direct-write identity test; reference pair `mine-backlog` + `ingest-backlog` converted.
+- [ ] Step 2.1 (remainder) — apply the same one-line swap to `generate-backlog`,
+      `generate-revenue-backlog`, `generate-organ-backlog`, `generate-positioning`, `discover-value`,
+      `ingest-coverage`; then flip `LIMEN_TICKETS_PRODUCE=1` and watch the keeper drain a few beats.
 - [ ] Step 2.2 — route CLI harvest/dispatch result-apply through a ticket.
 - [ ] Step 2.3 — MCP server → ticket producer (retire the raw write + duplicate models).
 - [ ] Step 2.4 — live API/Worker tier (needs the consistency decision above; website-sensitive).

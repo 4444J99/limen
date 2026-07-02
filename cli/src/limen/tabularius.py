@@ -137,6 +137,44 @@ def submit_ticket(board_path: Path, ticket: Ticket) -> Path:
     return dest
 
 
+def submit_task_upsert(
+    board_path: Path,
+    task: "Task | dict[str, Any]",
+    *,
+    agent: str,
+    session_id: str = "unknown",
+    now: datetime | None = None,
+) -> Path:
+    """One-line producer: hand the keeper a whole task field-set as an upsert ticket.
+
+    This is the conversion target for every writer that used to `load → extend → save_limen_file`.
+    A generator/miner drops the ``save_limen_file`` and instead calls this once per NEW task; the
+    keeper folds it onto the board on the next beat. The full field-set becomes the ticket ``patch``.
+
+    The task is validated HERE (fail-fast, exactly like the old ``Task(**t)`` before a direct write),
+    so a producer never emits an invalid task — the keeper's per-ticket validation stays a second
+    line of defense, not the first. Dedup remains the caller's responsibility: read the board and
+    submit only genuinely-new ids, because an upsert MERGES onto any existing task ({**base, **patch})
+    and blind-upserting a live id would overwrite its fields (e.g. flip a `done` task back to `open`).
+    """
+    validated = task if isinstance(task, Task) else Task.model_validate(task)
+    fields = validated.model_dump(mode="json", exclude_none=True)
+    tid = fields.get("id")
+    if not tid:
+        raise ValueError("task upsert requires an 'id'")
+    now = now or datetime.now(timezone.utc)
+    ticket = Ticket(
+        ticket_id=new_ticket_id(session_id, now),
+        timestamp=now,
+        agent=agent,
+        session_id=session_id,
+        intent=INTENT_UPSERT,
+        task_id=tid,
+        patch=fields,
+    )
+    return submit_ticket(board_path, ticket)
+
+
 @dataclass
 class DrainResult:
     """The outcome of one drain pass — counts only (safe to log)."""

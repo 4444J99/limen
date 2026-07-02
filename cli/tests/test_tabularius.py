@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from limen.io import load_limen_file, queue_lock, save_limen_file
-from limen.models import LimenFile
+from limen.models import LimenFile, Task
 from limen.tabularius import (
     INTENT_REMOVE,
     INTENT_STATUS,
@@ -211,3 +211,64 @@ def test_collapse_guard_rejects_a_shrinking_batch(tmp_path):
     assert result.wrote is False  # board never shrunk
     assert len(load_limen_file(board).tasks) == 6  # good board intact
     assert result.rejected == 5  # the whole batch quarantined
+
+
+# --- the Step-2 migration safety invariant: producer path ≡ legacy direct write -----------------
+def test_producer_path_matches_legacy_direct_write(tmp_path):
+    """The conversion contract for every writer: swapping `load → extend → save_limen_file` for
+    `submit_task_upsert(...) + drain` yields the SAME board — identical existing tasks, identical
+    new-task fields, identical order — save only for the keeper's added `updated` provenance stamp.
+    This is what turns each generator conversion into a mechanical, provable change, not surgery."""
+    from limen.tabularius import submit_task_upsert
+
+    existing = [_task(f"T-{i}", status="open") for i in range(6)]
+    new_tasks = [
+        Task.model_validate(_task("N-1", status="open", priority="high", repo="organvm/limen")),
+        Task.model_validate(_task("N-2", status="open", priority="medium", labels=["mined"])),
+        Task.model_validate(_task("N-3", status="open", type="content")),
+    ]
+
+    # Path A — legacy direct write: load → extend → save
+    board_a = tmp_path / "a" / "tasks.yaml"
+    board_a.parent.mkdir(parents=True)
+    lf = _board(existing)
+    lf.tasks.extend(new_tasks)
+    save_limen_file(board_a, lf)
+
+    # Path B — producer tickets drained by the keeper (monotonic ts pins the append order)
+    board_b = tmp_path / "b" / "tasks.yaml"
+    board_b.parent.mkdir(parents=True)
+    save_limen_file(board_b, _board(existing))
+    for i, t in enumerate(new_tasks):
+        submit_task_upsert(
+            board_b, t, agent="gen", session_id="s", now=datetime(2026, 7, 2, 12, i, tzinfo=timezone.utc)
+        )
+    result = drain_once(board_b)
+    assert result.applied == 3 and result.wrote is True
+
+    a_tasks = load_limen_file(board_a).tasks
+    b_tasks = load_limen_file(board_b).tasks
+    assert [t.id for t in a_tasks] == [t.id for t in b_tasks]  # same set AND order
+    da = {t.id: t.model_dump(mode="json", exclude_none=True) for t in a_tasks}
+    db = {t.id: t.model_dump(mode="json", exclude_none=True) for t in b_tasks}
+    for tid in da:
+        a, b = dict(da[tid]), dict(db[tid])
+        # the keeper additionally stamps `updated` provenance on each folded task — a strict add,
+        # not a divergence; every other field must match the legacy write byte-for-byte.
+        a.pop("updated", None)
+        b.pop("updated", None)
+        assert a == b, f"field divergence on {tid}: {a} vs {b}"
+
+
+def test_submit_task_upsert_validates_before_emitting(tmp_path):
+    """The producer validates the task up front (fail-fast, like the legacy `Task(**t)`), so an
+    invalid task never reaches the inbox as a silently-quarantined ticket."""
+    import pytest
+
+    from limen.tabularius import submit_task_upsert
+
+    board = _seed_board(tmp_path)
+    # a dict missing the required `id` — must raise at submit, not land a ticket
+    with pytest.raises((ValueError, Exception)):
+        submit_task_upsert(board, {"title": "no id"}, agent="gen")
+    assert pending_count(board) == 0  # nothing entered the inbox
