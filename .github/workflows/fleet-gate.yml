@@ -1,0 +1,71 @@
+name: Fleet Gate
+
+# Backstop for Option-1 pre-push gates: if a direct-to-main push from the
+# autonomic fleet sneaks through without pre-push ruff + check-params, this
+# workflow fires on the push itself, runs the fast-gates, and auto-opens a
+# heal PR when they fail — so ruff/param debt never lingers on trunk and the
+# PR queue never stalls on debt it didn't introduce.
+#
+# Option-2 per issue #578 — lightweight, no path filter so it fires on EVERY
+# push to main.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: fleet-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  fleet-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ruff pyyaml -r web/api/requirements.txt -e "cli[test]"
+
+      - name: Lint Python with ruff
+        run: python -m ruff check cli/src cli/tests web/api mcp ianva
+
+      - name: Format check Python with ruff
+        run: python -m ruff format --check cli/src cli/tests web/api mcp ianva
+
+      - name: No-hardcode gate (VIGILIA parameter panel ratchet)
+        run: python scripts/check-params.py
+
+      - name: Self-heal on failure — open PR with fixes
+        if: failure()
+        run: |
+          python -m ruff check --fix cli/src cli/tests web/api mcp ianva 2>&1 || true
+          python -m ruff format cli/src cli/tests web/api mcp ianva 2>&1 || true
+          python scripts/check-params.py --update 2>&1 || true
+          BRANCH="heal/fleet-gate-$(date -u +%Y%m%d%H%M%S)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add -A
+          git commit -m "heal: auto-fix ruff and check-params violations" || exit 0
+          git push origin "$BRANCH"
+          gh pr create \
+            --repo "${{ github.repository }}" \
+            --head "$BRANCH" \
+            --base main \
+            --title "heal: auto-fix ruff and check-params violations" \
+            --body "Auto-opened by Fleet Gate workflow [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) after a direct-to-main push introduced ruff or check-params violations." \
+            --label heal
