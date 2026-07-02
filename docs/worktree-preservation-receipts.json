@@ -368,6 +368,22 @@
       "root": "photos-universe-20260629-182431",
       "score_discount": 35,
       "status": "open_pr_preserved"
+    },
+    {
+      "branch": "work/domus-quarantine-retire-20260629",
+      "classification": "open draft PR preserves local worktree head",
+      "evidence_updated_utc": "2026-07-02T12:21:52Z",
+      "head": "384994b58bdc2e75c4eb2ae30fa8ca0e7744790c",
+      "lane": "remote-pr-open",
+      "next_action": "Review draft PR #158, then merge, supersede, or archive this lane. Local checkout is no longer the only review surface.",
+      "pr_draft": true,
+      "pr_number": 158,
+      "pr_state": "OPEN",
+      "pr_url": "https://github.com/organvm/domus-genoma/pull/158",
+      "repo": "organvm/domus-genoma",
+      "root": "domus-quarantine-retire-20260629",
+      "score_discount": 35,
+      "status": "open_pr_preserved"
     }
   ],
   "schema": 1
