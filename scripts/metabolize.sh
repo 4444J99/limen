@@ -49,6 +49,13 @@ fi
 echo "── 0. refresh usage telemetry / lane health ──"
 python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" || echo "  (usage telemetry skipped)"
 
+# DEAD-LINK HYGIENE: a 404 on a public identity surface is silent demand-loss — it repels the exact
+# visitor the front door pulls, and nobody reports it. Probe the tracked surfaces (link-surfaces.json)
+# for broken links; self-throttled to ~6h so the beat never floods the network. Fail-open, never fatal.
+if [ "${LIMEN_LINK_HEALTH:-1}" = "1" ]; then
+  python3 "$LIMEN_ROOT/scripts/link-health.py" --verify --throttle 21600 || echo "  ↑ DEAD link(s) on a public surface above — fix at the source or add a remap in link-surfaces.json"
+fi
+
 echo "── 1. drain (close completed Jules) ──"
 bash "$LIMEN_ROOT/scripts/drain.sh" || echo "  (drain skipped/failed — continuing)"
 

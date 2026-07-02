@@ -1,0 +1,37 @@
+{
+  "_doc": "The single home where every product launch lives. Add a product here, run scripts/launch-organ.py --stage --apply to generate channel-native drafts under staged/<product>/<channel>.md, refine them, then fire by hand (the organ never sends). Briefs must be DISCOVERED facts (real version/proof/links), never fabricated weight. This file PUBLISHES nothing private — public product URLs only.",
+  "generated_at": "2026-07-01",
+  "channels": [
+    {
+      "id": "hn",
+      "label": "Hacker News — Show HN",
+      "note": "Title: 'Show HN: <name> — <one-liner>'. One factual first comment: what it is, why you built it, the tech, the link. HN punishes marketing tone — no adjectives, no hype."
+    },
+    {
+      "id": "reddit",
+      "label": "Reddit",
+      "note": "Choose the subreddit per product and read its self-promotion rules first. Lead with the problem, disclose you built it, be a participant not an ad."
+    },
+    {
+      "id": "producthunt",
+      "label": "Product Hunt",
+      "note": "Tagline <= 60 chars + a short description + the maker's first comment. Schedule for 00:01 PT to get a full day on the leaderboard."
+    }
+  ],
+  "products": [
+    {
+      "id": "a-i-chat--exporter",
+      "name": "ChatGPT Exporter",
+      "one_liner": "export your ChatGPT history to Markdown, HTML, JSON, PNG, or plain text — browser-only, no account",
+      "url": "https://aichatexporter.com",
+      "install": "https://greasyfork.org/scripts/456055-chatgpt-exporter",
+      "repo": "organvm-iii-ergon/a-i-chat--exporter",
+      "audience": "researchers, writers, and developers who keep real work inside ChatGPT and need it out at the format level",
+      "proof": "live userscript v2.29.1, localized in 9 languages, free with an optional Pro tier (bulk/all-conversation export, conversations.json import/re-export); open source, no backend, no cloud upload",
+      "why_built": "once conversations are in the ChatGPT web UI they are hard to move into the systems you already use; the official JSON export is not the same as archiving, citing, searching, and repurposing at the format you need",
+      "source_post": "marketing/launch-post.md",
+      "channels": ["hn", "reddit", "producthunt"],
+      "status": "draft"
+    }
+  ]
+}

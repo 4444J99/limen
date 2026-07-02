@@ -1,0 +1,40 @@
+{
+  "_doc": "Declarative registry of PUBLIC identity/demand surfaces the link-health organ checks for dead links. A dead link on an identity surface repels the exact visitors the front door is built to pull, so this is demand-hygiene, not cosmetics. The organ (scripts/link-health.py) reads this every cadence, fetches each surface, extracts its outbound links, and probes each one; a 404 on any tracked surface fails the predicate. Add a surface = add one entry here, never a code change. Override the path with LIMEN_LINK_SURFACES. This file PUBLISHES (it names public URLs only) — never put a private URL or token here.",
+  "generated_at": "2026-07-01",
+  "remap": [
+    {
+      "from_host": "4444j99.github.io",
+      "to_host": "organvm.github.io",
+      "why": "the working GitHub Pages org is `organvm`; the bare `4444j99.github.io` user site has no Pages build and 404s on every path. Swap the host, keep the path — the target then resolves 200."
+    }
+  ],
+  "ignore_hosts": [
+    "img.shields.io",
+    "github-readme-stats-sigma-five.vercel.app",
+    "streak-stats.demolab.com",
+    "github-trophies.vercel.app",
+    "komarev.com",
+    "linkedin.com"
+  ],
+  "surfaces": [
+    {
+      "id": "profile-readme",
+      "type": "github_readme",
+      "ref": "organvm/4444J99",
+      "label": "GitHub profile README — the identity front door",
+      "why": "top identity surface; every visitor the discoverability pass pulls lands here first"
+    },
+    {
+      "id": "portfolio",
+      "type": "url",
+      "ref": "https://organvm.github.io/portfolio/",
+      "label": "Portfolio site (GitHub Pages)"
+    },
+    {
+      "id": "resume",
+      "type": "url",
+      "ref": "https://organvm.github.io/portfolio/resume/",
+      "label": "Resume (portfolio subpage)"
+    }
+  ]
+}

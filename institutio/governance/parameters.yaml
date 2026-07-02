@@ -832,3 +832,26 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Whether scripts/heal-board.py (heartbeat preflight) auto-restores the live board from `git show HEAD:tasks.yaml` when it is unloadable or collapsed (≤ LIMEN_BOARD_SHRINK_FLOOR tasks). Idempotent: a healthy board is a no-op. The recovery net behind the save-time guard. Set 0 to disable."
+
+  # --- DEMAND-SURFACE ORGANS: keep the front door reachable + launch posts homed ---
+  # (scripts/link-health.py + scripts/launch-organ.py). A 404 on a public identity surface is silent
+  # demand-loss; a launch with no home is a one-off. Both are REPEATABLE processes, not chores — the
+  # link organ probes every beat like creds-hydrate --verify, the launch organ homes every product ship.
+  LIMEN_LINK_HEALTH:
+    default: "1"               # ON — probe public surfaces for dead links each beat (throttled ~6h)
+    env: LIMEN_LINK_HEALTH
+    self_update: none
+    owner: link-health
+    note: "Beat gate for the link-health organ (scripts/link-health.py --verify). 1=probe the tracked identity/demand surfaces for 404s each beat, self-throttled to ~6h so it never floods the network; 0=off. Fail-open, never fatal — a dead link surfaces in the beat log the same way a dead credential does. See link-surfaces.json."
+  LIMEN_LINK_SURFACES:
+    default: "$LIMEN_ROOT/link-surfaces.json"
+    env: LIMEN_LINK_SURFACES
+    self_update: none
+    owner: link-health
+    note: "Path to the declarative registry of public surfaces + host remap rules the link-health organ checks. Add a surface or a known-good remap = one entry there, never a code change. Publishes public URLs only — never a private URL or token."
+  LIMEN_LAUNCHES:
+    default: "$LIMEN_ROOT/organs/launch/launches.json"
+    env: LIMEN_LAUNCHES
+    self_update: none
+    owner: launch
+    note: "Path to the launch organ's product registry (scripts/launch-organ.py). Add a product = one entry; channel-native drafts stage under organs/launch/staged/<product>/<channel>.md and the organ NEVER sends — publishing stays the human's hand."
