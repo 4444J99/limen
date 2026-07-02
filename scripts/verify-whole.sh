@@ -25,6 +25,9 @@ if [[ -f "$CVRSV_SEED" ]]; then
   python3 organs/governance/validate-seed.py "$CVRSV_SEED" --strict-graph --quiet
 fi
 
+step "Validate Sovereign Systems consulting engagement records"
+python3 organs/consulting/validate-consulting.py --fleet --quiet
+
 step "Verify the merge-policy predicate (verdict matrix regression test)"
 bash scripts/tests/merge-policy.test.sh
 

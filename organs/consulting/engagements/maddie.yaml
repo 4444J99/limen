@@ -1,0 +1,31 @@
+member:
+  name: "Maddie"
+  context: "Private client channel — scope capture under changing priorities"
+mandate:
+  description: "Engagement intake and delivery posture under changing scope"
+  outcome: "Test engagement posture stability when requirements shift"
+standing:
+  current: "EXECUTION"
+  history:
+    - "DISCOVERY"
+    - "PROPOSAL"
+    - "ACCEPTANCE"
+next_standing: "REVIEW"
+human_gates:
+  - "Partner confirms intake completeness"
+  - "Partner approves scope boundaries"
+  - "Partner signs off each deliverable"
+standard:
+  quality_bar: "Every deliverable must have a named owner and a human gate"
+  evidence: "Artifacts exist in repo or on human-approved channels"
+governance:
+  authority: "Engagement Partner (human) — strategic accept/reject, final scope, commitments"
+  ethics: "No autonomous sending, billing, or commitments"
+  reversibility: "All external actions staged and surfaced for human action"
+scope:
+  boundary: "Scope capture, posture tracking, assumption logging"
+  exclusions:
+    - "No contract execution"
+    - "No billing"
+    - "No legal advice"
+  changes: []

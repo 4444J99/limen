@@ -1,0 +1,34 @@
+member:
+  name: "Rob"
+  context: "Recurring execution support with staged deadlines"
+mandate:
+  description: "Recurring execution support with staged deadlines and clear decision checkpoints"
+  outcome: "Test execution rhythm stability across work packet adjustments"
+standing:
+  current: "EXECUTION"
+  history:
+    - "DISCOVERY"
+    - "PROPOSAL"
+    - "ACCEPTANCE"
+next_standing: "REVIEW"
+human_gates:
+  - "Partner confirms milestone completion"
+  - "Partner approves reprioritization"
+  - "Partner signs off handoff package"
+standard:
+  quality_bar: "Every milestone has a named owner and a human gate"
+  evidence: "Recurring cadence artifacts exist"
+governance:
+  authority: "Engagement Partner (human) — strategic direction, re-prioritization"
+  ethics: "No autonomous re-prioritization without partner approval"
+  reversibility: "All external actions staged and surfaced for human action"
+scope:
+  boundary: "Recurring execution support, milestone tracking, quality notes"
+  exclusions:
+    - "No financial commitments"
+    - "No contract changes"
+    - "No third-party agreements"
+  changes:
+    - date: "2026-06-15"
+      description: "Scope refined to add milestone checkpoint documentation"
+      approved_by: "Engagement Partner"

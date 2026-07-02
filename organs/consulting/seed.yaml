@@ -1,0 +1,26 @@
+schema_version: "1.0"
+organ: "consulting"
+repo: "organvm/limen"
+org: "organvm"
+metadata:
+  implementation_status: "BETA"
+  promotion_status: "BETA"
+description: >
+  Sovereign Systems — the consulting service desk of the VLTIMA body. Runs the
+  engagement posture validator, maintains client posture records, and audits every
+  delivery against the standing rules. This seed.yaml is the consulting organ's
+  own assertion.
+produces:
+  - type: "engagement_posture_report"
+    consumers:
+      - "organ-health"
+      - "conducting-report"
+  - type: "consulting_validation_result"
+    consumers:
+      - "organ-health"
+      - "evocator"
+consumes:
+  - type: "organ_ladder_census"
+    source: "organ-ladder.json"
+  - type: "engagement_declarations"
+    source: "organs/consulting/engagements/*.yaml"

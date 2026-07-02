@@ -1,0 +1,31 @@
+member:
+  name: "Derek"
+  context: "Cross-program work — education-adjacent and narrative-facing"
+mandate:
+  description: "Cross-program work with frequent context shifts, testing portability of the posture model"
+  outcome: "Test one operating model across different working idioms"
+standing:
+  current: "EXECUTION"
+  history:
+    - "DISCOVERY"
+    - "PROPOSAL"
+    - "ACCEPTANCE"
+next_standing: "REVIEW"
+human_gates:
+  - "Partner confirms brief structure"
+  - "Partner approves milestone ledger entries"
+  - "Partner signs off handoff package"
+standard:
+  quality_bar: "Structured brief format, milestone ledger, handoff package completeness"
+  evidence: "All artifacts review-ready before partner review"
+governance:
+  authority: "Engagement Partner (human) — strategic fit, cross-program coordination"
+  ethics: "No autonomous context shifts without partner awareness"
+  reversibility: "All external actions staged and surfaced for human action"
+scope:
+  boundary: "Structured brief format, milestone ledger, handoff packages"
+  exclusions:
+    - "No independent client outreach"
+    - "No narrative publication without partner review"
+    - "No billing or financial commitments"
+  changes: []
