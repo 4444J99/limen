@@ -432,12 +432,18 @@ def links_status(man: dict | None = _MAN) -> dict:
     lh = (man or {}).get("links_home") if man else None
     if not isinstance(lh, dict):
         return {"declared": False}
-    return {
+    out = {
         "declared": True,
         "status": lh.get("status"),
         "target": lh.get("target"),
         "converges": [c.get("home") for c in lh.get("converges", []) if isinstance(c, dict)],
     }
+    # once built, read the folded count from the register so the beat can prove the home is populated
+    if lh.get("status") == "present" and lh.get("target"):
+        doc = _load_json(WORKSPACE / lh["target"])
+        if isinstance(doc, dict):
+            out["count"] = (doc.get("summary") or {}).get("total")
+    return out
 
 
 # ── NVMERVS — the contribution activity shape (the radar) ─────────────────────────────────────
@@ -695,8 +701,11 @@ def _oneliner(a: dict) -> str:
     if drifts:
         d = ", ".join(f"{x['face']}.{x['metric']} {x['face_value']}→{x['src']}" for x in drifts[:3])
         head += f" · drift: {d}"
-    if a.get("links", {}).get("status") == "missing":
+    lk = a.get("links", {})
+    if lk.get("status") == "missing":
         head += " · links home: MISSING"
+    elif lk.get("status") == "present":
+        head += f" · links home: {lk['count']}" if lk.get("count") is not None else " · links home: ✓"
     if "review_pct" in mx:
         tell = " ⚠" if mx["review_pct"] < REVIEW_FLOOR else ""
         stale = " (stale)" if mx.get("stale") else ""
