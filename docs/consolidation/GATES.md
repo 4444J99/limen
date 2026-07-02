@@ -1,6 +1,6 @@
 # GitHub Consolidation Gates
 
-Generated: `2026-06-28T16:39:20+00:00`
+Generated: `2026-07-02T15:12:35+00:00`
 
 ## Rule
 
@@ -21,7 +21,7 @@ Generated: `2026-06-28T16:39:20+00:00`
 | Rename target conflicts/unknown | `0` / `0` |
 | Transfer apply gate open | `False` |
 | `tasks.yaml` repo refs to rewrite post-transfer | `49` |
-| Local remotes to rewrite post-transfer | `8` |
+| Local remotes to rewrite post-transfer | `15` |
 | Deploy literal to fix post-transfer | `False` |
 | `gh-app-token --which` | `pat (GITHUB_TOKEN fallback)` |
 | `limen[bot]` App installed | `False` |
@@ -67,8 +67,8 @@ Generated: `2026-06-28T16:39:20+00:00`
 
 ## Probe Commands
 
-- Consolidation dry-run: `/usr/local/bin/python3 scripts/consolidate-github.py`
-- Owner rewrite dry-run: `/usr/local/bin/python3 scripts/rewrite-owners.py`
+- Consolidation dry-run: `/opt/homebrew/opt/python@3.14/bin/python3.14 scripts/consolidate-github.py`
+- Owner rewrite dry-run: `/opt/homebrew/opt/python@3.14/bin/python3.14 scripts/rewrite-owners.py`
 - App token path probe: `bash scripts/gh-app-token.sh --which`
 - Org App installation probe: `gh api /orgs/organvm/installations --jq .installations[] | .app_slug`
 
