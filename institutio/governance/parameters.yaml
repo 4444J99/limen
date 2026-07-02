@@ -843,6 +843,12 @@ parameters:
     self_update: none
     owner: link-health
     note: "Beat gate for the link-health organ (scripts/link-health.py --verify). 1=probe the tracked identity/demand surfaces for 404s each beat, self-throttled to ~6h so it never floods the network; 0=off. Fail-open, never fatal — a dead link surfaces in the beat log the same way a dead credential does. See link-surfaces.json."
+  LIMEN_LINK_HEAL:
+    default: "1"               # ON — when a dead link has a verified-live remap, open a reviewable fix-PR
+    env: LIMEN_LINK_HEAL
+    self_update: none
+    owner: link-health
+    note: "Beat gate for the link-health organ's SELF-HEAL (scripts/link-health.py --heal --apply). 1=when a dead link has a verified-live replacement, auto-open a reversible fix-PR at the source; 0=detect only. Boundary: heal OPENS a PR, never MERGES — publishing the fix into a live identity surface stays the human's hand / merge-policy (the same stage-vs-send boundary the launch organ draws). Idempotent + self-limiting: the fix-PR branch embeds a hash of the exact fix-set, so a standing dead link is PR'd once and never re-nagged. Fail-open, never fatal."
   LIMEN_LINK_SURFACES:
     default: "$LIMEN_ROOT/link-surfaces.json"
     env: LIMEN_LINK_SURFACES

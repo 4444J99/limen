@@ -16,6 +16,14 @@ the remapped URL is live and prints the exact fix, so detection and repair are o
   python3 scripts/link-health.py --verify     # beat form: quiet unless broken, exit 1 on dead
   python3 scripts/link-health.py --json        # machine report to stdout
   python3 scripts/link-health.py --throttle 21600   # no-op if checked within 6h (beat self-throttle)
+  python3 scripts/link-health.py --heal        # dry-run: which verified fixes WOULD open a PR
+  python3 scripts/link-health.py --heal --apply     # open a reversible fix-PR per surface
+
+Detection and repair close into one loop: when a dead link's verified-live remap exists, `--heal`
+OPENS a reviewable PR that applies it — but never MERGES (the publish stays the human's hand, the
+same boundary the launch organ draws at `send`). Idempotent: the fix-PR branch embeds a hash of the
+exact fix-set, so a standing dead link is PR'd exactly once and a new one gets its own PR. Gated for
+the beat by LIMEN_LINK_HEAL; the CLI verb is an explicit manual trigger.
 
 Anti-waste + fail-open: read-only on the graph (one `gh api` per readme surface, plain HTTP
 HEAD elsewhere); decorative badge hosts are ignored so signal stays high; a fetch error on a
@@ -26,6 +34,7 @@ from __future__ import annotations
 import argparse
 import base64
 import datetime as dt
+import hashlib
 import json
 import os
 import re
@@ -157,6 +166,7 @@ def run(reg: dict) -> dict:
     for surface in reg["surfaces"]:
         text, err = fetch_surface(surface)
         entry = {"id": surface.get("id"), "label": surface.get("label"), "ref": surface.get("ref"),
+                 "type": surface.get("type"),
                  "links": [], "dead": [], "blocked": [], "skipped_surface": None}
         if text is None:
             entry["skipped_surface"] = err  # fail OPEN: a surface we can't fetch is not a broken link
@@ -230,18 +240,162 @@ def render(report: dict, verify: bool) -> str:
     return "\n".join(lines)
 
 
+# ── SELF-HEAL ────────────────────────────────────────────────────────────────
+# Detection and repair are one loop, but repair stops at the PUBLISH boundary: the organ
+# OPENS a reviewable fix-PR (reversible) — it never MERGES. Merging a fix into a live
+# identity surface is the publish, and that stays the human's hand / merge-policy — the
+# exact boundary the launch organ draws between `stage` and `send`. Gated for the beat by
+# LIMEN_LINK_HEAL (the CLI `--heal` is always an explicit manual trigger, like
+# `limen dispatch --live` vs the LIMEN_DISPATCH beat gate).
+HEAL_PREFIX = "fix/link-health-"
+
+
+def _gh(args: list[str], inp: str | None = None) -> tuple[int, str, str]:
+    r = subprocess.run(["gh", *args], capture_output=True, text=True, input=inp)
+    return r.returncode, r.stdout, r.stderr
+
+
+def _fix_set(entry: dict) -> list[tuple[str, str]]:
+    """(dead_url, live_url) pairs for this surface whose remap was probed VERIFIED live."""
+    pairs = {(d["url"], d["fix"]["to"]) for d in entry["dead"]
+             if d.get("fix") and d["fix"].get("verified_live")}
+    return sorted(pairs)
+
+
+def _branch_for(surface_id: str, pairs: list[tuple[str, str]]) -> str:
+    # The branch embeds a hash of the exact fix-set, so: the same standing dead link maps to
+    # the same branch (PR'd once, never re-nagged — even if a prior PR was declined/closed),
+    # while a genuinely NEW dead link hashes to a fresh branch and gets its own PR.
+    digest = hashlib.sha256("\n".join(f"{a} {b}" for a, b in pairs).encode()).hexdigest()[:8]
+    return f"{HEAL_PREFIX}{surface_id}-{digest}"
+
+
+def _pr_exists(repo: str, head: str) -> bool:
+    code, out, _ = _gh(["pr", "list", "--repo", repo, "--head", head, "--state", "all", "--json", "number"])
+    if code != 0:
+        return False
+    try:
+        return len(json.loads(out or "[]")) > 0
+    except json.JSONDecodeError:
+        return False
+
+
+def heal(report: dict, apply: bool) -> list[dict]:
+    """Open one reversible fix-PR per healable surface. Dry-run unless apply=True.
+
+    Only `github_readme` surfaces are healable — those are the ones whose editable source
+    (a repo README) the registry names. A `url` surface names no source file, so its fix is
+    surfaced by --verify but not auto-opened (declare a source to make it healable).
+    """
+    results: list[dict] = []
+    for s in report["surfaces"]:
+        if s.get("type") != "github_readme":
+            continue
+        repo, pairs = s.get("ref"), _fix_set(s)
+        if not repo or not pairs:
+            continue
+        branch = _branch_for(s["id"], pairs)
+        res = {"surface": s["id"], "repo": repo, "branch": branch, "n": len(pairs),
+               "pairs": pairs, "pr": None, "status": None}
+        results.append(res)
+        if _pr_exists(repo, branch):
+            res["status"] = "already-staged"       # a PR for this exact fix-set exists — never duplicate
+            continue
+        if not apply:
+            res["status"] = "would-open"
+            continue
+        code, out, err = _gh(["api", f"repos/{repo}/readme"])
+        if code != 0:
+            res["status"] = f"error: readme fetch ({err.strip()[:100]})"
+            continue
+        meta = json.loads(out)
+        path, sha = meta["path"], meta["sha"]
+        raw = base64.b64decode(meta["content"]).decode("utf-8", "replace")
+        fixed = raw
+        for dead, live in pairs:
+            fixed = fixed.replace(dead, live)        # per-URL swap — only the verified-live ones
+        if fixed == raw:
+            res["status"] = "no-op (fix targets not found verbatim in source)"
+            continue
+        dcode, dout, _ = _gh(["api", f"repos/{repo}"])
+        base = json.loads(dout).get("default_branch", "main") if dcode == 0 else "main"
+        rcode, rout, rerr = _gh(["api", f"repos/{repo}/git/ref/heads/{base}"])
+        if rcode != 0:
+            res["status"] = f"error: base ref ({rerr.strip()[:100]})"
+            continue
+        base_sha = json.loads(rout)["object"]["sha"]
+        ccode, _c, cerr = _gh(["api", "-X", "POST", f"repos/{repo}/git/refs",
+                               "-f", f"ref=refs/heads/{branch}", "-f", f"sha={base_sha}"])
+        if ccode != 0 and "already exists" not in cerr.lower():
+            res["status"] = f"error: branch create ({cerr.strip()[:100]})"
+            continue
+        n = len(pairs)
+        title = f"fix(links): heal {n} dead link{'s' if n != 1 else ''} on {s['id']} → verified-live"
+        msg = (title + "\n\n"
+               "Auto-opened by limen's link-health organ: each swapped link probed 404 and "
+               "its replacement probed live before this PR. Reversible (a PR, not a merge) — "
+               "merging into the live surface stays the human's hand.\n\n"
+               + "\n".join(f"  {a} -> {b}" for a, b in pairs)
+               + "\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>")
+        payload = json.dumps({"message": msg, "sha": sha, "branch": branch,
+                              "content": base64.b64encode(fixed.encode()).decode()})
+        pcode, _p, perr = _gh(["api", "-X", "PUT", f"repos/{repo}/contents/{path}", "--input", "-"], inp=payload)
+        if pcode != 0:
+            res["status"] = f"error: commit ({perr.strip()[:100]})"
+            continue
+        body = ("`link-health` probed each link **404** and verified its replacement **live** "
+                "before opening this PR:\n\n"
+                + "\n".join(f"- `{a}` → `{b}`" for a, b in pairs)
+                + "\n\nReversible — a PR, not a merge. Merging into the live identity surface is "
+                "the publish and stays your hand.\n\n"
+                "🤖 Generated with [Claude Code](https://claude.com/claude-code)")
+        ocode, oout, oerr = _gh(["pr", "create", "--repo", repo, "--base", base,
+                                 "--head", branch, "--title", title, "--body", body])
+        if ocode != 0:
+            res["status"] = f"error: pr create ({oerr.strip()[:100]})"
+            continue
+        res["pr"], res["status"] = oout.strip(), "opened"
+    return results
+
+
+def render_heal(results: list[dict], apply: bool) -> str:
+    if not results:
+        return "link-health heal: nothing healable (no surface has a verified-live remap)"
+    head = "link-health heal:" + ("" if apply else "  (dry-run — pass --apply to open PRs)")
+    lines = [head]
+    for r in results:
+        lines.append(f"  {r['surface']} ({r['repo']}): {r['n']} verified fix(es) — {r['status']}")
+        if r.get("pr"):
+            lines.append(f"      PR: {r['pr']}")
+        for a, b in r["pairs"]:
+            lines.append(f"      {a} -> {b}")
+    return "\n".join(lines)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--verify", action="store_true", help="beat form: silent when green, exit 1 on any dead link")
     ap.add_argument("--json", action="store_true", help="emit the machine report to stdout")
     ap.add_argument("--throttle", type=int, default=0, metavar="SEC",
                     help="no-op (use cached result) if the last run is younger than SEC (beat self-throttle)")
+    ap.add_argument("--heal", action="store_true",
+                    help="open a reversible fix-PR per surface with a verified-live remap (dry-run unless --apply)")
+    ap.add_argument("--apply", action="store_true", help="with --heal: actually open the PR(s)")
     args = ap.parse_args()
 
     cached = throttled(args.throttle)
     report = cached if cached is not None else run(load_registry())
     if cached is None:
         write_stamp(report)
+
+    if args.heal:
+        # heal is an ACTION, not the predicate: it exits 0 when it ran cleanly even though the
+        # dead links remain until the PR merges. It fails (1) only on a real error opening a PR.
+        results = heal(report, apply=args.apply)
+        out = render_heal(results, args.apply)
+        if out:
+            print(out)
+        return 1 if any(str(r["status"]).startswith("error") for r in results) else 0
 
     if args.json:
         print(json.dumps(report, indent=2))

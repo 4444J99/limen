@@ -54,6 +54,14 @@ python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" || echo "  (usage telemetry ski
 # for broken links; self-throttled to ~6h so the beat never floods the network. Fail-open, never fatal.
 if [ "${LIMEN_LINK_HEALTH:-1}" = "1" ]; then
   python3 "$LIMEN_ROOT/scripts/link-health.py" --verify --throttle 21600 || echo "  ↑ DEAD link(s) on a public surface above — fix at the source or add a remap in link-surfaces.json"
+  # SELF-HEAL: when a dead link has a verified-live replacement, the organ OPENS a reviewable
+  # fix-PR (reversible — never a merge; publishing stays the human's hand). Idempotent +
+  # self-limiting: one PR per distinct fix-set, skipped once a PR for it exists, so once merged
+  # the link resolves and no PR re-opens. Reuses the throttled probe above (near-zero extra work).
+  # Set LIMEN_LINK_HEAL=0 to keep detection but disable auto-opening PRs.
+  if [ "${LIMEN_LINK_HEAL:-1}" = "1" ]; then
+    python3 "$LIMEN_ROOT/scripts/link-health.py" --heal --apply --throttle 21600 || echo "  (link-health heal skipped/failed — non-fatal)"
+  fi
 fi
 
 echo "── 1. drain (close completed Jules) ──"
