@@ -243,6 +243,10 @@ def _registry():
         dict(key="life", rung="LIFE", voice="life", cadence_key="LIFE",
              what="digital-life office — accounts/assets + subscription purge clock (PII local)",
              probe=lambda: _mtime(LOGS / "life-organ-state.json")),
+        dict(key="governance", rung="GOVERNANCE", voice="governance", cadence_key="GOVERNANCE",
+             gate="LIMEN_GOVERNANCE", gate_default="1",
+             what="cursus honorum validator + governance standing; aerarium office",
+             probe=lambda: _mtime(LOGS / "governance-organ-state.json")),
     ]
 
 

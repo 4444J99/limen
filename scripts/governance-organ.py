@@ -19,7 +19,7 @@ import json
 import os
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
@@ -75,7 +75,7 @@ def main() -> int:
     standing = _governance_standing()
 
     report = {
-        "ts": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "validator": outcome,
         "standing": standing,
     }

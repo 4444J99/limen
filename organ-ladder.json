@@ -78,7 +78,7 @@
       "organ": "Aerarium / Cvrsvs Honorvm",
       "repo": "organvm/limen",
       "home": "organs/governance/",
-      "maturity": 50,
+      "maturity": 60,
       "stage": "building",
       "whose_hand": "mine (entity formation signatures are his)",
       "rival": "a constitutional state / a foundation's governance office",
@@ -86,7 +86,7 @@
       "macro": "a portable governance-as-code open standard anyone can adopt",
       "micro": "ORGANVM's own dual-entity operation (non-profit open project + commercial LLC)",
       "first_artifact": "operationalize ONE cvrsvs-honorvm rule as an executable validator",
-      "note": "infrastructure partial (aerarium--res-publica); rules conceptual, not operationalized"
+      "note": "rules operationalized via validate-seed.py + governance-organ.py beat; aerarium--res-publica infra partial"
     },
     {
       "rank": 6,

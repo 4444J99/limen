@@ -48,6 +48,30 @@ truths:
       memory: mpo-resolved-quaestor-owns
 
   - id: EVO-002
+    claim: "Governance organ = aerarium / Cvrsvs Honorvm — operationalized as an autonomic beat"
+    line: >-
+      The governance organ (rank 5, aerarium--res-publica) runs the cursus honorum seed validator
+      (validate-seed.py) every beat on the C_GOVERNANCE cadence. Rules are operationalized as
+      validatable checks; the organ stamps "governance" for proprioception. Self-feed is via the
+      generate-organ-backlog.py generator (building-stage levers). Maturity 50%→60% as of 2026-07-01.
+    summons: >-
+      The governance organ (Aerarium / Cvrsvs Honorvm) is the VLTIMA body's constitutional office.
+      It holds the cursus honorum (INCUBATOR → ALPHA → BETA → STABLE → MATURE) as executable
+      validation (validate-seed.py), tracks repo standing via seed.yaml declarations, and runs
+      autonomously every C_GOVERNANCE beat. The organ was self-feed wired on 2026-07-01: generator
+      hook confirmed, EVOCATOR canon registered, voice stamp active, seed.yaml first assertion created.
+      Rules are operationalized as validatable checks — the "conceptual, not operationalized"
+      constraint is resolved. The aerarium--res-publica infrastructure remains partial (infra note).
+    source_of_record: "limen/organs/governance/"
+    confidence: high
+    resolved: "2026-07-01"
+    reversible_via: "edit organs/governance/KERNEL.md or validate-seed.py; revert organ-ladder.json maturity"
+    channels:
+      flame: true
+      corpus: true
+      memory: governance-organ-self-feed
+
+  - id: EVO-003
     claim: '"find" = build the portal'
     line: >-
       When Anthony says "find X / find everything / find the answers", BUILD THE PORTAL that
