@@ -70,6 +70,17 @@ step "Run API and CLI tests"
 env -u LIMEN_API_TOKEN -u LIMEN_OWNER_TOKEN -u LIMEN_CLIENT_TOKEN \
   PYTHONPATH="$PYTHONPATH_VALUE" python3 -m pytest web/api/tests cli/tests -q
 
+step "Verify MONETA sovereign-mint licence tests (vitest + tsc)"
+if command -v npm >/dev/null; then
+  (
+    cd "$ROOT/moneta"
+    npm ci --silent >/dev/null 2>&1 || npm install --silent >/dev/null 2>&1
+    npm test
+  )
+else
+  printf 'Skipping MONETA tests — npm not found on PATH.\n'
+fi
+
 step "Probe local runtime adapter over HTTP"
 PYTHONPATH="$PYTHONPATH_VALUE" scripts/probe-local-runtime.sh
 

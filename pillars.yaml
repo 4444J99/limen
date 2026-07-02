@@ -76,3 +76,8 @@ pillars:
     path: ~/Workspace/limen/scripts/censor.py
     producer: scripts/censor.py
     health_signal: logs/censor-view.json
+  - id: mint
+    name: Sovereign mint (MONETA)
+    role: Take payment straight to an owner-controlled Bitcoin address and sign each product's own offline Pro licence — no Stripe/Ko-fi/Lemon Squeezy, no processor in the path. Unconfigured, it pools demand as reserved orders and auto-opens them the moment the receive address is set (the valve).
+    owner: limen
+    path: ~/Workspace/limen/moneta
