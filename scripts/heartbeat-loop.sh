@@ -146,6 +146,7 @@ C_LIFE="${LIMEN_BEAT_LIFE:-6}"           # STEWARD (refresh the digital-life off
 C_GOVERNANCE="${LIMEN_BEAT_GOVERNANCE:-8}" # GOVERN (run the cursus honorum seed validator + governance standing report)
 C_PUBPOLICY="${LIMEN_BEAT_PUBPOLICY:-8}" # DISCLOSE (verify the content-disposition engine: redactor owner-scoped, matrix + classifier intact)
 C_WALLS="${LIMEN_BEAT_WALLS:-12}"        # WALLS (regenerate the credential Wall #320 + his-hand Wall #330 so they never drift)
+C_CVSTOS="${LIMEN_BEAT_CVSTOS:-24}"      # KEEP (CVSTOS — host stays factory: chat-app/local debt census + factory-invariant + reaper proprioception; filesystem walk ⇒ rare)
 LOCKD="$LIMEN_ROOT/logs/.queue.lock.d"   # shared with supervisory ops (two-scale safety)
 c=0
 play() { [ $(( c % $1 )) -eq 0 ]; }   # true on this voice's beat
@@ -435,6 +436,13 @@ while true; do
   # Idempotent, fail-open — never gates the beat. Gate off with LIMEN_PUBPOLICY=0.
   due_voice pubpolicy "$C_PUBPOLICY" && [ "${LIMEN_PUBPOLICY:-1}" = "1" ] && \
     { python3 "$LIMEN_ROOT/scripts/publication-policy.py" --verify 2>&1 | tail -1 || true; stamp pubpolicy; }
+  # CVSTOS — the keeper of the host. Every C_CVSTOS beats: census the chat-app/local debt (all
+  # vendors, not just Claude), measure the factory-host invariant (nothing truly on PATH/local), and
+  # give the scattered reapers one liveness face. READ-ONLY (surface) — the regenerable-cache reclaim
+  # (--apply) stays a human lever until he classifies what's safe to purge. Lockless, fail-open —
+  # never gates the beat. Gate off with LIMEN_CVSTOS=0.
+  due_voice cvstos "$C_CVSTOS" && [ "${LIMEN_CVSTOS:-1}" = "1" ] && \
+    { python3 "$LIMEN_ROOT/scripts/cvstos-organ.py" 2>&1 | tail -1 || true; stamp cvstos; }
   # WALLS — regenerate the credential Wall (#320) + his-hand aggregate Wall (#330) every C_WALLS beats
   # so the published walls never drift from reality. Idempotent (writes only on change), fail-open.
   play "$C_WALLS"   && { python3 "$LIMEN_ROOT/scripts/credential-wall.py" --sync 2>&1 | tail -1 || true

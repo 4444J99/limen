@@ -493,6 +493,37 @@ parameters:
     self_update: none
     owner: health
     note: "Minimum logged observations before the learning department surfaces a pattern (avoids inferring from noise)."
+  # --- CVSTOS: the keeper of the host (chat-app/local debt + factory invariant + reaper proprioception) ---
+  LIMEN_BEAT_CVSTOS:
+    default: 24                 # cadence: census the host every 24 beats (filesystem walk ⇒ rare)
+    env: LIMEN_BEAT_CVSTOS
+    self_update: none
+    owner: cvstos
+    note: "How often CVSTOS censuses chat-app/local debt + measures the factory-host invariant + probes reaper liveness. Read-only (surface), lockless, fail-open."
+  LIMEN_CVSTOS:
+    default: 1                  # default-ON: the surface pass rides the beat (read-only)
+    env: LIMEN_CVSTOS
+    self_update: none
+    owner: cvstos
+    note: "Master gate for the CVSTOS beat. ON by default (surface-only, read-only). Set 0 to silence the rung. The --apply reclaim is never passed by the beat regardless of this gate."
+  LIMEN_CVSTOS_DEBT_CAP_GB:
+    default: 5                  # evictable chat-app cache over this ⇒ --check reports eviction owed
+    env: LIMEN_CVSTOS_DEBT_CAP_GB
+    self_update: none
+    owner: cvstos
+    note: "Evictable chat-app cache (GB) above which the host is not at factory — the eviction stage is owed. A derived threshold, not a pinned truth."
+  LIMEN_CVSTOS_REAPER_STALE_H:
+    default: 48                 # a reaper voice-stamp older than this ⇒ stale
+    env: LIMEN_CVSTOS_REAPER_STALE_H
+    self_update: none
+    owner: cvstos
+    note: "Hours after which a reaper (worktree/clone/branch/preserve) with no fresh voice-stamp is treated as stale in the proprioception roof."
+  LIMEN_CVSTOS_SCAN_CAP:
+    default: 600000             # bound the filesystem walk so a pathological tree can't hang the beat
+    env: LIMEN_CVSTOS_SCAN_CAP
+    self_update: none
+    owner: cvstos
+    note: "Max directory entries the debt-sizing walk visits before returning an approximate total. Bounds the beat's cost; never blocks."
   # --- ORGANS (VLTIMA): convert idle capacity into institutional weight (legal/financial/education/...) ---
   LIMEN_ORGAN_BACKLOG:
     default: 1                  # default-ON: organ-ladder -> bounded build tasks each FEED beat
