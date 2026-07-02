@@ -27,6 +27,7 @@ from limen.model_selection import (  # the shared model vocabulary — also used
     _claude_fable_acceptance_present,
     _claude_fable_classes,
     _claude_opus_classes,
+    _guard_fable_model_pin,
     _resolve_claude_model,
 )
 from limen.worktree_debt import worktree_debt_exceeded
@@ -1618,7 +1619,7 @@ def _claude_model(task: Task | None = None) -> str | None:
     Fail-open to None everywhere → bare `claude -p` (account default), never a blocked lane."""
     env = os.environ.get("LIMEN_CLAUDE_MODEL")
     if env:
-        return env
+        return _guard_fable_model_pin(env)
     if os.environ.get("LIMEN_CLAUDE_TIER_SELECT", "1") != "1":
         return None
     try:
