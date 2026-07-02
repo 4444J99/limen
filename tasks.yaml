@@ -32622,7 +32622,7 @@ tasks:
   title: Raise test coverage in meta-organvm/visual-substrate-inquiry
   repo: organvm/visual-substrate-inquiry
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: dispatched
@@ -32643,7 +32643,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-02T11:38:18.680119Z'
+  updated: '2026-07-02T13:17:12.046282Z'
   dispatch_log:
   - timestamp: '2026-07-01T02:00:38.750210Z'
     agent: codex
@@ -33500,6 +33500,61 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T11:48:06.844844Z'
+    agent: codex
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-07-02T11:48:19.713419Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T11:55:52.187304Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-02T11:56:04.615625Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T12:14:33.960579Z'
+    agent: opencode
+    session_id: cli
+    status: failed->agy
+  - timestamp: '2026-07-02T12:14:46.700815Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T12:50:10.368880Z'
+    agent: agy
+    session_id: cli
+    status: failed->github_actions
+  - timestamp: '2026-07-02T12:50:22.373297Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T13:01:05.355539Z'
+    agent: github_actions
+    session_id: cli
+    status: failed->codex
+    output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-02T13:01:15.539360Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T13:17:04.224542Z'
+    agent: codex
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-07-02T13:17:12.046282Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-meta-organvm-meta-organvm.github.io-test-coverage-0620
   title: Raise test coverage in meta-organvm/meta-organvm.github.io
   repo: organvm/meta-organvm.github.io
@@ -33507,7 +33562,7 @@ tasks:
   target_agent: github_actions
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -33525,7 +33580,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-02T11:38:07.447740Z'
+  updated: '2026-07-02T13:17:12.046282Z'
   dispatch_log:
   - timestamp: '2026-07-01T01:33:31.331859Z'
     agent: opencode
@@ -33719,6 +33774,57 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->github_actions
+  - timestamp: '2026-07-02T11:48:19.713419Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T11:55:52.187304Z'
+    agent: github_actions
+    session_id: cli
+    status: failed->codex
+    output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-02T11:56:04.615625Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T12:14:33.960579Z'
+    agent: codex
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-07-02T12:14:46.700815Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T12:50:10.368880Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-02T12:50:22.373297Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T13:01:05.355539Z'
+    agent: opencode
+    session_id: cli
+    status: failed->agy
+  - timestamp: '2026-07-02T13:01:15.539360Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T13:17:04.224542Z'
+    agent: agy
+    session_id: cli
+    status: failed->github_actions
+  - timestamp: '2026-07-02T13:17:12.046282Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-meta-organvm-digital-income-organism-inquiry-test-coverage-0620
   title: Raise test coverage in meta-organvm/digital-income-organism-inquiry
   repo: organvm/digital-income-organism-inquiry
@@ -33812,7 +33918,7 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/organvm-iv-taxis.github.io
   repo: organvm/organvm-iv-taxis.github.io
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: dispatched
@@ -33833,7 +33939,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-02T11:38:18.680119Z'
+  updated: '2026-07-02T13:17:12.046282Z'
   dispatch_log:
   - timestamp: '2026-07-01T02:37:53.707333Z'
     agent: codex
@@ -33901,6 +34007,60 @@ tasks:
     status: failed->claude
   - timestamp: '2026-07-02T11:38:18.680119Z'
     agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T11:48:06.844844Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-02T11:48:19.713419Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T11:55:52.187304Z'
+    agent: opencode
+    session_id: cli
+    status: failed->agy
+  - timestamp: '2026-07-02T11:56:04.615625Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T12:14:33.960579Z'
+    agent: agy
+    session_id: cli
+    status: failed->gemini
+  - timestamp: '2026-07-02T12:14:46.700815Z'
+    agent: gemini
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T12:50:10.368880Z'
+    agent: gemini
+    session_id: cli
+    status: failed->codex
+  - timestamp: '2026-07-02T12:50:22.373297Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T13:01:05.355539Z'
+    agent: codex
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-07-02T13:01:15.539360Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T13:17:04.224542Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-02T13:17:12.046282Z'
+    agent: opencode
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
@@ -39543,10 +39703,10 @@ tasks:
   title: Raise test coverage in organvm/render-second-amendment
   repo: organvm/render-second-amendment
   type: code
-  target_agent: gemini
+  target_agent: github_actions
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - test-coverage
   - generated
@@ -39555,6 +39715,7 @@ tasks:
   - tried:claude
   - tried:opencode
   - tried:agy
+  - tried:gemini
   urls: []
   context: Find the largest source module in organvm/render-second-amendment with
     little or no test coverage and add a focused, PASSING test suite for it. Run the
@@ -39562,7 +39723,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-02T11:38:18.680119Z'
+  updated: '2026-07-02T11:48:06.844844Z'
   dispatch_log:
   - timestamp: '2026-07-02T04:14:30.578162Z'
     agent: codex
@@ -39686,6 +39847,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T11:48:06.844844Z'
+    agent: gemini
+    session_id: cli
+    status: failed->github_actions
 - id: GEN-organvm-reverse-engine-recursive-run-test-coverage-0620
   title: Raise test coverage in organvm/reverse-engine-recursive-run
   repo: organvm/reverse-engine-recursive-run
@@ -60460,7 +60625,7 @@ tasks:
     \ by QUICKEN (finish-not-park); refreshes each beat until you act."
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-07-02T11:27:33.806630Z'
+  updated: '2026-07-02T12:24:36.368717Z'
   dispatch_log: []
 - id: ASK-quicken-d2l
   title: the D2L go-live click + cadence confirm (your login + judgment)
@@ -73751,7 +73916,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 2
-  status: open
+  status: needs_human
   labels:
   - organ-selffeed
   - pillar:media
@@ -73769,7 +73934,7 @@ tasks:
     \ \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-01'
-  updated: '2026-07-02T02:04:22.429750Z'
+  updated: '2026-07-02T12:15:17.898408Z'
   dispatch_log:
   - timestamp: '2026-07-02T01:02:53.775853Z'
     agent: codex
@@ -73833,6 +73998,12 @@ tasks:
     status: open
     output: 'closeout: stale async reserve had no active worker; canonical log realigned
       with open task state'
+  - timestamp: '2026-07-02T12:15:17.898408Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: ORG-consulting-organ-operationalize-0701
   title: Operationalize consulting governance (rules as checks)
   repo: organvm/limen
@@ -74027,11 +74198,12 @@ tasks:
   - needs-human
   urls: []
   context: "Cheapest path \u2192 approve the irreversible delete/clear (archived reversibly;\
-    \ purge is yours). Unblocks: cleanup stale worktrees. Auto-hung by QUICKEN (finish-not-park);\
-    \ refreshes each beat until you act."
+    \ purge is yours). Unblocks: Audit Codex handoff and validate token-accountin,\
+    \ cleanup stale worktrees. Auto-hung by QUICKEN (finish-not-park); refreshes each\
+    \ beat until you act."
   depends_on: []
   created: '2026-07-01'
-  updated: '2026-07-02T11:27:33.806630Z'
+  updated: '2026-07-02T12:24:36.368717Z'
   dispatch_log: []
 - id: GEN-organvm-session-meta-test-coverage-0702
   title: Raise test coverage in organvm/session-meta
@@ -74467,7 +74639,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - simplify
   - generated
@@ -74479,7 +74651,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-07-02 to keep the stream endless]
   depends_on: []
   created: '2026-07-02'
-  updated: '2026-07-02T11:10:32.824735Z'
+  updated: '2026-07-02T12:15:17.898408Z'
   dispatch_log:
   - timestamp: '2026-07-02T07:31:08.511696Z'
     agent: claude
@@ -74529,6 +74701,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/session-meta/pull/158
     status: dispatched
+  - timestamp: '2026-07-02T12:15:17.898408Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GEN-organvm-session-meta-typing-0702
   title: Tighten types in organvm/session-meta
   repo: organvm/session-meta
