@@ -1,0 +1,25 @@
+schema_version: "1.0"
+organ: "governance"
+repo: "organvm/limen"
+org: "organvm"
+metadata:
+  implementation_status: "BETA"
+  promotion_status: "BETA"
+description: >
+  Cvrsvs Honorvm — the governance office of the VLTIMA body. Runs the cursus honorum
+  validator, maintains the entity registrar, and audits every promotion against the
+  standing rules. This seed.yaml is the governance organ's own assertion.
+produces:
+  - type: "governance_standing_report"
+    consumers:
+      - "organ-health"
+      - "conducting-report"
+  - type: "seed_validation_result"
+    consumers:
+      - "organ-health"
+      - "evocator"
+consumes:
+  - type: "organ_ladder_census"
+    source: "organ-ladder.json"
+  - type: "seed_declarations"
+    source: "seed.yaml files across estate"
