@@ -57,6 +57,38 @@ def test_audit_workflow_blocks_opus_fanout_and_unparsed_string_args(tmp_path):
     assert "script does not parse args" in violations
 
 
+def test_audit_workflow_blocks_unaccepted_fable(tmp_path):
+    wf = {
+        "workflowName": "canonical-fable-synthesis",
+        "status": "completed",
+        "agentCount": 1,
+        "workflowProgress": [{"model": "claude-fable-5", "state": "done"}],
+        "result": {"summary": "done"},
+    }
+    p = tmp_path / "wf.json"
+    p.write_text(json.dumps(wf))
+    proc = run_guard("audit-workflow", str(p))
+    assert proc.returncode == 2
+    violations = "\n".join(json.loads(proc.stdout)["reports"][0]["violations"])
+    assert "Fable run lacks written acceptance command" in violations
+
+
+def test_audit_workflow_allows_accepted_single_fable(tmp_path):
+    wf = {
+        "workflowName": "canonical-fable-synthesis",
+        "status": "completed",
+        "agentCount": 1,
+        "fableAcceptance": "python3 scripts/fable-allotment.py accept --category governance",
+        "workflowProgress": [{"model": "claude-fable-5", "state": "done"}],
+        "result": {"summary": "done"},
+    }
+    p = tmp_path / "wf.json"
+    p.write_text(json.dumps(wf))
+    proc = run_guard("audit-workflow", str(p))
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert json.loads(proc.stdout)["ok"] is True
+
+
 def test_audit_workflow_allows_sonnet_success_with_ci_failure_words(tmp_path):
     wf = {
         "workflowName": "heal-stuck-prs",
@@ -175,6 +207,28 @@ def test_audit_transcript_flags_opus_subagent_fanout(tmp_path):
     assert report["expensiveSubagents"] == 2
     assert report["expensiveTier"] == "opus"
     assert "subagent fanout" in "\n".join(report["violations"])
+
+
+def test_audit_transcript_blocks_unaccepted_fable(tmp_path):
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text(
+        json.dumps(
+            {
+                "type": "assistant",
+                "message": {
+                    "model": "claude-fable-5",
+                    "content": [{"type": "text", "text": "canonical answer"}],
+                    "usage": {"input_tokens": 5, "output_tokens": 5},
+                },
+            }
+        )
+        + "\n"
+    )
+    proc = run_guard("audit-transcript", str(transcript), "--max-billable-tokens", "1000000")
+    assert proc.returncode == 2
+    report = json.loads(proc.stdout)
+    assert report["fableBillableTokens"] == 10
+    assert "Fable run lacks written acceptance command" in "\n".join(report["violations"])
 
 
 def test_audit_transcript_allows_small_bounded_sonnet_session(tmp_path):
