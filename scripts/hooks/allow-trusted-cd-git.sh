@@ -3,20 +3,33 @@
 #
 # WHY: Claude Code v2.1.x prompts on EVERY compound `cd <dir> && <cmd>` (the
 # "bare-repo / untrusted git hooks" guard, upstream #32985). No settings
-# allow-rule suppresses it. The autonomous fleet runs thousands of
-# `cd ~/Workspace/<repo> && (git|python|pytest|node|npm|osascript) ...` per day,
-# so the guard floods every session/job with "approve Bash" prompts.
+# allow-rule suppresses it — not even Bash(*) — and worktree/fleet sessions run
+# under `--permission-mode auto` (which overrides settings.defaultMode:
+# bypassPermissions), so the guard is live and floods every job with "approve
+# Bash" prompts. The autonomous fleet runs thousands of
+# `cd <repo> && (git|python|pytest|node|npm|osascript) ...` per day.
 #
 # TRUST BOUNDARY = THE DIRECTORY, NOT THE TOOL. If the cd target resolves inside
-# a tree the user owns (~/Workspace, a .claude worktree, ~/.claude/jobs, /tmp),
-# the whole chain is auto-approved — matching the user's established posture that
-# in-tree work (including cleanup) should never prompt. Any cd target OUTSIDE
-# those trees falls through to the normal guard untouched, so foreign dirs keep
-# full protection, and a bare standalone command (no leading cd) is unaffected.
+# a tree the user owns (~/Workspace, ~/Code, ~/.claude, a .claude worktree,
+# ~/.claude/jobs, /tmp) OR is an in-tree relative path (the fleet only ever runs
+# from an already-trusted cwd), the whole chain is auto-approved — matching the
+# user's established posture that in-tree work (including cleanup) should never
+# prompt. Any cd target OUTSIDE those trees — an absolute foreign dir, a `..`
+# escape, or an unresolved variable we can't place — falls through to the normal
+# guard untouched, so foreign dirs keep full protection, and a bare standalone
+# command (no leading cd) is unaffected.
 #
-# History: previously only handled the `git` case (cd\ *git*), which left the
-# fleet's python/pytest/node/osascript compound commands prompting every run.
-# Generalized 2026-06-24 to the documented directory-trust design.
+# History:
+#  - originally only handled the `git` case (cd\ *git*).
+#  - 2026-06-24 generalized to the documented directory-trust design (absolute
+#    trusted roots only).
+#  - 2026-07-01 closed the fall-through prompts measured across fleet
+#    transcripts: added ~/Code and ~/.claude to the trusted roots (the real
+#    speech-score-engine lives at ~/Code and was 23/27 of all misses), taught it
+#    to resolve $HOME / $CLAUDE_JOB_DIR / $CLAUDE_PROJECT_DIR targets instead of
+#    matching them literally, trusted bare home (`cd ~`), and trusted in-tree
+#    relative targets (`cd cli`, `cd web/app`) that carry no `..` escape and no
+#    unresolved variable.
 set -euo pipefail
 
 input="$(cat)"
@@ -28,27 +41,50 @@ case "$cmd" in
   *) exit 0 ;;
 esac
 
-# Extract the cd target: text after the leading `cd `, up to the first && or ;.
-target="$(printf '%s' "$cmd" | sed -E 's/^cd[[:space:]]+//; s/[[:space:]]*(&&|;).*$//')"
-
-# Expand a leading ~ to $HOME.
-case "$target" in
-  "~"*) target="${HOME}${target#\~}" ;;
-esac
+# Extract the cd target from the FIRST physical line only: text after the
+# leading `cd `, up to the first && or ; (later lines / clauses are irrelevant
+# to where the shell lands).
+first="$(printf '%s' "$cmd" | head -1)"
+target="$(printf '%s' "$first" | sed -E 's/^cd[[:space:]]+//; s/[[:space:]]*(&&|;).*$//')"
 
 # Strip surrounding quotes if present.
 target="${target%\"}"; target="${target#\"}"
 target="${target%\'}"; target="${target#\'}"
 
 allow=0
+
+# 1) Known-trusted env-var prefixes. Their value always resolves in-tree
+#    ($CLAUDE_JOB_DIR -> ~/.claude/jobs/..., $CLAUDE_PROJECT_DIR -> the repo/
+#    worktree), so trust the literal prefix without needing the value in-hook.
 case "$target" in
-  "$HOME/Workspace"|"$HOME/Workspace/"*) allow=1 ;;   # the fleet workspace
-  *.claude/worktrees/*) allow=1 ;;                     # isolated worktrees (relative or absolute)
-  "$HOME/.claude/jobs/"*) allow=1 ;;                   # background-job scratch trees
-  /tmp|/tmp/*|/private/tmp/*) allow=1 ;;               # ephemeral scratch
+  '$CLAUDE_JOB_DIR'|'$CLAUDE_JOB_DIR/'*|'${CLAUDE_JOB_DIR}'|'${CLAUDE_JOB_DIR}/'*) allow=1 ;;
+  '$CLAUDE_PROJECT_DIR'|'$CLAUDE_PROJECT_DIR/'*|'${CLAUDE_PROJECT_DIR}'|'${CLAUDE_PROJECT_DIR}/'*) allow=1 ;;
 esac
 
+# 2) Controlled expansion of leading ~ and $HOME/${HOME} to the real home.
+if [ "$allow" = 0 ]; then
+  case "$target" in
+    "~"*)        target="${HOME}${target#\~}" ;;
+    '$HOME'*)    target="${HOME}${target#\$HOME}" ;;
+    '${HOME}'*)  target="${HOME}${target#\$\{HOME\}}" ;;
+  esac
+
+  case "$target" in
+    # Absolute trusted roots.
+    "$HOME"|"$HOME/Workspace"|"$HOME/Workspace/"*) allow=1 ;;
+    "$HOME/Code"|"$HOME/Code/"*)                   allow=1 ;;
+    "$HOME/.claude"|"$HOME/.claude/"*)             allow=1 ;;
+    *.claude/worktrees/*)                          allow=1 ;;  # relative or absolute
+    /tmp|/tmp/*|/private/tmp/*)                     allow=1 ;;
+    # Beyond the trusted roots: decide by shape.
+    /*)     : ;;   # other absolute path -> foreign, stays protected
+    *'$'*)  : ;;   # unresolved variable -> can't place it, stays protected
+    *..*)   : ;;   # path escape -> stays protected
+    *)      allow=1 ;;  # plain in-tree relative target (cwd is already trusted)
+  esac
+fi
+
 if [ "$allow" = "1" ]; then
-  printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","permissionDecisionReason":"Trusted cd target inside a user-owned tree (~/Workspace, worktree, jobs, /tmp)"}}\n'
+  printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","permissionDecisionReason":"Trusted cd target inside a user-owned tree (~/Workspace, ~/Code, ~/.claude, worktree, jobs, /tmp) or an in-tree relative path"}}\n'
 fi
 exit 0
