@@ -615,6 +615,36 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "Floor the non-bypassable `claude` shim injects when a fleet spawn carries no --model. Spawns that earned more declare --model and pass through untouched; subagents inherit it. NOT a blanket downgrade — it is the ladder's own default for unsignaled work. See fleet-model-floor-bleed."
+  LIMEN_CLAUDE_FABLE_CLASSES:
+    default: "fable,long-horizon,huge-context,ambiguous-root-cause,final-canonical-decision"
+    env: LIMEN_CLAUDE_FABLE_CLASSES
+    self_update: none
+    owner: arms-agents
+    note: "Comma-separated task classes that may select the reserved Fable rung. Class membership is not enough by itself: LIMEN_FABLE_ACCEPTANCE must point at a written scripts/fable-allotment.py receipt before dispatch may return fable instead of falling back to opus."
+  LIMEN_FABLE_ACCEPTANCE:
+    default: ""
+    env: LIMEN_FABLE_ACCEPTANCE
+    self_update: none
+    owner: arms-agents
+    note: "Path to the written Fable acceptance receipt emitted by scripts/fable-allotment.py accept. Empty means Fable selections fall back to Opus; value `1` exists only for tests or a short-lived manual shell."
+  LIMEN_CLAUDE_RETRY_BUMP_TO_FABLE:
+    default: "0"
+    env: LIMEN_CLAUDE_RETRY_BUMP_TO_FABLE
+    self_update: none
+    owner: arms-agents
+    note: "Opt-in gate for tried:claude retry escalation from Opus to Fable. Requires LIMEN_FABLE_ACCEPTANCE as well; default caps retry bumping at Opus so Fable is never reached by inherited escalation."
+  LIMEN_ALLOW_FABLE_FANOUT:
+    default: "0"
+    env: LIMEN_ALLOW_FABLE_FANOUT
+    self_update: none
+    owner: arms-agents
+    note: "Emergency override for claude-workflow-guard's Fable fan-out check. Default 0 enforces one bounded accepted Fable objective instead of broad Fable worker pools."
+  LIMEN_ALLOW_UNACCEPTED_FABLE:
+    default: "0"
+    env: LIMEN_ALLOW_UNACCEPTED_FABLE
+    self_update: none
+    owner: arms-agents
+    note: "Emergency override for claude-workflow-guard's written-acceptance check when transcript evidence is incomplete. Default 0 blocks Fable runs that lack a visible acceptance command or receipt reference."
   LIMEN_REAL_CLAUDE:
     default: null              # DERIVED: heartbeat-loop.sh captures `command -v claude` BEFORE prepending the shim dir
     env: LIMEN_REAL_CLAUDE
