@@ -122,3 +122,13 @@ if [ "$PRESSURE" = 1 ] && [ -x "$ROOT/scripts/capture.sh" ]; then
 fi
 reap_args=(); [ "${LIMEN_CLONE_REAP_APPLY:-1}" = "1" ] && reap_args+=(--apply)
 python3 "$ROOT/scripts/reap-clones.py" "${reap_args[@]}" 2>&1 | tail -6 || true
+
+# ── branch reap — the REF sibling of the clone/worktree reapers. `git worktree remove` and
+# `gh pr merge --delete-branch` drop the worktree + the REMOTE branch but leave the LOCAL head ref,
+# so squash-merged branches pile up forever (the "1 ahead / N behind housekeeping" that gets
+# hand-waved every session). reap-branches.py deletes ONLY provably-landed branches (tip is an
+# ancestor of main, OR the PR is MERGED and the tip is not advanced past mergedAt) — loss-free and
+# reflog-recoverable, so reversible + ungated. Unfinished branches are KEPT and surfaced to
+# docs/branch-hygiene.md. Unit-proven by cli/tests/test_reap_branches.py. Escape: LIMEN_BRANCH_REAP_APPLY=0.
+breap_args=(); [ "${LIMEN_BRANCH_REAP_APPLY:-1}" = "1" ] && breap_args+=(--apply)
+python3 "$ROOT/scripts/reap-branches.py" "${breap_args[@]}" 2>&1 | tail -4 || true

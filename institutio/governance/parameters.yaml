@@ -823,6 +823,30 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "find -maxdepth for reap-clones.py clone discovery under LIMEN_WORKSPACE (repos nest one level under org dirs like organvm/*)."
+  LIMEN_BRANCH_REAP_APPLY:
+    default: "1"
+    env: LIMEN_BRANCH_REAP_APPLY
+    self_update: none
+    owner: limen-daemon
+    note: "ON — clone-maintenance reaps provably-landed LOCAL branch refs for real (the ref sibling of clone/worktree reaping). Loss-free by construction (tip is an ancestor of main, or the PR is MERGED with an un-advanced tip; reflog-recoverable), so reversible and ungated. Set 0 for dry-run (report reapable branches without deleting)."
+  LIMEN_BRANCH_REAP_MAX:
+    default: 100
+    env: LIMEN_BRANCH_REAP_MAX
+    self_update: none
+    owner: limen-daemon
+    note: "Max branches reap-branches.py deletes per run; the remainder is logged (never silently dropped) and reaped on the next hygiene beat."
+  LIMEN_BRANCH_REAP_EVERY_MIN:
+    default: 30
+    env: LIMEN_BRANCH_REAP_EVERY_MIN
+    self_update: none
+    owner: limen-daemon
+    note: "Self-throttle for a real --apply beat of reap-branches.py — it deletes at most once per this many minutes (a --check gate always runs). Mirrors the reclaim-worktrees throttle."
+  LIMEN_BRANCH_REAP_PROTECT:
+    default: ""
+    env: LIMEN_BRANCH_REAP_PROTECT
+    self_update: none
+    owner: limen-daemon
+    note: "Extra branch names (space-separated) reap-branches.py NEVER deletes, on top of the built-in trunks (main/master/develop/trunk) and the default branch. Empty by default."
   LIMEN_REAP_CORE:
     default: "limen session-meta sovereign-systems--elevate-align portfolio portvs universal-mail--automation"
     env: LIMEN_REAP_CORE

@@ -181,6 +181,23 @@ if dangling:
 print(f"ok    every lever id named in prose resolves to a defined object ({len(obj_ids)} levers)")
 PY
 
+# ---------------------------------------------------------------------------
+# 9: no SPENT branch hangs. A local branch whose work is already landed on
+#    origin/main (a real merge, or a MERGED PR with an un-advanced tip) is pure
+#    residue: `git worktree remove` / `gh pr merge --delete-branch` leave the
+#    LOCAL head ref behind, so squash-merged branches pile up as the "1 ahead /
+#    N behind housekeeping" that used to get hand-waved each session. The
+#    branch-reap organ (scripts/reap-branches.py) proves the fixed point — exit
+#    0 <=> no provably-landed branch lingers. Reaping is loss-free
+#    (reflog-recoverable) so the organ self-heals it on the hygiene beat; here we
+#    only ASSERT it, so a closeout cannot pass with spent branches hanging.
+#    Fails safe offline (ancestor-only). Genuinely-unfinished branches live in
+#    their OWN git-tracked home (docs/branch-hygiene.md), never here.
+# ---------------------------------------------------------------------------
+if ! python3 "$ROOT/scripts/reap-branches.py" --check; then
+  bad "spent branches are lingering — run: python3 scripts/reap-branches.py --apply"
+fi
+
 echo
 if [ "$fail" -ne 0 ]; then
   echo "VERDICT: tasks are hanging — see FAIL lines above. Hang each in its owner's git-tracked record, then re-run."
