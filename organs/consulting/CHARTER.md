@@ -39,9 +39,34 @@ operating floor that lets one person run multiple engagements with consistent in
 - **Inputs:** live client context, scope statements, context constraints, deadlines, partner preferences.
 - **Outputs:** posture record, scope draft, delivery plan, review log, quality checklist, closeout archive.
 
-## The first proof: `SOVEREIGN-SYSTEMS-DECK.md`
+## First proof: the engagement validator
 
-The micro instance is currently three named deployments:
+The first six executable rules are `validate-consulting.py`:
+
+- **Rule #1: Valid Posture** — engagement standing must name a recognised delivery posture in the
+  canonical sequence (DISCOVERY → PROPOSAL → ACCEPTANCE → EXECUTION → REVIEW → HOLD → ARCHIVED).
+  Stages may not be skipped and may not regress.
+- **Rule #2: Manual Mode** — no engagement may claim autonomic delivery. Every milestone must declare
+  explicit human gates. The `autonomic` flag is prohibited.
+- **Rule #3: 5-Primitive Completeness** — every engagement record must capture all five kernel
+  primitives: Member, Mandate, Standing, Standard, and Governance.
+- **Rule #4: Scope Integrity** — scope changes must be tracked. Each engagement must carry an explicit
+  scope boundary and a change log.
+- **Rule #5: No Overreach** — the engagement scope must not claim to provide legal, tax, or medical
+  advice. The consulting organ is delivery infrastructure, not professional services.
+- **Rule #6: Evidence Integrity** — every `standard.evidence` field must reference real artifacts or
+  clear statuses — no TODO, TBD, or placeholder text.
+
+Rules #1-6 are automatically checked by `verify-whole.sh` (the Sovereign Systems step). Run them
+manually:
+
+```bash
+python organs/consulting/validate-consulting.py path/to/engagement.yaml
+python organs/consulting/validate-consulting.py --fleet
+python organs/consulting/validate-consulting.py --fleet --quiet
+```
+
+The micro instance is currently three named deployments that all pass validation:
 
 - **Maddie** (named context for one private client channel)
 - **Rob** (named context for another recurring channel)

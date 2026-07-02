@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Sovereign Systems — Consulting Organ Rules #1-4.
+Sovereign Systems — Consulting Organ Rules #1-6.
 
 Rule #1 — Valid Posture: engagement standing must name a recognised delivery
 posture in the canonical sequence. Stages may not be skipped.
@@ -13,6 +13,13 @@ five kernel primitives (Member, Mandate, Standing, Standard, Governance).
 
 Rule #4 — Scope Integrity: scope changes must be tracked. Each engagement must
 carry an explicit scope boundary and a change log.
+
+Rule #5 — No Overreach: no engagement may claim to provide legal, tax, or
+medical advice. Scope boundary must not contain language asserting professional
+judgment authority outside consulting delivery infrastructure.
+
+Rule #6 — Evidence Integrity: every standard.evidence field must reference real
+artifacts or clear statuses — no TODO, TBD, or placeholder text.
 
 Usage:
   python organs/consulting/validate-consulting.py path/to/engagement.yaml
@@ -58,6 +65,26 @@ AUTONOMIC_KEYWORDS: list[str] = [
     "auto-bill",
     "self-executing",
     "unattended",
+]
+
+OVERREACH_KEYWORDS: list[str] = [
+    "legal advice",
+    "tax advice",
+    "medical advice",
+    "legal representation",
+    "tax preparation",
+    "medical diagnosis",
+    "licensed attorney",
+    "licensed physician",
+]
+
+PLACEHOLDER_PATTERNS: list[str] = [
+    "todo",
+    "tbd",
+    "fixme",
+    "placeholder",
+    "rough notes",
+    "to be determined",
 ]
 
 
@@ -177,6 +204,44 @@ def _validate_one(path: Path) -> list[str]:
                 "Rule #4 violation: scope.changes must be a list"
             )
 
+    # Rule #5 — No Overreach
+    if isinstance(scope, dict):
+        boundary_text = str(scope.get("boundary", "")).lower()
+        for kw in OVERREACH_KEYWORDS:
+            if kw in boundary_text:
+                violations.append(
+                    f"Rule #5 violation: scope boundary contains overreach "
+                    f"keyword {kw!r} — consulting organ is delivery "
+                    "infrastructure, not professional services"
+                )
+        exclusions = scope.get("exclusions", [])
+        if isinstance(exclusions, list):
+            for exc in exclusions:
+                exc_text = str(exc)
+                exc_lower = exc_text.lower()
+                # Skip disclaimers (statements prefixed with "No " or "Not ")
+                if any(exc_text.strip().startswith(p) for p in ("No ", "Not ", "no ", "not ")):
+                    continue
+                for kw in OVERREACH_KEYWORDS:
+                    if kw in exc_lower:
+                        violations.append(
+                            f"Rule #5 violation: exclusion contains overreach "
+                            f"keyword {kw!r} — this is delivery infrastructure"
+                        )
+
+    # Rule #6 — Evidence Integrity
+    standard = doc.get("standard", {})
+    if isinstance(standard, dict):
+        evidence = str(standard.get("evidence", ""))
+        evidence_lower = evidence.lower()
+        for pat in PLACEHOLDER_PATTERNS:
+            if pat in evidence_lower:
+                violations.append(
+                    f"Rule #6 violation: standard.evidence contains "
+                    f"placeholder text {pat!r} — must reference real "
+                    "artifacts"
+                )
+
     return violations
 
 
@@ -204,7 +269,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Validate engagement files against Sovereign Systems consulting rules. "
-            "Rules #1-4 are always active."
+            "Rules #1-6 are always active."
         )
     )
     parser.add_argument(
@@ -267,9 +332,9 @@ def main() -> int:
         print(f"\n{'─' * 60}")
         print(f"  {passed}/{total} passed  |  {failed} violation(s)")
         if failed == 0:
-            print("  Sovereign Systems Rules #1-4: all checks passed. Concordia.")
+            print("  Sovereign Systems Rules #1-6: all checks passed. Concordia.")
         else:
-            print("  Sovereign Systems Rules #1-4: violations found.")
+            print("  Sovereign Systems Rules #1-6: violations found.")
 
     return 0 if failed == 0 else 1
 
