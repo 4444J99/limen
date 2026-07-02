@@ -14,7 +14,16 @@
 - **Reversible via:** reopen quaestor issue #4 / its decisions card
 - **Summoned into:** FLAME, corpus, memory:mpo-resolved-quaestor-owns
 
-## "find" = build the portal  `EVO-002`
+## Governance organ = aerarium / Cvrsvs Honorvm — operationalized as an autonomic beat  `EVO-002`
+
+The governance organ (Aerarium / Cvrsvs Honorvm) is the VLTIMA body's constitutional office. It holds the cursus honorum (INCUBATOR → ALPHA → BETA → STABLE → MATURE) as executable validation (validate-seed.py), tracks repo standing via seed.yaml declarations, and runs autonomously every C_GOVERNANCE beat. The organ was self-feed wired on 2026-07-01: generator hook confirmed, EVOCATOR canon registered, voice stamp active, seed.yaml first assertion created. Rules are operationalized as validatable checks — the "conceptual, not operationalized" constraint is resolved. The aerarium--res-publica infrastructure remains partial (infra note).
+
+- **Source of record:** limen/organs/governance/
+- **Confidence:** high · **Resolved:** 2026-07-01
+- **Reversible via:** edit organs/governance/KERNEL.md or validate-seed.py; revert organ-ladder.json maturity
+- **Summoned into:** FLAME, corpus, memory:governance-organ-self-feed
+
+## "find" = build the portal  `EVO-003`
 
 "When I ask you to find everything, I'm asking you to build the portal that summons that context into every single place it needs to exist, not for a chat to search and then lose when the session ends." A found truth that is not propagated into the durable channels is lost. So "find" is a BUILD instruction: excavate the answer, enumerate every injection surface, land it in all of them, and prefer a durable autopoietic mechanism over hand-propagation so future truths flow automatically.
 
