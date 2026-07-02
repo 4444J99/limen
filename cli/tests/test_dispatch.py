@@ -357,6 +357,20 @@ def test_lane_run_env_keeps_lane_specific_isolation(tmp_path: Path, monkeypatch)
     assert "CLAUDE_CODE_OAUTH_TOKEN" not in claude_env
 
 
+def test_resolve_agent_binary_uses_opencode_clock_when_installed(monkeypatch) -> None:
+    monkeypatch.delenv("LIMEN_OPENCODE_BIN", raising=False)
+    monkeypatch.setattr(D.shutil, "which", lambda binary: f"/bin/{binary}" if binary == "opencode-clock" else None)
+
+    assert D._resolve_agent_binary("opencode") == "opencode-clock"
+
+
+def test_resolve_agent_binary_falls_back_when_wrapper_missing(monkeypatch) -> None:
+    monkeypatch.delenv("LIMEN_OPENCODE_BIN", raising=False)
+    monkeypatch.setattr(D.shutil, "which", lambda binary: None)
+
+    assert D._resolve_agent_binary("opencode") == "opencode"
+
+
 def test_run_isolated_agent_retries_transient_claude_auth_blip(tmp_path: Path, monkeypatch) -> None:
     calls: list[dict] = []
 

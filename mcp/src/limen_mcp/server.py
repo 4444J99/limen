@@ -3,12 +3,12 @@ import re
 import subprocess
 from datetime import date, datetime
 from pathlib import Path
-from typing import Optional, List, Dict
 import json
+from typing import Any, Dict, List, Optional
 
 import yaml
 from mcp.server.fastmcp import FastMCP
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 VALID_STATUSES = {"open", "dispatched", "in_progress", "done", "failed", "failed_blocked", "needs_human", "archived"}
 VALID_PRIORITIES = {"critical", "high", "medium", "low", "backlog"}
@@ -25,6 +25,7 @@ VALID_AGENTS = {
     "github_actions",
     "any",
 }
+CLAIMABLE_AGENTS = VALID_AGENTS - {"any"}
 TASK_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
 
 
@@ -52,10 +53,12 @@ def _validate_optional_enum(value: Optional[str], allowed: set[str], field_name:
     return value
 
 
-# ── Models ─────────────────────────────────────────────────────────────────
+# -- Models -----------------------------------------------------------------
 
 
 class DispatchLogEntry(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     timestamp: datetime
     agent: str
     session_id: str
@@ -64,6 +67,8 @@ class DispatchLogEntry(BaseModel):
 
 
 class Task(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     id: str
     title: str
     description: Optional[str] = None
@@ -76,6 +81,8 @@ class Task(BaseModel):
     labels: List[str] = Field(default_factory=list)
     urls: List[str] = Field(default_factory=list)
     context: Optional[str] = None
+    claude_tier: Optional[str] = None
+    depends_on: List[str] = Field(default_factory=list)
     created: date
     updated: Optional[datetime] = None
     dispatch_log: List[DispatchLogEntry] = Field(default_factory=list)
@@ -103,12 +110,17 @@ class Task(BaseModel):
 
 
 class BudgetTrack(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     date: str
     spent: int = 0
     per_agent: Dict[str, int] = Field(default_factory=dict)
+    per_agent_reset: Dict[str, str] = Field(default_factory=dict)
 
 
 class Budget(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     daily: int = 100
     unit: str = "runs"
     per_agent: Dict[str, int] = Field(default_factory=dict)
@@ -116,18 +128,23 @@ class Budget(BaseModel):
 
 
 class Portal(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     name: str = "Universal Task Intake"
     description: str = ""
     budget: Budget = Field(default_factory=Budget)
+    agents: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
 
 
 class LimenFile(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     version: str = "1.0"
     portal: Portal = Field(default_factory=Portal)
     tasks: List[Task] = Field(default_factory=list)
 
 
-# ── Server State ───────────────────────────────────────────────────────────
+# -- Server State -----------------------------------------------------------
 
 mcp = FastMCP("Limen")
 
@@ -338,6 +355,80 @@ def get_budget_status() -> dict:
     _check_circuit_breaker()
     data = _load_data()
     return data.portal.budget.model_dump()
+
+
+# -- Agent Presence / Coordination Tools ------------------------------------
+
+
+def _agents_dir() -> Path:
+    return _get_tasks_path().parent / "logs" / "agents"
+
+
+@mcp.tool()
+def agent_available(agent: Optional[str] = None) -> List[dict]:
+    """Query agent presence beacons. Returns status of all agents or a specific agent.
+    Each beacon contains: status (idle|working|throttled), accepting_tasks,
+    available_tokens, token_usage_pct, clock_health, heartbeat."""
+    agent = _validate_optional_enum(agent, CLAIMABLE_AGENTS, "agent")
+    _check_circuit_breaker()
+    agents_dir = _agents_dir()
+    if not agents_dir.exists():
+        return []
+    results = []
+    try:
+        for f in agents_dir.glob("*.json"):
+            name = f.stem
+            if agent is not None and name != agent:
+                continue
+            try:
+                data = json.loads(f.read_text())
+                data["_source"] = str(f)
+                results.append(data)
+            except Exception:
+                pass
+    except Exception:
+        pass
+    return results
+
+
+@mcp.tool()
+def agent_claim(task_id: str, agent_name: str = "opencode") -> str:
+    """Proactively claim a task from the pipeline. Agent writes its ID to the
+    task's target_agent and updates its own presence beacon. Prevents double-claim
+    by checking the task is still open. Returns confirmation or error."""
+    task_id = _validate_task_id(task_id)
+    agent_name = _validate_optional_enum(agent_name, CLAIMABLE_AGENTS, "agent_name") or agent_name
+    _check_circuit_breaker()
+    data = _load_data()
+
+    for t in data.tasks:
+        if t.id == task_id:
+            if t.status != "open":
+                return f"Task {task_id} is not open (current status: {t.status}) - cannot claim"
+            if t.target_agent not in (agent_name, "any"):
+                return f"Task {task_id} targets {t.target_agent}, not {agent_name} - cannot claim"
+
+            now = datetime.now()
+            t.status = "dispatched"
+            t.target_agent = agent_name
+            t.updated = now
+            track = data.portal.budget.track
+            track.spent += t.budget_cost
+            track.per_agent[agent_name] = track.per_agent.get(agent_name, 0) + t.budget_cost
+
+            entry = DispatchLogEntry(
+                timestamp=now,
+                agent=agent_name,
+                session_id="mcp-agent-claim",
+                status="dispatched",
+                output=f"Claimed by {agent_name} via MCP",
+            )
+            t.dispatch_log.append(entry)
+
+            _save_data(data, commit_msg=f"feat: {agent_name} claim task {task_id}")
+            return f"{agent_name} claimed task {task_id} (status=dispatched)"
+
+    raise ValueError(f"Task {task_id} not found")
 
 
 if __name__ == "__main__":

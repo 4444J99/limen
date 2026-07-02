@@ -4,6 +4,26 @@ from math import ceil
 from limen.models import LimenFile
 
 
+def _show_opencode_clock() -> None:
+    """Display opencode's internal token clock if available."""
+    clock_path = Path.home() / ".local/share/opencode/clock.json"
+    if not clock_path.exists():
+        return
+    try:
+        c = json.loads(clock_path.read_text())
+        used = c.get("used_pct", 0)
+        heavy = c.get("heavy_used", 0)
+        cache = c.get("cache_read_used", 0)
+        cap = c.get("cap_tokens", 0)
+        ttl = c.get("time_left_hours", 0)
+        health = c.get("health", "ok")
+        filled = max(0, min(10, int(float(used) / 10)))
+        bars = "#" * filled + "." * (10 - filled)
+        print(f"  opencode-clock: [{bars}] {used}% ({heavy:,}+{cache:,} tok/{cap:,}) ttl={ttl}h health={health}")
+    except Exception:
+        pass
+
+
 def _as_date(value: date | datetime | str | None) -> date | None:
     if value is None:
         return None
@@ -58,6 +78,7 @@ def print_status(
     if track.per_agent:
         per = ", ".join(f"{k}: {v}" for k, v in track.per_agent.items())
         print(f"  per agent: {per}")
+    _show_opencode_clock()
     throughput = _throughput(limen)
     print(
         "Throughput:"

@@ -386,7 +386,11 @@ def main():
     reserve_floor = load_reserve_floor_pct()
     for name, v in vendors.items():
         lim = limits.get(name, {})
-        possible = lim.get("limit")
+        # db-meter vendors (opencode) report real token consumption; use token_limit as possible.
+        if v.get("signal") == "db-meter":
+            possible = lim.get("token_limit") or v.get("possible")
+        else:
+            possible = lim.get("limit")
         v["possible"] = possible
         v["limit_source"] = lim.get("source", "")
         if possible:
