@@ -963,6 +963,12 @@ parameters:
     self_update: "set per-cell by cells.sh conduct (cell-<slug>-) to namespace a scoped conductor's branches"
     owner: limen-daemon
     note: "Branch-name namespace a scoped conductor uses so parallel cells never collide on branch names or fight over main. Unset ⇒ the daemon's default cadence; cells.sh sets it per cell."
+  LIMEN_WORKSTREAM:
+    default: null              # DERIVED per scope — cells.sh sets it when `cell conduct --workstream <handle>` pins a cell to ONE channel
+    env: LIMEN_WORKSTREAM
+    self_update: "set per-cell by cells.sh conduct (--workstream <handle>) to pin a scoped conductor to a single workstream channel"
+    owner: limen-daemon
+    note: "The purpose channel a scoped conductor is pinned to (the one-worker-one-workstream invariant). cells.sh filters the cell board to this channel via `limen channels --emit`, so the conductor structurally sees only its lane. Unset ⇒ the cell sees the full board. See docs/lanes/ and limen.workstream."
 
   # --- BOARD INTEGRITY — the SSOT can never collapse, and self-heals if it somehow does ---
   # (limen.io.save_limen_file collapse-guard + scripts/heal-board.py). Root-caused 2026-06-26:

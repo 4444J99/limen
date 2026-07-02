@@ -4,12 +4,16 @@ set -euo pipefail
 usage() {
   cat <<'USAGE'
 Usage:
-  scripts/start-worktree-session.sh [--codex] [--shell] [--from <branch-or-ref>] [--prompt <text>] [--prompt-file <path>] <repo-or-alias> <slug>
+  scripts/start-worktree-session.sh [--codex] [--shell] [--from <branch-or-ref>] [--prompt <text>] [--prompt-file <path>] [--workstream <handle>] <repo-or-alias> <slug>
 
 Examples:
   scripts/start-worktree-session.sh portvs triptych-story
   scripts/start-worktree-session.sh --codex portvs triptych-story
   scripts/start-worktree-session.sh --shell --prompt-file /tmp/prompt.md domus package-map
+  scripts/start-worktree-session.sh --workstream contributions --prompt 'drain the code lane' limen contrib-run
+
+--workstream pins the worker to ONE purpose channel (contributions/correspondence/… — see
+docs/lanes/). It is stamped into the kickoff packet so the session stays single-purpose.
 
 Aliases:
   portvs, portus  /Users/4jp/Workspace/4444J99/portvs
@@ -31,6 +35,7 @@ launch_shell=0
 from_ref=""
 prompt_text=""
 prompt_file=""
+workstream=""
 write_readme=1
 
 while [[ $# -gt 0 ]]; do
@@ -68,6 +73,15 @@ while [[ $# -gt 0 ]]; do
         exit 2
       fi
       prompt_file="$2"
+      shift 2
+      ;;
+    --workstream|--ws)
+      if [[ $# -lt 2 ]]; then
+        echo "missing value for --workstream" >&2
+        usage >&2
+        exit 2
+      fi
+      workstream="$2"
       shift 2
       ;;
     --no-readme)
@@ -144,6 +158,14 @@ if [[ -z "$slug" ]]; then
   exit 1
 fi
 
+if [[ -n "$workstream" ]]; then
+  workstream="$(
+    printf '%s' "$workstream" \
+      | tr '[:upper:]' '[:lower:]' \
+      | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//'
+  )"
+fi
+
 branch="work/$slug"
 wt="$repo/.worktrees/$slug"
 
@@ -193,6 +215,7 @@ fi
 
 echo "$created worktree: $wt"
 echo "branch: $branch"
+[[ -n "$workstream" ]] && echo "workstream: $workstream"
 
 if [[ "$write_readme" -eq 1 ]]; then
   readme_dir="$wt/.limen-workstream"
@@ -229,6 +252,7 @@ Created: $now_utc
 - Repo: \`$repo\`
 - Worktree: \`$wt\`
 - Branch: \`$branch\`
+- Workstream: \`${workstream:-unassigned}\`
 - Base ref: \`$from_ref\`
 - HEAD: \`$head_short\`
 - Upstream: \`${upstream_ref:-none yet}\`
@@ -273,6 +297,7 @@ $prompt_payload
 
 ## Closeout Rules
 
+- This worktree is ONE workstream (\`${workstream:-unassigned}\`) — keep it single-purpose. If another lane's work surfaces, seed it under its own workstream instead of mixing it in here.
 - Do not leave Git-visible generated files unclassified.
 - Push useful source commits or create a remote receipt before local cleanup.
 - First source push from a new workstream branch: \`git push -u origin HEAD\`.

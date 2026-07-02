@@ -182,6 +182,50 @@ def status(agent, status):
 
 
 @main.command()
+@click.option("--scope", default=None, help="Show only one channel (accepts an alias, e.g. 'revenue').")
+@click.option(
+    "--emit",
+    default=None,
+    type=click.Path(),
+    help="Write a board filtered to --scope's tasks to this path (feeds `cell conduct --workstream`).",
+)
+@click.option("--json-output", "json_output", is_flag=True, help="Machine-readable roster + per-channel counts.")
+def channels(scope, emit, json_output):
+    """Project the board by workstream channel — the purpose partition above vendor lanes.
+
+    The roster DERIVES from organ-ladder.json (one channel per institutional organ) plus the
+    operational lanes (conductor / contributions / correspondence / prompt-parity). `--emit` writes a
+    single channel's board so a scoped `cell conduct --workstream <handle>` sees only its own lane —
+    the one-worker-one-channel invariant that cures mixed-purpose PR pileup.
+    """
+    from limen import workstream as ws
+    from limen.io import save_limen_file
+
+    root = resolve_root()
+    tasks_path = resolve_tasks_path(root)
+    if not tasks_path.exists():
+        click.echo("tasks.yaml not found", err=True)
+        sys.exit(1)
+    limen = load_limen_file(tasks_path)
+
+    if emit:
+        if not scope:
+            click.echo("--emit requires --scope <handle>", err=True)
+            sys.exit(2)
+        filtered = ws.filter_board(limen, scope, root)
+        out = Path(emit).expanduser()
+        out.parent.mkdir(parents=True, exist_ok=True)
+        save_limen_file(out, filtered, allow_shrink=True)  # a single channel is legitimately small
+        click.echo(f"wrote {len(filtered.tasks)} tasks for channel '{ws.canonical_handle(scope, root)}' to {out}")
+        return
+
+    if json_output:
+        click.echo(json.dumps(ws.roster_summary(limen, root), indent=2))
+        return
+    ws.print_channels(limen, root, scope=scope)
+
+
+@main.command()
 @click.option("--agent", default=None, help="Filter by agent")
 def harvest(agent):
     """Check for completed dispatches and update task states."""
