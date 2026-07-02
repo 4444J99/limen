@@ -247,6 +247,10 @@ def _registry():
              gate="LIMEN_GOVERNANCE", gate_default="1",
              what="cursus honorum validator + governance standing; aerarium office",
              probe=lambda: _mtime(LOGS / "governance-organ-state.json")),
+        dict(key="pubpolicy", rung="PUBPOLICY", voice="pubpolicy", cadence_key="PUBPOLICY",
+             gate="LIMEN_PUBPOLICY", gate_default="1",
+             what="content-disposition engine: (repo visibility x content class) -> one disposition; owner-scoped redactor",
+             probe=lambda: _mtime(LOGS / "publication-policy-state.json")),
     ]
 
 

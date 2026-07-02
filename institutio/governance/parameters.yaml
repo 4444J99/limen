@@ -875,3 +875,33 @@ parameters:
     self_update: none
     owner: launch
     note: "Path to the launch organ's product registry (scripts/launch-organ.py). Add a product = one entry; channel-native drafts stage under organs/launch/staged/<product>/<channel>.md and the organ NEVER sends — publishing stays the human's hand."
+  LIMEN_BEAT_GOVERNANCE:
+    default: "8"               # every 8 beats
+    env: LIMEN_BEAT_GOVERNANCE
+    self_update: none
+    owner: governance
+    note: "Beat cadence for the governance organ (scripts/governance-organ.py): run the cursus-honorum seed validator + governance standing report every N beats. Read-only, lockless, fail-open."
+  LIMEN_GOVERNANCE:
+    default: "1"               # ON — run the governance organ each due beat
+    env: LIMEN_GOVERNANCE
+    self_update: none
+    owner: governance
+    note: "Beat gate for the governance organ. 1=validate every seed.yaml in the estate + stamp the governance voice each due beat; 0=off. Never gates the beat."
+  LIMEN_BEAT_PUBPOLICY:
+    default: "8"               # every 8 beats
+    env: LIMEN_BEAT_PUBPOLICY
+    self_update: none
+    owner: pubpolicy
+    note: "Beat cadence for the publication-policy organ (scripts/publication-policy.py --verify): re-prove the content-disposition engine stays sound (redactor owner-scoped, matrix + classifier intact) every N beats. Read-only self-test, stamps logs/publication-policy-state.json."
+  LIMEN_PUBPOLICY:
+    default: "1"               # ON — verify the disposition engine each due beat
+    env: LIMEN_PUBPOLICY
+    self_update: none
+    owner: pubpolicy
+    note: "Beat gate for the publication-policy organ (the ONE content-disposition decision: repo visibility x content class -> disposition). 1=self-verify each due beat; 0=off. Fail-open, never gates the beat. See organs/governance/PUBLICATION-POLICY.md."
+  LIMEN_OWNER_IDENTITY:
+    default: ""                # unset — the redactor uses its built-in owner instance
+    env: LIMEN_OWNER_IDENTITY
+    self_update: none
+    owner: pubpolicy
+    note: "Optional JSON override of the OWNER identity the publication-policy redactor is scoped to (handles/email_domains/names/username/phone). Fractal: the macro form works for anyone; unset uses the default instance. NEVER add a category-wide (@domain / any-phone) rule — redaction is owner-scoped only."

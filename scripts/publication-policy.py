@@ -1,0 +1,488 @@
+#!/usr/bin/env python3
+"""publication-policy.py — the ONE disposition engine for "what goes on which repo."
+
+Given (repo visibility) x (content classification), it returns a single disposition
+so the answer is always CLEAR and never re-litigated per repo. This converges the
+scattered content-safety gates (creds-hydrate `_SECRET_RX`, scan-legacy
+`SENSITIVE_PATTERNS`, the persona disclosure contracts, positioning `awaiting_publish`)
+behind one rule table instead of a per-repo human judgment call.
+
+DOCTRINE (the source of truth this engine encodes):
+  - PII is PROCESSED AND REDACTED, never deleted — owner identifiers scrubbed,
+    substance preserved. Redaction is OWNER-SCOPED ONLY, never category-scoped:
+    it never uses a bare `@domain` / any-phone wildcard that would eat product
+    contacts (`legal@styx.protocol`), UI placeholders (`you@styx.protocol`,
+    `partner@example.com`), or fiction-reserved `555` test fixtures. (That bare
+    wildcard was the 2026-07 over-redaction bug this engine exists to prevent.)
+  - Secrets are NEVER restored to any repo. They are removed + rotated (the
+    credential organ owns rotation); the engine only flags them.
+  - Subject-matter-sensitive content (internal strategy, raw session artifacts,
+    named third parties) on a PUBLIC surface stays OFF the public HEAD — preserved
+    in git HISTORY (never deleted from the universe), just not on the live face.
+    On a PRIVATE repo the same content is restore-and-redacted (kept, PII-scrubbed).
+  - Autonomy is DERIVED from reversibility (the Censor's constitution): reversible
+    -> auto; publish / flip-visibility / send -> his hand (the media-pillar boundary
+    "mine, but the publish click is his").
+
+CLI:
+  classify <path>                          -> content class + why (path-first, then content)
+  disposition --visibility V --class C     -> the one disposition + autonomy
+  redact <path> [--apply]                  -> owner-identifier-only redaction (dry by default)
+  audit <ledger.json> [--json]             -> run the matrix over a ledger of items
+  --verify                                 -> self-test predicate (exit 0 <=> engine sound)
+  --check                                  -> cheap stamp/presence check
+
+Fractal: OWNER identity is a NAMED config (macro form works for anyone); the default
+instance is Anthony's. Override via env LIMEN_OWNER_IDENTITY (a JSON object).
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import sys
+from datetime import datetime
+from pathlib import Path
+
+ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
+LOGS = ROOT / "logs"
+STAMP = LOGS / "publication-policy-state.json"
+
+# ---------------------------------------------------------------------------
+# OWNER identity (the only thing the redactor is scoped to). Generic underneath,
+# his instance as the default. NEVER add a category-wide (@domain / any-phone) rule.
+# ---------------------------------------------------------------------------
+DEFAULT_OWNER = {
+    "handles": ["padavano.anthony", "anthony.padavano"],  # personal-email local parts
+    "email_domains": ["gmail.com"],  # a handle is redacted only at these domains (or bare)
+    "names": ["Anthony James Padavano", "Anthony Padavano", "Padavano, Anthony"],
+    "username": "4jp",  # OS username / path + handle segment
+    "phone": None,  # owner's REAL personal number, if ever known. None => no phone redaction.
+}
+
+
+def _owner() -> dict:
+    raw = os.environ.get("LIMEN_OWNER_IDENTITY")
+    if raw:
+        try:
+            o = dict(DEFAULT_OWNER)
+            o.update(json.loads(raw))
+            return o
+        except Exception:
+            pass
+    return dict(DEFAULT_OWNER)
+
+
+# ---------------------------------------------------------------------------
+# Content classification taxonomy
+# ---------------------------------------------------------------------------
+CLASSES = ("secret", "personal_pii", "internal_strategy", "product_content", "public_safe")
+
+# secret files (path) — mirror restore-redact.sh's skip list + creds-hydrate shapes
+_SECRET_PATH = re.compile(
+    r"(?:^|/)(?:\.env(?:\.[^/]*)?|[^/]*\.local\.json|settings\.local\.json|"
+    r"[^/]*\.pem|[^/]*\.key|[^/]*id_rsa[^/]*|[^/]*credentials[^/]*|[^/]*secrets[^/]*|[^/]*\.tfvars)$",
+    re.I,
+)
+# secret SHAPES in content (from creds-hydrate.py::_SECRET_RX — the canonical firewall)
+_SECRET_RX = re.compile(
+    r"AIza[\w\-]{4}[\w\-]+|gh[pousr]_[A-Za-z0-9]{4}[A-Za-z0-9]+|\bapi[_-]?key\b\s*[:=]\s*['\"]?[A-Za-z0-9\-_]{16,}"
+)
+
+# internal-strategy signals (path): raw session artifacts / planning / premortem / prompt dumps
+_TS_SESSION = re.compile(r"\d{4}-\d{2}-\d{2}-\d{6}-")  # timestamped session dump, e.g. 2026-04-04-145105-*
+_STRATEGY_PATH = re.compile(
+    r"(?:^|/)(?:\.claude/|\.codex/|"  # agent working dirs
+    r"[^/]*prompts?-raw|[^/]*-prompts?\.(?:md|jsonl|txt)|"  # raw prompt dumps
+    r"docs/planning/|premortem|"  # planning / premortems
+    r"intake/drafts/|"  # raw intake exports
+    r"[^/]*transcript[^/]*|[^/]*session[^/]*\.(?:md|txt|jsonl))",  # transcripts / session logs
+    re.I,
+)
+
+# product content (path): app/source code + their fixtures/tests
+_PRODUCT_PATH = re.compile(
+    r"\.(?:tsx?|jsx?|py|go|rs|rb|java|kt|swift|c|cc|cpp|h|hpp|css|scss|vue|svelte)$"
+    r"|(?:^|/)(?:src|app|lib|components?|pages|tests?|__tests__|fixtures?)/",
+    re.I,
+)
+
+
+# owner-personal-identifier content signal (drives personal_pii) — see redactor below
+def _has_owner_pii(text: str, owner: dict | None = None) -> bool:
+    return _residual_pii(text, owner) is not None
+
+
+def classify(path: str, text: str | None = None, owner: dict | None = None) -> tuple[str, str]:
+    """Return (class, reason). Path-first (cheap, decisive), then content signals."""
+    owner = owner or _owner()
+    p = path.replace("\\", "/")
+    base = p.rsplit("/", 1)[-1]
+
+    # 1. secret — path shape or in-content secret shape (never restored anywhere)
+    if _SECRET_PATH.search(p):
+        return "secret", f"secret/credential path shape ({base})"
+    if text and _SECRET_RX.search(text):
+        return "secret", "content matches a secret shape (AIza…/gh?_…/api_key:)"
+
+    # 2. internal strategy — raw session artifact / planning / premortem / prompt dump
+    if _TS_SESSION.search(base):
+        return "internal_strategy", f"timestamped raw-session dump ({base})"
+    if _STRATEGY_PATH.search(p):
+        return "internal_strategy", "path signals raw session/planning/premortem/prompt material"
+
+    # 3. product content — app/source code + its fixtures (never redacted for PII)
+    if _PRODUCT_PATH.search(p):
+        return "product_content", "source/app/test path — product code + fixtures"
+
+    # 4. personal PII in an otherwise-ordinary doc -> personal_pii (redact identifiers only)
+    if text and _has_owner_pii(text, owner):
+        return "personal_pii", "contains owner personal identifiers (redact identifiers, keep substance)"
+
+    # 5. everything else is public-safe by default (README, curated docs, data)
+    return "public_safe", "no secret / strategy / product / owner-PII signal"
+
+
+# ---------------------------------------------------------------------------
+# Disposition matrix: (visibility, class) -> (disposition, autonomy)
+#   autonomy: "auto" (reversible, executive) | "his_lever" (publish/flip/rotate = his hand)
+# ---------------------------------------------------------------------------
+DISPOSITIONS = {
+    # class            (public,                 private)
+    "secret": {
+        "public": ("REMOVE_ROTATE", "his_lever"),  # remove now (auto), rotation is the credential organ + his mint
+        "private": ("REMOVE_ROTATE", "his_lever"),
+    },
+    "personal_pii": {
+        "public": ("REDACT_IDENTIFIERS", "auto"),  # reversible, protective
+        "private": ("REDACT_IDENTIFIERS", "auto"),
+    },
+    "internal_strategy": {
+        "public": ("KEEP_OFF_PUBLIC_HEAD", "auto"),  # don't restore to public HEAD; history preserves it
+        "private": ("RESTORE_REDACT", "auto"),  # private is a safe home: restore + redact identifiers
+    },
+    "product_content": {
+        "public": ("LEAVE", "noop"),  # NEVER redact product emails / placeholders / 555 fixtures
+        "private": ("LEAVE", "noop"),
+    },
+    "public_safe": {
+        "public": ("PUBLISH", "his_lever"),  # the publish/flip-visibility click is his
+        "private": ("PUBLISH", "his_lever"),
+    },
+}
+
+DISPOSITION_DOC = {
+    "REMOVE_ROTATE": "Secret — remove from the tree now; rotation is the credential organ + a vendor mint (his).",
+    "REDACT_IDENTIFIERS": "Scrub OWNER identifiers only (name/handle/home-path/convo-link); keep all substance.",
+    "KEEP_OFF_PUBLIC_HEAD": "Internal strategy on a PUBLIC surface — keep OFF the public HEAD; git history is the residue (not deleted).",
+    "RESTORE_REDACT": "Private repo is a safe home — restore the content and redact owner identifiers.",
+    "LEAVE": "Product content (source, product contacts, UI placeholders, synthetic 555/example fixtures) — never touch.",
+    "PUBLISH": "Public-safe — publishing / flipping visibility is HIS hand (the media-pillar boundary).",
+}
+
+
+def disposition(visibility: str, cls: str) -> tuple[str, str]:
+    v = "public" if str(visibility).lower().startswith("pub") else "private"
+    if cls not in DISPOSITIONS:
+        raise SystemExit(f"unknown class: {cls!r} (expected one of {CLASSES})")
+    return DISPOSITIONS[cls][v]
+
+
+# ---------------------------------------------------------------------------
+# The CORRECTED redactor — owner-scoped ONLY. Drops the generic EMAIL/PHONE that
+# caused the 2026-07 over-redaction. Product emails, placeholders, 555 fixtures,
+# and other users' home paths are all preserved.
+# ---------------------------------------------------------------------------
+def _domain_rx(d: str) -> str:
+    """A domain, tolerant of TLD truncation: 'gmail.com' -> 'gmail(?:\\.com)?'
+    (real data carries truncated forms like 'padavano.anthony@gmail')."""
+    labels = d.split(".")
+    pat = re.escape(labels[0])
+    for lbl in labels[1:]:
+        pat += r"(?:\." + re.escape(lbl)
+    return pat + ")?" * (len(labels) - 1)
+
+
+def _build_patterns(owner: dict):
+    handles = "|".join(re.escape(h) for h in owner["handles"])
+    domains = "|".join(_domain_rx(d) for d in owner.get("email_domains") or [])
+    # handle, optionally @<owner-domain> (bare or TLD-truncated). NOT a bare @wildcard.
+    dom = f"(?:@(?:{domains}))?" if domains else ""
+    HANDLE = re.compile(rf"(?:{handles}){dom}", re.I) if handles else None
+    NAME = re.compile("|".join(re.escape(n) for n in owner["names"])) if owner.get("names") else None
+    user = re.escape(owner["username"]) if owner.get("username") else None
+    HOME = re.compile(rf"/(?:Users|home)/{user}/") if user else None
+    USER = re.compile(rf"(?<![A-Za-z0-9]){user}(?![A-Za-z0-9])") if user else None
+    CONVO = re.compile(
+        r"https?://(?:chatgpt\.com/(?:g|c|share)/|chat\.openai\.com/|claude\.ai/(?:chat|share)/)[^\s)\]]+"
+    )
+    PHONE = re.compile(re.escape(owner["phone"])) if owner.get("phone") else None
+    return HANDLE, NAME, HOME, USER, CONVO, PHONE
+
+
+def redact(text: str, owner: dict | None = None) -> str:
+    owner = owner or _owner()
+    HANDLE, NAME, HOME, USER, CONVO, PHONE = _build_patterns(owner)
+    t = CONVO.sub("[personal conversation link redacted]", text)
+    if HANDLE:
+        t = HANDLE.sub("[email redacted]", t)
+    if NAME:
+        t = NAME.sub("[name redacted]", t)
+    if HOME:
+        t = HOME.sub("~/", t)
+    if PHONE:
+        t = PHONE.sub("[phone redacted]", t)
+    if USER:
+        t = USER.sub("[user]", t)
+    return t
+
+
+def _residual_pii(text: str, owner: dict | None = None) -> str | None:
+    """Return the first surviving owner-identifier, or None if clean."""
+    owner = owner or _owner()
+    HANDLE, NAME, HOME, USER, CONVO, PHONE = _build_patterns(owner)
+    for rx in (CONVO, HANDLE, NAME, HOME, USER, PHONE):
+        if rx is None:
+            continue
+        m = rx.search(text)
+        if m:
+            return m.group(0)
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Modes
+# ---------------------------------------------------------------------------
+def _read_text(path: str) -> str | None:
+    try:
+        raw = Path(path).read_bytes()
+        if b"\x00" in raw[:8192]:
+            return None
+        return raw.decode("utf-8", "replace")
+    except Exception:
+        return None
+
+
+def cmd_classify(args) -> int:
+    text = _read_text(args.path)
+    cls, why = classify(args.path, text)
+    vis = args.visibility
+    out = {"path": args.path, "class": cls, "why": why}
+    if vis:
+        disp, auto = disposition(vis, cls)
+        out.update(visibility=vis, disposition=disp, autonomy=auto, means=DISPOSITION_DOC[disp])
+    print(json.dumps(out, indent=2))
+    return 0
+
+
+def cmd_disposition(args) -> int:
+    disp, auto = disposition(args.visibility, args.cls)
+    print(
+        json.dumps(
+            {
+                "visibility": args.visibility,
+                "class": args.cls,
+                "disposition": disp,
+                "autonomy": auto,
+                "means": DISPOSITION_DOC[disp],
+            },
+            indent=2,
+        )
+    )
+    return 0
+
+
+def cmd_redact(args) -> int:
+    text = _read_text(args.path)
+    if text is None:
+        print("bin")
+        return 0
+    r = redact(text)
+    changed = r != text
+    if changed and args.apply:
+        Path(args.path).write_text(r, encoding="utf-8")
+    resid = _residual_pii(r)
+    print(
+        json.dumps(
+            {
+                "path": args.path,
+                "changed": changed,
+                "applied": bool(args.apply and changed),
+                "residual_owner_pii": resid,
+            },
+            indent=2,
+        )
+    )
+    return 2 if resid else 0
+
+
+def cmd_audit(args) -> int:
+    """Ledger: list of {repo, visibility, class?|path?, note?}. Emits dispositions."""
+    items = json.loads(Path(args.ledger).read_text())
+    if isinstance(items, dict):
+        items = items.get("items") or items.get("repos") or []
+    rows = []
+    for it in items:
+        cls = it.get("class")
+        if not cls and it.get("path"):
+            cls = classify(it["path"], _read_text(it["path"]) if Path(it["path"]).exists() else None)[0]
+        disp, auto = disposition(it["visibility"], cls)
+        rows.append(
+            {
+                "repo": it.get("repo", it.get("path", "?")),
+                "visibility": it["visibility"],
+                "class": cls,
+                "disposition": disp,
+                "autonomy": auto,
+                "note": it.get("note", ""),
+            }
+        )
+    if args.json:
+        print(json.dumps(rows, indent=2))
+    else:
+        w = max((len(r["repo"]) for r in rows), default=4)
+        for r in rows:
+            print(f"{r['repo']:<{w}}  {r['visibility']:<7}  {r['class']:<17}  {r['disposition']:<22}  {r['autonomy']}")
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# Predicates
+# ---------------------------------------------------------------------------
+def _self_test() -> list[str]:
+    """Return a list of failure strings (empty => sound)."""
+    fails = []
+
+    def check(cond, msg):
+        if not cond:
+            fails.append(msg)
+
+    o = dict(DEFAULT_OWNER)
+    # 1. redactor scrubs OWNER identifiers
+    check(redact("mail <owner-email>", o) == "mail [email redacted]", "owner email not redacted")
+    check(redact("by Anthony Padavano", o) == "by [name redacted]", "owner name not redacted")
+    check(redact("path /Users/4jp/x/y", o) == "path ~/x/y", "owner home path not normalized")
+    check(redact("user 4jp done", o) == "user [user] done", "owner username token not redacted")
+    check(
+        "[personal conversation link redacted]" in redact("see https://claude.ai/share/abc123", o),
+        "personal convo link not redacted",
+    )
+    # 2. redactor PRESERVES product content, placeholders, fixtures, other users
+    for keep in (
+        "legal@styx.protocol",
+        "you@styx.protocol",
+        "partner@example.com",
+        "buyer@example.com",
+        "test@example.com",
+        "555-111-2222",
+        "(555) 867-5309",
+        "/Users/someoneelse/repo",
+    ):
+        check(keep in redact(f"x {keep} y", o), f"OVER-REDACTED product/fixture content: {keep}")
+    # 3. classifier signals
+    check(
+        classify("out/2026-04-04-145105-define-workspace.txt")[0] == "internal_strategy",
+        "timestamped session dump not classed internal_strategy",
+    )
+    check(classify("docs/planning/premortem-x.md")[0] == "internal_strategy", "premortem not internal_strategy")
+    check(classify("web/app/src/pages/login/page.tsx")[0] == "product_content", "source not product_content")
+    check(classify(".env.production")[0] == "secret", ".env not secret")
+    check(classify("moneta/.env")[0] == "secret", ".env (nested) not secret")
+    check(classify("README.md")[0] == "public_safe", "README not public_safe")
+    check(
+        classify("notes.md", "reach me at <owner-email>")[0] == "personal_pii",
+        "owner-PII doc not personal_pii",
+    )
+    check(
+        classify("notes.md", "contact legal@styx.protocol")[0] == "public_safe",
+        "product-email doc wrongly classed as PII",
+    )
+    # 4. disposition matrix invariants
+    check(disposition("PUBLIC", "internal_strategy")[0] == "KEEP_OFF_PUBLIC_HEAD", "public strategy disposition wrong")
+    check(disposition("private", "internal_strategy")[0] == "RESTORE_REDACT", "private strategy disposition wrong")
+    check(disposition("PUBLIC", "product_content") == ("LEAVE", "noop"), "product disposition wrong")
+    check(disposition("PUBLIC", "secret")[0] == "REMOVE_ROTATE", "secret disposition wrong")
+    check(disposition("PUBLIC", "public_safe") == ("PUBLISH", "his_lever"), "publish disposition wrong")
+    check(disposition("PUBLIC", "personal_pii") == ("REDACT_IDENTIFIERS", "auto"), "pii disposition wrong")
+    return fails
+
+
+def _stamp(ok: bool, note: str = "") -> None:
+    try:
+        LOGS.mkdir(exist_ok=True)
+        STAMP.write_text(
+            json.dumps(
+                {
+                    "ran_at": datetime.now().isoformat(timespec="seconds"),
+                    "sound": ok,
+                    "classes": list(CLASSES),
+                    "note": note,
+                },
+                indent=2,
+            )
+        )
+        vd = LOGS / ".voice"
+        vd.mkdir(exist_ok=True)
+        (vd / "pubpolicy").write_text(datetime.now().isoformat(timespec="seconds"))
+    except Exception:
+        pass
+
+
+def cmd_verify(_args) -> int:
+    fails = _self_test()
+    _stamp(not fails, "verify")
+    if fails:
+        print("publication-policy UNSOUND:")
+        for f in fails:
+            print(f"  - {f}")
+        return 1
+    print("publication-policy sound: redactor owner-scoped, matrix + classifier verified")
+    return 0
+
+
+def cmd_check(_args) -> int:
+    fresh = STAMP.exists()
+    print(f"stamp={'present' if fresh else 'absent'} ({STAMP})")
+    return 0 if fresh else 1
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(description="publication-policy — the disposition engine")
+    ap.add_argument("--verify", action="store_true", help="self-test predicate (exit 0 <=> sound)")
+    ap.add_argument("--check", action="store_true", help="cheap stamp presence check")
+    sub = ap.add_subparsers(dest="cmd")
+
+    c = sub.add_parser("classify")
+    c.add_argument("path")
+    c.add_argument("--visibility", default=None)
+    d = sub.add_parser("disposition")
+    d.add_argument("--visibility", required=True)
+    d.add_argument("--class", dest="cls", required=True)
+    r = sub.add_parser("redact")
+    r.add_argument("path")
+    r.add_argument("--apply", action="store_true")
+    a = sub.add_parser("audit")
+    a.add_argument("ledger")
+    a.add_argument("--json", action="store_true")
+
+    args = ap.parse_args(argv)
+    if args.verify:
+        return cmd_verify(args)
+    if args.check:
+        return cmd_check(args)
+    if args.cmd == "classify":
+        return cmd_classify(args)
+    if args.cmd == "disposition":
+        return cmd_disposition(args)
+    if args.cmd == "redact":
+        return cmd_redact(args)
+    if args.cmd == "audit":
+        return cmd_audit(args)
+    ap.print_help()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

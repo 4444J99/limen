@@ -89,6 +89,22 @@
       "note": "auto-advanced by governance-organ.py beat (2026-07-02)"
     },
     {
+      "rank": 10,
+      "pillar": "governance",
+      "organ": "Publication Policy (the disclosure court)",
+      "repo": "organvm/limen",
+      "home": "organs/governance/",
+      "maturity": 60,
+      "stage": "building",
+      "whose_hand": "mine (the publish / flip-visibility click is his)",
+      "rival": "a newsroom standards desk + a data-protection office fused into one rule table",
+      "domain_map": "(repo visibility x content class) -> one disposition; owner-scoped redaction as case law",
+      "macro": "a portable content-disposition standard any repo/estate can defer to instead of judging per-file",
+      "micro": "ORGANVM's own PII/strategy sweep: the ONE answer for 'does this belong on this repo'",
+      "first_artifact": "scripts/publication-policy.py --verify green; matrix + owner-scoped redactor shipped (2026-07-02)",
+      "note": "converges the scattered gates (creds _SECRET_RX, scan-legacy SENSITIVE_PATTERNS, persona contracts, positioning awaiting_publish) behind one referenced rule table; beat C_PUBPOLICY, rung PUBPOLICY"
+    },
+    {
       "rank": 6,
       "pillar": "consulting",
       "organ": "Sovereign Systems (service)",
