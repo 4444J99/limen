@@ -192,6 +192,22 @@ DEFAULT_MAP: list[dict] = [
         "enabled": True,
     },
     {
+        # CI-SECRET sink — the a-i-chat--exporter Cloudflare Pages deploy (GitHub Actions) needs
+        # CLOUDFLARE_API_TOKEN as a repo secret. The token ALREADY EXISTS (the cloudflare lane above owns
+        # op://Personal/Cloudflare API Token/credential); the exporter repo correctly DEFERS — it expects
+        # the CI secret rather than documenting `wrangler login`. Landing that secret is pure plumbing the
+        # organ owns, NOT a his-hand "paste this gh secret" task — the exact wrangler-login disease, cured
+        # at the source. gh_secret-only (no env/file): presence-guarded, so once the secret is set the beat
+        # checks `gh_secret_present` and never touches 1Password again. CLOUDFLARE_ACCOUNT_ID is NOT a
+        # secret (it appears in dashboard URLs / wrangler.toml) — it belongs in the repo's own config, not
+        # here. Lands once op can read the value (gated only on the non-blocking SA vault-grant on #320).
+        # [[wrangler-login-and-op-ping-disease]] [[gmail-mutation-cascade-avenues]]
+        "lane": "cloudflare (a-i-chat--exporter CI secret)",
+        "ref": "op://Personal/Cloudflare API Token/credential",
+        "gh_secret": {"repo": "organvm/a-i-chat--exporter", "name": "CLOUDFLARE_API_TOKEN"},
+        "enabled": True,
+    },
+    {
         # Parked: the Claude token is owned by the credential-race fix + Rung-0 self-heal
         # ([[claude-login-flap-credential-race]] / L-CLAUDE-AUTH). Enable only if that handler is retired.
         # SECOND CONSUMER (2026-07-01): this same LIMEN_CLAUDE_AUTH_TOKEN is the sanctioned env token the

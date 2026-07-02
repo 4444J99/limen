@@ -56,7 +56,8 @@ def _load_default_map() -> list[dict]:
 LANE_META: dict[str, dict] = {
     "gemini": {"issue": "#265", "hand": "his — account-gated re-mint (downstream of #182)"},
     "gh/copilot/jules": {"issue": "—", "hand": "none — keyring-derived, self-heals every beat (#251)"},
-    "cloudflare (wrangler deploy)": {"issue": "#254 · #265", "hand": "his — account-gated regen"},
+    "cloudflare (wrangler deploy)": {"issue": "—", "hand": "none — token valid + headless via cf-wrangler.sh (#518); phantom re-mint lever retired 2026-07-01"},
+    "cloudflare (a-i-chat--exporter CI secret)": {"issue": "—", "hand": "none — organ-owned gh_secret sink; lands once op can read (gated on the non-blocking SA vault-grant on #320)"},
     "gmail (C_MAIL app-password)": {"issue": "#261", "hand": "reroutable — `op read … | gh secret set`"},
     "ianva (cloud connector bearer)": {"issue": "#263", "hand": "his — claude.ai account edit"},
     "claude": {"issue": "—", "hand": "none — owned by the Rung-0 credential-race self-heal"},
