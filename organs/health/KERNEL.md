@@ -1,47 +1,59 @@
 # Health Organ — KERNEL
 
-> **Boundary (load-bearing, repeated everywhere in this organ):** this is health-operations infrastructure.
-> It augments licensed medical professionals and never replaces clinical judgment, diagnosis, treatment, or
-> medical advice. Patient safety and privacy remain primary.
+> **Boundary (load-bearing, repeated everywhere in this organ):** this is health-operations
+> infrastructure that augments licensed medical professionals, the patient, and their care team.
+> It does **not** replace clinical judgment, diagnosis, treatment, medical advice, or the
+> patient-provider relationship. Patient safety, privacy, and the primacy of the licensed care
+> chain remain non-negotiable.
 
-## Purpose
+## Why this organ exists
 
-This organ is an **institutional prosthesis** for recovery management: a reusable substrate that can hold
-health/recovery burden outside a single person, without requiring that person to become their own bureaucracy.
+This organ is an **institutional prosthesis** for recovery management and disability access. It
+replaces the missing administrative weight for people who otherwise face complex health events,
+coordinated care, accommodation processes, and recovery tracking without a dedicated care
+administration team. It does that by making health operations repeatable: protocol tracking,
+symptom/state recording, care-team coordination, standard adherence, and capability-focused
+accommodation records.
 
-## The 5-primitive kernel mapped to health
+Generic at the base and instance-first atop that base: **generic + nameless underneath, his
+instance on top**.
 
-The kernel is domain-neutral at base and remaps cleanly into health:
+## The 5-primitive kernel, mapped to health
 
-| Primitive | Health mapping | Meaning in practice |
+| Primitive | Health mapping | Concretely |
 |---|---|---|
-| **Member** | **body / patient** | the physical self as the operating subject: capabilities, limits, function, and goals |
-| **Mandate** | **protocol** | the treatment plan that governs action: routines, constraints, coordination signals |
-| **Standing** | **health state** | the current condition baseline: symptoms, trend markers, functional status, and change |
-| **Standard** | **clinical guideline** | the verified care logic that frames safe, consistent action |
-| **Governance** | **care plan** | the control structure: specialist coordination, scheduling, accommodations, obligations |
+| **Member** | **body / patient** | the physical self as the operating subject: capabilities, limits, current function, recovery goals, and what the person needs to do or be |
+| **Mandate** | **protocol** | the treatment plan that governs action: prescribed routines, therapy cadence, constraint rules, medication schedule, and coordination signals between providers |
+| **Standing** | **health state** | the current condition baseline: symptoms, trend markers, functional status, change velocity, and the delta since last beat |
+| **Standard** | **clinical guideline** | verified care logic: published protocols, specialist directives, safety thresholds, rehab milestones, and the evidence base that frames consistent action |
+| **Governance** | **care plan** | the control structure: specialist coordination, appointment orchestration, accommodation obligations, scheduling authority, and escalation paths |
 
-This is the same kernel used elsewhere in the repository with only the naming layer changed.
+This is the same kernel shape as other organs, applied to health execution. The structure is
+fixed; the domain layer is where institutional behavior changes.
 
-## Fractal deployment of this organ
+## Fractal deployment
 
-### 1) MACRO (generic, nameless foundation)
+- **MACRO** — a health/recovery + disability-access institution anyone can hold. It provides a
+  reusable platform: protocol ingestion, symptom and state tracking, care-team coordination, a
+  standing health record with trend markers, clinical-standard alignment checks, and a
+  governance layer for accommodations, scheduling, and care-plan integrity. The macro form is
+  intentionally generic — no individual identity, no personal health data at the template layer.
 
-- Health/recovery + disability-access institution anyone can hold.
-- Publicly reusable and legally neutral: symptom indexing, plan tracking, appointment orchestration, and care-protocol
-  coherence.
-- Generic structure intentionally contains no individual identity.
+- **MICRO** — a post-injury recovery and disability-access case run with the weight of a
+  dedicated care-administration team, explicitly tied to the legal ADA accommodation matter.
+  The anchor event is a 4th-story fall (~2024). This instance proves the macro platform by
+  producing an auditable, capability-focused record of recovery state, protocol adherence, and
+  accommodation needs for the ADA proceeding. No personal name is used; only the instance
+  relationship is described.
 
-### 2) MICRO (specific instance on top of MACRO)
+## Hard guardrails
 
-- Post-injury recovery and disability-access case layer.
-- Post-injury anchor: 4th-story fall (~2024).
-- Operates as an accommodation-ready care-system for the legal ADA matter by producing an auditable, capability-focused
-  record for recovery state, protocol adherence, and access needs.
-- No personal name is used here; only the instance relationship is described.
-
-## Boundary guardrails
-
-- No diagnosis, no prescription, no medical advice output.
-- Do not treat this organ as a doctor, therapist, or hospital.
-- Keep records secure and scoped; medical data remains with the patient and licensed care chain.
+- No diagnosis, no prescription, no medical advice output. This organ is operations
+  infrastructure, not a clinician.
+- No independent clinical decisions. Every treatment shift, diagnosis, and prescription
+  remains with the licensed provider.
+- Patient records are secure and scoped. Medical data stays with the patient and their
+  licensed care chain.
+- Output is evidence-first and traceable: state records, protocol logs, and accommodation
+  documentation support the patient and provider's judgment.
+- This organ does not replace a doctor, therapist, hospital, or any licensed professional.
