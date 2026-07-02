@@ -265,15 +265,17 @@ def claude_5h():
                         continue
                     # ONLY a structured API rate_limit error counts — never free-text that merely
                     # mentions "rate limit"/"429" (a transcript discussing limits is not a 429).
+                    ts = _parse_ts(row.get("timestamp"))
                     if row.get("error") == "rate_limit" or (
                             isinstance(row.get("error"), dict)
                             and row["error"].get("type") == "rate_limit_error"):
                         rate_limit_events += 1
-                        ts = _parse_ts(row.get("timestamp"))
                         if ts is None or ts >= RL_COOLDOWN:  # recent (or undated → treat as recent)
                             recent_rl = True
                     u = (row.get("message", {}) or {}).get("usage")
                     if not u:
+                        continue
+                    if ts is not None and ts < W5H:
                         continue
                     total += (u.get("input_tokens", 0) + u.get("output_tokens", 0)
                               + u.get("cache_creation_input_tokens", 0))  # billable; exclude cheap cache_read

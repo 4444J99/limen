@@ -28,7 +28,7 @@ REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 BAD_TARGET_RE = re.compile(r"\bundefined#undefined\b|repo[=:]\\?\"?undefined|number[=:]\\?\"?undefined")
 FAILED_LOG_RE = re.compile(r"\bfailed:|agent died|monthly spend limit|rate[_ -]?limit", re.IGNORECASE)
 FABLE_ACCEPTANCE_RE = re.compile(
-    r"fable-allotment\.py\s+accept|LIMEN_FABLE_ACCEPTANCE|fableAcceptance",
+    r"fable-allotment\.py\s+accept|LIMEN_FABLE_ACCEPTANCE|fableAcceptance|fable-acceptance",
     re.IGNORECASE,
 )
 
@@ -41,8 +41,10 @@ def _model_selection() -> Any:
     try:
         import importlib.util
 
-        root = os.environ.get("LIMEN_ROOT") or str(Path(__file__).resolve().parents[1])
-        path = Path(root) / "cli" / "src" / "limen" / "model_selection.py"
+        root = Path(os.environ.get("LIMEN_ROOT") or Path(__file__).resolve().parents[1])
+        path = root / "cli" / "src" / "limen" / "model_selection.py"
+        if not path.exists():
+            path = Path(__file__).resolve().parents[1] / "cli" / "src" / "limen" / "model_selection.py"
         spec = importlib.util.spec_from_file_location("_limen_model_selection_guard", path)
         if spec is None or spec.loader is None:
             return None
@@ -106,6 +108,19 @@ def _as_text(value: Any) -> str:
     if isinstance(value, str):
         return value
     return json.dumps(value, sort_keys=True, ensure_ascii=False)
+
+
+def _current_fable_acceptance_present() -> bool:
+    mod = _model_selection()
+    try:
+        return bool(mod is not None and mod._claude_fable_acceptance_present())
+    except Exception:
+        return False
+
+
+def _structured_fable_acceptance(value: Any) -> bool:
+    text = _as_text(value).strip()
+    return bool(text and FABLE_ACCEPTANCE_RE.search(text))
 
 
 def normalize_candidates(data: Any, *, allow_empty: bool = False) -> list[dict[str, Any]]:
@@ -172,7 +187,6 @@ def _workflow_violations(
         wf.get("logs"),
         wf.get("result"),
         wf.get("error"),
-        wf.get("fableAcceptance"),
     ]
     for p in progress:
         if isinstance(p, dict):
@@ -183,9 +197,10 @@ def _workflow_violations(
                 p.get("lastToolSummary"),
             ])
     scan = "\n".join(_as_text(x) for x in scan_parts)
+    fable_acceptance_ok = _structured_fable_acceptance(wf.get("fableAcceptance"))
     if (
         fable_agents
-        and not FABLE_ACCEPTANCE_RE.search(scan)
+        and not fable_acceptance_ok
         and os.environ.get("LIMEN_ALLOW_UNACCEPTED_FABLE") != "1"
     ):
         violations.append(f"{name}: Fable run lacks written acceptance command")
@@ -306,6 +321,7 @@ def audit_transcript(
     *,
     max_billable_tokens: int,
     max_opus_billable_tokens: int,
+    max_fable_billable_tokens: int,
     max_agent_calls: int,
     max_opus_agents: int,
     max_fable_agents: int,
@@ -337,7 +353,7 @@ def audit_transcript(
     subagent_paths = {str(p) for p in files[1:]}
     expensive_subagent_files: set[str] = set()
     fable_subagent_files: set[str] = set()
-    fable_acceptance_seen = False
+    fable_acceptance_seen = _current_fable_acceptance_present()
 
     unbounded_re = re.compile(
         r"\b(no stopping|indefinite|indefinitely|until ideal form|keep going until ideal form)\b",
@@ -347,7 +363,9 @@ def audit_transcript(
     for path in files:
         for line_no, row in _iter_jsonl(path):
             msg = row.get("message") or {}
-            if FABLE_ACCEPTANCE_RE.search(_as_text(row)):
+            if _structured_fable_acceptance(row.get("fableAcceptance")) or (
+                isinstance(msg, dict) and _structured_fable_acceptance(msg.get("fableAcceptance"))
+            ):
                 fable_acceptance_seen = True
             if row.get("type") == "user":
                 text = _content_text(msg.get("content"))
@@ -394,6 +412,13 @@ def audit_transcript(
     ):
         violations.append(
             f"Opus billable budget exceeded ({opus_billable} > {max_opus_billable_tokens})"
+        )
+    if (
+        fable_billable > max_fable_billable_tokens
+        and os.environ.get("LIMEN_ALLOW_FABLE_SESSION_BURN") != "1"
+    ):
+        violations.append(
+            f"Fable billable budget exceeded ({fable_billable} > {max_fable_billable_tokens})"
         )
     if agent_calls > max_agent_calls and os.environ.get("LIMEN_ALLOW_AGENT_FANOUT") != "1":
         violations.append(f"agent/workflow fanout exceeded ({agent_calls} > {max_agent_calls})")
@@ -495,6 +520,7 @@ def main(argv: list[str] | None = None) -> int:
     at.add_argument("session_or_jsonl")
     at.add_argument("--max-billable-tokens", type=int, default=int(os.environ.get("LIMEN_MAX_CLAUDE_SESSION_TOKENS", "2000000")))
     at.add_argument("--max-opus-billable-tokens", type=int, default=int(os.environ.get("LIMEN_MAX_OPUS_SESSION_TOKENS", "750000")))
+    at.add_argument("--max-fable-billable-tokens", type=int, default=int(os.environ.get("LIMEN_MAX_FABLE_SESSION_TOKENS", "1000000")))
     at.add_argument("--max-agent-calls", type=int, default=int(os.environ.get("LIMEN_MAX_AGENT_CALLS", "8")))
     at.add_argument("--max-opus-agents", type=int, default=1)
     at.add_argument("--max-fable-agents", type=int, default=1)
@@ -544,6 +570,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.session_or_jsonl,
                 max_billable_tokens=args.max_billable_tokens,
                 max_opus_billable_tokens=args.max_opus_billable_tokens,
+                max_fable_billable_tokens=args.max_fable_billable_tokens,
                 max_agent_calls=args.max_agent_calls,
                 max_opus_agents=args.max_opus_agents,
                 max_fable_agents=args.max_fable_agents,

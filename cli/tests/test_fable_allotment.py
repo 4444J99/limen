@@ -1,6 +1,7 @@
 import json
 import subprocess
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 
@@ -37,6 +38,30 @@ def base_accept_args(receipts_dir: Path, category: str = "governance", percent: 
     ]
 
 
+def with_slug(args: list[str], slug: str) -> list[str]:
+    out = list(args)
+    out[out.index("--slug") + 1] = slug
+    return out
+
+
+def receipt_data(category: str, percent: float) -> dict:
+    now = datetime.now(timezone.utc)
+    monday = (now - timedelta(days=now.weekday())).date().isoformat()
+    return {
+        "schema": "limen.fable_acceptance.v1",
+        "created_at": now.isoformat().replace("+00:00", "Z"),
+        "week": monday,
+        "category": category,
+        "percent": percent,
+        "slug": f"{category}-{percent}",
+        "why": "test",
+        "sources": ["docs/fable-allotment.md"],
+        "redacted_packets": [],
+        "verification": ["python3 scripts/fable-allotment.py audit"],
+        "reserve_unlocked": category == "reserve",
+    }
+
+
 def test_accept_writes_receipt_and_env_export(tmp_path):
     receipts_dir = tmp_path / "receipts"
     proc = run_fable(*base_accept_args(receipts_dir))
@@ -61,6 +86,24 @@ def test_category_cap_and_reserve_lock_are_enforced(tmp_path):
     assert "reserve spend requires --reserve-unlock" in reserve.stderr
 
 
+def test_weekly_category_cap_is_cumulative(tmp_path):
+    receipts_dir = tmp_path / "receipts"
+    first = run_fable(*with_slug(base_accept_args(receipts_dir, category="governance", percent="6"), "g1"))
+    assert first.returncode == 0, first.stderr
+    second = run_fable(*with_slug(base_accept_args(receipts_dir, category="governance", percent="5"), "g2"))
+    assert second.returncode == 2
+    assert "governance weekly spend would be 11%" in second.stderr
+
+    # Audit also catches an already-bad receipt directory, not just future accept commands.
+    bad_dir = tmp_path / "bad-receipts"
+    bad_dir.mkdir()
+    (bad_dir / "a.json").write_text(json.dumps(receipt_data("adversarial-review", 3)))
+    (bad_dir / "b.json").write_text(json.dumps(receipt_data("adversarial-review", 3)))
+    audit = run_fable("audit", "--receipts-dir", str(bad_dir))
+    assert audit.returncode == 2
+    assert "adversarial-review spend 6% exceeds category cap 5%" in audit.stdout
+
+
 def test_audit_fails_when_deliberate_cap_is_exceeded(tmp_path):
     receipts_dir = tmp_path / "receipts"
     for category, percent in (
@@ -74,7 +117,7 @@ def test_audit_fails_when_deliberate_cap_is_exceeded(tmp_path):
 
     extra = run_fable(*base_accept_args(receipts_dir, category="governance", percent="1"))
     assert extra.returncode == 2
-    assert "deliberate Fable spend would be 41%" in extra.stderr
+    assert "governance weekly spend would be 11%" in extra.stderr
 
     audit = run_fable("audit", "--receipts-dir", str(receipts_dir))
     assert audit.returncode == 0, audit.stderr

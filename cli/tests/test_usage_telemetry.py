@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import yaml
@@ -59,6 +60,58 @@ def test_claude_rate_limit_in_recent_transcript_marks_lane_down(tmp_path):
     data = json.loads((limen_root / "logs" / "usage.json").read_text())
     assert data["vendors"]["claude"]["health"] == "rate-limited"
     assert data["vendors"]["claude"]["rate_limit_events"] == 1
+
+
+def test_claude_5h_usage_filters_rows_by_timestamp(tmp_path):
+    limen_root = tmp_path / "limen"
+    home = tmp_path / "home"
+    (limen_root / "logs").mkdir(parents=True)
+    project = home / ".claude" / "projects" / "proj"
+    project.mkdir(parents=True)
+    (limen_root / "tasks.yaml").write_text(
+        yaml.safe_dump(
+            {
+                "version": "1.0",
+                "portal": {
+                    "budget": {
+                        "track": {"date": "2026-06-19", "spent": 0, "per_agent": {"jules": 0}},
+                        "per_agent": {"jules": 100},
+                    }
+                },
+                "tasks": [],
+            }
+        )
+    )
+    now = datetime.now(timezone.utc)
+    rows = [
+        {
+            "timestamp": (now - timedelta(hours=6)).isoformat().replace("+00:00", "Z"),
+            "type": "assistant",
+            "message": {"usage": {"input_tokens": 100, "output_tokens": 100}},
+        },
+        {
+            "timestamp": (now - timedelta(minutes=30)).isoformat().replace("+00:00", "Z"),
+            "type": "assistant",
+            "message": {"usage": {"input_tokens": 7, "output_tokens": 11, "cache_creation_input_tokens": 13}},
+        },
+    ]
+    (project / "session.jsonl").write_text("\n".join(json.dumps(row) for row in rows) + "\n")
+
+    env = os.environ.copy()
+    env["HOME"] = str(home)
+    env["LIMEN_ROOT"] = str(limen_root)
+    proc = subprocess.run(
+        [sys.executable, str(USAGE)],
+        cwd=ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    data = json.loads((limen_root / "logs" / "usage.json").read_text())
+    assert data["vendors"]["claude"]["consumed"] == 31
+    assert data["vendors"]["claude"]["messages"] == 1
 
 
 def _run_telemetry(tmp_path, jules_consumed, extra_env=None):

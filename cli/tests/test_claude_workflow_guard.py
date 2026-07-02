@@ -1,6 +1,8 @@
 import json
+import os
 import subprocess
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 
@@ -8,14 +10,37 @@ ROOT = Path(__file__).resolve().parents[2]
 GUARD = ROOT / "scripts" / "claude-workflow-guard.py"
 
 
-def run_guard(*args, input_text=None):
+def run_guard(*args, input_text=None, env=None):
+    child_env = os.environ.copy()
+    if env:
+        child_env.update(env)
     return subprocess.run(
         [sys.executable, str(GUARD), *args],
         input=input_text,
         capture_output=True,
         text=True,
         cwd=ROOT,
+        env=child_env,
     )
+
+
+def write_fable_receipt(tmp_path: Path) -> Path:
+    now = datetime.now(timezone.utc)
+    monday = (now - timedelta(days=now.weekday())).date().isoformat()
+    receipt = tmp_path / "fable-acceptance.json"
+    receipt.write_text(
+        json.dumps(
+            {
+                "schema": "limen.fable_acceptance.v1",
+                "week": monday,
+                "category": "adversarial-review",
+                "percent": 5,
+                "sources": ["docs/fable-allotment.md"],
+                "verification": ["python3 scripts/fable-allotment.py audit"],
+            }
+        )
+    )
+    return receipt
 
 
 def test_normalize_candidates_accepts_nested_json_string():
@@ -74,11 +99,14 @@ def test_audit_workflow_blocks_unaccepted_fable(tmp_path):
 
 
 def test_audit_workflow_allows_accepted_single_fable(tmp_path):
+    receipt = tmp_path / "logs" / "fable-acceptance" / "accepted.json"
+    receipt.parent.mkdir(parents=True)
+    receipt.write_text("{}")
     wf = {
         "workflowName": "canonical-fable-synthesis",
         "status": "completed",
         "agentCount": 1,
-        "fableAcceptance": "python3 scripts/fable-allotment.py accept --category governance",
+        "fableAcceptance": str(receipt),
         "workflowProgress": [{"model": "claude-fable-5", "state": "done"}],
         "result": {"summary": "done"},
     }
@@ -229,6 +257,94 @@ def test_audit_transcript_blocks_unaccepted_fable(tmp_path):
     report = json.loads(proc.stdout)
     assert report["fableBillableTokens"] == 10
     assert "Fable run lacks written acceptance command" in "\n".join(report["violations"])
+
+
+def test_audit_transcript_policy_mentions_do_not_accept_fable(tmp_path):
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "type": "user",
+                        "message": {
+                            "content": "docs mention LIMEN_FABLE_ACCEPTANCE and fable-allotment.py accept"
+                        },
+                    }
+                ),
+                json.dumps(
+                    {
+                        "type": "assistant",
+                        "message": {
+                            "model": "claude-fable-5",
+                            "content": [{"type": "text", "text": "done"}],
+                            "usage": {"input_tokens": 5, "output_tokens": 5},
+                        },
+                    }
+                ),
+            ]
+        )
+        + "\n"
+    )
+    proc = run_guard("audit-transcript", str(transcript), "--max-billable-tokens", "1000000")
+    assert proc.returncode == 2
+    assert "Fable run lacks written acceptance command" in "\n".join(
+        json.loads(proc.stdout)["violations"]
+    )
+
+
+def test_audit_transcript_allows_current_receipt_env(tmp_path):
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text(
+        json.dumps(
+            {
+                "type": "assistant",
+                "message": {
+                    "model": "claude-fable-5",
+                    "content": [{"type": "text", "text": "accepted"}],
+                    "usage": {"input_tokens": 5, "output_tokens": 5},
+                },
+            }
+        )
+        + "\n"
+    )
+    receipt = write_fable_receipt(tmp_path)
+    proc = run_guard(
+        "audit-transcript",
+        str(transcript),
+        "--max-billable-tokens",
+        "1000000",
+        env={"LIMEN_FABLE_ACCEPTANCE": str(receipt)},
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert json.loads(proc.stdout)["fableAcceptanceSeen"] is True
+
+
+def test_audit_transcript_gates_fable_billable_tokens(tmp_path):
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text(
+        json.dumps(
+            {
+                "type": "assistant",
+                "message": {
+                    "model": "claude-fable-5",
+                    "content": [{"type": "text", "text": "expensive"}],
+                    "usage": {"input_tokens": 40, "cache_creation_input_tokens": 40, "output_tokens": 40},
+                },
+            }
+        )
+        + "\n"
+    )
+    proc = run_guard(
+        "audit-transcript",
+        str(transcript),
+        "--max-billable-tokens",
+        "1000000",
+        "--max-fable-billable-tokens",
+        "100",
+    )
+    assert proc.returncode == 2
+    assert "Fable billable budget exceeded" in "\n".join(json.loads(proc.stdout)["violations"])
 
 
 def test_audit_transcript_allows_small_bounded_sonnet_session(tmp_path):

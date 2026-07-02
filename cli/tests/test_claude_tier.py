@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import limen.dispatch as D
@@ -39,6 +39,25 @@ def _write_ledger(root: Path, claude_classes: dict):
 def _write_tiers(root: Path, mapping: dict):
     (root / "logs").mkdir(parents=True, exist_ok=True)
     (root / "logs" / "model-tiers.json").write_text(json.dumps({"claude": mapping}))
+
+
+def _write_fable_acceptance(root: Path) -> Path:
+    now = datetime.now(timezone.utc)
+    monday = (now - timedelta(days=now.weekday())).date().isoformat()
+    path = root / "fable-acceptance.json"
+    path.write_text(
+        json.dumps(
+            {
+                "schema": "limen.fable_acceptance.v1",
+                "week": monday,
+                "category": "adversarial-review",
+                "percent": 5,
+                "sources": ["docs/fable-allotment.md"],
+                "verification": ["python3 scripts/fable-allotment.py audit"],
+            }
+        )
+    )
+    return path
 
 
 def _clear(monkeypatch):
@@ -97,8 +116,7 @@ def test_fable_is_reserved_above_opus_and_requires_acceptance(tmp_path, monkeypa
     task = _task(type_="final-canonical-decision")
     assert D._claude_model(task) == "opus"
 
-    acceptance = tmp_path / "fable-acceptance.json"
-    acceptance.write_text("{}")
+    acceptance = _write_fable_acceptance(tmp_path)
     monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", str(acceptance))
     assert D._claude_model(task) == "fable"
 
@@ -113,6 +131,17 @@ def test_env_override_wins(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_CLAUDE_MODEL", "claude-opus-4-8")
     _write_ledger(tmp_path, {"waste_classes": []})
     assert D._claude_model(_task(type_="code")) == "claude-opus-4-8"
+
+
+def test_env_fable_pin_is_guarded_by_acceptance(tmp_path, monkeypatch):
+    """A model-name env pin cannot route Fable around the written acceptance receipt."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_ledger(tmp_path, {"waste_classes": []})
+    monkeypatch.setenv("LIMEN_CLAUDE_MODEL", "claude-fable-5")
+    assert D._claude_model(_task(type_="code")) == "opus"
+    monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", str(_write_fable_acceptance(tmp_path)))
+    assert D._claude_model(_task(type_="code")) == "claude-fable-5"
 
 
 def test_fail_open_on_missing_or_corrupt_ledger(tmp_path, monkeypatch):
@@ -156,8 +185,7 @@ def test_retry_bump_on_tried_claude(tmp_path, monkeypatch):
     assert D._claude_model(_task(type_="code", labels=["tried:claude"])) == "sonnet"  # haiku→sonnet
     assert D._claude_model(_task(type_="research", labels=["tried:claude"])) == "opus"  # sonnet→opus
     assert D._claude_model(_task(type_="code", labels=["canon", "tried:claude"])) == "opus"  # caps
-    acceptance = tmp_path / "fable-acceptance.json"
-    acceptance.write_text("{}")
+    acceptance = _write_fable_acceptance(tmp_path)
     monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", str(acceptance))
     assert D._claude_model(_task(type_="code", labels=["canon", "tried:claude"])) == "opus"
     monkeypatch.setenv("LIMEN_CLAUDE_RETRY_BUMP_TO_FABLE", "1")

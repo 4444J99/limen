@@ -147,6 +147,14 @@ def _validate_receipt(
         week = str(receipt.get("week"))
         existing = _load_receipts(receipts_dir, week)
         deliberate, total = _spent(existing)
+        category_total = sum(
+            float(r.get("percent", 0)) for r in existing if r.get("category") == category
+        )
+        if category_total + percent > cap:
+            raise PolicyError(
+                f"{category} weekly spend would be {category_total + percent:g}%, "
+                f"above category cap {cap:g}%"
+            )
         if category == "reserve":
             total += percent
         else:
@@ -221,6 +229,10 @@ def cmd_audit(args: argparse.Namespace) -> int:
         category = str(receipt.get("category", ""))
         if category in category_spend:
             category_spend[category] += float(receipt.get("percent", 0))
+    for category, spent in sorted(category_spend.items()):
+        cap = float(PLAN[category]["cap_percent"])
+        if spent > cap:
+            errors.append(f"{category} spend {spent:g}% exceeds category cap {cap:g}%")
     if deliberate > DELIBERATE_CAP:
         errors.append(f"deliberate spend {deliberate:g}% exceeds {DELIBERATE_CAP}%")
     if total > HARD_CAP:

@@ -626,7 +626,7 @@ parameters:
     env: LIMEN_FABLE_ACCEPTANCE
     self_update: none
     owner: arms-agents
-    note: "Path to the written Fable acceptance receipt emitted by scripts/fable-allotment.py accept. Empty means Fable selections fall back to Opus; value `1` exists only for tests or a short-lived manual shell."
+    note: "Path to the current-week written Fable acceptance receipt emitted by scripts/fable-allotment.py accept. Empty, stale, malformed, or arbitrary paths make Fable selections fall back to Opus; value `1` is accepted only under pytest."
   LIMEN_CLAUDE_RETRY_BUMP_TO_FABLE:
     default: "0"
     env: LIMEN_CLAUDE_RETRY_BUMP_TO_FABLE
@@ -639,6 +639,18 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "Emergency override for claude-workflow-guard's Fable fan-out check. Default 0 enforces one bounded accepted Fable objective instead of broad Fable worker pools."
+  LIMEN_MAX_FABLE_SESSION_TOKENS:
+    default: "1000000"
+    env: LIMEN_MAX_FABLE_SESSION_TOKENS
+    self_update: none
+    owner: arms-agents
+    note: "Maximum billable-ish Fable transcript tokens allowed by claude-workflow-guard before it flags the session. Counts input + output + cache creation, excluding cache reads."
+  LIMEN_ALLOW_FABLE_SESSION_BURN:
+    default: "0"
+    env: LIMEN_ALLOW_FABLE_SESSION_BURN
+    self_update: none
+    owner: arms-agents
+    note: "Emergency override for claude-workflow-guard's Fable session token cap. Default 0 keeps accepted Fable runs bounded even when they do not fan out."
   LIMEN_ALLOW_UNACCEPTED_FABLE:
     default: "0"
     env: LIMEN_ALLOW_UNACCEPTED_FABLE

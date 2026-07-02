@@ -61,6 +61,7 @@ def test_declared_model_is_left_alone(monkeypatch):
     """A spawn that already carries --model was sorted at its declaration site — never re-touch it."""
     _clear(monkeypatch)
     assert model_for_argv(["-p", "--model", "opus", "x"]) is None
+    assert model_for_argv(["-p", "--model=opus", "x"]) is None
     assert model_for_argv(["--model", "sonnet", "-p", "x"]) is None
 
 
@@ -87,14 +88,14 @@ def test_tiering_gated_off_yields_no_injection(monkeypatch):
 
 
 def test_floor_is_tunable_and_guarded(monkeypatch):
-    """LIMEN_CLAUDE_SHIM_FLOOR tunes the floor; bogus or unaccepted Fable values guard back."""
+    """LIMEN_CLAUDE_SHIM_FLOOR tunes the floor; Fable is never an inherited floor."""
     _clear(monkeypatch)
     monkeypatch.setenv("LIMEN_CLAUDE_SHIM_FLOOR", "sonnet")
     assert model_for_argv(["-p", "hi"]) == "sonnet"
     monkeypatch.setenv("LIMEN_CLAUDE_SHIM_FLOOR", "fable")
-    assert model_for_argv(["-p", "hi"]) == "haiku"
+    assert model_for_argv(["-p", "hi"]) == "opus"
     monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", "1")
-    assert model_for_argv(["-p", "hi"]) == "fable"
+    assert model_for_argv(["-p", "hi"]) == "opus"
     monkeypatch.setenv("LIMEN_CLAUDE_SHIM_FLOOR", "nonsense")
     assert model_for_argv(["-p", "hi"]) == "haiku"
 
@@ -104,6 +105,15 @@ def test_tier_alias_resolves_via_env_pin(monkeypatch):
     _clear(monkeypatch)
     monkeypatch.setenv("LIMEN_CLAUDE_HAIKU_MODEL", "claude-haiku-4-5")
     assert model_for_argv(["-p", "hi"]) == "claude-haiku-4-5"
+
+
+def test_fable_model_pins_require_acceptance(monkeypatch):
+    """Model-name pins cannot route Fable around the receipt-backed tier gate."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_CLAUDE_MODEL", "claude-fable-5")
+    assert model_for_argv(["-p", "hi"]) == "opus"
+    monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", "1")
+    assert model_for_argv(["-p", "hi"]) == "claude-fable-5"
 
 
 # ── Layer 2: the shim (end-to-end, against a stub "real claude") ───────────────────────────
