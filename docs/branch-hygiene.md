@@ -23,10 +23,11 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `worktree-ianva-doorway` — f4c0c07 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
 - `worktree-linear-conjuring-bear` — 92c21f2 chore(gitignore): ignore .wrangler/ cache at any depth, not just web/worker
 
-## Live-work branches (97) — decide each
+## Live-work branches (98) — decide each
 
 - `_pr198` — 4cd0dba fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
 - `capture/main-2026-07-02T01-03-35Z` — 71b4885 capture: off-disk sync 2026-07-02T01:03:35Z (main behind origin → side ref, HEAD untouched)
+- `capture/main-2026-07-02T18-41-47Z` — eaca451 capture: off-disk sync 2026-07-02T18:41:47Z (main behind origin → side ref, HEAD untouched)
 - `deepen/tao-te-ching-ch6-10` — 6bbd51f limen: promote organvm/domus-genoma to ranked value tier
 - `discover-carrier-wave-zeitgeist-thesis-value` — fe4f763 limen: discover corpus-mythicum, promote to ranked tier
 - `discover-limen-value-2026-06-22` — 7ad100f capture: autonomic off-disk sync 2026-06-23T13:19:40Z
