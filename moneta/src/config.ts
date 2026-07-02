@@ -1,8 +1,9 @@
 /**
  * Environment-driven configuration. Every value is optional: with nothing set
- * the mint boots and reports `configured:false`, refusing checkouts exactly like
- * the product's empty-checkout-URL gate. The code is done regardless of config;
- * these values are the operate step.
+ * the mint boots and reports `configured:false` — but it no longer refuses
+ * business. Checkouts pool as reserved orders (see `MintService`) and open into
+ * payable ones the instant a receive address is set. The code is done regardless
+ * of config; the receive address is the one sovereign value only the owner holds.
  */
 
 export interface MintConfig {

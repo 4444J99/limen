@@ -1,8 +1,9 @@
 /**
  * Mint entrypoint. Boots an HTTP server from environment config. The signing key
  * is always resolved (auto-generated + persisted on first run) so `/pubkey`
- * serves the verify key even before a receive address is set; checkouts stay
- * gated on `isConfigured` until `MINT_BTC_ADDRESS` is provided.
+ * serves the verify key even before a receive address is set; checkouts made
+ * before `MINT_BTC_ADDRESS` is provided pool as reserved orders and open into
+ * payable ones automatically once it is — no demand is turned away.
  */
 
 import { isConfigured, loadConfigFromEnv } from './config'

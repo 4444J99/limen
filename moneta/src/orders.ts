@@ -9,13 +9,14 @@
  * changing this contract.
  */
 
-export type OrderStatus = 'pending' | 'paid' | 'expired'
+export type OrderStatus = 'reserved' | 'pending' | 'paid' | 'expired'
 
 export interface Order {
     id: string
     email?: string
+    /** Empty while `reserved` (no receive address yet); set when the order opens. */
     address: string
-    /** Exact amount the buyer must send, unique among this address's open orders. */
+    /** Exact amount the buyer must send, unique among this address's open orders. `0` while reserved. */
     sats: number
     createdAt: number
     expiresAt: number
@@ -52,6 +53,44 @@ export class OrderStore {
         }
         this.orders.set(order.id, order)
         return order
+    }
+
+    /**
+     * Pool a buyer's intent before there is any receive address to pay to. The
+     * mint has no rail yet, so we hold the demand — not lose it — and open it
+     * into a payable order the moment the valve (a receive address) is set.
+     */
+    reserve(input: { id: string, email?: string, now: number }): Order {
+        const order: Order = {
+            id: input.id,
+            email: input.email,
+            address: '',
+            sats: 0,
+            createdAt: input.now,
+            expiresAt: 0,
+            status: 'reserved',
+        }
+        this.orders.set(order.id, order)
+        return order
+    }
+
+    /** Open a reserved order into a payable one once a receive address exists. */
+    activate(input: { id: string, address: string, baseSats: number, now: number, ttlMs: number }): Order | undefined {
+        const order = this.orders.get(input.id)
+        if (!order || order.status !== 'reserved') return undefined
+        order.address = input.address
+        order.sats = this.uniqueSats(input.address, input.baseSats, input.now)
+        order.createdAt = input.now
+        order.expiresAt = input.now + input.ttlMs
+        order.status = 'pending'
+        return order
+    }
+
+    /** How many buyers are pooled behind an unopened valve (no address yet). */
+    countReserved(): number {
+        let n = 0
+        for (const order of this.orders.values()) if (order.status === 'reserved') n++
+        return n
     }
 
     get(id: string, now?: number): Order | undefined {

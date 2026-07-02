@@ -31,11 +31,13 @@ async function makeService(env: Record<string, string>, fetchImpl: typeof fetch,
 }
 
 describe('MintService.checkout', () => {
-    it('refuses checkout until a receive address is configured', async () => {
+    it('pools demand (reserves) instead of dying when no receive address is set', async () => {
         const { service } = await makeService({ MINT_BTC_USD: '60000' }, throwingFetch) // no MINT_BTC_ADDRESS
         const res = await service.checkout({ email: 'a@b.com' })
-        expect(res.statusCode).toBe(503)
-        expect(res.body.error).toBe('unconfigured')
+        expect(res.statusCode).toBe(202)
+        expect(res.body.status).toBe('reserved')
+        expect(res.body.orderId).toBe('order-1')
+        expect(service.health().body.waiting).toBe(1)
     })
 
     it('quotes a unique sat amount with a BIP21 pay URI', async () => {
@@ -94,5 +96,41 @@ describe('MintService.order (the full sovereign flow)', () => {
         const { service } = await makeService({ MINT_BTC_ADDRESS: ADDR, MINT_BTC_USD: '60000' }, throwingFetch)
         const res = await service.order('does-not-exist')
         expect(res.statusCode).toBe(404)
+    })
+})
+
+describe('the valve: a reserved order opens the moment an address is set', () => {
+    it('keeps a reserved order waiting (202) while the valve is still closed', async () => {
+        const { service } = await makeService({ MINT_BTC_USD: '60000' }, throwingFetch) // no address
+        await service.checkout({ email: 'a@b.com' })
+        const poll = await service.order('order-1')
+        expect(poll.statusCode).toBe(202)
+        expect(poll.body.status).toBe('reserved')
+    })
+
+    it('opens pooled demand into a paid licence once the owner sets their own address', async () => {
+        const paid = mockFetch([{ match: `/address/${ADDR}/txs`, json: [confirmedTx(15_000)] }])
+        // Start with NO receive address: the buyer reserves.
+        const { service, config, keypair } = await makeService(
+            { MINT_PRICE_USD: '9', MINT_BTC_USD: '60000' },
+            paid,
+        )
+        const reserved = await service.checkout({ email: 'buyer@example.com' })
+        expect(reserved.statusCode).toBe(202)
+        expect(reserved.body.status).toBe('reserved')
+        expect(service.health().body.waiting).toBe(1)
+
+        // The owner opens the valve — their own self-custodied address, no processor.
+        config.address = ADDR
+
+        // The same buyer polls: the order opens, the chain shows payment, the key mints.
+        const opened = await service.order('order-1')
+        expect(opened.statusCode).toBe(200)
+        expect(opened.body.status).toBe('paid')
+        expect(opened.body.txid).toBe('paytx')
+        const verified = await verifyLikeProduct(opened.body.license as string, keypair.publicJwk, NOW)
+        expect(verified.valid).toBe(true)
+        expect(verified.tier).toBe('pro')
+        expect(verified.payload?.sub).toBe('buyer@example.com')
     })
 })

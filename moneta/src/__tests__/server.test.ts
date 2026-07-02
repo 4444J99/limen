@@ -25,10 +25,10 @@ afterAll(() => {
 })
 
 describe('mint HTTP server', () => {
-    it('GET /health reports liveness + configured flag', async () => {
+    it('GET /health reports liveness + configured flag + pooled demand', async () => {
         const res = await fetch(`${base}/health`)
         expect(res.status).toBe(200)
-        expect(await res.json()).toEqual({ ok: true, configured: false })
+        expect(await res.json()).toEqual({ ok: true, configured: false, waiting: 0 })
     })
 
     it('GET /pubkey serves the verify key for the product build', async () => {
@@ -39,14 +39,14 @@ describe('mint HTTP server', () => {
         expect(body.jwk.d).toBeUndefined()
     })
 
-    it('POST /checkout is refused while unconfigured', async () => {
+    it('POST /checkout pools demand (reserves) while unconfigured', async () => {
         const res = await fetch(`${base}/checkout`, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ email: 'a@b.com' }),
         })
-        expect(res.status).toBe(503)
-        expect((await res.json()).error).toBe('unconfigured')
+        expect(res.status).toBe(202)
+        expect((await res.json()).status).toBe('reserved')
     })
 
     it('unknown routes 404', async () => {

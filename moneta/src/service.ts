@@ -48,32 +48,26 @@ export class MintService {
     }
 
     health(): HttpResult {
-        return { statusCode: 200, body: { ok: true, configured: isConfigured(this.config) } }
+        return { statusCode: 200, body: { ok: true, configured: isConfigured(this.config), waiting: this.store.countReserved() } }
     }
 
     async checkout(input: { email?: string } = {}): Promise<HttpResult> {
+        // No wall when the mint has no receive address yet: pool the buyer's
+        // intent behind the valve instead of losing the sale to a 503. A
+        // reserved order opens into a payable one the moment an address is set.
         if (!isConfigured(this.config)) {
-            return { statusCode: 503, body: { error: 'unconfigured' } }
+            const order = this.store.reserve({ id: this.genId(), email: input.email, now: this.now() })
+            return { statusCode: 202, body: this.describe(order) }
         }
 
-        let btcUsd = this.config.btcUsdOverride
-        if (btcUsd === null) {
-            try {
-                btcUsd = await fetchBtcUsd(this.config.explorerBase, this.fetchImpl)
-            }
-            catch {
-                return { statusCode: 503, body: { error: 'price-unavailable' } }
-            }
-        }
-
-        const baseSats = priceToSats(this.config.priceUsd, btcUsd)
-        if (baseSats <= 0) return { statusCode: 503, body: { error: 'price-unavailable' } }
+        const quote = await this.quoteSats()
+        if ('error' in quote) return { statusCode: 503, body: { error: quote.error } }
 
         const order = this.store.create({
             id: this.genId(),
             email: input.email,
             address: this.config.address,
-            baseSats,
+            baseSats: quote.baseSats,
             now: this.now(),
             ttlMs: this.config.orderTtlMs,
         })
@@ -84,6 +78,21 @@ export class MintService {
         const now = this.now()
         let order = this.store.get(id, now)
         if (!order) return { statusCode: 404, body: { error: 'not-found' } }
+
+        if (order.status === 'reserved') {
+            // Valve still closed: keep the demand pooled (202), never discard it.
+            if (!isConfigured(this.config)) return { statusCode: 202, body: this.describe(order) }
+            // Valve just opened: quote at the current price and open the order.
+            const quote = await this.quoteSats()
+            if ('error' in quote) return { statusCode: 503, body: { error: quote.error } }
+            order = this.store.activate({
+                id: order.id,
+                address: this.config.address,
+                baseSats: quote.baseSats,
+                now,
+                ttlMs: this.config.orderTtlMs,
+            }) ?? order
+        }
 
         if (order.status === 'pending') {
             const payment = await checkAddressPayment({
@@ -106,7 +115,30 @@ export class MintService {
         return { statusCode: 200, body: this.describe(order) }
     }
 
+    /** Live sat price for one licence, or an error tag if the oracle is down. */
+    private async quoteSats(): Promise<{ baseSats: number } | { error: string }> {
+        let btcUsd = this.config.btcUsdOverride
+        if (btcUsd === null) {
+            try {
+                btcUsd = await fetchBtcUsd(this.config.explorerBase, this.fetchImpl)
+            }
+            catch {
+                return { error: 'price-unavailable' }
+            }
+        }
+        const baseSats = priceToSats(this.config.priceUsd, btcUsd)
+        if (baseSats <= 0) return { error: 'price-unavailable' }
+        return { baseSats }
+    }
+
     private describe(order: Order): Record<string, unknown> {
+        if (order.status === 'reserved') {
+            return {
+                orderId: order.id,
+                status: 'reserved',
+                message: 'Reserved — you are in line. Your Pro key mints automatically the moment the mint opens; keep this order id and poll to claim it.',
+            }
+        }
         const amountBtc = satsToBtcString(order.sats)
         const body: Record<string, unknown> = {
             orderId: order.id,

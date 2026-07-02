@@ -19,7 +19,8 @@ node_modules/
 **/node_modules/
 web/app/.next/
 web/app/out/
-web/worker/.wrangler/
+.wrangler/
+**/.wrangler/
 
 # Generated private validation snapshots (rebuilt by generate:data)
 web/app/.generated/
