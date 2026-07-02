@@ -1,11 +1,11 @@
 {
   "_comment": "VLTIMA MATERIA institutional census, made executable. The rich win because civilization's pillars (a legal org, a family office, a PR machine) stand behind them; this ranks those same pillars rebuilt as AI-run ORGANS so the idle fleet can build them continuously. Mirror of revenue-ladder.json: generate-organ-backlog.py reads this and emits bounded, lockless organ-build tasks toward each organ's next maturity band. Identity/levers are DERIVED here, never pinned in code. Each organ is a FRACTAL: macro (a platform anyone can hold) + micro (Anthony's own instance). Build stages: scaffold(<30%) -> building(30-60%) -> maturing(60-90%) -> mature(>=90, no build tasks). Organ artifacts are authored into the limen repo under organs/<pillar>/ (same proven home as the Studium) so dispatch never hits a dead clone; repo-specific product code is handled by the revenue/coverage generators.",
-  "spine": "Institutional weight for one person, then anyone — the prosthesis for human weakness. Not tips; institutions.",
+  "spine": "Institutional weight for one person, then anyone \u2014 the prosthesis for human weakness. Not tips; institutions.",
   "maturity_stages": {
-    "scaffold": "0-29% — kernel + charter + first vertical slice",
-    "building": "30-59% — close the gap to a usable institution; wire it self-feeding",
-    "maturing": "60-89% — excellent macro+micro face; operationalize governance",
-    "mature": ">=90% — self-running; no generated build work"
+    "scaffold": "0-29% \u2014 kernel + charter + first vertical slice",
+    "building": "30-59% \u2014 close the gap to a usable institution; wire it self-feeding",
+    "maturing": "60-89% \u2014 excellent macro+micro face; operationalize governance",
+    "mature": ">=90% \u2014 self-running; no generated build work"
   },
   "organs": [
     {
@@ -79,14 +79,14 @@
       "repo": "organvm/limen",
       "home": "organs/governance/",
       "maturity": 60,
-      "stage": "building",
+      "stage": "maturing",
       "whose_hand": "mine (entity formation signatures are his)",
       "rival": "a constitutional state / a foundation's governance office",
       "domain_map": "the Roman cursus-honorum office sequence expressed as executable rules",
       "macro": "a portable governance-as-code open standard anyone can adopt",
       "micro": "ORGANVM's own dual-entity operation (non-profit open project + commercial LLC)",
       "first_artifact": "operationalize ONE cvrsvs-honorvm rule as an executable validator",
-      "note": "rules operationalized via validate-seed.py + governance-organ.py beat; aerarium--res-publica infra partial"
+      "note": "auto-advanced by governance-organ.py beat (2026-07-02)"
     },
     {
       "rank": 6,
@@ -158,14 +158,17 @@
     "fleet_monthly_capacity_workunits": 21000,
     "harnessed_pct_range": "25-33",
     "idle_workunits_per_month_range": "14000-16000",
-    "fully_idle_lanes": ["codex (87% efficiency, the best earner)", "jules (94% idle)"],
-    "binding_constraint": "SUPPLY of high-value work, not capacity — these organs ARE the supply",
+    "fully_idle_lanes": [
+      "codex (87% efficiency, the best earner)",
+      "jules (94% idle)"
+    ],
+    "binding_constraint": "SUPPLY of high-value work, not capacity \u2014 these organs ARE the supply",
     "source": "logs/usage-limits.json, logs/usage.json, logs/ledger.json (assessed 2026-06-23)"
   },
   "your_levers": [
-    "card-0186 Santander fraud hold — keystone: the whole stack's billing rides on it (one call clears it; also frees Anthropic/GitHub autopay)",
-    "financial identity — receiving real money (bank/KYC for a payout rail or a signed deal) is genuinely yours",
-    "the send / the signature — outbound emails and any contract: I draft, you send/sign (reversible-only invariant)",
-    "institutional logins — D2L (education), and privileged/filing acts with Counsel (legal)"
+    "card-0186 Santander fraud hold \u2014 keystone: the whole stack's billing rides on it (one call clears it; also frees Anthropic/GitHub autopay)",
+    "financial identity \u2014 receiving real money (bank/KYC for a payout rail or a signed deal) is genuinely yours",
+    "the send / the signature \u2014 outbound emails and any contract: I draft, you send/sign (reversible-only invariant)",
+    "institutional logins \u2014 D2L (education), and privileged/filing acts with Counsel (legal)"
   ]
 }
