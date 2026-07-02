@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-07-01'
-      spent: 192
+      spent: 194
       per_agent:
         jules: 100
         gemini: 0
         codex: 73
-        opencode: 7
+        opencode: 9
         agy: 12
         claude: 0
       per_agent_reset:
@@ -32622,7 +32622,7 @@ tasks:
   title: Raise test coverage in meta-organvm/visual-substrate-inquiry
   repo: organvm/visual-substrate-inquiry
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -35201,7 +35201,7 @@ tasks:
   title: Raise test coverage in meta-organvm/meta-organvm--superproject
   repo: organvm/meta-organvm--superproject
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -35379,7 +35379,7 @@ tasks:
   title: Raise test coverage in organvm-iii-ergon/sign-signal--voice-synth
   repo: organvm/sign-signal--voice-synth
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -59949,12 +59949,11 @@ tasks:
   - needs-human
   urls: []
   context: "Cheapest path \u2192 land the credential/secret (your account/identity).\
-    \ Unblocks: Audit Codex handoff and validate token-accountin, wrangler credential\
-    \ persistence. Auto-hung by QUICKEN (finish-not-park); refreshes each beat until\
-    \ you act."
+    \ Unblocks: status endpoint documentation. Auto-hung by QUICKEN (finish-not-park);\
+    \ refreshes each beat until you act."
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-07-01T21:44:35.799289Z'
+  updated: '2026-07-02T01:27:22.868857Z'
   dispatch_log: []
 - id: ASK-quicken-d2l
   title: the D2L go-live click + cadence confirm (your login + judgment)
@@ -72644,7 +72643,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - needs-human
   urls:
@@ -72657,7 +72656,13 @@ tasks:
     \ is code-complete (BTC->MONETA->licence->pro->quota, organ"
   depends_on: []
   created: '2026-07-01'
-  dispatch_log: []
+  updated: '2026-07-02T01:14:18.394731Z'
+  dispatch_log:
+  - timestamp: '2026-07-02T01:14:18.394731Z'
+    agent: heal-board
+    session_id: heal-board
+    status: needs_human
+    output: 'heal-board: reconciled needs-human label to needs_human status'
 - id: GH-organvm-limen-534
   title: 'needs-human (L-PII-SWEEP-CONTAIN): Contain the org-wide personal-data exposure'
   repo: organvm/limen
@@ -72665,7 +72670,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - needs-human
   urls:
@@ -72678,7 +72683,13 @@ tasks:
     \ per-repo by parallel explorers, found ~16 publ"
   depends_on: []
   created: '2026-07-01'
-  dispatch_log: []
+  updated: '2026-07-02T01:14:18.394731Z'
+  dispatch_log:
+  - timestamp: '2026-07-02T01:14:18.394731Z'
+    agent: heal-board
+    session_id: heal-board
+    status: needs_human
+    output: 'heal-board: reconciled needs-human label to needs_human status'
 - id: GH-organvm-limen-533
   title: 'needs-human (L-SOCIAL-SEND): Pull the actual PUBLISH'
   repo: organvm/limen
@@ -72686,7 +72697,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - needs-human
   urls:
@@ -72699,7 +72710,13 @@ tasks:
     \ a scheduled send is human-gated (anything that"
   depends_on: []
   created: '2026-07-01'
-  dispatch_log: []
+  updated: '2026-07-02T01:14:18.394731Z'
+  dispatch_log:
+  - timestamp: '2026-07-02T01:14:18.394731Z'
+    agent: heal-board
+    session_id: heal-board
+    status: needs_human
+    output: 'heal-board: reconciled needs-human label to needs_human status'
 - id: GH-organvm-limen-532
   title: "needs-human (L-SOCIAL-OAUTH): Create the developer apps + mint first access\
     \ tokens for the outbound\u2026"
@@ -72708,7 +72725,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - needs-human
   urls:
@@ -72721,7 +72738,13 @@ tasks:
     \ (Meta Graph), TikTok (Content Posting API), X (v2)."
   depends_on: []
   created: '2026-07-01'
-  dispatch_log: []
+  updated: '2026-07-02T01:14:18.394731Z'
+  dispatch_log:
+  - timestamp: '2026-07-02T01:14:18.394731Z'
+    agent: heal-board
+    session_id: heal-board
+    status: needs_human
+    output: 'heal-board: reconciled needs-human label to needs_human status'
 - id: GH-organvm-limen-531
   title: "needs-human (L-TCC-PHOTOS-AUTOMATION): Grant Automation permission to control\
     \ Photos.app for the screen-capt\u2026"
@@ -72730,7 +72753,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - needs-human
   urls:
@@ -72743,7 +72766,13 @@ tasks:
     \ its on-record exit-1 (AppleScript error -4960). ### What"
   depends_on: []
   created: '2026-07-01'
-  dispatch_log: []
+  updated: '2026-07-02T01:14:18.394731Z'
+  dispatch_log:
+  - timestamp: '2026-07-02T01:14:18.394731Z'
+    agent: heal-board
+    session_id: heal-board
+    status: needs_human
+    output: 'heal-board: reconciled needs-human label to needs_human status'
 - id: GH-organvm-limen-530
   title: 'needs-human (L-AUDIO-BLACKHOLE): FALLBACK ONLY'
   repo: organvm/limen
@@ -72751,7 +72780,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - needs-human
   urls:
@@ -72764,7 +72793,13 @@ tasks:
     \ tap. Prefer the native recorder; this is the gap-"
   depends_on: []
   created: '2026-07-01'
-  dispatch_log: []
+  updated: '2026-07-02T01:14:18.394731Z'
+  dispatch_log:
+  - timestamp: '2026-07-02T01:14:18.394731Z'
+    agent: heal-board
+    session_id: heal-board
+    status: needs_human
+    output: 'heal-board: reconciled needs-human label to needs_human status'
 - id: GH-organvm-limen-529
   title: "needs-human (L-TCC-RECORDER): Grant Screen Recording + Microphone permission\
     \ to the media-recorder\u2026"
@@ -72773,7 +72808,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - needs-human
   urls:
@@ -72786,7 +72821,13 @@ tasks:
     \ on first capture \u2014 the one human step for native"
   depends_on: []
   created: '2026-07-01'
-  dispatch_log: []
+  updated: '2026-07-02T01:14:18.394731Z'
+  dispatch_log:
+  - timestamp: '2026-07-02T01:14:18.394731Z'
+    agent: heal-board
+    session_id: heal-board
+    status: needs_human
+    output: 'heal-board: reconciled needs-human label to needs_human status'
 - id: GH-organvm-limen-538
   title: "needs-human (L-STUDIO-GOLIVE): Take Object Lessons Studio public \u2014\
     \ the identity-portfolio public fac\u2026"
@@ -72795,7 +72836,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - needs-human
   urls:
@@ -72808,7 +72849,13 @@ tasks:
     \ object-lessons-studio.pages.dev -> 200; Script Doctor try-it"
   depends_on: []
   created: '2026-07-01'
-  dispatch_log: []
+  updated: '2026-07-02T01:14:18.394731Z'
+  dispatch_log:
+  - timestamp: '2026-07-02T01:14:18.394731Z'
+    agent: heal-board
+    session_id: heal-board
+    status: needs_human
+    output: 'heal-board: reconciled needs-human label to needs_human status'
 - id: ORG-legal-organ-kernel-0701
   title: Map the VLTIMA 5-primitive kernel to the legal organ
   repo: organvm/limen
@@ -72816,7 +72863,7 @@ tasks:
   target_agent: any
   priority: critical
   budget_cost: 2
-  status: dispatched
+  status: failed
   labels:
   - organ-kernel
   - pillar:legal
@@ -72824,6 +72871,7 @@ tasks:
   - institution
   - vltima
   - generated
+  - noop
   urls: []
   context: "In organvm/limen, author organs/legal/KERNEL.md: map the domain-neutral\
     \ kernel (Member - Mandate - Standing - Standard - Governance) onto the legal\
@@ -72839,21 +72887,26 @@ tasks:
     \ convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-01'
-  updated: '2026-07-02T00:24:42.477125Z'
+  updated: '2026-07-02T00:43:51.583165Z'
   dispatch_log:
   - timestamp: '2026-07-02T00:24:42.477125Z'
     agent: codex
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T00:43:51.583165Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: ORG-health-organ-kernel-0701
   title: Map the VLTIMA 5-primitive kernel to the health organ
   repo: organvm/limen
   type: content
-  target_agent: any
+  target_agent: opencode
   priority: critical
   budget_cost: 2
-  status: dispatched
+  status: done
   labels:
   - organ-kernel
   - pillar:health
@@ -72861,6 +72914,8 @@ tasks:
   - institution
   - vltima
   - generated
+  - tried:claude
+  - noop
   urls: []
   context: "In organvm/limen, author organs/health/KERNEL.md: map the domain-neutral\
     \ kernel (Member - Mandate - Standing - Standard - Governance) onto the health\
@@ -72875,13 +72930,43 @@ tasks:
     \ into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-01'
-  updated: '2026-07-02T00:24:42.477125Z'
+  updated: '2026-07-02T01:14:18.394731Z'
   dispatch_log:
   - timestamp: '2026-07-02T00:24:42.477125Z'
     agent: claude
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T00:43:51.583165Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-02T00:44:03.104808Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T00:58:00Z'
+    agent: opencode
+    session_id: current
+    status: done
+    output: "organs/health/KERNEL.md: wrote full kernel doc mapping 5 primitives (Member\u2192\
+      body/patient, Mandate\u2192protocol, Standing\u2192health state, Standard\u2192\
+      clinical guideline, Governance\u2192care plan), purpose as institutional prosthesis\
+      \ for recovery management + disability access, MACRO (generic health/recovery\
+      \ + disability-access platform) and MICRO (post-injury/ADA case from 4th-story\
+      \ fall ~2024) fractal deployment, hard guardrails. All constraints met: unnamed,\
+      \ ADA-legal tie, generic base with his instance on top."
+  - timestamp: '2026-07-02T01:02:45.226624Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-02T01:14:18.394731Z'
+    agent: limen
+    session_id: heal-board
+    status: done
+    output: 'heal-board: restored terminal done status after stale reopen'
 - id: ORG-legal-organ-charter-0701
   title: Charter the legal organ as an institution rivaling a top-tier litigation
     firm (the Cochran standard)
@@ -72898,6 +72983,7 @@ tasks:
   - institution
   - vltima
   - generated
+  - noop
   urls: []
   context: "In organvm/limen organs/legal/, write CHARTER.md: the org-chart of AI\
     \ roles (the 'virtual firm/team'), the workflows it runs, its inputs/outputs,\
@@ -72908,7 +72994,7 @@ tasks:
     \ scaffold \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-01'
-  updated: '2026-07-02T00:46:00Z'
+  updated: '2026-07-02T00:55:49.260638Z'
   dispatch_log:
   - timestamp: '2026-07-02T00:24:42.477125Z'
     agent: opencode
@@ -72923,12 +73009,22 @@ tasks:
       weight thesis, added fleet-capacity-to-firm leverage math, 6 concrete workflows
       mapped to 5-primitive kernel with orchestration diagram, explicit input/output
       tables with cadences, constraint registry. Preserved KERNEL.md and FRAMEWORK-FOR-COUNSEL.md.'
+  - timestamp: '2026-07-02T00:43:51.583165Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-02T00:55:49.260638Z'
+    agent: limen
+    session_id: heal-board
+    status: done
+    output: 'heal-board: restored terminal done status after stale reopen'
 - id: ORG-health-organ-charter-0701
   title: Charter the health organ as an institution rivaling a concierge medical /
     recovery team
   repo: organvm/limen
   type: content
-  target_agent: any
+  target_agent: opencode
   priority: critical
   budget_cost: 2
   status: open
@@ -72939,6 +73035,8 @@ tasks:
   - institution
   - vltima
   - generated
+  - tried:codex
+  - tried:claude
   urls: []
   context: "In organvm/limen organs/health/, write CHARTER.md: the org-chart of AI\
     \ roles (the 'virtual firm/team'), the workflows it runs, its inputs/outputs,\
@@ -72949,15 +73047,34 @@ tasks:
     \ convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-01'
-  dispatch_log: []
+  updated: '2026-07-02T01:17:04.103362Z'
+  dispatch_log:
+  - timestamp: '2026-07-02T00:44:03.104808Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T01:02:45.226624Z'
+    agent: codex
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-07-02T01:02:53.775853Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T01:17:04.103362Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
 - id: ORG-financial-organ-selffeed-0701
   title: Wire the financial organ to advance autonomously
   repo: organvm/limen
   type: content
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 2
-  status: open
+  status: done
   labels:
   - organ-selffeed
   - pillar:financial
@@ -72965,6 +73082,8 @@ tasks:
   - institution
   - vltima
   - generated
+  - tried:claude
+  - noop
   urls: []
   context: "Make the financial organ self-feeding like the revenue/studium voices:\
     \ bump its maturity in organ-ladder.json as slices land, and add/extend a beat\
@@ -72975,7 +73094,51 @@ tasks:
     \ weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-01'
-  dispatch_log: []
+  updated: '2026-07-02T01:24:30.927881Z'
+  dispatch_log:
+  - timestamp: '2026-07-02T00:44:03.104808Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T01:02:45.226624Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-02T01:02:53.775853Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T01:12:00Z'
+    agent: opencode
+    session_id: cli
+    status: in_progress
+    output: "Claimed by opencode (direct session). KERNEL.md + CHARTER.md authored\
+      \ at organs/financial/. Maturity bumped 30%\u219240%. EVOCATOR canon entry added\
+      \ for financial organ / invisible-ledger scaling constraint."
+  - timestamp: '2026-07-02T01:15:00Z'
+    agent: opencode
+    session_id: cli
+    status: done
+    output: "completed: organs/financial/KERNEL.md + CHARTER.md created; organ-ladder.json\
+      \ maturity 30%\u219240%; EVOCATOR canon EVO-003 added to spec/evocator/canon.yaml\
+      \ + FLAME.md; self-feeding confirmed via existing generate-organ-backlog.py\
+      \ organ-selffeed lever (no new beat hook needed \u2014 generator already emits\
+      \ building-stage selffeed tasks every FEED beat). The-invisible-ledger scaling\
+      \ constraint codified as canon truth riding every beat. Next dispatch: organ-deepen\
+      \ lever will emit 'personal balance-sheet on real numbers' task when organ floor\
+      \ dips."
+  - timestamp: '2026-07-02T01:17:04.103362Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-02T01:24:30.927881Z'
+    agent: limen
+    session_id: heal-board
+    status: done
+    output: 'heal-board: restored terminal done status after stale reopen'
 - id: ORG-education-organ-operationalize-0701
   title: Operationalize education governance (rules as checks)
   repo: organvm/limen
@@ -72983,7 +73146,7 @@ tasks:
   target_agent: any
   priority: medium
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - organ-operationalize
   - pillar:education
@@ -73000,7 +73163,13 @@ tasks:
     \ (VLTIMA).]"
   depends_on: []
   created: '2026-07-01'
-  dispatch_log: []
+  updated: '2026-07-02T01:17:15.131366Z'
+  dispatch_log:
+  - timestamp: '2026-07-02T01:17:15.131366Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: ORG-media-organ-selffeed-0701
   title: Wire the media organ to advance autonomously
   repo: organvm/limen
@@ -73008,7 +73177,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - organ-selffeed
   - pillar:media
@@ -73025,7 +73194,13 @@ tasks:
     \ \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-01'
-  dispatch_log: []
+  updated: '2026-07-02T01:02:53.775853Z'
+  dispatch_log:
+  - timestamp: '2026-07-02T01:02:53.775853Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: ORG-governance-organ-selffeed-0701
   title: Wire the governance organ to advance autonomously
   repo: organvm/limen
@@ -73033,7 +73208,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - organ-selffeed
   - pillar:governance
@@ -73051,7 +73226,13 @@ tasks:
     \ (VLTIMA).]"
   depends_on: []
   created: '2026-07-01'
-  dispatch_log: []
+  updated: '2026-07-02T01:17:15.131366Z'
+  dispatch_log:
+  - timestamp: '2026-07-02T01:17:15.131366Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: ORG-consulting-organ-operationalize-0701
   title: Operationalize consulting governance (rules as checks)
   repo: organvm/limen
