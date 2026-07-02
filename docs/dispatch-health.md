@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-02T21:55:46+00:00`
+Generated: `2026-07-02T22:14:28+00:00`
 
 Status: `healthy`
 
@@ -23,20 +23,20 @@ Status: `healthy`
 - Loaded LIMEN_DISPATCH_ASYNC: `1`.
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-02T21:55:46.537672+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-02T22:14:28.488700+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 3 ; 0 still running ; would launch 3 (cap 12) -> ['GEN-organvm-i-theoria-organvm-v-logos.github.io-test-coverage-0620', 'GEN-organvm-i-theoria-organvm-vi-koinonia.github.io-test-coverage-0620', 'GEN-organvm-i-theoria-organvm-vii-kerygma.github.io-test-coverage-0620']`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 3 ; 0 still running ; would launch 4 (cap 12) -> ['GEN-organvm-i-theoria-organvm-iv-taxis.github.io-test-coverage-0620', 'GEN-organvm-i-theoria-organvm-v-logos.github.io-test-coverage-0620', 'GEN-organvm-i-theoria-organvm-vi-koinonia.github.io-test-coverage-0620', 'GEN-organvm-i-theoria-organvm-vii-kerygma.github.io-test-coverage-0620']`.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `27cca726c07bb2733d39446a4bacd019dd83660e`.
-- origin/main: `27cca726c07bb2733d39446a4bacd019dd83660e`.
+- HEAD: `65283387ea7749a578e9ca78b54a440f35ba30f3`.
+- origin/main: `65283387ea7749a578e9ca78b54a440f35ba30f3`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
 - Dirty entries: `0`.
 
