@@ -10,6 +10,21 @@ step() {
   printf '\n==> %s\n' "$*"
 }
 
+ensure_web_app_deps() {
+  # A fresh worktree (or clone) has no web/app/node_modules, so the surface-contract generation and
+  # the dashboard build below fail with ERR_MODULE_NOT_FOUND (e.g. the 'yaml' package) — a local
+  # false-red that looks like a code regression but is only missing deps. Install once, idempotently,
+  # mirroring the MONETA step's `npm ci || npm install`. CI already runs `npm ci` first, so there the
+  # node_modules dir exists and this is a no-op.
+  [[ -d "$ROOT/web/app/node_modules" ]] && return 0
+  if ! command -v npm >/dev/null; then
+    printf 'npm not found on PATH — cannot install web/app dependencies for the surface/build steps\n' >&2
+    return 1
+  fi
+  printf 'Installing web/app dependencies (node_modules missing in this checkout)…\n'
+  ( cd "$ROOT/web/app" && npm ci --silent >/dev/null 2>&1 || npm install --silent >/dev/null 2>&1 )
+}
+
 step "Compile Python modules and validate shell syntax"
 cd "$ROOT"
 python3 -m py_compile web/api/main.py cli/src/limen/*.py scripts/probe-runtime-adapter.py scripts/validate-lifecycle-adapters.py scripts/validate-task-board.py scripts/worktree-debt.py scripts/worktree-pr-receipts.py scripts/continuation-beat.py scripts/codex-token-accounting.py scripts/overnight-watch.py scripts/session-corpus-ledger.py scripts/prompt-lifecycle-ledger.py scripts/prompt-priority-map.py scripts/prompt-batch-review-ledger.py scripts/prompt-packet-ledger.py scripts/current-session-fanout-plan.py scripts/capability-substrate-ledger.py scripts/consolidation-gates.py scripts/network-health.py scripts/dispatch-health.py scripts/live-root-gate.py scripts/session-blockers-ledger.py scripts/session-lifecycle-pressure.py scripts/session-attack-paths.py scripts/conductor-tranche.py scripts/session-value-review.py
@@ -54,6 +69,7 @@ for path in sorted(Path(".github/workflows").glob("*.yml")) + sorted(Path(".gith
 PY
 
 step "Generate static and private surface contracts"
+ensure_web_app_deps
 (
   cd "$ROOT/web/app"
   npm run generate:data
