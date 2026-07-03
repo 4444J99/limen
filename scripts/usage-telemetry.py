@@ -23,6 +23,11 @@ try:
 except ModuleNotFoundError:  # launchd/cron may resolve a Python without PyYAML
     yaml = None
 
+try:  # the metered vendor rows DERIVE from the census register (the single vendor umbrella)
+    from limen import census as _census  # launchd may resolve a Python without the package
+except Exception:  # pragma: no cover - import-fallback exercised only off the installed fleet
+    _census = None
+
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 HOME = Path.home()
 NOW = datetime.datetime.now(datetime.timezone.utc)
@@ -51,8 +56,13 @@ def _parse_ts(value) -> "datetime.datetime | None":
     except (ValueError, TypeError):
         return None
 
-# tunable per-vendor LIMITS (the "amount possible") — defaults are honest estimates;
-# calibrate to your real plan (codex/claude: see each CLI's /status). Override via
+# tunable per-vendor LIMITS (the "amount possible"). The metered-lane rows DERIVE from the census
+# register (cli/src/limen/census.py — the single vendor umbrella) rather than being re-typed here:
+# each vendor's Budget is the "means" half of the census. The filter is principled — a lane with a
+# real metering window (Budget.window != "none") is exactly the dispatchable metered set
+# (codex/claude/opencode/agy/gemini/jules); the unmetered floor (ollama), issue-assignment
+# (copilot), paid-service (warp/oz) and CI (github_actions) carry window="none" and are not
+# usage-metered. Calibrate a real cap to your plan (codex/claude: see each CLI's /status) via
 # logs/usage-limits.json or env LIMEN_<VENDOR>_LIMIT.
 #
 # `trust` is MACHINE-READABLE so a controller can read an untrusted cap PESSIMISTICALLY
@@ -64,18 +74,50 @@ def _parse_ts(value) -> "datetime.datetime | None":
 # spend the SAME Claude plan; codex-cli + the ChatGPT app spend the SAME OpenAI plan) — a
 # pool's real cap belongs on `pool_cap` once discovered. Extra keys here are ignored by the
 # existing consumers (all use .get()); scripts/verify-budget-gauge.py audits them.
-_DEFAULT_LIMITS = {
-    "jules":    {"limit": 100,        "unit": "runs",   "window": "24h",        "source": "known hard cap",                 "trust": "measured"},
+
+
+def _budget_row(b) -> dict:
+    """Project a census Budget dataclass onto the historical usage-limits row shape. `pool` is
+    omitted when None so a derived row is byte-for-byte the hand-typed one it replaces."""
+    row = {"limit": b.limit, "unit": b.unit, "window": b.window, "source": b.source, "trust": b.trust}
+    if getattr(b, "pool", None) is not None:
+        row["pool"] = b.pool
+    return row
+
+
+def _census_vendor_limits():
+    """The metered vendor rows, DERIVED from the census register. None when `limen` isn't importable
+    (launchd may resolve a Python without the package) → the drift-guarded fallback is used."""
+    if _census is None:
+        return None
+    try:
+        return {name: _budget_row(b) for name, b in _census.budgets().items() if b.window != "none"}
+    except Exception:  # pragma: no cover - defensive; census is pure-stdlib
+        return None
+
+
+# Drift-guarded FALLBACK for the metered vendor rows — used ONLY when `limen` isn't importable.
+# Kept byte-for-byte in lockstep with census.budgets() (window != "none") by
+# test_census::test_usage_telemetry_limits_derive_from_census, so it can never silently diverge
+# from the umbrella (the same pattern that guards dispatch._LANE_CASCADE).
+_FALLBACK_VENDOR_LIMITS = {
     "codex":    {"limit": 100_000_000, "unit": "tokens", "window": "5h rolling", "source": "ESTIMATE - tune to plan (/status)", "trust": "estimate", "pool": "openai-plan"},
     "claude":   {"limit": 100_000_000, "unit": "tokens", "window": "5h rolling", "source": "ESTIMATE - tune to plan (/status)", "trust": "estimate", "pool": "claude-plan"},
-    "gemini":   {"limit": 10,         "unit": "runs",   "window": "24h",        "source": "operator board cap until live vendor meter", "trust": "calibrated"},
     "opencode": {"limit": 100,        "unit": "runs",   "window": "today",      "source": "operator board cap until live vendor meter", "trust": "calibrated"},
     "agy":      {"limit": 100,        "unit": "runs",   "window": "today",      "source": "operator board cap until live vendor meter", "trust": "calibrated"},
-    # App-plane allotments share the same paid subscriptions as the CLI pools, but they are not
-    # dispatchable lanes. Model the plane explicitly so budget audits do not pretend it is absent.
+    "gemini":   {"limit": 10,         "unit": "runs",   "window": "24h",        "source": "operator board cap until live vendor meter", "trust": "calibrated"},
+    "jules":    {"limit": 100,        "unit": "runs",   "window": "24h",        "source": "known hard cap",                 "trust": "measured"},
+}
+
+# App-plane allotments share the same paid subscriptions as the CLI pools, but they are not
+# dispatchable lanes (no Vendor record). Model the plane explicitly so budget audits do not
+# pretend it is absent.
+_APP_PLANE_LIMITS = {
     "chatgpt-app": {"plane": "app", "unit": "app-runs", "window": "168h", "source": "modeled app-plane; cap unavailable locally", "trust": "modeled", "pool": "openai-plan"},
     "claude-app":  {"plane": "app", "unit": "app-runs", "window": "168h", "source": "modeled app-plane; cap unavailable locally", "trust": "modeled", "pool": "claude-plan"},
 }
+
+_DEFAULT_LIMITS = {**(_census_vendor_limits() or _FALLBACK_VENDOR_LIMITS), **_APP_PLANE_LIMITS}
 
 
 # Hold back this % of every cap so a live lane is paced-OUT before it hits 0 — the
@@ -404,7 +446,6 @@ def main():
     data = load_tasks_data()
     tasks = data.get("tasks", [])
     budget = (data.get("portal") or {}).get("budget") or {}
-    track = (budget.get("track") or {}).get("per_agent", {}) or {}
     reset_map = (budget.get("track") or {}).get("per_agent_reset", {}) or {}
     dc = dispatch_counts(tasks)
     rl = last_ratelimit()
@@ -413,8 +454,11 @@ def main():
     vendors = {
         "codex": codex_5h(),
         "claude": claude_5h(),
-        "jules": {"signal": "count", "window": "rolling 24h", "consumed": track.get("jules", 0),
-                  "unit": "runs", "note": "count vs cap — the one true proxy"},
+        # consumed from the LIVE dispatch-log count (today), like gemini/agy — never the persisted
+        # per_agent accumulator, whose stale value deadlocked the lane (a full counter + a reset that
+        # only persists on a beat that dispatches → jules gated to remaining=0 forever). [[no-never-happens-again]]
+        "jules": {"signal": "dispatch-count", "window": "rolling 24h", "consumed": dc.get("jules", 0),
+                  "unit": "runs", "note": "live dispatch count today vs cap — no stale accumulator"},
     }
     codex_vendor = codex_vendor_gauge()
     if codex_vendor is not None:

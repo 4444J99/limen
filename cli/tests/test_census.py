@@ -138,3 +138,39 @@ def test_healthy_fleet_has_no_other_dead_paths():
     """Only gemini is currently dark; guard against an accidental deprecation slipping in."""
     assert set(census.deprecated_paths()) == {"gemini"}
     assert set(census.unavailable()) == {"gemini"}
+
+
+def _load_usage_telemetry_module():
+    """Import scripts/usage-telemetry.py (hyphenated filename -> load by path) so its census
+    wiring can be inspected. Module-level code is side-effect-free at import (no file writes)."""
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[2] / "scripts" / "usage-telemetry.py"
+    spec = importlib.util.spec_from_file_location("usage_telemetry_under_test", path)
+    mod = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_usage_telemetry_limits_derive_from_census():
+    """Convergence roadmap item: usage-telemetry._DEFAULT_LIMITS DERIVES from census.budgets().
+
+    The vendor rows are a projection of the census register (filter: a real metering window,
+    Budget.window != "none" == the dispatchable metered lanes). The drift-guarded fallback literal
+    must equal that projection byte-for-byte, so it can never silently diverge from the umbrella.
+    """
+    ut = _load_usage_telemetry_module()
+    expected = {name: ut._budget_row(b) for name, b in census.budgets().items() if b.window != "none"}
+    # exactly the metered lanes — no non-metered (window == "none") lane leaks in.
+    assert set(expected) == {"codex", "claude", "opencode", "agy", "gemini", "jules"}
+    # the hand-typed fallback IS the census projection (drift guard).
+    assert ut._FALLBACK_VENDOR_LIMITS == expected
+    # the live derivation (limen importable) equals the fallback.
+    assert ut._census_vendor_limits() == expected
+    # _DEFAULT_LIMITS = derived vendor rows + the two app-plane rows (which have no Vendor record).
+    assert set(ut._DEFAULT_LIMITS) == set(expected) | {"chatgpt-app", "claude-app"}
+    # values preserved through the refactor (the swap changed nothing the consumers read).
+    for name, row in expected.items():
+        assert ut._DEFAULT_LIMITS[name] == row

@@ -189,23 +189,32 @@ def test_codex_vendor_rate_limits_override_transcript_estimate(tmp_path):
 
 def _run_telemetry(tmp_path, jules_consumed, extra_env=None):
     """Run usage-telemetry.py with jules pre-consumed to `jules_consumed` (cap defaults to 100,
-    24h window) and return the parsed usage.json vendors map."""
+    24h window) and return the parsed usage.json vendors map.
+
+    jules consumption is measured from the LIVE dispatch-log count (today), like gemini/agy — NOT
+    the persisted per_agent accumulator (whose stale value once deadlocked the lane). So the fixture
+    injects `jules_consumed` today-dated `dispatched` events rather than a track counter."""
     limen_root = tmp_path / "limen"
     home = tmp_path / "home"
     (limen_root / "logs").mkdir(parents=True)
     (home / ".claude" / "projects").mkdir(parents=True)
     (home / ".codex" / "sessions").mkdir(parents=True)
+    today = datetime.now(timezone.utc).date().isoformat()
+    jules_log = [
+        {"timestamp": f"{today}T12:00:00+00:00", "agent": "jules", "session_id": "sim", "status": "dispatched"}
+        for _ in range(jules_consumed)
+    ]
     (limen_root / "tasks.yaml").write_text(
         yaml.safe_dump(
             {
                 "version": "1.0",
                 "portal": {
                     "budget": {
-                        "track": {"date": "2026-06-19", "spent": 0, "per_agent": {"jules": jules_consumed}},
+                        "track": {"date": today, "spent": 0, "per_agent": {"jules": 0}},
                         "per_agent": {"jules": 100},
                     }
                 },
-                "tasks": [],
+                "tasks": [{"id": "jules-sim", "title": "sim", "status": "done", "dispatch_log": jules_log}],
             }
         )
     )

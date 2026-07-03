@@ -1422,10 +1422,16 @@ def _window_hours(agent: str) -> float:
     return 24.0
 
 
-def _reset_budget_if_needed(limen: LimenFile, now: datetime) -> None:
+def _reset_budget_if_needed(limen: LimenFile, now: datetime) -> bool:
     """Reset each vendor's spend on ITS OWN cadence (5h rolling for codex/claude, daily for
-    the rest) so no reset window goes unused — replaces the single crude calendar-day reset."""
+    the rest) so no reset window goes unused — replaces the single crude calendar-day reset.
+
+    Returns True when a NON-ZERO counter was cleared, so callers can PERSIST the reset even on a
+    beat that then dispatches nothing. Without that, a lane whose stale counter has hit its cap can
+    never self-clear: the reset computes in memory but is discarded on a no-candidate/gated
+    early-return, so the lane stays at remaining=0 forever (the jules deadlock). [[no-never-happens-again]]"""
     track = limen.portal.budget.track
+    cleared_nonzero = False
     for agent in list(limen.portal.budget.per_agent):
         last_iso = track.per_agent_reset.get(agent)
         last = None
@@ -1437,10 +1443,13 @@ def _reset_budget_if_needed(limen: LimenFile, now: datetime) -> None:
             except Exception:
                 last = None
         if last is None or (now - last) >= timedelta(hours=_window_hours(agent)):
+            if track.per_agent.get(agent, 0):
+                cleared_nonzero = True
             track.per_agent[agent] = 0
             track.per_agent_reset[agent] = now.isoformat()
     track.date = now.strftime("%Y-%m-%d")
     track.spent = sum(track.per_agent.values())
+    return cleared_nonzero
 
 
 def _remaining_budget(limen: LimenFile, agent: str, budget: int) -> int:
@@ -1467,7 +1476,10 @@ def dispatch_tasks(
     budget = budget or limen.portal.budget.daily
 
     _load_limen_env()  # hydrate creds into os.environ so agent CLIs inherit them (gemini/codex/opencode/…)
-    _reset_budget_if_needed(limen, now)
+    if _reset_budget_if_needed(limen, now) and not dry_run:
+        # Persist a cadence reset even when this call then dispatches nothing / bails at the
+        # down-gate — otherwise a stale-counter lane (jules) stays gated to remaining=0 forever.
+        save_limen_file(tasks_path, limen)
     track = limen.portal.budget.track
 
     agent_filter = canonical_agent(agent or resolve_agent())
@@ -1847,7 +1859,12 @@ def dispatch_parallel(
     process (serial), the slow agent runs happen concurrently in a thread pool, and a
     lane that hits its real rate-limit is cooled (its remaining reserved tasks re-queued)."""
     now = datetime.now(timezone.utc)
-    _reset_budget_if_needed(limen, now)
+    if _reset_budget_if_needed(limen, now) and not dry_run:
+        # Persist the cadence reset before the no-pick early-return below can discard it — same
+        # deadlock guard as the serial path. Atomic vs supervisor writes via the queue lock.
+        with _queue_lock(tasks_path) as got:
+            if got:
+                save_limen_file(tasks_path, limen)
     track = limen.portal.budget.track
     daily = limen.portal.budget.daily
 
