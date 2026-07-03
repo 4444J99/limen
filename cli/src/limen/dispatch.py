@@ -751,7 +751,7 @@ def _lane_cascade() -> list[str]:
     except Exception:
         down = set()
     if not selector:
-        return list(_LANE_CASCADE)
+        return [agent for agent in _LANE_CASCADE if agent not in down]
     try:
         lanes = select_lanes(selector, down_lanes=down)
     except Exception:

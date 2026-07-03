@@ -1,0 +1,40 @@
+schema_version: "1.0"
+organ: "financial"
+repo: "organvm/limen"
+org: "organvm"
+metadata:
+  implementation_status: "BUILDING"
+  maturity: 40
+  last_consolidated: "2026-07-03T00:00:00Z"
+description: >
+  Aerarium — the Financial Office. Runs the personal family-office engine for the VLTIMA body.
+  Maintains the entity registry, consolidated balance sheet, rolling cash-flow projection,
+  payrail disbursement map, and obligations ledger. This seed.yaml is the financial organ's
+  own assertion. Macro: a family-office-in-a-box anyone can deploy. Micro: Anthony's personal
+  balance-sheet + cashflow + payrail disbursement map run on his real numbers.
+produces:
+  - type: "consolidated_balance_sheet"
+    consumers:
+      - "organ-health"
+      - "conducting-report"
+      - "principal"
+  - type: "cashflow_projection"
+    consumers:
+      - "organ-health"
+      - "principal"
+  - type: "payrail_disbursement_map"
+    consumers:
+      - "principal"
+  - type: "obligations_ledger_financial"
+    consumers:
+      - "cashflow_projection"
+      - "principal"
+consumes:
+  - type: "organ_ladder_census"
+    source: "organ-ladder.json"
+  - type: "obligations_ledger"
+    source: "obligations-ledger.json"
+  - type: "revenue_ladder"
+    source: "revenue-ladder.json"
+  - type: "mail_organ_feed"
+    source: "obligations-ledger.json (mail organ writes it every 6 beats)"

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 import subprocess
 import sys
@@ -475,6 +476,42 @@ def test_blocked_result_is_terminal_failed_blocked() -> None:
     assert track.spent == 0
     assert task.dispatch_log[-1].status == "failed_blocked"
     assert "repo unavailable" in str(task.dispatch_log[-1].output)
+
+
+def test_failed_result_skips_down_lane_in_default_cascade(tmp_path: Path, monkeypatch) -> None:
+    import datetime
+
+    monkeypatch.delenv("LIMEN_DISPATCH_LANES", raising=False)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("LIMEN_OAUTH_PREFLIGHT", "0")
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    (logs / "usage.json").write_text(
+        json.dumps(
+            {
+                "vendors": {
+                    "gemini": {"health": "exhausted"},
+                    "jules": {"health": "ok"},
+                }
+            }
+        )
+    )
+    task = Task(
+        id="CASCADE",
+        title="cascade around down lane",
+        target_agent="claude",
+        status="open",
+        created=date(2026, 6, 27),
+        labels=[],
+    )
+    now = datetime.datetime.now(datetime.timezone.utc)
+
+    D._apply_result(task, "claude", False, now, BudgetTrack(date="2026-06-27"))
+
+    assert task.status == "open"
+    assert task.target_agent == "jules"
+    assert task.dispatch_log[-1].status == "failed->jules"
+    assert "tried:claude" in task.labels
 
 
 def test_isolated_local_run_blocks_unavailable_repo_without_cascading(monkeypatch) -> None:
