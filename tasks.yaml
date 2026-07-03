@@ -62613,7 +62613,7 @@ tasks:
     \ (finish-not-park); refreshes each beat until you act."
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-07-03T09:11:49.409709Z'
+  updated: '2026-07-03T10:00:16.249841Z'
   dispatch_log: []
 - id: ASK-quicken-d2l
   title: the D2L go-live click + cadence confirm (your login + judgment)
@@ -77502,17 +77502,16 @@ tasks:
   title: Draft the build-in-public launch post for ChatGPT Exporter
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 2
-  status: open
+  status: done
   labels:
   - revenue-launch-post
   - revenue
   - product
   - ship-order
   - generated
-  - noop
   urls: []
   context: "Write a ready-to-post launch announcement for ChatGPT Exporter (Show HN\
     \ + Reddit + X variants), grounded in what it ACTUALLY does and its real users.\
@@ -77521,7 +77520,7 @@ tasks:
     \ spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-03T09:51:05.948913Z'
+  updated: '2026-07-03T10:08:18Z'
   dispatch_log:
   - timestamp: '2026-07-03T09:05:02.070117Z'
     agent: agy
@@ -77548,6 +77547,15 @@ tasks:
     session_id: async-reap-stale
     status: open
     output: 'dispatch-async: stale worker marker older than 1200s reaped; task reopened'
+  - timestamp: '2026-07-03T10:05:18.337689Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
+  - timestamp: '2026-07-03T10:08:18Z'
+    agent: codex
+    session_id: direct-session
+    status: done
+    output: 'Closed duplicate launch-post task from repo evidence: /Users/4jp/Workspace/a-i-chat--exporter has tracked marketing/launch-post.md (192 lines) unchanged at HEAD 87b65f8; git log shows landed Draft the build-in-public launch post commits including db030dc (#91). No new PR needed.'
 - id: ORG-legal-organ-kernel-0703
   title: Map the VLTIMA 5-primitive kernel to the legal organ
   repo: organvm/limen
@@ -77602,7 +77610,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: failed
   labels:
   - organ-deepen
   - pillar:financial
@@ -77610,6 +77618,7 @@ tasks:
   - institution
   - vltima
   - generated
+  - noop
   urls: []
   context: "In organvm/limen organs/financial/ (and reference its product repo where\
     \ relevant), close the single highest-leverage gap between the current scaffold\
@@ -77624,13 +77633,18 @@ tasks:
     \ idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-03T09:51:22.009019Z'
+  updated: '2026-07-03T10:05:18.337689Z'
   dispatch_log:
   - timestamp: '2026-07-03T09:51:22.009019Z'
     agent: agy
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T10:05:18.337689Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: ORG-governance-organ-face-0703
   title: Make the governance organ's macro + micro face excellent
   repo: organvm/limen
@@ -77976,7 +77990,15 @@ tasks:
     agent: opencode
     session_id: current
     status: done
-    output: 'CHARTER.md (321 lines) verified complete: org-chart of 7 AI roles (Recovery Coordinator, State Recorder, Protocol Tracker, Accommodation Clerk, Appointment Scheduler, Safety Sentinel, Patient + Care Team), 6 workflows with orchestration diagram, input/output tables, leverage math converting 14K-16K idle fleet workunits into concierge-level recovery coordination, constraint registry with 7 non-negotiable guardrails. Mirrors legal/CHARTER.md and financial/CHARTER.md institutional standard. Bumped organ-ladder maturity 10%→15%. Files: organs/health/CHARTER.md (verified), organs/health/KERNEL.md (existing 5-primitive kernel), scripts/health-organ.py (existing executive office implementation).'
+    output: "CHARTER.md (321 lines) verified complete: org-chart of 7 AI roles (Recovery\
+      \ Coordinator, State Recorder, Protocol Tracker, Accommodation Clerk, Appointment\
+      \ Scheduler, Safety Sentinel, Patient + Care Team), 6 workflows with orchestration\
+      \ diagram, input/output tables, leverage math converting 14K-16K idle fleet\
+      \ workunits into concierge-level recovery coordination, constraint registry\
+      \ with 7 non-negotiable guardrails. Mirrors legal/CHARTER.md and financial/CHARTER.md\
+      \ institutional standard. Bumped organ-ladder maturity 10%\u219215%. Files:\
+      \ organs/health/CHARTER.md (verified), organs/health/KERNEL.md (existing 5-primitive\
+      \ kernel), scripts/health-organ.py (existing executive office implementation)."
 - id: ORG-financial-organ-selffeed-0703
   title: Wire the financial organ to advance autonomously
   repo: organvm/limen
