@@ -345,6 +345,8 @@ class Aggregator:
             flags = Counter(item["prompt_flags"])
             ideal_gaps: list[str] = []
             if prompt_events:
+                if flags["broad"] >= 10:
+                    ideal_gaps.append("repeated broad/invariant prompt pressure")
                 if flags["broad"] and not flags["has_scope"]:
                     ideal_gaps.append("prompt broad without concrete owner scope")
                 if not flags["has_predicate"]:
@@ -533,6 +535,20 @@ def extract_claude(agg: Aggregator, writer: Any) -> None:
                         cwd=cwd,
                         ordinal=obj.get("_line"),
                         surface="queue.enqueue",
+                    )
+                    writer.write(json.dumps(row, ensure_ascii=False) + "\n")
+            elif obj.get("type") == "last-prompt":
+                for text in json_text(obj.get("lastPrompt")):
+                    row = agg.add_prompt(
+                        agent="claude",
+                        source="claude-projects" if path.suffix == ".jsonl" else "claude-tasks",
+                        session_id=session_id,
+                        path=path,
+                        text=text,
+                        ts=ts,
+                        cwd=cwd,
+                        ordinal=obj.get("_line"),
+                        surface="last-prompt",
                     )
                     writer.write(json.dumps(row, ensure_ascii=False) + "\n")
             elif obj.get("type") == "user":
