@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-03T07:07:44+00:00`
+Generated: `2026-07-03T07:12:18+00:00`
 
 Status: `healthy`
 
@@ -23,25 +23,23 @@ Status: `healthy`
 - Loaded LIMEN_DISPATCH_ASYNC: `1`.
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-03T07:07:44.941416+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-03T07:12:18.716990+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 3 ; 0 still running ; would launch 5 (cap 12) -> ['GEN-organvm-session-meta-simplify-0703', 'GEN-meta-organvm-visual-substrate-inquiry-test-coverage-0620', 'GEN-organvm-i-theoria-organvm-vi-koinonia.github.io-test-coverage-0620', 'GEN-organvm-i-theoria-organvm-vii-kerygma.github.io-test-coverage-0620', 'GEN-organvm-i-theoria-meta-organvm.github.io-test-coverage-0620']`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 3 ; 0 still running ; would launch 5 (cap 12) -> ['GEN-organvm-session-meta-simplify-0703', 'GEN-meta-organvm-meta-organvm.github.io-test-coverage-0620', 'GEN-organvm-i-theoria-organvm-vi-koinonia.github.io-test-coverage-0620', 'GEN-organvm-i-theoria-organvm-vii-kerygma.github.io-test-coverage-0620', 'GEN-organvm-i-theoria-meta-organvm.github.io-test-coverage-0620']`.
 - Async skipped down lanes: `gemini, jules`.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `e9fbace0cfd355d526e8c2fd25d75e67eab6a8b7`.
-- origin/main: `e9fbace0cfd355d526e8c2fd25d75e67eab6a8b7`.
+- HEAD: `7a6afa35bf37300ed1482f43df9239e7c058f7f5`.
+- origin/main: `7a6afa35bf37300ed1482f43df9239e7c058f7f5`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
 - Dirty entries: `0`.
-- Ignored generated receipt dirty entries: `1`.
-  - `docs/dispatch-health.md`
 
 ## Verified Worktree
 
