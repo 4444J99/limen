@@ -404,7 +404,7 @@ def render_markdown(queue: dict[str, Any]) -> str:
             "",
             "## Findings",
             "",
-            "1. OpenCode is the only reviewed agent exposing native changed-file refs in the local stores; Claude, Codex, and Agy need git-window reconstruction or stronger receipt extraction.",
+            "1. Changed-file extraction is now multi-surface: OpenCode contributes native SQLite diffs, Codex/Claude contribute conservative patch/edit/write tool paths, and Agy still needs git-window reconstruction or stronger receipt extraction.",
             "2. `tasks.yaml` churn is a separate governance review path and should not be treated as product/code implementation without a matching task-state receipt.",
             "3. The highest immediate code-review candidates mix code, tests, CI, config, and docs with missing predicate/receipt signals; review should start there before broad prompt-pressure sessions.",
             "4. Broad Claude/Codex sessions remain high risk, but the next move is root-level reconstruction, not reading more prompt text.",

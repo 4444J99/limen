@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-03T23:36:18Z`
+Generated: `2026-07-03T23:49:09Z`
 
 ## Scope
 
@@ -16,7 +16,7 @@ Generated: `2026-07-03T23:36:18Z`
 | 2 | `opencode` | `ses_114c8f0c6ffeixS8gn4VxGqoHb` | Exact window matched `80d4e21f` (`feat(route): consume self-improve lane weights`). Widened window also showed related routing/meter/queue commits including `0146190` and `a6488c9`. |
 | 3 | `opencode` | `ses_1095e9b19ffe4yg9h4la7tGU4d` | Exact window had no matching commits on `main`; widened window was mostly Studium content-generation churn, not the control-plane code path reviewed here. |
 
-## Finding Fixed
+## Findings Fixed
 
 ### Route fail-open paths could still crash on malformed numeric input
 
@@ -193,6 +193,42 @@ python3 -m py_compile scripts/dispatch-async.py
 
 Result: `18 passed in 0.15s`; compile passed.
 
+### Review queue undercounted Codex and Claude changed files
+
+Severity: medium for review completeness.
+
+Evidence:
+
+- The first code-review queue treated OpenCode as the only agent with native structured changed-file refs.
+- That left Codex `apply_patch` calls and Claude `Edit` / `Write` tool-use payloads outside the immediate diff queue, pushing those sessions into coarser git-window reconstruction.
+- The old queue had `405` structured changed-file sessions, `226` immediate candidates, and `2038` reconstruction roots. After conservative Codex/Claude extraction, the refreshed queue has `1736` structured changed-file sessions, `1556` immediate candidates, and `873` reconstruction roots.
+
+Repair:
+
+- Parse Codex `apply_patch` file headers from structured tool calls.
+- Parse Claude mutating tool payload paths for `Edit`, `MultiEdit`, `Write`, and `NotebookEdit`, while ignoring read-only tool paths.
+- Wire Codex assistant/tool/function/custom call records and Claude assistant records into `changed_files`.
+- Regenerate the full-stack review and code-review queue from the private corpus.
+
+Touched paths:
+
+- `scripts/agent-session-full-stack-review.py`
+- `scripts/agent-code-review-queue.py`
+- `cli/tests/test_agent_session_full_stack_review.py`
+- `docs/agent-session-full-stack-review.md`
+- `docs/agent-code-review-queue.md`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_agent_session_full_stack_review.py -q
+python3 -m py_compile scripts/agent-session-full-stack-review.py scripts/agent-code-review-queue.py
+env LIMEN_ROOT=/Users/4jp/Workspace/limen python3 scripts/agent-session-full-stack-review.py --write
+env LIMEN_ROOT=/Users/4jp/Workspace/limen python3 scripts/agent-code-review-queue.py --write
+```
+
+Result: unit test returned `3 passed`; compile passed; full-stack refresh reviewed `125902` prompts and `4371` sessions; queue refresh produced `1556` changed-file candidates and `873` reconstruction roots.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -230,9 +266,18 @@ Result: `18 passed in 0.15s`; compile passed.
 - `scripts/dispatch-async.py:275` decrements shared daily budget as tasks are picked.
 - `cli/tests/test_async_dispatch.py:290` covers per-agent picked-cost accumulation.
 - `cli/tests/test_async_dispatch.py:301` covers daily picked-cost accumulation across lanes.
+- `scripts/agent-session-full-stack-review.py:78` matches patch file headers.
+- `scripts/agent-session-full-stack-review.py:278` extracts changed files from Codex patch text.
+- `scripts/agent-session-full-stack-review.py:303` extracts changed files from structured tool payloads.
+- `scripts/agent-session-full-stack-review.py:686` wires Codex assistant/tool records into changed-file extraction.
+- `scripts/agent-session-full-stack-review.py:696` wires Codex function/custom tool records into changed-file extraction.
+- `scripts/agent-session-full-stack-review.py:774` wires Claude assistant tool-use records into changed-file extraction.
+- `cli/tests/test_agent_session_full_stack_review.py:18` covers patch header extraction.
+- `cli/tests/test_agent_session_full_stack_review.py:42` covers Codex custom `apply_patch` extraction.
+- `cli/tests/test_agent_session_full_stack_review.py:59` covers Claude mutating-tool extraction.
 
 ## Remaining Review Queue
 
 1. Reconstruct changed-file evidence for queue rank 1; the exact OpenCode window has no commit on `main`, so the next pass should inspect private session outcome receipts and nearby branch/worktree state.
 2. Continue rank 7-12 control-plane windows before spending time on large Studium content churn; those windows touch dispatch, capacity, CI, and lifecycle code with higher operational blast radius.
-3. Add stronger changed-file extraction for Codex, Claude, and Agy. OpenCode is currently the only reviewed agent with native changed-file refs, which makes cross-agent diff review uneven.
+3. Add stronger Agy receipt extraction or repo diff reconstruction. OpenCode now contributes native SQLite diffs, Codex/Claude contribute conservative structured tool paths, and Agy remains the main changed-file extraction gap.

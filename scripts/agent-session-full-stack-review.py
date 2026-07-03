@@ -75,6 +75,9 @@ SCOPE_RE = re.compile(
 PREDICATE_RE = re.compile(r"\b(test|verify|predicate|acceptance|done when|passes|green|run)\b", re.I)
 GATE_RE = re.compile(r"\b(gate|human|approval|do not|never|ask|confirm|irreversible|outward)\b", re.I)
 BROAD_RE = re.compile(r"\b(all|everything|full stack|autonomous|keep working|never stop|whole|entire|every)\b", re.I)
+PATCH_FILE_RE = re.compile(r"^\*\*\* (?:Add|Update|Delete) File: (.+?)\s*$", re.M)
+PATCH_MOVE_RE = re.compile(r"^\*\*\* Move to: (.+?)\s*$", re.M)
+MUTATING_TOOL_NAMES = {"Edit", "MultiEdit", "Write", "NotebookEdit"}
 TASK_BODY_MARKERS = (
     "Complete task ",
     "## Current task",
@@ -261,6 +264,81 @@ def outcome_signals(text: str) -> dict[str, int]:
         "failures": len(FAIL_RE.findall(text)),
         "done_words": len(DONE_RE.findall(text)),
     }
+
+
+def clean_changed_path(path: Any) -> str | None:
+    if not isinstance(path, str):
+        return None
+    value = path.strip().strip('"').strip("'")
+    if not value or value == "/dev/null":
+        return None
+    return value
+
+
+def changed_files_from_patch(text: Any) -> list[str]:
+    if not isinstance(text, str) or "*** Begin Patch" not in text:
+        return []
+    out: list[str] = []
+    for match in PATCH_FILE_RE.finditer(text):
+        cleaned = clean_changed_path(match.group(1))
+        if cleaned:
+            out.append(cleaned)
+    for match in PATCH_MOVE_RE.finditer(text):
+        cleaned = clean_changed_path(match.group(1))
+        if cleaned:
+            out.append(cleaned)
+    return sorted(dict.fromkeys(out))
+
+
+def parse_tool_arguments(value: Any) -> Any:
+    if not isinstance(value, str):
+        return value
+    try:
+        parsed = json.loads(value)
+    except ValueError:
+        return value
+    return parsed
+
+
+def changed_files_from_tool_payload(value: Any) -> list[str]:
+    """Conservatively extract changed-file refs from structured tool payloads."""
+    out: list[str] = []
+
+    def walk(obj: Any) -> None:
+        if isinstance(obj, list):
+            for item in obj:
+                walk(item)
+            return
+        if not isinstance(obj, dict):
+            return
+        name = obj.get("name")
+        raw_input = obj.get("input")
+        arguments = parse_tool_arguments(obj.get("arguments"))
+        tool_input = parse_tool_arguments(raw_input)
+
+        if name == "apply_patch":
+            if isinstance(tool_input, str):
+                out.extend(changed_files_from_patch(tool_input))
+            elif isinstance(tool_input, dict):
+                out.extend(changed_files_from_patch(tool_input.get("patch")))
+            if isinstance(arguments, dict):
+                out.extend(changed_files_from_patch(arguments.get("patch")))
+            elif isinstance(arguments, str):
+                out.extend(changed_files_from_patch(arguments))
+
+        if name in MUTATING_TOOL_NAMES and isinstance(tool_input, dict):
+            for key in ("file_path", "path", "notebook_path"):
+                cleaned = clean_changed_path(tool_input.get(key))
+                if cleaned:
+                    out.append(cleaned)
+
+        for key in ("content", "message", "payload"):
+            child = obj.get(key)
+            if child is not None:
+                walk(child)
+
+    walk(value)
+    return sorted(dict.fromkeys(out))
 
 
 class Aggregator:
@@ -605,8 +683,9 @@ def extract_codex(agg: Aggregator, writer: Any) -> None:
                         path=path,
                         text="\n".join(json_text(payload.get("content"))),
                         ts=ts,
+                        changed_files=changed_files_from_tool_payload(payload),
                     )
-                elif payload.get("type") in ("function_call_output", "function_call"):
+                elif payload.get("type") in ("function_call_output", "function_call", "custom_tool_call"):
                     agg.add_outcome_text(
                         agent="codex",
                         source="codex-sessions",
@@ -614,6 +693,7 @@ def extract_codex(agg: Aggregator, writer: Any) -> None:
                         path=path,
                         text=json.dumps(payload, ensure_ascii=False)[:20000],
                         ts=ts,
+                        changed_files=changed_files_from_tool_payload(payload),
                     )
 
 
@@ -691,6 +771,7 @@ def extract_claude(agg: Aggregator, writer: Any) -> None:
                     path=path,
                     text="\n".join(json_text(obj.get("message")) + json_text(obj.get("content"))),
                     ts=ts,
+                    changed_files=changed_files_from_tool_payload(obj.get("message")),
                 )
             elif obj.get("type") == "tool_result":
                 agg.add_outcome_text(
@@ -1195,7 +1276,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-            "Structured change refs are native changed-file surfaces, not inferred code diffs. In this local corpus OpenCode exposes them directly; Codex and Claude require receipt/outcome parsing or repo diff reconstruction.",
+            "Structured change refs are native or structured tool-payload surfaces, not inferred code diffs. In this local corpus OpenCode exposes native SQLite diffs; Codex and Claude now add conservative patch/edit/write tool paths; Agy still needs receipt parsing or repo diff reconstruction.",
         ]
     )
 
@@ -1261,7 +1342,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
             f"- `{total_unreceipted}` sessions had no durable receipt signal or changed-file receipt.",
             f"- `{total_likely_noop}` sessions look like no-op or unrecorded work because prompts exist but the outcome surface has no verification/receipt/change signal.",
             f"- `{flame_events}` prompt events carried FLAME scaffolding; the task body is now separated, but older ledger views overcounted repeated invariant prompt mass as fresh work.",
-            "- Structured changed-file data is uneven by agent: OpenCode exposes it in SQLite, while Codex and Claude need receipt text or downstream repo diff reconstruction.",
+            "- Structured changed-file data is still uneven by agent: OpenCode exposes SQLite diffs, Codex and Claude now expose conservative patch/edit/write tool paths, and Agy still needs receipt text or downstream repo diff reconstruction.",
             "- OpenCode had many sessions that only become trustworthy when its DB-backed token clock and receipt handshake are present; session rows alone are not enough.",
             "- Antigravity IDE has no first-class prompt/session records on this host; provider quota is still not represented as a native receipt surface.",
             "",

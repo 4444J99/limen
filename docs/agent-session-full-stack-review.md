@@ -1,6 +1,6 @@
 # Agent Session Full-Stack Review
 
-Generated: `2026-07-03T23:04:10Z`
+Generated: `2026-07-03T23:48:41Z`
 
 ## Scope
 
@@ -12,19 +12,19 @@ Generated: `2026-07-03T23:04:10Z`
 
 - Verbatim prompt events: `.limen-private/session-corpus/full-stack-review/verbatim-prompts.jsonl`
 - Structured review: `.limen-private/session-corpus/full-stack-review/agent-session-review.json`
-- Prompt events extracted: `125875`
-- Unique prompt hashes: `74727`
-- Unique normalized task-body hashes: `74648`
-- Sessions reviewed: `4364`
-- Outcome text scanned: `596824677` bytes
+- Prompt events extracted: `125902`
+- Unique prompt hashes: `74736`
+- Unique normalized task-body hashes: `74657`
+- Sessions reviewed: `4371`
+- Outcome text scanned: `623629689` bytes
 
 ## Agent Coverage
 
 | Agent | Sessions | Prompt events | Prompt bytes | Task-body bytes | Verified sessions | Receipt sessions | Likely no-op/unrecorded |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | `agy` | 528 | 554 | 2214237 | 1950958 | 303 | 499 | 28 |
-| `claude` | 1270 | 115934 | 247646455 | 243704255 | 765 | 847 | 340 |
-| `codex` | 1298 | 8112 | 18706914 | 13712960 | 1034 | 1060 | 238 |
+| `claude` | 1274 | 115949 | 247703002 | 243713726 | 765 | 876 | 343 |
+| `codex` | 1301 | 8124 | 18789064 | 13760424 | 1037 | 1065 | 236 |
 | `opencode` | 1268 | 1275 | 2979982 | 2979976 | 866 | 1039 | 228 |
 
 ## Work Surface Coverage
@@ -32,27 +32,27 @@ Generated: `2026-07-03T23:04:10Z`
 | Agent | Structured change sessions | Structured change refs | Input tokens | Output tokens | Reasoning tokens | Cost |
 |---|---:|---:|---:|---:|---:|---:|
 | `agy` | 0 | 0 | 0 | 0 | 0 | 0.0000 |
-| `claude` | 0 | 0 | 0 | 0 | 0 | 0.0000 |
-| `codex` | 0 | 0 | 0 | 0 | 0 | 0.0000 |
+| `claude` | 448 | 2795 | 0 | 0 | 0 | 0.0000 |
+| `codex` | 883 | 4802 | 0 | 0 | 0 | 0.0000 |
 | `opencode` | 405 | 3484 | 145344500 | 2839094 | 1777101 | 0.0000 |
 
-Structured change refs are native changed-file surfaces, not inferred code diffs. In this local corpus OpenCode exposes them directly; Codex and Claude require receipt/outcome parsing or repo diff reconstruction.
+Structured change refs are native or structured tool-payload surfaces, not inferred code diffs. In this local corpus OpenCode exposes native SQLite diffs; Codex and Claude now add conservative patch/edit/write tool paths; Agy still needs receipt parsing or repo diff reconstruction.
 
 ## Prompt Body Mix
 
 | Body kind | Prompt events |
 |---|---:|
-| `direct` | 121913 |
-| `flame_scaffold` | 2262 |
-| `flame_with_task_body` | 1685 |
+| `direct` | 121922 |
+| `flame_scaffold` | 2266 |
+| `flame_with_task_body` | 1699 |
 | `session_context` | 15 |
 
 ## Source Coverage
 
 | Source | Prompt events |
 |---|---:|
-| `claude-projects` | 115934 |
-| `codex-sessions` | 7134 |
+| `claude-projects` | 115949 |
+| `codex-sessions` | 7146 |
 | `opencode-db` | 1275 |
 | `codex-history` | 978 |
 | `agy-cli-conversations` | 480 |
@@ -79,11 +79,11 @@ Each session is compared to this ideal form:
 
 ## What Broke
 
-- `1396` sessions with prompts had no verification signal in the reviewed outcome text.
-- `919` sessions had no durable receipt signal or changed-file receipt.
-- `834` sessions look like no-op or unrecorded work because prompts exist but the outcome surface has no verification/receipt/change signal.
-- `3947` prompt events carried FLAME scaffolding; the task body is now separated, but older ledger views overcounted repeated invariant prompt mass as fresh work.
-- Structured changed-file data is uneven by agent: OpenCode exposes it in SQLite, while Codex and Claude need receipt text or downstream repo diff reconstruction.
+- `1400` sessions with prompts had no verification signal in the reviewed outcome text.
+- `892` sessions had no durable receipt signal or changed-file receipt.
+- `835` sessions look like no-op or unrecorded work because prompts exist but the outcome surface has no verification/receipt/change signal.
+- `3965` prompt events carried FLAME scaffolding; the task body is now separated, but older ledger views overcounted repeated invariant prompt mass as fresh work.
+- Structured changed-file data is still uneven by agent: OpenCode exposes SQLite diffs, Codex and Claude now expose conservative patch/edit/write tool paths, and Agy still needs receipt text or downstream repo diff reconstruction.
 - OpenCode had many sessions that only become trustworthy when its DB-backed token clock and receipt handshake are present; session rows alone are not enough.
 - Antigravity IDE has no first-class prompt/session records on this host; provider quota is still not represented as a native receipt surface.
 
@@ -133,8 +133,8 @@ Each session is compared to this ideal form:
 ## Agent Notes
 
 - `agy`: top gaps: failure/blocker language outweighs done language (423), session outcome lacks verification signal (206), prompt missing expected receipt/artifact (82), session outcome lacks durable receipt signal (28), likely no-op or unrecorded work (28).
-- `claude`: top gaps: session outcome lacks verification signal (505), session outcome lacks durable receipt signal (423), repeated broad/invariant prompt pressure (367), failure/blocker language outweighs done language (362), likely no-op or unrecorded work (340).
-- `codex`: top gaps: failure/blocker language outweighs done language (758), session outcome lacks verification signal (264), prompt missing executable predicate (252), session outcome lacks durable receipt signal (238), likely no-op or unrecorded work (238).
+- `claude`: top gaps: session outcome lacks verification signal (509), session outcome lacks durable receipt signal (398), repeated broad/invariant prompt pressure (367), failure/blocker language outweighs done language (362), likely no-op or unrecorded work (343).
+- `codex`: top gaps: failure/blocker language outweighs done language (724), session outcome lacks verification signal (264), prompt missing executable predicate (252), session outcome lacks durable receipt signal (236), likely no-op or unrecorded work (236).
 - `opencode`: top gaps: prompt missing expected receipt/artifact (549), session outcome lacks verification signal (401), prompt missing executable predicate (396), session outcome lacks durable receipt signal (228), likely no-op or unrecorded work (228).
 
 ## Antigravity/Agy Native Surface
