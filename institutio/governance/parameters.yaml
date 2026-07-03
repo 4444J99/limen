@@ -676,6 +676,12 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "Fleet dispatch boundary selector. `auto` derives reachable registered lanes from the capacity registry; explicit comma lists are normalized and filtered for down lanes."
+  LIMEN_QUEUE_LOCK_HELD:
+    default: ""
+    env: LIMEN_QUEUE_LOCK_HELD
+    self_update: none
+    owner: limen-daemon
+    note: "Internal reentrancy marker exported only while heartbeat-loop.sh holds the queue lock, allowing child board writers to share the parent critical section instead of deadlocking on their own lock probe."
   LIMEN_OPENCODE_CLOCK:
     default: ""
     env: LIMEN_OPENCODE_CLOCK

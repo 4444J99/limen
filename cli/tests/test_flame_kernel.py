@@ -123,9 +123,13 @@ def test_run_cmd_captures_jules_session_id(monkeypatch):
 
 def test_ollama_is_cascade_floor(monkeypatch):
     monkeypatch.delenv("LIMEN_DISPATCH_LANES", raising=False)
+    monkeypatch.setattr(D, "_down_lanes", lambda: set())
     assert "ollama" in C.PAID_AGENT_ORDER
     assert "ollama" in C.LOCAL_CHECKOUT_AGENTS
     assert D._LANE_CASCADE[-1] == "ollama"  # the very last resort
+    monkeypatch.setattr(D, "select_lanes", lambda *a, **k: ["opencode", "agy", "jules"])
+    assert D._next_lane("jules") is None  # floor is not used until a model makes it reachable
+    monkeypatch.setattr(D, "select_lanes", lambda *a, **k: ["opencode", "agy", "jules", "ollama"])
     assert D._next_lane("jules") == "ollama"  # reached only after cloud-async too
     assert D._next_lane("ollama") is None  # nothing below the floor
 
