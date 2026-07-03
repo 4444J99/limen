@@ -32628,7 +32628,7 @@ tasks:
   title: Raise test coverage in meta-organvm/visual-substrate-inquiry
   repo: organvm/visual-substrate-inquiry
   type: code
-  target_agent: opencode
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -34238,7 +34238,7 @@ tasks:
   title: Raise test coverage in meta-organvm/meta-organvm.github.io
   repo: organvm/meta-organvm.github.io
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -37228,7 +37228,7 @@ tasks:
   title: Raise test coverage in a-organvm/4-ivi374-F0Rivi4
   repo: organvm/4-ivi374-F0Rivi4
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -37859,7 +37859,7 @@ tasks:
   title: Raise test coverage in organvm-iv-taxis/organvm-iv-taxis.github.io
   repo: organvm/organvm-iv-taxis.github.io
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -41691,7 +41691,7 @@ tasks:
   title: Raise test coverage in organvm/render-second-amendment
   repo: organvm/render-second-amendment
   type: code
-  target_agent: opencode
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -68765,7 +68765,7 @@ tasks:
   title: Draft the build-in-public launch post for ChatGPT Exporter
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: gemini
+  target_agent: opencode
   priority: high
   budget_cost: 2
   status: open
@@ -71126,7 +71126,7 @@ tasks:
   title: Real usage docs for organvm/mirror-mirror
   repo: organvm/mirror-mirror
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: low
   budget_cost: 1
   status: open
@@ -71196,7 +71196,7 @@ tasks:
   title: Real usage docs for organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: low
   budget_cost: 1
   status: open
@@ -71250,7 +71250,7 @@ tasks:
   title: Real usage docs for organvm/limen
   repo: organvm/limen
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: low
   budget_cost: 1
   status: open
@@ -71699,7 +71699,7 @@ tasks:
   title: Reduce complexity in organvm/mirror-mirror
   repo: organvm/mirror-mirror
   type: code
-  target_agent: opencode
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -72058,7 +72058,7 @@ tasks:
   title: Drive Universal Mail Automation to deploy-ready
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: high
   budget_cost: 2
   status: open
@@ -72070,6 +72070,7 @@ tasks:
   - generated
   - noop
   - tried:gemini
+  - tried:claude
   urls: []
   context: "In organvm/universal-mail--automation, clear the concrete blockers between\
     \ the current state and a DEPLOYABLE product: get open PRs green + merged, fix\
@@ -72078,7 +72079,7 @@ tasks:
     \ rank 3, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-07-01T17:08:08.957213Z'
+  updated: '2026-07-03T08:15:55.978401Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:47:16.260739Z'
     agent: claude
@@ -72127,6 +72128,15 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-07-03T08:15:09.159094Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T08:15:55.978401Z'
+    agent: claude
+    session_id: cli
+    status: failed->ollama
 - id: REV-organvm-the-invisible-ledger-revenue-ship-0630
   title: Drive The Invisible Ledger to deploy-ready
   repo: organvm/the-invisible-ledger
@@ -72574,7 +72584,7 @@ tasks:
   title: Deepen the media organ toward a usable institution
   repo: organvm/limen
   type: content
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 2
   status: open
@@ -72639,7 +72649,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 2
-  status: open
+  status: done
   labels:
   - organ-deepen
   - pillar:governance
@@ -72660,9 +72670,13 @@ tasks:
     \ (VLTIMA).]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-07-01T17:08:08.957213Z'
+  updated: '2026-07-03T08:20:26Z'
   dispatch_log:
   - timestamp: '2026-06-30T16:00:55.195999Z'
+    agent: opencode
+    session_id: current
+    status: dispatched
+  - timestamp: '2026-07-03T00:00:00Z'
     agent: claude
     session_id: async-reserve
     status: dispatched
@@ -72694,6 +72708,23 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-07-03T08:15:09.159094Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T08:19:47.863968Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-03T08:20:26Z'
+    agent: limen
+    session_id: cli
+    status: done
+    output: 'Board repaired after stale no-op marker: governance entity register artifacts
+      are present in commit 175e5a3, organ-ladder maturity updated, and `python3 organs/governance/validate-entities.py`
+      passes.'
 - id: ORG-consulting-organ-face-0630
   title: Make the consulting organ's macro + micro face excellent
   repo: organvm/limen
@@ -72701,7 +72732,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 2
-  status: open
+  status: done
   labels:
   - organ-face
   - pillar:consulting
@@ -72721,7 +72752,7 @@ tasks:
     \ convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-07-01T17:08:08.957213Z'
+  updated: '2026-07-03T08:22:11Z'
   dispatch_log:
   - timestamp: '2026-06-30T16:00:55.195999Z'
     agent: claude
@@ -72755,6 +72786,18 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-07-03T08:15:09.159094Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T08:22:11Z'
+    agent: limen
+    session_id: cli
+    status: done
+    output: Consulting macro/micro face artifacts preserved in cff39bf (`MACRO-FACE.md`,
+      `MICRO-FACE.md`, `KERNEL.md`, `SOVEREIGN-SYSTEMS-DECK.md`); `python3 organs/consulting/validate-consulting.py
+      --fleet` passes 3/3.
 - id: ORG-artist-organ-face-0630
   title: Make the artist organ's macro + micro face excellent
   repo: organvm/limen
@@ -73249,7 +73292,7 @@ tasks:
   title: Discover the latent value of organvm/the-actual-news
   repo: organvm/the-actual-news
   type: research
-  target_agent: opencode
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -75912,7 +75955,7 @@ tasks:
   title: Operationalize education governance (rules as checks)
   repo: organvm/limen
   type: content
-  target_agent: agy
+  target_agent: claude
   priority: medium
   budget_cost: 2
   status: open
@@ -76133,7 +76176,7 @@ tasks:
   title: Discover the latent value of organvm/styx-behavioral-art
   repo: organvm/styx-behavioral-art
   type: research
-  target_agent: claude
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -76326,7 +76369,7 @@ tasks:
   title: Raise test coverage in organvm/domus-genoma
   repo: organvm/domus-genoma
   type: code
-  target_agent: opencode
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -76367,7 +76410,7 @@ tasks:
   title: Raise test coverage in organvm/limen
   repo: organvm/limen
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -76422,7 +76465,7 @@ tasks:
   title: Make organvm/portfolio CI green
   repo: organvm/portfolio
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -76468,7 +76511,7 @@ tasks:
   title: Make organvm/mirror-mirror CI green
   repo: organvm/mirror-mirror
   type: code
-  target_agent: opencode
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -76856,7 +76899,7 @@ tasks:
   title: Drive Mirror Mirror to deploy-ready
   repo: organvm/mirror-mirror
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: high
   budget_cost: 2
   status: open
@@ -76900,7 +76943,7 @@ tasks:
   title: Discover the latent value of organvm/fetch-familiar-friends
   repo: organvm/fetch-familiar-friends
   type: research
-  target_agent: opencode
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
