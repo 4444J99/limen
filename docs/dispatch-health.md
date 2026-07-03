@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-03T08:29:13+00:00`
+Generated: `2026-07-03T09:11:19+00:00`
 
 Status: `healthy`
 
@@ -23,21 +23,21 @@ Status: `healthy`
 - Loaded LIMEN_DISPATCH_ASYNC: `1`.
 - Loaded LIMEN_DISPATCH_LANES: `opencode,agy`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-03T08:29:14.072416+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-03T09:11:19.665888+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 1 still running ; would launch 9 (cap 12) -> ['GEN-organvm-limen-typing-0630', 'ORG-education-organ-operationalize-0701', 'GEN-organvm-limen-test-coverage-0702', 'REV-organvm-universal-mail--automation-revenue-ship-0630', 'ORG-artist-organ-face-0630', 'GEN-organvm-portfolio-ci-green-0702', 'GEN-organvm-mirror-mirror-ci-green-0702', 'GEN-organvm-mirror-mirror-simplify-0630', 'DISCOVER-organvm-the-actual-news']`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 0 still running ; would launch 9 (cap 12) -> ['GEN-organvm-portfolio-ci-green-0702', 'REV-organvm-mirror-mirror-revenue-ship-0702', 'ORG-financial-organ-deepen-0703', 'REV-organvm-universal-mail--automation-revenue-ship-0703', 'ORG-governance-organ-face-0703', 'ORG-governance-organ-deepen-0703', 'ORG-consulting-organ-face-0703', 'ORG-education-organ-face-0703', 'ORG-education-organ-operationalize-0701']`.
 - Async skipped down lanes: `codex, gemini, jules`.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `7bc78a49a396d91deac168e5dd84116693ebfefc`.
-- origin/main: `7bc78a49a396d91deac168e5dd84116693ebfefc`.
+- HEAD: `24520f6c7f889bfce7e28513270afb85186ecb64`.
+- origin/main: `24520f6c7f889bfce7e28513270afb85186ecb64`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
 - Dirty entries: `0`.
 
