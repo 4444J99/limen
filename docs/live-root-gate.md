@@ -1,8 +1,8 @@
 # Live Root Gate
 
-Generated: `2026-07-02T22:14:43+00:00`
+Generated: `2026-07-03T05:36:47+00:00`
 
-Status: `ready`
+Status: `blocked`
 
 ## Rule
 
@@ -12,20 +12,24 @@ Status: `ready`
 
 ## Gate State
 
-- Operator gate required: `False`.
+- Operator gate required: `True`.
 - Release reconcile allowed without human: `False`.
 - Launchd reload allowed without human: `False`.
-- Blocking gates: none.
+- Blocking gates: `live-root-dirty`.
 
 ## Live Root
 
 - Path: `~/Workspace/limen`.
 - Branch: `main`; release branch `main`.
-- HEAD: `f7ee9e06dc7c3fd28a7ac02787915db18b78f80e`.
-- Release head: `f7ee9e06dc7c3fd28a7ac02787915db18b78f80e`.
+- HEAD: `fa8b70877ae5913ccf852bc04d6c6c3d4025ad7d`.
+- Release head: `fa8b70877ae5913ccf852bc04d6c6c3d4025ad7d`.
 - Matches release: `True`; ahead `0` behind `0`.
 - Unique local commits: `0`; patch-equivalent commits: `0`.
-- Dirty entries: `0`.
+- Dirty entries: `1`.
+
+### Dirty Paths
+
+- `docs/live-root-gate.md`
 
 ## Heartbeat
 
