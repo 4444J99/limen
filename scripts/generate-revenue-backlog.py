@@ -89,6 +89,11 @@ _BUILDING_LEVERS = [
      "One focused PR; keep CI green."),
 ]
 
+# Deploy-ready funnel levers create durable artifacts. Once one lands, a later date suffix should not
+# regenerate the same work just because the revenue floor has capacity again.
+_COMPLETED_DEDUP_STATUSES = {"done", "archived"}
+_COMPLETED_DEDUP_LEVERS = {k for k, *_ in _DEPLOY_READY_LEVERS}
+
 
 def _ladder_path() -> Path:
     root = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent))
@@ -162,8 +167,12 @@ def _plan(tasks: list[Task], floor_base: int, max_new: int, board: object | None
     existing = {t.id for t in tasks}
     lever_keys = {k for k, *_ in (_DEPLOY_READY_LEVERS + _BUILDING_LEVERS)}
     active_pairs = {
-        (t.repo, t.labels[0]) for t in tasks
-        if t.status in _ACTIVE and t.repo and t.labels and t.labels[0] in lever_keys
+        (t.repo, t.labels[0])
+        for t in tasks
+        if t.repo
+        and t.labels
+        and t.labels[0] in lever_keys
+        and (t.status in _ACTIVE or (t.status in _COMPLETED_DEDUP_STATUSES and t.labels[0] in _COMPLETED_DEDUP_LEVERS))
     }
     # feed least-loaded products first so we spread revenue work, not pile it on rank 1.
     load = Counter(t.repo for t in tasks if t.status in _ACTIVE and t.repo)
