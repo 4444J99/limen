@@ -57,7 +57,15 @@ limen workstream --workstream contributions --prompt 'drain the code lane' limen
 limen channels                       # board grouped by channel, counts per status
 limen channels --scope financial     # one channel + its tasks (accepts aliases: --scope revenue)
 limen channels --json-output         # machine-readable roster + counts
+limen channels --prs                 # OPEN PRs bucketed by the SAME channel taxonomy (via gh)
+limen channels --prs --scope legal   # list one channel's open PRs
 ```
+
+`--prs` reuses the exact channel roster to make session/PR sprawl legible on the purpose axis.
+Inference is whole-token only (a PR title/branch matches `financial`/`legal`/`mail`/… but never a
+substring), and the structural words `pr`/`prs` are ignored in free text — so a large
+`(unassigned)` bucket is the honest signal that most fleet PRs carry no purpose channel yet, not a
+matcher failure.
 
 ## Receipts
 

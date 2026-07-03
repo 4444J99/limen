@@ -119,3 +119,49 @@ def test_workstream_survives_tabularius_single_writer(tmp_path):
     assert res.wrote
     got = {t.id: t for t in load_limen_file(board).tasks}
     assert got["W1"].workstream == "revenue"  # normalized on submit, preserved through the seal
+
+
+def _pr(number, title, branch="", draft=False):
+    return ws.PullRequest(number=number, title=title, branch=branch, draft=draft)
+
+
+def test_infer_channel_whole_token_only(tmp_path):
+    _ladder(tmp_path)
+    assert ws.infer_channel("[limen] revenue harvest packet", tmp_path) == "financial"  # alias
+    assert ws.infer_channel("legal filing cleanup", tmp_path) == "legal"  # organ pillar
+    assert ws.infer_channel("mail drafts for obligations", tmp_path) == "correspondence"  # meta alias
+    assert ws.infer_channel("decode the render pipeline", tmp_path) == ws.UNASSIGNED  # 'decode' ≠ 'code'
+    assert ws.infer_channel("test(capacity): add unit tests", tmp_path) == ws.UNASSIGNED  # no purpose token
+    # "PR"/"PRs" are structural noise in PR-land — must NOT force a contributions match in free text …
+    assert ws.infer_channel("Recover closed PR task: add copilot lane", tmp_path) == ws.UNASSIGNED
+    # … but the task-label path still honors an intentional "pr" label (no regression to channel_of).
+    assert ws.channel_of(_task("Z", labels=["pr"]), tmp_path) == "contributions"
+
+
+def test_channel_of_pr_uses_title_and_branch(tmp_path):
+    _ladder(tmp_path)
+    assert ws.channel_of_pr(_pr(1, "wire watch subcommand", "feat/financial-report"), tmp_path) == "financial"
+    assert ws.channel_of_pr(_pr(2, "Odyssey film companion", "jules/studium-film"), tmp_path) == ws.UNASSIGNED
+
+
+def test_group_prs_by_channel_is_a_stable_scoreboard(tmp_path):
+    _ladder(tmp_path)
+    prs = [
+        _pr(10, "revenue backlog sweep"),  # → financial (alias)
+        _pr(11, "legal doc pass"),  # → legal (organ)
+        _pr(12, "CAPFILL packet 03"),  # → unassigned
+        _pr(13, "contributions drain", "feat/contrib-run"),  # → contributions
+    ]
+    groups = ws.group_prs_by_channel(prs, tmp_path)
+    assert [p.number for p in groups["financial"]] == [10]
+    assert [p.number for p in groups["legal"]] == [11]
+    assert [p.number for p in groups["contributions"]] == [13]
+    assert [p.number for p in groups[ws.UNASSIGNED]] == [12]
+    # every derived channel present even when empty, UNASSIGNED last
+    assert "correspondence" in groups and groups["correspondence"] == []
+    assert list(groups)[-1] == ws.UNASSIGNED
+
+    summary = ws.pr_roster_summary(prs, tmp_path)
+    assert summary["total_open"] == 4
+    fin = next(c for c in summary["channels"] if c["handle"] == "financial")
+    assert fin["total"] == 1 and fin["prs"][0]["number"] == 10

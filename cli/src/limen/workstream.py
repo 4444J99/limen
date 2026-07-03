@@ -40,6 +40,19 @@ class Channel:
     aliases: tuple[str, ...] = ()
 
 
+@dataclass(frozen=True)
+class PullRequest:
+    """A minimal open-PR reference for the PR × channel projection. Populated by the CLI from
+    ``gh pr list``; kept dependency-free (no gh/subprocess here) so the grouping stays pure."""
+
+    number: int
+    title: str
+    branch: str = ""
+    url: str = ""
+    draft: bool = False
+    repo: str = ""
+
+
 # Operational (non-organ) channels — the cross-cutting PROCESS lanes Anthony named in the
 # channel-decomposition session (2026-07-02). These are the ONLY hand-listed channels, because they
 # are not institutional organs; every DOMAIN channel derives from organ-ladder.json below.
@@ -75,6 +88,13 @@ _META_CHANNELS: tuple[Channel, ...] = (
         ("prompts", "prompt", "parity"),
     ),
 )
+
+# Aliases that are TOO generic for FREE-TEXT inference (a PR title / commit subject): in PR-land the
+# words "pr"/"prs" are structural, not a purpose signal — every PR is a "PR" — so matching on them
+# would sweep unrelated PRs into `contributions`. They are skipped ONLY in :func:`infer_channel`;
+# the task-label path in :func:`channel_of` still honors them (a task deliberately labelled "pr" is
+# intentional). Kept a named constant, not a magic literal, so the rationale travels with the code.
+_GENERIC_TEXT_TOKENS: frozenset[str] = frozenset({"pr", "prs"})
 
 # Aliases folded onto derived ORGAN channels so Anthony's spoken vocabulary resolves to the canonical
 # pillar handle (his word works at the surface; the code converges underneath).
@@ -168,6 +188,27 @@ def channel_of(task: Task, root: Path) -> str:
     return UNASSIGNED
 
 
+def infer_channel(text: str, root: Path) -> str:
+    """Best-effort channel for free text (a PR title + branch, a commit subject): split into
+    whole tokens and return the first that matches a known handle or alias, else :data:`UNASSIGNED`.
+
+    Whole-token matching (never substring) keeps it precise, exactly like the label path in
+    :func:`channel_of` — ``code-review`` matches the ``code`` → contributions alias, but ``decode``
+    never does. Most fleet-process PR titles (CAPFILL packets, ``test(...)``, ``build(deps)``) carry
+    no purpose token and land in UNASSIGNED — which is the honest signal: they have no channel yet.
+    """
+    amap = _alias_map(root)
+    for token in re.split(r"[^a-z0-9]+", str(text).lower()):
+        if token and token in amap and token not in _GENERIC_TEXT_TOKENS:
+            return amap[token]
+    return UNASSIGNED
+
+
+def channel_of_pr(pr: PullRequest, root: Path) -> str:
+    """A PR's inferred channel, from its title + branch (there is no explicit field on a PR yet)."""
+    return infer_channel(f"{pr.title} {pr.branch}", root)
+
+
 def group_by_channel(limen: LimenFile, root: Path) -> dict[str, list[Task]]:
     """{channel handle → tasks}, in roster order, with any inferred-only handles then UNASSIGNED
     last. Every derived channel appears even when empty, so the projection is a stable scoreboard."""
@@ -179,6 +220,22 @@ def group_by_channel(limen: LimenFile, root: Path) -> dict[str, list[Task]]:
     for h, tasks in buckets.items():
         if h not in ordered and h != UNASSIGNED:
             ordered[h] = tasks
+    ordered[UNASSIGNED] = buckets.get(UNASSIGNED, [])
+    return ordered
+
+
+def group_prs_by_channel(prs: list[PullRequest], root: Path) -> dict[str, list[PullRequest]]:
+    """{channel handle → open PRs}, in roster order, inferred-only handles then UNASSIGNED last.
+    The PR analogue of :func:`group_by_channel` — turns a flat open-PR pile into a channel scoreboard
+    so the session/PR sprawl is legible along the same purpose axis as the task board."""
+    order = [c.handle for c in derived_channels(root)]
+    buckets: dict[str, list[PullRequest]] = {h: [] for h in order}
+    for pr in prs:
+        buckets.setdefault(channel_of_pr(pr, root), []).append(pr)
+    ordered: dict[str, list[PullRequest]] = {h: buckets.get(h, []) for h in order}
+    for h, items in buckets.items():
+        if h not in ordered and h != UNASSIGNED:
+            ordered[h] = items
     ordered[UNASSIGNED] = buckets.get(UNASSIGNED, [])
     return ordered
 
@@ -243,3 +300,46 @@ def print_channels(limen: LimenFile, root: Path, scope: str | None = None) -> No
         for t in groups.get(scope_h, []):
             title = (t.title[:50] + "…") if len(t.title) > 51 else t.title
             print(f"  {t.id:<12} {t.status:<12} {t.target_agent:<8} {title}")
+
+
+def pr_roster_summary(prs: list[PullRequest], root: Path) -> dict:
+    """JSON-able projection of open PRs by channel (for ``limen channels --prs --json-output``)."""
+    groups = group_prs_by_channel(prs, root)
+    meta = {c.handle: c for c in derived_channels(root)}
+    channels = []
+    for handle, items in groups.items():
+        c = meta.get(handle)
+        channels.append(
+            {
+                "handle": handle,
+                "source": c.source if c else ("infer" if handle != UNASSIGNED else "none"),
+                "title": c.title if c else handle,
+                "total": len(items),
+                "prs": [{"number": p.number, "title": p.title, "branch": p.branch, "url": p.url} for p in items],
+            }
+        )
+    return {"projection": "open PRs × workstream channel", "total_open": len(prs), "channels": channels}
+
+
+def print_pr_channels(prs: list[PullRequest], root: Path, scope: str | None = None) -> None:
+    """Human projection of open PRs by channel — makes the session/PR sprawl legible on the purpose
+    axis. With ``scope`` set, lists that one channel's PRs; otherwise prints the per-channel counts."""
+    groups = group_prs_by_channel(prs, root)
+    meta = {c.handle: c for c in derived_channels(root)}
+    scope_h = canonical_handle(scope, root) if scope else None
+    print(f"Open PRs by workstream channel ({len(prs)} open) — purpose partition")
+    print(f"{'CHANNEL':<16} {'SRC':<6} {'PRS':>4}  TITLE")
+    print("-" * 60)
+    for handle, items in groups.items():
+        if scope_h and handle != scope_h:
+            continue
+        c = meta.get(handle)
+        src = c.source if c else ("infer" if handle != UNASSIGNED else "-")
+        title = c.title if c else handle
+        print(f"{handle:<16} {src:<6} {len(items):>4}  {title}")
+    if scope_h:
+        print()
+        for p in groups.get(scope_h, []):
+            draft = " (draft)" if p.draft else ""
+            title = (p.title[:52] + "…") if len(p.title) > 53 else p.title
+            print(f"  #{p.number:<6} {title}{draft}")
