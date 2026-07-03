@@ -1,6 +1,6 @@
 # Capacity Fill
 
-Generated: `2026-07-03T06:09:26+00:00`
+Generated: `2026-07-03T06:18:10+00:00`
 Status: `blocked`
 
 ## Capacity Census
@@ -12,7 +12,7 @@ Status: `blocked`
 | `opencode` | local-cli | `up` | 82 | 100 | /opt/homebrew/bin/opencode |
 | `agy` | local-cli | `up` | 86 | 100 | /opt/homebrew/bin/agy |
 | `gemini` | local-cli | `up` | 10 | 10 | /opt/homebrew/bin/gemini |
-| `ollama` | local-cli | `down` | 388 | 600 | /opt/homebrew/bin/ollama; no model pulled — run `ollama pull qwen2.5-coder:7b` to light the floor lane |
+| `ollama` | local-cli | `down` | 388 | 600 | /opt/homebrew/bin/ollama; no model pulled; local disk pressure blocks qwen2.5-coder:7b pull (20.5 GiB free, need >= 50 GiB) |
 | `jules` | cloud-cli | `down` | 0 | 100 | /opt/homebrew/bin/jules |
 | `copilot` | github-issue | `down` | 388 | 600 | /opt/homebrew/bin/gh; copilot-swe-agent not confirmed assignable (set LIMEN_COPILOT_ENABLED=1 after enabling Copilot coding agent) |
 | `warp` | paid-service | `down` | 388 | 600 | WARP_API_KEY not set (set env var + add as org/repo Actions secret) |
@@ -28,7 +28,7 @@ Status: `blocked`
 | `opencode` | db-meter | measured | best local paid-lane signal when the DB clock is present | Keep opencode-clock fresh from the SQLite usage DB. |
 | `agy` | dispatch-count proxy | proxy | reachable, but not proof of provider quota | Add a provider-backed Agy meter or recent rate-limit receipt. |
 | `gemini` | dispatch-count proxy | proxy | reachable when auth is configured; daily cap remains board-derived | Add a Gemini quota/rate-limit receipt if available. |
-| `ollama` | local model presence | binary/model | down until a model is pulled | Clear local disk pressure before pulling qwen2.5-coder:7b; current free space is 20.6 GiB. |
+| `ollama` | local model presence | binary/model | down until a model is pulled | Clear local disk pressure before pulling qwen2.5-coder:7b; current free space is 20.5 GiB. |
 | `jules` | dispatch-count cap | known cap | down locally until CLI/service path is available | Restore Jules CLI/service reachability. |
 | `copilot` | assignability probe | reachability | down until Copilot coding agent assignment is confirmed | Enable Copilot coding agent and set LIMEN_COPILOT_ENABLED=1. |
 | `warp` | credential presence | credential gate | down until WARP_API_KEY is installed | Install WARP_API_KEY locally and as the workflow secret. |
@@ -37,7 +37,7 @@ Status: `blocked`
 
 ## Blockers
 
-- `ollama`: /opt/homebrew/bin/ollama; no model pulled — run `ollama pull qwen2.5-coder:7b` to light the floor lane
+- `ollama`: /opt/homebrew/bin/ollama; no model pulled; local disk pressure blocks qwen2.5-coder:7b pull (20.5 GiB free, need >= 50 GiB)
 - `jules`: /opt/homebrew/bin/jules
 - `copilot`: /opt/homebrew/bin/gh; copilot-swe-agent not confirmed assignable (set LIMEN_COPILOT_ENABLED=1 after enabling Copilot coding agent)
 - `warp`: WARP_API_KEY not set (set env var + add as org/repo Actions secret)

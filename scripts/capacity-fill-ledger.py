@@ -27,6 +27,7 @@ PRIVATE_ROOT = Path(
 )
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "capacity-fill.json"
 TASKS_PATH = ROOT / "tasks.yaml"
+OLLAMA_MIN_PULL_FREE_GIB = 50.0
 
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
@@ -70,9 +71,20 @@ def disk_free_gib(path: Path = HOME) -> float | None:
 
 def ollama_next_build() -> str:
     free_gib = disk_free_gib()
-    if free_gib is not None and free_gib < 50:
+    if free_gib is not None and free_gib < OLLAMA_MIN_PULL_FREE_GIB:
         return f"Clear local disk pressure before pulling qwen2.5-coder:7b; current free space is {free_gib:g} GiB."
     return "Pull the configured local model to light the floor lane."
+
+
+def ollama_capacity_detail(detail: str) -> str:
+    free_gib = disk_free_gib()
+    if free_gib is None or free_gib >= OLLAMA_MIN_PULL_FREE_GIB:
+        return detail
+    base = detail.split("; no model pulled", 1)[0]
+    return (
+        f"{base}; no model pulled; local disk pressure blocks qwen2.5-coder:7b pull "
+        f"({free_gib:g} GiB free, need >= {OLLAMA_MIN_PULL_FREE_GIB:g} GiB)"
+    )
 
 
 def signal_quality(agent: str) -> dict[str, str]:
@@ -157,7 +169,10 @@ def signal_quality(agent: str) -> dict[str, str]:
 
 
 def build_snapshot(board: dict[str, Any]) -> dict[str, Any]:
-    census = capacity_census(board)
+    census = [dict(row) for row in capacity_census(board)]
+    for row in census:
+        if row.get("agent") == "ollama" and not row.get("reachable"):
+            row["detail"] = ollama_capacity_detail(str(row.get("detail", "unreachable")))
     blocked = [row for row in census if not row["reachable"]]
     claude = next((row for row in census if row["agent"] == "claude"), None)
     signals = {row["agent"]: signal_quality(row["agent"]) for row in census}
