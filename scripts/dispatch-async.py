@@ -65,7 +65,11 @@ def harvest() -> int:
         return 0
     now = _now()
     applied = 0
-    with _queue_lock(TASKS):
+    with _queue_lock(TASKS) as got:
+        if not got:
+            # Lock timed out — skip this pass (honor the contract). The .result.json files are only
+            # unlinked INSIDE the lock below, so returning here preserves them for the next beat.
+            return applied
         lf = load_limen_file(TASKS)
         byid = {t.id: t for t in lf.tasks}
         track = lf.portal.budget.track
@@ -110,13 +114,18 @@ def reap_stale(max_age_s: int):
             tid, agent = m.name[:-len(".running")].rsplit("__", 1)
             # if the worker DID finish (result file present), let harvest handle it; don't reap
             if not (RUNS / f"{tid}.result.json").exists():
-                reaped.append((tid, agent))
-                m.unlink(missing_ok=True)
+                # Defer the marker unlink until the reopen is committed under the lock (below), so a
+                # lock timeout can't leave the slot leaked (marker gone, task still 'dispatched').
+                reaped.append((tid, agent, m))
     if reaped:
-        with _queue_lock(TASKS):
+        with _queue_lock(TASKS) as got:
+            if not got:
+                # Lock busy — keep the markers (not yet unlinked) so a later beat retries the reap;
+                # unlinking without reopening would leak the concurrency slot forever.
+                return []
             lf = load_limen_file(TASKS)
             byid = {t.id: t for t in lf.tasks}
-            for tid, agent in reaped:
+            for tid, agent, _m in reaped:
                 t = byid.get(tid)
                 if t is not None and t.status == "dispatched":
                     if _has_done_transition(t):
@@ -141,7 +150,10 @@ def reap_stale(max_age_s: int):
                             output=f"dispatch-async: stale worker marker older than {max_age_s}s reaped; task reopened",
                         ))
             save_limen_file(TASKS, lf)
-    return [tid for tid, _agent in reaped]
+        # reopen is committed → now safe to remove the markers that freed these slots
+        for _tid, _agent, m in reaped:
+            m.unlink(missing_ok=True)
+    return [tid for tid, _agent, _m in reaped]
 
 
 def inspect_stale(max_age_s: int) -> list[str]:
@@ -174,7 +186,12 @@ def reserve_and_launch(agents, per_agent, cap, dry):
     detached workers. Returns the list of (agent, task_id) launched/would-launch."""
     now = _now()
     picked = []
-    with _queue_lock(TASKS):
+    with _queue_lock(TASKS) as got:
+        if not got:
+            # Lock busy — reserve nothing this round. Returning BEFORE `picked` is used to spawn
+            # detached workers (below) prevents launching workers for tasks never persisted as
+            # 'dispatched', which would double-dispatch. Self-corrects next beat.
+            return []
         lf = load_limen_file(TASKS)
         track = lf.portal.budget.track
         daily = lf.portal.budget.daily

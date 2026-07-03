@@ -43,7 +43,12 @@ def route_repo_insight(insight, apply):
         print(f"Would route to queue task {tid} for repo {repo}")
         return
 
-    with queue_lock(TASKS_YAML):
+    with queue_lock(TASKS_YAML) as got:
+        if not got:
+            # Lock timed out — honor the contract and skip this write (never dead-stop; a missed
+            # route self-corrects next beat) rather than clobbering a concurrent board write.
+            print(f"insight-route: queue busy — skipped {tid} this pass (self-corrects next beat)")
+            return
         limen_file = load_limen_file(TASKS_YAML)
 
         # Check idempotency
