@@ -10,6 +10,14 @@ The third path (his directive 2026-07-02): make the descriptions THINNER. Keep E
 distill each description to a meaning-preserving lead so the total fits the budget and Codex
 never has to shorten anything. This is "distillation, not reduction."
 
+GROUND TRUTH (corrected 2026-07-03): Codex loads skill metadata from EVERY cached marketplace
+plugin — not just the ones enabled in config.toml — plus `~/.codex/skills` and
+`~/.codex/memories/skills`. Its own render log proves it: `budget_limit=5440 total_skills=133`
+with only 9 plugins enabled. So this organ enumerates the FULL loaded set, and the cap is
+DERIVED from Codex's live per-skill allowance (budget ÷ skill-count), never a hardcoded number —
+the earlier 240-char / enabled-only version was scoped to ~17 of the 133 skills and left the
+warning firing. Slimming below Codex's own allowance is what makes truncation stop.
+
 DURABILITY: the fat lives in `~/.codex/plugins/cache/**` (marketplace caches) which REVERT on
 refresh, so this is a REPAIR organ, not a one-shot edit (containment Rule 6): idempotent, run
 every beat, re-distilling anything that reverted to fat. A backup ledger + `--restore` is the
@@ -35,13 +43,21 @@ import json
 import os
 import re
 import sys
-import tomllib
 from pathlib import Path
 
 CODEX_HOME = Path(os.environ.get("CODEX_HOME") or (Path.home() / ".codex"))
 CACHE = CODEX_HOME / "plugins" / "cache"
 LEDGER = CODEX_HOME / ".skill-slim" / "backup.json"
-CAP = int(os.environ.get("LIMEN_CODEX_SLIM_CAP") or 240)
+LOGDB = CODEX_HOME / "logs_2.sqlite"
+
+# The cap is DERIVED from Codex's live per-skill budget, not pinned. LIMEN_CODEX_SLIM_CAP is an
+# explicit override / escape-hatch only; unset (the default) means "derive from ground truth".
+CAP_OVERRIDE = os.environ.get("LIMEN_CODEX_SLIM_CAP")
+_MARGIN = 0.9  # sit safely UNDER Codex's per-skill allowance so it never has to truncate
+_MIN_CAP, _MAX_CAP = 60, 240  # clamp the derived cap to a sane, human-readable band
+_DEFAULT_BUDGET_TOKENS = 5440  # Codex's observed 2% skills budget (fallback when logs are absent)
+_CHARS_PER_TOKEN = 4.0  # rough tokenizer ratio (fallback; the log's own numbers override this)
+_DEFAULT_CAP = 150  # last-resort cap when neither logs nor an enumerated count are available
 
 _SENT_SPLIT = re.compile(r"(?<=[.!?])\s+")
 # Single-line YAML frontmatter description:  `description: <value>`  (we SKIP block scalars).
@@ -54,12 +70,14 @@ def _strip_trailing(s: str) -> str:
     prev = None
     while prev != s:
         prev = s
-        s = re.sub(r"[\s,;:]+$", "", s)
+        # Trailing whitespace, punctuation, and dangling openers/connectors left by a mid-clause cut
+        # (a lone "—", "(", "/", "&", ":" reads as broken; sentence-enders . ! ? are kept).
+        s = re.sub(r"[\s,;:—–\-()\[\]{}/&|]+$", "", s)
         s = _TRAIL_WORD.sub("", s)
     return s
 
 
-def distill(text: str, cap: int = CAP) -> str:
+def distill(text: str, cap: int = _DEFAULT_CAP) -> str:
     """Thin `text` under `cap`, preserving the informative lead (title + aliases + purpose).
 
     Whitespace/paragraphs collapse to single spaces (that is where plugin bloat hides). Whole
@@ -98,9 +116,83 @@ def distill(text: str, cap: int = CAP) -> str:
     return _strip_trailing(out).strip()
 
 
-def enabled_plugins(config: Path) -> list[tuple[str, str]]:
-    """(name, marketplace) for every enabled plugin in config.toml. Empty on any read error."""
+def codex_skill_budget() -> dict | None:
+    """Codex's own per-skill budget, read from its TUI render log (ground truth). None on failure.
+
+    Codex emits `truncated skill metadata to fit skills context budget budget_limit=… total_skills=…
+    truncated_description_chars_per_skill=…` whenever it shortens descriptions. That line IS the
+    budget: `truncated_description_chars_per_skill` is the exact per-skill char allowance for the
+    current skill count. Opened read-only + immutable so a live Codex never blocks on us; fail-open.
+    """
+    if not LOGDB.is_file():
+        return None
     try:
+        import sqlite3
+
+        con = sqlite3.connect(f"file:{LOGDB}?mode=ro&immutable=1", uri=True, timeout=1.5)
+        try:
+            row = con.execute(
+                "SELECT feedback_log_body FROM logs "
+                "WHERE feedback_log_body LIKE '%truncated skill metadata%' "
+                "ORDER BY ts DESC LIMIT 1"
+            ).fetchone()
+        finally:
+            con.close()
+    except Exception:
+        return None
+    if not row or not row[0]:
+        return None
+    body = row[0]
+
+    def _num(key: str) -> int | None:
+        m = re.search(rf"{key}=(\d+)", body)
+        return int(m.group(1)) if m else None
+
+    return {
+        "budget_tokens": _num("budget_limit"),
+        "total_skills": _num("total_skills"),
+        "chars_per_skill": _num("truncated_description_chars_per_skill"),
+    }
+
+
+def derive_cap(n_skills: int) -> int:
+    """The char cap to distill every loaded description under, DERIVED from Codex's live budget.
+
+    Codex divides a fixed char budget across the skills it loads and truncates any description over
+    its share. So the cap that guarantees zero truncation is `char_budget ÷ N × margin`, where N is
+    the WORST-CASE skill count — the larger of Codex's logged `total_skills` and our own enumerated
+    skill count (the full on-disk cache). Codex can only ever load skills that exist on disk, so
+    dividing by that ceiling means no subset it picks today, and no plugin it caches tomorrow, can
+    overflow. `char_budget` comes straight from the render log (`chars_per_skill × total_skills`);
+    the token-ratio fallback is only for when no truncation has ever been logged.
+
+    Priority: explicit LIMEN_CODEX_SLIM_CAP override → derived worst-case cap → safe constant.
+    Clamped to [60, 240].
+    """
+    if CAP_OVERRIDE:
+        try:
+            return max(_MIN_CAP, int(CAP_OVERRIDE))
+        except ValueError:
+            pass
+    b = codex_skill_budget() or {}
+    cps, logged_n, tokens = b.get("chars_per_skill"), b.get("total_skills"), b.get("budget_tokens")
+    if cps and logged_n:
+        char_budget = cps * logged_n  # exact: Codex's own per-skill allowance × its skill count
+    else:
+        char_budget = (tokens or _DEFAULT_BUDGET_TOKENS) * _CHARS_PER_TOKEN
+    n = max(n_skills or 1, logged_n or 0)  # worst-case: whichever skill count is larger
+    return max(_MIN_CAP, min(_MAX_CAP, int(char_budget / n * _MARGIN)))
+
+
+def enabled_plugins(config: Path) -> list[tuple[str, str]]:
+    """(name, marketplace) for every enabled plugin in config.toml. Empty on any read error.
+
+    Retained for diagnostics only — `targets()` no longer filters by enablement, because Codex
+    loads every cached plugin's metadata into the budget regardless of this flag.
+    """
+    try:
+        import tomllib
+
         data = tomllib.loads(config.read_text(encoding="utf-8"))
     except Exception:
         return []
@@ -118,10 +210,12 @@ def _latest_version_dir(plugin_dir: Path) -> Path | None:
 
 
 def targets() -> list[dict]:
-    """Every distillable description: plugin.json `description` + SKILL.md `description:` lines.
+    """Every distillable description Codex LOADS into its skills budget — the FULL set.
 
-    Each target: {kind, id, path, field, get(), set(new)} where field is 'json:description'
-    (plugin.json) or 'yaml:description' (single-line SKILL.md frontmatter).
+    Codex ingests skill metadata from every cached marketplace plugin regardless of the config.toml
+    `enabled` flag (confirmed against its render log: 133 skills loaded from 9 enabled plugins),
+    plus `~/.codex/skills` and `~/.codex/memories/skills`. Enumerating a superset is safe — slimming
+    a description Codex happens not to load costs nothing. Each target: {kind, id, path, field}.
     """
     out: list[dict] = []
 
@@ -136,24 +230,31 @@ def targets() -> list[dict]:
     def add_skill_md(sm: Path, sid: str, kind: str) -> None:
         out.append({"kind": kind, "id": sid, "path": sm, "field": "yaml:description"})
 
-    # Enabled plugins: their plugin.json + bundled skills.
-    for name, market in enabled_plugins(CODEX_HOME / "config.toml"):
-        pdir = CACHE / market / name
-        ver = _latest_version_dir(pdir)
-        if not ver:
-            continue
-        for cand in (".codex-plugin/plugin.json", ".claude-plugin/plugin.json"):
-            pj = ver / cand
-            if pj.is_file():
-                add_plugin_json(pj, name)
-                break
-        for sm in (ver / "skills").glob("*/SKILL.md"):
-            add_skill_md(sm, f"{name}:{sm.parent.name}", "plug.skill")
+    # Every cached plugin across every marketplace — Codex loads them all, enabled or not.
+    if CACHE.is_dir():
+        for market in sorted(CACHE.iterdir()):
+            if not market.is_dir() or market.name.startswith("."):
+                continue
+            for pdir in sorted(market.iterdir()):
+                if not pdir.is_dir() or pdir.name.startswith("."):
+                    continue
+                ver = _latest_version_dir(pdir) or pdir
+                for cand in (".codex-plugin/plugin.json", ".claude-plugin/plugin.json"):
+                    pj = ver / cand
+                    if pj.is_file():
+                        add_plugin_json(pj, f"{market.name}/{pdir.name}")
+                        break
+                for sm in (ver / "skills").glob("*/SKILL.md"):
+                    add_skill_md(sm, f"{pdir.name}:{sm.parent.name}", "plug.skill")
 
     # ~/.codex/skills — user + bundled .system skills.
     for sm in (CODEX_HOME / "skills").glob("**/SKILL.md"):
         kind = "sys.skill" if f"{os.sep}.system{os.sep}" in str(sm) else "user.skill"
         add_skill_md(sm, sm.parent.name, kind)
+
+    # ~/.codex/memories/skills — memory-scoped skills.
+    for sm in (CODEX_HOME / "memories" / "skills").glob("**/SKILL.md"):
+        add_skill_md(sm, sm.parent.name, "mem.skill")
     return out
 
 
@@ -260,27 +361,33 @@ def run(mode: str, quiet: bool) -> int:
             print("codex-skill-slim: no Codex skills/plugins found (nothing to do)")
         return 0
 
+    # Codex's budget metric is `total_skills`, so derive the cap against the SKILL count (SKILL.md
+    # descriptions), not the skill+plugin.json total. plugin.json descriptions are slimmed too, but
+    # they do not drive the per-skill divisor.
+    n_skills = sum(1 for t in tgts if t["field"] == "yaml:description")
+    cap = derive_cap(n_skills)
+
     rows = []
     for t in tgts:
         cur = _get(t)
         if cur is None:
             continue
-        rows.append((len(cur), t, cur, distill(cur)))
+        rows.append((len(cur), t, cur, distill(cur, cap)))
     rows.sort(key=lambda r: r[0], reverse=True)
     total = sum(r[0] for r in rows)
-    over = [r for r in rows if r[0] > CAP]
+    over = [r for r in rows if r[0] > cap]
 
     if mode == "check":
         # Standing detection: any over-cap description means the budget has drifted / reverted.
         if over:
             saved = sum(r[0] - len(r[3]) for r in over)
             print(
-                f"codex skill budget: {len(over)} description(s) over {CAP} chars "
+                f"codex skill budget: {len(over)} of {len(rows)} description(s) over {cap} chars "
                 f"(total {total}B; {saved}B recoverable) — run codex-skill-slim.py --apply",
                 file=sys.stderr,
             )
             return 1
-        print(f"codex skill budget: ok ({total}B across {len(rows)} entries, all ≤{CAP})")
+        print(f"codex skill budget: ok ({total}B across {len(rows)} entries, all ≤{cap})")
         return 0
 
     if mode == "restore":
@@ -298,10 +405,10 @@ def run(mode: str, quiet: bool) -> int:
     if mode == "report":
         print(
             f"codex skill/plugin description budget: {total}B across {len(rows)} entries "
-            f"(cap {CAP}); {len(over)} over-cap"
+            f"(derived cap {cap}); {len(over)} over-cap"
         )
         for b, t, _cur, new in rows:
-            flag = "SLIM →%3d" % len(new) if b > CAP else "ok      "
+            flag = "SLIM →%3d" % len(new) if b > cap else "ok      "
             print(f"  {b:5d}B  {flag}  {t['kind']:<11} {t['id']}")
         if over:
             saved = sum(r[0] - len(r[3]) for r in over)
@@ -313,7 +420,7 @@ def run(mode: str, quiet: bool) -> int:
     changed = 0
     saved = 0
     for b, t, cur, new in rows:
-        if b <= CAP or new == cur or not new:
+        if b <= cap or new == cur or not new:
             continue
         k = _key(t)
         led.setdefault(k, cur)  # preserve the FIRST-seen original as the restore point
@@ -331,7 +438,7 @@ def run(mode: str, quiet: bool) -> int:
     else:
         print(
             f"codex-skill-slim: distilled {changed} description(s); budget {total}→{new_total}B "
-            f"across {len(rows)} entries; every skill preserved"
+            f"across {len(rows)} entries (cap {cap}); every skill preserved"
         )
     return 0
 
