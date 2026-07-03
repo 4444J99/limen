@@ -69,20 +69,27 @@ def _load_limen_env() -> int:
 def _usage_dead_lanes() -> set[str]:
     """Lanes the LIVE usage meter (logs/usage.json, written by usage-telemetry.py) reports as
     out of safe usage — token-`exhausted`, `rate-limited`, or `low` (at/below the pacing reserve,
-    so we stop BEFORE 0). `throttle` lanes stay UP — they still have runway; it's a steering
-    signal for the split, not a stop. DERIVED from the live signal, never pinned: a lane auto-rejoins
-    the instant its rolling window refills (no manual edit). This is what makes dispatch HONEST —
-    we never assign a task to a lane that physically cannot produce, and we never burn one to 0."""
+    so we stop BEFORE 0). `throttle` usually stays UP as a steering signal, but a throttle signal
+    with zero remaining/headroom is already out of runway and must stop too. DERIVED from the live
+    signal, never pinned: a lane auto-rejoins the instant its rolling window refills (no manual edit).
+    This is what makes dispatch HONEST — we never assign a task to a lane that physically cannot
+    produce, and we never burn one to 0."""
     f = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen"))) / "logs" / "usage.json"
     try:
         vendors = (json.loads(f.read_text()) or {}).get("vendors", {})
     except (OSError, ValueError):
         return set()
-    return {
-        name
-        for name, info in vendors.items()
-        if isinstance(info, dict) and info.get("health") in ("exhausted", "rate-limited", "low")
-    }
+    dead: set[str] = set()
+    for name, info in vendors.items():
+        if not isinstance(info, dict):
+            continue
+        health = info.get("health")
+        if health in ("exhausted", "rate-limited", "low"):
+            dead.add(name)
+            continue
+        if health == "throttle" and (info.get("remaining") == 0 or info.get("headroom_pct") == 0):
+            dead.add(name)
+    return dead
 
 
 # Lanes whose CLI authenticates ONLY via an interactive browser OAuth flow — no headless / device-code
@@ -766,6 +773,7 @@ _RATELIMIT = "__ratelimit__"
 # apiece and gating beats). Route it straight to jules: async, no wall-clock cap, completes
 # in the cloud. One timeout → jules, instead of 5 timeouts → failed.
 _TIMEOUT = "__timeout__"
+_FAILED_BLOCKED_PREFIX = "__failed_blocked__:"
 _RATE_PATTERNS = re.compile(
     r"rate.?limit|quota|usage limit|too many requests|\b429\b|\b529\b|"
     r"resource.?exhausted|overloaded|insufficient_quota|throttl|out of (?:tokens|credits)",
@@ -775,6 +783,44 @@ _RATE_PATTERNS = re.compile(
 
 def _is_rate_limited(text: str) -> bool:
     return bool(_RATE_PATTERNS.search(text or ""))
+
+
+def _blocked_result(reason: str) -> str:
+    return _FAILED_BLOCKED_PREFIX + " ".join((reason or "blocked").split())[:500]
+
+
+def _is_blocked_result(result: bool | str) -> bool:
+    return isinstance(result, str) and result.startswith(_FAILED_BLOCKED_PREFIX)
+
+
+def _blocked_reason(result: bool | str) -> str:
+    if not _is_blocked_result(result):
+        return ""
+    return str(result)[len(_FAILED_BLOCKED_PREFIX) :]
+
+
+_REPO_UNAVAILABLE_PATTERNS = re.compile(
+    r"could not resolve to a repository|repository not found|http 404|not found",
+    re.IGNORECASE,
+)
+
+
+def _repo_unavailable_reason(repo: str | None) -> str | None:
+    if not repo or "/" not in repo:
+        return "task has no dispatchable repo"
+    try:
+        result = _run_capture(
+            ["gh", "repo", "view", repo, "--json", "nameWithOwner", "--jq", ".nameWithOwner"],
+            timeout=30,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return None
+    if result.returncode == 0:
+        return None
+    blob = ((result.stderr or "") + "\n" + (result.stdout or "")).strip()
+    if _REPO_UNAVAILABLE_PATTERNS.search(blob):
+        return f"repo unavailable: {repo}; {blob[:240]}"
+    return None
 
 
 # A TRANSIENT auth flap — NOT a real rate limit. Concurrent Claude Code processes share one
@@ -1172,6 +1218,10 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
     binary = _resolve_agent_binary(agent)
     repo_dir = _resolve_repo_dir(task)
     if repo_dir is None and not dry_run:
+        blocked = _repo_unavailable_reason(task.repo)
+        if blocked:
+            print(f"  BLOCKED {task.id}: {blocked}")
+            return _blocked_result(blocked)
         repo_dir = _clone_repo(task)  # post-move: clone on demand so local lanes can work it
     if repo_dir is None:
         msg = f"no local checkout of {task.repo or '(no repo)'}"
@@ -1388,7 +1438,7 @@ def dispatch_tasks(
                 save_limen_file(tasks_path, limen)
                 print(f"── lane {agent_filter} rate-limited — cooling, {dispatched} dispatched this cycle")
                 return
-            elif result and result not in (_NOOP, _RATELIMIT, _TIMEOUT):
+            elif result and result not in (_NOOP, _RATELIMIT, _TIMEOUT) and not _is_blocked_result(result):
                 remaining -= task.budget_cost
 
         dispatched += 1
@@ -1430,6 +1480,12 @@ def _apply_result(task: Task, agent: str, result: bool | str, now: datetime, tra
         task.status = "open"
         if "slow" not in task.labels:
             task.labels.append("slow")
+    elif _is_blocked_result(result):
+        entry.status = "failed_blocked"
+        entry.output = _blocked_reason(result)
+        task.status = "failed_blocked"
+        if "blocked:routing" not in task.labels:
+            task.labels.append("blocked:routing")
     elif result:
         if isinstance(result, str):
             entry.session_id = result
@@ -1804,7 +1860,7 @@ def dispatch_parallel(
                 n_noop += 1
             elif res == _TIMEOUT:
                 n_to += 1
-            elif res:
+            elif res and not _is_blocked_result(res):
                 n_pr += 1
             else:
                 n_fail += 1

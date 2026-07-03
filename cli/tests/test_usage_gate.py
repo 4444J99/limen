@@ -40,9 +40,22 @@ def test_usage_dead_lanes_flags_exhausted_ratelimited_and_reserve(tmp_path, monk
 
 def test_throttle_lane_stays_up(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
-    _write_usage(tmp_path, {"codex": {"health": "throttle"}, "claude": {"health": "ok"}})
+    _write_usage(tmp_path, {"codex": {"health": "throttle", "remaining": 10}, "claude": {"health": "ok"}})
     assert _usage_dead_lanes() == set()
     assert _down_lanes() == set()
+
+
+def test_zero_headroom_throttle_lane_is_down(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_usage(
+        tmp_path,
+        {
+            "codex": {"health": "throttle", "remaining": 0, "headroom_pct": 0},
+            "claude": {"health": "throttle", "remaining": 10, "headroom_pct": 10},
+        },
+    )
+    assert _usage_dead_lanes() == {"codex"}
+    assert _down_lanes() == {"codex"}
 
 
 def test_down_lanes_unions_manual_file_and_live_meter(tmp_path, monkeypatch):

@@ -7,6 +7,7 @@ import sys
 from datetime import date
 from pathlib import Path
 
+import pytest
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -218,7 +219,8 @@ def test_dispatch_skips_needs_human_label(tmp_path: Path, capsys) -> None:
     assert "HUMAN-GATE" not in output
 
 
-def test_dispatch_skips_open_task_with_prior_done_log(tmp_path: Path, capsys) -> None:
+def test_dispatch_skips_open_task_with_prior_done_log(tmp_path: Path, capsys, monkeypatch) -> None:
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     tasks_path = tmp_path / "tasks.yaml"
     write_board(
         tasks_path,
@@ -406,6 +408,50 @@ def test_noop_result_stays_recoverable_not_cancelled() -> None:
     assert "noop" in task.labels
     assert "cancelled" not in task.labels
     assert task.dispatch_log[-1].status == "failed"
+
+
+def test_blocked_result_is_terminal_failed_blocked() -> None:
+    import datetime
+
+    task = Task(
+        id="BLOCKED",
+        title="blocked attempt",
+        repo="organvm/missing",
+        target_agent="codex",
+        status="open",
+        created=date(2026, 6, 27),
+        labels=[],
+    )
+    track = BudgetTrack(date="2026-06-27")
+    now = datetime.datetime.now(datetime.timezone.utc)
+
+    D._apply_result(task, "codex", D._blocked_result("repo unavailable: organvm/missing"), now, track)
+
+    assert task.status == "failed_blocked"
+    assert task.target_agent == "codex"
+    assert "blocked:routing" in task.labels
+    assert track.spent == 0
+    assert task.dispatch_log[-1].status == "failed_blocked"
+    assert "repo unavailable" in str(task.dispatch_log[-1].output)
+
+
+def test_isolated_local_run_blocks_unavailable_repo_without_cascading(monkeypatch) -> None:
+    task = Task(
+        id="MISSING-REPO",
+        title="missing repo",
+        repo="organvm/missing",
+        target_agent="codex",
+        created=date(2026, 6, 27),
+    )
+    monkeypatch.setattr(D, "_resolve_agent_binary", lambda agent: agent)
+    monkeypatch.setattr(D, "_resolve_repo_dir", lambda task: None)
+    monkeypatch.setattr(D, "_repo_unavailable_reason", lambda repo: "repo unavailable: organvm/missing")
+    monkeypatch.setattr(D, "_clone_repo", lambda task: pytest.fail("unavailable repo should not clone"))
+
+    result = D._isolated_local_run("codex", task, dry_run=False)
+
+    assert D._is_blocked_result(result)
+    assert "organvm/missing" in D._blocked_reason(result)
 
 
 def test_release_stale_dry_run_does_not_mutate(tmp_path: Path) -> None:
