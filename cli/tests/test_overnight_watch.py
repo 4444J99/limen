@@ -113,6 +113,25 @@ def test_active_worker_suppresses_repeated_tick_alert(tmp_path, monkeypatch):
     assert snapshot["worker_count"] == 1
 
 
+def test_heartbeat_child_suppresses_repeated_tick_alert(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch, LIMEN_OVERNIGHT_WATCH_MAX_STALE_TICKS=2)
+    _mock_launchd(module, monkeypatch)
+    _write_heartbeat(module)
+    module.STATE_PATH.write_text(
+        json.dumps({"latest_tick": "2026-07-01T09:53:57+00:00", "stale_tick_count": 1}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        module,
+        "heartbeat_child_processes",
+        lambda pid: [{"pid": "99", "command": "scripts/clone-maintenance.sh"}],
+    )
+
+    snapshot = module.build_snapshot()
+    assert snapshot["status"] == "ok"
+    assert snapshot["heartbeat_child_count"] == 1
+
+
 def test_expected_env_mismatch_alerts(tmp_path, monkeypatch):
     module = _fresh_module(
         tmp_path,

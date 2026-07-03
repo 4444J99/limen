@@ -196,6 +196,32 @@ def active_workers() -> list[dict[str, Any]]:
     return workers
 
 
+def heartbeat_child_processes(pid: str | None) -> list[dict[str, Any]]:
+    if not pid:
+        return []
+    pgrep = run(["pgrep", "-P", str(pid)], timeout=5)
+    if pgrep.returncode != 0:
+        return []
+    children: list[dict[str, Any]] = []
+    for child_pid in [line.strip() for line in pgrep.stdout.splitlines() if line.strip()]:
+        ps = run(["ps", "-o", "pid=,ppid=,stat=,etime=,command=", "-p", child_pid], timeout=5)
+        line = (ps.stdout or "").strip()
+        if ps.returncode != 0 or not line:
+            children.append({"pid": child_pid})
+            continue
+        parts = line.split(None, 4)
+        children.append(
+            {
+                "pid": parts[0] if len(parts) > 0 else child_pid,
+                "ppid": parts[1] if len(parts) > 1 else None,
+                "stat": parts[2] if len(parts) > 2 else None,
+                "etime": parts[3] if len(parts) > 3 else None,
+                "command": parts[4] if len(parts) > 4 else "",
+            }
+        )
+    return children
+
+
 def load_json(path: Path) -> dict[str, Any]:
     try:
         raw = json.loads(path.read_text())
@@ -234,6 +260,7 @@ def build_snapshot() -> dict[str, Any]:
     stale_count = next_stale_count(previous, heartbeat.get("latest_tick"))
     workers = active_workers()
     launchd = launchd_snapshot()
+    children = heartbeat_child_processes(launchd.get("pid"))
 
     snapshot: dict[str, Any] = {
         "timestamp": iso_now(),
@@ -243,6 +270,8 @@ def build_snapshot() -> dict[str, Any]:
         "launchd": launchd,
         "workers": workers,
         "worker_count": len(workers),
+        "heartbeat_children": children,
+        "heartbeat_child_count": len(children),
         "stale_tick_count": stale_count,
         "thresholds": {
             "max_log_age_sec": MAX_LOG_AGE_SEC,
@@ -271,11 +300,18 @@ def evaluate(snapshot: dict[str, Any]) -> tuple[str, list[dict[str, str]]]:
     latest_tick = (snapshot.get("heartbeat") or {}).get("latest_tick")
     if not latest_tick:
         alerts.append({"id": "heartbeat-tick-missing", "evidence": "no tick emitted line found in recent heartbeat log"})
-    elif snapshot.get("stale_tick_count", 0) >= MAX_STALE_TICKS and snapshot.get("worker_count", 0) == 0:
+    elif (
+        snapshot.get("stale_tick_count", 0) >= MAX_STALE_TICKS
+        and snapshot.get("worker_count", 0) == 0
+        and snapshot.get("heartbeat_child_count", 0) == 0
+    ):
         alerts.append(
             {
                 "id": "heartbeat-progress-stale",
-                "evidence": f"same tick for {snapshot.get('stale_tick_count')} monitor samples and no active workers",
+                "evidence": (
+                    f"same tick for {snapshot.get('stale_tick_count')} monitor samples "
+                    "and no active workers or heartbeat child processes"
+                ),
             }
         )
 
@@ -327,6 +363,7 @@ def write_markdown(snapshot: dict[str, Any]) -> None:
     async_line = heartbeat.get("latest_async") or {}
     launchd = snapshot.get("launchd") or {}
     workers = snapshot.get("workers") or []
+    children = snapshot.get("heartbeat_children") or []
     lines = [
         "# Overnight Watch",
         "",
@@ -339,9 +376,15 @@ def write_markdown(snapshot: dict[str, Any]) -> None:
         f"- Latest async: `{async_line.get('raw')}`",
         f"- Stale tick samples: `{snapshot.get('stale_tick_count')}`",
         f"- Active workers: `{len(workers)}`",
+        f"- Heartbeat child processes: `{len(children)}`",
     ]
     for worker in workers[:10]:
         lines.append(f"  - `{worker.get('name')}` age `{worker.get('age_sec')}` seconds")
+    for child in children[:10]:
+        lines.append(
+            f"  - child `{child.get('pid')}` `{child.get('stat')}` "
+            f"`{child.get('etime')}` `{child.get('command')}`"
+        )
     if snapshot.get("alerts"):
         lines.extend(["", "## WATCH_ALERT"])
         for alert in snapshot["alerts"]:
@@ -392,7 +435,8 @@ def print_summary(snapshot: dict[str, Any]) -> None:
     print(
         "overnight-watch: "
         f"{snapshot.get('status')} log_age={snapshot.get('log_age_sec')} "
-        f"stale_ticks={snapshot.get('stale_tick_count')} workers={snapshot.get('worker_count')}"
+        f"stale_ticks={snapshot.get('stale_tick_count')} workers={snapshot.get('worker_count')} "
+        f"children={snapshot.get('heartbeat_child_count')}"
     )
     if tick_line:
         print(f"  tick: {tick_line}")
