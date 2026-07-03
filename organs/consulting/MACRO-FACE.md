@@ -9,35 +9,61 @@
 
 ---
 
-## The problem this solves
+## The problem this solves — in one scene
 
-Most well-intentioned teams are beaten by well-resourced ones not because of raw ability but
-because of **institutional weight** — the fixed routines, structured memory, and disciplined
-operating floors that turn good intent into reliable outcomes.
+**Thursday morning. You have three clients — one is re-scoping mid-delivery, one needs a milestone
+check-in before end of week, and one just sent a brief that changes the mandate.**
 
-A top-tier agency doesn't wing its intakes. It doesn't lose scope between calls. It doesn't
-hand off deliverables without a quality gate. Its junior doesn't forget what was promised in
-the last meeting because there's a system that remembers.
+You keep it all in your head. Or in a chat thread. Or in a Notion doc you haven't updated since the
+initial call. You know exactly what you promised each client — but you cannot point to the single
+place where that promise is written down, gated, and tracked against a standard.
 
-Sovereign Systems gives a solo operator, a two-person founding team, or an independent
-contractor **the same institutional floor** — without the overhead of hiring a firm.
+This is not a competence problem. It is an **institutional absence** problem.
+
+A boutique agency solves this with staff: a PM who logs every scope change, a quality reviewer who
+checks deliverables before handoff, a principal who owns the closeout. But the agency model costs
+overhead and floor space that a solo operator, a two-person founding team, or an independent
+contractor cannot sustain.
+
+Sovereign Systems gives that operator **the same institutional floor** — without the overhead.
+
+---
+
+## The thesis
+
+> **Most consulting engagements fail at the same four points:**
+> 1. The intake is soft — nobody wrote down what the client actually needs before the work started.
+> 2. The mandate drifts — scope expands, changes go unlogged, the original agreement is lost.
+> 3. Handoffs are rushed — deliverables reach the client before anyone checked them against the agreed standard.
+> 4. Nothing closes cleanly — the engagement ends with "the work stopped," not with a documented package.
+>
+> **This platform exists to make those four failures structurally impossible.**
+
+The mechanism is not a methodology binder or a set of best-practice recommendations. It is a
+**runnable posture model** — five primitives, one delivery sequence, six executable rules — that
+turns every engagement into a trackable record from intake to closeout.
 
 ---
 
 ## What Sovereign Systems is
 
-A **structured consulting-operations toolkit** that runs the five functions that agencies
-do better than individuals:
+A **structured consulting-operations toolkit** that runs five functions — the same five that a
+well-staffed agency performs through dedicated roles:
 
-| Function | What it produces |
-|---|---|
-| **Intake** | A single client posture record: who the client is, what they actually need, what constraints apply |
-| **Scope** | A proposal-grade engagement hypothesis with explicit inclusions, exclusions, and assumptions |
-| **Delivery** | A sequenced milestone map with named owners and human review gates at each checkpoint |
-| **Quality** | A per-deliverable audit against the agreed standard before any handoff |
-| **Archive** | A closed-engagement package: what was promised, built, deferred, and left open |
+| Function | What it produces | The file you hold |
+|---|---|---|
+| **Intake** | A single client posture record: who the client is, what they actually need, what constraints apply | `engagements/<client>.yaml` — one file, all five primitives, validated |
+| **Scope** | A proposal-grade engagement hypothesis with explicit inclusions, exclusions, and assumptions | Same file — `scope.boundary`, `scope.exclusions`, `scope.changes[]` |
+| **Delivery** | A sequenced milestone map with named owners and human review gates at each checkpoint | Same file — `standing.current`, `standing.history[]`, `human_gates[]` |
+| **Quality** | A per-deliverable audit against the agreed standard before any handoff | Same file — `standard.quality_bar`, `standard.evidence` |
+| **Archive** | A closed-engagement package: what was promised, built, deferred, and left open | ARCHIVED standing + `standing.history[]` as the complete arc |
 
-Each function is repeatable. Each feeds the next. The whole system can be held by one person.
+Every function lives in one file per client. The engagement file is the single source of truth.
+It is validated programmatically — not by reading it, but by running it through a rule engine.
+
+This is not a notion template. It is not a google doc. It is a structured YAML record with
+enforceable rules. The difference is the difference between "I should update this" and
+"the system will tell me if it's wrong."
 
 ---
 
@@ -46,16 +72,16 @@ Each function is repeatable. Each feeds the next. The whole system can be held b
 Every engagement is structured around five primitives. The same map works in any domain,
 for any client type:
 
-| Primitive | In consulting | Concretely |
+| Primitive | In consulting | What it looks like in the file |
 |---|---|---|
-| **Member** | the client | who they are, their constraints, their consent, their context |
-| **Mandate** | the engagement | what outcome was hired for, in language both sides can sign |
-| **Standing** | delivery posture | exactly where the engagement sits right now: discovery, proposal, acceptance, execution, review, hold, or archived |
-| **Standard** | the quality bar | what a good deliverable looks like, per phase, per client — explicit, not assumed |
-| **Governance** | the authority map | who decides what, what requires explicit approval, what cannot be sent or promised by the system |
+| **Member** | the client | `member.name`, `member.context` — who they are, their constraints, their consent |
+| **Mandate** | the engagement | `mandate.description`, `mandate.outcome` — what outcome was hired for, in language both sides can sign |
+| **Standing** | delivery posture | `standing.current`, `standing.history[]`, `next_standing` — exactly where the engagement is in the sequence |
+| **Standard** | the quality bar | `standard.quality_bar`, `standard.evidence` — what a good deliverable looks like, explicit and referenced |
+| **Governance** | the authority map | `governance.authority`, `governance.ethics`, `governance.reversibility` — who decides what, what cannot be automated |
 
-The engagement can only move forward when each primitive is named. No drifting mandates. No
-silent scope changes. No unreviewed handoffs.
+An engagement can only move forward when each primitive is named. No drifting mandates.
+No silent scope changes. No unreviewed handoffs.
 
 ---
 
@@ -63,28 +89,70 @@ silent scope changes. No unreviewed handoffs.
 
 ```
 DISCOVERY → PROPOSAL → ACCEPTANCE → EXECUTION → REVIEW → ARCHIVED
-                                                      ↓
-                                                    HOLD
+                                                ↓
+                                              HOLD
 ```
 
-An engagement's standing can advance; it cannot regress silently. A scope change is logged
-explicitly and approved before it takes effect. A hold is declared, not assumed.
+Rules of the road:
+- An engagement's standing **advances**; it does not regress silently
+- A scope change is **logged explicitly** and attributed before it takes effect
+- A **HOLD** is a declared state, not an implied pause
+- **ARCHIVED** is a complete closeout — what was promised, delivered, deferred, outstanding
 
-This is the standard a boutique agency enforces through staff and process. Here it is enforced
-through the posture record itself.
+These rules are not printed in a handbook. They are checked by the validator:
+`python organs/consulting/validate-consulting.py --fleet` — and every violation
+names the specific rule, field, and value.
 
 ---
 
 ## What the operator actually receives
 
-1. **A client posture file** — one record per engagement: member, mandate, standing, standards,
-   human gates, scope boundary, and scope change log.
-2. **A proposal-grade scope draft** — ready for partner review before any external send.
-3. **A milestone execution map** — staged, owned, and gated. No one-step commits to a full outcome.
-4. **A deliverable review log** — quality notes, missing evidence markers, and next-step list
-   before each handoff.
-5. **A closeout archive** — what was promised, delivered, deferred, and unresolved. The record
-   the next cycle starts from.
+When you hold Sovereign Systems, your workflow runs against five concrete outputs:
+
+| # | Output | What it is | How to use it |
+|---|---|---|---|
+| 1 | **Client posture file** | `engagements/<client>.yaml` — member, mandate, standing, standards, human gates, scope boundary, change log | One file per engagement. The single source of truth. Open it when you need to know where a client stands. |
+| 2 | **Scope draft** | The same file's `scope` section — what is included, excluded, and assumed | Ready for partner review before any external send. Changes are tracked in `scope.changes[]`. |
+| 3 | **Milestone map** | The `standing.history[]` and `human_gates[]` fields — staged, owned, gated | No one-step commits to a full outcome. Every milestone has a named gate. |
+| 4 | **Quality review** | The `standard` section — per-deliverable audit criteria against the agreed bar | Run the validator before handoff. It flags evidence gaps before they reach the client. |
+| 5 | **Closeout archive** | The full file at ARCHIVED standing — what was promised, delivered, deferred, open | The record the next engagement or the next cycle of this engagement starts from. |
+
+These are not templates to fill out. They are operational records that the rule engine
+reads, validates, and reports against. The operator works in the file; the engine
+enforces the discipline.
+
+---
+
+## How to adopt Sovereign Systems
+
+**You already hold it.** There is no setup to install, no API key to request, no dashboard
+to configure. The platform is the directory structure and the rule engine.
+
+```
+organs/consulting/
+├── engagements/        # One YAML file per client deployment
+│   ├── maddie.yaml
+│   ├── rob.yaml
+│   └── derek.yaml
+├── CHARTER.md          # The role map and workflow definitions
+├── KERNEL.md           # The architecture and 5-primitive map
+├── MACRO-FACE.md       # This document
+├── MICRO-FACE.md       # The live engagement record for Anthony's deployments
+├── SOVEREIGN-SYSTEMS-DECK.md  # A ready-to-show pitch
+├── seed.yaml           # The organ's self-assertion in the VLTIMA body
+└── validate-consulting.py  # Six executable rules, one command
+```
+
+**To adopt for your own clients:**
+
+1. Copy the directory structure: `organs/consulting/` into your own repo
+2. Create one engagement file per client: `engagements/<client>.yaml`
+3. Name the five primitives — member, mandate, standing, standard, governance
+4. Run the validator: `python3 validate-consulting.py --fleet`
+5. The validator tells you what is missing. Fix it. Run again.
+
+That is the full adoption flow. No timezone-dependent kickoff call. No training.
+The rule engine is the onboarding.
 
 ---
 
@@ -106,9 +174,9 @@ to practice and their client's trust.
 
 The macro form of Sovereign Systems is intentionally generic:
 
-- No hardcoded client names
-- No private pricing assumptions
-- No personality-specific idiom
+- No hardcoded client names — only `member.name` fields that change per engagement
+- No private pricing assumptions — the platform records scope, not rate cards
+- No personality-specific idiom — the five primitives and six rules apply to any domain
 
 A founder running three simultaneous client threads, a freelance operator managing recurring
 work with two partners, or an agency principal trying to turn a chaotic delivery history into
@@ -126,10 +194,12 @@ The organ runs the engagement system. The operator runs the engagement.
 
 | What the organ does | What the operator does |
 |---|---|
-| Captures intake, structures scope | Strategic accept/reject, final scope call |
+| Captures intake, structures scope | Strategic accept/reject — the human call on every engagement |
 | Sequences milestones, tracks standing | Approves reprioritization and external commitments |
-| Drafts deliverables, flags quality gaps | Signs off each handoff slice |
-| Stages outbound artifacts for review | Sends, signs, and commits externally |
+| Drafts deliverables, flags quality gaps | Signs off each handoff slice before it reaches the client |
+| Stages outbound artifacts for review | Sends, signs, and commits externally — never the system |
+| Runs the validator against posture rules | Fixes violations the validator flags; confirms resolution |
+| Maintains the posture record as source truth | Owns the relationship, the mandate, and the outcome |
 
 No autonomous external send. No autonomous billing. No autonomous contract execution.
 The operator is the final authority for every outward-facing action.
@@ -140,14 +210,32 @@ The operator is the final authority for every outward-facing action.
 
 The macro platform is **60% mature** (maturing stage). The engagement posture rules are
 executable and validated by `validate-consulting.py`. The first micro proof (three active
-deployments) passes all six rules. The face is polished. The remaining lift is to close
-the intake-to-closeout cycle completely for all three micro deployments and operationalize
-the handoff archive.
+deployments) passes all six rules. The face is polished.
 
-Validation:
+**What exists now:**
+- The 5-primitive kernel mapped to the consulting domain
+- The delivery posture sequence with explicit progression rules
+- Six executable rules checked by `validate-consulting.py`
+- Three active deployments (Maddie, Rob, Derek) at EXECUTION standing
+- All three pass the validator: 3/3 green, 0 violations
+- One scope change logged, attributed, and approved (Rob, 2026-06-15)
+- Zero placeholder evidence fields — every `standard.evidence` is real
+
+**The remaining lift to 70%+ requires:**
+- Close one complete intake-to-closeout cycle for all three deployments
+- Publish the closeout archive as the first repeatable handoff proof
+- Operationalize the governance layer: make the authority contract executable, not just stated
+
+**Validation:**
 
 ```bash
+# Check all active engagements against Rules #1-6
 python organs/consulting/validate-consulting.py --fleet
+
+# Expected output:
+# PASS  engagements/derek.yaml  posture: DISCOVERY → PROPOSAL → ACCEPTANCE → EXECUTION  |  next: REVIEW
+# PASS  engagements/maddie.yaml  posture: DISCOVERY → PROPOSAL → ACCEPTANCE → EXECUTION  |  next: REVIEW
+# PASS  engagements/rob.yaml     posture: DISCOVERY → PROPOSAL → ACCEPTANCE → EXECUTION  |  next: REVIEW
 ```
 
 ---
