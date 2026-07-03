@@ -59,14 +59,97 @@ def stable_display(path: Path) -> str:
         return str(resolved)
 
 
+def signal_quality(agent: str) -> dict[str, str]:
+    opencode_clock = HOME / ".local" / "share" / "opencode" / "clock.json"
+    rows: dict[str, dict[str, str]] = {
+        "codex": {
+            "signal": "transcript-token estimate",
+            "trust": "estimate",
+            "use": "usable for pacing; tune cap against plan status",
+            "next_build": "Calibrate OpenAI plan pool cap from a trusted account meter.",
+        },
+        "claude": {
+            "signal": "transcript-token estimate",
+            "trust": "estimate",
+            "use": "usable for pacing; rate-limit events still dominate stop decisions",
+            "next_build": "Calibrate Claude plan pool cap from a trusted account meter.",
+        },
+        "opencode": {
+            "signal": "db-meter" if opencode_clock.exists() else "dispatch-count proxy",
+            "trust": "measured" if opencode_clock.exists() else "proxy",
+            "use": "best local paid-lane signal when the DB clock is present",
+            "next_build": "Keep opencode-clock fresh from the SQLite usage DB.",
+        },
+        "agy": {
+            "signal": "dispatch-count proxy",
+            "trust": "proxy",
+            "use": "reachable, but not proof of provider quota",
+            "next_build": "Add a provider-backed Agy meter or recent rate-limit receipt.",
+        },
+        "gemini": {
+            "signal": "dispatch-count proxy",
+            "trust": "proxy",
+            "use": "reachable when auth is configured; daily cap remains board-derived",
+            "next_build": "Add a Gemini quota/rate-limit receipt if available.",
+        },
+        "github_actions": {
+            "signal": "workflow reachability",
+            "trust": "reachability",
+            "use": "can launch workflow packets; not a local quota meter",
+            "next_build": "Surface queued/running workflow capacity from GitHub checks.",
+        },
+        "ollama": {
+            "signal": "local model presence",
+            "trust": "binary/model",
+            "use": "down until a model is pulled",
+            "next_build": "Pull the configured local model to light the floor lane.",
+        },
+        "jules": {
+            "signal": "dispatch-count cap",
+            "trust": "known cap",
+            "use": "down locally until CLI/service path is available",
+            "next_build": "Restore Jules CLI/service reachability.",
+        },
+        "copilot": {
+            "signal": "assignability probe",
+            "trust": "reachability",
+            "use": "down until Copilot coding agent assignment is confirmed",
+            "next_build": "Enable Copilot coding agent and set LIMEN_COPILOT_ENABLED=1.",
+        },
+        "warp": {
+            "signal": "credential presence",
+            "trust": "credential gate",
+            "use": "down until WARP_API_KEY is installed",
+            "next_build": "Install WARP_API_KEY locally and as the workflow secret.",
+        },
+        "oz": {
+            "signal": "credential presence",
+            "trust": "credential gate",
+            "use": "down until WARP_API_KEY is installed",
+            "next_build": "Install WARP_API_KEY locally and as the workflow secret.",
+        },
+    }
+    return rows.get(
+        agent,
+        {
+            "signal": "unknown",
+            "trust": "unknown",
+            "use": "not enough local signal",
+            "next_build": "Define this lane in the capacity signal table.",
+        },
+    )
+
+
 def build_snapshot(board: dict[str, Any]) -> dict[str, Any]:
     census = capacity_census(board)
     blocked = [row for row in census if not row["reachable"]]
     claude = next((row for row in census if row["agent"] == "claude"), None)
+    signals = {row["agent"]: signal_quality(row["agent"]) for row in census}
     return {
         "generated_at": now_iso(),
         "status": "healthy" if not blocked else "blocked",
         "census": census,
+        "signals": signals,
         "blocked_count": len(blocked),
         "blocked_agents": [row["agent"] for row in blocked],
         "blocked_details": {row["agent"]: row["detail"] for row in blocked},
@@ -97,6 +180,25 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         reachable = "up" if row["reachable"] else "down"
         detail = str(row["detail"]).replace("|", "\\|")
         lines.append(f"| `{row['agent']}` | {row['kind']} | `{reachable}` | {remaining} | {limit} | {detail} |")
+
+    lines += [
+        "",
+        "## Signal Quality",
+        "",
+        "| Agent | Signal | Trust | Use | Next Build |",
+        "|---|---|---|---|---|",
+    ]
+    signals = snapshot.get("signals") or {}
+    for row in census:
+        signal = signals.get(row["agent"]) or {}
+        lines.append(
+            "| "
+            f"`{row['agent']}` | "
+            f"{str(signal.get('signal', 'unknown')).replace('|', '\\|')} | "
+            f"{str(signal.get('trust', 'unknown')).replace('|', '\\|')} | "
+            f"{str(signal.get('use', '')).replace('|', '\\|')} | "
+            f"{str(signal.get('next_build', '')).replace('|', '\\|')} |"
+        )
 
     lines += [
         "",
