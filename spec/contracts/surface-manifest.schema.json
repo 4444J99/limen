@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://limen.local/contracts/surface-manifest.schema.json",
   "title": "Limen Surface Manifest",
+  "description": "Persona-based surface gating contract. Gate authority: organs/governance/PUBLICATION-POLICY.md convergence table row 3. The publication policy decides CONTENT safety (disposition matrix); this schema decides AUDIENCE access (persona routing). Both must agree before content reaches a surface.",
   "type": "object",
   "required": ["status", "persona", "generated_at", "source", "surfaces", "contracts"],
   "properties": {
@@ -21,24 +22,29 @@
         "storage": { "type": "object" }
       }
     },
-    "surfaces": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["id", "title", "route", "contract", "persona", "sanctioned_personas", "disclosure"],
-        "properties": {
-          "id": { "type": "string", "enum": ["internal", "qa", "client", "public"] },
-          "title": { "type": "string" },
-          "route": { "type": "string" },
-          "contract": { "type": "string" },
-          "persona": { "type": "string", "enum": ["owner", "client", "public"] },
-          "sanctioned_personas": {
-            "type": "array",
-            "items": { "type": "string", "enum": ["owner", "client", "public"] }
-          },
-          "disclosure": { "type": "string" }
+      "surfaces": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "title", "route", "contract", "persona", "sanctioned_personas", "disclosure"],
+          "properties": {
+            "id": { "type": "string", "enum": ["internal", "qa", "client", "public"] },
+            "title": { "type": "string" },
+            "route": { "type": "string" },
+            "contract": { "type": "string" },
+            "persona": { "type": "string", "enum": ["owner", "client", "public"] },
+            "sanctioned_personas": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["owner", "client", "public"] }
+            },
+            "disclosure": {
+              "type": "string",
+              "description": "Disposition class from the publication-policy engine (organs/governance/PUBLICATION-POLICY.md convergence table row 3). Must match one of: secret, personal_pii, internal_strategy, product_content, public_safe. The persona contract decides WHO sees a surface; the publication policy decides whether the surface's CONTENT is safe for that visibility."
+            }
+          }
         }
+      }
       }
     },
     "contracts": {

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 """creds-hydrate.py — the credential HYDRATION organ. One source of truth, auto-applied everywhere.
+# Gate authority: organs/governance/PUBLICATION-POLICY.md — convergence table row 1 (_SECRET_RX).
+# The `_SECRET_RX` pattern is mirrored in scripts/publication-policy.py as the canonical firewall.
+# This file owns credential HYDRATION (minting + verifying); the publication policy owns
+# DISPOSITION (remove/redact/publish). Changes to what constitutes a secret shape start in the
+# publication policy's _SECRET_RX, not here — mirror back if the shape changes.
 
 THE DISEASE this cures: you log into a vendor (gemini / opencode / codex / …) ONCE — and then a new
 worktree, a fresh machine state, or a lapsed token makes you do it AGAIN. The credentials already

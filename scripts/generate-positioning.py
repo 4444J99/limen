@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 """generate-positioning — step 1 of the inbound-magnet system (docs/inbound-magnet-system.md).
+# Gate authority: organs/governance/PUBLICATION-POLICY.md — convergence table row 4 (awaiting_publish).
+# The `awaiting_publish` flag IS the `PUBLISH`→his_lever manifestation: the publication-policy engine
+# decides content disposition; this flag gates whether the fully-authored content actually renders
+# (his hand to flip). Changes to the publish gate start in the publication policy, not here.
 
 A repo pulls a warm inbound lead by *existing* only if its surface tells the right buyer,
 in their own language, that (a) it solves an expensive problem of theirs and (b) the person
