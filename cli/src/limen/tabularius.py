@@ -208,7 +208,7 @@ def _parse_pending(inbox: Path) -> tuple[list[tuple[Path, Ticket]], list[tuple[P
     return good, bad
 
 
-def _apply(ticket: Ticket, tasks: "OrderedDict[str, dict]", meta: dict) -> None:
+def _apply(ticket: Ticket, tasks: OrderedDict[str, dict[str, Any]], meta: dict[str, Any]) -> None:
     """Fold one ticket onto the in-memory board state (mutates `tasks`/`meta` in place).
 
     Validates the resulting single task so a malformed ticket raises HERE and is quarantined alone,

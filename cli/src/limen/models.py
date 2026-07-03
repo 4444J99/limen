@@ -1,7 +1,5 @@
 import re
 from datetime import date, datetime
-from typing import Any
-
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
@@ -106,7 +104,7 @@ class Portal(BaseModel):
     name: str = "Universal Task Intake"
     description: str = ""
     budget: Budget = Field(default_factory=Budget)
-    agents: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    agents: dict[str, dict[str, object]] = Field(default_factory=dict)
 
 
 class LimenFile(BaseModel):
