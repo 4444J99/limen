@@ -16,6 +16,7 @@ LOGS = LIMEN_ROOT / "logs"
 TASKS = Path(os.environ.get("LIMEN_TASKS", LIMEN_ROOT / "tasks.yaml"))
 STATE_PATH = LOGS / "insight-cadence-state.json"
 OUT_DIR = LOGS / "insight-cadence"
+DRIFT_JSON = LOGS / "insights-drift.json"
 
 TIER_SECONDS = {"hourly": 3600, "daily": 86400, "weekly": 604800, "monthly": 2592000}
 
@@ -67,6 +68,32 @@ def _load_json(path, default):
 def _gen_id(source, subject):
     h = hashlib.sha256(f"{source}:{subject}".encode()).hexdigest()[:8]
     return f"{source}-{h}"
+
+
+def _refresh_lineage():
+    """Regenerate logs/insights-drift.json from the /insights snapshot archive.
+
+    This is the conduit the censor's weekly tier has been starving on: the
+    machine-readable lineage of every archived /insights report (friction
+    persistence, key-pattern timeline, area churn). Degrades silently when the
+    insights-drift tool isn't deployed — the gatherer then reads whatever file
+    already exists."""
+    import shutil
+    import subprocess
+
+    tool = shutil.which("insights-drift") or str(Path.home() / ".local" / "bin" / "insights-drift")
+    if not Path(tool).exists():
+        return False
+    try:
+        r = subprocess.run(
+            [tool, "--json", str(DRIFT_JSON)],
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        return r.returncode == 0
+    except (subprocess.TimeoutExpired, OSError):
+        return False
 
 
 def _gather_insights():
@@ -189,6 +216,43 @@ def _gather_insights():
     except Exception:
         pass
 
+    # 7. insights lineage — recurring/resolved frictions across the archived
+    # /insights reports (logs/insights-drift.json, refreshed each due tier).
+    # Every new report is compared against every report before it; a friction
+    # present in >=2 reports including the latest is a standing-correction
+    # candidate for the censor's weekly cascade.
+    drift = _load_json(DRIFT_JSON, {})
+    for fr in (drift.get("recurring") or [])[:8]:
+        label = fr.get("label", "?")
+        insights.append({
+            "id": _gen_id("insights-lineage", label),
+            "severity": "warning",
+            "title": f"Recurring friction across {fr.get('reports', '?')} insights reports: {label}",
+            "detail": (
+                f"First seen {fr.get('first_seen')}, still present in {fr.get('last_seen')}. "
+                f"{fr.get('latest_description', '')}"
+            ),
+            "owner": "censor",
+            "source": "insights-drift.json",
+            "suggested_action": "Promote to a standing correction (CLAUDE.md/memory) via the censor cascade",
+            "healable": False,
+        })
+    for fr in (drift.get("resolved") or [])[:4]:
+        label = fr.get("label", "?")
+        insights.append({
+            "id": _gen_id("insights-lineage-resolved", label),
+            "severity": "info",
+            "title": f"Friction resolved since {fr.get('last_seen')}: {label}",
+            "detail": (
+                f"Present in {fr.get('reports', '?')} report(s) "
+                f"({fr.get('first_seen')} to {fr.get('last_seen')}), absent from the latest."
+            ),
+            "owner": "censor",
+            "source": "insights-drift.json",
+            "suggested_action": "None — confirm the correction that resolved it stays standing",
+            "healable": True,
+        })
+
     # ensure at least one insight for tests if none found
     if not insights:
         insights.append({
@@ -257,6 +321,9 @@ def main():
         if not args.dry_run:
             _stamp_health()
         return 0
+
+    if not args.dry_run:
+        _refresh_lineage()
 
     insights = _gather_insights()
 

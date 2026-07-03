@@ -71,5 +71,70 @@ if [ "$files_before" != "$files_after" ]; then
     exit 1
 fi
 
+echo "5. Lineage conduit (insights-drift --json -> logs/insights-drift.json -> gatherer)"
+DRIFT_TOOL="$(command -v insights-drift 2>/dev/null || true)"
+[ -z "$DRIFT_TOOL" ] && [ -x "$HOME/.local/bin/insights-drift" ] && DRIFT_TOOL="$HOME/.local/bin/insights-drift"
+if [ -z "$DRIFT_TOOL" ]; then
+    echo "   (insights-drift not deployed on this host — lineage checks skipped)"
+else
+    FIX="$(mktemp -d)"
+    trap 'rm -rf "$FIX"' EXIT
+    python3 - "$FIX" <<'PY'
+import json, pathlib, sys
+fix = pathlib.Path(sys.argv[1])
+def mani(stamp, frictions):
+    d = fix / stamp
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "manifest.json").write_text(json.dumps({
+        "snapshot_at": stamp, "stats": {"messages": 1}, "window": {},
+        "areas": [{"name": "A"}], "key_pattern": "kp-" + stamp,
+        "friction": frictions}))
+# One friction re-worded across all three snapshots (must cluster + persist),
+# one that appears once and vanishes (must resolve).
+mani("2026-01-01T0000", [
+    {"category": "Premature done claims", "description": "declares work done early with gaps"},
+    {"category": "Auth interruptions", "description": "login errors break long runs"}])
+mani("2026-02-01T0000", [
+    {"category": "Premature or hollow completion claims", "description": "declares work done early with gaps"}])
+mani("2026-03-01T0000", [
+    {"category": "Hollow premature completion claims", "description": "declares work done early with gaps remaining"}])
+PY
+    OUT1="$FIX/drift1.json"; OUT2="$FIX/drift2.json"
+    INSIGHTS_SNAPDIR="$FIX" "$DRIFT_TOOL" --json "$OUT1"
+    INSIGHTS_SNAPDIR="$FIX" "$DRIFT_TOOL" --json "$OUT2"
+    if ! cmp -s "$OUT1" "$OUT2"; then
+        echo "ERROR: lineage output is not byte-idempotent"
+        exit 1
+    fi
+    python3 - "$OUT1" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1]))
+assert d["snapshot_count"] == 3, d["snapshot_count"]
+rec, res = d["recurring"], d["resolved"]
+assert any(f["reports"] == 3 and f["status"] == "persisting" for f in rec), \
+    f"re-worded friction did not cluster across 3 snapshots: {rec}"
+assert any("auth" in f["label"].lower() and f["status"] == "resolved" for f in res), \
+    f"vanished friction not marked resolved: {res}"
+print(f"   clustering ok: {len(rec)} recurring, {len(res)} resolved")
+PY
+    # End-to-end: the cadence organ refreshes the drift file and surfaces
+    # recurring frictions in its reports.
+    rm -rf "$OUT_DIR"; rm -f "$STATE" "$LOGS/insights-drift.json"
+    INSIGHTS_SNAPDIR="$FIX" python3 "$LIMEN_ROOT/scripts/insight-cadence.py" --force hourly
+    if [ ! -f "$LOGS/insights-drift.json" ]; then
+        echo "ERROR: insight-cadence did not refresh logs/insights-drift.json"
+        exit 1
+    fi
+    if ! grep -q "Recurring friction across 3 insights reports" "$OUT_DIR/hourly-latest.md"; then
+        echo "ERROR: recurring friction missing from hourly report"
+        exit 1
+    fi
+    if ! grep -q "Friction resolved since" "$OUT_DIR/hourly-latest.md"; then
+        echo "ERROR: resolved friction missing from hourly report"
+        exit 1
+    fi
+    echo "   conduit ok: lineage flows archive -> drift json -> cadence report"
+fi
+
 echo "insight-cadence verification passed"
 exit 0
