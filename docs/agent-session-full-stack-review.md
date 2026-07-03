@@ -1,6 +1,6 @@
 # Agent Session Full-Stack Review
 
-Generated: `2026-07-03T22:54:00Z`
+Generated: `2026-07-03T23:04:10Z`
 
 ## Scope
 
@@ -12,11 +12,11 @@ Generated: `2026-07-03T22:54:00Z`
 
 - Verbatim prompt events: `.limen-private/session-corpus/full-stack-review/verbatim-prompts.jsonl`
 - Structured review: `.limen-private/session-corpus/full-stack-review/agent-session-review.json`
-- Prompt events extracted: `125871`
-- Unique prompt hashes: `74725`
-- Unique normalized task-body hashes: `74646`
-- Sessions reviewed: `4363`
-- Outcome text scanned: `596092982` bytes
+- Prompt events extracted: `125875`
+- Unique prompt hashes: `74727`
+- Unique normalized task-body hashes: `74648`
+- Sessions reviewed: `4364`
+- Outcome text scanned: `596824677` bytes
 
 ## Agent Coverage
 
@@ -24,7 +24,7 @@ Generated: `2026-07-03T22:54:00Z`
 |---|---:|---:|---:|---:|---:|---:|---:|
 | `agy` | 528 | 554 | 2214237 | 1950958 | 303 | 499 | 28 |
 | `claude` | 1270 | 115934 | 247646455 | 243704255 | 765 | 847 | 340 |
-| `codex` | 1297 | 8108 | 18691454 | 13709062 | 1033 | 1059 | 238 |
+| `codex` | 1298 | 8112 | 18706914 | 13712960 | 1034 | 1060 | 238 |
 | `opencode` | 1268 | 1275 | 2979982 | 2979976 | 866 | 1039 | 228 |
 
 ## Work Surface Coverage
@@ -42,9 +42,9 @@ Structured change refs are native changed-file surfaces, not inferred code diffs
 
 | Body kind | Prompt events |
 |---|---:|
-| `direct` | 121911 |
+| `direct` | 121913 |
 | `flame_scaffold` | 2262 |
-| `flame_with_task_body` | 1683 |
+| `flame_with_task_body` | 1685 |
 | `session_context` | 15 |
 
 ## Source Coverage
@@ -52,7 +52,7 @@ Structured change refs are native changed-file surfaces, not inferred code diffs
 | Source | Prompt events |
 |---|---:|
 | `claude-projects` | 115934 |
-| `codex-sessions` | 7130 |
+| `codex-sessions` | 7134 |
 | `opencode-db` | 1275 |
 | `codex-history` | 978 |
 | `agy-cli-conversations` | 480 |
@@ -82,10 +82,10 @@ Each session is compared to this ideal form:
 - `1396` sessions with prompts had no verification signal in the reviewed outcome text.
 - `919` sessions had no durable receipt signal or changed-file receipt.
 - `834` sessions look like no-op or unrecorded work because prompts exist but the outcome surface has no verification/receipt/change signal.
-- `3945` prompt events carried FLAME scaffolding; the task body is now separated, but older ledger views overcounted repeated invariant prompt mass as fresh work.
+- `3947` prompt events carried FLAME scaffolding; the task body is now separated, but older ledger views overcounted repeated invariant prompt mass as fresh work.
 - Structured changed-file data is uneven by agent: OpenCode exposes it in SQLite, while Codex and Claude need receipt text or downstream repo diff reconstruction.
 - OpenCode had many sessions that only become trustworthy when its DB-backed token clock and receipt handshake are present; session rows alone are not enough.
-- Antigravity IDE remains the weakest source surface because IDE conversations and provider quota are not yet decoded as first-class prompt/session records.
+- Antigravity IDE has no first-class prompt/session records on this host; provider quota is still not represented as a native receipt surface.
 
 ## Highest-Risk Session Diffs
 
@@ -128,25 +128,29 @@ Each session is compared to this ideal form:
 2. Repeated fleet prompts carry a large invariant preamble before narrow work. That makes the prompt layer expensive and blurs the ideal diff: many sessions look like they were asked to preserve the whole organism when the real task was a narrow repo predicate.
 3. Broad autonomy language and closeout language are fighting each other. The ideal form should require a named owner scope and receipt before any lane gets a broad prompt.
 4. OpenCode has many recent sessions with no summary diffs and no token accounting in the session row; those need a live clock/receipt handshake or they read as no-op/unrecorded work even when the model saw a prompt.
-5. Agy provider quota remains a weak surface: this review now decodes Agy CLI history and per-conversation SQLite prompts, but native Antigravity IDE conversation state is still only inventoried.
+5. Agy provider quota remains a weak surface: this review now decodes Agy CLI history and per-conversation SQLite prompts, while the native Antigravity IDE stores checked here contain no prompt/session records.
 
 ## Agent Notes
 
 - `agy`: top gaps: failure/blocker language outweighs done language (423), session outcome lacks verification signal (206), prompt missing expected receipt/artifact (82), session outcome lacks durable receipt signal (28), likely no-op or unrecorded work (28).
 - `claude`: top gaps: session outcome lacks verification signal (505), session outcome lacks durable receipt signal (423), repeated broad/invariant prompt pressure (367), failure/blocker language outweighs done language (362), likely no-op or unrecorded work (340).
-- `codex`: top gaps: failure/blocker language outweighs done language (757), session outcome lacks verification signal (264), prompt missing executable predicate (252), session outcome lacks durable receipt signal (238), likely no-op or unrecorded work (238).
+- `codex`: top gaps: failure/blocker language outweighs done language (758), session outcome lacks verification signal (264), prompt missing executable predicate (252), session outcome lacks durable receipt signal (238), likely no-op or unrecorded work (238).
 - `opencode`: top gaps: prompt missing expected receipt/artifact (549), session outcome lacks verification signal (401), prompt missing executable predicate (396), session outcome lacks durable receipt signal (228), likely no-op or unrecorded work (228).
 
 ## Antigravity/Agy Native Surface
 
 - Known native state files: `4`.
 - Agy CLI conversation DBs decoded: `501` files, `894586880` bytes.
+- Agy CLI implicit protobuf files inventoried: `13` files, `13532` bytes, `5` printable text spans.
+- Antigravity IDE conversation dirs checked: `.gemini/antigravity-ide/conversations` has `0` files; `.gemini/antigravity/conversations` has `0` files.
+- Antigravity IDE state DBs checked: `4` DBs, `204` keys, `28` chat/prompt/trajectory-like keys.
+- Antigravity IDE log evidence: `1` zero-chat-session migration lines and `3` trajectory-store startup lines across `76` log files.
 - Local support files inventoried: `621875` files, `33510178751` bytes.
-- Coverage note: Agy CLI history and per-conversation SQLite prompt bodies are decoded. Native Antigravity IDE prompt bodies remain inventoried but not fully decoded.
+- Coverage note: Agy CLI history and per-conversation SQLite prompt bodies are decoded. Antigravity IDE conversation directories are empty on this host; IDE state DBs and logs were checked for prompt/session stores and did not add first-class prompt events.
 
 ## Next Repairs
 
-1. Decode native Antigravity IDE conversation storage if a stable conversation-body mapping is found; current IDE evidence remains app/log inventory rather than first-class prompts.
+1. Re-check native Antigravity IDE only after a run creates non-empty `.gemini/antigravity-ide/conversations` or `.gemini/antigravity/conversations`; current host state has no IDE prompt store to decode.
 2. Add a native Agy provider clock or explicit quota receipt. The existing board-run clock is not equivalent to provider quota exhaustion.
 3. Require lane packets to include `owner_scope`, `predicate`, `expected_receipt`, and `gate_class` fields before dispatch to OpenCode/Agy/Claude/Jules.
 4. Flag sessions with `prompt_events > 0` and no verification/receipt as failed-unrecorded until a receipt or blocker is written.

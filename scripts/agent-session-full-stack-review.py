@@ -41,8 +41,13 @@ AGY_CLI_ROOT = HOME / ".gemini" / "antigravity-cli"
 AGY_CLI_HISTORY = AGY_CLI_ROOT / "history.jsonl"
 AGY_CLI_CONVERSATIONS = AGY_CLI_ROOT / "conversations"
 AGY_CLI_SUMMARIES = AGY_CLI_ROOT / "conversation_summaries.db"
+AGY_CLI_IMPLICIT = AGY_CLI_ROOT / "implicit"
 ANTIGRAVITY_STATE = HOME / ".gemini" / "antigravity" / "antigravity_state.pbtxt"
 ANTIGRAVITY_SUMMARIES = HOME / ".gemini" / "antigravity" / "agyhub_summaries_proto.pb"
+ANTIGRAVITY_HOME = HOME / ".gemini" / "antigravity"
+ANTIGRAVITY_IDE_HOME = HOME / ".gemini" / "antigravity-ide"
+ANTIGRAVITY_IDE_SUPPORT = HOME / "Library" / "Application Support" / "Antigravity IDE"
+ANTIGRAVITY_APP_SUPPORT = HOME / "Library" / "Application Support" / "Antigravity"
 
 
 VERIFY_RE = re.compile(
@@ -946,6 +951,95 @@ def extract_agy_cli_conversations(agg: Aggregator, writer: Any) -> None:
         con.close()
 
 
+def count_file_tree(root: Path) -> tuple[int, int]:
+    count = 0
+    size = 0
+    if not root.exists():
+        return count, size
+    for path in root.rglob("*"):
+        if not path.is_file():
+            continue
+        count += 1
+        try:
+            size += path.stat().st_size
+        except OSError:
+            pass
+    return count, size
+
+
+def sqlite_item_table_summary(path: Path) -> dict[str, Any]:
+    out: dict[str, Any] = {
+        "path": relpath(path),
+        "items": 0,
+        "chat_or_prompt_keys": [],
+        "largest_key": None,
+        "largest_bytes": 0,
+    }
+    try:
+        con = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    except sqlite3.Error:
+        out["error"] = "open_failed"
+        return out
+    try:
+        rows = con.execute("SELECT key, length(value) AS bytes FROM ItemTable").fetchall()
+    except sqlite3.Error:
+        con.close()
+        out["error"] = "query_failed"
+        return out
+    con.close()
+    out["items"] = len(rows)
+    key_re = re.compile(r"(chat|prompt|conversation|trajectory|agent|antigravity)", re.I)
+    for key, value_bytes in rows:
+        if int(value_bytes or 0) > int(out["largest_bytes"] or 0):
+            out["largest_key"] = key
+            out["largest_bytes"] = int(value_bytes or 0)
+        if key_re.search(str(key)):
+            out["chat_or_prompt_keys"].append({"key": str(key), "bytes": int(value_bytes or 0)})
+    out["chat_or_prompt_keys"] = sorted(
+        out["chat_or_prompt_keys"], key=lambda item: (-int(item["bytes"]), item["key"])
+    )[:20]
+    return out
+
+
+def antigravity_ide_state_summary() -> dict[str, Any]:
+    ide_convo_count, ide_convo_bytes = count_file_tree(ANTIGRAVITY_IDE_HOME / "conversations")
+    native_convo_count, native_convo_bytes = count_file_tree(ANTIGRAVITY_HOME / "conversations")
+    vscdbs = (
+        sorted((ANTIGRAVITY_IDE_SUPPORT / "User").rglob("state.vscdb"))
+        if (ANTIGRAVITY_IDE_SUPPORT / "User").exists()
+        else []
+    )
+    state_dbs = [sqlite_item_table_summary(path) for path in vscdbs]
+
+    chat_migration_zero = 0
+    trajectory_store_lines = 0
+    log_count = 0
+    if ANTIGRAVITY_IDE_SUPPORT.exists():
+        for path in ANTIGRAVITY_IDE_SUPPORT.rglob("*.log"):
+            log_count += 1
+            try:
+                text = path.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            chat_migration_zero += len(re.findall(r"ChatSessionStore: Migrating 0 chat sessions", text))
+            trajectory_store_lines += len(re.findall(r"Creating trajectory store manager", text))
+
+    prompt_like_key_count = sum(len(item.get("chat_or_prompt_keys") or []) for item in state_dbs)
+    return {
+        "ide_conversation_files": ide_convo_count,
+        "ide_conversation_bytes": ide_convo_bytes,
+        "native_conversation_files": native_convo_count,
+        "native_conversation_bytes": native_convo_bytes,
+        "state_db_count": len(state_dbs),
+        "state_db_items": sum(int(item.get("items") or 0) for item in state_dbs),
+        "prompt_like_key_count": prompt_like_key_count,
+        "state_db_prompt_like_keys": state_dbs,
+        "log_files": log_count,
+        "chat_migration_zero_lines": chat_migration_zero,
+        "trajectory_store_lines": trajectory_store_lines,
+    }
+
+
 def antigravity_inventory() -> dict[str, Any]:
     files = []
     for path in (ANTIGRAVITY_STATE, ANTIGRAVITY_SUMMARIES, AGY_CLI_HISTORY, AGY_CLI_SUMMARIES):
@@ -958,9 +1052,19 @@ def antigravity_inventory() -> dict[str, Any]:
             conversation_db_bytes += path.stat().st_size
         except OSError:
             pass
+    implicit_pbs = list(AGY_CLI_IMPLICIT.glob("*.pb")) if AGY_CLI_IMPLICIT.exists() else []
+    implicit_pb_bytes = 0
+    implicit_pb_text_spans = 0
+    for path in implicit_pbs:
+        try:
+            implicit_pb_bytes += path.stat().st_size
+            implicit_pb_text_spans += len(blob_text_spans(path.read_bytes(), min_len=20))
+        except OSError:
+            pass
+    ide_state = antigravity_ide_state_summary()
     support_roots = [
-        HOME / "Library" / "Application Support" / "Antigravity IDE",
-        HOME / "Library" / "Application Support" / "Antigravity",
+        ANTIGRAVITY_IDE_SUPPORT,
+        ANTIGRAVITY_APP_SUPPORT,
         HOME / ".gemini" / "antigravity-cli",
     ]
     support_count = 0
@@ -979,9 +1083,13 @@ def antigravity_inventory() -> dict[str, Any]:
         "known_state_files": files,
         "agy_cli_conversation_dbs": len(conversation_dbs),
         "agy_cli_conversation_db_bytes": conversation_db_bytes,
+        "agy_cli_implicit_pbs": len(implicit_pbs),
+        "agy_cli_implicit_pb_bytes": implicit_pb_bytes,
+        "agy_cli_implicit_pb_text_spans": implicit_pb_text_spans,
+        "ide_state": ide_state,
         "support_file_count": support_count,
         "support_bytes": support_bytes,
-        "note": "Agy CLI history and per-conversation SQLite prompt bodies are decoded. Native Antigravity IDE prompt bodies remain inventoried but not fully decoded.",
+        "note": "Agy CLI history and per-conversation SQLite prompt bodies are decoded. Antigravity IDE conversation directories are empty on this host; IDE state DBs and logs were checked for prompt/session stores and did not add first-class prompt events.",
     }
 
 
@@ -1155,7 +1263,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
             f"- `{flame_events}` prompt events carried FLAME scaffolding; the task body is now separated, but older ledger views overcounted repeated invariant prompt mass as fresh work.",
             "- Structured changed-file data is uneven by agent: OpenCode exposes it in SQLite, while Codex and Claude need receipt text or downstream repo diff reconstruction.",
             "- OpenCode had many sessions that only become trustworthy when its DB-backed token clock and receipt handshake are present; session rows alone are not enough.",
-            "- Antigravity IDE remains the weakest source surface because IDE conversations and provider quota are not yet decoded as first-class prompt/session records.",
+            "- Antigravity IDE has no first-class prompt/session records on this host; provider quota is still not represented as a native receipt surface.",
             "",
             "## Highest-Risk Session Diffs",
             "",
@@ -1180,7 +1288,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
             "2. Repeated fleet prompts carry a large invariant preamble before narrow work. That makes the prompt layer expensive and blurs the ideal diff: many sessions look like they were asked to preserve the whole organism when the real task was a narrow repo predicate.",
             "3. Broad autonomy language and closeout language are fighting each other. The ideal form should require a named owner scope and receipt before any lane gets a broad prompt.",
             "4. OpenCode has many recent sessions with no summary diffs and no token accounting in the session row; those need a live clock/receipt handshake or they read as no-op/unrecorded work even when the model saw a prompt.",
-            "5. Agy provider quota remains a weak surface: this review now decodes Agy CLI history and per-conversation SQLite prompts, but native Antigravity IDE conversation state is still only inventoried.",
+            "5. Agy provider quota remains a weak surface: this review now decodes Agy CLI history and per-conversation SQLite prompts, while the native Antigravity IDE stores checked here contain no prompt/session records.",
             "",
             "## Agent Notes",
             "",
@@ -1197,12 +1305,16 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
             "",
             f"- Known native state files: `{len(antigravity['known_state_files'])}`.",
             f"- Agy CLI conversation DBs decoded: `{antigravity['agy_cli_conversation_dbs']}` files, `{antigravity['agy_cli_conversation_db_bytes']}` bytes.",
+            f"- Agy CLI implicit protobuf files inventoried: `{antigravity['agy_cli_implicit_pbs']}` files, `{antigravity['agy_cli_implicit_pb_bytes']}` bytes, `{antigravity['agy_cli_implicit_pb_text_spans']}` printable text spans.",
+            f"- Antigravity IDE conversation dirs checked: `.gemini/antigravity-ide/conversations` has `{antigravity['ide_state']['ide_conversation_files']}` files; `.gemini/antigravity/conversations` has `{antigravity['ide_state']['native_conversation_files']}` files.",
+            f"- Antigravity IDE state DBs checked: `{antigravity['ide_state']['state_db_count']}` DBs, `{antigravity['ide_state']['state_db_items']}` keys, `{antigravity['ide_state']['prompt_like_key_count']}` chat/prompt/trajectory-like keys.",
+            f"- Antigravity IDE log evidence: `{antigravity['ide_state']['chat_migration_zero_lines']}` zero-chat-session migration lines and `{antigravity['ide_state']['trajectory_store_lines']}` trajectory-store startup lines across `{antigravity['ide_state']['log_files']}` log files.",
             f"- Local support files inventoried: `{antigravity['support_file_count']}` files, `{antigravity['support_bytes']}` bytes.",
             f"- Coverage note: {antigravity['note']}",
             "",
             "## Next Repairs",
             "",
-            "1. Decode native Antigravity IDE conversation storage if a stable conversation-body mapping is found; current IDE evidence remains app/log inventory rather than first-class prompts.",
+            "1. Re-check native Antigravity IDE only after a run creates non-empty `.gemini/antigravity-ide/conversations` or `.gemini/antigravity/conversations`; current host state has no IDE prompt store to decode.",
             "2. Add a native Agy provider clock or explicit quota receipt. The existing board-run clock is not equivalent to provider quota exhaustion.",
             "3. Require lane packets to include `owner_scope`, `predicate`, `expected_receipt`, and `gate_class` fields before dispatch to OpenCode/Agy/Claude/Jules.",
             "4. Flag sessions with `prompt_events > 0` and no verification/receipt as failed-unrecorded until a receipt or blocker is written.",
