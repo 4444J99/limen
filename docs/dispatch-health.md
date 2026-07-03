@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-03T07:48:35+00:00`
+Generated: `2026-07-03T07:56:17+00:00`
 
 Status: `healthy`
 
@@ -23,21 +23,21 @@ Status: `healthy`
 - Loaded LIMEN_DISPATCH_ASYNC: `1`.
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-03T07:48:35.827980+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-03T07:56:17.642287+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 0 still running ; would launch 5 (cap 12) -> ['GEN-meta-organvm-visual-substrate-inquiry-test-coverage-0620', 'GEN-organvm-i-theoria-organvm-v-logos.github.io-test-coverage-0620', 'GEN-organvm-i-theoria-meta-organvm.github.io-test-coverage-0620', 'GEN-organvm-i-theoria-organvm-ii-poiesis.github.io-test-coverage-0620', 'GEN-organvm-ii-poiesis-organvm-ii-poiesis.github.io-test-coverage-0620']`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 0 still running ; would launch 0 (cap 12) -> []`.
 - Async skipped down lanes: `codex, gemini, jules`.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `9dd0b53556a1d8f0611798acc43d992d6da0489a`.
-- origin/main: `9dd0b53556a1d8f0611798acc43d992d6da0489a`.
+- HEAD: `7d9fb775ec618f1cf5065bc11f7a9728fbf52f99`.
+- origin/main: `7d9fb775ec618f1cf5065bc11f7a9728fbf52f99`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
 - Dirty entries: `0`.
 
