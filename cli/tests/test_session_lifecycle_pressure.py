@@ -571,6 +571,7 @@ def test_dispatch_health_records_live_root_and_async_drift(tmp_path: Path):
         "ok": True,
         "timed_out": False,
         "last_line": "would launch 0",
+        "skipped_down_lanes": ["gemini", "jules"],
     }
 
     snapshot = dispatch.build_snapshot(type("Args", (), {"probe_async": True})())
@@ -583,8 +584,17 @@ def test_dispatch_health_records_live_root_and_async_drift(tmp_path: Path):
     assert "live-root-dirty" in blocker_ids
     assert "heartbeat-loaded-env-drift" in blocker_ids
     assert "Dispatch/heartbeat health is not proven by tests in a detached worktree alone." in markdown
+    assert "Async skipped down lanes: `gemini, jules`" in markdown
     assert dispatch.DOC_PATH.exists()
     assert dispatch.PRIVATE_INDEX.exists()
+
+
+def test_dispatch_health_parses_async_skipped_down_lanes():
+    dispatch = _load(DISPATCH_HEALTH_SCRIPT, "dispatch_health_async_skips")
+
+    output = "── skipping down lanes: ['gemini', 'jules']\n── async: would launch 0"
+
+    assert dispatch.parse_async_skipped_down_lanes(output) == ["gemini", "jules"]
 
 
 def test_dispatch_health_ignores_generated_receipt_dirty_paths():

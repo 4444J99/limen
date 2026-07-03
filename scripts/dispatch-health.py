@@ -11,6 +11,7 @@ tasks.yaml, switch branches, or repair credentials.
 from __future__ import annotations
 
 import argparse
+import ast
 import datetime as dt
 import json
 import os
@@ -89,6 +90,21 @@ def command_summary(result: dict[str, Any]) -> dict[str, Any]:
         "first_line": receipt_line(lines[0]) if lines else "",
         "last_line": receipt_line(lines[-1]) if lines else "",
     }
+
+
+def parse_async_skipped_down_lanes(output: str) -> list[str]:
+    for line in output.splitlines():
+        if "skipping down lanes:" not in line:
+            continue
+        _, _, raw = line.partition("skipping down lanes:")
+        try:
+            value = ast.literal_eval(raw.strip())
+        except (SyntaxError, ValueError):
+            return []
+        if not isinstance(value, list):
+            return []
+        return [str(item) for item in value if str(item).strip()]
+    return []
 
 
 def receipt_line(line: str) -> str:
@@ -249,8 +265,10 @@ def async_probe_snapshot(enabled: bool) -> dict[str, Any]:
         timeout=120,
     )
     summary = command_summary(result)
+    output = f"{result.get('stdout') or ''}\n{result.get('stderr') or ''}"
     summary["requested"] = True
     summary["ok"] = result.get("returncode") == 0 and not result.get("timed_out")
+    summary["skipped_down_lanes"] = parse_async_skipped_down_lanes(output)
     return summary
 
 
@@ -382,6 +400,12 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         f"- Async dry-run requested: `{async_probe.get('requested')}`.",
         f"- Async dry-run ok: `{async_probe.get('ok')}`; timed out `{async_probe.get('timed_out', False)}`.",
         f"- Async dry-run summary: `{async_probe.get('last_line', '')}`.",
+    ]
+    skipped_down_lanes = async_probe.get("skipped_down_lanes") or []
+    if skipped_down_lanes:
+        lines.append(f"- Async skipped down lanes: `{', '.join(str(lane) for lane in skipped_down_lanes)}`.")
+
+    lines += [
         "",
         "## Live Root",
         "",
