@@ -80,6 +80,19 @@ def test_capacity_census_lists_every_paid_lane(tmp_path: Path, monkeypatch) -> N
     assert "github_actions" in text
 
 
+def test_isolated_lane_env_points_limen_root_at_worktree(tmp_path: Path, monkeypatch) -> None:
+    live_root = tmp_path / "live"
+    wt = tmp_path / "worktree"
+    monkeypatch.setenv("LIMEN_ROOT", str(live_root))
+    monkeypatch.setenv("LIMEN_TASKS", str(live_root / "tasks.yaml"))
+
+    env = D._lane_run_env("codex", wt)
+
+    assert env["LIMEN_LIVE_ROOT"] == str(live_root)
+    assert env["LIMEN_ROOT"] == str(wt)
+    assert env["LIMEN_TASKS"] == str(wt / "tasks.yaml")
+
+
 def test_auto_lane_selector_includes_github_actions_and_blocks_oz_without_warp_key(tmp_path: Path, monkeypatch) -> None:
     gh = tmp_path / "gh"
     gh.write_text("#!/bin/sh\nexit 0\n")

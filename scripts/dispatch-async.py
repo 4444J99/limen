@@ -176,6 +176,15 @@ def inspect_stale(max_age_s: int) -> list[str]:
     return stale
 
 
+def default_max_age_s() -> int:
+    """Keep stale reaping above the local lane timeout so live bounded workers are not reopened."""
+    env = os.environ.get("LIMEN_ASYNC_MAX_AGE")
+    if env is not None:
+        return int(env)
+    lane_timeout = int(os.environ.get("LIMEN_LANE_TIMEOUT", "1800"))
+    return max(1200, lane_timeout + 300)
+
+
 def _running_total() -> int:
     return len(list(RUNS.glob("*.running")))
 
@@ -281,7 +290,7 @@ def main() -> int:
     lanes = resolve_lanes(a.lanes, down)
     if down:
         print(f"── skipping down lanes: {sorted(down)}")
-    max_age = int(os.environ.get("LIMEN_ASYNC_MAX_AGE", "1200"))
+    max_age = default_max_age_s()
     if a.dry_run:
         reaped = inspect_stale(max_age)
         applied = inspect_harvest()

@@ -59,6 +59,17 @@ def test_inflight_markers_consume_slots(tmp_path):
     assert picked == []  # 4 already running, cap 4 → 0 new
 
 
+def test_default_max_age_exceeds_lane_timeout(tmp_path, monkeypatch):
+    da = _load(tmp_path, n_open=0)
+    monkeypatch.delenv("LIMEN_ASYNC_MAX_AGE", raising=False)
+    monkeypatch.setenv("LIMEN_LANE_TIMEOUT", "1800")
+
+    assert da.default_max_age_s() == 2100
+
+    monkeypatch.setenv("LIMEN_ASYNC_MAX_AGE", "99")
+    assert da.default_max_age_s() == 99
+
+
 def test_harvest_applies_pr_result_and_cleans(tmp_path):
     da = _load(tmp_path, n_open=2)
     (da.RUNS / "T0__codex.running").write_text(datetime.datetime.now(datetime.timezone.utc).isoformat())

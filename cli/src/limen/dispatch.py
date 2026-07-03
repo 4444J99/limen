@@ -1103,8 +1103,13 @@ def _bridge_agy_scratch(task: Task, wt: Path) -> None:
         print(f"  agy-bridge {task.id}: skipped ({str(e)[:80]})")
 
 
-def _lane_run_env(agent: str) -> dict[str, str]:
+def _lane_run_env(agent: str, wt: Path | None = None) -> dict[str, str]:
     run_env = os.environ.copy()
+    if wt is not None:
+        live_root = os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen"))
+        run_env["LIMEN_LIVE_ROOT"] = live_root
+        run_env["LIMEN_ROOT"] = str(wt)
+        run_env["LIMEN_TASKS"] = str(wt / "tasks.yaml")
     # gemini: API-key mode throttles hard under agentic use. If the user has done the
     # one-time Google sign-in, drop API keys for gemini only so it uses OAuth / Code-Assist.
     if agent == "gemini" and os.environ.get("LIMEN_GEMINI_OAUTH") == "1":
@@ -1163,7 +1168,7 @@ def _run_isolated_agent(
     agent_cmd: list[str],
     lane_timeout: int,
 ) -> bool | str:
-    run_env = _lane_run_env(agent)
+    run_env = _lane_run_env(agent, wt)
     if agent == "opencode":
         run_env["LIMEN_OPENCODE_CLOCK"] = "1"
         run_env["LIMEN_TASK_ID"] = task.id
@@ -1303,7 +1308,15 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
     branch = f"limen/{slug}-{suffix}"
     wt = _ISOLATION_ROOT / (re.sub(r"[^a-zA-Z0-9._-]+", "-", task.id.lower()) + "-" + suffix)
     agent_args = _agent_argv(agent, task)
-    agent_cmd = [binary, *agent_args, _build_prompt(task)]
+    prompt = _build_prompt(task)
+    if os.environ.get("LIMEN_ISOLATION_PROMPT_GUARD", "1") == "1":
+        prompt = (
+            f"{prompt}\n\n--- ISOLATION CONTRACT ---\n"
+            "You are running inside an isolated git worktree. Treat the current working directory "
+            "and $LIMEN_ROOT as the only writable checkout. Do not edit the live root, do not edit "
+            "$LIMEN_LIVE_ROOT, and do not edit tasks.yaml; the dispatcher records task state."
+        )
+    agent_cmd = [binary, *agent_args, prompt]
     # 1800s (was 900): local lanes have ABUNDANT budget headroom (codex/claude/opencode ~60-92 left
     # per window) while jules is scarce (≈100/day). At 900s, big tasks — incl. the revenue/deploy
     # tasks (BLD2-*-deploy, REV-*) — timed out locally then bled to jules, exhausting the scarce lane
