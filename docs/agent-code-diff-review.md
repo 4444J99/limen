@@ -100,6 +100,37 @@ Touched paths:
 
 - `.github/workflows/auto-scale.yml`
 
+### Auto-scale script could clobber live queue updates and hang on duplicate pages
+
+Severity: high for task-board integrity.
+
+Evidence:
+
+- `scripts/auto-scale.py` read `tasks.yaml`, fetched GitHub issues, then atomically wrote the original snapshot plus new tasks without taking the shared queue lock or re-reading before write.
+- Atomic write prevented truncation, but not lost updates: a heartbeat/dispatcher change between the initial read and final write could be overwritten.
+- The pagination loop also kept running when a later page repeated only already-seen/duplicate issue URLs, because `needed` did not decrease.
+
+Repair:
+
+- Fetch candidate issue refs first, then take `queue_lock(TASKS_FILE)`.
+- Re-read `tasks.yaml` under the lock and recompute depth, existing URLs, and next task ID before writing.
+- Skip the write entirely when no new tasks survive the final re-read/filter.
+- Stop pagination on repeated pages and cap pages per org.
+
+Touched paths:
+
+- `scripts/auto-scale.py`
+- `cli/tests/test_auto_scale.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_auto_scale.py cli/tests/test_io_atomic.py -q
+python3 -m py_compile scripts/auto-scale.py
+```
+
+Result: `15 passed in 0.09s`; compile passed.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -119,6 +150,13 @@ Touched paths:
 - `cli/tests/test_async_dispatch.py:107` covers malformed async-dispatch env knobs.
 - `.github/workflows/auto-scale.yml:34` commits only when `tasks.yaml` changed.
 - `.github/workflows/auto-scale.yml:40` stages only `tasks.yaml`.
+- `scripts/auto-scale.py:30` imports the canonical `queue_lock`.
+- `scripts/auto-scale.py:114` caps pagination and tracks repeated page URLs.
+- `scripts/auto-scale.py:158` takes the queue lock before the final board mutation.
+- `scripts/auto-scale.py:162` re-reads `tasks.yaml` under the lock.
+- `scripts/auto-scale.py:197` skips the atomic write when no new tasks survive.
+- `cli/tests/test_auto_scale.py:193` covers reloading under lock before write.
+- `cli/tests/test_auto_scale.py:263` covers repeated duplicate pages.
 
 ## Remaining Review Queue
 
