@@ -30,11 +30,11 @@ ok()   { echo "✓ $*"; }
 ok "artifacts present and executable"
 
 # 2. generators run, print digests, write cached fallbacks, exit 0
-pressure="$(python3 "$PRESSURE_GEN" --write)" || fail "lifecycle pressure generator exited non-zero"
+pressure="$(LIMEN_ROOT="$ROOT" python3 "$PRESSURE_GEN" --write)" || fail "lifecycle pressure generator exited non-zero"
 printf '%s' "$pressure" | grep -q "Lifecycle pressure" || fail "pressure generator printed no lifecycle pressure line"
 [ -f "logs/session-lifecycle-pressure.json" ] || fail "pressure generator did not write logs/session-lifecycle-pressure.json"
 [ -f "logs/session-lifecycle-pressure.md" ] || fail "pressure generator did not write logs/session-lifecycle-pressure.md"
-out="$(python3 "$GEN")" || fail "generator exited non-zero"
+out="$(LIMEN_ROOT="$ROOT" python3 "$GEN")" || fail "generator exited non-zero"
 printf '%s' "$out" | grep -q "Session orientation" || fail "generator printed no digest header"
 printf '%s' "$out" | grep -q "Lifecycle pressure" || fail "generator omitted lifecycle pressure section"
 [ -f "$DIGEST" ] || fail "generator did not write $DIGEST"
@@ -50,7 +50,7 @@ if grep -Eiq "$DENY" "logs/session-lifecycle-pressure.md"; then fail "PII deny-l
 ok "PII-free: no clinical literal in generator source or digest"
 
 # 4. idempotent — two consecutive runs are byte-identical (counts are stable within a tick)
-a="$(python3 "$GEN")"; b="$(python3 "$GEN")"
+a="$(LIMEN_ROOT="$ROOT" python3 "$GEN")"; b="$(LIMEN_ROOT="$ROOT" python3 "$GEN")"
 [ "$a" = "$b" ] || fail "generator output not idempotent across two runs"
 ok "idempotent across consecutive runs"
 

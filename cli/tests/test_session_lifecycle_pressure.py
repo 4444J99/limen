@@ -12,6 +12,7 @@ BLOCKERS_SCRIPT = ROOT / "scripts" / "session-blockers-ledger.py"
 ATTACK_PATHS_SCRIPT = ROOT / "scripts" / "session-attack-paths.py"
 TRANCHE_SCRIPT = ROOT / "scripts" / "conductor-tranche.py"
 ORIENT_SCRIPT = ROOT / "scripts" / "session-orient.py"
+DONE_ORIENT_SCRIPT = ROOT / "scripts" / "done-session-orient.sh"
 CONSOLIDATION_GATES_SCRIPT = ROOT / "scripts" / "consolidation-gates.py"
 NETWORK_HEALTH_SCRIPT = ROOT / "scripts" / "network-health.py"
 DISPATCH_HEALTH_SCRIPT = ROOT / "scripts" / "dispatch-health.py"
@@ -2189,3 +2190,10 @@ tasks:
     board = orient.section_board()
 
     assert board == "**Board** — 1 open · 1 in_progress · 1 done"
+
+
+def test_done_session_orient_pins_generators_to_checkout_root():
+    script = DONE_ORIENT_SCRIPT.read_text(encoding="utf-8")
+
+    assert 'LIMEN_ROOT="$ROOT" python3 "$PRESSURE_GEN" --write' in script
+    assert 'LIMEN_ROOT="$ROOT" python3 "$GEN")' in script
