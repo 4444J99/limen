@@ -25,7 +25,7 @@
         <key>LIMEN_LOCAL_LIMIT</key><string>1</string>
         <key>LIMEN_DISPATCH_ASYNC</key><string>1</string>
         <key>LIMEN_ASYNC_MAX</key><string>3</string>
-        <key>LIMEN_VIGILIA</key><string>0</string>
+        <key>LIMEN_VIGILIA</key><string>1</string>
         <key>PATH</key><string>/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
     </dict>
     <key>KeepAlive</key><true/>
