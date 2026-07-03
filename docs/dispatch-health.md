@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-03T08:23:29+00:00`
+Generated: `2026-07-03T08:29:13+00:00`
 
 Status: `healthy`
 
@@ -16,28 +16,28 @@ Status: `healthy`
 - Plist KeepAlive: `True`; RunAtLoad: `True`.
 - Plist LIMEN_ROOT: `/Users/4jp/Workspace/limen`.
 - Plist LIMEN_DISPATCH_ASYNC: `1`.
-- Plist LIMEN_DISPATCH_LANES: `auto`.
+- Plist LIMEN_DISPATCH_LANES: `opencode,agy`.
 - Plist LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Loaded launchd state: `running` pid `59103`.
+- Loaded launchd state: `running` pid `4306`.
 - Loaded LIMEN_ROOT: `/Users/4jp/Workspace/limen`.
 - Loaded LIMEN_DISPATCH_ASYNC: `1`.
-- Loaded LIMEN_DISPATCH_LANES: `auto`.
+- Loaded LIMEN_DISPATCH_LANES: `opencode,agy`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-03T08:23:29.190781+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-03T08:29:14.072416+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 0 still running ; would launch 9 (cap 12) -> ['ORG-education-organ-face-0630', 'ORG-artist-organ-face-0630', 'GEN-organvm-mirror-mirror-ci-green-0702', 'REV-organvm-a-i-chat--exporter-revenue-launch-post-0628', 'REV-organvm-universal-mail--automation-revenue-ship-0630', 'REV-organvm-mirror-mirror-revenue-ship-0702', 'ORG-media-organ-deepen-0630', 'GEN-organvm-portfolio-ci-green-0702', 'GEN-organvm-limen-typing-0630']`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 1 still running ; would launch 9 (cap 12) -> ['GEN-organvm-limen-typing-0630', 'ORG-education-organ-operationalize-0701', 'GEN-organvm-limen-test-coverage-0702', 'REV-organvm-universal-mail--automation-revenue-ship-0630', 'ORG-artist-organ-face-0630', 'GEN-organvm-portfolio-ci-green-0702', 'GEN-organvm-mirror-mirror-ci-green-0702', 'GEN-organvm-mirror-mirror-simplify-0630', 'DISCOVER-organvm-the-actual-news']`.
 - Async skipped down lanes: `codex, gemini, jules`.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `db2f97596eacc7acc2d9f6d6f73371aea3d7b763`.
-- origin/main: `db2f97596eacc7acc2d9f6d6f73371aea3d7b763`.
+- HEAD: `7bc78a49a396d91deac168e5dd84116693ebfefc`.
+- origin/main: `7bc78a49a396d91deac168e5dd84116693ebfefc`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
 - Dirty entries: `0`.
 
