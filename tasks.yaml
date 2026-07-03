@@ -77762,7 +77762,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: done
-    output: 'Polished MACRO-FACE.md (thesis + concrete outputs + adoption path + validation proof), MICRO-FACE.md (data-driven summaries + scope change evidence + fleet table), SOVEREIGN-SYSTEMS-DECK.md (punchier standalone deck). Validator 3/3 green, 0 violations. Files changed: organs/consulting/MACRO-FACE.md, MICRO-FACE.md, SOVEREIGN-SYSTEMS-DECK.md.'
+    output: 'Polished MACRO-FACE.md (thesis + concrete outputs + adoption path + validation
+      proof), MICRO-FACE.md (data-driven summaries + scope change evidence + fleet
+      table), SOVEREIGN-SYSTEMS-DECK.md (punchier standalone deck). Validator 3/3
+      green, 0 violations. Files changed: organs/consulting/MACRO-FACE.md, MICRO-FACE.md,
+      SOVEREIGN-SYSTEMS-DECK.md.'
 - id: ORG-artist-organ-face-0703
   title: Make the artist organ's macro + micro face excellent
   repo: organvm/limen
