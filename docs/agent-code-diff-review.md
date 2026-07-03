@@ -80,6 +80,26 @@ python3 -m pytest cli/tests/test_route_bias.py cli/tests/test_dispatch.py::test_
 
 Result: `32 passed in 0.61s`.
 
+### Auto-scale workflow could commit unrelated code changes
+
+Severity: medium for repo integrity.
+
+Evidence:
+
+- `scripts/auto-scale.py` states that the scheduled auto-scaler writes only `tasks.yaml`.
+- `.github/workflows/auto-scale.yml` also ran ruff/check-params self-healing and then used `git add -A`.
+- That let a task-depth workflow commit arbitrary code, docs, generated files, or parameter-baseline changes under the misleading commit message `chore: auto-scale tasks.yaml to 100-task depth`.
+
+Repair:
+
+- Removed the self-healing ruff/check-params step from the auto-scale workflow.
+- Changed the commit guard to look only at `tasks.yaml`.
+- Changed staging from `git add -A` to `git add tasks.yaml`.
+
+Touched paths:
+
+- `.github/workflows/auto-scale.yml`
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -97,6 +117,8 @@ Result: `32 passed in 0.61s`.
 - `scripts/dispatch-async.py:52` defines async-dispatch tolerant numeric parsing.
 - `cli/tests/test_dispatch.py:493` covers malformed dispatch env knobs.
 - `cli/tests/test_async_dispatch.py:107` covers malformed async-dispatch env knobs.
+- `.github/workflows/auto-scale.yml:34` commits only when `tasks.yaml` changed.
+- `.github/workflows/auto-scale.yml:40` stages only `tasks.yaml`.
 
 ## Remaining Review Queue
 
