@@ -76885,15 +76885,14 @@ tasks:
   title: Reduce complexity in organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: medium
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - simplify
   - generated
   - build-out
-  - tried:claude
   - noop
   urls: []
   context: Identify the most complex or most-duplicated module in organvm/session-meta
@@ -76901,7 +76900,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-07-03 to keep the stream endless]
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-03T05:34:48.814626Z'
+  updated: '2026-07-03T06:31:31.612833Z'
   dispatch_log:
   - timestamp: '2026-07-03T04:38:16.134532Z'
     agent: claude
@@ -76927,6 +76926,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-03T06:31:31.612833Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GEN-organvm-universal-mail--automation-typing-0703
   title: Tighten types in organvm/universal-mail--automation
   repo: organvm/universal-mail--automation
