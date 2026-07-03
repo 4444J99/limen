@@ -26,6 +26,7 @@ and the self-contained organ-health.html face. Every probe fails OPEN — a miss
 import json
 import os
 import re
+import sys
 import time
 from datetime import datetime
 from pathlib import Path
@@ -37,6 +38,7 @@ LOOP_SH = ROOT / "scripts" / "heartbeat-loop.sh"
 ENV_FILE = Path(os.environ.get("LIMEN_ENV_FILE", Path.home() / ".limen.env"))
 OUT_DIRS = [ROOT / "web" / "app" / "out", ROOT / "web" / "app" / "public"]
 CANON = ROOT / "spec" / "avtopoiesis" / "canon.yaml"  # the SINGLE door-discovery contract (shared with AVTOPOIESIS)
+LEDGER = Path(os.environ.get("LIMEN_OBLIGATIONS_LEDGER", ROOT / "obligations-ledger.json"))  # mail capability signal
 
 try:
     import yaml
@@ -129,6 +131,37 @@ def _env_flag(name, default=""):
     return default
 
 
+def _mail_capability():
+    """Is the Gmail WRITE/archive capability actually LIVE? An HONEST capability signal, not a dead
+    env ref: the app-password credential is materialized (GMAIL_APP_PASSWORD present), OR the
+    obligations ledger shows a real archive already fired (any account.archived > 0). Returns
+    (live, bound_lever) — when not live, the bound human lever that opens it (the bulk archive stays
+    a hand-pull, so an un-live capability reads 'gated' with its lever, never forced green)."""
+    if _env_flag("GMAIL_APP_PASSWORD", "").strip():
+        return True, None
+    try:
+        led = json.loads(LEDGER.read_text())
+        accounts = led.get("accounts") if isinstance(led, dict) else None
+        if isinstance(accounts, list) and any((a or {}).get("archived", 0) for a in accounts):
+            return True, None
+    except (OSError, ValueError):
+        pass
+    return False, "L-IMAP-APP-PW"
+
+
+def _is_hold(o):
+    """When a rung reads 'gated', is that an INTENDED hold (owner's off-by-design knob) or a
+    RESIDUAL gap (a capability that should be live but a lever blocks it, or a default-ON safety
+    organ that got dark-disabled)? True ⟺ intended hold — so a deliberate HOLD is never mistaken
+    for a broken probe. Explicit `hold` wins; else derive: dormant/off-by-default = hold, while a
+    gate whose default is ON ("1") that is nonetheless gated is a dark-disable, i.e. NOT a hold."""
+    if "hold" in o:
+        return bool(o["hold"])
+    if o.get("_dormant"):
+        return True
+    return o.get("gate_default", "") != "1"
+
+
 # ── signal probes ─────────────────────────────────────────────────────────────────────────────
 def _mtime(path):
     try:
@@ -215,11 +248,16 @@ def _registry():
              what="copy irreplaceable → Archive4T; reclaim regenerable caches",
              probe=lambda: _mtime(LOGS / "library-levers.json") or _mtime(LOGS / "capture-log.jsonl")),
         dict(key="converge", rung="CONVERGE", voice="corpus", cadence_key="CORPUS",
-             gate="LIMEN_CORPUS_CONVERGE", gate_default="0",
+             gate="LIMEN_CORPUS_CONVERGE", gate_default="0", hold=True, bound_lever="LIMEN_CORPUS_CONVERGE=1",
              what="distill his words toward THE ONE (the 'back again')",
              probe=lambda: _mtime(LOGS / "corpus-converge-state.json")),
+        # MAIL: gate on a REAL capability signal (app-password materialized OR ledger shows a real
+        # archive), NOT the superseded GMAIL_OAUTH_OP_REF env ref (nobody set it → could never go
+        # green). The organ sweeps + rebuilds the ledger keylessly every beat, so with the capability
+        # live it is judged on its (fresh) voice-stamp; without it, the bulk archive is a hand-lever,
+        # so it reads 'gated' with that lever (residual, not an intended hold), never forced green.
         dict(key="mail", rung="MAIL", voice="mail", cadence_key="MAIL",
-             gate="GMAIL_OAUTH_OP_REF", gate_default="", gate_truthy_nonempty=True,
+             capability=_mail_capability, hold=False,
              what="sweep inbound (flag/archive) + rebuild obligations ledger",
              probe=lambda: _mtime(LOGS / "obligations-view.json")),
         dict(key="vigilia", rung="VIGILIA", voice="vigilia", cadence_beats=1,
@@ -227,14 +265,14 @@ def _registry():
              what="autonomic self-keeping: VITALS (don't crash) · CONTINUITY (don't forget) · INTEGRITY (don't corrupt)",
              probe=lambda: _json_field_ts(LOGS / "vigilia" / "status.json", "ts")),
         dict(key="nomenclator", rung="NOMENCLATOR", voice="nomenclator", cadence_key="NOMENCLATOR",
-             gate="LIMEN_NOMENCLATOR", gate_default="0",
+             gate="LIMEN_NOMENCLATOR", gate_default="0", hold=True, bound_lever="LIMEN_NOMENCLATOR=1",
              what="INDEX·NOMINVM — hold the roll of names to the canon (nota)",
              probe=lambda: _mtime(LOGS / "nomenclator.json")),
         dict(key="evocator", rung="EVOCATOR", voice="evocator", cadence_key="EVOCATOR",
              what="the summoner — keep canonical truths present in every channel (FLAME/corpus/memory)",
              probe=lambda: _mtime(LOGS / "evocator.json")),
         dict(key="positioning", rung="POSITIONING", voice="positioning", cadence_key="POSITIONING",
-             gate="LIMEN_POSITIONING", gate_default="0",
+             gate="LIMEN_POSITIONING", gate_default="0", hold=True, bound_lever="L-POSITIONING-ACTIVATE",
              what="refresh inbound-magnet surfaces (form/operation pages + front door + discoverability)",
              probe=lambda: _mtime(ROOT / "docs" / "positioning" / "_frontdoor.md")),
         dict(key="health", rung="HEALTH", voice="health", cadence_key="HEALTH",
@@ -298,6 +336,10 @@ def _doors(text):
             key=d["key"], rung=d["name"], voice=d["key"], cadence_key=d["name"],
             what=d["role"] or f"{d['key']} beat", probe=lambda: None,
             _dormant=bool(d.get("dormant")),
+            # a beat the heartbeat gates OFF by default (e.g. AVTOPOIESIS) is an INTENDED hold whose
+            # bound lever is its own knob — surfaced so a deliberate HOLD never reads as a broken probe
+            bound_lever=(f"LIMEN_{d['name']}=1" if d.get("dormant") else None),
+            hold=bool(d.get("dormant")),
             gate_note="gated OFF by default" if d.get("dormant") else ""))
     return rungs
 
@@ -308,6 +350,7 @@ def build():
     loop_min, loop_max = _parse_tempo(text)
 
     organs = []
+    drift = []
     for o in _doors(text):
         # cadence → expected seconds between fires, worst-case (idle beats run at LOOP_MAX).
         if "interval_s" in o:
@@ -318,13 +361,37 @@ def build():
             expected = beats * loop_max
             cadence_desc = "every beat" if beats == 1 else f"every {beats} beats"
 
-        # gate state — an explicit env-flag gate, or a beat the heartbeat itself gates OFF by default
-        gated = False
-        if o.get("_dormant"):
+        # gate state — a real CAPABILITY probe, an explicit env-flag gate, or a beat the heartbeat
+        # itself gates OFF by default. bound_lever + hold_vs_residual travel WITH the gate so a
+        # deliberate HOLD is never read as a broken probe, and a residual names the lever that opens it.
+        gated, bound_lever, hold_vs_residual = False, o.get("bound_lever"), None
+        if o.get("capability"):
+            live, lever = o["capability"]()
+            gated = not live
+            if gated:
+                bound_lever = lever or bound_lever
+        elif o.get("_dormant"):
             gated = True
         elif o.get("gate"):
             val = _env_flag(o["gate"], o.get("gate_default", ""))
             gated = (val == "") if o.get("gate_truthy_nonempty") else (val != "1")
+        if gated:
+            hold_vs_residual = _is_hold(o)
+            if not bound_lever and o.get("gate"):   # default re-enable lever = flip the knob on
+                bound_lever = f"{o['gate']}=1"
+
+        # SELF-PROTECTING INVARIANT: a gate whose DEPLOYED value disagrees with its declared
+        # gate_default is drift — and a default-ON safety organ flipped OFF is a dark-disable (exactly
+        # how VIGILIA sat dark for 2.5 days). Flag every such organ; --strict makes a dark-disable fatal.
+        gd = o.get("gate_default")
+        if o.get("gate") and gd is not None:
+            deployed = _env_flag(o["gate"], gd)
+            if deployed != gd:
+                drift.append({
+                    "key": o["key"], "rung": o["rung"], "gate": o["gate"],
+                    "gate_default": gd, "deployed": deployed,
+                    "dark_disabled": (gd == "1" and deployed != "1"),
+                })
 
         # best signal: voice-stamp (ground truth) else artifact probe
         src = "voice-stamp"
@@ -351,6 +418,12 @@ def build():
         if o.get("_absent"):       # ladder names a beat the heartbeat no longer declares → loud, not silent
             status = "down"
 
+        note = o.get("gate_note", "")
+        if gated:                  # make the tick honest: name the KIND of gate + its bound lever
+            kind = "intended HOLD" if hold_vs_residual else "residual (capability)"
+            bits = [kind] + ([f"lever {bound_lever}"] if bound_lever else []) + ([note] if note else [])
+            note = " · ".join(bits)
+
         organs.append({
             "key": o["key"], "rung": o["rung"], "what": o["what"],
             "voice": o["voice"], "cadence": cadence_desc,
@@ -358,17 +431,22 @@ def build():
             "last_fired": datetime.fromtimestamp(ts).isoformat(timespec="seconds") if ts else None,
             "age_h": round(age / 3600, 1) if age is not None else None,
             "expected_h": round(expected / 3600, 1),
-            "note": o.get("gate_note", ""),
+            "note": note,
+            "bound_lever": bound_lever if gated else None,
+            "hold_vs_residual": hold_vs_residual,
         })
 
     counts = {}
     for o in organs:
         counts[o["status"]] = counts.get(o["status"], 0) + 1
     rungs_live = sum(1 for o in organs if o["status"] in ("green", "gated"))
+    dark = [d for d in drift if d["dark_disabled"]]
     return {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "tempo": {"min_s": loop_min, "max_s": loop_max},
         "summary": {"total": len(organs), "live": rungs_live, **counts},
+        # self-protecting invariant: deployed gate values that diverge from their safe default
+        "gate_integrity": {"drift": drift, "dark_disabled": dark, "ok": not dark},
         "organs": organs,
     }
 
@@ -432,7 +510,9 @@ def render_html(v):
 </div></body></html>"""
 
 
-def main():
+def main(argv=None):
+    argv = sys.argv[1:] if argv is None else argv
+    strict = "--strict" in argv
     view = build()
     LOGS.mkdir(parents=True, exist_ok=True)
     (LOGS / "organ-health.json").write_text(json.dumps(view, indent=2))
@@ -450,7 +530,11 @@ def main():
     detail = " ".join(f"{o['rung']}:{o['status']}" for o in view["organs"])
     print(f"organ-health: {s.get('live', 0)}/{s.get('total', 0)} live -> "
           f"{', '.join(wrote) or 'logs/organ-health.json only'}\n  {detail}")
-    return 0
+    dark = view["gate_integrity"]["dark_disabled"]
+    if dark:                       # a default-ON safety organ deployed OFF — never let it pass silently
+        print("  ⚠ GATE-DRIFT (dark-disabled safety organ): "
+              + ", ".join(f"{d['rung']} {d['gate']}={d['deployed']} (default {d['gate_default']})" for d in dark))
+    return 1 if (strict and dark) else 0
 
 
 if __name__ == "__main__":
