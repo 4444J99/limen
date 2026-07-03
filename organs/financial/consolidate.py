@@ -22,6 +22,12 @@ import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
+try:
+    import yaml as _yaml
+    HAS_YAML = True
+except ImportError:
+    HAS_YAML = False
+
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[2]))
 HERE = ROOT / "organs" / "financial"
 
@@ -33,41 +39,13 @@ def load_json(path: Path) -> dict:
     return {}
 
 
-def load_yaml_simple(path: Path) -> dict:
-    """Minimal YAML-like loader — reads key:value trees from the entities.yaml.
-    For a production organ, use PyYAML; this avoids a dependency for now."""
-    import re
-    result = {}
-    current_section = result
-    section_stack = [result]
-    with open(path) as f:
-        for line in f:
-            stripped = line.rstrip()
-            if stripped.startswith("#") or not stripped.strip():
-                continue
-            indent = len(line) - len(line.lstrip())
-            while len(section_stack) > indent // 2 + 1:
-                section_stack.pop()
-            current = section_stack[-1]
-            m = re.match(r'^(\w[\w_-]*):\s*(.*)', stripped)
-            if m:
-                key, val = m.group(1), m.group(2).strip()
-                if val == "":
-                    current[key] = {}
-                    section_stack.append(current[key])
-                elif val.startswith("|"):
-                    current[key] = val[1:].strip()
-                else:
-                    current[key] = val
-            elif stripped.startswith("- "):
-                m2 = re.match(r'^-\s+(\w[\w_-]*):\s*(.*)', stripped)
-                if m2:
-                    entry = {m2.group(1): m2.group(2).strip()}
-                    if "entities" in current and isinstance(current.get("entities"), list):
-                        current["entities"].append(entry)
-                    elif "accounts" in current and isinstance(current.get("accounts"), list):
-                        current["accounts"].append(entry)
-    return result
+def load_yaml(path: Path) -> dict:
+    if not path.exists():
+        return {}
+    if HAS_YAML:
+        with open(path) as f:
+            return _yaml.safe_load(f) or {}
+    return {}
 
 
 def now_iso() -> str:
@@ -265,7 +243,7 @@ def build_dashboard(entities: dict, revenue: dict, obligations: dict) -> str:
 
 def main() -> int:
     # Load data sources
-    entities = load_yaml_simple(HERE / "entities.yaml")
+    entities = load_yaml(HERE / "entities.yaml")
     revenue = load_json(ROOT / "revenue-ladder.json")
     obligations = load_json(ROOT / "obligations-ledger.json")
 

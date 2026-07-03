@@ -1,12 +1,12 @@
 # Financial Office — STATUS Dashboard
 
-**Generated:** 2026-07-03T08:07:59Z  **Maturity:** Building (30% → 40%)
+**Generated:** 2026-07-03T08:14:31Z  **Maturity:** Building (30% → 40%)
 
 ---
 
 ## At a glance
 
-- **Entities tracked:** 0
+- **Entities tracked:** 6
 - **Revenue products:** 6 (1 deploy-ready or live)
 - **Open obligations:** 11
 - **First dollar path:** ChatGPT Exporter → MONETA/Ko-fi (deploy-ready, principal-gated)
@@ -15,7 +15,7 @@
 
 | Artifact | File | Status |
 |---|---|---|
-| Entity Registry | `entities.yaml` | Live — 0 entities registered |
+| Entity Registry | `entities.yaml` | Live — 6 entities registered |
 | Balance Sheet | `balance-sheet.md` | Generated — needs principal balance entry |
 | Cash-Flow Projection | `cashflow.md` | Generated — pre-revenue baseline |
 | Payrail Disbursement Map | `payrail.md` | Authored — all 4 hops mapped |
