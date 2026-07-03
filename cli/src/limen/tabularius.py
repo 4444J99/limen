@@ -309,7 +309,7 @@ def drain_once(board_path: Path, *, dry_run: bool = False, lock_timeout: int = 2
 
         board = load_limen_file(board_path)
         board_json = board.model_dump(mode="json", exclude_none=True)
-        tasks: OrderedDict[str, dict] = OrderedDict((t["id"], t) for t in board_json.get("tasks", []))
+        tasks: OrderedDict[str, dict[str, Any]] = OrderedDict((t["id"], t) for t in board_json.get("tasks", []))
         meta: dict[str, Any] = {"version": board_json.get("version", "1.0"), "portal": board_json.get("portal")}
 
         applied: list[tuple[Path, Ticket]] = []
