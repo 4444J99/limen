@@ -18,6 +18,7 @@ import sqlite3
 import subprocess
 import sys
 import time
+import unicodedata
 import urllib.error
 import urllib.request
 from collections import Counter, defaultdict
@@ -36,6 +37,9 @@ PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
 TASKS_PATH = ROOT / "tasks.yaml"
 WORKTREE_ROOT = ROOT.parent / ".limen-worktrees"
 OPENCODE_DB = HOME / ".local" / "share" / "opencode" / "opencode.db"
+AGY_CLI_ROOT = HOME / ".gemini" / "antigravity-cli"
+AGY_CLI_HISTORY = AGY_CLI_ROOT / "history.jsonl"
+AGY_CLI_CONVERSATIONS = AGY_CLI_ROOT / "conversations"
 GITHUB_PR_RE = re.compile(r"github\.com/([^/]+)/([^/]+)/pull/(\d+)")
 DISPATCH_GRACE_SECONDS = int(os.environ.get("LIMEN_LANE_TIMEOUT", "900")) + 600
 GH_RETRIES = max(1, int(os.environ.get("LIMEN_GH_RECEIPT_RETRIES", "3")))
@@ -60,6 +64,7 @@ LOCAL_SOURCES = [
     ("claude-plans", HOME / ".claude" / "plans", ("*",)),
     ("claude-file-history", HOME / ".claude" / "file-history", ("*",)),
     ("gemini-tmp-agy", HOME / ".gemini" / "tmp", ("capfill-agy-*/chats/*.jsonl", "*agy*/chats/*.jsonl")),
+    ("agy-cli-history", AGY_CLI_ROOT, ("history.jsonl",)),
 ]
 
 TASK_BODY_MARKERS = (
@@ -175,6 +180,40 @@ def prompt_fingerprint(text: str) -> dict[str, Any]:
     }
 
 
+def blob_text_spans(blob: bytes | None, *, min_len: int = 40) -> list[str]:
+    if not blob:
+        return []
+    decoded = blob.decode("utf-8", errors="ignore")
+    chars: list[str] = []
+    for ch in decoded:
+        if ch in "\n\r\t" or (ch.isprintable() and unicodedata.category(ch)[0] != "C"):
+            chars.append(ch)
+        else:
+            chars.append("\0")
+    out: list[str] = []
+    seen: set[str] = set()
+    for part in "".join(chars).split("\0"):
+        text = part.strip()
+        if len(text) < min_len or sum(c.isalpha() for c in text) < 12:
+            continue
+        if text in seen:
+            continue
+        seen.add(text)
+        out.append(text)
+    return out
+
+
+def agy_prompt_from_spans(spans: list[str]) -> str | None:
+    prompt_markers = ("# FLAME", "## FLAME", "Complete task ", "/goal", "Repo:", "Rules:", "Context:")
+    candidates = [span for span in spans if any(marker in span for marker in prompt_markers)]
+    if not candidates:
+        candidates = [span for span in spans if len(span) >= 120]
+    if not candidates:
+        return None
+    text = max(candidates, key=len).strip()
+    return text.lstrip("#,- \n\t") or text
+
+
 def iter_source_files(days: int | None) -> list[dict[str, Any]]:
     cutoff = None if days is None else dt.datetime.now(dt.timezone.utc).timestamp() - days * 86400
     rows: list[dict[str, Any]] = []
@@ -241,6 +280,9 @@ def prompt_texts(source: str, obj: dict[str, Any]) -> list[str]:
                 if isinstance(rec, dict) and rec.get("type") == "user":
                     texts.extend(text_from_content(rec.get("content")))
         return texts
+
+    if source == "agy-cli-history":
+        return text_from_content(obj.get("display"))
 
     payload = obj.get("payload")
     if isinstance(payload, dict):
@@ -511,6 +553,81 @@ def opencode_virtual_sessions(days: int | None) -> list[dict[str, Any]]:
             }
         )
     con.close()
+    return out
+
+
+def agy_cli_conversation_sessions(days: int | None) -> list[dict[str, Any]]:
+    if not AGY_CLI_CONVERSATIONS.exists():
+        return []
+    cutoff = None if days is None else dt.datetime.now(dt.timezone.utc).timestamp() - days * 86400
+    out: list[dict[str, Any]] = []
+    for path in sorted(AGY_CLI_CONVERSATIONS.glob("*.db")):
+        try:
+            st = path.stat()
+        except OSError:
+            continue
+        if cutoff is not None and st.st_mtime < cutoff:
+            continue
+        try:
+            con = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+        except sqlite3.Error:
+            continue
+        con.row_factory = sqlite3.Row
+        try:
+            rows = con.execute(
+                "SELECT idx, step_type, status, step_payload, metadata, task_details, "
+                "error_details, render_info FROM steps ORDER BY idx"
+            ).fetchall()
+        except sqlite3.Error:
+            con.close()
+            continue
+        prompt_hashes: list[str] = []
+        task_body_hashes: list[str] = []
+        prompt_bytes = 0
+        task_body_bytes = 0
+        body_kind_counts: Counter[str] = Counter()
+        for row in rows:
+            if int(row["step_type"]) != 14:
+                continue
+            spans: list[str] = []
+            for column in ("step_payload", "metadata", "task_details", "error_details", "render_info"):
+                spans.extend(blob_text_spans(row[column]))
+            prompt = agy_prompt_from_spans(spans)
+            if not prompt:
+                continue
+            fingerprint = prompt_fingerprint(prompt)
+            prompt_bytes += int(fingerprint["prompt_bytes"])
+            task_body_bytes += int(fingerprint["task_body_bytes"])
+            prompt_hashes.append(str(fingerprint["prompt_hash"]))
+            if fingerprint["task_body_hash"]:
+                task_body_hashes.append(str(fingerprint["task_body_hash"]))
+            body_kind_counts[str(fingerprint["body_kind"])] += 1
+        con.close()
+        sid = path.stem
+        out.append(
+            {
+                "session_key": stable_hash(f"agy-cli-conversations:{sid}:{path}", 20),
+                "session_id_hash": stable_hash(sid, 20),
+                "source": "agy-cli-conversations",
+                "path": str(path),
+                "display_path": relpath(path),
+                "size": st.st_size,
+                "mtime": iso_from_ts(st.st_mtime),
+                "event_count": len(rows),
+                "first_event": None,
+                "last_event": None,
+                "cwd": None,
+                "cwd_hash": None,
+                "prompt_event_count": len(prompt_hashes),
+                "prompt_bytes": prompt_bytes,
+                "task_body_bytes": task_body_bytes,
+                "first_prompt_hash": prompt_hashes[0] if prompt_hashes else None,
+                "last_prompt_hash": prompt_hashes[-1] if prompt_hashes else None,
+                "prompt_hashes": prompt_hashes,
+                "task_body_hashes": task_body_hashes,
+                "body_kind_counts": dict(sorted(body_kind_counts.items())),
+            }
+        )
     return out
 
 
@@ -1004,6 +1121,7 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
         records = read_json_records(row["path"])
         sessions.append(session_meta_from_records(row["source"], row, records))
     sessions.extend(opencode_virtual_sessions(args.days))
+    sessions.extend(agy_cli_conversation_sessions(args.days))
 
     wt_report = current_worktree_report()
     worktrees = wt_report.get("items") or []

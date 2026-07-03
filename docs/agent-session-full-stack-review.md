@@ -1,6 +1,6 @@
 # Agent Session Full-Stack Review
 
-Generated: `2026-07-03T22:40:51Z`
+Generated: `2026-07-03T22:54:00Z`
 
 ## Scope
 
@@ -12,19 +12,19 @@ Generated: `2026-07-03T22:40:51Z`
 
 - Verbatim prompt events: `.limen-private/session-corpus/full-stack-review/verbatim-prompts.jsonl`
 - Structured review: `.limen-private/session-corpus/full-stack-review/agent-session-review.json`
-- Prompt events extracted: `125319`
-- Unique prompt hashes: `74321`
-- Unique normalized task-body hashes: `74242`
-- Sessions reviewed: `3848`
-- Outcome text scanned: `530534615` bytes
+- Prompt events extracted: `125871`
+- Unique prompt hashes: `74725`
+- Unique normalized task-body hashes: `74646`
+- Sessions reviewed: `4363`
+- Outcome text scanned: `596092982` bytes
 
 ## Agent Coverage
 
 | Agent | Sessions | Prompt events | Prompt bytes | Task-body bytes | Verified sessions | Receipt sessions | Likely no-op/unrecorded |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| `agy` | 15 | 30 | 273370 | 10095 | 0 | 0 | 15 |
-| `claude` | 1270 | 115915 | 247630632 | 243688433 | 765 | 847 | 340 |
-| `codex` | 1295 | 8099 | 18632106 | 13672838 | 1031 | 1057 | 238 |
+| `agy` | 528 | 554 | 2214237 | 1950958 | 303 | 499 | 28 |
+| `claude` | 1270 | 115934 | 247646455 | 243704255 | 765 | 847 | 340 |
+| `codex` | 1297 | 8108 | 18691454 | 13709062 | 1033 | 1059 | 238 |
 | `opencode` | 1268 | 1275 | 2979982 | 2979976 | 866 | 1039 | 228 |
 
 ## Work Surface Coverage
@@ -42,19 +42,21 @@ Structured change refs are native changed-file surfaces, not inferred code diffs
 
 | Body kind | Prompt events |
 |---|---:|
-| `direct` | 121363 |
+| `direct` | 121911 |
 | `flame_scaffold` | 2262 |
-| `flame_with_task_body` | 1679 |
+| `flame_with_task_body` | 1683 |
 | `session_context` | 15 |
 
 ## Source Coverage
 
 | Source | Prompt events |
 |---|---:|
-| `claude-projects` | 115915 |
-| `codex-sessions` | 7121 |
+| `claude-projects` | 115934 |
+| `codex-sessions` | 7130 |
 | `opencode-db` | 1275 |
 | `codex-history` | 978 |
+| `agy-cli-conversations` | 480 |
+| `agy-cli-history` | 44 |
 | `gemini-tmp-agy` | 30 |
 
 ## Ideal-Form Diff Rules
@@ -70,20 +72,20 @@ Each session is compared to this ideal form:
 ## Ask-vs-Done Diff
 
 - Asked for every prompt verbatim: done in the private prompt corpus with hashes in the tracked report.
-- Asked for Codex, Claude, Agy/Antigravity, and OpenCode: covered Codex session/history JSONL, Claude project/task JSONL, OpenCode SQLite, and Agy/Gemini capfill JSONL; native Antigravity IDE state is inventoried but not fully decoded.
+- Asked for Codex, Claude, Agy/Antigravity, and OpenCode: covered Codex session/history JSONL, Claude project/task JSONL, OpenCode SQLite, Agy CLI history/conversation SQLite, and Agy/Gemini capfill JSONL; native Antigravity IDE state is inventoried but not fully decoded.
 - Asked for prompt layer first and session layer second: prompt events are normalized into raw prompt hashes plus task-body hashes, then sessions are scored against ideal-form outcome rules.
 - Asked for the diff between the ask and actual work: tracked at session level through missing scope, predicate, receipt, gate handling, verification, changed-file, token, and blocker signals.
 - Asked for a full work review: this pass is the corpus-wide receipt/outcome review; line-level code review should be driven next from the highest-risk session list rather than attempted as an unbounded manual sweep.
 
 ## What Broke
 
-- `1186` sessions with prompts had no verification signal in the reviewed outcome text.
-- `905` sessions had no durable receipt signal or changed-file receipt.
-- `821` sessions look like no-op or unrecorded work because prompts exist but the outcome surface has no verification/receipt/change signal.
-- `3941` prompt events carried FLAME scaffolding; the task body is now separated, but older ledger views overcounted repeated invariant prompt mass as fresh work.
+- `1396` sessions with prompts had no verification signal in the reviewed outcome text.
+- `919` sessions had no durable receipt signal or changed-file receipt.
+- `834` sessions look like no-op or unrecorded work because prompts exist but the outcome surface has no verification/receipt/change signal.
+- `3945` prompt events carried FLAME scaffolding; the task body is now separated, but older ledger views overcounted repeated invariant prompt mass as fresh work.
 - Structured changed-file data is uneven by agent: OpenCode exposes it in SQLite, while Codex and Claude need receipt text or downstream repo diff reconstruction.
 - OpenCode had many sessions that only become trustworthy when its DB-backed token clock and receipt handshake are present; session rows alone are not enough.
-- Agy/Antigravity remains the weakest source surface because provider quota and native IDE conversations are not yet decoded as first-class prompt/session records.
+- Antigravity IDE remains the weakest source surface because IDE conversations and provider quota are not yet decoded as first-class prompt/session records.
 
 ## Highest-Risk Session Diffs
 
@@ -97,7 +99,7 @@ Each session is compared to this ideal form:
 | 6 | `claude` | `dc879846-e9bf-41c0-b25d-5cebab230983` | 2594 | 1858 | repeated broad/invariant prompt pressure | ~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-nested-humming-mochi/dc879846-e9bf-41c0-b25d-5cebab230983.jsonl<br>~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-nested-humming-mochi/dc879846-e9bf-41c0-b25d-5cebab230983/subagents/agent-a120e9fec105aff82.jsonl |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | 2046 | 1684 | repeated broad/invariant prompt pressure | ~/.claude/projects/-Users-4jp-Workspace-limen/34d17b80-3af9-41d6-8c52-231ddce47064.jsonl<br>~/.claude/projects/-Users-4jp-Workspace-limen/34d17b80-3af9-41d6-8c52-231ddce47064/subagents/agent-a214fdddae40bb120.jsonl |
 | 8 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | 1712 | 1675 | repeated broad/invariant prompt pressure | ~/.claude/projects/-Users-4jp-Workspace-limen/a39889c7-0aae-4348-84ed-19612cb0daa2.jsonl<br>~/.claude/projects/-Users-4jp-Workspace-limen/a39889c7-0aae-4348-84ed-19612cb0daa2/subagents/agent-a247af5bfed85d756.jsonl |
-| 9 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | 1796 | 1543 | repeated broad/invariant prompt pressure | ~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-ticklish-bubbling-robin/0305e50a-e5ba-48e6-8fb1-6fb61264470d.jsonl<br>~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-ticklish-bubbling-robin/0305e50a-e5ba-48e6-8fb1-6fb61264470d/subagents/agent-a0467340f188db4f8.jsonl |
+| 9 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | 1815 | 1567 | repeated broad/invariant prompt pressure | ~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-ticklish-bubbling-robin/0305e50a-e5ba-48e6-8fb1-6fb61264470d.jsonl<br>~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-ticklish-bubbling-robin/0305e50a-e5ba-48e6-8fb1-6fb61264470d/subagents/agent-a0467340f188db4f8.jsonl |
 | 10 | `claude` | `4693c425-3c29-4a48-9a0b-54fd9fd37753` | 1525 | 1492 | repeated broad/invariant prompt pressure; failure/blocker language outweighs done language | ~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-piped-booping-kettle/4693c425-3c29-4a48-9a0b-54fd9fd37753.jsonl<br>~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-piped-booping-kettle/4693c425-3c29-4a48-9a0b-54fd9fd37753/subagents/agent-a0557b6700135bd60.jsonl |
 | 11 | `claude` | `3d972c29-36c6-4803-b94b-255df104f644` | 1530 | 1459 | repeated broad/invariant prompt pressure | ~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-integration-organs/3d972c29-36c6-4803-b94b-255df104f644.jsonl<br>~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-integration-organs/3d972c29-36c6-4803-b94b-255df104f644/subagents/agent-a0520000a299cee80.jsonl |
 | 12 | `claude` | `b7efae9c-af24-4c2c-9288-d2fa860ba974` | 4098 | 1450 | repeated broad/invariant prompt pressure | ~/.claude/projects/-Volumes-Archive4T/b7efae9c-af24-4c2c-9288-d2fa860ba974.jsonl<br>~/.claude/projects/-Volumes-Archive4T/b7efae9c-af24-4c2c-9288-d2fa860ba974/subagents/workflows/wf_12b30531-cf8/agent-a022f1572abeac617.jsonl |
@@ -122,33 +124,33 @@ Each session is compared to this ideal form:
 
 ## Findings
 
-1. Codex and Claude are now covered by the refreshed Limen prompt ledger, but the old prompt ledger did not directly ingest OpenCode's SQLite prompt store or Agy/Gemini capfill chat files. This review closes that local gap for the four requested agents.
+1. Codex, Claude, OpenCode, and Agy CLI prompt stores are now covered by the refreshed Limen prompt ledger and this full-stack review. The old prompt ledger undercounted OpenCode's SQLite store and Agy CLI/capfill sources; this pass closes that local gap for the four requested agents.
 2. Repeated fleet prompts carry a large invariant preamble before narrow work. That makes the prompt layer expensive and blurs the ideal diff: many sessions look like they were asked to preserve the whole organism when the real task was a narrow repo predicate.
 3. Broad autonomy language and closeout language are fighting each other. The ideal form should require a named owner scope and receipt before any lane gets a broad prompt.
 4. OpenCode has many recent sessions with no summary diffs and no token accounting in the session row; those need a live clock/receipt handshake or they read as no-op/unrecorded work even when the model saw a prompt.
-5. Agy/Antigravity provider quota remains a weak surface: this review can see capfill-agy prompt JSONL and local Antigravity state files, but not a decoded native conversation DB for every IDE conversation.
+5. Agy provider quota remains a weak surface: this review now decodes Agy CLI history and per-conversation SQLite prompts, but native Antigravity IDE conversation state is still only inventoried.
 
 ## Agent Notes
 
-- `agy`: top gaps: session outcome lacks verification signal (15), session outcome lacks durable receipt signal (15), likely no-op or unrecorded work (15).
+- `agy`: top gaps: failure/blocker language outweighs done language (423), session outcome lacks verification signal (206), prompt missing expected receipt/artifact (82), session outcome lacks durable receipt signal (28), likely no-op or unrecorded work (28).
 - `claude`: top gaps: session outcome lacks verification signal (505), session outcome lacks durable receipt signal (423), repeated broad/invariant prompt pressure (367), failure/blocker language outweighs done language (362), likely no-op or unrecorded work (340).
-- `codex`: top gaps: failure/blocker language outweighs done language (754), session outcome lacks verification signal (264), prompt missing executable predicate (252), session outcome lacks durable receipt signal (238), likely no-op or unrecorded work (238).
+- `codex`: top gaps: failure/blocker language outweighs done language (757), session outcome lacks verification signal (264), prompt missing executable predicate (252), session outcome lacks durable receipt signal (238), likely no-op or unrecorded work (238).
 - `opencode`: top gaps: prompt missing expected receipt/artifact (549), session outcome lacks verification signal (401), prompt missing executable predicate (396), session outcome lacks durable receipt signal (228), likely no-op or unrecorded work (228).
 
 ## Antigravity/Agy Native Surface
 
-- Known native state files: `2`.
-- Local support files inventoried: `621079` files, `33497202623` bytes.
-- Coverage note: Native Antigravity IDE prompt bodies were not decoded here; Agy prompt coverage comes from Gemini CLI capfill-agy chat JSONL plus local support inventory.
+- Known native state files: `4`.
+- Agy CLI conversation DBs decoded: `501` files, `894586880` bytes.
+- Local support files inventoried: `621875` files, `33510178751` bytes.
+- Coverage note: Agy CLI history and per-conversation SQLite prompt bodies are decoded. Native Antigravity IDE prompt bodies remain inventoried but not fully decoded.
 
 ## Next Repairs
 
-1. Add OpenCode and Agy sources to `prompt-lifecycle-ledger.py` so the standard ledger stops undercounting those agents.
-2. Promote this compact prompt normalizer into the standard ledger so it separates invariant preamble hash from task body hash everywhere.
+1. Decode native Antigravity IDE conversation storage if a stable conversation-body mapping is found; current IDE evidence remains app/log inventory rather than first-class prompts.
+2. Add a native Agy provider clock or explicit quota receipt. The existing board-run clock is not equivalent to provider quota exhaustion.
 3. Require lane packets to include `owner_scope`, `predicate`, `expected_receipt`, and `gate_class` fields before dispatch to OpenCode/Agy/Claude/Jules.
-4. Add a native Agy provider clock or explicit quota receipt. The existing board-run clock is not equivalent to provider quota exhaustion.
-5. Flag sessions with `prompt_events > 0` and no verification/receipt as failed-unrecorded until a receipt or blocker is written.
-6. Use the top-risk session list as the queue for deeper code-diff review, starting with broad Claude sessions and no-receipt OpenCode/Agy sessions.
+4. Flag sessions with `prompt_events > 0` and no verification/receipt as failed-unrecorded until a receipt or blocker is written.
+5. Use the top-risk session list as the queue for deeper code-diff review, starting with broad Claude sessions and no-receipt OpenCode/Agy sessions.
 
 ## Commands
 

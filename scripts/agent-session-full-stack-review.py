@@ -15,6 +15,7 @@ import os
 import re
 import sqlite3
 import sys
+import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Iterable
@@ -36,6 +37,10 @@ CLAUDE_PROJECTS = HOME / ".claude" / "projects"
 CLAUDE_TASKS = HOME / ".claude" / "tasks"
 OPENCODE_DB = HOME / ".local" / "share" / "opencode" / "opencode.db"
 GEMINI_TMP = HOME / ".gemini" / "tmp"
+AGY_CLI_ROOT = HOME / ".gemini" / "antigravity-cli"
+AGY_CLI_HISTORY = AGY_CLI_ROOT / "history.jsonl"
+AGY_CLI_CONVERSATIONS = AGY_CLI_ROOT / "conversations"
+AGY_CLI_SUMMARIES = AGY_CLI_ROOT / "conversation_summaries.db"
 ANTIGRAVITY_STATE = HOME / ".gemini" / "antigravity" / "antigravity_state.pbtxt"
 ANTIGRAVITY_SUMMARIES = HOME / ".gemini" / "antigravity" / "agyhub_summaries_proto.pb"
 
@@ -88,6 +93,15 @@ def iso_from_epoch_ms(value: Any) -> str | None:
         return dt.datetime.fromtimestamp(value / 1000, dt.timezone.utc).isoformat(timespec="seconds").replace(
             "+00:00", "Z"
         )
+    except (OSError, OverflowError, ValueError):
+        return None
+
+
+def iso_from_mtime(path: Path) -> str | None:
+    try:
+        return dt.datetime.fromtimestamp(path.stat().st_mtime, dt.timezone.utc).isoformat(
+            timespec="seconds"
+        ).replace("+00:00", "Z")
     except (OSError, OverflowError, ValueError):
         return None
 
@@ -146,6 +160,54 @@ def json_text(value: Any) -> list[str]:
                 out.extend(json_text(value[key]))
         return out
     return []
+
+
+def blob_text_spans(blob: bytes | None, *, min_len: int = 40) -> list[str]:
+    if not blob:
+        return []
+    decoded = blob.decode("utf-8", errors="ignore")
+    chars: list[str] = []
+    for ch in decoded:
+        if ch in "\n\r\t" or (ch.isprintable() and unicodedata.category(ch)[0] != "C"):
+            chars.append(ch)
+        else:
+            chars.append("\0")
+    out: list[str] = []
+    seen: set[str] = set()
+    for part in "".join(chars).split("\0"):
+        text = part.strip()
+        if len(text) < min_len or sum(c.isalpha() for c in text) < 12:
+            continue
+        if text in seen:
+            continue
+        seen.add(text)
+        out.append(text)
+    return out
+
+
+def agy_prompt_from_spans(spans: list[str]) -> str | None:
+    prompt_markers = ("# FLAME", "## FLAME", "Complete task ", "/goal", "Repo:", "Rules:", "Context:")
+    candidates = [span for span in spans if any(marker in span for marker in prompt_markers)]
+    if not candidates:
+        candidates = [span for span in spans if len(span) >= 120]
+    if not candidates:
+        return None
+    text = max(candidates, key=len).strip()
+    return text.lstrip("#,- \n\t") or text
+
+
+def agy_outcome_text_from_spans(spans: list[str], *, limit: int = 50000) -> str:
+    signal_re = re.compile(
+        r"(RESOURCE_EXHAUSTED|quota|error|failed|completed|finished|verified|passed|"
+        r"Task id|CommandLine|toolAction|toolSummary|git |pytest|npm |pnpm |"
+        r"Log: file://|pull/|commit|\\.md\\b|\\.json\\b|\\.py\\b|\\.ts\\b|\\.tsx\\b)",
+        re.I,
+    )
+    selected = [span for span in spans if signal_re.search(span)]
+    if not selected:
+        selected = [span for span in spans if len(span) <= 4000][:3]
+    text = "\n\n".join(selected)
+    return text[:limit]
 
 
 def maybe_decode_wrapped_string(text: str) -> str:
@@ -810,11 +872,92 @@ def extract_gemini_tmp_agy(agg: Aggregator, writer: Any) -> None:
                     )
 
 
+def extract_agy_cli_history(agg: Aggregator, writer: Any) -> None:
+    if not AGY_CLI_HISTORY.exists():
+        return
+    for ordinal, obj in enumerate(read_jsonl(AGY_CLI_HISTORY), 1):
+        text = obj.get("display")
+        if not isinstance(text, str) or not text.strip():
+            continue
+        session_id = str(obj.get("conversationId") or f"history-{ordinal}")
+        row = agg.add_prompt(
+            agent="agy",
+            source="agy-cli-history",
+            session_id=session_id,
+            path=AGY_CLI_HISTORY,
+            text=text,
+            ts=iso_from_epoch_ms(obj.get("timestamp")),
+            cwd=obj.get("workspace"),
+            ordinal=ordinal,
+            surface=f"agy-cli.history.{obj.get('type') or 'prompt'}",
+        )
+        writer.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
+def extract_agy_cli_conversations(agg: Aggregator, writer: Any) -> None:
+    if not AGY_CLI_CONVERSATIONS.exists():
+        return
+    for path in sorted(AGY_CLI_CONVERSATIONS.glob("*.db")):
+        sid = path.stem
+        try:
+            con = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+        except sqlite3.Error:
+            continue
+        con.row_factory = sqlite3.Row
+        try:
+            rows = con.execute(
+                "SELECT idx, step_type, status, step_payload, metadata, task_details, "
+                "error_details, render_info FROM steps ORDER BY idx"
+            ).fetchall()
+        except sqlite3.Error:
+            con.close()
+            continue
+        ts = iso_from_mtime(path)
+        agg.add_session_metadata(agent="agy", source="agy-cli-conversations", session_id=sid, path=path, ts=ts)
+        for row in rows:
+            spans: list[str] = []
+            for column in ("step_payload", "metadata", "task_details", "error_details", "render_info"):
+                spans.extend(blob_text_spans(row[column]))
+            if int(row["step_type"]) == 14:
+                prompt = agy_prompt_from_spans(spans)
+                if prompt:
+                    record = agg.add_prompt(
+                        agent="agy",
+                        source="agy-cli-conversations",
+                        session_id=sid,
+                        path=path,
+                        text=prompt,
+                        ts=ts,
+                        ordinal=row["idx"],
+                        surface="agy-cli.steps.type14",
+                    )
+                    writer.write(json.dumps(record, ensure_ascii=False) + "\n")
+            else:
+                outcome_text = agy_outcome_text_from_spans(spans)
+                if outcome_text.strip():
+                    agg.add_outcome_text(
+                        agent="agy",
+                        source="agy-cli-conversations",
+                        session_id=sid,
+                        path=path,
+                        text=outcome_text,
+                        ts=ts,
+                    )
+        con.close()
+
+
 def antigravity_inventory() -> dict[str, Any]:
     files = []
-    for path in (ANTIGRAVITY_STATE, ANTIGRAVITY_SUMMARIES):
+    for path in (ANTIGRAVITY_STATE, ANTIGRAVITY_SUMMARIES, AGY_CLI_HISTORY, AGY_CLI_SUMMARIES):
         if path.exists():
             files.append({"path": str(path), "display_path": relpath(path), "bytes": path.stat().st_size})
+    conversation_dbs = list(AGY_CLI_CONVERSATIONS.glob("*.db")) if AGY_CLI_CONVERSATIONS.exists() else []
+    conversation_db_bytes = 0
+    for path in conversation_dbs:
+        try:
+            conversation_db_bytes += path.stat().st_size
+        except OSError:
+            pass
     support_roots = [
         HOME / "Library" / "Application Support" / "Antigravity IDE",
         HOME / "Library" / "Application Support" / "Antigravity",
@@ -834,9 +977,11 @@ def antigravity_inventory() -> dict[str, Any]:
                     pass
     return {
         "known_state_files": files,
+        "agy_cli_conversation_dbs": len(conversation_dbs),
+        "agy_cli_conversation_db_bytes": conversation_db_bytes,
         "support_file_count": support_count,
         "support_bytes": support_bytes,
-        "note": "Native Antigravity IDE prompt bodies were not decoded here; Agy prompt coverage comes from Gemini CLI capfill-agy chat JSONL plus local support inventory.",
+        "note": "Agy CLI history and per-conversation SQLite prompt bodies are decoded. Native Antigravity IDE prompt bodies remain inventoried but not fully decoded.",
     }
 
 
@@ -997,7 +1142,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
             "## Ask-vs-Done Diff",
             "",
             "- Asked for every prompt verbatim: done in the private prompt corpus with hashes in the tracked report.",
-            "- Asked for Codex, Claude, Agy/Antigravity, and OpenCode: covered Codex session/history JSONL, Claude project/task JSONL, OpenCode SQLite, and Agy/Gemini capfill JSONL; native Antigravity IDE state is inventoried but not fully decoded.",
+            "- Asked for Codex, Claude, Agy/Antigravity, and OpenCode: covered Codex session/history JSONL, Claude project/task JSONL, OpenCode SQLite, Agy CLI history/conversation SQLite, and Agy/Gemini capfill JSONL; native Antigravity IDE state is inventoried but not fully decoded.",
             "- Asked for prompt layer first and session layer second: prompt events are normalized into raw prompt hashes plus task-body hashes, then sessions are scored against ideal-form outcome rules.",
             "- Asked for the diff between the ask and actual work: tracked at session level through missing scope, predicate, receipt, gate handling, verification, changed-file, token, and blocker signals.",
             "- Asked for a full work review: this pass is the corpus-wide receipt/outcome review; line-level code review should be driven next from the highest-risk session list rather than attempted as an unbounded manual sweep.",
@@ -1010,7 +1155,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
             f"- `{flame_events}` prompt events carried FLAME scaffolding; the task body is now separated, but older ledger views overcounted repeated invariant prompt mass as fresh work.",
             "- Structured changed-file data is uneven by agent: OpenCode exposes it in SQLite, while Codex and Claude need receipt text or downstream repo diff reconstruction.",
             "- OpenCode had many sessions that only become trustworthy when its DB-backed token clock and receipt handshake are present; session rows alone are not enough.",
-            "- Agy/Antigravity remains the weakest source surface because provider quota and native IDE conversations are not yet decoded as first-class prompt/session records.",
+            "- Antigravity IDE remains the weakest source surface because IDE conversations and provider quota are not yet decoded as first-class prompt/session records.",
             "",
             "## Highest-Risk Session Diffs",
             "",
@@ -1031,11 +1176,11 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
             "",
             "## Findings",
             "",
-            "1. Codex and Claude are now covered by the refreshed Limen prompt ledger, but the old prompt ledger did not directly ingest OpenCode's SQLite prompt store or Agy/Gemini capfill chat files. This review closes that local gap for the four requested agents.",
+            "1. Codex, Claude, OpenCode, and Agy CLI prompt stores are now covered by the refreshed Limen prompt ledger and this full-stack review. The old prompt ledger undercounted OpenCode's SQLite store and Agy CLI/capfill sources; this pass closes that local gap for the four requested agents.",
             "2. Repeated fleet prompts carry a large invariant preamble before narrow work. That makes the prompt layer expensive and blurs the ideal diff: many sessions look like they were asked to preserve the whole organism when the real task was a narrow repo predicate.",
             "3. Broad autonomy language and closeout language are fighting each other. The ideal form should require a named owner scope and receipt before any lane gets a broad prompt.",
             "4. OpenCode has many recent sessions with no summary diffs and no token accounting in the session row; those need a live clock/receipt handshake or they read as no-op/unrecorded work even when the model saw a prompt.",
-            "5. Agy/Antigravity provider quota remains a weak surface: this review can see capfill-agy prompt JSONL and local Antigravity state files, but not a decoded native conversation DB for every IDE conversation.",
+            "5. Agy provider quota remains a weak surface: this review now decodes Agy CLI history and per-conversation SQLite prompts, but native Antigravity IDE conversation state is still only inventoried.",
             "",
             "## Agent Notes",
             "",
@@ -1051,17 +1196,17 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
             "## Antigravity/Agy Native Surface",
             "",
             f"- Known native state files: `{len(antigravity['known_state_files'])}`.",
+            f"- Agy CLI conversation DBs decoded: `{antigravity['agy_cli_conversation_dbs']}` files, `{antigravity['agy_cli_conversation_db_bytes']}` bytes.",
             f"- Local support files inventoried: `{antigravity['support_file_count']}` files, `{antigravity['support_bytes']}` bytes.",
             f"- Coverage note: {antigravity['note']}",
             "",
             "## Next Repairs",
             "",
-            "1. Add OpenCode and Agy sources to `prompt-lifecycle-ledger.py` so the standard ledger stops undercounting those agents.",
-            "2. Promote this compact prompt normalizer into the standard ledger so it separates invariant preamble hash from task body hash everywhere.",
+            "1. Decode native Antigravity IDE conversation storage if a stable conversation-body mapping is found; current IDE evidence remains app/log inventory rather than first-class prompts.",
+            "2. Add a native Agy provider clock or explicit quota receipt. The existing board-run clock is not equivalent to provider quota exhaustion.",
             "3. Require lane packets to include `owner_scope`, `predicate`, `expected_receipt`, and `gate_class` fields before dispatch to OpenCode/Agy/Claude/Jules.",
-            "4. Add a native Agy provider clock or explicit quota receipt. The existing board-run clock is not equivalent to provider quota exhaustion.",
-            "5. Flag sessions with `prompt_events > 0` and no verification/receipt as failed-unrecorded until a receipt or blocker is written.",
-            "6. Use the top-risk session list as the queue for deeper code-diff review, starting with broad Claude sessions and no-receipt OpenCode/Agy sessions.",
+            "4. Flag sessions with `prompt_events > 0` and no verification/receipt as failed-unrecorded until a receipt or blocker is written.",
+            "5. Use the top-risk session list as the queue for deeper code-diff review, starting with broad Claude sessions and no-receipt OpenCode/Agy sessions.",
             "",
             "## Commands",
             "",
@@ -1080,6 +1225,8 @@ def build_snapshot() -> dict[str, Any]:
         extract_claude(agg, writer)
         extract_opencode(agg, writer)
         extract_gemini_tmp_agy(agg, writer)
+        extract_agy_cli_history(agg, writer)
+        extract_agy_cli_conversations(agg, writer)
     sessions = agg.finalize_sessions()
     snapshot = {
         "generated_at": now_iso(),
