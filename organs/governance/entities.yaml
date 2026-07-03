@@ -1,0 +1,139 @@
+# Governance Office — Entity Register (Aerarium / Cvrsvs Honorvm)
+# MACRO: a portable entity register any dual-entity (or multi-entity) governance can adopt.
+# MICRO: ORGANVM's own dual-entity operation (NPO + LLC).
+#
+# Single source of truth for legal entities, their mandates, and cursus standing.
+# The Compliance Sentinel reads this to check entity role blurring.
+# The Sequencing Auditor reads this to validate promotions.
+#
+# Add/update entities by editing this file. Run validate-entities.py to check integrity.
+schema_version: "1.0"
+organ: "governance"
+repo: "organvm/limen"
+updated: "2026-07-03"
+
+# ── Entity taxonomy ──────────────────────────────────────────────────────
+# Governance-specific types with their required mandate fields.
+entity_taxonomy:
+  nonprofit:
+    description: "Non-profit organization — public-benefit vehicle"
+    required_fields: [name, jurisdiction, mandates, forbidden_acts, fiduciary]
+  llc:
+    description: "Limited liability company — commercial vehicle"
+    required_fields: [name, jurisdiction, mandates, forbidden_acts, fiduciary]
+
+# ── The dual-entity boundary (the invariant) ─────────────────────────────
+# This matrix is the Compliance Sentinel's primary rule table. Every entity's
+# mandates and forbidden_acts are checked against it.
+boundary_matrix:
+  nonprofit:
+    allowed_mandates:
+      - "open-project-commons"
+      - "grant-receiving"
+      - "public-benefit"
+    always_forbidden:
+      - "private-profit-generation"
+      - "commercial-contracts-for-revenue"
+  llc:
+    allowed_mandates:
+      - "service-delivery"
+      - "revenue-generation"
+      - "commercial-contracts"
+    always_forbidden:
+      - "receive-charitable-grants"
+      - "claim-public-benefit-status"
+
+# ── Cursus honorum offices (mirrors the sequence in validate-seed.py) ────
+cursus_offices:
+  - "INCUBATOR"
+  - "ALPHA"
+  - "BETA"
+  - "STABLE"
+  - "MATURE"
+
+# ── Valid cursus promotion rules ────────────────────────────────────────
+# A repo or entity may only advance one office at a time. No skipping.
+# Each promotion requires ALL prerequisites to be satisfied.
+promotion_rules:
+  INCUBATOR_to_ALPHA:
+    prerequisites:
+      - "seed.yaml exists and validates"
+      - "organ KERNEL.md and CHARTER.md exist"
+  ALPHA_to_BETA:
+    prerequisites:
+      - "first vertical slice artifact exists"
+      - "organ registered in organ-ladder.json"
+      - "seed.yaml promotion_status matches implementation_status"
+  BETA_to_STABLE:
+    prerequisites:
+      - "organ beat wired into heartbeat loop"
+      - "maturity >= 60% in organ-ladder.json"
+  STABLE_to_MATURE:
+    prerequisites:
+      - "organ face (macro + micro) documented"
+      - "governance rules operationalized as checks"
+      - "maturity >= 90% in organ-ladder.json"
+
+# ── REPOSITORY REGISTRATIONS ────────────────────────────────────────────
+# Every organ repo registered under governance, with its cursus standing.
+# Update these as repos advance through the cursus.
+repos:
+  - repo: "organvm/limen"
+    organ: "Aerarium / Cvrsvs Honorvm"
+    home: "organs/governance/"
+    entity: "cind-and-sol-foundation"
+    cursus: "BETA"
+    implementation_status: "BETA"
+    description: >
+      Cvrsvs Honorvm — the governance office of the VLTIMA body. Runs the cursus
+      honorum validator, maintains the entity registrar, and audits every promotion
+      against the standing rules.
+    governance_roles:
+      - "Standing Clerk"
+      - "Sequencing Auditor"
+      - "Entity Registrar"
+      - "Compliance Sentinel"
+
+# ── ENTITIES (MICRO: ORGANVM's own) ─────────────────────────────────────
+# Legal entities under governance. Each has mandates (what it may do) and
+# forbidden_acts (what it must never do). The validator checks all.
+entities:
+  - id: "cind-and-sol-foundation"
+    name: "Cind & Sol Foundation"
+    type: nonprofit
+    jurisdiction: "Panama"
+    status: active
+    formation_date: null
+    fiduciary: "Anthony J. Padavano (human board)"
+    mandates:
+      - "open-project-commons"
+      - "grant-receiving"
+      - "public-benefit"
+    forbidden_acts:
+      - "private-profit-generation"
+      - "commercial-contracts-for-revenue"
+    cursus: "STABLE"
+    notes: >
+      The non-profit that holds the open-project commons. Grant-finding engine = Quaestor
+      (organvm-iii-ergon/quaestor). Per FLAME.md canon: MPO = NPO. Must never generate
+      private profit or execute commercial contracts for revenue.
+
+  - id: "sovereign-systems-llc"
+    name: "Sovereign Systems LLC"
+    type: llc
+    jurisdiction: "US"
+    status: active
+    formation_date: null
+    fiduciary: "Anthony J. Padavano (member/manager)"
+    mandates:
+      - "service-delivery"
+      - "revenue-generation"
+      - "commercial-contracts"
+    forbidden_acts:
+      - "receive-charitable-grants"
+      - "claim-public-benefit-status"
+    cursus: "STABLE"
+    notes: >
+      The commercial vehicle that delivers services and generates revenue. Per the
+      dual-entity boundary, must never receive charitable grants or claim public-benefit
+      status. Currently in dead-LLC status per financial organ — Stripe KYC blocked.
