@@ -1,19 +1,24 @@
-# Legal Organism — CHARTER (the virtual firm)
+# Legal Organism — CHARTER (COCHRAN, the virtual firm)
 
 > **Boundary:** an AI-run legal *operations* firm that works under and for a licensed attorney. It does
 > not practice law or give legal advice. The attorney of record directs it and owns every output. See
 > [KERNEL.md](KERNEL.md) for the full guardrails and [FRAMEWORK-FOR-COUNSEL.md](FRAMEWORK-FOR-COUNSEL.md) for
-> the client-facing deck.
+> the client-facing deck. **Current maturity:** scaffold. This charter defines buildable workflows and
+> reviewable artifacts; it does not claim an autonomous law practice or a deployed production firm.
 
 ## What it rivals — the Cochran standard
 
-A top-tier litigation firm like Cochran's doesn't have better lawyers; it has **more bench**. For every
-hour the named partner spends in court or on strategy, a coordinated team spends dozens of hours on
-the work that makes that hour effective: evidence indexing, research, calendaring, drafting, chain-of-
-custody discipline. The solo practitioner or lean firm has the same legal skill but **none of the bench**.
+Anthony named this flagship legal organ **Cochran**: not a claim of affiliation, and not a promise of
+legal representation, but the institutional standard it must rival. A top-tier litigation firm like
+Cochran's doesn't have better lawyers; it has **more bench**. For every hour the named partner spends in
+court or on strategy, a coordinated team spends dozens of hours on the work that makes that hour
+effective: evidence indexing, research, calendaring, drafting, chain-of-custody discipline. The solo
+practitioner or lean firm has the same legal skill but **none of the bench**.
 
-This organ supplies that bench as persistent AI roles that run continuously against the matter. It does
-not replace the attorney — it replaces the headcount that multiplies the attorney's effective output.
+This organ supplies that bench as persistent AI roles expressed as repeatable workflows. In the scaffold
+stage, those workflows can be run manually by a conductor or scheduled by Limen beats; each run produces
+local artifacts for attorney review. It does not replace the attorney — it replaces the missing
+operations headcount that multiplies the attorney's effective output.
 
 The Cochran standard, distilled: **every fact is found before it is needed, every deadline is owned before
 it arrives, and every argument is built on an evidence base that is complete and current.** This organ
@@ -32,10 +37,12 @@ into ongoing case operations. The mapping:
 | Drafting runs | → | Skeleton document regeneration when facts change |
 | Cross-model verification | → | Ethics/conflict sentinel checks on every output before human review |
 
-The binding constraint is not capacity — it is **matters to feed**. One active matter consumes
-approximately 20-40 workunits/month in steady-state operations. A fleet of 14K+ idle workunits can
-sustain hundreds of matters simultaneously. The first matter (Anthony's ADA employment case) proves
-the pipeline; scaling means adding matters, not capacity.
+The binding constraint is not capacity — it is **matter packets to feed**: attorney-approved scope,
+documents, dates, jurisdiction, and instructions. One active matter consumes approximately 20-40
+workunits/month in steady-state operations. A fleet of 14K+ idle workunits can sustain many matters
+simultaneously once intake, privilege handling, and review gates are wired. The first matter
+(Anthony's ADA employment case, augmenting attorney Counsel Longo) proves the pipeline; scaling means
+adding well-scoped matters, not inventing new legal authority.
 
 ## The org-chart (AI roles, human-supervised)
 
@@ -55,6 +62,30 @@ is always organized, always current, always ready — the leverage a big firm bu
 The attorney remains the center of gravity. These roles do not make decisions; they prepare the ground
 so the attorney's decisions are better informed and faster.
 
+## Current build surface
+
+This charter's first implementation surface is deliberately small and local. The organ is buildable
+when each matter can be represented as a folder of reviewable artifacts:
+
+```text
+organs/legal/
+  KERNEL.md                  # invariant model + guardrails
+  CHARTER.md                 # this virtual-firm operating charter
+  FRAMEWORK-FOR-COUNSEL.md     # first attorney-facing deck
+  matters/<matter-id>/
+    intake.md                # attorney/client supplied facts, scope, and exclusions
+    posture.md               # living case-posture brief
+    evidence-index.csv       # document/source/elements/chain-of-custody table
+    elements-map.md          # attorney-verified law-to-proof matrix
+    deadlines.md             # advisory deadline calendar
+    drafts/                  # review-only skeletons, never final filings
+    ethics-log.md            # sentinel checks and human approvals
+```
+
+Only the first three files exist in the scaffold today. The `matters/<matter-id>/` surface is the
+next build target, not a claim that live case records have already been ingested. Until counsel supplies
+or approves real matter facts, all examples stay structural.
+
 ## The firm-wide workflows it runs
 
 Each workflow maps to the 5-primitive kernel (Member/Mandate/Standing/Standard/Governance) and
@@ -70,6 +101,8 @@ standing, weekly or on-event for drafting.
 - **Output:** a living case-posture brief — one page, always current. Sections: parties, matter,
   stage, deadlines, open items, risk register, leverage assessment.
 - **Human gate:** attorney reviews and approves posture assessment.
+- **Build path:** first as `matters/<matter-id>/intake.md` and `posture.md`; later as a structured
+  intake form that writes the same fields.
 
 ### 2. Evidence → index (Member + Standard)
 
@@ -81,6 +114,8 @@ standing, weekly or on-event for drafting.
 - **Output:** evidence index — sortable, filterable, citable. Each entry is a row with: ID, date,
   source, type, element(s) supported, chain-of-custody, notes.
 - **Human gate:** attorney verifies completeness, relevance, and admissibility.
+- **Build path:** first as `evidence-index.csv` plus a document naming convention; later as OCR/import
+  adapters that append rows but never overwrite provenance.
 
 ### 3. Law → elements map (Standard + Mandate)
 
@@ -92,6 +127,8 @@ standing, weekly or on-event for drafting.
 - **Output:** elements-to-evidence matrix — elements as rows, evidence citations as columns, with
   confidence ratings and gap flags.
 - **Human gate:** attorney validates every cited authority and the legal element decomposition.
+- **Build path:** first as `elements-map.md` populated from attorney-provided authorities; later as a
+  cite-fetch/check workflow that only records verifiable authority.
 
 ### 4. Deadlines → calendar (Standing + Governance)
 
@@ -103,6 +140,8 @@ standing, weekly or on-event for drafting.
 - **Output:** deadline calendar — all dates sorted by proximity, with alert status. Never misses
   a date because the calendar runs daily whether the attorney looks or not.
 - **Human gate:** attorney approves the calendar weekly and confirms critical deadlines.
+- **Build path:** first as `deadlines.md` maintained from attorney-supplied dates; later as calendar
+  export/reminder integrations after explicit approval.
 
 ### 5. Draft → review (Governance + Mandate)
 
@@ -116,6 +155,8 @@ standing, weekly or on-event for drafting.
   marked as draft work product.
 - **Human gate:** attorney rewrites, adopts, and owns every word. Nothing is filed or sent by
   the system.
+- **Build path:** first as Markdown files under `drafts/`; later as template-assisted generation from
+  the index and elements map. Every file remains review-only.
 
 ### 6. Ethics / conflict check (Governance — cross-cuts all)
 
@@ -128,6 +169,8 @@ standing, weekly or on-event for drafting.
 - **Output:** ethics certification — a stamp on every deliverable: "Ethics/Conflict check passed:
   privilege intact, UPL boundary held, no conflicts identified."
 - **Human gate:** attorney is the final arbiter of all ethics and privilege decisions.
+- **Build path:** first as `ethics-log.md` entries attached to each artifact; later as an automated
+  preflight that blocks artifacts missing source, draft status, or human-review fields.
 
 ### Workflow orchestration diagram
 
@@ -184,6 +227,7 @@ path — no artifact reaches an external destination without human judgment.
 | Matter facts | Structured intake form or narrative | Client / attorney | Member + Mandate |
 | Documents, messages, records | PDF, text, email, image, spreadsheet | Client, attorney, discovery | Member + Standard |
 | Controlling jurisdiction | Jurisdiction name + area of law | Attorney designates | Standard |
+| Counsel-approved theory / exclusions | Written instruction, correction, or "do not analyze" list | Attorney | Mandate + Governance |
 | Attorney instructions | Direction, feedback, correction | Attorney | Governance |
 | Deadlines and obligations | Dates, rules, court orders | Court rules, attorney | Standing |
 
@@ -201,6 +245,23 @@ path — no artifact reaches an external destination without human judgment.
 
 All outputs are **advisory-to-the-attorney**. None are self-acting, none are filed, none are
 communicated externally without the attorney's review and execution.
+
+## Exact mechanism — how one person gets the weight
+
+The organ gives one person top-firm weight through four concrete mechanisms:
+
+1. **Persistent memory of the matter:** posture, evidence, law map, dates, and ethics checks live as
+   separate artifacts instead of in one person's head or inbox.
+2. **Parallel role separation:** evidence, law, drafting, docketing, and ethics are handled by distinct
+   workflows, so each output can check the others the way firm staff checks partner work.
+3. **Cadence:** daily/weekly beats keep the matter current even when counsel is busy, producing the
+   advantage large firms get from staff who keep working between attorney touchpoints.
+4. **Attorney-controlled choke point:** everything stops at counsel. The system increases prepared
+   surface area; counsel supplies legal judgment, communication, filing, negotiation, and signature.
+
+That is the Cochran standard in buildable form: not "AI lawyer," but a disciplined back office that
+keeps evidence, deadlines, drafts, and review gates in motion until the attorney has a top-tier
+institutional surface to act from.
 
 ## How the institutional weight works (the leverage math)
 
@@ -233,6 +294,13 @@ until the client/attorney supply them; the *structure* is the deliverable.
 The SCRUM: run workflow 1 (intake → posture) and workflow 2 (evidence → index) against the real
 matter facts once Counsel provides them. Workflow 4 (deadlines → calendar) runs as soon as dates
 are known. Workflows 3 and 5 build on the index output.
+
+The first acceptable live artifact set is:
+
+- `posture.md` — one-page matter posture, approved/corrected by Counsel.
+- `evidence-index.csv` — every supplied record logged with source and chain-of-custody notes.
+- `deadlines.md` — all known dates, explicitly marked "attorney-confirmed" or "unconfirmed".
+- `FRAMEWORK-FOR-COUNSEL.md` — the presentation wrapper, not a substitute for counsel's direction.
 
 ## Future scaling (non-blocking, noted for later maturity bands)
 
