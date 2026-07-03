@@ -1,0 +1,33 @@
+id: homeschool-engine
+name: Homeschool engine
+member:
+  learner_group: Family-owned homeschool learner
+  human_owner: Anthony J. Padavano
+  context: Alternative curriculum arc outside the legacy school default.
+mandate:
+  description: Convert a family learning goal into a staged quest with rubric, cadence, Wings artifacts, and closeout archive.
+  scope_boundary: Quest architecture, rubric drafting, cadence planning, artifact review, and closeout records.
+standing:
+  current: ACTIVE
+  since: "2026-07-03"
+next_standing: REVIEW
+standard:
+  rubric: A homeschool quest is review-ready only when learner context, objective, cadence, rubric, and parent gate are explicit.
+  evidence:
+    - KERNEL.md
+    - MACRO-FACE.md
+    - MICRO-FACE.md
+governance:
+  manual_mode: true
+  forbidden_acts:
+    - autonomous curriculum adoption
+    - autonomous parent consent
+    - autonomous credential issuance
+human_gates:
+  - parent curriculum approval
+  - learner feedback approval
+  - completion record approval
+artifacts:
+  next_reviewable_output: first Quest packet
+  wings_path: eight-artifact Wings packet for the first module
+

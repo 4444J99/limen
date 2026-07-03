@@ -1,0 +1,33 @@
+id: enc1101
+name: ENC1101 writing course
+member:
+  learner_group: Broward College ENC1101 students
+  human_owner: Anthony J. Padavano
+  context: Legacy-adjacent college writing course delivered through D2L.
+mandate:
+  description: Keep the course staged, rubric-grounded, and reviewable while the instructor retains all institutional authority.
+  scope_boundary: Syllabus support, module packaging, rubric structure, feedback bank drafting, and closeout records.
+standing:
+  current: ACTIVE
+  since: "2026-07-03"
+next_standing: REVIEW
+standard:
+  rubric: Writing module is review-ready only when objective, prompt, criteria, feedback bank, and artifact path are named.
+  evidence:
+    - KERNEL.md
+    - MACRO-FACE.md
+    - MICRO-FACE.md
+governance:
+  manual_mode: true
+  forbidden_acts:
+    - autonomous D2L go-live
+    - autonomous grade submission
+    - autonomous credential issuance
+human_gates:
+  - D2L go-live approval
+  - feedback release approval
+  - grade submission approval
+artifacts:
+  next_reviewable_output: ENC1101 module package
+  wings_path: academic argument plus feedback bank
+
