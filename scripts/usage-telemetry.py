@@ -7,7 +7,8 @@ available real signal and writes logs/usage.json for board.py + the portal:
   claude  — sum usage tokens from ~/.claude/projects/**/*.jsonl in the 5h window
   jules   — dispatch count today vs 100 (the one true proxy; rolling 24h)
   gemini  — dispatch count today vs RPD-ish cap + last rate-limit event
-  opencode/agy — dispatch count today + last rate-limit event (no readable meter)
+  opencode — opencode-clock token meter when present, else dispatch count today
+  agy      — dispatch count today + last rate-limit event (no readable meter)
 
 READ-ONLY w.r.t. tasks.yaml (writes ONLY logs/usage.json) → never races the daemon.
 """

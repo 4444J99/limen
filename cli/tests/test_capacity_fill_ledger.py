@@ -48,3 +48,35 @@ def test_ollama_blocker_preserves_pull_instruction_without_disk_pressure(monkeyp
     monkeypatch.setattr(module, "disk_free_gib", lambda path=module.HOME: 80.0)
 
     assert module.ollama_capacity_detail(original) == original
+
+
+def test_opencode_signal_quality_reports_clock_health(monkeypatch):
+    module = _load_capacity_fill_module()
+    monkeypatch.setattr(
+        module,
+        "read_opencode_clock",
+        lambda: {
+            "health": "ok",
+            "used_pct": 15,
+            "accepting_tasks": True,
+            "updated_at": "2026-07-03T06:00:00+00:00",
+        },
+    )
+
+    signal = module.signal_quality("opencode")
+
+    assert signal["signal"] == "db-meter"
+    assert signal["trust"] == "measured"
+    assert "health=ok" in signal["use"]
+    assert "used=15%" in signal["use"]
+    assert "accepting_tasks=True" in signal["use"]
+
+
+def test_opencode_signal_quality_falls_back_without_clock(monkeypatch):
+    module = _load_capacity_fill_module()
+    monkeypatch.setattr(module, "read_opencode_clock", lambda: None)
+
+    signal = module.signal_quality("opencode")
+
+    assert signal["signal"] == "dispatch-count proxy"
+    assert signal["trust"] == "proxy"

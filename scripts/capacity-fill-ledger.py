@@ -87,8 +87,37 @@ def ollama_capacity_detail(detail: str) -> str:
     )
 
 
+def read_opencode_clock() -> dict[str, Any] | None:
+    path = HOME / ".local" / "share" / "opencode" / "clock.json"
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return value if isinstance(value, dict) else None
+
+
+def opencode_signal_quality() -> dict[str, str]:
+    clock = read_opencode_clock()
+    if not clock:
+        return {
+            "signal": "dispatch-count proxy",
+            "trust": "proxy",
+            "use": "usable only as a dispatch-count fallback until opencode-clock writes its DB meter",
+            "next_build": "Restore opencode-clock so the SQLite usage DB emits clock.json.",
+        }
+    health = str(clock.get("health", "unknown"))
+    used = clock.get("used_pct", "unknown")
+    accepting = clock.get("accepting_tasks", "unknown")
+    updated = str(clock.get("updated_at") or clock.get("heartbeat") or "unknown")
+    return {
+        "signal": "db-meter",
+        "trust": "measured",
+        "use": f"token clock health={health}; used={used}%; accepting_tasks={accepting}; updated={updated}",
+        "next_build": "Keep opencode-clock fresh from the SQLite usage DB.",
+    }
+
+
 def signal_quality(agent: str) -> dict[str, str]:
-    opencode_clock = HOME / ".local" / "share" / "opencode" / "clock.json"
     rows: dict[str, dict[str, str]] = {
         "codex": {
             "signal": "transcript-token estimate",
@@ -102,12 +131,7 @@ def signal_quality(agent: str) -> dict[str, str]:
             "use": "usable for pacing; rate-limit events still dominate stop decisions",
             "next_build": "Calibrate Claude plan pool cap from a trusted account meter.",
         },
-        "opencode": {
-            "signal": "db-meter" if opencode_clock.exists() else "dispatch-count proxy",
-            "trust": "measured" if opencode_clock.exists() else "proxy",
-            "use": "best local paid-lane signal when the DB clock is present",
-            "next_build": "Keep opencode-clock fresh from the SQLite usage DB.",
-        },
+        "opencode": opencode_signal_quality(),
         "agy": {
             "signal": "dispatch-count proxy",
             "trust": "proxy",
