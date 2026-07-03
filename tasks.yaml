@@ -68765,18 +68765,16 @@ tasks:
   title: Draft the build-in-public launch post for ChatGPT Exporter
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: opencode
+  target_agent: claude
   priority: high
   budget_cost: 2
-  status: failed
+  status: needs_human
   labels:
   - revenue-launch-post
   - revenue
   - product
   - ship-order
   - generated
-  - tried:gemini
-  - tried:claude
   - noop
   urls: []
   context: "Write a ready-to-post launch announcement for ChatGPT Exporter (Show HN\
@@ -68786,7 +68784,7 @@ tasks:
     \ spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-28'
-  updated: '2026-07-03T08:27:06.538836Z'
+  updated: '2026-07-03T09:31:04.440453Z'
   dispatch_log:
   - timestamp: '2026-06-28T04:10:51.965981Z'
     agent: gemini
@@ -68848,6 +68846,17 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-03T09:28:28.857477Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-03T09:31:04.440453Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: GEN-organvm-limen-test-coverage-0628
   title: Raise test coverage in organvm/limen
   repo: organvm/limen
@@ -71137,7 +71146,7 @@ tasks:
   title: Real usage docs for organvm/mirror-mirror
   repo: organvm/mirror-mirror
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: low
   budget_cost: 1
   status: open
@@ -71207,7 +71216,7 @@ tasks:
   title: Real usage docs for organvm/a-i-chat--exporter
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: low
   budget_cost: 1
   status: open
@@ -71261,7 +71270,7 @@ tasks:
   title: Real usage docs for organvm/limen
   repo: organvm/limen
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: low
   budget_cost: 1
   status: open
@@ -71710,7 +71719,7 @@ tasks:
   title: Reduce complexity in organvm/mirror-mirror
   repo: organvm/mirror-mirror
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -72089,10 +72098,10 @@ tasks:
   title: Drive Universal Mail Automation to deploy-ready
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: high
   budget_cost: 2
-  status: failed
+  status: needs_human
   labels:
   - revenue-ship
   - revenue
@@ -72100,8 +72109,6 @@ tasks:
   - ship-order
   - generated
   - noop
-  - tried:gemini
-  - tried:claude
   urls: []
   context: "In organvm/universal-mail--automation, clear the concrete blockers between\
     \ the current state and a DEPLOYABLE product: get open PRs green + merged, fix\
@@ -72110,7 +72117,7 @@ tasks:
     \ rank 3, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-07-03T08:34:37.943578Z'
+  updated: '2026-07-03T09:31:04.440453Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:47:16.260739Z'
     agent: claude
@@ -72184,6 +72191,17 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-03T09:28:28.857477Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-03T09:31:04.440453Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: REV-organvm-the-invisible-ledger-revenue-ship-0630
   title: Drive The Invisible Ledger to deploy-ready
   repo: organvm/the-invisible-ledger
@@ -72646,7 +72664,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 2
-  status: failed
+  status: open
   labels:
   - organ-deepen
   - pillar:media
@@ -72654,8 +72672,6 @@ tasks:
   - institution
   - vltima
   - generated
-  - tried:claude
-  - tried:gemini
   urls: []
   context: "In organvm/limen organs/media/ (and reference its product repo where relevant),\
     \ close the single highest-leverage gap between the current scaffold and something\
@@ -72667,7 +72683,7 @@ tasks:
     \ (VLTIMA).]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-07-03T08:27:06.538836Z'
+  updated: '2026-07-03T09:28:28.857477Z'
   dispatch_log:
   - timestamp: '2026-06-30T16:00:55.195999Z'
     agent: claude
@@ -72710,6 +72726,11 @@ tasks:
     agent: claude
     session_id: cli
     status: failed
+  - timestamp: '2026-07-03T09:28:28.857477Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: ORG-governance-organ-deepen-0630
   title: Deepen the governance organ toward a usable institution
   repo: organvm/limen
@@ -74343,7 +74364,7 @@ tasks:
   title: Discover the latent value of organvm/sovereign-systems--layer-above-hokage
   repo: organvm/sovereign-systems--layer-above-hokage
   type: research
-  target_agent: opencode
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -76931,7 +76952,7 @@ tasks:
   title: Tighten types in organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -77019,7 +77040,7 @@ tasks:
   title: Drive Mirror Mirror to deploy-ready
   repo: organvm/mirror-mirror
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 2
   status: open
@@ -77441,10 +77462,10 @@ tasks:
   title: Drive Universal Mail Automation to deploy-ready
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: opencode
+  target_agent: claude
   priority: high
   budget_cost: 2
-  status: failed
+  status: open
   labels:
   - revenue-ship
   - revenue
@@ -77460,7 +77481,7 @@ tasks:
     \ rank 3, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-03T09:16:14.632674Z'
+  updated: '2026-07-03T09:28:28.857477Z'
   dispatch_log:
   - timestamp: '2026-07-03T09:13:33.694628Z'
     agent: opencode
@@ -77472,14 +77493,19 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-03T09:28:28.857477Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: REV-organvm-a-i-chat--exporter-revenue-launch-post-0703
   title: Draft the build-in-public launch post for ChatGPT Exporter
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 2
-  status: failed
+  status: dispatched
   labels:
   - revenue-launch-post
   - revenue
@@ -77495,7 +77521,7 @@ tasks:
     \ spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-03T09:08:34.823210Z'
+  updated: '2026-07-03T09:30:25.724513Z'
   dispatch_log:
   - timestamp: '2026-07-03T09:05:02.070117Z'
     agent: agy
@@ -77507,6 +77533,16 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-03T09:28:28.857477Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-03T09:30:25.724513Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: ORG-legal-organ-kernel-0703
   title: Map the VLTIMA 5-primitive kernel to the legal organ
   repo: organvm/limen
@@ -77558,7 +77594,7 @@ tasks:
   title: Deepen the financial organ toward a usable institution
   repo: organvm/limen
   type: content
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 2
   status: open
@@ -77632,10 +77668,10 @@ tasks:
   title: Make the consulting organ's macro + micro face excellent
   repo: organvm/limen
   type: content
-  target_agent: agy
+  target_agent: claude
   priority: high
   budget_cost: 2
-  status: failed
+  status: open
   labels:
   - organ-face
   - pillar:consulting
@@ -77654,7 +77690,7 @@ tasks:
     \ convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-03T09:14:01.763689Z'
+  updated: '2026-07-03T09:28:28.857477Z'
   dispatch_log:
   - timestamp: '2026-07-03T09:13:33.694628Z'
     agent: agy
@@ -77666,11 +77702,16 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-03T09:28:28.857477Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: ORG-artist-organ-face-0703
   title: Make the artist organ's macro + micro face excellent
   repo: organvm/limen
   type: content
-  target_agent: claude
+  target_agent: opencode
   priority: high
   budget_cost: 2
   status: open
@@ -77740,7 +77781,7 @@ tasks:
   title: Deepen the governance organ toward a usable institution
   repo: organvm/limen
   type: content
-  target_agent: opencode
+  target_agent: agy
   priority: high
   budget_cost: 2
   status: open
@@ -77768,10 +77809,10 @@ tasks:
   title: Make the education organ's macro + micro face excellent
   repo: organvm/limen
   type: content
-  target_agent: agy
+  target_agent: claude
   priority: high
   budget_cost: 2
-  status: failed
+  status: open
   labels:
   - organ-face
   - pillar:education
@@ -77791,7 +77832,7 @@ tasks:
     \ (VLTIMA).]"
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-03T09:17:19.258649Z'
+  updated: '2026-07-03T09:28:28.857477Z'
   dispatch_log:
   - timestamp: '2026-07-03T09:16:26.808055Z'
     agent: agy
@@ -77803,3 +77844,226 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-03T09:28:28.857477Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+- id: GEN-organvm-limen-typing-0703
+  title: Tighten types in organvm/limen
+  repo: organvm/limen
+  type: code
+  target_agent: opencode
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - typing
+  - generated
+  - build-out
+  urls: []
+  context: Eliminate the worst untyped hotspots in organvm/limen's most-imported module
+    (remove `any` / add type hints / fix loose signatures). Keep the build and tests
+    green. [auto-generated 2026-07-03 to keep the stream endless]
+  depends_on: []
+  created: '2026-07-03'
+  dispatch_log: []
+- id: ORG-legal-organ-charter-0703
+  title: Charter the legal organ as an institution rivaling a top-tier litigation
+    firm (the Cochran standard)
+  repo: organvm/limen
+  type: content
+  target_agent: agy
+  priority: critical
+  budget_cost: 2
+  status: failed
+  labels:
+  - organ-charter
+  - pillar:legal
+  - organ
+  - institution
+  - vltima
+  - generated
+  - noop
+  urls: []
+  context: "In organvm/limen organs/legal/, write CHARTER.md: the org-chart of AI\
+    \ roles (the 'virtual firm/team'), the workflows it runs, its inputs/outputs,\
+    \ and exactly how it gives one person the institutional weight of a top-tier litigation\
+    \ firm (the Cochran standard). Concrete and buildable. No invented capabilities.\
+    \ CONSTRAINT: THE FLAGSHIP he named. Augments real counsel; does NOT give legal\
+    \ advice or practice law.. [organ-backlog 2026-07-03: rank 1, maturity 20% stage\
+    \ scaffold \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-03'
+  updated: '2026-07-03T09:38:29.222798Z'
+  dispatch_log:
+  - timestamp: '2026-07-03T09:30:25.724513Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T09:38:29.222798Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+- id: ORG-health-organ-charter-0703
+  title: Charter the health organ as an institution rivaling a concierge medical /
+    recovery team
+  repo: organvm/limen
+  type: content
+  target_agent: claude
+  priority: critical
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-charter
+  - pillar:health
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "In organvm/limen organs/health/, write CHARTER.md: the org-chart of AI\
+    \ roles (the 'virtual firm/team'), the workflows it runs, its inputs/outputs,\
+    \ and exactly how it gives one person the institutional weight of a concierge\
+    \ medical / recovery team. Concrete and buildable. No invented capabilities. CONSTRAINT:\
+    \ unnamed; post-injury (4th-story fall ~2024); ties to the legal ADA accommodation\
+    \ matter. KERNEL.md authored 2026-07-03: full 5-primitive map + institutional\
+    \ prosthesis framing + rival institution + legal organ link + hard guardrails.\
+    \ Maturity 5%\u219210%.. [organ-backlog 2026-07-03: rank 9, maturity 10% stage\
+    \ scaffold \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-03'
+  dispatch_log: []
+- id: ORG-financial-organ-selffeed-0703
+  title: Wire the financial organ to advance autonomously
+  repo: organvm/limen
+  type: content
+  target_agent: opencode
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-selffeed
+  - pillar:financial
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "Make the financial organ self-feeding like the revenue/studium voices:\
+    \ bump its maturity in organ-ladder.json as slices land, and add/extend a beat\
+    \ or generator hook so the conductor keeps driving it without a human in the loop.\
+    \ Keep it lockless + idempotent. CONSTRAINT: scale the-invisible-ledger from a\
+    \ B2B CPA tool into a personal family office; intake is owned by MONETA (moneta/),\
+    \ the sovereign cash organ \u2014 this census tracks the institution, MONETA is\
+    \ its rail. Deepened 2026-07-03: entity registry (entities.yaml), balance-sheet/cashflow/payrail\
+    \ STATUS dashboard, seed.yaml, consolidate.py generator. Maturity 30%\u219240%..\
+    \ [organ-backlog 2026-07-03: rank 2, maturity 40% stage building \u2014 convert\
+    \ idle fleet capacity into institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-03'
+  dispatch_log: []
+- id: ORG-governance-organ-operationalize-0703
+  title: Operationalize governance governance (rules as checks)
+  repo: organvm/limen
+  type: content
+  target_agent: agy
+  priority: medium
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-operationalize
+  - pillar:governance
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "Turn the governance organ's rules into executable/checkable form (mirror\
+    \ cvrsvs-honorvm): a small validator or checklist that PROVES the institution\
+    \ runs correctly. One PR, green. CONSTRAINT: deepened 2026-07-03: entity register\
+    \ (entities.yaml) with dual-entity boundary matrix, validate-entities.py (Rules\
+    \ #3-4: entity integrity + repo registration). Maturity 70%\u219275%.. [organ-backlog\
+    \ 2026-07-03: rank 5, maturity 75% stage maturing \u2014 convert idle fleet capacity\
+    \ into institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-03'
+  dispatch_log: []
+- id: ORG-consulting-organ-operationalize-0703
+  title: Operationalize consulting governance (rules as checks)
+  repo: organvm/limen
+  type: content
+  target_agent: claude
+  priority: medium
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-operationalize
+  - pillar:consulting
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "Turn the consulting organ's rules into executable/checkable form (mirror\
+    \ cvrsvs-honorvm): a small validator or checklist that PROVES the institution\
+    \ runs correctly. One PR, green. CONSTRAINT: working manual prototypes; not yet\
+    \ autonomic or scaled back to self. [organ-backlog 2026-07-03: rank 6, maturity\
+    \ 60% stage maturing \u2014 convert idle fleet capacity into institutional weight\
+    \ (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-03'
+  dispatch_log: []
+- id: ORG-artist-organ-operationalize-0703
+  title: Operationalize artist governance (rules as checks)
+  repo: organvm/limen
+  type: content
+  target_agent: opencode
+  priority: medium
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-operationalize
+  - pillar:artist
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "Turn the artist organ's rules into executable/checkable form (mirror cvrsvs-honorvm):\
+    \ a small validator or checklist that PROVES the institution runs correctly. One\
+    \ PR, green. CONSTRAINT: temple built (70%) but chambers under-filled; currently\
+    \ subordinate to education. [organ-backlog 2026-07-03: rank 7, maturity 70% stage\
+    \ maturing \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-03'
+  dispatch_log: []
+- id: ORG-social-organ-charter-0703
+  title: Charter the social organ as an institution rivaling a civic/community institution
+    + relationship support ('relationship gurus')
+  repo: organvm/limen
+  type: content
+  target_agent: agy
+  priority: critical
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-charter
+  - pillar:social
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "In organvm/limen organs/social/, write CHARTER.md: the org-chart of AI\
+    \ roles (the 'virtual firm/team'), the workflows it runs, its inputs/outputs,\
+    \ and exactly how it gives one person the institutional weight of a civic/community\
+    \ institution + relationship support ('relationship gurus'). Concrete and buildable.\
+    \ No invented capabilities. CONSTRAINT: named by him, unscoped. [organ-backlog\
+    \ 2026-07-03: rank 8, maturity 5% stage scaffold \u2014 convert idle fleet capacity\
+    \ into institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-03'
+  dispatch_log: []
