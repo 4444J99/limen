@@ -88,3 +88,54 @@ def test_consolidator_skips_timestamp_only_writes(tmp_path: Path, monkeypatch) -
         "**Generated:** 2026-07-03T10:00:00Z  **Maturity:** mature (90%)\n\nbody\n",
     )
     assert changed is True
+
+
+def test_financial_dashboard_surfaces_macro_and_micro_faces(tmp_path: Path, monkeypatch) -> None:
+    fin = tmp_path / "organs" / "financial"
+    fin.mkdir(parents=True)
+    (fin / "MACRO.md").write_text("# Macro\n")
+    (fin / "MICRO.md").write_text("# Micro\n")
+    module = load_consolidate(tmp_path, monkeypatch)
+
+    dashboard = module.build_dashboard(
+        {"entities": []},
+        {"products": []},
+        {"obligations": []},
+        {"snapshot_count": 0},
+    )
+    web_face = module.build_web_dashboard({"entities": []}, {"snapshot_count": 0})
+
+    assert "| Macro Face | `MACRO.md` | Authored" in dashboard
+    assert "| Micro Instance Face | `MICRO.md` | Authored" in dashboard
+    faces = {face["id"]: face for face in web_face["faces"]}
+    assert faces["macro"]["path"] == "organs/financial/MACRO.md"
+    assert faces["micro"]["status"] == "authored"
+    assert "MONETA intakes value" in web_face["rail_boundary"]
+
+
+def test_cashflow_uses_registry_obligation_fallback(tmp_path: Path, monkeypatch) -> None:
+    module = load_consolidate(tmp_path, monkeypatch)
+    entities = {
+        "obligation_sources": [
+            {
+                "source": "$LIMEN_ROOT/obligations-ledger.json",
+                "financial_obligations": [
+                    {
+                        "priority": 88,
+                        "title": "Student loan default risk",
+                        "entity": "anthony-personal",
+                        "next_step": "Check servicer status",
+                    }
+                ],
+            }
+        ]
+    }
+
+    cashflow = module.build_cashflow(entities, {"products": []}, {}, {})
+    dashboard = module.build_dashboard(entities, {"products": []}, {}, {"snapshot_count": 0})
+
+    assert "1 protocol-class obligations" in cashflow
+    assert "entities.yaml registry fallback" in cashflow
+    assert "Student loan default risk" in cashflow
+    assert "1 financial-material (registry fallback)" in dashboard
+    assert "using `entities.yaml` fallback" in dashboard

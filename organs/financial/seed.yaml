@@ -13,6 +13,16 @@ description: >
   own assertion. Macro: a family-office-in-a-box anyone can deploy. Micro: Anthony's personal
   balance-sheet + cashflow + payrail disbursement map run on his real numbers.
 produces:
+  - type: "macro_family_office_face"
+    path: "organs/financial/MACRO.md"
+    consumers:
+      - "principal"
+      - "public positioning"
+  - type: "micro_principal_instance_face"
+    path: "organs/financial/MICRO.md"
+    consumers:
+      - "principal"
+      - "conducting-report"
   - type: "consolidated_balance_sheet"
     consumers:
       - "organ-health"

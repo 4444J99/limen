@@ -67,6 +67,11 @@ Each workflow maps to the 5-primitive kernel (Member/Mandate/Standing/Standard/G
 and produces a specific artifact. Workflows run on a **cadence** — continuous for
 reconciliation, daily for position, weekly for projection, on-event for major decisions.
 
+The polished faces are now first-class artifacts:
+
+- [MACRO.md](MACRO.md) — the deployable family-office-in-a-box face for anyone.
+- [MICRO.md](MICRO.md) — Anthony's own MONETA/payrail/wealth/tax office instance.
+
 ### 1. Entity registry → position (Member + Standing)
 
 - **Trigger:** entity added, account opened, or position change detected.
