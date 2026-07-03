@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-03T11:01:46+00:00`
+Generated: `2026-07-03T11:12:27+00:00`
 
 Status: `healthy`
 
@@ -23,21 +23,21 @@ Status: `healthy`
 - Loaded LIMEN_DISPATCH_ASYNC: `1`.
 - Loaded LIMEN_DISPATCH_LANES: `opencode,agy`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-03T11:01:46.356341+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-03T11:12:27.281017+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 0 still running ; would launch 9 (cap 12) -> ['GEN-organvm-portfolio-ci-green-0702', 'ORG-financial-organ-deepen-0703', 'ORG-governance-organ-selffeed-0703', 'ORG-governance-organ-deepen-0703', 'ORG-legal-organ-firstslice-0703', 'DISCOVER-organvm-the-actual-news', 'REV-organvm-universal-mail--automation-revenue-ship-0703', 'ORG-education-organ-face-0703', 'ORG-health-organ-firstslice-0703']`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 0 still running ; would launch 9 (cap 12) -> ['GEN-organvm-portfolio-ci-green-0702', 'ORG-financial-organ-deepen-0703', 'ORG-governance-organ-selffeed-0703', 'ORG-legal-organ-firstslice-0703', 'DISCOVER-organvm-the-actual-news', 'DISCOVER-organvm-sovereign-systems--layer-above-hokage', 'ORG-education-organ-face-0703', 'ORG-health-organ-firstslice-0703', 'ORG-social-organ-firstslice-0703']`.
 - Async skipped down lanes: `codex, gemini, jules`.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `d3277f2fab3b6d18719660e59814517d298b3462`.
-- origin/main: `d3277f2fab3b6d18719660e59814517d298b3462`.
+- HEAD: `417b33f5fb95db23f8a094511007729744135d3b`.
+- origin/main: `417b33f5fb95db23f8a094511007729744135d3b`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
 - Dirty entries: `0`.
 
