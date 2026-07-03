@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-03T10:24:29+00:00`
+Generated: `2026-07-03T10:35:29+00:00`
 
 Status: `healthy`
 
@@ -23,21 +23,21 @@ Status: `healthy`
 - Loaded LIMEN_DISPATCH_ASYNC: `1`.
 - Loaded LIMEN_DISPATCH_LANES: `opencode,agy`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-03T10:24:29.397058+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-03T10:35:29.802640+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 1 still running ; would launch 9 (cap 12) -> ['REV-organvm-mirror-mirror-revenue-ship-0702', 'ORG-consulting-organ-face-0703', 'ORG-governance-organ-selffeed-0703', 'GEN-organvm-portfolio-ci-green-0702', 'REV-organvm-universal-mail--automation-revenue-ship-0703', 'ORG-governance-organ-deepen-0703', 'ORG-financial-organ-selffeed-0703', 'ORG-legal-organ-firstslice-0703', 'ORG-health-organ-firstslice-0703']`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 1 still running ; would launch 9 (cap 12) -> ['GEN-organvm-portfolio-ci-green-0702', 'REV-organvm-universal-mail--automation-revenue-ship-0703', 'ORG-legal-organ-firstslice-0703', 'ORG-financial-organ-selffeed-0703', 'ORG-health-organ-firstslice-0703', 'DISCOVER-organvm-the-actual-news', 'ORG-governance-organ-deepen-0703', 'ORG-governance-organ-selffeed-0703', 'ORG-education-organ-operationalize-0701']`.
 - Async skipped down lanes: `codex, gemini, jules`.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `5347ac56367c29e24c77f3b6e87d4fbe68bd0fe9`.
-- origin/main: `5347ac56367c29e24c77f3b6e87d4fbe68bd0fe9`.
+- HEAD: `3350aae122a592fc6820a82fbf944f461a2264f1`.
+- origin/main: `3350aae122a592fc6820a82fbf944f461a2264f1`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
 - Dirty entries: `0`.
 
