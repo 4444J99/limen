@@ -73404,7 +73404,7 @@ tasks:
   title: Discover the latent value of organvm/the-actual-news
   repo: organvm/the-actual-news
   type: research
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -74369,7 +74369,7 @@ tasks:
   title: Discover the latent value of organvm/sovereign-systems--layer-above-hokage
   repo: organvm/sovereign-systems--layer-above-hokage
   type: research
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -76067,7 +76067,7 @@ tasks:
   title: Operationalize education governance (rules as checks)
   repo: organvm/limen
   type: content
-  target_agent: claude
+  target_agent: agy
   priority: medium
   budget_cost: 2
   status: open
@@ -76288,7 +76288,7 @@ tasks:
   title: Discover the latent value of organvm/styx-behavioral-art
   repo: organvm/styx-behavioral-art
   type: research
-  target_agent: opencode
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -76481,7 +76481,7 @@ tasks:
   title: Raise test coverage in organvm/domus-genoma
   repo: organvm/domus-genoma
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -76522,7 +76522,7 @@ tasks:
   title: Raise test coverage in organvm/limen
   repo: organvm/limen
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -76577,7 +76577,7 @@ tasks:
   title: Make organvm/portfolio CI green
   repo: organvm/portfolio
   type: code
-  target_agent: opencode
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -76957,7 +76957,7 @@ tasks:
   title: Tighten types in organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -77045,10 +77045,10 @@ tasks:
   title: Drive Mirror Mirror to deploy-ready
   repo: organvm/mirror-mirror
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue-ship
   - revenue
@@ -77065,7 +77065,7 @@ tasks:
     \ stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-07-02'
-  updated: '2026-07-02T06:42:47.535105Z'
+  updated: '2026-07-03T10:27:45.066373Z'
   dispatch_log:
   - timestamp: '2026-07-02T04:45:12.845659Z'
     agent: claude
@@ -77085,6 +77085,11 @@ tasks:
     agent: codex
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-03T10:27:45.066373Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: DISCOVER-organvm-fetch-familiar-friends
   title: Discover the latent value of organvm/fetch-familiar-friends
   repo: organvm/fetch-familiar-friends
@@ -77467,7 +77472,7 @@ tasks:
   title: Drive Universal Mail Automation to deploy-ready
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: opencode
+  target_agent: claude
   priority: high
   budget_cost: 2
   status: open
@@ -77701,10 +77706,10 @@ tasks:
   title: Make the consulting organ's macro + micro face excellent
   repo: organvm/limen
   type: content
-  target_agent: claude
+  target_agent: opencode
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - organ-face
   - pillar:consulting
@@ -77723,7 +77728,7 @@ tasks:
     \ convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-03T09:28:28.857477Z'
+  updated: '2026-07-03T10:27:45.066373Z'
   dispatch_log:
   - timestamp: '2026-07-03T09:13:33.694628Z'
     agent: agy
@@ -77740,6 +77745,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-03T10:27:45.066373Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: ORG-artist-organ-face-0703
   title: Make the artist organ's macro + micro face excellent
   repo: organvm/limen
@@ -77833,7 +77843,7 @@ tasks:
   title: Deepen the governance organ toward a usable institution
   repo: organvm/limen
   type: content
-  target_agent: opencode
+  target_agent: agy
   priority: high
   budget_cost: 2
   status: open
@@ -78021,7 +78031,7 @@ tasks:
   title: Wire the financial organ to advance autonomously
   repo: organvm/limen
   type: content
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 2
   status: open
@@ -78050,7 +78060,7 @@ tasks:
   title: Operationalize governance governance (rules as checks)
   repo: organvm/limen
   type: content
-  target_agent: claude
+  target_agent: agy
   priority: medium
   budget_cost: 2
   status: open
@@ -78076,7 +78086,7 @@ tasks:
   title: Operationalize consulting governance (rules as checks)
   repo: organvm/limen
   type: content
-  target_agent: opencode
+  target_agent: claude
   priority: medium
   budget_cost: 2
   status: open
@@ -78101,7 +78111,7 @@ tasks:
   title: Operationalize artist governance (rules as checks)
   repo: organvm/limen
   type: content
-  target_agent: agy
+  target_agent: opencode
   priority: medium
   budget_cost: 2
   status: open
@@ -78164,7 +78174,7 @@ tasks:
   title: Wire the governance organ to advance autonomously
   repo: organvm/limen
   type: content
-  target_agent: any
+  target_agent: agy
   priority: high
   budget_cost: 2
   status: open
@@ -78191,7 +78201,7 @@ tasks:
   title: Build the first working vertical slice of the legal organ
   repo: organvm/limen
   type: content
-  target_agent: any
+  target_agent: claude
   priority: high
   budget_cost: 2
   status: open
@@ -78218,7 +78228,7 @@ tasks:
   title: Build the first working vertical slice of the health organ
   repo: organvm/limen
   type: content
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 2
   status: open
