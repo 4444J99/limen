@@ -496,6 +496,13 @@ def test_failed_result_skips_down_lane_in_default_cascade(tmp_path: Path, monkey
             }
         )
     )
+
+    def fake_select_lanes(selector, board=None, *, down_lanes=None):
+        assert selector == "auto"
+        assert "gemini" in set(down_lanes or ())
+        return ["codex", "opencode", "agy", "claude", "jules"]
+
+    monkeypatch.setattr(D, "select_lanes", fake_select_lanes)
     task = Task(
         id="CASCADE",
         title="cascade around down lane",
@@ -511,6 +518,34 @@ def test_failed_result_skips_down_lane_in_default_cascade(tmp_path: Path, monkey
     assert task.status == "open"
     assert task.target_agent == "jules"
     assert task.dispatch_log[-1].status == "failed->jules"
+    assert "tried:claude" in task.labels
+
+
+def test_default_cascade_uses_reachable_auto_lanes(monkeypatch) -> None:
+    import datetime
+
+    monkeypatch.delenv("LIMEN_DISPATCH_LANES", raising=False)
+    monkeypatch.setattr(D, "_down_lanes", lambda: {"codex", "gemini", "jules"})
+    monkeypatch.setattr(
+        D,
+        "select_lanes",
+        lambda selector, board=None, *, down_lanes=None: ["opencode", "agy", "claude"],
+    )
+    task = Task(
+        id="NO-UNREACHABLE",
+        title="do not fall to unreachable floor",
+        target_agent="claude",
+        status="open",
+        created=date(2026, 6, 27),
+        labels=[],
+    )
+    now = datetime.datetime.now(datetime.timezone.utc)
+
+    D._apply_result(task, "claude", False, now, BudgetTrack(date="2026-06-27"))
+
+    assert task.status == "failed"
+    assert task.target_agent == "claude"
+    assert task.dispatch_log[-1].status == "failed"
     assert "tried:claude" in task.labels
 
 

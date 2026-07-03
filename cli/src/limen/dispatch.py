@@ -751,6 +751,12 @@ def _lane_cascade() -> list[str]:
     except Exception:
         down = set()
     if not selector:
+        try:
+            live = set(select_lanes("auto", down_lanes=down))
+        except Exception:
+            live = set()
+        if live:
+            return [agent for agent in _LANE_CASCADE if agent in live and agent not in down]
         return [agent for agent in _LANE_CASCADE if agent not in down]
     try:
         lanes = select_lanes(selector, down_lanes=down)
