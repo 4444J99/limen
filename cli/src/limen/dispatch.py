@@ -1266,7 +1266,8 @@ def _window_hours(agent: str) -> float:
     while jules/gemini/opencode/agy refill daily."""
     try:
         root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
-        limits = json.load(open(root / "logs" / "usage-limits.json"))
+        with open(root / "logs" / "usage-limits.json") as fh:
+            limits = json.load(fh)
         window = str((limits.get(agent) or {}).get("window", ""))
         m = re.search(r"(\d+)\s*h", window)
         if m:
@@ -1747,7 +1748,13 @@ def dispatch_parallel(
     if not picked:
         print(f"── PARALLEL: nothing to dispatch for {agents} within budget")
         return
-    with _queue_lock(tasks_path):
+    with _queue_lock(tasks_path) as got:
+        if not got:
+            # Lock timed out — honor the contract (io.queue_lock): skip this round rather than
+            # writing unprotected. Running the agents WITHOUT persisting the reservation would risk
+            # a double-dispatch, so we skip the whole round; it self-corrects on the next beat.
+            print("── PARALLEL: queue busy — skipped this dispatch round (self-corrects next beat)")
+            return
         save_limen_file(tasks_path, limen)  # reserve commit (atomic vs supervisor writes)
 
     # ── RUN: concurrent agent executions (worktree→PR / jules), no tasks.yaml access here
@@ -1774,7 +1781,16 @@ def dispatch_parallel(
     # during the unlocked run aren't clobbered; re-apply each result to the fresh task by id.
     # This is the #11 keystone — without the reload, this save would silently overwrite seeds.
     n_pr = n_noop = n_fail = n_rl = n_to = 0
-    with _queue_lock(tasks_path):
+    with _queue_lock(tasks_path) as got:
+        if not got:
+            # Lock timed out — do NOT write unprotected (that is the #111 clobber this reload guards
+            # against). The agents already ran; their PRs exist, so harvest/reconcile recovers the
+            # results from GitHub PR state on a later beat. Skip the commit rather than corrupt it.
+            print(
+                f"── PARALLEL: queue busy — {len(results)} result(s) NOT committed this round; "
+                "harvest reconciles from PR state (self-corrects next beat)"
+            )
+            return
         fresh = load_limen_file(tasks_path)
         fid = {t.id: t for t in fresh.tasks}
         ftrack = fresh.portal.budget.track
