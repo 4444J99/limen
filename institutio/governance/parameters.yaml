@@ -928,7 +928,13 @@ parameters:
     env: LIMEN_DISK_HIGH_WATER
     self_update: none
     owner: limen-daemon
-    note: "Percent-used high-water mark for the workspace data volume. At/over it, disk pressure is ON: clone-maintenance waives the node_modules idle window and captures-then-reaps, and the beat runs hygiene every tick until it drains. Reclaim intensity tracks real fullness, not a fixed clock (the 'creeps back to full' fix)."
+    note: "Percent-used high-water mark for the workspace data volume. INFORMATIONAL/legacy — kept for display. The pressure DECISION now keys off absolute free (LIMEN_DISK_FREE_FLOOR_GIB), because df/statvfs percent counts ~100GB of purgeable APFS space as used (the meter-lie: a 95%-by-percent disk can have ~120GB effectively free)."
+  LIMEN_DISK_FREE_FLOOR_GIB:
+    default: 15
+    env: LIMEN_DISK_FREE_FLOOR_GIB
+    self_update: none
+    owner: limen-daemon
+    note: "GiB of ABSOLUTE raw free space below which disk pressure is ON (emergency reap waives the loss-free age gate; the beat ramps hygiene to every tick). Honest signal on a large APFS volume where df% is inflated by ~100GB of purgeable-but-reclaimable space. Consumed by reap-clones.py and heartbeat-loop.sh's hygiene ramp."
   LIMEN_DISK_PRESSURE_ESCALATE:
     default: "1"
     env: LIMEN_DISK_PRESSURE_ESCALATE

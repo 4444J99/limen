@@ -429,8 +429,12 @@ while true; do
   # full" fix). Cheap df probe; off with LIMEN_DISK_PRESSURE_ESCALATE=0.
   HYG_CAD="$C_HYGIENE"
   if [ "${LIMEN_DISK_PRESSURE_ESCALATE:-1}" = "1" ]; then
-    _dpct="$(df -P "${LIMEN_WORKDIR:-$HOME/Workspace}" 2>/dev/null | awk 'NR==2 {gsub("%","",$5); print $5+0}')"
-    [ -n "$_dpct" ] && [ "$_dpct" -ge "${LIMEN_DISK_HIGH_WATER:-85}" ] 2>/dev/null && HYG_CAD=1
+    # ABSOLUTE free (GiB), not df% — df counts ~100GB of purgeable-but-reclaimable APFS space as
+    # "used", so a 95%-by-percent disk with ~120GB effectively free would falsely ramp hygiene to
+    # EVERY beat and slow the whole beat (clone-maintenance runs each tick). Ramp only when raw free
+    # genuinely drops below the floor. ([[meter-lie-and-dead-daemon-incident]])
+    _dfree="$(df -Pk "${LIMEN_WORKDIR:-$HOME/Workspace}" 2>/dev/null | awk 'NR==2 {print int($4/1048576)}')"
+    [ -n "$_dfree" ] && [ "$_dfree" -le "${LIMEN_DISK_FREE_FLOOR_GIB:-15}" ] 2>/dev/null && HYG_CAD=1
   fi
   due_voice hygiene "$HYG_CAD" && bash "$LIMEN_ROOT/scripts/clone-maintenance.sh" 2>&1 | tail -3 || true
   due_voice hygiene "$HYG_CAD" && bash "$LIMEN_ROOT/scripts/heal-claude-update-marker.sh" 2>&1 | tail -1 || true

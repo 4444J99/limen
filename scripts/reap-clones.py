@@ -330,6 +330,18 @@ def disk_pct_used(path: Path) -> float:
         return 0.0
 
 
+def disk_free_gib(path: Path) -> float:
+    """Absolute free space (GiB) — the HONEST pressure signal on a large APFS volume. df/statvfs
+    counts ~100GB of purgeable-but-reclaimable space (snapshots, caches macOS releases on demand) as
+    "used", so `disk_pct_used` can read 95% while the volume has ~120GB effectively free (the
+    meter-lie). Emergency reap keys off THIS absolute floor, not the misleading percentage. Fail-open
+    to +inf (→ no pressure) so a probe error never triggers an aggressive waived-gate reap."""
+    try:
+        return shutil.disk_usage(str(path)).free / (1024**3)
+    except Exception:
+        return float("inf")
+
+
 def discover_clones(workspace: Path, maxdepth: int) -> list[Path]:
     """Every .git directory under the workspace (standalone clones + the top level), maxdepth-bounded."""
     out: list[Path] = []
@@ -366,16 +378,24 @@ def main() -> int:
 
     idle_days = float(os.environ.get("LIMEN_REAP_IDLE_DAYS", "2"))
     high_water = float(os.environ.get("LIMEN_DISK_HIGH_WATER", "85"))
+    free_floor = float(os.environ.get("LIMEN_DISK_FREE_FLOOR_GIB", "15"))
     maxdepth = int(os.environ.get("LIMEN_REAP_MAXDEPTH", "3"))
 
     pct = disk_pct_used(WORKSPACE)
-    pressure = args.pressure if args.pressure is not None else (pct >= high_water)
+    free_gib = disk_free_gib(WORKSPACE)
+    # Emergency pressure (age-gate WAIVED → aggressive rmtree every beat) now keys off ABSOLUTE low
+    # free space, not the percentage. On a large APFS volume, df/statvfs counts ~100GB of
+    # purgeable-but-reclaimable space as "used", so a 95%-by-percent disk can still have ~120GB
+    # effectively free — waiving the loss-free age gate on that false 95% made the daemon reap hard
+    # every beat for no reason (and slowed the beat). It now fires only when raw free genuinely drops
+    # below the floor; the normal idle-gate reap still runs the rest of the time. ([[meter-lie-and-dead-daemon-incident]])
+    pressure = args.pressure if args.pressure is not None else (free_gib <= free_floor)
     active = active_task_slugs(LIMEN_ROOT / "tasks.yaml")
     now = time.time()
 
     mode = "APPLY" if args.apply else "dry-run"
     print(
-        f"[reap-clones] disk {pct:.0f}% used (high-water {high_water:.0f}%) → "
+        f"[reap-clones] disk {pct:.0f}% used, {free_gib:.0f}GiB free (floor {free_floor:.0f}GiB, hw {high_water:.0f}%) → "
         f"pressure={'ON' if pressure else 'off'}; mode={mode}; idle-gate={'waived' if pressure else f'{idle_days:g}d'}"
     )
 
