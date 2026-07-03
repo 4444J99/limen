@@ -164,6 +164,12 @@ Concretely, from precedent:
 - **`settings.json` / hook-arming blocked** (self-modification boundary) → stage the exact
   validated file, hand the human the one required copy-paste, and do the surrounding branch,
   commit, rebase, push, PR, and merge work yourself.
+- **A permission prompt recurs** → broaden the allow rule to the whole class of command
+  (root-to-leaf), never re-approve the same literal string one prompt at a time. (Insights
+  lineage: a too-narrow allowlist caused 10+ repeat prompts in one session.)
+- **A bridge / connectivity / auth check reports blocked** → attempt the documented bootstrap or
+  reconnection path once before reporting; a passive re-report of a known-blocked status is a
+  parked blocker, not a finding.
 
 Never present a reroutable gate as human work. Reduce every blocker to its single irreducible atom
 (if any), clear the rest through compliant mechanisms, and report what was done. The

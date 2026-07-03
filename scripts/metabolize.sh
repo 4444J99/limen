@@ -120,6 +120,11 @@ echo "── 5b. insight-cadence (proposal-only auto-reporting) ──"
 # elapsed wall-clock time internally, but --once forces it to run if due.
 if [ "${LIMEN_INSIGHT_CADENCE:-1}" = "1" ]; then
   python3 "$LIMEN_ROOT/scripts/insight-cadence.py" --once || echo "  (insight-cadence skipped)"
+  # Route the latest report per tier to its durable owner (his-hand levers / keeper upsert
+  # tickets / organ residual inboxes). Armed by the same default as the heartbeat
+  # (LIMEN_INSIGHT_ROUTE_APPLY=1); board echoes are skipped, new tasks capped per pass.
+  LIMEN_INSIGHT_ROUTE_APPLY="${LIMEN_INSIGHT_ROUTE_APPLY:-1}" \
+    python3 "$LIMEN_ROOT/scripts/insight-route.py" | tail -3 || echo "  (insight-route skipped)"
 fi
 
 # ── 6. self-improve (LOW cadence) — the last rung of the self-* ladder ──

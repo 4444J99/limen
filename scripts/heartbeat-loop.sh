@@ -66,6 +66,11 @@ cd "$LIMEN_ROOT" || exit 1
 # the fleet; set LIMEN_TICKETS_PRODUCE=0 in ~/.limen.env to revert instantly. The keeper (organ at
 # the top of the beat) folds the tickets next beat; the status-mutator tier stays direct (Step 2.2).
 export LIMEN_TICKETS_PRODUCE="${LIMEN_TICKETS_PRODUCE:-1}"
+# INSIGHT-ROUTE armed: the insights→owners route organ (insight-route.py, after insight-cadence in
+# the beat) routes the latest report per tier to its durable owner — his-hand levers, keeper upsert
+# tickets (board echoes skipped, capped per pass), organ residual inboxes. Default ON; set
+# LIMEN_INSIGHT_ROUTE_APPLY=0 in ~/.limen.env to make it observe-only (dry-run prints).
+export LIMEN_INSIGHT_ROUTE_APPLY="${LIMEN_INSIGHT_ROUTE_APPLY:-1}"
 
 # HARD DISPATCH CEILING — a shell-level backstop so ONE hung agent run can never freeze the whole
 # beat. The synchronous beat waits for the slowest lane; the per-lane Python timeout (LIMEN_LANE_TIMEOUT,
@@ -452,6 +457,7 @@ while true; do
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/censor-view.py" 2>&1 | tail -1 || true   # the Censor's face (no network, can't time out)
   play "$C_WEB"     && [ "${LIMEN_STUDIUM:-0}" = "1" ] && python3 "$LIMEN_ROOT/scripts/studium.py" --daily 2>&1 | tail -1 || true   # daily transmission-curriculum face (gated; advances once/day, no network, can't time out)
   play "$C_INSIGHT_CADENCE" && python3 "$LIMEN_ROOT/scripts/insight-cadence.py" --once 2>&1 | tail -1 || true  # INSIGHT-CADENCE: draft insight reports at four wall-clock cadences
+  play "$C_INSIGHT_CADENCE" && python3 "$LIMEN_ROOT/scripts/insight-route.py" 2>&1 | tail -1 || true  # INSIGHT-ROUTE: latest report per tier → durable owner (levers / keeper tickets / organ residuals)
   # HEALTH — the personal health office (chart digest + visit-prep + clinical-loop chase; PII stays
   # local, off-repo; lockless, read-only). Refreshes the office every C_HEALTH beats. Fail-open.
   due_voice health "$C_HEALTH"  && { python3 "$LIMEN_ROOT/scripts/health-organ.py" 2>&1 | tail -1 || true; stamp health; }

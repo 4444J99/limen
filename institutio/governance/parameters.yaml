@@ -1061,6 +1061,20 @@ parameters:
     owner: tabularius
     note: "Cutover flag for the TABVLARIVS single-writer transition (Step 2). When 1, converted task-CREATION writers (mine-backlog, ingest-backlog, generate-backlog, generate-revenue-backlog, generate-organ-backlog, discover-value) STOP writing tasks.yaml directly and instead submit an upsert ticket per new task via limen.tabularius.submit_task_upsert; the keeper folds them next beat. This default 0 is the SAFE CODE FALLBACK (an ad-hoc manual run stays legacy), but the LIVE FLEET DELIBERATELY ENABLES IT: scripts/heartbeat-loop.sh sets LIMEN_TICKETS_PRODUCE=1 (overridable to 0 in ~/.limen.env to revert instantly) — the cutover, taken after the keeper was watched draining a real batch. Coverage = the task-creation tier; the status-mutator tier (route/dispatch-async/heal-dispatch/rebalance/recover/quicken) stays direct until Step 2.2 (those need INTENT_STATUS tickets, not upsert). Mixed-mode (some producers, some direct writers) is strictly safer than all-direct, so the tiers flip incrementally."
 
+  LIMEN_INSIGHT_ROUTE_APPLY:
+    default: "0"               # SAFE CODE DEFAULT — a bare manual run is a dry-run; the FLEET arms it (see note)
+    env: LIMEN_INSIGHT_ROUTE_APPLY
+    self_update: none
+    owner: insight-route
+    note: "Arms scripts/insight-route.py — the insights→owners route organ that closes the insight-cadence loop. When 1, the latest report per cadence tier routes each insight to its durable owner: anthony → his-hand-levers.json (+ issue sync), org/repo → a board task via the TABVLARIVS keeper (submit_task_upsert when LIMEN_TICKETS_PRODUCE=1; board-echo insights sourced from tasks.yaml are skipped — the failed task IS the record), organ → logs/<organ>-residual.json. Default 0 keeps an ad-hoc run observe-only, but the LIVE FLEET ARMS IT: scripts/heartbeat-loop.sh exports LIMEN_INSIGHT_ROUTE_APPLY=1 (overridable to 0 in ~/.limen.env), and metabolize.sh section 5b runs it right after insight-cadence."
+
+  LIMEN_INSIGHT_ROUTE_MAX:
+    default: "5"
+    env: LIMEN_INSIGHT_ROUTE_MAX
+    self_update: none
+    owner: insight-route
+    note: "Per-pass cap on NEW board tasks created by insight-route.py. Overflow is counted in the summary line and self-corrects next beat (the insight persists in the latest report until routed). Bounds a first arming or an insight burst so the route organ can never flood the board in one pass — the same board-hygiene reflex as the sync 8/beat cap."
+
   # --- DEMAND-SURFACE ORGANS: keep the front door reachable + launch posts homed ---
   # (scripts/link-health.py + scripts/launch-organ.py). A 404 on a public identity surface is silent
   # demand-loss; a launch with no home is a one-off. Both are REPEATABLE processes, not chores — the

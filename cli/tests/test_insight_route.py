@@ -22,7 +22,12 @@ spec.loader.exec_module(insight_route)
 
 
 @pytest.fixture
-def test_env(tmp_path):
+def test_env(tmp_path, monkeypatch):
+    # Isolate from the fleet env: a leaked LIMEN_TICKETS_PRODUCE=1 would silently
+    # flip the repo route onto the keeper path and break the legacy-path asserts.
+    monkeypatch.delenv("LIMEN_TICKETS_PRODUCE", raising=False)
+    monkeypatch.delenv("LIMEN_INSIGHT_ROUTE_APPLY", raising=False)
+    monkeypatch.delenv("LIMEN_INSIGHT_ROUTE_MAX", raising=False)
     # Setup test environment with paths inside tmp_path
     logs_dir = tmp_path / "logs"
     logs_dir.mkdir()
@@ -197,3 +202,98 @@ def test_dry_run(test_env):
 
         residual_file = test_env["logs"] / "test-organ-residual.json"
         assert not residual_file.exists()
+
+
+def _repo_insight(iid, source="test"):
+    return {
+        "id": iid,
+        "severity": "warning",
+        "title": f"Insight {iid}",
+        "detail": "Detail",
+        "owner": "test-org/test-repo",
+        "source": source,
+        "suggested_action": "Fix it",
+    }
+
+
+def test_board_echo_skipped(test_env):
+    # An insight sourced from the board itself is an echo of a task the board
+    # already records — it must never become a heal-twin task.
+    report = {"insights": [_repo_insight("INS-ECHO-1", source="tasks.yaml")]}
+    report_file = test_env["cadence"] / "hourly-echo.json"
+    report_file.write_text(json.dumps(report))
+
+    stats = {"cap_left": 5, "created": 0, "echo": 0, "deferred": 0}
+    with (
+        patch("insight_route.TASKS_YAML", test_env["tasks"]),
+        patch("insight_route.HIS_HAND_FILE", test_env["his_hand"]),
+        patch("insight_route.LOGS_DIR", test_env["logs"]),
+    ):
+        insight_route.process_report(report_file, apply=True, stats=stats)
+
+    limen_file = load_limen_file(test_env["tasks"])
+    assert len(limen_file.tasks) == 0
+    assert stats["echo"] == 1
+    assert stats["created"] == 0
+
+
+def test_cap_defers_overflow(test_env, monkeypatch):
+    report = {"insights": [_repo_insight(f"INS-CAP-{i}") for i in range(3)]}
+    report_file = test_env["cadence"] / "hourly-cap.json"
+    report_file.write_text(json.dumps(report))
+
+    stats = {"cap_left": 1, "created": 0, "echo": 0, "deferred": 0}
+    with (
+        patch("insight_route.TASKS_YAML", test_env["tasks"]),
+        patch("insight_route.HIS_HAND_FILE", test_env["his_hand"]),
+        patch("insight_route.LOGS_DIR", test_env["logs"]),
+    ):
+        insight_route.process_report(report_file, apply=True, stats=stats)
+
+    limen_file = load_limen_file(test_env["tasks"])
+    assert len(limen_file.tasks) == 1
+    assert stats["created"] == 1
+    assert stats["deferred"] == 2
+
+
+def test_keeper_path_submits_ticket_not_board_write(test_env, monkeypatch):
+    # With the TABVLARIVS producer flag on, a repo insight becomes an upsert
+    # ticket in the inbox and the board file itself stays untouched.
+    monkeypatch.setenv("LIMEN_TICKETS_PRODUCE", "1")
+    report = {"insights": [_repo_insight("INS-KEEPER-1")]}
+    report_file = test_env["cadence"] / "hourly-keeper.json"
+    report_file.write_text(json.dumps(report))
+
+    with (
+        patch("insight_route.TASKS_YAML", test_env["tasks"]),
+        patch("insight_route.HIS_HAND_FILE", test_env["his_hand"]),
+        patch("insight_route.LOGS_DIR", test_env["logs"]),
+    ):
+        insight_route.process_report(report_file, apply=True)
+
+    limen_file = load_limen_file(test_env["tasks"])
+    assert len(limen_file.tasks) == 0
+    inbox = test_env["root"] / "logs" / "tickets" / "inbox"
+    tickets = list(inbox.glob("*.json"))
+    assert len(tickets) == 1
+    ticket = json.loads(tickets[0].read_text())
+    assert ticket["task_id"] == "TASK-INS-KEEPER-1"
+    assert ticket["intent"] == "task.upsert"
+
+
+def test_latest_reports_picks_true_latest_per_tier(test_env):
+    # Stamp formats changed over time; lexical sort would pick 20260626T135356
+    # over 2026-07-03T133909+0000. The selector must order on the digit prefix.
+    cadence = test_env["cadence"]
+    for name in (
+        "hourly-20260626T135356.json",
+        "hourly-2026-07-03T133909+0000.json",
+        "daily-20260625T223909.json",
+    ):
+        (cadence / name).write_text(json.dumps({"insights": []}))
+
+    picked = {p.name for p in insight_route.latest_reports(cadence)}
+    assert picked == {
+        "hourly-2026-07-03T133909+0000.json",
+        "daily-20260625T223909.json",
+    }
