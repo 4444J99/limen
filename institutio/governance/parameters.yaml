@@ -1071,6 +1071,7 @@ parameters:
   LIMEN_INSIGHT_ROUTE_APPLY:
     default: "0"               # SAFE CODE DEFAULT — a bare manual run is a dry-run; the FLEET arms it (see note)
     env: LIMEN_INSIGHT_ROUTE_APPLY
+    fleet_runtime: "1"         # ENACTMENT CONTRACT — the LIVE fleet MUST resolve this to 1 (heartbeat-loop.sh wires it); enactment-audit.py fails if the beat diverges, so the route organ can never silently go dark again (it shipped as an orphan once — tests+gate, no caller, #596)
     self_update: none
     owner: insight-route
     note: "Arms scripts/insight-route.py — the insights→owners route organ that closes the insight-cadence loop. When 1, the latest report per cadence tier routes each insight to its durable owner: anthony → his-hand-levers.json (+ issue sync), org/repo → a board task via the TABVLARIVS keeper (submit_task_upsert when LIMEN_TICKETS_PRODUCE=1; board-echo insights sourced from tasks.yaml are skipped — the failed task IS the record), organ → logs/<organ>-residual.json. Default 0 keeps an ad-hoc run observe-only, but the LIVE FLEET ARMS IT: scripts/heartbeat-loop.sh exports LIMEN_INSIGHT_ROUTE_APPLY=1 (overridable to 0 in ~/.limen.env), and metabolize.sh section 5b runs it right after insight-cadence."
