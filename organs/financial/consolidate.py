@@ -18,12 +18,14 @@ The organ's generator beat (C_FEED / organ-selffeed) should call this on cadence
 
 import json
 import os
+import re
 import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 try:
     import yaml as _yaml
+
     HAS_YAML = True
 except ImportError:
     HAS_YAML = False
@@ -156,7 +158,7 @@ def build_cashflow(entities: dict, revenue: dict, obligations: dict) -> str:
     cumulative = 0.0
     for w in range(12):
         week_start = (start + timedelta(weeks=w)).strftime("%Y-%m-%d")
-        week_label = f"W{w+1}"
+        week_label = f"W{w + 1}"
         # No known inflows until first product goes live
         inflows = 0.0
         outflows = 0.0  # unknown until obligations are quantified
@@ -172,7 +174,9 @@ def build_cashflow(entities: dict, revenue: dict, obligations: dict) -> str:
     lines.append("")
     lines.append("### Runway alert")
     lines.append("")
-    lines.append("- **Current runway:** Unknown (no balance data). Set balances in `entities.yaml` to enable runway calculation.")
+    lines.append(
+        "- **Current runway:** Unknown (no balance data). Set balances in `entities.yaml` to enable runway calculation."
+    )
     lines.append("- **Threshold:** < 4 weeks of obligations = alert principal.")
     lines.append("")
 
@@ -203,7 +207,7 @@ def _maturity_from_ladder() -> str:
         if ladder_path.exists():
             with open(ladder_path) as f:
                 data = json.load(f)
-            for o in (data.get("organs") or []):
+            for o in data.get("organs") or []:
                 if o.get("pillar") == "financial":
                     m = o.get("maturity", "?")
                     s = o.get("stage", "?")
@@ -247,15 +251,40 @@ def build_dashboard(entities: dict, revenue: dict, obligations: dict) -> str:
     lines.append("")
     lines.append("## Next deepen steps")
     lines.append("")
-    lines.append("1. **Enter balances** — principal fills `balance` + `as_of` in `entities.yaml`")
-    lines.append("2. **Deploy Exporter** — first dollar via MONETA or Ko-fi")
-    lines.append("3. **Wire self-feed** — `generate-organ-backlog.py` already reads organ-ladder.json;"
-                 " when maturity hits 40% it emits next deepen")
+    lines.append(
+        "1. **Enter balances** — principal fills `balance` + `as_of` in `entities.yaml` (unlocks real position tracking)"
+    )
+    lines.append("2. **Deploy Exporter** — first dollar via MONETA or Ko-fi (unlocks revenue pipeline)")
+    lines.append(
+        "3. ✅ **Self-feed wired** — `financial-organ.py` runs every 8 beats via heartbeat loop; auto-advances maturity as slices land"
+    )
     lines.append("4. **Add credit accounts** — credit cards, loans, mortgages to entity registry")
     lines.append("5. **Investment accounts** — brokerage, retirement, crypto wallets")
     lines.append("")
 
     return "\n".join(lines)
+
+
+def comparable_content(text: str) -> str:
+    """Normalize generated timestamps so unchanged source data does not dirty artifacts every beat."""
+    text = re.sub(r"^(> Generated:) \S+$", r"\1 <generated>", text, flags=re.MULTILINE)
+    return re.sub(
+        r"^(\*\*Generated:\*\*) \S+(\s+\*\*Maturity:\*\*)",
+        r"\1 <generated>\2",
+        text,
+        flags=re.MULTILINE,
+    )
+
+
+def write_if_changed(path: Path, content: str) -> bool:
+    try:
+        existing = path.read_text()
+    except OSError:
+        existing = None
+    if existing is not None and comparable_content(existing) == comparable_content(content):
+        return False
+    path.write_text(content)
+    return True
 
 
 def main() -> int:
@@ -273,9 +302,10 @@ def main() -> int:
 
     for filename, content in artifacts.items():
         path = HERE / filename
-        with open(path, "w") as f:
-            f.write(content)
-        print(f"[consolidate] wrote {path.relative_to(ROOT)} ({len(content)} chars)")
+        if write_if_changed(path, content):
+            print(f"[consolidate] wrote {path.relative_to(ROOT)} ({len(content)} chars)")
+        else:
+            print(f"[consolidate] unchanged {path.relative_to(ROOT)}")
 
     print(f"[consolidate] done — {len(artifacts)} artifacts generated")
     return 0

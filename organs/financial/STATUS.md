@@ -1,6 +1,6 @@
 # Financial Office — STATUS Dashboard
 
-**Generated:** 2026-07-03T08:14:31Z  **Maturity:** Building (30% → 40%)
+**Generated:** 2026-07-03T10:44:27Z  **Maturity:** maturing (70%)
 
 ---
 
@@ -24,8 +24,8 @@
 
 ## Next deepen steps
 
-1. **Enter balances** — principal fills `balance` + `as_of` in `entities.yaml`
-2. **Deploy Exporter** — first dollar via MONETA or Ko-fi
-3. **Wire self-feed** — `generate-organ-backlog.py` already reads organ-ladder.json; when maturity hits 40% it emits next deepen
+1. **Enter balances** — principal fills `balance` + `as_of` in `entities.yaml` (unlocks real position tracking)
+2. **Deploy Exporter** — first dollar via MONETA or Ko-fi (unlocks revenue pipeline)
+3. ✅ **Self-feed wired** — `financial-organ.py` runs every 8 beats via heartbeat loop; auto-advances maturity as slices land
 4. **Add credit accounts** — credit cards, loans, mortgages to entity registry
 5. **Investment accounts** — brokerage, retirement, crypto wallets
