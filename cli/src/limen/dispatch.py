@@ -1870,36 +1870,22 @@ def _claude_model(task: Task | None = None) -> str | None:
         return None  # never block the lane on a tier-selection hiccup
 
 
-def dispatch_parallel(
+def _select_parallel_reservations(
     limen: LimenFile,
-    tasks_path: Path,
     agents: list[str],
-    per_agent_limit: int = 3,
-    max_workers: int = 8,
-    dry_run: bool = False,
-) -> None:
-    """RESERVE → RUN (parallel) → COMMIT. Fixes both serialism levels (across lanes AND
-    within a lane) without racing tasks.yaml: the two file writes happen under this single
-    process (serial), the slow agent runs happen concurrently in a thread pool, and a
-    lane that hits its real rate-limit is cooled (its remaining reserved tasks re-queued)."""
-    now = datetime.now(timezone.utc)
-    if _reset_budget_if_needed(limen, now) and not dry_run:
-        # Persist the cadence reset before the no-pick early-return below can discard it — same
-        # deadlock guard as the serial path. Atomic vs supervisor writes via the queue lock.
-        with _queue_lock(tasks_path) as got:
-            if got:
-                save_limen_file(tasks_path, limen)
+    per_agent_limit: int,
+    now: datetime,
+    *,
+    dry_run: bool,
+    debt_blocked: bool,
+) -> list[tuple[str, str]]:
+    """Pick and optionally reserve parallel-dispatch tasks on the supplied fresh board."""
     track = limen.portal.budget.track
     daily = limen.portal.budget.daily
-
-    # ── RESERVE: pick balanced candidates per lane within budget; mark dispatched, save once
-    picked: list[tuple[str, str]] = []  # (agent, task_id)
+    picked: list[tuple[str, str]] = []
     spent_daily = track.spent
-    id2 = {t.id: t for t in limen.tasks}  # for dependency resolution
-    ledger_lanes = _ledger_lanes()  # waste/win classes — gates the acceleration tail (read once)
-    debt_blocked, debt_message = _worktree_debt_gate()
-    if debt_message:
-        print(f"Lifecycle debt gate: {debt_message}")
+    id2 = {t.id: t for t in limen.tasks}
+    ledger_lanes = _ledger_lanes()
     for agent in agents:
         cap = limen.portal.budget.per_agent.get(agent)
         agent_spent = track.per_agent.get(agent, 0)
@@ -1919,8 +1905,7 @@ def dispatch_parallel(
         cands.sort(key=lambda t: _PRIORITY_ORDER.get(t.priority, 99))
         # FRONT-LOAD: base picks by priority, then an ACCELERATION TAIL (only when the lane is
         # under-spending toward its reset cliff) drawn ONLY from work-classes the ledger says this
-        # lane lands — so expiring budget converts to shipped value, never to junk. Cumulative
-        # budget_cost is held within the lane's real remaining headroom (rem).
+        # lane lands — so expiring budget converts to shipped value, never to junk.
         eff = _accel_limit(limen, agent, per_agent_limit, now)
         ordered = list(cands[:per_agent_limit])
         if eff > per_agent_limit:
@@ -1932,6 +1917,7 @@ def dispatch_parallel(
                 continue
             chosen.append(t)
             spent_here += t.budget_cost
+        spent_daily += spent_here
         for t in chosen:
             if dry_run:
                 picked.append((agent, t.id))
@@ -1948,15 +1934,44 @@ def dispatch_parallel(
                 )
             )
             picked.append((agent, t.id))
+    return picked
+
+
+def dispatch_parallel(
+    limen: LimenFile,
+    tasks_path: Path,
+    agents: list[str],
+    per_agent_limit: int = 3,
+    max_workers: int = 8,
+    dry_run: bool = False,
+) -> None:
+    """RESERVE → RUN (parallel) → COMMIT. Fixes both serialism levels (across lanes AND
+    within a lane) without racing tasks.yaml: the two file writes happen under this single
+    process (serial), the slow agent runs happen concurrently in a thread pool, and a
+    lane that hits its real rate-limit is cooled (its remaining reserved tasks re-queued)."""
+    now = datetime.now(timezone.utc)
+    debt_blocked, debt_message = _worktree_debt_gate()
+    if debt_message:
+        print(f"Lifecycle debt gate: {debt_message}")
 
     if dry_run:
+        _reset_budget_if_needed(limen, now)
+        picked = _select_parallel_reservations(
+            limen,
+            agents,
+            per_agent_limit,
+            now,
+            dry_run=True,
+            debt_blocked=debt_blocked,
+        )
         print(f"── PARALLEL DRY-RUN — would dispatch {len(picked)} task(s) across {agents}:")
         for a, tid in picked:
             print(f"  {a}: {tid}")
         return
-    if not picked:
-        print(f"── PARALLEL: nothing to dispatch for {agents} within budget")
-        return
+
+    # ── RESERVE: re-read inside the queue lock, then pick and mark dispatched on that fresh board.
+    # The caller may have loaded `limen` before a supervisor/heartbeat wrote tasks.yaml; saving that
+    # stale snapshot would erase concurrent task additions, completions, or budget resets.
     with _queue_lock(tasks_path) as got:
         if not got:
             # Lock timed out — honor the contract (io.queue_lock): skip this round rather than
@@ -1964,7 +1979,23 @@ def dispatch_parallel(
             # a double-dispatch, so we skip the whole round; it self-corrects on the next beat.
             print("── PARALLEL: queue busy — skipped this dispatch round (self-corrects next beat)")
             return
-        save_limen_file(tasks_path, limen)  # reserve commit (atomic vs supervisor writes)
+        fresh = load_limen_file(tasks_path) if tasks_path.exists() else limen
+        reset = _reset_budget_if_needed(fresh, now)
+        picked = _select_parallel_reservations(
+            fresh,
+            agents,
+            per_agent_limit,
+            now,
+            dry_run=False,
+            debt_blocked=debt_blocked,
+        )
+        if not picked:
+            if reset:
+                save_limen_file(tasks_path, fresh)
+            print(f"── PARALLEL: nothing to dispatch for {agents} within budget")
+            return
+        save_limen_file(tasks_path, fresh)  # reserve commit (atomic vs supervisor writes)
+        limen = fresh
 
     # ── RUN: concurrent agent executions (worktree→PR / jules), no tasks.yaml access here
     id2task = {t.id: t for t in limen.tasks}

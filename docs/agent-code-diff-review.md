@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-03T23:13:41Z`
+Generated: `2026-07-03T23:33:37Z`
 
 ## Scope
 
@@ -131,6 +131,38 @@ python3 -m py_compile scripts/auto-scale.py
 
 Result: `15 passed in 0.09s`; compile passed.
 
+### Parallel dispatch reservation could clobber live board updates
+
+Severity: high for task-board integrity and duplicate-dispatch prevention.
+
+Evidence:
+
+- The result-commit path in `dispatch_parallel()` reloaded `tasks.yaml` under the queue lock, but the earlier reservation commit did not.
+- A caller could load `tasks.yaml`, then a supervisor/heartbeat could add or complete tasks, then `dispatch_parallel()` would save the stale caller snapshot while marking reservations.
+- That could erase concurrently added work, revive a stale `open` task that had already become `done`, or reserve work from a board state that was no longer authoritative.
+
+Repair:
+
+- Moved parallel reservation selection into `_select_parallel_reservations()`, which operates on the board supplied to it.
+- For live dispatch, take the queue lock first, re-read `tasks.yaml`, reset budget on the fresh board, then select and mark reservations.
+- Preserve the old in-memory-board behavior only for dry-run and file-absent test harness cases.
+- Track cumulative selected budget across lanes during reservation selection so multi-lane picks do not overrun daily headroom.
+
+Touched paths:
+
+- `cli/src/limen/dispatch.py`
+- `cli/tests/test_dispatch.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_dispatch.py::test_dispatch_parallel_reloads_under_queue_lock_before_reserve_write cli/tests/test_dispatch.py::test_dispatch_parallel_does_not_dispatch_stale_open_task cli/tests/test_dispatch.py::test_dispatch_parallel_skips_needs_human_label cli/tests/test_dispatch.py::test_dispatch_parallel_debt_gate_skips_routine_generated_buildout cli/tests/test_dispatch.py::test_dispatch_parallel_skips_generated_buildout_outside_value_tier cli/tests/test_accelerator.py::test_dispatch_parallel_accel_tail_is_win_class_only cli/tests/test_dispatch_engine.py -q
+python3 -m py_compile cli/src/limen/dispatch.py
+```
+
+Result: `20 passed in 24.56s`; compile passed. Broader dispatch/control-plane check:
+`python3 -m pytest cli/tests/test_dispatch.py cli/tests/test_accelerator.py cli/tests/test_dispatch_engine.py cli/tests/test_async_dispatch.py cli/tests/test_route_bias.py cli/tests/test_route_torn_write.py -q` returned `98 passed in 31.30s`.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -157,6 +189,12 @@ Result: `15 passed in 0.09s`; compile passed.
 - `scripts/auto-scale.py:197` skips the atomic write when no new tasks survive.
 - `cli/tests/test_auto_scale.py:193` covers reloading under lock before write.
 - `cli/tests/test_auto_scale.py:263` covers repeated duplicate pages.
+- `cli/src/limen/dispatch.py:1873` defines fresh-board parallel reservation selection.
+- `cli/src/limen/dispatch.py:1920` tracks selected budget across lanes before reserving.
+- `cli/src/limen/dispatch.py:1975` takes the queue lock before live reservation.
+- `cli/src/limen/dispatch.py:1982` re-reads `tasks.yaml` under the lock before selecting reservations.
+- `cli/tests/test_dispatch.py:440` covers preserving concurrently added tasks during reservation.
+- `cli/tests/test_dispatch.py:494` covers not dispatching stale-open tasks that became `done`.
 
 ## Remaining Review Queue
 

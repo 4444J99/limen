@@ -437,6 +437,96 @@ def test_dispatch_parallel_skips_generated_buildout_outside_value_tier(tmp_path:
     assert "GEN-NONVALUE" not in output
 
 
+def test_dispatch_parallel_reloads_under_queue_lock_before_reserve_write(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "DISPATCH-ME",
+                "title": "Dispatch me",
+                "repo": "organvm/limen",
+                "target_agent": "codex",
+                "priority": "critical",
+                "budget_cost": 1,
+                "status": "open",
+                "created": "2026-06-20",
+                "dispatch_log": [],
+            }
+        ],
+    )
+    stale = load_limen_file(tasks_path)
+    board = read_board(tasks_path)
+    board["tasks"].append(
+        {
+            "id": "CONCURRENT",
+            "title": "Concurrent task",
+            "repo": "organvm/limen",
+            "target_agent": "agy",
+            "priority": "critical",
+            "budget_cost": 1,
+            "status": "open",
+            "created": "2026-06-20",
+            "dispatch_log": [],
+        }
+    )
+    tasks_path.write_text(yaml.safe_dump(board, sort_keys=False))
+    calls: list[str] = []
+
+    def fake_dispatch(agent, task, dry_run=False):
+        calls.append(task.id)
+        return True
+
+    monkeypatch.setattr(D, "call_agent_dispatch", fake_dispatch)
+
+    dispatch_parallel(stale, tasks_path, agents=["codex"], per_agent_limit=1, max_workers=1, dry_run=False)
+
+    tasks = {task["id"]: task for task in read_board(tasks_path)["tasks"]}
+    assert set(tasks) == {"DISPATCH-ME", "CONCURRENT"}
+    assert tasks["DISPATCH-ME"]["status"] == "dispatched"
+    assert tasks["CONCURRENT"]["status"] == "open"
+    assert calls == ["DISPATCH-ME"]
+
+
+def test_dispatch_parallel_does_not_dispatch_stale_open_task(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "ALREADY-DONE",
+                "title": "Already done",
+                "repo": "organvm/limen",
+                "target_agent": "codex",
+                "priority": "critical",
+                "budget_cost": 1,
+                "status": "open",
+                "created": "2026-06-20",
+                "dispatch_log": [],
+            }
+        ],
+    )
+    stale = load_limen_file(tasks_path)
+    board = read_board(tasks_path)
+    board["tasks"][0]["status"] = "done"
+    tasks_path.write_text(yaml.safe_dump(board, sort_keys=False))
+    calls: list[str] = []
+
+    monkeypatch.setattr(D, "call_agent_dispatch", lambda agent, task, dry_run=False: calls.append(task.id) or True)
+
+    dispatch_parallel(stale, tasks_path, agents=["codex"], per_agent_limit=1, max_workers=1, dry_run=False)
+
+    tasks = {task["id"]: task for task in read_board(tasks_path)["tasks"]}
+    assert tasks["ALREADY-DONE"]["status"] == "done"
+    assert calls == []
+
+
 def test_lane_run_env_keeps_lane_specific_isolation(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     monkeypatch.setenv("PATH", "/usr/bin")
