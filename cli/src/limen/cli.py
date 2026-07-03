@@ -181,6 +181,53 @@ def status(agent, status):
     print_status(limen, agent_filter=agent, status_filter=status)
 
 
+def _open_prs_via_gh(limit: int = 200):
+    """Enumerate open PRs in the current repo via `gh pr list` → list[workstream.PullRequest].
+
+    Kept in the CLI (IO) layer so `limen.workstream` stays pure. Fail-open: any gh error (not
+    installed, unauthenticated, not a GitHub repo) yields an empty list with a note on stderr,
+    never a traceback — the projection just shows zero PRs.
+    """
+    from limen import workstream as ws
+
+    try:
+        result = subprocess.run(
+            [
+                "gh",
+                "pr",
+                "list",
+                "--state",
+                "open",
+                "--limit",
+                str(limit),
+                "--json",
+                "number,title,headRefName,url,isDraft",
+            ],
+            text=True,
+            capture_output=True,
+        )
+    except FileNotFoundError:
+        click.echo("gh not found — cannot enumerate PRs (install GitHub CLI)", err=True)
+        return []
+    if result.returncode != 0:
+        click.echo(f"gh pr list failed: {result.stderr.strip()}", err=True)
+        return []
+    try:
+        rows = json.loads(result.stdout or "[]")
+    except json.JSONDecodeError:
+        return []
+    return [
+        ws.PullRequest(
+            number=int(r.get("number", 0)),
+            title=str(r.get("title", "")),
+            branch=str(r.get("headRefName", "")),
+            url=str(r.get("url", "")),
+            draft=bool(r.get("isDraft", False)),
+        )
+        for r in rows
+    ]
+
+
 @main.command()
 @click.option("--scope", default=None, help="Show only one channel (accepts an alias, e.g. 'revenue').")
 @click.option(
@@ -189,19 +236,38 @@ def status(agent, status):
     type=click.Path(),
     help="Write a board filtered to --scope's tasks to this path (feeds `cell conduct --workstream`).",
 )
+@click.option(
+    "--prs",
+    "prs_mode",
+    is_flag=True,
+    help="Project OPEN PRs (via gh) by channel instead of the task board — makes PR sprawl legible.",
+)
 @click.option("--json-output", "json_output", is_flag=True, help="Machine-readable roster + per-channel counts.")
-def channels(scope, emit, json_output):
+def channels(scope, emit, prs_mode, json_output):
     """Project the board by workstream channel — the purpose partition above vendor lanes.
 
     The roster DERIVES from organ-ladder.json (one channel per institutional organ) plus the
     operational lanes (conductor / contributions / correspondence / prompt-parity). `--emit` writes a
     single channel's board so a scoped `cell conduct --workstream <handle>` sees only its own lane —
-    the one-worker-one-channel invariant that cures mixed-purpose PR pileup.
+    the one-worker-one-channel invariant that cures mixed-purpose PR pileup. `--prs` reuses the same
+    channel taxonomy to bucket the open-PR pile, so session/PR sprawl reads on the purpose axis too.
     """
     from limen import workstream as ws
     from limen.io import save_limen_file
 
     root = resolve_root()
+
+    if prs_mode:
+        if emit:
+            click.echo("--emit projects the task board, not PRs; drop --prs or --emit", err=True)
+            sys.exit(2)
+        prs = _open_prs_via_gh()
+        if json_output:
+            click.echo(json.dumps(ws.pr_roster_summary(prs, root), indent=2))
+        else:
+            ws.print_pr_channels(prs, root, scope=scope)
+        return
+
     tasks_path = resolve_tasks_path(root)
     if not tasks_path.exists():
         click.echo("tasks.yaml not found", err=True)
