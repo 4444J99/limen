@@ -62,6 +62,7 @@ def test_opencode_signal_quality_reports_clock_health(monkeypatch):
             "updated_at": "2026-07-03T06:00:00+00:00",
         },
     )
+    monkeypatch.setattr(module, "usage_vendor", lambda agent: None)
 
     signal = module.signal_quality("opencode")
 
@@ -75,6 +76,7 @@ def test_opencode_signal_quality_reports_clock_health(monkeypatch):
 def test_opencode_signal_quality_falls_back_without_clock(monkeypatch):
     module = _load_capacity_fill_module()
     monkeypatch.setattr(module, "read_opencode_clock", lambda: None)
+    monkeypatch.setattr(module, "usage_vendor", lambda agent: None)
 
     signal = module.signal_quality("opencode")
 
@@ -85,9 +87,38 @@ def test_opencode_signal_quality_falls_back_without_clock(monkeypatch):
 def test_proxy_lane_signal_reports_rate_limit_watch(monkeypatch):
     module = _load_capacity_fill_module()
     monkeypatch.setattr(module, "recent_rate_limit", lambda agent: agent == "agy")
+    monkeypatch.setattr(module, "usage_vendor", lambda agent: None)
 
     agy = module.signal_quality("agy")
     gemini = module.signal_quality("gemini")
 
     assert "recent heartbeat rate-limit marker present" in agy["use"]
     assert "no recent heartbeat rate-limit marker" in gemini["use"]
+
+
+def test_proxy_lane_signal_includes_usage_telemetry(monkeypatch):
+    module = _load_capacity_fill_module()
+
+    def usage_vendor(agent):
+        if agent == "agy":
+            return {
+                "health": "ok",
+                "consumed": 14,
+                "possible": 100,
+                "unit": "runs",
+                "remaining": 86,
+                "headroom_pct": 86,
+            }
+        return None
+
+    monkeypatch.setattr(module, "usage_vendor", usage_vendor)
+    monkeypatch.setattr(module, "recent_rate_limit", lambda agent: False)
+
+    signal = module.signal_quality("agy")
+
+    assert signal["signal"] == "usage-telemetry proxy"
+    assert signal["trust"] == "proxy + recent-rl"
+    assert "usage health=ok" in signal["use"]
+    assert "used=14/100 runs" in signal["use"]
+    assert "remaining=86" in signal["use"]
+    assert "headroom=86%" in signal["use"]

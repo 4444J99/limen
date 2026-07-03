@@ -28,6 +28,7 @@ PRIVATE_ROOT = Path(
 )
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "capacity-fill.json"
 TASKS_PATH = ROOT / "tasks.yaml"
+USAGE_PATH = ROOT / "logs" / "usage.json"
 OLLAMA_MIN_PULL_FREE_GIB = 50.0
 RATE_LIMIT_TAIL_LINES = 400
 
@@ -98,23 +99,84 @@ def read_opencode_clock() -> dict[str, Any] | None:
     return value if isinstance(value, dict) else None
 
 
+def read_usage_snapshot() -> dict[str, Any] | None:
+    try:
+        value = json.loads(USAGE_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return value if isinstance(value, dict) else None
+
+
+def usage_vendor(agent: str) -> dict[str, Any] | None:
+    snapshot = read_usage_snapshot()
+    vendors = snapshot.get("vendors") if isinstance(snapshot, dict) else None
+    if not isinstance(vendors, dict):
+        return None
+    value = vendors.get(agent)
+    return value if isinstance(value, dict) else None
+
+
+def usage_signal_detail(agent: str) -> str | None:
+    vendor = usage_vendor(agent)
+    if not vendor:
+        return None
+
+    parts: list[str] = []
+    health = vendor.get("health")
+    if health:
+        parts.append(f"usage health={health}")
+
+    consumed = vendor.get("consumed")
+    possible = vendor.get("possible")
+    unit = str(vendor.get("unit") or "").strip()
+    unit_suffix = f" {unit}" if unit else ""
+    if consumed is not None:
+        if possible not in (None, ""):
+            parts.append(f"used={consumed}/{possible}{unit_suffix}")
+        else:
+            parts.append(f"used={consumed}{unit_suffix}")
+
+    remaining = vendor.get("remaining")
+    if remaining is not None:
+        parts.append(f"remaining={remaining}")
+
+    headroom = vendor.get("headroom_pct")
+    if headroom is not None:
+        parts.append(f"headroom={headroom}%")
+
+    signal = vendor.get("signal")
+    if signal and not parts:
+        parts.append(f"usage signal={signal}")
+
+    return "; ".join(parts) if parts else None
+
+
 def opencode_signal_quality() -> dict[str, str]:
     clock = read_opencode_clock()
     if not clock:
+        usage = usage_signal_detail("opencode")
         return {
             "signal": "dispatch-count proxy",
             "trust": "proxy",
-            "use": "usable only as a dispatch-count fallback until opencode-clock writes its DB meter",
+            "use": (
+                f"{usage}; usable only as a dispatch-count fallback until opencode-clock writes its DB meter"
+                if usage
+                else "usable only as a dispatch-count fallback until opencode-clock writes its DB meter"
+            ),
             "next_build": "Restore opencode-clock so the SQLite usage DB emits clock.json.",
         }
     health = str(clock.get("health", "unknown"))
     used = clock.get("used_pct", "unknown")
     accepting = clock.get("accepting_tasks", "unknown")
     updated = str(clock.get("updated_at") or clock.get("heartbeat") or "unknown")
+    usage = usage_signal_detail("opencode")
+    use = f"token clock health={health}; used={used}%; accepting_tasks={accepting}; updated={updated}"
+    if usage:
+        use = f"{use}; {usage}"
     return {
         "signal": "db-meter",
         "trust": "measured",
-        "use": f"token clock health={health}; used={used}%; accepting_tasks={accepting}; updated={updated}",
+        "use": use,
         "next_build": "Keep opencode-clock fresh from the SQLite usage DB.",
     }
 
@@ -135,31 +197,49 @@ def rate_limit_watch(agent: str) -> str:
     return "no recent heartbeat rate-limit marker"
 
 
+def signal_use(agent: str, fallback: str) -> str:
+    usage = usage_signal_detail(agent)
+    if not usage:
+        return fallback
+    return f"{usage}; {fallback}"
+
+
 def signal_quality(agent: str) -> dict[str, str]:
+    agy_usage = usage_signal_detail("agy")
+    gemini_usage = usage_signal_detail("gemini")
     rows: dict[str, dict[str, str]] = {
         "codex": {
             "signal": "transcript-token estimate",
             "trust": "estimate",
-            "use": "usable for pacing; tune cap against plan status",
+            "use": signal_use("codex", "usable for pacing; tune cap against plan status"),
             "next_build": "Calibrate OpenAI plan pool cap from a trusted account meter.",
         },
         "claude": {
             "signal": "transcript-token estimate",
             "trust": "estimate",
-            "use": "usable for pacing; rate-limit events still dominate stop decisions",
+            "use": signal_use(
+                "claude",
+                "usable for pacing; rate-limit events still dominate stop decisions",
+            ),
             "next_build": "Calibrate Claude plan pool cap from a trusted account meter.",
         },
         "opencode": opencode_signal_quality(),
         "agy": {
-            "signal": "dispatch-count proxy",
-            "trust": "proxy",
-            "use": f"reachable; {rate_limit_watch('agy')}; not proof of provider quota",
+            "signal": "usage-telemetry proxy" if agy_usage else "dispatch-count proxy",
+            "trust": "proxy + recent-rl" if agy_usage else "proxy",
+            "use": signal_use(
+                "agy",
+                f"reachable; {rate_limit_watch('agy')}; not proof of provider quota",
+            ),
             "next_build": "Add a provider-backed Agy meter or recent rate-limit receipt.",
         },
         "gemini": {
-            "signal": "dispatch-count proxy",
-            "trust": "proxy",
-            "use": f"reachable when auth is configured; {rate_limit_watch('gemini')}; daily cap remains board-derived",
+            "signal": "usage-telemetry proxy" if gemini_usage else "dispatch-count proxy",
+            "trust": "proxy + recent-rl" if gemini_usage else "proxy",
+            "use": signal_use(
+                "gemini",
+                f"reachable when auth is configured; {rate_limit_watch('gemini')}; daily cap remains board-derived",
+            ),
             "next_build": "Add a Gemini quota/rate-limit receipt if available.",
         },
         "github_actions": {
