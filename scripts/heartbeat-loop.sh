@@ -315,7 +315,15 @@ while true; do
     # tasks.yaml (two-scale safety). If a supervisor holds it, skip queue-mutation this
     # beat (still emit tick/web below). Wait up to ~20s.
     locked=0
-    for _ in $(seq 1 20); do mkdir "$LOCKD" 2>/dev/null && { locked=1; break; }; sleep 1; done
+    for _ in $(seq 1 20); do
+      if mkdir "$LOCKD" 2>/dev/null; then
+        printf '%s\n' "$$" > "$LOCKD/pid" 2>/dev/null || true
+        date -u '+%Y-%m-%dT%H:%M:%SZ' > "$LOCKD/created_at" 2>/dev/null || true
+        locked=1
+        break
+      fi
+      sleep 1
+    done
 
     if [ "$locked" = 1 ]; then
       export LIMEN_QUEUE_LOCK_HELD=1
@@ -344,6 +352,7 @@ while true; do
       # SAME lockdir around its reserve AND reloads-fresh+commits under it — so nothing races
       # tasks.yaml, and a seed written mid-run survives instead of being clobbered.
       unset LIMEN_QUEUE_LOCK_HELD
+      rm -f "$LOCKD/pid" "$LOCKD/created_at" 2>/dev/null || true
       rmdir "$LOCKD" 2>/dev/null || true
 
       # BUILD — dispatch every beat. Default = SYNC parallel (reserve→run→commit, beat waits for the

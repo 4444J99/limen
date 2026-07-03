@@ -682,6 +682,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Internal reentrancy marker exported only while heartbeat-loop.sh holds the queue lock, allowing child board writers to share the parent critical section instead of deadlocking on their own lock probe."
+  LIMEN_QUEUE_LOCK_STALE_SEC:
+    default: 900
+    env: LIMEN_QUEUE_LOCK_STALE_SEC
+    self_update: none
+    owner: limen-daemon
+    note: "Conservative age threshold before Python lock users may reap a metadata-free queue lock directory. PID-bearing locks are reaped only when the holder process is dead."
   LIMEN_OPENCODE_CLOCK:
     default: ""
     env: LIMEN_OPENCODE_CLOCK

@@ -13,12 +13,85 @@ import yaml
 from limen.models import LimenFile
 
 _DLOG_REQUIRED = {"timestamp", "agent", "session_id", "status"}
+_QUEUE_LOCK_STALE_SEC = 900
 
 
 class BoardCollapseError(RuntimeError):
     """Raised when a save would catastrophically shrink the board — a clobber. The existing
     good board is left INTACT and the rejected payload is preserved to a `.rejected-<stamp>`
     sidecar (never lost). See save_limen_file's collapse-guard."""
+
+
+def _queue_lock_stale_seconds() -> int:
+    try:
+        return int(os.environ.get("LIMEN_QUEUE_LOCK_STALE_SEC", str(_QUEUE_LOCK_STALE_SEC)))
+    except ValueError:
+        return _QUEUE_LOCK_STALE_SEC
+
+
+def _lock_age_seconds(lockd: Path) -> float:
+    try:
+        return max(0.0, time.time() - lockd.stat().st_mtime)
+    except OSError:
+        return 0.0
+
+
+def _pid_is_alive(pid: int) -> bool:
+    if pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+
+
+def _read_lock_pid(lockd: Path) -> int | None:
+    try:
+        raw = (lockd / "pid").read_text().strip()
+    except OSError:
+        return None
+    try:
+        return int(raw)
+    except ValueError:
+        return None
+
+
+def _write_lock_metadata(lockd: Path) -> None:
+    try:
+        (lockd / "pid").write_text(f"{os.getpid()}\n")
+        (lockd / "created_at").write_text(datetime.now(timezone.utc).isoformat() + "\n")
+    except OSError:
+        pass
+
+
+def _clear_lock_metadata(lockd: Path) -> None:
+    for name in ("pid", "created_at"):
+        try:
+            (lockd / name).unlink()
+        except OSError:
+            pass
+
+
+def _try_reap_stale_queue_lock(lockd: Path) -> bool:
+    """Remove a stale queue lock if it is provably dead.
+
+    PID-bearing locks are safe to reap as soon as their process is gone. Metadata-free locks can be
+    created by older shell holders, so only reap them after a conservative age threshold.
+    """
+    pid = _read_lock_pid(lockd)
+    if pid is not None and _pid_is_alive(pid):
+        return False
+    if pid is None and _lock_age_seconds(lockd) < _queue_lock_stale_seconds():
+        return False
+    _clear_lock_metadata(lockd)
+    try:
+        lockd.rmdir()
+        return True
+    except OSError:
+        return False
 
 
 @contextlib.contextmanager
@@ -40,15 +113,18 @@ def queue_lock(tasks_path: Path, timeout: int = 90) -> Iterator[bool]:
     for _ in range(timeout):
         try:
             lockd.mkdir()
+            _write_lock_metadata(lockd)
             got = True
             break
         except FileExistsError:
+            _try_reap_stale_queue_lock(lockd)
             time.sleep(1)
     try:
         yield got
     finally:
         if got:
             try:
+                _clear_lock_metadata(lockd)
                 lockd.rmdir()
             except OSError:
                 pass
