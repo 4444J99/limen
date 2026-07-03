@@ -317,6 +317,7 @@ while true; do
     for _ in $(seq 1 20); do mkdir "$LOCKD" 2>/dev/null && { locked=1; break; }; sleep 1; done
 
     if [ "$locked" = 1 ]; then
+      export LIMEN_QUEUE_LOCK_HELD=1
       due_voice drain "$C_DRAIN"   && { bash "$LIMEN_ROOT/scripts/drain.sh" 2>&1 | tail -2 || true        # VERIFY
                                        python3 -m limen release-stale --agent jules --hours 24 --apply 2>&1 | tail -1 || true; }
       due_voice heal "$C_HEAL"     && python3 "$LIMEN_ROOT/scripts/recover.py" --apply 2>&1 | tail -1 || true   # HEAL
@@ -341,6 +342,7 @@ while true; do
       # aren't starved through the multi-minute run. dispatch-parallel.py now self-acquires the
       # SAME lockdir around its reserve AND reloads-fresh+commits under it — so nothing races
       # tasks.yaml, and a seed written mid-run survives instead of being clobbered.
+      unset LIMEN_QUEUE_LOCK_HELD
       rmdir "$LOCKD" 2>/dev/null || true
 
       # BUILD — dispatch every beat. Default = SYNC parallel (reserve→run→commit, beat waits for the

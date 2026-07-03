@@ -34,6 +34,9 @@ def queue_lock(tasks_path: Path, timeout: int = 90) -> Iterator[bool]:
     lockd = Path(tasks_path).parent / "logs" / ".queue.lock.d"
     got = False
     lockd.parent.mkdir(parents=True, exist_ok=True)
+    if os.environ.get("LIMEN_QUEUE_LOCK_HELD") == "1" and lockd.exists():
+        yield True
+        return
     for _ in range(timeout):
         try:
             lockd.mkdir()

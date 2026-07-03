@@ -91,6 +91,20 @@ def test_queue_lock_is_mutually_exclusive(tmp_path):
     assert not (tmp_path / "logs" / ".queue.lock.d").exists()  # released on exit
 
 
+def test_queue_lock_reenters_when_outer_heartbeat_lock_is_held(tmp_path, monkeypatch):
+    tp = tmp_path / "tasks.yaml"
+    tp.write_text("x")
+    lockd = tmp_path / "logs" / ".queue.lock.d"
+    lockd.parent.mkdir()
+    lockd.mkdir()
+    monkeypatch.setenv("LIMEN_QUEUE_LOCK_HELD", "1")
+
+    with D._queue_lock(tp, timeout=1) as got:
+        assert got is True
+
+    assert lockd.exists(), "inner queue_lock must not release the heartbeat's outer lock"
+
+
 def test_deps_met_gates_on_merged_predecessor():
     """depends_on is satisfied only when the predecessor's PR is MERGED (reconcile marker),
     not merely built (PR open). No deps → always met."""
