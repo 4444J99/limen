@@ -267,8 +267,12 @@ def reserve_and_launch(agents, per_agent, cap, dry):
                     break  # local slot budget spent for this beat (async lanes are not slot-bound)
                 if t.id in picked_ids:
                     continue
+                if t.budget_cost > rem:
+                    continue
                 picked.append((agent, t.id))
                 picked_ids.add(t.id)
+                rem -= t.budget_cost
+                spent += t.budget_cost
                 if not dry:
                     t.status = "dispatched"
                     t.updated = now

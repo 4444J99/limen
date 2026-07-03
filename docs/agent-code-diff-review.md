@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-03T23:33:37Z`
+Generated: `2026-07-03T23:36:18Z`
 
 ## Scope
 
@@ -163,6 +163,36 @@ python3 -m py_compile cli/src/limen/dispatch.py
 Result: `20 passed in 24.56s`; compile passed. Broader dispatch/control-plane check:
 `python3 -m pytest cli/tests/test_dispatch.py cli/tests/test_accelerator.py cli/tests/test_dispatch_engine.py cli/tests/test_async_dispatch.py cli/tests/test_route_bias.py cli/tests/test_route_torn_write.py -q` returned `98 passed in 31.30s`.
 
+### Async dispatch reservation ignored cumulative picked cost
+
+Severity: high for budget integrity.
+
+Evidence:
+
+- `scripts/dispatch-async.py` counted already-running markers against per-agent budget, but within the current reserve pass it only checked each candidate task's individual `budget_cost <= rem`.
+- Because `rem` and global `spent` were not decremented after selecting a task, one beat could reserve multiple tasks whose combined cost exceeded per-agent or daily headroom.
+- This directly conflicted with the prompt/session goal of guarding continuation and token spend in the rank 7-12 control-plane windows.
+
+Repair:
+
+- Decrement the lane `rem` and shared daily `spent` as each async reservation is picked.
+- Keep the existing local-slot and duplicate-any-task guards intact.
+- Added regressions for per-agent headroom and daily headroom accumulation.
+
+Touched paths:
+
+- `scripts/dispatch-async.py`
+- `cli/tests/test_async_dispatch.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_async_dispatch.py -q
+python3 -m py_compile scripts/dispatch-async.py
+```
+
+Result: `18 passed in 0.15s`; compile passed.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -195,6 +225,11 @@ Result: `20 passed in 24.56s`; compile passed. Broader dispatch/control-plane ch
 - `cli/src/limen/dispatch.py:1982` re-reads `tasks.yaml` under the lock before selecting reservations.
 - `cli/tests/test_dispatch.py:440` covers preserving concurrently added tasks during reservation.
 - `cli/tests/test_dispatch.py:494` covers not dispatching stale-open tasks that became `done`.
+- `scripts/dispatch-async.py:270` skips candidates that no longer fit current reserve-pass headroom.
+- `scripts/dispatch-async.py:274` decrements lane remaining budget as tasks are picked.
+- `scripts/dispatch-async.py:275` decrements shared daily budget as tasks are picked.
+- `cli/tests/test_async_dispatch.py:290` covers per-agent picked-cost accumulation.
+- `cli/tests/test_async_dispatch.py:301` covers daily picked-cost accumulation across lanes.
 
 ## Remaining Review Queue
 

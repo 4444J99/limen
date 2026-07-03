@@ -287,6 +287,35 @@ def test_async_reserve_counts_inflight_against_budget(tmp_path):
     assert picked == [], f"over-dispatched past in-flight budget: {picked}"
 
 
+def test_async_reserve_accumulates_picked_cost_against_agent_budget(tmp_path):
+    da = _load(tmp_path, n_open=6, agent="codex")
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.portal.budget.per_agent = {"codex": 2}
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    picked = da.reserve_and_launch(["codex"], per_agent=8, cap=20, dry=True)
+
+    assert picked == [("codex", "T0"), ("codex", "T1")]
+
+
+def test_async_reserve_accumulates_picked_cost_against_daily_budget(tmp_path):
+    da = _load(tmp_path, n_open=0)
+    today = datetime.date.today()
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.portal.budget.daily = 2
+    lf.portal.budget.per_agent = {"codex": 50, "agy": 50}
+    lf.tasks = [
+        Task(id="C0", title="t", repo="x/y", target_agent="codex", status="open", created=today),
+        Task(id="C1", title="t", repo="x/y", target_agent="codex", status="open", created=today),
+        Task(id="A0", title="t", repo="x/y", target_agent="agy", status="open", created=today),
+    ]
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    picked = da.reserve_and_launch(["codex", "agy"], per_agent=8, cap=20, dry=True)
+
+    assert picked == [("codex", "C0"), ("codex", "C1")]
+
+
 def test_async_reserve_skips_open_task_with_prior_done(tmp_path):
     da = _load(tmp_path, n_open=0)
     lf = load_limen_file(tmp_path / "tasks.yaml")
