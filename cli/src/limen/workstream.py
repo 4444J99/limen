@@ -204,6 +204,48 @@ def infer_channel(text: str, root: Path) -> str:
     return UNASSIGNED
 
 
+# Task-KIND → channel: structured fleet-task id prefixes whose PURPOSE is unambiguous even when the
+# title carries no purpose token. ``GEN-*`` are generated code contributions (test-coverage, docs,
+# typing, ci-green, simplify) → the code/PR lane; ``DISCOVER-*`` are idea/value probes → the intake
+# conductor. These are the ONLY kind-based fallbacks — everything else must earn its channel via an
+# explicit field, a matching label, or a purpose token, else it stays UNASSIGNED (the honest signal
+# that it has no channel yet). A named constant, like _META_CHANNELS/_ORGAN_ALIASES, so the rationale
+# travels with the rule rather than hiding as a literal in the assigner.
+_KIND_PREFIX_CHANNELS: tuple[tuple[str, str], ...] = (
+    ("gen-", "contributions"),
+    ("discover-", "conductor"),
+)
+
+
+def assign_channel(task: Task, root: Path) -> str:
+    """Derive the channel to STAMP onto a task during the beat's auto-partition (route.py --apply).
+
+    The projection's :func:`channel_of` only reads the explicit field + labels (so pre-field tasks
+    stay visibly UNASSIGNED); the assigner goes one step further so the board actually partitions:
+
+    1. explicit ``workstream`` field or a matching label (:func:`channel_of`) — honors intent;
+    2. a purpose token anywhere in ``id + title + repo`` (:func:`infer_channel`) — catches the
+       organ lanes (``ORG-financial-…`` → financial) whose id names the pillar but that carry no
+       label;
+    3. a task-KIND prefix (:data:`_KIND_PREFIX_CHANNELS`) — the structured GEN-*/DISCOVER-* fleet
+       tasks whose purpose is structural, not lexical.
+
+    Returns :data:`UNASSIGNED` only when nothing resolves — it never guesses a domain, so an
+    unclassifiable task stays honestly unassigned instead of being mis-lane'd.
+    """
+    explicit = channel_of(task, root)
+    if explicit != UNASSIGNED:
+        return explicit
+    inferred = infer_channel(f"{task.id} {task.title} {task.repo or ''}", root)
+    if inferred != UNASSIGNED:
+        return inferred
+    tid = (task.id or "").lower()
+    for prefix, handle in _KIND_PREFIX_CHANNELS:
+        if tid.startswith(prefix):
+            return handle
+    return UNASSIGNED
+
+
 def channel_of_pr(pr: PullRequest, root: Path) -> str:
     """A PR's inferred channel, from its title + branch (there is no explicit field on a PR yet)."""
     return infer_channel(f"{pr.title} {pr.branch}", root)

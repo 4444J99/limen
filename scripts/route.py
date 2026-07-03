@@ -59,6 +59,7 @@ from limen.capacity import (  # noqa: E402
 )
 from limen.io import load_limen_file, queue_lock, save_limen_file  # noqa: E402
 from limen.dispatch import _down_lanes  # noqa: E402
+from limen.workstream import UNASSIGNED, assign_channel  # noqa: E402
 
 
 # Vendor health: which local lanes are usable right now. gemini needs an API key.
@@ -504,16 +505,30 @@ def main() -> int:
             return 0
         lf = load_limen_file(tasks_path)
         applied = 0
+        ws_applied = 0
         for task in lf.tasks:
+            if task.status != "open":
+                continue
             v = assignments.get(task.id)
-            if v and task.status == "open":
+            if v:
                 task.target_agent = v
                 applied += 1
+            # PURPOSE partition (workstream) — the axis ABOVE target_agent, without which the
+            # channels organ's scoped `cell conduct --workstream <handle>` conductors draw an empty
+            # lane. Stamp only when EMPTY (honor explicit intent) and only a RESOLVED channel (leave
+            # UNASSIGNED as None so it re-derives next beat when new signal appears). Same lock, same
+            # fresh re-read, same validated save — a sibling of the vendor assignment above.
+            if not task.workstream:
+                handle = assign_channel(task, ROOT)
+                if handle != UNASSIGNED:
+                    task.workstream = handle
+                    ws_applied += 1
         save_limen_file(tasks_path, lf)
     print(
         f"applied target_agent assignments ({applied}) -> {tasks_path} "
         f"(dispatch separately, gated: limen dispatch --agent <v> --live)"
     )
+    print(f"applied workstream assignments ({ws_applied}) -> {tasks_path} (purpose partition)")
     return 0
 
 

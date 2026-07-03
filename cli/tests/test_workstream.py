@@ -165,3 +165,21 @@ def test_group_prs_by_channel_is_a_stable_scoreboard(tmp_path):
     assert summary["total_open"] == 4
     fin = next(c for c in summary["channels"] if c["handle"] == "financial")
     assert fin["total"] == 1 and fin["prs"][0]["number"] == 10
+
+
+def test_assign_channel_partitions_the_board(tmp_path):
+    """The beat's auto-partition derivation: the field/label/token ladder PLUS the task-KIND
+    fallback that actually resolves the fleet's GEN-*/DISCOVER-* backlog (the reason the board sat
+    100% unassigned). Unclassifiable tasks stay honestly UNASSIGNED — never guessed into a domain."""
+    root = _ladder(tmp_path)
+    # 1. explicit field wins, alias-resolved (revenue → financial)
+    assert ws.assign_channel(_task("A", workstream="revenue"), root) == "financial"
+    # 2. a matching label
+    assert ws.assign_channel(_task("B", labels=["legal"]), root) == "legal"
+    # 3. a purpose token in the id — the ORG-* organ lanes that carry no field/label
+    assert ws.assign_channel(_task("ORG-financial-organ-operationalize-0703"), root) == "financial"
+    # 4. task-KIND prefix — the structured fleet tasks whose purpose is structural, not lexical
+    assert ws.assign_channel(_task("GEN-organvm-limen-test-coverage-0620"), root) == "contributions"
+    assert ws.assign_channel(_task("DISCOVER-organvm-the-actual-news"), root) == "conductor"
+    # honest fallback: nothing resolves → stays unassigned (never mis-lane'd)
+    assert ws.assign_channel(_task("ZZZ-unknown-kind-0703"), root) == ws.UNASSIGNED
