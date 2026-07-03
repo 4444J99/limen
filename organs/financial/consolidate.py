@@ -196,6 +196,23 @@ def build_cashflow(entities: dict, revenue: dict, obligations: dict) -> str:
     return "\n".join(lines)
 
 
+def _maturity_from_ladder() -> str:
+    """Derive financial organ maturity from organ-ladder.json (never pin)."""
+    ladder_path = ROOT / "organ-ladder.json"
+    try:
+        if ladder_path.exists():
+            with open(ladder_path) as f:
+                data = json.load(f)
+            for o in (data.get("organs") or []):
+                if o.get("pillar") == "financial":
+                    m = o.get("maturity", "?")
+                    s = o.get("stage", "?")
+                    return f"**Maturity:** {s} ({m}%)"
+    except Exception:
+        pass
+    return "**Maturity:** unknown"
+
+
 def build_dashboard(entities: dict, revenue: dict, obligations: dict) -> str:
     """Produce the one-page STATUS.md dashboard."""
     entity_list = entities.get("entities", [])
@@ -205,7 +222,7 @@ def build_dashboard(entities: dict, revenue: dict, obligations: dict) -> str:
     lines = []
     lines.append("# Financial Office — STATUS Dashboard")
     lines.append("")
-    lines.append(f"**Generated:** {now_iso()}  **Maturity:** Building (30% → 40%)")
+    lines.append(f"**Generated:** {now_iso()}  {_maturity_from_ladder()}")
     lines.append("")
     lines.append("---")
     lines.append("")
