@@ -1476,6 +1476,8 @@ def dispatch_tasks(
 def _apply_result(task: Task, agent: str, result: bool | str, now: datetime, track: BudgetTrack) -> None:
     """Apply one dispatch result to a task (same semantics as the serial path):
     success → dispatched + spend; no-op/fail → recoverable failed; rate-limit → cascade."""
+    if task.status in {"done", "archived"} and _has_done_transition(task):
+        return
     if _restore_done_status(
         task,
         now,

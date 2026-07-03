@@ -18,7 +18,7 @@ from limen.capacity import PAID_AGENT_ORDER, capacity_census, format_capacity_ce
 from limen.dispatch import dispatch_parallel, dispatch_tasks, release_stale_tasks
 from limen.doctor import qa_report, readiness_report, stale_tasks
 from limen.io import load_limen_file
-from limen.models import BudgetTrack, Task
+from limen.models import BudgetTrack, DispatchLogEntry, Task
 from limen.status import print_status
 
 
@@ -512,6 +512,37 @@ def test_failed_result_skips_down_lane_in_default_cascade(tmp_path: Path, monkey
     assert task.target_agent == "jules"
     assert task.dispatch_log[-1].status == "failed->jules"
     assert "tried:claude" in task.labels
+
+
+def test_late_result_does_not_reopen_already_done_task() -> None:
+    import datetime
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    task = Task(
+        id="DONE-LATE",
+        title="already done",
+        target_agent="opencode",
+        status="done",
+        created=date(2026, 6, 27),
+        labels=[],
+        dispatch_log=[
+            DispatchLogEntry(
+                timestamp=now,
+                agent="opencode",
+                session_id="cli",
+                status="done",
+                output="completed before async worker result arrived",
+            )
+        ],
+    )
+    track = BudgetTrack(date="2026-06-27")
+
+    D._apply_result(task, "opencode", D._NOOP, now, track)
+
+    assert task.status == "done"
+    assert "noop" not in task.labels
+    assert task.dispatch_log[-1].status == "done"
+    assert track.spent == 0
 
 
 def test_isolated_local_run_blocks_unavailable_repo_without_cascading(monkeypatch) -> None:
