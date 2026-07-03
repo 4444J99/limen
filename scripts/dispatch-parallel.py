@@ -39,7 +39,11 @@ def main() -> int:
                 f"({policy_path})"
             )
             return 0
-    path = Path(args.tasks)
+    # Mirror dispatch-async.py: fall back to $LIMEN_ROOT/tasks.yaml when --tasks/$LIMEN_TASKS is
+    # unset (the daemon invokes this with only --lanes/--per-lane/--workers). Without this the
+    # non-async fallback dispatcher crashed on Path(None) — one flag-flip (LIMEN_DISPATCH_ASYNC=0)
+    # from killing all dispatch. ([[no-never-happens-again]])
+    path = Path(args.tasks) if args.tasks else root / "tasks.yaml"
     lf = load_limen_file(path)
     down = _down_lanes()   # skip lanes that can't produce (e.g. gemini ratelimited) — no wasted slots
     lanes = select_lanes(args.lanes, lf, down_lanes=down)
