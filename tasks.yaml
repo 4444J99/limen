@@ -15,13 +15,13 @@ portal:
       claude: 100
     track:
       date: '2026-07-03'
-      spent: 219
+      spent: 221
       per_agent:
         jules: 100
         gemini: 0
         codex: 81
         opencode: 24
-        agy: 14
+        agy: 16
         claude: 0
       per_agent_reset:
         jules: '2026-06-29T05:54:07.312618+00:00'
@@ -77065,7 +77065,7 @@ tasks:
     \ stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-07-02'
-  updated: '2026-07-03T10:27:45.066373Z'
+  updated: '2026-07-03T10:29:18.753433Z'
   dispatch_log:
   - timestamp: '2026-07-02T04:45:12.845659Z'
     agent: claude
@@ -77090,6 +77090,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T10:29:18.753433Z'
+    agent: agy
+    session_id: https://github.com/organvm/mirror-mirror/pull/100
+    status: dispatched
 - id: DISCOVER-organvm-fetch-familiar-friends
   title: Discover the latent value of organvm/fetch-familiar-friends
   repo: organvm/fetch-familiar-friends
@@ -77709,7 +77713,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 2
-  status: dispatched
+   status: in_progress
   labels:
   - organ-face
   - pillar:consulting
