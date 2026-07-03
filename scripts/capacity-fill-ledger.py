@@ -14,6 +14,7 @@ import argparse
 import datetime as dt
 import json
 import os
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -28,6 +29,7 @@ PRIVATE_ROOT = Path(
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "capacity-fill.json"
 TASKS_PATH = ROOT / "tasks.yaml"
 OLLAMA_MIN_PULL_FREE_GIB = 50.0
+RATE_LIMIT_TAIL_LINES = 400
 
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
@@ -117,6 +119,22 @@ def opencode_signal_quality() -> dict[str, str]:
     }
 
 
+def recent_rate_limit(agent: str, tail_lines: int = RATE_LIMIT_TAIL_LINES) -> bool:
+    log = ROOT / "logs" / "heartbeat.out.log"
+    try:
+        lines = log.read_text(encoding="utf-8", errors="ignore").splitlines()[-tail_lines:]
+    except OSError:
+        return False
+    pattern = re.compile(rf"\bRATE-LIMIT\s+{re.escape(agent)}\b")
+    return any(pattern.search(line) for line in lines)
+
+
+def rate_limit_watch(agent: str) -> str:
+    if recent_rate_limit(agent):
+        return "recent heartbeat rate-limit marker present"
+    return "no recent heartbeat rate-limit marker"
+
+
 def signal_quality(agent: str) -> dict[str, str]:
     rows: dict[str, dict[str, str]] = {
         "codex": {
@@ -135,13 +153,13 @@ def signal_quality(agent: str) -> dict[str, str]:
         "agy": {
             "signal": "dispatch-count proxy",
             "trust": "proxy",
-            "use": "reachable, but not proof of provider quota",
+            "use": f"reachable; {rate_limit_watch('agy')}; not proof of provider quota",
             "next_build": "Add a provider-backed Agy meter or recent rate-limit receipt.",
         },
         "gemini": {
             "signal": "dispatch-count proxy",
             "trust": "proxy",
-            "use": "reachable when auth is configured; daily cap remains board-derived",
+            "use": f"reachable when auth is configured; {rate_limit_watch('gemini')}; daily cap remains board-derived",
             "next_build": "Add a Gemini quota/rate-limit receipt if available.",
         },
         "github_actions": {

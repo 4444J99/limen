@@ -80,3 +80,14 @@ def test_opencode_signal_quality_falls_back_without_clock(monkeypatch):
 
     assert signal["signal"] == "dispatch-count proxy"
     assert signal["trust"] == "proxy"
+
+
+def test_proxy_lane_signal_reports_rate_limit_watch(monkeypatch):
+    module = _load_capacity_fill_module()
+    monkeypatch.setattr(module, "recent_rate_limit", lambda agent: agent == "agy")
+
+    agy = module.signal_quality("agy")
+    gemini = module.signal_quality("gemini")
+
+    assert "recent heartbeat rate-limit marker present" in agy["use"]
+    assert "no recent heartbeat rate-limit marker" in gemini["use"]
