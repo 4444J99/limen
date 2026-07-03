@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-03T11:12:27+00:00`
+Generated: `2026-07-03T11:33:39+00:00`
 
 Status: `healthy`
 
@@ -23,21 +23,23 @@ Status: `healthy`
 - Loaded LIMEN_DISPATCH_ASYNC: `1`.
 - Loaded LIMEN_DISPATCH_LANES: `opencode,agy`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-03T11:12:27.281017+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-03T11:33:40.072797+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 0 still running ; would launch 9 (cap 12) -> ['GEN-organvm-portfolio-ci-green-0702', 'ORG-financial-organ-deepen-0703', 'ORG-governance-organ-selffeed-0703', 'ORG-legal-organ-firstslice-0703', 'DISCOVER-organvm-the-actual-news', 'DISCOVER-organvm-sovereign-systems--layer-above-hokage', 'ORG-education-organ-face-0703', 'ORG-health-organ-firstslice-0703', 'ORG-social-organ-firstslice-0703']`.
-- Async skipped down lanes: `codex, gemini, jules`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 1 still running ; would launch 10 (cap 12) -> ['REV-organvm-mirror-mirror-revenue-ship-0703', 'ORG-health-organ-firstslice-0703', 'ORG-social-organ-firstslice-0703', 'GEN-organvm-mirror-mirror-simplify-0630', 'ORG-financial-organ-deepen-0703', 'ORG-governance-organ-selffeed-0703', 'ORG-financial-organ-face-0703', 'DISCOVER-organvm-the-actual-news', 'DISCOVER-organvm-sovereign-systems--layer-above-hokage', 'GEN-organvm-domus-genoma-test-coverage-0702']`.
+- Async skipped down lanes: `gemini, jules`.
+  - `gemini`: usage health `exhausted`; signal `dispatch-count`; remaining `0` of `10`; headroom `0%`.
+  - `jules`: usage health `exhausted`; signal `count`; remaining `0` of `100`; headroom `0%`.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `417b33f5fb95db23f8a094511007729744135d3b`.
-- origin/main: `417b33f5fb95db23f8a094511007729744135d3b`.
+- HEAD: `1e8b6c4be3b4bbcbf711cefc512ef5aea4efaf97`.
+- origin/main: `1e8b6c4be3b4bbcbf711cefc512ef5aea4efaf97`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
 - Dirty entries: `0`.
 
