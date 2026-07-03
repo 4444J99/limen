@@ -235,7 +235,8 @@ are named, and the micro instance has three active chambers proving the model in
 
 ```bash
 # confirm chamber structure and posture records are well-formed
-python organs/artist/validate-artist.py --chambers
+python organs/artist/validate-artist.py --fleet
+python organs/artist/validate-artist.py --checklist
 ```
 
 ---

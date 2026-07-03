@@ -1,5 +1,32 @@
 #!/usr/bin/env python3
-"""A-MAVS-OLEVM artist-organ rules #1-6."""
+"""
+A-MAVS-OLEVM artist-organ governance rules #1-6.
+
+Rule #1 - Archive Standing: each chamber must hold a recognized archive state
+and any pre-exhibition chamber must declare a forward next_standing.
+
+Rule #2 - Artist Gate: every chamber must be artist-gated and must name at
+least one explicit human gate before outward movement.
+
+Rule #3 - 5-Primitive Completeness: every chamber record must capture Member,
+Mandate, Standing, Standard, and Governance.
+
+Rule #4 - Evidence Integrity: every standard.evidence field must reference real
+artifacts or statuses; TODO/TBD/placeholder text is not evidence.
+
+Rule #5 - No Overreach: no chamber may claim autonomous publication, source
+alteration, generated art as original work, or art-creation authority.
+
+Rule #6 - Reviewable Output: every chamber must name the next concrete artifact
+the institution can stage for artist review.
+
+Usage:
+  python organs/artist/validate-artist.py path/to/chamber.yaml
+  python organs/artist/validate-artist.py --fleet
+  python organs/artist/validate-artist.py --fleet --quiet
+  python organs/artist/validate-artist.py --checklist
+  echo $?   # 0 = all pass, 1 = violations found
+"""
 
 from __future__ import annotations
 
@@ -25,6 +52,14 @@ OVERREACH = [
     "alter original source files",
     "create art on behalf",
     "treat generated output as original",
+]
+RULES: list[tuple[int, str]] = [
+    (1, "Archive Standing: valid state, forward next_standing before EXHIBITED"),
+    (2, "Artist Gate: artist_gate true plus at least one human gate"),
+    (3, "5-Primitive Completeness: member, mandate, standing, standard, governance"),
+    (4, "Evidence Integrity: real standard.evidence, no placeholder text"),
+    (5, "No Overreach: no autonomous publication, source alteration, or substitute authorship"),
+    (6, "Reviewable Output: artifacts.next_reviewable_output is present"),
 ]
 
 
@@ -72,11 +107,23 @@ def _validate_one(path: Path) -> list[str]:
         violations.append(f"Rule #1 violation: standing {standing!r} is not a valid archive state")
 
     next_standing = str(doc.get("next_standing") or "").upper()
-    if standing in ADVANCING and next_standing in ADVANCING:
-        if ADVANCING.index(next_standing) <= ADVANCING.index(standing):
+    if standing in ADVANCING[:-1]:
+        if not next_standing:
+            violations.append(
+                "Rule #1 violation: next_standing is required until the chamber reaches EXHIBITED"
+            )
+        elif next_standing not in ADVANCING:
+            violations.append(
+                f"Rule #1 violation: next_standing {next_standing!r} is not in {' -> '.join(ADVANCING)}"
+            )
+        elif ADVANCING.index(next_standing) <= ADVANCING.index(standing):
             violations.append(
                 f"Rule #1 violation: next_standing {next_standing!r} does not advance {standing!r}"
             )
+    elif standing == "EXHIBITED" and next_standing and next_standing != "EXHIBITED":
+        violations.append(
+            f"Rule #1 violation: EXHIBITED is terminal unless reopened by a new chamber; got {next_standing!r}"
+        )
 
     governance = doc.get("governance")
     if not isinstance(governance, dict) or governance.get("artist_gate") is not True:
@@ -111,17 +158,30 @@ def _validate_one(path: Path) -> list[str]:
     return violations
 
 
+def _fleet_paths(base: Path) -> list[Path]:
+    return sorted((base / "chambers").glob("*.yaml"))
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Validate A-MAVS-OLEVM artist chamber records against executable governance rules."
+    )
     parser.add_argument("paths", nargs="*", type=Path)
-    parser.add_argument("--chambers", action="store_true")
+    parser.add_argument("--chambers", action="store_true", help="validate all chamber YAML records")
+    parser.add_argument("--fleet", action="store_true", help="alias for --chambers")
     parser.add_argument("--quiet", action="store_true")
+    parser.add_argument("--checklist", action="store_true", help="print the six executable rules and exit")
     args = parser.parse_args()
 
+    if args.checklist:
+        for number, rule in RULES:
+            print(f"Rule #{number}: {rule}")
+        return 0
+
     base = Path(__file__).resolve().parent
-    paths = sorted((base / "chambers").glob("*.yaml")) if args.chambers else args.paths
+    paths = _fleet_paths(base) if args.chambers or args.fleet else args.paths
     if not paths:
-        parser.error("provide path(s) or --chambers")
+        parser.error("provide path(s), --chambers, or --fleet")
 
     failures = 0
     for path in paths:
@@ -142,4 +202,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

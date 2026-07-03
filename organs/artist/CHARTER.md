@@ -51,6 +51,12 @@ All three pass the full six-rule validation suite. The next cycle fills each cha
 outputs — preservation report, statement and caption set, first intake batch — so the macro platform
 stabilizes through real repetition across all three chamber types.
 
+Executable proof:
+
+```bash
+python organs/artist/validate-artist.py --fleet
+```
+
 ## Boundaries (always)
 
 - No AI-generated output is inserted into the archive as finished work.

@@ -179,12 +179,13 @@ The intake batch will include:
 Run:
 
 ```bash
-python organs/artist/validate-artist.py --chambers
+python organs/artist/validate-artist.py --fleet
 ```
 
 Expected result: all three chamber records pass the full six-rule artist-organ
 validation suite (standing progression, artist gate, primitive completeness,
 standard evidence, overreach prohibition, artifact requirement).
+`scripts/verify-whole.sh` invokes this fleet check as part of the repo gate.
 
 ---
 

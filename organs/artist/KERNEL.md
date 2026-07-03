@@ -142,6 +142,18 @@ From the organ-backlog for the maturing stage (70% → 90%):
 4. Populate the Scriptorium with a written aesthetic rubric for at least one medium
 5. Stabilize LOCREANCE intake cadence and run first batch through Vault → Catalog
 
+## Validation
+
+```bash
+# Rules #1-6: archive standing, artist gates, primitive completeness, evidence,
+# no-overreach boundary, and next reviewable artifact
+python organs/artist/validate-artist.py --fleet
+python organs/artist/validate-artist.py --checklist
+```
+
+`scripts/verify-whole.sh` runs the fleet check, so an artist chamber regression fails
+the repo predicate instead of remaining a hand-audited claim.
+
 ---
 
 *Companion documents: [`CHARTER.md`](CHARTER.md) (roles + workflows),
