@@ -72007,7 +72007,12 @@ tasks:
     agent: opencode
     session_id: cli
     status: done
-    output: 'Tightened types in organvm/limen: (1) models.py: removed `Any` import, changed agents dict type from dict[str, Any] → dict[str, object]; (2) tabularius.py: tightened _apply() + drain_once() signatures from bare dict → dict[str, Any]; (3) vigilia/__init__.py: fixed pyright __all__ warning by importing submodules. All 90 tests pass, ruff + pyright clean (5 pre-existing external import errors only).'
+    output: "Tightened types in organvm/limen: (1) models.py: removed `Any` import,\
+      \ changed agents dict type from dict[str, Any] \u2192 dict[str, object]; (2)\
+      \ tabularius.py: tightened _apply() + drain_once() signatures from bare dict\
+      \ \u2192 dict[str, Any]; (3) vigilia/__init__.py: fixed pyright __all__ warning\
+      \ by importing submodules. All 90 tests pass, ruff + pyright clean (5 pre-existing\
+      \ external import errors only)."
 - id: REV-organvm-mirror-mirror-revenue-ship-0630
   title: Drive Mirror Mirror to deploy-ready
   repo: organvm/mirror-mirror
@@ -77509,7 +77514,12 @@ tasks:
     agent: opencode
     session_id: cli
     status: done
-    output: 'organs/legal/KERNEL.md exists and is complete (PR #488, commit cc1b422). Maps 5-primitive kernel to legal domain: Member=client/party, Mandate=claim/matter, Standing=case posture, Standard=statute/precedent/rubric, Governance=firm process+ethics wall. Institutional prosthesis purpose, MACRO=pro-se platform, MICRO=Anthony''s ADA matter augmenting Counsel Longo. Named Cochran by Anthony. Constraint: augments counsel, no legal advice/UPL. Maturity at solid 20% scaffold stage.'
+    output: 'organs/legal/KERNEL.md exists and is complete (PR #488, commit cc1b422).
+      Maps 5-primitive kernel to legal domain: Member=client/party, Mandate=claim/matter,
+      Standing=case posture, Standard=statute/precedent/rubric, Governance=firm process+ethics
+      wall. Institutional prosthesis purpose, MACRO=pro-se platform, MICRO=Anthony''s
+      ADA matter augmenting Counsel Longo. Named Cochran by Anthony. Constraint: augments
+      counsel, no legal advice/UPL. Maturity at solid 20% scaffold stage.'
 - id: ORG-financial-organ-deepen-0703
   title: Deepen the financial organ toward a usable institution
   repo: organvm/limen
@@ -77660,10 +77670,10 @@ tasks:
     agent: limen
     session_id: cli
     status: done
-    output: 'Health organ kernel completed in 0fbb157 and maturity bumped in
-      271e73b; files: organs/health/KERNEL.md, organ-ladder.json. Evidence:
-      `python3 scripts/validate-task-board.py --tasks tasks.yaml`, `python3 -m
-      ruff check cli/src/limen/tabularius.py`, and `git diff --check` passed.'
+    output: 'Health organ kernel completed in 0fbb157 and maturity bumped in 271e73b;
+      files: organs/health/KERNEL.md, organ-ladder.json. Evidence: `python3 scripts/validate-task-board.py
+      --tasks tasks.yaml`, `python3 -m ruff check cli/src/limen/tabularius.py`, and
+      `git diff --check` passed.'
 - id: ORG-governance-organ-deepen-0703
   title: Deepen the governance organ toward a usable institution
   repo: organvm/limen
