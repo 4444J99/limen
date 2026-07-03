@@ -57,6 +57,17 @@ if [ "${LIMEN_CARTRIDGE_CHECK:-1}" = "1" ]; then
   python3 "$LIMEN_ROOT/scripts/cartridge-connected.py" || echo "  ↑ cartridge UNPLUGGED (above) — bring domus-genoma current, then re-point chezmoi at it"
 fi
 
+echo "── 0d. verify enactment — every declared-ON fleet flag is actually LIVE (not just merged) ──"
+# The gap this closes (memory: enacted-not-declared): a flag can be declared ON in parameters.yaml
+# and merged, yet be dark in the RUNNING beat — either wired nowhere (TABVLARIVS #576 shipped its
+# producers OFF while the note claimed the fleet enabled them) or wired-but-the-daemon-never-
+# kickstarted (a `while true` loop never re-sources itself). verify-whole enforces the wiring
+# contract; THIS surfaces the live-host liveness truth in the beat log — a stale daemon or an
+# un-enacted switch shows up HERE, not by the operator asking five times. Fail-open, never fatal.
+if [ "${LIMEN_ENACTMENT_CHECK:-1}" = "1" ]; then
+  python3 "$LIMEN_ROOT/scripts/enactment-audit.py" --check || echo "  ↑ un-enacted fleet flag above — wire it in heartbeat-loop.sh, or kickstart the daemon (launchctl kickstart -k gui/\$(id -u)/com.limen.heartbeat)"
+fi
+
 echo "── 0. refresh usage telemetry / lane health ──"
 python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" || echo "  (usage telemetry skipped)"
 

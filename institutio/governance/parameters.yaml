@@ -1057,9 +1057,16 @@ parameters:
   LIMEN_TICKETS_PRODUCE:
     default: "0"               # SAFE CODE DEFAULT — a bare manual script run stays legacy (no surprise); the FLEET opts in (see below)
     env: LIMEN_TICKETS_PRODUCE
+    fleet_runtime: "1"         # ENACTMENT CONTRACT — the LIVE fleet MUST resolve this to 1 (heartbeat-loop.sh wires it). scripts/enactment-audit.py fails if the running beat diverges. This is the field #576 lacked: the note *claimed* the fleet enabled it, but nothing machine-checked that the wiring did — so the switch shipped dark and green.
     self_update: none
     owner: tabularius
     note: "Cutover flag for the TABVLARIVS single-writer transition (Step 2). When 1, converted task-CREATION writers (mine-backlog, ingest-backlog, generate-backlog, generate-revenue-backlog, generate-organ-backlog, discover-value) STOP writing tasks.yaml directly and instead submit an upsert ticket per new task via limen.tabularius.submit_task_upsert; the keeper folds them next beat. This default 0 is the SAFE CODE FALLBACK (an ad-hoc manual run stays legacy), but the LIVE FLEET DELIBERATELY ENABLES IT: scripts/heartbeat-loop.sh sets LIMEN_TICKETS_PRODUCE=1 (overridable to 0 in ~/.limen.env to revert instantly) — the cutover, taken after the keeper was watched draining a real batch. Coverage = the task-creation tier; the status-mutator tier (route/dispatch-async/heal-dispatch/rebalance/recover/quicken) stays direct until Step 2.2 (those need INTENT_STATUS tickets, not upsert). Mixed-mode (some producers, some direct writers) is strictly safer than all-direct, so the tiers flip incrementally."
+  LIMEN_ENACTMENT_CHECK:
+    default: "1"               # ON — surface un-enacted fleet flags (declared ON but dark/stale in the running beat) in the beat log
+    env: LIMEN_ENACTMENT_CHECK
+    self_update: none
+    owner: tabularius
+    note: "Master gate for the enactment advisory (scripts/enactment-audit.py --check) run each beat by metabolize.sh section 0d. It proves every parameters.yaml flag declaring a fleet_runtime intent is actually LIVE: the WIRING rung checks the beat resolves the flag to the declared value (catches the #576 dark-switch — declared ON, wired nowhere), the LIVENESS rung checks the running daemon started AFTER its last wiring change (catches wired-but-not-kickstarted, since a `while true` loop never re-sources itself). verify-whole.sh enforces the wiring rung as a HARD gate so 'done' can never again go green on a dark switch; this beat advisory surfaces live-host liveness in the log (never chat), like creds-hydrate --verify. Set 0 to silence."
 
   LIMEN_INSIGHT_ROUTE_APPLY:
     default: "0"               # SAFE CODE DEFAULT — a bare manual run is a dry-run; the FLEET arms it (see note)
