@@ -445,6 +445,24 @@ def test_run_isolated_agent_retries_transient_claude_auth_blip(tmp_path: Path, m
     assert len(calls) == 2
 
 
+def test_git_plumbing_retries_transient_config_lock(tmp_path: Path, monkeypatch) -> None:
+    calls: list[list[str]] = []
+
+    def fake_git(args, cwd, timeout=120):
+        calls.append(args)
+        if len(calls) == 1:
+            return subprocess.CompletedProcess(args, 128, "", "error: could not lock config file .git/config: File exists")
+        return subprocess.CompletedProcess(args, 0, "ok", "")
+
+    monkeypatch.setattr(D, "_git", fake_git)
+    monkeypatch.setattr(D.time, "sleep", lambda _seconds: None)
+
+    result = D._git_plumbing(["worktree", "add"], tmp_path)
+
+    assert result.returncode == 0
+    assert len(calls) == 2
+
+
 def test_noop_result_stays_recoverable_not_cancelled() -> None:
     import datetime
 

@@ -6,6 +6,7 @@ import shlex
 import shutil
 import subprocess
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -1000,6 +1001,20 @@ def _git(args: list[str], cwd: Path, timeout: int = 120) -> subprocess.Completed
     )
 
 
+_GIT_CONFIG_LOCK_RE = re.compile(r"could not lock config file|config\.lock|File exists", re.IGNORECASE)
+
+
+def _git_plumbing(args: list[str], cwd: Path, timeout: int = 120) -> subprocess.CompletedProcess[str]:
+    """Run a short Git plumbing command with retry for transient parent-repo config locks."""
+    result = _git(args, cwd, timeout=timeout)
+    for attempt in range(4):
+        if result.returncode == 0 or not _GIT_CONFIG_LOCK_RE.search(result.stderr or ""):
+            return result
+        time.sleep(0.5 * (attempt + 1))
+        result = _git(args, cwd, timeout=timeout)
+    return result
+
+
 def _default_branch(repo_dir: Path) -> str:
     """Best-effort detection of origin's default branch (main/master/…)."""
     r = _git(["symbolic-ref", "--quiet", "refs/remotes/origin/HEAD"], repo_dir)
@@ -1336,12 +1351,12 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
     # Hold the git-plumbing lock only for these fast parent-repo ops so concurrent
     # same-repo dispatches don't collide on index.lock (the slow run is unlocked).
     with _GIT_PLUMBING_LOCK:
-        _git(["fetch", "origin", base], repo_dir, timeout=300)
+        _git_plumbing(["fetch", "origin", base], repo_dir, timeout=300)
         _ISOLATION_ROOT.mkdir(parents=True, exist_ok=True)
         if wt.exists():  # leftover from a prior run
-            _git(["worktree", "remove", "--force", str(wt)], repo_dir)
-        _git(["branch", "-D", branch], repo_dir)  # clear stale same-named branch
-        add = _git(["worktree", "add", "-b", branch, str(wt), f"origin/{base}"], repo_dir, timeout=120)
+            _git_plumbing(["worktree", "remove", "--force", str(wt)], repo_dir)
+        _git_plumbing(["branch", "-D", branch], repo_dir)  # clear stale same-named branch
+        add = _git_plumbing(["worktree", "add", "-b", branch, str(wt), f"origin/{base}"], repo_dir, timeout=120)
     if add.returncode != 0:
         print(f"  FAILED worktree add {task.id}: {add.stderr.strip()[:300]}")
         return False
@@ -1365,9 +1380,9 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
         # branch too once its commits are safely on the remote. Guard the parent-repo
         # plumbing so concurrent teardowns don't collide on index.lock.
         with _GIT_PLUMBING_LOCK:
-            _git(["worktree", "remove", "--force", str(wt)], repo_dir)
+            _git_plumbing(["worktree", "remove", "--force", str(wt)], repo_dir)
             if pushed:
-                _git(["branch", "-D", branch], repo_dir)
+                _git_plumbing(["branch", "-D", branch], repo_dir)
 
 
 def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str:
