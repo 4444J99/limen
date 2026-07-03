@@ -102,6 +102,8 @@ def start(cfg: GatewayConfig, settings_path: Path) -> tuple[bool, str]:
             start_new_session=True,  # MCPHub finds mcp_settings.json here
         )
     except FileNotFoundError:
+        if hasattr(log, "close"):
+            log.close()  # close the log fd opened above; else it leaks on every missing-binary attempt
         return False, f"backend binary not found: {argv[0]!r} (set core.backend_cmd in ianva.toml)"
     PIDFILE.write_text(str(proc.pid))
     return True, f"started backend: {' '.join(argv)} (pid {proc.pid}, log {LOGFILE})"
