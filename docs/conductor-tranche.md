@@ -1,8 +1,8 @@
 # Conductor Tranche
 
-Generated: `2026-07-02T22:07:27+00:00`
+Generated: `2026-07-03T05:45:07+00:00`
 
-Summary: `tranche-the-invisible-ledger` -> `the-invisible-ledger` (`remote-pr-open`); stop before: Stop before deletion, force-push, merge, or owner-repo source edits unless a narrower owner packet names the repo, branch, predicate, and receipt.
+Summary: `tranche-reflective-marinating-dijkstra` -> `reflective-marinating-dijkstra` (`preserve`); stop before: Stop before deletion, force-push, merge, or owner-repo source edits unless a narrower owner packet names the repo, branch, predicate, and receipt.
 
 ## Cadence Contract
 
@@ -16,21 +16,21 @@ Summary: `tranche-the-invisible-ledger` -> `the-invisible-ledger` (`remote-pr-op
 
 | Field | Value |
 |---|---|
-| Packet | `tranche-the-invisible-ledger` |
-| Selected path | `the-invisible-ledger` |
+| Packet | `tranche-reflective-marinating-dijkstra` |
+| Selected path | `reflective-marinating-dijkstra` |
 | Kind | `worktree` |
-| Lane | `remote-pr-open` |
-| Score | `29` |
+| Lane | `preserve` |
+| Score | `60` |
 | Agent fit | `codex first; opencode/jules after packetization` |
-| Attack index generated | `2026-07-02T22:07:27+00:00` |
-| Ranked paths read | `51` |
-| Skipped family/human-gate/parked/observe/auth paths | `session_lifecycle`, `github-app-limen-bot-not-wired`, `worktree_lifecycle`, `github_review`, `github-consolidation-collisions`, `agent_coordination`, `local-lifecycle-disk-pressure`, `technical_debt_ci`, `convergence_corpus`, `gen-organvm-universal-mail--automation-test-coverage-0625-151e`, `cloud-runtime-endpoint-unconfigured`, `uncategorized`, `cloud-credential-handles-unconfigured`, `credential-codex-auth-sessions`, `resolve-organvm-i-theoria-.github-459-1ade`, `auth_credentials`, `pr-463`, `pr-466`, `pr-467`, `pr-468`, `pr-471`, `pr-475`, `cifix-organvm-i-theoria-conversation-corpus-engine-f02e`, `discover-organvm-kerygma-profiles-6c74`, `bld-my--father-mother-harden-44b2`, `bld-promptscope-next-rev-3fde` |
+| Attack index generated | `2026-07-03T05:44:52+00:00` |
+| Ranked paths read | `47` |
+| Skipped family/human-gate/parked/observe/auth paths | `session_lifecycle`, `github-app-limen-bot-not-wired`, `worktree_lifecycle`, `github_review`, `github-consolidation-collisions`, `agent_coordination`, `local-lifecycle-disk-pressure`, `technical_debt_ci`, `convergence_corpus`, `gen-organvm-universal-mail--automation-test-coverage-0625-151e`, `gen-organvm-universal-mail--automation-typing-0703-3f24`, `cloud-runtime-endpoint-unconfigured`, `uncategorized`, `cloud-credential-handles-unconfigured`, `credential-codex-auth-sessions`, `resolve-organvm-i-theoria-.github-459-1ade`, `auth_credentials`, `pr-463`, `pr-466`, `pr-467`, `pr-468`, `pr-471`, `pr-475`, `cifix-organvm-i-theoria-conversation-corpus-engine-f02e`, `discover-organvm-kerygma-profiles-6c74`, `bld-my--father-mother-harden-44b2`, `bld-promptscope-next-rev-3fde` |
 
 ## Work Packet
 
-Purpose: Resolve `the-invisible-ledger` to a preservation proof, owner blocker, remote/default proof, or documented non-source residue without deleting unique work.
+Purpose: Resolve `reflective-marinating-dijkstra` to a preservation proof, owner blocker, remote/default proof, or documented non-source residue without deleting unique work.
 
-Repo/worktree: Owner worktree `the-invisible-ledger` under `~/Workspace/.limen-worktrees` plus Limen receipts.
+Repo/worktree: Owner worktree `reflective-marinating-dijkstra` under `~/Workspace/.limen-worktrees` plus Limen receipts.
 
 Allowed files:
 
@@ -63,7 +63,7 @@ Verification:
 
 ## Source Next Action
 
-Review draft PR #79, then merge, supersede, or archive the Invisible Ledger trial followups branch. Local checkout is no longer the only review surface.
+Inspect diff, run owner predicate, push branch/open draft PR or record blocker.
 
 ## Refresh
 

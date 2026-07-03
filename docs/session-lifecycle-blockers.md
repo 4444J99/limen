@@ -1,6 +1,6 @@
 # Session Lifecycle Blockers
 
-Generated: `2026-07-02T22:07:26+00:00`
+Generated: `2026-07-03T05:44:45+00:00`
 
 ## Canonical Handling
 
@@ -22,7 +22,7 @@ Generated: `2026-07-02T22:07:26+00:00`
 - Worktree debt roots: `0`.
 - Remote receipts enabled: `True`; cloud receipts enabled: `True`.
 - Session pressure hook wired: `True`; last pressure snapshot present: `True`.
-- Local lifecycle footprint: `21.6 GiB`.
+- Local lifecycle footprint: `20.8 GiB`.
 - Capability substrate detected: `10` roots, `467` skill files, `43` plugin/MCP manifests.
 - Capability resurfacing receipt present/current: `True`/`True`; activation candidates `30`.
 - Local network substrate: status `healthy`, mode `observe`, route `en0` via `192.168.1.1`.
@@ -40,7 +40,7 @@ Generated: `2026-07-02T22:07:26+00:00`
 | `credential-codex-auth-sessions` | `auth_credentials` | `parked` | 405 Codex sessions classified as auth/credential work; states: ALIVE 1, CLOSED 364, PARKED 40 | credential workstream | Keep parked unless a future scoped task explicitly requires the account action. |
 | `cloud-credential-handles-unconfigured` | `auth_credentials` | `parked` | 6 credential/deploy handles absent; 0 present. No values inspected. | credential workstream | Do not repair inline; open a bounded credential/setup workstream only when a cloud action requires it. |
 | `cloud-runtime-endpoint-unconfigured` | `cloud_runtime` | `parked` | No runtime URL was configured for the last cloud receipt probe. | limen deployment workstream | Keep separate from session intake; configure/probe runtime only in a deploy/runtime task. |
-| `local-lifecycle-disk-pressure` | `local_lean` | `parked` | Local lifecycle stores use 21.6 GiB (16.9 GiB worktrees, 4.7 GiB private corpus). | local lifecycle | Drain only after remote/default preservation proof or non-source residue receipt; keep pressure visible in SessionStart. |
+| `local-lifecycle-disk-pressure` | `local_lean` | `parked` | Local lifecycle stores use 20.8 GiB (16.1 GiB worktrees, 4.7 GiB private corpus). | local lifecycle | Drain only after remote/default preservation proof or non-source residue receipt; keep pressure visible in SessionStart. |
 | `github-consolidation-collisions` | `github_consolidation` | `needs_human_gate` | 34 source repos remain outside `organvm`; 13 name-collision groups block the transfer apply gate. | GitHub consolidation | Collision packet is complete; await an explicit human GitHub mutation gate to run `docs/consolidation/COLLISION-RENAMES.md`, then re-run the consolidation dry-run and require 0 collisions before transfer. |
 | `github-app-limen-bot-not-wired` | `github_app_identity` | `needs_human_gate` | `gh-app-token --which` resolves to `pat (GITHUB_TOKEN fallback)`; 4 org Apps are installed, and `limen[bot]` is not wired. | limen[bot] App identity | Create/install the org GitHub App and hydrate credentials via `scripts/set-credential.sh`; verify `bash scripts/gh-app-token.sh --which` reports the App path. |
 
