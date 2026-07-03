@@ -112,6 +112,32 @@ def test_deploy_still_opencode_despite_bias(tmp_path, monkeypatch):
     assert v == "opencode", "the deploy specialty fires before weighting — bias never blocks it"
 
 
+def test_slow_task_routes_to_jules_not_back_to_local(tmp_path, monkeypatch):
+    """A "slow"-labelled task already timed out on a wall-clock-bound sync local lane (dispatch.py's
+    timeout->jules path). The local-first router must NOT steal it back to a local lane — that re-times-
+    out and retargets to jules every beat, an infinite loop where jules never actually runs. It must go
+    to the async remote lane (jules) while jules is healthy."""
+    monkeypatch.setattr(route, "ROOT", tmp_path)
+    # every local lane is healthy, so the local-first path WOULD fire (clone-on-demand) — the slow
+    # guard must intercept and route to jules before that.
+    task = {"id": "S1", "repo": "o/r", "type": "content", "labels": ["slow", "generated"], "budget_cost": 2}
+    health = {a: True for a in route.PAID_AGENT_ORDER}
+    pick, reason = route.route_task(task, health, tmp_path, assigned={}, budget={"jules": 100}, runway={})
+    assert pick == "jules", f"slow task stolen back to a local sync lane (infinite loop): {pick} ({reason})"
+
+
+def test_slow_task_falls_through_to_local_when_jules_down(tmp_path, monkeypatch):
+    """Never strand: if jules is DOWN, a slow task still routes to a healthy local lane rather than
+    going unroutable — the async carve-out only applies while jules can actually take it."""
+    monkeypatch.setattr(route, "ROOT", tmp_path)
+    task = {"id": "S2", "repo": "o/r", "type": "content", "labels": ["slow"], "budget_cost": 2}
+    health = {a: True for a in route.PAID_AGENT_ORDER}
+    health["jules"] = False
+    budget = {a: 100 for a in route.PAID_AGENT_ORDER}
+    pick, _reason = route.route_task(task, health, tmp_path, assigned={}, budget=budget, runway={})
+    assert pick in route.LOCAL_CHECKOUT_AGENTS, f"slow task stranded when jules down: {pick}"
+
+
 def test_jules_not_stranded_when_sole_capable(tmp_path, monkeypatch):
     monkeypatch.setattr(route, "ROOT", tmp_path)
     _ledger(tmp_path, {"jules": {"waste_classes": ["coverage"], "win_classes": ["revenue"]}})

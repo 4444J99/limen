@@ -59,6 +59,40 @@ def test_inflight_markers_consume_slots(tmp_path):
     assert picked == []  # 4 already running, cap 4 → 0 new
 
 
+def test_async_remote_lane_not_gated_by_local_concurrency_cap(tmp_path):
+    """A jules (async/remote) task runs OFF-BOX (a `jules remote new` session executes on Google's VM),
+    so it must NOT be starved by the LOCAL concurrency cap even when local in-flight runs have consumed
+    every slot. This is the 'zero jules remote sessions launched' root cause: the local cap saturated
+    before jules's turn, so a jules-targeted task never got reserved."""
+    da = _load(tmp_path, n_open=0)
+    today = datetime.date.today()
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.portal.budget.per_agent = {"codex": 50, "jules": 50}
+    lf.tasks = [Task(id="JT", title="slow", repo="x/y", target_agent="jules", status="open", created=today)]
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+    # local in-flight runs fully saturate the cap (4 local markers, cap 4)
+    for i in range(4):
+        (da.RUNS / f"L{i}__codex.running").write_text(datetime.datetime.now(datetime.timezone.utc).isoformat())
+
+    picked = da.reserve_and_launch(["codex", "jules"], per_agent=8, cap=4, dry=True)
+
+    assert picked == [("jules", "JT")], f"jules starved by the local concurrency cap: {picked}"
+
+
+def test_local_lane_still_bounded_by_cap_after_async_carveout(tmp_path):
+    """The carve-out is remote-only: a jules run in flight must NOT free a slot for local lanes, and a
+    local lane is still hard-capped by the concurrency budget (no over-dispatch of the host)."""
+    da = _load(tmp_path, n_open=6, agent="codex")
+    # one jules run in flight (off-box) + 4 local runs in flight; cap is 4 → local slots already spent
+    (da.RUNS / "JX__jules.running").write_text(datetime.datetime.now(datetime.timezone.utc).isoformat())
+    for i in range(4):
+        (da.RUNS / f"L{i}__codex.running").write_text(datetime.datetime.now(datetime.timezone.utc).isoformat())
+
+    picked = da.reserve_and_launch(["codex"], per_agent=8, cap=4, dry=True)
+
+    assert picked == [], f"local lane over-dispatched past the cap: {picked}"
+
+
 def test_default_max_age_exceeds_lane_timeout(tmp_path, monkeypatch):
     da = _load(tmp_path, n_open=0)
     monkeypatch.delenv("LIMEN_ASYNC_MAX_AGE", raising=False)

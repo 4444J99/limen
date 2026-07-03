@@ -401,6 +401,16 @@ def route_task(
     budget = budget if budget is not None else {}
     repo = task.get("repo")
     checkout = _local_checkout(repo, workdir)
+    # ASYNC SIGNAL first: a task that already TIMED OUT on a wall-clock-bound sync local lane carries
+    # the "slow" label (dispatch.py's timeout->jules path, which also sets target_agent=jules). A local
+    # sync lane BLOCKS the beat and would just time it out AGAIN, then retarget it back to jules — an
+    # infinite loop where jules never actually runs (verified: a slow, jules-pinned task cycled
+    # agy->opencode->codex with ZERO `jules remote` sessions launched, because this local-first router
+    # stole the jules retarget every beat). Honor the signal: send a slow task straight to the async
+    # remote lane (jules, no wall-clock cap) whenever it is healthy; only fall through to a local lane
+    # if jules is down (never strand — [[no-never-happens-again]]).
+    if repo and "slow" in set(task.get("labels") or []) and health.get("jules"):
+        return "jules", "slow (timed out on a sync local lane) -> jules async remote (no wall-clock cap)"
     if repo:
         local = _pick_local(task, health, assigned, budget, runway)
         if local:

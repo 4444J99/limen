@@ -31,6 +31,7 @@ from limen.capacity import select_lanes  # noqa: E402
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.models import DispatchLogEntry  # noqa: E402
 from limen.dispatch import (  # noqa: E402
+    _ASYNC_LANES,
     _PRIORITY_ORDER,
     _apply_result,
     _deps_met,
@@ -189,6 +190,21 @@ def _running_total() -> int:
     return len(list(RUNS.glob("*.running")))
 
 
+def _running_local() -> int:
+    """In-flight LOCAL-lane runs only. The concurrency cap bounds LOCAL host pressure (each local run
+    holds a worktree + a ThreadPoolExecutor slot). An async/remote run (jules, github_actions, ...)
+    executes OFF-BOX — a `jules remote new` session runs on Google's VM — so it must NOT consume a
+    local slot, or a backlog of local work starves the remote lanes out of the cap entirely (the root
+    cause of 'zero jules remote sessions launched'). Remote lanes stay bounded by their per-agent
+    budget, not this local cap."""
+    total = 0
+    for m in RUNS.glob("*__*.running"):
+        agent = m.name[: -len(".running")].rsplit("__", 1)[1]
+        if agent not in _ASYNC_LANES:
+            total += 1
+    return total
+
+
 def _running_for(agent: str) -> int:
     return len(list(RUNS.glob(f"*__{agent}.running")))
 
@@ -208,12 +224,15 @@ def reserve_and_launch(agents, per_agent, cap, dry):
         lf = load_limen_file(TASKS)
         track = lf.portal.budget.track
         daily = lf.portal.budget.daily
-        slots = max(0, cap - _running_total())
+        # The cap counts only LOCAL in-flight runs; remote/async lanes run off-box and are budgeted
+        # separately below (see _running_local).
+        slots = max(0, cap - _running_local())
         spent = track.spent
         id2 = {t.id: t for t in lf.tasks}  # for dependency resolution
         for agent in agents:
-            if slots <= 0:
-                break
+            is_async = agent in _ASYNC_LANES  # remote lane (jules, ...) — off-box, not gated by the local cap
+            if not is_async and slots <= 0:
+                continue  # local slot budget spent — but a later async lane may still launch off-box
             capa = lf.portal.budget.per_agent.get(agent)
             aspent = track.per_agent.get(agent, 0) + _running_for(agent)  # count in-flight vs budget
             rem = daily - spent if capa is None else max(0, min(daily - spent, capa - aspent))
@@ -231,8 +250,10 @@ def reserve_and_launch(agents, per_agent, cap, dry):
             cands.sort(key=lambda t: _PRIORITY_ORDER.get(t.priority, 99))
             taken = 0
             for t in cands:
-                if slots <= 0 or taken >= per_agent:
+                if taken >= per_agent:
                     break
+                if not is_async and slots <= 0:
+                    break  # local slot budget spent for this beat (async lanes are not slot-bound)
                 if t.id in picked_ids:
                     continue
                 picked.append((agent, t.id))
@@ -249,7 +270,8 @@ def reserve_and_launch(agents, per_agent, cap, dry):
                             output="dispatch-async: reserved before detached worker launch",
                         )
                     )
-                slots -= 1
+                if not is_async:
+                    slots -= 1  # only local runs consume a local concurrency slot
                 taken += 1
         if not dry and picked:
             save_limen_file(TASKS, lf)
