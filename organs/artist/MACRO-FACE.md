@@ -38,7 +38,7 @@ The platform runs on two synchronized engines:
 | Engine | What it does | Why it works |
 |---|---|---|
 | **The Preservation Engine** | Captures raw work with full provenance, assigns stable catalog records, and tracks format-risk across the whole archive | Work that is findable and verified survives the conditions that destroy most archives — file migration, hardware failure, and the artist's own changing memory of what they made and when |
-| **The Exhibition Engine** | Groups cataloged work into coherent themed sequences, drafts the language that frames those sequences, and stages release packages for the artist's review | Exhibition is not the art; it is the argument about the art. That argument is the institution's core product — and it is the difference between a body of work that lands and a body of work that sits |
+| **The Exhibition Engine** | Groups cataloged work into coherent themed sequences, drafts the language that frames those sequences, and stages release packages for the artist's review | Exhibition is not the art; it is the argument *about* the art. That argument is the institution's core product — and it is the difference between a body of work that lands and a body of work that sits |
 
 Neither engine works without the other. Preservation without exhibition is a closed archive.
 Exhibition without preservation is a performance that leaves nothing behind. Together,
@@ -48,23 +48,25 @@ they are a living museum with one curator.
 
 ## What this platform is
 
-A **structured creative-institution toolkit** that runs the seven functions a living museum
+A **9-chamber creative-institution toolkit** that runs every function a living museum
 performs for a major artist — stripped to their mechanical core, adaptable to any medium
 and any scale:
 
 | Chamber | What it produces |
 |---|---|
-| **The Vault** | All raw work safely captured with intake checks, stable identifiers, and format verification |
-| **The Catalog** | Indexed records for every piece: provenance, date, medium, series membership, and custody state |
+| **The Vault** | All raw work safely captured with intake checks, stable identifiers, and format verification — the first invariant against loss |
+| **The Catalog** | Indexed records for every piece: provenance, date, medium, series membership, custody state, and cross-references |
 | **The Studio** | Active workbench: current production state, what is in progress, what is stalled, and what needs the artist's attention |
-| **The Gallery** | Narrative groupings: themed sequences, arc logic, and exhibition-ready assemblies for review |
-| **The Archive** | Preservation records and custody chain: what is stable, what is at format-risk, and what is dormant |
-| **The Press** | Draft exhibition language: titles, captions, artist statements, and catalog notes authored under the artist's rubric |
+| **The Gallery** | Narrative groupings: themed sequences, arc logic, and exhibition-ready assemblies for artist review |
+| **The Archive** | Preservation records and custody chain: what is stable, what is at format-risk, what is dormant and needs a decision |
+| **The Press** | Draft exhibition language: titles, captions, artist statements, and catalog notes authored under the artist's rubric — always proposals, never final |
 | **The Calendar** | Release timing: exhibition cadence, next-cycle sequencing, and deadline discipline |
+| **The Atrium** | External-facing portfolio and exhibition entry — the public face that only receives approved, staged packages |
+| **The Scriptorium** | The aesthetic rubric repository: style standards, naming conventions, and the quality criteria that every catalog record and exhibition grouping is judged against |
 
 Each chamber feeds the next. Intake arrives in the Vault; cataloging builds the Catalog;
 curation pulls from the Catalog into the Gallery; the Press drafts from the Gallery's
-approved selections; the Calendar governs when those selections leave the platform.
+approved selections; the Calendar governs when those selections reach the Atrium.
 
 ---
 
@@ -77,7 +79,7 @@ map holds for any medium — photography, writing, painting, sound, code-as-art:
 |---|---|---|
 | **Member** (Work) | each piece in the archive | every artifact, with medium, date, provenance link, source file path, and custody state — never floating, always traceable |
 | **Mandate** (Exhibition) | the story each grouping tells | what a selection of works is built to argue — specific enough to be curated toward, not vague enough to include everything by default |
-| **Standing** (Archive state) | where a piece is right now | RAW · CATALOGED · CURATED · EXHIBITED · DORMANT · AT-RISK — the full lifecycle, never collapsed into "in the archive somewhere" |
+| **Standing** (Archive state) | where a piece is right now | RAW · CATALOGED · CURATED · STAGED · EXHIBITED · DORMANT · AT-RISK — the full lifecycle, never collapsed into "in the archive somewhere" |
 | **Standard** (Aesthetic rubric) | what quality looks like | the criteria the artist names for inclusion, sequencing, and framing — applied consistently across the whole catalog |
 | **Governance** (Curation) | what requires the artist's hand | what the organ proposes vs. what the artist must confirm, approve, or reject before anything moves outward |
 
@@ -102,37 +104,60 @@ through the posture record itself.
 
 ---
 
-## The curatorial language layer
+## The Curatorial Voice (the artist-organ's framework)
 
-Exhibition is not a file dump with captions attached. It is an argument — and the argument
-requires language that earns the work's meaning, not just describes its surface.
+Every artist who holds this platform develops a curatorial voice — the consistent idiom of
+selection, framing, and sequencing that makes their exhibition argument legible. The platform
+formalizes this voice through three layers:
 
-The Press chamber drafts three layers for every approved grouping:
-
-| Layer | What it is | Who owns it |
+| Layer | What it does | Artist authority |
 |---|---|---|
-| **Title** | the name the exhibition or series carries in the world | artist rewrites and approves |
-| **Statement** | the artist's own account of what the work is doing and why | artist rewrites and signs |
-| **Caption set** | per-piece framing language: date, medium, series, and context note | artist revises to taste |
+| **The Selection Rubric** | Names what qualifies for a given exhibition — medium range, date window, thematic link, quality floor | The artist writes the rubric; the organ applies it consistently |
+| **The Sequencing Logic** | Determines how pieces within a grouping relate — chronological, thematic contrast, formal conversation, arc narrative | The artist chooses the logic; the organ proposes the arrangement |
+| **The Framing Language** | Titles, statements, and captions that earn the work's meaning rather than describing its surface | The organ drafts; the artist rewrites and signs |
 
-Every draft is explicitly a proposal. The artist is the sole signatory of the language
-that frames their work. The organ supplies the scaffold; the artist supplies the voice.
+The voice is the institution's signature. The platform supplies the mechanism; the artist
+supplies the aesthetic intelligence.
+
+---
+
+## The Provenance Contract (the ethical floor)
+
+This platform does not create art. It does not alter source files. It does not insert
+generated material into the archive as original work. Every institutional act that touches
+the world is gated by the artist.
+
+The Provenance Contract is explicit:
+
+- **Source files are sacred.** The organ catalogs, indexes, preserves, and drafts; it never
+  edits, overwrites, or recompresses original source assets.
+- **Provenance is written, not assumed.** Every piece carries medium, date, source path,
+  custody history, and cross-references. Nothing enters without a trail.
+- **The artist's voice is sovereign.** Curation proposals, caption drafts, and exhibition
+  groupings are advisory. The artist accepts, rewrites, or rejects each output.
+- **No outward action without a gate.** Publication, portfolio deployment, and social
+  distribution are staged, surfaced, and approved per event — never by default.
+
+The constraint is a feature. It enforces the boundary that keeps the platform trustworthy
+and the artist's authorship intact.
 
 ---
 
 ## What the operator actually receives
 
 1. **A Vault with stable intake records** — every piece logged with provenance, date,
-   medium, and source file path. No floating work.
-2. **A Catalog with full custody state** — one record per piece; standing is current
-   and auditable.
+   medium, and source file path. Nothing floating. Nothing undocumented.
+2. **A Catalog with full custody state** — one record per piece; Standing is current
+   and auditable. The artist sees the entire archive's state at a glance.
 3. **Proposed curatorial groupings** — exhibition-ready sequences with named Mandate,
    proposed arc logic, and Standing report for each selected piece.
 4. **Draft press language** — titles, statements, and captions under the artist's rubric,
    ready for the artist to rewrite and own.
 5. **A preservation-risk report** — what is stable, what is at format-risk, and what
-   is dormant and needs decision.
-6. **Staged deployment packages** — approved groupings assembled with all associated
+   is dormant and needs a decision.
+6. **A Calendar with cadence** — recommended exhibition rhythm, pending gates, and
+   the sequence of the next three release cycles.
+7. **Staged deployment packages** — approved groupings assembled with all associated
    language, ready to submit to a gallery, portfolio, or publication surface once the
    artist opens the gate.
 
@@ -148,9 +173,6 @@ archive as original work.
 Every draft is advisory until the artist signs it. Every grouping is a proposal until
 the artist approves it. Every release is staged until the artist opens the gate.
 
-The constraint is a feature. It enforces the boundary that keeps the platform trustworthy
-and the artist's authorship intact.
-
 ---
 
 ## Who holds this platform
@@ -162,8 +184,8 @@ The macro form of A-MAVS-OLEVM is intentionally generic:
 - No gallery or institution-specific naming
 
 A photographer managing a twenty-year archive, a poet assembling a third collection, a
-painter building toward a first solo show — all three hold the same seven-chamber toolkit
-and fill in their own Member, Mandate, and Rubric.
+painter building toward a first solo show — all three hold the same 9-chamber toolkit
+and fill in their own Member, Mandate, and Scriptorium rubric.
 
 The proof that the platform holds across different mediums, different scales, and different
 exhibition rhythms is the micro instance.
@@ -181,6 +203,7 @@ The organ runs the institution. The artist runs the body of work.
 | Proposes groupings and exhibition sequences | Approves, revises, or rejects each proposed grouping |
 | Drafts titles, statements, and captions | Rewrites and signs the language that frames their work |
 | Issues preservation-risk report | Decides what happens to at-risk or dormant work |
+| Maintains the Calendar and cadence | Approves the exhibition rhythm and release timing |
 | Assembles staged deployment package | Approves each release event before anything leaves the platform |
 
 No autonomous publication. No autonomous archive alteration. No autonomous language issuance.
@@ -190,18 +213,25 @@ The artist is the final authority for every institutional act that touches the w
 
 ## Current stage and validation
 
-The macro platform is **70% mature** (maturing stage). The seven-chamber structure is
-defined, the 5-primitive kernel is mapped, and the micro instance has three active chambers
-proving the model in practice. The remaining lift is to raise each chamber from defined
-structure to review-ready outputs — drafted groupings, full press language, and staged
-exhibition packages ready for the artist's gate.
+The macro platform is **70% mature** (maturing stage). The 9-chamber structure is
+defined, the 5-primitive kernel is mapped, the Curatorial Voice and Provenance Contract
+are named, and the micro instance has three active chambers proving the model in practice.
 
-The next maturity band (80%) requires:
+**What exists now:**
+- 9 chambers defined with named outputs
+- 5-primitive kernel mapped to the artist domain
+- Curatorial Voice framework formalized (Selection Rubric / Sequencing Logic / Framing Language)
+- Provenance Contract written as the ethical floor
+- Micro instance with three chambers: primary archive, thematic series, ongoing practice
+- Chamber YAML records passing validation at the Standing, governance, and artifact rules
+
+**The remaining lift to 80% requires:**
 - The Gallery producing at least one approved exhibition package from the micro instance
 - The Press chamber producing a complete statement + caption set that the artist has reviewed
 - The Preservation chamber issuing a current risk report against the full archive
+- The Scriptorium chamber holding a written aesthetic rubric for at least one medium
 
-Validation:
+**Validation:**
 
 ```bash
 # confirm chamber structure and posture records are well-formed

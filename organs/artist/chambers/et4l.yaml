@@ -4,6 +4,8 @@ member:
   body: ET4L thematic series
   medium: mixed archive sequence
   human_owner: Anthony J. Padavano
+  source: extracted from 444-file photo archive (chamber: photo-archive-444)
+  series_type: thematic extraction
 mandate:
   description: Convert a curated selection into an exhibition argument with statement, caption set, and staged package.
   scope_boundary: Sequence logic, statement draft, caption draft, and release package staging.
@@ -14,19 +16,21 @@ next_standing: STAGED
 standard:
   rubric: A series is stage-ready only when selection, sequence logic, title, statement, and caption set are present for artist rewrite.
   evidence:
-    - KERNEL.md
-    - MACRO-FACE.md
-    - MICRO-FACE.md
+    - KERNEL.md (5-primitive kernel with exhibition mandate)
+    - MACRO-FACE.md (Curatorial Voice framework: Selection Rubric / Sequencing Logic / Framing Language)
+    - MICRO-FACE.md (chamber stress-test: thematic series extracted from archive)
+    - validate-artist.py rules 1-6 (all chamber records pass)
+    - "photo-archive.yaml (source chamber: cataloged pieces eligible for curation)"
 governance:
   artist_gate: true
   forbidden_acts:
     - publish without artist approval
     - issue artist statement without artist rewrite
     - alter original source files
+    - finalize exhibition language without artist sign-off
 human_gates:
-  - selection approval
-  - statement rewrite
-  - release event approval
+  - selection approval — artist confirms which pieces belong in the series
+  - statement rewrite — artist rewrites and signs the exhibition statement
+  - release event approval — artist approves the staged package before any outward action
 artifacts:
   next_reviewable_output: ET4L statement and caption set
-

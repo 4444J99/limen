@@ -4,6 +4,9 @@ member:
   body: 444-file photo archive
   medium: photography
   human_owner: Anthony J. Padavano
+  source_path: "~/Pictures/archive-444/"
+  custody_state: local ssd + backblaze b2
+  piece_count: 444
 mandate:
   description: Preserve source custody, provenance, and catalog state for the primary archive before curation.
   scope_boundary: Intake, catalog, preservation-risk reporting, and curation eligibility.
@@ -14,19 +17,21 @@ next_standing: CURATED
 standard:
   rubric: A file is review-ready only when source path, medium, date/provenance note, custody state, and risk posture are explicit.
   evidence:
-    - KERNEL.md
-    - MACRO-FACE.md
-    - MICRO-FACE.md
+    - KERNEL.md (5-primitive kernel mapped to artist domain)
+    - MACRO-FACE.md (9-chamber operating surface defined)
+    - MICRO-FACE.md (chamber fleet standing with explicit gates)
+    - validate-artist.py rules 1-6 (standing progression, artist gate, primitive completeness)
+    - "photo-archive.yaml artifact: artifacts.next_reviewable_output = preservation report and first grouping eligibility list"
 governance:
   artist_gate: true
   forbidden_acts:
     - alter original source files
     - publish without artist approval
     - treat generated output as original work
+    - issue preservation decisions without artist review
 human_gates:
-  - provenance confirmation
-  - preservation-risk decision
-  - curation eligibility approval
+  - provenance confirmation — artist confirms source paths and dates
+  - preservation-risk decision — artist decides what to do with at-risk formats
+  - curation eligibility approval — artist approves which pieces enter exhibition pipeline
 artifacts:
   next_reviewable_output: preservation report and first grouping eligibility list
-

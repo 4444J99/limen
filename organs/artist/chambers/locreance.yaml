@@ -4,6 +4,8 @@ member:
   body: LOCREANCE active practice stream
   medium: ongoing mixed creative work
   human_owner: Anthony J. Padavano
+  intake_state: open
+  cadence: proposed (first batch pending)
 mandate:
   description: Keep a growing practice body from becoming residue by routing each intake through Vault, Catalog, and Calendar.
   scope_boundary: Intake batch records, custody state, cadence proposal, and release readiness notes.
@@ -14,19 +16,21 @@ next_standing: CATALOGED
 standard:
   rubric: A new work enters the catalog only when medium, provenance, source custody, and intended chamber are explicit.
   evidence:
-    - KERNEL.md
-    - MACRO-FACE.md
-    - MICRO-FACE.md
+    - KERNEL.md (5-primitive kernel mapped to active practice)
+    - MACRO-FACE.md (Studio and Calendar chambers defined for continuing production)
+    - MICRO-FACE.md (chamber stress-test: active practice body with continuous growth)
+    - validate-artist.py rules 1-6 (artist gate and forbidden acts established)
+    - "photo-archive.yaml (precedent: cataloged archive establishes intake pattern)"
 governance:
   artist_gate: true
   forbidden_acts:
     - alter original source files
     - publish without artist approval
     - create art on behalf of the artist
+    - catalog work without artist accession approval
 human_gates:
-  - accession approval
-  - cadence approval
-  - release readiness approval
+  - accession approval — artist confirms what enters the body of work
+  - cadence approval — artist sets intake rhythm and batch frequency
+  - release readiness approval — artist gates any outward movement
 artifacts:
   next_reviewable_output: first LOCREANCE intake batch and custody-state report
-
