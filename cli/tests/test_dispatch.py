@@ -451,7 +451,9 @@ def test_git_plumbing_retries_transient_config_lock(tmp_path: Path, monkeypatch)
     def fake_git(args, cwd, timeout=120):
         calls.append(args)
         if len(calls) == 1:
-            return subprocess.CompletedProcess(args, 128, "", "error: could not lock config file .git/config: File exists")
+            return subprocess.CompletedProcess(
+                args, 128, "", "error: could not lock config file .git/config: File exists"
+            )
         return subprocess.CompletedProcess(args, 0, "ok", "")
 
     monkeypatch.setattr(D, "_git", fake_git)
