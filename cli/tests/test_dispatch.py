@@ -267,6 +267,51 @@ def test_dispatch_skips_open_task_with_prior_done_log(tmp_path: Path, capsys, mo
     assert "REOPENED-DONE" not in output
 
 
+def test_dispatch_bulk_gates_unmet_deps_but_explicit_task_overrides(tmp_path: Path, capsys) -> None:
+    # Serial bulk dispatch must gate on dependencies the same way dispatch_parallel does; an
+    # explicit --task is a human override that bypasses the gate.
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "DEP",
+                "title": "Predecessor — PR not yet merged",
+                "repo": "organvm/limen",
+                "target_agent": "external",  # keep DEP out of the codex candidate set
+                "priority": "high",
+                "budget_cost": 1,
+                "status": "open",
+                "created": "2026-06-30",
+                "dispatch_log": [],
+            },
+            {
+                "id": "DEPENDENT",
+                "title": "Waits on DEP",
+                "repo": "organvm/limen",
+                "target_agent": "codex",
+                "priority": "critical",
+                "budget_cost": 1,
+                "status": "open",
+                "depends_on": ["DEP"],
+                "created": "2026-06-30",
+                "dispatch_log": [],
+            },
+        ],
+    )
+
+    # BULK: DEP is unmerged, so DEPENDENT is withheld (matches the parallel path's gate).
+    dispatch_tasks(load_limen_file(tasks_path), tasks_path, agent="codex", dry_run=True)
+    bulk = capsys.readouterr().out
+    assert "DEPENDENT" not in bulk
+    assert "No open tasks for agent 'codex'" in bulk
+
+    # EXPLICIT single-task dispatch is a deliberate human override — it bypasses the deps gate.
+    dispatch_tasks(load_limen_file(tasks_path), tasks_path, agent="codex", dry_run=True, task_id="DEPENDENT")
+    override = capsys.readouterr().out
+    assert "DRY-RUN: 1 task(s)" in override
+
+
 def test_dispatch_parallel_skips_needs_human_label(tmp_path: Path, capsys) -> None:
     tasks_path = tmp_path / "tasks.yaml"
     write_board(

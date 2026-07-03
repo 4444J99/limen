@@ -1494,12 +1494,20 @@ def dispatch_tasks(
     else:
         debt_blocked, debt_message = _worktree_debt_gate()
 
+    # Serial dispatch gates on dependencies the SAME way dispatch_parallel does (line ~1706): a
+    # dependent increment stays OPEN but un-dispatched until its predecessor's PR merges, so the
+    # roadmap self-advances with no parallel-built conflicts. Without this, bulk `limen dispatch`
+    # dispatched dependents immediately, violating depends_on ordering the parallel path enforces.
+    # An EXPLICIT single-task dispatch (`limen dispatch --task X`) is a deliberate human override and
+    # bypasses the gate; only BULK dispatch respects it.
+    id2 = {t.id: t for t in limen.tasks}
     candidates = [
         t
         for t in tasks
         if _dispatchable(t)
         and (t.target_agent == agent_filter or t.target_agent == "any")
         and t.budget_cost <= remaining
+        and (task_id is not None or _deps_met(t, id2))
         and not (debt_blocked and _routine_generated_buildout(t))
         and _routine_generated_buildout_allowed(t)
     ]
