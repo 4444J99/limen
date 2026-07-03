@@ -93,7 +93,7 @@ def test_capacity_canonical_agent_still_resolves_aliases():
 
 
 def test_lane_cascade_drift_guard_against_dispatch():
-    """census.lane_cascade() must equal dispatch._LANE_CASCADE so they can't diverge again."""
+    """dispatch._LANE_CASCADE now DERIVES from census.lane_cascade(); assert they stay equal."""
     from limen import dispatch
 
     assert census.lane_cascade() == list(dispatch._LANE_CASCADE)
@@ -174,3 +174,37 @@ def test_usage_telemetry_limits_derive_from_census():
     # values preserved through the refactor (the swap changed nothing the consumers read).
     for name, row in expected.items():
         assert ut._DEFAULT_LIMITS[name] == row
+
+
+def test_route_vendor_health_derives_lane_set_from_census():
+    """scripts/route.py _vendor_health (the capacity_census fallback) derives its lane set from
+    census.lane_cascade(), so the fallback can never list a different vendor set than the main path."""
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[2] / "scripts" / "route.py"
+    spec = importlib.util.spec_from_file_location("route_under_test", path)
+    mod = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    try:
+        spec.loader.exec_module(mod)
+    except Exception as exc:  # pragma: no cover - script-only deps absent in a minimal env
+        import pytest
+
+        pytest.skip(f"route.py not importable in this environment: {exc}")
+    health = mod._vendor_health()
+    assert set(health) == set(census.lane_cascade())
+
+
+def test_ianva_agent_keys_reconcile_with_census():
+    """Every dispatchable ianva MCP target is a canonical census vendor (guards naming drift, e.g.
+    'antigravity' vs 'agy'). 'cline' is the one MCP-only client that is not a dispatch lane."""
+    import pytest
+
+    agents_mod = pytest.importorskip("ianva.agents")
+    census_names = set(census.paid_agent_order())
+    non_census_mcp_targets = {"cline"}  # a valid MCP client, not a limen dispatch lane
+    for agent in agents_mod.AGENTS:
+        if agent.key in non_census_mcp_targets:
+            continue
+        assert agent.key in census_names, f"ianva agent {agent.key!r} is not a canonical census vendor"

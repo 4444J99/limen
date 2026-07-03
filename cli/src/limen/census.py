@@ -24,11 +24,15 @@ CONVERGENCE ROADMAP (each remaining consumer records its own residual rewire, so
 head or a chat):
   * DONE  — ``capacity.py`` derives PAID_AGENT_ORDER / AGENT_ALIASES / LOCAL_CHECKOUT_AGENTS /
             ISSUE_ASSIGNMENT_AGENTS / _DEFAULT_BINARIES / _KINDS from :data:`VENDORS`.
-  * DONE  — ``test_census`` drift-guards ``dispatch._LANE_CASCADE`` against :func:`lane_cascade`,
-            so the two can never silently diverge again.
-  * TODO  — ``scripts/usage-telemetry.py`` ``_DEFAULT_LIMITS`` should derive from :func:`budgets`.
-  * TODO  — ``scripts/route.py`` ``_vendor_health`` should derive its vendor set from census.
-  * TODO  — ``ianva/src/ianva/agents.py`` MCP-target list should reconcile against census names.
+  * DONE  — ``dispatch._LANE_CASCADE`` now DERIVES from :func:`lane_cascade` (was drift-guarded);
+            ``test_census`` still asserts the two are equal.
+  * DONE  — ``scripts/usage-telemetry.py`` ``_DEFAULT_LIMITS`` metered rows derive from :func:`budgets`
+            (filter: ``Budget.window != "none"``), with a drift-guarded fallback for launchd.
+  * DONE  — ``scripts/route.py`` ``_vendor_health`` fallback derives its lane set + binaries from
+            census (:func:`lane_cascade` + :func:`default_binaries`).
+  * DONE  — ``ianva/src/ianva/agents.py`` keys reconcile against census names (``test_census`` guards
+            that every dispatchable ianva target is a canonical vendor; ``cline`` is the one MCP-only
+            target, documented).
   * TODO  — unify per-vendor model choice: ``dispatch._codex_model``/``_opencode_model`` are the
             non-Claude analogue of ``model_selection``; ``Vendor.tiering`` marks who owns each.
 """

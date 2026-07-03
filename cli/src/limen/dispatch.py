@@ -12,6 +12,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import TypedDict
 
+from limen import census
 from limen.capacity import (
     canonical_agent,
     capacity_census,
@@ -777,7 +778,9 @@ def _agent_argv(agent: str, task: Task | None = None) -> list[str]:
 # not a terminal archive; chronic no-output loops escalate through heal-dispatch.
 # agy/antigravity KEPT and HEALED: it writes to a scratch dir, so _bridge_agy_scratch carries
 # that work into the worktree after the run (see _isolated_local_run) — productive lane again.
-_LANE_CASCADE = ["codex", "opencode", "agy", "claude", "gemini", "jules", "ollama"]
+# DERIVED from the census register (the single vendor umbrella) — no longer a hand-typed copy.
+# census owns the order literal (_LANE_CASCADE_ORDER); test_census still asserts the two are equal.
+_LANE_CASCADE = census.lane_cascade()
 _NOOP = "__noop__"  # agent ran but produced no diff
 
 

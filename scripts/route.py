@@ -48,6 +48,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
+from limen import census  # noqa: E402
 from limen.capacity import (  # noqa: E402
     ISSUE_ASSIGNMENT_AGENTS,
     LOCAL_CHECKOUT_AGENTS,
@@ -64,6 +65,11 @@ from limen.workstream import UNASSIGNED, assign_channel  # noqa: E402
 
 # Vendor health: which local lanes are usable right now. gemini needs an API key.
 def _vendor_health() -> dict[str, bool]:
+    """Fallback health map (used only when capacity_census raises). Lane names + binaries DERIVE
+    from the census register (the single vendor umbrella) — the earned local rotation
+    (census.lane_cascade()) with each vendor's binary — so this fallback can never drift to a
+    different vendor set than the census-backed main path. gemini additionally needs an API key."""
+
     def has(bin_: str) -> bool:
         return subprocess.run(["which", bin_], capture_output=True).returncode == 0
 
@@ -77,14 +83,14 @@ def _vendor_health() -> dict[str, bool]:
             return False
 
     gemini_auth = bool(os.environ.get("GEMINI_API_KEY")) or _gemini_settings_has_auth()
-    return {
-        "jules": has("jules"),
-        "codex": has("codex"),
-        "opencode": has("opencode"),
-        "agy": has("agy"),
-        "claude": has("claude"),
-        "gemini": has("gemini") and bool(gemini_auth),
-    }
+    binaries = census.default_binaries()
+    health: dict[str, bool] = {}
+    for name in census.lane_cascade():  # the local rotation — each lane with a binary to probe
+        ok = has(binaries.get(name, name))
+        if name == "gemini":
+            ok = ok and bool(gemini_auth)
+        health[name] = ok
+    return health
 
 
 def _fleet_health(data) -> dict[str, bool]:
