@@ -393,7 +393,17 @@ while true; do
                       # LEDGER — weigh the RETURN on every newly-resolved task (the credit side), then
                       # roll up the value verdict (which lane earns its keep / what was sunk money).
                       python3 "$LIMEN_ROOT/scripts/score-dispatch.py" 2>&1 | tail -1 || true
-                      python3 "$LIMEN_ROOT/scripts/ledger.py" 2>&1 | tail -1 || true; }
+                      python3 "$LIMEN_ROOT/scripts/ledger.py" 2>&1 | tail -1 || true
+                      # SELF-HEAL — the repair FACTORY (complements heal-dispatch's phantom-reconcile): classify the
+                      # fleet's REFUSED PRs (CI-red / conflicting) and emit HEAL-cifix / HEAL-rebase tasks so the
+                      # router+dispatcher fix them and merge-drain then LANDS them. merge-drain is the bouncer; THIS is
+                      # the factory. Silent since 2026-06-30 — the machine worked, but no beat ever turned the crank, so
+                      # DIRTY/BLOCKED PRs piled up read as "blockers" instead of becoming work. Bounded rotating --scan
+                      # window + already-queued dedup = idempotent; self-acquires the queue-lock (safe outside the daemon
+                      # lock, like heal-dispatch) and skips cleanly when the daemon holds it; network → timeout-wrapped,
+                      # fail-open. Redirects existing budgeted dispatch from receipt-churn to real PR repair; off with
+                      # LIMEN_SELF_HEAL=0.
+                      [ "${LIMEN_SELF_HEAL:-1}" = "1" ] && timeout "${LIMEN_SELF_HEAL_TIMEOUT:-150}" python3 "$LIMEN_ROOT/scripts/self-heal.py" --scan "${LIMEN_SELF_HEAL_SCAN:-30}" 2>&1 | tail -1 || true; }
   due_voice heal "$C_HEAL"    && stamp heal
   # DISK PRESSURE — when the data volume is past high-water, run hygiene (clone-maintenance:
   # capture→reap→node_modules) EVERY beat, not just every C_HYGIENE, until it drains back under

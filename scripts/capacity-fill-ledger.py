@@ -366,14 +366,14 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
     signals = snapshot.get("signals") or {}
     for row in census:
         signal = signals.get(row["agent"]) or {}
-        lines.append(
-            "| "
-            f"`{row['agent']}` | "
-            f"{str(signal.get('signal', 'unknown')).replace('|', '\\|')} | "
-            f"{str(signal.get('trust', 'unknown')).replace('|', '\\|')} | "
-            f"{str(signal.get('use', '')).replace('|', '\\|')} | "
-            f"{str(signal.get('next_build', '')).replace('|', '\\|')} |"
-        )
+        # Hoist the pipe-escape out of the f-string braces (matches the census loop
+        # above): a backslash inside an f-string expression is a SyntaxError on
+        # Python 3.11 (PEP 701 only lifts that on 3.12+), and CI runs both.
+        sig = str(signal.get("signal", "unknown")).replace("|", "\\|")
+        trust = str(signal.get("trust", "unknown")).replace("|", "\\|")
+        use = str(signal.get("use", "")).replace("|", "\\|")
+        nxt = str(signal.get("next_build", "")).replace("|", "\\|")
+        lines.append(f"| `{row['agent']}` | {sig} | {trust} | {use} | {nxt} |")
 
     lines += [
         "",

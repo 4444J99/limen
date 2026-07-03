@@ -592,6 +592,38 @@ parameters:
     self_update: none
     owner: vltima
     note: "Max new organ-build tasks appended per run. Bounded output; id-deduped against existing tasks."
+  # --- SELF-HEAL: the PR-repair FACTORY — turn REFUSED PRs (CI-red / conflicting) into fixable tasks ---
+  LIMEN_SELF_HEAL:
+    default: 1                  # default-ON: emit HEAL-cifix / HEAL-rebase tasks each HEAL beat
+    env: LIMEN_SELF_HEAL
+    self_update: none
+    owner: heal
+    note: "Toggle for the self-heal PR-repair factory (scripts/self-heal.py) wired into the HEAL beat. 1=on. Classifies the fleet's refused PRs and emits bounded HEAL-cifix/HEAL-rebase tasks so the router+dispatcher fix them and merge-drain lands them — merge-drain is the bouncer, this is the factory. Self-acquires the queue-lock (skips cleanly when the daemon holds it), already-queued-deduped, fail-open. 0=off."
+  LIMEN_SELF_HEAL_TIMEOUT:
+    default: 150                # seconds: cap the network-touching classify+emit run inside the beat
+    env: LIMEN_SELF_HEAL_TIMEOUT
+    self_update: none
+    owner: heal
+    note: "Hard timeout (s) for the self-heal factory inside the HEAL beat so a slow gh enumeration never wedges the heartbeat."
+  LIMEN_SELF_HEAL_SCAN:
+    default: 30                 # rotating window: PRs classified per beat (self-heal.py --scan)
+    env: LIMEN_SELF_HEAL_SCAN
+    self_update: none
+    owner: heal
+    note: "How many PRs the factory classifies per beat (a rotating window over the full fleet), so each beat does a bounded slice rather than the whole backlog at once."
+  # --- SELF-IMPROVE (route SI-weighting): clamp per-lane weight so no lane starves or swamps the fleet ---
+  LIMEN_SI_WEIGHT_FLOOR:
+    default: 0.25               # lower clamp: a down-weighted lane is still picked sometimes (never starved)
+    env: LIMEN_SI_WEIGHT_FLOOR
+    self_update: none
+    owner: route
+    note: "Floor on the self-improvement lane-weight multiplier in route.py. A down-weighted lane gets a proportionally higher effective load (picked less) but is clamped here so it is never fully starved. Derive-not-pin."
+  LIMEN_SI_WEIGHT_CEILING:
+    default: 2.0                # upper clamp: a boosted lane can be favored, but never swamps the fleet
+    env: LIMEN_SI_WEIGHT_CEILING
+    self_update: none
+    owner: route
+    note: "Ceiling on the self-improvement lane-weight multiplier in route.py (clamped to >= floor). Keeps a boost-underused lane from swamping the fleet. Was referenced in code but undeclared — folded into the panel to clear the NO-HARDCODE gate."
   # --- WALLS: keep the published walls (credential #320, his-hand #330) from drifting ---
   LIMEN_BEAT_WALLS:
     default: 12                 # cadence: regenerate the walls every 12 beats

@@ -223,6 +223,13 @@ def test_failed_claude_escalates_via_existing_cascade(monkeypatch):
     """Escalate-on-failure also rides the EXISTING lane cascade unchanged: a failed claude
     attempt re-routes to the next lane. Documents the cross-lane escalate rung (no new code)."""
     monkeypatch.delenv("LIMEN_DISPATCH_LANES", raising=False)
+    # Pin the cascade to its STATIC order: this documents the escalation *ordering*
+    # (claude → gemini), not live provider health. _lane_cascade() legitimately drops
+    # lanes that are `down` (e.g. gemini when CONSUMER_SUSPENDED) or absent from the
+    # auto-selected live set (no creds in CI) — which would make claude the last live
+    # lane and _next_lane return None. That real-world filtering is a separate concern;
+    # here we assert the ordering rung is intact regardless of who happens to be up.
+    monkeypatch.setattr(D, "_lane_cascade", lambda: list(D._LANE_CASCADE))
     assert D._next_lane("claude") == "gemini"
 
 
