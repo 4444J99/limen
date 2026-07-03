@@ -227,3 +227,21 @@ def test_ianva_agent_keys_reconcile_with_census():
         if agent.key in non_census_mcp_targets:
             continue
         assert agent.key in census_names, f"ianva agent {agent.key!r} is not a canonical census vendor"
+
+
+def test_agy_meter_is_honest_no_readable_source():
+    """agy (Antigravity) persists NO local usage — /usage is live-fetched from Google OAuth only —
+    so its census meter must NOT fake a measured number. It stays a calibrated dispatch-count board
+    cap, the same honest posture as gemini (also no readable vendor meter). Guards against a future
+    'graduate agy to a measured meter' edit that invents a number agy never actually exposes."""
+    agy = census.by_name("agy")
+    gem = census.by_name("gemini")
+    assert agy is not None and gem is not None
+    # no readable meter → dispatch_count, the same honest marker gemini carries (NOT a real meter).
+    assert agy.meter == "dispatch_count" == gem.meter
+    assert agy.meter != "vendor_ratelimit"  # must not falsely claim codex-style real rate-limit data
+    # trust is calibrated (an operator board cap), never "measured" (which would fake a real number).
+    assert agy.budget.trust == "calibrated"
+    assert agy.budget.trust != "measured"
+    # it still carries a concrete board cap (not None) so the pacing controller has a number to use.
+    assert agy.budget.limit == 100

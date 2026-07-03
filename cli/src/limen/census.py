@@ -156,7 +156,7 @@ VENDORS: tuple[Vendor, ...] = (
         issue_assignment=False,
         auth_mode="google_oauth",  # ~/.gemini/antigravity-cli; agy IS Google's Antigravity client
         cred_ref=None,
-        meter="dispatch_count",
+        meter="dispatch_count",  # no readable vendor meter — agy persists NO local usage; /usage is live-fetched from Google OAuth only
         tiering="none",
         budget=Budget(100, "runs", "today", "operator board cap until live vendor meter", "calibrated"),
         # Antigravity is Google's DIRECTED migration target off the sunset Gemini Code-Assist OAuth
