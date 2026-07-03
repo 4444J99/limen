@@ -1,6 +1,6 @@
 # Prompt Lifecycle Ledger
 
-Generated: `2026-07-03T22:12:00+00:00`
+Generated: `2026-07-03T22:35:52+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -12,23 +12,35 @@ Horizon: `all local history`
 
 ## Redacted Prompt Coverage
 
-Indexed `12656` app/session files, `3.2 GiB`, with `124134` prompt-like user events hashed into the private index.
+Indexed `13942` app/session files, `3.2 GiB`, with `125457` prompt-like user events hashed into the private index.
+Normalized task-body payload covered `248.3 MiB` after stripping recognized scaffold-only prompt frames.
 
-| Source | Files | Prompt Events | Event Records | Size | Newest |
-|---|---:|---:|---:|---:|---|
-| `claude-projects` | 6269 | 115907 | 439486 | 1.8 GiB | `2026-07-03T21:48:19+00:00` |
-| `codex-sessions` | 1292 | 7111 | 418307 | 1.3 GiB | `2026-07-03T22:11:48+00:00` |
-| `codex-history` | 1 | 978 | 978 | 787.6 KiB | `2026-07-03T22:11:39+00:00` |
-| `claude-tasks` | 206 | 138 | 138 | 59.9 KiB | `2026-07-03T15:47:52+00:00` |
-| `claude-file-history` | 4841 | 0 | 0 | 59.8 MiB | `2026-07-03T21:46:56+00:00` |
-| `claude-plans` | 43 | 0 | 0 | 369.8 KiB | `2026-07-03T15:08:54+00:00` |
-| `codex-attachments` | 4 | 0 | 0 | 6.2 KiB | `2026-06-27T18:15:45+00:00` |
+| Source | Files/Sessions | Prompt Events | Prompt Bytes | Task Body Bytes | Event Records | Size | Newest |
+|---|---:|---:|---:|---:|---:|---:|---|
+| `claude-projects` | 6270 | 115915 | 236.2 MiB | 232.4 MiB | 439516 | 1.8 GiB | `2026-07-03T22:28:41+00:00` |
+| `codex-sessions` | 1294 | 7121 | 17.1 MiB | 12.4 MiB | 420095 | 1.3 GiB | `2026-07-03T22:35:35+00:00` |
+| `opencode-db` | 1268 | 1275 | 2.8 MiB | 2.8 MiB | 72408 | 0 B | `2026-07-03T22:03:28+00:00` |
+| `codex-history` | 1 | 978 | 689.8 KiB | 689.8 KiB | 978 | 787.6 KiB | `2026-07-03T22:11:39+00:00` |
+| `claude-tasks` | 206 | 138 | 32.2 KiB | 32.2 KiB | 138 | 59.9 KiB | `2026-07-03T15:47:52+00:00` |
+| `gemini-tmp-agy` | 15 | 30 | 267.0 KiB | 9.9 KiB | 60 | 280.8 KiB | `2026-06-30T14:29:59+00:00` |
+| `claude-file-history` | 4841 | 0 | 0 B | 0 B | 0 | 59.8 MiB | `2026-07-03T21:46:56+00:00` |
+| `claude-plans` | 43 | 0 | 0 B | 0 B | 0 | 369.8 KiB | `2026-07-03T15:08:54+00:00` |
+| `codex-attachments` | 4 | 0 | 0 B | 0 B | 0 | 6.2 KiB | `2026-06-27T18:15:45+00:00` |
+
+## Prompt Body Mix
+
+| Body Kind | Prompt Events |
+|---|---:|
+| `direct` | 121501 |
+| `flame_scaffold` | 2262 |
+| `flame_with_task_body` | 1679 |
+| `session_context` | 15 |
 
 ## Prompt To Worktree Crosswalk
 
-- Current `.limen-worktrees` roots scanned: `46`; debt roots: `5`.
-- Current worktree roots with at least one local session/prompt receipt: `36`.
-- Current worktree roots without a local session receipt in this index: `10`.
+- Current `.limen-worktrees` roots scanned: `47`; debt roots: `6`.
+- Current worktree roots with at least one local session/prompt receipt: `38`.
+- Current worktree roots without a local session receipt in this index: `9`.
 
 | Worktree Root | Session Files | Prompt Events | Debt Reason |
 |---|---:|---:|---|
@@ -53,11 +65,12 @@ Indexed `12656` app/session files, `3.2 GiB`, with `124134` prompt-like user eve
 | `heal+jules-revive-census-converge` | 20 | 952 | `active(<24h)` |
 | `limen-main-trench-20260628` | 1 | 14 | `remote-pr-open` |
 | `limen-network-substrate-20260628` | 2 | 21 | `remote-pr-open` |
-| `linear-conjuring-bear` | 43 | 2036 | `active(<24h)` |
+| `linear-conjuring-bear` | 43 | 2041 | `active(<24h)` |
 | `maddie-boundary-20260629` | 2 | 68 | `remote-pr-open` |
-| `org-financial-organ-face-0703-a678` | 0 | 0 | `active(<6h)` |
+| `org-governance-organ-deepen-0703-9f8e` | 1 | 4 | `active(<6h)` |
 | `org-health-organ-firstslice-0703-9ab8` | 1 | 3 | `not-a-git-dir` |
-| `org-health-organ-firstslice-0703-e860` | 1 | 4 | `active(<6h)` |
+| `org-legal-organ-charter-0703-dcc8` | 1 | 3 | `not-a-git-dir` |
+| `org-legal-organ-firstslice-0703-621b` | 1 | 4 | `active(<6h)` |
 | `org-legal-organ-firstslice-0703-8242` | 1 | 3 | `not-a-git-dir` |
 | `org-social-organ-firstslice-0703-3636` | 1 | 3 | `not-a-git-dir` |
 | `photos-universe-20260629-182431` | 4 | 20 | `remote-pr-open` |
@@ -81,16 +94,16 @@ Indexed `12656` app/session files, `3.2 GiB`, with `124134` prompt-like user eve
 
 ## Task Board Crosswalk
 
-- Task records: `1630`.
-- Status distribution: `archived` 439, `dispatched` 7, `done` 988, `in_progress` 1, `needs_human` 148, `open` 47.
+- Task records: `1649`.
+- Status distribution: `archived` 439, `dispatched` 4, `done` 990, `in_progress` 1, `needs_human` 149, `open` 66.
 - Invalid statuses outside canonical set: `0`.
-- Current worktree root slugs mentioned exactly in `tasks.yaml`: `2` / `46`.
+- Current worktree root slugs mentioned exactly in `tasks.yaml`: `2` / `47`.
 - Chronic reopen-loop candidates: `1`.
-- Dispatched tasks with PR receipt: `2`.
+- Dispatched tasks with PR receipt: `1`.
 - Dispatched Jules async tasks without PR yet: `0`.
-- Dispatched local tasks still inside running grace/no-op guard: `3`.
-- Dispatched local tasks stranded without PR receipt: `2`.
-- Done tasks with PR receipt still visible in dispatch log/URLs: `778`.
+- Dispatched local tasks still inside running grace/no-op guard: `2`.
+- Dispatched local tasks stranded without PR receipt: `1`.
+- Done tasks with PR receipt still visible in dispatch log/URLs: `780`.
 
 ## Remote Receipts
 

@@ -14,6 +14,7 @@ import hashlib
 import json
 import os
 import re
+import sqlite3
 import subprocess
 import sys
 import time
@@ -34,6 +35,7 @@ PRIVATE_ROOT = Path(
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
 TASKS_PATH = ROOT / "tasks.yaml"
 WORKTREE_ROOT = ROOT.parent / ".limen-worktrees"
+OPENCODE_DB = HOME / ".local" / "share" / "opencode" / "opencode.db"
 GITHUB_PR_RE = re.compile(r"github\.com/([^/]+)/([^/]+)/pull/(\d+)")
 DISPATCH_GRACE_SECONDS = int(os.environ.get("LIMEN_LANE_TIMEOUT", "900")) + 600
 GH_RETRIES = max(1, int(os.environ.get("LIMEN_GH_RECEIPT_RETRIES", "3")))
@@ -57,7 +59,19 @@ LOCAL_SOURCES = [
     ("claude-tasks", HOME / ".claude" / "tasks", ("*",)),
     ("claude-plans", HOME / ".claude" / "plans", ("*",)),
     ("claude-file-history", HOME / ".claude" / "file-history", ("*",)),
+    ("gemini-tmp-agy", HOME / ".gemini" / "tmp", ("capfill-agy-*/chats/*.jsonl", "*agy*/chats/*.jsonl")),
 ]
+
+TASK_BODY_MARKERS = (
+    "Complete task ",
+    "## Current task",
+    "## Task",
+    "## Work packet",
+    "## Packet",
+    "### Task",
+    "TASK:",
+    "Task:",
+)
 
 VALID_STATUSES = {
     "open",
@@ -93,6 +107,10 @@ def stable_hash(text: str, length: int = 16) -> str:
     return hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest()[:length]
 
 
+def full_hash(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest()
+
+
 def relpath(path: Path) -> str:
     try:
         return "~/" + str(path.expanduser().resolve().relative_to(HOME))
@@ -107,6 +125,54 @@ def parse_ts(value: Any) -> dt.datetime | None:
         return dt.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
     except (TypeError, ValueError):
         return None
+
+
+def iso_from_epoch_ms(value: Any) -> str | None:
+    if not isinstance(value, (int, float)) or value <= 0:
+        return None
+    try:
+        return dt.datetime.fromtimestamp(value / 1000, dt.timezone.utc).isoformat(timespec="seconds")
+    except (OSError, OverflowError, ValueError):
+        return None
+
+
+def maybe_decode_wrapped_string(text: str) -> str:
+    stripped = text.strip()
+    if len(stripped) >= 2 and stripped[0] == stripped[-1] == '"':
+        try:
+            decoded = json.loads(stripped)
+        except ValueError:
+            return text
+        if isinstance(decoded, str):
+            return decoded
+    return text
+
+
+def normalize_task_body(text: str) -> tuple[str, str]:
+    stripped = text.strip()
+    if stripped.startswith("<session_context>"):
+        return "", "session_context"
+    if stripped.startswith("# FLAME"):
+        positions = [(stripped.find(marker), marker) for marker in TASK_BODY_MARKERS if stripped.find(marker) >= 0]
+        if positions:
+            pos, _marker = min(positions, key=lambda item: item[0])
+            return stripped[pos:], "flame_with_task_body"
+        return "", "flame_scaffold"
+    return stripped, "direct"
+
+
+def prompt_fingerprint(text: str) -> dict[str, Any]:
+    text = maybe_decode_wrapped_string(text)
+    task_body, body_kind = normalize_task_body(text)
+    prompt_bytes = len(text.encode("utf-8", errors="replace"))
+    task_body_bytes = len(task_body.encode("utf-8", errors="replace"))
+    return {
+        "prompt_hash": full_hash(text),
+        "prompt_bytes": prompt_bytes,
+        "task_body_hash": full_hash(task_body) if task_body else None,
+        "task_body_bytes": task_body_bytes,
+        "body_kind": body_kind,
+    }
 
 
 def iter_source_files(days: int | None) -> list[dict[str, Any]]:
@@ -164,6 +230,17 @@ def text_from_content(value: Any) -> list[str]:
 def prompt_texts(source: str, obj: dict[str, Any]) -> list[str]:
     if source == "codex-history":
         return text_from_content(obj.get("text"))
+
+    if source == "gemini-tmp-agy":
+        texts: list[str] = []
+        if obj.get("type") == "user":
+            texts.extend(text_from_content(obj.get("content")))
+        set_obj = obj.get("$set")
+        if isinstance(set_obj, dict) and isinstance(set_obj.get("messages"), list):
+            for rec in set_obj["messages"]:
+                if isinstance(rec, dict) and rec.get("type") == "user":
+                    texts.extend(text_from_content(rec.get("content")))
+        return texts
 
     payload = obj.get("payload")
     if isinstance(payload, dict):
@@ -228,7 +305,10 @@ def session_meta_from_records(source: str, row: dict[str, Any], records: list[di
     cwd: str | None = None
     event_times: list[str] = []
     prompt_hashes: list[str] = []
+    task_body_hashes: list[str] = []
+    body_kind_counts: Counter[str] = Counter()
     prompt_bytes = 0
+    task_body_bytes = 0
 
     for obj in records:
         timestamp = obj.get("timestamp") or obj.get("ts")
@@ -247,8 +327,13 @@ def session_meta_from_records(source: str, row: dict[str, Any], records: list[di
         if obj.get("cwd"):
             cwd = str(obj.get("cwd"))
         for text in prompt_texts(source, obj):
-            prompt_bytes += len(text.encode("utf-8", errors="replace"))
-            prompt_hashes.append(hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest())
+            fingerprint = prompt_fingerprint(text)
+            prompt_bytes += int(fingerprint["prompt_bytes"])
+            task_body_bytes += int(fingerprint["task_body_bytes"])
+            prompt_hashes.append(str(fingerprint["prompt_hash"]))
+            if fingerprint["task_body_hash"]:
+                task_body_hashes.append(str(fingerprint["task_body_hash"]))
+            body_kind_counts[str(fingerprint["body_kind"])] += 1
 
     if session_id is None:
         session_id = row["path"].stem
@@ -268,10 +353,165 @@ def session_meta_from_records(source: str, row: dict[str, Any], records: list[di
         "cwd_hash": stable_hash(cwd, 20) if cwd else None,
         "prompt_event_count": len(prompt_hashes),
         "prompt_bytes": prompt_bytes,
+        "task_body_bytes": task_body_bytes,
         "first_prompt_hash": prompt_hashes[0] if prompt_hashes else None,
         "last_prompt_hash": prompt_hashes[-1] if prompt_hashes else None,
         "prompt_hashes": prompt_hashes,
+        "task_body_hashes": task_body_hashes,
+        "body_kind_counts": dict(sorted(body_kind_counts.items())),
     }
+
+
+def opencode_part_texts(parts: list[sqlite3.Row]) -> list[str]:
+    texts: list[str] = []
+    for part in parts:
+        try:
+            data = json.loads(part["data"]) if part["data"] else {}
+        except (TypeError, ValueError):
+            continue
+        if not isinstance(data, dict):
+            continue
+        typ = data.get("type")
+        if typ in ("text", "compaction"):
+            text = data.get("text") or data.get("summary")
+            if isinstance(text, str) and text.strip():
+                texts.append(text)
+        elif typ == "subtask":
+            prompt = data.get("prompt") or data.get("description")
+            if isinstance(prompt, str) and prompt.strip():
+                texts.append(prompt)
+    return texts
+
+
+def opencode_virtual_sessions(days: int | None) -> list[dict[str, Any]]:
+    if not OPENCODE_DB.exists():
+        return []
+    cutoff_ms = None
+    if days is not None:
+        cutoff_ms = int((dt.datetime.now(dt.timezone.utc).timestamp() - days * 86400) * 1000)
+    try:
+        con = sqlite3.connect(f"file:{OPENCODE_DB}?mode=ro", uri=True)
+    except sqlite3.Error:
+        return []
+    con.row_factory = sqlite3.Row
+    try:
+        where = "WHERE time_updated >= ?" if cutoff_ms is not None else ""
+        params: tuple[Any, ...] = (cutoff_ms,) if cutoff_ms is not None else ()
+        sessions = con.execute(
+            "SELECT id, title, directory, time_created, time_updated, summary_additions, "
+            "summary_deletions, summary_files, summary_diffs, cost, tokens_input, "
+            "tokens_output, tokens_reasoning, tokens_cache_read, tokens_cache_write, model "
+            f"FROM session {where} ORDER BY time_created, id",
+            params,
+        ).fetchall()
+    except sqlite3.Error:
+        con.close()
+        return []
+
+    out: list[dict[str, Any]] = []
+    db_display = relpath(OPENCODE_DB)
+    for session in sessions:
+        sid = str(session["id"])
+        try:
+            messages = con.execute(
+                "SELECT id, time_created, time_updated, data FROM message WHERE session_id=? "
+                "ORDER BY time_created, id",
+                (sid,),
+            ).fetchall()
+            parts_by_message: dict[str, list[sqlite3.Row]] = defaultdict(list)
+            part_count = 0
+            for part in con.execute(
+                "SELECT message_id, time_created, time_updated, data FROM part WHERE session_id=? "
+                "ORDER BY time_created, id",
+                (sid,),
+            ):
+                parts_by_message[str(part["message_id"])].append(part)
+                part_count += 1
+        except sqlite3.Error:
+            continue
+
+        event_times = [
+            ts
+            for ts in (
+                iso_from_epoch_ms(row["time_created"]) for row in list(messages) + [p for ps in parts_by_message.values() for p in ps]
+            )
+            if ts
+        ]
+        prompt_hashes: list[str] = []
+        task_body_hashes: list[str] = []
+        body_kind_counts: Counter[str] = Counter()
+        prompt_bytes = 0
+        task_body_bytes = 0
+        for message in messages:
+            try:
+                data = json.loads(message["data"]) if message["data"] else {}
+            except (TypeError, ValueError):
+                continue
+            if not isinstance(data, dict) or data.get("role") != "user":
+                continue
+            texts = opencode_part_texts(parts_by_message.get(str(message["id"]), []))
+            text = "\n\n".join(texts)
+            if not text.strip():
+                continue
+            fingerprint = prompt_fingerprint(text)
+            prompt_bytes += int(fingerprint["prompt_bytes"])
+            task_body_bytes += int(fingerprint["task_body_bytes"])
+            prompt_hashes.append(str(fingerprint["prompt_hash"]))
+            if fingerprint["task_body_hash"]:
+                task_body_hashes.append(str(fingerprint["task_body_hash"]))
+            body_kind_counts[str(fingerprint["body_kind"])] += 1
+
+        summary_diffs = []
+        try:
+            decoded = json.loads(session["summary_diffs"]) if session["summary_diffs"] else []
+            if isinstance(decoded, list):
+                summary_diffs = [stable_hash(str(item), 20) for item in decoded]
+        except (TypeError, ValueError):
+            summary_diffs = []
+
+        session_id = sid
+        out.append(
+            {
+                "session_key": stable_hash(f"opencode-db:{session_id}:{OPENCODE_DB}", 20),
+                "session_id_hash": stable_hash(session_id, 20),
+                "source": "opencode-db",
+                "path": str(OPENCODE_DB),
+                "display_path": f"{db_display}#{stable_hash(session_id, 12)}",
+                "source_file": str(OPENCODE_DB),
+                "virtual_source": True,
+                "size": 0,
+                "mtime": iso_from_epoch_ms(session["time_updated"]),
+                "event_count": len(messages) + part_count,
+                "first_event": min(event_times) if event_times else None,
+                "last_event": max(event_times) if event_times else None,
+                "cwd": session["directory"],
+                "cwd_hash": stable_hash(session["directory"], 20) if session["directory"] else None,
+                "prompt_event_count": len(prompt_hashes),
+                "prompt_bytes": prompt_bytes,
+                "task_body_bytes": task_body_bytes,
+                "first_prompt_hash": prompt_hashes[0] if prompt_hashes else None,
+                "last_prompt_hash": prompt_hashes[-1] if prompt_hashes else None,
+                "prompt_hashes": prompt_hashes,
+                "task_body_hashes": task_body_hashes,
+                "body_kind_counts": dict(sorted(body_kind_counts.items())),
+                "title_hash": stable_hash(session["title"], 20) if session["title"] else None,
+                "model_hash": stable_hash(session["model"], 20) if session["model"] else None,
+                "summary_files": session["summary_files"],
+                "summary_additions": session["summary_additions"],
+                "summary_deletions": session["summary_deletions"],
+                "summary_diff_hashes": summary_diffs,
+                "tokens": {
+                    "input": session["tokens_input"],
+                    "output": session["tokens_output"],
+                    "reasoning": session["tokens_reasoning"],
+                    "cache_read": session["tokens_cache_read"],
+                    "cache_write": session["tokens_cache_write"],
+                },
+                "cost": session["cost"],
+            }
+        )
+    con.close()
+    return out
 
 
 def current_worktree_report() -> dict[str, Any]:
@@ -763,6 +1003,7 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
     for row in rows:
         records = read_json_records(row["path"])
         sessions.append(session_meta_from_records(row["source"], row, records))
+    sessions.extend(opencode_virtual_sessions(args.days))
 
     wt_report = current_worktree_report()
     worktrees = wt_report.get("items") or []
@@ -790,6 +1031,8 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
                 "files": 0,
                 "bytes": 0,
                 "prompt_events": 0,
+                "prompt_bytes": 0,
+                "task_body_bytes": 0,
                 "event_records": 0,
                 "newest": None,
             },
@@ -797,9 +1040,15 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
         item["files"] += 1
         item["bytes"] += int(session["size"])
         item["prompt_events"] += int(session["prompt_event_count"])
+        item["prompt_bytes"] += int(session.get("prompt_bytes") or 0)
+        item["task_body_bytes"] += int(session.get("task_body_bytes") or 0)
         item["event_records"] += int(session["event_count"])
         if item["newest"] is None or (session["mtime"] or "") > item["newest"]:
             item["newest"] = session["mtime"]
+
+    body_kind_counts = Counter()
+    for session in sessions:
+        body_kind_counts.update(session.get("body_kind_counts") or {})
 
     sessions_by_worktree = Counter(s["worktree_slug"] for s in sessions if s.get("worktree_slug"))
     prompt_by_worktree = defaultdict(int)
@@ -811,6 +1060,7 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "horizon_days": args.days,
         "sources": sorted(by_source.values(), key=lambda x: (-x["prompt_events"], x["source"])),
+        "body_kind_counts": dict(sorted(body_kind_counts.items())),
         "sessions": sessions,
         "worktree_report": wt_report,
         "task_snapshot": task_snapshot_private,
@@ -829,6 +1079,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
     total_files = sum(int(s["files"]) for s in sources)
     total_bytes = sum(int(s["bytes"]) for s in sources)
     total_prompts = sum(int(s["prompt_events"]) for s in sources)
+    total_task_body_bytes = sum(int(s.get("task_body_bytes") or 0) for s in sources)
     wt = snapshot["worktree_report"]
     tasks = snapshot["task_snapshot"]
     remote = snapshot.get("remote", {})
@@ -854,18 +1105,34 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "## Redacted Prompt Coverage",
         "",
         f"Indexed `{total_files}` app/session files, `{fmt_bytes(total_bytes)}`, with `{total_prompts}` prompt-like user events hashed into the private index.",
+        f"Normalized task-body payload covered `{fmt_bytes(total_task_body_bytes)}` after stripping recognized scaffold-only prompt frames.",
         "",
-        "| Source | Files | Prompt Events | Event Records | Size | Newest |",
-        "|---|---:|---:|---:|---:|---|",
+        "| Source | Files/Sessions | Prompt Events | Prompt Bytes | Task Body Bytes | Event Records | Size | Newest |",
+        "|---|---:|---:|---:|---:|---:|---:|---|",
     ]
     for source in sources:
         lines.append(
             f"| `{source['source']}` | {source['files']} | {source['prompt_events']} | "
+            f"{fmt_bytes(int(source.get('prompt_bytes') or 0))} | "
+            f"{fmt_bytes(int(source.get('task_body_bytes') or 0))} | "
             f"{source['event_records']} | {fmt_bytes(int(source['bytes']))} | "
             f"`{source['newest'] or 'n/a'}` |"
         )
     if not sources:
-        lines.append("| none | 0 | 0 | 0 | 0 B | n/a |")
+        lines.append("| none | 0 | 0 | 0 B | 0 B | 0 | 0 B | n/a |")
+
+    body_kind_counts = snapshot.get("body_kind_counts") or {}
+    lines += [
+        "",
+        "## Prompt Body Mix",
+        "",
+        "| Body Kind | Prompt Events |",
+        "|---|---:|",
+    ]
+    for kind, count in sorted(body_kind_counts.items(), key=lambda kv: (-kv[1], kv[0])):
+        lines.append(f"| `{kind}` | {count} |")
+    if not body_kind_counts:
+        lines.append("| none | 0 |")
 
     lines += [
         "",
