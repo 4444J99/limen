@@ -1,6 +1,6 @@
 # Agent Session Full-Stack Review
 
-Generated: `2026-07-03T22:31:32Z`
+Generated: `2026-07-03T22:40:51Z`
 
 ## Scope
 
@@ -12,11 +12,11 @@ Generated: `2026-07-03T22:31:32Z`
 
 - Verbatim prompt events: `.limen-private/session-corpus/full-stack-review/verbatim-prompts.jsonl`
 - Structured review: `.limen-private/session-corpus/full-stack-review/agent-session-review.json`
-- Prompt events extracted: `125314`
-- Unique prompt hashes: `74318`
-- Unique normalized task-body hashes: `74239`
-- Sessions reviewed: `3846`
-- Outcome text scanned: `529628612` bytes
+- Prompt events extracted: `125319`
+- Unique prompt hashes: `74321`
+- Unique normalized task-body hashes: `74242`
+- Sessions reviewed: `3848`
+- Outcome text scanned: `530534615` bytes
 
 ## Agent Coverage
 
@@ -24,16 +24,27 @@ Generated: `2026-07-03T22:31:32Z`
 |---|---:|---:|---:|---:|---:|---:|---:|
 | `agy` | 15 | 30 | 273370 | 10095 | 0 | 0 | 15 |
 | `claude` | 1270 | 115915 | 247630632 | 243688433 | 765 | 847 | 340 |
-| `codex` | 1294 | 8095 | 18603686 | 13655980 | 1030 | 1056 | 238 |
-| `opencode` | 1267 | 1274 | 2972700 | 2972694 | 866 | 1039 | 227 |
+| `codex` | 1295 | 8099 | 18632106 | 13672838 | 1031 | 1057 | 238 |
+| `opencode` | 1268 | 1275 | 2979982 | 2979976 | 866 | 1039 | 228 |
+
+## Work Surface Coverage
+
+| Agent | Structured change sessions | Structured change refs | Input tokens | Output tokens | Reasoning tokens | Cost |
+|---|---:|---:|---:|---:|---:|---:|
+| `agy` | 0 | 0 | 0 | 0 | 0 | 0.0000 |
+| `claude` | 0 | 0 | 0 | 0 | 0 | 0.0000 |
+| `codex` | 0 | 0 | 0 | 0 | 0 | 0.0000 |
+| `opencode` | 405 | 3484 | 145344500 | 2839094 | 1777101 | 0.0000 |
+
+Structured change refs are native changed-file surfaces, not inferred code diffs. In this local corpus OpenCode exposes them directly; Codex and Claude require receipt/outcome parsing or repo diff reconstruction.
 
 ## Prompt Body Mix
 
 | Body kind | Prompt events |
 |---|---:|
-| `direct` | 121360 |
+| `direct` | 121363 |
 | `flame_scaffold` | 2262 |
-| `flame_with_task_body` | 1677 |
+| `flame_with_task_body` | 1679 |
 | `session_context` | 15 |
 
 ## Source Coverage
@@ -41,8 +52,8 @@ Generated: `2026-07-03T22:31:32Z`
 | Source | Prompt events |
 |---|---:|
 | `claude-projects` | 115915 |
-| `codex-sessions` | 7117 |
-| `opencode-db` | 1274 |
+| `codex-sessions` | 7121 |
+| `opencode-db` | 1275 |
 | `codex-history` | 978 |
 | `gemini-tmp-agy` | 30 |
 
@@ -66,10 +77,11 @@ Each session is compared to this ideal form:
 
 ## What Broke
 
-- `1185` sessions with prompts had no verification signal in the reviewed outcome text.
-- `904` sessions had no durable receipt signal or changed-file receipt.
-- `820` sessions look like no-op or unrecorded work because prompts exist but the outcome surface has no verification/receipt/change signal.
-- `3939` prompt events carried FLAME scaffolding; the task body is now separated, but older ledger views overcounted repeated invariant prompt mass as fresh work.
+- `1186` sessions with prompts had no verification signal in the reviewed outcome text.
+- `905` sessions had no durable receipt signal or changed-file receipt.
+- `821` sessions look like no-op or unrecorded work because prompts exist but the outcome surface has no verification/receipt/change signal.
+- `3941` prompt events carried FLAME scaffolding; the task body is now separated, but older ledger views overcounted repeated invariant prompt mass as fresh work.
+- Structured changed-file data is uneven by agent: OpenCode exposes it in SQLite, while Codex and Claude need receipt text or downstream repo diff reconstruction.
 - OpenCode had many sessions that only become trustworthy when its DB-backed token clock and receipt handshake are present; session rows alone are not enough.
 - Agy/Antigravity remains the weakest source surface because provider quota and native IDE conversations are not yet decoded as first-class prompt/session records.
 
@@ -121,7 +133,7 @@ Each session is compared to this ideal form:
 - `agy`: top gaps: session outcome lacks verification signal (15), session outcome lacks durable receipt signal (15), likely no-op or unrecorded work (15).
 - `claude`: top gaps: session outcome lacks verification signal (505), session outcome lacks durable receipt signal (423), repeated broad/invariant prompt pressure (367), failure/blocker language outweighs done language (362), likely no-op or unrecorded work (340).
 - `codex`: top gaps: failure/blocker language outweighs done language (754), session outcome lacks verification signal (264), prompt missing executable predicate (252), session outcome lacks durable receipt signal (238), likely no-op or unrecorded work (238).
-- `opencode`: top gaps: prompt missing expected receipt/artifact (549), session outcome lacks verification signal (400), prompt missing executable predicate (396), session outcome lacks durable receipt signal (227), likely no-op or unrecorded work (227).
+- `opencode`: top gaps: prompt missing expected receipt/artifact (549), session outcome lacks verification signal (401), prompt missing executable predicate (396), session outcome lacks durable receipt signal (228), likely no-op or unrecorded work (228).
 
 ## Antigravity/Agy Native Surface
 

@@ -855,6 +855,8 @@ def summarize_agents(sessions: list[dict[str, Any]], agg: Aggregator) -> dict[st
             "sessions_with_receipts": sum(
                 1 for s in agent_sessions if s["outcome"].get("receipts", 0) > 0 or s["changed_file_count"] > 0
             ),
+            "sessions_with_structured_changes": sum(1 for s in agent_sessions if s.get("changed_file_count", 0) > 0),
+            "structured_change_refs": sum(int(s.get("changed_file_count") or 0) for s in agent_sessions),
             "likely_noop_or_unrecorded": sum(
                 1 for s in agent_sessions if "likely no-op or unrecorded work" in s["ideal_gaps"]
             ),
@@ -875,6 +877,7 @@ def summarize_agents(sessions: list[dict[str, Any]], agg: Aggregator) -> dict[st
                 )
             ),
             "tokens": dict(sum((Counter(s.get("tokens") or {}) for s in agent_sessions), Counter())),
+            "cost": sum(float(s.get("cost") or 0.0) for s in agent_sessions),
         }
     return by_agent
 
@@ -919,6 +922,29 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
             f"{item['task_body_bytes']} | {item['sessions_with_verification']} | "
             f"{item['sessions_with_receipts']} | {item['likely_noop_or_unrecorded']} |"
         )
+
+    lines.extend(
+        [
+            "",
+            "## Work Surface Coverage",
+            "",
+            "| Agent | Structured change sessions | Structured change refs | Input tokens | Output tokens | Reasoning tokens | Cost |",
+            "|---|---:|---:|---:|---:|---:|---:|",
+        ]
+    )
+    for agent, item in sorted(agent_summary.items()):
+        tokens = item.get("tokens") or {}
+        lines.append(
+            f"| `{agent}` | {item['sessions_with_structured_changes']} | {item['structured_change_refs']} | "
+            f"{int(tokens.get('input') or 0)} | {int(tokens.get('output') or 0)} | "
+            f"{int(tokens.get('reasoning') or 0)} | {item['cost']:.4f} |"
+        )
+    lines.extend(
+        [
+            "",
+            "Structured change refs are native changed-file surfaces, not inferred code diffs. In this local corpus OpenCode exposes them directly; Codex and Claude require receipt/outcome parsing or repo diff reconstruction.",
+        ]
+    )
 
     lines.extend(
         [
@@ -982,6 +1008,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
             f"- `{total_unreceipted}` sessions had no durable receipt signal or changed-file receipt.",
             f"- `{total_likely_noop}` sessions look like no-op or unrecorded work because prompts exist but the outcome surface has no verification/receipt/change signal.",
             f"- `{flame_events}` prompt events carried FLAME scaffolding; the task body is now separated, but older ledger views overcounted repeated invariant prompt mass as fresh work.",
+            "- Structured changed-file data is uneven by agent: OpenCode exposes it in SQLite, while Codex and Claude need receipt text or downstream repo diff reconstruction.",
             "- OpenCode had many sessions that only become trustworthy when its DB-backed token clock and receipt handshake are present; session rows alone are not enough.",
             "- Agy/Antigravity remains the weakest source surface because provider quota and native IDE conversations are not yet decoded as first-class prompt/session records.",
             "",
