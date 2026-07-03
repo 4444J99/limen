@@ -72664,7 +72664,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - organ-deepen
   - pillar:media
@@ -72683,7 +72683,7 @@ tasks:
     \ (VLTIMA).]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-07-03T09:28:28.857477Z'
+  updated: '2026-07-03T10:18:18.613765Z'
   dispatch_log:
   - timestamp: '2026-06-30T16:00:55.195999Z'
     agent: claude
@@ -72731,6 +72731,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-03T10:18:18.613765Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: ORG-governance-organ-deepen-0630
   title: Deepen the governance organ toward a usable institution
   repo: organvm/limen
@@ -77555,7 +77560,10 @@ tasks:
     agent: codex
     session_id: direct-session
     status: done
-    output: 'Closed duplicate launch-post task from repo evidence: /Users/4jp/Workspace/a-i-chat--exporter has tracked marketing/launch-post.md (192 lines) unchanged at HEAD 87b65f8; git log shows landed Draft the build-in-public launch post commits including db030dc (#91). No new PR needed.'
+    output: 'Closed duplicate launch-post task from repo evidence: /Users/4jp/Workspace/a-i-chat--exporter
+      has tracked marketing/launch-post.md (192 lines) unchanged at HEAD 87b65f8;
+      git log shows landed Draft the build-in-public launch post commits including
+      db030dc (#91). No new PR needed.'
 - id: ORG-legal-organ-kernel-0703
   title: Map the VLTIMA 5-primitive kernel to the legal organ
   repo: organvm/limen
@@ -77856,7 +77864,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - organ-face
   - pillar:education
@@ -77876,7 +77884,7 @@ tasks:
     \ (VLTIMA).]"
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-03T09:28:28.857477Z'
+  updated: '2026-07-03T10:18:18.613765Z'
   dispatch_log:
   - timestamp: '2026-07-03T09:16:26.808055Z'
     agent: agy
@@ -77893,6 +77901,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-03T10:18:18.613765Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-organvm-limen-typing-0703
   title: Tighten types in organvm/limen
   repo: organvm/limen
@@ -78142,3 +78155,87 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+- id: ORG-governance-organ-selffeed-0703
+  title: Wire the governance organ to advance autonomously
+  repo: organvm/limen
+  type: content
+  target_agent: any
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-selffeed
+  - pillar:governance
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "Make the governance organ self-feeding like the revenue/studium voices:\
+    \ bump its maturity in organ-ladder.json as slices land, and add/extend a beat\
+    \ or generator hook so the conductor keeps driving it without a human in the loop.\
+    \ Keep it lockless + idempotent. CONSTRAINT: converges the scattered gates (creds\
+    \ _SECRET_RX, scan-legacy SENSITIVE_PATTERNS, persona contracts, positioning awaiting_publish)\
+    \ behind one referenced rule table; beat C_PUBPOLICY, rung PUBPOLICY. [organ-backlog\
+    \ 2026-07-03: rank 10, maturity 60% stage building \u2014 convert idle fleet capacity\
+    \ into institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-03'
+  dispatch_log: []
+- id: ORG-legal-organ-firstslice-0703
+  title: Build the first working vertical slice of the legal organ
+  repo: organvm/limen
+  type: content
+  target_agent: any
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-firstslice
+  - pillar:legal
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "In organvm/limen organs/legal/, deliver one real end-to-end artifact the\
+    \ organ produces: a case-posture brief + evidence/chain-of-custody index for the\
+    \ live matter, packaged as a framework deck to show Counsel. A tangible proof the\
+    \ institution works for ONE real case. One PR; tested where it is code; drafts\
+    \ only for anything outbound (his hand on send/sign). CONSTRAINT: THE FLAGSHIP\
+    \ he named. Augments real counsel; does NOT give legal advice or practice law..\
+    \ [organ-backlog 2026-07-03: rank 1, maturity 20% stage scaffold \u2014 convert\
+    \ idle fleet capacity into institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-03'
+  dispatch_log: []
+- id: ORG-health-organ-firstslice-0703
+  title: Build the first working vertical slice of the health organ
+  repo: organvm/limen
+  type: content
+  target_agent: any
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-firstslice
+  - pillar:health
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "In organvm/limen organs/health/, deliver one real end-to-end artifact\
+    \ the organ produces: charter the health organ + a personal recovery/access protocol\
+    \ (informational, not medical advice). A tangible proof the institution works\
+    \ for ONE real case. One PR; tested where it is code; drafts only for anything\
+    \ outbound (his hand on send/sign). CONSTRAINT: unnamed; post-injury (4th-story\
+    \ fall ~2024); ties to the legal ADA accommodation matter. KERNEL.md + CHARTER.md\
+    \ authored: full 5-primitive map, institutional prosthesis framing, rival institution,\
+    \ legal organ link, hard guardrails, 6-workflow orchestration, AI role org-chart,\
+    \ leverage math. Maturity 10%\u219215%.. [organ-backlog 2026-07-03: rank 9, maturity\
+    \ 10% stage scaffold \u2014 convert idle fleet capacity into institutional weight\
+    \ (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-03'
+  dispatch_log: []
