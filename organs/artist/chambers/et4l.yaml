@@ -1,0 +1,32 @@
+id: et4l
+name: ET4L
+member:
+  body: ET4L thematic series
+  medium: mixed archive sequence
+  human_owner: Anthony J. Padavano
+mandate:
+  description: Convert a curated selection into an exhibition argument with statement, caption set, and staged package.
+  scope_boundary: Sequence logic, statement draft, caption draft, and release package staging.
+standing:
+  current: CURATED
+  since: "2026-07-03"
+next_standing: STAGED
+standard:
+  rubric: A series is stage-ready only when selection, sequence logic, title, statement, and caption set are present for artist rewrite.
+  evidence:
+    - KERNEL.md
+    - MACRO-FACE.md
+    - MICRO-FACE.md
+governance:
+  artist_gate: true
+  forbidden_acts:
+    - publish without artist approval
+    - issue artist statement without artist rewrite
+    - alter original source files
+human_gates:
+  - selection approval
+  - statement rewrite
+  - release event approval
+artifacts:
+  next_reviewable_output: ET4L statement and caption set
+

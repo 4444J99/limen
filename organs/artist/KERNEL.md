@@ -79,3 +79,9 @@ chamber from static state to review-ready outputs, then release each one as an a
   without confirmation.
 - **No irreversible outward-facing action without gate.** Publication, social distribution, or portfolio deployment
   is staged, surfaced, and approved per event.
+
+---
+
+*Companion documents: [`CHARTER.md`](CHARTER.md) (roles + workflows),
+[`MACRO-FACE.md`](MACRO-FACE.md) (the studio/temple platform any artist holds),
+[`MICRO-FACE.md`](MICRO-FACE.md) (live chambers: 444-file archive / ET4L / LOCREANCE).*

@@ -2,74 +2,69 @@
 
 *The micro instance of the A-MAVS-OLEVM studio/museum organ · Anthony Padavano*
 
-> **What this is, plainly:** the artist-facing copy of what this organ already does today.
-> **What this is not:** it does not create, alter, or publish anything without explicit per-event approval.
-> The artist remains the Chief Curator.
+> **What this is, plainly:** the artist-facing summary of what this organ holds
+> and what the three active chambers have produced. This is not the full face
+> documentation — that is in [`MACRO-FACE.md`](MACRO-FACE.md) (the platform any
+> artist holds) and [`MICRO-FACE.md`](MICRO-FACE.md) (Anthony's live chambers).
+>
+> **What this is not:** it does not create, alter, or publish anything without
+> explicit per-event approval. The artist remains the Chief Curator.
 
 ---
 
 ## One-line position
 
-A-MAVS-OLEVM gives one artist the infrastructure of a museum/studio: a vault, catalog, curated Gallery,
-and publication pipeline, while preserving provenance and creative authorship.
+A-MAVS-OLEVM gives one artist the infrastructure of a museum/studio: a vault,
+catalog, curated Gallery, and publication pipeline — while preserving provenance
+and creative authorship entirely with the artist.
 
-The macro platform is reusable for any artist. The micro instance proves the platform in Anthony's actual
-practice.
-
----
-
-## Current structure under this face
-
-### The macro floor (platform anyone can hold)
-
-- Intake and intake checks: consistent entry and capture for each raw asset.
-- Catalog integrity: provenance, state, and cross-references in one sequence.
-- Curatorial grouping: themed assemblies and exhibition logic.
-- Preservation posture: format checks, backup posture, and chain-of-custody evidence.
-- Press drafting: statement and caption drafts in the artist's tone.
-- Calendar discipline: release timing and next-cycle sequencing.
-- Staged deployment: prepared publication bundles that wait for final approval.
-
-### The micro body (current proving instance)
-
-Anthony's instance currently includes:
-
-1. **The 444-file photo archive**
-   - The source body of work.
-   - Deliverable path: catalog IDs, stable provenance links, preservation checks, and proposed gallery
-     sequences.
-
-2. **ET4L**
-   - A thematic series extracted from the archive.
-   - Deliverable path: thematic sequence, series statement draft, and install-ready exhibition package.
-
-3. **LOCREANCE**
-   - Ongoing practice body with continuous intake.
-   - Deliverable path: living catalog growth, cadence proposals, and upcoming exhibition readiness notes.
+The macro platform is reusable for any artist. The micro instance proves the
+platform in Anthony's actual practice across three chamber types: a primary
+source archive, a named thematic series, and an ongoing practice body.
 
 ---
 
-## What the artist receives now
+## The three chambers
 
-1. **A stable Vault and Catalog** for the body of work.
-2. **Proposed groupings** from the archive and named series.
-3. **Draft exhibition packages** with curation + copy.
-4. **A preservation-state report** (what is stable, what needs action).
-5. **Staged deployments** ready to launch once approved by the artist.
+| Chamber | Type | Current standing |
+|---|---|---|
+| **444-file photo archive** | Primary source body | CATALOGED (partial) — catalog pass in progress |
+| **ET4L** | Thematic series | CURATED (draft) — series package awaiting Anthony's gate |
+| **LOCREANCE** | Ongoing practice | ACTIVE (open intake) — cadence proposal pending |
+
+No chamber has an open outbound action. Nothing publishes without Anthony's
+explicit per-event approval.
+
+---
+
+## What exists across the three chambers
+
+- **A vaulted source archive** — 444 files, intake-checked, stable references
+- **A draft ET4L series package** — selection + Mandate + title + statement +
+  captions, ready for Anthony's review and rewrite
+- **A live LOCREANCE intake stream** — continuous discipline, first cadence
+  proposal pending
+- **No release staged or opened** without Anthony's gate
+
+---
+
+## The next move
+
+Review the ET4L package in [`MICRO-FACE.md`](MICRO-FACE.md) and open the gate.
+That is the first complete exhibition-ready artifact this platform produces.
 
 ---
 
 ## Operating constraints (always)
 
-- No generated art is treated as original work.
-- Source files are not modified by the organ.
-- All provenance metadata is explicit and auditable.
-- Nothing publishes itself.
-- Curatorial suggestions are non-final drafts.
-- The artist is the final release authority.
+- No generated art is treated as original work
+- Source files are not modified by the organ
+- All provenance metadata is explicit and auditable
+- Nothing publishes itself
+- Curatorial suggestions and press language are non-final drafts
+- The artist is the final release authority for every institutional act
 
 ---
 
-*Stage status: macro is maturing at ~70%. The next lift is to convert this micro body into fully filled,
-review-ready chamber output. Companion docs: [KERNEL.md](KERNEL.md) (macro architecture),
-[CHARTER.md](CHARTER.md) (roles + workflows).* 
+*Full face documentation: [`MACRO-FACE.md`](MACRO-FACE.md) · [`MICRO-FACE.md`](MICRO-FACE.md)
+· [`KERNEL.md`](KERNEL.md) · [`CHARTER.md`](CHARTER.md)*

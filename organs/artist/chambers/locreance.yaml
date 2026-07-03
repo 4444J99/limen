@@ -1,0 +1,32 @@
+id: locreance
+name: LOCREANCE
+member:
+  body: LOCREANCE active practice stream
+  medium: ongoing mixed creative work
+  human_owner: Anthony J. Padavano
+mandate:
+  description: Keep a growing practice body from becoming residue by routing each intake through Vault, Catalog, and Calendar.
+  scope_boundary: Intake batch records, custody state, cadence proposal, and release readiness notes.
+standing:
+  current: RAW
+  since: "2026-07-03"
+next_standing: CATALOGED
+standard:
+  rubric: A new work enters the catalog only when medium, provenance, source custody, and intended chamber are explicit.
+  evidence:
+    - KERNEL.md
+    - MACRO-FACE.md
+    - MICRO-FACE.md
+governance:
+  artist_gate: true
+  forbidden_acts:
+    - alter original source files
+    - publish without artist approval
+    - create art on behalf of the artist
+human_gates:
+  - accession approval
+  - cadence approval
+  - release readiness approval
+artifacts:
+  next_reviewable_output: first LOCREANCE intake batch and custody-state report
+
