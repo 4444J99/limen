@@ -437,6 +437,18 @@ while true; do
   due_voice hygiene "$HYG_CAD" && stamp hygiene
   python3 "$LIMEN_ROOT/scripts/emit-tick.py" 2>&1 | tail -1 || true   # tick voice — every beat
   stamp tick
+  # PROPRIOCEPTION for the DISCOVERED organs that fire every beat but never stamped, so the health
+  # face read "unknown" for them (sync/web/censor/insight_cadence/report/quicken/corpus_feed). `play`
+  # is a pure due-check (the green organs already call it a 2nd time to stamp, e.g. `play "$C_FEED" &&
+  # stamp feed`), so this records real liveness on each organ's own cadence. Placed BEFORE the render
+  # below so the tick greens them the SAME beat. Fail-open like every other stamp. ([[no-never-happens-again]])
+  play "$C_SYNC"             && stamp sync
+  play "$C_WEB"              && stamp web
+  play "$C_CENSOR"           && stamp censor
+  play "$C_INSIGHT_CADENCE"  && stamp insight_cadence
+  play "$C_REPORT"           && stamp report
+  play "$C_QUICKEN"          && stamp quicken
+  play "$C_CORPUS_FEED"      && stamp corpus_feed
   python3 "$LIMEN_ROOT/scripts/organ-health.py" 2>&1 | tail -1 || true   # PROPRIOCEPTION — EVERY beat: the health face must never lag the organs it watches. route stamps on C_BALANCE=2, feed on C_FEED=3, but C_WEB=4, so on the old web cadence the face showed stale "unknown" for rungs that were already green (and a restart-to-beat-2 froze it until beat 4). Cheapest renderer: read-only, no network, can't time out — belongs with the tick.
   [ "${LIMEN_VIGILIA:-1}" = "1" ] && { python3 -m limen.vigilia beat 2>&1 | tail -1 || true; stamp vigilia; }   # VIGILIA autonomic executive — record vitals/continuity/integrity to the seat (read-only, fail-open)
   play "$C_WEB"     && python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" 2>&1 | tail -1 || true   # real per-vendor usage
