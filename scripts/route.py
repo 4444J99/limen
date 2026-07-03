@@ -34,6 +34,7 @@ stays a separate, explicitly-gated step (`limen dispatch --agent X --live`).
 Usage:
   python3 route.py [--tasks tasks.yaml] [--apply] [--workdir ~/Workspace]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -143,8 +144,7 @@ def _local_checkout(repo: str | None, workdir: Path) -> Path | None:
         return None
     org, _, name = repo.partition("/")
     cart = Path.home() / "Workspace" / ".home-cartridge" / "Code"
-    for cand in (workdir / repo, workdir / org / name, workdir / name,
-                 cart / org / name, cart / name):
+    for cand in (workdir / repo, workdir / org / name, workdir / name, cart / org / name, cart / name):
         if (cand / ".git").exists():
             return cand
     for root in (workdir, cart):
@@ -178,12 +178,14 @@ def _learned_weights() -> dict[str, float]:
     split by default now that the ladder is closed — set LIMEN_SI_APPLY=0 to disable (clean rollback).
     Still a no-op until a proposal exists (fail-open below), so the flip is safe before the first run.
 
-    A down-weighted lane gets a proportionally higher effective load (picked less), but every weight
-    is floored (LIMEN_SI_WEIGHT_FLOOR, default 0.25) so no lane is ever fully STARVED — it can still
-    win work and recover as its later tries succeed. Missing lane -> 1.0 (no effect). Derive-not-pin."""
+    A down-weighted lane gets a proportionally higher effective load (picked less), while a
+    boost-underused lane gets a lower effective load (picked more). We clamp to a floor
+    (LIMEN_SI_WEIGHT_FLOOR, default 0.25) and ceiling (LIMEN_SI_WEIGHT_CEILING, default 2.0) so no lane
+    is ever fully STARVED or allowed to swamp the fleet. Missing lane -> 1.0 (no effect). Derive-not-pin."""
     if os.environ.get("LIMEN_SI_APPLY", "1") != "1":
         return {}
     floor = float(os.environ.get("LIMEN_SI_WEIGHT_FLOOR", "0.25"))
+    ceiling = max(floor, float(os.environ.get("LIMEN_SI_WEIGHT_CEILING", "2.0")))
     try:
         data = json.loads((ROOT / "logs" / "self-improve-proposal.json").read_text())
     except Exception:
@@ -192,7 +194,7 @@ def _learned_weights() -> dict[str, float]:
     for adj in data.get("lane_adjustments", []):
         lane, w = adj.get("lane"), adj.get("target_weight")
         if lane and isinstance(w, (int, float)):
-            weights[lane] = max(floor, min(1.0, float(w)))
+            weights[lane] = max(floor, min(ceiling, float(w)))
     return weights
 
 
@@ -224,8 +226,10 @@ def _refresh_self_improve_proposal() -> None:
         if not script.exists():
             return
         subprocess.run(
-            ["python3", str(script)], cwd=str(ROOT),
-            timeout=float(os.environ.get("LIMEN_SI_TIMEOUT", "120")), capture_output=True,
+            ["python3", str(script)],
+            cwd=str(ROOT),
+            timeout=float(os.environ.get("LIMEN_SI_TIMEOUT", "120")),
+            capture_output=True,
         )
     except Exception:
         return  # fail-open: a stale/absent proposal just means _learned_weights -> {} (no effect)
@@ -285,7 +289,7 @@ def _pick_local(
     its reserve sheds new work before it trips the gate. Both signals are live + derived, not pinned.
     """
     runway = runway or {}
-    text = f"{task.get('type','')} {task.get('title','')} {task.get('context','')}".lower()
+    text = f"{task.get('type', '')} {task.get('title', '')} {task.get('context', '')}".lower()
     if any(h in text for h in _DEPLOY_HINTS) and health.get("opencode"):
         return "opencode"
     candidates = [v for v in _LOCAL_LANES if health.get(v)]
@@ -318,8 +322,7 @@ def _pick_local(
 
     # least-loaded by budget ratio; then HIGHEST cliff-urgency (drain expiring budget before reset);
     # then MOST refresh runway (freshest window); then higher-budget lane; then name (stable).
-    return min(candidates,
-               key=lambda v: (load(v), -urgency_of(v), -runway_of(v), -budget.get(v, 0), v))
+    return min(candidates, key=lambda v: (load(v), -urgency_of(v), -runway_of(v), -budget.get(v, 0), v))
 
 
 def _capable_agents(
@@ -412,8 +415,9 @@ def route_task(
         # capable lane (the penalty only reorders — min() still picks it when it's the sole option, so
         # a no-local-checkout repo is never stranded). [[no-never-happens-again]]
         bias = _ledger_bias(task)
-        pick = min(extended, key=lambda a: (1 if bias.get(a, 1.0) < 1.0 else 0,
-                                            assigned.get(a, 0), PAID_AGENT_ORDER.index(a)))
+        pick = min(
+            extended, key=lambda a: (1 if bias.get(a, 1.0) < 1.0 else 0, assigned.get(a, 0), PAID_AGENT_ORDER.index(a))
+        )
         return pick, reasons[pick]
     return "unroutable", "no reachable capable paid lane"
 
@@ -421,10 +425,10 @@ def route_task(
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS", "tasks.yaml"))
-    ap.add_argument("--workdir", default=os.environ.get(
-        "LIMEN_WORKDIR", str(Path.home() / "Workspace")))
-    ap.add_argument("--apply", action="store_true",
-                    help="rewrite target_agent in tasks.yaml (reversible); never dispatches")
+    ap.add_argument("--workdir", default=os.environ.get("LIMEN_WORKDIR", str(Path.home() / "Workspace")))
+    ap.add_argument(
+        "--apply", action="store_true", help="rewrite target_agent in tasks.yaml (reversible); never dispatches"
+    )
     args = ap.parse_args()
 
     # PRODUCE the self-improve proposal (low cadence) before we CONSUME it in routing below — this is
@@ -460,10 +464,7 @@ def main() -> int:
     up = [k for k, v in health.items() if v]
     down = [k for k, v in health.items() if not v]
     print(format_capacity_census(census))
-    print(
-        f"\n# Router plan  (agents up: {', '.join(up) or 'none'}; "
-        f"down: {', '.join(down) or 'none'})\n"
-    )
+    print(f"\n# Router plan  (agents up: {', '.join(up) or 'none'}; down: {', '.join(down) or 'none'})\n")
 
     opens = [t for t in data["tasks"] if t.get("status") == "open"]
     if not opens:
@@ -473,6 +474,7 @@ def main() -> int:
     print("| task | repo | -> vendor | reason |")
     print("|---|---|---|---|")
     from collections import Counter
+
     # per-agent daily budget drives the distribution (derived from tasks.yaml, never pinned).
     budget = (data.get("portal", {}).get("budget", {}) or {}).get("per_agent", {}) or {}
     tally: Counter = Counter()
@@ -482,7 +484,7 @@ def main() -> int:
         # and the live runway so the split steers toward the freshest refresh window.
         vendor, reason = route_task(t, health, workdir, assigned=tally, budget=budget, runway=runway)
         tally[vendor] += 1
-        print(f"| {t['id']} | {t.get('repo','-')} | {vendor} | {reason} |")
+        print(f"| {t['id']} | {t.get('repo', '-')} | {vendor} | {reason} |")
         if vendor not in ("unroutable",):
             assignments[t["id"]] = vendor
 
@@ -508,8 +510,10 @@ def main() -> int:
                 task.target_agent = v
                 applied += 1
         save_limen_file(tasks_path, lf)
-    print(f"applied target_agent assignments ({applied}) -> {tasks_path} "
-          f"(dispatch separately, gated: limen dispatch --agent <v> --live)")
+    print(
+        f"applied target_agent assignments ({applied}) -> {tasks_path} "
+        f"(dispatch separately, gated: limen dispatch --agent <v> --live)"
+    )
     return 0
 
 
@@ -519,9 +523,7 @@ def _stamp_health() -> None:
     try:
         logs = ROOT / "logs"
         logs.mkdir(exist_ok=True)
-        (logs / "route-health.json").write_text(
-            json.dumps({"timestamp": time.strftime("%Y-%m-%dT%H:%M:%S")}) + "\n"
-        )
+        (logs / "route-health.json").write_text(json.dumps({"timestamp": time.strftime("%Y-%m-%dT%H:%M:%S")}) + "\n")
     except OSError:
         pass
 

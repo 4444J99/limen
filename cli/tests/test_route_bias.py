@@ -22,6 +22,11 @@ def _ledger(tmp: Path, lanes: dict):
     (tmp / "logs" / "ledger.json").write_text(json.dumps({"lanes": lanes}))
 
 
+def _self_improve(tmp: Path, lane_adjustments: list[dict]):
+    (tmp / "logs").mkdir(parents=True, exist_ok=True)
+    (tmp / "logs" / "self-improve-proposal.json").write_text(json.dumps({"lane_adjustments": lane_adjustments}))
+
+
 def test_ledger_bias_sheds_waste_class_but_exempts_winners(tmp_path, monkeypatch):
     monkeypatch.setattr(route, "ROOT", tmp_path)
     _ledger(
@@ -75,6 +80,27 @@ def test_opencode_shed_from_its_waste_class(tmp_path, monkeypatch):
     # opencode is floored (0.2) for this class → far fewer than every earner, but NOT zero (never starved)
     assert c["opencode"] < min(c["codex"], c["claude"], c["agy"]), c
     assert c["opencode"] >= 1, "floored, not starved"
+
+
+def test_self_improve_boost_weight_is_honored(tmp_path, monkeypatch):
+    monkeypatch.setattr(route, "ROOT", tmp_path)
+    monkeypatch.setenv("LIMEN_LEDGER_BIAS", "0")
+    _self_improve(
+        tmp_path,
+        [
+            {"lane": "codex", "target_weight": 1.0},
+            {"lane": "opencode", "target_weight": 1.25},
+        ],
+    )
+
+    assert route._learned_weights()["opencode"] == 1.25
+
+    health = {"codex": True, "opencode": True}
+    budget = {"codex": 100, "opencode": 100}
+    assigned = {"codex": 1, "opencode": 1}
+    pick = route._pick_local({"title": "ordinary code task", "type": "code"}, health, assigned, budget)
+
+    assert pick == "opencode"
 
 
 def test_deploy_still_opencode_despite_bias(tmp_path, monkeypatch):

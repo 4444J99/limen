@@ -4,7 +4,7 @@ repo: "organvm/limen"
 org: "organvm"
 metadata:
   implementation_status: "BUILDING"
-  maturity: 40
+  maturity: 70
   last_consolidated: "2026-07-03T00:00:00Z"
 description: >
   Aerarium — the Financial Office. Runs the personal family-office engine for the VLTIMA body.
