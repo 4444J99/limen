@@ -58,6 +58,24 @@ def _point_at(mod, home: Path) -> None:
     mod.LOGDB = home / "logs_2.sqlite"
 
 
+def _write_trunc_log(home: Path, ts: int, total_skills: int = 133, chars_per_skill: int = 169) -> None:
+    """Seed a synthetic Codex render log with one 'truncated skill metadata' row at epoch `ts`."""
+    import sqlite3
+
+    con = sqlite3.connect(home / "logs_2.sqlite")
+    try:
+        con.execute("CREATE TABLE IF NOT EXISTS logs (ts INTEGER, feedback_log_body TEXT)")
+        body = (
+            "truncated skill metadata to fit skills context budget "
+            f"budget_limit=5440 total_skills={total_skills} "
+            f"truncated_description_chars_per_skill={chars_per_skill} truncated_skill_descriptions=132"
+        )
+        con.execute("INSERT INTO logs (ts, feedback_log_body) VALUES (?, ?)", (ts, body))
+        con.commit()
+    finally:
+        con.close()
+
+
 # ── scope: every cached plugin, not just enabled ─────────────────────────────────────────────────
 def test_targets_enumerate_all_cached_plugins_not_just_enabled(tmp_path):
     mod = _load()
@@ -133,3 +151,30 @@ def test_apply_is_idempotent_and_restorable(tmp_path, monkeypatch):
     # restore brings the original description VALUE back (re-emitted as a quoted scalar)
     assert mod.run("restore", quiet=True) == 0
     assert mod._get(target) == orig_value
+
+
+# ── check is confirmed against Codex's emission, not just our own cap ─────────────────────────────
+def test_check_fails_when_codex_truncated_after_last_slim(tmp_path, monkeypatch):
+    """The anti-false-green lock: even with every description UNDER our cap, if Codex's own log shows
+    it truncated AFTER the last slim, --check must fail — the witness overrides the proxy."""
+    mod = _load()
+    _point_at(mod, _synthetic_home(tmp_path))
+    monkeypatch.setattr(mod, "CAP_OVERRIDE", "80")  # fixed cap so the proxy half is deterministically clean
+
+    assert mod.run("apply", quiet=True) == 0  # writes the ledger → its mtime is the "last slim" instant
+    applied_at = mod.LEDGER.stat().st_mtime
+    # Codex truncated AFTER we slimmed → our cap is proven too loose, regardless of the byte-count.
+    _write_trunc_log(tmp_path, ts=int(applied_at) + 1000)
+    assert mod.run("check", quiet=True) == 1  # ground truth fails the check even though nothing is over-cap
+
+
+def test_check_passes_when_no_truncation_since_slim(tmp_path, monkeypatch):
+    """Same setup, but Codex's latest truncation PREDATES the slim → the fix held → --check is green."""
+    mod = _load()
+    _point_at(mod, _synthetic_home(tmp_path))
+    monkeypatch.setattr(mod, "CAP_OVERRIDE", "80")
+
+    assert mod.run("apply", quiet=True) == 0
+    applied_at = mod.LEDGER.stat().st_mtime
+    _write_trunc_log(tmp_path, ts=int(applied_at) - 1000)  # last truncation was before we slimmed
+    assert mod.run("check", quiet=True) == 0

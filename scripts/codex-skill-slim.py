@@ -21,13 +21,21 @@ warning firing. Slimming below Codex's own allowance is what makes truncation st
 DURABILITY: the fat lives in `~/.codex/plugins/cache/**` (marketplace caches) which REVERT on
 refresh, so this is a REPAIR organ, not a one-shot edit (containment Rule 6): idempotent, run
 every beat, re-distilling anything that reverted to fat. A backup ledger + `--restore` is the
-revert guard (Rule 10); `--check` is standing detection (exit 1 when anything is over-cap) so a
-reversion surfaces in the beat log — never hidden.
+revert guard (Rule 10); `--check` is standing detection so a reversion surfaces in the beat log —
+never hidden.
+
+`--check` is deliberately NOT self-referential (the failure that shipped once: a green byte-count
+that only proved we agreed with ourselves). It couples TWO signals: (1) predictive — anything over
+the derived cap will be truncated on Codex's next render; (2) confirmatory — Codex's OWN render log
+(`logs_2.sqlite`) as an independent witness: if Codex truncated AFTER our last real slim (ledger
+mtime), the cap was silently too loose and we exit 1 EVEN IF every description looks under-cap. The
+witness overrides the proxy, so a false-green cannot recur.
 
 Modes:
   (no flag)   dry-run report — rank every description, show what WOULD be slimmed. Safe.
   --apply     write the distilled descriptions (atomic, validated, backed up first).
-  --check     exit 1 if any tracked description exceeds the cap (detection; for the beat/CI).
+  --check     exit 1 if any tracked description exceeds the cap OR Codex's log shows it truncated
+              since the last slim (predictive proxy + ground-truth witness; for the beat/CI).
   --restore   put every original description back from the backup ledger (revert guard).
   --quiet     one summary line instead of per-entry lines (used by the beat).
 
@@ -132,7 +140,7 @@ def codex_skill_budget() -> dict | None:
         con = sqlite3.connect(f"file:{LOGDB}?mode=ro&immutable=1", uri=True, timeout=1.5)
         try:
             row = con.execute(
-                "SELECT feedback_log_body FROM logs "
+                "SELECT ts, feedback_log_body FROM logs "
                 "WHERE feedback_log_body LIKE '%truncated skill metadata%' "
                 "ORDER BY ts DESC LIMIT 1"
             ).fetchone()
@@ -140,15 +148,20 @@ def codex_skill_budget() -> dict | None:
             con.close()
     except Exception:
         return None
-    if not row or not row[0]:
+    if not row or not row[1]:
         return None
-    body = row[0]
+    body = row[1]
 
     def _num(key: str) -> int | None:
         m = re.search(rf"{key}=(\d+)", body)
         return int(m.group(1)) if m else None
 
+    try:
+        ts = int(row[0]) if row[0] is not None else None
+    except (TypeError, ValueError):
+        ts = None
     return {
+        "ts": ts,  # epoch of Codex's most recent truncation — the enactment witness
         "budget_tokens": _num("budget_limit"),
         "total_skills": _num("total_skills"),
         "chars_per_skill": _num("truncated_description_chars_per_skill"),
@@ -378,16 +391,48 @@ def run(mode: str, quiet: bool) -> int:
     over = [r for r in rows if r[0] > cap]
 
     if mode == "check":
-        # Standing detection: any over-cap description means the budget has drifted / reverted.
-        if over:
-            saved = sum(r[0] - len(r[3]) for r in over)
+        # Two COUPLED signals, so a green here means what the USER sees — not a proxy for it.
+        #   (1) PREDICTIVE (proxy): any description over the derived cap will be truncated on Codex's
+        #       next render — drift/reversion caught before it happens.
+        #   (2) CONFIRMATORY (ground truth): Codex's OWN render log — did it truncate AFTER our last
+        #       real slim? This is the independent witness that catches a cap silently gone too loose
+        #       (the exact false-green that shipped once: descriptions "under cap" yet Codex truncated
+        #       anyway because its budget shrank or its skill count grew past what we enumerate). The
+        #       ledger's mtime is the "last real slim" instant (written only when --apply changes a
+        #       description); a truncation newer than that is Codex telling us the proxy was wrong.
+        b = codex_skill_budget() or {}
+        trunc_ts = b.get("ts")
+        try:
+            applied_at = LEDGER.stat().st_mtime if LEDGER.is_file() else None
+        except OSError:
+            applied_at = None
+        truncated_after_slim = bool(trunc_ts and applied_at and trunc_ts > applied_at)
+        emitted = ""
+        if trunc_ts:
+            import time as _time
+
+            when = _time.strftime("%Y-%m-%dT%H:%MZ", _time.gmtime(trunc_ts))
+            emitted = (
+                f"; Codex last truncated {when} ({b.get('total_skills')} skills @ "
+                f"{b.get('chars_per_skill')} chars/skill)"
+                + (" — AFTER the last slim" if truncated_after_slim else " — none since the last slim")
+            )
+        if over or truncated_after_slim:
+            reasons = []
+            if over:
+                saved = sum(r[0] - len(r[3]) for r in over)
+                reasons.append(f"{len(over)} of {len(rows)} description(s) over {cap} chars ({saved}B recoverable)")
+            if truncated_after_slim:
+                # Ground truth overrides the proxy: Codex truncated even though our cap said fine.
+                reasons.append(
+                    "Codex truncated AFTER the last slim — derived cap too loose (budget shrank / skills grew)"
+                )
             print(
-                f"codex skill budget: {len(over)} of {len(rows)} description(s) over {cap} chars "
-                f"(total {total}B; {saved}B recoverable) — run codex-skill-slim.py --apply",
+                f"codex skill budget: {'; '.join(reasons)} (total {total}B){emitted} — run codex-skill-slim.py --apply",
                 file=sys.stderr,
             )
             return 1
-        print(f"codex skill budget: ok ({total}B across {len(rows)} entries, all ≤{cap})")
+        print(f"codex skill budget: ok ({total}B across {len(rows)} entries, all ≤{cap}){emitted}")
         return 0
 
     if mode == "restore":
