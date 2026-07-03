@@ -189,6 +189,7 @@ def reserve_and_launch(agents, per_agent, cap, dry):
     detached workers. Returns the list of (agent, task_id) launched/would-launch."""
     now = _now()
     picked = []
+    picked_ids = set()
     with _queue_lock(TASKS) as got:
         if not got:
             # Lock busy — reserve nothing this round. Returning BEFORE `picked` is used to spawn
@@ -223,7 +224,10 @@ def reserve_and_launch(agents, per_agent, cap, dry):
             for t in cands:
                 if slots <= 0 or taken >= per_agent:
                     break
+                if t.id in picked_ids:
+                    continue
                 picked.append((agent, t.id))
+                picked_ids.add(t.id)
                 if not dry:
                     t.status = "dispatched"
                     t.updated = now

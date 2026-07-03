@@ -87,6 +87,20 @@ def test_reserve_and_launch_marks_and_spawns(tmp_path, monkeypatch):
     assert len(list(da.RUNS.glob("*__codex.running"))) == 2
 
 
+def test_dry_run_does_not_pick_same_any_task_for_multiple_lanes(tmp_path):
+    da = _load(tmp_path, n_open=0)
+    today = datetime.date.today()
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.portal.budget.per_agent = {"codex": 50, "agy": 50}
+    lf.tasks = [Task(id="ANY", title="t", repo="x/y", target_agent="any", status="open", created=today)]
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    picked = da.reserve_and_launch(["codex", "agy"], per_agent=1, cap=2, dry=True)
+
+    assert picked == [("codex", "ANY")]
+    assert _board(tmp_path)["ANY"].status == "open"
+
+
 def test_reserve_skips_generated_buildout_outside_value_tier(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_VALUE_REPOS", "x/y")
     monkeypatch.setenv("LIMEN_VALUE_REPOS_FILE", str(tmp_path / "no-such-tier.json"))
