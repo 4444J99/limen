@@ -94,6 +94,16 @@ def _patch_equivalent_to_default(cwd: Path) -> bool:
     return bool(lines) and all(line.startswith("-") for line in lines)
 
 
+def _git_toplevel(cwd: Path) -> Path | None:
+    top = _git(["rev-parse", "--show-toplevel"], cwd)
+    if top.returncode != 0 or not top.stdout.strip():
+        return None
+    try:
+        return Path(top.stdout.strip()).resolve()
+    except OSError:
+        return Path(top.stdout.strip())
+
+
 def _load_preservation_receipts(limen_root: Path) -> dict[str, dict[str, Any]]:
     path = limen_root / "docs" / "worktree-preservation-receipts.json"
     try:
@@ -184,8 +194,11 @@ def _classify(
         return "remote-pr-open"
     if _is_owner_blocker(path, preservation_receipts):
         return "owner-blocker"
-    if _git(["rev-parse", "--is-inside-work-tree"], path).returncode != 0:
+    top = _git_toplevel(path)
+    if top is None:
         return "not-a-git-dir"
+    if top != resolved:
+        return "self/live-checkout" if top in self_guard else "not-a-git-dir"
     age_h = (now - path.stat().st_mtime) / 3600.0
     if age_h < min_age_h:
         return f"active(<{min_age_h:g}h)"
