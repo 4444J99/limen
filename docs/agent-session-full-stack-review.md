@@ -1,6 +1,6 @@
 # Agent Session Full-Stack Review
 
-Generated: `2026-07-03T22:22:48Z`
+Generated: `2026-07-03T22:31:32Z`
 
 ## Scope
 
@@ -12,26 +12,36 @@ Generated: `2026-07-03T22:22:48Z`
 
 - Verbatim prompt events: `.limen-private/session-corpus/full-stack-review/verbatim-prompts.jsonl`
 - Structured review: `.limen-private/session-corpus/full-stack-review/agent-session-review.json`
-- Prompt events extracted: `125307`
-- Unique prompt hashes: `74315`
-- Sessions reviewed: `3844`
-- Outcome text scanned: `529035743` bytes
+- Prompt events extracted: `125314`
+- Unique prompt hashes: `74318`
+- Unique normalized task-body hashes: `74239`
+- Sessions reviewed: `3846`
+- Outcome text scanned: `529628612` bytes
 
 ## Agent Coverage
 
-| Agent | Sessions | Prompt events | Prompt bytes | Verified sessions | Receipt sessions | Likely no-op/unrecorded |
-|---|---:|---:|---:|---:|---:|---:|
-| `agy` | 15 | 30 | 273370 | 0 | 0 | 15 |
-| `claude` | 1269 | 115912 | 247616849 | 765 | 847 | 339 |
-| `codex` | 1293 | 8091 | 18575033 | 1029 | 1055 | 238 |
-| `opencode` | 1267 | 1274 | 2972700 | 866 | 1039 | 227 |
+| Agent | Sessions | Prompt events | Prompt bytes | Task-body bytes | Verified sessions | Receipt sessions | Likely no-op/unrecorded |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `agy` | 15 | 30 | 273370 | 10095 | 0 | 0 | 15 |
+| `claude` | 1270 | 115915 | 247630632 | 243688433 | 765 | 847 | 340 |
+| `codex` | 1294 | 8095 | 18603686 | 13655980 | 1030 | 1056 | 238 |
+| `opencode` | 1267 | 1274 | 2972700 | 2972694 | 866 | 1039 | 227 |
+
+## Prompt Body Mix
+
+| Body kind | Prompt events |
+|---|---:|
+| `direct` | 121360 |
+| `flame_scaffold` | 2262 |
+| `flame_with_task_body` | 1677 |
+| `session_context` | 15 |
 
 ## Source Coverage
 
 | Source | Prompt events |
 |---|---:|
-| `claude-projects` | 115912 |
-| `codex-sessions` | 7113 |
+| `claude-projects` | 115915 |
+| `codex-sessions` | 7117 |
 | `opencode-db` | 1274 |
 | `codex-history` | 978 |
 | `gemini-tmp-agy` | 30 |
@@ -45,6 +55,23 @@ Each session is compared to this ideal form:
 - Prompt names the expected durable receipt: changed path, commit, PR, artifact, or blocker record.
 - Prompt separates reversible execution from human-gated outward/irreversible action.
 - Session outcome records verification and a durable receipt, or a precise blocker.
+
+## Ask-vs-Done Diff
+
+- Asked for every prompt verbatim: done in the private prompt corpus with hashes in the tracked report.
+- Asked for Codex, Claude, Agy/Antigravity, and OpenCode: covered Codex session/history JSONL, Claude project/task JSONL, OpenCode SQLite, and Agy/Gemini capfill JSONL; native Antigravity IDE state is inventoried but not fully decoded.
+- Asked for prompt layer first and session layer second: prompt events are normalized into raw prompt hashes plus task-body hashes, then sessions are scored against ideal-form outcome rules.
+- Asked for the diff between the ask and actual work: tracked at session level through missing scope, predicate, receipt, gate handling, verification, changed-file, token, and blocker signals.
+- Asked for a full work review: this pass is the corpus-wide receipt/outcome review; line-level code review should be driven next from the highest-risk session list rather than attempted as an unbounded manual sweep.
+
+## What Broke
+
+- `1185` sessions with prompts had no verification signal in the reviewed outcome text.
+- `904` sessions had no durable receipt signal or changed-file receipt.
+- `820` sessions look like no-op or unrecorded work because prompts exist but the outcome surface has no verification/receipt/change signal.
+- `3939` prompt events carried FLAME scaffolding; the task body is now separated, but older ledger views overcounted repeated invariant prompt mass as fresh work.
+- OpenCode had many sessions that only become trustworthy when its DB-backed token clock and receipt handshake are present; session rows alone are not enough.
+- Agy/Antigravity remains the weakest source surface because provider quota and native IDE conversations are not yet decoded as first-class prompt/session records.
 
 ## Highest-Risk Session Diffs
 
@@ -92,8 +119,8 @@ Each session is compared to this ideal form:
 ## Agent Notes
 
 - `agy`: top gaps: session outcome lacks verification signal (15), session outcome lacks durable receipt signal (15), likely no-op or unrecorded work (15).
-- `claude`: top gaps: session outcome lacks verification signal (504), session outcome lacks durable receipt signal (422), repeated broad/invariant prompt pressure (380), failure/blocker language outweighs done language (362), likely no-op or unrecorded work (339).
-- `codex`: top gaps: failure/blocker language outweighs done language (752), session outcome lacks verification signal (264), session outcome lacks durable receipt signal (238), likely no-op or unrecorded work (238), prompt missing executable predicate (221).
+- `claude`: top gaps: session outcome lacks verification signal (505), session outcome lacks durable receipt signal (423), repeated broad/invariant prompt pressure (367), failure/blocker language outweighs done language (362), likely no-op or unrecorded work (340).
+- `codex`: top gaps: failure/blocker language outweighs done language (754), session outcome lacks verification signal (264), prompt missing executable predicate (252), session outcome lacks durable receipt signal (238), likely no-op or unrecorded work (238).
 - `opencode`: top gaps: prompt missing expected receipt/artifact (549), session outcome lacks verification signal (400), prompt missing executable predicate (396), session outcome lacks durable receipt signal (227), likely no-op or unrecorded work (227).
 
 ## Antigravity/Agy Native Surface
@@ -105,10 +132,11 @@ Each session is compared to this ideal form:
 ## Next Repairs
 
 1. Add OpenCode and Agy sources to `prompt-lifecycle-ledger.py` so the standard ledger stops undercounting those agents.
-2. Add a compact prompt normalizer that separates invariant preamble hash from task body hash; review should diff the task body, not charge every FLAME repeat as a fresh unique ask.
+2. Promote this compact prompt normalizer into the standard ledger so it separates invariant preamble hash from task body hash everywhere.
 3. Require lane packets to include `owner_scope`, `predicate`, `expected_receipt`, and `gate_class` fields before dispatch to OpenCode/Agy/Claude/Jules.
 4. Add a native Agy provider clock or explicit quota receipt. The existing board-run clock is not equivalent to provider quota exhaustion.
 5. Flag sessions with `prompt_events > 0` and no verification/receipt as failed-unrecorded until a receipt or blocker is written.
+6. Use the top-risk session list as the queue for deeper code-diff review, starting with broad Claude sessions and no-receipt OpenCode/Agy sessions.
 
 ## Commands
 

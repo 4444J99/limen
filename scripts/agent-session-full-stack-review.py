@@ -65,6 +65,16 @@ SCOPE_RE = re.compile(
 PREDICATE_RE = re.compile(r"\b(test|verify|predicate|acceptance|done when|passes|green|run)\b", re.I)
 GATE_RE = re.compile(r"\b(gate|human|approval|do not|never|ask|confirm|irreversible|outward)\b", re.I)
 BROAD_RE = re.compile(r"\b(all|everything|full stack|autonomous|keep working|never stop|whole|entire|every)\b", re.I)
+TASK_BODY_MARKERS = (
+    "Complete task ",
+    "## Current task",
+    "## Task",
+    "## Work packet",
+    "## Packet",
+    "### Task",
+    "TASK:",
+    "Task:",
+)
 
 
 def now_iso() -> str:
@@ -160,6 +170,23 @@ def classify_prompt(text: str) -> dict[str, bool]:
     }
 
 
+def normalize_task_body(text: str) -> tuple[str, str]:
+    stripped = text.strip()
+    if stripped.startswith("<session_context>"):
+        return "", "session_context"
+    if stripped.startswith("# FLAME"):
+        positions = [(stripped.find(marker), marker) for marker in TASK_BODY_MARKERS if stripped.find(marker) >= 0]
+        if positions:
+            pos, marker = min(positions, key=lambda item: item[0])
+            body = stripped[pos:]
+            if marker.startswith("##"):
+                # Keep the marker heading and everything after it.
+                return body, "flame_with_task_body"
+            return body, "flame_with_task_body"
+        return "", "flame_scaffold"
+    return stripped, "direct"
+
+
 def outcome_signals(text: str) -> dict[str, int]:
     return {
         "verification": len(VERIFY_RE.findall(text)),
@@ -174,8 +201,10 @@ class Aggregator:
         self.sessions: dict[str, dict[str, Any]] = {}
         self.prompt_events = 0
         self.unique_prompt_hashes: set[str] = set()
+        self.unique_task_body_hashes: set[str] = set()
         self.source_counts: Counter[str] = Counter()
         self.agent_counts: Counter[str] = Counter()
+        self.body_kind_counts: Counter[str] = Counter()
         self.prompt_bytes_by_agent: Counter[str] = Counter()
         self.outcome_text_bytes = 0
         self.private_paths: set[str] = set()
@@ -197,7 +226,9 @@ class Aggregator:
                 "last_ts": None,
                 "prompt_events": 0,
                 "unique_prompt_hashes": set(),
+                "unique_task_body_hashes": set(),
                 "prompt_bytes": 0,
+                "task_body_bytes": 0,
                 "prompt_flags": Counter(),
                 "outcome": Counter(),
                 "changed_files": set(),
@@ -228,7 +259,10 @@ class Aggregator:
         extra: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         text = maybe_decode_wrapped_string(text)
+        task_body, body_kind = normalize_task_body(text)
+        classified_text = task_body or text
         prompt_hash = stable_hash(text)
+        task_body_hash = stable_hash(task_body) if task_body else None
         row = {
             "agent": agent,
             "source": source,
@@ -242,7 +276,10 @@ class Aggregator:
             "surface": surface,
             "prompt_hash": prompt_hash,
             "prompt_bytes": len(text.encode("utf-8", errors="replace")),
-            "flags": classify_prompt(text),
+            "task_body_hash": task_body_hash,
+            "task_body_bytes": len(task_body.encode("utf-8", errors="replace")),
+            "body_kind": body_kind,
+            "flags": classify_prompt(classified_text),
             "text": text,
         }
         if extra:
@@ -251,7 +288,10 @@ class Aggregator:
         session = self.session(agent, session_id, source, path)
         session["prompt_events"] += 1
         session["unique_prompt_hashes"].add(prompt_hash)
+        if task_body_hash:
+            session["unique_task_body_hashes"].add(task_body_hash)
         session["prompt_bytes"] += row["prompt_bytes"]
+        session["task_body_bytes"] += row["task_body_bytes"]
         if cwd and not session["cwd"]:
             session["cwd"] = cwd
         if title and not session["title"]:
@@ -259,14 +299,18 @@ class Aggregator:
         for flag, val in row["flags"].items():
             if val:
                 session["prompt_flags"][flag] += 1
+        session["prompt_flags"][f"body_kind:{body_kind}"] += 1
         for key in ("first_ts", "last_ts"):
             if ts and (session[key] is None or (key == "first_ts" and ts < session[key]) or (key == "last_ts" and ts > session[key])):
                 session[key] = ts
 
         self.prompt_events += 1
         self.unique_prompt_hashes.add(prompt_hash)
+        if task_body_hash:
+            self.unique_task_body_hashes.add(task_body_hash)
         self.source_counts[source] += 1
         self.agent_counts[agent] += 1
+        self.body_kind_counts[body_kind] += 1
         self.prompt_bytes_by_agent[agent] += row["prompt_bytes"]
         if len(self.samples_by_agent[agent]) < 5:
             self.samples_by_agent[agent].append(
@@ -275,6 +319,8 @@ class Aggregator:
                     "timestamp": ts,
                     "prompt_hash": prompt_hash[:16],
                     "bytes": row["prompt_bytes"],
+                    "task_body_bytes": row["task_body_bytes"],
+                    "body_kind": body_kind,
                     "flags": row["flags"],
                     "display_path": row["display_path"],
                 }
@@ -383,7 +429,9 @@ class Aggregator:
                     "paths": sorted(relpath(p) for p in item["paths"]),
                     "prompt_events": prompt_events,
                     "unique_prompts": len(item["unique_prompt_hashes"]),
+                    "unique_task_bodies": len(item["unique_task_body_hashes"]),
                     "prompt_bytes": item["prompt_bytes"],
+                    "task_body_bytes": item["task_body_bytes"],
                     "prompt_flags": dict(flags),
                     "outcome": dict(outcome),
                     "changed_files": changed[:100],
@@ -799,15 +847,10 @@ def summarize_agents(sessions: list[dict[str, Any]], agg: Aggregator) -> dict[st
         by_agent[agent] = {
             "sessions": len(agent_sessions),
             "prompt_events": sum(s["prompt_events"] for s in agent_sessions),
-            "unique_prompts": len(
-                {
-                    # session-level unique counts are enough for agent summary only if not exact;
-                    # exact global uniqueness is reported separately.
-                    (s["session_id"], s["unique_prompts"])
-                    for s in agent_sessions
-                }
-            ),
+            "session_unique_prompts_sum": sum(s["unique_prompts"] for s in agent_sessions),
+            "session_unique_task_bodies_sum": sum(s["unique_task_bodies"] for s in agent_sessions),
             "prompt_bytes": sum(s["prompt_bytes"] for s in agent_sessions),
+            "task_body_bytes": sum(s["task_body_bytes"] for s in agent_sessions),
             "sessions_with_verification": sum(1 for s in agent_sessions if s["outcome"].get("verification", 0) > 0),
             "sessions_with_receipts": sum(
                 1 for s in agent_sessions if s["outcome"].get("receipts", 0) > 0 or s["changed_file_count"] > 0
@@ -816,6 +859,21 @@ def summarize_agents(sessions: list[dict[str, Any]], agg: Aggregator) -> dict[st
                 1 for s in agent_sessions if "likely no-op or unrecorded work" in s["ideal_gaps"]
             ),
             "top_gaps": Counter(gap for s in agent_sessions for gap in s["ideal_gaps"]).most_common(8),
+            "body_kinds": dict(
+                sum(
+                    (
+                        Counter(
+                            {
+                                key.removeprefix("body_kind:"): value
+                                for key, value in (s.get("prompt_flags") or {}).items()
+                                if key.startswith("body_kind:")
+                            }
+                        )
+                        for s in agent_sessions
+                    ),
+                    Counter(),
+                )
+            ),
             "tokens": dict(sum((Counter(s.get("tokens") or {}) for s in agent_sessions), Counter())),
         }
     return by_agent
@@ -846,19 +904,33 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         f"- Structured review: `{private['structured_review']}`",
         f"- Prompt events extracted: `{counts['prompt_events']}`",
         f"- Unique prompt hashes: `{counts['unique_prompt_hashes']}`",
+        f"- Unique normalized task-body hashes: `{counts['unique_task_body_hashes']}`",
         f"- Sessions reviewed: `{counts['sessions']}`",
         f"- Outcome text scanned: `{counts['outcome_text_bytes']}` bytes",
         "",
         "## Agent Coverage",
         "",
-        "| Agent | Sessions | Prompt events | Prompt bytes | Verified sessions | Receipt sessions | Likely no-op/unrecorded |",
-        "|---|---:|---:|---:|---:|---:|---:|",
+        "| Agent | Sessions | Prompt events | Prompt bytes | Task-body bytes | Verified sessions | Receipt sessions | Likely no-op/unrecorded |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for agent, item in sorted(agent_summary.items()):
         lines.append(
             f"| `{agent}` | {item['sessions']} | {item['prompt_events']} | {item['prompt_bytes']} | "
-            f"{item['sessions_with_verification']} | {item['sessions_with_receipts']} | {item['likely_noop_or_unrecorded']} |"
+            f"{item['task_body_bytes']} | {item['sessions_with_verification']} | "
+            f"{item['sessions_with_receipts']} | {item['likely_noop_or_unrecorded']} |"
         )
+
+    lines.extend(
+        [
+            "",
+            "## Prompt Body Mix",
+            "",
+            "| Body kind | Prompt events |",
+            "|---|---:|",
+        ]
+    )
+    for kind, count in sorted(snapshot["body_kind_counts"].items(), key=lambda kv: (-kv[1], kv[0])):
+        lines.append(f"| `{kind}` | {count} |")
 
     lines.extend(
         [
@@ -872,6 +944,17 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
     for source, count in sorted(snapshot["source_counts"].items(), key=lambda kv: (-kv[1], kv[0])):
         lines.append(f"| `{source}` | {count} |")
 
+    total_unverified = sum(
+        item["sessions"] - item["sessions_with_verification"] for item in agent_summary.values()
+    )
+    total_unreceipted = sum(
+        item["sessions"] - item["sessions_with_receipts"] for item in agent_summary.values()
+    )
+    total_likely_noop = sum(item["likely_noop_or_unrecorded"] for item in agent_summary.values())
+    flame_events = snapshot["body_kind_counts"].get("flame_scaffold", 0) + snapshot["body_kind_counts"].get(
+        "flame_with_task_body", 0
+    )
+
     lines.extend(
         [
             "",
@@ -884,6 +967,23 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
             "- Prompt names the expected durable receipt: changed path, commit, PR, artifact, or blocker record.",
             "- Prompt separates reversible execution from human-gated outward/irreversible action.",
             "- Session outcome records verification and a durable receipt, or a precise blocker.",
+            "",
+            "## Ask-vs-Done Diff",
+            "",
+            "- Asked for every prompt verbatim: done in the private prompt corpus with hashes in the tracked report.",
+            "- Asked for Codex, Claude, Agy/Antigravity, and OpenCode: covered Codex session/history JSONL, Claude project/task JSONL, OpenCode SQLite, and Agy/Gemini capfill JSONL; native Antigravity IDE state is inventoried but not fully decoded.",
+            "- Asked for prompt layer first and session layer second: prompt events are normalized into raw prompt hashes plus task-body hashes, then sessions are scored against ideal-form outcome rules.",
+            "- Asked for the diff between the ask and actual work: tracked at session level through missing scope, predicate, receipt, gate handling, verification, changed-file, token, and blocker signals.",
+            "- Asked for a full work review: this pass is the corpus-wide receipt/outcome review; line-level code review should be driven next from the highest-risk session list rather than attempted as an unbounded manual sweep.",
+            "",
+            "## What Broke",
+            "",
+            f"- `{total_unverified}` sessions with prompts had no verification signal in the reviewed outcome text.",
+            f"- `{total_unreceipted}` sessions had no durable receipt signal or changed-file receipt.",
+            f"- `{total_likely_noop}` sessions look like no-op or unrecorded work because prompts exist but the outcome surface has no verification/receipt/change signal.",
+            f"- `{flame_events}` prompt events carried FLAME scaffolding; the task body is now separated, but older ledger views overcounted repeated invariant prompt mass as fresh work.",
+            "- OpenCode had many sessions that only become trustworthy when its DB-backed token clock and receipt handshake are present; session rows alone are not enough.",
+            "- Agy/Antigravity remains the weakest source surface because provider quota and native IDE conversations are not yet decoded as first-class prompt/session records.",
             "",
             "## Highest-Risk Session Diffs",
             "",
@@ -930,10 +1030,11 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
             "## Next Repairs",
             "",
             "1. Add OpenCode and Agy sources to `prompt-lifecycle-ledger.py` so the standard ledger stops undercounting those agents.",
-            "2. Add a compact prompt normalizer that separates invariant preamble hash from task body hash; review should diff the task body, not charge every FLAME repeat as a fresh unique ask.",
+            "2. Promote this compact prompt normalizer into the standard ledger so it separates invariant preamble hash from task body hash everywhere.",
             "3. Require lane packets to include `owner_scope`, `predicate`, `expected_receipt`, and `gate_class` fields before dispatch to OpenCode/Agy/Claude/Jules.",
             "4. Add a native Agy provider clock or explicit quota receipt. The existing board-run clock is not equivalent to provider quota exhaustion.",
             "5. Flag sessions with `prompt_events > 0` and no verification/receipt as failed-unrecorded until a receipt or blocker is written.",
+            "6. Use the top-risk session list as the queue for deeper code-diff review, starting with broad Claude sessions and no-receipt OpenCode/Agy sessions.",
             "",
             "## Commands",
             "",
@@ -958,10 +1059,12 @@ def build_snapshot() -> dict[str, Any]:
         "counts": {
             "prompt_events": agg.prompt_events,
             "unique_prompt_hashes": len(agg.unique_prompt_hashes),
+            "unique_task_body_hashes": len(agg.unique_task_body_hashes),
             "sessions": len(sessions),
             "outcome_text_bytes": agg.outcome_text_bytes,
         },
         "source_counts": dict(agg.source_counts),
+        "body_kind_counts": dict(agg.body_kind_counts),
         "agent_prompt_counts": dict(agg.agent_counts),
         "agents": summarize_agents(sessions, agg),
         "top_sessions": sessions[:200],
