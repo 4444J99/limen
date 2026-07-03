@@ -33,8 +33,10 @@ head or a chat):
   * DONE  — ``ianva/src/ianva/agents.py`` keys reconcile against census names (``test_census`` guards
             that every dispatchable ianva target is a canonical vendor; ``cline`` is the one MCP-only
             target, documented).
-  * TODO  — unify per-vendor model choice: ``dispatch._codex_model``/``_opencode_model`` are the
-            non-Claude analogue of ``model_selection``; ``Vendor.tiering`` marks who owns each.
+  * DONE (Increment-1) — per-vendor model choice is homed on ``Vendor.tiering`` and projected by
+            :func:`tiering`; ``test_census`` drift-guards it against a closed sentinel set. Remaining
+            Increment-2: make ``dispatch._codex_model``/``_opencode_model`` (the non-Claude analogue of
+            ``model_selection``) CONSUME :func:`tiering` instead of hard-coding who owns each.
 """
 
 from __future__ import annotations
@@ -334,6 +336,11 @@ def default_binaries() -> dict[str, str]:
 def kinds() -> dict[str, str]:
     """name -> lane kind (source of `capacity._KINDS`)."""
     return {v.name: v.kind for v in VENDORS}
+
+
+def tiering() -> dict[str, str]:
+    """name -> which model-selection layer owns its model choice (drift-guard for dispatch)."""
+    return {v.name: v.tiering for v in VENDORS}
 
 
 def lane_cascade() -> list[str]:
