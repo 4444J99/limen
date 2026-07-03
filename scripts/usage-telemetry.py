@@ -240,6 +240,66 @@ def codex_5h():
             "health": "ok", "note": "billable codex tokens (input+output, 5h)"}
 
 
+def codex_live_rate_limits() -> dict:
+    """Read Codex's vendor-reported rate-limit gauge from the newest session stream."""
+    base = HOME / ".codex" / "sessions"
+    try:
+        files = [p for p in base.rglob("rollout-*.jsonl") if p.is_file()]
+    except OSError:
+        return {}
+    if not files:
+        return {}
+    newest = max(files, key=lambda p: p.stat().st_mtime)
+    last: dict = {}
+    try:
+        for line in newest.read_text(encoding="utf-8", errors="ignore").splitlines():
+            if '"rate_limits"' not in line:
+                continue
+            try:
+                row = json.loads(line)
+            except Exception:
+                continue
+            payload = row.get("payload") if isinstance(row.get("payload"), dict) else {}
+            info = payload.get("info") if isinstance(payload.get("info"), dict) else {}
+            rate_limits = info.get("rate_limits") or payload.get("rate_limits")
+            if isinstance(rate_limits, dict):
+                last = rate_limits
+    except OSError:
+        return {}
+    return last
+
+
+def codex_vendor_gauge() -> dict | None:
+    """Return a percent-based Codex gauge when the vendor exposes one; otherwise None."""
+    rate_limits = codex_live_rate_limits()
+    primary = rate_limits.get("primary") if isinstance(rate_limits.get("primary"), dict) else {}
+    used = primary.get("used_percent")
+    if used is None:
+        return None
+    try:
+        used_pct = float(used)
+    except (TypeError, ValueError):
+        return None
+    window_minutes = primary.get("window_minutes")
+    try:
+        window_hours = max(1.0, float(window_minutes) / 60.0) if window_minutes else 5.0
+    except (TypeError, ValueError):
+        window_hours = 5.0
+    secondary = rate_limits.get("secondary") if isinstance(rate_limits.get("secondary"), dict) else {}
+    return {
+        "signal": "vendor-rate-limit",
+        "window": f"{window_hours:g}h rolling",
+        "consumed": used_pct,
+        "unit": "percent",
+        "health": "ok",
+        "note": "vendor-reported Codex rate-limit gauge",
+        "plan_type": rate_limits.get("plan_type"),
+        "resets_at": primary.get("resets_at"),
+        "weekly_used_percent": secondary.get("used_percent"),
+        "weekly_resets_at": secondary.get("resets_at"),
+    }
+
+
 def claude_5h():
     base = HOME / ".claude" / "projects"
     total = msgs = rate_limit_events = 0
@@ -356,6 +416,9 @@ def main():
         "jules": {"signal": "count", "window": "rolling 24h", "consumed": track.get("jules", 0),
                   "unit": "runs", "note": "count vs cap — the one true proxy"},
     }
+    codex_vendor = codex_vendor_gauge()
+    if codex_vendor is not None:
+        vendors["codex"].update(codex_vendor)
     for v in ("gemini", "agy"):
         vendors[v] = {"signal": "dispatch-count", "window": "today",
                       "consumed": dc.get(v, 0), "unit": "runs",
@@ -390,15 +453,22 @@ def main():
         # db-meter vendors (opencode) report real token consumption; use token_limit as possible.
         if v.get("signal") == "db-meter":
             possible = lim.get("token_limit") or v.get("possible")
+        elif v.get("signal") == "vendor-rate-limit":
+            possible = 100
         else:
             possible = lim.get("limit")
         v["possible"] = possible
-        v["limit_source"] = lim.get("source", "")
+        v["limit_source"] = "vendor rate_limits" if v.get("signal") == "vendor-rate-limit" else lim.get("source", "")
         if possible:
             remaining = max(0, possible - v["consumed"])
             v["remaining"] = remaining
             v["headroom_pct"] = round(remaining / possible * 100)
-            wh = _window_hours(lim.get("window") or v.get("window", ""))
+            window_label = (
+                v.get("window", "")
+                if v.get("signal") == "vendor-rate-limit"
+                else lim.get("window") or v.get("window", "")
+            )
+            wh = _window_hours(window_label)
             burn = round(v["consumed"] / wh) if wh else 0       # consumed-per-hour, in-window
             safe = round(possible / wh) if wh else 0            # cap-per-hour = steady-state ceiling
             v["window_hours"] = round(wh, 2)
@@ -448,7 +518,8 @@ def main():
     logs = ROOT / "logs"
     logs.mkdir(exist_ok=True)
     (logs / "usage.json").write_text(json.dumps(out, indent=2))
-    print(f"usage-telemetry: codex {vendors['codex']['consumed']}tok/5h · "
+    codex_suffix = "%" if vendors["codex"].get("unit") == "percent" else "tok"
+    print(f"usage-telemetry: codex {vendors['codex']['consumed']}{codex_suffix}/5h · "
           f"claude {vendors['claude']['consumed']}tok/5h · jules {vendors['jules']['consumed']}/100 · "
           f"gemini {vendors['gemini']['consumed']} · opencode {vendors['opencode']['consumed']} · agy {vendors['agy']['consumed']}")
     gated = [n for n, v in vendors.items() if v.get("tcc_gated")]

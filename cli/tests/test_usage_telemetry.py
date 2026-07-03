@@ -114,6 +114,79 @@ def test_claude_5h_usage_filters_rows_by_timestamp(tmp_path):
     assert data["vendors"]["claude"]["messages"] == 1
 
 
+def test_codex_vendor_rate_limits_override_transcript_estimate(tmp_path):
+    limen_root = tmp_path / "limen"
+    home = tmp_path / "home"
+    (limen_root / "logs").mkdir(parents=True)
+    session_dir = home / ".codex" / "sessions" / "2026" / "07" / "03"
+    session_dir.mkdir(parents=True)
+    (home / ".claude" / "projects").mkdir(parents=True)
+    (limen_root / "tasks.yaml").write_text(
+        yaml.safe_dump(
+            {
+                "version": "1.0",
+                "portal": {
+                    "budget": {
+                        "track": {"date": "2026-07-03", "spent": 0, "per_agent": {"jules": 0}},
+                        "per_agent": {"jules": 100},
+                    }
+                },
+                "tasks": [],
+            }
+        )
+    )
+    now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    (session_dir / "rollout-live.jsonl").write_text(
+        json.dumps(
+            {
+                "timestamp": now,
+                "type": "event_msg",
+                "payload": {
+                    "type": "token_count",
+                    "info": {
+                        "total_token_usage": {"input_tokens": 250_000_000, "output_tokens": 1},
+                        "rate_limits": {
+                            "plan_type": "plus",
+                            "primary": {
+                                "used_percent": 14,
+                                "window_minutes": 300,
+                                "resets_at": "2026-07-03T12:00:00Z",
+                            },
+                            "secondary": {
+                                "used_percent": 57,
+                                "window_minutes": 10080,
+                                "resets_at": "2026-07-06T12:00:00Z",
+                            },
+                        },
+                    },
+                },
+            }
+        )
+        + "\n"
+    )
+
+    env = os.environ.copy()
+    env["HOME"] = str(home)
+    env["LIMEN_ROOT"] = str(limen_root)
+    proc = subprocess.run(
+        [sys.executable, str(USAGE)],
+        cwd=ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    codex = json.loads((limen_root / "logs" / "usage.json").read_text())["vendors"]["codex"]
+    assert codex["signal"] == "vendor-rate-limit"
+    assert codex["unit"] == "percent"
+    assert codex["possible"] == 100
+    assert codex["consumed"] == 14
+    assert codex["remaining"] == 86
+    assert codex["health"] == "ok"
+    assert codex["weekly_used_percent"] == 57
+
+
 def _run_telemetry(tmp_path, jules_consumed, extra_env=None):
     """Run usage-telemetry.py with jules pre-consumed to `jules_consumed` (cap defaults to 100,
     24h window) and return the parsed usage.json vendors map."""
