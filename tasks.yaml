@@ -72072,7 +72072,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 2
-  status: open
+  status: failed
   labels:
   - revenue-ship
   - revenue
@@ -72090,7 +72090,7 @@ tasks:
     \ rank 3, stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-07-03T08:15:55.978401Z'
+  updated: '2026-07-03T08:34:37.943578Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:47:16.260739Z'
     agent: claude
@@ -72148,6 +72148,22 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->ollama
+  - timestamp: '2026-07-03T08:31:07.342422Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T09:00:00Z'
+    agent: opencode
+    session_id: cli
+    status: in_progress
+    output: 'Claimed task. Starting work: merge green PRs, fix failing CI, verify
+      build, update DEPLOY.md'
+  - timestamp: '2026-07-03T08:34:37.943578Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: REV-organvm-the-invisible-ledger-revenue-ship-0630
   title: Drive The Invisible Ledger to deploy-ready
   repo: organvm/the-invisible-ledger
@@ -72526,7 +72542,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: done
   labels:
   - organ-face
   - pillar:education
@@ -72548,7 +72564,7 @@ tasks:
     \ (VLTIMA).]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-07-03T08:26:11.803966Z'
+  updated: '2026-07-03T08:34:22Z'
   dispatch_log:
   - timestamp: '2026-06-30T16:00:55.195999Z'
     agent: claude
@@ -72596,6 +72612,13 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T08:34:22Z'
+    agent: limen
+    session_id: cli
+    status: done
+    output: 'Education organ face completed after partial Agy artifact: added organs/education/{CHARTER.md,MICRO-FACE.md,validate-education.py,engagements/*.yaml}
+      alongside KERNEL.md and MACRO-FACE.md; `python3 organs/education/validate-education.py
+      --fleet` passes 3/3.'
 - id: ORG-media-organ-deepen-0630
   title: Deepen the media organ toward a usable institution
   repo: organvm/limen
@@ -76539,7 +76562,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - ci-green
   - generated
@@ -76554,7 +76577,7 @@ tasks:
     endless]
   depends_on: []
   created: '2026-07-02'
-  updated: '2026-07-02T06:23:30.048422Z'
+  updated: '2026-07-03T08:31:07.342422Z'
   dispatch_log:
   - timestamp: '2026-07-02T04:33:46.431227Z'
     agent: claude
@@ -76588,6 +76611,18 @@ tasks:
     agent: codex
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-03T08:31:07.342422Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T08:34:00Z'
+    agent: agy
+    session_id: https://github.com/organvm/mirror-mirror/pull/99
+    status: pr_open
+    output: "Removed .github/workflows/deploy.yml \u2014 GitHub Pages 404 on private\
+      \ repo; Netlify handles deploy. CI (lint/typecheck/build/test) is the sole check\
+      \ and passes."
 - id: GEN-organvm-universal-mail--automation-ci-green-0702
   title: Make organvm/universal-mail--automation CI green
   repo: organvm/universal-mail--automation
