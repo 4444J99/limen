@@ -77863,7 +77863,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - organ-deepen
   - pillar:governance
@@ -77883,7 +77883,13 @@ tasks:
     \ \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-03'
-  dispatch_log: []
+  updated: '2026-07-03T10:36:36.527923Z'
+  dispatch_log:
+  - timestamp: '2026-07-03T10:36:36.527923Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: ORG-education-organ-face-0703
   title: Make the education organ's macro + micro face excellent
   repo: organvm/limen
@@ -78051,7 +78057,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - organ-selffeed
   - pillar:financial
@@ -78072,7 +78078,13 @@ tasks:
     \ idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-03'
-  dispatch_log: []
+  updated: '2026-07-03T10:36:36.527923Z'
+  dispatch_log:
+  - timestamp: '2026-07-03T10:36:36.527923Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: ORG-governance-organ-operationalize-0703
   title: Operationalize governance governance (rules as checks)
   repo: organvm/limen
