@@ -32628,7 +32628,7 @@ tasks:
   title: Raise test coverage in meta-organvm/visual-substrate-inquiry
   repo: organvm/visual-substrate-inquiry
   type: code
-  target_agent: claude
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -32649,7 +32649,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-03T07:43:21.136226Z'
+  updated: '2026-07-03T07:50:36.607965Z'
   dispatch_log:
   - timestamp: '2026-07-01T02:00:38.750210Z'
     agent: codex
@@ -34225,6 +34225,15 @@ tasks:
     agent: agy
     session_id: cli
     status: failed->claude
+  - timestamp: '2026-07-03T07:49:07.172510Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T07:50:36.607965Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
 - id: GEN-meta-organvm-meta-organvm.github.io-test-coverage-0620
   title: Raise test coverage in meta-organvm/meta-organvm.github.io
   repo: organvm/meta-organvm.github.io
@@ -36210,7 +36219,7 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/meta-organvm.github.io
   repo: organvm/meta-organvm.github.io
   type: code
-  target_agent: github_actions
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -36220,6 +36229,7 @@ tasks:
   - build-out
   - tried:agy
   - tried:gemini
+  - tried:github_actions
   urls: []
   context: Find the largest source module in organvm-i-theoria/meta-organvm.github.io
     with little or no test coverage and add a focused, PASSING test suite for it.
@@ -36227,7 +36237,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-01T23:40:48.985064Z'
+  updated: '2026-07-03T07:50:36.607965Z'
   dispatch_log:
   - timestamp: '2026-07-01T22:30:07.443680Z'
     agent: agy
@@ -36247,6 +36257,15 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->github_actions
+  - timestamp: '2026-07-03T07:49:07.172510Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T07:50:36.607965Z'
+    agent: github_actions
+    session_id: cli
+    status: failed->codex
 - id: GEN-organvm-i-theoria-4444j99.github.io-test-coverage-0620
   title: Raise test coverage in organvm-i-theoria/4444J99.github.io
   repo: organvm/4444J99.github.io
