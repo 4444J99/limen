@@ -84,6 +84,37 @@ def test_opencode_signal_quality_falls_back_without_clock(monkeypatch):
     assert signal["trust"] == "proxy"
 
 
+def test_codex_signal_quality_prefers_vendor_rate_limits(monkeypatch):
+    module = _load_capacity_fill_module()
+
+    def usage_vendor(agent):
+        if agent == "codex":
+            return {
+                "signal": "vendor-rate-limit",
+                "health": "ok",
+                "unit": "percent",
+                "consumed": 15.0,
+                "possible": 100,
+                "remaining": 85.0,
+                "headroom_pct": 85,
+                "weekly_used_percent": 58.0,
+                "limit_source": "vendor rate_limits",
+            }
+        return None
+
+    monkeypatch.setattr(module, "usage_vendor", usage_vendor)
+
+    signal = module.signal_quality("codex")
+
+    assert signal["signal"] == "vendor rate-limit meter"
+    assert signal["trust"] == "measured"
+    assert "usage health=ok" in signal["use"]
+    assert "used=15.0/100 percent" in signal["use"]
+    assert "remaining=85.0" in signal["use"]
+    assert "weekly=58.0%" in signal["use"]
+    assert "source=vendor rate_limits" in signal["use"]
+
+
 def test_proxy_lane_signal_reports_rate_limit_watch(monkeypatch):
     module = _load_capacity_fill_module()
     monkeypatch.setattr(module, "recent_rate_limit", lambda agent: agent == "agy")

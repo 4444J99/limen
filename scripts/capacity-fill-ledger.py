@@ -8,6 +8,7 @@ The command writes:
 It is intentionally read-only with respect to tasks/credentials/auth/deploy gates: this only
 re-derives reachability and remaining lane headroom from local receipts and configuration.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -23,9 +24,7 @@ from typing import Any
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 HOME = Path.home()
 DOC_PATH = ROOT / "docs" / "capacity-fill.md"
-PRIVATE_ROOT = Path(
-    os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus")
-)
+PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus"))
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "capacity-fill.json"
 TASKS_PATH = ROOT / "tasks.yaml"
 USAGE_PATH = ROOT / "logs" / "usage.json"
@@ -35,7 +34,6 @@ RATE_LIMIT_TAIL_LINES = 400
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
 from limen.capacity import capacity_census  # noqa: E402
-
 
 
 def load_tasks_board() -> dict[str, Any]:
@@ -144,6 +142,14 @@ def usage_signal_detail(agent: str) -> str | None:
     if headroom is not None:
         parts.append(f"headroom={headroom}%")
 
+    weekly = vendor.get("weekly_used_percent")
+    if weekly is not None:
+        parts.append(f"weekly={weekly}%")
+
+    limit_source = str(vendor.get("limit_source") or "").strip()
+    if limit_source:
+        parts.append(f"source={limit_source}")
+
     signal = vendor.get("signal")
     if signal and not parts:
         parts.append(f"usage signal={signal}")
@@ -204,16 +210,32 @@ def signal_use(agent: str, fallback: str) -> str:
     return f"{usage}; {fallback}"
 
 
+def codex_signal_quality() -> dict[str, str]:
+    vendor = usage_vendor("codex")
+    signal = str((vendor or {}).get("signal") or "").strip()
+    if signal == "vendor-rate-limit":
+        return {
+            "signal": "vendor rate-limit meter",
+            "trust": "measured",
+            "use": signal_use(
+                "codex",
+                "usable for pacing from provider rate_limits; weekly plan headroom is a steering input",
+            ),
+            "next_build": "Keep harvesting Codex vendor rate_limits into usage telemetry.",
+        }
+    return {
+        "signal": "transcript-token estimate",
+        "trust": "estimate",
+        "use": signal_use("codex", "usable for pacing; tune cap against plan status"),
+        "next_build": "Calibrate OpenAI plan pool cap from a trusted account meter.",
+    }
+
+
 def signal_quality(agent: str) -> dict[str, str]:
     agy_usage = usage_signal_detail("agy")
     gemini_usage = usage_signal_detail("gemini")
     rows: dict[str, dict[str, str]] = {
-        "codex": {
-            "signal": "transcript-token estimate",
-            "trust": "estimate",
-            "use": signal_use("codex", "usable for pacing; tune cap against plan status"),
-            "next_build": "Calibrate OpenAI plan pool cap from a trusted account meter.",
-        },
+        "codex": codex_signal_quality(),
         "claude": {
             "signal": "transcript-token estimate",
             "trust": "estimate",
