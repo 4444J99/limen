@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-07-02T22:06:45Z",
+  "generated_utc": "2026-07-03T05:40:00Z",
   "receipts": [
     {
       "branch": "limen/gen-organvm-universal-mail--automation-test-coverage-0625-151e",
@@ -26,6 +26,31 @@
         "api": 12,
         "mcp_server": 2
       }
+    },
+    {
+      "branch": "heal/derive-mediark-host-cloudflare",
+      "classification": "merged owner PR plus one unpushed owner-record commit",
+      "evidence_updated_utc": "2026-07-03T05:40:00Z",
+      "head": "0a4f21fdb152776383818e155b9c70a5ef38cd24",
+      "lane": "owner-blocker",
+      "merged_pr_head": "f20bb66f54283db99f66c3b4a26333d83e945a7a",
+      "merged_pr_number": 544,
+      "merged_pr_url": "https://github.com/organvm/limen/pull/544",
+      "next_action": "Do not delete, reclaim, or auto-port this Claude worktree without a narrower owner packet. PR #544 merged only through f20bb66, while local HEAD 0a4f21f remains unique and changes organs/media/NEXT.md to mark operator-cleared media-ark PR/issue atoms done. Preserve this as an owner blocker; if still wanted, port only that owner-record update onto current main with a named branch and predicate.",
+      "private_patch_bytes": 6238,
+      "private_patch_sha256": "c120e08f955899667f1d38bf30bf808e902d73c9dc118fc27f7afc6086288c1e",
+      "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/2026-07-03T054000Z-feat-gcp-sa-organ/receipt.json",
+      "remote_branch_present": false,
+      "repo": "organvm/limen",
+      "root": "feat-gcp-sa-organ",
+      "status": "owner_commit_needs_packet",
+      "touched_paths": [
+        "organs/media/NEXT.md"
+      ],
+      "unique_commits": [
+        "0a4f21fdb152776383818e155b9c70a5ef38cd24"
+      ],
+      "worktree": "/Users/4jp/limen/.claude/worktrees/feat-gcp-sa-organ"
     },
     {
       "branch": "limen/bld-mirror-mirror-harden-350f",
