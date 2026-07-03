@@ -299,6 +299,13 @@ while true; do
     # healthy board) and BEFORE the body's own queue mutation. Idempotent: an empty inbox is an
     # instant no-op (no lock, no board I/O), so it is safe every beat while no producers exist yet.
     [ "${LIMEN_TABVLARIVS:-1}" = "1" ] && python3 "$LIMEN_ROOT/scripts/tabularius-organ.py" 2>&1 | tail -1 || true
+    # ENACTMENT — surface any declared-ON fleet flag that is dark/stale in THIS running beat (memory:
+    # enacted-not-declared). THE LIVE-LOOP HOME: metabolize.sh has the same advisory but the daemon
+    # never runs metabolize (only saturate.sh does — route.py:208), so this line is what makes the
+    # check actually fire on the fleet. Spawned fresh each beat like the organs above → deploys on the
+    # next sync-release ff; but adding THIS line is a loop-body edit, so it needs a kickstart to load.
+    # Fail-open, log-only (never chat), like creds/link health in metabolize §0d.
+    [ "${LIMEN_ENACTMENT_CHECK:-1}" = "1" ] && python3 "$LIMEN_ROOT/scripts/enactment-audit.py" --check 2>&1 | tail -1 || true
     python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" 2>&1 | tail -1 || true   # refresh lane health BEFORE route/dispatch
     python3 "$LIMEN_ROOT/scripts/codex-token-accounting.py" \
       --since-hours "${LIMEN_CODEX_TOKEN_REPORT_HOURS:-6}" \
