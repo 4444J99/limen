@@ -196,6 +196,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Optional archive target list for substrate/product ledger classification. Read-only; no archive mutation."
+  LIMEN_WORKSPACE_UNIT_TIMEOUT_SEC:
+    default: 600                # seconds: per-entry rsync cap so one big repo copy never wedges the beat
+    env: LIMEN_WORKSPACE_UNIT_TIMEOUT_SEC
+    self_update: none
+    owner: continuity
+    note: "Hard timeout (s) for one top-level ~/Workspace entry's additive rsync inside preserve_workspace() (library-preserve.py), so a slow multi-GB repo copy never wedges the C_BACKUP beat."
   LIMEN_STORAGE_FREE_FLOOR_GIB:
     default: 5
     env: LIMEN_STORAGE_FREE_FLOOR_GIB
