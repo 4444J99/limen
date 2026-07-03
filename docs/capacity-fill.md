@@ -1,6 +1,6 @@
 # Capacity Fill
 
-Generated: `2026-07-03T06:03:12+00:00`
+Generated: `2026-07-03T06:09:26+00:00`
 Status: `blocked`
 
 ## Capacity Census
@@ -28,7 +28,7 @@ Status: `blocked`
 | `opencode` | db-meter | measured | best local paid-lane signal when the DB clock is present | Keep opencode-clock fresh from the SQLite usage DB. |
 | `agy` | dispatch-count proxy | proxy | reachable, but not proof of provider quota | Add a provider-backed Agy meter or recent rate-limit receipt. |
 | `gemini` | dispatch-count proxy | proxy | reachable when auth is configured; daily cap remains board-derived | Add a Gemini quota/rate-limit receipt if available. |
-| `ollama` | local model presence | binary/model | down until a model is pulled | Pull the configured local model to light the floor lane. |
+| `ollama` | local model presence | binary/model | down until a model is pulled | Clear local disk pressure before pulling qwen2.5-coder:7b; current free space is 20.6 GiB. |
 | `jules` | dispatch-count cap | known cap | down locally until CLI/service path is available | Restore Jules CLI/service reachability. |
 | `copilot` | assignability probe | reachability | down until Copilot coding agent assignment is confirmed | Enable Copilot coding agent and set LIMEN_COPILOT_ENABLED=1. |
 | `warp` | credential presence | credential gate | down until WARP_API_KEY is installed | Install WARP_API_KEY locally and as the workflow secret. |

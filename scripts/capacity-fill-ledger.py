@@ -14,6 +14,7 @@ import argparse
 import datetime as dt
 import json
 import os
+import shutil
 import sys
 from pathlib import Path
 from typing import Any
@@ -59,6 +60,21 @@ def stable_display(path: Path) -> str:
         return str(resolved)
 
 
+def disk_free_gib(path: Path = HOME) -> float | None:
+    try:
+        usage = shutil.disk_usage(path)
+    except OSError:
+        return None
+    return round(usage.free / (1024**3), 1)
+
+
+def ollama_next_build() -> str:
+    free_gib = disk_free_gib()
+    if free_gib is not None and free_gib < 50:
+        return f"Clear local disk pressure before pulling qwen2.5-coder:7b; current free space is {free_gib:g} GiB."
+    return "Pull the configured local model to light the floor lane."
+
+
 def signal_quality(agent: str) -> dict[str, str]:
     opencode_clock = HOME / ".local" / "share" / "opencode" / "clock.json"
     rows: dict[str, dict[str, str]] = {
@@ -102,7 +118,7 @@ def signal_quality(agent: str) -> dict[str, str]:
             "signal": "local model presence",
             "trust": "binary/model",
             "use": "down until a model is pulled",
-            "next_build": "Pull the configured local model to light the floor lane.",
+            "next_build": ollama_next_build(),
         },
         "jules": {
             "signal": "dispatch-count cap",
