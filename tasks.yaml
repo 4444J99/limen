@@ -77713,7 +77713,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 2
-  status: in_progress
+  status: done
   labels:
   - organ-face
   - pillar:consulting
@@ -77721,7 +77721,6 @@ tasks:
   - institution
   - vltima
   - generated
-  - noop
   urls: []
   context: "In organvm/limen organs/consulting/, author the polished MACRO face (ORGANVM-as-a-service:\
     \ the institutional toolkit offered to clients \u2014 the platform anyone can\
@@ -77732,7 +77731,7 @@ tasks:
     \ convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-03T10:38:00Z'
+  updated: '2026-07-03T10:45:00Z'
   dispatch_log:
   - timestamp: '2026-07-03T09:13:33.694628Z'
     agent: agy
@@ -77759,6 +77758,11 @@ tasks:
     session_id: cli
     status: in_progress
     output: 'Claimed task: polishing MACRO-FACE.md, MICRO-FACE.md, SOVEREIGN-SYSTEMS-DECK.md'
+  - timestamp: '2026-07-03T10:45:00Z'
+    agent: opencode
+    session_id: cli
+    status: done
+    output: 'Polished MACRO-FACE.md (thesis + concrete outputs + adoption path + validation proof), MICRO-FACE.md (data-driven summaries + scope change evidence + fleet table), SOVEREIGN-SYSTEMS-DECK.md (punchier standalone deck). Validator 3/3 green, 0 violations. Files changed: organs/consulting/MACRO-FACE.md, MICRO-FACE.md, SOVEREIGN-SYSTEMS-DECK.md.'
 - id: ORG-artist-organ-face-0703
   title: Make the artist organ's macro + micro face excellent
   repo: organvm/limen

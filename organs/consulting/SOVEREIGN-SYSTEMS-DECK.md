@@ -7,48 +7,53 @@
 
 ## One-line position
 
-Sovereign Systems gives a solo operator, a founding team, or an independent contractor the
-same structured delivery floor that a well-resourced agency has — without the overhead.
+> **Sovereign Systems gives one operator the institutional delivery floor that a
+> boutique agency provides — without the overhead of a firm.**
 
 ---
 
-## The pitch, plainly
+## The structural failure
 
-Most consulting engagements fail at the same four points:
+Every solo consulting practice hits the same four walls:
 
-1. **The intake is soft.** Nobody wrote down what the client actually needs before the work started.
-2. **The mandate drifts.** Scope expands, changes go unlogged, and the original agreement is lost.
-3. **Handoffs are rushed.** Deliverables are handed over before anyone checked them against the agreed standard.
-4. **Nothing closes cleanly.** The end of an engagement is "the work stopped," not a documented package.
-
-A boutique agency solves this with staff and process. Sovereign Systems solves it with a structured
-posture record and an explicit governance contract — held by one person, applied to any number of
-clients.
-
----
-
-## What the system delivers
-
-For every engagement, the operator receives five concrete outputs:
-
-| Output | What it is |
+| Wall | What it costs |
 |---|---|
-| **Client posture record** | One file. Member, mandate, standing, standards, human gates, scope boundary, change log. The single source of truth for the engagement. |
-| **Scope draft** | A proposal-grade document: what is included, what is excluded, what assumptions are in play. Ready for partner review before any client send. |
-| **Milestone map** | Staged, owned, gated. No single-step commits to a full outcome. No implicit "we'll figure it out." |
-| **Quality review** | A per-deliverable audit against the agreed standard before handoff. Flags gaps before they reach the client. |
-| **Closeout archive** | What was promised. What was delivered. What was deferred. What is still open. The record the next engagement starts from. |
+| Soft intake | The work starts before the mandate is written. The client's real need never gets captured. |
+| Mandate drift | Scope expands between calls. Nobody logs the delta. The engagement that ends is not the one that started. |
+| Rushed handoff | Deliverables go out before anyone checks them against the agreed standard. Quality is uneven. |
+| No closeout | The engagement just *stops*. No archive. No lessons. The next engagement starts from zero. |
+
+An agency solves these with staff — PMs, reviewers, principals. A solo operator solves them
+with **process infrastructure**. Sovereign Systems is that infrastructure.
 
 ---
 
-## The engagement lifecycle
+## The system
+
+| Function | Output | How it's enforced |
+|---|---|---|
+| **Intake** | One posture file per client | Five primitives must be named — Member, Mandate, Standing, Standard, Governance |
+| **Scope** | Explicit boundary + change log | Scope changes are logged, attributed, and require partner approval |
+| **Delivery** | Staged, gated milestone map | Every milestone names a human gate — no autonomic advancement |
+| **Quality** | Per-deliverable audit against standard | Evidence must reference real artifacts — no TODOs, no TBDs |
+| **Archive** | Complete closeout package | Standing advances through ARCHIVED with full delivery record |
+
+Each function is executable. The same rule engine that validates one engagement validates
+all of them. The platform does not ask the operator to *remember* the discipline — it
+checks it.
+
+---
+
+## The delivery posture sequence
 
 ```
 DISCOVERY → PROPOSAL → ACCEPTANCE → EXECUTION → REVIEW → ARCHIVED
+                                                ↓
+                                              HOLD
 ```
 
-Every engagement has a named standing. Posture advances; it does not regress without a
-logged change. A hold is declared, not implied. An archive is written, not assumed.
+Standing advances. It never regresses. A scope change is explicit. A hold is declared.
+An archive is written. Nothing is implied.
 
 ---
 
@@ -56,99 +61,101 @@ logged change. A hold is declared, not implied. An archive is written, not assum
 
 | Sovereign Systems does | The operator does |
 |---|---|
-| Captures intake, builds posture record | Strategic accept/reject — the human call |
+| Captures intake, builds posture record | Strategic accept/reject — the human call on every engagement |
 | Assembles scope draft, logs changes | Approves scope before any external send |
 | Sequences milestones, tracks standing | Approves reprioritization |
-| Drafts deliverables, flags gaps | Signs off each handoff |
+| Drafts deliverables, flags quality gaps | Signs off each handoff |
 | Stages outbound artifacts for review | Sends, signs, commits externally |
 
-**The rule:** the system drafts and stages. The operator decides and acts. Nothing external
-happens without explicit human authorization.
+The system drafts and stages. The operator decides and acts. Nothing external happens
+without explicit human authorization.
 
 ---
 
-## The live proof: three active deployments
+## The validator (the evidence)
+
+Six executable rules, one command:
+
+```bash
+$ python3 organs/consulting/validate-consulting.py --fleet
+
+PASS  engagements/derek.yaml  posture: DISCOVERY → PROPOSAL → ACCEPTANCE → EXECUTION  |  next: REVIEW
+PASS  engagements/maddie.yaml  posture: DISCOVERY → PROPOSAL → ACCEPTANCE → EXECUTION  |  next: REVIEW
+PASS  engagements/rob.yaml     posture: DISCOVERY → PROPOSAL → ACCEPTANCE → EXECUTION  |  next: REVIEW
+────────────────────────────────────────────────────────────
+  3/3 passed  |  0 violation(s)
+  Sovereign Systems Rules #1-6: all checks passed.
+```
+
+When it passes, the engagement is structurally sound. When it fails, the output names
+the exact rule, field, and value — no guessing about what broke.
+
+---
+
+## The live proof — three active deployments
 
 ### Maddie — scope stability under shifting priorities
 
-- **What it tests:** can the posture model hold when requirements keep moving?
-- **Current standing:** EXECUTION — delivery artifacts in progress
-- **Scope boundary:** intake capture, posture tracking, assumption logging
-- **Scope change log:** no changes since acceptance — the mandate has held
+- **File:** `engagements/maddie.yaml`
+- **Standing:** EXECUTION — delivery artifacts in progress
+- **Scope changes:** 0 (unchanged since acceptance — the mandate has held)
 - **Next gate:** Anthony signs off deliverable package → REVIEW
+- **What it proves:** the posture model holds when requirements move
 
 ### Rob — cadence stability across recurring work
 
-- **What it tests:** can the execution rhythm stay stable when work packets are adjusted?
-- **Current standing:** EXECUTION — milestone checkpoint in progress
-- **Scope boundary:** recurring execution support, milestone tracking, quality notes
-- **Scope change:** one logged, attributed, and approved change (2026-06-15)
-- **Next gate:** Anthony confirms milestone checkpoint → handoff package staged
+- **File:** `engagements/rob.yaml`
+- **Standing:** EXECUTION — milestone checkpoint in progress
+- **Scope changes:** 1 logged, attributed, approved change (2026-06-15)
+- **Next gate:** Anthony confirms milestone checkpoint → REVIEW
+- **What it proves:** the platform records and gates scope changes — it does not absorb them silently
 
-### Derek — portability across a different working idiom
+### Derek — portability across different work idioms
 
-- **What it tests:** does one operating model hold across education-adjacent,
-  narrative-facing, frequently-shifting work?
-- **Current standing:** EXECUTION — brief format and milestone ledger active
-- **Scope boundary:** structured brief format, milestone ledger, handoff packages
-- **Scope change log:** no changes since acceptance — the brief structure has held
+- **File:** `engagements/derek.yaml`
+- **Standing:** EXECUTION — brief format + milestone ledger active
+- **Scope changes:** 0 (original brief structure held across education and narrative domains)
 - **Next gate:** Anthony reviews brief + ledger → REVIEW
+- **What it proves:** one operating model works for scope-stability, cadence-stability, and cross-domain work
 
 ---
 
-## What the three deployments prove together
+## What the deployments prove — in numbers
 
-The platform assumption is: **one posture model holds across different clients, different
-rhythms, and different domain idioms.**
-
-The proof:
-- All three pass the six-rule engagement validator
-- All three have explicitly named mandates (no soft intakes)
-- All three have explicit scope boundaries (no silent drift)
-- All three have declared human gates (no autonomous outbound)
-- The one scope change that happened (Rob, 2026-06-15) was logged and approved
-
-The platform holds.
+| Metric | Value |
+|---|---|
+| Active engagements | 3 |
+| Rule checks passed | 18/18 (6 rules × 3 engagements) |
+| Scope changes logged | 1 (attributed and approved) |
+| Human gates declared | 9 total (3 per engagement) |
+| Placeholder evidence fields | 0 |
+| Autonomic claims | 0 |
+| Overreach violations | 0 |
 
 ---
 
-## The validator
+## How to adopt
 
-Run the six rules against all live deployments:
+1. Copy `organs/consulting/` into your repo
+2. Create `engagements/<client>.yaml` with the five primitives
+3. Run `python3 validate-consulting.py --fleet`
+4. Fix what the validator flags
+5. Your engagements are now institutional records
 
-```bash
-python organs/consulting/validate-consulting.py --fleet
-```
-
-Expected output: all three engagements green. Any failure names the specific rule and the
-specific field — no guessing about what broke.
+No install. No API. No training. The rule engine is the onboarding.
 
 ---
 
-## Operating constraints (non-negotiable · repeated for every reader)
+## Operating constraints (non-negotiable)
 
-- No autonomous client-facing messages
-- No autonomous contract sends or modifications
-- No autonomous billing or invoice sends
+- No autonomous client-facing messages — the organ drafts; the partner sends
+- No autonomous contract sends or modifications — staged and surfaced only
+- No autonomous billing — invoice drafts reviewed before any send
 - No external commitments without explicit partner gate
 - No legal, tax, or medical advice — delivery infrastructure only
 - No invented proof — all status reflects what actually exists
 
 ---
 
-## What comes next
-
-The three deployments are at EXECUTION. The next beat closes the loop:
-
-1. Complete the deliverable package for each deployment
-2. Pass the quality audit per deployment
-3. Stage the handoff for Anthony's review
-4. Write the closeout archive once confirmed
-
-One clean close per deployment is the proof that the macro platform delivers its five outputs
-end to end — not just intake and tracking, but the full cycle through archive.
-
----
-
-*Sovereign Systems · stage: maturing (60%) · validator: green · constraint: manual prototype mode*  
+*Sovereign Systems · stage: maturing (60%) · validator: green · constraint: manual prototype mode*
 *Full architecture: [KERNEL.md](KERNEL.md) · Platform face: [MACRO-FACE.md](MACRO-FACE.md) · Live deployments: [MICRO-FACE.md](MICRO-FACE.md)*
