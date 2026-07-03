@@ -228,6 +228,42 @@ def _has_done_transition(task: Task) -> bool:
     return any(str(entry.status or "") == "done" for entry in (task.dispatch_log or []))
 
 
+def _has_pr_open_transition(task: Task) -> bool:
+    """True once a task has recorded a durable open-PR receipt.
+
+    Open PRs are not terminal like `done`, but they are durable work receipts. A later stale
+    local no-op result must not demote the task or invite duplicate dispatch against the same
+    owner repo.
+    """
+    return any(str(entry.status or "") == "pr_open" for entry in (task.dispatch_log or []))
+
+
+def _restore_pr_open_status(
+    task: Task,
+    now: datetime,
+    *,
+    agent: str = "limen",
+    session_id: str = "pr-open-lifecycle-guard",
+    output: str = "dispatch result ignored because this task already recorded an open PR",
+) -> bool:
+    """Keep an open-PR task out of no-op/failed churn."""
+    if not _has_pr_open_transition(task):
+        return False
+    if task.status != "dispatched":
+        task.status = "dispatched"
+    task.updated = now
+    task.dispatch_log.append(
+        DispatchLogEntry(
+            timestamp=now,
+            agent=agent,
+            session_id=session_id,
+            status="pr_open",
+            output=output,
+        )
+    )
+    return True
+
+
 def _restore_done_status(
     task: Task,
     now: datetime,
@@ -261,7 +297,7 @@ def _dispatchable(task: Task) -> bool:
     """Open machine-work only. Human-gated or already-done work is never reserved."""
     if task.status != "open":
         return False
-    if _has_done_transition(task):
+    if _has_done_transition(task) or _has_pr_open_transition(task):
         return False
     return "needs-human" not in (task.labels or [])
 
@@ -1490,6 +1526,13 @@ def _apply_result(task: Task, agent: str, result: bool | str, now: datetime, tra
         agent=agent,
         session_id="result-lifecycle-guard",
         output="dispatch result ignored because this task already recorded done",
+    ):
+        return
+    if result in {_NOOP, False} and _restore_pr_open_status(
+        task,
+        now,
+        agent=agent,
+        session_id="result-lifecycle-guard",
     ):
         return
 

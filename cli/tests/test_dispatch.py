@@ -453,6 +453,39 @@ def test_noop_result_stays_recoverable_not_cancelled() -> None:
     assert task.dispatch_log[-1].status == "failed"
 
 
+def test_pr_open_receipt_blocks_duplicate_dispatch_and_noop_demotion() -> None:
+    import datetime
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    task = Task(
+        id="PR-OPEN",
+        title="already has a PR",
+        target_agent="opencode",
+        status="open",
+        created=date(2026, 6, 27),
+        labels=[],
+        dispatch_log=[
+            DispatchLogEntry(
+                timestamp=now,
+                agent="agy",
+                session_id="https://github.com/x/y/pull/99",
+                status="pr_open",
+                output="PR is open and green",
+            )
+        ],
+    )
+
+    assert D._dispatchable(task) is False
+
+    task.status = "dispatched"
+    D._apply_result(task, "opencode", D._NOOP, now, BudgetTrack(date="2026-06-27"))
+
+    assert task.status == "dispatched"
+    assert "noop" not in task.labels
+    assert task.dispatch_log[-1].status == "pr_open"
+    assert task.dispatch_log[-1].session_id == "result-lifecycle-guard"
+
+
 def test_blocked_result_is_terminal_failed_blocked() -> None:
     import datetime
 
