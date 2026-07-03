@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-07-02'
-      spent: 207
+      spent: 211
       per_agent:
         jules: 100
         gemini: 0
-        codex: 76
-        opencode: 17
+        codex: 79
+        opencode: 18
         agy: 14
         claude: 0
       per_agent_reset:
@@ -32628,7 +32628,7 @@ tasks:
   title: Raise test coverage in meta-organvm/visual-substrate-inquiry
   repo: organvm/visual-substrate-inquiry
   type: code
-  target_agent: opencode
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: dispatched
@@ -32649,7 +32649,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-02T22:10:26.891750Z'
+  updated: '2026-07-03T05:35:01.004116Z'
   dispatch_log:
   - timestamp: '2026-07-01T02:00:38.750210Z'
     agent: codex
@@ -33892,11 +33892,267 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T22:21:06.057375Z'
+    agent: opencode
+    session_id: cli
+    status: failed->agy
+  - timestamp: '2026-07-02T22:21:20.922973Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T22:39:09.327533Z'
+    agent: agy
+    session_id: cli
+    status: failed->github_actions
+  - timestamp: '2026-07-02T22:39:26.107929Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T22:59:16.067867Z'
+    agent: github_actions
+    session_id: cli
+    status: failed->codex
+    output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-02T22:59:23.613819Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T23:09:23.270346Z'
+    agent: codex
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-07-02T23:09:39.696909Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T23:20:37.847319Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-02T23:20:53.208807Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T23:39:53.151676Z'
+    agent: opencode
+    session_id: cli
+    status: failed->agy
+  - timestamp: '2026-07-02T23:40:08.619154Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T23:51:10.454918Z'
+    agent: agy
+    session_id: cli
+    status: failed->github_actions
+  - timestamp: '2026-07-02T23:51:21.312824Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T00:00:23.372839Z'
+    agent: github_actions
+    session_id: cli
+    status: failed->codex
+    output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-03T00:00:38.876244Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T00:19:19.814047Z'
+    agent: codex
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-07-03T00:19:35.776496Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T01:02:38.367206Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-03T01:02:53.097287Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T01:14:49.754399Z'
+    agent: opencode
+    session_id: cli
+    status: failed->agy
+  - timestamp: '2026-07-03T01:15:05.635884Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T01:31:50.771816Z'
+    agent: agy
+    session_id: cli
+    status: failed->gemini
+  - timestamp: '2026-07-03T01:32:07.418114Z'
+    agent: gemini
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T01:43:12.198015Z'
+    agent: gemini
+    session_id: cli
+    status: failed->github_actions
+  - timestamp: '2026-07-03T01:43:28.659569Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T01:55:47.103646Z'
+    agent: github_actions
+    session_id: cli
+    status: failed->codex
+    output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-03T01:56:02.984845Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T02:14:27.049022Z'
+    agent: codex
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-07-03T02:14:41.948966Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T02:25:20.988908Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-03T02:25:33.786655Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T02:37:15.242670Z'
+    agent: opencode
+    session_id: cli
+    status: failed->agy
+  - timestamp: '2026-07-03T02:37:31.743888Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T03:04:27.377966Z'
+    agent: agy
+    session_id: cli
+    status: failed->gemini
+  - timestamp: '2026-07-03T03:04:44.508243Z'
+    agent: gemini
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T03:16:26.461063Z'
+    agent: gemini
+    session_id: cli
+    status: failed->github_actions
+  - timestamp: '2026-07-03T03:16:32.481427Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T03:25:04.727084Z'
+    agent: github_actions
+    session_id: cli
+    status: failed->codex
+    output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-03T03:25:20.488358Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T03:44:06.528446Z'
+    agent: codex
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-07-03T03:44:17.793006Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T03:58:14.825557Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-03T03:58:31.361812Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T04:09:39.932064Z'
+    agent: opencode
+    session_id: cli
+    status: failed->agy
+  - timestamp: '2026-07-03T04:09:56.109616Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T04:26:41.978150Z'
+    agent: agy
+    session_id: cli
+    status: failed->gemini
+  - timestamp: '2026-07-03T04:38:16.134532Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T04:55:08.695558Z'
+    agent: codex
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-07-03T04:55:25.232350Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T05:13:58.915986Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-03T05:14:15.100644Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T05:24:35.349173Z'
+    agent: opencode
+    session_id: cli
+    status: failed->agy
+  - timestamp: '2026-07-03T05:24:44.469312Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T05:34:48.814626Z'
+    agent: agy
+    session_id: cli
+    status: failed->gemini
+  - timestamp: '2026-07-03T05:35:01.004116Z'
+    agent: gemini
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-meta-organvm-meta-organvm.github.io-test-coverage-0620
   title: Raise test coverage in meta-organvm/meta-organvm.github.io
   repo: organvm/meta-organvm.github.io
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: dispatched
@@ -33917,7 +34173,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-02T22:10:26.891750Z'
+  updated: '2026-07-03T05:35:01.004116Z'
   dispatch_log:
   - timestamp: '2026-07-01T01:33:31.331859Z'
     agent: opencode
@@ -34494,6 +34750,244 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T22:21:06.057375Z'
+    agent: codex
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-07-02T22:21:20.922973Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T22:39:09.327533Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-02T22:39:26.107929Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T22:59:16.067867Z'
+    agent: opencode
+    session_id: cli
+    status: failed->agy
+  - timestamp: '2026-07-02T22:59:23.613819Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T23:09:23.270346Z'
+    agent: agy
+    session_id: cli
+    status: failed->github_actions
+  - timestamp: '2026-07-02T23:09:39.696909Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T23:20:37.847319Z'
+    agent: github_actions
+    session_id: cli
+    status: failed->codex
+    output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-02T23:20:53.208807Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T23:39:53.151676Z'
+    agent: codex
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-07-02T23:40:08.619154Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T23:51:10.454918Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-02T23:51:21.312824Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T00:00:23.372839Z'
+    agent: opencode
+    session_id: cli
+    status: failed->agy
+  - timestamp: '2026-07-03T00:00:38.876244Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T00:19:19.814047Z'
+    agent: agy
+    session_id: cli
+    status: failed->gemini
+  - timestamp: '2026-07-03T00:19:35.776496Z'
+    agent: gemini
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T01:02:38.367206Z'
+    agent: gemini
+    session_id: cli
+    status: failed->github_actions
+  - timestamp: '2026-07-03T01:02:53.097287Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T01:14:49.754399Z'
+    agent: github_actions
+    session_id: cli
+    status: failed->codex
+    output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-03T01:15:05.635884Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T01:31:50.771816Z'
+    agent: codex
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-07-03T01:32:07.418114Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T01:43:12.198015Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-03T01:43:28.659569Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T01:55:47.103646Z'
+    agent: opencode
+    session_id: cli
+    status: failed->agy
+  - timestamp: '2026-07-03T01:56:02.984845Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T02:14:27.049022Z'
+    agent: agy
+    session_id: cli
+    status: failed->gemini
+  - timestamp: '2026-07-03T02:14:41.948966Z'
+    agent: gemini
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T02:25:20.988908Z'
+    agent: gemini
+    session_id: cli
+    status: failed->github_actions
+  - timestamp: '2026-07-03T02:25:33.786655Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T02:37:15.242670Z'
+    agent: github_actions
+    session_id: cli
+    status: failed->codex
+    output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-03T02:37:31.743888Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T03:04:27.377966Z'
+    agent: codex
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-07-03T03:04:44.508243Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T03:16:26.461063Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-03T03:16:32.481427Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T03:25:04.727084Z'
+    agent: opencode
+    session_id: cli
+    status: failed->agy
+  - timestamp: '2026-07-03T03:25:20.488358Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T03:44:06.528446Z'
+    agent: agy
+    session_id: cli
+    status: failed->gemini
+  - timestamp: '2026-07-03T03:44:17.793006Z'
+    agent: gemini
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T03:58:14.825557Z'
+    agent: gemini
+    session_id: cli
+    status: failed->github_actions
+  - timestamp: '2026-07-03T03:58:31.361812Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T04:09:39.932064Z'
+    agent: github_actions
+    session_id: cli
+    status: failed->codex
+    output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-03T04:09:56.109616Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T04:26:41.978150Z'
+    agent: codex
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-07-03T04:26:57.887899Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T04:37:59.806104Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-03T04:55:25.232350Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T05:13:58.915986Z'
+    agent: opencode
+    session_id: cli
+    status: failed->agy
+  - timestamp: '2026-07-03T05:35:01.004116Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-meta-organvm-digital-income-organism-inquiry-test-coverage-0620
   title: Raise test coverage in meta-organvm/digital-income-organism-inquiry
   repo: organvm/digital-income-organism-inquiry
@@ -34608,7 +35102,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-02T22:10:17.746434Z'
+  updated: '2026-07-03T04:26:41.978150Z'
   dispatch_log:
   - timestamp: '2026-07-01T02:37:53.707333Z'
     agent: codex
@@ -35056,6 +35550,208 @@ tasks:
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-02T22:10:17.746434Z'
+    agent: opencode
+    session_id: cli
+    status: failed->agy
+  - timestamp: '2026-07-02T22:39:26.107929Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T22:59:16.067867Z'
+    agent: agy
+    session_id: cli
+    status: failed->github_actions
+  - timestamp: '2026-07-02T22:59:23.613819Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T23:09:23.270346Z'
+    agent: github_actions
+    session_id: cli
+    status: failed->codex
+    output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-02T23:09:39.696909Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T23:20:37.847319Z'
+    agent: codex
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-07-02T23:20:53.208807Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T23:39:53.151676Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-02T23:40:08.619154Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T23:51:10.454918Z'
+    agent: opencode
+    session_id: cli
+    status: failed->agy
+  - timestamp: '2026-07-02T23:51:21.312824Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T00:00:23.372839Z'
+    agent: agy
+    session_id: cli
+    status: failed->github_actions
+  - timestamp: '2026-07-03T00:00:38.876244Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T00:19:19.814047Z'
+    agent: github_actions
+    session_id: cli
+    status: failed->codex
+    output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-03T00:19:35.776496Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T01:02:38.367206Z'
+    agent: codex
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-07-03T01:02:53.097287Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T01:14:49.754399Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-03T01:15:05.635884Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T01:31:50.771816Z'
+    agent: opencode
+    session_id: cli
+    status: failed->agy
+  - timestamp: '2026-07-03T01:32:07.418114Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T01:43:12.198015Z'
+    agent: agy
+    session_id: cli
+    status: failed->gemini
+  - timestamp: '2026-07-03T01:43:28.659569Z'
+    agent: gemini
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T01:55:47.103646Z'
+    agent: gemini
+    session_id: cli
+    status: failed->github_actions
+  - timestamp: '2026-07-03T01:56:02.984845Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T02:14:27.049022Z'
+    agent: github_actions
+    session_id: cli
+    status: failed->codex
+    output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-03T02:14:41.948966Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T02:25:20.988908Z'
+    agent: codex
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-07-03T02:25:33.786655Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T02:37:15.242670Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-03T02:37:31.743888Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T03:04:27.377966Z'
+    agent: opencode
+    session_id: cli
+    status: failed->agy
+  - timestamp: '2026-07-03T03:04:44.508243Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T03:16:26.461063Z'
+    agent: agy
+    session_id: cli
+    status: failed->gemini
+  - timestamp: '2026-07-03T03:16:32.481427Z'
+    agent: gemini
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T03:25:04.727084Z'
+    agent: gemini
+    session_id: cli
+    status: failed->github_actions
+  - timestamp: '2026-07-03T03:25:20.488358Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T03:44:06.528446Z'
+    agent: github_actions
+    session_id: cli
+    status: failed->codex
+    output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-03T03:44:17.793006Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T03:58:14.825557Z'
+    agent: codex
+    session_id: cli
+    status: failed->claude
+  - timestamp: '2026-07-03T03:58:31.361812Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T04:09:39.932064Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-03T04:09:56.109616Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T04:26:41.978150Z'
     agent: opencode
     session_id: cli
     status: failed->agy
@@ -61616,12 +62312,11 @@ tasks:
   - needs-human
   urls: []
   context: "Cheapest path \u2192 land the credential/secret (your account/identity).\
-    \ Unblocks: Audit Codex handoff and validate token-accountin, wrangler credential\
-    \ persistence. Auto-hung by QUICKEN (finish-not-park); refreshes each beat until\
-    \ you act."
+    \ Unblocks: Audit Codex handoff and validate token-accountin. Auto-hung by QUICKEN\
+    \ (finish-not-park); refreshes each beat until you act."
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-07-02T21:39:20.552603Z'
+  updated: '2026-07-03T04:47:20.425289Z'
   dispatch_log: []
 - id: ASK-quicken-d2l
   title: the D2L go-live click + cadence confirm (your login + judgment)
@@ -75198,7 +75893,7 @@ tasks:
     \ refreshes each beat until you act."
   depends_on: []
   created: '2026-07-01'
-  updated: '2026-07-02T21:39:20.552603Z'
+  updated: '2026-07-03T03:54:38.477929Z'
   dispatch_log: []
 - id: GEN-organvm-session-meta-test-coverage-0702
   title: Raise test coverage in organvm/session-meta
@@ -75927,11 +76622,13 @@ tasks:
     and blocks the PR queue'
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: dispatched
-  labels: []
+  status: done
+  labels:
+  - tried:claude
+  - noop
   urls:
   - https://github.com/organvm/limen/issues/578
   context: "GitHub issue organvm/limen#578. ## Finding The autonomic fleet's state-commits\
@@ -75942,10 +76639,247 @@ tasks:
     \ checks test the branch **merged with current"
   depends_on: []
   created: '2026-07-02'
-  updated: '2026-07-02T22:10:26.891750Z'
+  updated: '2026-07-02T22:49:00.625431Z'
   dispatch_log:
   - timestamp: '2026-07-02T22:10:26.891750Z'
     agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T22:21:06.057375Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-02T22:21:20.922973Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-02T23:15:00Z'
+    agent: opencode
+    session_id: cli
+    status: in_progress
+    output: Implementing Option 1 (pre-push self-healing) + Option 2 (push-triggered
+      backstop)
+  - timestamp: '2026-07-02T23:15:00Z'
+    agent: opencode
+    session_id: cli
+    status: done
+    output: "Option 1: added ruff --fix + check-params.py --update self-healing gates\
+      \ before commit in auto-scale.yml and operate.yml. Option 2: created .github/workflows/fleet-gate.yml\
+      \ \u2014 push-triggered workflow that runs the fast-gates on every push to main\
+      \ and auto-opens a heal PR on failure. Changed fleet commit steps from git add\
+      \ tasks.yaml to git add -A so self-healed files are included."
+  - timestamp: '2026-07-02T22:39:09.327533Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-02T22:49:00.625431Z'
+    agent: limen
+    session_id: heal-board
+    status: done
+    output: 'heal-board: restored terminal done status after stale reopen'
+- id: GEN-organvm-session-meta-test-coverage-0703
+  title: Raise test coverage in organvm/session-meta
+  repo: organvm/session-meta
+  type: code
+  target_agent: codex
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  - noop
+  urls: []
+  context: Find the largest source module in organvm/session-meta with little or no
+    test coverage and add a focused, PASSING test suite for it. Run the repo's own
+    test command and confirm green. No placeholder tests. [auto-generated 2026-07-03
+    to keep the stream endless]
+  depends_on: []
+  created: '2026-07-03'
+  updated: '2026-07-03T05:24:35.349173Z'
+  dispatch_log:
+  - timestamp: '2026-07-03T04:26:57.887899Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T04:37:59.806104Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-03T05:07:56.478927Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-03T05:14:15.100644Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T05:24:35.349173Z'
+    agent: codex
+    session_id: https://github.com/organvm/session-meta/pull/159
+    status: dispatched
+- id: GEN-organvm-limen-ci-green-0703
+  title: Make organvm/limen CI green
+  repo: organvm/limen
+  type: code
+  target_agent: jules
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - ci-green
+  - generated
+  - build-out
+  - slow
+  urls: []
+  context: Inspect the latest FAILING checks on organvm/limen's default branch, fix
+    the root cause (lint / types / failing test / config), and confirm the checks
+    pass. If CI is already green, add the single most valuable missing check (e.g.
+    typecheck or test-matrix) instead. [auto-generated 2026-07-03 to keep the stream
+    endless]
+  depends_on: []
+  created: '2026-07-03'
+  updated: '2026-07-03T05:24:35.349173Z'
+  dispatch_log:
+  - timestamp: '2026-07-03T04:26:57.887899Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T04:54:52.265000Z'
+    agent: codex
+    session_id: async-reap-stale
+    status: open
+    output: 'dispatch-async: stale worker marker older than 1200s reaped; task reopened'
+  - timestamp: '2026-07-03T04:55:25.232350Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T05:13:58.915986Z'
+    agent: codex
+    session_id: cli
+    status: timeout->jules
+  - timestamp: '2026-07-03T05:24:35.349173Z'
+    agent: codex
+    session_id: https://github.com/organvm/limen/pull/581
+    status: dispatched
+- id: GEN-organvm-session-meta-docs-0703
+  title: Real usage docs for organvm/session-meta
+  repo: organvm/session-meta
+  type: code
+  target_agent: any
+  priority: low
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - docs
+  - generated
+  - build-out
+  urls: []
+  context: "Derive an accurate Usage section in organvm/session-meta's README from\
+    \ the ACTUAL entrypoints/exports (install, run, key commands + flags). No invented\
+    \ features, no TODOs \u2014 only what the code actually does. [auto-generated\
+    \ 2026-07-03 to keep the stream endless]"
+  depends_on: []
+  created: '2026-07-03'
+  updated: '2026-07-03T05:34:48.814626Z'
+  dispatch_log:
+  - timestamp: '2026-07-03T05:24:44.469312Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T05:34:48.814626Z'
+    agent: codex
+    session_id: https://github.com/organvm/session-meta/pull/160
+    status: dispatched
+- id: GEN-organvm-session-meta-simplify-0703
+  title: Reduce complexity in organvm/session-meta
+  repo: organvm/session-meta
+  type: code
+  target_agent: opencode
+  priority: medium
+  budget_cost: 1
+  status: failed
+  labels:
+  - simplify
+  - generated
+  - build-out
+  - tried:claude
+  - noop
+  urls: []
+  context: Identify the most complex or most-duplicated module in organvm/session-meta
+    and refactor it for clarity, with tests proving behavior is unchanged. Net lines
+    should not grow without cause. [auto-generated 2026-07-03 to keep the stream endless]
+  depends_on: []
+  created: '2026-07-03'
+  updated: '2026-07-03T05:34:48.814626Z'
+  dispatch_log:
+  - timestamp: '2026-07-03T04:38:16.134532Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T04:55:08.695558Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-03T05:24:44.469312Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T15:43:00Z'
+    agent: opencode
+    session_id: current
+    status: in_progress
+    output: Claimed and starting execution
+  - timestamp: '2026-07-03T05:34:48.814626Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
+- id: GEN-organvm-universal-mail--automation-typing-0703
+  title: Tighten types in organvm/universal-mail--automation
+  repo: organvm/universal-mail--automation
+  type: code
+  target_agent: codex
+  priority: medium
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - typing
+  - generated
+  - build-out
+  - tried:claude
+  urls: []
+  context: Eliminate the worst untyped hotspots in organvm/universal-mail--automation's
+    most-imported module (remove `any` / add type hints / fix loose signatures). Keep
+    the build and tests green. [auto-generated 2026-07-03 to keep the stream endless]
+  depends_on: []
+  created: '2026-07-03'
+  updated: '2026-07-03T05:35:01.004116Z'
+  dispatch_log:
+  - timestamp: '2026-07-03T05:14:15.100644Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T05:24:35.349173Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-03T05:35:01.004116Z'
+    agent: codex
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
