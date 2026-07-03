@@ -113,10 +113,17 @@ above it is autonomous.
 
 - [x] Step 2.1 (pattern proven) — `submit_task_upsert` producer API + `LIMEN_TICKETS_PRODUCE` gate +
       the producer≡direct-write identity test; reference pair `mine-backlog` + `ingest-backlog` converted.
-- [ ] Step 2.1 (remainder) — apply the same one-line swap to `generate-backlog`,
-      `generate-revenue-backlog`, `generate-organ-backlog`, `generate-positioning`, `discover-value`,
-      `ingest-coverage`; then flip `LIMEN_TICKETS_PRODUCE=1` and watch the keeper drain a few beats.
-- [ ] Step 2.2 — route CLI harvest/dispatch result-apply through a ticket.
+- [x] Step 2.1 (creation tier converted + **CUTOVER LIVE**) — the whole task-CREATION tier now
+      produces tickets: `generate-backlog`, `generate-revenue-backlog`, `generate-organ-backlog`,
+      `discover-value` converted (behind the same gate). Reading the code corrected the remainder list:
+      `generate-positioning` and `ingest-coverage` **never write `tasks.yaml`** (obligations / read-only) —
+      not writers, so not converted. **`scripts/heartbeat-loop.sh` sets `LIMEN_TICKETS_PRODUCE=1`**, so the
+      LIVE fleet routes task creation through the keeper (revertible via `~/.limen.env`). Smoke-proven:
+      a real `generate-backlog` run submitted 5 tickets, left the board untouched, and the keeper folded
+      them (2→7). The status-mutator tier still writes directly — that is Step 2.2.
+- [ ] Step 2.2 — the STATUS-mutator tier (`route`, `dispatch-async`, `heal-dispatch`, `rebalance`,
+      `recover`, `quicken`) → emit an INTENT_STATUS ticket instead of a direct RMW (NOT an upsert — an
+      upsert of a live id merge-clobbers; these change existing tasks). Also CLI harvest/dispatch result-apply.
 - [ ] Step 2.3 — MCP server → ticket producer (retire the raw write + duplicate models).
 - [ ] Step 2.4 — live API/Worker tier (needs the consistency decision above; website-sensitive).
 - [ ] Step 3 — flip SSOT to the event log; add an archive→`events.jsonl` compactor + a standing

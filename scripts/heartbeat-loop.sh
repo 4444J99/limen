@@ -60,6 +60,12 @@ cd "$LIMEN_ROOT" || exit 1
 [ -f "$HOME/.limen.env" ] && { set -a; . "$HOME/.limen.env"; set +a; }
 # opencode runs on a Google model → it needs the Google generative-AI key (reuse gemini's)
 [ -n "${GEMINI_API_KEY:-}" ] && export GOOGLE_GENERATIVE_AI_API_KEY="${GOOGLE_GENERATIVE_AI_API_KEY:-$GEMINI_API_KEY}"
+# TABVLARIVS single-writer CUTOVER (Step 2.1, watched draining before flip): the fleet routes its
+# task-CREATION writers (mine/ingest-backlog, generate-backlog/-revenue/-organ, discover-value)
+# through the record-keeper's ticket inbox instead of each direct-writing tasks.yaml. Default ON for
+# the fleet; set LIMEN_TICKETS_PRODUCE=0 in ~/.limen.env to revert instantly. The keeper (organ at
+# the top of the beat) folds the tickets next beat; the status-mutator tier stays direct (Step 2.2).
+export LIMEN_TICKETS_PRODUCE="${LIMEN_TICKETS_PRODUCE:-1}"
 
 # HARD DISPATCH CEILING — a shell-level backstop so ONE hung agent run can never freeze the whole
 # beat. The synchronous beat waits for the slowest lane; the per-lane Python timeout (LIMEN_LANE_TIMEOUT,
