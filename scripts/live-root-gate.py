@@ -31,6 +31,7 @@ HEARTBEAT_PLIST = Path(
     os.environ.get("LIMEN_HEARTBEAT_PLIST", HOME / "Library" / "LaunchAgents" / "com.limen.heartbeat.plist")
 )
 LAUNCHD_LABEL = os.environ.get("LIMEN_HEARTBEAT_LABEL", "com.limen.heartbeat")
+IGNORED_GENERATED_RECEIPTS = {"docs/dispatch-health.md", "docs/live-root-gate.md"}
 
 
 def run_command(args: list[str], *, cwd: Path | None = None, timeout: int = 30) -> dict[str, Any]:
@@ -89,27 +90,34 @@ def parse_ahead_behind(text: str | None) -> tuple[int | None, int | None]:
     return None, None
 
 
-def parse_dirty(status_text: str) -> dict[str, Any]:
+def parse_dirty(status_text: str, ignored_paths: set[str] | None = None) -> dict[str, Any]:
+    ignored_paths = ignored_paths or set()
     lines = [line for line in status_text.splitlines() if line and not line.startswith("## ")]
     tracked: list[str] = []
     untracked: list[str] = []
+    ignored: list[str] = []
     for line in lines:
         path = line[3:] if len(line) > 3 else line
+        if path in ignored_paths:
+            ignored.append(path)
+            continue
         if line.startswith("?? "):
             untracked.append(path)
         else:
             tracked.append(path)
     return {
-        "dirty_entries": len(lines),
+        "dirty_entries": len(tracked) + len(untracked),
         "tracked_dirty": tracked,
         "untracked": untracked,
         "dirty_paths": tracked + untracked,
+        "ignored_dirty_entries": len(ignored),
+        "ignored_dirty_paths": ignored,
     }
 
 
 def git_snapshot(root: Path, release_branch: str = RELEASE_BRANCH) -> dict[str, Any]:
     status_text = git_output(root, ["status", "--porcelain=v1", "--branch"]) or ""
-    dirty = parse_dirty(status_text)
+    dirty = parse_dirty(status_text, IGNORED_GENERATED_RECEIPTS)
     release_ref = f"origin/{release_branch}"
     head = git_output(root, ["rev-parse", "HEAD"])
     release_head = git_output(root, ["rev-parse", release_ref])
@@ -328,6 +336,10 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         f"- Unique local commits: `{live.get('unique_commit_count')}`; patch-equivalent commits: `{live.get('patch_equivalent_commit_count')}`.",
         f"- Dirty entries: `{live.get('dirty_entries')}`.",
     ]
+    if live.get("ignored_dirty_entries"):
+        lines.append(f"- Ignored generated receipt dirty entries: `{live.get('ignored_dirty_entries')}`.")
+        for path in live.get("ignored_dirty_paths") or []:
+            lines.append(f"  - `{path}`")
     if live.get("local_log"):
         lines += ["", "### Local Commits", ""]
         for line in live.get("local_log") or []:

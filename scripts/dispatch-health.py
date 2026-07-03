@@ -32,6 +32,7 @@ HEARTBEAT_PLIST = Path(
     os.environ.get("LIMEN_HEARTBEAT_PLIST", HOME / "Library" / "LaunchAgents" / "com.limen.heartbeat.plist")
 )
 LAUNCHD_LABEL = os.environ.get("LIMEN_HEARTBEAT_LABEL", "com.limen.heartbeat")
+IGNORED_GENERATED_RECEIPTS = {"docs/dispatch-health.md", "docs/live-root-gate.md"}
 
 
 def run_command(
@@ -167,10 +168,34 @@ def git_output(root: Path, args: list[str], timeout: int = 12) -> str | None:
     return None
 
 
+def parse_dirty(status_text: str, ignored_paths: set[str] | None = None) -> dict[str, Any]:
+    ignored_paths = ignored_paths or set()
+    tracked: list[str] = []
+    untracked: list[str] = []
+    ignored: list[str] = []
+    for line in [line for line in status_text.splitlines() if line and not line.startswith("## ")]:
+        path = line[3:] if len(line) > 3 else line
+        if path in ignored_paths:
+            ignored.append(path)
+            continue
+        if line.startswith("?? "):
+            untracked.append(path)
+        else:
+            tracked.append(path)
+    dirty_paths = tracked + untracked
+    return {
+        "dirty_entries": len(dirty_paths),
+        "dirty_paths": dirty_paths[:30],
+        "dirty_truncated": len(dirty_paths) > 30,
+        "ignored_dirty_entries": len(ignored),
+        "ignored_dirty_paths": ignored,
+    }
+
+
 def git_snapshot(root: Path) -> dict[str, Any]:
     status_text = git_output(root, ["status", "--porcelain=v1", "--branch"]) or ""
     lines = status_text.splitlines()
-    dirty = [line for line in lines if line and not line.startswith("## ")]
+    dirty = parse_dirty(status_text, IGNORED_GENERATED_RECEIPTS)
     ahead_behind = git_output(root, ["rev-list", "--left-right", "--count", "HEAD...origin/main"])
     ahead = behind = None
     if ahead_behind:
@@ -190,9 +215,7 @@ def git_snapshot(root: Path) -> dict[str, Any]:
         "ahead_origin_main": ahead,
         "behind_origin_main": behind,
         "status_summary": lines[0] if lines else "",
-        "dirty_entries": len(dirty),
-        "dirty_paths": [line[3:] if len(line) > 3 else line for line in dirty[:30]],
-        "dirty_truncated": len(dirty) > 30,
+        **dirty,
     }
 
 
@@ -369,6 +392,10 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         f"- Matches origin/main: `{live.get('matches_origin_main')}`; ahead `{live.get('ahead_origin_main')}` behind `{live.get('behind_origin_main')}`.",
         f"- Dirty entries: `{live.get('dirty_entries')}`.",
     ]
+    if live.get("ignored_dirty_entries"):
+        lines.append(f"- Ignored generated receipt dirty entries: `{live.get('ignored_dirty_entries')}`.")
+        for path in live.get("ignored_dirty_paths") or []:
+            lines.append(f"  - `{path}`")
     for path in live.get("dirty_paths") or []:
         lines.append(f"  - `{path}`")
     if live.get("dirty_truncated"):

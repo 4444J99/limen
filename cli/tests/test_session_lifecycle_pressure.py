@@ -587,6 +587,26 @@ def test_dispatch_health_records_live_root_and_async_drift(tmp_path: Path):
     assert dispatch.PRIVATE_INDEX.exists()
 
 
+def test_dispatch_health_ignores_generated_receipt_dirty_paths():
+    dispatch = _load(DISPATCH_HEALTH_SCRIPT, "dispatch_health_receipt_dirty_filter")
+
+    dirty = dispatch.parse_dirty(
+        "\n".join(
+            [
+                "## main...origin/main",
+                " M docs/dispatch-health.md",
+                " M docs/live-root-gate.md",
+                " M tasks.yaml",
+            ]
+        ),
+        dispatch.IGNORED_GENERATED_RECEIPTS,
+    )
+
+    assert dirty["dirty_entries"] == 1
+    assert dirty["dirty_paths"] == ["tasks.yaml"]
+    assert dirty["ignored_dirty_entries"] == 2
+
+
 def test_live_root_gate_records_operator_stop_conditions(tmp_path: Path):
     gate = _load(LIVE_ROOT_GATE_SCRIPT, "live_root_gate")
     gate.ROOT = tmp_path
@@ -648,6 +668,26 @@ def test_live_root_gate_records_operator_stop_conditions(tmp_path: Path):
     assert "Human-Gated Command Packet" in markdown
     assert gate.DOC_PATH.exists()
     assert gate.PRIVATE_INDEX.exists()
+
+
+def test_live_root_gate_ignores_generated_receipt_dirty_paths():
+    gate = _load(LIVE_ROOT_GATE_SCRIPT, "live_root_gate_receipt_dirty_filter")
+
+    dirty = gate.parse_dirty(
+        "\n".join(
+            [
+                "## main...origin/main",
+                " M docs/dispatch-health.md",
+                " M docs/live-root-gate.md",
+                " M tasks.yaml",
+            ]
+        ),
+        gate.IGNORED_GENERATED_RECEIPTS,
+    )
+
+    assert dirty["dirty_entries"] == 1
+    assert dirty["tracked_dirty"] == ["tasks.yaml"]
+    assert dirty["ignored_dirty_entries"] == 2
 
 
 def test_session_blockers_records_hooks_disk_and_credentials_without_values(tmp_path: Path):
