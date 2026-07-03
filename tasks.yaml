@@ -71940,7 +71940,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - typing
   - generated
@@ -71953,7 +71953,7 @@ tasks:
     green. [auto-generated 2026-06-30 to keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-07-03T08:45:43.873184Z'
+  updated: '2026-07-03T08:56:01Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:52:21.550880Z'
     agent: agy
@@ -72003,6 +72003,11 @@ tasks:
     session_id: async-reap-stale
     status: open
     output: 'dispatch-async: stale worker marker older than 1s reaped; task reopened'
+  - timestamp: '2026-07-03T08:56:01Z'
+    agent: opencode
+    session_id: cli
+    status: done
+    output: 'Tightened types in organvm/limen: (1) models.py: removed `Any` import, changed agents dict type from dict[str, Any] → dict[str, object]; (2) tabularius.py: tightened _apply() + drain_once() signatures from bare dict → dict[str, Any]; (3) vigilia/__init__.py: fixed pyright __all__ warning by importing submodules. All 90 tests pass, ruff + pyright clean (5 pre-existing external import errors only).'
 - id: REV-organvm-mirror-mirror-revenue-ship-0630
   title: Drive Mirror Mirror to deploy-ready
   repo: organvm/mirror-mirror
@@ -77417,3 +77422,287 @@ tasks:
     session_id: heal
     status: done
     output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
+- id: REV-organvm-universal-mail--automation-revenue-ship-0703
+  title: Drive Universal Mail Automation to deploy-ready
+  repo: organvm/universal-mail--automation
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - revenue-ship
+  - revenue
+  - product
+  - ship-order
+  - generated
+  urls: []
+  context: "In organvm/universal-mail--automation, clear the concrete blockers between\
+    \ the current state and a DEPLOYABLE product: get open PRs green + merged, fix\
+    \ the critical path, confirm the app runs end-to-end. Output: a deploy-ready build\
+    \ + a short DEPLOY.md listing exactly what remains. [revenue-backlog 2026-07-03:\
+    \ rank 3, stage building \u2014 spend tokens on income, not busywork]"
+  depends_on: []
+  created: '2026-07-03'
+  dispatch_log: []
+- id: REV-organvm-a-i-chat--exporter-revenue-launch-post-0703
+  title: Draft the build-in-public launch post for ChatGPT Exporter
+  repo: organvm/a-i-chat--exporter
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - revenue-launch-post
+  - revenue
+  - product
+  - ship-order
+  - generated
+  urls: []
+  context: "Write a ready-to-post launch announcement for ChatGPT Exporter (Show HN\
+    \ + Reddit + X variants), grounded in what it ACTUALLY does and its real users.\
+    \ Save as marketing/launch-post.md in organvm/a-i-chat--exporter. No hype, no\
+    \ invented metrics. [revenue-backlog 2026-07-03: rank 1, stage deploy-ready \u2014\
+    \ spend tokens on income, not busywork]"
+  depends_on: []
+  created: '2026-07-03'
+  dispatch_log: []
+- id: ORG-legal-organ-kernel-0703
+  title: Map the VLTIMA 5-primitive kernel to the legal organ
+  repo: organvm/limen
+  type: content
+  target_agent: any
+  priority: critical
+  budget_cost: 2
+  status: dispatched
+  labels:
+  - organ-kernel
+  - pillar:legal
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "In organvm/limen, author organs/legal/KERNEL.md: map the domain-neutral\
+    \ kernel (Member - Mandate - Standing - Standard - Governance) onto the legal\
+    \ domain (Member=client/party; Mandate=claim/matter; Standing=case posture; Standard=statute/precedent/rubric;\
+    \ Governance=the firm's process + ethics wall). State the organ's purpose as an\
+    \ institutional prosthesis, its MACRO deployment (a legal-institution platform\
+    \ any pro-se or under-resourced person can hold) and its MICRO deployment (Anthony's\
+    \ active ADA employment matter run with a top-firm's institutional weight, AUGMENTING\
+    \ attorney Counsel Longo (never replacing counsel, never practicing law)). Generic\
+    \ + nameless underneath, his instance on top. One PR, no lorem. CONSTRAINT: THE\
+    \ FLAGSHIP he named. Augments real counsel; does NOT give legal advice or practice\
+    \ law.. [organ-backlog 2026-07-03: rank 1, maturity 20% stage scaffold \u2014\
+    \ convert idle fleet capacity into institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-03'
+  updated: '2026-07-03T08:55:15.457859Z'
+  dispatch_log:
+  - timestamp: '2026-07-03T08:55:15.457859Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+- id: ORG-financial-organ-deepen-0703
+  title: Deepen the financial organ toward a usable institution
+  repo: organvm/limen
+  type: content
+  target_agent: any
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-deepen
+  - pillar:financial
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "In organvm/limen organs/financial/ (and reference its product repo where\
+    \ relevant), close the single highest-leverage gap between the current scaffold\
+    \ and something a real person could RELY ON for financial. Ship a personal balance-sheet\
+    \ + cashflow + payrail disbursement map run on his real numbers if not yet done,\
+    \ else the next gap. One focused PR. CONSTRAINT: scale the-invisible-ledger from\
+    \ a B2B CPA tool into a personal family office; intake is owned by MONETA (moneta/),\
+    \ the sovereign cash organ \u2014 this census tracks the institution, MONETA is\
+    \ its rail. Deepened 2026-07-03: entity registry (entities.yaml), balance-sheet/cashflow/payrail\
+    \ STATUS dashboard, seed.yaml, consolidate.py generator. Maturity 30%\u219240%..\
+    \ [organ-backlog 2026-07-03: rank 2, maturity 40% stage building \u2014 convert\
+    \ idle fleet capacity into institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-03'
+  dispatch_log: []
+- id: ORG-governance-organ-face-0703
+  title: Make the governance organ's macro + micro face excellent
+  repo: organvm/limen
+  type: content
+  target_agent: any
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-face
+  - pillar:governance
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "In organvm/limen organs/governance/, author the polished MACRO face (a\
+    \ portable governance-as-code open standard anyone can adopt \u2014 the platform\
+    \ anyone can hold) AND the MICRO instance (ORGANVM's own dual-entity operation\
+    \ (non-profit open project + commercial LLC) \u2014 his own), grounded in what\
+    \ the organ actually does. Real copy, ready to show. One PR. CONSTRAINT: deepened\
+    \ 2026-07-03: entity register (entities.yaml) with dual-entity boundary matrix,\
+    \ validate-entities.py (Rules #3-4: entity integrity + repo registration). Maturity\
+    \ 70%\u219275%.. [organ-backlog 2026-07-03: rank 5, maturity 75% stage maturing\
+    \ \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-03'
+  dispatch_log: []
+- id: ORG-consulting-organ-face-0703
+  title: Make the consulting organ's macro + micro face excellent
+  repo: organvm/limen
+  type: content
+  target_agent: any
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-face
+  - pillar:consulting
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "In organvm/limen organs/consulting/, author the polished MACRO face (ORGANVM-as-a-service:\
+    \ the institutional toolkit offered to clients \u2014 the platform anyone can\
+    \ hold) AND the MICRO instance (the Maddie / Rob / Derek client deployments \u2014\
+    \ his own), grounded in what the organ actually does. Real copy, ready to show.\
+    \ One PR. CONSTRAINT: working manual prototypes; not yet autonomic or scaled back\
+    \ to self. [organ-backlog 2026-07-03: rank 6, maturity 60% stage maturing \u2014\
+    \ convert idle fleet capacity into institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-03'
+  dispatch_log: []
+- id: ORG-artist-organ-face-0703
+  title: Make the artist organ's macro + micro face excellent
+  repo: organvm/limen
+  type: content
+  target_agent: any
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-face
+  - pillar:artist
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "In organvm/limen organs/artist/, author the polished MACRO face (a studio/temple\
+    \ platform any artist can hold \u2014 the platform anyone can hold) AND the MICRO\
+    \ instance (Anthony's a-mavs-olevm chambers (444-file photo archive, ET4L, LOCREANCE)\
+    \ \u2014 his own), grounded in what the organ actually does. Real copy, ready\
+    \ to show. One PR. CONSTRAINT: temple built (70%) but chambers under-filled; currently\
+    \ subordinate to education. [organ-backlog 2026-07-03: rank 7, maturity 70% stage\
+    \ maturing \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-03'
+  dispatch_log: []
+- id: ORG-health-organ-kernel-0703
+  title: Map the VLTIMA 5-primitive kernel to the health organ
+  repo: organvm/limen
+  type: content
+  target_agent: any
+  priority: critical
+  budget_cost: 2
+  status: dispatched
+  labels:
+  - organ-kernel
+  - pillar:health
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "In organvm/limen, author organs/health/KERNEL.md: map the domain-neutral\
+    \ kernel (Member - Mandate - Standing - Standard - Governance) onto the health\
+    \ domain (Member=body/patient; Mandate=protocol; Standing=health state; Standard=clinical\
+    \ guideline; Governance=care plan). State the organ's purpose as an institutional\
+    \ prosthesis, its MACRO deployment (a health/recovery + disability-access institution\
+    \ anyone can hold) and its MICRO deployment (Anthony's post-injury recovery +\
+    \ disability access (ties directly to the legal ADA matter)). Generic + nameless\
+    \ underneath, his instance on top. One PR, no lorem. CONSTRAINT: unnamed; post-injury\
+    \ (4th-story fall ~2024); ties to the legal ADA accommodation matter. [organ-backlog\
+    \ 2026-07-03: rank 9, maturity 5% stage scaffold \u2014 convert idle fleet capacity\
+    \ into institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-03'
+  updated: '2026-07-03T08:55:15.457859Z'
+  dispatch_log:
+  - timestamp: '2026-07-03T08:55:15.457859Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+- id: ORG-governance-organ-deepen-0703
+  title: Deepen the governance organ toward a usable institution
+  repo: organvm/limen
+  type: content
+  target_agent: any
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-deepen
+  - pillar:governance
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "In organvm/limen organs/governance/ (and reference its product repo where\
+    \ relevant), close the single highest-leverage gap between the current scaffold\
+    \ and something a real person could RELY ON for governance. Ship scripts/publication-policy.py\
+    \ --verify green; matrix + owner-scoped redactor shipped (2026-07-02) if not yet\
+    \ done, else the next gap. One focused PR. CONSTRAINT: converges the scattered\
+    \ gates (creds _SECRET_RX, scan-legacy SENSITIVE_PATTERNS, persona contracts,\
+    \ positioning awaiting_publish) behind one referenced rule table; beat C_PUBPOLICY,\
+    \ rung PUBPOLICY. [organ-backlog 2026-07-03: rank 10, maturity 60% stage building\
+    \ \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-03'
+  dispatch_log: []
+- id: ORG-education-organ-face-0703
+  title: Make the education organ's macro + micro face excellent
+  repo: organvm/limen
+  type: content
+  target_agent: any
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-face
+  - pillar:education
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "In organvm/limen organs/education/, author the polished MACRO face (the\
+    \ alt-education platform (the quarantine-from-the-system thesis) \u2014 the platform\
+    \ anyone can hold) AND the MICRO instance (ENC1101 + Derek's narrative workshop\
+    \ + the homeschool engine \u2014 his own), grounded in what the organ actually\
+    \ does. Real copy, ready to show. One PR. CONSTRAINT: already 60-80% in edu-organism;\
+    \ drive to 90 and fire the alt-ed thesis. [organ-backlog 2026-07-03: rank 3, maturity\
+    \ 70% stage maturing \u2014 convert idle fleet capacity into institutional weight\
+    \ (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-03'
+  dispatch_log: []
