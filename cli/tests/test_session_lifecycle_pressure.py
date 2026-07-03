@@ -572,6 +572,22 @@ def test_dispatch_health_records_live_root_and_async_drift(tmp_path: Path):
         "timed_out": False,
         "last_line": "would launch 0",
         "skipped_down_lanes": ["gemini", "jules"],
+        "skipped_down_reasons": {
+            "gemini": {
+                "source": "usage",
+                "health": "exhausted",
+                "signal": "dispatch-count",
+                "remaining": 0,
+                "possible": 10,
+            },
+            "jules": {
+                "source": "usage",
+                "health": "exhausted",
+                "signal": "count",
+                "remaining": 0,
+                "possible": 100,
+            },
+        },
     }
 
     snapshot = dispatch.build_snapshot(type("Args", (), {"probe_async": True})())
@@ -585,6 +601,8 @@ def test_dispatch_health_records_live_root_and_async_drift(tmp_path: Path):
     assert "heartbeat-loaded-env-drift" in blocker_ids
     assert "Dispatch/heartbeat health is not proven by tests in a detached worktree alone." in markdown
     assert "Async skipped down lanes: `gemini, jules`" in markdown
+    assert "`gemini`: usage health `exhausted`; signal `dispatch-count`; remaining `0` of `10`." in markdown
+    assert "`jules`: usage health `exhausted`; signal `count`; remaining `0` of `100`." in markdown
     assert dispatch.DOC_PATH.exists()
     assert dispatch.PRIVATE_INDEX.exists()
 
@@ -595,6 +613,47 @@ def test_dispatch_health_parses_async_skipped_down_lanes():
     output = "── skipping down lanes: ['gemini', 'jules']\n── async: would launch 0"
 
     assert dispatch.parse_async_skipped_down_lanes(output) == ["gemini", "jules"]
+
+
+def test_dispatch_health_explains_skipped_down_lanes_from_live_artifacts(tmp_path: Path):
+    dispatch = _load(DISPATCH_HEALTH_SCRIPT, "dispatch_health_async_skip_reasons")
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    (logs / "lanes-down.txt").write_text("agy  # oauth browser preflight\n", encoding="utf-8")
+    (logs / "usage.json").write_text(
+        json.dumps(
+            {
+                "vendors": {
+                    "gemini": {
+                        "health": "exhausted",
+                        "signal": "dispatch-count",
+                        "unit": "runs",
+                        "remaining": 0,
+                        "possible": 10,
+                    },
+                    "codex": {
+                        "health": "ok",
+                        "signal": "vendor-rate-limit",
+                        "remaining": 85,
+                        "possible": 100,
+                    },
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    reasons = dispatch.skipped_down_lane_reasons(["agy", "gemini", "jules"], tmp_path)
+
+    assert reasons["agy"] == {
+        "source": "manual",
+        "path": "logs/lanes-down.txt",
+        "note": "oauth browser preflight",
+    }
+    assert reasons["gemini"]["source"] == "usage"
+    assert reasons["gemini"]["health"] == "exhausted"
+    assert reasons["gemini"]["remaining"] == 0
+    assert reasons["jules"] == {"source": "unknown"}
 
 
 def test_dispatch_health_ignores_generated_receipt_dirty_paths():

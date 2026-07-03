@@ -8,6 +8,7 @@ async-dispatch probes healthy enough to trust?
 It is read-only. It does not restart launchd, edit plist files, touch
 tasks.yaml, switch branches, or repair credentials.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -23,9 +24,7 @@ from typing import Any
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 HOME = Path.home()
-PRIVATE_ROOT = Path(
-    os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus")
-)
+PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus"))
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "dispatch-health.json"
 DOC_PATH = ROOT / "docs" / "dispatch-health.md"
 LIVE_ROOT = Path(os.environ.get("LIMEN_LIVE_ROOT", HOME / "Workspace" / "limen"))
@@ -105,6 +104,87 @@ def parse_async_skipped_down_lanes(output: str) -> list[str]:
             return []
         return [str(item) for item in value if str(item).strip()]
     return []
+
+
+def read_manual_down_lanes(root: Path) -> dict[str, str]:
+    down_file = root / "logs" / "lanes-down.txt"
+    reasons: dict[str, str] = {}
+    try:
+        lines = down_file.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return reasons
+    for line in lines:
+        lane_part, sep, comment = line.partition("#")
+        lane = lane_part.strip()
+        if not lane:
+            continue
+        reasons[lane] = comment.strip() if sep else ""
+    return reasons
+
+
+def read_usage_vendors(root: Path) -> dict[str, dict[str, Any]]:
+    try:
+        data = json.loads((root / "logs" / "usage.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return {}
+    vendors = data.get("vendors") if isinstance(data, dict) else {}
+    if not isinstance(vendors, dict):
+        return {}
+    return {str(name): info for name, info in vendors.items() if isinstance(info, dict)}
+
+
+def skipped_down_lane_reasons(lanes: list[str], root: Path) -> dict[str, dict[str, Any]]:
+    manual = read_manual_down_lanes(root)
+    usage = read_usage_vendors(root)
+    reasons: dict[str, dict[str, Any]] = {}
+    for lane in lanes:
+        lane_name = str(lane)
+        if lane_name in manual:
+            reasons[lane_name] = {
+                "source": "manual",
+                "path": "logs/lanes-down.txt",
+                "note": manual[lane_name],
+            }
+            continue
+        info = usage.get(lane_name)
+        if info:
+            reasons[lane_name] = {
+                "source": "usage",
+                "health": info.get("health"),
+                "signal": info.get("signal"),
+                "unit": info.get("unit"),
+                "remaining": info.get("remaining"),
+                "possible": info.get("possible"),
+                "headroom_pct": info.get("headroom_pct"),
+                "limit_source": info.get("limit_source"),
+            }
+            continue
+        reasons[lane_name] = {"source": "unknown"}
+    return reasons
+
+
+def render_skipped_lane_reason(lane: str, reason: dict[str, Any]) -> str:
+    source = reason.get("source")
+    if source == "manual":
+        note = str(reason.get("note") or "").strip()
+        suffix = f"; {receipt_line(note)}" if note else ""
+        return f"`{lane}`: manual down file `{reason.get('path')}`{suffix}."
+    if source == "usage":
+        details = [
+            f"usage health `{reason.get('health')}`",
+            f"signal `{reason.get('signal')}`",
+        ]
+        remaining = reason.get("remaining")
+        possible = reason.get("possible")
+        if remaining is not None and possible is not None:
+            details.append(f"remaining `{remaining}` of `{possible}`")
+        elif remaining is not None:
+            details.append(f"remaining `{remaining}`")
+        headroom = reason.get("headroom_pct")
+        if headroom is not None:
+            details.append(f"headroom `{headroom}%`")
+        return f"`{lane}`: " + "; ".join(details) + "."
+    return f"`{lane}`: down source unknown from async dry-run output."
 
 
 def receipt_line(line: str) -> str:
@@ -269,6 +349,7 @@ def async_probe_snapshot(enabled: bool) -> dict[str, Any]:
     summary["requested"] = True
     summary["ok"] = result.get("returncode") == 0 and not result.get("timed_out")
     summary["skipped_down_lanes"] = parse_async_skipped_down_lanes(output)
+    summary["skipped_down_reasons"] = skipped_down_lane_reasons(summary["skipped_down_lanes"], ROOT)
     return summary
 
 
@@ -289,7 +370,12 @@ def derive_blockers(snapshot: dict[str, Any]) -> list[dict[str, str]]:
         blockers.append({"id": "heartbeat-launchd-not-running", "evidence": f"launchd state is {loaded.get('state')}."})
 
     if not watchdog.get("healthy"):
-        blockers.append({"id": "heartbeat-watchdog-unhealthy", "evidence": watchdog.get("last_line") or "watchdog did not report healthy."})
+        blockers.append(
+            {
+                "id": "heartbeat-watchdog-unhealthy",
+                "evidence": watchdog.get("last_line") or "watchdog did not report healthy.",
+            }
+        )
 
     if git.get("present") and not git.get("matches_origin_main"):
         blockers.append(
@@ -325,10 +411,7 @@ def derive_blockers(snapshot: dict[str, Any]) -> list[dict[str, str]]:
         blockers.append(
             {
                 "id": "heartbeat-dispatch-lanes-env-drift",
-                "evidence": (
-                    f"plist LIMEN_DISPATCH_LANES={plist_dispatch_lanes!r}, "
-                    f"loaded={loaded_dispatch_lanes!r}."
-                ),
+                "evidence": (f"plist LIMEN_DISPATCH_LANES={plist_dispatch_lanes!r}, loaded={loaded_dispatch_lanes!r}."),
             }
         )
 
@@ -404,6 +487,12 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
     skipped_down_lanes = async_probe.get("skipped_down_lanes") or []
     if skipped_down_lanes:
         lines.append(f"- Async skipped down lanes: `{', '.join(str(lane) for lane in skipped_down_lanes)}`.")
+        skipped_down_reasons = async_probe.get("skipped_down_reasons") or {}
+        for lane in skipped_down_lanes:
+            lane_name = str(lane)
+            reason = skipped_down_reasons.get(lane_name)
+            if isinstance(reason, dict):
+                lines.append(f"  - {render_skipped_lane_reason(lane_name, reason)}")
 
     lines += [
         "",
