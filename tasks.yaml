@@ -77890,7 +77890,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: failed
   labels:
   - organ-deepen
   - pillar:governance
@@ -77911,7 +77911,7 @@ tasks:
     \ \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-03T11:04:40.390187Z'
+  updated: '2026-07-03T11:09:58.514312Z'
   dispatch_log:
   - timestamp: '2026-07-03T10:36:36.527923Z'
     agent: agy
@@ -77933,6 +77933,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T11:09:58.514312Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: ORG-education-organ-face-0703
   title: Make the education organ's macro + micro face excellent
   repo: organvm/limen
