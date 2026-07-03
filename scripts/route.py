@@ -112,6 +112,17 @@ def _read_usage_vendors() -> dict:
         return {}
 
 
+def _float_or_default(raw: object, default: float) -> float:
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return default
+
+
+def _env_float(name: str, default: float) -> float:
+    return _float_or_default(os.environ.get(name), default)
+
+
 def _vendor_runway() -> dict[str, float]:
     """Per-vendor hours-of-runway from the LIVE usage meter (logs/usage.json, written by
     usage-telemetry.py). This is the refresh-vs-remaining input to the split decision: how long
@@ -123,7 +134,7 @@ def _vendor_runway() -> dict[str, float]:
         if not isinstance(info, dict):
             continue
         r = info.get("runway_h")
-        out[name] = float("inf") if r is None else float(r)
+        out[name] = float("inf") if r is None else _float_or_default(r, float("inf"))
     return out
 
 
@@ -191,8 +202,8 @@ def _learned_weights() -> dict[str, float]:
     is ever fully STARVED or allowed to swamp the fleet. Missing lane -> 1.0 (no effect). Derive-not-pin."""
     if os.environ.get("LIMEN_SI_APPLY", "1") != "1":
         return {}
-    floor = float(os.environ.get("LIMEN_SI_WEIGHT_FLOOR", "0.25"))
-    ceiling = max(floor, float(os.environ.get("LIMEN_SI_WEIGHT_CEILING", "2.0")))
+    floor = max(0.001, _env_float("LIMEN_SI_WEIGHT_FLOOR", 0.25))
+    ceiling = max(floor, _env_float("LIMEN_SI_WEIGHT_CEILING", 2.0))
     try:
         data = json.loads((ROOT / "logs" / "self-improve-proposal.json").read_text())
     except Exception:
@@ -225,7 +236,7 @@ def _refresh_self_improve_proposal() -> None:
     if os.environ.get("LIMEN_SI_APPLY", "1") != "1":
         return
     try:
-        cadence_h = float(os.environ.get("LIMEN_SI_CADENCE", "10"))
+        cadence_h = _env_float("LIMEN_SI_CADENCE", 10.0)
         proposal = ROOT / "logs" / "self-improve-proposal.json"
         if proposal.exists() and (time.time() - proposal.stat().st_mtime) / 3600.0 < cadence_h:
             return  # fresh enough — skip the producer this beat
@@ -235,7 +246,7 @@ def _refresh_self_improve_proposal() -> None:
         subprocess.run(
             ["python3", str(script)],
             cwd=str(ROOT),
-            timeout=float(os.environ.get("LIMEN_SI_TIMEOUT", "120")),
+            timeout=_env_float("LIMEN_SI_TIMEOUT", 120.0),
             capture_output=True,
         )
     except Exception:
@@ -259,7 +270,7 @@ def _ledger_bias(task: dict) -> dict[str, float]:
     routing) on any missing/torn ledger."""
     if os.environ.get("LIMEN_LEDGER_BIAS", "1") != "1":
         return {}
-    floor = float(os.environ.get("LIMEN_LEDGER_BIAS_FLOOR", "0.2"))
+    floor = max(0.001, _env_float("LIMEN_LEDGER_BIAS_FLOOR", 0.2))
     try:
         lanes = json.loads((ROOT / "logs" / "ledger.json").read_text()).get("lanes", {})
     except Exception:

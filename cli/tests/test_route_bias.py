@@ -103,6 +103,32 @@ def test_self_improve_boost_weight_is_honored(tmp_path, monkeypatch):
     assert pick == "opencode"
 
 
+def test_route_float_knobs_fail_open_when_malformed(tmp_path, monkeypatch):
+    monkeypatch.setattr(route, "ROOT", tmp_path)
+    _self_improve(tmp_path, [{"lane": "opencode", "target_weight": 0.1}])
+
+    monkeypatch.setenv("LIMEN_SI_WEIGHT_FLOOR", "not-a-float")
+    monkeypatch.setenv("LIMEN_SI_WEIGHT_CEILING", "also-not-a-float")
+    assert route._learned_weights()["opencode"] == 0.25
+
+    _ledger(tmp_path, {"opencode": {"waste_classes": ["code"], "win_classes": []}})
+    monkeypatch.setenv("LIMEN_LEDGER_BIAS_FLOOR", "not-a-float")
+    assert route._ledger_bias({"type": "code"})["opencode"] == 0.2
+
+
+def test_malformed_usage_runway_fails_open(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    (tmp_path / "logs").mkdir()
+    (tmp_path / "logs" / "usage.json").write_text(
+        json.dumps({"vendors": {"codex": {"runway_h": "bad-meter-value"}, "claude": {"runway_h": 3}}})
+    )
+
+    runway = route._vendor_runway()
+
+    assert runway["codex"] == float("inf")
+    assert runway["claude"] == 3.0
+
+
 def test_deploy_still_opencode_despite_bias(tmp_path, monkeypatch):
     monkeypatch.setattr(route, "ROOT", tmp_path)
     _ledger(tmp_path, {"opencode": {"waste_classes": ["code"], "win_classes": []}})
