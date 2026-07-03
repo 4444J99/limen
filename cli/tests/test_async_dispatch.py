@@ -87,6 +87,31 @@ def test_reserve_and_launch_marks_and_spawns(tmp_path, monkeypatch):
     assert len(list(da.RUNS.glob("*__codex.running"))) == 2
 
 
+def test_reserve_skips_generated_buildout_outside_value_tier(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_VALUE_REPOS", "x/y")
+    monkeypatch.setenv("LIMEN_VALUE_REPOS_FILE", str(tmp_path / "no-such-tier.json"))
+    da = _load(tmp_path, n_open=0)
+    today = datetime.date.today()
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.tasks = [
+        Task(
+            id="GEN-NONVALUE",
+            title="generated",
+            repo="x/site.github.io",
+            target_agent="codex",
+            status="open",
+            labels=["test-coverage", "generated", "build-out"],
+            created=today,
+        ),
+        Task(id="VALUE-WORK", title="value", repo="x/y", target_agent="codex", status="open", created=today),
+    ]
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    picked = da.reserve_and_launch(["codex"], per_agent=5, cap=5, dry=True)
+
+    assert picked == [("codex", "VALUE-WORK")]
+
+
 def test_reaper_frees_dead_workers_not_live(tmp_path):
     da = _load(tmp_path, n_open=0)
     # two dispatched tasks, one with a stale marker (dead), one fresh (live)

@@ -17,6 +17,7 @@ is tracked via <task-id>__<agent>.running markers so budgets aren't blown betwee
 
 Usage: dispatch-async.py --lanes auto --per-lane 8 --max 12 [--dry-run]
 """
+
 import argparse
 import datetime
 import json
@@ -38,6 +39,7 @@ from limen.dispatch import (  # noqa: E402
     _has_done_transition,
     _queue_lock,
     _restore_done_status,
+    _routine_generated_buildout_allowed,
 )
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
@@ -111,7 +113,7 @@ def reap_stale(max_age_s: int):
         except Exception:
             age = max_age_s + 1  # unreadable/empty marker → treat as stale
         if age > max_age_s:
-            tid, agent = m.name[:-len(".running")].rsplit("__", 1)
+            tid, agent = m.name[: -len(".running")].rsplit("__", 1)
             # if the worker DID finish (result file present), let harvest handle it; don't reap
             if not (RUNS / f"{tid}.result.json").exists():
                 # Defer the marker unlink until the reopen is committed under the lock (below), so a
@@ -135,20 +137,21 @@ def reap_stale(max_age_s: int):
                             agent=agent,
                             session_id="async-reap-stale",
                             output=(
-                                "dispatch-async: stale worker marker reaped after prior done; "
-                                "restored terminal status"
+                                "dispatch-async: stale worker marker reaped after prior done; restored terminal status"
                             ),
                         )
                     else:
                         t.status = "open"  # dead worker left no result → retry on a later beat
                         t.updated = now
-                        t.dispatch_log.append(DispatchLogEntry(
-                            timestamp=now,
-                            agent=agent,
-                            session_id="async-reap-stale",
-                            status="open",
-                            output=f"dispatch-async: stale worker marker older than {max_age_s}s reaped; task reopened",
-                        ))
+                        t.dispatch_log.append(
+                            DispatchLogEntry(
+                                timestamp=now,
+                                agent=agent,
+                                session_id="async-reap-stale",
+                                status="open",
+                                output=f"dispatch-async: stale worker marker older than {max_age_s}s reaped; task reopened",
+                            )
+                        )
             save_limen_file(TASKS, lf)
         # reopen is committed → now safe to remove the markers that freed these slots
         for _tid, _agent, m in reaped:
@@ -167,7 +170,7 @@ def inspect_stale(max_age_s: int) -> list[str]:
         except Exception:
             age = max_age_s + 1
         if age > max_age_s:
-            tid, _agent = m.name[:-len(".running")].rsplit("__", 1)
+            tid, _agent = m.name[: -len(".running")].rsplit("__", 1)
             if not (RUNS / f"{tid}.result.json").exists():
                 stale.append(tid)
     return stale
@@ -206,9 +209,15 @@ def reserve_and_launch(agents, per_agent, cap, dry):
             rem = daily - spent if capa is None else max(0, min(daily - spent, capa - aspent))
             if rem <= 0:
                 continue
-            cands = [t for t in lf.tasks
-                     if _dispatchable(t) and (t.target_agent == agent or t.target_agent == "any")
-                     and t.budget_cost <= rem and _deps_met(t, id2)]
+            cands = [
+                t
+                for t in lf.tasks
+                if _dispatchable(t)
+                and (t.target_agent == agent or t.target_agent == "any")
+                and t.budget_cost <= rem
+                and _deps_met(t, id2)
+                and _routine_generated_buildout_allowed(t)
+            ]
             cands.sort(key=lambda t: _PRIORITY_ORDER.get(t.priority, 99))
             taken = 0
             for t in cands:
@@ -218,13 +227,15 @@ def reserve_and_launch(agents, per_agent, cap, dry):
                 if not dry:
                     t.status = "dispatched"
                     t.updated = now
-                    t.dispatch_log.append(DispatchLogEntry(
-                        timestamp=now,
-                        agent=agent,
-                        session_id="async-reserve",
-                        status="dispatched",
-                        output="dispatch-async: reserved before detached worker launch",
-                    ))
+                    t.dispatch_log.append(
+                        DispatchLogEntry(
+                            timestamp=now,
+                            agent=agent,
+                            session_id="async-reserve",
+                            status="dispatched",
+                            output="dispatch-async: reserved before detached worker launch",
+                        )
+                    )
                 slots -= 1
                 taken += 1
         if not dry and picked:
@@ -237,7 +248,10 @@ def reserve_and_launch(agents, per_agent, cap, dry):
         logf = open(RUNS / f"{tid}.log", "a")
         subprocess.Popen(
             [sys.executable, str(WORKER), "--agent", agent, "--task-id", tid],
-            stdout=logf, stderr=logf, stdin=subprocess.DEVNULL, start_new_session=True,
+            stdout=logf,
+            stderr=logf,
+            stdin=subprocess.DEVNULL,
+            start_new_session=True,
             env={**os.environ, "PYTHONPATH": str(ROOT / "cli" / "src")},
         )
     return picked
@@ -273,8 +287,10 @@ def main() -> int:
     running = _running_total()
     launched = reserve_and_launch(lanes, a.per_lane, a.max, a.dry_run)
     verb = "would launch" if a.dry_run else "launched"
-    print(f"── async: reaped {len(reaped)} dead · harvested {applied} · {running} still running · "
-          f"{verb} {len(launched)} (cap {a.max}) → {[t for _, t in launched]}")
+    print(
+        f"── async: reaped {len(reaped)} dead · harvested {applied} · {running} still running · "
+        f"{verb} {len(launched)} (cap {a.max}) → {[t for _, t in launched]}"
+    )
     return 0
 
 

@@ -271,6 +271,29 @@ def _routine_generated_buildout(task: Task) -> bool:
     return "generated" in labels and "build-out" in labels
 
 
+def _value_tier_repos() -> set[str]:
+    repos: set[str] = {r.strip() for r in os.environ.get("LIMEN_VALUE_REPOS", "").split(",") if r.strip()}
+    fpath = os.environ.get(
+        "LIMEN_VALUE_REPOS_FILE",
+        str(Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen"))) / "value-repos.json"),
+    )
+    try:
+        data = json.loads(Path(fpath).read_text())
+        for item in data.get("repos", []):
+            repos.add(item if isinstance(item, str) else (item.get("repo") or ""))
+    except Exception:
+        pass
+    repos.discard("")
+    return repos
+
+
+def _routine_generated_buildout_allowed(task: Task) -> bool:
+    if not _routine_generated_buildout(task):
+        return True
+    allowed = _value_tier_repos()
+    return bool(task.repo and task.repo in allowed)
+
+
 def _worktree_debt_gate() -> tuple[bool, str]:
     if os.environ.get("LIMEN_WORKTREE_DEBT_GATE", "1") != "1":
         return False, ""
@@ -1408,6 +1431,7 @@ def dispatch_tasks(
         and (t.target_agent == agent_filter or t.target_agent == "any")
         and t.budget_cost <= remaining
         and not (debt_blocked and _routine_generated_buildout(t))
+        and _routine_generated_buildout_allowed(t)
     ]
     priority_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "backlog": 4}
     candidates.sort(key=lambda t: priority_order.get(t.priority, 99))
@@ -1762,6 +1786,7 @@ def dispatch_parallel(
             and t.budget_cost <= rem
             and _deps_met(t, id2)
             and not (debt_blocked and _routine_generated_buildout(t))
+            and _routine_generated_buildout_allowed(t)
         ]
         cands.sort(key=lambda t: _PRIORITY_ORDER.get(t.priority, 99))
         # FRONT-LOAD: base picks by priority, then an ACCELERATION TAIL (only when the lane is

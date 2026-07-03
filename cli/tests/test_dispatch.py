@@ -336,6 +336,48 @@ def test_dispatch_parallel_debt_gate_skips_routine_generated_buildout(tmp_path: 
     assert "GEN-BUILDOUT" not in output
 
 
+def test_dispatch_parallel_skips_generated_buildout_outside_value_tier(tmp_path: Path, capsys, monkeypatch) -> None:
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("LIMEN_VALUE_REPOS", "organvm/limen")
+    monkeypatch.setenv("LIMEN_VALUE_REPOS_FILE", str(tmp_path / "no-such-tier.json"))
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "GEN-NONVALUE",
+                "title": "Generated non-value build-out",
+                "repo": "organvm/site.github.io",
+                "target_agent": "any",
+                "priority": "critical",
+                "budget_cost": 1,
+                "status": "open",
+                "labels": ["typing", "generated", "build-out"],
+                "created": "2026-06-20",
+                "dispatch_log": [],
+            },
+            {
+                "id": "VALUE-WORK",
+                "title": "Value-tier work",
+                "repo": "organvm/limen",
+                "target_agent": "any",
+                "priority": "critical",
+                "budget_cost": 1,
+                "status": "open",
+                "labels": ["lifecycle"],
+                "created": "2026-06-20",
+                "dispatch_log": [],
+            },
+        ],
+    )
+
+    dispatch_parallel(load_limen_file(tasks_path), tasks_path, agents=["codex"], dry_run=True)
+
+    output = capsys.readouterr().out
+    assert "VALUE-WORK" in output
+    assert "GEN-NONVALUE" not in output
+
+
 def test_lane_run_env_keeps_lane_specific_isolation(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     monkeypatch.setenv("PATH", "/usr/bin")
