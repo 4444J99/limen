@@ -35,6 +35,28 @@ from limen.model_selection import (  # the shared model vocabulary — also used
 from limen.worktree_debt import worktree_debt_exceeded
 
 
+def _int_or_default(raw: object, default: int) -> int:
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return default
+
+
+def _float_or_default(raw: object, default: float) -> float:
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return default
+
+
+def _env_int(name: str, default: int) -> int:
+    return _int_or_default(os.environ.get(name), default)
+
+
+def _env_float(name: str, default: float) -> float:
+    return _float_or_default(os.environ.get(name), default)
+
+
 def _load_limen_env() -> int:
     """Load ~/.limen.env into os.environ so agent subprocesses (gemini/codex/opencode/…) INHERIT the
     credentials. Without this, _run_cmd runs the CLIs with the daemon's bare env and a key that was
@@ -120,7 +142,7 @@ def _oauth_unreachable_lanes() -> set[str]:
         return set()
     import socket
 
-    timeout = float(os.environ.get("LIMEN_OAUTH_PREFLIGHT_TIMEOUT", "3"))
+    timeout = max(0.1, _env_float("LIMEN_OAUTH_PREFLIGHT_TIMEOUT", 3.0))
     reachable: dict[str, bool] = {}
     down: set[str] = set()
     for lane, host in _BROWSER_OAUTH_LANES.items():
@@ -452,7 +474,7 @@ def _run_cmd(cmd: list[str], task: Task, dry_run: bool, cwd: str | None = None) 
         result = _run_capture(
             cmd,
             cwd=cwd,
-            timeout=int(os.environ.get("LIMEN_DISPATCH_TIMEOUT", "600")),
+            timeout=max(1, _env_int("LIMEN_DISPATCH_TIMEOUT", 600)),
         )  # own process group → timeout SIGKILLs grandchildren too (no beat-stall hang)
         if result.returncode == 0:
             print(f"  dispatched: {task.id}")
@@ -1340,7 +1362,7 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
     # tasks (BLD2-*-deploy, REV-*) — timed out locally then bled to jules, exhausting the scarce lane
     # and stalling the money work. A longer local cap lets the cheap, abundant lanes finish the big
     # tasks (a hung run is still bounded — _run_capture kills the process group at the cap).
-    lane_timeout = int(os.environ.get("LIMEN_LANE_TIMEOUT", "1800"))
+    lane_timeout = max(1, _env_int("LIMEN_LANE_TIMEOUT", 1800))
 
     if dry_run:
         print(
@@ -1719,15 +1741,14 @@ def _accel_limit(limen: LimenFile, agent: str, base_limit: int, now: datetime) -
         return base_limit
     try:
         remaining_frac, time_left_frac = _accel_window(limen, agent, now)
-        floor = float(os.environ.get("LIMEN_ACCEL_TLEFT_FLOOR", "0.08"))
+        floor = max(0.001, _env_float("LIMEN_ACCEL_TLEFT_FLOOR", 0.08))
         urgency = remaining_frac / max(time_left_frac, floor)
         if urgency <= 1.0:
             return base_limit
         non_blocking = agent in _ASYNC_LANES or os.environ.get("LIMEN_DISPATCH_ASYNC") == "1"
-        ceiling = int(
-            os.environ.get(
-                "LIMEN_ACCEL_ASYNC_CEIL" if non_blocking else "LIMEN_ACCEL_LOCAL_CEIL", "25" if non_blocking else "8"
-            )
+        ceiling = _env_int(
+            "LIMEN_ACCEL_ASYNC_CEIL" if non_blocking else "LIMEN_ACCEL_LOCAL_CEIL",
+            25 if non_blocking else 8,
         )
         eff = int(round(base_limit * urgency))
         return max(base_limit, min(eff, ceiling))

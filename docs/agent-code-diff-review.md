@@ -48,6 +48,38 @@ python3 -m pytest cli/tests/test_route_bias.py cli/tests/test_dispatch.py::test_
 
 Result: `16 passed in 0.45s`.
 
+### Dispatch numeric knobs could abort hot paths instead of using defaults
+
+Severity: high for daemon reliability.
+
+Evidence:
+
+- The rank 7-12 control-plane queue windows include async dispatch, local lane isolation, OAuth preflight, and accelerator work.
+- Several runtime knobs in these hot paths used bare `int(...)` / `float(...)`: `LIMEN_OAUTH_PREFLIGHT_TIMEOUT`, `LIMEN_DISPATCH_TIMEOUT`, `LIMEN_LANE_TIMEOUT`, `LIMEN_ACCEL_TLEFT_FLOOR`, accelerator ceilings, `LIMEN_ASYNC_MAX_AGE`, `LIMEN_LOCAL_LIMIT`, and `LIMEN_ASYNC_MAX`.
+- A malformed launchd or shell environment value could abort the dispatch beat before it reached lane gating, reservation, or result harvesting.
+
+Repair:
+
+- Added tolerant env parsing helpers to `cli/src/limen/dispatch.py`.
+- Hardened OAuth preflight timeout, agent command timeout, isolated lane timeout, and accelerator floor/ceiling parsing.
+- Added tolerant async-dispatch env parsing in `scripts/dispatch-async.py`.
+- Covered malformed env values in synchronous dispatch and async dispatch tests without invoking real agents or network calls.
+
+Touched paths:
+
+- `cli/src/limen/dispatch.py`
+- `scripts/dispatch-async.py`
+- `cli/tests/test_dispatch.py`
+- `cli/tests/test_async_dispatch.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_route_bias.py cli/tests/test_dispatch.py::test_dispatch_numeric_env_knobs_fail_open_when_malformed cli/tests/test_dispatch.py::test_run_isolated_agent_retries_transient_claude_auth_blip cli/tests/test_dispatch.py::test_pr_open_receipt_blocks_duplicate_dispatch_and_noop_demotion cli/tests/test_async_dispatch.py cli/tests/test_route_torn_write.py -q
+```
+
+Result: `32 passed in 0.61s`.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -57,6 +89,14 @@ Result: `16 passed in 0.45s`.
 - `scripts/route.py:273` applies safe ledger-bias floor parsing.
 - `cli/tests/test_route_bias.py:106` covers malformed route knob parsing.
 - `cli/tests/test_route_bias.py:119` covers malformed usage runway parsing.
+- `cli/src/limen/dispatch.py:38` defines the dispatch tolerant numeric parsers.
+- `cli/src/limen/dispatch.py:145` applies safe OAuth preflight timeout parsing.
+- `cli/src/limen/dispatch.py:477` applies safe agent command timeout parsing.
+- `cli/src/limen/dispatch.py:1365` applies safe isolated lane timeout parsing.
+- `cli/src/limen/dispatch.py:1744` applies safe accelerator floor/ceiling parsing.
+- `scripts/dispatch-async.py:52` defines async-dispatch tolerant numeric parsing.
+- `cli/tests/test_dispatch.py:493` covers malformed dispatch env knobs.
+- `cli/tests/test_async_dispatch.py:107` covers malformed async-dispatch env knobs.
 
 ## Remaining Review Queue
 

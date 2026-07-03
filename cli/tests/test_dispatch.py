@@ -490,6 +490,50 @@ def test_run_isolated_agent_retries_transient_claude_auth_blip(tmp_path: Path, m
     assert len(calls) == 2
 
 
+def test_dispatch_numeric_env_knobs_fail_open_when_malformed(tmp_path: Path, monkeypatch) -> None:
+    import datetime
+    import socket
+
+    class FakeSocket:
+        def close(self) -> None:
+            pass
+
+    oauth_timeouts: list[float] = []
+
+    def fake_create_connection(addr, timeout):
+        oauth_timeouts.append(timeout)
+        return FakeSocket()
+
+    monkeypatch.setattr(socket, "create_connection", fake_create_connection)
+    monkeypatch.setenv("LIMEN_OAUTH_PREFLIGHT_TIMEOUT", "not-a-float")
+    assert D._oauth_unreachable_lanes() == set()
+    assert oauth_timeouts == [3.0]
+
+    captured: dict[str, int] = {}
+
+    def fake_run_capture(cmd, cwd=None, timeout=600, env=None):
+        captured["timeout"] = timeout
+        return subprocess.CompletedProcess(cmd, 0, "", "")
+
+    task = Task(id="ENV-KNOBS", title="env", repo="x/y", target_agent="codex", created=date(2026, 6, 27))
+    monkeypatch.setattr(D, "_run_capture", fake_run_capture)
+    monkeypatch.setenv("LIMEN_DISPATCH_TIMEOUT", "not-an-int")
+    assert D._run_cmd(["codex"], task, dry_run=False) is True
+    assert captured["timeout"] == 600
+
+    monkeypatch.setattr(D, "_resolve_agent_binary", lambda agent: agent)
+    monkeypatch.setattr(D, "_resolve_repo_dir", lambda _task: tmp_path)
+    monkeypatch.setenv("LIMEN_LANE_TIMEOUT", "not-an-int")
+    assert D._isolated_local_run("codex", task, dry_run=True) is True
+
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(tasks_path, [])
+    limen = load_limen_file(tasks_path)
+    monkeypatch.setenv("LIMEN_ACCEL_TLEFT_FLOOR", "not-a-float")
+    monkeypatch.setenv("LIMEN_ACCEL_ASYNC_CEIL", "not-an-int")
+    assert D._accel_limit(limen, "jules", 2, datetime.datetime.now(datetime.timezone.utc)) >= 2
+
+
 def test_git_plumbing_retries_transient_config_lock(tmp_path: Path, monkeypatch) -> None:
     calls: list[list[str]] = []
 

@@ -104,6 +104,24 @@ def test_default_max_age_exceeds_lane_timeout(tmp_path, monkeypatch):
     assert da.default_max_age_s() == 99
 
 
+def test_async_numeric_env_knobs_fail_open_when_malformed(tmp_path, monkeypatch):
+    da = _load(tmp_path, n_open=0)
+
+    monkeypatch.setenv("LIMEN_ASYNC_MAX_AGE", "not-an-int")
+    assert da.default_max_age_s() == 2100
+
+    monkeypatch.delenv("LIMEN_ASYNC_MAX_AGE", raising=False)
+    monkeypatch.setenv("LIMEN_LANE_TIMEOUT", "not-an-int")
+    assert da.default_max_age_s() == 2100
+
+    monkeypatch.setenv("LIMEN_LOCAL_LIMIT", "not-an-int")
+    monkeypatch.setenv("LIMEN_ASYNC_MAX", "not-an-int")
+    monkeypatch.setattr(da, "_down_lanes", lambda: set())
+    monkeypatch.setattr(sys, "argv", ["dispatch-async.py", "--lanes", "codex", "--dry-run"])
+
+    assert da.main() == 0
+
+
 def test_harvest_applies_pr_result_and_cleans(tmp_path):
     da = _load(tmp_path, n_open=2)
     (da.RUNS / "T0__codex.running").write_text(datetime.datetime.now(datetime.timezone.utc).isoformat())

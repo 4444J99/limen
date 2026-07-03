@@ -49,6 +49,17 @@ RUNS = ROOT / "logs" / "async-runs"
 WORKER = ROOT / "scripts" / "async-run-one.py"
 
 
+def _int_or_default(raw: object, default: int) -> int:
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return default
+
+
+def _env_int(name: str, default: int) -> int:
+    return _int_or_default(os.environ.get(name), default)
+
+
 def _now():
     return datetime.datetime.now(datetime.timezone.utc)
 
@@ -181,8 +192,8 @@ def default_max_age_s() -> int:
     """Keep stale reaping above the local lane timeout so live bounded workers are not reopened."""
     env = os.environ.get("LIMEN_ASYNC_MAX_AGE")
     if env is not None:
-        return int(env)
-    lane_timeout = int(os.environ.get("LIMEN_LANE_TIMEOUT", "1800"))
+        return max(1, _int_or_default(env, 2100))
+    lane_timeout = max(1, _env_int("LIMEN_LANE_TIMEOUT", 1800))
     return max(1200, lane_timeout + 300)
 
 
@@ -304,8 +315,8 @@ def resolve_lanes(selector: str, down: set[str]) -> list[str]:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--lanes", default="auto")
-    ap.add_argument("--per-lane", type=int, default=int(os.environ.get("LIMEN_LOCAL_LIMIT", "8")))
-    ap.add_argument("--max", type=int, default=int(os.environ.get("LIMEN_ASYNC_MAX", "12")))
+    ap.add_argument("--per-lane", type=int, default=max(1, _env_int("LIMEN_LOCAL_LIMIT", 8)))
+    ap.add_argument("--max", type=int, default=max(1, _env_int("LIMEN_ASYNC_MAX", 12)))
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
     down = _down_lanes()
