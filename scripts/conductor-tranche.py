@@ -36,8 +36,9 @@ DOC_PATH = ROOT / "docs" / "conductor-tranche.md"
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "conductor-tranche.json"
 PORTVS_PATH = HOME / "Workspace" / "4444J99" / "portvs"
 
-SKIP_LANES = {"family", "human-gate", "observe", "parked"}
+SKIP_LANES = {"family", "human-gate", "observe", "owner-blocker", "parked", "remote-pr-open"}
 SKIP_CATEGORIES = {"auth_credentials"}
+SKIP_REASONS = {"active(<24h)", "owner-blocker", "remote-pr-open"}
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -77,9 +78,12 @@ def corpus_inventory_path() -> Path:
 def is_actionable(path: dict[str, Any]) -> bool:
     lane = str(path.get("lane") or "")
     category = str(path.get("category") or "")
+    reason = str(path.get("reason") or "")
     if lane in SKIP_LANES:
         return False
     if category in SKIP_CATEGORIES:
+        return False
+    if reason in SKIP_REASONS or reason.startswith("self/"):
         return False
     return True
 
@@ -524,7 +528,8 @@ def packet_for_path(path: dict[str, Any] | None) -> dict[str, Any]:
         return {
             "purpose": (
                 "Record that no ranked path is autonomously actionable after skipping parked, "
-                "family, human-gated, observe, and auth-only lanes."
+                "family, human-gated, observe, auth-only, already-preserved PR, owner-blocked, "
+                "active, and live-checkout paths."
             ),
             "repo_worktree": "`organvm/limen` conductor checkout.",
             "allowed_files": [
@@ -594,6 +599,7 @@ def build_snapshot() -> dict[str, Any]:
         "selection_policy": {
             "skip_lanes": sorted(SKIP_LANES),
             "skip_categories": sorted(SKIP_CATEGORIES),
+            "skip_reasons": sorted(SKIP_REASONS),
         },
         "selected_path": selected or {},
         "skipped_unactionable_path_ids": [str(item) for item in skipped if item],
@@ -657,7 +663,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         f"| Agent fit | `{selected.get('agent_fit', 'n/a')}` |",
         f"| Attack index generated | `{inputs.get('generated_at') or 'unknown'}` |",
         f"| Ranked paths read | `{inputs.get('ranked_paths', 0)}` |",
-        f"| Skipped family/human-gate/parked/observe/auth paths | {skipped} |",
+        f"| Skipped unactionable paths | {skipped} |",
         "",
         "## Work Packet",
         "",

@@ -1969,6 +1969,74 @@ def test_conductor_tranche_skips_operator_gated_worktree(tmp_path: Path):
     assert "operator-gated-root" in snapshot["skipped_unactionable_path_ids"]
 
 
+def test_conductor_tranche_skips_preserved_active_and_owner_blocker_worktrees(tmp_path: Path):
+    tranche = _load(TRANCHE_SCRIPT, "conductor_tranche_skips_preserved_worktrees")
+    tranche.ROOT = tmp_path
+    tranche.HOME = tmp_path
+    tranche.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    tranche.ATTACK_INDEX = tranche.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
+    tranche.DOC_PATH = tmp_path / "docs" / "conductor-tranche.md"
+    tranche.PRIVATE_INDEX = tranche.PRIVATE_ROOT / "lifecycle" / "conductor-tranche.json"
+    tranche.PORTVS_PATH = tmp_path / "Workspace" / "4444J99" / "portvs"
+
+    tranche.ATTACK_INDEX.parent.mkdir(parents=True)
+    tranche.ATTACK_INDEX.write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-06-28T12:00:00+00:00",
+                "ranked_paths": [
+                    {
+                        "id": "preserved-pr-root",
+                        "kind": "worktree",
+                        "lane": "remote-pr-open",
+                        "reason": "remote-pr-open",
+                        "score": 90,
+                        "agent_fit": "codex first",
+                        "next_action": "Review and merge PR only after owner approval.",
+                    },
+                    {
+                        "id": "active-claude-root",
+                        "kind": "worktree",
+                        "lane": "remote-proof",
+                        "reason": "active(<24h)",
+                        "score": 80,
+                        "agent_fit": "codex first",
+                        "next_action": "Verify later after the active agent window closes.",
+                    },
+                    {
+                        "id": "owner-blocked-root",
+                        "kind": "worktree",
+                        "lane": "owner-blocker",
+                        "reason": "owner-blocker",
+                        "score": 70,
+                        "agent_fit": "human/codex-prep",
+                        "next_action": "Do not auto-port without a named owner packet.",
+                    },
+                    {
+                        "id": "default-proof-root",
+                        "kind": "worktree",
+                        "lane": "remote-proof",
+                        "reason": "remote-default-proof",
+                        "score": 60,
+                        "agent_fit": "codex first",
+                        "next_action": "Verify remote/default preservation.",
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = tranche.build_snapshot()
+
+    assert snapshot["packet"]["selected_path_id"] == "default-proof-root"
+    assert snapshot["skipped_unactionable_path_ids"] == [
+        "preserved-pr-root",
+        "active-claude-root",
+        "owner-blocked-root",
+    ]
+
+
 def test_conductor_tranche_records_no_autonomous_path_when_all_ranked_paths_skipped(tmp_path: Path):
     tranche = _load(TRANCHE_SCRIPT, "conductor_tranche_no_autonomous_path")
     tranche.ROOT = tmp_path
