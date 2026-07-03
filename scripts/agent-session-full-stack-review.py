@@ -1,0 +1,984 @@
+#!/usr/bin/env python3
+"""Full-stack prompt/session review across Codex, Claude, OpenCode, and Agy.
+
+The private output is intentionally verbatim. The tracked report is counts,
+hashes, and findings only, so the repo can keep processing private prompt
+material without publishing it.
+"""
+from __future__ import annotations
+
+import argparse
+import datetime as dt
+import hashlib
+import json
+import os
+import re
+import sqlite3
+import sys
+from collections import Counter, defaultdict
+from pathlib import Path
+from typing import Any, Iterable
+
+
+ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
+HOME = Path.home()
+PRIVATE_ROOT = Path(
+    os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus")
+)
+OUT_DIR = PRIVATE_ROOT / "full-stack-review"
+PRIVATE_PROMPTS = OUT_DIR / "verbatim-prompts.jsonl"
+PRIVATE_REVIEW = OUT_DIR / "agent-session-review.json"
+DOC_PATH = ROOT / "docs" / "agent-session-full-stack-review.md"
+
+CODEX_SESSIONS = HOME / ".codex" / "sessions"
+CODEX_HISTORY = HOME / ".codex" / "history.jsonl"
+CLAUDE_PROJECTS = HOME / ".claude" / "projects"
+CLAUDE_TASKS = HOME / ".claude" / "tasks"
+OPENCODE_DB = HOME / ".local" / "share" / "opencode" / "opencode.db"
+GEMINI_TMP = HOME / ".gemini" / "tmp"
+ANTIGRAVITY_STATE = HOME / ".gemini" / "antigravity" / "antigravity_state.pbtxt"
+ANTIGRAVITY_SUMMARIES = HOME / ".gemini" / "antigravity" / "agyhub_summaries_proto.pb"
+
+
+VERIFY_RE = re.compile(
+    r"\b("
+    r"verify-whole\.sh|pytest|ruff|mypy|py_compile|npm run (?:build|check|test)|"
+    r"pnpm (?:test|build)|vitest|git diff --check|verify|predicate|tests? passed|passed"
+    r")\b",
+    re.I,
+)
+RECEIPT_RE = re.compile(
+    r"(https://github\.com/[^)\s]+/pull/\d+|\bPR\s*#?\d+\b|\bcommit\s+[0-9a-f]{7,40}\b|"
+    r"\b[0-9a-f]{7,40}\b|\.jsonl\b|\.md\b|\.json\b|artifact|receipt)",
+    re.I,
+)
+FAIL_RE = re.compile(
+    r"\b(failed|failure|blocked|error|exception|timeout|rate.?limit|permission|auth|quota|"
+    r"resource_exhausted|needs_human|not found|no-op|noop|aborted|interrupted)\b",
+    re.I,
+)
+DONE_RE = re.compile(r"\b(done|complete|completed|verified|passed|merged|pushed|landed|shipped)\b", re.I)
+SCOPE_RE = re.compile(
+    r"(/Users/|~/|\.py\b|\.ts\b|\.tsx\b|\.md\b|\.json\b|scripts/|docs/|cli/|web/|"
+    r"tasks\.yaml|[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+|LIMEN-[0-9A-Z-]+|[A-Z]+-[A-Za-z0-9-]+)"
+)
+PREDICATE_RE = re.compile(r"\b(test|verify|predicate|acceptance|done when|passes|green|run)\b", re.I)
+GATE_RE = re.compile(r"\b(gate|human|approval|do not|never|ask|confirm|irreversible|outward)\b", re.I)
+BROAD_RE = re.compile(r"\b(all|everything|full stack|autonomous|keep working|never stop|whole|entire|every)\b", re.I)
+
+
+def now_iso() -> str:
+    return dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+
+
+def iso_from_epoch_ms(value: Any) -> str | None:
+    if not isinstance(value, (int, float)) or value <= 0:
+        return None
+    try:
+        return dt.datetime.fromtimestamp(value / 1000, dt.timezone.utc).isoformat(timespec="seconds").replace(
+            "+00:00", "Z"
+        )
+    except (OSError, OverflowError, ValueError):
+        return None
+
+
+def stable_hash(text: str, length: int | None = None) -> str:
+    digest = hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest()
+    return digest if length is None else digest[:length]
+
+
+def file_hash(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def relpath(path: Path | str) -> str:
+    p = Path(path)
+    try:
+        return "~/" + str(p.expanduser().resolve().relative_to(HOME))
+    except (OSError, ValueError):
+        return str(path)
+
+
+def read_jsonl(path: Path) -> Iterable[dict[str, Any]]:
+    try:
+        with path.open(encoding="utf-8", errors="replace") as f:
+            for line_no, line in enumerate(f, 1):
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                except ValueError:
+                    continue
+                if isinstance(obj, dict):
+                    obj["_line"] = line_no
+                    yield obj
+    except OSError:
+        return
+
+
+def json_text(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value] if value.strip() else []
+    if isinstance(value, list):
+        out: list[str] = []
+        for item in value:
+            out.extend(json_text(item))
+        return out
+    if isinstance(value, dict):
+        out: list[str] = []
+        for key in ("text", "content", "message", "input", "prompt", "description"):
+            if key in value:
+                out.extend(json_text(value[key]))
+        return out
+    return []
+
+
+def maybe_decode_wrapped_string(text: str) -> str:
+    stripped = text.strip()
+    if len(stripped) >= 2 and stripped[0] == stripped[-1] == '"':
+        try:
+            decoded = json.loads(stripped)
+        except ValueError:
+            return text
+        if isinstance(decoded, str):
+            return decoded
+    return text
+
+
+def classify_prompt(text: str) -> dict[str, bool]:
+    return {
+        "has_scope": bool(SCOPE_RE.search(text)),
+        "has_predicate": bool(PREDICATE_RE.search(text)),
+        "has_receipt_request": bool(RECEIPT_RE.search(text)),
+        "mentions_gate": bool(GATE_RE.search(text)),
+        "broad": bool(BROAD_RE.search(text)),
+    }
+
+
+def outcome_signals(text: str) -> dict[str, int]:
+    return {
+        "verification": len(VERIFY_RE.findall(text)),
+        "receipts": len(RECEIPT_RE.findall(text)),
+        "failures": len(FAIL_RE.findall(text)),
+        "done_words": len(DONE_RE.findall(text)),
+    }
+
+
+class Aggregator:
+    def __init__(self) -> None:
+        self.sessions: dict[str, dict[str, Any]] = {}
+        self.prompt_events = 0
+        self.unique_prompt_hashes: set[str] = set()
+        self.source_counts: Counter[str] = Counter()
+        self.agent_counts: Counter[str] = Counter()
+        self.prompt_bytes_by_agent: Counter[str] = Counter()
+        self.outcome_text_bytes = 0
+        self.private_paths: set[str] = set()
+        self.samples_by_agent: dict[str, list[dict[str, Any]]] = defaultdict(list)
+
+    def session(self, agent: str, session_id: str, source: str, path: Path | str | None = None) -> dict[str, Any]:
+        key = f"{agent}:{session_id}"
+        item = self.sessions.setdefault(
+            key,
+            {
+                "key": key,
+                "agent": agent,
+                "session_id": session_id,
+                "sources": Counter(),
+                "paths": set(),
+                "cwd": None,
+                "title": None,
+                "first_ts": None,
+                "last_ts": None,
+                "prompt_events": 0,
+                "unique_prompt_hashes": set(),
+                "prompt_bytes": 0,
+                "prompt_flags": Counter(),
+                "outcome": Counter(),
+                "changed_files": set(),
+                "model": None,
+                "tokens": Counter(),
+                "cost": 0.0,
+            },
+        )
+        item["sources"][source] += 1
+        if path is not None:
+            item["paths"].add(str(path))
+            self.private_paths.add(str(path))
+        return item
+
+    def add_prompt(
+        self,
+        *,
+        agent: str,
+        source: str,
+        session_id: str,
+        path: Path | str,
+        text: str,
+        ts: str | None = None,
+        cwd: str | None = None,
+        title: str | None = None,
+        ordinal: int | None = None,
+        surface: str | None = None,
+        extra: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        text = maybe_decode_wrapped_string(text)
+        prompt_hash = stable_hash(text)
+        row = {
+            "agent": agent,
+            "source": source,
+            "session_id": session_id,
+            "timestamp": ts,
+            "cwd": cwd,
+            "title": title,
+            "path": str(path),
+            "display_path": relpath(path),
+            "ordinal": ordinal,
+            "surface": surface,
+            "prompt_hash": prompt_hash,
+            "prompt_bytes": len(text.encode("utf-8", errors="replace")),
+            "flags": classify_prompt(text),
+            "text": text,
+        }
+        if extra:
+            row["extra"] = extra
+
+        session = self.session(agent, session_id, source, path)
+        session["prompt_events"] += 1
+        session["unique_prompt_hashes"].add(prompt_hash)
+        session["prompt_bytes"] += row["prompt_bytes"]
+        if cwd and not session["cwd"]:
+            session["cwd"] = cwd
+        if title and not session["title"]:
+            session["title"] = title
+        for flag, val in row["flags"].items():
+            if val:
+                session["prompt_flags"][flag] += 1
+        for key in ("first_ts", "last_ts"):
+            if ts and (session[key] is None or (key == "first_ts" and ts < session[key]) or (key == "last_ts" and ts > session[key])):
+                session[key] = ts
+
+        self.prompt_events += 1
+        self.unique_prompt_hashes.add(prompt_hash)
+        self.source_counts[source] += 1
+        self.agent_counts[agent] += 1
+        self.prompt_bytes_by_agent[agent] += row["prompt_bytes"]
+        if len(self.samples_by_agent[agent]) < 5:
+            self.samples_by_agent[agent].append(
+                {
+                    "session_id": session_id,
+                    "timestamp": ts,
+                    "prompt_hash": prompt_hash[:16],
+                    "bytes": row["prompt_bytes"],
+                    "flags": row["flags"],
+                    "display_path": row["display_path"],
+                }
+            )
+        return row
+
+    def add_outcome_text(
+        self,
+        *,
+        agent: str,
+        source: str,
+        session_id: str,
+        path: Path | str,
+        text: str,
+        ts: str | None = None,
+        changed_files: Iterable[str] = (),
+    ) -> None:
+        if not text:
+            return
+        session = self.session(agent, session_id, source, path)
+        signals = outcome_signals(text)
+        session["outcome"].update(signals)
+        for changed in changed_files:
+            if changed:
+                session["changed_files"].add(changed)
+        if ts and (session["last_ts"] is None or ts > session["last_ts"]):
+            session["last_ts"] = ts
+        self.outcome_text_bytes += len(text.encode("utf-8", errors="replace"))
+
+    def add_session_metadata(
+        self,
+        *,
+        agent: str,
+        source: str,
+        session_id: str,
+        path: Path | str,
+        cwd: str | None = None,
+        title: str | None = None,
+        model: str | None = None,
+        tokens: dict[str, int] | None = None,
+        cost: float | None = None,
+        changed_files: Iterable[str] = (),
+        ts: str | None = None,
+    ) -> None:
+        session = self.session(agent, session_id, source, path)
+        if cwd and not session["cwd"]:
+            session["cwd"] = cwd
+        if title and not session["title"]:
+            session["title"] = title
+        if model and not session["model"]:
+            session["model"] = model
+        if tokens:
+            session["tokens"].update({k: int(v or 0) for k, v in tokens.items()})
+        if cost:
+            session["cost"] = float(session["cost"]) + float(cost)
+        for changed in changed_files:
+            if changed:
+                session["changed_files"].add(changed)
+        if ts and (session["last_ts"] is None or ts > session["last_ts"]):
+            session["last_ts"] = ts
+
+    def finalize_sessions(self) -> list[dict[str, Any]]:
+        rows: list[dict[str, Any]] = []
+        for item in self.sessions.values():
+            prompt_events = int(item["prompt_events"])
+            changed = sorted(item["changed_files"])
+            outcome = Counter(item["outcome"])
+            flags = Counter(item["prompt_flags"])
+            ideal_gaps: list[str] = []
+            if prompt_events:
+                if flags["broad"] and not flags["has_scope"]:
+                    ideal_gaps.append("prompt broad without concrete owner scope")
+                if not flags["has_predicate"]:
+                    ideal_gaps.append("prompt missing executable predicate")
+                if not flags["has_receipt_request"]:
+                    ideal_gaps.append("prompt missing expected receipt/artifact")
+            if prompt_events and outcome["verification"] == 0:
+                ideal_gaps.append("session outcome lacks verification signal")
+            if prompt_events and outcome["receipts"] == 0 and not changed:
+                ideal_gaps.append("session outcome lacks durable receipt signal")
+            if prompt_events and outcome["failures"] > outcome["done_words"]:
+                ideal_gaps.append("failure/blocker language outweighs done language")
+            if prompt_events and not changed and outcome["verification"] == 0 and outcome["receipts"] == 0:
+                ideal_gaps.append("likely no-op or unrecorded work")
+
+            score = (
+                flags["broad"] * 3
+                + (1 if not flags["has_predicate"] and prompt_events else 0) * 4
+                + (1 if not flags["has_receipt_request"] and prompt_events else 0) * 4
+                + (1 if outcome["verification"] == 0 and prompt_events else 0) * 5
+                + (1 if outcome["receipts"] == 0 and not changed and prompt_events else 0) * 5
+                + min(outcome["failures"], 10)
+            )
+            rows.append(
+                {
+                    "key": item["key"],
+                    "agent": item["agent"],
+                    "session_id": item["session_id"],
+                    "title": item["title"],
+                    "cwd": item["cwd"],
+                    "first_ts": item["first_ts"],
+                    "last_ts": item["last_ts"],
+                    "sources": dict(item["sources"]),
+                    "paths": sorted(relpath(p) for p in item["paths"]),
+                    "prompt_events": prompt_events,
+                    "unique_prompts": len(item["unique_prompt_hashes"]),
+                    "prompt_bytes": item["prompt_bytes"],
+                    "prompt_flags": dict(flags),
+                    "outcome": dict(outcome),
+                    "changed_files": changed[:100],
+                    "changed_file_count": len(changed),
+                    "model": item["model"],
+                    "tokens": dict(item["tokens"]),
+                    "cost": item["cost"],
+                    "ideal_gaps": ideal_gaps,
+                    "risk_score": score,
+                }
+            )
+        rows.sort(key=lambda r: (r["risk_score"], r["prompt_events"], r.get("last_ts") or ""), reverse=True)
+        return rows
+
+
+def extract_codex(agg: Aggregator, writer: Any) -> None:
+    paths = sorted(CODEX_SESSIONS.rglob("*.jsonl")) if CODEX_SESSIONS.exists() else []
+    if CODEX_HISTORY.exists():
+        paths.append(CODEX_HISTORY)
+    for path in paths:
+        session_id = path.stem
+        cwd = None
+        for obj in read_jsonl(path):
+            typ = obj.get("type")
+            ts = obj.get("timestamp")
+            payload = obj.get("payload")
+            if typ == "session_meta" and isinstance(payload, dict):
+                session_id = str(payload.get("id") or payload.get("session_id") or session_id)
+                cwd = payload.get("cwd") or cwd
+                model = payload.get("model") or payload.get("model_slug") or payload.get("model_provider")
+                agg.add_session_metadata(
+                    agent="codex",
+                    source="codex-sessions",
+                    session_id=session_id,
+                    path=path,
+                    cwd=cwd,
+                    model=str(model) if model else None,
+                    ts=ts,
+                )
+                continue
+            if typ == "turn_context" and isinstance(payload, dict):
+                cwd = payload.get("cwd") or cwd
+                agg.add_session_metadata(
+                    agent="codex",
+                    source="codex-sessions",
+                    session_id=session_id,
+                    path=path,
+                    cwd=cwd,
+                    model=str(payload.get("model")) if payload.get("model") else None,
+                    ts=ts,
+                )
+                continue
+            if path == CODEX_HISTORY:
+                if isinstance(obj.get("text"), str):
+                    row = agg.add_prompt(
+                        agent="codex",
+                        source="codex-history",
+                        session_id=str(obj.get("session_id") or session_id),
+                        path=path,
+                        text=obj["text"],
+                        ts=ts,
+                        cwd=cwd,
+                        ordinal=obj.get("_line"),
+                        surface="history",
+                    )
+                    writer.write(json.dumps(row, ensure_ascii=False) + "\n")
+                continue
+            if typ == "event_msg" and isinstance(payload, dict) and payload.get("type") == "user_message":
+                text = payload.get("message")
+                if isinstance(text, str) and text.strip():
+                    row = agg.add_prompt(
+                        agent="codex",
+                        source="codex-sessions",
+                        session_id=session_id,
+                        path=path,
+                        text=text,
+                        ts=ts,
+                        cwd=cwd,
+                        ordinal=obj.get("_line"),
+                        surface="event_msg.user_message",
+                    )
+                    writer.write(json.dumps(row, ensure_ascii=False) + "\n")
+            elif typ == "response_item" and isinstance(payload, dict):
+                if payload.get("type") == "message" and payload.get("role") == "user":
+                    texts = json_text(payload.get("content"))
+                    for text in texts:
+                        row = agg.add_prompt(
+                            agent="codex",
+                            source="codex-sessions",
+                            session_id=session_id,
+                            path=path,
+                            text=text,
+                            ts=ts,
+                            cwd=cwd,
+                            ordinal=obj.get("_line"),
+                            surface="response_item.user",
+                        )
+                        writer.write(json.dumps(row, ensure_ascii=False) + "\n")
+                elif payload.get("type") == "message" and payload.get("role") in ("assistant", "tool"):
+                    agg.add_outcome_text(
+                        agent="codex",
+                        source="codex-sessions",
+                        session_id=session_id,
+                        path=path,
+                        text="\n".join(json_text(payload.get("content"))),
+                        ts=ts,
+                    )
+                elif payload.get("type") in ("function_call_output", "function_call"):
+                    agg.add_outcome_text(
+                        agent="codex",
+                        source="codex-sessions",
+                        session_id=session_id,
+                        path=path,
+                        text=json.dumps(payload, ensure_ascii=False)[:20000],
+                        ts=ts,
+                    )
+
+
+def extract_claude(agg: Aggregator, writer: Any) -> None:
+    paths = sorted(CLAUDE_PROJECTS.rglob("*.jsonl")) if CLAUDE_PROJECTS.exists() else []
+    if CLAUDE_TASKS.exists():
+        paths.extend(sorted(CLAUDE_TASKS.rglob("*.json")))
+    for path in paths:
+        if path.suffix == ".json":
+            try:
+                obj = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+            except (OSError, ValueError):
+                continue
+            records = [obj] if isinstance(obj, dict) else obj if isinstance(obj, list) else []
+        else:
+            records = list(read_jsonl(path))
+        session_id = path.stem
+        cwd = None
+        for obj in records:
+            if not isinstance(obj, dict):
+                continue
+            ts = obj.get("timestamp") or obj.get("created_at") or obj.get("updated_at")
+            session_id = str(obj.get("sessionId") or obj.get("session_id") or session_id)
+            cwd = obj.get("cwd") or cwd
+            if obj.get("type") == "queue-operation" and obj.get("operation") == "enqueue":
+                for text in json_text(obj.get("content")):
+                    row = agg.add_prompt(
+                        agent="claude",
+                        source="claude-projects" if path.suffix == ".jsonl" else "claude-tasks",
+                        session_id=session_id,
+                        path=path,
+                        text=text,
+                        ts=ts,
+                        cwd=cwd,
+                        ordinal=obj.get("_line"),
+                        surface="queue.enqueue",
+                    )
+                    writer.write(json.dumps(row, ensure_ascii=False) + "\n")
+            elif obj.get("type") == "user":
+                msg = obj.get("message")
+                if isinstance(msg, dict) and msg.get("role") not in (None, "user"):
+                    continue
+                for text in json_text(msg):
+                    row = agg.add_prompt(
+                        agent="claude",
+                        source="claude-projects" if path.suffix == ".jsonl" else "claude-tasks",
+                        session_id=session_id,
+                        path=path,
+                        text=text,
+                        ts=ts,
+                        cwd=cwd,
+                        ordinal=obj.get("_line"),
+                        surface="message.user",
+                    )
+                    writer.write(json.dumps(row, ensure_ascii=False) + "\n")
+            elif obj.get("type") == "assistant":
+                agg.add_outcome_text(
+                    agent="claude",
+                    source="claude-projects" if path.suffix == ".jsonl" else "claude-tasks",
+                    session_id=session_id,
+                    path=path,
+                    text="\n".join(json_text(obj.get("message")) + json_text(obj.get("content"))),
+                    ts=ts,
+                )
+            elif obj.get("type") == "tool_result":
+                agg.add_outcome_text(
+                    agent="claude",
+                    source="claude-projects" if path.suffix == ".jsonl" else "claude-tasks",
+                    session_id=session_id,
+                    path=path,
+                    text="\n".join(json_text(obj)),
+                    ts=ts,
+                )
+
+
+def extract_opencode(agg: Aggregator, writer: Any) -> None:
+    if not OPENCODE_DB.exists():
+        return
+    try:
+        con = sqlite3.connect(f"file:{OPENCODE_DB}?immutable=1", uri=True)
+    except sqlite3.Error:
+        return
+    con.row_factory = sqlite3.Row
+    try:
+        sessions = con.execute(
+            "SELECT id, title, directory, time_created, time_updated, summary_files, summary_additions, "
+            "summary_deletions, cost, tokens_input, tokens_output, tokens_reasoning, model "
+            "FROM session ORDER BY time_created, id"
+        ).fetchall()
+    except sqlite3.Error:
+        con.close()
+        return
+    for s in sessions:
+        sid = str(s["id"])
+        model = s["model"]
+        changed_files: list[str] = []
+        try:
+            diffs = json.loads(s["summary_diffs"]) if "summary_diffs" in s.keys() and s["summary_diffs"] else None
+        except (TypeError, ValueError):
+            diffs = None
+        if isinstance(diffs, list):
+            changed_files.extend(str(x) for x in diffs[:200])
+        agg.add_session_metadata(
+            agent="opencode",
+            source="opencode-db",
+            session_id=sid,
+            path=OPENCODE_DB,
+            cwd=s["directory"],
+            title=s["title"],
+            model=model,
+            tokens={
+                "input": s["tokens_input"],
+                "output": s["tokens_output"],
+                "reasoning": s["tokens_reasoning"],
+            },
+            cost=s["cost"],
+            changed_files=changed_files,
+            ts=iso_from_epoch_ms(s["time_updated"]),
+        )
+        try:
+            msgs = con.execute(
+                "SELECT id, time_created, data FROM message WHERE session_id=? ORDER BY time_created, id",
+                (sid,),
+            ).fetchall()
+            pmap: dict[str, list[sqlite3.Row]] = defaultdict(list)
+            for p in con.execute(
+                "SELECT message_id, time_created, data FROM part WHERE session_id=? ORDER BY time_created, id",
+                (sid,),
+            ):
+                pmap[p["message_id"]].append(p)
+        except sqlite3.Error:
+            continue
+        for idx, m in enumerate(msgs):
+            try:
+                md = json.loads(m["data"]) if m["data"] else {}
+            except (TypeError, ValueError):
+                md = {}
+            role = md.get("role")
+            ts = iso_from_epoch_ms(m["time_created"])
+            parts: list[str] = []
+            patches: list[str] = []
+            for p in pmap.get(m["id"], []):
+                try:
+                    pd = json.loads(p["data"]) if p["data"] else {}
+                except (TypeError, ValueError):
+                    continue
+                if not isinstance(pd, dict):
+                    continue
+                typ = pd.get("type")
+                if typ in ("text", "reasoning", "compaction"):
+                    text = pd.get("text") or pd.get("summary")
+                    if isinstance(text, str) and text.strip():
+                        parts.append(text)
+                elif typ == "tool":
+                    parts.append(json.dumps(pd, ensure_ascii=False)[:20000])
+                elif typ == "patch":
+                    files = pd.get("files")
+                    if isinstance(files, list):
+                        patches.extend(str(x) for x in files)
+                    parts.append(json.dumps(pd, ensure_ascii=False)[:20000])
+                elif typ == "subtask":
+                    prompt = pd.get("prompt") or pd.get("description")
+                    if isinstance(prompt, str) and prompt.strip():
+                        parts.append(prompt)
+            text = "\n\n".join(parts)
+            if role == "user" and text.strip():
+                row = agg.add_prompt(
+                    agent="opencode",
+                    source="opencode-db",
+                    session_id=sid,
+                    path=OPENCODE_DB,
+                    text=text,
+                    ts=ts,
+                    cwd=s["directory"],
+                    title=s["title"],
+                    ordinal=idx,
+                    surface="message.user.parts",
+                )
+                writer.write(json.dumps(row, ensure_ascii=False) + "\n")
+            elif text.strip():
+                agg.add_outcome_text(
+                    agent="opencode",
+                    source="opencode-db",
+                    session_id=sid,
+                    path=OPENCODE_DB,
+                    text=text,
+                    ts=ts,
+                    changed_files=patches,
+                )
+    con.close()
+
+
+def extract_gemini_tmp_agy(agg: Aggregator, writer: Any) -> None:
+    if not GEMINI_TMP.exists():
+        return
+    paths = sorted(GEMINI_TMP.glob("capfill-agy-*/chats/*.jsonl"))
+    paths.extend(sorted(GEMINI_TMP.glob("*agy*/chats/*.jsonl")))
+    seen: set[Path] = set()
+    for path in paths:
+        if path in seen:
+            continue
+        seen.add(path)
+        session_id = path.stem
+        cwd = None
+        for obj in read_jsonl(path):
+            if "sessionId" in obj:
+                session_id = str(obj.get("sessionId") or session_id)
+            records: list[dict[str, Any]] = []
+            if obj.get("type") in ("user", "assistant", "model"):
+                records.append(obj)
+            set_obj = obj.get("$set")
+            if isinstance(set_obj, dict) and isinstance(set_obj.get("messages"), list):
+                records.extend(x for x in set_obj["messages"] if isinstance(x, dict))
+            for rec in records:
+                typ = rec.get("type")
+                ts = rec.get("timestamp")
+                texts = json_text(rec.get("content"))
+                if not texts:
+                    continue
+                text = "\n\n".join(texts)
+                if text.startswith("<session_context>"):
+                    # Still a prompt event, but record the workspace as cwd when possible.
+                    m = re.search(r"- \*\*Workspace Directories:\*\*\n\s+- ([^\n]+)", text)
+                    if m:
+                        cwd = m.group(1).strip()
+                if typ == "user":
+                    row = agg.add_prompt(
+                        agent="agy",
+                        source="gemini-tmp-agy",
+                        session_id=session_id,
+                        path=path,
+                        text=text,
+                        ts=ts,
+                        cwd=cwd,
+                        ordinal=rec.get("_line"),
+                        surface="gemini-cli.user",
+                    )
+                    writer.write(json.dumps(row, ensure_ascii=False) + "\n")
+                else:
+                    agg.add_outcome_text(
+                        agent="agy",
+                        source="gemini-tmp-agy",
+                        session_id=session_id,
+                        path=path,
+                        text=text,
+                        ts=ts,
+                    )
+
+
+def antigravity_inventory() -> dict[str, Any]:
+    files = []
+    for path in (ANTIGRAVITY_STATE, ANTIGRAVITY_SUMMARIES):
+        if path.exists():
+            files.append({"path": str(path), "display_path": relpath(path), "bytes": path.stat().st_size})
+    support_roots = [
+        HOME / "Library" / "Application Support" / "Antigravity IDE",
+        HOME / "Library" / "Application Support" / "Antigravity",
+        HOME / ".gemini" / "antigravity-cli",
+    ]
+    support_count = 0
+    support_bytes = 0
+    for root in support_roots:
+        if not root.exists():
+            continue
+        for path in root.rglob("*"):
+            if path.is_file():
+                support_count += 1
+                try:
+                    support_bytes += path.stat().st_size
+                except OSError:
+                    pass
+    return {
+        "known_state_files": files,
+        "support_file_count": support_count,
+        "support_bytes": support_bytes,
+        "note": "Native Antigravity IDE prompt bodies were not decoded here; Agy prompt coverage comes from Gemini CLI capfill-agy chat JSONL plus local support inventory.",
+    }
+
+
+def summarize_agents(sessions: list[dict[str, Any]], agg: Aggregator) -> dict[str, Any]:
+    by_agent: dict[str, dict[str, Any]] = {}
+    for agent in sorted({s["agent"] for s in sessions} | set(agg.agent_counts)):
+        agent_sessions = [s for s in sessions if s["agent"] == agent]
+        by_agent[agent] = {
+            "sessions": len(agent_sessions),
+            "prompt_events": sum(s["prompt_events"] for s in agent_sessions),
+            "unique_prompts": len(
+                {
+                    # session-level unique counts are enough for agent summary only if not exact;
+                    # exact global uniqueness is reported separately.
+                    (s["session_id"], s["unique_prompts"])
+                    for s in agent_sessions
+                }
+            ),
+            "prompt_bytes": sum(s["prompt_bytes"] for s in agent_sessions),
+            "sessions_with_verification": sum(1 for s in agent_sessions if s["outcome"].get("verification", 0) > 0),
+            "sessions_with_receipts": sum(
+                1 for s in agent_sessions if s["outcome"].get("receipts", 0) > 0 or s["changed_file_count"] > 0
+            ),
+            "likely_noop_or_unrecorded": sum(
+                1 for s in agent_sessions if "likely no-op or unrecorded work" in s["ideal_gaps"]
+            ),
+            "top_gaps": Counter(gap for s in agent_sessions for gap in s["ideal_gaps"]).most_common(8),
+            "tokens": dict(sum((Counter(s.get("tokens") or {}) for s in agent_sessions), Counter())),
+        }
+    return by_agent
+
+
+def render_markdown(snapshot: dict[str, Any]) -> str:
+    generated = snapshot["generated_at"]
+    counts = snapshot["counts"]
+    agent_summary = snapshot["agents"]
+    top_sessions = snapshot["top_sessions"]
+    private = snapshot["private_outputs"]
+    antigravity = snapshot["antigravity_inventory"]
+
+    lines: list[str] = [
+        "# Agent Session Full-Stack Review",
+        "",
+        f"Generated: `{generated}`",
+        "",
+        "## Scope",
+        "",
+        "- Prompt layer first: every extracted prompt event is stored verbatim in the private cartridge.",
+        "- Session layer second: sessions are scored against ideal-form requirements and observed outcome signals.",
+        "- Tracked output is redacted and receipt-oriented; raw prompt text remains process input under `.limen-private/`.",
+        "",
+        "## Private Prompt Corpus",
+        "",
+        f"- Verbatim prompt events: `{private['verbatim_prompts']}`",
+        f"- Structured review: `{private['structured_review']}`",
+        f"- Prompt events extracted: `{counts['prompt_events']}`",
+        f"- Unique prompt hashes: `{counts['unique_prompt_hashes']}`",
+        f"- Sessions reviewed: `{counts['sessions']}`",
+        f"- Outcome text scanned: `{counts['outcome_text_bytes']}` bytes",
+        "",
+        "## Agent Coverage",
+        "",
+        "| Agent | Sessions | Prompt events | Prompt bytes | Verified sessions | Receipt sessions | Likely no-op/unrecorded |",
+        "|---|---:|---:|---:|---:|---:|---:|",
+    ]
+    for agent, item in sorted(agent_summary.items()):
+        lines.append(
+            f"| `{agent}` | {item['sessions']} | {item['prompt_events']} | {item['prompt_bytes']} | "
+            f"{item['sessions_with_verification']} | {item['sessions_with_receipts']} | {item['likely_noop_or_unrecorded']} |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Source Coverage",
+            "",
+            "| Source | Prompt events |",
+            "|---|---:|",
+        ]
+    )
+    for source, count in sorted(snapshot["source_counts"].items(), key=lambda kv: (-kv[1], kv[0])):
+        lines.append(f"| `{source}` | {count} |")
+
+    lines.extend(
+        [
+            "",
+            "## Ideal-Form Diff Rules",
+            "",
+            "Each session is compared to this ideal form:",
+            "",
+            "- Prompt names concrete owner scope: repo/path/task/lane.",
+            "- Prompt names an executable predicate or acceptance condition.",
+            "- Prompt names the expected durable receipt: changed path, commit, PR, artifact, or blocker record.",
+            "- Prompt separates reversible execution from human-gated outward/irreversible action.",
+            "- Session outcome records verification and a durable receipt, or a precise blocker.",
+            "",
+            "## Highest-Risk Session Diffs",
+            "",
+            "| Rank | Agent | Session | Prompt events | Risk | Gaps | Paths |",
+            "|---:|---|---|---:|---:|---|---|",
+        ]
+    )
+    for i, session in enumerate(top_sessions[:30], 1):
+        gaps = "; ".join(session["ideal_gaps"][:4]) or "none"
+        paths = "<br>".join(session["paths"][:2])
+        lines.append(
+            f"| {i} | `{session['agent']}` | `{session['session_id']}` | {session['prompt_events']} | "
+            f"{session['risk_score']} | {gaps} | {paths} |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Findings",
+            "",
+            "1. Codex and Claude are now covered by the refreshed Limen prompt ledger, but the old prompt ledger did not directly ingest OpenCode's SQLite prompt store or Agy/Gemini capfill chat files. This review closes that local gap for the four requested agents.",
+            "2. Repeated fleet prompts carry a large invariant preamble before narrow work. That makes the prompt layer expensive and blurs the ideal diff: many sessions look like they were asked to preserve the whole organism when the real task was a narrow repo predicate.",
+            "3. Broad autonomy language and closeout language are fighting each other. The ideal form should require a named owner scope and receipt before any lane gets a broad prompt.",
+            "4. OpenCode has many recent sessions with no summary diffs and no token accounting in the session row; those need a live clock/receipt handshake or they read as no-op/unrecorded work even when the model saw a prompt.",
+            "5. Agy/Antigravity provider quota remains a weak surface: this review can see capfill-agy prompt JSONL and local Antigravity state files, but not a decoded native conversation DB for every IDE conversation.",
+            "",
+            "## Agent Notes",
+            "",
+        ]
+    )
+    for agent, item in sorted(agent_summary.items()):
+        gaps = ", ".join(f"{name} ({count})" for name, count in item["top_gaps"][:5]) or "none"
+        lines.append(f"- `{agent}`: top gaps: {gaps}.")
+
+    lines.extend(
+        [
+            "",
+            "## Antigravity/Agy Native Surface",
+            "",
+            f"- Known native state files: `{len(antigravity['known_state_files'])}`.",
+            f"- Local support files inventoried: `{antigravity['support_file_count']}` files, `{antigravity['support_bytes']}` bytes.",
+            f"- Coverage note: {antigravity['note']}",
+            "",
+            "## Next Repairs",
+            "",
+            "1. Add OpenCode and Agy sources to `prompt-lifecycle-ledger.py` so the standard ledger stops undercounting those agents.",
+            "2. Add a compact prompt normalizer that separates invariant preamble hash from task body hash; review should diff the task body, not charge every FLAME repeat as a fresh unique ask.",
+            "3. Require lane packets to include `owner_scope`, `predicate`, `expected_receipt`, and `gate_class` fields before dispatch to OpenCode/Agy/Claude/Jules.",
+            "4. Add a native Agy provider clock or explicit quota receipt. The existing board-run clock is not equivalent to provider quota exhaustion.",
+            "5. Flag sessions with `prompt_events > 0` and no verification/receipt as failed-unrecorded until a receipt or blocker is written.",
+            "",
+            "## Commands",
+            "",
+            "- Refresh this review: `env LIMEN_ROOT=/Users/4jp/Workspace/limen python3 scripts/agent-session-full-stack-review.py --write`",
+            "- Inspect raw prompts locally: `less .limen-private/session-corpus/full-stack-review/verbatim-prompts.jsonl`",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def build_snapshot() -> dict[str, Any]:
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    agg = Aggregator()
+    with PRIVATE_PROMPTS.open("w", encoding="utf-8") as writer:
+        extract_codex(agg, writer)
+        extract_claude(agg, writer)
+        extract_opencode(agg, writer)
+        extract_gemini_tmp_agy(agg, writer)
+    sessions = agg.finalize_sessions()
+    snapshot = {
+        "generated_at": now_iso(),
+        "counts": {
+            "prompt_events": agg.prompt_events,
+            "unique_prompt_hashes": len(agg.unique_prompt_hashes),
+            "sessions": len(sessions),
+            "outcome_text_bytes": agg.outcome_text_bytes,
+        },
+        "source_counts": dict(agg.source_counts),
+        "agent_prompt_counts": dict(agg.agent_counts),
+        "agents": summarize_agents(sessions, agg),
+        "top_sessions": sessions[:200],
+        "sessions": sessions,
+        "private_outputs": {
+            "verbatim_prompts": str(PRIVATE_PROMPTS.relative_to(ROOT)) if PRIVATE_PROMPTS.is_relative_to(ROOT) else str(PRIVATE_PROMPTS),
+            "structured_review": str(PRIVATE_REVIEW.relative_to(ROOT)) if PRIVATE_REVIEW.is_relative_to(ROOT) else str(PRIVATE_REVIEW),
+        },
+        "antigravity_inventory": antigravity_inventory(),
+    }
+    PRIVATE_REVIEW.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return snapshot
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--write", action="store_true", help="write tracked markdown report")
+    parser.add_argument("--json", action="store_true", help="print private structured review path and counts")
+    args = parser.parse_args(argv)
+
+    snapshot = build_snapshot()
+    if args.write:
+        DOC_PATH.write_text(render_markdown(snapshot), encoding="utf-8")
+    if args.json or not args.write:
+        print(json.dumps({"counts": snapshot["counts"], "private_review": str(PRIVATE_REVIEW), "doc": str(DOC_PATH)}, indent=2))
+    else:
+        print(
+            "agent-session-full-stack-review: "
+            f"{snapshot['counts']['prompt_events']} prompts, "
+            f"{snapshot['counts']['sessions']} sessions; wrote {DOC_PATH}"
+        )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
