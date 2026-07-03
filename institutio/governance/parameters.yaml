@@ -694,6 +694,12 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "The Limen task ID injected into the opencode lane run environment so the agent knows which task it is executing. Set by dispatch.py at dispatch time."
+  LIMEN_ISOLATION_PROMPT_GUARD:
+    default: "1"
+    env: LIMEN_ISOLATION_PROMPT_GUARD
+    self_update: none
+    owner: arms-agents
+    note: "Prompt-level guard for isolated async/local worker packets. 1=explicitly forbid live-root and tasks.yaml mutation inside isolated worktrees; 0=omit the extra prompt block for tests or emergency rollback."
   # --- the non-bypassable Claude model chokepoint (scripts/shims/claude) ----------
   LIMEN_CLAUDE_SHIM_FLOOR:
     default: "haiku"           # the cheapest rung — the SAME tier the per-task ladder assigns to unclassed work
@@ -1057,6 +1063,18 @@ parameters:
     self_update: none
     owner: governance
     note: "Beat gate for the governance organ. 1=validate every seed.yaml in the estate + stamp the governance voice each due beat; 0=off. Never gates the beat."
+  LIMEN_BEAT_FINANCIAL:
+    default: "8"               # every 8 beats
+    env: LIMEN_BEAT_FINANCIAL
+    self_update: none
+    owner: financial
+    note: "Beat cadence for the financial organ (scripts/financial-organ.py): run the financial-office consolidator and maturity advance every N beats. Idempotent and fail-open."
+  LIMEN_FINANCIAL:
+    default: "1"               # ON — run the financial organ each due beat
+    env: LIMEN_FINANCIAL
+    self_update: none
+    owner: financial
+    note: "Beat gate for the financial organ. 1=refresh balance/cashflow/status and advance maturity when criteria are met; 0=off. Never gates the beat."
   LIMEN_BEAT_PUBPOLICY:
     default: "8"               # every 8 beats
     env: LIMEN_BEAT_PUBPOLICY
