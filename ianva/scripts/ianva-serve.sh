@@ -23,7 +23,11 @@ export CLAUDE_CODE_OAUTH_TOKEN=""   # never let the backend inherit it (#37512);
 unset CLAUDE_CODE_OAUTH_TOKEN
 
 # Materialize settings and derive the exact backend command from config.
-mapfile -t ARGV < <(python3 - <<'PY'
+# launchd runs this under macOS /bin/bash 3.2; keep this read loop Bash-3-safe.
+ARGV=()
+while IFS= read -r arg; do
+  ARGV[${#ARGV[@]}]="$arg"
+done < <(python3 - <<'PY'
 from ianva.config import load_config
 from ianva.upstreams import load_upstreams
 from ianva.mcphub import materialize_settings
@@ -33,6 +37,10 @@ for a in cfg.backend_argv(sp):
     print(a)
 PY
 )
+if [ "${#ARGV[@]}" -eq 0 ]; then
+  echo "ianva-serve: backend command resolved empty" >&2
+  exit 127
+fi
 
 cd "${IANVA_HOME:-$HOME/.config/ianva}"
 echo "ianva-serve: exec ${ARGV[*]} (PORT=$PORT, cwd=$PWD)"
