@@ -6,6 +6,8 @@
 > caption draft, and exhibition grouping is a proposal the artist reviews and owns. The human
 > creates; the organ supplies the institution.
 
+---
+
 ## Why this organ exists
 
 Artists usually lose their work to entropy first, not lack of talent. File sprawl, weak naming,
@@ -13,59 +15,106 @@ provenance gaps, and missed sequencing degrade a portfolio over time and leave t
 invisible to its own author.
 
 This organ gives one person the infrastructure of a museum/studio: curation, catalog discipline,
-preservation, and release sequencing. It is the **Pantheon standard** stripped down to the
-same strategic layers and adapted to one human's workflow.
+preservation, and release sequencing. It is the **same 5-primitive kernel** used by every other
+VLTIMA organ — mapped to the artist's domain instead of education, legal, or financial.
+
+---
 
 ## The 5-primitive kernel, mapped to the artist domain
 
 | Primitive | Artist meaning | Concretely |
 |---|---|---|
-| **Member** | the work / artifact | each piece, with medium, date, provenance, source file, and custody state |
-| **Mandate** | the exhibition thesis | the story, audience, and impact each grouping is built to pursue |
-| **Standing** | archive state | where each piece sits: raw, cataloged, curated, exhibited, dormant, or at-risk |
-| **Standard** | the aesthetic rubric | the quality floor, visual grammar, and naming/selection constraints |
-| **Governance** | curation + preservation | what gets shown, what gets archived, what requires artist approval |
+| **Member** (Work) | each piece / artifact in the archive | every artifact, with medium, date, provenance link, source file path, and custody state — never floating, always traceable |
+| **Mandate** (Exhibition) | the story each grouping tells | what a selection of works is built to argue — specific enough to be curated toward, not vague enough to include everything by default |
+| **Standing** (Archive state) | where a piece is right now | RAW · CATALOGED · CURATED · STAGED · EXHIBITED · DORMANT · AT-RISK — the full lifecycle, never collapsed into "in the archive somewhere" |
+| **Standard** (Aesthetic rubric) | what quality looks like | the criteria the artist names for inclusion, sequencing, and framing — applied consistently across the whole catalog |
+| **Governance** (Curation) | what requires the artist's hand | what the organ proposes vs. what the artist must confirm, approve, or reject before anything moves outward |
 
 This is the same 5-primitive map as other organs. Only the domain changes.
 
+---
+
 ## Fractal deployment
 
-- **MACRO face** — the reusable studio/temple platform any artist can hold:
-  - Raw-archive intake with stable intake checks
-  - Full cataloging with provenance and cross-references
-  - Themed grouping workflows for meaningful exhibition narratives
-  - Press drafting for titles, captions, artist statements, and notes
-  - Preservation auditing and format-risk checks
-  - Staged deployment paths for portfolio and exhibition outputs
+### MACRO face — the reusable studio/temple platform any artist can hold
 
-  This face is generic and nameless. It runs for the artist as architect, not as an external
-  assistant taking the frame away.
+The 9-chamber toolkit: Vault, Catalog, Studio, Gallery, Archive, Press, Calendar, Atrium,
+Scriptorium. Full description in [`MACRO-FACE.md`](MACRO-FACE.md).
 
-- **MICRO instance** — **Anthony's a-mavs-olevm**:
-  - **Chamber 1: 444-file photo archive** — the primary source body
-  - **Chamber 2: ET4L** — a thematic series extracted from the archive
-  - **Chamber 3: LOCREANCE** — an active practice body with continuous growth
+This face is generic and nameless. It runs for the artist as architect, not as an external
+assistant taking the frame away. Its two distinguishing frameworks:
 
-  The micro instance is the proving ground. Its outputs are used to harden the macro face.
+- **The Curatorial Voice** — the consistent idiom of selection, sequencing, and framing
+  that makes an artist's exhibition argument legible. Three layers: Selection Rubric,
+  Sequencing Logic, Framing Language.
+- **The Provenance Contract** — the ethical floor: source files are sacred, provenance
+  is written not assumed, the artist's voice is sovereign, no outward action without a gate.
+
+### MICRO instance — Anthony's a-mavs-olevm
+
+Three chambers proving the platform against a real body of work:
+
+| Chamber | Type | Standing | Proof target |
+|---|---|---|---|
+| **444-file photo archive** | Primary source body | CATALOGED | The Vault and Catalog preserve provenance before curation |
+| **ET4L** | Thematic series extracted from the archive | CURATED | The Gallery and Press turn cataloged work into an exhibition argument |
+| **LOCREANCE** | Active practice body | RAW | The Studio and Calendar handle continuing production without custody loss |
+
+Full deployment record in [`MICRO-FACE.md`](MICRO-FACE.md). All three chambers pass the
+full six-rule artist-organ validation suite.
+
+---
 
 ## The 9-chamber operating surface
 
 A real institution is layered architecture:
 
-| Chamber | Function |
-|---|---|
-| **The Vault** | all raw material, safely captured and format-checked |
-| **The Catalog** | indexed records: provenance, date, medium, series, and links |
-| **The Studio** | active workbench and current production state |
-| **The Gallery** | narrative groupings and exhibition sequences |
-| **The Archive** | preservation records and custody chain |
-| **The Press** | draft exhibition language and contextual notes |
-| **The Calendar** | release timing and exhibition cadence |
-| **The Atrium** | external-facing portfolio / exhibition entry layer |
-| **The Scriptorium** | aesthetic rubric: style, standards, and constraints |
+| Chamber | Function | Feeds |
+|---|---|---|
+| **The Vault** | all raw material, safely captured and format-checked | Catalog |
+| **The Catalog** | indexed records: provenance, date, medium, series, and links | Gallery |
+| **The Studio** | active workbench and current production state | Catalog |
+| **The Gallery** | narrative groupings and exhibition sequences | Press |
+| **The Archive** | preservation records and custody chain | Governance |
+| **The Press** | draft exhibition language and contextual notes | Calendar |
+| **The Calendar** | release timing and exhibition cadence | Atrium |
+| **The Atrium** | external-facing portfolio / exhibition entry layer | (public) |
+| **The Scriptorium** | aesthetic rubric: style, standards, and constraints | All chambers |
 
-The macro platform is structurally near **70%** maturity. The remaining growth is to raise each
-chamber from static state to review-ready outputs, then release each one as an approved package.
+Every chamber is defined. Every chamber has a named output. Every chamber is gated by the
+artist before its output reaches the world.
+
+---
+
+## The authority contract
+
+| What the organ does | What the artist does |
+|---|---|
+| Captures intake, assigns Vault record | Confirms provenance and medium are accurate |
+| Builds Catalog record, names Standing | Confirms the record before the piece advances |
+| Proposes groupings and exhibition sequences | Approves, revises, or rejects each proposed grouping |
+| Drafts titles, statements, and captions | Rewrites and signs the language that frames their work |
+| Issues preservation-risk report | Decides what happens to at-risk or dormant work |
+| Maintains the Calendar and cadence | Approves the exhibition rhythm and release timing |
+| Assembles staged deployment package | Approves each release event before anything leaves the platform |
+
+No autonomous publication. No autonomous archive alteration. No autonomous language issuance.
+
+---
+
+## The exhibition arc
+
+```
+INTAKE → VAULT → CATALOG → CURATE → FRAME → PRESERVE → STAGE → [ARTIST GATE] → EXHIBIT
+```
+
+Posture rules:
+- The sequence advances; it does not regress silently
+- Standing changes are logged explicitly and require confirmation
+- AT-RISK pieces cannot be staged until risk is resolved
+- EXHIBITED requires explicit artist approval at the gate
+
+---
 
 ## Hard guardrails (every contributor + every dispatched task)
 
@@ -79,6 +128,19 @@ chamber from static state to review-ready outputs, then release each one as an a
   without confirmation.
 - **No irreversible outward-facing action without gate.** Publication, social distribution, or portfolio deployment
   is staged, surfaced, and approved per event.
+
+---
+
+## What gets built next
+
+From the organ-backlog for the maturing stage (70% → 90%):
+
+1. Complete one full RAW→EXHIBITED cycle for at least one chamber — from intake through
+   artist-approved exhibition package
+2. Issue a preservation-risk report against the full 444-file archive
+3. Fire the Press chamber: complete ET4L statement and caption set for artist rewrite
+4. Populate the Scriptorium with a written aesthetic rubric for at least one medium
+5. Stabilize LOCREANCE intake cadence and run first batch through Vault → Catalog
 
 ---
 

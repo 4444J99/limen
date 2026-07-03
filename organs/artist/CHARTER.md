@@ -43,12 +43,13 @@ and staged deployment packs that the artist can approve, revise, or reject.
 
 The micro instance is **a-mavs-olevm**, currently running with three chambers:
 
-1. **The 444-file photo archive** — primary source body.
-2. **ET4L** — thematic series from that source.
-3. **LOCREANCE** — active practice stream and ongoing production body.
+1. **The 444-file photo archive** — primary source body, CATALOGED standing with provenance stubbed.
+2. **ET4L** — thematic series from that source, CURATED standing with Mandate and selection named.
+3. **LOCREANCE** — active practice stream and ongoing production body, RAW standing with intake protocol.
 
-The three are in place; the priority now is filling each chamber with review-ready outputs so the macro can
-stabilize with real repetition.
+All three pass the full six-rule validation suite. The next cycle fills each chamber with review-ready
+outputs — preservation report, statement and caption set, first intake batch — so the macro platform
+stabilizes through real repetition across all three chamber types.
 
 ## Boundaries (always)
 

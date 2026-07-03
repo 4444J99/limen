@@ -26,11 +26,11 @@ source archive, a named thematic series, and an ongoing practice body.
 
 ## The three chambers
 
-| Chamber | Type | Current standing |
-|---|---|---|
-| **444-file photo archive** | Primary source body | CATALOGED (partial) — catalog pass in progress |
-| **ET4L** | Thematic series | CURATED (draft) — series package awaiting Anthony's gate |
-| **LOCREANCE** | Ongoing practice | ACTIVE (open intake) — cadence proposal pending |
+| Chamber | Type | Current standing | Next gate |
+|---|---|---|---|
+| **444-file photo archive** | Primary source body | CATALOGED — provenance stubbed, 444 files | Preservation report to CURATED |
+| **ET4L** | Thematic series | CURATED — selection and Mandate named | Statement + caption set to STAGED |
+| **LOCREANCE** | Ongoing practice | RAW — intake protocol defined, cadence pending | First batch to CATALOGED |
 
 No chamber has an open outbound action. Nothing publishes without Anthony's
 explicit per-event approval.
@@ -39,11 +39,16 @@ explicit per-event approval.
 
 ## What exists across the three chambers
 
-- **A vaulted source archive** — 444 files, intake-checked, stable references
-- **A draft ET4L series package** — selection + Mandate + title + statement +
-  captions, ready for Anthony's review and rewrite
-- **A live LOCREANCE intake stream** — continuous discipline, first cadence
-  proposal pending
+- **A vaulted source archive** — 444 files, intake-checked, stable references,
+  custody state documented
+- **A draft ET4L series package** — selection + Mandate + proposed sequence,
+  pending statement and caption set for Anthony's review and rewrite
+- **A live LOCREANCE intake stream** — open intake with named accession gates,
+  first cadence proposal pending
+- **The Curatorial Voice framework** — Selection Rubric, Sequencing Logic, and
+  Framing Language formalized in the macro platform
+- **The Provenance Contract** — the ethical floor: no source file alteration,
+  no autonomous publication, no unlabeled additions
 - **No release staged or opened** without Anthony's gate
 
 ---
@@ -52,6 +57,8 @@ explicit per-event approval.
 
 Review the ET4L package in [`MICRO-FACE.md`](MICRO-FACE.md) and open the gate.
 That is the first complete exhibition-ready artifact this platform produces.
+From there: issue the preservation report for the 444-file archive, stabilize
+the LOCREANCE intake cadence, and run the first full RAW→EXHIBITED cycle.
 
 ---
 
