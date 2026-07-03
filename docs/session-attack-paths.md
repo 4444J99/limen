@@ -1,6 +1,6 @@
 # Session Attack Paths
 
-Generated: `2026-07-03T06:25:05+00:00`
+Generated: `2026-07-03T10:25:43+00:00`
 
 ## Canonical Decision
 
@@ -18,7 +18,7 @@ Generated: `2026-07-03T06:25:05+00:00`
 - Worktree preservation receipts: `33`.
 - Parked blockers: `6`.
 - Local lifecycle footprint: `21.6 GiB`.
-- Candidate lanes: `family` 7, `human-gate` 14, `owner-blocker` 2, `parked` 5, `remote-pr-open` 10, `remote-proof` 7.
+- Candidate lanes: `family` 7, `human-gate` 14, `observe` 1, `owner-blocker` 2, `parked` 5, `remote-pr-open` 10, `remote-proof` 7.
 
 ## Ordering Model
 
@@ -52,13 +52,13 @@ Generated: `2026-07-03T06:25:05+00:00`
 | 16 | `ticklish-bubbling-robin` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
 | 17 | `convergence_corpus` | `family` | `family` | 26 | sessions 10; states CLOSED 10; prompts 37 | codex | Promote durable atoms through session-meta and knowledge-corpus. |
 | 18 | `gen-organvm-universal-mail--automation-test-coverage-0625-151e` | `worktree` | `human-gate` | 26 | reason `owner-blocker`; prompts 100; remote `missing`; open PRs 0; receipt `private_patch_preserved` | human/codex-prep | Do not PR or delegate this deletion patch. The branch has no unique commits, no remote branch, no PR, no sparse-checkout configuration, and 167 tracked files deleted from disk while HEAD is an ancestor of origin/main. Treat as stale broken checkout/deletion artifact; reclaim only after operator acceptance, and recreate from origin/main if owner work is needed. |
-| 19 | `cloud-runtime-endpoint-unconfigured` | `blocker` | `parked` | 18 | category `cloud_runtime`; status `parked` | codex | Keep separate from session intake; configure/probe runtime only in a deploy/runtime task. |
-| 20 | `uncategorized` | `family` | `family` | 18 | sessions 2; states STALLED 2; prompts 10 | codex | Inspect privately and add classifier/owner route. |
-| 21 | `triptych-story` | `worktree` | `remote-pr-open` | 17 | reason `remote-pr-open`; prompts 212; remote `present`; open PRs 0; receipt `open_pr_preserved` | codex first; opencode/jules after packetization | Review draft PR #1, then merge, supersede, or archive this lane. Local checkout is no longer the only review surface. |
-| 22 | `maddie-boundary-20260629` | `worktree` | `remote-pr-open` | 11 | reason `remote-pr-open`; prompts 68; remote `present`; open PRs 0; receipt `open_pr_preserved` | codex first; opencode/jules after packetization | Review draft PR #11, then merge, supersede, or archive the Maddie boundary evidence branch. Local checkout is no longer the only review surface. |
-| 23 | `student-email-d2l-support-20260629` | `worktree` | `remote-pr-open` | 11 | reason `remote-pr-open`; prompts 67; remote `present`; open PRs 0; receipt `open_pr_preserved` | codex first; opencode/jules after packetization | Review draft PR #12, then merge, supersede, or archive this lane. Local checkout is no longer the only review surface. |
-| 24 | `limen-network-substrate-20260628` | `worktree` | `remote-pr-open` | 7 | reason `remote-pr-open`; prompts 21; remote `present`; open PRs 0; receipt `open_pr_preserved` | codex first; opencode/jules after packetization | Review draft PR #494, then merge, supersede, or archive the network substrate healing branch. Local checkout is no longer the only review surface. |
-| 25 | `cloud-credential-handles-unconfigured` | `blocker` | `parked` | 6 | category `auth_credentials`; status `parked` | human/codex-prep | Do not repair inline; open a bounded credential/setup workstream only when a cloud action requires it. |
+| 19 | `org-media-organ-deepen-0630-0571` | `worktree` | `observe` | 20 | reason `active(<6h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
+| 20 | `cloud-runtime-endpoint-unconfigured` | `blocker` | `parked` | 18 | category `cloud_runtime`; status `parked` | codex | Keep separate from session intake; configure/probe runtime only in a deploy/runtime task. |
+| 21 | `uncategorized` | `family` | `family` | 18 | sessions 2; states STALLED 2; prompts 10 | codex | Inspect privately and add classifier/owner route. |
+| 22 | `triptych-story` | `worktree` | `remote-pr-open` | 17 | reason `remote-pr-open`; prompts 212; remote `present`; open PRs 0; receipt `open_pr_preserved` | codex first; opencode/jules after packetization | Review draft PR #1, then merge, supersede, or archive this lane. Local checkout is no longer the only review surface. |
+| 23 | `maddie-boundary-20260629` | `worktree` | `remote-pr-open` | 11 | reason `remote-pr-open`; prompts 68; remote `present`; open PRs 0; receipt `open_pr_preserved` | codex first; opencode/jules after packetization | Review draft PR #11, then merge, supersede, or archive the Maddie boundary evidence branch. Local checkout is no longer the only review surface. |
+| 24 | `student-email-d2l-support-20260629` | `worktree` | `remote-pr-open` | 11 | reason `remote-pr-open`; prompts 67; remote `present`; open PRs 0; receipt `open_pr_preserved` | codex first; opencode/jules after packetization | Review draft PR #12, then merge, supersede, or archive this lane. Local checkout is no longer the only review surface. |
+| 25 | `limen-network-substrate-20260628` | `worktree` | `remote-pr-open` | 7 | reason `remote-pr-open`; prompts 21; remote `present`; open PRs 0; receipt `open_pr_preserved` | codex first; opencode/jules after packetization | Review draft PR #494, then merge, supersede, or archive the network substrate healing branch. Local checkout is no longer the only review surface. |
 
 ## Delegation Gate
 
