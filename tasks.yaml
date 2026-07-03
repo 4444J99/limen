@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-03'
-      spent: 226
+      spent: 228
       per_agent:
         jules: 100
         gemini: 0
-        codex: 81
+        codex: 83
         opencode: 27
         agy: 18
         claude: 0
@@ -72685,7 +72685,8 @@ tasks:
   title: Deepen the media organ toward a usable institution
   repo: organvm/limen
   type: content
-  target_agent: opencode
+  target_agent: claude
+  workstream: media
   priority: high
   budget_cost: 2
   status: open
@@ -73443,7 +73444,7 @@ tasks:
   title: Discover the latent value of organvm/the-actual-news
   repo: organvm/the-actual-news
   type: research
-  target_agent: claude
+  target_agent: codex
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -74409,7 +74410,7 @@ tasks:
   title: Discover the latent value of organvm/sovereign-systems--layer-above-hokage
   repo: organvm/sovereign-systems--layer-above-hokage
   type: research
-  target_agent: codex
+  target_agent: opencode
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -76108,7 +76109,7 @@ tasks:
   title: Operationalize education governance (rules as checks)
   repo: organvm/limen
   type: content
-  target_agent: opencode
+  target_agent: agy
   workstream: education
   priority: medium
   budget_cost: 2
@@ -76330,7 +76331,7 @@ tasks:
   title: Discover the latent value of organvm/styx-behavioral-art
   repo: organvm/styx-behavioral-art
   type: research
-  target_agent: agy
+  target_agent: claude
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -76524,7 +76525,7 @@ tasks:
   title: Raise test coverage in organvm/domus-genoma
   repo: organvm/domus-genoma
   type: code
-  target_agent: claude
+  target_agent: codex
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -76566,7 +76567,7 @@ tasks:
   title: Raise test coverage in organvm/limen
   repo: organvm/limen
   type: code
-  target_agent: codex
+  target_agent: opencode
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -76682,7 +76683,7 @@ tasks:
   title: Make organvm/mirror-mirror CI green
   repo: organvm/mirror-mirror
   type: code
-  target_agent: opencode
+  target_agent: agy
   workstream: contributions
   priority: high
   budget_cost: 1
@@ -77020,7 +77021,7 @@ tasks:
   title: Tighten types in organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: agy
+  target_agent: claude
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -77167,7 +77168,7 @@ tasks:
   title: Discover the latent value of organvm/fetch-familiar-friends
   repo: organvm/fetch-familiar-friends
   type: research
-  target_agent: claude
+  target_agent: codex
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -77709,6 +77710,7 @@ tasks:
   repo: organvm/limen
   type: content
   target_agent: opencode
+  workstream: financial
   priority: high
   budget_cost: 2
   status: open
@@ -77963,7 +77965,7 @@ tasks:
   workstream: governance
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - organ-deepen
   - pillar:governance
@@ -77984,7 +77986,7 @@ tasks:
     \ \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-03T22:10:09.654904Z'
+  updated: '2026-07-03T22:28:18.406449Z'
   dispatch_log:
   - timestamp: '2026-07-03T10:36:36.527923Z'
     agent: agy
@@ -78016,6 +78018,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-03T22:28:18.406449Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: ORG-education-organ-face-0703
   title: Make the education organ's macro + micro face excellent
   repo: organvm/limen
@@ -78126,7 +78133,7 @@ tasks:
   workstream: legal
   priority: critical
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - organ-charter
   - pillar:legal
@@ -78145,7 +78152,7 @@ tasks:
     \ scaffold \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-03T22:10:09.654904Z'
+  updated: '2026-07-03T22:28:18.406449Z'
   dispatch_log:
   - timestamp: '2026-07-03T09:30:25.724513Z'
     agent: agy
@@ -78177,6 +78184,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-03T22:28:18.406449Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: ORG-health-organ-charter-0703
   title: Charter the health organ as an institution rivaling a concierge medical /
     recovery team
@@ -78270,7 +78282,7 @@ tasks:
   title: Operationalize governance governance (rules as checks)
   repo: organvm/limen
   type: content
-  target_agent: codex
+  target_agent: claude
   workstream: governance
   priority: medium
   budget_cost: 2
@@ -78297,7 +78309,7 @@ tasks:
   title: Operationalize consulting governance (rules as checks)
   repo: organvm/limen
   type: content
-  target_agent: opencode
+  target_agent: codex
   workstream: consulting
   priority: medium
   budget_cost: 2
@@ -78323,7 +78335,7 @@ tasks:
   title: Operationalize artist governance (rules as checks)
   repo: organvm/limen
   type: content
-  target_agent: agy
+  target_agent: opencode
   workstream: artist
   priority: medium
   budget_cost: 2
@@ -78349,7 +78361,7 @@ tasks:
     + relationship support ('relationship gurus')
   repo: organvm/limen
   type: content
-  target_agent: claude
+  target_agent: agy
   workstream: social
   priority: critical
   budget_cost: 2
@@ -78408,7 +78420,7 @@ tasks:
   title: Wire the governance organ to advance autonomously
   repo: organvm/limen
   type: content
-  target_agent: codex
+  target_agent: claude
   workstream: governance
   priority: high
   budget_cost: 2
@@ -78453,7 +78465,7 @@ tasks:
   title: Build the first working vertical slice of the legal organ
   repo: organvm/limen
   type: content
-  target_agent: opencode
+  target_agent: codex
   workstream: legal
   priority: high
   budget_cost: 2
@@ -78524,13 +78536,17 @@ tasks:
     \ (VLTIMA).]"
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-03T22:02:53.496023Z'
+  updated: '2026-07-03T22:28:07.700691Z'
   dispatch_log:
   - timestamp: '2026-07-03T22:02:53.496023Z'
     agent: codex
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T22:28:07.700691Z'
+    agent: codex
+    session_id: https://github.com/organvm/limen/pull/621
+    status: dispatched
 - id: ORG-financial-organ-face-0703
   title: Make the financial organ's macro + micro face excellent
   repo: organvm/limen
@@ -78575,7 +78591,7 @@ tasks:
   title: Operationalize financial governance (rules as checks)
   repo: organvm/limen
   type: content
-  target_agent: agy
+  target_agent: opencode
   workstream: financial
   priority: medium
   budget_cost: 2
@@ -78606,11 +78622,11 @@ tasks:
   title: Build the first working vertical slice of the social organ
   repo: organvm/limen
   type: content
-  target_agent: claude
+  target_agent: agy
   workstream: social
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: open
   labels:
   - organ-firstslice
   - pillar:social
@@ -78618,6 +78634,7 @@ tasks:
   - institution
   - vltima
   - generated
+  - tried:claude
   urls: []
   context: "In organvm/limen organs/social/, deliver one real end-to-end artifact\
     \ the organ produces: charter the social organ: what institution it rivals + the\
@@ -78628,13 +78645,17 @@ tasks:
     \ into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-03T22:02:53.496023Z'
+  updated: '2026-07-03T22:28:07.700691Z'
   dispatch_log:
   - timestamp: '2026-07-03T22:02:53.496023Z'
     agent: claude
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-03T22:28:07.700691Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
 - id: REV-organvm-mirror-mirror-revenue-ship-0703
   title: Drive Mirror Mirror to deploy-ready
   repo: organvm/mirror-mirror
@@ -78708,7 +78729,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -78723,12 +78744,18 @@ tasks:
     \ [auto-emitted 2026-07-03 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-03'
-  dispatch_log: []
+  updated: '2026-07-03T22:28:18.406449Z'
+  dispatch_log:
+  - timestamp: '2026-07-03T22:28:18.406449Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-peer-audited--behavioral-blockchain-719
   title: fix failing CI on organvm/peer-audited--behavioral-blockchain#719
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: any
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -78751,7 +78778,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/peer-audited--behavioral-blockchain#721
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: any
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -78774,7 +78801,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/peer-audited--behavioral-blockchain#725
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: any
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -78797,7 +78824,7 @@ tasks:
   title: fix failing CI on organvm/peer-audited--behavioral-blockchain#727
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -78820,7 +78847,7 @@ tasks:
   title: fix failing CI on organvm/peer-audited--behavioral-blockchain#728
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: any
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -78843,7 +78870,7 @@ tasks:
   title: fix failing CI on organvm/peer-audited--behavioral-blockchain#729
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: any
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -78866,7 +78893,7 @@ tasks:
   title: fix failing CI on organvm/peer-audited--behavioral-blockchain#730
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: any
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -78889,7 +78916,7 @@ tasks:
   title: fix failing CI on organvm/peer-audited--behavioral-blockchain#731
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -78912,7 +78939,7 @@ tasks:
   title: fix failing CI on organvm/peer-audited--behavioral-blockchain#733
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: any
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -78935,7 +78962,7 @@ tasks:
   title: fix failing CI on organvm/peer-audited--behavioral-blockchain#744
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: any
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -78958,7 +78985,7 @@ tasks:
   title: fix failing CI on organvm/peer-audited--behavioral-blockchain#752
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: any
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -78981,7 +79008,7 @@ tasks:
   title: fix failing CI on organvm/petasum-super-petasum#148
   repo: organvm/petasum-super-petasum
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -79004,7 +79031,7 @@ tasks:
   title: fix failing CI on organvm/petasum-super-petasum#149
   repo: organvm/petasum-super-petasum
   type: code
-  target_agent: any
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -79022,4 +79049,110 @@ tasks:
     \ [auto-emitted 2026-07-03 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-03'
+  dispatch_log: []
+- id: TASK-LED-strategic-rollup
+  title: 'Heal insight: strategic rollup: net WORTH IT (shipped=605, spent=1465, sunk=176)'
+  description: 'Over 1269 tasks: 48% success rate, 176 sunk runs worth organvm/organvm-engine.
+    Cost per shipped: 2.42.'
+  repo: organvm/limen
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls: []
+  context: 'Suggested action: Continue rebalancing lanes away from waste sinks. Prioritize
+    revenue-attributed repos.
+
+    Source: /Users/4jp/Workspace/limen/logs/ledger.json
+
+    Severity: medium'
+  depends_on: []
+  created: '2026-07-03'
+  updated: '2026-07-03T22:18:00.439075Z'
+  dispatch_log: []
+- id: TASK-LED-rev-organvm/public-recor
+  title: 'Heal insight: waste on revenue repo: organvm/public-record-data-scrapper'
+  description: Product 'Public Record Data Scraper' spent 50 with 20 wasted (20 shipped).
+  repo: organvm/public-record-data-scrapper
+  type: code
+  target_agent: codex
+  workstream: financial
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls: []
+  context: 'Suggested action: Triage wasted tasks on this revenue repo.
+
+    Source: /Users/4jp/Workspace/limen/logs/ledger.json
+
+    Severity: medium'
+  depends_on: []
+  created: '2026-07-03'
+  updated: '2026-07-03T22:18:04.499042Z'
+  dispatch_log: []
+- id: TASK-LED-rev-organvm/universal-ma
+  title: 'Heal insight: waste on revenue repo: organvm/universal-mail--automation'
+  description: Product 'Universal Mail Automation' spent 36 with 18 wasted (23 shipped).
+  repo: organvm/universal-mail--automation
+  type: code
+  target_agent: opencode
+  workstream: financial
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls: []
+  context: 'Suggested action: Triage wasted tasks on this revenue repo.
+
+    Source: /Users/4jp/Workspace/limen/logs/ledger.json
+
+    Severity: medium'
+  depends_on: []
+  created: '2026-07-03'
+  updated: '2026-07-03T22:18:08.500430Z'
+  dispatch_log: []
+- id: TASK-LED-rev-organvm/a-i-chat--ex
+  title: 'Heal insight: waste on revenue repo: organvm/a-i-chat--exporter'
+  description: Product 'ChatGPT Exporter' spent 35 with 24 wasted (29 shipped).
+  repo: organvm/a-i-chat--exporter
+  type: code
+  target_agent: agy
+  workstream: financial
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls: []
+  context: 'Suggested action: Triage wasted tasks on this revenue repo.
+
+    Source: /Users/4jp/Workspace/limen/logs/ledger.json
+
+    Severity: medium'
+  depends_on: []
+  created: '2026-07-03'
+  updated: '2026-07-03T22:18:12.453002Z'
+  dispatch_log: []
+- id: TASK-LED-rev-organvm/the-invisibl
+  title: 'Heal insight: waste on revenue repo: organvm/the-invisible-ledger'
+  description: Product 'The Invisible Ledger' spent 35 with 16 wasted (29 shipped).
+  repo: organvm/the-invisible-ledger
+  type: code
+  target_agent: claude
+  workstream: financial
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls: []
+  context: 'Suggested action: Triage wasted tasks on this revenue repo.
+
+    Source: /Users/4jp/Workspace/limen/logs/ledger.json
+
+    Severity: medium'
+  depends_on: []
+  created: '2026-07-03'
+  updated: '2026-07-03T22:18:16.264076Z'
   dispatch_log: []
