@@ -198,7 +198,7 @@ def _load_data() -> LimenFile:
     if not path.exists():
         return LimenFile()
     with open(path) as f:
-        data = yaml.safe_load(f)
+        data = yaml.safe_load(f) or {}  # empty / comment-only file → None; avoid LimenFile(**None) TypeError
     return LimenFile(**data)
 
 
@@ -213,8 +213,11 @@ def _save_data(data: LimenFile, commit_msg: str = "chore: mcp task update"):
     # Layer 1: Concurrency Sync (Git Pull --Rebase wrapper)
     if (repo_dir / ".git").exists():
         try:
-            # 1. Stash any uncommitted changes
-            subprocess.run(["git", "stash"], cwd=repo_dir, capture_output=True)
+            # 1. Stash any uncommitted changes. Capture the result so we ONLY drop the stash we
+            #    actually created — an unconditional `git stash drop` would discard an unrelated
+            #    pre-existing stash whenever there was nothing to stash ("No local changes to save").
+            stash = subprocess.run(["git", "stash"], cwd=repo_dir, capture_output=True, text=True)
+            created_stash = "No local changes to save" not in ((stash.stdout or "") + (stash.stderr or ""))
             # 2. Pull rebase to resolve remote conflicts
             subprocess.run(["git", "pull", "--rebase"], cwd=repo_dir, capture_output=True)
 
@@ -222,7 +225,12 @@ def _save_data(data: LimenFile, commit_msg: str = "chore: mcp task update"):
             with open(path, "w") as f:
                 yaml.dump(data.model_dump(mode="json"), f, default_flow_style=False, sort_keys=False)
 
-            # 4. Commit and Push
+            # 4. Drop the now-superseded stash (the memory re-write above is authoritative) so stash
+            #    entries don't accumulate on every save.
+            if created_stash:
+                subprocess.run(["git", "stash", "drop"], cwd=repo_dir, capture_output=True)
+
+            # 5. Commit and Push
             subprocess.run(["git", "add", path.name], cwd=repo_dir, capture_output=True)
             subprocess.run(["git", "commit", "-m", commit_msg], cwd=repo_dir, capture_output=True)
             subprocess.run(["git", "push"], cwd=repo_dir, capture_output=True)
