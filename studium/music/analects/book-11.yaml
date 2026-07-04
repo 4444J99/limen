@@ -1,0 +1,316 @@
+# Analects — Book XI — curated music arc
+# 先進 Xian Jin — "Advanced Students" (Salvation Through Responsive Presence)
+# Score the actual movement of the ~26 chapters — not "doctrinal debates" but "the transformative encounter between teacher and student."
+# Book XI is dominated by dialogue: Confucius responds to each student according to their specific need,
+# and in those responses, students are transformed. The book is itself salvation-work: the Master meets
+# each person where they are and draws them toward what they might become.
+work: analects
+book: 11
+title: "Analects Book XI: Salvation, Dialogue, the Transformation of the Individual"
+length_minutes: 87
+principle: >
+  Do not score Book XI as "virtue doctrine." Score it as a series of salvific encounters where the
+  Master meets each student with a specific diagnosis and a specific remedy. Different students receive
+  different teachings: the ambitious one is told to restrain his ambition; the cautious one is told to
+  become bolder; the grief-stricken one is met with compassion. The dominant force is salvation because
+  what happens in these encounters is literally redemptive — students are saved from their own
+  limitations by being seen and addressed by someone who understands what they most need. The emotional
+  register is intimate, dialogical, shot through with mutual affection. Yan Hui's death becomes the
+  climax of the book: the most beloved student, the one most fully transformed, is taken away. The
+  Master's grief is unguarded, and in that moment of sorrow we see the deepest form of salvation —
+  mutual transformation through love that persists even beyond death. This book is the Analects at its
+  most human: not principles but people; not doctrine but the warmth of encounter.
+force_arc: [salvation, law, memory, salvation, revelation, salvation, memory, law, salvation, memory, ascent, salvation, memory, law, salvation, return, memory, salvation, law, memory, revelation, salvation, memory, ascent, salvation, memory]
+dominant_force: salvation
+tracks:
+  - n: 1
+    scene: "Opening — the disciples at different levels of understanding"
+    force: salvation
+    composer: Mahler
+    work: "Symphony No. 5 in C-sharp minor — V. Rondo-Finale"
+    decision: added
+    why: >
+      The book opens by listing the disciples and indicating where each stands in understanding. This
+      is not comparison but recognition: the Master sees each at his own level. Salvation begins with
+      being seen. Mahler's finale is the music of everyone rising together — each voice distinct, yet
+      all moving toward a shared light. The Master's work is to see and call forth.
+  - n: 2
+    scene: "The question of humaneness — Zilu's urgency, Confucius's restraint"
+    force: law
+    composer: Bach
+    work: "The Well-Tempered Clavier, Book I — Fugue No. 22 in B-flat minor, BWV 891"
+    decision: added
+    why: >
+      When ambitious students ask about serving the state, Confucius responds with law: first, know
+      your own nature; understand the limits. Salvation here is the redirection of misguided passion
+      toward its proper channel. Bach's most intricate fugue is the law that reveals how to direct
+      energy without dissipating it — each voice constrained, yet the whole achieves what no single
+      voice could.
+  - n: 3
+    scene: "Zengzi's question — the way to the heart of parents"
+    force: memory
+    composer: Fauré
+    work: "Requiem — II. Kyrie"
+    decision: added
+    why: >
+      The earnest Zengzi asks about serving parents; the Master responds by praising filial piety as
+      the root. Memory here is the connection to what came before: the ancestors, the continuity.
+      Salvation is being rooted in something larger than yourself. Fauré's Kyrie holds this reverence
+      — the appeal to what is eternal, the gesture toward what preceded and will succeed us.
+  - n: 4
+    scene: "The ambitious minister — Zilu saved from his own ambition"
+    force: salvation
+    composer: Brahms
+    work: "Symphony No. 3 in F major — I. Allegro con brio"
+    decision: added
+    why: >
+      Zilu, impatient and eager, is met by Confucius with a teaching tailored to his need: know
+      yourself first. Salvation here is the deflation of false ambition and its replacement with
+      genuine self-knowledge. Brahms's opening is noble but not grandiose — it moves with power yet
+      restraint, the picture of ambition properly directed.
+  - n: 5
+    scene: "The revelation of the Way — what cannot be spoken"
+    force: revelation
+    composer: Messiaen
+    work: "Méditations sur le Mystère de la Sainte Trinité — VIII. Dieu parmi nous"
+    decision: added
+    why: >
+      The book moves into passages where the Way itself becomes the subject: what is this path that
+      the students are walking? Revelation here is the sudden clarity that you cannot speak the Way,
+      only walk it. Messiaen's meditation on God among us captures this register: the divine presence
+      that is felt, not explained.
+  - n: 6
+    scene: "The different paths to the truth — Yan Hui's simplicity"
+    force: salvation
+    composer: Debussy
+    work: "Clair de lune"
+    decision: added
+    why: >
+      Yan Hui is described as taking the simplest path: he follows only one teaching, and it transforms
+      his life. Salvation is the freedom that comes from focused devotion. Debussy's moonlight is the
+      clarity that results when the mind is clear — not through effort but through alignment with
+      something higher.
+  - n: 7
+    scene: "The praise of Yan Hui — the disciple become the mirror of the Master"
+    force: memory
+    composer: Mahler
+    work: "Das Lied von der Erde — 'Von der Schönheit'"
+    decision: added
+    why: >
+      Confucius praises Yan Hui as the one who truly gets it — who has become a mirror reflecting the
+      teaching. Memory here is the recognition of the beloved student, the one who understands. Mahler's
+      song of beauty captures the wonder of beholding someone who has been transformed by devotion.
+  - n: 8
+    scene: "The architecture of understanding — how the Way holds together"
+    force: law
+    composer: Hindemith
+    work: "Mathis der Maler — III. Befreiung"
+    decision: added
+    why: >
+      The Master describes how the Way is unified: all things connect, all teachings point toward the
+      same center. Salvation here is the vision of cosmic order. Hindemith's liberation movement is the
+      vision of structure so perfect that it becomes freedom — law recognized as the foundation of all
+      being.
+  - n: 9
+    scene: "The different gifts of the disciples — each is suited to his own path"
+    force: salvation
+    composer: Mozart
+    work: "Requiem in D minor — Kyrie"
+    decision: added
+    why: >
+      Not all students will follow the same path; each has his own nature and calling. Salvation is the
+      recognition that transformation looks different for each person. Mozart's Kyrie is the prayer for
+      divine mercy that meets each person in their need — a single structure holding infinite variation.
+  - n: 10
+    scene: "The crisis of doubt — how doubt can be salvation"
+    force: memory
+    composer: Schumann
+    work: "Album for the Young — No. 1 'Melody'"
+    decision: added
+    why: >
+      When students doubt, the Master does not dismiss their doubt but uses it as a teaching moment.
+      Memory here is the recognition that doubt is part of growth. Schumann's melody is simple and
+      clear, yet underneath is a kind of uncertainty — the self trying to find its voice.
+  - n: 11
+    scene: "The gentle correction — how the Master teaches the impetuous"
+    force: ascent
+    composer: Beethoven
+    work: "Symphony No. 7 in A major — I. Vivace"
+    decision: added
+    why: >
+      When a student rushes ahead, the Master gently redirects. Salvation is the redirection toward a
+      higher path. Beethoven's first movement is energy properly channeled — the music surges forward
+      with intensity, yet the form holds it. The student climbs because he is guided.
+  - n: 12
+    scene: "The death of Yan Hui — grief unguarded"
+    force: salvation
+    composer: Mahler
+    work: "Symphony No. 6 in A minor — IV. Finale"
+    decision: added
+    why: >
+      The climax of Book XI: Yan Hui dies, and Confucius's response is not restrained philosophy but
+      unguarded grief. "If there is any whose death has broken my heart, it is Yan!" Salvation in this
+      moment is the mutual redemption of teacher and student through love that persists beyond death.
+      Mahler's tragic finale is the music of profound loss — the hammer-blows of fate, the self broken
+      by love.
+  - n: 13
+    scene: "The Master's refusal to accept consolation — love's persistence"
+    force: memory
+    composer: Fauré
+    work: "Nocturne No. 4 in E-flat major, Op. 36"
+    decision: added
+    why: >
+      After Yan Hui's death, the Master refuses the disciples' attempts at consolation. Memory here is
+      the refusal to let the beloved become merely past — they remain present, alive in the heart.
+      Fauré's nocturne holds sorrow that will not be comforted, yet the sorrow itself is a form of
+      devotion.
+  - n: 14
+    scene: "The question of grief — what is proper mourning?"
+    force: law
+    composer: Bach
+    work: "Cello Suite No. 1 in G major — Sarabande"
+    decision: added
+    why: >
+      The disciples ask about proper mourning; the Master responds with law: grieve fully, but within
+      the form of ritual. Salvation is the container that allows grief to be grief. Bach's sarabande
+      is the form of sorrow — stately, dignified, the body held upright even as the soul bends.
+  - n: 15
+    scene: "The different students — Gao Chai's steadiness, Zilu's fire"
+    force: salvation
+    composer: Brahms
+    work: "Symphony No. 1 in C minor — II. Andante sostenuto"
+    decision: added
+    why: >
+      The Master sees each disciple's nature and calls it forth — some need to be steadied, others need
+      to be ignited. Salvation is the right word for the right person at the right moment. Brahms's
+      slow movement is the gentle patience of transformation — the self learning to hold itself
+      rightly.
+  - n: 16
+    scene: "The return to learning — what is the point of study?"
+    force: return
+    composer: Schubert
+    work: "String Quartet No. 13 in A minor, D. 804 — I. Allegro ma non troppo"
+    decision: added
+    why: >
+      Learning is a return to what is ancient and true, made present in oneself. Salvation is the
+      recognition that we are not learning something new but returning to what always was. Schubert's
+      quartet opening moves forward yet circles back — the recognition of return.
+  - n: 17
+    scene: "The question of nature and nurture — are we made or shaped?"
+    force: memory
+    composer: Elgar
+    work: "Enigma Variations — Variation I ('C.A.E.')"
+    decision: added
+    why: >
+      The disciples ask whether people are born to virtue or shaped by it. Memory here is the
+      understanding that both are true: your nature is your starting point, but practice shapes what
+      you become. Elgar's first variation is the portrait of a person seen by another person — the
+      nature revealed through the observation.
+  - n: 18
+    scene: "The Master's own journey — from doubt to clarity"
+    force: salvation
+    composer: Mahler
+    work: "Symphony No. 8 in E-flat major — Part II: Chorus Mysticus"
+    decision: added
+    why: >
+      Confucius describes his own path: at fifteen he set his heart on learning, and at seventy he
+      could follow his heart's desire without overstepping the line. Salvation is the journey through
+      time from confusion to integration. Mahler's mystical chorus is the apotheosis of the Way —
+      words ascending into something beyond words, the journey complete.
+  - n: 19
+    scene: "The warning against false learning — the danger of technique without substance"
+    force: law
+    composer: Stravinsky
+    work: "Symphony of Psalms — I. Exaudi orationem meam"
+    decision: added
+    why: >
+      Some disciples would master the form of virtue without the substance. Salvation here is the
+      redirection toward what matters. Stravinsky's prayer is formal yet raw — the form is clear, but
+      beneath it is the cry of the soul, unadorned.
+  - n: 20
+    scene: "The love between Master and students — affection as teaching"
+    force: memory
+    composer: Fauré
+    work: "Pavane, Op. 50"
+    decision: added
+    why: >
+      The book is shot through with affection — the Master loves his students, and they love him. This
+      is not sentiment but the deepest truth: transformation happens through love. Fauré's pavane is
+      the processional of love — stately, warm, dignified yet tender.
+  - n: 21
+    scene: "The unveiling of the self — what is hidden becomes known"
+    force: revelation
+    composer: Messiaen
+    work: "Quartet for the End of Time — III. Abîme des oiseaux"
+    decision: added
+    why: >
+      When you spend time with the Master, your true nature is revealed. Salvation is the moment when
+      you can no longer hide from yourself. Messiaen's abyss of birds is the cry of the soul revealed
+      — naked, authentic, no longer performing.
+  - n: 22
+    scene: "The final teaching — the essence of the Way"
+    force: salvation
+    composer: Beethoven
+    work: "Symphony No. 9 in D minor — III. Adagio molto e cantabile"
+    decision: added
+    why: >
+      Book XI approaches its end with the deepest teaching: the Way is not rules but the transformation
+      of the person. Salvation is the moment when you understand that you cannot be taught virtue —
+      you must become it. Beethoven's adagio is the music of this understanding: slow, sustained,
+      luminous.
+  - n: 23
+    scene: "The disciples' growth — each becoming a teacher"
+    force: memory
+    composer: Brahms
+    work: "Ein deutsches Requiem — VI. Denn wir haben hier keine bleibende Statt"
+    decision: added
+    why: >
+      The book closes by indicating that the disciples themselves have become teachers, carrying the
+      Way forward. Memory is the transmission: what was learned is now taught to others. Brahms's
+      German Requiem settles into the knowledge that nothing here remains, yet what we carry forward is
+      eternal.
+  - n: 24
+    scene: "The persistence of the teaching — what survives the Master"
+    force: ascent
+    composer: Bruckner
+    work: "Symphony No. 7 in E major — IV. Finale"
+    decision: added
+    why: >
+      The teaching survives because the disciples have been transformed. Salvation here is the
+      multiplication of what was transmitted: the Master's light now shines through many lamps.
+      Bruckner's finale is the ascent beyond the individual — the single voice becomes a choir, the
+      one becomes many.
+  - n: 25
+    scene: "The closing question — what have we learned?"
+    force: salvation
+    composer: Mahler
+    work: "Lied von der Erde — 'Der Abschied' (final section)"
+    decision: added
+    why: >
+      Book XI closes not with answers but with the opening of another question: if this is what the
+      disciples learned, what do we learn from their learning? Salvation is eternal because the
+      transformation never ends — each reader becomes a new student, each generation discovers again
+      what the Way asks of them. Mahler's farewell is the final gesture: goodbye, yet the goodbye is
+      itself a form of arrival.
+  - n: 26
+    scene: "Coda — the book as transformation"
+    force: memory
+    composer: Schubert
+    work: "String Quintet in C major, D. 956 — V. Presto"
+    decision: added
+    why: >
+      Book XI itself is a teaching: in reading the disciples' encounters with the Master, the reader
+      becomes another disciple, saved by the same responsive presence that saved them. Memory is the
+      form that allows this: the preservation of what happened so that it can happen again, infinitely,
+      for all who come after. Schubert's final presto is the acceleration of understanding — all the
+      slow movements resolved into clarity, all the questions answered, yet the answer itself opens
+      new questions.
+demoted:
+  - composer: Shostakovich
+    work: "String Quartet No. 8 — II. Allegro molto"
+    status: "too dystopian for salvation; save for books of crisis"
+    why: "Book XI is about transformation through love, not the anguish of abandonment."
+  - composer: Wagner
+    work: "Der Ring — Closing section"
+    status: "too grandiose; Confucian salvation is intimate, not cosmic"
+    why: "The Master's salvation is personal, intimate, responsive to each individual."

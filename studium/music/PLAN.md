@@ -7,7 +7,7 @@
 - [`iliad`](iliad/PLAN.md) — The Iliad · 24/24 arcs
 - [`odyssey`](odyssey/PLAN.md) — The Odyssey · 24/24 arcs
 - [`tanakh`](tanakh/PLAN.md) — The Tanakh / Hebrew Bible (Torah · Nevi'im · Ketuvim) · 5/39 arcs
-- [`analects`](analects/PLAN.md) — The Analects · 9/20 arcs
+- [`analects`](analects/PLAN.md) — The Analects · 11/20 arcs
 - [`mahabharata`](mahabharata/PLAN.md) — The Mahabharata (selections, incl. the Bhagavad Gita) · 11/18 arcs
 - [`ramayana`](ramayana/PLAN.md) — The Ramayana · 7/7 arcs
 - [`bhagavad-gita`](bhagavad-gita/PLAN.md) — The Bhagavad Gita · 8/18 arcs
