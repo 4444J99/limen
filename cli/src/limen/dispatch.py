@@ -1144,8 +1144,14 @@ def _bridge_agy_scratch(task: Task, wt: Path) -> None:
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(src, dst)
                 carried += 1
-            elif not src.exists() and dst.is_file():  # agy deleted it → mirror the deletion
-                dst.unlink()
+            elif src.is_dir():
+                shutil.copytree(src, dst, dirs_exist_ok=True)
+                carried += 1
+            elif not src.exists() and (dst.exists() or dst.is_symlink()):  # agy deleted it → mirror the deletion
+                if dst.is_dir() and not dst.is_symlink():
+                    shutil.rmtree(dst)
+                else:
+                    dst.unlink()
                 carried += 1
         print(f"  agy-bridge {task.id}: carried {carried} changed path(s) from scratch '{best.name}' → worktree")
     except Exception as e:

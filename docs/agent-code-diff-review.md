@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T01:38:28Z`
+Generated: `2026-07-04T01:42:27Z`
 
 ## Scope
 
@@ -35,6 +35,7 @@ Generated: `2026-07-04T01:38:28Z`
 | refreshed 18 | `claude` | `57fa1ead-aabf-4c2e-b62e-6843cf74a66a` | Insights/censor/session-meta reanchor run. Surviving artifacts are split across a Claude hook, plan/settings/memory files, and one external session-meta worktree; temp scripts and two named side worktrees are absent, so no Limen code patch was made. |
 | refreshed 19 | `claude` | `5e1004b3-b917-4a9d-a1ca-0f9b2b8dba45` | Mail audit / flagged-newsletter-storm run. Reviewed surviving private audit artifacts and external `universal-mail--automation` commit `39bf80d`; newsletter classifier tests pass, while ledger reconciliation after sent/withheld replies remains a recorded residual. |
 | refreshed 20 | `claude` | `ce278978-35f1-4b6c-a511-41f5d1de75cf` | Pre-build excavation / private venture run. Reviewed landed `pre-build-excavate.sh` gate and fixed regex keyword matching so duplicate detection uses literal user keywords; private venture/temp artifacts are absent or outside Limen and remain report-only. |
+| refreshed 21 | `claude` | `84a89bbb-ecd3-4e22-8148-f9b683bd2d92` | Agy bridge / Jules autonomous-dispatch run. The original `melodic-riding-hinton` worktree and temp job files were gone, but the landed Agy/Jules dispatch code was live on `main`; fixed a remaining Agy bridge gap where folder-shaped untracked deltas were silently skipped. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -1443,6 +1444,39 @@ Result: `2 passed`; shell syntax check passed; diff check passed.
 - `scripts/pre-build-excavate.sh:74` matches duplicate-check keywords as fixed strings.
 - `cli/tests/test_pre_build_excavate.py:57` covers literal duplicate hits.
 - `cli/tests/test_pre_build_excavate.py:65` covers regex-like keywords as fixed strings.
+- `cli/src/limen/dispatch.py:1147` copies directory-shaped Agy scratch deltas.
+- `cli/src/limen/dispatch.py:1150` mirrors deleted Agy paths that are symlinks or directories.
+- `cli/tests/test_agy_bridge.py:69` covers untracked directory deltas from `git status --porcelain -z`.
+
+### Agy scratch bridge skipped new directory deltas
+
+Severity: high for Agy/Antigravity work recovery, medium for repo safety.
+
+Evidence:
+
+- Claude session `84a89bbb-ecd3-4e22-8148-f9b683bd2d92` asked the lane to make Agy scratch work bridgeable and Jules dispatch autonomous.
+- The Jules half survived on `main`: `_call_jules()` uses `jules remote new --repo ... --session ...`, the prompt is directive-led, and `_run_cmd()` captures the durable `ID:` from stdout for harvest matching.
+- The Agy half correctly stopped whole-tree scratch overlays, but it still only copied regular-file paths. `git status --porcelain -z` reports a fully untracked directory as one `?? dir/` record, so a session that created a new test/package/docs folder could print a successful bridge message while carrying none of that folder's contents.
+
+Repair:
+
+- Updated `_bridge_agy_scratch()` to copy directory deltas with `shutil.copytree(..., dirs_exist_ok=True)`.
+- Made deletion mirroring handle symlinks and directories, not only regular files.
+- Added a regression for the exact `?? new_suite/` shape.
+
+Touched paths:
+
+- `cli/src/limen/dispatch.py`
+- `cli/tests/test_agy_bridge.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_agy_bridge.py cli/tests/test_flame_kernel.py -q
+bash scripts/done-jules-lane.sh
+```
+
+Result: `14 passed in 0.21s`; `jules-lane verification passed`.
 
 ## Remaining Review Queue
 
