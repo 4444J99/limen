@@ -2261,6 +2261,58 @@ python3 scripts/claude-workflow-guard.py audit-transcript ~/.claude/projects/-Us
 
 Result: PR `#295` is merged with green checks; the temporary remote branch is gone after merge; live root returns 200 and backend probes return 404; transcript guard fails on token and Opus budgets.
 
+### Codex interrupted-session recovery produced valuable ledgers, but the lane boundary collapsed
+
+Severity: medium-high; durable Limen lifecycle work with avoidable session sprawl.
+
+Evidence:
+
+- Codex session `019f0b9d-603c-7e81-b236-cd08143cb8b4` ran from `/Users/4jp/Workspace/limen` on 2026-06-28.
+- The first user prompt said the previous Codex session had been cut off, pasted a hook parse warning, and included a large prompt-wall convergence artifact. The actionable asks were to reconstruct what was interrupted, fix the startup hook warning, and continue from repo truth.
+- Transcript: `~/.local/share/codex/sessions/2026/06/27/rollout-2026-06-27T20-24-51-019f0b9d-603c-7e81-b236-cd08143cb8b4.jsonl`.
+- Structural counts: 19,221 JSONL records; 13,830 response items; 5,290 event messages; 76 turn contexts; 24 compactions; 181 prompt events in the private queue index.
+- The session touched 55 queue-listed paths across Limen scripts/docs/tests, `tasks.yaml`, a host-local Codex plugin cache, several `.limen-worktrees` owner checkouts, and the Portvs triptych worktree.
+- It removed the invalid top-level `description` key from `~/.codex/plugins/cache/claude-code-warp/warp/2.1.0/hooks/hooks.json`. Current file is valid JSON and has only the expected top-level `hooks` key.
+- It fixed interrupted lifecycle-pressure scripts: `scripts/session-attack-paths.py`, `scripts/session-blockers-ledger.py`, `scripts/session-lifecycle-pressure.py`, generated docs, and tests.
+- It added and used the autonomous value gate: `scripts/session-value-review.py` and `cli/tests/test_session_value_review.py`.
+- It landed many prompt-corpus receipt commits. The in-session value review reported 103 commits, 38 batch receipts, 948 sessions recorded, and 18,656 prompt events recorded across the 12-hour window, while explicitly rating the run as "valuable, but mostly as lifecycle debt reduction rather than immediate shipping".
+- Later in the same session it shifted to operational sprawl control: it committed the loose `tasks.yaml` board state as `ca97981`, corrected Portvs incubator rules, wrote `incubator/triptych-video-canon/HANDOFF_PROMPT.md`, and handed off to a clean Limen conductor session.
+
+Ideal prompt diff:
+
+- Ideal form: this should have split into at least four packets: interrupted Limen lifecycle recovery, prompt-corpus batch sweep, host-local plugin-cache repair, and Portvs creative-lane handoff.
+- Actual form: all four ran in one long Codex transcript, with repeated context compactions and broad philosophical steering mixed into code, board, hook-cache, and Portvs edits.
+- Good correction inside the session: it introduced `session-value-review.py --gate`, which is exactly the kind of pressure valve this run needed earlier.
+- Remaining process gap: the run used valuable autonomy to reduce inventory, but it also proved that prompt sweeps need a hard stop condition before they become their own self-justifying workload.
+
+Outcome:
+
+- Limen-side lifecycle and prompt-corpus tooling is landed and still exercised by tests.
+- The host-local Warp/Codex hook warning is fixed in the local plugin cache.
+- The Portvs triptych worktree now has the incubator and handoff artifacts in the active branch; current Portvs triptych worktree is clean against `origin/work/triptych-story`.
+- The current session-value gate works and returns `continue_current_work` for the last 1.5h because there were commits but no new prompt-batch receipt movement.
+- This row is useful progress, but not direct product shipping. Its value is conductibility: receipt surfaces, lifecycle pressure, and a clean handoff split.
+
+What was fucked up:
+
+- The session let the system-conducting work, prompt sweeping, and creative-lane handoff share one transcript. That is the exact cognitive debt pattern the user was objecting to inside the session.
+- It made a host-local plugin-cache mutation to stop a warning. That was pragmatic and validated, but it is not a repo-owned durable fix; plugin cache regeneration could reintroduce it unless the upstream plugin package is corrected.
+- It touched `tasks.yaml` in a direct human cleanup context; the commit was scoped, but board-state mutation inside a broad recovery session increases audit load.
+- The token/context profile was very large: final Codex token event reported 355,514,527 total tokens, 343,902,848 cached input tokens, 1,186,162 output tokens, and 300,040 reasoning output tokens. Most of that was cache churn, but it still signals the run needed tighter lane caps.
+
+Verification:
+
+```bash
+PYTHONPATH=/Users/4jp/Workspace/limen/cli/src python3 -m pytest cli/tests/test_session_lifecycle_pressure.py cli/tests/test_session_value_review.py cli/tests/test_prompt_priority_map.py -q
+python3 -m py_compile scripts/session-lifecycle-pressure.py scripts/session-blockers-ledger.py scripts/session-attack-paths.py scripts/session-corpus-ledger.py scripts/session-orient.py scripts/session-value-review.py scripts/prompt-priority-map.py scripts/prompt-batch-review-ledger.py scripts/prompt-packet-ledger.py scripts/resolve-codex-family-batch.py scripts/resolve-legacy-session-batch.py scripts/scan-legacy-session-batch.py
+bash -n scripts/hooks/session-lifecycle-pressure.sh scripts/done-session-orient.sh scripts/verify-whole.sh scripts/start-worktree-session.sh
+python3 -m json.tool ~/.codex/plugins/cache/claude-code-warp/warp/2.1.0/hooks/hooks.json
+python3 scripts/session-value-review.py --gate --hours 1.5
+git -C /Users/4jp/Workspace/4444J99/portvs/.worktrees/triptych-story status --short --branch
+```
+
+Result: focused tests passed `48 passed`; Python compile passed; shell syntax passed; hook JSON is valid and only has `hooks`; value gate exits 0 with `continue_current_work`; Portvs triptych worktree is clean.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
