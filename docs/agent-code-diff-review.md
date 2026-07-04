@@ -7560,6 +7560,70 @@ git log --oneline --all --grep 'budget-gauge truth predicate'
 
 Result: transcript guard failed only on spend/fanout governance (`3,100,148` Opus billable tokens, four Opus subagents); prompt extraction matches row `135`; PR #498 and PR #499 are merged with green CI; `7413296` is not an ancestor of `origin/main`; the surviving budget-gauge artifact is PR #499 / `96074c9`.
 
+### Claude's glimmering ladder lifecycle landed real closes, but the session became an overbroad closeout magnet
+
+Severity: medium for code, high for spend/scope. The session did close real hanging work: self-improve, CI unpoisoning, watchdog self-deploy, and the CI-poison lever. But it collapsed several distinct lifecycle lanes into one massive Opus transcript and the changed-file metadata undercounted durable repo work as only a Claude plan file.
+
+Evidence:
+
+- Reconstruction row `136` targets Claude session `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa`, rooted in the deleted `.claude/worktrees/glimmering-mapping-whistle` worktree, from 2026-06-23T12:43:38Z through 2026-06-24T13:04:41Z.
+- The prompt stream started from a continuation summary after a `/compact`: the prior user narrowed the work to "Close the ladder" after excluding D2L launch, ENC1101 schedule, revenue prep, and mail credential lanes. Later prompts added "proceed with what is hanging then", "we dont leave tasks hanging on me--they need to be hung somewhere permanent", "complete this session/worktree lifecycle then", and "so i can close it out and ctrl+x it on claude agents?"
+- Durable PR #63 merged at `dce463c`, wiring the self-improve rung live through `scripts/metabolize.sh` and `scripts/route.py`. PR checks and post-merge `CI` passed.
+- The session diagnosed that the live daemon checkout was diverged from `origin/main`, with duplicated value-promotion/capture/task-state commits and one unique revenue-backlog organ. It did not flatten that into one blind reset; it separated unique work from runtime noise.
+- The session wrote `/Users/4jp/.claude/plans/proceed-with-what-is-tidy-axolotl.md`, which correctly identified a main-branch CI poison from direct push `f9325a8` and planned a minimal unpoisoning PR plus a merge-forward for #76.
+- Durable PR #78 merged at `c9180db`, clearing ruff/web validation poison with green PR checks and post-merge `CI`, `Deploy API`, and `Deploy Dashboard` runs. Duplicate PR #77 was later closed unmerged.
+- Durable PR #76 merged at `f31e8ba`, adding watchdog loop-body reload/self-deploy logic and tests. PR checks and post-merge `CI`, `Deploy API`, and `Deploy Dashboard` runs passed.
+- Durable PR #188 merged at `ecfe544`, enriching `L-BRANCH-PROTECT-072` in `his-hand-levers.json` so the limen/main CI-poison cure lived on the permanent obligations/lever surface instead of in memory. It had no status checks in the PR rollup, so the durable proof is merge commit plus rendered-face verification from the transcript.
+- The transcript closed the lifecycle cleanly: verified #188 on `origin/main`, confirmed the branch/worktree delta was empty, removed the `glimmering-mapping-whistle` worktree and local branch, and told the user Ctrl-X was safe because no local state would be lost.
+- Full private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-136-claude-glimmering-ladder-lifecycle-prompts.jsonl`: 451 prompt-surface records, 283 unique prompt hashes, 431,727 prompt bytes. Surfaces are `message.user` 329, `last-prompt` 118, and `queue.enqueue` 4.
+
+Ideal prompt diff:
+
+- Ideal close-ladder form: prove which rung is actually missing, ship one narrow rung, verify, and stop.
+- Actual form: PR #63 did that for `improve`, but the same session then absorbed daemon divergence, CI poisoning, watchdog reload, his-hand lever enrichment, and worktree retirement.
+- Ideal "hanging tasks" form: hang every residual on a durable owner surface, not in memory or a final answer.
+- Actual form: after user correction, #188 correctly moved the CI-poison cure onto `L-BRANCH-PROTECT-072` and proved it rendered. The first closeout had wrongly treated memory as sufficient permanence.
+- Ideal lifecycle form: if a worktree is being retired, prove the branch has no unique unmerged content, confirm remote merge, delete only the owned worktree/branch, and leave no background process.
+- Actual form: this was handled well at the end; the transcript proves #188 merged, remote/main had the enriched lever, the branch delta was empty, and the worktree was removed.
+
+Outcome:
+
+- Credit row `136` with a real multi-PR closeout chain: #63, #78, #76, and #188.
+- Do not credit the row as a clean single code diff. It is better understood as a lifecycle/closeout stream spanning several already-hot system surfaces.
+- Treat the metadata's single changed file (`~/.claude/plans/proceed-with-what-is-tidy-axolotl.md`) as an undercount. Durable repo work is visible through PR receipts, not the changed-file ledger alone.
+
+What was fucked up:
+
+- The session blew the model budget: transcript guard reports 5,386,791 billable tokens, all Opus, and fails the Opus budget guard.
+- The compacted prompt carried an unbounded-goal phrase, and the behavior followed that shape: a narrow ladder closeout became a broad session magnet.
+- Permanent-surface ownership had to be corrected by the user twice. The agent initially left the CI-poison cure in memory/recall rather than hanging it on `his-hand-levers.json`.
+- PR #188 merged without status checks; it was a small one-file lever edit, but the receipt should explicitly say "no checks" rather than imply a green rollup.
+- The live-branch divergence and CI-poison diagnosis was valuable, but it shows a systemic control flaw: direct pushes to `main` could poison CI and jam open PRs until a human/agent cleaned the base.
+
+Verification:
+
+```bash
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-glimmering-mapping-whistle/a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa.jsonl
+python3 - <<'PY'
+import json
+from collections import Counter
+from pathlib import Path
+p = Path('/Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-136-claude-glimmering-ladder-lifecycle-prompts.jsonl')
+rows = [json.loads(line) for line in p.read_text(encoding='utf-8').splitlines() if line.strip()]
+print(len(rows), len({r['prompt_hash'] for r in rows}), sum(r['prompt_bytes'] for r in rows), Counter(r['surface'] for r in rows), Counter(r['session_id'] for r in rows))
+PY
+gh pr view 63 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+gh pr view 78 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+gh pr view 76 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+gh pr view 188 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+gh run list --repo organvm/limen --branch main --commit dce463cc9dedaddbf581736cb861da6a9c76379e --limit 10 --json databaseId,name,status,conclusion,headSha,createdAt,url
+gh run list --repo organvm/limen --branch main --commit c9180db1cf11fa036af00889bae7f2352b079e07 --limit 10 --json databaseId,name,status,conclusion,headSha,createdAt,url
+gh run list --repo organvm/limen --branch main --commit f31e8ba158ab3e6050624c39194fbb4f5732305f --limit 10 --json databaseId,name,status,conclusion,headSha,createdAt,url
+test -d /Users/4jp/Workspace/limen/.claude/worktrees/glimmering-mapping-whistle; echo $?
+```
+
+Result: transcript guard failed on spend and one unbounded-goal phrase; prompt extraction matches row `136`; #63, #78, #76, and #188 are merged; post-merge runs are green for #63/#78/#76; #188 has no status checks but is merged at `ecfe544`; the `glimmering-mapping-whistle` worktree is absent.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
