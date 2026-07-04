@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import sys
 from collections import Counter
@@ -101,6 +102,26 @@ def _ladder_path() -> Path:
     return Path(os.environ.get("LIMEN_REVENUE_LADDER", str(root / "revenue-ladder.json")))
 
 
+def _positive_int(value: object, default: int) -> int:
+    if isinstance(value, bool):
+        return default
+    try:
+        n = int(value)
+    except (TypeError, ValueError):
+        return default
+    return n if n > 0 else default
+
+
+def _finite_float(value: object) -> float | None:
+    if isinstance(value, bool):
+        return None
+    try:
+        n = float(value)
+    except (TypeError, ValueError):
+        return None
+    return n if math.isfinite(n) else None
+
+
 def _products() -> list[dict]:
     """Active products from revenue-ladder.json, build-stage only, ranked. [] on any error (the
     generator must never break the feed beat)."""
@@ -109,7 +130,14 @@ def _products() -> list[dict]:
     except Exception as e:  # noqa: BLE001
         print(f"  revenue-ladder unreadable ({e}) — nothing to generate.", file=sys.stderr)
         return []
-    prods = [p for p in (data.get("products") or [])
+    if not isinstance(data, dict):
+        print(f"  revenue-ladder root is {type(data).__name__}, not a mapping — nothing to generate.", file=sys.stderr)
+        return []
+    raw_products = data.get("products") or []
+    if not isinstance(raw_products, list):
+        print(f"  revenue-ladder products is {type(raw_products).__name__}, not a list — nothing to generate.", file=sys.stderr)
+        return []
+    prods = [p for p in raw_products
              if isinstance(p, dict) and p.get("repo") and (p.get("stage") in _BUILD_STAGES)]
     prods.sort(key=lambda p: p.get("rank", 999))
     return prods
@@ -122,8 +150,13 @@ def _avg_headroom_pct() -> float | None:
     fpath = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent)) / "logs" / "usage.json"
     try:
         vendors = (json.loads(fpath.read_text()) or {}).get("vendors", {})
-        hs = [v["headroom_pct"] for v in vendors.values()
-              if isinstance(v, dict) and isinstance(v.get("headroom_pct"), (int, float))]
+        hs = [
+            h
+            for v in vendors.values()
+            if isinstance(v, dict)
+            for h in [_finite_float(v.get("headroom_pct"))]
+            if h is not None
+        ]
         return sum(hs) / len(hs) if hs else None
     except Exception:
         return None
@@ -222,9 +255,9 @@ def _plan(tasks: list[Task], floor_base: int, max_new: int, board: object | None
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS", "tasks.yaml"))
-    ap.add_argument("--floor", type=int, default=int(os.environ.get("LIMEN_REVENUE_FLOOR", "12")),
+    ap.add_argument("--floor", type=int, default=_positive_int(os.environ.get("LIMEN_REVENUE_FLOOR"), 12),
                     help="keep at least this many routable OPEN revenue-class tasks; generate up to it")
-    ap.add_argument("--max-new", type=int, default=int(os.environ.get("LIMEN_REVENUE_MAX", "12")),
+    ap.add_argument("--max-new", type=int, default=_positive_int(os.environ.get("LIMEN_REVENUE_MAX"), 12),
                     help="hard cap on tasks generated in one run (anti-flood)")
     ap.add_argument("--apply", action="store_true",
                     help="append to tasks.yaml (validated, atomic, under the queue lock)")

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 
 from limen.models import Task
@@ -92,3 +93,49 @@ def test_done_building_pass_remains_repeatable_when_ladder_still_building(monkey
     )
 
     assert {t.labels[0] for t in new} == {"revenue-ship", "revenue-readiness"}
+
+
+def test_products_fail_open_on_wrong_ladder_shapes(monkeypatch, tmp_path, capsys):
+    mod = _load_module()
+    ladder = tmp_path / "revenue-ladder.json"
+    monkeypatch.setenv("LIMEN_REVENUE_LADDER", str(ladder))
+
+    ladder.write_text("[]")
+    assert mod._products() == []
+    assert "root is list" in capsys.readouterr().err
+
+    ladder.write_text(json.dumps({"products": {"repo": "organvm/a-i-chat--exporter"}}))
+    assert mod._products() == []
+    assert "products is dict" in capsys.readouterr().err
+
+
+def test_avg_headroom_accepts_numeric_strings_and_rejects_bad_values(monkeypatch, tmp_path):
+    mod = _load_module()
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    (logs / "usage.json").write_text(
+        json.dumps(
+            {
+                "vendors": {
+                    "ok-string": {"headroom_pct": "75.5"},
+                    "ok-number": {"headroom_pct": 24.5},
+                    "bool": {"headroom_pct": True},
+                    "nan": {"headroom_pct": "NaN"},
+                    "bad": {"headroom_pct": "not-a-number"},
+                }
+            }
+        )
+    )
+
+    assert mod._avg_headroom_pct() == 50.0
+
+
+def test_positive_int_uses_default_for_invalid_values():
+    mod = _load_module()
+
+    assert mod._positive_int("9", 12) == 9
+    assert mod._positive_int("bad", 12) == 12
+    assert mod._positive_int("0", 12) == 12
+    assert mod._positive_int("-4", 12) == 12
+    assert mod._positive_int(True, 12) == 12

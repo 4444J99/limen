@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T00:40:41Z`
+Generated: `2026-07-04T01:22:21Z`
 
 ## Scope
 
@@ -27,6 +27,7 @@ Generated: `2026-07-04T00:40:41Z`
 | 10 | `claude` | `3d972c29-36c6-4803-b94b-255df104f644` | Integration-organ window landed value ledger, score-dispatch, omni, ingest coverage, media atomization, and accelerator surfaces. Reviewed current `main` and found remaining malformed numeric crash paths in fail-open organs. |
 | 11 | `claude` | `f9c6b1e7-2c05-4d42-9d6a-8b08ee98a155` | Window touched watchdog, self-heal, and self-improve organs. Reviewed current `main` implementations and found remaining malformed-env crash paths in watchdog/self-heal. |
 | 12 | `claude` | `b7efae9c-af24-4c2c-9288-d2fa860ba974` | Off-repo `/Volumes/Archive4T` PR-healing fanout. Temp scratch artifacts were gone, but the persistent Claude workflow transcripts exposed a guard blind spot: nested workflow subagents were not included in transcript audits. |
+| refreshed 13 | `claude` | `4693c425-3c29-4a48-9a0b-54fd9fd37753` | Revenue backlog / model-tier run. Original `piped-booping-kettle` worktree was gone, but revenue-backlog commits landed on `main`; fixed malformed ladder, usage, and env inputs that could abort the revenue feed beat. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -954,6 +955,42 @@ test -d /Users/4jp/Workspace/edu-organism
 
 Result: transcript audit succeeded; both artifact roots were absent.
 
+### Revenue backlog generator trusted local ladder and telemetry shape
+
+Severity: medium for revenue-feed reliability.
+
+Evidence:
+
+- Refreshed rank 13 (`4693c425-3c29-4a48-9a0b-54fd9fd37753`) was the revenue-backlog / model-tier run. The original `piped-booping-kettle` worktree is gone, but the durable commits include `8d63423`, `91e5ff6`, `6973619`, and `304656b`.
+- Patched transcript audit reports 31 transcript files, 2,361 usage-bearing messages, 13,691,070 billable-ish tokens, 266,381,347 cache-read tokens, 11,720,797 Opus-class billable-ish tokens, 15 expensive subagents, 18 agent/workflow calls, and three unbounded-goal prompt hits.
+- The prompt/session intent was to feed idle win-class capacity with revenue work rather than generated busywork. `scripts/generate-revenue-backlog.py` was therefore a heartbeat-critical revenue supply path.
+- The generator already failed open on unreadable or syntactically invalid `revenue-ladder.json`, but valid JSON with the wrong top-level shape made `_products()` call `.get()` on a non-mapping. A non-list `products` value could also break product extraction.
+- `LIMEN_REVENUE_FLOOR` and `LIMEN_REVENUE_MAX` were parsed with bare `int(...)` while constructing argparse defaults, so one malformed launchd/shell env value could abort the feed before the script reached read-only planning.
+- Headroom telemetry only accepted native numeric JSON types and treated booleans as integers. Numeric strings from JSON-safe telemetry were ignored, while boolean `true` could count as `1%` headroom.
+
+Repair:
+
+- Added positive integer fallback parsing for revenue floor and max-new defaults.
+- Added finite numeric parsing for usage headroom that accepts numeric strings but rejects booleans, malformed strings, and non-finite values.
+- Made revenue ladder loading fail open on wrong-shaped roots and wrong-shaped `products` collections.
+- Added regressions for bad ladder shape, mixed headroom telemetry, and malformed revenue env defaults.
+
+Touched paths:
+
+- `scripts/generate-revenue-backlog.py`
+- `cli/tests/test_generate_revenue_backlog.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_generate_revenue_backlog.py -q
+python3 -m py_compile scripts/generate-revenue-backlog.py
+git diff --check -- scripts/generate-revenue-backlog.py cli/tests/test_generate_revenue_backlog.py docs/agent-code-diff-review.md
+LIMEN_REVENUE_FLOOR=bad LIMEN_REVENUE_MAX=bad python3 scripts/generate-revenue-backlog.py
+```
+
+Result: `5 passed`; compile passed; diff check passed; malformed-env dry run exited `0` and remained read-only.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -1154,6 +1191,16 @@ Result: transcript audit succeeded; both artifact roots were absent.
 - `scripts/obligations-view.py:69` filters obligations to mapping entries.
 - `cli/tests/test_obligations_view.py:20` covers wrong-shaped obligation ledgers.
 - `cli/tests/test_obligations_view.py:33` covers scalar entries in ledger lists.
+- `scripts/generate-revenue-backlog.py:105` defines positive integer fallback parsing for revenue defaults.
+- `scripts/generate-revenue-backlog.py:115` defines finite telemetry numeric parsing.
+- `scripts/generate-revenue-backlog.py:133` rejects wrong-shaped revenue-ladder roots.
+- `scripts/generate-revenue-backlog.py:137` rejects non-list product collections.
+- `scripts/generate-revenue-backlog.py:153` coerces usage headroom before averaging.
+- `scripts/generate-revenue-backlog.py:258` applies safe revenue floor default parsing.
+- `scripts/generate-revenue-backlog.py:260` applies safe revenue max-new default parsing.
+- `cli/tests/test_generate_revenue_backlog.py:98` covers wrong-shaped revenue ladder JSON.
+- `cli/tests/test_generate_revenue_backlog.py:112` covers mixed headroom telemetry parsing.
+- `cli/tests/test_generate_revenue_backlog.py:134` covers malformed positive integer defaults.
 
 ## Remaining Review Queue
 
