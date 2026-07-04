@@ -53,6 +53,7 @@ Generated: `2026-07-04T04:13:46Z`
 | refreshed 36 | `claude` | `4582fe4c-165d-440b-a36a-562e67cd5cf4` | Fleet session-reconcile run. Temp scripts are gone, but durable ledger/scorecard and `organvm/session-meta#37` survive; review confirmed the lane closed, the 102-branch prune was explicitly gated, and the run remains a spend/fanout cautionary example. |
 | refreshed 37 | `claude` | `57c0201a-82bd-4be7-96dd-4c7039038edd` | Codex skill-slim run. PRs #573, #597, and #615 landed a repair organ that keeps all skills while stopping Codex description truncation; current tests and live `--check` pass, but the session needed two follow-up corrections after false-green proofs and blew Claude spend limits. |
 | refreshed 38 | `claude` | `dceadf88-8fb3-478d-8626-38393fc09b97` | No-tasks-on-me / closeout predicate run. PR #250 landed `scripts/no-tasks-on-me.sh` and wired it into `CLAUDE.md`; current predicate exits 0 and proves lever ownership, preserved-ref ownership, graph issue pointers, and branch-reap fixed point. Session was still far too broad and expensive. |
+| refreshed 39 | `claude` | `743b4834-4bdd-4942-a861-7006dbe2e87c` | Proprioception / permission-dialog run. Landed organ-health and related prompt-dialog repairs, but review found the live trusted-`cd` hook auto-approved any tail inside trusted dirs; hardened the repo and live hook so destructive tails fall back to normal Claude approval, with a regression test. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -352,6 +353,57 @@ rg -n 'no-tasks-on-me|nothing hangs|credential-wall.py --check' CLAUDE.md script
 ```
 
 Result: PR #250 is merged with green GitHub checks; current predicate exits 0; shell syntax and helper Python compile pass. Transcript audit fails on billable, Opus, agent fanout, and Opus-subagent fanout budgets.
+
+### Claude proprioception/dialog run built useful health surfaces, but over-broadened the trusted-cd hook
+
+Severity: high for local approval safety; current review patched the live and repo hook copies.
+
+Evidence:
+
+- Claude session `743b4834-4bdd-4942-a861-7006dbe2e87c` ran from `/Users/4jp/Workspace/limen` and a later `.claude/worktrees/organ-proprioception` worktree across 2026-06-23T16:09:27Z through 2026-06-24T12:39:45Z.
+- Queue row `57` saw eight changed paths: a his-hand registry worktree file, organ-proprioception docs/scripts, the home hook `~/.claude/hooks/allow-trusted-cd-git.sh`, a private plan, and private memory note `proprioception-organ-staged.md`.
+- Prompt-layer pressure came from recurring approval/dialog noise and organism-health visibility: make the system know its own organs, surface stale human gates, and stop benign Claude Code update/`cd && git` prompts from blocking work.
+- Landed/surviving commits include `c37b994` (`feat(proprioception): organ-health face + heartbeat voice-stamps + fresh needs_human digest`), `e6248bd` (`heal: swallow Claude Code's benign install_failed update marker`), `b1e80cf` (Full Disk Access-aware library preservation), and later durable hook commits `1f06950` / `3dce523`.
+- Current `scripts/organ-health.py --json` reports `33/33 live` and writes the organ-health HTML surfaces.
+- Current live Claude settings still point at the absolute home hook path `~/.claude/hooks/allow-trusted-cd-git.sh`; that file was byte-identical to the repo copy before this review.
+
+Ideal prompt diff:
+
+- Ideal form: reduce false approval prompts without disabling the permission model; make organ health observable; keep user-level hooks durable and testable; and preserve a normal approval path for destructive operations.
+- Actual form: it improved organ-health and made the prompt fix durable, but the trusted-`cd` hook treated directory trust as permission to auto-approve the entire command tail, including `/tmp`, `~/.claude`, and arbitrary `rm`/`git reset` style commands after `cd`.
+- Corrected ideal form: directory trust is enough for normal read/build/test/git chains, not enough for destructive tails. Dangerous tails should fall through to Claude's normal approval guard.
+
+Outcome:
+
+- Hardened `scripts/hooks/allow-trusted-cd-git.sh`: it now extracts the command tail after the leading `cd` and refuses to auto-approve obvious destructive tails (`sudo`, recursive `rm`, `git reset --hard`, destructive `git clean`, `dd ... of=`, `mkfs`, recursive chmod/chown, and `curl|sh`/`wget|bash` installers).
+- Applied the same change to the live home hook at `~/.claude/hooks/allow-trusted-cd-git.sh`, because current settings execute that path directly.
+- Added `scripts/tests/allow-trusted-cd-git.test.sh` to lock the intended behavior: trusted normal chains still allow, foreign paths and destructive tails fall through.
+
+What was fucked up:
+
+- The original hook solved approval spam by expanding the allow decision too far. It was a bypass shape, not a guardrail evolution: trusted path plus arbitrary tail is too much authority.
+- The hook lived in two places: repo copy and home copy. Documentation said the live hook was versioned and byte-identical, but settings still executed the home path, so a repo-only fix would not have changed active behavior.
+- Transcript guard fails on spend: 3,940,495 billable-ish tokens, 3,136,787 Opus billable-ish tokens, 662 usage-bearing messages, and seven agent/workflow calls.
+- The queue row undercounted the durable outcome and mixed surfaces: organ-health commits, dialog hooks, memory, and his-hand registry work were all part of the same sprawling run.
+
+Touched paths:
+
+- `scripts/hooks/allow-trusted-cd-git.sh`
+- `scripts/tests/allow-trusted-cd-git.test.sh`
+- `~/.claude/hooks/allow-trusted-cd-git.sh` (live host copy; kept byte-identical to repo)
+
+Verification:
+
+```bash
+python3 scripts/organ-health.py --json
+bash scripts/tests/allow-trusted-cd-git.test.sh
+bash -n scripts/hooks/allow-trusted-cd-git.sh scripts/tests/allow-trusted-cd-git.test.sh ~/.claude/hooks/allow-trusted-cd-git.sh
+cmp -s ~/.claude/hooks/allow-trusted-cd-git.sh scripts/hooks/allow-trusted-cd-git.sh
+python3 -m py_compile scripts/organ-health.py scripts/reclassify-needs-human.py scripts/merge-ready.py scripts/library-preserve.py
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/743b4834-4bdd-4942-a861-7006dbe2e87c.jsonl
+```
+
+Result: organ-health reports `33/33 live`; trusted-cd hook regression test passes; repo and live hook syntax pass and match byte-for-byte; helper Python compile passes. Transcript audit fails on total and Opus billable budgets.
 
 ### Agent-instruction standard landed the right two-layer answer, but one Layer-1 gate pointer was wrong
 
