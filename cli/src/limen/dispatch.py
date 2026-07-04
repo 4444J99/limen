@@ -1519,6 +1519,36 @@ def _remaining_budget(limen: LimenFile, agent: str, budget: int) -> int:
     return max(0, budget - track.spent)
 
 
+def _commit_dispatch_results(
+    tasks_path: Path,
+    limen: LimenFile,
+    results: list[tuple[str, str, bool | str]],
+    now: datetime,
+) -> None:
+    """COMMIT for the serial path, mirroring dispatch_parallel's commit: reload FRESH under the
+    queue lock and re-apply each result by id. The caller's snapshot is minutes stale by the time
+    agents finish — saving it whole erases every concurrent write made meanwhile (keeper folds,
+    route stamps, status transitions): the lost-update board wipe. A task completed elsewhere in
+    the interim keeps its terminal status (_apply_result's lifecycle guards); a task removed from
+    the fresh board is skipped."""
+    with _queue_lock(tasks_path) as got:
+        if not got:
+            print(
+                f"── dispatch: queue busy — {len(results)} result(s) NOT committed this round; "
+                "harvest reconciles from PR state (self-corrects next beat)"
+            )
+            return
+        fresh = load_limen_file(tasks_path) if tasks_path.exists() else limen
+        _reset_budget_if_needed(fresh, now)
+        fid = {t.id: t for t in fresh.tasks}
+        ftrack = fresh.portal.budget.track
+        for agent, tid, res in results:
+            ft = fid.get(tid)
+            if ft is not None:
+                _apply_result(ft, agent, res, now, ftrack)
+        save_limen_file(tasks_path, fresh)
+
+
 def dispatch_tasks(
     limen: LimenFile,
     tasks_path: Path,
@@ -1535,7 +1565,9 @@ def dispatch_tasks(
     if _reset_budget_if_needed(limen, now) and not dry_run:
         # Persist a cadence reset even when this call then dispatches nothing / bails at the
         # down-gate — otherwise a stale-counter lane (jules) stays gated to remaining=0 forever.
-        save_limen_file(tasks_path, limen)
+        # Committed via fresh reload, not this snapshot: the caller may hold a board loaded
+        # before other writers ran.
+        _commit_dispatch_results(tasks_path, limen, [], now)
     track = limen.portal.budget.track
 
     agent_filter = canonical_agent(agent or resolve_agent())
@@ -1597,15 +1629,19 @@ def dispatch_tasks(
     print(f"── limen dispatch ({mode}) — agent={agent_filter} budget_remaining={remaining}")
 
     dispatched = 0
+    results: list[tuple[str, str, bool | str]] = []
     for task in candidates:
         if remaining < task.budget_cost:
             break
 
         result = call_agent_dispatch(agent_filter, task, dry_run)
         if not dry_run:
+            # In-memory apply keeps this loop's bookkeeping consistent; persistence happens
+            # once at commit, re-applied onto a FRESH board (never this stale snapshot).
             _apply_result(task, agent_filter, result, now, track)
+            results.append((agent_filter, task.id, result))
             if result == _RATELIMIT:
-                save_limen_file(tasks_path, limen)
+                _commit_dispatch_results(tasks_path, limen, results, now)
                 print(f"── lane {agent_filter} rate-limited — cooling, {dispatched} dispatched this cycle")
                 return
             elif result and result not in (_NOOP, _RATELIMIT, _TIMEOUT) and not _is_blocked_result(result):
@@ -1614,7 +1650,7 @@ def dispatch_tasks(
         dispatched += 1
 
     if not dry_run:
-        save_limen_file(tasks_path, limen)
+        _commit_dispatch_results(tasks_path, limen, results, now)
 
     print(f"── {mode}: {dispatched} task(s)")
 
@@ -2122,33 +2158,54 @@ def release_stale_tasks(
     print(f"── limen release-stale ({mode}) — hours={hours} candidates={len(candidates)}")
     released: list[str] = []
     restored_done: list[str] = []
-    for task in candidates:
-        print(f"  {task.id} {task.status} {task.target_agent} — {task.title}")
-        if not dry_run:
-            if _restore_done_status(
-                task,
-                now,
-                agent="limen",
-                session_id="release-stale",
-                output="release-stale: prior done transition wins; restored terminal status",
-            ):
-                restored_done.append(task.id)
-                continue
-            task.status = "open"
-            task.updated = now
-            task.dispatch_log.append(
-                DispatchLogEntry(
-                    timestamp=now,
-                    agent="limen",
-                    session_id=session_id(),
-                    status="open",
-                    output=f"Released stale claim after {hours}h",
-                )
-            )
-            released.append(task.id)
-
     if not dry_run:
-        save_limen_file(tasks_path, limen)
+        # APPLY re-selects and mutates on a FRESH board under the queue lock — persisting the
+        # caller's snapshot would erase every write made since it was loaded (the dispatch
+        # lost-update wipe). The fresh re-select also means we only reopen tasks that are STILL
+        # stale at write time, not ones another process just progressed.
+        with _queue_lock(tasks_path) as got:
+            if not got:
+                print("── release-stale: queue busy — skipped this round (self-corrects next beat)")
+                return {
+                    "status": "skipped_queue_busy",
+                    "agent": agent,
+                    "hours": hours,
+                    "tasks_path": str(tasks_path),
+                    "count": 0,
+                    "released": [],
+                    "restored_done": [],
+                    "candidates": [],
+                }
+            fresh = load_limen_file(tasks_path) if tasks_path.exists() else limen
+            candidates = stale_tasks(fresh, hours=hours, agent=agent)
+            for task in candidates:
+                print(f"  {task.id} {task.status} {task.target_agent} — {task.title}")
+                if _restore_done_status(
+                    task,
+                    now,
+                    agent="limen",
+                    session_id="release-stale",
+                    output="release-stale: prior done transition wins; restored terminal status",
+                ):
+                    restored_done.append(task.id)
+                    continue
+                task.status = "open"
+                task.updated = now
+                task.dispatch_log.append(
+                    DispatchLogEntry(
+                        timestamp=now,
+                        agent="limen",
+                        session_id=session_id(),
+                        status="open",
+                        output=f"Released stale claim after {hours}h",
+                    )
+                )
+                released.append(task.id)
+            save_limen_file(tasks_path, fresh)
+    else:
+        for task in candidates:
+            print(f"  {task.id} {task.status} {task.target_agent} — {task.title}")
+
     return {
         "status": "dry_run" if dry_run else "applied",
         "agent": agent,
@@ -2163,7 +2220,7 @@ def release_stale_tasks(
                 "title": task.title,
                 "repo": task.repo,
                 "target_agent": task.target_agent,
-                "status": task.status if dry_run else task.status,
+                "status": task.status,
             }
             for task in candidates
         ],

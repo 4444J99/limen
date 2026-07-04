@@ -527,6 +527,135 @@ def test_dispatch_parallel_does_not_dispatch_stale_open_task(
     assert calls == []
 
 
+def _concurrent_fold(tasks_path: Path, task_id: str = "CONCURRENT-FOLD") -> None:
+    """Simulate a keeper/route write landing on tasks.yaml while a dispatch cycle holds a
+    stale in-memory snapshot (the lost-update wipe scenario)."""
+    board = read_board(tasks_path)
+    board["tasks"].append(
+        {
+            "id": task_id,
+            "title": "Folded while agents ran",
+            "repo": "organvm/limen",
+            "target_agent": "agy",
+            "priority": "critical",
+            "budget_cost": 1,
+            "status": "open",
+            "created": "2026-06-20",
+            "dispatch_log": [],
+        }
+    )
+    tasks_path.write_text(yaml.safe_dump(board, sort_keys=False))
+
+
+def test_dispatch_serial_commit_survives_concurrent_board_write(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """Serial dispatch loads the board, runs agents for minutes, then saves — persisting that
+    stale snapshot erased every interim write (keeper folds, route stamps). The commit must
+    re-apply results onto a FRESH reload so concurrent writes survive."""
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "DISPATCH-ME",
+                "title": "Dispatch me",
+                "repo": "organvm/limen",
+                "target_agent": "codex",
+                "priority": "critical",
+                "budget_cost": 1,
+                "status": "open",
+                "created": "2026-06-20",
+                "dispatch_log": [],
+            }
+        ],
+    )
+    stale = load_limen_file(tasks_path)
+
+    def fold_then_succeed(agent, task, dry_run=False):
+        _concurrent_fold(tasks_path)
+        return True
+
+    monkeypatch.setattr(D, "_down_lanes", lambda: set())
+    monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
+    monkeypatch.setattr(D, "call_agent_dispatch", fold_then_succeed)
+
+    dispatch_tasks(stale, tasks_path, agent="codex", dry_run=False)
+
+    tasks = {task["id"]: task for task in read_board(tasks_path)["tasks"]}
+    assert set(tasks) == {"DISPATCH-ME", "CONCURRENT-FOLD"}
+    assert tasks["DISPATCH-ME"]["status"] == "dispatched"
+    assert tasks["CONCURRENT-FOLD"]["status"] == "open"
+
+
+def test_dispatch_budget_reset_persist_survives_concurrent_board_write(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """The no-candidate budget-reset persist saved the caller's whole stale snapshot; it must
+    commit the reset via a fresh reload instead."""
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(tasks_path, [])
+    board = read_board(tasks_path)
+    board["portal"]["budget"]["track"] = {
+        "date": "2026-01-01",
+        "spent": 2,
+        "per_agent": {"codex": 2},
+        "per_agent_reset": {"codex": "2026-01-01T00:00:00+00:00"},
+    }
+    tasks_path.write_text(yaml.safe_dump(board, sort_keys=False))
+    stale = load_limen_file(tasks_path)
+
+    _concurrent_fold(tasks_path)
+
+    monkeypatch.setattr(D, "_down_lanes", lambda: set())
+    monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
+
+    dispatch_tasks(stale, tasks_path, agent="codex", dry_run=False)
+
+    board = read_board(tasks_path)
+    assert "CONCURRENT-FOLD" in {task["id"] for task in board["tasks"]}
+    assert board["portal"]["budget"]["track"]["per_agent"]["codex"] == 0
+
+
+def test_release_stale_apply_survives_concurrent_board_write(
+    tmp_path: Path,
+) -> None:
+    """release-stale APPLY re-selects and mutates a FRESH board under the queue lock; saving
+    the caller's snapshot would erase concurrent writes."""
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "STALE-CLAIM",
+                "title": "Stale dispatched task",
+                "repo": "organvm/limen",
+                "target_agent": "jules",
+                "priority": "high",
+                "budget_cost": 1,
+                "status": "dispatched",
+                "created": "2026-06-01",
+                "dispatch_log": [],
+            }
+        ],
+    )
+    stale = load_limen_file(tasks_path)
+
+    _concurrent_fold(tasks_path)
+
+    report = release_stale_tasks(stale, tasks_path, hours=24, dry_run=False)
+
+    tasks = {task["id"]: task for task in read_board(tasks_path)["tasks"]}
+    assert set(tasks) == {"STALE-CLAIM", "CONCURRENT-FOLD"}
+    assert tasks["STALE-CLAIM"]["status"] == "open"
+    assert report["status"] == "applied"
+    assert report["released"] == ["STALE-CLAIM"]
+
+
 def test_lane_run_env_keeps_lane_specific_isolation(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     monkeypatch.setenv("PATH", "/usr/bin")
