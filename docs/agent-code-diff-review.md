@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T07:33:50Z`
+Generated: `2026-07-04T07:36:08Z`
 
 ## Scope
 
@@ -83,6 +83,7 @@ Generated: `2026-07-04T07:33:50Z`
 | 97 | `codex` | `019f187d-dcd6-7390-99a9-f3c1267fb7ca` | Current-session fanout / multistream waterfall run. The session made fanout real by seeding tasks, launching async planners, and merging the CSF PR train, but it also exposed a serious control-plane hazard: root-level parallel dispatch could mutate the conductor checkout and erase repairs. Current `main` is safer because later PRs #584/#585/#586 hardened queue locks and dependencies. |
 | 98 | `claude` | `6226cb86-1ef9-4ab7-a8c5-e668da59b071` | Payment synthesis / credential-wall run. The session first produced a private high-context revenue/payment synthesis, then correctly moved credential/login/env atoms out of chat burden and into code plus a GitHub wall through merged PR #321 and issue #320. The later resume blurred session boundaries by drifting into a QUICKEN/live-checkout closeout claim; current git does not prove a surviving row-98 QUICKEN commit, so that part is recorded as a transcript-level scope/control failure rather than an attributed code diff. |
 | 99 | `claude` | `f0a18679-fd83-4fb8-a836-0cb7a79c58d8` | Domus Genoma CI-fix session. The prompt asked for one root-cause PR making failing lint/validation checks green, but the session could not run local validators or fetch GitHub logs, fanned out Opus subagents into manual read-only audits, and ended on a subagent result with no final implementation or PR. The local branch was only the already-merged PR #107 tip; current green CI came much later through PR #147. |
+| 100 | `opencode` | `ses_10a3c204bffeL4VwSbuTG4aEU8` | Shahnameh cycles 2-6 OpenCode run. The prompt asked for the next bounded Shahnameh batch and one green PR. OpenCode authored and locally validated cycles 2-6, but started on an unrelated `aeneid-books-2-3` branch with stale Tale of Genji/task-board dirt, stashed only tracked changes, copied untracked files into an existing worktree, and ended before commit/push/PR. Durable delivery came later through PR #130, while PR #167 shows the polluted broader branch should not be credited as clean closeout. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -5335,6 +5336,62 @@ git -C /Users/4jp/Workspace/domus-genoma log --date=iso-strict --pretty=format:'
 ```
 
 Result: private prompt extraction has `255` prompt-bearing records; the original worktree and temp helpers are gone; the row branch tip is already-merged PR #107, not a row-99 fix; PRs #104/#105/#106/#107/#113/#114 merged with the five lint checks red; PR #147 later made the target repo green.
+
+### OpenCode Shahnameh run authored useful cycles, then stopped before clean PR closeout
+
+Severity: medium for content attribution and branch hygiene; low for current repo correctness because the matching content later landed and current validation passes.
+
+Evidence:
+
+- Queue row `100` points at OpenCode session `ses_10a3c204bffeL4VwSbuTG4aEU8`, titled `Shahnameh cycles 2..50 arcs`, rooted at `/Users/4jp/Workspace/limen`, running on 2026-06-23T18:35:16Z through 2026-06-23T18:45:07Z with model `deepseek-v4-flash-free`, cost `0`, and 83,959 input / 30,974 output / 2,894 reasoning / 3,139,712 cache-read tokens.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-100-opencode-shahnameh-prompts.jsonl` (`1` prompt record).
+- Prompt intent was bounded despite the task title: complete the next handful of undone Shahnameh divisions, not all 49 remaining cycles at once; mirror music arcs and essays in the Iliad format; make `scripts/studium-validate.py` pass; leave one green PR.
+- OpenCode did the core authorship work locally: it wrote Shahnameh cycles 2-6 in `studium/music/shahnameh/book-02.yaml` through `book-06.yaml`, mirrored essays `studium/essays/shahnameh/book-02.md` through `book-06.md`, and updated `studium/music/shahnameh/PLAN.md` from `1/50` to `6/50`.
+- Local verification inside the session passed: `python3 scripts/studium-validate.py` reported `82` arcs valid and `1` film companion valid, and a follow-up YAML parse check for the new Shahnameh files succeeded.
+- The session was not cleanly isolated. It started on branch `aeneid-books-2-3`; `git status` showed unrelated dirty `studium/music/tale-of-genji/PLAN.md`, `tasks.yaml`, `obligations-ledger.json`, and untracked Tale of Genji content alongside the Shahnameh files.
+- OpenCode noticed the wrong branch and tried to move only Shahnameh work to `limen/studium-deepen-shahnameh-1441`. It stashed only tracked Shahnameh changes, so the untracked cycle files were not in the stash. It then copied the untracked files from the main checkout into the existing Shahnameh worktree.
+- The session ended at 18:45:07Z immediately after the copy command. It did not commit, push, open a PR, or record a green PR URL.
+- Durable delivery came later through PR #130, `feat(studium): Shahnameh Cycles 2-6 - the early dynastic arc (force-matched + essays)`, merged at `c8d89e99188342beb2e7bb16acbff1f2bbfc4969` on 2026-06-24. That PR's file list is the clean 11-file Shahnameh cycles 2-6 package matching the session's authored surface.
+- The queue's `68` changed-file list is not the authored diff. It included Aeneid, Beowulf, Conference of Birds, Divine Comedy, Journey to the West, Metamorphoses, Tale of Genji, watchdog/sync-reclaim code, web export validation, and `tasks.yaml` from concurrent/local dirty state.
+- PR #167 later carried a polluted broad branch named `studium-deepen-shahnameh-2-8` with many unrelated Studium additions and was closed unmerged. That branch is evidence of the same contamination hazard, not a clean row-100 receipt.
+- Current `python3 scripts/studium-validate.py` passes for `211` arcs and `18` film companions.
+
+Ideal prompt diff:
+
+- Ideal form: start from a clean `main` worktree, inspect the Shahnameh plan, author only the next bounded batch, run `studium-validate.py`, commit only the Shahnameh files, open one PR, and report that PR's checks.
+- Actual form: the content and validation happened, but from a dirty unrelated branch. The session had to disentangle local state and ended before the PR receipt existed.
+- Ideal attribution form: credit row `100` for authoring the cycles 2-6 content if the later PR matches that file set, but do not credit it for PR closeout or the queue's broader 68-file snapshot.
+- Actual durable form: PR #130 is the clean delivery receipt; PR #167 and the queue snapshot are contamination evidence.
+
+Outcome:
+
+- No code/content patch was made by this review pass. Current Studium validation passes.
+- Row `100` is classified as partial success: useful authored content, local validation, but incomplete autonomous closeout.
+- Durable current credit should go to PR #130 for the Shahnameh 2-6 merge; row `100` explains where that content was locally authored and why the session itself should not be treated as a clean green-PR closeout.
+
+What was fucked up:
+
+- OpenCode worked directly in a dirty root checkout instead of a clean task worktree.
+- The session mixed local untracked files, an unrelated active branch, and task-board dirt, making the queue's changed-file attribution wildly overbroad.
+- The stash step only captured tracked changes, so the new authored files stayed behind until OpenCode noticed and copied them manually.
+- The session stopped before commit/push/PR, despite the prompt's "one green PR" acceptance condition.
+- The later stale/polluted PR #167 shows how quickly this kind of branch contamination becomes a misleading public artifact if not stopped.
+
+Verification:
+
+```bash
+jq '.changed_review[100]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-100-opencode-shahnameh-prompts.jsonl
+sqlite3 -json "$HOME/.local/share/opencode/opencode.db" "select id,parent_id,slug,directory,title,version,agent,model,cost,tokens_input,tokens_output,tokens_reasoning,tokens_cache_read,tokens_cache_write,datetime(time_created/1000,'unixepoch') as created, datetime(time_updated/1000,'unixepoch') as updated from session where id='ses_10a3c204bffeL4VwSbuTG4aEU8' or parent_id='ses_10a3c204bffeL4VwSbuTG4aEU8' order by time_created;"
+sqlite3 -json "$HOME/.local/share/opencode/opencode.db" "select datetime(time_created/1000,'unixepoch') as created,json_extract(data,'$.type') as type,json_extract(data,'$.tool') as tool,substr(json_extract(data,'$.state.input.command'),1,600) as cmd,substr(json_extract(data,'$.state.output'),1,1200) as output,substr(json_extract(data,'$.text'),1,1200) as text from part where session_id='ses_10a3c204bffeL4VwSbuTG4aEU8' and time_created >= strftime('%s','2026-06-23 18:43:20')*1000 order by time_created,id;"
+git log --all --date=iso-strict --pretty=format:'%h%x09%H%x09%ad%x09%D%x09%s' --max-count=200 --grep='Shahnameh\|shahnameh\|studium-deepen-shahnameh'
+gh pr list --repo organvm/limen --state all --search "Shahnameh cycles 2..50 OR studium-deepen-shahnameh OR Shahnameh" --json number,title,state,createdAt,updatedAt,mergedAt,headRefName,baseRefName,mergeCommit,statusCheckRollup,url,files --limit 50
+git show --stat --oneline --decorate c8d89e99188342beb2e7bb16acbff1f2bbfc4969 -- studium/music/shahnameh studium/essays/shahnameh
+git show --stat --oneline --decorate bf6de36ab89243e950370cf4c4e0620c8d3c9ff0 -- studium/music/shahnameh studium/essays/shahnameh
+python3 scripts/studium-validate.py
+```
+
+Result: private prompt extraction has `1` record; the OpenCode DB proves local authorship and validation for Shahnameh cycles 2-6; PR #130 is the later clean merged receipt for those files; PR #167 is a closed polluted branch; current Studium validation passes.
 
 ## Remaining Review Queue
 
