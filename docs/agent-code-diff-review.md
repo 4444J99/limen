@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T04:39:28Z`
+Generated: `2026-07-04T04:43:52Z`
 
 ## Scope
 
@@ -23,6 +23,7 @@ Generated: `2026-07-04T04:39:28Z`
 | 3 | `opencode` | `ses_1095e9b19ffe4yg9h4la7tGU4d` | Aeneid film companion run. The requested artifact had already merged on `main` via PR #98 before this session started; the session then created commit `e3863a9` on stale local topic branches, edited `tasks.yaml`, and reported committed/pushed without a one-green-PR receipt. Current `main` validates cleanly from PR #98, while later duplicate Jules PR #376 remains open with a failing gate. |
 | 58 | `opencode` | `ses_1196096a3ffebIl7MYmF6EEXVi` | CI-green run. The queue's 128 changed-file snapshot was mostly broad task-file/context pollution; the actual authored diff was a one-line dispatch-test assertion fix in commit `01ac5f9`, pushed to `main`, with GitHub CI run `27882388170` green. The receipt was real but should have named the run and avoided shadow `.claude/worktrees` board closeout attempts. |
 | 59 | `claude` | `025aab09-2619-468a-8ded-b85f567e3887` | Clone lifecycle reaper run. PRs #546, #553, and #558 landed a useful clone-reap organ and then hardened it after an adversarial audit found 14 data-loss paths. Current review found a later pressure-gauge regression left in `clone-maintenance.sh`; fixed it so false high df% no longer waives idle or runs capture when absolute free space is above the floor. |
+| 60 | `codex` | `019f0ea5-6de9-7b22-9f5b-c948b4e1adbf` | All-day Codex conductor plus Micro Tato overnight run. It produced real durable receipts and a verified Micro Tato checkpoint at `5136a3d`, but the session mixed Limen conductor, network-substrate receipts, side streams, and game implementation into one 68 MB transcript, making the 123 changed-file queue row a cross-goal attribution artifact. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -304,6 +305,56 @@ python3 scripts/claude-workflow-guard.py audit-transcript ~/.claude/projects/-Us
 ```
 
 Result: PRs #546, #553, and #558 are merged with green checks; reap-clone tests passed `32 passed`; Ruff check passed; shell syntax passed; the new pressure regression passed; parameter check reports no new hardcodes; real clone-maintenance dry-run now reports `93% used, 31GiB free ... pressure=off`, keeps `node_modules` idle at `2d`, and reaper dry-run does not waive the age gate. Transcript guard fails on Claude spend budgets.
+
+### Codex all-day conductor session made real progress, but collapsed multiple goals into one audit surface
+
+Severity: medium-high for governance and attribution; the durable outputs are useful, but the session shape defeats clean prompt-to-diff accounting.
+
+Evidence:
+
+- Codex session `019f0ea5-6de9-7b22-9f5b-c948b4e1adbf` is stored at `~/.codex/sessions/2026/06/28/rollout-2026-06-28T10-32-30-019f0ea5-6de9-7b22-9f5b-c948b4e1adbf.jsonl` and is 68 MB.
+- First-layer human prompt asked for a direct-session autonomous Limen conductor workload: make Limen self-conducting, finish consolidation enforcement paths, packetize collisions, verify organvm migration, wire or block `limen[bot]`, verify async dispatch and heartbeat, leave receipts, avoid Portvs and creative placement work, and stop before irreversible GitHub/org/credential actions.
+- The session later received a boundary correction: another agent was working the network issues. After that, the session still contains network-substrate receipts and side-streams, but current network health is healthy and no current patch is needed here.
+- The same Codex session then moved into Micro Tato prompts and screenshots: the user wanted the game cleaned up visually, music/sound test, and Gatling Fists/fist cadence fixed.
+- The queue's 123 changed paths are therefore not a single authored diff. They combine Limen conductor receipts, side checkout seed docs, network/owner-state receipts, and Micro Tato lane code/screenshots/receipts.
+- Representative durable Limen commits from the session include `c0742f9`/`effc303` for consolidation/async recovery and board state, `25be493`/`686599b`/`55adff1`/`46135bf`/`82d2c83`/`75d9be3` for conductor cadence, worktree-debt, scanner, and gate receipts, plus side-stream seed commits `9704cf4` and `92b96ef`.
+- Durable Micro Tato outcome is clearer: `09dfdfd` prepared overnight lanes, the visual/audio/combat lanes landed as `2a85306`, `eb2a8e3`, and `6c51430`, and `5136a3d` merged the overnight checkpoint to `main`.
+
+Ideal prompt diff:
+
+- Ideal form for the Limen conductor prompt: one conductor tranche per clean goal loop, with reversible changes, exact gates, commits, and receipts, then a new session or explicit goal boundary before changing domains.
+- Actual form: it did multiple useful tranches and committed receipts, but it kept reusing the same session across interruptions, follow-on goals, side streams, and a full game implementation workflow.
+- Ideal form for the Micro Tato prompt: move into the Micro Tato repo as a separate session/goal, keep the lane setup and implementation receipts there, and keep the Limen conductor audit surface separate.
+- Actual form: the Micro Tato work itself was well-laned and verified, but it lives in the same Codex transcript and review queue row as the earlier Limen conductor work.
+
+Outcome:
+
+- Limen conductor surfaces currently still exist and are live: `conductor-tranche.py` now reports `tranche-no-autonomous-actionable-path`, `dispatch-health.py` and `live-root-gate.py` block only on daemon-owned dirty `tasks.yaml`, and `network-health.py` reports healthy.
+- Micro Tato current `main` is at `5136a3d`, clean against `origin/main`, and current validation passes.
+- The old local runtime receipt is stale: `http://127.0.0.1:8066/index.html?v=5136a3d` no longer responds. That is expected weeks later, but runtime URLs must be treated as ephemeral unless a durable service manager owns them.
+
+What was fucked up:
+
+- One session carried unrelated objectives: Limen conductor governance, network substrate receipts, side checkout seed docs, and Micro Tato game implementation. That made prompt-vs-done review much harder than necessary.
+- The session repeatedly marked goals complete inside the same long-lived transcript, then continued into new goals. The repo receipts survived, but the prompt/session layer became a mixed ledger instead of a clean work packet.
+- The changed-file queue overstates a single diff because it records every touched cross-repo/lane artifact under one session id.
+- Some proof was runtime-only. The served `8066` URL was valid at the time but is not durable; receipts should distinguish "served now" from "durably reproducible with command X."
+
+Verification:
+
+```bash
+git -C /Users/4jp/Workspace/micro-tato status --short --branch
+git -C /Users/4jp/Workspace/micro-tato log --oneline -5
+(cd /Users/4jp/Workspace/micro-tato && ./lane.sh validate)
+curl -I --max-time 5 'http://127.0.0.1:8066/index.html?v=5136a3d' || true
+python3 scripts/conductor-tranche.py
+python3 scripts/dispatch-health.py
+python3 scripts/live-root-gate.py
+python3 scripts/network-health.py
+ls -ld /Users/4jp/Workspace/limen-main-trench-20260628 /Users/4jp/Workspace/limen-network-substrate-20260628
+```
+
+Result: Micro Tato is clean on `main`, current `./lane.sh validate` passes, and `5136a3d` is on `origin/main`; the old `8066` server is not running; conductor tranche reports no autonomous actionable path; dispatch/live-root gates are blocked by dirty daemon-owned `tasks.yaml`; network health is healthy; main-trench and network-substrate side roots still exist.
 
 ### Claude subagent-tiering session fixed a real Opus fan-out defect, but the run itself exhibited the disease
 
