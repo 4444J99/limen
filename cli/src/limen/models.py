@@ -1,8 +1,10 @@
 import re
 from datetime import date, datetime
+from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
+TASK_ID_PATTERN = r"^[A-Za-z0-9][A-Za-z0-9._/-]*$"
 VALID_STATUSES = {
     "open",
     "dispatched",
@@ -28,7 +30,7 @@ class DispatchLogEntry(BaseModel):
 class Task(BaseModel):
     model_config = ConfigDict(extra="allow")
 
-    id: str
+    id: str = Field(min_length=1, max_length=128, pattern=TASK_ID_PATTERN)
     title: str
     description: str | None = None
     repo: str | None = None
@@ -41,7 +43,7 @@ class Task(BaseModel):
     # for mixed-purpose PR pileup. None → unassigned. See docs/lanes/.
     workstream: str | None = None
     priority: str = "medium"
-    budget_cost: int = 1
+    budget_cost: int = Field(default=1, ge=1, le=1000)
     status: str = "open"
     labels: list[str] = Field(default_factory=list)
     urls: list[str] = Field(default_factory=list)
@@ -64,6 +66,13 @@ class Task(BaseModel):
     def validate_status(cls, value: str) -> str:
         if value not in VALID_STATUSES:
             raise ValueError(f"status must be one of {', '.join(sorted(VALID_STATUSES))}")
+        return value
+
+    @field_validator("budget_cost", mode="before")
+    @classmethod
+    def validate_budget_cost(cls, value: Any) -> Any:
+        if isinstance(value, bool):
+            raise ValueError("budget_cost must be an integer, not a boolean")
         return value
 
     @field_validator("workstream")

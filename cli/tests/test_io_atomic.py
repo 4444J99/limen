@@ -135,6 +135,31 @@ def test_load_text_refuses_empty() -> None:
         load_limen_text("   \n", name="tasks.yaml")
 
 
+def test_task_model_rejects_invalid_ids() -> None:
+    with pytest.raises(ValueError):
+        LimenFile.model_validate(
+            _board(tasks=[{"id": "bad id!", "title": "t", "target_agent": "jules", "created": "2026-07-01"}])
+        )
+
+
+@pytest.mark.parametrize("budget_cost", [True, False, 0, -1])
+def test_task_model_rejects_invalid_budget_cost(budget_cost) -> None:
+    with pytest.raises(ValueError):
+        LimenFile.model_validate(
+            _board(
+                tasks=[
+                    {
+                        "id": "T-1",
+                        "title": "t",
+                        "target_agent": "jules",
+                        "created": "2026-07-01",
+                        "budget_cost": budget_cost,
+                    }
+                ]
+            )
+        )
+
+
 def test_load_text_reads_a_frozen_snapshot(tmp_path: Path) -> None:
     """The whole point of the single-read path: parsing a captured buffer is immune to a concurrent
     rewrite of the file. Load from a snapshot string, then mutate the file on disk — the parsed board

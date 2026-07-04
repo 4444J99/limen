@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T00:36:20Z`
+Generated: `2026-07-04T00:40:41Z`
 
 ## Scope
 
@@ -17,6 +17,7 @@ Generated: `2026-07-04T00:36:20Z`
 | 3 | `opencode` | `ses_1095e9b19ffe4yg9h4la7tGU4d` | Exact window had no matching commits on `main`; widened window was mostly Studium content-generation churn, not the control-plane code path reviewed here. |
 | 10 | `claude` | `3d972c29-36c6-4803-b94b-255df104f644` | Integration-organ window landed value ledger, score-dispatch, omni, ingest coverage, media atomization, and accelerator surfaces. Reviewed current `main` and found remaining malformed numeric crash paths in fail-open organs. |
 | 11 | `claude` | `f9c6b1e7-2c05-4d42-9d6a-8b08ee98a155` | Window touched watchdog, self-heal, and self-improve organs. Reviewed current `main` implementations and found remaining malformed-env crash paths in watchdog/self-heal. |
+| 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
 ## Rejected Artifacts
@@ -47,6 +48,25 @@ git diff --name-status main..02f256ed268320b242789a2c268e0fc40c44c8a8
 git diff main..02f256ed268320b242789a2c268e0fc40c44c8a8 -- .github/workflows/ci.yml cli/src/limen/dispatch.py cli/src/limen/capacity.py cli/pyproject.toml tasks.yaml
 grep -R "def _load_limen_env\|ollama_model\|TypeScript type-check\|Validate naming canon\|mypy" -n cli/src/limen .github/workflows scripts cli/pyproject.toml
 ```
+
+### Stale security/test-coverage branches would delete current control-plane work
+
+Severity: high if merged or rebased wholesale.
+
+Evidence:
+
+- Branch `limen/gen-organvm-limen-security-0624-a9e5` is `835` commits behind / `1` ahead and would delete `542` files: `693 files changed, 16208 insertions(+), 167332 deletions(-)`.
+- Branch `limen/gen-organvm-limen-security-0625-b412` is `782` behind / `2` ahead and would delete `480` files.
+- Branch `limen/gen-organvm-limen-security-0626-b91f` is `699` behind / `2` ahead and would delete `275` files.
+- Branches `limen/gen-organvm-limen-test-coverage-0625-0153`, `limen/gen-organvm-limen-test-coverage-0625-1c32`, `limen/gen-organvm-limen-test-coverage-0628-139c`, `origin/limen/gen-organvm-limen-test-coverage-0629-f1c2`, `origin/limen/gen-organvm-limen-test-coverage-0701-52e4`, and `origin/limen/gen-organvm-limen-ci-green-0629-e0c3` are also hundreds of commits behind and would delete between `118` and `480` current files.
+- The deleted/currently-regressed surface includes current agent review ledgers, Tabularius, Vigilia, census, workstream, model-selection, current-session fanout, and large board-state updates.
+- Some tip commits are small and salvageable after independent review: `0d705fe` model/API validation, `dc89769` nomenclator tests, `632e348` capacity tests. At least `cb166bd` also carries generated `.coverage` files and must not be merged as-is.
+
+Disposition:
+
+- Do not merge or rebase these stale branch heads into current `main`.
+- Salvage only reviewed single commits or hunks, with generated coverage files excluded.
+- `0d705fe` was partly salvaged below; target-agent model validation was not copied because the live board still has four legacy `target_agent: human` rows and would fail current queue parsing.
 
 ## Findings Fixed
 
@@ -539,6 +559,44 @@ bash -n scripts/clone-maintenance.sh scripts/heartbeat-loop.sh
 
 Result: `46 passed`; compile and shell syntax checks passed.
 
+### Task model accepted invalid task ids and budget costs
+
+Severity: medium for board integrity.
+
+Evidence:
+
+- Security branch `limen/gen-organvm-limen-security-0624-a9e5` had a valid narrow idea in tip commit `0d705fe`: model/API validation should reject malformed task input.
+- Current `web/api` already carried the API-side agent and boolean-integer validation, but `cli/src/limen/models.py` still accepted `budget_cost=True`, `budget_cost=0`, and `budget_cost=-1`.
+- Current `Task.id` also had no canonical pattern/length guard even though the API and MCP surfaces already enforce a task-id shape.
+- A live-board precheck found `0` invalid ids and `0` invalid budgets across `1677` current tasks, so the model hardening is compatible with current queue data.
+
+Repair:
+
+- Added a canonical task-id pattern/length guard to `Task.id`.
+- Added positive bounded `budget_cost` validation and a pre-validator rejecting booleans before Pydantic coerces them to integers.
+- Added model-level regressions through `LimenFile.model_validate`.
+- Left `target_agent` model validation for a later owner-policy cleanup because current `tasks.yaml` still contains four legacy `target_agent: human` rows.
+
+Touched paths:
+
+- `cli/src/limen/models.py`
+- `cli/tests/test_io_atomic.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_io_atomic.py cli/tests/test_doctor.py cli/tests/test_dispatch_engine.py cli/tests/test_async_dispatch.py cli/tests/test_dispatch.py -q
+python3 -m py_compile cli/src/limen/models.py
+PYTHONPATH=cli/src python3 - <<'PY'
+from pathlib import Path
+from limen.io import load_limen_file
+board = load_limen_file(Path('tasks.yaml'))
+print(len(board.tasks))
+PY
+```
+
+Result: `129 passed`; compile passed; live board parsed `1677` tasks.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -670,6 +728,12 @@ Result: `46 passed`; compile and shell syntax checks passed.
 - `cli/tests/test_score_dispatch.py:93` covers malformed task `budget_cost` values.
 - `cli/tests/test_ingest_coverage.py:52` covers malformed manifest atom counts.
 - `cli/tests/test_media_atomize.py:184` covers malformed media atomize env values.
+- `cli/src/limen/models.py:7` defines the canonical task-id pattern.
+- `cli/src/limen/models.py:33` applies the task-id pattern and length guard.
+- `cli/src/limen/models.py:46` bounds `budget_cost` to a positive integer range.
+- `cli/src/limen/models.py:71` rejects boolean task budget values before Pydantic integer coercion.
+- `cli/tests/test_io_atomic.py:138` covers invalid task-id rejection.
+- `cli/tests/test_io_atomic.py:145` covers invalid and boolean task-budget rejection.
 
 ## Remaining Review Queue
 
