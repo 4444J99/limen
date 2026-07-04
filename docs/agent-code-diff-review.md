@@ -45,6 +45,7 @@ Generated: `2026-07-04T02:17:42Z`
 | refreshed 28 | `claude` | `6cdc53d9-1d39-4936-976a-ab0f77a8d561` | IANVA doorway run. Original worktree is gone, but the IANVA gateway lives under `ianva/` on `main`; fixed unversioned upstream registry coercion so malformed args/env/header/boolean shapes cannot corrupt or crash the gateway inventory. |
 | refreshed 29 | `claude` | `ec251ec3-e2e5-405b-a7ea-c93d93c255a3` | Object Lessons Studio / WriteLens launch review. Original worktree and temp OG captures are gone; external Studio and WriteLens artifacts survived. Fixed the remaining WriteLens brand/OG/reframe gap and added an explicit Studio predicate override for the clean WriteLens root. |
 | refreshed 30 | `claude` | `ef651be0-bf09-4cdb-a0db-649e0bdc67ef` | Speech Score Philip Glass tracker planning run. Original worktree and temp render artifacts are gone, but the target `speech-score-engine` repo now contains the implemented tracker/static share artifact and passes its documented gate matrix. Recorded as executed/superseded target-repo work. |
+| refreshed 31 | `claude` | `08929862-d3f1-4a09-8903-277707a8524b` | Wrangler / 1Password one-spot credential run. Original worktree is gone, but `scripts/cf-wrangler.sh` and `scripts/op-service-account.sh` landed on `main`; fixed a wrapper-order bug that could run global Wrangler before the nearest project-local binary. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -97,6 +98,38 @@ Disposition:
 - `0d705fe` was partly salvaged below; target-agent model validation was not copied because the live board still has four legacy `target_agent: human` rows and would fail current queue parsing.
 
 ## Findings Fixed
+
+### Cloudflare wrapper preferred global Wrangler before project-local Wrangler
+
+Severity: medium for deploy reproducibility.
+
+Evidence:
+
+- Claude session `08929862-d3f1-4a09-8903-277707a8524b` targeted the recurring Cloudflare Wrangler / 1Password prompt disease.
+- The original `.claude/worktrees/fix-wrangler-cred-one-spot` worktree is gone, but `scripts/cf-wrangler.sh` and `scripts/op-service-account.sh` landed on `main`.
+- `scripts/cf-wrangler.sh` claimed to prefer repo-local Wrangler, but the implementation ran `command -v wrangler` before any local `node_modules/.bin/wrangler` lookup.
+- That could bypass a pinned project-local Wrangler and run an arbitrary global binary while still satisfying the "headless no-login" wrapper path.
+
+Repair:
+
+- Added nearest-ancestor `node_modules/.bin/wrangler` discovery.
+- Added Limen `web/worker` fallback only when the caller is inside the Limen checkout, so external temp/project calls do not accidentally run Limen's worker-local Wrangler.
+- Kept the global Wrangler and `npx --yes wrangler` fallback after local discovery.
+- Added `scripts/tests/cf-wrangler.test.sh` to cover local-before-global, global fallback, and missing-token exit guidance.
+
+Touched paths:
+
+- `scripts/cf-wrangler.sh`
+- `scripts/tests/cf-wrangler.test.sh`
+
+Verification:
+
+```bash
+bash scripts/tests/cf-wrangler.test.sh
+bash -n scripts/cf-wrangler.sh scripts/tests/cf-wrangler.test.sh
+```
+
+Result: wrapper regression test passed; shell syntax check passed.
 
 ### Route fail-open paths could still crash on malformed numeric input
 
