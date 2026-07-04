@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T04:34:16Z`
+Generated: `2026-07-04T04:39:28Z`
 
 ## Scope
 
@@ -22,6 +22,7 @@ Generated: `2026-07-04T04:34:16Z`
 | 2 | `opencode` | `ses_114c8f0c6ffeixS8gn4VxGqoHb` | Corrected mapping: session opened PR #45 (`ci: add ruff Python linting as missing check`), which merged at `024d443` with green python/worker/web checks. The earlier route-weight attribution was a widened-window false positive. |
 | 3 | `opencode` | `ses_1095e9b19ffe4yg9h4la7tGU4d` | Aeneid film companion run. The requested artifact had already merged on `main` via PR #98 before this session started; the session then created commit `e3863a9` on stale local topic branches, edited `tasks.yaml`, and reported committed/pushed without a one-green-PR receipt. Current `main` validates cleanly from PR #98, while later duplicate Jules PR #376 remains open with a failing gate. |
 | 58 | `opencode` | `ses_1196096a3ffebIl7MYmF6EEXVi` | CI-green run. The queue's 128 changed-file snapshot was mostly broad task-file/context pollution; the actual authored diff was a one-line dispatch-test assertion fix in commit `01ac5f9`, pushed to `main`, with GitHub CI run `27882388170` green. The receipt was real but should have named the run and avoided shadow `.claude/worktrees` board closeout attempts. |
+| 59 | `claude` | `025aab09-2619-468a-8ded-b85f567e3887` | Clone lifecycle reaper run. PRs #546, #553, and #558 landed a useful clone-reap organ and then hardened it after an adversarial audit found 14 data-loss paths. Current review found a later pressure-gauge regression left in `clone-maintenance.sh`; fixed it so false high df% no longer waives idle or runs capture when absolute free space is above the floor. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -250,6 +251,59 @@ python3 scripts/studium-validate.py
 ```
 
 Result: PR #98 is merged with green checks; PR #376 is open with a failing gate; current `main` has only the PR #98 history for `studium/film/aeneid.yaml`; commit `e3863a9` is absent from current `main` and only appears on stale local branches; no matching remote topic branch currently exists; current Studium validation passes.
+
+### Claude clone-reap session solved real disk creep, but needed a later pressure-path repair
+
+Severity: high; the code owns autonomous local deletion of workspace clones.
+
+Evidence:
+
+- Claude session `025aab09-2619-468a-8ded-b85f567e3887` started in `/Users/4jp/Workspace/limen`, then moved into `.claude/worktrees/feat-clone-lifecycle-reap`, spanning 2026-07-01T23:33:56Z through 2026-07-02T10:40:30Z.
+- Prompt pressure first layer was the recurring storage-creep complaint: the expected lifecycle is clone -> work -> push -> delete/re-clone, and that cadence had not been wired into the fleet.
+- Queue-level changed files showed only five direct artifacts, but the durable outcome landed through merged PRs:
+  - PR `organvm/limen#546` merged at `dc3f196`: introduced `scripts/reap-clones.py`, `cli/tests/test_reap_clones.py`, disk-pressure cadence, recursive capture, and clone-maintenance integration.
+  - PR `organvm/limen#553` merged at `00c1e8c`: fixed the first network belt so behind-origin mirrors were still treated as re-cloneable.
+  - PR `organvm/limen#558` merged at `a3beace`: converted the reaper from a denylist into an allowlist after adversarial subagents reproduced 14 data-loss paths.
+- The session's own closeout correctly named the 14 classes: stash WIP, reflog orphan commits, local-only tags, git notes, ignored data, hidden tracked edits, submodule/LFS/linked-worktree contexts, stale/force-pushed remotes, ahead-of-origin commits, deleted branches, and TOCTOU races.
+- PR #558 had green GitHub checks: `python`, `python-311`, `worker`, `web`, `verify`, and `pr-gate`.
+- Current `scripts/reap-clones.py` and `cli/tests/test_reap_clones.py` still carry the hardened guard functions and 32 regression tests.
+- Current review found one remaining pressure-path mismatch from later PR #611: `reap-clones.py` and `heartbeat-loop.sh` had moved to `LIMEN_DISK_FREE_FLOOR_GIB`, but `scripts/clone-maintenance.sh` still used df percent to decide pressure. On this host that meant `93% used` with `31-32GiB` free would still waive `node_modules` idle and run pressure capture.
+
+Ideal prompt diff:
+
+- Ideal form: identify clone lifecycle as a reversible-cache problem, implement autonomous deletion only for provably re-cloneable mirrors, and leave executable data-loss guards before allowing real `rmtree`.
+- Actual form: the first implementation got the lifecycle direction right but shipped a dangerously narrow proof model. The same session then did the right thing: ran adversarial audits, found 14 confirmed data-loss paths, and merged the allowlist hardening with regression tests.
+- Corrected ideal form after this review: every consumer of "disk pressure" must use the same absolute-free floor. Percent-used can remain display-only, but it must not independently waive idle gates, trigger capture, or intensify destructive maintenance on APFS.
+
+Outcome:
+
+- The clone-reap organ is materially valuable: it can clear pure pushed-mirror clones without requiring the operator's hand, while keeping dirty, untracked, ignored-data, active-task, no-origin, nested-context, and unmirrored-object clones.
+- This review patched the remaining pressure path in `scripts/clone-maintenance.sh`: pressure now keys off `LIMEN_DISK_FREE_FLOOR_GIB`, the status line reports both df percent and GiB free, and the script passes `LIMEN_WORKSPACE="$WS"` through to `capture.sh` and `reap-clones.py` so override runs do not accidentally scan the real default workspace.
+- Added `scripts/tests/clone-maintenance-pressure.test.sh` to lock the APFS meter-lie case: fake `df` reports `93%` used but `32GiB` free, and clone-maintenance must report `pressure=off`, keep the configured node_modules idle window, and avoid pressure capture.
+
+What was fucked up:
+
+- The first PR #546 turned on autonomous deletion before the proof model covered local-only refs, ignored data, nested object stores, and stale remote refs. The follow-up was strong, but the first merged state had real data-loss potential.
+- The session burned far too much premium Claude budget: transcript guard reports 959 usage-bearing messages, 6,516,723 billable-ish Opus tokens, and 123,239,455 cache-read tokens, exceeding both billable and Opus budgets.
+- Closeout initially used a truncated log grep to question whether #558 reached trunk; it corrected to `git merge-base --is-ancestor`, which is the right graph proof.
+- The later #611 pressure repair fixed two consumers but missed `clone-maintenance.sh`, leaving the actual hygiene script able to enter pressure mode under the same false df-percent condition it was supposed to stop.
+
+Verification:
+
+```bash
+gh pr view 546 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,statusCheckRollup
+gh pr view 553 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,statusCheckRollup
+gh pr view 558 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,statusCheckRollup
+PYTHONPATH=cli/src python3 -m pytest cli/tests/test_reap_clones.py -q
+PYTHONPATH=cli/src python3 -m ruff check scripts/reap-clones.py cli/tests/test_reap_clones.py
+bash -n scripts/clone-maintenance.sh scripts/tests/clone-maintenance-pressure.test.sh
+bash scripts/tests/clone-maintenance-pressure.test.sh
+python3 scripts/check-params.py
+LIMEN_RECLAIM_DRYRUN=1 LIMEN_CLONE_REAP_APPLY=0 LIMEN_BRANCH_REAP_APPLY=0 bash scripts/clone-maintenance.sh
+python3 scripts/claude-workflow-guard.py audit-transcript ~/.claude/projects/-Users-4jp-Workspace-limen/025aab09-2619-468a-8ded-b85f567e3887.jsonl
+```
+
+Result: PRs #546, #553, and #558 are merged with green checks; reap-clone tests passed `32 passed`; Ruff check passed; shell syntax passed; the new pressure regression passed; parameter check reports no new hardcodes; real clone-maintenance dry-run now reports `93% used, 31GiB free ... pressure=off`, keeps `node_modules` idle at `2d`, and reaper dry-run does not waive the age gate. Transcript guard fails on Claude spend budgets.
 
 ### Claude subagent-tiering session fixed a real Opus fan-out defect, but the run itself exhibited the disease
 

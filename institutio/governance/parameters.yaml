@@ -940,7 +940,7 @@ parameters:
     env: LIMEN_DISK_PRESSURE_ESCALATE
     self_update: none
     owner: limen-daemon
-    note: "ON — when disk usage is past LIMEN_DISK_HIGH_WATER the heartbeat drops the hygiene cadence to every beat until it drains. Set 0 to keep hygiene on its fixed LIMEN_BEAT_HYGIENE cadence regardless of fullness."
+    note: "ON — when absolute free space is at/below LIMEN_DISK_FREE_FLOOR_GIB the heartbeat drops hygiene cadence to every beat until it drains. Set 0 to keep hygiene on its fixed LIMEN_BEAT_HYGIENE cadence regardless of fullness."
   LIMEN_CLONE_REAP_APPLY:
     default: "1"
     env: LIMEN_CLONE_REAP_APPLY
