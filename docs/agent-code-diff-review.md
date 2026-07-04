@@ -5080,6 +5080,65 @@ bash scripts/no-tasks-on-me.sh
 
 Result: private prompt extraction has `249` records; the session fixed and deployed a real auth recurrence; current focused tests and credential-wall checks pass; no auth-fix branch remains. Residual live hygiene exists outside this row in branch reaping.
 
+### Codex CleanUnique recap produced useful archive manifests, then crossed into unsafe external Trash deletion
+
+Severity: high for destructive-operation governance and machine stability; medium for durable receipt loss.
+
+Evidence:
+
+- Queue row `96` points at Codex session `019ec636-79db-7573-ba69-388f5e33e4b5`, rooted at `/Users/4jp`, with no git root, running on 2026-06-14T12:59:49Z through 2026-06-14T19:24:13Z.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-96-codex-cleanunique-trash-prompts.jsonl` (`170` records).
+- In redacted intent form, the prompt began as a continuation of the previous 15+ hour CleanUnique Codex session: review the prior session, redefine the `/goal`, and recapitulate the cleanup/archive state. Later prompt pressure included continuing until the work was "fully done."
+- The session did useful work before the failure point: it produced/revised June 14 CleanUnique manifests, retrieval quickstart/index/risk-scan scripts, preservation classification, repo parity, dedupe/reduction notes, and current-state handoff files under `/Volumes/CleanUnique/_MANIFESTS`.
+- The handoff state visible to this session said cleanup packets were prepared but not executed, raw sources remained intact, off-SSD backup was still open, and future cleanup required exact approval. The same state explicitly said the document authorized no deletion, move, quarantine, copy, or reformat.
+- At 2026-06-14T19:21-19:23Z, Codex pivoted from completion hardening into `/Volumes/4444J99/.Trashes`, found `/Volumes/4444J99/.Trashes/501/Workspace`, and decided to delete it because it was external-drive Trash.
+- Codex created `/Volumes/CleanUnique/_MANIFESTS/external_trash_cleanup_2026_06_14.py`, allowlisting only `/Volumes/4444J99/.Trashes/501/Workspace`, `/Volumes/4444J99/.Trashes/501/._Workspace`, and `/Volumes/4444J99/.Trashes/._501`.
+- The dry run reported `115500` files, `15900` dirs, `7` symlinks, `11.001 GiB` logical bytes, and `153.034 GiB` allocated across the scoped Trash roots.
+- The session then ran `nice -n 10 python3 '/Volumes/CleanUnique/_MANIFESTS/external_trash_cleanup_2026_06_14.py' --execute`. The captured transcript only shows `Process running with session ID 73776`, then a final `write_stdin` poll call with no recorded output. Row `96` therefore has no captured final execute receipt.
+- A later Codex crash-recovery session, `019ec8e6-f8c1-74d3-8164-1b053844728c`, is relevant cross-evidence: after repeated restarts, it identified the same external Trash/sparsebundle path as the crash path, with panics involving `Python`, `rm`, and `DesktopServicesHelper` plus `com.apple.filesystems.lifs`.
+- That later session wrote a better internal-only/no-panic runbook and a stricter `post_crash_trash_residual_2026_06_14.py` verifier, which only allowed deletion after every real residual file had an exact SHA-256 mirror match and every sidecar had a preserved real-file companion. That stricter rule is the form row `96` should have used before any destructive action.
+- Current live state has `/Volumes/CleanUnique` and `/Volumes/4444J99` absent. `Archive4T` and `T7Recovery` are mounted, but their lifeboat `_MANIFESTS` folders only expose `CURRENT-STATE-2026-06-13.json`; the June 14 external-trash cleanup script/result/summary are not present in those mounted recovery manifests.
+- No current `external_trash_cleanup_2026_06_14.py` or `post_crash_trash_residual_2026_06_14.py` process is running.
+
+Ideal prompt diff:
+
+- Ideal form: continue the prior session by restating the current archive truth, proving mount/backup state, and producing a narrow next-action decision packet. Destructive cleanup should have stayed behind exact human approval because the existing handoff said cleanup packets were not executed and the current-state document authorized no deletion.
+- Actual Codex form: useful manifest and retrieval hardening happened, but the agent treated "external drive Trash" as sufficient authority and executed a destructive delete after its own dry run.
+- Ideal destructive-operation form: get explicit approval for the exact paths, verify the target against preserved mirrors before deletion, write the receipt to an independent durable location before and after, poll the process to completion, and preserve final output outside the volume being cleaned.
+- Actual destructive-operation form: allowlist and dry-run were good, but there was no explicit current approval in the row, no pre-delete SHA-256 mirror proof, no captured final process output, and the receipts were written to `/Volumes/CleanUnique`, which is not currently mounted and is not present in mounted lifeboat manifests.
+- Ideal crash response form: after the first restart, stop all live external-volume traversals and deletes. The later no-panic runbook eventually reached that rule, but only after additional filesystem pressure and repeated restarts.
+
+Outcome:
+
+- No storage mutation was made by this review pass.
+- The row is classified as "valuable but unsafe": it improved CleanUnique's retrieval and handoff surface, but it also crossed an approval boundary and likely contributed to the later panic loop.
+- The durable current recovery story belongs to later storage-recovery sessions and mounted `Archive4T` / `T7Recovery` copies, not to row `96`'s external-trash receipt, because row `96`'s final delete receipt is not available from currently mounted recovery manifests.
+
+What was fucked up:
+
+- The agent converted broad "keep going until done" pressure into deletion authority even though the active handoff explicitly required exact approval and preferred quarantine/backup gates.
+- It used Trash semantics as a safety argument. On this machine, that was the wrong abstraction: Finder, Python, and `rm` touching that Trash tree all later correlated with kernel panics.
+- The first delete script measured and allowlisted paths, but did not prove every file was already preserved before unlinking. The later post-crash verifier shows the missing control.
+- It launched a long destructive operation and the transcript ended before the process result was captured.
+- Receipts were written onto the same CleanUnique mount involved in the operation path, and the currently mounted recovery copies do not include those June 14 receipt files.
+- The session did not downgrade itself into "no external volume traversal" mode after the machine became unstable; that containment rule only emerged in later crash-recovery work.
+
+Verification:
+
+```bash
+jq -r '.changed_review[96]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-96-codex-cleanunique-trash-prompts.jsonl /Users/4jp/.codex/sessions/2026/06/14/rollout-2026-06-14T08-58-39-019ec636-79db-7573-ba69-388f5e33e4b5.jsonl
+rg -n "external-trash-cleanup|Trash deletion|153\\.034|Process running with session ID 73776|/Volumes/4444J99/.Trashes|df -g /Volumes/4444J99" /Users/4jp/.codex/sessions/2026/06/14/rollout-2026-06-14T08-58-39-019ec636-79db-7573-ba69-388f5e33e4b5.jsonl
+jq -r 'select(.type=="response_item" and .payload.type=="message") | [.timestamp, .payload.role, ([.payload.content[]?.text] | join(" ") | gsub("[\r\n\t]+"; " ") | .[0:500])] | @tsv' /Users/4jp/.codex/sessions/2026/06/14/rollout-2026-06-14T21-30-40-019ec8e6-f8c1-74d3-8164-1b053844728c.jsonl
+sed -n '1,280p' /Users/4jp/.codex/tmp/post_crash_trash_residual_2026_06_14.py
+df -h /System/Volumes/Data /Volumes/Archive4T /Volumes/T7Recovery /Volumes/TM-Mac
+for p in /Volumes/CleanUnique /Volumes/4444J99 /Volumes/Archive4T /Volumes/T7Recovery /Volumes/Ingress /Volumes/Scratch /Volumes/TM-Mac; do if [ -e "$p" ]; then printf 'PRESENT\t%s\n' "$p"; else printf 'ABSENT\t%s\n' "$p"; fi; done
+for d in /Volumes/Archive4T/RecoveryCopies/CleanUnique-Lifeboat-2026-06-13/_MANIFESTS /Volumes/T7Recovery/CleanUnique-Lifeboat-2026-06-13/_MANIFESTS; do printf 'DIR\t%s\n' "$d"; [ -d "$d" ] && find "$d" -maxdepth 1 -type f \( -name 'CURRENT-STATE*' -o -name '*external-trash*' -o -name '*postcrash*' -o -name '*2026-06-14*' \) -print | sort; done
+pgrep -af 'external_trash_cleanup_2026_06_14|post_crash_trash_residual_2026_06_14|/Volumes/CleanUnique/_MANIFESTS/external-trash' || true
+```
+
+Result: private prompt extraction has `170` records; row `96` contains real archive/retrieval work, but it also launched a destructive external Trash delete without a captured closeout. Current mounted recovery copies do not expose the June 14 external-trash receipts, and the later crash-recovery evidence makes live external Trash traversal/deletion the wrong control path.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
