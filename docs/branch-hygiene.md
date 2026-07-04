@@ -23,7 +23,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `worktree-ianva-doorway` — f4c0c07 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
 - `worktree-linear-conjuring-bear` — 92c21f2 chore(gitignore): ignore .wrangler/ cache at any depth, not just web/worker
 
-## Live-work branches (101) — decide each
+## Live-work branches (103) — decide each
 
 - `_pr198` — 4cd0dba fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
 - `capture/main-2026-07-02T01-03-35Z` — 71b4885 capture: off-disk sync 2026-07-02T01:03:35Z (main behind origin → side ref, HEAD untouched)
@@ -73,8 +73,10 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `limen/gh-organvm-limen-262-0a16` — 3ebc05c docs(levers): L-IANVA-LOCAL — launchd plist staged, ONE command to bootstrap (#262)
 - `limen/gh-organvm-limen-352-b4c3` — 18129a4 fix(cli): type-modernization — PEP 604 syntax and TypedDict definitions
 - `limen/org-governance-organ-deepen-0628-90ee` — 3b2001f feat: operationalize cvrsvs-honorvm rule as executable validator
+- `limen/org-governance-organ-deepen-0703-9f8e` — 6d48601 governance: enforce publication-policy convergence
 - `limen/org-governance-organ-selffeed-0701-ba0f` — 3b9baf0 limen: close governance organ self-feed task
 - `limen/org-health-organ-kernel-0630-e4e0` — 2564cd7 Add health organ kernel
+- `limen/org-legal-organ-charter-0703-0899` — b8eb571 limen: complete legal organ charter
 - `limen/org-legal-organ-kernel-0630-a5e5` — 6c301f3 limen: map legal organ kernel
 - `limen/org-legal-organ-kernel-0701-e535` — 3dcb37c organs: refine legal kernel flagship
 - `limen/org-social-organ-firstslice-0703-1c71` — a2fa6ad organs/social: ship first slice

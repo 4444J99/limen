@@ -1,6 +1,6 @@
 # Financial Office — STATUS Dashboard
 
-**Generated:** 2026-07-03T19:38:43Z  **Maturity:** maturing (70%)
+**Generated:** 2026-07-03T23:19:04Z  **Maturity:** maturing (70%)
 
 ---
 
@@ -8,7 +8,7 @@
 
 - **Entities tracked:** 6
 - **Revenue products:** 6 (1 deploy-ready or live)
-- **Open obligations:** 28
+- **Open obligations:** 27
 - **Net worth:** unknown
 - **Balance snapshots:** 1
 - **First dollar path:** ChatGPT Exporter → MONETA/Ko-fi (deploy-ready, principal-gated)
@@ -16,9 +16,9 @@
 ## Artifacts
 
 | Artifact | File | Status |
-|---|---|---|
-| Macro Face | `MACRO.md` | Authored — family-office-in-a-box platform |
-| Micro Instance Face | `MICRO.md` | Authored — Anthony's MONETA/payrail/wealth/tax office |
+|---|---|---|---|
+| Macro Face | `MACRO.md` | Deepened — excellent, deployable-in-5-minutes, fleet-capacity-mapped |
+| Micro Instance Face | `MICRO.md` | Deepened — wealth/portfolio/tax-automation workflow, MONETA interaction, priority gates |
 | Entity Registry | `entities.yaml` | Live — 6 entities registered |
 | Balance Sheet | `balance-sheet.md` | Generated — needs principal balance entry |
 | Cash-Flow Projection | `cashflow.md` | Generated — pre-revenue baseline |
@@ -30,11 +30,13 @@
 
 ## Next deepen steps
 
-1. ✅ **Macro/micro faces authored** — `MACRO.md` and `MICRO.md` are the showable office surfaces
-2. **Enter balances** — principal fills `balance` + `as_of` in `entities.yaml` (unlocks real position tracking)
-3. **Deploy Exporter** — first dollar via MONETA or Ko-fi (unlocks revenue pipeline)
-4. ✅ **Self-feed wired** — `financial-organ.py` runs every 8 beats; auto-advances maturity as slices land
-5. ✅ **Web JSON dashboard** — `financial-standing.json` written to web face each beat
-6. ✅ **Balance journal** — `balances-history.json` persists time-series of snapshots
-7. **Add credit accounts** — credit cards, loans, mortgages to entity registry
-8. **Investment accounts** — brokerage, retirement, crypto wallets
+1. ✅ **Macro/micro faces deepened** — excellent, showable, polished (2026-07-03 beat)
+2. **P0: Clear card-0186 fraud hold** — one call to Santander; keystone for 3+ cascaded billing failures
+3. **P1: Enter balances** — principal fills `balance` + `as_of` in `entities.yaml` (unlocks real position tracking)
+4. **P2: Deploy MONETA** — `docker build + docker run` on $0 host; set `MINT_BTC_ADDRESS`
+5. **P3: Deploy Exporter** — 'git push' + 'wrangler deploy'; first dollar via MONETA or Ko-fi
+6. ✅ **Self-feed wired** — `financial-organ.py` runs every 8 beats; auto-advances maturity as slices land
+7. ✅ **Web JSON dashboard** — `financial-standing.json` written to web face each beat
+8. ✅ **Balance journal** — `balances-history.json` persists time-series of snapshots
+9. **P4: Decide entity route** — revive LLC / dissolve / individual-only; sets tax structure
+10. **P5: Register investment accounts** — brokerage, retirement, crypto, credit accounts

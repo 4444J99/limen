@@ -521,12 +521,12 @@ def build_dashboard(
     lines.append("|---|---|---|")
     lines.append(
         "| Macro Face | `MACRO.md` | {} |".format(
-            "Authored — family-office-in-a-box platform" if MACRO_FACE.exists() else "Missing"
+            "Deepened — deployable-in-5-minutes, fleet-capacity-mapped" if MACRO_FACE.exists() else "Missing"
         )
     )
     lines.append(
         "| Micro Instance Face | `MICRO.md` | {} |".format(
-            "Authored — Anthony's MONETA/payrail/wealth/tax office" if MICRO_FACE.exists() else "Missing"
+            "Deepened — wealth/portfolio/tax-automation workflow, MONETA interaction, priority gates" if MICRO_FACE.exists() else "Missing"
         )
     )
     lines.append(
@@ -563,28 +563,34 @@ def build_dashboard(
     lines.append("## Next deepen steps")
     lines.append("")
     lines.append(
-        "1. ✅ **Macro/micro faces authored** — `MACRO.md` and `MICRO.md` are the showable office surfaces"
+        "1. ✅ **Macro/micro faces deepened** — excellent, showable, polished (2026-07-03 beat)"
     )
     lines.append(
-        "2. **Enter balances** — principal fills `balance` + `as_of` in `entities.yaml` (unlocks real position tracking)"
+        "2. **P0: Clear card-0186 fraud hold** — one call to Santander; keystone for 3+ cascaded billing failures"
     )
     lines.append(
-        "3. **Deploy Exporter** — first dollar via MONETA or Ko-fi (unlocks revenue pipeline)"
+        "3. **P1: Enter balances** — principal fills `balance` + `as_of` in `entities.yaml` (unlocks real position tracking)"
     )
     lines.append(
-        "4. ✅ **Self-feed wired** — `financial-organ.py` runs every 8 beats; auto-advances maturity as slices land"
+        "4. **P2: Deploy MONETA** — `docker build + docker run` on $0 host; set `MINT_BTC_ADDRESS`"
     )
     lines.append(
-        "5. ✅ **Web JSON dashboard** — `financial-standing.json` written to web face each beat"
+        "5. **P3: Deploy Exporter** — 'git push' + 'wrangler deploy'; first dollar via MONETA or Ko-fi"
     )
     lines.append(
-        "6. ✅ **Balance journal** — `balances-history.json` persists time-series of snapshots"
+        "6. ✅ **Self-feed wired** — `financial-organ.py` runs every 8 beats; auto-advances maturity as slices land"
     )
     lines.append(
-        "7. **Add credit accounts** — credit cards, loans, mortgages to entity registry"
+        "7. ✅ **Web JSON dashboard** — `financial-standing.json` written to web face each beat"
     )
     lines.append(
-        "8. **Investment accounts** — brokerage, retirement, crypto wallets"
+        "8. ✅ **Balance journal** — `balances-history.json` persists time-series of snapshots"
+    )
+    lines.append(
+        "9. **P4: Decide entity route** — revive LLC / dissolve / individual-only; sets tax structure"
+    )
+    lines.append(
+        "10. **P5: Register investment accounts** — brokerage, retirement, crypto, credit accounts"
     )
     lines.append("")
 
@@ -612,15 +618,15 @@ def build_web_dashboard(entities: dict, classified: dict) -> dict:
                 "id": "macro",
                 "title": "Aerarium MACRO Face",
                 "path": "organs/financial/MACRO.md",
-                "status": "authored" if MACRO_FACE.exists() else "missing",
-                "promise": "family-office-in-a-box anyone can deploy",
+                "status": "deepened" if MACRO_FACE.exists() else "missing",
+                "promise": "deployable-in-5-minutes family office — fleet-capacity-mapped, self-sovereign, institutional weight for one person",
             },
             {
                 "id": "micro",
                 "title": "Aerarium MICRO Face",
                 "path": "organs/financial/MICRO.md",
-                "status": "authored" if MICRO_FACE.exists() else "missing",
-                "promise": "Anthony's MONETA/payrail/wealth/tax office instance",
+                "status": "deepened" if MICRO_FACE.exists() else "missing",
+                "promise": "Anthony's real instance — MONETA sovereign intake, wealth/portfolio/tax-automation workflow, priority-ranked principal gates",
             },
         ],
         "rail_boundary": "MONETA intakes value; Aerarium tracks, projects, allocates, and governs the institution around it.",
