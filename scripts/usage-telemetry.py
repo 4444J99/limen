@@ -14,6 +14,7 @@ READ-ONLY w.r.t. tasks.yaml (writes ONLY logs/usage.json) → never races the da
 """
 import datetime
 import json
+import math
 import os
 import re
 from pathlib import Path
@@ -36,11 +37,23 @@ TODAY = NOW.date().isoformat()
 _IN = re.compile(r'"input_tokens"\s*:\s*(\d+)')
 _OUT = re.compile(r'"output_tokens"\s*:\s*(\d+)')
 
+
+def _number_or_default(value, default=0):
+    if isinstance(value, bool):
+        return default
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return default
+    if not math.isfinite(parsed) or parsed < 0:
+        return default
+    return int(parsed) if parsed.is_integer() else parsed
+
 # A rate-limit gate must come from a REAL, RECENT 429 — never from text that merely MENTIONS
 # rate limits (a planning session discussing "rate limit" / "429" must not bench a lane). And it
 # must auto-expire: a lane is only "rate-limited" while a real event sits inside this cooldown,
 # then it heals on its own. Override via env LIMEN_RL_COOLDOWN_MIN. ([[no-never-happens-again]])
-COOLDOWN_MIN = float(os.environ.get("LIMEN_RL_COOLDOWN_MIN", "30"))
+COOLDOWN_MIN = _number_or_default(os.environ.get("LIMEN_RL_COOLDOWN_MIN", "30"), 30)
 RL_COOLDOWN = NOW - datetime.timedelta(minutes=COOLDOWN_MIN)
 
 
@@ -219,6 +232,7 @@ def load_reserve_pct():
 def _window_hours(window: str) -> float:
     """Refresh-window length in hours, parsed from the human label telemetry already carries:
     "5h"/"5h rolling" → 5, "24h"/"rolling 24h" → 24, "today" → hours left in the UTC day."""
+    window = str(window or "")
     if window:
         m = re.search(r"(\d+)\s*h", window)
         if m:
@@ -473,14 +487,16 @@ def main():
     # token-level clock instead of a blind run count.
     oc_clock = _read_opencode_clock()
     if oc_clock is not None:
-        consumed = oc_clock.get("heavy_used", 0) + oc_clock.get("cache_read_used", 0)
-        cap = oc_clock.get("cap_tokens", 1)
+        consumed = _number_or_default(oc_clock.get("heavy_used"), 0) + _number_or_default(
+            oc_clock.get("cache_read_used"), 0
+        )
+        cap = _number_or_default(oc_clock.get("cap_tokens"), 0)
         note = "real token usage from opencode internal clock (SQLite DB)"
         vendors["opencode"] = {
             "signal": "db-meter", "window": "today", "consumed": consumed,
             "unit": "tokens", "possible": cap, "note": note,
             "health": oc_clock.get("health", "ok"),
-            "clock_used_pct": oc_clock.get("used_pct", 0),
+            "clock_used_pct": _number_or_default(oc_clock.get("used_pct"), 0),
         }
     else:
         vendors["opencode"] = {"signal": "dispatch-count", "window": "today",
@@ -501,6 +517,8 @@ def main():
             possible = 100
         else:
             possible = lim.get("limit")
+        possible = _number_or_default(possible, 0)
+        v["consumed"] = _number_or_default(v.get("consumed"), 0)
         v["possible"] = possible
         v["limit_source"] = "vendor rate_limits" if v.get("signal") == "vendor-rate-limit" else lim.get("source", "")
         if possible:

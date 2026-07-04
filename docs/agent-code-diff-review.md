@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T00:17:51Z`
+Generated: `2026-07-04T00:23:13Z`
 
 ## Scope
 
@@ -369,6 +369,38 @@ python3 -m py_compile scripts/claim-task.py
 
 Result: `4 passed`; compile passed.
 
+### Opencode clock telemetry could crash usage refresh on malformed numerics
+
+Severity: medium for dispatch observability and lane pacing.
+
+Evidence:
+
+- Codex session `019f2413-801b-7cd2-bb1e-c226d96c6355` included the provider-clock commits `ab6d684` and `5b1f84a`.
+- The prompt/session intent was stronger lane presence and usage-clock evidence, but `scripts/usage-telemetry.py` trusted `~/.local/share/opencode/clock.json` numeric fields directly.
+- If `heavy_used`, `cache_read_used`, `cap_tokens`, or `used_pct` arrived as strings, booleans, `nan`, or malformed values, usage refresh could raise before writing `logs/usage.json`.
+- `LIMEN_RL_COOLDOWN_MIN` also used bare float parsing at import time, so one malformed environment value could abort telemetry before it reached the fail-open lane health logic.
+
+Repair:
+
+- Added a non-negative finite numeric coercion helper for telemetry inputs.
+- Applied it to cooldown parsing, Opencode clock consumed/cap/percent fields, and generic possible/consumed values before headroom math.
+- Made window-label parsing tolerate non-string values.
+- Added subprocess regressions for string clock numerics, malformed clock numerics, boolean/nan fields, and malformed cooldown env.
+
+Touched paths:
+
+- `scripts/usage-telemetry.py`
+- `cli/tests/test_usage_telemetry_health.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_usage_telemetry_health.py -q
+python3 -m py_compile scripts/usage-telemetry.py
+```
+
+Result: `7 passed`; compile passed.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -446,6 +478,17 @@ Result: `4 passed`; compile passed.
 - `cli/tests/test_claim_task.py:50` covers invalid-agent rejection without mutation.
 - `cli/tests/test_claim_task.py:61` covers malformed-budget rejection without mutation.
 - `cli/tests/test_claim_task.py:72` covers boolean-budget rejection without mutation.
+- `scripts/usage-telemetry.py:41` defines the finite non-negative numeric coercion helper.
+- `scripts/usage-telemetry.py:56` applies fail-open cooldown parsing at import time.
+- `scripts/usage-telemetry.py:232` tolerates non-string window labels.
+- `scripts/usage-telemetry.py:490` coerces Opencode clock token counters.
+- `scripts/usage-telemetry.py:493` coerces Opencode clock cap tokens.
+- `scripts/usage-telemetry.py:499` coerces Opencode clock used percentage.
+- `scripts/usage-telemetry.py:520` coerces possible budget before headroom math.
+- `scripts/usage-telemetry.py:521` coerces consumed budget before headroom math.
+- `cli/tests/test_usage_telemetry_health.py:87` covers string Opencode clock numerics.
+- `cli/tests/test_usage_telemetry_health.py:106` covers malformed Opencode clock numerics.
+- `cli/tests/test_usage_telemetry_health.py:125` covers malformed cooldown env parsing.
 
 ## Remaining Review Queue
 
