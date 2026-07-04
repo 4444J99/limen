@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T01:29:02Z`
+Generated: `2026-07-04T01:32:25Z`
 
 ## Scope
 
@@ -31,6 +31,7 @@ Generated: `2026-07-04T01:29:02Z`
 | refreshed 14 | `claude` | `4a4c2aa8-d455-431e-b18c-3ac1d5824741` | Moneta checkout / order-persistence run. Worktree and live `moneta` root exist; fixed a valid-JSON order-book shape crash that could break the restart-survival promise for pooled demand. |
 | refreshed 15 | `claude` | `95f5e850-1274-40de-8a32-8ade3192b22a` | Course-recapitulation / education-organism run. Surviving evidence is transcript, plan, and Claude memory files; the `peaceful-plotting-fern` worktree, temp converter, and external `~/Workspace/edu-organism` root are absent, so code attribution is report-only. |
 | refreshed 16 | `claude` | `06d2559b-05e9-4ff3-b1bf-4473bd935228` | Credential/his-hand wall and dialog-silencing run. Reviewed landed credential-wall generator and fixed an import-time malformed env crash in the wall predicate. |
+| refreshed 17 | `claude` | `3be1f3a6-e00e-403d-a967-6d86c55deb56` | Workstream-channel run. Reviewed landed channel partition code and fixed the scoped cell conductor fallback so a failed channel projection cannot hand a worker the full mixed board. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -1089,6 +1090,39 @@ git diff --check -- scripts/credential-wall.py cli/tests/test_credential_wall.py
 
 Result: `6 passed`; compile passed; malformed-env `--check` exited `0` and reported all 16 secret atoms registered.
 
+### Scoped cell conductor could fall back to the full mixed board
+
+Severity: high for the one-worker-one-workstream invariant.
+
+Evidence:
+
+- Refreshed rank 17 (`3be1f3a6-e00e-403d-a967-6d86c55deb56`) maps to landed workstream/channel commits: `0fcd5b3`, `b7ca033`, `2aa6011`, and `17a12d3`.
+- Patched transcript audit reports eight transcript files, 2,328 usage-bearing messages, 17,064,364 billable-ish tokens, 377,658,818 cache-read tokens, six expensive subagents, six agent/workflow calls, and two unbounded-goal prompt hits.
+- The prompt/session ideal was a purpose axis above vendor lanes: a worker session should draw open tasks from exactly one workstream so it cannot create another mixed-purpose PR pile.
+- The pure `limen.workstream` grouping code was mostly sound, but `scripts/cells.sh` violated the operational invariant. If `limen channels --scope <workstream> --emit tasks.cell.yaml` failed, `cell conduct --workstream` copied the full `tasks.yaml` into the cell board as a fallback.
+- That meant a transient CLI failure, bad scope, or invalid board could silently hand the scoped conductor all mixed tasks while still printing `workstream=<handle>`.
+
+Repair:
+
+- Added a helper that writes a minimal valid empty board.
+- Changed the scoped-conductor failure path to write the empty board and log the isolation-preserving fallback instead of copying the full board.
+- Added a shell regression with a fake failing `limen` binary proving `tasks.cell.yaml` contains no mixed task when scoped emit fails.
+- This code fix was captured by the repo daemon in `3789b78` while the review was running; this section records the review evidence and acceptance.
+
+Touched paths:
+
+- `scripts/cells.sh`
+- `cli/tests/test_cells.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_workstream.py cli/tests/test_cells.py -q
+bash -n scripts/cells.sh
+```
+
+Result: `13 passed`; shell syntax check passed.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -1307,6 +1341,10 @@ Result: `6 passed`; compile passed; malformed-env `--check` exited `0` and repor
 - `scripts/credential-wall.py:42` defines positive integer parsing for the wall issue env.
 - `scripts/credential-wall.py:50` applies the wall issue fallback.
 - `cli/tests/test_credential_wall.py:64` covers malformed wall issue env values.
+- `scripts/cells.sh:40` writes a valid empty scoped board.
+- `scripts/cells.sh:116` attempts scoped board emission for the requested workstream.
+- `scripts/cells.sh:118` preserves isolation with an empty board when scoped emission fails.
+- `cli/tests/test_cells.py:13` covers the no-full-board fallback for scoped conductors.
 
 ## Remaining Review Queue
 
