@@ -3244,6 +3244,54 @@ python3 scripts/merge-drain.py --dry-run --scan 5 --limit 0
 
 Result: focused tests passed `30 passed`; predecessor transcript guard passed; continuation transcript guard failed on billable and Opus budgets; watchdog plist linted OK; watchdog dry-run reported `HEALTHY`; launchd listed heartbeat and watchdog; merge-drain dry-run classified a 5-PR window without cursor mutation and reported `ready=3`, `ci-red=2`, `stale-core=0`, `stale-base=0`.
 
+### Claude domus-genoma CIFIX session failed to fix CI and should have stopped at the permission/spend wall
+
+Severity: high; base-branch CI, dispatch credibility, and premium-model budget.
+
+Evidence:
+
+- Queue row `62` points at Claude session `18a64738-962a-4da2-b7bc-6c56a124f35e`, rooted in deleted worktree `/Users/4jp/Workspace/.limen-worktrees/cifix-4444j99-domus-genoma-aa8c`, with changed-file evidence limited to temporary CI helper scripts and `.ci-shellcheck.sh` / `.ci_local_check.sh`.
+- First-layer prompt, redacted to intent: fix pre-existing default-branch CI breakage for `4444J99/domus-genoma`, specifically ShellCheck, YAML Lint, JSON Validation, Python Lint, and Shell Formatting; keep the root-cause fix minimal and open one fix PR. The verbatim local-only prompt record is in `.limen-private/session-corpus/full-stack-review/session-62-claude-domus-genoma-cifix-prompts.jsonl`.
+- The canonical remote now resolves as private repo `organvm/domus-genoma` with default branch `master`; local checkouts under `/Users/4jp/Workspace/4444J99/domus-genoma`, `/Users/4jp/Workspace/domus-genoma`, and `/Users/4jp/Workspace/limen/domus-genoma` all point at `https://github.com/organvm/domus-genoma.git`.
+- The session did not make durable code edits. Tool-use inventory shows `38` Bash calls, `8` Reads, `4` Writes, `6` Agent calls, and `1` AskUserQuestion. The only Write tools created helper scripts: `/tmp/check_shellcheck.sh`, `/tmp/check_shfmt.sh`, `/tmp/check_json.sh`, and worktree `.ci-shellcheck.sh`.
+- The session repeatedly reported that execution was blocked by approval / permission mode, then spawned read-only subagents. Those subagents hit the Claude monthly spend wall and returned `You've hit your monthly spend limit`.
+- No session-final receipt or fix PR appears in the transcript tail. The later same-title PR #114 was created at `2026-06-19T18:32:29Z`, after this session's last event, and its check rollup still had the five named checks failing.
+
+Ideal prompt diff:
+
+- Ideal form: pull the exact failing GitHub logs first, reproduce each check locally or in CI, land a narrow root-cause change, and prove the named checks green before reporting success.
+- Actual session outcome: it never reproduced the checks, never opened a credible fix PR, and ended behind both a permission wall and monthly spend wall. The generated helper scripts were not durable work.
+- Ideal blocker handling: when Bash/gh/linters and all subagents were blocked, mark the task `failed_blocked` / leave a precise handoff with the missing capability and do not keep spending Opus.
+- Actual blocker handling: the session fanned out 11 total agents/workflows, including 8 Opus subagents, despite the task being a narrow CI-debugging job.
+
+Outcome:
+
+- Current `master` is now green, but not because of this session. The eventual fix is PR #147, merged `2026-07-03T22:58:25Z`, commit `97b3f2c6169b83a20e0d1a61ef95b6621d0e1533`, titled `fix(ci): resolve YAML indentation, line-length, test teardown, and missing +x bits`.
+- GitHub Actions run `28686905469` on `master` at that SHA completed success, including JSON Validation, ShellCheck, YAML Lint, Python Lint, Shell Formatting, Python Tests, Template Validation, BATS Tests, AI Config Parity, Secret Scanning, and Version Sync.
+- The reviewed session should therefore be recorded as a failed attempt that consumed budget and produced only transient helpers, while current-state remediation is credited to later work.
+
+What was fucked up:
+
+- Two earlier same-title CIFIX PRs (#104 and #105) were merged while the named checks were still red. PR #114 later repeated the pattern: broad changes, same task title, still red on the five requested checks at PR creation.
+- PR #114 was the opposite of "minimal": 70 files changed, including large README/test/script deletions, scheduled-task edits, memory changes, workflow changes, and a new `lint_test.sh`. That is not a root-cause CI fix.
+- The task prompt named `4444J99/domus-genoma`, while the repo's durable identity is now `organvm/domus-genoma`. That owner drift should be normalized before dispatch to avoid duplicate local roots and stale worktrees.
+- The agent should not have used Opus fanout for static lint inspection after execution was blocked. The guard reports `3,404,679` billable-ish tokens, `1,768,089` Opus billable-ish tokens, `11` agent calls, and `8` Opus subagents.
+- The right behavior after "gh needs approval" and "Bash execution is fully blocked" was to stop and emit a bounded handoff. Continuing with read-only static guesses on a five-check CI failure was low-confidence and expensive.
+
+Verification:
+
+```bash
+jq '.changed_review[62]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+jq -r 'select(.type=="user") | select(.message.content | type=="string") | [.timestamp, .message.content] | @tsv' /Users/4jp/.claude/projects/-Users-4jp-Workspace--limen-worktrees-cifix-4444j99-domus-genoma-aa8c/18a64738-962a-4da2-b7bc-6c56a124f35e.jsonl
+jq -r 'select(.type=="assistant") | .message.content[]? | select(.type=="tool_use") | .name' /Users/4jp/.claude/projects/-Users-4jp-Workspace--limen-worktrees-cifix-4444j99-domus-genoma-aa8c/18a64738-962a-4da2-b7bc-6c56a124f35e.jsonl | sort | uniq -c
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace--limen-worktrees-cifix-4444j99-domus-genoma-aa8c/18a64738-962a-4da2-b7bc-6c56a124f35e.jsonl
+gh pr view 114 --repo organvm/domus-genoma --json number,title,state,createdAt,mergedAt,mergeCommit,commits,files,body,url,statusCheckRollup
+gh api repos/organvm/domus-genoma/commits/97b3f2c6169b83a20e0d1a61ef95b6621d0e1533/pulls --jq '.[] | {number,title,state,merged_at,html_url,head:{ref:.head.ref}}'
+gh run view 28686905469 --repo organvm/domus-genoma --json databaseId,headSha,headBranch,status,conclusion,jobs,url
+```
+
+Result: the reviewed worktree is gone; the transcript contains the CIFIX prompt and no durable fix receipt; the guard fails on billable budget, Opus budget, total fanout, and Opus subagent fanout; PR #114 is merged but its check rollup shows the five requested checks failing; PR #147 is the later green fix; current `master` run `28686905469` is successful.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
