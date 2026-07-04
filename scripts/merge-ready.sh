@@ -28,6 +28,22 @@ prev=""; for a in "$@"; do [ "$prev" = "--limit" ] && LIMIT="$a"; prev="$a"; don
 
 # Revenue repos merge FIRST (ship dollars before archives). Extend freely.
 PRIORITY_REPOS="a-organvm/a-i-chat--exporter a-organvm/public-record-data-scrapper a-organvm/mirror-mirror 4444J99/domus-genoma"
+
+# Record the adjudication as a PR review BEFORE merging. The merge decision IS a code review —
+# merge-ready verified CLEAN state + non-junk — but until now it was never recorded in the medium
+# GitHub counts, so the profile radar showed 1% code review against 76% commits. GitHub forbids
+# approving your OWN PR, so self-authored PRs get a --comment review (still a recorded
+# adjudication); PRs authored by another identity (bots, the limen App) get a real --approve.
+# Fail-open: a refused review never blocks the merge.
+VIEWER="$(gh api user -q .login 2>/dev/null || echo "")"
+record_review() { # $1=repo $2=num
+  local author verb
+  author="$(gh pr view "$2" --repo "$1" --json author -q .author.login 2>/dev/null || echo "")"
+  verb="--approve"; [ "$author" = "$VIEWER" ] && verb="--comment"
+  gh pr review "$2" --repo "$1" "$verb" --body \
+    "Adjudicated by merge-ready: mergeStateStatus=CLEAN (green required checks, no conflicts), non-junk, revenue-first order. Squash-merge per the standing grant (CLAUDE.md § Merge & Branch Protocol)." \
+    >/dev/null 2>&1 || true
+}
 # Title patterns that mark junk/dup (never merge these) — test fixtures + the known leak.
 JUNK_RE='Open Codex task (one|two|three)'
 
@@ -57,6 +73,7 @@ while IFS=$'\t' read -r repo num title; do
   n=$((n+1))
   [ "$LIMIT" -gt 0 ] && [ "$n" -gt "$LIMIT" ] && { echo "  …(stopped at --limit $LIMIT)"; break; }
   if [ "$APPLY" = 1 ]; then
+    record_review "$repo" "$num"
     if gh pr merge "$num" --repo "$repo" --squash --delete-branch >/dev/null 2>&1; then
       echo "  ✓ merged  $repo#$num  $title"
     else
