@@ -7342,6 +7342,63 @@ npx vitest run src/__tests__/postgres-organization-repository.test.ts
 
 Result: transcript guard passed at 419,911 billable tokens; prompt extraction matches row `131`; PR #42 is still open with failing CI; PR #50 merged green and includes the superseding Postgres billing persistence fix; focused Vitest replay passes on both the PR #42 branch and `024ec92`.
 
+### Claude's UMA revenue-ship row cleared the then-current deploy gate, but by admin-merging build artifacts
+
+Severity: medium. The session did useful closeout work and merged a green PR, but it used admin merge after self-approval failed, committed/generated package artifacts were part of the merge, and the "deploy-ready" claim was only true for that moment.
+
+Evidence:
+
+- Reconstruction row `132` targets Claude session `ccf383c4-a04f-48db-9e69-67eb534f8898`, rooted in deleted worktree `/Users/4jp/Workspace/.limen-worktrees/rev-organvm-universal-mail--automation-revenue-ship-0629-d041`, from 2026-06-29T05:57:36Z through 2026-06-29T06:05:19Z.
+- The first-layer task was `REV-organvm-universal-mail--automation-revenue-ship-0629`: drive UMA to deploy-ready, clear concrete blockers, get open PRs green and merged, confirm the app runs end-to-end, and leave a short `DEPLOY.md` listing remaining gates.
+- The session found current `DEPLOY.md` already comprehensive, identified PR #117 as the only open deploy-readiness PR at that moment, checked PR status/checks, and ran a broad local gate: Python tests, ruff, CLI import/version, wheel build, twine check, web lint/build, and Cloudflare worker tests.
+- Transcript-local proof claimed `517 tests pass`, ruff clean, wheel/twine clean, worker tests `13/13`, web lint/build clean, and `umail --version` reporting `0.2.0`.
+- PR #117 merged at `cf92d8403b07c0d1bb8eedd01e1850563a393117` on 2026-06-29T06:03:36Z. Its PR check rollup is green for Python 3.11, Python 3.12, package build, web lint/build, and Cloudflare worker tests; Cloudflare deploy demo was skipped.
+- The merge mostly added generated Python package artifacts: wheel/sdist binary changes and `universal_mail_automation.egg-info/*`. The deploy documentation update itself had already landed in PR #116 / `e738eaf`.
+- The session attempted `gh pr review --approve`, could not self-approve, then used `gh pr merge --squash --admin --delete-branch`. That cleared the gate but bypassed the normal review edge.
+- `gh run list --commit cf92d84` does not return a run, so the durable CI proof available now is PR #117's green check rollup, not a post-merge run tied directly to the squash SHA.
+- Current state has later open UMA PRs and a later pages-build failure on a newer SHA, so this row's deploy-ready claim should be read as 2026-06-29 closeout evidence, not a current status statement.
+- Full private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-132-claude-uma-revenue-ship-prompts.jsonl`: 46 prompt-surface records, 38 unique prompt hashes, 32,856 prompt bytes. Surfaces are `queue.enqueue` 1, `message.user` 37, and `last-prompt` 8.
+
+Ideal prompt diff:
+
+- Ideal deploy-closeout form: verify local gates, merge only with required approvals or an explicit recorded exception, confirm a post-merge main run, and leave deploy blockers in `DEPLOY.md`.
+- Actual form: local/PR verification was broad and useful, but the merge used admin after self-approval failed and the available durable CI receipt is the PR check rollup.
+- Ideal artifact hygiene: generated build outputs should be intentionally justified if committed.
+- Actual form: PR #117 committed wheel/sdist and `egg-info` artifacts as part of deploy readiness. That may be acceptable for the repo's release process, but it increases churn and should be explicit.
+
+Outcome:
+
+- Credit row `132` for clearing the then-current UMA PR gate and moving PR #117 to `MERGED`.
+- Credit deploy documentation status primarily to PR #116 / `e738eaf`; PR #117 was the package-artifact/release merge that followed.
+- Do not treat the row as proof that UMA is deploy-ready now. It is a dated 2026-06-29 closeout receipt.
+
+What was fucked up:
+
+- Admin merge after a failed self-approval is a governance smell. It may have been pragmatically correct, but it should be recorded as an explicit exception.
+- The final answer collapsed time-bound deploy readiness into a broad statement. Later open PRs and later CI/pages drift show why these claims need dates and commit SHAs.
+- The row did not create the `DEPLOY.md` state it cited; it depended on immediately prior PR #116. That is fine as closeout, but not as implementation credit.
+- Generated package artifacts in Git create review noise and should be covered by a repo policy rather than treated as incidental.
+
+Verification:
+
+```bash
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace--limen-worktrees-rev-organvm-universal-mail--automation-revenue-ship-0629-d041/ccf383c4-a04f-48db-9e69-67eb534f8898.jsonl
+python3 - <<'PY'
+import json
+from collections import Counter
+from pathlib import Path
+p = Path('/Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-132-claude-uma-revenue-ship-prompts.jsonl')
+rows = [json.loads(line) for line in p.read_text(encoding='utf-8').splitlines() if line.strip()]
+print(len(rows), len({r['prompt_hash'] for r in rows}), sum(r['prompt_bytes'] for r in rows), Counter(r['surface'] for r in rows), Counter(r['session_id'] for r in rows))
+PY
+gh pr view 117 --repo organvm/universal-mail--automation --json number,title,state,createdAt,closedAt,mergedAt,mergeCommit,files,statusCheckRollup,url,reviews
+git -C /Users/4jp/Workspace/.home-cartridge/Code/organvm/universal-mail--automation show --stat --oneline cf92d8403b07c0d1bb8eedd01e1850563a393117
+git -C /Users/4jp/Workspace/.home-cartridge/Code/organvm/universal-mail--automation show --stat --oneline e738eaffbfe8067543af39d14dd27d32b6867604
+gh run list --repo organvm/universal-mail--automation --branch main --commit cf92d8403b07c0d1bb8eedd01e1850563a393117 --limit 10 --json databaseId,name,status,conclusion,headSha,createdAt,url
+```
+
+Result: transcript guard passed at 136,866 Sonnet billable tokens; prompt extraction matches row `132`; PR #117 is merged with green PR checks; commit `cf92d84` is on `origin/main`; direct run lookup by `cf92d84` returns no post-merge run; current later UMA state has new open PRs and newer CI drift outside this row.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
