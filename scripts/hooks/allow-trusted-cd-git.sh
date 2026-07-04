@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PreToolUse hook: auto-approve `cd <trusted-path> && <anything> ...` chains.
+# PreToolUse hook: auto-approve safe `cd <trusted-path> && <cmd> ...` chains.
 #
 # WHY: Claude Code v2.1.x prompts on EVERY compound `cd <dir> && <cmd>` (the
 # "bare-repo / untrusted git hooks" guard, upstream #32985). No settings
@@ -9,15 +9,14 @@
 # Bash" prompts. The autonomous fleet runs thousands of
 # `cd <repo> && (git|python|pytest|node|npm|osascript) ...` per day.
 #
-# TRUST BOUNDARY = THE DIRECTORY, NOT THE TOOL. If the cd target resolves inside
-# a tree the user owns (~/Workspace, ~/Code, ~/.claude, a .claude worktree,
-# ~/.claude/jobs, /tmp) OR is an in-tree relative path (the fleet only ever runs
-# from an already-trusted cwd), the whole chain is auto-approved — matching the
-# user's established posture that in-tree work (including cleanup) should never
-# prompt. Any cd target OUTSIDE those trees — an absolute foreign dir, a `..`
-# escape, or an unresolved variable we can't place — falls through to the normal
-# guard untouched, so foreign dirs keep full protection, and a bare standalone
-# command (no leading cd) is unaffected.
+# TRUST BOUNDARY = THE DIRECTORY, WITH A TAIL GUARD. If the cd target resolves
+# inside a tree the user owns (~/Workspace, ~/Code, ~/.claude, a .claude
+# worktree, ~/.claude/jobs, /tmp) OR is an in-tree relative path (the fleet only
+# ever runs from an already-trusted cwd), normal read/build/test/git chains are
+# auto-approved. Obvious destructive tails still fall through to Claude's normal
+# guard, even in trusted directories. Any cd target OUTSIDE those trees — an
+# absolute foreign dir, a `..` escape, or an unresolved variable we can't place
+# — also falls through untouched, and a bare standalone command is unaffected.
 #
 # History:
 #  - originally only handled the `git` case (cd\ *git*).
@@ -46,6 +45,12 @@ esac
 # to where the shell lands).
 first="$(printf '%s' "$cmd" | head -1)"
 target="$(printf '%s' "$first" | sed -E 's/^cd[[:space:]]+//; s/[[:space:]]*(&&|;).*$//')"
+tail_cmd=""
+case "$first" in
+  *"&&"*) tail_cmd="${first#*&&}" ;;
+  *";"*)  tail_cmd="${first#*;}" ;;
+esac
+tail_cmd="$(printf '%s' "$tail_cmd" | sed -E 's/^[[:space:]]+//')"
 
 # Strip surrounding quotes if present.
 target="${target%\"}"; target="${target#\"}"
@@ -84,7 +89,16 @@ if [ "$allow" = 0 ]; then
   esac
 fi
 
-if [ "$allow" = "1" ]; then
+# Destructive tails do not get auto-approved. They are not blocked here; they
+# simply fall back to Claude's ordinary approval path.
+danger=0
+if [ -n "$tail_cmd" ]; then
+  if printf '%s\n' "$tail_cmd" | grep -Eiq '(^|[;&|[:space:]])sudo([[:space:]]|$)|(^|[;&|[:space:]])rm[[:space:]]+-[^;&|[:space:]]*[rR][^;&|[:space:]]*|git[[:space:]]+reset[[:space:]]+--hard|git[[:space:]]+clean[[:space:]]+-[^;&|[:space:]]*[xdf]|(^|[;&|[:space:]])dd[[:space:]].*of=|(^|[;&|[:space:]])mkfs|(^|[;&|[:space:]])chmod[[:space:]]+-R|(^|[;&|[:space:]])chown[[:space:]]+-R|(curl|wget)[^;&]*[|][[:space:]]*(sh|bash)'; then
+    danger=1
+  fi
+fi
+
+if [ "$allow" = "1" ] && [ "$danger" = "0" ]; then
   printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","permissionDecisionReason":"Trusted cd target inside a user-owned tree (~/Workspace, ~/Code, ~/.claude, worktree, jobs, /tmp) or an in-tree relative path"}}\n'
 fi
 exit 0
