@@ -1,9 +1,30 @@
+# Engagement: Rob — the niche-funnel flagship
+# Enriched 2026-07-04 from the recovered April–May 2026 strategy corpus
+# (Archive4T workspace-backup + T7Recovery lifeboat). See FUNNEL-ENGINE.md.
+
 member:
   name: "Rob"
-  context: "Recurring execution support with staged deadlines"
+  context: >
+    NYC-based dual-discipline creator: chess content (@HokageChess on YouTube,
+    322+ videos, Road to 1500 arc) + fitness coaching built on 3+ years
+    operating a Beachbody/BODi funnel (a 1-level affiliate model since BODi
+    ended its multi-level coach network 2025-01-01). Runs Teamzy CRM,
+    Instagram (@robbonav), and a proven 4-level sales funnel. This engagement
+    treats the funnel discipline Rob already owns as the seed of the
+    generalized niche-funnel engine.
+
 mandate:
-  description: "Recurring execution support with staged deadlines and clear decision checkpoints"
-  outcome: "Test execution rhythm stability across work packet adjustments"
+  description: >
+    Recurring execution support with staged deadlines and clear decision
+    checkpoints, expanded 2026-07-04 to the niche-funnel program: package
+    Rob's proven L0-L4 funnel as repeatable processes, sequences, and staged
+    drafts he fires by hand — content pipeline, opt-in capture, CRM cadence,
+    and offer ladder across the chess / fitness / bridge pillars.
+  outcome: >
+    A working funnel instance for Rob (BODi affiliate + Hokage Chess) whose
+    every stage has a named artifact, an owner, and a human gate — and whose
+    shape is reusable by every other instance in FUNNEL-ENGINE.md.
+
 standing:
   current: "EXECUTION"
   history:
@@ -11,24 +32,63 @@ standing:
     - "PROPOSAL"
     - "ACCEPTANCE"
 next_standing: "REVIEW"
+
+channels:
+  live:
+    - "YouTube: https://www.youtube.com/@HokageChess"
+    - "Instagram: @robbonav"
+    - "BODi affiliate program page: https://www.bodi.com/us/en/affiliate"
+  planned:
+    - "hokagechess.com — RB-10, awaiting Rob's Cloudflare registration (fallback: 4jp.io/rob)"
+    - "The Scroll — weekly newsletter (Kit/ConvertKit per the 2026-04-25 business plan v2)"
+    - "The Village — Discord community, Genin/Chunin/Jonin role tiers (Welcome Wed / Loot Drop Fri / Quest Log Sun)"
+  owed_by_rob:
+    - "Personal BODi affiliate/referral link — never recorded in any system; only the generic program page is on file"
+    - "Canonical Facebook + Instagram handle confirmation (board atom RB-8)"
+
+funnel:
+  engine: "organs/consulting/FUNNEL-ENGINE.md — Rob is instance #1, the proven shape"
+  levels:
+    - "L0 discovery content: shorts/reels/videos replace manual Instagram hashtag prospecting"
+    - "L1 cold-audience capture: follows and community entry"
+    - "L2 opt-in: lead magnet + form -> email list (The Scroll)"
+    - "L3 conversion: offer ladder $0 -> $300/mo cohort -> $500 physical+app; Teamzy CRM cadence"
+    - "L4 expansion: ambassadors, referrals, community leadership (The Village)"
+
 human_gates:
   - "Partner confirms milestone completion"
   - "Partner approves reprioritization"
   - "Partner signs off handoff package"
+  - "Rob fires every outbound post, DM, and send himself — the system stages drafts only"
+
 standard:
-  quality_bar: "Every milestone has a named owner and a human gate"
-  evidence: "Recurring cadence artifacts exist"
+  quality_bar: "Every milestone has a named owner and a human gate; every funnel stage names its artifact"
+  evidence: >
+    Recovered corpus: 144 strategy docs on Archive4T
+    (workspace-backup/organvm/_agent/hokage-chess), the 2026-04-25 call
+    transcript and cross-pollination plan on T7Recovery, 30 open hokage-chess
+    atoms on the limen board (MP/FWS/CWS/RB series), and the live
+    gamified-coach-interface (Legion Command Center) build.
+
 governance:
   authority: "Engagement Partner (human) — strategic direction, re-prioritization"
-  ethics: "No autonomous re-prioritization without partner approval"
+  ethics: >
+    No re-prioritization without partner approval. Affiliate-program and
+    platform terms are honored as written; no bulk prospecting or scraping on
+    Rob's behalf — discovery happens through published content.
   reversibility: "All external actions staged and surfaced for human action"
+
 scope:
-  boundary: "Recurring execution support, milestone tracking, quality notes"
+  boundary: "Recurring execution support, milestone tracking, quality notes, and staged niche-funnel artifacts (content drafts, sequences, capture forms, CRM cadences)"
   exclusions:
     - "No financial commitments"
     - "No contract changes"
     - "No third-party agreements"
+    - "No outbound sends in Rob's name — he fires every send"
   changes:
     - date: "2026-06-15"
       description: "Scope refined to add milestone checkpoint documentation"
       approved_by: "Engagement Partner"
+    - date: "2026-07-04"
+      description: "Expanded to the niche-funnel program (principal's direct ask: build Rob's funnel machinery; engine generalized in FUNNEL-ENGINE.md)"
+      approved_by: "Anthony (requesting principal)"

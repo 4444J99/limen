@@ -1,0 +1,55 @@
+# Engagement: Jessica — the HR niche instance
+# Created 2026-07-04 from the principal's niche-institution directive.
+
+member:
+  name: "Jessica"
+  context: >
+    Human-resources professional and Instagram-growth practitioner (named in
+    the recovered hokage-chess ecosystem docs as the resident Instagram growth
+    expert). Partner on Styx — the peer-audited behavioral accountability
+    product (organvm/peer-audited--behavioral-blockchain) — which serves the
+    HR niche: habit competition, performance accountability, team behavior.
+
+mandate:
+  description: >
+    Stand up the HR niche instance of the funnel engine: Jessica's
+    professional reach built with the same staged pipeline as Rob's, with
+    Styx as the flagship product and the HR organ (organs/hr/) as the
+    institutional frame.
+  outcome: >
+    A scoped proposal Jessica can accept: her funnel instance config, the
+    Styx product tie, and the first HR-institution artifact she can put in
+    front of a real client.
+
+standing:
+  current: "DISCOVERY"
+next_standing: "PROPOSAL"
+
+human_gates:
+  - "Jessica confirms scope and consents to this engagement record"
+  - "Any artifact naming Jessica is reviewed by her before external use"
+  - "Anthony approves the proposal before it is presented"
+
+standard:
+  quality_bar: "Nothing leaves DISCOVERY until Jessica has spoken for herself; artifacts reference real repos and recovered docs only"
+  evidence: >
+    Styx product exists and is test-covered
+    (organvm/peer-audited--behavioral-blockchain: 1107 tests, Stripe escrow
+    staged); HR organ chartered at organs/hr/; 8 open Styx tasks on the limen
+    board across the product, theory, and art repos.
+
+governance:
+  authority: "Engagement Partner (human) — Jessica's participation is hers to confirm"
+  ethics: "No employment or benefits counsel to anyone; delivery infrastructure only"
+  reversibility: "All external actions staged and surfaced for human action"
+
+scope:
+  boundary: "Delivery infrastructure for the HR niche: funnel instance config, Styx product positioning, HR-organ artifacts"
+  exclusions:
+    - "No employment decisions or workplace counsel"
+    - "No outreach in Jessica's name"
+    - "No client commitments"
+  changes:
+    - date: "2026-07-04"
+      description: "Engagement record created at DISCOVERY from the principal's niche-institution directive"
+      approved_by: "Anthony (requesting principal)"
