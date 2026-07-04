@@ -200,6 +200,20 @@ DEFAULT_MAP: list[dict] = [
         "enabled": True,
     },
     {
+        # CI-SECRET sink — LAVREA (4444J99/laurea, the computed-laurels organ) recomputes percentile
+        # placements daily in Actions; the default GITHUB_TOKEN cannot see private org memberships, so
+        # without a user token the snapshot collapses (5 repos, 0 orgs) and the composite claim deletes
+        # itself. The workflow reads LAUREA_TOKEN. Same promptless source as the gh/copilot/jules lane:
+        # mint from the live `gh` keyring (derive preferred; the static op:// PAT is the revoked
+        # last-resort, retained for shape parity). gh_secret-only: presence-guarded, so the beat only
+        # reads+sets when the secret is absent. [[credential-durability-organ]]
+        "lane": "laurea (computed-laurels CI secret)",
+        "ref": "op://GitHub-Tokens/master-org-token-011726/password",
+        "derive": ["gh", "auth", "token"],
+        "gh_secret": {"repo": "4444J99/laurea", "name": "LAUREA_TOKEN"},
+        "enabled": True,
+    },
+    {
         # CI-SECRET sink — the a-i-chat--exporter Cloudflare Pages deploy (GitHub Actions) needs
         # CLOUDFLARE_API_TOKEN as a repo secret. The token ALREADY EXISTS (the cloudflare lane above owns
         # op://Personal/Cloudflare API Token/credential); the exporter repo correctly DEFERS — it expects
