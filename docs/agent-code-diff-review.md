@@ -94,6 +94,7 @@ Generated: `2026-07-04T12:24:23Z`
 | changed 136 | `codex` | `019f1a99-5cdd-7461-a1c0-2d7524a2cc43` | My Knowledge Base discovery/build-health run. Codex made a useful local external-repo commit (`5198141`) and identified the correct value-tier promotion, but the original worktree is gone, no PR or remote branch exists, and the local branch is now stale behind `origin/master` with conflicts. This review landed the safe Limen-side registry gap by adding `organvm/my-knowledge-base` to `value-repos.json`; the external code diff still needs a current selective port. |
 | changed 137 | `codex` | `019f191a-bf3b-7ab1-b9ef-d76c22c62f47` | Limen CI-green 0622 recovery. Codex manually reconstructed a 17-file lint-stabilization patch after `.git` writes were blocked; the dispatcher turned it into PR #487, which merged, but full CI was not green because `verify` failed after merge on missing web `yaml`. Later PRs #496 and #581 are the durable green CI receipts, not row 137 alone. |
 | changed 138 | `claude` | `33eaebb1-edb0-4b53-b22a-d6925bd980a5` | Public Record Data Scraper revenue readiness. Claude identified async scrape jobs as the highest-leverage first-dollar gap and opened PR #318, which merged green and remains on `main`; the durable code is real. The defects are receipt hygiene: the final/memory claim overstated route-test coverage after a later branch-update commit dropped most route-test changes, commit author metadata used `Test User <test@example.com>`, and the session wrote project memory outside the repo. |
+| changed 139 | `claude` | `61d8b1ae-6d3b-4b87-b992-7fab59ce36e7` | Edu-organism closing-half course-engine run. A private teaching/email triage session grew into edu-organism engine work and shipped PR #48: live-date verifier, term-bound inactivity-agent dates, grounded reply drafter, advising memory, tests, and generated course artifacts. The code survived on `main`, but the session blew the Opus cap, merged with no GitHub checks, and the queue's six-file slice understated the final 15-file PR. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -4296,6 +4297,59 @@ gh api 'repos/organvm/public-record-data-scrapper/contents/server/routes/scrape.
 ```
 
 Result: private prompt extraction matches row `changed 138`; transcript guard passes; PR #318 merged with green repo gates; current `main` still contains the async job artifacts; receipt drift remains around route-test coverage, placeholder commit identity, and stale host-local Claude memory.
+
+### Claude's edu-organism closing-half run shipped useful course-engine organs, but overran scope and checks
+
+Severity: medium-high; private teaching workflow, cross-repo attribution, and spend control. The useful work did land, but the session started as private student/email triage inside Limen and expanded into an edu-organism feature PR. Public review should keep the prompt content summarized and leave the verbatim private prompt extract local.
+
+Evidence:
+
+- Queue row `changed 139` points at Claude session `61d8b1ae-6d3b-4b87-b992-7fab59ce36e7`, with session cwd `/Users/4jp/Workspace/limen` but changed files under `~/Workspace/edu-organism/.git-wt/engine-closing-half`.
+- First-layer prompt class, redacted to intent: answer private course/student email and D2L-shell questions, then after the user asked "what can we build from this?" and "proceed with all", turn the recurring confusion into reusable course-engine support for dates, inactive-agent timing, and grounded reply drafting.
+- The verbatim local-only prompt extract is `.limen-private/session-corpus/full-stack-review/session-changed-139-claude-edu-engine-closing-half-prompts.jsonl`: `188` prompt records, `127` unique prompt hashes, `215,766` prompt bytes, all sourced from `claude-projects`.
+- The original worktree `/Users/4jp/Workspace/edu-organism/.git-wt/engine-closing-half` is gone, and there is no local `/Users/4jp/Workspace/edu-organism` checkout now.
+- Durable delivery is PR `organvm/edu-organism#48`, `feat(engine): closing-half organs - live-date verifier, term-bound inactivity agent, grounded reply drafter`, merged at `2026-06-26T20:59:47Z` with merge commit `29785b1`.
+- PR #48's core commit `dd10752` added `courses/_engine/advisor.py`, `courses/_engine/verify_live.py`, `courses/enc1101/memory/advising.yaml`, and tests `test_advisor.py`, `test_agent_dates.py`, and `test_verify_live.py`. It also modified date/recapitulation logic, course agent variants, cadence, and generated summer-2026 course artifacts.
+- Current GitHub `main` still contains the key durable artifacts: `courses/_engine/advisor.py`, `courses/_engine/verify_live.py`, `courses/enc1101/memory/advising.yaml`, and `courses/tests/test_advisor.py`.
+- The session's final PR body says `16` new tests and `38` full-suite tests passed locally. GitHub PR #48 has an empty `statusCheckRollup`, so there was no durable CI check receipt attached to the merge.
+- The queue's changed-file slice lists six code/config/test files, but the merged PR changed `15` files, including generated HTML/XML course artifacts and both ENC1101/ENC1102 agent variants. The row should be reviewed as the broader PR, not only the queue slice.
+- Transcript guard fails: `1,815,322` Opus billable tokens, above the configured `750,000` cap; `24,627,327` cache-read tokens; `358,259` output tokens; no subagent fanout.
+
+Ideal prompt diff:
+
+- Ideal private-teaching workflow: handle the immediate email/D2L questions in a private lane, then split reusable engine work into a separate, scoped implementation packet with an explicit edu-organism root and acceptance predicate.
+- Actual session form: a single long Opus session blended private communication drafting, D2L export inspection, screenshots, course-engine design, code edits, generated course artifacts, PR creation, and merge.
+- Ideal release form: one focused PR with a local test receipt and either GitHub CI checks or an explicit "repo has no CI" caveat.
+- Actual release form: PR #48 merged with useful code and local test claims, but no GitHub checks.
+
+Outcome:
+
+- Credit row `changed 139` with a real merged edu-organism feature: live-date verification, term-bound inactivity-agent timing, grounded reply drafting, advising memory, and tests are on `main`.
+- Do not treat the queue's six changed files as the full diff. The durable PR is a 15-file course-engine/generated-artifact change.
+- Mark the process as overbroad and over-budget. The work crossed from private student support into productized engine code without a clean session boundary, and it exceeded the Opus budget by more than 2x.
+
+What was fucked up:
+
+- Private student/email triage and reusable course-engine code lived in one giant transcript, making public review and prompt attribution harder.
+- The session ran on Opus for 1.8M billable tokens with no subagent fanout to blame; this was a pacing failure, not a coordination failure.
+- The final merge had no GitHub status checks. Local test claims may be true, but the repository did not preserve a CI receipt.
+- The queue under-attributed the final PR: six files in the session index versus 15 files in the merged PR.
+
+Verification:
+
+```bash
+jq '.changed_review[139]' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+jq -s '{records:length, unique_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), task_body_bytes:([.[].task_body_bytes] | add), surfaces:([group_by(.surface)[] | {surface:.[0].surface,count:length}]), kinds:([group_by(.body_kind)[] | {kind:.[0].body_kind,count:length}]), sources:([group_by(.source)[] | {source:.[0].source,count:length}])}' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-changed-139-claude-edu-engine-closing-half-prompts.jsonl
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/61d8b1ae-6d3b-4b87-b992-7fab59ce36e7.jsonl
+test -d /Users/4jp/Workspace/edu-organism/.git-wt/engine-closing-half
+gh pr view 48 --repo organvm/edu-organism --json number,title,state,createdAt,mergedAt,closedAt,headRefName,headRefOid,baseRefName,mergeCommit,files,commits,statusCheckRollup,url,reviews,comments
+gh api 'repos/organvm/edu-organism/contents/courses/_engine/advisor.py?ref=main' --jq '{sha,size,path}'
+gh api 'repos/organvm/edu-organism/contents/courses/_engine/verify_live.py?ref=main' --jq '{sha,size,path}'
+gh api 'repos/organvm/edu-organism/contents/courses/enc1101/memory/advising.yaml?ref=main' --jq '{sha,size,path}'
+gh api 'repos/organvm/edu-organism/contents/courses/tests/test_advisor.py?ref=main' --jq '{sha,size,path}'
+```
+
+Result: private prompt extraction matches row `changed 139`; transcript guard fails on Opus billable budget; the original worktree is gone; PR #48 merged and current `main` still contains the key course-engine artifacts; no GitHub checks were attached to the PR.
 
 ### Claude domus-genoma CIFIX session failed to fix CI and should have stopped at the permission/spend wall
 
