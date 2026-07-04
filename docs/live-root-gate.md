@@ -1,8 +1,8 @@
 # Live Root Gate
 
-Generated: `2026-07-04T19:15:26+00:00`
+Generated: `2026-07-04T19:26:42+00:00`
 
-Status: `blocked`
+Status: `ready`
 
 ## Rule
 
@@ -12,38 +12,25 @@ Status: `blocked`
 
 ## Gate State
 
-- Operator gate required: `True`.
+- Operator gate required: `False`.
 - Release reconcile allowed without human: `False`.
 - Launchd reload allowed without human: `False`.
-- Blocking gates: `live-root-dirty`, `live-root-task-board-dirty`.
+- Blocking gates: none.
 
 ## Live Root
 
 - Path: `~/Workspace/limen`.
 - Branch: `main`; release branch `main`.
-- HEAD: `09b379c3912af55ad2a24ba01284096353014c23`.
-- Release head: `09b379c3912af55ad2a24ba01284096353014c23`.
+- HEAD: `44b0c845c750e8c0dd79e570a631493e61fc7890`.
+- Release head: `44b0c845c750e8c0dd79e570a631493e61fc7890`.
 - Matches release: `True`; ahead `0` behind `0`.
 - Unique local commits: `0`; patch-equivalent commits: `0`.
-- Dirty entries: `13`.
-- Ignored generated receipt dirty entries: `1`.
+- Dirty entries: `0`.
+- Ignored generated receipt dirty entries: `4`.
+  - `docs/conductor-tranche.md`
   - `docs/live-root-gate.md`
-
-### Dirty Paths
-
-- `cli/tests/test_session_lifecycle_pressure.py`
-- `docs/branch-hygiene.md`
-- `docs/conductor-tranche.md`
-- `docs/session-attack-paths.md`
-- `docs/session-corpus-ledger.md`
-- `docs/session-lifecycle-blockers.md`
-- `docs/worktree-lifecycle-ledger.md`
-- `docs/worktree-preservation-receipts.json`
-- `organs/financial/cashflow.md`
-- `scripts/session-blockers-ledger.py`
-- `scripts/session-lifecycle-pressure.py`
-- `tasks.yaml`
-- `organs/contributions/`
+  - `docs/session-attack-paths.md`
+  - `docs/session-lifecycle-blockers.md`
 
 ## Heartbeat
 

@@ -1,6 +1,6 @@
 # Session Attack Paths
 
-Generated: `2026-07-04T19:17:17+00:00`
+Generated: `2026-07-04T19:26:44+00:00`
 
 ## Canonical Decision
 
@@ -17,8 +17,8 @@ Generated: `2026-07-04T19:17:17+00:00`
 - Worktree debt roots: `0`.
 - Worktree preservation receipts: `77`.
 - Parked blockers: `6`.
-- Local lifecycle footprint: `29.7 GiB`.
-- Candidate lanes: `family` 7, `human-gate` 51, `observe` 5, `owner-blocker` 6, `parked` 5, `remote-close` 1, `remote-pr-open` 10, `remote-proof` 6.
+- Local lifecycle footprint: `29.8 GiB`.
+- Candidate lanes: `family` 7, `human-gate` 51, `observe` 5, `owner-blocker` 6, `parked` 5, `remote-close` 1, `remote-pr-open` 10, `remote-proof` 7.
 
 ## Ordering Model
 
@@ -52,13 +52,13 @@ Generated: `2026-07-04T19:17:17+00:00`
 | 16 | `feat-gcp-sa-organ` | `worktree` | `owner-blocker` | 34 | reason `owner-blocker`; prompts 727; remote `missing`; open PRs 0; receipt `owner_commit_needs_packet` | codex first; opencode/jules after packetization | Do not delete, reclaim, or auto-port this Claude worktree without a narrower owner packet. PR #544 merged only through f20bb66, while local HEAD 0a4f21f remains unique and changes organs/media/NEXT.md to mark operator-cleared media-ark PR/issue atoms done. Preserve this as an owner blocker; if still wanted, port only that owner-record update onto current main with a named branch and predicate. |
 | 17 | `agent-code-review-0704-113` | `worktree` | `observe` | 32 | reason `active(<6h)`; prompts 0; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
 | 18 | `fable-adjudication-followup-0704` | `worktree` | `observe` | 32 | reason `active(<6h)`; prompts 0; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
-| 19 | `unpark-live-checkout` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
-| 20 | `convergence_corpus` | `family` | `family` | 26 | sessions 10; states CLOSED 10; prompts 37 | codex | Promote durable atoms through session-meta and knowledge-corpus. |
-| 21 | `gen-organvm-universal-mail--automation-test-coverage-0625-151e` | `worktree` | `human-gate` | 26 | reason `owner-blocker`; prompts 100; remote `missing`; open PRs 0; receipt `private_patch_preserved` | human/codex-prep | Do not PR or delegate this deletion patch. The branch has no unique commits, no remote branch, no PR, no sparse-checkout configuration, and 167 tracked files deleted from disk while HEAD is an ancestor of origin/main. Treat as stale broken checkout/deletion artifact; reclaim only after operator acceptance, and recreate from origin/main if owner work is needed. |
-| 22 | `heal-cifix-organvm-limen-449-25ce` | `worktree` | `human-gate` | 21 | reason `documented-residue`; prompts 3; remote `not-a-git-dir`; open PRs 0; receipt `documented_non_source_residue` | human/codex-prep | No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass. |
-| 23 | `heal-cifix-organvm-limen-450-ed38` | `worktree` | `human-gate` | 21 | reason `documented-residue`; prompts 3; remote `not-a-git-dir`; open PRs 0; receipt `documented_non_source_residue` | human/codex-prep | No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass. |
-| 24 | `heal-cifix-organvm-limen-450-fc3a` | `worktree` | `human-gate` | 21 | reason `documented-residue`; prompts 3; remote `not-a-git-dir`; open PRs 0; receipt `documented_non_source_residue` | human/codex-prep | No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass. |
-| 25 | `heal-cifix-organvm-limen-451-0b29` | `worktree` | `human-gate` | 21 | reason `documented-residue`; prompts 3; remote `not-a-git-dir`; open PRs 0; receipt `documented_non_source_residue` | human/codex-prep | No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass. |
+| 19 | `dialog6-wt` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 20 | `unpark-live-checkout` | `worktree` | `remote-proof` | 28 | reason `active(<24h)`; prompts 0; remote `unknown`; open PRs 0 | codex first; opencode/jules after packetization | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 21 | `convergence_corpus` | `family` | `family` | 26 | sessions 10; states CLOSED 10; prompts 37 | codex | Promote durable atoms through session-meta and knowledge-corpus. |
+| 22 | `gen-organvm-universal-mail--automation-test-coverage-0625-151e` | `worktree` | `human-gate` | 26 | reason `owner-blocker`; prompts 100; remote `missing`; open PRs 0; receipt `private_patch_preserved` | human/codex-prep | Do not PR or delegate this deletion patch. The branch has no unique commits, no remote branch, no PR, no sparse-checkout configuration, and 167 tracked files deleted from disk while HEAD is an ancestor of origin/main. Treat as stale broken checkout/deletion artifact; reclaim only after operator acceptance, and recreate from origin/main if owner work is needed. |
+| 23 | `heal-cifix-organvm-limen-449-25ce` | `worktree` | `human-gate` | 21 | reason `documented-residue`; prompts 3; remote `not-a-git-dir`; open PRs 0; receipt `documented_non_source_residue` | human/codex-prep | No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass. |
+| 24 | `heal-cifix-organvm-limen-450-ed38` | `worktree` | `human-gate` | 21 | reason `documented-residue`; prompts 3; remote `not-a-git-dir`; open PRs 0; receipt `documented_non_source_residue` | human/codex-prep | No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass. |
+| 25 | `heal-cifix-organvm-limen-450-fc3a` | `worktree` | `human-gate` | 21 | reason `documented-residue`; prompts 3; remote `not-a-git-dir`; open PRs 0; receipt `documented_non_source_residue` | human/codex-prep | No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass. |
 
 ## Delegation Gate
 
