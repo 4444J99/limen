@@ -7399,6 +7399,58 @@ gh run list --repo organvm/universal-mail--automation --branch main --commit cf9
 
 Result: transcript guard passed at 136,866 Sonnet billable tokens; prompt extraction matches row `132`; PR #117 is merged with green PR checks; commit `cf92d84` is on `origin/main`; direct run lookup by `cf92d84` returns no post-merge run; current later UMA state has new open PRs and newer CI drift outside this row.
 
+### Claude's parallel-baking leftovers were diagnostic fragments, not new implementation
+
+Severity: low for code, medium for prompt/session accounting. These two sessions share the same deleted root as row 98 but are not the row-98 credential-wall implementation; one is a useful dead-worktree diagnosis, and the other is a no-answer memory lookup.
+
+Evidence:
+
+- Reconstruction row `133` targets the deleted root `.claude/worktrees/parallel-baking-perlis`, but not the large session `6226cb86-1ef9-4ab7-a8c5-e668da59b071`. That large session was already reviewed as row `98` and should not be double-counted here.
+- Row `133` covers Claude sessions `4cc964aa-1c9d-4b12-bd41-f9781090f2e0` and `65b4e079-01b6-47fd-abd8-1e07772008f4`.
+- Session `4cc...` was prompted with a screenshot: the user typed `/new`, saw a failure, and asked what was going on. It diagnosed the immediate issue as a dead current working directory: an auto-named `.claude/worktrees/hazy-spinning-spark` worktree had already been reaped while the interactive session was still inside it.
+- The same answer separated that dead-cwd symptom from the already-known Claude credential-refresh race. It referenced the existing Rung-0 fix `d8a4295` and told the user the human-gated atom was to isolate fleet credentials with `claude setup-token`.
+- That final `L-CLAUDE-AUTH` wording is now stale. Current `his-hand-levers.json` no longer has `L-CLAUDE-AUTH`; row `98` already records the durable current truth: `d8a4295` plus credential-wall/creds-hydrate ownership.
+- Session `65b4...` is a fragment: the user asked what they had said about getting paid, Claude listed memory/lever/revenue files, and the transcript contains no assistant answer. The queue's no-op classification is correct.
+- Full private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-133-claude-parallel-baking-leftovers-prompts.jsonl`: 20 prompt-surface records, 13 unique prompt hashes, 20,595 prompt bytes. Surfaces are `message.user` 12, `last-prompt` 7, and `queue.enqueue` 1.
+
+Ideal prompt diff:
+
+- Ideal diagnostic form: identify whether the screenshot failure is environment, auth, or repo state; give one actionable local recovery command; avoid inventing new work.
+- Actual form for `4cc...`: mostly correct. It identified the dead worktree and separated it from the standing login race, but it also repeated a lever id that later became stale.
+- Ideal memory-query form: answer the user's "what have I said about getting paid?" question from the listed sources or explicitly stop.
+- Actual form for `65b4...`: no answer was produced after the source listing.
+
+Outcome:
+
+- Credit `4cc...` as a useful diagnostic note, not implementation.
+- Credit `65b4...` as no-op/unanswered.
+- No code or repo diff is attributed to row `133`. The durable credential/login work remains row `98` and commit `d8a4295`.
+
+What was fucked up:
+
+- Same-root grouping can accidentally double-count the large row-98 credential-wall work unless session ids are separated.
+- `65b4...` consumed an expensive Opus session for a memory lookup and produced no final answer.
+- `4cc...` correctly diagnosed the dead worktree, but its final human-atom wording aged poorly because the lever taxonomy moved.
+
+Verification:
+
+```bash
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-parallel-baking-perlis/4cc964aa-1c9d-4b12-bd41-f9781090f2e0.jsonl
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-parallel-baking-perlis/65b4e079-01b6-47fd-abd8-1e07772008f4.jsonl
+python3 - <<'PY'
+import json
+from collections import Counter
+from pathlib import Path
+p = Path('/Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-133-claude-parallel-baking-leftovers-prompts.jsonl')
+rows = [json.loads(line) for line in p.read_text(encoding='utf-8').splitlines() if line.strip()]
+print(len(rows), len({r['prompt_hash'] for r in rows}), sum(r['prompt_bytes'] for r in rows), Counter(r['surface'] for r in rows), Counter(r['session_id'] for r in rows))
+PY
+rg -n "6226cb86|parallel-baking-perlis|L-CLAUDE-AUTH|d8a4295" docs/agent-code-diff-review.md his-hand-levers.json cli/src/limen/dispatch.py scripts/claude-fleet-auth-probe.sh
+git show --stat --oneline d8a4295
+```
+
+Result: both small transcripts pass the transcript guard; prompt extraction matches row `133`; row `98` already covers `6226cb86...`; `L-CLAUDE-AUTH` is not current in `his-hand-levers.json`; `d8a4295` remains the durable auth-race fix on main.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
