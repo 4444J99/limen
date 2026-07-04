@@ -6696,6 +6696,74 @@ test ! -d /Users/4jp/Workspace/limen/.claude/worktrees/fluttering-hugging-bunny
 
 Result: private prompt extraction has `127` records; exact local commit `7ad100f` exists only on local branch `discover-limen-value-2026-06-22`; the remote branch lookup now returns `404`; durable commit `b1e80cf` is on `origin/main`; current `library-preserve.py` contains the FDA-aware split; the live and tracked trusted-cd hooks match and the hook regression test passes; all six `needs-human` issues exist and are open; the old session directory is gone and not a registered worktree.
 
+### Claude's public-record CI-fix session spent heavily on static diagnosis, then stopped before the fix
+
+Severity: high for closeout quality and agent-spend control; medium for the target repository because later work eventually moved the repo forward. This session is a clear prompt-vs-done miss: the task asked for a minimal CI/typecheck repair with verification, but the transcript shows a large static-analysis fan-out, no file edits, no commit, no branch on GitHub, no PR, and no green receipt.
+
+Evidence:
+
+- Review row `121` targets Claude session `c05f8cf3-2a05-4738-88b1-e6514bde04a9`, rooted at `/Users/4jp/Workspace/.limen-worktrees/cifix-a-organvm-public-record-data-scrapper-d4e6`, branch `limen/cifix-a-organvm-public-record-data-scrapper-d4e6`, on 2026-06-19.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-121-claude-public-record-scrapper-ci-prompts.jsonl` (`782` records, `657` unique prompt hashes, `4307564` prompt bytes). It is mirrored in the main checkout's private corpus; no verbatim prompt text is committed here.
+- In redacted intent form, the prompt asked Claude to fix pre-existing CI breakage blocking open PRs in `a-organvm/public-record-data-scrapper`: run the TypeScript/test matrix, make minimal type-only changes, avoid runtime behavior changes, and produce a green verification/PR receipt.
+- The worktree is gone. GitHub has no branch named `limen/cifix-a-organvm-public-record-data-scrapper-d4e6`, and `gh pr list --head limen/cifix-a-organvm-public-record-data-scrapper-d4e6` returns no PRs.
+- A stale local branch with that name exists in one clone, but it has no unique commits over its old merge base and is now `65` commits behind `origin/main`; it is not a durable session patch.
+- The transcript contains no successful file-edit receipts, no commit, no push, and no PR creation. It ends mid-analysis after inspecting package/lockfile data.
+- The session could not run the intended `npm`/`npx` checks in its environment, so it spawned many static-audit subagents instead. One subagent reported "No high-confidence TypeScript errors found"; the main session then hypothesized a `pnpm-lock.yaml` / npm-workspace mismatch as the likely CI root.
+- Later same-task salvage exists as merged PR `organvm/public-record-data-scrapper#289`, but it used a different branch, changed only `scripts/scrapers/ca-ucc-scraper-puppeteer.ts` and `scripts/scrapers/jsdom.d.ts`, and does not match this session's lockfile diagnosis.
+- PR #289 was merged with failed checks: `CI Gate` failed one lead-export route test, and `Secret Scan` failed on a test JWT placeholder. That later salvage is useful context, but it is not a clean fulfillment receipt for this session.
+- Current `main` later became green for the core gates after subsequent work, so the target repository is not currently stuck on this exact failed attempt.
+
+Ideal prompt diff:
+
+- Ideal form: reproduce the failing CI command or inspect the exact GitHub run logs first, identify the concrete failing TypeScript/test surface, make the smallest type-only patch, run the named checks, then push a branch/PR with a green or explicitly blocked receipt.
+- Actual form: the session substituted broad static analysis for CI reproduction, spent heavily on subagent review, found no high-confidence source TypeScript error, guessed a lockfile/workspace cause, and stopped before a patch.
+- Ideal branch form: a task branch should contain the authored delta or be removed/released if no execution occurred.
+- Actual form: the old branch name is misleading: the remote branch is absent, and the local branch points at an old ancestor with no session delta.
+- Ideal salvage form: if another branch finishes the task, it should reference the earlier failed attempt and land with passing required checks.
+- Actual form: PR #289 was a different patch path and merged red, so it explains later movement but does not repair the original session's closeout record.
+
+Outcome:
+
+- Row `121` is classified as analysis-only/no-shipped-work for the original Claude session.
+- The prompt was not fulfilled by that session: no diff, no tests, no PR, no pushed branch, and no durable "green" evidence.
+- A later branch partially addressed related CI/type issues, but that PR was not attributable to this session and was merged with failed checks. The repository's later green mainline state came from subsequent work, not from the reviewed session's own receipts.
+- No additional code mutation was made by this review row. The right follow-up is process-level: when package-manager or CI-environment failure is suspected, agents should read the failing GitHub run first and classify environment blockers before spending large subagent budgets.
+
+What was fucked up:
+
+- The session consumed a very large prompt/subagent surface for a task that needed a narrow CI reproduction and patch receipt.
+- Static audits became a substitute for the actual failing command, even though the task was explicitly about CI breakage.
+- The lockfile diagnosis did not match the later PR #289 failure evidence, where `npm ci` ran and the failure was a route test plus a secret-scan fixture.
+- The branch name survived locally in a stale form, which can make future audits think there was a durable branch artifact when there was not.
+- The later same-task PR repeated the original closeout smell by merging despite failed checks.
+
+Verification:
+
+```bash
+wc -l .limen-private/session-corpus/full-stack-review/session-121-claude-public-record-scrapper-ci-prompts.jsonl
+python3 - <<'PY'
+import json
+from collections import Counter
+from pathlib import Path
+p = Path('.limen-private/session-corpus/full-stack-review/session-121-claude-public-record-scrapper-ci-prompts.jsonl')
+rows = [json.loads(line) for line in p.read_text(encoding='utf-8').splitlines() if line.strip()]
+print(len(rows), len({r['prompt_hash'] for r in rows}), sum(r['prompt_bytes'] for r in rows), Counter(r['surface'] for r in rows))
+PY
+rg -n "No high-confidence TypeScript errors found|Decisive findings|pnpm-lock.yaml|git commit|gh pr create|git push|structuredPatch|updated successfully" /Users/4jp/.claude/projects/-Users-4jp-Workspace--limen-worktrees-cifix-a-organvm-public-record-data-scrapper-d4e6/c05f8cf3-2a05-4738-88b1-e6514bde04a9.jsonl
+git ls-remote --heads https://github.com/a-organvm/public-record-data-scrapper.git 'limen/cifix-a-organvm-public-record-data-scrapper-d4e6' 'cifix-a-organvm-public-record-data-scrapper-d4e6' 'main' 'master'
+gh repo view a-organvm/public-record-data-scrapper --json nameWithOwner,defaultBranchRef,pushedAt,url
+gh pr list --repo organvm/public-record-data-scrapper --state all --head limen/cifix-a-organvm-public-record-data-scrapper-d4e6 --json number,title,state,url,headRefName,headRefOid
+git -C /Users/4jp/Workspace/a-organvm/public-record-data-scrapper rev-parse limen/cifix-a-organvm-public-record-data-scrapper-d4e6 origin/main
+git -C /Users/4jp/Workspace/a-organvm/public-record-data-scrapper rev-list --left-right --count origin/main...limen/cifix-a-organvm-public-record-data-scrapper-d4e6
+gh pr view 289 --repo organvm/public-record-data-scrapper --json number,state,title,url,headRefName,headRefOid,mergedAt,statusCheckRollup,commits,files
+git -C /Users/4jp/Workspace/a-organvm/public-record-data-scrapper show --stat --oneline f37a24a01ca6c1d50892fc970fbbda8dfb5e5ac5
+gh run view 27850623483 --repo organvm/public-record-data-scrapper --log-failed
+gh run view 27850623471 --repo organvm/public-record-data-scrapper --log-failed
+gh run list --repo organvm/public-record-data-scrapper --workflow "CI Gate" --branch main --limit 8 --json databaseId,headSha,status,conclusion,event,createdAt,updatedAt,url,workflowName
+```
+
+Result: the private prompt extraction has `782` records; no remote branch or PR exists for the reviewed branch name; the local branch has no unique session commits and is far behind current `origin/main`; the transcript contains no durable edit/commit/push/PR receipt; PR #289 later merged a different two-file patch with failed checks; current `main` later shows green core gates from subsequent work.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
