@@ -19,8 +19,7 @@ def _write_minimal_arc(root, checked=True, index_done=1):
     work = studium / "music" / "sample"
     work.mkdir(parents=True)
     (studium / "dominant-force.yaml").write_text(
-        "forces:\n"
-        "  wrath: {requirement: pressure, color: '#c0392b', composer_hints: []}\n"
+        "forces:\n  wrath: {requirement: pressure, color: '#c0392b', composer_hints: []}\n"
     )
     (work / "book-01.yaml").write_text(
         "work: sample\n"
@@ -40,8 +39,7 @@ def _write_minimal_arc(root, checked=True, index_done=1):
         f"| 1 | (author) | {status} |\n"
     )
     (studium / "music" / "PLAN.md").write_text(
-        "# Music layer\n\n"
-        f"- [`sample`](sample/PLAN.md) — Sample · {index_done}/1 arcs\n"
+        f"# Music layer\n\n- [`sample`](sample/PLAN.md) — Sample · {index_done}/1 arcs\n"
     )
 
 
