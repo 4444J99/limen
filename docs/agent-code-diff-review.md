@@ -6045,6 +6045,70 @@ gh pr list --repo organvm/session-meta --state open --json number,title,headRefN
 
 Result: private prompt extraction has `1` record; the OpenCode transcript shows no target-repo execution after the rejected `cd`; `tasks.yaml` records OpenCode no-op failures followed by Agy PR #144; PR #144 is now closed and remains red; PR #147 is merged green; PR #143 remains open and intentionally untouched in this row.
 
+### Archive4T Claude run found real truth gaps, then left stale handoffs and unrecoverable owner-board claims
+
+Severity: high for durability/accounting; medium for product direction drift. The session did valuable investigation and created a useful executable `/goal`, but several "fixed/green/shipped" claims did not survive current-state review.
+
+Evidence:
+
+- Queue row `111` points at Claude session `a623c4a9-3776-4d38-a09d-ac26cbf641f1`, rooted at `/Volumes/Archive4T`, running from 2026-06-19T01:21:05Z through 2026-06-21T16:47:46Z.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-111-claude-archive4t-prompts.jsonl` (`304` records: `240` user-message prompts, `59` last-prompt records, and `5` queue enqueue prompts).
+- In redacted prompt-layer form, the run started with a read-only owner-visibility audit in Limen, explicitly saying not to modify anything. It then expanded through exporter/payment-rail repair, owner-board implementation, `/goal` definition, and a prompt-relay handoff.
+- The session surfaced real value: it challenged a premature "100% done" exporter handoff, identified missing provider/build/license proof, recorded the clean-room-over-worktree verification lesson, and left `/Users/4jp/Workspace/GOAL.md` plus `/Users/4jp/Workspace/goal.py` as durable executable status artifacts.
+- The live `/goal` artifact is useful and honest today: `python3 /Users/4jp/Workspace/goal.py` exits nonzero and reports `Verdict NOT DONE`, including owner-visibility, converge-wiring, offsite restore-proof, delivery-gate, and substrate-silence gaps.
+- Exporter work did not land as green current truth. PR #96 (`[limen] Preserve exporter integration-test CI fixes`) preserved two commits from the vanished `bld2-a-i-chat--exporter-integration-tests-a00b` worktree, but its CI run `28289996915` failed with `ReferenceError: navigator is not defined` from `src/i18n.ts` during tests. The branch is now stale behind current `master`.
+- Review closed PR #96 on 2026-07-04T08:35:10Z because it was a stale red lifecycle-preservation PR, not a green exporter fix.
+- Current exporter product direction moved later through PR #107 (`feat(pro): cut checkout + verification from Lemon Squeezy to MONETA (sovereign)`), merged green on 2026-07-02T18:12:18Z. That supersedes the June 20 Lemon Squeezy/KYC handoff assumptions.
+- `/Users/4jp/Workspace/LEMONSQUEEZY-HANDOFF.md` survives and is historically useful, but it is stale as current guidance: it says the code was fully green and the branch was not pushed; later review shows PR #96 was pushed and red, and the product moved to MONETA.
+- Owner-visibility claims were not durable. Claude memory says branch `closeout/owner-visibility` shipped `scripts/board.py --by-owner`, `limen status --owner`, and `scripts/sync-owner-issues.py`, with commits `da245ba`, `0a68308`, and `57698e8`.
+- Current Limen `origin/main` does not contain `scripts/sync-owner-issues.py` or `cli/tests/test_status_owner.py`; the worktree `/Users/4jp/Workspace/.limen-worktrees/closeout-owner-board` is gone; `git cat-file -e` reports all three cited commits as missing from the local object database.
+- The final relay handoff is not safe as a fresh next-agent prompt without review. It carries stale branch facts, stale payment-rail assumptions, and a direct personal identifier that should stay out of public artifacts.
+
+Ideal prompt diff:
+
+- Ideal read-only audit form: answer the owner-visibility question with evidence, then stop or ask for an explicit scope expansion before mutation.
+- Actual form: the session started correctly, but then broadened into multiple product, governance, and relay tasks without a clean artifact boundary.
+- Ideal exporter form: keep "green" reserved for an actually pushed branch or PR with passing CI, and separate local clean-room claims from merge-ready status.
+- Actual form: the handoff and later preservation PR implied more readiness than the red PR #96 supported.
+- Ideal payment-rail form: treat Lemon Squeezy/KYC as a dated option and revise the handoff after MONETA became the merged current direction.
+- Actual form: the surviving handoff remains anchored to the old rail.
+- Ideal owner-board form: land a PR or preserve a patch/branch reference that can be fetched, then cite only commits present in git.
+- Actual form: the session/memory cite three owner-board commits that are not in current refs or the local object database, so the claimed fix is not recoverable from git.
+- Ideal relay form: provide next-agent instructions that distinguish historical facts from current truth and omit direct personal identifiers from public-facing artifacts.
+- Actual form: the relay is useful as a transcript of what Claude believed on June 21, but not as an executable current handoff.
+
+Outcome:
+
+- Row `111` is classified as valuable but unreliable without current-state verification.
+- The most durable outputs are `/Users/4jp/Workspace/GOAL.md`, `/Users/4jp/Workspace/goal.py`, Claude memory notes, and the private prompt corpus.
+- The exporter branch work is historical/cherry-pick material only; PR #96 is now closed.
+- The owner-visibility implementation should be treated as missing, not merely unmerged, unless a later file-history recovery finds the lost branch contents.
+- No local code patch was made by this review pass. The actionable result is truth correction: do not trust the old Lemon Squeezy handoff, the owner-board "shipped" claim, or the relay prompt as current state.
+
+What was fucked up:
+
+- The session mixed read-only audit, product repair, governance implementation, executable goal-setting, and prompt relay into one narrative thread.
+- It used strong "green/done/shipped" language for branch-only or later-red work.
+- It left a historical handoff in a location that looks current.
+- It made owner-board durability claims that cannot be proven from the current git object graph.
+- It generated a relay prompt with stale facts that would mislead a fresh agent unless the agent re-verifies first.
+
+Verification:
+
+```bash
+jq '.changed_review[111]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-111-claude-archive4t-prompts.jsonl
+python3 /Users/4jp/Workspace/goal.py
+ls -l /Users/4jp/Workspace/GOAL.md /Users/4jp/Workspace/goal.py /Users/4jp/Workspace/LEMONSQUEEZY-HANDOFF.md
+gh pr view 96 --repo organvm/a-i-chat--exporter --json number,title,state,closedAt,headRefName,headRefOid,url,statusCheckRollup,files,commits
+gh run view 28289996915 --repo organvm/a-i-chat--exporter --log-failed
+gh pr view 107 --repo organvm/a-i-chat--exporter --json number,title,state,mergedAt,mergeCommit,statusCheckRollup,url,files
+rg -n 'sync-owner-issues|test_status_owner|--by-owner|status --owner' .
+for c in da245ba 0a68308 57698e8; do if git -C /Users/4jp/Workspace/limen cat-file -e "$c^{commit}"; then printf '%s ok\n' "$c"; else printf '%s missing\n' "$c"; fi; done
+```
+
+Result: private prompt extraction has `304` records; `/goal` currently reports `NOT DONE`; PR #96 is closed and was red on the preserved exporter test branch; PR #107 is merged green and changes the current payment rail to MONETA; owner-visibility files are absent from current Limen; cited owner-board commits are missing from the local object database.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
