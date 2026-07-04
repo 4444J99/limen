@@ -142,6 +142,24 @@ parameters:
     self_update: none
     owner: continuity
     note: "Optional explicit Codex session JSONL for current-session fanout. Blank means derive the latest local Codex transcript."
+  LIMEN_ORIENT_TASKS:
+    default: ""
+    env: LIMEN_ORIENT_TASKS
+    self_update: none
+    owner: continuity
+    note: "Optional session-orientation verifier snapshot for tasks.yaml. Blank means the live board is read; predicates set this only to prove generator idempotence against a stable input while dispatch may be moving the live board."
+  LIMEN_ORIENT_GIT_SECTION:
+    default: ""
+    env: LIMEN_ORIENT_GIT_SECTION
+    self_update: none
+    owner: continuity
+    note: "Optional pinned Git summary line for the session-orientation verifier. Blank means read live git state; predicates set this only to avoid confusing live dirty-state changes with generator non-determinism."
+  LIMEN_ORIENT_NO_WRITE:
+    default: "0"
+    env: LIMEN_ORIENT_NO_WRITE
+    self_update: none
+    owner: continuity
+    note: "When 1, session-orient.py prints the digest without refreshing logs/session-orientation.md. Used by idempotence predicates; normal hooks leave it unset."
   LIMEN_MIN_CODEX_PLANNERS:
     default: 10
     env: LIMEN_MIN_CODEX_PLANNERS
