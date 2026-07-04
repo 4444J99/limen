@@ -1,4 +1,5 @@
 import json
+import math
 import os
 import re
 import secrets
@@ -36,17 +37,30 @@ from limen.worktree_debt import worktree_debt_exceeded
 
 
 def _int_or_default(raw: object, default: int) -> int:
-    try:
-        return int(raw)
-    except (TypeError, ValueError):
+    if isinstance(raw, bool):
         return default
+    if isinstance(raw, int):
+        return raw
+    if isinstance(raw, float):
+        return int(raw) if math.isfinite(raw) else default
+    if isinstance(raw, str | bytes | bytearray):
+        try:
+            return int(raw)
+        except ValueError:
+            return default
+    return default
 
 
 def _float_or_default(raw: object, default: float) -> float:
-    try:
-        return float(raw)
-    except (TypeError, ValueError):
+    if isinstance(raw, bool):
         return default
+    if isinstance(raw, int | float | str | bytes | bytearray):
+        try:
+            value = float(raw)
+        except ValueError:
+            return default
+        return value if math.isfinite(value) else default
+    return default
 
 
 def _env_int(name: str, default: int) -> int:
@@ -119,10 +133,12 @@ def _usage_dead_lanes() -> set[str]:
 def _usage_zero(value: object) -> bool:
     if isinstance(value, bool):
         return False
-    try:
-        return float(value) == 0.0
-    except (TypeError, ValueError):
-        return False
+    if isinstance(value, int | float | str | bytes | bytearray):
+        try:
+            return float(value) == 0.0
+        except ValueError:
+            return False
+    return False
 
 
 # Lanes whose CLI authenticates ONLY via an interactive browser OAuth flow — no headless / device-code

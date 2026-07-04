@@ -24,11 +24,20 @@ class BoardCollapseError(RuntimeError):
 
 
 def _int_or_default(raw: object, default: int, *, minimum: int | None = None) -> int:
-    try:
-        if isinstance(raw, bool):
-            return default
+    if isinstance(raw, bool):
+        return default
+    if isinstance(raw, int):
+        value = raw
+    elif isinstance(raw, float):
         value = int(raw)
-    except (TypeError, ValueError):
+    elif isinstance(raw, str | bytes | bytearray):
+        try:
+            value = int(raw)
+        except ValueError:
+            return default
+    else:
+        return default
+    if not math.isfinite(float(value)):
         return default
     if minimum is not None and value < minimum:
         return default
@@ -36,11 +45,14 @@ def _int_or_default(raw: object, default: int, *, minimum: int | None = None) ->
 
 
 def _float_or_default(raw: object, default: float, *, minimum: float | None = None) -> float:
-    try:
-        if isinstance(raw, bool):
+    if isinstance(raw, bool):
+        return default
+    if isinstance(raw, int | float | str | bytes | bytearray):
+        try:
+            value = float(raw)
+        except ValueError:
             return default
-        value = float(raw)
-    except (TypeError, ValueError):
+    else:
         return default
     if not math.isfinite(value):
         return default

@@ -105,11 +105,11 @@ def test_financial_dashboard_surfaces_macro_and_micro_faces(tmp_path: Path, monk
     )
     web_face = module.build_web_dashboard({"entities": []}, {"snapshot_count": 0})
 
-    assert "| Macro Face | `MACRO.md` | Authored" in dashboard
-    assert "| Micro Instance Face | `MICRO.md` | Authored" in dashboard
+    assert "| Macro Face | `MACRO.md` | Deepened" in dashboard
+    assert "| Micro Instance Face | `MICRO.md` | Deepened" in dashboard
     faces = {face["id"]: face for face in web_face["faces"]}
     assert faces["macro"]["path"] == "organs/financial/MACRO.md"
-    assert faces["micro"]["status"] == "authored"
+    assert faces["micro"]["status"] == "deepened"
     assert "MONETA intakes value" in web_face["rail_boundary"]
 
 
