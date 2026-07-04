@@ -10,4 +10,3 @@ def test_ianva_launchd_launcher_avoids_bash4_only_builtins():
 
     assert "mapfile" not in text
     assert "readarray" not in text
-
