@@ -6357,6 +6357,71 @@ gh run list --repo organvm/limen --branch main --limit 8 --json databaseId,workf
 
 Result: private prompt extraction has `92` records; local commits `4effd15..199d01d` exist but are branchless; PR #132 and #154 added 02-07 without visible check rollup; PR #348 rescued 08-21 and passed `pr-gate`; current Canterbury files exist through 21 and validate; PLAN/task completeness remains mismatched.
 
+### Claude made UMA's invariant surface real, but left stale parked-state breadcrumbs after the branch later merged
+
+Severity: medium. This session is a high-value recovery/build session, not a no-op. It preserved a large uncommitted UMA layer, added the goal's tri-state invariant rollup, and current UMA `main` contains that work with green CI. The durable weakness is state hygiene: the session wrote memory/state markers saying the branch was unpushed and awaiting user action; current repo state has since moved on, so those owner surfaces now mislead.
+
+Evidence:
+
+- Queue row `116` points at Claude session `f9156ca6-ac3c-495f-adf6-047dacf9341b`, rooted at `/Users/4jp/Workspace/.home-cartridge/Code/organvm/universal-mail--automation`, spanning 2026-06-15T23:16:06Z through 2026-06-20T16:48:14Z.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-116-claude-uma-invariant-prompts.jsonl` (`295` records: `205` user-message/tool-result records, `81` last-prompt records, and `9` queue enqueue prompts).
+- In redacted intent form, the initial prompt asked for an independent UMA reassessment: do not assume prior claims, do not rely on memory, verify local and remote state, do not use browser mail, do not send or mutate mailboxes/provider accounts, and separate built reality from plans.
+- Later prompts tightened the goal: UMA should keep every item in one of three states, and the operator must not blind-send or fabricate closure. A later collapse prompt explicitly prohibited new files/docs/repos/agents/commits/pushes/deletes and asked for terminal recap only; after that, the user reopened execution with "verify and closeout," "every owner knows of their remaining work?", and "close gaps and then closeout and archive cleanly."
+- The durable UMA commits are real: `aa43ef3` preserved a roughly 16k-line mail-operations layer; `524df42` fixed an MCP test; `5683549` added `core.mail_resolver_receipt.build_invariant_rollup`, `docs/schemas/mail-invariant-rollup-v1.md`, tests, and the `/ops` invariant panel.
+- The branch `feat/operator-dashboard-mail-endzone` is no longer just local: current UMA `main` is merge commit `8ef7ee6` with parent `5683549`, and `origin/main` points at `8ef7ee6`.
+- There is no GitHub PR object for `feat/operator-dashboard-mail-endzone` found by `gh pr list --head feat/operator-dashboard-mail-endzone`; this appears to have been merged directly rather than via the PR action the session parked.
+- Current UMA CI and Deploy are green on `8ef7ee6`; `pages-build-deployment` failed on the same commit with GitHub Pages reporting "Deployment failed, try again later."
+- Local focused invariant tests pass: `python3 -m pytest tests/test_mail_resolver_receipt.py -q` reports `8 passed`. Local full `python3 -m pytest -q` cannot collect in this bare Python 3.13 environment because `googleapiclient` and `stripe` are missing; current GitHub CI is the full-suite receipt.
+- The schema doc named by the queue as `.claude/worktrees/invariant/docs/schemas/mail-invariant-rollup-v1.md` is not present at that transient path now. The durable file is `docs/schemas/mail-invariant-rollup-v1.md` in UMA main.
+- `~/.local/state/universal-mail-automation/reconcile-notes.jsonl` still has two rows: one correctly parking the Counsel/legal reply as `needs_read_only_sent_mail_verification`, and one saying branch `feat/operator-dashboard-mail-endzone` is `parked_awaiting_user_authorization`, `pushed: false`, and "do not push."
+- Claude memory files `uma-mail-ops-state.md`, `styx-surface-packets-branch.md`, and `working-style-finish-dont-sprawl.md` were useful at closeout time, but at least `uma-mail-ops-state.md` and `styx-surface-packets-branch.md` are now time-sensitive and stale against current repo state.
+- The STYX note says a local unpushed branch `surface-packets @ 979e747` awaits author merge. Current `/Users/4jp/styx` is on `limen/merge-surface-packets-738 @ 66fa968`, with that branch pushed to origin and local `main` also at `66fa968` while `origin/main` is still `addae3a`. That is a different state than the memory note describes.
+
+Ideal prompt diff:
+
+- Ideal reassessment form: read-only first, produce a fact matrix, then only implement after the user explicitly reopens execution.
+- Actual form: the session did begin with strong verification and eventually implemented useful code, but it became a five-day cross-owner closeout spanning UMA, STYX, Fleet, Storage, Netmeter, memory, and local state.
+- Ideal invariant form: add the tri-state rollup as code + schema + tests + UI/API exposure, and keep closure impossible without receipts.
+- Actual form: that landed well. The invariant rollup is a strong implementation of the stated goal and avoids blind-send inflation.
+- Ideal owner-state form: when a parked branch later merges, the same owner surface that parked it must be updated or expired.
+- Actual form: the branch is now merged, but `reconcile-notes.jsonl` and memory still say "pushed false / do not push / awaiting PR."
+- Ideal "no memory" form: do not use memory as source of truth for the reassessment; memory may be an output receipt only if it says when it was true and what can drift.
+- Actual form: the session correctly used repo/git/tests for the build facts, but its memory artifacts now need explicit staleness handling.
+
+Outcome:
+
+- Row `116` is classified as valuable and mostly durable.
+- UMA's main product state is materially better because of this work: the preserved mail-ops layer and invariant rollup are merged on `main`.
+- The closeout claim "no sends, no provider writes, no blind closure" is supported by the recorded notes and the invariant design.
+- The stale state markers are now the risk: future agents could see `pushed: false` and "do_not push" even though the branch has already merged.
+- No UMA or STYX mutation was made by this review pass; this row records the drift in the Limen audit doc.
+
+What was fucked up:
+
+- The session started as independent reassessment but expanded into broad multi-owner closeout and local-memory authoring.
+- The queue's changed-file list underrepresents the actual durable work: it names a transient `.claude/worktrees/...` schema path and memory files, while the real UMA branch changed 69 tracked files when merged.
+- The branch-publication lifecycle is hard to reconstruct: no PR object exists, and the parked "push+PR" owner note was never retired after a direct merge.
+- The STYX cleanup crossed repo boundaries in a UMA closeout session; it may have been useful, but it widened the blast radius and created another time-sensitive memory surface.
+- Current GitHub Pages is red on UMA `main`, even though CI and Deploy are green. That should not be represented as "all green."
+
+Verification:
+
+```bash
+wc -l .limen-private/session-corpus/full-stack-review/session-116-claude-uma-invariant-prompts.jsonl
+git -C /Users/4jp/Workspace/.home-cartridge/Code/organvm/universal-mail--automation status --short
+git -C /Users/4jp/Workspace/.home-cartridge/Code/organvm/universal-mail--automation show --stat --oneline aa43ef3 524df42 5683549 8ef7ee6
+git -C /Users/4jp/Workspace/.home-cartridge/Code/organvm/universal-mail--automation show --no-patch --pretty=raw 8ef7ee6
+gh pr list --repo organvm/universal-mail--automation --state all --head feat/operator-dashboard-mail-endzone --limit 20 --json number,title,state,mergedAt,headRefName,baseRefName,mergeCommit,url,statusCheckRollup
+gh run list --repo organvm/universal-mail--automation --branch main --limit 12 --json databaseId,workflowName,headSha,status,conclusion,createdAt,url
+python3 -m pytest tests/test_mail_resolver_receipt.py -q
+python3 -m pytest -q
+sed -n '1,20p' /Users/4jp/.local/state/universal-mail-automation/reconcile-notes.jsonl
+git -C /Users/4jp/styx status --short
+git -C /Users/4jp/styx branch -avv
+```
+
+Result: private prompt extraction has `295` records; UMA working tree is clean; `5683549` is merged into `main` by `8ef7ee6`; no PR object exists for the branch; current UMA CI and Deploy are green while Pages is red; focused invariant tests pass locally; full local pytest is blocked by missing `googleapiclient` and `stripe`; owner-state markers still say the UMA branch is unpushed and parked.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
