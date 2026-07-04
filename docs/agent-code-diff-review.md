@@ -93,6 +93,7 @@ Generated: `2026-07-04T12:24:23Z`
 | changed 135 | `claude` | `97548ebc-22c4-4b1e-a33b-f56452b410ca` | Studium Analects batch. Claude authored useful Analects books 6-11 content locally and claimed a green PR, but the session branch never had a PR and was left local-only, 1084 commits behind. Later PRs #133 and #151 landed books 6-9; books 10-11 stayed stranded until this review salvaged them in `feb30c3` and proved `scripts/studium-validate.py` plus Fleet Gate `28706098796` green. |
 | changed 136 | `codex` | `019f1a99-5cdd-7461-a1c0-2d7524a2cc43` | My Knowledge Base discovery/build-health run. Codex made a useful local external-repo commit (`5198141`) and identified the correct value-tier promotion, but the original worktree is gone, no PR or remote branch exists, and the local branch is now stale behind `origin/master` with conflicts. This review landed the safe Limen-side registry gap by adding `organvm/my-knowledge-base` to `value-repos.json`; the external code diff still needs a current selective port. |
 | changed 137 | `codex` | `019f191a-bf3b-7ab1-b9ef-d76c22c62f47` | Limen CI-green 0622 recovery. Codex manually reconstructed a 17-file lint-stabilization patch after `.git` writes were blocked; the dispatcher turned it into PR #487, which merged, but full CI was not green because `verify` failed after merge on missing web `yaml`. Later PRs #496 and #581 are the durable green CI receipts, not row 137 alone. |
+| changed 138 | `claude` | `33eaebb1-edb0-4b53-b22a-d6925bd980a5` | Public Record Data Scraper revenue readiness. Claude identified async scrape jobs as the highest-leverage first-dollar gap and opened PR #318, which merged green and remains on `main`; the durable code is real. The defects are receipt hygiene: the final/memory claim overstated route-test coverage after a later branch-update commit dropped most route-test changes, commit author metadata used `Test User <test@example.com>`, and the session wrote project memory outside the repo. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -4235,6 +4236,66 @@ gh pr view 581 --repo organvm/limen --json number,title,state,mergedAt,mergeComm
 ```
 
 Result: private prompt extraction matches row `changed 137`; the session worktree is gone; PR #487 merged the row's 17-file patch but full CI concluded failure in `verify` due missing `yaml`; later PRs #496/#581 are the green current CI receipts.
+
+### Claude's public-record revenue-readiness run shipped async scrape jobs, with receipt drift
+
+Severity: medium; product delivery is real, but release/attribution details are messy. This is one of the better outcomes in the review queue: the prompt asked for the single highest-leverage first-dollar gap, and Claude shipped an async scrape job queue that merged green. The remaining gaps are about exact test attribution, commit identity, and private memory truth.
+
+Evidence:
+
+- Queue row `changed 138` points at Claude session `33eaebb1-edb0-4b53-b22a-d6925bd980a5`, rooted in deleted worktree `/Users/4jp/Workspace/.limen-worktrees/rev-organvm-public-record-data-scrapper-revenue-readiness-0626-6d93`, from `2026-06-26T04:20:09Z` through `2026-06-26T04:49:52Z`.
+- First-layer prompt, redacted to intent: complete `REV-organvm-public-record-data-scrapper-revenue-readiness-0626`; in `organvm/public-record-data-scrapper`, find and close the single highest-leverage gap between current product and first-dollar revenue for data-as-a-service / one-off scrape gigs; one focused PR; keep CI green.
+- The verbatim local-only prompt extract is `.limen-private/session-corpus/full-stack-review/session-changed-138-claude-public-record-revenue-readiness-prompts.jsonl`: `137` prompt records, `100` unique prompt hashes, `176,429` prompt bytes, all sourced from `claude-projects`.
+- Claude's transcript identified the missing gap as async scrape jobs: the synchronous `POST /api/scrape/ucc` endpoint could time out on large searches, so paying customers needed a `POST /api/scrape/jobs` enqueue path and `GET /api/scrape/jobs/:jobId` polling path with persisted job state.
+- The useful implementation became PR `organvm/public-record-data-scrapper#318`, `Add async scrape job queue for data-as-a-service revenue`, created at `2026-06-26T04:49:11Z` and merged at `2026-06-27T01:29:52Z`.
+- PR #318's core durable diff added migration `database/migrations/024_scrape_jobs.sql`, rollback `024_down.sql`, `server/services/ScrapeJobService.ts`, `server/__tests__/services/ScrapeJobService.test.ts`, and new job routes inside `server/routes/scrape.ts`.
+- GitHub current `main` still contains the key artifacts: `server/services/ScrapeJobService.ts`, `database/migrations/024_scrape_jobs.sql`, and `server/routes/scrape.ts` are present at `ref=main`.
+- PR #318's repo gates were green: `CI Gate` run `28274424226` passed lint, non-blocking type check, server tests, and production build; `Secret Scan` run `28274424236` passed; `validate-dependencies` run `28274424230` passed.
+- The final transcript claimed `88` test files and `1448` tests with `0` failures. It also claimed both `ScrapeJobService.test.ts` and `scrape.test.ts` coverage.
+- That route-test receipt drifted. Commit `b3529f87` initially modified `server/__tests__/routes/scrape.test.ts` with `235` additions, but branch-update commit `09ca9dd` later removed most of that route-test diff. The final PR file list did not retain a dedicated route-test file for the async job endpoints.
+- The commit author metadata is poor: the core commit `b3529f87` was authored and committed as `Test User <test@example.com>` with Claude as co-author, not the actual repository actor.
+- Claude also wrote project memory outside the repo at `~/.claude/projects/-Users-4jp-Workspace-organvm-public-record-data-scrapper/memory/async_scrape_jobs_revenue_ready.md`. That file now says PR #318 is `OPEN`, which is stale because PR #318 merged on `2026-06-27`.
+- Transcript guard passes for this row: `529,792` billable Sonnet tokens, no Opus billable tokens, no Fable, no subagent fanout, and no configured violations. Still, the run is expensive for a six-file product slice: `15,133,343` cache-read tokens and `183,133` output tokens.
+
+Ideal prompt diff:
+
+- Ideal revenue-readiness form: pick one first-dollar gap, implement it in one focused PR, prove the exact repo gate green, and update any durable memory with the final PR state after merge.
+- Actual form: the product part succeeded and merged green, but the durable receipt overstated route-test coverage and left a stale memory note saying the PR was open.
+- Ideal branch hygiene form: avoid late branch-update commits that introduce unrelated `DEPLOY.md` / web status-dashboard changes into a focused API revenue PR.
+- Actual final PR form: the merged PR contained the async job feature plus branch-update noise, and its commit authorship used placeholder `Test User` metadata.
+
+Outcome:
+
+- Credit row `changed 138` as substantially fulfilled: async scrape jobs were a real first-dollar feature, PR #318 merged, and the repo's named gates were green.
+- Do not credit the exact final receipt as clean. The claimed route test coverage was partially dropped before merge, the private memory is stale, and the commit metadata is wrong.
+- Current product state remains stronger because of the session: the async job service, migration, and scrape route support are still on `main`; later revenue-readiness PRs #333/#334 built on top of this stream.
+
+What was fucked up:
+
+- A "one focused PR" picked up branch-update noise (`DEPLOY.md` and a web status-dashboard test) in addition to the async job work.
+- The final receipt and Claude memory claimed route tests that did not survive as a final PR file.
+- The project memory file is host-local and stale. It records PR #318 as open even though GitHub has it merged.
+- Placeholder commit identity (`Test User <test@example.com>`) weakens auditability for a revenue-critical product change.
+
+Verification:
+
+```bash
+jq '.changed_review[138]' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+jq -s '{records:length, unique_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), task_body_bytes:([.[].task_body_bytes] | add), surfaces:([group_by(.surface)[] | {surface:.[0].surface,count:length}]), kinds:([group_by(.body_kind)[] | {kind:.[0].body_kind,count:length}]), sources:([group_by(.source)[] | {source:.[0].source,count:length}])}' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-changed-138-claude-public-record-revenue-readiness-prompts.jsonl
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace--limen-worktrees-rev-organvm-public-record-data-scrapper-revenue-readiness-0626-6d93/33eaebb1-edb0-4b53-b22a-d6925bd980a5.jsonl
+gh pr view 318 --repo organvm/public-record-data-scrapper --json number,title,state,createdAt,mergedAt,closedAt,headRefName,headRefOid,baseRefName,mergeCommit,files,commits,statusCheckRollup,url
+gh run view 28274424226 --repo organvm/public-record-data-scrapper --json databaseId,name,status,conclusion,headSha,jobs,url
+gh run view 28274424236 --repo organvm/public-record-data-scrapper --json databaseId,name,status,conclusion,headSha,jobs,url
+gh run view 28274424230 --repo organvm/public-record-data-scrapper --json databaseId,name,status,conclusion,headSha,jobs,url
+gh api repos/organvm/public-record-data-scrapper/commits/b3529f87a7943628f98dc07860d555d377d61d61 --jq '{sha, commit:{author:.commit.author, committer:.commit.committer, message:.commit.message}}'
+gh api repos/organvm/public-record-data-scrapper/commits/b3529f87a7943628f98dc07860d555d377d61d61 --jq '.files[] | {filename, status, additions, deletions}'
+gh api repos/organvm/public-record-data-scrapper/commits/09ca9dd800707188ea572364556f3958c30da66b --jq '.files[] | {filename, status, additions, deletions}'
+gh api 'repos/organvm/public-record-data-scrapper/contents/server/services/ScrapeJobService.ts?ref=main' --jq '{sha,size,path}'
+gh api 'repos/organvm/public-record-data-scrapper/contents/database/migrations/024_scrape_jobs.sql?ref=main' --jq '{sha,size,path}'
+gh api 'repos/organvm/public-record-data-scrapper/contents/server/routes/scrape.ts?ref=main' --jq '{sha,size,path}'
+```
+
+Result: private prompt extraction matches row `changed 138`; transcript guard passes; PR #318 merged with green repo gates; current `main` still contains the async job artifacts; receipt drift remains around route-test coverage, placeholder commit identity, and stale host-local Claude memory.
 
 ### Claude domus-genoma CIFIX session failed to fix CI and should have stopped at the permission/spend wall
 
