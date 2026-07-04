@@ -52,6 +52,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import shutil
 import subprocess
@@ -64,11 +65,27 @@ LOGS = ROOT / "logs"
 HOME = Path.home()
 
 GB = 1024**3
-DEBT_CAP_GB = float(os.environ.get("LIMEN_CVSTOS_DEBT_CAP_GB", "5"))  # evictable chat-app cache over this ⇒ over cap
-REAPER_STALE_H = float(os.environ.get("LIMEN_CVSTOS_REAPER_STALE_H", "48"))  # a reaper stamp older than this ⇒ stale
-SCAN_ENTRY_CAP = int(
-    os.environ.get("LIMEN_CVSTOS_SCAN_CAP", "600000")
-)  # bound the walk so a pathological tree can't hang the beat
+
+
+def _env_positive_float(name: str, default: float) -> float:
+    try:
+        value = float(os.environ.get(name, str(default)))
+    except (TypeError, ValueError):
+        return default
+    return value if math.isfinite(value) and value > 0 else default
+
+
+def _env_positive_int(name: str, default: int) -> int:
+    try:
+        value = int(os.environ.get(name, str(default)))
+    except (TypeError, ValueError):
+        return default
+    return value if value > 0 else default
+
+
+DEBT_CAP_GB = _env_positive_float("LIMEN_CVSTOS_DEBT_CAP_GB", 5)  # evictable chat-app cache over this ⇒ over cap
+REAPER_STALE_H = _env_positive_float("LIMEN_CVSTOS_REAPER_STALE_H", 48)  # a reaper stamp older than this ⇒ stale
+SCAN_ENTRY_CAP = _env_positive_int("LIMEN_CVSTOS_SCAN_CAP", 600000)  # bound the walk so a pathological tree can't hang the beat
 
 # Chromium/Electron subdirectories that regenerate on next launch — safe eviction candidates.
 _REGEN_SUBDIRS = {

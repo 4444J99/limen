@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T01:54:11Z`
+Generated: `2026-07-04T02:01:23Z`
 
 ## Scope
 
@@ -40,6 +40,7 @@ Generated: `2026-07-04T01:54:11Z`
 | refreshed 23 | `claude` | `685b48b0-94fa-4537-a327-453a6ba01238` | External `etceter4-revival` winter-build run. Temp extractors are gone, but the revival docs and image-manifest generator survived in `~/Workspace/organvm/etceter4-revival`; fixed the generator so archive folders with nonmatching filename stems are actually inventoried. |
 | refreshed 24 | `claude` | `1cea38f6-3455-4202-9c45-189a9f26d6dc` | Micro Tato initial Godot build. The original worktree game root and scratchpad audio generators are gone; the work was later promoted into standalone `~/Workspace/micro-tato`, which is clean on `main` and passes its current validation gate. Recorded as superseded artifact migration rather than a live patch. |
 | refreshed 25 | `claude` | `71d46003-4cfa-402e-b09e-fe0b99f0c702` | Health office / session-orientation run. Original worktree and temp compacted memory are gone, but health/session-orient code landed on `main` and private chart artifacts remain off-repo; fixed import-time malformed-env crashes in the health organ without exposing private chart content. |
+| refreshed 26 | `claude` | `04d49f5a-c88d-4588-a5d9-90f64d06eacc` | CVSTOS/VVLTVS organ run. Original worktree and temp extractors are gone, but CVSTOS/VVLTVS code landed on `main`; fixed malformed env, manifest-number, and manifest-shape crash paths that violated the organs' fail-open heartbeat contract. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -1614,6 +1615,42 @@ python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/pro
 ```
 
 Result: `10 passed`; malformed-env no-chart run exited 0 and wrote only a temp `chart_present: false` stamp; session-orientation predicate passed with the PII deny-list checks; transcript audit completed with an Opus budget violation.
+
+### CVSTOS/VVLTVS organs trusted local knobs and manifest shape
+
+Severity: medium for heartbeat reliability, low for data exposure.
+
+Evidence:
+
+- Claude session `04d49f5a-c88d-4588-a5d9-90f64d06eacc` built the CVSTOS keeper and VVLTVS public-face organs. The original `.claude/worktrees/feat+cvstos-vvltvs-organs` worktree and temp extractor scripts are gone; the code landed on `main`.
+- Matching landed commits include `ccbe068` for CVSTOS, `63e0f42` for the initial VVLTVS face organ, `3bb3044` for the data-ownership/VENA conduit work, and `a1875d5` for LINKS home registration.
+- Transcript audit reports 396 usage-bearing messages, 2,129,276 billable-ish tokens, 13,761,298 cache-read tokens, 658,152 Opus-class billable-ish tokens, two expensive subagents, and zero agent/workflow calls.
+- The prompt/session contract was fail-open and counts-only: CVSTOS measures host debt without deleting by default, and VVLTVS verifies public face/source integrity without exposing private contents.
+- `scripts/cvstos-organ.py` parsed `LIMEN_CVSTOS_DEBT_CAP_GB`, `LIMEN_CVSTOS_REAPER_STALE_H`, and `LIMEN_CVSTOS_SCAN_CAP` at import time with bare `float(...)` / `int(...)`.
+- `scripts/vvltvs-organ.py` parsed VVLTVS env knobs and manifest freshness numbers with bare numeric casts, then directly indexed manifest `tracks` and `checks` fields. A malformed launchd value or local manifest row could crash the organ before it emitted the fail-open state row.
+
+Repair:
+
+- Added tolerant positive env parsing in CVSTOS.
+- Added tolerant env, numeric manifest, and integer-source parsing in VVLTVS.
+- Made VVLTVS treat non-object SSOT/register documents, non-dict register/face rows, missing locators, and bad word-short source values as absent or `unmeasurable` instead of crashing.
+- Added focused regression tests for malformed env knobs, freshness numbers, register tracks, and face checks.
+
+Touched paths:
+
+- `scripts/cvstos-organ.py`
+- `scripts/vvltvs-organ.py`
+- `cli/tests/test_cvstos_vvltvs_organs.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_cvstos_vvltvs_organs.py -q
+python3 -m py_compile scripts/cvstos-organ.py scripts/vvltvs-organ.py
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-feat-cvstos-vvltvs-organs/04d49f5a-c88d-4588-a5d9-90f64d06eacc --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000 --out /tmp/rank-04d-audit.json
+```
+
+Result: `6 passed`; both scripts compiled; transcript audit completed without guard violations under the widened review limits.
 
 ## Remaining Review Queue
 
