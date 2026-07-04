@@ -73,6 +73,12 @@ def validate_label_list(value: list[str] | None) -> list[str] | None:
     return value
 
 
+def reject_bool_integer(value: Any, field_name: str) -> Any:
+    if isinstance(value, bool):
+        raise ValueError(f"{field_name} must be an integer, not a boolean")
+    return value
+
+
 def validate_url_list(value: list[str] | None) -> list[str] | None:
     if value is None:
         return None
@@ -159,6 +165,11 @@ class TaskCreate(BaseModel):
             raise ValueError(f"status must be one of {', '.join(sorted(VALID_STATUSES))}")
         return v
 
+    @field_validator("budget_cost", mode="before")
+    @classmethod
+    def validate_budget_cost(cls, v: Any) -> Any:
+        return reject_bool_integer(v, "budget_cost")
+
     @field_validator("target_agent")
     @classmethod
     def validate_target_agent(cls, v: str) -> str:
@@ -243,6 +254,13 @@ class AssignmentRequest(BaseModel):
             raise ValueError(f"status must be one of {', '.join(sorted(VALID_STATUSES))}")
         return v
 
+    @field_validator("budget_cost", mode="before")
+    @classmethod
+    def validate_budget_cost(cls, v: Any) -> Any:
+        if v is None:
+            return None
+        return reject_bool_integer(v, "budget_cost")
+
     @field_validator("target_agent")
     @classmethod
     def validate_target_agent(cls, v: str | None) -> str | None:
@@ -290,6 +308,11 @@ class DispatchRequest(BaseModel):
         if v not in VALID_DISPATCH_AGENTS:
             raise ValueError(f"agent must be one of {', '.join(sorted(VALID_DISPATCH_AGENTS))}")
         return v
+
+    @field_validator("limit", mode="before")
+    @classmethod
+    def validate_limit(cls, v: Any) -> Any:
+        return reject_bool_integer(v, "limit")
 
     @field_validator("session_id")
     @classmethod

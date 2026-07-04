@@ -74,7 +74,7 @@ function validateText(value, field, env, { defaultValue = "", max = 2000 } = {})
 
 function validateInteger(value, field, env, { defaultValue = 1, min = 1, max = 100 } = {}) {
   const actual = value === undefined || value === null ? defaultValue : Number(value);
-  if (!Number.isInteger(actual) || actual < min || actual > max) {
+  if (typeof value === "boolean" || !Number.isInteger(actual) || actual < min || actual > max) {
     return validationError(`${field} must be an integer between ${min} and ${max}`, env);
   }
   return { value: actual };

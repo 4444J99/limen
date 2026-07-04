@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T00:04:21Z`
+Generated: `2026-07-04T00:09:33Z`
 
 ## Scope
 
@@ -265,6 +265,38 @@ env LIMEN_ROOT=/Users/4jp/Workspace/limen python3 scripts/agent-code-review-queu
 
 Result: unit test returned `4 passed`; compile passed; full-stack refresh reviewed `125919` prompts and `4375` sessions; queue refresh produced `1778` changed-file candidates and `875` reconstruction roots.
 
+### Task API numeric validation accepted booleans as integers
+
+Severity: medium for API integrity.
+
+Evidence:
+
+- OpenCode session `ses_0f956f11fffepkhlsmcY72qUB3` mapped to `38a976d` (`Security: harden task API validation`) and `47534d5` (`fix: log dispatch reservations durably`).
+- The security hardening added integer bounds for `limit` and `budget_cost`, but Pydantic still coerced `True` to `1` for `DispatchRequest.limit`, `TaskCreate.budget_cost`, and `AssignmentRequest.budget_cost`.
+- The Cloudflare worker had the same drift because `Number(true)` returns `1`, so boolean dispatch limits and assignment costs could pass validation there too.
+
+Repair:
+
+- Added an explicit boolean-integer rejection helper in the FastAPI surface.
+- Applied it before Pydantic coercion for task creation, assignment steering, and dispatch request limits.
+- Updated the worker integer validator to reject boolean inputs before `Number(...)`.
+- Added focused API regressions for boolean `limit` and `budget_cost`.
+
+Touched paths:
+
+- `web/api/main.py`
+- `web/api/tests/test_main.py`
+- `web/worker/src/index.js`
+
+Verification:
+
+```bash
+python3 -m pytest web/api/tests/test_main.py::test_dispatch_rejects_invalid_agent_limit_and_task_id web/api/tests/test_main.py::test_create_task_rejects_malformed_untrusted_fields web/api/tests/test_main.py::test_assign_task_rejects_boolean_budget_cost -q
+npm run check --prefix web/worker
+```
+
+Result: `3 passed`; worker syntax check passed.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -316,6 +348,14 @@ Result: unit test returned `4 passed`; compile passed; full-stack refresh review
 - `cli/tests/test_agent_session_full_stack_review.py:42` covers Codex custom `apply_patch` extraction.
 - `cli/tests/test_agent_session_full_stack_review.py:59` covers Claude mutating-tool extraction.
 - `cli/tests/test_agent_session_full_stack_review.py:73` covers Agy mutating `TargetFile` extraction and read-only exclusion.
+- `web/api/main.py:76` rejects boolean values before integer validation.
+- `web/api/main.py:168` applies strict budget-cost validation to task creation.
+- `web/api/main.py:257` applies strict budget-cost validation to assignment steering.
+- `web/api/main.py:312` applies strict limit validation to dispatch requests.
+- `web/worker/src/index.js:75` rejects boolean integer inputs in the worker adapter.
+- `web/api/tests/test_main.py:559` covers assignment boolean budget rejection.
+- `web/api/tests/test_main.py:903` covers task-create boolean budget rejection.
+- `web/api/tests/test_main.py:921` covers dispatch boolean limit rejection.
 
 ## Remaining Review Queue
 

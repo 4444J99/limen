@@ -556,6 +556,29 @@ def test_assign_task_updates_steering_fields_and_logs(client: TestClient, tmp_pa
     assert "Route through Jules" in task["dispatch_log"][-1]["output"]
 
 
+def test_assign_task_rejects_boolean_budget_cost(client: TestClient, tmp_path: Path) -> None:
+    write_board(
+        tmp_path / "tasks.yaml",
+        [
+            {
+                "id": "LIMEN-011B",
+                "title": "Assignable task",
+                "repo": "4444J99/limen",
+                "target_agent": "any",
+                "priority": "low",
+                "budget_cost": 1,
+                "status": "needs_human",
+                "created": "2026-06-03",
+                "dispatch_log": [],
+            }
+        ],
+    )
+
+    response = client.post("/api/tasks/LIMEN-011B/assign", json={"budget_cost": True})
+
+    assert response.status_code == 422
+
+
 def test_assign_task_respects_token(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     tasks_path = tmp_path / "tasks.yaml"
     write_board(
@@ -877,12 +900,25 @@ def test_create_task_rejects_malformed_untrusted_fields(client: TestClient, tmp_
     )
     assert bad_label.status_code == 422
 
+    bad_budget = client.post(
+        "/api/tasks",
+        json={
+            "id": "LIMEN-SEC-003",
+            "title": "Bad budget",
+            "repo": "4444J99/limen",
+            "target_agent": "jules",
+            "budget_cost": True,
+        },
+    )
+    assert bad_budget.status_code == 422
+
 
 def test_dispatch_rejects_invalid_agent_limit_and_task_id(client: TestClient, tmp_path: Path) -> None:
     write_board(tmp_path / "tasks.yaml", [])
 
     assert client.post("/api/dispatch", json={"agent": "any"}).status_code == 422
     assert client.post("/api/dispatch", json={"agent": "codex", "limit": 101}).status_code == 422
+    assert client.post("/api/dispatch", json={"agent": "codex", "limit": True}).status_code == 422
     assert client.post("/api/dispatch", json={"agent": "codex", "task_id": "../escape"}).status_code == 422
 
 
