@@ -7056,6 +7056,65 @@ PY
 
 Result: the transcript guard fails on total billable, Opus billable, and Opus subagent fanout; the private prompt extraction includes both the `70b7...` strategy root and `ec251...` continuation records; existing public review already credits durable Object Lessons / WriteLens delivery to `ec251...`.
 
+### Claude's /doctor auth session fixed the registry path after first trying to hand auth back to the human
+
+Severity: medium. The durable output is useful and merged, but the session initially violated the user's ownership model by turning auth warnings into chat chores, and it overspent Opus for a small registry/settings repair.
+
+Evidence:
+
+- Reconstruction row `127` targets deleted worktree `.claude/worktrees/giggly-cuddling-quilt`, with Claude sessions `d8dea183-3eae-4d03-af3a-47d272f0a71f` and `9835ef28-c2ff-4cf8-8d47-a26b8cb3ef9b`, plus three subagent transcripts.
+- The first-layer prompt was `/doctor` remediation for invalid Claude permission rules in `/Users/4jp/.claude/settings.json`. The session read the host settings, asked before editing global config, and corrected the force-push ask rules to `Bash(git push* --force*)` and `Bash(git push* -f*)`.
+- The second prompt layer was `/doctor` MCP auth warnings. The bad initial form was to relay auth/OAuth work back to the human in chat. The user corrected that: credentials and login chores belong in owner registries and pinned GitHub homes, not ephemeral chat.
+- After that correction, the session did the right excavation: `ianva` was already owned by issue #262 / `L-IANVA-LOCAL`; the cloud-run claude.ai connector auth class belonged under issue #263 / `L-IANVA-CLOUD`.
+- PR #322 merged at `bae870eb543a9fd67fba8d7e12430710a3afbba3` on 2026-06-25T23:55:03Z. It changed `his-hand-levers.json` and `ianva/upstreams.example.json`, generalized `L-IANVA-CLOUD` from the single Sentry symptom to the whole claude.ai connector "needs authentication" class, and registered the public upstream roster without secret values.
+- GitHub issue #263 was also updated during the session window, with issue events at 2026-06-25T23:49:42Z and PR references from the same work. The issue has later July 2 title/body cleanup, but the June 25 PR is the durable source for this session's registry correction.
+- Full private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-127-claude-giggly-cuddling-auth-prompts.jsonl`: 181 prompt-surface records, 132 unique prompt hashes, 432,709 prompt bytes. Surfaces are `message.user` 147, `last-prompt` 29, and `queue.enqueue` 5.
+
+Ideal prompt diff:
+
+- Ideal `/doctor` settings form: ask once for the host-global mutation, patch the invalid rules, verify the JSON/settings state, then stop.
+- Actual form: the host settings repair was done correctly, but the session then expanded into MCP auth handling.
+- Ideal auth-warning form: classify each warning into an existing owner registry or mint a durable lever/issue only when no owner exists; never make the human the queue by pasting login chores into chat.
+- Actual form: it first tried to hand the human OAuth steps, then corrected itself after pushback, used subagents to locate owner precedent, and landed the right registry/issue/PR output.
+
+Outcome:
+
+- The host-global Claude settings repair is real but lives outside the repo.
+- PR #322 is the repo diff credited to this row. It made `L-IANVA-CLOUD` own the claude.ai connector auth class and added example upstream definitions, with PR Gate green.
+- The missing worktree is acceptable for review because the merged PR, issue event history, current registry state, prompt extraction, and transcript guard provide the durable receipt chain.
+
+What was fucked up:
+
+- The first MCP-auth response reproduced exactly the failure mode the user objected to: login/auth chores were treated as something to paste back to the human instead of routing to the owner graph.
+- The session used broad subagent excavation for what became a small two-file docs/config PR plus one host settings edit.
+- Transcript guard fails: 1,661,398 billable tokens and 1,028,631 Opus billable tokens, exceeding the 750,000 Opus budget.
+- The work used a force-with-lease push after rebase conflict resolution. That is defensible for the PR branch after a rebase, but it increases review sensitivity around unrelated branch ownership.
+
+Verification:
+
+```bash
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-giggly-cuddling-quilt/d8dea183-3eae-4d03-af3a-47d272f0a71f.jsonl
+python3 - <<'PY'
+import json
+from collections import Counter
+from pathlib import Path
+p = Path('/Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-127-claude-giggly-cuddling-auth-prompts.jsonl')
+rows = [json.loads(line) for line in p.read_text(encoding='utf-8').splitlines() if line.strip()]
+print(len(rows), len({r['prompt_hash'] for r in rows}), sum(r['prompt_bytes'] for r in rows), Counter(r['surface'] for r in rows), Counter(r['session_id'] for r in rows))
+PY
+gh pr view 322 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+gh issue view 263 --repo organvm/limen --json number,title,state,labels,updatedAt,url
+git show --stat --oneline bae870eb543a9fd67fba8d7e12430710a3afbba3
+python3 - <<'PY'
+import json
+from pathlib import Path
+obj = json.loads(Path('/Users/4jp/.claude/settings.json').read_text())
+print([x for x in obj.get('permissions', {}).get('ask', []) if 'git push' in str(x) or 'force' in str(x)])
+PY
+```
+
+Result: transcript guard fails only on Opus budget; prompt extraction matches row `127`; PR #322 is merged with PR Gate success; current host settings contain the corrected force-push ask rules.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
