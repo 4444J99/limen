@@ -6422,6 +6422,72 @@ git -C /Users/4jp/styx branch -avv
 
 Result: private prompt extraction has `295` records; UMA working tree is clean; `5683549` is merged into `main` by `8ef7ee6`; no PR object exists for the branch; current UMA CI and Deploy are green while Pages is red; focused invariant tests pass locally; full local pytest is blocked by missing `googleapiclient` and `stripe`; owner-state markers still say the UMA branch is unpushed and parked.
 
+### Claude's LIMEN-060 wrapper run produced a useful prototype, but the shipped lifecycle is still open and red
+
+Severity: high. The prompt asked Claude to complete `LIMEN-060` in `a-organvm/organvm-engine`: implement MCP tool wrappers for all five organvm CLIs, using issue #89 and a Jules session as references. The original Claude session did not ship that work. It generated a local implementation in a deleted worktree, could not run tests or ruff, did not commit, and ended by asking the human to run validation. A later salvage PR exists, but that PR is still open, issue #89 is still open, and the PR head is stale/red.
+
+Evidence:
+
+- Queue row `117` points at Claude session `9008fe91-9e8d-418e-8817-690c91c7dda0`, rooted at `/Users/4jp/Workspace/.limen-worktrees/limen-060-61b7`, spanning 2026-06-18T15:52:52Z through 2026-06-18T16:04:52Z.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-117-claude-organvm-engine-mcp-prompts.jsonl` (`114` records).
+- In redacted intent form, the prompt was: complete `LIMEN-060`, implement MCP tool wrappers for all five organvm CLIs in `a-organvm/organvm-engine`, and use GitHub issue #89 plus the Jules session as references.
+- Claude could not read the issue during the original session: `gh issue view 89 --repo a-organvm/organvm-engine` was blocked by the approval layer. The current issue is still open, has no comments, and was last updated on 2026-04-26.
+- The original session guessed the scope as the "5 foundational organvm CLIs": `registry`, `governance`, `seed`, `metrics`, and `dispatch`.
+- The final Claude answer claimed it built module-local wrappers under `src/organvm_engine/{registry,governance,seed,metrics,dispatch}/mcp_tools.py` plus five matching test files. It also explicitly said tests were unverified and that it "held off committing since execution/commit weren't authorized."
+- Transcript receipts show every `python`/`pytest`/`ruff` attempt was blocked with `This command requires approval`, and the final `git status --short` step showed the work existed only as untracked files in the transient worktree.
+- The transient worktree no longer exists, so the original per-module implementation is not a durable repo artifact unless reconstructed from the transcript.
+- A later PR does exist: organvm-engine PR #112, `[limen LIMEN-060] feat: implement MCP tool wrappers for all 5 organvm CLIs`, opened against `main` from `limen/limen-060-4a78`.
+- PR #112's remote head is `bee899a`, not the current local `b4522f0`. Both commits carry the same 861-line MCP patch shape, but local `b4522f0` is replayed on top of newer main commit `1388726`, while the PR still points at the older remote head.
+- The salvage implementation is architecturally different from Claude's final text: it uses a consolidated `src/organvm_engine/mcp/tools.py` and `src/organvm_engine/mcp/__init__.py`, plus `tests/test_mcp_tools.py`, rather than five per-module `mcp_tools.py` files.
+- PR #112 is still open and mergeable, but its checks are red: CI failed, CLA Assistant failed, and only release draft, secret scan, and spec compliance passed.
+- The earlier CI failure included a pre-existing `W293` in `src/organvm_engine/git/status.py`; newer main fixed that class of breakage, but the PR branch was not updated on GitHub.
+- Current local focused tests on the rebased branch pass with `PYTHONPATH=src python3 -m pytest tests/test_mcp_tools.py -q`: `30 passed in 0.17s`.
+- Current local style checks on the rebased branch still fail. `python3 -m ruff check src/organvm_engine/mcp tests/test_mcp_tools.py` reports import sorting in `tests/test_mcp_tools.py`, and `python3 -m ruff format --check src/organvm_engine/mcp tests/test_mcp_tools.py` says all three MCP files would be reformatted.
+
+Ideal prompt diff:
+
+- Ideal scoped-reference form: read issue #89 and the Jules session first, then implement the exact CLI set named by those receipts.
+- Actual form: issue access was blocked and Claude guessed the five-CLI scope from local docs. That guess may be reasonable, but it is still an inference.
+- Ideal implementation lifecycle: create the wrappers, run the focused tests and repo style checks, commit, push, open/update a PR, and tie the PR back to issue #89.
+- Actual Claude lifecycle: generated code only, no test execution, no ruff execution, no commit, no PR, no issue update.
+- Ideal salvage lifecycle: if another agent later rescues the task, it must preserve the receipt chain and close the previous local-only state by landing a clean PR.
+- Actual salvage lifecycle: PR #112 exists, but it diverges architecturally from Claude's final description, remains red/stale, and has not closed issue #89.
+- Ideal branch hygiene: the branch GitHub reviews should be the same branch state that local verification validates.
+- Actual state: local `b4522f0` has newer-main fixes and passing focused tests, while PR #112 still reviews remote `bee899a` with old failed checks.
+
+Outcome:
+
+- Row `117` is classified as a useful prototype plus partial salvage, not completed work.
+- The original Claude session itself did not ship anything durable. Its "completed" wording is contradicted by its own unverified/no-commit caveats.
+- PR #112 is the durable salvage artifact, but it is not merge-ready: open issue, open PR, failed checks, stale remote head, CLA failure, and style failures on the locally rebased branch.
+- No organvm-engine mutation was made by this review pass. Updating PR #112 would require a deliberate branch cleanup and probably a non-fast-forward PR refresh, which should be handled as a separate repair action.
+
+What was fucked up:
+
+- The dispatch environment allowed file edits but blocked all execution and commit steps, which turns "complete task" into "generate unverified local code."
+- Claude asked a scoping question through an interactive tool, got blocked/dismissed, then guessed and kept going; the final answer did flag the scope assumption, but the task state did not preserve that uncertainty as a blocker.
+- The queue row recorded `git_root: null` even though the transcript had a `cwd` inside a named worktree and a `gitBranch`. That made the original local diff harder to trace and likely contributed to losing the transient implementation.
+- The later salvage PR fixed durability partially, but did not close the lifecycle: the PR is stale/red, the issue is open, and local verification is for a different commit than the PR head.
+- The branch changes architecture from per-module wrappers to a consolidated MCP namespace without a recorded ideal-vs-actual design decision.
+- Static review was treated as near-completion even though both pytest and ruff were explicitly unrun.
+
+Verification:
+
+```bash
+wc -l .limen-private/session-corpus/full-stack-review/session-117-claude-organvm-engine-mcp-prompts.jsonl
+rg -n "Complete task LIMEN-060|held off committing|This command requires approval|git status|Tests are unverified" /Users/4jp/.claude/projects/-Users-4jp-Workspace--limen-worktrees-limen-060-61b7/9008fe91-9e8d-418e-8817-690c91c7dda0.jsonl
+gh issue view 89 --repo a-organvm/organvm-engine --json number,state,title,url,createdAt,updatedAt,comments
+gh pr view 112 --repo a-organvm/organvm-engine --json number,state,title,url,headRefName,baseRefName,headRefOid,mergeable,statusCheckRollup
+git -C /Users/4jp/Workspace/a-organvm/organvm-engine rev-parse HEAD origin/limen/limen-060-4a78 origin/main
+git -C /Users/4jp/Workspace/a-organvm/organvm-engine log --oneline --left-right --cherry-pick origin/limen/limen-060-4a78...HEAD
+git -C /Users/4jp/Workspace/a-organvm/organvm-engine diff --name-status origin/main...HEAD
+PYTHONPATH=src python3 -m pytest tests/test_mcp_tools.py -q
+python3 -m ruff check src/organvm_engine/mcp tests/test_mcp_tools.py
+python3 -m ruff format --check src/organvm_engine/mcp tests/test_mcp_tools.py
+```
+
+Result: private prompt extraction has `114` records; issue #89 is open with no comments; PR #112 is open at `bee899a` with failed CI and CLA; local branch `b4522f0` carries the same MCP patch replayed onto newer main; focused tests pass locally; ruff/import-format checks still fail on the local MCP files.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
