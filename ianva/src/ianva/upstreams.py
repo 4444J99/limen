@@ -96,8 +96,10 @@ def _coerce(name: str, raw: dict) -> Upstream:
 
     disabled = _as_bool(raw.get("disabled"), default=False)
     enabled = _as_bool(raw.get("enabled"), default=not disabled)
-    oauth = _as_bool(raw.get("oauth"), default=False) or _as_bool(raw.get("requiresOAuth"), default=False) or bool(
-        raw.get("authProviderType")
+    oauth = (
+        _as_bool(raw.get("oauth"), default=False)
+        or _as_bool(raw.get("requiresOAuth"), default=False)
+        or bool(raw.get("authProviderType"))
     )
 
     return Upstream(
