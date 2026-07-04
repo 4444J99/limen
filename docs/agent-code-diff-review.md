@@ -96,6 +96,7 @@ Generated: `2026-07-04T12:24:23Z`
 | changed 138 | `claude` | `33eaebb1-edb0-4b53-b22a-d6925bd980a5` | Public Record Data Scraper revenue readiness. Claude identified async scrape jobs as the highest-leverage first-dollar gap and opened PR #318, which merged green and remains on `main`; the durable code is real. The defects are receipt hygiene: the final/memory claim overstated route-test coverage after a later branch-update commit dropped most route-test changes, commit author metadata used `Test User <test@example.com>`, and the session wrote project memory outside the repo. |
 | changed 139 | `claude` | `61d8b1ae-6d3b-4b87-b992-7fab59ce36e7` | Edu-organism closing-half course-engine run. A private teaching/email triage session grew into edu-organism engine work and shipped PR #48: live-date verifier, term-bound inactivity-agent dates, grounded reply drafter, advising memory, tests, and generated course artifacts. The code survived on `main`, but the session blew the Opus cap, merged with no GitHub checks, and the queue's six-file slice understated the final 15-file PR. |
 | changed 140 | `opencode` | `ses_108a8bf16ffegslVYyDJTjKuCQ` | Divine Comedy batch run. The prompt asked for the next bounded Divine Comedy batch, validation, and one green PR. OpenCode instead wrote local books `05-94` while never running `git` or `gh`; no session PR or final receipt exists. Durable `main` only has books `05-17`, with `05-13` already merged before the session and `14-17` merged later through PR #164. |
+| changed 141 | `claude` | `5b3f1a8a-a89e-47d0-9b7e-9482c8e47080` | Merge-authority / permission-ping run. Claude turned recurring permission and branch-ownership pain into a real merge-policy fix: PR #214 stopped `BLOCKED` and `UNKNOWN` GitHub merge states from being treated as clear, and current `main` has the semantics. The defects are process-grade: the session burned 2.84M Opus billable tokens, the first merged predicate had a macOS Bash 3.2 empty-array false-pass bug later fixed by PR #223, and the final closeout was accurate for the session PR but too broad as a global backlog-owner claim. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -8839,6 +8840,61 @@ python3 scripts/studium-validate.py
 ```
 
 Result: private prompt extraction has `1` record; OpenCode DB proves the initial dirty summary had `210` diff entries, direct writes created Divine Comedy pairs from `book-05` through `book-94`, and no git/PR command ran; PR #103 and PR #164 are merged but only carry books `05-17`; current `origin/main` contains Divine Comedy through `17`; current validation passes.
+
+### Claude's merge-authority run fixed false CLEARs, then needed a Bash compatibility follow-up
+
+Severity: high for merge safety and spend discipline; low for current code risk because the follow-up fix is already on `main`. The row is valuable because it caught a real release-safety bug: the merge-policy predicate could report `CLEAR` even when GitHub said a PR was `BLOCKED` or `UNKNOWN`. The session's own release was not the final-stable version, though; PR #223 had to correct a Bash 3.2 empty-array crash that made no-`--repo` invocations falsely exit `0`.
+
+Evidence:
+
+- Queue row `changed_review[141]` points at Claude session `5b3f1a8a-a89e-47d0-9b7e-9482c8e47080`, rooted in deleted worktree `/Users/4jp/Workspace/limen/.claude/worktrees/hazy-spinning-spark`, from `2026-06-24T15:39:54Z` through `2026-06-24T17:28:23Z`.
+- First-layer prompt class, redacted to intent: stop repeated permission/ping friction around trusted Python/git/bash flows, make Claude own branch defaults and merge-readiness discipline instead of handing it back to the user, then close the session only when hanging tasks had durable owners.
+- The verbatim local-only prompt extract is `.limen-private/session-corpus/full-stack-review/session-changed-141-claude-merge-authority-prompts.jsonl`: `234` prompt-surface records, `174` unique prompt hashes, `262,873` prompt bytes. Surfaces are `message.user` `177`, `last-prompt` `56`, and `queue.enqueue` `1`. This is one record above the queue's `233` `prompt_events` count because the extract preserves the queue enqueue prompt-bearing surface.
+- The original worktree is gone, and the job temp files listed by the queue are gone. `~/.claude/hooks/allow-trusted-cd-git.sh` still exists, but the durable hook hardening is already covered by earlier rows; this row's durable code review should center on merge-policy ownership.
+- PR `organvm/limen#214`, `fix(merge-policy): never CLEAR on BLOCKED/UNKNOWN merge states (+ regression test)`, merged at `2026-06-24T17:04:20Z` with merge commit `95f945f`. Its durable diff touched `CLAUDE.md`, `scripts/merge-policy.sh`, `scripts/tests/merge-policy.test.sh`, and `scripts/verify-whole.sh`.
+- PR #214's checks were green: `python`, `pr-gate`, `worker`, and `web` passed. Current `origin/main` contains the topic patch after squash, and the focused merge-policy test suite now passes.
+- Later PR `organvm/limen#223`, `fix(merge-policy): bash 3.2 empty-array crash under set -u (false exit 0)`, merged at `2026-06-25T03:25:35Z` with green checks. That PR fixed a macOS Bash 3.2 bug introduced or left unhandled by the #214-era implementation: expanding an empty array under `set -u` crashed at the first `gh` call when no `--repo` was supplied, and a trailing pipe masked the crash as a successful `0` exit.
+- Transcript guard fails hard on spend: `2,840,679` billable Opus tokens, above both the `2,000,000` total billable and `750,000` Opus caps. There were no expensive subagents; the overrun was the main session.
+- The final closeout answer was mostly accurate for the row's own PR: no uncommitted diffs, #214 merged, no background jobs, and the worktree could be closed. The broader "remaining tasks all have owners" shape relied on memory/lever surfaces and should not be read as proof that the PR backlog itself was globally clean.
+
+Ideal prompt diff:
+
+- Ideal permission-pain response: convert repeated approval pings into a narrowly bounded trusted-command hook and settings proof, then keep dangerous tails under normal approval.
+- Actual form: useful, but already reviewed elsewhere; this session also mixed permission repair with branch governance, merge policy, backlog ownership, memory, and closeout in one long Opus run.
+- Ideal merge-authority response: make the predicate fail closed for GitHub `BLOCKED`, `UNKNOWN`, and unavailable states; test the macOS shell version used on the host; run the predicate both with and without explicit `--repo`.
+- Actual form: PR #214 fixed the core semantic bug and added regression coverage, but the implementation was not complete until PR #223 fixed the Bash 3.2 no-repo false pass.
+- Ideal closeout form: distinguish "this PR is merged and this worktree is clean" from "all future or adjacent backlog has durable owners."
+- Actual form: the first claim was supported; the second was too broad for the evidence captured in the session.
+
+Outcome:
+
+- Credit row `changed 141` for finding and fixing a real merge-safety defect. A predicate that clears blocked or unknown merge states is dangerous, and #214 corrected that core behavior.
+- Do not credit row `changed 141` as final-stable merge-policy implementation by itself. The stable current behavior depends on #223's Bash 3.2 compatibility fix.
+- Treat the standing-grant memory as useful operational context, not as a proof surface for backlog closure. The durable proof surfaces are merged PRs, current tests, and the focused predicate commands.
+
+What was fucked up:
+
+- The session was far too expensive for a permission/merge-policy repair: 2.84M Opus billable tokens, no subagent fanout, and no budget gate stop.
+- The prompt stream kept broadening from approval friction to branch defaults, merge authority, backlog ownership, memory, and closeout. The model did useful work, but the session shape encouraged "one more invariant" instead of a small PR plus receipt.
+- The initial merged fix did not cover the host shell's empty-array behavior. That is exactly the class of local-runtime compatibility bug this repo's predicates should catch before merge.
+- Temp and scratch artifacts disappeared, so the only reliable review surfaces are the transcript, private prompt extract, GitHub PRs, and current `main`.
+- The final "safe to close" answer blurred two scopes: closing the Claude session was reasonable; declaring the adjacent task universe owned was not fully proven.
+
+Verification:
+
+```bash
+jq '.changed_review[141]' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+jq -s '{records:length, unique_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), task_body_bytes:([.[].task_body_bytes] | add), surfaces:([group_by(.surface)[] | {surface:.[0].surface,count:length}]), kinds:([group_by(.body_kind)[] | {kind:.[0].body_kind,count:length}])}' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-changed-141-claude-merge-authority-prompts.jsonl
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-hazy-spinning-spark/5b3f1a8a-a89e-47d0-9b7e-9482c8e47080.jsonl
+gh pr view 214 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+gh pr view 223 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+bash scripts/tests/merge-policy.test.sh && bash -n scripts/merge-policy.sh scripts/tests/merge-policy.test.sh scripts/verify-whole.sh
+git cherry origin/main 07fa56f46f817fa5d989f8f67b63b80b27af89eb
+git merge-base --is-ancestor 95f945fb44db7966789b3ff165f62da1221b5802 origin/main
+for p in /Users/4jp/.claude/hooks/allow-trusted-cd-git.sh /Users/4jp/.claude/jobs/5b3f1a8a/tmp/allow-trusted-cd-git.sh /Users/4jp/.claude/jobs/5b3f1a8a/tmp/project-settings.json /Users/4jp/.claude/jobs/5b3f1a8a/tmp/scan_perms.py /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/memory/merge-authority-standing-grant.md /Users/4jp/Workspace/limen/.claude/worktrees/hazy-spinning-spark/scripts/merge-policy.sh; do test -e "$p" && printf 'exists %s\n' "$p" || printf 'missing %s\n' "$p"; done
+```
+
+Result: private prompt extraction has `234` records; transcript guard fails on spend only; PR #214 is merged and its topic patch is present on current `origin/main`; PR #223 is merged and supplies the Bash 3.2 compatibility correction; current merge-policy tests and syntax checks pass; the original worktree and job temp files are gone, while the standing-grant memory file remains host-local.
 
 ## Remaining Review Queue
 
