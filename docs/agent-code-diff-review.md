@@ -7,6 +7,7 @@ Generated: `2026-07-04T14:05:34Z`
 - Input queue: `docs/agent-code-review-queue.md` plus private queue metadata under `.limen-private/session-corpus/full-stack-review/`.
 - Review method: start from high-risk prompt/session rows, reconstruct the matching git window, inspect the actual code diff, and record concrete implementation findings.
 - Redaction boundary: no raw prompt bodies are included here; prompt bodies remain in the ignored private corpus.
+- Recording flow: append the new row(s) here, then ship the append through a PR — `scripts/ship-docs.sh agent-review "docs: review <slug> run" docs/agent-code-diff-review.md` — never a direct commit to `main` (charter § Merge & Branch Protocol, "No side doors").
 
 ## Reviewed Windows
 

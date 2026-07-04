@@ -1080,6 +1080,13 @@ parameters:
     owner: tabularius
     note: "Master gate for the enactment advisory (scripts/enactment-audit.py --check) run each beat by metabolize.sh section 0d. It proves every parameters.yaml flag declaring a fleet_runtime intent is actually LIVE: the WIRING rung checks the beat resolves the flag to the declared value (catches the #576 dark-switch — declared ON, wired nowhere), the LIVENESS rung checks the running daemon started AFTER its last wiring change (catches wired-but-not-kickstarted, since a `while true` loop never re-sources itself). verify-whole.sh enforces the wiring rung as a HARD gate so 'done' can never again go green on a dark switch; this beat advisory surfaces live-host liveness in the log (never chat), like creds-hydrate --verify. Set 0 to silence."
 
+  LIMEN_CENSOR_ISSUES_APPLY:
+    default: "0"               # SAFE CODE DEFAULT — dry-run; ships observable-before-autonomous (the LIMEN_CENSOR_APPLY constitutional pattern). NO fleet_runtime yet: arming is deliberately a human act.
+    env: LIMEN_CENSOR_ISSUES_APPLY
+    self_update: none
+    owner: censor
+    note: "Arms scripts/sync-censor-issues.py — the censor→GitHub mirror that makes the system's own findings part of the public graph. When 1, every live `warning` residual in logs/censor-residual.json gets exactly one open `censor`-labelled issue (marker `<!-- censor:<id> -->`), auto-closed with a citation when the lineage clears; a HUMAN close is a veto, respected forever; creations capped per pass (--cap, default 8); stamps logs/censor-issues.json. Wired in heartbeat-loop.sh (C_CENSOR lane, after insight-route) and metabolize.sh 5b — both dry-run until armed, so the plan is observable in the beat log first. WHEN ARMING: set 1 in the daemon env AND add fleet_runtime: \"1\" here in the same change, so enactment-audit.py locks it live (the #576 dark-switch lesson — never a note that claims what no rung checks)."
+
   LIMEN_INSIGHT_ROUTE_APPLY:
     default: "0"               # SAFE CODE DEFAULT — a bare manual run is a dry-run; the FLEET arms it (see note)
     env: LIMEN_INSIGHT_ROUTE_APPLY

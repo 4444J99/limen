@@ -136,6 +136,10 @@ if [ "${LIMEN_INSIGHT_CADENCE:-1}" = "1" ]; then
   # (LIMEN_INSIGHT_ROUTE_APPLY=1); board echoes are skipped, new tasks capped per pass.
   LIMEN_INSIGHT_ROUTE_APPLY="${LIMEN_INSIGHT_ROUTE_APPLY:-1}" \
     python3 "$LIMEN_ROOT/scripts/insight-route.py" | tail -3 || echo "  (insight-route skipped)"
+  # Mirror live censor residuals → public `censor` GitHub issues (auto-open/auto-close, capped).
+  # Observable before autonomous: dry-run until LIMEN_CENSOR_ISSUES_APPLY=1 arms it.
+  python3 "$LIMEN_ROOT/scripts/sync-censor-issues.py" \
+    $([ "${LIMEN_CENSOR_ISSUES_APPLY:-0}" = "1" ] && echo --apply) | tail -3 || echo "  (censor-issues skipped)"
 fi
 
 # ── 6. self-improve (LOW cadence) — the last rung of the self-* ladder ──

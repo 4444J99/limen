@@ -215,6 +215,19 @@ Authoritative and permanent. Claude **owns the branch cadence and the merge deci
 
 One PR per branch → `main`. Squash-merge, delete the branch. `main` is the trunk **and** the live deploy source.
 
+**No side doors — docs included.** The branch cadence applies to *every* tracked change, including
+one-file docs appends (the `docs: review … run` class, which was landing as direct `main` commits —
+35 of 40 at its worst). Ship those with **`scripts/ship-docs.sh <slug> "<msg>" <file…>`**: it stages
+only the named files onto a fresh branch cut from `origin/main` in a throwaway worktree (your
+checkout is never touched), opens the PR, and self-merges the moment `merge-policy.sh` clears —
+one command, so the PR path is never harder than the side door. The system's own findings are
+githubbed the same way: **`scripts/sync-censor-issues.py`** (beat-wired, dry-run until
+`LIMEN_CENSOR_ISSUES_APPLY=1` arms it) mirrors live censor residuals to public `censor`-labelled
+issues and auto-closes them when the lineage clears — so insight→correction work arrives as an
+issue and leaves as a PR that cites it. Machine board writes (`tasks.yaml` via the keeper/worker)
+are the one sanctioned direct-push lane; blanket branch protection stays a lever (#257) for exactly
+that reason.
+
 **Merge authority (standing grant).** Claude merges its own PRs into `main` *without asking*, the moment they are green and mergeable. Do not defer routine merges to the human operator. The grant has exactly one guardrail.
 
 **The website guardrail.** A merge to `main` **auto-deploys** the live public site/API — but *only* when the diff touches a deploy-trigger path:
