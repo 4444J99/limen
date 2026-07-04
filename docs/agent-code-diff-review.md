@@ -5984,6 +5984,67 @@ PYTHONPATH=cli/src python3 -m pytest cli/tests/test_dispatch_engine.py::test_run
 
 Result: private prompt extraction has `1` record; PR #398 merged and the pydantic install fix is on `origin/main`; the original failing Auto-Scaler run failed exactly on missing `pydantic`; current import probe and focused dispatch test pass; latest scheduled Auto-Scaler run is green; stale duplicate PR #400 is now closed; dropped stash `2281fd62...` is still inspectable at review time.
 
+### OpenCode did not reach session-meta; Agy PR #144 was a stale red duplicate and has been closed
+
+Severity: high for dispatch attribution; medium for code risk. The prompt asked for a security-hardening pass in `organvm/session-meta`, but the OpenCode session stayed in the Limen checkout, stopped when the target-repo `cd` was rejected, and never produced the requested audit, validation patch, build, or PR. Later board healing credited the same task to a different Agy PR that was red and deleted core ingestion files.
+
+Evidence:
+
+- Queue row `110` points at OpenCode session `ses_0ee421bbeffeFCrzoLj43q9lDZ`, titled `Security hardening pass on organvm/session-meta`, rooted at `/Users/4jp/Workspace/limen`, running on 2026-06-29T04:58:05Z through 2026-06-29T05:03:05Z.
+- OpenCode database metadata: model `north-mini-code-free`, cost `0`, 693,209 input / 211 output / 2,647 reasoning tokens.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-110-opencode-session-meta-security-prompts.jsonl` (`1` record).
+- In redacted intent form, the prompt asked OpenCode to complete `GEN-organvm-session-meta-security-0629`: run the ecosystem audit for `organvm/session-meta`, upgrade or pin high-severity advisories, add input validation at the main untrusted-input entrypoints, open a PR, and keep the build green.
+- The session started in `/Users/4jp/Workspace/limen`, searched `tasks.yaml`, then searched for a `session-meta` checkout with broad shell commands. Its final target command was `cd /Users/4jp/Workspace/session-meta && ls -la && git status`; OpenCode recorded that command as rejected, and the session ended immediately after it.
+- No `npm audit`, `pip-audit`, dependency pin, validation patch, local build, or PR was produced by this OpenCode session.
+- The queue's row-110 changed-file list is therefore ambient/misaligned Limen drift, not an authored `session-meta` diff from this session.
+- Current `tasks.yaml` marks `GEN-organvm-session-meta-security-0629` as `done` with labels including `noop`, but its log says two OpenCode reserves failed as no-op, then Agy opened PR #144, and `heal-dispatch` marked the task done because the PR was open.
+- PR #144 (`limen/gen-organvm-session-meta-security-0629-0ee3`) contained one commit, `5096ece`, with `93` additions and `3,134` deletions across `23` files. It deleted most of `ingest/adapters/*`, `ingest/manifest.py`, `ingest/redact.py`, `ingest/registry.py`, `ingest/schema.py`, and `tests/test_federated_friction.py`.
+- PR #144 CI was red: run `28357906908` failed on `test (3.10)` because `make lint` had no rule; Python 3.11 and 3.12 jobs were cancelled.
+- Review closed PR #144 on 2026-07-04T08:30:31Z with a factual stale/unsafe generated-output note.
+- Later narrow security-stream work landed through PR #147 on 2026-06-30T15:15:43Z. That PR changed only `ingest/adapters/opencode.py`, merged as `e6fc771`, and passed all CI matrix jobs for Python 3.10, 3.11, and 3.12.
+- PR #143 remains open on `fix/security-hardening-0629`; it is a long-lived broad branch with 300k+ added lines and current local `ingest/manifest.jsonl` drift in `/Users/4jp/Workspace/session-meta`. This review did not close or mutate it because it needs a separate branch-specific audit.
+
+Ideal prompt diff:
+
+- Ideal repo-targeting form: enter the actual `organvm/session-meta` checkout or fail with a durable no-op receipt before touching or claiming work.
+- Actual OpenCode form: stayed in the Limen checkout, used broad search commands, then stopped at a rejected `cd` into the target repo.
+- Ideal security form: run `npm audit` / `pip-audit` / equivalent, make a minimum input-validation or advisory fix, run the repo checks, and open exactly one green PR.
+- Actual task-completion form: no audit, no patch, no build, and no PR from OpenCode.
+- Ideal healing form: a no-op OpenCode result should remain failed/retryable until a later agent lands a green, scoped PR.
+- Actual healing form: the board treated the mere existence of PR #144 as done even though the PR was red and removed core implementation files.
+- Ideal attribution form: credit PR #147's narrow green change to the later Jules/security stream, not to OpenCode row `110`.
+
+Outcome:
+
+- Row `110` is classified as a failed/no-op OpenCode session.
+- Review action: closed stale unsafe PR #144.
+- No local code patch was made by this review pass. The remaining `session-meta` risk is open PR #143 and the broader population of stale generated PRs in that repo.
+
+What was fucked up:
+
+- The OpenCode session could not operate outside the Limen root and lacked a fallback that cloned/fetched the target repo or recorded a precise blocker.
+- It spent nearly all of its tiny output budget on broad repository search rather than a direct target-repo setup path.
+- The dispatcher/healer confused "PR exists" with "work is done," even when the PR was red and destructive.
+- `tasks.yaml` has no durable URL for the PR under `urls`, leaving the misleading evidence only in `dispatch_log`.
+- The changed-file attribution for the row was polluted by unrelated Limen drift, which would have hidden the fact that OpenCode made no `session-meta` change.
+
+Verification:
+
+```bash
+jq '.changed_review[110]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-110-opencode-session-meta-security-prompts.jsonl
+sqlite3 /Users/4jp/.local/share/opencode/opencode.db "select datetime(s.time_created/1000,'unixepoch'), s.directory, s.title, s.version, s.agent, s.model, s.cost, s.tokens_input, s.tokens_output, s.tokens_reasoning from session s where s.id='ses_0ee421bbeffeFCrzoLj43q9lDZ';"
+sqlite3 /Users/4jp/.local/share/opencode/opencode.db "select id, message_id, datetime(time_created/1000,'unixepoch'), substr(data,1,800) from part where session_id='ses_0ee421bbeffeFCrzoLj43q9lDZ' order by time_created, id limit 20;"
+sed -n '69880,70080p' tasks.yaml
+gh pr view 144 --repo organvm/session-meta --json number,title,state,closedAt,url,statusCheckRollup,files,commits
+gh run view 28357906908 --repo organvm/session-meta --log-failed
+git -C /Users/4jp/Workspace/session-meta show --stat --oneline --decorate --find-renames 5096ece7b5683b4afeb4f46e82597672f92c1090
+gh pr view 147 --repo organvm/session-meta --json number,title,state,mergedAt,url,mergeCommit,statusCheckRollup,files,commits
+gh pr list --repo organvm/session-meta --state open --json number,title,headRefName,updatedAt,statusCheckRollup,url
+```
+
+Result: private prompt extraction has `1` record; the OpenCode transcript shows no target-repo execution after the rejected `cd`; `tasks.yaml` records OpenCode no-op failures followed by Agy PR #144; PR #144 is now closed and remains red; PR #147 is merged green; PR #143 remains open and intentionally untouched in this row.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
