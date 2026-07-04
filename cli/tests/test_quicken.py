@@ -35,3 +35,51 @@ def test_breathe_numeric_env_falls_back(monkeypatch, capsys):
     quicken.breathe([], "all", dry=True)
 
     assert "within cap=1" in capsys.readouterr().out
+
+
+def test_hang_residue_does_not_refresh_unchanged_human_ask(tmp_path, monkeypatch):
+    quicken = _load()
+    tasks = tmp_path / "tasks.yaml"
+    atom = "land the credential/secret (your account/identity)"
+    title = "Audit Codex handoff and validate token-accountin"
+    context = (
+        f"Cheapest path \u2192 {atom}. Unblocks: {title}. "
+        "Auto-hung by QUICKEN (finish-not-park); refreshes each beat until you act."
+    )
+    before = f"""version: '1.0'
+tasks:
+- id: ASK-quicken-credential
+  title: {atom}
+  type: ops
+  target_agent: human
+  priority: high
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - user-ask
+  - quicken-residue
+  - needs-human
+  urls: []
+  context: "{context}"
+  depends_on: []
+  created: '2026-06-26'
+  updated: '2026-07-04T19:36:24.651929Z'
+  dispatch_log: []
+"""
+    tasks.write_text(before, encoding="utf-8")
+    monkeypatch.setattr(quicken, "LEDGER", tasks)
+
+    result = quicken.hang_residue(
+        [
+            {
+                "state": "STALLED",
+                "title": title,
+                "decision": {"residue": atom},
+            }
+        ]
+    )
+
+    assert result["created"] == []
+    assert result["refreshed"] == []
+    assert result["homed"] == [f"{atom} \u2192 ASK-quicken-credential"]
+    assert tasks.read_text(encoding="utf-8") == before

@@ -442,6 +442,7 @@ def hang_residue(rows: list[dict]) -> dict:
         lf = load_limen_file(LEDGER)
         index = {t.id: t for t in lf.tasks}
         now = datetime.now(timezone.utc)
+        changed = False
         for k, info in sorted(by_key.items()):
             if k in _POSTURE:
                 res["homed"].append(f"{info['atom']} → {_POSTURE[k]}")
@@ -453,10 +454,22 @@ def hang_residue(rows: list[dict]) -> dict:
             )
             ex = index.get(tid)
             if ex and ex.status != "done":
-                ex.status, ex.context, ex.updated = "needs_human", ctx, now
+                refreshed = False
+                if ex.status != "needs_human":
+                    ex.status = "needs_human"
+                    refreshed = True
+                if ex.context != ctx:
+                    ex.context = ctx
+                    refreshed = True
                 if "quicken-residue" not in (ex.labels or []):
                     ex.labels = list(ex.labels or []) + ["quicken-residue"]
-                res["refreshed"].append(tid)
+                    refreshed = True
+                if refreshed:
+                    ex.updated = now
+                    changed = True
+                    res["refreshed"].append(tid)
+                else:
+                    res["homed"].append(f"{info['atom']} → {tid}")
             elif ex is None:
                 lf.tasks.append(
                     Task(
@@ -472,8 +485,10 @@ def hang_residue(rows: list[dict]) -> dict:
                         updated=now,
                     )
                 )
+                changed = True
                 res["created"].append(tid)
-        save_limen_file(LEDGER, lf)
+        if changed:
+            save_limen_file(LEDGER, lf)
     return res
 
 
