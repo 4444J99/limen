@@ -2367,6 +2367,70 @@ python3 scripts/claude-workflow-guard.py audit-transcript ~/.claude/projects/-Us
 
 Result: all listed PRs are merged; funding file contains `ko_fi: 4444j99`; credential tests passed `23 passed`; dialog check reports `ALL CLEAR`; transcript guard fails on Opus budget.
 
+### Claude netmode session delivered a useful private network tool, but left live-source drift and CI/provenance gaps
+
+Severity: high; live host networking, private connectivity data, and account-level GitHub surfaces.
+
+Evidence:
+
+- Claude session `adc51b7d-2651-4fc1-9caa-b3c698803e0e` spans 2026-06-16T10:40:02Z through 2026-06-24T17:16:17Z, rooted at `/Users/4jp` and later `/Users/4jp/Library/Application Support/netmeter`.
+- Queue row `45` reports 31 changed paths across code, config, docs, and GitHub metadata. The prompt stream had 1,249 prompt events and included private hotspot/config material, so this tracked row records redacted prompt-layer findings only.
+- Prompt-layer evolution:
+  - First layer started as emergency troubleshooting: the user could not use the phone hotspot and wanted the laptop to prefer the phone connection over Starlink.
+  - It then expanded into product pressure: build an interface/suite for choosing policies, round-robin/failover modes, usage metering, home/away behavior, and "seamless" policy.
+  - On 2026-06-16 the user explicitly put the lane into collapse mode: no new files, docs, repos, agents, commits, pushes, or deletes; the session complied by returning a 10-field terminal recap and stopping.
+  - On 2026-06-24 the user later gave a separate broad instruction to build out the full GitHub repo lifecycle, including branches, rules, discussions, issues, and PRs.
+- Durable repo state exists at private repo `4444J99/netmode`: default branch `main`, private, issues and discussions enabled, squash merge only, delete-branch-on-merge enabled, PR #18 merged 2026-06-24T16:11:43Z.
+- Git history in the live repo has two pushed commits: `ad24dc64e4a0d9b651c14b06b66499eca3e3087c` initial full repo scaffold and `ed299cb4ce6e9c2a4a5dbdb130f6ee51de74940d` adding `netmode version`.
+- Releases exist for `v1.5.0` and `v1.6.0`; `v1.6.0` is the latest release.
+- Branch protection on `main` requires PR flow and linear history and blocks force-push/delete. Required status checks are intentionally null because issue #9 records Actions billing as the external blocker.
+- Current live checkout is not clean: `netmode.sh` has 151 lines of uncommitted post-release drift. The drift moves defaults toward observe-only safety, gates background switching behind `BACKGROUND_SWITCHING=1`, adds `netmode stop`, and recycles long-lived clients on gateway change. Its file mtime is after the reviewed Claude session, so it is current live state, not evidence of that session's final pushed state.
+- Current docs have a stale public-facing marker: `README.md` badge still says version `1.5.0` while `VERSION`, tag, release, and `netmode version` report `1.6.0`.
+
+Ideal prompt diff:
+
+- Ideal form for the early support prompts: restore connectivity, identify whether the broken path was USB tether, Wi-Fi hotspot, Starlink, DNS, or netmode automation, and leave a low-risk status command.
+- Actual early outcome: the session did root-cause USB tether instability vs. phone Wi-Fi stability, shipped a keep-alive, made iPhone/Starlink policy explicit, and verified local selftests.
+- Ideal form for the suite prompts: build the smallest host-owned control surface that makes policy visible and reversible, with live host changes separated from source artifacts.
+- Actual suite outcome: it built a large Bash/Python policy engine, UI wrapper, launchd agents, metering, sensing, and repo scaffolding in the live Application Support directory. This worked, but source and runtime state still cohabit the same tree.
+- Ideal form for the later GitHub lifecycle prompt: create a private repo with a deny-by-default tracking surface, prove one branch-to-PR-to-release loop, and record any external blockers.
+- Actual GitHub outcome mostly matched: private repo, allowlisted tracked files, PR #18, issues, labels, milestones, discussions, releases, and branch protection exist. The gap is that CI is present but blocked, and the README version badge was not updated after v1.6.0.
+
+Outcome:
+
+- The session created a genuinely useful personal network controller: `netmode.sh`, `netui.py`, wrappers, config example, launchd integration, usage tracking, selftests, docs, and GitHub lifecycle surfaces.
+- Private/runtime data was mostly handled correctly: `config` is ignored, `config.example` is sanitized, and the repo is private by design.
+- The local tool is currently healthier than the release state in one respect: current uncommitted source selftests pass `66 passed, 0 failed`, including observe-mode safety added after v1.6.0.
+- The published lifecycle is real but not fully green: PR #18 merged, releases exist, issue #9 tracks CI as billing-blocked, and GitHub check rollup still shows failed CI check runs from the blocked workflow.
+
+What was fucked up:
+
+- This was an eight-day mega-session that combined live network repair, OS setting changes, daemon launchd state, private credentials/config data, product design, GitHub repo creation, branch protection, issue management, and memory updates.
+- The session originally treated a live runtime directory as the source tree. The deny-by-default `.gitignore` reduced blast radius, but the architecture still mixes source, logs, mode files, usage data, LaunchAgent-owned state, and local config under one path.
+- The first-layer prompt contained private hotspot/password/phone material. The agent correctly avoided tracking the secret config, but the review pipeline must continue to keep raw prompts in private artifacts and redact tracked/public summaries.
+- CI was described as locally green but the public proof surface is a failed GitHub check rollup. The issue correctly records the billing blocker, but consumers looking only at PR #18 see red CI.
+- Release/docs drift exists: `README.md` still advertises `version-1.5.0` despite v1.6.0 being the latest release.
+- Transcript guard failed badly: 1,952 usage-bearing messages, 10,143,632 billable-ish tokens, 205,323,231 cache-read tokens, and 9,963,533 Opus billable-ish tokens. The session did valuable work, but not at an acceptable default cost.
+
+Verification:
+
+```bash
+git -C "/Users/4jp/Library/Application Support/netmeter" status --short --branch
+git -C "/Users/4jp/Library/Application Support/netmeter" log --date=iso-strict --pretty=format:'%H%x09%ad%x09%s' --all --decorate
+bash -n netmode.sh netmeter.sh
+python3 -m py_compile netui.py
+bash netmode.sh version
+bash netmode.sh selftest
+plutil -lint "$HOME/Library/LaunchAgents/com.user.netmeter.plist"
+gh pr view 18 --repo 4444J99/netmode --json number,state,mergedAt,mergeCommit,title,url,headRefName,baseRefName,statusCheckRollup
+gh release list --repo 4444J99/netmode --limit 5
+gh issue view 9 --repo 4444J99/netmode --json number,title,state,body,labels,url
+gh api repos/4444J99/netmode/branches/main/protection --jq '{required_pull_request_reviews,required_linear_history,allow_force_pushes,allow_deletions,required_status_checks}'
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp/adc51b7d-2651-4fc1-9caa-b3c698803e0e.jsonl
+```
+
+Result: current live checkout is `main...origin/main` with `M netmode.sh`; current syntax and Python compile pass; `netmode version` prints `1.6.0`; current selftest passes `66 passed, 0 failed`; LaunchAgent plist lints OK; PR #18 is merged; `v1.6.0` is latest; issue #9 is open and records the billing-blocked CI gate; branch protection has PR review and linear-history controls but no required status checks; transcript guard fails on billable and Opus budgets.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
