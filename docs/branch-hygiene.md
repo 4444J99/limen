@@ -14,129 +14,129 @@ Resolve each: open a PR and land it, or delete the branch by hand if the intenti
 These heads had a MERGED PR but the local branch has newer commits not on `main`.
 Push them as a follow-up PR, or delete if the extra commits are throwaway.
 
-- `chore/pii-containment-limen-scrub` — 59a109c chore(security): correct PII-containment doctrine — surgical-by-default, no unique work deleted
-- `docs/cred-durability-lever` — b37c9ec docs(levers): L-FLEET-CAPACITY owns the live-checkout-drift heal inline — no phantom 'tracked separately'
-- `docs/pii-doctrine-correction` — 24efc96 chore(security): record PII-containment as EXECUTED (process-and-redact)
-- `feat/vigilia-nohardcode-gate` — b94e124 feat(vigilia): wire organ-health VIGILIA rung + heartbeat stamp (build #4)
-- `fix/ianva-secret-redaction` — c67b988 fix(ianva): write enableBearerAuth explicitly — loopback /mcp was 401ing every agent
-- `heal/conductor-restart-2026-06-16` — d012d75 limen: close the torn-write race + make the fleet visible (money view)
-- `worktree-ianva-doorway` — f4c0c07 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
-- `worktree-linear-conjuring-bear` — 92c21f2 chore(gitignore): ignore .wrangler/ cache at any depth, not just web/worker
+- `chore/pii-containment-limen-scrub` — 59a109c8 chore(security): correct PII-containment doctrine — surgical-by-default, no unique work deleted
+- `docs/cred-durability-lever` — b37c9ec2 docs(levers): L-FLEET-CAPACITY owns the live-checkout-drift heal inline — no phantom 'tracked separately'
+- `docs/pii-doctrine-correction` — 24efc964 chore(security): record PII-containment as EXECUTED (process-and-redact)
+- `feat/vigilia-nohardcode-gate` — b94e1242 feat(vigilia): wire organ-health VIGILIA rung + heartbeat stamp (build #4)
+- `fix/ianva-secret-redaction` — c67b9889 fix(ianva): write enableBearerAuth explicitly — loopback /mcp was 401ing every agent
+- `heal/conductor-restart-2026-06-16` — d012d759 limen: close the torn-write race + make the fleet visible (money view)
+- `worktree-ianva-doorway` — f4c0c076 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
+- `worktree-linear-conjuring-bear` — 92c21f2e chore(gitignore): ignore .wrangler/ cache at any depth, not just web/worker
 
 ## Live-work branches (114) — decide each
 
-- `_pr198` — 4cd0dba fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
-- `capture/main-2026-07-02T01-03-35Z` — 71b4885 capture: off-disk sync 2026-07-02T01:03:35Z (main behind origin → side ref, HEAD untouched)
-- `capture/main-2026-07-02T18-41-47Z` — eaca451 capture: off-disk sync 2026-07-02T18:41:47Z (main behind origin → side ref, HEAD untouched)
-- `capture/main-2026-07-03T18-23-54Z` — b53f0ab capture: off-disk sync 2026-07-03T18:23:54Z (main behind origin → side ref, HEAD untouched)
-- `capture/main-2026-07-04T18-44-48Z` — bdc71ec capture: off-disk sync 2026-07-04T18:44:48Z (main behind origin → side ref, HEAD untouched)
-- `deepen/tao-te-ching-ch6-10` — 6bbd51f limen: promote organvm/domus-genoma to ranked value tier
-- `discover-carrier-wave-zeitgeist-thesis-value` — fe4f763 limen: discover corpus-mythicum, promote to ranked tier
-- `discover-limen-value-2026-06-22` — 7ad100f capture: autonomic off-disk sync 2026-06-23T13:19:40Z
-- `feat/bhagavad-gita-arcs-5-8` — 13a810c feat(studium): author metamorphoses books 2 and 3 arcs
-- `feat/censor-monthly-tier` — a89dd04 censor: add MONTHLY cadence (2592000s) to TIER_SECONDS
-- `feat/studium-deepen-bhagavad-gita` — b79d0fa studium: deepen bhagavad-gita — chapters 2-4 (3 arcs)
-- `feat/studium-deepen-mahabharata-books-5-8` — fd8dbae studium: deepen mahabharata — parvas 5-8 (Udyoga, Bhishma, Drona, Karna)
-- `feat/studium-deepen-metamorphoses-batch-1` — 2bf8011 limen: REV-organvm-a-i-chat--exporter-revenue-launch-post-0623 done
-- `feat/studium-deepen-quran` — 2bf8011 limen: REV-organvm-a-i-chat--exporter-revenue-launch-post-0623 done
-- `feat/studium-film-beowulf` — 799a27f limen: studium-film-tanakh done — existing companion verified on origin/main (PR #116)
-- `feat/studium-film-canterbury-tales` — b79d0fa studium: deepen bhagavad-gita — chapters 2-4 (3 arcs)
-- `feat/studium-film-divine-comedy` — ab82b47 feat: Divine Comedy film companion
-- `feat/studium-film-quran` — 6c70956 limen: studium-film-metamorphoses done — 10 films validated across 9 forces
-- `feat/studium-film-tanakh` — d8c703e feat: studium-film-tanakh (covenant/law/exile companion)
-- `feat/vltima-organ-engine` — fe3e5eb fix(ci): clear ruff E702/E703 in test_sync_reclaim.py — unjams the merge backlog
-- `feat/walls-auto-regen` — 990a39d feat(heartbeat): auto-regenerate the credential + his-hand Walls every 12 beats
-- `feature/ORG-education-organ-face-0630` — 9d17479 feat(education): author polished macro and micro face for education organ
-- `feature/tale-of-genji-chapters-2-5` — 50a31de studium: author Tale of Genji chapters 2-5
-- `fix/616-format` — e020757 style: ruff format test_corpus_command_center.py (CI format-check gate)
-- `fix/heartbeat-refresh-web-wedge` — 0a51202 fix(heartbeat): stop refresh-web piping into tail — it wedges the daemon (regression reintroduced in loop refactor)
-- `heal/608-declare-param` — a63e6db chore(governance): declare LIMEN_WORKSPACE_UNIT_TIMEOUT_SEC for preserve_workspace()
-- `heal/ci-ruff-semicolons` — 04b0509 fix(ci): clear ruff E702/E703 in test_sync_reclaim.py — unjams the merge backlog
-- `heal/health-office-staged-0625` — ff43850 health office — the executive health office (autopoietic; PII strictly off-repo)
-- `heal/marker-and-tcc-registry-2026-06-24` — e6248bd heal: swallow Claude Code's benign install_failed update marker (false ⚠ on /doctor)
-- `limen/csf-caeb31d8-plan-10-b131e64c-38bd` — 705fcee limen: record current-session private boundary packet
-- `limen/gen-organvm-limen-docs-0624-0129` — e454a60 Real usage docs for organvm/limen
-- `limen/gen-organvm-limen-docs-0624-32e1` — 0aea514 limen: GEN-organvm-limen-docs-0624 — accurate Usage docs from real CLI
-- `limen/gen-organvm-limen-docs-0624-525d` — 5683c27 Real usage docs for organvm/limen
-- `limen/gen-organvm-limen-docs-0624-6fc0` — 4c7453a docs(usage): derive accurate CLI usage from actual entrypoints
-- `limen/gen-organvm-limen-docs-0625-4261` — d98ada7 Real usage docs for organvm/limen
-- `limen/gen-organvm-limen-docs-0625-86a3` — 2ba9c11 Real usage docs for organvm/limen
-- `limen/gen-organvm-limen-docs-0625-9c44` — 83e805e Real usage docs for organvm/limen
-- `limen/gen-organvm-limen-docs-0625-db1d` — 44b3958 Real usage docs for organvm/limen
-- `limen/gen-organvm-limen-security-0624-a9e5` — 0d705fe security: harden input validation across API and CLI models
-- `limen/gen-organvm-limen-security-0625-57ce` — 02f256e Security hardening pass on organvm/limen
-- `limen/gen-organvm-limen-security-0625-b412` — bd88bf7 docs(security): audit results for organvm/limen hardening pass
-- `limen/gen-organvm-limen-security-0626-b91f` — 569a4eb limen: mark security task blocked on PR gate
-- `limen/gen-organvm-limen-simplify-0624-901a` — 0d9c414 Reduce complexity in organvm/limen — refactor dispatch.py
-- `limen/gen-organvm-limen-test-coverage-0625-0153` — cb166bd Raise test coverage in organvm/limen
-- `limen/gen-organvm-limen-test-coverage-0625-1c32` — dc89769 test(nomenclator): add 37-case unit suite for INDEX·NOMINVM enforcer
-- `limen/gen-organvm-limen-typing-0622-9eb5` — c60bc17 refactor(types): tighten the most-imported limen modules — kill capacity.py's any hotspot
-- `limen/gen-organvm-limen-typing-0627-ccac` — d280f1d fix: tighten types in limen's most-imported modules
-- `limen/gh-organvm-limen-262-0a16` — 3ebc05c docs(levers): L-IANVA-LOCAL — launchd plist staged, ONE command to bootstrap (#262)
-- `limen/gh-organvm-limen-352-b4c3` — 18129a4 fix(cli): type-modernization — PEP 604 syntax and TypedDict definitions
-- `limen/org-governance-organ-deepen-0628-90ee` — 3b2001f feat: operationalize cvrsvs-honorvm rule as executable validator
-- `limen/org-governance-organ-deepen-0703-9f8e` — 6d48601 governance: enforce publication-policy convergence
-- `limen/org-governance-organ-selffeed-0701-ba0f` — 3b9baf0 limen: close governance organ self-feed task
-- `limen/org-health-organ-kernel-0630-e4e0` — 2564cd7 Add health organ kernel
-- `limen/org-health-organ-kernel-0704-59fd` — c3d9167 health: sync KERNEL.md to completed scaffold (authority contract + posture sequence + build plan)
-- `limen/org-health-organ-kernel-0704-decb` — 74a158a docs: advance health organ kernel
-- `limen/org-health-organ-kernel-0704-e61b` — b08caed health: complete organ kernel scaffold sync
-- `limen/org-legal-organ-charter-0703-0899` — b8eb571 limen: complete legal organ charter
-- `limen/org-legal-organ-charter-0704-0b2a` — 5dbc0e8 docs: harden legal organ charter
-- `limen/org-legal-organ-firstslice-0703-c244` — 05cad7d legal: add first counsel-review matter slice
-- `limen/org-legal-organ-kernel-0630-a5e5` — 6c301f3 limen: map legal organ kernel
-- `limen/org-legal-organ-kernel-0701-e535` — 3dcb37c organs: refine legal kernel flagship
-- `limen/org-legal-organ-kernel-0704-a80b` — 1800caa chore(legal): bump legal organ maturity to 25% (KERNEL.md authored)
-- `limen/org-legal-organ-kernel-0704-c763` — ac60fff legal: author KERNEL.md mapping domain-neutral kernel to legal domain
-- `limen/org-social-organ-firstslice-0703-1c71` — a2fa6ad organs/social: ship first slice
-- `limen/org-social-organ-firstslice-0703-6fb5` — 4e69933 feat(social): add first koinonia slice
-- `limen/org-social-organ-firstslice-0703-edcd` — 0fbca3f social: ship koinonia first slice
-- `limen/studium-deepen-aeneid-e6cf` — fcee5d4 feat(studium): Aeneid Books 4-8 arcs and essays (desire/sacrifice/revelation/war)
-- `limen/studium-deepen-analects-78fa` — d5d8c19 feat(studium): Analects books 9-11 music arcs + essays (ascent/memory/salvation)
-- `limen/studium-deepen-beowulf-4918` — 99fb771 feat(studium): Beowulf fitts 2–6 — force-matched arcs + essays
-- `limen/studium-deepen-canterbury-tales-c640` — 76bb9f6 feat(studium): add Canterbury Tales tales 2-5 (Knight, Miller, Reeve, Cook)
-- `limen/studium-deepen-conference-of-birds-2584` — 377bd8b feat(studium): Conference of the Birds sections 2–6 — assembly phase arcs
-- `limen/studium-deepen-gilgamesh-57a4` — 6120605 Gilgamesh — tablets 2..12 (11 arcs)
-- `limen/studium-deepen-gilgamesh-dfa8` — d41f002 Gilgamesh — tablets 2..12 (11 arcs)
-- `limen/studium-deepen-heike-d8fc` — 0da64c7 Tale of the Heike — books 2..12 (11 arcs)
-- `limen/studium-deepen-mahabharata-bc93` — 0c5fe0f Mahabharata — parvas 2..18 (17 arcs)
-- `limen/studium-deepen-quran-5b8b` — 302ca7f Qur'an — suras 5–10 (6 arcs)
-- `limen/studium-deepen-quran-a6fe` — 0d6f113 feat(studium): author Qur'an suras 2-5 in force-matched arcs format
-- `limen/studium-deepen-ramayana-10fe` — 638a4f1 Ramayana — kandas 2..7 (6 arcs)
-- `limen/studium-deepen-ramayana-267f` — 58cfa60 Ramayana — kandas 2..7 (6 arcs)
-- `limen/studium-deepen-ramayana-93fe` — 3005554 Ramayana — kandas 2..7 (6 arcs; Ayodhya→Aranya→Kishkindha→Sundara→Yuddha→Uttara = exile→forest→alliance→quest→war→return)
-- `limen/studium-deepen-ramayana-ae60` — 4e0290f Ramayana — kandas 2..7 (6 arcs)
-- `limen/studium-deepen-tale-of-genji-0ce7` — c01d098 feat(studium): Tale of Genji chapters 2–5 — early loves arc (force-matched + essays)
-- `limen/studium-deepen-tanakh-2fbf` — 75201c6 Tanakh — books 2..39 (38 arcs; Torah · Nevi'im · Ketuvim)
-- `limen/studium-deepen-tanakh-3953` — f7bf5c4 Tanakh — books 2..39 (38 arcs; Torah · Nevi'im · Ketuvim)
-- `limen/studium-deepen-tanakh-60ca` — a17fde2 Tanakh — books 2..39 (38 arcs; Torah · Nevi'im · Ketuvim)
-- `limen/studium-deepen-tanakh-ba2e` — 60330fe Tanakh — books 2..39 (38 arcs; Torah · Nevi'im · Ketuvim)
-- `limen/studium-film-bhagavad-gita-3c09` — a869452 Bhagavad Gita film companion (right action/renunciation)
-- `limen/studium-film-conference-of-birds-0330` — 63aee55 Conference of the Birds film companion (the seven valleys/fanā)
-- `limen/studium-film-heike-01af` — 11f603a Tale of the Heike film companion (mono no aware)
-- `limen/studium-film-mahabharata-017c` — b2e94d1 Mahabharata film companion (dharma/war)
-- `limen/studium-film-mahabharata-2deb` — acca9eb Mahabharata film companion (dharma/war)
-- `limen/studium-film-metamorphoses-9408` — 4872c64 Metamorphoses film companion (metamorphosis)
-- `limen/studium-film-odyssey-04ee` — 39ed67b Odyssey film companion (return/exile/recognition)
-- `limen/studium-film-odyssey-4227` — 65ded77 Odyssey film companion (return/exile/recognition)
-- `limen/studium-film-odyssey-7534` — 3f8bd49 Odyssey film companion (return/exile/recognition)
-- `limen/studium-film-shahnameh-2b83` — 654c505 Shahnameh film companion (kingship/the farr)
-- `limen/studium-film-tale-of-genji-57f4` — a776ac5 Tale of Genji film companion (desire/impermanence)
-- `limen/studium-film-tale-of-genji-6900` — f035767 Tale of Genji film companion (desire/impermanence)
-- `limen/vigilia-face-2fae` — 3032cfc The face — one pane that renders the C-suite from the seat (CCO)
-- `limen/vigilia-face-706a` — 2a8dc02 chore(tasks): record VIGILIA-FACE as needs_human (push blocked on dead creds)
-- `limen/vigilia-face-dd81` — 93754f9 The face — one pane that renders the C-suite from the seat (CCO)
-- `limen/vigilia-vitals-7fb7` — efa6864 feat(vitals): add CFO's don't-crash executive for memory pressure reaction
-- `live-snapshot-pre-main-2026-06-21` — f8e1779 snapshot: live working state before moving to released main
-- `promote-domus-genoma` — 6bbd51f limen: promote organvm/domus-genoma to ranked value tier
-- `registry-update` — c2490e0 docs(registry): credential CLOSED (keyless lane); Exporter funnel verified BUILT
-- `studium-beowulf-fitts-2-4` — cd8625b studium: author Beowulf fitts 2-4 music arcs and essays
-- `studium-deepen-aeneid-4-6` — 791f3b4 studium-deepen-aeneid: Aeneid books 4-6
-- `studium-deepen-metamorphoses` — d0cb8cd limen: track studium-deepen-metamorphoses done (opencode +1)
-- `studium-deepen-shahnameh-2-8` — bf6de36 feat(studium): Shahnameh cycles 2-8 arcs and essays
-- `studium-film-canterbury-tales` — d7fcab0 feat(studium): add Canterbury Tales film companion
-- `task-conference-of-birds-batch-1` — e1facc1 feat(studium): author Conference of the Birds arcs 2-4
-- `work/workstream-agent-launcher-20260629` — a66424e chore: execute dynamic-substrate fanout executor packet
-- `worktree-jolly-knitting-lovelace` — 1e23993 feat(hooks): arm the session-orientation organ in committed project settings
-- `worktree-parsed-finding-fern` — 6f171f8 docs(hishand): register L-STUDIO-GOLIVE — clip studio go-live atoms to the durable registry (#538)
+- `_pr198` — 4cd0dbaa fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
+- `capture/main-2026-07-02T01-03-35Z` — 71b48852 capture: off-disk sync 2026-07-02T01:03:35Z (main behind origin → side ref, HEAD untouched)
+- `capture/main-2026-07-02T18-41-47Z` — eaca4510 capture: off-disk sync 2026-07-02T18:41:47Z (main behind origin → side ref, HEAD untouched)
+- `capture/main-2026-07-03T18-23-54Z` — b53f0abc capture: off-disk sync 2026-07-03T18:23:54Z (main behind origin → side ref, HEAD untouched)
+- `capture/main-2026-07-04T18-44-48Z` — bdc71ecb capture: off-disk sync 2026-07-04T18:44:48Z (main behind origin → side ref, HEAD untouched)
+- `deepen/tao-te-ching-ch6-10` — 6bbd51f7 limen: promote organvm/domus-genoma to ranked value tier
+- `discover-carrier-wave-zeitgeist-thesis-value` — fe4f7633 limen: discover corpus-mythicum, promote to ranked tier
+- `discover-limen-value-2026-06-22` — 7ad100f0 capture: autonomic off-disk sync 2026-06-23T13:19:40Z
+- `feat/bhagavad-gita-arcs-5-8` — 13a810c3 feat(studium): author metamorphoses books 2 and 3 arcs
+- `feat/censor-monthly-tier` — a89dd048 censor: add MONTHLY cadence (2592000s) to TIER_SECONDS
+- `feat/studium-deepen-bhagavad-gita` — b79d0fae studium: deepen bhagavad-gita — chapters 2-4 (3 arcs)
+- `feat/studium-deepen-mahabharata-books-5-8` — fd8dbae6 studium: deepen mahabharata — parvas 5-8 (Udyoga, Bhishma, Drona, Karna)
+- `feat/studium-deepen-metamorphoses-batch-1` — 2bf80117 limen: REV-organvm-a-i-chat--exporter-revenue-launch-post-0623 done
+- `feat/studium-deepen-quran` — 2bf80117 limen: REV-organvm-a-i-chat--exporter-revenue-launch-post-0623 done
+- `feat/studium-film-beowulf` — 799a27f9 limen: studium-film-tanakh done — existing companion verified on origin/main (PR #116)
+- `feat/studium-film-canterbury-tales` — b79d0fae studium: deepen bhagavad-gita — chapters 2-4 (3 arcs)
+- `feat/studium-film-divine-comedy` — ab82b47b feat: Divine Comedy film companion
+- `feat/studium-film-quran` — 6c70956e limen: studium-film-metamorphoses done — 10 films validated across 9 forces
+- `feat/studium-film-tanakh` — d8c703e9 feat: studium-film-tanakh (covenant/law/exile companion)
+- `feat/vltima-organ-engine` — fe3e5eb4 fix(ci): clear ruff E702/E703 in test_sync_reclaim.py — unjams the merge backlog
+- `feat/walls-auto-regen` — 990a39da feat(heartbeat): auto-regenerate the credential + his-hand Walls every 12 beats
+- `feature/ORG-education-organ-face-0630` — 9d174794 feat(education): author polished macro and micro face for education organ
+- `feature/tale-of-genji-chapters-2-5` — 50a31de4 studium: author Tale of Genji chapters 2-5
+- `fix/616-format` — e020757c style: ruff format test_corpus_command_center.py (CI format-check gate)
+- `fix/heartbeat-refresh-web-wedge` — 0a512024 fix(heartbeat): stop refresh-web piping into tail — it wedges the daemon (regression reintroduced in loop refactor)
+- `heal/608-declare-param` — a63e6db7 chore(governance): declare LIMEN_WORKSPACE_UNIT_TIMEOUT_SEC for preserve_workspace()
+- `heal/ci-ruff-semicolons` — 04b05097 fix(ci): clear ruff E702/E703 in test_sync_reclaim.py — unjams the merge backlog
+- `heal/health-office-staged-0625` — ff43850e health office — the executive health office (autopoietic; PII strictly off-repo)
+- `heal/marker-and-tcc-registry-2026-06-24` — e6248bdd heal: swallow Claude Code's benign install_failed update marker (false ⚠ on /doctor)
+- `limen/csf-caeb31d8-plan-10-b131e64c-38bd` — 705fcee4 limen: record current-session private boundary packet
+- `limen/gen-organvm-limen-docs-0624-0129` — e454a603 Real usage docs for organvm/limen
+- `limen/gen-organvm-limen-docs-0624-32e1` — 0aea514a limen: GEN-organvm-limen-docs-0624 — accurate Usage docs from real CLI
+- `limen/gen-organvm-limen-docs-0624-525d` — 5683c27b Real usage docs for organvm/limen
+- `limen/gen-organvm-limen-docs-0624-6fc0` — 4c7453ac docs(usage): derive accurate CLI usage from actual entrypoints
+- `limen/gen-organvm-limen-docs-0625-4261` — d98ada7c Real usage docs for organvm/limen
+- `limen/gen-organvm-limen-docs-0625-86a3` — 2ba9c114 Real usage docs for organvm/limen
+- `limen/gen-organvm-limen-docs-0625-9c44` — 83e805e6 Real usage docs for organvm/limen
+- `limen/gen-organvm-limen-docs-0625-db1d` — 44b39586 Real usage docs for organvm/limen
+- `limen/gen-organvm-limen-security-0624-a9e5` — 0d705fe1 security: harden input validation across API and CLI models
+- `limen/gen-organvm-limen-security-0625-57ce` — 02f256ed Security hardening pass on organvm/limen
+- `limen/gen-organvm-limen-security-0625-b412` — bd88bf7e docs(security): audit results for organvm/limen hardening pass
+- `limen/gen-organvm-limen-security-0626-b91f` — 569a4ebf limen: mark security task blocked on PR gate
+- `limen/gen-organvm-limen-simplify-0624-901a` — 0d9c4141 Reduce complexity in organvm/limen — refactor dispatch.py
+- `limen/gen-organvm-limen-test-coverage-0625-0153` — cb166bd2 Raise test coverage in organvm/limen
+- `limen/gen-organvm-limen-test-coverage-0625-1c32` — dc89769a test(nomenclator): add 37-case unit suite for INDEX·NOMINVM enforcer
+- `limen/gen-organvm-limen-typing-0622-9eb5` — c60bc170 refactor(types): tighten the most-imported limen modules — kill capacity.py's any hotspot
+- `limen/gen-organvm-limen-typing-0627-ccac` — d280f1d1 fix: tighten types in limen's most-imported modules
+- `limen/gh-organvm-limen-262-0a16` — 3ebc05c2 docs(levers): L-IANVA-LOCAL — launchd plist staged, ONE command to bootstrap (#262)
+- `limen/gh-organvm-limen-352-b4c3` — 18129a47 fix(cli): type-modernization — PEP 604 syntax and TypedDict definitions
+- `limen/org-governance-organ-deepen-0628-90ee` — 3b2001f6 feat: operationalize cvrsvs-honorvm rule as executable validator
+- `limen/org-governance-organ-deepen-0703-9f8e` — 6d486017 governance: enforce publication-policy convergence
+- `limen/org-governance-organ-selffeed-0701-ba0f` — 3b9baf04 limen: close governance organ self-feed task
+- `limen/org-health-organ-kernel-0630-e4e0` — 2564cd7b Add health organ kernel
+- `limen/org-health-organ-kernel-0704-59fd` — c3d9167b health: sync KERNEL.md to completed scaffold (authority contract + posture sequence + build plan)
+- `limen/org-health-organ-kernel-0704-decb` — 74a158a6 docs: advance health organ kernel
+- `limen/org-health-organ-kernel-0704-e61b` — b08caed6 health: complete organ kernel scaffold sync
+- `limen/org-legal-organ-charter-0703-0899` — b8eb571e limen: complete legal organ charter
+- `limen/org-legal-organ-charter-0704-0b2a` — 5dbc0e8d docs: harden legal organ charter
+- `limen/org-legal-organ-firstslice-0703-c244` — 05cad7d7 legal: add first counsel-review matter slice
+- `limen/org-legal-organ-kernel-0630-a5e5` — 6c301f3e limen: map legal organ kernel
+- `limen/org-legal-organ-kernel-0701-e535` — 3dcb37cd organs: refine legal kernel flagship
+- `limen/org-legal-organ-kernel-0704-a80b` — 1800caa0 chore(legal): bump legal organ maturity to 25% (KERNEL.md authored)
+- `limen/org-legal-organ-kernel-0704-c763` — ac60fff8 legal: author KERNEL.md mapping domain-neutral kernel to legal domain
+- `limen/org-social-organ-firstslice-0703-1c71` — a2fa6ada organs/social: ship first slice
+- `limen/org-social-organ-firstslice-0703-6fb5` — 4e699332 feat(social): add first koinonia slice
+- `limen/org-social-organ-firstslice-0703-edcd` — 0fbca3fa social: ship koinonia first slice
+- `limen/studium-deepen-aeneid-e6cf` — fcee5d4d feat(studium): Aeneid Books 4-8 arcs and essays (desire/sacrifice/revelation/war)
+- `limen/studium-deepen-analects-78fa` — d5d8c190 feat(studium): Analects books 9-11 music arcs + essays (ascent/memory/salvation)
+- `limen/studium-deepen-beowulf-4918` — 99fb7715 feat(studium): Beowulf fitts 2–6 — force-matched arcs + essays
+- `limen/studium-deepen-canterbury-tales-c640` — 76bb9f6d feat(studium): add Canterbury Tales tales 2-5 (Knight, Miller, Reeve, Cook)
+- `limen/studium-deepen-conference-of-birds-2584` — 377bd8b1 feat(studium): Conference of the Birds sections 2–6 — assembly phase arcs
+- `limen/studium-deepen-gilgamesh-57a4` — 61206056 Gilgamesh — tablets 2..12 (11 arcs)
+- `limen/studium-deepen-gilgamesh-dfa8` — d41f0020 Gilgamesh — tablets 2..12 (11 arcs)
+- `limen/studium-deepen-heike-d8fc` — 0da64c72 Tale of the Heike — books 2..12 (11 arcs)
+- `limen/studium-deepen-mahabharata-bc93` — 0c5fe0fa Mahabharata — parvas 2..18 (17 arcs)
+- `limen/studium-deepen-quran-5b8b` — 302ca7ff Qur'an — suras 5–10 (6 arcs)
+- `limen/studium-deepen-quran-a6fe` — 0d6f113a feat(studium): author Qur'an suras 2-5 in force-matched arcs format
+- `limen/studium-deepen-ramayana-10fe` — 638a4f1c Ramayana — kandas 2..7 (6 arcs)
+- `limen/studium-deepen-ramayana-267f` — 58cfa603 Ramayana — kandas 2..7 (6 arcs)
+- `limen/studium-deepen-ramayana-93fe` — 30055546 Ramayana — kandas 2..7 (6 arcs; Ayodhya→Aranya→Kishkindha→Sundara→Yuddha→Uttara = exile→forest→alliance→quest→war→return)
+- `limen/studium-deepen-ramayana-ae60` — 4e0290f5 Ramayana — kandas 2..7 (6 arcs)
+- `limen/studium-deepen-tale-of-genji-0ce7` — c01d0987 feat(studium): Tale of Genji chapters 2–5 — early loves arc (force-matched + essays)
+- `limen/studium-deepen-tanakh-2fbf` — 75201c63 Tanakh — books 2..39 (38 arcs; Torah · Nevi'im · Ketuvim)
+- `limen/studium-deepen-tanakh-3953` — f7bf5c4c Tanakh — books 2..39 (38 arcs; Torah · Nevi'im · Ketuvim)
+- `limen/studium-deepen-tanakh-60ca` — a17fde2f Tanakh — books 2..39 (38 arcs; Torah · Nevi'im · Ketuvim)
+- `limen/studium-deepen-tanakh-ba2e` — 60330fe3 Tanakh — books 2..39 (38 arcs; Torah · Nevi'im · Ketuvim)
+- `limen/studium-film-bhagavad-gita-3c09` — a869452f Bhagavad Gita film companion (right action/renunciation)
+- `limen/studium-film-conference-of-birds-0330` — 63aee558 Conference of the Birds film companion (the seven valleys/fanā)
+- `limen/studium-film-heike-01af` — 11f603a3 Tale of the Heike film companion (mono no aware)
+- `limen/studium-film-mahabharata-017c` — b2e94d13 Mahabharata film companion (dharma/war)
+- `limen/studium-film-mahabharata-2deb` — acca9ebd Mahabharata film companion (dharma/war)
+- `limen/studium-film-metamorphoses-9408` — 4872c64d Metamorphoses film companion (metamorphosis)
+- `limen/studium-film-odyssey-04ee` — 39ed67b9 Odyssey film companion (return/exile/recognition)
+- `limen/studium-film-odyssey-4227` — 65ded77f Odyssey film companion (return/exile/recognition)
+- `limen/studium-film-odyssey-7534` — 3f8bd49d Odyssey film companion (return/exile/recognition)
+- `limen/studium-film-shahnameh-2b83` — 654c505b Shahnameh film companion (kingship/the farr)
+- `limen/studium-film-tale-of-genji-57f4` — a776ac59 Tale of Genji film companion (desire/impermanence)
+- `limen/studium-film-tale-of-genji-6900` — f035767c Tale of Genji film companion (desire/impermanence)
+- `limen/vigilia-face-2fae` — 3032cfc9 The face — one pane that renders the C-suite from the seat (CCO)
+- `limen/vigilia-face-706a` — 2a8dc028 chore(tasks): record VIGILIA-FACE as needs_human (push blocked on dead creds)
+- `limen/vigilia-face-dd81` — 93754f97 The face — one pane that renders the C-suite from the seat (CCO)
+- `limen/vigilia-vitals-7fb7` — efa6864a feat(vitals): add CFO's don't-crash executive for memory pressure reaction
+- `live-snapshot-pre-main-2026-06-21` — f8e17798 snapshot: live working state before moving to released main
+- `promote-domus-genoma` — 6bbd51f7 limen: promote organvm/domus-genoma to ranked value tier
+- `registry-update` — c2490e09 docs(registry): credential CLOSED (keyless lane); Exporter funnel verified BUILT
+- `studium-beowulf-fitts-2-4` — cd8625b8 studium: author Beowulf fitts 2-4 music arcs and essays
+- `studium-deepen-aeneid-4-6` — 791f3b45 studium-deepen-aeneid: Aeneid books 4-6
+- `studium-deepen-metamorphoses` — d0cb8cd7 limen: track studium-deepen-metamorphoses done (opencode +1)
+- `studium-deepen-shahnameh-2-8` — bf6de36a feat(studium): Shahnameh cycles 2-8 arcs and essays
+- `studium-film-canterbury-tales` — d7fcab07 feat(studium): add Canterbury Tales film companion
+- `task-conference-of-birds-batch-1` — e1facc15 feat(studium): author Conference of the Birds arcs 2-4
+- `work/workstream-agent-launcher-20260629` — a66424e0 chore: execute dynamic-substrate fanout executor packet
+- `worktree-jolly-knitting-lovelace` — 1e239934 feat(hooks): arm the session-orientation organ in committed project settings
+- `worktree-parsed-finding-fern` — 6f171f83 docs(hishand): register L-STUDIO-GOLIVE — clip studio go-live atoms to the durable registry (#538)
 
