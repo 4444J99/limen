@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T05:50:02Z`
+Generated: `2026-07-04T05:53:43Z`
 
 ## Scope
 
@@ -35,6 +35,7 @@ Generated: `2026-07-04T05:50:02Z`
 | 75 | `claude` | `ac1ebb8c-d0f5-4591-bbd5-9ac4fff616af` | Worktree/sync reclaim and his-hand closeout run. It landed useful `sync-release`/`reclaim-worktrees` code and permanent his-hand levers, but it also discarded multiple Claude worktree commit stacks and included absent off-repo education artifacts. Review fixed a live fail-open violation: malformed reclaim numeric env values could crash the organ before classification. |
 | 76 | `codex` | `019ec8e6-f8c1-74d3-8164-1b053844728c` | Storage recovery / Archive4T endgame run. This was valuable off-repo operational recovery work, not a Limen code diff: the Codex temp corpus, Archive4T operation docs, and read-only status script survive. Current live status improves on some June 15 gates, but also exposes drift: internal disk is back in emergency space at `31Gi` free and T7Recovery's lifeboat copy measures smaller than Archive4T's. |
 | 77 | `claude` | `9fbf75ec-5156-4f2f-bb84-23a10be15885` | Claude model chokepoint shim run. The deleted worktree row did land durable fleet value on `main`: a shared model sorter, executable Claude shim, heartbeat PATH wiring, and focused tests. It directly answered the user's "non-bypassable on-demand sorting" correction, but still spent 3.7M billable / 2.1M Opus before the guardrail existed and should be monitored as a fail-open seatbelt, not a complete spend-control system. |
+| 78 | `claude` | `3424630b-7849-4c5b-a9bb-5f24cd7b3ec8` | D2L discussion-responder skill run. The session correctly turned a repeatable LMS-instructor workflow into `organvm/_agent` skill PR #19 with FERPA/process boundaries and D2L browser mechanics, but it cost 2.6M Opus billable tokens and two Opus subagents. Review also found and fixed a reusable-skill privacy edge: concrete-looking student-name examples are now placeholders in `_agent` commit `8456104`. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -4041,6 +4042,66 @@ test -x scripts/shims/claude
 ```
 
 Result: the original worktree path is absent; the landed commit is on `main`; private prompt extraction has `15` records; Claude guard fails on historical 3.70M billable / 2.14M Opus; current chokepoint tests pass `29` cases; the sorter and shim compile; the shim is executable; heartbeat captures the real Claude binary before prepending the shim directory.
+
+### Claude D2L discussion responder became a reusable skill, with a privacy edge fixed
+
+Severity: medium-high for FERPA-sensitive workflow boundaries; low for current artifact integrity after the follow-up fix.
+
+Evidence:
+
+- Queue row `78` points at Claude session `3424630b-7849-4c5b-a9bb-5f24cd7b3ec8`, rooted at `/Users/4jp/Workspace/limen`, with changed paths under Claude memory and `~/Workspace/organvm/_agent/_agent.claudebrain/global/skills/d2l-discussion-responder/`.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-78-claude-d2l-discussion-responder-prompts.jsonl` (`17` prompt-bearing records: `11` direct human text prompts, `2` multimodal prompt records, `2` compaction summaries, and `2` task notifications).
+- In redacted intent form, the prompt layer asked the agent to answer student D2L/Brightspace discussion posts, post a small batch, verify an assignment-template question, check another forum for unanswered posts, and then turn the hard-won process into a durable academic/student-repo artifact because the workflow would repeat.
+- Durable memory exists at `/Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/memory/d2l-discussion-responder-skill.md`, pointing to the reusable skill and to merged PR `organvm/_agent#19`.
+- PR `organvm/_agent#19` merged 2026-07-02 at `fe2383c`, with green `cowork-gates`, adding three files: `SKILL.md`, `references/course-facts-template.md`, and `references/d2l-browser-operations.md`.
+- The skill correctly captures the main process: read-only forum orientation, no re-answering already answered threads, course-fact verification against source-of-truth materials, instructor-voice drafting, explicit go-ahead before posting, live reload/readback verification, and no persisted student-identifying records.
+- The D2L browser reference preserves genuinely useful operational knowledge: screenshot/CSS coordinate scaling, trusted coordinate clicks for context menus, JS clicks for D2L submit buttons, shadow-DOM/iframe editor handling, the JavaScript return-value guard, and the dropped-leading-word defect.
+- Claude workflow guard fails for the session: `billableTokens=2634445`, `opusBillableTokens=2634445`, `agentCalls=2`, `expensiveSubagents=2`, with violations for total billable budget, Opus billable budget, and Opus subagent fanout.
+- Current review found a reusable-skill privacy edge: the skill's own FERPA rule said never persist student names, but instructor-voice examples used a concrete-looking student name. Even if illustrative, that weakens the artifact boundary.
+- Follow-up fix landed in `organvm/_agent` commit `8456104` (`docs: tighten d2l skill student-name boundary`): the examples now use `<student name>`, and the skill explicitly says examples must use placeholders rather than real LMS names. `_agent` local and `origin/main` both resolve to `84561045cfde660365e50004b7af4a589ff30f09`.
+
+Ideal prompt diff:
+
+- Ideal form: answer the immediate LMS discussion batch without persisting raw student records, then distill only the repeatable process, browser mechanics, and course-fact shapes into a reusable skill artifact.
+- Actual form: the session appears to have done the right product move: the durable repo artifact captures process and mechanics, not raw student posts. The private transcript remains the raw session source; the public skill avoids storing student post text.
+- Ideal form for FERPA examples: reusable docs should never use concrete-looking student names unless they are impossible to mistake for real records; placeholders are safer and reinforce the rule.
+- Actual pre-review form: the skill included concrete-looking name examples in two places. This review patched them to placeholders and added an explicit sample-prose rule.
+- Ideal form for cost: a process-capture skill after a live browser session should use narrow workers for artifact synthesis and privacy audit, not inherit Opus for every subagent.
+- Actual form: both subagents were Opus and the run exceeded the Claude guard budget, despite the final artifact being three Markdown files plus memory.
+
+Outcome:
+
+- This row produced useful durable value outside Limen proper: a repeatable `_agent` skill for D2L discussion-response work, with the hard browser lessons preserved instead of rediscovered each term.
+- The artifact now has a stronger privacy boundary after the follow-up `_agent` commit.
+- The row should not be reviewed as a Limen source diff. It is a cross-repo skill artifact plus local Claude memory, with Limen's review ledger tracking the prompt-vs-done outcome.
+
+What was fucked up:
+
+- The session spent 2.63M Opus billable tokens and used two Opus subagents for a workflow capture that should have been mostly documentation and verification once the browser work was understood.
+- The original durable skill contradicted its own FERPA rule at the sample-prose layer by including concrete-looking student-name examples.
+- The queue row's changed-file surface mixes Claude memory and `_agent` repo paths, so a reviewer who only looks inside Limen would miss the actual merged artifact.
+- The skill intentionally keeps course-fact examples, including term/course structure. That is acceptable as course-structure data, but it means future course-specific additions must keep student records out and re-verify facts against the course source of truth.
+
+Verification:
+
+```bash
+jq '.changed_review[78]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-78-claude-d2l-discussion-responder-prompts.jsonl
+jq -r '.kind' .limen-private/session-corpus/full-stack-review/session-78-claude-d2l-discussion-responder-prompts.jsonl | sort | uniq -c
+sed -n '1,220p' /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/memory/d2l-discussion-responder-skill.md
+sed -n '1,260p' /Users/4jp/Workspace/organvm/_agent/_agent.claudebrain/global/skills/d2l-discussion-responder/SKILL.md
+sed -n '1,260p' /Users/4jp/Workspace/organvm/_agent/_agent.claudebrain/global/skills/d2l-discussion-responder/references/course-facts-template.md
+sed -n '1,300p' /Users/4jp/Workspace/organvm/_agent/_agent.claudebrain/global/skills/d2l-discussion-responder/references/d2l-browser-operations.md
+gh pr view 19 --repo organvm/_agent --json number,title,state,createdAt,mergedAt,mergeCommit,files,statusCheckRollup
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/3424630b-7849-4c5b-a9bb-5f24cd7b3ec8.jsonl
+git -C /Users/4jp/Workspace/organvm/_agent show --stat --oneline fe2383caaad4977f27fcde98c297d4a4545cc7fb
+git -C /Users/4jp/Workspace/organvm/_agent show --stat --oneline 84561045cfde660365e50004b7af4a589ff30f09
+git -C /Users/4jp/Workspace/organvm/_agent diff --check -- _agent.claudebrain/global/skills/d2l-discussion-responder/SKILL.md LIRF.md
+git -C /Users/4jp/Workspace/organvm/_agent rev-parse HEAD
+git -C /Users/4jp/Workspace/organvm/_agent rev-parse origin/main
+```
+
+Result: private prompt extraction has `17` records; PR #19 is merged with green `cowork-gates`; the skill and references survive in `_agent`; Claude guard fails on 2.63M Opus / two Opus subagents; follow-up privacy fix `8456104` is pushed and `_agent` local/remote HEAD match.
 
 ## Remaining Review Queue
 
