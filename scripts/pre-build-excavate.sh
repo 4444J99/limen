@@ -71,7 +71,7 @@ if [ -n "$KEYWORDS" ]; then
   HAYSTACK="$(printf '%s\n%s\n%s\n' "$OPEN_PRS" "$DONE_PRS" "$COMMITS")"
   HITS=""
   for kw in $KEYWORDS; do
-    match="$(printf '%s\n' "$HAYSTACK" | grep -i -- "$kw" 2>/dev/null || true)"
+    match="$(printf '%s\n' "$HAYSTACK" | grep -Fi -- "$kw" 2>/dev/null || true)"
     [ -n "$match" ] && HITS="$HITS"$'\n'"── matches for '$kw' ──"$'\n'"$match"
   done
   if [ -n "$HITS" ]; then

@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T01:36:12Z`
+Generated: `2026-07-04T01:38:28Z`
 
 ## Scope
 
@@ -34,6 +34,7 @@ Generated: `2026-07-04T01:36:12Z`
 | refreshed 17 | `claude` | `3be1f3a6-e00e-403d-a967-6d86c55deb56` | Workstream-channel run. Reviewed landed channel partition code and fixed the scoped cell conductor fallback so a failed channel projection cannot hand a worker the full mixed board. |
 | refreshed 18 | `claude` | `57fa1ead-aabf-4c2e-b62e-6843cf74a66a` | Insights/censor/session-meta reanchor run. Surviving artifacts are split across a Claude hook, plan/settings/memory files, and one external session-meta worktree; temp scripts and two named side worktrees are absent, so no Limen code patch was made. |
 | refreshed 19 | `claude` | `5e1004b3-b917-4a9d-a1ca-0f9b2b8dba45` | Mail audit / flagged-newsletter-storm run. Reviewed surviving private audit artifacts and external `universal-mail--automation` commit `39bf80d`; newsletter classifier tests pass, while ledger reconciliation after sent/withheld replies remains a recorded residual. |
+| refreshed 20 | `claude` | `ce278978-35f1-4b6c-a511-41f5d1de75cf` | Pre-build excavation / private venture run. Reviewed landed `pre-build-excavate.sh` gate and fixed regex keyword matching so duplicate detection uses literal user keywords; private venture/temp artifacts are absent or outside Limen and remain report-only. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -1185,6 +1186,38 @@ git -C /Users/4jp/Workspace/universal-mail--automation log --since=2026-07-02T17
 
 Result: transcript audit completed with an Opus budget violation; external classifier tests returned `7 passed`; external git log showed commit `39bf80d`.
 
+### Pre-build excavation gate matched keywords as regex
+
+Severity: medium for duplicate-work prevention.
+
+Evidence:
+
+- Refreshed rank 20 (`ce278978-35f1-4b6c-a511-41f5d1de75cf`) maps to landed Limen commit `28cdcb3` (`feat(scripts): pre-build-excavate — enforceable 'did a parallel session already ship this?' predicate`).
+- Patched transcript audit reports 37 transcript files, 1,465 usage-bearing messages, 13,810,471 billable-ish tokens, 89,690,141 cache-read tokens, 11,527,801 Opus-class billable-ish tokens, 21 expensive subagents, and 11 agent/workflow calls.
+- The prompt/session ideal was an enforceable pre-build gate: before building in a shared fleet repo, enumerate PR/commit streams and stop if a user-supplied keyword literally matches shipped or in-flight work.
+- `scripts/pre-build-excavate.sh` used `grep -i` for keyword matching. That treated user keywords as regular expressions, so `moneta.checkout` could match `moneta-checkout`, and regex metacharacters could create false duplicate hits or false clears.
+- The temp research/audit files and private venture root listed in the session metadata are absent on this host; no private venture content was copied into the public review doc.
+
+Repair:
+
+- Changed keyword matching to `grep -Fi` so user keywords are fixed strings.
+- Added fake-`gh` shell tests proving literal duplicate hits still return `LIKELY-DUP` and regex-like keywords do not match different strings.
+
+Touched paths:
+
+- `scripts/pre-build-excavate.sh`
+- `cli/tests/test_pre_build_excavate.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_pre_build_excavate.py -q
+bash -n scripts/pre-build-excavate.sh
+git diff --check -- scripts/pre-build-excavate.sh cli/tests/test_pre_build_excavate.py docs/agent-code-diff-review.md
+```
+
+Result: `2 passed`; shell syntax check passed; diff check passed.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -1407,6 +1440,9 @@ Result: transcript audit completed with an Opus budget violation; external class
 - `scripts/cells.sh:116` attempts scoped board emission for the requested workstream.
 - `scripts/cells.sh:118` preserves isolation with an empty board when scoped emission fails.
 - `cli/tests/test_cells.py:13` covers the no-full-board fallback for scoped conductors.
+- `scripts/pre-build-excavate.sh:74` matches duplicate-check keywords as fixed strings.
+- `cli/tests/test_pre_build_excavate.py:57` covers literal duplicate hits.
+- `cli/tests/test_pre_build_excavate.py:65` covers regex-like keywords as fixed strings.
 
 ## Remaining Review Queue
 
