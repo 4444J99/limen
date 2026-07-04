@@ -143,6 +143,106 @@ def test_untracked_collision_with_release_is_cleared(checkout, tmp_path):
     assert (clone / "usage.json").exists()  # untracked non-release runtime untouched
 
 
+def test_parked_on_pushed_branch_unparks(checkout, tmp_path):
+    """HEAD parked on a work branch whose tip is safe on origin -> switch back to main and ff to
+    the release (the 2026-06-29 jules-capfill park: 5 days pinned to a work branch, 65 behind)."""
+    clone, bare = checkout
+    _git("switch", "-q", "-c", "work", cwd=clone)
+    work_sha = _commit(clone, "work.txt", "w\n", "work on branch")
+    _git("push", "-q", "-u", "origin", "work", cwd=clone)
+    release = _origin_advance(bare, tmp_path, "rel.txt", "r\n", "release advances")
+    r = _run_sync(clone)
+    assert r.returncode == 0
+    assert "UNPARKED" in r.stdout, r.stdout + r.stderr
+    assert _git("rev-parse", "--abbrev-ref", "HEAD", cwd=clone).stdout.strip() == "main"
+    assert _git("rev-parse", "HEAD", cwd=clone).stdout.strip() == release  # ff happened same run
+    assert _git("rev-parse", "work", cwd=clone).stdout.strip() == work_sha  # branch ref survives
+
+
+def test_parked_with_unpushed_commit_fails_open(checkout, tmp_path):
+    """A parked branch carrying a commit origin does not have must NEVER be auto-switched away."""
+    clone, bare = checkout
+    _git("switch", "-q", "-c", "work", cwd=clone)
+    _git("push", "-q", "-u", "origin", "work", cwd=clone)
+    local_sha = _commit(clone, "work.txt", "w\n", "unpushed work")
+    _origin_advance(bare, tmp_path, "rel.txt", "r\n", "release advances")
+    r = _run_sync(clone)
+    assert r.returncode == 0
+    assert "not safe on origin/work" in r.stdout, r.stdout + r.stderr
+    assert _git("rev-parse", "--abbrev-ref", "HEAD", cwd=clone).stdout.strip() == "work"
+    assert _git("rev-parse", "HEAD", cwd=clone).stdout.strip() == local_sha
+
+
+def test_parked_with_tracked_dirt_fails_open(checkout, tmp_path):
+    """Tracked dirt beyond tasks.yaml is potential session work -> capture.sh owns landing it;
+    the valve must not carry or drop it."""
+    clone, bare = checkout
+    _git("switch", "-q", "-c", "work", cwd=clone)
+    _git("push", "-q", "-u", "origin", "work", cwd=clone)
+    _origin_advance(bare, tmp_path, "rel.txt", "r\n", "release advances")
+    (clone / "base.txt").write_text("uncommitted session work\n")  # tracked file, dirty
+    r = _run_sync(clone)
+    assert r.returncode == 0
+    assert "tracked dirt beyond tasks.yaml" in r.stdout, r.stdout + r.stderr
+    assert _git("rev-parse", "--abbrev-ref", "HEAD", cwd=clone).stdout.strip() == "work"
+    assert (clone / "base.txt").read_text() == "uncommitted session work\n"  # dirt untouched
+
+
+def test_parked_unpark_preserves_live_tasks_yaml(checkout, tmp_path):
+    """The daemon-owned live queue is the ONE tracked-dirt exception: preserved across the
+    unpark switch AND the follow-on ff (the committed copies are stale snapshots)."""
+    clone, bare = checkout
+    _commit(clone, "tasks.yaml", "queue: v0\n", "queue snapshot")
+    _git("push", "-q", "origin", "main", cwd=clone)
+    _git("switch", "-q", "-c", "work", cwd=clone)
+    _commit(clone, "tasks.yaml", "queue: branch-snapshot\n", "branch queue snapshot")
+    _git("push", "-q", "-u", "origin", "work", cwd=clone)
+    release = _origin_advance(bare, tmp_path, "rel.txt", "r\n", "release advances")
+    (clone / "tasks.yaml").write_text("queue: LIVE\n")  # daemon-owned dirt, the sole exception
+    r = _run_sync(clone)
+    assert r.returncode == 0
+    assert "UNPARKED" in r.stdout, r.stdout + r.stderr
+    assert _git("rev-parse", "HEAD", cwd=clone).stdout.strip() == release
+    assert (clone / "tasks.yaml").read_text() == "queue: LIVE\n"  # live queue won end-to-end
+
+
+def test_parked_unpark_clears_untracked_release_collision(checkout, tmp_path):
+    """An UNTRACKED local file that the release now TRACKS blocks the switch exactly like the ff
+    (censor/precedents.jsonl on the 2026-07-04 live heal): release-owned, so it is backed up and
+    the released version wins — the unpark must still complete."""
+    clone, bare = checkout
+    _git("switch", "-q", "-c", "work", cwd=clone)
+    _commit(clone, "work.txt", "w\n", "work on branch")
+    _git("push", "-q", "-u", "origin", "work", cwd=clone)
+    release = _origin_advance(bare, tmp_path, "conf.json", "RELEASE\n", "release adds conf.json")
+    (clone / "conf.json").write_text("LOCAL-STALE\n")  # untracked here, tracked by the release
+    (clone / "usage.json").write_text("{}\n")  # untracked runtime the release does NOT track
+    r = _run_sync(clone)
+    assert r.returncode == 0
+    assert "UNPARKED" in r.stdout, r.stdout + r.stderr
+    assert _git("rev-parse", "HEAD", cwd=clone).stdout.strip() == release
+    assert (clone / "conf.json").read_text() == "RELEASE\n"  # released version won
+    backup = clone / "logs" / ".sync-collision" / "conf.json"
+    assert backup.exists() and backup.read_text() == "LOCAL-STALE\n"  # backed up, never lost
+    assert (clone / "usage.json").exists()  # non-release runtime untouched
+
+
+def test_parked_on_branch_held_elsewhere_fails_open(checkout, tmp_path):
+    """If the release branch is checked out in ANOTHER worktree, git refuses the switch; the valve
+    must fail open (loudly) and leave the parked checkout intact."""
+    clone, bare = checkout
+    _git("switch", "-q", "-c", "work", cwd=clone)
+    work_sha = _commit(clone, "work.txt", "w\n", "work on branch")
+    _git("push", "-q", "-u", "origin", "work", cwd=clone)
+    _origin_advance(bare, tmp_path, "rel.txt", "r\n", "release advances")
+    _git("worktree", "add", "-q", str(tmp_path / "holder"), "main", cwd=clone)  # holds main hostage
+    r = _run_sync(clone)
+    assert r.returncode == 0
+    assert "refused" in r.stdout, r.stdout + r.stderr
+    assert _git("rev-parse", "--abbrev-ref", "HEAD", cwd=clone).stdout.strip() == "work"
+    assert _git("rev-parse", "HEAD", cwd=clone).stdout.strip() == work_sha
+
+
 # ---------------- reclaim-worktrees.py ----------------
 
 
