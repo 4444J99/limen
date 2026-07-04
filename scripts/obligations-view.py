@@ -40,10 +40,17 @@ def _load_json(path, default):
 def _union_levers(ledger):
     """His-hand levers (git, durable) first, then the mail ledger's levers; dedup by id.
     Fail-open: a missing/torn his-hand file just yields the ledger levers, never a crash."""
+    if not isinstance(ledger, dict):
+        ledger = {}
     his_hand = _load_json(HIS_HAND, {})
     his = his_hand.get("levers", []) if isinstance(his_hand, dict) else []
     out, seen = [], set()
-    for lev in list(his) + list(ledger.get("levers", [])):
+    ledger_levers = ledger.get("levers", [])
+    if not isinstance(ledger_levers, list):
+        ledger_levers = []
+    for lev in list(his) + list(ledger_levers):
+        if not isinstance(lev, dict):
+            continue
         lid = lev.get("id")
         if lid in seen:
             continue
@@ -54,16 +61,33 @@ def _union_levers(ledger):
 
 def build_view():
     ledger = _load_json(LEDGER, {})
+    if not isinstance(ledger, dict):
+        ledger = {}
     obligations = ledger.get("obligations", [])
+    if not isinstance(obligations, list):
+        obligations = []
+    obligations = [o for o in obligations if isinstance(o, dict)]
+    verify_first = [o for o in obligations if isinstance(o, dict) and o.get("verify_first")]
+    accounts = ledger.get("accounts", [])
+    if not isinstance(accounts, list):
+        accounts = []
+    accounts = [a for a in accounts if isinstance(a, dict)]
+    totals = ledger.get("totals", {})
+    if not isinstance(totals, dict):
+        totals = {}
+    noise_killers = ledger.get("noise_killers", [])
+    if not isinstance(noise_killers, list):
+        noise_killers = []
+    noise_killers = [n for n in noise_killers if isinstance(n, dict)]
     return {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "built_at": ledger.get("generated_at", ""),
         "spine": ledger.get("spine", ""),
-        "accounts": ledger.get("accounts", []),
-        "totals": ledger.get("totals", {}),
+        "accounts": accounts,
+        "totals": totals,
         "obligations": obligations,
-        "verify_first": [o for o in obligations if o.get("verify_first")],
-        "noise_killers": ledger.get("noise_killers", []),
+        "verify_first": verify_first,
+        "noise_killers": noise_killers,
         "levers": _union_levers(ledger),
     }
 

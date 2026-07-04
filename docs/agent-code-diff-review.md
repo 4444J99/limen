@@ -16,6 +16,7 @@ Generated: `2026-07-04T00:40:41Z`
 | refreshed 2 | `claude` | `eb3b624c-206f-4c9e-91aa-f069967a3796` | Studium transmission-curriculum run. Original worktree was gone, but the scripts and corpus are live on `main`; fixed a state-loader crash that violated the prompt's fail-open daily-face contract. |
 | refreshed 3 | `claude` | `343d6769-bdee-480f-88d9-981eec736b87` | Evocator/SVMMONER run. Worktree and temp activation files were gone, but `scripts/evocator.py` and `spec/evocator` landed on `main`; fixed canon-shape crash paths that violated the organ's fail-open beat contract. |
 | refreshed 4 | `claude` | `7c761a22-5bdf-42e8-bfb6-e8988530303f` | Archive4T convergence/knowledge-corpus planning run. Durable evidence is transcripts and memory docs; the referenced `converge-build` worktree was gone and no matching in-window `converge.py` commit survived, so this row is recorded as report-only. |
+| refreshed 5 | `claude` | `a290329e-a778-478f-a7a7-9afa79709221` | UMA/mail obligations run. Original worktree and temp atlas outputs were gone, but the mail beat and obligations face landed on `main`; fixed wrong-shaped ledger crash paths in the obligations renderer. |
 | 1 | `opencode` | `ses_11427e08affe3D8jAAl5W43viB` | Exact window had no matching commits on `main`, but the matching unmerged branch is `limen/gen-organvm-limen-security-0625-57ce` at `02f256e` (`Security hardening pass on organvm/limen`). Reviewed as a reject/do-not-merge artifact. |
 | 2 | `opencode` | `ses_114c8f0c6ffeixS8gn4VxGqoHb` | Exact window matched `80d4e21f` (`feat(route): consume self-improve lane weights`). Widened window also showed related routing/meter/queue commits including `0146190` and `a6488c9`. |
 | 3 | `opencode` | `ses_1095e9b19ffe4yg9h4la7tGU4d` | Exact window had no matching commits on `main`; widened window was mostly Studium content-generation churn, not the control-plane code path reviewed here. |
@@ -892,6 +893,39 @@ git log --all --since=2026-06-19T22:10:36Z --until=2026-06-20T11:09:22Z --onelin
 
 Result: transcript audit succeeded; git-window search returned no matching commits.
 
+### Obligations face did not fail open on wrong-shaped ledgers
+
+Severity: medium for mail-beat reliability.
+
+Evidence:
+
+- Refreshed rank 5 (`a290329e-a778-478f-a7a7-9afa79709221`) was the UMA/mail obligations run: 30 changed-file entries spanning Limen mail-beat/obligations surfaces plus external Domus and universal-mail-automation roots.
+- The original `glimmering-mapping-whistle` worktree and `/tmp/uma-*` atlas outputs were gone, but commits `7dd1789` and `310b83c` show the durable Limen-side mail/obligations surfaces on `main`.
+- Patched transcript audit reports 40 transcript files, 3,019 usage-bearing messages, 17,224,078 billable-ish tokens, 269,663,204 cache-read tokens, 12,133,498 Opus-class billable-ish tokens, 6 Opus-class subagents, 15 agent/workflow calls, and three unbounded-goal prompt hits.
+- `scripts/obligations-view.py` promised that a missing or torn ledger yields an empty state, never a crash. It handled parse errors, but if `obligations-ledger.json` was valid JSON of the wrong shape, such as a list, `build_view()` called `.get()` on a list. Mixed scalar entries inside `obligations`, `accounts`, `noise_killers`, or `levers` could still crash rendering.
+
+Repair:
+
+- Normalized non-mapping ledgers to `{}`.
+- Filtered list fields down to mapping entries before rendering.
+- Added regression tests for wrong-shaped ledgers and scalar list entries.
+
+Touched paths:
+
+- `scripts/obligations-view.py`
+- `cli/tests/test_obligations_view.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_obligations_view.py -q
+python3 -m py_compile scripts/obligations-view.py
+python3 scripts/obligations-view.py
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-glimmering-mapping-whistle/a290329e-a778-478f-a7a7-9afa79709221.jsonl --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000 --out /tmp/rank-a290-audit.json
+```
+
+Result: `2 passed`; compile passed; live renderer reported 27 obligations and 3 verify-first items.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -1087,6 +1121,11 @@ Result: transcript audit succeeded; git-window search returned no matching commi
 - `scripts/evocator.py:104` normalizes non-mapping channel data.
 - `cli/tests/test_evocator.py:22` covers wrong-shaped canon YAML.
 - `cli/tests/test_evocator.py:36` covers bad channel data without crashing rendering.
+- `scripts/obligations-view.py:43` rejects non-mapping ledgers for lever union.
+- `scripts/obligations-view.py:63` rejects non-mapping ledgers before view construction.
+- `scripts/obligations-view.py:69` filters obligations to mapping entries.
+- `cli/tests/test_obligations_view.py:20` covers wrong-shaped obligation ledgers.
+- `cli/tests/test_obligations_view.py:33` covers scalar entries in ledger lists.
 
 ## Remaining Review Queue
 
