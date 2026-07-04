@@ -79,6 +79,7 @@ Generated: `2026-07-04T08:12:45Z`
 | 125 | `claude` | `0ce115d3-e83b-408a-a3a8-deac07888433` + 17 corpus workers | CI-green 2026-06-28 CDB4 root. The parent session fulfilled the generated CI-green packet through PR #378, adding a Python 3.11 CI job and fixing corpus-converge subprocess env leakage; the other 17 sessions under the same deleted root are generated corpus distillation workers and should not be counted as CI implementation. |
 | 126 | `claude` | `70b7dbdd-d715-4d44-8812-98901dfed535` | Object Lessons Studio strategy/fanout root. This session produced the strategic public-face direction for the creative-writing/education portfolio, then launched a heavy workflow fanout; durable code/launch verification belongs to later session `ec251ec3-e2e5-405b-a7ea-c93d93c255a3`, so this row is valuable planning evidence with serious spend/fanout defects, not a standalone implementation diff. |
 | changed 123 | `codex` | `019eddbf-e29e-7d81-a3ad-f8c947d865e0` | Invisible Ledger PostgreSQL adapter first pass. Codex produced the first useful adapter implementation and the dispatch wrapper opened PR #4 with an initially green Node matrix, but later conflict resolution merged that PR red. Durable current health comes from the later green PR #23 plus subsequent fixes, not from treating PR #4's final merge as clean. |
+| changed 124 | `codex` | `019f13f0-960f-7490-bc0a-a5f4bc70a6fb` | Private relationship-boundary/persona workstream. Codex created substantial PII-free reusable tooling, private ignored outputs, a Desktop voice-note file, and draft PR #11 with green tests. The prompt was only partially fulfilled at the action layer: the bounded response/voice note was prepared, not sent, and the PR remains draft for owner review. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -3382,6 +3383,68 @@ PY
 ```
 
 Result: predecessor transcript guard passed; current focused FLAME checks passed `30 passed`; implementation commits are contained in current branch/main; the private row-124 prompt extraction exists and preserves the predecessor prompt surfaces.
+
+### Codex's private boundary/persona workstream is valuable, but the action prompt is still only partially fulfilled
+
+Severity: medium for prompt fulfillment; low for code quality and privacy. The session built substantial reusable tooling and preserved it in a draft PR with green tests, but the original action-level ask included deciding and sending a bounded response. The tooling/report generation is done; sending or explicitly declining the response is still a human/action gate.
+
+Evidence:
+
+- Queue row `changed_review[124]` points at Codex session `019f13f0-960f-7490-bc0a-a5f4bc70a6fb`, rooted at `/Users/4jp/Workspace/4444J99/relationship-pipeline/.worktrees/maddie-boundary-20260629`, running from 2026-06-29T15:12:44Z through 2026-06-29T19:18:49Z.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-124-codex-maddie-boundary-prompts.jsonl`: `81` prompt-surface records, `27` unique prompt hashes, `14,757` prompt bytes, with `56` records from the Codex transcript and `25` from Codex history.
+- In redacted intent form, the prompt stream asked Codex to recover after a crash, audit whether prior prompts had been fulfilled, build a repeatable dialogue/persona math-diff process over private messages, produce a reference appendix and future-interaction policy, build claim/evidence and voice-note support, keep raw message content private, and close out the worktree.
+- The session produced six commits on branch `work/maddie-boundary-20260629`: `060bd35`, `50d1d92`, `0693346`, `6e81918`, `b653ab1`, and `c67c627`.
+- PR #11 (`Relationship pipeline Maddie boundary evidence checkpoint`) is open as a draft against `organvm/relationship-pipeline`, cleanly mergeable, with green check run `28462176613` on Python 3.11 and 3.12.
+- The tracked diff is reusable tooling/docs/tests only: `dialogue_persona.py`, `exchange_arc_review.py`, `vltima_profile.py`, `claim_evidence_pack.py`, four process docs, four test files, and two Vltima docs. The branch adds about `4,450` lines.
+- Current local verification passes in the target worktree: `python3 -m unittest discover -s tests -p 'test_*.py'` reports `24` tests with `2` expected skips; `python3 -m pytest -q` reports `22 passed, 2 skipped, 15 subtests`; `python3 -m py_compile` passes for the four new scripts; `git diff --check origin/main...HEAD` passes.
+- The repo's default-deny `.gitignore` ignores everything by default and whitelists only reusable tooling/docs/tests. `out/<slug>/`, `.limen-workstream/`, `people.json`, per-person lexicons, caches, and bundles remain ignored.
+- A privacy scan of the tracked diff found guard language and synthetic test excerpts, not raw private message dumps. The generated private reports exist under `/Users/4jp/Workspace/4444J99/relationship-pipeline/out/maddie/`, and the final Desktop voice-note text exists at `/Users/4jp/Desktop/maddie-boundary-voice-note.txt`.
+- The ignored local fulfillment audit `.limen-workstream/prompt-fulfillment-2026-06-29.md` is the key first-layer diff: it marks the decision and draft bounded response fulfilled, but marks "sent bounded response" not fulfilled.
+- PR #11 was opened later as a lifecycle preservation PR, not as a final product-review PR. Its body says it is draft because the preservation pass was not a full product review.
+- All six authored commits use `Test User <test@example.com>`, repeating the provenance weakness seen in other generated-agent branches.
+
+Ideal prompt diff:
+
+- Ideal action prompt form: distinguish analysis artifacts from the real-world action. Done means either the bounded response was sent through the chosen channel, or the user explicitly decided not to send it.
+- Actual form: Codex produced the analysis machinery, private reports, voice-note text, branch, and green tests. It did not send the response, and correctly left a local fulfillment note saying that part remained open.
+- Ideal private-analysis form: keep raw messages and generated reports ignored, commit only generic code/docs/tests, and keep the public PR draft until owner privacy review.
+- Actual form: this part was handled well. The tracked branch is generic enough to review publicly, while the private outputs stay ignored.
+- Ideal CI/receipt form: push the branch, open a draft PR, run the full test discovery command, and record both local and remote receipts.
+- Actual form: PR #11 and CI exist, and local tests now match the workflow command. The PR body is conservative, but it does not mention the prompt-level "response not sent" residual.
+- Ideal claim-evidence form: generated claims should require external confirmation before formal use.
+- Actual form: tracked docs say claims are evidence-backed conclusions, not legal findings, and require outside records before formal compensation claims. That is the right boundary.
+
+Outcome:
+
+- Credit the session for valuable, reusable, privacy-bounded tooling and for preserving the branch as draft PR #11 with green tests.
+- Do not mark the first-layer active prompt fully complete, because the bounded response/voice note was prepared but not sent.
+- Keep PR #11 draft until owner review confirms the public tracked docs are acceptable and the action residual is either completed or explicitly out of scope.
+
+What was fucked up:
+
+- The session started with crash recovery and prompt-fulfillment frustration, then grew into a multi-tool private analysis platform. The result is useful, but the scope expansion was large.
+- The final answer said lifecycle closeout was complete, but the ignored fulfillment audit says the original response-send action was not complete.
+- The PR was opened by a later lifecycle-preservation pass, not the original session closeout, so the branch/PR receipt is split across sessions.
+- The commits use placeholder `Test User <test@example.com>` identity, weakening provenance.
+- The public PR title and branch still expose the contact-name slug. The raw data is not tracked, but future public-facing review should prefer neutral slugs where possible.
+
+Verification:
+
+```bash
+wc -l .limen-private/session-corpus/full-stack-review/session-124-codex-maddie-boundary-prompts.jsonl
+git -C /Users/4jp/Workspace/4444J99/relationship-pipeline/.worktrees/maddie-boundary-20260629 status --short --branch
+git -C /Users/4jp/Workspace/4444J99/relationship-pipeline/.worktrees/maddie-boundary-20260629 log --format='%h %an <%ae> %s' origin/main..HEAD
+gh pr view 11 --repo organvm/relationship-pipeline --json number,title,state,isDraft,mergeStateStatus,createdAt,headRefName,files,commits,statusCheckRollup,url
+gh run view 28462176613 --repo organvm/relationship-pipeline --json databaseId,conclusion,jobs
+python3 -m unittest discover -s tests -p 'test_*.py'
+python3 -m pytest -q
+python3 -m py_compile claim_evidence_pack.py dialogue_persona.py exchange_arc_review.py vltima_profile.py
+git diff --check origin/main...HEAD
+git check-ignore -v out/maddie/maddie-dialogue-persona-2026-06-29.json .limen-workstream/prompt-fulfillment-2026-06-29.md __pycache__/dialogue_persona.cpython-313.pyc
+sed -n '1,120p' .limen-workstream/prompt-fulfillment-2026-06-29.md
+```
+
+Result: prompt extraction matches row `changed_review[124]`; worktree and branch are clean; PR #11 is open draft with green remote tests; local unittest, pytest, py_compile, and diff-check pass; private generated outputs and fulfillment notes are ignored; the ignored fulfillment note records that the bounded response was drafted but not sent.
 
 ### Claude domus-genoma CIFIX session failed to fix CI and should have stopped at the permission/spend wall
 
