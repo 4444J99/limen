@@ -41,6 +41,7 @@ Generated: `2026-07-04T06:22:46Z`
 | 81 | `codex` | `019ee341-d271-7da2-81f1-79c53da2cda4` | Avditor billing Codex run. The prompt asked for Stripe/Lemon Squeezy checkout plus a license/subscription gate around premium features while preserving the free tier. The original worktree is gone, and PR #43 was left open/red: local tests were blocked by missing `vitest`, CI failed in `next build`, and review found a Stripe webhook ordering bug. Review repaired the PR branch in commit `7ee8531`: schedule gating now builds, incomplete `subscription.created` events no longer downgrade active checkout state, local unit/build/lint checks pass, GitHub CI run `28697258820` is green, and PR #43 merged at `9614eef`. |
 | 82 | `opencode` | `ses_1061a8069ffevlGm8hemwph4w7` | Public Record Data Scraper security run. The prompt asked OpenCode to audit `organvm/public-record-data-scrapper`, fix high-severity advisories, add input validation at untrusted entrypoints, keep builds green, and open a PR. The queue's 43 Limen changed files are attribution noise: actual work was external PR #310, which closed unmerged after CI failed at `npm ci` because package and lockfile drifted. Durable fulfillment came later through merged PR #331 with green gate, not through the OpenCode PR. |
 | 83 | `claude` | `507be061-4c39-4f04-8c01-7c1ea24f21ce` | QUICKEN session-lifecycle run. The prompt pressure was broad and repeated across 432 prompt events, but it landed real control-plane value: `scripts/quicken.py` via PR #185 and `scripts/hooks/session-closeout.sh` / autonomic closeout via PR #189. Review found a live fail-open violation in `scripts/quicken.py`: malformed numeric env values could crash the organ before reporting. Fixed with `positive_int_env` and `cli/tests/test_quicken.py`; focused lifecycle tests, Ruff, py_compile, hook syntax, and malformed-env repro pass. |
+| 84 | `opencode` | `ses_1061a71dbffeJZ4lIQymHDPC03` | a-i-chat exporter test-coverage run. The prompt asked OpenCode to raise test coverage for `organvm/a-i-chat--exporter`, find a large uncovered module, add meaningful tests, and keep the build green. The useful code did land: commit `cfe0b1c` added `src/__tests__/queue.test.ts` for `RequestQueue`, and current `master` still contains it with green Check/Deploy/Page checks at `867db55`. The process was not clean: no PR references `cfe0b1c`, it used `Test User <test@example.com>` metadata, and the queue's 43 Limen changed files came from parent board/rebase churn rather than authored product diff. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -4391,6 +4392,64 @@ bash -n scripts/hooks/session-closeout.sh
 ```
 
 Result: private prompt extraction has `432` records; original worktree is absent; PR #185 and #189 are merged, with #189 fully green and #185's Python check red; transcript guard fails on total and Opus billable tokens; focused lifecycle tests passed `5` cases; Ruff check/format, Python compile, malformed-env repro, and hook syntax all pass after the fix.
+
+### OpenCode a-i-chat exporter test coverage landed, but bypassed the normal PR receipt path
+
+Severity: medium. The product test coverage is real and still on `master`; the failure is process/provenance and parent-board contamination.
+
+Evidence:
+
+- Queue row `84` points at OpenCode session `ses_1061a71dbffeJZ4lIQymHDPC03`, titled `Raise test coverage for a-i-chat--exporter`, run from `/Users/4jp/Workspace/limen` on 2026-06-24T13:50:31Z through 2026-06-24T14:02:20Z with model `deepseek-v4-flash-free`, cost `0`, and 83,517 input / 14,556 output / 7,315 reasoning tokens.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-84-opencode-aichat-exporter-test-coverage-prompts.jsonl` (`1` `message.user.parts` record, `4546` bytes).
+- In redacted intent form, the prompt asked OpenCode to complete `GEN-organvm-a-i-chat--exporter-test-coverage-0624`: raise test coverage in `organvm/a-i-chat--exporter`, identify a large uncovered module, add meaningful tests, open a PR or commit, and keep the build green.
+- The queue listed 43 changed files under Limen, but that was not the authored product diff. The actual product work was in `organvm/a-i-chat--exporter`.
+- OpenCode selected `src/utils/queue.ts` and authored commit `cfe0b1c12b2d1baf9613ac4e612b2fd5fa328e38` (`test: add comprehensive test suite for RequestQueue (queue.ts)`), adding only `src/__tests__/queue.test.ts` (`173` additions).
+- GitHub exposes commit `cfe0b1c` publicly in `organvm/a-i-chat--exporter`, but `gh api repos/organvm/a-i-chat--exporter/commits/cfe0b1c/pulls` returns no PRs. This was a direct commit path, not a clean PR receipt.
+- `git merge-base --is-ancestor cfe0b1c FETCH_HEAD` succeeds after fetching current `master`; current `master` is `867db55ee2c01440166f36528b97f2f1ab8bde47` and still contains `src/__tests__/queue.test.ts` with blob `df0e75a4833980431a0c9985c0c86c2c6e3ba323`.
+- Current `master` has green GitHub checks for `Check`, `Deploy`, and `pages-build-deployment` on `867db55`; `Release` is skipped as expected.
+- The session transcript reports it first committed parent Limen `tasks.yaml`, then realized the target repo needed a separate commit, pushed/rebased through parent and target remotes, and manually resolved a large `tasks.yaml` conflict. That explains the queue's broad Limen changed-file surface.
+- Both local exporter checkouts are unsuitable as clean rerun roots without touching unrelated work: `/Users/4jp/Workspace/a-i-chat--exporter` is on `redact/readme-owner-pii` with staged/generated site changes, and `/Users/4jp/Workspace/a-organvm/a-i-chat--exporter` is dirty and far behind `origin/master`.
+
+Ideal prompt diff:
+
+- Ideal form: isolate the target repo first, create a task branch, commit only product tests, open a PR, and leave a CI URL or merged PR as the receipt.
+- Actual session form: it started from the Limen root, updated parent board state, fought rebase conflict noise, and landed the product test as a direct commit with no PR association.
+- Ideal code form: add focused tests for real uncovered behavior and prove the suite is green.
+- Actual code form: the added `RequestQueue` test suite is meaningful and survived into current `master`; current remote checks are green, but the session's own local green claim is not independently rerun here because the available local checkouts are dirty or stale.
+- Ideal provenance form: commits should carry a real agent/user identity and a receipt that links prompt, branch, and CI.
+- Actual provenance form: commit `cfe0b1c` uses `Test User <test@example.com>`, and the only durable current proof is commit ancestry plus later `master` checks.
+
+Outcome:
+
+- No code patch was made in this review pass. The useful test file is already on current `master`.
+- The row should be credited as landed product value, but not as clean OpenCode closeout. It is another example where the prompt/session result was better than the queue's raw file list, while the execution process still damaged attribution clarity.
+
+What was fucked up:
+
+- Direct-main delivery bypassed the PR review and receipt path even though the prompt allowed a PR.
+- Fake author metadata (`Test User <test@example.com>`) makes provenance weaker than it should be for fleet accounting.
+- OpenCode worked from `/Users/4jp/Workspace/limen` and touched/pushed parent `tasks.yaml`, so the session mixed product work with Limen board state.
+- The rebase/conflict handling made the queue think 43 Limen files were part of the authored diff; the actual product diff was one external test file.
+- The final receipt should have named the exact commit and current CI surface rather than narrating a broad success from inside a mixed-repo session.
+
+Verification:
+
+```bash
+jq '.changed_review[84]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-84-opencode-aichat-exporter-test-coverage-prompts.jsonl
+jq -r '.kind + " " + .surface + " bytes=" + (.prompt_bytes|tostring)' .limen-private/session-corpus/full-stack-review/session-84-opencode-aichat-exporter-test-coverage-prompts.jsonl
+sqlite3 -json -readonly "file:$HOME/.local/share/opencode/opencode.db?mode=ro&immutable=1" "select id,parent_id,slug,directory,title,version,agent,model,cost,tokens_input,tokens_output,tokens_reasoning,tokens_cache_read,tokens_cache_write,datetime(time_created/1000,'unixepoch') as created, datetime(time_updated/1000,'unixepoch') as updated from session where id='ses_1061a71dbffeJZ4lIQymHDPC03';"
+gh api repos/organvm/a-i-chat--exporter/commits/cfe0b1c
+gh api repos/organvm/a-i-chat--exporter/commits/cfe0b1c/pulls
+git -C /Users/4jp/Workspace/a-i-chat--exporter fetch origin master
+git -C /Users/4jp/Workspace/a-i-chat--exporter merge-base --is-ancestor cfe0b1c FETCH_HEAD
+git -C /Users/4jp/Workspace/a-i-chat--exporter ls-tree -r FETCH_HEAD src/__tests__/queue.test.ts
+gh api 'repos/organvm/a-i-chat--exporter/contents/src/__tests__/queue.test.ts?ref=master' --jq '.sha + " " + (.size|tostring)'
+gh run list --repo organvm/a-i-chat--exporter --branch master --limit 4 --json workflowName,headSha,status,conclusion,url
+gh pr list --repo organvm/a-i-chat--exporter --state all --search cfe0b1c --json number,title,state,createdAt,closedAt,mergedAt,headRefName,url --limit 20
+```
+
+Result: private prompt extraction has `1` prompt record; commit `cfe0b1c` added `src/__tests__/queue.test.ts`; GitHub has no PR association for that commit; current `master` at `867db55` contains the test file and has green `Check`, `Deploy`, and Pages checks; available local checkouts are dirty/stale, so local test rerun was intentionally skipped.
 
 ## Remaining Review Queue
 
