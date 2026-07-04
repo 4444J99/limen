@@ -20,6 +20,7 @@ Generated: `2026-07-04T00:40:41Z`
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
 | 10 | `claude` | `3d972c29-36c6-4803-b94b-255df104f644` | Integration-organ window landed value ledger, score-dispatch, omni, ingest coverage, media atomization, and accelerator surfaces. Reviewed current `main` and found remaining malformed numeric crash paths in fail-open organs. |
 | 11 | `claude` | `f9c6b1e7-2c05-4d42-9d6a-8b08ee98a155` | Window touched watchdog, self-heal, and self-improve organs. Reviewed current `main` implementations and found remaining malformed-env crash paths in watchdog/self-heal. |
+| 12 | `claude` | `b7efae9c-af24-4c2c-9288-d2fa860ba974` | Off-repo `/Volumes/Archive4T` PR-healing fanout. Temp scratch artifacts were gone, but the persistent Claude workflow transcripts exposed a guard blind spot: nested workflow subagents were not included in transcript audits. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -735,6 +736,37 @@ python3 -m py_compile cli/src/limen/dispatch.py
 
 Result: `43 passed`; compile passed.
 
+### Claude workflow audits missed nested fanout transcripts
+
+Severity: high for spend governance and post-run review accuracy.
+
+Evidence:
+
+- Rank 12 (`b7efae9c-af24-4c2c-9288-d2fa860ba974`) was an off-repo `/Volumes/Archive4T` PR-healing session with 4,098 prompt events and 23 changed-file entries. Most changed paths were deleted temp scratch files; the durable artifacts were the main Claude transcript and workflow scripts under `~/.claude/projects/-Volumes-Archive4T/...`.
+- The persistent workflow prompts were mass PR-healing/triage launchers. They authorized one-head-per-repo fanout, rebases, merges, and limited admin merges for billing-blocked CI. That is exactly the kind of session shape the workflow guard is supposed to measure after the fact.
+- Before this repair, `scripts/claude-workflow-guard.py audit-transcript` only scanned flat `session/subagents/*.jsonl`. Claude's workflow runner stores subagents at `session/subagents/workflows/<workflow-id>/*.jsonl`, so the guard audited only the main transcript file and reported zero expensive subagents.
+- After recursive scanning, the same rank-12 transcript audit sees 216 transcript files, 5,396 usage-bearing messages, 9,891,611 billable-ish tokens, 237,812,500 cache-read tokens, and 134 Opus-class nested subagents. The prompt/session diff was therefore not just "large fanout happened"; the tracked proof surface undercounted the fanout by construction.
+
+Repair:
+
+- Made transcript audit recurse under the session `subagents/` tree.
+- Added a regression for nested `subagents/workflows/<workflow>/agent-*.jsonl` layout.
+
+Touched paths:
+
+- `scripts/claude-workflow-guard.py`
+- `cli/tests/test_claude_workflow_guard.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_claude_workflow_guard.py -q
+python3 -m py_compile scripts/claude-workflow-guard.py
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Volumes-Archive4T/b7efae9c-af24-4c2c-9288-d2fa860ba974.jsonl --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000 --out /tmp/rank12-audit.json
+```
+
+Result: `14 passed`; compile passed; patched audit reports 216 transcript files and 134 Opus-class nested subagents for rank 12.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -917,9 +949,11 @@ Result: `43 passed`; compile passed.
 - `cli/src/limen/dispatch.py:2056` increments the blocked result bucket.
 - `cli/tests/test_usage_gate.py:48` covers stringified zero headroom/remaining telemetry.
 - `cli/tests/test_dispatch.py:726` covers parallel blocked-result persistence and reporting.
+- `scripts/claude-workflow-guard.py:339` recursively includes nested workflow subagent transcripts.
+- `cli/tests/test_claude_workflow_guard.py:240` covers nested Claude workflow subagent layout.
 
 ## Remaining Review Queue
 
-1. Continue rank 12 and other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
+1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
 2. Add stronger provider-clock and receipt extraction for Agy. Changed-file `TargetFile` evidence is now covered when present, but quota, verification, and no-op classification still depend on weaker outcome text.
 3. Continue branch-artifact review for other unmerged OpenCode security/test-coverage branches before any stale branch is rebased or merged.

@@ -237,6 +237,56 @@ def test_audit_transcript_flags_opus_subagent_fanout(tmp_path):
     assert "subagent fanout" in "\n".join(report["violations"])
 
 
+def test_audit_transcript_recurses_workflow_subagent_dirs(tmp_path):
+    main = tmp_path / "session.jsonl"
+    main.write_text(
+        json.dumps(
+            {
+                "type": "assistant",
+                "message": {
+                    "model": "claude-sonnet-4-6",
+                    "content": [{"type": "text", "text": "orchestrating"}],
+                    "usage": {"input_tokens": 5, "output_tokens": 5},
+                },
+            }
+        )
+        + "\n"
+    )
+    nested = tmp_path / "session" / "subagents" / "workflows" / "wf_123" / "agent-a.jsonl"
+    nested.parent.mkdir(parents=True)
+    nested.write_text(
+        json.dumps(
+            {
+                "type": "assistant",
+                "message": {
+                    "model": "claude-opus-4-8[1m]",
+                    "content": [{"type": "text", "text": "nested verifier"}],
+                    "usage": {"input_tokens": 5, "output_tokens": 5},
+                },
+            }
+        )
+        + "\n"
+    )
+
+    proc = run_guard(
+        "audit-transcript",
+        str(main),
+        "--max-billable-tokens",
+        "1000000",
+        "--max-opus-billable-tokens",
+        "1000000",
+        "--max-agent-calls",
+        "100",
+        "--max-opus-agents",
+        "0",
+    )
+    assert proc.returncode == 2, proc.stdout + proc.stderr
+    report = json.loads(proc.stdout)
+    assert report["files"] == [str(main), str(nested)]
+    assert report["expensiveSubagents"] == 1
+    assert "subagent fanout" in "\n".join(report["violations"])
+
+
 def test_audit_transcript_blocks_unaccepted_fable(tmp_path):
     transcript = tmp_path / "session.jsonl"
     transcript.write_text(

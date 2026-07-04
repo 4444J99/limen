@@ -336,7 +336,7 @@ def audit_transcript(
     files = [main]
     subagents = main.with_suffix("") / "subagents"
     if subagents.exists():
-        files.extend(sorted(subagents.glob("*.jsonl")))
+        files.extend(sorted(p for p in subagents.rglob("*.jsonl") if p.is_file()))
 
     total_billable = 0
     cache_read_tokens = 0
