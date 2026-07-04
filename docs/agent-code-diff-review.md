@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T02:14:01Z`
+Generated: `2026-07-04T02:17:42Z`
 
 ## Scope
 
@@ -44,6 +44,7 @@ Generated: `2026-07-04T02:14:01Z`
 | refreshed 27 | `claude` | `e31aaccb-1389-4079-aa0e-dc82dd6027a6` | Link-health / launch / media scheduler demand-surface run. Original worktree is gone, but link-health, launch, and scheduler code landed on `main`; fixed the scheduler dry-run mutation and unstable queue IDs that violated the draft-only, repeatable receipt contract. |
 | refreshed 28 | `claude` | `6cdc53d9-1d39-4936-976a-ab0f77a8d561` | IANVA doorway run. Original worktree is gone, but the IANVA gateway lives under `ianva/` on `main`; fixed unversioned upstream registry coercion so malformed args/env/header/boolean shapes cannot corrupt or crash the gateway inventory. |
 | refreshed 29 | `claude` | `ec251ec3-e2e5-405b-a7ea-c93d93c255a3` | Object Lessons Studio / WriteLens launch review. Original worktree and temp OG captures are gone; external Studio and WriteLens artifacts survived. Fixed the remaining WriteLens brand/OG/reframe gap and added an explicit Studio predicate override for the clean WriteLens root. |
+| refreshed 30 | `claude` | `ef651be0-bf09-4cdb-a0db-649e0bdc67ef` | Speech Score Philip Glass tracker planning run. Original worktree and temp render artifacts are gone, but the target `speech-score-engine` repo now contains the implemented tracker/static share artifact and passes its documented gate matrix. Recorded as executed/superseded target-repo work. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -1762,6 +1763,36 @@ python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/pro
 ```
 
 Result: WriteLens OPTIONS returned `204` with CORS headers; score POST returned `200` with live JSON scores; Studio launch predicate returned `OWNED SCOPE GREEN` with `38/38` checks passing; transcript audit completed with an Opus budget violation under the default guard.
+
+### Speech Score tracker plan was executed in the target repo
+
+Severity: low for current product correctness, medium for prompt/session provenance.
+
+Evidence:
+
+- Claude session `ef651be0-bf09-4cdb-a0db-649e0bdc67ef` produced a plan for a Philip Glass speech-score tracker prototype. The original `.claude/worktrees/reflective-marinating-dijkstra` worktree and `~/.claude/jobs/ef651be0/tmp/*` render artifacts are gone.
+- Transcript audit reports eight usage-bearing messages, 131,498 billable-ish tokens, 55,112 cache-read tokens, 131,498 Opus-class billable-ish tokens, one expensive subagent, zero agent/workflow calls, and no guard violations.
+- The surviving plan explicitly targeted `organvm/speech-score-engine`, not Limen, and asked for a hard-coded shareable tracker artifact first.
+- `~/Code/speech-score-engine` now contains the planned route/static artifacts, including `apps/web/src/app/prototypes/philip-glass-tracker`, `apps/web/public/prototypes/philip-glass-tracker.html`, exported `apps/web/out/prototypes/*`, and `dist/speech-score.html`.
+- The target repo fast-forwarded cleanly to `origin/main` commit `7bc03f2` (`feat: static export + real landing page -> Cloudflare Pages`).
+
+Outcome:
+
+- No Limen code patch was made for this row.
+- This row is closed as executed/superseded target-repo work: the original temporary render files are gone, but the durable target repo contains the implemented share artifact and passes its gate.
+
+Verification:
+
+```bash
+git -C /Users/4jp/Code/speech-score-engine pull --ff-only
+pnpm --filter @sse/web typecheck
+pnpm --filter @sse/web build
+pnpm biome check .
+node tools/build-standalone.mjs
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-reflective-marinating-dijkstra/ef651be0-bf09-4cdb-a0db-649e0bdc67ef --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000 --out /tmp/rank-ef651-audit.json
+```
+
+Result: target repo fast-forwarded to `7bc03f2`; web typecheck passed; web build exported seven static pages; Biome checked 81 files with no fixes; standalone builder wrote `dist/speech-score.html` at 1391 KB with ten files inlined; transcript audit passed without violations.
 
 ## Remaining Review Queue
 
