@@ -7624,6 +7624,68 @@ test -d /Users/4jp/Workspace/limen/.claude/worktrees/glimmering-mapping-whistle;
 
 Result: transcript guard failed on spend and one unbounded-goal phrase; prompt extraction matches row `136`; #63, #78, #76, and #188 are merged; post-merge runs are green for #63/#78/#76; #188 has no status checks but is merged at `ecfe544`; the `glimmering-mapping-whistle` worktree is absent.
 
+### Claude's cartridge-connected closeout shipped the right guard, but left a stale pulled-lever accounting edge
+
+Severity: medium for control-plane correctness, high for spend. The session found the real reason `brewup` failed in Claude, then turned that into a useful host-factory/cartridge guard and closeout filing. The code landed and still passes, but current state shows the filed `L-CARTRIDGE-REPOINT` issue can outlive the actual predicate turning green.
+
+Evidence:
+
+- Reconstruction row `137` targets Claude session `98d2f6d5-3477-42f3-ad15-d3dbf4890e15`, rooted in `/Users/4jp/Workspace/limen`, with a workflow fanout under `wf_b3e4eb67-ad2`, from 2026-07-02T10:47:06Z through 2026-07-02T13:29:59Z.
+- The first user ask was not "install brewup"; it was forensic: after `brewup` failed in Claude's command runner, the user said it used to run and asked for the full history. The workflow found `alias brewup='domus up'` in `~/.config/zsh/30-aliases.zsh` and explained the actual failure: non-interactive zsh does not load the alias even though interactive shells do.
+- The session then moved from the alias symptom into the host-factory invariant: if `chezmoi source-path` points at a scratch/dummy source, `chezmoi verify/status/health` can be green against the wrong cartridge.
+- Durable PR #560 merged at `f406061`: `scripts/cartridge-connected.py`, `cli/tests/test_cartridge_connected.py`, `metabolize.sh` beat wiring, governance parameters, and related tier/guard adjustments. PR checks `python`, `python-311`, `worker`, `web`, `verify`, and `pr-gate` passed; post-merge `CI` and `Deploy API` passed.
+- The cartridge guard still works on current code: `PYTHONPATH=cli/src python3 -m pytest cli/tests/test_cartridge_connected.py -q` returns `9 passed`, and `python3 scripts/cartridge-connected.py` currently reports `OK -- chezmoi source is organvm/domus-genoma`.
+- The session's `/closeout` pass correctly refused to leave the remaining re-point atom in recall-only memory. It created issue #563 and PR #564, adding `L-CARTRIDGE-REPOINT` to `his-hand-levers.json` as the permanent owner surface for the human-gated `chezmoi init/apply` step.
+- Durable PR #564 merged at `077181a` with passing `pr-gate`. Issue #563 exists, is open, and carries the `needs-human` label.
+- Current review found drift after the transcript: `chezmoi source-path` now resolves to `/Users/4jp/Workspace/domus-genoma` with remote `https://github.com/organvm/domus-genoma.git`, and `cartridge-connected.py` is green, but issue #563 still says the invariant is broken and remains open.
+- Current `scripts/no-tasks-on-me.sh` is not a clean re-run of the transcript closeout: it now fails on two later landed branches lingering (`limen/org-health-organ-kernel-0704-6db2`, `limen/org-legal-organ-charter-0703-3131`). That is later branch drift, not evidence that row `137` failed to file its cartridge atom.
+- Full private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-137-claude-cartridge-connected-closeout-prompts.jsonl`: 373 prompt-surface records, 269 unique prompt hashes, 492,664 prompt bytes. Surfaces are `message.user` 308, `last-prompt` 56, and `queue.enqueue` 9.
+
+Ideal prompt diff:
+
+- Ideal forensic form: distinguish missing command, missing PATH, alias/function definition, shell mode, and history before mutating anything.
+- Actual form: good. It found the alias and correctly diagnosed the non-interactive shell boundary instead of reinstalling or bypassing the alias.
+- Ideal root-healing form: preserve the host-factory guardrail and add a predicate that checks the actual cartridge source, then wire it into the beat.
+- Actual form: good. PR #560 shipped exactly that, with a focused script, tests, and beat wiring.
+- Ideal closeout form: if a remaining atom is human-gated, file it in `his-hand-levers.json` and graph issue, then stop reciting it.
+- Actual form: good at the time. PR #564 and issue #563 put the atom in the durable registry. The missing piece is lifecycle reconciliation when the predicate later turns green.
+
+Outcome:
+
+- Credit row `137` for a real guardrail improvement and for converting a one-off shell symptom into a repeatable host/cartridge predicate.
+- Credit the `/closeout` section for filing `L-CARTRIDGE-REPOINT` instead of leaving it in memory.
+- Flag current follow-up: issue #563 / `L-CARTRIDGE-REPOINT` appears stale now that the guard is green. The registry needs a "pulled lever" reconciliation path that closes or updates a needs-human lever when the executable predicate proves the action is already done.
+
+What was fucked up:
+
+- The session was too expensive for its shape. Transcript guard reports 4,614,759 billable tokens, including 3,938,672 Opus billable tokens.
+- The workflow fanout was useful for the initial `brewup` forensics, but the broader session kept expanding from alias history into Domus/cartridge architecture, code shipping, closeout, issue filing, and memory narration.
+- Closeout predicates prove that nothing is dangling at a point in time; they did not prevent the later stale-open issue once the real-world cartridge state changed.
+- The public lever text now says "currently BROKEN" while the current cartridge predicate says OK. That is exactly the kind of stale owner-surface wording this review is supposed to catch.
+
+Verification:
+
+```bash
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/98d2f6d5-3477-42f3-ad15-d3dbf4890e15.jsonl
+python3 - <<'PY'
+import json
+from collections import Counter
+from pathlib import Path
+p = Path('/Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-137-claude-cartridge-connected-closeout-prompts.jsonl')
+rows = [json.loads(line) for line in p.read_text(encoding='utf-8').splitlines() if line.strip()]
+print(len(rows), len({r['prompt_hash'] for r in rows}), sum(r['prompt_bytes'] for r in rows), Counter(r['surface'] for r in rows), Counter(r['session_id'] for r in rows))
+PY
+gh pr view 560 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+gh pr view 564 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+gh issue view 563 --repo organvm/limen --json number,title,state,labels,url
+PYTHONPATH=cli/src python3 -m pytest cli/tests/test_cartridge_connected.py -q
+python3 scripts/cartridge-connected.py
+python3 scripts/credential-wall.py --check
+scripts/no-tasks-on-me.sh
+```
+
+Result: transcript guard failed on spend only; prompt extraction matches row `137`; PR #560 and PR #564 are merged; focused cartridge tests pass; `credential-wall.py --check` passes; current cartridge predicate is green; current `no-tasks-on-me.sh` fails only on later landed branch-reap drift, and issue #563 remains open despite the cartridge predicate being green.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
