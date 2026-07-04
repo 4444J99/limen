@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T13:24:21Z`
+Generated: `2026-07-04T13:56:17Z`
 
 ## Scope
 
@@ -129,6 +129,7 @@ Generated: `2026-07-04T13:24:21Z`
 | 107 | `opencode` | `ses_0e6e2da47ffeA53Z2Bk69OWcSX` | Limen security recovery run. The prompt asked OpenCode to recover `RECOVER-GEN-organvm-limen-security-0622`. Durable value did land through PR #491 / `6b91e5d`: API list-size/input-boundary hardening plus tests are on `main` and current `web/api` tests pass. But the reviewed OpenCode session itself edited the wrong root branch, lost the header/requirements edits it thought it made, then hit a permission rejection when switching to the correct worktree. PR #491 was already created/merged by the dispatch lane while OpenCode was still in that confused state, and its `verify` job failed until the later row-105 CI fix. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
+| 150 | `codex` | `019ecda8-577e-7502-b811-ef2c27675cf9` | Universal-intake launch pass. Codex produced a useful local Limen launch ledger and verified public/private runtime boundaries, but the artifact stayed untracked in the dirty portfolio repo, live state has since drifted, and the session ended after promising three control-plane artifacts that were not created. |
 
 ## Merged Artifacts
 
@@ -9335,6 +9336,72 @@ PY
 ```
 
 Result: PR #101 is merged and green; current Studium validation passes; PR #367 is open bookkeeping-only; the repaired expansion backlog now has no active first-pass film row whose companion file already exists.
+
+### Codex's universal-intake launch pass produced a useful local ledger, then stopped before the promised control-plane artifacts
+
+Severity: medium for launch/process correctness, low for tracked Limen code risk. The session did valuable evidence gathering and produced a strong private/local ledger, but it did not turn the prompt into a durable tracked surface, and current live probes no longer match several of its June 15 facts.
+
+Evidence:
+
+- Queue row `changed_review[150]` points at Codex session `019ecda8-577e-7502-b811-ef2c27675cf9`, rooted at `/Users/4jp`, running from `2026-06-15T23:41:40Z` through `2026-06-16T00:13:38Z`.
+- Private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-changed-150-codex-universal-intake-prompts.jsonl`: `27` prompt records, `17` unique prompt hashes, `61,946` prompt bytes. Surfaces were `2` `event_msg.user_message`, `9` `history`, and `16` `response_item.user`; sources were `9` `codex-history` and `18` `codex-sessions`.
+- First-layer prompt, redacted to intent: make Limen the intake surface for the whole universe; verify CLI, Firebase UI, Worker runtime, public/client views, auth/persona/token behavior, and docs; then create reusable intake packets for Sovereign Systems, STYX, UMA, product launches, client onboarding, and autonomous agent execution.
+- The prompt also supplied strict audit shape: inspect the named repo/live URLs/README/package/docs/issues/workflows/tests first; separate `VERIFIED`, `INFERRED`, `STALE`, `BLOCKED`, and `UNKNOWN`; avoid hidden artifact folders as the main deliverable; return concise evidence-backed handoff.
+- The session produced a substantial local ledger at `/Users/4jp/Workspace/4444J99/portfolio/docs/audits/2026-06-15-limen-launch-evidence-ledger.md`. It includes Limen positioning, live Worker/Firebase checks, issue state, object mapping, reusable packet examples, trust boundaries, broken/drifted paths, screenshot list, portfolio copy, and next build goal.
+- That ledger is still untracked in a dirty portfolio checkout that is `43` commits behind `origin/main`. It is therefore a local evidence artifact, not a published portfolio/service surface or repo-delivered change.
+- The session then started to expose Limen as a project page, reversed direction after the user clarified that Limen/Surface/Portal should be one control plane, and ended after announcing three intended artifacts: a top-level workspace control-plane map, `portfolio/intake/tasks.yaml`, and an updated intake README.
+- Current filesystem checks show those three final artifacts were not completed by the session: `portfolio/intake/tasks.yaml` is absent, `portfolio/intake/README.md` still says "Materials Moved" and points to `application-pipeline`, and no obvious workspace control-plane map was found in the searched top-level workspace paths.
+- Current live Worker checks still prove the public/private boundary: `/health` returns `200` with GitHub storage configured, `/api/public-status` returns public aggregate data, `/api/surface-manifest` exposes only the public surface/contract, and unauthenticated `/api/client-status`, `/api/status`, `/api/qa-status`, `/api/readiness`, `/api/tasks`, and `POST /api/dispatch` all return `401`.
+- Current live Worker counts have drifted from the ledger: the June 15 ledger recorded `100` total and `28` completed; the July 4 probe reports `0` total and `0` completed.
+- Current Firebase checks still prove the static surface boundary: `/public`, `/surface-manifest.json`, `/public-status.json`, `/client`, and `/qa` return `200`; private static artifacts such as `/tasks.json`, `/client-status.json`, `/internal-status.json`, `/qa-status.json`, and `/readiness.json` return `404`.
+- Firebase public status is still stale: `/public-status.json` is generated at `2026-06-05T00:48:14.181Z` and reports `100` total, `20` completed, and `80` active.
+- GitHub repo identity drifted: `gh repo view 4444J99/limen` now resolves to `organvm/limen`. Current issue state is not the ledger's `0` open issues / `2` closed issues; current open issues include #578, #563, #538, #535, #534, #533, #532, #531, #530, and #529.
+- The queue's changed-file list includes UMA paths, but current UMA durability should not be credited to this session. Canonical `/Users/4jp/Code/organvm/universal-mail--automation` and the `.home-cartridge` mirror are clean and synced; the relevant UMA intake packet implementation landed later in commit `aa43ef3` with follow-up test commit `524df42`, outside this Codex session's endpoint.
+- The transcript's final token counter is enormous for an unfinished local artifact pass: `28,982,030` total tokens, `181,055` output tokens, and `111,023` reasoning-output tokens.
+
+Ideal prompt diff:
+
+- Ideal form: after the evidence pass, create one durable tracked surface or explicit local-only receipt that the user can rely on: either a committed public audit artifact, a committed control-plane map/queue/README set, or a clearly bounded private ledger with a current-state refresh command.
+- Actual form: Codex created one useful untracked ledger, pivoted through portfolio publication and control-plane mapping, then stopped before the final three artifacts or any commit/PR receipt.
+- Ideal current-state form: live checks should be timestamped and treated as perishable; any launch copy should either cite the date of the check or refresh before publication.
+- Actual current state: the ledger's Worker counts and GitHub issue inventory are stale, while the public/private boundary claim remains valid on current probes.
+- Ideal attribution form: distinguish local evidence work from later product code. UMA's current intake packet implementation is real, but it belongs to the later UMA commit path, not this Codex row.
+
+Outcome:
+
+- Credit row `changed 150` for a strong local evidence ledger and for correctly framing Limen as intake/dispatch/persona-boundary infrastructure rather than a fully autonomous execution platform.
+- Do not credit the row as shipped control-plane work: the planned map, queue, and README were not created; the portfolio ledger is untracked; and there is no branch, PR, or published surface receipt.
+- Treat the ledger as useful source material to harvest deliberately, with a fresh live-state pass, not as current launch truth.
+
+What was fucked up:
+
+- The prompt was too broad for one Codex session: UMA, STYX, Sovereign Systems, Limen runtime, Firebase, Worker, portfolio publication, client onboarding, and agent execution all entered the same window.
+- The session obeyed the evidence-first shape at first, then drifted into site-publication and control-plane artifact plans without closing either.
+- The final "exactly three intentional artifacts" sentence became a dangling promise. The filesystem shows no `portfolio/intake/tasks.yaml` and no updated intake README.
+- The queue changed-file list mixes external repo state, untracked portfolio artifacts, and later UMA implementation paths. Reviewing only changed files would over-credit this row and miss the incomplete closeout.
+- Current launch evidence must be refreshed before reuse. Worker counts, repo identity, and issue state have already drifted materially since the ledger was written.
+
+Verification:
+
+```bash
+jq '.changed_review[150]' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+jq -s '{records:length, unique_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), surfaces:([group_by(.surface)[] | {surface:.[0].surface,count:length}]), sources:([group_by(.source)[] | {source:.[0].source,count:length}])}' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-changed-150-codex-universal-intake-prompts.jsonl
+git -C /Users/4jp/Workspace/4444J99/portfolio status --short --branch
+test -f /Users/4jp/Workspace/4444J99/portfolio/docs/audits/2026-06-15-limen-launch-evidence-ledger.md
+ls -l /Users/4jp/Workspace/4444J99/portfolio/intake
+sed -n '1,80p' /Users/4jp/Workspace/4444J99/portfolio/intake/README.md
+/usr/bin/curl -sS -i https://limen-runtime.ivixivi.workers.dev/health
+/usr/bin/curl -sS https://limen-runtime.ivixivi.workers.dev/api/public-status
+/usr/bin/curl -sS https://limen-runtime.ivixivi.workers.dev/api/surface-manifest
+for path in /api/client-status /api/status /api/qa-status /api/readiness /api/tasks; do /usr/bin/curl -sS -o /tmp/limen_probe.out -w "$path %{http_code}\n" "https://limen-runtime.ivixivi.workers.dev$path"; done
+for path in /public /surface-manifest.json /public-status.json /client /qa /tasks.json /client-status.json /internal-status.json /qa-status.json /readiness.json; do /usr/bin/curl -sS -o /tmp/firebase_probe.out -w "$path %{http_code}\n" "https://device-streaming-067d747a.web.app$path"; done
+gh repo view 4444J99/limen --json nameWithOwner,url,defaultBranchRef
+gh issue list --repo 4444J99/limen --state open --limit 10 --json number,title,state,url
+git -C /Users/4jp/Code/organvm/universal-mail--automation status --short --branch
+git -C /Users/4jp/Code/organvm/universal-mail--automation show --stat --oneline --name-status aa43ef3 524df42
+```
+
+Result: private prompt extraction matches row `changed 150`; the portfolio ledger exists but is untracked in a dirty repo; the intended `portfolio/intake/tasks.yaml` does not exist; the intake README is still stale; current Worker and Firebase probes preserve the public/private boundary but have stale or drifted counts; `4444J99/limen` resolves to `organvm/limen` with open issues; UMA intake code is durable today, but via later commits outside this session's endpoint.
 
 ## Remaining Review Queue
 
