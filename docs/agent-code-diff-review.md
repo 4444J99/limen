@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T00:27:53Z`
+Generated: `2026-07-04T00:31:24Z`
 
 ## Scope
 
@@ -15,6 +15,7 @@ Generated: `2026-07-04T00:27:53Z`
 | 1 | `opencode` | `ses_11427e08affe3D8jAAl5W43viB` | Exact window had no matching commits on `main`, but the matching unmerged branch is `limen/gen-organvm-limen-security-0625-57ce` at `02f256e` (`Security hardening pass on organvm/limen`). Reviewed as a reject/do-not-merge artifact. |
 | 2 | `opencode` | `ses_114c8f0c6ffeixS8gn4VxGqoHb` | Exact window matched `80d4e21f` (`feat(route): consume self-improve lane weights`). Widened window also showed related routing/meter/queue commits including `0146190` and `a6488c9`. |
 | 3 | `opencode` | `ses_1095e9b19ffe4yg9h4la7tGU4d` | Exact window had no matching commits on `main`; widened window was mostly Studium content-generation churn, not the control-plane code path reviewed here. |
+| 11 | `claude` | `f9c6b1e7-2c05-4d42-9d6a-8b08ee98a155` | Window touched watchdog, self-heal, and self-improve organs. Reviewed current `main` implementations and found remaining malformed-env crash paths in watchdog/self-heal. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
 ## Rejected Artifacts
@@ -462,6 +463,39 @@ python3 -m py_compile cli/src/limen/tabularius.py
 
 Result: `15 passed`; compile passed.
 
+### Watchdog and self-heal env knobs could abort the beat
+
+Severity: medium for autonomic recovery reliability.
+
+Evidence:
+
+- Claude session `f9c6b1e7-2c05-4d42-9d6a-8b08ee98a155` covers the watchdog/self-heal/self-improve organ window.
+- The implementation intent was fail-open, beat-safe detection and repair, but `scripts/watchdog.py` parsed watchdog timing knobs with bare `int(...)` at import time.
+- `scripts/self-heal.py` parsed `LIMEN_HEAL_SCAN`, `LIMEN_HEAL_SCAN_MAX`, and `LIMEN_HEAL_LIMIT` with bare `int(...)` while constructing argparse defaults.
+- A malformed launchd or shell value could crash watchdog before health checks or crash self-heal before dry-run/live gating.
+
+Repair:
+
+- Added positive integer fallback parsing to `watchdog.py` for loop max, lane timeout, dispatch ceiling, overhead, stale threshold, and max-fails.
+- Added positive integer fallback parsing to `self-heal.py` for scan, scan-max, and limit defaults.
+- Added regressions proving malformed env values fall back without writing the board or queue lock in dry-run mode.
+
+Touched paths:
+
+- `scripts/watchdog.py`
+- `scripts/self-heal.py`
+- `cli/tests/test_watchdog.py`
+- `cli/tests/test_self_heal.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_watchdog.py cli/tests/test_self_heal.py -q
+python3 -m py_compile scripts/watchdog.py scripts/self-heal.py
+```
+
+Result: `18 passed`; compile passed.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -559,6 +593,19 @@ Result: `15 passed`; compile passed.
 - `cli/src/limen/tabularius.py:350` quarantines fold validation failures instead of crashing.
 - `cli/tests/test_tabularius.py:176` covers bad board-meta quarantine with good-ticket survival.
 - `cli/tests/test_tabularius.py:191` covers bad board-order quarantine with good-ticket survival.
+- `scripts/watchdog.py:55` defines positive integer env fallback parsing.
+- `scripts/watchdog.py:71` applies fallback parsing to the loop max threshold.
+- `scripts/watchdog.py:72` applies fallback parsing to the lane timeout threshold.
+- `scripts/watchdog.py:74` applies fallback parsing to the dispatch ceiling threshold.
+- `scripts/watchdog.py:75` applies fallback parsing to watchdog overhead.
+- `scripts/watchdog.py:76` applies fallback parsing to the stale threshold.
+- `scripts/watchdog.py:80` applies fallback parsing to max-fails.
+- `scripts/self-heal.py:197` defines positive integer env fallback parsing.
+- `scripts/self-heal.py:207` applies fallback parsing to heal scan size.
+- `scripts/self-heal.py:209` applies fallback parsing to heal scan max.
+- `scripts/self-heal.py:211` applies fallback parsing to heal emit limit.
+- `cli/tests/test_watchdog.py:77` covers malformed watchdog numeric env values.
+- `cli/tests/test_self_heal.py:120` covers malformed self-heal numeric env values.
 
 ## Remaining Review Queue
 

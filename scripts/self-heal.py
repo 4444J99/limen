@@ -194,13 +194,21 @@ def acquire_lock(timeout=15):
     return False
 
 
+def env_int(name, default):
+    try:
+        value = int(os.environ.get(name, str(default)) or str(default))
+    except (TypeError, ValueError):
+        return default
+    return value if value > 0 else default
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--scan", type=int, default=int(os.environ.get("LIMEN_HEAL_SCAN", "30")),
+    ap.add_argument("--scan", type=int, default=env_int("LIMEN_HEAL_SCAN", 30),
                     help="assess WINDOW per run — how many PRs to classify this beat (rotates)")
-    ap.add_argument("--scan-max", type=int, default=int(os.environ.get("LIMEN_HEAL_SCAN_MAX", "500")),
+    ap.add_argument("--scan-max", type=int, default=env_int("LIMEN_HEAL_SCAN_MAX", 500),
                     help="cap on the cheap full-fleet enumeration the rotating window draws from")
-    ap.add_argument("--limit", type=int, default=int(os.environ.get("LIMEN_HEAL_LIMIT", "10")),
+    ap.add_argument("--limit", type=int, default=env_int("LIMEN_HEAL_LIMIT", 10),
                     help="max heal tasks to EMIT this run (headroom-scaled up to 3x on a full tank)")
     ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS", str(ROOT / "tasks.yaml")))
     ap.add_argument("--dry-run", action="store_true")

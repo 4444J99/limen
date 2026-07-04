@@ -117,6 +117,20 @@ def test_dry_run_makes_zero_writes(tmp_path, monkeypatch):
     assert not (tmp_path / "logs" / ".queue.lock.d").exists(), "dry-run must not touch the queue lock"
 
 
+def test_malformed_numeric_env_falls_back(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_HEAL_SCAN", "bad")
+    monkeypatch.setenv("LIMEN_HEAL_SCAN_MAX", "bad")
+    monkeypatch.setenv("LIMEN_HEAL_LIMIT", "bad")
+    m = _load(tmp_path, monkeypatch)
+    p = tmp_path / "tasks.yaml"
+    _board(p)
+
+    rc = _run(m, monkeypatch, p, "--dry-run")
+
+    assert rc == 0
+    assert not (tmp_path / "logs" / ".queue.lock.d").exists()
+
+
 def test_idempotent_no_duplicate_on_rerun(tmp_path, monkeypatch):
     m = _load(tmp_path, monkeypatch)
     p = tmp_path / "tasks.yaml"
