@@ -1500,6 +1500,221 @@ tbody tr.activeRow {
   width: 28px;
 }
 
+.corpusGrid {
+  align-items: start;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+}
+
+.corpusPanel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  min-width: 0;
+  padding: 14px;
+}
+
+.corpusPanelWide {
+  grid-row: span 4;
+}
+
+.corpusPanelHeader {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.corpusPanelHeader h2,
+.corpusPanel h2 {
+  font-size: 18px;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.corpusControls {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.corpusControls input,
+.corpusControls select,
+.corpusPanelHeader select {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text);
+  min-height: 34px;
+  padding: 7px 9px;
+}
+
+.corpusControls input {
+  min-width: 220px;
+}
+
+.corpusTimeline {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  max-height: 680px;
+  overflow: auto;
+}
+
+.corpusUnitRow {
+  align-items: center;
+  border-bottom: 1px solid #edf0f4;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 128px minmax(0, 1fr) 120px;
+  min-height: 62px;
+  padding: 10px 12px;
+}
+
+.corpusUnitRow:last-child {
+  border-bottom: 0;
+}
+
+.corpusUnitTime,
+.corpusUnitMeta span,
+.corpusNote,
+.corpusReceipt dt,
+.corpusAtomList span,
+.corpusCompare span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.corpusUnitMain {
+  min-width: 0;
+}
+
+.corpusUnitMain strong,
+.corpusUnitMain span,
+.corpusUnitMain small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.corpusUnitMain strong,
+.corpusCompare strong,
+.corpusGate strong {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+.corpusUnitMain span {
+  color: var(--text);
+  font-size: 13px;
+  margin-top: 3px;
+}
+
+.corpusUnitMain small {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 3px;
+}
+
+.corpusUnitMeta {
+  display: grid;
+  gap: 5px;
+  justify-items: end;
+}
+
+.corpusCompare {
+  display: grid;
+  gap: 10px;
+}
+
+.corpusCompare div,
+.corpusSignalGrid span,
+.corpusAtomList div,
+.corpusGate {
+  background: var(--panel-2);
+  border: 1px solid #edf0f4;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.corpusCompare strong {
+  display: block;
+  font-size: 18px;
+  margin-top: 4px;
+}
+
+.corpusCompare p {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 6px 0 0;
+}
+
+.corpusAtomList,
+.corpusSignalGrid {
+  display: grid;
+  gap: 8px;
+}
+
+.corpusAtomList div {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(110px, 1fr) repeat(3, auto);
+}
+
+.corpusSignalGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.corpusSignalGrid span,
+.corpusAtomList span {
+  display: block;
+}
+
+.corpusSignalGrid strong {
+  display: block;
+  font-size: 18px;
+  margin-top: 4px;
+}
+
+.corpusGate {
+  display: grid;
+  gap: 4px;
+}
+
+.corpusGate.pass strong {
+  color: var(--green);
+}
+
+.corpusGate.fail strong {
+  color: var(--red);
+}
+
+.corpusReceipt {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.corpusReceipt dd {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  margin: 0 0 4px;
+  overflow-wrap: anywhere;
+}
+
+.corpusEmpty {
+  background: var(--panel-2);
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  padding: 18px;
+}
+
 @media (max-width: 1100px) {
   .metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1514,8 +1729,13 @@ tbody tr.activeRow {
   }
 
   .audienceGrid,
-  .qaLayout {
+  .qaLayout,
+  .corpusGrid {
     grid-template-columns: 1fr;
+  }
+
+  .corpusPanelWide {
+    grid-row: auto;
   }
 
   .publicOpsGrid,
@@ -1564,6 +1784,33 @@ tbody tr.activeRow {
   .opsControls input,
   .opsControls button {
     width: 100%;
+  }
+
+  .corpusPanelHeader,
+  .corpusControls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .corpusControls input,
+  .corpusControls select,
+  .corpusPanelHeader select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .corpusUnitRow {
+    align-items: start;
+    grid-template-columns: 1fr;
+  }
+
+  .corpusUnitMeta {
+    justify-items: start;
+  }
+
+  .corpusSignalGrid,
+  .corpusAtomList div {
+    grid-template-columns: 1fr;
   }
 
   .metrics {

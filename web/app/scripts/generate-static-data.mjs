@@ -22,11 +22,14 @@ const clientSurfaceManifestPath = join(privateDir, "client-surface-manifest.json
 const publicSurfaceManifestPath = join(appRoot, "public", "public-surface-manifest.json");
 const readinessPath = join(privateDir, "readiness.json");
 const qaStatusPath = join(privateDir, "qa-status.json");
+const corpusStatusSourcePath = process.env.LIMEN_CORPUS_STATUS || join(limenRoot, ".limen-private", "session-corpus", "lifecycle", "corpus-command-center.public.json");
+const corpusStatusPath = join(privateDir, "corpus-status.json");
 const hostedPrivatePaths = [
   join(appRoot, "public", "tasks.json"),
   join(appRoot, "public", "client-status.json"),
   join(appRoot, "public", "internal-status.json"),
   join(appRoot, "public", "qa-status.json"),
+  join(appRoot, "public", "corpus-status.json"),
   join(appRoot, "public", "owner-surface-manifest.json"),
   join(appRoot, "public", "client-surface-manifest.json"),
   join(appRoot, "public", "readiness.json"),
@@ -408,6 +411,55 @@ function qaStatus(data, summary) {
   };
 }
 
+function corpusStatus() {
+  if (existsSync(corpusStatusSourcePath)) {
+    return JSON.parse(readFileSync(corpusStatusSourcePath, "utf8"));
+  }
+  return {
+    status: "missing",
+    surface: "corpus",
+    generated_at: new Date(0).toISOString(),
+    privacy: {
+      redacted: true,
+      contains_raw_text: false,
+      private_index: ".limen-private/session-corpus/lifecycle/corpus-command-center.private.json",
+      private_html: ".limen-private/session-corpus/lifecycle/corpus-command-center.private.html",
+    },
+    coverage: {
+      units: 0,
+      sessions_indexed: 0,
+      unique_hashes: 0,
+      clusters: 0,
+      comparisons: 0,
+      allusion_rows: 0,
+      private_object_count: 0,
+      kinds: {},
+      lanes: {},
+      sources: {},
+    },
+    units: [],
+    truncated_units: false,
+    clusters: [],
+    comparisons: [],
+    allusions: [],
+    aug1: {
+      deadline: "2026-08-01",
+      gate_pass: false,
+      legs_total: 0,
+      legs_met: 0,
+      ledger: {},
+    },
+    inbound: {
+      value_repo_count: 0,
+      seeded_repo_count: 0,
+      frontdoor_present: false,
+      discoverability_present: false,
+      scraper_model_present: false,
+      capture_contact_configured: false,
+    },
+  };
+}
+
 function surfaceManifest(summary) {
   const generatedAt = summary.generated_at;
   return {
@@ -457,6 +509,15 @@ function surfaceManifest(summary) {
         sanctioned_personas: ["owner"],
         disclosure: "lifecycle gates, assignment queues, verification queues, and archive suppression",
       },
+      {
+        id: "corpus",
+        title: "Corpus command center",
+        route: "/corpus",
+        contract: "/corpus-status.json",
+        persona: "owner",
+        sanctioned_personas: ["owner"],
+        disclosure: "redacted prompt/reply/artifact atlas, Aug-1 gate, inbound magnet, and private corpus pointers",
+      },
     ],
     contracts: {
       internal: {
@@ -491,6 +552,11 @@ function surfaceManifest(summary) {
         includes_dispatch_logs: false,
         includes_task_context: false,
         includes_task_urls: false,
+      },
+      corpus: {
+        path: "/corpus-status.json",
+        includes_raw_text: false,
+        includes_private_paths: false,
       },
     },
   };
@@ -572,6 +638,7 @@ const clientManifest = sanctionedManifest(manifest, "client");
 const publicManifest = sanctionedManifest(manifest, "public");
 const readiness = readinessReport(data, summary);
 const qa = qaStatus(data, summary);
+const corpus = corpusStatus();
 
 mkdirSync(dirname(outPath), { recursive: true });
 mkdirSync(dirname(publicStatusPath), { recursive: true });
@@ -588,6 +655,7 @@ writeFileSync(clientSurfaceManifestPath, `${JSON.stringify(clientManifest, null,
 writeFileSync(publicSurfaceManifestPath, `${JSON.stringify(publicManifest, null, 2)}\n`);
 writeFileSync(readinessPath, `${JSON.stringify(readiness, null, 2)}\n`);
 writeFileSync(qaStatusPath, `${JSON.stringify(qa, null, 2)}\n`);
+writeFileSync(corpusStatusPath, `${JSON.stringify(corpus, null, 2)}\n`);
 mirrorFleetStatus();
 mirrorInsights();
 console.log(`Generated ${outPath} with ${output.tasks?.length || 0} tasks`);

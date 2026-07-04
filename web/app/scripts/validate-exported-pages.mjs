@@ -64,6 +64,7 @@ const ownerOnlyUiNeedles = [
   "/api/status",
   "/api/qa-status",
   "/api/readiness",
+  "/corpus-status.json",
   "/api/tasks/",
   "/api/release-stale",
   "/api/dispatch",
@@ -73,8 +74,9 @@ const ownerOnlyUiNeedles = [
 ];
 
 assertLabels("index.html", ["Public"]);
-assertLabels("internal.html", ["Internal", "QA", "Insights", "Client", "Public"]);
-assertLabels("qa.html", ["Internal", "QA", "Insights", "Client", "Public"]);
+assertLabels("internal.html", ["Internal", "QA", "Insights", "Corpus", "Client", "Public"]);
+assertLabels("qa.html", ["Internal", "QA", "Insights", "Corpus", "Client", "Public"]);
+assertLabels("corpus.html", ["Internal", "QA", "Insights", "Corpus", "Client", "Public"]);
 assertLabels("client.html", ["Client", "Public"]);
 assertLabels("public.html", ["Public"]);
 
@@ -85,24 +87,26 @@ if (runtimeAttached) {
   assertIncludes("client.html", ["Client token required", "Load client"]);
   assertIncludes("public.html", ["Public runtime refresh", "Unrecorded capacity", "Pull requests"]);
   assertIncludes("qa.html", ["Owner token required", "Load QA"]);
+  assertIncludes("corpus.html", ["Corpus Command Center", "Prompt atlas"]);
   assertNotIncludes("client.html", ["Static snapshot only", "Build with NEXT_PUBLIC_API_URL to enable runtime refresh."]);
   assertNotIncludes("public.html", ["Static snapshot only", "Build with NEXT_PUBLIC_API_URL to enable runtime refresh."]);
 } else {
   assertIncludes("index.html", ["Limen is tracking", "Run plan", "Unrecorded capacity"]);
   assertIncludes("internal.html", ["Runtime unavailable"]);
   assertIncludes("qa.html", ["Runtime unavailable"]);
+  assertIncludes("corpus.html", ["Corpus Command Center", "Prompt atlas"]);
   assertIncludes("client.html", ["Runtime unavailable"]);
   assertIncludes("public.html", ["Static snapshot only", "Build with NEXT_PUBLIC_API_URL to enable runtime refresh."]);
 }
 assertIncludes("public.html", ["/public-surface-manifest.json"]);
 
 assertNotIncludes("index.html", [">Internal</a>", ">QA</a>", ">Client</a>", "Client token", "Load internal", "Load QA"]);
-assertNotIncludes("client.html", [">Internal</a>", ">QA</a>", "API verification unavailable", "API assignment unavailable", "API archive unavailable"]);
-assertNotIncludes("public.html", [">Internal</a>", ">QA</a>", ">Client</a>", "Client token", "API verification unavailable", "API assignment unavailable", "API archive unavailable"]);
+assertNotIncludes("client.html", [">Internal</a>", ">QA</a>", ">Corpus</a>", "API verification unavailable", "API assignment unavailable", "API archive unavailable"]);
+assertNotIncludes("public.html", [">Internal</a>", ">QA</a>", ">Corpus</a>", ">Client</a>", "Client token", "API verification unavailable", "API assignment unavailable", "API archive unavailable"]);
 assertNotIncludes("client.html", ['href="/surface-manifest.json"']);
 assertNotIncludes("public.html", ['href="/surface-manifest.json"']);
-for (const page of ["index.html", "internal.html", "qa.html", "client.html", "public.html"]) {
-  assertNotIncludes(page, ["LIMEN-015", "Propagate PR #234 completions", "dispatch_log", "/tasks.json", "/qa-status.json", "/client-status.json", "/internal-status.json", "/owner-surface-manifest.json", "/readiness.json"]);
+for (const page of ["index.html", "internal.html", "qa.html", "corpus.html", "client.html", "public.html"]) {
+  assertNotIncludes(page, ["LIMEN-015", "Propagate PR #234 completions", "dispatch_log", "/tasks.json", "/qa-status.json", "/client-status.json", "/internal-status.json", "/owner-surface-manifest.json", "/readiness.json", "/corpus-status.json"]);
 }
 assertSourceNotIncludes("lib/data.ts", [
   "tasks.json",
@@ -180,5 +184,11 @@ for (const needle of ["lifecycleGates", "getLifecycleGate", "getLifecycleGateLab
   }
 }
 
+const corpusSource = readSource("corpus/corpus-command-center-client.tsx");
+for (const needle of ['"body_preview"', '"body_object"', '"private_source_path"', "dispatch_log"]) {
+  if (corpusSource.includes(needle)) {
+    fail(`corpus client source unexpectedly references private field ${needle}`);
+  }
+}
 console.log("Exported page persona/runtime checks verified");
-assertLabels("insights.html", ["Internal", "QA", "Insights", "Client", "Public"]);
+assertLabels("insights.html", ["Internal", "QA", "Insights", "Corpus", "Client", "Public"]);

@@ -65,7 +65,7 @@ export interface SurfaceManifestData {
     blocker: string | null;
   };
   surfaces: {
-    id: "internal" | "client" | "public" | "qa";
+    id: "internal" | "client" | "public" | "qa" | "corpus";
     title: string;
     route: string;
     contract: string;
@@ -133,6 +133,97 @@ export interface QAStatusData {
   mechanisms: QAMechanism[];
 }
 
+export interface CorpusStatusData {
+  status: "ok" | "missing";
+  surface: "corpus";
+  generated_at: string;
+  privacy: {
+    redacted: boolean;
+    contains_raw_text: boolean;
+    private_index?: string;
+    private_html?: string;
+  };
+  coverage: {
+    units: number;
+    sessions_indexed: number;
+    unique_hashes: number;
+    clusters: number;
+    comparisons: number;
+    allusion_rows: number;
+    private_object_count: number;
+    kinds: Record<string, number>;
+    lanes: Record<string, number>;
+    sources: Record<string, number>;
+  };
+  units: {
+    unit_id: string;
+    kind: string;
+    role: string;
+    source: string;
+    event_at?: string | null;
+    hash: string;
+    signature: string;
+    cluster_id: string;
+    parent_id?: string | null;
+    lane_id: string;
+    body_chars: number;
+    body_words: number;
+    atom_ids: string[];
+    task_status?: string;
+    task_priority?: string;
+    artifact_path?: string;
+    worktree_slug_hash?: string;
+    repo_hash?: string;
+  }[];
+  truncated_units: boolean;
+  clusters: {
+    cluster_id: string;
+    unit_count: number;
+    kinds: Record<string, number>;
+    lanes: Record<string, number>;
+    first_event?: string | null;
+    last_event?: string | null;
+    atom_ids: string[];
+    representative_unit_id: string;
+  }[];
+  comparisons: {
+    comparison_id: string;
+    cluster_id: string;
+    left_unit_id: string;
+    right_unit_id: string;
+    unit_count: number;
+    first_event?: string | null;
+    last_event?: string | null;
+    lanes: Record<string, number>;
+    kinds: Record<string, number>;
+  }[];
+  allusions: {
+    unit_id: string;
+    explicit_atom_ids: string[];
+    implied_atom_ids: string[];
+    absent_adjacent_atom_ids: string[];
+  }[];
+  aug1: {
+    generated_at?: string | null;
+    deadline: string;
+    days_left?: number | null;
+    gate_pass: boolean;
+    legs_total: number;
+    legs_met: number;
+    next_act?: string | null;
+    ledger: Record<string, number | string | boolean | null>;
+  };
+  inbound: {
+    value_repo_count: number;
+    seeded_repo_count: number;
+    frontdoor_present: boolean;
+    discoverability_present: boolean;
+    scraper_model_present: boolean;
+    capture_contact_configured: boolean;
+    scraper_model_unit?: string;
+  };
+}
+
 function readJson<T>(path: string, fallback: T): T {
   try {
     return JSON.parse(readFileSync(path, "utf8")) as T;
@@ -180,6 +271,52 @@ export function getSurfaceManifest() {
     },
     surfaces: [],
     contracts: {},
+  });
+}
+
+export function getCorpusCommandCenterData() {
+  const privateDir = join(process.cwd(), ".generated", "surfaces");
+  const corpusFile = `${["corpus", "status"].join("-")}.json`;
+  return readJson<CorpusStatusData>(join(privateDir, corpusFile), {
+    status: "missing",
+    surface: "corpus",
+    generated_at: new Date(0).toISOString(),
+    privacy: {
+      redacted: true,
+      contains_raw_text: false,
+    },
+    coverage: {
+      units: 0,
+      sessions_indexed: 0,
+      unique_hashes: 0,
+      clusters: 0,
+      comparisons: 0,
+      allusion_rows: 0,
+      private_object_count: 0,
+      kinds: {},
+      lanes: {},
+      sources: {},
+    },
+    units: [],
+    truncated_units: false,
+    clusters: [],
+    comparisons: [],
+    allusions: [],
+    aug1: {
+      deadline: "2026-08-01",
+      gate_pass: false,
+      legs_total: 0,
+      legs_met: 0,
+      ledger: {},
+    },
+    inbound: {
+      value_repo_count: 0,
+      seeded_repo_count: 0,
+      frontdoor_present: false,
+      discoverability_present: false,
+      scraper_model_present: false,
+      capture_contact_configured: false,
+    },
   });
 }
 

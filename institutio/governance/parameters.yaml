@@ -226,6 +226,18 @@ parameters:
     self_update: none
     owner: continuity
     note: "Tracked contrib/product mirror ledger path used for read-only product accounting."
+  LIMEN_CORPUS_MAX_SESSIONS:
+    default: ""
+    env: LIMEN_CORPUS_MAX_SESSIONS
+    self_update: none
+    owner: continuity
+    note: "Optional debug cap for the interactive Corpus Command Center snapshot. Blank means index every local lifecycle session; --all-sessions ignores any cap."
+  LIMEN_CORPUS_PUBLIC_UNIT_LIMIT:
+    default: 2000
+    env: LIMEN_CORPUS_PUBLIC_UNIT_LIMIT
+    self_update: none
+    owner: continuity
+    note: "Maximum redacted units exposed to the owner dashboard/public-safe corpus snapshot; coverage still records full bounded-run counts."
   LIMEN_CAPABILITY_ROOTS:
     default: ""
     env: LIMEN_CAPABILITY_ROOTS
