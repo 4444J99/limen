@@ -12,6 +12,7 @@ Generated: `2026-07-04T00:40:41Z`
 
 | Queue rank | Agent | Session | Result |
 |---:|---|---|---|
+| refreshed 1 | `claude` | `9750bef7-8829-4373-916a-f86338b2e20a` | Archive4T conductor/session-foundation run. Temp job files were gone, durable transcripts and workflow JSON remained. Patched the audit redaction boundary after the session exposed raw prompt text in `unboundedGoalEvidence`. |
 | 1 | `opencode` | `ses_11427e08affe3D8jAAl5W43viB` | Exact window had no matching commits on `main`, but the matching unmerged branch is `limen/gen-organvm-limen-security-0625-57ce` at `02f256e` (`Security hardening pass on organvm/limen`). Reviewed as a reject/do-not-merge artifact. |
 | 2 | `opencode` | `ses_114c8f0c6ffeixS8gn4VxGqoHb` | Exact window matched `80d4e21f` (`feat(route): consume self-improve lane weights`). Widened window also showed related routing/meter/queue commits including `0146190` and `a6488c9`. |
 | 3 | `opencode` | `ses_1095e9b19ffe4yg9h4la7tGU4d` | Exact window had no matching commits on `main`; widened window was mostly Studium content-generation churn, not the control-plane code path reviewed here. |
@@ -767,6 +768,37 @@ python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/pro
 
 Result: `14 passed`; compile passed; patched audit reports 216 transcript files and 134 Opus-class nested subagents for rank 12.
 
+### Claude transcript audits leaked raw unbounded prompt excerpts
+
+Severity: high for the private/public boundary of prompt review artifacts.
+
+Evidence:
+
+- Refreshed rank 1 (`9750bef7-8829-4373-916a-f86338b2e20a`) was a broad Archive4T conductor/session-foundation run with 5,021 prompt events, 92 changed-file entries, 12 saved workflows, and 180 transcript files. The durable changed files are mostly Archive4T docs, Claude memory, launchd/container/dispatch surfaces, and workflow records; listed `~/.claude/jobs/9750bef7/tmp/*` scratch files were gone.
+- Patched transcript audit reports 63,473,116 billable-ish tokens, 61,179,741 Opus-class billable-ish tokens, 1,621,582,877 cache-read tokens, 148 Opus-class subagents, 32 agent/workflow calls, and two unbounded-goal prompt hits for this session.
+- `audit-session` already flags one completed workflow (`exposure-map-phase0`) as containing errored agents and failure/dead-agent evidence, so the existing guard can identify completion-shape lies in saved workflow JSON.
+- The transcript guard's `unboundedGoalEvidence` field, however, carried a raw user prompt excerpt. `scripts/hooks/session-closeout.sh` can append the audit JSON into `logs/model-tier-audit.jsonl` when fanout fires, so the raw excerpt was an avoidable private-text leak in a durable audit surface.
+
+Repair:
+
+- Replaced raw `unboundedGoalEvidence.text` excerpts with `path`, `line`, `textSha256`, and `chars`.
+- Added a regression that asserts the original prompt text is absent from audit stdout while the hash and length remain available for local correlation.
+
+Touched paths:
+
+- `scripts/claude-workflow-guard.py`
+- `cli/tests/test_claude_workflow_guard.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_claude_workflow_guard.py -q
+python3 -m py_compile scripts/claude-workflow-guard.py
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Volumes-Archive4T/9750bef7-8829-4373-916a-f86338b2e20a.jsonl --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000 --out /tmp/rank1-audit.json
+```
+
+Result: `15 passed`; compile passed; patched rank-1 audit reports only line/hash/character metadata for the two unbounded prompt hits.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -950,7 +982,9 @@ Result: `14 passed`; compile passed; patched audit reports 216 transcript files 
 - `cli/tests/test_usage_gate.py:48` covers stringified zero headroom/remaining telemetry.
 - `cli/tests/test_dispatch.py:726` covers parallel blocked-result persistence and reporting.
 - `scripts/claude-workflow-guard.py:339` recursively includes nested workflow subagent transcripts.
-- `cli/tests/test_claude_workflow_guard.py:240` covers nested Claude workflow subagent layout.
+- `scripts/claude-workflow-guard.py:371` stores unbounded prompt evidence as hash/length metadata instead of raw text.
+- `cli/tests/test_claude_workflow_guard.py:189` covers redacted unbounded prompt evidence.
+- `cli/tests/test_claude_workflow_guard.py:264` covers nested Claude workflow subagent layout.
 
 ## Remaining Review Queue
 

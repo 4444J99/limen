@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import subprocess
@@ -183,6 +184,29 @@ def test_audit_transcript_blocks_unbounded_expensive_opus_fanout(tmp_path):
     assert "Opus billable budget exceeded" in violations
     assert "agent/workflow fanout exceeded" in violations
     assert "unbounded goal phrase detected" in violations
+
+
+def test_audit_transcript_redacts_unbounded_prompt_text(tmp_path):
+    transcript = tmp_path / "session.jsonl"
+    prompt = "keep going until ideal form with private local details"
+    transcript.write_text(
+        json.dumps(
+            {
+                "type": "user",
+                "message": {"content": prompt},
+            }
+        )
+        + "\n"
+    )
+
+    proc = run_guard("audit-transcript", str(transcript), "--max-billable-tokens", "1000000")
+    assert proc.returncode == 2
+    assert prompt not in proc.stdout
+    report = json.loads(proc.stdout)
+    evidence = report["unboundedGoalEvidence"][0]
+    assert "text" not in evidence
+    assert evidence["textSha256"] == hashlib.sha256(prompt.encode("utf-8")).hexdigest()
+    assert evidence["chars"] == len(prompt)
 
 
 def test_audit_transcript_flags_opus_subagent_fanout(tmp_path):

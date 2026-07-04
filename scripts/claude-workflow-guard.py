@@ -16,6 +16,7 @@ Read-only. It writes no repo state unless --out is supplied.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -370,7 +371,14 @@ def audit_transcript(
             if row.get("type") == "user":
                 text = _content_text(msg.get("content"))
                 if unbounded_re.search(text):
-                    user_unbounded.append({"path": str(path), "line": line_no, "text": text[:240]})
+                    user_unbounded.append(
+                        {
+                            "path": str(path),
+                            "line": line_no,
+                            "textSha256": hashlib.sha256(text.encode("utf-8", "replace")).hexdigest(),
+                            "chars": len(text),
+                        }
+                    )
             if row.get("type") != "assistant":
                 continue
             model = str(msg.get("model") or "unknown")
