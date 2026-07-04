@@ -92,6 +92,7 @@ Generated: `2026-07-04T12:24:23Z`
 | changed 134 | `claude` | `fb60b82c-1e6e-44ae-b097-30925e248bb2` | Earlier domus-genoma CIFIX retry. The prompt asked for one minimal PR making the five named default-branch lint checks green; Claude instead burned 565k Opus billable tokens in a permission-blocked diagnostic loop, spawned two Opus subagents, created only temp/helper scripts, and ended on an ungranted WebFetch call with no final report or PR. Current green `master` is due to later PR #147, not this retry. |
 | changed 135 | `claude` | `97548ebc-22c4-4b1e-a33b-f56452b410ca` | Studium Analects batch. Claude authored useful Analects books 6-11 content locally and claimed a green PR, but the session branch never had a PR and was left local-only, 1084 commits behind. Later PRs #133 and #151 landed books 6-9; books 10-11 stayed stranded until this review salvaged them in `feb30c3` and proved `scripts/studium-validate.py` plus Fleet Gate `28706098796` green. |
 | changed 136 | `codex` | `019f1a99-5cdd-7461-a1c0-2d7524a2cc43` | My Knowledge Base discovery/build-health run. Codex made a useful local external-repo commit (`5198141`) and identified the correct value-tier promotion, but the original worktree is gone, no PR or remote branch exists, and the local branch is now stale behind `origin/master` with conflicts. This review landed the safe Limen-side registry gap by adding `organvm/my-knowledge-base` to `value-repos.json`; the external code diff still needs a current selective port. |
+| changed 137 | `codex` | `019f191a-bf3b-7ab1-b9ef-d76c22c62f47` | Limen CI-green 0622 recovery. Codex manually reconstructed a 17-file lint-stabilization patch after `.git` writes were blocked; the dispatcher turned it into PR #487, which merged, but full CI was not green because `verify` failed after merge on missing web `yaml`. Later PRs #496 and #581 are the durable green CI receipts, not row 137 alone. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -4180,6 +4181,60 @@ git diff --check
 ```
 
 Result: private prompt extraction matches row `changed 136`; no PR or remote branch exists for the local external-repo commit; direct replay now conflicts against current `origin/master`; the external repo still lacks refreshed dependency-backed proof; this review landed the authoritative Limen value-tier registry addition and validated the JSON/diff.
+
+### Codex's Limen CI-green recovery merged useful lint cleanup but was not green
+
+Severity: medium-high; CI receipt integrity. The session produced a real patch that was harvested into PR #487, but the prompt asked to recover a closed "Make organvm/limen CI green" task. The durable receipt was not fully green: full `CI / verify` failed after the PR merged.
+
+Evidence:
+
+- Queue row `changed 137` points at Codex session `019f191a-bf3b-7ab1-b9ef-d76c22c62f47`, rooted in deleted worktree `/Users/4jp/Workspace/.limen-worktrees/recover-gen-organvm-limen-ci-green-0622-f2b1`, from `2026-06-30T15:16:54Z` through `2026-06-30T15:18:25Z`.
+- First-layer prompt, redacted to intent: under FLAME continuity rules, complete fresh recovery task `RECOVER-GEN-organvm-limen-ci-green-0622`, recovering the closed unmerged PR task "Make organvm/limen CI green" for `organvm/limen`; because the original task was already `done`, do not reopen it.
+- The verbatim local-only prompt extract is `.limen-private/session-corpus/full-stack-review/session-changed-137-codex-limen-ci-green-recovery-prompts.jsonl`: `4` prompt records, `3` unique prompt hashes, `25,347` prompt bytes, all sourced from `codex-sessions`.
+- The transcript shows Codex found prior CI-green recovery branches, could not `git cherry-pick` because the worktree could not create `.git/index.lock`, then manually applied a 17-file equivalent lint-stabilization patch.
+- The final answer was explicit that it did not run validation commands or tests. It offered a later verification sweep instead of proving the task green in the session.
+- The deleted worktree no longer exists, but the dispatcher/harvester turned the exact dirty diff into PR `organvm/limen#487`, created at `2026-06-30T15:18:28Z`, three seconds after the session final answer. PR #487's commit was `1df167b` and merge commit was `f46fab3`.
+- PR #487 changed the same 17 files the session listed: `.ruff.toml` plus `scripts/batch-dispatch.py`, `scripts/board.py`, `scripts/claude-workflow-guard.py`, `scripts/consolidate-github.py`, `scripts/library-preserve.py`, `scripts/merge-drain.py`, `scripts/prompt-packet-ledger.py`, `scripts/reclaim-worktrees.py`, `scripts/resolve-legacy-session-batch.py`, `scripts/rewrite-owners.py`, `scripts/session-attack-paths.py`, `scripts/session-corpus-ledger.py`, `scripts/setup-rulesets.py`, `scripts/studium.py`, `scripts/verify-whole.sh`, and `scripts/watch.py`.
+- PR #487 merged at `2026-06-30T15:19:25Z` after `pr-gate`, `python`, `python-311`, `worker`, and `web` were green or already green. The later full `CI / verify` job completed at `2026-06-30T15:21:01Z` with `FAILURE`.
+- The actual failing line was in `scripts/verify-whole.sh`'s "Generate static and private surface contracts" step: Node raised `ERR_MODULE_NOT_FOUND` because `web/app/scripts/generate-static-data.mjs` imported package `yaml`, which was not installed for that verification job.
+- Later PR #496 (`90d22e9`, `2026-07-01`) and PR #581 (`a18ed00`, `2026-07-03`) are the durable green CI lineage: both have green `python`, `pr-gate`, `python-311`, `worker`, `web`, and `verify` checks. They are separate fixes and should not be collapsed into row 137.
+
+Ideal prompt diff:
+
+- Ideal recovery form: inspect the closed PR task, reproduce or fetch the failing check, make the narrowest fix, run/trigger the full acceptance predicate, and merge only after every required check is complete.
+- Actual session form: Codex did useful local reconstruction, but stopped before validation and relied on downstream dispatch to commit/PR/merge.
+- Ideal merge policy form: a CI-green recovery PR should not merge while a full `verify` job is still pending.
+- Actual release form: PR #487 merged before full `verify` finished, so the final check state became red after merge.
+
+Outcome:
+
+- Credit row `changed 137` with authoring the 17-file lint cleanup that became PR #487.
+- Do not credit it as a completed CI-green recovery. The session did not run validation, and the PR's final CI state was red.
+- Credit durable current CI-green state to later PRs #496 and #581, with row 137 as a precursor patch rather than the final fix.
+
+What was fucked up:
+
+- The session runtime instructions discouraged validation unless explicitly asked, but the task itself was a CI-green recovery. The prompt stack let a lower-level "do not verify" habit weaken the acceptance criterion.
+- `.git` write protection forced manual patch application; that was a reasonable fallback, but it made the session depend on a harvester to create the actual PR and receipt.
+- The dispatch/merge path treated a green `pr-gate` plus partial CI success as enough, then merged before full `verify` completed.
+- The real failed acceptance gap was not in the 17 patched files; it was the web dashboard verification environment missing the `yaml` package. The session never reached that failure because it stopped before running the predicate.
+
+Verification:
+
+```bash
+jq '.changed_review[137]' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+jq -s '{records:length, unique_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), task_body_bytes:([.[].task_body_bytes] | add), surfaces:([group_by(.surface)[] | {surface:.[0].surface,count:length}]), sources:([group_by(.source)[] | {source:.[0].source,count:length}])}' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-changed-137-codex-limen-ci-green-recovery-prompts.jsonl
+test -d /Users/4jp/Workspace/.limen-worktrees/recover-gen-organvm-limen-ci-green-0622-f2b1
+git worktree list | rg 'recover-gen-organvm-limen-ci-green-0622-f2b1|agent-code-review'
+git log --all --oneline --decorate --grep='RECOVER-GEN-organvm-limen-ci-green-0622\|ci-green 0622\|CI-green stabilization\|Make organvm/limen CI green' --max-count=40
+gh pr view 487 --repo organvm/limen --json number,title,state,createdAt,mergedAt,closedAt,headRefName,headRefOid,baseRefName,mergeCommit,files,commits,statusCheckRollup,url
+gh run view 28455369354 --repo organvm/limen --json databaseId,name,status,conclusion,headSha,jobs,url
+gh run view 28455369354 --repo organvm/limen --log-failed | rg -n -C 4 'ERR_MODULE_NOT_FOUND|yaml|verify-whole|Process completed with exit code'
+gh pr view 496 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+gh pr view 581 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+```
+
+Result: private prompt extraction matches row `changed 137`; the session worktree is gone; PR #487 merged the row's 17-file patch but full CI concluded failure in `verify` due missing `yaml`; later PRs #496/#581 are the green current CI receipts.
 
 ### Claude domus-genoma CIFIX session failed to fix CI and should have stopped at the permission/spend wall
 
