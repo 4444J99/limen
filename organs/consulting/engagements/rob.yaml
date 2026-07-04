@@ -45,9 +45,12 @@ channels:
   owed_by_rob:
     - "Personal BODi affiliate/referral link — never recorded in any system; only the generic program page is on file"
     - "Canonical Facebook + Instagram handle confirmation (board atom RB-8)"
+    - "Current Teamzy field schema (screenshot or list) so attribution fields land without collision — recovered from the 2026-04-25 residual-blockers ledger"
+    - "Existing reel/short links to seed the L0 content inventory — recovered from the 2026-04-25 residual-blockers ledger"
 
 funnel:
   engine: "organs/consulting/FUNNEL-ENGINE.md — Rob is instance #1, the proven shape"
+  operating_floor: "organs/consulting/funnel/ROB-BODI-OPERATING-FLOOR.md (fitness lane; instance config organs/consulting/funnel/instances/rob-fitness.yaml)"
   levels:
     - "L0 discovery content: shorts/reels/videos replace manual Instagram hashtag prospecting"
     - "L1 cold-audience capture: follows and community entry"

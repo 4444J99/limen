@@ -1,0 +1,116 @@
+# Funnel instance: Rob — BODi fitness lane
+# The machine-readable floor behind ROB-BODI-OPERATING-FLOOR.md.
+# Recovered 2026-07-04 from the BODi substrate (Archive4T workspace-backup,
+# docs/substrate/bodi/). Every outbound act is human-fired; see human_gates.
+
+instance: "rob-fitness"
+engagement: "organs/consulting/engagements/rob.yaml"
+niche: "fitness"
+operating_floor: "organs/consulting/funnel/ROB-BODI-OPERATING-FLOOR.md"
+
+channels:
+  content:
+    - "Instagram: @robbonav (reels — canonical handle confirmation owed, RB-8)"
+    - "Facebook (handle confirmation owed, RB-8)"
+    - "YouTube Shorts (fitness cut-downs, planned)"
+  owned:
+    - "Email list (Scroll-pattern newsletter; Kit or Beehiiv — Beehiiv provisional per production stack)"
+    - "Private VIP group chat (existing, active)"
+  crm: "Teamzy"
+
+# Named so no future session rebuilds them. These are rejected by Rob's own
+# attractor law ("cold pressure models") and by the engine boundary.
+retired_tactics:
+  - "Instagram hashtag scraping for cold lead lists"
+  - "Influencer-follower harvesting for manual cold DM outreach"
+
+offers:
+  disclosure: >
+    Every paid tier is offered with plain affiliate disclosure: Rob earns a
+    commission on BODi purchases made through his link. BODi has been a
+    1-level affiliate program since 2025-01-01 — sharing a link, not
+    recruiting a downline.
+  ladder:
+    - tier: "free"
+      name: "Personalized free fitness plan"
+      price: "$0"
+      delivery: "Google Form intake -> personalized plan -> weekly check-in (opt-out anytime)"
+    - tier: "core"
+      name: "BODi subscription / program via affiliate link"
+      price: "per BODi retail pricing"
+      delivery: "{{ROB_AFFILIATE_LINK}} — slot stays empty until Rob provides his personal link"
+    - tier: "vip"
+      name: "VIP coaching group"
+      price: "monthly, set by Rob"
+      delivery: "Private group chat + priority check-ins in Teamzy"
+
+funnel:
+  - level: "L0"
+    name: "Discovery content"
+    entry: "A person sees a reel/short/post in the fitness idiom"
+    exit: "They follow, comment, or DM with intent"
+    method: "Content-led warming only — staged drafts fired by Rob; content inventory keyed by Source_Content_ID"
+    artifact: "Content inventory + weekly draft batch (3-5 posts) with capture-form CTA"
+    human_gate: "Rob fires every publish himself"
+  - level: "L1"
+    name: "Signal response"
+    entry: "Meaningful comment/DM/follow appears in Rob's own notifications"
+    exit: "A real conversation is open"
+    method: "Daily signal sheet compiled from what Rob reads in his own apps; personal replies from talk-track drafts"
+    artifact: "templates/talk-tracks-fitness.md — track 1 (inbound reply)"
+    human_gate: "Rob types and sends every reply personally"
+  - level: "L2"
+    name: "Opt-in"
+    entry: "Lead asks about training or accepts the free-plan invite"
+    exit: "Form submitted; email captured; Teamzy record created"
+    method: "Capture form gated by the personalized free plan (the real deliverable)"
+    artifact: "templates/capture-form-fitness.md + tracks 2-3 (invite, plan delivery)"
+    human_gate: "Rob sends the invite and delivers every plan himself"
+  - level: "L3"
+    name: "Conversion"
+    entry: "Lead completes 2+ weekly check-ins or raises the buying question"
+    exit: "Purchase through the disclosed affiliate link, or a graceful no"
+    method: "Teamzy warm-column cadence; one personal offer conversation, then respect the answer"
+    artifact: "tracks 4-5 (check-in cadence, offer conversation) + offers.ladder"
+    human_gate: "Rob makes every offer and close personally; one ask per lead"
+  - level: "L4"
+    name: "Expansion"
+    entry: "VIP customer already shares Rob's content organically"
+    exit: "They hold their own affiliate link and community role"
+    method: "Personal invitation only — no recruiting scripts, no income claims"
+    artifact: "track 6 (ambassador invite)"
+    human_gate: "Rob invites personally; no recruiting automation, ever"
+
+cadence:
+  daily: "Power half-hour: read signal sheet -> 5-10 personal replies/check-ins from staged drafts -> record outcomes in Teamzy"
+  weekly: "Fire content batch; send one Scroll-pattern email; review Teamzy warm column for offer-ready leads"
+  monthly: "KPI review; graceful-exit note to dead leads; ambassador check-in"
+
+crm:
+  tool: "Teamzy"
+  warm_rule: "Engagers from content outrank any legacy cold lead (the hunting->farming routing rule from the gap map)"
+  proposed_fields:
+    note: "Blocked awaiting Rob's current field schema (owed atom) — add without collision"
+    fields:
+      - "Source_Content_ID"
+      - "Wearable_User"
+      - "Owned_Media_Subscriber"
+      - "Ambassador_Readiness"
+
+kpis:
+  - "Manual L1 hours/week (target < 5, from ~20)"
+  - "L0 inbound ratio (% of leads from content vs. outreach)"
+  - "Owned conversion (% of leads moving from IG to the email list)"
+  - "VIP LTV (retention duration in months)"
+  - "Ambassador velocity (new duplication-ready partners/month)"
+
+human_gates:
+  - "Rob fires every outbound post, DM, email, and send himself — the system stages drafts only"
+  - "No scraping or bulk prospecting on Rob's behalf; discovery through published content"
+  - "Affiliate disclosure appears in every offer conversation"
+  - "The system never logs into Rob's accounts; signal sheets come from what Rob reads himself"
+
+# Every double-brace slot token used anywhere in this file must be declared
+# here and must correspond to an owed atom in the engagement record.
+owed_slots:
+  - "ROB_AFFILIATE_LINK"

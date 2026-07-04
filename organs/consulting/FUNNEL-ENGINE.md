@@ -46,7 +46,7 @@ into the BODi funnel). The engine generalizes that design to every niche.
 
 | Instance | Niche | Product / offer | Record | Status |
 |---|---|---|---|---|
-| Rob | fitness + chess (+ bridge content) | BODi affiliate links + Hokage Chess offer ladder + `organvm/gamified-coach-interface` (Legion Command Center) | `engagements/rob.yaml` | EXECUTION — the proven shape |
+| Rob | fitness + chess (+ bridge content) | BODi affiliate links + Hokage Chess offer ladder + `organvm/gamified-coach-interface` (Legion Command Center) | `engagements/rob.yaml` · floor: `funnel/ROB-BODI-OPERATING-FLOOR.md` + `funnel/instances/rob-fitness.yaml` | EXECUTION — the proven shape |
 | Jessica | human resources (+ IG growth craft) | Styx (`organvm/peer-audited--behavioral-blockchain`) + the HR organ (`organs/hr/`) | `engagements/jessica.yaml` | DISCOVERY |
 | Maddie | wellness (Elevate Align) | collaboratory constellation + quaestor grant engine | `engagements/maddie.yaml` | existing record |
 | John F. | finance | unscoped — that is the DISCOVERY work | `engagements/john-f.yaml` | DISCOVERY |
@@ -86,9 +86,13 @@ for n in rob jessica maddie john-f; do
   test -f organs/consulting/engagements/$n.yaml || exit 1
 done
 python organs/consulting/validate-consulting.py --fleet --quiet
+python organs/consulting/funnel/validate-funnel.py --fleet --quiet
 ```
 
-Exit 0 ⟺ every registered instance has a valid engagement record. Next
-increments (each lands as its own PR): the per-instance offer/links config
-consumed by `social-automation`; the L2 capture-form template; the Rob content
-pipeline fed from the hokage-chess corpus.
+Exit 0 ⟺ every registered instance has a valid engagement record and every
+shipped funnel instance passes Engine Rules #1-7 (`funnel/validate-funnel.py`).
+Landed increments: the Rob fitness-lane operating floor
+(`funnel/ROB-BODI-OPERATING-FLOOR.md` + `funnel/instances/rob-fitness.yaml` +
+talk tracks + the L2 capture-form template). Next increments (each lands as
+its own PR): the per-instance offer/links config consumed by
+`social-automation`; the Rob content pipeline fed from the hokage-chess corpus.
