@@ -56,9 +56,19 @@ CHART = HEALTH_DIR / "chart.json"
 PREP = HEALTH_DIR / "prep"
 CHRONICLE = HEALTH_DIR / "chronicle.jsonl"
 OBSERVATIONS = HEALTH_DIR / "observations.jsonl"   # off-repo: what ACTUALLY happened (he logs it / another organ feeds it)
-OVERDUE_DAYS = int(os.environ.get("LIMEN_HEALTH_OVERDUE_DAYS", "14"))
-LEARN_WINDOW_DAYS = int(os.environ.get("LIMEN_HEALTH_LEARN_DAYS", "21"))  # how far back the office learns your real rhythm
-MIN_OBSERVATIONS = int(os.environ.get("LIMEN_HEALTH_MIN_OBS", "3"))       # won't reshape an anchor on fewer days than this
+
+
+def _env_positive_int(name, default):
+    try:
+        value = int(os.environ.get(name, str(default)))
+    except (TypeError, ValueError):
+        return default
+    return value if value > 0 else default
+
+
+OVERDUE_DAYS = _env_positive_int("LIMEN_HEALTH_OVERDUE_DAYS", 14)
+LEARN_WINDOW_DAYS = _env_positive_int("LIMEN_HEALTH_LEARN_DAYS", 21)  # how far back the office learns your real rhythm
+MIN_OBSERVATIONS = _env_positive_int("LIMEN_HEALTH_MIN_OBS", 3)       # won't reshape an anchor on fewer days than this
 
 _WEEKDAYS = {"monday": 0, "tuesday": 1, "wednesday": 2, "thursday": 3,
              "friday": 4, "saturday": 5, "sunday": 6}

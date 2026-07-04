@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T01:51:13Z`
+Generated: `2026-07-04T01:54:11Z`
 
 ## Scope
 
@@ -39,6 +39,7 @@ Generated: `2026-07-04T01:51:13Z`
 | refreshed 22 | `claude` | `f38f4b2a-5c49-4d13-9b36-24bf31c941cc` | Archive4T conductor/relay incident run. The `/Volumes/Archive4T` docs/tests/scripts listed in the changed-file ledger are absent; only home-state memory, handoff, and static status artifacts survive. Current `main` has the scripts/watchdog/import fixes the static handoffs called missing, so this is recorded as stale-handoff/artifact-loss rather than a live code patch. |
 | refreshed 23 | `claude` | `685b48b0-94fa-4537-a327-453a6ba01238` | External `etceter4-revival` winter-build run. Temp extractors are gone, but the revival docs and image-manifest generator survived in `~/Workspace/organvm/etceter4-revival`; fixed the generator so archive folders with nonmatching filename stems are actually inventoried. |
 | refreshed 24 | `claude` | `1cea38f6-3455-4202-9c45-189a9f26d6dc` | Micro Tato initial Godot build. The original worktree game root and scratchpad audio generators are gone; the work was later promoted into standalone `~/Workspace/micro-tato`, which is clean on `main` and passes its current validation gate. Recorded as superseded artifact migration rather than a live patch. |
+| refreshed 25 | `claude` | `71d46003-4cfa-402e-b09e-fe0b99f0c702` | Health office / session-orientation run. Original worktree and temp compacted memory are gone, but health/session-orient code landed on `main` and private chart artifacts remain off-repo; fixed import-time malformed-env crashes in the health organ without exposing private chart content. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -1578,6 +1579,41 @@ git -C /Users/4jp/Workspace/micro-tato status --short --branch
 ```
 
 Result: transcript audit completed with an Opus budget violation; old worktree/scratchpad paths were absent; `~/Workspace/micro-tato` was clean on `main`; `./lane.sh validate` returned `gate PASS` with compile plus fighter/knight/cowboy/magician soaks all zero.
+
+### Health organ could crash before writing its PII-free stamp
+
+Severity: medium for heartbeat reliability, high for privacy discipline if operators respond by inspecting private files manually.
+
+Evidence:
+
+- Claude session `71d46003-4cfa-402e-b09e-fe0b99f0c702` built the health office and session-orientation organ. The original worktree and temp compacted memory file are gone; the code/docs landed on `main`, and the private chart root remains outside the repo.
+- Transcript audit reports nine transcript files, 1,659 usage-bearing messages, 13,895,942 billable-ish tokens, 178,503,912 cache-read tokens, 12,518,492 Opus-class billable-ish tokens, two expensive subagents, and nine agent/workflow calls.
+- The prompt/session contract was fail-open and PII-free: the health chart stays off-repo, generated health outputs stay in the private root, and the repo receives only `logs/health-organ-state.json` counts.
+- `scripts/session-orient.py` and `scripts/done-session-orient.sh` enforce the counts-only orientation digest. That predicate passes.
+- `scripts/health-organ.py` still parsed `LIMEN_HEALTH_OVERDUE_DAYS`, `LIMEN_HEALTH_LEARN_DAYS`, and `LIMEN_HEALTH_MIN_OBS` with bare `int(...)` at import time. A malformed launchd or shell value could crash the organ before it wrote the PII-free liveness stamp.
+
+Repair:
+
+- Added `_env_positive_int()` in `scripts/health-organ.py`.
+- Made malformed and nonpositive health env knobs fall back to defaults.
+- Added a regression importing the script under bad env values.
+- Verified a no-chart run with malformed env writes only a temp counts-only stamp.
+
+Touched paths:
+
+- `scripts/health-organ.py`
+- `cli/tests/test_health_organ.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_health_organ.py -q
+tmp_root=$(mktemp -d); tmp_health=$(mktemp -d); LIMEN_ROOT="$tmp_root" LIMEN_HEALTH_DIR="$tmp_health" LIMEN_HEALTH_OVERDUE_DAYS=bad LIMEN_HEALTH_LEARN_DAYS=0 LIMEN_HEALTH_MIN_OBS=-3 python3 scripts/health-organ.py
+bash scripts/done-session-orient.sh
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-jolly-knitting-lovelace/71d46003-4cfa-402e-b09e-fe0b99f0c702.jsonl --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000 --out /tmp/rank-71d-audit.json
+```
+
+Result: `10 passed`; malformed-env no-chart run exited 0 and wrote only a temp `chart_present: false` stamp; session-orientation predicate passed with the PII deny-list checks; transcript audit completed with an Opus budget violation.
 
 ## Remaining Review Queue
 

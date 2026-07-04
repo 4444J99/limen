@@ -109,3 +109,15 @@ def test_round5():
     assert health_organ._round5(13) == 15
     assert health_organ._round5(0) == 0
     assert health_organ._round5(17.5) == 20
+
+
+def test_malformed_env_knobs_fail_open(monkeypatch):
+    monkeypatch.setenv("LIMEN_HEALTH_OVERDUE_DAYS", "bad")
+    monkeypatch.setenv("LIMEN_HEALTH_LEARN_DAYS", "0")
+    monkeypatch.setenv("LIMEN_HEALTH_MIN_OBS", "-3")
+
+    health_organ = _load()
+
+    assert health_organ.OVERDUE_DAYS == 14
+    assert health_organ.LEARN_WINDOW_DAYS == 21
+    assert health_organ.MIN_OBSERVATIONS == 3
