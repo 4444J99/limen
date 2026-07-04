@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T11:45:38Z`
+Generated: `2026-07-04T11:51:29Z`
 
 ## Scope
 
@@ -84,6 +84,7 @@ Generated: `2026-07-04T11:45:38Z`
 | changed 126 | `codex` | `019f1abf-0fa8-76a2-b8ec-149765d2c7d2` | Fleet-autonomy dispatch selector repair. The prompt asked Codex to fix the heartbeat/router/async/backlog lane mismatch so open work no longer stranded on unreachable or exhausted lanes. The reviewed transcript ended honestly as mid-implementation, with only board drift committed and no tests yet run; durable code completion came shortly after in direct-main commits `1b24887` and `6115a6c`. Current focused tests pass and read-only health probes show async `auto` can launch work, but today's live root is again blocked by branch/dirty-state drift. |
 | changed 127 | `claude` | `5cd65ab3-deca-4c49-a560-fb470571f0eb` | Token-budget / usage-pacing conductor. Claude shipped the core predictive usage gate in `e36e9cc`, then caught a real false-done in the live heartbeat and reconciled divergent heal histories through `ed05e5a` / `b6e3782`. Current `main` still has the pacing fields, reserve gate, and route runway logic with focused tests green, but the session mixed live policy mutation, stale PR metadata, home-state memory, and missing untracked relay artifacts; transcript guard also flags Opus over-budget. |
 | changed 128 | `codex` | `019f1c06-192e-7d40-8301-dedc5cf370f8` | Mirror Mirror security hardening branch. Codex authored a plausible 19-file hardening commit (`90398cc`) for auth, checkout, webhooks, ShareFile, Ready Player Me, and regression tests, but the prompt's delivery contract was not met: dependency audit/install/test/build were blocked, no PR exists, no CI ran for the branch, and the branch remains published but unmerged, one commit ahead and four commits behind current `main`. |
+| changed 129 | `claude` | `08b4f87e-10c4-485d-84c4-5094ef74e2fa` | Peer-audited behavioral-blockchain CI fix attempt. Claude spent a narrow CI/type-fix task mostly fighting sandboxed `npm`/`npx`/`gh`/settings permissions, then fanned out Opus subagents for static diagnosis and hit the monthly spend wall. The session left no durable code diff beyond a protected `.claude/settings.local.json` attempt; a later green PR #726 with the same title is separate, broad, unmerged, and stale, while current default-branch health comes from later PR #766. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -3711,6 +3712,69 @@ gh api -H 'Accept: application/vnd.github+json' repos/organvm/mirror-mirror/comm
 ```
 
 Result: prompt extraction matches row `128`; commit `90398cc` exists locally and remotely; it is not an ancestor of `origin/main`; current compare is diverged with the branch one commit ahead and four commits behind; no PR, run, check-run, or commit-to-PR receipt exists for the branch.
+
+### Claude's peer-audited behavioral-blockchain CI attempt found a likely type culprit, then died at the tool/spend wall
+
+Severity: high for dispatch credibility and premium-model spend. The first-layer task was narrow: fix pre-existing TypeScript/test-matrix CI breakage blocking open PRs. The session instead became a constrained static audit: no install, no compiler, no GitHub logs, no code commit, and five Opus subagents before the monthly spend wall.
+
+Evidence:
+
+- Queue row `changed_review[129]` points at Claude session `08b4f87e-10c4-485d-84c4-5094ef74e2fa`, rooted in absent worktree `/Users/4jp/Workspace/.limen-worktrees/cifix-a-organvm-peer-audited--behavioral-blockchain-9bb1`, running from 2026-06-19T16:33:43Z through 2026-06-19T17:03:29Z.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-129-claude-behavioral-blockchain-cifix-prompts.jsonl`: `22` prompt-surface records, `8` unique prompt hashes, `16,367` prompt bytes. Sources are `claude-projects` `16` and `claude-subagents` `6`; surfaces are `message.user` `7` and `last-prompt` `15`.
+- In redacted intent form, the first prompt asked Claude to complete `CIFIX-a-organvm-peer-audited--behavioral-blockchain`: fix pre-existing `tsc` / test-matrix errors on `a-organvm/peer-audited--behavioral-blockchain`, use minimal type-only changes, keep runtime behavior unchanged, and unblock the open PR stack.
+- GitHub resolves the durable repo as `organvm/peer-audited--behavioral-blockchain` with default branch `main`; the prompt's `a-organvm` owner was stale.
+- The original worktree path is absent. The queue's only changed-file surface is `.claude/settings.local.json`, not product code.
+- The transcript shows repeated execution blockers: `npm ci`, `npm ci --no-audit --no-fund`, `npx --version`, `make`, `gh run list`, and writing `.claude/settings.local.json` were denied or gated by the Claude permission layer. The checkout also had no `node_modules`.
+- Claude first inferred a likely ask-styx culprit: `src/ask-styx/tests/worker.test.ts` imported `../worker/index`, pulling `/// <reference types="@cloudflare/workers-types" />` into the app `tsconfig` program that also uses DOM libs.
+- Because it could not run the compiler or inspect GitHub logs, Claude broadened into static audits of `src/web`, `src/api`, and `src/ask-styx` via subagents.
+- One subagent returned a concrete high-confidence diagnosis: decouple `worker.test.ts` from the app program to remove Cloudflare Workers ambient types from the DOM-lib program. Other subagents ended with `You've hit your monthly spend limit`.
+- Transcript guard fails: `2,304,491` billable tokens, `2,240,553` Opus billable tokens, `319` usage-bearing messages, `6` agent calls, and `5` Opus subagents.
+- No session-final implementation receipt exists after the subagent wall. The last visible user/tool-result records are spend-limit messages from subagents, not a commit/PR/test result.
+- PR `organvm/peer-audited--behavioral-blockchain#726` has the same CIFIX title and green checks, but it was created at 2026-06-19T18:39:02Z, about `96` minutes after this session ended. Its single commit `53a0f07` was authored at 2026-06-19T18:38:54Z, outside the reviewed transcript window.
+- PR #726 remains open and stale. Current compare reports its branch as `diverged`, `ahead_by: 1`, `behind_by: 18`, and it includes broad non-minimal artifacts: docs, `.env.example`, generated `traceDir/*`, `tsconfig.tsbuildinfo`, API/compliance/contracts changes, shared libs, and ask-styx worker/test changes.
+- Current default-branch health comes from later work. PR #766 merged at 2026-07-04T10:33:35Z with merge commit `b48a3afeb7e8b11ddb4e3eb69bb5657bf0d21ff5`; Styx CI run `28703456180` completed success across `build_and_test_matrix`, `build_and_test`, beta readiness, browser e2e, and e2e.
+- Current open PR health is still mixed: PR #767 is open/red on `build_and_test_matrix` and `build_and_test`, and several older open branches still have red checks or no current checks. So "unblock every open PR" remains stronger than "default branch is green."
+
+Ideal prompt diff:
+
+- Ideal form: fetch the failing CI log first, reproduce the type-check locally, make a minimal type-only fix, run the matrix locally or through CI, and open/merge one green PR.
+- Actual form: tool execution was blocked before reproduction; Claude made a plausible static diagnosis but did not land a patch or produce a check receipt.
+- Ideal blocker handling: after `npm`, `npx`, `gh`, and even local settings were denied, mark the task `failed_blocked` with exact missing capabilities and stop premium fanout.
+- Actual blocker handling: the session escalated into Opus subagents for static code search, then hit the spend wall.
+- Ideal ownership normalization: dispatch should normalize `a-organvm` to the current `organvm` repo identity before creating worktrees, prompts, or PR titles.
+- Actual ownership handling: the stale owner string persisted in the prompt and PR title family, adding provenance noise.
+
+Outcome:
+
+- Credit this session for a useful static hypothesis about ask-styx worker tests and ambient Cloudflare types.
+- Do not credit this session for fixing CI. It left no product commit, no PR, no local compiler run, and no green check run.
+- Treat PR #726 as a later adjacent artifact, not this session's receipt. It was green, but broad and unmerged; current `main` is green through later PR #766.
+- The corrected delivery pattern for this class is "stop on tool wall, write exact retry command and required permission," not "spend Opus searching statically for a type error that a compiler would identify in seconds."
+
+What was fucked up:
+
+- A narrow CI task burned `2.24M` Opus billable tokens and five Opus subagents before producing no commit.
+- The session treated inability to run `npm`/`gh` as a reason to keep guessing, not as an acceptance blocker for a CI-fix task.
+- The only attempted write was a protected local `.claude/settings.local.json`, so the queue's changed-file row is not a code diff.
+- PR #726 later reused the CIFIX title but was not minimal: it carried generated traces, build info, docs, env examples, and broad runtime files. That should not be retroactively treated as the ideal output of this Claude session.
+- The fleet still needs a stronger generated-task rule: if compiler/log access is blocked, produce a short blocked handoff and let a lane with tool access run the compiler instead of spending premium static-analysis budget.
+
+Verification:
+
+```bash
+jq -s '{records:length, unique_prompt_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), task_body_bytes:([.[].task_body_bytes] | add), by_source:(group_by(.source) | map({source:.[0].source, count:length})), by_surface:(group_by(.surface) | map({surface:.[0].surface, count:length}))}' .limen-private/session-corpus/full-stack-review/session-129-claude-behavioral-blockchain-cifix-prompts.jsonl
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace--limen-worktrees-cifix-a-organvm-peer-audited--behavioral-blockchain-9bb1/08b4f87e-10c4-485d-84c4-5094ef74e2fa.jsonl
+test -d /Users/4jp/Workspace/.limen-worktrees/cifix-a-organvm-peer-audited--behavioral-blockchain-9bb1
+gh repo view a-organvm/peer-audited--behavioral-blockchain --json nameWithOwner,defaultBranchRef,isPrivate,url
+gh pr view 726 --repo organvm/peer-audited--behavioral-blockchain --json number,title,state,createdAt,mergedAt,headRefName,headRefOid,files,commits,statusCheckRollup,url
+gh run view 27842723359 --repo organvm/peer-audited--behavioral-blockchain --json databaseId,name,status,conclusion,headSha,jobs,url
+gh api repos/organvm/peer-audited--behavioral-blockchain/compare/main...limen/cifix-a-organvm-peer-audited--behavioral-blockchain-c905 --jq '{status:.status,ahead_by:.ahead_by,behind_by:.behind_by,total_commits:.total_commits,commits:[.commits[]|{sha:.sha[0:7],message:.commit.message}],files:[.files[]|{filename,status,changes}]}'
+gh pr view 766 --repo organvm/peer-audited--behavioral-blockchain --json number,title,state,createdAt,mergedAt,mergeCommit,headRefName,headRefOid,files,commits,statusCheckRollup,url
+gh run view 28703456180 --repo organvm/peer-audited--behavioral-blockchain --json databaseId,name,status,conclusion,headSha,jobs,url
+gh pr list --repo organvm/peer-audited--behavioral-blockchain --state open --limit 20 --json number,title,headRefName,headRefOid,statusCheckRollup
+```
+
+Result: private prompt extraction matches row `129`; transcript guard fails on total billable, Opus billable, and Opus subagent fanout; original worktree is absent; the durable repo owner is `organvm`; PR #726 is open, green historically, and diverged/stale relative to current `main`; current default branch is green via PR #766 and Styx CI run `28703456180`; open-PR health is still mixed, with PR #767 red.
 
 ### Claude domus-genoma CIFIX session failed to fix CI and should have stopped at the permission/spend wall
 
