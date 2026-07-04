@@ -46,6 +46,9 @@ python3 organs/consulting/validate-consulting.py --fleet --quiet
 step "Validate A-MAVS-OLEVM artist chamber governance records"
 python3 organs/artist/validate-artist.py --fleet --quiet
 
+step "Validate Koinonia social organ relationship-posture briefs"
+python3 organs/social/validate-social.py --fleet --quiet
+
 step "Verify the merge-policy predicate (verdict matrix regression test)"
 bash scripts/tests/merge-policy.test.sh
 
