@@ -1,0 +1,267 @@
+{
+  "contributions": [
+    {
+      "name": "contrib--a2aproject-a2a-python",
+      "pr_state": "CLOSED",
+      "pr_title": "fix(client): export TenantTransportDecorator and fix docstring",
+      "pr_updated": "2026-04-22T06:36:04Z",
+      "tracking_remote": "a-organvm/contrib--a2aproject-a2a-python",
+      "upstream_fork": "4444J99/a2a-python",
+      "upstream_pr": 915,
+      "upstream_repo": "a2aproject/a2a-python",
+      "workspace": "~/Code/upstream/community/contrib--a2aproject-a2a-python"
+    },
+    {
+      "name": "contrib--adenhq-hive",
+      "pr_state": "CLOSED",
+      "pr_title": "feat: add design versioning system for agent reproducibility",
+      "pr_updated": "2026-03-24T00:32:36Z",
+      "tracking_remote": "a-organvm/contrib--adenhq-hive",
+      "upstream_fork": "4444J99/hive",
+      "upstream_pr": 6707,
+      "upstream_repo": "aden-hive/hive",
+      "workspace": "~/Code/upstream/community/contrib--adenhq-hive"
+    },
+    {
+      "name": "contrib--anthropic-skills",
+      "pr_state": "OPEN",
+      "pr_title": "feat: add testing-patterns skill",
+      "pr_updated": "2026-04-21T21:42:19Z",
+      "tracking_remote": "a-organvm/contrib--anthropic-skills",
+      "upstream_fork": "4444J99/skills",
+      "upstream_pr": 723,
+      "upstream_repo": "anthropics/skills",
+      "workspace": "~/Code/upstream/community/contrib--anthropic-skills"
+    },
+    {
+      "name": "contrib--anthropics-anthropic-sdk-python",
+      "pr_state": "OPEN",
+      "pr_title": "fix(bedrock,vertex): add missing 413 and 529 status error handling",
+      "pr_updated": "2026-04-21T21:41:25Z",
+      "tracking_remote": "a-organvm/contrib--anthropics-anthropic-sdk-python",
+      "upstream_fork": "4444J99/anthropic-sdk-python",
+      "upstream_pr": 1306,
+      "upstream_repo": "anthropics/anthropic-sdk-python",
+      "workspace": "~/Code/upstream/community/contrib--anthropics-anthropic-sdk-python"
+    },
+    {
+      "name": "contrib--camel-ai-camel",
+      "pr_state": "OPEN",
+      "pr_title": "fix: generalize rate-limit retry to all model providers",
+      "pr_updated": "2026-05-12T09:18:47Z",
+      "tracking_remote": "a-organvm/contrib--camel-ai-camel",
+      "upstream_fork": "4444J99/camel",
+      "upstream_pr": 3974,
+      "upstream_repo": "camel-ai/camel",
+      "workspace": "~/Code/upstream/community/contrib--camel-ai-camel"
+    },
+    {
+      "name": "contrib--clyra-gait",
+      "pr_state": "OPEN",
+      "pr_title": "feat: add CI/CD pipeline policy template with intent fixtures",
+      "pr_updated": "2026-04-21T11:13:19Z",
+      "tracking_remote": "a-organvm/contrib--clyra-gait",
+      "upstream_fork": "4444J99/gait",
+      "upstream_pr": 110,
+      "upstream_repo": "Clyra-AI/gait",
+      "workspace": "~/Code/upstream/community/contrib--clyra-gait"
+    },
+    {
+      "name": "contrib--dapr-dapr",
+      "notes": "full upstream Go clone (3,670 files) \u2014 xenograft, resolve identity per IRF-CND-033",
+      "pr_state": "OPEN",
+      "pr_title": "fix: make DeliverBulk fallthru consistent with Deliver for empty status",
+      "pr_updated": "2026-04-22T14:00:35Z",
+      "tracking_remote": "a-organvm/contrib--dapr-dapr",
+      "upstream_fork": "4444J99/dapr",
+      "upstream_pr": 9719,
+      "upstream_repo": "dapr/dapr",
+      "workspace": "~/Code/upstream/community/contrib--dapr-dapr"
+    },
+    {
+      "name": "contrib--databricks-dbt-databricks",
+      "pr_state": "CLOSED",
+      "pr_title": "feat: include job_id, run_id, and task_key in adapter_response",
+      "pr_updated": "2026-05-11T12:59:57Z",
+      "tracking_remote": "a-organvm/contrib--databricks-dbt-databricks",
+      "upstream_fork": "4444J99/dbt-databricks",
+      "upstream_pr": 1376,
+      "upstream_repo": "databricks/dbt-databricks",
+      "workspace": "~/Code/upstream/community/contrib--databricks-dbt-databricks"
+    },
+    {
+      "name": "contrib--datadog-guarddog",
+      "pr_state": "OPEN",
+      "pr_title": "fix: normalize git URLs in npm_metadata_mismatch to avoid false positives",
+      "pr_updated": "2026-06-05T15:45:24Z",
+      "tracking_remote": "a-organvm/contrib--datadog-guarddog",
+      "upstream_fork": "4444J99/guarddog",
+      "upstream_pr": 703,
+      "upstream_repo": "DataDog/guarddog",
+      "workspace": "~/Code/upstream/community/contrib--datadog-guarddog"
+    },
+    {
+      "name": "contrib--dbt-mcp",
+      "pr_merged_at": "2026-03-27T02:54:15Z",
+      "pr_state": "MERGED",
+      "pr_title": "fix: clarify OAuth page wording for non-configuring developers",
+      "pr_updated": "2026-03-27T02:54:15Z",
+      "tracking_remote": "a-organvm/contrib--dbt-mcp",
+      "upstream_fork": "4444J99/dbt-mcp",
+      "upstream_pr": 669,
+      "upstream_repo": "dbt-labs/dbt-mcp",
+      "workspace": "~/Code/upstream/community/contrib--dbt-mcp"
+    },
+    {
+      "name": "contrib--grafana-k6",
+      "pr_state": "OPEN",
+      "pr_title": "metrics: add Len and ForEach methods to TagSet",
+      "pr_updated": "2026-05-11T09:59:25Z",
+      "tracking_remote": "a-organvm/contrib--grafana-k6",
+      "upstream_fork": "4444J99/k6",
+      "upstream_pr": 5770,
+      "upstream_repo": "grafana/k6",
+      "workspace": "~/Code/upstream/community/contrib--grafana-k6"
+    },
+    {
+      "name": "contrib--indeedeng-iwf",
+      "pr_state": "OPEN",
+      "pr_title": "Add unit tests for timeparser and urlautofix packages",
+      "pr_updated": "2026-04-21T21:42:06Z",
+      "tracking_remote": "a-organvm/contrib--indeedeng-iwf",
+      "upstream_fork": "4444J99/iwf",
+      "upstream_pr": 601,
+      "upstream_repo": "indeedeng/iwf",
+      "workspace": "~/Code/upstream/community/contrib--indeedeng-iwf"
+    },
+    {
+      "name": "contrib--ipqwery-ipapi-py",
+      "pr_state": "OPEN",
+      "pr_title": "feat: add Codecov integration for test coverage reporting",
+      "pr_updated": "2026-04-21T11:13:17Z",
+      "tracking_remote": "a-organvm/contrib--ipqwery-ipapi-py",
+      "upstream_fork": "4444J99/ipapi-py",
+      "upstream_pr": 8,
+      "upstream_repo": "ipqwery/ipapi-py",
+      "workspace": "~/Code/upstream/community/contrib--ipqwery-ipapi-py"
+    },
+    {
+      "name": "contrib--jairus-dagster-sdlc",
+      "notes": "workspace + journal exist, no PR ever filed \u2014 decide: file or retire (IRF-CND-020 candidate)",
+      "pr_state": "NO_PR",
+      "tracking_remote": "a-organvm/contrib--jairus-dagster-sdlc",
+      "upstream_fork": "4444J99/dagster-sdlc",
+      "upstream_repo": "jairus-m/dagster-sdlc",
+      "workspace": "~/Code/upstream/community/contrib--jairus-dagster-sdlc"
+    },
+    {
+      "name": "contrib--langchain-langgraph",
+      "pr_state": "OPEN",
+      "pr_title": "feat: add restart-safety coverage for put_writes idempotency",
+      "pr_updated": "2026-04-21T21:41:21Z",
+      "tracking_remote": "a-organvm/contrib--langchain-langgraph",
+      "upstream_fork": "4444J99/langgraph",
+      "upstream_pr": 7237,
+      "upstream_repo": "langchain-ai/langgraph",
+      "workspace": "~/Code/upstream/community/contrib--langchain-langgraph"
+    },
+    {
+      "name": "contrib--m13v-summarize-recent-commit",
+      "pr_state": "OPEN",
+      "pr_title": "feat: add daily auto-trigger with --schedule and --watch modes",
+      "pr_updated": "2026-04-21T11:13:16Z",
+      "tracking_remote": "a-organvm/contrib--m13v-summarize-recent-commit",
+      "upstream_fork": "4444J99/summarize_recent_commit",
+      "upstream_pr": 2,
+      "upstream_repo": "m13v/summarize_recent_commit",
+      "workspace": "~/Code/upstream/community/contrib--m13v-summarize-recent-commit"
+    },
+    {
+      "name": "contrib--modelcontextprotocol-python-sdk",
+      "pr_state": "OPEN",
+      "pr_title": "fix: accept single supported content type in SSE mode Accept header",
+      "pr_updated": "2026-05-02T02:51:19Z",
+      "tracking_remote": "a-organvm/contrib--modelcontextprotocol-python-sdk",
+      "upstream_fork": "4444J99/python-sdk",
+      "upstream_pr": 2361,
+      "upstream_repo": "modelcontextprotocol/python-sdk",
+      "workspace": "~/Code/upstream/community/contrib--modelcontextprotocol-python-sdk"
+    },
+    {
+      "name": "contrib--notion-mcp-server",
+      "notes": "87 commits of real TS development \u2014 only workspace with substantial original code; needs identity contract (IRF-CND-031)",
+      "pr_state": "OPEN",
+      "pr_title": "fix: correct children items schema in POST /v1/pages to use blockObjectRequest ref",
+      "pr_updated": "2026-04-21T21:42:02Z",
+      "tracking_remote": "a-organvm/contrib--notion-mcp-server",
+      "upstream_fork": "4444J99/notion-mcp-server",
+      "upstream_pr": 242,
+      "upstream_repo": "makenotion/notion-mcp-server",
+      "workspace": "~/Code/upstream/community/contrib--notion-mcp-server"
+    },
+    {
+      "name": "contrib--openai-agents-python",
+      "notes": "workspace is CLAUDE.md-only; PR closed unmerged 2026-04-21",
+      "pr_state": "CLOSED",
+      "pr_title": "fix(mcp): prevent leaked semaphore warnings during MCPServerStdio cleanup",
+      "pr_updated": "2026-04-21T22:14:20Z",
+      "tracking_remote": "a-organvm/contrib--openai-agents-python",
+      "upstream_fork": "4444J99/openai-agents-python",
+      "upstream_pr": 2802,
+      "upstream_repo": "openai/openai-agents-python",
+      "workspace": "~/Code/upstream/community/contrib--openai-agents-python"
+    },
+    {
+      "name": "contrib--prefecthq-fastmcp",
+      "pr_merged_at": "2026-03-28T01:42:36Z",
+      "pr_state": "MERGED",
+      "pr_title": "fix: serialize object query params per OpenAPI style/explode rules",
+      "pr_updated": "2026-03-28T01:42:37Z",
+      "tracking_remote": "a-organvm/contrib--prefecthq-fastmcp",
+      "upstream_fork": "4444J99/fastmcp",
+      "upstream_pr": 3662,
+      "upstream_repo": "PrefectHQ/fastmcp",
+      "workspace": "~/Code/upstream/community/contrib--prefecthq-fastmcp"
+    },
+    {
+      "name": "contrib--primeinc-github-stars",
+      "pr_merged_at": "2026-05-10T11:26:19Z",
+      "pr_state": "MERGED",
+      "pr_title": "feat: add CodeQL security analysis workflow",
+      "pr_updated": "2026-05-10T11:35:59Z",
+      "tracking_remote": "a-organvm/contrib--primeinc-github-stars",
+      "upstream_fork": "4444J99/github-stars",
+      "upstream_pr": 39,
+      "upstream_repo": "primeinc/github-stars",
+      "workspace": "~/Code/upstream/community/contrib--primeinc-github-stars"
+    },
+    {
+      "name": "contrib--tadata-org-fastapi-mcp",
+      "pr_state": "OPEN",
+      "pr_title": "fix: preserve typed array `items` in nullable anyOf schemas",
+      "pr_updated": "2026-04-21T11:17:13Z",
+      "tracking_remote": "a-organvm/contrib--tadata-org-fastapi-mcp",
+      "upstream_fork": "4444J99/fastapi_mcp",
+      "upstream_pr": 274,
+      "upstream_repo": "tadata-org/fastapi_mcp",
+      "workspace": "~/Code/upstream/community/contrib--tadata-org-fastapi-mcp"
+    },
+    {
+      "name": "contrib--temporal-sdk-python",
+      "notes": "no PR filed; upstream.repo tracked for discovery only (enterprise signal target per strategy memo)",
+      "pr_state": "NO_PR",
+      "tracking_remote": "a-organvm/contrib--temporal-sdk-python",
+      "upstream_fork": "4444J99/sdk-python",
+      "upstream_repo": "temporalio/sdk-python",
+      "workspace": "~/Code/upstream/community/contrib--temporal-sdk-python"
+    },
+    {
+      "name": "engagement--m13v-agentic-titan",
+      "notes": "issue #20 \u2014 30-comment technical exchange went cold; re-engage per IRF-OSS-050 (split: m13v takes sliding-window PR, we wire EpisodicLearner\u2192EventBus\u2192TopologyEngine)",
+      "pr_state": "NO_PR",
+      "upstream_repo": "m13v/agentic-titan"
+    }
+  ],
+  "fetched": "2026-07-04",
+  "source": "organvm/contrib/LEDGER.yaml"
+}

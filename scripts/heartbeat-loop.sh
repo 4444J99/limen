@@ -160,6 +160,7 @@ C_PUBPOLICY="${LIMEN_BEAT_PUBPOLICY:-8}" # DISCLOSE (verify the content-disposit
 C_WALLS="${LIMEN_BEAT_WALLS:-12}"        # WALLS (regenerate the credential Wall #320 + his-hand Wall #330 so they never drift)
 C_CVSTOS="${LIMEN_BEAT_CVSTOS:-24}"      # KEEP (CVSTOS — host stays factory: chat-app/local debt census + factory-invariant + reaper proprioception; filesystem walk ⇒ rare)
 C_VVLTVS="${LIMEN_BEAT_VVLTVS:-24}"      # FACE (VVLTVS — verify the public face reflects the live SSOT: profile/portfolio drift + contribution-mix radar; offline read ⇒ cheap)
+C_CONTRIB="${LIMEN_BEAT_CONTRIB:-12}"    # MIRROR (SPECVLVM — re-render the contributions proof surface from hub-ledger outputs; offline read ⇒ cheap)
 LOCKD="$LIMEN_ROOT/logs/.queue.lock.d"   # shared with supervisory ops (two-scale safety)
 c=0
 play() { [ $(( c % $1 )) -eq 0 ]; }   # true on this voice's beat
@@ -525,6 +526,14 @@ while true; do
   # the re-stamp (--apply prints the plan) stays his lever. Lockless, fail-open. Gate off LIMEN_VVLTVS=0.
   due_voice vvltvs "$C_VVLTVS" && [ "${LIMEN_VVLTVS:-1}" = "1" ] && \
     { python3 "$LIMEN_ROOT/scripts/vvltvs-organ.py" 2>&1 | tail -1 || true; stamp vvltvs; }
+  # SPECVLVM — the contributions mirror (the OSPO organ: outward to learn inward; proof, never
+  # outreach). Every C_CONTRIB beats: re-render organs/contributions/MIRROR.md + the
+  # logs/contributions.json signal from hub-ledger outputs (organvm/contrib LEDGER or the committed
+  # cache). OFFLINE on the beat — never hits `gh api` unless LIMEN_CONTRIB_REFRESH=1. NEVER sends:
+  # no comments, bumps, PRs, or posts — outbound stays his hand (the PLAN-06 planner decision).
+  # Lockless, idempotent (writes only on change), fail-open. Gate off with LIMEN_CONTRIB=0.
+  due_voice contrib "$C_CONTRIB" && [ "${LIMEN_CONTRIB:-1}" = "1" ] && \
+    { python3 "$LIMEN_ROOT/scripts/contributions-organ.py" 2>&1 | tail -1 || true; stamp contrib; }
   # WALLS — regenerate the credential Wall (#320) + his-hand aggregate Wall (#330) every C_WALLS beats
   # so the published walls never drift from reality. Idempotent (writes only on change), fail-open.
   play "$C_WALLS"   && { python3 "$LIMEN_ROOT/scripts/credential-wall.py" --sync 2>&1 | tail -1 || true

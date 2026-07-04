@@ -81,3 +81,10 @@ pillars:
     role: Take payment straight to an owner-controlled Bitcoin address and sign each product's own offline Pro licence — no Stripe/Ko-fi/Lemon Squeezy, no processor in the path. Unconfigured, it pools demand as reserved orders and auto-opens them the moment the receive address is set (the valve).
     owner: limen
     path: ~/Workspace/limen/moneta
+  - id: contributions
+    name: Contributions mirror (SPECVLVM)
+    role: Look outward at other projects' wiring to improve inward — upstream contributions rendered as proof (merged/open/closed…); community + name recognition accrue as byproducts of genuine value. Never sends — outbound is the human's hand.
+    owner: limen
+    path: ~/Workspace/limen/organs/contributions
+    producer: scripts/contributions-organ.py
+    health_signal: logs/contributions.json

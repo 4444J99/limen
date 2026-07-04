@@ -579,6 +579,37 @@ parameters:
     self_update: none
     owner: vvltvs
     note: "Age (days) after which the cached contribution mix is treated as stale. Only surfaced as an advisory (and triggers a refresh when LIMEN_VVLTVS_REFRESH=1); never fails the predicate."
+  # --- SPECVLVM: the contributions mirror — outward to learn inward; proof, never outreach ---
+  LIMEN_BEAT_CONTRIB:
+    default: 12                 # cadence: re-render the contributions mirror every 12 beats (offline file reads => cheap)
+    env: LIMEN_BEAT_CONTRIB
+    self_update: none
+    owner: contributions
+    note: "How often SPECVLVM re-renders organs/contributions/MIRROR.md + logs/contributions.json from hub-ledger outputs. Offline on the beat, idempotent (writes only on change), fail-open."
+  LIMEN_CONTRIB:
+    default: 1                  # default-ON: the mirror rides the beat (read-only outward, never sends)
+    env: LIMEN_CONTRIB
+    self_update: none
+    owner: contributions
+    note: "Master gate for the SPECVLVM beat. ON by default — the organ never sends (no comments/bumps/PRs/posts; outbound stays his hand per the PLAN-06 planner decision). Set 0 to silence the rung."
+  LIMEN_CONTRIB_REFRESH:
+    default: 0                  # default-OFF: the beat never hits `gh api` — reads the local hub ledger or the committed cache only
+    env: LIMEN_CONTRIB_REFRESH
+    self_update: none
+    owner: contributions
+    note: "When 1, the beat MAY refresh the ledger cache via one read-only `gh api` contents call. Default 0 keeps the beat fully offline; `--refresh` always forces it regardless."
+  LIMEN_CONTRIB_HUB_REPO:
+    default: "organvm/contrib"  # the hub whose generated LEDGER.yaml is the one state surface
+    env: LIMEN_CONTRIB_HUB_REPO
+    self_update: none
+    owner: contributions
+    note: "The contribution hub repo (PLAN-06-OWNER-01). The mirror consumes its LEDGER outputs only — never raw sessions or private archaeology."
+  LIMEN_BACKFLOW_MANIFEST:
+    default: "~/Workspace/organvm-corpvs-testamentvm/backflow-manifest.yaml"
+    env: LIMEN_BACKFLOW_MANIFEST
+    self_update: none
+    owner: contributions
+    note: "Where the inward-lens tally reads what each contribution taught (signals routed per receiving organ). Optional: an absent manifest renders as such, never fails the mirror."
   # --- ORGANS (VLTIMA): convert idle capacity into institutional weight (legal/financial/education/...) ---
   LIMEN_ORGAN_BACKLOG:
     default: 1                  # default-ON: organ-ladder -> bounded build tasks each FEED beat
