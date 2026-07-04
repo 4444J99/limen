@@ -17,6 +17,7 @@ Generated: `2026-07-04T00:40:41Z`
 | refreshed 3 | `claude` | `343d6769-bdee-480f-88d9-981eec736b87` | Evocator/SVMMONER run. Worktree and temp activation files were gone, but `scripts/evocator.py` and `spec/evocator` landed on `main`; fixed canon-shape crash paths that violated the organ's fail-open beat contract. |
 | refreshed 4 | `claude` | `7c761a22-5bdf-42e8-bfb6-e8988530303f` | Archive4T convergence/knowledge-corpus planning run. Durable evidence is transcripts and memory docs; the referenced `converge-build` worktree was gone and no matching in-window `converge.py` commit survived, so this row is recorded as report-only. |
 | refreshed 5 | `claude` | `a290329e-a778-478f-a7a7-9afa79709221` | UMA/mail obligations run. Original worktree and temp atlas outputs were gone, but the mail beat and obligations face landed on `main`; fixed wrong-shaped ledger crash paths in the obligations renderer. |
+| refreshed 6 | `claude` | `dc879846-e9bf-41c0-b25d-5cebab230983` | Education-organism buildout run. Limen worktree, temp PR files, and the referenced external `~/Workspace/edu-organism` root were all absent on this host; recorded as transcript-only/off-host artifact loss. |
 | 1 | `opencode` | `ses_11427e08affe3D8jAAl5W43viB` | Exact window had no matching commits on `main`, but the matching unmerged branch is `limen/gen-organvm-limen-security-0625-57ce` at `02f256e` (`Security hardening pass on organvm/limen`). Reviewed as a reject/do-not-merge artifact. |
 | 2 | `opencode` | `ses_114c8f0c6ffeixS8gn4VxGqoHb` | Exact window matched `80d4e21f` (`feat(route): consume self-improve lane weights`). Widened window also showed related routing/meter/queue commits including `0146190` and `a6488c9`. |
 | 3 | `opencode` | `ses_1095e9b19ffe4yg9h4la7tGU4d` | Exact window had no matching commits on `main`; widened window was mostly Studium content-generation churn, not the control-plane code path reviewed here. |
@@ -925,6 +926,33 @@ python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/pro
 ```
 
 Result: `2 passed`; compile passed; live renderer reported 27 obligations and 3 verify-first items.
+
+### Education-organism row has no surviving artifact root
+
+Severity: medium for auditability, not a current Limen code defect.
+
+Evidence:
+
+- Refreshed rank 6 (`dc879846-e9bf-41c0-b25d-5cebab230983`) was a broad education-organism buildout: 97 changed-file entries, mostly external `~/Workspace/edu-organism/**` docs/config/code plus temporary PR files under `/tmp`.
+- Patched transcript audit reports 57 transcript files, 3,434 usage-bearing messages, 21,420,595 billable-ish tokens, 315,757,786 cache-read tokens, 15,778,453 Opus-class billable-ish tokens, 10 Opus-class subagents, and 25 agent/workflow calls.
+- The Limen worktree `.claude/worktrees/nested-humming-mochi` is gone.
+- The temporary `/tmp/vh-*` commit/PR files are gone.
+- The referenced external root `~/Workspace/edu-organism` is absent on this host, so none of the listed external code/docs/tests can be inspected directly.
+
+Outcome:
+
+- No Limen code change was made.
+- This row is recorded as transcript-only/off-host artifact loss: the prompts/session are reviewable, but the actual produced files are not currently available for diff review.
+
+Verification:
+
+```bash
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-nested-humming-mochi/dc879846-e9bf-41c0-b25d-5cebab230983.jsonl --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000 --out /tmp/rank-dc-audit.json
+test -d /Users/4jp/Workspace/limen/.claude/worktrees/nested-humming-mochi
+test -d /Users/4jp/Workspace/edu-organism
+```
+
+Result: transcript audit succeeded; both artifact roots were absent.
 
 ## Current File References
 
