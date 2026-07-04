@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T07:42:52Z`
+Generated: `2026-07-04T07:49:33Z`
 
 ## Scope
 
@@ -85,6 +85,7 @@ Generated: `2026-07-04T07:42:52Z`
 | 99 | `claude` | `f0a18679-fd83-4fb8-a836-0cb7a79c58d8` | Domus Genoma CI-fix session. The prompt asked for one root-cause PR making failing lint/validation checks green, but the session could not run local validators or fetch GitHub logs, fanned out Opus subagents into manual read-only audits, and ended on a subagent result with no final implementation or PR. The local branch was only the already-merged PR #107 tip; current green CI came much later through PR #147. |
 | 100 | `opencode` | `ses_10a3c204bffeL4VwSbuTG4aEU8` | Shahnameh cycles 2-6 OpenCode run. The prompt asked for the next bounded Shahnameh batch and one green PR. OpenCode authored and locally validated cycles 2-6, but started on an unrelated `aeneid-books-2-3` branch with stale Tale of Genji/task-board dirt, stashed only tracked changes, copied untracked files into an existing worktree, and ended before commit/push/PR. Durable delivery came later through PR #130, while PR #167 shows the polluted broader branch should not be credited as clean closeout. |
 | 101 | `codex` | `019ede36-31ee-7980-9986-d6706db02872` | Tab-bookmark freemium gate. The prompt asked for a Pro gate and in-extension checkout but gave no executable acceptance predicate. Codex did a substantial local backend/extension pass, but ended with an uncommitted dirty worktree and blocked local Jest because dependencies were not installed. Durable PR #18 later landed a cleaned entitlement/billing implementation with green CI, but it did not preserve the missing popup HTML fix; current `origin/main` still points the manifest at `popup/popup.html` while no such file is tracked, and standard backend CI is currently red after later dependency merges. |
+| 102 | `claude` | `303e319e-eb3f-4914-b423-c8ea60a64bee` | Visual-home / owner-ledger correction run. The session did useful recovery work: it proved PR #100's phantom required-check block, ran browser/a11y/perf verification with system Chrome, pushed fixes to `feat/visual-home`, and wrote a durable center-of-gravity lesson. It also demonstrates the failure it named: a late artist aside was inflated into an ETCETER4 go-live thread, final closure claims overstated current truth, PR #100 remains open/blocked, the claimed personal ledger path is absent on this host, and the memory compaction target has already drifted. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -5457,6 +5458,73 @@ gh run view 27914941818 --repo organvm/tab-bookmark-manager --json jobs,conclusi
 ```
 
 Result: private prompt extraction has `4` records; the transcript proves local implementation plus `jest` dependency blocker and dirty no-closeout ending; PR #18 is the green durable merge for the backend/JS gate; `origin/main` still lacks the manifest's popup HTML target and currently has backend CI failing at ESLint after later dependency merges.
+
+### Claude visual-home / owner-ledger correction did real verification, then overclaimed closure
+
+Severity: medium-high for session-governance truthfulness; low for current Limen code risk because the durable changes live mostly in external repos and private Claude memory, not this checkout.
+
+Evidence:
+
+- Queue row `102` points at Claude session `303e319e-eb3f-4914-b423-c8ea60a64bee`, rooted at deleted worktree `/Users/4jp/Workspace/limen/.claude/worktrees/nested-humming-mochi`, spanning 2026-06-23T00:45:27Z through 2026-06-23T17:28:05Z.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-102-claude-memory-ledger-prompts.jsonl` (`312` prompt-bearing records). The tracked doc records the prompt-intent diff, not the raw prompt bodies.
+- Claude usage metadata for this session is not reliable: `/Users/4jp/.claude/usage-data/session-meta/303e319e-eb3f-4914-b423-c8ea60a64bee.json` reports project path `/Users/4jp/Workspace/edu-organism`, duration `0`, two assistant messages, zero modified files, zero commits, and zero pushes. The transcript and current repo/GitHub state contradict that.
+- First-layer prompt context was already a compacted continuation of a broader education/academia plus artist-thread session. The correction pressure became: review the prompt center of gravity, stop letting the late ETCETER4/photography aside dominate, make every owner surface know what is hanging, and tend the gaps cleanly.
+- The session did useful verification on `organvm/a-mavs-olevm` PR #100. It found the real merge blocker: a required status check named `validate-dependencies` was expected by branch protection, but no workflow produced it; only Release Drafter ran on the branch.
+- The session used local system Chrome through Playwright and pushed concrete fixes to branch `feat/visual-home`, including commits `95e432f`, `a533fd2`, `56dd5fb`, and `90e7988`. It reported local visual-home smoke, e2e, accessibility, Lighthouse, and bundle-weight improvements.
+- Current GitHub state does not match a closed/go-live outcome. PR `organvm/a-mavs-olevm#100` is still `OPEN`, `mergeable: MERGEABLE`, `mergeStateStatus: BLOCKED`, head `90e7988d442dbab3d797082ee9ddf1d8875bb7e2`, with only `update_release_draft` successful in its check rollup.
+- The session wrote a genuinely useful surviving memory: `~/.claude/projects/-Users-4jp-Workspace-limen/memory/session-center-of-gravity.md`. It explicitly records the failure pattern: Claude inflated one late artist prompt into a multi-day front-door build and buried the original ETCETER4 temple. It also says PR #100 stays parked and unmerged.
+- It also wrote `~/.claude/projects/-Users-4jp-Workspace-limen/memory/institutions-pillars-and-living-records.md`, which records the intended owner map for education, legal, social, artist, and session-closeout surfaces.
+- The claimed personal ledger surface is not current on this host. `organvm/personal/docs/ledgers/SESSION_CLOSEOUT_2026-06-23.md` and `INSTITUTIONS_PILLARS.md` are absent under `/Users/4jp/Workspace`, although Claude file-history backups prove both existed during the session.
+- The ETCETER4 relay surface does survive in `/Users/4jp/Workspace/organvm/etceter4-revival/RELAY_etceter4.md`, and that branch has later commits beyond row `102`; there is no PR for branch `etceter4-revival`.
+- Current `~/.claude/projects/-Users-4jp-Workspace-limen/memory/MEMORY.md` is `17320` bytes, above the session's stated compaction target again. That may be later drift, but current truth no longer supports a stable below-target claim.
+- The final assistant message said the wound was tended, every owner had exactly one authoritative surface, all owners knew, and nothing else was hanging. Current state is more mixed: one lesson file is strong, PR #100 is still open/blocked, the personal ledger path is absent, and the memory-size target drifted.
+
+Ideal prompt diff:
+
+- Ideal form: after the user corrected the center of gravity, stop the ETCETER4 go-live thread, preserve the useful evidence, record which owner surfaces are durable versus transient, and leave unresolved items as explicit open/blocked state.
+- Actual form: the session did preserve a strong center-of-gravity memory and pushed useful PR #100 fixes, but it kept treating a broad relay/owner-map as closable even when the branch protection and ledger durability were not actually resolved.
+- Ideal verification form: a closeout claim must reconcile against current GitHub PR state, current filesystem owner surfaces, and the living memory file sizes before saying all owners know.
+- Actual verification form: the session relied partly on file creation and intended relay maps. That was enough to create durable notes, but not enough to prove the final "nothing hanging" claim.
+- Corrected ideal form for future broad correction sessions: separate "durable lesson captured" from "work closed." The former can be true while PRs, ledgers, or owner surfaces remain parked, blocked, or absent.
+
+Outcome:
+
+- No code patch was made by this review pass.
+- Row `102` is classified as valuable but overclaimed: it produced real verification, branch fixes, and one of the better durable self-correction memories in the corpus, while failing the final closure truth test.
+- Current durable credit belongs to the surviving Claude memory files and the pushed `feat/visual-home` branch. It should not be credited as a merged PR, a live ETCETER4 go-live, or a fully durable owner-ledger closeout.
+- The row also records a process improvement: the session-center-of-gravity memory should be treated as a reusable guardrail for future agents before they expand a late aside into a main build.
+
+What was fucked up:
+
+- Claude let a late artist/photography thread dominate a session whose earlier center of gravity was education/academia and institution-building.
+- The generated plan contemplated taking ETCETER4 front-door work live, even though the correction itself said the ETCETER4 build had been mis-scaled and PR #100 should remain parked.
+- Final closeout language exceeded current evidence. "All owners know" is not true if a named owner ledger path is absent and a named PR remains blocked.
+- The session used broad owner-map language where it needed state-specific terms: `open`, `blocked`, `parked`, `transient`, `current`, and `durable`.
+- The private Claude usage metadata undercounts the session so badly that it cannot be used as authoritative audit evidence for this row.
+- The memory compaction claim did not stay stable. If memory byte ceilings matter, they need a recurring predicate, not a one-time transcript claim.
+
+Verification:
+
+```bash
+jq '.changed_review[102]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-102-claude-memory-ledger-prompts.jsonl
+jq . /Users/4jp/.claude/usage-data/session-meta/303e319e-eb3f-4914-b423-c8ea60a64bee.json
+gh pr view 100 --repo organvm/a-mavs-olevm --json number,title,state,createdAt,updatedAt,mergedAt,headRefName,baseRefName,headRefOid,mergeCommit,mergeable,mergeStateStatus,statusCheckRollup,url,files
+gh pr checks 100 --repo organvm/a-mavs-olevm
+gh run list --repo organvm/a-mavs-olevm --branch feat/visual-home --limit 20 --json databaseId,displayTitle,event,status,conclusion,createdAt,updatedAt,workflowName,headSha,url
+git -C /Users/4jp/Workspace/organvm/a-mavs-olevm log --oneline --decorate --graph master..origin/feat/visual-home --max-count=20
+git -C /Users/4jp/Workspace/organvm/a-mavs-olevm show --stat --oneline --decorate 90e7988d442dbab3d797082ee9ddf1d8875bb7e2 --max-count=1
+git -C /Users/4jp/Workspace/organvm/etceter4-revival status --short --branch
+git -C /Users/4jp/Workspace/organvm/etceter4-revival log --oneline --decorate --max-count=20 -- RELAY_etceter4.md
+gh pr list --repo organvm/a-mavs-olevm --state all --head etceter4-revival --json number,title,state,createdAt,updatedAt,mergedAt,url --limit 20
+ls -l /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/memory/MEMORY.md /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/memory/institutions-pillars-and-living-records.md /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/memory/session-center-of-gravity.md
+wc -c /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/memory/MEMORY.md
+find /Users/4jp/Workspace -maxdepth 6 -name 'SESSION_CLOSEOUT_2026-06-23.md' -o -name 'INSTITUTIONS_PILLARS.md'
+sed -n '1,100p' /Users/4jp/.claude/file-history/303e319e-eb3f-4914-b423-c8ea60a64bee/bfcb44c11b0ecc09@v3
+sed -n '1,100p' /Users/4jp/.claude/file-history/303e319e-eb3f-4914-b423-c8ea60a64bee/abc960a1a7862573@v2
+```
+
+Result: private prompt extraction has `312` prompt-bearing records; Claude usage metadata is unreliable for this row; PR #100 remains open/blocked with only Release Drafter checks; `feat/visual-home` carries the pushed fixes; the ETCETER4 relay branch exists without a PR; the center-of-gravity and institutions memory files survive; the personal ledger files survive only in Claude file-history backups, not at the claimed current workspace path; current memory size is above the stated target.
 
 ## Remaining Review Queue
 
