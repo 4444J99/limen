@@ -16,6 +16,7 @@ Generated: `2026-07-04T00:40:41Z`
 | 2 | `opencode` | `ses_114c8f0c6ffeixS8gn4VxGqoHb` | Exact window matched `80d4e21f` (`feat(route): consume self-improve lane weights`). Widened window also showed related routing/meter/queue commits including `0146190` and `a6488c9`. |
 | 3 | `opencode` | `ses_1095e9b19ffe4yg9h4la7tGU4d` | Exact window had no matching commits on `main`; widened window was mostly Studium content-generation churn, not the control-plane code path reviewed here. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
+| 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
 | 10 | `claude` | `3d972c29-36c6-4803-b94b-255df104f644` | Integration-organ window landed value ledger, score-dispatch, omni, ingest coverage, media atomization, and accelerator surfaces. Reviewed current `main` and found remaining malformed numeric crash paths in fail-open organs. |
 | 11 | `claude` | `f9c6b1e7-2c05-4d42-9d6a-8b08ee98a155` | Window touched watchdog, self-heal, and self-improve organs. Reviewed current `main` implementations and found remaining malformed-env crash paths in watchdog/self-heal. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
@@ -669,6 +670,38 @@ python3 -m py_compile scripts/claude-usage.py scripts/reap-branches.py scripts/v
 
 Result: `29 passed`; compile passed.
 
+### Usage reserve inputs could poison census-derived pacing
+
+Severity: medium for gauge truth and front-load pacing.
+
+Evidence:
+
+- Claude session `a39889c7-0aae-4348-84ed-19612cb0daa2` covers the census/vendor-registry, usage-telemetry derivation, and stale budget-reset healing window.
+- The prompt/session intent was one vendor truth source, no fabricated meters, and no stale-counter deadlock.
+- The landed census register, capacity projections, dispatch lane cascade, Agy meter-honesty guard, and budget reset heal tests passed on current `main`.
+- The remaining gap was in the adjacent census-derived usage telemetry consumer: `load_reserve_pct()` and `load_reserve_floor_pct()` accepted bare `float(...)` values from env or `logs/usage-limits.json`.
+- `float("nan")`, infinite values, negative values, or percentages above `100` could flow into `effective_reserve_pct`, lane health, and front-load `will_expire` math, contradicting the gauge-truth intent.
+
+Repair:
+
+- Added a bounded percent parser on top of the existing finite non-negative numeric helper.
+- Applied it to `LIMEN_RESERVE_PCT`, `LIMEN_RESERVE_FLOOR_PCT`, and the matching `usage-limits.json` fields.
+- Added a regression proving malformed/out-of-range reserve env values fall back to the default reserve and do not poison pacing health.
+
+Touched paths:
+
+- `scripts/usage-telemetry.py`
+- `cli/tests/test_usage_telemetry_health.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_census.py cli/tests/test_budget_reset_heal.py cli/tests/test_usage_telemetry.py cli/tests/test_usage_telemetry_health.py -q
+python3 -m py_compile cli/src/limen/census.py cli/src/limen/dispatch.py scripts/usage-telemetry.py
+```
+
+Result: `29 passed, 1 skipped`; compile passed.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -839,9 +872,15 @@ Result: `29 passed`; compile passed.
 - `cli/tests/test_reap_branches.py:84` covers malformed and non-positive branch-reap env knobs.
 - `cli/tests/test_verify_budget_gauge.py:15` covers malformed live Codex rate-limit payloads.
 - `cli/tests/test_verify_budget_gauge.py:37` covers human display of malformed used-percent fields.
+- `scripts/usage-telemetry.py:53` bounds reserve percentage inputs.
+- `scripts/usage-telemetry.py:160` applies bounded parsing to reserve floor env values.
+- `scripts/usage-telemetry.py:166` applies bounded parsing to reserve floor config values.
+- `scripts/usage-telemetry.py:222` applies bounded parsing to reserve env values.
+- `scripts/usage-telemetry.py:228` applies bounded parsing to reserve config values.
+- `cli/tests/test_usage_telemetry_health.py:135` covers malformed and out-of-range reserve env values.
 
 ## Remaining Review Queue
 
-1. Continue unresolved rank 7, 9, and 12 control-plane windows before spending time on large Studium content churn; those windows touch dispatch, capacity, CI, and lifecycle code with higher operational blast radius.
+1. Continue unresolved rank 7 and 12 control-plane windows before spending time on large Studium content churn; those windows touch dispatch, capacity, CI, and lifecycle code with higher operational blast radius.
 2. Add stronger provider-clock and receipt extraction for Agy. Changed-file `TargetFile` evidence is now covered when present, but quota, verification, and no-op classification still depend on weaker outcome text.
 3. Continue branch-artifact review for other unmerged OpenCode security/test-coverage branches before any stale branch is rebased or merged.

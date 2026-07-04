@@ -49,6 +49,14 @@ def _number_or_default(value, default=0):
         return default
     return int(parsed) if parsed.is_integer() else parsed
 
+
+def _percent_or_default(value, default):
+    parsed = _number_or_default(value, default)
+    if parsed > 100:
+        return default
+    return parsed
+
+
 # A rate-limit gate must come from a REAL, RECENT 429 — never from text that merely MENTIONS
 # rate limits (a planning session discussing "rate limit" / "429" must not bench a lane). And it
 # must auto-expire: a lane is only "rate-limited" while a real event sits inside this cooldown,
@@ -149,16 +157,13 @@ _DEFAULT_RESERVE_FLOOR_PCT = 5.0
 def load_reserve_floor_pct():
     env = os.environ.get("LIMEN_RESERVE_FLOOR_PCT")
     if env:
-        try:
-            return float(env)
-        except ValueError:
-            pass
+        return _percent_or_default(env, _DEFAULT_RESERVE_FLOOR_PCT)
     path = ROOT / "logs" / "usage-limits.json"
     if path.exists():
         try:
             v = json.loads(path.read_text()).get("reserve_floor_pct")
             if v is not None:
-                return float(v)
+                return _percent_or_default(v, _DEFAULT_RESERVE_FLOOR_PCT)
         except Exception:
             pass
     return _DEFAULT_RESERVE_FLOOR_PCT
@@ -214,16 +219,13 @@ def load_reserve_pct():
     top-level "reserve_pct" in logs/usage-limits.json, else the default."""
     env = os.environ.get("LIMEN_RESERVE_PCT")
     if env:
-        try:
-            return float(env)
-        except ValueError:
-            pass
+        return _percent_or_default(env, _DEFAULT_RESERVE_PCT)
     path = ROOT / "logs" / "usage-limits.json"
     if path.exists():
         try:
             v = json.loads(path.read_text()).get("reserve_pct")
             if v is not None:
-                return float(v)
+                return _percent_or_default(v, _DEFAULT_RESERVE_PCT)
         except Exception:
             pass
     return _DEFAULT_RESERVE_PCT

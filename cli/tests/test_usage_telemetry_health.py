@@ -130,3 +130,15 @@ def test_malformed_cooldown_env_does_not_crash(tmp_path):
     )
 
     assert vendors["gemini"]["health"] == "ok"
+
+
+def test_malformed_reserve_env_does_not_poison_pacing(tmp_path):
+    vendors = _run(
+        tmp_path,
+        ["beat ok"],
+        extra_env={"LIMEN_RESERVE_PCT": "nan", "LIMEN_RESERVE_FLOOR_PCT": "200"},
+    )
+
+    assert vendors["gemini"]["reserve_pct"] == 15.0
+    assert vendors["gemini"]["effective_reserve_pct"] == 15.0
+    assert vendors["gemini"]["health"] == "ok"
