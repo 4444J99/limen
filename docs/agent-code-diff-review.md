@@ -1922,6 +1922,53 @@ python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/pro
 
 Result: `15 passed`; enactment audit test passed `4/4`; heartbeat/metabolize shell syntax passed; live enactment check returned green; transcript audit passed without violations.
 
+### CleanUnique archive session is off-repo and currently recoverable through mounted copies
+
+Severity: high historical data-risk context; no Limen code patch required.
+
+Evidence:
+
+- Codex session `019ebd1b-96b9-7c71-8d3e-45a52b031ead` was rooted at `~` and wrote/read `/Volumes/CleanUnique` archive, manifest, cleanup, backup, and rebuild documents rather than Limen source code.
+- Local session JSONL survives at `~/.codex/sessions/2026/06/12/rollout-2026-06-12T14-32-42-019ebd1b-96b9-7c71-8d3e-45a52b031ead.jsonl`.
+- Structural session count: 66 user prompt events, 158 task-complete events, 5,146 tool-call records, 18 compaction records.
+- Current live `/Volumes/CleanUnique` mount is absent.
+- Current recovery copies are mounted:
+  - `/Volumes/Archive4T/RecoveryCopies/CleanUnique-Lifeboat-2026-06-13`: 146G, 1,164,328 files, 564 manifest files.
+  - `/Volumes/Archive4T/CleanUnique.apfs.sparsebundle`: 311G.
+  - `/Volumes/T7Recovery/CleanUnique-Lifeboat-2026-06-13`: 117G, 948,590 files, 565 manifest files.
+  - `/Volumes/T7Recovery/CleanUnique.apfs.sparsebundle`: 311G.
+- Both Lifeboat trees expose `README.md`, `_MANIFESTS/MANIFEST-CATALOG-2026-06-13.md`, `_MANIFESTS/OPERATOR-QUICKSTART-2026-06-13.md`, and `_MANIFESTS/CURRENT-STATE-2026-06-13.json`.
+- Archive4T and T7Recovery Lifeboat file counts differ, so treat Archive4T as the larger primary recovery tree and T7Recovery as a secondary copy with parity caveat unless a later parity receipt says otherwise.
+
+Outcome:
+
+- No tracked Limen code change was made for this row.
+- Prompt/session diff is closed as recovered/off-repo evidence, not a missing Limen implementation.
+- Current safe posture remains read-only review and exact-path verification; the archive's own README and quickstart authorize no deletion, move, quarantine, wipe, reformat, detach, or public promotion.
+
+Verification:
+
+```bash
+test -d /Volumes/CleanUnique || true
+find /Volumes/Archive4T/RecoveryCopies/CleanUnique-Lifeboat-2026-06-13 -type f | wc -l
+find /Volumes/T7Recovery/CleanUnique-Lifeboat-2026-06-13 -type f | wc -l
+find /Volumes/Archive4T/RecoveryCopies/CleanUnique-Lifeboat-2026-06-13/_MANIFESTS -maxdepth 1 -type f | wc -l
+find /Volumes/T7Recovery/CleanUnique-Lifeboat-2026-06-13/_MANIFESTS -maxdepth 1 -type f | wc -l
+python3 - <<'PY'
+import json
+from pathlib import Path
+for f in [
+    Path('/Volumes/Archive4T/RecoveryCopies/CleanUnique-Lifeboat-2026-06-13/_MANIFESTS/CURRENT-STATE-2026-06-13.json'),
+    Path('/Volumes/T7Recovery/CleanUnique-Lifeboat-2026-06-13/_MANIFESTS/CURRENT-STATE-2026-06-13.json'),
+]:
+    data = json.loads(f.read_text(encoding='utf-8', errors='replace'))
+    assert data.get('schema') == 'cleanunique-current-state/v1'
+    assert data.get('authoritative') is True
+PY
+```
+
+Result: live CleanUnique mount absent; Archive4T and T7Recovery recovery roots readable; current-state JSON parsed with the expected schema/authority fields.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
