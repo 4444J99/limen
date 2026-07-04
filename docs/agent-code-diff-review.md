@@ -98,6 +98,7 @@ Generated: `2026-07-04T12:24:23Z`
 | changed 140 | `opencode` | `ses_108a8bf16ffegslVYyDJTjKuCQ` | Divine Comedy batch run. The prompt asked for the next bounded Divine Comedy batch, validation, and one green PR. OpenCode instead wrote local books `05-94` while never running `git` or `gh`; no session PR or final receipt exists. Durable `main` only has books `05-17`, with `05-13` already merged before the session and `14-17` merged later through PR #164. |
 | changed 141 | `claude` | `5b3f1a8a-a89e-47d0-9b7e-9482c8e47080` | Merge-authority / permission-ping run. Claude turned recurring permission and branch-ownership pain into a real merge-policy fix: PR #214 stopped `BLOCKED` and `UNKNOWN` GitHub merge states from being treated as clear, and current `main` has the semantics. The defects are process-grade: the session burned 2.84M Opus billable tokens, the first merged predicate had a macOS Bash 3.2 empty-array false-pass bug later fixed by PR #223, and the final closeout was accurate for the session PR but too broad as a global backlog-owner claim. |
 | changed 142 | `codex` | `019eddb0-eb7b-7923-8215-81201a83b50a` | AI Chat Exporter Gemini adapter. Codex authored a broad 15-file live Gemini DOM-scraping implementation and opened PR #30, but the prompt asked to replace a scaffold that was not actually present in the session base. The PR is still open, conflicting, 66 commits behind, and only has a skipped Release check; current `master` instead contains scaffold-only Gemini support from PR #27 and deliberately avoids guessed live extraction. |
+| changed 143 | `codex` | `019eddb0-ebed-7492-a12d-81cf4eac0b3b` | AI Chat Exporter Claude adapter. Codex authored a broad 15-file live Claude API/provider implementation and opened PR #31, but like the Gemini sibling it worked from a base without the scaffold the prompt referenced. The PR is still open, conflicting, 66 commits behind, and only has a skipped Release check; current `master` keeps Claude scaffold-only through PR #27 and requires live-session validation before wiring real extraction. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -8965,6 +8966,76 @@ gh run list --repo organvm/a-i-chat--exporter --branch limen/rev-exporter-gemini
 ```
 
 Result: private prompt extraction matches row `changed 142`; original worktree is absent; transcript command stream confirms failed test/install and only `git diff --check` passing; PR #30 is open, conflicting, stale, and only has a skipped Release check; PR #27 is merged and current `master` keeps Gemini as a documented `NotImplemented` scaffold; current default branch checks are green on later commits.
+
+### Codex's AI Chat Exporter Claude adapter repeated the stale live-provider branch pattern
+
+Severity: medium for product delivery, low for current default-branch risk. This row is the Claude sibling of row `changed 142`: Codex did substantial implementation work, but the branch never became the durable provider path. It wrote a live Claude API/provider implementation from an outdated base, opened PR #31, and stopped with only whitespace verification. Current `master` still keeps Claude scaffold-only through PR #27.
+
+Evidence:
+
+- Queue row `changed_review[143]` points at Codex session `019eddb0-ebed-7492-a12d-81cf4eac0b3b`, rooted in now-absent worktree `/Users/4jp/Workspace/.limen-worktrees/rev-exporter-claude-adapter-6dde`, from `2026-06-19T02:23:45Z` through `2026-06-19T02:37:39Z`.
+- First-layer prompt, redacted to intent: in `organvm/a-i-chat--exporter`, implement the Claude.ai export provider, fetch conversations from `claude.ai`, map into the provider `ConversationResult` shape, replace the `NotImplemented` scaffold, and keep the ChatGPT path untouched.
+- The verbatim local-only prompt extract is `.limen-private/session-corpus/full-stack-review/session-changed-143-codex-exporter-claude-adapter-prompts.jsonl`: `4` prompt records, `3` unique prompt hashes, `3,042` prompt bytes, all sourced from `codex-sessions`. Surfaces are `response_item.user` `3` and `event_msg.user_message` `1`.
+- The session base again lacked `src/providers/` and the scaffold the prompt referenced. Codex created a provider layer, ChatGPT delegate, Claude provider, provider facade, Claude mapping tests, exporter rewiring, and `claude.ai` userscript matches.
+- The authored branch exists as PR `organvm/a-i-chat--exporter#31`, `[limen REV-exporter-claude-adapter] Implement the Claude.ai export provider...`, opened at `2026-06-19T02:37:43Z` from `limen/rev-exporter-claude-adapter-6dde` at commit `84a8964`.
+- PR #31 is still open, `mergeable: CONFLICTING`, `1` commit ahead and `66` commits behind current `master`. Its only GitHub status is a skipped `Release` workflow; no `check` workflow validated the branch.
+- PR #31 changed `14` files in GitHub's PR file list and the queue counted `15` changed files because it included `src/exporter/image.ts` from transcript context. The core branch diff added a `619`-line `src/providers/claude.ts`, a `117`-line test file, provider facade files, and rewired HTML/JSON/Markdown/text/export-dialog paths.
+- Codex inferred Claude API endpoints and response wrappers (`organizations`, `chat_conversations`, `{ conversation: ... }`, `{ data: ... }`) and wrote pure mapper tests, but there is no transcript evidence that it opened a live Claude web session or verified current Claude API responses.
+- The transcript command stream has `64` shell calls. `pnpm run test`, `pnpm exec vitest`, and `pnpm install --offline --ignore-scripts` did not produce a runnable test receipt because dependencies were missing; later direct TypeScript/Vitest path attempts found pnpm metadata directories but not executable package contents. `organvm session review`, `organvm session plans --project .`, and `organvm prompts distill --dry-run` failed because `organvm_engine` was not importable.
+- Durable current `master` got Claude support through separate PR `organvm/a-i-chat--exporter#27`, `feat: multi-provider architecture foundation (ChatGPT preserved; Claude/Gemini scaffolded)`, merged at `2026-06-19T09:47:47Z` with merge commit `68af507`.
+- Current `master`'s `src/providers/claude.ts` is `SCAFFOLD ONLY`: every method throws `NotImplemented`, and the file documents the live-session extraction points. The PR #27 body explicitly says no guessed API calls should silently emit wrong exports.
+- Current `master` at `b934177` is green for `Check`, `Deploy`, and Pages deployment, but that health belongs to later/default-branch code, not PR #31.
+
+Ideal prompt diff:
+
+- Ideal generated task form: base the work on the current provider scaffold branch/PR, then replace only `src/providers/claude.ts` with a live implementation after validating the real Claude API shape.
+- Actual prompt/base form: Codex had to build the provider architecture itself because the checked-out base predated the scaffold, causing a wide branch that conflicts with the actual merged architecture.
+- Ideal Claude provider form: verify against an authenticated live Claude session or leave the provider as a scaffold with documented extraction endpoints.
+- Actual implementation form: PR #31 inferred endpoint shapes and response wrappers and wired them into runtime behavior without live API proof.
+- Ideal delivery form: one mergeable PR with a successful `check` workflow or an explicit blocked classification.
+- Actual delivery form: PR #31 stayed open, conflicting, and unverified; current default branch separately merged scaffold-only support.
+
+Outcome:
+
+- Credit Codex with useful implementation exploration: it identified the likely provider boundary, wrote Claude mapping logic, and added tests that could be mined in a future live-session implementation.
+- Do not credit row `changed 143` as completed Claude.ai export support. The PR did not merge, did not pass checks, and is now stale/conflicting.
+- Credit durable default-branch progress to PR #27's scaffold and later green master, not to PR #31's live API branch.
+
+What was fucked up:
+
+- The generated prompt, checkout base, and expected scaffold were out of sync for the second consecutive exporter adapter lane.
+- The branch touched runtime export paths broadly while the only clean verification was `git diff --check`.
+- Provider correctness depended on live Claude web/API behavior, but the session had network restricted and no live browser/API receipt.
+- OrganVM review hooks were requested by repo guidance but failed due local CLI import breakage; the final answer reported that, but the PR still remained open as if implementation delivery was ready for review.
+- The stale PR now competes with the scaffold that actually merged. It should be closed, or consciously salvaged by porting only proven mapper pieces onto current `master` after live verification.
+
+Verification:
+
+```bash
+jq '.changed_review[143]' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+jq -s '{records:length, unique_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), task_body_bytes:([.[].task_body_bytes] | add), surfaces:([group_by(.surface)[] | {surface:.[0].surface,count:length}]), sources:([group_by(.source)[] | {source:.[0].source,count:length}])}' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-changed-143-codex-exporter-claude-adapter-prompts.jsonl
+python3 - <<'PY'
+import json
+p='/Users/4jp/.codex/sessions/2026/06/18/rollout-2026-06-18T22-23-40-019eddb0-ebed-7492-a12d-81cf4eac0b3b.jsonl'
+cmds=[]
+for line in open(p, encoding='utf-8'):
+    o=json.loads(line); pl=o.get('payload') or {}
+    item=pl.get('item') if isinstance(pl.get('item'), dict) else pl
+    if o.get('type') == 'response_item' and item.get('type') == 'function_call' and item.get('name') == 'exec_command':
+        cmds.append(json.loads(item.get('arguments') or '{}').get('cmd'))
+print(len(cmds))
+print([cmd for cmd in cmds if cmd and ('pnpm' in cmd or 'vitest' in cmd or 'tsc' in cmd or 'organvm ' in cmd or 'git diff --check' in cmd)])
+PY
+test -d /Users/4jp/Workspace/.limen-worktrees/rev-exporter-claude-adapter-6dde
+gh pr view 31 --repo organvm/a-i-chat--exporter --json number,title,state,createdAt,updatedAt,mergedAt,headRefName,headRefOid,baseRefName,mergeable,files,commits,statusCheckRollup,url
+gh api repos/organvm/a-i-chat--exporter/compare/master...limen/rev-exporter-claude-adapter-6dde --jq '{status,ahead_by,behind_by,total_commits,files_count:(.files|length)}'
+gh pr view 27 --repo organvm/a-i-chat--exporter --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url,body
+gh api 'repos/organvm/a-i-chat--exporter/contents/src/providers/claude.ts?ref=master' --jq '.content' | base64 --decode | sed -n '1,120p'
+gh run list --repo organvm/a-i-chat--exporter --branch master --commit b934177450a9b15e036c3831bf2371605557c456 --limit 10 --json name,status,conclusion,headSha,url
+gh run list --repo organvm/a-i-chat--exporter --branch limen/rev-exporter-claude-adapter-6dde --commit 84a8964502486ac72888355e716b8d02e70a8489 --limit 10 --json name,status,conclusion,headSha,url
+```
+
+Result: private prompt extraction matches row `changed 143`; original worktree is absent; transcript command stream confirms failed test/install/tooling and only `git diff --check` passing; PR #31 is open, conflicting, stale, and only has a skipped Release check; PR #27 is merged and current `master` keeps Claude as a documented `NotImplemented` scaffold; current default branch checks are green on later commits.
 
 ## Remaining Review Queue
 
