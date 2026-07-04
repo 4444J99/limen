@@ -4836,6 +4836,74 @@ PY
 
 Result: private prompt extraction has `1` record; PR #90 was green but closed unmerged; PR #98 merged the books 2-5 content under an unrelated title; current Studium validation passes; this review pass repaired Analects progress trackers to match the `9/20` files on disk.
 
+### OpenCode Mahabharata books 2-4 merged, but the PR mixed other Studium streams
+
+Severity: medium for attribution hygiene; low for current content validity after tracker repair.
+
+Evidence:
+
+- Queue row `92` points at OpenCode session `ses_10a35bce3ffe5IJgKmphDakizu`, titled `Completing studium-deepen-mahabharata`, run from `/Users/4jp/Workspace/limen` on 2026-06-23T18:42:13Z through 2026-06-23T18:53:33Z with model `deepseek-v4-flash-free`, cost `0`, and 71,716 input / 28,381 output / 8,499 reasoning tokens plus 2,558,592 cache-read tokens.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-92-opencode-prompts.jsonl` (`1` record).
+- In redacted intent form, the prompt asked OpenCode to author the next bounded batch for `studium-deepen-mahabharata`: a handful of undone parvas, force-matched music arcs plus mirrored essays, `scripts/studium-validate.py` passing, and one green PR.
+- The transcript shows OpenCode authored Sabha/Vana/Virata parvas, companion essays, and a Mahabharata plan update; it initially noted unrelated Analects validation noise, then verified the three Mahabharata arcs specifically and opened PR #89.
+- PR #89 merged at `95dfc1f`, titled `feat(studium): add Mahabharata books 2..4 arcs and essays`.
+- The actual PR #89 commit stack was not narrow: it also contained Aeneid books 2-3 and Metamorphoses books 2-4 files from adjacent sessions. Its check rollup is empty in the current GitHub API response, so current local validation is the strongest proof.
+- Current `main` contains Mahabharata books 1-11 in music and essay form; `studium/music/mahabharata/PLAN.md` correctly says `11/18`.
+- Before this review pass, the top-level `studium/music/PLAN.md` still said Mahabharata was `1/18` and several other work counts were stale relative to their per-work plans.
+
+Ideal prompt diff:
+
+- Ideal form: one green PR containing only Mahabharata books 2-4 plus the Mahabharata plan update.
+- Actual OpenCode form: the requested Mahabharata content merged, but the PR carried unrelated Aeneid and Metamorphoses batch commits.
+- Ideal tracker form: top-level music progress should derive from per-work plans. This review found the master tracker stale and repaired it across all mismatched rows.
+- Ideal attribution form: credit row `92` for Mahabharata commit `1d9639e` and merged PR #89, but do not attribute the whole 72-file queue surface to this prompt.
+
+Outcome:
+
+- No Mahabharata arc content was changed in this review pass.
+- This review pass updated `studium/music/PLAN.md` so the master progress counts match the per-work PLAN files, including Mahabharata `11/18`.
+
+What was fucked up:
+
+- The PR receipt was merged, but it was not a clean one-task PR; adjacent Studium sessions rode in the same branch/PR stack.
+- The transcript's "validation passes" claim had a confusing intermediate caveat about unrelated Analects violations; the final proof should have recorded both scoped validation and whole-corpus validation separately.
+- The top-level progress tracker drifted badly from the per-work plans, making the public status surface understate completed work.
+- The queue over-attributed many unrelated code, config, and Studium files to a single Mahabharata prompt.
+
+Verification:
+
+```bash
+jq '.changed_review[92]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-92-opencode-prompts.jsonl
+sqlite3 -json -readonly "file:$HOME/.local/share/opencode/opencode.db?mode=ro&immutable=1" "select id,parent_id,slug,directory,title,version,agent,model,cost,tokens_input,tokens_output,tokens_reasoning,tokens_cache_read,tokens_cache_write,datetime(time_created/1000,'unixepoch') as created, datetime(time_updated/1000,'unixepoch') as updated from session where id='ses_10a35bce3ffe5IJgKmphDakizu';"
+sqlite3 -json -readonly "file:$HOME/.local/share/opencode/opencode.db?mode=ro&immutable=1" "select p.id,p.message_id,json_extract(m.data,'$.role') as role,json_extract(p.data,'$.type') as part_type,length(json_extract(p.data,'$.text')) as text_len,substr(json_extract(p.data,'$.text'),1,1000) as text from part p left join message m on m.id=p.message_id where p.session_id='ses_10a35bce3ffe5IJgKmphDakizu' and json_extract(p.data,'$.type')='text' order by p.time_created;"
+gh pr view 89 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup,url,body
+python3 scripts/studium-validate.py
+python3 - <<'PY'
+from pathlib import Path
+import re
+root = Path("studium/music")
+master = root / "PLAN.md"
+text = master.read_text()
+errors = []
+for plan in sorted(root.glob("*/PLAN.md")):
+    slug = plan.parent.name
+    match = re.search(r"Progress:\*\*\s*(\d+)/(\d+)\s+arcs authored", plan.read_text())
+    if not match:
+        continue
+    progress = f"{match.group(1)}/{match.group(2)} arcs"
+    line = next((ln for ln in text.splitlines() if f"]({slug}/PLAN.md)" in ln), None)
+    if line and progress not in line:
+        errors.append(f"{slug}: {line} ; plan={progress}")
+if errors:
+    print("\n".join(errors))
+    raise SystemExit(1)
+print("music master tracker matches per-work PLAN progress")
+PY
+```
+
+Result: private prompt extraction has `1` record; PR #89 merged; current Studium validation passes; this review pass repaired the master music tracker so its progress counts match each work's own PLAN.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
