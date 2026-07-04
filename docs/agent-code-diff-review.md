@@ -4904,6 +4904,66 @@ PY
 
 Result: private prompt extraction has `1` record; PR #89 merged; current Studium validation passes; this review pass repaired the master music tracker so its progress counts match each work's own PLAN.
 
+### Codex Domus checkout/runtime tranche landed on a branch but stayed conflict-blocked
+
+Severity: high for delivery closure; medium for current branch health after lint repair.
+
+Evidence:
+
+- Queue row `93` points at Codex session `019f1415-c63c-7172-8bb7-3960894570e9`, run from `/Users/4jp/Workspace/domus-genoma/.worktrees/domus-quarantine-retire-20260629` on 2026-06-29T15:53:20Z through 2026-06-29T19:53:19Z.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-93-codex-domus-quarantine-prompts.jsonl` (`26` records).
+- In redacted intent form, the prompt sequence asked Codex to implement an inherited Domus checkout/runtime plan, proceed "alpha to omega/root to leaf," handle a Next dev runtime error, push the branch, and answer "what's next?" from live repo state.
+- The core implementation landed in `/Users/4jp/Workspace/domus-genoma/.worktrees/domus-quarantine-retire-20260629` through commits `897562ea` (`Checkpoint Domus checkout tranche`) and `8e0f2f4d` (`Add Domus API runtime leaves`).
+- The implementation added shared billing/licensing API cores, Next App Router handlers, a standalone Node API host, optional JSON-backed subscription persistence, checkout UI wiring, API smoke coverage, and private corpus quarantine receipts without moving/deleting the corpus.
+- Draft PR #158 (`[codex] Add Domus API runtime leaves`) exists against `organvm/domus-genoma` `master`, but remains open, draft, `mergeable: CONFLICTING`, `mergeStateStatus: DIRTY`, and has no check rollup.
+- The current PR branch also carries later Domus governance/storage commits, so the PR is no longer a clean checkout/runtime tranche. GitHub lists `ac490fbf`, `d55bc8e`, `b7c3226`, `897562ea`, `8e0f2f4d`, later memory/Ark/storage commits, and this review's lint fix `e0861f52` in the same PR.
+- Current local conflict probing still shows real merge conflicts against `origin/master` in `.github/workflows/lint.yml`, `README.md`, and additional audit/generated surfaces; this was not fixed by the original session.
+- Current branch verification initially failed in this review pass because `lint_test.sh` scanned ignored `_agents/cache/uv` JSON-like templates and `dot_local/bin/executable_domus-packages` failed `shfmt`.
+
+Ideal prompt diff:
+
+- Ideal form: ship the runtime leaves in a narrow, mergeable PR with green checks, or explicitly stop at "branch pushed, PR draft/conflicting" with the next conflict-resolution command.
+- Actual Codex form: the branch implementation was real and locally verified, but the PR remained draft/conflict-blocked and therefore did not reach `master`.
+- Ideal verification form: distinguish source correctness from branch mergeability. Local tests passing is not the same as a mergeable PR.
+- Ideal attribution form: separate the checkout/runtime commits from later memory-index, Ark, package/storage, and lint-hardening commits now stacked onto the same branch.
+
+Outcome:
+
+- This review pass made a cross-repo Domus fix on the existing branch: `e0861f52` (`domus: keep lint scoped to source files`).
+- The fix excludes ignored `_agents` caches from JSON linting and applies the required `shfmt` change to `dot_local/bin/executable_domus-packages`.
+- After the fix, the Domus branch passes `bash lint_test.sh`, `node --test server/__tests__/*.test.ts`, `pnpm web:typecheck`, `pnpm web:build`, `pnpm api:smoke`, and `git diff --check`.
+- PR #158 still remains draft and conflict-blocked; resolving that branch against `master` is still an open delivery task.
+
+What was fucked up:
+
+- The original session pushed a branch and opened a draft PR, but did not resolve the conflict that kept the work out of `master`.
+- The "what's next?" answer needed to put PR conflict resolution first; local verification was not enough.
+- The PR accumulated unrelated later work, making the originally reviewable checkout/runtime tranche hard to reason about.
+- Generated Next state (`apps/web/.next`, `apps/web/next-env.d.ts`) and an aborted dev server created noisy drift during the session.
+- The repo lint gate was not robust to ignored generated caches, so later verification failed on files the source tree does not track.
+
+Verification:
+
+```bash
+jq '.changed_review[93]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-93-codex-domus-quarantine-prompts.jsonl
+git -C /Users/4jp/Workspace/domus-genoma/.worktrees/domus-quarantine-retire-20260629 status --short --branch
+git -C /Users/4jp/Workspace/domus-genoma/.worktrees/domus-quarantine-retire-20260629 show --stat --oneline --decorate 897562ea
+git -C /Users/4jp/Workspace/domus-genoma/.worktrees/domus-quarantine-retire-20260629 show --stat --oneline --decorate 8e0f2f4d
+gh pr view 158 --repo organvm/domus-genoma --json number,title,state,isDraft,baseRefName,headRefName,mergeable,mergeStateStatus,mergedAt,mergeCommit,statusCheckRollup,url,commits
+git -C /Users/4jp/Workspace/domus-genoma/.worktrees/domus-quarantine-retire-20260629 fetch origin master --quiet
+git -C /Users/4jp/Workspace/domus-genoma/.worktrees/domus-quarantine-retire-20260629 merge-tree "$(git -C /Users/4jp/Workspace/domus-genoma/.worktrees/domus-quarantine-retire-20260629 merge-base HEAD origin/master)" HEAD origin/master
+cd /Users/4jp/Workspace/domus-genoma/.worktrees/domus-quarantine-retire-20260629
+bash lint_test.sh
+node --test server/__tests__/*.test.ts
+pnpm web:typecheck
+pnpm web:build
+pnpm api:smoke
+git diff --check
+```
+
+Result: private prompt extraction has `26` records; the Domus branch is clean after pushed fix `e0861f52`; local verification passes; PR #158 remains open/draft/conflict-blocked and still needs a deliberate rebase/merge-resolution tranche before it can land.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
