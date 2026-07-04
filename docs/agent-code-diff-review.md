@@ -2212,6 +2212,55 @@ python3 scripts/claude-workflow-guard.py audit-transcript ~/.claude/projects/-Us
 
 Result: local branch checks passed; PR `#17` is open and mergeable but has the CodeQL `actions` settings failure described above; the transcript guard failed on the Opus budget cap.
 
+### Public-record-data-scrapper heal landed code, but live deployment is still parked
+
+Severity: high; product/revenue surface with live-app claims and unusually high model spend.
+
+Evidence:
+
+- Claude session `13ed1642-86b4-42f7-8a0a-5a9ef3f1478b` started with a `/goal` for a Public Records / UCC-MCA Intelligence Platform alpha-to-omega sellable B2B data-product run.
+- The prompt asked for inspect-first review of `a-organvm/public-record-data-scrapper` and `https://public-record-data-scrapper.vercel.app/`, verified install/build/test/live paths, what works today, broken or overclaimed parts, a demo dataset and buyer workflow, a compliance/data-source/trust boundary, paid pilot packages, a launch/GTM packet, an evidence ledger, and ranked fixes.
+- The original Claude job temp repo at `~/.claude/jobs/13ed1642/tmp/repo` is gone; the surviving transcript is `~/.claude/projects/-Users-4jp/13ed1642-86b4-42f7-8a0a-5a9ef3f1478b.jsonl`.
+- The session retained eight subagent transcript files and 23 changed-file targets in the private queue index. File-history snapshots preserve the generated deliverables and code paths, including `00_README.md`, `01_EVIDENCE_LEDGER.md`, `02_PRODUCT_STATE.md`, `03_DEMO_PACKAGE.md`, `04_COMPLIANCE_TRUST_BOUNDARY.md`, `05_PILOT_PACKAGES.md`, `06_GTM_PACKET.md`, `07_LAUNCH_PLAN.md`, `08_HEAL_STATUS.md`, `docs/REMEDIATION.md`, `docs/DEPLOYMENT.md`, `api/index.ts`, `api/spark-fallback.ts`, enrichment adapters, ML scoring files, tests, and Vercel config.
+- The remediation ultimately landed as merged PR `organvm/public-record-data-scrapper#295`: `https://github.com/organvm/public-record-data-scrapper/pull/295`.
+- PR `#295` merged on 2026-06-20 at 19:06:38Z. Its checks passed: `gate`, `Secret Pattern Detection`, and `validate-dependencies`.
+- PR `#295` changed 34 files with 3,207 additions and 1,380 deletions across commits `e15118c`, `ae4ab74`, and `caabfac`.
+
+Ideal prompt diff:
+
+- Ideal form: the alpha-to-omega product prompt should separate three products of work: truth-finding deliverables, code remediation, and live deployment. Truth-finding belongs in a durable evidence packet; code remediation belongs in a reviewable PR; live deployment needs explicit owner infra/secrets gates.
+- Actual form: the session did produce the evidence packet and code remediation, but the first durable implementation pass was local-only until a later closeout continuation pushed and opened PR `#295`.
+- Actual form also left the live deployment correctly parked, but the fleet `SCORECARD.csv` remained stale after the PR merged, still saying "open & green; owner to review/merge". This audit corrected that local ledger row and appended a 2026-07-04 refresh to `/Users/4jp/Workspace/.session-reconcile/LEDGER.md`.
+- Remaining gap: the live app still does not satisfy the original live-critical-path ask. The SPA shell is up, but backend paths are not deployed.
+
+Outcome:
+
+- Code-heal outcome is good: six audited defects were fixed in code, the PR merged, and CI was green at merge time.
+- The session fixed or documented the central defects it found: false test claims/failing web tests, critical/high dependency audit problems, overclaimed state coverage, rules-engine "ML" labeling, unwired enrichment sources, and missing live backend code.
+- It also found and fixed a real Express 5 query-coercion regression in `validateRequest`.
+- Fleet ownership record was stale and is now corrected locally: `public-record-data-scrapper` remains `PARKED`, but because deployment infra is pending, not because PR review/merge is pending.
+- Live verification on 2026-07-04 still returns 200 for `/`, but 404 for `/api`, `/api/health`, `/api/status`, `/api/records`, `/api/search`, `/_spark/user`, and `/_spark/loaded`.
+
+What was fucked up:
+
+- The session's initial local-only commit was a serious visibility failure for the owner; it needed a later continuation to push the branch, open PR `#295`, fix CI, and update owner surfaces.
+- The alpha-to-omega prompt was too broad for a single premium-model run. It combined product audit, sales packaging, compliance packaging, deep code remediation, CI healing, branch reconciliation, and live deployment analysis.
+- Transcript guard failed hard: 1,144 usage-bearing messages, 5,588,492 billable-ish tokens, 152,603,452 cache-read tokens, one expensive subagent, and 4,330,196 Opus billable-ish tokens. Violations: total billable budget exceeded and Opus budget exceeded.
+- The tracked public deliverable should not imply live product completion. Code is landed; deployment remains an owner-infra task.
+
+Verification:
+
+```bash
+gh pr view 295 --repo organvm/public-record-data-scrapper --json number,title,state,url,mergeable,headRefName,headRefOid,baseRefName,baseRefOid,updatedAt,mergedAt,statusCheckRollup
+gh pr checks 295 --repo organvm/public-record-data-scrapper
+git ls-remote --heads https://github.com/organvm/public-record-data-scrapper.git worktree-heal-remediation main security-hardening-0630
+curl -sS -m 20 -o /dev/null -w "%{http_code}" https://public-record-data-scrapper.vercel.app/
+curl -sS -m 20 -o /dev/null -w "%{http_code}" https://public-record-data-scrapper.vercel.app/api/health
+python3 scripts/claude-workflow-guard.py audit-transcript ~/.claude/projects/-Users-4jp/13ed1642-86b4-42f7-8a0a-5a9ef3f1478b.jsonl
+```
+
+Result: PR `#295` is merged with green checks; the temporary remote branch is gone after merge; live root returns 200 and backend probes return 404; transcript guard fails on token and Opus budgets.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
