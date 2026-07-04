@@ -2101,6 +2101,37 @@ wc -l raw/*.jsonl canonical/*.jsonl out/corpus-feed.jsonl /Users/4jp/Workspace/s
 
 Result: browser adapter smoke produced two reference atoms from a temporary fixture; restored browser-state pipeline extracted 7,764 browser records; canonical import contains 2,797 links; corpus feed contains 8,994 records; `verify_restore.py` passed with 2,595/2,595 canonical unique URLs present in `out/bookmarks.html`.
 
+### VLTIMA organ-engine session is landed and current generators are healthy
+
+Severity: review closure; no new patch required.
+
+Evidence:
+
+- Claude session `8a284b0a-d749-4b41-8955-99aff1b51d47` worked VLTIMA institutional-prosthesis artifacts from the deleted `.claude/worktrees/piped-booping-kettle` worktree and Claude job temp worktrees.
+- Local transcript survives at `~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-piped-booping-kettle/8a284b0a-d749-4b41-8955-99aff1b51d47`.
+- Structural session count: 538 prompt events, 319 unique prompt/task bodies, 11 changed-file targets in the private queue index, and eight subagent transcript files.
+- The original job temp directories are gone, but the durable Limen surfaces are present: `docs/first-dollar-runbook.md`, `docs/MONSTER-MAP.md`, `organ-ladder.json`, `organs/README.md`, `organs/legal/KERNEL.md`, `organs/legal/CHARTER.md`, `organs/legal/FRAMEWORK-FOR-COUNSEL.md`, and `scripts/generate-organ-backlog.py`.
+- Git history shows the session's intended artifacts landed through later public commits, including `65284d9` for the first-dollar runbook, `1fd0c7c` for the organ-backlog generator, `cc1b422` for the legal-organ kernel, and `7482c76` for the legal-organ charter.
+
+Outcome:
+
+- No source recovery was needed for this row.
+- `scripts/generate-organ-backlog.py` was verified read-only against the current dirty live board: it saw five open organ-class tasks and a headroom-adjusted floor of three, then correctly emitted no new tasks.
+- Prompt/session diff is closed as landed and live: the broad institutional prompt produced durable organs/generator surfaces, and the current generator is still integrated with the board and Tabularius ticket path.
+- Residual caveat: the original Claude temp worktrees are deleted, so this closure relies on current tracked Limen state, git history, and transcript/file-history metadata rather than preserving those temp directories.
+
+Verification:
+
+```bash
+python3 -m py_compile scripts/generate-organ-backlog.py scripts/financial-organ.py scripts/governance-organ.py scripts/vvltvs-organ.py
+python3 scripts/generate-organ-backlog.py --floor 1 --max-new 2
+python3 -m pytest cli/tests/test_workstream.py cli/tests/test_workstream_command.py cli/tests/test_generate_backlog.py cli/tests/test_generate_revenue_backlog.py -q
+python3 scripts/validate-task-board.py --tasks tasks.yaml
+python3 scripts/claude-workflow-guard.py audit-transcript ~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-piped-booping-kettle/8a284b0a-d749-4b41-8955-99aff1b51d47 --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000
+```
+
+Result: Python compile passed; generator dry-run reported `organ queue healthy: 5 >= 3`; adjacent tests passed `23 passed`; task-board statuses were valid for 1,757 tasks; transcript audit passed with 485 usage-bearing messages, 1,368,360 Haiku billable-ish tokens, no expensive subagents, and no guard violations.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
