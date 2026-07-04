@@ -75,6 +75,7 @@ Generated: `2026-07-04T08:12:45Z`
 | refreshed 33 | `claude` | `e4cd8413-965c-4cde-a656-e1d09ba31da1` | Fleet-sprawl reduction / cells / board-collapse run. PRs #356, #359, #360, and #361 landed useful surfaces; current review fixed `cell` commands so they no longer list or operate on arbitrary non-cell Claude worktrees. |
 | refreshed 34 | `claude` | `6b107f0b-4796-4cc2-95ef-861947c991b9` | Vigilia autonomic-institution run. PRs #277, #281, #285, and #315 landed VITALS/CONTINUITY/INTEGRITY, the face, no-hardcode gate, and heartbeat stamp; current review verified the code and recorded raw-transcript log privacy and Opus spend as residual risks. |
 | 123 | `claude` | `38f777fe-fe4a-44aa-abf9-fa8edfb2a3c3` | Vigilia closeout/resume layer. The session should be credited as PR #315 closeout and residual tracking, not as a separate broad code stream: PR #315 merged green and is on `main`, but the closeout transcript itself exceeded Claude token/Opus budget gates and left a real `_diagnostics` README pointer atom open. |
+| 124 | `claude` | `d051cce2-54b0-478d-afaf-e2ed1429ce41` | FLAME predecessor prompt root. This session contains the actual "go away for a month / flame never goes out" first-layer ask and three read-only exploration subagents; the durable implementation belongs to continuation session `25d48a87-2cb2-428d-bb68-96467d8bc5fe`, so this row is prompt-boundary evidence rather than a second code workstream. |
 | refreshed 35 | `claude` | `d7044841-5c47-45c2-be86-b5d96a1ea15d` | Cloudflare deploy derivation / Studio / Media Ark run. Useful PRs landed, but review found live Studio source-file exposure plus a sibling Pages-project collision; redeployed public-only Studio, added a Studio predicate, and restored `object-lessons.pages.dev` to a cinema placeholder. |
 | refreshed 36 | `claude` | `4582fe4c-165d-440b-a36a-562e67cd5cf4` | Fleet session-reconcile run. Temp scripts are gone, but durable ledger/scorecard and `organvm/session-meta#37` survive; review confirmed the lane closed, the 102-branch prune was explicitly gated, and the run remains a spend/fanout cautionary example. |
 | refreshed 37 | `claude` | `57c0201a-82bd-4be7-96dd-4c7039038edd` | Codex skill-slim run. PRs #573, #597, and #615 landed a repair organ that keeps all skills while stopping Codex description truncation; current tests and live `--check` pass, but the session needed two follow-up corrections after false-green proofs and blew Claude spend limits. |
@@ -3280,7 +3281,7 @@ Severity: high; conductor identity, autonomous dispatch safety, merge behavior, 
 Evidence:
 
 - Queue row `61` points at Claude continuation session `25d48a87-2cb2-428d-bb68-96467d8bc5fe`, rooted in deleted worktree `.claude/worktrees/woolly-forging-sedgewick`, with 10 changed paths across `FLAME.md`, `docs/FLAME-ACTIVATION.md`, `_pr_scan.py`, watchdog launchd config, and tests.
-- The real first-layer prompt is in predecessor session `d051cce2-54b0-478d-afaf-e2ed1429ce41`; the `25d48...` main human prompts are three "Continue from where you left off" turns. The verbatim local-only prompt record is in `.limen-private/session-corpus/full-stack-review/session-61-claude-flame-prompts.jsonl`.
+- The real first-layer prompt is in predecessor session `d051cce2-54b0-478d-afaf-e2ed1429ce41`; the `25d48...` main human prompts are three "Continue from where you left off" turns. The older minimal local prompt record is `.limen-private/session-corpus/full-stack-review/session-61-claude-flame-prompts.jsonl`; the row-124 full prompt extraction is `.limen-private/session-corpus/full-stack-review/session-124-claude-woolly-forging-prompts.jsonl` with 129 prompt-surface records, 119 unique prompt hashes, and 489,595 prompt bytes.
 - First-layer ask, redacted to intent: prove that VLTIMA can run for a month without the human, preserve the conductor "flame" across model substitution, and keep functioning if the active substrate becomes Codex, OpenCode, Ollama, or another lane.
 - Durable commits found in git history:
   - `f2fa84485dd51b34869c0eb2edb5e0bfe0dee8e1` adds `FLAME.md`, dispatch prompt injection, the `ollama` floor lane, watchdog launchd config, and focused tests.
@@ -3323,6 +3324,56 @@ python3 scripts/merge-drain.py --dry-run --scan 5 --limit 0
 ```
 
 Result: focused tests passed `30 passed`; predecessor transcript guard passed; continuation transcript guard failed on billable and Opus budgets; watchdog plist linted OK; watchdog dry-run reported `HEALTHY`; launchd listed heartbeat and watchdog; merge-drain dry-run classified a 5-PR window without cursor mutation and reported `ready=3`, `ci-red=2`, `stale-core=0`, `stale-base=0`.
+
+### Claude's woolly-forging predecessor is the FLAME prompt root, not a second implementation session
+
+Severity: medium for attribution and prompt accounting; current code verifies.
+
+Evidence:
+
+- Reconstruction row `124` targets Claude session `d051cce2-54b0-478d-afaf-e2ed1429ce41`, rooted in deleted worktree `.claude/worktrees/woolly-forging-sedgewick`, from 2026-06-23T18:34:33Z through 2026-06-23T18:37:30Z.
+- The row-124 private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-124-claude-woolly-forging-prompts.jsonl`: 129 records, 119 unique prompt hashes, 489,595 prompt bytes, and surfaces `message.user` 125, `last-prompt` 3, `queue.enqueue` 1. One tiny prompt-surface row inside a subagent transcript carries continuation session id `25d48...`; the rest are `d051...`.
+- The parent prompt asked for a concrete month-away test: VLTIMA should keep running without the human, and the conductor "flame" should survive if the active substrate becomes Codex, OpenCode, Ollama, or another model.
+- The parent session launched three read-only subagents for conductor/heartbeat, vendor/model cascade, and identity/autonomy walls. The parent transcript stopped after only the conductor-loop subagent reported back, with two background agents still pending in the parent view.
+- The subagent transcripts completed useful maps, but no tracked file mutation, commit, PR, or final design artifact belongs to this `d051...` session itself. The durable code is already credited in the FLAME continuation row through commits `f2fa844`, `84fb255`, and `ed54823`.
+- `scripts/claude-workflow-guard.py audit-transcript` passes for this predecessor session: 839,147 billable tokens, 157,228 Opus billable, three subagent calls, and no violations.
+
+Ideal prompt diff:
+
+- Ideal form: first do read-only architecture discovery, then either produce a concrete implementation plan or hand off to a continuation session with explicit session-boundary receipts.
+- Actual form: the read-only discovery happened and later work did implement the FLAME kernel, but the first parent session ended mid-integration. The review must therefore treat `d051...` as first-layer prompt evidence for row `61`, not as a standalone code-delivery session.
+- Corrected accounting form: prompt corpora should store the predecessor prompt verbatim while the public code review credits the continuation where commits actually landed.
+
+Outcome:
+
+- Row `124` is classified as prompt-boundary evidence for the FLAME continuity work.
+- No new code issue is attributed to this predecessor session. Current focused FLAME checks still pass.
+- The process issue is that the queue can surface a predecessor and a continuation as separate high-risk roots; review tooling needs to stitch them before counting work.
+
+What was fucked up:
+
+- The parent transcript stopped before integrating two completed exploration agents, so the session's own final output under-delivered relative to the prompt pressure.
+- The worktree is gone, which makes the session look like missing implementation unless the continuation row and git commits are linked.
+- Older prompt records undercounted the first-layer prompt surface for this row; the new row-124 private extract preserves the verbatim prompt layer without committing it publicly.
+
+Verification:
+
+```bash
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-woolly-forging-sedgewick/d051cce2-54b0-478d-afaf-e2ed1429ce41.jsonl
+PYTHONPATH=cli/src python3 -m pytest cli/tests/test_flame_kernel.py cli/tests/test_pr_scan.py cli/tests/test_self_heal.py -q
+git branch -a --contains f2fa84485dd51b34869c0eb2edb5e0bfe0dee8e1
+git show --stat --oneline f2fa84485dd51b34869c0eb2edb5e0bfe0dee8e1 84fb2550dafeda8b768bc9845e5e66406df58a1b ed54823fda65b8b37d7175bb07dcfe381240245a -- FLAME.md docs/FLAME-ACTIVATION.md cli/src/limen/dispatch.py cli/src/limen/capacity.py cli/tests/test_flame_kernel.py cli/tests/test_pr_scan.py cli/tests/test_self_heal.py
+python3 - <<'PY'
+import json
+from pathlib import Path
+from collections import Counter
+p=Path('/Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-124-claude-woolly-forging-prompts.jsonl')
+rows=[json.loads(l) for l in p.read_text().splitlines() if l.strip()]
+print(len(rows), len({r['prompt_hash'] for r in rows}), sum(r['prompt_bytes'] for r in rows), Counter(r['surface'] for r in rows), Counter(r['session_id'] for r in rows))
+PY
+```
+
+Result: predecessor transcript guard passed; current focused FLAME checks passed `30 passed`; implementation commits are contained in current branch/main; the private row-124 prompt extraction exists and preserves the predecessor prompt surfaces.
 
 ### Claude domus-genoma CIFIX session failed to fix CI and should have stopped at the permission/spend wall
 
