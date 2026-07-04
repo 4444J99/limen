@@ -88027,3 +88027,22 @@ tasks:
   created: '2026-07-04'
   updated: '2026-07-04T19:52:23.528817Z'
   dispatch_log: []
+- id: ASK-quicken-send
+  title: send the drafted message (never auto-send)
+  type: ops
+  target_agent: human
+  priority: high
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - user-ask
+  - quicken-residue
+  - needs-human
+  urls: []
+  context: "Cheapest path \u2192 send the drafted message (never auto-send). Unblocks:\
+    \ effort-level-ultracode, nous research outreach pipeline. Auto-hung by QUICKEN\
+    \ (finish-not-park); refreshes each beat until you act."
+  depends_on: []
+  created: '2026-07-04'
+  updated: '2026-07-04T19:59:55.345314Z'
+  dispatch_log: []
