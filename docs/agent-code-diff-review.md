@@ -15,6 +15,7 @@ Generated: `2026-07-04T00:40:41Z`
 | refreshed 1 | `claude` | `9750bef7-8829-4373-916a-f86338b2e20a` | Archive4T conductor/session-foundation run. Temp job files were gone, durable transcripts and workflow JSON remained. Patched the audit redaction boundary after the session exposed raw prompt text in `unboundedGoalEvidence`. |
 | refreshed 2 | `claude` | `eb3b624c-206f-4c9e-91aa-f069967a3796` | Studium transmission-curriculum run. Original worktree was gone, but the scripts and corpus are live on `main`; fixed a state-loader crash that violated the prompt's fail-open daily-face contract. |
 | refreshed 3 | `claude` | `343d6769-bdee-480f-88d9-981eec736b87` | Evocator/SVMMONER run. Worktree and temp activation files were gone, but `scripts/evocator.py` and `spec/evocator` landed on `main`; fixed canon-shape crash paths that violated the organ's fail-open beat contract. |
+| refreshed 4 | `claude` | `7c761a22-5bdf-42e8-bfb6-e8988530303f` | Archive4T convergence/knowledge-corpus planning run. Durable evidence is transcripts and memory docs; the referenced `converge-build` worktree was gone and no matching in-window `converge.py` commit survived, so this row is recorded as report-only. |
 | 1 | `opencode` | `ses_11427e08affe3D8jAAl5W43viB` | Exact window had no matching commits on `main`, but the matching unmerged branch is `limen/gen-organvm-limen-security-0625-57ce` at `02f256e` (`Security hardening pass on organvm/limen`). Reviewed as a reject/do-not-merge artifact. |
 | 2 | `opencode` | `ses_114c8f0c6ffeixS8gn4VxGqoHb` | Exact window matched `80d4e21f` (`feat(route): consume self-improve lane weights`). Widened window also showed related routing/meter/queue commits including `0146190` and `a6488c9`. |
 | 3 | `opencode` | `ses_1095e9b19ffe4yg9h4la7tGU4d` | Exact window had no matching commits on `main`; widened window was mostly Studium content-generation churn, not the control-plane code path reviewed here. |
@@ -865,6 +866,31 @@ python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/pro
 ```
 
 Result: `2 passed`; compile passed; live Evocator run reported `3 truths`, `FLAME unchanged`, corpus skipped because knowledge-corpus is absent on this host, and memory all present.
+
+### Archive4T convergence row is transcript-only for code attribution
+
+Severity: medium for audit completeness, not a current `main` code defect.
+
+Evidence:
+
+- Refreshed rank 4 (`7c761a22-5bdf-42e8-bfb6-e8988530303f`) was a broad Archive4T convergence/knowledge-corpus planning run: 1,719 prompt events, 41 changed-file entries, and mostly docs/memory/knowledge-corpus paths.
+- Patched transcript audit reports 79 transcript files, 2,289 usage-bearing messages, 17,333,349 billable-ish tokens, 165,663,795 cache-read tokens, 12,719,125 Opus-class billable-ish tokens, 34 Opus-class subagents, 26 agent/workflow calls, and 23 unbounded-goal prompt hits.
+- The only code/test paths in the row were under `~/Workspace/.limen-worktrees/converge-build`, but that worktree is no longer present. There were no matching in-window commits for `cli/src/limen/converge.py`, `cli/tests/test_converge.py`, or `docs/CONVERGE-ACTIVATION-RUNBOOK.md`.
+- Current `cli/src/limen/converge.py` and `cli/tests/test_converge.py` exist on `main`, but they cannot be attributed to this session window from the surviving git evidence.
+
+Outcome:
+
+- No Limen code change was made for this row.
+- The row remains useful as prompt/session evidence: high unbounded-goal pressure, high Opus usage, and off-repo knowledge-corpus/memory churn, but no durable code diff to review or patch.
+
+Verification:
+
+```bash
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Volumes-Archive4T/7c761a22-5bdf-42e8-bfb6-e8988530303f.jsonl --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000 --out /tmp/rank-7c-audit.json
+git log --all --since=2026-06-19T22:10:36Z --until=2026-06-20T11:09:22Z --oneline --stat -- cli/src/limen/converge.py cli/tests/test_converge.py docs/CONVERGE-ACTIVATION-RUNBOOK.md
+```
+
+Result: transcript audit succeeded; git-window search returned no matching commits.
 
 ## Current File References
 
