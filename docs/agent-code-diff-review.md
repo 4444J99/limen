@@ -5139,6 +5139,75 @@ pgrep -af 'external_trash_cleanup_2026_06_14|post_crash_trash_residual_2026_06_1
 
 Result: private prompt extraction has `170` records; row `96` contains real archive/retrieval work, but it also launched a destructive external Trash delete without a captured closeout. Current mounted recovery copies do not expose the June 14 external-trash receipts, and the later crash-recovery evidence makes live external Trash traversal/deletion the wrong control path.
 
+### Codex current-session fanout run made waterfall real, but exposed a control-plane integrity hazard
+
+Severity: high for dispatch/conductor safety; medium-high for receipt clarity.
+
+Evidence:
+
+- Queue row `97` points at Codex session `019f187d-dcd6-7390-99a9-f3c1267fb7ca`, rooted at `/Users/4jp/Workspace/limen`, running on 2026-06-30T12:25:32Z through 2026-06-30T15:54:30Z.
+- Queue metadata reports `61` prompt events and `30` changed files across dispatch code, tests, docs, governance parameters, `tasks.yaml`, and temporary `.limen-repair/pr-467` / `.limen-repair/pr-471` repair worktrees.
+- Verbatim prompt-bearing extraction is private in `.limen-private/session-corpus/full-stack-review/session-97-codex-current-session-fanout-prompts.jsonl` (`31` user/developer records).
+- In redacted intent form, the prompt began as a handoff to implement the prior plan-source consolidation proof: prove every drafted plan, preserve plan hashes, wire packet metadata through planner/executor packets, and keep raw plan text private.
+- The user then interrupted and asked why multiple workstreams were not running. The session correctly explained that the first phase was proof/packet generation, then added queue seeding and targeted async dispatch so the fanout could become actual `tasks.yaml` work instead of a doc-only receipt.
+- The session did make the waterfall real: it seeded `16` `current-session-fanout` tasks, launched bounded async Codex planner workers, repaired CI on fanout PR branches, and merged the CSF planner/executor PR train (#458-#467, #471, #472, #475).
+- The session also exposed a serious live hazard: a root-level `dispatch-parallel.py` parent could mutate the conductor checkout while control-plane fixes were in progress. The transcript records local repairs disappearing after checkout/reset/rebase activity and the agent stopping the root dispatcher before reapplying control-plane fixes.
+- The row produced direct-main receipts as well as PR receipts. `9f8be98` (`limen: record current-session fanout proof`) directly changed `docs/current-session-fanout.md` and `tasks.yaml`; `2f18353` (`limen: guard continuation and token spend`) and `1b24887` (`limen: route heartbeat dispatch through fleet lane selector`) were also direct-main commits with no PR association.
+- Several CSF PRs merged with green `pr-gate` while their legacy `verify` check remained red in the status rollup. That is a usable merge receipt only if `pr-gate` is the accepted gate, but it is still a noisy public proof surface.
+- Current `main` has stronger dispatch hardening than row `97` alone delivered: later green PRs #584 (`2aa6011`) and #585 (`b57a065`) honor queue-lock timeouts in async and parallel dispatch, and PR #586 (`880f54b`) gates serial bulk dispatch on dependencies.
+- Current focused verification passes: `PYTHONPATH=cli/src python3 -m pytest cli/tests/test_async_dispatch.py cli/tests/test_dispatch_engine.py cli/tests/test_substrate_repo_product_fanout.py cli/tests/test_verify_dispatch.py -q` reports `43 passed`; the relevant scripts/modules compile; `python3 scripts/verify-dispatch.py --quiet` exits `0`; `python3 scripts/validate-task-board.py` reports `1893` valid task statuses.
+- Current dry-run against the row `97` transcript is ready but proves only the row's own `2` plan events / `2` unique plan sources. The original row `70` transcript remains the one with the broader `11` plan events / `10` unique plan sources proof.
+- Current `tasks.yaml` has no surviving `CSF-CAEB31D8-*` / `current-session-fanout` task slice, and no current `CSF-CAEB31D8` async process is running.
+
+Ideal prompt diff:
+
+- Ideal first form: finish the plan-source proof and packet metadata without launching live lanes, then present the exact gate for switching from proof to execution.
+- Actual first form: Codex did that part reasonably, but the user had to challenge why workstreams were not actually running before the fanout was connected to queue tasks and async dispatch.
+- Ideal execution form: seed tasks, launch only through an isolated async path, never let the conductor checkout be mutated by root-level dispatch, and preserve receipts atomically under the queue lock.
+- Actual execution form: the system found those failure modes live, after work had already launched. That discovery was valuable, but it means the waterfall substrate was not safe enough before activation.
+- Ideal closeout form: stop only after no live CSF workers/results remain, all PRs are merged or intentionally terminal, the board slice is valid, and the central code repairs are committed with green PR or explicit direct-main receipt.
+- Actual closeout form: the session ended with a "fleet is running" claim and then a continuation plan to harvest `13` completed async results and refill `12` workstreams. That is progress, not a zero-dangling closeout.
+- Ideal current-state attribution: credit row `97` for discovering and partially repairing the hazards, but credit later green PRs #584/#585/#586 for the fully durable queue-lock/dependency hardening now relied on by `main`.
+
+Outcome:
+
+- No code was changed in this review pass.
+- Row `97` is classified as a valuable stress test and partial repair, not a clean autonomous finish.
+- The review records that multistream execution did happen, but the first live run proved the dispatcher/heartbeat/conductor boundary was too porous.
+- The durable current state is better than the row's final state: focused dispatch tests pass, board validation passes, and later merged PRs hardened the lock/dependency surfaces that row `97` exposed.
+
+What was fucked up:
+
+- The workstream launch happened before the conductor isolation and queue-lock semantics were proven under live load.
+- `dispatch-parallel.py` could run from the root checkout and mutate the same repo that held the control-plane repair. That is the central "full-stack" failure for this row.
+- Dry-run, harvest, stale-marker, and late-result behavior were not initially trustworthy enough for autonomous waterfalling; the session found markerless workers, stale receipts, clobbered task state, and late PR receipts.
+- The session mixed code repair, PR branch repair, board healing, live dispatch, heartbeat reload, and user status reporting in one very broad loop. The breadth produced useful repairs, but made receipt boundaries hard to audit.
+- The session's midstream claim about lifecycle-preserving closed-PR recovery does not exactly match current `heal-dispatch.py`: current durable behavior only reopens still-`dispatched` PR-closed/no-PR tasks, while prior-done protection is handled elsewhere in dispatch guards.
+- The public PR receipts are mixed: many CSF PRs merged, but several still show a failed legacy `verify` check in their rollup despite green `pr-gate`.
+- The central proof/heartbeat commits were direct-to-main and have no PR association, continuing the direct-main receipt weakness already seen in adjacent rows.
+
+Verification:
+
+```bash
+jq '.changed_review[97]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-97-codex-current-session-fanout-prompts.jsonl /Users/4jp/.codex/sessions/2026/06/30/rollout-2026-06-30T08-25-29-019f187d-dcd6-7390-99a9-f3c1267fb7ca.jsonl
+git log --date=iso-strict --pretty=format:'%h%x09%ad%x09%s' --since='2026-06-30T12:00:00Z' --until='2026-07-01T00:00:00Z' --max-count=120 --all --grep='fanout\|dispatch\|heal\|waterfall\|CSF\|queue\|lock'
+for n in 458 459 460 461 462 463 464 465 466 467 471 472 475 487; do gh pr view "$n" --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,headRefName,baseRefName,statusCheckRollup,url; done
+for c in 9f8be98 2f18353 1b24887; do gh api -H 'Accept: application/vnd.github+json' repos/organvm/limen/commits/$c/pulls --jq '[.[] | {number,title,state,merged_at,html_url}]'; done
+git show --stat --oneline 9f8be98 2f18353 1b24887
+gh pr view 584 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,statusCheckRollup,url
+gh pr view 585 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,statusCheckRollup,url
+gh pr view 586 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,statusCheckRollup,url
+PYTHONPATH=cli/src python3 -m pytest cli/tests/test_async_dispatch.py cli/tests/test_dispatch_engine.py cli/tests/test_substrate_repo_product_fanout.py cli/tests/test_verify_dispatch.py -q
+python3 -m py_compile scripts/current-session-fanout.py scripts/dispatch-async.py scripts/heal-dispatch.py cli/src/limen/dispatch.py
+python3 scripts/verify-dispatch.py --quiet
+python3 scripts/validate-task-board.py
+LIMEN_ROOT=$PWD LIMEN_TASKS=$PWD/tasks.yaml PYTHONPATH=cli/src python3 scripts/current-session-fanout.py --session /Users/4jp/.codex/sessions/2026/06/30/rollout-2026-06-30T08-25-29-019f187d-dcd6-7390-99a9-f3c1267fb7ca.jsonl --min-codex-planners 10 --executor-lanes auto --include-contrib --no-reset-spend --dry-run
+ps -axo pid,ppid,etime,stat,command | rg 'dispatch-async|async-run-one|dispatch-parallel|CSF-CAEB31D8|current-session-fanout' | rg -v 'rg' || true
+```
+
+Result: private prompt extraction has `31` prompt-bearing records; row `97` produced real multi-lane fanout and exposed real conductor-safety bugs; current focused dispatch/fanout predicates pass, but the row's own closeout was not zero-dangling and the most durable lock/dependency fixes landed later.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
