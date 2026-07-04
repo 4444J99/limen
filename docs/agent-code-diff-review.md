@@ -6560,6 +6560,67 @@ gh run list --repo organvm/domus-genoma --branch master --limit 10 --json databa
 
 Result: private prompt extraction has `171` records; original commit `44731ed2` exists only on a local branch; no matching remote branch or PR exists; `origin/master` lacks the row's new security docs and validation helper; current `master` is green on later commits; five later security-hardening PRs remain open/red.
 
+### Claude's second Domus Genoma security pass created PR #138, but it was red and stayed open
+
+Severity: medium-high. This was a stronger retry of the same Domus Genoma security-hardening prompt: it found the PostCSS advisory, added concrete guards around two CLI entrypoints, committed, pushed, and opened a PR. But it still failed the prompt's green-build requirement. PR #138 is open, not merged, and its checks failed, including failures introduced by the new tests.
+
+Evidence:
+
+- Queue row `119` points at Claude session `a79dddc4-6e7e-426c-af42-10ac45acc29b`, rooted at deleted worktree `/Users/4jp/Workspace/.limen-worktrees/gen-organvm-domus-genoma-security-0626-5961`, running from 2026-06-27T00:22:19Z through 2026-06-27T00:40:11Z.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-119-claude-domus-genoma-security-0626-prompts.jsonl` (`166` records).
+- In redacted intent form, the task repeated the row 118 security-hardening ask for `organvm/domus-genoma`: audit dependencies, upgrade/pin advisories, add input validation at untrusted entrypoints, open a PR, and keep the build green.
+- The session committed `9347a980`, `security: pin postcss, guard system paths, bound stdin in bench-sanitize`, with seven changed files and 768 insertions: `.gitignore`, `dot_local/bin/executable_bench-sanitize`, `dot_local/bin/executable_normalize-names`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `tests/test_bench_sanitize.py`, and `tests/test_normalize_names.py`.
+- The branch was pushed successfully to `limen/gen-organvm-domus-genoma-security-0626-5961`, and PR #138 was created: `https://github.com/organvm/domus-genoma/pull/138`.
+- PR #138's head is now `b994d3ac`, which adds `pnpm.yaml`; the PR includes both `9347a980` and `b994d3ac`.
+- The PR is still open, mergeable, and unmerged.
+- PR #138's checks are red: `Build, Test, and Lint` failed; `YAML Lint` failed; `Shell Formatting` failed; `Python Tests` failed.
+- The failed Python Tests job is not just ambient repo noise. It shows six new `tests/test_bench_sanitize.py` cases failing with `ModuleNotFoundError: No module named 'yaml'`, because the tests import `yaml` in CI without PyYAML available. It also shows `tests/test_normalize_names.py::TestProtectedPathGuard::test_system_rejected` failing because Linux reports `/System` as missing before the protected-path guard returns the expected "protected" error.
+- The YAML Lint failure is `.github/workflows/lint.yml` line 89 length `208 > 200`, likely inherited from the base rather than introduced by this PR, but it still means the required green-build predicate was not satisfied.
+- The final answer claimed `pnpm audit` was clean and "All 200 pytest tests pass." That may reflect local verification, but the remote PR receipt contradicts the session-level closeout: PR #138 did not stay green.
+- Current `origin/master` is green on later commit `97b3f2c`, but PR #138 remains outside `master`.
+- Later security-hardening PRs #140, #146, #149, #155, and #160 show that the same workstream kept spawning duplicate repair attempts instead of converging on PR #138.
+
+Ideal prompt diff:
+
+- Ideal retry form: detect that row 118 already produced an unpushed local attempt, salvage or supersede it intentionally, and record why this new PR is the canonical lane.
+- Actual form: the prompt repeated the same generated task one day later with no visible dedupe against the prior local-only branch.
+- Ideal dependency-audit form: pin PostCSS through a lock/override surface and prove the audit command is green in the same environment that will run CI.
+- Actual form: the dependency side improved materially, but the PR still failed other required checks.
+- Ideal input-validation form: add validation to actual untrusted entrypoints with tests that pass locally and in CI.
+- Actual form: the chosen entrypoints were real enough (`normalize-names` root guard and `bench-sanitize` stdin cap), but the new tests were not CI-portable.
+- Ideal PR-closeout form: after opening the PR, wait for checks and either fix failures or record a blocker.
+- Actual form: the final response stopped at local claims and the PR URL; remote checks failed minutes later.
+
+Outcome:
+
+- Row `119` is classified as useful but not complete.
+- This row should get credit for producing a real PR and a better concrete security patch than row 118.
+- It should not be counted as shipped: PR #138 is open/red, not merged, and current `master` does not contain the work.
+- The follow-up system should have converged on fixing PR #138's concrete CI failures or explicitly superseded it. Instead, later red duplicate security PRs accumulated.
+
+What was fucked up:
+
+- The task generator retried essentially the same Domus Genoma security ask without first reconciling row 118's failed local branch.
+- The session's local verification claim did not survive remote CI. "All tests pass" is not a durable receipt when the required PR checks are red.
+- The new tests imported `yaml` without ensuring the CI environment installed PyYAML.
+- The `/System` protected-path test assumed macOS filesystem semantics while PR CI ran on Linux.
+- PR creation was treated as closeout, even though the prompt required a green build.
+
+Verification:
+
+```bash
+wc -l .limen-private/session-corpus/full-stack-review/session-119-claude-domus-genoma-security-0626-prompts.jsonl
+gh pr view 138 --repo organvm/domus-genoma --json number,state,title,url,headRefName,baseRefName,headRefOid,mergeable,statusCheckRollup,files,commits,createdAt,updatedAt,mergedAt
+gh run view 28273172917 --repo organvm/domus-genoma --log-failed
+gh run view 28273172916 --repo organvm/domus-genoma --log-failed
+git -C /Users/4jp/Workspace/domus-genoma show --stat --oneline 9347a980
+git -C /Users/4jp/Workspace/domus-genoma show --stat --oneline b994d3ac
+git -C /Users/4jp/Workspace/4444J99/domus-genoma ls-remote --heads origin 'limen/gen-organvm-domus-genoma-security-0626-5961'
+gh run list --repo organvm/domus-genoma --branch master --limit 10 --json databaseId,workflowName,headSha,status,conclusion,createdAt,url
+```
+
+Result: private prompt extraction has `166` records; PR #138 exists and is open; remote branch `limen/gen-organvm-domus-genoma-security-0626-5961` exists at `b994d3ac`; the original patch commit `9347a980` is present locally/remotely; PR checks failed, including branch-introduced Python test failures; current `master` is green later but does not include PR #138.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
