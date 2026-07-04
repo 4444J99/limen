@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T11:51:29Z`
+Generated: `2026-07-04T11:55:21Z`
 
 ## Scope
 
@@ -85,6 +85,7 @@ Generated: `2026-07-04T11:51:29Z`
 | changed 127 | `claude` | `5cd65ab3-deca-4c49-a560-fb470571f0eb` | Token-budget / usage-pacing conductor. Claude shipped the core predictive usage gate in `e36e9cc`, then caught a real false-done in the live heartbeat and reconciled divergent heal histories through `ed05e5a` / `b6e3782`. Current `main` still has the pacing fields, reserve gate, and route runway logic with focused tests green, but the session mixed live policy mutation, stale PR metadata, home-state memory, and missing untracked relay artifacts; transcript guard also flags Opus over-budget. |
 | changed 128 | `codex` | `019f1c06-192e-7d40-8301-dedc5cf370f8` | Mirror Mirror security hardening branch. Codex authored a plausible 19-file hardening commit (`90398cc`) for auth, checkout, webhooks, ShareFile, Ready Player Me, and regression tests, but the prompt's delivery contract was not met: dependency audit/install/test/build were blocked, no PR exists, no CI ran for the branch, and the branch remains published but unmerged, one commit ahead and four commits behind current `main`. |
 | changed 129 | `claude` | `08b4f87e-10c4-485d-84c4-5094ef74e2fa` | Peer-audited behavioral-blockchain CI fix attempt. Claude spent a narrow CI/type-fix task mostly fighting sandboxed `npm`/`npx`/`gh`/settings permissions, then fanned out Opus subagents for static diagnosis and hit the monthly spend wall. The session left no durable code diff beyond a protected `.claude/settings.local.json` attempt; a later green PR #726 with the same title is separate, broad, unmerged, and stale, while current default-branch health comes from later PR #766. |
+| changed 130 | `claude` | `a585c8ed-3af9-46c2-92cd-20d87153d16f` | Materialize fold / board-as-event-log projection. The prompt challenged recurring 30k-line dirty `tasks.yaml` churn and rejected mechanical splits; Claude landed the evolved Step 1 through PR #543: a pure `board = fold(events)` reducer, seed/diff functions, CLI proof, and tests. Current `main` still verifies byte-identical materialization, and follow-up PR #549 fixed a TOCTOU false-negative; the session still overran Opus budget and left `verify-whole.sh` weaker than the full CI gate matrix. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -3775,6 +3776,70 @@ gh pr list --repo organvm/peer-audited--behavioral-blockchain --state open --lim
 ```
 
 Result: private prompt extraction matches row `129`; transcript guard fails on total billable, Opus billable, and Opus subagent fanout; original worktree is absent; the durable repo owner is `organvm`; PR #726 is open, green historically, and diverged/stale relative to current `main`; current default branch is green via PR #766 and Styx CI run `28703456180`; open-PR health is still mixed, with PR #767 red.
+
+### Claude's materialize-fold session turned board churn into a real event-log projection, but the gate story still needed correction
+
+Severity: high for architecture value, medium for session cost. This is one of the stronger prompt-to-diff matches in the review set: the user rejected mechanical "split the board" fixes and asked for the evolved form. The merged answer was the right first move: prove the board can be derived from events before changing any writer.
+
+Evidence:
+
+- Queue row `changed_review[130]` points at Claude session `a585c8ed-3af9-46c2-92cd-20d87153d16f`, rooted at `/Users/4jp/Workspace/limen`, spanning 2026-07-01T22:46:51Z through 2026-07-02T01:49:23Z.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-130-claude-materialize-fold-prompts.jsonl`: `109` prompt-surface records, `17` unique prompt hashes, `58,470` prompt bytes. Surfaces are `message.user` `55`, `last-prompt` `48`, and `message.user.text[0]` `6`.
+- In redacted intent form, the session started with the user's complaint that recurring `tasks.yaml` churn left roughly `30,000` local changes and should have been part of the lifecycle. The user rejected "split the board" and similar mechanical fixes, then explicitly approved: "build step 1 — the materialize fold."
+- PR `organvm/limen#543` merged 2026-07-01T23:56:40Z at merge commit `005d17dbaabc43c6c923d633bbadcbd5147d98a7`.
+- PR #543 added `cli/src/limen/materialize.py`, `cli/tests/test_materialize.py`, and the `limen materialize` CLI in `cli/src/limen/cli.py`.
+- The core model is a pure reducer: `board = fold(events)`, with event tags `board.meta`, `board.order`, `task.upsert`, and `task.remove`. `seed_events_from_board` emits a loss-free snapshot seed, and `diff_boards` emits deltas across board versions, including a `board.order` event when order changes.
+- PR #543 checks were green: `python`, `python-311`, `worker`, `web`, `verify`, and `pr-gate`.
+- Follow-up PR `organvm/limen#549` merged at `e7fa928904e3c54c9bc08bcd09d5ece9642cd5b9`; it fixed a real `materialize --verify` false-negative by reading `tasks.yaml` once and comparing against that same byte snapshot instead of a second live read.
+- PR `organvm/limen#552` corrected `CLAUDE.md`'s local gate matrix to include Ruff format and mypy after #543 bounced through avoidable CI iterations.
+- Current `origin/main` contains PR #543 and PR #549; both merge commits are ancestors of `origin/main`.
+- Current focused verification passes: `PYTHONPATH=cli/src python3 -m pytest cli/tests/test_materialize.py cli/tests/test_io_atomic.py -q` reports `23 passed`.
+- Current live projection proof passes in the review worktree: `PYTHONPATH=cli/src python3 -m limen.cli materialize --verify` reports `materialize: 1650 tasks, 1651 events; fold(events) == tasks.yaml bytes: True`.
+- The session's private memory file survives at `/Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/memory/board-is-event-log-projection.md`; the temp proof script under `~/.claude/jobs/a585c8ed/tmp/prove_materialize.py` is absent.
+- Transcript guard fails on spend: `2,521,877` billable tokens, all Opus, with `655` usage-bearing messages and no subagents.
+- A residual predicate caveat remains current: `scripts/verify-whole.sh` itself still does not run Ruff check, Ruff format, or mypy. CI runs those gates before `verify-whole.sh`, and `CLAUDE.md` now tells operators to run the fuller gate matrix, but a local claim that only ran `verify-whole.sh` is still weaker than full CI.
+
+Ideal prompt diff:
+
+- Ideal form: identify the root cause as the wrong source of truth, not a serialization nuisance; model board state as a derived view; prove lossless projection before moving writers; keep the live `tasks.yaml` cache unchanged until the proof is exact.
+- Actual form: strong. PR #543 did exactly that: pure fold, seed/diff primitives, order-as-state handling, byte-identity verify, and tests.
+- Ideal closeout form: merge only after all CI-equivalent local gates and the PR check rollup are green; if `--verify` races the live board, fix the read model, not the proof.
+- Actual closeout form: mostly strong but iterative. PR #543 needed CI feedback for formatting/mypy, and PR #549 had to repair the live-read false-negative after merge.
+- Ideal gate doctrine: "whole-system predicate" should either include the full CI Python gate matrix or explicitly say it is not CI-equivalent.
+- Actual gate doctrine: docs improved via #552, but `verify-whole.sh` still remains a broad integration predicate rather than a complete CI surrogate.
+
+Outcome:
+
+- Credit the session for real architecture progress. It replaced repeated dirty-board symptoms with a proof surface for the better model: append transitions, derive state.
+- Credit PR #549 as necessary hardening rather than a failure: it found that the proof was correct but the live file was changing between reads.
+- Treat "step 1" literally. The materialize fold proves the ideal form and gives later TABVLARIVS work a reducer, but it does not by itself flip writers to append-only events or make `tasks.yaml` non-load-bearing.
+- Current tests and `materialize --verify` are green, so no code patch is needed in this review pass.
+
+What was fucked up:
+
+- The session spent too much Opus for a two-file reducer plus CLI proof, especially after the architecture was understood.
+- The first PR entered CI without running the full local gate matrix; PR #552 documents that gap, but the preventable format/mypy loop is still a process smell.
+- The public "whole-system predicate" language remains easy to overclaim. `verify-whole.sh` is valuable, but it is not the same as CI's Ruff and mypy gates.
+- The temp proof script is gone, so the durable proof must be the merged tests, current `materialize --verify`, and the memory note, not the temp path from the queue.
+
+Verification:
+
+```bash
+jq -s '{records:length, unique_prompt_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), task_body_bytes:([.[].task_body_bytes] | add), by_surface:(group_by(.surface) | map({surface:.[0].surface, count:length}))}' .limen-private/session-corpus/full-stack-review/session-130-claude-materialize-fold-prompts.jsonl
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/a585c8ed-3af9-46c2-92cd-20d87153d16f.jsonl
+gh pr view 543 --repo organvm/limen --json number,title,state,createdAt,mergedAt,mergeCommit,headRefName,headRefOid,files,commits,statusCheckRollup,url
+gh pr view 549 --repo organvm/limen --json number,title,state,createdAt,mergedAt,mergeCommit,headRefName,headRefOid,files,commits,statusCheckRollup,url
+gh pr view 552 --repo organvm/limen --json number,title,state,createdAt,mergedAt,mergeCommit,headRefName,headRefOid,files,commits,statusCheckRollup,url
+git merge-base --is-ancestor 005d17dbaabc43c6c923d633bbadcbd5147d98a7 origin/main
+git merge-base --is-ancestor e7fa928904e3c54c9bc08bcd09d5ece9642cd5b9 origin/main
+PYTHONPATH=cli/src python3 -m pytest cli/tests/test_materialize.py cli/tests/test_io_atomic.py -q
+PYTHONPATH=cli/src python3 -m limen.cli materialize --verify
+test -f /Users/4jp/.claude/jobs/a585c8ed/tmp/prove_materialize.py
+test -f /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/memory/board-is-event-log-projection.md
+rg -n 'ruff|mypy|verify-whole|Type-check Python' .github/workflows scripts/verify-whole.sh CLAUDE.md
+```
+
+Result: private prompt extraction matches row `130`; transcript guard fails on Opus spend; PR #543, #549, and #552 are merged; PR #543 and #549 merge commits are on `origin/main`; focused materialize/io tests pass; live `materialize --verify` proves byte identity for the current 1,650-task board; the temp proof script is absent but the memory note survives; `verify-whole.sh` still does not include the full Ruff/mypy CI matrix.
 
 ### Claude domus-genoma CIFIX session failed to fix CI and should have stopped at the permission/spend wall
 
