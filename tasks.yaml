@@ -79771,7 +79771,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -79788,7 +79788,7 @@ tasks:
     \ [auto-emitted 2026-07-03 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-04T16:48:04.105288Z'
+  updated: '2026-07-04T19:53:18.190767Z'
   dispatch_log:
   - timestamp: '2026-07-04T10:47:12.481099Z'
     agent: claude
@@ -79838,6 +79838,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-04T19:53:18.190767Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-peer-audited--behavioral-blockchain-752
   title: fix failing CI on organvm/peer-audited--behavioral-blockchain#752
   repo: organvm/peer-audited--behavioral-blockchain
@@ -80256,10 +80261,10 @@ tasks:
   title: fix failing CI on organvm/dot-github--theoria#462
   repo: organvm/dot-github--theoria
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -80276,7 +80281,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-04T19:44:17.632595Z'
+  updated: '2026-07-04T19:53:02.404500Z'
   dispatch_log:
   - timestamp: '2026-07-04T16:37:22.166513Z'
     agent: claude
@@ -80310,6 +80315,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-04T19:53:02.404500Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
 - id: HEAL-cifix-organvm-dot-github--theoria-463
   title: fix failing CI on organvm/dot-github--theoria#463
   repo: organvm/dot-github--theoria
@@ -80512,7 +80521,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -80528,7 +80537,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-04T18:58:13.548607Z'
+  updated: '2026-07-04T19:53:18.190767Z'
   dispatch_log:
   - timestamp: '2026-07-04T17:24:12.101271Z'
     agent: claude
@@ -80548,6 +80557,11 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->opencode
+  - timestamp: '2026-07-04T19:53:18.190767Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-dot-github--theoria-471
   title: fix failing CI on organvm/dot-github--theoria#471
   repo: organvm/dot-github--theoria
@@ -86798,11 +86812,11 @@ tasks:
   title: Map the VLTIMA 5-primitive kernel to the hr organ
   repo: organvm/limen
   type: content
-  target_agent: opencode
+  target_agent: jules
   workstream: hr
   priority: critical
   budget_cost: 2
-  status: dispatched
+  status: open
   labels:
   - organ-kernel
   - pillar:hr
@@ -86810,6 +86824,7 @@ tasks:
   - institution
   - vltima
   - generated
+  - slow
   urls: []
   context: "In organvm/limen, author organs/hr/KERNEL.md: map the domain-neutral kernel\
     \ (Member - Mandate - Standing - Standard - Governance) onto the hr domain (Member=person\
@@ -86830,13 +86845,17 @@ tasks:
     \ convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-04T19:18:47.570019Z'
+  updated: '2026-07-04T19:53:02.404500Z'
   dispatch_log:
   - timestamp: '2026-07-04T19:18:47.570019Z'
     agent: opencode
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-04T19:53:02.404500Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: ORG-hr-organ-charter-0704
   title: Charter the hr organ as an institution rivaling a Fortune-500 people office
     + a boutique HR consultancy
@@ -87881,16 +87900,17 @@ tasks:
   title: Decide and activate the dedicated gatekeeper repository boundary
   repo: organvm/limen
   type: architecture
-  target_agent: any
+  target_agent: codex
   workstream: governance
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - architecture
   - gatekeeper
   - repository-boundary
   - closeout-residue
+  - tried:github_actions
   urls: []
   context: 'Closeout residue from 2026-07-04: user stated the keeper-of-records repository/surface
     already exists and should be active, and that a separate gatekeeper repository
@@ -87904,10 +87924,15 @@ tasks:
     handling or the existing merge gate.'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-04T19:44:17.632595Z'
+  updated: '2026-07-04T19:53:02.404500Z'
   dispatch_log:
   - timestamp: '2026-07-04T19:44:17.632595Z'
     agent: github_actions
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-04T19:53:02.404500Z'
+    agent: github_actions
+    session_id: cli
+    status: failed->codex
+    output: remote/service lane failed; reopened to healthy fleet cascade
