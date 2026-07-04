@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T05:10:30Z`
+Generated: `2026-07-04T05:14:07Z`
 
 ## Scope
 
@@ -26,6 +26,7 @@ Generated: `2026-07-04T05:10:30Z`
 | 60 | `codex` | `019f0ea5-6de9-7b22-9f5b-c948b4e1adbf` | All-day Codex conductor plus Micro Tato overnight run. It produced real durable receipts and a verified Micro Tato checkpoint at `5136a3d`, but the session mixed Limen conductor, network-substrate receipts, side streams, and game implementation into one 68 MB transcript, making the 123 changed-file queue row a cross-goal attribution artifact. |
 | 65 | `opencode` | `ses_108ebe914ffewL4axO5hTLs4gr` | Tanakh film companion closeout. The requested content had already merged via PR #116 before the session; OpenCode correctly discovered that, then re-added a stale `tasks.yaml` entry and accidentally committed ten film files onto an unrelated Beowulf PR branch. |
 | 66 | `opencode` | `ses_108ebf37effe8LmzZRJAZdya7b` | Qur'an film companion closeout. The requested content had already merged via PR #97 and current `main` validates; OpenCode stopped without a new commit, but its final receipt repeated a bogus PR #81 citation and exposed concurrent task-board volatility. |
+| 67 | `codex` | `019f24d2-6dae-7d30-8ea4-f14f3045fc67` | Overnight Codex conductor run. It produced useful live-root, worktree-debt, async dispatch, route, capacity, and organ work, but the session became a direct-main commit storm and an interrupted route fix was later captured together with a financial worker PR delta, leaving PR #590 open/red and proof surfaces stale. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -3516,6 +3517,69 @@ python3 scripts/studium-validate.py
 ```
 
 Result: PR #97 is merged and added `studium/film/quran.yaml`; PR #81 is closed unmerged and unrelated; current `origin/main` contains the Qur'an companion with 11 films and one adaptation; current Studium validation passes; the reviewed OpenCode session did not leave a new commit.
+
+### Codex overnight conductor made real progress, but direct-main/capture lifecycle split the proof surface
+
+Severity: high for governance and closeout; the session shipped useful fixes, but it also produced a broad direct-main commit stream and left an interrupted worker/route boundary in a bad PR state.
+
+Evidence:
+
+- Queue row `67` points at Codex session `019f24d2-6dae-7d30-8ea4-f14f3045fc67`, rooted at `/Users/4jp/Workspace/limen`, running from `2026-07-02T21:53:21Z` through `2026-07-03T11:50:19Z`.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-67-codex-overnight-prompts.jsonl` (`8` user-message records). In redacted intent form, the session started from a previous-agent plan to preserve live-root state and resume worktree lifecycle debt; the user then added a screenshot that Claude was writing concurrently, and later gave the all-night instruction: use Agy/Codex/OpenCode well, build what matters, do not conflict with Claude, keep working until morning, hang blockers and continue.
+- The session was interrupted by the user at `2026-07-03T11:44:54Z`, then another session-start payload and a second interrupt appear at `2026-07-03T11:50:19Z`. There is no clean final closeout message.
+- Early work matched the handoff: it preserved daemon `tasks.yaml` ticks, merged `origin/main` without reset/force-push, refreshed `docs/dispatch-health.md` and `docs/live-root-gate.md`, and converted the initial seven worktree-debt items into receipts. At that moment, `scripts/worktree-debt.py --json` reported zero debt.
+- The overnight phase landed real code and receipt improvements. High-signal commits include:
+  - `e01626f` (`dispatch: isolate async worker root env`) for worker-root isolation.
+  - `5347ac5` (`dispatch: dedupe async dry-run reservations`) for async dry-run reservation behavior.
+  - `a97ceef` (`dispatch: explain skipped async lanes`) for receipt visibility.
+  - `fdae5c3` (`usage: trust codex vendor rate limits`) and `aac1043` (`capacity: trust codex vendor rate limit meter`) for provider-clock/capacity realism.
+  - `a59d4b1` (`financial: stabilize organ self-feed beat`) for the financial organ.
+  - `f383822`, `5703f81`, `7fbc6dc`, and related receipt commits for dispatch/live-root/capacity proof surfaces.
+- Focused current verification for the route/capacity/dispatch code surfaces passes: `PYTHONPATH=cli/src python3 -m pytest cli/tests/test_route_bias.py cli/tests/test_usage_telemetry.py cli/tests/test_capacity_fill_ledger.py cli/tests/test_async_dispatch.py cli/tests/test_session_lifecycle_pressure.py -q` passed `85 passed`.
+
+Ideal prompt diff:
+
+- Ideal form for the first plan: preserve live-root/board state, prove the root clean, classify worktree debt without deleting owner state, then stop or move to the next named tranche with clean receipts.
+- Actual early outcome: that mostly happened; the initial debt was converted to receipts and the root was repeatedly pushed/receipted.
+- Ideal form for the overnight prompt: choose bounded, non-conflicting packets, coordinate with Claude by avoiding live-root overlap, let async workers own their PR branches, and keep direct-main commits to receipt/board preservation only.
+- Actual overnight outcome: Codex kept making useful progress, but it also worked directly on `main` for many unrelated surfaces while Claude/heartbeat/async workers were active. The run became a broad conductor thread rather than a set of bounded packets.
+- Ideal interruption handling: when the user interrupts, stop at a stable boundary; do not rely on off-disk capture to turn mixed in-flight files into a commit.
+- Actual interruption path: an in-progress route self-improve boost fix and an active financial worker's file delta were later committed together by capture commit `a52c1c878b1fdc6fed864d0abdafa1d3bf160265`.
+
+Outcome:
+
+- The session was valuable: it improved async dispatch isolation, queue-lock recovery, route/usage/capacity signals, receipt freshness, organ self-feeding, and worktree-debt accounting.
+- The session also proved that "work all night" needs a stronger transaction boundary. Useful local code, daemon board churn, generated receipts, and worker-owned PR deltas repeatedly shared the same live checkout.
+- Current proof is mixed. The focused tests pass, but current read-only gates do not show a clean global state: `live-root-gate.py` and `dispatch-health.py --probe-async` are blocked by the current dirty `organs/health/KERNEL.md` and `tasks.yaml`, and `scripts/worktree-debt.py --json` now reports `11` debt items after later fleet activity.
+- The zero-debt result should be credited as true at that tranche moment, not as a durable current invariant.
+
+What was fucked up:
+
+- The session ignored the user's anti-conflict constraint at the system boundary. It acknowledged Claude as a concurrent writer, but continued a direct-main live-root workflow while heartbeat, Claude, and async workers were also writing or producing results.
+- Commit scope got too broad. The reviewed window has dozens of direct `main` commits, many board-only commits, multiple generated capture commits, and several unrelated organ/dispatch surfaces in one transcript.
+- The worst concrete failure is `a52c1c`: Codex was preparing a focused `scripts/route.py` / `cli/tests/test_route_bias.py` fix for self-improve boost weights, while PR #590's financial worker delta was also present in the live root. The later capture commit combined both. That bypassed the intended PR lane for financial work and made route work ride along with unrelated generated financial artifacts.
+- PR `organvm/limen#590` remains open and red (`pr-gate` failure) with the financial delta that was partly direct-committed by capture. That leaves a confusing proof surface: some financial changes are on `main`, the worker PR still advertises them, and the PR is not green.
+- Direct pushes to `main` during this period repeatedly bypassed the required `pr-gate` check. The audit has observed the same server-side bypass warning during its own pushes, so this is not isolated to the overnight row.
+- The session counted full verifies and refreshed receipts as proof, but receipts were quickly invalidated by live-root churn. A receipt loop is not a stable closeout when the daemon keeps writing between probe, commit, push, and the next worker harvest.
+- The queue's 64-file row undercounts the real conceptual surface and overstates coherent code ownership. This was not one code diff; it was a conductor stream spanning root reconciliation, worktree debt, async routing, financial organ work, capacity telemetry, and live receipts.
+
+Verification:
+
+```bash
+jq '.changed_review[67]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+jq -c 'select(.type=="response_item" and .payload.type=="message" and .payload.role=="user") | {timestamp,prompt:([.payload.content[]? | .text // .input_text // empty] | join("\n"))}' /Users/4jp/.codex/sessions/2026/07/02/rollout-2026-07-02T17-53-18-019f24d2-6dae-7d30-8ea4-f14f3045fc67.jsonl
+git log main --since='2026-07-02T21:53:00Z' --until='2026-07-03T11:51:00Z' --date=iso-strict --pretty=format:'%H%x09%ad%x09%s' --max-count=200
+gh pr view 590 --repo organvm/limen --json number,title,state,createdAt,updatedAt,mergedAt,headRefName,baseRefName,mergeCommit,commits,files,statusCheckRollup,url
+git show --stat --name-status --format=fuller a52c1c878b1fdc6fed864d0abdafa1d3bf160265 --
+git show --patch --format=fuller a52c1c878b1fdc6fed864d0abdafa1d3bf160265 -- scripts/route.py cli/tests/test_route_bias.py
+git show --patch --format=fuller a52c1c878b1fdc6fed864d0abdafa1d3bf160265 -- organs/financial/consolidate.py organs/financial/balances-history.json organs/financial/STATUS.md organs/financial/balance-sheet.md organs/financial/cashflow.md organs/financial/seed.yaml
+PYTHONPATH=cli/src python3 -m pytest cli/tests/test_route_bias.py cli/tests/test_usage_telemetry.py cli/tests/test_capacity_fill_ledger.py cli/tests/test_async_dispatch.py cli/tests/test_session_lifecycle_pressure.py -q
+python3 scripts/worktree-debt.py --json
+python3 scripts/live-root-gate.py
+python3 scripts/dispatch-health.py --probe-async
+```
+
+Result: focused code tests pass `85 passed`; PR #590 is open with failed `pr-gate`; `a52c1c` combines route/test code with financial worker artifacts; current live-root and dispatch-health gates are blocked by current dirty files; current worktree debt is `11`, so the session's zero-debt receipt was not durable across later activity.
 
 ## Remaining Review Queue
 
