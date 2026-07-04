@@ -2033,6 +2033,39 @@ git -C /Users/4jp/Workspace/.home-cartridge/Code/organvm/universal-mail--automat
 
 Result: external repo clean on `main...origin/main`; latest commit `8ef7ee6`; merged tree passed `632` tests and compiled core/API/MCP modules.
 
+### Portvs triptych public package needed live artifact regeneration
+
+Severity: medium for release handoff reliability; no tracked Portvs source patch required.
+
+Evidence:
+
+- Codex session `019f0ea1-820c-7003-9444-ce7e5e3142c3` worked the Portvs triptych-video-canon incubator in `/Users/4jp/Workspace/4444J99/portvs/.worktrees/triptych-story`.
+- Local session JSONL survives at `~/.codex/sessions/2026/06/28/rollout-2026-06-28T10-28-13-019f0ea1-820c-7003-9444-ce7e5e3142c3.jsonl`.
+- Structural session count: 40 user prompt events, 102 task-complete events, 3,987 tool-call records, 26 compaction records.
+- The Portvs worktree was clean on `work/triptych-story...origin/work/triptych-story` before review.
+- `verify_local_lifecycle.py` passed, but `verify_package.py` failed on the live ignored package with `package manifest missing custody`.
+- The tracked generator `incubator/triptych-video-canon/package_public_site.py` already writes the required `custody` block, so this was a stale generated package artifact, not a missing source-code rule.
+
+Outcome:
+
+- Regenerated the ignored public package from the sanitized `site/` tree using `python3 package_public_site.py`.
+- The rebuilt package manifest now satisfies the custody contract enforced by `verify_package.py`.
+- Prompt/session diff is closed as live-artifact repair plus verification: the work promised a hostable public package, and the local package verifier now agrees.
+- No raw media, private work receipts, samples, renders, or prompt bodies were copied into Limen's tracked audit output.
+
+Verification:
+
+```bash
+python3 verify_public_site.py --site-dir site
+python3 package_public_site.py
+python3 verify_package.py
+python3 -m py_compile *.py
+python3 verify_local_lifecycle.py
+git -C /Users/4jp/Workspace/4444J99/portvs/.worktrees/triptych-story status --short --branch
+```
+
+Result: public site passed; package rebuild passed; package verifier returned `package ok: packages/triptych-video-canon-site (113 files, 55.6 MB)`; Python compile passed; local lifecycle remained clean with zero git-visible pending entries.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
