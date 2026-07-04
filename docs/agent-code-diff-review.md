@@ -3348,6 +3348,64 @@ cd /Users/4jp/Workspace/micro-tato && ./lane.sh validate
 
 Result: the transcript prompt extraction found the B54 resume prompt, the mobile/KaossPad/matter redesign prompt, the outward-assignment prompt, the conductor-progress prompt, and the repeated status asks; the guard failed on billable and Opus budgets; Micro Tato main currently passes `./lane.sh validate`; B58/B59 are real merged implementation PRs; B60-B63 were contract-only merges in this session window; B60 feature implementation landed later and separately.
 
+### Claude CleanUnique closeout produced durable storage evidence, but the final relay blurred destructive history
+
+Severity: high; storage/recovery safety, irreversible-operation handoff, and premium-model budget.
+
+Evidence:
+
+- Queue row `64` points at Claude session `7b134fd2-3452-4734-b8c1-879d443b412b`, rooted in reaped temp path `~/.claude/jobs/7b134fd2/tmp`, with surviving changed-file evidence in Claude memory plus `/Users/4jp/Workspace/.cleanunique/`.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-64-claude-cleanunique-prompts.jsonl` (`24` prompt-like string records). In redacted intent form, the session started with an independent macOS storage/backup reassessment under strict read-only/no-delete constraints, then evolved through goal extraction, explicit approval for a `7.47 GB` confirmed-safe deletion plus checksum dry-run, explicit approval to delete one exact `20.98 GB` Workspace subtree after checksum proof, read-only Axis-1 offsite/copy-collapse verification, STOP/collapse-mode recap, repeated "owner knows remaining work" / "close gaps" prompts, and a final relay request.
+- The core storage work was authorized in prompt text. The user explicitly approved the `7.47 GB` deletion and checksum dry-run at `2026-06-16T11:04:00Z`, then explicitly approved deletion of only `/Volumes/T7Recovery/CleanUnique-Lifeboat-2026-06-13/30_CODE/repos/path-mirror/Volumes/WorkspaceAPFS/Workspace` at `2026-06-16T11:22:39Z`, with guardrails against touching `4444J99`, `PriorMigrationAPFS`, parent `repos`, sparsebundles, or any other source.
+- The durable evidence surface now exists at `/Users/4jp/Workspace/.cleanunique/`, containing `INDEX.md`, `REDUCTION_LEDGER.md`, `AXIS1-GONOGO-2026-06-16.md`, `rsync_checksum.log`, and `evidence/` with `du_full.txt.gz`, `delete_list.tsv`, `overlap_roots.txt`, `resolve_paths.py`, `analyze4.py`, and `append_ledger.py`. It is `1.9M` on disk.
+- The ledger states Phase 1 deleted `7.472 GB` of confirmed-safe items and Phase 2 deleted the exact `20.98 GB` Workspace overlap from the canonical T7 copy after `rsync -rcn -i` found only derived `.git/index` and Firebase cache differences. The Axis-1 report states source wipe remains `NO-GO`, Backblaze offsite was incomplete/stale, T7Recovery was not selected in Backblaze, and sparsebundles were not excluded as of `2026-06-16`.
+- The session created/updated Claude memory records: `cleanunique-end-goal.md`, `cleanunique-reduction-audit.md`, `cleanunique-storage-layout.md`, `styx-state.md`, and the Claude memory `MEMORY.md` index.
+- Tool-use inventory shows `69` Bash calls, `17` Writes, `11` Edits, `8` Reads, `2` AskUserQuestion calls, and `1` Workflow. The workflow ran a `28`-agent classifier/adversarial pass.
+
+Ideal prompt diff:
+
+- Ideal form: after the user's initial read-only/no-delete prompt, stay read-only until explicit deletion authorization appears; once authorization appears, execute exactly the named target, preserve evidence, and keep every future relay explicit about what was deleted.
+- Actual session outcome: deletion authorization was obtained and the target boundaries were narrow; durable evidence was preserved. But the final relay later said "No destructive action taken in this job's lanes" and "Recovery data untouched" while the same session had in fact deleted `28.45 GB` from the canonical archive. That wording is only defensible if scoped to the post-closeout phase, but the relay did not say that.
+- Ideal form: "close gaps" should converge quickly to a fixed point and then stop.
+- Actual session outcome: it did converge to a useful fixed point, but only after several repeated closeout passes, a mistaken STYX-read, and extra memory/index edits.
+- Ideal form: use a small, low-tier or local deterministic workflow for file classification after the one-pass `du` inventory.
+- Actual session outcome: the session burned Opus heavily, including a 28-agent Opus workflow, for a storage-classification task that should have downshifted after the first adversarial synthesis.
+
+What was valuable:
+
+- The session did the right first-order thing: it identified that the user did not need more copying; the endgame was one reduced canonical archive plus one verified offsite copy.
+- It avoided repeated external-drive scans by using a single `du -kx` inventory and then doing offline analysis, matching the panic-risk constraints.
+- It converted ephemeral job evidence into a durable local owner surface at `/Users/4jp/Workspace/.cleanunique/`, which directly fixed the risk that `~/.claude/jobs/7b134fd2/tmp` would be deleted.
+- It preserved strong wipe guardrails: no source wipe, no sparsebundle deletion, no Finder/Trash, no sudo, no Backblaze config-file edits, and no sparsebundle mounts.
+- It surfaced the important Axis-1 truth: Backblaze was backing up stale Archive4T state, not the canonical reduced T7 copy, so the one-local-plus-one-offsite invariant was not satisfied.
+
+What was fucked up:
+
+- The final relay is not safe enough for a downstream agent. It says "No destructive action taken" and "Recovery data untouched" without explicitly scoping that to the final closeout phase, despite earlier authorized canonical deletions. A future agent could misread that as "nothing was deleted in this job."
+- The first "every owner knows" answer incorrectly said STYX had no memory entry. Later reads found an existing narrow `styx-surface-packets-branch` entry, and the session reconciled it, but the first answer was overconfident.
+- The STOP/collapse-mode intent was to avoid creating more surfaces. The later user did ask to close gaps, so the `.cleanunique` surface is justified, but this should have been framed as "copying existing evidence out of ephemeral storage" rather than new documentation expansion.
+- Budget discipline failed: `4,894,949` billable-ish tokens, all Opus, `38,089,874` cache-read tokens, and `28` Opus subagents. The guard failed on billable budget, Opus budget, and Opus subagent fanout.
+- The durable surface is host-local and not currently in a tracked repo. That is acceptable for private storage evidence, but the relay should say "durable on this host, not offsite/tracked" so the next agent does not confuse it with a backed-up artifact.
+- Current physical backup facts may have drifted since `2026-06-16`. This audit verified the evidence files and transcript, not the live Backblaze/external-drive state, because the documented panic risk makes fresh broad scans inappropriate.
+
+Verification:
+
+```bash
+jq '.changed_review[64]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+jq -r 'select(.type=="user") | select(.message.content|type=="string") | select((.message.content|startswith("<local-command"))|not) | select((.message.content|startswith("<command-name>"))|not) | [.timestamp, (.origin.kind // ""), (.promptSource // ""), .uuid, .message.content] | @tsv' /Users/4jp/.claude/projects/-Users-4jp/7b134fd2-3452-4734-b8c1-879d443b412b.jsonl
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp/7b134fd2-3452-4734-b8c1-879d443b412b.jsonl
+jq -r 'select(.type=="assistant") | .message.content[]? | select(.type=="tool_use") | .name' /Users/4jp/.claude/projects/-Users-4jp/7b134fd2-3452-4734-b8c1-879d443b412b.jsonl | sort | uniq -c
+find /Users/4jp/Workspace/.cleanunique -maxdepth 3 -type f -print | sort
+du -sh /Users/4jp/Workspace/.cleanunique
+sed -n '1,220p' /Users/4jp/Workspace/.cleanunique/INDEX.md
+sed -n '1,220p' /Users/4jp/Workspace/.cleanunique/AXIS1-GONOGO-2026-06-16.md
+sed -n '1,220p' /Users/4jp/Workspace/.cleanunique/REDUCTION_LEDGER.md
+gzip -l /Users/4jp/Workspace/.cleanunique/evidence/du_full.txt.gz
+sed -n '1,160p' /Users/4jp/.claude/projects/-Users-4jp/memory/MEMORY.md
+```
+
+Result: the private prompt record contains the initial read-only reassessment prompt, the explicit deletion approvals, the read-only Axis-1 goal, STOP/collapse-mode instruction, repeated closeout prompts, and final relay request; durable `.cleanunique` evidence is present and compact; Claude memory index points at CleanUnique, Fleet, STYX, UMA, and netmode surfaces; the guard fails on budget and Opus fanout; the final relay wording is materially ambiguous about earlier destructive work.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
