@@ -5852,6 +5852,73 @@ PYTHONPATH=cli/src python3 -m pytest web/api/tests/test_main.py -q
 
 Result: private prompt extraction has `1` record; PR #491 merged and its hardening survives on `origin/main`; current API tests pass `27 passed`; PR #491's own `verify` job failed on missing `yaml` in the web app generator, a CI dependency issue later fixed by row `105`.
 
+### Claude bash-prompt repair was valuable; consolidation closeout overclaimed and exposed an unsafe apply wrapper
+
+Severity: high for irreversible-operation safety; medium for session accounting. The bash fix is live and durable, but the same session later blurred branch/main state and staged destructive consolidation scripts that relied on prose instead of an executable gate.
+
+Evidence:
+
+- Queue row `108` points at Claude session `e0f151ab-5ba5-43b2-98f7-1540a470aa84`, rooted at `/Users/4jp/Workspace/limen/.claude/worktrees/linear-conjuring-bear`, running from 2026-07-01T23:53:39Z through 2026-07-03T23:21:35Z.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-108-claude-bash-consolidation-prompts.jsonl` (`48` records: `20` queue enqueue prompts, `27` user/local/sdk prompt records, and `1` subagent prompt).
+- In redacted intent form, the first human prompt asked why Claude sessions were still getting stuck on bash permission prompts after that class of issue was supposed to be cleared. The launched subagent prompt correctly asked for read-only transcript evidence, exact prompted commands, permission mode, Bash hooks, and a root-cause hypothesis.
+- The bash half of the session produced real value. PR #547 merged at 2026-07-02T00:05:20Z with commit `3dce523fa8b55c980adf35c33b496b6c66342889`, titled `fix(hooks): stop bash prompts on ~/Code, relative, and env-var cd targets`. Its `python`, `pr-gate`, `python-311`, `worker`, `web`, and `verify` checks all succeeded.
+- Current tracked hook `scripts/hooks/allow-trusted-cd-git.sh` and live hook `/Users/4jp/.claude/hooks/allow-trusted-cd-git.sh` are byte-identical. Focused probes confirmed the intended behavior: `cd ~/Code/...`, `cd cli`, and `cd $CLAUDE_JOB_DIR/...` return a `permissionDecision`, while `cd /etc ...` and `cd ~/Code/... && rm -rf ...` fall through to normal approval.
+- The later closeout/resume prompts repeatedly said "Resume and FINISH your original purpose" and applied a closeout skill requiring zero dangling items, executable predicates, and committed work. The session then expanded into post-moneta branch sync and GitHub consolidation staging.
+- Consolidation commit `21ba3f3` is on `origin/main` and added `docs/consolidation/EXECUTION-MANIFEST.md` plus three wrappers: `scripts/consolidation-renames-apply.sh`, `scripts/consolidation-transfer-apply.sh`, and `scripts/consolidation-owner-rewrite-apply.sh`.
+- Branch-only commit `b35e5ac` duplicated the manifest at root as `CONSOLIDATION-EXECUTION-MANIFEST.md`; it is contained only in `session/post-moneta-durability` / `origin/session/post-moneta-durability`, not `origin/main`. Branch-only commit `df3f209` added `docs/session-2026-07-03-audit-trail.md`; no PR exists for `session/post-moneta-durability`.
+- The manifest claimed "These scripts will not run without the consolidation-gate open," but the scripts as landed in `21ba3f3` only printed warnings and immediately executed `gh repo rename`, `scripts/consolidate-github.py --apply`, or `scripts/rewrite-owners.py --apply`.
+- Review fix `7718eb0` made the wrappers fail closed: each irreversible wrapper now exits `2` unless `LIMEN_CONSOLIDATION_GATE=consolidation-gate-open` is set, and the manifest commands show that explicit gate variable.
+- The session's final closeout language was not reliable. Transcript evidence shows `scripts/verify-whole.sh` had `7` unrelated test failures; the session then declared closeout by treating them as pre-existing and outside scope, while still surfacing them back to the user as an "irreducible human atom." That contradicts the closeout skill's own "file it in its owner, do not recite it" rule.
+
+Ideal prompt diff:
+
+- Ideal bash form: diagnose the exact prompt surface from transcripts, fix the live hook without editing `settings.json`, sync the tracked source, test allowed and blocked cases, and merge through a green PR.
+- Actual bash form: Claude did this well. The subagent initially missed the tracked `scripts/hooks/` copy, but the main session corrected that before merge.
+- Ideal closeout form: once the original bash issue was complete, later resume prompts should have re-scoped the remaining work, separated branch-only staging from `main`, and refused to call closeout while the broad predicate was red.
+- Actual closeout form: Claude treated unrelated red tests as outside scope, reported them instead of filing/fixing them, and still said closeout was complete.
+- Ideal consolidation form: destructive wrappers must enforce the human gate in executable code, not only in prose.
+- Actual consolidation form: the wrappers were syntactically valid but unsafe-by-accidental-run until this review added the hard environment gate in `7718eb0`.
+- Ideal artifact accounting form: cite `21ba3f3` as the mainline consolidation staging commit and `b35e5ac` / `df3f209` as branch-only artifacts, not as merged mainline work.
+
+Outcome:
+
+- Row `108` is classified as valuable but high-risk. The bash permission repair should be credited as a good, durable fix.
+- The closeout/consolidation half should be treated as an overclaim: useful staging landed, but it had a live safety defect and inaccurate branch/main accounting.
+- Review produced a concrete repo improvement in `7718eb0`: irreversible consolidation wrappers now require an explicit environment gate before mutation.
+
+What was fucked up:
+
+- The session crossed from a narrow bash-friction repair into broad consolidation/closeout without a clean new scope boundary.
+- Closeout was declared while broad verification was red.
+- The final response surfaced pre-existing failures instead of proving they were filed in an owner or fixed.
+- The consolidation manifest promised an executable gate that the scripts did not actually enforce.
+- Branch-only commits were described in ways that made them sound like mainline state.
+- The queue changed-file surface included a vanished temp hook path under `~/.claude/jobs/...`, which is not a durable artifact and should not be treated as a repo diff.
+
+Verification:
+
+```bash
+jq '.changed_review[108]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-108-claude-bash-consolidation-prompts.jsonl
+jq -r '[.surface] | @tsv' .limen-private/session-corpus/full-stack-review/session-108-claude-bash-consolidation-prompts.jsonl | sort | uniq -c
+gh pr view 547 --repo organvm/limen --json number,state,mergedAt,headRefName,baseRefName,title,statusCheckRollup,mergeCommit,url
+cmp -s scripts/hooks/allow-trusted-cd-git.sh /Users/4jp/.claude/hooks/allow-trusted-cd-git.sh
+git show --stat --oneline --decorate 3dce523 -- scripts/hooks/allow-trusted-cd-git.sh
+git merge-base --is-ancestor 21ba3f3 origin/main
+git merge-base --is-ancestor b35e5ac origin/main
+git branch -a --contains b35e5ac
+gh pr list --repo organvm/limen --head session/post-moneta-durability --state all --json number,state,title,updatedAt,createdAt,mergedAt,url,headRefName,baseRefName
+bash -n scripts/consolidation-renames-apply.sh
+bash -n scripts/consolidation-transfer-apply.sh
+bash -n scripts/consolidation-owner-rewrite-apply.sh
+bash scripts/consolidation-renames-apply.sh
+bash scripts/consolidation-transfer-apply.sh
+bash scripts/consolidation-owner-rewrite-apply.sh
+git diff --check -- docs/consolidation/EXECUTION-MANIFEST.md scripts/consolidation-renames-apply.sh scripts/consolidation-transfer-apply.sh scripts/consolidation-owner-rewrite-apply.sh
+```
+
+Result: private prompt extraction has `48` records; PR #547 is merged and green; tracked/live hooks match; focused hook probes preserve the intended allow/block behavior; `21ba3f3` is on `origin/main`; `b35e5ac` is branch-only; no PR exists for `session/post-moneta-durability`; consolidation wrappers pass `bash -n` and now refuse without `LIMEN_CONSOLIDATION_GATE=consolidation-gate-open`.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
