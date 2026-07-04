@@ -18,7 +18,7 @@ import sys
 import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, Iterator
 
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
@@ -78,6 +78,21 @@ BROAD_RE = re.compile(r"\b(all|everything|full stack|autonomous|keep working|nev
 PATCH_FILE_RE = re.compile(r"^\*\*\* (?:Add|Update|Delete) File: (.+?)\s*$", re.M)
 PATCH_MOVE_RE = re.compile(r"^\*\*\* Move to: (.+?)\s*$", re.M)
 MUTATING_TOOL_NAMES = {"Edit", "MultiEdit", "Write", "NotebookEdit"}
+AGY_MUTATING_ACTION_RE = re.compile(
+    r"\b(edit|fix|writ|creat|replac|updat|append|add|lower|resolv)\b",
+    re.I,
+)
+AGY_MUTATING_PAYLOAD_KEYS = {
+    "AllowMultiple",
+    "CodeContent",
+    "EndLine",
+    "Instruction",
+    "Overwrite",
+    "ReplacementChunks",
+    "ReplacementContent",
+    "StartLine",
+    "TargetContent",
+}
 TASK_BODY_MARKERS = (
     "Complete task ",
     "## Current task",
@@ -338,6 +353,54 @@ def changed_files_from_tool_payload(value: Any) -> list[str]:
                 walk(child)
 
     walk(value)
+    return sorted(dict.fromkeys(out))
+
+
+def embedded_json_objects(text: Any) -> list[Any]:
+    if not isinstance(text, str):
+        return []
+    decoder = json.JSONDecoder()
+    out: list[Any] = []
+    starts: set[int] = set()
+    for match in re.finditer(r'"TargetFile"', text):
+        nearby = [m.start() for m in re.finditer(r"\{", text[: match.start()])]
+        starts.update(nearby[-20:])
+    for start in sorted(starts):
+        try:
+            obj, _ = decoder.raw_decode(text[start:])
+        except ValueError:
+            continue
+        out.append(obj)
+    return out
+
+
+def walk_dicts(value: Any) -> Iterator[dict[str, Any]]:
+    if isinstance(value, dict):
+        yield value
+        for child in value.values():
+            yield from walk_dicts(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from walk_dicts(child)
+
+
+def agy_payload_mutates(obj: dict[str, Any]) -> bool:
+    action = str(obj.get("toolAction") or obj.get("ToolAction") or "")
+    if AGY_MUTATING_ACTION_RE.search(action):
+        return True
+    return any(key in obj for key in AGY_MUTATING_PAYLOAD_KEYS)
+
+
+def changed_files_from_agy_spans(spans: Iterable[str]) -> list[str]:
+    out: list[str] = []
+    for span in spans:
+        if "TargetFile" not in span:
+            continue
+        for obj in embedded_json_objects(span):
+            for item in walk_dicts(obj):
+                target = clean_changed_path(item.get("TargetFile"))
+                if target and agy_payload_mutates(item):
+                    out.append(target)
     return sorted(dict.fromkeys(out))
 
 
@@ -1028,6 +1091,7 @@ def extract_agy_cli_conversations(agg: Aggregator, writer: Any) -> None:
                         path=path,
                         text=outcome_text,
                         ts=ts,
+                        changed_files=changed_files_from_agy_spans(spans),
                     )
         con.close()
 
@@ -1276,7 +1340,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-            "Structured change refs are native or structured tool-payload surfaces, not inferred code diffs. In this local corpus OpenCode exposes native SQLite diffs; Codex and Claude now add conservative patch/edit/write tool paths; Agy still needs receipt parsing or repo diff reconstruction.",
+            "Structured change refs are native or structured tool-payload surfaces, not inferred code diffs. In this local corpus OpenCode exposes native SQLite diffs; Codex and Claude add conservative patch/edit/write tool paths; Agy adds conservative CLI `TargetFile` tool paths when present.",
         ]
     )
 
@@ -1342,7 +1406,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
             f"- `{total_unreceipted}` sessions had no durable receipt signal or changed-file receipt.",
             f"- `{total_likely_noop}` sessions look like no-op or unrecorded work because prompts exist but the outcome surface has no verification/receipt/change signal.",
             f"- `{flame_events}` prompt events carried FLAME scaffolding; the task body is now separated, but older ledger views overcounted repeated invariant prompt mass as fresh work.",
-            "- Structured changed-file data is still uneven by agent: OpenCode exposes SQLite diffs, Codex and Claude now expose conservative patch/edit/write tool paths, and Agy still needs receipt text or downstream repo diff reconstruction.",
+            "- Structured changed-file data is still uneven by agent: OpenCode exposes SQLite diffs, Codex and Claude expose conservative patch/edit/write tool paths, and Agy exposes conservative CLI `TargetFile` tool paths when present.",
             "- OpenCode had many sessions that only become trustworthy when its DB-backed token clock and receipt handshake are present; session rows alone are not enough.",
             "- Antigravity IDE has no first-class prompt/session records on this host; provider quota is still not represented as a native receipt surface.",
             "",

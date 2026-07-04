@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-03T23:49:09Z`
+Generated: `2026-07-04T00:04:21Z`
 
 ## Scope
 
@@ -229,6 +229,42 @@ env LIMEN_ROOT=/Users/4jp/Workspace/limen python3 scripts/agent-code-review-queu
 
 Result: unit test returned `3 passed`; compile passed; full-stack refresh reviewed `125902` prompts and `4371` sessions; queue refresh produced `1556` changed-file candidates and `873` reconstruction roots.
 
+### Agy changed-file evidence was still reconstruction-only
+
+Severity: medium for cross-agent review completeness.
+
+Evidence:
+
+- After the Codex/Claude extractor fix, Agy still had no structured changed-file refs in the review queue.
+- Agy CLI conversation SQLite `steps` do carry explicit mutating tool payloads with `TargetFile` fields, but the extractor only turned those spans into outcome text.
+- The refreshed queue now has `1963` structured changed-file sessions and `1778` immediate changed-file candidates. Agy contributes `225` changed-file sessions and `493` changed-file refs.
+
+Repair:
+
+- Added conservative Agy `TargetFile` extraction from per-step CLI SQLite spans.
+- Classified Agy payloads as mutating only when the `toolAction` looks like edit/write/create/update work or the payload carries replacement/code/edit keys.
+- Kept read-only-looking `TargetFile` spans out of the changed-file list.
+- Regenerated the full-stack review and code-review queue from the private corpus.
+
+Touched paths:
+
+- `scripts/agent-session-full-stack-review.py`
+- `scripts/agent-code-review-queue.py`
+- `cli/tests/test_agent_session_full_stack_review.py`
+- `docs/agent-session-full-stack-review.md`
+- `docs/agent-code-review-queue.md`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_agent_session_full_stack_review.py -q
+python3 -m py_compile scripts/agent-session-full-stack-review.py scripts/agent-code-review-queue.py
+env LIMEN_ROOT=/Users/4jp/Workspace/limen python3 scripts/agent-session-full-stack-review.py --write
+env LIMEN_ROOT=/Users/4jp/Workspace/limen python3 scripts/agent-code-review-queue.py --write
+```
+
+Result: unit test returned `4 passed`; compile passed; full-stack refresh reviewed `125919` prompts and `4375` sessions; queue refresh produced `1778` changed-file candidates and `875` reconstruction roots.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -267,17 +303,22 @@ Result: unit test returned `3 passed`; compile passed; full-stack refresh review
 - `cli/tests/test_async_dispatch.py:290` covers per-agent picked-cost accumulation.
 - `cli/tests/test_async_dispatch.py:301` covers daily picked-cost accumulation across lanes.
 - `scripts/agent-session-full-stack-review.py:78` matches patch file headers.
-- `scripts/agent-session-full-stack-review.py:278` extracts changed files from Codex patch text.
-- `scripts/agent-session-full-stack-review.py:303` extracts changed files from structured tool payloads.
-- `scripts/agent-session-full-stack-review.py:686` wires Codex assistant/tool records into changed-file extraction.
-- `scripts/agent-session-full-stack-review.py:696` wires Codex function/custom tool records into changed-file extraction.
-- `scripts/agent-session-full-stack-review.py:774` wires Claude assistant tool-use records into changed-file extraction.
+- `scripts/agent-session-full-stack-review.py:293` extracts changed files from Codex patch text.
+- `scripts/agent-session-full-stack-review.py:318` extracts changed files from structured tool payloads.
+- `scripts/agent-session-full-stack-review.py:749` wires Codex assistant/tool records into changed-file extraction.
+- `scripts/agent-session-full-stack-review.py:759` wires Codex function/custom tool records into changed-file extraction.
+- `scripts/agent-session-full-stack-review.py:837` wires Claude assistant tool-use records into changed-file extraction.
+- `scripts/agent-session-full-stack-review.py:81` defines mutating Agy action detection.
+- `scripts/agent-session-full-stack-review.py:359` decodes bounded embedded JSON objects around Agy `TargetFile` fields.
+- `scripts/agent-session-full-stack-review.py:394` extracts changed files from Agy CLI `TargetFile` spans.
+- `scripts/agent-session-full-stack-review.py:1094` wires Agy CLI conversation steps into changed-file extraction.
 - `cli/tests/test_agent_session_full_stack_review.py:18` covers patch header extraction.
 - `cli/tests/test_agent_session_full_stack_review.py:42` covers Codex custom `apply_patch` extraction.
 - `cli/tests/test_agent_session_full_stack_review.py:59` covers Claude mutating-tool extraction.
+- `cli/tests/test_agent_session_full_stack_review.py:73` covers Agy mutating `TargetFile` extraction and read-only exclusion.
 
 ## Remaining Review Queue
 
 1. Reconstruct changed-file evidence for queue rank 1; the exact OpenCode window has no commit on `main`, so the next pass should inspect private session outcome receipts and nearby branch/worktree state.
 2. Continue rank 7-12 control-plane windows before spending time on large Studium content churn; those windows touch dispatch, capacity, CI, and lifecycle code with higher operational blast radius.
-3. Add stronger Agy receipt extraction or repo diff reconstruction. OpenCode now contributes native SQLite diffs, Codex/Claude contribute conservative structured tool paths, and Agy remains the main changed-file extraction gap.
+3. Add stronger provider-clock and receipt extraction for Agy. Changed-file `TargetFile` evidence is now covered when present, but quota, verification, and no-op classification still depend on weaker outcome text.

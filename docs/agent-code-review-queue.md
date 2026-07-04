@@ -1,6 +1,6 @@
 # Agent Code Review Queue
 
-Generated: `2026-07-03T23:49:00Z`
+Generated: `2026-07-04T00:04:12Z`
 
 ## Scope
 
@@ -10,24 +10,24 @@ Generated: `2026-07-03T23:49:00Z`
 
 ## Counts
 
-- Sessions reviewed: `4371`.
-- Structured changed-file sessions: `1736`.
-- Immediate changed-file review candidates: `1556`.
-- Board/log-only sessions: `180`.
-- Reconstruction roots: `873`.
+- Sessions reviewed: `4375`.
+- Structured changed-file sessions: `1963`.
+- Immediate changed-file review candidates: `1778`.
+- Board/log-only sessions: `185`.
+- Reconstruction roots: `875`.
 
 ## Changed-File Buckets
 
 | Bucket | Files |
 |---|---:|
-| `code` | 3349 |
-| `docs` | 3152 |
-| `config` | 1393 |
-| `other` | 880 |
-| `tests` | 769 |
-| `content` | 398 |
-| `board` | 356 |
-| `ci` | 69 |
+| `code` | 3540 |
+| `docs` | 3291 |
+| `config` | 1464 |
+| `other` | 892 |
+| `tests` | 800 |
+| `content` | 426 |
+| `board` | 368 |
+| `ci` | 83 |
 | `logs` | 20 |
 
 ## Immediate Changed-File Review
@@ -47,7 +47,7 @@ Generated: `2026-07-03T23:49:00Z`
 | 11 | `claude` | `f9c6b1e7-2c05-4d42-9d6a-8b08ee98a155` | 1605 | 34 | code:13, config:3, docs:9, other:1, tests:8 | repeated broad/invariant prompt pressure | `.claude/worktrees/agent-a2ddf8b000ec0cfc4/cli/tests/test_watchdog.py`<br>`.claude/worktrees/agent-a2ddf8b000ec0cfc4/scripts/watchdog.py`<br>`.claude/worktrees/agent-a3c8e56266bd70566/cli/tests/test_self_heal.py`<br>`.claude/worktrees/agent-a3c8e56266bd70566/scripts/self-heal.py`<br>`.claude/worktrees/agent-a81857c595daeec7d/cli/tests/test_self_improve.py`<br>... +29 more | `git -C .claude/worktrees/agent-a2ddf8b000ec0cfc4 log --since=2026-06-21T16:51:29.658Z --until=2026-06-24T12:28:03.984Z --stat --oneline -- .claude/worktrees/agent-a2ddf8b000ec0cfc4/cli/tests/test_watchdog.py .claude/worktrees/agent-a2ddf8b000ec0cfc4/scripts/watchdog.py .claude/worktrees/agent-a3c8e56266bd70566/cli/tests/test_self_heal.py .claude/worktrees/agent-a3c8e56266bd70566/scripts/self-heal.py` |
 | 12 | `claude` | `b7efae9c-af24-4c2c-9288-d2fa860ba974` | 1578 | 23 | ci:5, code:4, config:5, docs:6, other:2, tests:1 | repeated broad/invariant prompt pressure | `/tmp/run_merged.mjs`<br>`/tmp/schema_merged.sql`<br>`/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/tmp.0wSbPqasFF/package.json`<br>`/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/tmp.0wSbPqasFF/vitest.config.ts`<br>`/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/tmp.4JkOCms9kY/.github/workflows/ci.yml`<br>... +18 more | `git -C /Volumes/Archive4T log --since=2026-06-19T14:45:24.932Z --until=2026-06-19T17:02:54.733Z --stat --oneline -- /tmp/run_merged.mjs /tmp/schema_merged.sql /var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/tmp.0wSbPqasFF/package.json /var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/tmp.0wSbPqasFF/vitest.config.ts` |
 | 13 | `claude` | `4693c425-3c29-4a48-9a0b-54fd9fd37753` | 1570 | 14 | code:3, docs:7, other:1, tests:3 | repeated broad/invariant prompt pressure; failure/blocker language outweighs done language | `.claude/worktrees/piped-booping-kettle/cli/tests/test_claude_tier.py`<br>`.claude/worktrees/piped-booping-kettle/corpus/.gitignore`<br>`.claude/worktrees/piped-booping-kettle/corpus/extract_9d.py`<br>`.claude/worktrees/piped-booping-kettle/scripts/generate-revenue-backlog.py`<br>`~/.claude/plans/piped-booping-kettle.md`<br>... +9 more | `git -C .claude/worktrees/piped-booping-kettle log --since=2026-06-22T14:43:15.406Z --until=2026-06-23T12:45:36.634Z --stat --oneline -- .claude/worktrees/piped-booping-kettle/cli/tests/test_claude_tier.py .claude/worktrees/piped-booping-kettle/corpus/.gitignore .claude/worktrees/piped-booping-kettle/corpus/extract_9d.py .claude/worktrees/piped-booping-kettle/scripts/generate-revenue-backlog.py` |
-| 14 | `claude` | `4a4c2aa8-d455-431e-b18c-3ac1d5824741` | 1557 | 70 | code:34, config:5, docs:18, other:13 | repeated broad/invariant prompt pressure | `moneta/src/__tests__/orders-file.test.ts`<br>`moneta/src/checkout-page.ts`<br>`moneta/src/orders-file.ts`<br>`~/.claude/jobs/4a4c2aa8/tmp/aether-listen-msg.txt`<br>`~/.claude/jobs/4a4c2aa8/tmp/aether-listen-pr.md`<br>... +65 more | `git -C .claude/worktrees/linear-conjuring-bear log --since=2026-07-01T23:37:10.126Z --until=2026-07-03T22:20:01.834Z --stat --oneline -- moneta/src/__tests__/orders-file.test.ts moneta/src/checkout-page.ts moneta/src/orders-file.ts ~/.claude/jobs/4a4c2aa8/tmp/aether-listen-msg.txt` |
+| 14 | `claude` | `4a4c2aa8-d455-431e-b18c-3ac1d5824741` | 1566 | 70 | code:34, config:5, docs:18, other:13 | repeated broad/invariant prompt pressure | `moneta/src/__tests__/orders-file.test.ts`<br>`moneta/src/checkout-page.ts`<br>`moneta/src/orders-file.ts`<br>`~/.claude/jobs/4a4c2aa8/tmp/aether-listen-msg.txt`<br>`~/.claude/jobs/4a4c2aa8/tmp/aether-listen-pr.md`<br>... +65 more | `git -C .claude/worktrees/linear-conjuring-bear log --since=2026-07-01T23:37:10.126Z --until=2026-07-03T23:57:27.821Z --stat --oneline -- moneta/src/__tests__/orders-file.test.ts moneta/src/checkout-page.ts moneta/src/orders-file.ts ~/.claude/jobs/4a4c2aa8/tmp/aether-listen-msg.txt` |
 | 15 | `claude` | `95f5e850-1274-40de-8a32-8ade3192b22a` | 1277 | 50 | code:5, config:7, docs:31, other:3, tests:4 | repeated broad/invariant prompt pressure | `~/.claude/jobs/95f5e850/tmp/conv_eng101.py`<br>`~/.claude/plans/luminous-knitting-fairy.md`<br>`~/.claude/projects/-Users-4jp-Workspace-limen/memory/course-recapitulation-engine.md`<br>`~/.claude/projects/-Users-4jp-Workspace-limen/memory/stpauls-literature-materials-located.md`<br>`~/Workspace/edu-organism/academia/feedback-bank/universal-feedback-discussions.md`<br>... +45 more | `git -C .claude/worktrees/peaceful-plotting-fern log --since=2026-06-23T16:58:37.750Z --until=2026-06-24T15:45:33.758Z --stat --oneline -- ~/.claude/jobs/95f5e850/tmp/conv_eng101.py ~/.claude/plans/luminous-knitting-fairy.md ~/.claude/projects/-Users-4jp-Workspace-limen/memory/course-recapitulation-engine.md ~/.claude/projects/-Users-4jp-Workspace-limen/memory/stpauls-literature-materials-located.md` |
 | 16 | `claude` | `06d2559b-05e9-4ff3-b1bf-4473bd935228` | 1252 | 33 | code:4, config:5, docs:16, tests:8 | repeated broad/invariant prompt pressure | `.claude/worktrees/goofy-meandering-crayon/cli/tests/test_credential_wall.py`<br>`.claude/worktrees/goofy-meandering-crayon/cli/tests/test_hishand_wall.py`<br>`.claude/worktrees/goofy-meandering-crayon/cli/tests/test_obligations_deadline.py`<br>`.claude/worktrees/goofy-meandering-crayon/scripts/credential-wall.py`<br>`.claude/worktrees/goofy-meandering-crayon/scripts/dialogs-silenced.sh`<br>... +28 more | `git -C .claude/worktrees/goofy-meandering-crayon log --since=2026-06-24T16:22:56.318Z --until=2026-06-26T10:48:05.214Z --stat --oneline -- .claude/worktrees/goofy-meandering-crayon/cli/tests/test_credential_wall.py .claude/worktrees/goofy-meandering-crayon/cli/tests/test_hishand_wall.py .claude/worktrees/goofy-meandering-crayon/cli/tests/test_obligations_deadline.py .claude/worktrees/goofy-meandering-crayon/scripts/credential-wall.py` |
 | 17 | `claude` | `3be1f3a6-e00e-403d-a967-6d86c55deb56` | 1247 | 6 | code:1, docs:3, tests:2 | repeated broad/invariant prompt pressure | `.claude/worktrees/feat+workstream-channels/cli/src/limen/workstream.py`<br>`.claude/worktrees/feat+workstream-channels/cli/tests/test_dispatch_async.py`<br>`.claude/worktrees/feat+workstream-channels/cli/tests/test_workstream.py`<br>`.claude/worktrees/feat+workstream-channels/docs/lanes/README.md`<br>`~/.claude/projects/-Users-4jp-Workspace-limen/memory/receive-critique-dont-grade-the-critic.md`<br>... +1 more | `git -C . log --since=2026-07-02T20:46:29.051Z --until=2026-07-03T18:42:14.559Z --stat --oneline -- .claude/worktrees/feat+workstream-channels/cli/src/limen/workstream.py .claude/worktrees/feat+workstream-channels/cli/tests/test_dispatch_async.py .claude/worktrees/feat+workstream-channels/cli/tests/test_workstream.py .claude/worktrees/feat+workstream-channels/docs/lanes/README.md` |
@@ -98,8 +98,8 @@ These sessions have prompts/outcome text but no structured changed-file refs. Re
 
 | Rank | Root | Sessions | Agents | Risk | Dirty | Top Gaps | Start Command |
 |---:|---|---:|---|---:|---|---|---|
-| 1 | `.` | 1127 | opencode:836, claude:242, codex:45, agy:4 | 16093 | dirty:8 | session outcome lacks verification signal (507); prompt missing expected receipt/artifact (392); prompt missing executable predicate (340) | `git -C . log --since=2026-06-16T16:28:36.566Z --until=2026-07-03T22:03:28Z --stat --oneline` |
-| 2 | `unknown` | 487 | agy:486, codex:1 | 7053 | missing-or-non-git:0 | failure/blocker language outweighs done language (422); session outcome lacks verification signal (179); prompt missing expected receipt/artifact (71) | `no git root; inspect private session paths and outcome receipts` |
+| 1 | `.` | 1126 | opencode:836, claude:242, codex:45, agy:3 | 16065 | dirty:7 | session outcome lacks verification signal (507); prompt missing expected receipt/artifact (392); prompt missing executable predicate (340) | `git -C . log --since=2026-06-16T16:28:36.566Z --until=2026-07-03T22:03:28Z --stat --oneline` |
+| 2 | `unknown` | 266 | agy:265, codex:1 | 4136 | missing-or-non-git:0 | failure/blocker language outweighs done language (246); session outcome lacks verification signal (156); prompt missing expected receipt/artifact (36) | `no git root; inspect private session paths and outcome receipts` |
 | 3 | `~/Workspace/.limen-worktrees/cifix-a-organvm-public-record-data-scrapper-d4e6` | 1 | claude:1 | 811 | missing-or-non-git:0 | repeated broad/invariant prompt pressure (1); failure/blocker language outweighs done language (1) | `no git root; inspect private session paths and outcome receipts` |
 | 4 | `~` | 17 | agy:10, codex:5, claude:2 | 455 | missing-or-non-git:0 | session outcome lacks durable receipt signal (11); session outcome lacks verification signal (10); likely no-op or unrecorded work (10) | `no git root; inspect private session paths and outcome receipts` |
 | 5 | `.claude/worktrees/tender-sniffing-marshmallow` | 1 | claude:1 | 439 | missing-or-non-git:0 | repeated broad/invariant prompt pressure (1); failure/blocker language outweighs done language (1) | `no git root; inspect private session paths and outcome receipts` |
@@ -131,7 +131,7 @@ These sessions have prompts/outcome text but no structured changed-file refs. Re
 
 ## Findings
 
-1. Changed-file extraction is now multi-surface: OpenCode contributes native SQLite diffs, Codex/Claude contribute conservative patch/edit/write tool paths, and Agy still needs git-window reconstruction or stronger receipt extraction.
+1. Changed-file extraction is now multi-surface: OpenCode contributes native SQLite diffs, Codex/Claude contribute conservative patch/edit/write tool paths, and Agy contributes conservative CLI `TargetFile` tool paths when present.
 2. `tasks.yaml` churn is a separate governance review path and should not be treated as product/code implementation without a matching task-state receipt.
 3. The highest immediate code-review candidates mix code, tests, CI, config, and docs with missing predicate/receipt signals; review should start there before broad prompt-pressure sessions.
 4. Broad Claude/Codex sessions remain high risk, but the next move is root-level reconstruction, not reading more prompt text.

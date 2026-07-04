@@ -68,3 +68,19 @@ def test_changed_files_from_claude_mutating_tool_payload() -> None:
     }
 
     assert review.changed_files_from_tool_payload(payload) == ["docs/report.md", "scripts/route.py"]
+
+
+def test_changed_files_from_agy_spans_extracts_mutating_target_files() -> None:
+    review = load_review_module()
+    spans = [
+        '{"toolAction":"Viewing file","TargetFile":"docs/read-only.md"}',
+        'x{"toolAction":"Editing file","TargetFile":"/Users/4jp/Workspace/limen/scripts/route.py","ReplacementChunks":[]}',
+        '{"toolAction":"Creating file","TargetFile":"docs/new.md","CodeContent":"text"}',
+        '{"TargetFile":"docs/implicit-edit.md","ReplacementContent":"new"}',
+    ]
+
+    assert review.changed_files_from_agy_spans(spans) == [
+        "/Users/4jp/Workspace/limen/scripts/route.py",
+        "docs/implicit-edit.md",
+        "docs/new.md",
+    ]
