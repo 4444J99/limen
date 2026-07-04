@@ -87361,3 +87361,472 @@ tasks:
   created: '2026-07-04'
   updated: '2026-07-04T18:41:00.159754Z'
   dispatch_log: []
+- id: HEAL-rebase-stale-organvm-universal-mail--automation-129
+  title: "rebase organvm/universal-mail--automation#129 onto current base \u2014 branched\
+    \ far behind"
+  repo: organvm/universal-mail--automation
+  type: code
+  target_agent: any
+  priority: normal
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - stale-base
+  urls:
+  - https://github.com/organvm/universal-mail--automation/pull/129
+  context: "PR organvm/universal-mail--automation#129 is MERGEABLE + green but branched\
+    \ well behind its current base \u2014 the structural condition for a stale-base\
+    \ silent revert. Check out the branch, REBASE it onto the current base, KEEP all\
+    \ of the PR's genuine changes and DROP any hunk that merely reverts base files\
+    \ it didn't mean to touch, push --force-with-lease to the SAME branch, and confirm\
+    \ MERGEABLE + current + green. Do NOT open a new PR; preserve all unique work.\
+    \ PR: https://github.com/organvm/universal-mail--automation/pull/129 [auto-emitted\
+    \ 2026-07-04 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-04'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-universal-mail--automation-130
+  title: rebase/resolve conflicts on organvm/universal-mail--automation#130
+  repo: organvm/universal-mail--automation
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/universal-mail--automation/pull/130
+  context: 'PR organvm/universal-mail--automation#130 is CONFLICTING with its base
+    branch and merge-drain correctly refuses to merge it. Check out the PR branch,
+    rebase it onto the current base (or merge base in), resolve every conflict preserving
+    the PR''s intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. Do not open a new PR. PR: https://github.com/organvm/universal-mail--automation/pull/130
+    [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-04'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-universal-mail--automation-131
+  title: fix failing CI on organvm/universal-mail--automation#131
+  repo: organvm/universal-mail--automation
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/universal-mail--automation/pull/131
+  context: "PR organvm/universal-mail--automation#131 has FAILING CI checks and merge-drain\
+    \ correctly refuses to merge it. Check out the PR branch, find the root cause\
+    \ of the red checks (lint / types / failing test / config), fix it, push to the\
+    \ SAME PR branch, and confirm every check goes green. Do not open a new PR \u2014\
+    \ repair the existing one so merge-drain lands it. PR: https://github.com/organvm/universal-mail--automation/pull/131\
+    \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-04'
+  dispatch_log: []
+- id: HEAL-rebase-stale-organvm-universal-mail--automation-132
+  title: "rebase organvm/universal-mail--automation#132 onto current base \u2014 branched\
+    \ far behind"
+  repo: organvm/universal-mail--automation
+  type: code
+  target_agent: any
+  priority: normal
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - stale-base
+  urls:
+  - https://github.com/organvm/universal-mail--automation/pull/132
+  context: "PR organvm/universal-mail--automation#132 is MERGEABLE + green but branched\
+    \ well behind its current base \u2014 the structural condition for a stale-base\
+    \ silent revert. Check out the branch, REBASE it onto the current base, KEEP all\
+    \ of the PR's genuine changes and DROP any hunk that merely reverts base files\
+    \ it didn't mean to touch, push --force-with-lease to the SAME branch, and confirm\
+    \ MERGEABLE + current + green. Do NOT open a new PR; preserve all unique work.\
+    \ PR: https://github.com/organvm/universal-mail--automation/pull/132 [auto-emitted\
+    \ 2026-07-04 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-04'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-universal-mail--automation-133
+  title: rebase/resolve conflicts on organvm/universal-mail--automation#133
+  repo: organvm/universal-mail--automation
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/universal-mail--automation/pull/133
+  context: 'PR organvm/universal-mail--automation#133 is CONFLICTING with its base
+    branch and merge-drain correctly refuses to merge it. Check out the PR branch,
+    rebase it onto the current base (or merge base in), resolve every conflict preserving
+    the PR''s intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. Do not open a new PR. PR: https://github.com/organvm/universal-mail--automation/pull/133
+    [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-04'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-universal-mail--automation-134
+  title: rebase/resolve conflicts on organvm/universal-mail--automation#134
+  repo: organvm/universal-mail--automation
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/universal-mail--automation/pull/134
+  context: 'PR organvm/universal-mail--automation#134 is CONFLICTING with its base
+    branch and merge-drain correctly refuses to merge it. Check out the PR branch,
+    rebase it onto the current base (or merge base in), resolve every conflict preserving
+    the PR''s intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. Do not open a new PR. PR: https://github.com/organvm/universal-mail--automation/pull/134
+    [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-04'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-universal-mail--automation-135
+  title: fix failing CI on organvm/universal-mail--automation#135
+  repo: organvm/universal-mail--automation
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/universal-mail--automation/pull/135
+  context: "PR organvm/universal-mail--automation#135 has FAILING CI checks and merge-drain\
+    \ correctly refuses to merge it. Check out the PR branch, find the root cause\
+    \ of the red checks (lint / types / failing test / config), fix it, push to the\
+    \ SAME PR branch, and confirm every check goes green. Do not open a new PR \u2014\
+    \ repair the existing one so merge-drain lands it. PR: https://github.com/organvm/universal-mail--automation/pull/135\
+    \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-04'
+  dispatch_log: []
+- id: HEAL-rebase-stale-organvm-universal-mail--automation-137
+  title: "rebase organvm/universal-mail--automation#137 onto current base \u2014 branched\
+    \ far behind"
+  repo: organvm/universal-mail--automation
+  type: code
+  target_agent: any
+  priority: normal
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - stale-base
+  urls:
+  - https://github.com/organvm/universal-mail--automation/pull/137
+  context: "PR organvm/universal-mail--automation#137 is MERGEABLE + green but branched\
+    \ well behind its current base \u2014 the structural condition for a stale-base\
+    \ silent revert. Check out the branch, REBASE it onto the current base, KEEP all\
+    \ of the PR's genuine changes and DROP any hunk that merely reverts base files\
+    \ it didn't mean to touch, push --force-with-lease to the SAME branch, and confirm\
+    \ MERGEABLE + current + green. Do NOT open a new PR; preserve all unique work.\
+    \ PR: https://github.com/organvm/universal-mail--automation/pull/137 [auto-emitted\
+    \ 2026-07-04 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-04'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-universal-mail--automation-138
+  title: fix failing CI on organvm/universal-mail--automation#138
+  repo: organvm/universal-mail--automation
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/universal-mail--automation/pull/138
+  context: "PR organvm/universal-mail--automation#138 has FAILING CI checks and merge-drain\
+    \ correctly refuses to merge it. Check out the PR branch, find the root cause\
+    \ of the red checks (lint / types / failing test / config), fix it, push to the\
+    \ SAME PR branch, and confirm every check goes green. Do not open a new PR \u2014\
+    \ repair the existing one so merge-drain lands it. PR: https://github.com/organvm/universal-mail--automation/pull/138\
+    \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-04'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-universal-node-network-7
+  title: fix failing CI on organvm/universal-node-network#7
+  repo: organvm/universal-node-network
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/universal-node-network/pull/7
+  context: "PR organvm/universal-node-network#7 has FAILING CI checks and merge-drain\
+    \ correctly refuses to merge it. Check out the PR branch, find the root cause\
+    \ of the red checks (lint / types / failing test / config), fix it, push to the\
+    \ SAME PR branch, and confirm every check goes green. Do not open a new PR \u2014\
+    \ repair the existing one so merge-drain lands it. PR: https://github.com/organvm/universal-node-network/pull/7\
+    \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-04'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-universal-node-network-9
+  title: fix failing CI on organvm/universal-node-network#9
+  repo: organvm/universal-node-network
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/universal-node-network/pull/9
+  context: "PR organvm/universal-node-network#9 has FAILING CI checks and merge-drain\
+    \ correctly refuses to merge it. Check out the PR branch, find the root cause\
+    \ of the red checks (lint / types / failing test / config), fix it, push to the\
+    \ SAME PR branch, and confirm every check goes green. Do not open a new PR \u2014\
+    \ repair the existing one so merge-drain lands it. PR: https://github.com/organvm/universal-node-network/pull/9\
+    \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-04'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-universal-node-network-10
+  title: fix failing CI on organvm/universal-node-network#10
+  repo: organvm/universal-node-network
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/universal-node-network/pull/10
+  context: "PR organvm/universal-node-network#10 has FAILING CI checks and merge-drain\
+    \ correctly refuses to merge it. Check out the PR branch, find the root cause\
+    \ of the red checks (lint / types / failing test / config), fix it, push to the\
+    \ SAME PR branch, and confirm every check goes green. Do not open a new PR \u2014\
+    \ repair the existing one so merge-drain lands it. PR: https://github.com/organvm/universal-node-network/pull/10\
+    \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-04'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-vigiles-aeternae--agon-cosmogonicum-7
+  title: fix failing CI on organvm/vigiles-aeternae--agon-cosmogonicum#7
+  repo: organvm/vigiles-aeternae--agon-cosmogonicum
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/vigiles-aeternae--agon-cosmogonicum/pull/7
+  context: "PR organvm/vigiles-aeternae--agon-cosmogonicum#7 has FAILING CI checks\
+    \ and merge-drain correctly refuses to merge it. Check out the PR branch, find\
+    \ the root cause of the red checks (lint / types / failing test / config), fix\
+    \ it, push to the SAME PR branch, and confirm every check goes green. Do not open\
+    \ a new PR \u2014 repair the existing one so merge-drain lands it. PR: https://github.com/organvm/vigiles-aeternae--agon-cosmogonicum/pull/7\
+    \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-04'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-vox--architectura-gubernatio-31
+  title: fix failing CI on organvm/vox--architectura-gubernatio#31
+  repo: organvm/vox--architectura-gubernatio
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/vox--architectura-gubernatio/pull/31
+  context: "PR organvm/vox--architectura-gubernatio#31 has FAILING CI checks and merge-drain\
+    \ correctly refuses to merge it. Check out the PR branch, find the root cause\
+    \ of the red checks (lint / types / failing test / config), fix it, push to the\
+    \ SAME PR branch, and confirm every check goes green. Do not open a new PR \u2014\
+    \ repair the existing one so merge-drain lands it. PR: https://github.com/organvm/vox--architectura-gubernatio/pull/31\
+    \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-04'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-vulnpulse-12
+  title: rebase/resolve conflicts on organvm/vulnpulse#12
+  repo: organvm/vulnpulse
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/vulnpulse/pull/12
+  context: 'PR organvm/vulnpulse#12 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/vulnpulse/pull/12 [auto-emitted
+    2026-07-04 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-04'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-writelens-5
+  title: rebase/resolve conflicts on organvm/writelens#5
+  repo: organvm/writelens
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/writelens/pull/5
+  context: 'PR organvm/writelens#5 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/writelens/pull/5 [auto-emitted 2026-07-04
+    by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-04'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-writelens-6
+  title: fix failing CI on organvm/writelens#6
+  repo: organvm/writelens
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/writelens/pull/6
+  context: "PR organvm/writelens#6 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
+    \ one so merge-drain lands it. PR: https://github.com/organvm/writelens/pull/6\
+    \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-04'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-writelens-7
+  title: rebase/resolve conflicts on organvm/writelens#7
+  repo: organvm/writelens
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/writelens/pull/7
+  context: 'PR organvm/writelens#7 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/writelens/pull/7 [auto-emitted 2026-07-04
+    by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-04'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-writelens-8
+  title: rebase/resolve conflicts on organvm/writelens#8
+  repo: organvm/writelens
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/writelens/pull/8
+  context: 'PR organvm/writelens#8 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/writelens/pull/8 [auto-emitted 2026-07-04
+    by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-04'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-writelens-9
+  title: rebase/resolve conflicts on organvm/writelens#9
+  repo: organvm/writelens
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/writelens/pull/9
+  context: 'PR organvm/writelens#9 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/writelens/pull/9 [auto-emitted 2026-07-04
+    by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-04'
+  dispatch_log: []
