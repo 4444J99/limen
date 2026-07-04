@@ -46,7 +46,20 @@ PRECEDENTS_PATH = CENSOR_DIR / "precedents.jsonl"  # judicial case law → durab
 LAST_PATH = LOGS / "censor-last.json"   # compact summary the view reads
 
 TIER_SECONDS = {"hourly": 3600, "daily": 86400, "weekly": 604800, "monthly": 2592000}
-ACTUATOR_TIMEOUT = int(os.environ.get("LIMEN_CENSOR_TIMEOUT", "300"))
+
+
+def _positive_int_env(name, default):
+    raw = os.environ.get(name)
+    if raw in (None, ""):
+        return default
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        return default
+    return value if value > 0 else default
+
+
+ACTUATOR_TIMEOUT = _positive_int_env("LIMEN_CENSOR_TIMEOUT", 300)
 
 
 # ─── primitives ──────────────────────────────────────────────────────

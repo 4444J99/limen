@@ -8,9 +8,17 @@ import importlib.util
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-_spec = importlib.util.spec_from_file_location("censor", Path(__file__).resolve().parents[2] / "scripts" / "censor.py")
-censor = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(censor)
+SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "censor.py"
+
+
+def _load_censor(module_name="censor"):
+    spec = importlib.util.spec_from_file_location(module_name, SCRIPT)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+censor = _load_censor()
 
 
 def _ts(dt):
@@ -90,3 +98,14 @@ def test_state_persistence_round_trip(tmp_path):
     loaded = censor._load_json(str(state_path), {"last_run": {}})
     due = censor.due_tiers(loaded, now)
     assert "monthly" not in due
+
+
+def test_malformed_timeout_env_falls_back(monkeypatch):
+    monkeypatch.setenv("LIMEN_CENSOR_TIMEOUT", "not-an-int")
+    assert _load_censor("censor_bad_timeout").ACTUATOR_TIMEOUT == 300
+
+    monkeypatch.setenv("LIMEN_CENSOR_TIMEOUT", "0")
+    assert _load_censor("censor_zero_timeout").ACTUATOR_TIMEOUT == 300
+
+    monkeypatch.setenv("LIMEN_CENSOR_TIMEOUT", "12")
+    assert _load_censor("censor_custom_timeout").ACTUATOR_TIMEOUT == 12

@@ -1860,6 +1860,39 @@ LIMEN_CODEX_QUICKEN_STALE_MIN=bad python3 scripts/codex-quicken.py --days 1
 
 Result: `3 passed`; command-line malformed-env reproduction returned exit `0` and classified the bounded session set.
 
+### Censor fail-open actuator could fail closed at import time
+
+Severity: medium for autonomous heartbeat reliability.
+
+Evidence:
+
+- Claude session `d906f1ab-d8d0-4c04-9af6-a23882e14a98` worked from deleted worktree `.claude/worktrees/glittery-petting-leaf` and landed the naming, avtopoiesis, Censor, and Nomenclator surfaces now present on `main`.
+- Transcript audit covered the parent session plus eight subagent logs: 261 usage-bearing messages, 1,067,683 billable-ish tokens, 7,643,899 cache-read tokens, Haiku-class model billing, zero expensive subagents, and no guard violations.
+- The prompt/session intent for Censor was explicitly fail-open, timeout-bounded, read-mostly operation.
+- Reproducing with `LIMEN_CENSOR_TIMEOUT=bad python3 scripts/censor.py --tier hourly` crashed while importing `scripts/censor.py`, before the fail-open actuator wrapper could run.
+
+Repair:
+
+- Added `_positive_int_env()` for `LIMEN_CENSOR_TIMEOUT` so malformed, empty, zero, or negative values fall back to the default timeout.
+- Refactored the Censor cadence test loader to support fresh module imports under different env values.
+- Added regression coverage for malformed, zero, and valid timeout overrides.
+
+Touched paths:
+
+- `scripts/censor.py`
+- `cli/tests/test_censor_cadence.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_censor_cadence.py cli/tests/test_avtopoiesis.py -q
+python3 -m py_compile scripts/censor.py cli/tests/test_censor_cadence.py
+LIMEN_CENSOR_TIMEOUT=bad python3 scripts/censor.py --tier hourly
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-glittery-petting-leaf/d906f1ab-d8d0-4c04-9af6-a23882e14a98 --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000 --out /tmp/rank-d906-audit.json
+```
+
+Result: `12 passed`; malformed timeout reproduction returned exit `0` with an hourly dry-run decision; transcript audit passed without violations.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
