@@ -2377,8 +2377,46 @@ tasks:
     assert board == "**Board** — 1 open · 1 in_progress · 1 done"
 
 
+def test_session_orientation_board_can_read_pinned_snapshot(tmp_path: Path, monkeypatch):
+    orient = _load(ORIENT_SCRIPT, "session_orient_board_snapshot")
+    orient.ROOT = tmp_path
+    (tmp_path / "tasks.yaml").write_text(
+        """
+tasks:
+  - id: live
+    status: open
+""",
+        encoding="utf-8",
+    )
+    snapshot = tmp_path / "snapshot-tasks.yaml"
+    snapshot.write_text(
+        """
+tasks:
+  - id: snap-a
+    status: open
+  - id: snap-b
+    status: done
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("LIMEN_ORIENT_TASKS", str(snapshot))
+
+    board = orient.section_board()
+
+    assert board == "**Board** — 1 open · 1 done"
+
+
+def test_session_orientation_git_section_can_be_pinned(monkeypatch):
+    orient = _load(ORIENT_SCRIPT, "session_orient_git_snapshot")
+    monkeypatch.setenv("LIMEN_ORIENT_GIT_SECTION", "**Git** — pinned · clean")
+
+    assert orient.section_git() == "**Git** — pinned · clean"
+
+
 def test_done_session_orient_pins_generators_to_checkout_root():
     script = DONE_ORIENT_SCRIPT.read_text(encoding="utf-8")
 
     assert 'LIMEN_ROOT="$ROOT" python3 "$PRESSURE_GEN" --write' in script
     assert 'LIMEN_ROOT="$ROOT" python3 "$GEN")' in script
+    assert 'LIMEN_ORIENT_TASKS="$tasks_snapshot"' in script
+    assert 'LIMEN_ORIENT_GIT_SECTION="$git_section"' in script

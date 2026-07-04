@@ -18,6 +18,13 @@ PRESSURE_HOOK="scripts/hooks/session-lifecycle-pressure.sh"
 DIGEST="logs/session-orientation.md"
 fail() { echo "✗ $*"; exit 1; }
 ok()   { echo "✓ $*"; }
+cleanup_paths=()
+cleanup() {
+  for path in "${cleanup_paths[@]}"; do
+    [ -n "$path" ] && rm -rf "$path"
+  done
+}
+trap cleanup EXIT
 
 # 1. artifacts exist
 [ -f "$GEN" ]  || fail "missing generator $GEN"
@@ -49,13 +56,35 @@ if grep -Eiq "$DENY" "$PRESSURE_GEN"; then fail "PII deny-list hit in pressure s
 if grep -Eiq "$DENY" "logs/session-lifecycle-pressure.md"; then fail "PII deny-list hit in pressure digest"; fi
 ok "PII-free: no clinical literal in generator source or digest"
 
-# 4. idempotent — two consecutive runs are byte-identical (counts are stable within a tick)
-a="$(LIMEN_ROOT="$ROOT" python3 "$GEN")"; b="$(LIMEN_ROOT="$ROOT" python3 "$GEN")"
+# 4. idempotent — two consecutive runs are byte-identical for a stable input snapshot
+tasks_snapshot="$(mktemp)"
+cleanup_paths+=("$tasks_snapshot")
+cp "tasks.yaml" "$tasks_snapshot"
+git_section=""
+branch="$(git -C "$ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+if [ -n "$branch" ]; then
+  dirty="clean"
+  if [ -n "$(git -C "$ROOT" status --porcelain 2>/dev/null || true)" ]; then
+    dirty="dirty"
+  fi
+  counts="$(git -C "$ROOT" rev-list --left-right --count origin/main...HEAD 2>/dev/null || true)"
+  pos=""
+  set -- $counts
+  if [ "$#" -eq 2 ]; then
+    behind="$1"
+    ahead="$2"
+    pos=" · ahead $ahead/behind $behind of main"
+  fi
+  git_section="**Git** — $branch$pos · $dirty"
+fi
+a="$(LIMEN_ROOT="$ROOT" LIMEN_ORIENT_TASKS="$tasks_snapshot" LIMEN_ORIENT_GIT_SECTION="$git_section" LIMEN_ORIENT_NO_WRITE=1 python3 "$GEN")"
+b="$(LIMEN_ROOT="$ROOT" LIMEN_ORIENT_TASKS="$tasks_snapshot" LIMEN_ORIENT_GIT_SECTION="$git_section" LIMEN_ORIENT_NO_WRITE=1 python3 "$GEN")"
 [ "$a" = "$b" ] || fail "generator output not idempotent across two runs"
 ok "idempotent across consecutive runs"
 
 # 5. fail-open — empty LIMEN_ROOT yields exit 0 and an (almost) empty digest, never a crash
-tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
+tmp="$(mktemp -d)"
+cleanup_paths+=("$tmp")
 LIMEN_ROOT="$tmp" python3 "$GEN" >/dev/null 2>&1 || fail "generator crashed on empty root (not fail-open)"
 ok "generator fails open on a missing/empty root"
 

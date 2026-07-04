@@ -17,6 +17,7 @@ medical literal — it reads numeric liveness counts by field NAME from the alre
 counts-only logs/health-organ-state.json, and lever IDs/titles that already live PII-free in
 the committed registry. The firewall guards this generator, not just its output.
 """
+
 import json
 import os
 import re
@@ -31,14 +32,7 @@ except Exception:  # pragma: no cover - dependency absence is a fail-open hook p
 ROOT = Path(os.environ.get("LIMEN_ROOT") or Path(__file__).resolve().parents[1])
 # The auto-memory index lives outside the repo (per-user projects dir); resolve it from
 # this repo's identity so the lookup is derived, never pinned to a machine path.
-MEMORY_INDEX = (
-    Path.home()
-    / ".claude"
-    / "projects"
-    / "-Users-4jp-Workspace-limen"
-    / "memory"
-    / "MEMORY.md"
-)
+MEMORY_INDEX = Path.home() / ".claude" / "projects" / "-Users-4jp-Workspace-limen" / "memory" / "MEMORY.md"
 
 
 def _read_text(path, limit_bytes=None):
@@ -138,8 +132,9 @@ def section_board():
     if yaml is None:
         return ""
     counts = {}
+    tasks_path = Path(os.environ.get("LIMEN_ORIENT_TASKS") or ROOT / "tasks.yaml")
     try:
-        data = yaml.safe_load((ROOT / "tasks.yaml").read_text(encoding="utf-8", errors="replace"))
+        data = yaml.safe_load(tasks_path.read_text(encoding="utf-8", errors="replace"))
     except Exception:
         return ""
     tasks = data.get("tasks") if isinstance(data, dict) else []
@@ -160,11 +155,16 @@ def section_board():
 
 def section_git():
     """Current branch, ahead/behind main, dirty flag."""
+    if "LIMEN_ORIENT_GIT_SECTION" in os.environ:
+        return os.environ.get("LIMEN_ORIENT_GIT_SECTION", "")
+
     def _git(*args):
         try:
             return subprocess.run(
                 ["git", "-C", str(ROOT), *args],
-                capture_output=True, text=True, timeout=4,
+                capture_output=True,
+                text=True,
+                timeout=4,
             ).stdout.strip()
         except Exception:
             return ""
@@ -251,6 +251,8 @@ def main():
     print(digest, end="")
 
     out_path = ROOT / "logs" / "session-orientation.md"
+    if os.environ.get("LIMEN_ORIENT_NO_WRITE") == "1":
+        return
     try:
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(digest, encoding="utf-8")
