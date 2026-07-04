@@ -39,7 +39,7 @@ own instance). Maturity = how close it is to a self-running institution.
 | 6 | **Consulting** | Sovereign Systems | 60% | maturing | a boutique agency / consultancy | repeatable intake→delivery autonomic playbook |
 | 7 | **Artist** | A-MAVS-OLEVM (Poiesis) | 70% | maturing | a living museum / studio (9-chamber Pantheon) | fill under-populated chambers with real work |
 | 8 | **Social** | Koinonia | 5% | scaffold | a civic institution + relationship support | charter + 5-primitive map + first slice |
-| 9 | **Health** | Health / Body | 5% | scaffold | a concierge medical / recovery team | charter + personal recovery/access protocol |
+| 9 | **Health** | Health / Body | 15% | scaffold | a concierge medical / recovery team | KERNEL + CHARTER + recovery/access protocol |
 
 **The 5-primitive kernel** (every organ, domain-neutral): `Member · Mandate · Standing · Standard ·
 Governance`. Generic + nameless underneath, his instance on top — never hardcoded to one person.

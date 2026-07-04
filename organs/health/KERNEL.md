@@ -58,7 +58,7 @@ governance layer for accommodations, scheduling, and care-plan integrity. The ma
 intentionally generic — no individual identity, no personal health data at the template layer. It is
 the platform that scales to N recovery cases with zero marginal design cost.
 
-### MICRO — Anthony's post-injury recovery + disability access (tied to the legal ADA matter)
+### MICRO — the principal's unnamed post-injury recovery + disability access (tied to the legal ADA matter)
 
 A post-injury recovery and disability-access case run with the weight of a dedicated care-
 administration team, explicitly tied to the legal ADA accommodation matter. The anchor event is a
@@ -163,4 +163,4 @@ From the scaffold stage (10% → building 30%):
 
 *Companion documents: [`CHARTER.md`](CHARTER.md) (org-chart + 6-workflow orchestration + role
 assignments + leverage math), `MACRO-FACE.md` (the health institution platform pitch),
-`MICRO-FACE.md` (Anthony's post-injury recovery instance).*
+`MICRO-FACE.md` (the unnamed post-injury recovery instance).*

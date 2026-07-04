@@ -39,8 +39,9 @@ capacity into ongoing health operations. The mapping:
 
 The binding constraint is not capacity — it is **a recovery to manage**. One active recovery
 consumes approximately 15-30 workunits/month in steady-state operations. A fleet of 14K+ idle
-workunits can sustain hundreds of concurrent recoveries. The first instance (Anthony's post-injury
-recovery + ADA accommodation matter) proves the pipeline; scaling means adding cases, not capacity.
+workunits can sustain hundreds of concurrent recoveries. The first instance (the principal's
+unnamed post-injury recovery + ADA accommodation matter) proves the pipeline; scaling means adding
+cases, not capacity.
 
 ## The org-chart (AI roles, human-supervised)
 
@@ -256,9 +257,9 @@ would do: track, record, schedule, document, and verify.
 
 ## First proof: the micro instance
 
-The micro instance — Anthony's post-injury recovery and ADA accommodation matter — is the first
-deployment. The anchor event is a 4th-story fall (~2024). No personal name is used in the record;
-documented capability-focused.
+The micro instance — the principal's unnamed post-injury recovery and ADA accommodation matter — is
+the first deployment. The anchor event is a 4th-story fall (~2024). No personal name is used in the
+case record; documentation stays capability-focused.
 
 The rollout order, matching the workflows above:
 
