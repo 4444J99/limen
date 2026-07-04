@@ -54,7 +54,7 @@ def test_caption_derivation():
     assert ss.caption_for(Path("x.mov"), "x", "Custom note") == "Custom note"
 
 
-def test_plan_dry_run_writes_draft_queue(tmp_path: Path):
+def test_plan_dry_run_does_not_write_queue(tmp_path: Path):
     src = tmp_path / "src"
     src.mkdir()
     (src / "clip.mov").write_bytes(b"v")
@@ -73,11 +73,45 @@ def test_plan_dry_run_writes_draft_queue(tmp_path: Path):
     )
     assert len(items) == 1
     assert items[0].status == "draft"
-    # dry-run must NOT run ffmpeg -> no staged output produced
+    # dry-run must NOT run ffmpeg or mutate the queue.
     assert not stage.exists()
+    assert not qpath.exists()
+
+
+def test_plan_apply_writes_stable_draft_queue(tmp_path: Path, monkeypatch):
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "clip.mov").write_bytes(b"v")
+    qpath = tmp_path / "queue.jsonl"
+    stage = tmp_path / "staged"
+
+    def fake_run(cmd, check, capture_output):
+        assert check is True
+        assert capture_output is True
+        Path(cmd[-1]).parent.mkdir(parents=True, exist_ok=True)
+        Path(cmd[-1]).write_bytes(b"out")
+
+    monkeypatch.setattr(ss.subprocess, "run", fake_run)
+
+    items = ss.plan(
+        "reel",
+        src,
+        None,
+        5,
+        None,
+        "unscheduled",
+        apply=True,
+        stage_dir=stage,
+        queue_path=qpath,
+    )
+
+    assert len(items) == 1
+    assert items[0].id == ss._qid(src / "clip.mov", "reel")
+    assert (stage / "reel" / "clip-reel.mp4").exists()
     rows = [json.loads(x) for x in qpath.read_text().splitlines() if x.strip()]
     assert rows[0]["platform"] == "reel" and rows[0]["status"] == "draft"
     assert rows[0]["ffmpeg"][0] == "ffmpeg"
+    assert rows[0]["id"] == items[0].id
 
 
 def test_send_refused_without_token(tmp_path: Path, monkeypatch):

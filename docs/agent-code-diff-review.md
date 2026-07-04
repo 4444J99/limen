@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T02:01:23Z`
+Generated: `2026-07-04T02:04:32Z`
 
 ## Scope
 
@@ -41,6 +41,7 @@ Generated: `2026-07-04T02:01:23Z`
 | refreshed 24 | `claude` | `1cea38f6-3455-4202-9c45-189a9f26d6dc` | Micro Tato initial Godot build. The original worktree game root and scratchpad audio generators are gone; the work was later promoted into standalone `~/Workspace/micro-tato`, which is clean on `main` and passes its current validation gate. Recorded as superseded artifact migration rather than a live patch. |
 | refreshed 25 | `claude` | `71d46003-4cfa-402e-b09e-fe0b99f0c702` | Health office / session-orientation run. Original worktree and temp compacted memory are gone, but health/session-orient code landed on `main` and private chart artifacts remain off-repo; fixed import-time malformed-env crashes in the health organ without exposing private chart content. |
 | refreshed 26 | `claude` | `04d49f5a-c88d-4588-a5d9-90f64d06eacc` | CVSTOS/VVLTVS organ run. Original worktree and temp extractors are gone, but CVSTOS/VVLTVS code landed on `main`; fixed malformed env, manifest-number, and manifest-shape crash paths that violated the organs' fail-open heartbeat contract. |
+| refreshed 27 | `claude` | `e31aaccb-1389-4079-aa0e-dc82dd6027a6` | Link-health / launch / media scheduler demand-surface run. Original worktree is gone, but link-health, launch, and scheduler code landed on `main`; fixed the scheduler dry-run mutation and unstable queue IDs that violated the draft-only, repeatable receipt contract. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -1651,6 +1652,42 @@ python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/pro
 ```
 
 Result: `6 passed`; both scripts compiled; transcript audit completed without guard violations under the widened review limits.
+
+### Social scheduler dry-run was mutating the private queue
+
+Severity: medium for receipt integrity and repeated use, low for publish safety.
+
+Evidence:
+
+- Claude session `e31aaccb-1389-4079-aa0e-dc82dd6027a6` built demand-surface processes around link-health, launch staging, and the media social scheduler. The original `.claude/worktrees/quiet-bubbling-hejlsberg` worktree is gone, but the relevant code landed on `main`.
+- Matching landed commits include `2ffcdab` for the outbound social scheduler and `f10c8ec` for link-health plus launch.
+- Transcript audit reports 506 usage-bearing messages, 5,057,486 billable-ish tokens, 19,904,440 cache-read tokens, 4,330,440 Opus-class billable-ish tokens, ten expensive subagents, and zero agent/workflow calls. The audit violated the normal Opus budget guard.
+- The prompt/session contract was draft-only and repeatable: the scheduler plans local draft assets, never posts, and says the default dry-run touches nothing.
+- `organs/media/scheduler/social_scheduler.py` still appended `QueueItem` rows during dry-run planning, so a no-apply plan mutated `$LIMEN_PRIVATE_ROOT/media-scheduler/queue.jsonl`.
+- Queue IDs used Python's process-randomized `hash(...)`, so the same asset/platform could produce different visible IDs across process restarts.
+
+Repair:
+
+- Changed scheduler IDs to stable SHA-256-derived IDs from platform plus source path.
+- Made `plan(..., apply=False)` return the draft plan without appending to the private queue.
+- Left `apply=True` as the boundary that runs ffmpeg and appends draft queue rows.
+- Updated CLI output so dry-run says the queue is unchanged.
+- Added regressions for dry-run non-mutation and apply-time stable queue writes.
+
+Touched paths:
+
+- `organs/media/scheduler/social_scheduler.py`
+- `cli/tests/test_social_scheduler.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_social_scheduler.py -q
+python3 -m py_compile organs/media/scheduler/social_scheduler.py scripts/launch-organ.py scripts/link-health.py
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-quiet-bubbling-hejlsberg/e31aaccb-1389-4079-aa0e-dc82dd6027a6 --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000 --out /tmp/rank-e31-audit.json
+```
+
+Result: `9 passed`; scheduler/launch/link-health scripts compiled; transcript audit completed with an Opus budget violation under the default guard.
 
 ## Remaining Review Queue
 
