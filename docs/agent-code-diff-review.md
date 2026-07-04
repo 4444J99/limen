@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T05:57:13Z`
+Generated: `2026-07-04T06:01:04Z`
 
 ## Scope
 
@@ -37,6 +37,7 @@ Generated: `2026-07-04T05:57:13Z`
 | 77 | `claude` | `9fbf75ec-5156-4f2f-bb84-23a10be15885` | Claude model chokepoint shim run. The deleted worktree row did land durable fleet value on `main`: a shared model sorter, executable Claude shim, heartbeat PATH wiring, and focused tests. It directly answered the user's "non-bypassable on-demand sorting" correction, but still spent 3.7M billable / 2.1M Opus before the guardrail existed and should be monitored as a fail-open seatbelt, not a complete spend-control system. |
 | 78 | `claude` | `3424630b-7849-4c5b-a9bb-5f24cd7b3ec8` | D2L discussion-responder skill run. The session correctly turned a repeatable LMS-instructor workflow into `organvm/_agent` skill PR #19 with FERPA/process boundaries and D2L browser mechanics, but it cost 2.6M Opus billable tokens and two Opus subagents. Review also found and fixed a reusable-skill privacy edge: concrete-looking student-name examples are now placeholders in `_agent` commit `8456104`. |
 | 79 | `claude` | `efb53173-614a-4f9f-9399-48fbab1150ee` | Credential hydration / no-more-login run. The deleted worktree did land the core `creds-hydrate` organ through PR #217 and many later corrections: env propagation, validity probes, phantom-lane retirement, `op` prompt-storm prevention, GH keyring derivation, and Cloudflare probe correction. It was valuable root healing, but the session spent 3.98M billable / 3.70M Opus and repeatedly overclaimed done before testing the real property. Review fixed stale launchd/script guidance that still described bare `--apply` as 1Password self-heal instead of promptless-only hydration. |
+| 80 | `codex` | `019ede36-2d1a-7fe1-9793-e42f2d9ca717` | Avditor premium-tier Codex run. The prompt asked for a $29-$99 paid tier with Stripe checkout, Growth Vault / advanced-audit gating, and the free audit preserved. The original ephemeral worktree is gone and the transcript ends mid-edit with local tests blocked by missing `vitest`, but the same task later landed as PR #33 with green build/test/e2e. The durable merged diff is narrower than the queue's 35-file snapshot. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -4163,6 +4164,61 @@ plutil -lint container/launchd/com.limen.creds-hydrate.plist
 ```
 
 Result: original worktree is absent; private prompt extraction has `26` records; PR #217 and later credential hardening commits are on `main`; Claude guard fails on 3.98M billable / 3.70M Opus; current focused credential tests pass `23` cases; Ruff, Python compile, and plist lint pass after the stale launchd/script guidance fix.
+
+### Codex Avditor premium-tier run became a green PR, but the session itself did not close cleanly
+
+Severity: medium for monetization and access-control surface; low for current artifact integrity because the merged PR is green.
+
+Evidence:
+
+- Queue row `80` points at Codex session `019ede36-2d1a-7fe1-9793-e42f2d9ca717`, rooted at deleted worktree `/Users/4jp/Workspace/.limen-worktrees/rev-avditor-premium-tier-0af4`, with a 35-file snapshot across subscription, webhook, pricing, Growth Vault, teams, integrations, prompt, DB, and Supabase surfaces.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-80-codex-avditor-premium-prompts.jsonl` (`2` records: `1` environment context and `1` task prompt).
+- In redacted intent form, the prompt asked Codex to complete `REV-avditor-premium-tier`: launch a $29-$99 monthly paid tier for `organvm-iii-ergon/specvla-ergon--avditor-mvndi`, add Stripe subscription wiring/checkout, gate Growth Vault and advanced-audit features behind it, and keep the free audit working.
+- The original worktree is absent now. The surviving standalone checkout `/Users/4jp/Workspace/specvla-ergon--avditor-mvndi` is on `discover-value-thesis`, does not contain merge commit `6c1229d` as an ancestor, and has no `node_modules`. The mirrored checkout under `organvm-iii-ergon` is dirty/behind and also does not contain the merge as an ancestor.
+- The Codex transcript did inspect the right surfaces and made the right diagnoses: server-side subscription checkout trusted client price IDs, webhook state needed better Stripe metadata, NextAuth JWT premium state could go stale after checkout, and multiple advertised premium surfaces needed server/API gating.
+- The session-local verification was not clean: the targeted `npm test -- ...` attempt failed because `vitest` was not installed in the ephemeral worktree (`sh: vitest: command not found`), and the transcript tail ends mid-edit while updating team page tests.
+- Durable delivery happened later as PR `organvm/specvla-ergon--avditor-mvndi#33`, merged 2026-06-19 at `6c1229d`, with green GitHub `CI` (`build-and-test` and `e2e`) and CodeQL checks.
+- The merged PR diff is narrower than the queue row: 13 files, not 35. It added `src/lib/plans.ts` / `src/lib/plans.test.ts`, updated pricing UI/tests, subscription checkout, Stripe webhook, auth session/JWT plan state, cron/analyze gates, environment examples, and NextAuth type augmentation.
+- Code review of the merged commit shows the core shape matches the prompt: `PLAN_CATALOG` defines free/pro/premium tiers at $0/$29/$99, paid tiers resolve Stripe price IDs server-side, advanced/public API depth gates use plan entitlements, and the pricing UI sends tier IDs instead of raw client-chosen price IDs.
+
+Ideal prompt diff:
+
+- Ideal form: implement a single plan catalog, server-resolve Stripe price IDs, persist Stripe subscription identifiers/status/plan from webhooks, refresh auth/session premium state after checkout, gate advanced features on the server, keep free audit paths available, and prove with local tests plus CI.
+- Actual code form: the merged PR largely achieved that shape. It centralizes plan definitions and entitlements, makes pricing configurable within the requested range, hardens checkout away from arbitrary client price IDs, and expands tests around plan and subscription behavior.
+- Ideal closeout form: the session should leave an executable local predicate or a PR/CI receipt.
+- Actual session form: the transcript lacked a clean local closeout because dependencies were missing and the turn ended while still editing tests. The durable receipt is the later merged PR, not the session transcript tail.
+- Ideal attribution form: review the PR's actual authored diff, not the queue's broad changed-file snapshot.
+- Actual queue form: the 35-file snapshot included surfaces Codex read or temporarily touched; the merged PR contains 13 files.
+
+Outcome:
+
+- The underlying task produced useful product work: a real paid-tier architecture and green CI/e2e receipt.
+- This row should be credited as a green PR delivery, but not as a clean self-contained Codex session closeout.
+- No current code patch was made in this review because the merged PR is already green and the surviving local checkouts are not positioned for a faithful rerun without changing branches or installing dependencies.
+
+What was fucked up:
+
+- The prompt omitted an executable predicate and receipt target, and the session did not independently produce one before the transcript ended.
+- Local verification failed on missing dev dependencies, but the session continued making changes rather than first establishing a runnable test environment.
+- The queue's changed-file count overstates the durable authored diff by almost 3x.
+- The local checkout topology is confusing: the path named in the session is gone, the standalone repo is on an unrelated discovery branch, and another mirror is dirty/behind. GitHub PR/CI is the only clean proof surface for this row.
+
+Verification:
+
+```bash
+jq '.changed_review[80]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-80-codex-avditor-premium-prompts.jsonl
+jq -r '.kind' .limen-private/session-corpus/full-stack-review/session-80-codex-avditor-premium-prompts.jsonl | sort | uniq -c
+test -d /Users/4jp/Workspace/.limen-worktrees/rev-avditor-premium-tier-0af4
+gh pr view 33 --repo organvm-iii-ergon/specvla-ergon--avditor-mvndi --json number,title,state,createdAt,mergedAt,mergeCommit,headRefName,baseRefName,url,files,commits,statusCheckRollup
+gh run view 27838544577 --repo organvm/specvla-ergon--avditor-mvndi --json databaseId,name,displayTitle,status,conclusion,createdAt,updatedAt,url,headBranch,headSha,jobs
+git -C /Users/4jp/Workspace/specvla-ergon--avditor-mvndi merge-base --is-ancestor 6c1229d0c7eb2c093dc6a23bf3b5a3ab25cf3ff5 HEAD
+git -C /Users/4jp/Workspace/specvla-ergon--avditor-mvndi show --stat --oneline 6c1229d0c7eb2c093dc6a23bf3b5a3ab25cf3ff5
+git -C /Users/4jp/Workspace/specvla-ergon--avditor-mvndi show 6c1229d0c7eb2c093dc6a23bf3b5a3ab25cf3ff5:src/lib/plans.ts
+git -C /Users/4jp/Workspace/specvla-ergon--avditor-mvndi show 6c1229d0c7eb2c093dc6a23bf3b5a3ab25cf3ff5:src/lib/plans.test.ts
+```
+
+Result: private prompt extraction has `2` records; original worktree is absent; local surviving checkouts are not on the merged PR as current HEAD; PR #33 is merged at `6c1229d` with green `build-and-test`, `e2e`, and CodeQL; session-local tests had failed because `vitest` was missing, so current proof rests on the merged GitHub checks.
 
 ## Remaining Review Queue
 
