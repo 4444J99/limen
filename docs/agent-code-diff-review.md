@@ -93,7 +93,7 @@ Generated: `2026-07-04T08:12:45Z`
 | 98 | `claude` | `6226cb86-1ef9-4ab7-a8c5-e668da59b071` | Payment synthesis / credential-wall run. The session first produced a private high-context revenue/payment synthesis, then correctly moved credential/login/env atoms out of chat burden and into code plus a GitHub wall through merged PR #321 and issue #320. The later resume blurred session boundaries by drifting into a QUICKEN/live-checkout closeout claim; current git does not prove a surviving row-98 QUICKEN commit, so that part is recorded as a transcript-level scope/control failure rather than an attributed code diff. |
 | 99 | `claude` | `f0a18679-fd83-4fb8-a836-0cb7a79c58d8` | Domus Genoma CI-fix session. The prompt asked for one root-cause PR making failing lint/validation checks green, but the session could not run local validators or fetch GitHub logs, fanned out Opus subagents into manual read-only audits, and ended on a subagent result with no final implementation or PR. The local branch was only the already-merged PR #107 tip; current green CI came much later through PR #147. |
 | 100 | `opencode` | `ses_10a3c204bffeL4VwSbuTG4aEU8` | Shahnameh cycles 2-6 OpenCode run. The prompt asked for the next bounded Shahnameh batch and one green PR. OpenCode authored and locally validated cycles 2-6, but started on an unrelated `aeneid-books-2-3` branch with stale Tale of Genji/task-board dirt, stashed only tracked changes, copied untracked files into an existing worktree, and ended before commit/push/PR. Durable delivery came later through PR #130, while PR #167 shows the polluted broader branch should not be credited as clean closeout. |
-| 101 | `codex` | `019ede36-31ee-7980-9986-d6706db02872` | Tab-bookmark freemium gate. The prompt asked for a Pro gate and in-extension checkout but gave no executable acceptance predicate. Codex did a substantial local backend/extension pass, but ended with an uncommitted dirty worktree and blocked local Jest because dependencies were not installed. Durable PR #18 later landed a cleaned entitlement/billing implementation with green CI, but it did not preserve the missing popup HTML fix; current `origin/main` still points the manifest at `popup/popup.html` while no such file is tracked, and standard backend CI is currently red after later dependency merges. |
+| 101 | `codex` | `019ede36-31ee-7980-9986-d6706db02872` + `019ede4e-4bac-7280-ac68-271184e84f83` | Tab-bookmark freemium gate. The prompt asked for a Pro gate and in-extension checkout but gave no executable acceptance predicate. Codex did substantial local backend/extension passes; the second `e464` session produced PR #18, which merged the entitlement/billing implementation. The durable merge still dropped `popup.html`, and its green check was weak because the root CI detected no package manager and skipped install/test/build steps. |
 | 102 | `claude` | `303e319e-eb3f-4914-b423-c8ea60a64bee` | Visual-home / owner-ledger correction run. The session did useful recovery work: it proved PR #100's phantom required-check block, ran browser/a11y/perf verification with system Chrome, pushed fixes to `feat/visual-home`, and wrote a durable center-of-gravity lesson. It also demonstrates the failure it named: a late artist aside was inflated into an ETCETER4 go-live thread, final closure claims overstated current truth, PR #100 remains open/blocked, the claimed personal ledger path is absent on this host, and the memory compaction target has already drifted. |
 | 103 | `claude` | `0c1725b4-9776-4d87-9783-3e67151968f4` | The Invisible Ledger typing pass. The prompt asked Claude to remove worst `any` hotspots in `organvm/the-invisible-ledger` and keep build/tests green. Claude authored a broad 41-file branch and pushed PR #57, but local verification was narrower than claimed: `tsc` still had 10 "pre-existing" errors and CI failed at lint before tests/build ran. PR #57 is still open, conflicting, and unmerged; current green `main` came later through other deploy-ready work, and `origin/main` does not contain the new `src/lib/drill-types.ts`. |
 | 104 | `codex` | `019f1300-f46e-7803-bbe2-87e355146df0` | Workstream kickstart / lifecycle review run. The prompt sequence asked for prior-session review, prompt-vs-work recalculation, immediate "what next" triage, triptych checkpointing, a universal terminal start command, Domus package revival orientation, and notification-provider clarification. Codex produced useful board repair, lifecycle/workstream commits, focused verification, and a private prompt extract, but the session was highly overloaded: it mixed review, board mutation, Portvs preservation, universal launcher design, Domus orientation, and Warp/Claude notification routing. Durable workstream/lifecycle commits are on `main`; later Warp provenance and Portvs branch advances are adjacent continuations and should not be collapsed into this one row. |
@@ -5506,34 +5506,36 @@ Result: private prompt extraction has `1` record; the OpenCode DB proves local a
 
 ### Tab-bookmark freemium gate landed backend value, but the extension package stayed broken
 
-Severity: high for product completeness because the durable extension manifest references an untracked popup HTML file; medium for billing correctness because the backend gate is useful but has bypass/edge-case gaps.
+Severity: high for product completeness because the durable extension manifest references untracked popup/icon assets; medium for billing correctness because the backend gate is useful but has bypass/edge-case gaps.
 
 Evidence:
 
 - Queue row `101` points at Codex session `019ede36-31ee-7980-9986-d6706db02872`, rooted at `/Users/4jp/Workspace/.limen-worktrees/rev-tabbookmark-freemium-755e`, running 2026-06-19T04:49:16.905Z through 2026-06-19T05:04:11.073Z.
+- The same freemium task continued through Codex session `019ede4e-4bac-7280-ac68-271184e84f83`, rooted at deleted worktree `/Users/4jp/Workspace/.limen-worktrees/rev-tabbookmark-freemium-e464`, running 2026-06-19T05:15:37Z through 2026-06-19T05:29:32Z.
 - Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-101-codex-tabbookmark-freemium-prompts.jsonl` (`4` prompt records).
+- The second session's prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-codex-tabbookmark-freemium-e464-prompts.jsonl`: `4` prompt records, `3` unique prompt hashes, and `2,895` prompt bytes.
 - Prompt intent: add a `$4.99/mo` freemium Pro gate to `a-organvm/tab-bookmark-manager`; free tier limits such as one device / N bookmarks; Pro unlocks ML features and sync; checkout through Lemon Squeezy or Stripe from the extension.
 - Prompt gap: no executable predicate was provided. It did not name exact tests, expected API routes, checkout-provider contract, package validation, or a required PR/check URL.
 - Codex did a real local implementation pass: plan/config, billing service/controllers/routes, gate middleware, free-device/bookmark checks, Pro ML/sync route checks, extension auth/device headers, popup UI state, checkout handoff, env docs, and tests.
-- The local session blocked on Jest: `NODE_ENV=test JWT_SECRET=testsecret npm test -- --runTestsByPath src/__tests__/billing.test.js src/__tests__/bulk.test.js --forceExit` failed with `sh: jest: command not found` because `backend/node_modules` did not exist.
+- Both Codex local runs blocked on Jest because `backend/node_modules` did not exist. The `e464` session's targeted command ended with `sh: jest: command not found`.
 - Local static checks did pass for touched backend and extension JS files with `node --check`, and `git diff --check` passed.
-- The original worktree no longer exists. The transcript ended immediately after a final focused status read; there is no final answer, no local commit, no push, and no PR URL from the session itself.
-- Durable delivery later came through PR #18, `[limen REV-tabbookmark-freemium] Add a freemium Pro gate ($4.99/mo) to the tab/bookmark manager`, merged at `a66c89659f42849a5854a2db7168cd1715280ef2` on 2026-06-19T09:52:49Z.
-- PR #18 carried one commit (`12407ef65aa706bd585b07552f262397950e059d`) and green CI checks for `test (18.x)`, `test (20.x)`, and `test (22.x)`.
-- PR #18 was not the exact local dirty diff. The session's queue snapshot listed `30` files including `.env.example`, `.gitignore`, `backend/src/config/swagger.js`, `backend/src/routes/archive.js`, `backend/src/middleware/billingMiddleware.js`, and `extension/popup/popup.html`; the merged PR changed `23` files, used `entitlementMiddleware.js`/`entitlementService.js`, added `docs/API_GUIDE.md`, and did not include `.gitignore` or `extension/popup/popup.html`.
-- The durable extension package is broken: `origin/main:extension/manifest.json` declares `"default_popup": "popup/popup.html"`, but `origin/main` tracks only `extension/popup/popup.css` and `extension/popup/popup.js`. No commit in history touches `extension/popup/popup.html`.
+- Both original worktrees are now absent. The first transcript ended uncommitted with no PR URL; the second transcript ended with a final receipt but no local Jest proof.
+- Durable delivery came through PR #18, `[limen REV-tabbookmark-freemium] Add a freemium Pro gate ($4.99/mo) to the tab/bookmark manager`, merged at `a66c89659f42849a5854a2db7168cd1715280ef2` on 2026-06-19T09:52:49Z. Its head branch was `limen/rev-tabbookmark-freemium-e464`, matching the second Codex session root, and its single commit `12407ef65aa706bd585b07552f262397950e059d` was authored one second after that session's final message.
+- PR #18 was not the exact local dirty diff. The first session's queue snapshot listed `30` files including `.env.example`, `.gitignore`, `backend/src/config/swagger.js`, `backend/src/routes/archive.js`, `backend/src/middleware/billingMiddleware.js`, and `extension/popup/popup.html`; the second session's queue snapshot listed `24` files including `extension/popup/popup.html`; the merged PR changed `23` files and still did not include `.gitignore` or `extension/popup/popup.html`.
+- The PR #18 check run completed successfully, but it was not meaningful backend validation. Workflow run `27807423393` detected no root package manager, then skipped install, lint, typecheck, tests, coverage upload, and build in all three Node jobs. This means the local `jest: command not found` blocker remained unresolved by CI.
+- The durable extension package is broken: live `main:extension/manifest.json` declares `"default_popup": "popup/popup.html"`, but live `main` tracks only `extension/popup/popup.css` and `extension/popup/popup.js`. The GitHub contents API returns 404 for `extension/popup/popup.html`.
 - Root `.gitignore` still ignores `*.html` and only exempts `extension/icons/*.png`; the local Codex transcript explicitly noticed this and tried to add a narrow popup HTML exception, but that fix did not survive into PR #18.
-- Manifest asset validation is weak. Current `origin/main` also tracks only `extension/icons/README.md` while the manifest references icon PNGs.
+- Manifest asset validation is weak. Live `main` also tracks only `extension/icons/README.md` while the manifest references `icons/icon16.png`, `icon32.png`, `icon48.png`, and `icon128.png`.
 - Backend entitlement behavior still has correctness gaps on `origin/main`: `registerDeviceMiddleware` skips enforcement when `X-Device-Id` is absent, so the one-device free limit is extension-cooperative rather than server-mandatory; `setSubscriptionForUser` does not check whether a webhook update matched a user row.
-- Current repo health is not green: latest standard `CI` on `origin/main` (`5880eea3dbd53e3858a7290bf616f19f8d395c9b`, run `27914941818`) has backend Node 18/20/22 failures at the ESLint step, while extension and ML jobs succeeded. This is later dependency-merge drift, not PR #18's original merge state.
+- Current repo health is not green: latest standard `CI` on live `main` (`5880eea3dbd53e3858a7290bf616f19f8d395c9b`, run `27914941818`) has backend Node 18/20/22 failures at the ESLint step, while extension and ML jobs succeeded. This is later dependency-merge drift, not PR #18's original merge state.
 
 Ideal prompt diff:
 
 - Ideal form: specify a clean worktree, exact provider-neutral checkout contract, backend enforcement invariants, extension package validation, and an acceptance command such as backend tests plus manifest asset existence checks.
 - Actual form: broad product request with no predicate, leaving the agent to choose scope and verification.
 - Ideal implementation form: commit a complete extension package, including the manifest's popup HTML and referenced icons or manifest cleanup, and add CI checks for those asset references.
-- Actual durable form: backend entitlement/billing and popup/background JS landed and passed PR #18 CI, but the popup HTML remained untracked because the `*.html` ignore rule was not fixed.
-- Ideal attribution form: credit the local Codex session for exploration and a rough implementation shape; credit PR #18 for durable backend/API/UI JS delivery; do not claim the original session itself closed the task.
+- Actual durable form: backend entitlement/billing and popup/background JS landed, but the popup HTML remained untracked because the `*.html` ignore rule was not fixed. PR #18's green check did not run the backend tests.
+- Ideal attribution form: credit the first Codex session for exploration and a rough implementation shape; credit the second `e464` Codex session plus PR #18 for durable backend/API/UI JS delivery; do not claim the extension task itself is closed.
 
 Outcome:
 
@@ -5544,10 +5546,10 @@ Outcome:
 
 What was fucked up:
 
-- The prompt did not include a runnable predicate, so the local session could stop at `node --check` plus a Jest dependency blocker.
-- The agent ended with an uncommitted dirty worktree and no final report.
-- The local session identified the exact `.gitignore` / `popup.html` packaging problem, but the durable PR dropped that fix.
-- CI for PR #18 validated JavaScript syntax and backend tests, but not manifest asset existence. That let a missing default popup ship.
+- The prompt did not include a runnable predicate, so Codex could stop at `node --check` plus a Jest dependency blocker.
+- The first agent run ended with an uncommitted dirty worktree and no final report; the second run produced the PR but still did not prove tests locally.
+- The local sessions identified the exact `.gitignore` / `popup.html` packaging problem, but the durable PR dropped that fix.
+- CI for PR #18 was green without running install, lint, tests, or build. That let a missing default popup ship under a success badge.
 - The merged backend tests exercise the happy checkout path, route gating, and the two-device extension path; they do not cover missing device headers, webhook unknown users, or signature-provider failure modes deeply enough.
 - Later dependency automation put mainline backend CI back into a red state, so the current repository cannot be described as green despite PR #18's original checks.
 
@@ -5556,17 +5558,19 @@ Verification:
 ```bash
 jq '.changed_review[101]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
 wc -l .limen-private/session-corpus/full-stack-review/session-101-codex-tabbookmark-freemium-prompts.jsonl
+wc -l .limen-private/session-corpus/full-stack-review/session-codex-tabbookmark-freemium-e464-prompts.jsonl
 jq -r 'select(.type=="response_item" and .payload.type=="message") | [.timestamp, .payload.role, ((.payload.content // []) | map(.text // empty) | join("\n") | gsub("\n";" ") | .[0:500])] | @tsv' /Users/4jp/.codex/sessions/2026/06/19/rollout-2026-06-19T00-49-14-019ede36-31ee-7980-9986-d6706db02872.jsonl
+jq -r 'select(.type=="response_item" and .payload.type=="message") | [.timestamp, .payload.role, ((.payload.content // []) | map(.text // empty) | join("\n") | gsub("\n";" ") | .[0:500])] | @tsv' /Users/4jp/.codex/sessions/2026/06/19/rollout-2026-06-19T01-15-33-019ede4e-4bac-7280-ac68-271184e84f83.jsonl
 gh pr view 18 --repo organvm/tab-bookmark-manager --json number,title,state,createdAt,updatedAt,mergedAt,headRefName,baseRefName,mergeCommit,statusCheckRollup,url,files,commits,reviews
-git -C /Users/4jp/Workspace/a-organvm/tab-bookmark-manager show --stat --oneline --decorate a66c896
-git -C /Users/4jp/Workspace/a-organvm/tab-bookmark-manager ls-tree -r --name-only origin/main | rg '^extension/popup|^extension/manifest'
-git -C /Users/4jp/Workspace/a-organvm/tab-bookmark-manager show origin/main:extension/manifest.json
-git -C /Users/4jp/Workspace/a-organvm/tab-bookmark-manager show origin/main:.gitignore
+gh run view 27807423393 --repo organvm/tab-bookmark-manager --json databaseId,name,status,conclusion,headSha,jobs,url
+gh api 'repos/organvm/tab-bookmark-manager/git/trees/main?recursive=1' --jq '[.tree[].path | select(test("^(extension/manifest.json|extension/popup|extension/icons)"))]'
+gh api 'repos/organvm/tab-bookmark-manager/contents/extension/manifest.json?ref=main' --jq '.content' | base64 --decode
+gh api 'repos/organvm/tab-bookmark-manager/contents/extension/popup/popup.html?ref=main' --jq '.name'
 gh run list --repo organvm/tab-bookmark-manager --workflow CI --limit 10 --json databaseId,displayTitle,event,status,conclusion,createdAt,updatedAt,headSha,url,workflowName
 gh run view 27914941818 --repo organvm/tab-bookmark-manager --json jobs,conclusion,createdAt,displayTitle,headSha,url
 ```
 
-Result: private prompt extraction has `4` records; the transcript proves local implementation plus `jest` dependency blocker and dirty no-closeout ending; PR #18 is the green durable merge for the backend/JS gate; `origin/main` still lacks the manifest's popup HTML target and currently has backend CI failing at ESLint after later dependency merges.
+Result: first and second private prompt extractions each have `4` records; the transcripts prove local implementation plus `jest` dependency blockers; PR #18 merged the `e464` branch but its success run skipped install/test/build; live `main` still lacks the manifest's popup HTML target and icon PNGs; current backend CI is failing at ESLint after later dependency merges.
 
 ### Claude visual-home / owner-ledger correction did real verification, then overclaimed closure
 
