@@ -131,6 +131,7 @@ Generated: `2026-07-04T14:05:34Z`
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 | 150 | `codex` | `019ecda8-577e-7502-b811-ef2c27675cf9` | Universal-intake launch pass. Codex produced a useful local Limen launch ledger and verified public/private runtime boundaries, but the artifact stayed untracked in the dirty portfolio repo, live state has since drifted, and the session ended after promising three control-plane artifacts that were not created. |
 | 151 | `codex` | `019eddbf-da3c-76e2-b234-7441407c8636` | AI Chat Exporter Lemon Squeezy checkout run. Codex produced useful checkout-return/license-capture scaffolding and PR #33, but the Pro gate was a bypass because any non-empty stored license string set `isPro`. PR #33 closed unmerged with only a skipped release check and no test/build receipt. Durable production credit belongs to later license-verification and MONETA checkout work, especially merged PR #107 with green checks. |
+| 153 | `claude` | `84c5c2ec-839c-47fb-a278-f1942e65acc1` | D3 dialog recurrence / session lifecycle run. Claude correctly diagnosed the recurring macOS TCC prompt as detached Claude binaries reaching into `~/Downloads`, copied D2L exports into an edu-organism workspace path, and later found the live merge/heal scan-window blind spot. But the row's durable attribution is weak: the claimed `edu-organism` path and Claude plan file are absent on this host now, the live fix is host-local `~/.limen.env`, and no tracked Limen commit belongs directly to this session. |
 
 ## Merged Artifacts
 
@@ -9466,6 +9467,63 @@ git -C /Users/4jp/Workspace/a-i-chat--exporter show origin/master:src/utils/lice
 ```
 
 Result: private prompt extraction matches row `changed 151`; PR #33 is closed unmerged with only a skipped release check; its diff proves the non-empty-string `isPro` bypass; no full test/build receipt exists for the row; current `origin/master` contains the later MONETA signed-license path that fails closed and gates features on verified license status.
+
+### Claude's D3 dialog recurrence row fixed live friction, but most value was host-local rather than a durable repo diff
+
+Severity: medium for attribution and lifecycle accounting. The session addressed real recurring friction, but the queue row should not be read as a durable two-file code/doc patch.
+
+Evidence:
+
+- Refreshed queue row `changed_review[153]` points at Claude session `84c5c2ec-839c-47fb-a278-f1942e65acc1`, rooted at `/Users/4jp/Workspace/limen`, running from `2026-06-23T19:21:14Z` through `2026-06-24T12:43:04Z`.
+- The old interrupted review called this row 152; after regenerating the full corpus it is row 153. The stable identifier is the session id, not the array index.
+- Private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-changed-153-claude-d3-dialog-recurrence-prompts.jsonl`: `184` prompt records, `140` unique prompt hashes, `486,147` prompt bytes, surfaces `message.user: 146`, `last-prompt: 35`, and `queue.enqueue: 3`. Raw prompt bodies remain private/ignored.
+- The extraction bug from the interrupted pass is fixed: Claude `last-prompt` events store text in `lastPrompt`, and the tracked full-stack extractor includes those records.
+- First-layer prompt, redacted to intent: explain why a recurring macOS security dialog named the raw Claude Code version binary and make the recurrence stop instead of asking the user to keep granting access.
+- Claude's useful diagnosis was structurally plausible: a detached Claude Code version binary was reaching into `~/Downloads` for D2L/ENC1101 exports, and macOS TCC grants do not persist across changing version-binary identities.
+- The session copied five D2L export items from `~/Downloads` into `/Users/4jp/Workspace/edu-organism/classes/enc1101-summer-2026/sources/d2l/`, left the originals in Downloads, and wrote a breadcrumb README telling future agents to use the workspace copy.
+- That target repo is not present on this host now: `/Users/4jp/Workspace/edu-organism` is absent, and `/Users/4jp/Workspace/edu-organism/classes/enc1101-summer-2026/sources/d2l/README.md` cannot be inspected.
+- The other queue changed path, `/Users/4jp/.claude/plans/joyful-twirling-crayon.md`, is also absent now.
+- Mid-session, Claude launched two exploration agents over Studium state and correctly identified that the live tree had a large finished-but-uncommitted Studium batch plus an existing publishing pipeline. That was useful analysis, but it did not itself land the content.
+- Later in the session, Claude corrected a stale release-gate interpretation and found a real merge/heal blind spot: `drain.sh` used `LIMEN_MERGE_SCAN:-30` and `LIMEN_HEAL_SCAN:-30`, which missed ready and repairable PRs deeper in the backlog.
+- The applied live fix was host-local, not a repo patch: current `/Users/4jp/.limen.env` contains `LIMEN_MERGE_SCAN=80` and `LIMEN_HEAL_SCAN=80`.
+- The stale release-gate memory was also updated outside the repo: `/Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/memory/release-gate-hold-2026-06-19.md` now says the routine merge/dispatch gate opened `2026-06-20`, and `heal-merge-scan-blindspot.md` records the scan-window correction.
+- No matching Limen commit exists in the session window for `scripts/drain.sh`, `scripts/merge-drain.py`, `scripts/self-heal.py`, `scripts/_pr_scan.py`, `.limen.env`, or `tasks.yaml`. The final transcript explicitly says the session created no worktree and no uncommitted repo work of its own.
+- Nearby Studium commits and PRs did land during the same broad date window, but they are not direct row-153 output. They should be credited to their own PR/session rows.
+
+Ideal prompt diff:
+
+- Ideal form: split the run into three bounded packets: TCC/D2L source relocation, Studium batch landing plan, and merge/heal scan-window repair. Each packet should leave one durable receipt or explicitly mark itself host-local.
+- Actual form: one Claude session moved from a macOS dialog, to education-source relocation, to Studium planning, to release-gate memory correction, to daemon scan tuning, then closed itself as lifecycle-complete.
+- Ideal durability form: the D2L breadcrumb should live in a reachable repo or have a durable private receipt with a current path check; host-local daemon env changes should be paired with a tracked issue or code follow-up for the real rotating-window fix.
+- Actual durability form: the strongest surviving facts are transcript evidence, private prompt extraction, `.limen.env`, and Claude memory files. The two changed paths reported by the queue are absent now.
+- Ideal attribution form: credit the row for live diagnosis and host-local mitigation, not for shipped Studium content, durable repo code, or a completed tracked education artifact.
+
+Outcome:
+
+- Credit row `changed 153` for correctly refusing the "just click Allow forever" path, copying D2L sources away from a TCC-gated folder, surfacing the stale release-gate frame, and applying the immediate scan-window env fix.
+- Do not credit row `changed 153` as a durable Limen code change. Its primary mutation was host-local state plus private Claude memory; the reported changed files are not inspectable on this host now.
+- Treat the proper long-term merge/heal repair as the tracked `_pr_scan.py` / rotating-window workstream, not as completed by this row's `~/.limen.env` override.
+
+What was fucked up:
+
+- The row mixed three different jobs into one session: macOS TCC friction, Studium content planning, and live merge/heal control-plane tuning.
+- The queue changed-file surface is misleading: both changed paths are absent now, while the important live mutation is `~/.limen.env`, which is intentionally host-local and not in git.
+- The session initially treated an outdated release-gate headline as the prime directive, then had to correct its own memory model mid-run.
+- The D2L source copy may have been the right live mitigation, but without the `edu-organism` checkout present now, the artifact is not currently reviewable.
+- The final "lifecycle complete" was true only in the narrow no-worktree/no-repo-dirt sense. It did not produce a durable tracked patch or public receipt for the TCC or scan-window fixes.
+
+Verification:
+
+```bash
+jq '.changed_review[153]' /Users/4jp/Workspace/.limen-worktrees/agent-code-review-0704-113/.limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+jq -s '{records:length, unique_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), surfaces:([group_by(.surface)[] | {surface:.[0].surface,count:length}]), sources:([group_by(.source)[] | {source:.[0].source,count:length}])}' /Users/4jp/Workspace/.limen-worktrees/agent-code-review-0704-113/.limen-private/session-corpus/full-stack-review/session-changed-153-claude-d3-dialog-recurrence-prompts.jsonl
+ls -ld /Users/4jp/.claude/plans/joyful-twirling-crayon.md /Users/4jp/Workspace/edu-organism /Users/4jp/Workspace/edu-organism/classes/enc1101-summer-2026/sources/d2l
+rg -n 'LIMEN_MERGE_SCAN|LIMEN_HEAL_SCAN' /Users/4jp/.limen.env
+rg -n 'GATE OPENED|LIMEN_MERGE_SCAN|LIMEN_HEAL_SCAN|release gate|HOLD' /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/memory/release-gate-hold-2026-06-19.md /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/memory/heal-merge-scan-blindspot.md
+git -C /Users/4jp/Workspace/limen log --oneline --since='2026-06-24T12:33:00Z' --until='2026-06-24T12:45:00Z' -- scripts/drain.sh scripts/merge-drain.py scripts/self-heal.py scripts/_pr_scan.py .limen.env tasks.yaml
+```
+
+Result: refreshed prompt extraction includes the missing `last-prompt` surface; the two queue changed paths are absent on this host; `~/.limen.env` still carries the scan-window override; Claude memory records the release-gate correction and scan-window correction; no matching tracked Limen commit exists in the row's closeout window.
 
 ## Remaining Review Queue
 

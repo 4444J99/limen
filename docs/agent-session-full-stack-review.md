@@ -1,6 +1,6 @@
 # Agent Session Full-Stack Review
 
-Generated: `2026-07-04T00:03:49Z`
+Generated: `2026-07-04T15:34:20Z`
 
 ## Scope
 
@@ -12,29 +12,29 @@ Generated: `2026-07-04T00:03:49Z`
 
 - Verbatim prompt events: `.limen-private/session-corpus/full-stack-review/verbatim-prompts.jsonl`
 - Structured review: `.limen-private/session-corpus/full-stack-review/agent-session-review.json`
-- Prompt events extracted: `125919`
-- Unique prompt hashes: `74742`
-- Unique normalized task-body hashes: `74663`
-- Sessions reviewed: `4375`
-- Outcome text scanned: `624380590` bytes
+- Prompt events extracted: `126593`
+- Unique prompt hashes: `74996`
+- Unique normalized task-body hashes: `74917`
+- Sessions reviewed: `4535`
+- Outcome text scanned: `684989220` bytes
 
 ## Agent Coverage
 
 | Agent | Sessions | Prompt events | Prompt bytes | Task-body bytes | Verified sessions | Receipt sessions | Likely no-op/unrecorded |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| `agy` | 528 | 554 | 2214237 | 1950958 | 303 | 499 | 28 |
-| `claude` | 1276 | 115958 | 247732459 | 243719645 | 765 | 876 | 345 |
-| `codex` | 1303 | 8132 | 18846241 | 13794477 | 1039 | 1067 | 236 |
-| `opencode` | 1268 | 1275 | 2979982 | 2979976 | 866 | 1039 | 228 |
+| `agy` | 528 | 554 | 2329036 | 2065757 | 303 | 499 | 28 |
+| `claude` | 1337 | 116342 | 248879858 | 244160873 | 766 | 877 | 405 |
+| `codex` | 1358 | 8378 | 20157934 | 14481822 | 1094 | 1122 | 236 |
+| `opencode` | 1312 | 1319 | 3283482 | 3283476 | 902 | 1077 | 234 |
 
 ## Work Surface Coverage
 
 | Agent | Structured change sessions | Structured change refs | Input tokens | Output tokens | Reasoning tokens | Cost |
 |---|---:|---:|---:|---:|---:|---:|
-| `agy` | 225 | 493 | 0 | 0 | 0 | 0.0000 |
-| `claude` | 448 | 2795 | 0 | 0 | 0 | 0.0000 |
-| `codex` | 885 | 4808 | 0 | 0 | 0 | 0.0000 |
-| `opencode` | 405 | 3484 | 145344500 | 2839094 | 1777101 | 0.0000 |
+| `agy` | 224 | 479 | 0 | 0 | 0 | 0.0000 |
+| `claude` | 449 | 2801 | 0 | 0 | 0 | 0.0000 |
+| `codex` | 918 | 5123 | 0 | 0 | 0 | 0.0000 |
+| `opencode` | 425 | 3980 | 146792862 | 2950524 | 1870715 | 0.0000 |
 
 Structured change refs are native or structured tool-payload surfaces, not inferred code diffs. In this local corpus OpenCode exposes native SQLite diffs; Codex and Claude add conservative patch/edit/write tool paths; Agy adds conservative CLI `TargetFile` tool paths when present.
 
@@ -42,19 +42,19 @@ Structured change refs are native or structured tool-payload surfaces, not infer
 
 | Body kind | Prompt events |
 |---|---:|
-| `direct` | 121929 |
-| `flame_scaffold` | 2268 |
-| `flame_with_task_body` | 1707 |
+| `direct` | 122315 |
+| `flame_scaffold` | 2328 |
+| `flame_with_task_body` | 1935 |
 | `session_context` | 15 |
 
 ## Source Coverage
 
 | Source | Prompt events |
 |---|---:|
-| `claude-projects` | 115958 |
-| `codex-sessions` | 7154 |
-| `opencode-db` | 1275 |
-| `codex-history` | 978 |
+| `claude-projects` | 116342 |
+| `codex-sessions` | 7390 |
+| `opencode-db` | 1319 |
+| `codex-history` | 988 |
 | `agy-cli-conversations` | 480 |
 | `agy-cli-history` | 44 |
 | `gemini-tmp-agy` | 30 |
@@ -79,10 +79,10 @@ Each session is compared to this ideal form:
 
 ## What Broke
 
-- `1402` sessions with prompts had no verification signal in the reviewed outcome text.
-- `894` sessions had no durable receipt signal or changed-file receipt.
-- `837` sessions look like no-op or unrecorded work because prompts exist but the outcome surface has no verification/receipt/change signal.
-- `3975` prompt events carried FLAME scaffolding; the task body is now separated, but older ledger views overcounted repeated invariant prompt mass as fresh work.
+- `1470` sessions with prompts had no verification signal in the reviewed outcome text.
+- `960` sessions had no durable receipt signal or changed-file receipt.
+- `903` sessions look like no-op or unrecorded work because prompts exist but the outcome surface has no verification/receipt/change signal.
+- `4263` prompt events carried FLAME scaffolding; the task body is now separated, but older ledger views overcounted repeated invariant prompt mass as fresh work.
 - Structured changed-file data is still uneven by agent: OpenCode exposes SQLite diffs, Codex and Claude expose conservative patch/edit/write tool paths, and Agy exposes conservative CLI `TargetFile` tool paths when present.
 - OpenCode had many sessions that only become trustworthy when its DB-backed token clock and receipt handshake are present; session rows alone are not enough.
 - Antigravity IDE has no first-class prompt/session records on this host; provider quota is still not represented as a native receipt surface.
@@ -99,13 +99,13 @@ Each session is compared to this ideal form:
 | 6 | `claude` | `dc879846-e9bf-41c0-b25d-5cebab230983` | 2594 | 1858 | repeated broad/invariant prompt pressure | ~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-nested-humming-mochi/dc879846-e9bf-41c0-b25d-5cebab230983.jsonl<br>~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-nested-humming-mochi/dc879846-e9bf-41c0-b25d-5cebab230983/subagents/agent-a120e9fec105aff82.jsonl |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | 2046 | 1684 | repeated broad/invariant prompt pressure | ~/.claude/projects/-Users-4jp-Workspace-limen/34d17b80-3af9-41d6-8c52-231ddce47064.jsonl<br>~/.claude/projects/-Users-4jp-Workspace-limen/34d17b80-3af9-41d6-8c52-231ddce47064/subagents/agent-a214fdddae40bb120.jsonl |
 | 8 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | 1712 | 1675 | repeated broad/invariant prompt pressure | ~/.claude/projects/-Users-4jp-Workspace-limen/a39889c7-0aae-4348-84ed-19612cb0daa2.jsonl<br>~/.claude/projects/-Users-4jp-Workspace-limen/a39889c7-0aae-4348-84ed-19612cb0daa2/subagents/agent-a247af5bfed85d756.jsonl |
-| 9 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | 1815 | 1567 | repeated broad/invariant prompt pressure | ~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-ticklish-bubbling-robin/0305e50a-e5ba-48e6-8fb1-6fb61264470d.jsonl<br>~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-ticklish-bubbling-robin/0305e50a-e5ba-48e6-8fb1-6fb61264470d/subagents/agent-a0467340f188db4f8.jsonl |
+| 9 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | 1862 | 1669 | repeated broad/invariant prompt pressure | ~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-ticklish-bubbling-robin/0305e50a-e5ba-48e6-8fb1-6fb61264470d.jsonl<br>~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-ticklish-bubbling-robin/0305e50a-e5ba-48e6-8fb1-6fb61264470d/subagents/agent-a0467340f188db4f8.jsonl |
 | 10 | `claude` | `4693c425-3c29-4a48-9a0b-54fd9fd37753` | 1525 | 1492 | repeated broad/invariant prompt pressure; failure/blocker language outweighs done language | ~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-piped-booping-kettle/4693c425-3c29-4a48-9a0b-54fd9fd37753.jsonl<br>~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-piped-booping-kettle/4693c425-3c29-4a48-9a0b-54fd9fd37753/subagents/agent-a0557b6700135bd60.jsonl |
 | 11 | `claude` | `3d972c29-36c6-4803-b94b-255df104f644` | 1530 | 1459 | repeated broad/invariant prompt pressure | ~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-integration-organs/3d972c29-36c6-4803-b94b-255df104f644.jsonl<br>~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-integration-organs/3d972c29-36c6-4803-b94b-255df104f644/subagents/agent-a0520000a299cee80.jsonl |
 | 12 | `claude` | `b7efae9c-af24-4c2c-9288-d2fa860ba974` | 4098 | 1450 | repeated broad/invariant prompt pressure | ~/.claude/projects/-Volumes-Archive4T/b7efae9c-af24-4c2c-9288-d2fa860ba974.jsonl<br>~/.claude/projects/-Volumes-Archive4T/b7efae9c-af24-4c2c-9288-d2fa860ba974/subagents/workflows/wf_12b30531-cf8/agent-a022f1572abeac617.jsonl |
 | 13 | `claude` | `f9c6b1e7-2c05-4d42-9d6a-8b08ee98a155` | 1708 | 1387 | repeated broad/invariant prompt pressure | ~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-integration-organs/f9c6b1e7-2c05-4d42-9d6a-8b08ee98a155/subagents/agent-a42604aaa1aeb9fb5.jsonl<br>~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-integration-organs/f9c6b1e7-2c05-4d42-9d6a-8b08ee98a155/subagents/agent-a4590ce4995abceb9.jsonl |
-| 14 | `claude` | `3be1f3a6-e00e-403d-a967-6d86c55deb56` | 1292 | 1216 | repeated broad/invariant prompt pressure | ~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-feat-workstream-channels/3be1f3a6-e00e-403d-a967-6d86c55deb56/subagents/agent-a5c42b2a74c922eb5.jsonl<br>~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-feat-workstream-channels/3be1f3a6-e00e-403d-a967-6d86c55deb56/subagents/agent-a83e5c825cb67363c.jsonl |
-| 15 | `claude` | `4a4c2aa8-d455-431e-b18c-3ac1d5824741` | 1872 | 1201 | repeated broad/invariant prompt pressure | ~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-linear-conjuring-bear/4a4c2aa8-d455-431e-b18c-3ac1d5824741.jsonl<br>~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-linear-conjuring-bear/4a4c2aa8-d455-431e-b18c-3ac1d5824741/subagents/agent-a0f59b52ab3fc4cca.jsonl |
+| 14 | `claude` | `4a4c2aa8-d455-431e-b18c-3ac1d5824741` | 1917 | 1300 | repeated broad/invariant prompt pressure | ~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-linear-conjuring-bear/4a4c2aa8-d455-431e-b18c-3ac1d5824741.jsonl<br>~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-linear-conjuring-bear/4a4c2aa8-d455-431e-b18c-3ac1d5824741/subagents/agent-a0f59b52ab3fc4cca.jsonl |
+| 15 | `claude` | `3be1f3a6-e00e-403d-a967-6d86c55deb56` | 1292 | 1216 | repeated broad/invariant prompt pressure | ~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-feat-workstream-channels/3be1f3a6-e00e-403d-a967-6d86c55deb56/subagents/agent-a5c42b2a74c922eb5.jsonl<br>~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-feat-workstream-channels/3be1f3a6-e00e-403d-a967-6d86c55deb56/subagents/agent-a83e5c825cb67363c.jsonl |
 | 16 | `claude` | `5e1004b3-b917-4a9d-a1ca-0f9b2b8dba45` | 958 | 1132 | repeated broad/invariant prompt pressure | ~/.claude/projects/-Users-4jp-Workspace-limen/5e1004b3-b917-4a9d-a1ca-0f9b2b8dba45.jsonl<br>~/.claude/projects/-Users-4jp-Workspace-limen/5e1004b3-b917-4a9d-a1ca-0f9b2b8dba45/subagents/agent-a933da4a2cb8d55d3.jsonl |
 | 17 | `claude` | `57fa1ead-aabf-4c2e-b62e-6843cf74a66a` | 1280 | 1117 | repeated broad/invariant prompt pressure | ~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-indexed-baking-breeze/57fa1ead-aabf-4c2e-b62e-6843cf74a66a.jsonl<br>~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-indexed-baking-breeze/57fa1ead-aabf-4c2e-b62e-6843cf74a66a/subagents/agent-a3e667029c14d3b93.jsonl |
 | 18 | `claude` | `84a89bbb-ecd3-4e22-8148-f9b683bd2d92` | 1116 | 1096 | repeated broad/invariant prompt pressure | ~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-melodic-riding-hinton/84a89bbb-ecd3-4e22-8148-f9b683bd2d92.jsonl<br>~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-melodic-riding-hinton/84a89bbb-ecd3-4e22-8148-f9b683bd2d92/subagents/agent-a493c8070e9bd376f.jsonl |
@@ -132,20 +132,20 @@ Each session is compared to this ideal form:
 
 ## Agent Notes
 
-- `agy`: top gaps: failure/blocker language outweighs done language (423), session outcome lacks verification signal (206), prompt missing expected receipt/artifact (82), session outcome lacks durable receipt signal (28), likely no-op or unrecorded work (28).
-- `claude`: top gaps: session outcome lacks verification signal (511), session outcome lacks durable receipt signal (400), repeated broad/invariant prompt pressure (367), failure/blocker language outweighs done language (362), likely no-op or unrecorded work (345).
-- `codex`: top gaps: failure/blocker language outweighs done language (726), session outcome lacks verification signal (264), prompt missing executable predicate (252), session outcome lacks durable receipt signal (236), likely no-op or unrecorded work (236).
-- `opencode`: top gaps: prompt missing expected receipt/artifact (549), session outcome lacks verification signal (401), prompt missing executable predicate (396), session outcome lacks durable receipt signal (228), likely no-op or unrecorded work (228).
+- `agy`: top gaps: failure/blocker language outweighs done language (417), session outcome lacks verification signal (206), prompt missing expected receipt/artifact (65), session outcome lacks durable receipt signal (28), likely no-op or unrecorded work (28).
+- `claude`: top gaps: session outcome lacks verification signal (571), session outcome lacks durable receipt signal (460), likely no-op or unrecorded work (405), repeated broad/invariant prompt pressure (368), failure/blocker language outweighs done language (362).
+- `codex`: top gaps: failure/blocker language outweighs done language (763), session outcome lacks verification signal (264), prompt missing executable predicate (252), session outcome lacks durable receipt signal (236), likely no-op or unrecorded work (236).
+- `opencode`: top gaps: prompt missing expected receipt/artifact (549), session outcome lacks verification signal (409), prompt missing executable predicate (396), session outcome lacks durable receipt signal (234), likely no-op or unrecorded work (234).
 
 ## Antigravity/Agy Native Surface
 
 - Known native state files: `4`.
-- Agy CLI conversation DBs decoded: `501` files, `894586880` bytes.
+- Agy CLI conversation DBs decoded: `501` files, `892334080` bytes.
 - Agy CLI implicit protobuf files inventoried: `13` files, `13532` bytes, `5` printable text spans.
 - Antigravity IDE conversation dirs checked: `.gemini/antigravity-ide/conversations` has `0` files; `.gemini/antigravity/conversations` has `0` files.
 - Antigravity IDE state DBs checked: `4` DBs, `204` keys, `28` chat/prompt/trajectory-like keys.
 - Antigravity IDE log evidence: `1` zero-chat-session migration lines and `3` trajectory-store startup lines across `76` log files.
-- Local support files inventoried: `621875` files, `33510178751` bytes.
+- Local support files inventoried: `627665` files, `33644273113` bytes.
 - Coverage note: Agy CLI history and per-conversation SQLite prompt bodies are decoded. Antigravity IDE conversation directories are empty on this host; IDE state DBs and logs were checked for prompt/session stores and did not add first-class prompt events.
 
 ## Next Repairs
