@@ -170,14 +170,14 @@ The human is the final authority for every relational act.
 
 ## Current stage and validation
 
-The macro platform is **5% mature** (scaffold stage). The kernel architecture is specified, the
-five-primitive map is complete, and the first relationship-posture brief proves the concept
-for one real tie. The remaining lift to 30% (entering building stage):
+The macro platform is **15% mature** (scaffold stage). The kernel architecture is specified, the
+five-primitive map is complete, the triage dashboard is wired as a generated report, and the first
+relationship-posture brief proves the concept for one real tie. The remaining lift to 30% (entering
+building stage):
 
 1. Complete the engagements fleet with 3-5 diverse relationship types
 2. Wire the cadence engine as a recurring beat
-3. Build the triage dashboard as a generated report
-4. Operationalize boundary enforcement as a structural check
+3. Operationalize boundary enforcement as a structural check
 
 Validation:
 
@@ -187,6 +187,9 @@ python organs/social/validate-social.py --fleet
 
 # generate a relationship-posture brief
 python organs/social/scripts/relationship-brief.py organs/social/engagements/derek.yaml
+
+# generate the fleet-wide triage dashboard
+python organs/social/scripts/triage-dashboard.py
 ```
 
 ---

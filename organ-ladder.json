@@ -142,14 +142,14 @@
       "organ": "Social / Koinonia",
       "repo": "organvm/limen",
       "home": "organs/social/",
-      "maturity": 5,
+      "maturity": 15,
       "stage": "scaffold",
       "whose_hand": "mine",
       "rival": "a civic/community institution + relationship support ('relationship gurus')",
       "domain_map": "Member=person/contact; Mandate=relationship; Standing=tie strength; Standard=reciprocity norm; Governance=community rules",
       "macro": "community + relationship infrastructure anyone can hold",
       "micro": "Anthony's network, correspondence, and relationship support",
-      "first_artifact": "charter the social organ: what institution it rivals + the 5-primitive map + first slice",
+      "first_artifact": "charter + 5-primitive map + derek relationship-posture brief + triage dashboard",
       "note": "named by him, unscoped"
     },
     {
