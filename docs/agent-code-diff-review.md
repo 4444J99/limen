@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T06:01:04Z`
+Generated: `2026-07-04T06:14:47Z`
 
 ## Scope
 
@@ -38,6 +38,7 @@ Generated: `2026-07-04T06:01:04Z`
 | 78 | `claude` | `3424630b-7849-4c5b-a9bb-5f24cd7b3ec8` | D2L discussion-responder skill run. The session correctly turned a repeatable LMS-instructor workflow into `organvm/_agent` skill PR #19 with FERPA/process boundaries and D2L browser mechanics, but it cost 2.6M Opus billable tokens and two Opus subagents. Review also found and fixed a reusable-skill privacy edge: concrete-looking student-name examples are now placeholders in `_agent` commit `8456104`. |
 | 79 | `claude` | `efb53173-614a-4f9f-9399-48fbab1150ee` | Credential hydration / no-more-login run. The deleted worktree did land the core `creds-hydrate` organ through PR #217 and many later corrections: env propagation, validity probes, phantom-lane retirement, `op` prompt-storm prevention, GH keyring derivation, and Cloudflare probe correction. It was valuable root healing, but the session spent 3.98M billable / 3.70M Opus and repeatedly overclaimed done before testing the real property. Review fixed stale launchd/script guidance that still described bare `--apply` as 1Password self-heal instead of promptless-only hydration. |
 | 80 | `codex` | `019ede36-2d1a-7fe1-9793-e42f2d9ca717` | Avditor premium-tier Codex run. The prompt asked for a $29-$99 paid tier with Stripe checkout, Growth Vault / advanced-audit gating, and the free audit preserved. The original ephemeral worktree is gone and the transcript ends mid-edit with local tests blocked by missing `vitest`, but the same task later landed as PR #33 with green build/test/e2e. The durable merged diff is narrower than the queue's 35-file snapshot. |
+| 81 | `codex` | `019ee341-d271-7da2-81f1-79c53da2cda4` | Avditor billing Codex run. The prompt asked for Stripe/Lemon Squeezy checkout plus a license/subscription gate around premium features while preserving the free tier. The original worktree is gone, and PR #43 was left open/red: local tests were blocked by missing `vitest`, CI failed in `next build`, and review found a Stripe webhook ordering bug. Review repaired the PR branch in commit `7ee8531`: schedule gating now builds, incomplete `subscription.created` events no longer downgrade active checkout state, local unit/build/lint checks pass, GitHub CI run `28697258820` is green, and PR #43 merged at `9614eef`. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -4219,6 +4220,66 @@ git -C /Users/4jp/Workspace/specvla-ergon--avditor-mvndi show 6c1229d0c7eb2c093d
 ```
 
 Result: private prompt extraction has `2` records; original worktree is absent; local surviving checkouts are not on the merged PR as current HEAD; PR #33 is merged at `6c1229d` with green `build-and-test`, `e2e`, and CodeQL; session-local tests had failed because `vitest` was missing, so current proof rests on the merged GitHub checks.
+
+### Codex Avditor billing run left an open red PR; review repaired and merged it
+
+Severity: high for monetization/access-control surface at first review; current merged artifact is green.
+
+Evidence:
+
+- Queue row `81` points at Codex session `019ee341-d271-7da2-81f1-79c53da2cda4`, rooted at deleted worktree `/Users/4jp/Workspace/.limen-worktrees/bld2-specvla-ergon--avditor-mvndi-billing-921e`, with a 34-file changed-file snapshot and no `git_root`.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-81-codex-avditor-billing-prompts.jsonl` (`2` records: `1` environment context and `1` task prompt).
+- In redacted intent form, the prompt asked Codex to complete `BLD2-specvla-ergon--avditor-mvndi-billing`: wire Stripe or Lemon Squeezy checkout plus a license/subscription gate around premium features, while preserving the free tier.
+- Durable delivery existed as PR `organvm/specvla-ergon--avditor-mvndi#43`, but it was open and red at first review: head `74d010a`, mergeable, CodeQL success, `CI / build-and-test` failure, and e2e skipped.
+- The failed CI run `27860269059` passed unit tests (`445` tests) but failed `next build` during TypeScript with `Property 'user' does not exist on type 'NextMiddleware'` in `src/app/api/settings/schedules/route.ts`.
+- The Codex transcript had already seen local `npm test` fail because `vitest` was not installed (`sh: vitest: command not found`), then relied on grep/diff hygiene rather than establishing a runnable dependency environment.
+- A ChatGPT Codex review comment on PR #43 identified a real Stripe webhook risk: `customer.subscription.created` can arrive after `checkout.session.completed` and persist an initial `incomplete` status over an already-active checkout grant because webhook delivery order is not guaranteed.
+
+Ideal prompt diff:
+
+- Ideal form: install locked dependencies, run the billing route/webhook tests and production build, fix failing gates before opening or declaring the PR ready, and encode webhook delivery-order invariants as tests.
+- Actual session form: it opened a useful but unfinished PR, left the original worktree absent, and reported verification as blocked by missing dependencies while GitHub later proved the build was broken.
+- Ideal code form: use a stable session type for schedule entitlement checks, and treat `customer.subscription.created` as a non-downgrading event unless it is already active/trialing.
+- Actual code form before review: schedule entitlement typing accidentally used the overloaded `auth` middleware return type, and Stripe `created`/`updated` events shared the same persistence path.
+
+Outcome:
+
+- Created repair worktree `/Users/4jp/Workspace/.limen-worktrees/review-avditor-billing-pr43` from PR #43 and pushed commit `7ee85315c78ac3ab7911cb9919740336d0cec145` (`fix: harden billing gate follow-up`) back to `limen/bld2-specvla-ergon--avditor-mvndi-billing-921e`.
+- Fixed `src/app/api/settings/schedules/route.ts` by replacing `Awaited<ReturnType<typeof auth>>` with the narrow session shape this route needs for plan/flag entitlement checks.
+- Fixed `src/app/api/webhooks/stripe/route.ts` by separating `customer.subscription.updated` from `customer.subscription.created`; created events now persist only active/trialing subscriptions, preventing an incomplete create event from downgrading checkout-completed access.
+- Added regression coverage in `src/app/api/webhooks/stripe/route.test.ts` for active created subscriptions and ignored incomplete created subscriptions.
+- GitHub PR #43 merged at `9614eef02e88c25049124ba1f563a9d28cd03f12` after CI run `28697258820` completed green for `build-and-test` and `e2e`.
+
+What was fucked up:
+
+- The prompt did not supply an executable predicate or receipt target, and the session accepted missing dependencies as a blocker instead of running `npm ci`.
+- The PR was left open/red on a production monetization gate, so the task was not actually done even though a broad billing diff existed.
+- The code crossed into a subtle billing-state race: webhook delivery order could revoke active paid state after a checkout success.
+- Queue changed-file attribution again overstates what should be reviewed as authored diff; the meaningful failure was in a few billing/schedule files plus the PR/CI state, not a 34-file review blob.
+- The repair commit inherited the external checkout's `Test User <test@example.com>` git identity, repeating the provenance noise seen in other generated-task PRs even though the GitHub PR receipt is clear.
+
+Verification:
+
+```bash
+wc -l .limen-private/session-corpus/full-stack-review/session-81-codex-avditor-billing-prompts.jsonl
+jq -r '.kind' .limen-private/session-corpus/full-stack-review/session-81-codex-avditor-billing-prompts.jsonl | sort | uniq -c
+test -d /Users/4jp/Workspace/.limen-worktrees/bld2-specvla-ergon--avditor-mvndi-billing-921e
+gh pr view 43 --repo organvm/specvla-ergon--avditor-mvndi --json number,state,mergeable,headRefOid,statusCheckRollup,reviewDecision,url
+gh run view 27860269059 --repo organvm/specvla-ergon--avditor-mvndi --json databaseId,status,conclusion,url,headSha,jobs
+git -C /Users/4jp/Workspace/specvla-ergon--avditor-mvndi fetch origin pull/43/head:review/pr43-billing-fix
+git -C /Users/4jp/Workspace/specvla-ergon--avditor-mvndi worktree add /Users/4jp/Workspace/.limen-worktrees/review-avditor-billing-pr43 review/pr43-billing-fix
+npm ci
+npm test -- src/app/api/webhooks/stripe/route.test.ts src/app/api/settings/schedules/route.test.ts
+npm test
+npm run build
+npm run lint
+git diff --check
+git push origin HEAD:limen/bld2-specvla-ergon--avditor-mvndi-billing-921e
+gh run view 28697258820 --repo organvm/specvla-ergon--avditor-mvndi --json databaseId,name,status,conclusion,createdAt,updatedAt,url,headSha,jobs
+gh pr view 43 --repo organvm/specvla-ergon--avditor-mvndi --json number,title,state,mergedAt,mergeCommit,headRefOid,statusCheckRollup
+```
+
+Result: private prompt extraction has `2` records; original worktree is absent; PR #43 was open/red on head `74d010a`; local repair commit `7ee8531` pushed to the PR branch; targeted tests passed `2` files / `15` tests; full `npm test` passed `76` files / `447` tests; `npm run build` passed; `npm run lint` exited `0` with 11 pre-existing warnings outside the patched files; `git diff --check` passed; GitHub CI run `28697258820` completed success; PR #43 merged at `9614eef`.
 
 ## Remaining Review Queue
 
