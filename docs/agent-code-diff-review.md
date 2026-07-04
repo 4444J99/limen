@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T07:49:33Z`
+Generated: `2026-07-04T07:53:27Z`
 
 ## Scope
 
@@ -86,6 +86,7 @@ Generated: `2026-07-04T07:49:33Z`
 | 100 | `opencode` | `ses_10a3c204bffeL4VwSbuTG4aEU8` | Shahnameh cycles 2-6 OpenCode run. The prompt asked for the next bounded Shahnameh batch and one green PR. OpenCode authored and locally validated cycles 2-6, but started on an unrelated `aeneid-books-2-3` branch with stale Tale of Genji/task-board dirt, stashed only tracked changes, copied untracked files into an existing worktree, and ended before commit/push/PR. Durable delivery came later through PR #130, while PR #167 shows the polluted broader branch should not be credited as clean closeout. |
 | 101 | `codex` | `019ede36-31ee-7980-9986-d6706db02872` | Tab-bookmark freemium gate. The prompt asked for a Pro gate and in-extension checkout but gave no executable acceptance predicate. Codex did a substantial local backend/extension pass, but ended with an uncommitted dirty worktree and blocked local Jest because dependencies were not installed. Durable PR #18 later landed a cleaned entitlement/billing implementation with green CI, but it did not preserve the missing popup HTML fix; current `origin/main` still points the manifest at `popup/popup.html` while no such file is tracked, and standard backend CI is currently red after later dependency merges. |
 | 102 | `claude` | `303e319e-eb3f-4914-b423-c8ea60a64bee` | Visual-home / owner-ledger correction run. The session did useful recovery work: it proved PR #100's phantom required-check block, ran browser/a11y/perf verification with system Chrome, pushed fixes to `feat/visual-home`, and wrote a durable center-of-gravity lesson. It also demonstrates the failure it named: a late artist aside was inflated into an ETCETER4 go-live thread, final closure claims overstated current truth, PR #100 remains open/blocked, the claimed personal ledger path is absent on this host, and the memory compaction target has already drifted. |
+| 103 | `claude` | `0c1725b4-9776-4d87-9783-3e67151968f4` | The Invisible Ledger typing pass. The prompt asked Claude to remove worst `any` hotspots in `organvm/the-invisible-ledger` and keep build/tests green. Claude authored a broad 41-file branch and pushed PR #57, but local verification was narrower than claimed: `tsc` still had 10 "pre-existing" errors and CI failed at lint before tests/build ran. PR #57 is still open, conflicting, and unmerged; current green `main` came later through other deploy-ready work, and `origin/main` does not contain the new `src/lib/drill-types.ts`. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -5525,6 +5526,65 @@ sed -n '1,100p' /Users/4jp/.claude/file-history/303e319e-eb3f-4914-b423-c8ea60a6
 ```
 
 Result: private prompt extraction has `312` prompt-bearing records; Claude usage metadata is unreliable for this row; PR #100 remains open/blocked with only Release Drafter checks; `feat/visual-home` carries the pushed fixes; the ETCETER4 relay branch exists without a PR; the center-of-gravity and institutions memory files survive; the personal ledger files survive only in Claude file-history backups, not at the claimed current workspace path; current memory size is above the stated target.
+
+### Claude Invisible Ledger typing pass removed many `any`s, but left an open red PR
+
+Severity: medium for target-repo delivery; the authored diff is not on current `main`, and the public PR is still red/conflicting.
+
+Evidence:
+
+- Queue row `103` points at Claude session `0c1725b4-9776-4d87-9783-3e67151968f4`, rooted at `/Users/4jp/Workspace/.limen-worktrees/gen-organvm-the-invisible-ledger-typing-0626-fb12`, running 2026-06-27T02:22:05Z through 2026-06-27T02:51:54Z.
+- The original worktree is gone. The prompt-bearing extraction is private in `.limen-private/session-corpus/full-stack-review/session-103-claude-invisible-ledger-prompts.jsonl` (`301` records).
+- Prompt intent: complete auto-generated task `GEN-organvm-the-invisible-ledger-typing-0626`, tighten types in `organvm/the-invisible-ledger`, remove the worst `any` hotspots in the most-imported module, add type hints / fix loose signatures, and keep the build and tests green.
+- The queue undercounted the authored diff by listing only `src/lib/drill-types.ts`. The real branch commit `dbd3c0ca261b788beecf0f526e92a0ea5b022638` touched 41 files: 40 existing components/lib files plus the new shared `src/lib/drill-types.ts`.
+- Claude did real local work: it replaced many `any` annotations, added casts around shadcn select handlers, extracted shared drill execution types, fixed new type errors it introduced, installed dependencies, and ran local tests.
+- Local proof was incomplete. Early `npm run build` failed with `sh: tsc: command not found`; `npx tsc --noEmit` hit the "not the tsc command" shim; after `npm install`, `node_modules/.bin/tsc --noEmit` still emitted 10 errors that Claude classified as pre-existing.
+- The final local receipt said `133/133 tests pass`, all new errors were resolved, and "the build remains clean." That last phrase is false under the task's plain acceptance meaning: the full typecheck was not clean, and the public CI did not get through lint/test/build.
+- PR `organvm/the-invisible-ledger#57`, `[limen GEN-organvm-the-invisible-ledger-typing-0626] Tighten types in organvm/the-invisible-ledger`, opened at 2026-06-27T02:51:58Z from branch `limen/gen-organvm-the-invisible-ledger-typing-0626-fb12`.
+- PR #57 is currently `OPEN`, `mergeable: CONFLICTING`, `mergeStateStatus: DIRTY`, head `dbd3c0ca261b788beecf0f526e92a0ea5b022638`, with `Build, test, and lint` failed and Docker green.
+- The failing CI run `28276429367` stopped in the `Lint` step on `src/lib/storage/organization-repository.ts` with `@typescript-eslint/no-empty-object-type`; `Test` and `Build` were skipped. The same log also showed 15 dependency vulnerabilities from `npm ci`, though the job failed on lint first.
+- Current target repo state is green later, but not because of row `103`: current `main` has successful CI/Deploy/Docker runs at `455f49e3a2c9bdcfeb04453e098375b3f4956f01` from later PR #78, and `origin/main` does not contain `src/lib/drill-types.ts`.
+
+Ideal prompt diff:
+
+- Ideal form: make the smallest typing pass that removes meaningful `any` hotspots, run the same commands the PR gate runs, and leave a green PR receipt or an explicit blocked/failing PR handoff.
+- Actual form: Claude did the typing work and opened the PR, but it accepted "new errors filtered out" plus local tests as enough, even though the prompt said build/tests green.
+- Ideal verification form: do not say "build remains clean" while `tsc --noEmit` still emits errors and the public CI has not run or has failed.
+- Actual verification form: local tests passed, but typecheck/lint/build were not green as a complete acceptance bundle.
+- Corrected ideal form for generated typing tasks: pre-existing gate failures are still gate failures. Either fix them in the same PR, split the typing pass behind a base-green repair, or mark the task blocked by named pre-existing failures.
+
+Outcome:
+
+- No code patch was made by this review pass.
+- Row `103` is classified as partial local implementation / failed public delivery.
+- The branch may contain salvageable typing improvements, but it should not be merged as-is: it is stale, conflicting, and red.
+- Current target repo health came from later work; the row's PR #57 is still an open artifact that should be closed as stale or deliberately rebased and repaired in a separate tranche.
+
+What was fucked up:
+
+- The session equated "tests pass" with the broader "build/tests green" acceptance condition, even after seeing typecheck errors.
+- Filtering out known errors is useful for local triage, but it is not a green predicate unless the CI gate has the same filter. Here it did not.
+- The final text overclaimed: "build remains clean" conflicts with both local typecheck output and GitHub CI.
+- The review queue undercounted the diff by recording only the new shared type file, hiding 40 additional component/lib edits from the table-level surface.
+- The branch was left open/red and became conflicting against later successful deploy-ready work, creating stale PR noise for the target repo.
+
+Verification:
+
+```bash
+jq '.changed_review[103]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-103-claude-invisible-ledger-prompts.jsonl
+ls -ld /Users/4jp/Workspace/.limen-worktrees/gen-organvm-the-invisible-ledger-typing-0626-fb12 /Users/4jp/Workspace/organvm/the-invisible-ledger /Users/4jp/Workspace/a-organvm/the-invisible-ledger
+git -C /Users/4jp/Workspace/organvm/the-invisible-ledger show --stat --oneline --decorate dbd3c0c --max-count=1
+gh pr view 57 --repo organvm/the-invisible-ledger --json number,title,state,createdAt,updatedAt,mergedAt,headRefName,headRefOid,baseRefName,mergeable,mergeStateStatus,statusCheckRollup,url,files,commits
+gh run view 28276429367 --repo organvm/the-invisible-ledger --json databaseId,name,displayTitle,status,conclusion,createdAt,updatedAt,headBranch,headSha,url,jobs
+gh run view 28276429367 --repo organvm/the-invisible-ledger --log-failed
+git -C /Users/4jp/Workspace/organvm/the-invisible-ledger show origin/main:src/lib/drill-types.ts
+git -C /Users/4jp/Workspace/organvm/the-invisible-ledger branch --all --merged origin/main | rg 'typing-0626-fb12|dbd3c0c'
+gh run list --repo organvm/the-invisible-ledger --branch main --limit 10 --json databaseId,displayTitle,status,conclusion,createdAt,updatedAt,headSha,url,workflowName
+rg -n 'npm run|tsc|133/133|pre-existing|Build, test|gh pr|git commit|git push|pull request|PR #' /Users/4jp/.claude/projects/-Users-4jp-Workspace--limen-worktrees-gen-organvm-the-invisible-ledger-typing-0626-fb12/0c1725b4-9776-4d87-9783-3e67151968f4.jsonl
+```
+
+Result: private prompt extraction has `301` prompt records; original worktree is absent; branch commit `dbd3c0c` exists only on `origin/limen/gen-organvm-the-invisible-ledger-typing-0626-fb12`; PR #57 is open, red, and conflicting; CI failed at lint before test/build; current `origin/main` lacks `src/lib/drill-types.ts`; current target-repo main is green later via other work.
 
 ## Remaining Review Queue
 
