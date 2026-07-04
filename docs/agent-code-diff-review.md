@@ -91,6 +91,7 @@ Generated: `2026-07-04T12:24:23Z`
 | changed 133 | `codex` | `019f1562-81b7-7370-b89d-1594e599dacc` | Paid-lane capacity-fill and live-root release planning. Codex produced a valuable local fix for the user's "paid lanes are underfilled" complaint: capacity-fill detection, a daily packet generator, tests, heartbeat/verify wiring, and worktree-preservation receipts. The failure is release convergence: the core commit `1fcf757` and receipt stack stayed on `work/workstream-agent-launcher-20260629`, no PR exists, the branch is now 641 commits behind / 27 ahead, and current `main` lacks `scripts/generate-capacity-fill.py` plus its tests. |
 | changed 134 | `claude` | `fb60b82c-1e6e-44ae-b097-30925e248bb2` | Earlier domus-genoma CIFIX retry. The prompt asked for one minimal PR making the five named default-branch lint checks green; Claude instead burned 565k Opus billable tokens in a permission-blocked diagnostic loop, spawned two Opus subagents, created only temp/helper scripts, and ended on an ungranted WebFetch call with no final report or PR. Current green `master` is due to later PR #147, not this retry. |
 | changed 135 | `claude` | `97548ebc-22c4-4b1e-a33b-f56452b410ca` | Studium Analects batch. Claude authored useful Analects books 6-11 content locally and claimed a green PR, but the session branch never had a PR and was left local-only, 1084 commits behind. Later PRs #133 and #151 landed books 6-9; books 10-11 stayed stranded until this review salvaged them in `feb30c3` and proved `scripts/studium-validate.py` plus Fleet Gate `28706098796` green. |
+| changed 136 | `codex` | `019f1a99-5cdd-7461-a1c0-2d7524a2cc43` | My Knowledge Base discovery/build-health run. Codex made a useful local external-repo commit (`5198141`) and identified the correct value-tier promotion, but the original worktree is gone, no PR or remote branch exists, and the local branch is now stale behind `origin/master` with conflicts. This review landed the safe Limen-side registry gap by adding `organvm/my-knowledge-base` to `value-repos.json`; the external code diff still needs a current selective port. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -4125,6 +4126,60 @@ gh run view 28706098796 --repo organvm/limen --json status,conclusion,headSha,di
 ```
 
 Result: private prompt extraction matches row `changed 135`; transcript guard fails only on total fanout; no PR exists for `limen/studium-deepen-analects-78fa`; later PRs #133/#151 landed books 6-9; the old branch cannot be merged whole; review commit `feb30c3` selectively salvaged books 10-11, fixed the Book 10 force arc mismatch, and passed both local Studium validation and Fleet Gate.
+
+### Codex's my-knowledge-base discovery found real value, but left the code branch unpushed
+
+Severity: medium-high; value-tier registry and external-repo release convergence. The session did useful discovery and local repair work, but the durable boundary is split: the Limen registry promotion was safe to land here, while the external repo's stale build-health branch now needs selective re-porting instead of a direct replay.
+
+Evidence:
+
+- Queue row `changed 136` points at Codex session `019f1a99-5cdd-7461-a1c0-2d7524a2cc43`, rooted in the now-absent worktree `/Users/4jp/Workspace/.limen-worktrees/discover-organvm-my-knowledge-base-e9e9`, from `2026-06-30T22:14:51Z` through `2026-06-30T22:26:45Z`.
+- First-layer prompt, redacted to intent: discover/evaluate `organvm/my-knowledge-base`, restore build health where needed, record a discovery thesis, and promote it into Limen's value tier by appending `organvm/my-knowledge-base` to `value-repos.json`.
+- The verbatim local-only prompt extract is `.limen-private/session-corpus/full-stack-review/session-changed-136-codex-my-knowledge-base-prompts.jsonl`: `4` prompt records, `3` unique prompt hashes, `17,558` prompt bytes, and `7,192` task-body bytes, sourced from `codex-sessions`.
+- Codex's final receipt was honest about the main blocker. It claimed local commit `5198141` (`fix: keep knowledge-base discovery build green`), local verification for `npm run build`, contracts/mobile/desktop builds, `vitest` for `LocalFileSource`, and `npm run test:github-pages-core`; then reported `gh pr create` failed on `api.github.com`, `gh auth status` had invalid tokens, and the checkout could not write Limen's parent `value-repos.json`.
+- Current external repo state confirms that no durable PR lifecycle exists for that code branch: `/Users/4jp/Workspace/organvm/my-knowledge-base` is clean on `master...origin/master`; local branch `limen/discover-organvm-my-knowledge-base-e9e9` exists at `5198141`; `gh pr list --head limen/discover-organvm-my-knowledge-base-e9e9` returns `[]`; search by the commit title returns `[]`; and `git ls-remote` shows no matching remote branch.
+- The local branch is now `4` commits behind and `1` ahead of `origin/master`. Current `origin/master` has later partial work (`32da31c`, `capture: autonomic off-disk sync 2026-07-02T00:25:52Z`), so the session branch is not a clean current PR candidate.
+- `git merge-tree` shows direct replay conflicts in `src/config.ts` and `src/ingestion-api.ts`; current `master` already has `src/pdf-parser.ts` and some PDF import movement, while still lacking other pieces from the Codex branch such as `LocalFileSource` watcher cleanup and `scripts/verify-alerts.ts`'s `js-yaml` import hardening.
+- Current external build verification cannot be refreshed without dependency install: `npm run build`, the contracts/mobile/desktop build chain, and the focused Vitest command fail before execution because `node_modules` is absent; `npm run test:github-pages-core` still passes.
+- The simple Limen-side gap was still real before this review: `value-repos.json` did not contain `organvm/my-knowledge-base`. This review added it immediately after `organvm/a-i-chat--exporter`, matching the exact required promotion diff recorded in the Codex session's `DISCOVERY.md`.
+
+Ideal prompt diff:
+
+- Ideal generated discovery packet: if a repo is promoted to value tier, write the registry update in the Limen checkout as part of the same durable receipt, or return a patch artifact that a writable Limen session must immediately apply.
+- Actual session form: Codex recorded the required `value-repos.json` diff in the external repo's `DISCOVERY.md`, but left the authoritative registry unchanged until this review.
+- Ideal external-repo release form: push the repair branch, open a PR, and preserve the green build receipt in GitHub checks or a durable PR comment.
+- Actual external-repo outcome: useful local fixes stayed on an unpushed local branch; newer `master` partially superseded the work and introduced conflicts, so the branch should now be mined selectively rather than merged whole.
+
+Outcome:
+
+- Credit the session for finding a real value-tier candidate, producing a clear discovery thesis, and making a plausible build-health patch in `organvm/my-knowledge-base`.
+- Credit this review with completing the Limen registry part by adding `organvm/my-knowledge-base` to `value-repos.json`.
+- Do not credit the session with external repo release. No PR, remote branch, or current CI receipt exists for `5198141`.
+- Remaining external action: from a clean current branch in `organvm/my-knowledge-base`, selectively port the still-missing pieces from `5198141` after resolving the newer `pdf-parser` / `ingestion-api` state, then install dependencies and rerun the build/test matrix before opening a PR.
+
+What was fucked up:
+
+- The prompt blended external-repo repair with Limen registry mutation, but the run happened in a worktree that could not write the authoritative Limen registry.
+- The final receipt preserved the blocker text, but no follow-on lane immediately applied the simple parent-repo diff.
+- The external branch was left local-only. That turned a small repair into a stale conflict-replay problem after later `master` commits.
+- Local verification was not converted into a durable GitHub receipt, so current reviewers cannot tell which parts remained green after dependency and master drift.
+
+Verification:
+
+```bash
+jq '.changed_review[136]' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+jq -s '{records:length, unique_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), task_body_bytes:([.[].task_body_bytes] | add), surfaces:([group_by(.surface)[] | {surface:.[0].surface,count:length}]), sources:([group_by(.source)[] | {source:.[0].source,count:length}])}' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-changed-136-codex-my-knowledge-base-prompts.jsonl
+git -C /Users/4jp/Workspace/organvm/my-knowledge-base status --short --branch
+git -C /Users/4jp/Workspace/organvm/my-knowledge-base log --oneline --decorate --all --grep='keep knowledge-base discovery build green' --max-count=20
+git -C /Users/4jp/Workspace/organvm/my-knowledge-base rev-list --left-right --count origin/master...limen/discover-organvm-my-knowledge-base-e9e9
+gh pr list --repo organvm/my-knowledge-base --head limen/discover-organvm-my-knowledge-base-e9e9 --state all --json number,title,state,createdAt,mergedAt,closedAt,headRefName,headRefOid,url
+gh pr list --repo organvm/my-knowledge-base --state all --search "knowledge-base discovery build green" --json number,title,state,createdAt,mergedAt,closedAt,headRefName,headRefOid,url --limit 20
+git merge-tree $(git -C /Users/4jp/Workspace/organvm/my-knowledge-base merge-base origin/master limen/discover-organvm-my-knowledge-base-e9e9) origin/master limen/discover-organvm-my-knowledge-base-e9e9
+python3 -m json.tool value-repos.json >/dev/null
+git diff --check
+```
+
+Result: private prompt extraction matches row `changed 136`; no PR or remote branch exists for the local external-repo commit; direct replay now conflicts against current `origin/master`; the external repo still lacks refreshed dependency-backed proof; this review landed the authoritative Limen value-tier registry addition and validated the JSON/diff.
 
 ### Claude domus-genoma CIFIX session failed to fix CI and should have stopped at the permission/spend wall
 

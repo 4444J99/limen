@@ -3,6 +3,7 @@
   "ranked_by": "time-to-dollar",
   "repos": [
     "organvm/a-i-chat--exporter",
+    "organvm/my-knowledge-base",
     "organvm/public-record-data-scrapper",
     "organvm/mirror-mirror",
     "organvm/universal-mail--automation",
