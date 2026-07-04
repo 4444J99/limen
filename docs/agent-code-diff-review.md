@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T12:11:59Z`
+Generated: `2026-07-04T12:17:37Z`
 
 ## Scope
 
@@ -89,6 +89,7 @@ Generated: `2026-07-04T12:11:59Z`
 | changed 131 | `claude` | `3625ab3d-c647-412e-8336-28d75a73f874` | Session-meta typing/restoration branch. Claude correctly diagnosed that the generated typing packet was really restoring deleted ingest modules and opened PR #133 with a local `111`-test claim, but that PR never merged, never got checks, and is now stale behind current `main`. Durable completion came from merged green PR #131 restoring the ingest surface plus later typing PRs such as #163; the open generated typing PR family needs harvest/closure rather than merge. |
 | changed 132 | `opencode` | `ses_0e6e14fb2ffetCps4cjgOEZ2hP` | Mirror Mirror closed-PR recovery reconnaissance. The prompt asked OpenCode to recover a closed unmerged deploy-ready PR, but the session made no code diff: OpenCode inspected `tasks.yaml`, PR #64, Mirror Mirror PR state, Netlify/GitHub Pages headers, and current CI, then stopped when workflow-file reads were rejected. The 22 changed-file queue attribution is prompt-context/patch-snapshot bleed from pre-existing Limen dirty state, not OpenCode-authored work. |
 | changed 133 | `codex` | `019f1562-81b7-7370-b89d-1594e599dacc` | Paid-lane capacity-fill and live-root release planning. Codex produced a valuable local fix for the user's "paid lanes are underfilled" complaint: capacity-fill detection, a daily packet generator, tests, heartbeat/verify wiring, and worktree-preservation receipts. The failure is release convergence: the core commit `1fcf757` and receipt stack stayed on `work/workstream-agent-launcher-20260629`, no PR exists, the branch is now 641 commits behind / 27 ahead, and current `main` lacks `scripts/generate-capacity-fill.py` plus its tests. |
+| changed 134 | `claude` | `fb60b82c-1e6e-44ae-b097-30925e248bb2` | Earlier domus-genoma CIFIX retry. The prompt asked for one minimal PR making the five named default-branch lint checks green; Claude instead burned 565k Opus billable tokens in a permission-blocked diagnostic loop, spawned two Opus subagents, created only temp/helper scripts, and ended on an ungranted WebFetch call with no final report or PR. Current green `master` is due to later PR #147, not this retry. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -4016,6 +4017,59 @@ PYTHONPATH=cli/src python3 scripts/capacity-fill-ledger.py
 ```
 
 Result: private prompt extraction matches row `133`; `1fcf757` exists and contains the capacity-fill implementation but is not on current `origin/main`; the workstream branch has no PR and is 641 behind / 27 ahead; current `main` lacks the generator and two focused tests; current capacity-fill ledger compiles and renders a blocked capacity census, but it is not the daily task-production loop from the reviewed branch.
+
+### Claude's earlier domus-genoma CIFIX retry repeated the no-fix helper-script pattern
+
+Severity: high; default-branch CI repair, generated-task credibility, and premium-model budget. This is a separate earlier retry from row `62`; together they show the same CIFIX packet being regenerated while the base stayed red and agents spent premium budget without landing a green PR.
+
+Evidence:
+
+- Queue row `changed 134` points at Claude session `fb60b82c-1e6e-44ae-b097-30925e248bb2`, rooted in deleted worktree `/Users/4jp/Workspace/.limen-worktrees/cifix-4444j99-domus-genoma-72f1`, from `2026-06-19T11:10:33Z` through `2026-06-19T11:25:23Z`.
+- First-layer prompt, redacted to intent: complete `CIFIX-4444J99-domus-genoma`; fix pre-existing default-branch breakage in ShellCheck, YAML Lint, JSON Validation, Python Lint, and Shell Formatting; keep the root-cause fix minimal; open one fix PR.
+- The verbatim local-only prompt extract is `.limen-private/session-corpus/full-stack-review/session-changed-134-claude-domus-genoma-cifix-72f1-prompts.jsonl`: `115` prompt records, `64` unique prompt hashes, `54,742` prompt bytes, all sourced from `claude-projects`.
+- Queue changed-file evidence is only transient scaffolding: `/tmp/ci_check_*.sh`, `/tmp/lint_versions.sh`, worktree `.ci_check1.sh`, `.ci_versions.sh`, `.lint_versions.sh`, `.tmp_check.py`, `.tmp_check.sh`, and `.claude/settings.local.json`. No repo fix file is present because the original worktree is gone.
+- Tool inventory from the parent transcript is `28` Bash calls, `3` Write calls, `2` Read calls, `1` WebFetch attempt, `1` ToolSearch, and `1` Agent call. The audit includes two subagent transcript files.
+- Transcript guard fails: `565,527` Opus billable tokens, `6,594,663` cache-read tokens, `73,495` output tokens, and `2` Opus subagents, violating the "tier subagent fan-out by job" rule for a narrow CI-debugging packet.
+- The session ended on an ungranted WebFetch request for GitHub Actions run data. There is no final assistant receipt after the tool error, no PR opened by this session, and no durable fix branch under `limen/cifix-4444j99-domus-genoma-72f1`.
+- GitHub state at the time confirms why the retry existed: PRs #104 and #105 had already been merged on `2026-06-19T09:57Z` with the five requested checks still failing; default-branch `Lint & Validate` runs at `09:57Z` were still red.
+- Later current truth: `master` is green at `97b3f2c6169b83a20e0d1a61ef95b6621d0e1533`, with successful `CI` run `28686905471` and successful `Lint & Validate` run `28686905469`. That durable repair came from PR #147, merged `2026-07-03T22:58:25Z`, not from this row.
+
+Ideal prompt diff:
+
+- Ideal form: before opening another CIFIX retry, reconcile existing same-title PRs #104/#105 and current default-branch CI logs; if the five named checks are still red, reproduce or fetch exact failures, land one minimal fix branch, and prove the PR gate green.
+- Actual form: Claude repeatedly tried to run local linters, hit permission approval walls, wrote helper scripts, tried a subagent, wrote local `.claude/settings.local.json`, then ended on an ungranted WebFetch call.
+- Ideal blocker handling: after Bash, linter installation, `gh`, and WebFetch were gated, classify the task as blocked with the exact missing permission/log access and stop. A static read-only audit is not an acceptable substitute for a five-check CI fix.
+- Actual blocker handling: the session kept spending Opus and cache budget on workarounds without producing the requested PR, green run, or even a final handoff.
+
+Outcome:
+
+- Do not credit this row as CI repair. It is a failed retry with useful diagnostic evidence about permission gating and dispatch repetition, not an implementation.
+- Credit durable current remediation to PR #147, which fixes YAML indentation, workflow line length, test teardown, executable bits, and related CI failures, and whose check rollup is green.
+- The generated task system should collapse repeated CIFIX retries against the same repo/base branch into a single active incident with one owner and live CI receipts. Re-issuing the same packet after red same-title PRs merged is what caused multiple helper-script sessions to pile up.
+
+What was fucked up:
+
+- Two same-title CIFIX PRs had already merged while still red, then another Claude session was started without first harvesting that failure pattern.
+- The user asked for a minimal root-cause fix PR; the session spent its visible work on permission negotiation and temporary scripts.
+- Opus subagent fanout was the wrong response to local permission walls. It multiplied cost while preserving the same inability to run or fetch the authoritative checks.
+- The prompt used `4444J99/domus-genoma` while the durable remote resolves to `organvm/domus-genoma`; dispatch should normalize owner/repo identity before creating local worktrees or task receipts.
+
+Verification:
+
+```bash
+jq '.changed_review[134]' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+jq -s '{records:length, unique_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), task_body_bytes:([.[].task_body_bytes] | add), surfaces:([group_by(.surface)[] | {surface:.[0].surface,count:length}]), sources:([group_by(.source)[] | {source:.[0].source,count:length}])}' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-changed-134-claude-domus-genoma-cifix-72f1-prompts.jsonl
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace--limen-worktrees-cifix-4444j99-domus-genoma-72f1/fb60b82c-1e6e-44ae-b097-30925e248bb2.jsonl
+jq -r 'select(.type=="assistant") | .message.content[]? | select(.type=="tool_use") | .name' /Users/4jp/.claude/projects/-Users-4jp-Workspace--limen-worktrees-cifix-4444j99-domus-genoma-72f1/fb60b82c-1e6e-44ae-b097-30925e248bb2.jsonl | sort | uniq -c | sort -nr
+gh pr list --repo organvm/domus-genoma --state all --search "created:2026-06-19..2026-06-20" --json number,title,state,createdAt,mergedAt,closedAt,headRefName,url --limit 40
+gh pr view 104 --repo organvm/domus-genoma --json number,state,createdAt,mergedAt,title,headRefName,statusCheckRollup,url
+gh pr view 105 --repo organvm/domus-genoma --json number,state,createdAt,mergedAt,title,headRefName,statusCheckRollup,url
+gh pr view 147 --repo organvm/domus-genoma --json number,title,state,createdAt,mergedAt,headRefName,headRefOid,statusCheckRollup,url
+gh run list --repo organvm/domus-genoma --branch master --limit 10 --json databaseId,name,status,conclusion,headSha,createdAt,url
+git ls-remote https://github.com/4444J99/domus-genoma.git refs/heads/master refs/heads/limen/cifix-4444j99-domus-genoma-72f1
+```
+
+Result: private prompt extraction matches row `changed 134`; transcript guard fails on Opus subagent fanout; the deleted worktree leaves only helper-script evidence; no row-specific branch/PR exists; #104/#105 were merged while the named checks were red; current green `master` comes from later PR #147.
 
 ### Claude domus-genoma CIFIX session failed to fix CI and should have stopped at the permission/spend wall
 
