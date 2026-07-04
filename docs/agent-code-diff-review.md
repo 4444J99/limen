@@ -51,6 +51,7 @@ Generated: `2026-07-04T04:13:46Z`
 | refreshed 34 | `claude` | `6b107f0b-4796-4cc2-95ef-861947c991b9` | Vigilia autonomic-institution run. PRs #277, #281, #285, and #315 landed VITALS/CONTINUITY/INTEGRITY, the face, no-hardcode gate, and heartbeat stamp; current review verified the code and recorded raw-transcript log privacy and Opus spend as residual risks. |
 | refreshed 35 | `claude` | `d7044841-5c47-45c2-be86-b5d96a1ea15d` | Cloudflare deploy derivation / Studio / Media Ark run. Useful PRs landed, but review found live Studio source-file exposure plus a sibling Pages-project collision; redeployed public-only Studio, added a Studio predicate, and restored `object-lessons.pages.dev` to a cinema placeholder. |
 | refreshed 36 | `claude` | `4582fe4c-165d-440b-a36a-562e67cd5cf4` | Fleet session-reconcile run. Temp scripts are gone, but durable ledger/scorecard and `organvm/session-meta#37` survive; review confirmed the lane closed, the 102-branch prune was explicitly gated, and the run remains a spend/fanout cautionary example. |
+| refreshed 37 | `claude` | `57c0201a-82bd-4be7-96dd-4c7039038edd` | Codex skill-slim run. PRs #573, #597, and #615 landed a repair organ that keeps all skills while stopping Codex description truncation; current tests and live `--check` pass, but the session needed two follow-up corrections after false-green proofs and blew Claude spend limits. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -251,6 +252,58 @@ python3 -m ruff check cli/tests/test_claude_tier.py cli/tests/test_claude_workfl
 ```
 
 Result: PR #514 is merged with green GitHub checks; current agent files pin `scan` and `verify` to Haiku and `synth` to Opus; focused local tests passed `30 passed`; docs/params checks, compile, shell syntax, and Ruff passed. Transcript guard fails as expected on this pre-fix/repair session with six Opus subagents.
+
+### Claude Codex skill-slim chain fixed the warning, but only after two false-green proofs
+
+Severity: medium for Codex session health and session-governance quality; current `main` behavior verifies.
+
+Evidence:
+
+- Claude session `57c0201a-82bd-4be7-96dd-4c7039038edd` ran from `/Users/4jp/Workspace/limen/.claude/worktrees/feat-codex-skill-slim` across 2026-07-02T18:31:25Z through 2026-07-03T18:45:22Z.
+- Queue row `55` saw three durable changed paths: `scripts/codex-skill-slim.py`, `cli/tests/test_codex_skill_slim.py`, and private memory note `~/.claude/projects/-Users-4jp-Workspace-limen/memory/codex-skill-slim-thinner-not-disable.md`.
+- Prompt first layer was the Codex startup warning that skill descriptions were being shortened to fit the 2% skills budget. The invariant the user enforced was "thinner, not disable": keep every skill/plugin capability, distill the descriptions, and do not rug-sweep the warning.
+- The session had 403 prompt events in the private prompt extractor, totaling 794,088 prompt bytes with a 62,377-byte largest prompt. Several follow-up prompts were verification pressure after the first "done" did not prove the warning had actually stopped.
+- PR `organvm/limen#573` merged the first repair organ: `scripts/codex-skill-slim.py`, `scripts/metabolize.sh` integration, and declared `LIMEN_CODEX_SLIM*` parameters. It passed GitHub checks but only slimmed enabled plugin/user surfaces under a 240-character cap.
+- PR `organvm/limen#597` fixed the first false proof: Codex's own render log showed it loaded every cached marketplace plugin plus user/memory skills, not just enabled plugins. The fix enumerated the full loaded set and derived the cap from Codex's logged budget.
+- PR `organvm/limen#615` fixed the second false proof: `--check` no longer trusts only the script's derived cap; it also reads Codex's own latest truncation timestamp and fails if Codex truncated after the last real slim.
+- The worktree is clean and detached at merge commit `4aa1011`; that commit is an ancestor of `origin/main`.
+
+Ideal prompt diff:
+
+- Ideal form: read Codex's own render/log evidence first, enumerate the actual loaded skill set, derive the cap from that evidence, keep every skill, make the repair idempotent/restorable, and verify against an independent witness rather than the repair script's own proxy.
+- Actual form: the session eventually reached that ideal through three merged PRs, but PR #573 declared success using the wrong surface and PR #597 still had a self-authored `--check` until #615 anchored it to Codex's emitted truncation log.
+- Corrected ideal form for startup-noise repair: "green" must mean the user-visible warning stopped after the repair, not just that the repair script's internal byte count is under a cap it chose.
+
+Outcome:
+
+- Current `python3 scripts/codex-skill-slim.py --check` passes: `20893B across 207 entries, all <=111`, with Codex's last truncation at 2026-07-03T11:50Z and none since the last slim.
+- Focused tests pass: `PYTHONPATH=/Users/4jp/Workspace/limen/cli/src python3 -m pytest cli/tests/test_codex_skill_slim.py -q` reports `8 passed`.
+- `scripts/metabolize.sh` runs `codex-skill-slim.py --apply --quiet` when `LIMEN_CODEX_SLIM` is enabled, so marketplace-cache reversion is treated as a repeatable repair, not a one-time host tweak.
+- `scripts/check-params.py` passes with `LIMEN_CODEX_SLIM` and `LIMEN_CODEX_SLIM_CAP` declared.
+- No code patch was needed in this review pass.
+
+What was fucked up:
+
+- The first merged fix was a classic false-green: it measured enabled-plugin bytes, while Codex was budgeting the full cached skill set.
+- The second fix still verified a proxy authored by the same script. It took a third PR to use Codex's own emitted truncation log as the independent witness.
+- This was too expensive for the problem shape: transcript guard reports 6,512,894 billable-ish tokens, 5,399,025 Opus billable-ish tokens, 639 usage-bearing messages, three agent/workflow calls, and one Opus subagent.
+- The repair intentionally mutates host-local Codex plugin/cache metadata under `~/.codex`. That is acceptable here because it is idempotent and restorable through `~/.codex/.skill-slim/backup.json`, but it must remain visible as host-local repair state rather than being mistaken for repo-only behavior.
+- CI can prove the parser/math/test fixtures, but only this host's live `--check` can prove that Codex stopped truncating in the current runtime.
+
+Verification:
+
+```bash
+gh pr view 573 --repo organvm/limen --json number,title,state,createdAt,mergedAt,mergeCommit,headRefName,files,commits,statusCheckRollup,url
+gh pr view 597 --repo organvm/limen --json number,title,state,createdAt,mergedAt,mergeCommit,headRefName,files,commits,statusCheckRollup,url
+gh pr view 615 --repo organvm/limen --json number,title,state,createdAt,mergedAt,mergeCommit,headRefName,files,commits,statusCheckRollup,url
+PYTHONPATH=/Users/4jp/Workspace/limen/cli/src python3 -m pytest cli/tests/test_codex_skill_slim.py -q
+python3 scripts/codex-skill-slim.py --check
+python3 scripts/check-params.py
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/57c0201a-82bd-4be7-96dd-4c7039038edd.jsonl
+git merge-base --is-ancestor 4aa1011 origin/main
+```
+
+Result: PRs #573, #597, and #615 are merged with green GitHub checks; focused tests pass; live Codex skill-budget check passes against Codex's own log; parameter declaration check passes; `4aa1011` is on `origin/main`. Transcript audit fails on total and Opus billable budgets.
 
 ### Agent-instruction standard landed the right two-layer answer, but one Layer-1 gate pointer was wrong
 
