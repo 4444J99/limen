@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T05:07:31Z`
+Generated: `2026-07-04T05:10:30Z`
 
 ## Scope
 
@@ -25,6 +25,7 @@ Generated: `2026-07-04T05:07:31Z`
 | 59 | `claude` | `025aab09-2619-468a-8ded-b85f567e3887` | Clone lifecycle reaper run. PRs #546, #553, and #558 landed a useful clone-reap organ and then hardened it after an adversarial audit found 14 data-loss paths. Current review found a later pressure-gauge regression left in `clone-maintenance.sh`; fixed it so false high df% no longer waives idle or runs capture when absolute free space is above the floor. |
 | 60 | `codex` | `019f0ea5-6de9-7b22-9f5b-c948b4e1adbf` | All-day Codex conductor plus Micro Tato overnight run. It produced real durable receipts and a verified Micro Tato checkpoint at `5136a3d`, but the session mixed Limen conductor, network-substrate receipts, side streams, and game implementation into one 68 MB transcript, making the 123 changed-file queue row a cross-goal attribution artifact. |
 | 65 | `opencode` | `ses_108ebe914ffewL4axO5hTLs4gr` | Tanakh film companion closeout. The requested content had already merged via PR #116 before the session; OpenCode correctly discovered that, then re-added a stale `tasks.yaml` entry and accidentally committed ten film files onto an unrelated Beowulf PR branch. |
+| 66 | `opencode` | `ses_108ebf37effe8LmzZRJAZdya7b` | Qur'an film companion closeout. The requested content had already merged via PR #97 and current `main` validates; OpenCode stopped without a new commit, but its final receipt repeated a bogus PR #81 citation and exposed concurrent task-board volatility. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -3463,6 +3464,58 @@ python3 scripts/studium-validate.py
 ```
 
 Result: PR #116 is merged and only changed `studium/film/tanakh.yaml`; PR #141 is closed unmerged and carried broad unrelated film/content additions from `feat/studium-film-beowulf`; commit `799a27f` appended a stale completed task entry and accidentally added ten film files; no matching remote topic branch is currently advertised; current Studium validation passes.
+
+### OpenCode Qur'an closeout was mostly correct, but its receipt repeated provenance noise
+
+Severity: medium; the content is merged and valid, and the reviewed session did not create a bad commit, but the closeout proof is still too sloppy for fleet accounting.
+
+Evidence:
+
+- Queue row `66` points at OpenCode session `ses_108ebf37effe8LmzZRJAZdya7b`, rooted at `/Users/4jp/Workspace/limen`, with a 151-file changed snapshot. As with the adjacent Tanakh row, that snapshot is mostly context and inherited worktree state, not authored diff.
+- The first-layer prompt is preserved locally in `.limen-private/session-corpus/full-stack-review/session-66-opencode-quran-prompts.jsonl`. In redacted intent form, the task was to complete the Qur'an film companion, pass the Studium validator, and produce one green PR.
+- The durable artifact had already merged before the session started. PR `organvm/limen#97` merged at `52af3bf0c0f603afa9db46e335fdf86f94597a41` on `2026-06-23T20:14:03Z`, adding `studium/film/quran.yaml`.
+- Current `origin/main:studium/film/quran.yaml` has `11` films, `1` adaptation overlay, and force coverage `[revelation, law, supplication, divine-intervention, salvation, kingship]`.
+- Current `python3 scripts/studium-validate.py` passes for `211` arcs and `18` film companions.
+- OpenCode correctly discovered that the file existed, was committed, and validated, and its final answer said no further action was needed because the task entry was not present in the current `tasks.yaml`.
+- Unlike row 65, this session did not create a new stale closeout commit or push a polluted branch.
+
+Ideal prompt diff:
+
+- Ideal form: verify the artifact on `origin/main`, name the merged PR and commit, confirm the live board state, and stop without mutating anything if the task has already been cleaned up.
+- Actual form: the session mostly did that, but the proof was internally confused: it cited PRs #81 and #97 as the Qur'an merge trail even though #81 is a closed, unrelated Conference of the Birds PR.
+- Ideal form for board state: if an initial large `tasks.yaml` read shows a dispatched task but later live searches show no such task, treat it as concurrent board volatility and record both observations with timestamps. Do not present it as certainty that the task was "already cleaned up" unless the live file was re-read after a fetch/branch check.
+- Actual form: the session noticed the inconsistency but resolved it informally in the final receipt.
+
+Outcome:
+
+- The Qur'an film companion should be credited to PR #97 / merge commit `52af3bf`, not to the reviewed OpenCode session.
+- The reviewed session is a qualified pass for non-mutation: it avoided the stale-board resurrection that row 65 performed.
+- The residual finding is proof quality. Receipts that cite an unrelated PR number or collapse volatile task-board state into a clean story are not reliable enough for automated fleet closeout.
+
+What was fucked up:
+
+- The final receipt repeated the merge commit title's bogus `#81` reference. GitHub confirms PR #81 is closed unmerged and unrelated to Qur'an film work.
+- The session spent time trying to reconcile contradictory `tasks.yaml` observations instead of treating the board as a volatile source requiring a final live reread and timestamped receipt.
+- It accepted "validation passes" without pinning whether it was validating current branch, checked-out main files, or `origin/main`. Current validation is green now, but the receipt should have named the exact tree.
+- Commit/provenance noise remains upstream: the PR #97 branch commit used `Test User <test@example.com>` plus Claude co-author metadata, although the GitHub merge commit is authored by Anthony/GitHub.
+- The queue's 151-file changed surface again overstates authored work; this row should not be reviewed as a 151-file code diff.
+
+Verification:
+
+```bash
+jq '.changed_review[66]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+sqlite3 -json /Users/4jp/.local/share/opencode/opencode.db "select * from session where id='ses_108ebf37effe8LmzZRJAZdya7b';"
+sqlite3 -json /Users/4jp/.local/share/opencode/opencode.db "select id, message_id, json_extract(data,'$.type') as type, json_extract(data,'$.text') as text, json_extract(data,'$.content') as content, json_extract(data,'$.tool') as tool from part where session_id='ses_108ebf37effe8LmzZRJAZdya7b' and json_extract(data,'$.type') in ('text','reasoning','patch') order by time_created;"
+sqlite3 -json /Users/4jp/.local/share/opencode/opencode.db "select json_extract(data,'$.state.input.command') as cmd, substr(coalesce(json_extract(data,'$.state.output'), json_extract(data,'$.output'), ''),1,3000) as output from part where session_id='ses_108ebf37effe8LmzZRJAZdya7b' and json_extract(data,'$.type')='tool' and json_extract(data,'$.tool')='bash' order by time_created;"
+gh pr view 81 --repo organvm/limen --json number,title,state,createdAt,mergedAt,mergeCommit,headRefName,baseRefName,commits,files,statusCheckRollup,url
+gh pr view 97 --repo organvm/limen --json number,title,state,createdAt,mergedAt,mergeCommit,headRefName,baseRefName,commits,files,statusCheckRollup,url
+git show --stat --name-status --format=fuller 52af3bf0c0f603afa9db46e335fdf86f94597a41 --
+git log --all --date=iso-strict --pretty=format:'%H%x09%ad%x09%D%x09%s' --name-status -- studium/film/quran.yaml
+git merge-base --is-ancestor 52af3bf origin/main
+python3 scripts/studium-validate.py
+```
+
+Result: PR #97 is merged and added `studium/film/quran.yaml`; PR #81 is closed unmerged and unrelated; current `origin/main` contains the Qur'an companion with 11 films and one adaptation; current Studium validation passes; the reviewed OpenCode session did not leave a new commit.
 
 ## Remaining Review Queue
 
