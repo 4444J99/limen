@@ -6231,6 +6231,71 @@ gh run list --repo organvm/the-invisible-ledger --branch main --limit 12 --json 
 
 Result: private prompt extraction has `5` records; Codex local commits survive in `/Users/4jp/Workspace/a-organvm/the-invisible-ledger`; the transcript shows local test/build success followed by interruption before API publication; PR #4 merged red on lint; PR #23 merged green and carried the durable adapter; current main has the type-alias fix and green CI on commit `455f49e`.
 
+### Claude shipped real Studium ingest machinery, but the final closeout overstated how clean it was
+
+Severity: medium. The session produced useful live infrastructure for Studium backlog ingestion, daily ledgers, and prompt-driven study expansion, but the prompt-to-done story is messier than the final report claimed. The right conclusion is "valuable and mostly durable, with red-gate and overclaim caveats," not "everything shipped cleanly."
+
+Evidence:
+
+- Queue row `114` points at Claude session `33670103-bc6d-438b-88f6-aefe8cd75218`, rooted at `/Users/4jp/Workspace/limen/.claude/worktrees/rippling-launching-trinket`, running from 2026-06-22T23:18:35Z through 2026-06-24T12:43:44Z.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-114-claude-studium-ingest-prompts.jsonl` (`314` records: `248` user-message prompts, `62` last-prompt records, and `4` queue enqueue prompts). The verbatim prompt appendix belongs there, not in this public review doc.
+- In redacted intent form, the user began with "what next" and a broad study/culture system ask, then authorized implementing every hanging item without returning decisions to the user, explicitly armed `LIMEN_STUDIUM=1`, asked Claude to land PR #75, asked who owned the hanging tasks, asked whether all prompts made it to shipped, and requested a full session report with verbatim prompts.
+- The original plan file `~/.claude/plans/rippling-launching-trinket.md` promised a lock-safe `scripts/ingest-backlog.py` path using the canonical queue lock.
+- The later plan/status file `~/.claude/plans/greedy-finding-wilkes.md` records the important live correction: holding the queue lock starved heartbeat ingestion, so the better shape was an idempotent re-emitting C_FEED voice rather than a long lock-holding writer.
+- PR #75 (`af9453a`, commit `c29fcda`) merged on 2026-06-23T17:18:14Z and landed `scripts/ingest-backlog.py`. That file still exists and is idempotent: a current dry run against the live board reports `35 content tasks staged; 0 NEW, 35 already present`.
+- PR #75 was not green when merged. Its `python` check failed on unrelated `cli/tests/test_sync_reclaim.py` ruff errors, while `worker` and `web` succeeded. The PR body's "259 tests green" line is therefore an overbroad receipt.
+- The live host is still armed: `~/.limen.env` contains `LIMEN_STUDIUM=1`.
+- The current live `tasks.yaml` contains `41` `studium-*` task rows. The session's own final evidence said `43`, so the exact count was moving and should not have been treated as a permanent closeout fact.
+- Current Studium validation is green: `python3 scripts/studium-validate.py` reports all `211` arcs valid and `18` film companions valid.
+- Current focused lint is green for the relevant scripts: `python3 -m ruff check scripts/ingest-backlog.py scripts/studium.py scripts/studium-validate.py`.
+- Later current-main commits prove the closeout was too absolute: `11531db` rescued stranded stale-base Studium content, `e563a17` repaired force taxonomy validation, `8f4c1e4` hardened Studium state loading, and this review added `2116c5f` to validate plan ledgers against arc files.
+- During this review, main also exposed CI drift unrelated to row `114`: Fleet Gate needed formatting/baseline repair (`592580d`), and CI needed typed YAML numeric parsing plus the current financial dashboard test expectation (`9dee2bb`).
+
+Ideal prompt diff:
+
+- Ideal "what next" form: produce a bounded plan and a clear next smallest shippable packet.
+- Actual form: the work grew into a multi-day live activation and content-ingest project. The user did authorize breadth, but the session still needed stronger packet boundaries and interim receipts.
+- Ideal "full permissions" form: use permission to remove avoidable user waits, not to collapse planning, live host mutation, PR merge, queue materialization, and final reporting into one undifferentiated success claim.
+- Actual form: the session did remove friction and shipped real pieces, but it mixed live host state, moving queue counts, PR state, and content backlog state into a single closeout verdict.
+- Ideal lock model: start from the canonical queue lock, then revise the ideal after live evidence shows the lock is the source of starvation. The revised ideal is an idempotent, self-correcting feed or a single-writer ticket producer when TABVLARIVS is enabled.
+- Actual form: Claude learned the right lesson from live starvation, but the final narrative did not clearly mark "initial lock-safe ideal was superseded by live evidence."
+- Ideal "did all prompts ship?" form: answer with a matrix: shipped, armed/live, filed/human-gated, superseded, and not shipped.
+- Actual form: the final answer said every shippable prompt reached shipped state, with one permission-rule exception. That was too clean; later validation and rescue work show there were still real follow-up defects.
+
+Outcome:
+
+- Row `114` is classified as valuable but overclaimed.
+- The durable code path exists and is currently healthy: ingest dry-run is idempotent, `LIMEN_STUDIUM=1` is armed, and Studium validation passes.
+- No row-specific code patch was needed here. The earlier review fix `2116c5f` strengthened Studium plan-ledger validation because row `106` exposed stale plan text, and that protection also supports this row's broader lesson.
+- Review did produce two main-line health repairs while processing this row: Fleet Gate formatting/baseline repair (`592580d`) and CI repair (`9dee2bb`). Those are separate from the Claude session, but they are a direct benefit of keeping the audit receipt-backed.
+
+What was fucked up:
+
+- The prompt pressure was broad enough to make a single session own planning, content strategy, live daemon activation, queue mutation, PR merge, and retrospective reporting.
+- The first ingest design leaned on a queue lock that live heartbeat behavior made counterproductive. The corrected model was better, but it arrived through production friction.
+- PR #75 was merged with a red `python` check while the body still claimed green tests.
+- The final closeout treated moving live counts and local host state as if they were stable shipped facts.
+- The session correctly preserved a verbatim prompt appendix, but public repo artifacts should continue to reference the private corpus rather than paste the full prompt text.
+- "Every shippable prompt shipped" erased necessary categories: superseded by better live evidence, armed but host-local, filed but human-gated, and later repaired by follow-up work.
+
+Verification:
+
+```bash
+wc -l .limen-private/session-corpus/full-stack-review/session-114-claude-studium-ingest-prompts.jsonl
+gh pr view 75 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,statusCheckRollup,files,commits,url
+gh run view 28043209829 --repo organvm/limen --log-failed
+python3 scripts/ingest-backlog.py --tasks /Users/4jp/Workspace/limen/tasks.yaml
+rg -n '^LIMEN_STUDIUM=' /Users/4jp/.limen.env
+python3 scripts/studium-validate.py
+python3 -m ruff check scripts/ingest-backlog.py scripts/studium.py scripts/studium-validate.py
+git log --oneline --grep=studium -12
+cd cli && python3 -m mypy src/limen/
+PYTHONPATH=cli/src python3 -m pytest cli/tests/test_financial_organ.py -q
+PYTHONPATH=cli/src python3 -m pytest cli/tests -q
+```
+
+Result: private prompt extraction has `314` records; PR #75 is merged but had a red `python` check; current ingest dry-run is idempotent with `0 NEW`; `LIMEN_STUDIUM=1` is armed; current Studium validation and focused lint pass; full CLI tests pass (`939` passed, `1` skipped); exact CI health was repaired separately in commits `592580d` and `9dee2bb`.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
