@@ -11,6 +11,7 @@ import argparse
 import datetime as dt
 import json
 import os
+import re
 import subprocess
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -29,6 +30,7 @@ SELF_OUTPUT_PATHS = {
     "docs/agent-code-review-queue.md",
     "scripts/agent-code-review-queue.py",
 }
+BACKTICKED_TOKEN_RE = re.compile(r"`([^`]+)`")
 
 
 def now_iso() -> str:
@@ -44,6 +46,13 @@ def relpath(path: str | Path | None) -> str:
         return str(p.relative_to(ROOT))
     except (OSError, ValueError):
         return value
+
+
+def private_corpus_relpath(path: Path) -> str:
+    parts = path.parts
+    if ".limen-private" in parts:
+        return str(Path(*parts[parts.index(".limen-private") :]))
+    return relpath(path)
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -413,16 +422,126 @@ def render_markdown(queue: dict[str, Any]) -> str:
             "",
             "- Refresh full-stack source first: `env LIMEN_ROOT=/Users/4jp/Workspace/limen python3 scripts/agent-session-full-stack-review.py --write`",
             "- Refresh this queue: `env LIMEN_ROOT=/Users/4jp/Workspace/limen python3 scripts/agent-code-review-queue.py --write`",
-            f"- Private structured queue: `{PRIVATE_QUEUE.relative_to(ROOT)}`",
+            "- Check the executable depth stop predicate: `env LIMEN_ROOT=/Users/4jp/Workspace/limen python3 scripts/agent-code-review-queue.py --depth-stop-predicate --review-score-floor 100`",
+            f"- Private structured queue: `{private_corpus_relpath(PRIVATE_QUEUE)}`",
         ]
     )
     return "\n".join(lines) + "\n"
 
 
+def reviewed_tokens_from_doc(text: str) -> set[str]:
+    """Return backticked public tokens from the tracked review ledger.
+
+    The review ledger intentionally keeps prompt bodies private, but session ids
+    are public row keys. Matching queue session ids against all backticked
+    ledger tokens keeps this predicate robust across table labels such as
+    ``changed 147`` and ``refreshed 35``.
+    """
+
+    return {match.group(1) for match in BACKTICKED_TOKEN_RE.finditer(text)}
+
+
+def depth_queue_rows(queue: dict[str, Any]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for section in ("changed_review", "board_only"):
+        for item in queue.get(section) or []:
+            if isinstance(item, dict) and item.get("session_id"):
+                rows.append(item)
+    rows.sort(
+        key=lambda item: (
+            -int(item.get("review_score") or 0),
+            -int(item.get("changed_file_count") or 0),
+            str(item.get("session_id") or ""),
+        )
+    )
+    return rows
+
+
+def depth_stop_status(
+    queue: dict[str, Any],
+    review_doc_text: str,
+    *,
+    review_score_floor: int,
+    max_open: int,
+    sample_limit: int = 10,
+) -> dict[str, Any]:
+    reviewed = reviewed_tokens_from_doc(review_doc_text)
+    eligible = [
+        row
+        for row in depth_queue_rows(queue)
+        if int(row.get("review_score") or 0) >= review_score_floor
+    ]
+    open_rows = [row for row in eligible if str(row.get("session_id")) not in reviewed]
+    next_rows = [
+        {
+            "agent": row.get("agent"),
+            "session_id": row.get("session_id"),
+            "review_score": int(row.get("review_score") or 0),
+            "changed_file_count": int(row.get("changed_file_count") or 0),
+            "ideal_gaps": list(row.get("ideal_gaps") or [])[:3],
+            "command": command_for_session(row),
+        }
+        for row in open_rows[:sample_limit]
+    ]
+    return {
+        "passed": len(open_rows) <= max_open,
+        "review_score_floor": review_score_floor,
+        "max_open": max_open,
+        "eligible_count": len(eligible),
+        "reviewed_count": len(eligible) - len(open_rows),
+        "open_count": len(open_rows),
+        "next": next_rows,
+    }
+
+
+def print_depth_stop_status(status: dict[str, Any], *, as_json: bool) -> None:
+    if as_json:
+        print(json.dumps(status, indent=2, sort_keys=True))
+        return
+    state = "passed" if status["passed"] else "blocked"
+    print(
+        "agent-code-review-depth-stop: "
+        f"{state}; {status['open_count']} open of {status['eligible_count']} "
+        f"eligible rows at review_score>={status['review_score_floor']} "
+        f"(max_open={status['max_open']})"
+    )
+    for row in status.get("next") or []:
+        print(
+            "- "
+            f"{row.get('agent')} {row.get('session_id')} "
+            f"score={row.get('review_score')} files={row.get('changed_file_count')}"
+        )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--write", action="store_true", help="write tracked markdown and private JSON")
+    parser.add_argument(
+        "--depth-stop-predicate",
+        action="store_true",
+        help="exit 0 only when the tracked depth ledger has reviewed all queue rows above the score floor",
+    )
+    parser.add_argument("--review-score-floor", type=int, default=100)
+    parser.add_argument("--max-open", type=int, default=0)
+    parser.add_argument("--json", action="store_true", help="emit machine-readable output for predicate mode")
     args = parser.parse_args()
+
+    if args.depth_stop_predicate:
+        review = load_json(FULL_STACK_REVIEW)
+        queue = build_queue(review) if review else {}
+        if not queue.get("counts"):
+            queue = load_json(PRIVATE_QUEUE)
+        if not queue.get("counts"):
+            print("agent-code-review-depth-stop: missing private queue/source review", flush=True)
+            return 2
+        status = depth_stop_status(
+            queue,
+            DOC_PATH.read_text(encoding="utf-8", errors="replace") if DOC_PATH.exists() else "",
+            review_score_floor=args.review_score_floor,
+            max_open=args.max_open,
+        )
+        print_depth_stop_status(status, as_json=args.json)
+        return 0 if status["passed"] else 1
 
     review = load_json(FULL_STACK_REVIEW)
     queue = build_queue(review)
