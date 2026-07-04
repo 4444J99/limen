@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T07:53:27Z`
+Generated: `2026-07-04T07:57:12Z`
 
 ## Scope
 
@@ -87,6 +87,7 @@ Generated: `2026-07-04T07:53:27Z`
 | 101 | `codex` | `019ede36-31ee-7980-9986-d6706db02872` | Tab-bookmark freemium gate. The prompt asked for a Pro gate and in-extension checkout but gave no executable acceptance predicate. Codex did a substantial local backend/extension pass, but ended with an uncommitted dirty worktree and blocked local Jest because dependencies were not installed. Durable PR #18 later landed a cleaned entitlement/billing implementation with green CI, but it did not preserve the missing popup HTML fix; current `origin/main` still points the manifest at `popup/popup.html` while no such file is tracked, and standard backend CI is currently red after later dependency merges. |
 | 102 | `claude` | `303e319e-eb3f-4914-b423-c8ea60a64bee` | Visual-home / owner-ledger correction run. The session did useful recovery work: it proved PR #100's phantom required-check block, ran browser/a11y/perf verification with system Chrome, pushed fixes to `feat/visual-home`, and wrote a durable center-of-gravity lesson. It also demonstrates the failure it named: a late artist aside was inflated into an ETCETER4 go-live thread, final closure claims overstated current truth, PR #100 remains open/blocked, the claimed personal ledger path is absent on this host, and the memory compaction target has already drifted. |
 | 103 | `claude` | `0c1725b4-9776-4d87-9783-3e67151968f4` | The Invisible Ledger typing pass. The prompt asked Claude to remove worst `any` hotspots in `organvm/the-invisible-ledger` and keep build/tests green. Claude authored a broad 41-file branch and pushed PR #57, but local verification was narrower than claimed: `tsc` still had 10 "pre-existing" errors and CI failed at lint before tests/build ran. PR #57 is still open, conflicting, and unmerged; current green `main` came later through other deploy-ready work, and `origin/main` does not contain the new `src/lib/drill-types.ts`. |
+| 104 | `codex` | `019f1300-f46e-7803-bbe2-87e355146df0` | Workstream kickstart / lifecycle review run. The prompt sequence asked for prior-session review, prompt-vs-work recalculation, immediate "what next" triage, triptych checkpointing, a universal terminal start command, Domus package revival orientation, and notification-provider clarification. Codex produced useful board repair, lifecycle/workstream commits, focused verification, and a private prompt extract, but the session was highly overloaded: it mixed review, board mutation, Portvs preservation, universal launcher design, Domus orientation, and Warp/Claude notification routing. Durable workstream/lifecycle commits are on `main`; later Warp provenance and Portvs branch advances are adjacent continuations and should not be collapsed into this one row. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -5585,6 +5586,76 @@ rg -n 'npm run|tsc|133/133|pre-existing|Build, test|gh pr|git commit|git push|pu
 ```
 
 Result: private prompt extraction has `301` prompt records; original worktree is absent; branch commit `dbd3c0c` exists only on `origin/limen/gen-organvm-the-invisible-ledger-typing-0626-fb12`; PR #57 is open, red, and conflicting; CI failed at lint before test/build; current `origin/main` lacks `src/lib/drill-types.ts`; current target-repo main is green later via other work.
+
+### Codex workstream kickstart run created useful rails, but overloaded one session with too many surfaces
+
+Severity: medium for governance/attribution; current code surfaces are healthy, but the session shape made prompt-to-work accounting difficult.
+
+Evidence:
+
+- Queue row `104` points at Codex session `019f1300-f46e-7803-bbe2-87e355146df0`, rooted at `/Users/4jp/Workspace/limen`, spanning 2026-06-29T10:51:48Z through 2026-06-29T15:11:00Z.
+- The Codex transcript is `/Users/4jp/.codex/sessions/2026/06/29/rollout-2026-06-29T06-50-57-019f1300-f46e-7803-bbe2-87e355146df0.jsonl` (`2725` records). Direct human-prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-104-codex-workstream-kickstart-prompts.jsonl` (`26` records); the queue's `84` prompt events include repeated context/developer surfaces and tool-fed prompt material.
+- Prompt sequence started as read-only review: review previous Codex session `019f0ea5-6de9-7b22-9f5b-c948b4e1adbf`, then include two Limen sessions `019f109b-dc71-76f2-b0a2-7e2254ee29b8` and `019f109b-6e8a-7de1-a4a1-738c5c5b4df1`, then recalculate work against all prompts.
+- The next prompt added a Portvs lifecycle-management thread around session `019f0ea1-820c-7003-9444-ce7e5e3142c3` and the apparent 50k/large local diff. Codex correctly separated functional prototype progress from lifecycle containment.
+- The session then shifted from review into action after "Why are we paused?"; Codex repaired live board invariants, verified Limen whole-repo gates, and pushed a board-state commit.
+- Durable in-window Limen commits include board/lifecycle/workstream work:
+  - `750acc0` / `f5ee666` / `bc16040` / `7fa3a1b` for task-board state and reservation repair.
+  - `381eddc` for session reclaim lifecycle/root handling, lifecycle-pressure tests, docs, parameters, and scripts.
+  - `7c39df4` for initial workstream kickstart packets and CLI/script docs/tests.
+  - `9f7af24` for the `workstream` shortcut install path.
+- `7c39df4`, `9f7af24`, and `381eddc` are ancestors of current `origin/main`.
+- The branch `origin/work/workstream-kickstart-20260629` preserves the focused workstream chain ending at `9f7af24`.
+- Later commits `3cd1507` (`limen: add agent-selectable workstream launcher`) and `3035140` (`limen: preserve workstream kickstart receipt`) extended the same theme after this row's transcript window. They are useful continuation work but should not be credited as row `104`'s direct output without a separate session mapping.
+- The session also pushed the Portvs triptych checkpoint branch at the time. Current `origin/work/triptych-story` has advanced to `7325b8b`, and PR `organvm/portvs#1` remains open; row `104` should be credited for preservation direction/checkpointing, not for final Portvs closeout.
+- The final visible prompt in this transcript was a screenshot question about whether the produced plan aligned with the designed Bash behavior. The transcript ends there, so the row itself does not contain a final answer to that last image prompt.
+- A nearby continuation fixed a Warp/Claude/Codex notification identity problem and produced `6fb678e` on `origin/work/warp-agent-routing-20260629`, but `6fb678e` is not an ancestor of current `origin/main` and is not part of this row's changed-file queue.
+
+Ideal prompt diff:
+
+- Ideal form: keep the first phase read-only, produce a scored prior-session review, then open a new bounded tranche for board repair, a separate tranche for Portvs checkpointing, a separate tranche for universal start-command/Domus package revival, and a separate tranche for Warp notification provenance.
+- Actual form: Codex did start read-only, then correctly moved into urgent board repair when the user asked "what next," but the same transcript kept accumulating domains until it became a mixed review/action/workstream/router session.
+- Ideal verification form: for each surface, record a predicate and durable receipt: board validator/whole-repo gate for Limen, branch+PR/cache policy for Portvs, CLI tests for workstream, and preference/provenance checks for Warp.
+- Actual verification form: Limen board and whole-repo verification were strong at the time; the workstream code now has focused tests; Portvs and Warp were left as branch/adjacent-continuation surfaces rather than a single clean closeout.
+- Corrected ideal form for "what next" overload: give the one decisive next local action, execute it, and explicitly park the other lanes with owner surfaces instead of letting them all merge into the same work packet.
+
+Outcome:
+
+- No code patch was made by this review pass.
+- Row `104` is classified as valuable but overloaded. The durable workstream/lifecycle code is real and currently verifies; the session-level accounting is the failure.
+- Current focused verification passes on `main`: workstream/lifecycle tests, shell syntax, Python compile, and task-board validation.
+- The queue's changed-file list is a mixed ledger. It includes Limen source/docs/tests, board state, workstream scaffolding, shell installs, and external Portvs/relationship/Domus worktree artifacts; it is not one coherent authored diff.
+
+What was fucked up:
+
+- The row started as a review/progress report and mutated into live board repair, whole-repo verification, Portvs checkpointing, universal command design, Domus orientation, and notification-provider debugging.
+- Direct `tasks.yaml` mutation was necessary after the user asked why work had paused, but it still turned a review session into a board-writer session. That boundary should have been announced as a new tranche with its own receipt.
+- The final transcript boundary is unresolved: the user asked whether a screenshot plan aligned with the designed Bash behavior, and the row ends on that prompt.
+- The workstream feature had to be strengthened later by `3cd1507` and `3035140`, which means row `104` should be credited as the first rail, not the complete universal start-command system.
+- Portvs branch preservation succeeded as a checkpoint, but the branch later advanced and PR #1 remains open; row `104` did not close the media/cache architecture problem.
+- The Warp notification provenance fix is adjacent but should be reviewed under the Warp-routing row/branch, not silently merged into this row's success story.
+
+Verification:
+
+```bash
+jq '.changed_review[104]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-104-codex-workstream-kickstart-prompts.jsonl
+wc -l /Users/4jp/.codex/sessions/2026/06/29/rollout-2026-06-29T06-50-57-019f1300-f46e-7803-bbe2-87e355146df0.jsonl
+git log --all --date=iso-strict --pretty=format:'%h%x09%H%x09%ad%x09%D%x09%s' --since='2026-06-29T10:40:00Z' --until='2026-06-29T15:30:00Z' --max-count=120
+git show --stat --oneline --decorate 750acc0 381eddc 7c39df4 9f7af24 --
+git merge-base --is-ancestor 7c39df4 origin/main
+git merge-base --is-ancestor 9f7af24 origin/main
+git merge-base --is-ancestor 381eddc origin/main
+git merge-base --is-ancestor 6fb678e origin/main
+PYTHONPATH=cli/src python3 -m pytest cli/tests/test_workstream_command.py cli/tests/test_session_lifecycle_pressure.py cli/tests/test_sync_reclaim.py cli/tests/test_worktree_debt.py -q
+bash -n scripts/start-worktree-session.sh scripts/session-lifecycle-pressure.py scripts/reclaim-worktrees.py scripts/drain.sh
+python3 -m py_compile scripts/session-lifecycle-pressure.py scripts/reclaim-worktrees.py cli/src/limen/worktree_roots.py cli/src/limen/worktree_debt.py cli/src/limen/cli.py
+python3 scripts/validate-task-board.py --tasks tasks.yaml
+git -C /Users/4jp/Workspace/4444J99/portvs/.worktrees/triptych-story status --short --branch
+git -C /Users/4jp/Workspace/4444J99/portvs/.worktrees/triptych-story log --oneline --decorate -5
+gh pr list --repo organvm/portvs --state all --head work/triptych-story --json number,title,state,createdAt,updatedAt,mergedAt,url --limit 20
+```
+
+Result: private prompt extraction has `26` direct user records; the Codex transcript has `2725` records; row-owned workstream/lifecycle commits are on current `origin/main`; focused tests passed `63 passed`; shell syntax, Python compile, and task-board validation pass; `6fb678e` Warp provenance is not on `origin/main`; Portvs triptych branch is preserved remotely and PR #1 is open but has advanced beyond the row-104 checkpoint.
 
 ## Remaining Review Queue
 
