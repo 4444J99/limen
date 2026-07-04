@@ -9,6 +9,15 @@
 
 set -euo pipefail
 
+if [ "${LIMEN_CONSOLIDATION_GATE:-}" != "consolidation-gate-open" ]; then
+  cat >&2 <<EOF
+Refusing to run irreversible GitHub consolidation renames.
+Open the human consolidation gate first, then run:
+  LIMEN_CONSOLIDATION_GATE=consolidation-gate-open bash $0
+EOF
+  exit 2
+fi
+
 echo "⚠ GitHub mutation gate: renames are IRREVERSIBLE. Verify you have admin:org + workflow before proceeding."
 echo ""
 echo "Pages shadow copies under organvm-i-theoria:"
