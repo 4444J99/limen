@@ -6621,6 +6621,81 @@ gh run list --repo organvm/domus-genoma --branch master --limit 10 --json databa
 
 Result: private prompt extraction has `166` records; PR #138 exists and is open; remote branch `limen/gen-organvm-domus-genoma-security-0626-5961` exists at `b994d3ac`; the original patch commit `9347a980` is present locally/remotely; PR checks failed, including branch-introduced Python test failures; current `master` is green later but does not include PR #138.
 
+### Claude's permission/lifecycle run solved real host pain, but mixed evolving root cause with overconfident closeout
+
+Severity: medium-high for host automation and owner-record governance. This session did produce useful durable outcomes: the recurring `python3` prompt trigger was eventually fixed in `library-preserve.py`, the trusted-cd hook was later hardened and tested, and six human-gated atoms were filed into owning GitHub repos. The problems are the session's shifting diagnosis, local-only receipt language, and final framing that made open user-action issues sound closed.
+
+Evidence:
+
+- Review row `120` targets Claude session `2227b1d3-dd6a-4926-879c-cfcd6c24acde`, rooted at `/Users/4jp/Workspace/limen/.claude/worktrees/fluttering-hugging-bunny`, running from 2026-06-23T12:43:33Z through 2026-06-24T12:42:17Z.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-120-claude-permission-lifecycle-prompts.jsonl` (`127` records, `83` unique prompt hashes, `154617` prompt bytes). It is mirrored in the main checkout's private corpus; no verbatim prompt text is committed here.
+- In redacted intent form, the first prompt layer continued a prior run about recurring macOS security dialogs across Warp/Claude sessions: stop the `python3` TCC prompt and the stale `ClaudeCode.app` Gatekeeper dialog from recurring. The second prompt layer asked that hanging "his-hand" tasks be put somewhere permanent rather than left on the user.
+- The first continuation summary and early final answer diagnosed the `python3` prompt as a Full Disk Access inheritance problem and told the user to grant Full Disk Access to Warp. The same session later superseded that: the real recurring trigger was `scripts/library-preserve.py` touching Mail/Messages without Full Disk Access.
+- Commit `7ad100f` (`capture: autonomic off-disk sync 2026-06-23T13:19:40Z`) contains the local `library-preserve.py` guard, but that exact branch is not present on GitHub now and `7ad100f` is not an ancestor of `origin/main`.
+- The same code did land durably later as `b1e80cf` (`fix(library): FDA-aware sliver -- skip Mail/Messages without Full Disk Access (kills recurring consent dialog)`), which is on `origin/main`. Current `scripts/library-preserve.py` has `SLIVER_SAFE`, `SLIVER_FDA`, `_has_fda()`, and the parked Mail/Messages message.
+- The trusted-cd/bash-prompt part overlaps row 57: current tracked hook `scripts/hooks/allow-trusted-cd-git.sh` and live hook `/Users/4jp/.claude/hooks/allow-trusted-cd-git.sh` are byte-identical, and `scripts/tests/allow-trusted-cd-git.test.sh` passes.
+- The session explicitly received authorization to file six `needs-human` issues and then filed them: `organvm/a-i-chat--exporter#71`, `organvm/edu-organism#3`, `organvm/domus#3`, and `organvm/limen#182/#183/#184`.
+- All six issues still exist, are open, and carry `needs-human` labels. That proves the owner-record action happened, but also proves the underlying human-gated atoms are not closed.
+- The old `fluttering-hugging-bunny` session directory is gone and does not appear in `git worktree list`; the session's "no stranded registered worktree" claim is currently accurate.
+- The final session summary said the work was "fulfilled" and "none on you"; an away summary even drifted to "all 7" while the final listed six. The durable graph is useful, but the language obscured that these were still open user-action issues.
+
+Ideal prompt diff:
+
+- Ideal TCC/Gatekeeper form: distinguish user-visible dialogs, isolate the exact process and filesystem trigger, land a repo-owned guard where possible, and leave any true macOS consent step as a clearly optional or blocked owner record.
+- Actual form: the session first overfit to Warp Full Disk Access and daemon interpreter identity, then corrected itself to the `library-preserve.py` Mail/Messages trigger. The corrected implementation was good, but the receipt trail was messy: a local branch commit first, durable mainline commit later.
+- Ideal "permanent hanging" form: file every irreducible human atom in its owning repo, then report them as open issues the user can act on.
+- Actual form: the six issues were correctly filed, but the closeout wording called the session "fulfilled" and "none on you" even though every issue is explicitly a user-action issue and remains open.
+- Ideal fixed-point form: after later hook/library fixes land, stale `needs-human` issues should be closed, narrowed, or commented with the superseding receipt.
+- Actual form: the graph stayed open; at least the bash-prompt issue now needs reconciliation against the later row 57 hook hardening.
+
+Outcome:
+
+- Row `120` is classified as valuable but not cleanly closed.
+- Credit: the root-cause repair for the recurring `python3` prompt did eventually land in tracked code on `origin/main`; the stale `ClaudeCode.app` cleanup had plausible host-local receipts in the transcript; the issue graph receipts are real; and the old session worktree is no longer stranded.
+- Residual gap: the session's own proof chain is not a single clean PR/commit/issue closure path. It spans host-local mutations, private memory, a local-only commit, a later durable main commit, and six still-open issues.
+- No additional code mutation was made by this review row. The right follow-up is issue hygiene: comment or close any now-superseded `needs-human` issues, especially `organvm/limen#183`, after confirming the current live hook state is the intended human-action replacement.
+
+What was fucked up:
+
+- The first explanation over-prescribed a human Full Disk Access grant before finding the actual `library-preserve.py` trigger. The later correction was technically better, but users should not be handed an irreversible-looking macOS privacy action until the process-level trigger is proven.
+- Host-local actions, private memory edits, and repo code changes were mixed in one long Claude run, making the true durable receipt hard to reconstruct.
+- The session treated "file issues" as "nothing is on you." Filing issues is the right ownership move, but open `needs-human` issues are still real work.
+- The issue count drifted between six and seven in summaries, a small but concrete sign that the closeout was narrative-driven instead of fixed-point driven.
+- The row overlaps prior hook work; without a later reconciliation pass, the GitHub issue graph can keep surfacing stale human work even after code and live hooks have changed.
+- The accidental lesson for future agents: do not run `scripts/library-preserve.py` as a casual `--help` probe; it does not implement help semantics and starts real preservation work.
+
+Verification:
+
+```bash
+wc -l .limen-private/session-corpus/full-stack-review/session-120-claude-permission-lifecycle-prompts.jsonl
+python3 - <<'PY'
+import json
+from collections import Counter
+from pathlib import Path
+p = Path('.limen-private/session-corpus/full-stack-review/session-120-claude-permission-lifecycle-prompts.jsonl')
+rows = [json.loads(line) for line in p.read_text(encoding='utf-8').splitlines() if line.strip()]
+print(len(rows), len({r['prompt_hash'] for r in rows}), sum(r['prompt_bytes'] for r in rows), Counter(r['surface'] for r in rows))
+PY
+rg -n "Full Disk Access|TRUE ROOT|library-preserve.py|File the 6 issues now|github.com/organvm/.*/issues/|git rev-list origin/main..HEAD" /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-fluttering-hugging-bunny/2227b1d3-dd6a-4926-879c-cfcd6c24acde.jsonl
+git show --stat --oneline --decorate 7ad100f -- scripts/library-preserve.py
+git branch -a --contains 7ad100f
+gh api repos/organvm/limen/git/ref/heads/discover-limen-value-2026-06-22
+git show --stat --oneline --decorate b1e80cf -- scripts/library-preserve.py
+git merge-base --is-ancestor b1e80cf origin/main
+rg -n "SLIVER_SAFE|SLIVER_FDA|_has_fda|parked|Messages|Mail" scripts/library-preserve.py
+cmp -s scripts/hooks/allow-trusted-cd-git.sh /Users/4jp/.claude/hooks/allow-trusted-cd-git.sh
+bash scripts/tests/allow-trusted-cd-git.test.sh
+python3 -m py_compile scripts/library-preserve.py
+gh issue view 71 --repo organvm/a-i-chat--exporter --json number,title,state,url,labels,createdAt,updatedAt,closedAt
+gh issue view 3 --repo organvm/edu-organism --json number,title,state,url,labels,createdAt,updatedAt,closedAt
+gh issue view 3 --repo organvm/domus --json number,title,state,url,labels,createdAt,updatedAt,closedAt
+for n in 182 183 184; do gh issue view "$n" --repo organvm/limen --json number,title,state,url,labels,createdAt,updatedAt,closedAt; done
+git -C /Users/4jp/Workspace/limen worktree list --porcelain | rg -n "fluttering-hugging-bunny|worktree|branch|HEAD"
+test ! -d /Users/4jp/Workspace/limen/.claude/worktrees/fluttering-hugging-bunny
+```
+
+Result: private prompt extraction has `127` records; exact local commit `7ad100f` exists only on local branch `discover-limen-value-2026-06-22`; the remote branch lookup now returns `404`; durable commit `b1e80cf` is on `origin/main`; current `library-preserve.py` contains the FDA-aware split; the live and tracked trusted-cd hooks match and the hook regression test passes; all six `needs-human` issues exist and are open; the old session directory is gone and not a registered worktree.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
