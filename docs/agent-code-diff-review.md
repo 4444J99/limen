@@ -7451,6 +7451,55 @@ git show --stat --oneline d8a4295
 
 Result: both small transcripts pass the transcript guard; prompt extraction matches row `133`; row `98` already covers `6226cb86...`; `L-CLAUDE-AUTH` is not current in `his-hand-levers.json`; `d8a4295` remains the durable auth-race fix on main.
 
+### Claude's Archive4T leftover sessions were configuration/no-op fragments, not review work
+
+Severity: low for code, medium for accounting. These two `/Volumes/Archive4T` sessions did not implement or review anything, but they are useful evidence for separating private prompt surfaces from actual work.
+
+Evidence:
+
+- Reconstruction row `134` covers Claude sessions `7c72c72d-75c2-4927-acf0-038e6571aa87` and `fe8a679b-882d-48f7-a351-867ca7511650`, rooted in `/Volumes/Archive4T`, from 2026-06-19T18:35:49Z through 2026-06-20T16:02:47Z.
+- Session `7c72...` contains only local slash-command chatter: `/effort`, repeated `/status`, and `/exit`, plus command stdout. It has no assistant response, no tool calls, no changed files, no verification, and the transcript guard records zero billable tokens.
+- Session `fe8a...` was prompted with `config`. Claude answered with orientation only: Archive4T is a frozen two-copy backup tier, live work belongs in `~/Workspace/limen`, release remains on hold, and bounded autonomous work needs objective, scope, wall time, agent cap, and model tier limits.
+- The `fe8a...` answer was directionally useful as guardrail reinforcement, but it did not satisfy an executable task because the user had not supplied one.
+- Transcript guard passed for both sessions. The second session spent 29,436 Opus billable tokens for the orientation answer.
+- Full private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-134-claude-archive4t-leftovers-prompts.jsonl`: 9 prompt-surface records, 6 unique prompt hashes, 954 prompt bytes. Surfaces are `message.user` 7, `queue.enqueue` 1, and `last-prompt` 1.
+
+Ideal prompt diff:
+
+- Ideal configuration-check form: report current mode, root boundaries, release gate, and exact next action needed from the human.
+- Actual form for `fe8a...`: mostly did that, but spent Opus and produced no durable receipt because the prompt was just `config`.
+- Ideal slash-command transcript form: slash-command state changes should be excluded from implementation credit.
+- Actual form for `7c72...`: correctly produces no work signal once local-command wrappers are separated from real prompts.
+
+Outcome:
+
+- Credit these sessions only as prompt/accounting coverage and safety-orientation evidence.
+- Do not attribute any code, documentation, queue, or release change to row `134`.
+- Preserve the row in the corpus so later aggregate prompt counts do not mistake these prompt events for missing implementation.
+
+What was fucked up:
+
+- An Opus session was used for a one-word `config` prompt and a non-actionable orientation answer.
+- Slash-command/local-command transcript lines can look like user prompts unless the extractor preserves surface metadata.
+- Archive4T has many much larger nearby sessions; row-level session-id separation is necessary to avoid double-counting unrelated Archive work.
+
+Verification:
+
+```bash
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Volumes-Archive4T/7c72c72d-75c2-4927-acf0-038e6571aa87.jsonl
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Volumes-Archive4T/fe8a679b-882d-48f7-a351-867ca7511650.jsonl
+python3 - <<'PY'
+import json
+from collections import Counter
+from pathlib import Path
+p = Path('/Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-134-claude-archive4t-leftovers-prompts.jsonl')
+rows = [json.loads(line) for line in p.read_text(encoding='utf-8').splitlines() if line.strip()]
+print(len(rows), len({r['prompt_hash'] for r in rows}), sum(r['prompt_bytes'] for r in rows), Counter(r['surface'] for r in rows), Counter(r['session_id'] for r in rows))
+PY
+```
+
+Result: both transcript guards passed; `7c72...` had zero billable tokens and no assistant response; `fe8a...` passed at 29,436 Opus billable tokens; prompt extraction matches row `134` with 9 prompt-surface records and no verification or durable receipt signal.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
