@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T01:42:27Z`
+Generated: `2026-07-04T01:45:03Z`
 
 ## Scope
 
@@ -36,6 +36,7 @@ Generated: `2026-07-04T01:42:27Z`
 | refreshed 19 | `claude` | `5e1004b3-b917-4a9d-a1ca-0f9b2b8dba45` | Mail audit / flagged-newsletter-storm run. Reviewed surviving private audit artifacts and external `universal-mail--automation` commit `39bf80d`; newsletter classifier tests pass, while ledger reconciliation after sent/withheld replies remains a recorded residual. |
 | refreshed 20 | `claude` | `ce278978-35f1-4b6c-a511-41f5d1de75cf` | Pre-build excavation / private venture run. Reviewed landed `pre-build-excavate.sh` gate and fixed regex keyword matching so duplicate detection uses literal user keywords; private venture/temp artifacts are absent or outside Limen and remain report-only. |
 | refreshed 21 | `claude` | `84a89bbb-ecd3-4e22-8148-f9b683bd2d92` | Agy bridge / Jules autonomous-dispatch run. The original `melodic-riding-hinton` worktree and temp job files were gone, but the landed Agy/Jules dispatch code was live on `main`; fixed a remaining Agy bridge gap where folder-shaped untracked deltas were silently skipped. |
+| refreshed 22 | `claude` | `f38f4b2a-5c49-4d13-9b36-24bf31c941cc` | Archive4T conductor/relay incident run. The `/Volumes/Archive4T` docs/tests/scripts listed in the changed-file ledger are absent; only home-state memory, handoff, and static status artifacts survive. Current `main` has the scripts/watchdog/import fixes the static handoffs called missing, so this is recorded as stale-handoff/artifact-loss rather than a live code patch. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -1477,6 +1478,35 @@ bash scripts/done-jules-lane.sh
 ```
 
 Result: `14 passed in 0.21s`; `jules-lane verification passed`.
+
+### Archive4T relay handoff artifacts aged out of truth
+
+Severity: medium for relay reliability and auditability, not a current Limen code defect.
+
+Evidence:
+
+- Claude session `f38f4b2a-5c49-4d13-9b36-24bf31c941cc` was a broad `/Volumes/Archive4T` conductor/relay incident run with 23 changed-file refs and 1,383 prompt events in the private queue metadata.
+- Transcript audit reports 28 transcript files, 2,013 usage-bearing messages, 19,944,431 billable-ish tokens, 576,806,109 cache-read tokens, 19,458,400 Opus-class billable-ish tokens, 18 expensive subagents, five agent/workflow calls, and one unbounded-goal phrase hit stored as hash/length metadata.
+- Sixteen changed-file refs under `/tmp` and `/Volumes/Archive4T` are absent on this host, including the listed vendor-lane audit, container manifest, consolidation docs, and backlog/owner rewrite scripts.
+- Seven home-state artifacts survive: one Claude plan, three Claude memory files, `~/Workspace/LEMONSQUEEZY-HANDOFF.md`, `~/Workspace/RELAY-HANDOFF.md`, and `~/Workspace/limen-status-report.html`.
+- The surviving static handoffs are historical, not current source of truth. For example, the June 21 status report says the heartbeat is down and the conductor scripts are missing, while current `main` has `scripts/generate-backlog.py`, `scripts/verify-dispatch.py`, `scripts/heal-dispatch.py`, `scripts/consolidate-github.py`, `scripts/watchdog.py`, and `cli/src/limen/dispatch.py` imports `secrets`.
+
+Outcome:
+
+- No code change was made for this row.
+- The ideal-form diff is that the prompts demanded relay-grade, durable, verifiable state, but the produced state mixed ephemeral off-volume files with static handoffs that became stale. Future relay prompts should point to live probes and tracked generated reports instead of treating the June 2026 handoff files as current truth.
+
+Verification:
+
+```bash
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Volumes-Archive4T/f38f4b2a-5c49-4d13-9b36-24bf31c941cc.jsonl --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000 --out /tmp/rank-f38-audit.json
+test -f /Volumes/Archive4T/scripts/generate-backlog.py
+test -f /Volumes/Archive4T/docs/CONSOLIDATE-DRYRUN.md
+test -f /Users/4jp/Workspace/RELAY-HANDOFF.md
+rg -n "^import secrets|def atomic_write_text|generate-backlog|verify-dispatch|heal-dispatch|consolidate-github|watchdog" cli/src/limen scripts docs
+```
+
+Result: transcript audit completed with Opus budget and unbounded-goal violations; the `/Volumes/Archive4T` changed-file refs sampled above were absent; the surviving relay/status artifacts are stale against current `main`.
 
 ## Remaining Review Queue
 
