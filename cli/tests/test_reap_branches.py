@@ -81,6 +81,19 @@ def test_open_pr_beats_a_landed_proof():
     assert v.action == "keep" and v.reason == "inflight" and v.landed is False
 
 
+def test_numeric_env_knobs_fall_back(monkeypatch):
+    monkeypatch.setenv("LIMEN_BRANCH_REAP_MAX", "bad")
+    monkeypatch.setenv("LIMEN_BRANCH_REAP_EVERY_MIN", "nan")
+
+    assert reap._int_env("LIMEN_BRANCH_REAP_MAX", 100, minimum=1) == 100
+    assert reap._float_env("LIMEN_BRANCH_REAP_EVERY_MIN", 30.0, minimum=0.0) == 30.0
+
+    monkeypatch.setenv("LIMEN_BRANCH_REAP_MAX", "0")
+    monkeypatch.setenv("LIMEN_BRANCH_REAP_EVERY_MIN", "-1")
+    assert reap._int_env("LIMEN_BRANCH_REAP_MAX", 100, minimum=1) == 100
+    assert reap._float_env("LIMEN_BRANCH_REAP_EVERY_MIN", 30.0, minimum=0.0) == 30.0
+
+
 def test_ancestor_reported_before_pr_merged():
     v = reap.classify(F(is_ancestor=True, pr_merged_safe=True))
     assert v.reason == "landed-ancestor"

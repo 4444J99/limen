@@ -15,6 +15,7 @@ Generated: `2026-07-04T00:40:41Z`
 | 1 | `opencode` | `ses_11427e08affe3D8jAAl5W43viB` | Exact window had no matching commits on `main`, but the matching unmerged branch is `limen/gen-organvm-limen-security-0625-57ce` at `02f256e` (`Security hardening pass on organvm/limen`). Reviewed as a reject/do-not-merge artifact. |
 | 2 | `opencode` | `ses_114c8f0c6ffeixS8gn4VxGqoHb` | Exact window matched `80d4e21f` (`feat(route): consume self-improve lane weights`). Widened window also showed related routing/meter/queue commits including `0146190` and `a6488c9`. |
 | 3 | `opencode` | `ses_1095e9b19ffe4yg9h4la7tGU4d` | Exact window had no matching commits on `main`; widened window was mostly Studium content-generation churn, not the control-plane code path reviewed here. |
+| 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 10 | `claude` | `3d972c29-36c6-4803-b94b-255df104f644` | Integration-organ window landed value ledger, score-dispatch, omni, ingest coverage, media atomization, and accelerator surfaces. Reviewed current `main` and found remaining malformed numeric crash paths in fail-open organs. |
 | 11 | `claude` | `f9c6b1e7-2c05-4d42-9d6a-8b08ee98a155` | Window touched watchdog, self-heal, and self-improve organs. Reviewed current `main` implementations and found remaining malformed-env crash paths in watchdog/self-heal. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
@@ -629,6 +630,45 @@ python3 -m py_compile cli/src/limen/io.py
 
 Result: `24 passed`; compile passed.
 
+### Claude gauge and branch-reap fail-open paths still trusted malformed local data
+
+Severity: medium for usage-window control and branch-lifecycle reliability.
+
+Evidence:
+
+- Claude session `0305e50a-e5ba-48e6-8fb1-6fb61264470d` covers the Claude usage gauge, branch reaper, publication-policy, and budget-gauge truth window.
+- The prompt/session intent was a durable "forever bridge" gauge, visible dark avenues instead of silent all-clear readings, and loss-free branch reaping.
+- `scripts/claude-usage.py` parsed `LIMEN_CLAUDE_GAUGE_FRESH_S` with bare `float(...)` at import, parsed proxy percentages with bare `float(...)`, and allowed malformed freshness timestamps to abort an avenue.
+- The on-disk Claude gauge summed raw transcript token fields without coercion, so a string or malformed usage field could darken the whole transcript avenue.
+- `scripts/reap-branches.py` parsed `LIMEN_BRANCH_REAP_MAX` and `LIMEN_BRANCH_REAP_EVERY_MIN` with bare `int(...)` / `float(...)` before classification.
+- `scripts/verify-budget-gauge.py` parsed live Codex `window_minutes` with bare `int(...)` and formatted malformed `used_percent` values directly.
+
+Repair:
+
+- Added finite numeric parsing and per-avenue exception guards to `claude-usage.py`.
+- Made proxy, count, calibration, and transcript-token values degrade to dark/unknown readings instead of aborting the gauge.
+- Added branch-reap env parsers with minimum bounds for max and throttle values.
+- Made budget-gauge Codex rate-limit window/percentage parsing and human display tolerate malformed live payloads.
+- Added focused regressions for malformed env, malformed proxy telemetry, string count values, branch-reap env knobs, and bad Codex rate-limit payloads.
+
+Touched paths:
+
+- `scripts/claude-usage.py`
+- `scripts/reap-branches.py`
+- `scripts/verify-budget-gauge.py`
+- `cli/tests/test_claude_usage.py`
+- `cli/tests/test_reap_branches.py`
+- `cli/tests/test_verify_budget_gauge.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_claude_usage.py cli/tests/test_reap_branches.py cli/tests/test_verify_budget_gauge.py -q
+python3 -m py_compile scripts/claude-usage.py scripts/reap-branches.py scripts/verify-budget-gauge.py
+```
+
+Result: `29 passed`; compile passed.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -773,9 +813,35 @@ Result: `24 passed`; compile passed.
 - `cli/src/limen/io.py:284` applies fallback parsing to the board shrink fraction.
 - `cli/tests/test_io_atomic.py:145` covers malformed, `nan`, and infinite shared IO env values.
 - `cli/tests/test_io_atomic.py:157` covers non-positive shared IO env values.
+- `scripts/claude-usage.py:43` defines finite numeric parsing for Claude gauge inputs.
+- `scripts/claude-usage.py:62` finds numeric fields in usage dictionaries.
+- `scripts/claude-usage.py:70` applies fallback parsing to the Claude gauge freshness env.
+- `scripts/claude-usage.py:133` coerces transcript token fields before weighted-cost math.
+- `scripts/claude-usage.py:168` treats malformed freshness timestamps as unknown freshness.
+- `scripts/claude-usage.py:197` rejects malformed proxy used-percent fields.
+- `scripts/claude-usage.py:225` validates calibration cost and percent fields.
+- `scripts/claude-usage.py:293` accepts numeric usage-count fields without trusting malformed values.
+- `scripts/claude-usage.py:305` validates the explicit Claude weekly cap env.
+- `scripts/claude-usage.py:367` catches per-avenue exceptions so one bad source cannot abort the cascade.
+- `scripts/reap-branches.py:85` defines integer env fallback parsing.
+- `scripts/reap-branches.py:95` defines finite float env fallback parsing.
+- `scripts/reap-branches.py:312` applies safe parsing to branch-reap max.
+- `scripts/reap-branches.py:315` applies safe parsing to branch-reap throttle minutes.
+- `scripts/verify-budget-gauge.py:56` defines finite numeric parsing for live gauge payloads.
+- `scripts/verify-budget-gauge.py:70` converts rate-limit minutes to window labels without throwing.
+- `scripts/verify-budget-gauge.py:177` coerces Codex primary used-percent and window fields.
+- `scripts/verify-budget-gauge.py:182` coerces Codex weekly used-percent and window fields.
+- `scripts/verify-budget-gauge.py:310` coerces display percentages before formatting.
+- `cli/tests/test_claude_usage.py:43` covers malformed Claude freshness env fallback.
+- `cli/tests/test_claude_usage.py:50` covers malformed proxy used-percent telemetry.
+- `cli/tests/test_claude_usage.py:65` covers malformed proxy freshness timestamps.
+- `cli/tests/test_claude_usage.py:102` covers string count/cap numerics.
+- `cli/tests/test_reap_branches.py:84` covers malformed and non-positive branch-reap env knobs.
+- `cli/tests/test_verify_budget_gauge.py:15` covers malformed live Codex rate-limit payloads.
+- `cli/tests/test_verify_budget_gauge.py:37` covers human display of malformed used-percent fields.
 
 ## Remaining Review Queue
 
-1. Continue rank 7-12 control-plane windows before spending time on large Studium content churn; those windows touch dispatch, capacity, CI, and lifecycle code with higher operational blast radius.
+1. Continue unresolved rank 7, 9, and 12 control-plane windows before spending time on large Studium content churn; those windows touch dispatch, capacity, CI, and lifecycle code with higher operational blast radius.
 2. Add stronger provider-clock and receipt extraction for Agy. Changed-file `TargetFile` evidence is now covered when present, but quota, verification, and no-op classification still depend on weaker outcome text.
 3. Continue branch-artifact review for other unmerged OpenCode security/test-coverage branches before any stale branch is rebased or merged.

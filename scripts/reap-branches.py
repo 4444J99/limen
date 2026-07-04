@@ -53,6 +53,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import shutil
 import subprocess
@@ -79,6 +80,28 @@ EXTRA_PROTECT = set(os.environ.get("LIMEN_BRANCH_REAP_PROTECT", "").split())
 
 # Non-interactive git: fail (→ fail-safe KEEP) rather than block on a credential/GUI prompt.
 _GIT_ENV = {**os.environ, "GIT_TERMINAL_PROMPT": "0"}
+
+
+def _int_env(name: str, default: int, *, minimum: int | None = None) -> int:
+    try:
+        value = int(os.environ.get(name, str(default)))
+    except (TypeError, ValueError):
+        return default
+    if minimum is not None and value < minimum:
+        return default
+    return value
+
+
+def _float_env(name: str, default: float, *, minimum: float | None = None) -> float:
+    try:
+        value = float(os.environ.get(name, str(default)))
+    except (TypeError, ValueError):
+        return default
+    if not math.isfinite(value):
+        return default
+    if minimum is not None and value < minimum:
+        return default
+    return value
 
 
 def _git(args: list[str], timeout: int = 30) -> subprocess.CompletedProcess:
@@ -286,10 +309,10 @@ def main() -> int:
     ap.add_argument("--apply", action="store_true", help="actually delete landed branches (default: dry-run)")
     ap.add_argument("--check", action="store_true", help="exit 1 if any provably-landed branch lingers (read-only)")
     ap.add_argument("--force", action="store_true", help="ignore the self-throttle")
-    ap.add_argument("--max", type=int, default=int(os.environ.get("LIMEN_BRANCH_REAP_MAX", "100")))
+    ap.add_argument("--max", type=int, default=_int_env("LIMEN_BRANCH_REAP_MAX", 100, minimum=1))
     args = ap.parse_args()
 
-    every_min = float(os.environ.get("LIMEN_BRANCH_REAP_EVERY_MIN", "30"))
+    every_min = _float_env("LIMEN_BRANCH_REAP_EVERY_MIN", 30.0, minimum=0.0)
 
     # Refresh the default ref so a just-merged branch is judged against current main (best-effort).
     if not args.check:
