@@ -101,6 +101,7 @@ Generated: `2026-07-04T13:24:21Z`
 | changed 143 | `codex` | `019eddb0-ebed-7492-a12d-81cf4eac0b3b` | AI Chat Exporter Claude adapter. Codex authored a broad 15-file live Claude API/provider implementation and opened PR #31, but like the Gemini sibling it worked from a base without the scaffold the prompt referenced. The PR is still open, conflicting, 66 commits behind, and only has a skipped Release check; current `master` keeps Claude scaffold-only through PR #27 and requires live-session validation before wiring real extraction. |
 | changed 144 | `codex` | `019f22c5-0e92-7831-9c59-c3988dc917c3` | Fable routing / budget-gauge run. Codex implemented real Fable acceptance machinery, hardened model routing after an accepted Fable adversarial review found bypasses, and left current focused tests green. The defects are process-grade: the run started in the live root with dirty board state, the first Fable CLI invocation failed, Fable spend initially exceeded the original transcript cap, and the session ended behind `origin/main` with daemon-owned `tasks.yaml` still dirty instead of reaching a clean closeout. |
 | changed 145 | `claude` | `1af9693f-12dd-41e9-8b73-ab54814d34b1` | Governance organ deepen run. Claude correctly attacked the prompt's highest-leverage gap by creating a Cvrsvs Honorvm promotion validator and PR #386, but the PR stayed open/red and 679 commits behind after the session ended at a force-push approval gate. Durable current governance validation came later through PR #483, and this review fixed the remaining seed-metadata drift so the current fleet validator now passes 4/4. |
+| changed 146 | `claude` | `5f469687-a7d6-40d6-ba54-e47bdce3cd5f` | Aug-1 revenue/recovery memory run. Claude turned a sensitive personal revenue-planning prompt into two useful private memory notes about payment rails, services-first revenue, and not mistaking product polish for closing progress. The prompt-vs-done gap is severe on governance: no tracked repo diff or executable next-step artifact landed, the original worktree is gone, and transcript guard flags 1.88M Opus billable tokens plus six Opus subagents for memory capture. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -9158,6 +9159,55 @@ bash -n scripts/verify-whole.sh
 ```
 
 Result: private prompt extraction matches the row; original worktree is absent; PR #386 remains open/red/stale, `3` ahead and `679` behind; PR #483 is the later merged governance-validator path; Claude transcript guard passes with no Opus/Fable violations; this review's seed metadata patch makes `validate-seed.py --fleet --strict-graph` pass `4/4`.
+
+### Claude's Aug-1 memory run captured the right lesson, but used an Opus workflow where a small private artifact was the deliverable
+
+Severity: high for spend governance and privacy/process boundaries, low for tracked repo code risk. The session produced useful private memory notes, but it was not a code-delivery session and should not be counted as shipped repo work.
+
+Evidence:
+
+- The queue entry for Claude session `5f469687-a7d6-40d6-ba54-e47bdce3cd5f` points at deleted worktree `.claude/worktrees/squishy-humming-biscuit`, from `2026-06-24T19:30:20Z` through `2026-06-24T19:56:07Z`.
+- Changed-file evidence is limited to two private Claude memory files: `aug1-10k-revenue-gate.md` and `close-is-the-cliff.md`. No tracked Limen repo file, PR, branch, or commit belongs to this row.
+- The verbatim local-only prompt extract is `.limen-private/session-corpus/full-stack-review/session-changed-146-claude-aug1-revenue-memory-prompts.jsonl`: `13` nonempty prompt records, `7` unique prompt hashes, `18,937` prompt bytes, all sourced from `claude-projects`. Surfaces were `6` direct user messages, `6` recovered `last-prompt` entries, and `1` queued workflow prompt.
+- First-layer prompt, redacted to intent: the user was in a sensitive recovery/revenue-planning moment and asked to find a realistic path to the Aug-1 weekly-revenue target. The session then launched a workflow to survey the real revenue surface and produce an honest services/products plan.
+- The workflow answer was directionally useful: the short-path revenue strategy was services-first AI systems consulting, with products treated as proof and compounding base. It correctly identified payment/closing/outreach as the bottleneck rather than more product polish.
+- Claude wrote two private memory notes that preserve that lesson: one for the Aug-1 revenue gate and one for the recurring "close is the cliff" pattern. The public review intentionally does not reproduce raw private prompt text, personal recovery details, wallet/payment specifics, or private customer/contact material.
+- The session stopped at memory capture plus suggested next actions: offer-page variants, outreach, a short demo script, course go-live steps, and an optional predicate. Those follow-up artifacts were not implemented by the session.
+- Transcript guard reports one workflow call, `1,882,583` billable tokens, `158,434` output tokens, six Opus subagents, and no Fable. It fails on Opus billable budget (`1,882,583 > 750,000`) and Opus subagent fan-out (`6` subagents where the guard allows `1`).
+- The original worktree is absent, so the only durable row-specific artifacts are the transcript, ignored private prompt extract, and private Claude memory notes.
+
+Ideal prompt diff:
+
+- Ideal form: for a sensitive revenue/recovery prompt, produce the smallest durable private artifact that turns the pressure into one executable next action: payment rail, outreach packet, booking link, or a local predicate. Keep raw personal details out of public repo artifacts and keep model spend proportional to the output.
+- Actual form: Claude created useful memory notes and correctly named the bottleneck, but the session spent a large Opus workflow budget, fanned out six Opus agents, and did not land a tracked action surface or executable receipt.
+- Ideal agent-form: broad strategy exploration should be tiered down for commodity research and reserved-model use should require explicit acceptance or a bounded cap.
+- Actual agent-form: the workflow inherited Opus across all six subagents. That is precisely the anti-pattern later model-routing and workflow-guard work is meant to prevent.
+
+Outcome:
+
+- Credit the session for capturing the important operational lesson: first-dollar progress is blocked by closing/payment/outreach, not by another code polish loop.
+- Do not credit the session as repo implementation. It produced no tracked code, no PR, no executable predicate, and no public deliverable.
+- Treat this row as a strong example for private artifact discipline: raw prompts can be processed locally, but the public audit needs redacted intent, hashes/counts, and outcome deltas rather than private verbatim content.
+
+What was fucked up:
+
+- The work shape was too heavy for the deliverable. Six Opus subagents for a short memory-capture/planning session is a spend-control failure.
+- The session proposed concrete next actions but stopped before turning any one of them into a durable artifact.
+- The queue's changed-file view is accurate but easy to overread: two memory-file writes are not equivalent to shipped revenue machinery.
+- The same deleted worktree family also contains other Aug-1/inbound-positioning sessions. This row must stay separate from row `69`, which did ship Aug-1 gate code, and from other positioning work rooted in the same scratch worktree.
+
+Verification:
+
+```bash
+jq '.changed_review[] | select(.session_id=="5f469687-a7d6-40d6-ba54-e47bdce3cd5f")' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+jq -s '{records:length, unique_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), surfaces:([group_by(.surface)[] | {surface:.[0].surface,count:length}]), sources:([group_by(.source)[] | {source:.[0].source,count:length}])}' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-changed-146-claude-aug1-revenue-memory-prompts.jsonl
+test ! -d /Users/4jp/Workspace/limen/.claude/worktrees/squishy-humming-biscuit
+ls -l /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/memory/aug1-10k-revenue-gate.md /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/memory/close-is-the-cliff.md
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-squishy-humming-biscuit/5f469687-a7d6-40d6-ba54-e47bdce3cd5f.jsonl
+git status --short --branch
+```
+
+Result: private prompt extraction matches the row; the original worktree is absent; both private memory files exist; the review worktree has no hidden code diff for this row before documentation; transcript guard fails as expected on Opus budget and Opus subagent fan-out.
 
 ## Remaining Review Queue
 
