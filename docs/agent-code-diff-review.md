@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T01:22:21Z`
+Generated: `2026-07-04T01:25:36Z`
 
 ## Scope
 
@@ -28,6 +28,7 @@ Generated: `2026-07-04T01:22:21Z`
 | 11 | `claude` | `f9c6b1e7-2c05-4d42-9d6a-8b08ee98a155` | Window touched watchdog, self-heal, and self-improve organs. Reviewed current `main` implementations and found remaining malformed-env crash paths in watchdog/self-heal. |
 | 12 | `claude` | `b7efae9c-af24-4c2c-9288-d2fa860ba974` | Off-repo `/Volumes/Archive4T` PR-healing fanout. Temp scratch artifacts were gone, but the persistent Claude workflow transcripts exposed a guard blind spot: nested workflow subagents were not included in transcript audits. |
 | refreshed 13 | `claude` | `4693c425-3c29-4a48-9a0b-54fd9fd37753` | Revenue backlog / model-tier run. Original `piped-booping-kettle` worktree was gone, but revenue-backlog commits landed on `main`; fixed malformed ladder, usage, and env inputs that could abort the revenue feed beat. |
+| refreshed 14 | `claude` | `4a4c2aa8-d455-431e-b18c-3ac1d5824741` | Moneta checkout / order-persistence run. Worktree and live `moneta` root exist; fixed a valid-JSON order-book shape crash that could break the restart-survival promise for pooled demand. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -991,6 +992,38 @@ LIMEN_REVENUE_FLOOR=bad LIMEN_REVENUE_MAX=bad python3 scripts/generate-revenue-b
 
 Result: `5 passed`; compile passed; diff check passed; malformed-env dry run exited `0` and remained read-only.
 
+### Moneta order persistence trusted saved row shape
+
+Severity: medium for checkout reliability and restart durability.
+
+Evidence:
+
+- Refreshed rank 14 (`4a4c2aa8-d455-431e-b18c-3ac1d5824741`) maps to live Moneta checkout/order work. Durable commits include `eeb1d55` (`feat(moneta): serve MONETA's own buyer-facing checkout page`) and `a5d4a49` (`feat(moneta): persist the order book so the pooled valve survives a restart`).
+- Patched transcript audit reports 19 transcript files, 2,793 usage-bearing messages, 18,447,762 billable-ish tokens, 388,544,259 cache-read tokens, 13,495,868 Opus-class billable-ish tokens, one expensive subagent, 11 agent/workflow calls, and two unbounded-goal prompt hits.
+- The prompt/session intent was that Moneta's pooled buyer demand and paid licences survive process restarts on ephemeral hosts. `FileOrderPersistence.load()` caught syntax errors and wrong top-level JSON shapes, but trusted any valid JSON array as `Order[]`.
+- A valid JSON array containing `null`, a scalar, or an object with malformed `id`, `status`, `sats`, or timestamp fields could make `OrderStore` crash during startup when it read `order.id`. That violates the "corrupt file must never crash the mint" contract and can drop the checkout surface until the file is manually repaired.
+
+Repair:
+
+- Added an explicit persisted-order shape guard for IDs, addresses, finite numeric fields, canonical statuses, and optional string fields.
+- Changed file loading to filter valid saved orders from a mixed array instead of blindly casting the whole array.
+- Added a regression proving malformed saved rows are dropped without losing valid pooled demand.
+
+Touched paths:
+
+- `moneta/src/orders-file.ts`
+- `moneta/src/__tests__/orders-file.test.ts`
+
+Verification:
+
+```bash
+npm test --prefix moneta
+git diff --check -- moneta/src/orders-file.ts moneta/src/__tests__/orders-file.test.ts docs/agent-code-diff-review.md
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-linear-conjuring-bear/4a4c2aa8-d455-431e-b18c-3ac1d5824741.jsonl --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000 --out /tmp/rank-4a4c-audit.json
+```
+
+Result: Moneta tests/typecheck returned `43 passed`; diff check passed; transcript audit completed and reported the expected spend/unbounded-goal violations for this high-pressure session.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -1201,6 +1234,11 @@ Result: `5 passed`; compile passed; diff check passed; malformed-env dry run exi
 - `cli/tests/test_generate_revenue_backlog.py:98` covers wrong-shaped revenue ladder JSON.
 - `cli/tests/test_generate_revenue_backlog.py:112` covers mixed headroom telemetry parsing.
 - `cli/tests/test_generate_revenue_backlog.py:134` covers malformed positive integer defaults.
+- `moneta/src/orders-file.ts:21` defines canonical persisted order statuses.
+- `moneta/src/orders-file.ts:23` rejects non-finite numeric persisted fields.
+- `moneta/src/orders-file.ts:31` validates persisted order rows before replaying them.
+- `moneta/src/orders-file.ts:52` filters malformed saved rows during load.
+- `moneta/src/__tests__/orders-file.test.ts:67` covers dropping malformed saved rows while preserving valid pooled demand.
 
 ## Remaining Review Queue
 
