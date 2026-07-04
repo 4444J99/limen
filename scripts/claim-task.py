@@ -12,6 +12,19 @@ from typing import Any
 
 import yaml
 
+VALID_CLAIM_AGENTS = {
+    "agy",
+    "claude",
+    "codex",
+    "copilot",
+    "gemini",
+    "github_actions",
+    "jules",
+    "opencode",
+    "oz",
+    "warp",
+}
+
 
 def default_tasks_path() -> Path:
     if tasks_env := os.environ.get("LIMEN_TASKS"):
@@ -31,7 +44,29 @@ def load_board(path: Path) -> dict[str, Any]:
     return data
 
 
+def parse_nonnegative_int(value: Any, field_name: str) -> int:
+    if isinstance(value, bool):
+        raise SystemExit(f"{field_name} must be a non-negative integer")
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        raise SystemExit(f"{field_name} must be a non-negative integer") from None
+    if parsed < 0:
+        raise SystemExit(f"{field_name} must be a non-negative integer")
+    return parsed
+
+
+def optional_nonnegative_int(mapping: dict[str, Any], key: str, field_name: str) -> int:
+    if key not in mapping:
+        return 0
+    return parse_nonnegative_int(mapping[key], field_name)
+
+
 def claim_task(data: dict[str, Any], task_id: str, agent: str, session_id: str) -> dict[str, Any]:
+    if agent not in VALID_CLAIM_AGENTS:
+        allowed = ", ".join(sorted(VALID_CLAIM_AGENTS))
+        raise SystemExit(f"agent must be one of: {allowed}")
+
     tasks = data.get("tasks")
     if not isinstance(tasks, list):
         raise SystemExit("tasks file has no tasks list")
@@ -42,6 +77,25 @@ def claim_task(data: dict[str, Any], task_id: str, agent: str, session_id: str) 
         status = task.get("status")
         if status != "open":
             raise SystemExit(f"task {task_id} is not open; current status is {status!r}")
+
+        budget_cost = optional_nonnegative_int(task, "budget_cost", "budget_cost")
+        portal = data.setdefault("portal", {})
+        if not isinstance(portal, dict):
+            raise SystemExit("portal must be a mapping")
+        budget = portal.setdefault("budget", {})
+        if not isinstance(budget, dict):
+            raise SystemExit("portal.budget must be a mapping")
+        track = budget.setdefault("track", {})
+        if not isinstance(track, dict):
+            raise SystemExit("portal.budget.track must be a mapping")
+        spent = optional_nonnegative_int(track, "spent", "portal.budget.track.spent")
+        per_agent = track.setdefault("per_agent", {})
+        if not isinstance(per_agent, dict):
+            raise SystemExit("portal.budget.track.per_agent must be a mapping")
+        agent_spent = parse_nonnegative_int(
+            per_agent[agent] if agent in per_agent else 0,
+            f"portal.budget.track.per_agent.{agent}",
+        )
 
         now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         task["target_agent"] = agent
@@ -57,11 +111,8 @@ def claim_task(data: dict[str, Any], task_id: str, agent: str, session_id: str) 
             }
         )
 
-        budget_cost = int(task.get("budget_cost") or 0)
-        track = data.setdefault("portal", {}).setdefault("budget", {}).setdefault("track", {})
-        track["spent"] = int(track.get("spent") or 0) + budget_cost
-        per_agent = track.setdefault("per_agent", {})
-        per_agent[agent] = int(per_agent.get(agent) or 0) + budget_cost
+        track["spent"] = spent + budget_cost
+        per_agent[agent] = agent_spent + budget_cost
         return task
 
     raise SystemExit(f"task {task_id} not found")

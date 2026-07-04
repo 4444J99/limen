@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T00:13:06Z`
+Generated: `2026-07-04T00:17:51Z`
 
 ## Scope
 
@@ -15,6 +15,7 @@ Generated: `2026-07-04T00:13:06Z`
 | 1 | `opencode` | `ses_11427e08affe3D8jAAl5W43viB` | Exact window had no matching commits on `main`; treated as a reconstruction gap for follow-up. |
 | 2 | `opencode` | `ses_114c8f0c6ffeixS8gn4VxGqoHb` | Exact window matched `80d4e21f` (`feat(route): consume self-improve lane weights`). Widened window also showed related routing/meter/queue commits including `0146190` and `a6488c9`. |
 | 3 | `opencode` | `ses_1095e9b19ffe4yg9h4la7tGU4d` | Exact window had no matching commits on `main`; widened window was mostly Studium content-generation churn, not the control-plane code path reviewed here. |
+| 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
 ## Findings Fixed
 
@@ -337,6 +338,37 @@ PY
 
 Result: `6 passed`; compile passed; malformed-env verifier exited `0`; lifecycle import printed `1500 3`.
 
+### Manual claim helper could write invalid agents or crash mid-claim
+
+Severity: medium for board integrity.
+
+Evidence:
+
+- Codex session `019f2413-801b-7cd2-bb1e-c226d96c6355` maps to the 2026-07-02 window containing `1e964a9` (`limen: add safe task claim helper`).
+- The prompt/session intent was safe task reservation with board accounting, but `scripts/claim-task.py` accepted arbitrary agent strings and could write an invalid `target_agent`.
+- The helper also parsed `budget_cost`, `portal.budget.track.spent`, and per-agent counters with bare integer coercion after claim mutation was underway. Malformed board fields could crash a library caller with partially-mutated in-memory claim state.
+
+Repair:
+
+- Added a canonical claimable-agent allowlist and reject unknown agents before touching the board.
+- Added strict non-negative integer parsing that rejects booleans, malformed values, and negative values while still defaulting absent optional counters to zero.
+- Moved budget/counter validation before task status mutation and dispatch-log append.
+- Added unit coverage for valid reservation, invalid agents, malformed budgets, and boolean budgets with no mutation on rejection.
+
+Touched paths:
+
+- `scripts/claim-task.py`
+- `cli/tests/test_claim_task.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_claim_task.py -q
+python3 -m py_compile scripts/claim-task.py
+```
+
+Result: `4 passed`; compile passed.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -403,6 +435,17 @@ Result: `6 passed`; compile passed; malformed-env verifier exited `0`; lifecycle
 - `scripts/prompt-lifecycle-ledger.py:54` applies the GitHub receipt retry fallback.
 - `cli/tests/test_verify_dispatch.py:27` covers malformed verifier timeout import.
 - `cli/tests/test_prompt_lifecycle_ledger.py:18` covers malformed lifecycle timeout and retry imports.
+- `scripts/claim-task.py:15` defines the canonical claimable-agent allowlist.
+- `scripts/claim-task.py:47` rejects boolean, malformed, and negative integer fields.
+- `scripts/claim-task.py:59` defaults absent optional integer fields without accepting present malformed values.
+- `scripts/claim-task.py:65` rejects unknown claim agents before board mutation.
+- `scripts/claim-task.py:81` validates task budget cost before claim mutation.
+- `scripts/claim-task.py:91` validates global spent before claim mutation.
+- `scripts/claim-task.py:95` validates per-agent spent before claim mutation.
+- `cli/tests/test_claim_task.py:37` covers valid reservation and budget accounting.
+- `cli/tests/test_claim_task.py:50` covers invalid-agent rejection without mutation.
+- `cli/tests/test_claim_task.py:61` covers malformed-budget rejection without mutation.
+- `cli/tests/test_claim_task.py:72` covers boolean-budget rejection without mutation.
 
 ## Remaining Review Queue
 
