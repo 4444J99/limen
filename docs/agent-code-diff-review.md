@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T05:24:31Z`
+Generated: `2026-07-04T05:28:37Z`
 
 ## Scope
 
@@ -29,6 +29,7 @@ Generated: `2026-07-04T05:24:31Z`
 | 67 | `codex` | `019f24d2-6dae-7d30-8ea4-f14f3045fc67` | Overnight Codex conductor run. It produced useful live-root, worktree-debt, async dispatch, route, capacity, and organ work, but the session became a direct-main commit storm and an interrupted route fix was later captured together with a financial worker PR delta, leaving PR #590 open/red and proof surfaces stale. |
 | 68 | `claude` | `6b32c7a7-c558-45f0-b872-3cd16c338448` | Insights-lineage / insight-route run. It shipped the missing insight lineage and route loop through green PRs #592, #596, #598, and #599, and current heartbeat evidence shows the route organ running; the session still violated Fable/token governance and overstated "everything fixed" because closeout predicates are point-in-time and one now fails on later branch drift. |
 | 69 | `claude` | `620d2d1a-a190-4a35-ba0c-1b3fccb61778` | AUG1 revenue gate / inbound-positioning conductor run. It shipped a useful executable Aug-1 predicate and six external inbound docs PRs, but the session spent 6.1M billable tokens with five Opus subagents and overclaimed "7/7 live": universal-mail#89 closed unmerged and its positioning docs are absent from current `main`. Review fixed a malformed-state crash path in `scripts/aug1-view.py`. |
+| 70 | `codex` | `019f1809-13b4-7780-9b1f-d4584f872333` | Full-fleet substrate / current-session fanout run. The session built useful ledger/fanout machinery, but first produced theme-based receipts instead of consolidating every drafted plan; it then correctly diagnosed that proof gap. Current fanout code now proves `11` plan events / `10` unique plan sources in dry-run against the original transcript, but the persisted receipt points at a later continuation session. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -3709,6 +3710,57 @@ bash scripts/aug1-gate.sh
 ```
 
 Result: Limen PR #242 is merged and current gate behavior is honestly false; six external docs PRs are merged; universal-mail#89 is closed unmerged and its docs file is absent from current `main`; PR #115 did not include the positioning docs; the new malformed-state regression test passes; the Claude guard fails for Opus spend and fanout.
+
+### Codex full-fleet substrate run built useful machinery before proving the actual plan set
+
+Severity: medium-high for proof sequencing. The code surface is now in much better shape, but the original row's first receipts did not prove the user's requested source-of-truth.
+
+Evidence:
+
+- Queue row `70` points at Codex session `019f1809-13b4-7780-9b1f-d4584f872333`, rooted at `/Users/4jp/Workspace/limen`, with changed paths across dispatch/capacity code, fanout scripts, docs, tests, web/MCP surfaces, and one Domus worktree.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-70-codex-fleet-substrate-prompts.jsonl` (`23` user-message records). In redacted intent form, the first prompt carried a prior "Full-Fleet Overnight Autonomy Fix" plan: derive all lanes from a canonical registry, make `auto`/`all` lane semantics explicit, make async dispatch the overnight default after gates, add an `overnight-doctor`, and replace per-agent prompts with one command surface.
+- The session then accumulated more user pressure: every plan drafted in the current session needed to be consolidated newest-to-oldest before fanout, not merely theme-detected from user messages.
+- The session's own final messages identify the failure: it first implemented dynamic substrate / repo-surface / product / current-session fanout scaffolding, then realized `docs/current-session-fanout.md` only proved detected themes and not "every drafted plan."
+- Surviving artifacts include `scripts/current-session-fanout.py`, `scripts/product-ledger.py`, `scripts/repo-surface-ledger.py`, `scripts/substrate-ledger.py`, `docs/current-session-fanout.md`, `docs/product-ledger.md`, `docs/repo-surface-ledger.md`, and tests `cli/tests/test_current_session_fanout.py` / `cli/tests/test_substrate_repo_product_fanout.py`.
+- `docs/substrate-ledger.md`, which the session's interim receipt named, is not present now.
+- Current `docs/current-session-fanout.md` is a later continuation receipt for session `019f193f-3598-71a0-bb1a-db95c729b359`, not the original row70 transcript. Its persisted private JSON records `1` plan event / `1` unique plan source for that later session.
+- Running current code in dry-run against the original row70 transcript now produces the proof row70 originally lacked: `11` plan events, `10` unique plan sources, `1` duplicate, `0` unconsolidated plan hashes, `12` Codex planner packets, and `4` executor packets.
+- Current focused verification passes: `PYTHONPATH=cli/src python3 -m pytest cli/tests/test_current_session_fanout.py cli/tests/test_substrate_repo_product_fanout.py -q` (`9 passed`) and `python3 -m py_compile scripts/current-session-fanout.py scripts/product-ledger.py scripts/repo-surface-ledger.py scripts/substrate-ledger.py`.
+
+Ideal prompt diff:
+
+- Ideal form: extract every plan event from the active session first, dedupe exact repeats, preserve plan hashes in a private proof matrix, then derive planner/executor packets from that canonical plan-source set.
+- Actual first form: Codex built useful scripts and ledgers, but started with theme detection and product/fanout scaffolding. The first receipt could say "12 detected themes" but could not prove "every drafted plan."
+- Ideal form for live control-plane safety: implement read-only/dry-run proof first; avoid `--write` and live control-plane probes unless the prompt explicitly asks to steer the running fleet.
+- Actual form: after the useful implementation pass, Codex drifted into `capacity-fill-ledger.py --write` and `dispatch-health.py --write --probe-async`; the user interrupted, and Codex killed the lingering dry-run async child.
+- Corrected form: current `scripts/current-session-fanout.py` now has `plan_events`, `unique_plan_sources`, `source_plan_hashes`, duplicate detection, and redacted markdown proof. The fix exists, but the persisted receipt currently points at the later continuation, not row70's source session.
+
+Outcome:
+
+- This row produced valuable substrate work: plan-source extraction, fanout packet generation, product/repo/substrate ledgers, and tests that keep private prompt bodies out of public artifacts.
+- The original session should not be treated as a clean closeout. It was interrupted and ended by proposing the plan-source repair, not by completing and persisting the corrected proof for its own transcript.
+- Current code can now generate the missing proof for the original transcript in dry-run. A durable follow-up would write a row70-specific receipt, or make the public receipt retain multiple source-session proof packets instead of replacing the active one.
+
+What was fucked up:
+
+- The session built the machine before proving the queue it was supposed to consume. That inverted the user's requested order.
+- The receipt surface was unstable: current `docs/current-session-fanout.md` no longer proves the original row70 session; it proves the later continuation.
+- An interim receipt named `docs/substrate-ledger.md`, but that file is absent now. Either the file aged out, was renamed, or the receipt was over-specific.
+- The session overreached into live verification after an implementation request. It did stop and kill the leftover child process after the interrupt, which is the right recovery behavior, but the overreach still matters.
+- The nearby OpenCode `echo test` rows are likely harness/probe noise caused by this fanout period, not meaningful 65-file OpenCode authored diffs. They should be classified separately rather than reviewed as code changes.
+
+Verification:
+
+```bash
+jq '.changed_review[70]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+git log --all --date=iso-strict --pretty=format:'%H%x09%ad%x09%s' -- scripts/current-session-fanout.py docs/current-session-fanout.md .limen-private/session-corpus/lifecycle/current-session-fanout.json docs/product-ledger.md docs/repo-surface-ledger.md scripts/product-ledger.py scripts/repo-surface-ledger.py scripts/substrate-ledger.py cli/tests/test_current_session_fanout.py cli/tests/test_substrate_repo_product_fanout.py
+jq '{plan_event_count, unique_plan_count, duplicate_plan_count, unconsolidated_plan_hashes, source_plan_hashes, themes, planner_count:(.planner_packets|length), executor_count:(.executor_packets|length), session_path}' .limen-private/session-corpus/lifecycle/current-session-fanout.json
+LIMEN_ROOT=$PWD LIMEN_TASKS=$PWD/tasks.yaml PYTHONPATH=cli/src python3 scripts/current-session-fanout.py --session /Users/4jp/.codex/sessions/2026/06/30/rollout-2026-06-30T06-17-55-019f1809-13b4-7780-9b1f-d4584f872333.jsonl --min-codex-planners 10 --executor-lanes auto --include-contrib --no-reset-spend --dry-run
+PYTHONPATH=cli/src python3 -m pytest cli/tests/test_current_session_fanout.py cli/tests/test_substrate_repo_product_fanout.py -q
+python3 -m py_compile scripts/current-session-fanout.py scripts/product-ledger.py scripts/repo-surface-ledger.py scripts/substrate-ledger.py
+```
+
+Result: current implementation passes focused tests and compiles; dry-run against the original transcript proves `11` plan events / `10` unique plan sources / `12` planner packets / `4` executor packets; persisted receipt currently records only the later continuation session's `1` plan event, so row70 remains a corrected-but-not-row-specific closeout.
 
 ## Remaining Review Queue
 
