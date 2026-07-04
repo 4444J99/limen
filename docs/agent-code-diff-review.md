@@ -44,6 +44,7 @@ Generated: `2026-07-04T06:22:46Z`
 | 84 | `opencode` | `ses_1061a71dbffeJZ4lIQymHDPC03` | a-i-chat exporter test-coverage run. The prompt asked OpenCode to raise test coverage for `organvm/a-i-chat--exporter`, find a large uncovered module, add meaningful tests, and keep the build green. The useful code did land: commit `cfe0b1c` added `src/__tests__/queue.test.ts` for `RequestQueue`, and current `master` still contains it with green Check/Deploy/Page checks at `867db55`. The process was not clean: no PR references `cfe0b1c`, it used `Test User <test@example.com>` metadata, and the queue's 43 Limen changed files came from parent board/rebase churn rather than authored product diff. |
 | 85 | `claude` | `b4bf9d03-8a0f-413c-9029-0455f8594b7e` | Private financial/legal matter plus his-hand sync run. The raw prompts and matter artifacts are intentionally kept out of this tracked file. The original Claude worktree is gone; the private local packet and Claude memory files survive off-repo, while the only public Limen code surface is the his-hand issue sync helper already landed through green PRs #272 and #329. Structural review found the private packet is draft-only: valid JSON and complete files, but fill/verify markers remain and no source URLs are embedded. Transcript guard fails on 3.78M billable / 3.10M Opus tokens. |
 | 86 | `opencode` | `ses_0e6fefdb2ffek3p0JVS3cLbgha` | OpenCode probe/no-op. The only user prompt was `"echo test"`, the only tool command was `echo test`, and the final answer was `test`. The queue's 182 changed files are pure attribution noise from adjacent Limen work, not OpenCode-authored changes. |
+| 87 | `claude` | `7e1bf165-2964-433c-9400-ba516b9060c6` | MCP auth tending / credential Lane B run. The original worktree is gone, but PR #545 landed `scripts/mcp-auth-verify.py`, tests, beat wiring, and lever drift checks with green CI. Current focused tests pass and the offline probe exits `0`, reporting the known claude.ai connector consent lapses without token material and pointing to `L-IANVA-CLOUD (#263)`. The code work is valuable; the session still violated spend/fanout governance with 2.48M Opus billable tokens and five Opus subagents. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -4549,6 +4550,60 @@ wc -l .limen-private/session-corpus/full-stack-review/session-86-opencode-probe-
 ```
 
 Result: private prompt extraction has `1` record; the prompt/tool/final text are exactly the `echo test` probe path; no authored code diff belongs to this session.
+
+### Claude MCP auth tending landed useful Lane B validity probing, but overspent Opus
+
+Severity: medium for credential/control-plane reliability; current code checks are green.
+
+Evidence:
+
+- Queue row `87` points at Claude session `7e1bf165-2964-433c-9400-ba516b9060c6`, rooted at `/Users/4jp/Workspace/limen`, with an absent side worktree `.claude/worktrees/feat-mcp-auth-tending`.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-87-claude-mcp-auth-tending-prompts.jsonl` (`55` prompt-bearing records).
+- In redacted intent form, the session asked Claude to stop recurring secrets/API-key/login/MCP/ACP nag loops by separating promptless `op://` service-secret hydration from hosted claude.ai MCP connector consent, and to make the latter observable in a beat instead of chat.
+- Durable delivery landed as PR #545 (`feat(creds): tend Lane B - MCP-connector consent gets the validity probe op:// already had`), merged 2026-07-02 at `6a8f440`.
+- PR #545 added `scripts/mcp-auth-verify.py` and `cli/tests/test_mcp_auth_verify.py`, wired the non-fatal probe into `scripts/metabolize.sh`, declared `LIMEN_MCP_*` knobs, reconciled lever drift, and added a `no-tasks-on-me.sh` lever-id check.
+- GitHub checks on PR #545 were green: `python`, `python-311`, `pr-gate`, `worker`, `web`, and `verify`.
+- Current focused verification passes: `python3 -m pytest cli/tests/test_mcp_auth_verify.py -q` (`11 passed`), `python3 -m py_compile scripts/mcp-auth-verify.py`, and `python3 scripts/mcp-auth-verify.py --help`.
+- Current offline JSON probe exits `0` and reports the known claude.ai connector consent lapses from the needs-auth cache, with `required_lapsed: []` and cure `L-IANVA-CLOUD (#263)`. It does not print token material.
+- Transcript guard fails: 2,475,972 billable-ish tokens, all Opus, 259 usage messages, and five Opus subagents.
+
+Ideal prompt diff:
+
+- Ideal form: model the credential estate as two lanes, keep `op://` promptless hydration separate from hosted OAuth consent, add a non-secret validity predicate, and surface lapses in beat logs rather than chat nags.
+- Actual code form: PR #545 substantially matches that ideal. Lane B now has an offline cache reader, optional live probe, fail-open default, strict/required modes, tests, parameter declarations, and lever linkage.
+- Ideal process form: narrow the investigation, tier subagents down, and keep Opus for the synthesis/decision work only.
+- Actual session form: useful but expensive, with five Opus subagents and a failed transcript guard even though the final code diff was moderate.
+- Ideal review form: review the PR's six-file landed diff, not the queue's three-file changed surface. The queue missed `metabolize.sh`, `his-hand-levers.json`, `parameters.yaml`, and `no-tasks-on-me.sh`.
+
+Outcome:
+
+- No code patch was made in this review pass. The merged code is green and current focused probes pass.
+- This row should be credited as a strong control-plane repair, with a spend/fanout violation recorded as the main defect.
+
+What was fucked up:
+
+- The session exceeded both total and Opus budgets, and used five Opus subagents for exploratory work that should have been tiered down.
+- The queue changed-file summary understated the real landed diff and omitted important guardrail files.
+- The work was framed around "stop nag loops" but still leaves the irreversible cure as a human lever (`L-IANVA-CLOUD`); that is correct, but final receipts need to distinguish "observable and routed" from "fully cured."
+- Commit metadata again includes generated-agent co-authoring and premium-model provenance, but the actionable code receipt is the merged PR and green CI.
+
+Verification:
+
+```bash
+wc -l .limen-private/session-corpus/full-stack-review/session-87-claude-mcp-auth-tending-prompts.jsonl
+jq -r '.kind + " " + .surface + " bytes=" + (.prompt_bytes|tostring)' .limen-private/session-corpus/full-stack-review/session-87-claude-mcp-auth-tending-prompts.jsonl | sort | uniq -c
+test -d /Users/4jp/Workspace/limen/.claude/worktrees/feat-mcp-auth-tending
+test -e scripts/mcp-auth-verify.py
+git log --oneline --decorate --all -- scripts/mcp-auth-verify.py cli/tests/test_mcp_auth_verify.py
+gh pr view 545 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup,url,body
+python3 -m pytest cli/tests/test_mcp_auth_verify.py -q
+python3 -m py_compile scripts/mcp-auth-verify.py
+python3 scripts/mcp-auth-verify.py --help
+python3 scripts/mcp-auth-verify.py --json
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/7e1bf165-2964-433c-9400-ba516b9060c6.jsonl
+```
+
+Result: private prompt extraction has `55` records; original worktree is absent; PR #545 is merged green; focused tests pass; offline MCP auth probe exits `0` and points to the permanent human lever without exposing secrets; transcript guard fails on Opus spend and Opus subagent fanout.
 
 ## Remaining Review Queue
 
