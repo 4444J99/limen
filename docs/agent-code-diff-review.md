@@ -7500,6 +7500,66 @@ PY
 
 Result: both transcript guards passed; `7c72...` had zero billable tokens and no assistant response; `fe8a...` passed at 29,436 Opus billable tokens; prompt extraction matches row `134` with 9 prompt-surface records and no verification or durable receipt signal.
 
+### Claude's Codex-token takeover landed real gates, but burned Opus and briefly violated worktree isolation
+
+Severity: high for spend/control, medium for code. The session did valuable skeptical takeover work: it rescued Codex's stranded active-token-budget fix and opened the first executable budget-gauge truth predicate. But it also spent 3.1M Opus billable tokens, fanned out four Opus subagents, and briefly committed to the live `main` checkout before repairing the mistake.
+
+Evidence:
+
+- Reconstruction row `135` targets Claude session `8776c2a9-7669-4570-9f7b-d6158a4eeba3`, rooted in `.claude/worktrees/ticklish-bubbling-robin`, with four subagents: adversarial review of the token-gate patch, per-lane usage telemetry recon, pacing/backoff recon, and repo budget/capacity recon.
+- The first-layer ask was explicit: start in Limen, read `AGENTS.md` and `CLAUDE.md`, direct-session mode, do not mutate `tasks.yaml`, do not rubber-stamp Codex, audit the previous three days, verify the uncommitted Codex token-accounting patch, preserve the agent-neutral fleet contract, and land the highest-value evidence-backed fix.
+- The session correctly treated the four-file Codex patch as an atomic unit: `scripts/codex-token-accounting.py`, `scripts/continuation-beat.py`, `cli/tests/test_codex_token_accounting.py`, and `institutio/governance/parameters.yaml`. It verified why `parameters.yaml` was load-bearing for the no-hardcode ratchet.
+- It ran strong local proof before merge: `ruff check` and `ruff format --check` across CI scope, `check-params.py`, `check-agent-docs.py`, `validate-task-board.py`, `py_compile`, the full `cli/tests` suite with `547 passed`, and then `scripts/verify-whole.sh` with `Whole-system verification passed`.
+- PR #498 merged at `5a54abb3182841afcc563e92824fc4d6dea2229d` with green PR checks and post-merge `CI` / `Deploy API` runs. This delivered the active-vs-historical Codex token budget gate.
+- The same session then derived the next budget problem correctly: the fleet controllers were pacing against fictional or untrusted cross-lane caps. It created `scripts/verify-budget-gauge.py` and added machine-readable `trust` / `pool` metadata in `scripts/usage-telemetry.py`.
+- PR #499 eventually merged at `96074c950e24ca7d5e97928080f6e069c90e65eb` with green CI. The `8776...` transcript itself visibly opens the PR and ends; a continuation under the same root added the second commit `d75442b` to read Codex's real vendor gauge before the PR merged.
+- The transcript caught and repaired a serious process error: it accidentally committed `7413296` on the live `main` checkout, then cherry-picked the change to `feat/fleet-budget-gauge`, moved `main` back with `--mixed`, restored the tracked files, and preserved daemon-owned `tasks.yaml` drift. Current `origin/main` does not contain `7413296`; only PR #499's merge commit survives.
+- Full private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-135-claude-codex-token-budget-gauge-prompts.jsonl`: 213 prompt-surface records, 168 unique prompt hashes, 562,933 prompt bytes. Surfaces are `message.user` 168, `last-prompt` 33, and `queue.enqueue` 12.
+
+Ideal prompt diff:
+
+- Ideal takeover form: inspect the live dirty state, verify the uncommitted Codex patch against consumers and CI gates, keep `tasks.yaml` separate, land a narrow PR, and record exact merge/CI receipts.
+- Actual form: mostly satisfied for PR #498. The patch was reviewed skeptically, hardened, verified through full repo predicate, rebased over daemon receipt drift, and merged green.
+- Ideal budget-gauge form: after merging the active-session fix, derive one bounded follow-up from real telemetry and keep it in an isolated worktree until PR checks pass.
+- Actual form: the derivation was good and PR #499 became valuable, but the session briefly wrote to the live main checkout and had to perform an emergency containment dance.
+- Ideal model-tier form: use cheap/read-only workers for reconnaissance unless there is a justified reason for Opus.
+- Actual form: every subagent inherited Opus. The transcript guard reports 3,100,148 Opus billable tokens and four Opus subagents.
+
+Outcome:
+
+- Credit row `135` for rescuing and landing the Codex active-token gate through PR #498.
+- Credit row `135` for opening the budget-gauge truth predicate lane and its first commit; credit final PR #499 merge to the same continuation/root stream, with `0305...` already reviewed as the later usage-gauge / publication-policy / branch-reap window.
+- Do not count this as a clean single diff. It is a high-value takeover plus a high-cost control failure.
+
+What was fucked up:
+
+- The model tiering was backwards for the job. Recon agents and adversarial review did not need to inherit Opus, and the session exceeded both total billable and Opus budget guardrails.
+- The live-checkout write was exactly the kind of worktree-isolation failure the prompt warned against. It was repaired without a destructive reset, but it should not have happened.
+- The session started well-scoped around Codex token accounting, then expanded into cross-lane budget modeling before the first PR was fully complete. That expansion produced useful work, but it inflated spend and session complexity.
+- PR #499 attribution needs continuation-aware accounting: the `8776...` row opened the PR; the later same-root continuation added Codex vendor-gauge reading and merged it.
+
+Verification:
+
+```bash
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-ticklish-bubbling-robin/8776c2a9-7669-4570-9f7b-d6158a4eeba3.jsonl
+python3 - <<'PY'
+import json
+from collections import Counter
+from pathlib import Path
+p = Path('/Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-135-claude-codex-token-budget-gauge-prompts.jsonl')
+rows = [json.loads(line) for line in p.read_text(encoding='utf-8').splitlines() if line.strip()]
+print(len(rows), len({r['prompt_hash'] for r in rows}), sum(r['prompt_bytes'] for r in rows), Counter(r['surface'] for r in rows), Counter(r['session_id'] for r in rows))
+PY
+gh pr view 498 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+gh pr view 499 --repo organvm/limen --json number,title,state,mergedAt,mergedBy,mergeCommit,commits,files,statusCheckRollup,url
+gh run list --repo organvm/limen --branch main --commit 5a54abb3182841afcc563e92824fc4d6dea2229d --limit 10 --json databaseId,name,status,conclusion,headSha,createdAt,url
+gh run list --repo organvm/limen --branch main --commit 96074c950e24ca7d5e97928080f6e069c90e65eb --limit 10 --json databaseId,name,status,conclusion,headSha,createdAt,url
+git merge-base --is-ancestor 7413296 origin/main; echo $?
+git log --oneline --all --grep 'budget-gauge truth predicate'
+```
+
+Result: transcript guard failed only on spend/fanout governance (`3,100,148` Opus billable tokens, four Opus subagents); prompt extraction matches row `135`; PR #498 and PR #499 are merged with green CI; `7413296` is not an ancestor of `origin/main`; the surviving budget-gauge artifact is PR #499 / `96074c9`.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
