@@ -46,6 +46,7 @@ Generated: `2026-07-04T02:17:42Z`
 | refreshed 29 | `claude` | `ec251ec3-e2e5-405b-a7ea-c93d93c255a3` | Object Lessons Studio / WriteLens launch review. Original worktree and temp OG captures are gone; external Studio and WriteLens artifacts survived. Fixed the remaining WriteLens brand/OG/reframe gap and added an explicit Studio predicate override for the clean WriteLens root. |
 | refreshed 30 | `claude` | `ef651be0-bf09-4cdb-a0db-649e0bdc67ef` | Speech Score Philip Glass tracker planning run. Original worktree and temp render artifacts are gone, but the target `speech-score-engine` repo now contains the implemented tracker/static share artifact and passes its documented gate matrix. Recorded as executed/superseded target-repo work. |
 | refreshed 31 | `claude` | `08929862-d3f1-4a09-8903-277707a8524b` | Wrangler / 1Password one-spot credential run. Original worktree is gone, but `scripts/cf-wrangler.sh` and `scripts/op-service-account.sh` landed on `main`; fixed a wrapper-order bug that could run global Wrangler before the nearest project-local binary. |
+| refreshed 32 | `claude` | `3c7f2396-ca81-4494-a9e2-3b4a5d2a87ea` | Agent-instruction / "agent-all" convergence run. PR #358 merged the two-layer standard and drift predicate; current review fixed an inaccurate Layer-1 drift-check provenance pointer. Transcript guard still fails on heavy Opus fanout. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -198,6 +199,56 @@ python3 -m ruff check cli/tests/test_claude_tier.py cli/tests/test_claude_workfl
 ```
 
 Result: PR #514 is merged with green GitHub checks; current agent files pin `scan` and `verify` to Haiku and `synth` to Opus; focused local tests passed `30 passed`; docs/params checks, compile, shell syntax, and Ruff passed. Transcript guard fails as expected on this pre-fix/repair session with six Opus subagents.
+
+### Agent-instruction standard landed the right two-layer answer, but one Layer-1 gate pointer was wrong
+
+Severity: medium for governance docs; current patch corrects the bad provenance pointer.
+
+Evidence:
+
+- Claude session `3c7f2396-ca81-4494-a9e2-3b4a5d2a87ea` ran from `/Users/4jp/Workspace/limen` on 2026-06-26T20:53:43Z through 2026-06-27T00:27:00Z. The original `.claude/worktrees/agent-standard-converge` worktree is gone.
+- Prompt first layer started from improving `CLAUDE.md`, `AGENTS.md`, and related instruction files; then widened to the missing/remembered `agent-all` capability and asked the session to find the relevant prompt/session history and build the durable thing.
+- PR `organvm/limen#358` merged 2026-06-26T22:21:02Z at merge commit `213c708709710d31395dc881156ce7a1bd4529da` with green `python`, `worker`, `web`, and `pr-gate` checks.
+- PR #358 added `docs/agent-instruction-standard.md`, added `scripts/check-agent-docs.py`, wired it into `scripts/verify-whole.sh`, expanded `AGENTS.md` with the full state table and precedence ladder, corrected `GEMINI.md` from `completed` to `done`, and rewrote the stray `CONTRIBUTING.md`.
+- Later in-window commits `00fe3fd` and `38c7f97` expanded the same thread into broader task-lifecycle canonicalization and operating-protocol alignment.
+- External `a-organvm/organvm-engine` is present and clean on this host. Its `contextmd/templates.py` emits marker sections for ecosystem context, not Limen task states; `fossil/drift.py` is intention/reality fossil analysis, not the contextmd dry-run gate.
+
+Ideal prompt diff:
+
+- Ideal form: converge on the existing two-layer architecture, distinguish ecosystem-context generation from Limen's dispatch lifecycle, update the owning docs/code once, and add a predicate so the state vocabulary cannot drift again.
+- Actual form: the session did land the correct core artifact and predicate, plus useful follow-up protocol alignment.
+- Residual gap: the standard described the Layer-1 drift check as `organvm ecosystem sync --dry-run` backed by `fossil/drift.py`, conflating ecosystem-profile scaffolding and fossil intention drift with the actual contextmd marker-section sync path.
+
+Outcome:
+
+- Current `docs/agent-instruction-standard.md` now points Layer 1 to `organvm context sync --dry-run` via `cli/context.py::cmd_context_sync` and `contextmd/sync.py::sync_all()`.
+- It also explicitly says `.github/workflows/ecosystem-sync-check.yml` runs `organvm ecosystem sync --dry-run` for `ecosystem.yaml` scaffolds, not contextmd marker drift.
+- Current `scripts/check-agent-docs.py` passes and binds the Limen task-state table to `VALID_STATUSES`.
+
+What was fucked up:
+
+- The session was expensive and broad: current transcript audit reports 4,732,834 billable-ish tokens, 3,778,683 Opus billable-ish tokens, 11 agent/workflow calls, and 10 Opus subagents.
+- The row's private changed-file ledger undercounted durable output by only seeing four files from the gone worktree/memory surface; the real landed surface was PR #358 plus follow-up commits.
+- The first standard mixed up the external gate provenance. A future agent following it would inspect `fossil/drift.py` for contextmd marker drift and miss the actual `contextmd/sync.py` implementation.
+- External `organvm` dry-run commands could not be fully exercised from this Limen run because the installed wrapper needs local source hydration and the default registry path `/Users/4jp/Code/organvm/organvm-corpvs-testamentvm/registry-v2.json` is absent on this host. The implementation path was verified by source inspection instead.
+
+Touched paths:
+
+- `docs/agent-instruction-standard.md`
+
+Verification:
+
+```bash
+gh pr view 358 --repo organvm/limen --json number,title,state,createdAt,mergedAt,mergeCommit,headRefName,baseRefName,url,author,files,commits,statusCheckRollup
+git show --stat --oneline --decorate 213c708 38c7f97 00fe3fd
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/3c7f2396-ca81-4494-a9e2-3b4a5d2a87ea.jsonl
+python3 scripts/check-agent-docs.py
+PYTHONPATH=/Users/4jp/Workspace/limen/cli/src python3 -m pytest cli/tests/test_dispatch.py cli/tests/test_harvest.py cli/tests/test_score_dispatch.py cli/tests/test_self_improve.py web/api/tests/test_main.py -q
+git -C /Users/4jp/Workspace/a-organvm/organvm-engine status --short --branch
+rg -n 'ecosystem sync|context sync|sync --dry-run|ecosystem-sync|contextmd|drift' /Users/4jp/Workspace/a-organvm/organvm-engine/.github/workflows /Users/4jp/Workspace/a-organvm/organvm-engine/src/organvm_engine /Users/4jp/Workspace/a-organvm/organvm-engine/pyproject.toml
+```
+
+Result: PR #358 is merged with green checks; local doc predicate passes; focused lifecycle/API tests passed `79 passed`; external organvm-engine is clean. Transcript audit fails on spend/fanout, which is recorded as a session-quality defect rather than a current-code defect.
 
 ## Rejected Artifacts
 

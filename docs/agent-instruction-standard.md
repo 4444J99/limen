@@ -60,8 +60,10 @@ defer to that project contract and must not redefine Limen task states or dispat
 - **Source of truth:** `contextmd/templates.py` (REPO / AGENTS / ORGAN / WORKSPACE sections);
   rendered by `generator.py`, applied by `sync.py::sync_all()`.
 - **Run:** `organvm context sync --write`
-- **Drift check:** `organvm ecosystem sync --dry-run` (`fossil/drift.py` +
-  `.github/workflows/ecosystem-sync-check.yml`, on push to `main`).
+- **Drift check:** `organvm context sync --dry-run` (`cli/context.py::cmd_context_sync` →
+  `contextmd/sync.py::sync_all()`). The separate
+  `.github/workflows/ecosystem-sync-check.yml` runs `organvm ecosystem sync --dry-run` for
+  `ecosystem.yaml` scaffolds; it is not the contextmd marker-section drift gate.
 - **Coverage:** manages `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` across ~190 files at
   workspace / organ / repo level (~73–85% auto-generated).
 - **What it injects:** shared org/ecosystem context (system library, handoff status,
