@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T01:25:36Z`
+Generated: `2026-07-04T01:27:08Z`
 
 ## Scope
 
@@ -29,6 +29,7 @@ Generated: `2026-07-04T01:25:36Z`
 | 12 | `claude` | `b7efae9c-af24-4c2c-9288-d2fa860ba974` | Off-repo `/Volumes/Archive4T` PR-healing fanout. Temp scratch artifacts were gone, but the persistent Claude workflow transcripts exposed a guard blind spot: nested workflow subagents were not included in transcript audits. |
 | refreshed 13 | `claude` | `4693c425-3c29-4a48-9a0b-54fd9fd37753` | Revenue backlog / model-tier run. Original `piped-booping-kettle` worktree was gone, but revenue-backlog commits landed on `main`; fixed malformed ladder, usage, and env inputs that could abort the revenue feed beat. |
 | refreshed 14 | `claude` | `4a4c2aa8-d455-431e-b18c-3ac1d5824741` | Moneta checkout / order-persistence run. Worktree and live `moneta` root exist; fixed a valid-JSON order-book shape crash that could break the restart-survival promise for pooled demand. |
+| refreshed 15 | `claude` | `95f5e850-1274-40de-8a32-8ade3192b22a` | Course-recapitulation / education-organism run. Surviving evidence is transcript, plan, and Claude memory files; the `peaceful-plotting-fern` worktree, temp converter, and external `~/Workspace/edu-organism` root are absent, so code attribution is report-only. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -1023,6 +1024,36 @@ python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/pro
 ```
 
 Result: Moneta tests/typecheck returned `43 passed`; diff check passed; transcript audit completed and reported the expected spend/unbounded-goal violations for this high-pressure session.
+
+### Course-recapitulation row has no surviving code artifact root
+
+Severity: medium for auditability, not a current Limen code defect.
+
+Evidence:
+
+- Refreshed rank 15 (`95f5e850-1274-40de-8a32-8ade3192b22a`) was a course-recapitulation / education-organism run with 50 changed-file refs, mostly under `~/Workspace/edu-organism/**`, plus Claude plan/memory files and a temp converter script.
+- Patched transcript audit reports 16 transcript files, 1,556 usage-bearing messages, 12,477,844 billable-ish tokens, 158,961,756 cache-read tokens, 10,316,377 Opus-class billable-ish tokens, two expensive subagents, and 15 agent/workflow calls.
+- The original Limen worktree `.claude/worktrees/peaceful-plotting-fern` is absent on this host.
+- The external root `~/Workspace/edu-organism` is absent on this host.
+- The temp script `~/.claude/jobs/95f5e850/tmp/conv_eng101.py` is absent. The Claude plan file and two memory files still exist, but they are evidence of intent/handoff, not the generated course-engine code itself.
+- A git-window search over the listed course-engine and feedback-bank paths found no matching commits in the Limen repo.
+
+Outcome:
+
+- No Limen code change was made for this row.
+- This row remains review-relevant because it shows a high-cost session where prompts and handoff memory survived, but the actual produced education-organism files are unavailable for code diff review on this host.
+
+Verification:
+
+```bash
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-peaceful-plotting-fern/95f5e850-1274-40de-8a32-8ade3192b22a.jsonl --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000 --out /tmp/rank-95f5-audit.json
+test -d /Users/4jp/Workspace/limen/.claude/worktrees/peaceful-plotting-fern
+test -d /Users/4jp/Workspace/edu-organism
+test -f /Users/4jp/.claude/jobs/95f5e850/tmp/conv_eng101.py
+git log --all --since=2026-06-23T16:58:37Z --until=2026-06-24T15:45:34Z --oneline --stat -- courses/_engine/dates.py courses/_engine/ingest.py courses/_engine/pii.py courses/_engine/recapitulate.py academia/feedback-bank/universal-feedback-discussions.md academia/feedback-bank/universal-feedback-essays.md
+```
+
+Result: transcript audit completed and reported an Opus budget violation; both artifact roots and the temp converter were absent; git-window search returned no matching commits.
 
 ## Current File References
 
