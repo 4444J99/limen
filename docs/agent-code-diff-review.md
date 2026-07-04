@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T07:28:17Z`
+Generated: `2026-07-04T07:33:50Z`
 
 ## Scope
 
@@ -82,6 +82,7 @@ Generated: `2026-07-04T07:28:17Z`
 | 96 | `codex` | `019ec636-79db-7573-ba69-388f5e33e4b5` | CleanUnique recap / external Trash cleanup run. The session produced useful archive manifests and retrieval surfaces, but then crossed into destructive external Trash deletion on `/Volumes/4444J99/.Trashes/501/Workspace` without a captured final execute receipt and without the later-required mirror-proof gate. Later crash-recovery evidence ties that traversal/delete path to the machine's panic loop. |
 | 97 | `codex` | `019f187d-dcd6-7390-99a9-f3c1267fb7ca` | Current-session fanout / multistream waterfall run. The session made fanout real by seeding tasks, launching async planners, and merging the CSF PR train, but it also exposed a serious control-plane hazard: root-level parallel dispatch could mutate the conductor checkout and erase repairs. Current `main` is safer because later PRs #584/#585/#586 hardened queue locks and dependencies. |
 | 98 | `claude` | `6226cb86-1ef9-4ab7-a8c5-e668da59b071` | Payment synthesis / credential-wall run. The session first produced a private high-context revenue/payment synthesis, then correctly moved credential/login/env atoms out of chat burden and into code plus a GitHub wall through merged PR #321 and issue #320. The later resume blurred session boundaries by drifting into a QUICKEN/live-checkout closeout claim; current git does not prove a surviving row-98 QUICKEN commit, so that part is recorded as a transcript-level scope/control failure rather than an attributed code diff. |
+| 99 | `claude` | `f0a18679-fd83-4fb8-a836-0cb7a79c58d8` | Domus Genoma CI-fix session. The prompt asked for one root-cause PR making failing lint/validation checks green, but the session could not run local validators or fetch GitHub logs, fanned out Opus subagents into manual read-only audits, and ended on a subagent result with no final implementation or PR. The local branch was only the already-merged PR #107 tip; current green CI came much later through PR #147. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -5273,6 +5274,67 @@ python3 -m pytest cli/tests/test_creds_hydrate.py cli/tests/test_credential_wall
 ```
 
 Result: private prompt extraction has `199` prompt-bearing records; PR #321 is merged green; issue #320 exists and is labelled `credential`; current structural credential checks and `32` focused tests pass; the original worktree and temp wall file are gone; no matching in-window QUICKEN commit is proven from current git.
+
+### Claude Domus Genoma CI-fix session burned analysis without landing a fix
+
+Severity: high for CI governance and merge discipline in the target repo; medium for this row's direct code risk because it did not leave a new surviving diff.
+
+Evidence:
+
+- Queue row `99` points at Claude session `f0a18679-fd83-4fb8-a836-0cb7a79c58d8`, rooted at deleted worktree `/Users/4jp/Workspace/.limen-worktrees/cifix-4444j99-domus-genoma-3c5a`, running on 2026-06-19T15:50:58Z through 2026-06-19T16:20:44Z.
+- Verbatim prompt-bearing extraction is private in `.limen-private/session-corpus/full-stack-review/session-99-claude-domus-genoma-ci-prompts.jsonl` (`255` records across the main transcript and subagents).
+- Prompt intent was explicit: fix pre-existing CI breakage on `4444J99/domus-genoma`, specifically ShellCheck, YAML Lint, JSON Validation, Python Lint, and Shell Formatting; root-cause the default branch so open PRs become mergeable; open one fix PR.
+- The queued changed files were only temporary CI helpers under `/tmp` and the deleted worktree: `.ci_check*.sh`, `.ci_jsoncheck.py`, `ci_repro.sh`, and `/tmp/vj_4444.py`. None are present now.
+- The original worktree is gone. A local branch named `limen/cifix-4444j99-domus-genoma-3c5a` still exists in `/Users/4jp/Workspace/4444J99/domus-genoma`, but its tip is `c22646f` from PR #107 (`Add apps/web/src/pages/InstallPage`), not a row-99 CI fix. It is `behind 27` from `origin/master`, and `merge-base --is-ancestor` confirms it is already contained by current `origin/master`.
+- The session quickly hit approval/sandbox limits: local validator commands, `gh` log fetches, and helper script execution required approval. It delegated reproduction to a subagent, but that subagent hit the same gate.
+- After execution was blocked, Claude switched to manual read-only audits. Subagents manually inspected JSON and YAML file sets and reported no concrete JSON or YAML violations; this did not cover ShellCheck, shfmt, or ruff with executable proof.
+- The main transcript has `120` records and ends on a subagent tool result, not an assistant closeout. There is no final "failed", "needs_human", PR link, commit, or narrow next-action receipt.
+- Nearby target-repo PRs show the systemic failure. PR #104 and PR #105 were both titled as CIFIX work and merged on 2026-06-19, but their status rollups still showed all five named lint checks failing. PRs #106, #107, #113, and later CIFIX PR #114 also merged with the same five lint checks red.
+- Current `organvm/domus-genoma` is green only much later: PR #147 (`fix(ci): resolve YAML indentation, line-length, test teardown, and missing +x bits`) merged on 2026-07-03 at `97b3f2c6169b83a20e0d1a61ef95b6621d0e1533`, with ShellCheck, YAML Lint, JSON Validation, Python Lint, Shell Formatting, Build/Test/Lint, and other checks successful.
+
+Ideal prompt diff:
+
+- Ideal form: fetch the actual failing GitHub logs first, reproduce each failing check locally or in CI, make the smallest root-cause fix, open one PR, and do not claim completion until the named checks are green.
+- Actual form: Claude could not fetch or run the decisive evidence, then spent subagent budget manually reading files and ended without a patch or PR.
+- Ideal blocked form: once both direct execution and subagent execution were blocked, mark the task `failed_blocked` or produce a handoff with the exact missing gate and no claims of CI repair.
+- Actual blocked form: the session continued into approximation work. Manual YAML/JSON reading was not useless, but it was not the requested executable predicate and did not address ShellCheck/shfmt/ruff.
+- Ideal target-repo merge discipline: red CI-fix PRs must not merge. If the repository allows emergency red merges, the receipt must state that explicitly and create a follow-up with the still-red checks.
+- Actual target-repo discipline: several PRs with CI-fix or adjacent release titles merged while all five lint checks were still red, creating the rotating CI-fix storm that row `99` entered.
+
+Outcome:
+
+- No source code was changed by this review pass.
+- Row `99` is classified as failed/superseded: it did not land a fix, and the target repo's durable green state comes from PR #147 weeks later.
+- The useful finding is systemic: the target repo's process accepted red merges and repeatedly reissued CI-fix work without a hard "all named checks green" gate.
+
+What was fucked up:
+
+- The task asked for one green fix PR, but the session never got the actual CI logs or executable local output.
+- Claude used Opus subagents for manual linter emulation after execution was blocked. That is an expensive weak substitute for the predicate.
+- The work ended on a tool result, not a closeout state, so the queue row had no durable failure receipt.
+- The local branch evidence is misleading if read naively: the row branch name points at PR #107, not a CI-fix commit from this session.
+- The broader repo process merged PRs #104, #105, #106, #107, #113, and #114 while the same five lint checks were failing. That made "CI fix" work non-terminating until a later, broader repair finally made master green.
+
+Verification:
+
+```bash
+jq '.changed_review[99]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-99-claude-domus-genoma-ci-prompts.jsonl
+ls -ld /Users/4jp/Workspace/.limen-worktrees/cifix-4444j99-domus-genoma-3c5a
+find /tmp -maxdepth 1 -type f \( -name 'ci_check*.sh' -o -name 'ci_repro.sh' -o -name 'vj_4444.py' \) -print -ls
+find /Users/4jp/Workspace/.limen-worktrees/cifix-4444j99-domus-genoma-3c5a -maxdepth 1 -type f \( -name '.ci_check*.sh' -o -name '.ci_jsoncheck.py' -o -name 'ci_repro.sh' \) -print -ls
+wc -l /Users/4jp/.claude/projects/-Users-4jp-Workspace--limen-worktrees-cifix-4444j99-domus-genoma-3c5a/f0a18679-fd83-4fb8-a836-0cb7a79c58d8.jsonl
+git -C /Users/4jp/Workspace/4444J99/domus-genoma branch -vv | rg 'cifix-4444j99-domus-genoma-3c5a|codex/artifact-open-package-20260629'
+git -C /Users/4jp/Workspace/4444J99/domus-genoma show --stat --oneline --decorate limen/cifix-4444j99-domus-genoma-3c5a
+git -C /Users/4jp/Workspace/4444J99/domus-genoma merge-base --is-ancestor limen/cifix-4444j99-domus-genoma-3c5a origin/master
+for n in 104 105 106 107 113 114; do gh pr view "$n" --repo organvm/domus-genoma --json number,title,state,createdAt,mergedAt,mergeCommit,headRefName,statusCheckRollup,url,files; done
+gh pr view 147 --repo organvm/domus-genoma --json number,title,state,createdAt,mergedAt,mergeCommit,headRefName,statusCheckRollup,url,files
+gh run list --repo organvm/domus-genoma --branch master --limit 20 --json databaseId,displayTitle,headSha,status,conclusion,createdAt,event,workflowName,url
+git -C /Users/4jp/Workspace/domus-genoma fetch origin master --quiet
+git -C /Users/4jp/Workspace/domus-genoma log --date=iso-strict --pretty=format:'%h%x09%ad%x09%D%x09%s' -n 10 origin/master
+```
+
+Result: private prompt extraction has `255` prompt-bearing records; the original worktree and temp helpers are gone; the row branch tip is already-merged PR #107, not a row-99 fix; PRs #104/#105/#106/#107/#113/#114 merged with the five lint checks red; PR #147 later made the target repo green.
 
 ## Remaining Review Queue
 
