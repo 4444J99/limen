@@ -47,6 +47,7 @@ Generated: `2026-07-04T02:17:42Z`
 | refreshed 30 | `claude` | `ef651be0-bf09-4cdb-a0db-649e0bdc67ef` | Speech Score Philip Glass tracker planning run. Original worktree and temp render artifacts are gone, but the target `speech-score-engine` repo now contains the implemented tracker/static share artifact and passes its documented gate matrix. Recorded as executed/superseded target-repo work. |
 | refreshed 31 | `claude` | `08929862-d3f1-4a09-8903-277707a8524b` | Wrangler / 1Password one-spot credential run. Original worktree is gone, but `scripts/cf-wrangler.sh` and `scripts/op-service-account.sh` landed on `main`; fixed a wrapper-order bug that could run global Wrangler before the nearest project-local binary. |
 | refreshed 32 | `claude` | `3c7f2396-ca81-4494-a9e2-3b4a5d2a87ea` | Agent-instruction / "agent-all" convergence run. PR #358 merged the two-layer standard and drift predicate; current review fixed an inaccurate Layer-1 drift-check provenance pointer. Transcript guard still fails on heavy Opus fanout. |
+| refreshed 33 | `claude` | `e4cd8413-965c-4cde-a656-e1d09ba31da1` | Fleet-sprawl reduction / cells / board-collapse run. PRs #356, #359, #360, and #361 landed useful surfaces; current review fixed `cell` commands so they no longer list or operate on arbitrary non-cell Claude worktrees. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -249,6 +250,61 @@ rg -n 'ecosystem sync|context sync|sync --dry-run|ecosystem-sync|contextmd|drift
 ```
 
 Result: PR #358 is merged with green checks; local doc predicate passes; focused lifecycle/API tests passed `79 passed`; external organvm-engine is clean. Transcript audit fails on spend/fanout, which is recorded as a session-quality defect rather than a current-code defect.
+
+### Parallel cells exposed non-cell Claude worktrees as cells
+
+Severity: medium for worktree safety; current patch fences the user-facing cell command set.
+
+Evidence:
+
+- Claude session `e4cd8413-965c-4cde-a656-e1d09ba31da1` ran from `/Users/4jp/Workspace/limen` on 2026-06-25T23:53:36Z through 2026-06-26T23:31:18Z.
+- Prompt first layer was a sprawl-reduction ask: identify the parallel streams behind many sprawling sessions, reduce cleanly, and keep valuable work moving without merging stale forks.
+- Durable merged artifacts from the queue row include PR #356 (`feat(cells): parallel-cells lifecycle`), PR #359 (`fix(board): collapse-guard + self-heal`), PR #360 (`docs(readme): rescue stranded Usage rewrite`), and PR #361 (`docs(agent-standard): record the layer task-vocabulary boundary`). All listed PRs merged with green checks.
+- The board-collapse path is high-value and still verifies: `save_limen_file()` guards catastrophic task-count shrink, `heal-board.py` restores collapsed/unloadable boards and reconciles lifecycle drift, and current board/io/heal tests pass.
+- The live `scripts/cells.sh ls` output before this review listed every directory under `.claude/worktrees`, including branches such as `worktree-agent-*`, `heal/*`, `feat/*`, and detached `HEAD` worktrees. Those are not cells: cells are defined as path `.claude/worktrees/<slug>` on branch `cell/<slug>`.
+
+Ideal prompt diff:
+
+- Ideal form: produce a safe reduction protocol that separates true cells from generic Claude worktrees, gates destructive cleanup through content-preservation checks, and leaves command affordances aligned with the documented mental model.
+- Actual form: the session landed valuable cell/reclaim docs and scripts, but the `cell` CLI was too trusting of path shape and treated all `.claude/worktrees/*` entries as cells.
+- Corrected ideal form: user-facing `cell` commands should only operate on a worktree whose current branch exactly matches `cell/<slug>`; broader cleanup belongs to `scripts/reclaim-worktrees.py`.
+
+Outcome:
+
+- Added `require_cell()` to `scripts/cells.sh`.
+- `cell ls` now filters to real `cell/<slug>` branches.
+- `cell cd`, `cell conduct`, `cell merge`, and `cell reap` now refuse non-cell worktrees instead of operating on arbitrary Claude worktrees under the same directory.
+- Added regression coverage in `cli/tests/test_cells.py` for both scoped-conductor isolation and non-cell filtering/rejection.
+
+What was fucked up:
+
+- This was a classic over-broad session: the prompt began as "tame the sprawl" and the session touched Life/Health offices, stale fork rescue, cells, board integrity, README docs, agent-standard boundary, and worktree cleanup.
+- The private changed-file ledger undercounted and mixed surfaces because the session spanned many PRs and compact/resume turns. The durable audit needs PR-level receipts, not a single file list.
+- The transcript guard fails spend limits: 6,764,262 billable-ish tokens and 6,128,054 Opus billable-ish tokens.
+- The original `cell ls` result made the tool look more capable than it was and could steer an operator toward `cell reap` on a non-cell worktree. That is exactly the kind of affordance mismatch that causes cleanup loss.
+
+Touched paths:
+
+- `scripts/cells.sh`
+- `cli/tests/test_cells.py`
+
+Verification:
+
+```bash
+gh pr view 356 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup
+gh pr view 359 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup
+gh pr view 360 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup
+gh pr view 361 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/e4cd8413-965c-4cde-a656-e1d09ba31da1.jsonl
+PYTHONPATH=/Users/4jp/Workspace/limen/cli/src python3 -m pytest cli/tests/test_cells.py -q
+PYTHONPATH=/Users/4jp/Workspace/limen/cli/src python3 -m pytest cli/tests/test_board_integrity.py cli/tests/test_io_atomic.py cli/tests/test_heal_board.py -q
+bash -n scripts/cells.sh
+python3 -m ruff check cli/tests/test_cells.py
+python3 -m ruff format --check cli/tests/test_cells.py
+bash scripts/cells.sh ls
+```
+
+Result: cell tests passed `2 passed`; board/io/heal tests passed `26 passed`; shell syntax and Ruff checks passed. Live `cell ls` now prints only the header on this host because no current `.claude/worktrees/*` checkout is an actual `cell/<slug>` branch.
 
 ## Rejected Artifacts
 

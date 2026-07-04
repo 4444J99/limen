@@ -51,6 +51,14 @@ cell_path() { echo "$WT_DIR/$1"; }
 cell_branch() { echo "${BRANCH_PREFIX}$1"; }
 pidfile() { echo "$CELL_LOGS/$1.pid"; }
 conductor_running() { local pf; pf="$(pidfile "$1")"; [ -f "$pf" ] && kill -0 "$(cat "$pf")" 2>/dev/null; }
+current_branch() { git -C "$1" rev-parse --abbrev-ref HEAD 2>/dev/null || true; }
+require_cell() {
+  local slug="${1:?require_cell needs a slug}" p b expected
+  p="$(cell_path "$slug")"; expected="$(cell_branch "$slug")"
+  [ -d "$p" ] || die "no cell '$slug' (run: cell new $slug)"
+  b="$(current_branch "$p")"
+  [ "$b" = "$expected" ] || die "'$slug' is not a cell (branch: ${b:-unknown}; expected: $expected). Use reclaim-worktrees.py for non-cell worktrees."
+}
 
 cmd_new() {
   local slug="${1:-}"; [ -n "$slug" ] || die "usage: cell new <slug>"
@@ -65,7 +73,12 @@ cmd_new() {
   echo "$p"   # stdout = path, so: cd \"\$(cell new foo)\"
 }
 
-cmd_cd() { local slug="${1:?usage: cell cd <slug>}"; local p; p="$(cell_path "$slug")"; [ -d "$p" ] || die "no cell '$slug'"; echo "$p"; }
+cmd_cd() {
+  local slug="${1:?usage: cell cd <slug>}" p
+  require_cell "$slug"
+  p="$(cell_path "$slug")"
+  echo "$p"
+}
 
 cmd_ls() {
   printf "%-26s %-22s %-12s %-6s %-10s %-7s\n" "CELL" "BRANCH" "AHEAD/BEHIND" "DIRTY" "CONDUCTOR" "SIZE"
@@ -75,6 +88,7 @@ cmd_ls() {
     [ -d "$p" ] || continue
     p="${p%/}"; slug="$(basename "$p")"
     b="$(git -C "$p" rev-parse --abbrev-ref HEAD 2>/dev/null || echo '?')"
+    [ "$b" = "$(cell_branch "$slug")" ] || continue
     ahead="$(git -C "$p" rev-list --count origin/main..HEAD 2>/dev/null || echo '?')"
     behind="$(git -C "$p" rev-list --count HEAD..origin/main 2>/dev/null || echo '?')"
     ab="+${ahead}/-${behind}"
@@ -88,7 +102,7 @@ cmd_ls() {
 cmd_conduct() {
   local slug="${1:-}"; shift || true; [ -n "$slug" ] || die "usage: cell conduct <slug> [--loop] [--workstream <handle>]"
   local p b; p="$(cell_path "$slug")"; b="$(cell_branch "$slug")"
-  [ -d "$p" ] || die "no cell '$slug' (run: cell new $slug)"
+  require_cell "$slug"
   conductor_running "$slug" && die "conductor for '$slug' already running (PID $(cat "$(pidfile "$slug")"))"
   local loop=0 workstream=""
   while [ $# -gt 0 ]; do
@@ -142,7 +156,7 @@ cmd_stop() {
 
 cmd_merge() {
   local slug="${1:?usage: cell merge <slug>}"; local p b; p="$(cell_path "$slug")"; b="$(cell_branch "$slug")"
-  [ -d "$p" ] || die "no cell '$slug'"
+  require_cell "$slug"
   [ -n "$(git -C "$p" status --porcelain)" ] && die "cell '$slug' has uncommitted changes — commit first"
   git -C "$p" push -u origin "$b" 2>&1 | tail -2
   echo "cell: run the standing merge grant →  scripts/merge-policy.sh <PR#>  (open the PR if none yet: gh pr create)"
@@ -152,7 +166,7 @@ cmd_reap() {
   local slug="${1:-}"; shift || true; [ -n "$slug" ] || die "usage: cell reap <slug> [--force]"
   local force=0; [ "${1:-}" = "--force" ] && force=1
   local p b; p="$(cell_path "$slug")"; b="$(cell_branch "$slug")"
-  [ -d "$p" ] || die "no cell '$slug'"
+  require_cell "$slug"
   conductor_running "$slug" && cmd_stop "$slug"
   if [ "$force" != "1" ]; then
     [ -n "$(git -C "$p" status --porcelain 2>/dev/null)" ] && die "cell '$slug' is DIRTY — commit/push or use --force"
