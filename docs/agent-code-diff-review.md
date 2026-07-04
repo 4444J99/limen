@@ -7282,6 +7282,66 @@ gh search prs --repo organvm/the-invisible-ledger 'docs add Usage section derive
 
 Result: transcript guard passed at 191,889 Sonnet billable tokens; prompt extraction matches row `130`; `98a6dcd` exists only on local branch `limen/gen-organvm-the-invisible-ledger-docs-0625-4473`; GitHub has no commit or PR for it.
 
+### Claude's Invisible Ledger revenue-readiness row found the right first-dollar blocker but left PR #42 stale
+
+Severity: medium. The analysis and patch were high-value, and a later green merge incorporated the same core fix, but this row's own PR remains open with failed CI.
+
+Evidence:
+
+- Reconstruction row `131` targets Claude session `1e7a9ca8-53b9-4b00-80f0-5bfa4f373724`, rooted in deleted worktree `/Users/4jp/Workspace/.limen-worktrees/rev-organvm-the-invisible-ledger-revenue-readiness-0623-383c`, from 2026-06-23T23:13:06Z through 2026-06-23T23:21:24Z.
+- The first-layer task was `REV-organvm-the-invisible-ledger-revenue-readiness-0623`: find the highest-leverage gap between the current product and something a stranger would pay for, close it with one focused PR, and keep CI green.
+- The session launched one subagent to audit revenue readiness. That audit correctly identified the gap: `Organization` had billing/payment fields, but the PostgreSQL production persistence path did not write/read them, so paying-customer state would be forgotten after reload.
+- The parent verified the gap directly, patched `src/lib/storage/organization-postgres.ts`, added regression coverage in `src/__tests__/postgres-organization-repository.test.ts`, ran tests/build, and opened PR #42.
+- PR #42 (`Persist billing fields in the Postgres organization adapter`) is still open. Its head commit is `3650b945b6034756ad136dc28209da0d4f2b547e`, with 147 insertions across the Postgres adapter and test. Its check rollup has `Build, test, and lint` failing and Docker succeeding.
+- The failure was not purely imaginary: the transcript records a lint error in an untouched file, then treats build/test as green and the lint as pre-existing. The task asked to keep CI green, so leaving the PR open with red CI did not satisfy the full ask.
+- A later merged deploy-ready PR #50 includes commit `024ec92a3c1adb2b1a7449efae507621ee1daf28`, `fix(postgres): persist billing fields so paying-customer state survives reload`, and merged green on 2026-06-26. That later merge is the durable delivery of the core fix.
+- Focused replay of the Postgres repository test passes on both the PR #42 branch (`6 passed`) and the later `024ec92` commit (`5 passed`).
+- Full private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-131-claude-invisible-ledger-revenue-readiness-prompts.jsonl`: 79 prompt-surface records, 58 unique prompt hashes, 205,520 prompt bytes. Surfaces are `queue.enqueue` 1, `message.user` 68, and `last-prompt` 10.
+
+Ideal prompt diff:
+
+- Ideal revenue-readiness form: identify one revenue blocker, patch it, prove it with focused tests, open a PR, fix or explicitly gate any CI failure, and close/merge or supersede stale predecessor PRs.
+- Actual form: the blocker selection was excellent and the patch was technically on target, but PR #42 stayed open with red CI.
+- Ideal fleet follow-up: once PR #50 delivered the same core fix green, PR #42 should have been closed as superseded with a link to the green merge.
+- Actual fleet state: PR #42 remains open, so the graph still advertises unresolved work even though the durable fix landed later.
+
+Outcome:
+
+- Credit row `131` for discovering the correct first-dollar blocker and producing the first focused PR for it.
+- Do not credit row `131` with final delivery because PR #42 did not merge and did not keep CI green.
+- Credit the durable delivery to later PR #50 / commit `024ec92`, which superseded the row's stale PR with green CI.
+
+What was fucked up:
+
+- The session equated "tests/build pass and lint failure is pre-existing" with task completion, but the explicit task contract included "keep CI green."
+- Leaving PR #42 open after PR #50 merged creates stale queue pressure and makes the same revenue blocker look unresolved.
+- The subagent report was large relative to the actual code gap. It was useful here, but this kind of broad revenue audit needs a follow-through rule: either land green or close as superseded.
+
+Verification:
+
+```bash
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace--limen-worktrees-rev-organvm-the-invisible-ledger-revenue-readiness-0623-383c/1e7a9ca8-53b9-4b00-80f0-5bfa4f373724.jsonl
+python3 - <<'PY'
+import json
+from collections import Counter
+from pathlib import Path
+p = Path('/Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-131-claude-invisible-ledger-revenue-readiness-prompts.jsonl')
+rows = [json.loads(line) for line in p.read_text(encoding='utf-8').splitlines() if line.strip()]
+print(len(rows), len({r['prompt_hash'] for r in rows}), sum(r['prompt_bytes'] for r in rows), Counter(r['surface'] for r in rows), Counter(r['session_id'] for r in rows))
+PY
+gh pr view 42 --repo organvm/the-invisible-ledger --json number,title,state,createdAt,closedAt,mergedAt,mergeCommit,headRefName,files,statusCheckRollup,url
+gh pr view 50 --repo organvm/the-invisible-ledger --json number,title,state,closedAt,mergedAt,mergeCommit,files,statusCheckRollup,url
+git -C /Users/4jp/Workspace/organvm/the-invisible-ledger show --stat --oneline origin/limen/rev-organvm-the-invisible-ledger-revenue-readiness-0623-383c
+git -C /Users/4jp/Workspace/organvm/the-invisible-ledger show --stat --oneline 024ec92a3c1adb2b1a7449efae507621ee1daf28
+tmp=$(mktemp -d /tmp/invisible-ledger-pr42.XXXXXX)
+git -C /Users/4jp/Workspace/organvm/the-invisible-ledger archive origin/limen/rev-organvm-the-invisible-ledger-revenue-readiness-0623-383c | tar -x -C "$tmp"
+cd "$tmp"
+npm install --silent >/dev/null 2>&1
+npx vitest run src/__tests__/postgres-organization-repository.test.ts
+```
+
+Result: transcript guard passed at 419,911 billable tokens; prompt extraction matches row `131`; PR #42 is still open with failing CI; PR #50 merged green and includes the superseding Postgres billing persistence fix; focused Vitest replay passes on both the PR #42 branch and `024ec92`.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
