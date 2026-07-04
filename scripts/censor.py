@@ -194,11 +194,20 @@ def gather_signals(tier, refresh=True):
     elif tier == "weekly":
         # behavioural drift — recurring frictions become candidate standing corrections.
         # Read whatever drift signal exists; degrade gracefully if the tooling is absent.
+        # A friction whose correction is already ADJUDICATED (a precedent with a good
+        # outcome records where the standing correction lives) is annotated codified=yes:
+        # the behavioural-rule lever was already blessed once — re-surfacing it every week
+        # is the parked-blocker anti-pattern, so the cascade resolves it via precedent.
+        # The friction still leaves the drift only empirically (a future report without it).
+        settled = {pc.get("subject") for pc in _load_jsonl(PRECEDENTS_PATH)
+                   if pc.get("type") == "recurring_friction"
+                   and pc.get("outcome") in ("good", "applied-ok")}
         for src in (LOGS / "friction-federation.json", LOGS / "insights-drift.json"):
             d = _load_json(src, {})
             for fr in (d.get("recurring") or d.get("frictions") or [])[:8]:
                 label = fr if isinstance(fr, str) else fr.get("pattern") or fr.get("label", "?")
                 sigs.append({"type": "recurring_friction", "subject": label,
+                             "codified": "yes" if label in settled else "no",
                              "reason": "recurring across the window"})
     return sigs
 

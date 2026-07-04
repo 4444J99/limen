@@ -83,6 +83,23 @@ When asked to define "done" or a "goal", deliver an **executable predicate** —
 - **Do not claim completion — or write any closeout — until it exits 0.** Run it and summarize the output as proof. If it fails, keep iterating until it passes. If a higher-priority harness rule prevents running it, report the blocker rather than claiming verified completion.
 - For whole-system "done" in this repo, the predicate is already shipped: **`scripts/verify-whole.sh`** (lint → compile → contracts → `pytest web/api/tests cli/tests -q` → runtime/worker probes → dashboard build → `git diff --check`; prints `Whole-system verification passed`). A task-level `done.sh` should call it or a scoped subset — don't reinvent it.
 
+## Engage the Real Problem First
+
+The insights lineage's most-persistent friction (4 consecutive reports, 2026-05-21 → 2026-07-03):
+fixating on trivial mechanics, or offering a menu of reporting options, instead of engaging the
+actual design problem — forcing the requester to repeat or reframe until it converges. The standing
+correction (censor precedent `PREC-2026-07-04-friction-shallow-first`):
+
+- **Commit to the substantive problem on the first pass.** Name the real objective behind the
+  request and work at that altitude; a seemingly trivial chore usually implies the engine behind it
+  ("find X" = build the portal that finds X; "import this" = the auto-rebuild engine, not the one
+  import; "define done" = the executable predicate, not prose).
+- **Deliver executable, durable forms by default** — a predicate, an organ, a register — never
+  hand-maintained prose where a runnable check belongs (see [Definition of Done](#definition-of-done)).
+- **Options are a decision, not a deliverable.** Pick the reversible best by the cascade
+  (protocol → precedent → exploration → ideal-form) and proceed; present alternatives only when a
+  genuine human-gated lever forces the choice.
+
 ## Never Over-Claim Completion
 
 Do **not** declare work "done" or "fully done" until verified end-to-end:
@@ -169,7 +186,11 @@ Concretely, from precedent:
   lineage: a too-narrow allowlist caused 10+ repeat prompts in one session.)
 - **A bridge / connectivity / auth check reports blocked** → attempt the documented bootstrap or
   reconnection path once before reporting; a passive re-report of a known-blocked status is a
-  parked blocker, not a finding.
+  parked blocker, not a finding. The Chrome-bridge bootstrap, concretely: `tabs_context_mcp` → if
+  no browser attaches, relaunch Chrome (`open -a "Google Chrome"`) and retry once; a background
+  job that cannot pair with the extension does not fight it — fall back to headless Playwright
+  (token/magic-link URLs carry their own identity), dry-run → screenshot → act, verify via the
+  server's observed effect (never the acting session's optimistic DOM), and abort on any captcha.
 
 Never present a reroutable gate as human work. Reduce every blocker to its single irreducible atom
 (if any), clear the rest through compliant mechanisms, and report what was done. The

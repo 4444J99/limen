@@ -93,7 +93,11 @@ protocols:
     cadence: daily
 
   - id: PROTO-BEHAVIOURAL-CORRECTION
-    when: {signal: recurring_friction}
+    # Amendment 2026-07-04 (ideal-form step of the cascade, authorised by the operator's
+    # "implement every insights-report note" ask): only an UN-codified friction is his to
+    # bless. Once blessed, the correction lives in precedents.jsonl (case law) and the
+    # cascade resolves the signal there — the lever fires once per rule, not weekly forever.
+    when: {signal: recurring_friction, codified: "no"}
     action: codify a standing correction (CLAUDE.md / a memory / a lever)
     reversible: gated
     branch: judicial
