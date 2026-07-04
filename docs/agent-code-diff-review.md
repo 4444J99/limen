@@ -43,6 +43,7 @@ Generated: `2026-07-04T06:22:46Z`
 | 83 | `claude` | `507be061-4c39-4f04-8c01-7c1ea24f21ce` | QUICKEN session-lifecycle run. The prompt pressure was broad and repeated across 432 prompt events, but it landed real control-plane value: `scripts/quicken.py` via PR #185 and `scripts/hooks/session-closeout.sh` / autonomic closeout via PR #189. Review found a live fail-open violation in `scripts/quicken.py`: malformed numeric env values could crash the organ before reporting. Fixed with `positive_int_env` and `cli/tests/test_quicken.py`; focused lifecycle tests, Ruff, py_compile, hook syntax, and malformed-env repro pass. |
 | 84 | `opencode` | `ses_1061a71dbffeJZ4lIQymHDPC03` | a-i-chat exporter test-coverage run. The prompt asked OpenCode to raise test coverage for `organvm/a-i-chat--exporter`, find a large uncovered module, add meaningful tests, and keep the build green. The useful code did land: commit `cfe0b1c` added `src/__tests__/queue.test.ts` for `RequestQueue`, and current `master` still contains it with green Check/Deploy/Page checks at `867db55`. The process was not clean: no PR references `cfe0b1c`, it used `Test User <test@example.com>` metadata, and the queue's 43 Limen changed files came from parent board/rebase churn rather than authored product diff. |
 | 85 | `claude` | `b4bf9d03-8a0f-413c-9029-0455f8594b7e` | Private financial/legal matter plus his-hand sync run. The raw prompts and matter artifacts are intentionally kept out of this tracked file. The original Claude worktree is gone; the private local packet and Claude memory files survive off-repo, while the only public Limen code surface is the his-hand issue sync helper already landed through green PRs #272 and #329. Structural review found the private packet is draft-only: valid JSON and complete files, but fill/verify markers remain and no source URLs are embedded. Transcript guard fails on 3.78M billable / 3.10M Opus tokens. |
+| 86 | `opencode` | `ses_0e6fefdb2ffek3p0JVS3cLbgha` | OpenCode probe/no-op. The only user prompt was `"echo test"`, the only tool command was `echo test`, and the final answer was `test`. The queue's 182 changed files are pure attribution noise from adjacent Limen work, not OpenCode-authored changes. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -4508,6 +4509,46 @@ python3 scripts/sync-hishand-issues.py --wall
 ```
 
 Result: private prompt extraction has `91` records; original worktree path is absent; private off-repo packet and Claude memory files exist; the public his-hand helper exists on `main`, PR #272 and PR #329 are merged green, focused helper tests pass, and the default wall dry-run would refresh the aggregate wall without mutation. No private body text was copied into this tracked review.
+
+### OpenCode row 86 was only an echo probe
+
+Severity: low. This row is useful only as another attribution-noise example.
+
+Evidence:
+
+- Queue row `86` points at OpenCode session `ses_0e6fefdb2ffek3p0JVS3cLbgha`, run from `/Users/4jp/Workspace/limen` with model `north-mini-code-free`, cost `0`, 20,028 input tokens, 4 output tokens, and 201 reasoning tokens.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-86-opencode-probe-prompts.jsonl` (`1` record).
+- The only user prompt was `"echo test"`.
+- The only tool call was `bash` command `echo test`; it completed with output `test`.
+- The final assistant text was `test`.
+- The queue listed 182 Limen changed files across CI, dispatch, capacity, fanout, lane checkups, positioning docs, prompt ledgers, and tests. None of those files are attributable to this OpenCode session.
+
+Ideal prompt diff:
+
+- Ideal form: a probe prompt should be classified as a no-op and excluded from code-diff review.
+- Actual queue form: a one-command echo probe inherited a broad changed-file surface from adjacent repository activity.
+
+Outcome:
+
+- No code patch was made. This row is closed as no-op/probe.
+
+What was fucked up:
+
+- The queue attributed a large mixed Limen file set to a session that did not author code.
+- The session stayed open for hours between creation and the eventual `echo test`, making timestamp-window attribution especially misleading.
+- Probe sessions should be filtered before the high-risk review queue, or at least grouped with the other echo probes instead of presented as a 182-file code review target.
+
+Verification:
+
+```bash
+jq '.changed_review[86]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+sqlite3 -json -readonly "file:$HOME/.local/share/opencode/opencode.db?mode=ro&immutable=1" "select id,parent_id,slug,directory,title,version,agent,model,cost,tokens_input,tokens_output,tokens_reasoning,tokens_cache_read,tokens_cache_write,datetime(time_created/1000,'unixepoch') as created, datetime(time_updated/1000,'unixepoch') as updated from session where id='ses_0e6fefdb2ffek3p0JVS3cLbgha';"
+sqlite3 -json -readonly "file:$HOME/.local/share/opencode/opencode.db?mode=ro&immutable=1" "select p.id,p.message_id,json_extract(m.data,'$.role') as role,json_extract(p.data,'$.type') as part_type,length(json_extract(p.data,'$.text')) as text_len,json_extract(p.data,'$.text') as text from part p left join message m on m.id=p.message_id where p.session_id='ses_0e6fefdb2ffek3p0JVS3cLbgha' and json_extract(p.data,'$.type')='text' order by p.time_created;"
+sqlite3 -json -readonly "file:$HOME/.local/share/opencode/opencode.db?mode=ro&immutable=1" "select p.id,p.message_id,json_extract(p.data,'$.tool') as tool,json_extract(p.data,'$.state.status') as status,json_extract(p.data,'$.state.input.command') as command,json_extract(p.data,'$.state.output') as output from part p where p.session_id='ses_0e6fefdb2ffek3p0JVS3cLbgha' and json_extract(p.data,'$.type')='tool';"
+wc -l .limen-private/session-corpus/full-stack-review/session-86-opencode-probe-prompts.jsonl
+```
+
+Result: private prompt extraction has `1` record; the prompt/tool/final text are exactly the `echo test` probe path; no authored code diff belongs to this session.
 
 ## Remaining Review Queue
 
