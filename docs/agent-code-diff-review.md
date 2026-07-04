@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T08:09:32Z`
+Generated: `2026-07-04T08:12:45Z`
 
 ## Scope
 
@@ -90,6 +90,7 @@ Generated: `2026-07-04T08:09:32Z`
 | 104 | `codex` | `019f1300-f46e-7803-bbe2-87e355146df0` | Workstream kickstart / lifecycle review run. The prompt sequence asked for prior-session review, prompt-vs-work recalculation, immediate "what next" triage, triptych checkpointing, a universal terminal start command, Domus package revival orientation, and notification-provider clarification. Codex produced useful board repair, lifecycle/workstream commits, focused verification, and a private prompt extract, but the session was highly overloaded: it mixed review, board mutation, Portvs preservation, universal launcher design, Domus orientation, and Warp/Claude notification routing. Durable workstream/lifecycle commits are on `main`; later Warp provenance and Portvs branch advances are adjacent continuations and should not be collapsed into this one row. |
 | 105 | `opencode` | `ses_0e6e2d3c1ffexKkNl00evfeU1R` | Limen CI recovery run. The prompt asked OpenCode to recover `RECOVER-GEN-4444j99-limen-ci-green-0620` after prior CI-green PRs closed unmerged. The useful outcome is real: commit `d8d2b5c` is on current `origin/main`, added the missing `web/app` `npm ci` step to the `verify` job, and GitHub run `28455805115` passed all jobs. The queue's 36-file changed surface is attribution noise; the actual commit changed one workflow file, and the final receipt over-described the `plutil` fix because that guard had already landed in PR #487. |
 | 106 | `opencode` | `ses_108a8b407ffebMDRjOI11pNiUu` | Journey to the West batch run. The prompt asked OpenCode for the next bounded Journey batch plus `scripts/studium-validate.py` passing and one green PR. OpenCode worked from stale local state, authored local chapters 5-9, saw validation exit `1`, then reported "passes" by dismissing film-layer failures and left no commit/PR. Durable content came from PR #105 before the session (books 5-8) and PR #165 after it (books 9-12), not from this row. Review found later PLAN ledger regressions from stale merges and fixed them in `2116c5f` by regenerating Studium plan counts and making `studium-validate.py` enforce plan/file agreement. |
+| 107 | `opencode` | `ses_0e6e2da47ffeA53Z2Bk69OWcSX` | Limen security recovery run. The prompt asked OpenCode to recover `RECOVER-GEN-organvm-limen-security-0622`. Durable value did land through PR #491 / `6b91e5d`: API list-size/input-boundary hardening plus tests are on `main` and current `web/api` tests pass. But the reviewed OpenCode session itself edited the wrong root branch, lost the header/requirements edits it thought it made, then hit a permission rejection when switching to the correct worktree. PR #491 was already created/merged by the dispatch lane while OpenCode was still in that confused state, and its `verify` job failed until the later row-105 CI fix. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -5786,6 +5787,70 @@ git show --stat --oneline --decorate 2116c5f
 ```
 
 Result: private prompt extraction has `1` record; OpenCode authored local Journey files but left no commit/PR; validation exited `1` in-session; PR #105 had already merged books 5-8 before the session; PR #165 later merged books 9-12; current live validation passes with `211` arcs and `18` film companions; the new plan-ledger tests pass `2 passed`.
+
+### OpenCode security recovery landed through PR #491, but the reviewed session was not the clean author path
+
+Severity: medium; the security hardening is live and tested, but the prompt/session attribution and CI receipt were messy.
+
+Evidence:
+
+- Queue row `107` points at OpenCode session `ses_0e6e2da47ffeA53Z2Bk69OWcSX`, titled `Recover security hardening PR for limen`, rooted at `/Users/4jp/Workspace/limen`, running on 2026-06-30T15:19:28Z through 2026-06-30T15:22:26Z.
+- OpenCode database metadata: model `deepseek-v4-flash-free`, cost `0`, 112,119 input / 6,597 output / 2,683 reasoning / 2,489,600 cache-read tokens.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-107-opencode-security-recovery-prompts.jsonl` (`1` record).
+- In redacted intent form, the prompt asked OpenCode to complete `RECOVER-GEN-organvm-limen-security-0622`: recover a closed PR task for security hardening on `organvm/limen`, because the original task had already reached `done` and AGENTS lifecycle rules required a fresh task.
+- Original PR #52 for `GEN-organvm-limen-security-0622` was closed unmerged after a failed `python` check.
+- The OpenCode session read the recovery task, planned to inspect PR #52, and began editing from the root checkout. That root checkout was on branch `feature/RECOVER-GEN-limen-ci-green-0620`, not the security recovery branch.
+- OpenCode attempted to add security headers to `web/api/main.py` and `web/app/next.config.js`, and safe dependency minimums to `web/api/requirements.txt`. Immediately afterward, `git diff --stat` showed only `web/api/requirements.txt`; greps confirmed the header edits were not present.
+- OpenCode then discovered the correct worktree path `/Users/4jp/Workspace/.limen-worktrees/recover-gen-organvm-limen-security-0622-4c1f`, but both the read and branch-check tool calls against that path were rejected by the OpenCode runtime. The session ended there without a final receipt, commit, push, PR, or board update.
+- In the same window, PR #491 was created at 2026-06-30T15:21:04Z and merged at 2026-06-30T15:22:04Z from branch `limen/recover-gen-organvm-limen-security-0622-dfdc`.
+- PR #491 / merge commit `6b91e5d96a061183bed5f85736a967aace709e83` landed real security value: it added `MAX_TASK_LIST_LENGTH`, enforced list-size limits for labels/URLs, validated URL lists, and added API tests for the boundary.
+- Current `origin/main` contains `6b91e5d`, and current focused tests pass: `PYTHONPATH=cli/src python3 -m pytest web/api/tests/test_main.py -q` -> `27 passed`.
+- PR #491's status rollup was mixed: `pr-gate`, `validate`, `python`, `python-311`, `worker`, and `web` succeeded, but `verify` failed after merge because `scripts/verify-whole.sh` called the web-app generator without `web/app/node_modules`. That is the exact CI verify dependency bug later fixed by row `105` / `d8d2b5c`.
+- The queue listed 34 changed paths across dispatch, docs, scripts, `tasks.yaml`, web API, and Next config. The actual durable PR #491 diff was only `tasks.yaml`, `web/api/main.py`, and `web/api/tests/test_main.py`; OpenCode's attempted `next.config.js` and requirements edits were not part of the merged PR.
+
+Ideal prompt diff:
+
+- Ideal form: start in the task worktree/branch that the dispatch system reserved, or fail before editing if the runtime cannot access it.
+- Actual form: OpenCode edited from a root checkout on a different recovery branch, then discovered the correct worktree only after edits were already confused.
+- Ideal recovery form: inspect the closed PR, port the minimum surviving hardening into a fresh branch, run the declared gate, open one PR, and wait for green evidence.
+- Actual durable form: PR #491 landed useful input-boundary hardening, but it was produced by the dispatch recovery lane while the reviewed OpenCode session itself hit a permission wall.
+- Ideal receipt form: do not count a row done until the requested PR is green, or explicitly say the PR is merged with a failing `verify` job caused by an unrelated CI infrastructure bug.
+- Actual receipt surface: the PR merged before `verify` completed, then `verify` failed. Row `105` later fixed the CI infrastructure problem, so current main is healthier than PR #491's immediate check state.
+
+Outcome:
+
+- No code patch was made by this review pass for row `107`.
+- The task family is valuable and landed through PR #491, and the API input-boundary tests still pass.
+- The reviewed OpenCode session is classified as partial/noisy orchestration, not clean authored closeout. It should not be credited for the exact PR #491 diff without noting that the transcript itself stopped at a worktree permission rejection.
+- The correct durable accounting is: PR #491 delivered the security boundary hardening; row `105` made the verify job capable of passing afterward.
+
+What was fucked up:
+
+- OpenCode worked in the wrong checkout/branch and only discovered the correct worktree late.
+- The runtime denied access to the correct task worktree, ending the session before commit/PR closeout.
+- The session's intended security headers and dependency pin edits did not survive into the actual PR.
+- PR #491 merged while `verify` was still running, and `verify` failed shortly after merge.
+- The queue again over-attributed a broad root snapshot to a narrow durable PR.
+- The task-board recovery entry in PR #491 was another direct `tasks.yaml` mutation bundled with code; useful for state repair, but noisy for code review attribution.
+
+Verification:
+
+```bash
+jq '.changed_review[107]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-107-opencode-security-recovery-prompts.jsonl
+sqlite3 -json "$HOME/.local/share/opencode/opencode.db" "select id,parent_id,slug,directory,title,version,agent,model,cost,tokens_input,tokens_output,tokens_reasoning,tokens_cache_read,tokens_cache_write,datetime(time_created/1000,'unixepoch') as created, datetime(time_updated/1000,'unixepoch') as updated from session where id='ses_0e6e2da47ffeA53Z2Bk69OWcSX' or parent_id='ses_0e6e2da47ffeA53Z2Bk69OWcSX' order by time_created;"
+sqlite3 -json "$HOME/.local/share/opencode/opencode.db" "select datetime(time_created/1000,'unixepoch') as timestamp, json_extract(data,'$.type') as type, substr(data,1,2600) as data_prefix from part where session_id='ses_0e6e2da47ffeA53Z2Bk69OWcSX' and (data like '%RECOVER-GEN%' or data like '%security%' or data like '%worktree%' or data like '%gh pr%' or data like '%git %' or data like '%pytest%' or data like '%verify%') order by time_created,id;"
+gh pr view 491 --repo organvm/limen --json number,title,state,createdAt,updatedAt,mergedAt,headRefName,headRefOid,mergeCommit,statusCheckRollup,url,files,commits,body
+gh run view 28455547025 --repo organvm/limen --json databaseId,displayTitle,conclusion,status,headBranch,headSha,event,url,createdAt,updatedAt,jobs
+gh run view 28455547025 --repo organvm/limen --log-failed
+git show --stat --oneline --decorate 6b91e5d
+git show --unified=80 6b91e5d -- web/api/main.py web/api/tests/test_main.py tasks.yaml
+git merge-base --is-ancestor 6b91e5d origin/main
+rg -n 'MAX_TASK_LIST_LENGTH|validate_url_list|labels must have at most|urls must have at most|invalid URL format' web/api/main.py web/api/tests/test_main.py
+PYTHONPATH=cli/src python3 -m pytest web/api/tests/test_main.py -q
+```
+
+Result: private prompt extraction has `1` record; PR #491 merged and its hardening survives on `origin/main`; current API tests pass `27 passed`; PR #491's own `verify` job failed on missing `yaml` in the web app generator, a CI dependency issue later fixed by row `105`.
 
 ## Remaining Review Queue
 
