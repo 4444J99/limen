@@ -33,6 +33,7 @@ Generated: `2026-07-04T05:30:35Z`
 | 71 | `claude` | `3f10c46f-8329-437b-8419-a1a3e3e20941` | Micro Tato combat/mobile/shareability continuation. The original Claude worktree is gone, but the standalone `~/Workspace/micro-tato` target now validates and live artifacts exist for Pages and Android; the row should be credited as migrated game work, not a Limen patch. It still mixed feature work, distribution, reporting, and closeout in one oversized Claude run that spent 8.5M billable tokens / 7.6M Opus and used two Opus subagents. |
 | 72-74 | `opencode` | `ses_0e6fc0277ffeuuI2k5jQntzOUg`, `ses_0e6fcb282ffebyHJmZuwBru59C`, `ses_0e6fd2ff2ffeIJ75fQQC1gLn66` | OpenCode probe sessions. Each prompt was only `"echo test"` and each session only ran `echo test`; the 65-67 changed-file queue surfaces are attribution noise from adjacent fleet work, not OpenCode authored diffs. |
 | 75 | `claude` | `ac1ebb8c-d0f5-4591-bbd5-9ac4fff616af` | Worktree/sync reclaim and his-hand closeout run. It landed useful `sync-release`/`reclaim-worktrees` code and permanent his-hand levers, but it also discarded multiple Claude worktree commit stacks and included absent off-repo education artifacts. Review fixed a live fail-open violation: malformed reclaim numeric env values could crash the organ before classification. |
+| 76 | `codex` | `019ec8e6-f8c1-74d3-8164-1b053844728c` | Storage recovery / Archive4T endgame run. This was valuable off-repo operational recovery work, not a Limen code diff: the Codex temp corpus, Archive4T operation docs, and read-only status script survive. Current live status improves on some June 15 gates, but also exposes drift: internal disk is back in emergency space at `31Gi` free and T7Recovery's lifeboat copy measures smaller than Archive4T's. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -3918,6 +3919,68 @@ python3 -m py_compile scripts/reclaim-worktrees.py cli/src/limen/worktree_roots.
 ```
 
 Result: the session transcript exists; the listed Claude worktrees and external course-prep path are absent; `f9325a8`, `c133da1`, and `aaef1fa` are ancestors of `main`, while `fe3e5eb` is not; Claude guard fails on 3.87M billable / 3.31M Opus; current focused tests now pass `11` cases with the malformed-env regression.
+
+### Codex storage recovery run produced durable off-repo receipts, but live storage pressure regressed
+
+Severity: high historical data-risk context; no Limen code patch required.
+
+Evidence:
+
+- Queue row `76` points at Codex session `019ec8e6-f8c1-74d3-8164-1b053844728c`, rooted at `/Users/4jp`, with `48` changed-file refs under `.codex/tmp/storage_recovery_2026_06_14`, `~/.codex/tmp/storage_recovery_2026_06_14`, and `/Volumes/Archive4T`.
+- The local Codex rollout survives at `/Users/4jp/.local/share/codex/sessions/2026/06/14/rollout-2026-06-14T21-30-40-019ec8e6-f8c1-74d3-8164-1b053844728c.jsonl` (`21,986,941` bytes).
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-76-codex-storage-recovery-prompts.jsonl` (`106` user-message records: `95` human/context records and `11` environment-context records).
+- In redacted intent form, the prompts asked Codex to stop triggering restarts after repeated kernel panics, avoid dangerous Trash/SSD operations, explain the whole macro plan, set long-running goals from the current state, handle old/new SSD formatting safely from the terminal, define the endgame, configure Time Machine / partitioning / Backblaze / Dropbox / Google Drive / iCloud roles, expel archive data off the local magnetic center, make paths dynamic rather than hardcoded, justify long-running work, prove it was not looping, and finally produce a witness-neutral handoff prompt.
+- The private recovery folder still exists at `/Users/4jp/.codex/tmp/storage_recovery_2026_06_14` (`264K`), including `final_ops/` and tool scripts.
+- Archive4T receipts still exist: `/Volumes/Archive4T/_OPERATIONS` (`100K`) and `/Volumes/Archive4T/_MANIFESTS` are mounted. The only `diff -qr` difference between the private `final_ops` copy and Archive4T is placement: `ARCHIVE4T-CURRENT-STATE-2026-06-15.md` lives under Archive4T `_MANIFESTS`, and `cmp` confirms it matches the private `final_ops` copy.
+- Operation helper scripts remain syntactically valid: `find ... -name '*.sh' -print0 | xargs -0 bash -n` passed for both the private tool directory and `/Volumes/Archive4T/_OPERATIONS/tools`.
+- The read-only live status script is the current authority: `/Volumes/Archive4T/_OPERATIONS/tools/storage_endgame_status.sh` ran successfully on 2026-07-04 01:44 EDT.
+- Current live status improves some June 15 gates: `TM-Mac` is configured with latest backup `2026-06-15-141030`; Backblaze has selected `/` and `/Volumes/Archive4T/`; Backblaze reports `remainingnumfilesforbackup="0"` and `remainingnumbytesforbackup="0"`; Archive4T and T7Recovery recovery candidates are mounted.
+- Current live status also exposes drift: `/System/Volumes/Data` is back down to `31Gi` available (`93%` used), below the repo's own emergency threshold of `60Gi`; Archive4T's lifeboat measures `146G`, while T7Recovery's lifeboat measures `117G`; the internal lifeboat path `/Users/4jp/CleanUnique-Lifeboat-2026-06-13` is absent.
+
+Ideal prompt diff:
+
+- Ideal form: first stabilize the machine and stop crash-triggering actions, then name the entire recovery graph in one page: source of truth, old SSD role, new SSD role, no-delete gates, backup roles, and exact finish line.
+- Actual form: Codex eventually produced a real operating manual and status tool, but the early loop left the user repeatedly asking for the macro plan and whether the SSD should remain plugged in.
+- Ideal form for storage docs: every document that contains sizes, backup state, or cloud state must label itself a snapshot and point to a live read-only command for current truth.
+- Actual form: later docs mostly got this right, but some "current live state" prose from June 15 is stale today. The status script correctly supersedes it.
+- Ideal form for duplicate/recovery data: verify parity or explicitly downgrade one copy to "secondary with caveat." Size mismatch between Archive4T and T7Recovery must not be flattened into "both verified identical."
+- Actual form: the docs proved both recovery roots existed and were readable; current measurement still shows T7Recovery's lifeboat smaller than Archive4T's, so parity should remain caveated.
+- Ideal form for cloud/backup products: Time Machine is local rollback, Backblaze is broad offsite, Arq/Drive/Dropbox are optional encrypted/versioned destinations, and sync folders are never the only copy.
+- Actual form: the operating manual says that clearly and remains useful.
+
+Outcome:
+
+- This row was valuable operational work. It left durable receipts, a read-only status collector, an APFS Archive4T role model, and a documented backup/storage policy.
+- It is not a Limen source-code patch. The right review closure is off-repo artifact verification plus current drift callout.
+- No destructive command was run during this review. The only live command was the read-only status collector plus read/list/syntax/size checks.
+
+What was fucked up:
+
+- The session initially failed to give the user the macro plan in the form they were actually asking for, which amplified panic during a high-risk storage incident.
+- The long-running goal loop created many prompts and repeated status resets; durable docs came out of it, but the interaction was too circular before the endgame became crisp.
+- The storage runbooks cannot be treated as current state. They are June 15 receipts. Today, the live script is authoritative and says local disk pressure is again emergency-level.
+- The T7Recovery lifeboat size mismatch remains a caveat. It may be explained by filesystem accounting or copy differences, but it should not be called parity without a fresh manifest/file-count proof.
+- Backblaze now reports zero remaining bytes, which is good, but the old required action also called for a restore test; this review did not find or run a restore test.
+
+Verification:
+
+```bash
+jq '.changed_review[76]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-76-codex-storage-recovery-prompts.jsonl
+jq -r '.kind' .limen-private/session-corpus/full-stack-review/session-76-codex-storage-recovery-prompts.jsonl | sort | uniq -c
+ls -ld /Users/4jp/.codex/tmp/storage_recovery_2026_06_14 /Users/4jp/.codex/tmp/storage_recovery_2026_06_14/final_ops /Volumes/Archive4T /Volumes/Archive4T/_OPERATIONS /Volumes/Archive4T/_MANIFESTS
+du -sh /Users/4jp/.codex/tmp/storage_recovery_2026_06_14 /Volumes/Archive4T/_OPERATIONS /Volumes/Archive4T/_MANIFESTS
+find /Users/4jp/.codex/tmp/storage_recovery_2026_06_14 -maxdepth 2 -type f | sort
+find /Volumes/Archive4T/_OPERATIONS /Volumes/Archive4T/_MANIFESTS -maxdepth 2 -type f | sort
+/Volumes/Archive4T/_OPERATIONS/tools/storage_endgame_status.sh
+find /Users/4jp/CleanUnique-Lifeboat-2026-06-13 /Volumes/Archive4T/RecoveryCopies/CleanUnique-Lifeboat-2026-06-13 /Volumes/T7Recovery/CleanUnique-Lifeboat-2026-06-13 -maxdepth 0 -type d -print -exec du -sh {} \;
+find /Users/4jp/.codex/tmp/storage_recovery_2026_06_14/tools /Volumes/Archive4T/_OPERATIONS/tools -type f -name '*.sh' -print0 | xargs -0 bash -n
+diff -qr /Users/4jp/.codex/tmp/storage_recovery_2026_06_14/final_ops /Volumes/Archive4T/_OPERATIONS
+cmp -s /Users/4jp/.codex/tmp/storage_recovery_2026_06_14/final_ops/ARCHIVE4T-CURRENT-STATE-2026-06-15.md /Volumes/Archive4T/_MANIFESTS/ARCHIVE4T-CURRENT-STATE-2026-06-15.md
+df -h /System/Volumes/Data /Volumes/Archive4T /Volumes/T7Recovery /Volumes/TM-Mac
+```
+
+Result: Codex transcript, private recovery docs, Archive4T operations docs, and the live status script all survive; helper shell scripts parse; Time Machine and Backblaze are currently configured; Backblaze reports zero remaining backup bytes; internal disk is currently `31Gi` free and emergency-level; internal lifeboat is absent; Archive4T lifeboat is `146G` and T7Recovery lifeboat is `117G`.
 
 ## Remaining Review Queue
 
