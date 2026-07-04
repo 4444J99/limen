@@ -16,7 +16,14 @@ from unittest import mock
 import pytest
 import yaml
 
-from limen.io import atomic_write_text, load_limen_file, load_limen_text, save_limen_file
+from limen.io import (
+    _board_guard_config,
+    _queue_lock_stale_seconds,
+    atomic_write_text,
+    load_limen_file,
+    load_limen_text,
+    save_limen_file,
+)
 from limen.models import LimenFile
 
 
@@ -133,6 +140,27 @@ def test_load_text_refuses_empty() -> None:
     """The empty/corruption guard holds on the string entry point too."""
     with pytest.raises(ValueError):
         load_limen_text("   \n", name="tasks.yaml")
+
+
+def test_io_numeric_env_knobs_fall_back(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LIMEN_QUEUE_LOCK_STALE_SEC", "bad")
+    monkeypatch.setenv("LIMEN_BOARD_SHRINK_FLOOR", "bad")
+    monkeypatch.setenv("LIMEN_BOARD_SHRINK_FRACTION", "nan")
+
+    assert _queue_lock_stale_seconds() == 900
+    assert _board_guard_config() == (True, 5, 0.10)
+
+    monkeypatch.setenv("LIMEN_BOARD_SHRINK_FRACTION", "inf")
+    assert _board_guard_config() == (True, 5, 0.10)
+
+
+def test_io_numeric_env_knobs_reject_nonpositive_values(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LIMEN_QUEUE_LOCK_STALE_SEC", "0")
+    monkeypatch.setenv("LIMEN_BOARD_SHRINK_FLOOR", "-2")
+    monkeypatch.setenv("LIMEN_BOARD_SHRINK_FRACTION", "-0.5")
+
+    assert _queue_lock_stale_seconds() == 900
+    assert _board_guard_config() == (True, 5, 0.10)
 
 
 def test_task_model_rejects_invalid_ids() -> None:

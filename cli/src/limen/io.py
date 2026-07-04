@@ -1,4 +1,5 @@
 import contextlib
+import math
 import os
 import re
 import sys
@@ -22,11 +23,38 @@ class BoardCollapseError(RuntimeError):
     sidecar (never lost). See save_limen_file's collapse-guard."""
 
 
-def _queue_lock_stale_seconds() -> int:
+def _int_or_default(raw: object, default: int, *, minimum: int | None = None) -> int:
     try:
-        return int(os.environ.get("LIMEN_QUEUE_LOCK_STALE_SEC", str(_QUEUE_LOCK_STALE_SEC)))
-    except ValueError:
-        return _QUEUE_LOCK_STALE_SEC
+        if isinstance(raw, bool):
+            return default
+        value = int(raw)
+    except (TypeError, ValueError):
+        return default
+    if minimum is not None and value < minimum:
+        return default
+    return value
+
+
+def _float_or_default(raw: object, default: float, *, minimum: float | None = None) -> float:
+    try:
+        if isinstance(raw, bool):
+            return default
+        value = float(raw)
+    except (TypeError, ValueError):
+        return default
+    if not math.isfinite(value):
+        return default
+    if minimum is not None and value < minimum:
+        return default
+    return value
+
+
+def _queue_lock_stale_seconds() -> int:
+    return _int_or_default(
+        os.environ.get("LIMEN_QUEUE_LOCK_STALE_SEC"),
+        _QUEUE_LOCK_STALE_SEC,
+        minimum=1,
+    )
 
 
 def _lock_age_seconds(lockd: Path) -> float:
@@ -252,14 +280,12 @@ def _board_guard_config() -> tuple[bool, int, float]:
     """(enabled, floor, fraction) — declared in institutio/governance/parameters.yaml as
     LIMEN_BOARD_GUARD / LIMEN_BOARD_SHRINK_FLOOR / LIMEN_BOARD_SHRINK_FRACTION."""
     on = os.environ.get("LIMEN_BOARD_GUARD", "1") != "0"
-    try:
-        floor = int(os.environ.get("LIMEN_BOARD_SHRINK_FLOOR", "5"))
-    except ValueError:
-        floor = 5
-    try:
-        fraction = float(os.environ.get("LIMEN_BOARD_SHRINK_FRACTION", "0.10"))
-    except ValueError:
-        fraction = 0.10
+    floor = _int_or_default(os.environ.get("LIMEN_BOARD_SHRINK_FLOOR"), 5, minimum=1)
+    fraction = _float_or_default(
+        os.environ.get("LIMEN_BOARD_SHRINK_FRACTION"),
+        0.10,
+        minimum=0.0,
+    )
     return on, floor, fraction
 
 

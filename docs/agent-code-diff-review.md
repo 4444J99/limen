@@ -597,6 +597,38 @@ PY
 
 Result: `129 passed`; compile passed; live board parsed `1677` tasks.
 
+### Shared board IO env knobs could disable queue safety paths
+
+Severity: medium for board writer reliability.
+
+Evidence:
+
+- Continuing the control-plane review queue found a shared board-write dependency rather than a single leaf agent script.
+- The prompt/session intent across board reservation and queue-safety work was race-safe, fail-open board mutation.
+- `cli/src/limen/io.py` parsed `LIMEN_QUEUE_LOCK_STALE_SEC`, `LIMEN_BOARD_SHRINK_FLOOR`, and `LIMEN_BOARD_SHRINK_FRACTION` directly from env input.
+- Malformed, zero, negative, `nan`, or infinite values could silently weaken the lock stale check or collapse guard before callers reached their own safety logic.
+
+Repair:
+
+- Added shared integer and finite-float fallback parsing in `limen.io`.
+- Applied positive minimums to queue-lock stale seconds and collapse-guard floor.
+- Rejected non-finite or negative collapse fractions back to the default guard fraction.
+- Added focused IO regressions for malformed, non-positive, `nan`, and infinite env values.
+
+Touched paths:
+
+- `cli/src/limen/io.py`
+- `cli/tests/test_io_atomic.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_io_atomic.py cli/tests/test_board_integrity.py -q
+python3 -m py_compile cli/src/limen/io.py
+```
+
+Result: `24 passed`; compile passed.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -732,8 +764,15 @@ Result: `129 passed`; compile passed; live board parsed `1677` tasks.
 - `cli/src/limen/models.py:33` applies the task-id pattern and length guard.
 - `cli/src/limen/models.py:46` bounds `budget_cost` to a positive integer range.
 - `cli/src/limen/models.py:71` rejects boolean task budget values before Pydantic integer coercion.
-- `cli/tests/test_io_atomic.py:138` covers invalid task-id rejection.
-- `cli/tests/test_io_atomic.py:145` covers invalid and boolean task-budget rejection.
+- `cli/tests/test_io_atomic.py:166` covers invalid task-id rejection.
+- `cli/tests/test_io_atomic.py:173` covers invalid and boolean task-budget rejection.
+- `cli/src/limen/io.py:26` defines integer fallback parsing for shared IO env knobs.
+- `cli/src/limen/io.py:38` defines finite float fallback parsing for shared IO env knobs.
+- `cli/src/limen/io.py:52` applies fallback parsing to queue-lock stale seconds.
+- `cli/src/limen/io.py:283` applies fallback parsing to the board shrink floor.
+- `cli/src/limen/io.py:284` applies fallback parsing to the board shrink fraction.
+- `cli/tests/test_io_atomic.py:145` covers malformed, `nan`, and infinite shared IO env values.
+- `cli/tests/test_io_atomic.py:157` covers non-positive shared IO env values.
 
 ## Remaining Review Queue
 
