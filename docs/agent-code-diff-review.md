@@ -102,7 +102,7 @@ Generated: `2026-07-04T14:05:34Z`
 | changed 144 | `codex` | `019f22c5-0e92-7831-9c59-c3988dc917c3` | Fable routing / budget-gauge run. Codex implemented real Fable acceptance machinery, hardened model routing after an accepted Fable adversarial review found bypasses, and left current focused tests green. The defects are process-grade: the run started in the live root with dirty board state, the first Fable CLI invocation failed, Fable spend initially exceeded the original transcript cap, and the session ended behind `origin/main` with daemon-owned `tasks.yaml` still dirty instead of reaching a clean closeout. |
 | changed 145 | `claude` | `1af9693f-12dd-41e9-8b73-ab54814d34b1` | Governance organ deepen run. Claude correctly attacked the prompt's highest-leverage gap by creating a Cvrsvs Honorvm promotion validator and PR #386, but the PR stayed open/red and 679 commits behind after the session ended at a force-push approval gate. Durable current governance validation came later through PR #483, and this review fixed the remaining seed-metadata drift so the current fleet validator now passes 4/4. |
 | changed 146 | `claude` | `5f469687-a7d6-40d6-ba54-e47bdce3cd5f` | Aug-1 revenue/recovery memory run. Claude turned a sensitive personal revenue-planning prompt into two useful private memory notes about payment rails, services-first revenue, and not mistaking product polish for closing progress. The prompt-vs-done gap is severe on governance: no tracked repo diff or executable next-step artifact landed, the original worktree is gone, and transcript guard flags 1.88M Opus billable tokens plus six Opus subagents for memory capture. |
-| changed 147 | `codex` | `019f2a04-e1eb-7b41-9e8d-1b96c75ddc86` | Self-review adjudicated after the user interrupt. Local goal/session evidence shows the thread ran 2026-07-03T22:09Z to 2026-07-04T14:09Z, ended `paused`, and used `20,638,119` goal tokens / `56,978` goal seconds. It passed the goal setup, breadth scan, private verbatim corpus, redaction, value-progress answer, and "work until stopped" asks; it was only partial on the core depth ask because the ideal-form prompt-vs-done review covered roughly 50-80 sessions from a much larger ranked queue before interruption. The continuation closed the interrupted row-153 tranche through PR #636, but not the depth backlog. |
+| changed 147 | `codex` | `019f2a04-e1eb-7b41-9e8d-1b96c75ddc86` | Self-review adjudicated after the user interrupt. Local goal/session evidence shows the thread ran 2026-07-03T22:09Z to 2026-07-04T14:09Z, ended `paused`, and used `20,638,119` goal tokens / `56,978` goal seconds. It passed the goal setup, breadth scan, private verbatim corpus, redaction, value-progress answer, and "work until stopped" asks; it was only partial on the core depth ask: measured at the session's last commit (`f404f85`), the ideal-form prompt-vs-done review produced `182` ledger entries (~10% of the `1,778`-row changed-file queue) before interruption — the earlier "roughly 50-80 sessions" here was an unmeasured estimate. Full Fable adjudication in the entry "Fable adjudication: the founding full-stack-review run" below. The continuation closed the interrupted row-153 tranche through PR #636, but not the depth backlog. |
 | changed 148 | `claude` | `2227b1d3-dd6a-4926-879c-cfcd6c24acde` | Fleet permission-prompt / human-owner home run. Claude correctly identified that hand-maintained owner docs rot and moved six human-gated atoms into durable GitHub issues, while adjacent code paths later made the FDA guard and bash hook canonical on `main`. The defects are that the session spent 1.69M Opus billable tokens, mutated live/home state, left no direct session commit, and the `L-AGENT-BASH-PROMPT` issue/lever is now stale because the live hook matches the current repo source. |
 | changed 149 | `opencode` | `ses_10a1ed17effezInw4p4MT8BH7e` | Odyssey film companion run. OpenCode did satisfy the prompt's core artifact by opening merged green PR #101 with `studium/film/odyssey.yaml`, and current `scripts/studium-validate.py` passes. The queue over-attributed 36 files because the OpenCode user message carried a huge dirty patch-summary context; the actual PR changed only `studium/film/odyssey.yaml` and `tasks.yaml`. This review fixed the current stale film backlog so completed companions are no longer advertised as active first-pass tasks. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
@@ -9524,6 +9524,62 @@ git -C /Users/4jp/Workspace/limen log --oneline --since='2026-06-24T12:33:00Z' -
 ```
 
 Result: refreshed prompt extraction includes the missing `last-prompt` surface; the two queue changed paths are absent on this host; `~/.limen.env` still carries the scan-window override; Claude memory records the release-gate correction and scan-window correction; no matching tracked Limen commit exists in the row's closeout window.
+
+### Fable adjudication: the founding full-stack-review run delivered the engine and breadth; depth stopped at ~10% with correctable protocol faults
+
+Severity: low product risk; medium process risk — the run's faults are cadence and enforcement gaps, already partially corrected by successor sessions (PR #636, PR #638).
+
+Evidence:
+
+- Codex session `019f2a04-e1eb-7b41-9e8d-1b96c75ddc86` ran 2026-07-03T22:09:10Z through 2026-07-04T14:09:51Z (user abort mid-row), using `20,638,119` goal tokens and `56,978` goal seconds across `60` context compactions, with exactly `4` user messages.
+- The `/goal` was set `14` seconds after the first ask (thread goal `createdAt` 22:09:27Z), faithfully restating the mandate, and was still active at abort.
+- Turn 1 (33 minutes) committed the durable engine — `scripts/agent-session-full-stack-review.py` + `docs/agent-session-full-stack-review.md` (`c0a6b22`, `4ab3c34`) — and extended `prompt-lifecycle-ledger` with OpenCode SQLite and Agy/Gemini adapters after noticing the prior ledger's two-provider bias.
+- Breadth layer complete: `3,848` sessions inventoried at turn 1 (Agy `15`, Claude `1,270`, Codex `1,295`, OpenCode `1,268`), growing to `4,375` in the queue snapshot, with corpus failure statistics published (`1,186` sessions missing verification signal, `905` missing durable receipts, `821` apparent no-ops).
+- Privacy negotiation: at 22:09:59Z the agent proposed withholding raw prompt text; the user's 22:10:51Z full-access pushback was honored at 22:11:04Z — full verbatim extraction (`125,319` prompt events, `74,321` unique hashes) into ignored `.limen-private/`, public artifacts redacted. The user independently confirmed exactly this split at 22:12:00Z.
+- Depth layer measured at the session's last commit (`f404f85`): `182` ledger entries, `139` review-stream commits in the window, `107` private prompt extracts on disk today — sustained ≈`12` rows/hour for ~15 hours ≈ `10%` of the `1,778`-row changed-file queue, with `875` reconstruction roots untouched.
+- Redaction verified: `.limen-private/` is ignored (`.gitignore:47`); a secret-pattern scan of the committed ledger (key/token/JWT/PEM shapes) is clean.
+- The final in-session claim verified: Fleet Gate run `28708715093` for `f404f85` concluded `success`.
+- The 03:12Z "valuable progress" answer cited two side repairs — the Portvs package verifier regeneration and the `~/Workspace/browser-state` toolchain restore — the latter corroborated by the directory mtime (2026-07-03 23:11 -0400).
+- The row in flight at abort (d3-dialog recurrence, now `changed_review[153]`) had its private extract written `19` seconds before the abort and was closed by a successor through PR #636; the depth backlog is homed by PR #638's executable queue stop predicate.
+- One environment slip, self-caught and disclosed: the first ledger refresh wrote to a stray `LIMEN_ROOT=/Users/4jp/limen` before the agent forced the correct root for all subsequent commands.
+
+Ideal prompt diff:
+
+- Ideal form of "review ALL sessions … keep working until I stop you": a durable engine plus a resumable ranked queue, a per-row template enforced by an executable predicate, lanes sharded so wall-clock scales with fleet size, and every row landing through a gated PR.
+- Actual form: engine, queue, private/public split, and resumability were delivered; template compliance stayed habitual (`124/182` entries carry `Ideal prompt diff:`, `123` carry `What was fucked up:`, vs `182/182` Severity+Evidence), the stream ran a single lane, and `139` commits went directly to `main` with the ruleset warning acknowledged and the Fleet Gate watched post-push instead of PR-gated pre-merge.
+- Ideal verification form: numeric claims in a self-review must be measured against a ref (`git show f404f85:…`), never a working file — the queue-row's earlier "roughly 50-80 sessions" was an estimate; the measured figure is `182` entries. A stale-file miscount (`127`) in the first draft of this adjudication was caught the same way.
+
+Outcome:
+
+- Ask 1 (full-stack review of all four providers, prompts-first, ideal-forms diff, `/goal`, autonomous until stopped): completed in structure and breadth; depth partial by user stop at ~10% of the queue, remainder durably homed.
+- Ask 2 (full verbatim prompt access, "no privacy"): completed after one hedge, corrected within seconds of the pushback and never re-litigated.
+- Ask 3 (no secrets in the repo, redact for public): completed and verified.
+- Ask 4 ("Are we making valuable, useful progress?"): answered honestly in ~8 seconds with corroborated non-report value, and the work continued instead of parking.
+- Credit the session as the founding run of the full-stack review institution; do not credit it with "all sessions reviewed" at depth.
+
+What was fucked up:
+
+- `139` direct-to-main pushes bypassed the branch→PR protocol; mitigated (docs-heavy paths, gate watched per push) but corrected only by successors — PR #636 and PR #638 went through PRs.
+- The mandate's two signature lenses were not structurally enforced: `58/182` entries lack `Ideal prompt diff:`. Filed as organvm/limen#640 (executable ledger lint).
+- Agy remains the weakest quadrant: `15` sessions inventoried and `4` heading mentions across `182` entries; native Antigravity IDE conversation decoding is unsolved. Filed as organvm/limen#641.
+- No throughput scaling: a single lane needs ~6-9 days to drain the changed-file queue; sharding was never proposed. Filed as organvm/limen#642 (deterministic lane assignment).
+- The first Fable adjudication of this run existed only as chat text — nothing that survives chat removal — and carried the stale-file miscount. This entry, the amended queue-row `changed 147`, and issues #640-#642 are the durable correction.
+
+Verification:
+
+```bash
+jq -c 'select(.type=="event_msg") | select(.payload.type=="user_message" or .payload.type=="turn_aborted" or .payload.type=="thread_goal_updated")' /Users/4jp/.codex/sessions/2026/07/03/rollout-2026-07-03T18-06-30-019f2a04-e1eb-7b41-9e8d-1b96c75ddc86.jsonl
+git show f404f85:docs/agent-code-diff-review.md | grep -c '^### '
+git show f404f85:docs/agent-code-diff-review.md | grep -oE '^(Severity|Evidence|Ideal prompt diff|Outcome|What was fucked up|Verification|Result):' | sort | uniq -c
+git log --format='%s' --since='2026-07-03T18:09:00-0400' --until='2026-07-04T10:10:00-0400' main | grep -cE '^(docs: review|docs: refine|limen: record)'
+gh run view 28708715093 --repo organvm/limen --json conclusion,headSha
+grep -n 'limen-private' .gitignore
+gh issue view 640 --repo organvm/limen --json state,title
+gh issue view 641 --repo organvm/limen --json state,title
+gh issue view 642 --repo organvm/limen --json state,title
+```
+
+Result: the founding run's asks verify as completed (goal, breadth sweep, verbatim corpus, redaction discipline, honest progress answer, work-until-stopped) with the depth ask partial at `182` entries / ~10% of the queue; the faults are homed as #640 (template lint), #641 (Agy decoding), and #642 (lane sharding); queue-row `changed 147` above is amended from its 50-80 estimate to the measured figures.
 
 ## Remaining Review Queue
 
