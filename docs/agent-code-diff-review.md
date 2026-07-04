@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T02:07:10Z`
+Generated: `2026-07-04T02:14:01Z`
 
 ## Scope
 
@@ -43,6 +43,7 @@ Generated: `2026-07-04T02:07:10Z`
 | refreshed 26 | `claude` | `04d49f5a-c88d-4588-a5d9-90f64d06eacc` | CVSTOS/VVLTVS organ run. Original worktree and temp extractors are gone, but CVSTOS/VVLTVS code landed on `main`; fixed malformed env, manifest-number, and manifest-shape crash paths that violated the organs' fail-open heartbeat contract. |
 | refreshed 27 | `claude` | `e31aaccb-1389-4079-aa0e-dc82dd6027a6` | Link-health / launch / media scheduler demand-surface run. Original worktree is gone, but link-health, launch, and scheduler code landed on `main`; fixed the scheduler dry-run mutation and unstable queue IDs that violated the draft-only, repeatable receipt contract. |
 | refreshed 28 | `claude` | `6cdc53d9-1d39-4936-976a-ab0f77a8d561` | IANVA doorway run. Original worktree is gone, but the IANVA gateway lives under `ianva/` on `main`; fixed unversioned upstream registry coercion so malformed args/env/header/boolean shapes cannot corrupt or crash the gateway inventory. |
+| refreshed 29 | `claude` | `ec251ec3-e2e5-405b-a7ea-c93d93c255a3` | Object Lessons Studio / WriteLens launch review. Original worktree and temp OG captures are gone; external Studio and WriteLens artifacts survived. Fixed the remaining WriteLens brand/OG/reframe gap and added an explicit Studio predicate override for the clean WriteLens root. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -1725,6 +1726,42 @@ python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/pro
 ```
 
 Result: `1 passed`; IANVA package/scripts compiled; transcript audit completed with an Opus budget violation under the default guard.
+
+### Studio launch verifier exposed a stale WriteLens face and root mismatch
+
+Severity: high for launch credibility, medium for artifact lifecycle.
+
+Evidence:
+
+- Claude session `ec251ec3-e2e5-405b-a7ea-c93d93c255a3` adversarially reviewed the Object Lessons Studio launch set. The original `.claude/worktrees/parsed-finding-fern` worktree and `~/.claude/jobs/ec251ec3/tmp/og-*.html` captures are gone.
+- Surviving artifacts are external repos: `~/Workspace/studio` and `~/Workspace/4444J99/writelens`, plus the Claude transcript directory.
+- Transcript audit reports 282 usage-bearing messages, 2,725,937 billable-ish tokens, 9,389,866 cache-read tokens, 2,725,937 Opus-class billable-ish tokens, fourteen expensive subagents, and zero agent/workflow calls. The audit violated the normal Opus budget guard.
+- The old review correctly flagged that Studio's launch copy treated WriteLens as the craft-facing live instrument while the WriteLens page itself still looked like a separate developer/API product and lacked a shareable OG image.
+- Current Studio had fixed most launch issues, and live probes confirmed WriteLens CORS and `/v1/score` are up.
+- `~/Workspace/studio/take-it-home.sh` still hard-coded `../writelens`, while the actual local checkout is `~/Workspace/4444J99/writelens`; that hid the true state as "repo not found" instead of letting a clean root be selected for verification.
+- The `~/Workspace/4444J99/writelens` checkout is dirty and behind `origin/main`, so the fix was landed in a clean repair worktree from `origin/main` to avoid overwriting unrelated README/API/test work.
+
+Repair:
+
+- In WriteLens commit `826f626` (`fix(face): align writelens with object lessons studio`) pushed to `organvm/writelens:main`, reframed `public/index.html` around writing craft before API/pricing, adopted the Studio type/color system, added Studio links, removed the sister-product footer, removed the old "aimed at code" framing, and added `public/og/writelens.png`.
+- In Studio local commit `3ac3c58` (`fix(predicate): allow explicit writelens root`), added `WRITELENS_ROOT` override support to `take-it-home.sh` so the predicate can target a clean WriteLens checkout without disturbing the dirty local checkout.
+
+Touched external paths:
+
+- `/Users/4jp/Workspace/.limen-repair/writelens-object-lessons-face-20260704/public/index.html`
+- `/Users/4jp/Workspace/.limen-repair/writelens-object-lessons-face-20260704/public/og/writelens.png`
+- `/Users/4jp/Workspace/studio/take-it-home.sh`
+
+Verification:
+
+```bash
+curl -sS -i -X OPTIONS https://writelens.ivixivi.workers.dev/v1/score -H 'Origin: https://object-lessons-studio.pages.dev' -H 'Access-Control-Request-Method: POST'
+curl -sS -i https://writelens.ivixivi.workers.dev/v1/score -H 'Content-Type: application/json' -H 'Origin: https://object-lessons-studio.pages.dev' --data '{"text":"In today'\''s fast-paced world, our innovative solution leverages synergies to deliver value-added outcomes."}'
+WRITELENS_ROOT=/Users/4jp/Workspace/.limen-repair/writelens-object-lessons-face-20260704 bash /Users/4jp/Workspace/studio/take-it-home.sh
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-parsed-finding-fern/ec251ec3-e2e5-405b-a7ea-c93d93c255a3 --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000 --out /tmp/rank-ec251-audit.json
+```
+
+Result: WriteLens OPTIONS returned `204` with CORS headers; score POST returned `200` with live JSON scores; Studio launch predicate returned `OWNED SCOPE GREEN` with `38/38` checks passing; transcript audit completed with an Opus budget violation under the default guard.
 
 ## Remaining Review Queue
 
