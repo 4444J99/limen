@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T04:11:12Z`
+Generated: `2026-07-04T04:13:46Z`
 
 ## Scope
 
@@ -50,6 +50,7 @@ Generated: `2026-07-04T04:11:12Z`
 | refreshed 33 | `claude` | `e4cd8413-965c-4cde-a656-e1d09ba31da1` | Fleet-sprawl reduction / cells / board-collapse run. PRs #356, #359, #360, and #361 landed useful surfaces; current review fixed `cell` commands so they no longer list or operate on arbitrary non-cell Claude worktrees. |
 | refreshed 34 | `claude` | `6b107f0b-4796-4cc2-95ef-861947c991b9` | Vigilia autonomic-institution run. PRs #277, #281, #285, and #315 landed VITALS/CONTINUITY/INTEGRITY, the face, no-hardcode gate, and heartbeat stamp; current review verified the code and recorded raw-transcript log privacy and Opus spend as residual risks. |
 | refreshed 35 | `claude` | `d7044841-5c47-45c2-be86-b5d96a1ea15d` | Cloudflare deploy derivation / Studio / Media Ark run. Useful PRs landed, but review found live Studio source-file exposure plus a sibling Pages-project collision; redeployed public-only Studio, added a Studio predicate, and restored `object-lessons.pages.dev` to a cinema placeholder. |
+| refreshed 36 | `claude` | `4582fe4c-165d-440b-a36a-562e67cd5cf4` | Fleet session-reconcile run. Temp scripts are gone, but durable ledger/scorecard and `organvm/session-meta#37` survive; review confirmed the lane closed, the 102-branch prune was explicitly gated, and the run remains a spend/fanout cautionary example. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -408,6 +409,55 @@ python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/pro
 ```
 
 Result: Speech Score PR #12 and Limen PRs #518/#523/#526/#544 are merged with green checks; Studio public-only deploy succeeded; Studio source-marker URL checks now report `source-not-exposed`; the Studio predicate's new source-exposure gate passes; the sibling `object-lessons` Pages alias no longer serves Studio source markers. Full Studio predicate still fails on unrelated WriteLens drift, and full cinema rebuild is blocked by source dependency drift as described above.
+
+### Fleet session-reconcile reached an omega ledger, but it was too broad and too expensive
+
+Severity: medium for governance/process; no current code patch.
+
+Evidence:
+
+- Claude session `4582fe4c-165d-440b-a36a-562e67cd5cf4` ran from `/Users/4jp` and then `~/.claude/jobs/4582fe4c/tmp` from 2026-06-15T23:07:25Z through 2026-06-20T17:11:52Z.
+- Prompt first layer was explicit and broad: work through all Claude Code desktop local/cloud routines/sessions and ensure nothing was hanging or unfinished; then process the 160+ GitHub-linked Claude sessions to terminal done/parked states with explore -> plan -> build -> verify -> heal -> learn cadence.
+- Surviving changed-file refs are temp scripts (`build_scorecard.py`, `verify_prune.py`, `do_prune.py`, `prune_guarded.py`, `verify_all_gone.py`) plus Claude memory `fleet-session-reconcile.md`; the temp scripts are gone.
+- Durable artifacts survive outside Limen: `/Users/4jp/Workspace/.session-reconcile/LEDGER.md`, `SCORECARD.csv`, `SESSION_SCORECARD.md`, and memory `fleet-session-reconcile.md`.
+- Public hub issue `organvm/session-meta#37` is closed, with a June 20 closeout comment recording 54 PR-linked cloud sessions, 37 done / 10 in-flight / 7 abandoned, and 102 dead branches deleted under an explicit 0-ahead gate.
+
+Ideal prompt diff:
+
+- Ideal form: enumerate local daemons, cloud routines, repo-linked sessions, and PR-linked sessions; separate read-only classification from destructive cleanup; preserve a durable ledger; require explicit authorization for cross-repo branch deletion; and close the hub only after a zero-residual pass.
+- Actual form: the session eventually did that, but it started with brittle local probing, needed user correction on how to find sessions, attempted broad destructive merge/prune operations that the classifier denied, and relied on temp scripts that were not preserved in a repo.
+- Corrected ideal form: this kind of fleet sweep needs a checked-in, reusable reconciler and receipt schema before touching hundreds of shared refs; temp scripts are acceptable for exploration but not for the final destructive gate.
+
+Outcome:
+
+- Local orphan scheduler cleanup remains reversible and still defensible: current cron entries are disabled with a backup at `~/.claude/backups/crontab.backup-2026-06-15.txt`, and all five disabled target scripts are still absent. Current Limen launchd jobs (`com.limen.heartbeat`, watchdog, creds-hydrate, overnight-watch) are loaded separately.
+- `/Users/4jp/Workspace/.session-reconcile/SCORECARD.csv` has 247 lines, covering the 246 active repos plus header; `SESSION_SCORECARD.md` is explicitly marked superseded by the June 20 ledger rollup.
+- `organvm/session-meta#37` is closed as completed. The comment records the explicit user condition for deletion: delete the 102 dead branches iff their work already found life in ideal forms.
+- No code patch was made during this review pass because the lane's durable artifacts already record terminal state and the current scheduler check did not show an active regression.
+
+What was fucked up:
+
+- The run was far too broad for an interactive Opus session: transcript guard reports 5,402,831 billable-ish tokens, 1,083 usage-bearing messages, and 44 Opus subagents.
+- The first pass treated "sessions" as hard to enumerate and asked for another execution path; the user had to correct that framing and authorize local GitHub access.
+- The session tried mass merge/delete operations before the authorization boundary was crisp. The classifier denials were appropriate; the eventual 102-branch deletion was only acceptable because it used a live 0-ahead check and the user gave a precise condition.
+- The durable ledger is local under `Workspace/.session-reconcile`, not a tracked repo artifact. That is acceptable for private fleet state, but weaker than a reproducible tool + receipt bundle.
+- The temp scripts that performed scorecard build and guarded prune are gone, so future reviewers can verify outcomes but cannot rerun the exact implementation.
+- The baseline session scorecard admitted a coverage gap: PR-linked search found 52 sessions while the user's estimate was ~160; non-PR sessions remained invisible without the Claude session list/browser path.
+
+Verification:
+
+```bash
+sed -n '1,220p' /Users/4jp/.claude/projects/-Users-4jp/memory/fleet-session-reconcile.md
+gh issue view 37 --repo organvm/session-meta --json number,title,state,closedAt,comments,url
+wc -l /Users/4jp/Workspace/.session-reconcile/SCORECARD.csv /Users/4jp/Workspace/.session-reconcile/SESSION_SCORECARD.csv
+sed -n '1,120p' /Users/4jp/Workspace/.session-reconcile/SESSION_SCORECARD.md
+crontab -l
+launchctl list | rg 'com\\.4jp|organvm|limen|claude|codex|mail'
+for target in /Users/4jp/Workspace/4444J99/summoning/bin/summon-daily.sh /Users/4jp/.claude/scheduled-tasks/daily-operational-heartbeat/run.sh /Users/4jp/.local/bin/codex-mcp-healthcheck /Users/4jp/.claude/scheduled-tasks/weekly-toolchain-refresh/run.sh /Users/4jp/.config/ai-context/scripts/disk-drain-sweep; do test -e "$target" && echo EXISTS "$target" || echo ABSENT "$target"; done
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp/4582fe4c-165d-440b-a36a-562e67cd5cf4.jsonl
+```
+
+Result: the memory and ledger record the lane as closed; issue #37 is closed with the omega closeout comment; local scorecards exist; disabled cron targets remain absent; Limen launchd replacements are loaded. Transcript audit fails on total billable, Opus billable, and Opus fanout, which is recorded as the primary session-quality defect.
 
 ## Rejected Artifacts
 
