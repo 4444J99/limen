@@ -52,6 +52,7 @@ Generated: `2026-07-04T04:13:46Z`
 | refreshed 35 | `claude` | `d7044841-5c47-45c2-be86-b5d96a1ea15d` | Cloudflare deploy derivation / Studio / Media Ark run. Useful PRs landed, but review found live Studio source-file exposure plus a sibling Pages-project collision; redeployed public-only Studio, added a Studio predicate, and restored `object-lessons.pages.dev` to a cinema placeholder. |
 | refreshed 36 | `claude` | `4582fe4c-165d-440b-a36a-562e67cd5cf4` | Fleet session-reconcile run. Temp scripts are gone, but durable ledger/scorecard and `organvm/session-meta#37` survive; review confirmed the lane closed, the 102-branch prune was explicitly gated, and the run remains a spend/fanout cautionary example. |
 | refreshed 37 | `claude` | `57c0201a-82bd-4be7-96dd-4c7039038edd` | Codex skill-slim run. PRs #573, #597, and #615 landed a repair organ that keeps all skills while stopping Codex description truncation; current tests and live `--check` pass, but the session needed two follow-up corrections after false-green proofs and blew Claude spend limits. |
+| refreshed 38 | `claude` | `dceadf88-8fb3-478d-8626-38393fc09b97` | No-tasks-on-me / closeout predicate run. PR #250 landed `scripts/no-tasks-on-me.sh` and wired it into `CLAUDE.md`; current predicate exits 0 and proves lever ownership, preserved-ref ownership, graph issue pointers, and branch-reap fixed point. Session was still far too broad and expensive. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -304,6 +305,53 @@ git merge-base --is-ancestor 4aa1011 origin/main
 ```
 
 Result: PRs #573, #597, and #615 are merged with green GitHub checks; focused tests pass; live Codex skill-budget check passes against Codex's own log; parameter declaration check passes; `4aa1011` is on `origin/main`. Transcript audit fails on total and Opus billable budgets.
+
+### Claude no-tasks-on-me closeout predicate made the handoff rule executable, but the session still sprawled
+
+Severity: medium for closeout governance; current predicate is live and green.
+
+Evidence:
+
+- Claude session `dceadf88-8fb3-478d-8626-38393fc09b97` ran from 2026-06-24T16:01:48Z through 2026-06-25T17:57:55Z and eventually created the worktree `.claude/worktrees/no-tasks-on-me-predicate-0625`.
+- Queue row `56` saw two durable changed paths: `.claude/worktrees/no-tasks-on-me-predicate-0625/scripts/no-tasks-on-me.sh` and the private memory rollup `~/.claude/projects/-Users-4jp-Workspace-limen/memory/MEMORY.md`.
+- Prompt-layer pressure centered on closing cleanly: no "and also" residue, no human-gated task hanging only in chat or recall-only memory, and every owed item placed in a permanent owner record.
+- The session had 812 prompt events in the private extractor, totaling 910,961 prompt bytes with a 29,790-byte largest prompt. It also covered unrelated package hygiene, memory compression, health-office, and mail-review context before the final closeout predicate.
+- PR `organvm/limen#250` merged 2026-06-25T17:55:56Z at `5a66bb6` with green `python`, `pr-gate`, `worker`, and `web` checks.
+- PR #250 added `scripts/no-tasks-on-me.sh` and a `CLAUDE.md` closeout pointer. The script checks the his-hand lever registry, PII shape safety, local `*-staged-*` preserve refs, obligation unionability, issue pointers, dangling prose lever ids, and spent-branch fixed point via `scripts/reap-branches.py --check`.
+- Transcript evidence ties this row to PR #250. A later dispatch repair PR (#271) is adjacent in the git window but not credited to this row.
+
+Ideal prompt diff:
+
+- Ideal form: transform "nothing hangs on me" from a repeated chat audit into a reproducible predicate over git-tracked owner records, prove it catches stranded preserve refs and unowned human-gated items, and close without handing the user another list.
+- Actual form: the session did land that predicate and verified it before closeout, including catching and fixing a branch-glob bug where `refs/heads/*-staged-*` failed to cross branch-name slashes.
+- Corrected ideal form for future closeouts: a clean final answer should cite the owning predicate and current exit code, not restate a bespoke task list. The predicate is now the home of the rule.
+
+Outcome:
+
+- Current `bash scripts/no-tasks-on-me.sh` exits 0. It reports 25 levers owned/traceable, no PII measurement shapes, `heal/health-office-staged-0625` cited by a registry lever, 25 needs-human issue pointers with no dangling graph pointers, all prose lever ids resolved, and no provably landed branch lingering.
+- `bash -n scripts/no-tasks-on-me.sh` passes.
+- `python3 -m py_compile scripts/reap-branches.py scripts/sync-hishand-issues.py` passes for the helper scripts the predicate depends on.
+- No code patch was needed in this review pass.
+
+What was fucked up:
+
+- The session scope was far larger than the final predicate: package hygiene, private memory ledger work, health-office PII containment, mail review, closeout doctrine, and worktree lifecycle all flowed through one Claude run.
+- Transcript guard fails hard: 6,426,275 billable-ish tokens, all 6,426,275 on Opus, 772 usage-bearing messages, 10 agent/workflow calls, and nine Opus subagents.
+- The final worktree removal tried to discard a local commit; the transcript correctly proved it was the pre-squash copy already landed as `5a66bb6`, but this class of operation should remain receipt-gated.
+- The predicate's specific-literal PII denylist is optional and absent on this host, so current proof is shape-scan plus off-repo-denylist skip. That is acceptable as designed, but it should not be overclaimed as exhaustive clinical-text scanning.
+
+Verification:
+
+```bash
+gh pr view 250 --repo organvm/limen --json number,title,state,createdAt,mergedAt,mergeCommit,headRefName,files,commits,statusCheckRollup,url
+bash scripts/no-tasks-on-me.sh
+bash -n scripts/no-tasks-on-me.sh
+python3 -m py_compile scripts/reap-branches.py scripts/sync-hishand-issues.py
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/dceadf88-8fb3-478d-8626-38393fc09b97.jsonl
+rg -n 'no-tasks-on-me|nothing hangs|credential-wall.py --check' CLAUDE.md scripts/no-tasks-on-me.sh
+```
+
+Result: PR #250 is merged with green GitHub checks; current predicate exits 0; shell syntax and helper Python compile pass. Transcript audit fails on billable, Opus, agent fanout, and Opus-subagent fanout budgets.
 
 ### Agent-instruction standard landed the right two-layer answer, but one Layer-1 gate pointer was wrong
 
