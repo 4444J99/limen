@@ -78,6 +78,11 @@ Generated: `2026-07-04T08:12:45Z`
 | 124 | `claude` | `d051cce2-54b0-478d-afaf-e2ed1429ce41` | FLAME predecessor prompt root. This session contains the actual "go away for a month / flame never goes out" first-layer ask and three read-only exploration subagents; the durable implementation belongs to continuation session `25d48a87-2cb2-428d-bb68-96467d8bc5fe`, so this row is prompt-boundary evidence rather than a second code workstream. |
 | 125 | `claude` | `0ce115d3-e83b-408a-a3a8-deac07888433` + 17 corpus workers | CI-green 2026-06-28 CDB4 root. The parent session fulfilled the generated CI-green packet through PR #378, adding a Python 3.11 CI job and fixing corpus-converge subprocess env leakage; the other 17 sessions under the same deleted root are generated corpus distillation workers and should not be counted as CI implementation. |
 | 126 | `claude` | `70b7dbdd-d715-4d44-8812-98901dfed535` | Object Lessons Studio strategy/fanout root. This session produced the strategic public-face direction for the creative-writing/education portfolio, then launched a heavy workflow fanout; durable code/launch verification belongs to later session `ec251ec3-e2e5-405b-a7ea-c93d93c255a3`, so this row is valuable planning evidence with serious spend/fanout defects, not a standalone implementation diff. |
+| 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
+| 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
+| 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
+| 137 | `claude` | `98d2f6d5-3477-42f3-ad15-d3dbf4890e15` | Cartridge-connected closeout. The session correctly diagnosed the `brewup` alias boundary, shipped a cartridge-source predicate in PR #560, and filed `L-CARTRIDGE-REPOINT` through PR #564, but the human-lever issue now appears stale because the current predicate is green. |
+| 138 | `claude` | `ab9c5754-13dc-4575-8f84-139df4b17884` | Public Record Data Scraper security retry. Claude authored the right four-file Zod validation shape and opened PR #319, but that PR later failed CI and closed unmerged; durable fulfillment came from later merged PR #331 with green gate, not from the row-138 branch. |
 | refreshed 35 | `claude` | `d7044841-5c47-45c2-be86-b5d96a1ea15d` | Cloudflare deploy derivation / Studio / Media Ark run. Useful PRs landed, but review found live Studio source-file exposure plus a sibling Pages-project collision; redeployed public-only Studio, added a Studio predicate, and restored `object-lessons.pages.dev` to a cinema placeholder. |
 | refreshed 36 | `claude` | `4582fe4c-165d-440b-a36a-562e67cd5cf4` | Fleet session-reconcile run. Temp scripts are gone, but durable ledger/scorecard and `organvm/session-meta#37` survive; review confirmed the lane closed, the 102-branch prune was explicitly gated, and the run remains a spend/fanout cautionary example. |
 | refreshed 37 | `claude` | `57c0201a-82bd-4be7-96dd-4c7039038edd` | Codex skill-slim run. PRs #573, #597, and #615 landed a repair organ that keeps all skills while stopping Codex description truncation; current tests and live `--check` pass, but the session needed two follow-up corrections after false-green proofs and blew Claude spend limits. |
@@ -7685,6 +7690,67 @@ scripts/no-tasks-on-me.sh
 ```
 
 Result: transcript guard failed on spend only; prompt extraction matches row `137`; PR #560 and PR #564 are merged; focused cartridge tests pass; `credential-wall.py --check` passes; current cartridge predicate is green; current `no-tasks-on-me.sh` fails only on later landed branch-reap drift, and issue #563 remains open despite the cartridge predicate being green.
+
+### Claude's public-record security retry had the right patch, but the PR lifecycle failed
+
+Severity: medium for security delivery, low for spend. The row is valuable because it separates a technically reasonable patch from a failed delivery receipt: Claude found the same validation gap the prior OpenCode branch had chased, authored the right Zod shape, then left a PR that later failed CI and closed unmerged. The durable security fix belongs to the later merged PR #331.
+
+Evidence:
+
+- Reconstruction row `138` targets Claude session `ab9c5754-13dc-4575-8f84-139df4b17884`, rooted in the now-absent worktree `/Users/4jp/Workspace/.limen-worktrees/gen-organvm-public-record-data-scrapper-security-0626-6c09`, from 2026-06-26T04:56:32Z through 2026-06-26T05:18:47Z.
+- In redacted intent form, the first-layer prompt asked Claude to complete `GEN-organvm-public-record-data-scrapper-security-0626`: audit `organvm/public-record-data-scrapper`, fix high-severity advisories, add input validation at the main untrusted-input entrypoints, open a PR, and keep the build green.
+- The session reported `npm audit` had no high or critical advisories. The remaining moderate advisories were transitive `expo` / `postcss` issues that required major-version work outside the packet.
+- The useful authored diff was four files: `server/routes/competitive.ts`, `server/routes/outreach.ts`, and their route tests. Commit `6611689` added Zod validation to competitive/outreach params and query bodies, updated async error handling, and added invalid-input test coverage.
+- The transcript's own local verification did not produce a clean full suite. Claude found five scrape-route Vitest failures, reproduced the same failure count before and after the patch, and classified them as pre-existing. That is useful isolation, but it is not the same as satisfying the prompt's "keep the build green" acceptance criterion.
+- PR `organvm/public-record-data-scrapper#319` was opened from branch `limen/gen-organvm-public-record-data-scrapper-security-0626-6c09` at `6611689`. Later branch updates added commits `5f90b4c` and `ca2800f`, and the PR diff then included a deleted `package-lock.json`.
+- PR #319 closed unmerged on 2026-06-28T04:28:48Z. Its final `CI Gate` run `28274602165` failed at `Setup Node.js`; `Secret Pattern Detection` and `validate-dependencies` passed.
+- The remote branch still exists at `ca2800f81b0debf811f97f5e4de3897f1156f72d` and is diverged from current `main`.
+- Durable fulfillment came later through PR `organvm/public-record-data-scrapper#331`, `Security: Zod input validation on competitive and outreach routes`, which merged on 2026-06-28T06:49:12Z at `44d9757`. Its `CI Gate`, `Secret Pattern Detection`, and `validate-dependencies` checks all passed.
+- Full private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-138-claude-public-record-scrapper-security-0626-prompts.jsonl`: 197 prompt-surface records, 129 unique prompt hashes, 196,049 prompt bytes. Surfaces are `message.user` 159, `last-prompt` 37, and `queue.enqueue` 1.
+- Transcript guard passes for this row: 464,386 billable tokens, no Opus billable tokens, no subagent fanout, and no guard violations. This is not a runaway-spend failure; it is a delivery lifecycle failure.
+
+Ideal prompt diff:
+
+- Ideal generated security packet: reconcile the prior OpenCode security attempt, audit current dependency state, identify one untrusted-input surface family, ship one clean PR, and prove the PR gate green.
+- Actual form: the technical patch shape was right and the local failure isolation was useful, but PR #319 did not merge and did not finish green. A later branch, #331, provided the durable green merge.
+- Ideal retry form: before opening a new security branch, detect existing stale branches/PRs for the same generated task and either revive one cleanly or explicitly supersede them.
+- Actual form: row `82` had already produced stale PR #310, row `138` produced stale PR #319, and #331 later became the real fulfillment. The prompt stream kept generating retries without collapsing old receipts.
+
+Outcome:
+
+- Credit row `138` for discovering and authoring the right validation target and for isolating local scrape-test failures as pre-existing.
+- Do not credit row `138` as completed security delivery. The row's own PR #319 closed unmerged and failed CI after later branch updates.
+- Credit durable completion of this security atom to PR #331, which merged green and explicitly superseded stale PRs #310, #314, and #319 in its deployment note.
+
+What was fucked up:
+
+- The generated retry system made another security branch for the same target instead of first reconciling PR #310 and the branch family already in flight.
+- The row's PR receipt said the branch should pass CI, but the PR's final check failed and the branch later contained a deleted lockfile.
+- Branch cleanup is still incomplete: the closed #319 branch remains published even though current `main` has the superseding #331 fix.
+- The prompt's "keep the build green" requirement was under-specified for pre-existing local failures. The corrected ideal packet should require a PR-gate receipt or an explicit "blocked by pre-existing red gate" classification, not a chat assertion that CI should pass.
+
+Verification:
+
+```bash
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace--limen-worktrees-gen-organvm-public-record-data-scrapper-security-0626-6c09/ab9c5754-13dc-4575-8f84-139df4b17884.jsonl
+python3 - <<'PY'
+import json
+from collections import Counter
+from pathlib import Path
+p = Path('/Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-138-claude-public-record-scrapper-security-0626-prompts.jsonl')
+rows = [json.loads(line) for line in p.read_text(encoding='utf-8').splitlines() if line.strip()]
+print(len(rows), len({r['prompt_hash'] for r in rows}), sum(r['prompt_bytes'] for r in rows), Counter(r['surface'] for r in rows), Counter(r['session_id'] for r in rows))
+PY
+gh pr view 319 --repo organvm/public-record-data-scrapper --json number,title,state,mergedAt,closedAt,headRefName,headRefOid,baseRefName,url,files,statusCheckRollup,commits
+gh run view 28274602165 --repo organvm/public-record-data-scrapper --json databaseId,name,status,conclusion,headSha,jobs,url
+gh pr view 331 --repo organvm/public-record-data-scrapper --json number,title,state,mergedAt,closedAt,headRefName,headRefOid,baseRefName,url,files,statusCheckRollup,commits
+gh run view 28311339161 --repo organvm/public-record-data-scrapper --json databaseId,name,status,conclusion,headSha,jobs,url
+git ls-remote https://github.com/organvm/public-record-data-scrapper.git refs/heads/limen/gen-organvm-public-record-data-scrapper-security-0626-6c09 refs/heads/main
+gh api repos/organvm/public-record-data-scrapper/compare/ca2800f81b0debf811f97f5e4de3897f1156f72d...main --jq '{status, ahead_by, behind_by, total_commits}'
+test -d /Users/4jp/Workspace/.limen-worktrees/gen-organvm-public-record-data-scrapper-security-0626-6c09
+```
+
+Result: transcript guard passed; prompt extraction matches row `138`; PR #319 is closed unmerged with final `CI Gate` failure at `Setup Node.js`; PR #331 is merged with green `CI Gate`, `Secret Pattern Detection`, and `validate-dependencies`; the #319 branch still exists and is diverged from current `main`; the original worktree is absent.
 
 ## Remaining Review Queue
 
