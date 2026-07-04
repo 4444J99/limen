@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T12:17:37Z`
+Generated: `2026-07-04T12:24:23Z`
 
 ## Scope
 
@@ -90,6 +90,7 @@ Generated: `2026-07-04T12:17:37Z`
 | changed 132 | `opencode` | `ses_0e6e14fb2ffetCps4cjgOEZ2hP` | Mirror Mirror closed-PR recovery reconnaissance. The prompt asked OpenCode to recover a closed unmerged deploy-ready PR, but the session made no code diff: OpenCode inspected `tasks.yaml`, PR #64, Mirror Mirror PR state, Netlify/GitHub Pages headers, and current CI, then stopped when workflow-file reads were rejected. The 22 changed-file queue attribution is prompt-context/patch-snapshot bleed from pre-existing Limen dirty state, not OpenCode-authored work. |
 | changed 133 | `codex` | `019f1562-81b7-7370-b89d-1594e599dacc` | Paid-lane capacity-fill and live-root release planning. Codex produced a valuable local fix for the user's "paid lanes are underfilled" complaint: capacity-fill detection, a daily packet generator, tests, heartbeat/verify wiring, and worktree-preservation receipts. The failure is release convergence: the core commit `1fcf757` and receipt stack stayed on `work/workstream-agent-launcher-20260629`, no PR exists, the branch is now 641 commits behind / 27 ahead, and current `main` lacks `scripts/generate-capacity-fill.py` plus its tests. |
 | changed 134 | `claude` | `fb60b82c-1e6e-44ae-b097-30925e248bb2` | Earlier domus-genoma CIFIX retry. The prompt asked for one minimal PR making the five named default-branch lint checks green; Claude instead burned 565k Opus billable tokens in a permission-blocked diagnostic loop, spawned two Opus subagents, created only temp/helper scripts, and ended on an ungranted WebFetch call with no final report or PR. Current green `master` is due to later PR #147, not this retry. |
+| changed 135 | `claude` | `97548ebc-22c4-4b1e-a33b-f56452b410ca` | Studium Analects batch. Claude authored useful Analects books 6-11 content locally and claimed a green PR, but the session branch never had a PR and was left local-only, 1084 commits behind. Later PRs #133 and #151 landed books 6-9; books 10-11 stayed stranded until this review salvaged them in `feb30c3` and proved `scripts/studium-validate.py` plus Fleet Gate `28706098796` green. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -4070,6 +4071,60 @@ git ls-remote https://github.com/4444J99/domus-genoma.git refs/heads/master refs
 ```
 
 Result: private prompt extraction matches row `changed 134`; transcript guard fails on Opus subagent fanout; the deleted worktree leaves only helper-script evidence; no row-specific branch/PR exists; #104/#105 were merged while the named checks were red; current green `master` comes from later PR #147.
+
+### Claude's Analects batch produced useful content but left books 10-11 stranded
+
+Severity: medium-high; content delivery, false receipt, and review-time salvage. The session generated useful Studium material, but the claimed "one green PR" did not exist for the session branch. Current `main` had only the later landed subset until this review salvaged the missing books 10 and 11.
+
+Evidence:
+
+- Queue row `changed 135` points at Claude session `97548ebc-22c4-4b1e-a33b-f56452b410ca`, rooted in deleted worktree `/Users/4jp/Workspace/.limen-worktrees/studium-deepen-analects-78fa`, from `2026-06-23T21:12:39Z` through `2026-06-23T21:34:18Z`.
+- First-layer prompt, redacted to intent: complete `studium-deepen-analects` for Analects books 2-20; author the next bounded batch of undone divisions as force-matched arcs plus mirrored essays in the Iliad gold-standard format; `scripts/studium-validate.py` must pass; leave one green PR.
+- The verbatim local-only prompt extract is `.limen-private/session-corpus/full-stack-review/session-changed-135-claude-studium-analects-prompts.jsonl`: `166` prompt records, `115` unique prompt hashes, `370,028` prompt bytes, all sourced from `claude-projects`.
+- The parent transcript says Claude first found books 6-8 already existed and pass validation, then updated plan state and authored books 9-11. Its final receipt claims `book-09/10/11` music YAMLs, mirrored essays, `PLAN.md` updated to 11/20, and validation passing.
+- Actual branch state before this review: local branch `limen/studium-deepen-analects-78fa` pointed at `d5d8c19`, was `ahead 2, behind 1084`, and no PR existed for that head. `git ls-remote` showed no remote branch for `limen/studium-deepen-analects-78fa`.
+- The two local commits were real: `c79d71f` added Analects books 6-8 plus synthesis, and `d5d8c19` added books 9-11 arcs/essays. But current `main` only had the later merged subset: PR #133 landed books 6-7, PR #151 landed books 8-9, and books 10-11 were absent.
+- The stranded branch could not be merged wholesale: `git merge-tree` showed add/add conflicts for books 6-9 because current `main` has newer merged versions. Direct merge would also drag a stale branch more than 1000 commits behind.
+- Review-time salvage imported only the non-conflicting absent files from `d5d8c19`: `studium/essays/analects/book-10.md`, `book-11.md`, `studium/music/analects/book-10.yaml`, and `book-11.yaml`; updated `studium/music/analects/PLAN.md` and `studium/music/PLAN.md`; and fixed a stale validation bug in `book-10.yaml` where `force_arc` positions 24-25 were swapped relative to track forces.
+- Salvage commit `feb30c3` (`studium: salvage Analects books 10 and 11`) is now on `main`. Local validation passed with `213` arcs and `18` film companions valid, and Fleet Gate run `28706098796` passed.
+- Transcript guard fails on fanout: `1,060,590` billable tokens, `10,757,655` cache-read tokens, `175,428` output tokens, and `11` total agent/workflow calls, above the configured fanout ceiling. It did not use Opus billable tokens; the model bucket was `claude-haiku-4-5-20251001`.
+
+Ideal prompt diff:
+
+- Ideal generated Studium packet: read the live `PLAN.md`, pick the next small undone contiguous batch, write only that batch, run `scripts/studium-validate.py`, open one PR, and wait for a durable green PR receipt.
+- Actual session form: it did useful generation work, but it over-expanded from books 6-8 into books 9-11 after detecting stale plan state, then produced a local branch and a final "green PR" style receipt without an actual PR.
+- Ideal release form: if books 6-8 were already authored or later superseded, harvest only the surviving missing units and reconcile plan counts against current `main`.
+- Actual pre-review state: content was split across a stale local-only branch, later PRs #133/#151, and current `main` with plan progress still 9/20.
+
+Outcome:
+
+- Credit the session for authoring reusable content for books 10 and 11 and for identifying that the plan was stale.
+- Do not credit the session with its claimed PR lifecycle. There was no PR for the session branch, and `d5d8c19` was not on `main`.
+- Current durable state is now corrected by this review: books 10-11 are present, plans say 11/20, `scripts/studium-validate.py` passes, and Fleet Gate passed on the salvage commit.
+
+What was fucked up:
+
+- The final receipt overstated release truth: validation plus a local commit is not "one green PR."
+- The session fanned out 11 agents/workflows for a content batch and still missed the final release/PR step.
+- The branch carried conflicting versions of books 6-9 after later PRs landed, so the useful work needed selective salvage rather than branch merge.
+- The stranded content itself had one validator-visible defect: book 10's `force_arc` did not match track forces at positions 24 and 25. The stale session receipt said validation passed, but current validation disproved that until the review patch fixed it.
+
+Verification:
+
+```bash
+jq '.changed_review[135]' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+jq -s '{records:length, unique_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), task_body_bytes:([.[].task_body_bytes] | add), surfaces:([group_by(.surface)[] | {surface:.[0].surface,count:length}]), sources:([group_by(.source)[] | {source:.[0].source,count:length}])}' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-changed-135-claude-studium-analects-prompts.jsonl
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace--limen-worktrees-studium-deepen-analects-78fa/97548ebc-22c4-4b1e-a33b-f56452b410ca.jsonl
+gh pr list --repo organvm/limen --head limen/studium-deepen-analects-78fa --state all --json number,title,state,createdAt,mergedAt,closedAt,headRefName,headRefOid,url,statusCheckRollup
+gh pr list --repo organvm/limen --state all --search "Analects" --json number,title,state,createdAt,mergedAt,closedAt,headRefName,headRefOid,url,files --limit 80
+git log --all --decorate --oneline -- studium/music/analects/book-11.yaml studium/essays/analects/book-11.md studium/essays/analects/books-06-07-08-synthesis.md
+git branch --contains d5d8c19 --all --verbose
+git merge-tree $(git merge-base origin/main d5d8c19) origin/main d5d8c19
+python3 scripts/studium-validate.py
+gh run view 28706098796 --repo organvm/limen --json status,conclusion,headSha,displayTitle,url
+```
+
+Result: private prompt extraction matches row `changed 135`; transcript guard fails only on total fanout; no PR exists for `limen/studium-deepen-analects-78fa`; later PRs #133/#151 landed books 6-9; the old branch cannot be merged whole; review commit `feb30c3` selectively salvaged books 10-11, fixed the Book 10 force arc mismatch, and passed both local Studium validation and Fleet Gate.
 
 ### Claude domus-genoma CIFIX session failed to fix CI and should have stopped at the permission/spend wall
 
