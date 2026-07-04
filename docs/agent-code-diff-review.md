@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T05:30:35Z`
+Generated: `2026-07-04T05:50:02Z`
 
 ## Scope
 
@@ -34,6 +34,7 @@ Generated: `2026-07-04T05:30:35Z`
 | 72-74 | `opencode` | `ses_0e6fc0277ffeuuI2k5jQntzOUg`, `ses_0e6fcb282ffebyHJmZuwBru59C`, `ses_0e6fd2ff2ffeIJ75fQQC1gLn66` | OpenCode probe sessions. Each prompt was only `"echo test"` and each session only ran `echo test`; the 65-67 changed-file queue surfaces are attribution noise from adjacent fleet work, not OpenCode authored diffs. |
 | 75 | `claude` | `ac1ebb8c-d0f5-4591-bbd5-9ac4fff616af` | Worktree/sync reclaim and his-hand closeout run. It landed useful `sync-release`/`reclaim-worktrees` code and permanent his-hand levers, but it also discarded multiple Claude worktree commit stacks and included absent off-repo education artifacts. Review fixed a live fail-open violation: malformed reclaim numeric env values could crash the organ before classification. |
 | 76 | `codex` | `019ec8e6-f8c1-74d3-8164-1b053844728c` | Storage recovery / Archive4T endgame run. This was valuable off-repo operational recovery work, not a Limen code diff: the Codex temp corpus, Archive4T operation docs, and read-only status script survive. Current live status improves on some June 15 gates, but also exposes drift: internal disk is back in emergency space at `31Gi` free and T7Recovery's lifeboat copy measures smaller than Archive4T's. |
+| 77 | `claude` | `9fbf75ec-5156-4f2f-bb84-23a10be15885` | Claude model chokepoint shim run. The deleted worktree row did land durable fleet value on `main`: a shared model sorter, executable Claude shim, heartbeat PATH wiring, and focused tests. It directly answered the user's "non-bypassable on-demand sorting" correction, but still spent 3.7M billable / 2.1M Opus before the guardrail existed and should be monitored as a fail-open seatbelt, not a complete spend-control system. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -3981,6 +3982,65 @@ df -h /System/Volumes/Data /Volumes/Archive4T /Volumes/T7Recovery /Volumes/TM-Ma
 ```
 
 Result: Codex transcript, private recovery docs, Archive4T operations docs, and the live status script all survive; helper shell scripts parse; Time Machine and Backblaze are currently configured; Backblaze reports zero remaining backup bytes; internal disk is currently `31Gi` free and emergency-level; internal lifeboat is absent; Archive4T lifeboat is `146G` and T7Recovery lifeboat is `117G`.
+
+### Claude model chokepoint shim answered the right correction, but it is a fail-open seatbelt
+
+Severity: medium-high for spend governance; low for current code correctness.
+
+Evidence:
+
+- Queue row `77` points at Claude session `9fbf75ec-5156-4f2f-bb84-23a10be15885`, rooted at `/Users/4jp/Workspace/limen`, with changed paths under the deleted worktree `.claude/worktrees/feat+model-chokepoint-shim`, `scripts/shims/claude`, and a Claude memory file.
+- The listed worktree paths are absent now, but the implementation landed on `main` in `8c8f975` (`feat(fleet): non-bypassable claude model chokepoint -- sort on-demand, never blanket-default (#328)`), touching `cli/src/limen/model_selection.py`, `cli/tests/test_model_chokepoint.py`, `scripts/heartbeat-loop.sh`, and `scripts/shims/claude`.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-77-claude-model-chokepoint-prompts.jsonl` (`15` prompt-bearing records: `5` direct human text prompts, `4` multimodal prompt records, `2` compaction summaries, and `4` task notifications).
+- In redacted intent form, the prompt layer started with a usage emergency: less than 48 hours into the period, Claude usage was near 70 percent. The user rejected a blanket "use the dumber model" answer and demanded a non-bypassable logic chain that sorts on demand instead of letting sessions silently inherit the expensive account default.
+- Current `cli/src/limen/model_selection.py` is a stdlib-only shared source of truth for Claude tier vocabulary. It defines the tier order `haiku`, `sonnet`, `opus`, `fable`, resolves env pins, and gates Fable behind a current-week acceptance receipt.
+- Current `model_for_argv(args)` injects a model only for `-p` / `--print` invocations with no existing `--model`; it respects explicit declaration sites, interactive/non-print invocations, `LIMEN_CLAUDE_MODEL`, and `LIMEN_CLAUDE_TIER_SELECT=0`.
+- Current `scripts/shims/claude` locates the real Claude binary via `LIMEN_REAL_CLAUDE` or PATH, imports the sorter by file path from `LIMEN_ROOT`, injects `--model <model>` when the sorter returns one, and then `execv`s the real Claude. Sort/import errors fail open to the original argv.
+- Current `scripts/heartbeat-loop.sh` captures `LIMEN_REAL_CLAUDE` before prepending `scripts/shims` to PATH, so fleet-spawned Claude calls route through the shim while human interactive shells remain outside this heartbeat-scoped PATH change.
+- Claude workflow guard still fails for the session that created the guardrail: `billableTokens=3697285`, `opusBillableTokens=2142125`, `agentCalls=4`, with violations for total billable and Opus billable budgets. That is expected historical debt, not a current test failure.
+- Current focused verification passes: `PYTHONPATH=cli/src python3 -m pytest cli/tests/test_model_chokepoint.py cli/tests/test_claude_tier.py -q` reports `29 passed`; `python3 -m py_compile cli/src/limen/model_selection.py scripts/shims/claude` succeeds; `scripts/shims/claude` is executable.
+
+Ideal prompt diff:
+
+- Ideal form: first measure usage across models and agents, then install a non-bypassable per-spawn sorting chokepoint that only assigns a cheap floor when no declaration site already chose a model, while preserving explicit earned-tier choices and interactive human control.
+- Actual form: the final code matches that correction. It does not blanket-default all Claude work to the cheapest model; it only injects for headless print spawns without a model and leaves declared / interactive calls alone.
+- Ideal form for Fable: treat Fable as a reserved tier above Opus, not a model name a stale env var can unlock forever.
+- Actual form: current code checks a receipt-shaped `LIMEN_FABLE_ACCEPTANCE` artifact for the current week and downgrades ungated Fable pins to Opus. That is a useful acceptance gate.
+- Ideal form for enforcement: the chokepoint should be fleet-scoped and fail open, but it should also have monitoring so fail-open does not become silent cost leakage.
+- Actual form: the shim is heartbeat-scoped and fail-open, which is correct for availability; the residual risk is that missing `LIMEN_REAL_CLAUDE`, a sorter import failure, or CLI shape drift can silently bypass tier injection unless usage telemetry catches it.
+
+Outcome:
+
+- This row produced real durable value. It is one of the sessions where the user's prompt pressure directly improved the architecture: from "use a cheaper default" to "create a shared model-decision chain and make fleet spawns pass through it."
+- The code is currently narrow, tested, and wired into heartbeat. It should be credited as a useful fleet-cost control primitive.
+- It is not a complete spend-control system by itself. It does not retroactively fix resumed sessions born at expensive tiers, and by design it does not block spawns when the shim cannot resolve the sorter or real Claude binary.
+
+What was fucked up:
+
+- The run burned 3.7M billable tokens and 2.1M Opus billable tokens to create the spend guardrail. That is exactly the failure mode the feature was supposed to prevent.
+- The deleted worktree and Claude memory path mean the durable proof has to be reconstructed from the transcript and landed commit, not reviewed in the original workspace.
+- The first proposed framing apparently optimized for lower model choice rather than non-bypassable decision topology; the user had to correct the architecture under pressure.
+- The guardrail relies on heartbeat PATH ownership. Any fleet lane that invokes Claude outside that lifecycle, or resumes a session born before the shim, needs separate usage receipts.
+- The shim's fail-open posture is right for not bricking the fleet, but fail-open events need explicit observability if this is going to be treated as a budget gate rather than a best-effort seatbelt.
+
+Verification:
+
+```bash
+jq '.changed_review[77]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-77-claude-model-chokepoint-prompts.jsonl
+jq -r '.kind' .limen-private/session-corpus/full-stack-review/session-77-claude-model-chokepoint-prompts.jsonl | sort | uniq -c
+test -e /Users/4jp/Workspace/limen/.claude/worktrees/feat+model-chokepoint-shim/cli/src/limen/model_selection.py
+git show --stat --oneline 8c8f9759335b8302c68dab8962654527ff275721 -- cli/src/limen/model_selection.py cli/tests/test_model_chokepoint.py scripts/shims/claude scripts/heartbeat-loop.sh
+sed -n '1,220p' cli/src/limen/model_selection.py
+sed -n '1,220p' scripts/shims/claude
+sed -n '35,65p' scripts/heartbeat-loop.sh
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/9fbf75ec-5156-4f2f-bb84-23a10be15885.jsonl
+PYTHONPATH=cli/src python3 -m pytest cli/tests/test_model_chokepoint.py cli/tests/test_claude_tier.py -q
+python3 -m py_compile cli/src/limen/model_selection.py scripts/shims/claude
+test -x scripts/shims/claude
+```
+
+Result: the original worktree path is absent; the landed commit is on `main`; private prompt extraction has `15` records; Claude guard fails on historical 3.70M billable / 2.14M Opus; current chokepoint tests pass `29` cases; the sorter and shim compile; the shim is executable; heartbeat captures the real Claude binary before prepending the shim directory.
 
 ## Remaining Review Queue
 
