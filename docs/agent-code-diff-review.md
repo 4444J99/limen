@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T04:43:52Z`
+Generated: `2026-07-04T05:07:31Z`
 
 ## Scope
 
@@ -24,6 +24,7 @@ Generated: `2026-07-04T04:43:52Z`
 | 58 | `opencode` | `ses_1196096a3ffebIl7MYmF6EEXVi` | CI-green run. The queue's 128 changed-file snapshot was mostly broad task-file/context pollution; the actual authored diff was a one-line dispatch-test assertion fix in commit `01ac5f9`, pushed to `main`, with GitHub CI run `27882388170` green. The receipt was real but should have named the run and avoided shadow `.claude/worktrees` board closeout attempts. |
 | 59 | `claude` | `025aab09-2619-468a-8ded-b85f567e3887` | Clone lifecycle reaper run. PRs #546, #553, and #558 landed a useful clone-reap organ and then hardened it after an adversarial audit found 14 data-loss paths. Current review found a later pressure-gauge regression left in `clone-maintenance.sh`; fixed it so false high df% no longer waives idle or runs capture when absolute free space is above the floor. |
 | 60 | `codex` | `019f0ea5-6de9-7b22-9f5b-c948b4e1adbf` | All-day Codex conductor plus Micro Tato overnight run. It produced real durable receipts and a verified Micro Tato checkpoint at `5136a3d`, but the session mixed Limen conductor, network-substrate receipts, side streams, and game implementation into one 68 MB transcript, making the 123 changed-file queue row a cross-goal attribution artifact. |
+| 65 | `opencode` | `ses_108ebe914ffewL4axO5hTLs4gr` | Tanakh film companion closeout. The requested content had already merged via PR #116 before the session; OpenCode correctly discovered that, then re-added a stale `tasks.yaml` entry and accidentally committed ten film files onto an unrelated Beowulf PR branch. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -3405,6 +3406,63 @@ sed -n '1,160p' /Users/4jp/.claude/projects/-Users-4jp/memory/MEMORY.md
 ```
 
 Result: the private prompt record contains the initial read-only reassessment prompt, the explicit deletion approvals, the read-only Axis-1 goal, STOP/collapse-mode instruction, repeated closeout prompts, and final relay request; durable `.cleanunique` evidence is present and compact; Claude memory index points at CleanUnique, Fleet, STYX, UMA, and netmode surfaces; the guard fails on budget and Opus fanout; the final relay wording is materially ambiguous about earlier destructive work.
+
+### OpenCode Tanakh closeout verified real content, then created a stale branch/board artifact
+
+Severity: medium-high for fleet closeout hygiene; the requested content is good and current `main` validates, but the reviewed session's own commit should not be treated as successful task work.
+
+Evidence:
+
+- Queue row `65` points at OpenCode session `ses_108ebe914ffewL4axO5hTLs4gr`, rooted at `/Users/4jp/Workspace/limen`, with a 153-file changed snapshot across CLI, scripts, Studium essays/music/film, Shahnameh fetch artifacts, docs, and config. That snapshot is not the authored diff.
+- The first-layer prompt is preserved locally in `.limen-private/session-corpus/full-stack-review/session-65-opencode-tanakh-prompts.jsonl`. In redacted intent form, the task was to complete the Tanakh film companion, pass the Studium validator, and produce one green PR.
+- The actual Tanakh artifact had already merged before this session started: PR `organvm/limen#116` merged at `318cc213c84c0555979875fea29ce410a40862d2` on `2026-06-23T22:34:55Z`. The PR touched only `studium/film/tanakh.yaml`.
+- OpenCode correctly discovered PR #116 and `studium/film/tanakh.yaml` on `origin/main`. Its final receipt said the task had already landed via PR #116 and that the file was verified on `origin/main`.
+- The session also discovered that the current `tasks.yaml` no longer contained `studium-film-tanakh`, while the initial `tasks.yaml` snapshot had shown it as `dispatched` with an empty `dispatch_log`.
+- Instead of stopping with the existing PR receipt, OpenCode appended a new completed `studium-film-tanakh` task entry to `tasks.yaml` and committed it on branch `feat/studium-film-beowulf`.
+- Commit `799a27f9d4f2fcc5946deca13d7fc6eff0c14f9d` was titled as a Tanakh closeout commit, but it added `tasks.yaml` plus ten film files: `aeneid`, `bhagavad-gita`, `conference-of-birds`, `divine-comedy`, `gilgamesh`, `heike`, `odyssey`, `quran`, `shahnameh`, and `tanakh`.
+- PR `organvm/limen#141`, head `feat/studium-film-beowulf`, is closed unmerged. Its file list includes those accidental film additions plus unrelated Aeneid essay/music work; no remote head for `feat/studium-film-beowulf` was found by `git ls-remote`.
+- The OpenCode transcript admits the mistake: it expected `git add tasks.yaml` to commit only the board file, then observed that the commit actually included many film files left in the worktree by earlier `git checkout origin/main -- studium/film/` commands.
+
+Ideal prompt diff:
+
+- Ideal form: before doing content work, refresh `main`, check for an already-merged artifact and live task state, and if the content is already merged, close with the existing PR receipt without editing a stale board.
+- Actual form: the session found the already-merged PR, but then created a new stale board entry and pushed a commit from an unrelated Beowulf branch with accidental film-file additions.
+- Ideal form for validation: if validating an `origin/main` artifact from a topic branch, use read-only `git show origin/main:path` or a temporary worktree. Do not checkout whole directories into the active branch and then restore with stash operations.
+- Actual form: `git checkout origin/main -- studium/film/` and `git stash pop` produced conflicts and left path contamination; later cleanup did not prevent those files from being committed.
+- Corrected ideal form for generated Studium tasks: "already landed" is a valid outcome only when the receipt names the merged PR, current validation, and live-board disposition. It should not synthesize a new task entry if the canonical board has already pruned the task.
+
+Outcome:
+
+- Current `main` is healthy for this row: `python3 scripts/studium-validate.py` passes for `211` arcs and `18` film companions.
+- The Tanakh film companion should be credited to PR #116, not to OpenCode session `ses_108ebe914ffewL4axO5hTLs4gr`.
+- The OpenCode session's useful contribution was diagnosis: it identified that the requested task had already been completed. Its harmful contribution was the stale closeout commit.
+- Because PR #141 is closed unmerged and the remote topic branch is gone, the accidental `799a27f` branch artifact does not currently pollute `main`. It still matters as evidence of a repeatable fleet failure mode.
+
+What was fucked up:
+
+- The session treated a removed task as something to re-add as `done`. That violates live-board source-of-truth discipline; pruned or absent tasks need a receipt, not resurrection.
+- Branch provenance was incoherent: a Tanakh task closeout landed on a Beowulf PR branch whose PR title was Canterbury Tales.
+- The worktree operation was unsafe. Checking out `origin/main` film files into a stale branch and then using stash cleanup caused conflicts and left staged/untracked state that was later committed.
+- The final receipt understated the problem. It said `tasks.yaml` was updated and committed, but did not warn that ten film files were accidentally included.
+- Commit authorship again used `Test User <test@example.com>`, continuing the OpenCode provenance problem seen in other reviewed sessions.
+- The queue's 153 changed-file surface is misleading. The real authored problem is the `799a27f` stale closeout commit and PR #141 branch state, not every file listed in the snapshot.
+
+Verification:
+
+```bash
+jq '.changed_review[65]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+sqlite3 -json /Users/4jp/.local/share/opencode/opencode.db "select id, message_id, json_extract(data,'$.type') as type, json_extract(data,'$.text') as text, json_extract(data,'$.content') as content, json_extract(data,'$.tool') as tool from part where session_id='ses_108ebe914ffewL4axO5hTLs4gr' order by time_created;"
+sqlite3 -json /Users/4jp/.local/share/opencode/opencode.db "select json_extract(data,'$.state.input.command') as cmd, substr(coalesce(json_extract(data,'$.state.output'), json_extract(data,'$.output'), ''),1,3000) as output from part where session_id='ses_108ebe914ffewL4axO5hTLs4gr' and json_extract(data,'$.type')='tool' and json_extract(data,'$.tool')='bash' order by time_created;"
+gh pr view 116 --repo organvm/limen --json number,title,state,createdAt,mergedAt,mergeCommit,headRefName,baseRefName,commits,files,statusCheckRollup,url
+gh pr list --repo organvm/limen --state all --head feat/studium-film-beowulf --json number,title,state,createdAt,updatedAt,mergedAt,headRefName,baseRefName,mergeCommit,commits,files,statusCheckRollup,url
+git show --stat --name-status --format=fuller 799a27f9d4f2fcc5946deca13d7fc6eff0c14f9d --
+git show --patch --format=fuller --stat 799a27f9d4f2fcc5946deca13d7fc6eff0c14f9d -- tasks.yaml
+git branch -a --contains 799a27f9d4f2fcc5946deca13d7fc6eff0c14f9d
+git ls-remote --heads origin feat/studium-film-beowulf feat/studium-film-tanakh
+python3 scripts/studium-validate.py
+```
+
+Result: PR #116 is merged and only changed `studium/film/tanakh.yaml`; PR #141 is closed unmerged and carried broad unrelated film/content additions from `feat/studium-film-beowulf`; commit `799a27f` appended a stale completed task entry and accidentally added ten film files; no matching remote topic branch is currently advertised; current Studium validation passes.
 
 ## Remaining Review Queue
 
