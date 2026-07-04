@@ -76,6 +76,7 @@ Generated: `2026-07-04T08:12:45Z`
 | refreshed 34 | `claude` | `6b107f0b-4796-4cc2-95ef-861947c991b9` | Vigilia autonomic-institution run. PRs #277, #281, #285, and #315 landed VITALS/CONTINUITY/INTEGRITY, the face, no-hardcode gate, and heartbeat stamp; current review verified the code and recorded raw-transcript log privacy and Opus spend as residual risks. |
 | 123 | `claude` | `38f777fe-fe4a-44aa-abf9-fa8edfb2a3c3` | Vigilia closeout/resume layer. The session should be credited as PR #315 closeout and residual tracking, not as a separate broad code stream: PR #315 merged green and is on `main`, but the closeout transcript itself exceeded Claude token/Opus budget gates and left a real `_diagnostics` README pointer atom open. |
 | 124 | `claude` | `d051cce2-54b0-478d-afaf-e2ed1429ce41` | FLAME predecessor prompt root. This session contains the actual "go away for a month / flame never goes out" first-layer ask and three read-only exploration subagents; the durable implementation belongs to continuation session `25d48a87-2cb2-428d-bb68-96467d8bc5fe`, so this row is prompt-boundary evidence rather than a second code workstream. |
+| 125 | `claude` | `0ce115d3-e83b-408a-a3a8-deac07888433` + 17 corpus workers | CI-green 2026-06-28 CDB4 root. The parent session fulfilled the generated CI-green packet through PR #378, adding a Python 3.11 CI job and fixing corpus-converge subprocess env leakage; the other 17 sessions under the same deleted root are generated corpus distillation workers and should not be counted as CI implementation. |
 | refreshed 35 | `claude` | `d7044841-5c47-45c2-be86-b5d96a1ea15d` | Cloudflare deploy derivation / Studio / Media Ark run. Useful PRs landed, but review found live Studio source-file exposure plus a sibling Pages-project collision; redeployed public-only Studio, added a Studio predicate, and restored `object-lessons.pages.dev` to a cinema placeholder. |
 | refreshed 36 | `claude` | `4582fe4c-165d-440b-a36a-562e67cd5cf4` | Fleet session-reconcile run. Temp scripts are gone, but durable ledger/scorecard and `organvm/session-meta#37` survive; review confirmed the lane closed, the 102-branch prune was explicitly gated, and the run remains a spend/fanout cautionary example. |
 | refreshed 37 | `claude` | `57c0201a-82bd-4be7-96dd-4c7039038edd` | Codex skill-slim run. PRs #573, #597, and #615 landed a repair organ that keeps all skills while stopping Codex description truncation; current tests and live `--check` pass, but the session needed two follow-up corrections after false-green proofs and blew Claude spend limits. |
@@ -6938,6 +6939,63 @@ git ls-remote --heads origin GEN-organvm-limen-ci-green-0702 main
 ```
 
 Result: private prompt extraction has `15` records; `443087b`, `1e964a9`, `5dbeab1`, and `c2fc811` are on `origin/main`; the board clock runs and focused claim-helper tests pass (`4 passed`); no Agy MCP registration file exists at the expected path; PR #574 merged with green `pr-gate`; the task row is currently `done`; the generated task worktree is clean but tracks a deleted remote branch.
+
+### Claude's CDB4 CI-green root landed PR #378, while adjacent corpus workers were not CI work
+
+Severity: low for current code; medium for attribution and prompt accounting.
+
+Evidence:
+
+- Reconstruction row `125` covers deleted root `/Users/4jp/Workspace/.limen-worktrees/gen-organvm-limen-ci-green-0628-cdb4`, which produced 18 Claude sessions from 2026-06-28T05:01:39Z through 2026-06-28T05:23:33Z.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-125-claude-ci-green-0628-cdb4-prompts.jsonl`: 184 prompt-surface records, 102 unique prompt hashes, 698,408 prompt bytes, and surfaces `message.user` 108, `last-prompt` 53, `queue.enqueue` 23.
+- The parent session is `0ce115d3-e83b-408a-a3a8-deac07888433`. Its normalized generated task body asked to make `organvm/limen` CI green, or, if CI was already green, add the single most valuable missing check.
+- The parent inspected GitHub runs, saw current `main` had already recovered to green after earlier failures, and took the fallback path: add a Python 3.11 compatibility job because the project declared `requires-python >=3.11` while CI only tested Python 3.12.
+- During local verification the parent found a real host-env leakage bug: subprocess tests inherited `LIMEN_CORPUS_CONVERGE_LIVE=1` and `LIMEN_CORPUS_GRAPH=1`, causing offline corpus-converge tests to make live synthesis/graph calls and write face files. The patch neutralized both env vars to `"0"` in the subprocess env.
+- PR `organvm/limen#378` merged 2026-06-28T05:23:23Z at merge commit `e636310d3bcbe6c78cfbe7a3eb6dc027bc2e1b78`. The merged diff touched exactly `.github/workflows/ci.yml` and `cli/tests/test_corpus_converge.py`.
+- PR #378 checks were green: `pr-gate`, `python`, `python-311`, `web`, and `worker` all succeeded.
+- The other 17 sessions in this root are generated `corpus-converge` distillation calls around "Prompts" / "THE ONE" wall content. They produced assistant JSON summaries and no tracked file diffs, commits, PRs, or CI implementation.
+
+Ideal prompt diff:
+
+- Ideal CI packet form: read failing default-branch checks first, patch the root cause if still red, or add one high-value missing check if the branch is already green; then run local tests, open one PR, wait for checks, merge, and leave a precise receipt.
+- Actual parent form: this matched the ideal. The parent identified that default branch CI had recovered, added the missing Python 3.11 job, found and fixed a real local env-leak regression, ran `485 passed`, opened PR #378, waited for all five checks, and merged.
+- Ideal accounting form: generated corpus-converge sessions under the same root should be classified as adjacent corpus organ work, not as CI-green implementation.
+- Actual accounting gap: the reconstruction queue grouped the CI parent and corpus workers under one missing worktree, so naive review makes the prompt surface look broader than the implementation task.
+
+Outcome:
+
+- Row `125` is classified as fulfilled for the parent CI task.
+- Current source still contains the Python 3.11 job and the env isolation fix; focused corpus-converge tests pass even when the outer environment sets the leaked daemon flags.
+- No code patch was made by this review row.
+
+What was fucked up:
+
+- The root mixed a real PR-driving Claude session with 17 generated corpus distillation sessions. That is not wrong operationally, but it is bad attribution shape for prompt-vs-done review.
+- The original local test run was slow and dangerous because "offline" subprocess tests inherited live daemon env. The session fixed it, but the failure mode proves tests must scrub live/spend/graph env by default when they spawn subprocesses.
+- Claude first tried a blocked `sleep 90 && gh pr checks ...` wait; the tool layer rejected it, and the session recovered with an until-loop. That is minor but shows the need for standard wait wrappers in generated CI lanes.
+- The deleted worktree means branch-local state is gone; the durable receipt has to be PR #378 plus the transcript, not local worktree inspection.
+
+Verification:
+
+```bash
+wc -l .limen-private/session-corpus/full-stack-review/session-125-claude-ci-green-0628-cdb4-prompts.jsonl
+python3 - <<'PY'
+import json
+from collections import Counter
+from pathlib import Path
+p = Path('/Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-125-claude-ci-green-0628-cdb4-prompts.jsonl')
+rows = [json.loads(line) for line in p.read_text(encoding='utf-8').splitlines() if line.strip()]
+print(len(rows), len({r['prompt_hash'] for r in rows}), sum(r['prompt_bytes'] for r in rows), Counter(r['surface'] for r in rows), Counter(r['session_id'] for r in rows))
+PY
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace--limen-worktrees-gen-organvm-limen-ci-green-0628-cdb4/0ce115d3-e83b-408a-a3a8-deac07888433.jsonl
+gh pr view 378 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup,url
+gh run view 28312407438 --repo organvm/limen --json databaseId,name,status,conclusion,headSha,jobs
+git show --stat --oneline e636310d3bcbe6c78cfbe7a3eb6dc027bc2e1b78
+rg -n "python-311|3\\.11|LIMEN_CORPUS_CONVERGE_LIVE|LIMEN_CORPUS_GRAPH|test_main_offline" .github/workflows/ci.yml cli/tests/test_corpus_converge.py
+LIMEN_CORPUS_CONVERGE_LIVE=1 LIMEN_CORPUS_GRAPH=1 PYTHONPATH=cli/src python3 -m pytest cli/tests/test_corpus_converge.py -q
+```
+
+Result: private prompt extraction has `184` records; parent transcript guard passed with 312,406 billable tokens and no Opus; PR #378 merged green; current focused corpus-converge tests pass `12 passed` even with leaked live/graph flags set in the outer environment.
 
 ## Remaining Review Queue
 
