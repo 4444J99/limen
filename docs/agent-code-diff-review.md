@@ -78,6 +78,7 @@ Generated: `2026-07-04T08:12:45Z`
 | 124 | `claude` | `d051cce2-54b0-478d-afaf-e2ed1429ce41` | FLAME predecessor prompt root. This session contains the actual "go away for a month / flame never goes out" first-layer ask and three read-only exploration subagents; the durable implementation belongs to continuation session `25d48a87-2cb2-428d-bb68-96467d8bc5fe`, so this row is prompt-boundary evidence rather than a second code workstream. |
 | 125 | `claude` | `0ce115d3-e83b-408a-a3a8-deac07888433` + 17 corpus workers | CI-green 2026-06-28 CDB4 root. The parent session fulfilled the generated CI-green packet through PR #378, adding a Python 3.11 CI job and fixing corpus-converge subprocess env leakage; the other 17 sessions under the same deleted root are generated corpus distillation workers and should not be counted as CI implementation. |
 | 126 | `claude` | `70b7dbdd-d715-4d44-8812-98901dfed535` | Object Lessons Studio strategy/fanout root. This session produced the strategic public-face direction for the creative-writing/education portfolio, then launched a heavy workflow fanout; durable code/launch verification belongs to later session `ec251ec3-e2e5-405b-a7ea-c93d93c255a3`, so this row is valuable planning evidence with serious spend/fanout defects, not a standalone implementation diff. |
+| changed 123 | `codex` | `019eddbf-e29e-7d81-a3ad-f8c947d865e0` | Invisible Ledger PostgreSQL adapter first pass. Codex produced the first useful adapter implementation and the dispatch wrapper opened PR #4 with an initially green Node matrix, but later conflict resolution merged that PR red. Durable current health comes from the later green PR #23 plus subsequent fixes, not from treating PR #4's final merge as clean. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -6279,6 +6280,64 @@ gh issue view 190 --repo organvm/limen --json number,title,state,updatedAt,url
 ```
 
 Result: private prompt extraction has `254` records; PR #180 is merged green; `463e28d` is missing while `0d06ff8` and `741cf17` are present; the advisory lint hook exits `0`; agent instruction docs match canonical task states; issue #190 is still open and now has a provenance-correction comment.
+
+### Codex produced the first Invisible Ledger PostgreSQL adapter PR, but the branch later merged red
+
+Severity: medium for delivery accounting; low for current product state. This was real useful implementation work, and its initial remote CI was green, but the final PR #4 merge was not green. The durable state should be credited as an initial successful implementation plus later resolver cleanup, not as a clean single-session closeout.
+
+Evidence:
+
+- Queue row `changed_review[123]` points at Codex session `019eddbf-e29e-7d81-a3ad-f8c947d865e0`, rooted at deleted worktree `~/Workspace/.limen-worktrees/rev-ledger-postgres-adapter-ef35`, running from 2026-06-19T02:40:02Z through 2026-06-19T02:54:24Z.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-123-codex-ledger-postgres-adapter-prompts.jsonl`: `4` prompt-surface records, `3` unique prompt hashes, `3,032` prompt bytes, with surfaces `response_item.user` `3` and `event_msg.user_message` `1`.
+- In redacted intent form, the prompt asked Codex to add a PostgreSQL persistence adapter behind the existing storage interface for `a-organvm/the-invisible-ledger`, replacing Spark KV for one proof entity with a documented schema, env-based connection, scaffold, and smoke test.
+- The final Codex answer reported a meaningful local implementation: storage/repository boundary, Spark and Postgres implementations, organization type split, lazy repository resolution, component reads through `useOrganizations`, schema/env docs, README update, and a Postgres repository smoke test.
+- Local verification was partial but honestly caveated: `git diff --check` passed, direct Spark KV reads were checked away, and a direct Node TypeScript smoke script passed. `npm test` did not run because the checkout lacked installed dependencies and `vitest` was unavailable.
+- Although the transcript final answer did not include a PR receipt, GitHub shows the dispatch wrapper committed the work one second later as `1a2ccbe` and opened PR #4 five seconds later on branch `limen/rev-ledger-postgres-adapter-ef35`.
+- PR #4's initial run `27802478842` on `1a2ccbe` was green across Node 18, 20, and 22, including install, lint, typecheck, tests, and build.
+- PR #4 later gained conflict-resolution commit `d03f5cb` and merged on 2026-06-23 as `7c2058b`, but the merge-candidate CI run `28040062737` failed. The failure was a real lint error in the row's new file: `src/lib/storage/organization-repository.ts` declared an empty interface equivalent to `EntityRepository<Organization>`.
+- The same feature was already delivered durably by PR #23 on 2026-06-20 as `d2a4b51`, with green CI and Docker checks. PR #23 carried the adapter, tests, storage abstractions, docs, and component updates.
+- Current `organvm/the-invisible-ledger` main still carries the PostgreSQL adapter and docs, and the empty-interface issue is fixed by making `OrganizationRepository` a type alias. Current main's latest relevant CI on commit `455f49e` is green.
+- Local target checkouts are dirty or behind (`/Users/4jp/Workspace/a-organvm/the-invisible-ledger` and `/Users/4jp/Workspace/organvm/the-invisible-ledger`), so this review used GitHub evidence and read-only local inspection rather than mutating or replaying tests there.
+
+Ideal prompt diff:
+
+- Ideal generated adapter task form: implement one proof entity, run local tests/build or state the exact local blocker, open a PR, wait for the remote check matrix, and include the PR/check receipt in the closeout.
+- Actual Codex form: the implementation was focused and the final caveat about missing local `vitest` was honest, but the PR/remote receipt happened just after the final answer through the dispatch wrapper. The human-facing closeout therefore lacked the durable PR number and check run.
+- Ideal PR lifecycle form: after later conflict resolution, rerun and respect the full PR check matrix before merge.
+- Actual fleet form: the branch initially went green, but later conflict resolution introduced or exposed a lint-failing merge candidate and PR #4 still merged red.
+- Ideal overlap handling: once PR #23 delivered the same feature green, PR #4 should have been closed or explicitly marked superseded unless it could be rebased and re-proven green.
+- Actual graph shape: PR #4 and PR #23 both merged, so shallow "merged PR" accounting overstates cleanliness.
+
+Outcome:
+
+- Credit this row for the first focused PostgreSQL adapter implementation and for an initially green PR #4 run.
+- Do not credit this row as a clean final delivery, because the PR #4 merge candidate failed CI and was merged red.
+- Credit durable current product health to PR #23 plus later follow-up fixes. Row `113` remains the later resolver/rebuild story for the same feature family.
+
+What was fucked up:
+
+- The final answer did not include the PR receipt because the autonomous dispatch wrapper created it after Codex finished.
+- Local verification was weaker than the task wanted because dependencies were unavailable in the worktree.
+- The later conflict-resolution path did not preserve the initial green state and allowed a red merge.
+- Two overlapping PRs for the same adapter both merged, leaving provenance noisy even though current main is healthy.
+- The queue extractor initially made this row look unreviewed because the public doc mentioned the branch under row `113` but not this session id.
+
+Verification:
+
+```bash
+jq '.changed_review[123]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-123-codex-ledger-postgres-adapter-prompts.jsonl
+rg -n "git diff --check|vitest: command not found|PostgreSQL persistence proof|task_complete" ~/.codex/sessions/2026/06/18/rollout-2026-06-18T22-40-00-019eddbf-e29e-7d81-a3ad-f8c947d865e0.jsonl
+gh pr view 4 --repo organvm/the-invisible-ledger --json number,title,state,createdAt,mergedAt,mergeCommit,commits,statusCheckRollup,url
+gh run view 27802478842 --repo organvm/the-invisible-ledger --json databaseId,conclusion,jobs
+gh run view 28040062737 --repo organvm/the-invisible-ledger --log-failed
+gh pr view 23 --repo organvm/the-invisible-ledger --json number,title,state,mergedAt,mergeCommit,statusCheckRollup,files,url
+gh api 'repos/organvm/the-invisible-ledger/contents/src/lib/storage/organization-repository.ts?ref=1a2ccbe0dc8ac2fc59308c38e912db50c6dac986' --jq '.content' | base64 --decode
+gh api 'repos/organvm/the-invisible-ledger/contents/src/lib/storage/organization-repository.ts?ref=main' --jq '.content' | base64 --decode
+gh run list --repo organvm/the-invisible-ledger --branch main --limit 10 --json databaseId,workflowName,conclusion,headSha,createdAt,url
+```
+
+Result: private prompt extraction has `4` records; PR #4 was created from commit `1a2ccbe` immediately after the session and initially passed the Node matrix; later conflict-resolution commit `d03f5cb` failed lint and merged red as `7c2058b`; PR #23 merged the durable overlapping adapter with green checks; current main keeps the adapter and uses the fixed type-alias repository shape.
 
 ### Codex rebuilt the invisible-ledger PostgreSQL adapter locally, but the interrupted turn did not push the receipt
 
