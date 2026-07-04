@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T01:32:25Z`
+Generated: `2026-07-04T01:34:25Z`
 
 ## Scope
 
@@ -32,6 +32,7 @@ Generated: `2026-07-04T01:32:25Z`
 | refreshed 15 | `claude` | `95f5e850-1274-40de-8a32-8ade3192b22a` | Course-recapitulation / education-organism run. Surviving evidence is transcript, plan, and Claude memory files; the `peaceful-plotting-fern` worktree, temp converter, and external `~/Workspace/edu-organism` root are absent, so code attribution is report-only. |
 | refreshed 16 | `claude` | `06d2559b-05e9-4ff3-b1bf-4473bd935228` | Credential/his-hand wall and dialog-silencing run. Reviewed landed credential-wall generator and fixed an import-time malformed env crash in the wall predicate. |
 | refreshed 17 | `claude` | `3be1f3a6-e00e-403d-a967-6d86c55deb56` | Workstream-channel run. Reviewed landed channel partition code and fixed the scoped cell conductor fallback so a failed channel projection cannot hand a worker the full mixed board. |
+| refreshed 18 | `claude` | `57fa1ead-aabf-4c2e-b62e-6843cf74a66a` | Insights/censor/session-meta reanchor run. Surviving artifacts are split across a Claude hook, plan/settings/memory files, and one external session-meta worktree; temp scripts and two named side worktrees are absent, so no Limen code patch was made. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -1122,6 +1123,37 @@ bash -n scripts/cells.sh
 ```
 
 Result: `13 passed`; shell syntax check passed.
+
+### Insights and multiprovider reanchor row is split across surviving private artifacts
+
+Severity: medium for auditability, not a current Limen code defect.
+
+Evidence:
+
+- Refreshed rank 18 (`57fa1ead-aabf-4c2e-b62e-6843cf74a66a`) spans the Claude insights hook, temp rescue/snapshot scripts, Claude plan/settings/memory files, two `.limen-worktrees` side roots, and one `.session-meta-worktrees` side root.
+- Patched transcript audit reports 15 transcript files, 2,030 usage-bearing messages, 9,991,973 billable-ish tokens, 205,630,944 cache-read tokens, 7,850,263 Opus-class billable-ish tokens, seven agent/workflow calls, and one unbounded-goal prompt hit.
+- Surviving private artifacts: `~/.claude/hooks/insights-capture.sh`, `~/.claude/plans/indexed-baking-breeze.md`, `~/.claude/settings.proposed.json`, and the Claude memory files for censor/pillars context.
+- Surviving side-worktree artifact: `/Users/4jp/Workspace/.session-meta-worktrees/reanchor-multiprovider-ingest`, with commit `048dd74` (`feat(ingest): re-anchor multi-provider atoms producer into session-meta`) touching `ingest/refresh-atoms.sh`.
+- Missing artifacts: `~/.claude/jobs/57fa1ead/tmp/rescue_insights.py`, `~/.claude/jobs/57fa1ead/tmp/snapshot_0623.py`, `/Users/4jp/Workspace/.limen-worktrees/censor-institution`, `/Users/4jp/Workspace/.limen-worktrees/cutover-corpus-feed-multiprovider`, and `/Users/4jp/Workspace/.limen-worktrees/heal-192-regression`.
+- A Limen git-window search over the listed hook/temp/worktree paths found no matching in-repo commits.
+
+Outcome:
+
+- No Limen code change was made for this row.
+- The review finding is provenance/auditability: some work survived as private home-state and a separate session-meta worktree, while the claimed temp and side-worktree artifacts needed for full code diff review are gone.
+
+Verification:
+
+```bash
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-indexed-baking-breeze/57fa1ead-aabf-4c2e-b62e-6843cf74a66a.jsonl --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000 --out /tmp/rank-57fa-audit.json
+test -f /Users/4jp/.claude/hooks/insights-capture.sh
+test -f /Users/4jp/.claude/jobs/57fa1ead/tmp/rescue_insights.py
+test -d /Users/4jp/Workspace/.limen-worktrees/censor-institution
+test -d /Users/4jp/Workspace/.session-meta-worktrees/reanchor-multiprovider-ingest
+git -C /Users/4jp/Workspace/.session-meta-worktrees/reanchor-multiprovider-ingest log -5 --oneline --decorate --stat -- ingest/refresh-atoms.sh
+```
+
+Result: transcript audit completed with spend/unbounded-goal violations; hook/plan/settings/memory and the session-meta worktree were present; temp scripts and the two named `.limen-worktrees` roots were absent; session-meta log showed commit `048dd74`.
 
 ## Current File References
 
