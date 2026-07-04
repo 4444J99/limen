@@ -18,6 +18,8 @@ from pathlib import Path
 from limen.io import load_limen_file, queue_lock, save_limen_file
 from limen.models import LimenFile, Task
 from limen.tabularius import (
+    INTENT_META,
+    INTENT_ORDER,
     INTENT_REMOVE,
     INTENT_STATUS,
     INTENT_UPSERT,
@@ -169,6 +171,36 @@ def test_bad_ticket_quarantined_good_ticket_survives(tmp_path):
     # the bad ticket landed in rejected/ with a reason sidecar, board still valid
     assert (_rejected(board) / f"{bad.ticket_id}.json").exists()
     assert (_rejected(board) / f"{bad.ticket_id}.json.reason.txt").exists()
+
+
+def test_bad_meta_ticket_quarantined_good_ticket_survives(tmp_path):
+    board = _seed_board(tmp_path)
+    good = _ticket(INTENT_UPSERT, task_id="T-ok", patch=_task("T-ok", status="open"))
+    bad = _ticket(INTENT_META, patch={"portal": {"budget": "not-a-mapping"}})
+    submit_ticket(board, good)
+    submit_ticket(board, bad)
+
+    result = drain_once(board)
+
+    assert result.applied == 1 and result.rejected == 1
+    ids = {t.id for t in load_limen_file(board).tasks}
+    assert "T-ok" in ids
+    assert (_rejected(board) / f"{bad.ticket_id}.json").exists()
+
+
+def test_bad_order_ticket_quarantined_good_ticket_survives(tmp_path):
+    board = _seed_board(tmp_path)
+    good = _ticket(INTENT_UPSERT, task_id="T-ok", patch=_task("T-ok", status="open"))
+    bad = _ticket(INTENT_ORDER, patch={"ids": "T-2"})
+    submit_ticket(board, good)
+    submit_ticket(board, bad)
+
+    result = drain_once(board)
+
+    assert result.applied == 1 and result.rejected == 1
+    ids = {t.id for t in load_limen_file(board).tasks}
+    assert "T-ok" in ids
+    assert (_rejected(board) / f"{bad.ticket_id}.json").exists()
 
 
 def test_unparseable_ticket_is_quarantined(tmp_path):

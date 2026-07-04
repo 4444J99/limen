@@ -50,7 +50,7 @@ from pydantic import BaseModel
 
 from limen.io import BoardCollapseError, load_limen_file, queue_lock, save_limen_file
 from limen.materialize import EV_BOARD_META, EV_BOARD_ORDER, EV_TASK_UPSERT, Event, fold
-from limen.models import Task
+from limen.models import LimenFile, Task
 
 # --- ticket intents (a superset of materialize's Event tags, plus the status convenience) --------
 INTENT_UPSERT = "task.upsert"  # create-or-merge a task field-set (patch may be full or partial)
@@ -246,14 +246,29 @@ def _apply(ticket: Ticket, tasks: OrderedDict[str, dict[str, Any]], meta: dict[s
 
     if ticket.intent == INTENT_META:
         p = ticket.patch or {}
+        candidate = dict(meta)
         if "version" in p:
-            meta["version"] = p["version"]
+            candidate["version"] = p["version"]
         if "portal" in p:
-            meta["portal"] = p["portal"]
+            if p["portal"] is not None and not isinstance(p["portal"], dict):
+                raise ValueError("board.meta portal must be a mapping")
+            candidate["portal"] = p["portal"]
+        LimenFile.model_validate(
+            {
+                "version": candidate.get("version", "1.0"),
+                "portal": candidate.get("portal"),
+                "tasks": list(tasks.values()),
+            }
+        )
+        meta.clear()
+        meta.update(candidate)
         return
 
     if ticket.intent == INTENT_ORDER:
-        meta["order"] = list((ticket.patch or {}).get("ids", []))
+        ids = (ticket.patch or {}).get("ids", [])
+        if not isinstance(ids, list) or any(not isinstance(tid, str) for tid in ids):
+            raise ValueError("board.order ids must be a list of task id strings")
+        meta["order"] = list(ids)
         return
 
     raise ValueError(f"unknown ticket intent: {ticket.intent!r}")
@@ -332,12 +347,17 @@ def drain_once(board_path: Path, *, dry_run: bool = False, lock_timeout: int = 2
                 events.append({"type": EV_BOARD_ORDER, "data": {"ids": meta["order"]}})
             try:
                 new_board = fold(events)  # the proven reducer assembles + validates the whole board
-                save_limen_file(board_path, new_board)  # collapse-guard + atomic seal
-                wrote = True
-            except BoardCollapseError as exc:
-                # the batch would collapse the board — never write; quarantine it whole, board intact
-                rejected.extend((p, f"batch rejected by collapse-guard: {exc}") for p, _ in applied)
+            except Exception as exc:
+                rejected.extend((p, f"batch rejected by board validation: {exc}") for p, _ in applied)
                 applied = []
+            else:
+                try:
+                    save_limen_file(board_path, new_board)  # collapse-guard + atomic seal
+                    wrote = True
+                except BoardCollapseError as exc:
+                    # the batch would collapse the board — never write; quarantine it whole, board intact
+                    rejected.extend((p, f"batch rejected by collapse-guard: {exc}") for p, _ in applied)
+                    applied = []
 
         _move([p for p, _ in applied], _archive(board_path))
         _quarantine(rejected, _rejected(board_path))

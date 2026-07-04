@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T00:23:13Z`
+Generated: `2026-07-04T00:25:45Z`
 
 ## Scope
 
@@ -401,6 +401,38 @@ python3 -m py_compile scripts/usage-telemetry.py
 
 Result: `7 passed`; compile passed.
 
+### Tabularius bad board-level tickets could crash the keeper
+
+Severity: high for the new single-writer board path.
+
+Evidence:
+
+- Codex session `019f2413-801b-7cd2-bb1e-c226d96c6355` included the Tabularius merge `6a28f1a`.
+- The prompt/session intent was a beat-safe single writer where one bad ticket is quarantined and the rest of the inbox still lands.
+- Task tickets were validated per-ticket, but `board.meta` and `board.order` tickets could carry invalid board-level data through to the final fold.
+- A malformed meta ticket, such as a non-mapping `portal.budget`, raised `ValidationError` from `fold(...)` and left the ticket in `inbox/` instead of quarantining it.
+
+Repair:
+
+- Validate `board.meta` candidate state before mutating the in-memory projection.
+- Reject non-list or non-string `board.order` ids instead of silently iterating arbitrary values.
+- Catch final fold validation failures and quarantine the batch rather than crashing the beat.
+- Added tests proving bad meta/order tickets are quarantined while a good task ticket in the same inbox still applies.
+
+Touched paths:
+
+- `cli/src/limen/tabularius.py`
+- `cli/tests/test_tabularius.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_tabularius.py -q
+python3 -m py_compile cli/src/limen/tabularius.py
+```
+
+Result: `15 passed`; compile passed.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -489,6 +521,15 @@ Result: `7 passed`; compile passed.
 - `cli/tests/test_usage_telemetry_health.py:87` covers string Opencode clock numerics.
 - `cli/tests/test_usage_telemetry_health.py:106` covers malformed Opencode clock numerics.
 - `cli/tests/test_usage_telemetry_health.py:125` covers malformed cooldown env parsing.
+- `cli/src/limen/tabularius.py:247` handles board-meta tickets.
+- `cli/src/limen/tabularius.py:253` rejects non-mapping board portal patches.
+- `cli/src/limen/tabularius.py:256` validates candidate board metadata before mutation.
+- `cli/src/limen/tabularius.py:267` handles board-order tickets.
+- `cli/src/limen/tabularius.py:269` rejects malformed board-order id lists.
+- `cli/src/limen/tabularius.py:349` folds the candidate board under validation.
+- `cli/src/limen/tabularius.py:350` quarantines fold validation failures instead of crashing.
+- `cli/tests/test_tabularius.py:176` covers bad board-meta quarantine with good-ticket survival.
+- `cli/tests/test_tabularius.py:191` covers bad board-order quarantine with good-ticket survival.
 
 ## Remaining Review Queue
 
