@@ -4767,6 +4767,75 @@ PYTHONPATH=cli/src python3 -m limen watch --once --compact
 
 Result: private prompt extraction has `1` record; PR #486 is open/red on formatting; this review pass adds the missing watch feature to `main`; Ruff format/check, py_compile, targeted tests (`39` tests), and both CLI smoke modes pass locally.
 
+### OpenCode Analects books 2-5 produced valid content but the PR receipt path was misleading
+
+Severity: medium for delivery hygiene; low for current content validity after tracker repair.
+
+Evidence:
+
+- Queue row `91` points at OpenCode session `ses_10a35b644ffeAh1tsb96sehtyN`, titled `Complete studium-deepen-analects`, run from `/Users/4jp/Workspace/limen` on 2026-06-23T18:42:15Z through 2026-06-23T18:55:05Z with model `deepseek-v4-flash-free`, cost `0`, and 64,702 input / 41,486 output / 5,324 reasoning tokens plus 3,925,760 cache-read tokens.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-91-opencode-prompts.jsonl` (`1` record).
+- In redacted intent form, the prompt asked OpenCode to author the next bounded batch for `studium-deepen-analects`: a handful of undone Analects divisions, force-matched music arcs plus mirrored essays, `scripts/studium-validate.py` passing, and one green PR.
+- The transcript final claimed PR #90, branch `studium/analects-books-2-5`, books 2-5, validation passing, `PLAN.md` updated to `5/20`, and `tasks.yaml` marked done.
+- PR #90 was green but closed unmerged. It had no merge commit and bundled multiple content commits for Aeneid, Metamorphoses, Mahabharata, and Analects.
+- The Analects books 2-5 content did reach current `main`, but through PR #98 (`feat(studium): add Aeneid film companion (empire/fate/sacrifice)`), whose title/body were about an Aeneid film companion while its merged commit also carried the Analects, Aeneid-books, Mahabharata, Metamorphoses, Tanakh-film, and Divine-Comedy-film changes.
+- Current `main` has `studium/music/analects/book-02.yaml` through `book-09.yaml` and matching essays. Books 6-9 later came through merged PRs #133 and #151.
+- Before this review pass, `studium/music/analects/PLAN.md` and `studium/music/PLAN.md` still said Analects was `5/20` and marked books 6-9 todo, even though the book 6-9 files existed and current validation passed. `git blame` pointed the stale progress line at later PR #166.
+
+Ideal prompt diff:
+
+- Ideal form: open one narrow green PR containing only the requested Analects bounded batch, then merge that PR or leave a durable merge receipt.
+- Actual OpenCode form: content and validation were good, but the named PR #90 closed unmerged and the content was later merged under an unrelated PR title.
+- Ideal tracker form: after later Analects batches landed, the authoritative plan should reflect disk reality. The review found and repaired the stale `5/20` tracker state.
+- Ideal attribution form: row `91` should get credit for the Analects books 2-5 authored in commit `a9d0e93`, but the durable merge receipt is PR #98, not PR #90.
+
+Outcome:
+
+- This review pass updated `studium/music/analects/PLAN.md` and `studium/music/PLAN.md` from `5/20` to `9/20`, marking books 6-9 complete because both music arcs and essays exist.
+- No content arcs were changed. The patch only repairs progress/checklist state.
+
+What was fucked up:
+
+- OpenCode reported a green PR receipt, but that PR was never merged.
+- PR #90 and PR #98 both mixed unrelated content streams, making prompt-to-diff attribution unnecessarily hard.
+- The eventual merge receipt was titled for Aeneid film, so a future reviewer would not discover the Analects delivery from the PR title alone.
+- A later merge regressed the authoritative Analects checklist from `9/20` back to `5/20`; validation did not catch stale plan progress.
+- The queue's 73 changed files included unrelated watchdog/capacity/export-page surfaces plus several Studium streams; the actual prompt diff is the Analects books 2-5 slice.
+
+Verification:
+
+```bash
+jq '.changed_review[91]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-91-opencode-prompts.jsonl
+sqlite3 -json -readonly "file:$HOME/.local/share/opencode/opencode.db?mode=ro&immutable=1" "select id,parent_id,slug,directory,title,version,agent,model,cost,tokens_input,tokens_output,tokens_reasoning,tokens_cache_read,tokens_cache_write,datetime(time_created/1000,'unixepoch') as created, datetime(time_updated/1000,'unixepoch') as updated from session where id='ses_10a35b644ffeAh1tsb96sehtyN';"
+sqlite3 -json -readonly "file:$HOME/.local/share/opencode/opencode.db?mode=ro&immutable=1" "select p.id,p.message_id,json_extract(m.data,'$.role') as role,json_extract(p.data,'$.type') as part_type,length(json_extract(p.data,'$.text')) as text_len,substr(json_extract(p.data,'$.text'),1,1000) as text from part p left join message m on m.id=p.message_id where p.session_id='ses_10a35b644ffeAh1tsb96sehtyN' and json_extract(p.data,'$.type')='text' order by p.time_created;"
+gh pr view 90 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup,url,body
+gh pr view 98 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup,url,body
+gh pr view 133 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup,url,body
+gh pr view 151 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup,url,body
+python3 scripts/studium-validate.py
+python3 - <<'PY'
+from pathlib import Path
+plan = Path("studium/music/analects/PLAN.md").read_text()
+count = 0
+for n in range(1, 21):
+    has = Path(f"studium/music/analects/book-{n:02d}.yaml").exists() and Path(f"studium/essays/analects/book-{n:02d}.md").exists()
+    line = next((ln for ln in plan.splitlines() if ln.startswith(f"| {n} |")), "")
+    if has:
+        count += 1
+    expected = "✓" if has else "☐"
+    if expected not in line:
+        raise SystemExit(f"mismatch book {n}: has={has} line={line!r}")
+summary = f"Analects · {count}/20 arcs"
+master = Path("studium/music/PLAN.md").read_text()
+if summary not in master:
+    raise SystemExit(f"master tracker missing {summary!r}")
+print(f"analects trackers match disk: {count}/20")
+PY
+```
+
+Result: private prompt extraction has `1` record; PR #90 was green but closed unmerged; PR #98 merged the books 2-5 content under an unrelated title; current Studium validation passes; this review pass repaired Analects progress trackers to match the `9/20` files on disk.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
