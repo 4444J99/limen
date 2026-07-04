@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T01:34:25Z`
+Generated: `2026-07-04T01:36:12Z`
 
 ## Scope
 
@@ -33,6 +33,7 @@ Generated: `2026-07-04T01:34:25Z`
 | refreshed 16 | `claude` | `06d2559b-05e9-4ff3-b1bf-4473bd935228` | Credential/his-hand wall and dialog-silencing run. Reviewed landed credential-wall generator and fixed an import-time malformed env crash in the wall predicate. |
 | refreshed 17 | `claude` | `3be1f3a6-e00e-403d-a967-6d86c55deb56` | Workstream-channel run. Reviewed landed channel partition code and fixed the scoped cell conductor fallback so a failed channel projection cannot hand a worker the full mixed board. |
 | refreshed 18 | `claude` | `57fa1ead-aabf-4c2e-b62e-6843cf74a66a` | Insights/censor/session-meta reanchor run. Surviving artifacts are split across a Claude hook, plan/settings/memory files, and one external session-meta worktree; temp scripts and two named side worktrees are absent, so no Limen code patch was made. |
+| refreshed 19 | `claude` | `5e1004b3-b917-4a9d-a1ca-0f9b2b8dba45` | Mail audit / flagged-newsletter-storm run. Reviewed surviving private audit artifacts and external `universal-mail--automation` commit `39bf80d`; newsletter classifier tests pass, while ledger reconciliation after sent/withheld replies remains a recorded residual. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -1154,6 +1155,35 @@ git -C /Users/4jp/Workspace/.session-meta-worktrees/reanchor-multiprovider-inges
 ```
 
 Result: transcript audit completed with spend/unbounded-goal violations; hook/plan/settings/memory and the session-meta worktree were present; temp scripts and the two named `.limen-worktrees` roots were absent; session-meta log showed commit `048dd74`.
+
+### Mail audit row has an external classifier fix and an unclosed ledger gap
+
+Severity: medium for auditability and obligation truth.
+
+Evidence:
+
+- Refreshed rank 19 (`5e1004b3-b917-4a9d-a1ca-0f9b2b8dba45`) spans mail audit artifacts, Domus workflow probe drafts, verification scripts, Claude memory files, and an external `~/Workspace/universal-mail--automation` test path.
+- Patched transcript audit reports 67 transcript files, 1,549 usage-bearing messages, 13,646,225 billable-ish tokens, 271,134,912 cache-read tokens, 10,748,941 Opus-class billable-ish tokens, 24 expensive subagents, and six agent/workflow calls.
+- Surviving private artifacts include `MAIL-AUDIT.md`, `extract_prompts.py`, `ground-truth.md`, `verify_decide.py`, and `verify_star_disposition.py`.
+- Missing private artifacts include the `domus-draft`, `domus-probe`, `domus-probe2`, and `um-inc2` temp worktrees.
+- The external `universal-mail--automation` repo survived the relevant code diff at commit `39bf80d` (`fix(inbox_sweep): stop the flagged-newsletter storm at its root`), adding `tests/test_inbox_sweep_decide.py`.
+- Focused external verification passes: `python3 -m pytest tests/test_inbox_sweep_decide.py -q` returned `7 passed`.
+- The surviving mail audit itself records the main residual: sent/withheld replies are not reconciled back into the obligations ledger, so obligations such as replied or deliberately skipped mail can remain displayed as "Reply owed."
+
+Outcome:
+
+- No Limen code change was made for this row.
+- The newsletter-storm classifier fix is verified in the external mail repo; the prompt-vs-done gap to carry forward is obligation-ledger reconciliation, not another classifier patch.
+
+Verification:
+
+```bash
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/5e1004b3-b917-4a9d-a1ca-0f9b2b8dba45.jsonl --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000 --out /tmp/rank-5e1004-audit.json
+python3 -m pytest tests/test_inbox_sweep_decide.py -q  # run in /Users/4jp/Workspace/universal-mail--automation
+git -C /Users/4jp/Workspace/universal-mail--automation log --since=2026-07-02T17:34:35Z --until=2026-07-03T18:34:03Z --oneline --decorate --stat -- tests/test_inbox_sweep_decide.py
+```
+
+Result: transcript audit completed with an Opus budget violation; external classifier tests returned `7 passed`; external git log showed commit `39bf80d`.
 
 ## Current File References
 
