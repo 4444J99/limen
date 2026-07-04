@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T00:25:45Z`
+Generated: `2026-07-04T00:27:53Z`
 
 ## Scope
 
@@ -12,10 +12,39 @@ Generated: `2026-07-04T00:25:45Z`
 
 | Queue rank | Agent | Session | Result |
 |---:|---|---|---|
-| 1 | `opencode` | `ses_11427e08affe3D8jAAl5W43viB` | Exact window had no matching commits on `main`; treated as a reconstruction gap for follow-up. |
+| 1 | `opencode` | `ses_11427e08affe3D8jAAl5W43viB` | Exact window had no matching commits on `main`, but the matching unmerged branch is `limen/gen-organvm-limen-security-0625-57ce` at `02f256e` (`Security hardening pass on organvm/limen`). Reviewed as a reject/do-not-merge artifact. |
 | 2 | `opencode` | `ses_114c8f0c6ffeixS8gn4VxGqoHb` | Exact window matched `80d4e21f` (`feat(route): consume self-improve lane weights`). Widened window also showed related routing/meter/queue commits including `0146190` and `a6488c9`. |
 | 3 | `opencode` | `ses_1095e9b19ffe4yg9h4la7tGU4d` | Exact window had no matching commits on `main`; widened window was mostly Studium content-generation churn, not the control-plane code path reviewed here. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
+
+## Rejected Artifacts
+
+### OpenCode security hardening branch disabled core gates
+
+Severity: high if merged; current `main` is not affected.
+
+Evidence:
+
+- OpenCode session `ses_11427e08affe3D8jAAl5W43viB` maps to branch `limen/gen-organvm-limen-security-0625-57ce`, commit `02f256e` (`Security hardening pass on organvm/limen`).
+- The session prompt was a security hardening pass, but the branch removes or weakens multiple safety gates: Python mypy, ruff format, MCP/Ianva type checks, shellcheck, the whole-repo verify job, Python 3.11 tests, npm audit, and TypeScript type-check.
+- The branch reverts `capacity.py` from the census-derived vendor registry to hand-maintained literals and removes the `ollama` local floor lane.
+- The branch removes dispatch environment hydration (`_load_limen_env`), which would make daemon-launched local agents miss credentials landed in `~/.limen.env`.
+- The branch rewrites `tasks.yaml` heavily and is now stale enough that `main..02f256e` would delete many current agent-review, Tabularius, Vigilia, census, and workstream files.
+
+Disposition:
+
+- Do not merge branch `limen/gen-organvm-limen-security-0625-57ce`.
+- Current `main` preserves the relevant gates and surfaces: CI still has mypy, nomenclator, TypeScript checks, and broader compile/test coverage; `capacity.py` still exposes `ollama_model`; `dispatch.py` still exposes `_load_limen_env`.
+- Salvage should be by cherry-picking any independently reviewed, minimal hunks from the branch, not by rebasing or merging the branch.
+
+Review commands:
+
+```bash
+git show --stat --oneline --name-only 02f256ed268320b242789a2c268e0fc40c44c8a8
+git diff --name-status main..02f256ed268320b242789a2c268e0fc40c44c8a8
+git diff main..02f256ed268320b242789a2c268e0fc40c44c8a8 -- .github/workflows/ci.yml cli/src/limen/dispatch.py cli/src/limen/capacity.py cli/pyproject.toml tasks.yaml
+grep -R "def _load_limen_env\|ollama_model\|TypeScript type-check\|Validate naming canon\|mypy" -n cli/src/limen .github/workflows scripts cli/pyproject.toml
+```
 
 ## Findings Fixed
 
@@ -533,6 +562,6 @@ Result: `15 passed`; compile passed.
 
 ## Remaining Review Queue
 
-1. Reconstruct changed-file evidence for queue rank 1; the exact OpenCode window has no commit on `main`, so the next pass should inspect private session outcome receipts and nearby branch/worktree state.
-2. Continue rank 7-12 control-plane windows before spending time on large Studium content churn; those windows touch dispatch, capacity, CI, and lifecycle code with higher operational blast radius.
-3. Add stronger provider-clock and receipt extraction for Agy. Changed-file `TargetFile` evidence is now covered when present, but quota, verification, and no-op classification still depend on weaker outcome text.
+1. Continue rank 7-12 control-plane windows before spending time on large Studium content churn; those windows touch dispatch, capacity, CI, and lifecycle code with higher operational blast radius.
+2. Add stronger provider-clock and receipt extraction for Agy. Changed-file `TargetFile` evidence is now covered when present, but quota, verification, and no-op classification still depend on weaker outcome text.
+3. Continue branch-artifact review for other unmerged OpenCode security/test-coverage branches before any stale branch is rebased or merged.
