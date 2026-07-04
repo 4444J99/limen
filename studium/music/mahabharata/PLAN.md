@@ -15,17 +15,17 @@
 
 | Parva | dominant force | status |
 | --: | --- | :--: |
-| 1 | memory | ✓ |
-| 2 | fate | ✓ |
-| 3 | exile | ✓ |
-| 4 | comedy | ✓ |
-| 5 | fate | ✓ |
-| 6 | wrath | ✓ |
-| 7 | grief | ✓ |
-| 8 | fate | ✓ |
-| 9 | judgment | ✓ |
-| 10 | judgment | ✓ |
-| 11 | grief | ✓ |
+| 1 | (author) | ✓ |
+| 2 | (author) | ✓ |
+| 3 | (author) | ✓ |
+| 4 | (author) | ✓ |
+| 5 | (author) | ✓ |
+| 6 | (author) | ✓ |
+| 7 | (author) | ✓ |
+| 8 | (author) | ✓ |
+| 9 | (author) | ✓ |
+| 10 | (author) | ✓ |
+| 11 | (author) | ✓ |
 | 12 | (author) | ☐ |
 | 13 | (author) | ☐ |
 | 14 | (author) | ☐ |

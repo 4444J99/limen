@@ -8,7 +8,7 @@
 
 - **Main question:** What is the self (ātman) that is also the ground of all being (brahman)?
 - **Tradition / script:** sanskrit / devanagari · **language lesson:** [`../../scripts/sanskrit.md`](../../scripts/sanskrit.md)
-- **Corpus:** `None` (translations only)
+- **Corpus:** `sanskrit/upanishads` (sanskrit_original.txt)
 - **Source rail:** https://www.sacred-texts.com/hin/upan/
 - **Divisions:** 13 × Upanishad
 - **Progress:** 0/13 arcs authored

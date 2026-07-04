@@ -8,7 +8,7 @@
 
 - **Main question:** What is ritual lyric — song before 'literature' becomes private expression?
 - **Tradition / script:** chinese / hanzi · **language lesson:** [`../../scripts/chinese.md`](../../scripts/chinese.md)
-- **Corpus:** `None` (translations only)
+- **Corpus:** `chinese-classical/book-of-songs` (chinese_original.txt)
 - **Source rail:** https://ctext.org/book-of-poetry
 - **Divisions:** 4 × Part
 - **Progress:** 0/4 arcs authored
