@@ -663,8 +663,11 @@ def test_dispatch_health_ignores_generated_receipt_dirty_paths():
         "\n".join(
             [
                 "## main...origin/main",
+                " M docs/conductor-tranche.md",
                 " M docs/dispatch-health.md",
                 " M docs/live-root-gate.md",
+                " M docs/session-attack-paths.md",
+                " M docs/session-lifecycle-blockers.md",
                 " M tasks.yaml",
             ]
         ),
@@ -673,7 +676,7 @@ def test_dispatch_health_ignores_generated_receipt_dirty_paths():
 
     assert dirty["dirty_entries"] == 1
     assert dirty["dirty_paths"] == ["tasks.yaml"]
-    assert dirty["ignored_dirty_entries"] == 2
+    assert dirty["ignored_dirty_entries"] == 5
 
 
 def test_live_root_gate_records_operator_stop_conditions(tmp_path: Path):
@@ -746,8 +749,11 @@ def test_live_root_gate_ignores_generated_receipt_dirty_paths():
         "\n".join(
             [
                 "## main...origin/main",
+                " M docs/conductor-tranche.md",
                 " M docs/dispatch-health.md",
                 " M docs/live-root-gate.md",
+                " M docs/session-attack-paths.md",
+                " M docs/session-lifecycle-blockers.md",
                 " M tasks.yaml",
             ]
         ),
@@ -756,7 +762,7 @@ def test_live_root_gate_ignores_generated_receipt_dirty_paths():
 
     assert dirty["dirty_entries"] == 1
     assert dirty["tracked_dirty"] == ["tasks.yaml"]
-    assert dirty["ignored_dirty_entries"] == 2
+    assert dirty["ignored_dirty_entries"] == 5
 
 
 def test_session_blockers_records_hooks_disk_and_credentials_without_values(tmp_path: Path):

@@ -32,7 +32,14 @@ HEARTBEAT_PLIST = Path(
     os.environ.get("LIMEN_HEARTBEAT_PLIST", HOME / "Library" / "LaunchAgents" / "com.limen.heartbeat.plist")
 )
 LAUNCHD_LABEL = os.environ.get("LIMEN_HEARTBEAT_LABEL", "com.limen.heartbeat")
-IGNORED_GENERATED_RECEIPTS = {"docs/dispatch-health.md", "docs/live-root-gate.md"}
+IGNORED_GENERATED_RECEIPTS = {
+    "docs/conductor-tranche.md",
+    "docs/dispatch-health.md",
+    "docs/live-root-gate.md",
+    "docs/session-attack-paths.md",
+    "docs/session-corpus-ledger.md",
+    "docs/session-lifecycle-blockers.md",
+}
 
 
 def run_command(
