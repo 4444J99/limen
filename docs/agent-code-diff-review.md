@@ -42,6 +42,7 @@ Generated: `2026-07-04T06:22:46Z`
 | 82 | `opencode` | `ses_1061a8069ffevlGm8hemwph4w7` | Public Record Data Scraper security run. The prompt asked OpenCode to audit `organvm/public-record-data-scrapper`, fix high-severity advisories, add input validation at untrusted entrypoints, keep builds green, and open a PR. The queue's 43 Limen changed files are attribution noise: actual work was external PR #310, which closed unmerged after CI failed at `npm ci` because package and lockfile drifted. Durable fulfillment came later through merged PR #331 with green gate, not through the OpenCode PR. |
 | 83 | `claude` | `507be061-4c39-4f04-8c01-7c1ea24f21ce` | QUICKEN session-lifecycle run. The prompt pressure was broad and repeated across 432 prompt events, but it landed real control-plane value: `scripts/quicken.py` via PR #185 and `scripts/hooks/session-closeout.sh` / autonomic closeout via PR #189. Review found a live fail-open violation in `scripts/quicken.py`: malformed numeric env values could crash the organ before reporting. Fixed with `positive_int_env` and `cli/tests/test_quicken.py`; focused lifecycle tests, Ruff, py_compile, hook syntax, and malformed-env repro pass. |
 | 84 | `opencode` | `ses_1061a71dbffeJZ4lIQymHDPC03` | a-i-chat exporter test-coverage run. The prompt asked OpenCode to raise test coverage for `organvm/a-i-chat--exporter`, find a large uncovered module, add meaningful tests, and keep the build green. The useful code did land: commit `cfe0b1c` added `src/__tests__/queue.test.ts` for `RequestQueue`, and current `master` still contains it with green Check/Deploy/Page checks at `867db55`. The process was not clean: no PR references `cfe0b1c`, it used `Test User <test@example.com>` metadata, and the queue's 43 Limen changed files came from parent board/rebase churn rather than authored product diff. |
+| 85 | `claude` | `b4bf9d03-8a0f-413c-9029-0455f8594b7e` | Private financial/legal matter plus his-hand sync run. The raw prompts and matter artifacts are intentionally kept out of this tracked file. The original Claude worktree is gone; the private local packet and Claude memory files survive off-repo, while the only public Limen code surface is the his-hand issue sync helper already landed through green PRs #272 and #329. Structural review found the private packet is draft-only: valid JSON and complete files, but fill/verify markers remain and no source URLs are embedded. Transcript guard fails on 3.78M billable / 3.10M Opus tokens. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -4450,6 +4451,63 @@ gh pr list --repo organvm/a-i-chat--exporter --state all --search cfe0b1c --json
 ```
 
 Result: private prompt extraction has `1` prompt record; commit `cfe0b1c` added `src/__tests__/queue.test.ts`; GitHub has no PR association for that commit; current `master` at `867db55` contains the test file and has green `Check`, `Deploy`, and Pages checks; available local checkouts are dirty/stale, so local test rerun was intentionally skipped.
+
+### Claude private matter run mixed sensitive drafting with public control-plane work
+
+Severity: medium for process and privacy boundaries; no public code patch was required.
+
+Evidence:
+
+- Queue row `85` points at Claude session `b4bf9d03-8a0f-413c-9029-0455f8594b7e`, rooted at now-absent worktree `.claude/worktrees/temporal-percolating-token`.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-85-claude-private-matter-prompts.jsonl` (`91` prompt-bearing records, `124,924` total prompt bytes). The file name and tracked review intentionally omit the matter subject.
+- In redacted intent form, the session combined two different layers: a private financial/legal-administrative drafting packet, and public Limen work to make his-hand levers durable in GitHub instead of memory-only files.
+- The original Claude worktree and its queued `scripts/sync-hishand-issues.py` path are absent now.
+- The private local packet still exists outside the repo with five files; structural QA shows the JSON matter ledger is valid and the markdown drafts are present.
+- Structural QA also found the private packet remains draft-only: several fill/verification markers remain, there are phone/email-like identifiers in the private files, and the drafts embed no source URLs. This review did not copy or legal-validate the private content in the tracked repo.
+- The public Limen code surface is real but not unique to the private matter packet: `scripts/sync-hishand-issues.py` landed through PR #272, then gained the aggregate Wall path through PR #329. Both PRs are merged with green `python`, `pr-gate`, `worker`, and `web` checks.
+- Focused current verification passes for the public helper: `python3 -m py_compile scripts/sync-hishand-issues.py`, `python3 -m pytest cli/tests/test_hishand_wall.py -q`, and the default dry-run `python3 scripts/sync-hishand-issues.py --wall`.
+- Transcript guard fails: 3,784,518 billable-ish tokens, 3,096,113 Opus billable-ish tokens, 333 usage messages, and 2 agent calls.
+
+Ideal prompt diff:
+
+- Ideal form: keep sensitive personal/financial/legal drafting in a private matter root, never in tracked repo docs or public issues, and clearly separate it from public control-plane code.
+- Actual session form: the artifacts were stored in private/off-repo locations, which is the right containment, but the same session also carried public his-hand issue-sync work, making the queue row a mixed private/public attribution surface.
+- Ideal matter form: high-stakes drafts should have source citations, explicit user-fill fields, and a private review checklist before any outward use.
+- Actual matter form: the packet is structurally present and valid, but it has remaining fill/verify markers and no embedded source URLs. It should be treated as a private draft packet, not send-ready advice or filing material.
+- Ideal control-plane form: his-hand levers should be machine-owned by code and linked to individually closeable GitHub issues.
+- Actual control-plane form: PR #272 and PR #329 achieved that public code shape with green checks.
+
+Outcome:
+
+- No current code patch was made. The public helper is already present and focused tests pass.
+- The row should be credited as private drafting plus durable his-hand wall machinery, but not as a clean single-purpose session. The useful public artifact is already covered by PR #272/#329; the private artifact should remain out of tracked docs.
+
+What was fucked up:
+
+- Sensitive life-admin drafting and public fleet control-plane work were bundled in one Claude session, which makes provenance and redaction harder.
+- The session spent 3.78M billable / 3.10M Opus tokens, far over the guardrail, with no reason this private drafting packet needed to ride that much premium-model time.
+- The private packet has no embedded official-source links and still has fill/verify markers, so any outward use needs a private, official-source review pass first.
+- The public queue row exposed enough changed-file names to reveal the private matter's existence; future queue summaries should bucket private roots as redacted matter paths before they enter shared review docs.
+- The original worktree disappeared, so review depends on the surviving transcript, private local artifacts, and PR receipts rather than the exact working tree.
+
+Verification:
+
+```bash
+wc -l .limen-private/session-corpus/full-stack-review/session-85-claude-private-matter-prompts.jsonl
+jq -r '.kind + " " + .surface + " bytes=" + (.prompt_bytes|tostring)' .limen-private/session-corpus/full-stack-review/session-85-claude-private-matter-prompts.jsonl | sort | uniq -c
+test -d /Users/4jp/Workspace/limen/.claude/worktrees/temporal-percolating-token
+test -e /Users/4jp/Workspace/limen/.claude/worktrees/temporal-percolating-token/scripts/sync-hishand-issues.py
+test -e scripts/sync-hishand-issues.py
+git log --oneline --decorate --all -- scripts/sync-hishand-issues.py
+gh pr view 272 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup,url
+gh pr view 329 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup,url
+python3 scripts/claude-workflow-guard.py audit-transcript /path/to/private-session.jsonl
+python3 -m py_compile scripts/sync-hishand-issues.py
+python3 -m pytest cli/tests/test_hishand_wall.py -q
+python3 scripts/sync-hishand-issues.py --wall
+```
+
+Result: private prompt extraction has `91` records; original worktree path is absent; private off-repo packet and Claude memory files exist; the public his-hand helper exists on `main`, PR #272 and PR #329 are merged green, focused helper tests pass, and the default wall dry-run would refresh the aggregate wall without mutation. No private body text was copied into this tracked review.
 
 ## Remaining Review Queue
 
