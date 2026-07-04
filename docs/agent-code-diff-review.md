@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T04:02:52Z`
+Generated: `2026-07-04T04:11:12Z`
 
 ## Scope
 
@@ -49,6 +49,7 @@ Generated: `2026-07-04T04:02:52Z`
 | refreshed 32 | `claude` | `3c7f2396-ca81-4494-a9e2-3b4a5d2a87ea` | Agent-instruction / "agent-all" convergence run. PR #358 merged the two-layer standard and drift predicate; current review fixed an inaccurate Layer-1 drift-check provenance pointer. Transcript guard still fails on heavy Opus fanout. |
 | refreshed 33 | `claude` | `e4cd8413-965c-4cde-a656-e1d09ba31da1` | Fleet-sprawl reduction / cells / board-collapse run. PRs #356, #359, #360, and #361 landed useful surfaces; current review fixed `cell` commands so they no longer list or operate on arbitrary non-cell Claude worktrees. |
 | refreshed 34 | `claude` | `6b107f0b-4796-4cc2-95ef-861947c991b9` | Vigilia autonomic-institution run. PRs #277, #281, #285, and #315 landed VITALS/CONTINUITY/INTEGRITY, the face, no-hardcode gate, and heartbeat stamp; current review verified the code and recorded raw-transcript log privacy and Opus spend as residual risks. |
+| refreshed 35 | `claude` | `d7044841-5c47-45c2-be86-b5d96a1ea15d` | Cloudflare deploy derivation / Studio / Media Ark run. Useful PRs landed, but review found live Studio source-file exposure plus a sibling Pages-project collision; redeployed public-only Studio, added a Studio predicate, and restored `object-lessons.pages.dev` to a cinema placeholder. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -356,6 +357,57 @@ git check-ignore -v logs/vigilia/status.json logs/vigilia/continuity-test.md cli
 ```
 
 Result: focused Vigilia/no-hardcode tests passed `29 passed`; `check-params` reported `195 declared, 256 undeclared (baseline 256), no new hardcodes`; the face command rendered the read-only C-suite pane; ignored-output checks confirm `logs/vigilia/*` and Vigilia `__pycache__` are not tracked. Transcript audit fails on total and Opus billable tokens, which is recorded as a session-quality defect rather than a current-code defect.
+
+### Cloudflare derivation fixed real deploy ownership, but shipped source files before the audit cleaned it up
+
+Severity: high for public deployment hygiene; live source exposure has been remediated.
+
+Evidence:
+
+- Claude session `d7044841-5c47-45c2-be86-b5d96a1ea15d` ran from `/Users/4jp/Workspace/limen` from 2026-07-01T17:15:05Z through 2026-07-02T01:04:06Z.
+- Prompt first layer challenged a recurring "convenience over derivation" failure: another session chose Vercel because auth was already confirmed, then switched to Cloudflare only after being challenged. The user asked the agent to derive from protocol/precedent rather than ask for another decision.
+- The same thread continued into "we do not login in session--there is a repo/directory that owns this", then "protocols dictate actions", then "you should never need me to speak again".
+- Queue extraction saw only four changed files: a temp Media Ark deploy note, a Claude memory note, and `~/Workspace/studio/.assetsignore` / `deploy.sh`. The durable surface was wider: external Speech Score PR #12, Limen credential/Media Ark PRs #518, #523, #526, and #544, plus local Studio deployment work.
+- Useful merged receipts exist: Speech Score PR #12 merged the static export / Cloudflare Pages path; Limen PR #518 made `cf-wrangler.sh` the no-login Cloudflare wrapper; PR #523 installed the 1Password service-account control point; PR #526 organ-owned the GCP deploy secret lane; PR #544 derived Media Ark hosting away from the GCP decision menu to Cloudflare.
+
+Ideal prompt diff:
+
+- Ideal form: derive the hosting answer from the existing Cloudflare/worker substrate and repo ownership, never from whichever provider happens to be logged in; use the repo-owned deploy entrypoint; stage only public assets; verify the public URL does not expose source docs/scripts; and update durable owner records.
+- Actual form: the derivation was mostly right, and the repo-owned `deploy.sh` eventually staged only the public Studio set. But the session first tried weaker paths, created a false `.assetsignore` mitigation, deployed a full folder that exposed internal Studio files, and also deployed the Studio hub to the sibling `object-lessons` Pages project.
+- Corrected ideal form: Cloudflare Pages deploys must use a staged public directory, not the repo root, and the predicate must check body markers so a `200` fallback is not confused with a real source-file leak.
+
+Outcome:
+
+- Ran `/Users/4jp/Workspace/studio/deploy.sh`, producing public-only deployment `https://d2bc2dc9.object-lessons-studio.pages.dev`; the production alias now returns HTML fallback for `LAUNCH.md`, `README.md`, `take-it-home.sh`, and `deploy.sh` instead of source bodies.
+- Added local Studio commit `45b5fef` (`fix(predicate): fail on public source-file exposure`) so `take-it-home.sh` checks the live URL for internal source markers. This Studio checkout has no remote configured, so the fix is local.
+- Restored the sibling `object-lessons` Cloudflare Pages project away from Studio content by deploying a minimal cinema placeholder to `https://f79d9d9b.object-lessons.pages.dev`; the production alias no longer exposes Studio launch markdown or scripts.
+- No Limen code patch was made for this row beyond this audit entry; the live service cleanup happened in Cloudflare Pages and the local Studio checkout.
+
+What was fucked up:
+
+- The session only reached the right Cloudflare answer after the user explicitly pushed against convenience-based provider selection.
+- `.assetsignore` was treated as a deploy safety mechanism, but `wrangler pages deploy` did not honor it. The correct mitigation is staging a public-only directory.
+- The first Studio deployment exposed internal `LAUNCH.md`, `README.md`, and `take-it-home.sh` content on `object-lessons-studio.pages.dev`.
+- The wrong project deployment left `object-lessons.pages.dev` serving Studio content from the cinema site's Cloudflare Pages project. The session note called that harmless, but it was publicly serving Studio source markdown.
+- The full cinema repo could not be rebuilt from default branch during remediation: `npm ci` hit peer-dependency conflict, Astro 6 rejected legacy content config, Astro 5 conflicted with the current Cloudflare adapter, and the Tailwind/MDX stack also drifted. That needs a separate `organvm/object-lessons` source repair before the full cinema site can replace the placeholder.
+- The full Studio predicate currently fails on unrelated WriteLens checkout drift (`/Users/4jp/Workspace/4444J99/writelens` is behind origin and dirty). The new source-exposure gate itself passes.
+- Transcript guard reports 6,440,225 Opus billable-ish tokens, 1,191 usage-bearing messages, seven agent calls, and three Opus subagents.
+
+Verification:
+
+```bash
+gh pr view 12 --repo organvm/speech-score-engine --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup
+for pr in 518 523 526 544; do gh pr view "$pr" --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,statusCheckRollup; done
+/Users/4jp/Workspace/studio/deploy.sh
+for url in 'https://object-lessons-studio.pages.dev/LAUNCH.md?audit=2' 'https://object-lessons-studio.pages.dev/README.md?audit=2' 'https://object-lessons-studio.pages.dev/take-it-home.sh?audit=2' 'https://object-lessons-studio.pages.dev/deploy.sh?audit=2'; do curl -L -sS "$url" | grep -q 'Object Lessons Studio — public face\|take-it-home.sh — the launch predicate\|deploy.sh — the studio hub' && echo SOURCE_EXPOSED || echo source-not-exposed; done
+bash -n /Users/4jp/Workspace/studio/take-it-home.sh /Users/4jp/Workspace/studio/deploy.sh
+git -C /Users/4jp/Workspace/studio show --stat --oneline 45b5fef
+/Users/4jp/Workspace/limen/scripts/cf-wrangler.sh pages deploy /tmp/object-lessons-restore-static --project-name object-lessons --branch main --commit-dirty=true
+for url in 'https://object-lessons.pages.dev/' 'https://object-lessons.pages.dev/LAUNCH.md?audit=3' 'https://object-lessons.pages.dev/README.md?audit=3' 'https://object-lessons.pages.dev/take-it-home.sh?audit=3'; do curl -L -sS "$url" | grep -q 'Object Lessons Studio' && echo STUDIO_SOURCE_EXPOSED || echo source-not-exposed; done
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/d7044841-5c47-45c2-be86-b5d96a1ea15d.jsonl
+```
+
+Result: Speech Score PR #12 and Limen PRs #518/#523/#526/#544 are merged with green checks; Studio public-only deploy succeeded; Studio source-marker URL checks now report `source-not-exposed`; the Studio predicate's new source-exposure gate passes; the sibling `object-lessons` Pages alias no longer serves Studio source markers. Full Studio predicate still fails on unrelated WriteLens drift, and full cinema rebuild is blocked by source dependency drift as described above.
 
 ## Rejected Artifacts
 
