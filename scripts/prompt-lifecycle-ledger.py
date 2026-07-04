@@ -41,8 +41,17 @@ AGY_CLI_ROOT = HOME / ".gemini" / "antigravity-cli"
 AGY_CLI_HISTORY = AGY_CLI_ROOT / "history.jsonl"
 AGY_CLI_CONVERSATIONS = AGY_CLI_ROOT / "conversations"
 GITHUB_PR_RE = re.compile(r"github\.com/([^/]+)/([^/]+)/pull/(\d+)")
-DISPATCH_GRACE_SECONDS = int(os.environ.get("LIMEN_LANE_TIMEOUT", "900")) + 600
-GH_RETRIES = max(1, int(os.environ.get("LIMEN_GH_RECEIPT_RETRIES", "3")))
+
+
+def int_or_default(raw: Any, default: int) -> int:
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return default
+
+
+DISPATCH_GRACE_SECONDS = int_or_default(os.environ.get("LIMEN_LANE_TIMEOUT"), 900) + 600
+GH_RETRIES = max(1, int_or_default(os.environ.get("LIMEN_GH_RECEIPT_RETRIES"), 3))
 TRANSIENT_GH_ERROR_BITS = (
     "connect: network is unreachable",
     "connection reset",

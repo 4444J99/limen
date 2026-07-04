@@ -15,6 +15,15 @@ def _load():
     return mod
 
 
+def test_malformed_lane_timeout_uses_default_dispatch_grace(monkeypatch):
+    monkeypatch.setenv("LIMEN_LANE_TIMEOUT", "not-an-int")
+    monkeypatch.setenv("LIMEN_GH_RECEIPT_RETRIES", "also-bad")
+    pll = _load()
+
+    assert pll.DISPATCH_GRACE_SECONDS == 1500
+    assert pll.GH_RETRIES == 3
+
+
 def test_task_snapshot_distinguishes_jules_async_from_stranded_no_pr(tmp_path: Path):
     pll = _load()
     pll.ROOT = tmp_path

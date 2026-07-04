@@ -24,6 +24,16 @@ def _load(tmp_path, monkeypatch):
     return m
 
 
+def test_malformed_lane_timeout_uses_default_grace(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("LIMEN_LANE_TIMEOUT", "not-an-int")
+    spec = importlib.util.spec_from_file_location("verify_dispatch_bad_timeout", SCRIPT)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+
+    assert m.GRACE == 1500
+
+
 def test_chronic_tasks_flags_reopened_without_pr(tmp_path, monkeypatch):
     m = _load(tmp_path, monkeypatch)
     tasks = [

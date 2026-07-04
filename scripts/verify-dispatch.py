@@ -33,7 +33,16 @@ PR_RE = re.compile(r"github\.com/([^/]+)/([^/]+)/pull/(\d+)")
 # slow run. A freshly reserved local task still has no PR/session result, so only treat it as
 # STRANDED once it has sat longer than any run could take: lane_timeout (900s) +
 # fetch/worktree/push/PR overhead.
-GRACE = int(os.environ.get("LIMEN_LANE_TIMEOUT", "900")) + 600
+
+
+def _int_or_default(raw, default):
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return default
+
+
+GRACE = _int_or_default(os.environ.get("LIMEN_LANE_TIMEOUT"), 900) + 600
 
 
 def _parse_ts(v):

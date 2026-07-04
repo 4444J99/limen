@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T00:09:33Z`
+Generated: `2026-07-04T00:13:06Z`
 
 ## Scope
 
@@ -297,6 +297,46 @@ npm run check --prefix web/worker
 
 Result: `3 passed`; worker syntax check passed.
 
+### Dispatch verification could crash before writing health evidence
+
+Severity: medium for control-plane observability.
+
+Evidence:
+
+- The same OpenCode window touched `scripts/verify-dispatch.py` in `47534d5`.
+- `verify-dispatch.py` parsed `LIMEN_LANE_TIMEOUT` with bare `int(...)` at import time. A malformed launchd or shell value crashed the verifier before it could write `logs/dispatch-verify.json`.
+- `prompt-lifecycle-ledger.py` had the same bare timeout parse, plus a bare GitHub receipt retry parse, so lifecycle evidence refresh could fail before producing the redacted prompt/session crosswalk.
+
+Repair:
+
+- Added tolerant integer parsing to `verify-dispatch.py`.
+- Applied the same fallback parsing to dispatch grace and GitHub receipt retry settings in `prompt-lifecycle-ledger.py`.
+- Added import-time regressions for malformed env values.
+
+Touched paths:
+
+- `scripts/verify-dispatch.py`
+- `scripts/prompt-lifecycle-ledger.py`
+- `cli/tests/test_verify_dispatch.py`
+- `cli/tests/test_prompt_lifecycle_ledger.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_verify_dispatch.py cli/tests/test_prompt_lifecycle_ledger.py -q
+python3 -m py_compile scripts/verify-dispatch.py scripts/prompt-lifecycle-ledger.py
+env LIMEN_LANE_TIMEOUT=bad python3 scripts/verify-dispatch.py --quiet
+env LIMEN_LANE_TIMEOUT=bad LIMEN_GH_RECEIPT_RETRIES=bad python3 - <<'PY'
+import importlib.util
+from pathlib import Path
+spec=importlib.util.spec_from_file_location('pll', Path('scripts/prompt-lifecycle-ledger.py'))
+mod=importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+print(mod.DISPATCH_GRACE_SECONDS, mod.GH_RETRIES)
+PY
+```
+
+Result: `6 passed`; compile passed; malformed-env verifier exited `0`; lifecycle import printed `1500 3`.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -356,6 +396,13 @@ Result: `3 passed`; worker syntax check passed.
 - `web/api/tests/test_main.py:559` covers assignment boolean budget rejection.
 - `web/api/tests/test_main.py:903` covers task-create boolean budget rejection.
 - `web/api/tests/test_main.py:921` covers dispatch boolean limit rejection.
+- `scripts/verify-dispatch.py:38` defines tolerant verifier env integer parsing.
+- `scripts/verify-dispatch.py:45` applies the verifier dispatch grace fallback.
+- `scripts/prompt-lifecycle-ledger.py:46` defines tolerant lifecycle env integer parsing.
+- `scripts/prompt-lifecycle-ledger.py:53` applies the lifecycle dispatch grace fallback.
+- `scripts/prompt-lifecycle-ledger.py:54` applies the GitHub receipt retry fallback.
+- `cli/tests/test_verify_dispatch.py:27` covers malformed verifier timeout import.
+- `cli/tests/test_prompt_lifecycle_ledger.py:18` covers malformed lifecycle timeout and retry imports.
 
 ## Remaining Review Queue
 
