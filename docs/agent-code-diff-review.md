@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T01:45:03Z`
+Generated: `2026-07-04T01:48:46Z`
 
 ## Scope
 
@@ -37,6 +37,7 @@ Generated: `2026-07-04T01:45:03Z`
 | refreshed 20 | `claude` | `ce278978-35f1-4b6c-a511-41f5d1de75cf` | Pre-build excavation / private venture run. Reviewed landed `pre-build-excavate.sh` gate and fixed regex keyword matching so duplicate detection uses literal user keywords; private venture/temp artifacts are absent or outside Limen and remain report-only. |
 | refreshed 21 | `claude` | `84a89bbb-ecd3-4e22-8148-f9b683bd2d92` | Agy bridge / Jules autonomous-dispatch run. The original `melodic-riding-hinton` worktree and temp job files were gone, but the landed Agy/Jules dispatch code was live on `main`; fixed a remaining Agy bridge gap where folder-shaped untracked deltas were silently skipped. |
 | refreshed 22 | `claude` | `f38f4b2a-5c49-4d13-9b36-24bf31c941cc` | Archive4T conductor/relay incident run. The `/Volumes/Archive4T` docs/tests/scripts listed in the changed-file ledger are absent; only home-state memory, handoff, and static status artifacts survive. Current `main` has the scripts/watchdog/import fixes the static handoffs called missing, so this is recorded as stale-handoff/artifact-loss rather than a live code patch. |
+| refreshed 23 | `claude` | `685b48b0-94fa-4537-a327-453a6ba01238` | External `etceter4-revival` winter-build run. Temp extractors are gone, but the revival docs and image-manifest generator survived in `~/Workspace/organvm/etceter4-revival`; fixed the generator so archive folders with nonmatching filename stems are actually inventoried. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -1507,6 +1508,45 @@ rg -n "^import secrets|def atomic_write_text|generate-backlog|verify-dispatch|he
 ```
 
 Result: transcript audit completed with Opus budget and unbounded-goal violations; the `/Volumes/Archive4T` changed-file refs sampled above were absent; the surviving relay/status artifacts are stale against current `main`.
+
+### Etceter4 revival manifest missed archive photos
+
+Severity: medium for the external revival site, low for Limen control-plane safety.
+
+Evidence:
+
+- Claude session `685b48b0-94fa-4537-a327-453a6ba01238` produced an external `etceter4-revival` document/script set: nine revival docs and `scripts/gen-image-manifest.mjs` survived under `~/Workspace/organvm/etceter4-revival`; the two temp extractor scripts are absent.
+- Transcript audit reports 28 transcript files, 1,140 usage-bearing messages, 10,896,690 billable-ish tokens, 71,620,782 cache-read tokens, 10,585,171 Opus-class billable-ish tokens, 25 expensive subagents, and 13 agent/workflow calls.
+- The prompt/session intent was to derive real revival inventories from disk rather than hand-pin media. The generator did that for carousel folders whose filename stem matched the folder name.
+- The archive folder `img/photos/glitchpr0n/` contains files named `glitch1.png` through `glitch41.png`, but the generator expected names like `glitchpr0n1.png`, so it emitted `glitchpr0n: []` while 41 real images existed.
+- The natural-sort comparator also returned `NaN` for identifiers without a leading number, making future nonnumeric archive identifiers fragile.
+
+Repair:
+
+- External repo commit `e53ada4` (`fix(revival): derive archive image manifest stems`) on branch `etceter4-revival` in `organvm/a-mavs-olevm`.
+- Added collection metadata that separates folder name from filename stem.
+- Switched natural sorting to `Intl.Collator(..., { numeric: true })`.
+- Added `scripts/verify-image-manifest.mjs` and `npm run verify:image-manifest`.
+- Regenerated `js/imageManifest.js`, now reporting `glitchpr0n=41`.
+
+Touched external paths:
+
+- `/Users/4jp/Workspace/organvm/etceter4-revival/scripts/gen-image-manifest.mjs`
+- `/Users/4jp/Workspace/organvm/etceter4-revival/scripts/verify-image-manifest.mjs`
+- `/Users/4jp/Workspace/organvm/etceter4-revival/js/imageManifest.js`
+- `/Users/4jp/Workspace/organvm/etceter4-revival/package.json`
+
+Verification:
+
+```bash
+npm run verify:image-manifest --prefix /Users/4jp/Workspace/organvm/etceter4-revival
+npm run validate:package-lock --prefix /Users/4jp/Workspace/organvm/etceter4-revival
+node --check scripts/gen-image-manifest.mjs
+node --check scripts/verify-image-manifest.mjs
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-calm-questing-ember/685b48b0-94fa-4537-a327-453a6ba01238.jsonl --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000 --out /tmp/rank-685-audit.json
+```
+
+Result: image manifest verification passed with `glitchpr0n=41`; package-lock validation passed with existing duplicate-package warnings; Node syntax checks passed; transcript audit completed with an Opus budget violation.
 
 ## Remaining Review Queue
 
