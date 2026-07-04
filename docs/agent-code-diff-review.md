@@ -77,6 +77,7 @@ Generated: `2026-07-04T08:12:45Z`
 | 123 | `claude` | `38f777fe-fe4a-44aa-abf9-fa8edfb2a3c3` | Vigilia closeout/resume layer. The session should be credited as PR #315 closeout and residual tracking, not as a separate broad code stream: PR #315 merged green and is on `main`, but the closeout transcript itself exceeded Claude token/Opus budget gates and left a real `_diagnostics` README pointer atom open. |
 | 124 | `claude` | `d051cce2-54b0-478d-afaf-e2ed1429ce41` | FLAME predecessor prompt root. This session contains the actual "go away for a month / flame never goes out" first-layer ask and three read-only exploration subagents; the durable implementation belongs to continuation session `25d48a87-2cb2-428d-bb68-96467d8bc5fe`, so this row is prompt-boundary evidence rather than a second code workstream. |
 | 125 | `claude` | `0ce115d3-e83b-408a-a3a8-deac07888433` + 17 corpus workers | CI-green 2026-06-28 CDB4 root. The parent session fulfilled the generated CI-green packet through PR #378, adding a Python 3.11 CI job and fixing corpus-converge subprocess env leakage; the other 17 sessions under the same deleted root are generated corpus distillation workers and should not be counted as CI implementation. |
+| 126 | `claude` | `70b7dbdd-d715-4d44-8812-98901dfed535` | Object Lessons Studio strategy/fanout root. This session produced the strategic public-face direction for the creative-writing/education portfolio, then launched a heavy workflow fanout; durable code/launch verification belongs to later session `ec251ec3-e2e5-405b-a7ea-c93d93c255a3`, so this row is valuable planning evidence with serious spend/fanout defects, not a standalone implementation diff. |
 | refreshed 35 | `claude` | `d7044841-5c47-45c2-be86-b5d96a1ea15d` | Cloudflare deploy derivation / Studio / Media Ark run. Useful PRs landed, but review found live Studio source-file exposure plus a sibling Pages-project collision; redeployed public-only Studio, added a Studio predicate, and restored `object-lessons.pages.dev` to a cinema placeholder. |
 | refreshed 36 | `claude` | `4582fe4c-165d-440b-a36a-562e67cd5cf4` | Fleet session-reconcile run. Temp scripts are gone, but durable ledger/scorecard and `organvm/session-meta#37` survive; review confirmed the lane closed, the 102-branch prune was explicitly gated, and the run remains a spend/fanout cautionary example. |
 | refreshed 37 | `claude` | `57c0201a-82bd-4be7-96dd-4c7039038edd` | Codex skill-slim run. PRs #573, #597, and #615 landed a repair organ that keeps all skills while stopping Codex description truncation; current tests and live `--check` pass, but the session needed two follow-up corrections after false-green proofs and blew Claude spend limits. |
@@ -6996,6 +6997,64 @@ LIMEN_CORPUS_CONVERGE_LIVE=1 LIMEN_CORPUS_GRAPH=1 PYTHONPATH=cli/src python3 -m 
 ```
 
 Result: private prompt extraction has `184` records; parent transcript guard passed with 312,406 billable tokens and no Opus; PR #378 merged green; current focused corpus-converge tests pass `12 passed` even with leaked live/graph flags set in the outer environment.
+
+### Claude's parsed-finding strategy session framed Object Lessons Studio, but durable delivery belongs to the later launch row
+
+Severity: medium for spend/fanout and artifact durability; low for current code because no implementation diff is attributed to this row.
+
+Evidence:
+
+- Reconstruction row `126` targets Claude session `70b7dbdd-d715-4d44-8812-98901dfed535`, rooted in deleted worktree `.claude/worktrees/parsed-finding-fern`, from 2026-07-01T15:04:22Z through 2026-07-01T15:15:17Z.
+- The first-layer prompt asked how to make the user's education, creative-writing, narrative, studio, and teaching work presentable to local audiences, friends, peers, and students, with the Public Data Scraper inbound effect as the analogy.
+- The session read workspace repos and existing studio/GTM memory, identified the gap between a dev/security revenue portfolio that had launch copy and an identity portfolio with no public face, and framed the public face as a way for the creative community to see the work.
+- It launched workflow `studio-public-face` with ten readers/synthesizers. The workflow journal produced useful strategic outputs: "computational dramaturgy" as the trade, narrative Script Doctor as likely flagship, and `Object Lessons Studio` / `studio.objectlessons.film` as the public face.
+- The parent transcript ended while waiting for fanout to land and did not create a tracked plan file, commit, PR, hosted artifact, or final implementation receipt.
+- The later reviewed session `ec251ec3-e2e5-405b-a7ea-c93d93c255a3` is the durable follow-through row for Object Lessons Studio / WriteLens launch verification and fixes. This `70b7...` row should be cited as the strategy prompt root, not counted as an additional implementation stream.
+- Full private prompt extraction for the session tree is `.limen-private/session-corpus/full-stack-review/session-126-claude-parsed-finding-prompts.jsonl`: 552 prompt-surface records, 424 unique prompt hashes, 1,835,058 prompt bytes. The split is 258 prompt records for `70b7...` and 294 continuation/workflow records carrying `ec251...`.
+
+Ideal prompt diff:
+
+- Ideal strategy-session form: inspect built assets, synthesize one public-face strategy, write a durable local artifact or handoff, and clearly mark the next implementation atom.
+- Actual form: the strategic analysis was strong and grounded in real repos plus user-authored studio-vision docs, but it lived mostly in transcript/workflow state and then rolled into a later code session.
+- Ideal fanout form: read-only product characterization can use cheaper tiers and bounded outputs; only the synthesis/decision step needs a premium model if at all.
+- Actual fanout form: workflow orchestration used broad fanout and inherited expensive model tiers for work that was largely repository reading and summarization.
+
+Outcome:
+
+- Row `126` is classified as valuable strategy/planning evidence for Object Lessons Studio.
+- No code mutation is credited to this row. The durable implementation and verification remain credited to the existing `ec251...` Object Lessons / WriteLens row.
+- The review artifact now preserves the full prompt layer privately so the strategy-to-implementation chain is reconstructable without duplicating code credit.
+
+What was fucked up:
+
+- Transcript guard fails: 3,503,776 billable tokens, 872,265 Opus billable tokens, and four Opus subagents, exceeding both total and Opus budget limits.
+- The parent promised to deliver the full strategy after fanout but ended before integrating the workflow result into a durable document or final answer.
+- The workflow/session boundary is messy: prompt records under the `70b7...` tree carry both `70b7...` and `ec251...` session ids. That makes naive queue grouping overcount or misattribute the Object Lessons work.
+- The session did useful strategic thinking, but without the later `ec251...` row it would be transcript-only planning, not completed work.
+
+Verification:
+
+```bash
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-parsed-finding-fern/70b7dbdd-d715-4d44-8812-98901dfed535.jsonl
+python3 - <<'PY'
+import json
+from collections import Counter
+from pathlib import Path
+p = Path('/Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-126-claude-parsed-finding-prompts.jsonl')
+rows = [json.loads(line) for line in p.read_text(encoding='utf-8').splitlines() if line.strip()]
+print(len(rows), len({r['prompt_hash'] for r in rows}), sum(r['prompt_bytes'] for r in rows), Counter(r['surface'] for r in rows), Counter(r['session_id'] for r in rows))
+PY
+rg -n "70b7dbdd|ec251ec3|Object Lessons Studio|WriteLens" docs/agent-code-diff-review.md docs/agent-code-review-queue.md
+python3 - <<'PY'
+import json
+from pathlib import Path
+j = Path('/Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-parsed-finding-fern/70b7dbdd-d715-4d44-8812-98901dfed535/subagents/workflows/wf_4252c7cf-4f5/journal.jsonl')
+rows = [json.loads(line) for line in j.read_text(encoding='utf-8').splitlines() if line.strip()]
+print(len(rows), rows[-1].get('type'), str(rows[-1].get('result'))[:300])
+PY
+```
+
+Result: the transcript guard fails on total billable, Opus billable, and Opus subagent fanout; the private prompt extraction includes both the `70b7...` strategy root and `ec251...` continuation records; existing public review already credits durable Object Lessons / WriteLens delivery to `ec251...`.
 
 ## Remaining Review Queue
 
