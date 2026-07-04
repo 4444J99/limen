@@ -23,7 +23,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `worktree-ianva-doorway` — f4c0c07 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
 - `worktree-linear-conjuring-bear` — 92c21f2 chore(gitignore): ignore .wrangler/ cache at any depth, not just web/worker
 
-## Live-work branches (103) — decide each
+## Live-work branches (104) — decide each
 
 - `_pr198` — 4cd0dba fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
 - `capture/main-2026-07-02T01-03-35Z` — 71b4885 capture: off-disk sync 2026-07-02T01:03:35Z (main behind origin → side ref, HEAD untouched)
@@ -80,6 +80,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `limen/org-legal-organ-kernel-0630-a5e5` — 6c301f3 limen: map legal organ kernel
 - `limen/org-legal-organ-kernel-0701-e535` — 3dcb37c organs: refine legal kernel flagship
 - `limen/org-social-organ-firstslice-0703-1c71` — a2fa6ad organs/social: ship first slice
+- `limen/org-social-organ-firstslice-0703-6fb5` — 4e69933 feat(social): add first koinonia slice
 - `limen/studium-deepen-aeneid-e6cf` — fcee5d4 feat(studium): Aeneid Books 4-8 arcs and essays (desire/sacrifice/revelation/war)
 - `limen/studium-deepen-analects-78fa` — d5d8c19 feat(studium): Analects books 9-11 music arcs + essays (ascent/memory/salvation)
 - `limen/studium-deepen-beowulf-4918` — 99fb771 feat(studium): Beowulf fitts 2–6 — force-matched arcs + essays

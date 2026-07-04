@@ -1,6 +1,6 @@
 # Financial Office — STATUS Dashboard
 
-**Generated:** 2026-07-03T23:19:04Z  **Maturity:** maturing (70%)
+**Generated:** 2026-07-04T00:26:26Z  **Maturity:** maturing (70%)
 
 ---
 
@@ -16,8 +16,8 @@
 ## Artifacts
 
 | Artifact | File | Status |
-|---|---|---|---|
-| Macro Face | `MACRO.md` | Deepened — excellent, deployable-in-5-minutes, fleet-capacity-mapped |
+|---|---|---|
+| Macro Face | `MACRO.md` | Deepened — deployable-in-5-minutes, fleet-capacity-mapped |
 | Micro Instance Face | `MICRO.md` | Deepened — wealth/portfolio/tax-automation workflow, MONETA interaction, priority gates |
 | Entity Registry | `entities.yaml` | Live — 6 entities registered |
 | Balance Sheet | `balance-sheet.md` | Generated — needs principal balance entry |

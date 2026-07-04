@@ -1,0 +1,101 @@
+# Koinonia — MICRO FACE
+## Anthony's relationship network: Derek + the growing fleet
+
+*Anthony's live social instance · Internal review only*
+
+> **What you are reading:** the micro face is the proof that the reusable
+> community + relationship infrastructure platform holds for a real person's
+> actual ties. The macro platform is in [`MACRO-FACE.md`](MACRO-FACE.md).
+
+---
+
+## Why these engagements
+
+The platform has to work for more than one kind of tie. Each engagement tests a
+different relationship type and a different stress vector:
+
+| Engagement | Relationship type | Stress test |
+|---|---|---|
+| Derek | Collaborator, client, creative partner | Multi-dimensional tie spanning professional and personal — tests whether the posture brief captures both without flattening either |
+| (next) | Family | Ties with deep history, implicit obligations, and high emotional stakes — tests whether the organ holds sensitive care patterns without overstepping |
+| (next) | Collaborative network | The web of contributors, patrons, and peers — tests whether the registry scales beyond one-to-one ties |
+
+The first engagement is Derek. It proves the brief. The next engagements prove the fleet.
+
+---
+
+## Fleet standing
+
+| Person | Relationship | Standing | Next gate | Owner of gate |
+|---|---|---|---|---|
+| Derek | Collaborator, client, creative partner | ACTIVE | Brief review and confirmation | Anthony |
+
+No engagement has autonomous outbound action open. No messages, invitations, care
+actions, or relationship changes move without human review.
+
+---
+
+## Engagement 1: Derek — creative collaborator and client
+
+**What this proves:** the posture brief can hold a multi-dimensional tie —
+professional collaboration, paid client engagement, and creative partnership —
+without reducing it to any one dimension.
+
+**Mandate:** collaborative narrative work and sovereign-systems client delivery.
+The tie spans creative output (narrative workshop, Beowulf Fitts composition),
+professional services (consulting delivery through Sovereign Systems LLC), and
+personal creative partnership (shared aesthetic sensibility, long-form
+collaboration).
+
+**What exists now:**
+
+- Complete Relationship-Posture Brief in `engagements/derek.yaml`
+- ACTIVE standing with strong warmth — high-care tie
+- Reciprocity norm: reply within 24h on active threads; weekly check-in cadence
+  during active projects; annual gratitude/reflection note
+- Clear human gates: every project deliverable reviewed before delivery; every
+  introduction or referral staged for Anthony's approval; any conflict or repair
+  surfaced directly
+- Governance: all project-specific data lives in the consulting organ; Derek's
+  personal relationship record is private and never shared
+
+**Next proof step:**
+
+Produce the relationship-posture report from the brief and review with Anthony.
+Then add the next engagement (family tie) to prove the fleet.
+
+---
+
+## What the first engagement proves
+
+1. **The posture model holds for multi-dimensional ties.** Member, Mandate, Standing,
+   Standard, and Governance capture a relationship that spans professional, creative,
+   and personal dimensions without flattening the human being to a contact record.
+2. **The human gate is structural.** Every outbound act — deliverable review, referral,
+   introduction — stays with Anthony. Nothing leaves the system without his hand.
+3. **The infrastructure is not the relationship.** The brief documents the care pattern;
+   it does not claim to own the friendship, predict the other person's needs, or
+   optimize the tie for extraction.
+4. **Consent and privacy are architectural.** Derek's record is private; only the
+   posture fields that the relationship itself requires are tracked. Project-specific
+   data is scoped to the consulting organ.
+
+---
+
+## Validation
+
+Run:
+
+```bash
+python organs/social/validate-social.py --fleet
+python organs/social/scripts/relationship-brief.py organs/social/engagements/derek.yaml
+```
+
+Expected result: the engagement passes all six social organ rules and produces a
+relationship-posture report.
+
+---
+
+*Companion documents: [`KERNEL.md`](KERNEL.md) (architecture),
+[`MACRO-FACE.md`](MACRO-FACE.md) (platform thesis), [`CHARTER.md`](CHARTER.md)
+(roles + workflows).*

@@ -37,6 +37,15 @@ BRANCH_PREFIX="cell/"
 mkdir -p "$CELL_LOGS"
 
 die() { echo "cell: $*" >&2; exit 1; }
+write_empty_board() {
+  local out="${1:?write_empty_board needs a path}"
+  cat > "$out" <<'YAML'
+version: "1.0"
+portal:
+  name: scoped-empty
+tasks: []
+YAML
+}
 slug_ok() { [[ "$1" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]] || die "bad slug '$1' (use letters/digits/._-)"; }
 cell_path() { echo "$WT_DIR/$1"; }
 cell_branch() { echo "${BRANCH_PREFIX}$1"; }
@@ -105,10 +114,11 @@ cmd_conduct() {
       # board ($p/tasks.yaml) and emit the filtered subset to the cell board.
       export LIMEN_WORKSTREAM="$workstream"
       if ! LIMEN_TASKS="$p/tasks.yaml" limen channels --scope "$workstream" --emit "$cell_board" >/dev/null 2>&1; then
-        cp "$p/tasks.yaml" "$cell_board" 2>/dev/null || : > "$cell_board"   # fallback: full board
+        echo "cell: scoped board emit failed for workstream '$workstream'; writing empty board to preserve isolation" >&2
+        write_empty_board "$cell_board"
       fi
     else
-      [ -f "$cell_board" ] || cp "$p/tasks.yaml" "$cell_board" 2>/dev/null || : > "$cell_board"
+      [ -f "$cell_board" ] || cp "$p/tasks.yaml" "$cell_board" 2>/dev/null || write_empty_board "$cell_board"
     fi
     export LIMEN_TASKS="$cell_board"
     if [ "$loop" = "1" ]; then
