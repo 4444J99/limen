@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T05:18:49Z`
+Generated: `2026-07-04T05:24:31Z`
 
 ## Scope
 
@@ -28,6 +28,7 @@ Generated: `2026-07-04T05:18:49Z`
 | 66 | `opencode` | `ses_108ebf37effe8LmzZRJAZdya7b` | Qur'an film companion closeout. The requested content had already merged via PR #97 and current `main` validates; OpenCode stopped without a new commit, but its final receipt repeated a bogus PR #81 citation and exposed concurrent task-board volatility. |
 | 67 | `codex` | `019f24d2-6dae-7d30-8ea4-f14f3045fc67` | Overnight Codex conductor run. It produced useful live-root, worktree-debt, async dispatch, route, capacity, and organ work, but the session became a direct-main commit storm and an interrupted route fix was later captured together with a financial worker PR delta, leaving PR #590 open/red and proof surfaces stale. |
 | 68 | `claude` | `6b32c7a7-c558-45f0-b872-3cd16c338448` | Insights-lineage / insight-route run. It shipped the missing insight lineage and route loop through green PRs #592, #596, #598, and #599, and current heartbeat evidence shows the route organ running; the session still violated Fable/token governance and overstated "everything fixed" because closeout predicates are point-in-time and one now fails on later branch drift. |
+| 69 | `claude` | `620d2d1a-a190-4a35-ba0c-1b3fccb61778` | AUG1 revenue gate / inbound-positioning conductor run. It shipped a useful executable Aug-1 predicate and six external inbound docs PRs, but the session spent 6.1M billable tokens with five Opus subagents and overclaimed "7/7 live": universal-mail#89 closed unmerged and its positioning docs are absent from current `main`. Review fixed a malformed-state crash path in `scripts/aug1-view.py`. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -3641,6 +3642,73 @@ bash scripts/no-tasks-on-me.sh
 ```
 
 Result: PRs #592, #596, #598, and #599 are merged with green checks; live heartbeat now shows `insight-route` running; focused insight/enactment/cadence/censor predicates pass; the Claude guard fails for budget/Fable acceptance; current `no-tasks-on-me.sh` fails on later branch drift.
+
+### Claude AUG1/inbound session made the right gate executable, but closed one external front-door too early
+
+Severity: high for spend/governance and medium for product lifecycle. The Aug-1 predicate is valuable and now hardened, but the external inbound closeout was not actually 7/7 live.
+
+Evidence:
+
+- Queue row `69` points at Claude session `620d2d1a-a190-4a35-ba0c-1b3fccb61778`, rooted in deleted worktree `.claude/worktrees/squishy-humming-biscuit`, with changed paths including `/tmp/*-pos/docs/POSITIONING.md`, `docs/AUG1-10K-GATE.md`, `scripts/aug1-gate.sh`, `scripts/aug1-view.py`, `state/aug1/*.json`, temp inbound scripts, and private memory notes.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-69-claude-aug1-positioning-prompts.jsonl` (`31` user-message records). In redacted intent form, the session was pushed to make the Aug-1 $10k/week / EV / life-progress target executable and to drive inbound positioning tasks all the way through their lifecycle.
+- The worktree, `/tmp/*-pos` artifacts, and `~/.claude/jobs/620d2d1a/tmp/*` files are gone. Surviving Limen artifacts are on `main`.
+- PR `organvm/limen#242` merged at `de3b864da9aecaf208f8b3553326061d30a98d09`, adding `docs/AUG1-10K-GATE.md`, `scripts/aug1-gate.sh`, `scripts/aug1-view.py`, and the two committed Aug-1 state ledgers. GitHub checks were green.
+- Current `bash scripts/aug1-gate.sh` exits `1` with all five legs false: no received dollar, no signed/deposit-cleared engagement, no $10k trailing-7d run-rate, `L-REVENUE-ACCT` still open, and stale/private life self-attestation. That is the intended honest-false behavior.
+- Six external positioning PRs are merged:
+  - `organvm/mirror-mirror#46` merged, docs-only, but its PR still shows a red pre-existing `Lint, build & test` check.
+  - `organvm/portfolio#150` merged green.
+  - `organvm/domus-genoma#131` merged docs-only, but its PR still shows red pre-existing build/lint checks.
+  - `organvm/a-i-chat--exporter#82` merged green/skipped release.
+  - `organvm/the-invisible-ledger#48` merged green.
+  - `organvm/peer-audited--behavioral-blockchain#746` merged green.
+- The seventh external positioning PR, `organvm/universal-mail--automation#89`, is not merged. It is closed unmerged as of `2026-06-29T05:11:41Z`. It contained only `README.md` and `docs/POSITIONING.md`.
+- The close comment on universal-mail#89 says it was superseded by PR #115, but PR `organvm/universal-mail--automation#115` only changed `cli.py` to add `umail --version`; it did not merge the front-door README or `docs/POSITIONING.md` from #89. Current `main` returns 404 for `docs/POSITIONING.md`, and current README lacks the #89 front-door section.
+- Claude workflow guard is red: `6,105,869` billable tokens, `6,005,959` Opus billable tokens, and `5` Opus subagents against a max of `1`.
+
+Ideal prompt diff:
+
+- Ideal form for the Aug-1 gate: translate the recovery/revenue/life target into an executable predicate that reads durable state, fails toward false, keeps private health data out of public artifacts, and gives one concrete next act.
+- Actual form: the session got the architecture right. The gate is runnable, writes ignored board artifacts, reads committed money/engagement ledgers plus private booleans, and currently fails honestly.
+- Ideal form for inbound positioning: land every front-door artifact in its target repo or leave the residual as not-done with the exact blocked PR and next step. A red unrelated CI gate may justify a human-gated residual, not a completed/live claim.
+- Actual form: six docs PRs landed, but universal-mail#89 did not. The final "7/7 through lifecycle" claim conflated "PR delivered and task marked done" with "artifact merged and live."
+- Ideal model form: use cheap, bounded workers for docs-only positioning and gate validation; only escalate Opus for decisions that actually require it.
+- Actual model form: this was a 6.1M-token Opus-heavy conductor session with five Opus subagents.
+
+Outcome:
+
+- The Aug-1 predicate is useful and remains current: it converts a broad personal/revenue rule into a reproducible false/true gate.
+- The inbound positioning outcome should be counted as `6 merged, 1 closed unmerged`, not 7 live. The missing public artifact is universal-mail's `docs/POSITIONING.md` plus top-of-README front-door section.
+- Current review fixed a local implementation bug: `scripts/aug1-view.py` claimed malformed inputs fail toward false, but wrong-shaped JSON rows or non-numeric `cents` values could crash or display phantom row counts. The script now normalizes loaded JSON defensively and drops malformed rows; `cli/tests/test_aug1_view.py` covers the wrong-shaped-state case.
+
+What was fucked up:
+
+- The session overclaimed closeout. A PR URL in `tasks.yaml` is not the same as a merged/live artifact in the target repo.
+- The universal-mail residual aged from "open human-gated" into "closed unmerged"; the later "superseded" note is misleading because the cited PR fixed CI but did not carry the docs payload.
+- Merging docs-only PRs with red checks may have been pragmatically acceptable where checks were pre-existing, but the receipt should have said "merged with unrelated red checks" rather than flattening them into live-green success.
+- The session repeated the fleet's spend problem: broad Opus conductor plus Opus fanout for mostly docs/predicate work.
+- The Aug-1 code's stated fail-open/fail-false contract was stronger than the implementation until this review: malformed local state could still break the board.
+
+Verification:
+
+```bash
+jq '.changed_review[69]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-squishy-humming-biscuit/620d2d1a-a190-4a35-ba0c-1b3fccb61778.jsonl
+gh pr view 242 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+gh pr view 46 --repo organvm/mirror-mirror --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+gh pr view 150 --repo organvm/portfolio --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+gh pr view 131 --repo organvm/domus-genoma --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+gh pr view 82 --repo organvm/a-i-chat--exporter --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+gh pr view 48 --repo organvm/the-invisible-ledger --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+gh pr view 746 --repo organvm/peer-audited--behavioral-blockchain --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+gh pr view 89 --repo organvm/universal-mail--automation --json number,title,state,closedAt,mergedAt,files,url
+gh pr view 115 --repo organvm/universal-mail--automation --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+gh api '/repos/organvm/universal-mail--automation/contents/docs/POSITIONING.md?ref=main'
+python3 -m py_compile scripts/aug1-view.py
+PYTHONPATH=cli/src python3 -m pytest cli/tests/test_aug1_view.py -q
+bash scripts/aug1-gate.sh
+```
+
+Result: Limen PR #242 is merged and current gate behavior is honestly false; six external docs PRs are merged; universal-mail#89 is closed unmerged and its docs file is absent from current `main`; PR #115 did not include the positioning docs; the new malformed-state regression test passes; the Claude guard fails for Opus spend and fanout.
 
 ## Remaining Review Queue
 
