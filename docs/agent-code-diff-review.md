@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T11:22:19Z`
+Generated: `2026-07-04T11:29:12Z`
 
 ## Scope
 
@@ -81,6 +81,7 @@ Generated: `2026-07-04T11:22:19Z`
 | changed 123 | `codex` | `019eddbf-e29e-7d81-a3ad-f8c947d865e0` | Invisible Ledger PostgreSQL adapter first pass. Codex produced the first useful adapter implementation and the dispatch wrapper opened PR #4 with an initially green Node matrix, but later conflict resolution merged that PR red. Durable current health comes from the later green PR #23 plus subsequent fixes, not from treating PR #4's final merge as clean. |
 | changed 124 | `codex` | `019f13f0-960f-7490-bc0a-a5f4bc70a6fb` | Private relationship-boundary/persona workstream. Codex created substantial PII-free reusable tooling, private ignored outputs, a Desktop voice-note file, and draft PR #11 with green tests. The prompt was only partially fulfilled at the action layer: the bounded response/voice note was prepared, not sent, and the PR remains draft for owner review. |
 | changed 125 | `codex` | `019f13f1-3d53-7783-8b17-483fa603a53a` | Workstream launcher / Corpus Command Center continuation. Codex built useful launcher and corpus-review machinery in commits `3cd1507`, `5252041`, `65b6d23`, and `61c8071`, and preserved cross-repo worktree receipts, but the Limen work was stranded on `work/workstream-agent-launcher-20260629`. There is no PR for that branch, the key command-center files are absent from current `origin/main`, and the branch is now 633 commits behind with a destructive direct merge diff. |
+| changed 126 | `codex` | `019f1abf-0fa8-76a2-b8ec-149765d2c7d2` | Fleet-autonomy dispatch selector repair. The prompt asked Codex to fix the heartbeat/router/async/backlog lane mismatch so open work no longer stranded on unreachable or exhausted lanes. The reviewed transcript ended honestly as mid-implementation, with only board drift committed and no tests yet run; durable code completion came shortly after in direct-main commits `1b24887` and `6115a6c`. Current focused tests pass and read-only health probes show async `auto` can launch work, but today's live root is again blocked by branch/dirty-state drift. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -3517,6 +3518,67 @@ sed -n '8516,8550p' .limen-private/session-corpus/lifecycle/worktree-preserve/20
 ```
 
 Result: prompt extraction matches the session metadata; the useful commits exist; no Limen PR exists for the workstream branch; key Corpus Command Center files are absent from current `origin/main`; the branch is 633 commits behind / 28 ahead and a direct merge would delete 211 current files; cross-repo Invisible Ledger preservation is merged green, while Mirror Mirror is merged with a later failing rollup entry.
+
+### Codex made real fleet-autonomy progress, but the reviewed transcript ended before delivery
+
+Severity: medium for process/accounting; low for current code, because the main fleet-selector repair is now landed and focused tests pass. The session is a good example of useful invisible substrate becoming hard for the operator to trust: the work was real, but the reviewed transcript stopped at "not done yet" and the proof arrived after the visible session boundary.
+
+Evidence:
+
+- Queue index `changed_review[125]` currently points at Codex session `019f1abf-0fa8-76a2-b8ec-149765d2c7d2`, rooted at `/Users/4jp/Workspace/limen`, running from 2026-06-30T22:55:58Z through 2026-07-01T00:27:38Z.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-126-codex-dispatch-substrate-prompts.jsonl`: `16` prompt-surface records, `7` unique prompt hashes, `26,576` prompt bytes, with `12` records from the Codex transcript and `4` from Codex history. Surfaces are `response_item.user` `8`, `event_msg.user_message` `4`, and `history` `4`.
+- First-layer prompt intent was a generated plan titled "Fix Limen Continuous Fleet Autonomy": the daemon was alive, but open work was assigned to lanes heartbeat was not actually dispatching (`github_actions`, blocked `oz`, exhausted `jules`), while healthy local lanes had capacity. The prompt explicitly said to treat this as a fleet-wiring bug, not a Codex-session bug.
+- The plan asked for a canonical lane selector in `cli/src/limen/capacity.py`, heartbeat dispatch using `LIMEN_DISPATCH_LANES=${LIMEN_DISPATCH_LANES:-auto}`, router changes so work does not strand on unavailable lanes, async dry-run safety, backlog-generator lane derivation, focused tests, shell/static checks, `verify-whole.sh`, separate board/code commits, and live beat confirmation.
+- The reviewed transcript's final status answer did not overclaim. It said the work was "mid-implementation, not a completed handoff": only `1e71a8a` (`limen: checkpoint task board state`) had been committed; implementation changes across 22 code/test/doc/config files were still uncommitted; focused tests, `verify-whole.sh`, heartbeat restart, and push had not happened.
+- A later user status prompt inside the same session got the right operator answer: the work was not empty motion, but should stop broad editing and convert the patch into verified evidence before pressing on.
+- Durable completion landed after that transcript boundary. Commit `1b24887` (`limen: route heartbeat dispatch through fleet lane selector`) is on current `origin/main`, changes 23 files with `342` insertions and `135` deletions, and covers the core lane selector, dispatch, async, route, heartbeat, backlog, docs, and tests surface.
+- Follow-up commit `6115a6c` (`limen: enable low-throughput overnight fleet heartbeat`) changed launchd heartbeat config and `tasks.yaml`, setting `LIMEN_DISPATCH_LANES=auto`, low local/async caps, and committing the operational board state.
+- Current source still contains the requested mechanics: `select_lanes("auto")` derives reachable lanes from the capacity census; `dispatch-async.py --dry-run` uses inspect-only stale/result counts; heartbeat scripts default `LIMEN_DISPATCH_LANES` to `auto`; backlog generators call `select_lanes(...) | {"any"}`; and route treats repo tasks as local-lane clone-on-demand candidates rather than requiring a pre-existing checkout.
+- Current focused verification passes in the review worktree: `PYTHONPATH=cli/src python3 -m pytest cli/tests/test_async_dispatch.py cli/tests/test_dispatch.py cli/tests/test_generate_backlog.py cli/tests/test_route_bias.py cli/tests/test_usage_gate.py -q` reports `77 passed`.
+- Shell syntax checks pass for `scripts/heartbeat-loop.sh`, `scripts/heartbeat.sh`, and `scripts/gen-launchd-plist.sh`.
+- Read-only `python3 scripts/dispatch-health.py --probe-async` now reports loaded `LIMEN_DISPATCH_LANES=auto`, async dry-run `ok=True`, and `would launch 11`, but status is `blocked` because the current live root is on branch `limen/jules-capfill-claude-20260629-14-5970`, `5` ahead / `34` behind `origin/main`, with dirty `docs/branch-hygiene.md` and `tasks.yaml`.
+- Read-only `python3 scripts/capacity-fill-ledger.py` reports useful capacity now exists across local lanes and `github_actions`, but also records five lane blockers: `ollama` no model/disk pressure, `jules` down, `copilot` not assignable, and `warp`/`oz` missing `WARP_API_KEY`.
+- GitHub run lookup by exact commits `1b24887` and `6115a6c` returned no run records, so this row's CI proof is current-main Fleet Gate health plus local focused tests, not a commit-specific historical run.
+
+Ideal prompt diff:
+
+- Ideal form: implement the selector/heartbeat/router/async/backlog changes, run the exact focused test plan, run shell/static checks, run whole-system verification, commit code/docs/tests separately from board state, then only restart heartbeat between beats and record a live receipt.
+- Actual reviewed transcript: Codex implemented much of the patch and committed the board checkpoint, but was interrupted before verification or code commit. The final answer correctly refused to call it done.
+- Actual durable state: the code landed shortly after in direct-main commit `1b24887`, followed by operational heartbeat/board commit `6115a6c`. The implementation is valuable and currently test-backed.
+- Ideal accounting form: the reviewed session should be credited as diagnosis + mid-implementation + honest stop, while `1b24887`/`6115a6c` are the durable completion receipts. Do not infer completion from the transcript alone.
+- Ideal live-acceptance form: a green detached worktree test and committed config are not enough; live-root gate must match `origin/main`, be clean, and show the loaded launchd daemon running the same substrate.
+- Actual live state today: loaded launchd is running `auto` and async dry-run works, but the live root is dirty/off-main again, so live acceptance is blocked by environment drift rather than missing fleet-selector code.
+
+Outcome:
+
+- Credit the workstream for real progress. The user's status concern was valid, and the session's answer was technically honest: the patch was meaningful but not yet proven.
+- Credit current `main` for carrying the core fleet-autonomy fix through `1b24887` and the low-throughput heartbeat enablement through `6115a6c`.
+- Keep live acceptance separate from code acceptance. The code is present and focused tests pass; the live daemon/root gate still requires branch/dirty-state reconciliation before declaring the fleet fully operational.
+
+What was fucked up:
+
+- The session ran for hours before providing an operator-visible status report, which directly caused the user's "are we getting shit done?" concern.
+- The implementation touched broad dispatch substrate before the first focused test run. The breadth was justified by the prompt, but the checkpoint cadence was not.
+- Board state and code state were adjacent: `1e71a8a` checkpointed task-board drift, then code was still uncommitted. That is safer than mixing them, but it means the visible transcript ended with a large uncommitted patch.
+- Durable completion happened outside the reviewed transcript boundary, so queue changed-file attribution can make the session look more complete than its final message actually was.
+- The current live root has drifted again. This is not the same bug as the lane selector, but it means the operator still cannot rely on "tests passed in a detached worktree" as a complete heartbeat proof.
+
+Verification:
+
+```bash
+wc -l .limen-private/session-corpus/full-stack-review/session-126-codex-dispatch-substrate-prompts.jsonl
+jq -s '{records:length, unique_prompt_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), by_source:(group_by(.source) | map({source:.[0].source, count:length})), by_surface:(group_by(.surface) | map({surface:.[0].surface, count:length}))}' .limen-private/session-corpus/full-stack-review/session-126-codex-dispatch-substrate-prompts.jsonl
+jq '.. | objects | select(.session_id? == "019f1abf-0fa8-76a2-b8ec-149765d2c7d2")' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+git show --stat --oneline --summary 1e71a8a 1b24887 6115a6c
+git show -s --format='%h parent=%P%nsubject=%s%nci=%cI' 1e71a8a 1b24887 6115a6c
+git merge-base --is-ancestor 1b24887 origin/main
+PYTHONPATH=cli/src python3 -m pytest cli/tests/test_async_dispatch.py cli/tests/test_dispatch.py cli/tests/test_generate_backlog.py cli/tests/test_route_bias.py cli/tests/test_usage_gate.py -q
+bash -n scripts/heartbeat-loop.sh scripts/heartbeat.sh scripts/gen-launchd-plist.sh
+python3 scripts/dispatch-health.py --probe-async
+python3 scripts/capacity-fill-ledger.py
+```
+
+Result: prompt extraction matches metadata; `1b24887` is on current `origin/main`; focused tests pass `77 passed`; heartbeat shell syntax passes; read-only dispatch-health shows loaded `LIMEN_DISPATCH_LANES=auto` and async dry-run can launch work, but live acceptance is blocked by the current live root being off-main and dirty.
 
 ### Claude domus-genoma CIFIX session failed to fix CI and should have stopped at the permission/spend wall
 
