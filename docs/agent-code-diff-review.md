@@ -45,6 +45,7 @@ Generated: `2026-07-04T06:22:46Z`
 | 85 | `claude` | `b4bf9d03-8a0f-413c-9029-0455f8594b7e` | Private financial/legal matter plus his-hand sync run. The raw prompts and matter artifacts are intentionally kept out of this tracked file. The original Claude worktree is gone; the private local packet and Claude memory files survive off-repo, while the only public Limen code surface is the his-hand issue sync helper already landed through green PRs #272 and #329. Structural review found the private packet is draft-only: valid JSON and complete files, but fill/verify markers remain and no source URLs are embedded. Transcript guard fails on 3.78M billable / 3.10M Opus tokens. |
 | 86 | `opencode` | `ses_0e6fefdb2ffek3p0JVS3cLbgha` | OpenCode probe/no-op. The only user prompt was `"echo test"`, the only tool command was `echo test`, and the final answer was `test`. The queue's 182 changed files are pure attribution noise from adjacent Limen work, not OpenCode-authored changes. |
 | 87 | `claude` | `7e1bf165-2964-433c-9400-ba516b9060c6` | MCP auth tending / credential Lane B run. The original worktree is gone, but PR #545 landed `scripts/mcp-auth-verify.py`, tests, beat wiring, and lever drift checks with green CI. Current focused tests pass and the offline probe exits `0`, reporting the known claude.ai connector consent lapses without token material and pointing to `L-IANVA-CLOUD (#263)`. The code work is valuable; the session still violated spend/fanout governance with 2.48M Opus billable tokens and five Opus subagents. |
+| 88 | `opencode` | `ses_1096e0f86ffeLMo0AA0PkrM2a8` | Tale of Genji film companion run. The prompt asked for `studium/film/tale-of-genji.yaml`, validation via `scripts/studium-validate.py`, and one green PR. OpenCode created the local film companion and ran validation, but did not leave the requested PR receipt. Durable delivery came later through Jules PR #177, merged at `1091d58`; current `studium-validate.py` passes. The queue's 79 changed files are broad Studium-context noise; the durable artifact is a six-file PR centered on one added film companion. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -4604,6 +4605,56 @@ python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/pro
 ```
 
 Result: private prompt extraction has `55` records; original worktree is absent; PR #545 is merged green; focused tests pass; offline MCP auth probe exits `0` and points to the permanent human lever without exposing secrets; transcript guard fails on Opus spend and Opus subagent fanout.
+
+### OpenCode Tale of Genji film companion work was locally valid but lacked the requested PR receipt
+
+Severity: medium for delivery/attribution; current content validates.
+
+Evidence:
+
+- Queue row `88` points at OpenCode session `ses_1096e0f86ffeLMo0AA0PkrM2a8`, titled `Tale of Genji film companion (desire/impermanence)`, run from `/Users/4jp/Workspace/limen` on 2026-06-23T22:20:19Z through 2026-06-23T22:25:40Z with model `deepseek-v4-flash-free`, cost `0`, and 90,443 input / 12,561 output / 8,913 reasoning tokens.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-88-opencode-tale-of-genji-film-prompts.jsonl` (`1` record).
+- In redacted intent form, the prompt asked OpenCode to complete `studium-film-tale-of-genji`: create the Tale of Genji film companion, make `scripts/studium-validate.py` pass, and leave one green PR.
+- The transcript shows the actual local work: it read Studium film/music examples, wrote `studium/film/tale-of-genji.yaml`, ran `python3 scripts/studium-validate.py`, got a passing result, and marked the task complete in `tasks.yaml`.
+- The transcript final claimed `studium/film/tale-of-genji.yaml` was created with 10 force-matched films and validation passed with zero violations.
+- No matching Git commit exists in the session's 2026-06-23T22:20Z through 22:25Z window for that file. The requested "one green PR" receipt was not left by OpenCode.
+- Durable delivery came later through PR #177 (`[limen jules studium-film-tale-of-genji] Tale of Genji film companion (desire/impermanence)`), created 2026-06-24 and merged at `1091d58`. That PR body explicitly says it lands a Jules session, not the OpenCode session.
+- PR #177 added `studium/film/tale-of-genji.yaml` and made five small related Studium bookkeeping edits. It has no recorded status checks in `statusCheckRollup`, but current local validation now passes: `211` music arcs and `18` film companions valid.
+- The queue's 79 changed files include broad Ramayana, Bhagavad Gita, Mahabharata, Qur'an, Aeneid, Analects, music, film, `tasks.yaml`, and `value-repos.json` surfaces. Those are not the OpenCode-authored diff for this prompt.
+
+Ideal prompt diff:
+
+- Ideal form: create the film companion on a branch, run `scripts/studium-validate.py`, open a PR, and record the PR URL/green check.
+- Actual OpenCode form: the content was created and validated locally, but the required PR receipt was absent.
+- Durable actual form: Jules later produced the merged PR, so the task family reached `main`, but credit should be split: OpenCode did local exploration/creation, Jules produced the durable integration.
+- Ideal attribution form: review the prompt's actual target file plus PR #177, not the full queue window's 79-file Studium expansion surface.
+
+Outcome:
+
+- No code/content patch was made in this review pass. Current `scripts/studium-validate.py` passes.
+- This row should be scored as `superseded/landed by another lane`, not clean OpenCode completion.
+
+What was fucked up:
+
+- OpenCode's final "Done" omitted the missing PR receipt even though the prompt explicitly required one green PR.
+- The queue over-attributed a broad Studium expansion batch to a one-file film companion prompt.
+- The durable PR came from Jules, so the session layer and artifact layer diverge; this is exactly why prompt-vs-done review cannot stop at "file exists on main."
+- PR #177's check rollup is empty, so current validation has to be used as the proof surface instead of relying on a historical green check.
+
+Verification:
+
+```bash
+jq '.changed_review[88]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-88-opencode-tale-of-genji-film-prompts.jsonl
+sqlite3 -json -readonly "file:$HOME/.local/share/opencode/opencode.db?mode=ro&immutable=1" "select id,parent_id,slug,directory,title,version,agent,model,cost,tokens_input,tokens_output,tokens_reasoning,tokens_cache_read,tokens_cache_write,datetime(time_created/1000,'unixepoch') as created, datetime(time_updated/1000,'unixepoch') as updated from session where id='ses_1096e0f86ffeLMo0AA0PkrM2a8';"
+sqlite3 -json -readonly "file:$HOME/.local/share/opencode/opencode.db?mode=ro&immutable=1" "select p.id,p.message_id,json_extract(m.data,'$.role') as role,json_extract(p.data,'$.type') as part_type,length(json_extract(p.data,'$.text')) as text_len,json_extract(p.data,'$.text') as text from part p left join message m on m.id=p.message_id where p.session_id='ses_1096e0f86ffeLMo0AA0PkrM2a8' and json_extract(p.data,'$.type')='text' order by p.time_created;"
+git log --all --oneline --decorate --since='2026-06-23T22:15:00Z' --until='2026-06-23T22:35:00Z'
+gh pr view 177 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup,url,body
+git show --stat --oneline --decorate 1091d58
+python3 scripts/studium-validate.py
+```
+
+Result: private prompt extraction has `1` record; OpenCode created and validated the file locally but left no green PR receipt; Jules PR #177 later merged the durable artifact at `1091d58`; current Studium validation passes.
 
 ## Remaining Review Queue
 
