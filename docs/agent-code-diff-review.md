@@ -104,6 +104,7 @@ Generated: `2026-07-04T13:24:21Z`
 | changed 146 | `claude` | `5f469687-a7d6-40d6-ba54-e47bdce3cd5f` | Aug-1 revenue/recovery memory run. Claude turned a sensitive personal revenue-planning prompt into two useful private memory notes about payment rails, services-first revenue, and not mistaking product polish for closing progress. The prompt-vs-done gap is severe on governance: no tracked repo diff or executable next-step artifact landed, the original worktree is gone, and transcript guard flags 1.88M Opus billable tokens plus six Opus subagents for memory capture. |
 | changed 147 | `codex` | `019f2a04-e1eb-7b41-9e8d-1b96c75ddc86` | Active full-stack review thread. This is the current still-running Codex goal session, so it is intentionally deferred as a prompt-vs-done target until the run has a stable endpoint. Reviewing it midstream would turn the audit into a false closeout of its own in-progress work. |
 | changed 148 | `claude` | `2227b1d3-dd6a-4926-879c-cfcd6c24acde` | Fleet permission-prompt / human-owner home run. Claude correctly identified that hand-maintained owner docs rot and moved six human-gated atoms into durable GitHub issues, while adjacent code paths later made the FDA guard and bash hook canonical on `main`. The defects are that the session spent 1.69M Opus billable tokens, mutated live/home state, left no direct session commit, and the `L-AGENT-BASH-PROMPT` issue/lever is now stale because the live hook matches the current repo source. |
+| changed 149 | `opencode` | `ses_10a1ed17effezInw4p4MT8BH7e` | Odyssey film companion run. OpenCode did satisfy the prompt's core artifact by opening merged green PR #101 with `studium/film/odyssey.yaml`, and current `scripts/studium-validate.py` passes. The queue over-attributed 36 files because the OpenCode user message carried a huge dirty patch-summary context; the actual PR changed only `studium/film/odyssey.yaml` and `tasks.yaml`. This review fixed the current stale film backlog so completed companions are no longer advertised as active first-pass tasks. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -9272,6 +9273,68 @@ PYTHONPATH=cli/src python3 -m pytest cli/tests/test_obligations_view.py cli/test
 ```
 
 Result: private prompt extraction matches row `changed 148`; transcript guard fails only on Opus billable budget; current hook/library/lever focused tests pass; all six graph issues exist and remain open; the bash prompt hook is already installed and byte-identical to repo source, making `L-AGENT-BASH-PROMPT`/#183 a stale pending-human signal unless there is a separate remaining acceptance rule.
+
+### OpenCode's Odyssey film companion shipped, but dirty patch context made the session look 18 times larger than it was
+
+Severity: low for current artifact quality, medium for dispatch hygiene. The requested content exists on `main` and validates. The defect is attribution and lifecycle cleanup: the OpenCode database carried a large pre-existing patch summary as the user message, and the Studium expansion backlog continued to re-advertise completed film tasks after the companion landed.
+
+Evidence:
+
+- Queue row `changed_review[149]` points at OpenCode session `ses_10a1ed17effezInw4p4MT8BH7e`, titled `Odyssey film companion (return/exile/recognition)`, run from `/Users/4jp/Workspace/limen` on `2026-06-23T19:07:17Z` through `2026-06-23T19:16:53Z` with model `deepseek-v4-flash-free`, cost `0`, and a child explore session `ses_10a1e1b4affe63kC4zfOeMTBGQ`.
+- Private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-changed-149-opencode-odyssey-film-prompts.jsonl`: `2` prompt records, `2` unique prompt hashes, and `767` prompt bytes. One record is the direct task prompt; one is the child explore prompt to extract Odyssey force arcs from the existing music files.
+- First-layer prompt, redacted to intent: complete `studium-film-odyssey` by authoring an Odyssey film companion around return/exile/recognition, run `scripts/studium-validate.py`, and open one green PR.
+- OpenCode created PR #101, `feat(studium): Odyssey film companion (return/exile/recognition)`. It merged on `2026-06-23T20:13:55Z` at merge commit `8affcca`, with green `python`, `validate`, `worker`, and `web` checks.
+- PR #101 changed exactly two files: `studium/film/odyssey.yaml` and `tasks.yaml`. The companion file is present on current `main` and contains `12` force-matched films plus the set-aside literal adaptation.
+- Current `python3 scripts/studium-validate.py` passes: `213` arcs valid and `18` film companions valid.
+- The queue's `36` changed-file attribution is wrong for the durable PR. OpenCode's first user message embedded a `2,090,102` byte patch-summary context with `33` diffs from the dirty live checkout, including heartbeat, Aeneid/Analects/Mahabharata/Metamorphoses content, film YAML, music YAML, and `tasks.yaml`. Those were context bleed, not the session's final PR.
+- The session noticed branch contamination while running and attempted to rebranch: it stated that it needed to separate Odyssey from existing Aeneid work, reverted/recreated the Odyssey file on a clean branch, and then opened PR #101.
+- Current `tasks.yaml` has since drifted: `studium-film-odyssey` is marked `done` through later Jules PR #367, even though #367 is still open and only changes `studium/STUDIUM-PLAN.md` / `studium/expansion-backlog.yaml`. The content owner remains merged PR #101.
+- This review fixed the current source of re-dispatch churn in `studium/expansion-backlog.yaml`: completed film companions with existing files are now commented as `# DONE`; only Metamorphoses, Journey to the West, and the gated tier-2 batch remain active in that first-pass film backlog.
+
+Ideal prompt diff:
+
+- Ideal form: dispatch a clean worktree with only the Odyssey task context, author `studium/film/odyssey.yaml`, validate, open one PR, and retire the backlog row in the same lifecycle surface.
+- Actual form: OpenCode completed the core artifact and PR, but it started with a huge dirty patch summary, so downstream review attributed unrelated files to the session. The backlog row cleanup was left to later churn and remained stale on current `main` until this review.
+- Ideal queue form: changed-file evidence should reflect the final PR diff, not every dirty patch visible in the message context.
+- Actual queue form: `changed_file_count=36` overstated the final durable change set by a factor of `18`.
+
+Outcome:
+
+- Credit row `changed 149` for a real, merged, validated content artifact: `studium/film/odyssey.yaml`.
+- Do not credit the row for the 35 sibling files in the queue changed-file list; those were dirty-context bleed or unrelated concurrent Studium/heartbeat churn.
+- Credit this review for the current backlog repair that stops already-authored film companions from being reissued as first-pass work.
+
+What was fucked up:
+
+- The dispatcher fed OpenCode a dirty context payload rather than a clean task packet, polluting downstream reconstruction.
+- Board lifecycle and expansion backlog lifecycle diverged: the content PR merged, but the backlog still advertised the task and later agents were asked to handle bookkeeping for already-authored work.
+- PR #367 was recorded as the later `done` owner in `tasks.yaml` even though it remains open and is bookkeeping-only. That is a board semantics smell: "PR open" is not the same as "merged durable artifact."
+
+Verification:
+
+```bash
+sqlite3 -json -readonly "file:$HOME/.local/share/opencode/opencode.db?mode=ro&immutable=1" "select id,parent_id,slug,directory,title,version,agent,model,cost,tokens_input,tokens_output,tokens_reasoning,tokens_cache_read,summary_files,summary_additions,summary_deletions,datetime(time_created/1000,'unixepoch') as created,datetime(time_updated/1000,'unixepoch') as updated from session where id='ses_10a1ed17effezInw4p4MT8BH7e' or parent_id='ses_10a1ed17effezInw4p4MT8BH7e' order by time_created;"
+jq -s '{records:length, unique_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), body_kinds:([group_by(.body_kind)[] | {body_kind:.[0].body_kind,count:length}])}' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-changed-149-opencode-odyssey-film-prompts.jsonl
+gh pr view 101 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+git show --stat --oneline 8affcca
+python3 scripts/studium-validate.py
+gh pr view 367 --repo organvm/limen --json number,title,state,files,statusCheckRollup,url
+python3 - <<'PY'
+from pathlib import Path
+import re, yaml
+p=Path('studium/expansion-backlog.yaml')
+yaml.safe_load(p.read_text())
+files={x.stem for x in Path('studium/film').glob('*.yaml') if x.name!='object-taxonomy.yaml'}
+active=[]
+for i,line in enumerate(p.read_text().splitlines(),1):
+    m=re.search(r'id: studium-film-([^,} ]+)', line)
+    if m and not line.lstrip().startswith('#'):
+        active.append((i,m.group(1),m.group(1) in files))
+print(active)
+PY
+```
+
+Result: PR #101 is merged and green; current Studium validation passes; PR #367 is open bookkeeping-only; the repaired expansion backlog now has no active first-pass film row whose companion file already exists.
 
 ## Remaining Review Queue
 
