@@ -7115,6 +7115,62 @@ PY
 
 Result: transcript guard fails only on Opus budget; prompt extraction matches row `127`; PR #322 is merged with PR Gate success; current host settings contain the corrected force-push ask rules.
 
+### Claude's UMA docs row found real README inaccuracies, but the commit died in a deleted worktree
+
+Severity: medium. The session's code reading was useful and mostly correct for its timestamp, but it produced only an unpushed local commit. Later UMA work partially superseded it, leaving one of the same documentation gaps alive today.
+
+Evidence:
+
+- Reconstruction row `128` targets Claude session `5430ecb1-6a17-47d4-a026-09264a9c332d`, rooted in deleted worktree `/Users/4jp/Workspace/.limen-worktrees/gen-organvm-universal-mail--automation-docs-0624-dc84`, from 2026-06-25T17:45:30Z through 2026-06-25T17:47:27Z.
+- The first-layer task body was `GEN-organvm-universal-mail--automation-docs-0624`: derive accurate README usage docs for `organvm/universal-mail--automation` from actual entrypoints, install/run commands, key commands, and flags; no invented features or TODOs.
+- The session read `README.md`, `cli.py --help`, subcommand help, `scripts/intake_now.sh`, `deploy.sh`, `pyproject.toml`, and `setup.py`.
+- It made a narrow README diff removing three inaccurate claims: `cli.py` installed as `umail`, `--version` as a global flag, and `--limit` being reduced to a free cap when unlicensed. It also added the IMAP/mailapp connection flags to the label command table.
+- The vanished worktree commit was `c37deac` with message `Fix three inaccuracies in README CLI Reference section`, changing `README.md` by 7 insertions and 2 deletions. It was not pushed: GitHub has no commit for `c37deac`, PR search has no matching PR, and surviving local UMA clones do not contain that commit.
+- Current canonical UMA `main` at `/Users/4jp/Workspace/.home-cartridge/Code/organvm/universal-mail--automation` has later docs commits. PR #112 (`c3a6d01`) removed the unlicensed-cap claim, and current README no longer says `installed as umail`. PR #115 (`500009e`) later added `--version` to the CLI so the package smoke test would pass.
+- Current drift remains: `python3 cli.py label --help` still exposes `--host`, `--user`, `--password`, `--account`, and `--gmail-extensions`, while current `README.md`'s label flag table omits them. Current `cli.py --help` also has many more commands and `--version`, while the README still describes the old eight-subcommand surface.
+- Full private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-128-claude-uma-docs-prompts.jsonl`: 31 prompt-surface records, 22 unique prompt hashes, 72,269 prompt bytes. Surfaces are `queue.enqueue` 1, `message.user` 24, and `last-prompt` 6.
+
+Ideal prompt diff:
+
+- Ideal docs task form: inspect actual CLI/source, patch README, run a narrow doc/CLI verification command, push a branch, open a PR, wait for CI, and record the PR/commit receipt.
+- Actual form: inspect and local patch were good; the session committed locally and stopped. No push, no PR, no CI, no durable handoff survived worktree deletion.
+- Ideal follow-up form: when later docs/code PRs touch the same section, reconcile all discovered inaccuracies rather than fixing only the one that blocked CI.
+- Actual later state: later PRs corrected some claims and then reintroduced `--version` as valid behavior, but did not update the README's command/flag surface.
+
+Outcome:
+
+- Credit the row for identifying real README inaccuracies and producing a narrow local diff.
+- Do not credit it with landed work. The durable repo state came from later UMA PRs, not from `c37deac`.
+- Current UMA still needs a fresh README/CLI sync pass for the label provider flags and expanded command surface if the docs are intended to be current.
+
+What was fucked up:
+
+- The session stopped at a local commit in a disposable worktree. That is the exact failure mode this audit is surfacing: work can be "done" in transcript while being absent from the durable repository.
+- The local commit hash was reported to the user, but no PR or remote receipt was created. Once the worktree disappeared, the diff became transcript-only evidence.
+- Later task generation did not reconcile the lost patch as a first-class predecessor; PR #112 fixed only part of the same README area, and PR #115 changed CLI truth again without bringing the README along.
+- The queue marked this as no durable receipt, which was correct.
+
+Verification:
+
+```bash
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace--limen-worktrees-gen-organvm-universal-mail--automation-docs-0624-dc84/5430ecb1-6a17-47d4-a026-09264a9c332d.jsonl
+python3 - <<'PY'
+import json
+from collections import Counter
+from pathlib import Path
+p = Path('/Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-128-claude-uma-docs-prompts.jsonl')
+rows = [json.loads(line) for line in p.read_text(encoding='utf-8').splitlines() if line.strip()]
+print(len(rows), len({r['prompt_hash'] for r in rows}), sum(r['prompt_bytes'] for r in rows), Counter(r['surface'] for r in rows), Counter(r['session_id'] for r in rows))
+PY
+gh api repos/organvm/universal-mail--automation/commits/c37deac --jq '{sha:.sha, message:.commit.message, html_url:.html_url}' || true
+gh pr view 112 --repo organvm/universal-mail--automation --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+gh pr view 115 --repo organvm/universal-mail--automation --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+python3 cli.py label --help
+python3 cli.py --help
+```
+
+Result: transcript guard passed at 135,370 Sonnet billable tokens; prompt extraction matches row `128`; `c37deac` is absent from GitHub; PR #112 and PR #115 are merged later partial/superseding evidence; current CLI help still exposes flags and commands missing from current README.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
