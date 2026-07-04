@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T12:01:02Z`
+Generated: `2026-07-04T12:06:52Z`
 
 ## Scope
 
@@ -87,6 +87,7 @@ Generated: `2026-07-04T12:01:02Z`
 | changed 129 | `claude` | `08b4f87e-10c4-485d-84c4-5094ef74e2fa` | Peer-audited behavioral-blockchain CI fix attempt. Claude spent a narrow CI/type-fix task mostly fighting sandboxed `npm`/`npx`/`gh`/settings permissions, then fanned out Opus subagents for static diagnosis and hit the monthly spend wall. The session left no durable code diff beyond a protected `.claude/settings.local.json` attempt; a later green PR #726 with the same title is separate, broad, unmerged, and stale, while current default-branch health comes from later PR #766. |
 | changed 130 | `claude` | `a585c8ed-3af9-46c2-92cd-20d87153d16f` | Materialize fold / board-as-event-log projection. The prompt challenged recurring 30k-line dirty `tasks.yaml` churn and rejected mechanical splits; Claude landed the evolved Step 1 through PR #543: a pure `board = fold(events)` reducer, seed/diff functions, CLI proof, and tests. Current `main` still verifies byte-identical materialization, and follow-up PR #549 fixed a TOCTOU false-negative; the session still overran Opus budget and left `verify-whole.sh` weaker than the full CI gate matrix. |
 | changed 131 | `claude` | `3625ab3d-c647-412e-8336-28d75a73f874` | Session-meta typing/restoration branch. Claude correctly diagnosed that the generated typing packet was really restoring deleted ingest modules and opened PR #133 with a local `111`-test claim, but that PR never merged, never got checks, and is now stale behind current `main`. Durable completion came from merged green PR #131 restoring the ingest surface plus later typing PRs such as #163; the open generated typing PR family needs harvest/closure rather than merge. |
+| changed 132 | `opencode` | `ses_0e6e14fb2ffetCps4cjgOEZ2hP` | Mirror Mirror closed-PR recovery reconnaissance. The prompt asked OpenCode to recover a closed unmerged deploy-ready PR, but the session made no code diff: OpenCode inspected `tasks.yaml`, PR #64, Mirror Mirror PR state, Netlify/GitHub Pages headers, and current CI, then stopped when workflow-file reads were rejected. The 22 changed-file queue attribution is prompt-context/patch-snapshot bleed from pre-existing Limen dirty state, not OpenCode-authored work. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -3900,6 +3901,63 @@ git -C /Users/4jp/Workspace/session-meta status --short --branch
 ```
 
 Result: private prompt extraction matches row `131`; transcript guard passes with 380,835 billable tokens and no Opus/subagent violations; the original worktree is absent; PR #133 is open with no checks and is diverged 1 ahead / 25 behind current `main`; PR #131 merged the ingest restoration with green Python matrix checks; PR #163 and main CI run `28678320317` are green; current main contains the ingest modules; the local `session-meta` checkout is dirty and was left untouched.
+
+### OpenCode's Mirror Mirror recovery session found the live problem, but authored no recovery diff
+
+Severity: medium for dispatch credibility, low for direct code risk. This is a clean example of attribution bleed: the queue row lists 22 Limen files, but OpenCode's own session record says zero changed files. The row should be credited for useful reconnaissance and debited for failing to create the recovery task, fix CI, or leave a durable PR/commit receipt.
+
+Evidence:
+
+- Queue row `changed_review[132]` points at OpenCode session `ses_0e6e14fb2ffetCps4cjgOEZ2hP`, rooted at `/Users/4jp/Workspace/limen`, running from 2026-06-30T15:21:09Z through 2026-06-30T15:22:38Z.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-132-opencode-mirror-mirror-recovery-prompts.jsonl`: `1` prompt-surface record, `1` prompt hash, and `5,594` prompt bytes.
+- In redacted intent form, the FLAME-wrapped prompt asked OpenCode to complete `RECOVER-REV-organvm-mirror-mirror-revenue-ship-0627`: recover a closed unmerged "Drive Mirror Mirror to deploy-ready" task without reopening the completed original task lifecycle.
+- OpenCode ran as `build` on `deepseek-v4-flash-free`, with `46,566` input tokens, `3,237` output tokens, `3,197` reasoning tokens, `619,392` cache-read tokens, and zero recorded cost.
+- The session row in `~/.local/share/opencode/opencode.db` reports `summary_additions: 0`, `summary_deletions: 0`, `summary_files: 0`, and `summary_diffs: null`.
+- The apparent 22 changed files are not this session's authored diff. The first user message includes a preloaded `summary.diffs` list for 20 already-dirty Limen files, and later OpenCode `patch` parts snapshot more Limen files while it is reading context. No `write`, `edit`, commit, push, or PR creation happens in the target repo.
+- The useful reconnaissance was real: OpenCode found that PR #64 was closed unmerged, identified `/Users/4jp/Workspace/a-organvm/mirror-mirror` as the local checkout, saw the dirty `pr32` branch, and noticed that other deploy-ready PRs had already merged.
+- It correctly checked live surfaces: Netlify returned HTTP 200, GitHub Pages returned HTTP 404, and main-branch GitHub Actions were failing on 2026-06-30.
+- It then tried to inspect `.github/workflows/ci.yml` and `.github/workflows/deploy.yml` in the Mirror Mirror checkout. Both `read` tool calls were rejected by the OpenCode permission layer, and the transcript ends immediately after those rejected reads. There is no final answer, no recovery task write, no commit, and no PR.
+- Current PR #64 is closed unmerged, with one two-file commit and a historically green `Lint, build & test` check. It remains a stale branch, not a completion receipt.
+- Durable Mirror Mirror progress came from adjacent and later work, not this OpenCode session. PR #63 and PR #97 both merged deploy-ready work with green checks. PR #89 also merged later, but current `main` CI is red at run `28676057905` because `package.json` and `package-lock.json` disagree on Vitest and related transitive versions.
+- As of this review, Netlify still returns HTTP 200 and GitHub Pages still returns HTTP 404. Open PR #105 has a green `Lint, build & test` check and is one commit ahead of `main`, but it is not merged.
+
+Ideal prompt diff:
+
+- Ideal recovery packet: verify the closed PR, create a fresh recovery task if required by lifecycle rules, inspect current target-repo state, fix the concrete deploy-ready blocker, and leave a green PR/commit receipt.
+- Actual form: OpenCode inspected the landscape and discovered the right current problem, but stopped at workflow-read permission rejection and produced no durable artifact.
+- Ideal attribution form: changed-file accounting should separate prompt-context diffs from tool-authored diffs.
+- Actual form: the row's 22 changed files are prompt-context/patch snapshots from Limen, while the OpenCode session summary reports zero actual file changes.
+
+Outcome:
+
+- Credit this session as reconnaissance only. It found the core truth: the specific recovery target, PR #64, was stale, while the real current blocker had become Mirror Mirror `main` CI and deployment status.
+- Do not credit it with implementing or recovering the deploy-ready task. No target-repo code changed and no recovery PR was opened.
+- Carry forward the active Mirror Mirror state separately: `main` is currently red from lockfile drift after PR #89, Netlify is live, GitHub Pages is not, and PR #105 is a green open candidate recovery branch.
+
+What was fucked up:
+
+- OpenCode treated the dispatch prompt as permission to inspect, but the tool permission layer blocked the exact workflow files needed to continue. The right finish would have been a short blocked receipt naming those rejected reads and the next command, not a silent stop.
+- The session contemplated adding a recovery task to `tasks.yaml`, but never did. That left lifecycle recovery as chat/context rather than state.
+- The full-stack review queue counted dirty prompt-context diffs as changed files. This is a pipeline bug: OpenCode `message.summary.diffs` and `patch` snapshot parts are not equivalent to authored file mutations.
+- The Mirror Mirror lifecycle remained noisy: closed/unmerged PR #64, multiple overlapping deploy-ready PRs, a red current `main`, and a green-but-open PR #105 all coexist.
+
+Verification:
+
+```bash
+jq -s '{records:length, unique_prompt_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), task_body_bytes:([.[].task_body_bytes] | add), by_surface:(group_by(.surface) | map({surface:.[0].surface, count:length})), flags:.[0].flags, title:.[0].title, cwd:.[0].cwd}' .limen-private/session-corpus/full-stack-review/session-132-opencode-mirror-mirror-recovery-prompts.jsonl
+sqlite3 -json /Users/4jp/.local/share/opencode/opencode.db "SELECT id,title,directory,summary_additions,summary_deletions,summary_files,summary_diffs,revert,agent,model,cost,tokens_input,tokens_output,tokens_reasoning,tokens_cache_read,time_created,time_updated FROM session WHERE id='ses_0e6e14fb2ffetCps4cjgOEZ2hP';"
+sqlite3 -json /Users/4jp/.local/share/opencode/opencode.db "SELECT id,session_id,time_created,time_updated,substr(data,1,1200) AS data_head,length(data) AS data_len FROM message WHERE session_id='ses_0e6e14fb2ffetCps4cjgOEZ2hP' ORDER BY time_created;"
+sqlite3 -json /Users/4jp/.local/share/opencode/opencode.db "SELECT id,message_id,time_created,time_updated,substr(data,1,800) AS data_head,length(data) AS data_len FROM part WHERE session_id='ses_0e6e14fb2ffetCps4cjgOEZ2hP' ORDER BY time_created;"
+gh pr view 64 --repo organvm/mirror-mirror --json number,title,state,createdAt,mergedAt,closedAt,headRefName,headRefOid,baseRefName,url,files,statusCheckRollup,commits
+gh pr view 97 --repo organvm/mirror-mirror --json number,title,state,createdAt,updatedAt,mergedAt,headRefName,headRefOid,baseRefName,url,files,statusCheckRollup,commits
+gh pr view 105 --repo organvm/mirror-mirror --json number,title,state,createdAt,updatedAt,mergedAt,headRefName,headRefOid,baseRefName,url,files,statusCheckRollup,commits
+gh run view 28676057905 --repo organvm/mirror-mirror --json databaseId,name,status,conclusion,headSha,displayTitle,jobs,url
+gh run view 28676057905 --repo organvm/mirror-mirror --log-failed
+curl -sI https://mirror-mirror-app.netlify.app/
+curl -sI https://organvm.github.io/mirror-mirror/
+```
+
+Result: private prompt extraction matches row `132`; OpenCode's DB session summary reports zero changed files; part inventory is one prompt text, 46 tools, 17 reasoning blocks, 5 patch snapshots, and no final receipt; PR #64 is closed unmerged; PR #97 merged green; current main run `28676057905` fails at `npm ci` because `package.json` and `package-lock.json` disagree on Vitest-related versions; Netlify returns 200; GitHub Pages returns 404; PR #105 is open and green.
 
 ### Claude domus-genoma CIFIX session failed to fix CI and should have stopped at the permission/spend wall
 
