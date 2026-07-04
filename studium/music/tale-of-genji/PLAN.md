@@ -11,7 +11,7 @@
 - **Corpus:** `japanese/tale-of-genji` (japanese_original.txt)
 - **Source rail:** https://www.aozora.gr.jp/
 - **Divisions:** 54 × Chapter
-- **Progress:** 5/54 arcs authored
+- **Progress:** 1/54 arcs authored
 
 | Chapter | dominant force | status |
 | --: | --- | :--: |
@@ -19,7 +19,7 @@
 | 2 | (author) | ✓ |
 | 3 | (author) | ✓ |
 | 4 | (author) | ✓ |
-| 5 | (author) | ✓ |
+| 5 | (author) | ☐ |
 | 6 | (author) | ☐ |
 | 7 | (author) | ☐ |
 | 8 | (author) | ☐ |
