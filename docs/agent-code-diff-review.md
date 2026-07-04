@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T00:31:24Z`
+Generated: `2026-07-04T00:36:20Z`
 
 ## Scope
 
@@ -15,6 +15,7 @@ Generated: `2026-07-04T00:31:24Z`
 | 1 | `opencode` | `ses_11427e08affe3D8jAAl5W43viB` | Exact window had no matching commits on `main`, but the matching unmerged branch is `limen/gen-organvm-limen-security-0625-57ce` at `02f256e` (`Security hardening pass on organvm/limen`). Reviewed as a reject/do-not-merge artifact. |
 | 2 | `opencode` | `ses_114c8f0c6ffeixS8gn4VxGqoHb` | Exact window matched `80d4e21f` (`feat(route): consume self-improve lane weights`). Widened window also showed related routing/meter/queue commits including `0146190` and `a6488c9`. |
 | 3 | `opencode` | `ses_1095e9b19ffe4yg9h4la7tGU4d` | Exact window had no matching commits on `main`; widened window was mostly Studium content-generation churn, not the control-plane code path reviewed here. |
+| 10 | `claude` | `3d972c29-36c6-4803-b94b-255df104f644` | Integration-organ window landed value ledger, score-dispatch, omni, ingest coverage, media atomization, and accelerator surfaces. Reviewed current `main` and found remaining malformed numeric crash paths in fail-open organs. |
 | 11 | `claude` | `f9c6b1e7-2c05-4d42-9d6a-8b08ee98a155` | Window touched watchdog, self-heal, and self-improve organs. Reviewed current `main` implementations and found remaining malformed-env crash paths in watchdog/self-heal. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -496,6 +497,48 @@ python3 -m py_compile scripts/watchdog.py scripts/self-heal.py
 
 Result: `18 passed`; compile passed.
 
+### Integration organs could crash on malformed local numerics
+
+Severity: medium for heartbeat-visible observability and value accounting.
+
+Evidence:
+
+- Claude session `3d972c29-36c6-4803-b94b-255df104f644` covers the integration-organ window that landed value-ledger, score-dispatch, omni-view, ingest-coverage, media-atomize, and accelerator surfaces.
+- The prompt/session intent was fail-open, beat-safe organs that make value, context coverage, and media atoms visible without blocking the heartbeat.
+- `scripts/ledger.py` parsed ledger record spend/sunk fields and steering thresholds with bare `int(...)` / `float(...)`.
+- `scripts/score-dispatch.py` parsed `budget_cost` with bare `int(...)` while grading resolved tasks.
+- `scripts/ingest-coverage.py` parsed manifest `atom_count` with bare `int(...)`.
+- `scripts/media-atomize.py` parsed chunk, PDF timeout, and default limit env knobs with bare `int(...)` at import or argparse construction time.
+
+Repair:
+
+- Added tolerant numeric helpers for ledger record totals and ledger steering thresholds.
+- Made score-dispatch fall back per task when `budget_cost` is malformed or boolean.
+- Made ingest coverage treat malformed atom counts as zero and normalize source keys before tallying.
+- Made media-atomize env/default numeric parsing fall back to positive defaults before preview/apply mode.
+- Added focused regressions for malformed records, board budgets, ingest manifests, and media-atomize env defaults.
+
+Touched paths:
+
+- `scripts/ledger.py`
+- `scripts/score-dispatch.py`
+- `scripts/ingest-coverage.py`
+- `scripts/media-atomize.py`
+- `cli/tests/test_ledger.py`
+- `cli/tests/test_score_dispatch.py`
+- `cli/tests/test_ingest_coverage.py`
+- `cli/tests/test_media_atomize.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_ledger.py cli/tests/test_score_dispatch.py cli/tests/test_ingest_coverage.py cli/tests/test_media_atomize.py cli/tests/test_omni_view.py cli/tests/test_accelerator.py -q
+python3 -m py_compile scripts/ledger.py scripts/score-dispatch.py scripts/omni-view.py scripts/ingest-coverage.py scripts/media-atomize.py scripts/library-preserve.py
+bash -n scripts/clone-maintenance.sh scripts/heartbeat-loop.sh
+```
+
+Result: `46 passed`; compile and shell syntax checks passed.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -606,6 +649,27 @@ Result: `18 passed`; compile passed.
 - `scripts/self-heal.py:211` applies fallback parsing to heal emit limit.
 - `cli/tests/test_watchdog.py:77` covers malformed watchdog numeric env values.
 - `cli/tests/test_self_heal.py:120` covers malformed self-heal numeric env values.
+- `scripts/ledger.py:30` defines safe integer fallback parsing for ledger values.
+- `scripts/ledger.py:40` defines finite float fallback parsing for ledger thresholds.
+- `scripts/ledger.py:85` applies safe parsing to spent totals.
+- `scripts/ledger.py:86` applies safe parsing to sunk totals.
+- `scripts/ledger.py:116` applies safe parsing to the waste-rate threshold.
+- `scripts/ledger.py:117` applies safe parsing to the win-rate threshold.
+- `scripts/ledger.py:118` applies safe parsing to the minimum-volume threshold.
+- `scripts/score-dispatch.py:41` defines positive integer fallback parsing for task costs.
+- `scripts/score-dispatch.py:92` applies safe parsing to `budget_cost`.
+- `scripts/ingest-coverage.py:29` defines non-negative integer fallback parsing for manifest counts.
+- `scripts/ingest-coverage.py:55` applies safe parsing to `atom_count`.
+- `scripts/ingest-coverage.py:56` normalizes manifest source keys.
+- `scripts/media-atomize.py:53` defines positive integer env fallback parsing.
+- `scripts/media-atomize.py:61` applies safe parsing to media chunk max.
+- `scripts/media-atomize.py:62` applies safe parsing to media chunk min.
+- `scripts/media-atomize.py:63` applies safe parsing to PDF timeout.
+- `scripts/media-atomize.py:502` applies safe parsing to default media atomize limit.
+- `cli/tests/test_ledger.py:93` covers malformed ledger numeric inputs and threshold env values.
+- `cli/tests/test_score_dispatch.py:93` covers malformed task `budget_cost` values.
+- `cli/tests/test_ingest_coverage.py:52` covers malformed manifest atom counts.
+- `cli/tests/test_media_atomize.py:184` covers malformed media atomize env values.
 
 ## Remaining Review Queue
 

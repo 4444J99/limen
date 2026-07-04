@@ -88,3 +88,16 @@ def test_idempotent_append(tmp_path: Path):
     assert "0 newly-weighed" in out2
     lines = (tmp_path / "logs" / "ledger.jsonl").read_text().splitlines()
     assert len(lines) == 2, "no duplicate records on re-run"
+
+
+def test_malformed_budget_cost_falls_back_per_task(tmp_path: Path):
+    tasks = [
+        _task("bad", "done", pr="o/r/pull/1", cost="bad"),
+        _task("bool", "archived", cost=True, attempts=2, labels=["cancelled"]),
+    ]
+    recs = {r["task_id"]: r for r in _records(_run(tmp_path, tasks, "--backfill", "--print"))}
+
+    assert recs["bad"]["budget_cost"] == 1
+    assert recs["bad"]["spent"] == 1
+    assert recs["bool"]["budget_cost"] == 1
+    assert recs["bool"]["sunk"] == 2

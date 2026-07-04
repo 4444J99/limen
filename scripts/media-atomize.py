@@ -48,9 +48,19 @@ sys.path.insert(0, str(ROOT / "cli" / "src"))
 HEAD_RE = re.compile(r"^#{1,3}[ \t]+\S.*$", re.MULTILINE)
 PARA_RE = re.compile(r"\n[ \t]*\n")
 DOC_EXTS = {".md", ".markdown", ".txt", ".text", ".rst", ".org", ".pdf"}
-MAX_CHARS = int(os.environ.get("LIMEN_MEDIA_MAX_CHARS", "4000"))
-MIN_CHARS = int(os.environ.get("LIMEN_MEDIA_MIN_CHARS", "200"))
-PDF_TIMEOUT = int(os.environ.get("LIMEN_MEDIA_PDF_TIMEOUT", "60"))
+
+
+def _env_int(name: str, default: int) -> int:
+    try:
+        value = int(os.environ.get(name, str(default)) or str(default))
+    except (TypeError, ValueError):
+        return default
+    return value if value > 0 else default
+
+
+MAX_CHARS = _env_int("LIMEN_MEDIA_MAX_CHARS", 4000)
+MIN_CHARS = _env_int("LIMEN_MEDIA_MIN_CHARS", 200)
+PDF_TIMEOUT = _env_int("LIMEN_MEDIA_PDF_TIMEOUT", 60)
 
 
 # ─── locations (derive at runtime, never pin — [[derive-never-pin-hardcodes]]) ───
@@ -489,7 +499,7 @@ def _prove_converge(idea: str, limit: int = 50) -> None:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="media-atomize — personal media → first-class Shot atoms")
     ap.add_argument("--apply", action="store_true", help="write atoms/state/log (else preview)")
-    ap.add_argument("--limit", type=int, default=int(os.environ.get("LIMEN_MEDIA_LIMIT", "50")),
+    ap.add_argument("--limit", type=int, default=_env_int("LIMEN_MEDIA_LIMIT", 50),
                     help="max source items atomized per run (bounded)")
     ap.add_argument("--src", default=None, help="docs source dir (default: Archive4T CloudDocs copy)")
     ap.add_argument("--photos-metadata", action="store_true",

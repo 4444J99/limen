@@ -47,3 +47,16 @@ def test_counts_sources_and_flags_gaps(tmp_path: Path):
 def test_fails_open_when_manifest_absent(tmp_path: Path):
     out = _run(tmp_path, None)
     assert isinstance(out, str) and "no manifest" in out, "absent manifest → graceful, not a crash"
+
+
+def test_malformed_atom_count_falls_back(tmp_path: Path):
+    manifest = [
+        {"source": "claude", "atom_count": "bad", "mtime": "2026-06-10T00:00:00+00:00"},
+        {"source": ["opencode"], "atom_count": True, "mtime": "2026-06-11T00:00:00+00:00"},
+    ]
+
+    snap = _run(tmp_path, manifest)
+
+    assert snap["atoms_extracted"] == 0
+    assert snap["blobs"] == 2
+    assert snap["sources"] == 2

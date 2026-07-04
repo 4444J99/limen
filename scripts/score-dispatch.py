@@ -38,6 +38,16 @@ PR_RE = re.compile(r"github\.com/([^/]+)/([^/]+)/pull/(\d+)")
 _RESOLVED = {"done", "archived"}
 
 
+def _positive_int(value, default: int = 1) -> int:
+    try:
+        if isinstance(value, bool):
+            return default
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return default
+    return parsed if parsed > 0 else default
+
+
 def _pr_ref(t: dict) -> str | None:
     for e in (t.get("dispatch_log") or []):
         m = PR_RE.search(str(e.get("session_id", "")))
@@ -79,7 +89,7 @@ def grade(t: dict) -> dict | None:
         return None  # open / dispatched / in_progress / non-chronic needs_human → not yet weighable
 
     pr = _pr_ref(t)
-    cost = int(t.get("budget_cost", 1) or 1)
+    cost = _positive_int(t.get("budget_cost"), 1)
     attempts = _attempts(t)
 
     if status == "done" and pr:
