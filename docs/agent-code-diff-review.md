@@ -1969,6 +1969,37 @@ PY
 
 Result: live CleanUnique mount absent; Archive4T and T7Recovery recovery roots readable; current-state JSON parsed with the expected schema/authority fields.
 
+### Positioning/inbound-magnet session is landed and generator-fixed-point clean
+
+Severity: review closure; no new patch required.
+
+Evidence:
+
+- Claude session `9388ade2-2ba4-4dd3-9571-62d910657d82` worked the inbound-magnet positioning generator, positioning docs, capture/frontdoor/discoverability surfaces, and his-hand memory notes from deleted worktree `.claude/worktrees/squishy-humming-biscuit`.
+- Transcript audit covered the parent session plus nine subagent logs: 477 usage-bearing messages, 1,331,717 billable-ish tokens, 14,476,053 cache-read tokens, Haiku-class model billing, zero expensive subagents, and no guard violations.
+- The durable work is present on `main` through the positioning commit chain, including recent reconciliation commit `2ca6896` (`feat(positioning): phase 1 - reconcile his-hand record (#589)`).
+- `scripts/generate-positioning.py` enforces no-price public output, holds `awaiting_publish` repos out of public pages/frontdoor/discoverability, and writes public/internal artifacts atomically.
+- A full `--apply`, `--frontdoor --apply`, and `--discoverability --apply` pass produced no tracked diff, so generated positioning artifacts match the current seeds.
+
+Outcome:
+
+- No code patch was needed for this row.
+- Prompt/session diff is closed as landed and fixed-point verified.
+- Four authored repos remain intentionally held behind `awaiting_publish`: `organvm/mirror-mirror`, `organvm/the-invisible-ledger`, `organvm/domus-genoma`, and `organvm/session-meta`.
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_generate_positioning.py cli/tests/test_positioning_organ.py -q
+LIMEN_ROOT=/Users/4jp/Workspace/limen python3 scripts/generate-positioning.py --apply
+LIMEN_ROOT=/Users/4jp/Workspace/limen python3 scripts/generate-positioning.py --frontdoor --apply
+LIMEN_ROOT=/Users/4jp/Workspace/limen python3 scripts/generate-positioning.py --discoverability --apply
+git diff --stat -- docs/positioning positioning-seeds.json scripts/generate-positioning.py cli/tests/test_generate_positioning.py cli/tests/test_positioning_organ.py
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-squishy-humming-biscuit/9388ade2-2ba4-4dd3-9571-62d910657d82 --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000 --out /tmp/rank-9388-audit.json
+```
+
+Result: `24 passed`; full positioning apply pass held the four private repos and produced no tracked diff; transcript audit passed without violations.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
