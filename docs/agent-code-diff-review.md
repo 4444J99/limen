@@ -5015,6 +5015,71 @@ rg -n "Bhagavad Gita .*4/18|Progress:.*4/18" studium/music/PLAN.md studium/music
 
 Result: private prompt extraction has `1` record; OpenCode produced useful local chapter 2-4 content but did not create the requested green PR; PR #135 was closed/red, PR #111 is a false receipt for this prompt, and Jules PR #345 is the actual durable green delivery. Current Studium validation passes.
 
+### Claude login-flap session fixed a real fleet auth race, but needed repeated closeout correction
+
+Severity: high for fleet reliability; medium for process hygiene and direct-main receipts.
+
+Evidence:
+
+- Queue row `95` points at Claude session `05519aef-808f-422e-ae0e-2493c6a38003`, titled `login-successful`, run from `/Users/4jp/Workspace/limen` on 2026-06-23T18:46:46Z through 2026-06-24T13:04:13Z.
+- The compact prompt digest has `22` human prompts. Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-95-claude-login-flap-prompts.jsonl` (`249` records, including tool-result and subagent prompt surfaces).
+- In redacted intent form, the prompt layer began with `/login` and a screenshot question, then escalated to "figure out the whole entire picture and solve it root to leaf," then explicitly rejected menu/punt handling: hanging tasks must not sit on the user or in memory; the session/worktree lifecycle had to be fully closed with "full permissions."
+- The useful diagnosis was real: concurrent Claude Code processes on macOS shared one rotating Keychain credential, so fleet `claude -p` work could lose refresh-token races and surface recurring `Not logged in` failures.
+- The durable auth fix landed directly on `main` as `d8a4295` (`fix(dispatch): isolate fleet claude auth from the interactive Keychain (login flap)`), touching `cli/src/limen/dispatch.py`, `scripts/claude-fleet-auth-probe.sh`, and `scripts/set-credential.sh`.
+- `d8a4295` added a Claude auth-blip detector, one retry for transient login flaps, fleet-only `LIMEN_CLAUDE_AUTH_TOKEN` / `LIMEN_CLAUDE_API_KEY` cascade, and explicit removal of `CLAUDE_CODE_OAUTH_TOKEN` from lane env.
+- The his-hand/obligations side landed directly on `main` as `9aba5b6`, adding the then-current `his-hand-levers.json` superset and `_union_levers()` renderer behavior in `scripts/obligations-view.py`.
+- Later mainline work evolved the same class into the credential-wall model: `cbeed10` / PR #329 added `scripts/credential-wall.py` and the aggregate walls, and current `scripts/creds-hydrate.py` keeps the Claude credential lane parked with `enabled: False` because the Rung-0 login-flap handler still owns the active path.
+- Current git proves `d8a4295` is an ancestor of both `HEAD` and `origin/main`; there is no surviving `*claude*credential*` / `*auth*` branch for this session.
+
+Ideal prompt diff:
+
+- Ideal form: root-cause the recurring login flap, deploy the least-human-burden fleet fix, put any unavoidable credential/browser action in the durable wall, and close the session with no loose branch/worktree state.
+- Actual Claude form: it reached that end state, but only after the user rejected a menu-style decision, rejected "owned by you" as a closeout, rejected memory-file-only ownership, and then explicitly opened the "finish it all" gate.
+- Ideal receipt form: one PR or a clearly named direct-main receipt with post-merge checks. Actual receipt was direct-to-main commits with no PR association for `d8a4295` or `9aba5b6`.
+- Ideal current-state form: the session's final claim that `L-CLAUDE-AUTH` surfaces in the obligations face was true for that moment, but current `main` has since retired/moved that class into the credential-wall model. The durable current truth is the auth fix plus credential-wall registration, not the old lever id.
+
+Outcome:
+
+- No code patch was needed in this review pass. The core auth fix is still present and covered by tests.
+- The private prompt artifact for row `95` was added under `.limen-private/session-corpus/full-stack-review/`.
+- Current focused tests pass: `python3 -m pytest cli/tests/test_dispatch.py cli/tests/test_obligations_view.py -q` reports `39 passed`.
+- `python3 scripts/credential-wall.py --check` reports all registered token/secret/login/env atoms homed.
+- `bash scripts/no-tasks-on-me.sh` currently fails, but for two unrelated landed branches (`limen/heal-cifix-organvm-limen-449-a159` and `limen/heal-cifix-organvm-limen-450-fc3a`) that need reaping; the auth/login row itself is not the live blocker.
+
+What was fucked up:
+
+- The first assistant response asked what "login" meant instead of using the immediately available `/login` context and screenshot evidence.
+- Claude initially offered a spend-vs-free menu instead of deriving the cascade the user expected; the user had to push it away from "which option?" framing.
+- The first closeout put the remaining setup-token/probe/deploy atoms back on the user and in a Claude memory file. The user correctly forced durable ownership in the wall/obligations model.
+- The session fought contended `MEMORY.md` writes while sibling sessions were editing it, and it had to back away to avoid clobbering live memory state.
+- A cherry-pick accidentally swept in `scripts/heartbeat-loop.sh`; Claude had to split it back out, then skip it during rebase because the same fix had already landed as #187.
+- The final delivery bypassed PR review. That may have been permitted by the user's "full permissions" gate, but it is weaker as a public receipt than a green PR.
+- One final assertion became stale: `L-CLAUDE-AUTH` no longer exists in current `his-hand-levers.json`; the credential class is now represented by credential-wall/creds-hydrate ownership while the Rung-0 dispatch fix remains active.
+
+Verification:
+
+```bash
+jq '.changed_review[95]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-95-claude-login-flap-prompts.jsonl
+sed -n '1,120p' /Users/4jp/.claude/jobs/5e1004b3/tmp/digests/05519aef-808f-422e-ae0e-2493c6a38003.prompts.txt
+sed -n '220,520p' /Users/4jp/.claude/jobs/5e1004b3/tmp/digests/05519aef-808f-422e-ae0e-2493c6a38003.assistant.txt
+sed -n '1,220p' /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/memory/claude-login-flap-credential-race.md
+sed -n '1,220p' /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/memory/his-hand-tasks-hang-in-permanent-registry.md
+git show --stat --oneline --decorate d8a4295
+git show --stat --oneline --decorate 9aba5b6
+gh api -H 'Accept: application/vnd.github+json' repos/organvm/limen/commits/d8a4295/pulls --jq '[.[] | {number,title,state,merged_at,html_url}]'
+gh api -H 'Accept: application/vnd.github+json' repos/organvm/limen/commits/9aba5b6/pulls --jq '[.[] | {number,title,state,merged_at,html_url}]'
+git merge-base --is-ancestor d8a4295 HEAD
+git merge-base --is-ancestor d8a4295 origin/main
+rg -n "LIMEN_CLAUDE_AUTH_TOKEN|LIMEN_CLAUDE_API_KEY|ANTHROPIC_AUTH_TOKEN|_is_auth_blip|claude-fleet-auth-probe" cli/src scripts his-hand-levers.json docs organs institutio
+python3 -m pytest cli/tests/test_dispatch.py cli/tests/test_obligations_view.py -q
+bash -n scripts/claude-fleet-auth-probe.sh scripts/set-credential.sh
+python3 scripts/credential-wall.py --check
+bash scripts/no-tasks-on-me.sh
+```
+
+Result: private prompt extraction has `249` records; the session fixed and deployed a real auth recurrence; current focused tests and credential-wall checks pass; no auth-fix branch remains. Residual live hygiene exists outside this row in branch reaping.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
