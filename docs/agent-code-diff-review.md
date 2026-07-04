@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T07:57:12Z`
+Generated: `2026-07-04T08:02:47Z`
 
 ## Scope
 
@@ -88,6 +88,7 @@ Generated: `2026-07-04T07:57:12Z`
 | 102 | `claude` | `303e319e-eb3f-4914-b423-c8ea60a64bee` | Visual-home / owner-ledger correction run. The session did useful recovery work: it proved PR #100's phantom required-check block, ran browser/a11y/perf verification with system Chrome, pushed fixes to `feat/visual-home`, and wrote a durable center-of-gravity lesson. It also demonstrates the failure it named: a late artist aside was inflated into an ETCETER4 go-live thread, final closure claims overstated current truth, PR #100 remains open/blocked, the claimed personal ledger path is absent on this host, and the memory compaction target has already drifted. |
 | 103 | `claude` | `0c1725b4-9776-4d87-9783-3e67151968f4` | The Invisible Ledger typing pass. The prompt asked Claude to remove worst `any` hotspots in `organvm/the-invisible-ledger` and keep build/tests green. Claude authored a broad 41-file branch and pushed PR #57, but local verification was narrower than claimed: `tsc` still had 10 "pre-existing" errors and CI failed at lint before tests/build ran. PR #57 is still open, conflicting, and unmerged; current green `main` came later through other deploy-ready work, and `origin/main` does not contain the new `src/lib/drill-types.ts`. |
 | 104 | `codex` | `019f1300-f46e-7803-bbe2-87e355146df0` | Workstream kickstart / lifecycle review run. The prompt sequence asked for prior-session review, prompt-vs-work recalculation, immediate "what next" triage, triptych checkpointing, a universal terminal start command, Domus package revival orientation, and notification-provider clarification. Codex produced useful board repair, lifecycle/workstream commits, focused verification, and a private prompt extract, but the session was highly overloaded: it mixed review, board mutation, Portvs preservation, universal launcher design, Domus orientation, and Warp/Claude notification routing. Durable workstream/lifecycle commits are on `main`; later Warp provenance and Portvs branch advances are adjacent continuations and should not be collapsed into this one row. |
+| 105 | `opencode` | `ses_0e6e2d3c1ffexKkNl00evfeU1R` | Limen CI recovery run. The prompt asked OpenCode to recover `RECOVER-GEN-4444j99-limen-ci-green-0620` after prior CI-green PRs closed unmerged. The useful outcome is real: commit `d8d2b5c` is on current `origin/main`, added the missing `web/app` `npm ci` step to the `verify` job, and GitHub run `28455805115` passed all jobs. The queue's 36-file changed surface is attribution noise; the actual commit changed one workflow file, and the final receipt over-described the `plutil` fix because that guard had already landed in PR #487. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -5656,6 +5657,69 @@ gh pr list --repo organvm/portvs --state all --head work/triptych-story --json n
 ```
 
 Result: private prompt extraction has `26` direct user records; the Codex transcript has `2725` records; row-owned workstream/lifecycle commits are on current `origin/main`; focused tests passed `63 passed`; shell syntax, Python compile, and task-board validation pass; `6fb678e` Warp provenance is not on `origin/main`; Portvs triptych branch is preserved remotely and PR #1 is open but has advanced beyond the row-104 checkpoint.
+
+### OpenCode CI recovery fixed main, but the review queue overstated the authored diff
+
+Severity: low-to-medium; the target `main` CI failure was genuinely fixed, but the session still shows attribution, receipt, and recovery-loop hygiene problems.
+
+Evidence:
+
+- Queue row `105` points at OpenCode session `ses_0e6e2d3c1ffexKkNl00evfeU1R`, titled `Recover 4444J99/limen CI green`, rooted at `/Users/4jp/Workspace/limen`, running on 2026-06-30T15:19:30Z through 2026-06-30T15:30:19Z.
+- OpenCode database metadata: model `deepseek-v4-flash-free`, cost `0`, 96,428 input / 8,051 output / 7,689 reasoning / 5,966,976 cache-read tokens.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-105-opencode-limen-prompts.jsonl` (`1` record). It now stores both the full prompt body and the extracted task prompt, after normalization from OpenCode's quoted text encoding.
+- In redacted intent form, the prompt asked OpenCode to complete `RECOVER-GEN-4444j99-limen-ci-green-0620`: recover a closed PR task for making `organvm/limen` CI green, because the original task had already reached `done` and AGENTS lifecycle rules required a fresh task instead of reopening completed work.
+- The queue listed 36 changed paths across CI, Ruff config, dispatch code/tests, capacity docs, organ files, many scripts, `tasks.yaml`, and web API code. That is not the session-authored diff.
+- The actual session-owned commit is `d8d2b5cf31ae7d4399677d6efd6e43496b1df916` (`limen: fix CI regression - plutil guard + missing npm ci in verify job`), authored 2026-06-30T11:23:55-04:00.
+- `d8d2b5c` is an ancestor of current `origin/main` and touched only `.github/workflows/ci.yml`: it renamed the verify dependency step to `Install Python dependencies` and added a new `Install Node dependencies` step running `npm ci` in `web/app`.
+- GitHub Actions run `28455805115` is the push run for `main` at `d8d2b5c`, status `completed`, conclusion `success`. Jobs `web`, `python`, `worker`, `python-311`, and `verify` all passed.
+- The green `verify` job explicitly includes the new `Install Node dependencies` step followed by successful `Run whole-repo verification (verify-whole.sh)`.
+- The final OpenCode receipt correctly identified the missing `web/app` install as the commit's actual fix, but its root-cause framing included `verify-whole.sh`'s unconditional `plutil` as part of the two-bug chain even though `scripts/verify-whole.sh` was not changed by `d8d2b5c`; that guard had already landed just before in PR #487 / commit `f46fab3`.
+- Related PR history shows a recovery-loop smell: PRs #49, #127, and #196 for `GEN-4444j99-limen-ci-green-0620` were closed unmerged, while PR #42 had merged earlier. Row `105` repaired the live `main` gate directly rather than closing through a fresh PR.
+
+Ideal prompt diff:
+
+- Ideal form: recover the closed CI-green task by identifying the live failing check, making the minimum fix, and leaving an unambiguous receipt tying the prompt, commit, task lifecycle, and green run together.
+- Actual form: OpenCode did identify and fix the active `main` failure with a minimal one-file workflow change, then cited a green push run on `main`.
+- Ideal attribution form: classify the row's authored diff as the one workflow commit and treat the 36-file queue path list as surrounding board/rebase context.
+- Actual attribution surface: the queue made this look like a broad Limen mutation, obscuring that the useful code change was a narrow CI dependency install.
+- Ideal receipt form: say "the `plutil` guard landed in PR #487, and this session added the missing `web/app` install in `d8d2b5c`."
+- Actual receipt form: the final answer included that nuance in the fix bullets, but the root-cause summary and commit message still read as if this session fixed both bugs.
+- Corrected ideal form for recovery tasks: if the old task was already `done`, the new recovery task needs either a fresh PR receipt or an explicit direct-main policy/receipt. "Remote dispatch-heal cleaned the task" is acceptable only if the board mutation is proven from live state, not inferred from a rebase.
+
+Outcome:
+
+- No code patch was made by this review pass.
+- Row `105` is classified as useful and landed. It made `main` CI green with a narrow, correct workflow fix.
+- The queue's changed-file surface should be ignored for code-review purposes; the reviewable diff is commit `d8d2b5c` plus the green run `28455805115`.
+- This row should still feed two process fixes: queue attribution must distinguish authored commits from ambient changed-file snapshots, and recovery tasks need clearer PR-vs-direct-main receipt policy.
+
+What was fucked up:
+
+- The queue materially overstated the authored diff: 36 files listed versus one file actually changed by the fix commit.
+- The commit message overclaimed the patch scope by naming the `plutil` guard even though the commit did not change `scripts/verify-whole.sh`.
+- Multiple prior CI-green recovery PRs had already churned closed/unmerged, so the row represents a fleet recovery-loop symptom, not just a single successful fix.
+- The final receipt did not name the exact workflow job set or explain that the green evidence was a push to `main`, not a newly merged PR.
+- The task-board closeout was delegated to "remote dispatch-heal during rebase" in the final receipt; that may be true, but it is weaker than a direct live-board evidence line in the session.
+
+Verification:
+
+```bash
+jq '.changed_review[105]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-105-opencode-limen-prompts.jsonl
+jq -r '{prompt_bytes:(.prompt|length), task_prompt_bytes:(.task_prompt|length), has_prompt:(.prompt != null), has_task:(.task_prompt|length > 0)}' .limen-private/session-corpus/full-stack-review/session-105-opencode-limen-prompts.jsonl
+sqlite3 -json "$HOME/.local/share/opencode/opencode.db" "select id,parent_id,slug,directory,title,version,agent,model,cost,tokens_input,tokens_output,tokens_reasoning,tokens_cache_read,tokens_cache_write,datetime(time_created/1000,'unixepoch') as created, datetime(time_updated/1000,'unixepoch') as updated from session where id='ses_0e6e2d3c1ffexKkNl00evfeU1R' or parent_id='ses_0e6e2d3c1ffexKkNl00evfeU1R' order by time_created;"
+git show --stat --oneline --decorate d8d2b5c
+git show --unified=80 d8d2b5c -- .github/workflows/ci.yml scripts/verify-whole.sh
+git merge-base --is-ancestor d8d2b5c origin/main
+git branch --all --contains d8d2b5c
+rg -n 'web/app|generate:data|npm ci|plutil|verify-whole|verify:' .github/workflows/ci.yml scripts/verify-whole.sh
+gh run view 28455805115 --repo organvm/limen --json databaseId,displayTitle,conclusion,status,headBranch,headSha,event,url,createdAt,updatedAt
+gh run view 28455805115 --repo organvm/limen --json jobs
+gh pr list --repo organvm/limen --state all --search "d8d2b5c OR RECOVER-GEN-4444j99-limen-ci-green-0620 OR ci green 0620" --json number,title,state,createdAt,updatedAt,mergedAt,headRefName,url --limit 20
+bash -n scripts/verify-whole.sh
+```
+
+Result: private prompt extraction has `1` normalized record; `d8d2b5c` is on current `origin/main`; the actual diff is one workflow file; CI run `28455805115` passed all jobs; `verify-whole.sh` currently has the `plutil` guard and shell syntax passes, but that guard was not introduced by `d8d2b5c`.
 
 ## Remaining Review Queue
 
