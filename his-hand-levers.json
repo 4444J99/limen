@@ -352,6 +352,16 @@
       ],
       "note": "The disconnection SELF-SURFACES every beat via the guard (metabolize 0c) -- this lever exists so the human-gated re-point lives in the registry, not recall-only memory. Nothing here sends/deletes/spends without you. See memory [[host-is-factory-system-is-cartridge]], [[build-the-repeatable-process-not-the-one-off]], [[his-hand-tasks-hang-in-permanent-registry]].",
       "issue": 563
+    },
+    {
+      "id": "L-FLEET-DISPATCH",
+      "label": "The whole board is partitioned + routed and POOLS ready for parallel execution: route.py auto-assigns the vendor lane (target_agent) AND the purpose lane (workstream, limen#595) every beat over the #579 channel roster, so every open task sits lane-assigned and waiting. What it waits ON is one outward valve. metabolize.sh is SAFE BY DEFAULT (metabolize.sh:10 — 'without LIMEN_DISPATCH=1 it only drains/mines/routes/reports, all reversible local writes, nothing outward'). Unattended parallel execution — walk away and the fleet keeps draining the backlog across every lane at once — is the one thing the daemon will not do on its own, because it authorizes unattended token spend + GitHub mutation. Claude cannot persist the valve itself: the harness blocks writing it to ~/.limen.env as Unauthorized Persistence (the same self-modification class as arming a plist/settings file). ATTENDED in-session dispatch already works and needs no valve; this lever is only the walk-away mode.",
+      "owner": "yours",
+      "cost": "One reversible line — add `LIMEN_DISPATCH=1` to ~/.limen.env (delete the line to revert). metabolize.sh sources ~/.limen.env fresh every beat, so it takes effect on the next beat with no restart. Equivalent homes: the launchd plist EnvironmentVariables, or a settings permission rule.",
+      "unlocks": "unattended parallel fleet execution — the routed, partitioned backlog drains outward across all vendor lanes + workstream channels with no attended Claude session driving each wave. This is the 'multiple workstream sessions doing everything' state.",
+      "source_task": "workstream auto-partition (limen#595) over channels (limen#579); 2026-07-04 fury that no parallel workstream sessions were running; safe-by-default gate metabolize.sh:10-11.",
+      "note": "The value SELF-SURFACES — the routed/partitioned board is visible every beat and only grows; nothing is lost while the valve is off (safe-by-default is a feature, not a fault). This lever exists so the one walk-away valve lives in the registry, not a chat closeout. Nothing here sends/spends without you; attended dispatch needs nothing. See memory [[human-gated-atom-is-a-valve]], [[use-all-vendors-never-serialize]], [[autonomous-operation-design]].",
+      "issue": 651
     }
   ]
 }
