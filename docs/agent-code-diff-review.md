@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T05:53:43Z`
+Generated: `2026-07-04T05:57:13Z`
 
 ## Scope
 
@@ -36,6 +36,7 @@ Generated: `2026-07-04T05:53:43Z`
 | 76 | `codex` | `019ec8e6-f8c1-74d3-8164-1b053844728c` | Storage recovery / Archive4T endgame run. This was valuable off-repo operational recovery work, not a Limen code diff: the Codex temp corpus, Archive4T operation docs, and read-only status script survive. Current live status improves on some June 15 gates, but also exposes drift: internal disk is back in emergency space at `31Gi` free and T7Recovery's lifeboat copy measures smaller than Archive4T's. |
 | 77 | `claude` | `9fbf75ec-5156-4f2f-bb84-23a10be15885` | Claude model chokepoint shim run. The deleted worktree row did land durable fleet value on `main`: a shared model sorter, executable Claude shim, heartbeat PATH wiring, and focused tests. It directly answered the user's "non-bypassable on-demand sorting" correction, but still spent 3.7M billable / 2.1M Opus before the guardrail existed and should be monitored as a fail-open seatbelt, not a complete spend-control system. |
 | 78 | `claude` | `3424630b-7849-4c5b-a9bb-5f24cd7b3ec8` | D2L discussion-responder skill run. The session correctly turned a repeatable LMS-instructor workflow into `organvm/_agent` skill PR #19 with FERPA/process boundaries and D2L browser mechanics, but it cost 2.6M Opus billable tokens and two Opus subagents. Review also found and fixed a reusable-skill privacy edge: concrete-looking student-name examples are now placeholders in `_agent` commit `8456104`. |
+| 79 | `claude` | `efb53173-614a-4f9f-9399-48fbab1150ee` | Credential hydration / no-more-login run. The deleted worktree did land the core `creds-hydrate` organ through PR #217 and many later corrections: env propagation, validity probes, phantom-lane retirement, `op` prompt-storm prevention, GH keyring derivation, and Cloudflare probe correction. It was valuable root healing, but the session spent 3.98M billable / 3.70M Opus and repeatedly overclaimed done before testing the real property. Review fixed stale launchd/script guidance that still described bare `--apply` as 1Password self-heal instead of promptless-only hydration. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -4102,6 +4103,66 @@ git -C /Users/4jp/Workspace/organvm/_agent rev-parse origin/main
 ```
 
 Result: private prompt extraction has `17` records; PR #19 is merged with green `cowork-gates`; the skill and references survive in `_agent`; Claude guard fails on 2.63M Opus / two Opus subagents; follow-up privacy fix `8456104` is pushed and `_agent` local/remote HEAD match.
+
+### Claude credential hydration organ solved real recurrence, but only after multiple false-done corrections
+
+Severity: high for fleet availability and operator-burden loops; medium for current code after review fix.
+
+Evidence:
+
+- Queue row `79` points at Claude session `efb53173-614a-4f9f-9399-48fbab1150ee`, rooted at deleted worktree `/Users/4jp/Workspace/limen/.claude/worktrees/melodic-riding-hinton`, with changed paths for `scripts/creds-hydrate.py`, `cli/tests/test_creds_hydrate.py`, `container/launchd/com.limen.creds-hydrate.plist`, and Claude memory.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-79-claude-creds-hydrate-prompts.jsonl` (`26` prompt-bearing records: `12` direct human text prompts, `5` multimodal prompt records, `6` compaction summaries, and `3` task notifications).
+- In redacted intent form, the prompt layer began with heavy Claude usage pressure and then narrowed to the real recurring pain: credentials and logins had already been set up elsewhere, so the system needed to ensure the user did not have to keep logging in or re-running auth steps. Later prompts explicitly rejected leaving credential certainty at the user's feet and required the agent to walk history, sessions, diagnostics, and logs to closure.
+- The original worktree is absent, but durable code landed on `main`: `9be4d60` / PR #217 added the credential hydration organ, `dispatch._load_limen_env`, `metabolize.sh` integration, a launchd plist, and tests.
+- The row's own memory file, `/Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/memory/credential-durability-organ.md`, is useful because it records the false-done chain and corrections: phantom OpenAI/OpenRouter lanes, presence-vs-validity, GH keyring derivation, non-interactive `op` gating, Cloudflare probe scope correction, organ-owned credentials, and the "merged to main is not live daemon path" lesson.
+- Current code includes the later hardening: `--verify` authenticates materialized credentials instead of trusting env presence, OpenAI/OpenRouter lanes are parked as phantom, GH derives from the local keyring with floor tokens scrubbed, Cloudflare probes `/accounts`, static op:// reads are opt-in via `--op`, and gh-secret sinks let the organ land CI secrets instead of creating "paste this secret" chores.
+- Claude workflow guard fails for the session: `billableTokens=3977595`, `opusBillableTokens=3699938`, with violations for total billable and Opus billable budgets.
+- Current focused verification passes after this review: `PYTHONPATH=cli/src python3 -m pytest cli/tests/test_creds_hydrate.py -q` reports `23 passed`; `python3 -m ruff check scripts/creds-hydrate.py cli/tests/test_creds_hydrate.py` passes; `python3 -m ruff format --check scripts/creds-hydrate.py cli/tests/test_creds_hydrate.py` passes; `python3 -m py_compile scripts/creds-hydrate.py` succeeds; `plutil -lint container/launchd/com.limen.creds-hydrate.plist` reports OK.
+- Current review found and fixed stale guidance: `scripts/creds-hydrate.py` and the launchd plist still described bare `--apply` as `op read` / 1Password self-heal, while the live implementation intentionally makes launchd `--apply` promptless and requires `--op` for static op:// reads unless promptless auth exists.
+
+Ideal prompt diff:
+
+- Ideal form: model the credential problem as ownership and propagation, not as "ask the user to log in again": name one source of truth, materialize into a daemon-readable floor, propagate into agent subprocess env, and authenticate real services in the done predicate.
+- Actual first form: the session built the right organ, but initially overclaimed after presence checks. It had to correct "hydrated" into "valid", retire phantom lanes, and derive from existing live keyrings before it reached the user's requested certainty.
+- Ideal form for credential closeout: never park credentials, tokens, API keys, logins, or env variables as his-hand tasks when an organ can own the sink; only real-world vendor/billing actions belong outside the organ.
+- Actual later form: the memory and commits show the system moved in that direction with gh-secret sinks, phantom-lane retirement, and organ-owned credential chartering.
+- Ideal form for daemon fixes: verify the exact file path the daemon executes, not just the current branch or PR. A launchd beat running stale code can keep prompting even after main is fixed.
+- Actual form: the session did eventually learn that lesson, but the review found a remaining stale comment layer that could mislead future agents back toward the old model.
+
+Outcome:
+
+- This was valuable root healing. It created and evolved a real credential hydration organ that reduces repeated login/auth loops and made the fleet reason about credential validity instead of env-var presence.
+- It was not a clean one-pass closeout. The row is a multi-day correction chain with several explicit false-done states.
+- This review fixed the current documentation/config mismatch so the launchd path now says what the code does: promptless hydration by default, static 1Password reads only by explicit `--op` or promptless auth.
+
+What was fucked up:
+
+- The session consumed nearly 4M billable tokens, almost all Opus, while trying to reduce premium-model and operator-burden loops.
+- It repeatedly converted uncertainty into user burden before walking the existing evidence to certainty. The user's prompt had to push the agent to stop leaving credential questions on them.
+- The original `done` predicates were proxy predicates: "is an env var present" and "did hydration count succeed" instead of "does the credential authenticate against its service."
+- Some fixes landed to `main` before the live daemon path had them, so the actual user-facing prompt storm could continue from stale code.
+- Even after the code evolved, the launchd plist and CLI overview still taught the stale model. That is now fixed in this review.
+
+Verification:
+
+```bash
+jq '.changed_review[79]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-79-claude-creds-hydrate-prompts.jsonl
+jq -r '.kind' .limen-private/session-corpus/full-stack-review/session-79-claude-creds-hydrate-prompts.jsonl | sort | uniq -c
+test -d /Users/4jp/Workspace/limen/.claude/worktrees/melodic-riding-hinton
+sed -n '1,220p' /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/memory/credential-durability-organ.md
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-melodic-riding-hinton/efb53173-614a-4f9f-9399-48fbab1150ee.jsonl
+git show --stat --oneline 9be4d60dd3a94f592884452e06b154da04a003bc
+git show --stat --oneline 0ac659436a95cbf598494512608e434d1a668b32 -- scripts/creds-hydrate.py cli/tests/test_creds_hydrate.py
+git show --stat --oneline 1a53a5efb6df3b0379e9356a6eff85371aeacd2b -- scripts/creds-hydrate.py cli/tests/test_creds_hydrate.py container/launchd/com.limen.creds-hydrate.plist
+PYTHONPATH=cli/src python3 -m pytest cli/tests/test_creds_hydrate.py -q
+python3 -m ruff check scripts/creds-hydrate.py cli/tests/test_creds_hydrate.py
+python3 -m ruff format --check scripts/creds-hydrate.py cli/tests/test_creds_hydrate.py
+python3 -m py_compile scripts/creds-hydrate.py
+plutil -lint container/launchd/com.limen.creds-hydrate.plist
+```
+
+Result: original worktree is absent; private prompt extraction has `26` records; PR #217 and later credential hardening commits are on `main`; Claude guard fails on 3.98M billable / 3.70M Opus; current focused credential tests pass `23` cases; Ruff, Python compile, and plist lint pass after the stale launchd/script guidance fix.
 
 ## Remaining Review Queue
 

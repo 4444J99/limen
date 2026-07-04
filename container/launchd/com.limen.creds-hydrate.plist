@@ -4,12 +4,12 @@
   The credential hydration login agent. The metabolize beat already hydrates each daemon cycle;
   this closes the two gaps the beat can't reach: LOGIN time (so a fresh boot has fleet creds before
   any agent runs) and INTERACTIVE/worktree sessions (which aren't the daemon). RunAtLoad fires it at
-  login; StartInterval re-runs every 30 min so a lapsed OAuth/refresh token self-heals from 1Password
-  with no human re-login. Fail-open: creds-hydrate.py skips silently when `op` is locked or absent.
+  login; StartInterval re-runs every 30 min.
 
-  The ONLY human atom: the 1Password session must be unlocked (op signin / Touch-ID / a service
-  account). Everything else — gemini, codex, opencode, gh, cloudflare — flows from the ONE source of
-  truth and is never re-entered. Loading is his-hand (one launchctl bootstrap):
+  This launchd path is promptless by design: it runs --apply without --op, so it can refresh derived
+  lanes (for example, the gh keyring) and already-materialized floors without raising 1Password
+  Touch-ID. Static op:// reads require an explicit interactive run with --apply --op, or a promptless
+  service-account/Connect setup. Loading is his-hand (one launchctl bootstrap):
 
     cp container/launchd/com.limen.creds-hydrate.plist ~/Library/LaunchAgents/
     launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.limen.creds-hydrate.plist
@@ -32,7 +32,7 @@
         <key>LIMEN_ROOT</key><string>/Users/4jp/Workspace/limen</string>
         <key>PYTHONPATH</key><string>/Users/4jp/Workspace/limen/cli/src</string>
     </dict>
-    <!-- RunAtLoad hydrates at login; StartInterval re-hydrates every 30 min (token-lapse self-heal).
+    <!-- RunAtLoad hydrates promptless lanes at login; StartInterval re-runs every 30 min.
          One-shot assess-and-exit model, so no KeepAlive. -->
     <key>StartInterval</key><integer>1800</integer>
     <key>RunAtLoad</key><true/>

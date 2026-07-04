@@ -17,7 +17,8 @@ GitHub tokens, …). The fleet just never READS from that source of truth at the
 
 THE CURE (this organ): 1Password is the ONE source of truth. On every beat / worktree-start / login,
 hydrate idempotently + silently:
-  1. `op read` each canonical credential,
+  1. read promptless sources each beat; read static op:// credentials only with explicit `--op`
+     or a promptless service-account/Connect setup,
   2. materialize it into ~/.limen.env (the env cache the daemon + dispatch._load_limen_env() read),
      and into each tool's native location where one is configured,
   3. never echo a value, chmod 600, atomic write, add-or-replace (re-runnable).
@@ -36,29 +37,32 @@ and accept a single touch — a deliberate act, never a surprise storm.
 Companion pieces (same PR):
   - dispatch._load_limen_env() — loads ~/.limen.env into os.environ so agent subprocesses inherit it.
   - metabolize.sh — sources ~/.limen.env and runs this organ each beat.
-  - deploy/com.limen.creds-hydrate.plist — a launchd login agent (arming is your hand, like the watchdog).
+  - container/launchd/com.limen.creds-hydrate.plist — a launchd login agent
+    (arming is your hand, like the watchdog).
   - route.py capacity census — the VERIFIER: after hydration every lane should read "up".
 
 Fail-open by contract: any `op` error skips that one credential (logged by NAME only) and never crashes
 the beat. Read-only by default (`--dry-run` prints the op://→target plan with NO secret reads); writes
-only with `--apply`.
+only with `--apply`, and static op:// reads still require `--op` unless promptless op auth exists.
 
 PRESENCE is not VALIDITY. `--check` (and route.py's capacity census) only ask "is the env var set?" —
 a stale/revoked/suspended token sits in ~/.limen.env looking ✓ while every lane it feeds is dead. The
 durable predicate is `--verify`: it authenticates each materialized credential against its own service
-(gh /user, cloudflare /tokens/verify, gemini /models) and exits non-zero on a dead token. Run it after
+(gh /user, cloudflare /accounts, gemini /models) and exits non-zero on a dead token. Run it after
 --apply and on a cadence — a green --check over dead creds is the precise way "done" silently rots.
 
 Usage:
   python3 scripts/creds-hydrate.py --dry-run     # print the plan (no reads, no writes) — default
   python3 scripts/creds-hydrate.py --check       # PRESENCE of env targets (NAMES only; offline) — not validity
   python3 scripts/creds-hydrate.py --verify      # VALIDITY — authenticate each cred against its service; exit 1 if any dead
-  python3 scripts/creds-hydrate.py --apply        # op read → materialize into ~/.limen.env + tool files
+  python3 scripts/creds-hydrate.py --apply        # promptless lanes only; no Touch-ID / op prompt
+  python3 scripts/creds-hydrate.py --apply --op   # deliberate op:// read → materialize static creds
   LIMEN_CREDS_MAP=/path/map.json python3 scripts/creds-hydrate.py --apply   # override the named map
 
 The MAP is a NAMED, tweakable parameter (one entry per credential). Edit DEFAULT_MAP below or point
 LIMEN_CREDS_MAP at a JSON file with the same shape.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -105,8 +109,7 @@ DEFAULT_MAP: list[dict] = [
         "enabled": True,
         # validity probe: a 200 from the model list means the key authenticates. A suspended
         # Google project answers 403 PERMISSION_DENIED / CONSUMER_SUSPENDED — caught by --verify.
-        "verify": {"url": "https://generativelanguage.googleapis.com/v1beta/models",
-                   "auth": "query", "param": "key"},
+        "verify": {"url": "https://generativelanguage.googleapis.com/v1beta/models", "auth": "query", "param": "key"},
     },
     {
         # Parked — PHANTOM env var, retired 2026-06-25 (session efb53173) after walking it to certainty.
@@ -287,8 +290,9 @@ def have_op() -> bool:
 
 # Where a 1Password service-account token lives if the user mints one. Kept OUTSIDE the repo
 # (chmod 600, never committed) so the secret never lands in git. Override with LIMEN_OP_SA_TOKEN_FILE.
-SA_TOKEN_FILE = Path(os.environ.get(
-    "LIMEN_OP_SA_TOKEN_FILE", str(Path.home() / ".config" / "op" / "service-account-token")))
+SA_TOKEN_FILE = Path(
+    os.environ.get("LIMEN_OP_SA_TOKEN_FILE", str(Path.home() / ".config" / "op" / "service-account-token"))
+)
 
 
 def load_service_account_token() -> None:
@@ -329,7 +333,9 @@ def op_read(ref: str, timeout: int = 15) -> str | None:
     try:
         r = subprocess.run(
             ["op", "read", ref],
-            capture_output=True, text=True, timeout=timeout,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
             stdin=subprocess.DEVNULL,
         )
     except (FileNotFoundError, subprocess.TimeoutExpired):
@@ -349,8 +355,11 @@ def derive_value(cmd: list[str], timeout: int = 15) -> str | None:
     try:
         r = subprocess.run(
             cmd,
-            capture_output=True, text=True, timeout=timeout,
-            stdin=subprocess.DEVNULL, env=child_env,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            stdin=subprocess.DEVNULL,
+            env=child_env,
         )
     except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
         return None
@@ -372,7 +381,10 @@ def gh_secret_present(repo: str, name: str, timeout: int = 15) -> bool | None:
     try:
         r = subprocess.run(
             ["gh", "secret", "list", "-R", repo],
-            capture_output=True, text=True, timeout=timeout, stdin=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            stdin=subprocess.DEVNULL,
         )
     except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
         return None
@@ -390,7 +402,10 @@ def gh_secret_set(repo: str, name: str, value: str, timeout: int = 30) -> bool:
     try:
         r = subprocess.run(
             ["gh", "secret", "set", name, "-R", repo],
-            input=value, capture_output=True, text=True, timeout=timeout,
+            input=value,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
         )
     except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
         return False
@@ -458,9 +473,9 @@ def write_tool_file(spec: dict, value: str) -> str:
 # tokens behind a green --check). --verify closes that gap: it authenticates each materialized cred
 # against its own service. Values are used only for the request and never logged.
 _SECRET_RX = (
-    re.compile(r"AIza[\w\-]{4}[\w\-]+"),          # Google API keys
+    re.compile(r"AIza[\w\-]{4}[\w\-]+"),  # Google API keys
     re.compile(r"gh[pousr]_[A-Za-z0-9]{4}[A-Za-z0-9]+"),  # GitHub tokens
-    re.compile(r"api_key:\S+"),                   # Google's error echoes the key inline
+    re.compile(r"api_key:\S+"),  # Google's error echoes the key inline
 )
 
 
@@ -480,7 +495,7 @@ def _env_value(key: str) -> str | None:
         s = line.strip()
         for pre in (f"{key}=", f"export {key}="):
             if s.startswith(pre):
-                return s[len(pre):].strip().strip('"').strip("'") or None
+                return s[len(pre) :].strip().strip('"').strip("'") or None
     return None
 
 
@@ -561,7 +576,7 @@ def _sweep_vaults() -> list[str]:
     for e in DEFAULT_MAP:
         ref = e.get("ref", "")
         if ref.startswith("op://"):
-            v = ref[len("op://"):].split("/", 1)[0]
+            v = ref[len("op://") :].split("/", 1)[0]
             if v and v not in vaults:
                 vaults.append(v)
     return vaults
@@ -574,7 +589,7 @@ def _mapped_titles() -> set[tuple[str, str]]:
     for e in DEFAULT_MAP:
         ref = e.get("ref", "")
         if ref.startswith("op://"):
-            parts = ref[len("op://"):].split("/")
+            parts = ref[len("op://") :].split("/")
             if len(parts) >= 2:
                 out.add((parts[0], parts[1]))
     return out
@@ -596,8 +611,9 @@ def _sanitize_env_name(s: str) -> str:
 def _op_json(cmd: list[str], timeout: int = 20):
     """Run an `op` subcommand that emits JSON; return the parsed object or None on any failure."""
     try:
-        r = subprocess.run(["op", *cmd, "--format=json"], capture_output=True, text=True,
-                           timeout=timeout, stdin=subprocess.DEVNULL)
+        r = subprocess.run(
+            ["op", *cmd, "--format=json"], capture_output=True, text=True, timeout=timeout, stdin=subprocess.DEVNULL
+        )
     except (FileNotFoundError, subprocess.TimeoutExpired):
         return None
     if r.returncode != 0 or not r.stdout.strip():
@@ -632,16 +648,20 @@ def sweep_all(apply: bool) -> int:
         print("creds-hydrate --sweep-all: `op` not found — install the 1Password CLI first. (fail-open)")
         return 0
     if not op_can_read_silently():
-        print("creds-hydrate --sweep-all: op is NOT promptless — refusing to run (a sweep here would pop a "
-              "Touch-ID storm). Install the service-account token ONCE, then the sweep is silent forever:")
+        print(
+            "creds-hydrate --sweep-all: op is NOT promptless — refusing to run (a sweep here would pop a "
+            "Touch-ID storm). Install the service-account token ONCE, then the sweep is silent forever:"
+        )
         print(f"  scripts/op-service-account.sh install   # writes {SA_TOKEN_FILE}, chmod 600, value never shown")
         return 0
 
     vaults = _sweep_vaults()
     include_logins = os.environ.get("LIMEN_CREDS_SWEEP_LOGINS") == "1"
     mapped_titles, mapped_envs = _mapped_titles(), _mapped_env_names()
-    print(f"creds-hydrate --sweep-all {'--apply' if apply else '(dry-run — pass --apply to write)'} "
-          f"over vault(s): {', '.join(vaults) or '(none)'}")
+    print(
+        f"creds-hydrate --sweep-all {'--apply' if apply else '(dry-run — pass --apply to write)'} "
+        f"over vault(s): {', '.join(vaults) or '(none)'}"
+    )
     swept, skipped_curated, skipped_login, skipped_collide = 0, 0, 0, 0
     written_names: set[str] = set()
     for vault in vaults:
@@ -678,29 +698,50 @@ def sweep_all(apply: bool) -> int:
                 written_names.add(name)
                 swept += 1
                 print(f"  {'✓' if apply else 'plan:'} {vault}/{title} -> {name}")
-    print(f"creds-hydrate --sweep-all: {swept} field(s){' materialized' if apply else ' planned'}, "
-          f"{skipped_curated} curated-skip, {skipped_login} login-skip, {skipped_collide} name-collision-skip.")
+    print(
+        f"creds-hydrate --sweep-all: {swept} field(s){' materialized' if apply else ' planned'}, "
+        f"{skipped_curated} curated-skip, {skipped_login} login-skip, {skipped_collide} name-collision-skip."
+    )
     if skipped_login:
-        print(f"  ({skipped_login} LOGIN item(s) skipped — personal web logins; set LIMEN_CREDS_SWEEP_LOGINS=1 to include.)")
+        print(
+            f"  ({skipped_login} LOGIN item(s) skipped — personal web logins; set LIMEN_CREDS_SWEEP_LOGINS=1 to include.)"
+        )
     return 0
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Hydrate fleet credentials from 1Password — once minted, never re-logged-in.")
+    ap = argparse.ArgumentParser(
+        description="Hydrate fleet credentials from 1Password — once minted, never re-logged-in."
+    )
     g = ap.add_mutually_exclusive_group()
-    g.add_argument("--apply", action="store_true", help="op read → materialize into ~/.limen.env + tool files")
-    g.add_argument("--check", action="store_true", help="report PRESENCE of env targets (names only; offline) — not validity")
-    g.add_argument("--verify", action="store_true", help="authenticate each materialized cred against its service (VALIDITY) — exit 1 if any is dead")
+    g.add_argument(
+        "--apply", action="store_true", help="materialize promptless lanes; combine with --op for static op:// reads"
+    )
+    g.add_argument(
+        "--check", action="store_true", help="report PRESENCE of env targets (names only; offline) — not validity"
+    )
+    g.add_argument(
+        "--verify",
+        action="store_true",
+        help="authenticate each materialized cred against its service (VALIDITY) — exit 1 if any is dead",
+    )
     g.add_argument("--dry-run", action="store_true", help="print the op://→target plan; NO reads, NO writes (default)")
-    ap.add_argument("--sweep-all", action="store_true", dest="sweep_all",
-                    help="CATCH-ALL: materialize EVERY credential field in the automation vaults (beyond the curated "
-                         "map) into ~/.limen.env. Promptless-only (needs the service-account token) — never prompts. "
-                         "Combine with --apply to write; alone it dry-runs the plan.")
-    ap.add_argument("--op", action="store_true",
-                    help="ALSO read op:// lanes — may raise a 1Password Touch-ID/GUI prompt. OFF by default: "
-                         "without it, only promptless lanes (derive, e.g. the gh keyring) hydrate, so NO dialog "
-                         "ever fires from a daemon beat or an interactive session. Pass it deliberately, at a "
-                         "terminal, when you want to (re)hydrate the op:// creds and accept one biometric touch.")
+    ap.add_argument(
+        "--sweep-all",
+        action="store_true",
+        dest="sweep_all",
+        help="CATCH-ALL: materialize EVERY credential field in the automation vaults (beyond the curated "
+        "map) into ~/.limen.env. Promptless-only (needs the service-account token) — never prompts. "
+        "Combine with --apply to write; alone it dry-runs the plan.",
+    )
+    ap.add_argument(
+        "--op",
+        action="store_true",
+        help="ALSO read op:// lanes — may raise a 1Password Touch-ID/GUI prompt. OFF by default: "
+        "without it, only promptless lanes (derive, e.g. the gh keyring) hydrate, so NO dialog "
+        "ever fires from a daemon beat or an interactive session. Pass it deliberately, at a "
+        "terminal, when you want to (re)hydrate the op:// creds and accept one biometric touch.",
+    )
     args = ap.parse_args()
 
     load_service_account_token()  # hydrate OP_SERVICE_ACCOUNT_TOKEN from its file if present → silent `op read`
@@ -740,8 +781,10 @@ def main() -> int:
             print(f"  {mark} {e['lane']:28} {state.upper()}" + (f" — {detail}" if detail else ""))
             any_invalid = any_invalid or state == "invalid"
         if any_invalid:
-            print("creds-hydrate: ✗ = a DEAD credential (presence ✓ is not validity). Re-mint it into its "
-                  "op:// item, then `--apply`. Re-run `--verify` to confirm green.")
+            print(
+                "creds-hydrate: ✗ = a DEAD credential (presence ✓ is not validity). Re-mint it into its "
+                "op:// item, then `--apply`. Re-run `--verify` to confirm green."
+            )
         return 1 if any_invalid else 0
 
     if not have_op():
@@ -761,8 +804,10 @@ def main() -> int:
             present = all(_env_has(k) for k in envs) if envs else False
             mark = "✓" if present else "✗"
             print(f"  {mark} {e['lane']:28} {ref_display(e['ref'])} -> {','.join(envs) or '(file only)'}")
-        print("  (presence only — ✓ means the env var is SET, not that it still authenticates. "
-              "Run `--verify` to probe validity against each service.)")
+        print(
+            "  (presence only — ✓ means the env var is SET, not that it still authenticates. "
+            "Run `--verify` to probe validity against each service.)"
+        )
         return 0
 
     apply = args.apply  # default (no flag) == dry-run
@@ -784,11 +829,15 @@ def main() -> int:
     # skip. [[macos-tcc-gatekeeper-dialogs-solved]]
     op_ok = op_can_read_silently() or args.op
     if apply and not op_ok:
-        hint = ("re-run with `--op` at a terminal to hydrate them (accepts one Touch-ID)."
-                if running_interactively()
-                else "they hydrate only with `--op` or a service-account token.")
-        print("creds-hydrate: op:// lanes SKIPPED (opt-in) — not touching 1Password, so no Touch-ID/GUI "
-              f"prompt fires. Promptless `derive` lanes still hydrate. To (re)hydrate the op:// creds, {hint}")
+        hint = (
+            "re-run with `--op` at a terminal to hydrate them (accepts one Touch-ID)."
+            if running_interactively()
+            else "they hydrate only with `--op` or a service-account token."
+        )
+        print(
+            "creds-hydrate: op:// lanes SKIPPED (opt-in) — not touching 1Password, so no Touch-ID/GUI "
+            f"prompt fires. Promptless `derive` lanes still hydrate. To (re)hydrate the op:// creds, {hint}"
+        )
 
     print(f"creds-hydrate {'--apply' if apply else '--dry-run (no reads, no writes — pass --apply to hydrate)'}:")
     hydrated, skipped = 0, 0
@@ -806,8 +855,7 @@ def main() -> int:
         # gh_secret-ONLY entry (no env/file): if the CI secret is already set, skip — no value read, no
         # re-push, and crucially NO 1Password touch. The organ keeps it landed without a per-beat biometric
         # prompt; it only reads+sets when the secret is ABSENT (and op is permitted / the value derivable).
-        if sinks and not envs and not fspec and all(
-                gh_secret_present(s["repo"], s["name"]) is True for s in sinks):
+        if sinks and not envs and not fspec and all(gh_secret_present(s["repo"], s["name"]) is True for s in sinks):
             label = ", ".join(f"gh:{s['repo']}:{s['name']}" for s in sinks)
             print(f"  ✓ {e['lane']:28} -> {label} (already set)")
             hydrated += 1
@@ -818,8 +866,11 @@ def main() -> int:
         if not val and op_ok:
             val = op_read(ref)
         if not val:
-            why = ("unreadable (check op signin / the field name)" if op_ok
-                   else "op:// read skipped — no promptless 1Password auth (fail-open, no Touch-ID)")
+            why = (
+                "unreadable (check op signin / the field name)"
+                if op_ok
+                else "op:// read skipped — no promptless 1Password auth (fail-open, no Touch-ID)"
+            )
             print(f"  SKIP {e['lane']:28} {source} — {why}")
             skipped += 1
             continue
@@ -839,14 +890,18 @@ def main() -> int:
         hydrated += 1
 
     if apply:
-        print(f"creds-hydrate: {hydrated} hydrated, {skipped} skipped. "
-              f"Apply to the running daemon: launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat")
+        print(
+            f"creds-hydrate: {hydrated} hydrated, {skipped} skipped. "
+            f"Apply to the running daemon: launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat"
+        )
         if skipped:
-            print("  (skipped = `op` couldn't read it: unlock with `op signin`, then re-run with `--op`, "
-                  "or fix the field in the map. Never a vendor re-login — only the 1Password unlock.)"
-                  if op_ok else
-                  "  (skipped = op:// lanes are opt-in and `--op` was not passed — this is the NO-PROMPT "
-                  "default. Promptless `derive` lanes hydrated. Pass `--op` at a terminal to hydrate op://.)")
+            print(
+                "  (skipped = `op` couldn't read it: unlock with `op signin`, then re-run with `--op`, "
+                "or fix the field in the map. Never a vendor re-login — only the 1Password unlock.)"
+                if op_ok
+                else "  (skipped = op:// lanes are opt-in and `--op` was not passed — this is the NO-PROMPT "
+                "default. Promptless `derive` lanes hydrated. Pass `--op` at a terminal to hydrate op://.)"
+            )
     return 0
 
 
