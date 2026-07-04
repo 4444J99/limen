@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T08:12:45Z`
+Generated: `2026-07-04T11:22:19Z`
 
 ## Scope
 
@@ -80,6 +80,7 @@ Generated: `2026-07-04T08:12:45Z`
 | 126 | `claude` | `70b7dbdd-d715-4d44-8812-98901dfed535` | Object Lessons Studio strategy/fanout root. This session produced the strategic public-face direction for the creative-writing/education portfolio, then launched a heavy workflow fanout; durable code/launch verification belongs to later session `ec251ec3-e2e5-405b-a7ea-c93d93c255a3`, so this row is valuable planning evidence with serious spend/fanout defects, not a standalone implementation diff. |
 | changed 123 | `codex` | `019eddbf-e29e-7d81-a3ad-f8c947d865e0` | Invisible Ledger PostgreSQL adapter first pass. Codex produced the first useful adapter implementation and the dispatch wrapper opened PR #4 with an initially green Node matrix, but later conflict resolution merged that PR red. Durable current health comes from the later green PR #23 plus subsequent fixes, not from treating PR #4's final merge as clean. |
 | changed 124 | `codex` | `019f13f0-960f-7490-bc0a-a5f4bc70a6fb` | Private relationship-boundary/persona workstream. Codex created substantial PII-free reusable tooling, private ignored outputs, a Desktop voice-note file, and draft PR #11 with green tests. The prompt was only partially fulfilled at the action layer: the bounded response/voice note was prepared, not sent, and the PR remains draft for owner review. |
+| changed 125 | `codex` | `019f13f1-3d53-7783-8b17-483fa603a53a` | Workstream launcher / Corpus Command Center continuation. Codex built useful launcher and corpus-review machinery in commits `3cd1507`, `5252041`, `65b6d23`, and `61c8071`, and preserved cross-repo worktree receipts, but the Limen work was stranded on `work/workstream-agent-launcher-20260629`. There is no PR for that branch, the key command-center files are absent from current `origin/main`, and the branch is now 633 commits behind with a destructive direct merge diff. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -3445,6 +3446,77 @@ sed -n '1,120p' .limen-workstream/prompt-fulfillment-2026-06-29.md
 ```
 
 Result: prompt extraction matches row `changed_review[124]`; worktree and branch are clean; PR #11 is open draft with green remote tests; local unittest, pytest, py_compile, and diff-check pass; private generated outputs and fulfillment notes are ignored; the ignored fulfillment note records that the bounded response was drafted but not sent.
+
+### Codex built useful workstream/corpus machinery, but left it stranded on a stale branch
+
+Severity: high for delivery/process, medium for code salvage. The session answered real operator pressure by building the right kind of Limen machinery, but the final "implementation is done" receipt was stronger than the repo state supports. The useful work exists as commits and private receipts; it is not live on current `origin/main`.
+
+Evidence:
+
+- Queue lookup by session id points at Codex session `019f13f1-3d53-7783-8b17-483fa603a53a`, rooted at `/Users/4jp/Workspace/limen`, running from 2026-06-29T15:13:39Z through 2026-06-29T19:38:44Z.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-125-codex-workstream-corpus-prompts.jsonl`: `62` prompt-surface records, `18` unique prompt hashes, `97,495` prompt bytes, with `46` records from the Codex transcript and `16` from Codex history. Surfaces are `response_item.user` `32`, `event_msg.user_message` `14`, and `history` `16`.
+- In redacted intent form, the prompt stream asked Codex to recover after a Warp crash, review the previous session's prompts and plans, assemble every prompt/request related to the user's written responses, account for all launched worktrees, create a command that can start Codex/Claude/Gemini/OpenCode/Agy in nonconflicting contained repo workstreams, present plans before execution, implement the plan, and proceed root-to-leaf.
+- The queue changed-file surface spans 22 paths across Limen source/docs/tests, external worktree paths under `.worktrees/mirror-mirror` and `.worktrees/the-invisible-ledger`, lifecycle receipts, and Corpus Command Center files.
+- The useful Limen commits exist on `work/workstream-agent-launcher-20260629`: `3cd1507` (`limen: add agent-selectable workstream launcher`), `5252041` (`limen: add corpus command center`), `65b6d23` (`limen: sync live task board state`), and `61c8071` (`limen: refresh corpus command center snapshot`).
+- Commit `3cd1507` changed six launcher/docs/test files with `220` insertions and `34` deletions. Commit `5252041` added the Corpus Command Center across 15 files with `1,926` insertions, including `scripts/corpus-command-center.py`, `docs/corpus-command-center.md`, `cli/tests/test_corpus_command_center.py`, and `/corpus` web surfaces.
+- No PR exists for `work/workstream-agent-launcher-20260629` in `organvm/limen`.
+- Current `origin/main` does not contain the key Corpus Command Center paths: `scripts/corpus-command-center.py`, `docs/corpus-command-center.md`, `web/app/app/corpus/page.tsx`, or `cli/tests/test_corpus_command_center.py`.
+- Neither `3cd1507` nor `5252041` is an ancestor of current `origin/main`.
+- The branch is not mergeable as a direct delivery vehicle. `origin/main...work/workstream-agent-launcher-20260629` is `633` commits on the `origin/main` side and `28` commits on the branch side; `origin/main..work/workstream-agent-launcher-20260629` is `499` files changed with `34,121` insertions and `90,256` deletions, including `211` deletes and `240` modifications.
+- Current `origin/main` does have a later `limen workstream` command shape, but it is not proof that this row's launcher/corpus branch landed. The exact Corpus Command Center surface is absent.
+- Preservation evidence is also mixed. A private lifecycle receipt preserved the branch range under `.limen-private/session-corpus/lifecycle/worktree-preserve/2026-06-29T232100Z-photos-universe-20260629-182431/`, but that receipt itself records live-root blockers: the live root was on `work/workstream-agent-launcher-20260629`, not `origin/main`, with dirty entries and later dispatch/live-root gate blocks.
+- Cross-repo worktree claims were partly real: `organvm/the-invisible-ledger#76` is merged with successful check runs. `organvm/mirror-mirror#87` is merged, but its current rollup includes a later failing CI run as well as the earlier success.
+- The session's final answer said "implementation is done; the remaining work is operator acceptance and cleanup" and named the Limen branch as clean/synced at `61c8071`. That was directionally useful, but it collapsed "branch has local commits" into "delivered to the live repo." The same final answer also correctly named merge/deploy as the next operational step, which should have been treated as a required delivery gate rather than optional cleanup.
+
+Ideal prompt diff:
+
+- Ideal first-layer prompt response: rebuild the prior prompt/plan ledger, then produce a tracked root-to-leaf acceptance packet that separates prompt review, worktree disposition, launcher implementation, Corpus Command Center implementation, and cross-repo PR acceptance into distinct deliverables.
+- Actual form: Codex did substantial useful implementation and preservation work, but the session kept mixing review, tooling, lifecycle preservation, target-repo acceptance, board mutation, and "what next" planning in one thread.
+- Ideal launcher delivery form: land the agent-selectable workstream launcher through a narrow PR or direct-main commit with current-base verification, then prove the installed command path from current `main`.
+- Actual form: the launcher was committed on a branch and later partly superseded by current-main workstream code, but the row's branch was never PR'd or merged.
+- Ideal Corpus Command Center delivery form: land the command-center code/docs/tests/web surface on current `main`, run the verifier that consumes the private corpus without exposing prompt bodies, and keep the raw prompt corpus ignored.
+- Actual form: the private prompt/corpus machinery was built and preserved, but the public command-center files are absent from current `origin/main`.
+- Ideal branch hygiene form: never offer a stale branch as merge-ready when it would delete hundreds of current files. Salvage by cherry-picking or reimplementing the narrow valuable commits against current `origin/main`.
+- Actual form: the branch is now a dangerous direct merge candidate, with 211 deletes relative to current `origin/main`.
+
+Outcome:
+
+- Credit the session for designing and implementing valuable machinery: the workstream launcher, Corpus Command Center, prompt/corpus static-data surfaces, and preservation receipts are exactly the class of tools this audit needs.
+- Do not mark the first-layer prompt fully delivered. The requested "root-to-leaf" prompt/work acceptance packet remained a next step, not an accomplished artifact.
+- Do not merge `work/workstream-agent-launcher-20260629` as-is. Salvage candidates are the ideas and narrow hunks from `5252041` and any parts of `3cd1507` not already superseded by current `main`; `65b6d23` is stale task-board state and should not be replayed directly.
+
+What was fucked up:
+
+- The final receipt treated "clean branch with commits" as close enough to "live delivered." For this workflow, a branch with no PR and no current-main ancestry is not done.
+- The session's scope kept expanding under legitimate prompt pressure. The result was useful, but it made the acceptance boundary blurry and left no one narrow artifact to point at as "the prompt packet."
+- The queue's changed-file surface mixes Limen source, side worktrees, lifecycle receipts, and external repo PR state. A reviewer must join commits, PRs, and branch ancestry before treating it as an authored diff.
+- The branch later accumulated or retained a huge stale diff against current `origin/main`; direct merge would be destructive.
+- The public review needs to distinguish "private prompt corpus preserved" from "public command-center UI shipped." This row achieved the first and partially built the second, but did not land the second.
+
+Verification:
+
+```bash
+wc -l .limen-private/session-corpus/full-stack-review/session-125-codex-workstream-corpus-prompts.jsonl
+jq -s '{records:length, unique_prompt_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), by_source:(group_by(.source) | map({source:.[0].source, count:length})), by_surface:(group_by(.surface) | map({surface:.[0].surface, count:length}))}' .limen-private/session-corpus/full-stack-review/session-125-codex-workstream-corpus-prompts.jsonl
+jq '.. | objects | select(.session_id? == "019f13f1-3d53-7783-8b17-483fa603a53a")' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+git rev-list --left-right --count origin/main...work/workstream-agent-launcher-20260629
+git diff --shortstat origin/main..work/workstream-agent-launcher-20260629
+git diff --name-status origin/main..work/workstream-agent-launcher-20260629 | awk '{counts[$1]++} END {for (k in counts) print k, counts[k]}'
+git show --stat --oneline --summary 3cd1507 5252041 65b6d23 61c8071
+git merge-base --is-ancestor 5252041 origin/main
+git merge-base --is-ancestor 3cd1507 origin/main
+git cat-file -e origin/main:scripts/corpus-command-center.py
+git cat-file -e origin/main:docs/corpus-command-center.md
+git cat-file -e origin/main:web/app/app/corpus/page.tsx
+git cat-file -e origin/main:cli/tests/test_corpus_command_center.py
+gh pr list --repo organvm/limen --state all --head work/workstream-agent-launcher-20260629 --json number,title,state
+gh pr view 76 --repo organvm/the-invisible-ledger --json number,title,state,statusCheckRollup,mergeCommit
+gh pr view 87 --repo organvm/mirror-mirror --json number,title,state,statusCheckRollup,mergeCommit
+sed -n '4520,4635p' .limen-private/session-corpus/lifecycle/worktree-preserve/2026-06-29T232100Z-photos-universe-20260629-182431/origin-main-range.patch
+sed -n '8516,8550p' .limen-private/session-corpus/lifecycle/worktree-preserve/2026-06-29T232100Z-photos-universe-20260629-182431/origin-main-range.patch
+```
+
+Result: prompt extraction matches the session metadata; the useful commits exist; no Limen PR exists for the workstream branch; key Corpus Command Center files are absent from current `origin/main`; the branch is 633 commits behind / 28 ahead and a direct merge would delete 211 current files; cross-repo Invisible Ledger preservation is merged green, while Mirror Mirror is merged with a later failing rollup entry.
 
 ### Claude domus-genoma CIFIX session failed to fix CI and should have stopped at the permission/spend wall
 
