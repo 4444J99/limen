@@ -158,6 +158,9 @@ DEFAULT_MAP: list[dict] = [
         "lane": "cloudflare (wrangler deploy)",
         "ref": "op://Personal/Cloudflare API Token/credential",
         "env": ["CLOUDFLARE_API_TOKEN"],
+        # gh_secret sink: deploy.yml's dashboard Cloudflare Pages step (the derived owned rail after
+        # the Firebase/GCP road-not-taken) reads this repo secret — the organ lands it, never a paste.
+        "gh_secret": {"repo": "organvm/limen", "name": "CLOUDFLARE_API_TOKEN"},
         "enabled": True,
         # validity probe: GET /accounts. This works for BOTH token kinds — the earlier
         # /user/tokens/verify endpoint is USER-token-only and returns code 1000 "Invalid API

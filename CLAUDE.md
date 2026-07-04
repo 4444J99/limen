@@ -41,7 +41,7 @@ authoritative rule.
 | `cli/` | The `limen` CLI (`limen.cli:main`, Click). Core verbs: `init`, `dispatch`, `release-stale`, `doctor`, `qa`, `status`, `harvest`. Logic in `dispatch.py`, `harvest.py`, `capacity.py`, `model_selection.py`, `converge.py`; data shapes in `models.py`; YAML I/O in `io.py`. The autonomic institution lives under `cli/src/limen/vigilia/`. | `pip install -e 'cli[test]'`; tests in `cli/tests/` |
 | `web/api/` | FastAPI runtime adapter (`main.py`). Same HTTP contract as the Worker. | `uvicorn main:app` / Docker; tests in `web/api/tests/` |
 | `web/worker/` | Cloudflare Worker — the **live** runtime, GitHub-Contents storage. Deploys on-demand via wrangler (not on merge). | `npm run dev` / `npm run deploy`; lint `npm run check` |
-| `web/app/` | Next.js dashboard (static export → Firebase Hosting). Surfaces `/` (owner), `/qa`, `/client`, `/public`. | `npm run dev`; `npm run build` (prebuild generates static data + validates surfaces) |
+| `web/app/` | Next.js dashboard (static export → Cloudflare Pages `limen-dashboard.pages.dev`; the Firebase Hosting step is dormant — its GCP credential exists nowhere, road-not-taken). Surfaces `/` (owner), `/qa`, `/client`, `/public`. | `npm run dev`; `npm run build` (prebuild generates static data + validates surfaces) |
 | `mcp/` | MCP server exposing limen over the Model Context Protocol (`mcp/src/limen_mcp/server.py`). | `pip install -e mcp/` |
 | `ianva/` | MCP doorway/aggregator package. | `pip install -e ianva/` |
 | `moneta/` | **MONETA** — the sovereign cash organ (sibling of `quaestor`: quaestor *finds* money, MONETA *intakes* it). Self-hosted Bitcoin licence mint: takes BTC to an owner-controlled address, confirms against a **keyless** public explorer (mempool.space/Esplora), and signs each product's own offline ECDSA-P256 Pro licence — **no processor in the path**. Unconfigured, it *pools* demand as `reserved` orders (the valve) and auto-opens them the moment a receive address is set. `Dockerfile`-ready for a $0 deploy. | `cd moneta && npm test` (vitest + `tsc`); tests in `moneta/src/__tests__/` |
@@ -234,7 +234,7 @@ that reason.
 
 **The website guardrail.** A merge to `main` **auto-deploys** the live public site/API — but *only* when the diff touches a deploy-trigger path:
 
-- **Dashboard** (`deploy.yml` → Firebase Hosting): `web/app/**`, `firebase.json`, `tasks.yaml`, `.github/workflows/deploy.yml`
+- **Dashboard** (`deploy.yml` → Cloudflare Pages; Firebase step dormant pending a credential that exists nowhere): `web/app/**`, `firebase.json`, `tasks.yaml`, `.github/workflows/deploy.yml`
 - **API** (`deploy-api.yml` → Cloud Run / Worker): `web/api/**`, `cli/**`, `scripts/preflight-cloud-run.sh`, `.github/workflows/deploy-api.yml`
 
 For a **website-sensitive** PR, merging *is* the deploy — so it requires **green CI first** (plus a local `web/app` build for dashboard changes). Never blind-merge a live deploy. For every **other** PR (docs, corpus, mcp, ianva, memory, `web/worker`, most of `scripts/**`), merge freely once CLEAN. (`web/worker` is the live runtime but deploys on-demand via wrangler, not on merge — so its merges don't auto-deploy.)
