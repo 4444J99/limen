@@ -102,6 +102,8 @@ Generated: `2026-07-04T13:24:21Z`
 | changed 144 | `codex` | `019f22c5-0e92-7831-9c59-c3988dc917c3` | Fable routing / budget-gauge run. Codex implemented real Fable acceptance machinery, hardened model routing after an accepted Fable adversarial review found bypasses, and left current focused tests green. The defects are process-grade: the run started in the live root with dirty board state, the first Fable CLI invocation failed, Fable spend initially exceeded the original transcript cap, and the session ended behind `origin/main` with daemon-owned `tasks.yaml` still dirty instead of reaching a clean closeout. |
 | changed 145 | `claude` | `1af9693f-12dd-41e9-8b73-ab54814d34b1` | Governance organ deepen run. Claude correctly attacked the prompt's highest-leverage gap by creating a Cvrsvs Honorvm promotion validator and PR #386, but the PR stayed open/red and 679 commits behind after the session ended at a force-push approval gate. Durable current governance validation came later through PR #483, and this review fixed the remaining seed-metadata drift so the current fleet validator now passes 4/4. |
 | changed 146 | `claude` | `5f469687-a7d6-40d6-ba54-e47bdce3cd5f` | Aug-1 revenue/recovery memory run. Claude turned a sensitive personal revenue-planning prompt into two useful private memory notes about payment rails, services-first revenue, and not mistaking product polish for closing progress. The prompt-vs-done gap is severe on governance: no tracked repo diff or executable next-step artifact landed, the original worktree is gone, and transcript guard flags 1.88M Opus billable tokens plus six Opus subagents for memory capture. |
+| changed 147 | `codex` | `019f2a04-e1eb-7b41-9e8d-1b96c75ddc86` | Active full-stack review thread. This is the current still-running Codex goal session, so it is intentionally deferred as a prompt-vs-done target until the run has a stable endpoint. Reviewing it midstream would turn the audit into a false closeout of its own in-progress work. |
+| changed 148 | `claude` | `2227b1d3-dd6a-4926-879c-cfcd6c24acde` | Fleet permission-prompt / human-owner home run. Claude correctly identified that hand-maintained owner docs rot and moved six human-gated atoms into durable GitHub issues, while adjacent code paths later made the FDA guard and bash hook canonical on `main`. The defects are that the session spent 1.69M Opus billable tokens, mutated live/home state, left no direct session commit, and the `L-AGENT-BASH-PROMPT` issue/lever is now stale because the live hook matches the current repo source. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -9208,6 +9210,68 @@ git status --short --branch
 ```
 
 Result: private prompt extraction matches the row; the original worktree is absent; both private memory files exist; the review worktree has no hidden code diff for this row before documentation; transcript guard fails as expected on Opus budget and Opus subagent fan-out.
+
+### Claude's permission-prompt session found the right permanent home, but left a stale human gate after the fix landed
+
+Severity: medium for current process correctness, low for current code risk. The session's key insight was right: a human-owned task that lives only in memory or a hand-maintained doc is still effectively hung on the agent. The durable home should be a graph issue plus a tracked lever. Current code is healthier than the session's final state, but one issue/lever still needs reconciliation.
+
+Evidence:
+
+- Queue row `changed_review[148]` points at Claude session `2227b1d3-dd6a-4926-879c-cfcd6c24acde`, rooted in deleted worktree `.claude/worktrees/fluttering-hugging-bunny`, from `2026-06-23T12:43:33Z` through `2026-06-24T12:42:17Z`.
+- Changed-file evidence from the row is mostly home state: `~/.claude/hooks/allow-trusted-cd-git.sh`, temporary issue bodies under `~/.claude/jobs/2227b1d3/tmp/`, a Claude plan file, and memory notes. The original temporary job directory is gone; the hook, plan, and memory file still exist.
+- The verbatim local-only prompt extract is `.limen-private/session-corpus/full-stack-review/session-changed-148-claude-fleet-permission-prompt-fix-prompts.jsonl`: `127` prompt records, `83` unique prompt hashes, `154,617` prompt bytes, all sourced from `claude-projects`. Surfaces were `94` user messages, `31` recovered `last-prompt` entries, and `2` queued prompts.
+- First-layer prompt, redacted to intent: stop recurring Claude permission prompts and macOS access prompts from holding the fleet back; then answer whether every owner had a permanent home for their hanging tasks rather than leaving them in chat, memory, or hand-maintained docs.
+- Claude did identify two real technical fixes: `scripts/library-preserve.py` needed to avoid Mail/Messages preservation without Full Disk Access, and the bash PreToolUse hook needed to trust compound `cd <owned tree> && <cmd>` forms rather than only the git form.
+- Durable current code exists, but not as a clean session branch. `b1e80cf` added the FDA-aware `library-preserve.py` guard on `main`; `1f06950` added the canonical hook source and project allowlist through PR #202; `3dce523` later hardened the hook for `~/Code`, relative paths, and env-var cd targets through PR #547.
+- Present-tense proof is good: `bash scripts/tests/allow-trusted-cd-git.test.sh` passes; `python3 -m py_compile scripts/library-preserve.py scripts/sync-hishand-issues.py scripts/obligations-view.py scripts/session-orient.py` passes; `python3 -m json.tool his-hand-levers.json` passes; related obligations/insight tests pass `11 passed`.
+- The live hook now byte-matches the repo source: `diff -u scripts/hooks/allow-trusted-cd-git.sh /Users/4jp/.claude/hooks/allow-trusted-cd-git.sh` returns no diff, and a backup exists at `~/.claude/hooks/allow-trusted-cd-git.sh.bak`.
+- The graph handoff was real. After explicit approval in the transcript, Claude filed six `needs-human` issues: `organvm/a-i-chat--exporter#71`, `organvm/edu-organism#3`, `organvm/domus#3`, and `organvm/limen#182`, `#183`, `#184`. Current GitHub checks show all six still open.
+- Current `his-hand-levers.json` also records the Limen-side levers `L-CARD-FRAUD-HOLD`, `L-AGENT-BASH-PROMPT`, and `L-BACKUP-FDA`.
+- The stale part is `L-AGENT-BASH-PROMPT`: issue #183 and the lever still describe the bash hook as a human one-paste task, but the live hook is already installed and matches current repo source. The lever/issue should be closed or rewritten to the actual remaining invariant rather than left as a completed human gate.
+- There is also a host-factory drift caveat: tracked `.claude/settings.json` is not an exact mirror of live `~/.claude/settings.json`. The live file is much broader and includes the hook wiring; the tracked project file is a narrower portable source. That split may be intentional, but the row's final claims blur live home-state with reproducible repo state.
+- Transcript guard fails on spend: `1,689,150` billable tokens, `441,114` output tokens, no subagent/workflow calls, no Fable, and one violation: Opus billable budget exceeded (`1,689,150 > 750,000`).
+
+Ideal prompt diff:
+
+- Ideal form: narrow the permission prompt flood to a reproducible hook/test change, ship that source through the repo, then file only genuinely remaining human-gated atoms into the graph.
+- Actual form: Claude mixed macOS/TCC probing, live checkout mutation, home hook/settings mutation attempts, issue filing, memory edits, and closeout discussion in one long Opus session. The durable fixes eventually landed, but the session itself did not leave a clean one-PR receipt.
+- Ideal permanent-home form: graph issues and `his-hand-levers.json` stay synchronized with reality. Once a human gate is applied or repo automation owns it, the lever closes or changes wording.
+- Actual current form: the bash-prompt lever still reads like pending human work even though the hook is installed and tested.
+
+Outcome:
+
+- Credit the session for the architectural correction: permanent homes beat memory and hand-maintained docs for human-gated residue.
+- Credit current `main` for retaining the useful code: FDA-aware library preservation, canonical hook source, hook tests, and graph/lever sync machinery.
+- Do not credit the session as a clean repo delivery. Its durable work was later captured or hardened by separate commits and PRs, and the session transcript itself ended around live/home state and issue graph state, not a clean branch.
+
+What was fucked up:
+
+- The session found that docs were not permanent, then still depended on a live/home-state story in its final closeout.
+- `L-AGENT-BASH-PROMPT` now appears stale: the system still tells the human to apply a fix that is already applied on this host and represented in repo source.
+- The row spent 1.69M Opus billable tokens without subagent fan-out, which means the waste was not parallelism but an oversized single-agent investigation.
+- The queue's changed-file list undercounts the current durable repo story and overrepresents transient home/job files. Reviewing this row from changed files alone would miss `b1e80cf`, `1f06950`, `3dce523`, and the later `his-hand-levers.json` source of truth.
+
+Verification:
+
+```bash
+jq '.changed_review[148]' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+jq -s '{records:length, unique_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), task_body_bytes:([.[].task_body_bytes] | add), surfaces:([group_by(.surface)[] | {surface:.[0].surface,count:length}]), sources:([group_by(.source)[] | {source:.[0].source,count:length}])}' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-changed-148-claude-fleet-permission-prompt-fix-prompts.jsonl
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-fluttering-hugging-bunny/2227b1d3-dd6a-4926-879c-cfcd6c24acde.jsonl
+git show --stat --oneline b1e80cf 1f06950 3dce523 -- scripts/library-preserve.py scripts/hooks/allow-trusted-cd-git.sh .claude/settings.json
+diff -u scripts/hooks/allow-trusted-cd-git.sh /Users/4jp/.claude/hooks/allow-trusted-cd-git.sh
+gh issue view 71 -R organvm/a-i-chat--exporter --json number,title,state,url
+gh issue view 3 -R organvm/edu-organism --json number,title,state,url
+gh issue view 3 -R organvm/domus --json number,title,state,url
+gh issue view 182 -R organvm/limen --json number,title,state,url
+gh issue view 183 -R organvm/limen --json number,title,state,url
+gh issue view 184 -R organvm/limen --json number,title,state,url
+python3 -m py_compile scripts/library-preserve.py scripts/sync-hishand-issues.py scripts/obligations-view.py scripts/session-orient.py
+python3 -m json.tool his-hand-levers.json >/dev/null
+bash scripts/tests/allow-trusted-cd-git.test.sh
+PYTHONPATH=cli/src python3 -m pytest cli/tests/test_obligations_view.py cli/tests/test_aug1_view.py cli/tests/test_insight_route.py -q
+```
+
+Result: private prompt extraction matches row `changed 148`; transcript guard fails only on Opus billable budget; current hook/library/lever focused tests pass; all six graph issues exist and remain open; the bash prompt hook is already installed and byte-identical to repo source, making `L-AGENT-BASH-PROMPT`/#183 a stale pending-human signal unless there is a separate remaining acceptance rule.
 
 ## Remaining Review Queue
 
