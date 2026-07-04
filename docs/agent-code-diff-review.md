@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T01:48:46Z`
+Generated: `2026-07-04T01:51:13Z`
 
 ## Scope
 
@@ -38,6 +38,7 @@ Generated: `2026-07-04T01:48:46Z`
 | refreshed 21 | `claude` | `84a89bbb-ecd3-4e22-8148-f9b683bd2d92` | Agy bridge / Jules autonomous-dispatch run. The original `melodic-riding-hinton` worktree and temp job files were gone, but the landed Agy/Jules dispatch code was live on `main`; fixed a remaining Agy bridge gap where folder-shaped untracked deltas were silently skipped. |
 | refreshed 22 | `claude` | `f38f4b2a-5c49-4d13-9b36-24bf31c941cc` | Archive4T conductor/relay incident run. The `/Volumes/Archive4T` docs/tests/scripts listed in the changed-file ledger are absent; only home-state memory, handoff, and static status artifacts survive. Current `main` has the scripts/watchdog/import fixes the static handoffs called missing, so this is recorded as stale-handoff/artifact-loss rather than a live code patch. |
 | refreshed 23 | `claude` | `685b48b0-94fa-4537-a327-453a6ba01238` | External `etceter4-revival` winter-build run. Temp extractors are gone, but the revival docs and image-manifest generator survived in `~/Workspace/organvm/etceter4-revival`; fixed the generator so archive folders with nonmatching filename stems are actually inventoried. |
+| refreshed 24 | `claude` | `1cea38f6-3455-4202-9c45-189a9f26d6dc` | Micro Tato initial Godot build. The original worktree game root and scratchpad audio generators are gone; the work was later promoted into standalone `~/Workspace/micro-tato`, which is clean on `main` and passes its current validation gate. Recorded as superseded artifact migration rather than a live patch. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -1547,6 +1548,36 @@ python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/pro
 ```
 
 Result: image manifest verification passed with `glitchpr0n=41`; package-lock validation passed with existing duplicate-package warnings; Node syntax checks passed; transcript audit completed with an Opus budget violation.
+
+### Micro Tato worktree was superseded by standalone repo
+
+Severity: medium for prompt/session provenance, low for current game correctness.
+
+Evidence:
+
+- Claude session `1cea38f6-3455-4202-9c45-189a9f26d6dc` was an initial Godot game build with 68 changed-file refs under `.claude/worktrees/dazzling-knitting-donut/game` plus scratchpad audio-generation scripts.
+- Transcript audit reports 24 transcript files, 2,094 usage-bearing messages, 12,240,591 billable-ish tokens, 294,774,224 cache-read tokens, 10,646,244 Opus-class billable-ish tokens, 13 expensive subagents, and 13 agent/workflow calls.
+- The original `.claude/worktrees/dazzling-knitting-donut/game` root is absent.
+- The listed `/private/tmp/.../scratchpad` generator and validation scripts are absent.
+- The durable current state lives in `~/Workspace/micro-tato`, a standalone repo on `main` tracking `origin/main`; Claude memory explicitly marks the old `game/` subdir framing as stale.
+- Current Micro Tato is not the same artifact shape as the session's first worktree, but it has a stronger proof surface: `lane.sh`, `build_web.sh`, branch lanes, launch/batch gates, web build path, and current design/runbook docs.
+
+Outcome:
+
+- No code change was made for this row.
+- This row is closed as a superseded artifact migration: the original prompt/session worktree is no longer diffable, but the migrated standalone repo is present, clean, pushed, and validated.
+
+Verification:
+
+```bash
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-dazzling-knitting-donut/1cea38f6-3455-4202-9c45-189a9f26d6dc.jsonl --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000 --out /tmp/rank-1cea-audit.json
+test -d /Users/4jp/Workspace/limen/.claude/worktrees/dazzling-knitting-donut/game
+test -f /private/tmp/claude-501/-Users-4jp-Workspace-limen/1cea38f6-3455-4202-9c45-189a9f26d6dc/scratchpad/validate.sh
+git -C /Users/4jp/Workspace/micro-tato status --short --branch
+./lane.sh validate
+```
+
+Result: transcript audit completed with an Opus budget violation; old worktree/scratchpad paths were absent; `~/Workspace/micro-tato` was clean on `main`; `./lane.sh validate` returned `gate PASS` with compile plus fighter/knight/cowboy/magician soaks all zero.
 
 ## Remaining Review Queue
 
