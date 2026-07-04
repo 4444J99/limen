@@ -14,6 +14,7 @@ Generated: `2026-07-04T00:40:41Z`
 |---:|---|---|---|
 | refreshed 1 | `claude` | `9750bef7-8829-4373-916a-f86338b2e20a` | Archive4T conductor/session-foundation run. Temp job files were gone, durable transcripts and workflow JSON remained. Patched the audit redaction boundary after the session exposed raw prompt text in `unboundedGoalEvidence`. |
 | refreshed 2 | `claude` | `eb3b624c-206f-4c9e-91aa-f069967a3796` | Studium transmission-curriculum run. Original worktree was gone, but the scripts and corpus are live on `main`; fixed a state-loader crash that violated the prompt's fail-open daily-face contract. |
+| refreshed 3 | `claude` | `343d6769-bdee-480f-88d9-981eec736b87` | Evocator/SVMMONER run. Worktree and temp activation files were gone, but `scripts/evocator.py` and `spec/evocator` landed on `main`; fixed canon-shape crash paths that violated the organ's fail-open beat contract. |
 | 1 | `opencode` | `ses_11427e08affe3D8jAAl5W43viB` | Exact window had no matching commits on `main`, but the matching unmerged branch is `limen/gen-organvm-limen-security-0625-57ce` at `02f256e` (`Security hardening pass on organvm/limen`). Reviewed as a reject/do-not-merge artifact. |
 | 2 | `opencode` | `ses_114c8f0c6ffeixS8gn4VxGqoHb` | Exact window matched `80d4e21f` (`feat(route): consume self-improve lane weights`). Widened window also showed related routing/meter/queue commits including `0146190` and `a6488c9`. |
 | 3 | `opencode` | `ses_1095e9b19ffe4yg9h4la7tGU4d` | Exact window had no matching commits on `main`; widened window was mostly Studium content-generation churn, not the control-plane code path reviewed here. |
@@ -833,6 +834,38 @@ python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/pro
 
 Result: `8 passed`; compile passed.
 
+### Evocator canon loading trusted valid YAML shape too much
+
+Severity: medium for autonomous beat reliability.
+
+Evidence:
+
+- Refreshed rank 3 (`343d6769-bdee-480f-88d9-981eec736b87`) was the Evocator/SVMMONER run. The original worktree and `~/.claude/jobs/343d6769/tmp/*` activation files were gone, but commits `078f90c` and `035ddae` landed the durable `scripts/evocator.py` and `spec/evocator` surfaces on `main`.
+- Patched transcript audit reports 39 transcript files, 3,622 usage-bearing messages, 24,600,795 billable-ish tokens, 448,429,536 cache-read tokens, 22,631,162 Opus-class billable-ish tokens, 24 Opus-class subagents, 23 agent/workflow calls, and one unbounded-goal prompt hit.
+- The organ promised "fail-open, never gate the beat." It caught unreadable or syntactically invalid YAML, but a valid YAML root with the wrong shape, such as a list, made `load_canon()` call `.get()` on a list. A truth whose `channels` field was present but not a mapping would later break render/channel logic.
+
+Repair:
+
+- Rejected wrong-shaped canon roots and non-list `truths` values as logged problems.
+- Normalized non-mapping `channels` to an empty mapping while preserving the truth and reporting the problem.
+- Added Evocator unit tests for both shape failures.
+
+Touched paths:
+
+- `scripts/evocator.py`
+- `cli/tests/test_evocator.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_evocator.py -q
+python3 -m py_compile scripts/evocator.py
+python3 scripts/evocator.py
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-fluttering-wandering-wilkes/343d6769-bdee-480f-88d9-981eec736b87.jsonl --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000 --out /tmp/rank-343-audit.json
+```
+
+Result: `2 passed`; compile passed; live Evocator run reported `3 truths`, `FLAME unchanged`, corpus skipped because knowledge-corpus is absent on this host, and memory all present.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -1023,6 +1056,11 @@ Result: `8 passed`; compile passed.
 - `scripts/studium.py:119` rejects wrong-shaped state before merging persisted values.
 - `cli/tests/test_studium.py:132` covers wrong-shaped state JSON.
 - `cli/tests/test_studium.py:143` covers poisoned cursor fields.
+- `scripts/evocator.py:88` rejects wrong-shaped canon roots.
+- `scripts/evocator.py:91` rejects non-list canon truth collections.
+- `scripts/evocator.py:104` normalizes non-mapping channel data.
+- `cli/tests/test_evocator.py:22` covers wrong-shaped canon YAML.
+- `cli/tests/test_evocator.py:36` covers bad channel data without crashing rendering.
 
 ## Remaining Review Queue
 

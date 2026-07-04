@@ -85,8 +85,13 @@ def load_canon():
         doc = yaml.safe_load(CANON.read_text()) or {}
     except (OSError, yaml.YAMLError) as e:
         return [], [f"canon unreadable: {e}"]
+    if not isinstance(doc, dict):
+        return [], [f"canon root is {type(doc).__name__}, not a mapping — skipped"]
+    raw_truths = doc.get("truths") or []
+    if not isinstance(raw_truths, list):
+        return [], [f"canon truths is {type(raw_truths).__name__}, not a list — skipped"]
     truths, problems = [], []
-    for i, t in enumerate(doc.get("truths") or []):
+    for i, t in enumerate(raw_truths):
         if not isinstance(t, dict):
             problems.append(f"truth #{i} is not a mapping — skipped")
             continue
@@ -94,6 +99,12 @@ def load_canon():
         if missing:
             problems.append(f"truth #{i} ({t.get('id', '?')}) missing {missing} — skipped")
             continue
+        channels = t.get("channels") or {}
+        t = dict(t)
+        if not isinstance(channels, dict):
+            problems.append(f"truth #{i} ({t.get('id')}) channels is not a mapping — treated as empty")
+            channels = {}
+        t["channels"] = channels
         truths.append(t)
     return truths, problems
 
