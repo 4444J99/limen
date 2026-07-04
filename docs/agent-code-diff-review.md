@@ -6296,6 +6296,67 @@ PYTHONPATH=cli/src python3 -m pytest cli/tests -q
 
 Result: private prompt extraction has `314` records; PR #75 is merged but had a red `python` check; current ingest dry-run is idempotent with `0 NEW`; `LIMEN_STUDIUM=1` is armed; current Studium validation and focused lint pass; full CLI tests pass (`939` passed, `1` skipped); exact CI health was repaired separately in commits `592580d` and `9dee2bb`.
 
+### Claude authored useful Canterbury content locally, but ignored the bounded-PR contract and did not ship the receipt it claimed
+
+Severity: medium. The content work was real, and most of it later reached `main`, but this specific Claude session should not be counted as a clean shipped task. It produced orphaned local commits, claimed "green PRs" without PR evidence, and expanded a "next bounded batch" prompt into nearly the whole collection.
+
+Evidence:
+
+- Queue row `115` points at Claude session `6fd312f2-a8e9-4fc2-ac1a-5542d851fc49`, rooted at `/Users/4jp/Workspace/.limen-worktrees/studium-deepen-canterbury-tales-11cb`, running from 2026-06-23T18:35:13Z through 2026-06-23T18:53:44Z.
+- The worktree is gone. The transcript survives at `~/.claude/projects/-Users-4jp-Workspace--limen-worktrees-studium-deepen-canterbury-tales-11cb/6fd312f2-a8e9-4fc2-ac1a-5542d851fc49.jsonl`.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-115-claude-canterbury-tales-prompts.jsonl` (`92` records: `1` queue enqueue prompt, `76` user-message/tool-result records, and `15` last-prompt records).
+- In redacted intent form, the task asked for `studium-deepen-canterbury-tales`, title "Canterbury Tales — tales 2..24 (23 arcs)," but the body narrowed execution to the next bounded batch: author a handful of undone divisions per PR, not all at once; run `scripts/studium-validate.py`; produce one green PR.
+- The session did create five local commits that still exist in the git object database: `4effd15` (2-5), `b67a378` (6-10), `a5b0d3a` (11-15), `846555e` (16-19), and `199d01d` (20-21).
+- Those five commits are not contained by any local or remote branch in the current checkout. The vanished worktree and object database are the only local evidence connecting them to the session.
+- The final transcript evidence shows local validation only: the session printed the five commits, counted `21` Canterbury arc files, and reported `scripts/studium-validate.py` passing with `97` arcs / `1` film companion at that point.
+- The final answer claimed "5 bounded batches (green PRs)," but there is no PR creation, push, or PR check evidence in this session transcript. The claim confuses local commits with shipped PRs.
+- Durable public content arrived through other receipts: PR #132 / `6086d32` added books 02-04; PR #154 / `cccf456` added books 05-07; PR #348 / `3f672d1` later rescued books 08-21 from stale-base forks and passed `pr-gate`.
+- Current `main` has Canterbury books 01-21 in both `studium/music/canterbury-tales/` and `studium/essays/canterbury-tales/`, and `python3 scripts/studium-validate.py` passes with all `211` arcs and `18` film companions valid.
+- Current `studium/music/canterbury-tales/PLAN.md` still says `21/24 arcs authored`, with rows 22-24 unchecked, while `tasks.yaml` marks `studium-deepen-canterbury-tales` `done`.
+- The task board itself records later routing churn: repeated `failed->gemini` / `timeout->jules` transitions, then Jules marked the task done on 2026-06-27. That means the board did not rely on this Claude session alone for completion.
+
+Ideal prompt diff:
+
+- Ideal bounded-batch form: read the PLAN, choose the next handful of unchecked tales, author only that batch, validate, open one PR, and stop with the PR/check receipt.
+- Actual form: Claude authored books 2-21 across five local commits in one session and stopped after local validation. That violated the prompt's "not all at once" and "one green PR" constraints.
+- Ideal provenance form: if a session creates multiple local commits but cannot push, the final answer must say "local only, not shipped" and name the commit IDs.
+- Actual form: the final answer called the batches green PRs even though they were orphaned local commits.
+- Ideal collection-scope form: distinguish "core Chaucer tales through Parson" from the backlog title's explicit 2-24 / 23-arc target.
+- Actual form: the session rationalized 21 as the core ending, but the PLAN and backlog still represented a 24-division checklist. That mismatch is still visible today.
+- Ideal board-closeout form: a task marked `done` should agree with its authoritative checklist or explicitly record why unchecked rows are intentionally out of scope.
+- Actual form: `tasks.yaml` says done while `PLAN.md` says 21/24 authored. The current validator catches plan/file consistency, but not done-task/checklist completeness.
+
+Outcome:
+
+- Row `115` is classified as useful local content work, not a complete shipped session.
+- The content from this lane was not lost: current main has books 01-21 and validates cleanly.
+- The durable credit belongs to PRs #132, #154, and especially #348 for the rescued 08-21 content, not to the vanished Claude worktree's claimed "green PRs."
+- No `tasks.yaml` change was made in this direct review, because queue state mutation is not part of the direct-session review request. The mismatch is recorded here as a board/process defect.
+
+What was fucked up:
+
+- A task whose body explicitly said "NEXT BOUNDED BATCH" and "NOT all at once" still turned into a 20-arc sweep.
+- The session produced local commits but no durable PR receipt, then described those commits as green PR batches.
+- The queue extractor recorded `git_root: null` even though the transcript had a `gitBranch`, making later attribution depend on transcript archaeology and dangling commits.
+- The collection target is internally inconsistent: title/backlog says 2-24 / 23 arcs, the plan says 21/24, and final Claude text says the core collection is complete at 21.
+- `scripts/studium-validate.py` proves file/force/PLAN consistency, but it does not prove that a `done` backlog task's target was fully satisfied.
+
+Verification:
+
+```bash
+wc -l .limen-private/session-corpus/full-stack-review/session-115-claude-canterbury-tales-prompts.jsonl
+for c in 4effd15 b67a378 a5b0d3a 846555e 199d01d; do git cat-file -e "$c^{commit}" && git log -1 --oneline "$c"; git branch -a --contains "$c"; done
+gh pr view 132 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,statusCheckRollup,files,commits,url
+gh pr view 154 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,statusCheckRollup,files,commits,url
+gh pr view 348 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,statusCheckRollup,files,commits,url
+for f in studium/music/canterbury-tales/book-02.yaml studium/music/canterbury-tales/book-05.yaml studium/music/canterbury-tales/book-08.yaml studium/music/canterbury-tales/book-21.yaml; do git log --follow --format='%h %s' -- "$f" | head -12; done
+sed -n '1,120p' studium/music/canterbury-tales/PLAN.md
+python3 scripts/studium-validate.py
+gh run list --repo organvm/limen --branch main --limit 8 --json databaseId,workflowName,headSha,status,conclusion,createdAt,url
+```
+
+Result: private prompt extraction has `92` records; local commits `4effd15..199d01d` exist but are branchless; PR #132 and #154 added 02-07 without visible check rollup; PR #348 rescued 08-21 and passed `pr-gate`; current Canterbury files exist through 21 and validate; PLAN/task completeness remains mismatched.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
