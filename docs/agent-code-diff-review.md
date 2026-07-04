@@ -95,6 +95,7 @@ Generated: `2026-07-04T12:24:23Z`
 | changed 137 | `codex` | `019f191a-bf3b-7ab1-b9ef-d76c22c62f47` | Limen CI-green 0622 recovery. Codex manually reconstructed a 17-file lint-stabilization patch after `.git` writes were blocked; the dispatcher turned it into PR #487, which merged, but full CI was not green because `verify` failed after merge on missing web `yaml`. Later PRs #496 and #581 are the durable green CI receipts, not row 137 alone. |
 | changed 138 | `claude` | `33eaebb1-edb0-4b53-b22a-d6925bd980a5` | Public Record Data Scraper revenue readiness. Claude identified async scrape jobs as the highest-leverage first-dollar gap and opened PR #318, which merged green and remains on `main`; the durable code is real. The defects are receipt hygiene: the final/memory claim overstated route-test coverage after a later branch-update commit dropped most route-test changes, commit author metadata used `Test User <test@example.com>`, and the session wrote project memory outside the repo. |
 | changed 139 | `claude` | `61d8b1ae-6d3b-4b87-b992-7fab59ce36e7` | Edu-organism closing-half course-engine run. A private teaching/email triage session grew into edu-organism engine work and shipped PR #48: live-date verifier, term-bound inactivity-agent dates, grounded reply drafter, advising memory, tests, and generated course artifacts. The code survived on `main`, but the session blew the Opus cap, merged with no GitHub checks, and the queue's six-file slice understated the final 15-file PR. |
+| changed 140 | `opencode` | `ses_108a8bf16ffegslVYyDJTjKuCQ` | Divine Comedy batch run. The prompt asked for the next bounded Divine Comedy batch, validation, and one green PR. OpenCode instead wrote local books `05-94` while never running `git` or `gh`; no session PR or final receipt exists. Durable `main` only has books `05-17`, with `05-13` already merged before the session and `14-17` merged later through PR #164. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -7470,7 +7471,7 @@ Outcome:
 
 What was fucked up:
 
-- A task whose body explicitly said "NEXT BOUNDED BATCH" and "NOT all at once" still turned into a 20-arc sweep.
+- A task whose body explicitly required a small bounded batch still turned into a 20-arc sweep.
 - The session produced local commits but no durable PR receipt, then described those commits as green PR batches.
 - The queue extractor recorded `git_root: null` even though the transcript had a `gitBranch`, making later attribution depend on transcript archaeology and dangling commits.
 - The collection target is internally inconsistent: title/backlog says 2-24 / 23 arcs, the plan says 21/24, and final Claude text says the core collection is complete at 21.
@@ -8782,6 +8783,62 @@ test -d /Users/4jp/Workspace/.limen-worktrees/gen-organvm-public-record-data-scr
 ```
 
 Result: transcript guard passed; prompt extraction matches row `138`; PR #319 is closed unmerged with final `CI Gate` failure at `Setup Node.js`; PR #331 is merged with green `CI Gate`, `Secret Pattern Detection`, and `validate-dependencies`; the #319 branch still exists and is diverged from current `main`; the original worktree is absent.
+
+### OpenCode's Divine Comedy session overproduced local content and left only a small durable slice
+
+Severity: medium for content pipeline integrity, low for current code risk. This row is useful because it catches both sides of the problem: the model did real writing work, but the fleet queue attributed a huge dirty snapshot as if it were a clean session diff, while the prompt's bounded-batch and one-green-PR contract were not satisfied.
+
+Evidence:
+
+- Queue row `changed_review[140]` points at OpenCode session `ses_108a8bf16ffegslVYyDJTjKuCQ`, titled `Divine Comedy cantos 2-100 batch: Inferno->Purgatorio->Paradiso arcs`, rooted at `/Users/4jp/Workspace/limen`, running from 2026-06-24T01:55:52Z through 2026-06-24T02:25:32Z.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-changed-140-opencode-divine-comedy-prompts.jsonl`: `1` prompt record, `1` unique prompt hash, `932` prompt bytes after removing OpenCode's stored quote wrapper.
+- In redacted intent form, the first-layer prompt asked OpenCode to complete `studium-deepen-divine-comedy` by authoring only a small next batch of undone Divine Comedy divisions, then prove `scripts/studium-validate.py` and leave one green PR.
+- OpenCode database metadata: model `north-mini-code-free`, cost `0`, `5,004,753` input tokens, `138,461` output tokens, `16,072` reasoning tokens, and session summary counters of `0` files / `0` additions / `0` deletions.
+- The session's user-message metadata already carried `210` summary diff entries before execution, starting with `scripts/generate_shahnameh_arcs.py`. That explains why the queue row listed `209` changed files across Shahnameh, Journey to the West, Tao Te Ching, films, and Divine Comedy.
+- The actual direct write stream is narrower and still too broad: `180` `write` tool calls created Divine Comedy music/essay pairs for books `05` through `94`. The patch-summary stream also reported `209` unique files, but that surface includes inherited dirty context and adjacent Studium changes, not clean OpenCode authorship.
+- The session ran only listing commands and `python3 scripts/studium-validate.py`; it never ran `git`, `gh`, commit, push, or PR commands. Its message finishes were `157` `tool-calls` and `2` null finishes, with no final completion receipt.
+- In-session validation initially failed on unrelated film-layer issues, later reported green as the dirty checkout changed, and then kept being rerun while the session continued writing far beyond the bounded-batch instruction.
+- Durable GitHub history does not match the local burst. PR #103 merged books `05-13` at 2026-06-23T21:38:48Z, before this OpenCode session. PR #164 merged books `14-17` at 2026-06-24T04:36:55Z, about two hours after this session, with no status checks in the PR rollup.
+- Current `origin/main` contains Divine Comedy books `01-17` only. Books `18-94` from this session's local write stream are not on current `main`.
+- Current validation on the review worktree is green: `python3 scripts/studium-validate.py` reports `213` arcs and `18` film companions valid.
+
+Ideal prompt diff:
+
+- Ideal bounded content packet: inspect the live plan, choose a small next batch, write only that batch, update the plan, run validation, then open or cite one green PR.
+- Actual form: the model interpreted the broad task title as permission to continue toward full completion and wrote ninety Divine Comedy pairs locally.
+- Ideal authorship surface: distinguish the prompt-context dirty diff from files written by the session.
+- Actual surface: the queue collapsed OpenCode's `summary.diffs`, patch summaries, and direct writes into one `209`-file attribution.
+- Ideal receipt: either a PR URL/check-run ID or an explicit incomplete status.
+- Actual receipt: no git/PR command and no final OpenCode completion message.
+
+Outcome:
+
+- Credit the session for producing draft local Divine Comedy material and for repeatedly exercising `studium-validate.py`.
+- Do not credit the session as a completed green PR. Durable `main` credit belongs to PR #103 for books `05-13` and PR #164 for books `14-17`.
+- Treat books `18-94` as unreviewed, non-durable local draft output unless a future salvage pass compares them against the current plan and literary/music quality bar.
+
+What was fucked up:
+
+- The prompt itself had contradictory pressure: the title said cantos `2..100`, while the body said bounded handful. OpenCode followed the title gravity and blew past the body constraint.
+- The session worked from a polluted root checkout. The initial OpenCode user message carried 210 pre-existing diff entries, making changed-file attribution untrustworthy without tool-stream reconstruction.
+- Validation was global and dirty-state-sensitive. A green validator during this session did not prove only the session's intended batch was clean.
+- No PR/receipt boundary existed. The session could generate huge local content and then end mid-tool loop with no durable handoff.
+
+Verification:
+
+```bash
+jq -s '{records:length, unique_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), task_prompt_bytes:([.[].task_prompt_bytes] | add)}' .limen-private/session-corpus/full-stack-review/session-changed-140-opencode-divine-comedy-prompts.jsonl
+sqlite3 -readonly -json "$HOME/.local/share/opencode/opencode.db" "select id,slug,directory,title,version,agent,model,cost,tokens_input,tokens_output,tokens_reasoning,datetime(time_created/1000,'unixepoch') as created,datetime(time_updated/1000,'unixepoch') as updated,summary_additions,summary_deletions,summary_files,summary_diffs from session where id='ses_108a8bf16ffegslVYyDJTjKuCQ';"
+sqlite3 -readonly -json "$HOME/.local/share/opencode/opencode.db" "select json_array_length(json_extract(data,'$.summary.diffs')) as diff_count, json_extract(data,'$.summary.diffs[0].file') as first_file from message where session_id='ses_108a8bf16ffegslVYyDJTjKuCQ' and json_extract(data,'$.role')='user' order by time_created limit 1;"
+sqlite3 -readonly "$HOME/.local/share/opencode/opencode.db" "select json_extract(data,'$.state.input.command') from part where session_id='ses_108a8bf16ffegslVYyDJTjKuCQ' and json_extract(data,'$.tool')='bash' order by time_created,id;"
+sqlite3 -readonly -json "$HOME/.local/share/opencode/opencode.db" "select count(*) as write_count, min(json_extract(data,'$.state.input.filePath')) as first_file, max(json_extract(data,'$.state.input.filePath')) as last_file from part where session_id='ses_108a8bf16ffegslVYyDJTjKuCQ' and json_extract(data,'$.tool')='write';"
+gh pr view 103 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+gh pr view 164 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+git ls-tree -r --name-only origin/main studium/music/divine-comedy studium/essays/divine-comedy
+python3 scripts/studium-validate.py
+```
+
+Result: private prompt extraction has `1` record; OpenCode DB proves the initial dirty summary had `210` diff entries, direct writes created Divine Comedy pairs from `book-05` through `book-94`, and no git/PR command ran; PR #103 and PR #164 are merged but only carry books `05-17`; current `origin/main` contains Divine Comedy through `17`; current validation passes.
 
 ## Remaining Review Queue
 
