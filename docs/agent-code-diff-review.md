@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T04:13:46Z`
+Generated: `2026-07-04T04:34:16Z`
 
 ## Scope
 
@@ -21,6 +21,7 @@ Generated: `2026-07-04T04:13:46Z`
 | 1 | `opencode` | `ses_11427e08affe3D8jAAl5W43viB` | Corrected mapping: session opened PR #46 (`Security hardening pass - audit fixes + input validation`), which merged at `b82223c` with green python/worker/web checks. The earlier stale branch attribution was false-positive snapshot confusion. |
 | 2 | `opencode` | `ses_114c8f0c6ffeixS8gn4VxGqoHb` | Corrected mapping: session opened PR #45 (`ci: add ruff Python linting as missing check`), which merged at `024d443` with green python/worker/web checks. The earlier route-weight attribution was a widened-window false positive. |
 | 3 | `opencode` | `ses_1095e9b19ffe4yg9h4la7tGU4d` | Aeneid film companion run. The requested artifact had already merged on `main` via PR #98 before this session started; the session then created commit `e3863a9` on stale local topic branches, edited `tasks.yaml`, and reported committed/pushed without a one-green-PR receipt. Current `main` validates cleanly from PR #98, while later duplicate Jules PR #376 remains open with a failing gate. |
+| 58 | `opencode` | `ses_1196096a3ffebIl7MYmF6EEXVi` | CI-green run. The queue's 128 changed-file snapshot was mostly broad task-file/context pollution; the actual authored diff was a one-line dispatch-test assertion fix in commit `01ac5f9`, pushed to `main`, with GitHub CI run `27882388170` green. The receipt was real but should have named the run and avoided shadow `.claude/worktrees` board closeout attempts. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -156,6 +157,51 @@ PYTHONPATH=/Users/4jp/Workspace/limen/cli/src python3 -m pytest cli/tests/test_d
 ```
 
 Result: PR #45 is merged with green GitHub checks; current Ruff lint passes across the listed Python surfaces; the PR-touched Python files pass Ruff format and Python compile; focused dispatch/doctor tests passed `84 passed`. Current broad Ruff format check fails on two later unrelated files, so that is recorded as post-session drift rather than a PR #45 failure.
+
+### OpenCode CI-green session fixed the failing assertion, but the receipt hid direct-main and shadow-board risks
+
+Severity: medium for lifecycle hygiene; the code fix was correct and GitHub CI was green, but the session's closeout proof was weaker than the actual evidence.
+
+Evidence:
+
+- OpenCode session `ses_1196096a3ffebIl7MYmF6EEXVi` ran from `/Users/4jp/Workspace/limen` on 2026-06-20T20:01:09Z through 2026-06-20T20:08:38Z with slug `glowing-island`, model `deepseek-v4-flash-free`, and cost 0.
+- Token counters from the OpenCode database: 86,843 input, 7,137 output, 2,824 reasoning, and 3,637,120 cache-read.
+- Prompt first layer was an auto-generated CI-green task for `organvm/limen`: inspect latest failing default-branch checks, fix the root cause, and confirm checks pass; if already green, add the single most valuable missing check.
+- The queue reported 128 changed files, but that was not the authored diff. The session read a massive `tasks.yaml`/worktree context snapshot, which polluted changed-file attribution.
+- Actual authored diff was one line in `cli/tests/test_dispatch.py`: commit `01ac5f9d0857a3a171545176fbe021410cb69370` (`fix(test): update copilot dry-run assertion to match GraphQL dispatch`) changed the dry-run assertion from the old `gh issue edit` command to the new GraphQL dispatch text.
+- The commit is on `origin/main`, and GitHub Actions run `27882388170` for workflow `CI` on that SHA completed successfully at 2026-06-20T20:06:20Z with `python`, `web`, and `worker` jobs all green.
+- The final OpenCode receipt said "CI green" and described the root cause, but it did not name the check run URL/id. The session also tried to `git add .claude/worktrees/usage-pacing/tasks.yaml`, discovered the file was not tracked, and then treated that shadow board file as non-committable local state.
+
+Ideal prompt diff:
+
+- Ideal form: inspect the live failing check, make the smallest root-cause fix, verify the exact affected test locally, confirm the GitHub check run by id or URL, and avoid board closeout against shadow worktree copies.
+- Actual form: the engineering fix matched the failure and CI was genuinely green, but the proof was chat-only until this review reconstructed the GitHub run. The session also operated from a divergent local branch context while pushing the fix straight to `main`.
+- Corrected ideal form for CI-green generated tasks: "confirm checks pass" means record the workflow/run id and commit SHA in the receipt. If a local `.claude/worktrees/.../tasks.yaml` is not tracked by the repo that owns the task, do not attempt to use it as dispatch closeout state.
+
+Outcome:
+
+- Current `main` still contains the correct dispatch-test assertion shape for GraphQL Copilot assignment dry-run output.
+- Current targeted dispatch tests pass on this checkout.
+- The queue row should be scored as a qualified pass, not a 128-file code-review target: the real defect was receipt and board-state hygiene, not broad code churn.
+
+What was fucked up:
+
+- Changed-file attribution was wildly inflated because context reads were treated like authored changes.
+- The final receipt omitted the durable GitHub Actions run id even though the run existed and was green.
+- The direct push to `main` left less review surface than a PR would have, and the commit used `Test User <test@example.com>` author identity.
+- The session attempted to close out `.claude/worktrees/usage-pacing/tasks.yaml` from the parent repo, then learned it was not tracked. That is a useful warning sign: OpenCode must distinguish repo-owned board state from agent scratch/worktree state before commit/push closeout.
+
+Verification:
+
+```bash
+sqlite3 -line "$HOME/.local/share/opencode/opencode.db" "select datetime(time_created/1000,'unixepoch') as created, data from part where session_id='ses_1196096a3ffebIl7MYmF6EEXVi' and (data like '%CI%' or data like '%complete%' or data like '%tasks.yaml%') order by time_created desc limit 12;"
+git show --format=fuller --stat --patch 01ac5f9d0857a3a171545176fbe021410cb69370 -- cli/tests/test_dispatch.py
+git merge-base --is-ancestor 01ac5f9d0857a3a171545176fbe021410cb69370 origin/main
+gh run view 27882388170 --repo organvm/limen --json databaseId,name,displayTitle,conclusion,status,createdAt,updatedAt,url,headBranch,headSha,jobs
+PYTHONPATH=cli/src python3 -m pytest cli/tests/test_dispatch.py -q
+```
+
+Result: commit `01ac5f9d0857a3a171545176fbe021410cb69370` is an ancestor of `origin/main`; GitHub run `27882388170` is completed success for workflow `CI`; `python`, `web`, and `worker` jobs are all success; targeted dispatch tests passed `37 passed`.
 
 ### OpenCode Aeneid content run produced valid-looking local work, but failed the one-green-PR contract
 
