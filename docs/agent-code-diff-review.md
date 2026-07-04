@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T06:14:47Z`
+Generated: `2026-07-04T06:18:14Z`
 
 ## Scope
 
@@ -39,6 +39,7 @@ Generated: `2026-07-04T06:14:47Z`
 | 79 | `claude` | `efb53173-614a-4f9f-9399-48fbab1150ee` | Credential hydration / no-more-login run. The deleted worktree did land the core `creds-hydrate` organ through PR #217 and many later corrections: env propagation, validity probes, phantom-lane retirement, `op` prompt-storm prevention, GH keyring derivation, and Cloudflare probe correction. It was valuable root healing, but the session spent 3.98M billable / 3.70M Opus and repeatedly overclaimed done before testing the real property. Review fixed stale launchd/script guidance that still described bare `--apply` as 1Password self-heal instead of promptless-only hydration. |
 | 80 | `codex` | `019ede36-2d1a-7fe1-9793-e42f2d9ca717` | Avditor premium-tier Codex run. The prompt asked for a $29-$99 paid tier with Stripe checkout, Growth Vault / advanced-audit gating, and the free audit preserved. The original ephemeral worktree is gone and the transcript ends mid-edit with local tests blocked by missing `vitest`, but the same task later landed as PR #33 with green build/test/e2e. The durable merged diff is narrower than the queue's 35-file snapshot. |
 | 81 | `codex` | `019ee341-d271-7da2-81f1-79c53da2cda4` | Avditor billing Codex run. The prompt asked for Stripe/Lemon Squeezy checkout plus a license/subscription gate around premium features while preserving the free tier. The original worktree is gone, and PR #43 was left open/red: local tests were blocked by missing `vitest`, CI failed in `next build`, and review found a Stripe webhook ordering bug. Review repaired the PR branch in commit `7ee8531`: schedule gating now builds, incomplete `subscription.created` events no longer downgrade active checkout state, local unit/build/lint checks pass, GitHub CI run `28697258820` is green, and PR #43 merged at `9614eef`. |
+| 82 | `opencode` | `ses_1061a8069ffevlGm8hemwph4w7` | Public Record Data Scraper security run. The prompt asked OpenCode to audit `organvm/public-record-data-scrapper`, fix high-severity advisories, add input validation at untrusted entrypoints, keep builds green, and open a PR. The queue's 43 Limen changed files are attribution noise: actual work was external PR #310, which closed unmerged after CI failed at `npm ci` because package and lockfile drifted. Durable fulfillment came later through merged PR #331 with green gate, not through the OpenCode PR. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -4280,6 +4281,61 @@ gh pr view 43 --repo organvm/specvla-ergon--avditor-mvndi --json number,title,st
 ```
 
 Result: private prompt extraction has `2` records; original worktree is absent; PR #43 was open/red on head `74d010a`; local repair commit `7ee8531` pushed to the PR branch; targeted tests passed `2` files / `15` tests; full `npm test` passed `76` files / `447` tests; `npm run build` passed; `npm run lint` exited `0` with 11 pre-existing warnings outside the patched files; `git diff --check` passed; GitHub CI run `28697258820` completed success; PR #43 merged at `9614eef`.
+
+### OpenCode Public Record Data Scraper security work was useful exploration, but the PR failed and was superseded
+
+Severity: medium for external security work; current repo contains a later green replacement, but the OpenCode PR itself did not land.
+
+Evidence:
+
+- Queue row `82` points at OpenCode session `ses_1061a8069ffevlGm8hemwph4w7`, titled `Security hardening public-record-data-scrapper`, run from `/Users/4jp/Workspace/limen` on 2026-06-24T13:50:27Z through 2026-06-24T14:02:32Z with model `deepseek-v4-flash-free`, cost `0`, and 237,119 input / 18,895 output / 9,111 reasoning tokens.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-82-opencode-public-record-scrapper-prompts.jsonl` (`2` records: the FLAME-wrapped task prompt and a short continuation prompt).
+- In redacted intent form, the prompt asked OpenCode to complete `GEN-organvm-public-record-data-scrapper-security-0624`: run the ecosystem audit for `organvm/public-record-data-scrapper`, upgrade or pin high-severity advisories, add input validation at the main untrusted-input entrypoints, open a PR, and keep the build green.
+- The queue listed 43 changed files in Limen, but that was not the authored diff. The actual session cloned/worked in `organvm/public-record-data-scrapper` and opened PR #310, while the Limen file list came from context/adjacent checkout noise.
+- PR #310 changed six external files: `package-lock.json`, `package.json`, `pnpm-lock.yaml`, `server/routes/competitive.ts`, `server/routes/health.ts`, and `server/routes/outreach.ts`.
+- OpenCode's PR body claimed production audit improved from `1 critical, 2 high` to `0 critical, 0 high`, and that 5-6 `scrape.test.ts` failures were pre-existing. The transcript shows it tried to prove no new regressions by stashing its work, rerunning tests, then restoring its changes.
+- The PR closed unmerged on 2026-06-28. The final PR comment says it was superseded by #331 because #310 had unresolvable merge conflicts.
+- The last CI run on PR #310 (`28274678275`) failed in the `Install dependencies` step before lint/tests/build because `npm ci` found package/lock drift: `axios@0.21.4` was missing from the lockfile.
+- PR #331 (`Security: Zod input validation on competitive and outreach routes`) merged on 2026-06-28 at `0d1cf39020d5f6b5b7f8e4793603964719c9d4ea`, explicitly replacing stale PRs #310, #314, and #319. Its gate, secret scan, and dependency validation checks were green, and the merge commit is an ancestor of `origin/main`.
+
+Ideal prompt diff:
+
+- Ideal form: run the external repo's install/audit/test/build gates from a clean lockfile state, keep the PR branch current with `main`, and open/leave a PR only when CI can install dependencies.
+- Actual OpenCode form: it did useful analysis and found plausible audit/input-validation work, but it mixed npm and pnpm lockfile edits, left package-lock drift that broke `npm ci`, and the PR eventually closed unmerged.
+- Ideal attribution form: record external PR #310 as the actual authored artifact and avoid treating Limen files read during the session as authored changes.
+- Actual queue form: it reported 43 Limen files, hiding the real six-file external PR and inflating the review surface.
+- Corrected done form: credit the task family to PR #331, not to the original OpenCode PR, because #331 is the merged green replacement that actually reached `main`.
+
+Outcome:
+
+- No code patch was made in this review pass. The current external repo already contains the superseding green merge from PR #331.
+- The row should be scored as `failed/superseded`, not as a successful OpenCode landing: OpenCode opened a useful but broken PR, and a later Claude-generated PR landed the durable input-validation work.
+- PR #335 remains open and green but currently conflicting; it is a later Jules security pass and should be reviewed separately rather than used to credit this OpenCode row.
+
+What was fucked up:
+
+- The OpenCode final receipt said "Done" and linked PR #310 before GitHub CI proved the branch could even install dependencies.
+- The session trusted local/no-new-regression reasoning despite the external repo's gate relying on `npm ci --ignore-scripts`, which failed because lockfiles were inconsistent.
+- The branch used `Test User <test@example.com>` commit identity, continuing the generated-task provenance problem.
+- The review queue's changed-file attribution was wrong by repository: Limen files were listed, but the authored changes were in `organvm/public-record-data-scrapper`.
+- A Codex review on PR #310 did not happen because usage limits were exhausted, so the session lost a review layer on a security-sensitive PR.
+
+Verification:
+
+```bash
+wc -l .limen-private/session-corpus/full-stack-review/session-82-opencode-public-record-scrapper-prompts.jsonl
+jq -r '.surface + " " + (.timestamp // "") + " bytes=" + (.prompt_bytes|tostring)' .limen-private/session-corpus/full-stack-review/session-82-opencode-public-record-scrapper-prompts.jsonl
+sqlite3 -json -readonly "file:$HOME/.local/share/opencode/opencode.db?mode=ro&immutable=1" "select id,parent_id,slug,directory,title,version,agent,model,cost,tokens_input,tokens_output,tokens_reasoning,tokens_cache_read,tokens_cache_write,datetime(time_created/1000,'unixepoch') as created, datetime(time_updated/1000,'unixepoch') as updated from session where id='ses_1061a8069ffevlGm8hemwph4w7';"
+gh pr view 310 --repo organvm/public-record-data-scrapper --json number,title,state,closedAt,mergedAt,headRefName,headRefOid,files,commits,statusCheckRollup,body,comments
+gh run view 28274678275 --repo organvm/public-record-data-scrapper --json databaseId,name,status,conclusion,createdAt,updatedAt,url,headSha,jobs
+gh run view 28274678275 --repo organvm/public-record-data-scrapper --log-failed
+gh pr view 331 --repo organvm/public-record-data-scrapper --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup,body
+git -C /Users/4jp/Workspace/organvm/public-record-data-scrapper fetch origin main
+git -C /Users/4jp/Workspace/organvm/public-record-data-scrapper merge-base --is-ancestor 0d1cf39020d5f6b5b7f8e4793603964719c9d4ea origin/main
+gh run list --repo organvm/public-record-data-scrapper --workflow "CI Gate" --branch main --limit 8 --json databaseId,headSha,status,conclusion,event,createdAt,updatedAt,url,workflowName
+```
+
+Result: private prompt extraction has `2` records; PR #310 is closed/unmerged and failed CI at `npm ci` because `axios@0.21.4` was missing from the lockfile; PR #331 merged at `0d1cf39` with green gate/secret/dependency checks and is on `origin/main`; current `main` later advanced to `25a91f4` with a green CI Gate run `28363974547`.
 
 ## Remaining Review Queue
 
