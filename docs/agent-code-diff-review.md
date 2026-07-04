@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T11:29:12Z`
+Generated: `2026-07-04T11:45:38Z`
 
 ## Scope
 
@@ -83,6 +83,7 @@ Generated: `2026-07-04T11:29:12Z`
 | changed 125 | `codex` | `019f13f1-3d53-7783-8b17-483fa603a53a` | Workstream launcher / Corpus Command Center continuation. Codex built useful launcher and corpus-review machinery in commits `3cd1507`, `5252041`, `65b6d23`, and `61c8071`, and preserved cross-repo worktree receipts, but the Limen work was stranded on `work/workstream-agent-launcher-20260629`. There is no PR for that branch, the key command-center files are absent from current `origin/main`, and the branch is now 633 commits behind with a destructive direct merge diff. |
 | changed 126 | `codex` | `019f1abf-0fa8-76a2-b8ec-149765d2c7d2` | Fleet-autonomy dispatch selector repair. The prompt asked Codex to fix the heartbeat/router/async/backlog lane mismatch so open work no longer stranded on unreachable or exhausted lanes. The reviewed transcript ended honestly as mid-implementation, with only board drift committed and no tests yet run; durable code completion came shortly after in direct-main commits `1b24887` and `6115a6c`. Current focused tests pass and read-only health probes show async `auto` can launch work, but today's live root is again blocked by branch/dirty-state drift. |
 | changed 127 | `claude` | `5cd65ab3-deca-4c49-a560-fb470571f0eb` | Token-budget / usage-pacing conductor. Claude shipped the core predictive usage gate in `e36e9cc`, then caught a real false-done in the live heartbeat and reconciled divergent heal histories through `ed05e5a` / `b6e3782`. Current `main` still has the pacing fields, reserve gate, and route runway logic with focused tests green, but the session mixed live policy mutation, stale PR metadata, home-state memory, and missing untracked relay artifacts; transcript guard also flags Opus over-budget. |
+| changed 128 | `codex` | `019f1c06-192e-7d40-8301-dedc5cf370f8` | Mirror Mirror security hardening branch. Codex authored a plausible 19-file hardening commit (`90398cc`) for auth, checkout, webhooks, ShareFile, Ready Player Me, and regression tests, but the prompt's delivery contract was not met: dependency audit/install/test/build were blocked, no PR exists, no CI ran for the branch, and the branch remains published but unmerged, one commit ahead and four commits behind current `main`. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -3651,6 +3652,65 @@ bash -n scripts/heartbeat-loop.sh scripts/heartbeat.sh scripts/metabolize.sh scr
 ```
 
 Result: prompt extraction matches session metadata; transcript guard fails only on Opus budget; `e36e9cc` and `b6e3782` are ancestors of `origin/main`; PR #18 is stale for this work; no PR or run rows were found for the core commit hashes; current `origin/main` contains the pacing/route/dispatch files but not the local policy/relay log files; the named relay file is absent on this host; current focused tests pass `50 passed`; heartbeat/metabolize/route syntax checks pass.
+
+### Codex's Mirror Mirror security branch authored useful hardening, but stopped before the PR/check contract
+
+Severity: high for delivery governance; medium for current code risk. The patch touched security-sensitive auth, checkout, webhook, OAuth, and browser message boundaries, but it never reached the acceptance surface the prompt requested: dependency audit, green tests/build, and a reviewable PR.
+
+Evidence:
+
+- Queue row `changed_review[128]` points at Codex session `019f1c06-192e-7d40-8301-dedc5cf370f8`, rooted in now-absent worktree `/Users/4jp/Workspace/.limen-worktrees/gen-organvm-mirror-mirror-security-0701-7e50`, running from 2026-07-01T04:53:32Z through 2026-07-01T05:07:58Z.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-128-codex-mirror-mirror-security-prompts.jsonl`: `4` prompt-surface records, `3` unique prompt hashes, `13,532` prompt bytes, all from `codex-sessions`. Surfaces are `response_item.user` `3` and `event_msg.user_message` `1`.
+- In redacted intent form, the first-layer generated task was: complete `GEN-organvm-mirror-mirror-security-0701`; run an ecosystem audit for `organvm/mirror-mirror`; upgrade or pin high-severity advisories; add input validation at the main untrusted-input entrypoints; open a PR; keep build green.
+- Codex authored commit `90398cc6ed162bfffbf964e06a67a7d0d19f458e` (`Harden mirror-mirror input boundaries`) on branch `limen/gen-organvm-mirror-mirror-security-0701-7e50`.
+- The diff touched `19` files with `616` insertions and `95` deletions: API key issuance/verification, Stripe and Lemon Squeezy checkout handlers, Stripe and Lemon Squeezy webhooks, shared webhook/auth helpers, client license verification, Ready Player Me message/url handling, ShareFile OAuth/API URL handling, and regression tests.
+- Static review of the commit found a coherent hardening shape: bounded headers and API keys, strict request-body schemas, price/variant id allowlisting, safer webhook field parsing, storage-scope sanitization, Ready Player Me origin/source checks, and ShareFile subdomain/control-plane/path checks.
+- The session's own transcript recorded a real verification blocker: `npm audit --audit-level=high --json` and `npm ci --ignore-scripts` failed on DNS resolution to `registry.npmjs.org`; without install, `npm test` could not find `vitest` and `npm run build` could not find `tsc`.
+- The only completed local verification in the transcript was `git diff --check`.
+- The branch exists remotely at `90398cc6ed162bfffbf964e06a67a7d0d19f458e`; current `main` is `aef2bed7ee1580d7790add8edb698fe00b409727`.
+- GitHub compare reports the branch as `diverged`: `ahead_by: 1`, `behind_by: 4`, `total_commits: 1`.
+- There is no PR for the branch. `gh pr list --head limen/gen-organvm-mirror-mirror-security-0701-7e50 --state all` returned `[]`, and GitHub's commit-to-PR endpoint for `90398cc` returned `[]`.
+- There are no CI runs or check runs for `90398cc`; `gh run list --commit 90398cc...`, branch run listing, and commit check-runs all returned empty results.
+- The original worktree is gone, while `/Users/4jp/Workspace/mirror-mirror` is clean on a different branch (`feature/revenue-readiness`). The local commit object still exists, but `git merge-base --is-ancestor 90398cc origin/main` exits `1`.
+- Current `main` moved ahead through PRs #97, #99, #101, and #89 after this branch was pushed, so the branch is stale as a direct merge candidate without rebase/retest.
+
+Ideal prompt diff:
+
+- Ideal generated security packet: run the audit first, distinguish high-severity dependency remediation from code hardening, patch the narrow untrusted-input surfaces, run tests/build, open a PR, and record the PR/check receipt.
+- Actual form: Codex did the code-hardening pass and pushed a branch, but every executable acceptance predicate except `git diff --check` was blocked, and the PR was never opened.
+- Ideal blocker handling: if DNS blocks audit/install/test/build, classify the task as blocked or partial, leave a branch receipt plus exact retry commands, and do not let "pushed branch" stand in for "PR opened / build green."
+- Actual blocker handling: the final response was honest about the DNS/test/build/PR blockers, but the generated-task delivery remained incomplete and no later process bridged the branch into a PR.
+
+Outcome:
+
+- Credit the session for a useful candidate patch, not for completed security delivery.
+- Do not merge `90398cc` directly into current `main` without rebasing and running the full package gate. The branch is four commits behind current `main`, has no CI history, and touches security/revenue code.
+- Treat the next useful action as a cleanup/revival packet: rebase the branch or cherry-pick the hardening, rerun `npm audit --audit-level=high`, `npm ci`, `npm test`, and `npm run build`, then open a PR with the old branch explicitly superseded if the code still applies.
+
+What was fucked up:
+
+- The generated security task treated a network outage as a temporary inconvenience instead of a hard acceptance blocker. For security packets, dependency audit and test/build are not optional proof.
+- The session ended with a manual PR creation URL after `gh pr create` failed, but no agent or harvest loop later converted that into an actual PR.
+- Branch push succeeded before the final remote check failed on DNS, so the state became easy to misread: there is a durable branch, but not a reviewable PR or check run.
+- The branch now sits as stale, unmerged security/revenue code. That creates review debt: future agents can rediscover the branch and mistake it for a completed or safe-to-merge artifact.
+- The queue row's changed-file count is real for the commit, unlike many context-polluted rows, but the session-level acceptance score is still partial because the required external proof surface is absent.
+
+Verification:
+
+```bash
+jq -s '{records:length, unique_prompt_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), task_body_bytes:([.[].task_body_bytes] | add), by_source:(group_by(.source) | map({source:.[0].source, count:length})), by_surface:(group_by(.surface) | map({surface:.[0].surface, count:length}))}' .limen-private/session-corpus/full-stack-review/session-128-codex-mirror-mirror-security-prompts.jsonl
+git -C /Users/4jp/Workspace/mirror-mirror show --stat --oneline --decorate 90398cc
+git -C /Users/4jp/Workspace/mirror-mirror branch -a --contains 90398cc
+git -C /Users/4jp/Workspace/mirror-mirror merge-base --is-ancestor 90398cc origin/main
+git -C /Users/4jp/Workspace/mirror-mirror rev-list --left-right --count origin/main...90398cc
+git ls-remote https://github.com/organvm/mirror-mirror.git refs/heads/limen/gen-organvm-mirror-mirror-security-0701-7e50 refs/heads/main
+gh pr list --repo organvm/mirror-mirror --head limen/gen-organvm-mirror-mirror-security-0701-7e50 --state all --json number,title,state,mergedAt,closedAt,headRefName,headRefOid,baseRefName,url,statusCheckRollup
+gh api repos/organvm/mirror-mirror/compare/main...limen/gen-organvm-mirror-mirror-security-0701-7e50 --jq '{status:.status,ahead_by:.ahead_by,behind_by:.behind_by,total_commits:.total_commits,files:[.files[]|{filename,status,additions,deletions,changes}],commits:[.commits[]|{sha:.sha[0:7],message:.commit.message}]}'
+gh run list --repo organvm/mirror-mirror --branch limen/gen-organvm-mirror-mirror-security-0701-7e50 --limit 10 --json databaseId,status,conclusion,workflowName,displayTitle,headSha,createdAt,url
+gh api -H 'Accept: application/vnd.github+json' repos/organvm/mirror-mirror/commits/90398cc6ed162bfffbf964e06a67a7d0d19f458e/pulls --jq '[.[]|{number,title,state,merged_at,head:.head.ref,base:.base.ref,url:.html_url}]'
+```
+
+Result: prompt extraction matches row `128`; commit `90398cc` exists locally and remotely; it is not an ancestor of `origin/main`; current compare is diverged with the branch one commit ahead and four commits behind; no PR, run, check-run, or commit-to-PR receipt exists for the branch.
 
 ### Claude domus-genoma CIFIX session failed to fix CI and should have stopped at the permission/spend wall
 
