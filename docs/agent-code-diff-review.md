@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T05:28:37Z`
+Generated: `2026-07-04T05:30:35Z`
 
 ## Scope
 
@@ -30,6 +30,7 @@ Generated: `2026-07-04T05:28:37Z`
 | 68 | `claude` | `6b32c7a7-c558-45f0-b872-3cd16c338448` | Insights-lineage / insight-route run. It shipped the missing insight lineage and route loop through green PRs #592, #596, #598, and #599, and current heartbeat evidence shows the route organ running; the session still violated Fable/token governance and overstated "everything fixed" because closeout predicates are point-in-time and one now fails on later branch drift. |
 | 69 | `claude` | `620d2d1a-a190-4a35-ba0c-1b3fccb61778` | AUG1 revenue gate / inbound-positioning conductor run. It shipped a useful executable Aug-1 predicate and six external inbound docs PRs, but the session spent 6.1M billable tokens with five Opus subagents and overclaimed "7/7 live": universal-mail#89 closed unmerged and its positioning docs are absent from current `main`. Review fixed a malformed-state crash path in `scripts/aug1-view.py`. |
 | 70 | `codex` | `019f1809-13b4-7780-9b1f-d4584f872333` | Full-fleet substrate / current-session fanout run. The session built useful ledger/fanout machinery, but first produced theme-based receipts instead of consolidating every drafted plan; it then correctly diagnosed that proof gap. Current fanout code now proves `11` plan events / `10` unique plan sources in dry-run against the original transcript, but the persisted receipt points at a later continuation session. |
+| 72-74 | `opencode` | `ses_0e6fc0277ffeuuI2k5jQntzOUg`, `ses_0e6fcb282ffebyHJmZuwBru59C`, `ses_0e6fd2ff2ffeIJ75fQQC1gLn66` | OpenCode probe sessions. Each prompt was only `"echo test"` and each session only ran `echo test`; the 65-67 changed-file queue surfaces are attribution noise from adjacent fleet work, not OpenCode authored diffs. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -3761,6 +3762,41 @@ python3 -m py_compile scripts/current-session-fanout.py scripts/product-ledger.p
 ```
 
 Result: current implementation passes focused tests and compiles; dry-run against the original transcript proves `11` plan events / `10` unique plan sources / `12` planner packets / `4` executor packets; persisted receipt currently records only the later continuation session's `1` plan event, so row70 remains a corrected-but-not-row-specific closeout.
+
+### OpenCode echo probes are not 65-file code review targets
+
+Severity: review-pipeline false positive; no code risk from the sessions themselves.
+
+Evidence:
+
+- Queue rows `72`, `73`, and `74` point at OpenCode sessions `ses_0e6fc0277ffeuuI2k5jQntzOUg`, `ses_0e6fcb282ffebyHJmZuwBru59C`, and `ses_0e6fd2ff2ffeIJ75fQQC1gLn66`.
+- Private prompt extraction is in `.limen-private/session-corpus/full-stack-review/session-72-74-opencode-echo-probes-prompts.jsonl`.
+- The OpenCode database shows each session prompt text was exactly `"echo test"`.
+- Each session used model `north-mini-code-free`, cost `0`, from `/Users/4jp/Workspace/limen`.
+- The part table shows only reasoning about running `echo test`, one `bash` tool call per session, and final text output `test`.
+- The review queue nevertheless assigned `65`, `66`, and `67` changed files respectively, including `.github/workflows/ci.yml`, `.ruff.toml`, `agy_log*.txt`, dispatch/capacity code, tests, and launchd files.
+
+Ideal prompt diff:
+
+- Ideal form: a one-command probe should be recorded as a no-op command session with output only.
+- Actual authored behavior: OpenCode did that. It did not author the changed files shown in the queue rows.
+- Pipeline correction: changed-file attribution needs to ignore broad repository snapshots for command-probe sessions, or require patch/tool evidence before assigning a code diff surface.
+
+Outcome:
+
+- These rows are closed as no-op probes.
+- No tracked Limen code change is attributed to them.
+- The useful finding is for the audit machinery: prompt/session first-layer evidence must be allowed to override a widened changed-file window.
+
+Verification:
+
+```bash
+sqlite3 -json /Users/4jp/.local/share/opencode/opencode.db "select id,parent_id,slug,directory,title,version,agent,model,cost,tokens_input,tokens_output,tokens_reasoning,tokens_cache_read,tokens_cache_write,datetime(time_created/1000,'unixepoch') as created, datetime(time_updated/1000,'unixepoch') as updated from session where id in ('ses_0e6fc0277ffeuuI2k5jQntzOUg','ses_0e6fcb282ffebyHJmZuwBru59C','ses_0e6fd2ff2ffeIJ75fQQC1gLn66') order by time_created;"
+sqlite3 -json /Users/4jp/.local/share/opencode/opencode.db "select session_id, id, json_extract(data,'$.type') as type, json_extract(data,'$.text') as text, json_extract(data,'$.content') as content, json_extract(data,'$.tool') as tool from part where session_id in ('ses_0e6fc0277ffeuuI2k5jQntzOUg','ses_0e6fcb282ffebyHJmZuwBru59C','ses_0e6fd2ff2ffeIJ75fQQC1gLn66') order by time_created;"
+jq '.changed_review[72:75] | map({agent,session_id,changed_file_count,first_ts,last_ts,risk_score,review_score,ideal_gaps,changed_files:(.changed_files[0:12])})' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+```
+
+Result: all three sessions are one-command `echo test` probes; the changed-file counts are false attribution.
 
 ## Remaining Review Queue
 
