@@ -20,7 +20,7 @@ Generated: `2026-07-04T04:13:46Z`
 | refreshed 6 | `claude` | `dc879846-e9bf-41c0-b25d-5cebab230983` | Education-organism buildout run. Limen worktree, temp PR files, and the referenced external `~/Workspace/edu-organism` root were all absent on this host; recorded as transcript-only/off-host artifact loss. |
 | 1 | `opencode` | `ses_11427e08affe3D8jAAl5W43viB` | Corrected mapping: session opened PR #46 (`Security hardening pass - audit fixes + input validation`), which merged at `b82223c` with green python/worker/web checks. The earlier stale branch attribution was false-positive snapshot confusion. |
 | 2 | `opencode` | `ses_114c8f0c6ffeixS8gn4VxGqoHb` | Corrected mapping: session opened PR #45 (`ci: add ruff Python linting as missing check`), which merged at `024d443` with green python/worker/web checks. The earlier route-weight attribution was a widened-window false positive. |
-| 3 | `opencode` | `ses_1095e9b19ffe4yg9h4la7tGU4d` | Exact window had no matching commits on `main`; widened window was mostly Studium content-generation churn, not the control-plane code path reviewed here. |
+| 3 | `opencode` | `ses_1095e9b19ffe4yg9h4la7tGU4d` | Aeneid film companion run. The requested artifact had already merged on `main` via PR #98 before this session started; the session then created commit `e3863a9` on stale local topic branches, edited `tasks.yaml`, and reported committed/pushed without a one-green-PR receipt. Current `main` validates cleanly from PR #98, while later duplicate Jules PR #376 remains open with a failing gate. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -153,6 +153,54 @@ PYTHONPATH=/Users/4jp/Workspace/limen/cli/src python3 -m pytest cli/tests/test_d
 ```
 
 Result: PR #45 is merged with green GitHub checks; current Ruff lint passes across the listed Python surfaces; the PR-touched Python files pass Ruff format and Python compile; focused dispatch/doctor tests passed `84 passed`. Current broad Ruff format check fails on two later unrelated files, so that is recorded as post-session drift rather than a PR #45 failure.
+
+### OpenCode Aeneid content run produced valid-looking local work, but failed the one-green-PR contract
+
+Severity: medium for fleet governance; current `main` is valid, but the reviewed session did not leave an acceptable receipt for the task it claimed done.
+
+Evidence:
+
+- OpenCode session `ses_1095e9b19ffe4yg9h4la7tGU4d` ran from `/Users/4jp/Workspace/limen` on 2026-06-23T22:37:12Z through 2026-06-23T22:43:37Z with slug `witty-wizard`, model `deepseek-v4-flash-free`, and cost 0.
+- Token counters from the OpenCode database: 144,165 input, 10,538 output, 8,708 reasoning, and 2,570,880 cache-read.
+- Prompt first layer was a generated Studium task: complete `studium-film-aeneid`, satisfy `scripts/studium-validate.py`, and produce one green PR.
+- The real Aeneid artifact had already merged on `main` before this session started: PR `organvm/limen#98` merged at `be38fe0` on 2026-06-23T20:13:59Z with green `python`, `validate`, `worker`, and `web` checks.
+- The OpenCode session's own commit was `e3863a9` (`studium: add Aeneid film companion (empire/fate/sacrifice)`), authored at 2026-06-23T22:43:20Z. It touched `studium/film/aeneid.yaml` and `tasks.yaml`, but it is not on current `main`.
+- `git branch --contains e3863a9` finds only stale local topic branches, including `feat/studium-film-canterbury-tales`; no remote `feat/studium-film-aeneid` or `feat/studium-film-canterbury-tales` head currently exists.
+- The final OpenCode receipt said the file was created, validation passed, and the work was committed and pushed. It did not name a PR URL or a green check run.
+- A later duplicate Jules PR `organvm/limen#376` for the same `studium-film-aeneid` task remains open and only changes `studium/expansion-backlog.yaml`; its `pr-gate` check is failing. That duplicate is strong evidence that the earlier OpenCode closeout did not close the fleet loop cleanly.
+
+Ideal prompt diff:
+
+- Ideal form: before generating content, refresh `main`, check whether `studium/film/aeneid.yaml` and the queued task already have a merged PR, and if the artifact already landed, close the task with the existing PR receipt instead of creating a second branch.
+- Actual form: the session read the staged backlog, generated or rewrote local content, edited `tasks.yaml` directly, validated, committed, pushed a stale topic branch, and reported success without a PR receipt.
+- Corrected ideal form for generated Studium tasks: "one green PR" means a named PR and check rollup. A local commit or branch push is not enough; if the content already exists on `main`, the right output is an existing-PR verification receipt and a backlog/board cleanup, not new content.
+
+Outcome:
+
+- Current `main` contains a valid Aeneid film companion from PR #98, and current `python3 scripts/studium-validate.py` passes for all 211 arcs and 18 film companions.
+- The OpenCode session's commit should not be merged: it is stale relative to `main`, rewrites an already-landed Aeneid file, and carries direct `tasks.yaml` mutation from a generated content lane.
+- PR #376 should be treated as duplicate/stale backlog cleanup, not new Aeneid content, unless a fresh review finds a real missing acceptance point.
+
+What was fucked up:
+
+- The review queue initially flattened this into generic Studium churn and missed the key defect: the prompt asked for a green PR, but the session produced only a stale-branch commit and a self-reported push.
+- The session changed the board from a generated task lane instead of proving the artifact against the live queue state. That made duplicate dispatch possible days later.
+- The branch name/provenance was incoherent: Aeneid work was pushed from or onto a Canterbury Tales branch family.
+- The session accepted local validation as equivalent to fleet closeout. For these generated tasks, validation is necessary but not sufficient; the PR and board receipt are part of the acceptance contract.
+
+Verification:
+
+```bash
+sqlite3 -line "$HOME/.local/share/opencode/opencode.db" "select datetime(time_created/1000,'unixepoch') as created, data from part where session_id='ses_1095e9b19ffe4yg9h4la7tGU4d' order by time_created desc limit 8;"
+gh pr view 98 --repo organvm/limen --json number,title,state,createdAt,mergedAt,mergeCommit,headRefName,files,commits,statusCheckRollup,url
+gh pr view 376 --repo organvm/limen --json number,title,state,createdAt,updatedAt,headRefName,files,commits,statusCheckRollup,mergeStateStatus,url
+git log --all --date=iso-strict --pretty=format:'%h %ad %an %s' -- studium/film/aeneid.yaml
+git branch --all --contains e3863a9
+git ls-remote --heads origin feat/studium-film-canterbury-tales feat/studium-film-aeneid
+python3 scripts/studium-validate.py
+```
+
+Result: PR #98 is merged with green checks; PR #376 is open with a failing gate; current `main` has only the PR #98 history for `studium/film/aeneid.yaml`; commit `e3863a9` is absent from current `main` and only appears on stale local branches; no matching remote topic branch currently exists; current Studium validation passes.
 
 ### Claude subagent-tiering session fixed a real Opus fan-out defect, but the run itself exhibited the disease
 
