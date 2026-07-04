@@ -97,6 +97,7 @@ Generated: `2026-07-04T12:24:23Z`
 | changed 139 | `claude` | `61d8b1ae-6d3b-4b87-b992-7fab59ce36e7` | Edu-organism closing-half course-engine run. A private teaching/email triage session grew into edu-organism engine work and shipped PR #48: live-date verifier, term-bound inactivity-agent dates, grounded reply drafter, advising memory, tests, and generated course artifacts. The code survived on `main`, but the session blew the Opus cap, merged with no GitHub checks, and the queue's six-file slice understated the final 15-file PR. |
 | changed 140 | `opencode` | `ses_108a8bf16ffegslVYyDJTjKuCQ` | Divine Comedy batch run. The prompt asked for the next bounded Divine Comedy batch, validation, and one green PR. OpenCode instead wrote local books `05-94` while never running `git` or `gh`; no session PR or final receipt exists. Durable `main` only has books `05-17`, with `05-13` already merged before the session and `14-17` merged later through PR #164. |
 | changed 141 | `claude` | `5b3f1a8a-a89e-47d0-9b7e-9482c8e47080` | Merge-authority / permission-ping run. Claude turned recurring permission and branch-ownership pain into a real merge-policy fix: PR #214 stopped `BLOCKED` and `UNKNOWN` GitHub merge states from being treated as clear, and current `main` has the semantics. The defects are process-grade: the session burned 2.84M Opus billable tokens, the first merged predicate had a macOS Bash 3.2 empty-array false-pass bug later fixed by PR #223, and the final closeout was accurate for the session PR but too broad as a global backlog-owner claim. |
+| changed 142 | `codex` | `019eddb0-eb7b-7923-8215-81201a83b50a` | AI Chat Exporter Gemini adapter. Codex authored a broad 15-file live Gemini DOM-scraping implementation and opened PR #30, but the prompt asked to replace a scaffold that was not actually present in the session base. The PR is still open, conflicting, 66 commits behind, and only has a skipped Release check; current `master` instead contains scaffold-only Gemini support from PR #27 and deliberately avoids guessed live extraction. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -8895,6 +8896,75 @@ for p in /Users/4jp/.claude/hooks/allow-trusted-cd-git.sh /Users/4jp/.claude/job
 ```
 
 Result: private prompt extraction has `234` records; transcript guard fails on spend only; PR #214 is merged and its topic patch is present on current `origin/main`; PR #223 is merged and supplies the Bash 3.2 compatibility correction; current merge-policy tests and syntax checks pass; the original worktree and job temp files are gone, while the standing-grant memory file remains host-local.
+
+### Codex's AI Chat Exporter Gemini adapter became a stale live-extraction PR, while master kept a scaffold
+
+Severity: medium for product delivery, low for current default-branch risk. The session did real implementation work, but it did not fulfill the durable prompt contract. Codex wrote a guessed live DOM-scraping Gemini provider from an outdated base, opened PR #30, and stopped with only `git diff --check` passing. Current `master` contains a safer scaffold-only Gemini provider from PR #27, explicitly preserving ChatGPT behavior and deferring live extraction until a real Gemini session can validate selectors or RPCs.
+
+Evidence:
+
+- Queue row `changed_review[142]` points at Codex session `019eddb0-eb7b-7923-8215-81201a83b50a`, rooted in now-absent worktree `/Users/4jp/Workspace/.limen-worktrees/rev-exporter-gemini-adapter-67a2`, from `2026-06-19T02:23:45Z` through `2026-06-19T02:34:22Z`.
+- First-layer prompt, redacted to intent: in `organvm/a-i-chat--exporter`, implement the Gemini export provider for `gemini.google.com`, matching the provider interface and replacing the `NotImplemented` scaffold.
+- The verbatim local-only prompt extract is `.limen-private/session-corpus/full-stack-review/session-changed-142-codex-exporter-gemini-adapter-prompts.jsonl`: `4` prompt records, `3` unique prompt hashes, `2,926` prompt bytes, all sourced from `codex-sessions`. Surfaces are `response_item.user` `3` and `event_msg.user_message` `1`.
+- The session base did not actually have `src/providers/` or the Gemini scaffold. Codex noticed that mismatch, inspected sibling exporter worktrees, then created a provider contract, registry, Gemini provider, URL parser test, manifest matches, and cross-cutting exporter/page/menu wiring.
+- The authored branch exists as PR `organvm/a-i-chat--exporter#30`, `[limen REV-exporter-gemini-adapter] Implement the Gemini export provider...`, opened at `2026-06-19T02:34:29Z` from `limen/rev-exporter-gemini-adapter-67a2` at commit `f1b8132`.
+- PR #30 is still open, `mergeable: CONFLICTING`, `1` commit ahead and `66` commits behind current `master`. Its only GitHub status is a skipped `Release` workflow; no `check` run validated the branch.
+- PR #30 changed `15` files and added a `425`-line `src/providers/gemini.ts` that scrapes rendered DOM selectors such as `user-query`, `model-response`, `message-content`, `main`, `chat-window`, and `infinite-scroller`. There is no evidence from the transcript that Codex opened a live Gemini page or verified those selectors against a real session.
+- The transcript command stream has `77` shell calls and no successful project predicate. `pnpm run test` failed because dependencies were missing and `tsc` was unavailable; `pnpm install --offline --ignore-scripts` failed due missing store packages; the attempted `rm -rf node_modules` cleanup was blocked by runtime policy. Final verification was only `git diff --check`.
+- Durable current `master` got Gemini support through separate PR `organvm/a-i-chat--exporter#27`, `feat: multi-provider architecture foundation (ChatGPT preserved; Claude/Gemini scaffolded)`, merged at `2026-06-19T09:47:47Z` with merge commit `68af507`.
+- PR #27 deliberately added `src/providers/gemini.ts` as `SCAFFOLD ONLY`: every method throws `NotImplemented`, and the file documents that Gemini live extraction needs a real session to reverse the `batchexecute` RPC or validate DOM scraping. The PR body says the live UI still calls `api.ts` directly and the provider registry is importable but not wired into runtime behavior.
+- Current `master` at `b934177` is green for `Check`, `Deploy`, and Pages deployment, but that health belongs to later/default-branch code, not PR #30.
+
+Ideal prompt diff:
+
+- Ideal generated task form: require the session to first rebase or read the current multi-provider foundation PR, then implement only the Gemini provider against the actual scaffold and acceptance predicate.
+- Actual prompt/base form: the task referenced a scaffold that was not present in the checked-out base, so Codex invented the provider layer and rewired adjacent code rather than applying a narrow adapter patch.
+- Ideal live-provider form: either validate against a live Gemini session/browser transcript or leave a scaffold with explicit extraction notes.
+- Actual implementation form: PR #30 guessed DOM selectors and mounted runtime behavior without live browser proof. PR #27 is the safer durable form because it refused to fake extraction.
+- Ideal delivery form: one current PR with a successful `check` workflow or an explicit blocked status.
+- Actual delivery form: PR #30 stayed open, conflicting, and unverified; current default branch separately merged scaffold-only support.
+
+Outcome:
+
+- Credit Codex with useful exploratory implementation work and a concrete branch artifact. The session mapped out how a Gemini provider might synthesize ChatGPT-shaped conversation mappings from visible turns.
+- Do not credit row `changed 142` as a completed Gemini export provider. The PR did not merge, did not pass checks, and is now stale/conflicting.
+- Credit durable default-branch progress to PR #27's scaffold and later green master, not to PR #30's guessed live extraction.
+
+What was fucked up:
+
+- The generated prompt and checkout were out of sync. Asking to replace a scaffold in a base commit that had no scaffold forced Codex into architecture creation instead of the intended narrow adapter.
+- The acceptance predicate was missing in practice. `git diff --check` is not enough for a userscript provider that touches API routing, exporter behavior, menu controls, and browser DOM scraping.
+- Live Gemini export was asserted without live Gemini verification. For a provider whose correctness depends on unstable web DOM/RPC surfaces, selector guesses should not be merged as product behavior.
+- The PR lifecycle was left dirty: #30 remains open, stale, and conflicting, while a separate safer scaffold (#27) became the real mainline path.
+- The verification attempt left ignored `node_modules` in the original worktree and cleanup was blocked; the worktree is now gone, so only transcript and GitHub receipts remain.
+
+Verification:
+
+```bash
+jq '.changed_review[142]' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+jq -s '{records:length, unique_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), task_body_bytes:([.[].task_body_bytes] | add), surfaces:([group_by(.surface)[] | {surface:.[0].surface,count:length}]), sources:([group_by(.source)[] | {source:.[0].source,count:length}])}' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-changed-142-codex-exporter-gemini-adapter-prompts.jsonl
+python3 - <<'PY'
+import json, collections
+p='/Users/4jp/.codex/sessions/2026/06/18/rollout-2026-06-18T22-23-39-019eddb0-eb7b-7923-8215-81201a83b50a.jsonl'
+cmds=[]
+for line in open(p, encoding='utf-8'):
+    o=json.loads(line); pl=o.get('payload') or {}
+    item=pl.get('item') if isinstance(pl.get('item'), dict) else pl
+    if o.get('type') == 'response_item' and item.get('type') == 'function_call' and item.get('name') == 'exec_command':
+        cmds.append(json.loads(item.get('arguments') or '{}').get('cmd'))
+print(len(cmds))
+print([cmd for cmd in cmds if cmd and ('pnpm' in cmd or 'git diff --check' in cmd or 'rm -rf node_modules' in cmd)])
+PY
+test -d /Users/4jp/Workspace/.limen-worktrees/rev-exporter-gemini-adapter-67a2
+gh pr view 30 --repo organvm/a-i-chat--exporter --json number,title,state,createdAt,updatedAt,mergedAt,headRefName,headRefOid,baseRefName,mergeable,files,commits,statusCheckRollup,url
+gh api repos/organvm/a-i-chat--exporter/compare/master...limen/rev-exporter-gemini-adapter-67a2 --jq '{status,ahead_by,behind_by,total_commits,files_count:(.files|length)}'
+gh pr view 27 --repo organvm/a-i-chat--exporter --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url,body
+gh api 'repos/organvm/a-i-chat--exporter/contents/src/providers/gemini.ts?ref=master' --jq '.content' | base64 --decode | sed -n '1,120p'
+gh run list --repo organvm/a-i-chat--exporter --branch master --commit b934177450a9b15e036c3831bf2371605557c456 --limit 10 --json name,status,conclusion,headSha,url
+gh run list --repo organvm/a-i-chat--exporter --branch limen/rev-exporter-gemini-adapter-67a2 --commit f1b8132927ae39ad6883ea59eb0acd47800332d0 --limit 10 --json name,status,conclusion,headSha,url
+```
+
+Result: private prompt extraction matches row `changed 142`; original worktree is absent; transcript command stream confirms failed test/install and only `git diff --check` passing; PR #30 is open, conflicting, stale, and only has a skipped Release check; PR #27 is merged and current `master` keeps Gemini as a documented `NotImplemented` scaffold; current default branch checks are green on later commits.
 
 ## Remaining Review Queue
 
