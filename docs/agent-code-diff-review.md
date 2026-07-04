@@ -1893,6 +1893,35 @@ python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/pro
 
 Result: `12 passed`; malformed timeout reproduction returned exit `0` with an hourly dry-run decision; transcript audit passed without violations.
 
+### Tabularius/enactment session had a repaired crash and a bridged live-loop hook
+
+Severity: review closure; high original blast radius, no new patch required in this pass.
+
+Evidence:
+
+- Claude session `fabd5127-378d-498d-b9c7-3394c5bd907c` worked the Tabularius record-keeper and enactment-audit cutover.
+- Transcript audit covered the parent session plus workflow/subagent logs: 299 usage-bearing messages, 1,993,281 billable-ish tokens, 14,085,129 cache-read tokens, 119,401 Opus-class billable-ish tokens, one expensive subagent, and no guard violations.
+- The bad board-level ticket crash from the single-writer path was already repaired in `6521bd1` (`limen: quarantine bad tabularius board tickets`), with the earlier ledger entry above recording the concrete defect and tests.
+- The deleted/session worktree still pointed at `94b59c6` for the live-loop enactment hook, but `main` already contains equivalent commit `cadbb44` (`feat(enactment): fire the enactment advisory in the LIVE loop, not just metabolize (#600)`).
+- `scripts/heartbeat-loop.sh` now runs `scripts/enactment-audit.py --check` after the Tabularius organ, while `scripts/metabolize.sh` keeps the defense-in-depth check.
+
+Outcome:
+
+- No additional code patch was needed for this row.
+- The prompt/session diff is closed as: bad-ticket keeper failure repaired; live-loop branch work bridged to `main`; surviving worktree branch is stale relative to main rather than missing production work.
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_tabularius.py -q
+bash scripts/tests/enactment-audit.test.sh
+bash -n scripts/heartbeat-loop.sh scripts/metabolize.sh
+python3 scripts/enactment-audit.py --check
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/fabd5127-378d-498d-b9c7-3394c5bd907c --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000 --out /tmp/rank-fabd-audit.json
+```
+
+Result: `15 passed`; enactment audit test passed `4/4`; heartbeat/metabolize shell syntax passed; live enactment check returned green; transcript audit passed without violations.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
