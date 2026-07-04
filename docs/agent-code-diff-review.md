@@ -2132,6 +2132,37 @@ python3 scripts/claude-workflow-guard.py audit-transcript ~/.claude/projects/-Us
 
 Result: Python compile passed; generator dry-run reported `organ queue healthy: 5 >= 3`; adjacent tests passed `23 passed`; task-board statuses were valid for 1,757 tasks; transcript audit passed with 485 usage-bearing messages, 1,368,360 Haiku billable-ish tokens, no expensive subagents, and no guard violations.
 
+### Sovereign mint session became the MONETA organ; code is landed, model spend was high
+
+Severity: high product/revenue surface; governance concern for expensive broad excavation.
+
+Evidence:
+
+- Claude session `d7446a58-bd81-4932-8c32-e53f09b785de` worked from the deleted `.claude/worktrees/stateful-dazzling-rainbow` worktree.
+- Local transcript survives at `~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-stateful-dazzling-rainbow/d7446a58-bd81-4932-8c32-e53f09b785de`.
+- The private changed-file index shows a deleted `a-i-chat--exporter/mint/` TypeScript package, mint workflow, and temporary Moneta worktrees.
+- Current exporter history shows the expected sequence: `295dee4` (`feat(mint): self-hosted Bitcoin licence mint - sovereign cash intake, no processor`) followed by `2054a22` (`refactor(mint): the licence mint moved to limen as the MONETA organ (#86)`).
+- Current Limen history shows the durable owner moved to top-level `moneta/`: `45df442` (`feat(moneta): the sovereign cash organ - extract the rail out of the exporter (#325)`) plus later checkout, receive-address, and order-persistence commits.
+- The current `moneta/` package owns the buyer-facing checkout, Bitcoin payment confirmation, offline ECDSA licence signing, persisted order book, Dockerfile, go-live runbook, and CI workflow.
+
+Outcome:
+
+- No source recovery was needed; the exporter-local mint was intentionally superseded by `moneta/`.
+- Current Moneta tests passed: six Vitest suites, 43 tests, plus `tsc --noEmit`.
+- Prompt/session diff is closed as landed/evolved: the original ask for a self-hosted mint did not remain in the exact `a-i-chat--exporter/mint` shape, but the ideal form is stronger as a reusable Limen-owned MONETA organ.
+- What was fucked up: the session was broad and model-expensive. Transcript audit found 300 usage-bearing messages, 1,314,580 billable-ish tokens, two expensive subagents, and 119,353 Opus billable-ish tokens. It passed the guard because no hard cap was violated, but future work of this shape should narrow the owner/repo/predicate before using Opus-class exploration.
+
+Verification:
+
+```bash
+npm test --prefix moneta
+git -C /Users/4jp/Workspace/a-organvm/a-i-chat--exporter log --oneline --all -- mint .github/workflows/mint.yml
+git -C /Users/4jp/Workspace/a-i-chat--exporter log --oneline --all -- mint .github/workflows/mint.yml
+python3 scripts/claude-workflow-guard.py audit-transcript ~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-stateful-dazzling-rainbow/d7446a58-bd81-4932-8c32-e53f09b785de --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000
+```
+
+Result: Moneta `npm test` passed `43` tests; exporter histories show `feat(mint)` then `refactor(mint): the licence mint moved to limen as the MONETA organ`; transcript audit passed with no guard violations but did record two expensive subagents.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
