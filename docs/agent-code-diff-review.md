@@ -19,7 +19,7 @@ Generated: `2026-07-04T02:17:42Z`
 | refreshed 5 | `claude` | `a290329e-a778-478f-a7a7-9afa79709221` | UMA/mail obligations run. Original worktree and temp atlas outputs were gone, but the mail beat and obligations face landed on `main`; fixed wrong-shaped ledger crash paths in the obligations renderer. |
 | refreshed 6 | `claude` | `dc879846-e9bf-41c0-b25d-5cebab230983` | Education-organism buildout run. Limen worktree, temp PR files, and the referenced external `~/Workspace/edu-organism` root were all absent on this host; recorded as transcript-only/off-host artifact loss. |
 | 1 | `opencode` | `ses_11427e08affe3D8jAAl5W43viB` | Corrected mapping: session opened PR #46 (`Security hardening pass - audit fixes + input validation`), which merged at `b82223c` with green python/worker/web checks. The earlier stale branch attribution was false-positive snapshot confusion. |
-| 2 | `opencode` | `ses_114c8f0c6ffeixS8gn4VxGqoHb` | Exact window matched `80d4e21f` (`feat(route): consume self-improve lane weights`). Widened window also showed related routing/meter/queue commits including `0146190` and `a6488c9`. |
+| 2 | `opencode` | `ses_114c8f0c6ffeixS8gn4VxGqoHb` | Corrected mapping: session opened PR #45 (`ci: add ruff Python linting as missing check`), which merged at `024d443` with green python/worker/web checks. The earlier route-weight attribution was a widened-window false positive. |
 | 3 | `opencode` | `ses_1095e9b19ffe4yg9h4la7tGU4d` | Exact window had no matching commits on `main`; widened window was mostly Studium content-generation churn, not the control-plane code path reviewed here. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
@@ -100,6 +100,54 @@ node --check web/worker/src/index.js
 ```
 
 Result: PR #46 is merged with green GitHub checks; current hardening code is present; focused Python tests passed `102 passed`; Python compile and Worker syntax check passed; `npm audit --audit-level=high` reports zero vulnerabilities for both `web/app` and `web/worker`; `npm run build` in `web/app` passes. The only local dirty file after verification is unrelated `tasks.yaml`.
+
+### OpenCode CI-green session correctly added Ruff, but polluted the parent worktree during closeout
+
+Severity: medium for lifecycle hygiene; current `main` contains the useful CI improvement.
+
+Evidence:
+
+- OpenCode session `ses_114c8f0c6ffeixS8gn4VxGqoHb` ran from `/Users/4jp/Workspace/limen` on 2026-06-21T17:25:14Z through 2026-06-21T17:36:22Z with slug `glowing-cabin`, model `deepseek-v4-flash-free`, and cost 0.
+- Token counters from the OpenCode database: 64,530 input, 20,853 output, 8,291 reasoning, and 5,554,944 cache-read.
+- Prompt first layer was auto-generated and narrow: complete `GEN-4444j99-limen-ci-green-0620`, inspect the latest failing checks on `4444J99/limen` default branch, fix the root cause, and, if CI was already green, add the single most valuable missing check.
+- The session found default-branch CI already green on commit `1a867cd`, then chose the fallback path and added Ruff linting as the missing check.
+- PR `organvm/limen#45` merged 2026-06-21T18:09:41Z at merge commit `024d4438264d9ecc8e26035b44d02404ecd43c2f`; checks `python`, `worker`, and `web` were all successful.
+- The authored diff touched four files: `.github/workflows/ci.yml`, `.ruff.toml`, `mcp/src/limen_mcp/server.py`, and `web/api/main.py`.
+- The authored commit `4cc41060f5728827b5561c63e3b3f3eac382d6ec` used `Test User <test@example.com>` as commit identity, repeating the OpenCode provenance noise seen in PR #46.
+
+Ideal prompt diff:
+
+- Ideal form: read live CI status, choose the root-cause-fix path only if checks are failing, otherwise add one high-value missing check, verify locally and through GitHub, open a narrow PR, and leave the parent worktree untouched.
+- Actual form: the engineering choice was correct and the PR merged green, but closeout returned to the parent `heal/conductor-restart-2026-06-16` branch and popped a stash that left a broad unrelated dirty tree.
+- Corrected ideal form for OpenCode dispatch: isolate generated-task branches from parent healing branches; never restore unrelated stashes during task closeout unless the task created them and the exact path set is known.
+
+Outcome:
+
+- Current CI installs Ruff and runs both `ruff check` and `ruff format --check` across the Python surfaces.
+- Current code retains the small fixes from the PR: `mcp/src/limen_mcp/server.py` catches `ValueError` instead of using a bare `except`, and the redundant f-string in `web/api/main.py` is gone.
+- The session produced a useful low-cost improvement: it followed the prompt's fallback instruction instead of inventing a failing-CI fix when CI was already green.
+
+What was fucked up:
+
+- The review pipeline originally mapped this OpenCode session to route/self-improve commit `80d4e21f`. That was wrong: the live OpenCode database, PR metadata, and in-session final receipt map it to PR #45.
+- The closeout sequence polluted the parent worktree with unrelated stash contents, including environment examples, ledger/docs, dispatch scripts, and `tasks.yaml`. The PR branch itself stayed narrow, but the session's local lifecycle hygiene was poor.
+- The commit identity again used `Test User <test@example.com>`, making authorship weaker than the GitHub PR receipt.
+- Current broad `ruff format --check cli/src cli/tests web/api mcp ianva` fails on two later unrelated files (`cli/tests/test_ianva_launchd.py` and `ianva/src/ianva/upstreams.py`), so PR #45 should be credited for adding the gate, not for keeping all later Python formatting clean.
+
+Verification:
+
+```bash
+sqlite3 -json "$HOME/.local/share/opencode/opencode.db" "select id,parent_id,slug,directory,title,version,agent,model,cost,tokens_input,tokens_output,tokens_reasoning,tokens_cache_read,tokens_cache_write,datetime(time_created/1000,'unixepoch') as created, datetime(time_updated/1000,'unixepoch') as updated from session where id='ses_114c8f0c6ffeixS8gn4VxGqoHb' or parent_id='ses_114c8f0c6ffeixS8gn4VxGqoHb' order by time_created;"
+gh pr view 45 --repo organvm/limen --json number,title,state,createdAt,mergedAt,mergeCommit,headRefName,baseRefName,url,author,files,commits,statusCheckRollup
+git show --stat --oneline --decorate 024d4438264d9ecc8e26035b44d02404ecd43c2f
+rg -n 'ruff|except ValueError|target-version|line-length|f""' .github/workflows/ci.yml .ruff.toml mcp/src/limen_mcp/server.py web/api/main.py
+python3 -m ruff check cli/src cli/tests web/api mcp ianva
+python3 -m ruff format --check mcp/src/limen_mcp/server.py web/api/main.py
+python3 -m py_compile mcp/src/limen_mcp/server.py web/api/main.py
+PYTHONPATH=/Users/4jp/Workspace/limen/cli/src python3 -m pytest cli/tests/test_dispatch.py cli/tests/test_doctor.py -q
+```
+
+Result: PR #45 is merged with green GitHub checks; current Ruff lint passes across the listed Python surfaces; the PR-touched Python files pass Ruff format and Python compile; focused dispatch/doctor tests passed `84 passed`. Current broad Ruff format check fails on two later unrelated files, so that is recorded as post-session drift rather than a PR #45 failure.
 
 ### Claude subagent-tiering session fixed a real Opus fan-out defect, but the run itself exhibited the disease
 
