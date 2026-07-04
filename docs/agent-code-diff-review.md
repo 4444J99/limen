@@ -7171,6 +7171,63 @@ python3 cli.py --help
 
 Result: transcript guard passed at 135,370 Sonnet billable tokens; prompt extraction matches row `128`; `c37deac` is absent from GitHub; PR #112 and PR #115 are merged later partial/superseding evidence; current CLI help still exposes flags and commands missing from current README.
 
+### Claude's media-ark hardening landed as PR #38, but the session reported completion without running tests
+
+Severity: medium. The code change itself is real and focused tests pass when replayed now, but the session ended with all Python verification blocked and the PR merged with failing CI checks still visible in the rollup.
+
+Evidence:
+
+- Reconstruction row `129` targets Claude session `bffcd33d-292d-40fd-8cd2-04458ca04be2`, rooted in deleted worktree `/Users/4jp/Workspace/.limen-worktrees/bld-media-ark-harden-1273`, from 2026-06-19T14:37:32Z through 2026-06-19T14:46:13Z.
+- The first-layer task was `BLD-media-ark-harden`: harden `4444J99/media-ark` main entry points with input validation, error handling, and structured logging on primary request/CLI paths. The local repo remote is `organvm/media-ark`.
+- The session inspected `src/media_ark/process_captures.py`, `src/platform/api_server.py`, `src/platform/config.py`, `src/platform/runtime.py`, `src/platform/mcp_server.py`, `src/platform/auth.py`, existing tests, and audit docs. It decided the CLI path was already sufficiently guarded and scoped implementation to HTTP and MCP request paths.
+- The transcript diff added a negative `Content-Length` guard, top-level HTTP request exception handling with generic structured 500 responses, API structured logging, MCP stdio loop survival, JSON-RPC `-32603` handling for unexpected tool failures, and regression tests for API/MCP unexpected-error survival.
+- PR #38 merged at `aaf5d211b7bafc020dea85b8594106187cabe392` on 2026-06-19T15:49:02Z. Its file set matches the transcript: `src/platform/api_server.py`, `src/platform/mcp_server.py`, `tests/test_platform_api.py`, and `tests/test_platform_mcp.py`.
+- The session did not verify execution. Every attempted `py_compile`, pytest, and unittest command was blocked by Claude's permission mode, and the final answer asked the human to run tests.
+- PR #38's GitHub check rollup still shows two failing `CLI smoke` jobs and skipped `Tox matrix` jobs, with only Semgrep succeeding. This is a merge-governance defect even though the focused hardening tests can be replayed successfully now.
+- Full private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-129-claude-media-ark-harden-prompts.jsonl`: 62 prompt-surface records, 30 unique prompt hashes, 280,431 prompt bytes. Surfaces are `queue.enqueue` 1, `message.user` 44, and `last-prompt` 17.
+
+Ideal prompt diff:
+
+- Ideal hardening form: identify request boundaries, patch focused handlers, add regression tests, run the narrow tests locally, open/merge only after a green CI gate or a recorded owner-approved exception.
+- Actual form: boundary selection and patch shape were sound, but local execution never happened; the final "completed" claim was based on inspection plus an unverified diff.
+- Ideal merge form: a PR with failing required-like checks should either be fixed first or explicitly recorded as a failing external gate.
+- Actual merge form: PR #38 landed with failing CLI-smoke check entries still present in the rollup.
+
+Outcome:
+
+- Credit the row for a real landed hardening patch in `organvm/media-ark`.
+- Also record that the row's own verification was incomplete: the code was not executed in-session, and the PR check surface was not clean at merge.
+- Focused replay from an archived copy of `aaf5d21` now passes `tests/test_platform_api.py` and `tests/test_platform_mcp.py` with `PYTHONPATH=.`.
+
+What was fucked up:
+
+- The session said "completed" while also saying "please run the suite to confirm." That should have been reported as unverified/blocked, not done.
+- The generated prompt's repository label and actual remote ownership diverged (`4444J99/media-ark` prompt, `organvm/media-ark` remote). The review had to reconstruct the durable PR through local remote state.
+- The PR merge discipline was weak: merged code had useful tests, but the published check rollup still shows red CLI smoke and skipped tox.
+- The current local `media-ark` checkout is dirty and behind `origin/main`, so this review deliberately did not mutate it while auditing.
+
+Verification:
+
+```bash
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace--limen-worktrees-bld-media-ark-harden-1273/bffcd33d-292d-40fd-8cd2-04458ca04be2.jsonl
+python3 - <<'PY'
+import json
+from collections import Counter
+from pathlib import Path
+p = Path('/Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-129-claude-media-ark-harden-prompts.jsonl')
+rows = [json.loads(line) for line in p.read_text(encoding='utf-8').splitlines() if line.strip()]
+print(len(rows), len({r['prompt_hash'] for r in rows}), sum(r['prompt_bytes'] for r in rows), Counter(r['surface'] for r in rows), Counter(r['session_id'] for r in rows))
+PY
+gh pr view 38 --repo organvm/media-ark --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+git -C /Users/4jp/Workspace/4444J99/media-ark show --stat --oneline aaf5d211b7bafc020dea85b8594106187cabe392
+tmp=$(mktemp -d /tmp/media-ark-aaf5d21.XXXXXX)
+git -C /Users/4jp/Workspace/4444J99/media-ark archive aaf5d211b7bafc020dea85b8594106187cabe392 | tar -x -C "$tmp"
+cd "$tmp"
+PYTHONPATH=. python3 -m pytest tests/test_platform_api.py tests/test_platform_mcp.py -q
+```
+
+Result: transcript guard passed at 451,256 Opus billable tokens; prompt extraction matches row `129`; PR #38 is merged; the PR check rollup contains red CLI-smoke checks; focused archived replay passes `12 passed`.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
