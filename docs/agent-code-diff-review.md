@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T12:06:52Z`
+Generated: `2026-07-04T12:11:59Z`
 
 ## Scope
 
@@ -88,6 +88,7 @@ Generated: `2026-07-04T12:06:52Z`
 | changed 130 | `claude` | `a585c8ed-3af9-46c2-92cd-20d87153d16f` | Materialize fold / board-as-event-log projection. The prompt challenged recurring 30k-line dirty `tasks.yaml` churn and rejected mechanical splits; Claude landed the evolved Step 1 through PR #543: a pure `board = fold(events)` reducer, seed/diff functions, CLI proof, and tests. Current `main` still verifies byte-identical materialization, and follow-up PR #549 fixed a TOCTOU false-negative; the session still overran Opus budget and left `verify-whole.sh` weaker than the full CI gate matrix. |
 | changed 131 | `claude` | `3625ab3d-c647-412e-8336-28d75a73f874` | Session-meta typing/restoration branch. Claude correctly diagnosed that the generated typing packet was really restoring deleted ingest modules and opened PR #133 with a local `111`-test claim, but that PR never merged, never got checks, and is now stale behind current `main`. Durable completion came from merged green PR #131 restoring the ingest surface plus later typing PRs such as #163; the open generated typing PR family needs harvest/closure rather than merge. |
 | changed 132 | `opencode` | `ses_0e6e14fb2ffetCps4cjgOEZ2hP` | Mirror Mirror closed-PR recovery reconnaissance. The prompt asked OpenCode to recover a closed unmerged deploy-ready PR, but the session made no code diff: OpenCode inspected `tasks.yaml`, PR #64, Mirror Mirror PR state, Netlify/GitHub Pages headers, and current CI, then stopped when workflow-file reads were rejected. The 22 changed-file queue attribution is prompt-context/patch-snapshot bleed from pre-existing Limen dirty state, not OpenCode-authored work. |
+| changed 133 | `codex` | `019f1562-81b7-7370-b89d-1594e599dacc` | Paid-lane capacity-fill and live-root release planning. Codex produced a valuable local fix for the user's "paid lanes are underfilled" complaint: capacity-fill detection, a daily packet generator, tests, heartbeat/verify wiring, and worktree-preservation receipts. The failure is release convergence: the core commit `1fcf757` and receipt stack stayed on `work/workstream-agent-launcher-20260629`, no PR exists, the branch is now 641 commits behind / 27 ahead, and current `main` lacks `scripts/generate-capacity-fill.py` plus its tests. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -3958,6 +3959,63 @@ curl -sI https://organvm.github.io/mirror-mirror/
 ```
 
 Result: private prompt extraction matches row `132`; OpenCode's DB session summary reports zero changed files; part inventory is one prompt text, 46 tools, 17 reasoning blocks, 5 patch snapshots, and no final receipt; PR #64 is closed unmerged; PR #97 merged green; current main run `28676057905` fails at `npm ci` because `package.json` and `package-lock.json` disagree on Vitest-related versions; Netlify returns 200; GitHub Pages returns 404; PR #105 is open and green.
+
+### Codex's paid-lane capacity-fill fix was the right shape, but it stayed branch-local
+
+Severity: high for fleet economics and release governance. The session responded to a real user correction: Jules was being fed while Claude, Agy, Gemini, OpenCode, and other paid lanes were underused or failing silently. Codex built a plausible durable mechanism, but the release half did not happen. The work is currently a stale branch artifact, not release truth.
+
+Evidence:
+
+- Queue row `changed_review[133]` points at Codex session `019f1562-81b7-7370-b89d-1594e599dacc`, rooted at `/Users/4jp/Workspace/limen`, running from 2026-06-29T21:56:46Z through 2026-06-29T23:59:10Z.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-changed-133-codex-capfill-preserve-prompts.jsonl`: `17` prompt-surface records, `7` unique prompt hashes, `40,718` prompt bytes. Sources are `codex-sessions` `12` and `codex-history` `5`; surfaces are `response_item.user` `8`, `event_msg.user_message` `4`, and `history` `5`.
+- In redacted intent form, the prompt stream started as a continuous local-only Limen autonomy run. The user then asked whether Jules, Gemini, Agy, and OpenCode got their fill and called out that Claude should have daily tasks, lanes refresh at different times, and paid subscriptions were being wasted.
+- Codex answered with live board numbers at the time: Jules had meaningful usage, while Gemini, Agy, and OpenCode were dramatically underfilled; Claude was blocked by missing fleet credentials.
+- Codex then produced real code on branch `work/workstream-agent-launcher-20260629`. Commit `1fcf757` (`limen: enforce paid lane capacity fill`) added capacity-fill rows/snapshots, a daily capacity-fill task generator, tests, `docs/capacity-fill.md`, dispatch-health integration, heartbeat-loop generator wiring, governance parameters, and `verify-whole.sh` py_compile coverage.
+- The generator shape was coherent: underfilled lanes produced stable daily `CAPFILL-<lane>-<date>-NN` task IDs, reachable lanes targeted themselves, blocked/unreachable lanes targeted `any`, and tests covered idempotence, round-robin distribution, and blocked-lane diagnostics.
+- Codex also preserved a stack of worktree/lifecycle receipts. The ignored private receipts still exist under `.limen-private/session-corpus/lifecycle/worktree-preserve/` for triptych media, relationship boundary, student email, network substrate, main trench, warp routing, domus quarantine, photos universe, and universal entry.
+- The session ended in planning, not release. Its final answer says the branch had no PR, was 15 commits ahead of its upstream and 23 ahead of `origin/main`, and that full release apply would require pushing, opening/merging a PR, switching the live checkout to `main`, and kickstarting heartbeat.
+- Current branch reality is worse: `origin/work/workstream-agent-launcher-20260629` is 641 commits behind and 27 commits ahead of current `origin/main`. `gh pr list --head work/workstream-agent-launcher-20260629 --state all` returns `[]`.
+- The core commit `1fcf757` and the June 29 receipt-preservation commits checked in this review are not ancestors of current `origin/main`.
+- Current `main` has a later `scripts/capacity-fill-ledger.py` and can render a capacity census, but it lacks the session's core generator and tests: `scripts/generate-capacity-fill.py`, `cli/tests/test_capacity_fill.py`, and `cli/tests/test_generate_capacity_fill.py` are absent.
+- Current `scripts/capacity-fill-ledger.py` is read-only and reports a blocked capacity state, but current `verify-whole.sh` only py-compiles the present ledger and does not include the stranded generator. Current heartbeat-loop does not call `generate-capacity-fill.py`.
+
+Ideal prompt diff:
+
+- Ideal form: turn "I am paying for lanes that are not being used" into an executable, recurring capacity contract, with lane-specific targets, reset windows, blocked-lane receipts, generated daily packets, and heartbeat integration.
+- Actual local form: strong. The branch built the detection/generation/tests/wiring shape that would have made the user stop remembering lane fill manually.
+- Ideal release form: split code from live `tasks.yaml`/receipt churn, open a PR, pass CI, merge, then reconcile live root and launchd so the daemon runs the new contract.
+- Actual release form: failed. The session stopped at a proposed release plan; no PR exists, and the branch became stale.
+
+Outcome:
+
+- Credit the session for identifying the real defect and for building a usable first version of capacity-fill enforcement.
+- Do not credit it as durable fleet repair. The important generator/test/heartbeat pieces are absent from current `main`.
+- Treat the branch as salvage-only. Direct merge is unsafe because it is hundreds of commits behind and carries a broad 100-plus-file branch diff. Salvage should cherry-pick or reimplement the narrow generator/tests against current capacity telemetry.
+- Current `main` partially preserves the idea through a capacity census ledger, but not the daily-fill task production loop the user asked to stop remembering.
+
+What was fucked up:
+
+- The session correctly escalated from "receipt refresh" to "paid-lane economics," but then buried the fix in a mixed workstream branch with private receipt churn and live-root planning.
+- Local verification and commits were not enough. For this defect, the acceptance surface is release truth plus daemon execution, not a local branch.
+- The final plan recognized the exact missing step, but no follow-through happened inside the session: no PR, no merge, no live-root convergence, no launchd restart.
+- The review queue's changed-file list undercounts the release risk. It names 24 relevant files, while the current branch diff against `origin/main` spans over 100 paths and includes unrelated generated docs, coverage, web, task-board, and surface work.
+
+Verification:
+
+```bash
+jq -s '{records:length, unique_prompt_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), task_body_bytes:([.[].task_body_bytes] | add), by_source:(group_by(.source) | map({source:.[0].source, count:length})), by_surface:(group_by(.surface) | map({surface:.[0].surface, count:length}))}' .limen-private/session-corpus/full-stack-review/session-changed-133-codex-capfill-preserve-prompts.jsonl
+git show --stat --oneline --decorate 1fcf7579405c95e69735215566a1fa0ff91dbfa6
+git merge-base --is-ancestor 1fcf7579405c95e69735215566a1fa0ff91dbfa6 origin/main
+git rev-list --left-right --count origin/main...origin/work/workstream-agent-launcher-20260629
+git diff --stat origin/main...origin/work/workstream-agent-launcher-20260629 -- cli/src/limen/capacity.py cli/src/limen/dispatch.py scripts/generate-capacity-fill.py scripts/capacity-fill-ledger.py cli/tests/test_capacity_fill.py cli/tests/test_generate_capacity_fill.py docs/DISPATCH-ARCHITECTURE.md docs/worktree-lifecycle-ledger.md docs/worktree-preservation-receipts.json scripts/dispatch-health.py scripts/heartbeat-loop.sh scripts/verify-whole.sh institutio/governance/parameters.yaml
+git diff --name-status origin/main...origin/work/workstream-agent-launcher-20260629
+gh pr list --repo organvm/limen --head work/workstream-agent-launcher-20260629 --state all --json number,title,state,createdAt,updatedAt,mergedAt,closedAt,headRefName,headRefOid,url,statusCheckRollup
+for f in docs/worktree-lifecycle-ledger.md docs/worktree-preservation-receipts.json docs/capacity-fill.md scripts/generate-capacity-fill.py cli/tests/test_capacity_fill.py cli/tests/test_generate_capacity_fill.py; do test -e "$f" && echo present "$f" || echo absent "$f"; done
+python3 -m py_compile scripts/capacity-fill-ledger.py cli/src/limen/capacity.py
+PYTHONPATH=cli/src python3 scripts/capacity-fill-ledger.py
+```
+
+Result: private prompt extraction matches row `133`; `1fcf757` exists and contains the capacity-fill implementation but is not on current `origin/main`; the workstream branch has no PR and is 641 behind / 27 ahead; current `main` lacks the generator and two focused tests; current capacity-fill ledger compiles and renders a blocked capacity census, but it is not the daily task-production loop from the reviewed branch.
 
 ### Claude domus-genoma CIFIX session failed to fix CI and should have stopped at the permission/spend wall
 
