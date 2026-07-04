@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T02:17:42Z`
+Generated: `2026-07-04T04:02:52Z`
 
 ## Scope
 
@@ -48,6 +48,7 @@ Generated: `2026-07-04T02:17:42Z`
 | refreshed 31 | `claude` | `08929862-d3f1-4a09-8903-277707a8524b` | Wrangler / 1Password one-spot credential run. Original worktree is gone, but `scripts/cf-wrangler.sh` and `scripts/op-service-account.sh` landed on `main`; fixed a wrapper-order bug that could run global Wrangler before the nearest project-local binary. |
 | refreshed 32 | `claude` | `3c7f2396-ca81-4494-a9e2-3b4a5d2a87ea` | Agent-instruction / "agent-all" convergence run. PR #358 merged the two-layer standard and drift predicate; current review fixed an inaccurate Layer-1 drift-check provenance pointer. Transcript guard still fails on heavy Opus fanout. |
 | refreshed 33 | `claude` | `e4cd8413-965c-4cde-a656-e1d09ba31da1` | Fleet-sprawl reduction / cells / board-collapse run. PRs #356, #359, #360, and #361 landed useful surfaces; current review fixed `cell` commands so they no longer list or operate on arbitrary non-cell Claude worktrees. |
+| refreshed 34 | `claude` | `6b107f0b-4796-4cc2-95ef-861947c991b9` | Vigilia autonomic-institution run. PRs #277, #281, #285, and #315 landed VITALS/CONTINUITY/INTEGRITY, the face, no-hardcode gate, and heartbeat stamp; current review verified the code and recorded raw-transcript log privacy and Opus spend as residual risks. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -305,6 +306,56 @@ bash scripts/cells.sh ls
 ```
 
 Result: cell tests passed `2 passed`; board/io/heal tests passed `26 passed`; shell syntax and Ruff checks passed. Live `cell ls` now prints only the header on this host because no current `.claude/worktrees/*` checkout is an actual `cell/<slug>` branch.
+
+### Vigilia landed a useful autonomic executive, with private-log and spend caveats
+
+Severity: medium for session/process quality; current `main` code verifies.
+
+Evidence:
+
+- Claude session `6b107f0b-4796-4cc2-95ef-861947c991b9` ran in now-removed worktree `.claude/worktrees/tender-sniffing-marshmallow` from 2026-06-25T13:43:04Z through 2026-06-26T09:59:24Z.
+- Prompt first layer was broad but coherent: build the Vigilia autonomic institution, keep it beat-safe, add a no-hardcode ratchet, expose a read-only face, and preserve continuity across compacted Claude sessions.
+- The queue row listed 28 changed files across `cli/src/limen/vigilia/*`, Vigilia tests, `institutio/*`, heartbeat/check-params scripts, temp jobs, and memory notes.
+- Durable merged output maps to PR #277 (`feat(vigilia): autonomic executive`), PR #281 (`feat(vigilia): C-suite fold + face`), PR #285 (`feat(vigilia): no-hardcode gate`), and PR #315 (`feat(vigilia): organ-health VIGILIA rung + heartbeat stamp`). The listed PRs merged with green `python`, `pr-gate`, `worker`, and `web` checks.
+- Current source includes `vitals.py`, `continuity.py`, `integrity.py`, `executive.py`, and `face.py`; generated `logs/vigilia/*` output and `__pycache__` files are ignored rather than tracked.
+
+Ideal prompt diff:
+
+- Ideal form: land a small fail-open organ suite, prove the heartbeat/face/no-hardcode gates, keep continuity reconstruction private, and preserve a durable receipt without mixing raw transcript text into tracked artifacts.
+- Actual form: the code largely matches the ideal and verifies now, but the work spanned several interleaved PRs and the original worktree disappeared, so attribution depends on transcript, queue metadata, and PR receipts rather than local worktree history.
+- Corrected ideal form: any future continuity artifact that reconstructs from session transcripts must stay in ignored/private runtime storage unless it goes through the explicit redaction pipeline first.
+
+Outcome:
+
+- `limen.vigilia face` renders a read-only C-suite pane from `institutio/registry/organs.yaml` and `logs/vigilia/status.json`.
+- `scripts/check-params.py` now guards the undeclared-parameter ratchet with the current baseline.
+- `scripts/heartbeat-loop.sh` and `scripts/organ-health.py` include the Vigilia heartbeat/organ-health integration.
+- No code patch was made in this review pass because focused verification passed and the privacy-sensitive reconstruction output is already contained under ignored `logs/`.
+
+What was fucked up:
+
+- Transcript guard reports 4,531,220 billable-ish tokens, 4,351,637 Opus billable-ish tokens, 551 usage-bearing messages, and no subagent calls. This is another high-spend single-agent run.
+- The session's durable work landed through multiple PRs, which makes the prompt-to-done diff harder than it should be. The audit needs PR-level receipts, not only queue changed-file rows.
+- The PR authored commits used `Test User <test@example.com>` identity, repeating the provenance issue seen in OpenCode PRs.
+- `continuity.py` reconstructs compacted session context from raw Claude JSONL and writes it to `logs/vigilia/continuity-*.md`. That is useful private recovery behavior, but it can contain raw prompt/session text and must remain ignored/private.
+- The original worktree is gone, so temp job files and local intermediate artifacts are not independently inspectable.
+
+Verification:
+
+```bash
+gh pr view 277 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup
+gh pr view 281 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup
+gh pr view 285 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup
+gh pr view 315 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-tender-sniffing-marshmallow/6b107f0b-4796-4cc2-95ef-861947c991b9.jsonl
+PYTHONPATH=/Users/4jp/Workspace/limen/cli/src python3 -m pytest cli/tests/test_vigilia.py cli/tests/test_vigilia_face.py cli/tests/test_check_params.py -q
+python3 scripts/check-params.py
+PYTHONPATH=/Users/4jp/Workspace/limen/cli/src python3 -m limen.vigilia face
+git ls-files cli/src/limen/vigilia
+git check-ignore -v logs/vigilia/status.json logs/vigilia/continuity-test.md cli/src/limen/vigilia/__pycache__/vitals.cpython-314.pyc
+```
+
+Result: focused Vigilia/no-hardcode tests passed `29 passed`; `check-params` reported `195 declared, 256 undeclared (baseline 256), no new hardcodes`; the face command rendered the read-only C-suite pane; ignored-output checks confirm `logs/vigilia/*` and Vigilia `__pycache__` are not tracked. Transcript audit fails on total and Opus billable tokens, which is recorded as a session-quality defect rather than a current-code defect.
 
 ## Rejected Artifacts
 
