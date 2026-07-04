@@ -6172,6 +6172,65 @@ gh issue view 190 --repo organvm/limen --json number,title,state,updatedAt,url
 
 Result: private prompt extraction has `254` records; PR #180 is merged green; `463e28d` is missing while `0d06ff8` and `741cf17` are present; the advisory lint hook exits `0`; agent instruction docs match canonical task states; issue #190 is still open and now has a provenance-correction comment.
 
+### Codex rebuilt the invisible-ledger PostgreSQL adapter locally, but the interrupted turn did not push the receipt
+
+Severity: medium for attribution; low for current product state. The local Codex work was technically useful, but the session was interrupted before the remote branch update. The durable green result came later through PR #23, not through the original dirty PR #4.
+
+Evidence:
+
+- Queue row `113` points at Codex session `019ee0f8-c41f-7ad0-a733-e4589fd4d621`, rooted at `~/Workspace/.limen-worktrees/resolve-a-organvm-the-invisible-ledger-4-f657`, running on 2026-06-19T17:41:04Z through 2026-06-19T18:05:52Z.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-113-codex-invisible-ledger-prompts.jsonl` (`5` records).
+- In redacted intent form, the task asked Codex to resolve `a-organvm/the-invisible-ledger#4`, branch `limen/rev-ledger-postgres-adapter-ef35`, by rebasing onto `main`, resolving conflicts, running build/tests, and force-pushing. If unrecoverable, it should rebuild the same PostgreSQL persistence feature cleanly off `origin/main` as a fresh PR.
+- The target worktree is gone now, but the local commits it created still exist in `/Users/4jp/Workspace/a-organvm/the-invisible-ledger`: `f02de79`, `315c518`, `06081f6`, and final local commit `1741370`, all titled `Add PostgreSQL organization repository adapter`.
+- The transcript shows shell `git fetch`/`git push` were blocked by sandbox/DNS behavior, so Codex used GitHub inspection plus local rebuild. It ran `npm test` and `npm run build` successfully after tightening the final tree.
+- The session was interrupted at 2026-06-19T18:05:52Z immediately after Codex said it was splitting the GitHub tree creation into small batches. There is no transcript evidence that this Codex turn updated the remote branch or opened/merged the final PR.
+- The original PR #4 later merged on 2026-06-23 as `7c2058b`, but it is not a good success receipt: its `Build, test, and lint` check failed on run `28040062737`.
+- The PR #4 failure was a real lint error in `src/lib/storage/organization-repository.ts`: an empty interface equivalent to its supertype, `@typescript-eslint/no-empty-object-type`.
+- The durable green resolution is PR #23 (`[limen RESOLVE-a-organvm-the-invisible-ledger-4] resolve the-invisible-ledger#4 (DIRTY)`), merged on 2026-06-20 as `d2a4b51`. PR #23 carried the PostgreSQL adapter, tests, storage abstractions, docs, and related organization updates, and its CI matrix passed on Node 18, 20, and 22 plus Docker.
+- Current `organvm/the-invisible-ledger` main is green later on PR #78 / commit `455f49e`, and the PostgreSQL adapter still exists. The empty-interface lint issue is fixed on current main by making `OrganizationRepository` a type alias.
+- Local checkout `/Users/4jp/Workspace/a-organvm/the-invisible-ledger` is dirty and far behind current `origin/main`, so this review did not run local tests or mutate it.
+
+Ideal prompt diff:
+
+- Ideal dirty-PR resolver form: either update the original dirty PR branch and record the push/CI receipt, or create a fresh replacement PR and record that receipt before closeout.
+- Actual Codex form: Codex did the rebuild and local validation, but the turn was interrupted before the remote branch update. It should be credited for useful reconstruction, not for completing the remote PR lifecycle.
+- Ideal branch-accounting form: when push is blocked, preserve the local commit and explicitly hand off "not pushed" with exact commit IDs.
+- Actual form: the final state only survives because the removed worktree's objects remain in another local clone; without this review, `1741370` would be hard to connect to the later green PR.
+- Ideal success-receipt form: use PR #23 as the success receipt because it was green and merged; do not use PR #4 because it merged red.
+- Actual ecosystem form: both PR #23 and PR #4 ended up merged, so the board/story can look complete even though one merge had failing checks.
+
+Outcome:
+
+- Row `113` is classified as useful but interrupted.
+- No local code patch was made by this review pass.
+- The current product state is acceptable from this row's perspective: the adapter survived, current main is green, and the lint defect from PR #4 has been repaired.
+- The process finding is important: an interrupted local-green Codex session must not be recorded as done unless the remote branch/PR receipt exists.
+
+What was fucked up:
+
+- The sandbox allowed local index/commit writes but blocked fetch/push paths, forcing a fragile GitHub API fallback in a coding task whose explicit goal was branch repair.
+- The turn was interrupted at the exact remote-publication step; no automatic closeout recovered that gap.
+- The original dirty PR #4 was later merged despite red CI.
+- The green replacement PR #23 and red original PR #4 overlap enough that a shallow "merged" scan would incorrectly conclude every path was clean.
+- The queue changed-file list reflects the broader local rebuild surface, but the durable receipt should be PR #23, not the vanished worktree or PR #4.
+
+Verification:
+
+```bash
+jq '.changed_review[113]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-113-codex-invisible-ledger-prompts.jsonl
+rg -n "npm test|npm run build|1741370|turn_aborted|git push|create_tree" ~/.codex/sessions/2026/06/19/rollout-2026-06-19T13-41-00-019ee0f8-c41f-7ad0-a733-e4589fd4d621.jsonl
+for c in f02de79 315c518 06081f6 1741370 3c55978205dd3507d4c8a834c9b27192378687dd d2a4b519a652d35ef50eb3cd3f676b1116a9fbf8; do git -C /Users/4jp/Workspace/a-organvm/the-invisible-ledger cat-file -e "$c^{commit}" && git -C /Users/4jp/Workspace/a-organvm/the-invisible-ledger log -1 --oneline "$c"; done
+gh pr view 4 --repo organvm/the-invisible-ledger --json number,state,mergedAt,mergeCommit,statusCheckRollup,url
+gh run view 28040062737 --repo organvm/the-invisible-ledger --log-failed
+gh pr view 23 --repo organvm/the-invisible-ledger --json number,state,mergedAt,mergeCommit,statusCheckRollup,files,commits,url
+gh run view 27846598234 --repo organvm/the-invisible-ledger --json databaseId,conclusion,jobs
+gh api 'repos/organvm/the-invisible-ledger/contents/src/lib/storage/organization-repository.ts?ref=main' --jq '.content' | base64 --decode
+gh run list --repo organvm/the-invisible-ledger --branch main --limit 12 --json databaseId,workflowName,conclusion,headSha,createdAt,url
+```
+
+Result: private prompt extraction has `5` records; Codex local commits survive in `/Users/4jp/Workspace/a-organvm/the-invisible-ledger`; the transcript shows local test/build success followed by interruption before API publication; PR #4 merged red on lint; PR #23 merged green and carried the durable adapter; current main has the type-alias fix and green CI on commit `455f49e`.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
