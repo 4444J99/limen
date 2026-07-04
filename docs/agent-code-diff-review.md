@@ -101,6 +101,56 @@ node --check web/worker/src/index.js
 
 Result: PR #46 is merged with green GitHub checks; current hardening code is present; focused Python tests passed `102 passed`; Python compile and Worker syntax check passed; `npm audit --audit-level=high` reports zero vulnerabilities for both `web/app` and `web/worker`; `npm run build` in `web/app` passes. The only local dirty file after verification is unrelated `tasks.yaml`.
 
+### Claude subagent-tiering session fixed a real Opus fan-out defect, but the run itself exhibited the disease
+
+Severity: high for spend governance; current `main` contains the merged mitigation.
+
+Evidence:
+
+- Claude session `faa6ee98-4a19-4dfb-9151-3a41b48d51e2` ran in the now-removed worktree `.claude/worktrees/quiet-bubbling-hejlsberg` from 2026-07-01T16:12:49Z through 2026-07-02T22:28:52Z.
+- First prompt challenged why every subagent had been assigned Opus and explicitly rejected blanket downgrading to the smallest model. The correct ideal was dynamic, per-job tiering.
+- The session wrote plan `~/.claude/plans/idempotent-cooking-lollipop.md` and memory `~/.claude/projects/-Users-4jp-Workspace-limen/memory/subagent-tiering-uncovered-path.md`; both survive outside the repo. The worktree-local `.claude/agents/{scan,synth,verify}.md` files are gone with the worktree, but their content landed on `main`.
+- PR `organvm/limen#514` merged 2026-07-01T17:04:58Z at merge commit `95132261aad996d2b6551b818433975eda5764e5`.
+- PR #514 added `.claude/agents/scan.md`, `.claude/agents/verify.md`, `.claude/agents/synth.md`; documented the rule in `CLAUDE.md` and `AGENTS.md`; converged and armed `scripts/claude-workflow-guard.py` via `scripts/hooks/session-closeout.sh`; and added tier/guard tests.
+- GitHub checks on PR #514 were green: `python`, `python-311`, `worker`, `web`, `verify`, and `pr-gate`.
+- Current transcript audit of the session fails exactly on the defect it was fixing: 992 usage-bearing messages, 6,635,944 billable-ish tokens, 5,046,429 Opus billable-ish tokens, 13 transcript files, seven agent/workflow calls, and six Opus subagents.
+
+Ideal prompt diff:
+
+- Ideal form: prove the inheritance failure, identify all uncovered spawn paths, implement a dynamic per-job tiering surface tied to the existing `model_selection.py` brain, and add a guard that detects expensive fan-out without blocking legitimate escalation.
+- Actual form: the merged PR largely did that: cheap `scan`/`verify`, reserved `synth`, shared model-selection vocabulary, warn-only SessionEnd audit, and parity tests.
+- Remaining gap from the plan: whether Workflow `agent({ agentType })` actually honors `.claude/agents/*` frontmatter remained explicitly unproven in the memory. The guaranteed path is still explicit per-call `model`/`effort`.
+
+Outcome:
+
+- Current `main` has a clear doctrine: Task/Workflow subagents inherit the session model by default, so fan-out must choose an agent type or explicit model by job.
+- Guarding is materially stronger: `claude-workflow-guard.py audit-transcript` now counts expensive subagent fan-out and SessionEnd surfaces a warning instead of silently allowing inherited Opus swarms.
+- The fix is fail-open rather than hard-deny, which matches the repo's pattern: warn on bad spend shape, but do not kill a whole legitimate workflow.
+
+What was fucked up:
+
+- The repair run used the expensive model heavily while repairing expensive-model overuse. The transcript guard fails total billable, Opus billable, and Opus fan-out thresholds.
+- The session mixed the subagent-tiering thread with Object Lessons Studio deployment, Cloudflare credential-memory correction, closeout doctrine, stale-worktree handling, and his-hand lever cleanup. Some of that work was useful, but it diluted the prompt-to-done ledger.
+- The plan requested `judge.md`; PR #514 shipped only `scan`, `verify`, and `synth`. That is acceptable if intentional, but the omission should have been called out explicitly as scope narrowing.
+- The session later claimed it reverted daemon-contended `tasks.yaml` to make main clean. That is bad closeout behavior: daemon-owned board drift should be classified and left to its owner unless the human explicitly asks for a revert.
+- Queue changed-file extraction saw only plan/memory/docs artifacts, undercounting the durable repo output. The true code output is PR #514.
+
+Verification:
+
+```bash
+gh pr view 514 --repo organvm/limen --json number,title,state,createdAt,mergedAt,mergeCommit,headRefName,baseRefName,url,author,files,commits,statusCheckRollup
+find .claude/agents -maxdepth 1 -type f -print -exec sed -n '1,80p' {} \;
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-quiet-bubbling-hejlsberg/faa6ee98-4a19-4dfb-9151-3a41b48d51e2.jsonl
+PYTHONPATH=/Users/4jp/Workspace/limen/cli/src python3 -m pytest cli/tests/test_claude_tier.py cli/tests/test_claude_workflow_guard.py -q
+python3 scripts/check-agent-docs.py
+python3 scripts/check-params.py
+python3 -m py_compile scripts/claude-workflow-guard.py scripts/check-agent-docs.py
+bash -n scripts/hooks/session-closeout.sh
+python3 -m ruff check cli/tests/test_claude_tier.py cli/tests/test_claude_workflow_guard.py scripts/claude-workflow-guard.py scripts/check-agent-docs.py
+```
+
+Result: PR #514 is merged with green GitHub checks; current agent files pin `scan` and `verify` to Haiku and `synth` to Opus; focused local tests passed `30 passed`; docs/params checks, compile, shell syntax, and Ruff passed. Transcript guard fails as expected on this pre-fix/repair session with six Opus subagents.
+
 ## Rejected Artifacts
 
 ### Stale generated security branch disabled core gates
