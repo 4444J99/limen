@@ -30,6 +30,7 @@ Generated: `2026-07-04T05:30:35Z`
 | 68 | `claude` | `6b32c7a7-c558-45f0-b872-3cd16c338448` | Insights-lineage / insight-route run. It shipped the missing insight lineage and route loop through green PRs #592, #596, #598, and #599, and current heartbeat evidence shows the route organ running; the session still violated Fable/token governance and overstated "everything fixed" because closeout predicates are point-in-time and one now fails on later branch drift. |
 | 69 | `claude` | `620d2d1a-a190-4a35-ba0c-1b3fccb61778` | AUG1 revenue gate / inbound-positioning conductor run. It shipped a useful executable Aug-1 predicate and six external inbound docs PRs, but the session spent 6.1M billable tokens with five Opus subagents and overclaimed "7/7 live": universal-mail#89 closed unmerged and its positioning docs are absent from current `main`. Review fixed a malformed-state crash path in `scripts/aug1-view.py`. |
 | 70 | `codex` | `019f1809-13b4-7780-9b1f-d4584f872333` | Full-fleet substrate / current-session fanout run. The session built useful ledger/fanout machinery, but first produced theme-based receipts instead of consolidating every drafted plan; it then correctly diagnosed that proof gap. Current fanout code now proves `11` plan events / `10` unique plan sources in dry-run against the original transcript, but the persisted receipt points at a later continuation session. |
+| 71 | `claude` | `3f10c46f-8329-437b-8419-a1a3e3e20941` | Micro Tato combat/mobile/shareability continuation. The original Claude worktree is gone, but the standalone `~/Workspace/micro-tato` target now validates and live artifacts exist for Pages and Android; the row should be credited as migrated game work, not a Limen patch. It still mixed feature work, distribution, reporting, and closeout in one oversized Claude run that spent 8.5M billable tokens / 7.6M Opus and used two Opus subagents. |
 | 72-74 | `opencode` | `ses_0e6fc0277ffeuuI2k5jQntzOUg`, `ses_0e6fcb282ffebyHJmZuwBru59C`, `ses_0e6fd2ff2ffeIJ75fQQC1gLn66` | OpenCode probe sessions. Each prompt was only `"echo test"` and each session only ran `echo test`; the 65-67 changed-file queue surfaces are attribution noise from adjacent fleet work, not OpenCode authored diffs. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
@@ -3762,6 +3763,67 @@ python3 -m py_compile scripts/current-session-fanout.py scripts/product-ledger.p
 ```
 
 Result: current implementation passes focused tests and compiles; dry-run against the original transcript proves `11` plan events / `10` unique plan sources / `12` planner packets / `4` executor packets; persisted receipt currently records only the later continuation session's `1` plan event, so row70 remains a corrected-but-not-row-specific closeout.
+
+### Claude Micro Tato combat/mobile work is real, but the row is a migrated target-repo artifact
+
+Severity: medium-high for provenance and spend; low for current game build integrity.
+
+Evidence:
+
+- Queue row `71` points at Claude session `3f10c46f-8329-437b-8419-a1a3e3e20941`, rooted at the deleted Limen Claude worktree `.claude/worktrees/dazzling-knitting-donut`.
+- The changed-file ledger lists `23` paths, almost all under `.claude/worktrees/dazzling-knitting-donut/game`, plus one Claude plan, one job temp file, one Claude memory file, and one Godot editor-settings file. That is not a current Limen repo diff.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-71-claude-micro-tato-combat-prompts.jsonl` (`33` prompt-bearing records after excluding local command/tool-result noise: `19` direct human text prompts, `3` multimodal prompt records, `8` compaction summaries, and `3` task notifications).
+- In redacted intent form, the prompt layer asked for: clean tree proof, a complete prompt/request appendix, god/debug/pause menus, engine/tunable parameters, level select, learning enemies, debris, character select/return, sword/caster styles, polyrhythmic gatling ramp-up, spectator/design mode, labeling/taxonomy, scalable difficulty, bigger Zelda-style maps, NEWS reroll flow, always-in-motion "dance" movement, four attack styles mapped to the four stat bars, mobile/tap design, Rob/John shareability, public build repo, web publish, Android APK, and a full session report.
+- The original worktree root `/Users/4jp/Workspace/limen/.claude/worktrees/dazzling-knitting-donut/game` is absent, so this row cannot be reviewed as a live patch in place.
+- The target repo now exists separately at `/Users/4jp/Workspace/micro-tato`. Current `main` is `5136a3d` (`merge overnight Micro Tato checkpoint`) and is clean against `origin/main` after removing validation-generated Godot `.import` sidecars.
+- Current `~/Workspace/micro-tato` validation passes: `./lane.sh validate` compiled and soaked fighter plus the three weapon styles, then reported `gate PASS`.
+- Current `STATUS_MATRIX.md` records the major requested surfaces as done: pause menu, debug overlay, Designer/God/Spectator pages, four-style weapon system, sword/firearm/cast, persistent debris, spectator camera, scalable difficulty, NEWS pathing/reroll, bigger maps, adaptive/learning enemies, touch controls, MOVE/ATTACK KaossPads, touch combo tracking, style-slot remap, web hosting, and Android.
+- Distribution artifacts are live now: `gh repo view 4444J99/micro-tato-play` reports a public repo at `https://github.com/4444J99/micro-tato-play`; `https://4444j99.github.io/micro-tato-play/` returns HTTP `200`; the `android` release has asset `micro-tato.apk`, size `29,601,580`, digest `sha256:a2a8c7a890db7f3a1856c266741d59ddc2acec0f36b75bbbba8ac31ed403202e`; and the release download URL returns HTTP `200`.
+- Time qualification matters: the row71 session report itself still listed B48 learning AI, B49 bigger maps, level select, taxonomy, and clear-instance flow as pending/future at one point. Current `STATUS_MATRIX.md` marks B48/B49 and other surfaces done after later continuation work, so row71 gets credit for the migrated trajectory, not sole authorship of every current feature.
+- Claude guard fails hard: `billableTokens=8514252`, `opusBillableTokens=7555836`, `agentCalls=6`, `expensiveSubagents=2`, with violations for total billable budget, Opus budget, and Opus subagent fanout.
+
+Ideal prompt diff:
+
+- Ideal form: split the work into target-repo feature batches, distribution/publication batches, and report/prompt-corpus batches; keep each batch tied to one commit/receipt and one validation command.
+- Actual form: one Claude session carried game mechanics, mobile UX, public repo creation, web publishing, Android packaging, session report writing, prompt appendix work, and closeout ownership questions.
+- Ideal form for prompt handling: store full verbatim prompt layers privately and publish a redacted request index. The user's session-local request did ask for prompt appendix output, but fleet review should not normalize raw prompt bodies in public tracked docs.
+- Actual form: current `SESSION_REPORT.md` contains a public-facing prompt appendix with quoted prompt text and abridged large pasted context. That satisfied the immediate session ask, but it is a weaker redaction boundary than this review uses.
+- Ideal form for delivery proof: report "current target repo validates and artifacts are live" with a clear timestamp and distinguish features done during this session from features completed in later Micro Tato continuations.
+- Actual form: the deleted worktree and later standalone repo make authorship blurry. The correct review stance is "real migrated Micro Tato value, with time-qualified ownership."
+
+Outcome:
+
+- This is not a false-positive row like the OpenCode `echo test` probes. It is real game work that survived as a migrated standalone target repo.
+- The current product state is materially useful: local validation passes, public Pages is live, Android release download is live, and the status matrix shows many of the user's requested mechanics implemented.
+- The row is not a clean Limen diff. It should be closed as a target-repo migration review with a private prompt corpus and with spend/fanout as a major failure.
+
+What was fucked up:
+
+- The session burned far too much premium Claude capacity for mixed game/design/distribution/reporting work.
+- The clean-tree argument was confused by multiple roots: the user's screenshot complaint was about visible dirt, while the durable game target and the Limen fleet repo had different cleanliness states.
+- The run mixed public release work with prompt-appendix/reporting. That should be explicitly gated because the public artifact boundary differs from the private session-corpus boundary.
+- The final report's "done/current/pending" language is hard to audit because later Micro Tato continuations changed the truth underneath it. Durable receipts should be time-stamped snapshots or commit-bound matrices, not living claims.
+- Shareability was handled well for Pages and Android; iOS remains outside this row because it requires developer-account spend/gating and was not completed here.
+
+Verification:
+
+```bash
+jq '.changed_review[71]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-71-claude-micro-tato-combat-prompts.jsonl
+jq -r '.kind' .limen-private/session-corpus/full-stack-review/session-71-claude-micro-tato-combat-prompts.jsonl | sort | uniq -c
+test -d /Users/4jp/Workspace/limen/.claude/worktrees/dazzling-knitting-donut/game
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-dazzling-knitting-donut/3f10c46f-8329-437b-8419-a1a3e3e20941.jsonl
+git -C /Users/4jp/Workspace/micro-tato status --short --branch
+git -C /Users/4jp/Workspace/micro-tato log --oneline --decorate --max-count=12
+cd /Users/4jp/Workspace/micro-tato && ./lane.sh validate
+rg -n "level select|learn|learning|debug|god|pause|debris|style|B71|B75|Kaoss|touch|spectator|NEWS|sword|caster|gatling|polyr" STATUS_MATRIX.md COMBAT_DESIGN.md SESSION_REPORT.md BRANCHING.md ANDROID.md WEB.md scripts/*.gd
+gh repo view 4444J99/micro-tato-play --json nameWithOwner,url,isPrivate,defaultBranchRef,homepageUrl
+gh release view android --repo 4444J99/micro-tato-play --json tagName,name,url,isDraft,isPrerelease,createdAt,publishedAt,assets,targetCommitish
+curl -L -s -o /dev/null -w '%{http_code} %{url_effective}\n' https://4444j99.github.io/micro-tato-play/
+curl -L -s -o /dev/null -w '%{http_code} %{url_effective}\n' https://github.com/4444J99/micro-tato-play/releases/download/android/micro-tato.apk
+```
+
+Result: original Claude worktree is absent; private prompt extraction now has `33` records; Claude guard fails on 8.5M billable / 7.6M Opus / Opus subagent fanout; current Micro Tato `main` validates; Pages and Android release download return HTTP `200`; the validation-generated Godot `.import` sidecars were removed and `~/Workspace/micro-tato` is clean again.
 
 ### OpenCode echo probes are not 65-file code review targets
 
