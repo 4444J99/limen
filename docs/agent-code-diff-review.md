@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T13:56:17Z`
+Generated: `2026-07-04T14:05:34Z`
 
 ## Scope
 
@@ -130,6 +130,7 @@ Generated: `2026-07-04T13:56:17Z`
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 | 150 | `codex` | `019ecda8-577e-7502-b811-ef2c27675cf9` | Universal-intake launch pass. Codex produced a useful local Limen launch ledger and verified public/private runtime boundaries, but the artifact stayed untracked in the dirty portfolio repo, live state has since drifted, and the session ended after promising three control-plane artifacts that were not created. |
+| 151 | `codex` | `019eddbf-da3c-76e2-b234-7441407c8636` | AI Chat Exporter Lemon Squeezy checkout run. Codex produced useful checkout-return/license-capture scaffolding and PR #33, but the Pro gate was a bypass because any non-empty stored license string set `isPro`. PR #33 closed unmerged with only a skipped release check and no test/build receipt. Durable production credit belongs to later license-verification and MONETA checkout work, especially merged PR #107 with green checks. |
 
 ## Merged Artifacts
 
@@ -9402,6 +9403,69 @@ git -C /Users/4jp/Code/organvm/universal-mail--automation show --stat --oneline 
 ```
 
 Result: private prompt extraction matches row `changed 150`; the portfolio ledger exists but is untracked in a dirty repo; the intended `portfolio/intake/tasks.yaml` does not exist; the intake README is still stale; current Worker and Firebase probes preserve the public/private boundary but have stale or drifted counts; `4444J99/limen` resolves to `organvm/limen` with open issues; UMA intake code is durable today, but via later commits outside this session's endpoint.
+
+### Codex's Lemon Squeezy checkout PR was useful scaffolding, but the Pro gate was a bypass
+
+Severity: high for paid-feature/security correctness if merged; low current product risk because PR #33 closed unmerged and current `master` uses later verified MONETA licensing.
+
+Evidence:
+
+- Queue row `changed_review[151]` points at Codex session `019eddbf-da3c-76e2-b234-7441407c8636`, rooted at `/Users/4jp/Workspace/.limen-worktrees/rev-exporter-checkout-lemonsqueezy-e351`, running from `2026-06-19T02:40:00Z` through `2026-06-19T02:49:49Z`.
+- The original worktree is absent, so the durable attribution surface is the Codex transcript plus GitHub PR state.
+- Private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-changed-151-codex-exporter-lemonsqueezy-prompts.jsonl`: `4` prompt records, `3` unique prompt hashes, and `3,159` prompt bytes. Raw prompt bodies remain private/ignored.
+- First-layer prompt, redacted to intent: implement a Lemon Squeezy checkout plus license-key delivery wired into the exporter Pro-gate scaffold, then leave a green receipt.
+- Codex opened `organvm/a-i-chat--exporter#33` from branch `limen/rev-exporter-checkout-lemonsqueezy-e351`, head `62fac04585782640e7a47cf05bcd6e57d23dd957`. The PR touched `19` expected files: README, one new license test file, constants, nine locale JSON files, menu/settings UI, `src/utils/license.ts`, and `vite.config.ts`.
+- PR #33 closed unmerged on `2026-06-26T11:11:50Z`. Its only GitHub check was `release`, and that check was skipped; no green `test`, `typecheck`, build, or generated-userscript receipt exists for this PR.
+- The session final was honest about local verification being blocked: Codex only parsed locale JSON and could not run `pnpm test`, Vitest, lint, or rebuild `dist/chatgpt.user.js` because dependencies/tools were unavailable in the session environment.
+- The critical implementation defect was in `src/ui/SettingContext.tsx`: `isPro` was derived from `license.trim().length > 0`. Any non-empty string pasted or returned in the URL would unlock Pro.
+- The new tests only covered URL capture/scrub, checkout URL construction, and license masking. They did not prove that an invalid license fails closed, did not exercise feature gates, and did not prevent the non-empty-string bypass.
+- The README language acknowledged that the checkout/fulfillment flow still needed to send `ce_license_key`, `license_key`, or `license` back to the client. PR #33 added no server-side fulfillment or cryptographic verification path.
+- Locale additions copied English Pro strings into every locale, which is acceptable placeholder UI at best and not a localization completion receipt.
+- Later PR #47 merged a different "license-verify gap" port onto `master`, but its only check was also skipped `release`. It should be treated as an intermediate recovery step, not the final checkout receipt.
+- Later PR #101 merged a narrow Lemon Squeezy recovery with two green `check` jobs, but it only changed `vite.config.ts`; it recovered checkout URL configuration, not PR #33's full product promise.
+- Current durable product direction is PR #107, merged `2026-07-02T18:12:18Z` as `867db55` with green `check` jobs. It cuts checkout and verification from Lemon Squeezy to MONETA, updates `dist/chatgpt.user.js`, and keeps the Pro gate fail-closed through offline signed-license verification.
+- Current `origin/master` for `organvm/a-i-chat--exporter` includes the MONETA path: `useLicense()` verifies stored keys offline, catches failures back to `FREE_STATUS`, and `SettingContext` gates features through `hasFeature(status, feature)` / `isProUnlocked(status)` rather than key presence.
+
+Ideal prompt diff:
+
+- Ideal form: a checkout task that wires a paid Pro gate must define the trust boundary first: how keys are minted, what proves purchase, what feature flags the key grants, and what happens for malformed, expired, tampered, or unknown keys.
+- Actual form: Codex implemented the front-end return/capture UX but treated license presence as entitlement. That is checkout plumbing, not a paid-feature gate.
+- Ideal verification form: run the package test suite, add fail-closed tests for invalid/tampered/free-tier keys, rebuild the userscript bundle, and open a PR with at least one green build/test check.
+- Actual verification form: locale JSON parse only; no dependency install, no Vitest, no lint/typecheck/build, and no rebuilt `dist` artifact.
+- Ideal attribution form: credit PR #33 as exploration/scaffolding, then credit production readiness only to the later verification PRs that made the gate cryptographic and green.
+
+Outcome:
+
+- Credit row `changed 151` for useful checkout-return helpers, URL scrubbing, menu/settings affordances, and for making the missing license-verification gap obvious.
+- Do not credit row `changed 151` as shipped revenue infrastructure or a production paid gate. The branch closed unmerged, had no green check, and contained a direct entitlement bypass.
+- Current production credit belongs to the later sequence: PR #47 for the first merged verification gap port, PR #101 for the narrow checkout configuration recovery, and especially PR #107 for the current MONETA fail-closed checkout/verification cutover.
+- No code patch was made to `organvm/a-i-chat--exporter` during this review pass. The local exporter checkout is dirty and was treated as read-only evidence; GitHub PR state and `origin/master` content were used instead.
+
+What was fucked up:
+
+- The central security/product property was wrong: non-empty user input became Pro entitlement.
+- The prompt lacked an executable acceptance predicate, so Codex could stop at checkout-shaped UI without proving the paid-feature gate.
+- The session environment could not run the required JS toolchain, but the PR still opened without a green alternative receipt.
+- The generated userscript was not rebuilt, so even if the source diff were accepted the distributable artifact was stale.
+- Locale files were bulk-filled with English strings, inflating the changed-file count without real localized product quality.
+- The row's final value came from exposing a dangerous gap and feeding later recovery, not from shipping the requested checkout implementation itself.
+
+Verification:
+
+```bash
+jq '.changed_review[151]' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+jq -s '{records:length, unique_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), surfaces:([group_by(.surface)[] | {surface:.[0].surface,count:length}]), sources:([group_by(.source)[] | {source:.[0].source,count:length}])}' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-changed-151-codex-exporter-lemonsqueezy-prompts.jsonl
+gh pr view 33 --repo organvm/a-i-chat--exporter --json number,title,state,createdAt,closedAt,mergedAt,headRefName,headRefOid,files,commits,statusCheckRollup
+gh pr diff 33 --repo organvm/a-i-chat--exporter
+gh pr view 47 --repo organvm/a-i-chat--exporter --json number,title,state,createdAt,mergedAt,mergeCommit,files,statusCheckRollup
+gh pr view 101 --repo organvm/a-i-chat--exporter --json number,title,state,createdAt,mergedAt,mergeCommit,files,statusCheckRollup
+gh pr view 107 --repo organvm/a-i-chat--exporter --json number,title,state,createdAt,mergedAt,mergeCommit,files,statusCheckRollup
+git -C /Users/4jp/Workspace/a-i-chat--exporter show origin/master:src/hooks/useLicense.ts
+git -C /Users/4jp/Workspace/a-i-chat--exporter show origin/master:src/ui/SettingContext.tsx
+git -C /Users/4jp/Workspace/a-i-chat--exporter show origin/master:src/utils/license.ts
+```
+
+Result: private prompt extraction matches row `changed 151`; PR #33 is closed unmerged with only a skipped release check; its diff proves the non-empty-string `isPro` bypass; no full test/build receipt exists for the row; current `origin/master` contains the later MONETA signed-license path that fails closed and gates features on verified license status.
 
 ## Remaining Review Queue
 
