@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T06:18:14Z`
+Generated: `2026-07-04T06:22:46Z`
 
 ## Scope
 
@@ -40,6 +40,7 @@ Generated: `2026-07-04T06:18:14Z`
 | 80 | `codex` | `019ede36-2d1a-7fe1-9793-e42f2d9ca717` | Avditor premium-tier Codex run. The prompt asked for a $29-$99 paid tier with Stripe checkout, Growth Vault / advanced-audit gating, and the free audit preserved. The original ephemeral worktree is gone and the transcript ends mid-edit with local tests blocked by missing `vitest`, but the same task later landed as PR #33 with green build/test/e2e. The durable merged diff is narrower than the queue's 35-file snapshot. |
 | 81 | `codex` | `019ee341-d271-7da2-81f1-79c53da2cda4` | Avditor billing Codex run. The prompt asked for Stripe/Lemon Squeezy checkout plus a license/subscription gate around premium features while preserving the free tier. The original worktree is gone, and PR #43 was left open/red: local tests were blocked by missing `vitest`, CI failed in `next build`, and review found a Stripe webhook ordering bug. Review repaired the PR branch in commit `7ee8531`: schedule gating now builds, incomplete `subscription.created` events no longer downgrade active checkout state, local unit/build/lint checks pass, GitHub CI run `28697258820` is green, and PR #43 merged at `9614eef`. |
 | 82 | `opencode` | `ses_1061a8069ffevlGm8hemwph4w7` | Public Record Data Scraper security run. The prompt asked OpenCode to audit `organvm/public-record-data-scrapper`, fix high-severity advisories, add input validation at untrusted entrypoints, keep builds green, and open a PR. The queue's 43 Limen changed files are attribution noise: actual work was external PR #310, which closed unmerged after CI failed at `npm ci` because package and lockfile drifted. Durable fulfillment came later through merged PR #331 with green gate, not through the OpenCode PR. |
+| 83 | `claude` | `507be061-4c39-4f04-8c01-7c1ea24f21ce` | QUICKEN session-lifecycle run. The prompt pressure was broad and repeated across 432 prompt events, but it landed real control-plane value: `scripts/quicken.py` via PR #185 and `scripts/hooks/session-closeout.sh` / autonomic closeout via PR #189. Review found a live fail-open violation in `scripts/quicken.py`: malformed numeric env values could crash the organ before reporting. Fixed with `positive_int_env` and `cli/tests/test_quicken.py`; focused lifecycle tests, Ruff, py_compile, hook syntax, and malformed-env repro pass. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -4336,6 +4337,60 @@ gh run list --repo organvm/public-record-data-scrapper --workflow "CI Gate" --br
 ```
 
 Result: private prompt extraction has `2` records; PR #310 is closed/unmerged and failed CI at `npm ci` because `axios@0.21.4` was missing from the lockfile; PR #331 merged at `0d1cf39` with green gate/secret/dependency checks and is on `origin/main`; current `main` later advanced to `25a91f4` with a green CI Gate run `28363974547`.
+
+### Claude QUICKEN session-lifecycle run landed value, but its fail-open contract needed hardening
+
+Severity: high for control-plane reliability; fixed in this review pass.
+
+Evidence:
+
+- Queue row `83` points at Claude session `507be061-4c39-4f04-8c01-7c1ea24f21ce`, rooted at now-absent worktree `/Users/4jp/Workspace/limen/.claude/worktrees/optimized-wishing-crayon`.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-83-claude-quicken-lifecycle-prompts.jsonl` (`432` prompt records: `355` `message.user`, `68` `last-prompt`, and `9` `queue.enqueue`).
+- In redacted intent form, the prompt pressure centered on "sessions finish, not park": sitting Claude sessions should be driven through reversible work to completion, with only irreducible human atoms hung in the permanent queue; closeout/reap should be safe, reversible, daemon-owned, and not a memory-only reminder.
+- The original worktree is absent now. The queue's changed-file list had five surfaces: staged `scripts/quicken.py`, staged `scripts/hooks/session-closeout.sh`, a private plan, and two Claude memory files.
+- Durable output landed on `main` through PR #185 (`QUICKEN — session-lifecycle organ + permanent residue home`) at merge `2f7030a` and PR #189 (`feat(quicken): autonomic CLOSEOUT — reap spent, verified-merged worktrees`) at merge `69dbf30`.
+- PR #185 added `scripts/quicken.py`, the `C_QUICKEN` heartbeat rung, his-hand registry text, and ignored generated residue output. Its GitHub `python` check was red, while `worker` and `web` were green.
+- PR #189 added `scripts/hooks/session-closeout.sh`, made `quicken.py --apply` reap verified-merged spent worktrees, and had green `python`, `worker`, and `web` checks.
+- Transcript guard fails the session-quality budget: 3,479,987 billable-ish tokens, 2,752,590 Opus billable-ish tokens, 620 usage-bearing messages, and three agent calls.
+
+Ideal prompt diff:
+
+- Ideal form: converge the lifecycle organ in small slices, prove every destructive/reaping path with fail-closed guards, keep raw prompts private, and make the quicken beat fail open under malformed local state.
+- Actual code form: the main architecture was useful and largely matched the ideal: `quicken.py` classifies sessions, hangs residue into the permanent `needs_human` queue, gates headless breathe behind `LIMEN_QUICKEN_BREATHE`, and reaps only clean/verified-merged worktrees.
+- Actual process form: the session was too broad and expensive, PR #185 merged with a red Python check, and the original worktree was later removed, so attribution depends on PR receipts and transcript review.
+- Missing ideal detail found now: numeric env parsing used bare `int()`, so malformed local state could crash the organ before it could classify or report anything, contradicting its own "fail open, never crash" promise.
+
+Outcome:
+
+- Fixed `scripts/quicken.py` by adding `positive_int_env()` and using it for `LIMEN_QUICKEN_STALE_MIN`, `LIMEN_QUICKEN_HORIZON_DAYS`, `LIMEN_QUICKEN_CLOSED_HRS`, `LIMEN_QUICKEN_BREATHE_CAP`, and `LIMEN_QUICKEN_BREATHE_TIMEOUT`.
+- Added `cli/tests/test_quicken.py` covering malformed import-time numeric env values and malformed runtime breathe caps.
+- The repo-local `.claude/settings.json` currently wires `SessionEnd` to `scripts/hooks/session-closeout.sh`, while user-level `~/.claude/settings.json` does not. That means the hook's live activation still depends on which Claude settings layer is loaded; the daemon-driven `C_QUICKEN` path remains the reliable owner.
+
+What was fucked up:
+
+- The session spent 3.48M billable / 2.75M Opus tokens to build a control-plane organ that needed a later hardening pass.
+- PR #185's red Python check should have blocked merge or forced the repair into the same PR instead of relying on later follow-up.
+- The generated-task commit identity again used `Test User <test@example.com>` plus Claude co-author metadata.
+- Hook activation was easy to overstate: a hook file and repo-local settings are not the same thing as a verified live user-level hook.
+- The original prompt/session volume was enormous relative to the five changed surfaces in the queue row.
+
+Verification:
+
+```bash
+wc -l .limen-private/session-corpus/full-stack-review/session-83-claude-quicken-lifecycle-prompts.jsonl
+jq -r '.surface' .limen-private/session-corpus/full-stack-review/session-83-claude-quicken-lifecycle-prompts.jsonl | sort | uniq -c
+gh pr view 185 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup,body
+gh pr view 189 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup,body
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-optimized-wishing-crayon/507be061-4c39-4f04-8c01-7c1ea24f21ce.jsonl
+PYTHONPATH=cli/src python3 -m pytest cli/tests/test_quicken.py cli/tests/test_codex_quicken.py -q
+python3 -m ruff check scripts/quicken.py cli/tests/test_quicken.py
+python3 -m ruff format --check scripts/quicken.py cli/tests/test_quicken.py
+python3 -m py_compile scripts/quicken.py
+LIMEN_QUICKEN_STALE_MIN=bad LIMEN_QUICKEN_HORIZON_DAYS=0 LIMEN_QUICKEN_CLOSED_HRS=-1 python3 scripts/quicken.py --help
+bash -n scripts/hooks/session-closeout.sh
+```
+
+Result: private prompt extraction has `432` records; original worktree is absent; PR #185 and #189 are merged, with #189 fully green and #185's Python check red; transcript guard fails on total and Opus billable tokens; focused lifecycle tests passed `5` cases; Ruff check/format, Python compile, malformed-env repro, and hook syntax all pass after the fix.
 
 ## Remaining Review Queue
 
